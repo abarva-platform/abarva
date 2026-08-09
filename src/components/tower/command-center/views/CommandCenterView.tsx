@@ -40,7 +40,7 @@ function boardMetrics(view: TowerCommandCenterView): BoardMetric[] {
       key: "investment",
       label: "Approved investment",
       value: formatUsdM(s.approvedInvestmentUsd),
-      note: `${formatCount(s.boardScopeProgramCount)} board portfolio programs`,
+      note: `${formatCount(s.boardScopeProgramCount)} board-scope value cases`,
       tone: (s.approvedInvestmentUsd ?? 0) > 0 ? "gray" : "amber",
     },
     {
@@ -143,7 +143,7 @@ function cockpitRead(view: TowerCommandCenterView): string {
     return `${formatUsdM(s.claimableUsd)} is claimable today. Keep the remaining capital in proof-gated lanes until owners close usage, Finance, and attestation gaps.`;
   }
   if (!s.promisedBenefitLoaded) {
-    return `${formatUsdM(s.approvedInvestmentUsd)} of approved investment is visible across ${formatCount(s.boardScopeProgramCount)} board portfolio programs, but explicit promised benefit is absent. Keep benefit totals null until source-backed value cases are loaded and classified.`;
+    return `${formatUsdM(s.approvedInvestmentUsd)} of approved investment is visible across ${formatCount(s.boardScopeProgramCount)} board-scope value cases, but explicit promised benefit is absent. Keep benefit totals null until source-backed value cases are loaded and classified.`;
   }
   if (
     s.promisedBenefitUsd !== null &&
@@ -235,6 +235,7 @@ export function CommandCenterView({
   const owners = ownerQueue(view);
   const trustRows = sourceTrustRows(view);
   const openGapCount = view.gaps.length;
+  const groupedCampaignCount = view.evidenceMaturity.interventions.length;
 
   return (
     <div className={cx(styles.view, styles.cockpitView)}>
@@ -276,11 +277,20 @@ export function CommandCenterView({
         </div>
         <div className={styles.scopeFacts}>
           <span>
-            {formatCount(s.totalProgramSubjectCount)} tracked subjects
+            {formatCount(s.totalProgramSubjectCount)} tracked program subjects
           </span>
-          <span>{formatCount(s.boardScopeProgramCount)} board programs</span>
-          <span>{formatCount(s.aiInitiativeCount)} AI initiatives</span>
-          <span>{formatCount(openGapCount)} open proof actions</span>
+          <span>
+            {formatCount(s.boardScopeProgramCount)} board-scope value cases
+          </span>
+          <span>
+            {formatCount(s.aiInitiativeCount)} AI tools, agents and linked
+            capabilities
+          </span>
+          <span>{formatCount(view.actions.length)} total evidence actions</span>
+          <span>{formatCount(openGapCount)} current priority actions</span>
+          <span>
+            {formatCount(groupedCampaignCount)} grouped action campaigns
+          </span>
           <span>
             {formatCount(s.economicReviewQueueCount)} economic reviews
           </span>
@@ -354,9 +364,9 @@ export function CommandCenterView({
           ) : (
             <>
               <p className={styles.chartTruthNote}>
-                Each bubble is a board program: X is proof maturity, Y is risk
-                pressure, and size is capital exposure. Benefit remains a
-                separate proof gate.
+                Each bubble is a material board-scope value case: X is proof
+                maturity, Y is risk pressure, and size is capital exposure.
+                Benefit remains a separate proof gate.
               </p>
               <div
                 className={styles.cockpitMatrix}

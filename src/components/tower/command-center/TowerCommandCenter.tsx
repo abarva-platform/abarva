@@ -163,6 +163,9 @@ export function TowerCommandCenter({
     funnel: blockedValue > 0,
     evidence: (view?.gaps.length ?? 0) > 0,
   };
+  const headerScope = view
+    ? `${formatCount(view.summary.boardScopeProgramCount)} board-scope value cases · ${formatCount(view.summary.totalProgramSubjectCount)} tracked program subjects · ${formatCount(view.summary.aiInitiativeCount)} AI tools, agents and linked capabilities`
+    : "no governed rows";
 
   const body = (() => {
     if (!view) {
@@ -267,9 +270,7 @@ export function TowerCommandCenter({
               <div className={styles.when}>
                 Refreshed {refreshedOn}
                 <br />
-                {view
-                  ? `${formatCount(view.summary.boardScopeProgramCount)} board programs · ${formatCount(view.summary.totalProgramSubjectCount)} tracked subjects · ${formatCount(view.summary.aiInitiativeCount)} AI initiatives`
-                  : "no governed rows"}
+                {headerScope}
               </div>
               {view && commandCenterAttention(view) ? (
                 <div className={styles.flag}>
@@ -288,6 +289,10 @@ export function TowerCommandCenter({
               const selected = t.id === tab;
               const count =
                 t.id === "actions" ? (view?.actions.length ?? 0) : null;
+              const tabLabel =
+                t.id === "actions" && count !== null
+                  ? `${t.label}, ${formatCount(count)} total evidence actions`
+                  : t.label;
               const attn =
                 (t.id === "funnel" && attention.funnel) ||
                 (t.id === "evidence" && attention.evidence);
@@ -300,6 +305,7 @@ export function TowerCommandCenter({
                   type="button"
                   role="tab"
                   id={`tcc-tab-${t.id}`}
+                  aria-label={tabLabel}
                   aria-selected={selected}
                   aria-controls="tcc-panel"
                   tabIndex={selected ? 0 : -1}
@@ -309,7 +315,9 @@ export function TowerCommandCenter({
                 >
                   {t.label}
                   {count !== null ? (
-                    <span className={styles.tnum}>{count}</span>
+                    <span className={styles.tnum}>
+                      {formatCount(count)} total
+                    </span>
                   ) : null}
                   {attn ? (
                     <>

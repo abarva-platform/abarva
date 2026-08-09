@@ -64,6 +64,9 @@ export function RecommendedActionsView({
   onOpenAction: (id: string) => void;
 }) {
   const columns = bucketActions(view.actions);
+  const totalActionCount = view.actions.length;
+  const currentPriorityActionCount = view.gaps.length;
+  const groupedCampaignCount = view.evidenceMaturity.interventions.length;
 
   return (
     <div className={styles.view}>
@@ -76,11 +79,31 @@ export function RecommendedActionsView({
       <div className={styles.zipContractNote}>
         <Dot tone="amber" />
         <span>
-          North Star read: actions are not advice cards. They should become
-          controlled operating work with owner, due window, evidence package,
-          and handoff readiness.
+          North Star read: {formatCount(totalActionCount)} total evidence
+          actions are consolidated into {formatCount(groupedCampaignCount)}{" "}
+          grouped action campaigns, with{" "}
+          {formatCount(currentPriorityActionCount)} current priority actions in
+          the CFO proof queue.
         </span>
       </div>
+
+      <section
+        className={styles.actionCountStrip}
+        aria-label="Recommended action count definitions"
+      >
+        <span>
+          <b>{formatCount(totalActionCount)}</b>
+          total evidence actions
+        </span>
+        <span>
+          <b>{formatCount(currentPriorityActionCount)}</b>
+          current priority actions
+        </span>
+        <span>
+          <b>{formatCount(groupedCampaignCount)}</b>
+          grouped action campaigns
+        </span>
+      </section>
 
       <section className={styles.interventionMemo}>
         {view.evidenceMaturity.interventions.map((item) => (

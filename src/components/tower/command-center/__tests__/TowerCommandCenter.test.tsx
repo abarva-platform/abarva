@@ -102,7 +102,7 @@ describe("TowerCommandCenter", () => {
       "Decision Lanes",
       "AI Portfolio",
       "Evidence",
-      "Recommended Actions",
+      "Recommended Actions total",
     ]);
     expect(tab(/Command Center/)).toHaveAttribute("aria-selected", "true");
   });
@@ -125,6 +125,18 @@ describe("TowerCommandCenter", () => {
     expect(screen.getByText("Proof operations")).toBeInTheDocument();
     expect(screen.getByLabelText("Evidence-owner queue")).toBeInTheDocument();
     expect(screen.getByLabelText("Source trust rail")).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/board-scope value cases/).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/tracked program subjects/).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/AI tools, agents and linked capabilities/).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByText(/total evidence actions/)).toBeInTheDocument();
+    expect(screen.getByText(/current priority actions/)).toBeInTheDocument();
+    expect(screen.getByText(/grouped action campaigns/)).toBeInTheDocument();
     expect(screen.queryByText("Proof gate summary")).not.toBeInTheDocument();
     expect(screen.queryByText("aVa synthesis strip")).not.toBeInTheDocument();
     expect(
@@ -147,6 +159,10 @@ describe("TowerCommandCenter", () => {
     renderPage();
     fireEvent.click(tab(/Value Proof/));
     expect(screen.getByText("Outcome proof waterfall")).toBeInTheDocument();
+    expect(screen.getByText("Source-backed benefit chain")).toBeInTheDocument();
+    expect(
+      screen.getByText("Finance-calculated but blocked"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Top evidence blockers")).toBeInTheDocument();
     const table = screen.getByRole("table");
     expect(within(table).getByText("Missing baseline")).toBeInTheDocument();
@@ -192,7 +208,9 @@ describe("TowerCommandCenter", () => {
     expect(screen.getByText("5 shown of 5 candidates")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("radio", { name: "Usage & Value Proof" }));
-    expect(screen.getByText("Initiatives")).toBeInTheDocument();
+    expect(
+      screen.getByText("Tools, agents and capabilities"),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Fraud Graph Analytics v2/ }),
     ).toBeInTheDocument();
@@ -301,22 +319,26 @@ describe("TowerCommandCenter", () => {
     expect(cards).toHaveLength(designFixtureMart().cxoActions.length);
   });
 
-  it("reaches beyond the Top-10 default via All initiatives + search", () => {
+  it("reaches beyond the Top-10 default via capability inventory + search", () => {
     renderPage();
     fireEvent.click(tab(/AI Portfolio/));
 
     // The executive default caps the matrix at 10. Table mode must expose the
     // whole portfolio, otherwise rows 11+ are unreachable in the UI even
     // though the mart holds them.
-    fireEvent.click(screen.getByRole("radio", { name: "All initiatives" }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: "Capability inventory" }),
+    );
     const rows = within(screen.getByRole("table")).getAllByRole("button", {
       name: /^Open /,
     });
     expect(rows.length).toBeGreaterThan(10);
 
-    // Search narrows to a specific initiative without scrolling the table.
+    // Search narrows to a specific capability without scrolling the table.
     fireEvent.change(
-      screen.getByRole("searchbox", { name: "Search AI initiatives" }),
+      screen.getByRole("searchbox", {
+        name: "Search AI tools, agents and capabilities",
+      }),
       { target: { value: "fraud graph" } },
     );
     const narrowed = within(screen.getByRole("table")).getAllByRole("button", {
@@ -326,12 +348,16 @@ describe("TowerCommandCenter", () => {
     expect(narrowed[0]).toHaveAccessibleName("Open Fraud Graph Analytics v2");
   });
 
-  it("searches vendor and system, not just the initiative name", () => {
+  it("searches vendor and system, not just the capability name", () => {
     renderPage();
     fireEvent.click(tab(/AI Portfolio/));
-    fireEvent.click(screen.getByRole("radio", { name: "All initiatives" }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: "Capability inventory" }),
+    );
     fireEvent.change(
-      screen.getByRole("searchbox", { name: "Search AI initiatives" }),
+      screen.getByRole("searchbox", {
+        name: "Search AI tools, agents and capabilities",
+      }),
       { target: { value: "Vendor H" } },
     );
     const hits = within(screen.getByRole("table")).getAllByRole("button", {
@@ -345,10 +371,12 @@ describe("TowerCommandCenter", () => {
     renderPage();
     fireEvent.click(tab(/AI Portfolio/));
     fireEvent.change(
-      screen.getByRole("searchbox", { name: "Search AI initiatives" }),
+      screen.getByRole("searchbox", {
+        name: "Search AI tools, agents and capabilities",
+      }),
       { target: { value: "copilot" } },
     );
-    expect(screen.getByText(/of \d+ initiatives match/)).toBeInTheDocument();
+    expect(screen.getByText(/of \d+ capabilities match/)).toBeInTheDocument();
   });
 
   it("surfaces vendor attribution on the default AI Portfolio overview", () => {
@@ -396,7 +424,7 @@ describe("TowerCommandCenter", () => {
     expect(screen.queryByText("Value proof chain")).toBeNull();
   });
 
-  it("opens the AI initiative drawer from the active portfolio legend", () => {
+  it("opens the AI capability drawer from the active portfolio legend", () => {
     renderPage();
     fireEvent.click(tab(/AI Portfolio/));
     fireEvent.click(screen.getByRole("radio", { name: "Usage & Value Proof" }));
@@ -405,6 +433,7 @@ describe("TowerCommandCenter", () => {
     );
 
     const drawer = screen.getByRole("dialog");
+    expect(within(drawer).getByText(/AI capability/)).toBeInTheDocument();
     expect(within(drawer).getByText("Value potential")).toBeInTheDocument();
     expect(within(drawer).getByText("92/100")).toBeInTheDocument();
   });

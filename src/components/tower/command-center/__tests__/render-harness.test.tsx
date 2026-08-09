@@ -134,8 +134,10 @@ describe("Command Center render harness", () => {
     dump("04c-ai-lens");
     fireEvent.click(screen.getByRole("radio", { name: "Candidate Pipeline" }));
     dump("04d-ai-table");
-    fireEvent.click(screen.getByRole("radio", { name: "All initiatives" }));
-    dump("04e-ai-all-initiatives");
+    fireEvent.click(
+      screen.getByRole("radio", { name: "Capability inventory" }),
+    );
+    dump("04e-ai-capability-inventory");
 
     fireEvent.click(screen.getByRole("tab", { name: /Evidence/ }));
     dump("05-evidence");

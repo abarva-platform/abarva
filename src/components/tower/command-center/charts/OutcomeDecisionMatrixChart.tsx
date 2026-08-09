@@ -10,7 +10,6 @@ import {
   CartesianGrid,
   ReferenceArea,
   ReferenceLine,
-  ResponsiveContainer,
   Scatter,
   ScatterChart,
   Tooltip,
@@ -27,6 +26,7 @@ import type {
 
 import { LANE_HEX, LANE_WORD } from "../primitives";
 import { HEX, scatterDatum, toM } from "./chart-kit";
+import { MeasuredChartFrame } from "./MeasuredChartFrame";
 
 interface DecisionMatrixPoint {
   id: string;
@@ -156,152 +156,158 @@ export function OutcomeDecisionMatrixChart({
       }}
     >
       <div style={{ flex: "1 1 auto", minHeight: 160 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <ScatterChart margin={{ top: 22, right: 22, left: 10, bottom: 26 }}>
-            <ReferenceArea
-              x1={0}
-              x2={50}
-              y1={50}
-              y2={100}
-              fill={HEX.red}
-              fillOpacity={0.055}
-              label={{
-                value: "STOP / REDESIGN",
-                position: "insideTopLeft",
-                fill: HEX.red,
-                fontSize: 10,
-                fontFamily: "var(--abarva-mono)",
-                fontWeight: 700,
-              }}
-            />
-            <ReferenceArea
-              x1={50}
-              x2={100}
-              y1={50}
-              y2={100}
-              fill={HEX.amber}
-              fillOpacity={0.06}
-              label={{
-                value: "FIX PROOF",
-                position: "insideTopRight",
-                fill: HEX.amber,
-                fontSize: 10,
-                fontFamily: "var(--abarva-mono)",
-                fontWeight: 700,
-              }}
-            />
-            <ReferenceArea
-              x1={0}
-              x2={50}
-              y1={0}
-              y2={50}
-              fill={HEX.gray300}
-              fillOpacity={0.05}
-              label={{
-                value: "WATCH",
-                position: "insideBottomLeft",
-                fill: HEX.gray700,
-                fontSize: 10,
-                fontFamily: "var(--abarva-mono)",
-                fontWeight: 700,
-              }}
-            />
-            <ReferenceArea
-              x1={50}
-              x2={100}
-              y1={0}
-              y2={50}
-              fill={HEX.teal}
-              fillOpacity={0.055}
-              label={{
-                value: "SCALE",
-                position: "insideBottomRight",
-                fill: HEX.tealDark,
-                fontSize: 10,
-                fontFamily: "var(--abarva-mono)",
-                fontWeight: 700,
-              }}
-            />
-            <CartesianGrid stroke={HEX.border} />
-            <XAxis
-              type="number"
-              dataKey="x"
-              domain={[0, 100]}
-              tickCount={6}
-              tick={{
-                fontSize: 9.5,
-                fill: HEX.gray300,
-                fontFamily: "var(--abarva-mono)",
-              }}
-              axisLine={{ stroke: HEX.borderStrong }}
-              tickLine={false}
-              label={{
-                value: "Value proof maturity →",
-                position: "bottom",
-                offset: 7,
-                style: {
+        <MeasuredChartFrame minHeight={160}>
+          {({ width, height }) => (
+            <ScatterChart
+              width={width}
+              height={height}
+              margin={{ top: 22, right: 22, left: 10, bottom: 26 }}
+            >
+              <ReferenceArea
+                x1={0}
+                x2={50}
+                y1={50}
+                y2={100}
+                fill={HEX.red}
+                fillOpacity={0.055}
+                label={{
+                  value: "STOP / REDESIGN",
+                  position: "insideTopLeft",
+                  fill: HEX.red,
+                  fontSize: 10,
                   fontFamily: "var(--abarva-mono)",
-                  fontSize: 9.5,
-                  fill: HEX.gray500,
-                },
-              }}
-            />
-            <YAxis
-              type="number"
-              dataKey="y"
-              domain={[0, 100]}
-              tickCount={5}
-              tick={{
-                fontSize: 9.5,
-                fill: HEX.gray300,
-                fontFamily: "var(--abarva-mono)",
-              }}
-              axisLine={false}
-              tickLine={false}
-              width={28}
-              label={{
-                value: "Risk pressure",
-                angle: -90,
-                position: "insideLeft",
-                offset: 2,
-                style: {
-                  fontFamily: "var(--abarva-mono)",
-                  fontSize: 9.5,
-                  fill: HEX.gray500,
-                },
-              }}
-            />
-            <ZAxis type="number" dataKey="z" range={[80, 560]} />
-            <ReferenceLine
-              x={50}
-              stroke={HEX.borderStrong}
-              strokeDasharray="3 3"
-            />
-            <ReferenceLine
-              y={50}
-              stroke={HEX.borderStrong}
-              strokeDasharray="3 3"
-            />
-            <Tooltip content={<MatrixTooltip />} />
-            {[...byLane.entries()].map(([lane, lanePoints]) => (
-              <Scatter
-                key={lane}
-                name={LANE_WORD[lane]}
-                data={lanePoints}
-                fill={LANE_HEX[lane]}
-                fillOpacity={0.84}
-                stroke="#fff"
-                strokeWidth={1.5}
-                isAnimationActive={false}
-                style={{ cursor: "pointer" }}
-                onClick={(arg: unknown) => {
-                  const point = scatterDatum<DecisionMatrixPoint>(arg);
-                  if (point?.id) onSelect(point.id);
+                  fontWeight: 700,
                 }}
               />
-            ))}
-          </ScatterChart>
-        </ResponsiveContainer>
+              <ReferenceArea
+                x1={50}
+                x2={100}
+                y1={50}
+                y2={100}
+                fill={HEX.amber}
+                fillOpacity={0.06}
+                label={{
+                  value: "FIX PROOF",
+                  position: "insideTopRight",
+                  fill: HEX.amber,
+                  fontSize: 10,
+                  fontFamily: "var(--abarva-mono)",
+                  fontWeight: 700,
+                }}
+              />
+              <ReferenceArea
+                x1={0}
+                x2={50}
+                y1={0}
+                y2={50}
+                fill={HEX.gray300}
+                fillOpacity={0.05}
+                label={{
+                  value: "WATCH",
+                  position: "insideBottomLeft",
+                  fill: HEX.gray700,
+                  fontSize: 10,
+                  fontFamily: "var(--abarva-mono)",
+                  fontWeight: 700,
+                }}
+              />
+              <ReferenceArea
+                x1={50}
+                x2={100}
+                y1={0}
+                y2={50}
+                fill={HEX.teal}
+                fillOpacity={0.055}
+                label={{
+                  value: "SCALE",
+                  position: "insideBottomRight",
+                  fill: HEX.tealDark,
+                  fontSize: 10,
+                  fontFamily: "var(--abarva-mono)",
+                  fontWeight: 700,
+                }}
+              />
+              <CartesianGrid stroke={HEX.border} />
+              <XAxis
+                type="number"
+                dataKey="x"
+                domain={[0, 100]}
+                tickCount={6}
+                tick={{
+                  fontSize: 9.5,
+                  fill: HEX.gray300,
+                  fontFamily: "var(--abarva-mono)",
+                }}
+                axisLine={{ stroke: HEX.borderStrong }}
+                tickLine={false}
+                label={{
+                  value: "Value proof maturity →",
+                  position: "bottom",
+                  offset: 7,
+                  style: {
+                    fontFamily: "var(--abarva-mono)",
+                    fontSize: 9.5,
+                    fill: HEX.gray500,
+                  },
+                }}
+              />
+              <YAxis
+                type="number"
+                dataKey="y"
+                domain={[0, 100]}
+                tickCount={5}
+                tick={{
+                  fontSize: 9.5,
+                  fill: HEX.gray300,
+                  fontFamily: "var(--abarva-mono)",
+                }}
+                axisLine={false}
+                tickLine={false}
+                width={28}
+                label={{
+                  value: "Risk pressure",
+                  angle: -90,
+                  position: "insideLeft",
+                  offset: 2,
+                  style: {
+                    fontFamily: "var(--abarva-mono)",
+                    fontSize: 9.5,
+                    fill: HEX.gray500,
+                  },
+                }}
+              />
+              <ZAxis type="number" dataKey="z" range={[80, 560]} />
+              <ReferenceLine
+                x={50}
+                stroke={HEX.borderStrong}
+                strokeDasharray="3 3"
+              />
+              <ReferenceLine
+                y={50}
+                stroke={HEX.borderStrong}
+                strokeDasharray="3 3"
+              />
+              <Tooltip content={<MatrixTooltip />} />
+              {[...byLane.entries()].map(([lane, lanePoints]) => (
+                <Scatter
+                  key={lane}
+                  name={LANE_WORD[lane]}
+                  data={lanePoints}
+                  fill={LANE_HEX[lane]}
+                  fillOpacity={0.84}
+                  stroke="#fff"
+                  strokeWidth={1.5}
+                  isAnimationActive={false}
+                  style={{ cursor: "pointer" }}
+                  onClick={(arg: unknown) => {
+                    const point = scatterDatum<DecisionMatrixPoint>(arg);
+                    if (point?.id) onSelect(point.id);
+                  }}
+                />
+              ))}
+            </ScatterChart>
+          )}
+        </MeasuredChartFrame>
       </div>
       <div
         aria-label="Capital decision matrix program legend"

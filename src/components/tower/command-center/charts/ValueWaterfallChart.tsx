@@ -12,7 +12,6 @@ import {
   CartesianGrid,
   Cell,
   LabelList,
-  ResponsiveContainer,
   XAxis,
   YAxis,
 } from "recharts";
@@ -21,6 +20,7 @@ import { formatUsdM } from "@/lib/tower/command-center/format";
 import type { TowerCommandSummary } from "@/lib/tower/command-center/types";
 
 import { HEX, toM, twoLineTick, withSliver } from "./chart-kit";
+import { MeasuredChartFrame } from "./MeasuredChartFrame";
 
 /**
  * The seven waterfall bars — four levels and the three drops between them.
@@ -112,60 +112,64 @@ export function ValueWaterfallChart({
   }));
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart
-        data={data}
-        margin={{ top: 26, right: 64, left: 8, bottom: 6 }}
-        barCategoryGap="18%"
-      >
-        <CartesianGrid vertical={false} stroke={HEX.border} />
-        <XAxis
-          dataKey="name"
-          interval={0}
-          tickLine={false}
-          axisLine={{ stroke: HEX.borderStrong }}
-          height={40}
-          tick={twoLineTick}
-        />
-        <YAxis
-          tickFormatter={(v: number) => `$${v}`}
-          tick={{
-            fontSize: 10,
-            fill: HEX.gray300,
-            fontFamily: "var(--abarva-mono)",
-          }}
-          axisLine={false}
-          tickLine={false}
-          width={34}
-        />
-        {/* Transparent riser — floats the visible segment above the axis. */}
-        <Bar
-          dataKey="base"
-          stackId="a"
-          fill="transparent"
-          isAnimationActive={false}
-        />
-        <Bar
-          dataKey="v"
-          stackId="a"
-          radius={[3, 3, 0, 0]}
-          isAnimationActive={false}
+    <MeasuredChartFrame minHeight={220}>
+      {({ width, height }) => (
+        <BarChart
+          width={width}
+          height={height}
+          data={data}
+          margin={{ top: 26, right: 64, left: 8, bottom: 6 }}
+          barCategoryGap="18%"
         >
-          {data.map((d, i) => (
-            <Cell key={i} fill={d.fill} />
-          ))}
-          <LabelList
-            dataKey="lab"
-            position="top"
-            style={{
-              fontFamily: "var(--abarva-serif)",
-              fontSize: 12.5,
-              fontWeight: 500,
-              fill: HEX.gray900,
-            }}
+          <CartesianGrid vertical={false} stroke={HEX.border} />
+          <XAxis
+            dataKey="name"
+            interval={0}
+            tickLine={false}
+            axisLine={{ stroke: HEX.borderStrong }}
+            height={40}
+            tick={twoLineTick}
           />
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+          <YAxis
+            tickFormatter={(v: number) => `$${v}`}
+            tick={{
+              fontSize: 10,
+              fill: HEX.gray300,
+              fontFamily: "var(--abarva-mono)",
+            }}
+            axisLine={false}
+            tickLine={false}
+            width={34}
+          />
+          {/* Transparent riser — floats the visible segment above the axis. */}
+          <Bar
+            dataKey="base"
+            stackId="a"
+            fill="transparent"
+            isAnimationActive={false}
+          />
+          <Bar
+            dataKey="v"
+            stackId="a"
+            radius={[3, 3, 0, 0]}
+            isAnimationActive={false}
+          >
+            {data.map((d, i) => (
+              <Cell key={i} fill={d.fill} />
+            ))}
+            <LabelList
+              dataKey="lab"
+              position="top"
+              style={{
+                fontFamily: "var(--abarva-serif)",
+                fontSize: 12.5,
+                fontWeight: 500,
+                fill: HEX.gray900,
+              }}
+            />
+          </Bar>
+        </BarChart>
+      )}
+    </MeasuredChartFrame>
   );
 }

@@ -134,6 +134,32 @@ export function ValueProofView({
               : `Explicit promised benefit is absent. Approved investment is ${formatUsdM(s.approvedInvestmentUsd)}.`}
           </p>
 
+          <div
+            className={styles.valueProofRails}
+            aria-label="Value proof amount definitions"
+          >
+            <div className={styles.valueProofRail}>
+              <span>Source-backed benefit chain</span>
+              <b>
+                {s.promisedBenefitUsd === null
+                  ? "Not loaded"
+                  : formatUsdM(s.promisedBenefitUsd)}
+              </b>
+              <small>
+                Drives the waterfall only when a governed value-case benefit
+                assertion exists.
+              </small>
+            </div>
+            <div className={styles.valueProofRail}>
+              <span>Finance-calculated but blocked</span>
+              <b>{formatUsdM(s.financeValidatedBlockedUsd)}</b>
+              <small>
+                Kept separate until usage, outcome, attribution, and attestation
+                prove the claim path.
+              </small>
+            </div>
+          </div>
+
           {/* "The read" — the mart's own executive summary, prefixed with the
               two leak figures. Claude writes none of this and no figure in it
               is computed here beyond the subtractions the waterfall shows. */}

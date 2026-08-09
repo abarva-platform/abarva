@@ -1,7 +1,7 @@
 "use client";
 
 // Tab 4 — AI Portfolio. Four sub-views: Integrated (default), Bubble matrix,
-// Spend lens, Initiative table. Transcribed from `viewAI()` (design line ~903).
+// Spend lens, capability inventory. Transcribed from `viewAI()` (design line ~903).
 //
 // The type filter chips apply to every sub-view EXCEPT Spend lens, which is a
 // whole-portfolio category breakdown — filtering it would misrepresent the
@@ -44,7 +44,7 @@ export const AI_SUB_VIEWS: ReadonlyArray<readonly [AiSubView, string]> = [
   ["bubble", "Usage & Value Proof"],
   ["lens", "Spend Attribution"],
   ["table", "Candidate Pipeline"],
-  ["all", "All initiatives"],
+  ["all", "Capability inventory"],
 ];
 
 const AI_FILTERS: ReadonlyArray<readonly [AiFilter, string]> = [
@@ -241,9 +241,9 @@ function SpendUnattributed({ aiTagged }: { aiTagged: string }) {
       <h2>AI spend is portfolio-only today</h2>
       <p>
         {aiTagged} is tagged to AI-related spend, but none is currently
-        attributable to a specific initiative. This view supports position and
-        value-readiness evidence, not spend concentration, until the governed
-        attribution projection exists.
+        attributable to a specific tool, agent or linked capability. This view
+        supports position and value-readiness evidence, not spend concentration,
+        until the governed attribution projection exists.
       </p>
     </div>
   );
@@ -257,7 +257,8 @@ function VendorAttributionStrip({
   if (vendors.length === 0) {
     return (
       <p className={styles.lhSub}>
-        Vendor attribution is not yet populated for the current portfolio.
+        Vendor attribution is not yet populated for the current AI capability
+        portfolio.
       </p>
     );
   }
@@ -265,7 +266,7 @@ function VendorAttributionStrip({
     <div className={styles.vendorStrip} aria-label="Top attributed AI vendors">
       <div className={styles.vendorStripHead}>
         <span>Top attributed vendors</span>
-        <small>from governed AI portfolio rows</small>
+        <small>from governed AI tool, agent and capability rows</small>
       </div>
       <div className={styles.vendorStripRows}>
         {vendors.map((entry) => (
@@ -286,11 +287,11 @@ function VendorAttributionStrip({
 
 /**
  * Free-text search across the fields an executive would actually type: the
- * initiative name, its vendor, the system it runs in, and its spend category.
+ * capability name, its vendor, the system it runs in, and its spend category.
  *
  * The matrix and candidate pipeline default to the top 10 by governed policy,
  * which keeps a 232-row portfolio readable but would otherwise put rows 11+
- * out of reach. Search is how you get to a specific initiative without
+ * out of reach. Search is how you get to a specific capability without
  * scrolling a table of everything, and it applies to every sub-view.
  */
 export function applySearch(
@@ -307,7 +308,7 @@ export function applySearch(
 }
 
 /** The full portfolio table — every row, no policy cap. */
-function AllInitiativesTable({
+function CapabilityInventoryTable({
   items,
   onOpenAi,
 }: {
@@ -317,7 +318,8 @@ function AllInitiativesTable({
   if (items.length === 0) {
     return (
       <p className={styles.lhSub}>
-        No initiatives match the current filter or search.
+        No AI tools, agents or linked capabilities match the current filter or
+        search.
       </p>
     );
   }
@@ -325,7 +327,7 @@ function AllInitiativesTable({
     <table className={styles.tbl}>
       <thead>
         <tr>
-          <th scope="col">Initiative</th>
+          <th scope="col">Tool, agent or capability</th>
           <th scope="col">Spend type</th>
           <th scope="col">Vendor</th>
           <th scope="col">System</th>
@@ -447,7 +449,7 @@ export function AiPortfolioView({
         }}
       >
         <Card
-          eyebrow="Funded & embedded portfolio"
+          eyebrow="Funded programs and embedded capabilities"
           right={matrixRight}
           headId="tcc-ai-bubble"
           bodyStyle={{ display: "flex", flexDirection: "column" }}
@@ -500,7 +502,7 @@ export function AiPortfolioView({
               {fundedCount === 0
                 ? "No funded AI programs are represented. "
                 : `${fundedCount} funded AI program${fundedCount === 1 ? " is" : "s are"} represented. `}
-              {embeddedCount} embedded or usage-linked capabilit
+              {embeddedCount} embedded tool, agent or usage-linked capabilit
               {embeddedCount === 1 ? "y carries" : "ies carry"} the current
               value evidence. The broader pool contains{" "}
               {view.portfolioCounts.totalCandidateCount} unfunded candidate
@@ -530,7 +532,7 @@ export function AiPortfolioView({
           />
         </Card>
         <Card
-          title="Initiatives"
+          title="Tools, agents and capabilities"
           right={
             filtered.length > matrixItems.length
               ? `${matrixItems.length} numbered on matrix`
@@ -587,14 +589,14 @@ export function AiPortfolioView({
   } else if (subView === "all") {
     body = (
       <Card
-        title="All initiatives"
+        title="Tool, agent and capability inventory"
         right={`${allFiltered.length} of ${view.allInitiatives.length} rows${search.trim() ? " · searched" : ""}`}
         headId="tcc-ai-all"
         style={{ flex: 1 }}
         bodyClassName={styles.scroll}
         bodyStyle={{ paddingTop: 8 }}
       >
-        <AllInitiativesTable items={allFiltered} onOpenAi={onOpenAi} />
+        <CapabilityInventoryTable items={allFiltered} onOpenAi={onOpenAi} />
       </Card>
     );
   } else {
@@ -634,7 +636,8 @@ export function AiPortfolioView({
         <Dot tone="teal" />
         <span>
           North Star read: compare AI spend scale, proof maturity, readiness,
-          and candidate status before treating usage as outcome value.
+          funded-program status, embedded tool or agent usage, and candidate
+          status before treating usage as outcome value.
         </span>
       </div>
 
@@ -659,12 +662,12 @@ export function AiPortfolioView({
           className={styles.searchInput}
           value={search}
           onChange={(e) => onSearch(e.target.value)}
-          placeholder="Search initiative, vendor, system or category"
-          aria-label="Search AI initiatives"
+          placeholder="Search tool, agent, vendor, system or category"
+          aria-label="Search AI tools, agents and capabilities"
         />
         {search.trim() ? (
           <span className={styles.vhint}>
-            {allFiltered.length} of {view.allInitiatives.length} initiatives
+            {allFiltered.length} of {view.allInitiatives.length} capabilities
             match
           </span>
         ) : null}

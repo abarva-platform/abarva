@@ -1,6 +1,6 @@
 "use client";
 
-// The AI initiative drawer — opened from a bubble point or an initiative row.
+// The AI capability drawer — opened from a bubble point or inventory row.
 // Transcribed from `aiDrawer()` (design line ~1139).
 
 import { formatUsdM } from "@/lib/tower/command-center/format";
@@ -61,7 +61,7 @@ export function AiInitiativeDrawer({
     <DrawerShell
       open={open}
       onClose={onClose}
-      eyebrow={a ? `AI initiative ${a.n} · ${KIND_LABEL[a.kind]}` : ""}
+      eyebrow={a ? `AI capability ${a.n} · ${KIND_LABEL[a.kind]}` : ""}
       title={a?.name ?? ""}
       footer={
         <>
@@ -128,7 +128,7 @@ export function AiInitiativeDrawer({
                 </span>
               </div>
               <p className={styles.us}>
-                No usage-linked measurement is recorded for this initiative. Its
+                No usage-linked measurement is recorded for this capability. Its
                 value cannot be usage-supported until one exists.
               </p>
             </div>
@@ -167,7 +167,7 @@ export function AiInitiativeDrawer({
           <DrawerSection>The read</DrawerSection>
           <div className={styles.efact}>
             <p className={styles.es}>
-              {a.note ?? "No caveat recorded for this initiative."}
+              {a.note ?? "No caveat recorded for this capability."}
             </p>
             <div className={styles.eloc}>
               <span className={styles.file}>

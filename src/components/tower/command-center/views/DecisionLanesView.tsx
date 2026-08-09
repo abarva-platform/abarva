@@ -56,6 +56,22 @@ const INTERVENTION_TONE_CLASS: Record<TowerInterventionLane["tone"], string> = {
   gray: "",
 };
 
+const MATERIAL_PROGRAM_LIMIT = 20;
+
+function materialPrograms(
+  programs: readonly TowerProgramView[],
+): TowerProgramView[] {
+  return [...programs]
+    .sort(
+      (a, b) =>
+        b.valueAtStakeUsd - a.valueAtStakeUsd ||
+        b.blockedUsd - a.blockedUsd ||
+        LANE_ORDER[a.lane] - LANE_ORDER[b.lane] ||
+        a.name.localeCompare(b.name),
+    )
+    .slice(0, MATERIAL_PROGRAM_LIMIT);
+}
+
 function EvidenceLaneBoard({ view }: { view: TowerCommandCenterView }) {
   return (
     <div className={styles.interventionLanes}>
@@ -350,9 +366,11 @@ function LaneLegendList({
 
 function HeatmapPanel({
   programs,
+  totalProgramCount,
   onOpenProgram,
 }: {
   programs: readonly TowerProgramView[];
+  totalProgramCount: number;
   onOpenProgram: (id: string) => void;
 }) {
   const lowProofPrograms = programs.filter((p) => p.evidenceMaturity <= 5);
@@ -375,6 +393,13 @@ function HeatmapPanel({
             realized.
           </span>
         </div>
+      ) : null}
+      {totalProgramCount > programs.length ? (
+        <p className={styles.lhSub} style={{ marginBottom: 8 }}>
+          Showing the top {formatCount(programs.length)} material board-scope
+          value cases of {formatCount(totalProgramCount)}. The full row-level
+          inventory remains in Program table.
+        </p>
       ) : null}
       <div className={styles.chartwrap} aria-describedby="tcc-heatmap-alt">
         <PortfolioHeatmapChart programs={programs} onSelect={onOpenProgram} />
@@ -414,6 +439,7 @@ export function DecisionLanesView({
   onOpenProgram: (id: string) => void;
 }) {
   const programs = view.programs;
+  const focusPrograms = materialPrograms(programs);
   const valueUnknown =
     view.summary.valueClaimCount > 0 &&
     view.summary.knownValueClaimCount === 0 &&
@@ -447,10 +473,14 @@ export function DecisionLanesView({
           headId="tcc-lanes-heat"
           bodyStyle={{ display: "flex", flexDirection: "column" }}
         >
-          <HeatmapPanel programs={programs} onOpenProgram={onOpenProgram} />
+          <HeatmapPanel
+            programs={focusPrograms}
+            totalProgramCount={programs.length}
+            onOpenProgram={onOpenProgram}
+          />
         </Card>
         <LaneColumns
-          programs={programs}
+          programs={focusPrograms}
           valueUnknown={valueUnknown}
           onOpenProgram={onOpenProgram}
         />
@@ -468,7 +498,11 @@ export function DecisionLanesView({
           headId="tcc-lanes-heat-full"
           bodyStyle={{ display: "flex", flexDirection: "column" }}
         >
-          <HeatmapPanel programs={programs} onOpenProgram={onOpenProgram} />
+          <HeatmapPanel
+            programs={focusPrograms}
+            totalProgramCount={programs.length}
+            onOpenProgram={onOpenProgram}
+          />
         </Card>
         <Card
           title="Programs"
@@ -479,7 +513,7 @@ export function DecisionLanesView({
         >
           <div className={styles.pool}>
             <LaneLegendList
-              programs={programs}
+              programs={focusPrograms}
               valueUnknown={valueUnknown}
               onOpenProgram={onOpenProgram}
             />
