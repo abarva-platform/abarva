@@ -71,6 +71,7 @@ import { SAMPLE_STRATEGY_STAGE } from "./strategy-sample-view-model";
 import type {
   AvaLauncherView,
   StageAnalyticsView,
+  StageGateActionView,
   StepInsightView,
   VendorCoverageView,
 } from "./view-model";
@@ -642,6 +643,7 @@ function SourceWorkspace({
     return (
       <ApprovalsWorkspace
         view={view}
+        gateAction={stageView.gate.action}
         onGoToSteps={() => onWorkspaceChange("steps")}
       />
     );
@@ -2528,9 +2530,11 @@ function IntelligenceWorkspace({
 
 function ApprovalsWorkspace({
   view,
+  gateAction,
   onGoToSteps,
 }: {
   view: SourceEventShellView;
+  gateAction?: StageGateActionView;
   onGoToSteps: () => void;
 }) {
   return (
@@ -2543,6 +2547,7 @@ function ApprovalsWorkspace({
       {view.approvals.currentStageItem ? (
         <ApprovalCard
           item={view.approvals.currentStageItem}
+          gateAction={gateAction}
           featured
           onGoToSteps={onGoToSteps}
         />
@@ -3166,10 +3171,12 @@ function ProcessingReadinessBadge({ item }: { item: SourceShellFileItem }) {
 
 function ApprovalCard({
   item,
+  gateAction,
   featured = false,
   onGoToSteps,
 }: {
   item: ApprovalsInboxItem;
+  gateAction?: StageGateActionView;
   featured?: boolean;
   onGoToSteps?: () => void;
 }) {
@@ -3179,7 +3186,10 @@ function ApprovalCard({
   // stage gate live in the Steps workspace, so switch tabs there instead.
   // Intake approvals keep their real, distinct /approval decision page.
   const goToStepsInstead =
-    featured && item.kind === "stage_gate" && Boolean(onGoToSteps);
+    featured &&
+    item.kind === "stage_gate" &&
+    !gateAction &&
+    Boolean(onGoToSteps);
   const buttonStyle = {
     ...BUTTON_STYLE,
     padding: "10px 12px",
@@ -3212,7 +3222,13 @@ function ApprovalCard({
             {item.readiness}
           </div>
         </div>
-        {goToStepsInstead ? (
+        {gateAction ? (
+          <StageGateApprovalButton
+            action={gateAction}
+            status={item.status}
+            stageLabel={item.stageLabel}
+          />
+        ) : goToStepsInstead ? (
           <button
             type="button"
             data-testid="source-approval-card-go-to-steps"
@@ -3228,6 +3244,136 @@ function ApprovalCard({
         )}
       </div>
     </section>
+  );
+}
+
+function StageGateApprovalButton({
+  action,
+  status,
+  stageLabel,
+}: {
+  action: StageGateActionView;
+  status: ApprovalsInboxItem["status"];
+  stageLabel: string | null;
+}) {
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [rationale, setRationale] = useState(action.rationale);
+  const requiresRationale = status === "ready_with_gaps";
+  const buttonLabel =
+    status === "ready_with_gaps" ? "Approve with gaps" : "Approve now";
+  const trimmedRationale = rationale.trim();
+  const disabled =
+    submitting || (requiresRationale && trimmedRationale.length === 0);
+
+  const approve = async () => {
+    if (disabled) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/v1/source/events/${encodeURIComponent(action.eventId)}/approve`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "approve",
+            notes: trimmedRationale || action.rationale,
+            confirmations: Object.fromEntries(
+              action.confirmationKeys.map((key) => [key, true]),
+            ),
+            selfApproveIfAuthorized: true,
+          }),
+        },
+      );
+      const payload = (await response.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            error?: string;
+            detail?: string;
+            stageAdvancedTo?: string | null;
+          }
+        | null;
+      if (!response.ok || payload?.ok !== true) {
+        throw new Error(
+          payload?.detail ??
+            payload?.error ??
+            `Approval failed with HTTP ${response.status}.`,
+        );
+      }
+      const nextStage =
+        payload.stageAdvancedTo ?? action.redirectStageKey ?? undefined;
+      if (nextStage) {
+        router.push(
+          `/source/events/${action.eventId}?stage=${encodeURIComponent(nextStage)}`,
+        );
+      } else {
+        router.push(`/source/events/${action.eventId}?workspace=approvals`);
+      }
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Approval failed.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      data-testid="source-stage-gate-approval-control"
+      style={{
+        display: "grid",
+        gap: 8,
+        minWidth: 260,
+        maxWidth: 360,
+        flexShrink: 0,
+      }}
+    >
+      <textarea
+        aria-label={`${stageLabel ?? "Stage"} approval rationale`}
+        value={rationale}
+        onChange={(event) => setRationale(event.currentTarget.value)}
+        rows={3}
+        style={{
+          border: `1px solid ${ANALYTICS.LINE}`,
+          borderRadius: 8,
+          background: ANALYTICS.SOFT,
+          color: ANALYTICS.INK,
+          fontFamily: ANALYTICS.SANS,
+          fontSize: 12.5,
+          lineHeight: 1.4,
+          padding: "9px 10px",
+          resize: "vertical",
+        }}
+      />
+      <button
+        type="button"
+        data-testid="source-stage-gate-approve"
+        disabled={disabled}
+        onClick={() => void approve()}
+        style={{
+          ...BUTTON_STYLE,
+          padding: "10px 12px",
+          background: disabled ? "rgba(10,10,11,0.14)" : ANALYTICS.INK,
+          color: disabled ? ANALYTICS.FAINT : "#fff",
+          cursor: disabled ? "not-allowed" : "pointer",
+        }}
+      >
+        {submitting ? "Approving..." : `${buttonLabel} →`}
+      </button>
+      {requiresRationale ? (
+        <span style={{ color: ANALYTICS.FAINT, fontSize: 11.5 }}>
+          Rationale is required when approving with gaps.
+        </span>
+      ) : null}
+      {error ? (
+        <span role="alert" style={{ color: ANALYTICS.RUST, fontSize: 12 }}>
+          {error}
+        </span>
+      ) : null}
+    </div>
   );
 }
 
