@@ -63,8 +63,11 @@ import {
   SAMPLE_RFP_STAGE,
   SAMPLE_RESPONSES_STAGE,
   SAMPLE_EVALUATION_STAGE,
+  SAMPLE_PRICING_STAGE,
   SAMPLE_BAFO_STAGE,
+  SAMPLE_EXECUTIVE_DECISION_STAGE,
   SAMPLE_SELECTION_STAGE,
+  SAMPLE_TRANSITION_STAGE,
   SAMPLE_VALUE_STAGE,
 } from "./sample-view-model";
 import { SAMPLE_STRATEGY_STAGE } from "./strategy-sample-view-model";
@@ -209,16 +212,18 @@ function sampleStageViewFor(
         return SAMPLE_RESPONSES_STAGE;
       case "evaluation":
         return SAMPLE_EVALUATION_STAGE;
+      case "pricing":
+        return SAMPLE_PRICING_STAGE;
       case "bafo":
         return SAMPLE_BAFO_STAGE;
+      case "executive_decision":
+        return SAMPLE_EXECUTIVE_DECISION_STAGE;
       case "selection":
         return SAMPLE_SELECTION_STAGE;
+      case "transition":
+        return SAMPLE_TRANSITION_STAGE;
       case "value":
         return SAMPLE_VALUE_STAGE;
-      case "pricing":
-      case "executive_decision":
-      case "transition":
-        return placeholderStageViewFor(canonicalStageKey, journey);
       default:
         return placeholderStageViewFor(canonicalStageKey, journey);
     }

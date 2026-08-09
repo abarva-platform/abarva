@@ -38,6 +38,9 @@ import {
   SAMPLE_SELECTION_STAGE,
   SAMPLE_RESPONSES_STAGE,
   SAMPLE_EVALUATION_STAGE,
+  SAMPLE_PRICING_STAGE,
+  SAMPLE_EXECUTIVE_DECISION_STAGE,
+  SAMPLE_TRANSITION_STAGE,
   SAMPLE_VALUE_STAGE,
 } from '@/components/source/canvas/analytics/sample-view-model';
 import {
@@ -141,34 +144,8 @@ export function buildLiveStageView(
     });
   }
 
-  // Pick the intake scaffold (intel points / tasks / gate structure) for the stage
-  // being built. Today Scope, RFP, Responses, Evaluation, BAFO, and Selection have a
-  // stage-specific scaffold — RFP so its dropzone offers the RFP_CLAUSES_V1
-  // clause-checklist upload (flips RFP clause coverage live), Responses so its
-  // dropzone offers the RESPONSE_COVERAGE_V1 vendor-response matrix (flips Responses
-  // coverage live), Evaluation so its dropzone offers the VENDOR_BIDS_V1 vendor-bid
-  // upload (flips Evaluation should-cost live), BAFO so its dropzone offers the
-  // BAFO_CONCESSIONS_V1 concession-actuals upload (flips BAFO progress live),
-  // Selection so its dropzone offers the COMMITTED_VALUE_V1 award-commitments upload
-  // (flips committed value live), Value so its dropzone offers the
-  // VALUE_REALIZATION_V1 realized-value-actuals upload (flips value realization live)
-  // — instead of the Scope intake tasks; every other stage still reuses the Scope
-  // exemplar structure while the live value proof rides the fact-derived waterfall.
   const requestedStageKey = input.stageKey ?? SAMPLE_SCOPE_STAGE.stageKey;
-  const scaffold =
-    requestedStageKey === 'rfp'
-      ? SAMPLE_RFP_STAGE
-      : requestedStageKey === 'responses'
-        ? SAMPLE_RESPONSES_STAGE
-        : requestedStageKey === 'evaluation'
-          ? SAMPLE_EVALUATION_STAGE
-          : requestedStageKey === 'bafo'
-            ? SAMPLE_BAFO_STAGE
-            : requestedStageKey === 'selection'
-              ? SAMPLE_SELECTION_STAGE
-              : requestedStageKey === 'value'
-                ? SAMPLE_VALUE_STAGE
-                : SAMPLE_SCOPE_STAGE;
+  const scaffold = liveStageScaffoldFor(requestedStageKey);
 
   // The next stage this gate advances to, resolved through the canonical order so
   // the gate CTA ("Approve & advance to …") and the presentational nextStageName
@@ -197,4 +174,30 @@ export function buildLiveStageView(
     gate: { ...scaffold.gate, nextStageName },
     waterfall: waterfallView,
   };
+}
+
+export function liveStageScaffoldFor(stageKey: string): StageAnalyticsView {
+  switch (stageKey) {
+    case 'rfp':
+      return SAMPLE_RFP_STAGE;
+    case 'responses':
+      return SAMPLE_RESPONSES_STAGE;
+    case 'evaluation':
+      return SAMPLE_EVALUATION_STAGE;
+    case 'pricing':
+      return SAMPLE_PRICING_STAGE;
+    case 'bafo':
+      return SAMPLE_BAFO_STAGE;
+    case 'executive_decision':
+      return SAMPLE_EXECUTIVE_DECISION_STAGE;
+    case 'selection':
+      return SAMPLE_SELECTION_STAGE;
+    case 'transition':
+      return SAMPLE_TRANSITION_STAGE;
+    case 'value':
+      return SAMPLE_VALUE_STAGE;
+    case 'scope':
+    default:
+      return SAMPLE_SCOPE_STAGE;
+  }
 }

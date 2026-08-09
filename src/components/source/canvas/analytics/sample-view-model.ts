@@ -164,7 +164,7 @@ export const SAMPLE_SCOPE_STAGE: StageAnalyticsView = {
     },
   ],
   gate: {
-    approver: 'K. Oshima, CIO',
+    approver: 'Commercial owner',
     confirms: [
       {
         label: 'Evidence complete',
@@ -245,7 +245,7 @@ export const SAMPLE_RFP_STAGE: StageAnalyticsView = {
     },
   ],
   gate: {
-    approver: 'K. Oshima, CIO',
+    approver: 'Decision owner',
     confirms: [
       {
         label: 'Every priced lever has a clause',
@@ -318,7 +318,7 @@ export const SAMPLE_SELECTION_STAGE: StageAnalyticsView = {
     },
   ],
   gate: {
-    approver: 'K. Oshima, CIO',
+    approver: 'Commercial owner',
     confirms: [
       {
         label: 'Every priced lever carried into the award',
@@ -560,6 +560,216 @@ export const SAMPLE_EVALUATION_STAGE: StageAnalyticsView = {
     ],
     generates: [{ label: 'Should-cost evaluation summary', code: 'd10' }],
     nextStageName: 'Pricing',
+  },
+};
+
+/**
+ * The Pricing stage scaffold. Keeps the step checklist aligned with the pricing
+ * stage while the live value waterfall carries the computed economics.
+ */
+export const SAMPLE_PRICING_STAGE: StageAnalyticsView = {
+  stageKey: 'pricing',
+  stageName: 'Pricing',
+  purpose:
+    'Normalize supplier commercials to comparable TCO, expose assumptions, and prepare the pricing position for BAFO.',
+  intel: {
+    provenance: 'sample',
+    lead: "Here's the commercial comparison that needs confirmation before negotiation: normalized price, assumptions, and outlier traps.",
+    points: [
+      {
+        tone: 'archetype',
+        tag: 'Archetype',
+        text: 'Pricing is where supplier offers become comparable. Unit rates, transition costs, escalators, and retained effort need one normalized basis.',
+      },
+      {
+        tone: 'benchmark',
+        tag: 'Benchmark',
+        text: 'Strong sourcing events separate headline price from TCO before BAFO, so the negotiation targets the real cost drivers.',
+      },
+      {
+        tone: 'without',
+        tag: 'Without this',
+        text: 'Without normalized pricing, BAFO asks become generic discounts and hidden assumptions survive into the award decision.',
+      },
+    ],
+  },
+  tasks: [
+    {
+      id: 'pricing.normalized-supplier-pricing',
+      title: 'Confirm normalized supplier pricing',
+      subtitle: 'Vendor pricing · TCO · assumptions',
+      type: 'provide',
+      state: 'todo',
+      guide:
+        'Upload or confirm the normalized supplier pricing package: vendor price lines, transition costs, assumptions, escalators, and comparable TCO by finalist. This is stage evidence for the pricing decision; it does not use a fact-template parser yet.',
+      provenance: {
+        owner: 'Sourcing lead',
+        source: 'Supplier pricing submissions / normalization workbook',
+      },
+      cta: 'Upload normalized pricing',
+    },
+  ],
+  gate: {
+    approver: 'Commercial owner',
+    confirms: [
+      {
+        label: 'Supplier pricing normalized',
+        detail: 'Finalist pricing is on a comparable TCO basis.',
+      },
+      {
+        label: 'Assumptions and traps reviewed',
+        detail: 'Escalators, one-time costs, exclusions, and retained effort are visible.',
+      },
+      {
+        label: 'Pricing ready for BAFO',
+        detail: 'The commercial position is ready to convert into BAFO asks.',
+      },
+    ],
+    generates: [
+      { label: 'Pricing normalization workbook', code: 'd19' },
+      { label: 'Pricing trap log', code: 'd20' },
+    ],
+    nextStageName: 'BAFO',
+  },
+};
+
+/**
+ * The Executive Decision stage scaffold. Keeps the decision checklist distinct
+ * from Scope and focused on the recommendation, value case, and risk approval.
+ */
+export const SAMPLE_EXECUTIVE_DECISION_STAGE: StageAnalyticsView = {
+  stageKey: 'executive_decision',
+  stageName: 'Executive Decision',
+  purpose:
+    'Present the recommendation, value case, and residual risks so the executive owner can approve the award path.',
+  intel: {
+    provenance: 'sample',
+    lead: "Here's the decision posture to confirm: recommended path, economics, risks, and approval conditions.",
+    points: [
+      {
+        tone: 'archetype',
+        tag: 'Archetype',
+        text: 'The decision stage is not another intake gate. It is the point where value, risk, and supplier recommendation are put on the record.',
+      },
+      {
+        tone: 'benchmark',
+        tag: 'Benchmark',
+        text: 'A defensible executive decision keeps price, delivery risk, transition exposure, and dissenting views visible in one approval packet.',
+      },
+      {
+        tone: 'without',
+        tag: 'Without this',
+        text: 'Without a decision packet, award approval becomes a memory of the sourcing process instead of an auditable decision.',
+      },
+    ],
+  },
+  tasks: [
+    {
+      id: 'executive-decision.recommendation-packet',
+      title: 'Confirm executive recommendation packet',
+      subtitle: 'Recommendation · value case · risk conditions',
+      type: 'decide',
+      state: 'todo',
+      guide:
+        'Review the executive decision packet: recommended supplier, value case, residual risks, stakeholder objections, and approval conditions. Confirm that the decision owner has what they need to approve the award path.',
+      provenance: {
+        owner: 'Executive sponsor',
+        source: 'Decision brief / risk register / value ledger',
+      },
+      cta: 'Confirm recommendation packet',
+    },
+  ],
+  gate: {
+    approver: 'Decision owner',
+    confirms: [
+      {
+        label: 'Recommendation reviewed',
+        detail: 'The preferred path and supporting rationale are visible to the decision owner.',
+      },
+      {
+        label: 'Value and risk accepted',
+        detail: 'Residual risks and value assumptions are documented with approval conditions.',
+      },
+      {
+        label: 'Decision ready for selection',
+        detail: 'The award path is approved to move into Selection.',
+      },
+    ],
+    generates: [
+      { label: 'Executive decision brief', code: 'd21' },
+      { label: 'Decision approval record', code: 'd22' },
+    ],
+    nextStageName: 'Selection',
+  },
+};
+
+/**
+ * The Transition stage scaffold. Keeps go-live and handoff work distinct from
+ * Scope intake while the value baseline prepares for realization tracking.
+ */
+export const SAMPLE_TRANSITION_STAGE: StageAnalyticsView = {
+  stageKey: 'transition',
+  stageName: 'Transition',
+  purpose:
+    'Track the awarded supplier into service: knowledge transfer, cutover readiness, blockers, and the value baseline for go-live.',
+  intel: {
+    provenance: 'sample',
+    lead: "Here's the transition posture to confirm before go-live: milestones, blockers, handoff evidence, and measurement readiness.",
+    points: [
+      {
+        tone: 'archetype',
+        tag: 'Archetype',
+        text: 'Transition is execution control, not scope intake. The stage should show cutover, handoff, and go-live evidence.',
+      },
+      {
+        tone: 'benchmark',
+        tag: 'Benchmark',
+        text: 'Strong supplier transitions make blockers and knowledge-transfer gaps visible before go-live, when recovery options still exist.',
+      },
+      {
+        tone: 'without',
+        tag: 'Without this',
+        text: 'Without transition evidence, go-live risk gets discovered after handoff and value measurement starts from an untrusted baseline.',
+      },
+    ],
+  },
+  tasks: [
+    {
+      id: 'transition.go-live-readiness',
+      title: 'Confirm transition go-live readiness',
+      subtitle: 'Milestones · blockers · knowledge transfer',
+      type: 'provide',
+      state: 'todo',
+      guide:
+        'Upload or confirm the transition readiness packet: milestone tracker, open blockers, knowledge-transfer evidence, cutover plan, rollback plan, and go-live owner confirmation.',
+      provenance: {
+        owner: 'Transition owner',
+        source: 'Transition tracker / go-live checklist / knowledge-transfer log',
+      },
+      cta: 'Upload transition readiness',
+    },
+  ],
+  gate: {
+    approver: 'Transition owner',
+    confirms: [
+      {
+        label: 'Milestones reviewed',
+        detail: 'Transition milestones are complete, deferred with approval, or flagged with owners.',
+      },
+      {
+        label: 'Go-live blockers visible',
+        detail: 'Open blockers, rollback needs, and cutover risks are documented.',
+      },
+      {
+        label: 'Ready for value tracking',
+        detail: 'The go-live baseline is ready for the Value stage to measure realization.',
+      },
+    ],
+    generates: [
+      { label: 'Transition readiness tracker', code: 'd23' },
+      { label: 'Go-live checklist', code: 'd24' },
+    ],
+    nextStageName: 'Value',
   },
 };
 

@@ -119,6 +119,44 @@ describe("buildSourceEventShellView", () => {
     expect(view.event.viewedStageLabel).toBe("Commercial Baseline");
   });
 
+  it("does not show an incomplete fraction for a viewed past stage", () => {
+    const eventAtPricing: SourcingEventSummary = {
+      ...EVENT,
+      currentStageKey: "pricing",
+      currentStageLabel: "Pricing",
+    };
+    const viewedResponsesStage: StageAnalyticsView = {
+      ...(SAMPLE_SCOPE_STAGE as StageAnalyticsView),
+      stageKey: "responses",
+      stageName: "Responses",
+      tasks: [
+        {
+          id: "responses.coverage",
+          title: "Confirm vendor response coverage",
+          subtitle: "One row per vendor x value lever",
+          type: "provide",
+          state: "todo",
+          guide: "Confirm response coverage before evaluation.",
+          cta: "Confirm response coverage",
+        },
+      ],
+    };
+
+    const view = buildSourceEventShellView({
+      event: eventAtPricing,
+      tenantName: "FS Demo",
+      viewedStageKey: "responses",
+      stageView: viewedResponsesStage,
+    });
+
+    expect(view.journey.find((stage) => stage.key === "responses")).toMatchObject({
+      viewed: true,
+      state: "past",
+      done: 1,
+      total: 1,
+    });
+  });
+
   it("groups stage work into design-ready blocks and marks only persisted/computed completion as captured", () => {
     const view = buildSourceEventShellView({
       event: EVENT,

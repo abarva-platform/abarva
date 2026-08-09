@@ -342,16 +342,11 @@ export function buildSourceEventShellView(
     (stageKey, index) => {
       const viewed = stageKey === input.viewedStageKey;
       const current = stageKey === visibleCurrentStageKey;
-      const stageDone =
-        stageKey === input.viewedStageKey
-          ? ready
-          : index < currentStageIndex
-            ? 1
-            : 0;
-      const stageTotal =
-        stageKey === input.viewedStageKey ? Math.max(total, 1) : 1;
       const state: SourceShellJourneyStage["state"] =
         index < currentStageIndex ? "past" : current ? "current" : "future";
+      const stageTotal = viewed && state !== "past" ? Math.max(total, 1) : 1;
+      const stageDone =
+        state === "past" ? stageTotal : viewed ? ready : 0;
       return {
         key: stageKey,
         label: sourceJourneyLabelForStage(input.journey, stageKey),
