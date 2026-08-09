@@ -649,6 +649,8 @@
     "source:contract-optimization:evidence-audit": "npx tsx scripts/source/audit-contract-optimization-evidence-readiness.mjs",
     "source:contract-evidence:golden:plan": "node scripts/source/load-source-golden-contract-evidence.mjs",
     "source:contract-evidence:golden:apply": "node scripts/source/load-source-golden-contract-evidence.mjs --apply",
+    "source:contract-optimization:schema:plan": "npx tsx scripts/source/apply-contract-optimization-source-schema.ts",
+    "source:contract-optimization:schema:apply": "npx tsx scripts/source/apply-contract-optimization-source-schema.ts --apply",
     "source:contract-optimization:spine:plan": "npx tsx scripts/source/project-contract-optimization-spine.ts",
     "source:contract-optimization:spine:apply": "npx tsx scripts/source/project-contract-optimization-spine.ts --apply",
     "source:contract-evidence:meridian:build": "node scripts/source/build-meridian-contract-evidence-package.mjs",
