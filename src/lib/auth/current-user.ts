@@ -57,7 +57,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
         clerkUserId: `private-proof:${proofSession.email}`,
         metadataClientKey: proofSession.clientId,
         tenantRoles: proofSession.tenantRoles,
-        name: "Meridian Proof Viewer",
+        name: `${proofSession.tenantName} Proof Viewer`,
         email: proofSession.email,
         primaryRole: "client_viewer",
         accessibleClients: [],
