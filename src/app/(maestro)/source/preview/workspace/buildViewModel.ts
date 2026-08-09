@@ -157,7 +157,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
 
   // ── header, tabs ──
   const TABS: Record<string, string[]> = {
-    portfolio: ['Home', 'Explore', 'Concentration & Leverage', 'Renewals'],
+    portfolio: ['Portfolio', 'Explore', 'Concentration & Leverage', 'Renewals'],
     vendor: ['Overview', 'Contracts', 'Dependencies', 'Opportunities'],
     contract: ['Story', 'Scope', 'Economics', 'Performance', 'Relationship', 'Evidence', 'Optimize'],
     evidence: ['Coverage', 'Source systems', 'Contract documents', 'Conflicts', 'Missing evidence'],
@@ -182,13 +182,13 @@ export function buildViewModel(vm: WorkspaceViewModel) {
 
   if (kind === 'portfolio') {
     title = ({
-      Home: 'Where leadership should focus first',
+      Portfolio: 'Source portfolio: where leadership should focus first',
       Explore: 'Slice the portfolio any way the question demands',
       'Concentration & Leverage': 'Which contracts should leadership act on first?',
       Renewals: 'Which decisions are already live?',
     } as Record<string, string>)[activeTab];
     thesis = ({
-      Home: v4HasPortfolio
+      Portfolio: v4HasPortfolio
         ? 'AbarVa frames the active Source V4 snapshot into a leadership agenda: ' + whole(v4Snapshot.contextCoverage.vendors) + ' material vendors, ' + whole(v4Snapshot.executivePortfolio.contractCount) + ' contract families, ' + whole(v4Snapshot.scopeConfidence.explicitScopeCount) + ' explicit scope links, and ' + whole(v4Snapshot.scopeConfidence.inferredScopeCount) + ' inferred scope links. Exposure, observations, and finance-confirmed value stay visibly separate.'
         : 'AbarVa frames ' + summary.vendorCount + ' vendors and ' + summary.contractCount + ' contracts into a leadership agenda as of ' + fmtDate(vm.portfolio.asOfDateIso) + '. Missing values stay named as missing rather than treated as zero.',
       Explore: 'Use associative filters to isolate vendor, renewal, leverage, and evidence questions. The default view shows the selected slice only; compare-all is available when the discussion needs peer context.',
@@ -440,22 +440,24 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   // ── agenda lens — narrative generated live from real aggregates, not a
   // hand-authored findings table ──────────────────────────────────────────
   const findings = [
-    { ref: 'F-1', dot: COL.red, headline: passedN + ' active contract' + (passedN === 1 ? '' : 's') + ' have passed their notice window, ' + autoN + ' auto-renewing',
-      observed: 'At the governed as-of date, ' + passedN + ' active contracts totalling ' + money(rec180Fixed.noticeDeadlinePassedAnnualValue) + ' in annual value are past the contractual notice window.',
-      why: 'The right to change price, scope or supplier on those contracts has lapsed for the current term.',
-      response: 'Confirm the renewal position on each contract this month.' },
-    { ref: 'F-2', dot: COL.amber, headline: highLeverageRows.length + ' contracts carry two or more weak leverage signals',
-      observed: 'Together worth ' + money(highLeverageRows.reduce(addRowAnnualValue, 0)) + ' of annual value, computed by computeContractLeverageSignals from benchmarking_clause, alternatives_available, and concentration_note.',
-      why: 'Every position on the leverage axis is a countable signal, not a score.',
-      response: 'Prioritise the leverage matrix’s top-right quadrant for renegotiation.' },
-    { ref: 'F-3', dot: COL.blue, headline: 'Top ten vendors hold ' + pct(conc.topNShare(10)) + ' of annual contract value',
+    { ref: 'F-1', dot: COL.amber, headline: highLeverageRows.length + ' contracts carry two or more weak leverage signals',
+      observed: 'Together worth ' + money(highLeverageRows.reduce(addRowAnnualValue, 0)) + ' of annual value. The signals come from benchmark rights, supplier alternatives, concentration dependency, and renewal mechanics.',
+      why: 'This is the shortest list of contracts where procurement has something concrete to improve or validate.',
+      response: 'Start the executive review with the leverage lens and open the contract register below the matrix.' },
+    { ref: 'F-2', dot: COL.blue, headline: 'Top ten vendors hold ' + pct(conc.topNShare(10)) + ' of annual contract value',
       observed: conc.byVendor.slice(0, 3).map((v) => v.vendorName).join(', ') + ' are the three largest by annual value.',
       why: 'Concentration describes dependency, not exposure — cross-reference with the leverage matrix before treating rank alone as risk.',
       response: 'Manage concentration through the leverage matrix rather than a spend ranking.' },
-    { ref: 'F-4', dot: COL.teal, headline: opportunities.length + ' deterministic sourcing opportunities identified',
-      observed: 'Computed from weak-leverage signals, missed notice deadlines, and top-concentration vendor status — never a fabricated priority score.',
+    { ref: 'F-3', dot: COL.teal, headline: opportunities.length + ' deterministic sourcing opportunities identified',
+      observed: 'Each opportunity is tied to a named contract and reason. Missing evidence is carried as missing, not converted into savings.',
       why: 'Each opportunity states its reasons and rationale explicitly; none carries an invented readiness or confidence label.',
       response: 'Work the opportunity list in annual-value order.' },
+    { ref: 'F-4', dot: passedN > 0 ? COL.red : COL.gray, headline: passedN > 0 ? passedN + ' contracts need notice-window follow-up' : 'No active contract is past notice in the current as-of cut',
+      observed: passedN > 0
+        ? 'At the governed as-of date, ' + passedN + ' active contracts totalling ' + money(rec180Fixed.noticeDeadlinePassedAnnualValue) + ' are past the contractual notice window.'
+        : 'Renewal timing is not the primary trigger in this cut; commercial leverage and evidence readiness drive the first conversation.',
+      why: passedN > 0 ? 'A missed notice window can remove negotiating optionality for the current term.' : 'A zero-result check is still useful, but it should not lead the story.',
+      response: passedN > 0 ? 'Confirm the renewal position on each contract this month.' : 'Use the renewals tab only when the discussion is specifically about timing.' },
   ];
   const homeVerdict = {
     eyebrow: 'Portfolio verdict',
@@ -778,7 +780,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     ? `Vendor 360 / ${activeTab ?? 'Overview'}`
     : kind === 'evidence'
     ? `Evidence / ${activeTab ?? 'Coverage'}`
-    : `Portfolio / ${activeTab ?? 'Home'}`;
+    : `Portfolio / ${activeTab ?? 'Portfolio'}`;
   const sourceWorkspacePageFacts = [
     `Source Workspace is reading governed ${v4Snapshot.datasetLabel} data as of ${fmtDate(v4Snapshot.asOfDateIso)}.`,
     `Portfolio totals: ${v4Snapshot.executivePortfolio.contractCount} contracts, ${v4Snapshot.contextCoverage.vendors} vendors, ${money(v4Snapshot.executivePortfolio.annualValue)} annual contract value, ${money(v4Snapshot.executivePortfolio.totalCommittedValue)} total committed value.`,
@@ -1030,7 +1032,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       : null,
     contextTableCols, contextTableRows,
     availDot: vm.portfolio.isEmpty ? COL.gray : COL.teal, availLabel: vm.portfolio.isEmpty ? 'No rows returned' : 'Live governed data',
-    isPortfolioContext: kind === 'portfolio' && activeTab === 'Home', homeVerdict, homeStorySteps, leadershipPosition, coverage, goEvidence: () => vm.select('evidence', null, 'Coverage'),
+    isPortfolioContext: kind === 'portfolio' && activeTab === 'Portfolio', homeVerdict, homeStorySteps, leadershipPosition, coverage, goEvidence: () => vm.select('evidence', null, 'Coverage'),
     hasPins: (S.pins[kind + ':' + (sel.id || '')] || []).length > 0, pins: S.pins[kind + ':' + (sel.id || '')] || [],
     statusSel: crumbLabels.slice(2).join(' › '), freshness: 'Current at as-of', evidenceState: kind === 'contract' && c?.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) : 'Mixed', tip: S.tip,
     sourceV4ProofCards, sourceV4DatasetId: v4Snapshot.datasetId, sourceV4AsOf: fmtDate(v4Snapshot.asOfDateIso), dataLayerDiagnostics: diagnostics, categoryQuality,
