@@ -9,6 +9,9 @@ const reader = readFileSync("src/lib/tower/readTowerCommandCenter.ts", "utf8");
 describe("Tower value operating system contract", () => {
   it("creates the additive value-case layer and governed consumption views", () => {
     for (const tableName of [
+      "CREATE TABLE IF NOT EXISTS tower.tracked_subject",
+      "CREATE TABLE IF NOT EXISTS tower.metric_observation",
+      "CREATE TABLE IF NOT EXISTS tower.value_claim",
       "tower.value_case",
       "tower.value_case_period",
       "tower.subject_link",

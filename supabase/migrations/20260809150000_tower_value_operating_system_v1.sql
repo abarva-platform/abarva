@@ -16,6 +16,75 @@
 CREATE SCHEMA IF NOT EXISTS tower;
 CREATE SCHEMA IF NOT EXISTS consumption;
 
+-- Upstream Tower source facts are populated by governed loaders. These
+-- foundations make a clean database replay deterministic before tenant data is
+-- loaded; existing lab tables and rows are left unchanged.
+CREATE TABLE IF NOT EXISTS tower.tracked_subject (
+  tenant_key text NOT NULL,
+  subject_ref text NOT NULL,
+  subject_kind text NOT NULL DEFAULT 'initiative',
+  title text NOT NULL,
+  initiative_ref text,
+  owner_role text,
+  launch_date date,
+  vendor_ref text,
+  workflow_ref text,
+  application_ref text,
+  funding_status text,
+  metadata_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_key, subject_ref)
+);
+
+CREATE TABLE IF NOT EXISTS tower.metric_observation (
+  tenant_key text NOT NULL,
+  observation_id text NOT NULL DEFAULT ('obs-' || md5(random()::text || clock_timestamp()::text)),
+  subject_ref text NOT NULL,
+  metric_ref text NOT NULL,
+  scenario text NOT NULL DEFAULT 'actual',
+  value_num numeric,
+  numerator numeric,
+  denominator numeric,
+  period_start date,
+  period_end date,
+  cohort_ref text,
+  dimension_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+  observed_at timestamptz NOT NULL DEFAULT now(),
+  source_result_hash text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_key, observation_id)
+);
+
+CREATE TABLE IF NOT EXISTS tower.value_claim (
+  tenant_key text NOT NULL,
+  claim_id text NOT NULL,
+  subject_ref text NOT NULL,
+  promised_value numeric,
+  calculated_value numeric,
+  currency text NOT NULL DEFAULT 'USD',
+  claim_state text NOT NULL DEFAULT 'evidence_gap',
+  baseline_observation_id text,
+  target_observation_id text,
+  actual_observation_id text,
+  quality_guardrail_state text,
+  next_gate_owner_role text,
+  claim_rule_version text,
+  evaluated_at timestamptz NOT NULL DEFAULT now(),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_key, claim_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tower_tracked_subject_tenant_kind
+  ON tower.tracked_subject (tenant_key, subject_kind, initiative_ref);
+
+CREATE INDEX IF NOT EXISTS idx_tower_metric_observation_tenant_subject_metric
+  ON tower.metric_observation (tenant_key, subject_ref, metric_ref, scenario, period_start, period_end);
+
+CREATE INDEX IF NOT EXISTS idx_tower_value_claim_tenant_subject
+  ON tower.value_claim (tenant_key, subject_ref, claim_state);
+
 CREATE OR REPLACE FUNCTION tower.can_read_tower_tenant(target_tenant_key text)
 RETURNS boolean
 LANGUAGE sql
@@ -360,7 +429,7 @@ claim_cases AS (
       ELSE 'unclassified'
     END AS benefit_category,
     c.evaluated_at::date AS value_period_start,
-    (c.evaluated_at::date + interval '8 quarters' - interval '1 day')::date AS value_period_end,
+    (c.evaluated_at::date + interval '24 months' - interval '1 day')::date AS value_period_end,
     coalesce(po.approved_funding_usd, 0) AS approved_funding_usd,
     coalesce(po.actual_spend_usd, 0) AS actual_spend_usd,
     c.promised_value AS business_case_value_usd,
@@ -418,7 +487,7 @@ ai_adoption_cases AS (
     CASE WHEN s.subject_kind = 'developer_ai_tool' THEN 'workforce_productivity' ELSE 'process_automation' END AS value_archetype,
     'capacity'::text AS benefit_category,
     coalesce(s.launch_date, current_date)::date AS value_period_start,
-    (coalesce(s.launch_date, current_date)::date + interval '8 quarters' - interval '1 day')::date AS value_period_end,
+    (coalesce(s.launch_date, current_date)::date + interval '24 months' - interval '1 day')::date AS value_period_end,
     0::numeric AS approved_funding_usd,
     0::numeric AS actual_spend_usd,
     null::numeric AS business_case_value_usd,
