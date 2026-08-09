@@ -32,56 +32,64 @@ it("renders the compact executive Summary without the old AI Success thesis", ()
   expect(screen.queryByText(/source pending/i)).not.toBeInTheDocument();
 });
 
-it("integrates context, systems, architecture, Evidence action, and URL tab state", () => {
+it("integrates context and architecture into the approved eight-tab canvas", () => {
   render(<HomeEnterpriseLandscapeV2 />);
 
-  fireEvent.click(screen.getByRole("tab", { name: "Context" }));
   expect(
-    screen.getByRole("heading", {
-      name: "Loaded context, integrated into the Home story",
-    }),
-  ).toBeInTheDocument();
+    screen.queryByRole("tab", { name: "Context" }),
+  ).not.toBeInTheDocument();
   expect(
-    screen.getByText("Global airline operating context"),
-  ).toBeInTheDocument();
-  expect(
-    screen.getAllByText("Applications, cloud, data, integration").length,
-  ).toBeGreaterThan(0);
-  expect(
-    screen.getByText("architecture_graph · data_capability_packet"),
-  ).toBeInTheDocument();
-  expect(window.location.search).toBe("?view=context");
+    screen.queryByRole("tab", { name: "Architecture" }),
+  ).not.toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole("tab", { name: "Architecture" }));
+  fireEvent.click(screen.getByRole("tab", { name: "Patterns" }));
   expect(
     screen.getByRole("heading", {
-      name: "Data and AI current-state architecture by lane",
+      name: "Balanced enterprise portrait",
     }),
   ).toBeInTheDocument();
+  expect(screen.getByText("Operationally critical")).toBeInTheDocument();
   expect(
-    screen.getAllByText("Applications and core systems").length,
+    screen.getByText("Investment capacity, constrained flexibility"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("AI-enabled, outcome proof developing"),
+  ).toBeInTheDocument();
+  expect(screen.getAllByText("Architecture graph").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("586").length).toBeGreaterThan(0);
+  expect(window.location.search).toBe("?view=patterns");
+
+  fireEvent.click(screen.getByRole("tab", { name: "Coherence" }));
+  expect(
+    screen.getByRole("heading", {
+      name: "Why enterprise coherence is difficult",
+    }),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Enterprise constraint map")).toBeInTheDocument();
+  expect(
+    screen.getAllByText("Source to consumption architecture").length,
   ).toBeGreaterThan(0);
   expect(
-    screen.getAllByText("Integration, ETL, and event movement").length,
-  ).toBeGreaterThan(0);
-  expect(
-    screen.getAllByText("Storage, EDW, and data marts").length,
-  ).toBeGreaterThan(0);
+    screen.getByRole("img", {
+      name: /Applications feed integration, storage, data science, consumption, AI agents, and governed core-system action/i,
+    }),
+  ).toBeInTheDocument();
   expect(screen.getAllByText("Teradata Vantage").length).toBeGreaterThan(0);
   expect(screen.getAllByText("Power BI Copilot").length).toBeGreaterThan(0);
   expect(screen.getAllByText("On-prem / private DC").length).toBeGreaterThan(0);
   expect(screen.getAllByText("Hybrid cloud").length).toBeGreaterThan(0);
-  expect(screen.getAllByText("ERP and finance core").length).toBeGreaterThan(0);
   expect(
     screen.getByText("Resolve contradictory lifecycle states"),
   ).toBeInTheDocument();
   expect(screen.getByText("Route value claims to Tower")).toBeInTheDocument();
-  expect(window.location.search).toBe("?view=architecture");
+  expect(window.location.search).toBe("?view=coherence");
 
   fireEvent.click(screen.getByRole("button", { name: "Evidence" }));
   expect(
-    screen.getByRole("heading", { name: "Evidence and content provenance" }),
+    screen.getByRole("heading", { name: "Executive confidence view" }),
   ).toBeInTheDocument();
+  expect(screen.getByText("Broad, uneven depth")).toBeInTheDocument();
+  expect(screen.getByText("Identity facts")).toBeInTheDocument();
   expect(window.location.search).toBe("?view=evidence");
 
   const economics = screen.getByRole("tab", { name: "Economics" });
@@ -103,12 +111,29 @@ it("integrates context, systems, architecture, Evidence action, and URL tab stat
   economics.focus();
   fireEvent.keyDown(economics, { key: "ArrowRight" });
   expect(
-    screen.getByRole("heading", {
-      name: "Data and AI current-state architecture by lane",
-    }),
+    screen.getByRole("heading", { name: "Normalized enterprise posture" }),
   ).toBeInTheDocument();
-  expect(screen.getByRole("tab", { name: "Architecture" })).toHaveAttribute(
+  expect(screen.getByRole("tab", { name: "Posture" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
+});
+
+it("redirects legacy Context and Architecture view params into approved tabs", () => {
+  window.history.replaceState(null, "", "/home?view=context");
+  const { unmount } = render(<HomeEnterpriseLandscapeV2 />);
+  expect(screen.getByRole("tab", { name: "Patterns" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  expect(window.location.search).toBe("?view=patterns");
+
+  unmount();
+  window.history.replaceState(null, "", "/home?view=architecture");
+  render(<HomeEnterpriseLandscapeV2 />);
+  expect(screen.getByRole("tab", { name: "Coherence" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  expect(window.location.search).toBe("?view=coherence");
 });

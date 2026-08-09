@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   HOME_LANDSCAPE_TABS,
   SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2,
-  type ArchitectureLayer,
   type ContextSignal,
   type EconomicRow,
   type HomeEnterpriseLandscapeV2Model,
@@ -18,6 +17,11 @@ import styles from "./HomeEnterpriseLandscapeV2.module.css";
 const TAB_IDS = new Set<HomeLandscapeTabId>(
   HOME_LANDSCAPE_TABS.map((tab) => tab.id),
 );
+
+const LEGACY_TAB_REDIRECTS: Record<string, HomeLandscapeTabId> = {
+  context: "patterns",
+  architecture: "coherence",
+};
 
 const TONE_CLASS: Record<SignalTone, string> = {
   blue: styles.barBlue,
@@ -35,8 +39,11 @@ const TONE_HEX: Record<SignalTone, string> = {
   red: "#b63b35",
 };
 
-function isTabId(value: string | null): value is HomeLandscapeTabId {
-  return Boolean(value && TAB_IDS.has(value as HomeLandscapeTabId));
+function normalizeTabId(value: string | null): HomeLandscapeTabId | null {
+  if (!value) return null;
+  if (TAB_IDS.has(value as HomeLandscapeTabId))
+    return value as HomeLandscapeTabId;
+  return LEGACY_TAB_REDIRECTS[value] ?? null;
 }
 
 function useSelectedTab(defaultTab: HomeLandscapeTabId) {
@@ -45,7 +52,19 @@ function useSelectedTab(defaultTab: HomeLandscapeTabId) {
 
   useEffect(() => {
     const view = new URLSearchParams(window.location.search).get("view");
-    if (isTabId(view)) setSelectedTabState(view);
+    const normalizedView = normalizeTabId(view);
+    if (!normalizedView) return;
+
+    setSelectedTabState(normalizedView);
+    if (view !== normalizedView) {
+      const url = new URL(window.location.href);
+      if (normalizedView === "summary") {
+        url.searchParams.delete("view");
+      } else {
+        url.searchParams.set("view", normalizedView);
+      }
+      window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+    }
   }, []);
 
   const setSelectedTab = useCallback((tab: HomeLandscapeTabId) => {
@@ -65,7 +84,7 @@ function useSelectedTab(defaultTab: HomeLandscapeTabId) {
 function SparkBar({
   item,
 }: {
-  item: MetricAnchor | EconomicRow | ContextSignal | ArchitectureLayer;
+  item: MetricAnchor | EconomicRow | ContextSignal;
 }) {
   const width = Math.max(6, Math.min(88, Math.round(item.ratio * 88)));
   return (
@@ -103,35 +122,6 @@ function ContextSignalWall({
           <strong>{signal.value}</strong>
           <p>{signal.detail}</p>
           <SparkBar item={signal} />
-        </article>
-      ))}
-    </div>
-  );
-}
-
-function ArchitectureStack({
-  layers,
-}: {
-  layers: HomeEnterpriseLandscapeV2Model["architectureLayers"];
-}) {
-  return (
-    <div className={styles.architectureStack} aria-label="Architecture layers">
-      {layers.map((layer) => (
-        <article className={styles.architectureLayer} key={layer.layer}>
-          <div className={styles.layerNumber}>{layer.layer}</div>
-          <div>
-            <div className={styles.layerTitle}>
-              <strong>{layer.title}</strong>
-              <span>{layer.coverage}</span>
-            </div>
-            <p>{layer.detail}</p>
-            <div className={styles.laneChipRow}>
-              {layer.examples.map((example) => (
-                <span key={example}>{example}</span>
-              ))}
-            </div>
-            <SparkBar item={layer} />
-          </div>
         </article>
       ))}
     </div>
@@ -576,67 +566,116 @@ function EconomicsExhibit({ rows }: { rows: EconomicRow[] }) {
 }
 
 function CoherenceMap({ model }: { model: HomeEnterpriseLandscapeV2Model }) {
-  const [a, b, c, d] = model.coherence;
+  const edges = [
+    ["Operations", "Critical platforms", false],
+    ["Critical platforms", "Portfolio capacity", false],
+    ["Portfolio capacity", "Coherence", false],
+    ["Commercial", "Data and measures", false],
+    ["Data and measures", "Controls and vendors", false],
+    ["Controls and vendors", "Coherence", false],
+    ["Operations", "Commercial", true],
+    ["Critical platforms", "Data and measures", false],
+  ] as const;
+  const nodeByLabel = new Map(
+    model.coherence.map((node) => [node.label, node]),
+  );
+
   return (
     <div className={`${styles.visualPanel} ${styles.coherenceMap}`}>
       <div className={styles.visualTitle}>
-        <strong>Relationship view</strong>
-        <span>Governed dependency path</span>
+        <strong>Enterprise constraint map</strong>
+        <span>Relationship slice, not target architecture</span>
       </div>
       <svg
         className={styles.mapSvg}
-        viewBox="0 0 100 74"
+        viewBox="0 0 1120 500"
         role="img"
-        aria-label="Enterprise relationship map"
+        aria-label="Enterprise coherence map connecting operations, platforms, portfolio capacity, commercial, data, controls, and coherence"
       >
-        {[a, b, c, d].filter(Boolean).map((node, index, nodes) => {
-          const next = nodes[index + 1];
-          if (!next) return null;
+        <defs>
+          <linearGradient id="coherenceWash" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stopColor="#246fc8" stopOpacity="0.12" />
+            <stop offset="0.52" stopColor="#198f82" stopOpacity="0.1" />
+            <stop offset="1" stopColor="#b97824" stopOpacity="0.12" />
+          </linearGradient>
+          <marker
+            id="coherenceArrow"
+            markerHeight="9"
+            markerWidth="9"
+            orient="auto"
+            refX="8"
+            refY="4.5"
+          >
+            <path d="M0,0 L9,4.5 L0,9 Z" fill="#9fb3cf" />
+          </marker>
+        </defs>
+        <rect x="28" y="24" width="1064" height="428" rx="18" fill="#fbfcff" />
+        <path
+          d="M134 118 C260 30, 438 54, 546 134 C684 236, 820 108, 978 206"
+          fill="none"
+          stroke="url(#coherenceWash)"
+          strokeLinecap="round"
+          strokeWidth="92"
+        />
+        <path
+          d="M138 342 C286 232, 442 324, 554 330 C690 336, 798 394, 978 278"
+          fill="none"
+          stroke="url(#coherenceWash)"
+          strokeLinecap="round"
+          strokeWidth="96"
+        />
+        {edges.map(([fromLabel, toLabel, dashed]) => {
+          const from = nodeByLabel.get(fromLabel);
+          const to = nodeByLabel.get(toLabel);
+          if (!from || !to) return null;
           return (
             <line
-              key={`${node.label}-${next.label}`}
-              x1={node.x}
-              y1={node.y}
-              x2={next.x}
-              y2={next.y}
-              stroke="#cbd5e1"
-              strokeWidth="0.9"
-              strokeDasharray={index === nodes.length - 2 ? "2 2" : "0"}
+              key={`${fromLabel}-${toLabel}`}
+              x1={from.x * 11.2}
+              y1={from.y * 5}
+              x2={to.x * 11.2}
+              y2={to.y * 5}
+              markerEnd="url(#coherenceArrow)"
+              stroke="#9fb3cf"
+              strokeDasharray={dashed ? "10 10" : "0"}
+              strokeWidth="5"
             />
           );
         })}
         {model.coherence.map((node) => (
           <g className={styles.mapNode} key={node.label}>
             <circle
-              cx={node.x}
-              cy={node.y}
-              r="8"
+              cx={node.x * 11.2}
+              cy={node.y * 5}
+              r={node.label === "Coherence" ? "62" : "52"}
               fill={TONE_HEX[node.tone]}
               opacity="0.96"
             />
             <text
-              x={node.x}
-              y={node.y + 0.8}
+              x={node.x * 11.2}
+              y={node.y * 5 - 5}
               textAnchor="middle"
               dominantBaseline="middle"
               fill="#fff"
-              fontSize="3.6"
+              fontSize="25"
               fontWeight="800"
             >
-              {node.label
-                .split(" ")
-                .map((word) => word[0])
-                .join("")
-                .slice(0, 2)}
+              {node.label === "Coherence" ? "C" : node.label.split(" ")[0]}
             </text>
-            <text x={node.x} y={node.y + 13} textAnchor="middle" fontSize="3.2">
+            <text
+              x={node.x * 11.2}
+              y={node.y * 5 + 76}
+              textAnchor="middle"
+              fontSize="21"
+              fontWeight="760"
+            >
               {node.label}
             </text>
             <text
-              x={node.x}
-              y={node.y + 17}
+              x={node.x * 11.2}
+              y={node.y * 5 + 104}
               textAnchor="middle"
-              fontSize="2.7"
+              fontSize="15"
               fill="#657087"
             >
               {node.detail}
@@ -646,6 +685,18 @@ function CoherenceMap({ model }: { model: HomeEnterpriseLandscapeV2Model }) {
       </svg>
     </div>
   );
+}
+
+function postureStateClass(value: string) {
+  const normalized = value.toLowerCase().replaceAll(" ", "");
+  if (normalized === "high") return styles.stateHigh;
+  if (normalized === "moderate") return styles.stateModerate;
+  if (normalized === "limited") return styles.stateLimited;
+  if (normalized === "mixed") return styles.stateMixed;
+  if (normalized === "fragmented") return styles.stateFragmented;
+  if (normalized === "constrained") return styles.stateConstrained;
+  if (normalized === "locked") return styles.stateLocked;
+  return styles.stateSelective;
 }
 
 function TabPanels({
@@ -709,6 +760,7 @@ function TabPanels({
             specialist questions to other Nexus modules.
           </p>
         </div>
+        <ContextSignalWall signals={model.contextSignals} />
         <div className={styles.patternGrid}>
           {model.patterns.map((pattern) => (
             <article className={styles.patternCard} key={pattern.title}>
@@ -725,32 +777,6 @@ function TabPanels({
               />
             </article>
           ))}
-        </div>
-      </article>
-
-      <article
-        className={styles.panel}
-        id="context-panel"
-        role="tabpanel"
-        aria-labelledby="tab-context"
-        hidden={selectedTab !== "context"}
-      >
-        <div className={styles.contextLayout}>
-          <div>
-            <h2>Loaded context, integrated into the Home story</h2>
-            <p className={styles.lead}>{model.contextRead}</p>
-          </div>
-          <ContextSignalWall signals={model.contextSignals} />
-          <div className={styles.contextDomainGrid}>
-            {model.contextDomains.map((domain) => (
-              <article className={styles.contextDomain} key={domain.title}>
-                <span className={styles.eyebrow}>{domain.label}</span>
-                <h3>{domain.title}</h3>
-                <p>{domain.body}</p>
-                <small>{domain.evidence}</small>
-              </article>
-            ))}
-          </div>
         </div>
       </article>
 
@@ -786,20 +812,89 @@ function TabPanels({
 
       <article
         className={styles.panel}
-        id="architecture-panel"
+        id="posture-panel"
         role="tabpanel"
-        aria-labelledby="tab-architecture"
-        hidden={selectedTab !== "architecture"}
+        aria-labelledby="tab-posture"
+        hidden={selectedTab !== "posture"}
       >
-        <div className={styles.architectureLayout}>
-          <div>
-            <h2>Data and AI current-state architecture by lane</h2>
-            <p className={styles.lead}>{model.architectureRead}</p>
+        <div>
+          <h2>Normalized enterprise posture</h2>
+          <p className={styles.lead}>
+            Posture is shown as a normalized read across evidence, coherence,
+            flexibility, and potential. It is a planning-grade rubric, not a
+            Claude-generated score.
+          </p>
+        </div>
+        <div className={styles.postureMatrix}>
+          <div className={`${styles.postureRow} ${styles.postureHead}`}>
+            <div>Domain</div>
+            <div>Evidence</div>
+            <div>Coherence</div>
+            <div>Flexibility</div>
+            <div>Potential</div>
           </div>
-          <ArchitectureFlowMap model={model} />
-          <div className={styles.architectureGrid}>
-            <ArchitectureStack layers={model.architectureLayers} />
-            <div className={styles.architectureDecisionGrid}>
+          {model.posture.map((row) => (
+            <div className={styles.postureRow} key={row.domain}>
+              <div data-label="Domain" className={styles.postureDomain}>
+                {row.domain}
+              </div>
+              <div
+                data-label="Evidence"
+                className={`${styles.postureCell} ${postureStateClass(
+                  row.evidence,
+                )}`}
+              >
+                {row.evidence}
+              </div>
+              <div
+                data-label="Coherence"
+                className={`${styles.postureCell} ${postureStateClass(
+                  row.authority,
+                )}`}
+              >
+                {row.authority}
+              </div>
+              <div
+                data-label="Flexibility"
+                className={`${styles.postureCell} ${postureStateClass(
+                  row.valueState,
+                )}`}
+              >
+                {row.valueState}
+              </div>
+              <div
+                data-label="Potential"
+                className={`${styles.postureCell} ${postureStateClass(
+                  row.attention,
+                )}`}
+              >
+                {row.attention}
+              </div>
+            </div>
+          ))}
+        </div>
+      </article>
+
+      <article
+        className={styles.panel}
+        id="coherence-panel"
+        role="tabpanel"
+        aria-labelledby="tab-coherence"
+        hidden={selectedTab !== "coherence"}
+      >
+        <div className={styles.coherenceLayout}>
+          <div>
+            <h2>Why enterprise coherence is difficult</h2>
+            <p className={styles.lead}>
+              The operating model ties frontline reliability, commercial
+              choices, critical platforms, data measures, portfolio capacity,
+              and vendor controls into one system of constraints.
+            </p>
+          </div>
+          <CoherenceMap model={model} />
+          <div className={styles.coherenceSplit}>
+            <ArchitectureFlowMap model={model} />
+            <div className={styles.coherenceDecisionGrid}>
               {model.architectureDecisions.map((decision) => (
                 <article
                   className={styles.architectureDecision}
@@ -808,17 +903,6 @@ function TabPanels({
                   <span className={styles.severity}>{decision.evidence}</span>
                   <h3>{decision.title}</h3>
                   <p>{decision.body}</p>
-                  <SparkBar
-                    item={{
-                      layer: decision.title,
-                      title: decision.title,
-                      detail: decision.body,
-                      coverage: decision.evidence,
-                      examples: [],
-                      ratio: decision.tone === "red" ? 0.38 : 0.68,
-                      tone: decision.tone,
-                    }}
-                  />
                 </article>
               ))}
             </div>
@@ -834,89 +918,9 @@ function TabPanels({
                     <span key={example}>{example}</span>
                   ))}
                 </div>
-                <SparkBar
-                  item={{
-                    layer: deployment.label,
-                    title: deployment.posture,
-                    detail: deployment.body,
-                    coverage: deployment.label,
-                    examples: deployment.examples,
-                    ratio: deployment.ratio,
-                    tone: deployment.tone,
-                  }}
-                />
               </article>
             ))}
           </div>
-          <div className={styles.archetypeGrid}>
-            {model.architectureArchetypes.map((archetype) => (
-              <article className={styles.archetypeCard} key={archetype.title}>
-                <span className={styles.route}>{archetype.route}</span>
-                <h3>{archetype.title}</h3>
-                <strong>{archetype.topology}</strong>
-                <p>{archetype.body}</p>
-                <div className={styles.laneChipRow}>
-                  {archetype.examples.map((example) => (
-                    <span key={example}>{example}</span>
-                  ))}
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </article>
-
-      <article
-        className={styles.panel}
-        id="posture-panel"
-        role="tabpanel"
-        aria-labelledby="tab-posture"
-        hidden={selectedTab !== "posture"}
-      >
-        <div>
-          <h2>Current posture by evidence domain</h2>
-          <p className={styles.lead}>
-            Posture is expressed as evidence, authority, value state, and
-            attention area. It is not a Claude-generated score.
-          </p>
-        </div>
-        <div className={styles.postureTable}>
-          <div className={`${styles.postureRow} ${styles.postureHead}`}>
-            <div>Domain</div>
-            <div>Evidence</div>
-            <div>Authority</div>
-            <div>Value state</div>
-            <div>Attention</div>
-          </div>
-          {model.posture.map((row) => (
-            <div className={styles.postureRow} key={row.domain}>
-              <div data-label="Domain">{row.domain}</div>
-              <div data-label="Evidence">{row.evidence}</div>
-              <div data-label="Authority">{row.authority}</div>
-              <div data-label="Value state">{row.valueState}</div>
-              <div data-label="Attention">{row.attention}</div>
-            </div>
-          ))}
-        </div>
-      </article>
-
-      <article
-        className={styles.panel}
-        id="coherence-panel"
-        role="tabpanel"
-        aria-labelledby="tab-coherence"
-        hidden={selectedTab !== "coherence"}
-      >
-        <div className={styles.twoCol}>
-          <div>
-            <h2>Enterprise coherence map</h2>
-            <p className={styles.lead}>
-              The map is a governed relationship slice. It explains dependency
-              paths; it does not define canonical relationships or calculate
-              value.
-            </p>
-          </div>
-          <CoherenceMap model={model} />
         </div>
       </article>
 
@@ -928,27 +932,27 @@ function TabPanels({
         hidden={selectedTab !== "trajectory"}
       >
         <div>
-          <h2>Trajectory requires authority</h2>
+          <h2>Four shifts define the plausible direction of travel</h2>
           <p className={styles.lead}>
             Direction language lives here, not on Summary. Each shift separates
-            current state, potential direction, authority, gate, and module
-            route.
+            today, potential direction, principal gap, authority, gate, and
+            module route.
           </p>
         </div>
         <div className={styles.shiftTable}>
           <div className={`${styles.shiftRow} ${styles.postureHead}`}>
-            <div>Area</div>
-            <div>Current</div>
-            <div>Potential</div>
+            <div>Today</div>
+            <div>Potential direction</div>
+            <div>Principal gap</div>
             <div>Authority</div>
             <div>Gate</div>
             <div>Route</div>
           </div>
           {model.trajectory.map((row) => (
-            <div className={styles.shiftRow} key={row.area}>
-              <div data-label="Area">{row.area}</div>
-              <div data-label="Current">{row.current}</div>
-              <div data-label="Potential">{row.potential}</div>
+            <div className={styles.shiftRow} key={row.today}>
+              <div data-label="Today">{row.today}</div>
+              <div data-label="Potential direction">{row.potential}</div>
+              <div data-label="Principal gap">{row.gap}</div>
               <div data-label="Authority">{row.authority}</div>
               <div data-label="Gate">{row.gate}</div>
               <div data-label="Route">{row.route}</div>
@@ -991,12 +995,11 @@ function TabPanels({
         hidden={selectedTab !== "evidence"}
       >
         <div>
-          <h2>Evidence and content provenance</h2>
+          <h2>Executive confidence view</h2>
           <p className={styles.lead}>
-            This render reflects the V0.2.5 product contract. Production
-            approval still requires HomeEnterpriseEvidenceV2, one audited Claude
-            synthesis, raw-response retention, scrubbed-response retention, and
-            narrative validation.
+            This view separates what is loaded, what is directional, what has
+            conflicts, and which claims need source authority before they become
+            production narrative.
           </p>
         </div>
         <div className={styles.evidenceGrid}>

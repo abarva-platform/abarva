@@ -1,9 +1,7 @@
 export type HomeLandscapeTabId =
   | "summary"
   | "patterns"
-  | "context"
   | "economics"
-  | "architecture"
   | "posture"
   | "coherence"
   | "trajectory"
@@ -108,9 +106,9 @@ export interface CoherenceNode {
 }
 
 export interface TrajectoryRow {
-  area: string;
-  current: string;
+  today: string;
   potential: string;
+  gap: string;
   authority: string;
   gate: string;
   route: string;
@@ -161,9 +159,7 @@ export const HOME_LANDSCAPE_TABS: Array<{
 }> = [
   { id: "summary", label: "Summary" },
   { id: "patterns", label: "Patterns" },
-  { id: "context", label: "Context" },
   { id: "economics", label: "Economics" },
-  { id: "architecture", label: "Architecture" },
   { id: "posture", label: "Posture" },
   { id: "coherence", label: "Coherence" },
   { id: "trajectory", label: "Trajectory" },
@@ -233,19 +229,34 @@ export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Mo
     ],
     patterns: [
       {
-        title: "Operations-heavy enterprise",
-        body: "Core airline operations, commercial channels, loyalty, workforce, maintenance, and airport execution are all in scope for the current landscape.",
+        title: "Operationally critical",
+        body: "Network operations, crew, airport, maintenance, cargo, loyalty, and travel-service execution make the technology estate a reliability system, not a back-office portfolio.",
         tone: "blue",
       },
       {
-        title: "Hybrid technology estate",
-        body: "Modernization activity spans core systems, cloud platforms, data products, integration paths, and analytics tooling rather than a single-platform migration.",
+        title: "Investment capacity, constrained flexibility",
+        body: "The governed budget is material, but the committed contract base means modernization choices have to respect commercial timing and rights.",
+        tone: "amber",
+      },
+      {
+        title: "Transformation-active and capacity-sensitive",
+        body: "Active modernization spans core platforms, cloud, data products, interfaces, analytics, and operations-facing systems, creating sequencing pressure.",
         tone: "teal",
       },
       {
-        title: "Control evidence matters",
-        body: "The management read depends on scope, ownership, evidence depth, and module-specific validation instead of broad transformation labels.",
+        title: "Fragmented measures and ownership",
+        body: "Measures, platform lifecycle states, and ownership signals need reconciliation before the landscape can support a target-state commitment.",
+        tone: "slate",
+      },
+      {
+        title: "Resilience and control posture",
+        body: "Hybrid architecture, private data-center gravity, SaaS consumption, and operational control requirements create a practical resilience agenda.",
         tone: "amber",
+      },
+      {
+        title: "AI-enabled, outcome proof developing",
+        body: "AI activity and tool usage are visible, but Home keeps value claims separate from Tower validation, baselines, and attestation evidence.",
+        tone: "red",
       },
     ],
     contextSignals: [
@@ -572,135 +583,192 @@ export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Mo
     ],
     posture: [
       {
-        domain: "Business operations",
-        evidence: "Broad",
-        authority: "Current state",
-        valueState: "Observed",
-        attention: "Workflow alignment",
+        domain: "Operations",
+        evidence: "High",
+        authority: "Mixed",
+        valueState: "Constrained",
+        attention: "Selective",
       },
       {
-        domain: "Applications and platforms",
-        evidence: "Broad",
-        authority: "Current state",
-        valueState: "Derived",
-        attention: "Dependency gravity",
+        domain: "Data and KPI",
+        evidence: "Moderate",
+        authority: "Fragmented",
+        valueState: "Constrained",
+        attention: "High",
       },
       {
-        domain: "Vendors and contracts",
-        evidence: "Governed",
-        authority: "Current state",
-        valueState: "Observed",
-        attention: "Commercial flexibility",
+        domain: "Portfolio",
+        evidence: "Moderate",
+        authority: "Mixed",
+        valueState: "Locked",
+        attention: "Selective",
+      },
+      {
+        domain: "Commercial",
+        evidence: "Moderate",
+        authority: "Fragmented",
+        valueState: "Locked",
+        attention: "Selective",
       },
       {
         domain: "AI and automation",
-        evidence: "Specialist",
-        authority: "Tower routed",
-        valueState: "Not generalized",
-        attention: "Outcome proof",
+        evidence: "Limited",
+        authority: "Mixed",
+        valueState: "Constrained",
+        attention: "Selective",
       },
     ],
     coherence: [
       {
-        label: "Operating model",
-        detail: "Airline workflows and ownership",
-        x: 14,
-        y: 42,
+        label: "Operations",
+        detail: "Crew, airport, recovery",
+        x: 22,
+        y: 22,
         tone: "blue",
       },
       {
-        label: "Core platforms",
-        detail: "Applications, cloud, data, integration",
-        x: 40,
-        y: 28,
+        label: "Critical platforms",
+        detail: "Tier-1 gravity, lifecycle",
+        x: 50,
+        y: 18,
         tone: "teal",
       },
       {
-        label: "Commercial base",
-        detail: "Vendors, contracts, renewal choices",
-        x: 66,
-        y: 44,
+        label: "Portfolio capacity",
+        detail: "Sequencing, dependency load",
+        x: 78,
+        y: 28,
+        tone: "slate",
+      },
+      {
+        label: "Commercial",
+        detail: "Pricing, loyalty, revenue",
+        x: 24,
+        y: 58,
         tone: "amber",
       },
       {
-        label: "Value proof",
-        detail: "Tower-routed outcome validation",
-        x: 86,
+        label: "Data and measures",
+        detail: "Definitions, lineage, trust",
+        x: 50,
+        y: 62,
+        tone: "blue",
+      },
+      {
+        label: "Controls and vendors",
+        detail: "Contracts, resilience, risk",
+        x: 76,
         y: 64,
         tone: "slate",
+      },
+      {
+        label: "Coherence",
+        detail: "Enterprise system",
+        x: 92,
+        y: 46,
+        tone: "red",
       },
     ],
     trajectory: [
       {
-        area: "Enterprise modernization",
-        current: "Multiple active domains",
-        potential: "Coordinated enterprise roadmap",
+        today: "Fragmented metric ownership",
+        potential: "Common enterprise measures",
+        gap: "Owner and definition alignment",
         authority: "Planning hypothesis",
-        gate: "Approved target-state source",
+        gate: "Definition alignment",
         route: "Intelligence",
       },
       {
-        area: "Commercial flexibility",
-        current: "Large committed base",
-        potential: "Renegotiated rights and timing",
-        authority: "Source owned",
-        gate: "Clause-level evidence",
+        today: "Activity-led portfolio",
+        potential: "Sequenced enterprise change",
+        gap: "Capacity and dependency governance",
+        authority: "Planning hypothesis",
+        gate: "Capacity governance",
+        route: "Moves",
+      },
+      {
+        today: "Committed vendor base",
+        potential: "Negotiated optionality",
+        gap: "Commercial rights and timing windows",
+        authority: "Not authorized",
+        gate: "Source action required",
         route: "Source",
       },
       {
-        area: "AI value realization",
-        current: "Activity visible",
+        today: "AI usage visible",
         potential: "Finance-recognized outcomes",
-        authority: "Tower owned",
-        gate: "Baseline and attestation",
+        gap: "Baselines and Finance validation",
+        authority: "Planning hypothesis",
+        gate: "Tower validation required",
         route: "Tower",
       },
     ],
     watchlist: [
       {
-        severity: "Material",
-        title: "Contract-backed run economics",
-        body: "The committed annual base is large enough to constrain near-term portfolio flexibility if renewal, rights, and service scope are not managed.",
-        route: "Source",
+        severity: "High",
+        title: "Critical platform gravity",
+        body: "Critical-platform lifecycle choices shape modernization sequencing, dependency risk, and AI feasibility.",
+        route: "Intelligence",
       },
       {
-        severity: "Material",
-        title: "Outcome proof separation",
-        body: "Home should not turn AI activity into enterprise value claims. Tower remains the validation lane for claimability and finance recognition.",
+        severity: "Medium",
+        title: "Hybrid hosting reality",
+        body: "Cloud timelines need operational, resilience, latency, data-center, and integration constraints represented together.",
+        route: "Intelligence",
+      },
+      {
+        severity: "High",
+        title: "AI before value approval",
+        body: "AI adoption is visible before enterprise value claims are approved. Baseline, ownership, and attestation gates must stay explicit.",
         route: "Tower",
       },
       {
+        severity: "Medium",
+        title: "Commercial lock-in pressure",
+        body: "The contracted base reduces near-term flexibility unless renewal windows, rights, and scope choices are actively governed.",
+        route: "Source",
+      },
+      {
         severity: "Watch",
-        title: "Future-state authority",
-        body: "Current-to-future language needs approved strategy, approved Moves, declared target state, or explicit planning-hypothesis status.",
+        title: "Target-state authority",
+        body: "Current-to-potential trajectory needs declared target-state authority before it becomes a plan.",
         route: "Moves",
       },
     ],
     evidence: [
       {
-        label: "Design contract",
-        value: "V0.2.5",
-        detail: "Integrated context and architecture canvas",
+        label: "Domain coverage",
+        value: "Broad, uneven depth",
+        detail:
+          "Operations, technology, portfolio, commercial, and AI context are represented.",
         tone: "blue",
       },
       {
-        label: "Deterministic layer",
-        value: "Visual source",
+        label: "Freshness",
+        value: "Aug 2, 2026",
         detail:
-          "Validated HomeEnterpriseEvidenceV2 should drive SVG and charts",
+          "Current-state export date retained in the planning-grade package.",
+        tone: "teal",
+      },
+      {
+        label: "Conflicts",
+        value: "To review",
+        detail:
+          "Definitions and lifecycle states must be reconciled before production use.",
         tone: "amber",
       },
       {
-        label: "Claude result",
-        value: "Audit retained",
+        label: "Missing sources",
+        value: "Identity facts",
         detail:
-          "Prompt, raw response, scrubbed response, and rejection log required",
+          "Network, workforce, fleet, customer scale, and final owner facts need source authority.",
         tone: "amber",
       },
       {
-        label: "Runtime posture",
-        value: "Planning-grade",
-        detail: "No new Claude response is claimed by this render",
+        label: "Material claims",
+        value: "Directional",
+        detail:
+          "Validation is required before release as realized value, target state, or recommendation.",
         tone: "slate",
       },
     ],
