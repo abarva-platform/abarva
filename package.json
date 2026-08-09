@@ -643,6 +643,7 @@
     "source:skyharbor-v3:load-current-state": "npx tsx scripts/source/load-skyharbor-v3-current-state.ts",
     "source:skyharbor-v3:load-current-state:apply": "npx tsx scripts/source/load-skyharbor-v3-current-state.ts --apply",
     "source:skyharbor-v3:live-proof": "npx tsx scripts/source/inspect-skyharbor-v3-live-proof.ts",
+    "source:skyharbor:deloitte-scope-repair": "npx tsx scripts/source/repair-skyharbor-deloitte-workday-scope.ts --apply --emit-proof-bundle",
     "source:inspect-skyharbor-reconciliation": "npx tsx scripts/source/inspect-skyharbor-reconciliation.ts",
     "source:door1:smoke": "npx tsx scripts/source/smoke-skyharbor-door1-front-door.ts",
     "source:contract-optimization:evidence-audit": "npx tsx scripts/source/audit-contract-optimization-evidence-readiness.mjs",
