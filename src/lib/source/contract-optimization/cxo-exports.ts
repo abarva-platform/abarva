@@ -3,7 +3,7 @@ import type { ContractOptimizationMveProfile } from "./types";
 import { buildContractOptimizationStoryPack } from "./story-pack";
 import { computeContractOptimizationExposureRollup } from "./exposure";
 
-const DOCUMENT_TITLE = "AMS Contract Optimization Brief";
+const DOCUMENT_TITLE = "Contract Optimization Brief";
 
 export function buildContractOptimizationCxoNarrativeReport(args: {
   tenantName: string;
@@ -34,13 +34,13 @@ export function buildContractOptimizationCxoNarrativeReport(args: {
         kind: "cover",
         title: DOCUMENT_TITLE,
         message:
-          "Existing-contract optimization report for the Airline Demo AMS agreement. The report aligns contract evidence, commercial exposure, cure actions, and renewal decision timing.",
+          "Existing-contract optimization report. The report aligns contract evidence, commercial exposure, cure actions, and renewal decision timing.",
         proofLabel: "Contract optimization",
         metrics: [
           { label: "Company", value: args.tenantName, note: args.eventCode },
           {
             label: "Contract",
-            value: "AMS agreement",
+            value: "Agreement",
             note: args.profile.contractName,
           },
           {
@@ -219,7 +219,10 @@ export function buildContractOptimizationCxoNarrativeReport(args: {
             label: "Readiness",
             value: args.profile.readyForOptimization,
             note: args.profile.readyReason,
-            status: args.profile.readyForOptimization === "conditional" ? "warn" : "good",
+            status:
+              args.profile.readyForOptimization === "conditional"
+                ? "warn"
+                : "good",
           },
         ],
         table: {
@@ -280,50 +283,85 @@ export function renderContractOptimizationDealPackHtml(args: {
   </section>
   <section>
     <h2>Contract Baseline</h2>
-    ${table(["Field", "Value"], [
-      ["Incumbent", args.profile.incumbentVendorName],
-      ["Term", `${args.profile.contractBaseline.termStart} to ${args.profile.contractBaseline.termEnd}`],
-      ["Renewal notice date", args.profile.contractBaseline.renewalNoticeDate],
-      ["Evidence references", String(args.profile.contractBaseline.evidenceCount)],
-      ["Extraction boundary", args.profile.extractionBoundary],
-    ])}
+    ${table(
+      ["Field", "Value"],
+      [
+        ["Incumbent", args.profile.incumbentVendorName],
+        [
+          "Term",
+          `${args.profile.contractBaseline.termStart} to ${args.profile.contractBaseline.termEnd}`,
+        ],
+        [
+          "Renewal notice date",
+          args.profile.contractBaseline.renewalNoticeDate,
+        ],
+        [
+          "Evidence references",
+          String(args.profile.contractBaseline.evidenceCount),
+        ],
+        ["Extraction boundary", args.profile.extractionBoundary],
+      ],
+    )}
   </section>
   <section>
     <h2>Optimization Findings</h2>
-    ${table(["Finding", "Severity", "Current evidence", "Recommended action"], args.profile.findings.map((finding) => [
-      finding.title,
-      finding.severity,
-      finding.currentState,
-      finding.recommendedAction,
-    ]))}
+    ${table(
+      ["Finding", "Severity", "Current evidence", "Recommended action"],
+      args.profile.findings.map((finding) => [
+        finding.title,
+        finding.severity,
+        finding.currentState,
+        finding.recommendedAction,
+      ]),
+    )}
   </section>
   <section>
     <h2>Negotiation Levers</h2>
-    ${table(["Buyer ask", "Owner", "Value basis", "Impact"], args.profile.levers.map((lever) => [
-      lever.buyerAsk,
-      lever.ownerRole,
-      lever.valueBasis,
-      impactRange(lever.annualImpactLowUsd, lever.annualImpactHighUsd),
-    ]))}
+    ${table(
+      ["Buyer ask", "Owner", "Value basis", "Impact"],
+      args.profile.levers.map((lever) => [
+        lever.buyerAsk,
+        lever.ownerRole,
+        lever.valueBasis,
+        impactRange(lever.annualImpactLowUsd, lever.annualImpactHighUsd),
+      ]),
+    )}
   </section>
   <section>
     <h2>Evidence Inventory and Caveats</h2>
-    ${table(["Evidence", "Role", "Reference", "Source"], args.profile.syntheticDemo ? args.profile.contractBaseline.evidenceCount ? args.profile.minimumViableExtractionAreas.map((area) => [
-      area.area,
-      area.status,
-      area.evidenceLabels.join("; "),
-      area.whyItMatters,
-    ]) : [] : [])}
+    ${table(
+      ["Evidence", "Role", "Reference", "Source"],
+      args.profile.syntheticDemo
+        ? args.profile.contractBaseline.evidenceCount
+          ? args.profile.minimumViableExtractionAreas.map((area) => [
+              area.area,
+              area.status,
+              area.evidenceLabels.join("; "),
+              area.whyItMatters,
+            ])
+          : []
+        : [],
+    )}
     <p class="note">Synthetic demo evidence supports this controlled proof. Production use must replace demo evidence with client-approved contract, spend, SLA, staffing, ticket and change-order sources.</p>
   </section>
   <section>
     <h2>Audit Trail</h2>
-    ${table(["Item", "Status"], [
-      ["Event code", args.eventCode],
-      ["Generated", args.generatedAt],
-      ["Recommendation", "Do not renew as-is; issue cure notice; renegotiate with conditions; preserve RFP fallback."],
-      ["Do-nothing scenario", story.scenarios.find((scenario) => scenario.path === "do_nothing")?.outcome ?? "Exposure persists."],
-    ])}
+    ${table(
+      ["Item", "Status"],
+      [
+        ["Event code", args.eventCode],
+        ["Generated", args.generatedAt],
+        [
+          "Recommendation",
+          "Do not renew as-is; issue cure notice; renegotiate with conditions; preserve RFP fallback.",
+        ],
+        [
+          "Do-nothing scenario",
+          story.scenarios.find((scenario) => scenario.path === "do_nothing")
+            ?.outcome ?? "Exposure persists.",
+        ],
+      ],
+    )}
   </section>
 </main>
 </body>

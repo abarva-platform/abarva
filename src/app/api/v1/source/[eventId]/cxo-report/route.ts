@@ -12,12 +12,8 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { buildSourceGenerationContext } from "@/lib/source/agent-generation/server";
-import {
-  buildContractOptimizationCxoNarrativeReport,
-  buildContractOptimizationMveProfile,
-  buildSkyHarborAmsExistingContractInput,
-  isSkyHarborContractOptimizationEvent,
-} from "@/lib/source/contract-optimization";
+import { buildContractOptimizationCxoNarrativeReport } from "@/lib/source/contract-optimization";
+import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import { assembleDealPack } from "@/lib/source/exports/deal-pack/assemble-deal-pack";
 import { buildSourceCxoNarrativeReport } from "@/lib/source/exports/cxo-report/source-cxo-narrative-report";
 import {
@@ -108,23 +104,16 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
 
   const generatedAt = new Date().toISOString();
   try {
-    const isContractOptimization = isSkyHarborContractOptimizationEvent({
-      activeClientKey: activeClient?.key,
-      eventCode: ctx.event.code,
-      eventName: ctx.event.name,
-    });
-    const report = isContractOptimization
+    const contractOptimizationProfile = activeClient?.key
+      ? await getContractOptimizationProfile(activeClient.key, ctx.event.id)
+      : null;
+    const report = contractOptimizationProfile
       ? buildContractOptimizationCxoNarrativeReport({
-          tenantName: "Airline Demo",
-          eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
+          tenantName: activeClient?.name ?? ctx.tenantName,
+          eventCode: ctx.event.code,
           eventName: ctx.event.name,
           generatedAt,
-          profile: buildContractOptimizationMveProfile(
-            buildSkyHarborAmsExistingContractInput({
-              sourceEventId: ctx.event.id,
-              tenantKey: activeClient?.key ?? "skyharbor-air",
-            }),
-          ),
+          profile: contractOptimizationProfile,
         })
       : buildSourceCxoNarrativeReport(
           (await assembleDealPack(ctx, generatedAt)).input,

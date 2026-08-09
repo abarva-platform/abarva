@@ -17,7 +17,7 @@ export {
   contractOptimizationDealPackFilename,
   renderContractOptimizationDealPackHtml,
 } from "./cxo-exports";
-export { isSkyHarborContractOptimizationEvent } from "./eligibility";
+export { isContractOptimizationEvent } from "./eligibility";
 export { toContractOptimizationPersistenceRows } from "./persistence";
 
 export type {

@@ -5,12 +5,8 @@ import { pdf } from "@react-pdf/renderer";
 import { requireTenancy, tenancyErrorResponse } from "../../../../_intel-auth";
 import { getActiveClientRow } from "@/lib/active-client";
 import { getSourcingEvent } from "@/lib/source/queries";
-import {
-  buildContractOptimizationBriefMarkdown,
-  buildContractOptimizationMveProfile,
-  buildSkyHarborAmsExistingContractInput,
-  isSkyHarborContractOptimizationEvent,
-} from "@/lib/source/contract-optimization";
+import { buildContractOptimizationBriefMarkdown } from "@/lib/source/contract-optimization";
+import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import { DOCX_CONTENT_TYPE } from "@/lib/exports-shared/docx-base";
 import { PDF_CONTENT_TYPE } from "@/lib/exports-shared/pdf-base";
 import {
@@ -32,37 +28,32 @@ type ExportFormat = "md" | "docx" | "pdf";
 
 const CONTRACT_OPTIMIZATION_CONFIG: NarrativeDocxConfig = {
   artifactCode: "source_contract_optimization_brief",
-  headerLabel: "AMS Contract Optimization Brief",
+  headerLabel: "Contract Optimization Brief",
   eyebrowFor: (tenant) => `Source · Existing Contract Optimization · ${tenant}`,
-  documentTitle: "AMS Contract Optimization Brief",
+  documentTitle: "Contract Optimization Brief",
   confidentialityNote:
     "Executive review only — sourcing optimization brief; not for vendor distribution",
 };
-
-const CONTRACT_OPTIMIZATION_DISPLAY = {
-  tenantName: "Airline Demo",
-  eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
-} as const;
 
 export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
     await requireTenancy();
     const { eventId } = await params;
     if (!eventId) {
-      return Response.json({ ok: false, error: "missing_event" }, { status: 400 });
+      return Response.json(
+        { ok: false, error: "missing_event" },
+        { status: 400 },
+      );
     }
     const activeClient = await getActiveClientRow().catch(() => null);
     const event = await getSourcingEvent(eventId, activeClient?.key);
     if (!event) {
       return Response.json({ ok: false, error: "not_found" }, { status: 404 });
     }
-    if (
-      !isSkyHarborContractOptimizationEvent({
-        activeClientKey: activeClient?.key,
-        eventCode: event.code,
-        eventName: event.name,
-      })
-    ) {
+    const profile = activeClient?.key
+      ? await getContractOptimizationProfile(activeClient.key, event.id)
+      : null;
+    if (!profile) {
       return Response.json(
         {
           ok: false,
@@ -73,30 +64,35 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
         { status: 404 },
       );
     }
-    const profile = buildContractOptimizationMveProfile(
-      buildSkyHarborAmsExistingContractInput({
-        sourceEventId: event.id,
-        tenantKey: activeClient?.key ?? "skyharbor-air",
-      }),
-    );
     const markdown = buildContractOptimizationBriefMarkdown(profile);
     const format = normalizeFormat(request.nextUrl.searchParams.get("format"));
     const generatedAt = new Date().toISOString();
     const payload: NarrativeDocxPayload = {
-      tenantName: CONTRACT_OPTIMIZATION_DISPLAY.tenantName,
-      eventCode: CONTRACT_OPTIMIZATION_DISPLAY.eventCode,
-      eventName: CONTRACT_OPTIMIZATION_CONFIG.documentTitle,
+      tenantName: activeClient?.name ?? event.accountName ?? profile.tenantKey,
+      eventCode: event.code,
+      eventName: `${profile.contractName} Optimization Brief`,
       issuedBy: "AbarVa Source",
       generatedAt,
       body: markdown,
       bodyIsAuthored: true,
     };
-    const baseName = "skyharbor-ams-contract-optimization-brief";
+    const baseName = slugFileName(
+      `${event.code}-${profile.contractName}-optimization-brief`,
+    );
 
     if (format === "docx") {
-      const document = buildNarrativeDocx(payload, CONTRACT_OPTIMIZATION_CONFIG);
+      const document = buildNarrativeDocx(
+        payload,
+        CONTRACT_OPTIMIZATION_CONFIG,
+      );
       const buffer = await Packer.toBuffer(document);
-      return fileResponse(buffer, DOCX_CONTENT_TYPE, `${baseName}.docx`, format, payload.eventCode);
+      return fileResponse(
+        buffer,
+        DOCX_CONTENT_TYPE,
+        `${baseName}.docx`,
+        format,
+        payload.eventCode,
+      );
     }
     if (format === "pdf") {
       const element = buildNarrativePdf(payload, CONTRACT_OPTIMIZATION_CONFIG);
@@ -105,7 +101,13 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       for await (const chunk of stream as AsyncIterable<Buffer | string>) {
         chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
       }
-      return fileResponse(Buffer.concat(chunks), PDF_CONTENT_TYPE, `${baseName}.pdf`, format, payload.eventCode);
+      return fileResponse(
+        Buffer.concat(chunks),
+        PDF_CONTENT_TYPE,
+        `${baseName}.pdf`,
+        format,
+        payload.eventCode,
+      );
     }
     return fileResponse(
       Buffer.from(markdown, "utf8"),
@@ -131,6 +133,17 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       );
     }
   }
+}
+
+function slugFileName(value: string): string {
+  return (
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 120) || "contract-optimization-brief"
+  );
 }
 
 function normalizeFormat(value: string | null): ExportFormat {

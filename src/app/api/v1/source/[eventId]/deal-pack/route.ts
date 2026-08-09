@@ -19,12 +19,10 @@ import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster"
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { buildSourceGenerationContext } from "@/lib/source/agent-generation/server";
 import {
-  buildContractOptimizationMveProfile,
-  buildSkyHarborAmsExistingContractInput,
   contractOptimizationDealPackFilename,
-  isSkyHarborContractOptimizationEvent,
   renderContractOptimizationDealPackHtml,
 } from "@/lib/source/contract-optimization";
+import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import {
   assembleDealPack,
   type DealPackLoadedArtifactBody,
@@ -131,24 +129,16 @@ async function handleGet(req: NextRequest, { params }: RouteCtx) {
   }
 
   const generatedAt = new Date().toISOString();
-  if (
-    isSkyHarborContractOptimizationEvent({
-      activeClientKey: activeClient?.key,
+  const contractOptimizationProfile = activeClient?.key
+    ? await getContractOptimizationProfile(activeClient.key, ctx.event.id)
+    : null;
+  if (contractOptimizationProfile) {
+    const html = renderContractOptimizationDealPackHtml({
+      tenantName: activeClient?.name ?? ctx.tenantName,
       eventCode: ctx.event.code,
       eventName: ctx.event.name,
-    })
-  ) {
-    const html = renderContractOptimizationDealPackHtml({
-      tenantName: "Airline Demo",
-      eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
-      eventName: ctx.event.name,
       generatedAt,
-      profile: buildContractOptimizationMveProfile(
-        buildSkyHarborAmsExistingContractInput({
-          sourceEventId: ctx.event.id,
-          tenantKey: activeClient?.key ?? "skyharbor-air",
-        }),
-      ),
+      profile: contractOptimizationProfile,
     });
     return new Response(Buffer.from(html, "utf8") as unknown as ArrayBuffer, {
       status: 200,
@@ -156,12 +146,12 @@ async function handleGet(req: NextRequest, { params }: RouteCtx) {
         "content-type": "text/html; charset=utf-8",
         "content-disposition": `attachment; filename="${contractOptimizationDealPackFilename(
           {
-            eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
+            eventCode: ctx.event.code,
             generatedAt,
           },
         )}"`,
         "cache-control": "no-store",
-        "x-source-event-code": "SKYH-AMS-CONTRACT-OPT-2026",
+        "x-source-event-code": ctx.event.code,
         "x-source-deal-pack-format": "html",
         "x-source-deal-pack-motion": "contract-optimization",
       },
