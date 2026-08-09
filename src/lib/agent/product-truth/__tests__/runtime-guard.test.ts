@@ -87,6 +87,20 @@ describe("applyProductTruthRuntimeGuard", () => {
     expect(result.text).not.toMatch(/\b(?:BASE-007|CTX-AI-001-42)\b/);
   });
 
+  it("keeps public Source contract ids visible while removing other raw codes", () => {
+    const result = applyProductTruthRuntimeGuard(
+      "Source should optimize contract CTR-090, while BASE-007 stays internal.",
+      {
+        tenantKey: "skyharbor_global",
+        tenantName: "SkyHarbor Global",
+        surface: "source",
+      },
+    );
+
+    expect(result.text).toContain("CTR-090");
+    expect(result.text).not.toMatch(/\bBASE-007\b/);
+  });
+
   it("uses a surface boundary for obvious out-of-scope questions", () => {
     const result = applyProductTruthRuntimeGuard("France won it.", {
       tenantKey: "lakeshore",

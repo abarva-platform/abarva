@@ -108,6 +108,7 @@ const EVIDENCE_CLAIM_PATTERN =
   /\b(loaded estate shows|confirmed in the data|we have loaded|the data shows|evidence confirms)\b/i;
 const RAW_INTERNAL_ID_RE =
   /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6}|[A-Z]\d{3,4})\b/g;
+const PUBLIC_SOURCE_CONTRACT_ID_RE = /\bCTR-\d{3,6}\b/;
 
 export function applyProductTruthRuntimeGuard(
   text: string,
@@ -871,7 +872,9 @@ function normalizedSurface(surface: string | null | undefined): string {
 
 function normalizeWhitespace(text: string): string {
   return text
-    .replace(RAW_INTERNAL_ID_RE, "")
+    .replace(RAW_INTERNAL_ID_RE, (match) =>
+      PUBLIC_SOURCE_CONTRACT_ID_RE.test(match) ? match : "",
+    )
     .replace(/\s+\)/g, ")")
     .replace(/\(\s+/g, "(")
     .replace(/[ \t]{2,}/g, " ")

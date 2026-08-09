@@ -18,6 +18,8 @@ const RAW_RECORD_ID_RE =
   /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\b/g;
 const RAW_RECORD_ID_TEST_RE =
   /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\b/;
+const PUBLIC_SOURCE_CONTRACT_ID_RE = /\bCTR-\d{3,6}\b/g;
+const PUBLIC_SOURCE_CONTRACT_ID_TEST_RE = /\bCTR-\d{3,6}\b/;
 const UUID_RE =
   /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 const UUID_TEST_RE =
@@ -51,11 +53,15 @@ function fallbackCitationLabel(citation: AnswerCitation): string {
 }
 
 export function containsUnsafePublicText(value: string): boolean {
+  const withoutPublicBusinessIds = value.replace(
+    PUBLIC_SOURCE_CONTRACT_ID_RE,
+    "",
+  );
   return (
-    RAW_RECORD_ID_TEST_RE.test(value) ||
-    UUID_TEST_RE.test(value) ||
-    BRACKET_RECORD_TEST_RE.test(value) ||
-    INTERNAL_FIELD_TEST_RE.test(value)
+    RAW_RECORD_ID_TEST_RE.test(withoutPublicBusinessIds) ||
+    UUID_TEST_RE.test(withoutPublicBusinessIds) ||
+    BRACKET_RECORD_TEST_RE.test(withoutPublicBusinessIds) ||
+    INTERNAL_FIELD_TEST_RE.test(withoutPublicBusinessIds)
   );
 }
 
@@ -73,7 +79,9 @@ export function sanitizePublicText(
   const withoutUnsafeIds = dedupeConsultantLabels(value)
     .replace(BRACKET_RECORD_RE, fallback)
     .replace(UUID_RE, fallback)
-    .replace(RAW_RECORD_ID_RE, fallback)
+    .replace(RAW_RECORD_ID_RE, (match) =>
+      PUBLIC_SOURCE_CONTRACT_ID_TEST_RE.test(match) ? match : fallback,
+    )
     .replace(INTERNAL_FIELD_RE, "source field");
   const cleaned = shapePublicText(
     scrubPublicAvaAnswerText(withoutUnsafeIds),
@@ -91,7 +99,9 @@ function sanitizePublicSourceText(
   const withoutUnsafeIds = dedupeConsultantLabels(value)
     .replace(BRACKET_RECORD_RE, fallback)
     .replace(UUID_RE, fallback)
-    .replace(RAW_RECORD_ID_RE, fallback)
+    .replace(RAW_RECORD_ID_RE, (match) =>
+      PUBLIC_SOURCE_CONTRACT_ID_TEST_RE.test(match) ? match : fallback,
+    )
     .replace(INTERNAL_FIELD_RE, "source field");
   const cleaned = shapePublicText(
     scrubPublicAvaSourceText(withoutUnsafeIds),

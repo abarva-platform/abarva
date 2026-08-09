@@ -27,10 +27,10 @@ const surfaceRetrieverSource = fs.readFileSync(
 
 describe("Source Workspace aVa contract", () => {
   it("uses the rich aVa route and passes structured workspace context", () => {
-    expect(workspaceClientSource).toContain(
-      "const SOURCE_WORKSPACE_AGENT_API_URL = '/api/intelligence/ask'",
+    expect(workspaceClientSource).toMatch(
+      /SOURCE_WORKSPACE_AGENT_API_URL\s*=\s*["']\/api\/intelligence\/ask["']/,
     );
-    expect(workspaceClientSource).toContain("format: 'rich'");
+    expect(workspaceClientSource).toMatch(/format:\s*["']rich["']/);
     expect(workspaceClientSource).toContain("richText: true");
     expect(workspaceClientSource).toContain("answerOnlyStreaming: true");
     expect(workspaceClientSource).toContain("surfaceContext: vm.avaSurfaceContext");
@@ -40,7 +40,9 @@ describe("Source Workspace aVa contract", () => {
   });
 
   it("preserves structured answer packets for chart table and graph rendering", () => {
-    expect(workspaceClientSource).toContain("event.type === 'agent-answer'");
+    expect(workspaceClientSource).toMatch(
+      /event\.type\s*===\s*["']agent-answer["']/,
+    );
     expect(workspaceClientSource).toContain("agentAnswer: answerPacket");
     expect(workspaceClientSource).toContain("hasPacketArtifacts(answerPacket)");
     expect(workspaceClientSource).toContain("AskSource");
@@ -54,11 +56,12 @@ describe("Source Workspace aVa contract", () => {
   });
 
   it("grounds aVa in flat Source facts instead of only nested Source V4 JSON", () => {
-    expect(buildViewModelSource).toContain("module: 'Source'");
+    expect(buildViewModelSource).toMatch(/module:\s*["']Source["']/);
     expect(buildViewModelSource).toContain("activeTab: sourceWorkspaceActiveTab");
     expect(buildViewModelSource).toContain("pageFacts: sourceWorkspacePageFacts");
     expect(buildViewModelSource).toContain("vendorFacts: sourceWorkspaceVendorFacts");
-    expect(buildViewModelSource).toContain("sourceFacts: [...sourceWorkspaceLedgerFacts");
+    expect(buildViewModelSource).toContain("...sourceWorkspaceOpportunityFacts");
+    expect(buildViewModelSource).toContain("...sourceWorkspaceLedgerFacts");
     expect(buildViewModelSource).toContain("graphFacts: sourceWorkspaceGraphFacts");
     expect(buildViewModelSource).toContain(
       "When a user asks for a chart, table, trend, or graph",

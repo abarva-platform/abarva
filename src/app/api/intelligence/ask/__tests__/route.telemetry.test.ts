@@ -69,74 +69,6 @@ function makeRequest(body: unknown) {
   };
 }
 
-const tenantAskCases = [
-  {
-    client: "apexretail",
-    canonicalKey: "apex-retail",
-    displayName: "Apex Retail Group",
-    query: "Which AI investments should Apex scale before holiday readiness?",
-    expectedPrefix: "xp.retail.",
-    disallowedPrefixes: [
-      "xp.airline.",
-      "xp.financial-services-banking.",
-      "xp.healthcare-provider.",
-    ],
-  },
-  {
-    client: "skyharbor",
-    canonicalKey: "skyharbor-air",
-    displayName: "SkyHarbor Air",
-    query:
-      "What should SkyHarbor benchmark against for AI-assisted mainframe modernization?",
-    expectedPrefix: "xp.airline.",
-    disallowedPrefixes: [
-      "xp.financial-services-banking.",
-      "xp.healthcare-provider.",
-      "xp.retail.",
-    ],
-  },
-  {
-    client: "meridian",
-    canonicalKey: "meridian-health",
-    displayName: "Meridian Health System",
-    query:
-      "What should Meridian do about Epic revenue cycle denials and workflow leakage?",
-    expectedPrefix: "xp.healthcare-provider.",
-    disallowedPrefixes: [
-      "xp.airline.",
-      "xp.financial-services-banking.",
-      "xp.retail.",
-    ],
-  },
-  {
-    client: "arcturus",
-    canonicalKey: "first-capital",
-    displayName: "First Capital",
-    query:
-      "Which AI controls should First Capital prioritize for fraud and financial crime modernization?",
-    expectedPrefix: "xp.financial-services-banking.",
-    disallowedPrefixes: [
-      "xp.airline.",
-      "xp.healthcare-provider.",
-      "xp.retail.",
-    ],
-  },
-  {
-    client: "lakeshore",
-    canonicalKey: "lakeshore-holdings",
-    displayName: "Lakeshore Holdings",
-    query:
-      "What supply chain resilience questions should Lakeshore prioritize across its portfolio?",
-    expectedPrefix: "xp.x.",
-    disallowedPrefixes: [
-      "xp.airline.",
-      "xp.financial-services-banking.",
-      "xp.healthcare-provider.",
-      "xp.retail.",
-    ],
-  },
-] as const;
-
 async function readResponseText(response: Response): Promise<string> {
   const reader = response.body?.getReader();
   if (!reader) return "";
@@ -284,6 +216,8 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(askIntelligence).not.toHaveBeenCalled();
     expect(text).toContain('"type":"agent-answer"');
     expect(text).toContain("source_contract_visual");
+    expect(text).toContain("CTR-090");
+    expect(text).toContain("CTR-090 Salesforce");
     expect(text).toContain("Four-ledger Contract Evidence");
     expect(text).toContain("Optimization Ledgers With Quantified Evidence");
     expect(text).toContain("Contract Evidence Relationship");
