@@ -1,5 +1,6 @@
 import { azureRead } from "@/lib/data-plane/azureRead";
 import {
+  getContract360,
   getContractEvidenceOverview,
   getContractEvidencePerformanceSummary,
   getContractOptimizationEvidencePack,
@@ -9,17 +10,20 @@ import {
 } from "../read-adapter";
 
 jest.mock("@/lib/data-plane/azureRead", () => ({
-  azureRead: { withSession: jest.fn() },
+  azureRead: { query: jest.fn(), withSession: jest.fn() },
 }));
 
+const mockedQuery = azureRead.query as jest.Mock;
 const mockedWithSession = azureRead.withSession as jest.Mock;
 const run = jest.fn();
 
 describe("listContractVendor360 tenant-key aliasing", () => {
   beforeEach(() => {
+    mockedQuery.mockReset();
     run.mockReset();
     mockedWithSession.mockReset();
     mockedWithSession.mockImplementation(async (fn) => fn(run));
+    mockedQuery.mockResolvedValue([]);
     run.mockResolvedValue([]);
   });
 
@@ -79,6 +83,43 @@ describe("listContractVendor360 tenant-key aliasing", () => {
       expect.arrayContaining(["apexretail", "apex-retail", "retail demo"]),
     );
     expect(params[0]).not.toContain("skyharbor_global");
+  });
+
+  it("reads Meridian contract detail through the same canary projection as the portfolio", async () => {
+    mockedQuery.mockImplementation(async (sql: string, params: unknown[]) => {
+      expect(params[0]).toBe("meridian_health_global");
+      expect(sql).toContain("meridian_health_contract_family_v1");
+      expect(sql).not.toContain("source.contract_360");
+      return [
+        {
+          tenant_key: "meridian_health_global",
+          contract_id: "CF-001",
+          vendor_ref: "VEND-001",
+          vendor_name: "Crestline Analytics Services LLC",
+          vendor_category: "managed_services",
+          contract_name: "Data and Analytics Managed Services",
+          annual_value: "84900000",
+          total_committed_value: "35000000",
+          actual_annual_spend: "84900000",
+          auto_renew: false,
+          annual_value_conflict_flag: false,
+          total_committed_value_conflict_flag: false,
+          scoped_application_count: "4",
+          critical_application_count: "2",
+          operational_evidence_gap: false,
+          initiative_dependency_count: "0",
+        },
+      ];
+    });
+
+    const row = await getContract360("meridian-health", "CF-001");
+
+    expect(row?.contract_id).toBe("CF-001");
+    expect(row?.vendor_name).toBe("Crestline Analytics Services LLC");
+    expect(run).not.toHaveBeenCalledWith(
+      expect.stringContaining("source.contract_360"),
+      expect.anything(),
+    );
   });
 
   it("quantifies unapproved rate-card variance inside recoverable leakage evidence", async () => {
