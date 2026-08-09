@@ -5,7 +5,10 @@ import { AppShell } from "@/components/shell/AppShell";
 import { HomeEnterpriseLandscapeV2 } from "@/components/home/enterprise-landscape-v2/HomeEnterpriseLandscapeV2";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
-import { ACTIVE_CLIENT_COOKIE, resolveTenant } from "@/lib/tenant/resolveTenant";
+import {
+  ACTIVE_CLIENT_COOKIE,
+  resolveTenant,
+} from "@/lib/tenant/resolveTenant";
 
 export const metadata: Metadata = {
   title: "Enterprise Landscape | AbarVa",
@@ -115,7 +118,8 @@ export default async function HomePage() {
     cookies().catch(() => null),
   ]);
   const activeClientCookie = cookieStore?.get(ACTIVE_CLIENT_COOKIE)?.value;
-  const cookieClientKey = activeClientCookie === "skyharbor" ? "skyharbor" : null;
+  const cookieClientKey =
+    activeClientCookie === "skyharbor" ? "skyharbor" : null;
   const clientKey = client?.key ?? tenant?.appClientKey ?? cookieClientKey;
   const tenantName =
     canonicalClientDisplayName({

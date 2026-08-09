@@ -65,6 +65,32 @@ jest.mock("@/components/agent-answer/AgentAnswerRenderer", () => ({
 
 const fetchMock = jest.fn();
 
+function homeKnowJsonResponse(payload: unknown) {
+  return {
+    ok: true,
+    headers: {
+      get: (name: string) =>
+        name.toLowerCase() === "content-type" ? "application/json" : null,
+    },
+    body: null,
+    json: async () => payload,
+  } as unknown as Response;
+}
+
+function homeKnowJsonErrorResponse() {
+  return {
+    ok: false,
+    headers: {
+      get: (name: string) =>
+        name.toLowerCase() === "content-type" ? "application/json" : null,
+    },
+    json: async () => ({
+      error: "visible_answer_contract_failed",
+      detail: "internal display boundary",
+    }),
+  } as unknown as Response;
+}
+
 beforeEach(() => {
   fetchMock.mockReset();
   global.fetch = fetchMock as unknown as typeof fetch;
@@ -94,16 +120,15 @@ it("renders the generated advisory story and architecture canvas", () => {
 });
 
 it("wires expanded Ask aVa to the Home KNOW provider with export-capable rendering", async () => {
-  fetchMock.mockResolvedValueOnce({
-    ok: true,
-    json: async () => ({
+  fetchMock.mockResolvedValueOnce(
+    homeKnowJsonResponse({
       mode: "KNOW",
       intent: "table",
       tenantKey: "skyharbor_global",
       question: "Show the loaded context dimensions in a table.",
       prose: "The Home context is loaded enough to show a governed table.",
     }),
-  });
+  );
 
   render(<AiSuccessCommandCenter data={readSkyHarborAiSuccessHome()} />);
 
@@ -123,6 +148,7 @@ it("wires expanded Ask aVa to the Home KNOW provider with export-capable renderi
           question: "Show the loaded context dimensions in a table.",
           tenantKey: "skyharbor_global",
           client: "skyharbor_global",
+          stream: true,
         }),
       }),
     ),
@@ -141,14 +167,8 @@ it("wires expanded Ask aVa to the Home KNOW provider with export-capable renderi
   ).toBeInTheDocument();
 });
 
-it("does not expose internal visible-contract errors in the Ask aVa drawer", async () => {
-  fetchMock.mockResolvedValueOnce({
-    ok: false,
-    json: async () => ({
-      error: "visible_answer_contract_failed",
-      detail: "internal display boundary",
-    }),
-  });
+it("does not expose internal provider errors in the Ask aVa drawer", async () => {
+  fetchMock.mockResolvedValueOnce(homeKnowJsonErrorResponse());
 
   render(<AiSuccessCommandCenter data={readSkyHarborAiSuccessHome()} />);
 
@@ -160,7 +180,7 @@ it("does not expose internal visible-contract errors in the Ask aVa drawer", asy
   );
 
   expect(
-    await screen.findByText(/aVa tightened this answer before display/i),
+    await screen.findByText(/aVa could not reach the Home KNOW provider/i),
   ).toBeInTheDocument();
   expect(
     screen.queryByText(/visible_answer_contract_failed/i),

@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   HOME_LANDSCAPE_TABS,
   SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2,
+  type ArchitectureLayer,
+  type ContextSignal,
   type EconomicRow,
   type HomeEnterpriseLandscapeV2Model,
   type HomeLandscapeTabId,
@@ -60,7 +62,11 @@ function useSelectedTab(defaultTab: HomeLandscapeTabId) {
   return [selectedTab, setSelectedTab] as const;
 }
 
-function SparkBar({ item }: { item: MetricAnchor | EconomicRow }) {
+function SparkBar({
+  item,
+}: {
+  item: MetricAnchor | EconomicRow | ContextSignal | ArchitectureLayer;
+}) {
   const width = Math.max(6, Math.min(88, Math.round(item.ratio * 88)));
   return (
     <svg className={styles.spark} viewBox="0 0 120 28" aria-hidden="true">
@@ -81,6 +87,235 @@ function SparkBar({ item }: { item: MetricAnchor | EconomicRow }) {
         rx="5"
       />
     </svg>
+  );
+}
+
+function ContextSignalWall({
+  signals,
+}: {
+  signals: HomeEnterpriseLandscapeV2Model["contextSignals"];
+}) {
+  return (
+    <div className={styles.contextSignalWall}>
+      {signals.map((signal) => (
+        <article className={styles.contextSignal} key={signal.label}>
+          <span>{signal.label}</span>
+          <strong>{signal.value}</strong>
+          <p>{signal.detail}</p>
+          <SparkBar item={signal} />
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function ArchitectureStack({
+  layers,
+}: {
+  layers: HomeEnterpriseLandscapeV2Model["architectureLayers"];
+}) {
+  return (
+    <div className={styles.architectureStack} aria-label="Architecture layers">
+      {layers.map((layer) => (
+        <article className={styles.architectureLayer} key={layer.layer}>
+          <div className={styles.layerNumber}>{layer.layer}</div>
+          <div>
+            <div className={styles.layerTitle}>
+              <strong>{layer.title}</strong>
+              <span>{layer.coverage}</span>
+            </div>
+            <p>{layer.detail}</p>
+            <div className={styles.laneChipRow}>
+              {layer.examples.map((example) => (
+                <span key={example}>{example}</span>
+              ))}
+            </div>
+            <SparkBar item={layer} />
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function SvgTextLines({
+  x,
+  y,
+  lines,
+  className,
+  lineHeight = 15,
+}: {
+  x: number;
+  y: number;
+  lines: string[];
+  className: string;
+  lineHeight?: number;
+}) {
+  return (
+    <text x={x} y={y} textAnchor="middle" className={className}>
+      {lines.map((line, index) => (
+        <tspan x={x} dy={index === 0 ? 0 : lineHeight} key={line}>
+          {line}
+        </tspan>
+      ))}
+    </text>
+  );
+}
+
+function ArchitectureFlowMap({
+  model,
+}: {
+  model: HomeEnterpriseLandscapeV2Model;
+}) {
+  const compactLayerTitles: Record<string, string[]> = {
+    "Applications and core systems": ["Apps and", "core systems"],
+    "Integration, ETL, and event movement": ["Integration", "movement"],
+    "Storage, EDW, and data marts": ["EDW, storage", "marts"],
+    "Data science and engineering": ["Data science", "platforms"],
+    "Consumption and decision surfaces": ["Consumption", "BI"],
+    "AI agents and copilots": ["AI agents", "copilots"],
+    "Core-system action and proof gates": ["Action", "proof gates"],
+  };
+  const nodes = model.architectureLayers.map((layer, index) => ({
+    ...layer,
+    x: 28 + index * 136,
+    y: index === 6 ? 160 : 140,
+    width: 112,
+    height: index === 6 ? 106 : 118,
+  }));
+
+  return (
+    <section
+      className={styles.architectureHero}
+      aria-label="Data and AI architecture flow from source systems to consumption"
+    >
+      <div className={styles.visualTitle}>
+        <strong>Source to consumption architecture</strong>
+        <span>Current-state lane view · planning-grade</span>
+      </div>
+      <svg
+        className={styles.flowSvg}
+        viewBox="0 0 980 352"
+        role="img"
+        aria-label="Applications feed integration, storage, data science, consumption, AI agents, and governed core-system action"
+      >
+        <defs>
+          <linearGradient id="architectureFlow" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stopColor="#246fc8" stopOpacity="0.18" />
+            <stop offset="0.48" stopColor="#198f82" stopOpacity="0.14" />
+            <stop offset="1" stopColor="#b97824" stopOpacity="0.16" />
+          </linearGradient>
+          <marker
+            id="flowArrow"
+            markerHeight="8"
+            markerWidth="8"
+            orient="auto"
+            refX="7"
+            refY="4"
+          >
+            <path d="M0,0 L8,4 L0,8 Z" fill="#9fb3cf" />
+          </marker>
+        </defs>
+
+        <rect
+          x="18"
+          y="48"
+          width="944"
+          height="60"
+          rx="8"
+          fill="url(#architectureFlow)"
+        />
+        <g className={styles.hostingBands}>
+          <rect x="28" y="64" width="250" height="28" rx="14" />
+          <rect x="296" y="64" width="280" height="28" rx="14" />
+          <rect x="594" y="64" width="340" height="28" rx="14" />
+          <text x="153" y="82" textAnchor="middle">
+            On-prem / private DC
+          </text>
+          <text x="436" y="82" textAnchor="middle">
+            Hybrid cloud movement
+          </text>
+          <text x="764" y="82" textAnchor="middle">
+            Cloud, SaaS, and agent surfaces
+          </text>
+        </g>
+
+        {nodes.slice(0, -1).map((node, index) => {
+          const next = nodes[index + 1];
+          return (
+            <path
+              d={`M${node.x + node.width + 7} ${node.y + 48} C${
+                node.x + 132
+              } ${node.y + 38}, ${next.x - 18} ${next.y + 38}, ${next.x - 7} ${
+                next.y + 48
+              }`}
+              fill="none"
+              key={`${node.layer}-${next.layer}`}
+              markerEnd="url(#flowArrow)"
+              stroke="#9fb3cf"
+              strokeWidth="3"
+            />
+          );
+        })}
+
+        {nodes.map((node) => (
+          <g className={styles.flowNode} key={node.layer}>
+            <rect
+              x={node.x}
+              y={node.y}
+              width={node.width}
+              height={node.height}
+              rx="8"
+              fill="#fff"
+              stroke={TONE_HEX[node.tone]}
+              strokeOpacity="0.45"
+              strokeWidth="1.4"
+            />
+            <circle
+              cx={node.x + 20}
+              cy={node.y + 22}
+              r="12"
+              fill={TONE_HEX[node.tone]}
+            />
+            <text
+              x={node.x + 20}
+              y={node.y + 26}
+              textAnchor="middle"
+              className={styles.flowIndex}
+            >
+              {node.layer}
+            </text>
+            <SvgTextLines
+              x={node.x + node.width / 2}
+              y={node.y + 54}
+              className={styles.flowTitle}
+              lines={compactLayerTitles[node.title] ?? [node.title]}
+            />
+            <SvgTextLines
+              x={node.x + node.width / 2}
+              y={node.y + 102}
+              className={styles.flowDetail}
+              lineHeight={12}
+              lines={node.examples.slice(0, 2)}
+            />
+          </g>
+        ))}
+
+        <g className={styles.flowProofPath}>
+          <path
+            d="M902 272 C750 322, 214 318, 78 278"
+            fill="none"
+            stroke="#b63b35"
+            strokeDasharray="7 7"
+            strokeWidth="2.4"
+          />
+          <text x="490" y="330" textAnchor="middle">
+            Agent action loops back only through identity, retrieval, human
+            approval, baseline, writeback, and attestation gates.
+          </text>
+        </g>
+      </svg>
+    </section>
   );
 }
 
@@ -495,6 +730,32 @@ function TabPanels({
 
       <article
         className={styles.panel}
+        id="context-panel"
+        role="tabpanel"
+        aria-labelledby="tab-context"
+        hidden={selectedTab !== "context"}
+      >
+        <div className={styles.contextLayout}>
+          <div>
+            <h2>Loaded context, integrated into the Home story</h2>
+            <p className={styles.lead}>{model.contextRead}</p>
+          </div>
+          <ContextSignalWall signals={model.contextSignals} />
+          <div className={styles.contextDomainGrid}>
+            {model.contextDomains.map((domain) => (
+              <article className={styles.contextDomain} key={domain.title}>
+                <span className={styles.eyebrow}>{domain.label}</span>
+                <h3>{domain.title}</h3>
+                <p>{domain.body}</p>
+                <small>{domain.evidence}</small>
+              </article>
+            ))}
+          </div>
+        </div>
+      </article>
+
+      <article
+        className={styles.panel}
         id="economics-panel"
         role="tabpanel"
         aria-labelledby="tab-economics"
@@ -518,6 +779,88 @@ function TabPanels({
                 <div data-label="Value">{row.value}</div>
                 <div data-label="Read">{row.detail}</div>
               </div>
+            ))}
+          </div>
+        </div>
+      </article>
+
+      <article
+        className={styles.panel}
+        id="architecture-panel"
+        role="tabpanel"
+        aria-labelledby="tab-architecture"
+        hidden={selectedTab !== "architecture"}
+      >
+        <div className={styles.architectureLayout}>
+          <div>
+            <h2>Data and AI current-state architecture by lane</h2>
+            <p className={styles.lead}>{model.architectureRead}</p>
+          </div>
+          <ArchitectureFlowMap model={model} />
+          <div className={styles.architectureGrid}>
+            <ArchitectureStack layers={model.architectureLayers} />
+            <div className={styles.architectureDecisionGrid}>
+              {model.architectureDecisions.map((decision) => (
+                <article
+                  className={styles.architectureDecision}
+                  key={decision.title}
+                >
+                  <span className={styles.severity}>{decision.evidence}</span>
+                  <h3>{decision.title}</h3>
+                  <p>{decision.body}</p>
+                  <SparkBar
+                    item={{
+                      layer: decision.title,
+                      title: decision.title,
+                      detail: decision.body,
+                      coverage: decision.evidence,
+                      examples: [],
+                      ratio: decision.tone === "red" ? 0.38 : 0.68,
+                      tone: decision.tone,
+                    }}
+                  />
+                </article>
+              ))}
+            </div>
+          </div>
+          <div className={styles.deploymentGrid}>
+            {model.architectureDeployments.map((deployment) => (
+              <article className={styles.deploymentCard} key={deployment.label}>
+                <span className={styles.eyebrow}>{deployment.label}</span>
+                <h3>{deployment.posture}</h3>
+                <p>{deployment.body}</p>
+                <div className={styles.laneChipRow}>
+                  {deployment.examples.map((example) => (
+                    <span key={example}>{example}</span>
+                  ))}
+                </div>
+                <SparkBar
+                  item={{
+                    layer: deployment.label,
+                    title: deployment.posture,
+                    detail: deployment.body,
+                    coverage: deployment.label,
+                    examples: deployment.examples,
+                    ratio: deployment.ratio,
+                    tone: deployment.tone,
+                  }}
+                />
+              </article>
+            ))}
+          </div>
+          <div className={styles.archetypeGrid}>
+            {model.architectureArchetypes.map((archetype) => (
+              <article className={styles.archetypeCard} key={archetype.title}>
+                <span className={styles.route}>{archetype.route}</span>
+                <h3>{archetype.title}</h3>
+                <strong>{archetype.topology}</strong>
+                <p>{archetype.body}</p>
+                <div className={styles.laneChipRow}>
+                  {archetype.examples.map((example) => (
+                    <span key={example}>{example}</span>
+                  ))}
+                </div>
+              </article>
             ))}
           </div>
         </div>
@@ -650,9 +993,10 @@ function TabPanels({
         <div>
           <h2>Evidence and content provenance</h2>
           <p className={styles.lead}>
-            This render reflects the V0.2.4 product contract. Production
-            approval still requires HomeEnterpriseEvidenceV2, one Claude
-            synthesis, raw-response retention, and narrative validation.
+            This render reflects the V0.2.5 product contract. Production
+            approval still requires HomeEnterpriseEvidenceV2, one audited Claude
+            synthesis, raw-response retention, scrubbed-response retention, and
+            narrative validation.
           </p>
         </div>
         <div className={styles.evidenceGrid}>
