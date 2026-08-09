@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 
 import {
   HOME_LANDSCAPE_TABS,
@@ -128,21 +129,23 @@ function ContextSignalWall({
   );
 }
 
-function SvgTextLines({
+function SvgTextBlock({
   x,
   y,
   lines,
   className,
-  lineHeight = 15,
+  textAnchor = "start",
+  lineHeight = 13,
 }: {
   x: number;
   y: number;
   lines: string[];
   className: string;
+  textAnchor?: "start" | "middle" | "end";
   lineHeight?: number;
 }) {
   return (
-    <text x={x} y={y} textAnchor="middle" className={className}>
+    <text x={x} y={y} textAnchor={textAnchor} className={className}>
       {lines.map((line, index) => (
         <tspan x={x} dy={index === 0 ? 0 : lineHeight} key={line}>
           {line}
@@ -152,159 +155,384 @@ function SvgTextLines({
   );
 }
 
+function MiniArchitectureDiagram({
+  title,
+  subtitle,
+  children,
+  ariaLabel,
+}: {
+  title: string;
+  subtitle: string;
+  children: ReactNode;
+  ariaLabel: string;
+}) {
+  return (
+    <article className={styles.architectureDiagramCard}>
+      <div className={styles.visualTitle}>
+        <strong>{title}</strong>
+        <span>{subtitle}</span>
+      </div>
+      <svg
+        className={styles.architectureMiniSvg}
+        viewBox="0 0 560 320"
+        role="img"
+        aria-label={ariaLabel}
+      >
+        <defs>
+          <marker
+            id={`${title.replaceAll(" ", "-").toLowerCase()}-arrow`}
+            markerHeight="7"
+            markerWidth="7"
+            orient="auto"
+            refX="6"
+            refY="3.5"
+          >
+            <path d="M0,0 L7,3.5 L0,7 Z" fill="#8da2bd" />
+          </marker>
+        </defs>
+        {children}
+      </svg>
+    </article>
+  );
+}
+
 function ArchitectureFlowMap({
   model,
 }: {
   model: HomeEnterpriseLandscapeV2Model;
 }) {
-  const compactLayerTitles: Record<string, string[]> = {
-    "Applications and core systems": ["Apps and", "core systems"],
-    "Integration, ETL, and event movement": ["Integration", "movement"],
-    "Storage, EDW, and data marts": ["EDW, storage", "marts"],
-    "Data science and engineering": ["Data science", "platforms"],
-    "Consumption and decision surfaces": ["Consumption", "BI"],
-    "AI agents and copilots": ["AI agents", "copilots"],
-    "Core-system action and proof gates": ["Action", "proof gates"],
-  };
-  const nodes = model.architectureLayers.map((layer, index) => ({
-    ...layer,
-    x: 28 + index * 136,
-    y: index === 6 ? 160 : 140,
-    width: 112,
-    height: index === 6 ? 106 : 118,
-  }));
+  const layerByTitle = new Map(
+    model.architectureLayers.map((layer) => [layer.title, layer]),
+  );
+  const sourceLayer = layerByTitle.get("Applications and core systems");
+  const integrationLayer = layerByTitle.get(
+    "Integration, ETL, and event movement",
+  );
+  const storageLayer = layerByTitle.get("Storage, EDW, and data marts");
+  const consumptionLayer = layerByTitle.get(
+    "Consumption and decision surfaces",
+  );
+  const agentLayer = layerByTitle.get("AI agents and copilots");
+  const controlLayer = layerByTitle.get("Core-system action and proof gates");
 
   return (
     <section
       className={styles.architectureHero}
-      aria-label="Data and AI architecture flow from source systems to consumption"
+      aria-label="Scoped current-state architecture diagrams"
     >
       <div className={styles.visualTitle}>
-        <strong>Source to consumption architecture</strong>
-        <span>Current-state lane view · planning-grade</span>
+        <strong>Current-state architecture exhibits</strong>
+        <span>
+          Scoped views for Data and AI, ERP, private cloud, and digital channels
+        </span>
       </div>
-      <svg
-        className={styles.flowSvg}
-        viewBox="0 0 980 352"
-        role="img"
-        aria-label="Applications feed integration, storage, data science, consumption, AI agents, and governed core-system action"
-      >
-        <defs>
-          <linearGradient id="architectureFlow" x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0" stopColor="#246fc8" stopOpacity="0.18" />
-            <stop offset="0.48" stopColor="#198f82" stopOpacity="0.14" />
-            <stop offset="1" stopColor="#b97824" stopOpacity="0.16" />
-          </linearGradient>
-          <marker
-            id="flowArrow"
-            markerHeight="8"
-            markerWidth="8"
-            orient="auto"
-            refX="7"
-            refY="4"
-          >
-            <path d="M0,0 L8,4 L0,8 Z" fill="#9fb3cf" />
-          </marker>
-        </defs>
-
-        <rect
-          x="18"
-          y="48"
-          width="944"
-          height="60"
-          rx="8"
-          fill="url(#architectureFlow)"
-        />
-        <g className={styles.hostingBands}>
-          <rect x="28" y="64" width="250" height="28" rx="14" />
-          <rect x="296" y="64" width="280" height="28" rx="14" />
-          <rect x="594" y="64" width="340" height="28" rx="14" />
-          <text x="153" y="82" textAnchor="middle">
-            On-prem / private DC
-          </text>
-          <text x="436" y="82" textAnchor="middle">
-            Hybrid cloud movement
-          </text>
-          <text x="764" y="82" textAnchor="middle">
-            Cloud, SaaS, and agent surfaces
-          </text>
-        </g>
-
-        {nodes.slice(0, -1).map((node, index) => {
-          const next = nodes[index + 1];
-          return (
-            <path
-              d={`M${node.x + node.width + 7} ${node.y + 48} C${
-                node.x + 132
-              } ${node.y + 38}, ${next.x - 18} ${next.y + 38}, ${next.x - 7} ${
-                next.y + 48
-              }`}
-              fill="none"
-              key={`${node.layer}-${next.layer}`}
-              markerEnd="url(#flowArrow)"
-              stroke="#9fb3cf"
-              strokeWidth="3"
+      <div className={styles.architectureStoryboard}>
+        <MiniArchitectureDiagram
+          title="Data and AI mesh"
+          subtitle="Source to consumption, with governed agent loopback"
+          ariaLabel="Data and AI mesh diagram showing source applications, integration, governed data products, BI, analytics, AI agents, and proof gates"
+        >
+          <g className={styles.miniDiagramBase}>
+            <rect x="26" y="248" width="508" height="44" rx="7" />
+            <SvgTextBlock
+              x={44}
+              y={274}
+              lines={[
+                "Sources",
+                sourceLayer?.examples.slice(0, 4).join(" · ") ?? "",
+              ]}
+              className={styles.miniLabel}
             />
-          );
-        })}
-
-        {nodes.map((node) => (
-          <g className={styles.flowNode} key={node.layer}>
-            <rect
-              x={node.x}
-              y={node.y}
-              width={node.width}
-              height={node.height}
-              rx="8"
-              fill="#fff"
-              stroke={TONE_HEX[node.tone]}
-              strokeOpacity="0.45"
-              strokeWidth="1.4"
-            />
-            <circle
-              cx={node.x + 20}
-              cy={node.y + 22}
-              r="12"
-              fill={TONE_HEX[node.tone]}
-            />
-            <text
-              x={node.x + 20}
-              y={node.y + 26}
+            <rect x="42" y="182" width="120" height="44" rx="7" />
+            <SvgTextBlock
+              x={102}
+              y={201}
+              lines={[
+                "Integration",
+                integrationLayer?.examples.slice(1, 4).join(" · ") ?? "",
+              ]}
+              className={styles.miniCenterText}
               textAnchor="middle"
-              className={styles.flowIndex}
-            >
-              {node.layer}
-            </text>
-            <SvgTextLines
-              x={node.x + node.width / 2}
-              y={node.y + 54}
-              className={styles.flowTitle}
-              lines={compactLayerTitles[node.title] ?? [node.title]}
             />
-            <SvgTextLines
-              x={node.x + node.width / 2}
-              y={node.y + 102}
-              className={styles.flowDetail}
-              lineHeight={12}
-              lines={node.examples.slice(0, 2)}
+            <rect x="204" y="162" width="150" height="82" rx="12" />
+            <SvgTextBlock
+              x={279}
+              y={185}
+              lines={[
+                "Governed platform",
+                "Raw → processed → aggregated",
+                storageLayer?.examples.slice(0, 2).join(" + ") ?? "",
+              ]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+            <rect x="392" y="182" width="120" height="44" rx="7" />
+            <SvgTextBlock
+              x={452}
+              y={201}
+              lines={[
+                "Consumption",
+                consumptionLayer?.examples.slice(0, 2).join(" + ") ?? "",
+              ]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+            <rect x="354" y="70" width="142" height="58" rx="8" />
+            <SvgTextBlock
+              x={425}
+              y={94}
+              lines={[
+                "AI agents",
+                agentLayer?.examples.slice(0, 2).join(" + ") ?? "",
+              ]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+            <rect x="56" y="70" width="216" height="48" rx="8" />
+            <SvgTextBlock
+              x={164}
+              y={91}
+              lines={[
+                "Role-based access",
+                "identity · policy · lineage",
+                "domain ownership",
+              ]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
             />
           </g>
-        ))}
-
-        <g className={styles.flowProofPath}>
-          <path
-            d="M902 272 C750 322, 214 318, 78 278"
-            fill="none"
-            stroke="#b63b35"
-            strokeDasharray="7 7"
-            strokeWidth="2.4"
+          <g className={styles.miniDiagramFlows}>
+            <path d="M102 248 L102 226" />
+            <path d="M162 204 L204 204" />
+            <path d="M354 204 L392 204" />
+            <path d="M452 182 L425 128" />
+            <path d="M354 100 L272 100" />
+            <path
+              d="M425 128 C392 150 374 162 346 178"
+              className={styles.dashedFlow}
+            />
+            <path
+              d="M425 128 C342 42 174 44 108 70"
+              className={styles.dashedFlow}
+            />
+          </g>
+          <SvgTextBlock
+            x={280}
+            y={300}
+            lines={[
+              "Data products are visible;",
+              "finance value still needs baseline and attestation.",
+            ]}
+            className={styles.miniFootnote}
+            textAnchor="middle"
           />
-          <text x="490" y="330" textAnchor="middle">
-            Agent action loops back only through identity, retrieval, human
-            approval, baseline, writeback, and attestation gates.
-          </text>
-        </g>
-      </svg>
+        </MiniArchitectureDiagram>
+
+        <MiniArchitectureDiagram
+          title="ERP and finance core"
+          subtitle="Control-heavy path from source of record to value proof"
+          ariaLabel="ERP and finance architecture diagram showing SAP, EPM, master data, controlled integration, finance reporting, and Tower proof gates"
+        >
+          <g className={styles.miniDiagramBase}>
+            <rect x="28" y="66" width="126" height="70" rx="8" />
+            <SvgTextBlock
+              x={91}
+              y={92}
+              lines={["ERP core", "SAP S/4HANA", "finance master data"]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+            <rect x="218" y="66" width="124" height="70" rx="8" />
+            <SvgTextBlock
+              x={280}
+              y={92}
+              lines={["Controls", "MDM · close", "reconciliation"]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+            <rect x="406" y="66" width="126" height="70" rx="8" />
+            <SvgTextBlock
+              x={469}
+              y={92}
+              lines={["Finance view", "EPM · GL", "budget / actual"]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+            <rect x="90" y="198" width="132" height="54" rx="8" />
+            <SvgTextBlock
+              x={156}
+              y={220}
+              lines={["Integration", "batch · API · files"]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+            <rect x="314" y="198" width="156" height="54" rx="8" />
+            <SvgTextBlock
+              x={392}
+              y={220}
+              lines={[
+                "Tower proof",
+                controlLayer?.examples.slice(4, 6).join(" + ") ??
+                  "baseline + attestation",
+              ]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+          </g>
+          <g className={styles.miniDiagramFlows}>
+            <path d="M154 101 L218 101" />
+            <path d="M342 101 L406 101" />
+            <path d="M91 136 C94 166 116 184 156 198" />
+            <path d="M469 136 C466 166 436 184 392 198" />
+            <path d="M222 225 L314 225" className={styles.dashedFlow} />
+          </g>
+          <SvgTextBlock
+            x={280}
+            y={286}
+            lines={[
+              "ERP is slower-moving and evidence-governed;",
+              "AI action stays behind approval gates.",
+            ]}
+            className={styles.miniFootnote}
+            textAnchor="middle"
+          />
+        </MiniArchitectureDiagram>
+
+        <MiniArchitectureDiagram
+          title="Private cloud and mainframe"
+          subtitle="Two-data-center resilience, legacy gravity, and hybrid egress"
+          ariaLabel="Private cloud and mainframe architecture diagram showing two data centers, IBM mainframe, private cloud, replicated operations, integration, and cloud analytics egress"
+        >
+          <g className={styles.miniDiagramBase}>
+            <rect x="34" y="62" width="186" height="154" rx="12" />
+            <SvgTextBlock
+              x={127}
+              y={86}
+              lines={[
+                "Private DC 1",
+                "IBM z/OS · CICS",
+                "DB2 · MQ",
+                "operations gravity",
+              ]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+            <rect x="340" y="62" width="186" height="154" rx="12" />
+            <SvgTextBlock
+              x={433}
+              y={86}
+              lines={[
+                "Private DC 2",
+                "hot/warm recovery",
+                "replicated controls",
+              ]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+            <rect x="214" y="238" width="132" height="48" rx="8" />
+            <SvgTextBlock
+              x={280}
+              y={258}
+              lines={["Hybrid egress", "API · ETL · event bridge"]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+            <rect x="212" y="118" width="136" height="52" rx="8" />
+            <SvgTextBlock
+              x={280}
+              y={140}
+              lines={["Private cloud", "VMware / OpenShift"]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+          </g>
+          <g className={styles.miniDiagramFlows}>
+            <path d="M220 138 L340 138" />
+            <path d="M340 154 L220 154" className={styles.dashedFlow} />
+            <path d="M127 216 C152 236 182 250 214 260" />
+            <path d="M433 216 C408 236 378 250 346 260" />
+          </g>
+          <SvgTextBlock
+            x={280}
+            y={300}
+            lines={[
+              "A credible airline current state shows",
+              "mainframe and dual-DC resilience explicitly.",
+            ]}
+            className={styles.miniFootnote}
+            textAnchor="middle"
+          />
+        </MiniArchitectureDiagram>
+
+        <MiniArchitectureDiagram
+          title="Digital airline channels"
+          subtitle="Web, mobile, APIs, loyalty, and real-time experience data"
+          ariaLabel="Digital airline channels architecture diagram showing airline dot com, mobile, API gateway, loyalty, passenger service, events, analytics, and personalization"
+        >
+          <g className={styles.miniDiagramBase}>
+            <rect x="32" y="64" width="130" height="74" rx="8" />
+            <SvgTextBlock
+              x={97}
+              y={91}
+              lines={["Airline.com", "mobile · kiosks", "contact center"]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+            <rect x="216" y="64" width="128" height="74" rx="8" />
+            <SvgTextBlock
+              x={280}
+              y={91}
+              lines={["API layer", "identity · booking", "passenger service"]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+            <rect x="398" y="64" width="130" height="74" rx="8" />
+            <SvgTextBlock
+              x={463}
+              y={91}
+              lines={["Experience", "loyalty · offers", "service recovery"]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+            <rect x="78" y="204" width="152" height="54" rx="8" />
+            <SvgTextBlock
+              x={154}
+              y={226}
+              lines={["Events", "clickstream · trips · cases"]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+            <rect x="330" y="204" width="152" height="54" rx="8" />
+            <SvgTextBlock
+              x={406}
+              y={226}
+              lines={["Decisioning", "BI · CDP · AI assist"]}
+              className={styles.miniCenterText}
+              textAnchor="middle"
+            />
+          </g>
+          <g className={styles.miniDiagramFlows}>
+            <path d="M162 101 L216 101" />
+            <path d="M344 101 L398 101" />
+            <path d="M280 138 C244 162 204 184 154 204" />
+            <path d="M230 231 L330 231" />
+            <path
+              d="M406 204 C430 174 448 150 463 138"
+              className={styles.dashedFlow}
+            />
+          </g>
+          <SvgTextBlock
+            x={280}
+            y={286}
+            lines={[
+              "Digital has a real-time customer-facing shape;",
+              "it should not be drawn like ERP.",
+            ]}
+            className={styles.miniFootnote}
+            textAnchor="middle"
+          />
+        </MiniArchitectureDiagram>
+      </div>
     </section>
   );
 }

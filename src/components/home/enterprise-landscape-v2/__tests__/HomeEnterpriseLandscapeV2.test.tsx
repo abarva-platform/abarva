@@ -67,16 +67,28 @@ it("integrates context and architecture into the approved eight-tab canvas", () 
   ).toBeInTheDocument();
   expect(screen.getByText("Enterprise constraint map")).toBeInTheDocument();
   expect(
-    screen.getAllByText("Source to consumption architecture").length,
+    screen.getAllByText("Current-state architecture exhibits").length,
   ).toBeGreaterThan(0);
   expect(
     screen.getByRole("img", {
-      name: /Applications feed integration, storage, data science, consumption, AI agents, and governed core-system action/i,
+      name: /Data and AI mesh diagram showing source applications, integration, governed data products, BI, analytics, AI agents, and proof gates/i,
     }),
   ).toBeInTheDocument();
-  expect(screen.getAllByText("Teradata Vantage").length).toBeGreaterThan(0);
-  expect(screen.getAllByText("Power BI Copilot").length).toBeGreaterThan(0);
-  expect(screen.getAllByText("On-prem / private DC").length).toBeGreaterThan(0);
+  expect(
+    screen.getByRole("img", {
+      name: /Private cloud and mainframe architecture diagram showing two data centers, IBM mainframe, private cloud, replicated operations, integration, and cloud analytics egress/i,
+    }),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Data and AI mesh")).toBeInTheDocument();
+  expect(screen.getByText("ERP and finance core")).toBeInTheDocument();
+  expect(screen.getByText("Private cloud and mainframe")).toBeInTheDocument();
+  expect(screen.getByText("Digital airline channels")).toBeInTheDocument();
+  expect(screen.getByText("IBM z/OS · CICS")).toBeInTheDocument();
+  expect(screen.getByText("DB2 · MQ")).toBeInTheDocument();
+  expect(screen.getByText("Private DC / mainframe")).toBeInTheDocument();
+  expect(screen.getByText("Digital edge")).toBeInTheDocument();
+  expect(screen.getAllByText(/Teradata Vantage/).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/Power BI Copilot/).length).toBeGreaterThan(0);
   expect(screen.getAllByText("Hybrid cloud").length).toBeGreaterThan(0);
   expect(
     screen.getByText("Resolve contradictory lifecycle states"),
