@@ -259,6 +259,8 @@
     "tower:value-os:migrate:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260809150000_tower_value_operating_system_v1.sql",
     "tower:value-os:verify": "node scripts/tower/verify-tower-value-os.mjs --mode verify",
     "tower:value-os:verify:preflight": "node scripts/tower/verify-tower-value-os.mjs --mode preflight",
+    "tower:value-os:verify:bundle": "node scripts/tower/verify-tower-value-os.mjs --mode verify --require-db --emit-proof-bundle",
+    "tower:value-os:verify:preflight:bundle": "node scripts/tower/verify-tower-value-os.mjs --mode preflight --emit-proof-bundle",
     "audit:tower-cxo-claude-story": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/audit/build-tower-cxo-claude-story-proof.ts",
     "ingest:verify": "npx tsx -e \"const {Pinecone}=require('@pinecone-database/pinecone');const fs=require('fs'),path=require('path');const lines=fs.readFileSync(path.join(process.cwd(),'.env.local'),'utf-8').split('\\n');const env={};for(const l of lines){const[k,...v]=l.split('=');if(k&&v.length)env[k.trim()]=v.join('=').trim();}const pc=new Pinecone({apiKey:env.PINECONE_API_KEY});pc.index(env.PINECONE_INDEX||'nexus-knowledge').describeIndexStats().then(s=>console.log('Vectors in nexus-knowledge:',s.totalRecordCount));\"",
     "seed:enterprise": "npx tsx src/scripts/seed/run-enterprise-packj.ts",

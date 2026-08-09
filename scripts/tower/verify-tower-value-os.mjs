@@ -48,11 +48,11 @@ function parseArgs(argv) {
   const args = {
     mode: "verify",
     tenants: [],
-    outDir: "",
-    emitProofBundle: false,
-    requireDb: false,
-    skipQueryPlans: false,
-    zipPath: "",
+    outDir: process.env.TOWER_VALUE_OS_OUT_DIR || "",
+    emitProofBundle: process.env.TOWER_VALUE_OS_EMIT_PROOF_BUNDLE === "true",
+    requireDb: process.env.TOWER_VALUE_OS_REQUIRE_DB === "true",
+    skipQueryPlans: process.env.TOWER_VALUE_OS_SKIP_QUERY_PLANS === "true",
+    zipPath: process.env.TOWER_VALUE_OS_ZIP_PATH || "",
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -820,6 +820,7 @@ async function main() {
   const coverageRows = runtime.error || runtime.skipped ? [] : buildCoverageRows(runtime);
   const markdown = buildMarkdown(staticContract, runtime.skipped ? {} : runtime, reconciliation);
   const summary = {
+    event: "tower_value_os_reconciliation",
     status: runtime.skipped ? "PREFLIGHT_COMPLETE" : dbError && args.requireDb ? "FAIL" : dbError ? "BLOCKED_DB_UNAVAILABLE" : "COMPLETE",
     generated_at: new Date().toISOString(),
     mutation_scope: "none",
