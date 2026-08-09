@@ -247,4 +247,38 @@ describe("buildContractOptimizationFactLayer", () => {
       ]),
     );
   });
+
+  it("coerces non-numeric Contract 360 confidence descriptors before writing fact assertions", () => {
+    const layer = buildContractOptimizationFactLayer({
+      tenantKey: "skyharbor_global",
+      datasetVersion: "source-v1-1-canary",
+      contract: contract({
+        source_confidence: "system-derived" as unknown as number,
+      }),
+      overview: {
+        tenant_key: "skyharbor_global",
+        dataset_version: "source-v1-1-canary",
+        contract_id: "CTR-090",
+        vendor_id: "salesforce",
+        annual_value_usd: 100_000,
+      },
+      pricingRows: [],
+      invoiceRows: [],
+      slaRows: [],
+      financeRow: null,
+    });
+
+    expect(
+      layer.assertions.find(
+        (assertion) =>
+          assertion.sourceTable === "source.contract_360" &&
+          assertion.factKey === "contract_annual_value_usd",
+      ),
+    ).toMatchObject({ confidence: 0.82 });
+    expect(
+      layer.assertions.every((assertion) =>
+        Number.isFinite(assertion.confidence),
+      ),
+    ).toBe(true);
+  });
 });
