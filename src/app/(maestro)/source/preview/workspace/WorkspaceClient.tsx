@@ -294,7 +294,7 @@ export function WorkspaceClient({
         }}
       >
         <strong style={{ color: portfolio.isEmpty ? '#ffb066' : '#8fb8ff', fontWeight: 800 }}>
-          {portfolio.isEmpty ? 'No Source rows returned' : 'SkyHarbor Source'}
+          {portfolio.isEmpty ? 'No Source rows returned' : portfolio.workspaceDiagnostics.datasetLabel}
         </strong>
         <span style={{ color: 'rgba(255,255,255,.74)' }}>
           {portfolio.isEmpty
