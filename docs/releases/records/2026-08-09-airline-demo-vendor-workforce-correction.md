@@ -29,7 +29,7 @@ Corrects a synthetic airline demo source-data inconsistency where a digital-plat
 
 - `datasets/tenant-inputs/active/skyharbor-air/current/07_vendors_contracts.csv`: Removes HCM managed-services scope from the digital-platform supplier row.
 - `datasets/tenant-inputs/active/skyharbor-air/current/03_workforce_roles.csv`: Adds three internal HCM support roles totaling 23 FTE.
-- `scripts/source/repair-skyharbor-deloitte-workday-scope.ts`: Adds a tenant-scoped ACA operator repair/readback job for the Source raw table that backs the live Vendor 360 views.
+- `scripts/source/repair-skyharbor-deloitte-workday-scope.ts`: Adds a tenant-scoped ACA operator repair/readback job for Source raw rows and governed Source scope/relationship rows that can feed supplier-scope product views.
 - `package.json`: Adds `source:skyharbor:deloitte-scope-repair`.
 
 ## QA / Validation
@@ -41,13 +41,15 @@ Corrects a synthetic airline demo source-data inconsistency where a digital-plat
 - Pass: `npm run build:canonical-tenant-data`
 - Pass: `npm run project:tower-mart:airline-demo:dry-run`
 - Known pre-existing failure: `npm run audit:canonical-tenant-inputs -- --tenant skyharbor-air` still audits all active tenants and fails on existing active-template drift unrelated to this two-file correction.
-- Pending: governed ACA operator execution of `source:skyharbor:deloitte-scope-repair` after the script is merged and deployed into the digest-pinned image.
+- Pass: `npx eslint scripts/source/repair-skyharbor-deloitte-workday-scope.ts`
+- Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`
+- Pending: governed ACA operator execution of `source:skyharbor:deloitte-scope-repair` after the broadened script is merged and deployed into the digest-pinned image.
 
 ## Rollout Plan
 
 1. Merge the source-data correction to `main`.
 2. Let the repo-owned ACA main workflow build the new digest-pinned image.
-3. Run the governed ACA operator repair/readback job for the Source raw table using the approved digest-pinned image.
+3. Run the governed ACA operator repair/readback job for Source raw and governed scope tables using the approved digest-pinned image.
 4. Run the governed projection path needed for workforce-consuming read models.
 5. Verify product readback for the supplier scope and workforce projection before calling the correction live.
 
@@ -71,7 +73,7 @@ Revert the source-data PR and rerun the same governed data-build/projection job 
 - Local CSV semantic readback output.
 - Local canonical data build output.
 - Local Tower mart dry-run output.
-- Governed ACA operator job proof bundle after live projection.
+- Governed ACA operator job proof bundle after live repair/projection.
 - Signed-in product readback after live projection.
 
 ## Known Gaps

@@ -14,6 +14,8 @@ const DEFAULT_TENANT_KEY = "skyharbor_global";
 const RAW_SCHEMA = "raw_enterprise_it";
 const RAW_TABLE = "vendors_contracts";
 const REPAIR_ID = "skyharbor-deloitte-workday-scope-20260809";
+const CORRECTED_SCOPE_SUMMARY =
+  "Direct Booking Web Platform managed-services support only; HCM managed-services support is represented by internal workforce roles.";
 
 interface Args {
   apply: boolean;
@@ -99,6 +101,68 @@ async function readColumns(client: Client): Promise<Set<string>> {
   return new Set(result.rows.map((row) => row.column_name));
 }
 
+async function relationExists(
+  client: Client,
+  schemaName: string,
+  tableName: string,
+): Promise<boolean> {
+  const result = await client.query<{ exists: boolean }>(
+    `
+      select to_regclass($1) is not null as exists
+    `,
+    [`${schemaName}.${tableName}`],
+  );
+  return result.rows[0]?.exists === true;
+}
+
+async function readSourceVendorIds(
+  client: Client,
+  tenantKey: string,
+): Promise<string[]> {
+  if (!(await relationExists(client, "source", "vendor"))) return [];
+  const result = await client.query<{ vendor_id: string }>(
+    `
+      select distinct vendor_id
+        from source.vendor
+       where tenant_key = $1
+         and (
+           vendor_id ilike '%Deloitte%'
+           or legal_name ilike '%Deloitte%'
+           or raw_payload::text ilike '%Deloitte%'
+         )
+       order by vendor_id
+    `,
+    [tenantKey],
+  );
+  return result.rows.map((row) => row.vendor_id).filter(Boolean);
+}
+
+async function readDeloitteContractIds(
+  client: Client,
+  tenantKey: string,
+  vendorIds: string[],
+): Promise<string[]> {
+  if (!(await relationExists(client, "source", "contract"))) return [];
+  const result = await client.query<{ contract_id: string }>(
+    `
+      select distinct c.contract_id
+        from source.contract c
+        left join source.vendor v
+          on v.tenant_key = c.tenant_key
+         and v.vendor_id = c.vendor_id
+       where c.tenant_key = $1
+         and (
+           c.vendor_id = any($2::text[])
+           or v.legal_name ilike '%Deloitte%'
+           or c.raw_payload::text ilike '%Deloitte%'
+         )
+       order by c.contract_id
+    `,
+    [tenantKey, vendorIds],
+  );
+  return result.rows.map((row) => row.contract_id).filter(Boolean);
+}
+
 function candidateColumns(columns: Set<string>): string[] {
   return [
     "contract_name",
@@ -163,6 +227,180 @@ async function readSourceRows(client: Client, tenantKey: string): Promise<Row[]>
   }
 }
 
+async function readGovernedRows(
+  client: Client,
+  tenantKey: string,
+  vendorIds: string[],
+  contractIds: string[],
+): Promise<Record<string, Row[]>> {
+  const empty: Record<string, Row[]> = {
+    sourceVendor: [],
+    sourceContract: [],
+    sourceContractScope: [],
+    sourceVendorApplicationRelationship: [],
+    sourceVendorPlatformRelationship: [],
+    sourceContract360: [],
+    sourceContractApplicationScope: [],
+  };
+  const maybe = async (
+    key: keyof typeof empty,
+    relation: string,
+    sql: string,
+    params: unknown[],
+  ) => {
+    const [schemaName, tableName] = relation.split(".");
+    if (!(await relationExists(client, schemaName, tableName))) return;
+    try {
+      const result = await client.query(sql, params);
+      empty[key] = normalizeRows(result.rows);
+    } catch (error) {
+      empty[key] = [
+        { error: error instanceof Error ? error.message : String(error) },
+      ];
+    }
+  };
+
+  await maybe(
+    "sourceVendor",
+    "source.vendor",
+    `
+      select vendor_id, legal_name, raw_payload
+        from source.vendor
+       where tenant_key = $1
+         and vendor_id = any($2::text[])
+       order by vendor_id
+    `,
+    [tenantKey, vendorIds],
+  );
+  await maybe(
+    "sourceContract",
+    "source.contract",
+    `
+      select c.contract_id, c.vendor_id, v.legal_name, c.contract_name,
+             c.agreement_type, c.source_record_id, c.raw_payload
+        from source.contract c
+        left join source.vendor v
+          on v.tenant_key = c.tenant_key
+         and v.vendor_id = c.vendor_id
+       where c.tenant_key = $1
+         and (
+           c.contract_id = any($2::text[])
+           or c.vendor_id = any($3::text[])
+           or c.raw_payload::text ilike '%Deloitte%'
+         )
+         and (
+           c.contract_name ilike '%Workday%'
+           or c.contract_name ilike '%HCM%'
+           or c.raw_payload::text ilike '%Workday%'
+           or c.raw_payload::text ilike '%HCM%'
+         )
+       order by c.contract_id
+    `,
+    [tenantKey, contractIds, vendorIds],
+  );
+  await maybe(
+    "sourceContractScope",
+    "source.contract_scope",
+    `
+      select contract_scope_id, contract_id, scope_type, scope_ref, scope_name,
+             relationship_method, quality_state, raw_payload
+        from source.contract_scope
+       where tenant_key = $1
+         and contract_id = any($2::text[])
+         and quality_state is distinct from 'superseded'
+         and (
+           scope_name ilike '%Workday%'
+           or scope_name ilike '%HCM%'
+           or raw_payload::text ilike '%Workday%'
+           or raw_payload::text ilike '%HCM%'
+         )
+       order by contract_id, scope_name
+    `,
+    [tenantKey, contractIds],
+  );
+  await maybe(
+    "sourceVendorApplicationRelationship",
+    "source.vendor_application_relationship",
+    `
+      select relationship_id, vendor_id, application_ref, application_name,
+             relationship_method, quality_state, raw_payload
+        from source.vendor_application_relationship
+       where tenant_key = $1
+         and vendor_id = any($2::text[])
+         and quality_state is distinct from 'superseded'
+         and (
+           application_name ilike '%Workday%'
+           or application_name ilike '%HCM%'
+           or raw_payload::text ilike '%Workday%'
+           or raw_payload::text ilike '%HCM%'
+         )
+       order by vendor_id, application_name
+    `,
+    [tenantKey, vendorIds],
+  );
+  await maybe(
+    "sourceVendorPlatformRelationship",
+    "source.vendor_platform_relationship",
+    `
+      select relationship_id, vendor_id, platform_ref, platform_name,
+             relationship_method, quality_state, raw_payload
+        from source.vendor_platform_relationship
+       where tenant_key = $1
+         and vendor_id = any($2::text[])
+         and quality_state is distinct from 'superseded'
+         and (
+           platform_name ilike '%Workday%'
+           or platform_name ilike '%HCM%'
+           or raw_payload::text ilike '%Workday%'
+           or raw_payload::text ilike '%HCM%'
+         )
+       order by vendor_id, platform_name
+    `,
+    [tenantKey, vendorIds],
+  );
+  await maybe(
+    "sourceContract360",
+    "source.contract_360",
+    `
+      select tenant_key, contract_id, vendor_ref, vendor_name, contract_name,
+             scope_summary, annual_value
+        from source.contract_360
+       where tenant_key = $1
+         and (
+           vendor_name ilike '%Deloitte%'
+           or contract_id = any($2::text[])
+         )
+       order by contract_id
+       limit 50
+    `,
+    [tenantKey, contractIds],
+  );
+  await maybe(
+    "sourceContractApplicationScope",
+    "source.contract_application_scope",
+    `
+      select tenant_key, contract_id, vendor_ref, vendor_name, application_ref,
+             application_name, business_function, criticality
+        from source.contract_application_scope
+       where tenant_key = $1
+         and (
+           vendor_name ilike '%Deloitte%'
+           or contract_id = any($2::text[])
+         )
+         and (
+           application_name ilike '%Workday%'
+           or application_name ilike '%HCM%'
+           or business_function ilike '%Human Resources%'
+         )
+       order by contract_id, application_name
+       limit 50
+    `,
+    [tenantKey, contractIds],
+  );
+
+  return empty;
+}
+
 function updateAssignments(columns: Set<string>): string[] {
   const assignments: string[] = [];
   if (columns.has("contract_name")) {
@@ -176,7 +414,7 @@ function updateAssignments(columns: Set<string>): string[] {
     assignments.push(
       `${quoteIdent(
         "scope_summary",
-      )} = 'Direct Booking Web Platform managed-services support only; HCM managed-services support is represented by internal workforce roles.'`,
+      )} = '${CORRECTED_SCOPE_SUMMARY.replace(/'/g, "''")}'`,
     );
   }
   if (columns.has("supported_applications")) {
@@ -219,6 +457,146 @@ async function applyRepair(
   return normalizeRows(result.rows);
 }
 
+async function applyGovernedRepair(
+  client: Client,
+  tenantKey: string,
+  vendorIds: string[],
+  contractIds: string[],
+): Promise<Record<string, Row[]>> {
+  const changed: Record<string, Row[]> = {
+    sourceContract: [],
+    sourceContractScopeArchived: [],
+    sourceVendorApplicationRelationshipArchived: [],
+    sourceVendorPlatformRelationshipArchived: [],
+  };
+
+  if (await relationExists(client, "source", "contract")) {
+    const contractResult = await client.query(
+      `
+        update source.contract c
+           set contract_name = regexp_replace(
+                 regexp_replace(c.contract_name, '\\s*&\\s*Workday Managed Services', '', 'gi'),
+                 '\\s*Workday HCM Managed Services\\s*', '',
+                 'gi'
+               ),
+               raw_payload = jsonb_build_object(
+                 'scope_summary', $4::text,
+                 'supported_systems', 'Direct Booking Web Platform',
+                 'supported_functions', 'Distribution, Sales & E-Commerce',
+                 'scope_correction_id', $5::text,
+                 'previous_payload_md5', md5(coalesce(c.raw_payload::text, ''))
+               ),
+               quality_state = case
+                 when c.quality_state in ('accepted', 'reviewed') then c.quality_state
+                 else 'reviewed'
+               end
+         where c.tenant_key = $1
+           and (
+             c.contract_id = any($2::text[])
+             or c.vendor_id = any($3::text[])
+             or c.raw_payload::text ilike '%Deloitte%'
+           )
+           and (
+             c.contract_name ilike '%Workday%'
+             or c.contract_name ilike '%HCM%'
+             or c.raw_payload::text ilike '%Workday%'
+             or c.raw_payload::text ilike '%HCM%'
+           )
+         returning c.contract_id, c.vendor_id, c.contract_name, c.quality_state
+      `,
+      [tenantKey, contractIds, vendorIds, CORRECTED_SCOPE_SUMMARY, REPAIR_ID],
+    );
+    changed.sourceContract = normalizeRows(contractResult.rows);
+  }
+
+  if (await relationExists(client, "source", "contract_scope")) {
+    const scopeResult = await client.query(
+      `
+        update source.contract_scope
+           set quality_state = 'superseded',
+               relationship_method = 'superseded_scope_correction',
+               raw_payload = coalesce(raw_payload, '{}'::jsonb)
+                 || jsonb_build_object(
+                   'superseded_by', $3::text,
+                   'superseded_reason', 'Deloitte scope corrected to Direct Booking Web Platform only'
+                 )
+         where tenant_key = $1
+           and contract_id = any($2::text[])
+           and (
+             scope_name ilike '%Workday%'
+             or scope_name ilike '%HCM%'
+             or raw_payload::text ilike '%Workday%'
+             or raw_payload::text ilike '%HCM%'
+           )
+         returning contract_scope_id, contract_id, scope_type, scope_ref,
+                   scope_name, relationship_method, quality_state
+      `,
+      [tenantKey, contractIds, REPAIR_ID],
+    );
+    changed.sourceContractScopeArchived = normalizeRows(scopeResult.rows);
+  }
+
+  if (await relationExists(client, "source", "vendor_application_relationship")) {
+    const appResult = await client.query(
+      `
+        update source.vendor_application_relationship
+           set quality_state = 'superseded',
+               relationship_method = 'superseded_scope_correction',
+               raw_payload = coalesce(raw_payload, '{}'::jsonb)
+                 || jsonb_build_object(
+                   'superseded_by', $3::text,
+                   'superseded_reason', 'Deloitte application scope corrected to Direct Booking Web Platform only'
+                 )
+         where tenant_key = $1
+           and vendor_id = any($2::text[])
+           and (
+             application_name ilike '%Workday%'
+             or application_name ilike '%HCM%'
+             or raw_payload::text ilike '%Workday%'
+             or raw_payload::text ilike '%HCM%'
+           )
+         returning relationship_id, vendor_id, application_ref, application_name,
+                   relationship_method, quality_state
+      `,
+      [tenantKey, vendorIds, REPAIR_ID],
+    );
+    changed.sourceVendorApplicationRelationshipArchived = normalizeRows(
+      appResult.rows,
+    );
+  }
+
+  if (await relationExists(client, "source", "vendor_platform_relationship")) {
+    const platformResult = await client.query(
+      `
+        update source.vendor_platform_relationship
+           set quality_state = 'superseded',
+               relationship_method = 'superseded_scope_correction',
+               raw_payload = coalesce(raw_payload, '{}'::jsonb)
+                 || jsonb_build_object(
+                   'superseded_by', $3::text,
+                   'superseded_reason', 'Deloitte platform scope corrected to Direct Booking Web Platform only'
+                 )
+         where tenant_key = $1
+           and vendor_id = any($2::text[])
+           and (
+             platform_name ilike '%Workday%'
+             or platform_name ilike '%HCM%'
+             or raw_payload::text ilike '%Workday%'
+             or raw_payload::text ilike '%HCM%'
+           )
+         returning relationship_id, vendor_id, platform_ref, platform_name,
+                   relationship_method, quality_state
+      `,
+      [tenantKey, vendorIds, REPAIR_ID],
+    );
+    changed.sourceVendorPlatformRelationshipArchived = normalizeRows(
+      platformResult.rows,
+    );
+  }
+
+  return changed;
+}
+
 function emitProofBundle(outDir: string): void {
   const result = spawnSync("tar", ["-czf", "-", "-C", outDir, "."], {
     encoding: "buffer",
@@ -248,22 +626,62 @@ async function main() {
     ]);
     const columns = await readColumns(client);
     const beforeRaw = await readRawRows(client, args.tenantKey, columns);
+    const sourceVendorIds = await readSourceVendorIds(client, args.tenantKey);
+    const rawVendorIdsFromRows = beforeRaw
+      .map((row) => String(row.vendor_id ?? ""))
+      .filter(Boolean);
+    const vendorIds = Array.from(
+      new Set([...sourceVendorIds, ...rawVendorIdsFromRows]),
+    ).sort();
+    const sourceContractIds = await readDeloitteContractIds(
+      client,
+      args.tenantKey,
+      vendorIds,
+    );
+    const contractIds = Array.from(
+      new Set([
+        ...sourceContractIds,
+        ...beforeRaw.map((row) => String(row.contract_id ?? "")).filter(Boolean),
+      ]),
+    ).sort();
     const beforeSource = await readSourceRows(client, args.tenantKey);
-    if (beforeRaw.length === 0) {
+    const beforeGoverned = await readGovernedRows(
+      client,
+      args.tenantKey,
+      vendorIds,
+      contractIds,
+    );
+    const staleGovernedCount = Object.entries(beforeGoverned)
+      .filter(([key]) => key !== "sourceVendor" && key !== "sourceContract360")
+      .reduce((sum, [, rows]) => sum + rows.filter((row) => !row.error).length, 0);
+    if (beforeRaw.length === 0 && staleGovernedCount === 0) {
       throw new Error(
-        "No tenant-scoped Deloitte raw row with Workday/HCM overlap was found; no mutation performed.",
+        "No tenant-scoped Deloitte raw or governed Source row with Workday/HCM overlap was found; no mutation performed.",
       );
     }
 
     const updatedRaw = args.apply
-      ? await applyRepair(client, args.tenantKey, columns)
+      ? beforeRaw.length > 0
+        ? await applyRepair(client, args.tenantKey, columns)
+        : []
       : [];
+    const updatedGoverned = args.apply
+      ? await applyGovernedRepair(client, args.tenantKey, vendorIds, contractIds)
+      : {
+          sourceContract: [],
+          sourceContractScopeArchived: [],
+          sourceVendorApplicationRelationshipArchived: [],
+          sourceVendorPlatformRelationshipArchived: [],
+        };
     const afterRaw = args.apply
       ? await readRawRows(client, args.tenantKey, columns)
       : beforeRaw;
     const afterSource = args.apply
       ? await readSourceRows(client, args.tenantKey)
       : beforeSource;
+    const afterGoverned = args.apply
+      ? await readGovernedRows(client, args.tenantKey, vendorIds, contractIds)
+      : beforeGoverned;
 
     const residualWorkdayRaw = afterRaw.filter((row) =>
       JSON.stringify(row).toLowerCase().includes("workday"),
@@ -275,7 +693,8 @@ async function main() {
     );
     const passed =
       args.apply &&
-      updatedRaw.length > 0 &&
+      (updatedRaw.length > 0 ||
+        Object.values(updatedGoverned).some((rows) => rows.length > 0)) &&
       residualWorkdayRaw.length === 0 &&
       residualHumanResourcesRaw.length === 0;
 
@@ -286,11 +705,16 @@ async function main() {
       apply: args.apply,
       rawTable: `${RAW_SCHEMA}.${RAW_TABLE}`,
       changedRows: updatedRaw.length,
+      sourceVendorIds: vendorIds,
+      sourceContractIds: contractIds,
       beforeRaw,
       updatedRaw,
       afterRaw,
       beforeSource,
       afterSource,
+      beforeGoverned,
+      updatedGoverned,
+      afterGoverned,
       residualWorkdayRaw,
       residualHumanResourcesRaw,
       passed,
