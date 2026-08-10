@@ -227,6 +227,19 @@
   font-weight: 700;
 }
 
+@media (max-width: 1500px) {
+  .scopeRail {
+    clip: rect(0 0 0 0);
+    flex: 0 0 auto;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
+}
+
 /* Tabs */
 .tabs {
   flex: none;
