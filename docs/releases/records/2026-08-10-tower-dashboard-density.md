@@ -40,6 +40,7 @@ This release removes always-visible explanatory bands from the Tower cockpit so 
 - Tower spacing, tab padding, body gaps, and panel margins are tightened so the first analytical panel appears higher in the viewport.
 - Command Center compresses the board-posture card, read-model scope band, and first chart row so the conversion and trajectory dashboards appear in the initial viewport.
 - Command Center removes the redundant visible read-model scope strip from the dashboard flow; the same scope counts remain in the header chips and hidden semantic content.
+- Tower hides the duplicate header scope-chip rail on narrower desktop widths so the first dashboard row is not pushed down by wrapping executive metadata.
 
 ## QA / Validation
 
@@ -50,6 +51,8 @@ This release removes always-visible explanatory bands from the Tower cockpit so 
 - Command Center follow-up density proof moved the first chart row to y=263 in the local harness with zero horizontal overflow.
 - Command Center strip-fat proof moved the first chart row to y=214 in the local harness with zero horizontal overflow.
 - Shared live proof of the intermediate follow-up moved Command Center from y=563 to y=339; this final strip removal is expected to move the first dashboard band to roughly y=291 in the shared app.
+- Shared live proof after strip removal showed the remaining narrow-width issue: the header scope-chip rail pushed Command Center to y=344 at 1280px. This patch hides that duplicate rail below 1500px.
+- Header responsive density proof moved the local harness Command Center dashboard row to y=233 at 1280px and y=234 at 1440px, with zero horizontal overflow.
 - `git diff --check` — passed.
 
 ## Rollout Plan
@@ -77,6 +80,7 @@ Rollback by reverting the UI release commit and redeploying through the repo-own
 - Local density screenshots: `/Users/anand/Downloads/tower-density-visual-proof-2026-08-10-v4/screens`
 - Command Center density proof: `/Users/anand/Downloads/tower-command-center-density-proof-2026-08-10/command-center-density-proof.md`
 - Command Center strip-fat proof: `/Users/anand/Downloads/tower-strip-fat-density-proof-2026-08-10/command-center-strip-fat-proof.md`
+- Header responsive density proof: `/Users/anand/Downloads/tower-header-responsive-density-proof-2026-08-10/header-responsive-proof.md`
 - PR URL, ACA deploy workflow run, runtime invariant, and signed-in shared-route proof to be captured after publication.
 
 ## Known Gaps
