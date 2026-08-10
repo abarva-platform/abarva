@@ -107,6 +107,7 @@ describe("matchEvidenceRequirementForUpload (filename → canonical requirement)
       ["bafo", "bafo_offer_concession_register.xlsx", "EVID-SRC-BAFO-OFFERS"],
       ["executive_decision", "value_ledger_benefit_case.xlsx", "EVID-SRC-DEC-VALUE-LEDGER"],
       ["selection", "obligation_deliverable_register.xlsx", "EVID-SRC-SEL-OBLIGATION-REGISTER"],
+      ["transition", "transition_readiness_tracker.csv", "EVID-SRC-TRAN-MILESTONES"],
       ["transition", "cmdb_handover_access_assets.csv", "EVID-SRC-TRAN-ASSET-ACCESS"],
       ["value", "finance_confirmation_realized_value.xlsx", "EVID-SRC-VAL-FINANCE-CONFIRMATION"],
     ] as const;

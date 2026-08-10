@@ -99,6 +99,7 @@ describe("TaskChecklist provide-task upload", () => {
     expect(
       screen.getByLabelText(/Remove apex-svc-baseline-18mo\.xlsx/),
     ).toBeInTheDocument();
+    await waitFor(() => expect(routerRefresh).toHaveBeenCalled());
   });
 
   it("renders an error (not a fake success) when the upload fails", async () => {

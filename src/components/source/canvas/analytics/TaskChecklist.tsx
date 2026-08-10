@@ -810,6 +810,7 @@ export function TaskProvideUpload({
 
       setStatus({ phase: "uploaded", result });
       onUploaded?.();
+      router.refresh();
     } catch (error) {
       setStatus({
         phase: "error",
