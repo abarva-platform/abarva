@@ -1,13 +1,13 @@
 visual_id,type,status,chart_allowed,evidence_boundary
-SHA-VIZ-001,context_strength_snapshot,pass,false,Planning-grade only; no dimension is certified as production-ready evidence.
-SHA-VIZ-002,dimension_readiness_matrix,pass,false,All dimensions are planning-grade or needs-validation; none are certified.
-SHA-VIZ-003,top_evidence_requests,pass,false,Gaps are planning-grade hypotheses until validated by real documents or certified data.
-SHA-VIZ-004,use_case_portfolio,pass,false,All use cases are planning-grade; none have certified production readiness.
-SHA-VIZ-005,risk_control_heatmap,pass,false,Risk status is hypothesis-grade; no controls are certified as effective without audit evidence.
-SHA-VIZ-006,vendor_dependency_matrix,pass,false,Vendor analysis is planning-grade; no contract terms are legally validated at this stage.
-SHA-VIZ-007,data_foundation_gap_map,pass,false,All data domains are needs-validation; no domain has certified lineage or completeness proof.
-SHA-VIZ-008,module_next_actions,pass,false,Module actions are advisory; Source activation requires evidence gate clearance per use case.
-SHA-VIZ-009,value_hypothesis_vs_proof,pass,false,All value claims are hypothesis-grade; no realized savings or outcomes are claimed.
-SHA-VIZ-010,evidence_confidence_matrix,pass,false,Confidence ratings are planning-grade; all cells require real evidence validation to upgrade status.
-SHA-VIZ-011,program_readiness_matrix,pass,false,All programs are planning-grade; no program has certified readiness for production deployment.
-SHA-VIZ-012,cxo_insight_cards,pass,false,Insights are advisory and planning-grade; no claims reflect certified outcomes or validated decisions.
+SHA-VIZ-001,context_strength_snapshot,pass,false,All classifications are planning-grade; no dimension is certified without Tower validation.
+SHA-VIZ-002,dimension_readiness_matrix,pass,false,Readiness ratings are hypothesis-grade until Tower validation is completed per dimension.
+SHA-VIZ-003,top_evidence_requests,pass,false,Rankings are advisory and planning-grade; Tower must validate priority ordering.
+SHA-VIZ-004,risk_control_heatmap,pass,false,All risk ratings are planning-grade hypotheses; no certified control evidence is claimed.
+SHA-VIZ-005,use_case_portfolio,pass,false,All use cases are planning-grade; none are certified for production deployment.
+SHA-VIZ-006,vendor_dependency_matrix,pass,false,All classifications are planning-grade; legal validation of exit and benchmarking rights is not yet evidenced.
+SHA-VIZ-007,data_foundation_gap_map,pass,false,All lineage statuses are planning-grade; Tower validation is required before any domain is certified.
+SHA-VIZ-008,program_readiness_matrix,pass,false,All program statuses are planning-grade; joint baseline and control artifact are not yet evidenced.
+SHA-VIZ-009,module_next_actions,pass,false,Module actions are advisory and planning-grade; Tower must validate before any action is executed.
+SHA-VIZ-010,value_hypothesis_vs_proof,pass,false,All value hypotheses are planning-grade; no realized savings or outcomes are claimed.
+SHA-VIZ-011,sourcing_scope_readiness_map,pass,false,"All scope elements are planning-grade; CMDB, SLA, and invoice reconciliation are not yet evidenced."
+SHA-VIZ-012,cxo_insight_cards,pass,false,All signals are planning-grade and interview-derived; none are certified operational findings.

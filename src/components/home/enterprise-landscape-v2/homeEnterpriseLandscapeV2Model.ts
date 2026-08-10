@@ -1,12 +1,15 @@
 export type HomeLandscapeTabId =
   | "summary"
   | "patterns"
+  | "context"
   | "economics"
+  | "architecture"
   | "posture"
   | "coherence"
   | "trajectory"
   | "watchlist"
-  | "evidence";
+  | "evidence"
+  | "claudeReview";
 
 export type SignalTone = "blue" | "teal" | "amber" | "slate" | "red";
 
@@ -159,12 +162,15 @@ export const HOME_LANDSCAPE_TABS: Array<{
 }> = [
   { id: "summary", label: "Summary" },
   { id: "patterns", label: "Patterns" },
+  { id: "context", label: "Context" },
   { id: "economics", label: "Economics" },
+  { id: "architecture", label: "Architecture" },
   { id: "posture", label: "Posture" },
   { id: "coherence", label: "Coherence" },
   { id: "trajectory", label: "Trajectory" },
   { id: "watchlist", label: "Watchlist" },
   { id: "evidence", label: "Evidence" },
+  { id: "claudeReview", label: "Claude Review" },
 ];
 
 export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Model =

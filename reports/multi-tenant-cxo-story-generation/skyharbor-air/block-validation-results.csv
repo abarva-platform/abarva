@@ -1,21 +1,21 @@
-block_id,dimension,status,approved_for_render,hard_fail_count
-SHA-BLK-000,Overview,pass,true,0
-SHA-BLK-01,00 Enterprise Profile,pass,true,0
-SHA-BLK-02,01 Business Functions,pass,true,0
-SHA-BLK-03,02 Org Ownership,pass,true,0
-SHA-BLK-04,03 Workforce Roles,pass,true,0
-SHA-BLK-05,04 Applications & Systems,pass,true,0
-SHA-BLK-06,05 Data Assets & Integrations,pass,true,0
-SHA-BLK-07,06 Infrastructure & Platforms,pass,true,0
-SHA-BLK-08,07 Vendors & Contracts,pass,true,0
-SHA-BLK-09,"08 IT Budget, Spend & Value",pass,true,0
-SHA-BLK-10,09 Programs & Initiatives,pass,true,0
-SHA-BLK-11,10 AI & Automation Use Cases,pass,true,0
-SHA-BLK-12,11 Risks & Controls,pass,true,0
-SHA-BLK-13,12 Relationships,pass,true,0
-SHA-BLK-14,13 Evidence Sources,pass,true,0
-SHA-BLK-15,14 Metrics & Outcomes,pass,true,0
-SHA-BLK-16,15 Industry Context Patterns,pass,true,0
-SHA-BLK-17,16 Expert Lenses,pass,true,0
-SHA-BLK-18,17 Managed Services Scope,pass,true,0
-SHA-BLK-19,18 Operational Process Evidence,pass,true,0
+block_id,dimension,structural_status,publication_status,hard_fail_count,review_note
+"SHA-BLK-000","Overview","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-01","00 Enterprise Profile","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-02","01 Business Functions","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-03","02 Org Ownership","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-04","03 Workforce Roles","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-05","04 Applications & Systems","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-06","05 Data Assets & Integrations","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-07","06 Infrastructure & Platforms","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-08","07 Vendors & Contracts","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-09","08 IT Budget, Spend & Value","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-10","09 Programs & Initiatives","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-11","10 AI & Automation Use Cases","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-12","11 Risks & Controls","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-13","12 Relationships","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-14","13 Evidence Sources","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-15","14 Metrics & Outcomes","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-16","15 Industry Context Patterns","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-17","16 Expert Lenses","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-18","17 Managed Services Scope","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"
+"SHA-BLK-19","18 Operational Process Evidence","review_only","blocked_pending_claim_level_semantic_validation","0","Claude returned approved_for_render; publication approval rejected"

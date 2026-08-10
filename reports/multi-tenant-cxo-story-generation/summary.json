@@ -1,39 +1,26 @@
 {
-  "generated_at": "2026-07-17T00:00:00.715Z",
-  "audit_status": "Pass",
+  "generated_at": "2026-08-10T11:56:28.175Z",
+  "prompt_version": "knowledge-cxo-story-blocks-v1",
+  "model": "claude-sonnet-4-6",
   "results": [
     {
-      "tenantKey": "meridian-health",
-      "canonicalInput": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3",
-      "status": "Pass",
-      "failures": [],
-      "storyBlocks": 20,
-      "visualSpecs": 12,
-      "score": 4.65,
-      "storyStore": "approved tenant-key Home/Knowledge advisory artifact store",
-      "visualStore": "approved tenant-key Home/Knowledge visual artifact store"
-    },
-    {
       "tenantKey": "skyharbor-air",
-      "canonicalInput": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3",
-      "status": "Pass",
-      "failures": [],
+      "canonicalInput": "datasets/tenant-inputs/active/skyharbor-air/current",
       "storyBlocks": 20,
       "visualSpecs": 12,
-      "score": 4.65,
-      "storyStore": "approved tenant-key Home/Knowledge advisory artifact store",
-      "visualStore": "approved tenant-key Home/Knowledge visual artifact store"
-    },
-    {
-      "tenantKey": "first-capital",
-      "canonicalInput": "datasets/tenant-inputs/first-capital/standard-2026-07-v3",
-      "status": "Pass",
-      "failures": [],
-      "storyBlocks": 20,
-      "visualSpecs": 12,
-      "score": 4.65,
-      "storyStore": "approved tenant-key Home/Knowledge advisory artifact store",
-      "visualStore": "approved tenant-key Home/Knowledge visual artifact store"
+      "validation": {
+        "status": "pass",
+        "failures": [],
+        "overall": 4.65,
+        "categoryScores": {
+          "tenant_specificity": 4.7,
+          "evidence_boundary": 4.6,
+          "executive_quality": 4.6,
+          "module_actionability": 4.7
+        }
+      },
+      "reportDir": "/Users/anand/Projects/nexus-home-v023/reports/multi-tenant-cxo-story-generation/skyharbor-air",
+      "artifactDir": "approved tenant-key advisory artifact store"
     }
   ]
 }

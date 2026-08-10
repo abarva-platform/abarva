@@ -1,179 +1,179 @@
 ## Overview
 
-SkyHarbor Air is a complex global passenger airline with cargo, loyalty, maintenance, and digital operations.
+SkyHarbor Air operates across passenger, cargo, loyalty, maintenance, and digital domains with significant evidence gaps.
 
-- What context reveals: Seven strategic use cases span sourcing, IROPS, crew, contact center, maintenance, and baggage domains.
-- Decision implication: No use case is decision-grade until cross-domain evidence is reconciled and governance owners are confirmed.
-- Evidence still needed: SLA mapping, invoice reconciliation, disruption lineage, transcript governance, and lakehouse certification remain outstanding.
-- Next validation action: Prioritize SLA-to-criticality mapping and IROPS lineage certification as first evidence milestones.
+- What context reveals: Planning-grade context exists; operational, financial, and vendor evidence remains largely unvalidated across key domains.
+- Decision implication: No board-defensible business case should advance until cross-system lineage and finance sign-off are established.
+- Evidence still needed: Validated baselines across IROPS, crew, maintenance, baggage, and managed-services domains are not yet evidenced.
+- Next validation action: Commission a cross-domain evidence audit covering operations, finance, and vendor contracts before any initiative advances.
 
 ## 00 Enterprise Profile
 
-SkyHarbor Air operates as a multi-division global airline with significant operational and vendor complexity.
+SkyHarbor Air spans passenger, cargo, loyalty, airport, maintenance, and digital operations with inherited legacy system debt.
 
-- What context reveals: Passenger, cargo, loyalty, airport, maintenance, and digital divisions create interdependent operational risk exposure.
-- Decision implication: Enterprise profile supports planning-grade framing only; no audited scale or revenue figures are claimed.
-- Evidence still needed: Certified fleet size, route network scope, and division P&L boundaries need evidence before strategic sizing.
-- Next validation action: Request certified organizational scope and division boundary documentation from enterprise architecture team.
+- What context reveals: Enterprise scope is broad; system consolidation from prior integrations has left duplicated legacy instances unresolved.
+- Decision implication: A consolidated system inventory is prerequisite to any rationalization, sourcing, or AI-readiness program.
+- Evidence still needed: Consolidated system inventory across legacy instances is not yet evidenced; needs validation before scope decisions.
+- Next validation action: Request a verified system inventory covering all legacy instances inherited from prior integrations.
 
 ## 01 Business Functions
 
-Flight operations, crew management, customer experience, maintenance, and sourcing are the primary AI-relevant functions.
+Flight ops, crew, stations, cargo, loyalty, and contact center functions lack system-mediated handoffs during disruptions.
 
-- What context reveals: IROPS, crew recovery, contact center, and baggage functions share overlapping data and system dependencies.
-- Decision implication: Function readiness is hypothesis-grade; no function has certified end-to-end data lineage confirmed.
-- Evidence still needed: Accountable owners per function, data-sharing agreements, and process baseline documentation need validation.
-- Next validation action: Conduct function-owner interviews to assign accountability and confirm data-sharing readiness per domain.
+- What context reveals: Network and station views reconcile by phone rather than system, creating decision latency during irregular operations.
+- Decision implication: System-mediated handoff evidence must precede any AI-assisted disruption decision support deployment.
+- Evidence still needed: System-mediated handoff between ops control and stations is not yet evidenced; needs operational validation.
+- Next validation action: Document and validate the current handoff process between network operations control and station teams.
 
 ## 02 Org Ownership
 
-Policy content ownership and data governance accountability are not yet assigned across critical use cases.
+No joint governance forum with real authority exists; ops and IT decision ownership is contested across key programs.
 
-- What context reveals: Contact center policy ownership, crew rule lineage, and maintenance safety controls lack confirmed accountable owners.
-- Decision implication: Ownership gaps are a governance blocker; no AI use case should advance to production without resolution.
-- Evidence still needed: Named data owners, policy stewards, and AI governance sponsors need formal assignment and documentation.
-- Next validation action: Map each use case to a named executive sponsor and data steward before next evidence review cycle.
+- What context reveals: Interview signals confirm unresolved decision-ownership is a structural blocker for IROPS and data governance programs.
+- Decision implication: A documented decision-rights model signed by ops and IT leadership is prerequisite to any AI program advancement.
+- Evidence still needed: Chartered joint governance forum with decision authority is not yet evidenced; needs executive sponsorship.
+- Next validation action: Charter a joint ops-IT governance forum with explicit decision authority before next program milestone.
 
 ## 03 Workforce Roles
 
-Crew planners, contact center agents, maintenance technicians, and sourcing analysts are primary AI-adjacent roles.
+Prior tool failures have reduced frontline confidence; deployment is being reported as adoption without utilization evidence.
 
-- What context reveals: Agent assist, crew recovery, and maintenance analytics each require role-specific acceptance and QA telemetry.
-- Decision implication: Role readiness is not yet evidenced; human override capture and QA telemetry are prerequisites for deployment.
-- Evidence still needed: Agent QA telemetry, crew override reason codes, and technician workflow acceptance data need governance approval.
-- Next validation action: Design acceptance telemetry capture for agent assist and crew recovery pilots before any deployment decision.
+- What context reveals: Interview signals flag that deployment metrics are substituted for adoption metrics in executive reporting.
+- Decision implication: Post-launch utilization reporting at ninety days must be mandatory before any tool is declared operationally adopted.
+- Evidence still needed: Hub-level pilot with logged override rate and ninety-day utilization report are not yet evidenced.
+- Next validation action: Require a ninety-day post-launch utilization report for every deployed tool before adoption is claimed.
 
 ## 04 Applications & Systems
 
-Fourteen systems span reservations, crew, maintenance, baggage, CRM, loyalty, ITSM, and data platforms.
+Reservations, DCS, crew, baggage, and maintenance systems span legacy and target-state platforms without certified inventory.
 
-- What context reveals: Legacy reservations and enterprise data warehouse coexist with target-state AWS lakehouse and modern ITSM.
-- Decision implication: Application dependency mapping is planning-grade; real-time integration evidence is missing for critical use cases.
-- Evidence still needed: PSS-to-CRM real-time integration, lakehouse certification, and CMDB accuracy need validated evidence.
-- Next validation action: Commission CMDB accuracy audit and PSS-CRM integration latency assessment as immediate evidence requests.
+- What context reveals: AWS lakehouse and modernization platforms are target-state; current-state certification is not yet evidenced across domains.
+- Decision implication: No sourcing or migration decision should proceed without a finance-certified current-state application inventory.
+- Evidence still needed: Current-state application inventory certified across legacy and target-state platforms is not yet evidenced.
+- Next validation action: Commission a certified application inventory covering all operational domains before sourcing scope is defined.
 
 ## 05 Data Assets & Integrations
 
-Key data domains including disruption lineage, bag scans, maintenance events, and transcripts lack certification.
+Flight, crew, baggage, maintenance, and finance data flows lack certified lineage, blocking decision-grade analytics.
 
-- What context reveals: Cross-system data lineage is unproven for IROPS, baggage, maintenance, and contact center use cases.
-- Decision implication: All data-dependent use cases are hypothesis-grade until lineage, completeness, and quality are formally validated.
-- Evidence still needed: Disruption lineage certification, bag scan completeness proof, and maintenance feed reconciliation are outstanding.
-- Next validation action: Initiate data quality assessment for IROPS lineage and baggage scan completeness as first certification milestone.
+- What context reveals: No reconciled cross-system cost view of IROPS days exists; OTP recovery metric is used unvalidated across pitches.
+- Decision implication: Tower-validated metric definitions and cross-system lineage proof must precede any board-level analytics claim.
+- Evidence still needed: Cross-system lineage proof from DCS, crew, and finance is not yet evidenced; needs Tower validation.
+- Next validation action: Initiate a Tower-led lineage validation sprint covering DCS, crew, finance, and baggage data flows.
 
 ## 06 Infrastructure & Platforms
 
-AWS airline data lakehouse is a target-state platform; current-state certification evidence is not yet confirmed.
+AWS airline data lakehouse is a target-state platform; current infrastructure readiness for analytics workloads is unvalidated.
 
-- What context reveals: Legacy enterprise data warehouse remains the operational anchor while lakehouse migration is in progress.
-- Decision implication: Infrastructure readiness is planning-grade; no AI use case should assume lakehouse availability without certification.
-- Evidence still needed: Lakehouse certification status, migration timeline, and data feed reconciliation need formal validation.
-- Next validation action: Request lakehouse certification report and migration milestone evidence from cloud and data engineering teams.
+- What context reveals: Maintenance analytics and baggage analytics use cases depend on lakehouse certification not yet in evidence.
+- Decision implication: Infrastructure certification must precede any production analytics deployment on the target lakehouse.
+- Evidence still needed: AWS lakehouse certification for production analytics workloads is not yet evidenced; needs platform validation.
+- Next validation action: Request a platform readiness assessment for the target lakehouse before analytics use cases are promoted.
 
 ## 07 Vendors & Contracts
 
-Eight vendors including NorthSky Managed Services and AeroCore anchor critical operational and IT delivery.
+GDS, AMS, and legacy platform vendors represent concentration risk without a board-ready concentration ratio view.
 
-- What context reveals: Managed-services dependency is high; SLA commitments, exit rights, and benchmarking terms are not validated.
-- Decision implication: Vendor dependency is a sourcing risk; no renegotiation or exit strategy should proceed without contract evidence.
-- Evidence still needed: Exit rights, benchmarking clauses, step-in rights, and AI automation commitments need legal and procurement review.
-- Next validation action: Engage legal and procurement to extract and validate exit, benchmarking, and AI commitment clauses per vendor.
+- What context reveals: GDS distribution cost is creeping upward unexamined; GDS renewal and data migration decisions are made in isolation.
+- Decision implication: A vendor concentration ratio report and joint contract-migration risk model are needed before any renewal proceeds.
+- Evidence still needed: Vendor concentration ratio by system category and multi-year GDS cost trend analysis are not yet evidenced.
+- Next validation action: Produce a vendor concentration ratio report by system category for audit committee review.
 
 ## 08 IT Budget, Spend & Value
 
-IT spend allocation across managed services, platforms, and modernization is not finance-certified at this stage.
+Invoices do not code to projects; conflicting baselines across business cases prevent defensible value measurement.
 
-- What context reveals: Rate-card variance, change-order leakage, and staffing costs are hypothesized but not reconciled to finance records.
-- Decision implication: Spend analysis is planning-grade; savings hypotheses require Tower validation and finance-certified baselines.
-- Evidence still needed: Finance-certified rate cards, invoice-to-SOW reconciliation, and staffing cost mapping need procurement review.
-- Next validation action: Request finance-certified IT spend breakdown and invoice-to-SOW reconciliation from procurement and finance teams.
+- What context reveals: ROI cases bundle hard savings with speculative gains; no single reconciled cost baseline is finance-approved.
+- Decision implication: Invoice-to-project coding remediation and a disaggregated business case standard are required before capital approval.
+- Evidence still needed: Finance-approved capital plan tied to spend visibility and reconciled cost baseline are not yet evidenced.
+- Next validation action: Remediate invoice-to-project coding and require finance sign-off on all business case baselines.
 
 ## 09 Programs & Initiatives
 
-Seven active use-case programs span sourcing, operations, customer experience, and analytics modernization.
+IROPS, crew, maintenance, baggage, and analytics programs advance without co-existing baseline and control artifacts.
 
-- What context reveals: Program interdependencies are high; IROPS, crew, and contact center programs share unresolved data dependencies.
-- Decision implication: Program sequencing is a hypothesis; no program should advance to execution without dependency mapping evidence.
-- Evidence still needed: Cross-program dependency map, milestone owners, and evidence gate criteria need formal program governance.
-- Next validation action: Facilitate cross-program dependency workshop to identify sequencing blockers and assign milestone accountability.
+- What context reveals: Baseline and control artifact rarely co-exist on one initiative; sponsor-only value cases go unaccountable.
+- Decision implication: A uniform gating checklist requiring joint baseline and control artifact must apply to every program regardless of AI label.
+- Evidence still needed: Joint reconciled baseline plus control artifact for each active program is not yet evidenced.
+- Next validation action: Apply a uniform gating checklist requiring joint baseline and control artifact before any program milestone is approved.
 
 ## 10 AI & Automation Use Cases
 
-Seven AI use cases are identified across sourcing, IROPS, crew, contact center, maintenance, and baggage domains.
+IROPS copilot, crew recovery, agent assist, and maintenance analytics are planning-grade; none have auditable pilot events.
 
-- What context reveals: No use case has certified data lineage, operator acceptance telemetry, or governance approval for production deployment.
-- Decision implication: All AI use cases are planning-grade; production readiness requires evidence validation across all prerequisite domains.
-- Evidence still needed: Lineage certification, acceptance telemetry, governance approval, and baseline metrics are outstanding for all use cases.
-- Next validation action: Define evidence gate criteria for each use case and assign validation owners before next planning cycle.
+- What context reveals: Planning speed is being conflated with production readiness; no single logged, human-reviewed IROPS event is on record.
+- Decision implication: One logged, human-reviewed, outcome-compared IROPS event must exist before any AI use case is promoted to operations.
+- Evidence still needed: Auditable end-to-end pilot event with human review and outcome comparison is not yet evidenced for any use case.
+- Next validation action: Execute and log one complete IROPS pilot event with human review and outcome comparison before next board review.
 
 ## 11 Risks & Controls
 
-Risk spans managed-services contract gaps, uncertified data lineage, and unvalidated AI governance controls.
+AI recommendations for rebooking and crew recovery do not yet encode passenger-rights obligations or safety controls.
 
-- What context reveals: SLA misses without business-impact linkage, unreconciled service credits, and missing safety controls are key risks.
-- Decision implication: Risk posture is not yet evidenced as controlled; each risk domain requires owner assignment and mitigation evidence.
-- Evidence still needed: Safety control review, service-credit reconciliation, legal validation of exit rights, and AI audit trails are needed.
-- Next validation action: Commission risk register review covering vendor, data, AI governance, and safety control domains immediately.
+- What context reveals: Human-review gate evidence is absent; budget pressure is threatening the human-in-the-loop safeguard design.
+- Decision implication: A protected funding line for human-in-the-loop design and a human-review gate must precede any customer-facing automation.
+- Evidence still needed: Human-review gate evidence and protected human-in-the-loop funding line are not yet evidenced.
+- Next validation action: Establish and fund a human-review gate before any passenger-facing AI recommendation is deployed.
 
 ## 12 Relationships
 
-CIO, CTO, and CDAO teams share overlapping priorities but cross-functional alignment is not yet evidenced.
+AMS and GDS relationships carry ambiguous exit rights, benchmarking gaps, and unvalidated AI automation commitments.
 
-- What context reveals: Interview signals show consistent pain points across technology, infrastructure, and data leadership teams.
-- Decision implication: Stakeholder alignment is a hypothesis; formal cross-functional governance is needed before program commitments.
-- Evidence still needed: Cross-functional alignment sessions, shared priority rankings, and governance charter documentation are outstanding.
-- Next validation action: Facilitate CIO-CTO-CDAO alignment session to confirm shared priorities and cross-functional governance structure.
+- What context reveals: Termination assistance, step-in rights, and benchmarking provisions need legal validation before any renegotiation.
+- Decision implication: Legal review of exit, benchmarking, and AI automation commitments must precede any managed-services renegotiation.
+- Evidence still needed: Legal-validated exit rights, benchmarking provisions, and AI commitment terms are not yet evidenced.
+- Next validation action: Commission legal review of exit rights, benchmarking, and AI automation clauses across all managed-services agreements.
 
 ## 13 Evidence Sources
 
-Current evidence is planning-grade and synthetic; no production-certified data, contracts, or outcomes are claimed.
+All contracts, invoices, tickets, and interview signals are synthetic planning-grade evidence, not certified operational records.
 
-- What context reveals: Interview signals, use-case gap lists, and system inventories form the current evidence base for all analysis.
-- Decision implication: All analysis is advisory until real contracts, invoices, SLA reports, and certified data feeds are validated.
-- Evidence still needed: Real SLA reports, certified invoices, production data feeds, and legal contract extracts are the next evidence tier.
-- Next validation action: Establish evidence registry mapping each gap to a real document, system, or interview source for validation.
+- What context reveals: No realized savings, SLA credits, or operational improvement outcomes are claimed or evidenced at this stage.
+- Decision implication: Every evidence source must be explicitly classified as planning-grade or certified before it informs a board decision.
+- Evidence still needed: Certified operational evidence across all domains is not yet evidenced; classification audit is needed.
+- Next validation action: Conduct an evidence classification audit distinguishing planning-grade from certified sources across all active programs.
 
 ## 14 Metrics & Outcomes
 
-No certified operational, financial, or customer-experience baselines exist to anchor outcome measurement.
+OTP recovery, recovery cost per event, and crew shortfall cost metrics are used without Tower-validated definitions.
 
-- What context reveals: IROPS recovery time, agent handle time, crew recovery cost, and baggage claim rates lack approved baselines.
-- Decision implication: Outcome claims are hypothesis-grade; value measurement requires approved baselines before any AI deployment.
-- Evidence still needed: Operations, finance, and customer-experience baseline datasets need certification from accountable business owners.
-- Next validation action: Define baseline measurement protocol for each use case and assign metric owners before pilot design begins.
+- What context reveals: Unvalidated metrics appear across board materials and business cases, creating audit and credibility exposure.
+- Decision implication: Tower-validated metric definitions must be established and locked before any metric appears in board materials.
+- Evidence still needed: Tower-validated definitions for OTP recovery, recovery cost per event, and crew shortfall cost are not yet evidenced.
+- Next validation action: Initiate Tower-led metric validation for OTP recovery, recovery cost, and crew shortfall before next board cycle.
 
 ## 15 Industry Context Patterns
 
-IROPS sensitivity, crew legality complexity, and managed-services dependency are common airline transformation risks.
+Irregular-operations sensitivity, managed-services dependency, and legacy reservations are characteristic airline risk amplifiers.
 
-- What context reveals: Industry patterns suggest data lineage gaps and vendor lock-in are systemic challenges in airline AI programs.
-- Decision implication: Industry benchmarks are directional only; SkyHarbor-specific evidence must validate any pattern-based hypothesis.
-- Evidence still needed: Airline-specific benchmarking data for SLA performance, AI adoption, and managed-services terms needs sourcing.
-- Next validation action: Source airline industry benchmarking data for managed-services SLA norms and AI adoption maturity comparisons.
+- What context reveals: Industry patterns suggest IROPS cost exposure and managed-services concentration are structurally above average for this profile.
+- Decision implication: IROPS, managed-services, and legacy platform evidence should be prioritized given industry-pattern risk amplification.
+- Evidence still needed: Benchmarked industry-pattern comparison for IROPS cost and managed-services concentration is not yet evidenced.
+- Next validation action: Apply airline industry benchmarks to IROPS cost and managed-services concentration before next sourcing review.
 
 ## 16 Expert Lenses
 
-Legal, procurement, data governance, AI ethics, and operational safety expertise are required across use cases.
+No initiative has simultaneously applied operations, finance, and legal expert lenses to validate its evidence base.
 
-- What context reveals: No single expert lens covers the full scope; cross-domain expert engagement is a prerequisite for evidence validation.
-- Decision implication: Expert engagement is a planning prerequisite; no use case should advance without domain-specific expert sign-off.
-- Evidence still needed: Legal review of contracts, safety control audit, AI ethics framework, and data governance expert assessments needed.
-- Next validation action: Engage legal, safety, and AI governance experts to review highest-risk use cases in the next planning cycle.
+- What context reveals: Value cases are sponsor-driven; finance and legal sign-off are absent from most active program baselines.
+- Decision implication: A joint ops-finance-legal review must be required for every initiative before it advances to board-level approval.
+- Evidence still needed: Joint sponsor-finance-legal sign-off on any active initiative baseline is not yet evidenced.
+- Next validation action: Require joint ops, finance, and legal sign-off on every initiative baseline before board submission.
 
 ## 17 Managed Services Scope
 
-NorthSky Managed Services anchors AMS and IMS delivery; scope, SLAs, and exit terms are not yet validated.
+AMS and IMS scope lacks certified CMDB, SLA history, SOW mapping, and invoice-to-rate-card reconciliation.
 
-- What context reveals: SLA commitments are not mapped to business criticality; change-order leakage and rate-card variance are hypothesized.
-- Decision implication: Managed-services analysis is planning-grade; sourcing action requires validated SLA, invoice, and contract evidence.
-- Evidence still needed: SOW-to-invoice reconciliation, SLA criticality mapping, benchmarking rights, and exit clause validation are needed.
-- Next validation action: Initiate SOW and invoice reconciliation with procurement and request SLA criticality mapping from service management.
+- What context reveals: Service-credit eligibility, chronic SLA misses, and change-order leakage are hypotheses without reconciled evidence.
+- Decision implication: CMDB, SLA, SOW, invoice, and rate-card evidence must be reconciled before any renegotiation or re-sourcing proceeds.
+- Evidence still needed: Finance-certified SLA history, invoice-to-SOW reconciliation, and rate-card variance analysis are not yet evidenced.
+- Next validation action: Reconcile SLA history, invoices, and SOW mapping across all managed-services towers before renegotiation scope is set.
 
 ## 18 Operational Process Evidence
 
-IROPS, crew recovery, baggage, and maintenance processes lack certified process evidence for AI integration.
+IROPS lineage, baggage scan completeness, and maintenance work-order reconciliation are unproven across operational domains.
 
-- What context reveals: Cross-system disruption lineage, crew override capture, bag scan completeness, and maintenance feeds are unproven.
-- Decision implication: Operational process readiness is not yet evidenced; process certification is a prerequisite for all AI use cases.
-- Evidence still needed: Disruption lineage, crew override logs, bag scan completeness, and maintenance work-order feeds need certification.
-- Next validation action: Commission operational process evidence audit covering IROPS, crew, baggage, and maintenance domains immediately.
+- What context reveals: Outstation baggage data reconciles a day late; maintenance event lineage and parts feeds are not certified.
+- Decision implication: Network-wide real-time scan coverage and certified maintenance lineage must precede any operational analytics deployment.
+- Evidence still needed: Real-time bag scan coverage proof and certified maintenance event lineage are not yet evidenced.
+- Next validation action: Validate network-wide real-time bag scan coverage and certify maintenance event lineage before analytics deployment.

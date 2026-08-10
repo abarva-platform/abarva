@@ -1,0 +1,33 @@
+{
+  "model": "claude-sonnet-4-6",
+  "prompt_version": "home-claude-architecture-diagram-pack-v1",
+  "generation_mode": "per_diagram",
+  "generated_at": "2026-08-10T13:18:33.960Z",
+  "raw_responses": [
+    {
+      "diagram_id": "patterns-enterprise-operating-system",
+      "path": "reports/home-claude-architecture-generation/raw-claude-responses/raw-claude-response-patterns-enterprise-operating-system.json",
+      "sha256": "027d1966ac7969b9dc0236c54c4317af43c6255a16cd32a1d7c254954dba93f0"
+    },
+    {
+      "diagram_id": "economics-value-control",
+      "path": "reports/home-claude-architecture-generation/raw-claude-responses/raw-claude-response-economics-value-control.json",
+      "sha256": "2adbd145d651ef7337fcb08f002ec4b657729ee061e98d18d3ce9aab1707f001"
+    },
+    {
+      "diagram_id": "posture-evidence-authority",
+      "path": "reports/home-claude-architecture-generation/raw-claude-responses/raw-claude-response-posture-evidence-authority.json",
+      "sha256": "284c76e6b60dd44cae5d52ef58bd45375059991de05fd8750a2c0f9b7b4f2d40"
+    },
+    {
+      "diagram_id": "coherence-domain-architecture-index",
+      "path": "reports/home-claude-architecture-generation/raw-claude-responses/raw-claude-response-coherence-domain-architecture-index.json",
+      "sha256": "7d63c3fd8e68340d186f930aa2ee6f909ca9f8d48f23ac566948c2ec1e7b1628"
+    },
+    {
+      "diagram_id": "trajectory-executive-shifts",
+      "path": "reports/home-claude-architecture-generation/raw-claude-responses/raw-claude-response-trajectory-executive-shifts.json",
+      "sha256": "069b44e0a42bcfe09dde8584dc6505bf3e6ba9fa368da80deaf0b60cf7470ab7"
+    }
+  ]
+}
