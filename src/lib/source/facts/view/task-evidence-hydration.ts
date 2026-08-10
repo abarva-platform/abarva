@@ -18,16 +18,28 @@
 //     (the same facts that flip the step insight LIVE); and
 //   • a `provide` task with no template (its evidence is a stored document, e.g. the
 //     signed sponsor letter) is complete when at least one artifact is registered
-//     for the task's stage.
-// It is NEVER a fabricated "done" without evidence. `confirm` / `decide` tasks and
-// tasks with no derivable evidence are left untouched (undefined), so the checklist
-// keeps its existing behavior for them. This is purely additive + deterministic — it
-// derives done-state from persisted evidence and renders it; it writes nothing.
+//     for the task's stage; and
+//   • a `confirm` / `decide` task is complete only when it has an explicit task →
+//     evidence-requirement mapping and that governed evidence row meets the
+//     requirement's minimum readiness state.
+// It is NEVER a fabricated "done" without evidence. Tasks with no derivable
+// evidence are left untouched (undefined). This is purely additive +
+// deterministic — it derives done-state from persisted evidence and renders it;
+// it writes nothing.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { StageTaskView } from '@/components/source/canvas/analytics/view-model';
-import type { EvaluatorInputs } from '@/lib/source/facts/evaluators/types';
-import { templateFactMapByCode } from '@/lib/source/facts/template-fact-map';
+import type { StageTaskView } from "@/components/source/canvas/analytics/view-model";
+import type {
+  SourceEventEvidence,
+  SourceEventEvidenceCurrentState,
+} from "@/lib/source/canvas-substrate";
+import { evidenceById } from "@/lib/source/canonical-specs/evidence-requirements";
+import type { EvaluatorInputs } from "@/lib/source/facts/evaluators/types";
+import { templateFactMapByCode } from "@/lib/source/facts/template-fact-map";
+import {
+  evidenceRequirementIdForTask,
+  factTemplateCodeForTask,
+} from "@/lib/source/facts/task-evidence-requirements";
 
 /** The minimal artifact shape this hydrator needs (from the registry record). */
 export interface HydrationArtifact {
@@ -50,6 +62,15 @@ export interface HydrateTaskEvidenceInput {
    */
   artifacts?: readonly HydrationArtifact[];
   /**
+   * Effective evidence states for this event (persisted evidence plus
+   * fact-backed evidence), from `listEffectiveEvidenceStatesForEvent`.
+   * Used for non-upload confirm/decide rows that still need audited readback.
+   */
+  evidenceStates?: readonly Pick<
+    SourceEventEvidence,
+    "requirementId" | "currentState"
+  >[];
+  /**
    * The canonical stage key being rendered. Used to match artifacts to a
    * template-less `provide` task (the artifact carries the stage it landed under).
    */
@@ -69,7 +90,7 @@ export function templateFactsPresent(
   if (!map) return false;
   return map.columns.some((column) => {
     const value = factInputs[column.factKey];
-    return typeof value === 'number' && Number.isFinite(value);
+    return typeof value === "number" && Number.isFinite(value);
   });
 }
 
@@ -82,7 +103,13 @@ export function templateFactsPresent(
 export function hydrateTaskEvidenceState(
   input: HydrateTaskEvidenceInput,
 ): StageTaskView[] {
-  const { tasks, factInputs, artifacts = [], stageKey } = input;
+  const {
+    tasks,
+    factInputs,
+    artifacts = [],
+    evidenceStates = [],
+    stageKey,
+  } = input;
 
   // Which stages have at least one registered artifact — for template-less
   // `provide` tasks whose evidence is a stored document, not typed facts.
@@ -91,12 +118,38 @@ export function hydrateTaskEvidenceState(
     if (artifact.stageKey) stagesWithArtifact.add(artifact.stageKey);
   }
 
-  return tasks.map((task) => {
-    // Only `provide` tasks carry uploadable evidence; leave confirm/decide alone.
-    if (task.type !== 'provide') return task;
+  const evidenceStateByRequirementId = new Map<
+    string,
+    SourceEventEvidenceCurrentState
+  >();
+  for (const evidence of evidenceStates) {
+    if (evidence.requirementId) {
+      evidenceStateByRequirementId.set(
+        evidence.requirementId,
+        evidence.currentState,
+      );
+    }
+  }
 
-    if (task.factTemplateCode) {
-      if (templateFactsPresent(task.factTemplateCode, factInputs)) {
+  return tasks.map((task) => {
+    if (task.type !== "provide") {
+      const requirementId = evidenceRequirementIdForTask(task);
+      if (!requirementId) return task;
+      const requirement = evidenceById(requirementId);
+      const currentState = evidenceStateByRequirementId.get(requirementId);
+      if (
+        requirement &&
+        currentState &&
+        evidenceStateMeetsMinimum(currentState, requirement.minimumState)
+      ) {
+        return { ...task, evidenceComplete: true };
+      }
+      return task;
+    }
+
+    const taskFactTemplateCode = factTemplateCodeForTask(task);
+    if (taskFactTemplateCode) {
+      if (templateFactsPresent(taskFactTemplateCode, factInputs)) {
         return { ...task, evidenceComplete: true };
       }
       return task;
@@ -110,4 +163,23 @@ export function hydrateTaskEvidenceState(
     }
     return task;
   });
+}
+
+const READINESS_RANK: Record<SourceEventEvidenceCurrentState, number> = {
+  "Not Requested": 0,
+  Loaded: 1,
+  Parsed: 2,
+  Available: 3,
+  "Usable Evidence": 4,
+  Stale: -1,
+  "Low Confidence": -1,
+};
+
+function evidenceStateMeetsMinimum(
+  currentState: SourceEventEvidenceCurrentState,
+  minimumState: SourceEventEvidenceCurrentState,
+): boolean {
+  return (
+    (READINESS_RANK[currentState] ?? -1) >= (READINESS_RANK[minimumState] ?? 99)
+  );
 }
