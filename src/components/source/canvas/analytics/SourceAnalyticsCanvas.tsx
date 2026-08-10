@@ -56,8 +56,11 @@ import { IntelPanel } from "./IntelPanel";
 import {
   TaskProvideUpload,
   TemplateDownloadLink,
-  factTemplateCodeForTask,
 } from "./TaskChecklist";
+import {
+  evidenceRequirementIdForTask,
+  factTemplateCodeForTask,
+} from "@/lib/source/facts/task-evidence-requirements";
 import { ValueWaterfall } from "./ValueWaterfall";
 import { StepInsightPanel } from "./insights";
 import {
@@ -1390,9 +1393,97 @@ function StepDetail({
   stageKey: SourceStageKey;
   stepInsight: SourceEventShellView["intelligence"]["stepInsight"];
 }) {
+  const router = useRouter();
+  const [actionState, setActionState] = useState<
+    { phase: "idle" } | { phase: "saving" } | { phase: "error"; message: string }
+  >({ phase: "idle" });
   if (!step) return null;
+  const activeStep = step;
+  const evidenceRequirementId = evidenceRequirementIdForTask({
+    id: activeStep.id,
+    factTemplateCode: activeStep.factTemplateCode ?? undefined,
+  });
+  const canPersistAction =
+    activeStep.type !== "provide" && Boolean(evidenceRequirementId);
 
-  if (step.rows.length > 0) {
+  async function completeStepAction(): Promise<void> {
+    if (!canPersistAction) return;
+    setActionState({ phase: "saving" });
+    let response: Response;
+    try {
+      response = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/evidence/${encodeURIComponent(
+          evidenceRequirementId!,
+        )}/answer`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            stage: stageKey,
+            answer: `${activeStep.title}: ${activeStep.help}`,
+          }),
+        },
+      );
+    } catch (error) {
+      setActionState({
+        phase: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not save this step action.",
+      });
+      return;
+    }
+
+    const payload = (await response.json().catch(() => null)) as
+      | { ok?: boolean; detail?: string; error?: string }
+      | null;
+    if (!response.ok || !payload?.ok) {
+      setActionState({
+        phase: "error",
+        message:
+          payload?.detail ??
+          payload?.error ??
+          `Could not save this step action (${response.status}).`,
+      });
+      return;
+    }
+
+    setActionState({ phase: "idle" });
+    router.refresh();
+  }
+
+  const actionButton = canPersistAction ? (
+    <StepActionButton
+      saving={actionState.phase === "saving"}
+      onClick={completeStepAction}
+    >
+      {step.cta}
+    </StepActionButton>
+  ) : (
+    <ActionButton>{step.cta}</ActionButton>
+  );
+  const actionError =
+    actionState.phase === "error" ? (
+      <div
+        role="alert"
+        style={{
+          marginTop: 10,
+          padding: "9px 12px",
+          borderRadius: 8,
+          border: `1px solid ${ANALYTICS.AMBER}`,
+          background: "rgba(180,120,10,0.06)",
+          color: ANALYTICS.AMBER_TEXT,
+          fontSize: 12.5,
+          lineHeight: 1.45,
+          maxWidth: 680,
+        }}
+      >
+        {actionState.message}
+      </div>
+    ) : null;
+
+  if (activeStep.rows.length > 0) {
     return (
       <div
         style={{
@@ -1403,7 +1494,7 @@ function StepDetail({
           maxWidth: 680,
         }}
       >
-        {step.rows.map((row, index) => (
+        {activeStep.rows.map((row, index) => (
           <div
             key={`${row.key}-${index}`}
             style={{
@@ -1426,14 +1517,15 @@ function StepDetail({
           </div>
         ))}
         <div style={{ padding: "12px" }}>
-          <ActionButton>{step.cta}</ActionButton>
+          {actionButton}
+          {actionError}
         </div>
       </div>
     );
   }
 
-  if (step.type === "provide") {
-    const factTemplateCode = factTemplateCodeForTask(step);
+  if (activeStep.type === "provide") {
+    const factTemplateCode = factTemplateCodeForTask(activeStep);
     // Real per-vendor lever-coverage data, when it exists — never a
     // fabricated file/requirements-completeness table. Gated on the exact
     // factTemplateCode this step's upload parses into (not a title guess)
@@ -1456,7 +1548,7 @@ function StepDetail({
           />
         ) : null}
         <TaskProvideUpload
-          signed={/letter|commit/i.test(step.title)}
+          signed={/letter|commit/i.test(activeStep.title)}
           eventId={eventId}
           stageKey={stageKey}
           factTemplateCode={factTemplateCode}
@@ -1470,7 +1562,8 @@ function StepDetail({
 
   return (
     <div style={{ marginLeft: 42 }}>
-      <ActionButton>{step.cta}</ActionButton>
+      {actionButton}
+      {actionError}
     </div>
   );
 }
@@ -1613,6 +1706,37 @@ function ActionButton({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+    </button>
+  );
+}
+
+function StepActionButton({
+  children,
+  saving,
+  onClick,
+}: {
+  children: ReactNode;
+  saving: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={saving}
+      style={{
+        border: "none",
+        borderRadius: 8,
+        background: saving ? ANALYTICS.FAINT : ANALYTICS.INK,
+        color: "#fff",
+        cursor: saving ? "wait" : "pointer",
+        fontFamily: ANALYTICS.SANS,
+        fontSize: 13,
+        fontWeight: 800,
+        padding: "11px 16px",
+      }}
+    >
+      {saving ? "Saving..." : children}
     </button>
   );
 }

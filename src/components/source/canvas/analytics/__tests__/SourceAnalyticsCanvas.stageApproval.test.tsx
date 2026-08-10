@@ -31,6 +31,7 @@ jest.mock("@clerk/nextjs", () => ({
 import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
 import {
   SAMPLE_SCOPE_STAGE,
+  SAMPLE_EXECUTIVE_DECISION_STAGE,
   SAMPLE_SELECTION_STAGE,
 } from "../sample-view-model";
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
@@ -149,6 +150,44 @@ describe("SourceAnalyticsCanvas — stage approval blocker", () => {
     });
     expect(routerPush).toHaveBeenCalledWith(
       `/source/events/${EVENT.id}?stage=rfp`,
+    );
+    expect(routerRefresh).toHaveBeenCalled();
+  });
+
+  it("persists Source shell confirm/decide step actions through governed evidence answers", async () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={{
+          ...EVENT,
+          currentStageKey: "executive_decision",
+          currentStageLabel: "Executive Decision",
+        }}
+        viewStage="executive_decision"
+        tenantName="Demo Client"
+        stageView={SAMPLE_EXECUTIVE_DECISION_STAGE}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Confirm recommendation packet" }),
+    );
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/source/evt-scope/evidence/EVID-SRC-DEC-STAKEHOLDER-ENDORSEMENT/answer",
+        expect.objectContaining({
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    });
+    expect(JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body)).toEqual(
+      expect.objectContaining({
+        stage: "executive_decision",
+        answer: expect.stringContaining(
+          "Confirm executive recommendation packet",
+        ),
+      }),
     );
     expect(routerRefresh).toHaveBeenCalled();
   });
