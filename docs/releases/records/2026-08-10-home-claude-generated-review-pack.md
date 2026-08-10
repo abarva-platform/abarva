@@ -11,15 +11,18 @@
 ## Plain-English Summary
 
 Home now has Claude generation and audit tooling for a review-only architecture diagram pack plus
-review-only CXO story blocks and visual specs. The generated SVGs, raw Claude responses, failed
-attempt, snapshots, and candidate story outputs are retained for audit, but publication is blocked
-pending deterministic semantic validation and human approval.
+review-only CXO story blocks and visual specs. Home also exposes the generated architecture SVGs in
+a fenced `Claude Review` tab so reviewers can inspect the Claude outputs in the Home canvas. The
+generated SVGs, raw Claude responses, failed attempt, snapshots, and candidate story outputs are
+retained for audit, but publication into the normal Home tabs remains blocked pending deterministic
+semantic validation and human approval.
 
 ## Layer Impact
 
 Layer 4 — Products, `global-control-lane`: updates the Home review-generation tooling, restores
-native Context and Architecture tabs, and prevents Claude-generated review SVGs from rendering as
-approved Home runtime assets.
+native Context and Architecture tabs, and renders Claude-generated review SVGs only inside a
+fenced `Claude Review` surface. It prevents those assets from rendering as approved Home runtime
+content.
 
 Review artifact layer: updates SkyHarbor Home review reports. This does not mutate canonical tenant
 records, database tables, loaders, adapters, approved content, or runtime data-plane jobs.
@@ -37,8 +40,11 @@ records, database tables, loaders, adapters, approved content, or runtime data-p
 - `docs/home-know/HOME_DIAGRAM_SEMANTIC_SPEC_V2.md`
 - `reports/home-claude-architecture-generation/`
 - `reports/multi-tenant-cxo-story-generation/skyharbor-air/`
+- `src/app/api/home/architecture-review/[diagramId]/route.ts`
+- `src/components/home/enterprise-landscape-v2/HomeEnterpriseLandscapeV2.module.css`
 - `src/components/home/enterprise-landscape-v2/HomeEnterpriseLandscapeV2.tsx`
 - `src/components/home/enterprise-landscape-v2/homeEnterpriseLandscapeV2Model.ts`
+- `src/components/home/enterprise-landscape-v2/__tests__/HomeEnterpriseLandscapeV2.test.tsx`
 - `scripts/knowledge/generate-home-architecture-diagram-pack.mjs`
 - `scripts/knowledge/validate-home-architecture-diagram-pack.mjs`
 - `scripts/knowledge/generate-cxo-story-blocks.mjs`
@@ -50,6 +56,8 @@ records, database tables, loaders, adapters, approved content, or runtime data-p
 - PASS — XML well-formedness check for all generated SVG assets
 - PASS — stored SVG to retained raw Claude output fidelity
 - PASS — generated SVG snapshot/contact-sheet render via Sharp
+- PASS — Home renders the generated architecture outputs in a review-only `Claude Review` tab via
+  an allowlisted API route
 - BLOCKED — semantic validation not run
 - BLOCKED — human publication approval not granted
 - PASS — `npm run home:architecture-diagram-pack:test`
@@ -60,10 +68,11 @@ records, database tables, loaders, adapters, approved content, or runtime data-p
 
 ## Rollout Plan
 
-Review the generated artifacts first. If the tooling correction is approved, merge through pull
-request to `main`. This does not publish Claude-generated Home content. Runtime publication of any
-generated architecture/story asset requires `HomeDiagramSemanticSpecV2`, semantic validation,
-deterministic rendering, and human approval in a later release.
+Review the generated artifacts first in the Home `Claude Review` tab and the retained report pack.
+If the tooling correction is approved, merge through pull request to `main`. This does not publish
+Claude-generated Home content into the normal executive tabs. Runtime publication of any generated
+architecture/story asset requires `HomeDiagramSemanticSpecV2`, semantic validation, deterministic
+rendering, and human approval in a later release.
 
 ## Deployment Authority
 
@@ -73,8 +82,8 @@ deterministic rendering, and human approval in a later release.
 - ACA runtime invariant: required only if this candidate is merged for deployment
 - Worker image invariant: not applicable
 - Feature/env flag update path: not applicable
-- Live signed-in proof required: Home route preserves native Context and Architecture tabs and does
-  not render review-only Claude SVG exhibits
+- Live signed-in proof required: Home route preserves native Context and Architecture tabs and
+  renders Claude SVG exhibits only under the `Claude Review` tab with review-only status language
 
 ## Rollback Plan
 

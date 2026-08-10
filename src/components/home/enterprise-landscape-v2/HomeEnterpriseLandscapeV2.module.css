@@ -481,6 +481,68 @@
   text-transform: none;
 }
 
+.claudeReviewLayout {
+  display: grid;
+  gap: 18px;
+}
+
+.reviewWarning {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 18px;
+  padding: 16px;
+  border: 1px solid rgba(183, 120, 36, 0.34);
+  border-left: 5px solid #b97824;
+  border-radius: 7px;
+  background: #fffaf1;
+}
+
+.reviewWarning > div:first-child {
+  display: grid;
+  gap: 6px;
+}
+
+.reviewWarning span,
+.reviewStatusStack span {
+  width: fit-content;
+  border: 1px solid rgba(183, 120, 36, 0.34);
+  border-radius: 999px;
+  background: #fff;
+  color: #8a5b16;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 820;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.reviewWarning strong {
+  color: #172033;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.reviewWarning p {
+  margin: 0;
+  max-width: 980px;
+  color: #40506a;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.reviewStatusStack {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.reviewDiagramGrid {
+  display: grid;
+  gap: 16px;
+}
+
 .contextDomainGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

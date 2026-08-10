@@ -41,6 +41,9 @@ it("preserves context and architecture as native Home tabs", () => {
   expect(
     screen.getByRole("tab", { name: "Architecture" }),
   ).toBeInTheDocument();
+  expect(
+    screen.getByRole("tab", { name: "Claude Review" }),
+  ).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("tab", { name: "Patterns" }));
   expect(
@@ -165,6 +168,30 @@ it("preserves context and architecture as native Home tabs", () => {
   expect(screen.getByText("Broad, uneven depth")).toBeInTheDocument();
   expect(screen.getByText("Identity facts")).toBeInTheDocument();
   expect(window.location.search).toBe("?view=evidence");
+
+  fireEvent.click(screen.getByRole("tab", { name: "Claude Review" }));
+  expect(
+    screen.getByRole("heading", {
+      name: "Claude-generated architecture review",
+    }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("Not semantic validated. Not approved for publication."),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByLabelText(
+      "Enterprise operating system pattern map review-only Claude SVG",
+    ),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("img", {
+      name: "Enterprise operating system pattern map review-only Claude architecture candidate",
+    }),
+  ).toHaveAttribute(
+    "src",
+    "/api/home/architecture-review/patterns-enterprise-operating-system",
+  );
+  expect(window.location.search).toBe("?view=claudeReview");
 
   const economics = screen.getByRole("tab", { name: "Economics" });
   fireEvent.click(economics);

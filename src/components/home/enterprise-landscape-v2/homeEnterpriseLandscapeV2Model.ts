@@ -8,7 +8,8 @@ export type HomeLandscapeTabId =
   | "coherence"
   | "trajectory"
   | "watchlist"
-  | "evidence";
+  | "evidence"
+  | "claudeReview";
 
 export type SignalTone = "blue" | "teal" | "amber" | "slate" | "red";
 
@@ -169,6 +170,7 @@ export const HOME_LANDSCAPE_TABS: Array<{
   { id: "trajectory", label: "Trajectory" },
   { id: "watchlist", label: "Watchlist" },
   { id: "evidence", label: "Evidence" },
+  { id: "claudeReview", label: "Claude Review" },
 ];
 
 export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Model =

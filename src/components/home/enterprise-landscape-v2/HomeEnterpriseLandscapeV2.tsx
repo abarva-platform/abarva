@@ -42,6 +42,44 @@ const TILE_TONE_CLASS: Record<SignalTone, string> = {
   red: styles.tileToneRed,
 };
 
+const CLAUDE_REVIEW_DIAGRAMS = [
+  {
+    id: "patterns-enterprise-operating-system",
+    tab: "Patterns",
+    title: "Enterprise operating system pattern map",
+    subtitle:
+      "Review-only Claude candidate showing the enterprise operating pattern across domains, economics, evidence, and governance.",
+  },
+  {
+    id: "economics-value-control",
+    tab: "Economics",
+    title: "Economics and value-control architecture",
+    subtitle:
+      "Review-only Claude candidate; economics claims remain blocked until numeric reconciliation and overlap checks pass.",
+  },
+  {
+    id: "posture-evidence-authority",
+    tab: "Posture",
+    title: "Evidence and authority posture map",
+    subtitle:
+      "Review-only Claude candidate; evidence tiers and authority gates require deterministic semantic validation.",
+  },
+  {
+    id: "coherence-domain-architecture-index",
+    tab: "Coherence",
+    title: "Scoped architecture diagram index",
+    subtitle:
+      "Review-only Claude candidate showing scoped domains for digital, ERP, data/AI, and mainframe/private-cloud views.",
+  },
+  {
+    id: "trajectory-executive-shifts",
+    tab: "Trajectory",
+    title: "Executive shift and gate map",
+    subtitle:
+      "Review-only Claude candidate; future-state shifts and gates require approved authority before publication.",
+  },
+] as const;
+
 function normalizeTabId(value: string | null): HomeLandscapeTabId | null {
   if (!value) return null;
   if (TAB_IDS.has(value as HomeLandscapeTabId))
@@ -127,6 +165,65 @@ function ContextSignalWall({
           <SparkBar item={signal} />
         </article>
       ))}
+    </div>
+  );
+}
+
+function ClaudeArchitectureReviewPanel() {
+  return (
+    <div className={styles.claudeReviewLayout}>
+      <section className={styles.reviewWarning} aria-label="Review-only status">
+        <div>
+          <span>Review-only Claude candidate</span>
+          <strong>Not semantic validated. Not approved for publication.</strong>
+          <p>
+            These SVGs are the retained Claude outputs from the audit pack. They
+            are visible here so reviewers can inspect them in Home, but they are
+            not used by the normal Home tabs or approved content layer.
+          </p>
+        </div>
+        <div className={styles.reviewStatusStack}>
+          <span>SVG structural pass</span>
+          <span>Semantic gate not run</span>
+          <span>Human approval not granted</span>
+        </div>
+      </section>
+
+      <div className={styles.reviewDiagramGrid}>
+        {CLAUDE_REVIEW_DIAGRAMS.map((diagram) => (
+          <figure
+            className={styles.authoredDiagramExhibit}
+            key={diagram.id}
+            aria-label={`${diagram.title} review-only Claude SVG`}
+          >
+            <figcaption className={styles.authoredDiagramHeader}>
+              <div>
+                <span>{diagram.tab} candidate</span>
+                <strong>{diagram.title}</strong>
+                <p>{diagram.subtitle}</p>
+              </div>
+              <div className={styles.authoredDiagramMeta}>
+                <span>claude-sonnet-4-6</span>
+                <span>blocked pending semantic validation</span>
+              </div>
+            </figcaption>
+            <div className={styles.authoredDiagramFrame}>
+              {/* Review SVGs must render exactly as retained Claude output. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                className={styles.authoredDiagramImage}
+                src={`/api/home/architecture-review/${diagram.id}`}
+                alt={`${diagram.title} review-only Claude architecture candidate`}
+              />
+            </div>
+            <div className={styles.authoredDiagramSources}>
+              <span>raw response retained</span>
+              <span>stored SVG equals Claude output</span>
+              <span>review report only</span>
+            </div>
+          </figure>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1491,6 +1588,24 @@ function TabPanels({
             </article>
           ))}
         </div>
+      </article>
+
+      <article
+        className={styles.panel}
+        id="claudeReview-panel"
+        role="tabpanel"
+        aria-labelledby="tab-claudeReview"
+        hidden={selectedTab !== "claudeReview"}
+      >
+        <div>
+          <h2>Claude-generated architecture review</h2>
+          <p className={styles.lead}>
+            The generated architecture is visible here for inspection only. It
+            remains outside the approved Home content path until deterministic
+            semantic validation and human publication approval pass.
+          </p>
+        </div>
+        <ClaudeArchitectureReviewPanel />
       </article>
     </div>
   );

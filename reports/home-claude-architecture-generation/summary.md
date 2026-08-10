@@ -7,6 +7,8 @@
 - Generation mode: per-diagram Claude streaming calls
 - Post-Claude mutation: none; validators reject and generation is rerun
 - Review decision: changes requested; retain as review evidence only
+- Home review surface: `Home / Claude Review` tab renders the retained SVG outputs through the
+  review-only route `/api/home/architecture-review/[diagramId]`
 
 ## Generated Architecture Artifacts
 
@@ -14,6 +16,7 @@
 - Raw response index: `reports/home-claude-architecture-generation/raw-claude-responses/raw-claude-response.json`
 - Raw per-diagram responses: `reports/home-claude-architecture-generation/raw-claude-responses/raw-claude-response-*.json`
 - Review-only SVG assets: `reports/home-claude-architecture-generation/generated-svg/*.svg`
+- Home review renderer: `src/app/api/home/architecture-review/[diagramId]/route.ts`
 - Review snapshots: `reports/home-claude-architecture-generation/review-snapshots/*.png`
 - Contact sheet: `reports/home-claude-architecture-generation/review-snapshots/contact-sheet.png`
 
