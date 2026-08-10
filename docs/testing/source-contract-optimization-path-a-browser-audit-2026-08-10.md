@@ -273,6 +273,30 @@ For every friction item, capture:
 | Evidence          | screenshot/log/request   |
 | Smallest fix      | minimum product/code fix |
 
+## Part C: Find, Fix, And Ship Improvements
+
+Beyond the known backlog: as you run both journeys, actively look for improvements across every area: UX, workflow, output quality, analytics, guidance, performance, and product clarity. Fix and deploy them under the same authority. Do not only log them for later. If something makes the product measurably better and is safely shippable, ship it.
+
+What counts as in scope for autonomous improvement:
+
+- Anything that confuses, stalls, or misleads a user mid-workflow: unclear labels, missing feedback after an action, states that contradict each other, dead ends with no forward path.
+- Missing confirmation or error states, especially where a failure is currently silent.
+- Guidance gaps: a step that tells the user what is needed but not what to go get, from whom, and by when.
+- Output quality: generated artifacts that are structurally thin, contain placeholders, or do not trace their figures to evidence.
+- Anything where the UI asserts something the data does not support, or hides something the user needs.
+
+Guardrails on improvement work:
+
+- Stay inside the existing design system: `#F8F7F4` background, Georgia/serif headings, DM Sans body, black/ghost buttons. Improve density, hierarchy, states, and clarity; do not restyle the product. The compact-explorer work in item 11 is the sanctioned exception and should still land within that system.
+- Do not restructure things that work. If a surface is doing its job, leave it alone. Prefer the smallest change that removes the friction.
+- Do not change semantics to make something look better. Never make a number, status, or completion marker appear cleaner than the underlying evidence supports. Missing must stay missing; unaccepted must stay unaccepted; a gap must stay visible.
+- Use one improvement per PR where practical, so anything can be reverted independently.
+- Verify each improvement live to the same standard as the backlog items: reproduce the original friction and confirm it is gone.
+
+Prioritize by demo impact. Something a client hits in the first five minutes beats something buried three stages deep. If there is a choice, fix the thing that would be visible in a live walkthrough.
+
+Report improvements separately from bug fixes, with: what was observed, why it mattered, what changed, and how it was verified. If something is worth improving but was not shipped because it was too risky, too large, or needs a design decision, say so and explain the call. That list is as valuable as the shipped work.
+
 ## Required Final Report Structure
 
 The audit report must include:
