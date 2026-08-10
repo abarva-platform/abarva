@@ -290,6 +290,7 @@
     "source:enterprise-context:writeback": "npx tsx src/scripts/source/writeback-source-facts-to-enterprise-context.ts",
     "source:enterprise-context:verify-writeback": "npx tsx src/scripts/source/verify-source-enterprise-context-readback.ts",
     "source:artifact-parse:verify-backlog": "npx tsx src/scripts/source/verify-source-artifact-parse-backlog.ts",
+    "ops:source-events:archive-cleanup": "npx tsx scripts/source/archive-source-event-data.ts",
     "moves:enterprise-context:writeback": "npx tsx src/scripts/programs/writeback-move-learning-to-enterprise-context.ts",
     "moves:enterprise-context:verify-writeback": "npx tsx src/scripts/programs/verify-move-learning-writeback-readback.ts",
     "db:verify:tenant-keys": "npx tsx scripts/verify-tenant-key-canonical.ts",
