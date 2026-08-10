@@ -685,7 +685,7 @@ function ArchitectureLaneCanvas({ canvas }: { canvas: ArchitectureCanvas }) {
         <div
           className={styles.architectureLaneGrid}
           style={{
-            gridTemplateColumns: `repeat(${canvas.lanes.length}, minmax(190px, 1fr))`,
+            gridTemplateColumns: `repeat(${canvas.lanes.length}, minmax(168px, 1fr))`,
           }}
         >
           {canvas.lanes.map((lane, index) => (
@@ -998,6 +998,19 @@ function EconomicsExhibit({ rows }: { rows: EconomicRow[] }) {
   );
 }
 
+function splitCoherenceText(value: string) {
+  if (value === "Data and measures") return ["Data and", "measures"];
+  if (value === "Controls and vendors") return ["Controls and", "vendors"];
+  if (value === "Portfolio capacity") return ["Portfolio", "capacity"];
+  return [value];
+}
+
+function splitCoherenceDetail(value: string) {
+  const parts = value.split(", ");
+  if (parts.length <= 2) return [value];
+  return [`${parts[0]}, ${parts[1]}`, parts.slice(2).join(", ")];
+}
+
 function CoherenceMap({ model }: { model: HomeEnterpriseLandscapeV2Model }) {
   const edges = [
     ["Operations", "Critical platforms", false],
@@ -1012,6 +1025,8 @@ function CoherenceMap({ model }: { model: HomeEnterpriseLandscapeV2Model }) {
   const nodeByLabel = new Map(
     model.coherence.map((node) => [node.label, node]),
   );
+  const xScale = 12.4;
+  const yScale = 5.45;
 
   return (
     <div className={`${styles.visualPanel} ${styles.coherenceMap}`}>
@@ -1021,7 +1036,7 @@ function CoherenceMap({ model }: { model: HomeEnterpriseLandscapeV2Model }) {
       </div>
       <svg
         className={styles.mapSvg}
-        viewBox="0 0 1120 500"
+        viewBox="0 0 1280 560"
         role="img"
         aria-label="Enterprise coherence map connecting operations, platforms, portfolio capacity, commercial, data, controls, and coherence"
       >
@@ -1042,16 +1057,16 @@ function CoherenceMap({ model }: { model: HomeEnterpriseLandscapeV2Model }) {
             <path d="M0,0 L9,4.5 L0,9 Z" fill="#9fb3cf" />
           </marker>
         </defs>
-        <rect x="28" y="24" width="1064" height="428" rx="18" fill="#fbfcff" />
+        <rect x="28" y="24" width="1224" height="488" rx="18" fill="#fbfcff" />
         <path
-          d="M134 118 C260 30, 438 54, 546 134 C684 236, 820 108, 978 206"
+          d="M150 130 C300 38, 500 58, 626 148 C790 260, 940 128, 1140 226"
           fill="none"
           stroke="url(#coherenceWash)"
           strokeLinecap="round"
           strokeWidth="92"
         />
         <path
-          d="M138 342 C286 232, 442 324, 554 330 C690 336, 798 394, 978 278"
+          d="M150 380 C320 254, 500 356, 636 362 C790 368, 930 434, 1144 310"
           fill="none"
           stroke="url(#coherenceWash)"
           strokeLinecap="round"
@@ -1064,10 +1079,10 @@ function CoherenceMap({ model }: { model: HomeEnterpriseLandscapeV2Model }) {
           return (
             <line
               key={`${fromLabel}-${toLabel}`}
-              x1={from.x * 11.2}
-              y1={from.y * 5}
-              x2={to.x * 11.2}
-              y2={to.y * 5}
+              x1={from.x * xScale}
+              y1={from.y * yScale}
+              x2={to.x * xScale}
+              y2={to.y * yScale}
               markerEnd="url(#coherenceArrow)"
               stroke="#9fb3cf"
               strokeDasharray={dashed ? "10 10" : "0"}
@@ -1075,46 +1090,63 @@ function CoherenceMap({ model }: { model: HomeEnterpriseLandscapeV2Model }) {
             />
           );
         })}
-        {model.coherence.map((node) => (
-          <g className={styles.mapNode} key={node.label}>
-            <circle
-              cx={node.x * 11.2}
-              cy={node.y * 5}
-              r={node.label === "Coherence" ? "62" : "52"}
-              fill={TONE_HEX[node.tone]}
-              opacity="0.96"
-            />
-            <text
-              x={node.x * 11.2}
-              y={node.y * 5 - 5}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill="#fff"
-              fontSize="25"
-              fontWeight="800"
-            >
-              {node.label === "Coherence" ? "C" : node.label.split(" ")[0]}
-            </text>
-            <text
-              x={node.x * 11.2}
-              y={node.y * 5 + 76}
-              textAnchor="middle"
-              fontSize="21"
-              fontWeight="760"
-            >
-              {node.label}
-            </text>
-            <text
-              x={node.x * 11.2}
-              y={node.y * 5 + 104}
-              textAnchor="middle"
-              fontSize="15"
-              fill="#657087"
-            >
-              {node.detail}
-            </text>
-          </g>
-        ))}
+        {model.coherence.map((node) => {
+          const cx = node.x * xScale;
+          const cy = node.y * yScale;
+          const labelLines = splitCoherenceText(node.label);
+          const detailLines = splitCoherenceDetail(node.detail);
+          const labelY = cy + 76;
+          const detailY = labelY + 25 + (labelLines.length - 1) * 21;
+
+          return (
+            <g className={styles.mapNode} key={node.label}>
+              <circle
+                cx={cx}
+                cy={cy}
+                r={node.label === "Coherence" ? "62" : "52"}
+                fill={TONE_HEX[node.tone]}
+                opacity="0.96"
+              />
+              <text
+                x={cx}
+                y={cy - 5}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="#fff"
+                fontSize="23"
+                fontWeight="800"
+              >
+                {node.label === "Coherence" ? "C" : node.label.split(" ")[0]}
+              </text>
+              <text
+                x={cx}
+                y={labelY}
+                textAnchor="middle"
+                fontSize="18"
+                fontWeight="760"
+              >
+                {labelLines.map((line, index) => (
+                  <tspan key={line} x={cx} dy={index === 0 ? 0 : 21}>
+                    {line}
+                  </tspan>
+                ))}
+              </text>
+              <text
+                x={cx}
+                y={detailY}
+                textAnchor="middle"
+                fontSize="13"
+                fill="#657087"
+              >
+                {detailLines.map((line, index) => (
+                  <tspan key={line} x={cx} dy={index === 0 ? 0 : 17}>
+                    {line}
+                  </tspan>
+                ))}
+              </text>
+            </g>
+          );
+        })}
       </svg>
     </div>
   );
