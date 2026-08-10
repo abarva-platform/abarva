@@ -165,12 +165,12 @@ export const HOME_LANDSCAPE_TABS: Array<{
   { id: "context", label: "Context" },
   { id: "economics", label: "Economics" },
   { id: "architecture", label: "Architecture" },
+  { id: "claudeReview", label: "Claude Review" },
   { id: "posture", label: "Posture" },
   { id: "coherence", label: "Coherence" },
   { id: "trajectory", label: "Trajectory" },
   { id: "watchlist", label: "Watchlist" },
   { id: "evidence", label: "Evidence" },
-  { id: "claudeReview", label: "Claude Review" },
 ];
 
 export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Model =

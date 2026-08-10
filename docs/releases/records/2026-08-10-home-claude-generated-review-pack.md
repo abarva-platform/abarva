@@ -58,6 +58,8 @@ records, database tables, loaders, adapters, approved content, or runtime data-p
 - PASS — generated SVG snapshot/contact-sheet render via Sharp
 - PASS — Home renders the generated architecture outputs in a review-only `Claude Review` tab via
   an allowlisted API route
+- PASS — `Claude Review` tab is placed adjacent to `Architecture` so the generated architecture
+  review surface is discoverable in the visible tab sequence
 - BLOCKED — semantic validation not run
 - BLOCKED — human publication approval not granted
 - PASS — `npm run home:architecture-diagram-pack:test`
