@@ -2922,12 +2922,24 @@ function ApprovalLedgerTable({ ledger }: { ledger: ApprovalLedgerRow[] }) {
                   </span>
                 </td>
                 <td style={{ padding: "10px 14px", color: ANALYTICS.INK_2 }}>
-                  {row.authorizationNote}
+                  <span>{row.authorizationNote}</span>
                   {row.approvedAtIso ? (
                     <span style={{ color: ANALYTICS.MUTED }}>
                       {" "}
                       · {new Date(row.approvedAtIso).toLocaleDateString()}
                     </span>
+                  ) : null}
+                  {row.approverRationale ? (
+                    <div
+                      style={{
+                        marginTop: 4,
+                        color: ANALYTICS.MUTED,
+                        fontSize: 12,
+                        lineHeight: 1.35,
+                      }}
+                    >
+                      Rationale: {row.approverRationale}
+                    </div>
                   ) : null}
                 </td>
               </tr>
@@ -3570,8 +3582,7 @@ function StageGateApprovalButton({
             `Approval failed with HTTP ${response.status}.`,
         );
       }
-      const nextStage =
-        payload.stageAdvancedTo ?? action.redirectStageKey ?? undefined;
+      const nextStage = payload.stageAdvancedTo ?? undefined;
       if (nextStage) {
         router.push(
           `/source/events/${action.eventId}?stage=${encodeURIComponent(nextStage)}`,

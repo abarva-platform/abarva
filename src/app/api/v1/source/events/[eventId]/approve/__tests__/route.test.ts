@@ -100,10 +100,25 @@ jest.mock("@/lib/source/contract-optimization/read", () => ({
 
 import { POST } from "../route";
 import { after } from "next/server";
+import { getActiveClientRow } from "@/lib/active-client";
 import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
+import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 
 const mockAfter = jest.mocked(after);
 const mockAutoDraftOnStageEntry = jest.mocked(autoDraftOnStageEntry);
+const mockGetActiveClientRow = jest.mocked(getActiveClientRow);
+const mockGetContractOptimizationProfile = jest.mocked(
+  getContractOptimizationProfile,
+);
+
+function activeClientRow(key: string) {
+  return {
+    id: `client-${key}`,
+    key,
+    name: key,
+    industry_code: null,
+  };
+}
 
 describe("POST Source event approve", () => {
   beforeEach(() => {
@@ -111,6 +126,12 @@ describe("POST Source event approve", () => {
     mockAfter.mockClear();
     applyApproval.mockClear();
     updateStage.mockClear();
+    mockGetActiveClientRow.mockResolvedValue(activeClientRow("skyharbor-air"));
+    mockGetContractOptimizationProfile.mockResolvedValue(null);
+    applyApproval.mockResolvedValue({ ok: true });
+    updateStage.mockResolvedValue({ ok: true });
+    eventRow.current_stage_key = "rfp";
+    eventRow.client_key = "skyharbor-air";
   });
 
   it("auto-drafts the approved stage's gate artifacts with the signed-in request context", async () => {
@@ -146,6 +167,76 @@ describe("POST Source event approve", () => {
     );
     expect(updateStage).toHaveBeenCalledWith(
       expect.objectContaining({ stageKey: "responses" }),
+    );
+  });
+
+  it("fails closed when the approval record writes but stage advancement fails", async () => {
+    updateStage.mockResolvedValueOnce({
+      ok: false,
+      error: "stage update rejected",
+    } as never);
+
+    const request = new Request(
+      "https://app.abarva.ai/api/v1/source/events/event-1/approve",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          action: "approve",
+          notes: "Sponsor confirms RFP gate is ready to advance.",
+          confirmations: {
+            evidenceComplete: true,
+            exclusionsReviewed: true,
+            stageFinal: true,
+          },
+        }),
+      },
+    );
+
+    const response = await POST(request, {
+      params: Promise.resolve({ eventId: "event-1" }),
+    });
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload.error).toBe("stage_advance_failed");
+    expect(payload.stageAdvancedTo).toBeUndefined();
+  });
+
+  it("uses a contract optimization profile for any tenant, not only SkyHarbor aliases", async () => {
+    eventRow.current_stage_key = "pricing";
+    eventRow.client_key = "meridian";
+    mockGetActiveClientRow.mockResolvedValueOnce(activeClientRow("meridian"));
+    mockGetContractOptimizationProfile.mockResolvedValueOnce({
+      eventId: "event-1",
+    } as never);
+
+    const request = new Request(
+      "https://app.abarva.ai/api/v1/source/events/event-1/approve",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          action: "approve",
+          notes: "Sponsor confirms the commercial baseline is ready.",
+          confirmations: {
+            evidenceComplete: true,
+            exclusionsReviewed: true,
+            stageFinal: true,
+          },
+        }),
+      },
+    );
+
+    const response = await POST(request, {
+      params: Promise.resolve({ eventId: "event-1" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(mockGetContractOptimizationProfile).toHaveBeenCalledWith(
+      "meridian",
+      "event-1",
+    );
+    expect(updateStage).toHaveBeenCalledWith(
+      expect.objectContaining({ stageKey: "bafo" }),
     );
   });
 });

@@ -139,16 +139,11 @@ export async function POST(
   const currentStageKey = event.current_stage_key as string | null;
   const currentStage = normalizeSourceStageKey(currentStageKey);
   const normalizedClientKey = activeClient.key.trim().toLowerCase();
-  const hasContractOptimizationProfile =
-    normalizedClientKey === "skyharbor" ||
-    normalizedClientKey === "skyharbor-air"
-      ? Boolean(
-          await getContractOptimizationProfile(
-            normalizedClientKey,
-            eventId,
-          ).catch(() => null),
-        )
-      : false;
+  const hasContractOptimizationProfile = Boolean(
+    await getContractOptimizationProfile(normalizedClientKey, eventId).catch(
+      () => null,
+    ),
+  );
   const journey = getSourceJourneyForEvent({
     eventName: event.event_name as string | null,
     eventCode: event.event_code as string | null,
@@ -330,6 +325,14 @@ export async function POST(
           eventId,
           message: stageWrite.error,
         },
+      );
+      return Response.json(
+        {
+          error: "stage_advance_failed",
+          detail:
+            "The approval was recorded, but the event could not advance to the next stage. Reload and retry; if it repeats, check the Source write adapter.",
+        },
+        { status: 500 },
       );
     } else {
       stageAdvancedTo = decision.advanceStageTo;

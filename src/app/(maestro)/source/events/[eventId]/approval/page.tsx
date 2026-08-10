@@ -16,6 +16,7 @@ import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact-acceptances";
 import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
 import { loadApprovalLedger } from "@/lib/source/approval-ledger";
+import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import { formatSourceFinancialValue } from "@/lib/source/financial-display";
 import { parseSourceScopeDescription } from "@/lib/source/intake-summary";
 import {
@@ -23,6 +24,7 @@ import {
   isUuid,
   type SourceEventRow,
 } from "@/lib/source/queries";
+import { getSourceJourneyForEvent } from "@/lib/source/sourcing-motion-journeys";
 
 export const metadata = { title: "Source · Event Approval · AbarVa" };
 export const dynamic = "force-dynamic";
@@ -68,8 +70,21 @@ export default async function SourceEventApprovalPage({
     }) ?? event.accountName;
   const currentUserCanApprove =
     sourceAccessPolicy?.canApproveSourceStages === true;
+  const normalizedClientKey = activeClient.key.trim().toLowerCase();
+  const contractOptimizationProfile = await getContractOptimizationProfile(
+    normalizedClientKey,
+    event.id,
+  ).catch(() => null);
+  const sourceJourney = getSourceJourneyForEvent({
+    event,
+    hasContractOptimizationProfile: Boolean(contractOptimizationProfile),
+  });
   const [approvalLedger, artifactAcceptances] = await Promise.all([
-    loadApprovalLedger(event.id, row.current_stage_key).catch((error) => {
+    loadApprovalLedger(
+      event.id,
+      row.current_stage_key,
+      sourceJourney.stages,
+    ).catch((error) => {
       console.error(
         "[SourceEventApprovalPage] approval ledger read failed",
         error instanceof Error ? error.message : String(error),

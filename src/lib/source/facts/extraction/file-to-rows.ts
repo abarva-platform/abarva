@@ -131,8 +131,18 @@ function parseCsv(text: string): ParsedTemplateUpload {
 /** Parse XLSX bytes into headers + rows from the FIRST worksheet. */
 async function parseXlsx(bytes: Buffer): Promise<ParsedTemplateUpload> {
   const workbook = new ExcelJS.Workbook();
-  // exceljs accepts a Node Buffer for `load`; it is a Uint8Array subtype.
-  await workbook.xlsx.load(bytes as unknown as ArrayBuffer);
+  try {
+    const workbookBytes = bytes as unknown as Parameters<
+      typeof workbook.xlsx.load
+    >[0];
+    await workbook.xlsx.load(workbookBytes);
+  } catch (err) {
+    throw new Error(
+      `XLSX file could not be read. Save as a standard .xlsx workbook with a visible first worksheet and a header row. ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+  }
   const sheet = workbook.worksheets[0];
   if (!sheet) {
     throw new Error("XLSX file has no worksheet");

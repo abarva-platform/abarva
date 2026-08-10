@@ -147,6 +147,17 @@ describe("parseFileToRows — XLSX", () => {
     });
     expect(upload.rows[1]["Application ID"]).toBe("APP-2");
   });
+
+  it("rejects a corrupt XLSX with an actionable parser message", async () => {
+    await expect(
+      parseFileToRows({
+        bytes: Buffer.from("this is not a workbook", "utf8"),
+        filename: "broken.xlsx",
+        mimeType:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+    ).rejects.toThrow(/XLSX file could not be read.*standard \.xlsx/i);
+  });
 });
 
 describe("parseFileToRows — rejection", () => {
