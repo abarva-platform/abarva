@@ -19,6 +19,7 @@ import { AskAnythingBar } from "@/components/agent/AskAnythingBar";
 import { AppShell } from "@/components/shell/AppShell";
 import { AcceptClientFinalButton } from "@/components/source/canvas/workspace-tabs/AcceptClientFinalButton";
 import { ContractOptimizationProfilePanel } from "@/components/source/canvas/contract-optimization/ContractOptimizationProfilePanel";
+import { SourceVendorSelectionReadinessPanel } from "@/components/source/SourceVendorSelectionReadinessPanel";
 import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization";
 import {
   buildSourceEventShellView,
@@ -48,6 +49,7 @@ import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
 import type { ArtifactAcceptanceRecord } from "@/lib/source/artifact-acceptances";
 import type { SourceArtifactFamily } from "@/lib/source/artifact-registry/types";
+import type { SourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness-types";
 import { ArtifactAcceptancePanel } from "./ArtifactAcceptancePanel";
 import { ANALYTICS } from "./analytics-tokens";
 import { IntelPanel } from "./IntelPanel";
@@ -151,6 +153,8 @@ interface SourceAnalyticsCanvasProps {
   contractOptimizationProfile?: ContractOptimizationMveProfile | null;
   /** Event-specific journey: competitive RFP by default, contract optimization for incumbent-renegotiation work. */
   journey?: SourceJourneyDefinition;
+  /** Server-built Source selection readiness projection for Selection / Executive Decision stages. */
+  selectionReadiness?: SourceVendorSelectionReadiness | null;
 }
 
 const MAIN_STYLE: CSSProperties = {
@@ -308,6 +312,7 @@ export function SourceAnalyticsCanvas({
   initialWorkspace,
   contractOptimizationProfile = null,
   journey,
+  selectionReadiness = null,
 }: SourceAnalyticsCanvasProps) {
   const router = useRouter();
   const resolvedInitialWorkspace = initialWorkspace ?? "steps";
@@ -405,6 +410,16 @@ export function SourceAnalyticsCanvas({
                 <div style={{ marginBottom: 28 }}>
                   <ContractOptimizationProfilePanel
                     profile={contractOptimizationProfile}
+                  />
+                </div>
+              ) : null}
+              {selectionReadiness && workspace === "steps" ? (
+                <div
+                  data-testid="source-shell-selection-readiness-bridge"
+                  style={{ maxWidth: 1040, marginBottom: 12 }}
+                >
+                  <SourceVendorSelectionReadinessPanel
+                    readiness={selectionReadiness}
                   />
                 </div>
               ) : null}
@@ -901,14 +916,14 @@ function WorkflowBlocks({ groups }: { groups: SourceShellStepGroup[] }) {
 
 function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
   const flatSteps = view.stage.groups.flatMap((group) => group.steps);
-  const allReady = view.stage.total > 0 && view.stage.ready === view.stage.total;
-  const activeStep =
-    allReady
-      ? null
-      : (flatSteps.find((step) => step.status === "active") ??
-        flatSteps.find((step) => step.status !== "captured") ??
-        flatSteps[0] ??
-        null);
+  const allReady =
+    view.stage.total > 0 && view.stage.ready === view.stage.total;
+  const activeStep = allReady
+    ? null
+    : (flatSteps.find((step) => step.status === "active") ??
+      flatSteps.find((step) => step.status !== "captured") ??
+      flatSteps[0] ??
+      null);
   const activeIndex = activeStep
     ? flatSteps.findIndex((step) => step.id === activeStep.id)
     : -1;
@@ -1025,99 +1040,99 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
           <StageReadyPanel view={view} />
         ) : activeStep ? (
           <>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            gap: 16,
-            marginBottom: 14,
-          }}
-        >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "28px 1fr",
-              gap: 14,
-            }}
-          >
-            <StepDot active />
-            <div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 16,
+                marginBottom: 14,
+              }}
+            >
               <div
                 style={{
-                  color: ANALYTICS.MUTED,
-                  fontFamily: ANALYTICS.MONO,
+                  display: "grid",
+                  gridTemplateColumns: "28px 1fr",
+                  gap: 14,
+                }}
+              >
+                <StepDot active />
+                <div>
+                  <div
+                    style={{
+                      color: ANALYTICS.MUTED,
+                      fontFamily: ANALYTICS.MONO,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: "0.05em",
+                      marginBottom: 4,
+                    }}
+                  >
+                    Step {activeIndex + 1} of {flatSteps.length}
+                  </div>
+                  <h2
+                    style={{
+                      display: "inline",
+                      fontSize: 17,
+                      lineHeight: 1.3,
+                      margin: 0,
+                    }}
+                  >
+                    {activeStep.title}
+                  </h2>
+                  <EvidenceBadge
+                    basis={activeStep.sourceBasis}
+                    label={activeStep.type}
+                  />
+                </div>
+              </div>
+              <span
+                style={{
+                  borderRadius: 999,
+                  background:
+                    activeStep.status === "captured"
+                      ? ANALYTICS.GREEN_TINT
+                      : ANALYTICS.AMBER_TINT,
+                  color:
+                    activeStep.status === "captured"
+                      ? ANALYTICS.GREEN_TEXT
+                      : ANALYTICS.AMBER_TEXT,
                   fontSize: 10,
                   fontWeight: 800,
-                  letterSpacing: "0.05em",
-                  marginBottom: 4,
+                  padding: "5px 9px",
+                  textTransform: "uppercase",
+                  whiteSpace: "nowrap",
                 }}
               >
-                Step {activeIndex + 1} of {flatSteps.length}
-              </div>
-              <h2
-                style={{
-                  display: "inline",
-                  fontSize: 17,
-                  lineHeight: 1.3,
-                  margin: 0,
-                }}
-              >
-                {activeStep.title}
-              </h2>
-              <EvidenceBadge
-                basis={activeStep.sourceBasis}
-                label={activeStep.type}
-              />
+                {activeStep.status === "captured" ? "Done" : "Do this now"}
+              </span>
             </div>
-          </div>
-          <span
-            style={{
-              borderRadius: 999,
-              background:
-                activeStep.status === "captured"
-                  ? ANALYTICS.GREEN_TINT
-                  : ANALYTICS.AMBER_TINT,
-              color:
-                activeStep.status === "captured"
-                  ? ANALYTICS.GREEN_TEXT
-                  : ANALYTICS.AMBER_TEXT,
-              fontSize: 10,
-              fontWeight: 800,
-              padding: "5px 9px",
-              textTransform: "uppercase",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {activeStep.status === "captured" ? "Done" : "Do this now"}
-          </span>
-        </div>
 
-        <p
-          style={{
-            color: ANALYTICS.INK_2,
-            fontSize: 14,
-            lineHeight: 1.55,
-            margin: "0 0 16px 42px",
-            maxWidth: 720,
-          }}
-        >
-          {activeStep.help}
-        </p>
+            <p
+              style={{
+                color: ANALYTICS.INK_2,
+                fontSize: 14,
+                lineHeight: 1.55,
+                margin: "0 0 16px 42px",
+                maxWidth: 720,
+              }}
+            >
+              {activeStep.help}
+            </p>
 
-        {activeGroup ? (
-          <EvidenceAskTable
-            group={activeGroup}
-            activeStepId={activeStep.id}
-          />
-        ) : null}
+            {activeGroup ? (
+              <EvidenceAskTable
+                group={activeGroup}
+                activeStepId={activeStep.id}
+              />
+            ) : null}
 
-        <StepDetail
-          step={activeStep}
-          eventId={view.event.id}
-          stageKey={view.stage.key}
-          stepInsight={view.intelligence.stepInsight}
-        />
+            <StepDetail
+              step={activeStep}
+              eventId={view.event.id}
+              stageKey={view.stage.key}
+              stepInsight={view.intelligence.stepInsight}
+            />
           </>
         ) : null}
       </div>
@@ -1126,7 +1141,8 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
 }
 
 function StageApprovalHandoff({ view }: { view: SourceEventShellView }) {
-  const complete = view.stage.total > 0 && view.stage.ready === view.stage.total;
+  const complete =
+    view.stage.total > 0 && view.stage.ready === view.stage.total;
   return (
     <div
       data-testid="source-shell-stage-approval-handoff"
@@ -3567,14 +3583,12 @@ function StageGateApprovalButton({
           }),
         },
       );
-      const payload = (await response.json().catch(() => null)) as
-        | {
-            ok?: boolean;
-            error?: string;
-            detail?: string;
-            stageAdvancedTo?: string | null;
-          }
-        | null;
+      const payload = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        error?: string;
+        detail?: string;
+        stageAdvancedTo?: string | null;
+      } | null;
       if (!response.ok || payload?.ok !== true) {
         throw new Error(
           payload?.detail ??

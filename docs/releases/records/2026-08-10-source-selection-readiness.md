@@ -31,6 +31,7 @@ This release completes the deterministic Source vendor-selection readiness slice
 
 - Source vendor-selection readiness panel language is human-readable and avoids raw enum labels.
 - Selection and executive-decision workspaces render the readiness panel above the existing decision canvas.
+- The live Source event shell now renders the same selection-readiness projection on Selection and Executive Decision step workspaces, not only in the legacy active-stage component path.
 - Source active workspace imports were narrowed away from the broad Source barrel for cleaner test/runtime boundaries.
 - Targeted model, panel, and workspace smoke tests were added.
 - Source commercial backlog items SRC39, SRC40, and SRC41 were marked complete.
@@ -40,6 +41,8 @@ This release completes the deterministic Source vendor-selection readiness slice
 
 - PASS: `npx jest src/lib/source/__tests__/vendor-selection-readiness.test.ts src/components/source/__tests__/SourceVendorSelectionReadinessPanel.test.tsx src/components/source/__tests__/SourceActiveStageWorkspace.selectionReadiness.test.tsx --runInBand`
 - PASS: `npx eslint src/lib/source/vendor-selection-readiness.ts src/components/source/SourceVendorSelectionReadinessPanel.tsx src/components/source/SourceActiveStageWorkspace.tsx src/lib/source/__tests__/vendor-selection-readiness.test.ts src/components/source/__tests__/SourceVendorSelectionReadinessPanel.test.tsx src/components/source/__tests__/SourceActiveStageWorkspace.selectionReadiness.test.tsx`
+- PASS: `npx jest src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.stageApproval.test.tsx src/components/source/__tests__/SourceVendorSelectionReadinessPanel.test.tsx --runInBand`
+- PASS: `npx eslint src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.stageApproval.test.tsx src/components/source/SourceVendorSelectionReadinessPanel.tsx`
 - PASS: `git diff --check`
 - PASS: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`
 - PASS: `npm run release:check`

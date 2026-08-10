@@ -41,6 +41,7 @@ import {
 } from "@/lib/source/source-event-shell-v2";
 import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact-acceptances";
 import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repository";
+import { buildSourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness";
 import { requireTenancy } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
@@ -122,6 +123,21 @@ export default async function SourceEventDetailPage({
       event.currentStageKey,
       event.currentStageKey,
     );
+    const selectionReadiness =
+      viewStage === "executive_decision" || viewStage === "selection"
+        ? buildSourceVendorSelectionReadiness({
+            event: {
+              id: event.id,
+              name: event.name,
+              currentStageKey: viewStage,
+              currentStageLabel: sourceJourneyLabelForStage(
+                sourceJourney,
+                viewStage,
+              ),
+              valueAtStakeUsd: event.valueAtStakeUsd,
+            },
+          })
+        : null;
 
     // Build the stage view. The STRATEGY (P0) stage is the mandate-confirmation
     // stage and its gate IS the P0 approval — build it from the event's captured
@@ -463,6 +479,7 @@ export default async function SourceEventDetailPage({
         initialWorkspace={initialWorkspace}
         contractOptimizationProfile={contractOptimizationProfile}
         journey={sourceJourney}
+        selectionReadiness={selectionReadiness}
       />
     );
   }
