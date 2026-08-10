@@ -6,10 +6,10 @@ import type { SourceWorkspaceVM } from '../buildViewModel';
 const LEDGER_ORDER = ['recoverable_leakage', 'avoided_cost', 'negotiated_improvement', 'realized_value'] as const;
 
 const LEDGER_LABEL: Record<(typeof LEDGER_ORDER)[number], string> = {
-  recoverable_leakage: 'Recoverable leakage',
-  avoided_cost: 'Avoided cost',
-  negotiated_improvement: 'Negotiated improvement',
-  realized_value: 'Realized value',
+  recoverable_leakage: 'Recoverable opportunity',
+  avoided_cost: 'Avoidable opportunity',
+  negotiated_improvement: 'Negotiable improvement',
+  realized_value: 'Finance-confirmed outcome',
 };
 
 type MarkerShape = 'circle-fill' | 'square-fill' | 'check' | 'diamond' | 'circle-hollow';
@@ -66,7 +66,7 @@ export function EvidenceLineageGraph({ vm }: { vm: SourceWorkspaceVM }) {
         Why we believe this
       </div>
       <div style={{ fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.5, marginBottom: 16, maxWidth: 640 }}>
-        Trace each opportunity to its contract, transaction, operational, and validation evidence. Every line below is the same object the ledger above renders — a marker color here means evidence strength, not whether the finding is good or bad news.
+        Trace each opportunity to its contract, transaction, operational, and validation evidence. Marker color shows evidence strength, not whether the finding is good or bad news.
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: selected ? 'minmax(280px,1fr) minmax(320px,1.2fr)' : '1fr', gap: 22, alignItems: 'start' }}>

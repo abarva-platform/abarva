@@ -2126,7 +2126,7 @@ function ContractActionStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
             <div style={{ fontSize: 12.2, color: "#5f5e5a", lineHeight: 1.55 }}>
               {workflowLines.length
                 ? `${workflowLines.length} opportunity line${workflowLines.length === 1 ? " still requires" : "s still require"} workflow action before ${workflowLines.length === 1 ? "it becomes" : "they become"} finance-confirmed.`
-                : "The evidence pack can support a fact-based commercial conversation; realized value still requires Finance/Tower confirmation."}
+                : "The evidence pack can support a fact-based commercial conversation; finance-confirmed outcome still requires Finance/Tower confirmation."}
             </div>
           </div>
           <div
@@ -2653,7 +2653,7 @@ function OpportunityRelationshipCanvas({ vm }: { vm: SourceWorkspaceVM }) {
       id: "finance",
       label: "Finance / Tower",
       sub: view.financeConfirmed,
-      feeds: "realized value",
+      feeds: "finance-confirmed outcome",
       detail:
         "Finance confirmation is linked to originating opportunities; it is not added to potential value.",
     },
@@ -4150,7 +4150,8 @@ function DetailPanel({
               {period}. Sources: {sourceList}. This tab answers whether the
               vendor delivered against measurable service and commercial
               evidence; it does not turn incident volume, variance, or
-              opportunity into realized value without finance confirmation.
+              opportunity into a finance-confirmed outcome without finance
+              confirmation.
             </div>
           </div>
           <div
@@ -4189,7 +4190,7 @@ function DetailPanel({
                 "Earned, claimed, and received credits are separated so missed recovery is visible.",
               )}
               {row(
-                "Potential recoverable leakage",
+                "Potential recovery",
                 formatCurrency(evidencePerf.recoverable_leakage_usd),
                 "Potential recovery is derived from governed SLA, invoice, and rate-card rows.",
               )}
@@ -4283,7 +4284,7 @@ function DetailPanel({
         ? hasCreditEvidence
           ? serviceCreditGap != null && serviceCreditGap > 0
             ? "Service issues have a quantified credit gap to review."
-            : "Service issues are visible, but the loaded credit fields do not show recoverable leakage."
+            : "Service issues are visible, but the loaded credit fields do not show a recoverable amount."
           : "Service issues are visible, but SLA-credit recovery is not yet provable from the loaded evidence."
         : "No service-performance issue is established from the loaded evidence.";
     const financialRead = fin
@@ -4306,7 +4307,7 @@ function DetailPanel({
         : "contract-level financial exposure rows",
       hasCreditEvidence ? null : "monthly SLA credit history",
       "invoice/rate-card evidence before recovery can be claimed",
-      "Finance/Tower attestation before any realized value claim",
+      "Finance/Tower attestation before any confirmed outcome claim",
     ].filter(Boolean);
     if (!perf && !fin) {
       return (
@@ -4470,8 +4471,8 @@ function DetailPanel({
               <li>Actual below forecast is not automatically savings.</li>
               <li>Incident count is not automatically a credit claim.</li>
               <li>
-                Opportunity evidence is not realized value until Finance/Tower
-                confirms it.
+                Opportunity evidence is not a finance-confirmed outcome until
+                Finance/Tower confirms it.
               </li>
             </ul>
           </div>
