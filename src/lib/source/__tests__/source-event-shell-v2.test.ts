@@ -320,7 +320,8 @@ describe("buildSourceEventShellView", () => {
 
     expect(view.approvals.currentStageItem).toBe(APPROVAL);
     expect(view.approvals.readinessLine).toBe(APPROVAL.readiness);
-    expect(view.stage.gateReadinessLine).toContain("approval workspace");
+    expect(view.stage.gateReadinessLine).toContain("before approval");
+    expect(view.stage.approvalHref).toBe(`/source/events/${EVENT.id}/approval`);
   });
 
   it("scopes the Approvals workspace to this event only, and never renders the featured item twice", () => {

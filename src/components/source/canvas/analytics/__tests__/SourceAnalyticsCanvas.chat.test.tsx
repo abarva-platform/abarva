@@ -633,8 +633,8 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(screen.getByTestId("source-analytics-canvas").textContent).not.toContain(
       "approval belongs in Source Approvals",
     );
-    expect(screen.getByTestId("source-analytics-canvas").textContent).toContain(
-      "event's approval workspace",
+    expect(screen.getByTestId("source-analytics-canvas").textContent).toMatch(
+      /approval page/i,
     );
   });
 

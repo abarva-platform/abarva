@@ -901,16 +901,29 @@ function WorkflowBlocks({ groups }: { groups: SourceShellStepGroup[] }) {
 
 function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
   const flatSteps = view.stage.groups.flatMap((group) => group.steps);
+  const allReady = view.stage.total > 0 && view.stage.ready === view.stage.total;
   const activeStep =
-    flatSteps.find((step) => step.status === "active") ??
-    flatSteps.find((step) => step.status !== "captured") ??
-    flatSteps[0] ??
-    null;
+    allReady
+      ? null
+      : (flatSteps.find((step) => step.status === "active") ??
+        flatSteps.find((step) => step.status !== "captured") ??
+        flatSteps[0] ??
+        null);
   const activeIndex = activeStep
     ? flatSteps.findIndex((step) => step.id === activeStep.id)
     : -1;
+  const activeGroup =
+    (activeStep
+      ? view.stage.groups.find((group) =>
+          group.steps.some((step) => step.id === activeStep.id),
+        )
+      : view.stage.groups.find((group) =>
+          group.steps.some((step) => step.status === "captured"),
+        )) ??
+    view.stage.groups[0] ??
+    null;
 
-  if (!activeStep) {
+  if (flatSteps.length === 0) {
     return (
       <EmptyCard text="No required steps are defined for this stage yet." />
     );
@@ -934,82 +947,84 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
           background: ANALYTICS.PAGE_BG,
         }}
       >
-        {view.stage.groups.map((group) => (
-          <div key={group.id} style={{ marginBottom: 18 }}>
-            <RailLabel>{group.label}</RailLabel>
-            <div style={{ display: "grid", gap: 4 }}>
-              {group.steps.map((step) => {
-                const active = step.id === activeStep.id;
-                const done = step.status === "captured";
-                return (
-                  <div
-                    key={step.id}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "20px minmax(0, 1fr) auto",
-                      gap: 8,
-                      alignItems: "center",
-                      border: active
-                        ? `1px solid ${ANALYTICS.LINE}`
-                        : "1px solid transparent",
-                      borderLeft: active
-                        ? `2px solid ${ANALYTICS.BLUE}`
-                        : "2px solid transparent",
-                      borderRadius: 8,
-                      background: active ? ANALYTICS.CARD : "transparent",
-                      padding: "8px 7px",
-                      boxShadow: active ? ANALYTICS.SHADOW_SM : "none",
-                    }}
-                  >
-                    <StepDot done={done} active={active} />
-                    <span
+        {view.stage.groups.map((group) => {
+          const groupActive = activeGroup?.id === group.id;
+          return (
+            <div
+              key={group.id}
+              style={{
+                marginBottom: 18,
+                opacity: groupActive || allReady ? 1 : 0.58,
+              }}
+            >
+              <RailLabel>{group.label}</RailLabel>
+              <div style={{ display: "grid", gap: 4 }}>
+                {group.steps.map((step) => {
+                  const active = step.id === activeStep?.id;
+                  const done = step.status === "captured";
+                  return (
+                    <div
+                      key={step.id}
                       style={{
-                        color: done
-                          ? ANALYTICS.FAINT
-                          : active
-                            ? ANALYTICS.INK
-                            : ANALYTICS.INK_2,
-                        fontSize: 13,
-                        fontWeight: active ? 800 : 650,
-                        lineHeight: 1.25,
+                        display: "grid",
+                        gridTemplateColumns: "20px minmax(0, 1fr) auto",
+                        gap: 8,
+                        alignItems: "center",
+                        border: active
+                          ? `1px solid ${ANALYTICS.LINE}`
+                          : "1px solid transparent",
+                        borderLeft: active
+                          ? `2px solid ${ANALYTICS.BLUE}`
+                          : "2px solid transparent",
+                        borderRadius: 8,
+                        background: active ? ANALYTICS.CARD : "transparent",
+                        padding: "8px 7px",
+                        boxShadow: active ? ANALYTICS.SHADOW_SM : "none",
                       }}
                     >
-                      {step.title}
-                    </span>
-                    {active ? (
+                      <StepDot done={done} active={active} />
                       <span
                         style={{
-                          color: ANALYTICS.BLUE,
-                          fontFamily: ANALYTICS.MONO,
-                          fontSize: 8,
-                          fontWeight: 800,
-                          textTransform: "uppercase",
+                          color: done
+                            ? ANALYTICS.FAINT
+                            : active
+                              ? ANALYTICS.INK
+                              : ANALYTICS.INK_2,
+                          fontSize: 13,
+                          fontWeight: active ? 800 : 650,
+                          lineHeight: 1.25,
                         }}
                       >
-                        now
+                        {step.title}
                       </span>
-                    ) : null}
-                  </div>
-                );
-              })}
+                      {active ? (
+                        <span
+                          style={{
+                            color: ANALYTICS.BLUE,
+                            fontFamily: ANALYTICS.MONO,
+                            fontSize: 8,
+                            fontWeight: 800,
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          now
+                        </span>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
-        <div
-          style={{
-            color: ANALYTICS.FAINT,
-            fontSize: 12,
-            lineHeight: 1.45,
-            marginTop: 12,
-            paddingTop: 14,
-            borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
-          }}
-        >
-          {view.stage.gateReadinessLine}
-        </div>
+          );
+        })}
+        <StageApprovalHandoff view={view} />
       </div>
 
       <div style={{ padding: "28px 30px 34px" }}>
+        {allReady ? (
+          <StageReadyPanel view={view} />
+        ) : activeStep ? (
+          <>
         <div
           style={{
             display: "flex",
@@ -1090,14 +1105,261 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
           {activeStep.help}
         </p>
 
+        {activeGroup ? (
+          <EvidenceAskTable
+            group={activeGroup}
+            activeStepId={activeStep.id}
+          />
+        ) : null}
+
         <StepDetail
           step={activeStep}
           eventId={view.event.id}
           stageKey={view.stage.key}
           stepInsight={view.intelligence.stepInsight}
         />
+          </>
+        ) : null}
       </div>
     </section>
+  );
+}
+
+function StageApprovalHandoff({ view }: { view: SourceEventShellView }) {
+  const complete = view.stage.total > 0 && view.stage.ready === view.stage.total;
+  return (
+    <div
+      data-testid="source-shell-stage-approval-handoff"
+      style={{
+        display: "grid",
+        gap: 10,
+        marginTop: 12,
+        paddingTop: 14,
+        borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+      }}
+    >
+      <div
+        style={{
+          color: complete ? ANALYTICS.GREEN_TEXT : ANALYTICS.FAINT,
+          fontSize: 12,
+          fontWeight: complete ? 800 : 600,
+          lineHeight: 1.45,
+        }}
+      >
+        {view.stage.gateReadinessLine}
+      </div>
+      {complete ? (
+        <Link
+          href={view.stage.approvalHref}
+          style={{
+            ...BUTTON_STYLE,
+            background: ANALYTICS.INK,
+            color: "#fff",
+            display: "inline-flex",
+            justifyContent: "center",
+            padding: "10px 12px",
+            textDecoration: "none",
+            width: "100%",
+          }}
+        >
+          {view.stage.approvalCtaLabel}
+        </Link>
+      ) : (
+        <span
+          style={{
+            border: `1px solid ${ANALYTICS.LINE}`,
+            borderRadius: 8,
+            color: ANALYTICS.FAINT,
+            fontSize: 12,
+            fontWeight: 700,
+            padding: "10px 12px",
+            textAlign: "center",
+          }}
+        >
+          {view.stage.approvalLockedLabel}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function StageReadyPanel({ view }: { view: SourceEventShellView }) {
+  return (
+    <div
+      data-testid="source-shell-stage-ready-panel"
+      style={{
+        display: "grid",
+        gap: 18,
+        maxWidth: 760,
+      }}
+    >
+      <div>
+        <div
+          style={{
+            color: ANALYTICS.GREEN_TEXT,
+            fontFamily: ANALYTICS.MONO,
+            fontSize: 10,
+            fontWeight: 800,
+            letterSpacing: "0.08em",
+            marginBottom: 8,
+            textTransform: "uppercase",
+          }}
+        >
+          Stage ready
+        </div>
+        <h2 style={{ fontSize: 20, lineHeight: 1.25, margin: 0 }}>
+          All required evidence is ready for {view.stage.label}.
+        </h2>
+        <p
+          style={{
+            color: ANALYTICS.INK_2,
+            fontSize: 14,
+            lineHeight: 1.5,
+            margin: "8px 0 0",
+            maxWidth: 650,
+          }}
+        >
+          The next step is the approval page. Review the captured evidence,
+          record the decision, and advance the event from there.
+        </p>
+      </div>
+      <div style={{ display: "grid", gap: 12 }}>
+        {view.stage.groups.map((group) => (
+          <EvidenceAskTable key={group.id} group={group} inset={false} />
+        ))}
+      </div>
+      <Link
+        href={view.stage.approvalHref}
+        style={{
+          ...BUTTON_STYLE,
+          background: ANALYTICS.INK,
+          color: "#fff",
+          display: "inline-flex",
+          justifyContent: "center",
+          padding: "12px 16px",
+          textDecoration: "none",
+          width: "fit-content",
+        }}
+      >
+        {view.stage.approvalCtaLabel}
+      </Link>
+    </div>
+  );
+}
+
+function EvidenceAskTable({
+  group,
+  activeStepId,
+  inset = true,
+}: {
+  group?: SourceShellStepGroup;
+  activeStepId?: string;
+  inset?: boolean;
+}) {
+  if (!group) return null;
+  return (
+    <div
+      data-testid="source-shell-evidence-ask-table"
+      style={{
+        border: `1px solid ${ANALYTICS.LINE}`,
+        borderRadius: 8,
+        margin: inset ? "0 0 16px 42px" : 0,
+        maxWidth: 760,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          color: ANALYTICS.INK,
+          fontSize: 13,
+          fontWeight: 800,
+          padding: "10px 12px",
+        }}
+      >
+        {group.label}
+      </div>
+      <div
+        style={{
+          background: ANALYTICS.PAGE_BG,
+          color: ANALYTICS.MUTED,
+          display: "grid",
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 9,
+          fontWeight: 800,
+          gridTemplateColumns: "1.15fr 2fr 110px 112px",
+          letterSpacing: "0.06em",
+          padding: "9px 12px",
+          textTransform: "uppercase",
+        }}
+      >
+        <span>What is needed</span>
+        <span>Source or instruction</span>
+        <span>Status</span>
+        <span>Action</span>
+      </div>
+      {group.steps.map((step, index) => {
+        const active = step.id === activeStepId;
+        const captured = step.status === "captured";
+        return (
+          <div
+            key={step.id}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.15fr 2fr 110px 112px",
+              gap: 12,
+              padding: "11px 12px",
+              borderTop:
+                index === 0 ? "none" : `1px solid ${ANALYTICS.LINE_SOFT}`,
+              background: active ? "#fbfaf6" : ANALYTICS.CARD,
+              color: active || captured ? ANALYTICS.INK : ANALYTICS.MUTED,
+              fontSize: 12.5,
+              lineHeight: 1.35,
+            }}
+          >
+            <b>{step.title}</b>
+            <span style={{ color: active ? ANALYTICS.INK_2 : ANALYTICS.MUTED }}>
+              {step.help}
+            </span>
+            <span
+              style={{
+                color: captured
+                  ? ANALYTICS.GREEN_TEXT
+                  : active
+                    ? ANALYTICS.AMBER_TEXT
+                    : ANALYTICS.FAINT,
+                fontWeight: 800,
+              }}
+            >
+              {captured ? "Reviewed" : active ? "Now" : "Pending"}
+            </span>
+            <span
+              style={{
+                border: `1px solid ${captured ? "rgba(17, 120, 84, 0.24)" : ANALYTICS.LINE}`,
+                borderRadius: 999,
+                color: captured
+                  ? ANALYTICS.GREEN_TEXT
+                  : active
+                    ? ANALYTICS.INK
+                    : ANALYTICS.FAINT,
+                fontSize: 11,
+                fontWeight: 800,
+                padding: "5px 8px",
+                textAlign: "center",
+              }}
+            >
+              {captured
+                ? "Done"
+                : active
+                  ? step.type === "provide"
+                    ? "Upload below"
+                    : step.cta
+                  : "Select when ready"}
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

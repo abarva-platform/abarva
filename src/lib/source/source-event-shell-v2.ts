@@ -188,6 +188,9 @@ export interface SourceEventShellView {
     groups: SourceShellStepGroup[];
     activeStep: SourceShellStep | null;
     gateReadinessLine: string;
+    approvalHref: string;
+    approvalCtaLabel: string;
+    approvalLockedLabel: string;
   };
   files: {
     items: SourceShellFileItem[];
@@ -426,8 +429,11 @@ export function buildSourceEventShellView(
       activeStep,
       gateReadinessLine:
         ready === total
-          ? "All steps complete - review approval inside this event workspace."
-          : `${total - ready} step${total - ready === 1 ? "" : "s"} left - finish the inputs before opening this event's approval workspace.`,
+          ? "Stage complete - all required evidence is ready. Review the approval page to advance."
+          : `${total - ready} steps left - ${total - ready} required evidence item${total - ready === 1 ? "" : "s"} before approval.`,
+      approvalHref: `/source/events/${encodeURIComponent(input.event.id)}/approval`,
+      approvalCtaLabel: `Review ${viewedStageLabel} approval`,
+      approvalLockedLabel: "Approval page opens when required evidence is ready",
     },
     files: {
       items: artifacts,

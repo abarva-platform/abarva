@@ -19,7 +19,7 @@ interface ScopeGateProps {
  * because the evidence reached its target state — never because someone clicked
  * "mark met."
  */
-export function ScopeGate({ gate, stageName, eventId, stageKey }: ScopeGateProps) {
+export function ScopeGate({ gate, stageName, eventId }: ScopeGateProps) {
   const router = useRouter();
   const [confirmed, setConfirmed] = useState<ReadonlySet<number>>(new Set());
   const allConfirmed = confirmed.size === gate.confirms.length;
@@ -252,8 +252,7 @@ export function ScopeGate({ gate, stageName, eventId, stageKey }: ScopeGateProps
           disabled={!canOpenApprovalWorkspace}
           onClick={() => {
             if (!eventId) return;
-            const stageQuery = stageKey ? `?stage=${stageKey}&workspace=approvals` : '?workspace=approvals';
-            router.push(`/source/events/${eventId}${stageQuery}`);
+            router.push(`/source/events/${eventId}/approval`);
           }}
           style={{
             border: 'none',
@@ -267,7 +266,7 @@ export function ScopeGate({ gate, stageName, eventId, stageKey }: ScopeGateProps
             cursor: canOpenApprovalWorkspace ? 'pointer' : 'not-allowed',
           }}
         >
-          {last ? 'Open final approval →' : 'Open event approval workspace →'}
+          {last ? 'Open final approval ->' : 'Open event approval page ->'}
         </button>
         {!canOpenApprovalWorkspace ? (
           <span style={{ fontSize: 11.5, color: ANALYTICS.FAINT }}>
