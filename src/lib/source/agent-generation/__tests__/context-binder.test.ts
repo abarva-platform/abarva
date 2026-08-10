@@ -21,6 +21,11 @@ jest.mock("@/lib/client-config", () => ({
   canonicalClientDisplayName: jest.fn(() => "Apex Retail"),
 }));
 
+jest.mock("@/lib/auth/current-user", () => ({
+  __esModule: true,
+  getCurrentUser: jest.fn(() => Promise.resolve(null)),
+}));
+
 jest.mock("@/lib/admin/setup-data-broker", () => ({
   __esModule: true,
   listAppInventoryRecords: () => Promise.resolve([]),
@@ -41,6 +46,11 @@ jest.mock("@/lib/source/archetypes/event-archetype-resolver", () => ({
     categoryId: null,
     reason: "test",
   }),
+}));
+
+jest.mock("@/lib/source/stage-guidebooks/repository", () => ({
+  __esModule: true,
+  getSourceStageGuidebook: jest.fn(),
 }));
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
@@ -78,6 +88,16 @@ const { getAzureReadFluentClient } = jest.requireMock(
   "@/lib/data-plane/postgresCompat",
 ) as {
   getAzureReadFluentClient: jest.Mock;
+};
+
+const { getSourceStageGuidebook } = jest.requireMock(
+  "@/lib/source/stage-guidebooks/repository",
+) as {
+  getSourceStageGuidebook: jest.Mock;
+};
+
+const { getCurrentUser } = jest.requireMock("@/lib/auth/current-user") as {
+  getCurrentUser: jest.Mock;
 };
 
 function makeFluentResult(data: unknown[] = []) {
@@ -173,12 +193,14 @@ describe("buildSourceGenerationContext", () => {
     listGateCriterionStatesForEvent.mockResolvedValue([]);
     listEvidenceStatesForEvent.mockResolvedValue([]);
     mockUploadedEvidenceQueries();
+    getCurrentUser.mockResolvedValue(null);
     getActiveClientRow.mockResolvedValue({
       id: "client-apex",
       key: "apexretail",
       name: "Apex Retail",
       industry_code: "RETAIL",
     });
+    getSourceStageGuidebook.mockResolvedValue(null);
   });
 
   it("binds parsed uploaded evidence chunks and facts for generation prompts", async () => {
@@ -234,6 +256,60 @@ describe("buildSourceGenerationContext", () => {
         factSummaries: ['artifact_summary/text_uploaded: {"chunk_count":1}'],
       }),
     ]);
+  });
+
+  it("binds current and next-stage guidebooks for workflow-aware artifact prompts", async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+      currentStageKey: "strategy",
+    });
+    isUuid.mockImplementation(
+      (value: string) => value === "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+    const strategyGuidebook = {
+      id: "guidebook-strategy",
+      stageKey: "strategy",
+      clientKey: null,
+      title: "Strategy approval workshop",
+      purpose: "Align the sponsor on why this sourcing event should run.",
+      durationMinutes: 30,
+      status: "published",
+      sections: [],
+      version: 1,
+      createdBy: null,
+      updatedBy: null,
+      publishedAt: "2026-08-10T00:00:00.000Z",
+      createdAt: "2026-08-10T00:00:00.000Z",
+      updatedAt: "2026-08-10T00:00:00.000Z",
+    };
+    const scopeGuidebook = {
+      ...strategyGuidebook,
+      id: "guidebook-scope",
+      stageKey: "scope",
+      title: "Scope evidence collection workshop",
+      purpose:
+        "Collect volumetrics, SLA baseline, application inventory, and commercial terms before Scope approval.",
+    };
+    getSourceStageGuidebook.mockImplementation(async (stageKey: string) =>
+      stageKey === "strategy" ? strategyGuidebook : scopeGuidebook,
+    );
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    expect(getSourceStageGuidebook).toHaveBeenCalledWith(
+      "strategy",
+      "apexretail",
+    );
+    expect(getSourceStageGuidebook).toHaveBeenCalledWith("scope", "apexretail");
+    expect(ctx?.currentStageGuidebook?.title).toBe(
+      "Strategy approval workshop",
+    );
+    expect(ctx?.nextStageGuidebook?.title).toBe(
+      "Scope evidence collection workshop",
+    );
   });
 
   it("re-checks tenant_key at every join hop of the uploaded-evidence read (RLS/tenant-isolation workstream, PR B)", async () => {
@@ -496,6 +572,6 @@ describe("buildSourceGenerationContext", () => {
       "SKYH-AMS-CONTRACT-OPT-2026",
     );
 
-    expect(ctx?.tenantName).toBe("SkyHarbor Air");
+    expect(ctx?.tenantName).toBe("SkyHarbor Global");
   });
 });

@@ -33,6 +33,7 @@ const BOARD_GRADE_MODEL =
 // to develop complete arguments, tables, and all required sections without
 // truncation. Increase these rather than accept a truncated draft.
 const DEFAULT_MAX_TOKENS = 24_000;
+const BOARD_GRADE_MAX_TOKENS = 48_000;
 
 const AVA_SOURCE_ADVISOR_VOICE = `You are aVa, AbarVa's senior sourcing and vendor-strategy advisor writing for a CIO and their leadership team. You have personally run dozens of large-enterprise sourcing events. You write with the judgment, structure, and candor of a top-tier consulting partner — never like a template engine or a compliance checklist.
 
@@ -675,22 +676,60 @@ function formatGovernanceReviewFields(): string {
 function formatDraftEvidenceContext(
   ctx: SourceGenerationContext,
 ): string | null {
+  const guidebookBlock = formatStageGuidebookContext(ctx);
   const items = ctx.uploadedEvidence ?? [];
-  if (items.length === 0) return null;
-  const lines = items.slice(0, 8).map((a) => {
-    const facts = a.factSummaries?.length
-      ? `\n    Facts: ${a.factSummaries.slice(0, 6).join("; ")}`
-      : "";
-    const excerpt = a.chunkExcerpts?.length
-      ? `\n    Excerpt: ${a.chunkExcerpts[0].slice(0, 500)}`
-      : "";
-    return `  - ${a.originalName} (${a.artifactFamily} · ${a.evidenceState})${facts}${excerpt}`;
-  });
+  const evidenceBlock =
+    items.length === 0
+      ? null
+      : [
+          "Uploaded evidence for this event — CITE these by filename where they support a claim,",
+          "and do not invent figures beyond what they state:",
+          ...items.slice(0, 8).map((a) => {
+            const facts = a.factSummaries?.length
+              ? `\n    Facts: ${a.factSummaries.slice(0, 6).join("; ")}`
+              : "";
+            const excerpt = a.chunkExcerpts?.length
+              ? `\n    Excerpt: ${a.chunkExcerpts[0].slice(0, 500)}`
+              : "";
+            return `  - ${a.originalName} (${a.artifactFamily} · ${a.evidenceState})${facts}${excerpt}`;
+          }),
+        ].join("\n");
+  return [guidebookBlock, evidenceBlock].filter(Boolean).join("\n\n") || null;
+}
+
+function formatStageGuidebookContext(
+  ctx: SourceGenerationContext,
+): string | null {
+  const blocks: string[] = [];
+  const appendGuidebook = (
+    label: string,
+    guidebook: SourceGenerationContext["currentStageGuidebook"],
+  ) => {
+    if (!guidebook) return;
+    blocks.push(
+      [
+        `${label}: ${guidebook.title}`,
+        `Purpose: ${guidebook.purpose}`,
+        `Duration: ${guidebook.durationMinutes} minutes`,
+        "Use this guidebook to explain the workshop/session to run, what to present, what to discuss, what to collect, which template to fill, and what must be ready for the next approval gate.",
+        ...guidebook.sections.map((section) =>
+          [
+            `- ${section.title} (${section.type}${section.timeBoxMinutes ? `, ${section.timeBoxMinutes} min` : ""})`,
+            section.body,
+          ].join("\n  "),
+        ),
+      ].join("\n"),
+    );
+  };
+
+  appendGuidebook("Current-stage operating guidebook", ctx.currentStageGuidebook);
+  appendGuidebook("Next-stage evidence-collection guidebook", ctx.nextStageGuidebook);
+  if (blocks.length === 0) return null;
   return [
-    "Uploaded evidence for this event — CITE these by filename where they support a claim,",
-    "and do not invent figures beyond what they state:",
-    ...lines,
-  ].join("\n");
+    "— SOURCE WORKFLOW GUIDEBOOK CONTEXT —",
+    "When drafting, include a client-facing next-work plan where relevant: meeting/workshop to run, required attendees, data/system owners, template names, upload expectations, parser-readiness, and the approval decision the evidence will support.",
+    ...blocks,
+  ].join("\n\n");
 }
 const REGISTRY: Record<string, SourceArtifactPromptTemplate> = {
   d01_strategy_memo: {
@@ -741,7 +780,7 @@ This memo is your recommendation to the CIO on whether and how to take this to m
     artifactCode: "d02_value_target",
     version: 3,
     model: BOARD_GRADE_MODEL,
-    maxTokens: 12_000,
+    maxTokens: BOARD_GRADE_MAX_TOKENS,
     upstreamRequired: [],
     upstreamOptional: ["d01_strategy_memo"],
     systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
@@ -791,7 +830,7 @@ Requirements:
     artifactCode: "d03_archetype_decision",
     version: 3,
     model: BOARD_GRADE_MODEL,
-    maxTokens: 12_000,
+    maxTokens: BOARD_GRADE_MAX_TOKENS,
     upstreamRequired: [],
     upstreamOptional: ["d01_strategy_memo"],
     systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
@@ -4515,7 +4554,9 @@ export function getD09RfpSatisfiedRequirementIds(
 }
 
 export function listSupportedGenerationCodes(): string[] {
-  return Object.keys(REGISTRY).sort();
+  return Object.keys(REGISTRY)
+    .filter((code) => !code.endsWith("_legacy"))
+    .sort();
 }
 
 /**

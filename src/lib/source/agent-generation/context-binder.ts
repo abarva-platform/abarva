@@ -23,10 +23,12 @@ import { getActiveClientRow } from "@/lib/active-client";
 import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
 import { listAppInventoryRecords } from "@/lib/admin/setup-data-broker";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import { nextSourceStage } from "@/lib/source/constants";
 import { resolveArchetypeForEvent } from "@/lib/source/archetypes/event-archetype-resolver";
 import { buildArchetypeAdvisoryBlock } from "./archetype-advisory";
 import { getAuthoritativeVendorProposalFacts } from "@/lib/source/vendor-proposals/vendor-proposal-facts";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repository";
 import type { SourceCategoryId } from "@/lib/source/taxonomy/category-taxonomy";
 import type {
   SourceAppInventoryEntry,
@@ -105,6 +107,8 @@ export async function buildSourceGenerationContext(
     evidence,
     uploadedEvidence,
     authoritativeVendorProposalFacts,
+    currentStageGuidebook,
+    nextStageGuidebook,
   ] = await Promise.all([
     listArtifactStatesForEvent(substrateEventId),
     listGateCriterionStatesForEvent(substrateEventId),
@@ -122,6 +126,17 @@ export async function buildSourceGenerationContext(
           { eventId: substrateEventId },
         ).catch(() => [])
       : Promise.resolve([]),
+    activeClient?.key
+      ? getSourceStageGuidebook(event.currentStageKey, activeClient.key).catch(
+          () => null,
+        )
+      : Promise.resolve(null),
+    activeClient?.key && nextSourceStage(event.currentStageKey)
+      ? getSourceStageGuidebook(
+          nextSourceStage(event.currentStageKey)!,
+          activeClient.key,
+        ).catch(() => null)
+      : Promise.resolve(null),
   ]);
 
   // Pull the company's application inventory through the sanctioned broker seam
@@ -185,6 +200,8 @@ export async function buildSourceGenerationContext(
     archetypeAdvisory,
     enterpriseAppInventory,
     authoritativeVendorProposalFacts,
+    currentStageGuidebook,
+    nextStageGuidebook,
   };
 }
 
@@ -243,7 +260,7 @@ function inferSourceEventTenantName(args: {
   eventName?: string | null;
 }): string | null {
   const text = `${args.eventCode ?? ""} ${args.eventName ?? ""}`;
-  if (/\bSKYH\b|SkyHarbor/i.test(text)) return "Airline Demo";
+  if (/\bSKYH\b|SkyHarbor/i.test(text)) return "SkyHarbor Global";
   return null;
 }
 
