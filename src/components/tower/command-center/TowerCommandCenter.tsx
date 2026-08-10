@@ -57,8 +57,6 @@ const TABS: ReadonlyArray<{ id: TowerTab; label: string }> = [
 ];
 
 const TAB_IDS = new Set<string>(TABS.map((t) => t.id));
-const BOARDROOM_VERDICT =
-  "Investment is visible. Source-backed benefit evidence and economic conversion remain limited.";
 const BOARDROOM_UPDATED_LABEL = "Updated Aug 9, 2026";
 
 type DrawerState =
@@ -181,34 +179,41 @@ export function TowerCommandCenter({
             view.summary.approvedInvestmentUsd === null
               ? "Not loaded"
               : formatUsdM(view.summary.approvedInvestmentUsd),
-          label: "approved investment",
+          label: "investment",
+          fullLabel: "approved investment",
         },
         {
           value:
             view.summary.promisedBenefitUsd === null
               ? "Not loaded"
               : formatUsdM(view.summary.promisedBenefitUsd),
-          label: "explicit source-backed benefit",
+          label: "benefit",
+          fullLabel: "explicit source-backed benefit",
         },
         {
           value: formatUsdM(view.summary.financeValidatedBlockedUsd),
-          label: "Finance-calculated but blocked",
+          label: "blocked",
+          fullLabel: "Finance-calculated but blocked",
         },
         {
           value: formatUsdM(view.summary.claimableUsd),
           label: "claimable",
+          fullLabel: "claimable",
         },
         {
           value: formatCount(view.summary.boardScopeProgramCount),
-          label: "board-scope value cases",
+          label: "cases",
+          fullLabel: "board-scope value cases",
         },
         {
           value: formatCount(view.summary.totalProgramSubjectCount),
-          label: "tracked program subjects",
+          label: "subjects",
+          fullLabel: "tracked program subjects",
         },
         {
           value: formatCount(view.summary.aiInitiativeCount),
-          label: "AI tools, agents and capabilities",
+          label: "AI assets",
+          fullLabel: "AI tools, agents and capabilities",
         },
       ]
     : [];
@@ -300,9 +305,6 @@ export function TowerCommandCenter({
                 IT Investment Tower · FY26 · {tenantName}
               </div>
               <h1>AI value posture</h1>
-              <p className={styles.dashVerdict}>
-                {view ? BOARDROOM_VERDICT : "No governed Tower posture loaded."}
-              </p>
             </div>
             <div className={styles.dashRight}>
               <div className={styles.when}>
@@ -322,7 +324,11 @@ export function TowerCommandCenter({
                 aria-label="Tower boardroom scope and value posture"
               >
                 {boardroomRail.map((item) => (
-                  <span key={item.label}>
+                  <span
+                    key={item.label}
+                    aria-label={`${item.value} ${item.fullLabel}`}
+                    title={`${item.value} ${item.fullLabel}`}
+                  >
                     <b>{item.value}</b>
                     {item.label}
                   </span>

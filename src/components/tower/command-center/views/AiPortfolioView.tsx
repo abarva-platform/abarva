@@ -28,7 +28,6 @@ import {
   AI_KIND_WORD,
   Card,
   Chip,
-  Dot,
   MiniMeter,
   SubNav,
   ViewHead,
@@ -239,10 +238,10 @@ function AiPopulationStrip({ view }: { view: TowerCommandCenterView }) {
   ).length;
   const candidates = view.portfolioCounts.totalCandidateCount;
   const rows = [
-    ["Funded AI programs", funded],
-    ["Embedded tools/capabilities", directTools],
-    ["Platform/governance enablers", enablers],
-    ["Candidate opportunities", candidates],
+    ["funded", funded],
+    ["embedded", directTools],
+    ["enablers", enablers],
+    ["candidates", candidates],
   ] as const;
 
   return (
@@ -523,6 +522,8 @@ export function AiPortfolioView({
   );
   const showChips =
     subView === "overview" || subView === "bubble" || subView === "all";
+  const showControls =
+    subView === "overview" || subView === "bubble" || subView === "all";
   const aiTagged = formatUsdM(view.summary.aiTaggedUsd);
   const sizeMode = view.summary.aiSpendUnattributed ? "constant" : "spend";
   const spendLensHasRows = view.spendLens.some((row) => row.valueUsd > 0);
@@ -749,14 +750,7 @@ export function AiPortfolioView({
 
   return (
     <div className={cx(styles.view, styles.viewScroll)}>
-      <ViewHead
-        title="AI decision topology"
-        hint={
-          showChips
-            ? "Candidates are separated from the default portfolio so unfunded ideas do not overwhelm value evidence"
-            : "Spend attribution and candidate pipeline are whole-portfolio views — type filters do not apply"
-        }
-      >
+      <ViewHead title="AI portfolio">
         <SubNav
           label="AI Portfolio view"
           value={subView}
@@ -765,70 +759,59 @@ export function AiPortfolioView({
         />
       </ViewHead>
 
-      <div className={styles.zipContractNote}>
-        <Dot tone="teal" />
-        <span>
-          North Star read: compare AI spend scale, proof maturity, readiness,
-          funded-program status, embedded tool or agent usage, and candidate
-          status before treating usage as outcome value.
-        </span>
-      </div>
+      <p className={styles.srOnly}>
+        Compare AI spend scale, proof maturity, readiness, funded-program
+        status, embedded tool or agent usage, and candidate status before
+        treating usage as outcome value. Usage proves activity; it does not
+        prove business value.
+      </p>
 
-      <div className={styles.evidenceNote}>
-        <b>Usage proves activity. It does not prove business value.</b>
-        <span>
-          Spend, capacity, adoption, usage, outcome evidence, guardrails,
-          attestation and claim state are shown as separate gates.
-        </span>
-      </div>
-
-      <AiPopulationStrip view={view} />
-
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
-      >
-        <input
-          type="search"
-          className={styles.searchInput}
-          value={search}
-          onChange={(e) => onSearch(e.target.value)}
-          placeholder="Search tool, agent, vendor, system or category"
-          aria-label="Search AI tools, agents and capabilities"
-        />
-        {search.trim() ? (
-          <span className={styles.vhint}>
-            {allFiltered.length} of {view.allInitiatives.length} capabilities
-            match
-          </span>
-        ) : null}
-      </div>
-
-      {showChips ? (
-        <div
-          style={{ display: "flex", gap: 6, flexWrap: "wrap" }}
-          role="radiogroup"
-          aria-label="AI spend type filter"
-        >
-          {AI_FILTERS.map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              role="radio"
-              aria-checked={filter === id}
-              className={cx(
-                styles.chip,
-                filter === id ? styles.cBlue : styles.cGray,
-              )}
-              onClick={() => onFilter(id)}
+      {showControls ? (
+        <div className={styles.aiControlsBar}>
+          <input
+            type="search"
+            className={styles.searchInput}
+            value={search}
+            onChange={(e) => onSearch(e.target.value)}
+            placeholder="Search AI portfolio"
+            aria-label="Search AI tools, agents and capabilities"
+          />
+          {showChips ? (
+            <div
+              className={styles.aiFilterGroup}
+              role="radiogroup"
+              aria-label="AI spend type filter"
             >
-              {label}
-            </button>
-          ))}
+              {AI_FILTERS.map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={filter === id}
+                  className={cx(
+                    styles.chip,
+                    filter === id ? styles.cBlue : styles.cGray,
+                  )}
+                  onClick={() => onFilter(id)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {search.trim() ? (
+            <span className={styles.matchPill}>
+              {allFiltered.length} of {view.allInitiatives.length} capabilities
+              match
+            </span>
+          ) : null}
+          <span
+            className={styles.aiGuardrailPill}
+            title="Usage, adoption, spend, guardrails, attestation and claim state are separate gates."
+          >
+            Usage ≠ value
+          </span>
+          <AiPopulationStrip view={view} />
         </div>
       ) : null}
 
