@@ -228,6 +228,19 @@ it("preserves context and architecture as native Home tabs", () => {
   architecture.focus();
   fireEvent.keyDown(architecture, { key: "ArrowRight" });
   expect(
+    screen.getByRole("heading", {
+      name: "Claude-generated architecture review",
+    }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "Claude Review" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+
+  const claudeReview = screen.getByRole("tab", { name: "Claude Review" });
+  claudeReview.focus();
+  fireEvent.keyDown(claudeReview, { key: "ArrowRight" });
+  expect(
     screen.getByRole("heading", { name: "Normalized enterprise posture" }),
   ).toBeInTheDocument();
   expect(
