@@ -6,6 +6,7 @@ import {
   nextSourceStageForJourney,
   resolveSourceSourcingMotion,
   sourceJourneyLabelForStage,
+  sourceJourneyStageHref,
   sourceJourneyStageKeys,
 } from "../sourcing-motion-journeys";
 import type { StageAnalyticsView } from "@/components/source/canvas/analytics/view-model";
@@ -130,6 +131,34 @@ describe("Source sourcing motion journeys", () => {
     expect(coerceStageToSourceJourney(journey, "selection", "selection")).toBe(
       "transition",
     );
+  });
+
+  it("builds journey-aware stage links for optimization events", () => {
+    expect(
+      sourceJourneyStageHref({
+        eventId: "evt-1",
+        journey: SOURCE_JOURNEYS.contract_optimization,
+        stageKey: "rfp",
+      }),
+    ).toBe("/source/events/evt-1?stage=pricing");
+    expect(
+      sourceJourneyStageHref({
+        eventId: "evt-1",
+        journey: SOURCE_JOURNEYS.contract_optimization,
+        stageKey: "rfp",
+        workspace: "approvals",
+      }),
+    ).toBe("/source/events/evt-1?stage=pricing&workspace=approvals");
+  });
+
+  it("keeps competitive sourcing links on the full eleven-stage rail", () => {
+    expect(
+      sourceJourneyStageHref({
+        eventId: "evt-1",
+        journey: SOURCE_JOURNEYS.competitive_rfp,
+        stageKey: "rfp",
+      }),
+    ).toBe("/source/events/evt-1?stage=rfp");
   });
 
   it("removes RFP language from an optimization-adapted scope view", () => {
