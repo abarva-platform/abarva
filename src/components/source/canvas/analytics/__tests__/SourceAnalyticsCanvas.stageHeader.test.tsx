@@ -76,6 +76,21 @@ describe("SourceAnalyticsCanvas — stage header lead-agent label", () => {
     expect(screen.getByText(/Stage 01 · aVa/)).toBeInTheDocument();
   });
 
+  it("keeps the stage title compact for approval and workflow screens", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="strategy"
+        tenantName="Lakeshore"
+      />,
+    );
+    expect(screen.getByRole("heading", { level: 1, name: "Strategy" })).toHaveStyle({
+      fontSize: "26px",
+      lineHeight: "1.12",
+      letterSpacing: "0",
+    });
+  });
+
   it("shows Atlas for Value — not the hardcoded aVa the rail note contradicts", () => {
     render(
       <SourceAnalyticsCanvas
