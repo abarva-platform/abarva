@@ -104,18 +104,10 @@ function compact(value, fallback = "") {
   return text || fallback;
 }
 
-function readJson(file) {
-  return JSON.parse(fs.readFileSync(file, "utf8"));
-}
-
 function canonicalInputLabel(config) {
   const activePath = `datasets/tenant-inputs/active/${config.tenantKey}/current`;
   if (fs.existsSync(path.join(repoRoot, activePath))) return activePath;
   return `datasets/tenant-inputs/${config.tenantKey}/standard-2026-07-v3`;
-}
-
-function approvedArtifactDir(config) {
-  return path.join(repoRoot, "datasets/context-artifacts/approved", config.tenantKey, "home-knowledge");
 }
 
 function listTop(rows, field, count = 8) {
@@ -172,7 +164,7 @@ function contextForTenant(config) {
 }
 
 function buildPrompt(context) {
-  return `You generate approved Knowledge/Home CXO story blocks and visual specs from tenant context.
+  return `You generate review-only Knowledge/Home CXO story block candidates and visual spec candidates from tenant context.
 
 Return strict JSON only. No markdown fences.
 
@@ -185,16 +177,19 @@ Business model: ${context.businessModel}
 Required story arc:
 1. What kind of enterprise is this?
 2. What Nexus understands about how it runs.
-3. What is fragmented, risky, or not decision-grade.
-4. What that implies for AI-led transformation.
-5. What evidence is needed next.
-6. Which Nexus module should act next.
+3. Strengths and capabilities to preserve.
+4. Capabilities and transformation already in motion.
+5. Structural constraints and material uncertainties.
+6. Which accountable product module should validate deeper questions next.
 
 Rules:
 - Generate rich tenant context narrative, not Source event outputs.
 - Do not generate RFPs, vendor responses, BAFO packs, negotiation memos, or Source decision briefs.
 - Claude writes advisory story blocks and visual specs only.
+- This is review-only output. Do not write or imply approved_for_render.
 - Do not invent deterministic table rows, facts, savings, contract breach, production AI readiness, or measured improvements.
+- Do not issue final decisions or commands. Home may route to Intelligence, Moves, Source, or Tower; it must not prescribe funding, sourcing, sequencing, deployment, legal, or finance decisions.
+- Allowed module routes are only: Home / Knowledge, Intelligence, Moves, Source, Tower.
 - Use evidence-bound language such as "not yet evidenced", "needs validation", "planning-grade", "hypothesis", and "next evidence request".
 - Never write "not loaded"; write "not yet evidenced" or "needs evidence" instead.
 - Avoid these exact phrases: ${hardFailPhrases.join(" | ")}.
@@ -219,7 +214,19 @@ Output shape:
       "evidence_still_needed": string,
       "module_usage": string,
       "next_validation_action": string,
-      "approved_for_render": true
+      "material_claims": [
+        {
+          "claimId": string,
+          "text": string,
+          "claimType": "observed" | "derived" | "hypothesis",
+          "evidenceRefs": string[],
+          "counterEvidenceRefs": string[],
+          "confidence": "high" | "moderate" | "limited",
+          "scope": string,
+          "effectiveDate": string,
+          "moduleBoundary": "home" | "intelligence" | "moves" | "source" | "tower"
+        }
+      ]
     }
   ],
   "visual_specs": [
@@ -238,7 +245,7 @@ Output shape:
   ]
 }
 
-Create exactly 20 story_blocks: one Overview and one for each approved dimension. Create 8 to 12 visual_specs.
+Create exactly 20 story_blocks: one Overview and one for each review dimension. Create 8 to 12 visual_specs.
 Keep each story block text field to 12-24 words. Keep each visual spec string field to 8-18 words.
 
 Context JSON:
@@ -281,7 +288,24 @@ function validatePayload(payload, config) {
     for (const field of ["block_id", "surface", "dimension", "title", "executive_summary", "what_context_reveals", "why_it_matters", "decision_implication", "evidence_still_needed", "module_usage", "next_validation_action"]) {
       if (!compact(block[field])) failures.push(`story block ${block.block_id || "unknown"} missing ${field}`);
     }
-    if (block.approved_for_render !== true) failures.push(`story block ${block.block_id || "unknown"} not approved_for_render`);
+    if ("approved_for_render" in block) failures.push(`story block ${block.block_id || "unknown"} includes Claude-authored approved_for_render`);
+    if (!Array.isArray(block.material_claims) || block.material_claims.length === 0) {
+      failures.push(`story block ${block.block_id || "unknown"} missing material_claims`);
+    }
+    for (const claim of block.material_claims || []) {
+      for (const field of ["claimId", "text", "claimType", "evidenceRefs", "counterEvidenceRefs", "confidence", "scope", "effectiveDate", "moduleBoundary"]) {
+        if (claim[field] === undefined || claim[field] === null || claim[field] === "") failures.push(`claim ${claim.claimId || "unknown"} missing ${field}`);
+      }
+      if (!["observed", "derived", "hypothesis"].includes(claim.claimType)) failures.push(`claim ${claim.claimId || "unknown"} has invalid claimType`);
+      if (!["high", "moderate", "limited"].includes(claim.confidence)) failures.push(`claim ${claim.claimId || "unknown"} has invalid confidence`);
+      if (!["home", "intelligence", "moves", "source", "tower"].includes(claim.moduleBoundary)) failures.push(`claim ${claim.claimId || "unknown"} has invalid moduleBoundary`);
+      if (!Array.isArray(claim.evidenceRefs)) failures.push(`claim ${claim.claimId || "unknown"} evidenceRefs must be an array`);
+      if (!Array.isArray(claim.counterEvidenceRefs)) failures.push(`claim ${claim.claimId || "unknown"} counterEvidenceRefs must be an array`);
+    }
+    if (/\b(Operations|Nexus)\b/.test(String(block.module_usage))) failures.push(`story block ${block.block_id || "unknown"} uses non-canonical module route`);
+    if (/\b(must|require|commission|charter|execute|no .+ should advance|no .+ should proceed)\b/i.test(`${block.decision_implication} ${block.next_validation_action}`)) {
+      failures.push(`story block ${block.block_id || "unknown"} is too prescriptive for Home`);
+    }
   }
   for (const visual of payload.visual_specs || []) {
     if (!allowedVisualSpecTypes.has(visual.type)) failures.push(`visual ${visual.visual_id || "unknown"} has disallowed type ${visual.type}`);
@@ -310,24 +334,22 @@ function validatePayload(payload, config) {
 
 function writeTenantReports(config, payload, validation, rawText) {
   const reportDir = path.join(repoRoot, "reports/multi-tenant-cxo-story-generation", config.tenantKey);
-  const artifactDir = approvedArtifactDir(config);
   ensureDir(reportDir);
-  ensureDir(artifactDir);
   const storyPath = path.join(reportDir, "generated-story-blocks.json");
   const visualPath = path.join(reportDir, "generated-visual-specs.json");
-  fs.writeFileSync(storyPath, `${JSON.stringify(payload.story_blocks, null, 2)}\n`);
-  fs.writeFileSync(visualPath, `${JSON.stringify(payload.visual_specs, null, 2)}\n`);
-  fs.writeFileSync(path.join(artifactDir, "approved-cxo-story-blocks.json"), `${JSON.stringify({
+  fs.writeFileSync(storyPath, `${JSON.stringify({
     tenant_key: config.tenantKey,
     prompt_version: promptVersion,
     generated_model: model,
+    publication_status: "blocked_pending_semantic_validation",
     validation,
     story_blocks: payload.story_blocks,
   }, null, 2)}\n`);
-  fs.writeFileSync(path.join(artifactDir, "approved-cxo-visual-specs.json"), `${JSON.stringify({
+  fs.writeFileSync(visualPath, `${JSON.stringify({
     tenant_key: config.tenantKey,
     prompt_version: promptVersion,
     generated_model: model,
+    publication_status: "blocked_pending_semantic_validation",
     validation,
     visual_specs: payload.visual_specs,
   }, null, 2)}\n`);
@@ -335,7 +357,7 @@ function writeTenantReports(config, payload, validation, rawText) {
     block_id: block.block_id,
     dimension: block.dimension,
     status: validation.status,
-    approved_for_render: block.approved_for_render,
+    publication_status: "blocked_pending_semantic_validation",
     hard_fail_count: validation.failures.length,
   }));
   writeCsv(path.join(reportDir, "block-validation-results.csv"), Object.keys(blockRows[0]), blockRows);
@@ -354,17 +376,17 @@ function writeTenantReports(config, payload, validation, rawText) {
   }));
   scoreRows.push({ category: "overall", score: validation.overall, status: validation.overall >= 4.4 ? "Pass" : "Fail" });
   writeCsv(path.join(reportDir, "cxo-scorecard.csv"), Object.keys(scoreRows[0]), scoreRows);
-  fs.writeFileSync(path.join(reportDir, "summary.md"), `# ${config.tenantName} CXO Story Generation\n\n- Status: ${validation.status === "pass" ? "Pass" : "Fail"}\n- Model: ${model}\n- Prompt version: ${promptVersion}\n- Canonical input: ${canonicalInputLabel(config)}\n- Story blocks: ${payload.story_blocks.length}\n- Visual specs: ${payload.visual_specs.length}\n- Overall score: ${validation.overall}\n- Failures: ${validation.failures.join("; ") || "none"}\n\nApproved advisory artifacts are stored by tenant key and mirrored to this report folder.\n`);
+  fs.writeFileSync(path.join(reportDir, "summary.md"), `# ${config.tenantName} CXO Story Generation\n\n- Status: ${validation.status === "pass" ? "Structural review pass" : "Fail"}\n- Publication status: blocked_pending_semantic_validation\n- Model: ${model}\n- Prompt version: ${promptVersion}\n- Canonical input: ${canonicalInputLabel(config)}\n- Story blocks: ${payload.story_blocks.length}\n- Visual specs: ${payload.visual_specs.length}\n- Structural prompt-compliance score: ${validation.overall}\n- Failures: ${validation.failures.join("; ") || "none"}\n\nReview artifacts are stored in this report folder only. They are not approved Home content.\n`);
   fs.writeFileSync(path.join(reportDir, "all-dimension-review.md"), payload.story_blocks.map((block) => `## ${block.dimension}\n\n${block.executive_summary}\n\n- What context reveals: ${block.what_context_reveals}\n- Decision implication: ${block.decision_implication}\n- Evidence still needed: ${block.evidence_still_needed}\n- Next validation action: ${block.next_validation_action}\n`).join("\n"));
   fs.writeFileSync(path.join(reportDir, "visual-placement-plan.md"), payload.visual_specs.map((visual) => `- ${visual.title} (${visual.type}) -> ${visual.placement}. Chart allowed: ${visual.chart_allowed ? "yes" : "no"}. ${visual.why_chart_allowed_or_not}`).join("\n"));
   fs.writeFileSync(path.join(reportDir, "before-after-samples.md"), `# Before / After Samples\n\n## Before\n\nSafe deterministic fallback can state only that ${config.tenantName} has a planning-grade context pack and needs more evidence.\n\n## After\n\n${payload.story_blocks[0]?.executive_summary || ""}\n`);
   fs.writeFileSync(path.join(reportDir, "proof.html"), renderProofHtml(config, payload, validation));
   fs.writeFileSync(path.join(reportDir, "raw-claude-response.txt"), rawText);
-  return { reportDir, artifactDir };
+  return { reportDir };
 }
 
 function renderProofHtml(config, payload, validation) {
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${config.tenantName} CXO Story Proof</title><style>body{font-family:system-ui,sans-serif;margin:32px;line-height:1.45}section{border:1px solid #ddd;border-radius:8px;padding:16px;margin:12px 0}code{background:#f4f4f4;padding:2px 4px}</style></head><body><h1>${config.tenantName} CXO Story Proof</h1><p>Status: <strong>${validation.status}</strong>. Overall score: ${validation.overall}. Failures: ${validation.failures.join("; ") || "none"}.</p>${payload.story_blocks.slice(0, 6).map((block) => `<section><h2>${block.title}</h2><p>${block.executive_summary}</p><p><strong>Evidence:</strong> ${block.evidence_still_needed}</p><p><strong>Next:</strong> ${block.next_validation_action}</p></section>`).join("")}<h2>Visual Specs</h2><ul>${payload.visual_specs.map((visual) => `<li><code>${visual.type}</code> ${visual.title}</li>`).join("")}</ul></body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${config.tenantName} CXO Story Review Candidate</title><style>body{font-family:system-ui,sans-serif;margin:32px;line-height:1.45}section{border:1px solid #ddd;border-radius:8px;padding:16px;margin:12px 0}code{background:#f4f4f4;padding:2px 4px}.blocked{color:#8a2c0d;font-weight:700}</style></head><body><h1>${config.tenantName} CXO Story Review Candidate</h1><p>Status: <strong class="blocked">blocked pending claim-level semantic validation</strong>. Structural prompt-compliance score: ${validation.overall}. Failures: ${validation.failures.join("; ") || "none"}.</p>${payload.story_blocks.slice(0, 6).map((block) => `<section><h2>${block.title}</h2><p>${block.executive_summary}</p><p><strong>Evidence still needed:</strong> ${block.evidence_still_needed}</p><p><strong>Review note:</strong> Claude candidate retained for audit; publication rejected until claim support matrix and human approval pass.</p></section>`).join("")}<h2>Visual Specs</h2><ul>${payload.visual_specs.map((visual) => `<li><code>${visual.type}</code> ${visual.title}</li>`).join("")}</ul></body></html>`;
 }
 
 async function generateForTenant(client, config) {
@@ -409,11 +431,11 @@ function writeCombinedSummary(results) {
       visualSpecs: result.visualSpecs,
       validation: result.validation,
       reportDir: result.reportDir,
-      artifactDir: "approved tenant-key advisory artifact store",
+      publicationStatus: "blocked_pending_semantic_validation",
     })),
   };
   fs.writeFileSync(path.join(outDir, "summary.json"), `${JSON.stringify(summary, null, 2)}\n`);
-  fs.writeFileSync(path.join(outDir, "summary.md"), `# Multi-Tenant CXO Story Generation\n\n${results.map((result) => `- ${result.tenantKey}: ${result.validation.status} (${result.storyBlocks} story blocks, ${result.visualSpecs} visual specs, score ${result.validation.overall})`).join("\n")}\n`);
+  fs.writeFileSync(path.join(outDir, "summary.md"), `# Multi-Tenant CXO Story Generation\n\n${results.map((result) => `- ${result.tenantKey}: ${result.validation.status} (${result.storyBlocks} story blocks, ${result.visualSpecs} visual specs, structural prompt-compliance score ${result.validation.overall}, publication blocked pending semantic validation)`).join("\n")}\n`);
 }
 
 loadDotenvLocal();

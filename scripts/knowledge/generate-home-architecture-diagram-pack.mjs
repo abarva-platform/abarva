@@ -7,15 +7,23 @@ import { spawnSync } from "node:child_process";
 
 const repoRoot = process.cwd();
 const tenantKey = "skyharbor-air";
-const outDir = path.join(
+const reportRoot = path.join(
   repoRoot,
-  "datasets/tenant-inputs/skyharbor-air/approved-content/home/architecture-diagram-pack-v1",
+  "reports/home-claude-architecture-generation",
 );
-const publicDir = path.join(
-  repoRoot,
-  "public/generated/home/skyharbor-air/architecture-diagram-pack-v1",
+const outDir = path.join(
+  reportRoot,
+  "raw-claude-responses",
+);
+const svgDir = path.join(
+  reportRoot,
+  "generated-svg",
 );
 const manifestPath = path.join(
+  reportRoot,
+  "claude-architecture-diagram-pack.review.json",
+);
+const runtimeManifestPath = path.join(
   repoRoot,
   "datasets/tenant-inputs/skyharbor-air/approved-content/home/claude-architecture-diagram-pack.json",
 );
@@ -250,7 +258,7 @@ async function callClaudeDiagram(diagram) {
 }
 
 fs.mkdirSync(outDir, { recursive: true });
-fs.mkdirSync(publicDir, { recursive: true });
+fs.mkdirSync(svgDir, { recursive: true });
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const generatedDiagrams = [];
@@ -266,12 +274,12 @@ if (requestedDiagramId && requestsToGenerate.length !== 1) {
 for (const diagramRequest of requestsToGenerate) {
   console.log(`Generating ${diagramRequest.id} with ${model}`);
   const { parsed, rawPath, rawText } = await callClaudeDiagram(diagramRequest);
-  const assetPath = path.join(publicDir, `${parsed.id}.svg`);
+  const assetPath = path.join(svgDir, `${parsed.id}.svg`);
   fs.writeFileSync(assetPath, parsed.svg);
   delete parsed.svg;
   generatedDiagrams.push({
     ...parsed,
-    asset_path: `/generated/home/skyharbor-air/architecture-diagram-pack-v1/${parsed.id}.svg`,
+    asset_path: path.relative(repoRoot, assetPath),
   });
   rawResponses.push({
     diagram_id: parsed.id,
@@ -324,7 +332,8 @@ const manifest = {
   artifact_type: "home_architecture_diagram_pack",
   pack_version: "v1.0.0",
   generated_at: new Date().toISOString(),
-  authoring_status: "claude_generated_pending_validation",
+  authoring_status: "generation_complete",
+  publication_status: "blocked_pending_semantic_validation",
   generated_model: model,
   prompt_version: "home-claude-architecture-diagram-pack-v1",
   no_post_claude_mutation: true,
@@ -337,10 +346,20 @@ const manifest = {
     prompt_path: path.relative(repoRoot, promptContractPath),
     generator_path: "scripts/knowledge/generate-home-architecture-diagram-pack.mjs",
     validator_path: "scripts/knowledge/validate-home-architecture-diagram-pack.mjs",
+    runtime_manifest_path: path.relative(repoRoot, runtimeManifestPath),
     regeneration_policy:
-      "Validators reject and return failure report to Claude; they do not rewrite SVG or narrative output.",
+      "Validators reject and return failure report to Claude; they do not rewrite SVG or narrative output. Claude review output is not copied into runtime public paths until semantic validation and human publication approval pass.",
   },
-  asset_root: "/generated/home/skyharbor-air/architecture-diagram-pack-v1",
+  asset_root: path.relative(repoRoot, svgDir),
+  semantic_gate: {
+    status: "not_run",
+    required_before_runtime_publication: true,
+    required_contract: "HomeDiagramSemanticSpecV2",
+  },
+  human_review_gate: {
+    status: "not_approved",
+    required_before_runtime_publication: true,
+  },
   diagrams: allDiagrams,
 };
 
@@ -365,13 +384,15 @@ if (validation.status !== 0) {
 
 const approved = {
   ...manifest,
-  authoring_status: "claude_generated_validation_pass",
+  authoring_status: "svg_structural_pass",
+  publication_status: "blocked_pending_semantic_validation",
   quality_gate: {
     status: "pass",
+    scope: "svg_structural_security_and_raw_output_fidelity_only",
     validated_by: "scripts/knowledge/validate-home-architecture-diagram-pack.mjs",
     validated_at: new Date().toISOString(),
   },
 };
 
 fs.writeFileSync(manifestPath, `${JSON.stringify(approved, null, 2)}\n`);
-console.log(`Claude-authored Home architecture diagram pack written to ${manifestPath}`);
+console.log(`Claude-authored Home review diagram pack written to ${manifestPath}`);

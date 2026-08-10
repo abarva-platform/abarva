@@ -18,193 +18,201 @@
       "visual_id": "SHA-VIZ-001",
       "type": "context_strength_snapshot",
       "surface": "home",
-      "title": "SkyHarbor Air Context Strength Snapshot",
-      "purpose": "Show which dimensions have planning-grade context versus certified evidence across the enterprise.",
+      "title": "SkyHarbor Air Context Strength by Dimension",
+      "purpose": "Show which knowledge dimensions have strong versus weak evidence foundations across the enterprise.",
       "data_requirements": [
-        "Dimension-level evidence classification: planning-grade or certified",
-        "Evidence source type per dimension",
-        "Validation status per domain"
+        "dimension names",
+        "evidence status per dimension",
+        "planning-grade versus needs-validation classification"
       ],
       "chart_allowed": false,
-      "why_chart_allowed_or_not": "No certified numeric evidence exists; qualitative classification is the appropriate representation.",
-      "placement": "Home page hero section above story blocks",
-      "evidence_boundary": "All classifications are planning-grade; no dimension is certified without Tower validation."
+      "why_chart_allowed_or_not": "No certified numeric scores exist; qualitative status cards are the appropriate representation.",
+      "placement": "Home page hero section above use-case cards",
+      "evidence_boundary": "Planning-grade only; no dimension is certified as production-ready evidence."
     },
     {
       "visual_id": "SHA-VIZ-002",
       "type": "dimension_readiness_matrix",
       "surface": "knowledge",
-      "title": "Dimension Readiness Matrix: Evidence vs. Decision-Grade Status",
-      "purpose": "Map all twenty dimensions against evidence completeness and decision-grade readiness.",
+      "title": "Knowledge Dimension Readiness: SkyHarbor Air",
+      "purpose": "Display readiness status across all nineteen knowledge dimensions using qualitative confidence tiers.",
       "data_requirements": [
-        "Evidence completeness rating per dimension",
-        "Decision-grade status per dimension",
-        "Next evidence action per dimension"
+        "dimension labels",
+        "readiness tier per dimension",
+        "primary gap description per dimension"
       ],
       "chart_allowed": false,
-      "why_chart_allowed_or_not": "Qualitative matrix is appropriate; no numeric completeness scores are certified.",
-      "placement": "Knowledge page primary view below overview block",
-      "evidence_boundary": "Readiness ratings are hypothesis-grade until Tower validation is completed per dimension."
+      "why_chart_allowed_or_not": "Readiness tiers are qualitative; no numeric scores are validated for matrix charting.",
+      "placement": "Knowledge home page as primary navigation orientation visual",
+      "evidence_boundary": "All dimensions are planning-grade or needs-validation; none are certified."
     },
     {
       "visual_id": "SHA-VIZ-003",
       "type": "top_evidence_requests",
       "surface": "home",
-      "title": "Top Evidence Requests Blocking Decision-Grade Readiness",
-      "purpose": "Surface the highest-priority evidence gaps preventing board-defensible decisions across all domains.",
+      "title": "Top Evidence Requests Blocking AI Progress",
+      "purpose": "Surface the highest-priority evidence gaps preventing use-case advancement across all seven programs.",
       "data_requirements": [
-        "Ranked evidence gaps by decision impact",
-        "Owning executive area per gap",
-        "Initiative linkage per evidence request"
+        "evidence gap descriptions",
+        "linked use case per gap",
+        "responsible team or domain per gap"
       ],
       "chart_allowed": false,
-      "why_chart_allowed_or_not": "Ranked qualitative cards are appropriate; no numeric priority scores are validated.",
-      "placement": "Home page below context strength snapshot",
-      "evidence_boundary": "Rankings are advisory and planning-grade; Tower must validate priority ordering."
+      "why_chart_allowed_or_not": "Evidence gaps are qualitative; no numeric priority scores are validated for charting.",
+      "placement": "Home page below context strength snapshot as a priority action card stack",
+      "evidence_boundary": "Gaps are planning-grade hypotheses until validated by real documents or certified data."
     },
     {
       "visual_id": "SHA-VIZ-004",
-      "type": "risk_control_heatmap",
+      "type": "use_case_portfolio",
       "surface": "knowledge",
-      "title": "Risk and Control Gap Heatmap Across Operational Domains",
-      "purpose": "Highlight where risk exposure is highest and control evidence is weakest across airline operations.",
+      "title": "SkyHarbor Air AI Use Case Portfolio Overview",
+      "purpose": "Map all seven use cases by category, system dependency, and evidence readiness status.",
       "data_requirements": [
-        "Risk domain classification per use case",
-        "Control evidence status per domain",
-        "Human-in-the-loop gate status per AI use case"
+        "use case names",
+        "categories",
+        "linked systems",
+        "evidence readiness status per use case"
       ],
       "chart_allowed": false,
-      "why_chart_allowed_or_not": "No certified risk scores exist; qualitative heatmap cells are appropriate representation.",
-      "placement": "Knowledge page dimension 11 Risks and Controls section",
-      "evidence_boundary": "All risk ratings are planning-grade hypotheses; no certified control evidence is claimed."
+      "why_chart_allowed_or_not": "Use case readiness is qualitative; no numeric readiness scores are certified for charting.",
+      "placement": "Knowledge use-case section as primary portfolio orientation card grid",
+      "evidence_boundary": "All use cases are planning-grade; none have certified production readiness."
     },
     {
       "visual_id": "SHA-VIZ-005",
-      "type": "use_case_portfolio",
+      "type": "risk_control_heatmap",
       "surface": "knowledge",
-      "title": "AI and Analytics Use Case Portfolio: Readiness vs. Evidence Status",
-      "purpose": "Position each use case by evidence readiness and decision-grade status across the portfolio.",
+      "title": "Risk and Control Coverage Across Use Cases",
+      "purpose": "Highlight unmitigated risk areas across vendor, data, AI governance, and operational safety domains.",
       "data_requirements": [
-        "Use case name and category",
-        "Evidence gap count per use case",
-        "Planning-grade versus certified status per use case"
+        "risk domain labels",
+        "use case linkage per risk",
+        "control status per domain"
       ],
       "chart_allowed": false,
-      "why_chart_allowed_or_not": "No certified readiness scores exist; qualitative positioning cards are appropriate.",
-      "placement": "Knowledge page dimension 10 AI and Automation section",
-      "evidence_boundary": "All use cases are planning-grade; none are certified for production deployment."
+      "why_chart_allowed_or_not": "Control status is qualitative and unvalidated; heatmap uses categorical risk tiers only.",
+      "placement": "Knowledge risk section as primary risk orientation visual for CXO review",
+      "evidence_boundary": "Risk status is hypothesis-grade; no controls are certified as effective without audit evidence."
     },
     {
       "visual_id": "SHA-VIZ-006",
       "type": "vendor_dependency_matrix",
       "surface": "knowledge",
-      "title": "Vendor Dependency Matrix: Concentration and Contract Risk",
-      "purpose": "Map vendor relationships by system criticality and contract risk across managed-services and platform domains.",
+      "title": "Vendor Dependency and Contract Validation Status",
+      "purpose": "Show dependency concentration across eight vendors and flag unvalidated contract terms per vendor.",
       "data_requirements": [
-        "Vendor name and system category",
-        "Contract risk classification per vendor",
-        "Exit rights and benchmarking status per agreement"
+        "vendor names",
+        "dependency level per vendor",
+        "contract validation status",
+        "key unvalidated terms per vendor"
       ],
       "chart_allowed": false,
-      "why_chart_allowed_or_not": "No certified contract or spend data exists; qualitative matrix is the appropriate representation.",
-      "placement": "Knowledge page dimension 07 Vendors and Contracts section",
-      "evidence_boundary": "All classifications are planning-grade; legal validation of exit and benchmarking rights is not yet evidenced."
+      "why_chart_allowed_or_not": "Dependency levels are qualitative assessments; no certified spend or SLA data supports numeric charting.",
+      "placement": "Knowledge vendor section as primary vendor risk orientation matrix",
+      "evidence_boundary": "Vendor analysis is planning-grade; no contract terms are legally validated at this stage."
     },
     {
       "visual_id": "SHA-VIZ-007",
       "type": "data_foundation_gap_map",
       "surface": "knowledge",
-      "title": "Data Foundation Gap Map: Lineage and Certification Status by Domain",
-      "purpose": "Show where data lineage is uncertified and which domains block analytics and AI use case advancement.",
+      "title": "Data Foundation Gaps Across AI Use Cases",
+      "purpose": "Map uncertified data domains to dependent use cases to show compounding data risk exposure.",
       "data_requirements": [
-        "Data domain name and owning system",
-        "Lineage certification status per domain",
-        "Blocking use cases per uncertified domain"
+        "data domain names",
+        "certification status per domain",
+        "linked use cases per domain",
+        "gap description per domain"
       ],
       "chart_allowed": false,
-      "why_chart_allowed_or_not": "No certified lineage evidence exists; qualitative gap map is the appropriate representation.",
-      "placement": "Knowledge page dimension 05 Data Assets and Integrations section",
-      "evidence_boundary": "All lineage statuses are planning-grade; Tower validation is required before any domain is certified."
+      "why_chart_allowed_or_not": "Data certification status is qualitative; no completeness scores are validated for numeric display.",
+      "placement": "Knowledge data section as primary data readiness orientation visual",
+      "evidence_boundary": "All data domains are needs-validation; no domain has certified lineage or completeness proof."
     },
     {
       "visual_id": "SHA-VIZ-008",
-      "type": "program_readiness_matrix",
-      "surface": "knowledge",
-      "title": "Program Readiness Matrix: Baseline and Control Artifact Status",
-      "purpose": "Show which programs have co-existing baseline and control artifacts versus those that are sponsor-only.",
+      "type": "module_next_actions",
+      "surface": "home",
+      "title": "Nexus Module Next Actions for SkyHarbor Air",
+      "purpose": "Show which Nexus modules should act next and what evidence gates must clear before activation.",
       "data_requirements": [
-        "Program name and executive sponsor",
-        "Baseline artifact status per program",
-        "Control artifact status per program"
+        "module names",
+        "activation prerequisite per module",
+        "linked use case per module",
+        "evidence gate status"
       ],
       "chart_allowed": false,
-      "why_chart_allowed_or_not": "No certified program baselines exist; qualitative matrix is the appropriate representation.",
-      "placement": "Knowledge page dimension 09 Programs and Initiatives section",
-      "evidence_boundary": "All program statuses are planning-grade; joint baseline and control artifact are not yet evidenced."
+      "why_chart_allowed_or_not": "Module activation status is qualitative; no numeric readiness scores support charting.",
+      "placement": "Home page bottom section as a prioritized action roadmap card stack",
+      "evidence_boundary": "Module actions are advisory; Source activation requires evidence gate clearance per use case."
     },
     {
       "visual_id": "SHA-VIZ-009",
-      "type": "module_next_actions",
-      "surface": "home",
-      "title": "Nexus Module Next Actions: Where Each Module Should Act",
-      "purpose": "Guide executives to the right Nexus module for each priority evidence or decision action.",
+      "type": "value_hypothesis_vs_proof",
+      "surface": "knowledge",
+      "title": "Value Hypothesis Versus Proof Status by Use Case",
+      "purpose": "Contrast stated value hypotheses against current evidence proof status for each use case.",
       "data_requirements": [
-        "Module name and primary action",
-        "Priority domain per module",
-        "Evidence prerequisite per module action"
+        "use case names",
+        "value hypothesis statement per use case",
+        "proof status per use case",
+        "evidence needed to close gap"
       ],
       "chart_allowed": false,
-      "why_chart_allowed_or_not": "Module actions are qualitative advisory guidance; no numeric prioritization is certified.",
-      "placement": "Home page below top evidence requests section",
-      "evidence_boundary": "Module actions are advisory and planning-grade; Tower must validate before any action is executed."
+      "why_chart_allowed_or_not": "Value proof is qualitative and unvalidated; no audited savings or outcomes support numeric comparison.",
+      "placement": "Knowledge value section as primary hypothesis-to-proof orientation visual for finance stakeholders",
+      "evidence_boundary": "All value claims are hypothesis-grade; no realized savings or outcomes are claimed."
     },
     {
       "visual_id": "SHA-VIZ-010",
-      "type": "value_hypothesis_vs_proof",
+      "type": "evidence_confidence_matrix",
       "surface": "knowledge",
-      "title": "Value Hypothesis vs. Proof: Use Case Evidence Maturity",
-      "purpose": "Contrast the value hypothesis for each use case against the proof evidence currently available.",
+      "title": "Evidence Confidence by Domain and Use Case",
+      "purpose": "Rate evidence confidence across data, contract, process, and governance domains per use case.",
       "data_requirements": [
-        "Use case value hypothesis statement",
-        "Current proof evidence status per use case",
-        "Gap between hypothesis and proof per use case"
+        "evidence domain labels",
+        "use case names",
+        "confidence tier per domain-use case intersection",
+        "primary gap per cell"
       ],
       "chart_allowed": false,
-      "why_chart_allowed_or_not": "No realized value or measured outcomes exist; qualitative contrast cards are appropriate.",
-      "placement": "Knowledge page dimension 10 AI and Automation section alongside use case portfolio",
-      "evidence_boundary": "All value hypotheses are planning-grade; no realized savings or outcomes are claimed."
+      "why_chart_allowed_or_not": "Confidence tiers are qualitative assessments; no validated scores support numeric matrix charting.",
+      "placement": "Knowledge evidence section as primary confidence orientation matrix for CDAO and CIO review",
+      "evidence_boundary": "Confidence ratings are planning-grade; all cells require real evidence validation to upgrade status."
     },
     {
       "visual_id": "SHA-VIZ-011",
-      "type": "sourcing_scope_readiness_map",
+      "type": "program_readiness_matrix",
       "surface": "knowledge",
-      "title": "Sourcing Scope Readiness Map: AMS and IMS Evidence Status",
-      "purpose": "Show which sourcing scope elements are evidence-ready versus blocked by unreconciled data.",
+      "title": "Program Readiness Across Seven Strategic Initiatives",
+      "purpose": "Assess readiness of each program across data, governance, system, and stakeholder dimensions.",
       "data_requirements": [
-        "Sourcing scope element name",
-        "Evidence readiness status per element",
-        "Blocking evidence gap per element"
+        "program names",
+        "readiness dimension labels",
+        "readiness status per dimension per program",
+        "blocking gap per cell"
       ],
       "chart_allowed": false,
-      "why_chart_allowed_or_not": "No certified sourcing scope or spend data exists; qualitative readiness map is appropriate.",
-      "placement": "Knowledge page dimension 17 Managed Services Scope section",
-      "evidence_boundary": "All scope elements are planning-grade; CMDB, SLA, and invoice reconciliation are not yet evidenced."
+      "why_chart_allowed_or_not": "Program readiness is qualitative; no certified milestone or completion data supports numeric charting.",
+      "placement": "Knowledge programs section as primary readiness orientation matrix for CIO and PMO review",
+      "evidence_boundary": "All programs are planning-grade; no program has certified readiness for production deployment."
     },
     {
       "visual_id": "SHA-VIZ-012",
       "type": "cxo_insight_cards",
       "surface": "home",
-      "title": "CXO Insight Cards: Priority Signals by Executive Domain",
-      "purpose": "Surface the most critical planning-grade signals for enterprise strategy, finance, and operations leaders.",
+      "title": "CXO Insight Cards: SkyHarbor Air Priorities",
+      "purpose": "Deliver concise executive insight cards summarizing top risks, gaps, and next actions for CXO audiences.",
       "data_requirements": [
-        "Executive domain and priority signal",
-        "Initiative linkage per signal",
-        "Evidence needed per signal"
+        "top risk per executive domain",
+        "primary gap per domain",
+        "recommended next action per domain",
+        "linked use case per card"
       ],
       "chart_allowed": false,
-      "why_chart_allowed_or_not": "Signals are qualitative interview-derived; no certified numeric evidence supports chart representation.",
-      "placement": "Home page footer section as a persistent executive reference",
-      "evidence_boundary": "All signals are planning-grade and interview-derived; none are certified operational findings."
+      "why_chart_allowed_or_not": "Insight cards are narrative and qualitative; no numeric data supports chart-based CXO summary display.",
+      "placement": "Home page primary section as the first CXO-facing content block above all other visuals",
+      "evidence_boundary": "Insights are advisory and planning-grade; no claims reflect certified outcomes or validated decisions."
     }
   ]
 }

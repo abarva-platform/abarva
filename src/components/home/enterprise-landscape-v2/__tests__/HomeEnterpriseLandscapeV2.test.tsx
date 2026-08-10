@@ -32,15 +32,15 @@ it("renders the compact executive Summary without the old AI Success thesis", ()
   expect(screen.queryByText(/source pending/i)).not.toBeInTheDocument();
 });
 
-it("integrates context and architecture into the approved eight-tab canvas", () => {
+it("preserves context and architecture as native Home tabs", () => {
   render(<HomeEnterpriseLandscapeV2 />);
 
   expect(
-    screen.queryByRole("tab", { name: "Context" }),
-  ).not.toBeInTheDocument();
+    screen.getByRole("tab", { name: "Context" }),
+  ).toBeInTheDocument();
   expect(
-    screen.queryByRole("tab", { name: "Architecture" }),
-  ).not.toBeInTheDocument();
+    screen.getByRole("tab", { name: "Architecture" }),
+  ).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("tab", { name: "Patterns" }));
   expect(
@@ -58,17 +58,43 @@ it("integrates context and architecture into the approved eight-tab canvas", () 
   expect(screen.getAllByText("Architecture graph").length).toBeGreaterThan(0);
   expect(screen.getAllByText("586").length).toBeGreaterThan(0);
   expect(
-    screen.getByLabelText(
+    screen.queryByLabelText(
       "Enterprise operating system pattern map stored SVG exhibit",
     ),
+  ).not.toBeInTheDocument();
+  expect(window.location.search).toBe("?view=patterns");
+
+  fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+  expect(
+    screen.getByRole("heading", {
+      name: "Loaded context, integrated into the Home story",
+    }),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Industry context")).toBeInTheDocument();
+  expect(screen.getByText("Global airline operating context")).toBeInTheDocument();
+  expect(window.location.search).toBe("?view=context");
+
+  fireEvent.click(screen.getByRole("tab", { name: "Architecture" }));
+  expect(
+    screen.getByRole("heading", {
+      name: "Scoped current-state architecture",
+    }),
   ).toBeInTheDocument();
   expect(
-    screen.getByAltText("Enterprise operating system pattern map"),
-  ).toHaveAttribute(
-    "src",
-    "/generated/home/skyharbor-air/architecture-diagram-pack-v1/patterns-enterprise-operating-system.svg",
-  );
-  expect(window.location.search).toBe("?view=patterns");
+    screen.getAllByLabelText("Data and AI platform detailed architecture canvas")
+      .length,
+  ).toBeGreaterThan(0);
+  expect(
+    screen.getAllByLabelText(
+      "Private cloud, data centers, and mainframe detailed architecture canvas",
+    ).length,
+  ).toBeGreaterThan(0);
+  expect(screen.getAllByText("Data and AI platform").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("ERP and finance core").length).toBeGreaterThan(0);
+  expect(
+    screen.getAllByText("Private cloud, data centers, and mainframe").length,
+  ).toBeGreaterThan(0);
+  expect(screen.getAllByText("Digital airline channels").length).toBeGreaterThan(0);
 
   fireEvent.click(screen.getByRole("tab", { name: "Coherence" }));
   expect(
@@ -81,56 +107,45 @@ it("integrates context and architecture into the approved eight-tab canvas", () 
     screen.getAllByText("Current-state architecture exhibits").length,
   ).toBeGreaterThan(0);
   expect(
-    screen.getByLabelText(
+    screen.queryByLabelText(
       "Scoped architecture diagram index stored SVG exhibit",
     ),
-  ).toBeInTheDocument();
+  ).not.toBeInTheDocument();
+  expect(screen.getAllByText("Operational sources").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("Integration fabric").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("Data platforms").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("Analytics + AI").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("IBM mainframe").length).toBeGreaterThan(0);
   expect(
-    screen.getByLabelText("Data and AI platform detailed architecture canvas"),
-  ).toBeInTheDocument();
+    screen.getAllByText(/z\/OS, CICS transactions, DB2 records/i).length,
+  ).toBeGreaterThan(0);
+  expect(screen.getAllByText("Hot / warm recovery").length).toBeGreaterThan(0);
   expect(
-    screen.getByLabelText(
-      "Private cloud, data centers, and mainframe detailed architecture canvas",
-    ),
-  ).toBeInTheDocument();
-  expect(screen.getByText("Data and AI platform")).toBeInTheDocument();
-  expect(screen.getByText("ERP and finance core")).toBeInTheDocument();
+    screen.getAllByText("CDP + personalization").length,
+  ).toBeGreaterThan(0);
+  expect(screen.getAllByText("Agent runtime").length).toBeGreaterThan(0);
   expect(
-    screen.getByText("Private cloud, data centers, and mainframe"),
-  ).toBeInTheDocument();
-  expect(screen.getByText("Digital airline channels")).toBeInTheDocument();
-  expect(screen.getByText("Operational sources")).toBeInTheDocument();
-  expect(screen.getByText("Integration fabric")).toBeInTheDocument();
-  expect(screen.getByText("Data platforms")).toBeInTheDocument();
-  expect(screen.getByText("Analytics + AI")).toBeInTheDocument();
-  expect(screen.getByText("IBM mainframe")).toBeInTheDocument();
+    screen.getAllByText("Power BI, Tableau, scorecards, operating reviews")
+      .length,
+  ).toBeGreaterThan(0);
   expect(
-    screen.getByText(/z\/OS, CICS transactions, DB2 records/i),
-  ).toBeInTheDocument();
-  expect(screen.getByText("Hot / warm recovery")).toBeInTheDocument();
-  expect(screen.getByText("CDP + personalization")).toBeInTheDocument();
-  expect(screen.getByText("Agent runtime")).toBeInTheDocument();
+    screen.getAllByText("Finance owns recognized value, not Claude").length,
+  ).toBeGreaterThan(0);
   expect(
-    screen.getByText("Power BI, Tableau, scorecards, operating reviews"),
-  ).toBeInTheDocument();
-  expect(
-    screen.getByText("Finance owns recognized value, not Claude"),
-  ).toBeInTheDocument();
-  expect(
-    screen.getByText(
+    screen.getAllByText(
       "Mainframe integration is a modernization constraint, not a footnote",
-    ),
-  ).toBeInTheDocument();
+    ).length,
+  ).toBeGreaterThan(0);
   expect(
-    screen.getByText(
+    screen.getAllByText(
       "AI assist needs action guardrails and service recovery context",
-    ),
-  ).toBeInTheDocument();
+    ).length,
+  ).toBeGreaterThan(0);
   expect(
-    screen.getByText(
+    screen.getAllByText(
       "A credible airline current-state diagram must explicitly show mainframe gravity, dual data centers, private cloud, replicated controls, and selective cloud egress.",
-    ),
-  ).toBeInTheDocument();
+    ).length,
+  ).toBeGreaterThan(0);
   expect(
     screen.queryByRole("img", {
       name: /Data and AI mesh diagram/i,
@@ -157,10 +172,10 @@ it("integrates context and architecture into the approved eight-tab canvas", () 
     screen.getByRole("heading", { name: "Economics without value overclaim" }),
   ).toBeInTheDocument();
   expect(
-    screen.getByLabelText(
+    screen.queryByLabelText(
       "Economics and value-control architecture stored SVG exhibit",
     ),
-  ).toBeInTheDocument();
+  ).not.toBeInTheDocument();
   expect(screen.getByText("Budget commitment bridge")).toBeInTheDocument();
   expect(screen.getByText("63% committed")).toBeInTheDocument();
   expect(screen.getByText("$170.2M visible")).toBeInTheDocument();
@@ -175,34 +190,45 @@ it("integrates context and architecture into the approved eight-tab canvas", () 
   economics.focus();
   fireEvent.keyDown(economics, { key: "ArrowRight" });
   expect(
+    screen.getByRole("heading", { name: "Scoped current-state architecture" }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "Architecture" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+
+  const architecture = screen.getByRole("tab", { name: "Architecture" });
+  architecture.focus();
+  fireEvent.keyDown(architecture, { key: "ArrowRight" });
+  expect(
     screen.getByRole("heading", { name: "Normalized enterprise posture" }),
   ).toBeInTheDocument();
   expect(
-    screen.getByLabelText(
+    screen.queryByLabelText(
       "Evidence and authority posture map stored SVG exhibit",
     ),
-  ).toBeInTheDocument();
+  ).not.toBeInTheDocument();
   expect(screen.getByRole("tab", { name: "Posture" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
 });
 
-it("redirects legacy Context and Architecture view params into approved tabs", () => {
+it("loads native Context and Architecture view params without redirect", () => {
   window.history.replaceState(null, "", "/home?view=context");
   const { unmount } = render(<HomeEnterpriseLandscapeV2 />);
-  expect(screen.getByRole("tab", { name: "Patterns" })).toHaveAttribute(
+  expect(screen.getByRole("tab", { name: "Context" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
-  expect(window.location.search).toBe("?view=patterns");
+  expect(window.location.search).toBe("?view=context");
 
   unmount();
   window.history.replaceState(null, "", "/home?view=architecture");
   render(<HomeEnterpriseLandscapeV2 />);
-  expect(screen.getByRole("tab", { name: "Coherence" })).toHaveAttribute(
+  expect(screen.getByRole("tab", { name: "Architecture" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
-  expect(window.location.search).toBe("?view=coherence");
+  expect(window.location.search).toBe("?view=architecture");
 });

@@ -3,7 +3,12 @@ import { spawnSync } from "node:child_process";
 
 const result = spawnSync(
   process.execPath,
-  ["scripts/knowledge/validate-home-architecture-diagram-pack.mjs", "--require-claude"],
+  [
+    "scripts/knowledge/validate-home-architecture-diagram-pack.mjs",
+    "--manifest",
+    "reports/home-claude-architecture-generation/claude-architecture-diagram-pack.review.json",
+    "--require-claude",
+  ],
   {
     cwd: process.cwd(),
     encoding: "utf8",
@@ -28,4 +33,4 @@ if (report.warnings.some((warning) => warning.includes("not Claude-generated yet
   process.exit(1);
 }
 
-console.log("Home architecture diagram pack validator test passed.");
+console.log("Home architecture review diagram pack validator test passed.");

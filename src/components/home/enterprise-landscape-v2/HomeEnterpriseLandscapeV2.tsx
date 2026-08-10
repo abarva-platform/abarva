@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -13,21 +12,11 @@ import {
   type MetricAnchor,
   type SignalTone,
 } from "./homeEnterpriseLandscapeV2Model";
-import {
-  SKYHARBOR_HOME_ARCHITECTURE_DIAGRAM_PACK,
-  diagramForHomeTab,
-  type HomeArchitectureDiagram,
-} from "./claudeArchitectureDiagramPack";
 import styles from "./HomeEnterpriseLandscapeV2.module.css";
 
 const TAB_IDS = new Set<HomeLandscapeTabId>(
   HOME_LANDSCAPE_TABS.map((tab) => tab.id),
 );
-
-const LEGACY_TAB_REDIRECTS: Record<string, HomeLandscapeTabId> = {
-  context: "patterns",
-  architecture: "coherence",
-};
 
 const TONE_CLASS: Record<SignalTone, string> = {
   blue: styles.barBlue,
@@ -57,7 +46,7 @@ function normalizeTabId(value: string | null): HomeLandscapeTabId | null {
   if (!value) return null;
   if (TAB_IDS.has(value as HomeLandscapeTabId))
     return value as HomeLandscapeTabId;
-  return LEGACY_TAB_REDIRECTS[value] ?? null;
+  return null;
 }
 
 function useSelectedTab(defaultTab: HomeLandscapeTabId) {
@@ -140,59 +129,6 @@ function ContextSignalWall({
       ))}
     </div>
   );
-}
-
-function AuthoredDiagramExhibit({
-  diagram,
-}: {
-  diagram: HomeArchitectureDiagram;
-}) {
-  const isClaudeGenerated =
-    SKYHARBOR_HOME_ARCHITECTURE_DIAGRAM_PACK.authoring_status ===
-    "claude_generated_validation_pass";
-  const authoringLabel = isClaudeGenerated
-    ? "Claude-authored SVG pack"
-    : "Seed SVG pack, Claude generation pending";
-
-  return (
-    <figure
-      className={styles.authoredDiagramExhibit}
-      aria-label={`${diagram.title} stored SVG exhibit`}
-    >
-      <figcaption className={styles.authoredDiagramHeader}>
-        <div>
-          <span>{authoringLabel}</span>
-          <strong>{diagram.title}</strong>
-          <p>{diagram.subtitle}</p>
-        </div>
-        <div className={styles.authoredDiagramMeta}>
-          <span>{diagram.confidence.replaceAll("_", " ")}</span>
-          <span>{SKYHARBOR_HOME_ARCHITECTURE_DIAGRAM_PACK.prompt_version}</span>
-        </div>
-      </figcaption>
-      <div className={styles.authoredDiagramFrame}>
-        <Image
-          className={styles.authoredDiagramImage}
-          src={diagram.asset_path}
-          alt={diagram.title}
-          width={1280}
-          height={460}
-          unoptimized
-        />
-      </div>
-      <div className={styles.authoredDiagramSources}>
-        {diagram.source_refs.map((source) => (
-          <span key={source}>{source}</span>
-        ))}
-      </div>
-    </figure>
-  );
-}
-
-function TabAuthoredDiagram({ tab }: { tab: HomeLandscapeTabId }) {
-  const diagram = diagramForHomeTab(tab);
-  if (!diagram) return null;
-  return <AuthoredDiagramExhibit diagram={diagram} />;
 }
 
 interface ArchitectureTile {
@@ -1225,8 +1161,6 @@ function TabPanels({
             specialist questions to other Nexus modules.
           </p>
         </div>
-        <TabAuthoredDiagram tab="patterns" />
-        <ContextSignalWall signals={model.contextSignals} />
         <div className={styles.patternGrid}>
           {model.patterns.map((pattern) => (
             <article className={styles.patternCard} key={pattern.title}>
@@ -1248,6 +1182,32 @@ function TabPanels({
 
       <article
         className={styles.panel}
+        id="context-panel"
+        role="tabpanel"
+        aria-labelledby="tab-context"
+        hidden={selectedTab !== "context"}
+      >
+        <div className={styles.contextLayout}>
+          <div>
+            <h2>Loaded context, integrated into the Home story</h2>
+            <p className={styles.lead}>{model.contextRead}</p>
+          </div>
+          <ContextSignalWall signals={model.contextSignals} />
+          <div className={styles.contextDomainGrid}>
+            {model.contextDomains.map((domain) => (
+              <article className={styles.contextDomain} key={domain.label}>
+                <span className={styles.eyebrow}>{domain.label}</span>
+                <h3>{domain.title}</h3>
+                <p>{domain.body}</p>
+                <small>{domain.evidence}</small>
+              </article>
+            ))}
+          </div>
+        </div>
+      </article>
+
+      <article
+        className={styles.panel}
         id="economics-panel"
         role="tabpanel"
         aria-labelledby="tab-economics"
@@ -1258,7 +1218,6 @@ function TabPanels({
             <h2>Economics without value overclaim</h2>
             <p className={styles.lead}>{model.economicsRead}</p>
           </div>
-          <TabAuthoredDiagram tab="economics" />
           <EconomicsExhibit rows={model.economics} />
           <div className={styles.economicAuditTable}>
             <div className={`${styles.economicAuditRow} ${styles.postureHead}`}>
@@ -1279,6 +1238,51 @@ function TabPanels({
 
       <article
         className={styles.panel}
+        id="architecture-panel"
+        role="tabpanel"
+        aria-labelledby="tab-architecture"
+        hidden={selectedTab !== "architecture"}
+      >
+        <div className={styles.architectureLayout}>
+          <div>
+            <h2>Scoped current-state architecture</h2>
+            <p className={styles.lead}>{model.architectureRead}</p>
+          </div>
+          <ArchitectureFlowMap model={model} />
+          <div className={styles.deploymentGrid}>
+            {model.architectureDeployments.map((deployment) => (
+              <article className={styles.deploymentCard} key={deployment.label}>
+                <span className={styles.eyebrow}>{deployment.label}</span>
+                <h3>{deployment.posture}</h3>
+                <p>{deployment.body}</p>
+                <div className={styles.laneChipRow}>
+                  {deployment.examples.map((example) => (
+                    <span key={example}>{example}</span>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+          <div className={styles.archetypeGrid}>
+            {model.architectureArchetypes.map((archetype) => (
+              <article className={styles.archetypeCard} key={archetype.title}>
+                <span className={styles.eyebrow}>{archetype.route}</span>
+                <h3>{archetype.title}</h3>
+                <strong>{archetype.topology}</strong>
+                <p>{archetype.body}</p>
+                <div className={styles.laneChipRow}>
+                  {archetype.examples.map((example) => (
+                    <span key={example}>{example}</span>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </article>
+
+      <article
+        className={styles.panel}
         id="posture-panel"
         role="tabpanel"
         aria-labelledby="tab-posture"
@@ -1292,7 +1296,6 @@ function TabPanels({
             Claude-generated score.
           </p>
         </div>
-        <TabAuthoredDiagram tab="posture" />
         <div className={styles.postureMatrix}>
           <div className={`${styles.postureRow} ${styles.postureHead}`}>
             <div>Domain</div>
@@ -1359,7 +1362,6 @@ function TabPanels({
               and vendor controls into one system of constraints.
             </p>
           </div>
-          <TabAuthoredDiagram tab="coherence" />
           <CoherenceMap model={model} />
           <div className={styles.coherenceSplit}>
             <ArchitectureFlowMap model={model} />
@@ -1408,7 +1410,6 @@ function TabPanels({
             module route.
           </p>
         </div>
-        <TabAuthoredDiagram tab="trajectory" />
         <div className={styles.shiftTable}>
           <div className={`${styles.shiftRow} ${styles.postureHead}`}>
             <div>Today</div>

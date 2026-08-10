@@ -55,11 +55,25 @@ function readJson(filePath) {
   }
 }
 
+function extractJson(text) {
+  const candidate = String(text ?? "").trim();
+  const fenced = candidate.match(/```json\s*([\s\S]*?)```/i);
+  const body = fenced ? fenced[1] : candidate;
+  const start = body.indexOf("{");
+  const end = body.lastIndexOf("}");
+  if (start < 0 || end < start) {
+    throw new Error("Claude response did not contain a JSON object");
+  }
+  return JSON.parse(body.slice(start, end + 1));
+}
+
 function assetFsPath(assetPath) {
-  if (typeof assetPath !== "string" || !assetPath.startsWith("/")) {
+  if (typeof assetPath !== "string") {
     return null;
   }
-  return path.join(repoRoot, "public", assetPath);
+  if (assetPath.startsWith("/")) return path.join(repoRoot, "public", assetPath);
+  if (assetPath.includes("..")) return null;
+  return path.join(repoRoot, assetPath);
 }
 
 const manifest = readJson(manifestPath);
@@ -82,16 +96,60 @@ if (requireClaude && !String(manifest.generated_model ?? "").startsWith("claude-
 if (
   requireClaude &&
   ![
-    "claude_generated_pending_validation",
-    "claude_generated_validation_pass",
+    "generation_complete",
+    "svg_structural_pass",
+    "generated_pending_semantic_review",
+    "semantic_validation_pass",
+    "human_review_approved",
+    "publication_approved",
   ].includes(manifest.authoring_status)
 ) {
   fail(
-    "--require-claude requires a Claude-generated authoring_status pending or passed validation",
+    "--require-claude requires a Claude review lifecycle authoring_status",
   );
+}
+if (
+  ["semantic_validation_pass", "human_review_approved", "publication_approved"].includes(
+    manifest.authoring_status,
+  ) &&
+  manifest.semantic_gate?.status !== "pass"
+) {
+  fail(`${manifest.authoring_status} requires semantic_gate.status pass`);
+}
+if (
+  ["human_review_approved", "publication_approved"].includes(
+    manifest.authoring_status,
+  ) &&
+  manifest.human_review_gate?.status !== "approved"
+) {
+  fail(`${manifest.authoring_status} requires human_review_gate.status approved`);
+}
+if (
+  manifest.publication_status === "publication_approved" &&
+  manifest.authoring_status !== "publication_approved"
+) {
+  fail("publication_status publication_approved requires authoring_status publication_approved");
 }
 if (!Array.isArray(manifest.diagrams) || manifest.diagrams.length < requiredTabs.size) {
   fail(`diagrams must include at least ${requiredTabs.size} entries`);
+}
+
+const rawByDiagram = new Map();
+for (const rawRef of manifest.raw_claude_response?.responses ?? []) {
+  if (!rawRef?.diagram_id || !rawRef?.path) continue;
+  const rawPath = path.join(repoRoot, rawRef.path);
+  if (!fs.existsSync(rawPath)) {
+    fail(`Raw Claude response missing for ${rawRef.diagram_id}: ${rawRef.path}`);
+    continue;
+  }
+  const raw = readJson(rawPath);
+  if (!raw) continue;
+  try {
+    const parsed = extractJson(raw.raw_text);
+    rawByDiagram.set(rawRef.diagram_id, parsed);
+  } catch (error) {
+    fail(`Cannot parse retained raw Claude response for ${rawRef.diagram_id}: ${error.message}`);
+  }
 }
 
 const seenTabs = new Set();
@@ -121,6 +179,10 @@ for (const diagram of manifest.diagrams ?? []) {
   }
 
   const svg = fs.readFileSync(filePath, "utf8");
+  const rawDiagram = rawByDiagram.get(diagram.id);
+  if (rawDiagram?.svg && rawDiagram.svg !== svg) {
+    fail(`Diagram ${diagram.id} SVG differs from retained raw Claude response`);
+  }
   if (!svg.trim().startsWith("<svg")) {
     fail(`Diagram ${diagram.id} asset must start with <svg`);
   }
