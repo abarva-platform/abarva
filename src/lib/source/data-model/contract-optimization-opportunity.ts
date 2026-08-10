@@ -748,7 +748,7 @@ function buildRateVarianceOpportunity(
       lines,
     },
     overlapTreatment:
-      "Included only in recoverable leakage. Pending off-contract lines are excluded from this calculation to avoid double counting.",
+      "Included only in the recoverable opportunity calculation. Pending off-contract lines are excluded until coverage review is complete, so the page avoids double counting.",
     approvalState: "requires_amendment_exception_review",
     narrative:
       "Billed rates exceed operative contract rates on named invoice lines. The amount is reproducible from AP invoice lines and the pricing schedule.",
@@ -863,7 +863,7 @@ function buildSlaOpportunity(
     ],
     calculation: null,
     overlapTreatment:
-      "Tracked as recoverable leakage. Received credits are not double counted as finance realization.",
+      "Tracked as recoverable opportunity. Credits already received are kept out of the finance-confirmed outcome calculation.",
     approvalState: "requires_entitlement_review",
     narrative: `Monthly SLA evidence shows ${formatUsd(earned)} earned, ${formatUsd(claimed)} claimed, and ${formatUsd(received)} received.`,
   };
@@ -929,7 +929,7 @@ function buildShelfwareOpportunity(
     ],
     calculation: null,
     overlapTreatment:
-      "Avoided future spend only. It is not recoverable leakage and is not finance-confirmed until the reduced commitment is booked.",
+      "Avoided future spend only. It is not a recoverable opportunity and is not finance-confirmed until the reduced commitment is booked.",
     approvalState: "business_owner_approval_required",
     narrative:
       text(reviewed?.finding_or_offer_summary) ??
@@ -994,7 +994,7 @@ function buildNegotiatedOpportunity(
     ],
     calculation: null,
     overlapTreatment:
-      "Negotiated improvement is tracked as a target position until agreement. It is not added to finance realization.",
+      "Negotiated improvement is tracked as a target position until agreement. It is not added to the finance-confirmed outcome.",
     approvalState: "vendor_outreach_not_approved",
     narrative:
       text(reviewed?.finding_or_offer_summary) ??
@@ -1023,7 +1023,7 @@ function buildFinanceRealizations(
       amountUsd: roundCurrency(amount),
       basis:
         text(input.financeRow.realized_value_basis) ??
-        "Finance-confirmed realized value linked to originating opportunities.",
+        "Finance-confirmed outcome linked to originating opportunities.",
       confirmationDate: projectedFinanceConfirmationDate(input),
       owner: text(input.financeRow.finance_owner_role_ref),
       towerClaimRefs: towerRefs,

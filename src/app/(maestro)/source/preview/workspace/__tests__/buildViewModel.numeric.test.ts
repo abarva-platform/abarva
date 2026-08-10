@@ -432,18 +432,32 @@ describe("buildViewModel numeric coercion", () => {
             deadline: null,
             owner: "Commercial owner",
             blockingGap: null,
-            nextAction: "Review invoice-line exceptions.",
+            nextAction:
+              "Review recoverable leakage exceptions before finance realization.",
             sourceSystems: ["AP / ERP invoice line extract"],
             evidenceRefs: [],
             calculation: null,
-            overlapTreatment: "Line-level billing-rate variance only.",
+            overlapTreatment:
+              "Included only in recoverable leakage. Pending off-contract lines are excluded from this calculation to avoid double counting.",
             approvalState: "needs_review",
             narrative:
               "Invoice billing-rate variance is backed by AP evidence.",
           },
         ],
-        financeRealizations: [],
-        evidenceRequirements: [],
+        financeRealizations: [
+          {
+            realizationId: "fin-1",
+            amountUsd: 125_000,
+            basis:
+              "Finance-confirmed realized value linked to originating opportunities.",
+            confirmationDate: "2026-06-30",
+            owner: "Finance owner",
+            towerClaimRefs: ["claim-1"],
+            linkedOpportunityIds: ["c1:rate-variance"],
+            sourceRefs: [],
+          },
+        ],
+        evidenceRequirements: ["No recoverable leakage evidence gap remains."],
         potentialRecoverableUsd: 365_000,
         potentialAvoidableUsd: 0,
         potentialNegotiableUsd: 0,
@@ -453,8 +467,19 @@ describe("buildViewModel numeric coercion", () => {
 
     const built = buildViewModel(vm) as {
       opportunityView: {
-        selectedOpportunity: { label: string; shortLabel: string };
-        opportunities: Array<{ label: string; shortLabel: string }>;
+        selectedOpportunity: {
+          label: string;
+          shortLabel: string;
+          nextAction: string;
+          overlapTreatment: string;
+        };
+        opportunities: Array<{
+          label: string;
+          shortLabel: string;
+          nextAction: string;
+        }>;
+        evidenceRequirements: string[];
+        financeRealizations: Array<{ basis: string }>;
       };
     };
 
@@ -465,7 +490,20 @@ describe("buildViewModel numeric coercion", () => {
     expect(built.opportunityView.opportunities[0]).toMatchObject({
       label: "Invoice billing-rate variance",
       shortLabel: "Invoice billing-rate variance",
+      nextAction:
+        "Review recoverable opportunity exceptions before finance-confirmed outcome.",
     });
+    expect(
+      built.opportunityView.selectedOpportunity.overlapTreatment,
+    ).toBe(
+      "Included only in recoverable opportunity. Pending off-contract lines are excluded from this calculation to avoid double counting.",
+    );
+    expect(built.opportunityView.evidenceRequirements).toEqual([
+      "No recoverable opportunity evidence gap remains.",
+    ]);
+    expect(built.opportunityView.financeRealizations[0].basis).toBe(
+      "Finance-confirmed outcome linked to originating opportunities.",
+    );
   });
 
   it("does not promote synthetic fallback scope into the selected-contract intake URL", () => {
