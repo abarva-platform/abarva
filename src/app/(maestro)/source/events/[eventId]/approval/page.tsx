@@ -63,6 +63,7 @@ export default async function SourceEventApprovalPage({
   ).catch(() => null);
   const sourceJourney = getSourceJourneyForEvent({
     event,
+    sourcingMotion: row.sourcing_motion,
     hasContractOptimizationProfile: Boolean(contractOptimizationProfile),
   });
   const effectiveCurrentStageKey = coerceStageToSourceJourney(
@@ -168,7 +169,7 @@ async function loadPersistedEventRow(
   const { data, error } = await getAzureReadFluentClient()
     .from("source_events")
     .select(
-      "id, client_key, event_code, event_name, event_type, current_stage_key, lifecycle_state, linked_program_id, estimated_value_usd, trigger_description, scope_description, decision_owner, created_by_user_id, created_at, updated_at",
+      "id, client_key, event_code, event_name, event_type, sourcing_motion, current_stage_key, lifecycle_state, linked_program_id, estimated_value_usd, trigger_description, scope_description, decision_owner, created_by_user_id, created_at, updated_at",
     )
     .eq("id", eventId)
     .eq("client_key", clientKey)
