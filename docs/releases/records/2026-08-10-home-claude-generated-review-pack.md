@@ -41,6 +41,7 @@ records, database tables, loaders, adapters, approved content, or runtime data-p
 - `reports/home-claude-architecture-generation/`
 - `reports/multi-tenant-cxo-story-generation/skyharbor-air/`
 - `src/app/api/home/architecture-review/[diagramId]/route.ts`
+- `src/lib/home/claude-architecture-review-svg-assets.ts`
 - `src/components/home/enterprise-landscape-v2/HomeEnterpriseLandscapeV2.module.css`
 - `src/components/home/enterprise-landscape-v2/HomeEnterpriseLandscapeV2.tsx`
 - `src/components/home/enterprise-landscape-v2/homeEnterpriseLandscapeV2Model.ts`
@@ -58,6 +59,8 @@ records, database tables, loaders, adapters, approved content, or runtime data-p
 - PASS — generated SVG snapshot/contact-sheet render via Sharp
 - PASS — Home renders the generated architecture outputs in a review-only `Claude Review` tab via
   an allowlisted API route
+- PASS — the allowlisted route serves bundled server assets instead of runtime report-file reads,
+  and tests compare every bundled SVG byte-for-byte against the retained Claude report SVG
 - PASS — `Claude Review` tab is placed adjacent to `Architecture` so the generated architecture
   review surface is discoverable in the visible tab sequence
 - BLOCKED — semantic validation not run
