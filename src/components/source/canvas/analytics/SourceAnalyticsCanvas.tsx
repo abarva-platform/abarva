@@ -27,6 +27,7 @@ import {
   type SourceShellArtifactLike,
   type SourceShellEvidenceBasis,
   type SourceShellFileItem,
+  type SourceShellStep,
   type SourceShellStepGroup,
   type SourceShellWorkspace,
 } from "@/lib/source/source-event-shell-v2";
@@ -405,7 +406,7 @@ export function SourceAnalyticsCanvas({
               workspace={workspace}
               onWorkspaceChange={setWorkspace}
             />
-            <div style={{ minWidth: 0, padding: "28px 92px 150px" }}>
+            <div style={{ minWidth: 0, padding: "28px 28px 150px" }}>
               {contractOptimizationProfile ? (
                 <div style={{ marginBottom: 28 }}>
                   <ContractOptimizationProfilePanel
@@ -672,12 +673,7 @@ function SourceWorkspace({
   return (
     <section data-testid="source-shell-v2-steps">
       <StageHeader view={view} />
-      <StageModeTabs
-        workspace={workspace}
-        onWorkspaceChange={onWorkspaceChange}
-      />
-      <WorkflowBlocks groups={view.stage.groups} />
-      <FocusedWorkPanel view={view} />
+      <FocusedWorkPanel view={view} onWorkspaceChange={onWorkspaceChange} />
     </section>
   );
 }
@@ -705,9 +701,8 @@ function StageHeader({ view }: { view: SourceEventShellView }) {
       </div>
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) 230px",
-          alignItems: "flex-start",
+          display: "flex",
+          alignItems: "flex-end",
           justifyContent: "space-between",
           gap: 22,
         }}
@@ -751,42 +746,28 @@ function StageHeader({ view }: { view: SourceEventShellView }) {
         </div>
         <div
           style={{
-            ...CARD_STYLE,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 10,
             minWidth: 0,
-            padding: "18px 18px 17px",
-            boxShadow: "none",
+            whiteSpace: "nowrap",
           }}
         >
-          <div
+          <span
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              fontSize: 13,
-              color: ANALYTICS.INK_2,
-              fontWeight: 700,
+              color: ANALYTICS.INK,
+              fontFamily: ANALYTICS.SERIF,
+              fontSize: 24,
+              lineHeight: 1,
             }}
           >
-            <span>
-              <b
-                style={{
-                  color: ANALYTICS.INK,
-                  fontFamily: ANALYTICS.SERIF,
-                  fontSize: 22,
-                }}
-              >
-                {view.stage.ready} / {view.stage.total}
-              </b>
-            </span>
-            <span style={{ color: ANALYTICS.FAINT, fontSize: 12 }}>
-              steps ready
-            </span>
-          </div>
+            {view.stage.ready} / {view.stage.total}
+          </span>
           <div
             aria-hidden
             style={{
-              height: 6,
-              marginTop: 12,
+              width: 76,
+              height: 5,
               background: ANALYTICS.LINE_SOFT,
               borderRadius: 999,
               overflow: "hidden",
@@ -800,133 +781,67 @@ function StageHeader({ view }: { view: SourceEventShellView }) {
               }}
             />
           </div>
-          <div style={{ color: ANALYTICS.FAINT, fontSize: 12, marginTop: 8 }}>
-            {view.stage.readyPct}% ready ·{" "}
-            {view.stage.pattern.replace("-", " ")}
-          </div>
+          <span style={{ color: ANALYTICS.FAINT, fontSize: 12 }}>ready</span>
         </div>
       </div>
     </header>
   );
 }
 
-function StageModeTabs({
-  workspace,
+function FocusedWorkPanel({
+  view,
   onWorkspaceChange,
 }: {
-  workspace: SourceShellWorkspace;
+  view: SourceEventShellView;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
-  const tabs: { key: SourceShellWorkspace; label: ReactNode }[] = [
-    { key: "steps", label: "Steps" },
-    { key: "files", label: "Files" },
-    { key: "intelligence", label: <>✦ Intelligence</> },
-  ];
-
-  return (
-    <div
-      style={{
-        display: "inline-flex",
-        gap: 2,
-        margin: "0 0 22px",
-        padding: 3,
-        borderRadius: 10,
-        background: ANALYTICS.SOFT,
-        border: `1px solid ${ANALYTICS.LINE_SOFT}`,
-      }}
-    >
-      {tabs.map((tab) => {
-        const active = workspace === tab.key;
-        return (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => onWorkspaceChange(tab.key)}
-            style={{
-              border: active
-                ? `1px solid ${ANALYTICS.LINE}`
-                : "1px solid transparent",
-              borderRadius: 8,
-              background: active ? ANALYTICS.CARD : "transparent",
-              color: active ? ANALYTICS.INK : ANALYTICS.MUTED,
-              boxShadow: active ? ANALYTICS.SHADOW_SM : "none",
-              cursor: "pointer",
-              fontFamily: ANALYTICS.SANS,
-              fontSize: 13,
-              fontWeight: 700,
-              padding: "8px 17px",
-            }}
-          >
-            {tab.label}
-          </button>
-        );
-      })}
-    </div>
+  const flatSteps = useMemo(
+    () => view.stage.groups.flatMap((group) => group.steps),
+    [view.stage.groups],
   );
-}
-
-function WorkflowBlocks({ groups }: { groups: SourceShellStepGroup[] }) {
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: `repeat(${Math.min(Math.max(groups.length, 1), 3)}, minmax(0, 1fr))`,
-        gap: 10,
-        marginBottom: 20,
-      }}
-    >
-      {groups.map((group, index) => {
-        const done = group.steps.filter(
-          (step) => step.status === "captured",
-        ).length;
-        return (
-          <div
-            key={group.id}
-            style={{
-              ...CARD_STYLE,
-              padding: "13px 14px",
-              borderColor: index === 0 ? ANALYTICS.BLUE : ANALYTICS.LINE,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 10,
-                fontWeight: 800,
-                fontSize: 14,
-              }}
-            >
-              <span>
-                {index + 1}. {group.label}
-              </span>
-              <span>
-                {done}/{group.steps.length}
-              </span>
-            </div>
-            <div style={{ color: ANALYTICS.MUTED, fontSize: 12, marginTop: 7 }}>
-              {group.steps.map((step) => step.title).join(" · ")}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+  const [completedIds, setCompletedIds] = useState<ReadonlySet<string>>(
+    () =>
+      new Set(
+        flatSteps
+          .filter((step) => step.status === "captured")
+          .map((step) => step.id),
+      ),
   );
-}
+  const [activeStepId, setActiveStepId] = useState<string | null>(
+    () =>
+      flatSteps.find((step) => step.status !== "captured")?.id ??
+      flatSteps[0]?.id ??
+      null,
+  );
 
-function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
-  const flatSteps = view.stage.groups.flatMap((group) => group.steps);
-  const allReady =
-    view.stage.total > 0 && view.stage.ready === view.stage.total;
-  const activeStep = allReady
-    ? null
-    : (flatSteps.find((step) => step.status === "active") ??
-      flatSteps.find((step) => step.status !== "captured") ??
-      flatSteps[0] ??
-      null);
+  useEffect(() => {
+    setCompletedIds(
+      new Set(
+        flatSteps
+          .filter((step) => step.status === "captured")
+          .map((step) => step.id),
+      ),
+    );
+    setActiveStepId(
+      flatSteps.find((step) => step.status !== "captured")?.id ??
+        flatSteps[0]?.id ??
+        null,
+    );
+  }, [flatSteps, view.event.id, view.stage.key]);
+
+  const isComplete = (step: SourceShellStep) =>
+    step.status === "captured" || completedIds.has(step.id);
+  const doneCount = flatSteps.filter(isComplete).length;
+  const allReady = flatSteps.length > 0 && doneCount === flatSteps.length;
+  const activeStep =
+    flatSteps.find((step) => step.id === activeStepId) ??
+    flatSteps.find((step) => step.status !== "captured") ??
+    flatSteps[0] ??
+    null;
   const activeIndex = activeStep
     ? flatSteps.findIndex((step) => step.id === activeStep.id)
     : -1;
+  const activeComplete = activeStep ? isComplete(activeStep) : false;
   const activeGroup =
     (activeStep
       ? view.stage.groups.find((group) =>
@@ -937,6 +852,19 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
         )) ??
     view.stage.groups[0] ??
     null;
+
+  const markComplete = (stepId: string) => {
+    setCompletedIds((prev) => new Set(prev).add(stepId));
+  };
+
+  const goNext = () => {
+    if (!activeStep || !activeComplete) return;
+    if (activeIndex >= flatSteps.length - 1) {
+      onWorkspaceChange("approvals");
+      return;
+    }
+    setActiveStepId(flatSteps[activeIndex + 1]?.id ?? activeStep.id);
+  };
 
   if (flatSteps.length === 0) {
     return (
@@ -949,37 +877,60 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
       style={{
         ...CARD_STYLE,
         display: "grid",
-        gridTemplateColumns: "272px minmax(0, 1fr)",
-        maxWidth: 1040,
+        gridTemplateColumns: "286px minmax(0, 1fr)",
+        maxWidth: 1120,
         overflow: "hidden",
-        boxShadow: "none",
+        boxShadow: ANALYTICS.SHADOW_SM,
       }}
     >
       <div
         style={{
           borderRight: `1px solid ${ANALYTICS.LINE}`,
-          padding: "24px 14px 18px",
+          padding: "18px 14px",
           background: ANALYTICS.PAGE_BG,
         }}
       >
         {view.stage.groups.map((group) => {
           const groupActive = activeGroup?.id === group.id;
+          const groupDone = group.steps.filter(isComplete).length;
           return (
             <div
               key={group.id}
               style={{
-                marginBottom: 18,
-                opacity: groupActive || allReady ? 1 : 0.58,
+                marginBottom: 16,
+                opacity: groupActive || allReady ? 1 : 0.68,
               }}
             >
-              <RailLabel>{group.label}</RailLabel>
-              <div style={{ display: "grid", gap: 4 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 10,
+                  marginBottom: 8,
+                }}
+              >
+                <RailLabel>{plainStageStepGroupLabel(group.label)}</RailLabel>
+                <span
+                  style={{
+                    color: ANALYTICS.FAINT,
+                    fontFamily: ANALYTICS.MONO,
+                    fontSize: 10,
+                    fontWeight: 800,
+                  }}
+                >
+                  {groupDone}/{group.steps.length}
+                </span>
+              </div>
+              <div style={{ display: "grid", gap: 6 }}>
                 {group.steps.map((step) => {
                   const active = step.id === activeStep?.id;
-                  const done = step.status === "captured";
+                  const done = isComplete(step);
                   return (
-                    <div
+                    <button
                       key={step.id}
+                      type="button"
+                      onClick={() => setActiveStepId(step.id)}
                       style={{
                         display: "grid",
                         gridTemplateColumns: "20px minmax(0, 1fr) auto",
@@ -995,6 +946,9 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
                         background: active ? ANALYTICS.CARD : "transparent",
                         padding: "8px 7px",
                         boxShadow: active ? ANALYTICS.SHADOW_SM : "none",
+                        cursor: "pointer",
+                        fontFamily: ANALYTICS.SANS,
+                        textAlign: "left",
                       }}
                     >
                       <StepDot done={done} active={active} />
@@ -1015,27 +969,40 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
                       {active ? (
                         <span
                           style={{
-                            color: ANALYTICS.BLUE,
+                            color: done ? ANALYTICS.GREEN_TEXT : ANALYTICS.BLUE,
                             fontFamily: ANALYTICS.MONO,
                             fontSize: 8,
                             fontWeight: 800,
                             textTransform: "uppercase",
                           }}
                         >
-                          now
+                          {done ? "done" : "now"}
                         </span>
                       ) : null}
-                    </div>
+                    </button>
                   );
                 })}
               </div>
             </div>
           );
         })}
-        <StageApprovalHandoff view={view} />
+        <div
+          style={{
+            color: ANALYTICS.FAINT,
+            fontSize: 12,
+            lineHeight: 1.45,
+            marginTop: 12,
+            paddingTop: 14,
+            borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          }}
+        >
+          {allReady
+            ? `All required work is complete for ${view.stage.label}. Open the approval gate when the owner is ready.`
+            : `${flatSteps.length - doneCount} step${flatSteps.length - doneCount === 1 ? "" : "s"} left before ${view.stage.label} can move to approval.`}
+        </div>
       </div>
 
-      <div style={{ padding: "28px 30px 34px" }}>
+      <div>
         {allReady ? (
           <StageReadyPanel view={view} />
         ) : activeStep ? (
@@ -1043,96 +1010,125 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
             <div
               style={{
                 display: "flex",
-                alignItems: "flex-start",
+                alignItems: "center",
                 justifyContent: "space-between",
                 gap: 16,
-                marginBottom: 14,
+                padding: "20px 24px",
+                borderBottom: `1px solid ${ANALYTICS.LINE}`,
+              }}
+            >
+              <div>
+                <h2
+                  style={{
+                    fontFamily: ANALYTICS.SERIF,
+                    fontSize: 25,
+                    lineHeight: 1.12,
+                    margin: 0,
+                  }}
+                >
+                  {activeStep.title}
+                </h2>
+                <div
+                  style={{
+                    color: ANALYTICS.MUTED,
+                    fontFamily: ANALYTICS.MONO,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: "0.05em",
+                    marginTop: 7,
+                  }}
+                >
+                  Step {activeIndex + 1} of {flatSteps.length}
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={!activeComplete}
+                onClick={goNext}
+                style={{
+                  border: `1px solid ${activeComplete ? ANALYTICS.INK : ANALYTICS.LINE_STRONG}`,
+                  borderRadius: 8,
+                  background: activeComplete ? ANALYTICS.INK : "#e8e0d4",
+                  color: activeComplete ? "#fff" : "#81786a",
+                  cursor: activeComplete ? "pointer" : "not-allowed",
+                  fontFamily: ANALYTICS.SANS,
+                  fontSize: 13,
+                  fontWeight: 900,
+                  minHeight: 42,
+                  minWidth: activeIndex >= flatSteps.length - 1 ? 176 : 128,
+                  padding: "0 16px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {activeIndex >= flatSteps.length - 1
+                  ? `Open ${view.stage.label} gate →`
+                  : "Continue →"}
+              </button>
+            </div>
+
+            <div
+              style={{
+                minHeight: 450,
+                padding: "24px",
+                background:
+                  "linear-gradient(90deg, rgba(248,247,244,.88), rgba(255,255,255,0) 34%)",
               }}
             >
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "28px 1fr",
-                  gap: 14,
-                }}
-              >
-                <StepDot active />
-                <div>
-                  <div
-                    style={{
-                      color: ANALYTICS.MUTED,
-                      fontFamily: ANALYTICS.MONO,
-                      fontSize: 10,
-                      fontWeight: 800,
-                      letterSpacing: "0.05em",
-                      marginBottom: 4,
-                    }}
-                  >
-                    Step {activeIndex + 1} of {flatSteps.length}
-                  </div>
-                  <h2
-                    style={{
-                      display: "inline",
-                      fontSize: 17,
-                      lineHeight: 1.3,
-                      margin: 0,
-                    }}
-                  >
-                    {activeStep.title}
-                  </h2>
-                  <EvidenceBadge
-                    basis={activeStep.sourceBasis}
-                    label={activeStep.type}
-                  />
-                </div>
-              </div>
-              <span
-                style={{
-                  borderRadius: 999,
-                  background:
-                    activeStep.status === "captured"
-                      ? ANALYTICS.GREEN_TINT
-                      : ANALYTICS.AMBER_TINT,
-                  color:
-                    activeStep.status === "captured"
-                      ? ANALYTICS.GREEN_TEXT
-                      : ANALYTICS.AMBER_TEXT,
+                  color: ANALYTICS.FAINT,
+                  fontFamily: ANALYTICS.MONO,
                   fontSize: 10,
-                  fontWeight: 800,
-                  padding: "5px 9px",
+                  fontWeight: 900,
+                  letterSpacing: "0.18em",
                   textTransform: "uppercase",
-                  whiteSpace: "nowrap",
                 }}
               >
-                {activeStep.status === "captured" ? "Done" : "Do this now"}
-              </span>
-            </div>
+                Current step
+              </div>
+              <div
+                style={{
+                  color: activeComplete
+                    ? ANALYTICS.GREEN_TEXT
+                    : ANALYTICS.AMBER_TEXT,
+                  fontFamily: ANALYTICS.MONO,
+                  fontSize: 10,
+                  fontWeight: 900,
+                  letterSpacing: "0.08em",
+                  marginTop: 8,
+                  textTransform: "uppercase",
+                }}
+              >
+                {activeComplete ? "Complete" : "Required before Continue"}
+              </div>
+              <p
+                style={{
+                  color: ANALYTICS.INK_2,
+                  fontSize: 14,
+                  lineHeight: 1.55,
+                  margin: "10px 0 16px",
+                  maxWidth: 720,
+                }}
+              >
+                {activeStep.help}
+              </p>
 
-            <p
-              style={{
-                color: ANALYTICS.INK_2,
-                fontSize: 14,
-                lineHeight: 1.55,
-                margin: "0 0 16px 42px",
-                maxWidth: 720,
-              }}
-            >
-              {activeStep.help}
-            </p>
+              {activeGroup ? (
+                <EvidenceAskTable
+                  group={activeGroup}
+                  activeStepId={activeStep.id}
+                />
+              ) : null}
 
-            {activeGroup ? (
-              <EvidenceAskTable
-                group={activeGroup}
-                activeStepId={activeStep.id}
+              <StepDetail
+                step={activeStep}
+                eventId={view.event.id}
+                stageKey={view.stage.key}
+                stepInsight={view.intelligence.stepInsight}
+                isComplete={activeComplete}
+                onComplete={() => markComplete(activeStep.id)}
               />
-            ) : null}
-
-            <StepDetail
-              step={activeStep}
-              eventId={view.event.id}
-              stageKey={view.stage.key}
-              stepInsight={view.intelligence.stepInsight}
-            />
+            </div>
           </>
         ) : null}
       </div>
@@ -1140,68 +1136,11 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
   );
 }
 
-function StageApprovalHandoff({ view }: { view: SourceEventShellView }) {
-  const complete =
-    view.stage.total > 0 && view.stage.ready === view.stage.total;
-  const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
-  return (
-    <div
-      data-testid="source-shell-stage-approval-handoff"
-      style={{
-        display: "grid",
-        gap: 10,
-        marginTop: 12,
-        paddingTop: 14,
-        borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
-      }}
-    >
-      <div
-        style={{
-          color: complete
-            ? hasArtifactGaps
-              ? ANALYTICS.AMBER_TEXT
-              : ANALYTICS.GREEN_TEXT
-            : ANALYTICS.FAINT,
-          fontSize: 12,
-          fontWeight: complete ? 800 : 600,
-          lineHeight: 1.45,
-        }}
-      >
-        {view.stage.gateReadinessLine}
-      </div>
-      {complete ? (
-        <Link
-          href={view.stage.approvalHref}
-          style={{
-            ...BUTTON_STYLE,
-            background: ANALYTICS.INK,
-            color: "#fff",
-            display: "inline-flex",
-            justifyContent: "center",
-            padding: "10px 12px",
-            textDecoration: "none",
-            width: "100%",
-          }}
-        >
-          {view.stage.approvalCtaLabel}
-        </Link>
-      ) : (
-        <span
-          style={{
-            border: `1px solid ${ANALYTICS.LINE}`,
-            borderRadius: 8,
-            color: ANALYTICS.FAINT,
-            fontSize: 12,
-            fontWeight: 700,
-            padding: "10px 12px",
-            textAlign: "center",
-          }}
-        >
-          {view.stage.approvalLockedLabel}
-        </span>
-      )}
-    </div>
-  );
+function plainStageStepGroupLabel(label: string) {
+  if (/inclusion|exclusion|scope/i.test(label)) return "What are we sourcing?";
+  if (/baseline|evidence|data/i.test(label)) return "What evidence proves it?";
+  if (/boundary|owner|approval/i.test(label)) return "Who signs off?";
+  return label;
 }
 
 function StageReadyPanel({ view }: { view: SourceEventShellView }) {
@@ -1421,11 +1360,15 @@ function StepDetail({
   eventId,
   stageKey,
   stepInsight,
+  isComplete,
+  onComplete,
 }: {
   step: SourceEventShellView["stage"]["activeStep"];
   eventId: string;
   stageKey: SourceStageKey;
   stepInsight: SourceEventShellView["intelligence"]["stepInsight"];
+  isComplete: boolean;
+  onComplete: () => void;
 }) {
   const router = useRouter();
   const [actionState, setActionState] = useState<
@@ -1487,6 +1430,7 @@ function StepDetail({
       return;
     }
 
+    onComplete();
     setActionState({ phase: "idle" });
     router.refresh();
   }
@@ -1499,7 +1443,7 @@ function StepDetail({
       {step.cta}
     </StepActionButton>
   ) : (
-    <ActionButton>{step.cta}</ActionButton>
+    <ActionButton onClick={onComplete}>{step.cta}</ActionButton>
   );
   const actionError =
     actionState.phase === "error" ? (
@@ -1590,10 +1534,25 @@ function StepDetail({
           eventId={eventId}
           stageKey={stageKey}
           factTemplateCode={factTemplateCode}
+          onUploaded={onComplete}
         />
         {vendorCoverage ? (
           <VendorResponseCoverageList vendors={vendorCoverage} />
         ) : null}
+      </div>
+    );
+  }
+
+  if (isComplete) {
+    return (
+      <div
+        style={{
+          color: ANALYTICS.GREEN_TEXT,
+          fontSize: 13,
+          fontWeight: 800,
+        }}
+      >
+        Complete
       </div>
     );
   }
@@ -1727,10 +1686,17 @@ function StepDot({
   );
 }
 
-function ActionButton({ children }: { children: ReactNode }) {
+function ActionButton({
+  children,
+  onClick,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+}) {
   return (
     <button
       type="button"
+      onClick={onClick}
       style={{
         border: "none",
         borderRadius: 8,
