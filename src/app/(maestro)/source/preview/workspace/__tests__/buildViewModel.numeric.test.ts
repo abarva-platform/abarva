@@ -220,7 +220,7 @@ function assertPlausibleMoney(label: string, value: string) {
 }
 
 describe("buildViewModel numeric coercion", () => {
-  it("routes the workspace optimize entry to the contract-optimization intake, not generic new sourcing", () => {
+  it("routes the workspace optimize entry to the dedicated Optimize module, not generic new sourcing", () => {
     const vm = buildVm();
     vm.state.open.events = true;
     const built = buildViewModel(vm) as {
@@ -231,15 +231,13 @@ describe("buildViewModel numeric coercion", () => {
     );
 
     expect(optimizeNode).toBeDefined();
-    expect(String(optimizeNode?.onClick)).toContain(
-      "/source/new?intent=contract-optimization",
-    );
+    expect(String(optimizeNode?.onClick)).toContain("/source/optimize");
     expect(String(optimizeNode?.onClick)).not.toContain(
       "window.location.href = '/source/new';",
     );
   });
 
-  it("routes the selected-contract optimization cockpit through the reviewable intake URL", () => {
+  it("routes the selected-contract optimization cockpit through the dedicated Optimize URL", () => {
     const vm = buildVm();
     vm.state.sel = { kind: "contract", id: "c1" };
     vm.state.tabs.contract = "Optimize";
@@ -249,16 +247,14 @@ describe("buildViewModel numeric coercion", () => {
     };
 
     expect(built.optCtaLabel).toBe("Start / continue optimization");
-    expect(built.optCtaHref).toContain(
-      "/source/new?intent=contract-optimization",
-    );
+    expect(built.optCtaHref).toContain("/source/optimize");
     const url = new URL(built.optCtaHref!, "https://app.abarva.ai");
     expect(url.searchParams.get("contractId")).toBe("c1");
-    expect(url.searchParams.get("contractName")).toBe("Default Contract");
-    expect(url.searchParams.get("vendorName")).toBe("Vendor One");
-    expect(url.searchParams.get("annualValueUsd")).toBe("50000000");
-    expect(url.searchParams.get("actualAnnualSpendUsd")).toBe("48000000");
-    expect(url.searchParams.get("weakSignalCount")).toBe("2");
+    expect(url.searchParams.get("contractName")).toBeNull();
+    expect(url.searchParams.get("vendorName")).toBeNull();
+    expect(url.searchParams.get("annualValueUsd")).toBeNull();
+    expect(url.searchParams.get("actualAnnualSpendUsd")).toBeNull();
+    expect(url.searchParams.get("weakSignalCount")).toBeNull();
     expect(built.optCtaHref).not.toContain("/api/source/workspace");
     expect(JSON.stringify(built)).not.toContain("Door 1");
   });
@@ -493,9 +489,7 @@ describe("buildViewModel numeric coercion", () => {
       nextAction:
         "Review recoverable opportunity exceptions before finance-confirmed outcome.",
     });
-    expect(
-      built.opportunityView.selectedOpportunity.overlapTreatment,
-    ).toBe(
+    expect(built.opportunityView.selectedOpportunity.overlapTreatment).toBe(
       "Included only in recoverable opportunity. Pending off-contract lines are excluded from this calculation to avoid double counting.",
     );
     expect(built.opportunityView.evidenceRequirements).toEqual([
@@ -526,9 +520,7 @@ describe("buildViewModel numeric coercion", () => {
       scopeSummary: string;
     };
 
-    expect(built.optCtaHref).toContain(
-      "/source/new?intent=contract-optimization",
-    );
+    expect(built.optCtaHref).toContain("/source/optimize");
     expect(built.optCtaHref).not.toContain("scopeSummary=");
     expect(built.optCtaHref).not.toContain("Fictional");
     expect(built.scopeSummary).toContain(

@@ -25,9 +25,7 @@ import {
   type SourceIntakeShape,
 } from "@/lib/source/intake-intent";
 import type { SourceSourcingMotion } from "@/lib/source/sourcing-motion-journeys";
-import {
-  parseSourceIntakeText,
-} from "@/lib/source/intake-summary";
+import { parseSourceIntakeText } from "@/lib/source/intake-summary";
 import { buildAvaIntakeResponseParts } from "@/lib/source/ava-intake-response-parts";
 import {
   isCapturedApprovalFact,
@@ -38,7 +36,10 @@ import {
   type SourceCategory,
   type SourceCategoryId,
 } from "@/lib/source/taxonomy/category-taxonomy";
-export { isCapturedApprovalFact, isReviewableContractScope } from "@/lib/source/contract-optimization-intake";
+export {
+  isCapturedApprovalFact,
+  isReviewableContractScope,
+} from "@/lib/source/contract-optimization-intake";
 type SubmitState =
   | { status: "idle" }
   | { status: "submitting" }
@@ -319,8 +320,9 @@ function ContractOptimizationSelectionGate({
                 <span style={CONTRACT_SELECT_REASON}>{candidate.reason}</span>
               </span>
               <span style={CONTRACT_SELECT_VALUE}>
-                {formatContractOptimizationUsd(candidate.annualValueUsd ?? undefined) ??
-                  "Value not quantified"}
+                {formatContractOptimizationUsd(
+                  candidate.annualValueUsd ?? undefined,
+                ) ?? "Value not quantified"}
               </span>
             </a>
           ))}
@@ -387,7 +389,9 @@ interface ContractOptimizationContext {
   decisionOwner?: string;
 }
 
-function isContractOptimizationMotion(intent: string | null | undefined): boolean {
+function isContractOptimizationMotion(
+  intent: string | null | undefined,
+): boolean {
   return intent === "contract-optimization" || intent === "renewal";
 }
 
@@ -425,9 +429,12 @@ function buildContractOptimizationPrefill(
   if (!context.contractId && !context.contractName && !context.vendorName) {
     return {};
   }
-  const contractLabel = context.contractName ?? context.contractId ?? "selected contract";
+  const contractLabel =
+    context.contractName ?? context.contractId ?? "selected contract";
   const vendorLabel = context.vendorName ? ` with ${context.vendorName}` : "";
-  const contractRef = context.contractId ? ` Contract ref: ${context.contractId}.` : "";
+  const contractRef = context.contractId
+    ? ` Contract ref: ${context.contractId}.`
+    : "";
   const annual = formatContractOptimizationUsd(context.annualValueUsd);
   const actual = formatContractOptimizationUsd(context.actualAnnualSpendUsd);
   const valueBasis = [
@@ -462,14 +469,15 @@ function buildContractOptimizationPrefill(
   };
 }
 
-function formatContractOptimizationUsd(value: number | undefined): string | null {
+function formatContractOptimizationUsd(
+  value: number | undefined,
+): string | null {
   if (value == null || !Number.isFinite(value)) return null;
   if (Math.abs(value) >= 1_000_000_000)
     return `$${(value / 1_000_000_000).toFixed(1)}B`;
   if (Math.abs(value) >= 1_000_000)
     return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(value) >= 1_000)
-    return `$${(value / 1_000).toFixed(1)}K`;
+  if (Math.abs(value) >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
   return `$${Math.round(value).toLocaleString("en-US")}`;
 }
 
@@ -477,32 +485,17 @@ export function buildContractOptimizationCandidateHref(
   candidate: ContractOptimizationCandidate,
 ): string {
   const params = new URLSearchParams({
-    intent: "contract-optimization",
     contractId: candidate.contractId,
-    contractName: candidate.contractName,
-    vendorName: candidate.vendorName,
-    weakSignalCount: String(candidate.weakSignalCount),
   });
-  if (candidate.annualValueUsd != null) {
-    params.set("annualValueUsd", String(candidate.annualValueUsd));
-  }
-  if (candidate.actualAnnualSpendUsd != null) {
-    params.set("actualAnnualSpendUsd", String(candidate.actualAnnualSpendUsd));
-  }
-  const candidateScope = candidate.scopeSummary?.trim();
-  if (candidateScope && isReviewableContractScope(candidateScope)) {
-    params.set("scopeSummary", candidateScope);
-  }
-  if (candidate.decisionOwner) {
-    params.set("decisionOwner", candidate.decisionOwner);
-  }
-  return `/source/new?${params.toString()}`;
+  return `/source/optimize?${params.toString()}`;
 }
 
 function motionForIntent(
   intent: string | null | undefined,
 ): SourceSourcingMotion | undefined {
-  return isContractOptimizationMotion(intent) ? "contract_optimization" : undefined;
+  return isContractOptimizationMotion(intent)
+    ? "contract_optimization"
+    : undefined;
 }
 
 function ContractOptimizationLoadedPanel({
@@ -510,15 +503,21 @@ function ContractOptimizationLoadedPanel({
 }: {
   context: ContractOptimizationContext;
 }) {
-  if (!context.contractId && !context.contractName && !context.vendorName) return null;
+  if (!context.contractId && !context.contractName && !context.vendorName)
+    return null;
   const rows = [
     ["Contract ID", context.contractId ?? "Not established"],
     ["Contract name", context.contractName ?? "Not established"],
     ["Vendor", context.vendorName ?? "Not established"],
-    ["Annual value", formatContractOptimizationUsd(context.annualValueUsd) ?? "Not established"],
+    [
+      "Annual value",
+      formatContractOptimizationUsd(context.annualValueUsd) ??
+        "Not established",
+    ],
     [
       "Actual spend",
-      formatContractOptimizationUsd(context.actualAnnualSpendUsd) ?? "Not established",
+      formatContractOptimizationUsd(context.actualAnnualSpendUsd) ??
+        "Not established",
     ],
     [
       "Weak leverage",
@@ -542,7 +541,14 @@ function ContractOptimizationLoadedPanel({
             {context.contractName ?? context.contractId ?? "Selected contract"}
           </h3>
         </div>
-        <span style={{ ...STATUS_CHIP, background: SHELL.MINT_BG, borderColor: SHELL.MINT_LINE, color: SHELL.MINT_TEXT }}>
+        <span
+          style={{
+            ...STATUS_CHIP,
+            background: SHELL.MINT_BG,
+            borderColor: SHELL.MINT_LINE,
+            color: SHELL.MINT_TEXT,
+          }}
+        >
           Contract selected
         </span>
       </div>
@@ -707,8 +713,8 @@ function buildDecisionOwnerPreview(
   // a name; fall back to the generic label instead.
   const looksLikeAName = Boolean(
     firstNamedOwner &&
-      firstNamedOwner.length <= 60 &&
-      !/[.!?]\s+\S/.test(firstNamedOwner),
+    firstNamedOwner.length <= 60 &&
+    !/[.!?]\s+\S/.test(firstNamedOwner),
   );
   const resolvedName = looksLikeAName ? firstNamedOwner : undefined;
   return {
@@ -762,7 +768,10 @@ export function buildEventName(
       .replace(/\s+contract ref:\s*[^.]+$/i, "")
       .trim();
     const eventSubject = contractPhrase || "Existing Contract";
-    return `${clientShortName} ${eventSubject} Contract Optimization`.slice(0, 120);
+    return `${clientShortName} ${eventSubject} Contract Optimization`.slice(
+      0,
+      120,
+    );
   }
   if (selectedCategory)
     return `${clientShortName} ${selectedCategory.label} Sourcing Event`.slice(
@@ -897,7 +906,9 @@ export function SourceOriginatePage({
 
   useEffect(() => {
     if (!isContractOptimizationMotion(sourceIntent)) return;
-    const prefill = buildContractOptimizationPrefill(contractOptimizationContext);
+    const prefill = buildContractOptimizationPrefill(
+      contractOptimizationContext,
+    );
     const entries = Object.entries(prefill).filter(
       (entry): entry is [IntakeFieldId, string] =>
         typeof entry[1] === "string" && entry[1].trim().length > 0,
@@ -1065,9 +1076,9 @@ export function SourceOriginatePage({
           }),
         });
       }
-      payload = (await response.json().catch(() => null)) as
-        | SourceEventCreatePayload
-        | null;
+      payload = (await response
+        .json()
+        .catch(() => null)) as SourceEventCreatePayload | null;
     } catch (error) {
       setSubmitState({
         status: "error",
@@ -1221,7 +1232,9 @@ export function SourceOriginatePage({
           >
             {CONTRACT_OPTIMIZATION_LEDGER_HINTS.map((item) => (
               <div key={item.label} style={CONTRACT_OPTIMIZATION_LEDGER_CARD}>
-                <div style={CONTRACT_OPTIMIZATION_LEDGER_LABEL}>{item.label}</div>
+                <div style={CONTRACT_OPTIMIZATION_LEDGER_LABEL}>
+                  {item.label}
+                </div>
                 <div style={CONTRACT_OPTIMIZATION_LEDGER_BODY}>{item.body}</div>
               </div>
             ))}
@@ -1243,166 +1256,168 @@ export function SourceOriginatePage({
 
         {/* Intake fields */}
         {!contractOptimizationRequiresSelection && (
-        <div style={{ display: "grid", gap: 0 }}>
-          <div style={{ ...SECTION_LABEL, marginBottom: 4 }}>
-            Minimum approval packet
-          </div>
-          {intakeFields.map((field) => {
-            const value = intake[field.id];
-            const complete = isCapturedApprovalFact(value);
-            const isRequired = field.id === "trigger";
-            return (
-              <label
-                key={field.id}
-                style={{
-                  display: "grid",
-                  gap: 6,
-                  borderTop: `1px solid ${SHELL.CARD_LINE}`,
-                  padding: "11px 0",
-                }}
-              >
-                <div
+          <div style={{ display: "grid", gap: 0 }}>
+            <div style={{ ...SECTION_LABEL, marginBottom: 4 }}>
+              Minimum approval packet
+            </div>
+            {intakeFields.map((field) => {
+              const value = intake[field.id];
+              const complete = isCapturedApprovalFact(value);
+              const isRequired = field.id === "trigger";
+              return (
+                <label
+                  key={field.id}
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: 8,
-                    alignItems: "flex-start",
+                    display: "grid",
+                    gap: 6,
+                    borderTop: `1px solid ${SHELL.CARD_LINE}`,
+                    padding: "11px 0",
                   }}
                 >
-                  <div>
-                    <div style={FIELD_LABEL}>
-                      {field.label}
-                      {isRequired && (
-                        <span style={{ color: SHELL.PEACH_TEXT }}> *</span>
-                      )}
-                    </div>
-                    <div style={FIELD_PROMPT}>{field.prompt}</div>
-                  </div>
-                  <span
+                  <div
                     style={{
-                      flex: "0 0 auto",
-                      ...STATUS_CHIP,
-                      background: complete
-                        ? SHELL.MINT_BG
-                        : isRequired
-                          ? SHELL.PEACH_BG
-                          : SHELL.PAPER_SOFT,
-                      borderColor: complete
-                        ? SHELL.MINT_LINE
-                        : isRequired
-                          ? SHELL.PEACH_LINE
-                          : SHELL.CARD_LINE,
-                      color: complete
-                        ? SHELL.MINT_TEXT
-                        : isRequired
-                          ? SHELL.PEACH_TEXT
-                          : SHELL.INK_MUTED,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 8,
+                      alignItems: "flex-start",
                     }}
                   >
-                    {complete
-                      ? chatFilledFields.has(field.id)
-                        ? "From chat"
-                        : "Captured"
-                      : isRequired
-                        ? "Start here"
-                        : "Add"}
-                  </span>
-                </div>
-                <textarea
-                  value={value}
-                  onChange={(e) => patchIntake(field.id, e.target.value)}
-                  placeholder={field.placeholder}
-                  rows={2}
-                  style={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                    border: `1px solid ${complete ? SHELL.CARD_LINE : isRequired ? SHELL.PEACH_LINE : SHELL.CARD_LINE}`,
-                    borderRadius: 8,
-                    background: SHELL.PAPER,
-                    color: SHELL.INK,
-                    fontFamily: SHELL.SANS,
-                    fontSize: 12,
-                    lineHeight: 1.45,
-                    padding: "8px 10px",
-                    resize: "vertical",
-                    outline: "none",
-                  }}
-                />
-              </label>
-            );
-          })}
-        </div>
+                    <div>
+                      <div style={FIELD_LABEL}>
+                        {field.label}
+                        {isRequired && (
+                          <span style={{ color: SHELL.PEACH_TEXT }}> *</span>
+                        )}
+                      </div>
+                      <div style={FIELD_PROMPT}>{field.prompt}</div>
+                    </div>
+                    <span
+                      style={{
+                        flex: "0 0 auto",
+                        ...STATUS_CHIP,
+                        background: complete
+                          ? SHELL.MINT_BG
+                          : isRequired
+                            ? SHELL.PEACH_BG
+                            : SHELL.PAPER_SOFT,
+                        borderColor: complete
+                          ? SHELL.MINT_LINE
+                          : isRequired
+                            ? SHELL.PEACH_LINE
+                            : SHELL.CARD_LINE,
+                        color: complete
+                          ? SHELL.MINT_TEXT
+                          : isRequired
+                            ? SHELL.PEACH_TEXT
+                            : SHELL.INK_MUTED,
+                      }}
+                    >
+                      {complete
+                        ? chatFilledFields.has(field.id)
+                          ? "From chat"
+                          : "Captured"
+                        : isRequired
+                          ? "Start here"
+                          : "Add"}
+                    </span>
+                  </div>
+                  <textarea
+                    value={value}
+                    onChange={(e) => patchIntake(field.id, e.target.value)}
+                    placeholder={field.placeholder}
+                    rows={2}
+                    style={{
+                      width: "100%",
+                      boxSizing: "border-box",
+                      border: `1px solid ${complete ? SHELL.CARD_LINE : isRequired ? SHELL.PEACH_LINE : SHELL.CARD_LINE}`,
+                      borderRadius: 8,
+                      background: SHELL.PAPER,
+                      color: SHELL.INK,
+                      fontFamily: SHELL.SANS,
+                      fontSize: 12,
+                      lineHeight: 1.45,
+                      padding: "8px 10px",
+                      resize: "vertical",
+                      outline: "none",
+                    }}
+                  />
+                </label>
+              );
+            })}
+          </div>
         )}
 
         {/* T02 — Category picker */}
         {showCategoryPicker && (
-        <details
-          open={SOURCE_INTAKE_CATEGORY_PICKER_DEFAULT_OPEN || Boolean(selectedCategory)}
-          style={OPTIONAL_CATEGORY_STYLE}
-        >
-          <summary style={OPTIONAL_CATEGORY_SUMMARY_STYLE}>
-            <div>
-              <div style={SECTION_LABEL}>Category</div>
-              <div
-                style={{
-                  marginTop: 2,
-                  fontFamily: SHELL.SANS,
-                  fontSize: 11,
-                  lineHeight: 1.35,
-                  color: SHELL.INK_SOFT,
-                }}
-              >
-                Optional. aVa can infer this after the intake facts are
-                clear.
-              </div>
-            </div>
-            {selectedCategory ? (
-              <span
-                style={{
-                  ...STATUS_CHIP,
-                  background: SHELL.MINT_BG,
-                  borderColor: SHELL.MINT_LINE,
-                  color: SHELL.MINT_TEXT,
-                }}
-              >
-                {selectedCategory.label}
-              </span>
-            ) : (
-              <span
-                style={{
-                  ...STATUS_CHIP,
-                  background: SHELL.PAPER_SOFT,
-                  borderColor: SHELL.CARD_LINE,
-                  color: SHELL.INK_MUTED,
-                }}
-              >
-                Optional
-              </span>
-            )}
-          </summary>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
-              gap: 6,
-              marginTop: 9,
-            }}
+          <details
+            open={
+              SOURCE_INTAKE_CATEGORY_PICKER_DEFAULT_OPEN ||
+              Boolean(selectedCategory)
+            }
+            style={OPTIONAL_CATEGORY_STYLE}
           >
-            {SOURCE_CATEGORIES.map((category) => (
-              <CategoryOption
-                key={category.id}
-                category={category}
-                selected={selectedCategoryId === category.id}
-                onSelect={() => {
-                  setSelectedCategoryId((prev) =>
-                    prev === category.id ? null : category.id,
-                  );
-                  setSubmitState({ status: "idle" });
-                }}
-              />
-            ))}
-          </div>
-        </details>
+            <summary style={OPTIONAL_CATEGORY_SUMMARY_STYLE}>
+              <div>
+                <div style={SECTION_LABEL}>Category</div>
+                <div
+                  style={{
+                    marginTop: 2,
+                    fontFamily: SHELL.SANS,
+                    fontSize: 11,
+                    lineHeight: 1.35,
+                    color: SHELL.INK_SOFT,
+                  }}
+                >
+                  Optional. aVa can infer this after the intake facts are clear.
+                </div>
+              </div>
+              {selectedCategory ? (
+                <span
+                  style={{
+                    ...STATUS_CHIP,
+                    background: SHELL.MINT_BG,
+                    borderColor: SHELL.MINT_LINE,
+                    color: SHELL.MINT_TEXT,
+                  }}
+                >
+                  {selectedCategory.label}
+                </span>
+              ) : (
+                <span
+                  style={{
+                    ...STATUS_CHIP,
+                    background: SHELL.PAPER_SOFT,
+                    borderColor: SHELL.CARD_LINE,
+                    color: SHELL.INK_MUTED,
+                  }}
+                >
+                  Optional
+                </span>
+              )}
+            </summary>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+                gap: 6,
+                marginTop: 9,
+              }}
+            >
+              {SOURCE_CATEGORIES.map((category) => (
+                <CategoryOption
+                  key={category.id}
+                  category={category}
+                  selected={selectedCategoryId === category.id}
+                  onSelect={() => {
+                    setSelectedCategoryId((prev) =>
+                      prev === category.id ? null : category.id,
+                    );
+                    setSubmitState({ status: "idle" });
+                  }}
+                />
+              ))}
+            </div>
+          </details>
         )}
 
         {/* Completion route */}
@@ -1410,36 +1425,36 @@ export function SourceOriginatePage({
           {!contractOptimizationRequiresSelection &&
             !allFactsCaptured &&
             submitState.status !== "submitting" && (
-            <div
-              role="status"
-              aria-live="polite"
-              style={{
-                borderRadius: 8,
-                border: `1px solid ${SHELL.PEACH_LINE}`,
-                background: SHELL.PEACH_BG,
-                padding: "8px 10px",
-                fontFamily: SHELL.SANS,
-                fontSize: 12,
-                color: SHELL.PEACH_TEXT,
-              }}
-            >
-              Capture the five minimum approval facts to open the approval route.
-              Review prompts and placeholders do not count.
-            </div>
-          )}
+              <div
+                role="status"
+                aria-live="polite"
+                style={{
+                  borderRadius: 8,
+                  border: `1px solid ${SHELL.PEACH_LINE}`,
+                  background: SHELL.PEACH_BG,
+                  padding: "8px 10px",
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  color: SHELL.PEACH_TEXT,
+                }}
+              >
+                Capture the five minimum approval facts to open the approval
+                route. Review prompts and placeholders do not count.
+              </div>
+            )}
 
           {!contractOptimizationRequiresSelection && (
             <IntakeCompletionFooter
-            capturedFacts={capturedFacts}
-            decisionOwner={decisionOwnerPreview}
-            coApprover={coApproverPreview}
-            capturedFactsCount={capturedFactsCount}
-            totalFactsCount={intakeFields.length}
-            submitting={submitState.status === "submitting"}
-            draftSaved={draftSaved}
-            onOpenEvent={createEvent}
-            onSaveDraft={saveDraft}
-          />
+              capturedFacts={capturedFacts}
+              decisionOwner={decisionOwnerPreview}
+              coApprover={coApproverPreview}
+              capturedFactsCount={capturedFactsCount}
+              totalFactsCount={intakeFields.length}
+              submitting={submitState.status === "submitting"}
+              draftSaved={draftSaved}
+              onOpenEvent={createEvent}
+              onSaveDraft={saveDraft}
+            />
           )}
 
           {submitState.status === "error" && (
@@ -2243,9 +2258,9 @@ function RelatedContextSection() {
             background: SHELL.PAPER_SOFT,
           }}
         >
-          As aVa cites vendors, systems, owners, and dollar amounts during
-          the conversation, they will surface here so you can see the tenant
-          context supports the brief.
+          As aVa cites vendors, systems, owners, and dollar amounts during the
+          conversation, they will surface here so you can see the tenant context
+          supports the brief.
         </div>
       </section>
     );

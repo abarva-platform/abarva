@@ -53,25 +53,12 @@ const splitList = (value: string | null | undefined): string[] =>
 const contractOptimizationIntakeHref = (
   contract: EnrichedContract,
   opportunityId?: string | null,
-): string =>
-  "/source/new?intent=contract-optimization" +
-  param("contractId", contract.row.contract_id) +
-  param("opportunityId", opportunityId) +
-  param("contractName", contract.row.contract_name) +
-  param("vendorName", contract.row.vendor_name) +
-  param("annualValueUsd", numberFromDb(contract.row.annual_value)) +
-  param(
-    "actualAnnualSpendUsd",
-    numberFromDb(contract.row.actual_annual_spend),
-  ) +
-  param("weakSignalCount", contract.leverage.weakSignalCount) +
-  param(
-    "scopeSummary",
-    isReviewableContractScope(contract.row.scope_summary)
-      ? contract.row.scope_summary
-      : null,
-  ) +
-  param("decisionOwner", contract.row.renewal_owner_ref);
+): string => {
+  const query =
+    param("contractId", contract.row.contract_id).replace(/^&/, "?") +
+    param("opportunityId", opportunityId);
+  return `/source/optimize${query}`;
+};
 
 const REASON_LABEL: Record<SourcingOpportunityReason, string> = {
   high_priority_leverage: "Weak leverage",
@@ -89,8 +76,14 @@ const clientFacingOpportunityText = (
 ): string | null => {
   if (value == null) return null;
   return value
-    .replace(/\bfinance-confirmed realized value\b/gi, "Finance-confirmed outcome")
-    .replace(/\bfinance confirmed realized value\b/gi, "Finance-confirmed outcome")
+    .replace(
+      /\bfinance-confirmed realized value\b/gi,
+      "Finance-confirmed outcome",
+    )
+    .replace(
+      /\bfinance confirmed realized value\b/gi,
+      "Finance-confirmed outcome",
+    )
     .replace(/\brecoverable leakage\b/gi, "recoverable opportunity")
     .replace(/\brealized value\b/gi, "finance-confirmed outcome")
     .replace(/\bfinance realization\b/gi, "finance-confirmed outcome")
@@ -386,7 +379,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         label: "Optimize a contract",
         depth: 1,
         onClick: () => {
-          window.location.href = "/source/new?intent=contract-optimization";
+          window.location.href = "/source/optimize";
         },
       }),
     );
@@ -2178,8 +2171,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const optLedgerView = optLedger
     ? {
         headline:
-          clientFacingOpportunityText(optLedger.headline) ??
-          optLedger.headline,
+          clientFacingOpportunityText(optLedger.headline) ?? optLedger.headline,
         quantifiedLeakage:
           optLedger.quantifiedLeakageUsd > 0
             ? money(optLedger.quantifiedLeakageUsd)
@@ -3262,7 +3254,12 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               bg: "#0a0a0b",
               fg: "#fff",
               border: "#0a0a0b",
-              onClick: () => vm.setTab("contract", "Optimize"),
+              onClick: () => {
+                window.location.href = contractOptimizationIntakeHref(
+                  contract,
+                  opportunityView?.selectedOpportunityId ?? null,
+                );
+              },
             },
           ]
         : kind === "portfolio"
@@ -3272,7 +3269,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
                 bg: "#0a0a0b",
                 fg: "#fff",
                 border: "#0a0a0b",
-                onClick: () => vm.select("contractList", "weak"),
+                onClick: () => {
+                  window.location.href = "/source/optimize";
+                },
               },
             ]
           : [],
