@@ -645,7 +645,7 @@
 .cockpitView {
   display: grid;
   grid-template-rows: auto auto minmax(470px, 1fr);
-  gap: 9px;
+  gap: 6px;
   overflow-y: auto;
   padding-right: 6px;
   scrollbar-width: thin;

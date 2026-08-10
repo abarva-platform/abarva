@@ -41,6 +41,7 @@ This release removes always-visible explanatory bands from the Tower cockpit so 
 - Command Center compresses the board-posture card, read-model scope band, and first chart row so the conversion and trajectory dashboards appear in the initial viewport.
 - Command Center removes the redundant visible read-model scope strip from the dashboard flow; the same scope counts remain in the header chips and hidden semantic content.
 - Tower hides the duplicate header scope-chip rail on narrower desktop widths so the first dashboard row is not pushed down by wrapping executive metadata.
+- Command Center trims the cockpit row gap so the first dashboard row clears the strict 1280px and 1440px live viewport gates.
 
 ## QA / Validation
 
@@ -53,6 +54,7 @@ This release removes always-visible explanatory bands from the Tower cockpit so 
 - Shared live proof of the intermediate follow-up moved Command Center from y=563 to y=339; this final strip removal is expected to move the first dashboard band to roughly y=291 in the shared app.
 - Shared live proof after strip removal showed the remaining narrow-width issue: the header scope-chip rail pushed Command Center to y=344 at 1280px. This patch hides that duplicate rail below 1500px.
 - Header responsive density proof moved the local harness Command Center dashboard row to y=233 at 1280px and y=234 at 1440px, with zero horizontal overflow.
+- Shared live proof after responsive header hiding showed the dashboard row at y=310 for 1280px and y=311 for 1440px. The final row-gap trim addresses that one-pixel 1440px miss without changing governed values or charts.
 - `git diff --check` — passed.
 
 ## Rollout Plan
