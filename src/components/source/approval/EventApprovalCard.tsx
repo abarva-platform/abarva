@@ -589,6 +589,11 @@ function GovernanceHistory({
                   </span>
                 </div>
                 <p style={GOVERNANCE_NOTE_STYLE}>{row.authorizationNote}</p>
+                {row.approverRationale ? (
+                  <p style={GOVERNANCE_NOTE_STYLE}>
+                    Rationale: {row.approverRationale}
+                  </p>
+                ) : null}
               </article>
             ))}
           </div>

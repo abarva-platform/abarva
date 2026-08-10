@@ -9,6 +9,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import {
   buildApprovalLedger,
+  type ApprovalLedgerStageLike,
   type ApprovalLedgerRow,
   type ApprovalRowLike,
 } from "@/lib/source/approval-ledger-model";
@@ -66,11 +67,12 @@ async function resolveApproverNames(
 export async function loadApprovalLedger(
   eventId: string,
   currentStageKey: string | null,
+  stages?: readonly ApprovalLedgerStageLike[],
   db = getAzureWriteFluentClient(),
 ): Promise<ApprovalLedgerRow[]> {
   const { data, error } = await db
     .from("source_event_approvals")
-    .select("stage_key, approved_by_user_id, action, created_at")
+    .select("stage_key, approved_by_user_id, action, created_at, notes")
     .eq("event_id", eventId)
     .order("created_at", { ascending: true });
 
@@ -81,5 +83,10 @@ export async function loadApprovalLedger(
     approvalRows.map((r) => r.approved_by_user_id),
   );
 
-  return buildApprovalLedger({ currentStageKey, approvalRows, approverNames });
+  return buildApprovalLedger({
+    currentStageKey,
+    approvalRows,
+    approverNames,
+    stages,
+  });
 }

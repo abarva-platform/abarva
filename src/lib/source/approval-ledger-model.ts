@@ -17,6 +17,11 @@ import {
 } from "@/lib/source/constants";
 import type { SourceStageKey } from "@/lib/source/types";
 
+export interface ApprovalLedgerStageLike {
+  key: SourceStageKey;
+  label?: string | null;
+}
+
 export interface ApprovalLedgerRow {
   stageKey: SourceStageKey;
   stageLabel: string;
@@ -27,6 +32,8 @@ export interface ApprovalLedgerRow {
   approvedAtIso: string | null;
   /** Plain-language authorization statement for current/locked stages. */
   authorizationNote: string;
+  /** Human rationale captured on the append-only approval record. */
+  approverRationale: string | null;
 }
 
 export interface ApprovalRowLike {
@@ -34,17 +41,27 @@ export interface ApprovalRowLike {
   approved_by_user_id: string;
   action: string;
   created_at: string;
+  notes?: string | null;
 }
 
 const APPROVED_ACTIONS = new Set(["admin_review", "stage_advance"]);
 
-/** Pure: compose the 11-row ledger from the event's current stage and raw approval rows. */
+/** Pure: compose the approval ledger for the event's resolved journey. */
 export function buildApprovalLedger(args: {
   currentStageKey: string | null;
   approvalRows: ApprovalRowLike[];
   approverNames: ReadonlyMap<string, string>;
+  stages?: readonly ApprovalLedgerStageLike[];
 }): ApprovalLedgerRow[] {
-  const currentIndex = SOURCE_STAGE_ORDER.indexOf(
+  const stages =
+    args.stages && args.stages.length > 0
+      ? args.stages
+      : SOURCE_STAGE_ORDER.map((key) => ({
+          key,
+          label: SOURCE_STAGE_LABELS[key],
+        }));
+  const stageKeys = stages.map((stage) => stage.key);
+  const currentIndex = stageKeys.indexOf(
     args.currentStageKey as SourceStageKey,
   );
 
@@ -59,7 +76,8 @@ export function buildApprovalLedger(args: {
     }
   }
 
-  return SOURCE_STAGE_ORDER.map((stageKey, index) => {
+  return stages.map((stage, index) => {
+    const stageKey = stage.key;
     const state: ApprovalLedgerRow["state"] =
       currentIndex < 0
         ? "locked"
@@ -86,12 +104,13 @@ export function buildApprovalLedger(args: {
 
     return {
       stageKey,
-      stageLabel: SOURCE_STAGE_LABELS[stageKey] ?? stageKey,
+      stageLabel: stage.label ?? SOURCE_STAGE_LABELS[stageKey] ?? stageKey,
       index: index + 1,
       state,
       approverName,
       approvedAtIso: matched?.created_at ?? null,
       authorizationNote,
+      approverRationale: matched?.notes?.trim() || null,
     };
   });
 }

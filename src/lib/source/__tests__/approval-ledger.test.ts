@@ -40,6 +40,7 @@ describe("buildApprovalLedger", () => {
           approved_by_user_id: "user_abc",
           action: "admin_review",
           created_at: "2026-07-15T10:00:00.000Z",
+          notes: "Sponsor reviewed the strategy memo and confirmed the gate.",
         },
       ],
       approverNames: new Map([["user_abc", "D. Rao"]]),
@@ -50,6 +51,9 @@ describe("buildApprovalLedger", () => {
     expect(strategyRow.approverName).toBe("D. Rao");
     expect(strategyRow.approvedAtIso).toBe("2026-07-15T10:00:00.000Z");
     expect(strategyRow.authorizationNote).toBe("Approved by D. Rao.");
+    expect(strategyRow.approverRationale).toBe(
+      "Sponsor reviewed the strategy memo and confirmed the gate.",
+    );
   });
 
   it("does NOT fabricate an approver for a past stage with no matching stage_key row — honest null, not a guess", () => {
@@ -137,5 +141,45 @@ describe("buildApprovalLedger", () => {
       approverNames: new Map(),
     });
     expect(ledger.every((r) => r.state === "locked")).toBe(true);
+  });
+
+  it("uses a journey-specific stage list for contract optimization events", () => {
+    const ledger = buildApprovalLedger({
+      currentStageKey: "pricing",
+      approvalRows: [],
+      approverNames: new Map(),
+      stages: [
+        { key: "strategy", label: "Strategy" },
+        { key: "scope", label: "Scope" },
+        { key: "pricing", label: "Commercial Baseline" },
+        { key: "bafo", label: "Negotiation Plan" },
+        { key: "executive_decision", label: "Executive Decision" },
+        { key: "transition", label: "Agreement" },
+        { key: "value", label: "Value" },
+      ],
+    });
+
+    expect(ledger.map((row) => row.stageLabel)).toEqual([
+      "Strategy",
+      "Scope",
+      "Commercial Baseline",
+      "Negotiation Plan",
+      "Executive Decision",
+      "Agreement",
+      "Value",
+    ]);
+    expect(ledger.map((row) => row.stageKey)).not.toContain("rfp");
+    expect(ledger.map((row) => row.stageKey)).not.toContain("responses");
+    expect(ledger.map((row) => row.stageKey)).not.toContain("evaluation");
+    expect(ledger.map((row) => row.stageKey)).not.toContain("selection");
+    expect(ledger.map((row) => row.state)).toEqual([
+      "approved",
+      "approved",
+      "current",
+      "locked",
+      "locked",
+      "locked",
+      "locked",
+    ]);
   });
 });

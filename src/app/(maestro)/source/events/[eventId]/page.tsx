@@ -211,6 +211,7 @@ export default async function SourceEventDetailPage({
     const analyticsApprovalLedger = await loadApprovalLedger(
       event.id,
       event.currentStageKey,
+      sourceJourney.stages,
     ).catch((error) => {
       console.error(
         "[SourceEventDetailPage] approval ledger read failed for analytics shell",

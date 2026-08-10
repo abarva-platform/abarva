@@ -132,6 +132,7 @@ describe("EventApprovalCard", () => {
             approverName: "Ada Lovelace",
             approvedAtIso: "2026-06-06T15:00:00.000Z",
             authorizationNote: "Approved by Ada Lovelace.",
+            approverRationale: null,
           },
         ]}
         artifactAcceptances={[
