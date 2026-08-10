@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 460" role="img" aria-labelledby="title desc">
+  <title id="title">SkyHarbor trajectory shift map</title>
+  <desc id="desc">Executive trajectory diagram showing four planning-grade shifts and the gates that must be cleared before target-state commitment.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="#8ba0bd"/></marker>
+    <style>
+      text{font-family:Inter,Arial,sans-serif;fill:#172033}.m{font-size:13px;font-weight:820;fill:#246fc8}.h{font-size:24px;font-weight:820}.s{font-size:14px;fill:#53627b}.k{font-size:15px;font-weight:820}.small{font-size:12px;fill:#657087}.box{fill:#fff;stroke:#d9e0ea;stroke-width:1.5}.today{fill:#f4f7fb}.future{fill:#eef8f6}.gate{fill:#fff7e8;stroke:#b97824}.line{fill:none;stroke:#9fb0c8;stroke-width:3;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1280" height="460" rx="18" fill="#f8fbff"/>
+  <text x="34" y="46" class="m">Trajectory tab / direction of travel</text>
+  <text x="34" y="82" class="h">Direction language needs gates, not optimism</text>
+  <text x="34" y="110" class="s">Each executive shift shows today, plausible direction, principal gap, and the module gate that owns proof.</text>
+  <g transform="translate(54 148)">
+    <rect width="1170" height="48" rx="12" class="today"/><text x="24" y="31" class="k">Today: fragmented metric ownership</text><path class="line" d="M344 25 H470"/><text x="504" y="31" class="k">Potential: common enterprise measures</text><rect x="900" y="7" width="230" height="34" rx="17" class="gate"/><text x="924" y="30" class="small">Gate: definition alignment</text>
+    <rect y="64" width="1170" height="48" rx="12" class="today"/><text x="24" y="95" class="k">Today: activity-led portfolio</text><path class="line" d="M344 89 H470"/><text x="504" y="95" class="k">Potential: sequenced enterprise change</text><rect x="900" y="71" width="230" height="34" rx="17" class="gate"/><text x="924" y="94" class="small">Gate: capacity governance</text>
+    <rect y="128" width="1170" height="48" rx="12" class="today"/><text x="24" y="159" class="k">Today: committed vendor base</text><path class="line" d="M344 153 H470"/><text x="504" y="159" class="k">Potential: negotiated optionality</text><rect x="900" y="135" width="230" height="34" rx="17" class="gate"/><text x="924" y="158" class="small">Gate: Source action</text>
+    <rect y="192" width="1170" height="48" rx="12" class="today"/><text x="24" y="223" class="k">Today: AI usage visible</text><path class="line" d="M344 217 H470"/><text x="504" y="223" class="k">Potential: finance-recognized outcomes</text><rect x="900" y="199" width="230" height="34" rx="17" class="gate"/><text x="924" y="222" class="small">Gate: Tower validation</text>
+  </g>
+  <rect x="54" y="410" width="574" height="28" rx="14" fill="#fff" stroke="#d9e0ea"/><text x="74" y="429" class="small">No target-state claim appears until the owning evidence gate clears.</text>
+  <rect x="654" y="410" width="570" height="28" rx="14" fill="#fff" stroke="#d9e0ea"/><text x="674" y="429" class="small">Home shows trajectory as plausible movement, not as a committed roadmap.</text>
+</svg>

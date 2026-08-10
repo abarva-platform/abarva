@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -12,6 +13,11 @@ import {
   type MetricAnchor,
   type SignalTone,
 } from "./homeEnterpriseLandscapeV2Model";
+import {
+  SKYHARBOR_HOME_ARCHITECTURE_DIAGRAM_PACK,
+  diagramForHomeTab,
+  type HomeArchitectureDiagram,
+} from "./claudeArchitectureDiagramPack";
 import styles from "./HomeEnterpriseLandscapeV2.module.css";
 
 const TAB_IDS = new Set<HomeLandscapeTabId>(
@@ -134,6 +140,59 @@ function ContextSignalWall({
       ))}
     </div>
   );
+}
+
+function AuthoredDiagramExhibit({
+  diagram,
+}: {
+  diagram: HomeArchitectureDiagram;
+}) {
+  const isClaudeGenerated =
+    SKYHARBOR_HOME_ARCHITECTURE_DIAGRAM_PACK.authoring_status ===
+    "claude_generated_validation_pass";
+  const authoringLabel = isClaudeGenerated
+    ? "Claude-authored SVG pack"
+    : "Seed SVG pack, Claude generation pending";
+
+  return (
+    <figure
+      className={styles.authoredDiagramExhibit}
+      aria-label={`${diagram.title} stored SVG exhibit`}
+    >
+      <figcaption className={styles.authoredDiagramHeader}>
+        <div>
+          <span>{authoringLabel}</span>
+          <strong>{diagram.title}</strong>
+          <p>{diagram.subtitle}</p>
+        </div>
+        <div className={styles.authoredDiagramMeta}>
+          <span>{diagram.confidence.replaceAll("_", " ")}</span>
+          <span>{SKYHARBOR_HOME_ARCHITECTURE_DIAGRAM_PACK.prompt_version}</span>
+        </div>
+      </figcaption>
+      <div className={styles.authoredDiagramFrame}>
+        <Image
+          className={styles.authoredDiagramImage}
+          src={diagram.asset_path}
+          alt={diagram.title}
+          width={1280}
+          height={460}
+          unoptimized
+        />
+      </div>
+      <div className={styles.authoredDiagramSources}>
+        {diagram.source_refs.map((source) => (
+          <span key={source}>{source}</span>
+        ))}
+      </div>
+    </figure>
+  );
+}
+
+function TabAuthoredDiagram({ tab }: { tab: HomeLandscapeTabId }) {
+  const diagram = diagramForHomeTab(tab);
+  if (!diagram) return null;
+  return <AuthoredDiagramExhibit diagram={diagram} />;
 }
 
 interface ArchitectureTile {
@@ -1134,6 +1193,7 @@ function TabPanels({
             specialist questions to other Nexus modules.
           </p>
         </div>
+        <TabAuthoredDiagram tab="patterns" />
         <ContextSignalWall signals={model.contextSignals} />
         <div className={styles.patternGrid}>
           {model.patterns.map((pattern) => (
@@ -1166,6 +1226,7 @@ function TabPanels({
             <h2>Economics without value overclaim</h2>
             <p className={styles.lead}>{model.economicsRead}</p>
           </div>
+          <TabAuthoredDiagram tab="economics" />
           <EconomicsExhibit rows={model.economics} />
           <div className={styles.economicAuditTable}>
             <div className={`${styles.economicAuditRow} ${styles.postureHead}`}>
@@ -1199,6 +1260,7 @@ function TabPanels({
             Claude-generated score.
           </p>
         </div>
+        <TabAuthoredDiagram tab="posture" />
         <div className={styles.postureMatrix}>
           <div className={`${styles.postureRow} ${styles.postureHead}`}>
             <div>Domain</div>
@@ -1265,6 +1327,7 @@ function TabPanels({
               and vendor controls into one system of constraints.
             </p>
           </div>
+          <TabAuthoredDiagram tab="coherence" />
           <CoherenceMap model={model} />
           <div className={styles.coherenceSplit}>
             <ArchitectureFlowMap model={model} />
@@ -1313,6 +1376,7 @@ function TabPanels({
             module route.
           </p>
         </div>
+        <TabAuthoredDiagram tab="trajectory" />
         <div className={styles.shiftTable}>
           <div className={`${styles.shiftRow} ${styles.postureHead}`}>
             <div>Today</div>

@@ -1,0 +1,104 @@
+{
+  "pack_id": "skyharbor-home-architecture-diagram-pack-v1",
+  "tenant_key": "skyharbor-air",
+  "tenant_name": "SkyHarbor Global",
+  "artifact_type": "home_architecture_diagram_pack",
+  "pack_version": "v1.0.0",
+  "generated_at": "2026-08-10T00:00:00.000Z",
+  "authoring_status": "codex_seed_pending_claude_generation",
+  "generated_model": "codex-static-seed",
+  "prompt_version": "home-claude-architecture-diagram-pack-v1",
+  "no_post_claude_mutation": true,
+  "claude_generation_contract": {
+    "prompt_path": "docs/home-know/HOME_CLAUDE_ARCHITECTURE_DIAGRAM_OUTPUT_CONTRACT.md",
+    "generator_path": "scripts/knowledge/generate-home-architecture-diagram-pack.mjs",
+    "validator_path": "scripts/knowledge/validate-home-architecture-diagram-pack.mjs",
+    "raw_response_policy": "When ANTHROPIC_API_KEY is available, the generator writes raw-claude-response.json verbatim and stores the exact SVG strings Claude returned. Validators may reject output but must not rewrite it.",
+    "regeneration_policy": "A failed SVG or manifest check is returned to Claude as a failure report for regeneration; the product renderer never patches labels, layout, content, or SVG markup after Claude generation."
+  },
+  "asset_root": "/generated/home/skyharbor-air/architecture-diagram-pack-v1",
+  "quality_gate": {
+    "status": "candidate_pass",
+    "validated_by": "scripts/knowledge/validate-home-architecture-diagram-pack.mjs",
+    "validation_scope": [
+      "manifest shape",
+      "asset existence",
+      "svg root and viewBox",
+      "title and desc accessibility",
+      "unsafe SVG tag and event-handler rejection",
+      "minimum enterprise content density",
+      "required Home tab coverage"
+    ]
+  },
+  "diagrams": [
+    {
+      "id": "patterns-enterprise-operating-system",
+      "tab": "patterns",
+      "title": "Enterprise operating system pattern map",
+      "subtitle": "Shows how airline execution, platform gravity, commercial commitments, data proof, and AI guardrails connect before module routing.",
+      "asset_path": "/generated/home/skyharbor-air/architecture-diagram-pack-v1/patterns-enterprise-operating-system.svg",
+      "confidence": "planning_grade",
+      "source_refs": [
+        "enterprise_context",
+        "architecture_graph",
+        "contract_register",
+        "tower_value_lane"
+      ]
+    },
+    {
+      "id": "economics-value-control",
+      "tab": "economics",
+      "title": "Economics and value-control architecture",
+      "subtitle": "Separates budget scale, committed economics, visible AI cost, and the finance/Tower gate for recognized value.",
+      "asset_path": "/generated/home/skyharbor-air/architecture-diagram-pack-v1/economics-value-control.svg",
+      "confidence": "planning_grade",
+      "source_refs": [
+        "it_budget_spend_value",
+        "vendors_contracts",
+        "ai_automation_use_cases",
+        "tower_value_lane"
+      ]
+    },
+    {
+      "id": "posture-evidence-authority",
+      "tab": "posture",
+      "title": "Evidence and authority posture map",
+      "subtitle": "Visualizes evidence depth, coherence, flexibility, and potential without turning gaps into recommendations or scores.",
+      "asset_path": "/generated/home/skyharbor-air/architecture-diagram-pack-v1/posture-evidence-authority.svg",
+      "confidence": "planning_grade",
+      "source_refs": [
+        "home_evidence_contract",
+        "relationship_edges",
+        "architecture_advisory_result"
+      ]
+    },
+    {
+      "id": "coherence-domain-architecture-index",
+      "tab": "coherence",
+      "title": "Scoped architecture diagram index",
+      "subtitle": "Establishes that Data and AI, ERP, mainframe/private cloud, and digital airline channels require separate architecture views.",
+      "asset_path": "/generated/home/skyharbor-air/architecture-diagram-pack-v1/coherence-domain-architecture-index.svg",
+      "confidence": "planning_grade",
+      "source_refs": [
+        "applications_systems",
+        "data_assets_integrations",
+        "infrastructure_platforms",
+        "relationship_edges"
+      ]
+    },
+    {
+      "id": "trajectory-executive-shifts",
+      "tab": "trajectory",
+      "title": "Executive shift and gate map",
+      "subtitle": "Shows plausible direction of travel as gated movement, not a target-state commitment.",
+      "asset_path": "/generated/home/skyharbor-air/architecture-diagram-pack-v1/trajectory-executive-shifts.svg",
+      "confidence": "planning_grade",
+      "source_refs": [
+        "intelligence_route",
+        "moves_route",
+        "source_route",
+        "tower_route"
+      ]
+    }
+  ]
+}

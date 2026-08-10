@@ -456,6 +456,7 @@
     "home:knowledge-v4:test-dimension-headlines": "node scripts/knowledge/__tests__/run-dimension-headline-tests.mjs",
     "home:knowledge-v4:test-relationship-graph": "node scripts/knowledge/__tests__/run-relationship-graph-tests.mjs",
     "home:knowledge-v4:test-visual-fabrication": "node scripts/knowledge/__tests__/run-visual-data-fabrication-tests.mjs",
+    "home:architecture-diagram-pack:test": "node scripts/knowledge/__tests__/run-home-architecture-diagram-pack-tests.mjs",
     "home:knowledge-v4:test-heatmap-2d": "node scripts/knowledge/__tests__/run-heatmap-2d-tests.mjs",
     "home:knowledge-v4:canary-job": "node scripts/knowledge/build-home-knowledge-v4-review-pack.mjs --out-dir=/tmp/home-knowledge-v4-canary",
     "home:knowledge-v4:review-job": "node scripts/knowledge/build-home-knowledge-v4-review-pack.mjs --tenant=all --out-dir=/tmp/home-knowledge-v4-review",
