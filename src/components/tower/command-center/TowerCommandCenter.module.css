@@ -783,14 +783,15 @@
   margin-top: 4px;
 }
 .scopeStrip {
-  align-items: stretch;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid var(--canon-border);
-  border-radius: 10px;
-  display: grid;
-  gap: 10px;
-  grid-template-columns: minmax(150px, auto) minmax(0, 1fr);
-  padding: 7px 10px;
+  clip: rect(0 0 0 0);
+  border: 0;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 .scopeNarrative {
   align-self: center;
