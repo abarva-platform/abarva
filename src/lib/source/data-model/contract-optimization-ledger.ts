@@ -266,7 +266,7 @@ export function buildContractOptimizationLedger(input: {
     {
       id: 'realized:tower-finance-proof',
       kind: 'realized_value',
-      label: 'Finance-confirmed realized value',
+      label: 'Finance-confirmed outcome',
       amountUsd: governedRealizedValueUsd > 0 ? governedRealizedValueUsd : null,
       state: evidenceState(realizedEvidence) ?? (governedRealizedValueUsd > 0 ? 'quantified' : 'not_established'),
       evidenceClass: evidenceClass(realizedEvidence) ?? (governedRealizedValueUsd > 0 ? 'human_validated' : 'missing'),
@@ -311,8 +311,8 @@ export function buildContractOptimizationLedger(input: {
     evidenceGapCount,
     headline:
       quantifiedLeakageUsd > 0
-        ? `${formatUsd(quantifiedLeakageUsd)} recoverable leakage is visible before approval.`
-        : 'No recoverable leakage is quantified yet; contract optimization must collect the missing evidence before sizing value.',
+        ? `${formatUsd(quantifiedLeakageUsd)} recoverable opportunity is visible before approval.`
+        : 'No recoverable opportunity is quantified yet; contract optimization must collect the missing evidence before sizing value.',
     decisionRecord: buildDecisionRecord({
       c,
       lines,

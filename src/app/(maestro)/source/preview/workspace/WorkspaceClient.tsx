@@ -328,7 +328,7 @@ export function WorkspaceClient({
                 msg.id === assistantId
                   ? {
                       ...msg,
-                      body: "Selecting Source facts, contract evidence, and outside-in patterns...",
+                      body: "Selecting source systems, contract evidence, and outside-in patterns...",
                     }
                   : msg,
               ),

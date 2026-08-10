@@ -84,6 +84,21 @@ const REASON_COLOR: Record<SourcingOpportunityReason, string> = {
   top_concentration_vendor: COL.ink,
 };
 
+const clientFacingOpportunityText = (
+  value: string | null | undefined,
+): string | null => {
+  if (value == null) return null;
+  return value
+    .replace(/\bfinance-confirmed realized value\b/gi, "Finance-confirmed outcome")
+    .replace(/\bfinance confirmed realized value\b/gi, "Finance-confirmed outcome")
+    .replace(/\brecoverable leakage\b/gi, "recoverable opportunity")
+    .replace(/\brealized value\b/gi, "finance-confirmed outcome")
+    .replace(/\bfinance realization\b/gi, "finance-confirmed outcome")
+    .replace(/\bvalue proof\b/gi, "finance confirmation")
+    .replace(/\bvalue ledgers?\b/gi, "opportunity evidence")
+    .replace(/\bfour-ledger\b/gi, "opportunity evidence");
+};
+
 /**
  * Turns current UI state + the governed portfolio bundle into everything the
  * page renders. Mirrors renderVals() from the earlier illustrative build in
@@ -2162,7 +2177,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     : null;
   const optLedgerView = optLedger
     ? {
-        headline: optLedger.headline,
+        headline:
+          clientFacingOpportunityText(optLedger.headline) ??
+          optLedger.headline,
         quantifiedLeakage:
           optLedger.quantifiedLeakageUsd > 0
             ? money(optLedger.quantifiedLeakageUsd)
@@ -2214,8 +2231,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               missing: COL.red,
             } as const
           )[line.evidenceClass],
-          evidence: line.evidence,
-          nextAction: line.nextAction,
+          evidence: clientFacingOpportunityText(line.evidence) ?? line.evidence,
+          nextAction:
+            clientFacingOpportunityText(line.nextAction) ?? line.nextAction,
           sourceRefs: line.sourceRefs,
           lineageFields: line.lineageFields,
         })),
@@ -2424,7 +2442,10 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             total: totalOpportunityMoney(),
           },
           financeConfirmed,
-          evidenceRequirements: opportunitySet.evidenceRequirements,
+          evidenceRequirements: opportunitySet.evidenceRequirements.map(
+            (requirement) =>
+              clientFacingOpportunityText(requirement) ?? requirement,
+          ),
           selectedOpportunityId: selected?.opportunityId ?? null,
           selectedOpportunity: selected
             ? {
@@ -2446,11 +2467,17 @@ export function buildViewModel(vm: WorkspaceViewModel) {
                 deadline: selected.deadline
                   ? fmtDate(selected.deadline)
                   : "No deadline",
-                nextAction: selected.nextAction,
-                blockingGap: selected.blockingGap,
-                narrative: selected.narrative,
+                nextAction:
+                  clientFacingOpportunityText(selected.nextAction) ??
+                  selected.nextAction,
+                blockingGap: clientFacingOpportunityText(selected.blockingGap),
+                narrative:
+                  clientFacingOpportunityText(selected.narrative) ??
+                  selected.narrative,
                 approvalState: fmtStage(selected.approvalState),
-                overlapTreatment: selected.overlapTreatment,
+                overlapTreatment:
+                  clientFacingOpportunityText(selected.overlapTreatment) ??
+                  selected.overlapTreatment,
                 sourceRefs,
                 calculation: selected.calculation
                   ? {
@@ -2492,8 +2519,10 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             deadline: opportunity.deadline
               ? fmtDate(opportunity.deadline)
               : "No deadline",
-            blockingGap: opportunity.blockingGap,
-            nextAction: opportunity.nextAction,
+            blockingGap: clientFacingOpportunityText(opportunity.blockingGap),
+            nextAction:
+              clientFacingOpportunityText(opportunity.nextAction) ??
+              opportunity.nextAction,
             sourceRefs: opportunity.evidenceRefs
               .map((ref) =>
                 [
@@ -2523,7 +2552,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             amount: amount(line.amountUsd),
             inclusion: fmtStage(line.inclusion),
             inclusionRaw: line.inclusion,
-            inclusionReason: line.inclusionReason,
+            inclusionReason:
+              clientFacingOpportunityText(line.inclusionReason) ??
+              line.inclusionReason,
             pricingScheduleRef: line.pricingScheduleRef ?? "Not established",
             contractTermRef: line.contractTermRef ?? "Not established",
             amendmentRef: line.amendmentRef ?? "Not established",
@@ -2544,7 +2575,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             (item) => ({
               id: item.realizationId,
               amount: money(item.amountUsd),
-              basis: item.basis,
+              basis: clientFacingOpportunityText(item.basis) ?? item.basis,
               confirmationDate: item.confirmationDate
                 ? fmtDate(item.confirmationDate)
                 : "Not established",
