@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release makes Source workflow checklist actions auditable. A mapped confirm or decision task now writes to the governed evidence-answer route and refreshes the page so the checklist reads the persisted evidence back. The checklist no longer depends only on in-browser state for a gate-relevant decision step.
+This release makes Source workflow checklist actions auditable. A mapped confirm or decision task now writes to the governed evidence-answer route and refreshes the page so the checklist reads the persisted evidence back. The current Source shell and the older checklist renderer no longer depend only on in-browser state for a gate-relevant decision step.
 
 ## Layer Impact
 
@@ -33,15 +33,18 @@ This release makes Source workflow checklist actions auditable. A mapped confirm
 - Shared task-to-evidence mapping for Source checklist tasks.
 - Source event page reads effective evidence states and passes them into task hydration.
 - Source task checklist posts mapped confirm/decide actions to the governed evidence answer route.
+- Source shell step actions post mapped confirm/decide actions to the same governed evidence answer route.
 - Hydration tests cover mapped decision evidence, stale evidence, artifact-backed tasks, and canonical task-id fallback.
-- UI tests cover successful and failed checklist evidence saves.
+- UI tests cover successful and failed checklist evidence saves and the live shell step action path.
 
 ## QA / Validation
 
 - `npx jest src/lib/source/facts/view/__tests__/task-evidence-hydration.test.ts --runInBand` passed.
 - `npx jest src/components/source/canvas/analytics/__tests__/TaskChecklist.upload.test.tsx --runInBand` passed.
+- `npx jest src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.stageApproval.test.tsx --runInBand` passed.
+- `npx jest src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.stageApproval.test.tsx src/lib/source/facts/view/__tests__/task-evidence-hydration.test.ts src/components/source/canvas/analytics/__tests__/TaskChecklist.upload.test.tsx --runInBand` passed.
 - `npx tsc --noEmit --pretty false` passed.
-- `npx eslint src/components/source/canvas/analytics/TaskChecklist.tsx src/lib/source/facts/task-evidence-requirements.ts src/lib/source/facts/view/task-evidence-hydration.ts src/app/(maestro)/source/events/[eventId]/page.tsx src/components/source/canvas/analytics/__tests__/TaskChecklist.upload.test.tsx src/lib/source/facts/view/__tests__/task-evidence-hydration.test.ts` passed.
+- `npx eslint src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.stageApproval.test.tsx src/components/source/canvas/analytics/TaskChecklist.tsx src/lib/source/facts/task-evidence-requirements.ts src/lib/source/facts/view/task-evidence-hydration.ts src/app/(maestro)/source/events/[eventId]/page.tsx src/components/source/canvas/analytics/__tests__/TaskChecklist.upload.test.tsx src/lib/source/facts/view/__tests__/task-evidence-hydration.test.ts` passed.
 
 ## Rollout Plan
 
