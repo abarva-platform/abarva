@@ -1,6 +1,10 @@
-import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
+import {
+  SOURCE_STAGE_LABELS,
+  normalizeSourceStageKey,
+} from "@/lib/source/constants";
 import {
   SOURCE_JOURNEYS,
+  coerceStageToSourceJourney,
   sourceJourneyLabelForStage,
   sourceJourneyStageKeys,
   type SourceJourneyDefinition,
@@ -328,16 +332,20 @@ export function buildSourceEventShellView(
   const tasks = input.stageView.tasks;
   const ready = tasks.filter((task) => isTaskCaptured(task)).length;
   const total = tasks.length;
+  const resolvedJourney = input.journey ?? SOURCE_JOURNEYS.competitive_rfp;
   const viewedStageLabel =
     sourceJourneyLabelForStage(input.journey, input.viewedStageKey) ||
     input.stageView.stageName;
-  const visibleStageOrder = sourceJourneyStageKeys(
-    input.journey ?? SOURCE_JOURNEYS.competitive_rfp,
-  );
-  const visibleCurrentStageKey = visibleStageOrder.includes(
+  const visibleStageOrder = sourceJourneyStageKeys(resolvedJourney);
+  const rawCurrentStageKey = normalizeSourceStageKey(
     input.event.currentStageKey,
-  )
-    ? input.event.currentStageKey
+  );
+  const visibleCurrentStageKey = rawCurrentStageKey
+    ? coerceStageToSourceJourney(
+        resolvedJourney,
+        rawCurrentStageKey,
+        rawCurrentStageKey,
+      )
     : input.viewedStageKey;
   const currentStageIndex = visibleStageOrder.indexOf(visibleCurrentStageKey);
 
@@ -348,8 +356,7 @@ export function buildSourceEventShellView(
       const state: SourceShellJourneyStage["state"] =
         index < currentStageIndex ? "past" : current ? "current" : "future";
       const stageTotal = viewed && state !== "past" ? Math.max(total, 1) : 1;
-      const stageDone =
-        state === "past" ? stageTotal : viewed ? ready : 0;
+      const stageDone = state === "past" ? stageTotal : viewed ? ready : 0;
       return {
         key: stageKey,
         label: sourceJourneyLabelForStage(input.journey, stageKey),
@@ -386,22 +393,39 @@ export function buildSourceEventShellView(
   );
   const rawCurrentStageItem =
     thisEventApprovals.find(
-      (item) => item.stageKey === input.event.currentStageKey,
+      (item) =>
+        item.stageKey === input.event.currentStageKey ||
+        item.stageKey === visibleCurrentStageKey,
     ) ?? null;
   const stageApprovalHref = `/source/events/${encodeURIComponent(input.event.id)}?stage=${encodeURIComponent(input.viewedStageKey)}&workspace=approvals`;
-  const viewedStageIsCurrent =
-    input.viewedStageKey === input.event.currentStageKey;
+  const currentStageApprovalHref = `/source/events/${encodeURIComponent(input.event.id)}?stage=${encodeURIComponent(visibleCurrentStageKey)}&workspace=approvals`;
+  const viewedStageIsCurrent = input.viewedStageKey === visibleCurrentStageKey;
   const completedViewedStage = total > 0 && ready === total;
+  const normalizedCurrentStageItem = rawCurrentStageItem
+    ? normalizeCurrentStageApprovalItem(
+        rawCurrentStageItem,
+        visibleCurrentStageKey,
+        sourceJourneyLabelForStage(input.journey, visibleCurrentStageKey),
+        currentStageApprovalHref,
+      )
+    : null;
   const currentStageItem =
-    rawCurrentStageItem && viewedStageIsCurrent && completedViewedStage
+    normalizedCurrentStageItem && viewedStageIsCurrent
       ? {
-          ...rawCurrentStageItem,
-          status: "ready" as const,
-          readiness: `All ${total} required evidence item${total === 1 ? "" : "s"} ready — review and approve ${viewedStageLabel}.`,
+          ...normalizedCurrentStageItem,
+          status: completedViewedStage
+            ? ("ready" as const)
+            : ("ready_with_gaps" as const),
+          readiness:
+            total > 0
+              ? completedViewedStage
+                ? `All ${total} required evidence item${total === 1 ? "" : "s"} ready — review and approve ${viewedStageLabel}.`
+                : `${ready} of ${total} required evidence item${total === 1 ? "" : "s"} ready — review the gaps before approving ${viewedStageLabel}.`
+              : normalizedCurrentStageItem.readiness,
           href: stageApprovalHref,
-          actionLabel: "Approve now",
+          actionLabel: completedViewedStage ? "Approve now" : "Review & decide",
         }
-      : rawCurrentStageItem;
+      : normalizedCurrentStageItem;
   // currentStageItem already renders featured above the list — exclude it
   // here so it doesn't also render a second time inside the list.
   const approvals = thisEventApprovals.filter(
@@ -422,7 +446,7 @@ export function buildSourceEventShellView(
       accountName: input.event.accountName,
       statusLabel: input.event.statusLabel,
       valueAtStakeLabel: formatUsdPerYear(input.event.valueAtStakeUsd),
-      currentStageKey: input.event.currentStageKey,
+      currentStageKey: visibleCurrentStageKey,
       viewedStageKey: input.viewedStageKey,
       viewedStageLabel,
     },
@@ -492,6 +516,21 @@ export function buildSourceEventShellView(
       record: input.guidebook ?? null,
       emptyMessage: `No facilitator guidebook has been authored for the ${viewedStageLabel} stage yet.`,
     },
+  };
+}
+
+function normalizeCurrentStageApprovalItem(
+  item: ApprovalsInboxItem,
+  stageKey: SourceStageKey,
+  stageLabel: string,
+  href: string,
+): ApprovalsInboxItem {
+  return {
+    ...item,
+    stageKey,
+    stageLabel,
+    ask: `Approve advancing out of ${stageLabel}.`,
+    href,
   };
 }
 

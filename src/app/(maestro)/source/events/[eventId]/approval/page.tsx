@@ -24,7 +24,10 @@ import {
   isUuid,
   type SourceEventRow,
 } from "@/lib/source/queries";
-import { getSourceJourneyForEvent } from "@/lib/source/sourcing-motion-journeys";
+import {
+  coerceStageToSourceJourney,
+  getSourceJourneyForEvent,
+} from "@/lib/source/sourcing-motion-journeys";
 
 export const metadata = { title: "Source · Event Approval · AbarVa" };
 export const dynamic = "force-dynamic";
@@ -79,10 +82,15 @@ export default async function SourceEventApprovalPage({
     event,
     hasContractOptimizationProfile: Boolean(contractOptimizationProfile),
   });
+  const effectiveCurrentStageKey = coerceStageToSourceJourney(
+    sourceJourney,
+    row.current_stage_key,
+    row.current_stage_key,
+  );
   const [approvalLedger, artifactAcceptances] = await Promise.all([
     loadApprovalLedger(
       event.id,
-      row.current_stage_key,
+      effectiveCurrentStageKey,
       sourceJourney.stages,
     ).catch((error) => {
       console.error(

@@ -14,6 +14,7 @@
 import {
   SOURCE_STAGE_LABELS,
   SOURCE_STAGE_ORDER,
+  normalizeSourceStageKey,
 } from "@/lib/source/constants";
 import type { SourceStageKey } from "@/lib/source/types";
 
@@ -61,8 +62,9 @@ export function buildApprovalLedger(args: {
           label: SOURCE_STAGE_LABELS[key],
         }));
   const stageKeys = stages.map((stage) => stage.key);
-  const currentIndex = stageKeys.indexOf(
-    args.currentStageKey as SourceStageKey,
+  const currentIndex = resolveCurrentStageIndex(
+    stageKeys,
+    args.currentStageKey,
   );
 
   // Most recent matching, approved row per stage_key (last one wins if a
@@ -113,4 +115,28 @@ export function buildApprovalLedger(args: {
       approverRationale: matched?.notes?.trim() || null,
     };
   });
+}
+
+function resolveCurrentStageIndex(
+  stageKeys: readonly SourceStageKey[],
+  currentStageKey: string | null,
+): number {
+  const exactIndex = stageKeys.indexOf(currentStageKey as SourceStageKey);
+  if (exactIndex >= 0) return exactIndex;
+
+  const canonical = normalizeSourceStageKey(currentStageKey);
+  if (!canonical) return -1;
+
+  const canonicalIndex = SOURCE_STAGE_ORDER.indexOf(canonical);
+  if (canonicalIndex < 0) return -1;
+
+  const forward = SOURCE_STAGE_ORDER.slice(canonicalIndex + 1).find((key) =>
+    stageKeys.includes(key),
+  );
+  if (forward) return stageKeys.indexOf(forward);
+
+  const backward = SOURCE_STAGE_ORDER.slice(0, canonicalIndex)
+    .reverse()
+    .find((key) => stageKeys.includes(key));
+  return backward ? stageKeys.indexOf(backward) : -1;
 }
