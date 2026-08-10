@@ -732,21 +732,21 @@ function StageHeader({ view }: { view: SourceEventShellView }) {
           <h1
             style={{
               fontFamily: ANALYTICS.SERIF,
-              fontSize: 35,
-              lineHeight: 1,
+              fontSize: 26,
+              lineHeight: 1.12,
               margin: 0,
-              letterSpacing: "-0.5px",
+              letterSpacing: 0,
             }}
           >
             {view.stage.label}
           </h1>
           <p
             style={{
-              margin: "10px 0 0",
+              margin: "8px 0 0",
               color: ANALYTICS.INK_2,
-              fontSize: 17,
-              lineHeight: 1.45,
-              maxWidth: 760,
+              fontSize: 14,
+              lineHeight: 1.42,
+              maxWidth: 700,
             }}
           >
             {view.stage.purpose}
