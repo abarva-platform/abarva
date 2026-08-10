@@ -419,6 +419,7 @@
 
 .architectureHero {
   min-width: 0;
+  scroll-margin-top: 96px;
   padding: 18px;
   border: 1px solid #d9e0ea;
   border-radius: 7px;
@@ -1464,15 +1465,33 @@
   }
 
   .architectureLaneFrame {
-    overflow-x: auto;
+    overflow: visible;
   }
 
   .architectureLaneGrid {
-    min-width: 920px;
+    min-width: 0;
+    grid-template-columns: 1fr !important;
   }
 
   .architectureFlowOverlay {
-    min-width: 760px;
+    display: none;
+  }
+
+  .architectureLane {
+    border-right: 0;
+    border-bottom: 1px solid rgba(217, 224, 234, 0.92);
+  }
+
+  .architectureLane:last-child {
+    border-bottom: 0;
+  }
+
+  .architectureLaneTitle {
+    min-height: auto;
+  }
+
+  .architectureTile {
+    min-height: auto;
   }
 
   .economicInsightGrid {
