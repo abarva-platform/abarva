@@ -34,7 +34,7 @@ export function IntakeFactsReview({ facts }: IntakeFactsReviewProps) {
 
 const SECTION_STYLE: CSSProperties = {
   display: "grid",
-  gap: 14,
+  gap: 12,
 };
 
 const EYEBROW_STYLE: CSSProperties = {
@@ -48,8 +48,8 @@ const EYEBROW_STYLE: CSSProperties = {
 const TITLE_STYLE: CSSProperties = {
   margin: 0,
   fontFamily: SHELL.SERIF,
-  fontSize: 28,
-  lineHeight: 1.1,
+  fontSize: 18,
+  lineHeight: 1.18,
   fontWeight: 400,
   letterSpacing: 0,
   color: SHELL.INK,

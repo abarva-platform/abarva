@@ -103,16 +103,19 @@ describe("EventApprovalCard", () => {
     render(<EventApprovalCard {...baseProps} />);
 
     expect(screen.getByRole("heading", { level: 1 }).getAttribute("style")).toContain(
-      "font-size: clamp(27px, 2.2vw, 34px)",
+      "font-size: clamp(22px, 1.45vw, 28px)",
     );
     expect(screen.getByRole("heading", { level: 1 }).getAttribute("style")).toContain(
-      "line-height: 1.08",
+      "line-height: 1.12",
     );
     expect(screen.getByText("What you are approving").getAttribute("style")).toContain(
-      "font-size: 22px",
+      "font-size: 18px",
     );
     expect(screen.getByText("Approve or send back").getAttribute("style")).toContain(
-      "font-size: 22px",
+      "font-size: 18px",
+    );
+    expect(screen.getByText("Who must say yes").getAttribute("style")).toContain(
+      "font-size: 18px",
     );
     expect(screen.getByTestId("source-approval-rationale").getAttribute("rows")).toBe(
       "4",
