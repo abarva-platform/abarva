@@ -115,7 +115,7 @@ export function buildApprovalsInbox(args: {
       stageKey: e.current_stage_key,
       stageLabel,
       estimatedValueUsd: e.estimated_value_usd,
-      href: `/source/events/${e.id}?stage=${encodeURIComponent(e.current_stage_key)}`,
+      href: `/source/events/${e.id}?stage=${encodeURIComponent(e.current_stage_key)}&workspace=approvals`,
       actionLabel: met === total ? "Approve now" : "Review & decide",
     });
   }

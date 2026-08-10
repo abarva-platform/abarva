@@ -321,7 +321,55 @@ describe("buildSourceEventShellView", () => {
     expect(view.approvals.currentStageItem).toBe(APPROVAL);
     expect(view.approvals.readinessLine).toBe(APPROVAL.readiness);
     expect(view.stage.gateReadinessLine).toContain("before approval");
-    expect(view.stage.approvalHref).toBe(`/source/events/${EVENT.id}/approval`);
+    expect(view.stage.approvalHref).toBe(
+      `/source/events/${EVENT.id}?stage=scope&workspace=approvals`,
+    );
+  });
+
+  it("routes a completed current stage to the approvals workspace and reconciles stale gate-count copy", () => {
+    const completeScopeStage: StageAnalyticsView = {
+      ...(SAMPLE_SCOPE_STAGE as StageAnalyticsView),
+      tasks: (SAMPLE_SCOPE_STAGE as StageAnalyticsView).tasks.map((task) => ({
+        ...task,
+        state: "done",
+        evidenceComplete: true,
+      })),
+    };
+    const staleGateApproval: ApprovalsInboxItem = {
+      ...APPROVAL,
+      stageKey: "scope",
+      stageLabel: "Scope",
+      readiness:
+        "0 of 5 gate items met - you can approve with gaps (rationale required) or wait.",
+      status: "ready_with_gaps",
+      actionLabel: "Review & decide",
+    };
+
+    const view = buildSourceEventShellView({
+      event: {
+        ...EVENT,
+        currentStageKey: "scope",
+        currentStageLabel: "Scope",
+      },
+      tenantName: "FS Demo",
+      viewedStageKey: "scope",
+      stageView: completeScopeStage,
+      approvalItems: [staleGateApproval],
+    });
+
+    expect(view.stage.ready).toBe(view.stage.total);
+    expect(view.stage.approvalHref).toBe(
+      `/source/events/${EVENT.id}?stage=scope&workspace=approvals`,
+    );
+    expect(view.stage.approvalCtaLabel).toBe("Open Scope approval");
+    expect(view.approvals.currentStageItem).toMatchObject({
+      status: "ready",
+      actionLabel: "Approve now",
+      href: `/source/events/${EVENT.id}?stage=scope&workspace=approvals`,
+    });
+    expect(view.approvals.currentStageItem?.readiness).toContain(
+      "required evidence",
+    );
   });
 
   it("scopes the Approvals workspace to this event only, and never renders the featured item twice", () => {
