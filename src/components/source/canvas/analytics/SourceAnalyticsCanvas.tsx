@@ -3803,16 +3803,16 @@ function WorkspaceTitle({
   subtitle: string;
 }) {
   return (
-    <header style={{ marginBottom: 18 }}>
+    <header style={{ marginBottom: 14 }}>
       <div
         style={{
           fontFamily: ANALYTICS.MONO,
-          fontSize: 10,
+          fontSize: 9.5,
           fontWeight: 800,
-          letterSpacing: "0.14em",
+          letterSpacing: "0.12em",
           textTransform: "uppercase",
           color: ANALYTICS.FAINT,
-          marginBottom: 8,
+          marginBottom: 6,
         }}
       >
         {eyebrow}
@@ -3821,8 +3821,9 @@ function WorkspaceTitle({
         style={{
           fontFamily: ANALYTICS.SERIF,
           margin: 0,
-          fontSize: 34,
-          letterSpacing: "-0.4px",
+          fontSize: 26,
+          lineHeight: 1.08,
+          letterSpacing: 0,
         }}
       >
         {title}
@@ -3830,10 +3831,10 @@ function WorkspaceTitle({
       <p
         style={{
           color: ANALYTICS.INK_2,
-          margin: "8px 0 0",
-          fontSize: 16,
-          maxWidth: 780,
-          lineHeight: 1.45,
+          margin: "7px 0 0",
+          fontSize: 13.5,
+          maxWidth: 720,
+          lineHeight: 1.42,
         }}
       >
         {subtitle}

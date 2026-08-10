@@ -134,6 +134,31 @@ describe("buildApprovalLedger", () => {
     expect(lockedIndex).toBe(-1); // value is the last stage — nothing is locked
   });
 
+  it("marks the terminal value stage as approved when its own approval row exists", () => {
+    const ledger = buildApprovalLedger({
+      currentStageKey: "value",
+      approvalRows: [
+        {
+          stage_key: "value",
+          approved_by_user_id: "user_value",
+          action: "admin_review",
+          created_at: "2026-08-10T15:00:00.000Z",
+          notes: "Finance reviewed the value proof gate.",
+        },
+      ],
+      approverNames: new Map([["user_value", "Value Approver"]]),
+    });
+
+    expect(ledger.every((r) => r.state === "approved")).toBe(true);
+    const valueRow = ledger.find((r) => r.stageKey === "value")!;
+    expect(valueRow.approverName).toBe("Value Approver");
+    expect(valueRow.approvedAtIso).toBe("2026-08-10T15:00:00.000Z");
+    expect(valueRow.authorizationNote).toBe("Approved by Value Approver.");
+    expect(valueRow.approverRationale).toBe(
+      "Finance reviewed the value proof gate.",
+    );
+  });
+
   it("falls back to locked-for-all when currentStageKey is unknown/non-canonical", () => {
     const ledger = buildApprovalLedger({
       currentStageKey: "not_a_real_stage",
