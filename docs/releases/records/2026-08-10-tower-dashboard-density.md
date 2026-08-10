@@ -38,6 +38,7 @@ This release removes always-visible explanatory bands from the Tower cockpit so 
 - Evidence removes the always-visible North Star strip and collapses the source-authority workplan by default.
 - Value Proof, Decision Lanes, and Recommended Actions remove full-width explanatory strips above the dashboards.
 - Tower spacing, tab padding, body gaps, and panel margins are tightened so the first analytical panel appears higher in the viewport.
+- Command Center compresses the board-posture card, read-model scope band, and first chart row so the conversion and trajectory dashboards appear in the initial viewport.
 
 ## QA / Validation
 
@@ -45,6 +46,7 @@ This release removes always-visible explanatory bands from the Tower cockpit so 
 - `npm test -- --runTestsByPath src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx` — passed, 24 tests.
 - `TCC_HARNESS_OUT=/Users/anand/Downloads/tower-density-visual-proof-2026-08-10-v4/html npm test -- --runTestsByPath src/components/tower/command-center/__tests__/render-harness.test.tsx` — passed, 2 tests.
 - Local visual density proof at 1792x1120 showed first analytical panels above the fold for AI Portfolio, Value Proof, Decision Lanes, Evidence, and AI Spend Attribution with zero horizontal overflow in the harness.
+- Command Center follow-up density proof moved the first chart row to y=263 in the local harness with zero horizontal overflow.
 - `git diff --check` — passed.
 
 ## Rollout Plan
@@ -70,6 +72,7 @@ Rollback by reverting the UI release commit and redeploying through the repo-own
 - Local density proof report: `/Users/anand/Downloads/tower-density-visual-proof-2026-08-10-v4/tower-density-visual-proof.md`
 - Local density proof JSON: `/Users/anand/Downloads/tower-density-visual-proof-2026-08-10-v4/tower-density-visual-proof.json`
 - Local density screenshots: `/Users/anand/Downloads/tower-density-visual-proof-2026-08-10-v4/screens`
+- Command Center density proof: `/Users/anand/Downloads/tower-command-center-density-proof-2026-08-10/command-center-density-proof.md`
 - PR URL, ACA deploy workflow run, runtime invariant, and signed-in shared-route proof to be captured after publication.
 
 ## Known Gaps

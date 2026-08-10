@@ -631,8 +631,8 @@
  * an executive operating surface instead of a report exhibit. */
 .cockpitView {
   display: grid;
-  grid-template-rows: auto auto minmax(500px, 1fr);
-  gap: 12px;
+  grid-template-rows: auto auto minmax(470px, 1fr);
+  gap: 9px;
   overflow-y: auto;
   padding-right: 6px;
   scrollbar-width: thin;
@@ -641,45 +641,49 @@
 .boardPosture {
   flex: none;
   display: grid;
-  grid-template-columns: minmax(460px, 1.12fr) minmax(480px, 0.88fr);
-  gap: 12px;
+  grid-template-columns: minmax(420px, 1fr) minmax(680px, 1.4fr);
+  gap: 9px;
   align-items: stretch;
 }
 .boardVerdict {
   background: var(--canon-bg-surface);
   border: 1px solid var(--canon-border);
   border-left: 4px solid var(--canon-red);
-  border-radius: 13px;
+  border-radius: 10px;
   box-shadow: var(--shadow-card);
-  padding: 15px 18px;
+  padding: 10px 13px;
 }
 .boardVerdict h2 {
   font-family: var(--abarva-serif);
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 500;
-  line-height: 1.15;
+  line-height: 1.12;
   letter-spacing: 0;
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   text-wrap: pretty;
 }
 .boardVerdict p {
   margin: 10px 0 0;
   color: var(--canon-gray-700);
-  font-size: 13px;
-  line-height: 1.45;
+  display: -webkit-box;
+  font-size: 12px;
+  line-height: 1.32;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 .boardMetrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
 }
 .boardMetric {
   background: var(--canon-bg-surface);
   border: 1px solid var(--canon-border);
   border-top: 3px solid var(--canon-gray-200);
-  border-radius: 13px;
+  border-radius: 10px;
   box-shadow: var(--shadow-card);
-  padding: 12px 13px;
+  padding: 9px 10px;
   min-width: 0;
 }
 .boardMetric.mteal {
@@ -698,20 +702,19 @@
   display: block;
   color: var(--canon-gray-500);
   font-family: var(--abarva-mono);
-  font-size: 9.5px;
+  font-size: 8.5px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   line-height: 1.25;
-  min-height: 24px;
   text-transform: uppercase;
 }
 .bmValue {
   display: block;
   font-family: var(--abarva-serif);
-  font-size: 25px;
+  font-size: 21px;
   font-weight: 500;
   line-height: 1;
-  margin-top: 7px;
+  margin-top: 6px;
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -727,9 +730,12 @@
 .bmNote {
   display: block;
   color: var(--canon-gray-500);
-  font-size: 11px;
-  line-height: 1.3;
-  margin-top: 5px;
+  font-size: 10px;
+  line-height: 1.2;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .proofStrip {
   flex: none;
@@ -780,44 +786,60 @@
   align-items: stretch;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid var(--canon-border);
-  border-radius: 12px;
+  border-radius: 10px;
   display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(420px, 1fr) minmax(520px, 1.2fr);
-  padding: 11px 14px;
+  gap: 10px;
+  grid-template-columns: minmax(150px, auto) minmax(0, 1fr);
+  padding: 7px 10px;
 }
 .scopeNarrative {
+  align-self: center;
   min-width: 0;
 }
 .scopeNarrative .eyebrow2 {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 .scopeNarrative p {
-  color: var(--canon-gray-700);
-  font-size: 12px;
-  line-height: 1.35;
-  margin: 0;
-  text-wrap: pretty;
+  clip: rect(0 0 0 0);
+  border: 0;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 .scopeFacts {
   align-content: center;
   display: grid;
-  gap: 7px 10px;
+  gap: 6px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .scopeFacts span {
   background: var(--canon-bg-surface);
   border: 1px solid var(--canon-border);
-  border-radius: 8px;
+  border-radius: 7px;
   color: var(--canon-gray-700);
   font-family: var(--abarva-mono);
-  font-size: 10.5px;
+  font-size: 9.5px;
   font-weight: 650;
   line-height: 1.25;
   min-width: 0;
   overflow-wrap: anywhere;
-  padding: 7px 8px;
+  padding: 5px 7px;
+}
+.scopeFacts span:nth-child(n + 5) {
+  clip: rect(0 0 0 0);
+  border: 0;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 .valueProofRails,
 .actionCountStrip {
@@ -940,13 +962,13 @@
 .cockpitCanvas {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  grid-auto-rows: minmax(330px, auto);
+  grid-auto-rows: minmax(300px, auto);
   gap: 12px;
   align-items: stretch;
   min-height: 0;
 }
 .cockpitCanvas > .card {
-  min-height: 330px;
+  min-height: 300px;
 }
 .cockpitChartBody {
   display: flex;
@@ -974,10 +996,10 @@
   width: 100%;
 }
 .cockpitBridge {
-  min-height: 240px;
+  min-height: 214px;
 }
 .cockpitTrajectory {
-  min-height: 238px;
+  min-height: 214px;
 }
 .cockpitCta {
   align-self: flex-start;
