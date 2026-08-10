@@ -304,8 +304,8 @@ export async function POST(
   }
 
   // Advance the event to the next stage on approval (strategy→scope, scope→rfp,
-  // …; no-op on the final `value` stage). Non-fatal: a stage-advance miss leaves
-  // the event active on its current stage rather than blocking the approval.
+  // …; no-op on the final `value` stage). A failed stage write fails closed so
+  // the page never implies a gate advanced when the database says otherwise.
   let stageAdvancedTo: string | null = null;
   if (decision.advanceStageTo) {
     const stageWrite = await selectSourceWriteAdapter(

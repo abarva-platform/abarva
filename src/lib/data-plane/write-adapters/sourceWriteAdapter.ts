@@ -30,7 +30,6 @@ import {
   getAzureWriteFluentClient,
   type PostgresCompatClient as SupabaseClient,
 } from "@/lib/data-plane/postgresCompat";
-import { canonicalTenantKey } from "@/lib/tenant-keys";
 import {
   createTxSession,
   type TxSessionRunner,
@@ -163,9 +162,9 @@ export interface SourceWriteAdapter {
   insertParticipant(
     input: SourceParticipantInsert,
   ): Promise<SourceWriteOutcome<void>>;
-  /** Atomically advance lifecycle_state and append the approval record. The
-   *  approval insert is best-effort: a failure there does not fail the call
-   *  (the route logs it), matching the pre-seam behavior. */
+  /** Advance lifecycle_state and append the approval record. Both writes are
+   *  required: a stage gate is not approved unless the append-only approval
+   *  evidence row is persisted. */
   applyApproval(input: SourceApprovalWrite): Promise<SourceWriteOutcome<void>>;
   /** Append an approval record for a criterion-level mark-met/waive decision. */
   insertCriterionApproval(
@@ -267,11 +266,7 @@ export function createSupabaseSourceWriteAdapter(
           stage_key: input.stageKey ?? null,
         });
       if (approvalError) {
-        // Non-fatal — the event is already updated. Surface for the route log.
-        console.error(
-          "[sourceWriteAdapter] approval record insert failed:",
-          approvalError.message,
-        );
+        return fail(`approval record insert failed: ${approvalError.message}`);
       }
       return ok();
     },

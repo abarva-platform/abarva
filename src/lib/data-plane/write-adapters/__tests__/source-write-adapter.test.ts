@@ -181,6 +181,60 @@ describe("supabase source write adapter", () => {
     });
   });
 
+  it("applyApproval fails closed when the approval record cannot be inserted", async () => {
+    const calls: SupabaseCall[] = [];
+    function builder(
+      table: string,
+      op: SupabaseCall["op"],
+      payload: unknown,
+      message: string | null,
+    ) {
+      calls.push({ table, op, payload });
+      const result = {
+        data: null,
+        error: message ? { message } : null,
+      };
+      const chain: Record<string, unknown> = {};
+      chain.eq = () => chain;
+      chain.then = (resolve: (v: unknown) => unknown) => resolve(result);
+      return chain;
+    }
+    const client = {
+      from(table: string) {
+        return {
+          update: (payload: unknown) => builder(table, "update", payload, null),
+          insert: (payload: unknown) =>
+            builder(
+              table,
+              "insert",
+              payload,
+              table === "source_event_approvals"
+                ? "permission denied for source_event_approvals"
+                : null,
+            ),
+        };
+      },
+    } as unknown as SupabaseClient;
+
+    const adapter = createSupabaseSourceWriteAdapter(() => client);
+    const result = await adapter.applyApproval({
+      eventId: "evt-1",
+      clientKey: "apex-retail",
+      fromState: "pending",
+      toState: "active",
+      approvalAction: "admin_review",
+      approvedByUserId: "admin-1",
+      notes: "looks good",
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/approval record insert failed/);
+    expect(calls.map((c) => c.table)).toEqual([
+      "source_events",
+      "source_event_approvals",
+    ]);
+  });
+
   it("insertCriterionApproval inserts a source_event_approvals row and returns its id", async () => {
     const { client, calls } = fakeSupabase({ id: "approval-1" });
     const adapter = createSupabaseSourceWriteAdapter(() => client);
