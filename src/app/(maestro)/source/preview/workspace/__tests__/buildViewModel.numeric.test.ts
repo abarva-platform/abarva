@@ -810,7 +810,7 @@ describe("buildViewModel numeric coercion", () => {
     );
     expect(built.avaSurfaceContext.sourceV4.valueProof.claimableRows).toBe(0);
     expect(built.avaSurfaceContext.sourceV4.valueProof.rule).toMatch(
-      /do not prove realized value/i,
+      /do not prove a finance-confirmed outcome/i,
     );
   });
 

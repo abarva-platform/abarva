@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release tightens the Source workspace and contract detail presentation so the page reads as an executive decision surface instead of an implementation diagnostic. The always-visible workspace banner now shows only client-facing status, contract relationship copy uses plain commercial language, currency values render compactly, and opportunity evidence is separated from finance-confirmed outcome language.
+This release tightens the Source workspace and contract detail presentation so the page reads as an executive decision surface instead of an implementation diagnostic. The always-visible workspace banner now shows only client-facing status, contract relationship copy uses plain commercial language, currency values render compactly, evidence trace labels use plain opportunity terms, and opportunity evidence is separated from finance-confirmed outcome language.
 
 ## Layer Impact
 
@@ -31,12 +31,14 @@ This release tightens the Source workspace and contract detail presentation so t
 
 - `src/app/(maestro)/source/preview/workspace/WorkspaceClient.tsx`
 - `src/app/(maestro)/source/preview/workspace/canvases/ContractCanvas.tsx`
+- `src/app/(maestro)/source/preview/workspace/canvases/EvidenceLineageGraph.tsx`
 - `src/app/(maestro)/source/preview/workspace/buildViewModel.ts`
 
 ## QA / Validation
 
 - `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/viewModel.explore.test.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/workspace-ava-contract.test.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' --runInBand` — passed, 4 suites / 30 tests.
-- `npx eslint 'src/app/(maestro)/source/preview/workspace/WorkspaceClient.tsx' 'src/app/(maestro)/source/preview/workspace/canvases/ContractCanvas.tsx' 'src/app/(maestro)/source/preview/workspace/buildViewModel.ts'` — passed.
+- `npx eslint 'src/app/(maestro)/source/preview/workspace/WorkspaceClient.tsx' 'src/app/(maestro)/source/preview/workspace/canvases/ContractCanvas.tsx' 'src/app/(maestro)/source/preview/workspace/canvases/EvidenceLineageGraph.tsx' 'src/app/(maestro)/source/preview/workspace/buildViewModel.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts'` — passed.
+- `rg -n "Recoverable leakage|Realized value|Value proof|value proof|value ledger|Value ledgers|Four-ledger|ledger above|Source-system facts|SOURCE FACTS|realized value|recoverable leakage" 'src/app/(maestro)/source/preview/workspace'` — passed with no remaining Source workspace matches.
 - `NODE_OPTIONS=--max-old-space-size=8192 /Users/anand/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node ./node_modules/typescript/bin/tsc --noEmit --pretty false` — passed.
 
 ## Rollout Plan

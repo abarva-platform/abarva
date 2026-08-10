@@ -2920,7 +2920,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const sourceWorkspaceQualityFacts = [
     `Category quality: ${categoryQuality.qualityMessage}; affected rows ${categoryQuality.affectedRows}; affected value ${money(categoryQuality.affectedAnnualValue)}; authority gate ${categoryQuality.authorityGate}.`,
     `Evidence state for current selection: ${kind === "contract" && c?.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) + " source confidence" : "portfolio-level evidence"}.`,
-    `Missing evidence must be stated as evidence missing or workflow required. Never convert missing value to zero, and never claim realized value without Tower or finance confirmation.`,
+    `Missing evidence must be stated as evidence missing or workflow required. Never convert missing value to zero, and never claim a finance-confirmed outcome without Tower or finance confirmation.`,
   ];
   const avaSurfaceContext = {
     tenant: vm.tenantName,
@@ -2992,7 +2992,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         actualCost: money(v4Snapshot.aiUsageValueProof.actualCost),
         claimableRows: v4Snapshot.aiUsageValueProof.claimableRows,
         topProducts: v4Snapshot.aiUsageValueProof.topProducts,
-        rule: "Usage, active users and cost do not prove realized value without baseline and finance validation.",
+        rule: "Usage, active users and cost do not prove a finance-confirmed outcome without baseline and finance validation.",
       },
       selectedContract:
         kind === "contract" && c
