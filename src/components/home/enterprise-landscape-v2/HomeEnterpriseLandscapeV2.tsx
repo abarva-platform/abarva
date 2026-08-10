@@ -463,7 +463,7 @@ const ARCHITECTURE_CANVASES: ArchitectureCanvas[] = [
       },
     ],
     controls: [
-      "Finance owns recognized value, not Claude",
+      "Finance owns recognized value, not narrative generation",
       "Baseline, outcome, and attestation must be complete",
       "Contract commitments constrain modernization sequencing",
       "Unknown value remains unknown, not zero",

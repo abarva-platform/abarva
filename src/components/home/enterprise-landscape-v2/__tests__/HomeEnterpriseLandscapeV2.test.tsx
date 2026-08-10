@@ -132,7 +132,9 @@ it("preserves context and architecture as native Home tabs", () => {
       .length,
   ).toBeGreaterThan(0);
   expect(
-    screen.getAllByText("Finance owns recognized value, not Claude").length,
+    screen.getAllByText(
+      "Finance owns recognized value, not narrative generation",
+    ).length,
   ).toBeGreaterThan(0);
   expect(
     screen.getAllByText(

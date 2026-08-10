@@ -4713,9 +4713,9 @@ export function HomeSurface({
                         <section className="hx3-section">
                           <div className="hx3-sectionHead">
                             <div>
-                              <h2>Claude-derived visual story</h2>
+                              <h2>Generated visual story</h2>
                               <p>
-                                Approved visual blocks translated into safe
+                                Approved visual blocks translated into governed
                                 Nexus components. The page renders structured
                                 data, not model HTML.
                               </p>
