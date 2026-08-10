@@ -8,9 +8,9 @@
 
 .page {
   width: 100%;
-  max-width: 1480px;
+  max-width: none;
   margin: 0 auto;
-  padding: 22px 28px 32px;
+  padding: 18px clamp(16px, 1.8vw, 34px) 32px;
   display: grid;
   gap: 14px;
   align-content: start;
@@ -92,6 +92,7 @@
 }
 
 .canvas {
+  width: 100%;
   background: #fff;
   border: 1px solid #d9e0ea;
   border-radius: 8px;
@@ -136,7 +137,7 @@
 .panel {
   display: grid;
   min-height: min(460px, calc(100vh - 260px));
-  padding: 28px 30px;
+  padding: clamp(22px, 1.8vw, 34px);
   gap: 22px;
   align-content: start;
 }
@@ -147,7 +148,7 @@
 
 .panel h2 {
   margin: 0;
-  max-width: 980px;
+  max-width: 1180px;
   font-size: 20px;
   line-height: 1.16;
   letter-spacing: 0;
@@ -164,7 +165,7 @@
 .executiveRead,
 .lead {
   margin: 0;
-  max-width: 980px;
+  max-width: 1180px;
   color: #2f3d56;
   font-size: 15px;
   line-height: 1.48;
@@ -521,7 +522,7 @@
 .architectureHero {
   min-width: 0;
   scroll-margin-top: 96px;
-  padding: 18px;
+  padding: clamp(16px, 1.4vw, 24px);
   border: 1px solid #d9e0ea;
   border-radius: 7px;
   background:
@@ -551,7 +552,7 @@
 
 .architectureCanvasCard {
   min-width: 0;
-  padding: 16px;
+  padding: clamp(14px, 1.2vw, 22px);
   border: 1px solid rgba(217, 224, 234, 0.94);
   border-radius: 7px;
   background:
@@ -636,6 +637,7 @@
     );
   overflow-x: auto;
   overflow-y: hidden;
+  scrollbar-gutter: stable;
 }
 
 .architectureFlowOverlay {
@@ -668,7 +670,7 @@
   position: relative;
   z-index: 1;
   display: grid;
-  min-width: 980px;
+  min-width: min(1120px, 100%);
 }
 
 .architectureLane {
@@ -1333,7 +1335,7 @@
 }
 
 .coherenceMap {
-  min-height: 440px;
+  min-height: clamp(460px, 45vw, 620px);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), #fbfcff),
     repeating-linear-gradient(
@@ -1346,10 +1348,12 @@
 }
 
 .mapSvg {
+  display: block;
   width: 100%;
   height: auto;
-  min-height: 360px;
+  min-height: clamp(400px, 40vw, 560px);
   margin-top: 10px;
+  overflow: visible;
 }
 
 .mapNode {
