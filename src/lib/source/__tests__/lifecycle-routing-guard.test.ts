@@ -17,7 +17,9 @@ describe("source lifecycle routing guard", () => {
       eventId: "event-123",
       section: "value",
     });
-    expect(parseSourceEventRoute("/source/events/event-123/file-cabinet")).toEqual({
+    expect(
+      parseSourceEventRoute("/source/events/event-123/file-cabinet"),
+    ).toEqual({
       eventId: "event-123",
       section: "file_cabinet",
     });
@@ -72,6 +74,38 @@ describe("source lifecycle routing guard", () => {
     ).toEqual({
       type: "redirect",
       destination: "/source/events/SRC-100?stage=pricing",
+      status: 302,
+    });
+  });
+
+  it("maps stale RFP-stage active approval URLs to the optimization commercial baseline", () => {
+    expect(
+      resolveSourceLifecycleRoute({
+        eventId: "SRC-100",
+        lifecycleState: "active",
+        sourcingMotion: "contract_optimization",
+        currentStageKey: "rfp",
+        pathname: "/source/events/SRC-100/approval",
+      }),
+    ).toEqual({
+      type: "redirect",
+      destination: "/source/events/SRC-100?stage=pricing",
+      status: 302,
+    });
+  });
+
+  it("keeps RFP stage URLs for competitive sourcing events", () => {
+    expect(
+      resolveSourceLifecycleRoute({
+        eventId: "SRC-100",
+        lifecycleState: "active",
+        sourcingMotion: "competitive_rfp",
+        currentStageKey: "rfp",
+        pathname: "/source/events/SRC-100/approval",
+      }),
+    ).toEqual({
+      type: "redirect",
+      destination: "/source/events/SRC-100?stage=rfp",
       status: 302,
     });
   });

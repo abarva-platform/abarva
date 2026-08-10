@@ -1,3 +1,8 @@
+import {
+  getSourceJourneyForEvent,
+  sourceJourneyStageHref,
+} from "./sourcing-motion-journeys";
+
 export type SourceLifecycleRoutingState =
   | "active"
   | "waiting_on_client"
@@ -29,6 +34,11 @@ export interface SourceLifecycleRouteInput {
   eventId: string;
   lifecycleState: SourceLifecycleRoutingState | null | undefined;
   currentStageKey?: string | null;
+  sourcingMotion?: string | null;
+  eventType?: string | null;
+  eventName?: string | null;
+  eventCode?: string | null;
+  triggerDescription?: string | null;
   pathname: string;
   search?: string;
 }
@@ -47,7 +57,9 @@ export interface LoadSourceLifecycleRouteInput {
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-export function parseSourceEventRoute(pathname: string): SourceEventRouteMatch | null {
+export function parseSourceEventRoute(
+  pathname: string,
+): SourceEventRouteMatch | null {
   const match = pathname.match(/^\/source\/events\/([^/]+)(?:\/([^/?#]+))?/);
   if (!match?.[1]) return null;
 
@@ -57,13 +69,13 @@ export function parseSourceEventRoute(pathname: string): SourceEventRouteMatch |
       ? "approval"
       : rawSection === "file-cabinet"
         ? "file_cabinet"
-      : rawSection === "value"
-        ? "value"
-        : rawSection === "summary"
-          ? "summary"
-          : rawSection
-            ? "other"
-            : "canvas";
+        : rawSection === "value"
+          ? "value"
+          : rawSection === "summary"
+            ? "summary"
+            : rawSection
+              ? "other"
+              : "canvas";
 
   return {
     eventId: decodeURIComponent(match[1]),
@@ -97,14 +109,30 @@ export function resolveSourceLifecycleRoute(
   if (state === "active") {
     if (match.section !== "approval") return { type: "allow" };
     const stage = input.currentStageKey?.trim() || "strategy";
+    const journey = getSourceJourneyForEvent({
+      sourcingMotion: input.sourcingMotion,
+      eventType: input.eventType,
+      eventName: input.eventName,
+      eventCode: input.eventCode,
+      triggerDescription: input.triggerDescription,
+    });
     return {
       type: "redirect",
-      destination: `/source/events/${encodeURIComponent(input.eventId)}?stage=${encodeURIComponent(stage)}`,
+      destination: sourceJourneyStageHref({
+        eventId: input.eventId,
+        journey,
+        stageKey: stage,
+        fallbackStageKey: stage,
+      }),
       status: 302,
     };
   }
 
-  if (state === "closed" || state === "closed_rejected" || state === "completed") {
+  if (
+    state === "closed" ||
+    state === "closed_rejected" ||
+    state === "completed"
+  ) {
     if (match.section === "summary") return { type: "allow" };
     return { type: "redirect", destination: summaryPath, status: 302 };
   }
@@ -123,9 +151,8 @@ export async function loadSourceLifecycleRouteAction(
   if (!clientKey) return { type: "allow" };
 
   try {
-    const { selectSourceEventsReadAdapter } = await import(
-      "@/lib/data-plane/read-adapters/sourceEventsReadAdapter"
-    );
+    const { selectSourceEventsReadAdapter } =
+      await import("@/lib/data-plane/read-adapters/sourceEventsReadAdapter");
     const adapter = selectSourceEventsReadAdapter(undefined, clientKey);
     const event = UUID_RE.test(input.eventId)
       ? await adapter.getEventByIdForClient(input.eventId, clientKey)
@@ -137,15 +164,23 @@ export async function loadSourceLifecycleRouteAction(
       eventId: input.eventId,
       lifecycleState: event.lifecycle_state,
       currentStageKey: event.current_stage_key,
+      sourcingMotion: event.sourcing_motion,
+      eventType: event.event_type,
+      eventName: event.event_name,
+      eventCode: event.event_code,
+      triggerDescription: event.trigger_description,
       pathname: input.pathname,
       search: input.search,
     });
   } catch (error) {
-    console.warn("[source-lifecycle-routing-guard] lookup failed; allowing route", {
-      eventId: input.eventId,
-      clientKey,
-      message: error instanceof Error ? error.message : String(error),
-    });
+    console.warn(
+      "[source-lifecycle-routing-guard] lookup failed; allowing route",
+      {
+        eventId: input.eventId,
+        clientKey,
+        message: error instanceof Error ? error.message : String(error),
+      },
+    );
     return { type: "allow" };
   }
 }
