@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Home's Coherence view now presents current-state architecture as a set of detailed, lane-based executive canvases instead of one oversized generic diagram or compressed SVG sketch. The visual story separates Data and AI platform, ERP and finance core, private data-center/mainframe resilience, and digital airline channels so each architecture pattern has its own source, integration, platform, hosting, consumption, control, and proof questions. The exhibits use responsive HTML lanes and system tiles for readable labels, with SVG used only for high-level flow overlays.
+Home's Coherence view now presents current-state architecture as a set of detailed, lane-based executive canvases instead of one oversized generic diagram or compressed SVG sketch. The visual story separates Data and AI platform, ERP and finance core, private data-center/mainframe resilience, and digital airline channels so each architecture pattern has its own source, integration, platform, hosting, consumption, control, and proof questions. The exhibits use responsive HTML lanes and system tiles for readable labels, with SVG used only for high-level flow overlays on desktop and a stacked lane treatment on mobile.
 
 ## Layer Impact
 
