@@ -2,38 +2,11 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ClerkProvider } from "@clerk/nextjs";
 import { headers } from "next/headers";
-import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import PostHogProvider from "@/components/PostHogProvider";
 import ProductUsageTelemetry from "@/components/ProductUsageTelemetry";
 import MobileGuard from "@/components/MobileGuard";
 import { ToastProvider } from "@/components/shell/Toast";
-
-// Fraunces — canonical display serif (v3 design system). Used for all page
-// titles, section headings, and KPI numerals across the product.
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
-  variable: "--font-fraunces",
-  display: "swap",
-});
-
-// Inter — shell sans-serif for body and UI labels.
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-// JetBrains Mono — labels, eyebrows, IDs, KPI badges.
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-jetbrains-mono",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "AbarVa",
@@ -61,10 +34,7 @@ export default async function RootLayout({
 }) {
   const clerkDisabledForAxe = await shouldDisableClerkForAxe();
   const shell = (
-    <html
-      lang="en"
-      className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable}`}
-    >
+    <html lang="en">
       <head>
         <link
           rel="apple-touch-icon"
