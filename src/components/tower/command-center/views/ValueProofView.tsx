@@ -12,7 +12,7 @@ import {
   ValueWaterfallChart,
   buildWaterfallRows,
 } from "../charts/ValueWaterfallChart";
-import { Card, Dot, Pips, ViewHead, cx } from "../primitives";
+import { Card, Pips, ViewHead, cx } from "../primitives";
 import styles from "../TowerCommandCenter.module.css";
 
 function EvidenceGapLedger({ view }: { view: TowerCommandCenterView }) {
@@ -80,16 +80,7 @@ export function ValueProofView({
             : "Benefit proof coverage"
         }
         sub="Investment is separate from source-backed benefit, usage, outcome, Finance, and claimable value"
-        hint="Click a program for its proof chain & usage evidence"
       />
-
-      <div className={styles.zipContractNote}>
-        <Dot tone="red" />
-        <span>
-          CFO read: the waterfall shows only explicit source-backed benefit.
-          Finance-calculated value awaiting proof completion is held separately.
-        </span>
-      </div>
 
       <div
         className={styles.ccLower}

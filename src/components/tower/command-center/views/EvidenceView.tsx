@@ -222,11 +222,12 @@ function SourceAuthorityWorkplan({ view }: { view: TowerCommandCenterView }) {
   const rows = oneSourceFacts.map(authorityPlanForFact);
 
   return (
-    <section
+    <details
       className={styles.sourceAuthorityPlan}
+      role="region"
       aria-label="One-source fact workplan"
     >
-      <header>
+      <summary className={styles.sourceAuthoritySummary}>
         <div>
           <span className={styles.eyebrow2}>Source-authority workplan</span>
           <h3>One-source facts needing corroboration</h3>
@@ -235,7 +236,7 @@ function SourceAuthorityWorkplan({ view }: { view: TowerCommandCenterView }) {
           {formatCount(rows.length)} ONE_SOURCE fact
           {rows.length === 1 ? "" : "s"}
         </strong>
-      </header>
+      </summary>
       {rows.length === 0 ? (
         <p className={styles.lhSub}>
           No ONE_SOURCE board facts are exposed by the current governed lineage
@@ -261,7 +262,7 @@ function SourceAuthorityWorkplan({ view }: { view: TowerCommandCenterView }) {
           ))}
         </div>
       )}
-    </section>
+    </details>
   );
 }
 
@@ -347,18 +348,11 @@ export function EvidenceView({
 
   return (
     <div className={styles.view}>
-      <ViewHead
-        title="Evidence-owner control room"
-        hint="Answers, not a trace log — click a gap for its audit trail"
-      />
-
-      <div className={styles.zipContractNote}>
-        <Dot tone="red" />
-        <span>
-          North Star read: the default question is what proof is missing, who
-          owns it, and which decision remains blocked until it arrives.
-        </span>
-      </div>
+      <ViewHead title="Evidence control room" />
+      <p className={styles.srOnly}>
+        Default question: what proof is missing, who owns it, and which decision
+        remains blocked until it arrives.
+      </p>
 
       <SourceAuthorityWorkplan view={view} />
 

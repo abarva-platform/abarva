@@ -19,7 +19,6 @@ import {
 import {
   Card,
   Chip,
-  Dot,
   LANE_HEX,
   LANE_TONE,
   LANE_WORD,
@@ -684,11 +683,6 @@ export function DecisionLanesView({
                 ? "The evidence operating room"
                 : "The operating room"
         }
-        hint={
-          valueUnknown
-            ? "Sparse-state lanes prescribe proof work before investment decisions"
-            : "Click any program for its proof chain"
-        }
       >
         <SubNav
           label="Decision Lanes view"
@@ -697,14 +691,6 @@ export function DecisionLanesView({
           onChange={onSubView}
         />
       </ViewHead>
-      <div className={styles.zipContractNote}>
-        <Dot tone={subView === "heatmap" ? "amber" : "teal"} />
-        <span>
-          {maturityCompressed && subView === "overview"
-            ? "Default view is distribution-first because proof maturity is tightly compressed; the heatmap remains available as optional topology."
-            : "Decision lanes show exposure, proof maturity, and the next proof gate before the operating table."}
-        </span>
-      </div>
       {body}
     </div>
   );

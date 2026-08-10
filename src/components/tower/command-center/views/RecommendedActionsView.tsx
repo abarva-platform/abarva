@@ -122,22 +122,7 @@ export function RecommendedActionsView({
 
   return (
     <div className={styles.view}>
-      <ViewHead
-        title="Routeable action queue"
-        sub="Owner, evidence package, due window, and module handoff required before Tower recommends scale, freeze, stop or fund"
-        hint="Click any action to review & route"
-      />
-
-      <div className={styles.zipContractNote}>
-        <Dot tone="amber" />
-        <span>
-          North Star read: {formatCount(totalActionCount)} total evidence
-          actions are consolidated into {formatCount(groupedCampaignCount)}{" "}
-          grouped action campaigns, with{" "}
-          {formatCount(currentPriorityActionCount)} current priority actions in
-          the CFO proof queue.
-        </span>
-      </div>
+      <ViewHead title="Routeable action queue" />
 
       <section
         className={styles.actionCountStrip}
