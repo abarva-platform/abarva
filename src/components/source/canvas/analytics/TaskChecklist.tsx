@@ -1,9 +1,14 @@
-'use client';
+"use client";
 
-import { useRef, useState, type CSSProperties, type DragEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import { ANALYTICS, taskVerb } from './analytics-tokens';
-import { requirementIdForFactTemplate } from '@/lib/source/facts/template-requirements';
+import { useRef, useState, type CSSProperties, type DragEvent } from "react";
+import { useRouter } from "next/navigation";
+import { ANALYTICS, taskVerb } from "./analytics-tokens";
+import {
+  evidenceRequirementIdForTask,
+  factTemplateCodeForTask,
+  FACT_TEMPLATE_BY_TASK_ID,
+} from "@/lib/source/facts/task-evidence-requirements";
+import { requirementIdForFactTemplate } from "@/lib/source/facts/template-requirements";
 import {
   CANVAS_UPLOAD_ACCEPT,
   formatUploadSize,
@@ -12,7 +17,7 @@ import {
   uploadSourceCanvasArtifact,
   type IngestFactsResult,
   type UploadedArtifactResult,
-} from './upload-artifact';
+} from "./upload-artifact";
 import type {
   StageTaskView,
   TaskFileView,
@@ -20,7 +25,9 @@ import type {
   TaskState,
   TaskTemplateView,
   TaskType,
-} from './view-model';
+} from "./view-model";
+
+export { FACT_TEMPLATE_BY_TASK_ID, factTemplateCodeForTask };
 
 interface TaskChecklistProps {
   tasks: readonly StageTaskView[];
@@ -36,29 +43,10 @@ interface TaskChecklistProps {
 }
 
 const TYPE_LABEL: Record<TaskType, string> = {
-  provide: 'Provide',
-  confirm: 'Confirm',
-  decide: 'Decide',
+  provide: "Provide",
+  confirm: "Confirm",
+  decide: "Decide",
 };
-
-export const FACT_TEMPLATE_BY_TASK_ID: Record<string, string> = {
-  'scope.volumetrics': 'VOLUMETRICS_V1',
-  'scope.app-inventory': 'APP_INVENTORY_V1',
-  'scope.vendor-commercials': 'CONTRACT_TERMS_V1',
-  'rfp.clause-coverage': 'RFP_CLAUSES_V1',
-  'responses.coverage': 'RESPONSE_COVERAGE_V1',
-  'evaluation.vendor-bids': 'VENDOR_BIDS_V1',
-  'selection.committed-value': 'COMMITTED_VALUE_V1',
-  'bafo.concession-actuals': 'BAFO_CONCESSIONS_V1',
-  'value.realized-actuals': 'VALUE_REALIZATION_V1',
-};
-
-export function factTemplateCodeForTask(task: {
-  id: string;
-  factTemplateCode?: string | null;
-}): string | undefined {
-  return task.factTemplateCode ?? FACT_TEMPLATE_BY_TASK_ID[task.id];
-}
 
 /**
  * Beat 2 — "Your inputs & feedback." The stage task checklist. Every task is
@@ -67,13 +55,17 @@ export function factTemplateCodeForTask(task: {
  * per task; the form reveals on click (density contract: "every click is a
  * decision").
  */
-export function TaskChecklist({ tasks, eventId, stageKey }: TaskChecklistProps) {
+export function TaskChecklist({
+  tasks,
+  eventId,
+  stageKey,
+}: TaskChecklistProps) {
   // Track local "just completed" so the demo feels responsive without a backend.
   const [openId, setOpenId] = useState<string | null>(() => {
     // Open the first genuinely-incomplete task — one that is neither marked done
     // by the server nor complete from persisted evidence.
     const firstOpen = tasks.find(
-      (t) => t.state !== 'done' && t.evidenceComplete !== true,
+      (t) => t.state !== "done" && t.evidenceComplete !== true,
     );
     return firstOpen?.id ?? null;
   });
@@ -85,29 +77,31 @@ export function TaskChecklist({ tasks, eventId, stageKey }: TaskChecklistProps) 
   // still adds to this set live via onComplete.
   const [locallyDone, setLocallyDone] = useState<ReadonlySet<string>>(
     () =>
-      new Set(tasks.filter((t) => t.evidenceComplete === true).map((t) => t.id)),
+      new Set(
+        tasks.filter((t) => t.evidenceComplete === true).map((t) => t.id),
+      ),
   );
 
   const done = tasks.filter(
-    (t) => t.state === 'done' || locallyDone.has(t.id),
+    (t) => t.state === "done" || locallyDone.has(t.id),
   ).length;
 
   return (
     <div data-testid="task-checklist">
       <div
         style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
           gap: 12,
-          margin: '0 0 10px 2px',
+          margin: "0 0 10px 2px",
         }}
       >
         <span
           style={{
             fontSize: 11,
             letterSpacing: 0.5,
-            textTransform: 'uppercase',
+            textTransform: "uppercase",
             color: ANALYTICS.FAINT,
             fontWeight: 600,
           }}
@@ -119,9 +113,9 @@ export function TaskChecklist({ tasks, eventId, stageKey }: TaskChecklistProps) 
         </span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {tasks.map((task) => {
-          const isDone = task.state === 'done' || locallyDone.has(task.id);
+          const isDone = task.state === "done" || locallyDone.has(task.id);
           const isOpen = openId === task.id;
           return (
             <TaskRow
@@ -143,6 +137,49 @@ export function TaskChecklist({ tasks, eventId, stageKey }: TaskChecklistProps) 
   );
 }
 
+async function completeTaskEvidenceAnswer(args: {
+  eventId: string;
+  requirementId: string;
+  stageKey: string;
+  answer: string;
+}): Promise<void> {
+  const href = `/api/v1/source/${encodeURIComponent(
+    args.eventId,
+  )}/evidence/${encodeURIComponent(args.requirementId)}/answer`;
+
+  let response: Response;
+  try {
+    response = await fetch(href, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        answer: args.answer,
+        stage: args.stageKey,
+      }),
+    });
+  } catch (error) {
+    throw new Error(
+      error instanceof Error
+        ? `Checklist save failed: ${error.message}`
+        : "Checklist save failed before reaching the server.",
+    );
+  }
+
+  const payload = (await response.json().catch(() => null)) as {
+    ok?: boolean;
+    detail?: string;
+    error?: string;
+  } | null;
+
+  if (!response.ok || !payload?.ok) {
+    throw new Error(
+      payload?.detail ??
+        payload?.error ??
+        `Checklist save failed with HTTP ${response.status}.`,
+    );
+  }
+}
+
 interface TaskRowProps {
   task: StageTaskView;
   isDone: boolean;
@@ -162,13 +199,20 @@ function TaskRow({
   onToggle,
   onComplete,
 }: TaskRowProps) {
-  const effectiveState: TaskState = isDone ? 'done' : 'todo';
+  const router = useRouter();
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [completionError, setCompletionError] = useState<string | null>(null);
+  const effectiveState: TaskState = isDone ? "done" : "todo";
   const factTemplateCode = factTemplateCodeForTask(task);
+  const evidenceRequirementId = evidenceRequirementIdForTask(task);
+  const canPersistAnswer =
+    Boolean(eventId && stageKey && evidenceRequirementId) &&
+    task.type !== "provide";
   const rowStyle: CSSProperties = {
     border: `1px solid ${isOpen ? ANALYTICS.LINE_STRONG : ANALYTICS.LINE}`,
     borderRadius: ANALYTICS.RADIUS,
     background: ANALYTICS.CARD,
-    overflow: 'hidden',
+    overflow: "hidden",
   };
 
   return (
@@ -178,16 +222,16 @@ function TaskRow({
         onClick={onToggle}
         aria-expanded={isOpen}
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'auto 1fr auto',
+          display: "grid",
+          gridTemplateColumns: "auto 1fr auto",
           gap: 13,
-          alignItems: 'center',
-          width: '100%',
-          padding: '13px 15px',
-          border: 'none',
-          background: 'none',
-          textAlign: 'left',
-          cursor: 'pointer',
+          alignItems: "center",
+          width: "100%",
+          padding: "13px 15px",
+          border: "none",
+          background: "none",
+          textAlign: "left",
+          cursor: "pointer",
           fontFamily: ANALYTICS.SANS,
         }}
       >
@@ -195,7 +239,7 @@ function TaskRow({
         <span style={{ minWidth: 0 }}>
           <span
             style={{
-              display: 'block',
+              display: "block",
               fontSize: 14.5,
               fontWeight: 600,
               color: ANALYTICS.INK,
@@ -205,7 +249,7 @@ function TaskRow({
           </span>
           <span
             style={{
-              display: 'block',
+              display: "block",
               fontSize: 12,
               color: ANALYTICS.MUTED,
               marginTop: 3,
@@ -220,7 +264,7 @@ function TaskRow({
       {isOpen ? (
         <div
           style={{
-            padding: '0 15px 15px 15px',
+            padding: "0 15px 15px 15px",
             borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
           }}
         >
@@ -229,7 +273,7 @@ function TaskRow({
               fontSize: 13,
               color: ANALYTICS.INK_2,
               lineHeight: 1.55,
-              margin: '13px 0',
+              margin: "13px 0",
             }}
           >
             {task.guide}
@@ -245,7 +289,7 @@ function TaskRow({
           {task.rows ? <ReviewRows rows={task.rows} /> : null}
           {task.file ? (
             <FileChip file={task.file} />
-          ) : task.type === 'provide' ? (
+          ) : task.type === "provide" ? (
             <TaskProvideUpload
               signed={/letter|commit/i.test(task.title)}
               eventId={eventId}
@@ -264,14 +308,32 @@ function TaskRow({
                 lineHeight: 1.5,
               }}
             >
-              Where this comes from:{' '}
-              <b style={{ color: ANALYTICS.INK_2 }}>{task.provenance.owner}</b> ·{' '}
-              {task.provenance.source}
+              Where this comes from:{" "}
+              <b style={{ color: ANALYTICS.INK_2 }}>{task.provenance.owner}</b>{" "}
+              · {task.provenance.source}
             </div>
           ) : null}
 
           <div style={{ marginTop: 16 }}>
-            {effectiveState === 'done' ? (
+            {completionError ? (
+              <div
+                role="alert"
+                style={{
+                  marginBottom: 10,
+                  padding: "9px 12px",
+                  borderRadius: ANALYTICS.RADIUS_SM,
+                  border: `1px solid ${ANALYTICS.AMBER}`,
+                  background: "rgba(180,120,10,0.06)",
+                  color: ANALYTICS.AMBER_TEXT,
+                  fontSize: 12.5,
+                  lineHeight: 1.45,
+                }}
+              >
+                {completionError}
+              </div>
+            ) : null}
+
+            {effectiveState === "done" ? (
               <span
                 style={{
                   fontSize: 13,
@@ -284,20 +346,46 @@ function TaskRow({
             ) : (
               <button
                 type="button"
-                onClick={onComplete}
+                onClick={async () => {
+                  if (!canPersistAnswer) {
+                    onComplete();
+                    return;
+                  }
+                  setIsCompleting(true);
+                  setCompletionError(null);
+                  try {
+                    await completeTaskEvidenceAnswer({
+                      eventId: eventId!,
+                      requirementId: evidenceRequirementId!,
+                      stageKey: stageKey!,
+                      answer: `${task.title}: ${task.guide}`,
+                    });
+                    onComplete();
+                    router.refresh();
+                  } catch (error) {
+                    setCompletionError(
+                      error instanceof Error
+                        ? error.message
+                        : "Could not save this checklist action.",
+                    );
+                  } finally {
+                    setIsCompleting(false);
+                  }
+                }}
+                disabled={isCompleting}
                 style={{
-                  border: 'none',
+                  border: "none",
                   borderRadius: ANALYTICS.RADIUS_SM,
-                  background: ANALYTICS.INK,
-                  color: '#fff',
+                  background: isCompleting ? ANALYTICS.FAINT : ANALYTICS.INK,
+                  color: "#fff",
                   fontFamily: ANALYTICS.SANS,
                   fontSize: 13,
                   fontWeight: 600,
-                  padding: '9px 16px',
-                  cursor: 'pointer',
+                  padding: "9px 16px",
+                  cursor: isCompleting ? "wait" : "pointer",
                 }}
               >
-                {task.cta}
+                {isCompleting ? "Saving…" : task.cta}
               </button>
             )}
             <span
@@ -323,12 +411,12 @@ function StatusDot({ done, type }: { done: boolean; type: TaskType }) {
         style={{
           width: 20,
           height: 20,
-          borderRadius: '50%',
+          borderRadius: "50%",
           background: ANALYTICS.GREEN,
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           fontSize: 11,
           fontWeight: 700,
           flexShrink: 0,
@@ -339,9 +427,9 @@ function StatusDot({ done, type }: { done: boolean; type: TaskType }) {
     );
   }
   const hue =
-    type === 'provide'
+    type === "provide"
       ? ANALYTICS.BLUE
-      : type === 'confirm'
+      : type === "confirm"
         ? ANALYTICS.GREEN
         : ANALYTICS.AMBER;
   return (
@@ -349,7 +437,7 @@ function StatusDot({ done, type }: { done: boolean; type: TaskType }) {
       style={{
         width: 20,
         height: 20,
-        borderRadius: '50%',
+        borderRadius: "50%",
         border: `1.5px solid ${hue}`,
         background: ANALYTICS.CARD,
         flexShrink: 0,
@@ -365,13 +453,13 @@ function TypeTag({ type, done }: { type: TaskType; done: boolean }) {
         fontFamily: ANALYTICS.MONO,
         fontSize: 9,
         letterSpacing: 0.6,
-        textTransform: 'uppercase',
+        textTransform: "uppercase",
         fontWeight: 700,
-        padding: '3px 8px',
+        padding: "3px 8px",
         borderRadius: 5,
-        background: done ? 'rgba(10,10,11,0.05)' : 'rgba(10,10,11,0.06)',
+        background: done ? "rgba(10,10,11,0.05)" : "rgba(10,10,11,0.06)",
         color: done ? ANALYTICS.FAINT : ANALYTICS.MUTED,
-        whiteSpace: 'nowrap',
+        whiteSpace: "nowrap",
       }}
     >
       {TYPE_LABEL[type]}
@@ -383,22 +471,22 @@ function ReviewRows({ rows }: { rows: readonly TaskReviewRowView[] }) {
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         border: `1px solid ${ANALYTICS.LINE_SOFT}`,
         borderRadius: ANALYTICS.RADIUS_SM,
-        overflow: 'hidden',
+        overflow: "hidden",
       }}
     >
       {rows.map((row, i) => (
         <div
           key={`${row.key}-${i}`}
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
+            display: "flex",
+            justifyContent: "space-between",
             gap: 12,
-            padding: '9px 12px',
-            borderTop: i === 0 ? 'none' : `1px solid ${ANALYTICS.LINE_SOFT}`,
+            padding: "9px 12px",
+            borderTop: i === 0 ? "none" : `1px solid ${ANALYTICS.LINE_SOFT}`,
             fontSize: 13,
           }}
         >
@@ -407,7 +495,7 @@ function ReviewRows({ rows }: { rows: readonly TaskReviewRowView[] }) {
             style={{
               fontWeight: 600,
               color: row.flag ? ANALYTICS.AMBER_TEXT : ANALYTICS.INK,
-              textAlign: 'right',
+              textAlign: "right",
             }}
           >
             {row.value}
@@ -428,10 +516,10 @@ function FileChip({
   return (
     <div
       style={{
-        display: 'flex',
-        alignItems: 'center',
+        display: "flex",
+        alignItems: "center",
         gap: 12,
-        padding: '11px 13px',
+        padding: "11px 13px",
         border: `1px solid ${ANALYTICS.LINE_SOFT}`,
         borderRadius: ANALYTICS.RADIUS_SM,
         background: ANALYTICS.SOFT,
@@ -442,7 +530,7 @@ function FileChip({
           fontFamily: ANALYTICS.MONO,
           fontSize: 10,
           fontWeight: 700,
-          padding: '6px 8px',
+          padding: "6px 8px",
           borderRadius: 5,
           background: ANALYTICS.CARD,
           border: `1px solid ${ANALYTICS.LINE}`,
@@ -452,10 +540,19 @@ function FileChip({
         {file.format}
       </span>
       <span style={{ minWidth: 0, flex: 1 }}>
-        <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: ANALYTICS.INK }}>
+        <span
+          style={{
+            display: "block",
+            fontSize: 13,
+            fontWeight: 600,
+            color: ANALYTICS.INK,
+          }}
+        >
           {file.name}
         </span>
-        <span style={{ display: 'block', fontSize: 11.5, color: ANALYTICS.MUTED }}>
+        <span
+          style={{ display: "block", fontSize: 11.5, color: ANALYTICS.MUTED }}
+        >
           {file.meta}
         </span>
       </span>
@@ -465,9 +562,9 @@ function FileChip({
           aria-label={`Remove ${file.name}`}
           onClick={onRemove}
           style={{
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
+            border: "none",
+            background: "none",
+            cursor: "pointer",
             color: ANALYTICS.MUTED,
             fontSize: 16,
             lineHeight: 1,
@@ -486,10 +583,10 @@ function TemplateChip({ template }: { template: TaskTemplateView }) {
   return (
     <div
       style={{
-        display: 'flex',
-        alignItems: 'center',
+        display: "flex",
+        alignItems: "center",
         gap: 12,
-        padding: '11px 13px',
+        padding: "11px 13px",
         border: `1px solid ${ANALYTICS.LINE_SOFT}`,
         borderRadius: ANALYTICS.RADIUS_SM,
         background: ANALYTICS.CARD,
@@ -501,7 +598,7 @@ function TemplateChip({ template }: { template: TaskTemplateView }) {
           fontFamily: ANALYTICS.MONO,
           fontSize: 10,
           fontWeight: 700,
-          padding: '6px 8px',
+          padding: "6px 8px",
           borderRadius: 5,
           background: ANALYTICS.BLUE_TINT,
           color: ANALYTICS.BLUE,
@@ -510,10 +607,19 @@ function TemplateChip({ template }: { template: TaskTemplateView }) {
         {template.format}
       </span>
       <span style={{ minWidth: 0, flex: 1 }}>
-        <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: ANALYTICS.INK }}>
+        <span
+          style={{
+            display: "block",
+            fontSize: 13,
+            fontWeight: 600,
+            color: ANALYTICS.INK,
+          }}
+        >
           {template.name}
         </span>
-        <span style={{ display: 'block', fontSize: 11.5, color: ANALYTICS.MUTED }}>
+        <span
+          style={{ display: "block", fontSize: 11.5, color: ANALYTICS.MUTED }}
+        >
           {template.meta}
         </span>
       </span>
@@ -539,15 +645,15 @@ export function TemplateDownloadLink({
       download
       data-testid="task-template-download"
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
+        display: "inline-flex",
+        alignItems: "center",
         gap: 8,
         marginBottom: 8,
         color: ANALYTICS.BLUE,
         fontFamily: ANALYTICS.SANS,
         fontSize: 12.5,
         fontWeight: 700,
-        textDecoration: 'none',
+        textDecoration: "none",
       }}
     >
       Download CSV/XLSX template
@@ -567,14 +673,14 @@ function FactResultChip({ ingest }: { ingest: IngestFactsResult }) {
   if (ingest.unmappedColumns.length > 0) {
     parts.push(
       `${ingest.unmappedColumns.length} column${
-        ingest.unmappedColumns.length === 1 ? '' : 's'
+        ingest.unmappedColumns.length === 1 ? "" : "s"
       } unmapped`,
     );
   }
   if (ingest.rejectedRowCount > 0) {
     parts.push(
       `${ingest.rejectedRowCount} cell${
-        ingest.rejectedRowCount === 1 ? '' : 's'
+        ingest.rejectedRowCount === 1 ? "" : "s"
       } rejected`,
     );
   }
@@ -583,42 +689,43 @@ function FactResultChip({ ingest }: { ingest: IngestFactsResult }) {
       role="status"
       data-testid="fact-ingest-result"
       style={{
-        display: 'flex',
-        alignItems: 'center',
+        display: "flex",
+        alignItems: "center",
         gap: 9,
         marginTop: 8,
-        padding: '9px 12px',
+        padding: "9px 12px",
         borderRadius: ANALYTICS.RADIUS_SM,
         border: `1px solid ${ANALYTICS.LINE_SOFT}`,
-        background: wrote ? 'rgba(20,140,90,0.06)' : 'rgba(180,120,10,0.06)',
+        background: wrote ? "rgba(20,140,90,0.06)" : "rgba(180,120,10,0.06)",
         fontSize: 12.5,
         fontFamily: ANALYTICS.SANS,
       }}
     >
       <span style={{ color: wrote ? ANALYTICS.GREEN : ANALYTICS.AMBER_TEXT }}>
-        {wrote ? '✦' : '△'}
+        {wrote ? "✦" : "△"}
       </span>
       <span style={{ color: ANALYTICS.INK_2 }}>
         <b style={{ color: ANALYTICS.INK }}>
-          {ingest.factsWritten} fact{ingest.factsWritten === 1 ? '' : 's'} written
+          {ingest.factsWritten} fact{ingest.factsWritten === 1 ? "" : "s"}{" "}
+          written
         </b>
-        {wrote ? ' — Intelligence updated from your file' : ' — nothing mapped'}
-        {parts.length > 0 ? ` (${parts.join(' · ')})` : ''}
+        {wrote ? " — Intelligence updated from your file" : " — nothing mapped"}
+        {parts.length > 0 ? ` (${parts.join(" · ")})` : ""}
       </span>
     </div>
   );
 }
 
 type DropZoneStatus =
-  | { phase: 'idle' }
-  | { phase: 'uploading'; name: string }
+  | { phase: "idle" }
+  | { phase: "uploading"; name: string }
   | {
-      phase: 'uploaded';
+      phase: "uploaded";
       result: UploadedArtifactResult;
       /** Present when the file was also parsed into typed facts. */
       ingest?: IngestFactsResult;
     }
-  | { phase: 'error'; message: string };
+  | { phase: "error"; message: string };
 
 interface DropZoneProps {
   signed: boolean;
@@ -651,7 +758,7 @@ export function TaskProvideUpload({
 }: DropZoneProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [status, setStatus] = useState<DropZoneStatus>({ phase: 'idle' });
+  const [status, setStatus] = useState<DropZoneStatus>({ phase: "idle" });
   const [dragActive, setDragActive] = useState(false);
 
   const canUpload = Boolean(eventId);
@@ -660,10 +767,10 @@ export function TaskProvideUpload({
     if (!eventId) return;
     const guard = isAcceptedCanvasUpload(file);
     if (!guard.ok) {
-      setStatus({ phase: 'error', message: guard.reason ?? 'File rejected.' });
+      setStatus({ phase: "error", message: guard.reason ?? "File rejected." });
       return;
     }
-    setStatus({ phase: 'uploading', name: file.name });
+    setStatus({ phase: "uploading", name: file.name });
     try {
       // 1) Store the file as an artifact (unchanged behavior — always happens).
       const result = await uploadSourceCanvasArtifact({
@@ -687,27 +794,26 @@ export function TaskProvideUpload({
           });
         } catch (ingestError) {
           setStatus({
-            phase: 'error',
+            phase: "error",
             message:
               ingestError instanceof Error
                 ? `File stored, but fact parse failed: ${ingestError.message}`
-                : 'File stored, but fact parse failed.',
+                : "File stored, but fact parse failed.",
           });
           return;
         }
-        setStatus({ phase: 'uploaded', result, ingest });
+        setStatus({ phase: "uploaded", result, ingest });
         onUploaded?.();
         if (ingest.factsWritten > 0) router.refresh();
         return;
       }
 
-      setStatus({ phase: 'uploaded', result });
+      setStatus({ phase: "uploaded", result });
       onUploaded?.();
     } catch (error) {
       setStatus({
-        phase: 'error',
-        message:
-          error instanceof Error ? error.message : 'Upload failed.',
+        phase: "error",
+        message: error instanceof Error ? error.message : "Upload failed.",
       });
     }
   };
@@ -715,7 +821,7 @@ export function TaskProvideUpload({
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     // Reset so re-selecting the same file re-fires change.
-    e.target.value = '';
+    e.target.value = "";
     if (file) void handleFile(file);
   };
 
@@ -729,7 +835,7 @@ export function TaskProvideUpload({
 
   // Signed/PDF tasks keep their document hint and are not wired to the CSV/XLSX
   // uploader (out of scope: this wires the volumetrics-style CSV/XLSX dropzone).
-  if (status.phase === 'uploaded') {
+  if (status.phase === "uploaded") {
     return (
       <div>
         <FileChip
@@ -738,30 +844,32 @@ export function TaskProvideUpload({
             name: status.result.originalName,
             meta: `${formatUploadSize(status.result.sizeBytes)} · uploaded`,
           }}
-          onRemove={() => setStatus({ phase: 'idle' })}
+          onRemove={() => setStatus({ phase: "idle" })}
         />
         {status.ingest ? <FactResultChip ingest={status.ingest} /> : null}
       </div>
     );
   }
 
-  const isUploading = status.phase === 'uploading';
-  const hint = signed
-    ? 'PDF · signed document'
-    : 'CSV or XLSX · up to 100 MB';
+  const isUploading = status.phase === "uploading";
+  const hint = signed ? "PDF · signed document" : "CSV or XLSX · up to 100 MB";
 
   return (
     <div>
       <div
-        role={canUpload ? 'button' : undefined}
+        role={canUpload ? "button" : undefined}
         tabIndex={canUpload ? 0 : undefined}
-        aria-label={canUpload ? 'Drop a file here, or browse' : undefined}
+        aria-label={canUpload ? "Drop a file here, or browse" : undefined}
         data-testid="task-dropzone"
         onClick={() => {
           if (canUpload && !isUploading) inputRef.current?.click();
         }}
         onKeyDown={(e) => {
-          if (canUpload && !isUploading && (e.key === 'Enter' || e.key === ' ')) {
+          if (
+            canUpload &&
+            !isUploading &&
+            (e.key === "Enter" || e.key === " ")
+          ) {
             e.preventDefault();
             inputRef.current?.click();
           }
@@ -774,16 +882,16 @@ export function TaskProvideUpload({
         onDragLeave={() => setDragActive(false)}
         onDrop={onDrop}
         style={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: 13,
-          padding: '15px 16px',
+          padding: "15px 16px",
           border: `1.5px dashed ${
             dragActive ? ANALYTICS.INK : ANALYTICS.LINE_STRONG
           }`,
           borderRadius: ANALYTICS.RADIUS,
           background: dragActive ? ANALYTICS.CARD : ANALYTICS.SOFT,
-          cursor: canUpload && !isUploading ? 'pointer' : 'default',
+          cursor: canUpload && !isUploading ? "pointer" : "default",
           opacity: isUploading ? 0.7 : 1,
         }}
       >
@@ -794,30 +902,30 @@ export function TaskProvideUpload({
             borderRadius: 8,
             background: ANALYTICS.CARD,
             border: `1px solid ${ANALYTICS.LINE}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             color: ANALYTICS.MUTED,
             flexShrink: 0,
           }}
         >
-          {isUploading ? '⟳' : '↑'}
+          {isUploading ? "⟳" : "↑"}
         </span>
         <span style={{ minWidth: 0 }}>
           <span
             style={{
-              display: 'block',
+              display: "block",
               fontSize: 13.5,
               fontWeight: 600,
               color: ANALYTICS.INK,
             }}
           >
             {isUploading
-              ? `Uploading ${status.phase === 'uploading' ? status.name : ''}…`
-              : 'Drop a file here, or browse'}
+              ? `Uploading ${status.phase === "uploading" ? status.name : ""}…`
+              : "Drop a file here, or browse"}
           </span>
           <span
-            style={{ display: 'block', fontSize: 11.5, color: ANALYTICS.MUTED }}
+            style={{ display: "block", fontSize: 11.5, color: ANALYTICS.MUTED }}
           >
             {hint}
           </span>
@@ -828,12 +936,12 @@ export function TaskProvideUpload({
             type="file"
             accept={CANVAS_UPLOAD_ACCEPT}
             onChange={onInputChange}
-            style={{ display: 'none' }}
+            style={{ display: "none" }}
             data-testid="task-file-input"
           />
         ) : null}
       </div>
-      {status.phase === 'error' ? (
+      {status.phase === "error" ? (
         <div
           role="alert"
           style={{

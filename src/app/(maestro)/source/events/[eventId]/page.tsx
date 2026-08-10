@@ -4,7 +4,10 @@ import { getSourcingEvent, isUuid } from "@/lib/source/queries";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { listSourceArtifactsForSourceEventIdWithContent } from "@/lib/source/artifact-registry";
-import { listArtifactStatesForEvent } from "@/lib/source/canvas-substrate";
+import {
+  listArtifactStatesForEvent,
+  listEffectiveEvidenceStatesForEvent,
+} from "@/lib/source/canvas-substrate";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import {
@@ -153,6 +156,9 @@ export default async function SourceEventDetailPage({
     // checklist's done-state can be re-derived from persisted evidence on load
     // (a reload / tab switch must reflect uploaded facts, not reset to empty).
     let hydrationFactInputs: Record<string, number> = {};
+    let analyticsEvidenceStates: Awaited<
+      ReturnType<typeof listEffectiveEvidenceStatesForEvent>
+    > = [];
     const analyticsRegistryArtifacts =
       await listSourceArtifactsForSourceEventIdWithContent(event.id).catch(
         (error) => {
@@ -168,6 +174,15 @@ export default async function SourceEventDetailPage({
     ).catch((error) => {
       console.error(
         "[SourceEventDetailPage] source artifact states read failed for analytics shell",
+        error instanceof Error ? error.message : String(error),
+      );
+      return [];
+    });
+    analyticsEvidenceStates = await listEffectiveEvidenceStatesForEvent(
+      event.id,
+    ).catch((error) => {
+      console.error(
+        "[SourceEventDetailPage] source evidence states read failed for analytics shell",
         error instanceof Error ? error.message : String(error),
       );
       return [];
@@ -453,6 +468,7 @@ export default async function SourceEventDetailPage({
             tasks: journeyStageView.tasks,
             factInputs: hydrationFactInputs,
             artifacts: analyticsHydrationArtifacts,
+            evidenceStates: analyticsEvidenceStates,
             stageKey: journeyStageView.stageKey,
           }),
         };
