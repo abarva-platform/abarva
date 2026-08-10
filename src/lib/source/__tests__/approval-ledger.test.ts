@@ -182,4 +182,35 @@ describe("buildApprovalLedger", () => {
       "locked",
     ]);
   });
+
+  it("coerces skipped canonical stages to the nearest visible journey stage", () => {
+    const ledger = buildApprovalLedger({
+      currentStageKey: "rfp",
+      approvalRows: [],
+      approverNames: new Map(),
+      stages: [
+        { key: "strategy", label: "Strategy" },
+        { key: "scope", label: "Scope" },
+        { key: "pricing", label: "Commercial Baseline" },
+        { key: "bafo", label: "Negotiation Plan" },
+        { key: "executive_decision", label: "Executive Decision" },
+        { key: "transition", label: "Agreement" },
+        { key: "value", label: "Value" },
+      ],
+    });
+
+    expect(ledger.map((row) => row.state)).toEqual([
+      "approved",
+      "approved",
+      "current",
+      "locked",
+      "locked",
+      "locked",
+      "locked",
+    ]);
+    expect(ledger.find((row) => row.state === "current")).toMatchObject({
+      stageKey: "pricing",
+      stageLabel: "Commercial Baseline",
+    });
+  });
 });

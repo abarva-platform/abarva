@@ -119,6 +119,72 @@ describe("buildSourceEventShellView", () => {
     expect(view.event.viewedStageLabel).toBe("Commercial Baseline");
   });
 
+  it("coerces a legacy RFP current stage into the visible contract optimization gate", () => {
+    const optimizationEvent: SourcingEventSummary = {
+      ...EVENT,
+      archetype: "Contract Renewal / Renegotiation",
+      currentStageKey: "rfp",
+      currentStageLabel: "RFP",
+    };
+    const pricingStage: StageAnalyticsView = {
+      ...(SAMPLE_SCOPE_STAGE as StageAnalyticsView),
+      stageKey: "pricing",
+      stageName: "Commercial Baseline",
+      tasks: [
+        {
+          id: "pricing.normalized_supplier_pricing",
+          title: "Confirm normalized supplier pricing",
+          subtitle: "One row per rate, entitlement, and exception family",
+          type: "provide",
+          state: "todo",
+          guide: "Confirm normalized pricing before negotiation planning.",
+          cta: "Provide pricing evidence",
+        },
+      ],
+    };
+    const staleRfpApproval: ApprovalsInboxItem = {
+      ...APPROVAL,
+      eventId: optimizationEvent.id,
+      stageKey: "rfp",
+      stageLabel: "RFP",
+      ask: "Approve advancing out of RFP.",
+      readiness:
+        "0 of 4 gate items met - you can approve with gaps (rationale required) or wait.",
+      href: `/source/events/${optimizationEvent.id}?stage=rfp&workspace=approvals`,
+    };
+
+    const view = buildSourceEventShellView({
+      event: optimizationEvent,
+      tenantName: "FS Demo",
+      viewedStageKey: "pricing",
+      stageView: pricingStage,
+      journey: SOURCE_JOURNEYS.contract_optimization,
+      approvalItems: [staleRfpApproval],
+    });
+
+    expect(view.event.currentStageKey).toBe("pricing");
+    expect(view.journey.find((stage) => stage.key === "pricing")).toMatchObject(
+      {
+        current: true,
+        viewed: true,
+        state: "current",
+        done: 0,
+        total: 1,
+      },
+    );
+    expect(view.approvals.currentStageItem).toMatchObject({
+      stageKey: "pricing",
+      stageLabel: "Commercial Baseline",
+      ask: "Approve advancing out of Commercial Baseline.",
+      readiness:
+        "0 of 1 required evidence item ready — review the gaps before approving Commercial Baseline.",
+      href: `/source/events/${optimizationEvent.id}?stage=pricing&workspace=approvals`,
+      actionLabel: "Review & decide",
+    });
+    expect(view.approvals.currentStageItem?.readiness).not.toContain("0 of 4");
+    expect(view.approvals.currentStageItem?.ask).not.toContain("RFP");
+  });
+
   it("does not show an incomplete fraction for a viewed past stage", () => {
     const eventAtPricing: SourcingEventSummary = {
       ...EVENT,
@@ -149,7 +215,9 @@ describe("buildSourceEventShellView", () => {
       stageView: viewedResponsesStage,
     });
 
-    expect(view.journey.find((stage) => stage.key === "responses")).toMatchObject({
+    expect(
+      view.journey.find((stage) => stage.key === "responses"),
+    ).toMatchObject({
       viewed: true,
       state: "past",
       done: 1,
@@ -318,7 +386,10 @@ describe("buildSourceEventShellView", () => {
       ],
     });
 
-    expect(view.approvals.currentStageItem).toBe(APPROVAL);
+    expect(view.approvals.currentStageItem).toMatchObject({
+      ...APPROVAL,
+      href: `/source/events/${EVENT.id}?stage=responses&workspace=approvals`,
+    });
     expect(view.approvals.readinessLine).toBe(APPROVAL.readiness);
     expect(view.stage.gateReadinessLine).toContain("before approval");
     expect(view.stage.approvalHref).toBe(
@@ -396,7 +467,10 @@ describe("buildSourceEventShellView", () => {
       approvalItems: [otherEventItem, APPROVAL, secondItemSameEvent],
     });
 
-    expect(view.approvals.currentStageItem).toBe(APPROVAL);
+    expect(view.approvals.currentStageItem).toMatchObject({
+      ...APPROVAL,
+      href: `/source/events/${EVENT.id}?stage=responses&workspace=approvals`,
+    });
     // The list must exclude the featured item (no duplicate) and any other
     // event's items, but keep this event's other real items.
     expect(view.approvals.items).toEqual([secondItemSameEvent]);

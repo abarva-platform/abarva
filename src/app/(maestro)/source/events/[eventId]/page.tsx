@@ -210,7 +210,7 @@ export default async function SourceEventDetailPage({
       : null;
     const analyticsApprovalLedger = await loadApprovalLedger(
       event.id,
-      event.currentStageKey,
+      effectiveCurrentStageKey,
       sourceJourney.stages,
     ).catch((error) => {
       console.error(
