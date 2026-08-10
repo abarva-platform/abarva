@@ -651,7 +651,7 @@ function GovernanceHistory({
 const PAGE_STYLE: CSSProperties = {
   minHeight: "100%",
   background: SHELL.PAPER,
-  padding: "22px clamp(24px, 4vw, 56px) 40px",
+  padding: "20px clamp(24px, 4vw, 52px) 36px",
   overflow: "auto",
 };
 
@@ -662,8 +662,8 @@ const BANNER_STYLE: CSSProperties = {
   border: `1px solid ${SHELL.PEACH_LINE}`,
   borderRadius: 8,
   background: SHELL.PEACH_BG,
-  padding: "10px 14px",
-  marginBottom: 18,
+  padding: "9px 13px",
+  marginBottom: 16,
 };
 
 const STATUS_CHIP_STYLE: CSSProperties = {
@@ -687,7 +687,7 @@ const HEADER_STYLE: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   gap: 24,
-  marginBottom: 20,
+  marginBottom: 16,
 };
 
 const EYEBROW_STYLE: CSSProperties = {
@@ -698,21 +698,21 @@ const EYEBROW_STYLE: CSSProperties = {
 };
 
 const H1_STYLE: CSSProperties = {
-  margin: "7px 0 0",
+  margin: "6px 0 0",
   fontFamily: SHELL.SERIF,
-  fontSize: "clamp(27px, 2.2vw, 34px)",
-  lineHeight: 1.08,
+  fontSize: "clamp(22px, 1.45vw, 28px)",
+  lineHeight: 1.12,
   fontWeight: 400,
   letterSpacing: 0,
   color: SHELL.INK,
-  maxWidth: 1180,
+  maxWidth: 980,
 };
 
 const LEDE_STYLE: CSSProperties = {
   maxWidth: 760,
-  margin: "8px 0 0",
+  margin: "7px 0 0",
   fontFamily: SHELL.SANS,
-  fontSize: 13.5,
+  fontSize: 13,
   lineHeight: 1.45,
   color: SHELL.INK_SOFT,
 };
@@ -731,11 +731,11 @@ const LEFT_COL_STYLE: CSSProperties = {
 
 const BRIEF_CARD_STYLE: CSSProperties = {
   display: "grid",
-  gap: 14,
+  gap: 12,
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
   background: SHELL.CARD_WHITE,
-  padding: 16,
+  padding: 15,
   boxShadow: "0 12px 34px rgba(15,23,42,0.05)",
 };
 
@@ -747,11 +747,11 @@ const SECTION_HEADER_STYLE: CSSProperties = {
 };
 
 const SECTION_TITLE_STYLE: CSSProperties = {
-  margin: "5px 0 0",
+  margin: "4px 0 0",
   fontFamily: SHELL.SERIF,
-  fontSize: 22,
+  fontSize: 18,
   fontWeight: 400,
-  lineHeight: 1.12,
+  lineHeight: 1.18,
   letterSpacing: 0,
   color: SHELL.INK,
 };
@@ -825,11 +825,11 @@ const RIGHT_PANEL_STYLE: CSSProperties = {
   position: "sticky",
   top: 20,
   display: "grid",
-  gap: 13,
+  gap: 12,
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
   background: SHELL.CARD_WHITE,
-  padding: 16,
+  padding: 15,
   boxShadow: "0 18px 50px rgba(15,23,42,0.08)",
 };
 
@@ -841,9 +841,9 @@ const ACTION_PANEL_HEADER_STYLE: CSSProperties = {
 const ACTION_TITLE_STYLE: CSSProperties = {
   margin: 0,
   fontFamily: SHELL.SERIF,
-  fontSize: 22,
+  fontSize: 18,
   fontWeight: 400,
-  lineHeight: 1.12,
+  lineHeight: 1.18,
   letterSpacing: 0,
   color: SHELL.INK,
 };

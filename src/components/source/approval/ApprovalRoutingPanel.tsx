@@ -77,7 +77,7 @@ function RoutePerson({
 
 const PANEL_STYLE: CSSProperties = {
   display: "grid",
-  gap: 14,
+  gap: 12,
 };
 
 const EYEBROW_STYLE: CSSProperties = {
@@ -91,11 +91,11 @@ const EYEBROW_STYLE: CSSProperties = {
 const TITLE_STYLE: CSSProperties = {
   margin: 0,
   fontFamily: SHELL.SERIF,
-  fontSize: 26,
+  fontSize: 18,
   fontWeight: 400,
   letterSpacing: 0,
   color: SHELL.INK,
-  lineHeight: 1.1,
+  lineHeight: 1.18,
 };
 
 const ROUTE_LIST_STYLE: CSSProperties = {
