@@ -207,6 +207,24 @@ export function coerceStageToSourceJourney(
   return journey.stages[0]?.key ?? "strategy";
 }
 
+export function sourceJourneyStageHref(input: {
+  eventId: string;
+  journey: SourceJourneyDefinition;
+  stageKey: SourceStageKey | string | null | undefined;
+  fallbackStageKey?: SourceStageKey | string | null;
+  workspace?: string | null;
+}): string {
+  const stageKey = coerceStageToSourceJourney(
+    input.journey,
+    input.stageKey,
+    input.fallbackStageKey,
+  );
+  const params = new URLSearchParams({ stage: stageKey });
+  const workspace = input.workspace?.trim();
+  if (workspace) params.set("workspace", workspace);
+  return `/source/events/${encodeURIComponent(input.eventId)}?${params.toString()}`;
+}
+
 export function sourceJourneyLabelForStage(
   journey: SourceJourneyDefinition | null | undefined,
   stageKey: unknown,

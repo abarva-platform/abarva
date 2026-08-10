@@ -27,6 +27,7 @@ import {
 import {
   coerceStageToSourceJourney,
   getSourceJourneyForEvent,
+  sourceJourneyStageHref,
 } from "@/lib/source/sourcing-motion-journeys";
 
 export const metadata = { title: "Source · Event Approval · AbarVa" };
@@ -55,8 +56,29 @@ export default async function SourceEventApprovalPage({
   const row = await loadPersistedEventRow(event.id, activeClient.key);
   if (!row) notFound();
 
+  const normalizedClientKey = activeClient.key.trim().toLowerCase();
+  const contractOptimizationProfile = await getContractOptimizationProfile(
+    normalizedClientKey,
+    event.id,
+  ).catch(() => null);
+  const sourceJourney = getSourceJourneyForEvent({
+    event,
+    hasContractOptimizationProfile: Boolean(contractOptimizationProfile),
+  });
+  const effectiveCurrentStageKey = coerceStageToSourceJourney(
+    sourceJourney,
+    row.current_stage_key,
+    row.current_stage_key,
+  );
+  const currentStageHref = sourceJourneyStageHref({
+    eventId: event.id,
+    journey: sourceJourney,
+    stageKey: row.current_stage_key,
+    fallbackStageKey: row.current_stage_key,
+  });
+
   if (row.lifecycle_state === "active") {
-    redirect(`/source/events/${event.id}?stage=${event.currentStageKey}`);
+    redirect(currentStageHref);
   }
   if (!APPROVAL_STATES.has(row.lifecycle_state)) {
     redirect("/source/portfolio");
@@ -73,20 +95,6 @@ export default async function SourceEventApprovalPage({
     }) ?? event.accountName;
   const currentUserCanApprove =
     sourceAccessPolicy?.canApproveSourceStages === true;
-  const normalizedClientKey = activeClient.key.trim().toLowerCase();
-  const contractOptimizationProfile = await getContractOptimizationProfile(
-    normalizedClientKey,
-    event.id,
-  ).catch(() => null);
-  const sourceJourney = getSourceJourneyForEvent({
-    event,
-    hasContractOptimizationProfile: Boolean(contractOptimizationProfile),
-  });
-  const effectiveCurrentStageKey = coerceStageToSourceJourney(
-    sourceJourney,
-    row.current_stage_key,
-    row.current_stage_key,
-  );
   const [approvalLedger, artifactAcceptances] = await Promise.all([
     loadApprovalLedger(
       event.id,
@@ -139,7 +147,7 @@ export default async function SourceEventApprovalPage({
           pilotMode={true}
           currentUserId={tenancy.userId}
           currentUserCanApprove={currentUserCanApprove}
-          currentStageHref={`/source/events/${event.id}?stage=${event.currentStageKey}`}
+          currentStageHref={currentStageHref}
           generateMemoOnApprove={isFeatureEnabled(
             {
               clientKey: activeClient.key,
