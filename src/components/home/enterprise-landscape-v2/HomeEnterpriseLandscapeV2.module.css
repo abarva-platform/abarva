@@ -444,13 +444,12 @@
 .architectureStoryboard {
   margin-top: 16px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
 }
 
-.architectureDiagramCard {
+.architectureCanvasCard {
   min-width: 0;
-  padding: 14px;
+  padding: 16px;
   border: 1px solid rgba(217, 224, 234, 0.94);
   border-radius: 7px;
   background:
@@ -463,73 +462,252 @@
       transparent 52px
     );
   overflow: hidden;
+  display: grid;
+  gap: 14px;
 }
 
-.architectureMiniSvg {
-  display: block;
-  width: 100%;
-  height: auto;
-  margin-top: 10px;
+.architectureCanvasHeader {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.48fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
 }
 
-.miniDiagramBase rect {
-  fill: #fff;
-  stroke: #cfd9e8;
-  stroke-width: 1.4;
+.architectureCanvasHeader > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
 }
 
-.miniDiagramBase rect:nth-child(1) {
-  fill: #f6f9fd;
-}
-
-.miniDiagramBase rect:nth-child(3),
-.miniDiagramBase rect:nth-child(5) {
-  fill: #f0f7ff;
-}
-
-.miniDiagramBase rect:nth-child(7) {
-  fill: #eef8f6;
-}
-
-.miniDiagramBase rect:nth-child(9) {
-  fill: #fff7e8;
-}
-
-.miniDiagramBase rect:nth-child(11) {
-  fill: #f5f7fb;
-}
-
-.miniDiagramFlows path {
-  fill: none;
-  stroke: #8da2bd;
-  stroke-linecap: round;
-  stroke-width: 2.2;
-}
-
-.dashedFlow {
-  stroke: #b97824 !important;
-  stroke-dasharray: 6 6;
-}
-
-.miniLabel {
-  fill: #34445d;
-  font-size: 11px;
-  font-weight: 760;
-  letter-spacing: 0;
-}
-
-.miniCenterText {
-  fill: #172033;
-  font-size: 12px;
-  font-weight: 740;
-  letter-spacing: 0;
-}
-
-.miniFootnote {
-  fill: #40506a;
+.architectureCanvasHeader span {
+  width: fit-content;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #246fc8;
+  padding: 4px 8px;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0;
+  font-weight: 820;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.architectureCanvasHeader strong {
+  color: #172033;
+  font-size: 18px;
+  line-height: 1.16;
+}
+
+.architectureCanvasHeader p,
+.architectureCanvasHeader em {
+  margin: 0;
+  color: #475a78;
+  font-size: 12px;
+  line-height: 1.45;
+  font-style: normal;
+}
+
+.architectureCanvasHeader em {
+  border-left: 3px solid #d9e0ea;
+  padding-left: 12px;
+  color: #34445d;
+  font-weight: 650;
+}
+
+.architectureLaneFrame {
+  position: relative;
+  min-width: 0;
+  border: 1px solid #d9e0ea;
+  border-radius: 7px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.92),
+      rgba(247, 249, 252, 0.96)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(217, 224, 234, 0.5) 0,
+      rgba(217, 224, 234, 0.5) 1px,
+      transparent 1px,
+      transparent 72px
+    );
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.architectureFlowOverlay {
+  position: absolute;
+  inset: 74px 16px auto 16px;
+  z-index: 0;
+  width: calc(100% - 32px);
+  min-width: 820px;
+  height: 190px;
+  pointer-events: none;
+}
+
+.primaryArchitectureFlow,
+.controlArchitectureFlow {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 2.6;
+}
+
+.primaryArchitectureFlow {
+  stroke: #8da2bd;
+}
+
+.controlArchitectureFlow {
+  stroke: #b97824;
+  stroke-dasharray: 7 7;
+}
+
+.architectureLaneGrid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-width: 980px;
+}
+
+.architectureLane {
+  min-width: 0;
+  padding: 13px;
+  border-right: 1px solid rgba(217, 224, 234, 0.92);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+}
+
+.architectureLane:last-child {
+  border-right: 0;
+}
+
+.architectureLaneTitle {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 8px;
+  min-height: 74px;
+}
+
+.architectureLaneTitle > span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #142346;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 860;
+}
+
+.architectureLaneTitle strong {
+  display: block;
+  color: #172033;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.architectureLaneTitle p {
+  margin: 4px 0 0;
+  color: #657087;
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+.architectureTileStack {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+}
+
+.architectureTile {
+  min-width: 0;
+  min-height: 112px;
+  padding: 11px;
+  border: 1px solid #cfd9e8;
+  border-top: 4px solid #66758a;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 22px rgba(22, 33, 52, 0.07);
+  display: grid;
+  gap: 10px;
+  align-content: space-between;
+}
+
+.architectureTile strong {
+  display: block;
+  color: #172033;
+  font-size: 12px;
+  line-height: 1.22;
+}
+
+.architectureTile p {
+  margin: 5px 0 0;
+  color: #475a78;
+  font-size: 11px;
+  line-height: 1.36;
+}
+
+.architectureTagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.architectureTagRow span {
+  border: 1px solid #d9e0ea;
+  border-radius: 999px;
+  background: #f7f9fc;
+  color: #40506a;
+  padding: 3px 6px;
+  font-size: 9.5px;
+  font-weight: 760;
+  line-height: 1.1;
+}
+
+.tileToneBlue {
+  border-top-color: #246fc8;
+  background: #f4f8ff;
+}
+
+.tileToneTeal {
+  border-top-color: #198f82;
+  background: #f1faf8;
+}
+
+.tileToneAmber {
+  border-top-color: #b97824;
+  background: #fff8ea;
+}
+
+.tileToneSlate {
+  border-top-color: #66758a;
+  background: #f6f8fb;
+}
+
+.tileToneRed {
+  border-top-color: #b63b35;
+  background: #fff6f4;
+}
+
+.architectureControlStrip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.architectureControlStrip span {
+  min-width: 0;
+  border: 1px solid #d9e0ea;
+  border-left: 4px solid #142346;
+  border-radius: 7px;
+  background: #fff;
+  color: #34445d;
+  padding: 9px 10px;
+  font-size: 11px;
+  font-weight: 720;
+  line-height: 1.35;
 }
 
 .hostingBands rect {
@@ -1161,7 +1339,6 @@
   .contextSignalWall,
   .contextDomainGrid,
   .architectureStack,
-  .architectureStoryboard,
   .architectureDecisionGrid,
   .deploymentGrid,
   .archetypeGrid,
@@ -1238,7 +1415,6 @@
   .contextSignalWall,
   .contextDomainGrid,
   .architectureStack,
-  .architectureStoryboard,
   .architectureDecisionGrid,
   .deploymentGrid,
   .archetypeGrid,
@@ -1276,6 +1452,27 @@
   .visualTitle {
     display: grid;
     gap: 3px;
+  }
+
+  .architectureCanvasHeader,
+  .architectureControlStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .architectureCanvasHeader strong {
+    font-size: 17px;
+  }
+
+  .architectureLaneFrame {
+    overflow-x: auto;
+  }
+
+  .architectureLaneGrid {
+    min-width: 920px;
+  }
+
+  .architectureFlowOverlay {
+    min-width: 760px;
   }
 
   .economicInsightGrid {

@@ -70,26 +70,56 @@ it("integrates context and architecture into the approved eight-tab canvas", () 
     screen.getAllByText("Current-state architecture exhibits").length,
   ).toBeGreaterThan(0);
   expect(
-    screen.getByRole("img", {
-      name: /Data and AI mesh diagram showing source applications, integration, governed data products, BI, analytics, AI agents, and proof gates/i,
-    }),
+    screen.getByLabelText("Data and AI platform detailed architecture canvas"),
   ).toBeInTheDocument();
   expect(
-    screen.getByRole("img", {
-      name: /Private cloud and mainframe architecture diagram showing two data centers, IBM mainframe, private cloud, replicated operations, integration, and cloud analytics egress/i,
-    }),
+    screen.getByLabelText(
+      "Private cloud, data centers, and mainframe detailed architecture canvas",
+    ),
   ).toBeInTheDocument();
-  expect(screen.getByText("Data and AI mesh")).toBeInTheDocument();
+  expect(screen.getByText("Data and AI platform")).toBeInTheDocument();
   expect(screen.getByText("ERP and finance core")).toBeInTheDocument();
-  expect(screen.getByText("Private cloud and mainframe")).toBeInTheDocument();
+  expect(
+    screen.getByText("Private cloud, data centers, and mainframe"),
+  ).toBeInTheDocument();
   expect(screen.getByText("Digital airline channels")).toBeInTheDocument();
-  expect(screen.getByText("IBM z/OS · CICS")).toBeInTheDocument();
-  expect(screen.getByText("DB2 · MQ")).toBeInTheDocument();
-  expect(screen.getByText("Private DC / mainframe")).toBeInTheDocument();
-  expect(screen.getByText("Digital edge")).toBeInTheDocument();
-  expect(screen.getByText("Teradata EDW · marts")).toBeInTheDocument();
-  expect(screen.getByText("Power BI · Tableau")).toBeInTheDocument();
-  expect(screen.getByText("Ops Control · Crew · MRO")).toBeInTheDocument();
+  expect(screen.getByText("Operational sources")).toBeInTheDocument();
+  expect(screen.getByText("Integration fabric")).toBeInTheDocument();
+  expect(screen.getByText("Data platforms")).toBeInTheDocument();
+  expect(screen.getByText("Analytics + AI")).toBeInTheDocument();
+  expect(screen.getByText("IBM mainframe")).toBeInTheDocument();
+  expect(
+    screen.getByText(/z\/OS, CICS transactions, DB2 records/i),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Hot / warm recovery")).toBeInTheDocument();
+  expect(screen.getByText("CDP + personalization")).toBeInTheDocument();
+  expect(screen.getByText("Agent runtime")).toBeInTheDocument();
+  expect(
+    screen.getByText("Power BI, Tableau, scorecards, operating reviews"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("Finance owns recognized value, not Claude"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "Mainframe integration is a modernization constraint, not a footnote",
+    ),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "AI assist needs action guardrails and service recovery context",
+    ),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "A credible airline current-state diagram must explicitly show mainframe gravity, dual data centers, private cloud, replicated controls, and selective cloud egress.",
+    ),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("img", {
+      name: /Data and AI mesh diagram/i,
+    }),
+  ).not.toBeInTheDocument();
   expect(screen.getAllByText("Hybrid cloud").length).toBeGreaterThan(0);
   expect(
     screen.getByText("Resolve contradictory lifecycle states"),

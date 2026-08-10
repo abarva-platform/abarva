@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
 
 import {
   HOME_LANDSCAPE_TABS,
@@ -38,6 +37,14 @@ const TONE_HEX: Record<SignalTone, string> = {
   amber: "#b97824",
   slate: "#66758a",
   red: "#b63b35",
+};
+
+const TILE_TONE_CLASS: Record<SignalTone, string> = {
+  blue: styles.tileToneBlue,
+  teal: styles.tileToneTeal,
+  amber: styles.tileToneAmber,
+  slate: styles.tileToneSlate,
+  red: styles.tileToneRed,
 };
 
 function normalizeTabId(value: string | null): HomeLandscapeTabId | null {
@@ -129,69 +136,522 @@ function ContextSignalWall({
   );
 }
 
-function SvgTextBlock({
-  x,
-  y,
-  lines,
-  className,
-  textAnchor = "start",
-  lineHeight = 13,
-}: {
-  x: number;
-  y: number;
-  lines: string[];
-  className: string;
-  textAnchor?: "start" | "middle" | "end";
-  lineHeight?: number;
-}) {
+interface ArchitectureTile {
+  title: string;
+  detail: string;
+  tags?: string[];
+  tone?: SignalTone;
+}
+
+interface ArchitectureLane {
+  title: string;
+  detail: string;
+  tiles: ArchitectureTile[];
+}
+
+interface ArchitectureCanvas {
+  title: string;
+  subtitle: string;
+  footprint: string;
+  story: string;
+  lanes: ArchitectureLane[];
+  controls: string[];
+}
+
+const ARCHITECTURE_CANVASES: ArchitectureCanvas[] = [
+  {
+    title: "Data and AI platform",
+    subtitle: "Source-to-consumption architecture with governed agent loopback",
+    footprint: "Hybrid data estate",
+    story:
+      "This should read like a current-state data platform: operational sources feed integration and CDC, land in governed zones, then serve analytics, AI, and executive consumption with proof gates.",
+    lanes: [
+      {
+        title: "Operational sources",
+        detail: "Airline execution systems that generate the data exhaust",
+        tiles: [
+          {
+            title: "Operations control",
+            detail: "Network, disruption, crew pairing, turn execution",
+            tags: ["Ops", "Real-time"],
+            tone: "blue",
+          },
+          {
+            title: "Passenger + commerce",
+            detail: "Reservation/PSS, booking, loyalty, offers, cargo",
+            tags: ["PSS", "Loyalty"],
+            tone: "blue",
+          },
+          {
+            title: "Enterprise apps",
+            detail: "ERP, HR, procurement, MRO and service systems",
+            tags: ["ERP", "MRO"],
+            tone: "slate",
+          },
+        ],
+      },
+      {
+        title: "Integration fabric",
+        detail: "Movement, mediation, and mainframe-safe extraction",
+        tiles: [
+          {
+            title: "Event + API backbone",
+            detail: "Kafka streams, MuleSoft APIs, IBM MQ bridge",
+            tags: ["Kafka", "MuleSoft", "MQ"],
+            tone: "teal",
+          },
+          {
+            title: "Batch + CDC",
+            detail:
+              "ETL/ELT, file drops, replicated feeds from systems of record",
+            tags: ["ETL", "CDC", "SFTP"],
+            tone: "teal",
+          },
+        ],
+      },
+      {
+        title: "Data platforms",
+        detail: "Raw, curated, modeled, and governed analytical stores",
+        tiles: [
+          {
+            title: "Landing + lake zones",
+            detail: "Raw ingestion, processed zone, catalog, lineage",
+            tags: ["Raw", "Curated"],
+            tone: "amber",
+          },
+          {
+            title: "Enterprise warehouse",
+            detail: "Teradata EDW, marts, governed financial and ops measures",
+            tags: ["Teradata", "Marts"],
+            tone: "amber",
+          },
+          {
+            title: "Cloud analytics estate",
+            detail:
+              "Snowflake-style domain sharing, cloud object storage, data products",
+            tags: ["Cloud", "Data products"],
+            tone: "amber",
+          },
+        ],
+      },
+      {
+        title: "Analytics + AI",
+        detail:
+          "Science, semantic, and agent layers do not calculate value alone",
+        tiles: [
+          {
+            title: "Data science workbench",
+            detail: "SAS, notebooks, model features, experiment lineage",
+            tags: ["SAS", "ML"],
+            tone: "red",
+          },
+          {
+            title: "Agent runtime",
+            detail:
+              "Copilots, governed prompts, retrieval bundle, action gates",
+            tags: ["Agents", "RAG", "Gates"],
+            tone: "red",
+          },
+        ],
+      },
+      {
+        title: "Consumption",
+        detail: "Human and machine decision surfaces",
+        tiles: [
+          {
+            title: "Executive analytics",
+            detail: "Power BI, Tableau, scorecards, operating reviews",
+            tags: ["BI", "CXO"],
+            tone: "blue",
+          },
+          {
+            title: "Operational decisions",
+            detail: "Recovery, offers, maintenance, crew and service workflows",
+            tags: ["Workflow", "Action"],
+            tone: "blue",
+          },
+        ],
+      },
+    ],
+    controls: [
+      "Role-based access and domain ownership",
+      "Catalog, lineage, and evidence references",
+      "Finance baseline and attestation before value claims",
+      "Approval gate before agent-to-system actions",
+    ],
+  },
+  {
+    title: "ERP and finance core",
+    subtitle: "Controlled financial spine from source of record to Tower proof",
+    footprint: "Control-heavy core",
+    story:
+      "ERP should not look like a digital channel diagram. The story is controlled master data, close/reconciliation, budget/actual traceability, and proof gates for value claims.",
+    lanes: [
+      {
+        title: "Systems of record",
+        detail: "Financial and enterprise master data foundation",
+        tiles: [
+          {
+            title: "SAP S/4HANA / ERP",
+            detail: "GL, AP/AR, cost center, asset and procurement records",
+            tags: ["GL", "AP/AR", "Assets"],
+            tone: "blue",
+          },
+          {
+            title: "Finance master data",
+            detail:
+              "Chart of accounts, vendors, products, organization hierarchy",
+            tags: ["MDM", "Controls"],
+            tone: "blue",
+          },
+        ],
+      },
+      {
+        title: "Controlled movement",
+        detail: "Batch, API, close feeds, and reconciliation files",
+        tiles: [
+          {
+            title: "Finance integration",
+            detail: "Close calendar, allocations, GL extracts, contract feeds",
+            tags: ["Batch", "API", "Files"],
+            tone: "teal",
+          },
+          {
+            title: "EPM + planning",
+            detail: "Budget, forecast, actuals, scenario and variance views",
+            tags: ["Budget", "Actual"],
+            tone: "teal",
+          },
+        ],
+      },
+      {
+        title: "Proof layer",
+        detail:
+          "Tower can explain value only after finance-grade evidence exists",
+        tiles: [
+          {
+            title: "Baseline evidence",
+            detail:
+              "Starting cost, accountable owner, period, source file, lineage",
+            tags: ["Baseline", "Owner"],
+            tone: "amber",
+          },
+          {
+            title: "Attestation",
+            detail: "Finance recognition, approval, measurement state, caveats",
+            tags: ["CFO", "Evidence"],
+            tone: "amber",
+          },
+        ],
+      },
+      {
+        title: "Executive use",
+        detail: "Value narrative stays bounded by deterministic finance facts",
+        tiles: [
+          {
+            title: "Tower view",
+            detail:
+              "Portfolio value state, gaps, validation status, decision route",
+            tags: ["Tower", "Value"],
+            tone: "red",
+          },
+          {
+            title: "Home summary",
+            detail:
+              "Shows claimable value as not established when proof is absent",
+            tags: ["No overclaim"],
+            tone: "red",
+          },
+        ],
+      },
+    ],
+    controls: [
+      "Finance owns recognized value, not Claude",
+      "Baseline, outcome, and attestation must be complete",
+      "Contract commitments constrain modernization sequencing",
+      "Unknown value remains unknown, not zero",
+    ],
+  },
+  {
+    title: "Private cloud, data centers, and mainframe",
+    subtitle: "Dual-site resilience with legacy gravity and hybrid egress",
+    footprint: "Airline resilience core",
+    story:
+      "A credible airline current-state diagram must explicitly show mainframe gravity, dual data centers, private cloud, replicated controls, and selective cloud egress.",
+    lanes: [
+      {
+        title: "Private DC 1",
+        detail: "Primary operations gravity",
+        tiles: [
+          {
+            title: "IBM mainframe",
+            detail: "z/OS, CICS transactions, DB2 records, MQ integration",
+            tags: ["z/OS", "CICS", "DB2", "MQ"],
+            tone: "blue",
+          },
+          {
+            title: "Core operations",
+            detail:
+              "Schedule, inventory, operational state and settlement feeds",
+            tags: ["Core", "Ops"],
+            tone: "blue",
+          },
+        ],
+      },
+      {
+        title: "Private cloud",
+        detail: "Virtualized app and platform estate",
+        tiles: [
+          {
+            title: "VMware / OpenShift",
+            detail:
+              "Internal platforms, service mesh, API runtime, batch workers",
+            tags: ["Private cloud", "K8s"],
+            tone: "teal",
+          },
+          {
+            title: "Shared services",
+            detail:
+              "IAM, secrets, monitoring, logging, backup and run controls",
+            tags: ["IAM", "Ops"],
+            tone: "teal",
+          },
+        ],
+      },
+      {
+        title: "Private DC 2",
+        detail: "Recovery and resilience posture",
+        tiles: [
+          {
+            title: "Hot / warm recovery",
+            detail:
+              "Replicated operational data, failover runbooks, DR controls",
+            tags: ["DR", "Replication"],
+            tone: "amber",
+          },
+          {
+            title: "Continuity controls",
+            detail:
+              "Network segmentation, backup, privileged access, audit trail",
+            tags: ["Controls", "Audit"],
+            tone: "amber",
+          },
+        ],
+      },
+      {
+        title: "Hybrid egress",
+        detail: "Cloud is connected, not assumed as the center",
+        tiles: [
+          {
+            title: "Cloud landing zone",
+            detail: "Selective analytics, SaaS integration, external APIs",
+            tags: ["Hybrid", "Cloud"],
+            tone: "red",
+          },
+          {
+            title: "Security boundary",
+            detail:
+              "WAF, IDS/IPS, DLP, policy enforcement and exfiltration controls",
+            tags: ["WAF", "DLP"],
+            tone: "red",
+          },
+        ],
+      },
+    ],
+    controls: [
+      "Two data centers must be first-class in the architecture read",
+      "Mainframe integration is a modernization constraint, not a footnote",
+      "Hybrid egress should show security and data movement boundaries",
+      "Operational continuity beats generic cloud-first diagrams",
+    ],
+  },
+  {
+    title: "Digital airline channels",
+    subtitle: "Customer-facing real-time path from edge to decisioning",
+    footprint: "Digital channel estate",
+    story:
+      "Digital architecture should show experience edge, API mediation, real-time events, customer data, decisioning, and service recovery. It has a different shape from ERP.",
+    lanes: [
+      {
+        title: "Experience edge",
+        detail: "Internet-facing and contact-center channels",
+        tiles: [
+          {
+            title: "Airline.com + mobile",
+            detail: "Search, booking, check-in, trip management, offers",
+            tags: ["Web", "Mobile"],
+            tone: "blue",
+          },
+          {
+            title: "Airport + service",
+            detail:
+              "Kiosks, contact center, disruption and service recovery flows",
+            tags: ["Kiosk", "Contact"],
+            tone: "blue",
+          },
+        ],
+      },
+      {
+        title: "API and identity",
+        detail: "Mediated access to core systems",
+        tiles: [
+          {
+            title: "API gateway",
+            detail: "Booking, profile, payment, loyalty and trip APIs",
+            tags: ["API", "Gateway"],
+            tone: "teal",
+          },
+          {
+            title: "Identity + consent",
+            detail:
+              "Customer identity, preferences, consent and session controls",
+            tags: ["IAM", "Consent"],
+            tone: "teal",
+          },
+        ],
+      },
+      {
+        title: "Event stream",
+        detail: "Real-time behavioral and operational signals",
+        tiles: [
+          {
+            title: "Clickstream + journey events",
+            detail:
+              "Search, booking, disruption, case, loyalty and offer events",
+            tags: ["Events", "Journey"],
+            tone: "amber",
+          },
+          {
+            title: "Operational feedback",
+            detail:
+              "Irregular operations, service cases, refund and recovery signals",
+            tags: ["IROPS", "Cases"],
+            tone: "amber",
+          },
+        ],
+      },
+      {
+        title: "Decisioning",
+        detail: "Analytics and AI assist remain policy-bound",
+        tiles: [
+          {
+            title: "CDP + personalization",
+            detail:
+              "Customer segments, next-best-action, offers and service recovery",
+            tags: ["CDP", "Offers"],
+            tone: "red",
+          },
+          {
+            title: "Agent assist",
+            detail:
+              "Summaries, recommendations, handoffs, governed action controls",
+            tags: ["AI assist", "Gates"],
+            tone: "red",
+          },
+        ],
+      },
+    ],
+    controls: [
+      "Digital paths must show internet-facing controls",
+      "Real-time events are separate from finance/ERP batch flows",
+      "Customer data and consent belong in the diagram",
+      "AI assist needs action guardrails and service recovery context",
+    ],
+  },
+];
+
+function ArchitectureTileCard({ tile }: { tile: ArchitectureTile }) {
+  const toneClass = tile.tone ? TILE_TONE_CLASS[tile.tone] : "";
+
   return (
-    <text x={x} y={y} textAnchor={textAnchor} className={className}>
-      {lines.map((line, index) => (
-        <tspan x={x} dy={index === 0 ? 0 : lineHeight} key={line}>
-          {line}
-        </tspan>
-      ))}
-    </text>
+    <article className={`${styles.architectureTile} ${toneClass}`}>
+      <div>
+        <strong>{tile.title}</strong>
+        <p>{tile.detail}</p>
+      </div>
+      {tile.tags?.length ? (
+        <div className={styles.architectureTagRow}>
+          {tile.tags.map((tag) => (
+            <span key={tag}>{tag}</span>
+          ))}
+        </div>
+      ) : null}
+    </article>
   );
 }
 
-function MiniArchitectureDiagram({
-  title,
-  subtitle,
-  children,
-  ariaLabel,
-}: {
-  title: string;
-  subtitle: string;
-  children: ReactNode;
-  ariaLabel: string;
-}) {
+function ArchitectureLaneCanvas({ canvas }: { canvas: ArchitectureCanvas }) {
   return (
-    <article className={styles.architectureDiagramCard}>
-      <div className={styles.visualTitle}>
-        <strong>{title}</strong>
-        <span>{subtitle}</span>
+    <article
+      className={styles.architectureCanvasCard}
+      aria-label={`${canvas.title} detailed architecture canvas`}
+    >
+      <div className={styles.architectureCanvasHeader}>
+        <div>
+          <span>{canvas.footprint}</span>
+          <strong>{canvas.title}</strong>
+          <p>{canvas.subtitle}</p>
+        </div>
+        <em>{canvas.story}</em>
       </div>
-      <svg
-        className={styles.architectureMiniSvg}
-        viewBox="0 0 560 320"
-        role="img"
-        aria-label={ariaLabel}
-      >
-        <defs>
-          <marker
-            id={`${title.replaceAll(" ", "-").toLowerCase()}-arrow`}
-            markerHeight="7"
-            markerWidth="7"
-            orient="auto"
-            refX="6"
-            refY="3.5"
-          >
-            <path d="M0,0 L7,3.5 L0,7 Z" fill="#8da2bd" />
-          </marker>
-        </defs>
-        {children}
-      </svg>
+      <div className={styles.architectureLaneFrame}>
+        <svg
+          className={styles.architectureFlowOverlay}
+          viewBox="0 0 1000 210"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <defs>
+            <marker
+              id={`${canvas.title.replaceAll(" ", "-").toLowerCase()}-flow`}
+              markerHeight="8"
+              markerWidth="8"
+              orient="auto"
+              refX="7"
+              refY="4"
+            >
+              <path d="M0,0 L8,4 L0,8 Z" fill="#8da2bd" />
+            </marker>
+          </defs>
+          <path
+            d="M78 84 C228 72 330 72 462 84 S730 102 920 84"
+            className={styles.primaryArchitectureFlow}
+            markerEnd={`url(#${canvas.title.replaceAll(" ", "-").toLowerCase()}-flow)`}
+          />
+          <path
+            d="M918 142 C720 188 444 190 86 146"
+            className={styles.controlArchitectureFlow}
+          />
+        </svg>
+        <div
+          className={styles.architectureLaneGrid}
+          style={{
+            gridTemplateColumns: `repeat(${canvas.lanes.length}, minmax(190px, 1fr))`,
+          }}
+        >
+          {canvas.lanes.map((lane, index) => (
+            <section className={styles.architectureLane} key={lane.title}>
+              <div className={styles.architectureLaneTitle}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <div>
+                  <strong>{lane.title}</strong>
+                  <p>{lane.detail}</p>
+                </div>
+              </div>
+              <div className={styles.architectureTileStack}>
+                {lane.tiles.map((tile) => (
+                  <ArchitectureTileCard key={tile.title} tile={tile} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </div>
+      <div className={styles.architectureControlStrip}>
+        {canvas.controls.map((control) => (
+          <span key={control}>{control}</span>
+        ))}
+      </div>
     </article>
   );
 }
@@ -201,9 +661,7 @@ function ArchitectureFlowMap({
 }: {
   model: HomeEnterpriseLandscapeV2Model;
 }) {
-  const controlLayer = model.architectureLayers.find(
-    (layer) => layer.title === "Core-system action and proof gates",
-  );
+  void model;
 
   return (
     <section
@@ -217,309 +675,9 @@ function ArchitectureFlowMap({
         </span>
       </div>
       <div className={styles.architectureStoryboard}>
-        <MiniArchitectureDiagram
-          title="Data and AI mesh"
-          subtitle="Source to consumption, with governed agent loopback"
-          ariaLabel="Data and AI mesh diagram showing source applications, integration, governed data products, BI, analytics, AI agents, and proof gates"
-        >
-          <g className={styles.miniDiagramBase}>
-            <rect x="26" y="248" width="508" height="44" rx="7" />
-            <SvgTextBlock
-              x={46}
-              y={267}
-              lines={[
-                "Sources",
-                "Ops Control · Crew · MRO",
-                "Booking · Loyalty · Cargo",
-              ]}
-              className={styles.miniLabel}
-            />
-            <rect x="42" y="182" width="120" height="44" rx="7" />
-            <SvgTextBlock
-              x={102}
-              y={196}
-              lines={["Integration", "Event · API · ETL", "Kafka · MQ"]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-              lineHeight={12}
-            />
-            <rect x="204" y="162" width="150" height="82" rx="12" />
-            <SvgTextBlock
-              x={279}
-              y={185}
-              lines={[
-                "Governed platform",
-                "Raw → curated → aggregate",
-                "Teradata EDW · marts",
-              ]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-            <rect x="392" y="182" width="120" height="44" rx="7" />
-            <SvgTextBlock
-              x={452}
-              y={198}
-              lines={["Consumption", "BI · analytics", "Power BI · Tableau"]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-              lineHeight={12}
-            />
-            <rect x="354" y="70" width="142" height="58" rx="8" />
-            <SvgTextBlock
-              x={425}
-              y={94}
-              lines={["AI agents", "copilot · assist", "governed loopback"]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-              lineHeight={12}
-            />
-            <rect x="56" y="70" width="216" height="48" rx="8" />
-            <SvgTextBlock
-              x={164}
-              y={91}
-              lines={[
-                "Role-based access",
-                "identity · policy · lineage",
-                "domain ownership",
-              ]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-          </g>
-          <g className={styles.miniDiagramFlows}>
-            <path d="M102 248 L102 226" />
-            <path d="M162 204 L204 204" />
-            <path d="M354 204 L392 204" />
-            <path d="M452 182 L425 128" />
-            <path d="M354 100 L272 100" />
-            <path
-              d="M425 128 C392 150 374 162 346 178"
-              className={styles.dashedFlow}
-            />
-            <path
-              d="M425 128 C342 42 174 44 108 70"
-              className={styles.dashedFlow}
-            />
-          </g>
-          <SvgTextBlock
-            x={280}
-            y={300}
-            lines={[
-              "Data products are visible;",
-              "finance value still needs baseline and attestation.",
-            ]}
-            className={styles.miniFootnote}
-            textAnchor="middle"
-          />
-        </MiniArchitectureDiagram>
-
-        <MiniArchitectureDiagram
-          title="ERP and finance core"
-          subtitle="Control-heavy path from source of record to value proof"
-          ariaLabel="ERP and finance architecture diagram showing SAP, EPM, master data, controlled integration, finance reporting, and Tower proof gates"
-        >
-          <g className={styles.miniDiagramBase}>
-            <rect x="28" y="66" width="126" height="70" rx="8" />
-            <SvgTextBlock
-              x={91}
-              y={92}
-              lines={["ERP core", "SAP S/4HANA", "finance master data"]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-            <rect x="218" y="66" width="124" height="70" rx="8" />
-            <SvgTextBlock
-              x={280}
-              y={92}
-              lines={["Controls", "MDM · close", "reconciliation"]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-            <rect x="406" y="66" width="126" height="70" rx="8" />
-            <SvgTextBlock
-              x={469}
-              y={92}
-              lines={["Finance view", "EPM · GL", "budget / actual"]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-            <rect x="90" y="198" width="132" height="54" rx="8" />
-            <SvgTextBlock
-              x={156}
-              y={220}
-              lines={["Integration", "batch · API · files"]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-            <rect x="314" y="198" width="156" height="54" rx="8" />
-            <SvgTextBlock
-              x={392}
-              y={220}
-              lines={[
-                "Tower proof",
-                controlLayer?.examples.slice(4, 6).join(" + ") ??
-                  "baseline + attestation",
-              ]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-          </g>
-          <g className={styles.miniDiagramFlows}>
-            <path d="M154 101 L218 101" />
-            <path d="M342 101 L406 101" />
-            <path d="M91 136 C94 166 116 184 156 198" />
-            <path d="M469 136 C466 166 436 184 392 198" />
-            <path d="M222 225 L314 225" className={styles.dashedFlow} />
-          </g>
-          <SvgTextBlock
-            x={280}
-            y={286}
-            lines={[
-              "ERP is slower-moving and evidence-governed;",
-              "AI action stays behind approval gates.",
-            ]}
-            className={styles.miniFootnote}
-            textAnchor="middle"
-          />
-        </MiniArchitectureDiagram>
-
-        <MiniArchitectureDiagram
-          title="Private cloud and mainframe"
-          subtitle="Two-data-center resilience, legacy gravity, and hybrid egress"
-          ariaLabel="Private cloud and mainframe architecture diagram showing two data centers, IBM mainframe, private cloud, replicated operations, integration, and cloud analytics egress"
-        >
-          <g className={styles.miniDiagramBase}>
-            <rect x="34" y="62" width="186" height="154" rx="12" />
-            <SvgTextBlock
-              x={127}
-              y={86}
-              lines={[
-                "Private DC 1",
-                "IBM z/OS · CICS",
-                "DB2 · MQ",
-                "operations gravity",
-              ]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-            <rect x="340" y="62" width="186" height="154" rx="12" />
-            <SvgTextBlock
-              x={433}
-              y={86}
-              lines={[
-                "Private DC 2",
-                "hot/warm recovery",
-                "replicated controls",
-              ]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-            <rect x="214" y="238" width="132" height="48" rx="8" />
-            <SvgTextBlock
-              x={280}
-              y={258}
-              lines={["Hybrid egress", "API · ETL · event bridge"]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-            <rect x="212" y="118" width="136" height="52" rx="8" />
-            <SvgTextBlock
-              x={280}
-              y={140}
-              lines={["Private cloud", "VMware / OpenShift"]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-          </g>
-          <g className={styles.miniDiagramFlows}>
-            <path d="M220 112 C254 96 306 96 340 112" />
-            <path
-              d="M340 176 C306 194 254 194 220 176"
-              className={styles.dashedFlow}
-            />
-            <path d="M127 216 C152 236 182 250 214 260" />
-            <path d="M433 216 C408 236 378 250 346 260" />
-          </g>
-          <SvgTextBlock
-            x={280}
-            y={300}
-            lines={[
-              "A credible airline current state shows",
-              "mainframe and dual-DC resilience explicitly.",
-            ]}
-            className={styles.miniFootnote}
-            textAnchor="middle"
-          />
-        </MiniArchitectureDiagram>
-
-        <MiniArchitectureDiagram
-          title="Digital airline channels"
-          subtitle="Web, mobile, APIs, loyalty, and real-time experience data"
-          ariaLabel="Digital airline channels architecture diagram showing airline dot com, mobile, API gateway, loyalty, passenger service, events, analytics, and personalization"
-        >
-          <g className={styles.miniDiagramBase}>
-            <rect x="32" y="64" width="130" height="74" rx="8" />
-            <SvgTextBlock
-              x={97}
-              y={91}
-              lines={["Airline.com", "mobile · kiosks", "contact center"]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-            <rect x="216" y="64" width="128" height="74" rx="8" />
-            <SvgTextBlock
-              x={280}
-              y={91}
-              lines={["API layer", "identity · booking", "passenger service"]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-            <rect x="398" y="64" width="130" height="74" rx="8" />
-            <SvgTextBlock
-              x={463}
-              y={91}
-              lines={["Experience", "loyalty · offers", "service recovery"]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-            <rect x="78" y="204" width="152" height="54" rx="8" />
-            <SvgTextBlock
-              x={154}
-              y={226}
-              lines={["Events", "clickstream · trips · cases"]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-            <rect x="330" y="204" width="152" height="54" rx="8" />
-            <SvgTextBlock
-              x={406}
-              y={226}
-              lines={["Decisioning", "BI · CDP · AI assist"]}
-              className={styles.miniCenterText}
-              textAnchor="middle"
-            />
-          </g>
-          <g className={styles.miniDiagramFlows}>
-            <path d="M162 101 L216 101" />
-            <path d="M344 101 L398 101" />
-            <path d="M280 138 C244 162 204 184 154 204" />
-            <path d="M230 231 L330 231" />
-            <path
-              d="M406 204 C430 174 448 150 463 138"
-              className={styles.dashedFlow}
-            />
-          </g>
-          <SvgTextBlock
-            x={280}
-            y={286}
-            lines={[
-              "Digital has a real-time customer-facing shape;",
-              "it should not be drawn like ERP.",
-            ]}
-            className={styles.miniFootnote}
-            textAnchor="middle"
-          />
-        </MiniArchitectureDiagram>
+        {ARCHITECTURE_CANVASES.map((canvas) => (
+          <ArchitectureLaneCanvas canvas={canvas} key={canvas.title} />
+        ))}
       </div>
     </section>
   );
