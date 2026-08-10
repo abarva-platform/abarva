@@ -4,12 +4,12 @@ export type HomeLandscapeTabId =
   | "context"
   | "economics"
   | "architecture"
+  | "architectureEvidence"
   | "posture"
   | "coherence"
   | "trajectory"
   | "watchlist"
-  | "evidence"
-  | "claudeReview";
+  | "evidence";
 
 export type SignalTone = "blue" | "teal" | "amber" | "slate" | "red";
 
@@ -165,7 +165,7 @@ export const HOME_LANDSCAPE_TABS: Array<{
   { id: "context", label: "Context" },
   { id: "economics", label: "Economics" },
   { id: "architecture", label: "Architecture" },
-  { id: "claudeReview", label: "Claude Review" },
+  { id: "architectureEvidence", label: "Architecture Evidence" },
   { id: "posture", label: "Posture" },
   { id: "coherence", label: "Coherence" },
   { id: "trajectory", label: "Trajectory" },

@@ -42,7 +42,7 @@ it("preserves context and architecture as native Home tabs", () => {
     screen.getByRole("tab", { name: "Architecture" }),
   ).toBeInTheDocument();
   expect(
-    screen.getByRole("tab", { name: "Claude Review" }),
+    screen.getByRole("tab", { name: "Architecture Evidence" }),
   ).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("tab", { name: "Patterns" }));
@@ -169,10 +169,10 @@ it("preserves context and architecture as native Home tabs", () => {
   expect(screen.getByText("Identity facts")).toBeInTheDocument();
   expect(window.location.search).toBe("?view=evidence");
 
-  fireEvent.click(screen.getByRole("tab", { name: "Claude Review" }));
+  fireEvent.click(screen.getByRole("tab", { name: "Architecture Evidence" }));
   expect(
     screen.getByRole("heading", {
-      name: "Claude-generated architecture review",
+      name: "Generated architecture evidence",
     }),
   ).toBeInTheDocument();
   expect(
@@ -180,18 +180,18 @@ it("preserves context and architecture as native Home tabs", () => {
   ).toBeInTheDocument();
   expect(
     screen.getByLabelText(
-      "Enterprise operating system pattern map review-only Claude SVG",
+      "Enterprise operating system pattern map review-only generated SVG",
     ),
   ).toBeInTheDocument();
   expect(
     screen.getByRole("img", {
-      name: "Enterprise operating system pattern map review-only Claude architecture candidate",
+      name: "Enterprise operating system pattern map review-only generated architecture candidate",
     }),
   ).toHaveAttribute(
     "src",
     "/api/home/architecture-review/patterns-enterprise-operating-system",
   );
-  expect(window.location.search).toBe("?view=claudeReview");
+  expect(window.location.search).toBe("?view=architectureEvidence");
 
   const economics = screen.getByRole("tab", { name: "Economics" });
   fireEvent.click(economics);
@@ -229,17 +229,21 @@ it("preserves context and architecture as native Home tabs", () => {
   fireEvent.keyDown(architecture, { key: "ArrowRight" });
   expect(
     screen.getByRole("heading", {
-      name: "Claude-generated architecture review",
+      name: "Generated architecture evidence",
     }),
   ).toBeInTheDocument();
-  expect(screen.getByRole("tab", { name: "Claude Review" })).toHaveAttribute(
+  expect(
+    screen.getByRole("tab", { name: "Architecture Evidence" }),
+  ).toHaveAttribute(
     "aria-selected",
     "true",
   );
 
-  const claudeReview = screen.getByRole("tab", { name: "Claude Review" });
-  claudeReview.focus();
-  fireEvent.keyDown(claudeReview, { key: "ArrowRight" });
+  const architectureEvidence = screen.getByRole("tab", {
+    name: "Architecture Evidence",
+  });
+  architectureEvidence.focus();
+  fireEvent.keyDown(architectureEvidence, { key: "ArrowRight" });
   expect(
     screen.getByRole("heading", { name: "Normalized enterprise posture" }),
   ).toBeInTheDocument();
@@ -271,4 +275,17 @@ it("loads native Context and Architecture view params without redirect", () => {
     "true",
   );
   expect(window.location.search).toBe("?view=architecture");
+});
+
+it("normalizes the legacy generated-review view param to Architecture Evidence", () => {
+  window.history.replaceState(null, "", "/home?view=claudeReview");
+  render(<HomeEnterpriseLandscapeV2 />);
+
+  expect(
+    screen.getByRole("tab", { name: "Architecture Evidence" }),
+  ).toHaveAttribute("aria-selected", "true");
+  expect(
+    screen.getByRole("heading", { name: "Generated architecture evidence" }),
+  ).toBeInTheDocument();
+  expect(window.location.search).toBe("?view=architectureEvidence");
 });

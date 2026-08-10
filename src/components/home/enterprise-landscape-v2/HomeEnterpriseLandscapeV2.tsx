@@ -17,6 +17,9 @@ import styles from "./HomeEnterpriseLandscapeV2.module.css";
 const TAB_IDS = new Set<HomeLandscapeTabId>(
   HOME_LANDSCAPE_TABS.map((tab) => tab.id),
 );
+const LEGACY_TAB_ALIASES: Partial<Record<string, HomeLandscapeTabId>> = {
+  claudeReview: "architectureEvidence",
+};
 
 const TONE_CLASS: Record<SignalTone, string> = {
   blue: styles.barBlue,
@@ -42,46 +45,48 @@ const TILE_TONE_CLASS: Record<SignalTone, string> = {
   red: styles.tileToneRed,
 };
 
-const CLAUDE_REVIEW_DIAGRAMS = [
+const ARCHITECTURE_EVIDENCE_DIAGRAMS = [
   {
     id: "patterns-enterprise-operating-system",
     tab: "Patterns",
     title: "Enterprise operating system pattern map",
     subtitle:
-      "Review-only Claude candidate showing the enterprise operating pattern across domains, economics, evidence, and governance.",
+      "Review-only generated candidate showing the enterprise operating pattern across domains, economics, evidence, and governance.",
   },
   {
     id: "economics-value-control",
     tab: "Economics",
     title: "Economics and value-control architecture",
     subtitle:
-      "Review-only Claude candidate; economics claims remain blocked until numeric reconciliation and overlap checks pass.",
+      "Review-only generated candidate; economics claims remain blocked until numeric reconciliation and overlap checks pass.",
   },
   {
     id: "posture-evidence-authority",
     tab: "Posture",
     title: "Evidence and authority posture map",
     subtitle:
-      "Review-only Claude candidate; evidence tiers and authority gates require deterministic semantic validation.",
+      "Review-only generated candidate; evidence tiers and authority gates require deterministic semantic validation.",
   },
   {
     id: "coherence-domain-architecture-index",
     tab: "Coherence",
     title: "Scoped architecture diagram index",
     subtitle:
-      "Review-only Claude candidate showing scoped domains for digital, ERP, data/AI, and mainframe/private-cloud views.",
+      "Review-only generated candidate showing scoped domains for digital, ERP, data/AI, and mainframe/private-cloud views.",
   },
   {
     id: "trajectory-executive-shifts",
     tab: "Trajectory",
     title: "Executive shift and gate map",
     subtitle:
-      "Review-only Claude candidate; future-state shifts and gates require approved authority before publication.",
+      "Review-only generated candidate; future-state shifts and gates require approved authority before publication.",
   },
 ] as const;
 
 function normalizeTabId(value: string | null): HomeLandscapeTabId | null {
   if (!value) return null;
+  const alias = LEGACY_TAB_ALIASES[value];
+  if (alias) return alias;
   if (TAB_IDS.has(value as HomeLandscapeTabId))
     return value as HomeLandscapeTabId;
   return null;
@@ -169,15 +174,15 @@ function ContextSignalWall({
   );
 }
 
-function ClaudeArchitectureReviewPanel() {
+function GeneratedArchitectureEvidencePanel() {
   return (
-    <div className={styles.claudeReviewLayout}>
+    <div className={styles.architectureEvidenceLayout}>
       <section className={styles.reviewWarning} aria-label="Review-only status">
         <div>
-          <span>Review-only Claude candidate</span>
+          <span>Review-only generated candidate</span>
           <strong>Not semantic validated. Not approved for publication.</strong>
           <p>
-            These SVGs are the retained Claude outputs from the audit pack. They
+            These SVGs are retained generated outputs from the audit pack. They
             are visible here so reviewers can inspect them in Home, but they are
             not used by the normal Home tabs or approved content layer.
           </p>
@@ -190,11 +195,11 @@ function ClaudeArchitectureReviewPanel() {
       </section>
 
       <div className={styles.reviewDiagramGrid}>
-        {CLAUDE_REVIEW_DIAGRAMS.map((diagram) => (
+        {ARCHITECTURE_EVIDENCE_DIAGRAMS.map((diagram) => (
           <figure
             className={styles.authoredDiagramExhibit}
             key={diagram.id}
-            aria-label={`${diagram.title} review-only Claude SVG`}
+            aria-label={`${diagram.title} review-only generated SVG`}
           >
             <figcaption className={styles.authoredDiagramHeader}>
               <div>
@@ -203,22 +208,22 @@ function ClaudeArchitectureReviewPanel() {
                 <p>{diagram.subtitle}</p>
               </div>
               <div className={styles.authoredDiagramMeta}>
-                <span>claude-sonnet-4-6</span>
+                <span>generated diagram pack</span>
                 <span>blocked pending semantic validation</span>
               </div>
             </figcaption>
             <div className={styles.authoredDiagramFrame}>
-              {/* Review SVGs must render exactly as retained Claude output. */}
+              {/* Review SVGs must render exactly as retained generated output. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 className={styles.authoredDiagramImage}
                 src={`/api/home/architecture-review/${diagram.id}`}
-                alt={`${diagram.title} review-only Claude architecture candidate`}
+                alt={`${diagram.title} review-only generated architecture candidate`}
               />
             </div>
             <div className={styles.authoredDiagramSources}>
               <span>raw response retained</span>
-              <span>stored SVG equals Claude output</span>
+              <span>stored SVG equals retained output</span>
               <span>review report only</span>
             </div>
           </figure>
@@ -1032,6 +1037,7 @@ function EconomicsExhibit({ rows }: { rows: EconomicRow[] }) {
 }
 
 function splitCoherenceText(value: string) {
+  if (value === "Critical platforms") return ["Critical", "platforms"];
   if (value === "Data and measures") return ["Data and", "measures"];
   if (value === "Controls and vendors") return ["Controls and", "vendors"];
   if (value === "Portfolio capacity") return ["Portfolio", "capacity"];
@@ -1058,8 +1064,17 @@ function CoherenceMap({ model }: { model: HomeEnterpriseLandscapeV2Model }) {
   const nodeByLabel = new Map(
     model.coherence.map((node) => [node.label, node]),
   );
-  const xScale = 12.4;
-  const yScale = 5.45;
+  const nodeTokens: Record<string, string> = {
+    Operations: "Ops",
+    "Critical platforms": "Core",
+    "Portfolio capacity": "Port",
+    Commercial: "Comm",
+    "Data and measures": "Data",
+    "Controls and vendors": "Ctrl",
+    Coherence: "Fit",
+  };
+  const xScale = 11.55;
+  const yScale = 4.65;
 
   return (
     <div className={`${styles.visualPanel} ${styles.coherenceMap}`}>
@@ -1069,7 +1084,7 @@ function CoherenceMap({ model }: { model: HomeEnterpriseLandscapeV2Model }) {
       </div>
       <svg
         className={styles.mapSvg}
-        viewBox="0 0 1280 560"
+        viewBox="0 0 1160 440"
         role="img"
         aria-label="Enterprise coherence map connecting operations, platforms, portfolio capacity, commercial, data, controls, and coherence"
       >
@@ -1090,20 +1105,20 @@ function CoherenceMap({ model }: { model: HomeEnterpriseLandscapeV2Model }) {
             <path d="M0,0 L9,4.5 L0,9 Z" fill="#9fb3cf" />
           </marker>
         </defs>
-        <rect x="28" y="24" width="1224" height="488" rx="18" fill="#fbfcff" />
+        <rect x="26" y="18" width="1108" height="390" rx="18" fill="#fbfcff" />
         <path
-          d="M150 130 C300 38, 500 58, 626 148 C790 260, 940 128, 1140 226"
+          d="M132 108 C276 38, 455 50, 585 122 C742 208, 858 124, 1026 196"
           fill="none"
           stroke="url(#coherenceWash)"
           strokeLinecap="round"
-          strokeWidth="92"
+          strokeWidth="76"
         />
         <path
-          d="M150 380 C320 254, 500 356, 636 362 C790 368, 930 434, 1144 310"
+          d="M132 306 C292 220, 452 292, 585 298 C742 304, 858 352, 1028 252"
           fill="none"
           stroke="url(#coherenceWash)"
           strokeLinecap="round"
-          strokeWidth="96"
+          strokeWidth="78"
         />
         {edges.map(([fromLabel, toLabel, dashed]) => {
           const from = nodeByLabel.get(fromLabel);
@@ -1128,15 +1143,15 @@ function CoherenceMap({ model }: { model: HomeEnterpriseLandscapeV2Model }) {
           const cy = node.y * yScale;
           const labelLines = splitCoherenceText(node.label);
           const detailLines = splitCoherenceDetail(node.detail);
-          const labelY = cy + 76;
-          const detailY = labelY + 25 + (labelLines.length - 1) * 21;
+          const labelY = cy + 58;
+          const detailY = labelY + 21 + (labelLines.length - 1) * 18;
 
           return (
             <g className={styles.mapNode} key={node.label}>
               <circle
                 cx={cx}
                 cy={cy}
-                r={node.label === "Coherence" ? "62" : "52"}
+                r={node.label === "Coherence" ? "52" : "46"}
                 fill={TONE_HEX[node.tone]}
                 opacity="0.96"
               />
@@ -1146,20 +1161,20 @@ function CoherenceMap({ model }: { model: HomeEnterpriseLandscapeV2Model }) {
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="#fff"
-                fontSize="23"
+                fontSize="18"
                 fontWeight="800"
               >
-                {node.label === "Coherence" ? "C" : node.label.split(" ")[0]}
+                {nodeTokens[node.label] ?? node.label.slice(0, 4)}
               </text>
               <text
                 x={cx}
                 y={labelY}
                 textAnchor="middle"
-                fontSize="18"
+                fontSize="14"
                 fontWeight="760"
               >
                 {labelLines.map((line, index) => (
-                  <tspan key={line} x={cx} dy={index === 0 ? 0 : 21}>
+                  <tspan key={line} x={cx} dy={index === 0 ? 0 : 18}>
                     {line}
                   </tspan>
                 ))}
@@ -1168,11 +1183,11 @@ function CoherenceMap({ model }: { model: HomeEnterpriseLandscapeV2Model }) {
                 x={cx}
                 y={detailY}
                 textAnchor="middle"
-                fontSize="13"
+                fontSize="11"
                 fill="#657087"
               >
                 {detailLines.map((line, index) => (
-                  <tspan key={line} x={cx} dy={index === 0 ? 0 : 17}>
+                  <tspan key={line} x={cx} dy={index === 0 ? 0 : 14}>
                     {line}
                   </tspan>
                 ))}
@@ -1390,7 +1405,7 @@ function TabPanels({
           <p className={styles.lead}>
             Posture is shown as a normalized read across evidence, coherence,
             flexibility, and potential. It is a planning-grade rubric, not a
-            Claude-generated score.
+            model-generated score.
           </p>
         </div>
         <div className={styles.postureMatrix}>
@@ -1592,20 +1607,21 @@ function TabPanels({
 
       <article
         className={styles.panel}
-        id="claudeReview-panel"
+        id="architectureEvidence-panel"
         role="tabpanel"
-        aria-labelledby="tab-claudeReview"
-        hidden={selectedTab !== "claudeReview"}
+        aria-labelledby="tab-architectureEvidence"
+        hidden={selectedTab !== "architectureEvidence"}
       >
         <div>
-          <h2>Claude-generated architecture review</h2>
+          <h2>Generated architecture evidence</h2>
           <p className={styles.lead}>
-            The generated architecture is visible here for inspection only. It
-            remains outside the approved Home content path until deterministic
-            semantic validation and human publication approval pass.
+            The generated architecture exhibits are visible here for inspection
+            only. They remain outside the approved Home content path until
+            deterministic semantic validation and human publication approval
+            pass.
           </p>
         </div>
-        <ClaudeArchitectureReviewPanel />
+        <GeneratedArchitectureEvidencePanel />
       </article>
     </div>
   );
