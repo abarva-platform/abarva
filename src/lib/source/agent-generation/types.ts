@@ -22,6 +22,7 @@ import type {
   SourceEventEvidence,
   SourceEventGateCriterion,
 } from "@/lib/source/canvas-substrate/types";
+import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
 import type { SourceStageKey } from "@/lib/source/types";
 import type { VendorProposalFactRecord } from "@/lib/source/vendor-proposals/types";
 
@@ -152,6 +153,18 @@ export interface SourceGenerationContext {
    * as authoritative. Empty array when no facts have been accepted yet.
    */
   authoritativeVendorProposalFacts?: VendorProposalFactRecord[];
+  /**
+   * Facilitator guidebook for the event's current stage, when published.
+   * Generation prompts use this as operating context: what meeting to run,
+   * what evidence to collect, and how to capture the stage decision.
+   */
+  currentStageGuidebook?: SourceStageGuidebookRecord | null;
+  /**
+   * Published guidebook for the next stage, when available. This lets a
+   * Strategy artifact, for example, prepare the Scope data-collection plan
+   * and point the client to the right templates before the next gate opens.
+   */
+  nextStageGuidebook?: SourceStageGuidebookRecord | null;
 }
 
 /**
@@ -195,7 +208,7 @@ export interface SourceArtifactPromptTemplate {
   version: number;
   /** OpenAI model id. Defaults to the Source OpenAI model. */
   model: string;
-  /** Max output tokens — keep generous; cap at 8000 for v1. */
+  /** Max output tokens — keep generous; quality and completeness come first. */
   maxTokens: number;
   /**
    * Static system prompt for this artifact (voice + format
