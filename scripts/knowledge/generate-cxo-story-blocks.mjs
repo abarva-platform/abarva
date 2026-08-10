@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import fs from "node:fs";
 import path from "node:path";
 import { getTenantV6Config, tenantV6CanonicalConfigs } from "../tenant-v3/configs/index.mjs";
-import { readCsv, writeCsv } from "../lib/v6-v7/csv.mjs";
+import { readCsv, writeCsv } from "../tenant-v3/lib/csv.mjs";
 
 const repoRoot = process.cwd();
 const model = process.env.KNOWLEDGE_CXO_CLAUDE_MODEL || "claude-sonnet-4-6";
@@ -109,6 +109,8 @@ function readJson(file) {
 }
 
 function canonicalInputLabel(config) {
+  const activePath = `datasets/tenant-inputs/active/${config.tenantKey}/current`;
+  if (fs.existsSync(path.join(repoRoot, activePath))) return activePath;
   return `datasets/tenant-inputs/${config.tenantKey}/standard-2026-07-v3`;
 }
 
@@ -122,7 +124,15 @@ function listTop(rows, field, count = 8) {
 
 function contextForTenant(config) {
   const inputsDir = path.join(repoRoot, "datasets/tenant-inputs", config.tenantKey);
-  const standardDir = path.join(inputsDir, "standard-2026-07-v3");
+  const activeDir = path.join(
+    repoRoot,
+    "datasets/tenant-inputs/active",
+    config.tenantKey,
+    "current",
+  );
+  const standardDir = fs.existsSync(activeDir)
+    ? activeDir
+    : path.join(inputsDir, "standard-2026-07-v3");
   const profile = readCsv(path.join(standardDir, "00_enterprise_profile.csv"))[0] ?? {};
   const systems = readCsv(path.join(standardDir, "04_applications_systems.csv"));
   const vendors = readCsv(path.join(standardDir, "07_vendors_contracts.csv"));
@@ -188,6 +198,7 @@ Rules:
 - Use evidence-bound language such as "not yet evidenced", "needs validation", "planning-grade", "hypothesis", and "next evidence request".
 - Never write "not loaded"; write "not yet evidenced" or "needs evidence" instead.
 - Avoid these exact phrases: ${hardFailPhrases.join(" | ")}.
+- Never use the word "packet" in any phrase, including "board packet" or "data packet"; use "board materials", "evidence bundle", or "review artifact" instead.
 - Avoid internal version names and internal data plumbing words.
 - For numeric charts, only use if the supplied context includes numeric support. Prefer qualitative matrices/cards.
 
@@ -358,13 +369,14 @@ function renderProofHtml(config, payload, validation) {
 
 async function generateForTenant(client, config) {
   const context = contextForTenant(config);
-  const message = await client.messages.create({
+  const stream = client.messages.stream({
     model,
     max_tokens: Number(process.env.KNOWLEDGE_CXO_MAX_TOKENS || 20000),
     temperature: 0.2,
     system: "You generate evidence-bound enterprise CXO narrative artifacts. Return strict JSON only.",
     messages: [{ role: "user", content: buildPrompt(context) }],
   });
+  const message = await stream.finalMessage();
   const rawText = collectText(message);
   const payload = extractJson(rawText);
   const validation = validatePayload(payload, config);

@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 
 const result = spawnSync(
   process.execPath,
-  ["scripts/knowledge/validate-home-architecture-diagram-pack.mjs"],
+  ["scripts/knowledge/validate-home-architecture-diagram-pack.mjs", "--require-claude"],
   {
     cwd: process.cwd(),
     encoding: "utf8",
@@ -23,8 +23,8 @@ if (report.status !== "pass") {
   process.exit(1);
 }
 
-if (!report.warnings.some((warning) => warning.includes("not Claude-generated yet"))) {
-  console.error("Expected the seed pack to warn that Claude generation is pending.");
+if (report.warnings.some((warning) => warning.includes("not Claude-generated yet"))) {
+  console.error("Did not expect the generated pack to warn that Claude generation is pending.");
   process.exit(1);
 }
 

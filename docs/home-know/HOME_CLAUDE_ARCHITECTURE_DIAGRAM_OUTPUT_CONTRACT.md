@@ -16,7 +16,11 @@ not modify the SVG or the narrative.
 
 ## Required Claude Output
 
-Claude must return a single JSON object with this shape:
+Claude may be called once for the full pack or once per diagram. For review-grade generation, the
+preferred path is one Claude call per diagram so each SVG can be complete, detailed, and validated
+without truncation.
+
+When called for the full pack, Claude must return a single JSON object with this shape:
 
 ```json
 {
@@ -42,8 +46,33 @@ Claude must return a single JSON object with this shape:
 }
 ```
 
-The generator stores Claude's raw response verbatim at `raw-claude-response.json`, extracts the JSON
-object without changing content, and writes each `svg` string exactly as returned.
+When called for one diagram, Claude must return a single JSON object with this shape:
+
+```json
+{
+  "id": "patterns-enterprise-operating-system",
+  "tab": "patterns",
+  "title": "Enterprise operating system pattern map",
+  "subtitle": "Executive-safe one sentence explanation.",
+  "svg": "<svg ...>...</svg>",
+  "confidence": "planning_grade",
+  "source_refs": ["enterprise_context", "architecture_graph"]
+}
+```
+
+The generator stores Claude's raw response verbatim at `raw-claude-response.json` or at one
+`raw-claude-response-<diagram-id>.json` file per diagram, extracts the JSON object without changing
+content, and writes each `svg` string exactly as returned.
+
+## JSON String Discipline
+
+Claude must return valid JSON. SVG values must be JSON strings, not raw XML blocks.
+
+- Do not put literal line breaks inside the `svg` string.
+- Escape all quote characters that appear inside SVG attributes.
+- Prefer a compact one-line SVG string.
+- Do not use markdown fences.
+- The response must parse with `JSON.parse` before validation runs.
 
 ## Required Diagram Coverage
 

@@ -28,9 +28,9 @@ const pack = {
   tenant_key: "skyharbor-air",
   tenant_name: "SkyHarbor Global",
   artifact_type: "home_architecture_diagram_pack",
-  pack_version: "1.0.0",
-  authoring_status: "codex_seed_pending_claude_generation",
-  generated_model: "codex-static-seed",
+  pack_version: "v1.0.0",
+  authoring_status: "claude_generated_validation_pass",
+  generated_model: "claude-sonnet-4-6",
   prompt_version: "home-claude-architecture-diagram-pack-v1",
   no_post_claude_mutation: true,
   diagrams: [
@@ -39,55 +39,79 @@ const pack = {
       tab: "patterns",
       title: "Enterprise operating system pattern map",
       subtitle:
-        "Connects airline mission domains, technology lanes, and proof gates into one board-readable operating view.",
+        "A board-level view of how SkyHarbor Global's airline domains, technology estate, data proof, AI gates, and value controls operate as one integrated system.",
       asset_path:
         "/generated/home/skyharbor-air/architecture-diagram-pack-v1/patterns-enterprise-operating-system.svg",
-      confidence: "planning_grade_directional",
-      source_refs: ["design_contract_pack", "architecture_graph"],
+      confidence: "planning_grade",
+      source_refs: [
+        "enterprise_context",
+        "architecture_graph",
+        "contract_register",
+        "tower_value_lane",
+      ],
     },
     {
       id: "economics-value-control",
       tab: "economics",
       title: "Economics and value-control architecture",
       subtitle:
-        "Shows the value path from spend and commitments through governed claims and validated outcomes.",
+        "Maps SkyHarbor Global's $2.35B FY2027 technology budget from committed base through AI use cost to claimable-value gates and finance validation.",
       asset_path:
         "/generated/home/skyharbor-air/architecture-diagram-pack-v1/economics-value-control.svg",
-      confidence: "planning_grade_directional",
-      source_refs: ["tower_value_lane", "contract_register", "usage_observations"],
+      confidence: "planning_grade",
+      source_refs: [
+        "it_budget_spend_value",
+        "vendors_contracts",
+        "ai_automation_use_cases",
+        "tower_value_lane",
+      ],
     },
     {
       id: "posture-evidence-authority",
       tab: "posture",
       title: "Evidence and authority posture map",
       subtitle:
-        "Separates loaded context, indexed evidence, cited answers, and finance-grade value authority.",
+        "Shows where evidence is loaded and indexed, which relationships are directional versus confirmed, and which authority gates must clear before recommendations advance.",
       asset_path:
         "/generated/home/skyharbor-air/architecture-diagram-pack-v1/posture-evidence-authority.svg",
-      confidence: "planning_grade_directional",
-      source_refs: ["context_corpus_policy", "evidence_readiness"],
+      confidence: "planning_grade",
+      source_refs: [
+        "home_evidence_contract",
+        "relationship_edges",
+        "architecture_advisory_result",
+      ],
     },
     {
       id: "coherence-domain-architecture-index",
       tab: "coherence",
       title: "Scoped architecture diagram index",
       subtitle:
-        "Splits enterprise architecture into smaller, executive-consumable domains rather than one oversized map.",
+        "Four scoped architecture views - digital channels, ERP/back-office, data and AI, and mainframe/private-cloud infrastructure - mapped across SkyHarbor Global's 444-node estate.",
       asset_path:
         "/generated/home/skyharbor-air/architecture-diagram-pack-v1/coherence-domain-architecture-index.svg",
-      confidence: "planning_grade_directional",
-      source_refs: ["architecture_graph", "relationship_edges"],
+      confidence: "planning_grade",
+      source_refs: [
+        "applications_systems",
+        "data_assets_integrations",
+        "infrastructure_platforms",
+        "relationship_edges",
+      ],
     },
     {
       id: "trajectory-executive-shifts",
       tab: "trajectory",
-      title: "Executive architecture trajectory",
+      title: "Executive shift and gate map",
       subtitle:
-        "Frames current-state constraints and governed shifts across estate, data, AI, and value realization.",
+        "Gated movement from current-state constraints toward governed modernization across architecture, sourcing, data, and AI - no target-state commitment asserted.",
       asset_path:
         "/generated/home/skyharbor-air/architecture-diagram-pack-v1/trajectory-executive-shifts.svg",
-      confidence: "planning_grade_directional",
-      source_refs: ["strategy_signals", "enterprise_context_chunks"],
+      confidence: "planning_grade",
+      source_refs: [
+        "intelligence_route",
+        "moves_route",
+        "source_route",
+        "tower_route",
+      ],
     },
   ],
 } satisfies HomeArchitectureDiagramPack;

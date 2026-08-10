@@ -6,4 +6,4 @@ Safe deterministic fallback can state only that SkyHarbor Air has a planning-gra
 
 ## After
 
-SkyHarbor Air is a complex global passenger airline with cargo, loyalty, maintenance, and digital operations.
+SkyHarbor Air operates across passenger, cargo, loyalty, maintenance, and digital domains with significant evidence gaps.

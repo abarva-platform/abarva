@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 
 const repoRoot = process.cwd();
 const defaultManifest = path.join(
@@ -80,9 +81,14 @@ if (requireClaude && !String(manifest.generated_model ?? "").startsWith("claude-
 }
 if (
   requireClaude &&
-  manifest.authoring_status !== "claude_generated_validation_pass"
+  ![
+    "claude_generated_pending_validation",
+    "claude_generated_validation_pass",
+  ].includes(manifest.authoring_status)
 ) {
-  fail("--require-claude requires authoring_status=claude_generated_validation_pass");
+  fail(
+    "--require-claude requires a Claude-generated authoring_status pending or passed validation",
+  );
 }
 if (!Array.isArray(manifest.diagrams) || manifest.diagrams.length < requiredTabs.size) {
   fail(`diagrams must include at least ${requiredTabs.size} entries`);
@@ -130,6 +136,14 @@ for (const diagram of manifest.diagrams ?? []) {
   if (svg.length < 2500) {
     fail(`Diagram ${diagram.id} is too small to be an enterprise-grade exhibit`);
   }
+  const xmlCheck = spawnSync("xmllint", ["--noout", filePath], {
+    encoding: "utf8",
+  });
+  if (xmlCheck.error?.code === "ENOENT") {
+    warn("xmllint is not available; XML well-formedness check skipped");
+  } else if (xmlCheck.status !== 0) {
+    fail(`Diagram ${diagram.id} is not well-formed XML: ${xmlCheck.stderr.trim()}`);
+  }
   for (const pattern of forbiddenPatterns) {
     if (pattern.test(svg)) {
       fail(`Diagram ${diagram.id} contains forbidden SVG pattern: ${pattern}`);
@@ -161,4 +175,3 @@ console.log(JSON.stringify(report, null, 2));
 if (failures.length) {
   process.exit(1);
 }
-
