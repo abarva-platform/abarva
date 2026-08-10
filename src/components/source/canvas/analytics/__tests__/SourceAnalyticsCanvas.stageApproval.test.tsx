@@ -9,7 +9,11 @@ const routerPush = jest.fn();
 const routerRefresh = jest.fn();
 
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push: routerPush, replace: jest.fn(), refresh: routerRefresh }),
+  useRouter: () => ({
+    push: routerPush,
+    replace: jest.fn(),
+    refresh: routerRefresh,
+  }),
   usePathname: () => "/source/events/evt-scope",
   useSearchParams: () => new URLSearchParams("stage=scope&workspace=approvals"),
   useParams: () => ({ eventId: "evt-scope" }),
@@ -25,8 +29,12 @@ jest.mock("@clerk/nextjs", () => ({
 }));
 
 import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
-import { SAMPLE_SCOPE_STAGE } from "../sample-view-model";
+import {
+  SAMPLE_SCOPE_STAGE,
+  SAMPLE_SELECTION_STAGE,
+} from "../sample-view-model";
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
+import { buildSourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness";
 import type { SourcingEventSummary } from "@/lib/source/types";
 
 const EVENT: SourcingEventSummary = {
@@ -143,5 +151,57 @@ describe("SourceAnalyticsCanvas — stage approval blocker", () => {
       `/source/events/${EVENT.id}?stage=rfp`,
     );
     expect(routerRefresh).toHaveBeenCalled();
+  });
+});
+
+describe("SourceAnalyticsCanvas — selection readiness bridge", () => {
+  beforeEach(() => {
+    routerPush.mockClear();
+    routerRefresh.mockClear();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("renders the vendor-selection readiness panel on the live Selection stage shell", () => {
+    const selectionEvent: SourcingEventSummary = {
+      ...EVENT,
+      id: "evt-selection",
+      code: "SRC-SELECTION-2026",
+      name: "AMS Competitive RFP",
+      currentStageKey: "selection",
+      currentStageLabel: "Selection",
+      valueAtStakeUsd: 1_000_000,
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={selectionEvent}
+        viewStage="selection"
+        tenantName="Demo Client"
+        stageView={SAMPLE_SELECTION_STAGE}
+        initialWorkspace="steps"
+        selectionReadiness={buildSourceVendorSelectionReadiness({
+          event: {
+            id: selectionEvent.id,
+            name: selectionEvent.name,
+            currentStageKey: "selection",
+            currentStageLabel: "Selection",
+            valueAtStakeUsd: selectionEvent.valueAtStakeUsd,
+          },
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByTestId("source-shell-selection-readiness-bridge"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Ready for selection review?")).toBeInTheDocument();
+    expect(screen.getByText("Evidence used")).toBeInTheDocument();
+    expect(screen.queryByText("Modules used")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/READY_FOR_SELECTION_REVIEW|PROCEED_TO_BAFO/),
+    ).not.toBeInTheDocument();
   });
 });
