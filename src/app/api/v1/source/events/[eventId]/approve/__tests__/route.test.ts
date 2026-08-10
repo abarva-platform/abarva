@@ -202,6 +202,40 @@ describe("POST Source event approve", () => {
     expect(payload.stageAdvancedTo).toBeUndefined();
   });
 
+  it("fails closed when approval persistence is rejected", async () => {
+    applyApproval.mockResolvedValueOnce({
+      ok: false,
+      error:
+        "approval record insert failed: permission denied for source_event_approvals",
+    } as never);
+
+    const request = new Request(
+      "https://app.abarva.ai/api/v1/source/events/event-1/approve",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          action: "approve",
+          notes: "Sponsor confirms RFP gate is ready to advance.",
+          confirmations: {
+            evidenceComplete: true,
+            exclusionsReviewed: true,
+            stageFinal: true,
+          },
+        }),
+      },
+    );
+
+    const response = await POST(request, {
+      params: Promise.resolve({ eventId: "event-1" }),
+    });
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload.error).toBe("update_failed");
+    expect(payload.detail).toContain("approval record insert failed");
+    expect(updateStage).not.toHaveBeenCalled();
+  });
+
   it("uses a contract optimization profile for any tenant, not only SkyHarbor aliases", async () => {
     eventRow.current_stage_key = "pricing";
     eventRow.client_key = "meridian";
