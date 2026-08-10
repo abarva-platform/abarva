@@ -80,8 +80,16 @@ export function buildApprovalLedger(args: {
 
   return stages.map((stage, index) => {
     const stageKey = stage.key;
+    const matched = latestByStage.get(stageKey) ?? null;
+    // The final stage has no successor to advance into. Once its real
+    // approval row exists, the ledger should show completion instead of an
+    // endlessly current final gate.
+    const approvedTerminalStage =
+      currentIndex === stageKeys.length - 1 && index === currentIndex && matched;
     const state: ApprovalLedgerRow["state"] =
-      currentIndex < 0
+      approvedTerminalStage
+        ? "approved"
+        : currentIndex < 0
         ? "locked"
         : index < currentIndex
           ? "approved"
@@ -89,7 +97,6 @@ export function buildApprovalLedger(args: {
             ? "current"
             : "locked";
 
-    const matched = latestByStage.get(stageKey) ?? null;
     const approverName = matched
       ? (args.approverNames.get(matched.approved_by_user_id) ??
         "Unknown approver")
