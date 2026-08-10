@@ -839,14 +839,39 @@ export function TaskProvideUpload({
   if (status.phase === "uploaded") {
     return (
       <div>
-        <FileChip
-          file={{
-            format: status.result.format,
-            name: status.result.originalName,
-            meta: `${formatUploadSize(status.result.sizeBytes)} · uploaded`,
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "26px minmax(0, 1fr)",
+            gap: 10,
+            alignItems: "center",
           }}
-          onRemove={() => setStatus({ phase: "idle" })}
-        />
+        >
+          <span
+            aria-label="File uploaded"
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              background: ANALYTICS.GREEN,
+              color: "#fff",
+              display: "grid",
+              placeItems: "center",
+              fontSize: 12,
+              fontWeight: 900,
+            }}
+          >
+            ✓
+          </span>
+          <FileChip
+            file={{
+              format: status.result.format,
+              name: status.result.originalName,
+              meta: `${formatUploadSize(status.result.sizeBytes)} · uploaded`,
+            }}
+            onRemove={() => setStatus({ phase: "idle" })}
+          />
+        </div>
         {status.ingest ? <FactResultChip ingest={status.ingest} /> : null}
       </div>
     );
