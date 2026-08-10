@@ -47,7 +47,7 @@ describe("buildApprovalsInbox", () => {
     expect(item.status).toBe("ready");
     expect(item.readiness).toMatch(/All 2 gate items met/);
     expect(item.actionLabel).toBe("Approve now");
-    expect(item.href).toBe("/source/events/a1?stage=strategy");
+    expect(item.href).toBe("/source/events/a1?stage=strategy&workspace=approvals");
     expect(inbox.gateReadyCount).toBe(1);
   });
 

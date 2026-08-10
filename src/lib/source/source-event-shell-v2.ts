@@ -384,14 +384,28 @@ export function buildSourceEventShellView(
   const thisEventApprovals = Array.from(input.approvalItems ?? []).filter(
     (item) => item.eventId === input.event.id,
   );
-  const currentStageItem =
+  const rawCurrentStageItem =
     thisEventApprovals.find(
       (item) => item.stageKey === input.event.currentStageKey,
     ) ?? null;
+  const stageApprovalHref = `/source/events/${encodeURIComponent(input.event.id)}?stage=${encodeURIComponent(input.viewedStageKey)}&workspace=approvals`;
+  const viewedStageIsCurrent =
+    input.viewedStageKey === input.event.currentStageKey;
+  const completedViewedStage = total > 0 && ready === total;
+  const currentStageItem =
+    rawCurrentStageItem && viewedStageIsCurrent && completedViewedStage
+      ? {
+          ...rawCurrentStageItem,
+          status: "ready" as const,
+          readiness: `All ${total} required evidence item${total === 1 ? "" : "s"} ready — review and approve ${viewedStageLabel}.`,
+          href: stageApprovalHref,
+          actionLabel: "Approve now",
+        }
+      : rawCurrentStageItem;
   // currentStageItem already renders featured above the list — exclude it
   // here so it doesn't also render a second time inside the list.
   const approvals = thisEventApprovals.filter(
-    (item) => item !== currentStageItem,
+    (item) => item !== rawCurrentStageItem,
   );
   const stepInsight = input.stepInsight ?? input.stageView.stepInsight ?? null;
   const intelSourceBasis = intelligenceBasis(
@@ -429,11 +443,11 @@ export function buildSourceEventShellView(
       activeStep,
       gateReadinessLine:
         ready === total
-          ? "Stage complete - all required evidence is ready. Review the approval page to advance."
+          ? "Stage complete - all required evidence is ready. Open the approval workspace to advance."
           : `${total - ready} steps left - ${total - ready} required evidence item${total - ready === 1 ? "" : "s"} before approval.`,
-      approvalHref: `/source/events/${encodeURIComponent(input.event.id)}/approval`,
-      approvalCtaLabel: `Review ${viewedStageLabel} approval`,
-      approvalLockedLabel: "Approval page opens when required evidence is ready",
+      approvalHref: stageApprovalHref,
+      approvalCtaLabel: `Open ${viewedStageLabel} approval`,
+      approvalLockedLabel: "Approval opens when required evidence is ready",
     },
     files: {
       items: artifacts,
