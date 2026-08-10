@@ -203,25 +203,15 @@ describe("SourceContract360Page", () => {
 
     expect(screen.getByTestId("contract-360-optimize")).toHaveAttribute(
       "href",
-      expect.stringContaining("intent=contract-optimization"),
+      "/source/optimize?contractId=c1",
     );
-    expect(screen.getByTestId("contract-360-optimize")).toHaveAttribute(
+    expect(screen.getByTestId("contract-360-optimize")).not.toHaveAttribute(
       "href",
-      expect.stringContaining("contractId=c1"),
+      expect.stringContaining("contractName="),
     );
-    expect(screen.getByTestId("contract-360-optimize")).toHaveAttribute(
+    expect(screen.getByTestId("contract-360-optimize")).not.toHaveAttribute(
       "href",
-      expect.stringContaining(
-        "contractName=Salesforce%20Data%20Platform%20Agreement%203",
-      ),
-    );
-    expect(screen.getByTestId("contract-360-optimize")).toHaveAttribute(
-      "href",
-      expect.stringContaining("annualValueUsd=43476437"),
-    );
-    expect(screen.getByTestId("contract-360-optimize")).toHaveAttribute(
-      "href",
-      expect.stringContaining("actualAnnualSpendUsd=41000000"),
+      expect.stringContaining("annualValueUsd="),
     );
   });
 
@@ -266,14 +256,13 @@ describe("SourceContract360Page", () => {
     render(<SourceContract360Page view={view} tenantName="Airline Demo" />);
 
     const optimize = screen.getByTestId("contract-360-optimize");
-    expect(optimize).toHaveAttribute(
-      "href",
-      expect.stringContaining("intent=contract-optimization"),
-    );
+    expect(optimize).toHaveAttribute("href", "/source/optimize?contractId=c1");
     expect(optimize).not.toHaveAttribute(
       "href",
       expect.stringContaining("scopeSummary="),
     );
-    expect(screen.queryByText(/Fictional contract supporting/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Fictional contract supporting/),
+    ).not.toBeInTheDocument();
   });
 });

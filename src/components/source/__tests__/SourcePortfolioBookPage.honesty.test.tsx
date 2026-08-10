@@ -86,7 +86,7 @@ describe("SourcePortfolioBookPage — honesty invariants", () => {
     );
     expect(screen.getByTestId("source-book-optimize")).toHaveAttribute(
       "href",
-      "/source/new?intent=contract-optimization",
+      "/source/optimize",
     );
   });
 

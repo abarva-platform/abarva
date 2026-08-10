@@ -1,0 +1,849 @@
+"use client";
+
+import React, { useMemo, useState, type CSSProperties } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { AppShell } from "@/components/shell/AppShell";
+import { SourceSubNav } from "@/components/source/SourceSubNav";
+import { ANALYTICS } from "@/components/source/canvas/analytics/analytics-tokens";
+import type {
+  ContractOptimizationCandidate,
+  ContractOptimizationSourceConnection,
+  ContractOptimizationSpine,
+} from "@/lib/source/data-model/contract-optimization-spine";
+import type {
+  ContractOptimizationOpportunity,
+  ContractOptimizationOpportunitySet,
+} from "@/lib/source/data-model/contract-optimization-opportunity";
+
+interface SourceOptimizeContractPageProps {
+  tenantName: string;
+  asOfDateIso: string;
+  spine: ContractOptimizationSpine;
+  opportunitySet: ContractOptimizationOpportunitySet | null;
+}
+
+const STAGES = [
+  "Select",
+  "Baseline",
+  "Evidence",
+  "Diagnose",
+  "Levers",
+  "Approval",
+  "Value proof",
+] as const;
+
+export function SourceOptimizeContractPage({
+  tenantName,
+  asOfDateIso,
+  spine,
+  opportunitySet,
+}: SourceOptimizeContractPageProps) {
+  const selected = spine.selected;
+  const selectedOpportunity = useMemo(() => {
+    if (!opportunitySet) return null;
+    const id = opportunitySet.selectedOpportunityId;
+    return (
+      opportunitySet.opportunities.find(
+        (opportunity) => opportunity.opportunityId === id,
+      ) ??
+      opportunitySet.opportunities[0] ??
+      null
+    );
+  }, [opportunitySet]);
+
+  return (
+    <AppShell
+      surface="source"
+      agentName="Ava"
+      surfaceContext={{
+        sourceOptimizeContractMode: true,
+        contractId: selected?.contractId,
+      }}
+      topBarProps={{
+        tenantName,
+        showLocked: true,
+        context: "Source · Optimize Contract",
+      }}
+      subNav={<SourceSubNav />}
+    >
+      <main data-testid="source-optimize-contract" style={MAIN_STYLE}>
+        <div style={CONTAINER_STYLE}>
+          <ModuleHeader
+            asOfDateIso={asOfDateIso}
+            selected={selected}
+            selectedOpportunity={selectedOpportunity}
+          />
+          <StageRail activeIndex={selected ? 1 : 0} />
+          {selected ? (
+            <SelectedContractView
+              candidate={selected}
+              spine={spine}
+              opportunitySet={opportunitySet}
+              selectedOpportunity={selectedOpportunity}
+            />
+          ) : (
+            <ContractPicker candidates={spine.topCandidates} />
+          )}
+        </div>
+      </main>
+    </AppShell>
+  );
+}
+
+function ModuleHeader({
+  asOfDateIso,
+  selected,
+  selectedOpportunity,
+}: {
+  asOfDateIso: string;
+  selected: ContractOptimizationCandidate | null;
+  selectedOpportunity: ContractOptimizationOpportunity | null;
+}) {
+  return (
+    <header style={HEADER_STYLE}>
+      <div style={{ minWidth: 0, display: "grid", gap: 5 }}>
+        <div style={EYEBROW_STYLE}>Source · Optimize Contract</div>
+        <h1 style={H1_STYLE}>
+          {selected
+            ? `${selected.vendorName} contract optimization`
+            : "Optimize an existing contract"}
+        </h1>
+        <p style={SUBLINE_STYLE}>
+          {selected
+            ? `${selected.contractName} · ${formatUsd(selected.annualValue)} annual value · ${selected.band}.`
+            : "Pick a current contract, inspect the governed evidence, then open a dedicated optimization case."}
+        </p>
+        <div style={META_ROW_STYLE}>
+          <span>As of {formatDate(asOfDateIso)}</span>
+          <span>
+            No realized value is claimed until Finance/Tower confirms it.
+          </span>
+          {selectedOpportunity ? (
+            <span>Selected opportunity: {selectedOpportunity.shortLabel}</span>
+          ) : null}
+        </div>
+      </div>
+      <div style={HEADER_ACTIONS_STYLE}>
+        <Link href="/source/vendor-portfolio" style={GHOST_BUTTON_STYLE}>
+          Contract 360
+        </Link>
+        <Link href="/source/new" style={GHOST_BUTTON_STYLE}>
+          New sourcing event
+        </Link>
+      </div>
+    </header>
+  );
+}
+
+function StageRail({ activeIndex }: { activeIndex: number }) {
+  return (
+    <nav aria-label="Optimize contract stages" style={STAGE_RAIL_STYLE}>
+      {STAGES.map((stage, index) => (
+        <div
+          key={stage}
+          style={{
+            ...STAGE_CHIP_STYLE,
+            ...(index === activeIndex ? STAGE_CHIP_ACTIVE_STYLE : null),
+          }}
+        >
+          <span style={STAGE_NUMBER_STYLE}>
+            {String(index + 1).padStart(2, "0")}
+          </span>
+          {stage}
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+function ContractPicker({
+  candidates,
+}: {
+  candidates: readonly ContractOptimizationCandidate[];
+}) {
+  return (
+    <section style={PANEL_STYLE}>
+      <div style={PANEL_HEAD_STYLE}>
+        <div>
+          <h2 style={SECTION_TITLE_STYLE}>Choose the contract worth action</h2>
+          <p style={PANEL_COPY_STYLE}>
+            Ranking is based on governed Source facts: annual exposure, weak
+            leverage, renewal timing, spend variance, operational pressure, and
+            enterprise dependency.
+          </p>
+        </div>
+      </div>
+      {candidates.length === 0 ? (
+        <div style={EMPTY_STYLE}>
+          No governed contract candidates are available for this tenant.
+        </div>
+      ) : (
+        <div style={TABLE_WRAP_STYLE}>
+          <table style={TABLE_STYLE}>
+            <thead>
+              <tr>
+                <th style={TH_STYLE}>Rank</th>
+                <th style={TH_STYLE}>Contract</th>
+                <th style={TH_STYLE}>Annual value</th>
+                <th style={TH_STYLE}>Fit</th>
+                <th style={TH_STYLE}>Why it is surfaced</th>
+                <th style={TH_STYLE}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {candidates.map((candidate) => (
+                <tr key={candidate.contractId}>
+                  <td style={TD_STYLE}>#{candidate.rank}</td>
+                  <td style={TD_STYLE}>
+                    <strong>{candidate.vendorName}</strong>
+                    <div style={MUTED_SMALL_STYLE}>
+                      {candidate.contractName}
+                    </div>
+                  </td>
+                  <td style={TD_STYLE}>{formatUsd(candidate.annualValue)}</td>
+                  <td style={TD_STYLE}>
+                    <strong>{candidate.score}/100</strong>
+                    <div style={MUTED_SMALL_STYLE}>{candidate.band}</div>
+                  </td>
+                  <td style={TD_STYLE}>
+                    {candidate.reasons[0]?.detail ??
+                      "Governed optimization signals are still being assembled."}
+                  </td>
+                  <td style={TD_STYLE}>
+                    <Link
+                      href={`/source/optimize?contractId=${encodeURIComponent(candidate.contractId)}`}
+                      style={ROW_BUTTON_STYLE}
+                    >
+                      Review
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SelectedContractView({
+  candidate,
+  spine,
+  opportunitySet,
+  selectedOpportunity,
+}: {
+  candidate: ContractOptimizationCandidate;
+  spine: ContractOptimizationSpine;
+  opportunitySet: ContractOptimizationOpportunitySet | null;
+  selectedOpportunity: ContractOptimizationOpportunity | null;
+}) {
+  return (
+    <div style={SELECTED_GRID_STYLE}>
+      <section style={PANEL_STYLE}>
+        <div style={PANEL_HEAD_STYLE}>
+          <div>
+            <h2 style={SECTION_TITLE_STYLE}>
+              #{candidate.rank} {candidate.band}
+            </h2>
+            <p style={PANEL_COPY_STYLE}>{candidate.action}</p>
+          </div>
+          <div style={SCORE_BADGE_STYLE}>
+            <strong>{candidate.score}</strong>
+            <span>fit score</span>
+          </div>
+        </div>
+        <div style={REASON_GRID_STYLE}>
+          {candidate.reasons.slice(0, 4).map((reason) => (
+            <div key={`${reason.kind}-${reason.label}`} style={REASON_STYLE}>
+              <div style={REASON_LABEL_STYLE}>{reason.label}</div>
+              <p style={REASON_COPY_STYLE}>{reason.detail}</p>
+              <div style={MUTED_SMALL_STYLE}>{reason.sourceRef}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section style={PANEL_STYLE}>
+        <div style={PANEL_HEAD_STYLE}>
+          <div>
+            <h2 style={SECTION_TITLE_STYLE}>Governed opportunity spine</h2>
+            <p style={PANEL_COPY_STYLE}>
+              The optimization case starts from evidence rows, not a generic RFP
+              intake. Missing evidence remains a visible blocker.
+            </p>
+          </div>
+          <StartOptimizationButton
+            contractId={candidate.contractId}
+            opportunityId={selectedOpportunity?.opportunityId ?? null}
+          />
+        </div>
+        <BaselineRead opportunitySet={opportunitySet} />
+        <OpportunityTable
+          opportunities={opportunitySet?.opportunities ?? []}
+          selectedOpportunityId={selectedOpportunity?.opportunityId ?? null}
+        />
+      </section>
+
+      <section style={PANEL_STYLE}>
+        <h2 style={SECTION_TITLE_STYLE}>Evidence still needed</h2>
+        {spine.missingEvidenceSources.length === 0 ? (
+          <p style={PANEL_COPY_STYLE}>
+            No missing evidence sources are required by the current opportunity
+            spine. Continue through approval and value proof before making any
+            realized-value claim.
+          </p>
+        ) : (
+          <div style={EVIDENCE_LIST_STYLE}>
+            {spine.missingEvidenceSources.map((item) => (
+              <div key={item.lineId} style={EVIDENCE_ITEM_STYLE}>
+                <strong>{item.lineLabel}</strong>
+                <p style={PANEL_COPY_STYLE}>{item.nextAction}</p>
+                <div style={MUTED_SMALL_STYLE}>{item.ask}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section style={PANEL_STYLE}>
+        <h2 style={SECTION_TITLE_STYLE}>Where the data comes from</h2>
+        <SourceConnectionTable connections={spine.sourceConnections} />
+      </section>
+    </div>
+  );
+}
+
+function StartOptimizationButton({
+  contractId,
+  opportunityId,
+}: {
+  contractId: string;
+  opportunityId: string | null;
+}) {
+  const router = useRouter();
+  const [state, setState] = useState<"idle" | "busy" | "error">("idle");
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function start() {
+    setState("busy");
+    setMessage(null);
+    try {
+      const response = await fetch(
+        `/api/source/workspace/contract/${encodeURIComponent(contractId)}/optimization`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ opportunityId }),
+        },
+      );
+      const payload = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        approvalUrl?: string;
+        error?: string;
+        detail?: string;
+      } | null;
+      if (!response.ok || !payload?.ok || !payload.approvalUrl) {
+        throw new Error(
+          payload?.detail ??
+            payload?.error ??
+            "Could not open optimization case.",
+        );
+      }
+      router.push(payload.approvalUrl);
+    } catch (error) {
+      setState("error");
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not open optimization case.",
+      );
+    }
+  }
+
+  return (
+    <div style={START_WRAP_STYLE}>
+      <button
+        type="button"
+        onClick={start}
+        disabled={state === "busy"}
+        style={PRIMARY_BUTTON_STYLE}
+        data-testid="start-optimize-contract"
+      >
+        {state === "busy" ? "Opening..." : "Open optimize case"}
+      </button>
+      {message ? <div style={ERROR_STYLE}>{message}</div> : null}
+    </div>
+  );
+}
+
+function BaselineRead({
+  opportunitySet,
+}: {
+  opportunitySet: ContractOptimizationOpportunitySet | null;
+}) {
+  if (!opportunitySet) {
+    return (
+      <div style={BASELINE_STYLE}>
+        <strong>Baseline unavailable</strong>
+        <span>
+          The contract can be selected, but the opportunity spine has not found
+          a governed commercial baseline yet.
+        </span>
+      </div>
+    );
+  }
+  const baseline = opportunitySet.baseline;
+  return (
+    <div style={BASELINE_STYLE}>
+      <strong>{baseline.headline}</strong>
+      <span>{baseline.detail}</span>
+      <div style={BASELINE_METRICS_STYLE}>
+        <Metric
+          label="Annual value"
+          value={formatMaybeUsd(baseline.annualValueUsd)}
+        />
+        <Metric
+          label="Actual spend"
+          value={formatMaybeUsd(baseline.actualAnnualSpendUsd)}
+        />
+        <Metric
+          label="Committed"
+          value={formatMaybeUsd(baseline.totalCommittedValueUsd)}
+        />
+        <Metric
+          label="Finance confirmed"
+          value={formatUsd(opportunitySet.financeConfirmedUsd)}
+        />
+      </div>
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={METRIC_STYLE}>
+      <div style={METRIC_VALUE_STYLE}>{value}</div>
+      <div style={MUTED_SMALL_STYLE}>{label}</div>
+    </div>
+  );
+}
+
+function OpportunityTable({
+  opportunities,
+  selectedOpportunityId,
+}: {
+  opportunities: readonly ContractOptimizationOpportunity[];
+  selectedOpportunityId: string | null;
+}) {
+  if (opportunities.length === 0) {
+    return (
+      <div style={EMPTY_STYLE}>
+        No quantified opportunity rows are loaded yet.
+      </div>
+    );
+  }
+  return (
+    <div style={TABLE_WRAP_STYLE}>
+      <table style={TABLE_STYLE}>
+        <thead>
+          <tr>
+            <th style={TH_STYLE}>Opportunity</th>
+            <th style={TH_STYLE}>Value type</th>
+            <th style={TH_STYLE}>Amount</th>
+            <th style={TH_STYLE}>Evidence</th>
+            <th style={TH_STYLE}>Next action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {opportunities.slice(0, 6).map((opportunity) => (
+            <tr
+              key={opportunity.opportunityId}
+              style={
+                opportunity.opportunityId === selectedOpportunityId
+                  ? SELECTED_ROW_STYLE
+                  : undefined
+              }
+            >
+              <td style={TD_STYLE}>
+                <strong>{opportunity.shortLabel}</strong>
+                <div style={MUTED_SMALL_STYLE}>{opportunity.stage}</div>
+              </td>
+              <td style={TD_STYLE}>{labelValueType(opportunity.valueType)}</td>
+              <td style={TD_STYLE}>{formatMaybeUsd(opportunity.amountUsd)}</td>
+              <td style={TD_STYLE}>
+                {opportunity.evidenceGrade}
+                <div style={MUTED_SMALL_STYLE}>
+                  {opportunity.sourceSystems.join(", ") || "No source system"}
+                </div>
+              </td>
+              <td style={TD_STYLE}>{opportunity.nextAction}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SourceConnectionTable({
+  connections,
+}: {
+  connections: readonly ContractOptimizationSourceConnection[];
+}) {
+  return (
+    <div style={TABLE_WRAP_STYLE}>
+      <table style={TABLE_STYLE}>
+        <thead>
+          <tr>
+            <th style={TH_STYLE}>System</th>
+            <th style={TH_STYLE}>What to pull</th>
+            <th style={TH_STYLE}>Feeds</th>
+            <th style={TH_STYLE}>Why it matters</th>
+          </tr>
+        </thead>
+        <tbody>
+          {connections.map((connection) => (
+            <tr key={connection.id}>
+              <td style={TD_STYLE}>
+                <strong>{connection.sourceSystem}</strong>
+                <div style={MUTED_SMALL_STYLE}>
+                  {connection.examples.slice(0, 3).join(", ")}
+                </div>
+              </td>
+              <td style={TD_STYLE}>{connection.extract}</td>
+              <td style={TD_STYLE}>
+                {connection.ledgers.map(labelLedger).join(", ")}
+              </td>
+              <td style={TD_STYLE}>{connection.outcome}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatMaybeUsd(value: number | null): string {
+  return value == null ? "Not established" : formatUsd(value);
+}
+
+function formatUsd(value: number): string {
+  if (!Number.isFinite(value)) return "Not established";
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+  if (abs >= 1_000_000_000)
+    return `${sign}$${(abs / 1_000_000_000).toFixed(2)}B`;
+  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${sign}$${Math.round(abs / 1_000)}K`;
+  return `${sign}$${Math.round(abs).toLocaleString("en-US")}`;
+}
+
+function labelLedger(value: string): string {
+  return value.replace(/_/g, " ");
+}
+
+function labelValueType(value: string): string {
+  if (value === "recoverable_leakage") return "Recoverable leakage";
+  if (value === "avoided_cost") return "Avoided cost";
+  if (value === "negotiable_improvement") return "Negotiated improvement";
+  return value;
+}
+
+const MAIN_STYLE: CSSProperties = {
+  minHeight: "100vh",
+  background: ANALYTICS.PAGE_BG,
+  color: ANALYTICS.INK,
+};
+
+const CONTAINER_STYLE: CSSProperties = {
+  maxWidth: 1480,
+  margin: "0 auto",
+  padding: "24px 28px 48px",
+  display: "grid",
+  gap: 16,
+};
+
+const HEADER_STYLE: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  gap: 18,
+};
+
+const HEADER_ACTIONS_STYLE: CSSProperties = {
+  display: "flex",
+  gap: 8,
+  alignItems: "center",
+  flexShrink: 0,
+};
+
+const EYEBROW_STYLE: CSSProperties = {
+  color: ANALYTICS.BLUE,
+  fontSize: 11,
+  fontWeight: 800,
+  letterSpacing: 1.5,
+  textTransform: "uppercase",
+};
+
+const H1_STYLE: CSSProperties = {
+  margin: 0,
+  fontFamily: "Georgia, serif",
+  fontSize: 34,
+  lineHeight: 1.05,
+  letterSpacing: 0,
+};
+
+const SUBLINE_STYLE: CSSProperties = {
+  margin: 0,
+  color: ANALYTICS.MUTED,
+  fontSize: 15,
+  lineHeight: 1.4,
+};
+
+const META_ROW_STYLE: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 8,
+  color: ANALYTICS.MUTED,
+  fontSize: 12,
+};
+
+const GHOST_BUTTON_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderRadius: 8,
+  padding: "10px 12px",
+  color: ANALYTICS.INK,
+  textDecoration: "none",
+  background: "#fff",
+  fontSize: 13,
+  fontWeight: 800,
+};
+
+const PRIMARY_BUTTON_STYLE: CSSProperties = {
+  border: "none",
+  borderRadius: 8,
+  padding: "11px 14px",
+  color: "#fff",
+  background: ANALYTICS.INK,
+  fontSize: 13,
+  fontWeight: 900,
+  cursor: "pointer",
+};
+
+const ROW_BUTTON_STYLE: CSSProperties = {
+  ...PRIMARY_BUTTON_STYLE,
+  display: "inline-block",
+  textDecoration: "none",
+};
+
+const STAGE_RAIL_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+  gap: 8,
+};
+
+const STAGE_CHIP_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderRadius: 8,
+  background: "#fff",
+  padding: "10px 12px",
+  fontSize: 12,
+  fontWeight: 850,
+  color: ANALYTICS.MUTED,
+  display: "flex",
+  gap: 8,
+  alignItems: "center",
+  minHeight: 42,
+};
+
+const STAGE_CHIP_ACTIVE_STYLE: CSSProperties = {
+  background: ANALYTICS.INK,
+  color: "#fff",
+  borderColor: ANALYTICS.INK,
+};
+
+const STAGE_NUMBER_STYLE: CSSProperties = {
+  color: ANALYTICS.BLUE,
+  fontSize: 11,
+  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+};
+
+const PANEL_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderRadius: 8,
+  background: "#fff",
+  padding: 18,
+  display: "grid",
+  gap: 14,
+};
+
+const PANEL_HEAD_STYLE: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 16,
+  alignItems: "flex-start",
+};
+
+const SECTION_TITLE_STYLE: CSSProperties = {
+  margin: 0,
+  fontSize: 18,
+  lineHeight: 1.2,
+  letterSpacing: 0,
+};
+
+const PANEL_COPY_STYLE: CSSProperties = {
+  margin: "5px 0 0",
+  color: ANALYTICS.MUTED,
+  fontSize: 13,
+  lineHeight: 1.45,
+};
+
+const TABLE_WRAP_STYLE: CSSProperties = {
+  overflowX: "auto",
+};
+
+const TABLE_STYLE: CSSProperties = {
+  width: "100%",
+  borderCollapse: "collapse",
+  fontSize: 13,
+};
+
+const TH_STYLE: CSSProperties = {
+  textAlign: "left",
+  padding: "9px 10px",
+  borderBottom: `1px solid ${ANALYTICS.LINE}`,
+  color: ANALYTICS.MUTED,
+  fontSize: 10,
+  letterSpacing: 1.2,
+  textTransform: "uppercase",
+};
+
+const TD_STYLE: CSSProperties = {
+  padding: "11px 10px",
+  borderBottom: `1px solid ${ANALYTICS.LINE}`,
+  verticalAlign: "top",
+  lineHeight: 1.35,
+};
+
+const MUTED_SMALL_STYLE: CSSProperties = {
+  color: ANALYTICS.MUTED,
+  fontSize: 11,
+  lineHeight: 1.35,
+  marginTop: 3,
+};
+
+const EMPTY_STYLE: CSSProperties = {
+  border: `1px dashed ${ANALYTICS.LINE}`,
+  borderRadius: 8,
+  padding: 18,
+  color: ANALYTICS.MUTED,
+  fontSize: 13,
+};
+
+const SELECTED_GRID_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 16,
+};
+
+const SCORE_BADGE_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderRadius: 8,
+  padding: "10px 12px",
+  display: "grid",
+  gap: 2,
+  minWidth: 92,
+  textAlign: "center",
+};
+
+const REASON_GRID_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+  gap: 10,
+};
+
+const REASON_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderRadius: 8,
+  padding: 12,
+  minHeight: 126,
+};
+
+const REASON_LABEL_STYLE: CSSProperties = {
+  fontSize: 13,
+  fontWeight: 900,
+};
+
+const REASON_COPY_STYLE: CSSProperties = {
+  margin: "7px 0 0",
+  color: ANALYTICS.MUTED,
+  fontSize: 12,
+  lineHeight: 1.4,
+};
+
+const BASELINE_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderRadius: 8,
+  padding: 14,
+  display: "grid",
+  gap: 9,
+  color: ANALYTICS.INK,
+};
+
+const BASELINE_METRICS_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+  gap: 8,
+};
+
+const METRIC_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderRadius: 8,
+  padding: 10,
+};
+
+const METRIC_VALUE_STYLE: CSSProperties = {
+  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+  fontWeight: 900,
+  fontSize: 15,
+};
+
+const SELECTED_ROW_STYLE: CSSProperties = {
+  background: "#f8fafc",
+};
+
+const EVIDENCE_LIST_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 8,
+};
+
+const EVIDENCE_ITEM_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderRadius: 8,
+  padding: 12,
+};
+
+const START_WRAP_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 6,
+  justifyItems: "end",
+};
+
+const ERROR_STYLE: CSSProperties = {
+  color: ANALYTICS.RUST,
+  fontSize: 12,
+  maxWidth: 260,
+  textAlign: "right",
+};
