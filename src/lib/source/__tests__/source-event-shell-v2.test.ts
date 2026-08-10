@@ -177,7 +177,7 @@ describe("buildSourceEventShellView", () => {
       stageLabel: "Commercial Baseline",
       ask: "Approve advancing out of Commercial Baseline.",
       readiness:
-        "0 of 1 required evidence item ready — review the gaps before approving Commercial Baseline.",
+        "0 of 1 required evidence item ready - review the gaps before approving Commercial Baseline.",
       href: `/source/events/${optimizationEvent.id}?stage=pricing&workspace=approvals`,
       actionLabel: "Review & decide",
     });
@@ -397,7 +397,7 @@ describe("buildSourceEventShellView", () => {
     );
   });
 
-  it("routes a completed current stage to the approvals workspace and reconciles stale gate-count copy", () => {
+  it("routes a completed current stage to the approvals workspace while preserving artifact gaps", () => {
     const completeScopeStage: StageAnalyticsView = {
       ...(SAMPLE_SCOPE_STAGE as StageAnalyticsView),
       tasks: (SAMPLE_SCOPE_STAGE as StageAnalyticsView).tasks.map((task) => ({
@@ -432,15 +432,86 @@ describe("buildSourceEventShellView", () => {
     expect(view.stage.approvalHref).toBe(
       `/source/events/${EVENT.id}?stage=scope&workspace=approvals`,
     );
-    expect(view.stage.approvalCtaLabel).toBe("Open Scope approval");
+    expect(view.stage.artifactReadiness.ready).toBe(false);
+    expect(view.stage.artifactReadiness.blockerCount).toBeGreaterThan(0);
+    expect(view.stage.gateReadinessLine).toContain("required/gate artifact");
+    expect(view.stage.approvalCtaLabel).toBe("Review Scope approval gaps");
     expect(view.approvals.currentStageItem).toMatchObject({
-      status: "ready",
-      actionLabel: "Approve now",
+      status: "ready_with_gaps",
+      actionLabel: "Review gaps",
       href: `/source/events/${EVENT.id}?stage=scope&workspace=approvals`,
     });
     expect(view.approvals.currentStageItem?.readiness).toContain(
-      "required evidence",
+      "still need review",
     );
+  });
+
+  it("does not present completed RFP inputs as cleanly ready when gate artifacts are draft or missing", () => {
+    const completeRfpStage: StageAnalyticsView = {
+      ...(SAMPLE_SCOPE_STAGE as StageAnalyticsView),
+      stageKey: "rfp",
+      stageName: "RFP",
+      tasks: [
+        {
+          id: "rfp.package",
+          title: "Prepare the RFP package",
+          subtitle: "Client-ready release pack",
+          type: "confirm",
+          state: "done",
+          evidenceComplete: true,
+          guide: "Review the RFP package before release.",
+          cta: "Confirm RFP",
+        },
+      ],
+    };
+    const rfpApproval: ApprovalsInboxItem = {
+      ...APPROVAL,
+      stageKey: "rfp",
+      stageLabel: "RFP",
+      readiness: "All required inputs ready.",
+    };
+
+    const view = buildSourceEventShellView({
+      event: {
+        ...EVENT,
+        currentStageKey: "rfp",
+        currentStageLabel: "RFP",
+      },
+      tenantName: "FS Demo",
+      viewedStageKey: "rfp",
+      stageView: completeRfpStage,
+      approvalItems: [rfpApproval],
+      artifacts: [
+        {
+          id: "rfp-draft-1",
+          artifactCode: "d09_rfp_pack",
+          artifactGroup: "generated",
+          sourceOrigin: "generated",
+          stageKey: "rfp",
+          status: "draft",
+        },
+      ],
+    });
+
+    expect(view.stage.ready).toBe(view.stage.total);
+    expect(view.stage.artifactReadiness.ready).toBe(false);
+    expect(view.stage.artifactReadiness.blockers).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          "RFP Package: AI draft not accepted as client final",
+        ),
+        expect.stringContaining("Vendor Response Control Pack: not registered"),
+        expect.stringContaining("Vendor Shortlist: not registered"),
+      ]),
+    );
+    expect(view.stage.gateReadinessLine).toContain(
+      "required/gate artifacts still need",
+    );
+    expect(view.stage.approvalCtaLabel).toBe("Review RFP approval gaps");
+    expect(view.approvals.currentStageItem).toMatchObject({
+      status: "ready_with_gaps",
+      actionLabel: "Review gaps",
+    });
   });
 
   it("scopes the Approvals workspace to this event only, and never renders the featured item twice", () => {

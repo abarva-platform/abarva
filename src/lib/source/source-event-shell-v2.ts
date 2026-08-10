@@ -158,6 +158,14 @@ export interface SourceShellGuidebookWorkspace {
   emptyMessage: string;
 }
 
+export interface SourceShellStageArtifactReadiness {
+  ready: boolean;
+  blockerCount: number;
+  warningCount: number;
+  line: string;
+  blockers: string[];
+}
+
 export interface SourceEventShellView {
   event: {
     id: string;
@@ -192,6 +200,7 @@ export interface SourceEventShellView {
     groups: SourceShellStepGroup[];
     activeStep: SourceShellStep | null;
     gateReadinessLine: string;
+    artifactReadiness: SourceShellStageArtifactReadiness;
     approvalHref: string;
     approvalCtaLabel: string;
     approvalLockedLabel: string;
@@ -385,6 +394,10 @@ export function buildSourceEventShellView(
     ),
   );
   const lifecycle = buildSourceArtifactLifecycleSummary(input.artifacts ?? []);
+  const artifactReadiness = stageArtifactReadinessFor(
+    lifecycle,
+    input.viewedStageKey,
+  );
   // The raw inbox is cross-tenant ("everything waiting on you across every
   // event" — the portfolio-level /source/approvals page is where that
   // belongs). This per-event canvas must only ever show THIS event's items.
@@ -401,6 +414,8 @@ export function buildSourceEventShellView(
   const currentStageApprovalHref = `/source/events/${encodeURIComponent(input.event.id)}?stage=${encodeURIComponent(visibleCurrentStageKey)}&workspace=approvals`;
   const viewedStageIsCurrent = input.viewedStageKey === visibleCurrentStageKey;
   const completedViewedStage = total > 0 && ready === total;
+  const stageReadyWithArtifactGaps =
+    completedViewedStage && !artifactReadiness.ready;
   const normalizedCurrentStageItem = rawCurrentStageItem
     ? normalizeCurrentStageApprovalItem(
         rawCurrentStageItem,
@@ -414,16 +429,24 @@ export function buildSourceEventShellView(
       ? {
           ...normalizedCurrentStageItem,
           status: completedViewedStage
-            ? ("ready" as const)
+            ? artifactReadiness.ready
+              ? ("ready" as const)
+              : ("ready_with_gaps" as const)
             : ("ready_with_gaps" as const),
           readiness:
             total > 0
               ? completedViewedStage
-                ? `All ${total} required evidence item${total === 1 ? "" : "s"} ready — review and approve ${viewedStageLabel}.`
-                : `${ready} of ${total} required evidence item${total === 1 ? "" : "s"} ready — review the gaps before approving ${viewedStageLabel}.`
+                ? artifactReadiness.ready
+                  ? `All ${total} required evidence item${total === 1 ? "" : "s"} ready - review and approve ${viewedStageLabel}.`
+                  : `All ${total} required evidence item${total === 1 ? "" : "s"} ready, but ${artifactReadiness.blockerCount} required/gate artifact${artifactReadiness.blockerCount === 1 ? "" : "s"} still need review before approving ${viewedStageLabel}.`
+                : `${ready} of ${total} required evidence item${total === 1 ? "" : "s"} ready - review the gaps before approving ${viewedStageLabel}.`
               : normalizedCurrentStageItem.readiness,
           href: stageApprovalHref,
-          actionLabel: completedViewedStage ? "Approve now" : "Review & decide",
+          actionLabel: completedViewedStage
+            ? artifactReadiness.ready
+              ? "Approve now"
+              : "Review gaps"
+            : "Review & decide",
         }
       : normalizedCurrentStageItem;
   // currentStageItem already renders featured above the list — exclude it
@@ -466,11 +489,16 @@ export function buildSourceEventShellView(
       groups,
       activeStep,
       gateReadinessLine:
-        ready === total
-          ? "Stage complete - all required evidence is ready. Open the approval workspace to advance."
-          : `${total - ready} steps left - ${total - ready} required evidence item${total - ready === 1 ? "" : "s"} before approval.`,
+        completedViewedStage && artifactReadiness.ready
+          ? "Stage complete - required inputs and gate artifacts are ready. Open the approval workspace to advance."
+          : stageReadyWithArtifactGaps
+            ? artifactReadiness.line
+            : `${total - ready} steps left - ${total - ready} required evidence item${total - ready === 1 ? "" : "s"} before approval.`,
+      artifactReadiness,
       approvalHref: stageApprovalHref,
-      approvalCtaLabel: `Open ${viewedStageLabel} approval`,
+      approvalCtaLabel: stageReadyWithArtifactGaps
+        ? `Review ${viewedStageLabel} approval gaps`
+        : `Open ${viewedStageLabel} approval`,
       approvalLockedLabel: "Approval opens when required evidence is ready",
     },
     files: {
@@ -532,6 +560,84 @@ function normalizeCurrentStageApprovalItem(
     ask: `Approve advancing out of ${stageLabel}.`,
     href,
   };
+}
+
+function stageArtifactReadinessFor(
+  lifecycle: SourceArtifactLifecycleSummary,
+  stageKey: SourceStageKey,
+): SourceShellStageArtifactReadiness {
+  const gateRows = lifecycle.rows.filter(
+    (row) =>
+      row.stageKey === stageKey &&
+      (row.requirementLabel === "Required" ||
+        row.gateLabel === "Gate-defining"),
+  );
+  if (gateRows.length === 0) {
+    return {
+      ready: true,
+      blockerCount: 0,
+      warningCount: 0,
+      line: "No required/gate artifact standard is registered for this stage yet; use required inputs and approval rationale as the control.",
+      blockers: [],
+    };
+  }
+
+  const blockers = gateRows
+    .map((row) => {
+      const reason = artifactBlockerReason(row);
+      return reason ? `${row.name}: ${reason}` : null;
+    })
+    .filter((item): item is string => Boolean(item));
+  const warningCount = gateRows.reduce(
+    (totalWarnings, row) =>
+      totalWarnings +
+      row.quality.warnings.length +
+      row.contentQuality.warnings.length,
+    0,
+  );
+
+  if (blockers.length === 0) {
+    return {
+      ready: true,
+      blockerCount: 0,
+      warningCount,
+      line:
+        warningCount > 0
+          ? `Gate artifacts are client-final, with ${warningCount} warning${warningCount === 1 ? "" : "s"} to review in Files.`
+          : "Gate artifacts are client-final and ready for approval.",
+      blockers: [],
+    };
+  }
+
+  return {
+    ready: false,
+    blockerCount: blockers.length,
+    warningCount,
+    line: `${blockers.length} required/gate artifact${blockers.length === 1 ? "" : "s"} still need client-final or quality review before approval.`,
+    blockers,
+  };
+}
+
+function artifactBlockerReason(
+  row: SourceArtifactLifecycleSummary["rows"][number],
+): string | null {
+  if (row.lifecycleState === "not_registered") return "not registered";
+  if (row.lifecycleState === "ai_draft") {
+    return "AI draft not accepted as client final";
+  }
+  if (row.lifecycleState === "evidence_only") {
+    return "evidence is present, but no governed deliverable is accepted";
+  }
+  if (row.consultingGate.state === "required_not_run") {
+    return "consulting-grade Gate B not run";
+  }
+  if (row.consultingGate.state === "failed") {
+    return "consulting-grade Gate B failed";
+  }
+  if (row.contentQuality.state === "blocked") {
+    return row.contentQuality.blockers[0] ?? "content QA blocked";
+  }
+  return row.quality.hardFails[0] ?? null;
 }
 
 function isTaskCaptured(task: StageTaskView): boolean {

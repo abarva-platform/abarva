@@ -53,10 +53,7 @@ import type { SourceVendorSelectionReadiness } from "@/lib/source/vendor-selecti
 import { ArtifactAcceptancePanel } from "./ArtifactAcceptancePanel";
 import { ANALYTICS } from "./analytics-tokens";
 import { IntelPanel } from "./IntelPanel";
-import {
-  TaskProvideUpload,
-  TemplateDownloadLink,
-} from "./TaskChecklist";
+import { TaskProvideUpload, TemplateDownloadLink } from "./TaskChecklist";
 import {
   evidenceRequirementIdForTask,
   factTemplateCodeForTask,
@@ -1146,6 +1143,7 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
 function StageApprovalHandoff({ view }: { view: SourceEventShellView }) {
   const complete =
     view.stage.total > 0 && view.stage.ready === view.stage.total;
+  const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
   return (
     <div
       data-testid="source-shell-stage-approval-handoff"
@@ -1159,7 +1157,11 @@ function StageApprovalHandoff({ view }: { view: SourceEventShellView }) {
     >
       <div
         style={{
-          color: complete ? ANALYTICS.GREEN_TEXT : ANALYTICS.FAINT,
+          color: complete
+            ? hasArtifactGaps
+              ? ANALYTICS.AMBER_TEXT
+              : ANALYTICS.GREEN_TEXT
+            : ANALYTICS.FAINT,
           fontSize: 12,
           fontWeight: complete ? 800 : 600,
           lineHeight: 1.45,
@@ -1203,6 +1205,7 @@ function StageApprovalHandoff({ view }: { view: SourceEventShellView }) {
 }
 
 function StageReadyPanel({ view }: { view: SourceEventShellView }) {
+  const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
   return (
     <div
       data-testid="source-shell-stage-ready-panel"
@@ -1215,7 +1218,9 @@ function StageReadyPanel({ view }: { view: SourceEventShellView }) {
       <div>
         <div
           style={{
-            color: ANALYTICS.GREEN_TEXT,
+            color: hasArtifactGaps
+              ? ANALYTICS.AMBER_TEXT
+              : ANALYTICS.GREEN_TEXT,
             fontFamily: ANALYTICS.MONO,
             fontSize: 10,
             fontWeight: 800,
@@ -1224,10 +1229,14 @@ function StageReadyPanel({ view }: { view: SourceEventShellView }) {
             textTransform: "uppercase",
           }}
         >
-          Stage ready
+          {hasArtifactGaps
+            ? "Inputs ready - artifact review open"
+            : "Stage ready"}
         </div>
         <h2 style={{ fontSize: 20, lineHeight: 1.25, margin: 0 }}>
-          All required evidence is ready for {view.stage.label}.
+          {hasArtifactGaps
+            ? `Required inputs are complete, but ${view.stage.artifactReadiness.blockerCount} artifact review item${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"} remain.`
+            : `All required evidence is ready for ${view.stage.label}.`}
         </h2>
         <p
           style={{
@@ -1238,10 +1247,35 @@ function StageReadyPanel({ view }: { view: SourceEventShellView }) {
             maxWidth: 650,
           }}
         >
-          The next step is the approval page. Review the captured evidence,
-          record the decision, and advance the event from there.
+          {hasArtifactGaps
+            ? "Open the approval workspace to decide with a clear rationale, or return to Files to accept client-final artifacts and close quality gates before the stage advances."
+            : "The next step is the approval page. Review the captured evidence, record the decision, and advance the event from there."}
         </p>
       </div>
+      {hasArtifactGaps ? (
+        <div
+          style={{
+            background: ANALYTICS.AMBER_TINT,
+            border: `1px solid ${ANALYTICS.AMBER}`,
+            borderRadius: 8,
+            color: ANALYTICS.AMBER_TEXT,
+            display: "grid",
+            fontSize: 12,
+            gap: 6,
+            lineHeight: 1.45,
+            padding: "10px 12px",
+          }}
+        >
+          {view.stage.artifactReadiness.blockers.slice(0, 3).map((blocker) => (
+            <span key={blocker}>{blocker}</span>
+          ))}
+          {view.stage.artifactReadiness.blockerCount > 3 ? (
+            <span>
+              +{view.stage.artifactReadiness.blockerCount - 3} more in Files
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       <div style={{ display: "grid", gap: 12 }}>
         {view.stage.groups.map((group) => (
           <EvidenceAskTable key={group.id} group={group} inset={false} />
@@ -1395,7 +1429,9 @@ function StepDetail({
 }) {
   const router = useRouter();
   const [actionState, setActionState] = useState<
-    { phase: "idle" } | { phase: "saving" } | { phase: "error"; message: string }
+    | { phase: "idle" }
+    | { phase: "saving" }
+    | { phase: "error"; message: string }
   >({ phase: "idle" });
   if (!step) return null;
   const activeStep = step;
@@ -1435,9 +1471,11 @@ function StepDetail({
       return;
     }
 
-    const payload = (await response.json().catch(() => null)) as
-      | { ok?: boolean; detail?: string; error?: string }
-      | null;
+    const payload = (await response.json().catch(() => null)) as {
+      ok?: boolean;
+      detail?: string;
+      error?: string;
+    } | null;
     if (!response.ok || !payload?.ok) {
       setActionState({
         phase: "error",

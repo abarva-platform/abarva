@@ -181,7 +181,9 @@ describe("SourceAnalyticsCanvas — stage approval blocker", () => {
         }),
       );
     });
-    expect(JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body)).toEqual(
+    expect(
+      JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body),
+    ).toEqual(
       expect.objectContaining({
         stage: "executive_decision",
         answer: expect.stringContaining(
@@ -190,6 +192,68 @@ describe("SourceAnalyticsCanvas — stage approval blocker", () => {
       }),
     );
     expect(routerRefresh).toHaveBeenCalled();
+  });
+
+  it("shows artifact-review gaps when checklist inputs are complete but stage artifacts are not client-final", () => {
+    const rfpEvent: SourcingEventSummary = {
+      ...EVENT,
+      currentStageKey: "rfp",
+      currentStageLabel: "RFP",
+    };
+    render(
+      <SourceAnalyticsCanvas
+        event={rfpEvent}
+        viewStage="rfp"
+        tenantName="Demo Client"
+        stageView={{
+          ...SAMPLE_SCOPE_STAGE,
+          stageKey: "rfp",
+          stageName: "RFP",
+          tasks: [
+            {
+              id: "rfp.package",
+              title: "Prepare the RFP package",
+              subtitle: "Client-ready release pack",
+              type: "confirm",
+              state: "done",
+              evidenceComplete: true,
+              guide: "Review the RFP package before release.",
+              cta: "Confirm RFP",
+            },
+          ],
+        }}
+        approvalItems={[
+          {
+            ...APPROVAL,
+            stageKey: "rfp",
+            stageLabel: "RFP",
+          },
+        ]}
+        artifacts={[
+          {
+            id: "rfp-draft-1",
+            artifactCode: "d09_rfp_pack",
+            artifactGroup: "generated",
+            sourceOrigin: "generated",
+            stageKey: "rfp",
+            status: "draft",
+          },
+        ]}
+        initialWorkspace="steps"
+      />,
+    );
+
+    const panel = screen.getByTestId("source-shell-stage-ready-panel");
+    expect(panel).toHaveTextContent("artifact review open");
+    expect(panel).toHaveTextContent(
+      "RFP Package: AI draft not accepted as client final",
+    );
+    expect(
+      screen.getAllByRole("link", { name: "Review RFP approval gaps" })[0],
+    ).toHaveAttribute(
+      "href",
+      `/source/events/${EVENT.id}?stage=rfp&workspace=approvals`,
+    );
   });
 });
 
