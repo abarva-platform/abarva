@@ -887,9 +887,9 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                     }}
                   >
                     Recoverable opportunity, avoidable opportunity, negotiable
-                    improvement, and finance-confirmed outcome stay separate. Governed extracts and
-                    documents can start the cockpit; APIs can replace repeat
-                    feeds later.
+                    improvement, and finance-confirmed outcome stay separate.
+                    Governed extracts and documents can start the cockpit; APIs
+                    can replace repeat feeds later.
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -2214,6 +2214,10 @@ function sentenceCount(count: number) {
   return String(count);
 }
 
+function pluralOpportunity(count: number) {
+  return count === 1 ? "opportunity" : "opportunities";
+}
+
 function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
   const view = vm.opportunityView;
   if (!view) return null;
@@ -2261,7 +2265,7 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
       : "Start with evidence collection before sizing value.";
   const decisionDetail = conflict
     ? `${view.baseline.detail} AbarVa should block savings, recovery, and realized-value language until the baseline conflict is reviewed.`
-    : `${c?.vendor ?? view.contractId} has material annual exposure${c?.acv ? ` (${c.acv})` : ""} and ${view.opportunities.length} identified opportunity${view.opportunities.length === 1 ? "" : "ies"}. Potential value remains separate from the ${view.financeConfirmed} finance-confirmed outcome.`;
+    : `${c?.vendor ?? view.contractId} has material annual exposure${c?.acv ? ` (${c.acv})` : ""} and ${view.opportunities.length} identified ${pluralOpportunity(view.opportunities.length)}. Potential value remains separate from the ${view.financeConfirmed} finance-confirmed outcome.`;
   const timingRead = conflict
     ? "The timing trigger is the baseline conflict, not renewal urgency."
     : c?.notice && c?.expiry
@@ -2351,7 +2355,7 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
             <StoryTile
               index="03"
               title="Where value sits"
-              body={`${view.opportunities.length} opportunity${view.opportunities.length === 1 ? "" : "ies"}: recover money, avoid future spend, or improve the deal. Finance confirmation is shown separately.`}
+              body={`${view.opportunities.length} ${pluralOpportunity(view.opportunities.length)}: recover money, avoid future spend, or improve the deal. Finance confirmation is shown separately.`}
             />
             <StoryTile
               index="04"
@@ -2608,6 +2612,10 @@ function OpportunityRelationshipCanvas({ vm }: { vm: SourceWorkspaceVM }) {
   const contract = vm.contractRow;
   const [active, setActive] = useState("invoice");
   if (!view || !contract) return null;
+  const baselineAnnual =
+    view.baseline.annualValue === "Not sized" && vm.c?.acv
+      ? vm.c.acv
+      : view.baseline.annualValue;
   const sources = [
     {
       id: "clm",
@@ -2876,7 +2884,7 @@ function OpportunityRelationshipCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                   fontSize="12"
                   fill="rgba(255,255,255,.72)"
                 >
-                  {view.baseline.annualValue} annual
+                  {baselineAnnual} annual
                 </text>
                 <text
                   x="300"
@@ -3403,8 +3411,8 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
           Contract relationship
         </div>
         <div style={{ fontSize: 12.2, color: "#5f5e5a" }}>
-          Follow the contract from source systems and scope facts to
-          opportunity evidence and the optimize decision.
+          Follow the contract from source systems and scope facts to opportunity
+          evidence and the optimize decision.
         </div>
       </div>
       <div

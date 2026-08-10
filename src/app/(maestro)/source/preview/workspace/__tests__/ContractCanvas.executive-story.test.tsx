@@ -128,8 +128,32 @@ describe("ContractCanvas executive story", () => {
     expect(screen.getAllByText("Recover money").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Avoid future spend").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Improve the deal").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/opportunityies/i)).toBeNull();
     expect(screen.queryByText(/ready or reviewable/)).toBeNull();
     expect(screen.queryByText(/blocked or gap-backed/)).toBeNull();
     expect(screen.queryByText("Contract optimization story")).toBeNull();
+  });
+
+  it("uses the governed contract value as relationship baseline fallback", () => {
+    const vm = {
+      ...executiveStoryVm(),
+      cOverview: false,
+      cRelationship: true,
+      contractRow: {
+        contract_id: "c1",
+      },
+      opportunityView: {
+        ...executiveStoryVm().opportunityView,
+        baseline: {
+          ...executiveStoryVm().opportunityView.baseline,
+          annualValue: "Not sized",
+        },
+      },
+    };
+
+    render(<ContractCanvas vm={vm as never} />);
+
+    expect(screen.getByText("$50.0M annual")).toBeTruthy();
+    expect(screen.queryByText("Not sized annual")).toBeNull();
   });
 });
