@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 460" role="img" aria-labelledby="title desc">
+  <title id="title">SkyHarbor scoped architecture diagram index</title>
+  <desc id="desc">Executive index of scoped architecture diagrams for data and AI, ERP, private cloud and mainframe, and digital airline channels.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="#8ba0bd"/></marker>
+    <style>
+      text{font-family:Inter,Arial,sans-serif;fill:#172033}.m{font-size:13px;font-weight:820;fill:#246fc8}.h{font-size:24px;font-weight:820}.s{font-size:14px;fill:#53627b}.k{font-size:16px;font-weight:820}.small{font-size:12px;fill:#657087}.white{fill:#fff}.whiteSub{fill:#d9e6ff}.box{fill:#fff;stroke:#d9e0ea;stroke-width:1.5}.blue{stroke:#246fc8}.teal{stroke:#198f82}.amber{stroke:#b97824}.red{stroke:#b63b35}.line{fill:none;stroke:#9fb0c8;stroke-width:3;marker-end:url(#arrow)}.dash{fill:none;stroke:#b97824;stroke-width:3;stroke-dasharray:8 8;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1280" height="460" rx="18" fill="#f8fbff"/>
+  <text x="34" y="46" class="m">Coherence tab / scoped architecture index</text>
+  <text x="34" y="82" class="h">Do not use one gigantic diagram: use domain-specific current-state views</text>
+  <text x="34" y="110" class="s">Each domain has a different topology, control model, data path, and executive implication.</text>
+  <rect x="64" y="154" width="248" height="152" rx="12" class="box blue"/><text x="88" y="190" class="k">Data and AI platform</text><text x="88" y="220" class="s">Sources, integration, lake, EDW,</text><text x="88" y="242" class="s">data science, BI, agents, proof gates</text><text x="88" y="276" class="small">Pattern: source to consumption</text>
+  <rect x="368" y="154" width="248" height="152" rx="12" class="box teal"/><text x="392" y="190" class="k">ERP and finance core</text><text x="392" y="220" class="s">System of record, controlled feeds,</text><text x="392" y="242" class="s">reconciliation, baseline, attestation</text><text x="392" y="276" class="small">Pattern: control-heavy proof spine</text>
+  <rect x="672" y="154" width="248" height="152" rx="12" class="box amber"/><text x="696" y="190" class="k">Private cloud + mainframe</text><text x="696" y="220" class="s">DC1/DC2, z/OS, CICS, DB2, MQ,</text><text x="696" y="242" class="s">private cloud, recovery, security</text><text x="696" y="276" class="small">Pattern: resilience and legacy gravity</text>
+  <rect x="976" y="154" width="248" height="152" rx="12" class="box red"/><text x="1000" y="190" class="k">Digital airline channels</text><text x="1000" y="220" class="s">Experience edge, APIs, identity,</text><text x="1000" y="242" class="s">clickstream, CDP, service recovery</text><text x="1000" y="276" class="small">Pattern: real-time decision loop</text>
+  <path class="line" d="M314 230 H360"/><path class="line" d="M618 230 H664"/><path class="line" d="M922 230 H968"/>
+  <path class="dash" d="M1100 326 C900 398 460 398 184 326"/>
+  <rect x="118" y="348" width="252" height="54" rx="9" fill="#fff" stroke="#d9e0ea"/><text x="140" y="371" class="k">Evidence drawer</text><text x="140" y="391" class="small">Raw response, prompt, asset hash</text>
+  <rect x="514" y="348" width="252" height="54" rx="9" fill="#fff" stroke="#d9e0ea"/><text x="536" y="371" class="k">Validation gate</text><text x="536" y="391" class="small">Reject or regenerate, never mutate</text>
+  <rect x="910" y="348" width="252" height="54" rx="9" fill="#142346"/><text x="932" y="371" class="k white">Home renderer</text><text x="932" y="391" class="small whiteSub">Displays approved SVG asset</text>
+</svg>

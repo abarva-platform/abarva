@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 460" role="img" aria-labelledby="title desc">
+  <title id="title">SkyHarbor enterprise operating system pattern map</title>
+  <desc id="desc">Scoped executive diagram showing airline operating context, platform gravity, commercial constraint, data proof, AI guardrails, and module routing.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#f8fbff"/><stop offset="1" stop-color="#eef4fa"/></linearGradient>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="#8ba0bd"/></marker>
+    <style>
+      text{font-family:Inter,Arial,sans-serif;fill:#172033}.k{font-size:16px;font-weight:800}.h{font-size:24px;font-weight:820}.s{font-size:14px;fill:#53627b}.m{font-size:13px;font-weight:760;fill:#246fc8;text-transform:uppercase}.chip{font-size:12px;font-weight:800;fill:#40506a}.box{fill:#fff;stroke:#d6e0ec;stroke-width:1.5}.blue{stroke:#246fc8}.teal{stroke:#198f82}.amber{stroke:#b97824}.red{stroke:#b63b35}.slate{stroke:#66758a}.line{fill:none;stroke:#9fb0c8;stroke-width:3;marker-end:url(#arrow)}.soft{fill:#f4f7fb;stroke:#d9e0ea}.rail{fill:none;stroke:#cbd7e7;stroke-width:2;stroke-dasharray:8 8}
+    </style>
+  </defs>
+  <rect width="1280" height="460" rx="18" fill="url(#bg)"/>
+  <text x="34" y="46" class="m">Patterns tab / enterprise portrait</text>
+  <text x="34" y="82" class="h">The Home story should read like an airline operating system</text>
+  <text x="34" y="110" class="s">Operating context, platform gravity, commercial commitments, data proof, and AI guardrails appear together before module routing.</text>
+  <rect x="34" y="145" width="182" height="128" rx="10" class="box blue"/>
+  <text x="56" y="180" class="k">Airline execution</text>
+  <text x="56" y="208" class="s">Network operations</text><text x="56" y="230" class="s">Crew, cargo, loyalty</text><text x="56" y="252" class="s">Airport service reliability</text>
+  <rect x="260" y="145" width="182" height="128" rx="10" class="box teal"/>
+  <text x="282" y="180" class="k">Critical platforms</text>
+  <text x="282" y="208" class="s">ERP and mainframe</text><text x="282" y="230" class="s">Private cloud and SaaS</text><text x="282" y="252" class="s">Integration estate</text>
+  <rect x="486" y="145" width="182" height="128" rx="10" class="box amber"/>
+  <text x="508" y="180" class="k">Commercial gravity</text>
+  <text x="508" y="208" class="s">119 contracts</text><text x="508" y="230" class="s">$1.48B committed base</text><text x="508" y="252" class="s">Renewal timing pressure</text>
+  <rect x="712" y="145" width="182" height="128" rx="10" class="box slate"/>
+  <text x="734" y="180" class="k">Data proof</text>
+  <text x="734" y="208" class="s">444 nodes</text><text x="734" y="230" class="s">586 relationship flows</text><text x="734" y="252" class="s">Evidence readiness gates</text>
+  <rect x="938" y="145" width="182" height="128" rx="10" class="box red"/>
+  <text x="960" y="180" class="k">AI guardrails</text>
+  <text x="960" y="208" class="s">Usage visible</text><text x="960" y="230" class="s">Value not established</text><text x="960" y="252" class="s">Action controls required</text>
+  <path class="line" d="M216 209 H252"/><path class="line" d="M442 209 H478"/><path class="line" d="M668 209 H704"/><path class="line" d="M894 209 H930"/>
+  <path class="rail" d="M124 310 C300 372 544 374 803 319 C945 289 1043 298 1128 336"/>
+  <rect x="64" y="331" width="160" height="56" rx="8" class="soft"/><text x="84" y="354" class="chip">Intelligence</text><text x="84" y="374" class="s">architecture questions</text>
+  <rect x="286" y="354" width="160" height="56" rx="8" class="soft"/><text x="306" y="377" class="chip">Moves</text><text x="306" y="397" class="s">sequencing choices</text>
+  <rect x="508" y="344" width="160" height="56" rx="8" class="soft"/><text x="528" y="367" class="chip">Source</text><text x="528" y="387" class="s">commercial optionality</text>
+  <rect x="730" y="326" width="160" height="56" rx="8" class="soft"/><text x="750" y="349" class="chip">Tower</text><text x="750" y="369" class="s">finance validation</text>
+  <rect x="952" y="350" width="208" height="56" rx="8" class="soft"/><text x="972" y="373" class="chip">Home evidence</text><text x="972" y="393" class="s">safe executive boundary</text>
+</svg>

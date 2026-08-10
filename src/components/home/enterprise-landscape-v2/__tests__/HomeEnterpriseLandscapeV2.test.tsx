@@ -57,6 +57,17 @@ it("integrates context and architecture into the approved eight-tab canvas", () 
   ).toBeInTheDocument();
   expect(screen.getAllByText("Architecture graph").length).toBeGreaterThan(0);
   expect(screen.getAllByText("586").length).toBeGreaterThan(0);
+  expect(
+    screen.getByLabelText(
+      "Enterprise operating system pattern map stored SVG exhibit",
+    ),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByAltText("Enterprise operating system pattern map"),
+  ).toHaveAttribute(
+    "src",
+    "/generated/home/skyharbor-air/architecture-diagram-pack-v1/patterns-enterprise-operating-system.svg",
+  );
   expect(window.location.search).toBe("?view=patterns");
 
   fireEvent.click(screen.getByRole("tab", { name: "Coherence" }));
@@ -69,6 +80,11 @@ it("integrates context and architecture into the approved eight-tab canvas", () 
   expect(
     screen.getAllByText("Current-state architecture exhibits").length,
   ).toBeGreaterThan(0);
+  expect(
+    screen.getByLabelText(
+      "Scoped architecture diagram index stored SVG exhibit",
+    ),
+  ).toBeInTheDocument();
   expect(
     screen.getByLabelText("Data and AI platform detailed architecture canvas"),
   ).toBeInTheDocument();
@@ -140,6 +156,11 @@ it("integrates context and architecture into the approved eight-tab canvas", () 
   expect(
     screen.getByRole("heading", { name: "Economics without value overclaim" }),
   ).toBeInTheDocument();
+  expect(
+    screen.getByLabelText(
+      "Economics and value-control architecture stored SVG exhibit",
+    ),
+  ).toBeInTheDocument();
   expect(screen.getByText("Budget commitment bridge")).toBeInTheDocument();
   expect(screen.getByText("63% committed")).toBeInTheDocument();
   expect(screen.getByText("$170.2M visible")).toBeInTheDocument();
@@ -155,6 +176,11 @@ it("integrates context and architecture into the approved eight-tab canvas", () 
   fireEvent.keyDown(economics, { key: "ArrowRight" });
   expect(
     screen.getByRole("heading", { name: "Normalized enterprise posture" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByLabelText(
+      "Evidence and authority posture map stored SVG exhibit",
+    ),
   ).toBeInTheDocument();
   expect(screen.getByRole("tab", { name: "Posture" })).toHaveAttribute(
     "aria-selected",

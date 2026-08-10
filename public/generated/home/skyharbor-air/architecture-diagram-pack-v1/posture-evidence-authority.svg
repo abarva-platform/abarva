@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 460" role="img" aria-labelledby="title desc">
+  <title id="title">SkyHarbor normalized enterprise posture map</title>
+  <desc id="desc">Heatmap-style executive diagram showing evidence depth, coherence, flexibility, and potential by domain.</desc>
+  <defs>
+    <style>
+      text{font-family:Inter,Arial,sans-serif;fill:#172033}.m{font-size:13px;font-weight:820;fill:#246fc8}.h{font-size:24px;font-weight:820}.s{font-size:14px;fill:#53627b}.head{font-size:12px;font-weight:840;fill:#657087;text-transform:uppercase}.cell{font-size:15px;font-weight:820}.tiny{font-size:12px;fill:#53627b}.box{fill:#fff;stroke:#d9e0ea;stroke-width:1.5}.hi{fill:#eaf3ff}.mod{fill:#eef8f6}.lim{fill:#fff7e8}.risk{fill:#fff5f4}.mix{fill:#f4f7fb}
+    </style>
+  </defs>
+  <rect width="1280" height="460" rx="18" fill="#f8fbff"/>
+  <text x="34" y="46" class="m">Posture tab / evidence and authority</text>
+  <text x="34" y="82" class="h">Posture should show where executive confidence is strong or fragile</text>
+  <text x="34" y="110" class="s">This is a planning-grade posture map: it visualizes evidence, coherence, flexibility, and potential without turning gaps into scores.</text>
+  <g transform="translate(54 148)">
+    <rect width="1168" height="254" rx="12" class="box"/>
+    <text x="28" y="40" class="head">Domain</text><text x="310" y="40" class="head">Evidence</text><text x="520" y="40" class="head">Coherence</text><text x="730" y="40" class="head">Flexibility</text><text x="948" y="40" class="head">Potential</text>
+    <g transform="translate(0 62)"><text x="28" y="30" class="cell">Operations</text><rect x="286" y="5" width="150" height="36" rx="18" class="hi"/><text x="326" y="29" class="cell">High</text><rect x="496" y="5" width="150" height="36" rx="18" class="mix"/><text x="538" y="29" class="cell">Mixed</text><rect x="706" y="5" width="150" height="36" rx="18" class="lim"/><text x="735" y="29" class="cell">Constrained</text><rect x="926" y="5" width="150" height="36" rx="18" class="mod"/><text x="964" y="29" class="cell">Selective</text></g>
+    <g transform="translate(0 108)"><text x="28" y="30" class="cell">Data and KPI</text><rect x="286" y="5" width="150" height="36" rx="18" class="mod"/><text x="316" y="29" class="cell">Moderate</text><rect x="496" y="5" width="150" height="36" rx="18" class="risk"/><text x="520" y="29" class="cell">Fragmented</text><rect x="706" y="5" width="150" height="36" rx="18" class="lim"/><text x="735" y="29" class="cell">Constrained</text><rect x="926" y="5" width="150" height="36" rx="18" class="risk"/><text x="981" y="29" class="cell">High</text></g>
+    <g transform="translate(0 154)"><text x="28" y="30" class="cell">Portfolio</text><rect x="286" y="5" width="150" height="36" rx="18" class="mod"/><text x="316" y="29" class="cell">Moderate</text><rect x="496" y="5" width="150" height="36" rx="18" class="mix"/><text x="538" y="29" class="cell">Mixed</text><rect x="706" y="5" width="150" height="36" rx="18" class="risk"/><text x="758" y="29" class="cell">Locked</text><rect x="926" y="5" width="150" height="36" rx="18" class="mod"/><text x="964" y="29" class="cell">Selective</text></g>
+    <g transform="translate(0 200)"><text x="28" y="30" class="cell">AI and automation</text><rect x="286" y="5" width="150" height="36" rx="18" class="lim"/><text x="326" y="29" class="cell">Limited</text><rect x="496" y="5" width="150" height="36" rx="18" class="mix"/><text x="538" y="29" class="cell">Mixed</text><rect x="706" y="5" width="150" height="36" rx="18" class="lim"/><text x="735" y="29" class="cell">Constrained</text><rect x="926" y="5" width="150" height="36" rx="18" class="mod"/><text x="964" y="29" class="cell">Selective</text></g>
+  </g>
+  <rect x="78" y="414" width="420" height="28" rx="14" fill="#fff" stroke="#d9e0ea"/><text x="98" y="433" class="tiny">Rule: Home visualizes confidence posture; it does not promote recommendations.</text>
+  <rect x="526" y="414" width="578" height="28" rx="14" fill="#fff" stroke="#d9e0ea"/><text x="546" y="433" class="tiny">High-risk cells trigger evidence or owning-module routes, not Claude-authored conclusions.</text>
+</svg>
