@@ -697,66 +697,109 @@ async function getPersistedContractOptimizationOpportunitySet(
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
-         FROM source.opportunity_evidence
-        WHERE tenant_key = ANY($1::text[])
-          AND dataset_version = $2
-        ORDER BY opportunity_id, source_table, source_record_id`,
-      [datasetVersion],
+      `SELECT evidence.*
+         FROM source.opportunity_evidence evidence
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = evidence.tenant_key
+          AND opportunity.dataset_version = evidence.dataset_version
+          AND opportunity.opportunity_id = evidence.opportunity_id
+        WHERE evidence.tenant_key = ANY($1::text[])
+          AND evidence.dataset_version = $2
+          AND opportunity.contract_id = $3
+        ORDER BY evidence.opportunity_id, evidence.source_table, evidence.source_record_id`,
+      [datasetVersion, contractId],
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
-         FROM source.calculation_run
-        WHERE tenant_key = ANY($1::text[])
-          AND dataset_version = $2
-        ORDER BY opportunity_id, calculation_run_id`,
-      [datasetVersion],
+      `SELECT run.*
+         FROM source.calculation_run run
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = run.tenant_key
+          AND opportunity.dataset_version = run.dataset_version
+          AND opportunity.opportunity_id = run.opportunity_id
+        WHERE run.tenant_key = ANY($1::text[])
+          AND run.dataset_version = $2
+          AND opportunity.contract_id = $3
+        ORDER BY run.opportunity_id, run.calculation_run_id`,
+      [datasetVersion, contractId],
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
-         FROM source.calculation_input
-        WHERE tenant_key = ANY($1::text[])
-          AND dataset_version = $2
-        ORDER BY calculation_run_id, input_key`,
-      [datasetVersion],
+      `SELECT input.*
+         FROM source.calculation_input input
+         JOIN source.calculation_run run
+           ON run.tenant_key = input.tenant_key
+          AND run.dataset_version = input.dataset_version
+          AND run.calculation_run_id = input.calculation_run_id
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = run.tenant_key
+          AND opportunity.dataset_version = run.dataset_version
+          AND opportunity.opportunity_id = run.opportunity_id
+        WHERE input.tenant_key = ANY($1::text[])
+          AND input.dataset_version = $2
+          AND opportunity.contract_id = $3
+        ORDER BY input.calculation_run_id, input.input_key`,
+      [datasetVersion, contractId],
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
-         FROM source.calculation_output
-        WHERE tenant_key = ANY($1::text[])
-          AND dataset_version = $2
-        ORDER BY calculation_run_id, output_key`,
-      [datasetVersion],
+      `SELECT output.*
+         FROM source.calculation_output output
+         JOIN source.calculation_run run
+           ON run.tenant_key = output.tenant_key
+          AND run.dataset_version = output.dataset_version
+          AND run.calculation_run_id = output.calculation_run_id
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = run.tenant_key
+          AND opportunity.dataset_version = run.dataset_version
+          AND opportunity.opportunity_id = run.opportunity_id
+        WHERE output.tenant_key = ANY($1::text[])
+          AND output.dataset_version = $2
+          AND opportunity.contract_id = $3
+        ORDER BY output.calculation_run_id, output.output_key`,
+      [datasetVersion, contractId],
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
-         FROM source.opportunity_valuation
-        WHERE tenant_key = ANY($1::text[])
-          AND dataset_version = $2
-        ORDER BY opportunity_id, created_at DESC NULLS LAST`,
-      [datasetVersion],
+      `SELECT valuation.*
+         FROM source.opportunity_valuation valuation
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = valuation.tenant_key
+          AND opportunity.dataset_version = valuation.dataset_version
+          AND opportunity.opportunity_id = valuation.opportunity_id
+        WHERE valuation.tenant_key = ANY($1::text[])
+          AND valuation.dataset_version = $2
+          AND opportunity.contract_id = $3
+        ORDER BY valuation.opportunity_id, valuation.created_at DESC NULLS LAST`,
+      [datasetVersion, contractId],
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
-         FROM source.opportunity_requirement_status
-        WHERE tenant_key = ANY($1::text[])
-          AND dataset_version = $2
-        ORDER BY opportunity_id, requirement_id`,
-      [datasetVersion],
+      `SELECT requirement.*
+         FROM source.opportunity_requirement_status requirement
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = requirement.tenant_key
+          AND opportunity.dataset_version = requirement.dataset_version
+          AND opportunity.opportunity_id = requirement.opportunity_id
+        WHERE requirement.tenant_key = ANY($1::text[])
+          AND requirement.dataset_version = $2
+          AND opportunity.contract_id = $3
+        ORDER BY requirement.opportunity_id, requirement.requirement_id`,
+      [datasetVersion, contractId],
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
-         FROM source.finance_realization
-        WHERE tenant_key = ANY($1::text[])
-          AND dataset_version = $2
-        ORDER BY confirmation_date DESC NULLS LAST, realization_id`,
-      [datasetVersion],
+      `SELECT realization.*
+         FROM source.finance_realization realization
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = realization.tenant_key
+          AND opportunity.dataset_version = realization.dataset_version
+          AND opportunity.opportunity_id = realization.opportunity_id
+        WHERE realization.tenant_key = ANY($1::text[])
+          AND realization.dataset_version = $2
+          AND opportunity.contract_id = $3
+        ORDER BY realization.confirmation_date DESC NULLS LAST, realization.realization_id`,
+      [datasetVersion, contractId],
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
@@ -766,10 +809,15 @@ async function getPersistedContractOptimizationOpportunitySet(
            ON realization.tenant_key = evidence.tenant_key
           AND realization.dataset_version = evidence.dataset_version
           AND realization.realization_id = evidence.realization_id
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = realization.tenant_key
+          AND opportunity.dataset_version = realization.dataset_version
+          AND opportunity.opportunity_id = realization.opportunity_id
         WHERE evidence.tenant_key = ANY($1::text[])
           AND evidence.dataset_version = $2
+          AND opportunity.contract_id = $3
         ORDER BY evidence.realization_id, evidence.source_table, evidence.source_record_id`,
-      [datasetVersion],
+      [datasetVersion, contractId],
     ),
   ]);
 
@@ -866,6 +914,7 @@ async function getPersistedContractOptimizationOpportunitySet(
     opportunities[0]?.opportunityId ??
     null;
   const blockingRequirements = requirementRows
+    .filter((row) => opportunityIds.has(textValue(row.opportunity_id) ?? ""))
     .filter((row) => textValue(row.status) !== "met")
     .map((row) => textValue(row.status_detail))
     .filter((value): value is string => Boolean(value));
