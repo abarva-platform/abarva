@@ -199,6 +199,105 @@ const BUTTON_STYLE: CSSProperties = {
   fontWeight: 700,
 };
 
+const WORKSPACE_EYEBROW: CSSProperties = {
+  color: ANALYTICS.BLUE,
+  fontFamily: ANALYTICS.MONO,
+  fontSize: 10,
+  fontWeight: 900,
+  letterSpacing: 1.05,
+  textTransform: "uppercase",
+};
+
+const SMALL_STATUS_PILL: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+  borderRadius: 999,
+  background: ANALYTICS.SOFT,
+  color: ANALYTICS.INK_2,
+  fontFamily: ANALYTICS.MONO,
+  fontSize: 10,
+  fontWeight: 900,
+  padding: "6px 9px",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+};
+
+const FILE_USE_TABLE: CSSProperties = {
+  width: "100%",
+  minWidth: 920,
+  borderCollapse: "collapse",
+};
+
+const FILE_TH: CSSProperties = {
+  borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+  padding: "8px 8px",
+  color: ANALYTICS.MUTED,
+  fontFamily: ANALYTICS.MONO,
+  fontSize: 9.5,
+  fontWeight: 900,
+  letterSpacing: 0.8,
+  textAlign: "center",
+  textTransform: "uppercase",
+};
+
+const FILE_TD_LABEL: CSSProperties = {
+  borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+  padding: "9px 8px",
+  color: ANALYTICS.INK,
+  display: "grid",
+  gap: 3,
+  minWidth: 240,
+};
+
+const FILE_TD_CENTER: CSSProperties = {
+  borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+  padding: "9px 7px",
+  textAlign: "center",
+  verticalAlign: "top",
+};
+
+const FILE_TD_ACTION: CSSProperties = {
+  borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+  padding: "9px 8px",
+  color: ANALYTICS.INK,
+  display: "grid",
+  gap: 3,
+  fontSize: 12.5,
+  lineHeight: 1.38,
+  minWidth: 260,
+};
+
+const FILE_CHIP: CSSProperties = {
+  border: "1px solid",
+  borderRadius: 999,
+  display: "inline-flex",
+  justifyContent: "center",
+  minWidth: 78,
+  padding: "3px 7px",
+  fontFamily: ANALYTICS.MONO,
+  fontSize: 9,
+  fontWeight: 900,
+  letterSpacing: 0.65,
+  textTransform: "uppercase",
+};
+
+const FILE_CHIP_GOOD: CSSProperties = {
+  borderColor: ANALYTICS.GREEN,
+  background: ANALYTICS.GREEN_TINT,
+  color: ANALYTICS.GREEN_TEXT,
+};
+
+const FILE_CHIP_WARN: CSSProperties = {
+  borderColor: ANALYTICS.AMBER,
+  background: "rgba(186,117,23,0.07)",
+  color: ANALYTICS.AMBER,
+};
+
+const FILE_CHIP_NEUTRAL: CSSProperties = {
+  borderColor: ANALYTICS.LINE_SOFT,
+  background: ANALYTICS.SOFT,
+  color: ANALYTICS.MUTED,
+};
+
 function sampleStageViewFor(
   stageKey: SourceStageKey,
   journey?: SourceJourneyDefinition,
@@ -1956,7 +2055,143 @@ function EvidenceReadinessPanel({
           ))}
         </div>
       </div>
+      <FileUseReadinessMap files={files} />
     </section>
+  );
+}
+
+function FileUseReadinessMap({
+  files,
+}: {
+  files: readonly SourceShellFileItem[];
+}) {
+  const rows = files
+    .map((file) => ({
+      file,
+      nextAction: fileNextAction(file),
+      readyForUse: fileReadyForUse(file),
+    }))
+    .sort((a, b) => {
+      if (a.file.artifactRole !== b.file.artifactRole) {
+        return a.file.artifactRole === "authoritative" ? -1 : 1;
+      }
+      if (a.readyForUse !== b.readyForUse) return a.readyForUse ? 1 : -1;
+      return a.file.name.localeCompare(b.file.name);
+    })
+    .slice(0, 6);
+
+  return (
+    <div
+      data-testid="source-file-use-readiness-map"
+      style={{
+        borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+        marginTop: 12,
+        paddingTop: 12,
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) auto",
+          gap: 12,
+          alignItems: "start",
+          marginBottom: 9,
+        }}
+      >
+        <div>
+          <div style={WORKSPACE_EYEBROW}>File use map</div>
+          <p
+            style={{
+              margin: "4px 0 0",
+              color: ANALYTICS.MUTED,
+              fontSize: 12.5,
+              lineHeight: 1.45,
+            }}
+          >
+            Shows what each file can do next: gate-defining artifact, supporting
+            evidence, parser state, search readiness, graph projection, and the
+            next action.
+          </p>
+        </div>
+        <span style={SMALL_STATUS_PILL}>
+          {rows.filter((row) => row.readyForUse).length}/{rows.length} ready
+        </span>
+      </div>
+      {rows.length === 0 ? (
+        <div style={{ color: ANALYTICS.MUTED, fontSize: 12.5 }}>
+          No files are registered yet.
+        </div>
+      ) : (
+        <div style={{ overflowX: "auto" }}>
+          <table style={FILE_USE_TABLE}>
+            <thead>
+              <tr>
+                <th style={{ ...FILE_TH, textAlign: "left" }}>File</th>
+                <th style={FILE_TH}>Role</th>
+                <th style={FILE_TH}>Parse</th>
+                <th style={FILE_TH}>Search</th>
+                <th style={FILE_TH}>Graph</th>
+                <th style={{ ...FILE_TH, textAlign: "left" }}>Next action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ file, nextAction, readyForUse }) => (
+                <tr key={file.id}>
+                  <td style={FILE_TD_LABEL}>
+                    <strong>{file.name}</strong>
+                    <span>
+                      {file.stageLabel} · {file.format}
+                    </span>
+                  </td>
+                  <td style={FILE_TD_CENTER}>
+                    <ReadinessChip
+                      label={
+                        file.artifactRole === "authoritative"
+                          ? "Gate"
+                          : "Evidence"
+                      }
+                      tone={
+                        file.artifactRole === "authoritative"
+                          ? "good"
+                          : "neutral"
+                      }
+                    />
+                  </td>
+                  <td style={FILE_TD_CENTER}>
+                    <ReadinessChip
+                      label={fileParseReadinessLabel(file)}
+                      tone={file.parseStatus === "parsed" ? "good" : "warn"}
+                    />
+                  </td>
+                  <td style={FILE_TD_CENTER}>
+                    <ReadinessChip
+                      label={fileSearchReadinessLabel(file)}
+                      tone={
+                        file.embeddingStatus === "embedded" ? "good" : "neutral"
+                      }
+                    />
+                  </td>
+                  <td style={FILE_TD_CENTER}>
+                    <ReadinessChip
+                      label={fileGraphReadinessLabel(file)}
+                      tone={
+                        file.graphStatus === "projected" ? "good" : "neutral"
+                      }
+                    />
+                  </td>
+                  <td style={FILE_TD_ACTION}>
+                    <strong>
+                      {readyForUse ? "Ready for workflow use" : "Open"}
+                    </strong>
+                    <span>{nextAction}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1982,6 +2217,67 @@ function summarizeEvidenceReadiness(files: readonly SourceShellFileItem[]) {
     registeredOnlyCount,
     searchReadyCount,
   };
+}
+
+function fileReadyForUse(file: SourceShellFileItem): boolean {
+  return (
+    file.parseStatus === "parsed" &&
+    !file.needsComplianceReview &&
+    (file.artifactRole === "evidence" || Boolean(file.latestAcceptance))
+  );
+}
+
+function fileParseReadinessLabel(file: SourceShellFileItem): string {
+  if (file.parseStatus === "parsed") return "parsed";
+  if (file.parseStatus === "failed") return "failed";
+  return "not parsed";
+}
+
+function fileSearchReadinessLabel(file: SourceShellFileItem): string {
+  return file.embeddingStatus === "embedded" ? "embedded" : "not indexed";
+}
+
+function fileGraphReadinessLabel(file: SourceShellFileItem): string {
+  return file.graphStatus === "projected" ? "projected" : "not projected";
+}
+
+function fileNextAction(file: SourceShellFileItem): string {
+  if (file.needsComplianceReview) {
+    return "Resolve compliance review before this file influences scoring or approval.";
+  }
+  if (file.parseStatus !== "parsed") {
+    return "Run or retry parser before using this file as evidence.";
+  }
+  if (file.artifactRole === "authoritative" && !file.latestAcceptance) {
+    return "Accept as client-final before it gates the stage.";
+  }
+  if (file.embeddingStatus !== "embedded") {
+    return "Usable locally; index before enterprise search or aVa citation.";
+  }
+  return "Ready for artifacts, scoring context, and approval review.";
+}
+
+function ReadinessChip({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "good" | "warn" | "neutral";
+}) {
+  return (
+    <span
+      style={{
+        ...FILE_CHIP,
+        ...(tone === "good"
+          ? FILE_CHIP_GOOD
+          : tone === "warn"
+            ? FILE_CHIP_WARN
+            : FILE_CHIP_NEUTRAL),
+      }}
+    >
+      {label}
+    </span>
+  );
 }
 
 function SessionEvidenceCapturePanel({

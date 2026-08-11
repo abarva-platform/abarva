@@ -123,7 +123,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
       />,
     );
 
-    expect(screen.queryByTestId("stub-ask-anything-bar")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("stub-ask-anything-bar"),
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /ask ava/i }));
 
     const bar = screen.getByTestId("stub-ask-anything-bar");
@@ -149,7 +151,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(screen.queryByTestId("ava-dock-bottom")).not.toBeInTheDocument();
     expect(screen.queryByTestId("ava-dock-hidden")).not.toBeInTheDocument();
     expect(screen.getByTestId("source-ask-ava-launcher")).toBeInTheDocument();
-    expect(screen.queryByTestId("stub-ask-anything-bar")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("stub-ask-anything-bar"),
+    ).not.toBeInTheDocument();
   });
 
   it("does not render the retired Source section subnav inside the event shell", () => {
@@ -195,10 +199,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     );
 
     expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
-    expect(screen.getByTestId("source-shell-workspace-approvals")).toHaveAttribute(
-      "aria-label",
-      "Approvals",
-    );
+    expect(
+      screen.getByTestId("source-shell-workspace-approvals"),
+    ).toHaveAttribute("aria-label", "Approvals");
   });
 
   it("labels file-ledger generated drafts and client finals from artifact state", () => {
@@ -256,7 +259,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /^files$/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /^files & deliverables$/i }),
+    );
     // This test checks rows across multiple stages (scope + rfp) at once —
     // the lifecycle matrix defaults to the viewed stage only, so expand to
     // all 11 stages to keep exercising the full cross-stage matrix here.
@@ -284,9 +289,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
       screen.getByTestId("source-shell-file-compliance-flag-generated-rfp"),
     ).toHaveTextContent("Compliance review required");
     expect(
-      screen.getByTestId(
-        "source-shell-file-compliance-message-generated-rfp",
-      ),
+      screen.getByTestId("source-shell-file-compliance-message-generated-rfp"),
     ).toHaveTextContent(
       "This draft was flagged for compliance review before external use.",
     );
@@ -294,45 +297,49 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.queryByTestId("source-shell-file-compliance-flag-generated-draft"),
     ).not.toBeInTheDocument();
-    expect(screen.getByTestId("source-artifact-execution-summary")).toHaveTextContent(
-      "Due so far",
-    );
-    expect(screen.getByTestId("source-artifact-execution-summary")).toHaveTextContent(
-      "Registered",
-    );
-    expect(screen.getByTestId("source-artifact-execution-summary")).toHaveTextContent(
-      "Missing required",
-    );
-    expect(screen.getByTestId("source-artifact-execution-summary")).toHaveTextContent(
-      "Client finals",
-    );
-    expect(screen.queryByTestId("source-artifact-audit-metrics")).not.toBeInTheDocument();
-    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).not.toHaveTextContent(
-      "Quality score",
-    );
+    expect(
+      screen.getByTestId("source-artifact-execution-summary"),
+    ).toHaveTextContent("Due so far");
+    expect(
+      screen.getByTestId("source-artifact-execution-summary"),
+    ).toHaveTextContent("Registered");
+    expect(
+      screen.getByTestId("source-artifact-execution-summary"),
+    ).toHaveTextContent("Missing required");
+    expect(
+      screen.getByTestId("source-artifact-execution-summary"),
+    ).toHaveTextContent("Client finals");
+    expect(
+      screen.queryByTestId("source-artifact-audit-metrics"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("source-artifact-lifecycle-matrix"),
+    ).not.toHaveTextContent("Quality score");
     fireEvent.click(screen.getByTestId("source-artifact-audit-metrics-toggle"));
-    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
-      "Expected artifacts",
-    );
-    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
-      "Quality score",
-    );
-    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
-      "Hard fails",
-    );
-    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
-      "Content scored",
-    );
-    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
-      "Content blockers",
-    );
-    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
-      "Gate B required",
-    );
-    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
-      "Gate B pending",
-    );
-    expect(screen.getByTestId("source-artifact-quality-scope")).toHaveTextContent(
+    expect(
+      screen.getByTestId("source-artifact-audit-metrics"),
+    ).toHaveTextContent("Expected artifacts");
+    expect(
+      screen.getByTestId("source-artifact-audit-metrics"),
+    ).toHaveTextContent("Quality score");
+    expect(
+      screen.getByTestId("source-artifact-audit-metrics"),
+    ).toHaveTextContent("Hard fails");
+    expect(
+      screen.getByTestId("source-artifact-audit-metrics"),
+    ).toHaveTextContent("Content scored");
+    expect(
+      screen.getByTestId("source-artifact-audit-metrics"),
+    ).toHaveTextContent("Content blockers");
+    expect(
+      screen.getByTestId("source-artifact-audit-metrics"),
+    ).toHaveTextContent("Gate B required");
+    expect(
+      screen.getByTestId("source-artifact-audit-metrics"),
+    ).toHaveTextContent("Gate B pending");
+    expect(
+      screen.getByTestId("source-artifact-quality-scope"),
+    ).toHaveTextContent(
       "rendered body text where Source has artifact content available",
     );
     expect(
@@ -341,23 +348,28 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.getByTestId("source-artifact-consulting-gate-d09_rfp_pack"),
     ).toHaveTextContent("Gate B required");
-    expect(screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack")).toHaveTextContent(
-      "Content blockers",
-    );
-    expect(screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack")).toHaveTextContent(
-      "No persisted consulting-grade review receipt",
-    );
-    expect(screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack")).toHaveTextContent(
+    expect(
+      screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack"),
+    ).toHaveTextContent("Content blockers");
+    expect(
+      screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack"),
+    ).toHaveTextContent("No persisted consulting-grade review receipt");
+    expect(
+      screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack"),
+    ).toHaveTextContent(
       "Vendor-facing document contains internal commercial or scoring details",
     );
-    const standardsExport = screen.getByTestId("source-artifact-standards-export");
+    const standardsExport = screen.getByTestId(
+      "source-artifact-standards-export",
+    );
     expect(standardsExport).toHaveAttribute(
       "download",
       "LSH-AMS-2026-artifact-standards.csv",
     );
     const decodedCsv = decodeURIComponent(
-      standardsExport.getAttribute("href")?.replace(/^data:text\/csv;charset=utf-8,/, "") ??
-        "",
+      standardsExport
+        .getAttribute("href")
+        ?.replace(/^data:text\/csv;charset=utf-8,/, "") ?? "",
     );
     expect(decodedCsv).toContain('"Artifact code"');
     expect(decodedCsv).toContain('"d08_premortem"');
@@ -378,12 +390,12 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(decodedCsv).toContain(
       "A reviewed client-final version must be accepted back into Source as the authoritative artifact of record.",
     );
-    expect(screen.getByTestId("source-artifact-audit-metrics")).toHaveTextContent(
-      "Evidence-only",
-    );
-    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
-      "Human review required",
-    );
+    expect(
+      screen.getByTestId("source-artifact-audit-metrics"),
+    ).toHaveTextContent("Evidence-only");
+    expect(
+      screen.getByTestId("source-artifact-lifecycle-matrix"),
+    ).toHaveTextContent("Human review required");
     expect(
       screen.getByTestId("source-artifact-lifecycle-row-d05_scope_memo"),
     ).toHaveTextContent("Client-approved final");
@@ -472,7 +484,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /^files$/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /^files & deliverables$/i }),
+    );
 
     const readiness = screen.getByTestId("source-evidence-readiness-panel");
     expect(readiness).toHaveTextContent("Evidence readiness");
@@ -486,6 +500,17 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.getByTestId("source-evidence-readiness-registered-only"),
     ).toHaveTextContent("Vendor call recording");
+    const fileUseMap = screen.getByTestId("source-file-use-readiness-map");
+    expect(fileUseMap).toHaveTextContent("File use map");
+    expect(fileUseMap).toHaveTextContent("Sponsor call notes");
+    expect(fileUseMap).toHaveTextContent("Scope workshop output");
+    expect(fileUseMap).toHaveTextContent("Vendor call recording");
+    expect(fileUseMap).toHaveTextContent("Evidence");
+    expect(fileUseMap).toHaveTextContent("parsed");
+    expect(fileUseMap).toHaveTextContent("embedded");
+    expect(fileUseMap).toHaveTextContent("not projected");
+    expect(fileUseMap).toHaveTextContent("Run or retry parser");
+    expect(fileUseMap).toHaveTextContent("Ready for workflow use");
     expect(
       screen.getByTestId("source-shell-file-processing-parsed-notes"),
     ).toHaveTextContent("PARSED");
@@ -527,7 +552,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /^files$/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /^files & deliverables$/i }),
+    );
     // Viewing "scope" but this artifact is stageKey "rfp" — the lifecycle
     // matrix defaults to the viewed stage only, so expand to see it.
     fireEvent.click(
@@ -588,10 +615,12 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /^files$/i }));
-    expect(screen.getByTestId("source-session-evidence-capture")).toHaveTextContent(
-      "Session evidence",
+    fireEvent.click(
+      screen.getByRole("button", { name: /^files & deliverables$/i }),
     );
+    expect(
+      screen.getByTestId("source-session-evidence-capture"),
+    ).toHaveTextContent("Session evidence");
 
     fireEvent.change(
       screen.getByTestId("source-session-evidence-input-workshop_output"),
@@ -617,7 +646,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(body.get("artifactFamily")).toBe("workshop_output");
     expect(body.get("artifactKind")).toBe("source_workshop_output");
     expect(body.get("dataClassification")).toBe("Internal");
-    expect(await screen.findByText(/Captured scope-workshop-output.md/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Captured scope-workshop-output.md/i),
+    ).toBeInTheDocument();
     expect(mockRouterRefresh).toHaveBeenCalledTimes(1);
   });
 
@@ -630,11 +661,11 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
       />,
     );
 
-    expect(screen.getByTestId("source-analytics-canvas").textContent).not.toContain(
-      "approval belongs in Source Approvals",
-    );
+    expect(
+      screen.getByTestId("source-analytics-canvas").textContent,
+    ).not.toContain("approval belongs in Source Approvals");
     expect(screen.getByTestId("source-analytics-canvas").textContent).toMatch(
-      /approval page/i,
+      /approval/i,
     );
   });
 
@@ -649,7 +680,11 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     // given). This locks the source-side half of that contract.
     const event = makeEvent({ id: "evt-42", code: "LSH-AMS-2027" });
     render(
-      <SourceAnalyticsCanvas event={event} viewStage="scope" tenantName="Lakeshore" />,
+      <SourceAnalyticsCanvas
+        event={event}
+        viewStage="scope"
+        tenantName="Lakeshore"
+      />,
     );
     expect(screen.getByTestId("source-analytics-canvas")).toBeInTheDocument();
   });
@@ -694,7 +729,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     fireEvent.change(screen.getByTestId("task-file-input"), {
       target: {
         files: [
-          new File([new Uint8Array(16)], "volumetrics.csv", { type: "text/csv" }),
+          new File([new Uint8Array(16)], "volumetrics.csv", {
+            type: "text/csv",
+          }),
         ],
       },
     });
@@ -721,7 +758,10 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
   it("does NOT show the stale sample claim when a LIVE stage view says all tasks are complete", () => {
     const allDoneLiveView: StageAnalyticsView = {
       ...SAMPLE_SCOPE_STAGE,
-      tasks: SAMPLE_SCOPE_STAGE.tasks.map((t) => ({ ...t, state: "done" as const })),
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((t) => ({
+        ...t,
+        state: "done" as const,
+      })),
     };
 
     render(
@@ -776,7 +816,10 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
     };
     const allDoneLiveView: StageAnalyticsView = {
       ...SAMPLE_SCOPE_STAGE,
-      tasks: SAMPLE_SCOPE_STAGE.tasks.map((t) => ({ ...t, state: "done" as const })),
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((t) => ({
+        ...t,
+        state: "done" as const,
+      })),
     };
 
     render(
@@ -790,19 +833,25 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
     );
 
     expect(screen.queryByTestId("ava-launcher-fab")).not.toBeInTheDocument();
-    expect(screen.getByTestId("source-analytics-canvas").textContent).not.toContain(
-      "Explicit launcher context from the route.",
-    );
+    expect(
+      screen.getByTestId("source-analytics-canvas").textContent,
+    ).not.toContain("Explicit launcher context from the route.");
   });
 
   it("uses the same completion counter in sample mode instead of a hardcoded launcher claim", () => {
     render(
-      <SourceAnalyticsCanvas event={makeEvent()} viewStage="scope" tenantName="Lakeshore" />,
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Lakeshore"
+      />,
     );
     const total = SAMPLE_SCOPE_STAGE.tasks.length;
-    const done = SAMPLE_SCOPE_STAGE.tasks.filter((task) => task.state === "done").length;
+    const done = SAMPLE_SCOPE_STAGE.tasks.filter(
+      (task) => task.state === "done",
+    ).length;
     expect(screen.getByTestId("source-analytics-canvas").textContent).toContain(
-      `${total - done} of ${total}`,
+      `${total - done} steps left`,
     );
   });
 });
