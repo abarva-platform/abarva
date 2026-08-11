@@ -170,6 +170,25 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("shows what the active step needs before Continue can unlock", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Lakeshore"
+      />,
+    );
+
+    const needs = screen.getByTestId("source-shell-active-step-needs");
+    expect(needs).toHaveTextContent("What Continue needs");
+    expect(needs).toHaveTextContent("Application inventory file");
+    expect(needs).toHaveTextContent("CMDB / finance export");
+    expect(needs).toHaveTextContent("Ravi Menon, IT-Ops");
+    expect(needs).toHaveTextContent("CSV or XLSX");
+    expect(needs).toHaveTextContent("Missing");
+    expect(needs).toHaveTextContent("Upload the required file below.");
+  });
+
   it("keeps gate approval handoff inside the event shell workspace", () => {
     render(
       <SourceAnalyticsCanvas

@@ -1212,6 +1212,11 @@ function FocusedWorkPanel({
                 {activeStep.help}
               </p>
 
+              <ActiveStepNeedsPanel
+                step={activeStep}
+                isComplete={activeComplete}
+              />
+
               {activeGroup ? (
                 <EvidenceAskTable
                   group={activeGroup}
@@ -1452,6 +1457,211 @@ function EvidenceAskTable({
       })}
     </div>
   );
+}
+
+function ActiveStepNeedsPanel({
+  step,
+  isComplete,
+}: {
+  step: SourceShellStep;
+  isComplete: boolean;
+}) {
+  const need = activeStepNeed(step, isComplete);
+  return (
+    <div
+      data-testid="source-shell-active-step-needs"
+      style={{
+        border: `1px solid ${ANALYTICS.LINE}`,
+        borderRadius: 8,
+        background: ANALYTICS.CARD,
+        margin: "0 0 16px 42px",
+        maxWidth: 760,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          alignItems: "center",
+          borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          display: "flex",
+          gap: 10,
+          justifyContent: "space-between",
+          padding: "10px 12px",
+        }}
+      >
+        <strong style={{ color: ANALYTICS.INK, fontSize: 13 }}>
+          What Continue needs
+        </strong>
+        <span
+          style={{
+            border: `1px solid ${isComplete ? "rgba(17, 120, 84, 0.24)" : ANALYTICS.LINE}`,
+            borderRadius: 999,
+            color: isComplete ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
+            fontFamily: ANALYTICS.MONO,
+            fontSize: 10,
+            fontWeight: 900,
+            padding: "5px 8px",
+            textTransform: "uppercase",
+          }}
+        >
+          {isComplete ? "Done" : "Required"}
+        </span>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(136px, 1fr))",
+          gap: 12,
+          padding: "11px 12px 8px",
+        }}
+      >
+        <StepNeedDatum label="Needed" value={need.item} />
+        <StepNeedDatum label="Source" value={need.source} />
+        <StepNeedDatum label="Owner" value={need.owner} />
+      </div>
+      <div
+        style={{
+          borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(136px, 1fr))",
+          gap: 12,
+          padding: "9px 12px 11px",
+        }}
+      >
+        <StepNeedDatum label="Formats" value={need.formats} />
+        <StepNeedDatum label="Status" value={need.status} tone={need.tone} />
+        <StepNeedDatum label="Next" value={need.nextAction} />
+      </div>
+      {step.template ? (
+        <div
+          style={{
+            borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+            color: ANALYTICS.MUTED,
+            fontSize: 12,
+            lineHeight: 1.4,
+            padding: "9px 12px",
+          }}
+        >
+          Template: <strong>{step.template.name}</strong> · {step.template.meta}
+        </div>
+      ) : null}
+      {step.file ? (
+        <div
+          style={{
+            borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+            color: ANALYTICS.GREEN_TEXT,
+            fontSize: 12,
+            fontWeight: 800,
+            lineHeight: 1.4,
+            padding: "9px 12px",
+          }}
+        >
+          Uploaded: {step.file.name} · {step.file.meta}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function StepNeedDatum({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "good" | "warn";
+}) {
+  const color =
+    tone === "good"
+      ? ANALYTICS.GREEN_TEXT
+      : tone === "warn"
+        ? ANALYTICS.AMBER_TEXT
+        : ANALYTICS.INK;
+  return (
+    <div style={{ display: "grid", gap: 3, minWidth: 0 }}>
+      <span
+        style={{
+          color: ANALYTICS.FAINT,
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 9,
+          fontWeight: 900,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+        }}
+      >
+        {label}
+      </span>
+      <strong
+        style={{
+          color,
+          fontSize: 12.5,
+          lineHeight: 1.32,
+          overflowWrap: "anywhere",
+        }}
+      >
+        {value}
+      </strong>
+    </div>
+  );
+}
+
+function activeStepNeed(step: SourceShellStep, isComplete: boolean) {
+  const source =
+    step.provenance?.source ??
+    (step.type === "provide" ? "Client upload" : "Current stage evidence");
+  const owner = step.provenance?.owner ?? "Stage owner";
+  const formats =
+    step.type === "provide"
+      ? "CSV or XLSX"
+      : step.template
+        ? `${step.template.format} template`
+        : "No upload required";
+  const uploaded = Boolean(step.file);
+  const status = isComplete
+    ? "Complete"
+    : step.type === "provide"
+      ? uploaded
+        ? "Uploaded"
+        : "Missing"
+      : "Needs review";
+  const tone: "good" | "warn" = isComplete || uploaded ? "good" : "warn";
+  return {
+    item: activeStepNeedItem(step),
+    source,
+    owner,
+    formats,
+    status,
+    tone,
+    nextAction: activeStepNextAction(step, isComplete, uploaded),
+  };
+}
+
+function activeStepNeedItem(step: SourceShellStep): string {
+  const cleanTitle = step.title.replace(
+    /^(provide|upload|confirm|decide|review)\s+(the\s+)?/i,
+    "",
+  );
+  const label = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
+  if (step.type === "provide") return `${label} file`;
+  if (step.type === "decide") return `${label} decision`;
+  return `${label} review`;
+}
+
+function activeStepNextAction(
+  step: SourceShellStep,
+  isComplete: boolean,
+  uploaded: boolean,
+): string {
+  if (isComplete) return "Continue is enabled.";
+  if (step.type === "provide") {
+    if (uploaded) return "Review the parsed result, then Continue.";
+    return step.template
+      ? "Download the template, fill it, then upload below."
+      : "Upload the required file below.";
+  }
+  if (step.type === "decide") return "Record the decision, then Continue.";
+  return "Review the evidence, then confirm.";
 }
 
 function StepDetail({
