@@ -12,6 +12,8 @@
 
 The Source Optimize Contract selected-case page now reads as a decision cockpit instead of a generic case page. It separates the contract exposure, loaded opportunity rows, open evidence gaps, calculation input counts, and source-system requests so a sourcing leader can see what is ready, what is missing, and what evidence blocks an external value claim.
 
+This follow-up tightens the evidence gate further: commercial-baseline conflicts and opportunity-set requirements now appear on the evidence request board even when the older missing-source array is empty, so the page cannot imply that the case is clean when the opportunity spine still blocks approval.
+
 ## Layer Impact
 
 - Lane: `global-control-lane`, because this is shared Source product UI and workflow guidance for every tenant with governed contract optimization projections.
@@ -32,16 +34,18 @@ The Source Optimize Contract selected-case page now reads as a decision cockpit 
 - Tightened the Optimize Contract header and stage labels.
 - Reframed the selected-contract panel as an optimization decision brief.
 - Added readiness cells for contract exposure, opportunity rows, and open evidence gaps.
+- Added baseline readiness rows for pricing schedule tie-out, actual spend, calculation trace, and finance realization proof.
 - Added calculation input counts to the opportunity table.
 - Replaced the generic missing-evidence list with an evidence request board that names required evidence, source system, grain/history, blocker, and next action.
+- Included opportunity-set evidence requirements in the same board, including commercial baseline reconciliation requirements.
 - Renamed the realized-value ledger label to make the finance proof gate explicit.
-- Expanded focused component tests around evidence readiness and calculation input visibility.
+- Expanded focused component tests around evidence readiness, calculation input visibility, and baseline-conflict requirements.
 
 ## QA / Validation
 
 - Pass: `npx prettier --check src/components/source/SourceOptimizeContractPage.tsx src/components/source/__tests__/SourceOptimizeContractPage.test.tsx docs/releases/records/2026-08-11-source-optimize-evidence-readiness.md`.
 - Pass: `npx eslint src/components/source/SourceOptimizeContractPage.tsx src/components/source/__tests__/SourceOptimizeContractPage.test.tsx src/lib/source/data-model/contract-optimization-ledger.ts`.
-- Pass: `npx jest src/components/source/__tests__/SourceOptimizeContractPage.test.tsx --runInBand` — 1 suite, 4 tests passed. Existing duplicate manual mock warnings were emitted by Jest.
+- Pass: `npx jest src/components/source/__tests__/SourceOptimizeContractPage.test.tsx --runInBand` — 1 suite, 5 tests passed. Existing duplicate manual mock warnings were emitted by Jest.
 - Pass: `npx jest src/lib/source/data-model/__tests__/contract-optimization-spine.test.ts src/lib/source/data-model/__tests__/contract-optimization-opportunity.test.ts --runInBand` — 2 suites, 6 tests passed. Existing duplicate manual mock warnings were emitted by Jest.
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`.
 - Pass: `npm run release:check`. The command regenerated legacy-purge report timestamps locally; those generated report changes were not included in this release candidate.
@@ -67,8 +71,8 @@ Revert the PR and redeploy main through the repo-owned ACA workflow. No migratio
 
 ## Audit Evidence
 
-- PR URL: pending.
-- Focused Jest output: 3 suites / 10 tests passed.
+- PR URL: https://github.com/abarva-platform/abarva/pull/6159.
+- Focused Jest output: 3 suites / 11 tests passed.
 - ESLint output: passed.
 - Prettier output: passed.
 - TypeScript output: passed with explicit heap setting.
