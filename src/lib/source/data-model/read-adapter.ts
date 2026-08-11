@@ -27,6 +27,7 @@ import {
   type ContractOptimizationOpportunity,
   type ContractOptimizationOpportunitySet,
   type FinanceRealizationLink,
+  type OptimizationBaselineRead,
   type OptimizationEvidenceGrade,
   type OptimizationOpportunityStage,
   type OptimizationOpportunityValueType,
@@ -942,29 +943,7 @@ async function getPersistedContractOptimizationOpportunitySet(
       : selectedOpportunityId
         ? "review_calculation"
         : "request_evidence",
-    baseline: {
-      status:
-        (textValue(baselineRow.baseline_state) as
-          | "ready"
-          | "conflict"
-          | "missing") ?? "missing",
-      headline:
-        textValue(jsonObject(baselineRow.payload).headline) ??
-        "Commercial baseline loaded.",
-      detail:
-        textValue(baselineRow.detail) ??
-        "Commercial baseline detail is not available.",
-      annualValueUsd: numberValue(baselineRow.annual_value_usd),
-      pricingScheduleAnnualValueUsd: numberValue(
-        baselineRow.pricing_schedule_annual_value_usd,
-      ),
-      actualAnnualSpendUsd: numberValue(baselineRow.actual_annual_spend_usd),
-      totalCommittedValueUsd: numberValue(
-        baselineRow.total_committed_value_usd,
-      ),
-      conflictAmountUsd: numberValue(baselineRow.conflict_amount_usd),
-      sourceRefs: jsonArray(baselineRow.source_refs),
-    },
+    baseline: persistedBaselineRead(baselineRow, contract),
     selectedOpportunityId,
     opportunities,
     financeRealizations,
@@ -973,6 +952,58 @@ async function getPersistedContractOptimizationOpportunitySet(
     potentialAvoidableUsd,
     potentialNegotiableUsd,
     financeConfirmedUsd,
+  };
+}
+
+function persistedBaselineRead(
+  baselineRow: NumericRow,
+  contract: SourceContract360Row | null,
+): OptimizationBaselineRead {
+  const hasPersistedBaseline = Object.keys(baselineRow).length > 0;
+  const annualValueUsd =
+    numberValue(baselineRow.annual_value_usd) ??
+    numberValue(contract?.resolved_annual_value) ??
+    numberValue(contract?.annual_value);
+  const actualAnnualSpendUsd =
+    numberValue(baselineRow.actual_annual_spend_usd) ??
+    numberValue(contract?.actual_annual_spend);
+  const totalCommittedValueUsd =
+    numberValue(baselineRow.total_committed_value_usd) ??
+    numberValue(contract?.resolved_total_committed_value) ??
+    numberValue(contract?.total_committed_value);
+  const status =
+    readLiteral(baselineRow.baseline_state, ["ready", "conflict", "missing"]) ??
+    "missing";
+  const headline =
+    textValue(jsonObject(baselineRow.payload).headline) ??
+    (hasPersistedBaseline
+      ? "Commercial baseline is incomplete."
+      : "Commercial baseline needs pricing schedule tie-out.");
+  const detail =
+    textValue(baselineRow.detail) ??
+    (hasPersistedBaseline
+      ? "Contract register values are available, but baseline detail still needs review before approving a value case."
+      : "Contract register values are loaded from Contract 360; pricing schedule rows are still pending, so value approval remains blocked.");
+
+  return {
+    status,
+    headline,
+    detail,
+    annualValueUsd,
+    pricingScheduleAnnualValueUsd: numberValue(
+      baselineRow.pricing_schedule_annual_value_usd,
+    ),
+    actualAnnualSpendUsd,
+    totalCommittedValueUsd,
+    conflictAmountUsd: numberValue(baselineRow.conflict_amount_usd),
+    sourceRefs:
+      jsonArray(baselineRow.source_refs).length > 0
+        ? jsonArray(baselineRow.source_refs)
+        : [
+            "source.contract_360.annual_value",
+            "source.contract_360.actual_annual_spend",
+            "source.contract_360.total_committed_value",
+          ],
   };
 }
 
