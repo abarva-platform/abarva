@@ -54,22 +54,21 @@ function makeSpine(
   overrides: Partial<ContractOptimizationSpine> = {},
 ): ContractOptimizationSpine {
   const candidate = makeCandidate();
+  const sourceConnection = {
+    id: "itsm",
+    sourceSystem: "ITSM / service management",
+    examples: ["ServiceNow"],
+    extract: "SLA performance and service-credit eligibility.",
+    evidenceClasses: ["sla", "service_credit"],
+    ledgers: ["recoverable_leakage"],
+    fields: ["period", "credit_earned", "credit_claimed"],
+    outcome: "Quantifies service-credit recovery.",
+  } as const;
   return {
     selected: null,
     candidates: [candidate],
     topCandidates: [candidate],
-    sourceConnections: [
-      {
-        id: "clm",
-        sourceSystem: "CLM / contract repository",
-        examples: ["Icertis"],
-        extract: "Executed agreement and pricing schedules.",
-        evidenceClasses: ["contract_term", "rate_card"],
-        ledgers: ["negotiated_improvement"],
-        fields: ["contract_id", "document_id"],
-        outcome: "Proves pricing mechanics and rights.",
-      },
-    ],
+    sourceConnections: [sourceConnection],
     missingEvidenceSources: [],
     contractStory: [],
     missingEvidenceStory: [],
@@ -118,7 +117,20 @@ function makeOpportunitySet(): ContractOptimizationOpportunitySet {
         nextAction: "Review calculation lines.",
         sourceSystems: ["AP / ERP"],
         evidenceRefs: [],
-        calculation: null,
+        calculation: {
+          ruleId: "rate-variance-v1",
+          ruleVersion: "1.0.0",
+          formula: "Eligible quantity × rate variance",
+          eligibleQuantity: 100,
+          billedRateUsd: 12,
+          contractRateUsd: 10,
+          approvedExceptionsUsd: 0,
+          calculatedAmountUsd: 755_000,
+          includedLineCount: 18,
+          excludedLineCount: 3,
+          pendingLineCount: 2,
+          lines: [],
+        },
         overlapTreatment: "included",
         approvalState: "draft",
         narrative: "Line-level invoice and rate evidence is loaded.",
@@ -192,5 +204,64 @@ describe("SourceOptimizeContractPage", () => {
       );
       expect(push).toHaveBeenCalledWith("/source/events/event-090/approval");
     });
+  });
+
+  it("shows the selected contract as a decision brief with evidence readiness", () => {
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({ selected: makeCandidate() })}
+        opportunitySet={makeOpportunitySet()}
+      />,
+    );
+
+    expect(screen.getByText("Optimization decision brief")).toBeInTheDocument();
+    expect(screen.getByText("Contract exposure")).toBeInTheDocument();
+    expect(screen.getByText("Opportunity rows")).toBeInTheDocument();
+    expect(screen.getByText("Open evidence gaps")).toBeInTheDocument();
+    expect(screen.getByText("18 included")).toBeInTheDocument();
+    expect(screen.getByText("2 pending · 3 excluded")).toBeInTheDocument();
+  });
+
+  it("renders source-system, grain, blocker, and next-action guidance for missing evidence", () => {
+    const sourceConnection = makeSpine().sourceConnections[0];
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({
+          selected: makeCandidate(),
+          missingEvidenceSources: [
+            {
+              lineId: "recoverable:sla-credits",
+              lineLabel: "SLA credits earned but not claimed",
+              ask: "Pull the monthly service-credit register for the selected contract.",
+              nextAction:
+                "Request the SLA credit register from service management.",
+              connections: [sourceConnection],
+            },
+          ],
+        })}
+        opportunitySet={makeOpportunitySet()}
+      />,
+    );
+
+    expect(screen.getByText("Evidence request board")).toBeInTheDocument();
+    expect(
+      screen.getByText("SLA credits earned but not claimed"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText("ITSM / service management").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByText("Monthly SLA and credit rows, 24 months preferred."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Service-credit recovery")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Request the SLA credit register from service management.",
+      ),
+    ).toBeInTheDocument();
   });
 });

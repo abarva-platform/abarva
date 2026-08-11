@@ -266,7 +266,7 @@ export function buildContractOptimizationLedger(input: {
     {
       id: 'realized:tower-finance-proof',
       kind: 'realized_value',
-      label: 'Finance-confirmed outcome',
+      label: 'Finance-confirmed realized value',
       amountUsd: governedRealizedValueUsd > 0 ? governedRealizedValueUsd : null,
       state: evidenceState(realizedEvidence) ?? (governedRealizedValueUsd > 0 ? 'quantified' : 'not_established'),
       evidenceClass: evidenceClass(realizedEvidence) ?? (governedRealizedValueUsd > 0 ? 'human_validated' : 'missing'),
