@@ -16,6 +16,7 @@ import { ContractOptimizationProfilePanel } from "../contract-optimization/Contr
 import { VendorBafoInstructionPackPanel } from "./VendorBafoInstructionPackPanel";
 import { VendorChallengeLeveragePanel } from "./VendorChallengeLeveragePanel";
 import { VendorEvaluationScorecardPanel } from "./VendorEvaluationScorecardPanel";
+import { VendorResponsePackageCockpit } from "./VendorResponsePackageCockpit";
 import { VendorResponseProfilesPanel } from "./VendorResponseProfilesPanel";
 
 export function ResponsesStageView({
@@ -93,7 +94,7 @@ export function ResponsesStageView({
                     record.completenessStatus === "complete"
                       ? "good"
                       : record.completenessStatus === "blocked" ||
-                      record.completenessStatus === "not_comparable"
+                          record.completenessStatus === "not_comparable"
                         ? "bad"
                         : "warn"
                   }
@@ -112,6 +113,10 @@ export function ResponsesStageView({
       <ContractOptimizationProfilePanel profile={contractOptimizationProfile} />
       {!isContractOptimization ? (
         <>
+          <VendorResponsePackageCockpit
+            readiness={readiness}
+            profileSet={profileSet}
+          />
           <VendorResponseProfilesPanel profileSet={profileSet} />
           <VendorChallengeLeveragePanel intelligence={challengeIntelligence} />
           <VendorBafoInstructionPackPanel pack={bafoInstructionPack} />
@@ -124,7 +129,10 @@ export function ResponsesStageView({
         </>
       ) : null}
 
-      <section data-testid="source-responses-disqualification-card" style={DECISION}>
+      <section
+        data-testid="source-responses-disqualification-card"
+        style={DECISION}
+      >
         <div style={EYEBROW}>Decision point</div>
         <h3 style={SMALL_TITLE}>Disqualification requires rationale</h3>
         <p style={COPY}>
