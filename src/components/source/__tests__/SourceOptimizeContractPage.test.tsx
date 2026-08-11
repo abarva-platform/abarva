@@ -145,6 +145,35 @@ function makeOpportunitySet(): ContractOptimizationOpportunitySet {
   };
 }
 
+function makeConflictOpportunitySet(): ContractOptimizationOpportunitySet {
+  const base = makeOpportunitySet();
+  return {
+    ...base,
+    recommendation: "Resolve baseline before approval.",
+    recommendationDetail:
+      "The pricing schedule does not reconcile to the stated annual value.",
+    actionState: "request_evidence",
+    baseline: {
+      ...base.baseline,
+      status: "conflict",
+      headline: "Commercial baseline conflict.",
+      detail:
+        "Pricing schedule totals $44.8M while the stated annual value is $43.5M. Resolve the baseline before approving an optimization case.",
+      pricingScheduleAnnualValueUsd: 44_800_000,
+      conflictAmountUsd: 1_300_000,
+    },
+    selectedOpportunityId: null,
+    opportunities: [],
+    evidenceRequirements: [
+      "Resolve annual-value versus pricing-schedule baseline before sizing or approving an optimization case.",
+    ],
+    potentialRecoverableUsd: 0,
+    potentialAvoidableUsd: 0,
+    potentialNegotiableUsd: 0,
+    financeConfirmedUsd: 0,
+  };
+}
+
 describe("SourceOptimizeContractPage", () => {
   beforeEach(() => {
     push.mockReset();
@@ -220,8 +249,48 @@ describe("SourceOptimizeContractPage", () => {
     expect(screen.getByText("Contract exposure")).toBeInTheDocument();
     expect(screen.getByText("Opportunity rows")).toBeInTheDocument();
     expect(screen.getByText("Open evidence gaps")).toBeInTheDocument();
+    expect(screen.getByText("baseline ready")).toBeInTheDocument();
+    expect(screen.getByText("Pricing schedule tie-out")).toBeInTheDocument();
+    expect(screen.getByText("Actual spend baseline")).toBeInTheDocument();
+    expect(screen.getByText("Calculation trace")).toBeInTheDocument();
+    expect(screen.getByText("Finance realization proof")).toBeInTheDocument();
     expect(screen.getByText("18 included")).toBeInTheDocument();
     expect(screen.getByText("2 pending · 3 excluded")).toBeInTheDocument();
+  });
+
+  it("surfaces opportunity-set evidence requirements when spine rows are empty", () => {
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({
+          selected: makeCandidate(),
+          missingEvidenceSources: [],
+        })}
+        opportunitySet={makeConflictOpportunitySet()}
+      />,
+    );
+
+    expect(screen.getByText("baseline conflict")).toBeInTheDocument();
+    expect(
+      screen.getByText("Commercial baseline reconciliation"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Required before approval")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Pricing-schedule line item grain for the active term, including amendments or order forms.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Baseline lock, opportunity sizing, and approval-quality case",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "No required evidence rows are open in the current spine.",
+      ),
+    ).not.toBeInTheDocument();
   });
 
   it("renders source-system, grain, blocker, and next-action guidance for missing evidence", () => {
