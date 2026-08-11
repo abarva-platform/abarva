@@ -16,6 +16,7 @@ import { ContractOptimizationProfilePanel } from "../contract-optimization/Contr
 import { VendorBafoInstructionPackPanel } from "./VendorBafoInstructionPackPanel";
 import { VendorChallengeLeveragePanel } from "./VendorChallengeLeveragePanel";
 import { VendorEvaluationScorecardPanel } from "./VendorEvaluationScorecardPanel";
+import { VendorResponseIntelligenceBrief } from "./VendorResponseIntelligenceBrief";
 import { VendorResponsePackageCockpit } from "./VendorResponsePackageCockpit";
 import { VendorResponseProfilesPanel } from "./VendorResponseProfilesPanel";
 
@@ -116,6 +117,12 @@ export function ResponsesStageView({
           <VendorResponsePackageCockpit
             readiness={readiness}
             profileSet={profileSet}
+          />
+          <VendorResponseIntelligenceBrief
+            profileSet={profileSet}
+            challengeIntelligence={challengeIntelligence}
+            bafoInstructionPack={bafoInstructionPack}
+            evaluationDecisionView={evaluationDecisionView}
           />
           <VendorResponseProfilesPanel profileSet={profileSet} />
           <VendorChallengeLeveragePanel intelligence={challengeIntelligence} />
