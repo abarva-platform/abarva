@@ -1217,6 +1217,14 @@ function FocusedWorkPanel({
                 isComplete={activeComplete}
               />
 
+              <ActiveStepGuidePanel
+                step={activeStep}
+                stageLabel={view.stage.label}
+                isComplete={activeComplete}
+                guidebook={view.guidebook.record}
+                onOpenGuidebook={() => onWorkspaceChange("guidebook")}
+              />
+
               {activeGroup ? (
                 <EvidenceAskTable
                   group={activeGroup}
@@ -1563,6 +1571,107 @@ function ActiveStepNeedsPanel({
   );
 }
 
+function ActiveStepGuidePanel({
+  step,
+  stageLabel,
+  isComplete,
+  guidebook,
+  onOpenGuidebook,
+}: {
+  step: SourceShellStep;
+  stageLabel: string;
+  isComplete: boolean;
+  guidebook: SourceStageGuidebookRecord | null;
+  onOpenGuidebook: () => void;
+}) {
+  const guide = activeStepGuide(step, stageLabel, isComplete, guidebook);
+  return (
+    <div
+      data-testid="source-shell-active-step-guide"
+      style={{
+        border: `1px solid ${ANALYTICS.LINE}`,
+        borderRadius: 8,
+        background: ANALYTICS.CARD,
+        margin: "0 0 16px 42px",
+        maxWidth: 760,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          alignItems: "center",
+          borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          display: "flex",
+          gap: 12,
+          justifyContent: "space-between",
+          padding: "10px 12px",
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <strong style={{ color: ANALYTICS.INK, fontSize: 13 }}>
+            Run this step
+          </strong>
+          <div
+            style={{
+              color: ANALYTICS.MUTED,
+              fontSize: 12,
+              lineHeight: 1.35,
+              marginTop: 3,
+              overflowWrap: "anywhere",
+            }}
+          >
+            {guide.session}
+          </div>
+        </div>
+        {guidebook ? (
+          <button
+            type="button"
+            aria-label="Open full guidebook"
+            onClick={onOpenGuidebook}
+            style={{
+              ...BUTTON_STYLE,
+              fontSize: 11,
+              minHeight: 32,
+              padding: "0 10px",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Guidebook
+          </button>
+        ) : null}
+      </div>
+      <p
+        style={{
+          color: ANALYTICS.INK_2,
+          fontSize: 12.5,
+          lineHeight: 1.45,
+          margin: 0,
+          padding: "10px 12px 0",
+        }}
+      >
+        {guide.brief}
+      </p>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+          gap: 12,
+          padding: "11px 12px 12px",
+        }}
+      >
+        <StepNeedDatum label="Invite" value={guide.invite} />
+        <StepNeedDatum label="Collect" value={guide.collect} />
+        <StepNeedDatum label="Template" value={guide.template} />
+        <StepNeedDatum
+          label="Unlock"
+          value={guide.unlock}
+          tone={isComplete ? "good" : "warn"}
+        />
+      </div>
+    </div>
+  );
+}
+
 function StepNeedDatum({
   label,
   value,
@@ -1662,6 +1771,48 @@ function activeStepNextAction(
   }
   if (step.type === "decide") return "Record the decision, then Continue.";
   return "Review the evidence, then confirm.";
+}
+
+function activeStepGuide(
+  step: SourceShellStep,
+  stageLabel: string,
+  isComplete: boolean,
+  guidebook: SourceStageGuidebookRecord | null,
+) {
+  const need = activeStepNeed(step, isComplete);
+  const session = guidebook
+    ? `${guidebook.title} · ${guidebook.durationMinutes} min`
+    : `${stageLabel} working session`;
+  const brief = firstSentence(
+    guidebook?.purpose ||
+      guidebook?.sections.find((section) => section.type === "purpose")?.body ||
+      step.help,
+  );
+  const collect =
+    step.type === "provide" ? need.item : firstSentence(step.help);
+  const template = step.template
+    ? `${step.template.name} (${step.template.format})`
+    : step.type === "provide"
+      ? "Upload file"
+      : "No template";
+  return {
+    session,
+    brief,
+    invite: `${need.owner} + stage approver`,
+    collect,
+    template,
+    unlock: isComplete ? "Continue is enabled" : need.nextAction,
+  };
+}
+
+function firstSentence(value: string): string {
+  const cleaned = value
+    .replace(/[`*_>#]/g, "")
+    .replace(/^\s*[-\d.]+\s*/gm, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const match = cleaned.match(/^.*?[.!?](?:\s|$)/);
+  return (match?.[0] ?? cleaned).trim();
 }
 
 function StepDetail({

@@ -12,7 +12,11 @@ import "@testing-library/jest-dom";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+  }),
   usePathname: () => "/source/events/evt-1",
   useSearchParams: () => new URLSearchParams(),
   useParams: () => ({ eventId: "evt-1" }),
@@ -92,6 +96,34 @@ const GUIDEBOOK: SourceStageGuidebookRecord = {
 };
 
 describe("SourceAnalyticsCanvas — guidebook workspace", () => {
+  it("summarizes the stage guidebook on the active step canvas", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="strategy"
+        tenantName="Lakeshore"
+        guidebook={GUIDEBOOK}
+      />,
+    );
+
+    const guide = screen.getByTestId("source-shell-active-step-guide");
+    expect(guide).toHaveTextContent("Run this step");
+    expect(guide).toHaveTextContent("Strategy Gate Review · 20 min");
+    expect(guide).toHaveTextContent(
+      "Get a clean sponsor decision on whether this event goes to market.",
+    );
+    expect(guide).toHaveTextContent("Invite");
+    expect(guide).toHaveTextContent("stage approver");
+    expect(guide).toHaveTextContent("Collect");
+    expect(guide).toHaveTextContent("Template");
+    expect(guide).toHaveTextContent("Unlock");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /open full guidebook/i }),
+    );
+    expect(screen.getByTestId("source-shell-v2-guidebook")).toBeInTheDocument();
+  });
+
   it("shows the Guidebook rail tab, and opens it to render the real content when a guidebook exists", () => {
     render(
       <SourceAnalyticsCanvas
@@ -102,7 +134,7 @@ describe("SourceAnalyticsCanvas — guidebook workspace", () => {
       />,
     );
 
-    const tab = screen.getByRole("button", { name: /Guidebook/i });
+    const tab = screen.getByTestId("source-shell-workspace-guidebook");
     fireEvent.click(tab);
 
     expect(screen.getByTestId("source-shell-v2-guidebook")).toBeInTheDocument();
@@ -130,14 +162,19 @@ describe("SourceAnalyticsCanvas — guidebook workspace", () => {
     // content, via renderToStaticMarkup — confirmed real <ol>/<li> output,
     // zero literal "1. " text remaining.
     expect(
-      document.querySelector('[data-testid="source-shell-v2-guidebook"] [data-mock="react-markdown"]'),
+      document.querySelector(
+        '[data-testid="source-shell-v2-guidebook"] [data-mock="react-markdown"]',
+      ),
     ).toBeInTheDocument();
   });
 
   it("does not show the Guidebook tab at all when no guidebook is authored for the viewed stage", () => {
     render(
       <SourceAnalyticsCanvas
-        event={makeEvent({ currentStageKey: "scope", currentStageLabel: "Scope" })}
+        event={makeEvent({
+          currentStageKey: "scope",
+          currentStageLabel: "Scope",
+        })}
         viewStage="scope"
         tenantName="Lakeshore"
         guidebook={null}
@@ -164,9 +201,11 @@ describe("SourceAnalyticsCanvas — guidebook workspace", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Guidebook/i }));
+    fireEvent.click(screen.getByTestId("source-shell-workspace-guidebook"));
 
-    expect(screen.getByText("Lakeshore Strategy Gate Review")).toBeInTheDocument();
+    expect(
+      screen.getByText("Lakeshore Strategy Gate Review"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Tenant guidebook")).toBeInTheDocument();
     expect(screen.queryByText("Global default")).not.toBeInTheDocument();
   });
