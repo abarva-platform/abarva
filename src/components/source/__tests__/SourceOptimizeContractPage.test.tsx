@@ -293,6 +293,55 @@ describe("SourceOptimizeContractPage", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("turns opportunity evidence requirements into named pull instructions", () => {
+    const opportunitySet = {
+      ...makeOpportunitySet(),
+      evidenceRequirements: [
+        "This is a negotiation target/approved position, not booked savings. It requires vendor agreement or executed amendment.",
+        "AP and Procurement must confirm coverage, exceptions, and dispute eligibility before recovery is asserted externally.",
+        "Usage supports a reduction hypothesis; business owner must approve reclaim eligibility and service impact.",
+        "Entitlement, vendor-responsibility exclusions, and claim status require legal/vendor-management review.",
+        "Procurement must confirm no approved amendment, exception, or rate-card update covers these billed rates before asserting recovery.",
+      ],
+    };
+
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({
+          selected: makeCandidate(),
+          missingEvidenceSources: [],
+        })}
+        opportunitySet={opportunitySet}
+      />,
+    );
+
+    expect(
+      screen.getByText("Signed concession or amendment evidence"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Invoice, PO, and active-contract coverage"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Usage, entitlement, and scope-reduction approval"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("SLA credit entitlement and claim status"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Rate-card amendment and exception search"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Optimization evidence requirement"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "Relevant source owner extract named by the opportunity spine.",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
   it("renders source-system, grain, blocker, and next-action guidance for missing evidence", () => {
     const sourceConnection = makeSpine().sourceConnections[0];
     render(

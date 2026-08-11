@@ -451,7 +451,7 @@ function BaselineRead({
       <div style={BASELINE_HEADER_STYLE}>
         <div>
           <strong>{baseline.headline}</strong>
-          <span>{baseline.detail}</span>
+          <p style={BASELINE_DETAIL_STYLE}>{baseline.detail}</p>
         </div>
         <span
           style={{
@@ -777,12 +777,105 @@ function requirementRowFromOpportunityRequirement(
       nextAction: requirement,
     };
   }
+  if (
+    normalized.includes("vendor agreement") ||
+    normalized.includes("executed amendment") ||
+    normalized.includes("negotiation target") ||
+    normalized.includes("approved position")
+  ) {
+    return {
+      id: `opportunity-negotiated-improvement-${index}`,
+      label: "Signed concession or amendment evidence",
+      requirementType: "Required before negotiated improvement",
+      whereToPull:
+        "CLM / contract repository + Procurement / S2P — executed amendment, concession approval, supplier response, and sourcing case reference.",
+      grainHistory:
+        "Signed amendment or approved negotiation package for the current action.",
+      blocks: "Negotiated improvement approval and external supplier position",
+      nextAction: requirement,
+    };
+  }
+  if (
+    normalized.includes("usage supports") ||
+    normalized.includes("reclaim") ||
+    normalized.includes("service impact") ||
+    normalized.includes("scope")
+  ) {
+    return {
+      id: `opportunity-scope-reduction-${index}`,
+      label: "Usage, entitlement, and scope-reduction approval",
+      requirementType: "Required before avoided cost",
+      whereToPull:
+        "Usage / entitlement platform + application owner sign-off + sourcing workspace — active users, assignment, reclaim list, and approved scope change.",
+      grainHistory:
+        "User, seat, feature, or workload grain for the active term; 12 months preferred when consumption varies.",
+      blocks: "Avoided-cost sizing, service-impact review, and renewal scope",
+      nextAction: requirement,
+    };
+  }
+  if (
+    normalized.includes("ap and procurement") ||
+    normalized.includes("po coverage") ||
+    normalized.includes("off-contract") ||
+    normalized.includes("dispute eligibility") ||
+    normalized.includes("coverage")
+  ) {
+    return {
+      id: `opportunity-invoice-coverage-${index}`,
+      label: "Invoice, PO, and active-contract coverage",
+      requirementType: "Required before leakage claim",
+      whereToPull:
+        "AP / ERP financial subledger + Procurement / S2P — invoice lines, PO match, payment status, active contract coverage, and dispute state.",
+      grainHistory:
+        "Invoice-line and PO-line grain for the active contract term; 12-24 months preferred.",
+      blocks:
+        "Off-contract billing, duplicate charge, and recoverable leakage claim",
+      nextAction: requirement,
+    };
+  }
+  if (
+    normalized.includes("sla") ||
+    normalized.includes("service-credit") ||
+    normalized.includes("claim status") ||
+    normalized.includes("vendor-responsibility")
+  ) {
+    return {
+      id: `opportunity-sla-credit-${index}`,
+      label: "SLA credit entitlement and claim status",
+      requirementType: "Required before credit recovery",
+      whereToPull:
+        "ITSM / service management + CLM / contract repository — SLA performance, breach logs, service-review pack, credit clause, exclusions, and claim/receipt status.",
+      grainHistory:
+        "Monthly SLA, incident, and service-credit rows for 24 months preferred.",
+      blocks: "Service-credit recovery and vendor claim package",
+      nextAction: requirement,
+    };
+  }
+  if (
+    normalized.includes("rate") ||
+    normalized.includes("rate-card") ||
+    normalized.includes("billed rates") ||
+    normalized.includes("approved amendment") ||
+    normalized.includes("exception")
+  ) {
+    return {
+      id: `opportunity-rate-card-${index}`,
+      label: "Rate-card amendment and exception search",
+      requirementType: "Required before rate variance claim",
+      whereToPull:
+        "AP / ERP invoice extract + CLM pricing schedule + VMS / rate-card system — billed rate, contracted rate, quantity, amendment, and exception approval.",
+      grainHistory:
+        "Invoice-line, time-entry, and rate-card line grain for the active term; 12-24 months preferred.",
+      blocks: "Rate-card variance recovery and supplier dispute pack",
+      nextAction: requirement,
+    };
+  }
   return {
     id: `opportunity-requirement-${index}`,
-    label: "Optimization evidence requirement",
+    label: "Unclassified evidence requirement",
     requirementType: "Required before external claim",
     whereToPull:
-      "Relevant source owner extract named by the opportunity spine.",
+      "Named source owner extract tied to the active opportunity row.",
     grainHistory:
       "Native source grain for the active contract term; 12-24 months when periodized evidence is needed.",
     blocks: "Approval-quality opportunity sizing",
@@ -1143,6 +1236,13 @@ const BASELINE_HEADER_STYLE: CSSProperties = {
   justifyContent: "space-between",
   gap: 12,
   alignItems: "flex-start",
+};
+
+const BASELINE_DETAIL_STYLE: CSSProperties = {
+  margin: "4px 0 0",
+  color: ANALYTICS.MUTED,
+  fontSize: 13,
+  lineHeight: 1.45,
 };
 
 const BASELINE_STATUS_STYLE: CSSProperties = {
