@@ -1,0 +1,148 @@
+{
+  "tenant_key": "internal-golden",
+  "last_updated": "2026-07-24",
+  "data_classification": "Internal-Fixture",
+  "schema_version": 1,
+  "audit_findings": [
+    {
+      "finding_id": "audit:golden:001",
+      "domain": "HIPAA",
+      "severity": "low",
+      "status": "open",
+      "description": "Synthetic Golden Move audit finding 001."
+    },
+    {
+      "finding_id": "audit:golden:002",
+      "domain": "SOC2-vendor",
+      "severity": "medium",
+      "status": "remediated",
+      "description": "Synthetic Golden Move audit finding 002."
+    },
+    {
+      "finding_id": "audit:golden:003",
+      "domain": "PCI",
+      "severity": "high",
+      "status": "accepted risk",
+      "description": "Synthetic Golden Move audit finding 003."
+    },
+    {
+      "finding_id": "audit:golden:004",
+      "domain": "state-DOI",
+      "severity": "low",
+      "status": "open",
+      "description": "Synthetic Golden Move audit finding 004."
+    },
+    {
+      "finding_id": "audit:golden:005",
+      "domain": "Joint Commission",
+      "severity": "medium",
+      "status": "remediated",
+      "description": "Synthetic Golden Move audit finding 005."
+    },
+    {
+      "finding_id": "audit:golden:006",
+      "domain": "HIPAA",
+      "severity": "high",
+      "status": "accepted risk",
+      "description": "Synthetic Golden Move audit finding 006."
+    },
+    {
+      "finding_id": "audit:golden:007",
+      "domain": "SOC2-vendor",
+      "severity": "low",
+      "status": "open",
+      "description": "Synthetic Golden Move audit finding 007."
+    },
+    {
+      "finding_id": "audit:golden:008",
+      "domain": "PCI",
+      "severity": "medium",
+      "status": "remediated",
+      "description": "Synthetic Golden Move audit finding 008."
+    },
+    {
+      "finding_id": "audit:golden:009",
+      "domain": "state-DOI",
+      "severity": "high",
+      "status": "accepted risk",
+      "description": "Synthetic Golden Move audit finding 009."
+    },
+    {
+      "finding_id": "audit:golden:010",
+      "domain": "Joint Commission",
+      "severity": "low",
+      "status": "open",
+      "description": "Synthetic Golden Move audit finding 010."
+    },
+    {
+      "finding_id": "audit:golden:011",
+      "domain": "HIPAA",
+      "severity": "medium",
+      "status": "remediated",
+      "description": "Synthetic Golden Move audit finding 011."
+    },
+    {
+      "finding_id": "audit:golden:012",
+      "domain": "SOC2-vendor",
+      "severity": "high",
+      "status": "accepted risk",
+      "description": "Synthetic Golden Move audit finding 012."
+    },
+    {
+      "finding_id": "audit:golden:013",
+      "domain": "PCI",
+      "severity": "low",
+      "status": "open",
+      "description": "Synthetic Golden Move audit finding 013."
+    },
+    {
+      "finding_id": "audit:golden:014",
+      "domain": "state-DOI",
+      "severity": "medium",
+      "status": "remediated",
+      "description": "Synthetic Golden Move audit finding 014."
+    },
+    {
+      "finding_id": "audit:golden:015",
+      "domain": "Joint Commission",
+      "severity": "high",
+      "status": "accepted risk",
+      "description": "Synthetic Golden Move audit finding 015."
+    },
+    {
+      "finding_id": "audit:golden:016",
+      "domain": "HIPAA",
+      "severity": "low",
+      "status": "open",
+      "description": "Synthetic Golden Move audit finding 016."
+    },
+    {
+      "finding_id": "audit:golden:017",
+      "domain": "SOC2-vendor",
+      "severity": "medium",
+      "status": "remediated",
+      "description": "Synthetic Golden Move audit finding 017."
+    },
+    {
+      "finding_id": "audit:golden:018",
+      "domain": "PCI",
+      "severity": "high",
+      "status": "accepted risk",
+      "description": "Synthetic Golden Move audit finding 018."
+    },
+    {
+      "finding_id": "audit:golden:019",
+      "domain": "state-DOI",
+      "severity": "low",
+      "status": "open",
+      "description": "Synthetic Golden Move audit finding 019."
+    },
+    {
+      "finding_id": "audit:golden:020",
+      "domain": "Joint Commission",
+      "severity": "medium",
+      "status": "remediated",
+      "description": "Synthetic Golden Move audit finding 020."
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+shadow_id,tool_name,domain,governance_risk,discovery_method
+shadow:golden:001,Unsanctioned tool 001,clinical_ehr,Unknown,Reported by business owner
+shadow:golden:002,Unsanctioned tool 002,clinical_reporting,Low,Discovered via SSO log review
+shadow:golden:003,Unsanctioned tool 003,revenue_cycle,Low,Reported by business owner
+shadow:golden:004,Unsanctioned tool 004,claims_admin,Low,Discovered via SSO log review
+shadow:golden:005,Unsanctioned tool 005,member_services,Unknown,Reported by business owner
+shadow:golden:006,Unsanctioned tool 006,population_health,Low,Discovered via SSO log review
+shadow:golden:007,Unsanctioned tool 007,data_platform,Low,Reported by business owner
+shadow:golden:008,Unsanctioned tool 008,security,Low,Discovered via SSO log review
+shadow:golden:009,Unsanctioned tool 009,infrastructure,Unknown,Reported by business owner
+shadow:golden:010,Unsanctioned tool 010,hr_workforce,Low,Discovered via SSO log review
+shadow:golden:011,Unsanctioned tool 011,finance_erp,Low,Reported by business owner
+shadow:golden:012,Unsanctioned tool 012,supply_chain,Low,Discovered via SSO log review
+shadow:golden:013,Unsanctioned tool 013,telehealth,Unknown,Reported by business owner
+shadow:golden:014,Unsanctioned tool 014,pharmacy,Low,Discovered via SSO log review
+shadow:golden:015,Unsanctioned tool 015,imaging,Low,Reported by business owner
+shadow:golden:016,Unsanctioned tool 016,lab,Low,Discovered via SSO log review
+shadow:golden:017,Unsanctioned tool 017,care_management,Unknown,Reported by business owner
+shadow:golden:018,Unsanctioned tool 018,provider_network,Low,Discovered via SSO log review
+shadow:golden:019,Unsanctioned tool 019,actuarial,Low,Reported by business owner
+shadow:golden:020,Unsanctioned tool 020,digital_front_door,Low,Discovered via SSO log review
+shadow:golden:021,Unsanctioned tool 021,ai_ml_platform,Unknown,Reported by business owner
+shadow:golden:022,Unsanctioned tool 022,clinical_ehr,Low,Discovered via SSO log review
+shadow:golden:023,Unsanctioned tool 023,clinical_reporting,Low,Reported by business owner
+shadow:golden:024,Unsanctioned tool 024,revenue_cycle,Low,Discovered via SSO log review
+shadow:golden:025,Unsanctioned tool 025,claims_admin,Unknown,Reported by business owner

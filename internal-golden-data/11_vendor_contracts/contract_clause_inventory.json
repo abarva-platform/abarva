@@ -1,0 +1,158 @@
+{
+  "tenant_key": "internal-golden",
+  "last_updated": "2026-07-24",
+  "data_classification": "Internal-Fixture",
+  "schema_version": 1,
+  "clauses": [
+    {
+      "clause_id": "clause:golden:001",
+      "vendor_id": "vendor:golden:001",
+      "clause_type": "AI/ML usage",
+      "risk_flag": true
+    },
+    {
+      "clause_id": "clause:golden:002",
+      "vendor_id": "vendor:golden:003",
+      "clause_type": "BAA",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:003",
+      "vendor_id": "vendor:golden:005",
+      "clause_type": "data residency",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:004",
+      "vendor_id": "vendor:golden:007",
+      "clause_type": "termination for convenience",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:005",
+      "vendor_id": "vendor:golden:009",
+      "clause_type": "SLA credit",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:006",
+      "vendor_id": "vendor:golden:011",
+      "clause_type": "AI/ML usage",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:007",
+      "vendor_id": "vendor:golden:013",
+      "clause_type": "BAA",
+      "risk_flag": true
+    },
+    {
+      "clause_id": "clause:golden:008",
+      "vendor_id": "vendor:golden:015",
+      "clause_type": "data residency",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:009",
+      "vendor_id": "vendor:golden:017",
+      "clause_type": "termination for convenience",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:010",
+      "vendor_id": "vendor:golden:019",
+      "clause_type": "SLA credit",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:011",
+      "vendor_id": "vendor:golden:021",
+      "clause_type": "AI/ML usage",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:012",
+      "vendor_id": "vendor:golden:023",
+      "clause_type": "BAA",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:013",
+      "vendor_id": "vendor:golden:025",
+      "clause_type": "data residency",
+      "risk_flag": true
+    },
+    {
+      "clause_id": "clause:golden:014",
+      "vendor_id": "vendor:golden:027",
+      "clause_type": "termination for convenience",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:015",
+      "vendor_id": "vendor:golden:029",
+      "clause_type": "SLA credit",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:016",
+      "vendor_id": "vendor:golden:031",
+      "clause_type": "AI/ML usage",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:017",
+      "vendor_id": "vendor:golden:033",
+      "clause_type": "BAA",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:018",
+      "vendor_id": "vendor:golden:035",
+      "clause_type": "data residency",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:019",
+      "vendor_id": "vendor:golden:037",
+      "clause_type": "termination for convenience",
+      "risk_flag": true
+    },
+    {
+      "clause_id": "clause:golden:020",
+      "vendor_id": "vendor:golden:039",
+      "clause_type": "SLA credit",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:021",
+      "vendor_id": "vendor:golden:041",
+      "clause_type": "AI/ML usage",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:022",
+      "vendor_id": "vendor:golden:043",
+      "clause_type": "BAA",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:023",
+      "vendor_id": "vendor:golden:045",
+      "clause_type": "data residency",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:024",
+      "vendor_id": "vendor:golden:047",
+      "clause_type": "termination for convenience",
+      "risk_flag": false
+    },
+    {
+      "clause_id": "clause:golden:025",
+      "vendor_id": "vendor:golden:049",
+      "clause_type": "SLA credit",
+      "risk_flag": true
+    }
+  ]
+}

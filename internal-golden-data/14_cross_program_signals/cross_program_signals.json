@@ -1,0 +1,228 @@
+{
+  "tenant_key": "internal-golden",
+  "last_updated": "2026-07-24",
+  "data_classification": "Internal-Fixture",
+  "schema_version": 1,
+  "cross_program_signals": [
+    {
+      "id": "xsig:golden:001",
+      "signal_type": "resource_contention",
+      "programs": [
+        "golden-member-ai-assist-01",
+        "golden-population-health-2-01"
+      ],
+      "description": "Synthetic cross-program signal 001 linking golden-member-ai-assist-01 and golden-population-health-2-01.",
+      "severity": "low"
+    },
+    {
+      "id": "xsig:golden:002",
+      "signal_type": "shared_vendor_risk",
+      "programs": [
+        "golden-epic-oracle-rationalization-01",
+        "golden-digital-front-door-01"
+      ],
+      "description": "Synthetic cross-program signal 002 linking golden-epic-oracle-rationalization-01 and golden-digital-front-door-01.",
+      "severity": "medium"
+    },
+    {
+      "id": "xsig:golden:003",
+      "signal_type": "overlapping_kpi",
+      "programs": [
+        "golden-claims-automation-01",
+        "golden-telehealth-expansion-01"
+      ],
+      "description": "Synthetic cross-program signal 003 linking golden-claims-automation-01 and golden-telehealth-expansion-01.",
+      "severity": "high"
+    },
+    {
+      "id": "xsig:golden:004",
+      "signal_type": "sequencing_dependency",
+      "programs": [
+        "golden-data-platform-modernization-01",
+        "golden-security-modernization-01"
+      ],
+      "description": "Synthetic cross-program signal 004 linking golden-data-platform-modernization-01 and golden-security-modernization-01.",
+      "severity": "low"
+    },
+    {
+      "id": "xsig:golden:005",
+      "signal_type": "resource_contention",
+      "programs": [
+        "golden-population-health-2-01",
+        "golden-revenue-cycle-transform-01"
+      ],
+      "description": "Synthetic cross-program signal 005 linking golden-population-health-2-01 and golden-revenue-cycle-transform-01.",
+      "severity": "medium"
+    },
+    {
+      "id": "xsig:golden:006",
+      "signal_type": "shared_vendor_risk",
+      "programs": [
+        "golden-digital-front-door-01",
+        "golden-ai-governance-council-01"
+      ],
+      "description": "Synthetic cross-program signal 006 linking golden-digital-front-door-01 and golden-ai-governance-council-01.",
+      "severity": "high"
+    },
+    {
+      "id": "xsig:golden:007",
+      "signal_type": "overlapping_kpi",
+      "programs": [
+        "golden-telehealth-expansion-01",
+        "golden-member-ai-assist-02"
+      ],
+      "description": "Synthetic cross-program signal 007 linking golden-telehealth-expansion-01 and golden-member-ai-assist-02.",
+      "severity": "low"
+    },
+    {
+      "id": "xsig:golden:008",
+      "signal_type": "sequencing_dependency",
+      "programs": [
+        "golden-security-modernization-01",
+        "golden-epic-oracle-rationalization-02"
+      ],
+      "description": "Synthetic cross-program signal 008 linking golden-security-modernization-01 and golden-epic-oracle-rationalization-02.",
+      "severity": "medium"
+    },
+    {
+      "id": "xsig:golden:009",
+      "signal_type": "resource_contention",
+      "programs": [
+        "golden-revenue-cycle-transform-01",
+        "golden-claims-automation-02"
+      ],
+      "description": "Synthetic cross-program signal 009 linking golden-revenue-cycle-transform-01 and golden-claims-automation-02.",
+      "severity": "high"
+    },
+    {
+      "id": "xsig:golden:010",
+      "signal_type": "shared_vendor_risk",
+      "programs": [
+        "golden-ai-governance-council-01",
+        "golden-data-platform-modernization-02"
+      ],
+      "description": "Synthetic cross-program signal 010 linking golden-ai-governance-council-01 and golden-data-platform-modernization-02.",
+      "severity": "low"
+    },
+    {
+      "id": "xsig:golden:011",
+      "signal_type": "overlapping_kpi",
+      "programs": [
+        "golden-member-ai-assist-02",
+        "golden-population-health-2-02"
+      ],
+      "description": "Synthetic cross-program signal 011 linking golden-member-ai-assist-02 and golden-population-health-2-02.",
+      "severity": "medium"
+    },
+    {
+      "id": "xsig:golden:012",
+      "signal_type": "sequencing_dependency",
+      "programs": [
+        "golden-epic-oracle-rationalization-02",
+        "golden-digital-front-door-02"
+      ],
+      "description": "Synthetic cross-program signal 012 linking golden-epic-oracle-rationalization-02 and golden-digital-front-door-02.",
+      "severity": "high"
+    },
+    {
+      "id": "xsig:golden:013",
+      "signal_type": "resource_contention",
+      "programs": [
+        "golden-claims-automation-02",
+        "golden-telehealth-expansion-02"
+      ],
+      "description": "Synthetic cross-program signal 013 linking golden-claims-automation-02 and golden-telehealth-expansion-02.",
+      "severity": "low"
+    },
+    {
+      "id": "xsig:golden:014",
+      "signal_type": "shared_vendor_risk",
+      "programs": [
+        "golden-data-platform-modernization-02",
+        "golden-security-modernization-02"
+      ],
+      "description": "Synthetic cross-program signal 014 linking golden-data-platform-modernization-02 and golden-security-modernization-02.",
+      "severity": "medium"
+    },
+    {
+      "id": "xsig:golden:015",
+      "signal_type": "overlapping_kpi",
+      "programs": [
+        "golden-population-health-2-02",
+        "golden-revenue-cycle-transform-02"
+      ],
+      "description": "Synthetic cross-program signal 015 linking golden-population-health-2-02 and golden-revenue-cycle-transform-02.",
+      "severity": "high"
+    },
+    {
+      "id": "xsig:golden:016",
+      "signal_type": "sequencing_dependency",
+      "programs": [
+        "golden-digital-front-door-02",
+        "golden-ai-governance-council-02"
+      ],
+      "description": "Synthetic cross-program signal 016 linking golden-digital-front-door-02 and golden-ai-governance-council-02.",
+      "severity": "low"
+    },
+    {
+      "id": "xsig:golden:017",
+      "signal_type": "resource_contention",
+      "programs": [
+        "golden-telehealth-expansion-02",
+        "golden-member-ai-assist-03"
+      ],
+      "description": "Synthetic cross-program signal 017 linking golden-telehealth-expansion-02 and golden-member-ai-assist-03.",
+      "severity": "medium"
+    },
+    {
+      "id": "xsig:golden:018",
+      "signal_type": "shared_vendor_risk",
+      "programs": [
+        "golden-security-modernization-02",
+        "golden-epic-oracle-rationalization-03"
+      ],
+      "description": "Synthetic cross-program signal 018 linking golden-security-modernization-02 and golden-epic-oracle-rationalization-03.",
+      "severity": "high"
+    },
+    {
+      "id": "xsig:golden:019",
+      "signal_type": "overlapping_kpi",
+      "programs": [
+        "golden-revenue-cycle-transform-02",
+        "golden-claims-automation-03"
+      ],
+      "description": "Synthetic cross-program signal 019 linking golden-revenue-cycle-transform-02 and golden-claims-automation-03.",
+      "severity": "low"
+    },
+    {
+      "id": "xsig:golden:020",
+      "signal_type": "sequencing_dependency",
+      "programs": [
+        "golden-ai-governance-council-02",
+        "golden-data-platform-modernization-03"
+      ],
+      "description": "Synthetic cross-program signal 020 linking golden-ai-governance-council-02 and golden-data-platform-modernization-03.",
+      "severity": "medium"
+    },
+    {
+      "id": "xsig:golden:021",
+      "signal_type": "resource_contention",
+      "programs": [
+        "golden-member-ai-assist-03",
+        "golden-population-health-2-03"
+      ],
+      "description": "Synthetic cross-program signal 021 linking golden-member-ai-assist-03 and golden-population-health-2-03.",
+      "severity": "high"
+    },
+    {
+      "id": "xsig:golden:022",
+      "signal_type": "shared_vendor_risk",
+      "programs": [
+        "golden-epic-oracle-rationalization-03",
+        "golden-digital-front-door-03"
+      ],
+      "description": "Synthetic cross-program signal 022 linking golden-epic-oracle-rationalization-03 and golden-digital-front-door-03.",
+      "severity": "low"
+    }
+  ]
+}

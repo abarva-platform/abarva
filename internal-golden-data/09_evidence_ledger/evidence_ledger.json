@@ -1,0 +1,534 @@
+{
+  "tenant_key": "internal-golden",
+  "last_updated": "2026-07-24",
+  "data_classification": "Internal-Fixture",
+  "schema_version": 1,
+  "evidence_items": [
+    {
+      "id": "evid:golden:0001",
+      "title": "Golden Move synthetic evidence item 0001",
+      "evidence_type": "interview_note",
+      "phase_uploaded": "P0",
+      "supports_claims_in": [
+        "golden-member-ai-assist-01"
+      ],
+      "confidence": 0.6,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0002",
+      "title": "Golden Move synthetic evidence item 0002",
+      "evidence_type": "system_export",
+      "phase_uploaded": "P1",
+      "supports_claims_in": [
+        "golden-epic-oracle-rationalization-01"
+      ],
+      "confidence": 0.7,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0003",
+      "title": "Golden Move synthetic evidence item 0003",
+      "evidence_type": "policy_document",
+      "phase_uploaded": "P2",
+      "supports_claims_in": [
+        "golden-claims-automation-01"
+      ],
+      "confidence": 0.8,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0004",
+      "title": "Golden Move synthetic evidence item 0004",
+      "evidence_type": "meeting_minutes",
+      "phase_uploaded": "P0",
+      "supports_claims_in": [
+        "golden-data-platform-modernization-01"
+      ],
+      "confidence": 0.9,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0005",
+      "title": "Golden Move synthetic evidence item 0005",
+      "evidence_type": "financial_extract",
+      "phase_uploaded": "P1",
+      "supports_claims_in": [
+        "golden-population-health-2-01"
+      ],
+      "confidence": 0.6,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0006",
+      "title": "Golden Move synthetic evidence item 0006",
+      "evidence_type": "vendor_scorecard",
+      "phase_uploaded": "P2",
+      "supports_claims_in": [
+        "golden-digital-front-door-01"
+      ],
+      "confidence": 0.7,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0007",
+      "title": "Golden Move synthetic evidence item 0007",
+      "evidence_type": "interview_note",
+      "phase_uploaded": "P0",
+      "supports_claims_in": [
+        "golden-telehealth-expansion-01"
+      ],
+      "confidence": 0.8,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0008",
+      "title": "Golden Move synthetic evidence item 0008",
+      "evidence_type": "system_export",
+      "phase_uploaded": "P1",
+      "supports_claims_in": [
+        "golden-security-modernization-01"
+      ],
+      "confidence": 0.9,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0009",
+      "title": "Golden Move synthetic evidence item 0009",
+      "evidence_type": "policy_document",
+      "phase_uploaded": "P2",
+      "supports_claims_in": [
+        "golden-revenue-cycle-transform-01"
+      ],
+      "confidence": 0.6,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0010",
+      "title": "Golden Move synthetic evidence item 0010",
+      "evidence_type": "meeting_minutes",
+      "phase_uploaded": "P0",
+      "supports_claims_in": [
+        "golden-ai-governance-council-01"
+      ],
+      "confidence": 0.7,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0011",
+      "title": "Golden Move synthetic evidence item 0011",
+      "evidence_type": "financial_extract",
+      "phase_uploaded": "P1",
+      "supports_claims_in": [
+        "golden-member-ai-assist-02"
+      ],
+      "confidence": 0.8,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0012",
+      "title": "Golden Move synthetic evidence item 0012",
+      "evidence_type": "vendor_scorecard",
+      "phase_uploaded": "P2",
+      "supports_claims_in": [
+        "golden-epic-oracle-rationalization-02"
+      ],
+      "confidence": 0.9,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0013",
+      "title": "Golden Move synthetic evidence item 0013",
+      "evidence_type": "interview_note",
+      "phase_uploaded": "P0",
+      "supports_claims_in": [
+        "golden-claims-automation-02"
+      ],
+      "confidence": 0.6,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0014",
+      "title": "Golden Move synthetic evidence item 0014",
+      "evidence_type": "system_export",
+      "phase_uploaded": "P1",
+      "supports_claims_in": [
+        "golden-data-platform-modernization-02"
+      ],
+      "confidence": 0.7,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0015",
+      "title": "Golden Move synthetic evidence item 0015",
+      "evidence_type": "policy_document",
+      "phase_uploaded": "P2",
+      "supports_claims_in": [
+        "golden-population-health-2-02"
+      ],
+      "confidence": 0.8,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0016",
+      "title": "Golden Move synthetic evidence item 0016",
+      "evidence_type": "meeting_minutes",
+      "phase_uploaded": "P0",
+      "supports_claims_in": [
+        "golden-digital-front-door-02"
+      ],
+      "confidence": 0.9,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0017",
+      "title": "Golden Move synthetic evidence item 0017",
+      "evidence_type": "financial_extract",
+      "phase_uploaded": "P1",
+      "supports_claims_in": [
+        "golden-telehealth-expansion-02"
+      ],
+      "confidence": 0.6,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0018",
+      "title": "Golden Move synthetic evidence item 0018",
+      "evidence_type": "vendor_scorecard",
+      "phase_uploaded": "P2",
+      "supports_claims_in": [
+        "golden-security-modernization-02"
+      ],
+      "confidence": 0.7,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0019",
+      "title": "Golden Move synthetic evidence item 0019",
+      "evidence_type": "interview_note",
+      "phase_uploaded": "P0",
+      "supports_claims_in": [
+        "golden-revenue-cycle-transform-02"
+      ],
+      "confidence": 0.8,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0020",
+      "title": "Golden Move synthetic evidence item 0020",
+      "evidence_type": "system_export",
+      "phase_uploaded": "P1",
+      "supports_claims_in": [
+        "golden-ai-governance-council-02"
+      ],
+      "confidence": 0.9,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0021",
+      "title": "Golden Move synthetic evidence item 0021",
+      "evidence_type": "policy_document",
+      "phase_uploaded": "P2",
+      "supports_claims_in": [
+        "golden-member-ai-assist-03"
+      ],
+      "confidence": 0.6,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0022",
+      "title": "Golden Move synthetic evidence item 0022",
+      "evidence_type": "meeting_minutes",
+      "phase_uploaded": "P0",
+      "supports_claims_in": [
+        "golden-epic-oracle-rationalization-03"
+      ],
+      "confidence": 0.7,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0023",
+      "title": "Golden Move synthetic evidence item 0023",
+      "evidence_type": "financial_extract",
+      "phase_uploaded": "P1",
+      "supports_claims_in": [
+        "golden-claims-automation-03"
+      ],
+      "confidence": 0.8,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0024",
+      "title": "Golden Move synthetic evidence item 0024",
+      "evidence_type": "vendor_scorecard",
+      "phase_uploaded": "P2",
+      "supports_claims_in": [
+        "golden-data-platform-modernization-03"
+      ],
+      "confidence": 0.9,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0025",
+      "title": "Golden Move synthetic evidence item 0025",
+      "evidence_type": "interview_note",
+      "phase_uploaded": "P0",
+      "supports_claims_in": [
+        "golden-population-health-2-03"
+      ],
+      "confidence": 0.6,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0026",
+      "title": "Golden Move synthetic evidence item 0026",
+      "evidence_type": "system_export",
+      "phase_uploaded": "P1",
+      "supports_claims_in": [
+        "golden-digital-front-door-03"
+      ],
+      "confidence": 0.7,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0027",
+      "title": "Golden Move synthetic evidence item 0027",
+      "evidence_type": "policy_document",
+      "phase_uploaded": "P2",
+      "supports_claims_in": [
+        "golden-telehealth-expansion-03"
+      ],
+      "confidence": 0.8,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0028",
+      "title": "Golden Move synthetic evidence item 0028",
+      "evidence_type": "meeting_minutes",
+      "phase_uploaded": "P0",
+      "supports_claims_in": [
+        "golden-security-modernization-03"
+      ],
+      "confidence": 0.9,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0029",
+      "title": "Golden Move synthetic evidence item 0029",
+      "evidence_type": "financial_extract",
+      "phase_uploaded": "P1",
+      "supports_claims_in": [
+        "golden-revenue-cycle-transform-03"
+      ],
+      "confidence": 0.6,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0030",
+      "title": "Golden Move synthetic evidence item 0030",
+      "evidence_type": "vendor_scorecard",
+      "phase_uploaded": "P2",
+      "supports_claims_in": [
+        "golden-ai-governance-council-03"
+      ],
+      "confidence": 0.7,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0031",
+      "title": "Golden Move synthetic evidence item 0031",
+      "evidence_type": "interview_note",
+      "phase_uploaded": "P0",
+      "supports_claims_in": [
+        "golden-member-ai-assist-04"
+      ],
+      "confidence": 0.8,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0032",
+      "title": "Golden Move synthetic evidence item 0032",
+      "evidence_type": "system_export",
+      "phase_uploaded": "P1",
+      "supports_claims_in": [
+        "golden-epic-oracle-rationalization-04"
+      ],
+      "confidence": 0.9,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0033",
+      "title": "Golden Move synthetic evidence item 0033",
+      "evidence_type": "policy_document",
+      "phase_uploaded": "P2",
+      "supports_claims_in": [
+        "golden-claims-automation-04"
+      ],
+      "confidence": 0.6,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0034",
+      "title": "Golden Move synthetic evidence item 0034",
+      "evidence_type": "meeting_minutes",
+      "phase_uploaded": "P0",
+      "supports_claims_in": [
+        "golden-data-platform-modernization-04"
+      ],
+      "confidence": 0.7,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0035",
+      "title": "Golden Move synthetic evidence item 0035",
+      "evidence_type": "financial_extract",
+      "phase_uploaded": "P1",
+      "supports_claims_in": [
+        "golden-population-health-2-04"
+      ],
+      "confidence": 0.8,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0036",
+      "title": "Golden Move synthetic evidence item 0036",
+      "evidence_type": "vendor_scorecard",
+      "phase_uploaded": "P2",
+      "supports_claims_in": [
+        "golden-digital-front-door-04"
+      ],
+      "confidence": 0.9,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0037",
+      "title": "Golden Move synthetic evidence item 0037",
+      "evidence_type": "interview_note",
+      "phase_uploaded": "P0",
+      "supports_claims_in": [
+        "golden-telehealth-expansion-04"
+      ],
+      "confidence": 0.6,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0038",
+      "title": "Golden Move synthetic evidence item 0038",
+      "evidence_type": "system_export",
+      "phase_uploaded": "P1",
+      "supports_claims_in": [
+        "golden-security-modernization-04"
+      ],
+      "confidence": 0.7,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0039",
+      "title": "Golden Move synthetic evidence item 0039",
+      "evidence_type": "policy_document",
+      "phase_uploaded": "P2",
+      "supports_claims_in": [
+        "golden-revenue-cycle-transform-04"
+      ],
+      "confidence": 0.8,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    },
+    {
+      "id": "evid:golden:0040",
+      "title": "Golden Move synthetic evidence item 0040",
+      "evidence_type": "meeting_minutes",
+      "phase_uploaded": "P0",
+      "supports_claims_in": [
+        "golden-ai-governance-council-04"
+      ],
+      "confidence": 0.9,
+      "data_classification": "Internal-Fixture",
+      "source_basis": "internal_fixture_synthetic_generation",
+      "last_reviewed": "2026-07-24"
+    }
+  ],
+  "evidence_freshness_summary": {
+    "fresh": 40,
+    "attention": 0,
+    "stale": 0,
+    "unknown": 0
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "tenant_key": "internal-golden",
+  "last_updated": "2026-07-24",
+  "data_classification": "Internal-Fixture",
+  "schema_version": 1,
+  "executives": [
+    {
+      "id": "person:golden:priya-narang",
+      "name": "Priya Narang",
+      "title": "Chief Executive Officer",
+      "reports_to": null,
+      "tenure_years": 6,
+      "notes": "Former COO of a regional payer; drove the 2024 Epic/Oracle Health rationalization decision."
+    },
+    {
+      "id": "person:golden:daniel-oyelaran",
+      "name": "Daniel Oyelaran",
+      "title": "Chief Financial Officer",
+      "reports_to": "person:golden:priya-narang",
+      "tenure_years": 4,
+      "notes": "Owns the FY2026 capital plan; skeptical of AI ROI claims without finance-attested baselines."
+    },
+    {
+      "id": "person:golden:mei-fujimoto",
+      "name": "Mei Fujimoto",
+      "title": "Chief Information Officer",
+      "reports_to": "person:golden:priya-narang",
+      "tenure_years": 3,
+      "notes": "Sponsors the member AI assist program; came from a national payer's digital arm."
+    },
+    {
+      "id": "person:golden:tobias-lindqvist",
+      "name": "Tobias Lindqvist",
+      "title": "Chief Technology Officer",
+      "reports_to": "person:golden:mei-fujimoto",
+      "tenure_years": 2,
+      "notes": "Owns cloud platform strategy; pushing Snowflake/Databricks consolidation."
+    },
+    {
+      "id": "person:golden:aisha-boateng",
+      "name": "Aisha Boateng",
+      "title": "Chief Data & Analytics Officer",
+      "reports_to": "person:golden:mei-fujimoto",
+      "tenure_years": 2,
+      "notes": "Owns the enterprise data platform and AI governance council."
+    },
+    {
+      "id": "person:golden:ravi-chandrasekaran",
+      "name": "Ravi Chandrasekaran",
+      "title": "Chief Information Security Officer",
+      "reports_to": "person:golden:mei-fujimoto",
+      "tenure_years": 5,
+      "notes": "Blocking two vendor renewals over SOC 2 gaps."
+    },
+    {
+      "id": "person:golden:helena-kowalczyk",
+      "name": "Helena Kowalczyk",
+      "title": "Chief Operating Officer",
+      "reports_to": "person:golden:priya-narang",
+      "tenure_years": 7,
+      "notes": "Owns hospital operations across all four states."
+    },
+    {
+      "id": "person:golden:samuel-brightwater",
+      "name": "Samuel Brightwater",
+      "title": "Chief Medical Officer",
+      "reports_to": "person:golden:priya-narang",
+      "tenure_years": 5,
+      "notes": "Physician-side sponsor for clinical AI use cases; wary of ambient documentation vendors."
+    },
+    {
+      "id": "person:golden:renata-alves",
+      "name": "Renata Alves",
+      "title": "Chief Experience Officer",
+      "reports_to": "person:golden:priya-narang",
+      "tenure_years": 1,
+      "notes": "Owns the member AI assist program's experience metrics; newest member of the bench."
+    },
+    {
+      "id": "person:golden:oliver-mackenzie",
+      "name": "Oliver Mackenzie",
+      "title": "VP Innovation",
+      "reports_to": "person:golden:mei-fujimoto",
+      "tenure_years": 3,
+      "notes": "Runs the innovation pipeline intake; owns the AI use-case backlog."
+    },
+    {
+      "id": "person:golden:felicia-nakashima",
+      "name": "Felicia Nakashima",
+      "title": "VP Shared Services",
+      "reports_to": "person:golden:helena-kowalczyk",
+      "tenure_years": 4,
+      "notes": "Owns HR, finance shared services, and procurement operations."
+    },
+    {
+      "id": "person:golden:benedict-osei",
+      "name": "Benedict Osei",
+      "title": "VP Application Services",
+      "reports_to": "person:golden:tobias-lindqvist",
+      "tenure_years": 2,
+      "notes": "Owns the applications portfolio; understaffed relative to the 200-system estate."
+    },
+    {
+      "id": "person:golden:carmen-delrio",
+      "name": "Carmen Del Rio",
+      "title": "VP Health Plan Operations",
+      "reports_to": "person:golden:helena-kowalczyk",
+      "tenure_years": 6,
+      "notes": "Owns claims, member services, and network adequacy for the 2.1M-life plan."
+    },
+    {
+      "id": "person:golden:isadora-veltri",
+      "name": "Isadora Veltri",
+      "title": "General Counsel",
+      "reports_to": "person:golden:priya-narang",
+      "tenure_years": 8,
+      "notes": "Owns BAAs and AI/ML vendor clause review."
+    }
+  ]
+}

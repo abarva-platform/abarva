@@ -1,0 +1,968 @@
+{
+  "tenant_key": "internal-golden",
+  "last_updated": "2026-07-24",
+  "data_classification": "Internal-Fixture",
+  "schema_version": 1,
+  "active_programs": [
+    {
+      "id": "golden-member-ai-assist-01",
+      "name": "Member AI Assist Program \u2014 Wave 1",
+      "description": "Golden Move subject-matter analog to MEMBER AI ASSIST; deploys a member-facing AI assist experience across digital and contact-center channels. (synthetic Golden Move fixture initiative, wave 1).",
+      "phase": "P0",
+      "status": "on_track",
+      "sponsor_id": "person:golden:daniel-oyelaran",
+      "co_sponsor_id": "person:golden:helena-kowalczyk",
+      "program_lead_id": "person:golden:tobias-lindqvist",
+      "systems_touched": [
+        "system:golden:clinical_reporting-001",
+        "system:golden:revenue_cycle-002",
+        "system:golden:claims_admin-003",
+        "system:golden:member_services-004"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:001",
+        "kpi:golden:002",
+        "kpi:golden:003"
+      ],
+      "start_date": "2025-01-01",
+      "target_completion": "2027-01-01",
+      "budget_usd": 1500000
+    },
+    {
+      "id": "golden-epic-oracle-rationalization-01",
+      "name": "Clinical EHR Rationalization \u2014 Wave 1",
+      "description": "Multi-year consolidation of overlapping Epic and Oracle Health footprints post-acquisition. (synthetic Golden Move fixture initiative, wave 1).",
+      "phase": "P1",
+      "status": "at_risk",
+      "sponsor_id": "person:golden:mei-fujimoto",
+      "co_sponsor_id": "person:golden:samuel-brightwater",
+      "program_lead_id": "person:golden:aisha-boateng",
+      "systems_touched": [
+        "system:golden:member_services-004",
+        "system:golden:population_health-005",
+        "system:golden:data_platform-006",
+        "system:golden:security-007"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:003",
+        "kpi:golden:004",
+        "kpi:golden:005"
+      ],
+      "start_date": "2026-02-01",
+      "target_completion": "2028-02-01",
+      "budget_usd": 2120000
+    },
+    {
+      "id": "golden-claims-automation-01",
+      "name": "Claims Auto-Adjudication Uplift \u2014 Wave 1",
+      "description": "Increase straight-through claims processing rate and reduce denial rework. (synthetic Golden Move fixture initiative, wave 1).",
+      "phase": "P2",
+      "status": "on_track",
+      "sponsor_id": "person:golden:tobias-lindqvist",
+      "co_sponsor_id": "person:golden:renata-alves",
+      "program_lead_id": "person:golden:ravi-chandrasekaran",
+      "systems_touched": [
+        "system:golden:security-007",
+        "system:golden:infrastructure-008",
+        "system:golden:hr_workforce-009",
+        "system:golden:finance_erp-010"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:005",
+        "kpi:golden:006",
+        "kpi:golden:007"
+      ],
+      "start_date": "2025-03-01",
+      "target_completion": "2027-03-01",
+      "budget_usd": 2740000
+    },
+    {
+      "id": "golden-data-platform-modernization-01",
+      "name": "Enterprise Data Platform Modernization \u2014 Wave 1",
+      "description": "Consolidate onto a governed Snowflake/Databricks lakehouse with AI-ready data contracts. (synthetic Golden Move fixture initiative, wave 1).",
+      "phase": "P3",
+      "status": "on_track",
+      "sponsor_id": "person:golden:aisha-boateng",
+      "co_sponsor_id": "person:golden:oliver-mackenzie",
+      "program_lead_id": "person:golden:helena-kowalczyk",
+      "systems_touched": [
+        "system:golden:finance_erp-010",
+        "system:golden:supply_chain-011",
+        "system:golden:telehealth-012",
+        "system:golden:pharmacy-013"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:007",
+        "kpi:golden:008",
+        "kpi:golden:009"
+      ],
+      "start_date": "2026-04-01",
+      "target_completion": "2028-04-01",
+      "budget_usd": 3360000
+    },
+    {
+      "id": "golden-population-health-2-01",
+      "name": "Population Health Analytics 2.0 \u2014 Wave 1",
+      "description": "Expand risk-stratification and care-gap-closure models across the health plan book. (synthetic Golden Move fixture initiative, wave 1).",
+      "phase": "P4",
+      "status": "on_track",
+      "sponsor_id": "person:golden:ravi-chandrasekaran",
+      "co_sponsor_id": "person:golden:felicia-nakashima",
+      "program_lead_id": "person:golden:samuel-brightwater",
+      "systems_touched": [
+        "system:golden:pharmacy-013",
+        "system:golden:imaging-014",
+        "system:golden:lab-015",
+        "system:golden:care_management-016"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:009",
+        "kpi:golden:010",
+        "kpi:golden:011"
+      ],
+      "start_date": "2025-05-01",
+      "target_completion": "2027-05-01",
+      "budget_usd": 3980000
+    },
+    {
+      "id": "golden-digital-front-door-01",
+      "name": "Digital Front Door Expansion \u2014 Wave 1",
+      "description": "Unify scheduling, intake, and member/patient self-service across web and mobile. (synthetic Golden Move fixture initiative, wave 1).",
+      "phase": "P5",
+      "status": "at_risk",
+      "sponsor_id": "person:golden:helena-kowalczyk",
+      "co_sponsor_id": "person:golden:benedict-osei",
+      "program_lead_id": "person:golden:renata-alves",
+      "systems_touched": [
+        "system:golden:care_management-016",
+        "system:golden:provider_network-017",
+        "system:golden:actuarial-018",
+        "system:golden:digital_front_door-019"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:011",
+        "kpi:golden:012",
+        "kpi:golden:013"
+      ],
+      "start_date": "2026-06-01",
+      "target_completion": "2028-06-01",
+      "budget_usd": 4600000
+    },
+    {
+      "id": "golden-telehealth-expansion-01",
+      "name": "Telehealth Network Expansion \u2014 Wave 1",
+      "description": "Extend virtual visit capacity into rural service areas across all four states. (synthetic Golden Move fixture initiative, wave 1).",
+      "phase": "P0",
+      "status": "on_track",
+      "sponsor_id": "person:golden:samuel-brightwater",
+      "co_sponsor_id": "person:golden:carmen-delrio",
+      "program_lead_id": "person:golden:oliver-mackenzie",
+      "systems_touched": [
+        "system:golden:digital_front_door-019",
+        "system:golden:ai_ml_platform-020",
+        "system:golden:clinical_ehr-021",
+        "system:golden:clinical_reporting-022"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:013",
+        "kpi:golden:014",
+        "kpi:golden:015"
+      ],
+      "start_date": "2025-07-01",
+      "target_completion": "2027-07-01",
+      "budget_usd": 5220000
+    },
+    {
+      "id": "golden-security-modernization-01",
+      "name": "Security Modernization Program \u2014 Wave 1",
+      "description": "Zero-trust identity rollout and SOC 2 remediation across the vendor estate. (synthetic Golden Move fixture initiative, wave 1).",
+      "phase": "P1",
+      "status": "on_track",
+      "sponsor_id": "person:golden:renata-alves",
+      "co_sponsor_id": "person:golden:isadora-veltri",
+      "program_lead_id": "person:golden:felicia-nakashima",
+      "systems_touched": [
+        "system:golden:clinical_reporting-022",
+        "system:golden:revenue_cycle-023",
+        "system:golden:claims_admin-024",
+        "system:golden:member_services-025"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:015",
+        "kpi:golden:016",
+        "kpi:golden:017"
+      ],
+      "start_date": "2026-08-01",
+      "target_completion": "2028-08-01",
+      "budget_usd": 5840000
+    },
+    {
+      "id": "golden-revenue-cycle-transform-01",
+      "name": "Revenue Cycle Transformation \u2014 Wave 1",
+      "description": "Reduce days in A/R and denial rate through automation and coding accuracy uplift. (synthetic Golden Move fixture initiative, wave 1).",
+      "phase": "P2",
+      "status": "on_track",
+      "sponsor_id": "person:golden:oliver-mackenzie",
+      "co_sponsor_id": "person:golden:noor-haidari",
+      "program_lead_id": "person:golden:benedict-osei",
+      "systems_touched": [
+        "system:golden:member_services-025",
+        "system:golden:population_health-026",
+        "system:golden:data_platform-027",
+        "system:golden:security-028"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:017",
+        "kpi:golden:018",
+        "kpi:golden:019"
+      ],
+      "start_date": "2025-09-01",
+      "target_completion": "2027-09-01",
+      "budget_usd": 6460000
+    },
+    {
+      "id": "golden-ai-governance-council-01",
+      "name": "Enterprise AI Governance Council \u2014 Wave 1",
+      "description": "Stand up model-risk review, bias testing, and AI benefits-realization tracking. (synthetic Golden Move fixture initiative, wave 1).",
+      "phase": "P3",
+      "status": "at_risk",
+      "sponsor_id": "person:golden:felicia-nakashima",
+      "co_sponsor_id": "person:golden:walter-pemberton",
+      "program_lead_id": "person:golden:carmen-delrio",
+      "systems_touched": [
+        "system:golden:security-028",
+        "system:golden:infrastructure-029",
+        "system:golden:hr_workforce-030",
+        "system:golden:finance_erp-031"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:019",
+        "kpi:golden:020",
+        "kpi:golden:021"
+      ],
+      "start_date": "2026-10-01",
+      "target_completion": "2028-10-01",
+      "budget_usd": 7080000
+    },
+    {
+      "id": "golden-member-ai-assist-02",
+      "name": "Member AI Assist Program \u2014 Wave 2",
+      "description": "Golden Move subject-matter analog to MEMBER AI ASSIST; deploys a member-facing AI assist experience across digital and contact-center channels. (synthetic Golden Move fixture initiative, wave 2).",
+      "phase": "P4",
+      "status": "on_track",
+      "sponsor_id": "person:golden:benedict-osei",
+      "co_sponsor_id": "person:golden:yolanda-esparza",
+      "program_lead_id": "person:golden:isadora-veltri",
+      "systems_touched": [
+        "system:golden:finance_erp-031",
+        "system:golden:supply_chain-032",
+        "system:golden:telehealth-033",
+        "system:golden:pharmacy-034"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:021",
+        "kpi:golden:022",
+        "kpi:golden:023"
+      ],
+      "start_date": "2025-11-01",
+      "target_completion": "2027-11-01",
+      "budget_usd": 7700000
+    },
+    {
+      "id": "golden-epic-oracle-rationalization-02",
+      "name": "Clinical EHR Rationalization \u2014 Wave 2",
+      "description": "Multi-year consolidation of overlapping Epic and Oracle Health footprints post-acquisition. (synthetic Golden Move fixture initiative, wave 2).",
+      "phase": "P5",
+      "status": "on_track",
+      "sponsor_id": "person:golden:carmen-delrio",
+      "co_sponsor_id": "person:golden:desmond-attah",
+      "program_lead_id": "person:golden:noor-haidari",
+      "systems_touched": [
+        "system:golden:pharmacy-034",
+        "system:golden:imaging-035",
+        "system:golden:lab-036",
+        "system:golden:care_management-037"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:023",
+        "kpi:golden:024",
+        "kpi:golden:025"
+      ],
+      "start_date": "2026-12-01",
+      "target_completion": "2028-12-01",
+      "budget_usd": 8320000
+    },
+    {
+      "id": "golden-claims-automation-02",
+      "name": "Claims Auto-Adjudication Uplift \u2014 Wave 2",
+      "description": "Increase straight-through claims processing rate and reduce denial rework. (synthetic Golden Move fixture initiative, wave 2).",
+      "phase": "P0",
+      "status": "on_track",
+      "sponsor_id": "person:golden:isadora-veltri",
+      "co_sponsor_id": "person:golden:daniel-oyelaran",
+      "program_lead_id": "person:golden:walter-pemberton",
+      "systems_touched": [
+        "system:golden:care_management-037",
+        "system:golden:provider_network-038",
+        "system:golden:actuarial-039",
+        "system:golden:digital_front_door-040"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:025",
+        "kpi:golden:026",
+        "kpi:golden:027"
+      ],
+      "start_date": "2025-01-01",
+      "target_completion": "2027-01-01",
+      "budget_usd": 8940000
+    },
+    {
+      "id": "golden-data-platform-modernization-02",
+      "name": "Enterprise Data Platform Modernization \u2014 Wave 2",
+      "description": "Consolidate onto a governed Snowflake/Databricks lakehouse with AI-ready data contracts. (synthetic Golden Move fixture initiative, wave 2).",
+      "phase": "P1",
+      "status": "at_risk",
+      "sponsor_id": "person:golden:noor-haidari",
+      "co_sponsor_id": "person:golden:mei-fujimoto",
+      "program_lead_id": "person:golden:yolanda-esparza",
+      "systems_touched": [
+        "system:golden:digital_front_door-040",
+        "system:golden:ai_ml_platform-041",
+        "system:golden:clinical_ehr-042",
+        "system:golden:clinical_reporting-043"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:027",
+        "kpi:golden:028",
+        "kpi:golden:029"
+      ],
+      "start_date": "2026-02-01",
+      "target_completion": "2028-02-01",
+      "budget_usd": 9560000
+    },
+    {
+      "id": "golden-population-health-2-02",
+      "name": "Population Health Analytics 2.0 \u2014 Wave 2",
+      "description": "Expand risk-stratification and care-gap-closure models across the health plan book. (synthetic Golden Move fixture initiative, wave 2).",
+      "phase": "P2",
+      "status": "on_track",
+      "sponsor_id": "person:golden:walter-pemberton",
+      "co_sponsor_id": "person:golden:tobias-lindqvist",
+      "program_lead_id": "person:golden:desmond-attah",
+      "systems_touched": [
+        "system:golden:clinical_reporting-043",
+        "system:golden:revenue_cycle-044",
+        "system:golden:claims_admin-045",
+        "system:golden:member_services-046"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:029",
+        "kpi:golden:030",
+        "kpi:golden:031"
+      ],
+      "start_date": "2025-03-01",
+      "target_completion": "2027-03-01",
+      "budget_usd": 10180000
+    },
+    {
+      "id": "golden-digital-front-door-02",
+      "name": "Digital Front Door Expansion \u2014 Wave 2",
+      "description": "Unify scheduling, intake, and member/patient self-service across web and mobile. (synthetic Golden Move fixture initiative, wave 2).",
+      "phase": "P3",
+      "status": "on_track",
+      "sponsor_id": "person:golden:yolanda-esparza",
+      "co_sponsor_id": "person:golden:aisha-boateng",
+      "program_lead_id": "person:golden:daniel-oyelaran",
+      "systems_touched": [
+        "system:golden:member_services-046",
+        "system:golden:population_health-047",
+        "system:golden:data_platform-048",
+        "system:golden:security-049"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:031",
+        "kpi:golden:032",
+        "kpi:golden:033"
+      ],
+      "start_date": "2026-04-01",
+      "target_completion": "2028-04-01",
+      "budget_usd": 10800000
+    },
+    {
+      "id": "golden-telehealth-expansion-02",
+      "name": "Telehealth Network Expansion \u2014 Wave 2",
+      "description": "Extend virtual visit capacity into rural service areas across all four states. (synthetic Golden Move fixture initiative, wave 2).",
+      "phase": "P4",
+      "status": "on_track",
+      "sponsor_id": "person:golden:desmond-attah",
+      "co_sponsor_id": "person:golden:ravi-chandrasekaran",
+      "program_lead_id": "person:golden:mei-fujimoto",
+      "systems_touched": [
+        "system:golden:security-049",
+        "system:golden:infrastructure-050",
+        "system:golden:hr_workforce-051",
+        "system:golden:finance_erp-052"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:033",
+        "kpi:golden:034",
+        "kpi:golden:035"
+      ],
+      "start_date": "2025-05-01",
+      "target_completion": "2027-05-01",
+      "budget_usd": 11420000
+    },
+    {
+      "id": "golden-security-modernization-02",
+      "name": "Security Modernization Program \u2014 Wave 2",
+      "description": "Zero-trust identity rollout and SOC 2 remediation across the vendor estate. (synthetic Golden Move fixture initiative, wave 2).",
+      "phase": "P5",
+      "status": "at_risk",
+      "sponsor_id": "person:golden:daniel-oyelaran",
+      "co_sponsor_id": "person:golden:helena-kowalczyk",
+      "program_lead_id": "person:golden:tobias-lindqvist",
+      "systems_touched": [
+        "system:golden:finance_erp-052",
+        "system:golden:supply_chain-053",
+        "system:golden:telehealth-054",
+        "system:golden:pharmacy-055"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:035",
+        "kpi:golden:036",
+        "kpi:golden:037"
+      ],
+      "start_date": "2026-06-01",
+      "target_completion": "2028-06-01",
+      "budget_usd": 12040000
+    },
+    {
+      "id": "golden-revenue-cycle-transform-02",
+      "name": "Revenue Cycle Transformation \u2014 Wave 2",
+      "description": "Reduce days in A/R and denial rate through automation and coding accuracy uplift. (synthetic Golden Move fixture initiative, wave 2).",
+      "phase": "P0",
+      "status": "on_track",
+      "sponsor_id": "person:golden:mei-fujimoto",
+      "co_sponsor_id": "person:golden:samuel-brightwater",
+      "program_lead_id": "person:golden:aisha-boateng",
+      "systems_touched": [
+        "system:golden:pharmacy-055",
+        "system:golden:imaging-056",
+        "system:golden:lab-057",
+        "system:golden:care_management-058"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:037",
+        "kpi:golden:038",
+        "kpi:golden:039"
+      ],
+      "start_date": "2025-07-01",
+      "target_completion": "2027-07-01",
+      "budget_usd": 12660000
+    },
+    {
+      "id": "golden-ai-governance-council-02",
+      "name": "Enterprise AI Governance Council \u2014 Wave 2",
+      "description": "Stand up model-risk review, bias testing, and AI benefits-realization tracking. (synthetic Golden Move fixture initiative, wave 2).",
+      "phase": "P1",
+      "status": "on_track",
+      "sponsor_id": "person:golden:tobias-lindqvist",
+      "co_sponsor_id": "person:golden:renata-alves",
+      "program_lead_id": "person:golden:ravi-chandrasekaran",
+      "systems_touched": [
+        "system:golden:care_management-058",
+        "system:golden:provider_network-059",
+        "system:golden:actuarial-060",
+        "system:golden:digital_front_door-061"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:039",
+        "kpi:golden:040",
+        "kpi:golden:041"
+      ],
+      "start_date": "2026-08-01",
+      "target_completion": "2028-08-01",
+      "budget_usd": 13280000
+    },
+    {
+      "id": "golden-member-ai-assist-03",
+      "name": "Member AI Assist Program \u2014 Wave 3",
+      "description": "Golden Move subject-matter analog to MEMBER AI ASSIST; deploys a member-facing AI assist experience across digital and contact-center channels. (synthetic Golden Move fixture initiative, wave 3).",
+      "phase": "P2",
+      "status": "on_track",
+      "sponsor_id": "person:golden:aisha-boateng",
+      "co_sponsor_id": "person:golden:oliver-mackenzie",
+      "program_lead_id": "person:golden:helena-kowalczyk",
+      "systems_touched": [
+        "system:golden:digital_front_door-061",
+        "system:golden:ai_ml_platform-062",
+        "system:golden:clinical_ehr-063",
+        "system:golden:clinical_reporting-064"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:041",
+        "kpi:golden:042",
+        "kpi:golden:043"
+      ],
+      "start_date": "2025-09-01",
+      "target_completion": "2027-09-01",
+      "budget_usd": 13900000
+    },
+    {
+      "id": "golden-epic-oracle-rationalization-03",
+      "name": "Clinical EHR Rationalization \u2014 Wave 3",
+      "description": "Multi-year consolidation of overlapping Epic and Oracle Health footprints post-acquisition. (synthetic Golden Move fixture initiative, wave 3).",
+      "phase": "P3",
+      "status": "at_risk",
+      "sponsor_id": "person:golden:ravi-chandrasekaran",
+      "co_sponsor_id": "person:golden:felicia-nakashima",
+      "program_lead_id": "person:golden:samuel-brightwater",
+      "systems_touched": [
+        "system:golden:clinical_reporting-064",
+        "system:golden:revenue_cycle-065",
+        "system:golden:claims_admin-066",
+        "system:golden:member_services-067"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:043",
+        "kpi:golden:044",
+        "kpi:golden:045"
+      ],
+      "start_date": "2026-10-01",
+      "target_completion": "2028-10-01",
+      "budget_usd": 14520000
+    },
+    {
+      "id": "golden-claims-automation-03",
+      "name": "Claims Auto-Adjudication Uplift \u2014 Wave 3",
+      "description": "Increase straight-through claims processing rate and reduce denial rework. (synthetic Golden Move fixture initiative, wave 3).",
+      "phase": "P4",
+      "status": "on_track",
+      "sponsor_id": "person:golden:helena-kowalczyk",
+      "co_sponsor_id": "person:golden:benedict-osei",
+      "program_lead_id": "person:golden:renata-alves",
+      "systems_touched": [
+        "system:golden:member_services-067",
+        "system:golden:population_health-068",
+        "system:golden:data_platform-069",
+        "system:golden:security-070"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:045",
+        "kpi:golden:046",
+        "kpi:golden:047"
+      ],
+      "start_date": "2025-11-01",
+      "target_completion": "2027-11-01",
+      "budget_usd": 15140000
+    },
+    {
+      "id": "golden-data-platform-modernization-03",
+      "name": "Enterprise Data Platform Modernization \u2014 Wave 3",
+      "description": "Consolidate onto a governed Snowflake/Databricks lakehouse with AI-ready data contracts. (synthetic Golden Move fixture initiative, wave 3).",
+      "phase": "P5",
+      "status": "on_track",
+      "sponsor_id": "person:golden:samuel-brightwater",
+      "co_sponsor_id": "person:golden:carmen-delrio",
+      "program_lead_id": "person:golden:oliver-mackenzie",
+      "systems_touched": [
+        "system:golden:security-070",
+        "system:golden:infrastructure-071",
+        "system:golden:hr_workforce-072",
+        "system:golden:finance_erp-073"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:047",
+        "kpi:golden:048",
+        "kpi:golden:049"
+      ],
+      "start_date": "2026-12-01",
+      "target_completion": "2028-12-01",
+      "budget_usd": 15760000
+    },
+    {
+      "id": "golden-population-health-2-03",
+      "name": "Population Health Analytics 2.0 \u2014 Wave 3",
+      "description": "Expand risk-stratification and care-gap-closure models across the health plan book. (synthetic Golden Move fixture initiative, wave 3).",
+      "phase": "P0",
+      "status": "on_track",
+      "sponsor_id": "person:golden:renata-alves",
+      "co_sponsor_id": "person:golden:isadora-veltri",
+      "program_lead_id": "person:golden:felicia-nakashima",
+      "systems_touched": [
+        "system:golden:finance_erp-073",
+        "system:golden:supply_chain-074",
+        "system:golden:telehealth-075",
+        "system:golden:pharmacy-076"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:049",
+        "kpi:golden:050",
+        "kpi:golden:051"
+      ],
+      "start_date": "2025-01-01",
+      "target_completion": "2027-01-01",
+      "budget_usd": 16380000
+    },
+    {
+      "id": "golden-digital-front-door-03",
+      "name": "Digital Front Door Expansion \u2014 Wave 3",
+      "description": "Unify scheduling, intake, and member/patient self-service across web and mobile. (synthetic Golden Move fixture initiative, wave 3).",
+      "phase": "P1",
+      "status": "at_risk",
+      "sponsor_id": "person:golden:oliver-mackenzie",
+      "co_sponsor_id": "person:golden:noor-haidari",
+      "program_lead_id": "person:golden:benedict-osei",
+      "systems_touched": [
+        "system:golden:pharmacy-076",
+        "system:golden:imaging-077",
+        "system:golden:lab-078",
+        "system:golden:care_management-079"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:051",
+        "kpi:golden:052",
+        "kpi:golden:053"
+      ],
+      "start_date": "2026-02-01",
+      "target_completion": "2028-02-01",
+      "budget_usd": 17000000
+    },
+    {
+      "id": "golden-telehealth-expansion-03",
+      "name": "Telehealth Network Expansion \u2014 Wave 3",
+      "description": "Extend virtual visit capacity into rural service areas across all four states. (synthetic Golden Move fixture initiative, wave 3).",
+      "phase": "P2",
+      "status": "on_track",
+      "sponsor_id": "person:golden:felicia-nakashima",
+      "co_sponsor_id": "person:golden:walter-pemberton",
+      "program_lead_id": "person:golden:carmen-delrio",
+      "systems_touched": [
+        "system:golden:care_management-079",
+        "system:golden:provider_network-080",
+        "system:golden:actuarial-081",
+        "system:golden:digital_front_door-082"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:053",
+        "kpi:golden:054",
+        "kpi:golden:055"
+      ],
+      "start_date": "2025-03-01",
+      "target_completion": "2027-03-01",
+      "budget_usd": 17620000
+    },
+    {
+      "id": "golden-security-modernization-03",
+      "name": "Security Modernization Program \u2014 Wave 3",
+      "description": "Zero-trust identity rollout and SOC 2 remediation across the vendor estate. (synthetic Golden Move fixture initiative, wave 3).",
+      "phase": "P3",
+      "status": "on_track",
+      "sponsor_id": "person:golden:benedict-osei",
+      "co_sponsor_id": "person:golden:yolanda-esparza",
+      "program_lead_id": "person:golden:isadora-veltri",
+      "systems_touched": [
+        "system:golden:digital_front_door-082",
+        "system:golden:ai_ml_platform-083",
+        "system:golden:clinical_ehr-084",
+        "system:golden:clinical_reporting-085"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:055",
+        "kpi:golden:056",
+        "kpi:golden:057"
+      ],
+      "start_date": "2026-04-01",
+      "target_completion": "2028-04-01",
+      "budget_usd": 18240000
+    },
+    {
+      "id": "golden-revenue-cycle-transform-03",
+      "name": "Revenue Cycle Transformation \u2014 Wave 3",
+      "description": "Reduce days in A/R and denial rate through automation and coding accuracy uplift. (synthetic Golden Move fixture initiative, wave 3).",
+      "phase": "P4",
+      "status": "on_track",
+      "sponsor_id": "person:golden:carmen-delrio",
+      "co_sponsor_id": "person:golden:desmond-attah",
+      "program_lead_id": "person:golden:noor-haidari",
+      "systems_touched": [
+        "system:golden:clinical_reporting-085",
+        "system:golden:revenue_cycle-086",
+        "system:golden:claims_admin-087",
+        "system:golden:member_services-088"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:057",
+        "kpi:golden:058",
+        "kpi:golden:059"
+      ],
+      "start_date": "2025-05-01",
+      "target_completion": "2027-05-01",
+      "budget_usd": 18860000
+    },
+    {
+      "id": "golden-ai-governance-council-03",
+      "name": "Enterprise AI Governance Council \u2014 Wave 3",
+      "description": "Stand up model-risk review, bias testing, and AI benefits-realization tracking. (synthetic Golden Move fixture initiative, wave 3).",
+      "phase": "P5",
+      "status": "at_risk",
+      "sponsor_id": "person:golden:isadora-veltri",
+      "co_sponsor_id": "person:golden:daniel-oyelaran",
+      "program_lead_id": "person:golden:walter-pemberton",
+      "systems_touched": [
+        "system:golden:member_services-088",
+        "system:golden:population_health-089",
+        "system:golden:data_platform-090",
+        "system:golden:security-091"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:059",
+        "kpi:golden:060",
+        "kpi:golden:061"
+      ],
+      "start_date": "2026-06-01",
+      "target_completion": "2028-06-01",
+      "budget_usd": 19480000
+    },
+    {
+      "id": "golden-member-ai-assist-04",
+      "name": "Member AI Assist Program \u2014 Wave 4",
+      "description": "Golden Move subject-matter analog to MEMBER AI ASSIST; deploys a member-facing AI assist experience across digital and contact-center channels. (synthetic Golden Move fixture initiative, wave 4).",
+      "phase": "P0",
+      "status": "on_track",
+      "sponsor_id": "person:golden:noor-haidari",
+      "co_sponsor_id": "person:golden:mei-fujimoto",
+      "program_lead_id": "person:golden:yolanda-esparza",
+      "systems_touched": [
+        "system:golden:security-091",
+        "system:golden:infrastructure-092",
+        "system:golden:hr_workforce-093",
+        "system:golden:finance_erp-094"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:061",
+        "kpi:golden:062",
+        "kpi:golden:063"
+      ],
+      "start_date": "2025-07-01",
+      "target_completion": "2027-07-01",
+      "budget_usd": 20100000
+    },
+    {
+      "id": "golden-epic-oracle-rationalization-04",
+      "name": "Clinical EHR Rationalization \u2014 Wave 4",
+      "description": "Multi-year consolidation of overlapping Epic and Oracle Health footprints post-acquisition. (synthetic Golden Move fixture initiative, wave 4).",
+      "phase": "P1",
+      "status": "on_track",
+      "sponsor_id": "person:golden:walter-pemberton",
+      "co_sponsor_id": "person:golden:tobias-lindqvist",
+      "program_lead_id": "person:golden:desmond-attah",
+      "systems_touched": [
+        "system:golden:finance_erp-094",
+        "system:golden:supply_chain-095",
+        "system:golden:telehealth-096",
+        "system:golden:pharmacy-097"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:063",
+        "kpi:golden:064",
+        "kpi:golden:065"
+      ],
+      "start_date": "2026-08-01",
+      "target_completion": "2028-08-01",
+      "budget_usd": 20720000
+    },
+    {
+      "id": "golden-claims-automation-04",
+      "name": "Claims Auto-Adjudication Uplift \u2014 Wave 4",
+      "description": "Increase straight-through claims processing rate and reduce denial rework. (synthetic Golden Move fixture initiative, wave 4).",
+      "phase": "P2",
+      "status": "on_track",
+      "sponsor_id": "person:golden:yolanda-esparza",
+      "co_sponsor_id": "person:golden:aisha-boateng",
+      "program_lead_id": "person:golden:daniel-oyelaran",
+      "systems_touched": [
+        "system:golden:pharmacy-097",
+        "system:golden:imaging-098",
+        "system:golden:lab-099",
+        "system:golden:care_management-100"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:065",
+        "kpi:golden:066",
+        "kpi:golden:067"
+      ],
+      "start_date": "2025-09-01",
+      "target_completion": "2027-09-01",
+      "budget_usd": 21340000
+    },
+    {
+      "id": "golden-data-platform-modernization-04",
+      "name": "Enterprise Data Platform Modernization \u2014 Wave 4",
+      "description": "Consolidate onto a governed Snowflake/Databricks lakehouse with AI-ready data contracts. (synthetic Golden Move fixture initiative, wave 4).",
+      "phase": "P3",
+      "status": "at_risk",
+      "sponsor_id": "person:golden:desmond-attah",
+      "co_sponsor_id": "person:golden:ravi-chandrasekaran",
+      "program_lead_id": "person:golden:mei-fujimoto",
+      "systems_touched": [
+        "system:golden:care_management-100",
+        "system:golden:provider_network-101",
+        "system:golden:actuarial-102",
+        "system:golden:digital_front_door-103"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:067",
+        "kpi:golden:068",
+        "kpi:golden:069"
+      ],
+      "start_date": "2026-10-01",
+      "target_completion": "2028-10-01",
+      "budget_usd": 21960000
+    },
+    {
+      "id": "golden-population-health-2-04",
+      "name": "Population Health Analytics 2.0 \u2014 Wave 4",
+      "description": "Expand risk-stratification and care-gap-closure models across the health plan book. (synthetic Golden Move fixture initiative, wave 4).",
+      "phase": "P4",
+      "status": "on_track",
+      "sponsor_id": "person:golden:daniel-oyelaran",
+      "co_sponsor_id": "person:golden:helena-kowalczyk",
+      "program_lead_id": "person:golden:tobias-lindqvist",
+      "systems_touched": [
+        "system:golden:digital_front_door-103",
+        "system:golden:ai_ml_platform-104",
+        "system:golden:clinical_ehr-105",
+        "system:golden:clinical_reporting-106"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:069",
+        "kpi:golden:070",
+        "kpi:golden:071"
+      ],
+      "start_date": "2025-11-01",
+      "target_completion": "2027-11-01",
+      "budget_usd": 22580000
+    },
+    {
+      "id": "golden-digital-front-door-04",
+      "name": "Digital Front Door Expansion \u2014 Wave 4",
+      "description": "Unify scheduling, intake, and member/patient self-service across web and mobile. (synthetic Golden Move fixture initiative, wave 4).",
+      "phase": "P5",
+      "status": "on_track",
+      "sponsor_id": "person:golden:mei-fujimoto",
+      "co_sponsor_id": "person:golden:samuel-brightwater",
+      "program_lead_id": "person:golden:aisha-boateng",
+      "systems_touched": [
+        "system:golden:clinical_reporting-106",
+        "system:golden:revenue_cycle-107",
+        "system:golden:claims_admin-108",
+        "system:golden:member_services-109"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:071",
+        "kpi:golden:072",
+        "kpi:golden:073"
+      ],
+      "start_date": "2026-12-01",
+      "target_completion": "2028-12-01",
+      "budget_usd": 23200000
+    },
+    {
+      "id": "golden-telehealth-expansion-04",
+      "name": "Telehealth Network Expansion \u2014 Wave 4",
+      "description": "Extend virtual visit capacity into rural service areas across all four states. (synthetic Golden Move fixture initiative, wave 4).",
+      "phase": "P0",
+      "status": "on_track",
+      "sponsor_id": "person:golden:tobias-lindqvist",
+      "co_sponsor_id": "person:golden:renata-alves",
+      "program_lead_id": "person:golden:ravi-chandrasekaran",
+      "systems_touched": [
+        "system:golden:member_services-109",
+        "system:golden:population_health-110",
+        "system:golden:data_platform-111",
+        "system:golden:security-112"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:073",
+        "kpi:golden:074",
+        "kpi:golden:075"
+      ],
+      "start_date": "2025-01-01",
+      "target_completion": "2027-01-01",
+      "budget_usd": 23820000
+    },
+    {
+      "id": "golden-security-modernization-04",
+      "name": "Security Modernization Program \u2014 Wave 4",
+      "description": "Zero-trust identity rollout and SOC 2 remediation across the vendor estate. (synthetic Golden Move fixture initiative, wave 4).",
+      "phase": "P1",
+      "status": "at_risk",
+      "sponsor_id": "person:golden:aisha-boateng",
+      "co_sponsor_id": "person:golden:oliver-mackenzie",
+      "program_lead_id": "person:golden:helena-kowalczyk",
+      "systems_touched": [
+        "system:golden:security-112",
+        "system:golden:infrastructure-113",
+        "system:golden:hr_workforce-114",
+        "system:golden:finance_erp-115"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:075",
+        "kpi:golden:076",
+        "kpi:golden:077"
+      ],
+      "start_date": "2026-02-01",
+      "target_completion": "2028-02-01",
+      "budget_usd": 24440000
+    },
+    {
+      "id": "golden-revenue-cycle-transform-04",
+      "name": "Revenue Cycle Transformation \u2014 Wave 4",
+      "description": "Reduce days in A/R and denial rate through automation and coding accuracy uplift. (synthetic Golden Move fixture initiative, wave 4).",
+      "phase": "P2",
+      "status": "on_track",
+      "sponsor_id": "person:golden:ravi-chandrasekaran",
+      "co_sponsor_id": "person:golden:felicia-nakashima",
+      "program_lead_id": "person:golden:samuel-brightwater",
+      "systems_touched": [
+        "system:golden:finance_erp-115",
+        "system:golden:supply_chain-116",
+        "system:golden:telehealth-117",
+        "system:golden:pharmacy-118"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:077",
+        "kpi:golden:078",
+        "kpi:golden:079"
+      ],
+      "start_date": "2025-03-01",
+      "target_completion": "2027-03-01",
+      "budget_usd": 25060000
+    },
+    {
+      "id": "golden-ai-governance-council-04",
+      "name": "Enterprise AI Governance Council \u2014 Wave 4",
+      "description": "Stand up model-risk review, bias testing, and AI benefits-realization tracking. (synthetic Golden Move fixture initiative, wave 4).",
+      "phase": "P3",
+      "status": "on_track",
+      "sponsor_id": "person:golden:helena-kowalczyk",
+      "co_sponsor_id": "person:golden:benedict-osei",
+      "program_lead_id": "person:golden:renata-alves",
+      "systems_touched": [
+        "system:golden:pharmacy-118",
+        "system:golden:imaging-119",
+        "system:golden:lab-120",
+        "system:golden:care_management-121"
+      ],
+      "kpis_targeted": [
+        "kpi:golden:079",
+        "kpi:golden:080",
+        "kpi:golden:081"
+      ],
+      "start_date": "2026-04-01",
+      "target_completion": "2028-04-01",
+      "budget_usd": 25680000
+    }
+  ]
+}

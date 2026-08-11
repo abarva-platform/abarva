@@ -126,6 +126,21 @@
       ]
     },
     {
+      "tenantKey": "internal-golden",
+      "displayName": "AbarVa Golden Health System",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/internal-golden/current",
+      "packets": [
+        {
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/internal-golden/current",
+          "classification": "internal-fixture",
+          "status": "active-input",
+          "note": "Permanent internal-only Golden Move regression/demo/proof fixture (Healthcare archetype, synthetic), never a client engagement, per docs/architecture/MOVES_OPERATING_MODEL.md's Golden Move proposal. Created so regression, demo, and evidence phase-scoping testing never again needs to touch MEMBER AI ASSIST (a real, disputed Move under active fabrication-incident remediation) or any real client tenant. Excluded from client-facing portfolio views and reports by construction (tenant key, not a status flag). Setup-data content lives at repo-root internal-golden-data/, loaded via src/scripts/setup-data/load-internal-golden-setup-data.ts, mirroring the meridian-data/ pattern."
+        }
+      ]
+    },
+    {
       "tenantKey": "skyharbor-air",
       "displayName": "Airline Demo",
       "companySizeBand": "large",

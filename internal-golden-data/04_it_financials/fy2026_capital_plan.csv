@@ -1,0 +1,21 @@
+capital_id,title,category,amount_usd,approval_status
+cap:golden:001,FY2026 capital item 001,Clinical,1000000,Pending board review
+cap:golden:002,FY2026 capital item 002,Data & Analytics,1250000,Approved
+cap:golden:003,FY2026 capital item 003,Infrastructure,1500000,Approved
+cap:golden:004,FY2026 capital item 004,Security,1750000,Pending board review
+cap:golden:005,FY2026 capital item 005,Clinical,2000000,Approved
+cap:golden:006,FY2026 capital item 006,Data & Analytics,2250000,Approved
+cap:golden:007,FY2026 capital item 007,Infrastructure,2500000,Pending board review
+cap:golden:008,FY2026 capital item 008,Security,2750000,Approved
+cap:golden:009,FY2026 capital item 009,Clinical,3000000,Approved
+cap:golden:010,FY2026 capital item 010,Data & Analytics,3250000,Pending board review
+cap:golden:011,FY2026 capital item 011,Infrastructure,3500000,Approved
+cap:golden:012,FY2026 capital item 012,Security,3750000,Approved
+cap:golden:013,FY2026 capital item 013,Clinical,4000000,Pending board review
+cap:golden:014,FY2026 capital item 014,Data & Analytics,4250000,Approved
+cap:golden:015,FY2026 capital item 015,Infrastructure,4500000,Approved
+cap:golden:016,FY2026 capital item 016,Security,4750000,Pending board review
+cap:golden:017,FY2026 capital item 017,Clinical,5000000,Approved
+cap:golden:018,FY2026 capital item 018,Data & Analytics,5250000,Approved
+cap:golden:019,FY2026 capital item 019,Infrastructure,5500000,Pending board review
+cap:golden:020,FY2026 capital item 020,Security,5750000,Approved

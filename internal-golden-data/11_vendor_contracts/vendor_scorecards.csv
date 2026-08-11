@@ -1,0 +1,56 @@
+vendor_id,vendor_name,scope,category,annual_spend_bucket,performance_score,risk_score,financial_health_rating,strategic_alignment_rating,recent_issues_summary,escalation_path,owner_person_id
+vendor:golden:001,Epic,plan,Cloud,<$500K,50,20,A,1,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:daniel-oyelaran
+vendor:golden:002,Oracle Health,provider,Clinical,$500K-$1M,51,21,B,2,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:mei-fujimoto
+vendor:golden:003,Salesforce Health Cloud,plan,Analytics,$1M-$5M,52,22,C,3,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:tobias-lindqvist
+vendor:golden:004,Workday,provider,Security,>$5M,53,23,A,4,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:aisha-boateng
+vendor:golden:005,ServiceNow,plan,Finance,<$500K,54,24,B,5,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:ravi-chandrasekaran
+vendor:golden:006,Snowflake,provider,Cloud,$500K-$1M,55,25,C,1,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:helena-kowalczyk
+vendor:golden:007,Databricks,plan,Clinical,$1M-$5M,56,26,A,2,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:samuel-brightwater
+vendor:golden:008,Microsoft Azure,provider,Analytics,>$5M,57,27,B,3,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:renata-alves
+vendor:golden:009,AWS,plan,Security,<$500K,58,28,C,4,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:oliver-mackenzie
+vendor:golden:010,UKG,provider,Finance,$500K-$1M,59,29,A,5,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:felicia-nakashima
+vendor:golden:011,SAP Ariba,plan,Cloud,$1M-$5M,60,30,B,1,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:benedict-osei
+vendor:golden:012,Optum,provider,Clinical,>$5M,61,31,C,2,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:carmen-delrio
+vendor:golden:013,Waystar,plan,Analytics,<$500K,62,32,A,3,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:isadora-veltri
+vendor:golden:014,Availity,provider,Security,$500K-$1M,63,33,B,4,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:noor-haidari
+vendor:golden:015,NextGen Healthcare,plan,Finance,$1M-$5M,64,34,C,5,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:walter-pemberton
+vendor:golden:016,athenahealth,provider,Cloud,>$5M,65,35,A,1,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:yolanda-esparza
+vendor:golden:017,Tableau,plan,Clinical,<$500K,66,36,B,2,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:desmond-attah
+vendor:golden:018,Power BI,provider,Analytics,$500K-$1M,67,37,C,3,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:daniel-oyelaran
+vendor:golden:019,Innovaccer,plan,Security,$1M-$5M,68,38,A,4,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:mei-fujimoto
+vendor:golden:020,Health Catalyst,provider,Finance,>$5M,69,39,B,5,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:tobias-lindqvist
+vendor:golden:021,Redox,plan,Cloud,<$500K,70,40,C,1,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:aisha-boateng
+vendor:golden:022,Twilio,provider,Clinical,$500K-$1M,71,41,A,2,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:ravi-chandrasekaran
+vendor:golden:023,Nuance DAX,plan,Analytics,$1M-$5M,72,42,B,3,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:helena-kowalczyk
+vendor:golden:024,Zoom,provider,Security,>$5M,73,43,C,4,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:samuel-brightwater
+vendor:golden:025,Okta,plan,Finance,<$500K,74,44,A,5,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:renata-alves
+vendor:golden:026,CrowdStrike,provider,Cloud,$500K-$1M,75,45,B,1,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:oliver-mackenzie
+vendor:golden:027,Splunk,plan,Clinical,$1M-$5M,76,46,C,2,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:felicia-nakashima
+vendor:golden:028,GE Healthcare,provider,Analytics,>$5M,77,47,A,3,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:benedict-osei
+vendor:golden:029,Philips,plan,Security,<$500K,78,48,B,4,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:carmen-delrio
+vendor:golden:030,Sectra,provider,Finance,$500K-$1M,79,49,C,5,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:isadora-veltri
+vendor:golden:031,Omnicell,plan,Cloud,$1M-$5M,80,50,A,1,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:noor-haidari
+vendor:golden:032,BD Pyxis,provider,Clinical,>$5M,81,51,B,2,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:walter-pemberton
+vendor:golden:033,Cerner CommunityWorks,plan,Analytics,<$500K,82,52,C,3,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:yolanda-esparza
+vendor:golden:034,Infor,provider,Security,$500K-$1M,83,53,A,4,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:desmond-attah
+vendor:golden:035,Coupa,plan,Finance,$1M-$5M,84,54,B,5,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:daniel-oyelaran
+vendor:golden:036,MuleSoft,provider,Cloud,>$5M,85,55,C,1,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:mei-fujimoto
+vendor:golden:037,Informatica,plan,Clinical,<$500K,86,56,A,2,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:tobias-lindqvist
+vendor:golden:038,Collibra,provider,Analytics,$500K-$1M,87,57,B,3,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:aisha-boateng
+vendor:golden:039,Palantir,plan,Security,$1M-$5M,88,58,C,4,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:ravi-chandrasekaran
+vendor:golden:040,Amazon Connect,provider,Finance,>$5M,89,59,A,5,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:helena-kowalczyk
+vendor:golden:041,Genesys,plan,Cloud,<$500K,90,60,B,1,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:samuel-brightwater
+vendor:golden:042,Verato,provider,Clinical,$500K-$1M,91,61,C,2,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:renata-alves
+vendor:golden:043,Experian Health,plan,Analytics,$1M-$5M,92,62,A,3,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:oliver-mackenzie
+vendor:golden:044,Change Healthcare,provider,Security,>$5M,93,63,B,4,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:felicia-nakashima
+vendor:golden:045,Epic,plan,Finance,<$500K,94,64,C,5,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:benedict-osei
+vendor:golden:046,Oracle Health,provider,Cloud,$500K-$1M,50,65,A,1,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:carmen-delrio
+vendor:golden:047,Salesforce Health Cloud,plan,Clinical,$1M-$5M,51,66,B,2,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:isadora-veltri
+vendor:golden:048,Workday,provider,Analytics,>$5M,52,67,C,3,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:noor-haidari
+vendor:golden:049,ServiceNow,plan,Security,<$500K,53,68,A,4,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:walter-pemberton
+vendor:golden:050,Snowflake,provider,Finance,$500K-$1M,54,69,B,5,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:yolanda-esparza
+vendor:golden:051,Databricks,plan,Cloud,$1M-$5M,55,70,C,1,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:desmond-attah
+vendor:golden:052,Microsoft Azure,provider,Clinical,>$5M,56,71,A,2,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:daniel-oyelaran
+vendor:golden:053,AWS,plan,Analytics,<$500K,57,72,B,3,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:mei-fujimoto
+vendor:golden:054,UKG,provider,Security,$500K-$1M,58,73,C,4,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:tobias-lindqvist
+vendor:golden:055,SAP Ariba,plan,Finance,$1M-$5M,59,74,A,5,Standard monitoring; synthetic Golden Move fixture vendor record.,Owner to VP / sponsor / legal as needed,person:golden:aisha-boateng

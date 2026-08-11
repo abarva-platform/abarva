@@ -1,0 +1,56 @@
+renewal_id,system_id,renewal_date,action_required
+renewal:golden:001,system:golden:clinical_reporting-001,2026-01-01,Negotiation required
+renewal:golden:002,system:golden:revenue_cycle-002,2027-02-01,Auto-renew
+renewal:golden:003,system:golden:claims_admin-003,2028-03-01,Negotiation required
+renewal:golden:004,system:golden:member_services-004,2026-04-01,Auto-renew
+renewal:golden:005,system:golden:population_health-005,2027-05-01,Negotiation required
+renewal:golden:006,system:golden:data_platform-006,2028-06-01,Auto-renew
+renewal:golden:007,system:golden:security-007,2026-07-01,Negotiation required
+renewal:golden:008,system:golden:infrastructure-008,2027-08-01,Auto-renew
+renewal:golden:009,system:golden:hr_workforce-009,2028-09-01,Negotiation required
+renewal:golden:010,system:golden:finance_erp-010,2026-10-01,Auto-renew
+renewal:golden:011,system:golden:supply_chain-011,2027-11-01,Negotiation required
+renewal:golden:012,system:golden:telehealth-012,2028-12-01,Auto-renew
+renewal:golden:013,system:golden:pharmacy-013,2026-01-01,Negotiation required
+renewal:golden:014,system:golden:imaging-014,2027-02-01,Auto-renew
+renewal:golden:015,system:golden:lab-015,2028-03-01,Negotiation required
+renewal:golden:016,system:golden:care_management-016,2026-04-01,Auto-renew
+renewal:golden:017,system:golden:provider_network-017,2027-05-01,Negotiation required
+renewal:golden:018,system:golden:actuarial-018,2028-06-01,Auto-renew
+renewal:golden:019,system:golden:digital_front_door-019,2026-07-01,Negotiation required
+renewal:golden:020,system:golden:ai_ml_platform-020,2027-08-01,Auto-renew
+renewal:golden:021,system:golden:clinical_ehr-021,2028-09-01,Negotiation required
+renewal:golden:022,system:golden:clinical_reporting-022,2026-10-01,Auto-renew
+renewal:golden:023,system:golden:revenue_cycle-023,2027-11-01,Negotiation required
+renewal:golden:024,system:golden:claims_admin-024,2028-12-01,Auto-renew
+renewal:golden:025,system:golden:member_services-025,2026-01-01,Negotiation required
+renewal:golden:026,system:golden:population_health-026,2027-02-01,Auto-renew
+renewal:golden:027,system:golden:data_platform-027,2028-03-01,Negotiation required
+renewal:golden:028,system:golden:security-028,2026-04-01,Auto-renew
+renewal:golden:029,system:golden:infrastructure-029,2027-05-01,Negotiation required
+renewal:golden:030,system:golden:hr_workforce-030,2028-06-01,Auto-renew
+renewal:golden:031,system:golden:finance_erp-031,2026-07-01,Negotiation required
+renewal:golden:032,system:golden:supply_chain-032,2027-08-01,Auto-renew
+renewal:golden:033,system:golden:telehealth-033,2028-09-01,Negotiation required
+renewal:golden:034,system:golden:pharmacy-034,2026-10-01,Auto-renew
+renewal:golden:035,system:golden:imaging-035,2027-11-01,Negotiation required
+renewal:golden:036,system:golden:lab-036,2028-12-01,Auto-renew
+renewal:golden:037,system:golden:care_management-037,2026-01-01,Negotiation required
+renewal:golden:038,system:golden:provider_network-038,2027-02-01,Auto-renew
+renewal:golden:039,system:golden:actuarial-039,2028-03-01,Negotiation required
+renewal:golden:040,system:golden:digital_front_door-040,2026-04-01,Auto-renew
+renewal:golden:041,system:golden:ai_ml_platform-041,2027-05-01,Negotiation required
+renewal:golden:042,system:golden:clinical_ehr-042,2028-06-01,Auto-renew
+renewal:golden:043,system:golden:clinical_reporting-043,2026-07-01,Negotiation required
+renewal:golden:044,system:golden:revenue_cycle-044,2027-08-01,Auto-renew
+renewal:golden:045,system:golden:claims_admin-045,2028-09-01,Negotiation required
+renewal:golden:046,system:golden:member_services-046,2026-10-01,Auto-renew
+renewal:golden:047,system:golden:population_health-047,2027-11-01,Negotiation required
+renewal:golden:048,system:golden:data_platform-048,2028-12-01,Auto-renew
+renewal:golden:049,system:golden:security-049,2026-01-01,Negotiation required
+renewal:golden:050,system:golden:infrastructure-050,2027-02-01,Auto-renew
+renewal:golden:051,system:golden:hr_workforce-051,2028-03-01,Negotiation required
+renewal:golden:052,system:golden:finance_erp-052,2026-04-01,Auto-renew
+renewal:golden:053,system:golden:supply_chain-053,2027-05-01,Negotiation required
+renewal:golden:054,system:golden:telehealth-054,2028-06-01,Auto-renew
+renewal:golden:055,system:golden:pharmacy-055,2026-07-01,Negotiation required

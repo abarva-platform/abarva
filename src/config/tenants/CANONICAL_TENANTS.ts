@@ -124,6 +124,13 @@ export const CANONICAL_TENANTS = [
     mimics: "Morgan Street Holdings-shape diversified holding company",
     patternOverlays: ["core"],
   },
+  {
+    key: "internal-golden",
+    name: "AbarVa Golden Health System",
+    industry: "healthcare_provider",
+    mimics: "Permanent internal-only Golden Move regression/demo/proof fixture (Healthcare archetype, synthetic) — not a client, per docs/architecture/MOVES_OPERATING_MODEL.md's Golden Move proposal. Deliberately excluded from src/lib/client-config.ts's ALL_CLIENTS so it never appears in any client-facing picker/persona surface.",
+    patternOverlays: ["core", "internal-fixture"],
+  },
 ] as const satisfies readonly CanonicalTenant[];
 
 export type CanonicalTenantKey = (typeof CANONICAL_TENANTS)[number]["key"];

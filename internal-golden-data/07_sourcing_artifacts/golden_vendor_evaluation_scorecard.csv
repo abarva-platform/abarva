@@ -1,0 +1,21 @@
+evaluation_id,vendor_name,technical_score,commercial_score,outcome
+eval:golden:001,Epic,3.0,2.5,Shortlisted
+eval:golden:002,Oracle Health,3.1,2.6,Declined
+eval:golden:003,Salesforce Health Cloud,3.2,2.7,Declined
+eval:golden:004,Workday,3.3,2.8,Shortlisted
+eval:golden:005,ServiceNow,3.4,2.9,Declined
+eval:golden:006,Snowflake,3.5,3.0,Declined
+eval:golden:007,Databricks,3.6,3.1,Shortlisted
+eval:golden:008,Microsoft Azure,3.7,3.2,Declined
+eval:golden:009,AWS,3.8,3.3,Declined
+eval:golden:010,UKG,3.9,3.4,Shortlisted
+eval:golden:011,SAP Ariba,4.0,3.5,Declined
+eval:golden:012,Optum,4.1,3.6,Declined
+eval:golden:013,Waystar,4.2,3.7,Shortlisted
+eval:golden:014,Availity,4.3,3.8,Declined
+eval:golden:015,NextGen Healthcare,4.4,3.9,Declined
+eval:golden:016,athenahealth,4.5,2.5,Shortlisted
+eval:golden:017,Tableau,4.6,2.6,Declined
+eval:golden:018,Power BI,4.7,2.7,Declined
+eval:golden:019,Innovaccer,4.8,2.8,Shortlisted
+eval:golden:020,Health Catalyst,4.9,2.9,Declined
