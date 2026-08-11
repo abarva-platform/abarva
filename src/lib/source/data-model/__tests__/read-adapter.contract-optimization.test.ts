@@ -155,4 +155,67 @@ describe("getContractOptimizationOpportunitySet", () => {
     expect(JSON.stringify(set)).not.toContain("CTR-061");
     expect(JSON.stringify(set)).not.toContain("stated annual value is $35.8M");
   });
+
+  it("uses selected Contract 360 values when the persisted baseline row is missing", async () => {
+    withSessionMock.mockImplementation(async (callback) => {
+      const run = async <R>(sql: string): Promise<R[]> => {
+        let rows: unknown[] = [];
+        if (sql.includes("set_config")) return [];
+        if (
+          sql.includes("FROM source.optimization_opportunity") &&
+          sql.includes("GROUP BY dataset_version")
+        ) {
+          rows = [{ dataset_version: "source-v1-1-canary" }];
+        } else if (
+          sql.includes("FROM source.optimization_opportunity") &&
+          sql.includes("ORDER BY amount_usd")
+        ) {
+          rows = [
+            {
+              tenant_key: "skyharbor_global",
+              dataset_version: "source-v1-1-canary",
+              opportunity_id: "CTR-090:rate-variance",
+              contract_id: "CTR-090",
+              vendor_id: "salesforce",
+              value_type: "recoverable_leakage",
+              stage: "quantified",
+              amount_usd: 365_000,
+              amount_state: "exact",
+              evidence_grade: "system_evidenced",
+              confidence: 0.86,
+              next_action:
+                "Review included invoice lines and complete the amendment search.",
+              overlap_treatment: "Distinct from off-contract billing.",
+              approval_state: "requires_amendment_exception_review",
+              narrative:
+                "Rate variance rows are visible for this selected contract.",
+              payload: { label: "Rate variance" },
+            },
+          ];
+        } else if (sql.includes("FROM source.optimization_baseline")) {
+          rows = [];
+        }
+        return rows as R[];
+      };
+      return callback(run);
+    });
+
+    const set = await getContractOptimizationOpportunitySet(
+      "skyharbor_global",
+      "CTR-090",
+      contract(),
+    );
+
+    expect(set?.baseline.status).toBe("missing");
+    expect(set?.baseline.headline).toBe(
+      "Commercial baseline needs pricing schedule tie-out.",
+    );
+    expect(set?.baseline.detail).toContain(
+      "Contract register values are loaded from Contract 360",
+    );
+    expect(set?.baseline.annualValueUsd).toBe(43_500_000);
+    expect(set?.baseline.actualAnnualSpendUsd).toBe(37_400_000);
+    expect(set?.baseline.totalCommittedValueUsd).toBe(173_900_000);
+    expect(set?.baseline.pricingScheduleAnnualValueUsd).toBeNull();
+  });
 });
