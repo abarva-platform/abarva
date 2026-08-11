@@ -10,6 +10,7 @@ import { ANALYTICS } from "@/components/source/canvas/analytics/analytics-tokens
 import type {
   ContractOptimizationCandidate,
   ContractOptimizationSourceConnection,
+  ContractOptimizationSourcingRequirement,
   ContractOptimizationSpine,
 } from "@/lib/source/data-model/contract-optimization-spine";
 import type {
@@ -25,11 +26,11 @@ interface SourceOptimizeContractPageProps {
 }
 
 const STAGES = [
-  "Select",
+  "Pick",
   "Baseline",
   "Evidence",
   "Diagnose",
-  "Levers",
+  "Strategy",
   "Approval",
   "Value proof",
 ] as const;
@@ -113,7 +114,7 @@ function ModuleHeader({
         <p style={SUBLINE_STYLE}>
           {selected
             ? `${selected.contractName} · ${formatUsd(selected.annualValue)} annual value · ${selected.band}.`
-            : "Pick a current contract, inspect the governed evidence, then open a dedicated optimization case."}
+            : "Pick a current contract, inspect governed evidence, then open a dedicated optimization case."}
         </p>
         <div style={META_ROW_STYLE}>
           <span>As of {formatDate(asOfDateIso)}</span>
@@ -240,20 +241,53 @@ function SelectedContractView({
   opportunitySet: ContractOptimizationOpportunitySet | null;
   selectedOpportunity: ContractOptimizationOpportunity | null;
 }) {
+  const missingCount = spine.missingEvidenceSources.length;
+  const opportunityCount = opportunitySet?.opportunities.length ?? 0;
+  const primaryAction =
+    !opportunitySet || opportunitySet.baseline.status !== "ready"
+      ? "Build or resolve the commercial baseline before approving action."
+      : missingCount > 0
+        ? "Collect the missing evidence rows before using a value number externally."
+        : "Open the optimization case and move the evidenced opportunity through approval.";
   return (
     <div style={SELECTED_GRID_STYLE}>
       <section style={PANEL_STYLE}>
         <div style={PANEL_HEAD_STYLE}>
           <div>
-            <h2 style={SECTION_TITLE_STYLE}>
-              #{candidate.rank} {candidate.band}
-            </h2>
-            <p style={PANEL_COPY_STYLE}>{candidate.action}</p>
+            <h2 style={SECTION_TITLE_STYLE}>Optimization decision brief</h2>
+            <p style={PANEL_COPY_STYLE}>
+              #{candidate.rank} · {candidate.band}. {primaryAction}
+            </p>
           </div>
           <div style={SCORE_BADGE_STYLE}>
             <strong>{candidate.score}</strong>
             <span>fit score</span>
           </div>
+        </div>
+        <div style={DECISION_STRIP_STYLE}>
+          <DecisionCell
+            label="Contract exposure"
+            value={formatUsd(candidate.annualValue)}
+            detail="Annual value from governed contract register."
+          />
+          <DecisionCell
+            label="Opportunity rows"
+            value={String(opportunityCount)}
+            detail={
+              opportunityCount > 0
+                ? "Loaded evidence rows are available for diagnosis."
+                : "No opportunity rows are loaded yet."
+            }
+          />
+          <DecisionCell
+            label="Open evidence gaps"
+            value={String(missingCount)}
+            detail={
+              missingCount > 0
+                ? "These block sizing or external value claims."
+                : "No missing rows in the current evidence spine."
+            }
+          />
         </div>
         <div style={REASON_GRID_STYLE}>
           {candidate.reasons.slice(0, 4).map((reason) => (
@@ -269,10 +303,12 @@ function SelectedContractView({
       <section style={PANEL_STYLE}>
         <div style={PANEL_HEAD_STYLE}>
           <div>
-            <h2 style={SECTION_TITLE_STYLE}>Governed opportunity spine</h2>
+            <h2 style={SECTION_TITLE_STYLE}>
+              Baseline and opportunity evidence
+            </h2>
             <p style={PANEL_COPY_STYLE}>
-              The optimization case starts from evidence rows, not a generic RFP
-              intake. Missing evidence remains a visible blocker.
+              The case starts from commercial baseline and evidence rows.
+              Missing inputs stay pending; they are never displayed as zero.
             </p>
           </div>
           <StartOptimizationButton
@@ -288,30 +324,38 @@ function SelectedContractView({
       </section>
 
       <section style={PANEL_STYLE}>
-        <h2 style={SECTION_TITLE_STYLE}>Evidence still needed</h2>
-        {spine.missingEvidenceSources.length === 0 ? (
+        <div>
+          <h2 style={SECTION_TITLE_STYLE}>Evidence request board</h2>
           <p style={PANEL_COPY_STYLE}>
-            No missing evidence sources are required by the current opportunity
-            spine. Continue through approval and value proof before making any
-            realized-value claim.
+            Required rows name what to pull, where it comes from, and what
+            decision it blocks.
           </p>
-        ) : (
-          <div style={EVIDENCE_LIST_STYLE}>
-            {spine.missingEvidenceSources.map((item) => (
-              <div key={item.lineId} style={EVIDENCE_ITEM_STYLE}>
-                <strong>{item.lineLabel}</strong>
-                <p style={PANEL_COPY_STYLE}>{item.nextAction}</p>
-                <div style={MUTED_SMALL_STYLE}>{item.ask}</div>
-              </div>
-            ))}
-          </div>
-        )}
+        </div>
+        <EvidenceRequirementTable requirements={spine.missingEvidenceSources} />
       </section>
 
       <section style={PANEL_STYLE}>
         <h2 style={SECTION_TITLE_STYLE}>Where the data comes from</h2>
         <SourceConnectionTable connections={spine.sourceConnections} />
       </section>
+    </div>
+  );
+}
+
+function DecisionCell({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div style={DECISION_CELL_STYLE}>
+      <div style={MUTED_SMALL_STYLE}>{label}</div>
+      <strong style={DECISION_VALUE_STYLE}>{value}</strong>
+      <p style={DECISION_DETAIL_STYLE}>{detail}</p>
     </div>
   );
 }
@@ -454,6 +498,7 @@ function OpportunityTable({
             <th style={TH_STYLE}>Value type</th>
             <th style={TH_STYLE}>Amount</th>
             <th style={TH_STYLE}>Evidence</th>
+            <th style={TH_STYLE}>Inputs</th>
             <th style={TH_STYLE}>Next action</th>
           </tr>
         </thead>
@@ -479,7 +524,70 @@ function OpportunityTable({
                   {opportunity.sourceSystems.join(", ") || "No source system"}
                 </div>
               </td>
+              <td style={TD_STYLE}>
+                {opportunity.calculation ? (
+                  <>
+                    {opportunity.calculation.includedLineCount} included
+                    <div style={MUTED_SMALL_STYLE}>
+                      {opportunity.calculation.pendingLineCount} pending ·{" "}
+                      {opportunity.calculation.excludedLineCount} excluded
+                    </div>
+                  </>
+                ) : (
+                  "No calculation run"
+                )}
+              </td>
               <td style={TD_STYLE}>{opportunity.nextAction}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function EvidenceRequirementTable({
+  requirements,
+}: {
+  requirements: readonly ContractOptimizationSourcingRequirement[];
+}) {
+  if (requirements.length === 0) {
+    return (
+      <div style={EMPTY_STYLE}>
+        No required evidence rows are open in the current spine. Continue
+        through approval and value proof before making any external savings
+        claim.
+      </div>
+    );
+  }
+  return (
+    <div style={TABLE_WRAP_STYLE}>
+      <table style={TABLE_STYLE}>
+        <thead>
+          <tr>
+            <th style={TH_STYLE}>Required evidence</th>
+            <th style={TH_STYLE}>Where to pull it</th>
+            <th style={TH_STYLE}>Grain / history</th>
+            <th style={TH_STYLE}>Blocks</th>
+            <th style={TH_STYLE}>Next action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {requirements.map((requirement) => (
+            <tr key={requirement.lineId}>
+              <td style={TD_STYLE}>
+                <strong>{requirement.lineLabel}</strong>
+                <div style={MUTED_SMALL_STYLE}>Required for sizing</div>
+              </td>
+              <td style={TD_STYLE}>
+                {requirement.connections
+                  .map((connection) => connection.sourceSystem)
+                  .join(" + ")}
+                <div style={MUTED_SMALL_STYLE}>{requirement.ask}</div>
+              </td>
+              <td style={TD_STYLE}>{grainForRequirement(requirement)}</td>
+              <td style={TD_STYLE}>{blocksForRequirement(requirement)}</td>
+              <td style={TD_STYLE}>{requirement.nextAction}</td>
             </tr>
           ))}
         </tbody>
@@ -524,6 +632,40 @@ function SourceConnectionTable({
       </table>
     </div>
   );
+}
+
+function grainForRequirement(
+  requirement: ContractOptimizationSourcingRequirement,
+): string {
+  if (requirement.lineId.includes("sla")) {
+    return "Monthly SLA and credit rows, 24 months preferred.";
+  }
+  if (
+    requirement.lineId.includes("invoice") ||
+    requirement.lineId.includes("rate")
+  ) {
+    return "Invoice and rate-card line grain, last 12-24 months.";
+  }
+  if (requirement.lineId.includes("realized")) {
+    return "Finance confirmation by month or quarter after action.";
+  }
+  return "Contract-line or usage-line grain for the relevant term.";
+}
+
+function blocksForRequirement(
+  requirement: ContractOptimizationSourcingRequirement,
+): string {
+  if (requirement.lineId.includes("sla")) return "Service-credit recovery";
+  if (
+    requirement.lineId.includes("invoice") ||
+    requirement.lineId.includes("rate")
+  ) {
+    return "Leakage and rate variance sizing";
+  }
+  if (requirement.lineId.includes("realized")) {
+    return "Finance-confirmed value";
+  }
+  return "Approval-quality opportunity sizing";
 }
 
 function formatDate(value: string): string {
@@ -601,8 +743,8 @@ const EYEBROW_STYLE: CSSProperties = {
 const H1_STYLE: CSSProperties = {
   margin: 0,
   fontFamily: "Georgia, serif",
-  fontSize: 34,
-  lineHeight: 1.05,
+  fontSize: 30,
+  lineHeight: 1.1,
   letterSpacing: 0,
 };
 
@@ -659,7 +801,7 @@ const STAGE_CHIP_STYLE: CSSProperties = {
   border: `1px solid ${ANALYTICS.LINE}`,
   borderRadius: 8,
   background: "#fff",
-  padding: "10px 12px",
+  padding: "9px 10px",
   fontSize: 12,
   fontWeight: 850,
   color: ANALYTICS.MUTED,
@@ -770,7 +912,7 @@ const SCORE_BADGE_STYLE: CSSProperties = {
 
 const REASON_GRID_STYLE: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
   gap: 10,
 };
 
@@ -778,7 +920,7 @@ const REASON_STYLE: CSSProperties = {
   border: `1px solid ${ANALYTICS.LINE}`,
   borderRadius: 8,
   padding: 12,
-  minHeight: 126,
+  minHeight: 108,
 };
 
 const REASON_LABEL_STYLE: CSSProperties = {
@@ -824,15 +966,30 @@ const SELECTED_ROW_STYLE: CSSProperties = {
   background: "#f8fafc",
 };
 
-const EVIDENCE_LIST_STYLE: CSSProperties = {
+const DECISION_STRIP_STYLE: CSSProperties = {
   display: "grid",
-  gap: 8,
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  gap: 10,
 };
 
-const EVIDENCE_ITEM_STYLE: CSSProperties = {
+const DECISION_CELL_STYLE: CSSProperties = {
   border: `1px solid ${ANALYTICS.LINE}`,
   borderRadius: 8,
   padding: 12,
+};
+
+const DECISION_VALUE_STYLE: CSSProperties = {
+  display: "block",
+  marginTop: 3,
+  fontSize: 17,
+  lineHeight: 1.2,
+};
+
+const DECISION_DETAIL_STYLE: CSSProperties = {
+  margin: "5px 0 0",
+  color: ANALYTICS.MUTED,
+  fontSize: 12,
+  lineHeight: 1.35,
 };
 
 const START_WRAP_STYLE: CSSProperties = {
