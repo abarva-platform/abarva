@@ -598,7 +598,8 @@ The following still require explicit human gate per slice:
 - `SRC56` Post-award value realization proof.
 - `SRC57` End-to-end Source New Event smoke harness: foundation merged.
 - `SRC58` Simple front required-row clarity: merged and deployed; live SkyHarbor route proof showed the current event detail page renders the canonical analytics/stage shell, not the archived simple-front path.
-- `SRC59` Live Source analytics evidence-row clarity: in progress. Apply the completed-row check/DONE treatment to the canonical `SourceAnalyticsCanvas` evidence request table so the signed-in Scope workflow visibly separates done evidence from pending work.
+- `SRC59` Live Source analytics evidence-row clarity: merged, deployed, invariant-proven, and signed-in route-proven.
+- `SRC60` Vendor response upload package clarity: in progress. Align the live Responses file-readiness ledger to the parser contract: two required files per vendor (main proposal package plus pricing workbook), with SLA, staffing, transition, exceptions, and proof exhibits shown as conditional/optional evidence unless the buyer marks them required.
 
 ## Non-Negotiable Boundaries
 

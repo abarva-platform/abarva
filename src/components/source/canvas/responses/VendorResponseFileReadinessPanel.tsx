@@ -41,15 +41,15 @@ interface FileReadinessRow extends FileFamily {
 const FILE_FAMILIES: FileFamily[] = [
   {
     key: "main_proposal",
-    label: "Main proposal",
+    label: "Main proposal package",
     requirement: "Required",
     sourceSystem: "Vendor response pack",
     ownerRole: "Vendor response lead",
-    formats: "PDF, DOCX",
+    formats: "PDF or DOCX",
   },
   {
     key: "pricing_template",
-    label: "Pricing template",
+    label: "Pricing workbook",
     requirement: "Required",
     sourceSystem: "Commercial workbook",
     ownerRole: "Commercial lead",
@@ -57,25 +57,25 @@ const FILE_FAMILIES: FileFamily[] = [
   },
   {
     key: "sla_response",
-    label: "SLA response",
-    requirement: "Required",
-    sourceSystem: "Vendor response pack",
+    label: "SLA commitments",
+    requirement: "Conditional",
+    sourceSystem: "Main proposal or SLA exhibit",
     ownerRole: "Service owner",
     formats: "PDF, DOCX, XLSX",
   },
   {
     key: "staffing_model",
-    label: "Staffing model",
-    requirement: "Required",
-    sourceSystem: "Delivery model exhibit",
+    label: "Staffing and location model",
+    requirement: "Conditional",
+    sourceSystem: "Main proposal or delivery exhibit",
     ownerRole: "Delivery lead",
     formats: "PDF, DOCX, XLSX",
   },
   {
     key: "transition_plan",
     label: "Transition plan",
-    requirement: "Required",
-    sourceSystem: "Transition exhibit",
+    requirement: "Conditional",
+    sourceSystem: "Main proposal or transition exhibit",
     ownerRole: "Transition lead",
     formats: "PDF, DOCX, XLSX",
   },
@@ -124,6 +124,10 @@ export function VendorResponseFileReadinessPanel({
     (row) => row.doneTone === "done",
   ).length;
   const requiredOpen = requiredRows.length - requiredDone;
+  const vendorCount = readiness?.records.length ?? 0;
+  const minimumFilesPerVendor = FILE_FAMILIES.filter(
+    (family) => family.requirement === "Required",
+  ).length;
   const citationCount = rows.reduce((sum, row) => sum + row.citationCount, 0);
 
   return (
@@ -135,17 +139,32 @@ export function VendorResponseFileReadinessPanel({
       <div style={HEADER}>
         <div>
           <div style={EYEBROW}>File readiness</div>
-          <h3 style={TITLE}>
-            Which vendor files are required, parsed, and citable?
-          </h3>
+          <h3 style={TITLE}>What exactly must be uploaded for each vendor?</h3>
           <p style={COPY}>
             This is the scoring-readiness ledger, not the raw file cabinet. It
-            shows the file families that must be loaded, who owns each one, what
-            formats are accepted, whether parsing produced usable evidence, and
-            the next action.
+            separates the minimum required upload package from proposal content
+            sections that can arrive inside the main proposal or as exhibits. A
+            75-100 page proposal is acceptable when the parser can find and cite
+            the requested sections.
           </p>
+          <div style={MINIMUM_PACKAGE}>
+            <strong>
+              Minimum package: {minimumFilesPerVendor} required files per vendor
+            </strong>
+            <span>
+              Load one main proposal package plus one pricing workbook for each
+              invited vendor. SLA, staffing, transition, exceptions, and proof
+              exhibits strengthen scoring and BAFO leverage, but they are not
+              separate required uploads unless the buyer marks them required.
+            </span>
+          </div>
         </div>
         <div style={SUMMARY_GRID} aria-label="File readiness summary">
+          <Metric
+            label="Vendors"
+            value={String(vendorCount)}
+            tone={vendorCount > 0 ? "done" : "review"}
+          />
           <Metric
             label="Required done"
             value={`${requiredDone}/${requiredRows.length || 0}`}
@@ -168,8 +187,10 @@ export function VendorResponseFileReadinessPanel({
         <div style={EMPTY}>
           <strong>No vendor response files are loaded yet.</strong>
           <span>
-            Start with the main proposal and pricing template for each invited
-            vendor, then add SLA, staffing, transition, and exception exhibits.
+            Start with one main proposal package and one pricing workbook for
+            each invited vendor. Add SLA, staffing, transition, exceptions, and
+            proof exhibits only when they are separate files or needed for BAFO
+            leverage.
           </span>
         </div>
       ) : (
@@ -239,9 +260,10 @@ export function VendorResponseFileReadinessPanel({
       )}
 
       <div style={FOOTNOTE}>
-        A green check means the required file family is received and parsed with
-        usable support. Optional files can help BAFO leverage, but they should
-        not block Evaluation unless a buyer marks them required.
+        Required upload means a file must exist before parser-backed scoring can
+        start. Conditional means the content must be citable somewhere in the
+        proposal package; upload a separate exhibit only when the vendor sent it
+        separately or the buyer needs it for leverage.
       </div>
     </section>
   );
@@ -554,9 +576,23 @@ const COPY: CSSProperties = {
   maxWidth: 820,
 };
 
+const MINIMUM_PACKAGE: CSSProperties = {
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  background: "#fbfaf6",
+  color: CANVAS.INK_SOFT,
+  display: "grid",
+  gap: 4,
+  marginTop: 10,
+  maxWidth: 820,
+  padding: "9px 10px",
+  fontSize: CANVAS.T_BODY_SMALL,
+  lineHeight: 1.4,
+};
+
 const SUMMARY_GRID: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(3, minmax(86px, 1fr))",
+  gridTemplateColumns: "repeat(2, minmax(86px, 1fr))",
   gap: 6,
 };
 

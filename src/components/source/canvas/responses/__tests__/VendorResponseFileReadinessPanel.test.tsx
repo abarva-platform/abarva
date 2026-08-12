@@ -104,28 +104,39 @@ describe("VendorResponseFileReadinessPanel", () => {
       }),
     );
 
-    expect(html).toContain(
-      "Which vendor files are required, parsed, and citable?",
-    );
+    expect(html).toContain("What exactly must be uploaded for each vendor?");
     expect(html).toContain("scoring-readiness ledger");
+    expect(html).toContain("Minimum package: 2 required files per vendor");
+    expect(html).toContain(
+      "one main proposal package plus one pricing workbook",
+    );
+    expect(html).toContain(
+      "they are not separate required uploads unless the buyer marks them required",
+    );
+    expect(html).toContain("Vendors");
     expect(html).toContain("Required done");
     expect(html).toContain("Open required");
     expect(html).toContain("Cited items");
-    expect(html).toContain("Main proposal");
-    expect(html).toContain("Pricing template");
-    expect(html).toContain("SLA response");
-    expect(html).toContain("Staffing model");
+    expect(html).toContain("Main proposal package");
+    expect(html).toContain("Pricing workbook");
+    expect(html).toContain("SLA commitments");
+    expect(html).toContain("Staffing and location model");
     expect(html).toContain("Transition plan");
     expect(html).toContain("Exceptions and assumptions");
     expect(html).toContain("Proof exhibits");
+    expect(html).toContain("Conditional");
     expect(html).toContain("Vendor response lead");
     expect(html).toContain("Commercial lead");
+    expect(html).toContain("PDF or DOCX");
     expect(html).toContain("XLSX, CSV");
     expect(html).toContain("Vendor B");
     expect(html).toContain("Partial");
     expect(html).toContain("Low confidence");
-    expect(html).toContain("Review pricing template extraction.");
+    expect(html).toContain("Review pricing workbook extraction.");
     expect(html).toContain("Done");
+    expect(html).toContain(
+      "Conditional means the content must be citable somewhere in the proposal package",
+    );
     expect(html).not.toMatch(/Northstar|TitanTech|CloudBridge|DataPeak/i);
   });
 });
