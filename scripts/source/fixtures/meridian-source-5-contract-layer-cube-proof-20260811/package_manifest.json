@@ -1,0 +1,569 @@
+{
+  "package_id": "meridian-source-5-contract-layer-cube-proof-20260811",
+  "package_generated_at": "2026-08-11T23:45:00Z",
+  "scenario_as_of_date": "2027-06-30",
+  "dataset_version": "meridian-source-5-contract-layer-cube-proof-20260811",
+  "warning": "SYNTHETIC DEMO DATA - NOT CLIENT DATA - PHI-FREE - OFFLINE SOURCE LAYER/CUBE PROOF ONLY",
+  "status": "synthetic_offline_audit_only_no_load_no_deploy_no_live_claim",
+  "current_meridian_files_sufficient_before_enhancement": false,
+  "current_meridian_native_inputs": [
+    {
+      "source_file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/07_vendors_contracts.csv",
+      "rows": 231,
+      "columns": 49,
+      "sha256": "75efa51e1f3796206bcd98e5bec99fc852f057b2902bae76e72c2d1957f128a8",
+      "current_depth_verdict": "context_only_not_source_deep_for_target_contracts"
+    },
+    {
+      "source_file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/08_it_budget_spend_value.csv",
+      "rows": 298,
+      "columns": 67,
+      "sha256": "e30ede2647d29cc68bfd3dd53a89b9bcd063eb5ec6aa617cb07448c39686dedf",
+      "current_depth_verdict": "context_only_not_source_deep_for_target_contracts"
+    },
+    {
+      "source_file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/17_managed_services_scope.csv",
+      "rows": 228,
+      "columns": 56,
+      "sha256": "246a62c72d958e841d79a1cfd538bb85be72a37fcd5d9b4b6ef71e206cb06192",
+      "current_depth_verdict": "context_only_not_source_deep_for_target_contracts"
+    },
+    {
+      "source_file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/18_operational_process_evidence.csv",
+      "rows": 228,
+      "columns": 40,
+      "sha256": "c47fbd84032cd20ba4ebec566db18bd9cdf492561806647f2c6c09b7ee032db5",
+      "current_depth_verdict": "context_only_not_source_deep_for_target_contracts"
+    }
+  ],
+  "contracts": [
+    {
+      "contract_id": "MER-CTR-RCM-001",
+      "fixture_role": "existing_contract_optimize_hero",
+      "action_gate_state": "allowed",
+      "value_gate_state": "value_partially_proven"
+    },
+    {
+      "contract_id": "MER-CTR-HR-BPO-001",
+      "fixture_role": "new_event_hr_bpo",
+      "action_gate_state": "blocked",
+      "value_gate_state": "not_value_proven"
+    },
+    {
+      "contract_id": "MER-CTR-FIN-BPO-001",
+      "fixture_role": "new_event_finance_bpo",
+      "action_gate_state": "blocked",
+      "value_gate_state": "not_value_proven"
+    },
+    {
+      "contract_id": "MER-CTR-SC-BPO-001",
+      "fixture_role": "new_event_supply_chain_bpo",
+      "action_gate_state": "blocked",
+      "value_gate_state": "not_value_proven"
+    },
+    {
+      "contract_id": "MER-CTR-SSO-BPO-001",
+      "fixture_role": "shared_services_governance_control",
+      "action_gate_state": "blocked",
+      "value_gate_state": "not_value_proven"
+    }
+  ],
+  "files_note": "Hashes cover generated payload files; package_manifest.json is excluded to avoid self-referential hash recursion.",
+  "files": [
+    {
+      "path": "documents/DOC-MER-CTR-FIN-BPO-001-AMEND-001_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "f700618d8f181ba5306000be361c394d6b94669b024f16d3041a7ecff76cca74"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-FIN-BPO-001-AMEND-002_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "4efd900c7a126091034cb6fc3cfd4dd0e86ce48f9730f2572a6f3cfa1fd90e30"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-FIN-BPO-001-MSA_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "67910431600571277d809d68413306392757087080801e0b9d8bc1356e959d46"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-FIN-BPO-001-NOTICE-RENEWAL_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "5fd1a2993c29616ceb0b070d2728d5a40978e10d8af1ac7971172b1e960cd3e7"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-FIN-BPO-001-PRICING-EXHIBIT_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "714a384f42d3190ed52f8496cf20cf644fb0c24a4648ddef3457cc4c293503e7"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-FIN-BPO-001-SECURITY-CONTROL_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "717e3be12bed86b3f358829d75081197747f1fdd57a12f803f9ae67d62618ca8"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-FIN-BPO-001-SIDE-LETTER_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "7e72d1da8de95a2f20657124aa6380295d34a18a2a11b1c5506740b29b061185"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-FIN-BPO-001-SLA-SCHEDULE_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "7b8012435f0f3003c5f143bb85758528346f3a9655919153c8486a48a86a56b7"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-FIN-BPO-001-SOW-CORE_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "7b61ba4671b229328ca0425c006456e767786b6bd8ce992a8f960221a5cee866"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-FIN-BPO-001-SOW-OPERATIONS_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "2587903c711a214998774aedbbc0a7bfcf6398e3d24154e5be1484d73897e298"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-FIN-BPO-001-TRANSITION-PLAN_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "79c70126a4ca9fa37dc07ab701470a819b3cbe002232bc0ecb8077b0f3b5e6ad"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-HR-BPO-001-AMEND-001_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "21ff1479f96a9c2d1014fb8b4703a39b2c09837e56dfbf20f40150671a6305d3"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-HR-BPO-001-AMEND-002_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "7c464593497d1bcdba92124006bd102e2f6045426a0eee1fb04e51f85e238d22"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-HR-BPO-001-MSA_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "45506e31a99ef4ef4c8b44819e2eed34ca82babefb5651247f568ebe32c84084"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-HR-BPO-001-NOTICE-RENEWAL_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "d4fb615051ccd25450466d003580c69adacfd8093393197e388eb1dc580abf1d"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-HR-BPO-001-PRICING-EXHIBIT_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "c92979788e26271e8e4d3615ecaf4493dff0d562d9f529a9aa8884eaf724168a"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-HR-BPO-001-SECURITY-CONTROL_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "686834722d44c00506ff0dc655750a2cb640134b616f9ae40272b2f9407cec98"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-HR-BPO-001-SIDE-LETTER_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "1a2a61717c06b4bf1d887db288bdbbe81da2f7789c24586199393a76da10f356"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-HR-BPO-001-SLA-SCHEDULE_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "37676fca3a8720232e4477d90027eab2025fc1c5bb46dc47e1c463b78bbadeec"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-HR-BPO-001-SOW-CORE_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "82078d0ca3a5e637d3755c43a9c03b7d95535aba431b8e7a1dab8c78e9734a14"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-HR-BPO-001-SOW-OPERATIONS_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "4f6a09e1e59ada7b7832d9d8c2e257e96c7e3da43f669ddd971ae59b4d7e8788"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-HR-BPO-001-TRANSITION-PLAN_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "046ef8f756879a82f2ab0cf790bbea4c0264531afd73ca52085023eea9b11fe3"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-RCM-001-AMEND-001_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "a4e56f1b55e7463c512892927978a00fb790fedc7325594b0ffbba0e56411963"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-RCM-001-AMEND-002_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "08d7a56cf38c43c7fa6f4804e2908869f68f1debd506634d3e983ad5fca0b2d0"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-RCM-001-MSA_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "efbef8475ac9ae2fb4b336d6a8ffa01198ffd564de0c1e09b74fea345ef70620"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-RCM-001-NOTICE-RENEWAL_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "c686ae785502f58a40f2165d790d92defc4a1f560455207d63cdce2b2ad69667"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-RCM-001-PRICING-EXHIBIT_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "e0dffbb7e692096b067724ee7e366f2cfc55613751913da96f2eb08e9f4084db"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-RCM-001-SECURITY-CONTROL_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "6ff7bf2725c654ed1683b503f51e769044cc9102df99877fa5531545080ee327"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-RCM-001-SIDE-LETTER_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "1780fec6210d4de7d8092522d91a8fdb381c410d086d4f95ddbfa43bb8efe385"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-RCM-001-SLA-SCHEDULE_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "b02d0b6d2d49704b3e76bea78b27752996671c61f6988d0332fdae322f4b4e45"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-RCM-001-SOW-CORE_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "6bf321720b4558ba1a9537e4ba0443322f06c7ccf98accb746f46c6272c7a4b6"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-RCM-001-SOW-OPERATIONS_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "de15ff84ec2148f93c8dfc71d81b8fffa83f0a99a20129fdf56bd4c9282c9fbf"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-RCM-001-TRANSITION-PLAN_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "f7487e7eba44dd07104a140dc5b372dc4831b906da48a792cf8184db39da9111"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SC-BPO-001-AMEND-001_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "3d5bb5f591e888b3f3bce3a711bd2ec44e540aaa5f01f67dac1d4c687bdba12b"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SC-BPO-001-AMEND-002_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "a6c148fea4b2f776fdfdc4d657c281835d613850da1626c19a3d1911c20aa806"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SC-BPO-001-MSA_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "db72fca1d6feff2b0183271b8c5ae2f2bfdba5e40033d0fa46f46a3e2573614a"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SC-BPO-001-NOTICE-RENEWAL_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "f4e240ed267be17959c0c9a066ee11874bd9dff8d80e4e0d38b01614631ccf36"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SC-BPO-001-PRICING-EXHIBIT_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "308c5268307545c6fbac421c561535fd895cd70262fb68c84f1df717823ffd14"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SC-BPO-001-SECURITY-CONTROL_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "7a8e738bb102506d423062d3f5b277bca4ffc800289f70104332327ab844fb1b"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SC-BPO-001-SIDE-LETTER_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "81758c7be1c0438c93c0c6b4c8c1714a6ccbdfd197132f3ff3c84b32d23967fe"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SC-BPO-001-SLA-SCHEDULE_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "abb118843ce015ba53acb050fb6961757ae500077ef2f8f63bb4ec9746cb1bca"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SC-BPO-001-SOW-CORE_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "1da2ee4bb9d338364097691f8061f8ad0a8ae6298a6103310bd63bbe83c542e7"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SC-BPO-001-SOW-OPERATIONS_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "6c0915daddaf3913f19f8329bd20ba5aa6c3ed4189baa886e198781e6e99b2ca"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SC-BPO-001-TRANSITION-PLAN_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "a03508a942fb313dcb5a783d2991e4e9a97c973e41364d10c1990d9b2fe96d05"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SSO-BPO-001-AMEND-001_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "ddd24285ff84d86c1d921c4ba9ac8a47c8408c3736abb1a7296755e8263de76a"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SSO-BPO-001-AMEND-002_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "53f7b81a4879c7fa3b3e28f0545f3ebf4fe4ee2deba1ffe157ceecc10de89543"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SSO-BPO-001-MSA_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "84857601552841e138c514e435bf0627d62b68e81aa3ffd1ad8d05368f44b48b"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SSO-BPO-001-NOTICE-RENEWAL_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "1f73f8c86091d52d6b3461fd8b4cd0ce5e501b97ba8365c09de1a27b0c4ddecf"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SSO-BPO-001-PRICING-EXHIBIT_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "8d0a8fe198af9885a86211020f70a285238f82bd261f6aedec3cb5406b677091"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SSO-BPO-001-SECURITY-CONTROL_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "1307257a67783a1bd19c059cb0d0751c00841101b3c11fbff737063b94e6c5f1"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SSO-BPO-001-SIDE-LETTER_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "4a41aaad38fa4aff0769252b6118262da399da5aadced04478660af9a75033b2"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SSO-BPO-001-SLA-SCHEDULE_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "ec56425e4fdd4a054b8111437352f50ac8bb73cd6f102b236f05e07392af8653"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SSO-BPO-001-SOW-CORE_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "3d420ba26bd738503558f37d54070a503124aeecb26a11aa18304422cd030aec"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SSO-BPO-001-SOW-OPERATIONS_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "24ce0254e7bd263ca2d691b5be4165e7a6fb9af4838bf12058293734d895cb1a"
+    },
+    {
+      "path": "documents/DOC-MER-CTR-SSO-BPO-001-TRANSITION-PLAN_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "rows": null,
+      "sha256": "efc61ec687e23ab25dcffdac95a5c4fe6c6e286eaa9912544b261da4b6063cbf"
+    },
+    {
+      "path": "layer2_adapter_outputs/adapter_contract_outputs.csv",
+      "rows": 5,
+      "sha256": "cf381fc038fc6a2b59914783d8752074de6a639b4395027f6149ca20c3afb766"
+    },
+    {
+      "path": "layer3_canonical/canonical_calculation_outputs.csv",
+      "rows": 20,
+      "sha256": "d37bdb2dfb62213f376f31eb49c668a629382b9fd47ac089f676d719401af00b"
+    },
+    {
+      "path": "layer3_canonical/canonical_contracts.csv",
+      "rows": 5,
+      "sha256": "773f885db4b84823a7c427fa68a56208af5ae71f4caf954336a73ad85d80a566"
+    },
+    {
+      "path": "layer3_canonical/canonical_evidence.csv",
+      "rows": 35,
+      "sha256": "655f347913c0d3f1d54ff28ce5f8629428b301560bde7137b2bd2f147e8fca99"
+    },
+    {
+      "path": "layer3_canonical/canonical_facts.csv",
+      "rows": 30,
+      "sha256": "975b20beb96f911430dcd3745e236144d325acd61ab10f889d951f1465081e94"
+    },
+    {
+      "path": "layer3_canonical/canonical_suppliers.csv",
+      "rows": 5,
+      "sha256": "8813f399aba9c5a2379a053afa695ddb939a65ad238d47f9647de5b9af490e52"
+    },
+    {
+      "path": "layer4_source_read_models/source_contract360_case_rooms.csv",
+      "rows": 20,
+      "sha256": "a6be1beaed90bd0dbe5e2099229f0ed822098847e70dd77b2d72e0cef9ffab6c"
+    },
+    {
+      "path": "layer4_source_read_models/source_evidence_gates.csv",
+      "rows": 25,
+      "sha256": "b37d601ec193c9aa7d5b8f64d21342e92d25faa39bec923483fba7d00f89eca3"
+    },
+    {
+      "path": "layer4_source_read_models/source_opportunities_read_model.csv",
+      "rows": 20,
+      "sha256": "425fc99076973fe457b429a1b5b136f1f1697dc897f361ea1eaeca4bb35f22c5"
+    },
+    {
+      "path": "layer4_source_read_models/source_portfolio_read_model.csv",
+      "rows": 5,
+      "sha256": "52aca454a281c07e96555707789cac8b119d8c764f0becfa896cca36d2d7bac6"
+    },
+    {
+      "path": "layer4_tower_cube/tower_source_cube.csv",
+      "rows": 20,
+      "sha256": "ee8b721096bdb9354cad95ef1e6156a8efc428460655228c5a2cfde60de76c00"
+    },
+    {
+      "path": "layer4_vendor360_preview/vendor360_cpo_story.md",
+      "rows": null,
+      "sha256": "be42367b8fcf504aa0b3a55264760ceb747d78ae2cf9af952bf4a499c53be2a9"
+    },
+    {
+      "path": "layer4_vendor360_preview/vendor360_extract_mapping.csv",
+      "rows": 12,
+      "sha256": "4134c6e24b5ddb106daadec9b10c9bc6b58ad8689f9660dc738b2ee89b828b1d"
+    },
+    {
+      "path": "layer4_vendor360_preview/vendor360_layer_mapping.csv",
+      "rows": 4,
+      "sha256": "7f220ccd54068ed40cf1ce92d7dd83c7cfe4ec2aa53cd64aa51cf2f1c04bf9bb"
+    },
+    {
+      "path": "layer4_vendor360_preview/vendor360_mapping_story.html",
+      "rows": null,
+      "sha256": "8712bdb7829267c14652052070ff8715a8e7a384200733f55d1e32ffece188d6"
+    },
+    {
+      "path": "layer4_vendor360_preview/vendor360_mapping_story.png",
+      "rows": null,
+      "sha256": "c77afb99fdb50feb99f3b5e4574e7644f19444116ba8d41888e4299d2cb673ff"
+    },
+    {
+      "path": "layer4_vendor360_preview/vendor360_preview_validation.json",
+      "rows": null,
+      "sha256": "46638bd09da3b2914b3503be7347f74509c6b76c2bc8c3c79775849c8a6a31a1"
+    },
+    {
+      "path": "layer4_vendor360_preview/vendor360_read_model.csv",
+      "rows": 5,
+      "sha256": "2fee6cd18dbf6002602f014a2417bb778c34884eca82979f0997263dfe28e0fc"
+    },
+    {
+      "path": "README.md",
+      "rows": null,
+      "sha256": "1abde74d99123829ebc2c9fbd9dc0a70248c60db896c548106b0a7e14cae12b8"
+    },
+    {
+      "path": "review/depth_review.csv",
+      "rows": 110,
+      "sha256": "822d84526a3b36481c583fe4786ab8bda1ba66003f421c0ffcf187c17bf5bef5"
+    },
+    {
+      "path": "source_system_extracts/calculation_inputs.csv",
+      "rows": 50,
+      "sha256": "9b4c65a0bb12be63c31f78c32f6ee0814ea80ddceadf487234d393ee7cf5d71c"
+    },
+    {
+      "path": "source_system_extracts/calculation_outputs.csv",
+      "rows": 20,
+      "sha256": "b65af81dbdc0af99fed76b5851b8961c59c773c81bce8741988514f6781a0902"
+    },
+    {
+      "path": "source_system_extracts/contract_document_inventory.csv",
+      "rows": 55,
+      "sha256": "4b10cbf53b3b6191379a6054ebdce2696c03e5ce03bcc5b763c64eec0020a949"
+    },
+    {
+      "path": "source_system_extracts/contract_register.csv",
+      "rows": 5,
+      "sha256": "84966d359b58cf12e66fca2db5e74f73b71df62da672a9d8356dfb05a479f4a9"
+    },
+    {
+      "path": "source_system_extracts/current_meridian_file_profile.csv",
+      "rows": 4,
+      "sha256": "749ac4cc4e1a2be7bbaa62899fff56839f26a23365725d19b13073246b91a596"
+    },
+    {
+      "path": "source_system_extracts/document_clause_extractions.csv",
+      "rows": 220,
+      "sha256": "071455fa8cdcdb219e318131978f31c7ce8cd6719bb9dd490a3473097b1a1c79"
+    },
+    {
+      "path": "source_system_extracts/evidence_entity_links.csv",
+      "rows": 35,
+      "sha256": "e9ee2f890335c1f8195e91517d46e33f498db2e19a731750d5a3775c70a05727"
+    },
+    {
+      "path": "source_system_extracts/fact_assertions.csv",
+      "rows": 30,
+      "sha256": "8f433df5b357ec9bbda616be4bb1fe09a93da2fb93f78d1e120c2c991f226189"
+    },
+    {
+      "path": "source_system_extracts/fact_conflicts.csv",
+      "rows": 8,
+      "sha256": "28ec3cc2d45017b040446ac74951e517ab72fe4e45c0860f135e512cbc961cff"
+    },
+    {
+      "path": "source_system_extracts/reviewer_decisions.csv",
+      "rows": 13,
+      "sha256": "85ef24349e26f964c4c02160f0fc01992676af8390c4ec11e02bc8632772c966"
+    },
+    {
+      "path": "source_system_extracts/source_ap_po_invoice_lines.csv",
+      "rows": 40,
+      "sha256": "4d50b27e9de07e5dedab422b4b79e86556a49a7b40bc45943d0979821721eea8"
+    },
+    {
+      "path": "source_system_extracts/source_bpo_process_baseline.csv",
+      "rows": 80,
+      "sha256": "492d94ffa738387c8a1f2f86cfe4299ef8d50e8825290da6ed001bcbbb529729"
+    },
+    {
+      "path": "source_system_extracts/source_contract_change_orders.csv",
+      "rows": 10,
+      "sha256": "b5a0f81635d2aa7f02fffa31bc75fb8f62e3a16abc5e7c82f0cabed47f1233a0"
+    },
+    {
+      "path": "source_system_extracts/source_contract_pricing_rate_cards.csv",
+      "rows": 25,
+      "sha256": "6f53b48721edf1021be84447dec72ca594810c84c5dbd423359a3d15560a5178"
+    },
+    {
+      "path": "source_system_extracts/source_contract_scope_services.csv",
+      "rows": 20,
+      "sha256": "0ec3be00bd82b730e358615d6f9bc19919087474837d64538940742c84706a53"
+    },
+    {
+      "path": "source_system_extracts/source_finance_realization.csv",
+      "rows": 20,
+      "sha256": "6a120285577ac465412e24b29190eec71e5292a7e75e08858531484c5d70ce19"
+    },
+    {
+      "path": "source_system_extracts/source_risk_control_evidence.csv",
+      "rows": 20,
+      "sha256": "bd9c41bfedc1bca8603f84192eebd975bccca4c1591466055dfe45170ec0c4e3"
+    },
+    {
+      "path": "source_system_extracts/source_sla_kpi_events.csv",
+      "rows": 90,
+      "sha256": "e8e5c3867733bbbb3c0917ac667da0ad5303b447c674f0b493e2c2fb53d36474"
+    },
+    {
+      "path": "source_system_extracts/source_sourcing_event_artifacts.csv",
+      "rows": 35,
+      "sha256": "7689bc79396e4d5745432adc945e1dd5645f91663932d0a4432f2ad36e0f7349"
+    },
+    {
+      "path": "source_system_extracts/source_transition_evidence.csv",
+      "rows": 25,
+      "sha256": "1fcc1bda32a79ab9ff474092ea4366ef69b1eeeb877fddb127c5a588d6f70e94"
+    },
+    {
+      "path": "source_system_extracts/supplier_master.csv",
+      "rows": 5,
+      "sha256": "32c7f99be6acbf78018ce7bbf7971a3f8a81b17607faae718a9e2036e7cc211f"
+    }
+  ],
+  "zip_path": "/Users/anand/Downloads/meridian-source-5-contract-layer-cube-proof-20260811.zip",
+  "vendor360_preview": {
+    "generated_at": "2026-08-12T00:20:00Z",
+    "status": "offline_preview_only_no_runtime_wiring",
+    "files": [
+      "layer4_vendor360_preview/vendor360_cpo_story.md",
+      "layer4_vendor360_preview/vendor360_extract_mapping.csv",
+      "layer4_vendor360_preview/vendor360_layer_mapping.csv",
+      "layer4_vendor360_preview/vendor360_mapping_story.html",
+      "layer4_vendor360_preview/vendor360_mapping_story.png",
+      "layer4_vendor360_preview/vendor360_preview_validation.json",
+      "layer4_vendor360_preview/vendor360_read_model.csv"
+    ],
+    "validation_pass": true
+  }
+}

@@ -1,0 +1,26 @@
+tenant_key,read_model_id,contract_id,gate_name,gate_state,reason
+meridian-health,GATE-MER-CTR-RCM-001-evidence_available,MER-CTR-RCM-001,evidence_available,available,Offline synthetic evidence supports limited case-room proof.
+meridian-health,GATE-MER-CTR-RCM-001-diagnosis_ready,MER-CTR-RCM-001,diagnosis_ready,available,Offline synthetic evidence supports limited case-room proof.
+meridian-health,GATE-MER-CTR-RCM-001-action_ready,MER-CTR-RCM-001,action_ready,allowed,Offline synthetic evidence supports limited case-room proof.
+meridian-health,GATE-MER-CTR-RCM-001-vendor_outreach,MER-CTR-RCM-001,vendor_outreach,allowed,Offline synthetic evidence supports limited case-room proof.
+meridian-health,GATE-MER-CTR-RCM-001-value_proven,MER-CTR-RCM-001,value_proven,partially_proven,Offline synthetic evidence supports limited case-room proof.
+meridian-health,GATE-MER-CTR-HR-BPO-001-evidence_available,MER-CTR-HR-BPO-001,evidence_available,available,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-HR-BPO-001-diagnosis_ready,MER-CTR-HR-BPO-001,diagnosis_ready,available,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-HR-BPO-001-action_ready,MER-CTR-HR-BPO-001,action_ready,blocked,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-HR-BPO-001-vendor_outreach,MER-CTR-HR-BPO-001,vendor_outreach,blocked,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-HR-BPO-001-value_proven,MER-CTR-HR-BPO-001,value_proven,blocked,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-FIN-BPO-001-evidence_available,MER-CTR-FIN-BPO-001,evidence_available,available,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-FIN-BPO-001-diagnosis_ready,MER-CTR-FIN-BPO-001,diagnosis_ready,available,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-FIN-BPO-001-action_ready,MER-CTR-FIN-BPO-001,action_ready,blocked,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-FIN-BPO-001-vendor_outreach,MER-CTR-FIN-BPO-001,vendor_outreach,blocked,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-FIN-BPO-001-value_proven,MER-CTR-FIN-BPO-001,value_proven,blocked,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-SC-BPO-001-evidence_available,MER-CTR-SC-BPO-001,evidence_available,available,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-SC-BPO-001-diagnosis_ready,MER-CTR-SC-BPO-001,diagnosis_ready,available,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-SC-BPO-001-action_ready,MER-CTR-SC-BPO-001,action_ready,blocked,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-SC-BPO-001-vendor_outreach,MER-CTR-SC-BPO-001,vendor_outreach,blocked,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-SC-BPO-001-value_proven,MER-CTR-SC-BPO-001,value_proven,blocked,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-SSO-BPO-001-evidence_available,MER-CTR-SSO-BPO-001,evidence_available,available,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-SSO-BPO-001-diagnosis_ready,MER-CTR-SSO-BPO-001,diagnosis_ready,available,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-SSO-BPO-001-action_ready,MER-CTR-SSO-BPO-001,action_ready,blocked,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-SSO-BPO-001-vendor_outreach,MER-CTR-SSO-BPO-001,vendor_outreach,blocked,Unresolved conflicts block unsafe action/value claims.
+meridian-health,GATE-MER-CTR-SSO-BPO-001-value_proven,MER-CTR-SSO-BPO-001,value_proven,blocked,Unresolved conflicts block unsafe action/value claims.

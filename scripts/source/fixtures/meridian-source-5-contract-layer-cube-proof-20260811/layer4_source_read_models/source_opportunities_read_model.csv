@@ -1,0 +1,21 @@
+tenant_key,read_model_id,contract_id,opportunity_id,opportunity_type,value_type,forecast_value_usd,blocked_allowed_flag,gate_reason
+meridian-health,OPRM-OP-MER-CTR-RCM-001-RECOVERABLE-AP-VARIANCE,MER-CTR-RCM-001,OP-MER-CTR-RCM-001-RECOVERABLE-AP-VARIANCE,recoverable_ap_variance,recoverable,42625,allowed,
+meridian-health,OPRM-OP-MER-CTR-RCM-001-EARNED-SLA-CREDIT,MER-CTR-RCM-001,OP-MER-CTR-RCM-001-EARNED-SLA-CREDIT,earned_sla_credit,recoverable,25833.32,allowed,
+meridian-health,OPRM-OP-MER-CTR-RCM-001-FINANCE-CONFIRMED-VALUE,MER-CTR-RCM-001,OP-MER-CTR-RCM-001-FINANCE-CONFIRMED-VALUE,finance_confirmed_value,finance_confirmed,420000,allowed,
+meridian-health,OPRM-OP-MER-CTR-RCM-001-FORECAST-VALUE,MER-CTR-RCM-001,OP-MER-CTR-RCM-001-FORECAST-VALUE,forecast_value,forecast,488458.32,allowed,
+meridian-health,OPRM-OP-MER-CTR-HR-BPO-001-RECOVERABLE-AP-VARIANCE,MER-CTR-HR-BPO-001,OP-MER-CTR-HR-BPO-001-RECOVERABLE-AP-VARIANCE,recoverable_ap_variance,recoverable,0,blocked,Unresolved conflict blocks action/value claim.
+meridian-health,OPRM-OP-MER-CTR-HR-BPO-001-EARNED-SLA-CREDIT,MER-CTR-HR-BPO-001,OP-MER-CTR-HR-BPO-001-EARNED-SLA-CREDIT,earned_sla_credit,recoverable,0,blocked,Unresolved conflict blocks action/value claim.
+meridian-health,OPRM-OP-MER-CTR-HR-BPO-001-FINANCE-CONFIRMED-VALUE,MER-CTR-HR-BPO-001,OP-MER-CTR-HR-BPO-001-FINANCE-CONFIRMED-VALUE,finance_confirmed_value,finance_confirmed,0,blocked,Unresolved conflict blocks action/value claim.
+meridian-health,OPRM-OP-MER-CTR-HR-BPO-001-FORECAST-VALUE,MER-CTR-HR-BPO-001,OP-MER-CTR-HR-BPO-001-FORECAST-VALUE,forecast_value,forecast,0,blocked,Unresolved conflict blocks action/value claim.
+meridian-health,OPRM-OP-MER-CTR-FIN-BPO-001-RECOVERABLE-AP-VARIANCE,MER-CTR-FIN-BPO-001,OP-MER-CTR-FIN-BPO-001-RECOVERABLE-AP-VARIANCE,recoverable_ap_variance,recoverable,0,blocked,Unresolved conflict blocks action/value claim.
+meridian-health,OPRM-OP-MER-CTR-FIN-BPO-001-EARNED-SLA-CREDIT,MER-CTR-FIN-BPO-001,OP-MER-CTR-FIN-BPO-001-EARNED-SLA-CREDIT,earned_sla_credit,recoverable,0,blocked,Unresolved conflict blocks action/value claim.
+meridian-health,OPRM-OP-MER-CTR-FIN-BPO-001-FINANCE-CONFIRMED-VALUE,MER-CTR-FIN-BPO-001,OP-MER-CTR-FIN-BPO-001-FINANCE-CONFIRMED-VALUE,finance_confirmed_value,finance_confirmed,0,blocked,Unresolved conflict blocks action/value claim.
+meridian-health,OPRM-OP-MER-CTR-FIN-BPO-001-FORECAST-VALUE,MER-CTR-FIN-BPO-001,OP-MER-CTR-FIN-BPO-001-FORECAST-VALUE,forecast_value,forecast,0,blocked,Unresolved conflict blocks action/value claim.
+meridian-health,OPRM-OP-MER-CTR-SC-BPO-001-RECOVERABLE-AP-VARIANCE,MER-CTR-SC-BPO-001,OP-MER-CTR-SC-BPO-001-RECOVERABLE-AP-VARIANCE,recoverable_ap_variance,recoverable,0,blocked,Unresolved conflict blocks action/value claim.
+meridian-health,OPRM-OP-MER-CTR-SC-BPO-001-EARNED-SLA-CREDIT,MER-CTR-SC-BPO-001,OP-MER-CTR-SC-BPO-001-EARNED-SLA-CREDIT,earned_sla_credit,recoverable,0,blocked,Unresolved conflict blocks action/value claim.
+meridian-health,OPRM-OP-MER-CTR-SC-BPO-001-FINANCE-CONFIRMED-VALUE,MER-CTR-SC-BPO-001,OP-MER-CTR-SC-BPO-001-FINANCE-CONFIRMED-VALUE,finance_confirmed_value,finance_confirmed,0,blocked,Unresolved conflict blocks action/value claim.
+meridian-health,OPRM-OP-MER-CTR-SC-BPO-001-FORECAST-VALUE,MER-CTR-SC-BPO-001,OP-MER-CTR-SC-BPO-001-FORECAST-VALUE,forecast_value,forecast,0,blocked,Unresolved conflict blocks action/value claim.
+meridian-health,OPRM-OP-MER-CTR-SSO-BPO-001-RECOVERABLE-AP-VARIANCE,MER-CTR-SSO-BPO-001,OP-MER-CTR-SSO-BPO-001-RECOVERABLE-AP-VARIANCE,recoverable_ap_variance,recoverable,0,blocked,Unresolved conflict blocks action/value claim.
+meridian-health,OPRM-OP-MER-CTR-SSO-BPO-001-EARNED-SLA-CREDIT,MER-CTR-SSO-BPO-001,OP-MER-CTR-SSO-BPO-001-EARNED-SLA-CREDIT,earned_sla_credit,recoverable,0,blocked,Unresolved conflict blocks action/value claim.
+meridian-health,OPRM-OP-MER-CTR-SSO-BPO-001-FINANCE-CONFIRMED-VALUE,MER-CTR-SSO-BPO-001,OP-MER-CTR-SSO-BPO-001-FINANCE-CONFIRMED-VALUE,finance_confirmed_value,finance_confirmed,0,blocked,Unresolved conflict blocks action/value claim.
+meridian-health,OPRM-OP-MER-CTR-SSO-BPO-001-FORECAST-VALUE,MER-CTR-SSO-BPO-001,OP-MER-CTR-SSO-BPO-001-FORECAST-VALUE,forecast_value,forecast,0,blocked,Unresolved conflict blocks action/value claim.

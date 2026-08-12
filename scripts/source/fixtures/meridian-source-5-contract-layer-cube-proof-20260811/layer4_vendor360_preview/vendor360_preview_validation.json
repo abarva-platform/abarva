@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-08-12T00:20:00Z",
+  "scenarioAsOfDate": "2027-06-30",
+  "validation": [
+    {
+      "check": "vendor360_rows_match_contracts",
+      "status": "pass",
+      "detail": "5 cards for 5 contracts"
+    },
+    {
+      "check": "extract_mapping_covers_core_feeds",
+      "status": "pass",
+      "detail": "12 feed mappings"
+    },
+    {
+      "check": "native_grain_named_for_every_feed",
+      "status": "pass",
+      "detail": "every mapping names native grain"
+    },
+    {
+      "check": "blocked_contracts_have_zero_forecast_value",
+      "status": "pass",
+      "detail": "blocked cards keep forecast value at zero"
+    },
+    {
+      "check": "allowed_contract_has_source_evidence_counts",
+      "status": "pass",
+      "detail": "allowed card retains evidence counts"
+    },
+    {
+      "check": "html_contains_layer_story",
+      "status": "pass",
+      "detail": "visual HTML contains layer mapping"
+    },
+    {
+      "check": "story_preserves_no_live_claim",
+      "status": "pass",
+      "detail": "offline caveat present"
+    },
+    {
+      "check": "visual_screenshot_rendered",
+      "status": "pass",
+      "detail": "vendor360_mapping_story.png present"
+    }
+  ]
+}

@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Meridian Vendor 360 Mapping Story</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172026;
+      --muted: #5b6670;
+      --line: #d9e1e8;
+      --bg: #f7f9fb;
+      --panel: #ffffff;
+      --accent: #0f766e;
+      --accent-soft: #d9f4ef;
+      --warn: #9a3412;
+      --warn-soft: #ffedd5;
+      --blue: #1d4ed8;
+      --blue-soft: #dbeafe;
+      --shadow: 0 12px 28px rgba(23, 32, 38, 0.08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); }
+    main { max-width: 1180px; margin: 0 auto; padding: 34px 22px 48px; }
+    h1 { margin: 0; font-size: clamp(32px, 6vw, 58px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 14px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 0 0 4px; font-size: 18px; letter-spacing: 0; }
+    p { color: var(--muted); line-height: 1.48; }
+    .hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr); gap: 24px; align-items: end; margin-bottom: 26px; }
+    .hero aside { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px; box-shadow: var(--shadow); }
+    .eyebrow { margin: 0 0 8px; text-transform: uppercase; font-size: 12px; letter-spacing: .08em; color: var(--accent); font-weight: 800; }
+    .pipeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0 30px; }
+    .stage { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; min-height: 150px; position: relative; box-shadow: var(--shadow); }
+    .stage:not(:last-child)::after { content: "→"; position: absolute; right: -15px; top: 50%; transform: translateY(-50%); color: var(--blue); font-weight: 900; font-size: 24px; }
+    .stage b { display: block; margin-bottom: 8px; color: var(--blue); }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 20px 0; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px; box-shadow: var(--shadow); }
+    .contract-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .contract-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; box-shadow: var(--shadow); }
+    .card-head { display: flex; gap: 14px; justify-content: space-between; align-items: flex-start; }
+    .chip { display: inline-flex; align-items: center; min-height: 28px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 750; color: var(--muted); background: #fff; white-space: nowrap; }
+    .chip.allowed { color: var(--accent); background: var(--accent-soft); border-color: #9bd9cc; }
+    .chip.blocked { color: var(--warn); background: var(--warn-soft); border-color: #fed7aa; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0; }
+    .metrics div { background: #f4f7fa; border: 1px solid var(--line); border-radius: 8px; padding: 10px; min-width: 0; }
+    .metrics b { display: block; font-size: 20px; }
+    .metrics span { display: block; color: var(--muted); font-size: 11px; }
+    .gates { display: flex; gap: 6px; flex-wrap: wrap; }
+    .story { margin-bottom: 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; vertical-align: top; padding: 10px; border-bottom: 1px solid var(--line); }
+    th { color: var(--ink); background: var(--blue-soft); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    .numbers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .number { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 14px; }
+    .number b { display: block; font-size: 24px; }
+    @media (max-width: 900px) {
+      .hero, .grid, .contract-grid { grid-template-columns: 1fr; }
+      .pipeline { grid-template-columns: 1fr; }
+      .stage::after { display: none; }
+      .numbers, .metrics { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Meridian Source · Vendor 360 offline preview</p>
+        <h1>Every vendor action traces back to source-system grain.</h1>
+        <p>SYNTHETIC DEMO DATA - NOT CLIENT DATA - PHI-FREE - OFFLINE VENDOR 360 PREVIEW ONLY. Scenario as-of 2027-06-30. No load, no deploy, no tenant activation, no live-client claim.</p>
+      </div>
+      <aside>
+        <h2>CPO promise</h2>
+        <p>Vendor 360 will show where the evidence came from, what grain it arrived at, what canonical object it became, and whether Procurement is allowed to act.</p>
+      </aside>
+    </section>
+
+    <section class="pipeline" aria-label="Layer mapping pipeline">
+      <div class="stage"><b>Layer 1</b><h3>Source Extract</h3><p>CLM, documents, AP/PO, SLA, operations, transition, controls, sourcing, and Finance stay owner-shaped.</p></div>
+      <div class="stage"><b>Layer 2</b><h3>Adapter</h3><p>Preserves source file, row, system, record ID, timestamp, owner, and native grain.</p></div>
+      <div class="stage"><b>Layer 3</b><h3>Canonical</h3><p>Contracts, suppliers, documents, clauses, invoices, SLAs, controls, facts, conflicts, and calculations get stable IDs.</p></div>
+      <div class="stage"><b>Layer 4</b><h3>Vendor 360</h3><p>Procurement sees evidence counts, commercial exposure, gates, and why action is allowed or blocked.</p></div>
+    </section>
+
+    <section class="panel">
+      <h2>Grain Mapping</h2>
+      <table>
+        <thead><tr><th>Source system</th><th>Native grain</th><th>Canonical mapping</th><th>Vendor 360 use</th></tr></thead>
+        <tbody>
+    <tr>
+      <td>CLM contract workspace export</td>
+      <td>one row per contract workspace</td>
+      <td>canonical_contract, canonical_supplier</td>
+      <td>Vendor 360 contract header and material-contract list</td>
+    </tr>
+
+    <tr>
+      <td>SharePoint / CLM document library</td>
+      <td>one row per document</td>
+      <td>canonical_document, canonical_evidence</td>
+      <td>Evidence spine and document family depth</td>
+    </tr>
+
+    <tr>
+      <td>Document extraction pipeline</td>
+      <td>one row per page/span clause</td>
+      <td>canonical_clause, fact_assertion</td>
+      <td>Why we believe this terms panel</td>
+    </tr>
+
+    <tr>
+      <td>Service catalog / workflow export</td>
+      <td>one row per service tower/process/location</td>
+      <td>canonical_service, canonical_obligation</td>
+      <td>Scope and retained-owner view</td>
+    </tr>
+
+    <tr>
+      <td>CLM pricing exhibit / FP&A workbook</td>
+      <td>one row per pricing line</td>
+      <td>canonical_pricing_line</td>
+      <td>Commercial baseline and pricing confidence</td>
+    </tr>
+
+    <tr>
+      <td>AP / PO invoice-line extract</td>
+      <td>one row per invoice line</td>
+      <td>canonical_invoice_line, fact_assertion</td>
+      <td>Leakage/recovery evidence</td>
+    </tr>
+
+    <tr>
+      <td>ServiceNow / operational KPI export</td>
+      <td>one row per SLA/KPI event</td>
+      <td>canonical_sla_event, canonical_obligation</td>
+      <td>Performance and service-credit evidence</td>
+    </tr>
+
+    <tr>
+      <td>Operations baseline export</td>
+      <td>one row per process/period/location</td>
+      <td>canonical_process_baseline, metric</td>
+      <td>Run-rate and operations story</td>
+    </tr>
+
+    <tr>
+      <td>PMO transition tracker</td>
+      <td>one row per wave/milestone</td>
+      <td>canonical_transition_milestone</td>
+      <td>Transition readiness and award blockers</td>
+    </tr>
+
+    <tr>
+      <td>GRC / IAM control evidence</td>
+      <td>one row per control obligation/evidence item</td>
+      <td>canonical_control, canonical_risk</td>
+      <td>Risk/control gates</td>
+    </tr>
+
+    <tr>
+      <td>Sourcing workspace export</td>
+      <td>one row per sourcing artifact</td>
+      <td>canonical_sourcing_artifact</td>
+      <td>New Event readiness</td>
+    </tr>
+
+    <tr>
+      <td>FP&A value ledger / close proof</td>
+      <td>one row per finance period</td>
+      <td>canonical_finance_period, value_claim</td>
+      <td>Value-proven gate</td>
+    </tr></tbody>
+      </table>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>Evidence Depth</h2>
+        <div class="numbers">
+          <div class="number"><b>55</b><span>documents</span></div>
+          <div class="number"><b>220</b><span>page/span clauses</span></div>
+          <div class="number"><b>40</b><span>invoice lines</span></div>
+          <div class="number"><b>90</b><span>SLA events</span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Decision Honesty</h2>
+        <p>Evidence available and diagnosis ready are not the same as action ready. Four contracts intentionally remain blocked by unresolved conflicts or control/transition gates.</p>
+        <p><span class="chip allowed">Evidence available</span> <span class="chip allowed">Diagnosis ready</span> <span class="chip blocked">Action blocked</span> <span class="chip blocked">Value not proven</span></p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Vendor 360 Cards</h2>
+      <div class="contract-grid">
+      <article class="contract-card">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">MER-CTR-RCM-001</p>
+            <h3>Revenue Cycle Managed Services</h3>
+            <p>NorthBridge RCM Services LLC</p>
+          </div>
+          <span class="chip allowed">Allowed</span>
+        </div>
+        <div class="metrics">
+          <div><b>11</b><span>docs</span></div>
+          <div><b>44</b><span>clauses</span></div>
+          <div><b>8</b><span>invoice lines</span></div>
+          <div><b>18</b><span>SLA events</span></div>
+        </div>
+        <div class="gates">
+          <span class="chip allowed">Action: allowed</span>
+          <span class="chip allowed">Outreach: allowed</span>
+          <span class="chip allowed">Value: partially_proven</span>
+        </div>
+        <p class="story">Evidence is mapped from source extracts through canonical objects, so Vendor 360 can show a limited offline action story with value caveats.</p>
+      </article>
+    
+
+      <article class="contract-card">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">MER-CTR-HR-BPO-001</p>
+            <h3>HR Operations Payroll Benefits BPO</h3>
+            <p>PeopleBridge Operations Inc.</p>
+          </div>
+          <span class="chip blocked">Blocked</span>
+        </div>
+        <div class="metrics">
+          <div><b>11</b><span>docs</span></div>
+          <div><b>44</b><span>clauses</span></div>
+          <div><b>8</b><span>invoice lines</span></div>
+          <div><b>18</b><span>SLA events</span></div>
+        </div>
+        <div class="gates">
+          <span class="chip blocked">Action: blocked</span>
+          <span class="chip blocked">Outreach: blocked</span>
+          <span class="chip blocked">Value: blocked</span>
+        </div>
+        <p class="story">Evidence is deep enough for diagnosis, but unresolved transition/control/value conflicts block vendor outreach and value claims.</p>
+      </article>
+    
+
+      <article class="contract-card">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">MER-CTR-FIN-BPO-001</p>
+            <h3>Finance Accounting Operations BPO</h3>
+            <p>LedgerWorks Managed Finance Ltd.</p>
+          </div>
+          <span class="chip blocked">Blocked</span>
+        </div>
+        <div class="metrics">
+          <div><b>11</b><span>docs</span></div>
+          <div><b>44</b><span>clauses</span></div>
+          <div><b>8</b><span>invoice lines</span></div>
+          <div><b>18</b><span>SLA events</span></div>
+        </div>
+        <div class="gates">
+          <span class="chip blocked">Action: blocked</span>
+          <span class="chip blocked">Outreach: blocked</span>
+          <span class="chip blocked">Value: blocked</span>
+        </div>
+        <p class="story">Evidence is deep enough for diagnosis, but unresolved transition/control/value conflicts block vendor outreach and value claims.</p>
+      </article>
+    
+
+      <article class="contract-card">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">MER-CTR-SC-BPO-001</p>
+            <h3>Supply Chain Procure-to-Pay Operations BPO</h3>
+            <p>ProcureHealth Services LLC</p>
+          </div>
+          <span class="chip blocked">Blocked</span>
+        </div>
+        <div class="metrics">
+          <div><b>11</b><span>docs</span></div>
+          <div><b>44</b><span>clauses</span></div>
+          <div><b>8</b><span>invoice lines</span></div>
+          <div><b>18</b><span>SLA events</span></div>
+        </div>
+        <div class="gates">
+          <span class="chip blocked">Action: blocked</span>
+          <span class="chip blocked">Outreach: blocked</span>
+          <span class="chip blocked">Value: blocked</span>
+        </div>
+        <p class="story">Evidence is deep enough for diagnosis, but unresolved transition/control/value conflicts block vendor outreach and value claims.</p>
+      </article>
+    
+
+      <article class="contract-card">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">MER-CTR-SSO-BPO-001</p>
+            <h3>Shared Services Transition Multi-process BPO</h3>
+            <p>Helix Shared Services Group</p>
+          </div>
+          <span class="chip blocked">Blocked</span>
+        </div>
+        <div class="metrics">
+          <div><b>11</b><span>docs</span></div>
+          <div><b>44</b><span>clauses</span></div>
+          <div><b>8</b><span>invoice lines</span></div>
+          <div><b>18</b><span>SLA events</span></div>
+        </div>
+        <div class="gates">
+          <span class="chip blocked">Action: blocked</span>
+          <span class="chip blocked">Outreach: blocked</span>
+          <span class="chip blocked">Value: blocked</span>
+        </div>
+        <p class="story">Evidence is deep enough for diagnosis, but unresolved transition/control/value conflicts block vendor outreach and value claims.</p>
+      </article>
+    </div>
+    </section>
+  </main>
+</body>
+</html>
