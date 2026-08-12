@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 // documented in src/lib/source/data-model/types.ts — the real-world clock
 // would put every renewal/notice calculation on the wrong side of "today."
 // Every other tenant defaults to the real current date. `?asOf=` overrides
-// either, matching /source/vendor-portfolio's existing convention.
+// either, preserving the legacy Vendor 360 as-of convention.
 const SKYHARBOR_SYNTHETIC_AS_OF = "2027-06-30T00:00:00Z";
 
 /**
