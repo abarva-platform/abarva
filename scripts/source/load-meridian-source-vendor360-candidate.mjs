@@ -388,21 +388,35 @@ function buildModel(args) {
         decision_needed: row.review_state,
       };
     }),
-    sourceExtracts: SOURCE_EXTRACTS.flatMap((relativePath) =>
-      readCsv(args.packageDir, relativePath).map((row, index) => ({
-        tenant_key: args.tenantKey,
-        dataset_id: args.datasetId,
-        dataset_version: args.datasetVersion,
-        source_tenant_key: args.sourceTenantKey,
-        source_table: path.basename(relativePath, ".csv"),
-        source_file: relativePath,
-        source_row_number: index + 2,
-        source_record_id: row.source_record_id || row.read_model_id || row.canonical_id || row.row_hash || `${path.basename(relativePath, ".csv")}:${index + 2}`,
-        contract_id: row.contract_id || null,
-        row_sha256: sha256(JSON.stringify(row)),
-        payload_json: row,
-      })),
-    ),
+    sourceExtracts: SOURCE_EXTRACTS.flatMap((relativePath) => {
+      const sourceTable = path.basename(relativePath, ".csv");
+      const seen = new Map();
+      return readCsv(args.packageDir, relativePath).map((row, index) => {
+        const rowHash = sha256(JSON.stringify(row));
+        const nativeRecordId =
+          row.source_record_id || row.read_model_id || row.canonical_id || row.row_hash || `${sourceTable}:${index + 2}`;
+        const duplicateCount = seen.get(nativeRecordId) ?? 0;
+        seen.set(nativeRecordId, duplicateCount + 1);
+        const sourceRecordId =
+          duplicateCount === 0 ? nativeRecordId : `${nativeRecordId}#row-${index + 2}-${rowHash.slice(0, 12)}`;
+        return {
+          tenant_key: args.tenantKey,
+          dataset_id: args.datasetId,
+          dataset_version: args.datasetVersion,
+          source_tenant_key: args.sourceTenantKey,
+          source_table: sourceTable,
+          source_file: relativePath,
+          source_row_number: index + 2,
+          source_record_id: sourceRecordId,
+          contract_id: row.contract_id || null,
+          row_sha256: rowHash,
+          payload_json: {
+            ...row,
+            native_source_record_id: nativeRecordId,
+          },
+        };
+      });
+    }),
     mapping: mappingRows.map((row, index) => ({
       tenant_key: args.tenantKey,
       dataset_id: args.datasetId,
