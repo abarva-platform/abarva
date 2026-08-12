@@ -88,6 +88,10 @@ describe("SimpleStageFront", () => {
     expect(screen.getAllByText("Template")).toHaveLength(2);
     expect(screen.getAllByRole("button", { name: "Upload" })).toHaveLength(2);
     expect(screen.getByText("1 required input still open")).toBeInTheDocument();
+    const blockedButton = screen.getByRole("button", {
+      name: "Complete 1 input",
+    });
+    expect(blockedButton).toBeDisabled();
   });
 
   it("makes the completed-state approval action explicit", () => {
@@ -96,11 +100,11 @@ describe("SimpleStageFront", () => {
     expect(screen.getByText("Approval gate")).toBeInTheDocument();
     expect(screen.getByText("Ready to open RFP")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Approve stage → RFP" }),
+      screen.getByRole("button", { name: "Open approval gate → RFP" }),
     ).toBeInTheDocument();
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Approve stage → RFP" }),
+      screen.getByRole("button", { name: "Open approval gate → RFP" }),
     );
 
     expect(onGenerateArtifact).toHaveBeenCalledWith("d05_scope_memo");
