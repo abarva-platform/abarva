@@ -12,6 +12,8 @@
 
 The Source Pricing decision lens now answers why a vendor is not comparable. It shows missing pricing sections, unresolved assumptions, exclusions, transition versus steady-state issues, cross-vendor comparability gaps, and the next clarification action.
 
+Follow-up: the same Pricing decision lens is now rendered on the active signed-in Source event canvas, not only inside the document workspace panel. This keeps the workflow simple while making the pricing comparability gap visible where users actually land.
+
 ## Layer Impact
 
 - Product surface: Source Pricing UI only.
@@ -29,14 +31,17 @@ The Source Pricing decision lens now answers why a vendor is not comparable. It 
 ## Changes Included
 
 - Expanded `src/components/source/canvas/workspace-tabs/StageDecisionLensPanel.tsx` pricing view from counts into a real comparability drilldown.
+- Rendered the Pricing decision lens in `src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx` when the active stage is Pricing.
 - Added focused regression coverage in `src/components/source/canvas/workspace-tabs/__tests__/StageDecisionLensPanel.test.tsx`.
+- Added active-canvas regression coverage in `src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.stageApproval.test.tsx`.
 - Marked `SRC43` complete in `docs/backlog/tracks/04-source-commercial/BACKLOG.md`.
 - Added this release record.
 
 ## QA / Validation
 
 - PASS: Focused Jest for pricing decision lens: `npm test -- --runTestsByPath src/components/source/canvas/workspace-tabs/__tests__/StageDecisionLensPanel.test.tsx --runInBand`.
-- PASS: ESLint for affected files: `npx eslint src/components/source/canvas/workspace-tabs/StageDecisionLensPanel.tsx src/components/source/canvas/workspace-tabs/__tests__/StageDecisionLensPanel.test.tsx`.
+- PASS: Focused Jest for active Source canvas: `npm test -- --runTestsByPath src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.stageApproval.test.tsx`.
+- PASS: ESLint for affected files: `npx eslint src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.stageApproval.test.tsx src/components/source/canvas/workspace-tabs/StageDecisionLensPanel.tsx`.
 - PASS: TypeScript check: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false`.
 - PASS: Release check: `npm run release:check -- --base origin/main --head HEAD`.
 - PASS: Whitespace diff check: `git diff --check`.

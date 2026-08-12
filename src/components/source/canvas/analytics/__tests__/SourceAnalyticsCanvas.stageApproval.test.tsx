@@ -29,7 +29,11 @@ jest.mock("@clerk/nextjs", () => ({
 }));
 
 import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
-import { SAMPLE_BAFO_STAGE, SAMPLE_SCOPE_STAGE } from "../sample-view-model";
+import {
+  SAMPLE_BAFO_STAGE,
+  SAMPLE_PRICING_STAGE,
+  SAMPLE_SCOPE_STAGE,
+} from "../sample-view-model";
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
 import type { SourcingEventSummary } from "@/lib/source/types";
 
@@ -254,9 +258,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.getByTestId("source-shell-stage-ready-panel"),
     ).toHaveTextContent("Required inputs are complete");
-    expect(
-      screen.getByTestId("source-shell-v2-steps"),
-    ).toHaveTextContent(
+    expect(screen.getByTestId("source-shell-v2-steps")).toHaveTextContent(
       "Review Files first; the approval gate stays blocked until artifact review is cleared or an exception is recorded",
     );
     expect(screen.getByTestId("source-shell-v2-steps")).not.toHaveTextContent(
@@ -556,6 +558,45 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.getByTestId("source-commercial-active-lens"),
     ).toHaveTextContent("Carry open actions into the next stage");
+    expect(screen.getByTestId("source-shell-v2-steps")).toBeInTheDocument();
+  });
+
+  it("shows pricing comparability drilldown on the actual live workflow canvas", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={{
+          ...EVENT,
+          currentStageKey: "pricing",
+          currentStageLabel: "Pricing",
+          nextAction: "Clarify vendor pricing gaps",
+        }}
+        viewStage="pricing"
+        tenantName="Demo Client"
+        stageView={SAMPLE_PRICING_STAGE}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(screen.getByTestId("source-stage-decision-lens")).toHaveTextContent(
+      "Why is this vendor not comparable?",
+    );
+    expect(
+      screen.getByTestId("source-pricing-completeness-summary"),
+    ).toHaveTextContent("Comparable vendors");
+    expect(
+      screen.getByTestId("source-pricing-cross-vendor-gaps"),
+    ).toHaveTextContent("Application count varies by vendor");
+    expect(
+      screen.getByTestId("source-pricing-vendor-vendor-b"),
+    ).toHaveTextContent(
+      "SOC-2 compliance cost gap and security tower exclusion",
+    );
+    expect(
+      screen.getByTestId("source-pricing-vendor-vendor-c"),
+    ).toHaveTextContent("155 applications in scope");
+    expect(
+      screen.getByRole("button", { name: /Send clarification request/ }),
+    ).toBeDisabled();
     expect(screen.getByTestId("source-shell-v2-steps")).toBeInTheDocument();
   });
 });
