@@ -411,8 +411,9 @@ export function buildSourceEventShellView(
         item.stageKey === input.event.currentStageKey ||
         item.stageKey === visibleCurrentStageKey,
     ) ?? null;
-  const stageApprovalHref = `/source/events/${encodeURIComponent(input.event.id)}?stage=${encodeURIComponent(input.viewedStageKey)}&workspace=approvals`;
-  const currentStageApprovalHref = `/source/events/${encodeURIComponent(input.event.id)}?stage=${encodeURIComponent(visibleCurrentStageKey)}&workspace=approvals`;
+  const stageApprovalHref = `/source/events/${encodeURIComponent(input.event.id)}/approval`;
+  const stageApprovalWorkspaceHref = `/source/events/${encodeURIComponent(input.event.id)}?stage=${encodeURIComponent(input.viewedStageKey)}&workspace=approvals`;
+  const currentStageApprovalWorkspaceHref = `/source/events/${encodeURIComponent(input.event.id)}?stage=${encodeURIComponent(visibleCurrentStageKey)}&workspace=approvals`;
   const viewedStageIsCurrent = input.viewedStageKey === visibleCurrentStageKey;
   const completedViewedStage = total > 0 && ready === total;
   const stageReadyWithArtifactGaps =
@@ -422,7 +423,7 @@ export function buildSourceEventShellView(
         rawCurrentStageItem,
         visibleCurrentStageKey,
         sourceJourneyLabelForStage(input.journey, visibleCurrentStageKey),
-        currentStageApprovalHref,
+        currentStageApprovalWorkspaceHref,
       )
     : null;
   const currentStageItem =
@@ -442,7 +443,7 @@ export function buildSourceEventShellView(
                   : `All ${total} required evidence item${total === 1 ? "" : "s"} ready, but ${artifactReadiness.blockerCount} required/gate artifact${artifactReadiness.blockerCount === 1 ? "" : "s"} still need review before approving ${viewedStageLabel}.`
                 : `${ready} of ${total} required evidence item${total === 1 ? "" : "s"} ready - review the gaps before approving ${viewedStageLabel}.`
               : normalizedCurrentStageItem.readiness,
-          href: stageApprovalHref,
+          href: stageApprovalWorkspaceHref,
           actionLabel: completedViewedStage
             ? artifactReadiness.ready
               ? "Approve now"

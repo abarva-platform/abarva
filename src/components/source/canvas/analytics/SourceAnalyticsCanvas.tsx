@@ -1107,6 +1107,7 @@ function FocusedWorkPanel({
   view: SourceEventShellView;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
+  const router = useRouter();
   const flatSteps = useMemo(
     () =>
       view.stage.groups
@@ -1173,10 +1174,16 @@ function FocusedWorkPanel({
     setCompletedIds((prev) => new Set(prev).add(stepId));
   };
 
+  const openApprovalPage = () => {
+    if (view.stage.approvalHref) {
+      router.push(view.stage.approvalHref);
+    }
+  };
+
   const goNext = () => {
     if (!activeStep || !activeComplete) return;
     if (activeIndex >= flatSteps.length - 1) {
-      onWorkspaceChange("approvals");
+      openApprovalPage();
       return;
     }
     setActiveStepId(flatSteps[activeIndex + 1]?.id ?? activeStep.id);
@@ -1322,7 +1329,8 @@ function FocusedWorkPanel({
         {allReady ? (
           <StageReadyPanel
             view={view}
-            onOpenApprovals={() => onWorkspaceChange("approvals")}
+            onOpenApprovalPage={openApprovalPage}
+            onReviewApprovals={() => onWorkspaceChange("approvals")}
             onOpenFiles={() => onWorkspaceChange("files")}
           />
         ) : activeStep ? (
@@ -1478,11 +1486,13 @@ function plainStageStepGroupLabel(label: string) {
 
 function StageReadyPanel({
   view,
-  onOpenApprovals,
+  onOpenApprovalPage,
+  onReviewApprovals,
   onOpenFiles,
 }: {
   view: SourceEventShellView;
-  onOpenApprovals: () => void;
+  onOpenApprovalPage: () => void;
+  onReviewApprovals: () => void;
   onOpenFiles: () => void;
 }) {
   const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
@@ -1528,7 +1538,7 @@ function StageReadyPanel({
           }}
         >
           {hasArtifactGaps
-            ? "Open the approval workspace to decide with a clear rationale, or return to Files to accept client-final artifacts and close quality gates before the stage advances."
+            ? "Open the approval page to decide with a clear rationale, or return to Files to accept client-final artifacts and close quality gates before the stage advances."
             : "The next step is the approval page. Review the captured evidence, record the decision, and advance the event from there."}
         </p>
       </div>
@@ -1565,7 +1575,7 @@ function StageReadyPanel({
         <button
           type="button"
           data-testid="source-stage-ready-open-approval"
-          onClick={onOpenApprovals}
+          onClick={onOpenApprovalPage}
           style={{
             ...BUTTON_STYLE,
             background: ANALYTICS.INK,
@@ -1577,6 +1587,20 @@ function StageReadyPanel({
           }}
         >
           {view.stage.approvalCtaLabel}
+        </button>
+        <button
+          type="button"
+          data-testid="source-stage-ready-review-approval"
+          onClick={onReviewApprovals}
+          style={{
+            ...BUTTON_STYLE,
+            display: "inline-flex",
+            justifyContent: "center",
+            padding: "12px 16px",
+            width: "fit-content",
+          }}
+        >
+          Review readiness here
         </button>
         {hasArtifactGaps ? (
           <button
