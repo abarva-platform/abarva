@@ -1,0 +1,6 @@
+canonical_id,canonical_type,tenant_key,supplier_legal_name,vendor_parent_id,lineage
+MER-SUP-RCM-001,supplier,meridian-health,NorthBridge RCM Services LLC,MER-VEN-RCM-NORTHBRIDGE,source_system_extracts/supplier_master.csv#SUPM-MER-SUP-RCM-001
+MER-SUP-HR-001,supplier,meridian-health,PeopleBridge Operations Inc.,MER-VEN-HR-PEOPLEBRIDGE,source_system_extracts/supplier_master.csv#SUPM-MER-SUP-HR-001
+MER-SUP-FIN-001,supplier,meridian-health,LedgerWorks Managed Finance Ltd.,MER-VEN-FIN-LEDGERWORKS,source_system_extracts/supplier_master.csv#SUPM-MER-SUP-FIN-001
+MER-SUP-SC-001,supplier,meridian-health,ProcureHealth Services LLC,MER-VEN-SC-PROCUREHEALTH,source_system_extracts/supplier_master.csv#SUPM-MER-SUP-SC-001
+MER-SUP-SSO-001,supplier,meridian-health,Helix Shared Services Group,MER-VEN-SSO-HELIX,source_system_extracts/supplier_master.csv#SUPM-MER-SUP-SSO-001

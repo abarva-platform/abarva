@@ -1,0 +1,5 @@
+layer,name,mapping_grain,procurement_point,proof_artifact
+Layer 1,Client/source extracts,Source-owner files stay in native shape,Do not make Procurement fill our schema,source_system_extracts/*
+Layer 2,Adapter output,One adapter per extract preserves row lineage,CPO can ask where each number came from,layer2_adapter_outputs/adapter_contract_outputs.csv
+Layer 3,Canonical model,"Contracts, suppliers, documents, clauses, invoices, SLAs, controls, facts, conflicts","Same supplier/contract identity across Source, Tower, and future Vendor 360",layer3_canonical/*
+Layer 4,Vendor 360 preview,"Procurement story, evidence counts, gates, blocked/allowed action states",CPO sees what can be done now and what is blocked,layer4_vendor360_preview/*

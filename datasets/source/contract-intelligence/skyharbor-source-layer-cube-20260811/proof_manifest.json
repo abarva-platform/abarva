@@ -1,0 +1,498 @@
+{
+  "package_id": "skyharbor-source-layer-cube-proof-20260811",
+  "warning": "SYNTHETIC DEMO DATA - NOT CLIENT DATA - OFFLINE LAYER/CUBE PROOF ONLY",
+  "input_package": "/Users/anand/Projects/nexus/reports/source-golden-contract-production-reconciled-v2-20260811",
+  "status": "offline_layer_cube_proof_no_load_no_deploy",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 1317,
+      "sha256": "eb4870107603056d31af9da0fbbfea0caa5d7bd7120125707603b28b74242008"
+    },
+    {
+      "path": "cube/cube_dimensions.csv",
+      "bytes": 452,
+      "sha256": "fb7ea471b33ca89621b65aeb1785f506fb2c84c3d9c5b05ca90063d22a2213bb"
+    },
+    {
+      "path": "cube/cube_gate_flags.csv",
+      "bytes": 504,
+      "sha256": "4cf172bd8103ef7481d14393cf90db0235dfef009f9aeeddda46caadc5c2617d"
+    },
+    {
+      "path": "cube/cube_measures.csv",
+      "bytes": 505,
+      "sha256": "2228f1d1082047e75eef1b9e10f2141b285451ad93bc7a3637494153c1cf69bc"
+    },
+    {
+      "path": "cube/source_contract_cube.csv",
+      "bytes": 87173,
+      "sha256": "ebc62a4ffa204f9e18f963cabb8b584f18f6abd0b3f7e1554fc94837b5db7c99"
+    },
+    {
+      "path": "layer_1_client_intake/depth_review.csv",
+      "bytes": 11507,
+      "sha256": "a5091447f9257e0fe662acada081bd75db7c1d2068c8d68137a4b688e26e7996"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-061-AMEND-001_Microsoft_SYNTHETIC.md",
+      "bytes": 1064,
+      "sha256": "6604f965823251a21952ea8ab6c7f3af6f0146d5d3319f4c03afc7792d8f08d8"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-061-AMEND-002_Microsoft_SYNTHETIC.md",
+      "bytes": 997,
+      "sha256": "0a5e4e08ef2353f98ee700b3d8d343e1896355a7be0cb245ae63277ba14557e2"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-061-EXIT-PLAN_Microsoft_SYNTHETIC.md",
+      "bytes": 1029,
+      "sha256": "d8594f7ae48713a2e17e1e7298b34bcbc9446801a18caadeb2d619b27d41610e"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-061-MSA_Microsoft_SYNTHETIC.md",
+      "bytes": 1197,
+      "sha256": "9146324e746da5f1a153381bfb91bb9c003cb12892b9281fab8232f244cef492"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-061-NOTICE-RENEWAL_Microsoft_SYNTHETIC.md",
+      "bytes": 1007,
+      "sha256": "05071c000ab5bc7554219ffbee59c3f920034ad19d11fe51363388a7dc1723e7"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-061-ORDER-BASE_Microsoft_SYNTHETIC.md",
+      "bytes": 1017,
+      "sha256": "ecb256ee2bf228375975658072baf024e46abcbf055bf4c5dec2169cf77715d1"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-061-ORDER-TRUEUP_Microsoft_SYNTHETIC.md",
+      "bytes": 1020,
+      "sha256": "a64e3cb6be3d1f75478e976dc29038b02646222c02590db19c43ae4f2c6e4149"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-061-PRICING-EXHIBIT_Microsoft_SYNTHETIC.md",
+      "bytes": 1030,
+      "sha256": "efd46e8e58c4f7b638e1cf78e9cced155f82dcdf5fae02ce7b4139a8be7a1757"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-061-RENEWAL-QUOTE_Microsoft_SYNTHETIC.md",
+      "bytes": 1010,
+      "sha256": "0e821278cd34b57660920410dd8deb7d2b2da65d15c46855abf62bd5475469b9"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-061-SECURITY-DPA_Microsoft_SYNTHETIC.md",
+      "bytes": 1051,
+      "sha256": "ded629d107042fdc8499b5b38d78bd355be52d325c2ec83a5e762d0bfc91de4b"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-061-SIDE-LETTER_Microsoft_SYNTHETIC.md",
+      "bytes": 1093,
+      "sha256": "ee5e9227ae65dbc39ac919cc26b535195757153bbee59d3e8d02d731b7f40330"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-061-SLA-SCHEDULE_Microsoft_SYNTHETIC.md",
+      "bytes": 1074,
+      "sha256": "0ba4f011a9b722f29a2e7791c807f28cb74e58f5272f479f03f9e7d4a5c9912e"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-061-SOW-CORE_Microsoft_SYNTHETIC.md",
+      "bytes": 1155,
+      "sha256": "d1cbdd08325d077327cb9c04f69e312bb2a12a04e0101d50254b909290acf806"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-061-SOW-TRANSITION_Microsoft_SYNTHETIC.md",
+      "bytes": 1102,
+      "sha256": "3e7c3175efc61d2b56a390d228ae14fbfa072a2b018f7e97a877e83a287a0ff6"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-061-SUPPORT-POLICY_Microsoft_SYNTHETIC.md",
+      "bytes": 1016,
+      "sha256": "8207df87ee393fdc583ac4354639c49f681857deb727c2fc98dbeca45dd56889"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-090-AMEND-001_Salesforce_SYNTHETIC.md",
+      "bytes": 1064,
+      "sha256": "8feb01da78a17395fca0fd31e68272beb9f16f1c5d21650095ebfde3d0f60401"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-090-AMEND-002_Salesforce_SYNTHETIC.md",
+      "bytes": 997,
+      "sha256": "8d56e9255b3703d55935f6b755d5856de7801a9fe486afda4c1b689a29c57289"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-090-EXIT-PLAN_Salesforce_SYNTHETIC.md",
+      "bytes": 1029,
+      "sha256": "c62e74f19e08323a72fcc20b7bd5652b1b5975cc4c2a0b802f6539509caeb14d"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-090-MSA_Salesforce_SYNTHETIC.md",
+      "bytes": 1198,
+      "sha256": "3707ca2c715be273f8bd01550fe6119da6cc9fd69c52cdaab57d1c080ae07c63"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-090-NOTICE-RENEWAL_Salesforce_SYNTHETIC.md",
+      "bytes": 1007,
+      "sha256": "9274e5ade8c9ca807105f9a2f4ddd387514c26032219e86d458d735b9e90748c"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-090-ORDER-BASE_Salesforce_SYNTHETIC.md",
+      "bytes": 1017,
+      "sha256": "3d36212debc18275673d3c4c6d1909d38ef1ffcaccd098e5cf9e760ed86705b8"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-090-ORDER-TRUEUP_Salesforce_SYNTHETIC.md",
+      "bytes": 1020,
+      "sha256": "3e886fe6784a703ebfe2fa87cc824eae2b4cd74af05bf173fb9fa24bd0f728f3"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-090-PRICING-EXHIBIT_Salesforce_SYNTHETIC.md",
+      "bytes": 1030,
+      "sha256": "68ecbcae126bcc34f155336625ccbccf56bc857699916782d26c603e0793abe8"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-090-RENEWAL-QUOTE_Salesforce_SYNTHETIC.md",
+      "bytes": 1011,
+      "sha256": "c5c45582de1cbb16e225af21164d0035935498a21b121db1f2805dd55c03c1ea"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-090-SECURITY-DPA_Salesforce_SYNTHETIC.md",
+      "bytes": 1051,
+      "sha256": "744bb7802513af740c24eaac7687de17c6709bf3e7eb1af7dbaffaad88835d75"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-090-SIDE-LETTER_Salesforce_SYNTHETIC.md",
+      "bytes": 1093,
+      "sha256": "cce9dd587e34303cc3d0331a4ad5d0e3ec734a59d66b112fd9215178993d6d26"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-090-SLA-SCHEDULE_Salesforce_SYNTHETIC.md",
+      "bytes": 1074,
+      "sha256": "a75580dfa47e3596efa4192d40f4f226ad9800b6f5c972651d1d001f051e9915"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-090-SOW-CORE_Salesforce_SYNTHETIC.md",
+      "bytes": 1152,
+      "sha256": "c178f016eb9898e6e461e32b9ee9e564c666167304f2c75580ee5ea2441a3e62"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-090-SOW-TRANSITION_Salesforce_SYNTHETIC.md",
+      "bytes": 1102,
+      "sha256": "d6a1b8d06502c75c7a79300be9d09eb7fdcf82c811f0938a8267258d64f5ba0f"
+    },
+    {
+      "path": "layer_1_client_intake/documents/DOC-CTR-090-SUPPORT-POLICY_Salesforce_SYNTHETIC.md",
+      "bytes": 1016,
+      "sha256": "438510c35bc4847475208c58370ad7e3cbb7d6c240c2227685dcc93eb3d0459b"
+    },
+    {
+      "path": "layer_1_client_intake/source_file_manifest.csv",
+      "bytes": 15211,
+      "sha256": "989dafb36180821dbcea046b674a345b3a6c13435c3855413842ff8311c55517"
+    },
+    {
+      "path": "layer_1_client_intake/source_package_manifest.json",
+      "bytes": 10971,
+      "sha256": "1b7a363fcfdaef77bc30ce7df262a67bc767b1cbce99cf246cc43aaca2a4a3df"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/ap_invoice_lines.csv",
+      "bytes": 46923,
+      "sha256": "786a8e9f048abbd1b259b6355a944c02209ad921c696de1e6159242e4619f274"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/approval_decisions.csv",
+      "bytes": 4031,
+      "sha256": "d8bf1d5470a630501bdcbc23df80f498c65d8c4d015212057084798850aae99f"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/calculation_inputs.csv",
+      "bytes": 14054,
+      "sha256": "d762ed82734c9e401a17899a9151fbc552eec4b14a89c128433c5cb8240935d9"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/calculation_outputs.csv",
+      "bytes": 4369,
+      "sha256": "7480e6e75b2e69cf5651313c3b4dbd6541774dfd825aca5046ff5c5dbb31c640"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/case_lifecycle_events.csv",
+      "bytes": 15894,
+      "sha256": "37ae7258e2620f15e2b16cd0c6abc19fdbcf9c1ec216c8e54a758a91c24232d5"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/cloud_billing_export.csv",
+      "bytes": 28352,
+      "sha256": "088b0659939976122c36784659f41e65b715d5d1b78dddb3f2b82140e5c41235"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/commercial_learning_patterns.csv",
+      "bytes": 12487,
+      "sha256": "6181f168e5a118dd16798fc3189bc802d18198072261ab72e0758346bcbd9c46"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/contract_document_inventory.csv",
+      "bytes": 16750,
+      "sha256": "e56f016974ec4a4cc7a79b1405fdbeb31e60237e98555146f7aedea5f484edc5"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/contract_evidence_applicability.csv",
+      "bytes": 11984,
+      "sha256": "f406dbe10911edcb47dc5c6f6d4c2edfeb09f1c269596f0baaa478433189f1ba"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/contract_pricing_schedule.csv",
+      "bytes": 7869,
+      "sha256": "f4ab765ab0f00488007e40e748505c36c89b32fd1c017a8901e5be4a650538c3"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/contract_register.csv",
+      "bytes": 1712,
+      "sha256": "67a686d4c5f0841bc13d8c72deb1d7d9f1808c401e5d9932c328ff181a62c1c2"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/document_clause_extractions.csv",
+      "bytes": 57724,
+      "sha256": "2647c15810b03a1f1b6877c8a53f6ef00a23115eb555faff7e31eab59ad20a53"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/evidence_entity_links.csv",
+      "bytes": 9283,
+      "sha256": "3ad851a8003565a7489910276e26a8561c8537e7742e65ae10421ca2fcf5cb9e"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/fact_assertions.csv",
+      "bytes": 5622,
+      "sha256": "4392c8b9e109a3276c6f989920196c2c4b64ccf36c75fcd81cb67b49b9f3efc2"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/fact_conflicts.csv",
+      "bytes": 2298,
+      "sha256": "175b59f8c99de69fae9402e968dfd7fd763a9a3b0e80db084612c2b043694c10"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/finance_realization_period.csv",
+      "bytes": 3582,
+      "sha256": "8e10988856186c60ae48a41038743adce824daf7ab9a7c723598b009b15c4b6a"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/new_event_controls_from_lessons.csv",
+      "bytes": 7332,
+      "sha256": "4452dd966977469b7ecba23d73c53d9f2192626ab94ff26ec5991383eafe7d2f"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/optimization_opportunities.csv",
+      "bytes": 3077,
+      "sha256": "cd456072422a62942c372722dc707e69bb39d61c4feb289ec8d7099596abb423"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/po_line_extract.csv",
+      "bytes": 5672,
+      "sha256": "a48a51a109b54ba523488c536c673789e90999c6b955a32de276dded1642f364"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/renewal_negotiation_history.csv",
+      "bytes": 14670,
+      "sha256": "bfd173343211f6c31c91544b8ded9ad2e040434f62ac41ba74606c947b3356e9"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/reviewer_decisions.csv",
+      "bytes": 6248,
+      "sha256": "aa2fd674c5a324a32622abfa763d6a062b1dce31cb065cd60a0607d5418e0f24"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/sla_event_extract.csv",
+      "bytes": 33299,
+      "sha256": "f5e2635299b18ea0740bfb50b7c23ae9e09f572f736db6bf0170df6a2f22333c"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/supplier_master.csv",
+      "bytes": 2649,
+      "sha256": "d057c358b0647a72dea21c5264dfa5c2e7bd42003e681f50e9a121cbb4ce4339"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/usage_entitlement_detail.csv",
+      "bytes": 123645,
+      "sha256": "bfae642f6d409392fdc0009723958590a3a24a9194f92499d110e201b53e1955"
+    },
+    {
+      "path": "layer_1_client_intake/source_system_extracts/vms_work_order_rate_card.csv",
+      "bytes": 17762,
+      "sha256": "80289a11d3097436112797393dd3bc3154f0c56b2c3c60ff169464b9d6b6c047"
+    },
+    {
+      "path": "layer_2_source_adapters/adapter_emitted_objects.csv",
+      "bytes": 270334,
+      "sha256": "3fe7158606db70ce43e661246f22978193ad7149c1c9b409703ff9872420f941"
+    },
+    {
+      "path": "layer_2_source_adapters/adapter_runs.csv",
+      "bytes": 5935,
+      "sha256": "ddd29468ac7221a132f6977a00601b267bf3ea57632b8d5484a6a37395fb6b5d"
+    },
+    {
+      "path": "layer_3_canonical/canonical_approval_decisions.csv",
+      "bytes": 5477,
+      "sha256": "d118220e1529824358c1ce1e773af50ae19dfba845f6845061c499a754651f85"
+    },
+    {
+      "path": "layer_3_canonical/canonical_calculation_inputs.csv",
+      "bytes": 21319,
+      "sha256": "14bed4658b3cbba9b52e4facb9e84037d70dd5676608c1e272a2fb15844f6e36"
+    },
+    {
+      "path": "layer_3_canonical/canonical_calculation_outputs.csv",
+      "bytes": 7073,
+      "sha256": "b82b2a43ad3c448fc87447d45d0a87d89727b5fab0c7bfc695c50ee6a91aa47a"
+    },
+    {
+      "path": "layer_3_canonical/canonical_case_lifecycle_events.csv",
+      "bytes": 21440,
+      "sha256": "8214c1eee79b545fe57ed77a3e3c411dc69803d536e4f685ccb451106d35b01c"
+    },
+    {
+      "path": "layer_3_canonical/canonical_clauses.csv",
+      "bytes": 72564,
+      "sha256": "a3bba745afc5a71b5b43f00f96620be67c3f57058376e994c0df1adb6e6f90a0"
+    },
+    {
+      "path": "layer_3_canonical/canonical_cloud_billing_lines.csv",
+      "bytes": 36330,
+      "sha256": "5b7f9d055c8052cafa81e7275c58006a4b520c50cafd0048852053985f4002db"
+    },
+    {
+      "path": "layer_3_canonical/canonical_commercial_learning_patterns.csv",
+      "bytes": 14853,
+      "sha256": "6eb3a638e7ab520f38a5a435fc9a002ce79a50a38e97ee39240ed501dd8e98df"
+    },
+    {
+      "path": "layer_3_canonical/canonical_contracts.csv",
+      "bytes": 1934,
+      "sha256": "9e98df260ea31025d33bbedab88fcfd7e56920dc5084e697ab4c43f504fb917c"
+    },
+    {
+      "path": "layer_3_canonical/canonical_documents.csv",
+      "bytes": 20528,
+      "sha256": "59cc82d981965d5a77f24355faaecab0532db53f7637af7c712929a8b49846ec"
+    },
+    {
+      "path": "layer_3_canonical/canonical_evidence_applicability.csv",
+      "bytes": 18750,
+      "sha256": "ecdf6ba51f57f9ccc77e0c235fd63e94a2ae53dc0c6e6ad94e4a3e0b9d005c63"
+    },
+    {
+      "path": "layer_3_canonical/canonical_evidence_links.csv",
+      "bytes": 12232,
+      "sha256": "6c412c3a79f606b890de5b5bc954fe13d0ccca354e9fb4edfe613c434c40eb47"
+    },
+    {
+      "path": "layer_3_canonical/canonical_fact_assertions.csv",
+      "bytes": 7660,
+      "sha256": "9d815e520e383333250329343799814323e6177c9b2acc4bf3492f834c9cab88"
+    },
+    {
+      "path": "layer_3_canonical/canonical_fact_conflicts.csv",
+      "bytes": 3008,
+      "sha256": "58ac794380bc66cf9784219c15d001a0a95bce8e90ecbd4d38a130d60fb8707d"
+    },
+    {
+      "path": "layer_3_canonical/canonical_finance_periods.csv",
+      "bytes": 4664,
+      "sha256": "1443e41d75116a28f90a6727150ebb0515994e23ec76a5ea079522295f767255"
+    },
+    {
+      "path": "layer_3_canonical/canonical_invoice_lines.csv",
+      "bytes": 55909,
+      "sha256": "9c6f7f7f47b8a312e93d4a2c58e441078e8bf314c5c4616bc31925b236d5bfef"
+    },
+    {
+      "path": "layer_3_canonical/canonical_new_event_controls.csv",
+      "bytes": 9490,
+      "sha256": "147ad402b7959193a97eef6aae114326c033fd5af9ab0196000afbe73ff8b216"
+    },
+    {
+      "path": "layer_3_canonical/canonical_opportunities.csv",
+      "bytes": 3977,
+      "sha256": "493a67598ab4755d0ecbc38a3bb9fbdc4d9140da84c411bb829efcec996ced37"
+    },
+    {
+      "path": "layer_3_canonical/canonical_pricing_lines.csv",
+      "bytes": 9631,
+      "sha256": "3eee767a70a2d2722f5351086bb9d9f98ca375e4271d92fb8f92ad507bbd8c98"
+    },
+    {
+      "path": "layer_3_canonical/canonical_purchase_order_lines.csv",
+      "bytes": 7314,
+      "sha256": "9b7a8a1391882184cf11bf0886d56956b93ab9cd9abf41ace0a5becec6eb031a"
+    },
+    {
+      "path": "layer_3_canonical/canonical_renewal_negotiations.csv",
+      "bytes": 19104,
+      "sha256": "4a210def0996c98b0ec18101b39336eec78587792d13b9727d115c28729ec063"
+    },
+    {
+      "path": "layer_3_canonical/canonical_reviewer_decisions.csv",
+      "bytes": 8828,
+      "sha256": "182b56ebbf8621766106a055df44db071f642ae5b4684cda19443252d443b35a"
+    },
+    {
+      "path": "layer_3_canonical/canonical_sla_events.csv",
+      "bytes": 39981,
+      "sha256": "9b0e55a3f53fe0e01544127f546f09c7234e00b41b4e948fd33b28dfddd208ec"
+    },
+    {
+      "path": "layer_3_canonical/canonical_usage_entitlements.csv",
+      "bytes": 162509,
+      "sha256": "86a5f7147923f91640a223d9bc23511f8255cc09f8b30001ce8a927d9ba93e80"
+    },
+    {
+      "path": "layer_3_canonical/canonical_vendors_suppliers.csv",
+      "bytes": 3319,
+      "sha256": "899265ed5e5d5c8696a7e93a91253ce4c5348cb774b3f3cc42a0369f09c614c1"
+    },
+    {
+      "path": "layer_3_canonical/canonical_vms_rate_card_lines.csv",
+      "bytes": 22812,
+      "sha256": "d159fcab752c7e504deb1505b53894fb738e7d37b87a3ddf6619c59ca10ec755"
+    },
+    {
+      "path": "layer_4_read_models/source_contract_360_read_model.csv",
+      "bytes": 1025,
+      "sha256": "d6479ff019ecfcacab58a82a750fdf1dfa3543dc2e0825645f6c49afa6c788b3"
+    },
+    {
+      "path": "layer_4_read_models/source_contract_portfolio.csv",
+      "bytes": 837,
+      "sha256": "6f824c8ec02cdecbfca4f511c8ca61d445c97c79061c717d5769aafcecf79df7"
+    },
+    {
+      "path": "layer_4_read_models/source_evidence_gate_read_model.csv",
+      "bytes": 11556,
+      "sha256": "6c5f5e6b29d2dde65b0485be1d71bfa36bdc7e6839d7195b93a17218740b0df4"
+    },
+    {
+      "path": "layer_4_read_models/source_new_event_learning_read_model.csv",
+      "bytes": 7349,
+      "sha256": "28a6559705e789848f4708a7d292bb9ea8071b61ffc1f92cda3d3d868c6afd41"
+    },
+    {
+      "path": "layer_4_read_models/source_opportunity_read_model.csv",
+      "bytes": 3086,
+      "sha256": "bacfecb4e4cf5ee704e5aa8bd82f58b45a0236d69bbcbc9572ff1eacf9300732"
+    },
+    {
+      "path": "layer_4_read_models/tower_value_read_model.csv",
+      "bytes": 476,
+      "sha256": "642b0fb6ab9ab8f6fb4404b38c85ae9ade9bdfa99e675dd307c08a92a26535ee"
+    },
+    {
+      "path": "validation/validation_results.csv",
+      "bytes": 13082,
+      "sha256": "a82a0ed6b7b72c19ca3b4e3f056cd763dfee54dd8540fe17473639bbec261dd1"
+    },
+    {
+      "path": "validation/validation_results.json",
+      "bytes": 21461,
+      "sha256": "3feb0705c07cd9d8d909a2c8856c321b21ff4b33d5be360fce14ea82b3687ac1"
+    }
+  ]
+}

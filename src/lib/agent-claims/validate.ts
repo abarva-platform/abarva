@@ -188,7 +188,12 @@ const COMMON_NAME_WORDS = new Set([
 
 const TENANT_LEAKAGE_ALIASES: Record<string, string[]> = {
   "first-capital": ["First Capital Financial", "First Capital", "FS Demo"],
-  skyharbor_global: ["SkyHarbor Air", "SkyHarbor Airlines", "SkyHarbor"],
+  "skyharbor-air": [
+    "SkyHarbor Air",
+    "SkyHarbor Airlines",
+    "SkyHarbor",
+    "skyharbor_global",
+  ],
 };
 
 /** Detect references to OTHER canonical tenants in the answer. */

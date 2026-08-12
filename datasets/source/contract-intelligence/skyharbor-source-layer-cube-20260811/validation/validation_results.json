@@ -1,0 +1,609 @@
+{
+  "status": "pass",
+  "warning": "SYNTHETIC DEMO DATA - NOT CLIENT DATA - OFFLINE LAYER/CUBE PROOF ONLY",
+  "input_package": "/Users/anand/Projects/nexus/reports/source-golden-contract-production-reconciled-v2-20260811",
+  "output_package": "/Users/anand/Projects/nexus/reports/skyharbor-source-layer-cube-proof-20260811",
+  "checks": [
+    {
+      "check": "manifest_sha:source_system_extracts/contract_register.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/contract_register.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/contract_register.csv",
+      "status": "pass",
+      "detail": "expected=2 actual=2"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/supplier_master.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/supplier_master.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/supplier_master.csv",
+      "status": "pass",
+      "detail": "expected=6 actual=6"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/contract_document_inventory.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/contract_document_inventory.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/contract_document_inventory.csv",
+      "status": "pass",
+      "detail": "expected=30 actual=30"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/document_clause_extractions.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/document_clause_extractions.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/document_clause_extractions.csv",
+      "status": "pass",
+      "detail": "expected=120 actual=120"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/contract_pricing_schedule.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/contract_pricing_schedule.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/contract_pricing_schedule.csv",
+      "status": "pass",
+      "detail": "expected=16 actual=16"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/ap_invoice_lines.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/ap_invoice_lines.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/ap_invoice_lines.csv",
+      "status": "pass",
+      "detail": "expected=96 actual=96"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/po_line_extract.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/po_line_extract.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/po_line_extract.csv",
+      "status": "pass",
+      "detail": "expected=16 actual=16"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/sla_event_extract.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/sla_event_extract.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/sla_event_extract.csv",
+      "status": "pass",
+      "detail": "expected=72 actual=72"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/usage_entitlement_detail.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/usage_entitlement_detail.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/usage_entitlement_detail.csv",
+      "status": "pass",
+      "detail": "expected=288 actual=288"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/cloud_billing_export.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/cloud_billing_export.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/cloud_billing_export.csv",
+      "status": "pass",
+      "detail": "expected=72 actual=72"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/vms_work_order_rate_card.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/vms_work_order_rate_card.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/vms_work_order_rate_card.csv",
+      "status": "pass",
+      "detail": "expected=48 actual=48"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/renewal_negotiation_history.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/renewal_negotiation_history.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/renewal_negotiation_history.csv",
+      "status": "pass",
+      "detail": "expected=32 actual=32"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/finance_realization_period.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/finance_realization_period.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/finance_realization_period.csv",
+      "status": "pass",
+      "detail": "expected=8 actual=8"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/contract_evidence_applicability.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/contract_evidence_applicability.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/contract_evidence_applicability.csv",
+      "status": "pass",
+      "detail": "expected=46 actual=46"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/optimization_opportunities.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/optimization_opportunities.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/optimization_opportunities.csv",
+      "status": "pass",
+      "detail": "expected=8 actual=8"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/calculation_inputs.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/calculation_inputs.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/calculation_inputs.csv",
+      "status": "pass",
+      "detail": "expected=64 actual=64"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/calculation_outputs.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/calculation_outputs.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/calculation_outputs.csv",
+      "status": "pass",
+      "detail": "expected=24 actual=24"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/case_lifecycle_events.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/case_lifecycle_events.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/case_lifecycle_events.csv",
+      "status": "pass",
+      "detail": "expected=48 actual=48"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/approval_decisions.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/approval_decisions.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/approval_decisions.csv",
+      "status": "pass",
+      "detail": "expected=12 actual=12"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/commercial_learning_patterns.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/commercial_learning_patterns.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/commercial_learning_patterns.csv",
+      "status": "pass",
+      "detail": "expected=16 actual=16"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/new_event_controls_from_lessons.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/new_event_controls_from_lessons.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/new_event_controls_from_lessons.csv",
+      "status": "pass",
+      "detail": "expected=16 actual=16"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/evidence_entity_links.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/evidence_entity_links.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/evidence_entity_links.csv",
+      "status": "pass",
+      "detail": "expected=27 actual=27"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/fact_assertions.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/fact_assertions.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/fact_assertions.csv",
+      "status": "pass",
+      "detail": "expected=20 actual=20"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/fact_conflicts.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/fact_conflicts.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/fact_conflicts.csv",
+      "status": "pass",
+      "detail": "expected=7 actual=7"
+    },
+    {
+      "check": "manifest_sha:source_system_extracts/reviewer_decisions.csv",
+      "status": "pass",
+      "detail": "source_system_extracts/reviewer_decisions.csv"
+    },
+    {
+      "check": "manifest_rows:source_system_extracts/reviewer_decisions.csv",
+      "status": "pass",
+      "detail": "expected=23 actual=23"
+    },
+    {
+      "check": "manifest_sha:review/depth_review.csv",
+      "status": "pass",
+      "detail": "review/depth_review.csv"
+    },
+    {
+      "check": "manifest_rows:review/depth_review.csv",
+      "status": "pass",
+      "detail": "expected=48 actual=48"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-090-MSA_Salesforce_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-MSA_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-090-SOW-CORE_Salesforce_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-SOW-CORE_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-090-SOW-TRANSITION_Salesforce_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-SOW-TRANSITION_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-090-ORDER-BASE_Salesforce_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-ORDER-BASE_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-090-ORDER-TRUEUP_Salesforce_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-ORDER-TRUEUP_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-090-AMEND-001_Salesforce_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-AMEND-001_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-090-AMEND-002_Salesforce_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-AMEND-002_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-090-PRICING-EXHIBIT_Salesforce_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-PRICING-EXHIBIT_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-090-SLA-SCHEDULE_Salesforce_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-SLA-SCHEDULE_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-090-SUPPORT-POLICY_Salesforce_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-SUPPORT-POLICY_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-090-SECURITY-DPA_Salesforce_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-SECURITY-DPA_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-090-NOTICE-RENEWAL_Salesforce_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-NOTICE-RENEWAL_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-090-RENEWAL-QUOTE_Salesforce_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-RENEWAL-QUOTE_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-090-SIDE-LETTER_Salesforce_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-SIDE-LETTER_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-090-EXIT-PLAN_Salesforce_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-EXIT-PLAN_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-061-MSA_Microsoft_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-MSA_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-061-SOW-CORE_Microsoft_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-SOW-CORE_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-061-SOW-TRANSITION_Microsoft_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-SOW-TRANSITION_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-061-ORDER-BASE_Microsoft_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-ORDER-BASE_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-061-ORDER-TRUEUP_Microsoft_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-ORDER-TRUEUP_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-061-AMEND-001_Microsoft_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-AMEND-001_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-061-AMEND-002_Microsoft_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-AMEND-002_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-061-PRICING-EXHIBIT_Microsoft_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-PRICING-EXHIBIT_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-061-SLA-SCHEDULE_Microsoft_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-SLA-SCHEDULE_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-061-SUPPORT-POLICY_Microsoft_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-SUPPORT-POLICY_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-061-SECURITY-DPA_Microsoft_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-SECURITY-DPA_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-061-NOTICE-RENEWAL_Microsoft_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-NOTICE-RENEWAL_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-061-RENEWAL-QUOTE_Microsoft_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-RENEWAL-QUOTE_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-061-SIDE-LETTER_Microsoft_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-SIDE-LETTER_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "manifest_sha:documents/DOC-CTR-061-EXIT-PLAN_Microsoft_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-EXIT-PLAN_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-090-MSA",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-MSA_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-090-SOW-CORE",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-SOW-CORE_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-090-SOW-TRANSITION",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-SOW-TRANSITION_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-090-ORDER-BASE",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-ORDER-BASE_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-090-ORDER-TRUEUP",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-ORDER-TRUEUP_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-090-AMEND-001",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-AMEND-001_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-090-AMEND-002",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-AMEND-002_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-090-PRICING-EXHIBIT",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-PRICING-EXHIBIT_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-090-SLA-SCHEDULE",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-SLA-SCHEDULE_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-090-SUPPORT-POLICY",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-SUPPORT-POLICY_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-090-SECURITY-DPA",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-SECURITY-DPA_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-090-NOTICE-RENEWAL",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-NOTICE-RENEWAL_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-090-RENEWAL-QUOTE",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-RENEWAL-QUOTE_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-090-SIDE-LETTER",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-SIDE-LETTER_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-090-EXIT-PLAN",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-090-EXIT-PLAN_Salesforce_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-061-MSA",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-MSA_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-061-SOW-CORE",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-SOW-CORE_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-061-SOW-TRANSITION",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-SOW-TRANSITION_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-061-ORDER-BASE",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-ORDER-BASE_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-061-ORDER-TRUEUP",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-ORDER-TRUEUP_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-061-AMEND-001",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-AMEND-001_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-061-AMEND-002",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-AMEND-002_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-061-PRICING-EXHIBIT",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-PRICING-EXHIBIT_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-061-SLA-SCHEDULE",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-SLA-SCHEDULE_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-061-SUPPORT-POLICY",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-SUPPORT-POLICY_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-061-SECURITY-DPA",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-SECURITY-DPA_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-061-NOTICE-RENEWAL",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-NOTICE-RENEWAL_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-061-RENEWAL-QUOTE",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-RENEWAL-QUOTE_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-061-SIDE-LETTER",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-SIDE-LETTER_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "document_inventory_sha:DOC-CTR-061-EXIT-PLAN",
+      "status": "pass",
+      "detail": "documents/DOC-CTR-061-EXIT-PLAN_Microsoft_SYNTHETIC.md"
+    },
+    {
+      "check": "evidence_links_resolve",
+      "status": "pass",
+      "detail": "bad_links=0"
+    },
+    {
+      "check": "fact_assertions_resolve_to_links",
+      "status": "pass",
+      "detail": "bad_facts=0"
+    },
+    {
+      "check": "calculation_inputs_native_sources",
+      "status": "pass",
+      "detail": "bad_calc_inputs=0"
+    },
+    {
+      "check": "temporal_consistency",
+      "status": "pass",
+      "detail": "future_dates=0"
+    },
+    {
+      "check": "ctr_090_action_ready",
+      "status": "pass",
+      "detail": "ready"
+    },
+    {
+      "check": "ctr_061_conflict_control",
+      "status": "pass",
+      "detail": "blocked_by_governed_conflict"
+    },
+    {
+      "check": "cube_rows_present",
+      "status": "pass",
+      "detail": "rows=362"
+    },
+    {
+      "check": "cube_gate_rows_present",
+      "status": "pass",
+      "detail": "rows=2"
+    }
+  ],
+  "errors": []
+}

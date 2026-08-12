@@ -1,0 +1,11 @@
+measure_name,additive,owner
+invoice_net_amount_usd,yes,finance_ops_ap
+ap_exception_amount_usd,yes,finance_ops_ap
+service_credits_earned_usd,yes,service_management
+service_credits_claimed_usd,yes,service_management
+active_quantity,yes_by_period_sku,platform_admin
+inactive_quantity,yes_by_period_sku,platform_admin
+vms_variance_usd,yes,vms_owner
+finance_confirmed_value_usd,yes_by_period,fpna
+forecast_value_usd,yes_by_period,fpna
+current_valuation_base_usd,yes_with_gate_flags,source_optimizer

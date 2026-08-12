@@ -27,6 +27,7 @@ import {
   type ContractOptimizationOpportunity,
   type ContractOptimizationOpportunitySet,
   type FinanceRealizationLink,
+  type OptimizationBaselineRead,
   type OptimizationEvidenceGrade,
   type OptimizationOpportunityStage,
   type OptimizationOpportunityValueType,
@@ -61,6 +62,10 @@ function isMeridianTenantKey(tenantKey: string): boolean {
     tenantKey.trim().toLowerCase() === "meridian_health_global"
   );
 }
+
+const MERIDIAN_VENDOR360_TENANT_KEY = "meridian_health_global";
+const MERIDIAN_VENDOR360_DATASET_ID =
+  "meridian-source-5-contract-vendor360-20260811";
 
 /**
  * Resolve tenant aliases through the shared tenant service. Source data-model
@@ -114,6 +119,17 @@ async function meridianCanaryRows<R>(
   });
 }
 
+async function meridianVendor360CandidateRows<R>(
+  sql: string,
+  params: readonly unknown[] = [],
+): Promise<R[]> {
+  return azureRead.query<R>(
+    sql,
+    [MERIDIAN_VENDOR360_TENANT_KEY, MERIDIAN_VENDOR360_DATASET_ID, ...params],
+    { missingTable: "empty" },
+  );
+}
+
 async function withMeridianFallback<R>(
   tenantKey: string,
   legacyRead: () => Promise<R[]>,
@@ -128,6 +144,10 @@ async function withMeridianFallback<R>(
 export async function listContractVendor360(
   tenantKey: string,
 ): Promise<SourceContractVendor360Row[]> {
+  if (isMeridianTenantKey(tenantKey)) {
+    const candidate = await listMeridianVendor360CandidateContracts();
+    if (candidate.length > 0) return candidate;
+  }
   return queryForTenant<SourceContractVendor360Row>(
     tenantKey,
     "SELECT * FROM source.contract_vendor_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
@@ -137,6 +157,10 @@ export async function listContractVendor360(
 export async function listContract360(
   tenantKey: string,
 ): Promise<SourceContract360Row[]> {
+  if (isMeridianTenantKey(tenantKey)) {
+    const candidate = await listMeridianVendor360CandidateContracts();
+    if (candidate.length > 0) return candidate;
+  }
   return withMeridianFallback(
     tenantKey,
     () =>
@@ -224,6 +248,50 @@ export async function listContract360(
   );
 }
 
+function listMeridianVendor360CandidateContracts(): Promise<
+  SourceContract360Row[]
+> {
+  return meridianVendor360CandidateRows<SourceContract360Row>(
+    `SELECT
+       tenant_key,
+       contract_id,
+       vendor_ref,
+       vendor_name,
+       vendor_category,
+       contract_name,
+       scope_summary,
+       annual_value,
+       total_committed_value,
+       committed_annual_spend,
+       actual_annual_spend,
+       end_date,
+       notice_period_days,
+       auto_renew,
+       renewal_decision_state,
+       renewal_owner_ref,
+       benchmarking_clause,
+       exit_rights_summary,
+       alternatives_available,
+       concentration_note,
+       source_confidence,
+       resolved_annual_value,
+       annual_value_conflict_flag,
+       resolved_total_committed_value,
+       total_committed_value_conflict_flag,
+       scoped_application_count,
+       critical_application_count,
+       linked_budget_amount,
+       linked_actual_amount,
+       linked_budget_lines,
+       cloud_sev1_sev2_incidents,
+       operational_evidence_gap,
+       initiative_dependency_count
+      FROM source.meridian_vendor360_contract
+     WHERE tenant_key = $1 AND dataset_id = $2
+     ORDER BY annual_value DESC NULLS LAST`,
+  );
+}
+
 export async function getContract360(
   tenantKey: string,
   contractId: string,
@@ -244,6 +312,27 @@ export async function getContract360(
 export async function listVendorContractPortfolio(
   tenantKey: string,
 ): Promise<SourceVendorContractPortfolioRow[]> {
+  if (isMeridianTenantKey(tenantKey)) {
+    const candidate =
+      await meridianVendor360CandidateRows<SourceVendorContractPortfolioRow>(
+        `SELECT
+           tenant_key,
+           vendor_ref,
+           vendor_name,
+           vendor_category,
+           count(*)::int AS contract_count,
+           sum(annual_value)::numeric AS annual_value,
+           sum(total_committed_value)::numeric AS total_committed_value,
+           count(*) FILTER (WHERE auto_renew)::int AS auto_renew_contracts,
+           min(end_date) AS next_end_date,
+           array_agg(contract_id ORDER BY annual_value DESC NULLS LAST) AS contract_refs
+          FROM source.meridian_vendor360_contract
+         WHERE tenant_key = $1 AND dataset_id = $2
+         GROUP BY tenant_key, vendor_ref, vendor_name, vendor_category
+         ORDER BY annual_value DESC NULLS LAST`,
+      );
+    if (candidate.length > 0) return candidate;
+  }
   return withMeridianFallback(
     tenantKey,
     () =>
@@ -279,6 +368,35 @@ export async function listContractApplicationScope(
   tenantKey: string,
   contractId?: string,
 ): Promise<SourceContractApplicationScopeRow[]> {
+  if (isMeridianTenantKey(tenantKey)) {
+    const filter = contractId ? "AND contract_id = $3" : "";
+    const candidate =
+      await meridianVendor360CandidateRows<SourceContractApplicationScopeRow>(
+        `SELECT
+           tenant_key,
+           contract_id,
+           vendor_ref,
+           vendor_name,
+           application_ref,
+           application_name,
+           business_function,
+           function_ref,
+           criticality,
+           lifecycle_state,
+           hosting_model,
+           annual_run_cost,
+           modernization_plan,
+           sla_tier,
+           known_pain_risk,
+           it_portfolio_ref
+          FROM source.meridian_vendor360_application_scope
+         WHERE tenant_key = $1 AND dataset_id = $2
+           ${filter}
+         ORDER BY relationship_confidence DESC NULLS LAST, application_name`,
+        contractId ? [contractId] : [],
+      );
+    if (candidate.length > 0) return candidate;
+  }
   if (contractId) {
     return withMeridianFallback(
       tenantKey,
@@ -341,6 +459,28 @@ function listMeridianCanaryContractApplicationScope(
 export async function listContractFinancialExposure(
   tenantKey: string,
 ): Promise<SourceContractFinancialExposureRow[]> {
+  if (isMeridianTenantKey(tenantKey)) {
+    const candidate =
+      await meridianVendor360CandidateRows<SourceContractFinancialExposureRow>(
+        `SELECT
+           tenant_key,
+           contract_id,
+           vendor_ref,
+           vendor_name,
+           contracted_annual_value,
+           total_committed_value,
+           committed_annual_spend,
+           actual_annual_spend,
+           linked_budget_amount,
+           linked_forecast_amount,
+           linked_actual_amount,
+           linked_committed_amount,
+           linked_budget_lines
+          FROM source.meridian_vendor360_financial_exposure
+         WHERE tenant_key = $1 AND dataset_id = $2`,
+      );
+    if (candidate.length > 0) return candidate;
+  }
   return queryForTenant<SourceContractFinancialExposureRow>(
     tenantKey,
     "SELECT * FROM source.contract_financial_exposure WHERE tenant_key = ANY($1::text[])",
@@ -350,6 +490,27 @@ export async function listContractFinancialExposure(
 export async function listContractOperationalPerformance(
   tenantKey: string,
 ): Promise<SourceContractOperationalPerformanceRow[]> {
+  if (isMeridianTenantKey(tenantKey)) {
+    const candidate =
+      await meridianVendor360CandidateRows<SourceContractOperationalPerformanceRow>(
+        `SELECT
+           tenant_key,
+           contract_id,
+           vendor_ref,
+           vendor_name,
+           sla_summary,
+           scoped_application_count,
+           critical_application_count,
+           cloud_sev1_sev2_incidents,
+           avg_cloud_change_failure_rate,
+           service_credits_earned,
+           service_credits_claimed,
+           evidence_gap
+          FROM source.meridian_vendor360_operational_performance
+         WHERE tenant_key = $1 AND dataset_id = $2`,
+      );
+    if (candidate.length > 0) return candidate;
+  }
   return queryForTenant<SourceContractOperationalPerformanceRow>(
     tenantKey,
     "SELECT * FROM source.contract_operational_performance WHERE tenant_key = ANY($1::text[])",
@@ -697,66 +858,109 @@ async function getPersistedContractOptimizationOpportunitySet(
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
-         FROM source.opportunity_evidence
-        WHERE tenant_key = ANY($1::text[])
-          AND dataset_version = $2
-        ORDER BY opportunity_id, source_table, source_record_id`,
-      [datasetVersion],
+      `SELECT evidence.*
+         FROM source.opportunity_evidence evidence
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = evidence.tenant_key
+          AND opportunity.dataset_version = evidence.dataset_version
+          AND opportunity.opportunity_id = evidence.opportunity_id
+        WHERE evidence.tenant_key = ANY($1::text[])
+          AND evidence.dataset_version = $2
+          AND opportunity.contract_id = $3
+        ORDER BY evidence.opportunity_id, evidence.source_table, evidence.source_record_id`,
+      [datasetVersion, contractId],
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
-         FROM source.calculation_run
-        WHERE tenant_key = ANY($1::text[])
-          AND dataset_version = $2
-        ORDER BY opportunity_id, calculation_run_id`,
-      [datasetVersion],
+      `SELECT run.*
+         FROM source.calculation_run run
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = run.tenant_key
+          AND opportunity.dataset_version = run.dataset_version
+          AND opportunity.opportunity_id = run.opportunity_id
+        WHERE run.tenant_key = ANY($1::text[])
+          AND run.dataset_version = $2
+          AND opportunity.contract_id = $3
+        ORDER BY run.opportunity_id, run.calculation_run_id`,
+      [datasetVersion, contractId],
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
-         FROM source.calculation_input
-        WHERE tenant_key = ANY($1::text[])
-          AND dataset_version = $2
-        ORDER BY calculation_run_id, input_key`,
-      [datasetVersion],
+      `SELECT input.*
+         FROM source.calculation_input input
+         JOIN source.calculation_run run
+           ON run.tenant_key = input.tenant_key
+          AND run.dataset_version = input.dataset_version
+          AND run.calculation_run_id = input.calculation_run_id
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = run.tenant_key
+          AND opportunity.dataset_version = run.dataset_version
+          AND opportunity.opportunity_id = run.opportunity_id
+        WHERE input.tenant_key = ANY($1::text[])
+          AND input.dataset_version = $2
+          AND opportunity.contract_id = $3
+        ORDER BY input.calculation_run_id, input.input_key`,
+      [datasetVersion, contractId],
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
-         FROM source.calculation_output
-        WHERE tenant_key = ANY($1::text[])
-          AND dataset_version = $2
-        ORDER BY calculation_run_id, output_key`,
-      [datasetVersion],
+      `SELECT output.*
+         FROM source.calculation_output output
+         JOIN source.calculation_run run
+           ON run.tenant_key = output.tenant_key
+          AND run.dataset_version = output.dataset_version
+          AND run.calculation_run_id = output.calculation_run_id
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = run.tenant_key
+          AND opportunity.dataset_version = run.dataset_version
+          AND opportunity.opportunity_id = run.opportunity_id
+        WHERE output.tenant_key = ANY($1::text[])
+          AND output.dataset_version = $2
+          AND opportunity.contract_id = $3
+        ORDER BY output.calculation_run_id, output.output_key`,
+      [datasetVersion, contractId],
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
-         FROM source.opportunity_valuation
-        WHERE tenant_key = ANY($1::text[])
-          AND dataset_version = $2
-        ORDER BY opportunity_id, created_at DESC NULLS LAST`,
-      [datasetVersion],
+      `SELECT valuation.*
+         FROM source.opportunity_valuation valuation
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = valuation.tenant_key
+          AND opportunity.dataset_version = valuation.dataset_version
+          AND opportunity.opportunity_id = valuation.opportunity_id
+        WHERE valuation.tenant_key = ANY($1::text[])
+          AND valuation.dataset_version = $2
+          AND opportunity.contract_id = $3
+        ORDER BY valuation.opportunity_id, valuation.created_at DESC NULLS LAST`,
+      [datasetVersion, contractId],
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
-         FROM source.opportunity_requirement_status
-        WHERE tenant_key = ANY($1::text[])
-          AND dataset_version = $2
-        ORDER BY opportunity_id, requirement_id`,
-      [datasetVersion],
+      `SELECT requirement.*
+         FROM source.opportunity_requirement_status requirement
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = requirement.tenant_key
+          AND opportunity.dataset_version = requirement.dataset_version
+          AND opportunity.opportunity_id = requirement.opportunity_id
+        WHERE requirement.tenant_key = ANY($1::text[])
+          AND requirement.dataset_version = $2
+          AND opportunity.contract_id = $3
+        ORDER BY requirement.opportunity_id, requirement.requirement_id`,
+      [datasetVersion, contractId],
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
-         FROM source.finance_realization
-        WHERE tenant_key = ANY($1::text[])
-          AND dataset_version = $2
-        ORDER BY confirmation_date DESC NULLS LAST, realization_id`,
-      [datasetVersion],
+      `SELECT realization.*
+         FROM source.finance_realization realization
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = realization.tenant_key
+          AND opportunity.dataset_version = realization.dataset_version
+          AND opportunity.opportunity_id = realization.opportunity_id
+        WHERE realization.tenant_key = ANY($1::text[])
+          AND realization.dataset_version = $2
+          AND opportunity.contract_id = $3
+        ORDER BY realization.confirmation_date DESC NULLS LAST, realization.realization_id`,
+      [datasetVersion, contractId],
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
@@ -766,10 +970,15 @@ async function getPersistedContractOptimizationOpportunitySet(
            ON realization.tenant_key = evidence.tenant_key
           AND realization.dataset_version = evidence.dataset_version
           AND realization.realization_id = evidence.realization_id
+         JOIN source.optimization_opportunity opportunity
+           ON opportunity.tenant_key = realization.tenant_key
+          AND opportunity.dataset_version = realization.dataset_version
+          AND opportunity.opportunity_id = realization.opportunity_id
         WHERE evidence.tenant_key = ANY($1::text[])
           AND evidence.dataset_version = $2
+          AND opportunity.contract_id = $3
         ORDER BY evidence.realization_id, evidence.source_table, evidence.source_record_id`,
-      [datasetVersion],
+      [datasetVersion, contractId],
     ),
   ]);
 
@@ -866,6 +1075,7 @@ async function getPersistedContractOptimizationOpportunitySet(
     opportunities[0]?.opportunityId ??
     null;
   const blockingRequirements = requirementRows
+    .filter((row) => opportunityIds.has(textValue(row.opportunity_id) ?? ""))
     .filter((row) => textValue(row.status) !== "met")
     .map((row) => textValue(row.status_detail))
     .filter((value): value is string => Boolean(value));
@@ -893,29 +1103,7 @@ async function getPersistedContractOptimizationOpportunitySet(
       : selectedOpportunityId
         ? "review_calculation"
         : "request_evidence",
-    baseline: {
-      status:
-        (textValue(baselineRow.baseline_state) as
-          | "ready"
-          | "conflict"
-          | "missing") ?? "missing",
-      headline:
-        textValue(jsonObject(baselineRow.payload).headline) ??
-        "Commercial baseline loaded.",
-      detail:
-        textValue(baselineRow.detail) ??
-        "Commercial baseline detail is not available.",
-      annualValueUsd: numberValue(baselineRow.annual_value_usd),
-      pricingScheduleAnnualValueUsd: numberValue(
-        baselineRow.pricing_schedule_annual_value_usd,
-      ),
-      actualAnnualSpendUsd: numberValue(baselineRow.actual_annual_spend_usd),
-      totalCommittedValueUsd: numberValue(
-        baselineRow.total_committed_value_usd,
-      ),
-      conflictAmountUsd: numberValue(baselineRow.conflict_amount_usd),
-      sourceRefs: jsonArray(baselineRow.source_refs),
-    },
+    baseline: persistedBaselineRead(baselineRow, contract),
     selectedOpportunityId,
     opportunities,
     financeRealizations,
@@ -924,6 +1112,58 @@ async function getPersistedContractOptimizationOpportunitySet(
     potentialAvoidableUsd,
     potentialNegotiableUsd,
     financeConfirmedUsd,
+  };
+}
+
+function persistedBaselineRead(
+  baselineRow: NumericRow,
+  contract: SourceContract360Row | null,
+): OptimizationBaselineRead {
+  const hasPersistedBaseline = Object.keys(baselineRow).length > 0;
+  const annualValueUsd =
+    numberValue(baselineRow.annual_value_usd) ??
+    numberValue(contract?.resolved_annual_value) ??
+    numberValue(contract?.annual_value);
+  const actualAnnualSpendUsd =
+    numberValue(baselineRow.actual_annual_spend_usd) ??
+    numberValue(contract?.actual_annual_spend);
+  const totalCommittedValueUsd =
+    numberValue(baselineRow.total_committed_value_usd) ??
+    numberValue(contract?.resolved_total_committed_value) ??
+    numberValue(contract?.total_committed_value);
+  const status =
+    readLiteral(baselineRow.baseline_state, ["ready", "conflict", "missing"]) ??
+    "missing";
+  const headline =
+    textValue(jsonObject(baselineRow.payload).headline) ??
+    (hasPersistedBaseline
+      ? "Commercial baseline is incomplete."
+      : "Commercial baseline needs pricing schedule tie-out.");
+  const detail =
+    textValue(baselineRow.detail) ??
+    (hasPersistedBaseline
+      ? "Contract register values are available, but baseline detail still needs review before approving a value case."
+      : "Contract register values are loaded from Contract 360; pricing schedule rows are still pending, so value approval remains blocked.");
+
+  return {
+    status,
+    headline,
+    detail,
+    annualValueUsd,
+    pricingScheduleAnnualValueUsd: numberValue(
+      baselineRow.pricing_schedule_annual_value_usd,
+    ),
+    actualAnnualSpendUsd,
+    totalCommittedValueUsd,
+    conflictAmountUsd: numberValue(baselineRow.conflict_amount_usd),
+    sourceRefs:
+      jsonArray(baselineRow.source_refs).length > 0
+        ? jsonArray(baselineRow.source_refs)
+        : [
+            "source.contract_360.annual_value",
+            "source.contract_360.actual_annual_spend",
+            "source.contract_360.total_committed_value",
+          ],
   };
 }
 
@@ -1288,6 +1528,31 @@ export async function listContractInitiativeDependency(
   tenantKey: string,
   contractId?: string,
 ): Promise<SourceContractInitiativeDependencyRow[]> {
+  if (isMeridianTenantKey(tenantKey)) {
+    const filter = contractId ? "AND contract_id = $3" : "";
+    const candidate =
+      await meridianVendor360CandidateRows<SourceContractInitiativeDependencyRow>(
+        `SELECT
+           tenant_key,
+           contract_id,
+           vendor_ref,
+           vendor_name,
+           initiative_ref,
+           initiative_project_name,
+           status,
+           target_end_date,
+           approved_budget,
+           expected_business_technology_value,
+           major_risk_constraint,
+           decision_needed
+          FROM source.meridian_vendor360_initiative_dependency
+         WHERE tenant_key = $1 AND dataset_id = $2
+           ${filter}
+         ORDER BY target_end_date NULLS LAST, initiative_ref`,
+        contractId ? [contractId] : [],
+      );
+    if (candidate.length > 0) return candidate;
+  }
   if (contractId) {
     return queryForTenant<SourceContractInitiativeDependencyRow>(
       tenantKey,

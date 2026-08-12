@@ -1,0 +1,6 @@
+tenant_key,read_model_id,contract_id,contract_name,supplier_legal_name,fixture_role,document_count,unresolved_conflict_count,evidence_gate_state,diagnosis_ready_state,action_ready_state,vendor_outreach_state,value_proven_state,forecast_value_usd
+meridian-health,PORT-MER-CTR-RCM-001,MER-CTR-RCM-001,Revenue Cycle Managed Services,NorthBridge RCM Services LLC,existing_contract_optimize_hero,11,0,evidence_available,ready,ready,approved_for_offline_case,partially_proven,976916.64
+meridian-health,PORT-MER-CTR-HR-BPO-001,MER-CTR-HR-BPO-001,HR Operations Payroll Benefits BPO,PeopleBridge Operations Inc.,new_event_hr_bpo,11,2,evidence_available,ready,blocked,blocked,not_proven,0
+meridian-health,PORT-MER-CTR-FIN-BPO-001,MER-CTR-FIN-BPO-001,Finance Accounting Operations BPO,LedgerWorks Managed Finance Ltd.,new_event_finance_bpo,11,2,evidence_available,ready,blocked,blocked,not_proven,0
+meridian-health,PORT-MER-CTR-SC-BPO-001,MER-CTR-SC-BPO-001,Supply Chain Procure-to-Pay Operations BPO,ProcureHealth Services LLC,new_event_supply_chain_bpo,11,2,evidence_available,ready,blocked,blocked,not_proven,0
+meridian-health,PORT-MER-CTR-SSO-BPO-001,MER-CTR-SSO-BPO-001,Shared Services Transition Multi-process BPO,Helix Shared Services Group,shared_services_governance_control,11,2,evidence_available,ready,blocked,blocked,not_proven,0

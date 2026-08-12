@@ -50,6 +50,16 @@ export function SimpleStageFront({
     registryArtifacts,
     view.deliverable.artifactCode,
   );
+  const readyRequiredCount = view.required.filter((requirement) =>
+    isRequirementReady(requirement),
+  ).length;
+  const remainingRequiredCount = Math.max(
+    0,
+    view.required.length - readyRequiredCount,
+  );
+  const allRequiredReady =
+    view.required.length > 0 && remainingRequiredCount === 0;
+  const nextStageName = view.nextStep.label.replace(/^Issue the\s+/i, "");
 
   const handleUpload = async (
     requirement: SimpleStageRequirementView,
@@ -107,7 +117,9 @@ export function SimpleStageFront({
           detail?: string;
           error?: string;
         } | null;
-        setMessage(payload?.detail ?? payload?.error ?? "Answer was not saved.");
+        setMessage(
+          payload?.detail ?? payload?.error ?? "Answer was not saved.",
+        );
         return;
       }
       setAnswerFor(null);
@@ -135,6 +147,12 @@ export function SimpleStageFront({
   // in the deliverables explorer / File Cabinet, so we never block the advance on
   // a slow board-grade generation. Mirrors the Moves "Approve & Build" model.
   const handleApproveAndContinue = async () => {
+    if (!allRequiredReady) {
+      setMessage(
+        `${remainingRequiredCount} required input${remainingRequiredCount === 1 ? "" : "s"} still open before this stage can move to approval.`,
+      );
+      return;
+    }
     const nextStage = view.nextStep.stage;
     if (!nextStage) {
       // Final stage: nothing to advance to, so approving just writes the doc.
@@ -155,9 +173,10 @@ export function SimpleStageFront({
       <div style={TOP_ROW_STYLE}>
         <div>
           <div style={EYEBROW_STYLE}>Start here</div>
-          <h2 style={TITLE_STYLE}>You&apos;re on {view.stageLabel}</h2>
+          <h2 style={TITLE_STYLE}>Complete {view.stageLabel} evidence</h2>
           <p style={SUBTITLE_STYLE}>
-            Give the essentials, write the document, then move to the next step.
+            Load, confirm, or answer each required input. When the list is
+            ready, approve the stage and open {nextStageName}.
           </p>
         </div>
         <button
@@ -171,7 +190,13 @@ export function SimpleStageFront({
         </button>
       </div>
 
-      <div style={ASKS_STYLE}>
+      <div style={EVIDENCE_TABLE_STYLE} aria-label="Required evidence">
+        <div style={TABLE_HEADER_STYLE}>
+          <span>Evidence needed</span>
+          <span>Source / acceptable input</span>
+          <span>Status</span>
+          <span>Action</span>
+        </div>
         {view.required.map((requirement, index) => {
           const isAnswerOpen = answerFor === requirement.requirementId;
           const isSkipped = skipped.has(requirement.requirementId);
@@ -181,15 +206,14 @@ export function SimpleStageFront({
               data-testid={`source-simple-front-requirement-${requirement.requirementId}`}
               style={ASK_ROW_STYLE}
             >
-              <div style={ASK_NUMBER_STYLE}>{index + 1}</div>
               <div style={ASK_COPY_STYLE}>
                 <div style={ASK_TITLE_ROW_STYLE}>
+                  <span style={ASK_NUMBER_STYLE}>{index + 1}</span>
                   <strong style={ASK_TITLE_STYLE}>{requirement.label}</strong>
-                  <span style={stateChipStyle(requirement.state, isSkipped)}>
-                    {isSkipped ? "Skipped" : requirement.state}
-                  </span>
                 </div>
                 <p style={ASK_META_STYLE}>{requirement.why}</p>
+              </div>
+              <div style={ASK_COPY_STYLE}>
                 <p style={ASK_HINT_STYLE}>{requirement.acceptHint}</p>
                 {isAnswerOpen ? (
                   <div style={ANSWER_BOX_STYLE}>
@@ -222,6 +246,11 @@ export function SimpleStageFront({
                     </div>
                   </div>
                 ) : null}
+              </div>
+              <div>
+                <span style={stateChipStyle(requirement.state, isSkipped)}>
+                  {requirementStatusLabel(requirement, isSkipped)}
+                </span>
               </div>
               <div style={ASK_ACTIONS_STYLE}>
                 <a
@@ -266,16 +295,18 @@ export function SimpleStageFront({
                   }}
                   style={SECONDARY_SMALL_STYLE}
                 >
-                  Just tell me
+                  Answer
                 </button>
                 <button
                   type="button"
                   onClick={() =>
-                    setSkipped((prev) => new Set(prev).add(requirement.requirementId))
+                    setSkipped((prev) =>
+                      new Set(prev).add(requirement.requirementId),
+                    )
                   }
                   style={QUIET_BUTTON_STYLE}
                 >
-                  Skip
+                  Not needed
                 </button>
               </div>
             </div>
@@ -296,19 +327,34 @@ export function SimpleStageFront({
         </details>
       ) : null}
 
-      <div style={BOTTOM_BAR_STYLE}>
+      <div style={NEXT_GATE_STYLE} data-ready={allRequiredReady}>
+        <div style={NEXT_GATE_COPY_STYLE}>
+          <div style={EYEBROW_STYLE}>Approval gate</div>
+          <h3 style={NEXT_GATE_TITLE_STYLE}>
+            {allRequiredReady
+              ? `Ready to open ${nextStageName}`
+              : `${remainingRequiredCount} required input${remainingRequiredCount === 1 ? "" : "s"} still open`}
+          </h3>
+          <p style={NEXT_GATE_BODY_STYLE}>
+            {allRequiredReady
+              ? `Approval writes ${view.deliverable.name} and advances this event to ${nextStageName}.`
+              : `Finish the evidence rows above, or use Advanced when a named owner needs to approve with gaps carried forward.`}
+          </p>
+        </div>
         <button
           type="button"
           data-testid="source-simple-front-approve"
           onClick={() => void handleApproveAndContinue()}
-          disabled={generating}
-          style={PRIMARY_BUTTON_STYLE}
+          disabled={generating || !allRequiredReady}
+          style={primaryButtonStyle(allRequiredReady)}
         >
           {generating
             ? "Writing..."
-            : view.nextStep.stage
-              ? `Approve & write ${view.deliverable.name}`
-              : `Write my ${view.deliverable.name}`}
+            : !allRequiredReady
+              ? `Complete ${remainingRequiredCount} input${remainingRequiredCount === 1 ? "" : "s"}`
+              : view.nextStep.stage
+                ? `Open approval gate → ${nextStageName}`
+                : `Write ${view.deliverable.name}`}
         </button>
         {latestDoc ? (
           <Link
@@ -320,9 +366,6 @@ export function SimpleStageFront({
             Download
           </Link>
         ) : null}
-        <div style={NEXT_STEP_STYLE}>
-          <span>Then: {view.nextStep.label}</span>
-        </div>
       </div>
 
       {message ? (
@@ -369,6 +412,37 @@ function safeRegistryString(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+function isRequirementReady(requirement: SimpleStageRequirementView): boolean {
+  return (
+    READINESS_RANK[requirement.state] >=
+    READINESS_RANK[requirement.minimumState]
+  );
+}
+
+function requirementStatusLabel(
+  requirement: SimpleStageRequirementView,
+  skipped: boolean,
+): string {
+  if (skipped) return "Not needed here";
+  if (isRequirementReady(requirement)) return "Ready";
+  if (requirement.state === "Not Requested") return "Needed";
+  return requirement.state;
+}
+
+const READINESS_RANK: Record<
+  | SimpleStageRequirementView["state"]
+  | SimpleStageRequirementView["minimumState"],
+  number
+> = {
+  "Not Requested": 0,
+  Loaded: 1,
+  Parsed: 2,
+  Available: 3,
+  "Usable Evidence": 4,
+  Stale: -1,
+  "Low Confidence": -1,
+};
+
 function stateChipStyle(
   state: SimpleStageRequirementView["state"],
   skipped: boolean,
@@ -394,8 +468,8 @@ function stateChipStyle(
 const SHELL_STYLE: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: 20,
-  padding: 28,
+  gap: 18,
+  padding: 24,
   border: `1px solid ${CANVAS.RULE}`,
   borderRadius: 10,
   background: CANVAS.CARD,
@@ -419,7 +493,7 @@ const EYEBROW_STYLE: CSSProperties = {
 const TITLE_STYLE: CSSProperties = {
   margin: "8px 0 0",
   fontFamily: CANVAS.SERIF,
-  fontSize: 30,
+  fontSize: 26,
   lineHeight: 1.1,
   color: CANVAS.INK,
 };
@@ -431,24 +505,44 @@ const SUBTITLE_STYLE: CSSProperties = {
   color: CANVAS.INK_SOFT,
 };
 
-const ASKS_STYLE: CSSProperties = {
+const EVIDENCE_TABLE_STYLE: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  borderTop: `1px solid ${CANVAS.HAIRLINE}`,
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 10,
+  overflow: "hidden",
+};
+
+const TABLE_HEADER_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns:
+    "minmax(220px, 1.25fr) minmax(220px, 1fr) 104px minmax(230px, auto)",
+  gap: 14,
+  alignItems: "center",
+  padding: "10px 14px",
+  background: "rgba(12,26,58,0.035)",
+  borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  fontWeight: 800,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  color: CANVAS.INK_MUTED,
 };
 
 const ASK_ROW_STYLE: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "34px minmax(0,1fr) auto",
+  gridTemplateColumns:
+    "minmax(220px, 1.25fr) minmax(220px, 1fr) 104px minmax(230px, auto)",
   gap: 14,
   alignItems: "start",
-  padding: "18px 0",
+  padding: "14px",
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
 };
 
 const ASK_NUMBER_STYLE: CSSProperties = {
-  width: 28,
-  height: 28,
+  width: 24,
+  height: 24,
   borderRadius: 999,
   display: "inline-flex",
   alignItems: "center",
@@ -456,8 +550,9 @@ const ASK_NUMBER_STYLE: CSSProperties = {
   background: "rgba(12,26,58,0.06)",
   color: CANVAS.INK,
   fontFamily: CANVAS.SANS,
-  fontSize: 12,
+  fontSize: 11,
   fontWeight: 800,
+  flex: "0 0 auto",
 };
 
 const ASK_COPY_STYLE: CSSProperties = { minWidth: 0 };
@@ -580,21 +675,47 @@ const EXTRAS_LIST_STYLE: CSSProperties = {
   color: CANVAS.INK_SOFT,
 };
 
-const BOTTOM_BAR_STYLE: CSSProperties = {
-  display: "flex",
+const NEXT_GATE_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) auto auto",
   alignItems: "center",
   gap: 12,
-  flexWrap: "wrap",
-  paddingTop: 2,
+  padding: "14px 16px",
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: 10,
+  background: "rgba(12,26,58,0.025)",
 };
 
-const PRIMARY_BUTTON_STYLE: CSSProperties = {
-  ...BASE_BUTTON_STYLE,
-  padding: "12px 18px",
-  border: `1px solid ${CANVAS.ACTIVE}`,
-  background: CANVAS.ACTIVE,
-  color: CANVAS.CARD,
+const NEXT_GATE_COPY_STYLE: CSSProperties = {
+  minWidth: 0,
 };
+
+const NEXT_GATE_TITLE_STYLE: CSSProperties = {
+  margin: "4px 0 0",
+  fontFamily: CANVAS.SANS,
+  fontSize: 16,
+  fontWeight: 800,
+  color: CANVAS.INK,
+};
+
+const NEXT_GATE_BODY_STYLE: CSSProperties = {
+  margin: "5px 0 0",
+  fontFamily: CANVAS.SANS,
+  fontSize: 12.5,
+  lineHeight: 1.45,
+  color: CANVAS.INK_SOFT,
+};
+
+function primaryButtonStyle(enabled: boolean): CSSProperties {
+  return {
+    ...BASE_BUTTON_STYLE,
+    padding: "12px 18px",
+    border: `1px solid ${enabled ? CANVAS.ACTIVE : CANVAS.RULE}`,
+    background: enabled ? CANVAS.ACTIVE : "rgba(12,26,58,0.08)",
+    color: enabled ? CANVAS.CARD : CANVAS.INK_MUTED,
+    cursor: enabled ? "pointer" : "not-allowed",
+  };
+}
 
 const DOWNLOAD_LINK_STYLE: CSSProperties = {
   ...SECONDARY_SMALL_STYLE,
@@ -604,16 +725,6 @@ const DOWNLOAD_LINK_STYLE: CSSProperties = {
 const SECONDARY_BUTTON_STYLE: CSSProperties = {
   ...SECONDARY_SMALL_STYLE,
   padding: "10px 14px",
-};
-
-const NEXT_STEP_STYLE: CSSProperties = {
-  marginLeft: "auto",
-  display: "flex",
-  alignItems: "center",
-  gap: 10,
-  fontFamily: CANVAS.SANS,
-  fontSize: 13,
-  color: CANVAS.INK_SOFT,
 };
 
 const MESSAGE_STYLE: CSSProperties = {

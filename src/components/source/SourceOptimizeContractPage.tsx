@@ -241,7 +241,9 @@ function SelectedContractView({
   opportunitySet: ContractOptimizationOpportunitySet | null;
   selectedOpportunity: ContractOptimizationOpportunity | null;
 }) {
-  const missingCount = spine.missingEvidenceSources.length;
+  const missingCount =
+    spine.missingEvidenceSources.length +
+    (opportunitySet?.evidenceRequirements.length ?? 0);
   const opportunityCount = opportunitySet?.opportunities.length ?? 0;
   const primaryAction =
     !opportunitySet || opportunitySet.baseline.status !== "ready"
@@ -331,7 +333,10 @@ function SelectedContractView({
             decision it blocks.
           </p>
         </div>
-        <EvidenceRequirementTable requirements={spine.missingEvidenceSources} />
+        <EvidenceRequirementTable
+          requirements={spine.missingEvidenceSources}
+          opportunitySet={opportunitySet}
+        />
       </section>
 
       <section style={PANEL_STYLE}>
@@ -440,10 +445,31 @@ function BaselineRead({
     );
   }
   const baseline = opportunitySet.baseline;
+  const readinessRows = baselineReadinessRows(opportunitySet);
   return (
     <div style={BASELINE_STYLE}>
-      <strong>{baseline.headline}</strong>
-      <span>{baseline.detail}</span>
+      <div style={BASELINE_HEADER_STYLE}>
+        <div>
+          <strong>{baseline.headline}</strong>
+          <p style={BASELINE_DETAIL_STYLE}>{baseline.detail}</p>
+        </div>
+        <span
+          style={{
+            ...BASELINE_STATUS_STYLE,
+            ...(baseline.status === "conflict"
+              ? BASELINE_STATUS_WARNING_STYLE
+              : baseline.status === "missing"
+                ? BASELINE_STATUS_MISSING_STYLE
+                : null),
+          }}
+        >
+          {baseline.status === "ready"
+            ? "baseline ready"
+            : baseline.status === "conflict"
+              ? "baseline conflict"
+              : "baseline missing"}
+        </span>
+      </div>
       <div style={BASELINE_METRICS_STYLE}>
         <Metric
           label="Annual value"
@@ -461,6 +487,28 @@ function BaselineRead({
           label="Finance confirmed"
           value={formatUsd(opportunitySet.financeConfirmedUsd)}
         />
+      </div>
+      <div style={BASELINE_READINESS_STYLE}>
+        {readinessRows.map((row) => (
+          <div key={row.id} style={BASELINE_READINESS_ROW_STYLE}>
+            <span
+              aria-label={`${row.label} ${row.state}`}
+              style={{
+                ...STATE_DOT_STYLE,
+                ...(row.state === "included"
+                  ? STATE_DOT_READY_STYLE
+                  : row.state === "conflict"
+                    ? STATE_DOT_WARNING_STYLE
+                    : null),
+              }}
+            />
+            <div>
+              <strong>{row.label}</strong>
+              <p style={DECISION_DETAIL_STYLE}>{row.detail}</p>
+            </div>
+            <span style={BASELINE_ROW_STATE_STYLE}>{row.state}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -548,10 +596,18 @@ function OpportunityTable({
 
 function EvidenceRequirementTable({
   requirements,
+  opportunitySet,
 }: {
   requirements: readonly ContractOptimizationSourcingRequirement[];
+  opportunitySet: ContractOptimizationOpportunitySet | null;
 }) {
-  if (requirements.length === 0) {
+  const rows = [
+    ...requirements.map(requirementRowFromSourcingRequirement),
+    ...(opportunitySet?.evidenceRequirements.map(
+      requirementRowFromOpportunityRequirement,
+    ) ?? []),
+  ];
+  if (rows.length === 0) {
     return (
       <div style={EMPTY_STYLE}>
         No required evidence rows are open in the current spine. Continue
@@ -573,20 +629,17 @@ function EvidenceRequirementTable({
           </tr>
         </thead>
         <tbody>
-          {requirements.map((requirement) => (
-            <tr key={requirement.lineId}>
+          {rows.map((requirement) => (
+            <tr key={requirement.id}>
               <td style={TD_STYLE}>
-                <strong>{requirement.lineLabel}</strong>
-                <div style={MUTED_SMALL_STYLE}>Required for sizing</div>
+                <strong>{requirement.label}</strong>
+                <div style={MUTED_SMALL_STYLE}>
+                  {requirement.requirementType}
+                </div>
               </td>
-              <td style={TD_STYLE}>
-                {requirement.connections
-                  .map((connection) => connection.sourceSystem)
-                  .join(" + ")}
-                <div style={MUTED_SMALL_STYLE}>{requirement.ask}</div>
-              </td>
-              <td style={TD_STYLE}>{grainForRequirement(requirement)}</td>
-              <td style={TD_STYLE}>{blocksForRequirement(requirement)}</td>
+              <td style={TD_STYLE}>{requirement.whereToPull}</td>
+              <td style={TD_STYLE}>{requirement.grainHistory}</td>
+              <td style={TD_STYLE}>{requirement.blocks}</td>
               <td style={TD_STYLE}>{requirement.nextAction}</td>
             </tr>
           ))}
@@ -594,6 +647,240 @@ function EvidenceRequirementTable({
       </table>
     </div>
   );
+}
+
+interface BaselineReadinessRow {
+  readonly id: string;
+  readonly label: string;
+  readonly detail: string;
+  readonly state: "included" | "pending" | "conflict";
+}
+
+function baselineReadinessRows(
+  opportunitySet: ContractOptimizationOpportunitySet,
+): readonly BaselineReadinessRow[] {
+  const baseline = opportunitySet.baseline;
+  const calculationCount = opportunitySet.opportunities.filter(
+    (opportunity) => opportunity.calculation,
+  ).length;
+  return [
+    {
+      id: "pricing-schedule",
+      label: "Pricing schedule tie-out",
+      detail:
+        baseline.status === "conflict"
+          ? "Pricing rows and stated annual value disagree; do not approve a value case until this reconciles."
+          : baseline.pricingScheduleAnnualValueUsd == null
+            ? "Pricing schedule rows are not loaded, so rate and quantity coverage is still pending."
+            : "Pricing schedule value is available for baseline review.",
+      state:
+        baseline.status === "conflict"
+          ? "conflict"
+          : baseline.pricingScheduleAnnualValueUsd == null
+            ? "pending"
+            : "included",
+    },
+    {
+      id: "actual-spend",
+      label: "Actual spend baseline",
+      detail:
+        baseline.actualAnnualSpendUsd == null
+          ? "Actual annual spend is pending; variance may be visible elsewhere but is not a savings claim."
+          : "Actual spend is loaded and can be compared with contract and pricing baselines.",
+      state: baseline.actualAnnualSpendUsd == null ? "pending" : "included",
+    },
+    {
+      id: "calculation-lines",
+      label: "Calculation trace",
+      detail:
+        calculationCount > 0
+          ? `${calculationCount} opportunity row(s) have line-level calculation detail.`
+          : opportunitySet.opportunities.length > 0
+            ? "Opportunity rows exist, but line-level calculation runs are not persisted for this case yet."
+            : "No opportunity rows are loaded yet.",
+      state: calculationCount > 0 ? "included" : "pending",
+    },
+    {
+      id: "finance-proof",
+      label: "Finance realization proof",
+      detail:
+        opportunitySet.financeConfirmedUsd > 0
+          ? "Finance-confirmed value exists and remains separate from potential opportunity."
+          : "Finance confirmation is pending; realized value must stay not established.",
+      state: opportunitySet.financeConfirmedUsd > 0 ? "included" : "pending",
+    },
+  ];
+}
+
+interface EvidenceRequirementRow {
+  readonly id: string;
+  readonly label: string;
+  readonly requirementType: string;
+  readonly whereToPull: string;
+  readonly grainHistory: string;
+  readonly blocks: string;
+  readonly nextAction: string;
+}
+
+function requirementRowFromSourcingRequirement(
+  requirement: ContractOptimizationSourcingRequirement,
+): EvidenceRequirementRow {
+  return {
+    id: requirement.lineId,
+    label: requirement.lineLabel,
+    requirementType: "Required for sizing",
+    whereToPull: [
+      requirement.connections
+        .map((connection) => connection.sourceSystem)
+        .join(" + "),
+      requirement.ask,
+    ]
+      .filter(Boolean)
+      .join(" — "),
+    grainHistory: grainForRequirement(requirement),
+    blocks: blocksForRequirement(requirement),
+    nextAction: requirement.nextAction,
+  };
+}
+
+function requirementRowFromOpportunityRequirement(
+  requirement: string,
+  index: number,
+): EvidenceRequirementRow {
+  const normalized = requirement.toLowerCase();
+  if (
+    normalized.includes("baseline") ||
+    normalized.includes("pricing") ||
+    normalized.includes("annual-value")
+  ) {
+    return {
+      id: `opportunity-baseline-${index}`,
+      label: "Commercial baseline reconciliation",
+      requirementType: "Required before approval",
+      whereToPull:
+        "CLM / contract repository + pricing schedule extract — annual value, line values, effective dates, and document refs.",
+      grainHistory:
+        "Pricing-schedule line item grain for the active term, including amendments or order forms.",
+      blocks: "Baseline lock, opportunity sizing, and approval-quality case",
+      nextAction: requirement,
+    };
+  }
+  if (normalized.includes("finance") || normalized.includes("realized")) {
+    return {
+      id: `opportunity-finance-${index}`,
+      label: "Finance value confirmation",
+      requirementType: "Required for realized value",
+      whereToPull:
+        "Finance / FP&A / Tower value evidence — claim record, baseline, actuals, cadence, owner, and attestation state.",
+      grainHistory: "Monthly or quarterly claim period after action.",
+      blocks: "Realized value and Tower handoff",
+      nextAction: requirement,
+    };
+  }
+  if (
+    normalized.includes("vendor agreement") ||
+    normalized.includes("executed amendment") ||
+    normalized.includes("negotiation target") ||
+    normalized.includes("approved position")
+  ) {
+    return {
+      id: `opportunity-negotiated-improvement-${index}`,
+      label: "Signed concession or amendment evidence",
+      requirementType: "Required before negotiated improvement",
+      whereToPull:
+        "CLM / contract repository + Procurement / S2P — executed amendment, concession approval, supplier response, and sourcing case reference.",
+      grainHistory:
+        "Signed amendment or approved negotiation package for the current action.",
+      blocks: "Negotiated improvement approval and external supplier position",
+      nextAction: requirement,
+    };
+  }
+  if (
+    normalized.includes("usage supports") ||
+    normalized.includes("reclaim") ||
+    normalized.includes("service impact") ||
+    normalized.includes("scope")
+  ) {
+    return {
+      id: `opportunity-scope-reduction-${index}`,
+      label: "Usage, entitlement, and scope-reduction approval",
+      requirementType: "Required before avoided cost",
+      whereToPull:
+        "Usage / entitlement platform + application owner sign-off + sourcing workspace — active users, assignment, reclaim list, and approved scope change.",
+      grainHistory:
+        "User, seat, feature, or workload grain for the active term; 12 months preferred when consumption varies.",
+      blocks: "Avoided-cost sizing, service-impact review, and renewal scope",
+      nextAction: requirement,
+    };
+  }
+  if (
+    normalized.includes("ap and procurement") ||
+    normalized.includes("po coverage") ||
+    normalized.includes("off-contract") ||
+    normalized.includes("dispute eligibility") ||
+    normalized.includes("coverage")
+  ) {
+    return {
+      id: `opportunity-invoice-coverage-${index}`,
+      label: "Invoice, PO, and active-contract coverage",
+      requirementType: "Required before leakage claim",
+      whereToPull:
+        "AP / ERP financial subledger + Procurement / S2P — invoice lines, PO match, payment status, active contract coverage, and dispute state.",
+      grainHistory:
+        "Invoice-line and PO-line grain for the active contract term; 12-24 months preferred.",
+      blocks:
+        "Off-contract billing, duplicate charge, and recoverable leakage claim",
+      nextAction: requirement,
+    };
+  }
+  if (
+    normalized.includes("sla") ||
+    normalized.includes("service-credit") ||
+    normalized.includes("claim status") ||
+    normalized.includes("vendor-responsibility")
+  ) {
+    return {
+      id: `opportunity-sla-credit-${index}`,
+      label: "SLA credit entitlement and claim status",
+      requirementType: "Required before credit recovery",
+      whereToPull:
+        "ITSM / service management + CLM / contract repository — SLA performance, breach logs, service-review pack, credit clause, exclusions, and claim/receipt status.",
+      grainHistory:
+        "Monthly SLA, incident, and service-credit rows for 24 months preferred.",
+      blocks: "Service-credit recovery and vendor claim package",
+      nextAction: requirement,
+    };
+  }
+  if (
+    normalized.includes("rate") ||
+    normalized.includes("rate-card") ||
+    normalized.includes("billed rates") ||
+    normalized.includes("approved amendment") ||
+    normalized.includes("exception")
+  ) {
+    return {
+      id: `opportunity-rate-card-${index}`,
+      label: "Rate-card amendment and exception search",
+      requirementType: "Required before rate variance claim",
+      whereToPull:
+        "AP / ERP invoice extract + CLM pricing schedule + VMS / rate-card system — billed rate, contracted rate, quantity, amendment, and exception approval.",
+      grainHistory:
+        "Invoice-line, time-entry, and rate-card line grain for the active term; 12-24 months preferred.",
+      blocks: "Rate-card variance recovery and supplier dispute pack",
+      nextAction: requirement,
+    };
+  }
+  return {
+    id: `opportunity-requirement-${index}`,
+    label: "Unclassified evidence requirement",
+    requirementType: "Required before external claim",
+    whereToPull:
+      "Named source owner extract tied to the active opportunity row.",
+    grainHistory:
+      "Native source grain for the active contract term; 12-24 months when periodized evidence is needed.",
+    blocks: "Approval-quality opportunity sizing",
+    nextAction: requirement,
+  };
 }
 
 function SourceConnectionTable({
@@ -944,10 +1231,90 @@ const BASELINE_STYLE: CSSProperties = {
   color: ANALYTICS.INK,
 };
 
+const BASELINE_HEADER_STYLE: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 12,
+  alignItems: "flex-start",
+};
+
+const BASELINE_DETAIL_STYLE: CSSProperties = {
+  margin: "4px 0 0",
+  color: ANALYTICS.MUTED,
+  fontSize: 13,
+  lineHeight: 1.45,
+};
+
+const BASELINE_STATUS_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.GREEN}`,
+  borderRadius: 999,
+  color: ANALYTICS.GREEN,
+  background: "#ecfdf5",
+  padding: "5px 8px",
+  fontSize: 10,
+  fontWeight: 900,
+  letterSpacing: 1,
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+};
+
+const BASELINE_STATUS_WARNING_STYLE: CSSProperties = {
+  borderColor: ANALYTICS.RUST,
+  color: ANALYTICS.RUST,
+  background: "#fff7ed",
+};
+
+const BASELINE_STATUS_MISSING_STYLE: CSSProperties = {
+  borderColor: ANALYTICS.MUTED,
+  color: ANALYTICS.MUTED,
+  background: "#f8fafc",
+};
+
 const BASELINE_METRICS_STYLE: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
   gap: 8,
+};
+
+const BASELINE_READINESS_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: 8,
+};
+
+const BASELINE_READINESS_ROW_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderRadius: 8,
+  padding: 10,
+  display: "grid",
+  gridTemplateColumns: "10px minmax(0, 1fr) auto",
+  gap: 9,
+  alignItems: "start",
+};
+
+const STATE_DOT_STYLE: CSSProperties = {
+  width: 9,
+  height: 9,
+  borderRadius: 999,
+  background: ANALYTICS.MUTED,
+  marginTop: 4,
+};
+
+const STATE_DOT_READY_STYLE: CSSProperties = {
+  background: ANALYTICS.GREEN,
+};
+
+const STATE_DOT_WARNING_STYLE: CSSProperties = {
+  background: ANALYTICS.RUST,
+};
+
+const BASELINE_ROW_STATE_STYLE: CSSProperties = {
+  color: ANALYTICS.MUTED,
+  fontSize: 10,
+  fontWeight: 900,
+  letterSpacing: 1,
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
 };
 
 const METRIC_STYLE: CSSProperties = {

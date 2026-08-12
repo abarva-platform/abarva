@@ -219,6 +219,25 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(readiness).toHaveTextContent("Return to steps.");
   });
 
+  it("keeps inactive workspace tabs quiet instead of labeling them hidden", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Lakeshore"
+      />,
+    );
+
+    const intelligenceTab = screen.getByTestId(
+      "source-shell-workspace-intelligence",
+    );
+    expect(intelligenceTab).toHaveTextContent("Intelligence Explorer");
+    expect(intelligenceTab).not.toHaveTextContent("hidden");
+
+    fireEvent.click(intelligenceTab);
+    expect(intelligenceTab).toHaveTextContent("open");
+  });
+
   it("opens directly to a route-selected workspace", () => {
     render(
       <SourceAnalyticsCanvas

@@ -1,0 +1,25 @@
+tenant_key,contract_id,opportunity_id,calculation_run_id,output_name,output_value_numeric,output_currency,value_type,inclusion_state,exclusion_reason,review_state,output_rank
+skyharbor_global,CTR-090,OP-CTR-090-RECOVERY-001,CALC-OP-CTR-090-RECOVERY-001,low,526733.84,USD,recoverable,included,,accepted,1
+skyharbor_global,CTR-090,OP-CTR-090-RECOVERY-001,CALC-OP-CTR-090-RECOVERY-001,base,658417.3,USD,recoverable,included,,accepted,2
+skyharbor_global,CTR-090,OP-CTR-090-RECOVERY-001,CALC-OP-CTR-090-RECOVERY-001,high,790100.76,USD,recoverable,included,,accepted,3
+skyharbor_global,CTR-090,OP-CTR-090-AVOID-001,CALC-OP-CTR-090-AVOID-001,low,1119689.94,USD,avoided,included,,accepted,1
+skyharbor_global,CTR-090,OP-CTR-090-AVOID-001,CALC-OP-CTR-090-AVOID-001,base,1399612.43,USD,avoided,included,,accepted,2
+skyharbor_global,CTR-090,OP-CTR-090-AVOID-001,CALC-OP-CTR-090-AVOID-001,high,1679534.92,USD,avoided,included,,accepted,3
+skyharbor_global,CTR-090,OP-CTR-090-NEGOTIATE-001,CALC-OP-CTR-090-NEGOTIATE-001,low,0,USD,negotiated,included,,accepted,1
+skyharbor_global,CTR-090,OP-CTR-090-NEGOTIATE-001,CALC-OP-CTR-090-NEGOTIATE-001,base,0,USD,negotiated,included,,accepted,2
+skyharbor_global,CTR-090,OP-CTR-090-NEGOTIATE-001,CALC-OP-CTR-090-NEGOTIATE-001,high,0,USD,negotiated,included,,accepted,3
+skyharbor_global,CTR-090,OP-CTR-090-CONTROL-001,CALC-OP-CTR-090-CONTROL-001,low,0,USD,non_value_control,non_financial_control,,accepted,1
+skyharbor_global,CTR-090,OP-CTR-090-CONTROL-001,CALC-OP-CTR-090-CONTROL-001,base,0,USD,non_value_control,non_financial_control,,accepted,2
+skyharbor_global,CTR-090,OP-CTR-090-CONTROL-001,CALC-OP-CTR-090-CONTROL-001,high,0,USD,non_value_control,non_financial_control,,accepted,3
+skyharbor_global,CTR-061,OP-CTR-061-RECOVERY-001,CALC-OP-CTR-061-RECOVERY-001,low,0,USD,recoverable,withheld_pending_conflict_resolution,"Conflict-control contract is diagnosis-ready, not action-ready.",blocked_by_fact_conflict,1
+skyharbor_global,CTR-061,OP-CTR-061-RECOVERY-001,CALC-OP-CTR-061-RECOVERY-001,base,0,USD,recoverable,withheld_pending_conflict_resolution,"Conflict-control contract is diagnosis-ready, not action-ready.",blocked_by_fact_conflict,2
+skyharbor_global,CTR-061,OP-CTR-061-RECOVERY-001,CALC-OP-CTR-061-RECOVERY-001,high,0,USD,recoverable,withheld_pending_conflict_resolution,"Conflict-control contract is diagnosis-ready, not action-ready.",blocked_by_fact_conflict,3
+skyharbor_global,CTR-061,OP-CTR-061-AVOID-001,CALC-OP-CTR-061-AVOID-001,low,0,USD,avoided,withheld_pending_conflict_resolution,"Conflict-control contract is diagnosis-ready, not action-ready.",blocked_by_fact_conflict,1
+skyharbor_global,CTR-061,OP-CTR-061-AVOID-001,CALC-OP-CTR-061-AVOID-001,base,0,USD,avoided,withheld_pending_conflict_resolution,"Conflict-control contract is diagnosis-ready, not action-ready.",blocked_by_fact_conflict,2
+skyharbor_global,CTR-061,OP-CTR-061-AVOID-001,CALC-OP-CTR-061-AVOID-001,high,0,USD,avoided,withheld_pending_conflict_resolution,"Conflict-control contract is diagnosis-ready, not action-ready.",blocked_by_fact_conflict,3
+skyharbor_global,CTR-061,OP-CTR-061-NEGOTIATE-001,CALC-OP-CTR-061-NEGOTIATE-001,low,0,USD,negotiated,withheld_pending_conflict_resolution,"Conflict-control contract is diagnosis-ready, not action-ready.",blocked_by_fact_conflict,1
+skyharbor_global,CTR-061,OP-CTR-061-NEGOTIATE-001,CALC-OP-CTR-061-NEGOTIATE-001,base,0,USD,negotiated,withheld_pending_conflict_resolution,"Conflict-control contract is diagnosis-ready, not action-ready.",blocked_by_fact_conflict,2
+skyharbor_global,CTR-061,OP-CTR-061-NEGOTIATE-001,CALC-OP-CTR-061-NEGOTIATE-001,high,0,USD,negotiated,withheld_pending_conflict_resolution,"Conflict-control contract is diagnosis-ready, not action-ready.",blocked_by_fact_conflict,3
+skyharbor_global,CTR-061,OP-CTR-061-CONTROL-001,CALC-OP-CTR-061-CONTROL-001,low,0,USD,non_value_control,non_financial_control,"Conflict-control contract is diagnosis-ready, not action-ready.",accepted,1
+skyharbor_global,CTR-061,OP-CTR-061-CONTROL-001,CALC-OP-CTR-061-CONTROL-001,base,0,USD,non_value_control,non_financial_control,"Conflict-control contract is diagnosis-ready, not action-ready.",accepted,2
+skyharbor_global,CTR-061,OP-CTR-061-CONTROL-001,CALC-OP-CTR-061-CONTROL-001,high,0,USD,non_value_control,non_financial_control,"Conflict-control contract is diagnosis-ready, not action-ready.",accepted,3

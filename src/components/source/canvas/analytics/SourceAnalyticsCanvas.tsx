@@ -847,7 +847,7 @@ function SourceShellRail({
         <WorkspaceButton
           workspaceKey="intelligence"
           label="Intelligence Explorer"
-          badge={workspace === "intelligence" ? "open" : "hidden"}
+          badge={workspace === "intelligence" ? "open" : undefined}
           active={workspace === "intelligence"}
           onClick={() => onWorkspaceChange("intelligence")}
         />
@@ -2059,6 +2059,13 @@ function StepDetail({
   });
   const canPersistAction =
     activeStep.type !== "provide" && Boolean(evidenceRequirementId);
+  const evidenceRow = (
+    <ActiveStepRequirementRow
+      step={activeStep}
+      isComplete={isComplete}
+      factTemplateCode={factTemplateCodeForTask(activeStep)}
+    />
+  );
 
   async function completeStepAction(): Promise<void> {
     if (!canPersistAction) return;
@@ -2142,40 +2149,49 @@ function StepDetail({
 
   if (activeStep.rows.length > 0) {
     return (
-      <div
-        style={{
-          marginLeft: 42,
-          border: `1px solid ${ANALYTICS.LINE}`,
-          borderRadius: 8,
-          overflow: "hidden",
-          maxWidth: 680,
-        }}
-      >
-        {activeStep.rows.map((row, index) => (
+      <div style={{ marginLeft: 42, maxWidth: 760 }}>
+        {evidenceRow}
+        <div
+          style={{
+            border: `1px solid ${ANALYTICS.LINE}`,
+            borderRadius: 8,
+            overflow: "hidden",
+            maxWidth: 680,
+          }}
+        >
+          {activeStep.rows.map((row, index) => (
+            <div
+              key={`${row.key}-${index}`}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr auto",
+                gap: 16,
+                padding: "10px 12px",
+                borderTop:
+                  index === 0 ? "none" : `1px solid ${ANALYTICS.LINE_SOFT}`,
+                color: ANALYTICS.INK_2,
+                fontSize: 13,
+              }}
+            >
+              <span>{row.key}</span>
+              <b
+                style={{
+                  color: row.flag ? ANALYTICS.AMBER_TEXT : ANALYTICS.INK,
+                }}
+              >
+                {row.value}
+              </b>
+            </div>
+          ))}
           <div
-            key={`${row.key}-${index}`}
             style={{
-              display: "grid",
-              gridTemplateColumns: "1fr auto",
-              gap: 16,
-              padding: "10px 12px",
-              borderTop:
-                index === 0 ? "none" : `1px solid ${ANALYTICS.LINE_SOFT}`,
-              color: ANALYTICS.INK_2,
-              fontSize: 13,
+              padding: "12px",
+              borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
             }}
           >
-            <span>{row.key}</span>
-            <b
-              style={{ color: row.flag ? ANALYTICS.AMBER_TEXT : ANALYTICS.INK }}
-            >
-              {row.value}
-            </b>
+            {actionButton}
+            {actionError}
           </div>
-        ))}
-        <div style={{ padding: "12px" }}>
-          {actionButton}
-          {actionError}
         </div>
       </div>
     );
@@ -2198,6 +2214,7 @@ function StepDetail({
         : null;
     return (
       <div style={{ marginLeft: 42, maxWidth: 680 }}>
+        {evidenceRow}
         {factTemplateCode ? (
           <TemplateDownloadLink
             eventId={eventId}
@@ -2234,8 +2251,107 @@ function StepDetail({
 
   return (
     <div style={{ marginLeft: 42 }}>
+      {evidenceRow}
       {actionButton}
       {actionError}
+    </div>
+  );
+}
+
+function ActiveStepRequirementRow({
+  step,
+  isComplete,
+  factTemplateCode,
+}: {
+  step: SourceShellStep;
+  isComplete: boolean;
+  factTemplateCode?: string;
+}) {
+  const ownerSource = step.provenance
+    ? `${step.provenance.owner} / ${step.provenance.source}`
+    : step.file
+      ? step.file.name
+      : "Review on this page";
+  const format = factTemplateCode
+    ? "CSV/XLSX template"
+    : step.file
+      ? step.file.format
+      : step.type === "provide"
+        ? "Upload file"
+        : step.type === "decide"
+          ? "Decision"
+          : "Review";
+  const action =
+    step.type === "provide"
+      ? "Download template, fill it, upload here"
+      : step.type === "decide"
+        ? "Review, record decision, save"
+        : "Review and confirm";
+  return (
+    <div
+      data-testid="source-active-requirement-row"
+      style={{
+        border: `1px solid ${ANALYTICS.LINE}`,
+        borderRadius: 8,
+        marginBottom: 14,
+        maxWidth: 760,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          background: ANALYTICS.PAGE_BG,
+          color: ANALYTICS.MUTED,
+          display: "grid",
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 9,
+          fontWeight: 850,
+          gridTemplateColumns: "1.2fr 1.5fr 120px 116px",
+          letterSpacing: "0.06em",
+          padding: "8px 12px",
+          textTransform: "uppercase",
+        }}
+      >
+        <span>Required input</span>
+        <span>Owner / source</span>
+        <span>Format</span>
+        <span>Status</span>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1.2fr 1.5fr 120px 116px",
+          gap: 12,
+          padding: "11px 12px",
+          color: ANALYTICS.INK,
+          fontSize: 12.5,
+          lineHeight: 1.35,
+        }}
+      >
+        <span>
+          <b>{step.title}</b>
+          <span
+            style={{
+              color: ANALYTICS.MUTED,
+              display: "block",
+              fontSize: 11.5,
+              marginTop: 2,
+            }}
+          >
+            {action}
+          </span>
+        </span>
+        <span style={{ color: ANALYTICS.INK_2 }}>{ownerSource}</span>
+        <span style={{ color: ANALYTICS.MUTED }}>{format}</span>
+        <span
+          style={{
+            color: isComplete ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
+            fontWeight: 850,
+          }}
+        >
+          {isComplete ? "Done" : "Needed"}
+        </span>
+      </div>
     </div>
   );
 }
@@ -4945,9 +5061,7 @@ function WorkspaceButton({
       }}
     >
       <span>{label}</span>
-      <span style={{ color: badge ? ANALYTICS.FAINT : ANALYTICS.AMBER_TEXT }}>
-        {badge ?? "•"}
-      </span>
+      {badge ? <span style={{ color: ANALYTICS.FAINT }}>{badge}</span> : null}
     </button>
   );
 }

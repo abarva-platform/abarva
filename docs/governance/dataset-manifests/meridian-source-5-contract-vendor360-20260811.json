@@ -1,0 +1,17 @@
+{
+  "dataset_id": "meridian-source-5-contract-vendor360-20260811",
+  "title": "Meridian Source Five-Contract Vendor 360 Candidate",
+  "client_key": "meridian-health",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "synthetic_demo_companion_extract",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": "Synthetic, PHI-free, planning-grade Source/Vendor 360 package. No patient, member, provider, claim-line, PHI, PII, or real production Meridian records are included. Finance-confirmed value remains limited to the synthetic partial-proof row carried by the package.",
+  "expected_object_count": 1102,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-08-11",
+  "notes": "Manifest gates scripts/source/fixtures/meridian-source-5-contract-layer-cube-proof-20260811 and the source.meridian_vendor360_* read-model load. It does not activate a canonical tenant-input replacement, production client data claim, PHI-bearing dataset, or realized-value claim beyond the package caveats."
+}

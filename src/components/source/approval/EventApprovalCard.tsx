@@ -651,7 +651,7 @@ function GovernanceHistory({
 const PAGE_STYLE: CSSProperties = {
   minHeight: "100%",
   background: SHELL.PAPER,
-  padding: "20px clamp(24px, 4vw, 52px) 36px",
+  padding: "14px clamp(20px, 3vw, 40px) 28px",
   overflow: "auto",
 };
 
@@ -662,8 +662,8 @@ const BANNER_STYLE: CSSProperties = {
   border: `1px solid ${SHELL.PEACH_LINE}`,
   borderRadius: 8,
   background: SHELL.PEACH_BG,
-  padding: "9px 13px",
-  marginBottom: 16,
+  padding: "7px 11px",
+  marginBottom: 12,
 };
 
 const STATUS_CHIP_STYLE: CSSProperties = {
@@ -679,15 +679,15 @@ const STATUS_CHIP_STYLE: CSSProperties = {
 
 const BANNER_TEXT_STYLE: CSSProperties = {
   fontFamily: SHELL.SANS,
-  fontSize: 13,
+  fontSize: 12.5,
   color: SHELL.INK,
 };
 
 const HEADER_STYLE: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
-  gap: 24,
-  marginBottom: 16,
+  gap: 20,
+  marginBottom: 12,
 };
 
 const EYEBROW_STYLE: CSSProperties = {
@@ -698,21 +698,21 @@ const EYEBROW_STYLE: CSSProperties = {
 };
 
 const H1_STYLE: CSSProperties = {
-  margin: "6px 0 0",
+  margin: "4px 0 0",
   fontFamily: SHELL.SERIF,
-  fontSize: "clamp(22px, 1.45vw, 28px)",
+  fontSize: "clamp(20px, 1.25vw, 26px)",
   lineHeight: 1.12,
   fontWeight: 400,
   letterSpacing: 0,
   color: SHELL.INK,
-  maxWidth: 980,
+  maxWidth: 920,
 };
 
 const LEDE_STYLE: CSSProperties = {
   maxWidth: 760,
-  margin: "7px 0 0",
+  margin: "5px 0 0",
   fontFamily: SHELL.SANS,
-  fontSize: 13,
+  fontSize: 12.5,
   lineHeight: 1.45,
   color: SHELL.INK_SOFT,
 };
@@ -720,22 +720,22 @@ const LEDE_STYLE: CSSProperties = {
 const GRID_STYLE: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "minmax(0, 1.1fr) minmax(360px, 0.72fr)",
-  gap: 18,
+  gap: 14,
   alignItems: "start",
 };
 
 const LEFT_COL_STYLE: CSSProperties = {
   display: "grid",
-  gap: 12,
+  gap: 10,
 };
 
 const BRIEF_CARD_STYLE: CSSProperties = {
   display: "grid",
-  gap: 12,
+  gap: 10,
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
   background: SHELL.CARD_WHITE,
-  padding: 15,
+  padding: 13,
   boxShadow: "0 12px 34px rgba(15,23,42,0.05)",
 };
 
@@ -779,7 +779,7 @@ const FACT_ROW_STYLE: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "minmax(150px, 0.34fr) minmax(0, 1fr)",
   gap: 16,
-  padding: "10px 0",
+  padding: "8px 0",
   borderBottom: `1px solid ${SHELL.CARD_LINE}`,
 };
 
@@ -793,7 +793,7 @@ const FACT_LABEL_STYLE: CSSProperties = {
 const FACT_VALUE_STYLE: CSSProperties = {
   margin: 0,
   fontFamily: SHELL.SANS,
-  fontSize: 13.5,
+  fontSize: 13,
   fontWeight: 700,
   lineHeight: 1.35,
   color: SHELL.INK,
@@ -808,9 +808,9 @@ const BLOCKER_STRIP_STYLE: CSSProperties = {
   borderRadius: 8,
   background: SHELL.PEACH_BG,
   color: SHELL.PEACH_TEXT,
-  padding: "10px 12px",
+  padding: "8px 10px",
   fontFamily: SHELL.SANS,
-  fontSize: 13,
+  fontSize: 12.5,
   lineHeight: 1.35,
 };
 
@@ -823,13 +823,13 @@ const READY_STRIP_STYLE: CSSProperties = {
 
 const RIGHT_PANEL_STYLE: CSSProperties = {
   position: "sticky",
-  top: 20,
+  top: 14,
   display: "grid",
-  gap: 12,
+  gap: 10,
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
   background: SHELL.CARD_WHITE,
-  padding: 15,
+  padding: 13,
   boxShadow: "0 18px 50px rgba(15,23,42,0.08)",
 };
 
@@ -851,7 +851,7 @@ const ACTION_TITLE_STYLE: CSSProperties = {
 const ACTION_COPY_STYLE: CSSProperties = {
   margin: 0,
   fontFamily: SHELL.SANS,
-  fontSize: 13,
+  fontSize: 12.5,
   lineHeight: 1.45,
   color: SHELL.INK_SOFT,
 };
@@ -861,9 +861,9 @@ const SELF_NOTICE_STYLE: CSSProperties = {
   borderRadius: 8,
   background: SHELL.PEACH_BG,
   color: SHELL.PEACH_TEXT,
-  padding: "9px 11px",
+  padding: "8px 10px",
   fontFamily: SHELL.SANS,
-  fontSize: 13,
+  fontSize: 12.5,
   lineHeight: 1.45,
 };
 
@@ -884,9 +884,9 @@ const TEXTAREA_STYLE: CSSProperties = {
   resize: "vertical",
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
-  padding: 10,
+  padding: 9,
   fontFamily: SHELL.SANS,
-  fontSize: 13.5,
+  fontSize: 13,
   lineHeight: 1.45,
   color: SHELL.INK,
 };

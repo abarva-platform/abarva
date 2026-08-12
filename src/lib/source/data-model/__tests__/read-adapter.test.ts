@@ -31,7 +31,7 @@ describe("listContractVendor360 tenant-key aliasing", () => {
     await listContractVendor360("skyharbor-air");
     expect(run.mock.calls[0]).toEqual([
       "SELECT set_config('app.tenant_key', $1, false)",
-      ["skyharbor_global"],
+      ["skyharbor-air"],
     ]);
     const [, params] = run.mock.calls[1];
     expect(params[0]).toEqual(
@@ -60,7 +60,7 @@ describe("listContractVendor360 tenant-key aliasing", () => {
     expect(run.mock.calls[0][0]).toBe(
       "SELECT set_config('app.tenant_key', $1, false)",
     );
-    expect(run.mock.calls[0][1]).not.toEqual(["skyharbor_global"]);
+    expect(run.mock.calls[0][1]).not.toEqual(["skyharbor-air"]);
     const [, params] = run.mock.calls[1];
     expect(params[0]).toEqual(
       expect.arrayContaining([
@@ -88,6 +88,7 @@ describe("listContractVendor360 tenant-key aliasing", () => {
   it("reads Meridian contract detail through the same canary projection as the portfolio", async () => {
     mockedQuery.mockImplementation(async (sql: string, params: unknown[]) => {
       expect(params[0]).toBe("meridian_health_global");
+      if (sql.includes("source.meridian_vendor360_contract")) return [];
       expect(sql).toContain("meridian_health_contract_family_v1");
       expect(sql).not.toContain("source.contract_360");
       return [
@@ -116,10 +117,49 @@ describe("listContractVendor360 tenant-key aliasing", () => {
 
     expect(row?.contract_id).toBe("CF-001");
     expect(row?.vendor_name).toBe("Crestline Analytics Services LLC");
+    expect(mockedQuery.mock.calls[0][0]).toContain(
+      "source.meridian_vendor360_contract",
+    );
     expect(run).not.toHaveBeenCalledWith(
       expect.stringContaining("source.contract_360"),
       expect.anything(),
     );
+  });
+
+  it("prefers the loaded Meridian five-contract Vendor 360 candidate before the older canary", async () => {
+    mockedQuery.mockImplementation(async (sql: string, params: unknown[]) => {
+      expect(params[0]).toBe("meridian_health_global");
+      if (sql.includes("source.meridian_vendor360_contract")) {
+        return [
+          {
+            tenant_key: "meridian_health_global",
+            contract_id: "MER-CTR-RCM-001",
+            vendor_ref: "MER-VEN-RCM-NORTHBRIDGE",
+            vendor_name: "NorthBridge RCM Services LLC",
+            vendor_category: "Revenue cycle managed services",
+            contract_name: "Revenue Cycle Managed Services",
+            annual_value: "18600000",
+            total_committed_value: "55800000",
+            actual_annual_spend: "3128675",
+            auto_renew: false,
+            annual_value_conflict_flag: false,
+            total_committed_value_conflict_flag: false,
+            scoped_application_count: "4",
+            critical_application_count: "1",
+            operational_evidence_gap: "false",
+            initiative_dependency_count: "5",
+          },
+        ];
+      }
+      throw new Error(`Unexpected query after candidate hit: ${sql}`);
+    });
+
+    const row = await getContract360("meridian-health", "MER-CTR-RCM-001");
+
+    expect(row?.contract_id).toBe("MER-CTR-RCM-001");
+    expect(row?.vendor_name).toBe("NorthBridge RCM Services LLC");
+    expect(mockedQuery).toHaveBeenCalledTimes(1);
+    expect(run).not.toHaveBeenCalled();
   });
 
   it("quantifies unapproved rate-card variance inside recoverable leakage evidence", async () => {
