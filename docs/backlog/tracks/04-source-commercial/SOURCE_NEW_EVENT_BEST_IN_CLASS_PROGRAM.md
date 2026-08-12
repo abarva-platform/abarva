@@ -93,11 +93,12 @@ The workflow is not the product. The product is the governed conversion of messy
 ### SRC48 — Holistic New Event Operating Design
 
 **Priority:** P0
-**Status:** pending
+**Status:** candidate-design
 **Type:** design / architecture / workflow contract
 **Primary surface:** Source New Event 11-stage journey
 **Primary agent:** Nexus
 **Dependencies:** Current Source event canvas, guidebooks, files, approvals, Source shell read-model
+**Design artifact:** [`SOURCE_NEW_EVENT_SRC48_OPERATING_DESIGN.md`](./SOURCE_NEW_EVENT_SRC48_OPERATING_DESIGN.md)
 
 #### Purpose
 
@@ -544,7 +545,7 @@ The following still require explicit human gate per slice:
 - `SRC45` Transition readiness placeholder surface.
 - `SRC46` Contract optimization advisory story pack.
 - `SRC47` Source event archive and stale fact cleanup.
-- `SRC48` Holistic New Event operating design.
+- `SRC48` Holistic New Event operating design: candidate design authored; awaiting signed-in route review before implementation slices use it as accepted.
 - `SRC49` Live evidence intake and parser substrate.
 - `SRC50` Evidence-bound first-pass scoring.
 - `SRC51` Pricing normalization and commercial trap engine.
