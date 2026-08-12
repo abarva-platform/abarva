@@ -12,6 +12,16 @@ Dashboard, event canvas, Scope, RFP readiness, data readiness, vendor response c
 
 A coherent sourcing operating workspace that answers: what is ready, what is blocked, what should we negotiate, and are we ready for selection review?
 
+## Source New Event best-in-class program
+
+The broader Source New Event vision is tracked in
+[`SOURCE_NEW_EVENT_BEST_IN_CLASS_PROGRAM.md`](./SOURCE_NEW_EVENT_BEST_IN_CLASS_PROGRAM.md).
+
+Before starting additional New Event implementation beyond the current narrow
+backlog slices, use that program backlog to do the holistic 11-stage design
+review first, then execute incrementally with explicit PR, QA, ACA deploy, runtime
+invariant, and signed-in browser proof gates.
+
 ## Backlog Items
 
 ---
