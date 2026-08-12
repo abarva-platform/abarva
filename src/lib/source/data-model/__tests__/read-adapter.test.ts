@@ -31,7 +31,7 @@ describe("listContractVendor360 tenant-key aliasing", () => {
     await listContractVendor360("skyharbor-air");
     expect(run.mock.calls[0]).toEqual([
       "SELECT set_config('app.tenant_key', $1, false)",
-      ["skyharbor_global"],
+      ["skyharbor-air"],
     ]);
     const [, params] = run.mock.calls[1];
     expect(params[0]).toEqual(
@@ -60,7 +60,7 @@ describe("listContractVendor360 tenant-key aliasing", () => {
     expect(run.mock.calls[0][0]).toBe(
       "SELECT set_config('app.tenant_key', $1, false)",
     );
-    expect(run.mock.calls[0][1]).not.toEqual(["skyharbor_global"]);
+    expect(run.mock.calls[0][1]).not.toEqual(["skyharbor-air"]);
     const [, params] = run.mock.calls[1];
     expect(params[0]).toEqual(
       expect.arrayContaining([

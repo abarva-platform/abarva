@@ -1,0 +1,11 @@
+dimension,description
+tenant_key,Tenant/context key
+contract_id,Canonical contract ID
+vendor_name,Supplier/vendor label
+contract_archetype,Commercial archetype
+period,"Month, quarter, or scenario period"
+evidence_class,Evidence class feeding measure
+service_or_process,"Service, worker role, or process dimension"
+sku_or_service,SKU/service dimension
+opportunity_id,Opportunity/case dimension
+gate_state,Review/gate state for claim blocking

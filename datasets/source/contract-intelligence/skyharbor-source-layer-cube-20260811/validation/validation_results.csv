@@ -1,0 +1,121 @@
+check,status,detail
+manifest_sha:source_system_extracts/contract_register.csv,pass,source_system_extracts/contract_register.csv
+manifest_rows:source_system_extracts/contract_register.csv,pass,expected=2 actual=2
+manifest_sha:source_system_extracts/supplier_master.csv,pass,source_system_extracts/supplier_master.csv
+manifest_rows:source_system_extracts/supplier_master.csv,pass,expected=6 actual=6
+manifest_sha:source_system_extracts/contract_document_inventory.csv,pass,source_system_extracts/contract_document_inventory.csv
+manifest_rows:source_system_extracts/contract_document_inventory.csv,pass,expected=30 actual=30
+manifest_sha:source_system_extracts/document_clause_extractions.csv,pass,source_system_extracts/document_clause_extractions.csv
+manifest_rows:source_system_extracts/document_clause_extractions.csv,pass,expected=120 actual=120
+manifest_sha:source_system_extracts/contract_pricing_schedule.csv,pass,source_system_extracts/contract_pricing_schedule.csv
+manifest_rows:source_system_extracts/contract_pricing_schedule.csv,pass,expected=16 actual=16
+manifest_sha:source_system_extracts/ap_invoice_lines.csv,pass,source_system_extracts/ap_invoice_lines.csv
+manifest_rows:source_system_extracts/ap_invoice_lines.csv,pass,expected=96 actual=96
+manifest_sha:source_system_extracts/po_line_extract.csv,pass,source_system_extracts/po_line_extract.csv
+manifest_rows:source_system_extracts/po_line_extract.csv,pass,expected=16 actual=16
+manifest_sha:source_system_extracts/sla_event_extract.csv,pass,source_system_extracts/sla_event_extract.csv
+manifest_rows:source_system_extracts/sla_event_extract.csv,pass,expected=72 actual=72
+manifest_sha:source_system_extracts/usage_entitlement_detail.csv,pass,source_system_extracts/usage_entitlement_detail.csv
+manifest_rows:source_system_extracts/usage_entitlement_detail.csv,pass,expected=288 actual=288
+manifest_sha:source_system_extracts/cloud_billing_export.csv,pass,source_system_extracts/cloud_billing_export.csv
+manifest_rows:source_system_extracts/cloud_billing_export.csv,pass,expected=72 actual=72
+manifest_sha:source_system_extracts/vms_work_order_rate_card.csv,pass,source_system_extracts/vms_work_order_rate_card.csv
+manifest_rows:source_system_extracts/vms_work_order_rate_card.csv,pass,expected=48 actual=48
+manifest_sha:source_system_extracts/renewal_negotiation_history.csv,pass,source_system_extracts/renewal_negotiation_history.csv
+manifest_rows:source_system_extracts/renewal_negotiation_history.csv,pass,expected=32 actual=32
+manifest_sha:source_system_extracts/finance_realization_period.csv,pass,source_system_extracts/finance_realization_period.csv
+manifest_rows:source_system_extracts/finance_realization_period.csv,pass,expected=8 actual=8
+manifest_sha:source_system_extracts/contract_evidence_applicability.csv,pass,source_system_extracts/contract_evidence_applicability.csv
+manifest_rows:source_system_extracts/contract_evidence_applicability.csv,pass,expected=46 actual=46
+manifest_sha:source_system_extracts/optimization_opportunities.csv,pass,source_system_extracts/optimization_opportunities.csv
+manifest_rows:source_system_extracts/optimization_opportunities.csv,pass,expected=8 actual=8
+manifest_sha:source_system_extracts/calculation_inputs.csv,pass,source_system_extracts/calculation_inputs.csv
+manifest_rows:source_system_extracts/calculation_inputs.csv,pass,expected=64 actual=64
+manifest_sha:source_system_extracts/calculation_outputs.csv,pass,source_system_extracts/calculation_outputs.csv
+manifest_rows:source_system_extracts/calculation_outputs.csv,pass,expected=24 actual=24
+manifest_sha:source_system_extracts/case_lifecycle_events.csv,pass,source_system_extracts/case_lifecycle_events.csv
+manifest_rows:source_system_extracts/case_lifecycle_events.csv,pass,expected=48 actual=48
+manifest_sha:source_system_extracts/approval_decisions.csv,pass,source_system_extracts/approval_decisions.csv
+manifest_rows:source_system_extracts/approval_decisions.csv,pass,expected=12 actual=12
+manifest_sha:source_system_extracts/commercial_learning_patterns.csv,pass,source_system_extracts/commercial_learning_patterns.csv
+manifest_rows:source_system_extracts/commercial_learning_patterns.csv,pass,expected=16 actual=16
+manifest_sha:source_system_extracts/new_event_controls_from_lessons.csv,pass,source_system_extracts/new_event_controls_from_lessons.csv
+manifest_rows:source_system_extracts/new_event_controls_from_lessons.csv,pass,expected=16 actual=16
+manifest_sha:source_system_extracts/evidence_entity_links.csv,pass,source_system_extracts/evidence_entity_links.csv
+manifest_rows:source_system_extracts/evidence_entity_links.csv,pass,expected=27 actual=27
+manifest_sha:source_system_extracts/fact_assertions.csv,pass,source_system_extracts/fact_assertions.csv
+manifest_rows:source_system_extracts/fact_assertions.csv,pass,expected=20 actual=20
+manifest_sha:source_system_extracts/fact_conflicts.csv,pass,source_system_extracts/fact_conflicts.csv
+manifest_rows:source_system_extracts/fact_conflicts.csv,pass,expected=7 actual=7
+manifest_sha:source_system_extracts/reviewer_decisions.csv,pass,source_system_extracts/reviewer_decisions.csv
+manifest_rows:source_system_extracts/reviewer_decisions.csv,pass,expected=23 actual=23
+manifest_sha:review/depth_review.csv,pass,review/depth_review.csv
+manifest_rows:review/depth_review.csv,pass,expected=48 actual=48
+manifest_sha:documents/DOC-CTR-090-MSA_Salesforce_SYNTHETIC.md,pass,documents/DOC-CTR-090-MSA_Salesforce_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-090-SOW-CORE_Salesforce_SYNTHETIC.md,pass,documents/DOC-CTR-090-SOW-CORE_Salesforce_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-090-SOW-TRANSITION_Salesforce_SYNTHETIC.md,pass,documents/DOC-CTR-090-SOW-TRANSITION_Salesforce_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-090-ORDER-BASE_Salesforce_SYNTHETIC.md,pass,documents/DOC-CTR-090-ORDER-BASE_Salesforce_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-090-ORDER-TRUEUP_Salesforce_SYNTHETIC.md,pass,documents/DOC-CTR-090-ORDER-TRUEUP_Salesforce_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-090-AMEND-001_Salesforce_SYNTHETIC.md,pass,documents/DOC-CTR-090-AMEND-001_Salesforce_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-090-AMEND-002_Salesforce_SYNTHETIC.md,pass,documents/DOC-CTR-090-AMEND-002_Salesforce_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-090-PRICING-EXHIBIT_Salesforce_SYNTHETIC.md,pass,documents/DOC-CTR-090-PRICING-EXHIBIT_Salesforce_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-090-SLA-SCHEDULE_Salesforce_SYNTHETIC.md,pass,documents/DOC-CTR-090-SLA-SCHEDULE_Salesforce_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-090-SUPPORT-POLICY_Salesforce_SYNTHETIC.md,pass,documents/DOC-CTR-090-SUPPORT-POLICY_Salesforce_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-090-SECURITY-DPA_Salesforce_SYNTHETIC.md,pass,documents/DOC-CTR-090-SECURITY-DPA_Salesforce_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-090-NOTICE-RENEWAL_Salesforce_SYNTHETIC.md,pass,documents/DOC-CTR-090-NOTICE-RENEWAL_Salesforce_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-090-RENEWAL-QUOTE_Salesforce_SYNTHETIC.md,pass,documents/DOC-CTR-090-RENEWAL-QUOTE_Salesforce_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-090-SIDE-LETTER_Salesforce_SYNTHETIC.md,pass,documents/DOC-CTR-090-SIDE-LETTER_Salesforce_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-090-EXIT-PLAN_Salesforce_SYNTHETIC.md,pass,documents/DOC-CTR-090-EXIT-PLAN_Salesforce_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-061-MSA_Microsoft_SYNTHETIC.md,pass,documents/DOC-CTR-061-MSA_Microsoft_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-061-SOW-CORE_Microsoft_SYNTHETIC.md,pass,documents/DOC-CTR-061-SOW-CORE_Microsoft_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-061-SOW-TRANSITION_Microsoft_SYNTHETIC.md,pass,documents/DOC-CTR-061-SOW-TRANSITION_Microsoft_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-061-ORDER-BASE_Microsoft_SYNTHETIC.md,pass,documents/DOC-CTR-061-ORDER-BASE_Microsoft_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-061-ORDER-TRUEUP_Microsoft_SYNTHETIC.md,pass,documents/DOC-CTR-061-ORDER-TRUEUP_Microsoft_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-061-AMEND-001_Microsoft_SYNTHETIC.md,pass,documents/DOC-CTR-061-AMEND-001_Microsoft_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-061-AMEND-002_Microsoft_SYNTHETIC.md,pass,documents/DOC-CTR-061-AMEND-002_Microsoft_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-061-PRICING-EXHIBIT_Microsoft_SYNTHETIC.md,pass,documents/DOC-CTR-061-PRICING-EXHIBIT_Microsoft_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-061-SLA-SCHEDULE_Microsoft_SYNTHETIC.md,pass,documents/DOC-CTR-061-SLA-SCHEDULE_Microsoft_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-061-SUPPORT-POLICY_Microsoft_SYNTHETIC.md,pass,documents/DOC-CTR-061-SUPPORT-POLICY_Microsoft_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-061-SECURITY-DPA_Microsoft_SYNTHETIC.md,pass,documents/DOC-CTR-061-SECURITY-DPA_Microsoft_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-061-NOTICE-RENEWAL_Microsoft_SYNTHETIC.md,pass,documents/DOC-CTR-061-NOTICE-RENEWAL_Microsoft_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-061-RENEWAL-QUOTE_Microsoft_SYNTHETIC.md,pass,documents/DOC-CTR-061-RENEWAL-QUOTE_Microsoft_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-061-SIDE-LETTER_Microsoft_SYNTHETIC.md,pass,documents/DOC-CTR-061-SIDE-LETTER_Microsoft_SYNTHETIC.md
+manifest_sha:documents/DOC-CTR-061-EXIT-PLAN_Microsoft_SYNTHETIC.md,pass,documents/DOC-CTR-061-EXIT-PLAN_Microsoft_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-090-MSA,pass,documents/DOC-CTR-090-MSA_Salesforce_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-090-SOW-CORE,pass,documents/DOC-CTR-090-SOW-CORE_Salesforce_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-090-SOW-TRANSITION,pass,documents/DOC-CTR-090-SOW-TRANSITION_Salesforce_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-090-ORDER-BASE,pass,documents/DOC-CTR-090-ORDER-BASE_Salesforce_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-090-ORDER-TRUEUP,pass,documents/DOC-CTR-090-ORDER-TRUEUP_Salesforce_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-090-AMEND-001,pass,documents/DOC-CTR-090-AMEND-001_Salesforce_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-090-AMEND-002,pass,documents/DOC-CTR-090-AMEND-002_Salesforce_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-090-PRICING-EXHIBIT,pass,documents/DOC-CTR-090-PRICING-EXHIBIT_Salesforce_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-090-SLA-SCHEDULE,pass,documents/DOC-CTR-090-SLA-SCHEDULE_Salesforce_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-090-SUPPORT-POLICY,pass,documents/DOC-CTR-090-SUPPORT-POLICY_Salesforce_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-090-SECURITY-DPA,pass,documents/DOC-CTR-090-SECURITY-DPA_Salesforce_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-090-NOTICE-RENEWAL,pass,documents/DOC-CTR-090-NOTICE-RENEWAL_Salesforce_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-090-RENEWAL-QUOTE,pass,documents/DOC-CTR-090-RENEWAL-QUOTE_Salesforce_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-090-SIDE-LETTER,pass,documents/DOC-CTR-090-SIDE-LETTER_Salesforce_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-090-EXIT-PLAN,pass,documents/DOC-CTR-090-EXIT-PLAN_Salesforce_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-061-MSA,pass,documents/DOC-CTR-061-MSA_Microsoft_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-061-SOW-CORE,pass,documents/DOC-CTR-061-SOW-CORE_Microsoft_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-061-SOW-TRANSITION,pass,documents/DOC-CTR-061-SOW-TRANSITION_Microsoft_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-061-ORDER-BASE,pass,documents/DOC-CTR-061-ORDER-BASE_Microsoft_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-061-ORDER-TRUEUP,pass,documents/DOC-CTR-061-ORDER-TRUEUP_Microsoft_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-061-AMEND-001,pass,documents/DOC-CTR-061-AMEND-001_Microsoft_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-061-AMEND-002,pass,documents/DOC-CTR-061-AMEND-002_Microsoft_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-061-PRICING-EXHIBIT,pass,documents/DOC-CTR-061-PRICING-EXHIBIT_Microsoft_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-061-SLA-SCHEDULE,pass,documents/DOC-CTR-061-SLA-SCHEDULE_Microsoft_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-061-SUPPORT-POLICY,pass,documents/DOC-CTR-061-SUPPORT-POLICY_Microsoft_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-061-SECURITY-DPA,pass,documents/DOC-CTR-061-SECURITY-DPA_Microsoft_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-061-NOTICE-RENEWAL,pass,documents/DOC-CTR-061-NOTICE-RENEWAL_Microsoft_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-061-RENEWAL-QUOTE,pass,documents/DOC-CTR-061-RENEWAL-QUOTE_Microsoft_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-061-SIDE-LETTER,pass,documents/DOC-CTR-061-SIDE-LETTER_Microsoft_SYNTHETIC.md
+document_inventory_sha:DOC-CTR-061-EXIT-PLAN,pass,documents/DOC-CTR-061-EXIT-PLAN_Microsoft_SYNTHETIC.md
+evidence_links_resolve,pass,bad_links=0
+fact_assertions_resolve_to_links,pass,bad_facts=0
+calculation_inputs_native_sources,pass,bad_calc_inputs=0
+temporal_consistency,pass,future_dates=0
+ctr_090_action_ready,pass,ready
+ctr_061_conflict_control,pass,blocked_by_governed_conflict
+cube_rows_present,pass,rows=362
+cube_gate_rows_present,pass,rows=2
