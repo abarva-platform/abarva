@@ -29,7 +29,7 @@ jest.mock("@clerk/nextjs", () => ({
 }));
 
 import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
-import { SAMPLE_SCOPE_STAGE } from "../sample-view-model";
+import { SAMPLE_BAFO_STAGE, SAMPLE_SCOPE_STAGE } from "../sample-view-model";
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
 import type { SourcingEventSummary } from "@/lib/source/types";
 
@@ -202,14 +202,14 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(activeEvidenceRow).toHaveTextContent(
       "Tickets, SLA misses, change orders, run volumes",
     );
-    expect(activeEvidenceRow).toHaveTextContent(
-      "Scope volumetrics template",
-    );
+    expect(activeEvidenceRow).toHaveTextContent("Scope volumetrics template");
     expect(activeEvidenceRow).toHaveTextContent("VOLUMETRICS_V1");
     expect(activeEvidenceRow).toHaveTextContent(
       "Scope memo, value lever sizing, pricing baseline",
     );
-    expect(activeEvidenceRow).toHaveTextContent("Readback: no typed facts yet.");
+    expect(activeEvidenceRow).toHaveTextContent(
+      "Readback: no typed facts yet.",
+    );
     expect(activeEvidenceRow).toHaveTextContent("Upload below");
 
     fireEvent.click(
@@ -302,7 +302,9 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     ).toHaveTextContent("Clear these artifact actions before approval");
     expect(
       screen.getByTestId("source-shell-approval-review-gaps"),
-    ).toHaveTextContent("not decision-ready until the current-stage artifact queue is cleared");
+    ).toHaveTextContent(
+      "not decision-ready until the current-stage artifact queue is cleared",
+    );
     expect(
       screen.getByTestId("source-shell-approval-open-files"),
     ).toHaveTextContent("Clear artifact queue");
@@ -441,5 +443,46 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.getByTestId("source-shell-approval-readiness"),
     ).toHaveTextContent("Ready to decide");
+  });
+
+  it("shows BAFO scenario compare on the actual stage-ready workflow surface", () => {
+    const completedBafoStage = {
+      ...SAMPLE_BAFO_STAGE,
+      tasks: SAMPLE_BAFO_STAGE.tasks.map((task) => ({
+        ...task,
+        state: "done" as const,
+        evidenceComplete: true,
+      })),
+    };
+    const bafoEvent: SourcingEventSummary = {
+      ...EVENT,
+      currentStageKey: "bafo",
+      currentStageLabel: "BAFO",
+      nextAction: "Open BAFO approval gate",
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={bafoEvent}
+        viewStage="bafo"
+        tenantName="Demo Client"
+        stageView={completedBafoStage}
+        approvalItems={[]}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(
+      screen.getByTestId("source-shell-stage-ready-panel"),
+    ).toHaveTextContent("Required inputs are complete");
+    expect(
+      screen.getByTestId("source-bafo-scenario-compare"),
+    ).toHaveTextContent("What can we realistically improve in BAFO?");
+    expect(
+      screen.getByTestId("source-bafo-scenario-compare"),
+    ).toHaveTextContent("Base-case upside to test");
+    expect(
+      screen.getByTestId("source-bafo-scenario-compare"),
+    ).toHaveTextContent("Prepare negotiation brief");
   });
 });
