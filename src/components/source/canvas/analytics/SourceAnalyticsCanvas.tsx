@@ -1214,6 +1214,7 @@ function FocusedWorkPanel({
     step.status === "captured" || completedIds.has(step.id);
   const doneCount = flatSteps.filter(isComplete).length;
   const allReady = flatSteps.length > 0 && doneCount === flatSteps.length;
+  const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
   const activeStep =
     flatSteps.find((step) => step.id === activeStepId) ??
     flatSteps.find((step) => step.status !== "captured") ??
@@ -1385,7 +1386,9 @@ function FocusedWorkPanel({
           }}
         >
           {allReady
-            ? `All required work is complete for ${view.stage.label}. Open the approval gate when the owner is ready.`
+            ? hasArtifactGaps
+              ? `Required inputs are complete for ${view.stage.label}. Review Files first; the approval gate stays blocked until artifact review is cleared or an exception is recorded.`
+              : `All required work is complete for ${view.stage.label}. Open the approval gate when the owner is ready.`
             : `${flatSteps.length - doneCount} step${flatSteps.length - doneCount === 1 ? "" : "s"} left before ${view.stage.label} can move to approval.`}
         </div>
       </div>

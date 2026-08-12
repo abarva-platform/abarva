@@ -255,6 +255,14 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       screen.getByTestId("source-shell-stage-ready-panel"),
     ).toHaveTextContent("Required inputs are complete");
     expect(
+      screen.getByTestId("source-shell-v2-steps"),
+    ).toHaveTextContent(
+      "Review Files first; the approval gate stays blocked until artifact review is cleared or an exception is recorded",
+    );
+    expect(screen.getByTestId("source-shell-v2-steps")).not.toHaveTextContent(
+      "Open the approval gate when the owner is ready",
+    );
+    expect(
       screen.getByTestId("source-shell-stage-ready-panel"),
     ).toHaveTextContent("artifact review items remain");
     expect(screen.getByTestId("source-stage-ready-status")).toHaveTextContent(
