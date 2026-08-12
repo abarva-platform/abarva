@@ -147,6 +147,12 @@ export function SimpleStageFront({
   // in the deliverables explorer / File Cabinet, so we never block the advance on
   // a slow board-grade generation. Mirrors the Moves "Approve & Build" model.
   const handleApproveAndContinue = async () => {
+    if (!allRequiredReady) {
+      setMessage(
+        `${remainingRequiredCount} required input${remainingRequiredCount === 1 ? "" : "s"} still open before this stage can move to approval.`,
+      );
+      return;
+    }
     const nextStage = view.nextStep.stage;
     if (!nextStage) {
       // Final stage: nothing to advance to, so approving just writes the doc.
@@ -339,14 +345,16 @@ export function SimpleStageFront({
           type="button"
           data-testid="source-simple-front-approve"
           onClick={() => void handleApproveAndContinue()}
-          disabled={generating}
-          style={PRIMARY_BUTTON_STYLE}
+          disabled={generating || !allRequiredReady}
+          style={primaryButtonStyle(allRequiredReady)}
         >
           {generating
             ? "Writing..."
-            : view.nextStep.stage
-              ? `Approve stage → ${nextStageName}`
-              : `Write ${view.deliverable.name}`}
+            : !allRequiredReady
+              ? `Complete ${remainingRequiredCount} input${remainingRequiredCount === 1 ? "" : "s"}`
+              : view.nextStep.stage
+                ? `Open approval gate → ${nextStageName}`
+                : `Write ${view.deliverable.name}`}
         </button>
         {latestDoc ? (
           <Link
@@ -698,13 +706,16 @@ const NEXT_GATE_BODY_STYLE: CSSProperties = {
   color: CANVAS.INK_SOFT,
 };
 
-const PRIMARY_BUTTON_STYLE: CSSProperties = {
-  ...BASE_BUTTON_STYLE,
-  padding: "12px 18px",
-  border: `1px solid ${CANVAS.ACTIVE}`,
-  background: CANVAS.ACTIVE,
-  color: CANVAS.CARD,
-};
+function primaryButtonStyle(enabled: boolean): CSSProperties {
+  return {
+    ...BASE_BUTTON_STYLE,
+    padding: "12px 18px",
+    border: `1px solid ${enabled ? CANVAS.ACTIVE : CANVAS.RULE}`,
+    background: enabled ? CANVAS.ACTIVE : "rgba(12,26,58,0.08)",
+    color: enabled ? CANVAS.CARD : CANVAS.INK_MUTED,
+    cursor: enabled ? "pointer" : "not-allowed",
+  };
+}
 
 const DOWNLOAD_LINK_STYLE: CSSProperties = {
   ...SECONDARY_SMALL_STYLE,

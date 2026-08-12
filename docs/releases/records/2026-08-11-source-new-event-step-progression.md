@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The Source New Event step screen now shows required inputs as an evidence table with source, status, and row actions. The bottom of the screen now has an explicit approval-gate block that tells the user what remains open or what approving the stage will do next.
+The Source New Event step screen now shows required inputs as an evidence table with source, status, and row actions. The bottom of the screen now has an explicit approval-gate block that tells the user what remains open or what the approval gate will do next. The primary gate action is disabled until all required inputs meet their minimum readiness state.
 
 ## Layer Impact
 
@@ -61,4 +61,4 @@ Revert the PR and redeploy through the repo-owned ACA workflow. No migration rol
 
 ## Known Gaps
 
-This is a progression-clarity UI fix. It does not change upload parsing, artifact quality scoring, or the full Source 11-stage QA backlog.
+This is a progression-clarity and client-side gate-lock UI fix. It does not change upload parsing, artifact quality scoring, server-side approval semantics, or the full Source 11-stage QA backlog.
