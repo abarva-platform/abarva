@@ -1,0 +1,1407 @@
+#!/usr/bin/env node
+
+/**
+ * Two-tenant (or N-tenant) Layer 1-4 refresh preparation.
+ *
+ * Classifies every tenant context artifact by architecture layer and truth eligibility,
+ * derives conflicts mechanically rather than by assertion, prepares the Layer 1 governed
+ * intake draft package, and records what cannot be done without an explicit human gate.
+ *
+ * Everything it writes is either a report or a draft package under
+ * `datasets/tenant-inputs/<tenant>/v2026-08-governed-intake/`. It never writes an active
+ * tenant root, the registry, the data plane, retrieval, or any runtime surface, and it
+ * never reads one tenant's files to fill a gap in another.
+ *
+ * Usage:
+ *   node scripts/audit/tenant-layer-refresh.mjs
+ *   node scripts/audit/tenant-layer-refresh.mjs --tenant meridian-health --tenant skyharbor-air
+ *   node scripts/audit/tenant-layer-refresh.mjs --out reports/<dir> --no-package
+ */
+
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import Papa from 'papaparse';
+
+const ROOT = process.cwd();
+const DEFAULT_TENANTS = ['meridian-health', 'skyharbor-air'];
+const DEFAULT_OUT = 'reports/tenant-layer-refresh-2026-08-12';
+const REGISTRY = 'datasets/tenant-inputs/tenant-input-registry.json';
+const TEMPLATE_DIR = 'datasets/tenant-inputs/templates/universal/standard-2026-07-v3';
+const LINEAGE_JSON = 'reports/tower-fact-lineage/lineage.json';
+const PACKAGE_ID = 'v2026-08-governed-intake';
+
+const NOT_ACTIVE =
+  'draft_local_offline_only_not_active_truth_no_registry_no_load_no_retrieval_no_product_use';
+
+// --------------------------------------------------------------------------------------
+// args + io helpers
+// --------------------------------------------------------------------------------------
+
+function parseArgs(argv) {
+  const args = { tenants: [], out: DEFAULT_OUT, writePackage: true };
+  for (let index = 2; index < argv.length; index += 1) {
+    const value = argv[index];
+    if (value === '--tenant') {
+      args.tenants.push(argv[index + 1]);
+      index += 1;
+    } else if (value === '--out') {
+      args.out = argv[index + 1];
+      index += 1;
+    } else if (value === '--no-package') {
+      args.writePackage = false;
+    } else if (value === '--help') {
+      console.log(
+        [
+          'Usage:',
+          '  node scripts/audit/tenant-layer-refresh.mjs [--tenant <key>]... [--out <dir>] [--no-package]',
+        ].join('\n'),
+      );
+      process.exit(0);
+    }
+  }
+  if (args.tenants.length === 0) args.tenants = [...DEFAULT_TENANTS];
+  args.tenants = [...new Set(args.tenants.filter(Boolean))];
+  return args;
+}
+
+const abs = (relativePath) => path.join(ROOT, relativePath);
+const exists = (relativePath) => fs.existsSync(abs(relativePath));
+const sha256 = (relativePath) =>
+  crypto.createHash('sha256').update(fs.readFileSync(abs(relativePath))).digest('hex');
+
+const csvCell = (value) => {
+  const text = value === null || value === undefined ? '' : String(value);
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+function writeCsv(filePath, headers, rows) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const body = [
+    headers.join(','),
+    ...rows.map((row) => headers.map((header) => csvCell(row[header])).join(',')),
+  ].join('\n');
+  fs.writeFileSync(filePath, `${body}\n`);
+}
+
+function writeJson(filePath, value) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+function writeText(filePath, value) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, value.endsWith('\n') ? value : `${value}\n`);
+}
+
+function walk(relativeDir) {
+  const out = [];
+  const stack = [relativeDir];
+  while (stack.length) {
+    const current = stack.pop();
+    let entries;
+    try {
+      entries = fs.readdirSync(abs(current), { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      const next = path.posix.join(current, entry.name);
+      if (entry.isDirectory()) stack.push(next);
+      else if (entry.isFile()) out.push(next);
+    }
+  }
+  return out.sort();
+}
+
+/** Row/column shape of a CSV without loading assumptions about its schema. */
+function csvShape(relativePath) {
+  try {
+    const text = fs.readFileSync(abs(relativePath), 'utf8');
+    const parsed = Papa.parse(text.trim(), { header: true, skipEmptyLines: true });
+    return {
+      rows: parsed.data.length,
+      columns: parsed.meta.fields ?? [],
+      parseErrors: parsed.errors.length,
+    };
+  } catch {
+    return { rows: 0, columns: [], parseErrors: -1 };
+  }
+}
+
+// --------------------------------------------------------------------------------------
+// layer model
+// --------------------------------------------------------------------------------------
+
+/**
+ * Layer roots are declared by convention, then confirmed on disk. Nothing here infers
+ * tenancy from a directory name — the active root always comes from the registry.
+ */
+function layerRootsFor(tenant, activeRoot) {
+  return [
+    {
+      layer: 'Layer 1 — Client Intake',
+      role: 'registry-declared active input package',
+      relativePath: activeRoot,
+      truthEligibility: 'active-declared-source-package',
+      refreshLocally: 'no — active root is a hard gate',
+      gate: 'active-root-replacement',
+    },
+    {
+      layer: 'Layer 1 — Client Intake',
+      role: 'adjacent standard pack (parallel copy of the same dimensions)',
+      relativePath: `datasets/tenant-inputs/${tenant}/standard-2026-07-v3`,
+      truthEligibility: 'duplicate-truth-candidate',
+      refreshLocally: 'no — classify and reconcile first',
+      gate: 'retirement-manifest',
+    },
+    {
+      layer: 'Layer 1 — Client Intake',
+      role: 'governed intake draft package',
+      relativePath: `datasets/tenant-inputs/${tenant}/${PACKAGE_ID}`,
+      truthEligibility: 'draft-not-active',
+      refreshLocally: 'yes',
+      gate: 'none for drafts; registry activation is gated',
+    },
+    {
+      layer: 'Layer 1 — Client Intake',
+      role: 'interview and questionnaire discovery channel',
+      relativePath: `datasets/tenant-inputs/${tenant}/interviews`,
+      truthEligibility: 'source-signal-not-deterministic-truth',
+      refreshLocally: 'yes — as draft copies inside the governed package',
+      gate: 'none for drafts',
+    },
+    {
+      layer: 'Layer 1 — Client Intake',
+      role: 'candidate pack',
+      relativePath: `datasets/tenant-inputs/candidates/${tenant}`,
+      truthEligibility: 'not-active',
+      refreshLocally: 'no — classify only',
+      gate: 'retirement-manifest',
+    },
+    {
+      layer: 'Layer 2 — Source Adapters',
+      role: 'generated adapter output',
+      relativePath: `datasets/tenant-inputs/generated/${tenant}`,
+      truthEligibility: 'disposable-build-output',
+      refreshLocally: 'yes — dry-run only, no active write',
+      gate: 'none for dry-run',
+    },
+    {
+      layer: 'Layer 3 — Canonical Model',
+      role: 'derived canonical context artifacts',
+      relativePath: `datasets/tenant-inputs/${tenant}/derived`,
+      truthEligibility: 'derived-output-rebuildable',
+      refreshLocally: 'yes — as draft summaries only',
+      gate: 'canonical-store-write',
+    },
+    {
+      layer: 'Layer 4 — Products',
+      role: 'approved narrative/product content',
+      relativePath: `datasets/tenant-inputs/${tenant}/approved-content`,
+      truthEligibility: 'product-projection',
+      refreshLocally: 'no — readiness reporting only',
+      gate: 'product-projection-refresh',
+    },
+  ];
+}
+
+function readRegistry() {
+  const registry = JSON.parse(fs.readFileSync(abs(REGISTRY), 'utf8'));
+  const activeByTenant = new Map();
+  for (const tenant of registry.activeTenants ?? []) {
+    activeByTenant.set(tenant.tenantKey, tenant.canonicalInputRoot);
+  }
+  return { registry, activeByTenant };
+}
+
+function readManifestContract() {
+  const manifest = JSON.parse(fs.readFileSync(abs(`${TEMPLATE_DIR}/template-manifest.json`), 'utf8'));
+  const workstreams = JSON.parse(
+    fs.readFileSync(abs(`${TEMPLATE_DIR}/client-intake-workstreams.json`), 'utf8'),
+  );
+  const byFile = new Map(manifest.templates.map((template) => [template.file, template.columns]));
+  return { manifest, workstreams, byFile };
+}
+
+/**
+ * Reads the real Layer 2 mapping contract rather than a copy of it, so the gap register
+ * cannot drift from what the adapter actually requires.
+ */
+async function readMappingProfiles() {
+  try {
+    const module = await import('../../src/lib/enterprise-data/source-adapters/mapping-profiles.ts');
+    return module.BUILT_IN_MAPPING_PROFILES ?? [];
+  } catch (error) {
+    console.warn(`  warning: could not load mapping profiles (${error.message}); adapter gaps reported as unknown`);
+    return null;
+  }
+}
+
+function readLineage() {
+  if (!exists(LINEAGE_JSON)) return [];
+  try {
+    return JSON.parse(fs.readFileSync(abs(LINEAGE_JSON), 'utf8'));
+  } catch {
+    return [];
+  }
+}
+
+// --------------------------------------------------------------------------------------
+// per-tenant analysis
+// --------------------------------------------------------------------------------------
+
+function analyseTenant(tenant, activeRoot, contract, lineage) {
+  const roots = layerRootsFor(tenant, activeRoot).map((root) => {
+    const present = exists(root.relativePath);
+    const files = present ? walk(root.relativePath) : [];
+    return { ...root, present, files };
+  });
+
+  // ---- canonical dimension coverage against the declared contract -------------------
+  const activeFiles = roots.find((root) => root.truthEligibility === 'active-declared-source-package')?.files ?? [];
+  const activeBasenames = new Set(activeFiles.map((file) => path.basename(file)));
+
+  const contractFiles = [...contract.byFile.keys()];
+  const contractPrefix = new Map(
+    contractFiles.map((file) => [/^(\d{2})_/.exec(file)?.[1] ?? file, file]),
+  );
+
+  const dimensionRows = [];
+  for (const contractFile of contractFiles) {
+    const prefix = /^(\d{2})_/.exec(contractFile)?.[1] ?? '';
+    const matchByName = activeBasenames.has(contractFile) ? contractFile : '';
+    const matchByPrefix = [...activeBasenames].find(
+      (name) => name.endsWith('.csv') && /^(\d{2})_/.exec(name)?.[1] === prefix,
+    );
+    const resolved = matchByName || matchByPrefix || '';
+    const relative = resolved ? `${activeRoot}/${resolved}` : '';
+    const shape = relative ? csvShape(relative) : { rows: 0, columns: [], parseErrors: 0 };
+    const declared = contract.byFile.get(contractFile) ?? [];
+    const missingColumns = declared.filter((column) => !shape.columns.includes(column));
+
+    dimensionRows.push({
+      contractFile,
+      resolvedFile: resolved,
+      nameMatchesContract: resolved === contractFile ? 'yes' : resolved ? 'no' : 'absent',
+      dataRows: shape.rows,
+      declaredColumns: declared.length,
+      missingDeclaredColumns: missingColumns.length,
+      missingColumnNames: missingColumns.join('; '),
+      extraColumns: shape.columns.filter((column) => !declared.includes(column)).length,
+    });
+  }
+
+  const unregisteredActiveFiles = activeFiles
+    .map((file) => path.basename(file))
+    .filter((name) => {
+      if (!name.endsWith('.csv')) return true; // non-CSV inside a CSV intake root
+      if (contract.byFile.has(name)) return false;
+      const prefix = /^(\d{2})_/.exec(name)?.[1];
+      if (prefix && contractPrefix.has(prefix)) return false; // renamed but contract-mapped
+      return true;
+    });
+
+  // ---- duplicate truth candidates ---------------------------------------------------
+  const byBasename = new Map();
+  for (const root of roots) {
+    for (const file of root.files) {
+      const name = path.basename(file);
+      if (!name.endsWith('.csv')) continue;
+      if (!byBasename.has(name)) byBasename.set(name, []);
+      byBasename.get(name).push({ file, root });
+    }
+  }
+
+  const duplicates = [];
+  for (const [name, entries] of byBasename) {
+    if (entries.length < 2) continue;
+    const detail = entries.map((entry) => {
+      const shape = csvShape(entry.file);
+      return {
+        path: entry.file,
+        rootRole: entry.root.role,
+        layer: entry.root.layer,
+        eligibility: entry.root.truthEligibility,
+        sha256: sha256(entry.file),
+        rows: shape.rows,
+        columns: shape.columns.length,
+      };
+    });
+    const hashes = new Set(detail.map((entry) => entry.sha256));
+    duplicates.push({ name, detail, identical: hashes.size === 1 });
+  }
+
+  // ---- workstream coverage ----------------------------------------------------------
+  const dimensionByContractFile = new Map(dimensionRows.map((row) => [row.contractFile, row]));
+  const workstreamRows = contract.workstreams.clientFacingWorkstreams.map((workstream) => {
+    const targets = workstream.canonicalTargets ?? [];
+    const resolved = targets.map((target) => dimensionByContractFile.get(target)).filter(Boolean);
+    const present = resolved.filter((row) => row.resolvedFile);
+    const populated = present.filter((row) => row.dataRows > 0);
+    const totalRows = present.reduce((sum, row) => sum + row.dataRows, 0);
+
+    // Coverage is not just "a file exists with rows in it". A dimension whose columns do
+    // not match the declared contract carries no usable evidence for the attributes the
+    // adapters and products expect, so it counts as partial rather than covered.
+    const schemaClean = populated.filter((row) => row.missingDeclaredColumns === 0);
+
+    let coverage = 'missing';
+    if (schemaClean.length === targets.length) coverage = 'covered';
+    else if (populated.length > 0) coverage = 'partial';
+
+    return {
+      tenantKey: tenant,
+      workstreamId: workstream.workstreamId,
+      workstreamName: workstream.workstreamName,
+      typicalOwners: (workstream.typicalOwners ?? []).join('; '),
+      canonicalTargets: targets.join('; '),
+      targetsPresentInActiveRoot: present.length,
+      targetsPopulated: populated.length,
+      targetsSchemaConformant: schemaClean.length,
+      targetsDeclared: targets.length,
+      dataRowsAcrossTargets: totalRows,
+      coverageState: coverage,
+      schemaConformance:
+        schemaClean.length === present.length ? 'conformant' : `${present.length - schemaClean.length} target(s) off-contract`,
+      missingTargets: resolved
+        .filter((row) => !row.resolvedFile || row.dataRows === 0)
+        .map((row) => row.contractFile)
+        .join('; '),
+      offContractTargets: resolved
+        .filter((row) => row.resolvedFile && row.missingDeclaredColumns > 0)
+        .map((row) => `${row.resolvedFile} (-${row.missingDeclaredColumns} cols)`)
+        .join('; '),
+      smeValidationFocus: workstream.smeValidationFocus ?? '',
+      smeValidationStatus: 'not_reviewed',
+      allowedUse: 'internal_audit_and_gap_analysis_only',
+    };
+  });
+
+  // ---- fact lineage for this tenant --------------------------------------------------
+  const lineageForTenant = lineage.filter((entry) => entry.tenant === tenant);
+
+  return {
+    tenant,
+    activeRoot,
+    roots,
+    dimensionRows,
+    unregisteredActiveFiles,
+    duplicates,
+    workstreamRows,
+    lineageForTenant,
+  };
+}
+
+// --------------------------------------------------------------------------------------
+// derived matrices
+// --------------------------------------------------------------------------------------
+
+function layerMatrixRows(analysis) {
+  const rows = [];
+  for (const root of analysis.roots) {
+    const csvFiles = root.files.filter((file) => file.endsWith('.csv'));
+    const dataRows = csvFiles.reduce((sum, file) => sum + csvShape(file).rows, 0);
+    rows.push({
+      tenantKey: analysis.tenant,
+      layer: root.layer,
+      artifactGroup: root.role,
+      path: root.relativePath,
+      present: root.present ? 'yes' : 'no',
+      fileCount: root.files.length,
+      csvFileCount: csvFiles.length,
+      dataRowCount: dataRows,
+      truthEligibility: root.truthEligibility,
+      refreshableLocally: root.refreshLocally,
+      requiredGate: root.gate,
+      smeValidationRequired:
+        root.truthEligibility === 'active-declared-source-package' ||
+        root.truthEligibility === 'draft-not-active' ||
+        root.truthEligibility === 'source-signal-not-deterministic-truth'
+          ? 'yes'
+          : 'not-before-reconciliation',
+      status: NOT_ACTIVE,
+    });
+  }
+  return rows;
+}
+
+function claimRows(analysis) {
+  const rows = [];
+  const tenant = analysis.tenant;
+  let sequence = 0;
+  const nextId = (kind) => {
+    sequence += 1;
+    return `${tenant.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3)}-${kind}-${String(sequence).padStart(3, '0')}`;
+  };
+
+  for (const duplicate of analysis.duplicates) {
+    const asserting = duplicate.detail.map((entry) => entry.path).join('; ');
+    const values = duplicate.detail.map((entry) => `${path.basename(entry.path)}=${entry.rows} rows`).join('; ');
+    rows.push({
+      claimId: nextId('DUP'),
+      tenantKey: tenant,
+      claimType: 'duplicate-truth-candidate',
+      claim: `Canonical dimension ${duplicate.name} exists in ${duplicate.detail.length} roots`,
+      valueAsserted: values,
+      assertingFiles: asserting,
+      conflictState: duplicate.identical ? 'IDENTICAL_COPY' : 'DIVERGENT_COPY',
+      authoritativeCandidate: `${analysis.activeRoot}/${duplicate.name}`,
+      allowedUse: duplicate.identical
+        ? 'Either copy may be read; retire the non-registry copy through the retirement manifest.'
+        : 'Do not quote either copy until reconciled; the non-active copy asserts different content.',
+      blockedNarrative: duplicate.identical
+        ? ''
+        : 'Do not present figures from this dimension until the divergence is reconciled.',
+      recommendedNextEvidence: 'declare a source-of-record root, then regenerate the other copy or retire it',
+      smeReviewer: '',
+      status: 'open',
+    });
+  }
+
+  for (const dimension of analysis.dimensionRows) {
+    if (dimension.nameMatchesContract === 'absent') {
+      rows.push({
+        claimId: nextId('GAP'),
+        tenantKey: tenant,
+        claimType: 'contract-coverage-gap',
+        claim: `Canonical contract file ${dimension.contractFile} is absent from the active root`,
+        valueAsserted: 'absent',
+        assertingFiles: analysis.activeRoot,
+        conflictState: 'ABSENT',
+        authoritativeCandidate: '',
+        allowedUse: 'Treat this dimension as not evidenced for this tenant.',
+        blockedNarrative: `Do not state any fact that requires ${dimension.contractFile} for this tenant.`,
+        recommendedNextEvidence: 'client extract or document for this dimension',
+        smeReviewer: '',
+        status: 'open',
+      });
+    } else if (dimension.nameMatchesContract === 'no') {
+      rows.push({
+        claimId: nextId('DRIFT'),
+        tenantKey: tenant,
+        claimType: 'contract-naming-drift',
+        claim: `Contract file ${dimension.contractFile} is carried as ${dimension.resolvedFile} in the active root`,
+        valueAsserted: dimension.resolvedFile,
+        assertingFiles: `${analysis.activeRoot}/${dimension.resolvedFile}`,
+        conflictState: 'NAME_DRIFT',
+        authoritativeCandidate: dimension.contractFile,
+        allowedUse: 'Readable, but loaders keyed on the contract filename will miss it.',
+        blockedNarrative: '',
+        recommendedNextEvidence: 'decide whether the contract or the tenant file name is authoritative',
+        smeReviewer: '',
+        status: 'open',
+      });
+    }
+    if (dimension.resolvedFile && dimension.missingDeclaredColumns > 0) {
+      rows.push({
+        claimId: nextId('SCHEMA'),
+        tenantKey: tenant,
+        claimType: 'contract-column-gap',
+        claim: `${dimension.resolvedFile} is missing ${dimension.missingDeclaredColumns} declared column(s)`,
+        valueAsserted: dimension.missingColumnNames,
+        assertingFiles: `${analysis.activeRoot}/${dimension.resolvedFile}`,
+        conflictState: 'SCHEMA_GAP',
+        authoritativeCandidate: `${TEMPLATE_DIR}/template-manifest.json`,
+        allowedUse: 'Rows are readable; the missing columns carry no evidence for this tenant.',
+        blockedNarrative: 'Do not report the missing attributes as zero or as known.',
+        recommendedNextEvidence: 'source extract that carries the missing columns',
+        smeReviewer: '',
+        status: 'open',
+      });
+    }
+  }
+
+  for (const name of analysis.unregisteredActiveFiles) {
+    rows.push({
+      claimId: nextId('UNREG'),
+      tenantKey: tenant,
+      claimType: 'unregistered-artifact-in-active-root',
+      claim: `${name} sits in the active input root but is not in the template contract`,
+      valueAsserted: name,
+      assertingFiles: `${analysis.activeRoot}/${name}`,
+      conflictState: 'UNREGISTERED',
+      authoritativeCandidate: `${TEMPLATE_DIR}/template-manifest.json`,
+      allowedUse: 'Do not treat as a canonical dimension.',
+      blockedNarrative: 'Do not load or project this file as canonical content.',
+      recommendedNextEvidence: 'declare it in the template contract or move it out of the active root',
+      smeReviewer: '',
+      status: 'open',
+    });
+  }
+
+  for (const entry of analysis.lineageForTenant) {
+    if (entry.status !== 'CONFLICT' && entry.status !== 'ONE_SOURCE') continue;
+    rows.push({
+      claimId: nextId(entry.status === 'CONFLICT' ? 'FACT' : 'SOLO'),
+      tenantKey: tenant,
+      claimType: 'cross-source-fact-lineage',
+      claim: `${entry.label} (${entry.metric})`,
+      valueAsserted: (entry.asserted ?? [])
+        .map((claim) => `${claim.tree}/${path.basename(claim.rel)}·${claim.col}=${claim.value}`)
+        .join('; '),
+      assertingFiles: (entry.asserted ?? []).map((claim) => `${claim.tree}/${claim.rel}`).join('; '),
+      conflictState: entry.status,
+      authoritativeCandidate: '',
+      allowedUse:
+        entry.status === 'CONFLICT'
+          ? 'None. Sources materially disagree.'
+          : 'Quotable only if stated as uncorroborated single-source.',
+      blockedNarrative:
+        entry.status === 'CONFLICT'
+          ? 'Do not quote this figure at all until a source of record is declared.'
+          : 'Do not present as corroborated fact.',
+      recommendedNextEvidence: 'declare the source of record for this metric and regenerate the other assertion',
+      smeReviewer: '',
+      status: 'open',
+    });
+  }
+
+  return rows;
+}
+
+// --------------------------------------------------------------------------------------
+// Layer 2 — adapter dry-run against the real mapping contract
+// --------------------------------------------------------------------------------------
+
+/**
+ * A dry-run in the only sense that is safe here: for every implemented mapping profile,
+ * can this tenant's own intake files actually satisfy the required source fields? Nothing
+ * is transformed and nothing is written.
+ */
+function layer2Rows(analysis, contract, profiles) {
+  const tenant = analysis.tenant;
+  const activeRoot = analysis.activeRoot;
+  const activeCsvs = (analysis.roots.find((root) => root.relativePath === activeRoot)?.files ?? []).filter(
+    (file) => file.endsWith('.csv'),
+  );
+  const columnsByFile = new Map(activeCsvs.map((file) => [file, csvShape(file).columns]));
+
+  const implementedFamilies = new Set(
+    (profiles ?? []).map((profile) => profile.sourceClass).filter(Boolean),
+  );
+
+  // Declared adapter family per workstream vs what is actually implemented.
+  const familyRows = contract.workstreams.clientFacingWorkstreams.map((workstream) => {
+    const family = workstream.sourceAdapterFamily ?? '';
+    const targets = workstream.canonicalTargets ?? [];
+    const sourceFiles = targets
+      .map((target) => analysis.dimensionRows.find((row) => row.contractFile === target))
+      .filter((row) => row && row.resolvedFile)
+      .map((row) => `${activeRoot}/${row.resolvedFile}`);
+
+    // A declared family counts as implemented only if some mapping profile's source class
+    // plausibly covers it; the profile registry is keyed by source class, not family name.
+    const matchedProfiles = (profiles ?? []).filter((profile) =>
+      targets.some((target) => target.includes(profile.sourceClass.replace(/_/g, '_'))) ||
+      family.includes(profile.sourceClass.split('_')[0]),
+    );
+
+    return {
+      tenantKey: tenant,
+      workstreamId: workstream.workstreamId,
+      workstreamName: workstream.workstreamName,
+      declaredAdapterFamily: family,
+      implementedMappingProfiles: matchedProfiles.map((profile) => profile.mappingProfile).join('; '),
+      adapterState: matchedProfiles.length ? 'partially-implemented' : 'no-implemented-adapter',
+      sourceFilesAvailable: sourceFiles.join('; '),
+      sourceFileCount: sourceFiles.length,
+      outputsProduced: 'none — dry-run only, no adapter was executed',
+      gapNote: matchedProfiles.length
+        ? 'Mapping profile exists; field satisfaction is reported per profile in the dry-run rows.'
+        : `No mapping profile implements the ${family} family. Do not invent one — this is an adapter gap.`,
+    };
+  });
+
+  // Field-level satisfaction per implemented profile against this tenant's own files.
+  const dryRunRows = [];
+  for (const profile of profiles ?? []) {
+    const required = profile.rules.filter((rule) => rule.required).map((rule) => rule.sourceField);
+    const optional = profile.rules.filter((rule) => !rule.required).map((rule) => rule.sourceField);
+
+    // "Best" only means anything once at least one required field is present; otherwise
+    // reporting a filename would imply a match that does not exist.
+    let best = { file: '', satisfied: 0, missing: required };
+    for (const [file, columns] of columnsByFile) {
+      const satisfied = required.filter((field) => columns.includes(field));
+      if (satisfied.length > best.satisfied) {
+        best = { file, satisfied: satisfied.length, missing: required.filter((field) => !columns.includes(field)) };
+      }
+    }
+
+    const optionalHit = best.file
+      ? optional.filter((field) => (columnsByFile.get(best.file) ?? []).includes(field)).length
+      : 0;
+
+    dryRunRows.push({
+      tenantKey: tenant,
+      mappingProfile: profile.mappingProfile,
+      sourceClass: profile.sourceClass,
+      profileVersion: profile.version ?? '',
+      requiredFields: required.length,
+      bestMatchingSourceFile: best.file || 'none',
+      requiredFieldsSatisfied: Math.max(best.satisfied, 0),
+      requiredFieldsMissing: best.missing.length,
+      missingFieldNames: best.missing.join('; '),
+      optionalFieldsSatisfied: optionalHit,
+      dryRunResult:
+        best.satisfied === required.length && required.length > 0
+          ? 'would-run'
+          : best.satisfied > 0
+            ? 'would-fail-on-required-fields'
+            : 'no-source-file-matches-this-profile',
+      executed: 'no — field-satisfaction check only, no transform, no write',
+    });
+  }
+
+  return {
+    familyRows,
+    dryRunRows,
+    implementedFamilies: [...implementedFamilies],
+    profileCount: profiles ? profiles.length : 'unknown',
+  };
+}
+
+function evidenceRequestRows(analysis) {
+  const rows = [];
+  let sequence = 0;
+  for (const workstream of analysis.workstreamRows) {
+    if (workstream.coverageState === 'covered') continue;
+    sequence += 1;
+    rows.push({
+      requestId: `${analysis.tenant}-ER-${String(sequence).padStart(3, '0')}`,
+      tenantKey: analysis.tenant,
+      workstreamId: workstream.workstreamId,
+      workstreamName: workstream.workstreamName,
+      requestedFrom: workstream.typicalOwners,
+      whatIsMissing: workstream.missingTargets || 'partial population',
+      whyItMatters: workstream.smeValidationFocus,
+      coverageState: workstream.coverageState,
+      requestStatus: 'open',
+      dateRequested: '',
+      dateReceived: '',
+      notes: '',
+    });
+  }
+  return rows;
+}
+
+function hardGateRows(tenants, analyses) {
+  const gates = [
+    {
+      gateId: 'GATE-01',
+      action: 'Activate the governed intake package as the registry active root',
+      layer: 'Layer 1',
+      artefact: REGISTRY,
+      command: 'manual edit of tenant-input-registry.json + validation run',
+      expectedOutput: 'registry canonicalInputRoot repointed to the governed package',
+      rollback: 'restore prior registry commit; prior active root is untouched on disk',
+      approvalRequired: 'Anand/Codex, per tenant',
+    },
+    {
+      gateId: 'GATE-02',
+      action: 'Replace or alias the active tenant input root',
+      layer: 'Layer 1',
+      artefact: 'datasets/tenant-inputs/active/<tenant>/current',
+      command: 'package promotion step (not implemented in this script)',
+      expectedOutput: 'active root serves the governed package contents',
+      rollback: 'prior root retained until retirement manifest passes',
+      approvalRequired: 'Anand/Codex, per tenant',
+    },
+    {
+      gateId: 'GATE-03',
+      action: 'Load canonical data into Azure/Postgres',
+      layer: 'Layer 3',
+      artefact: 'intelligence_v6.* / canonical stores',
+      command: 'ACA data-build job per docs/ops/aca-data-build-job-rule.md',
+      expectedOutput: 'job run id, tenant scope, build version, Blob proof bundle, quality gate',
+      rollback: 'documented job rollback + readback',
+      approvalRequired: 'Anand/Codex + data-build job contract',
+    },
+    {
+      gateId: 'GATE-04',
+      action: 'Rebuild retrieval indexes',
+      layer: 'Layer 3/4',
+      artefact: 'Azure AI Search / fts indexes',
+      command: 'indexing job',
+      expectedOutput: 'indexed counts + cite-render verification',
+      rollback: 'prior index retained until swap',
+      approvalRequired: 'Anand/Codex',
+    },
+    {
+      gateId: 'GATE-05',
+      action: 'Enable aVa / product context use for the refreshed package',
+      layer: 'Layer 4',
+      artefact: 'agent context bundle + product projections',
+      command: 'flag/config change',
+      expectedOutput: 'signed-in proof per affected tenant',
+      rollback: 'flag off',
+      approvalRequired: 'Anand/Codex',
+    },
+    {
+      gateId: 'GATE-06',
+      action: 'Change signed-in runtime routes',
+      layer: 'Layer 4',
+      artefact: 'app routes',
+      command: 'ACA main deploy workflow',
+      expectedOutput: 'digest-pinned revision + live route proof',
+      rollback: 'traffic shift to prior revision',
+      approvalRequired: 'Anand/Codex',
+    },
+    {
+      gateId: 'GATE-07',
+      action: 'Retire, move, or delete legacy tenant files',
+      layer: 'Layer 1-4',
+      artefact: 'adjacent standard packs, candidate packs, generated packs',
+      command: 'retirement manifest apply step',
+      expectedOutput: 'retire-in-place first, deletion only after rollback window',
+      rollback: 'files retained in place',
+      approvalRequired: 'Anand/Codex',
+    },
+    {
+      gateId: 'GATE-08',
+      action: 'Change canonical CSV column contracts',
+      layer: 'Layer 1',
+      artefact: `${TEMPLATE_DIR}/template-manifest.json`,
+      command: 'contract amendment + loader/adapter update',
+      expectedOutput: 'documented reason, migration, and re-validation',
+      rollback: 'revert contract commit',
+      approvalRequired: 'Anand/Codex, with written justification',
+    },
+  ];
+
+  const rows = [];
+  for (const gate of gates) {
+    for (const tenant of tenants) {
+      const analysis = analyses.get(tenant);
+      let scope = '';
+      if (gate.gateId === 'GATE-01') scope = `active root today: ${analysis.activeRoot}`;
+      else if (gate.gateId === 'GATE-02')
+        scope = `${analysis.roots.find((root) => root.relativePath === analysis.activeRoot)?.files.length ?? 0} files in the active root`;
+      else if (gate.gateId === 'GATE-07')
+        scope = `${analysis.roots
+          .filter((root) => ['duplicate-truth-candidate', 'not-active'].includes(root.truthEligibility))
+          .reduce((sum, root) => sum + root.files.length, 0)} files across adjacent/candidate packs`;
+      else if (gate.gateId === 'GATE-08')
+        scope = `${analysis.dimensionRows.filter((row) => row.nameMatchesContract === 'no').length} naming drift(s), ${analysis.dimensionRows.filter((row) => row.missingDeclaredColumns > 0).length} column gap(s)`;
+      else scope = 'scope determined at apply time';
+
+      rows.push({
+        gateId: gate.gateId,
+        tenantKey: tenant,
+        action: gate.action,
+        layer: gate.layer,
+        artefactOrPath: gate.artefact,
+        scopeToday: scope,
+        commandToRun: gate.command,
+        expectedOutput: gate.expectedOutput,
+        rollbackReadbackProof: gate.rollback,
+        approvalRequired: gate.approvalRequired,
+        executedInThisRun: 'no',
+      });
+    }
+  }
+  return rows;
+}
+
+// --------------------------------------------------------------------------------------
+// Layer 1 governed intake draft package
+// --------------------------------------------------------------------------------------
+
+function writeGovernedPackage(analysis, contract, claims, generatedAt) {
+  const tenant = analysis.tenant;
+  const packageRoot = `datasets/tenant-inputs/${tenant}/${PACKAGE_ID}`;
+
+  // source register: every Layer 1 file this tenant has today, with provenance state
+  const sourceRegister = [];
+  for (const root of analysis.roots) {
+    if (!root.layer.startsWith('Layer 1')) continue;
+    if (root.relativePath === packageRoot) continue;
+    for (const file of root.files) {
+      const shape = file.endsWith('.csv') ? csvShape(file) : { rows: '', columns: [] };
+      sourceRegister.push({
+        tenantKey: tenant,
+        path: file,
+        rootRole: root.role,
+        truthEligibility: root.truthEligibility,
+        fileType: path.extname(file).replace('.', '') || 'none',
+        dataRows: shape.rows,
+        columnCount: Array.isArray(shape.columns) ? shape.columns.length : '',
+        sha256: sha256(file),
+        sourceSystemDeclared: 'not_declared_in_file',
+        sourceOwnerDeclared: 'not_declared_in_file',
+        extractDateDeclared: 'not_declared_in_file',
+        certificationState: 'not_attested',
+        classification: 'synthetic_demo_planning_grade',
+        approvedForLoading: 'no',
+      });
+    }
+  }
+
+  const smeMatrix = analysis.workstreamRows.map((row) => ({
+    tenantKey: tenant,
+    workstreamId: row.workstreamId,
+    workstreamName: row.workstreamName,
+    questionForSme: row.smeValidationFocus,
+    coverageState: row.coverageState,
+    dataRowsAvailable: row.dataRowsAcrossTargets,
+    reviewStatus: 'not_started',
+    disposition: '',
+    reviewerName: '',
+    reviewerRole: '',
+    reviewDate: '',
+    reviewerNotes: '',
+    allowedModuleUsage: 'internal_audit_and_gap_analysis_only',
+  }));
+
+  const blockedClaims = claims
+    .filter((claim) =>
+      ['CONFLICT', 'DIVERGENT_COPY', 'UNREGISTERED', 'ABSENT', 'SCHEMA_GAP'].includes(claim.conflictState),
+    )
+    .map((claim) => ({
+      tenantKey: tenant,
+      claimId: claim.claimId,
+      claimType: claim.claimType,
+      claim: claim.claim,
+      conflictState: claim.conflictState,
+      blockedNarrative: claim.blockedNarrative,
+      unblockCondition: claim.recommendedNextEvidence,
+      status: claim.status,
+    }));
+
+  writeJson(`${abs(packageRoot)}/00_manifest/package_manifest.json`, {
+    tenantKey: tenant,
+    packageId: PACKAGE_ID,
+    generatedAt,
+    generatedBy: 'scripts/audit/tenant-layer-refresh.mjs',
+    templateSetId: contract.manifest.templateSetId,
+    clientIntakeWorkstreams: `${TEMPLATE_DIR}/client-intake-workstreams.json`,
+    registryActiveRootAtGeneration: analysis.activeRoot,
+    registryActivated: false,
+    status: NOT_ACTIVE,
+    contents: {
+      '00_manifest/source_register.csv': 'every Layer 1 file this tenant has today, with provenance state',
+      '00_manifest/sme_validation_matrix.csv': 'one row per client-facing workstream, awaiting SME disposition',
+      '00_manifest/evidence_request_log.csv': 'open evidence requests derived from coverage gaps',
+      '00_manifest/blocked_claims.csv': 'claims that may not be quoted until reconciled',
+      'mapping/workstream_coverage_matrix.csv': 'workstream to canonical target coverage',
+    },
+    closedGates: [
+      'registry activation',
+      'active root replacement',
+      'Azure/Postgres load',
+      'retrieval indexing',
+      'aVa and product context use',
+      'runtime route change',
+      'file retirement or deletion',
+    ],
+  });
+
+  writeCsv(
+    `${abs(packageRoot)}/00_manifest/source_register.csv`,
+    Object.keys(sourceRegister[0] ?? { tenantKey: '', path: '' }),
+    sourceRegister,
+  );
+  writeCsv(`${abs(packageRoot)}/00_manifest/sme_validation_matrix.csv`, Object.keys(smeMatrix[0]), smeMatrix);
+
+  const evidenceRequests = evidenceRequestRows(analysis);
+  writeCsv(
+    `${abs(packageRoot)}/00_manifest/evidence_request_log.csv`,
+    [
+      'requestId',
+      'tenantKey',
+      'workstreamId',
+      'workstreamName',
+      'requestedFrom',
+      'whatIsMissing',
+      'whyItMatters',
+      'coverageState',
+      'requestStatus',
+      'dateRequested',
+      'dateReceived',
+      'notes',
+    ],
+    evidenceRequests,
+  );
+
+  writeCsv(
+    `${abs(packageRoot)}/00_manifest/blocked_claims.csv`,
+    ['tenantKey', 'claimId', 'claimType', 'claim', 'conflictState', 'blockedNarrative', 'unblockCondition', 'status'],
+    blockedClaims,
+  );
+
+  writeCsv(
+    `${abs(packageRoot)}/mapping/workstream_coverage_matrix.csv`,
+    Object.keys(analysis.workstreamRows[0]),
+    analysis.workstreamRows,
+  );
+
+  return { packageRoot, sourceRegister, smeMatrix, evidenceRequests, blockedClaims };
+}
+
+// --------------------------------------------------------------------------------------
+// per-tenant layer summaries
+// --------------------------------------------------------------------------------------
+
+function writeLayer3Summary(outDir, analysis, claims) {
+  const tenant = analysis.tenant;
+  const identityOk = analysis.dimensionRows.filter((row) => row.resolvedFile && row.dataRows > 0);
+  const conflicts = claims.filter((claim) =>
+    ['CONFLICT', 'DIVERGENT_COPY'].includes(claim.conflictState),
+  );
+  const relationships = analysis.dimensionRows.find((row) => row.contractFile === '12_relationships.csv');
+  const evidence = analysis.dimensionRows.find((row) => row.contractFile === '13_evidence_sources.csv');
+
+  const checks = [
+    {
+      check: 'Every canonical object has declared identity',
+      result: analysis.unregisteredActiveFiles.length === 0 ? 'PASS' : 'FAIL',
+      detail:
+        analysis.unregisteredActiveFiles.length === 0
+          ? 'All active-root files map to a declared contract dimension.'
+          : `${analysis.unregisteredActiveFiles.length} file(s) in the active root are not declared in the template contract: ${analysis.unregisteredActiveFiles.join('; ')}`,
+    },
+    {
+      check: 'Every fact carries source file / source row / evidence id where available',
+      result: evidence && evidence.dataRows > 0 ? 'PARTIAL' : 'FAIL',
+      detail: evidence
+        ? `13_evidence_sources carries ${evidence.dataRows} row(s); per-row evidence linkage is not verified by this script.`
+        : 'No evidence-sources dimension resolved.',
+    },
+    {
+      check: 'Relationship rows use canonical relationship types',
+      result: relationships && relationships.dataRows > 0 ? 'NOT_VERIFIED' : 'FAIL',
+      detail: relationships
+        ? `12_relationships carries ${relationships.dataRows} row(s); the canonical relationship dictionary lives in intelligence_v6.relationship_types and was not read (no data-plane access in this lane).`
+        : 'No relationships dimension resolved.',
+    },
+    {
+      check: 'Planning-grade and interview-only facts remain marked',
+      result: 'PARTIAL',
+      detail: 'Classification is carried in the package manifest as synthetic_demo_planning_grade; per-row attestation is not present.',
+    },
+    {
+      check: 'Money, counts, and metrics are deterministic and not model-invented',
+      result: conflicts.length === 0 ? 'PASS' : 'FAIL',
+      detail:
+        conflicts.length === 0
+          ? 'No cross-source conflicts detected for this tenant.'
+          : `${conflicts.length} conflicting or divergent claim(s); see claim-reconciliation-matrix.csv.`,
+    },
+    {
+      check: 'Duplicate/conflicting claims are blocked pending reconciliation',
+      result: 'PASS',
+      detail: `${conflicts.length} claim(s) recorded as blocked in the governed package blocked_claims.csv.`,
+    },
+  ];
+
+  const json = {
+    tenantKey: tenant,
+    layer: 'Layer 3 — Canonical Enterprise Model',
+    mode: 'draft-preparation-only',
+    canonicalStoreWritten: false,
+    activeRootAtGeneration: analysis.activeRoot,
+    dimensionsResolved: identityOk.length,
+    dimensionsDeclared: analysis.dimensionRows.length,
+    dimensionsAbsent: analysis.dimensionRows.filter((row) => row.nameMatchesContract === 'absent').length,
+    dimensionsWithNamingDrift: analysis.dimensionRows.filter((row) => row.nameMatchesContract === 'no').length,
+    dimensionsWithColumnGaps: analysis.dimensionRows.filter((row) => row.missingDeclaredColumns > 0).length,
+    unregisteredActiveFiles: analysis.unregisteredActiveFiles,
+    checks,
+    status: NOT_ACTIVE,
+  };
+
+  writeJson(path.join(outDir, tenant, 'layer3-canonical-refresh-summary.json'), json);
+  writeText(
+    path.join(outDir, tenant, 'layer3-canonical-refresh-summary.md'),
+    [
+      `# Layer 3 canonical refresh — ${tenant}`,
+      '',
+      `Mode: draft preparation only. No production canonical store was written.`,
+      `Active root at generation: \`${analysis.activeRoot}\``,
+      '',
+      '## Dimension coverage',
+      '',
+      '| Metric | Value |',
+      '| --- | ---: |',
+      `| Contract dimensions declared | ${json.dimensionsDeclared} |`,
+      `| Resolved with data | ${json.dimensionsResolved} |`,
+      `| Absent | ${json.dimensionsAbsent} |`,
+      `| Naming drift vs contract | ${json.dimensionsWithNamingDrift} |`,
+      `| Missing declared columns | ${json.dimensionsWithColumnGaps} |`,
+      `| Unregistered files in active root | ${json.unregisteredActiveFiles.length} |`,
+      '',
+      '## Required checks',
+      '',
+      '| Check | Result | Detail |',
+      '| --- | --- | --- |',
+      ...checks.map((check) => `| ${check.check} | \`${check.result}\` | ${check.detail} |`),
+      '',
+      '## Per-dimension detail',
+      '',
+      '| Contract file | Resolved as | Name matches | Data rows | Missing declared columns |',
+      '| --- | --- | --- | ---: | ---: |',
+      ...analysis.dimensionRows.map(
+        (row) =>
+          `| \`${row.contractFile}\` | ${row.resolvedFile ? `\`${row.resolvedFile}\`` : '—'} | ${row.nameMatchesContract} | ${row.dataRows} | ${row.missingDeclaredColumns} |`,
+      ),
+      '',
+      `Status: \`${NOT_ACTIVE}\``,
+      '',
+    ].join('\n'),
+  );
+
+  return json;
+}
+
+function writeLayer4Summary(outDir, analysis, inventoryRows) {
+  const tenant = analysis.tenant;
+  const lineageConflicts = analysis.lineageForTenant.filter((entry) => entry.status === 'CONFLICT');
+  const lineageSingle = analysis.lineageForTenant.filter((entry) => entry.status === 'ONE_SOURCE');
+  const approved = analysis.roots.find((root) => root.role.includes('approved narrative'));
+  const derived = analysis.roots.find((root) => root.layer.startsWith('Layer 3'));
+
+  const surfaces = [
+    {
+      surface: 'Home context and architecture projections',
+      localArtefact: `datasets/tenant-inputs/${tenant}/derived/home-context-view.json`,
+      present: exists(`datasets/tenant-inputs/${tenant}/derived/home-context-view.json`),
+    },
+    {
+      surface: 'Intelligence / aVa context bundle',
+      localArtefact: `datasets/tenant-inputs/${tenant}/derived/canonical-facts.json`,
+      present: exists(`datasets/tenant-inputs/${tenant}/derived/canonical-facts.json`),
+    },
+    {
+      surface: 'Moves context package',
+      localArtefact: `datasets/tenant-inputs/${tenant}/derived/moves-context-view.json`,
+      present: exists(`datasets/tenant-inputs/${tenant}/derived/moves-context-view.json`),
+    },
+    {
+      surface: 'Source read model / package',
+      localArtefact: `datasets/tenant-inputs/${tenant}/derived/evidence-registry.json`,
+      present: exists(`datasets/tenant-inputs/${tenant}/derived/evidence-registry.json`),
+    },
+    {
+      surface: 'Tower deterministic mart / cube',
+      localArtefact: `datasets/tenant-inputs/${tenant}/derived/tower-dashboard-view.json`,
+      present: exists(`datasets/tenant-inputs/${tenant}/derived/tower-dashboard-view.json`),
+    },
+  ].map((surface) => ({
+    ...surface,
+    readiness: surface.present ? 'local-artefact-present-not-refreshed' : 'no-local-artefact',
+    refreshedInThisRun: false,
+    blockedBy:
+      lineageConflicts.length > 0
+        ? 'Layer 3 fact conflicts unresolved'
+        : 'Layer 1 SME validation not complete',
+  }));
+
+  const json = {
+    tenantKey: tenant,
+    layer: 'Layer 4 — Products',
+    mode: 'readiness-report-only',
+    runtimeOrDatabaseProjectionRefreshed: false,
+    approvedContentFiles: approved?.files.length ?? 0,
+    derivedContextFiles: derived?.files.length ?? 0,
+    reportArtefacts: inventoryRows.filter(
+      (row) => row.tenantKey === tenant && row.artifactFamily === 'report-artifact',
+    ).length,
+    factLineage: {
+      source: LINEAGE_JSON,
+      conflictMetrics: lineageConflicts.map((entry) => entry.metric),
+      singleSourceMetrics: lineageSingle.map((entry) => entry.metric),
+      quotableFigures:
+        lineageConflicts.length === 0 && lineageSingle.length === 0
+          ? 'all corroborated'
+          : 'none without an explicit status caveat',
+    },
+    surfaces,
+    status: NOT_ACTIVE,
+  };
+
+  writeJson(path.join(outDir, tenant, 'layer4-projection-refresh-summary.json'), json);
+  writeText(
+    path.join(outDir, tenant, 'layer4-projection-refresh-summary.md'),
+    [
+      `# Layer 4 projection refresh — ${tenant}`,
+      '',
+      'Mode: readiness report only. No runtime surface, database projection, or product cube was refreshed.',
+      '',
+      '## Fact lineage before quoting any figure',
+      '',
+      `Source: \`${LINEAGE_JSON}\``,
+      '',
+      lineageConflicts.length
+        ? `**${lineageConflicts.length} metric(s) are \`CONFLICT\` for this tenant and must not be quoted at all:** ${lineageConflicts
+            .map((entry) => `\`${entry.metric}\``)
+            .join(', ')}.`
+        : 'No `CONFLICT` metrics for this tenant.',
+      '',
+      lineageSingle.length
+        ? `${lineageSingle.length} metric(s) are \`ONE_SOURCE\` and may only be quoted with that caveat stated: ${lineageSingle
+            .map((entry) => `\`${entry.metric}\``)
+            .join(', ')}.`
+        : 'No `ONE_SOURCE` metrics for this tenant.',
+      '',
+      '## Surface readiness',
+      '',
+      '| Surface | Local artefact | Readiness | Refreshed | Blocked by |',
+      '| --- | --- | --- | --- | --- |',
+      ...surfaces.map(
+        (surface) =>
+          `| ${surface.surface} | \`${surface.localArtefact}\` | ${surface.readiness} | no | ${surface.blockedBy} |`,
+      ),
+      '',
+      `Status: \`${NOT_ACTIVE}\``,
+      '',
+    ].join('\n'),
+  );
+
+  return json;
+}
+
+// --------------------------------------------------------------------------------------
+// main
+// --------------------------------------------------------------------------------------
+
+function readInventory(outDir) {
+  const inventoryPath = path.join(outDir, 'inventory', 'truth-inventory.csv');
+  if (!fs.existsSync(inventoryPath)) return [];
+  const parsed = Papa.parse(fs.readFileSync(inventoryPath, 'utf8').trim(), {
+    header: true,
+    skipEmptyLines: true,
+  });
+  return parsed.data;
+}
+
+async function main() {
+  const args = parseArgs(process.argv);
+  const generatedAt = new Date().toISOString();
+  const outDir = abs(args.out);
+  fs.mkdirSync(outDir, { recursive: true });
+
+  const { activeByTenant } = readRegistry();
+  const contract = readManifestContract();
+  const lineage = readLineage();
+  const profiles = await readMappingProfiles();
+  const inventoryRows = readInventory(outDir);
+
+  const analyses = new Map();
+  const allLayerRows = [];
+  const allClaimRows = [];
+  const allAdapterFamilyRows = [];
+  const allAdapterDryRunRows = [];
+  const packages = new Map();
+  const layer2 = new Map();
+  const layer3 = new Map();
+  const layer4 = new Map();
+
+  for (const tenant of args.tenants) {
+    const activeRoot = activeByTenant.get(tenant);
+    if (!activeRoot) {
+      throw new Error(
+        `Tenant "${tenant}" has no registry-declared active root. Identity is declared, never inferred — add it to ${REGISTRY} first.`,
+      );
+    }
+    const analysis = analyseTenant(tenant, activeRoot, contract, lineage);
+    analyses.set(tenant, analysis);
+
+    const layers = layerMatrixRows(analysis);
+    const claims = claimRows(analysis);
+    allLayerRows.push(...layers);
+    allClaimRows.push(...claims);
+
+    const adapters = layer2Rows(analysis, contract, profiles);
+    allAdapterFamilyRows.push(...adapters.familyRows);
+    allAdapterDryRunRows.push(...adapters.dryRunRows);
+    layer2.set(tenant, adapters);
+
+    if (args.writePackage) {
+      packages.set(tenant, writeGovernedPackage(analysis, contract, claims, generatedAt));
+    }
+    layer3.set(tenant, writeLayer3Summary(outDir, analysis, claims));
+    layer4.set(tenant, writeLayer4Summary(outDir, analysis, inventoryRows));
+  }
+
+  writeCsv(path.join(outDir, 'layer-refresh-matrix.csv'), Object.keys(allLayerRows[0]), allLayerRows);
+  writeCsv(
+    path.join(outDir, 'claim-reconciliation-matrix.csv'),
+    [
+      'claimId',
+      'tenantKey',
+      'claimType',
+      'claim',
+      'valueAsserted',
+      'assertingFiles',
+      'conflictState',
+      'authoritativeCandidate',
+      'allowedUse',
+      'blockedNarrative',
+      'recommendedNextEvidence',
+      'smeReviewer',
+      'status',
+    ],
+    allClaimRows,
+  );
+
+  writeCsv(
+    path.join(outDir, 'adapter-gap-register.csv'),
+    Object.keys(allAdapterFamilyRows[0]),
+    allAdapterFamilyRows,
+  );
+  writeCsv(
+    path.join(outDir, 'layer2-adapter-dry-run.csv'),
+    Object.keys(allAdapterDryRunRows[0] ?? { tenantKey: '', mappingProfile: '' }),
+    allAdapterDryRunRows,
+  );
+
+  const gateRows = hardGateRows(args.tenants, analyses);
+  writeCsv(path.join(outDir, 'hard-gate-register.csv'), Object.keys(gateRows[0]), gateRows);
+
+  const summary = {
+    generatedAt,
+    generatedBy: 'scripts/audit/tenant-layer-refresh.mjs',
+    tenants: args.tenants,
+    mode: 'local-offline-refresh-preparation',
+    status: NOT_ACTIVE,
+    factLineageSource: LINEAGE_JSON,
+    perTenant: Object.fromEntries(
+      args.tenants.map((tenant) => {
+        const analysis = analyses.get(tenant);
+        const claims = allClaimRows.filter((claim) => claim.tenantKey === tenant);
+        return [
+          tenant,
+          {
+            activeRoot: analysis.activeRoot,
+            layerRoots: analysis.roots.map((root) => ({
+              layer: root.layer,
+              path: root.relativePath,
+              present: root.present,
+              files: root.files.length,
+              truthEligibility: root.truthEligibility,
+            })),
+            claims: {
+              total: claims.length,
+              byState: claims.reduce((counts, claim) => {
+                counts[claim.conflictState] = (counts[claim.conflictState] ?? 0) + 1;
+                return counts;
+              }, {}),
+            },
+            workstreamCoverage: analysis.workstreamRows.reduce((counts, row) => {
+              counts[row.coverageState] = (counts[row.coverageState] ?? 0) + 1;
+              return counts;
+            }, {}),
+            governedPackage: packages.get(tenant)?.packageRoot ?? 'not written',
+            layer2: {
+              mappingProfilesImplemented: layer2.get(tenant).profileCount,
+              workstreamsWithNoImplementedAdapter: layer2
+                .get(tenant)
+                .familyRows.filter((row) => row.adapterState === 'no-implemented-adapter').length,
+              profilesThatWouldRun: layer2
+                .get(tenant)
+                .dryRunRows.filter((row) => row.dryRunResult === 'would-run').length,
+              adaptersExecuted: 0,
+            },
+            layer3: layer3.get(tenant),
+            layer4: layer4.get(tenant),
+          },
+        ];
+      }),
+    ),
+    closedGates: gateRows.filter((row) => row.executedInThisRun === 'no').length,
+  };
+  writeJson(path.join(outDir, 'summary.json'), summary);
+
+  const md = [
+    '# Two-tenant Layer 1-4 refresh preparation',
+    '',
+    `Generated: ${generatedAt}`,
+    `Tenants: ${args.tenants.map((tenant) => `\`${tenant}\``).join(', ')}`,
+    `Mode: local/offline refresh preparation. Status: \`${NOT_ACTIVE}\``,
+    '',
+    'Evidence for each tenant is derived only from that tenant\'s own files. No tenant\'s facts were used to fill another\'s gaps.',
+    '',
+    '## Layer roots per tenant',
+    '',
+    '| Tenant | Layer | Artifact group | Path | Files | Truth eligibility | Refresh locally |',
+    '| --- | --- | --- | --- | ---: | --- | --- |',
+    ...allLayerRows.map(
+      (row) =>
+        `| ${row.tenantKey} | ${row.layer} | ${row.artifactGroup} | \`${row.path}\` | ${row.present === 'yes' ? row.fileCount : '—'} | ${row.truthEligibility} | ${row.refreshableLocally} |`,
+    ),
+    '',
+    '## Claim reconciliation',
+    '',
+    '| Tenant | Conflict state | Claims |',
+    '| --- | --- | ---: |',
+    ...args.tenants.flatMap((tenant) => {
+      const byState = summary.perTenant[tenant].claims.byState;
+      return Object.entries(byState)
+        .sort()
+        .map(([state, count]) => `| ${tenant} | \`${state}\` | ${count} |`);
+    }),
+    '',
+    '## Workstream coverage',
+    '',
+    'A workstream counts as covered only when every canonical target resolves, carries rows, and matches the declared column contract.',
+    '',
+    '| Tenant | Covered | Partial | Missing |',
+    '| --- | ---: | ---: | ---: |',
+    ...args.tenants.map((tenant) => {
+      const coverage = summary.perTenant[tenant].workstreamCoverage;
+      return `| ${tenant} | ${coverage.covered ?? 0} | ${coverage.partial ?? 0} | ${coverage.missing ?? 0} |`;
+    }),
+    '',
+    '## Layer 2 adapters',
+    '',
+    `Implemented mapping profiles in \`src/lib/enterprise-data/source-adapters/mapping-profiles.ts\`: **${
+      profiles ? profiles.length : 'unknown'
+    }**, covering source classes ${
+      profiles ? [...new Set(profiles.map((profile) => `\`${profile.sourceClass}\``))].join(', ') : 'unknown'
+    }, against ${contract.workstreams.clientFacingWorkstreams.length} declared workstream adapter families.`,
+    '',
+    '| Tenant | Workstreams with no implemented adapter | Profiles that would run on this tenant | Adapters executed |',
+    '| --- | ---: | ---: | ---: |',
+    ...args.tenants.map((tenant) => {
+      const detail = summary.perTenant[tenant].layer2;
+      return `| ${tenant} | ${detail.workstreamsWithNoImplementedAdapter} | ${detail.profilesThatWouldRun} | ${detail.adaptersExecuted} |`;
+    }),
+    '',
+    'Adapter gaps are recorded, not filled. No adapter was invented and none was executed.',
+    '',
+    '## Outputs',
+    '',
+    '- `layer-refresh-matrix.csv` — every layer root per tenant with eligibility and gate.',
+    '- `claim-reconciliation-matrix.csv` — derived conflicts, duplicates, coverage gaps, and fact-lineage status.',
+    '- `adapter-gap-register.csv` — declared adapter family per workstream vs what is implemented.',
+    '- `layer2-adapter-dry-run.csv` — required-field satisfaction per mapping profile per tenant.',
+    '- `hard-gate-register.csv` — actions that require explicit approval; none were executed.',
+    '- `<tenant>/layer3-canonical-refresh-summary.{md,json}`',
+    '- `<tenant>/layer4-projection-refresh-summary.{md,json}`',
+    ...(args.writePackage
+      ? args.tenants.map(
+          (tenant) => `- \`datasets/tenant-inputs/${tenant}/${PACKAGE_ID}/\` — Layer 1 governed intake draft package.`,
+        )
+      : []),
+    '',
+    '## What was not done',
+    '',
+    '- The registry was not changed.',
+    '- No active tenant input root was written.',
+    '- No loader, data-plane write, or retrieval index ran.',
+    '- No product or runtime surface was changed.',
+    '- No file was retired, moved, or deleted.',
+    '',
+  ].join('\n');
+  writeText(path.join(outDir, 'summary.md'), md);
+
+  console.log(`tenant-layer-refresh: ${args.tenants.join(', ')}`);
+  console.log(`  layer rows: ${allLayerRows.length}  claims: ${allClaimRows.length}  gates: ${gateRows.length}`);
+  console.log(`  report: ${args.out}`);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

@@ -1,0 +1,27 @@
+{
+  "tenantKey": "skyharbor-air",
+  "packageId": "v2026-08-governed-intake",
+  "generatedAt": "2026-08-12T23:21:09.067Z",
+  "generatedBy": "scripts/audit/tenant-layer-refresh.mjs",
+  "templateSetId": "universal-tenant-input-standard-2026-07-v3",
+  "clientIntakeWorkstreams": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/client-intake-workstreams.json",
+  "registryActiveRootAtGeneration": "datasets/tenant-inputs/active/skyharbor-air/current",
+  "registryActivated": false,
+  "status": "draft_local_offline_only_not_active_truth_no_registry_no_load_no_retrieval_no_product_use",
+  "contents": {
+    "00_manifest/source_register.csv": "every Layer 1 file this tenant has today, with provenance state",
+    "00_manifest/sme_validation_matrix.csv": "one row per client-facing workstream, awaiting SME disposition",
+    "00_manifest/evidence_request_log.csv": "open evidence requests derived from coverage gaps",
+    "00_manifest/blocked_claims.csv": "claims that may not be quoted until reconciled",
+    "mapping/workstream_coverage_matrix.csv": "workstream to canonical target coverage"
+  },
+  "closedGates": [
+    "registry activation",
+    "active root replacement",
+    "Azure/Postgres load",
+    "retrieval indexing",
+    "aVa and product context use",
+    "runtime route change",
+    "file retirement or deletion"
+  ]
+}
