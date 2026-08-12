@@ -1068,6 +1068,14 @@ function StageHeader({ view }: { view: SourceEventShellView }) {
     view.stage.key === "transition" || view.stage.key === "value"
       ? "Atlas"
       : "aVa";
+  const inputsComplete =
+    view.stage.total > 0 && view.stage.ready >= view.stage.total;
+  const hasArtifactReviewBlockers =
+    inputsComplete && view.stage.artifactReadiness.blockerCount > 0;
+  const readinessLabel = hasArtifactReviewBlockers ? "inputs ready" : "ready";
+  const readinessAriaLabel = hasArtifactReviewBlockers
+    ? `${view.stage.ready} of ${view.stage.total} inputs ready; ${view.stage.artifactReadiness.blockerCount} file review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"} remain`
+    : `${view.stage.ready} of ${view.stage.total} ready`;
 
   return (
     <header style={{ marginBottom: 22, maxWidth: 1040 }}>
@@ -1126,6 +1134,8 @@ function StageHeader({ view }: { view: SourceEventShellView }) {
           </p>
         </div>
         <div
+          data-testid="source-stage-header-readiness"
+          aria-label={readinessAriaLabel}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -1162,7 +1172,17 @@ function StageHeader({ view }: { view: SourceEventShellView }) {
               }}
             />
           </div>
-          <span style={{ color: ANALYTICS.FAINT, fontSize: 12 }}>ready</span>
+          <span
+            data-testid="source-stage-header-readiness-label"
+            style={{
+              color: hasArtifactReviewBlockers
+                ? ANALYTICS.AMBER_TEXT
+                : ANALYTICS.FAINT,
+              fontSize: 12,
+            }}
+          >
+            {readinessLabel}
+          </span>
         </div>
       </div>
     </header>
