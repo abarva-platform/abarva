@@ -18,6 +18,8 @@ Adds a governed operator load path for a five-contract healthcare demo Source pa
 
 `client-data-lane`: adds `scripts/source/load-meridian-source-vendor360-candidate.mjs`, which creates dataset-scoped `source.meridian_vendor360_*` tables, loads the source extract ledger, and inserts clause-level `doc.extraction` rows.
 
+`client-data-lane`: follow-up loader hardening makes source-extract row IDs deterministic when a native extract ID repeats within a single source table, while preserving the native ID in JSON payload lineage.
+
 `public-demo`: Source Vendor 360 / Contract 360 now prefer the five-contract candidate for the healthcare demo tenant only when the dataset is loaded. Other tenants continue to read the existing `source.*` views.
 
 ## Client Applicability
@@ -61,6 +63,17 @@ Pass - focused read-adapter regression:
 
 - `npx jest src/lib/source/data-model/__tests__/read-adapter.test.ts --runInBand`
 - Result: passed, with existing duplicate manual mock warnings unrelated to this change.
+
+Pass - loader source-extract ID hotfix validation:
+
+- `node scripts/source/load-meridian-source-vendor360-candidate.mjs --mode self-test`
+- `npm run source:vendor360:meridian-5-contract:plan`
+- Result: target counts remained unchanged after deterministic duplicate-ID suffixing.
+
+Blocked - ACA operator preflight attempt:
+
+- Execution `job-abarva-private-operator-eus-h4hg1b7` failed closed before database access because the start override did not include the database secret env.
+- Execution `job-abarva-private-operator-eus-r4rxg0n` reached the database and rolled back on duplicate native source extract IDs in the package. This follow-up fixes that loader assumption; preflight must be rerun after merge/deploy.
 
 Additional validation required before release:
 
