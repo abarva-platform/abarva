@@ -177,6 +177,56 @@ describe("SimpleStageFront", () => {
     expect(onGenerateArtifact).not.toHaveBeenCalled();
   });
 
+  it("renders a pre-generation context manifest from substrate evidence states", () => {
+    const readyView: SimpleStageScreenView = {
+      ...view,
+      required: [
+        {
+          ...view.required[0],
+          state: "Usable Evidence",
+        },
+        view.required[1],
+        view.required[2],
+      ],
+      extras: [
+        {
+          ...view.extras[0]!,
+          state: "Available",
+        },
+      ],
+    };
+
+    render(
+      createElement(SimpleStageFront, {
+        eventId: "event-1",
+        stage: "scope",
+        view: readyView,
+        generating: false,
+        registryArtifacts: [],
+        onGenerateArtifact: jest.fn(async () => ({ ok: true as const })),
+        onAdvanceStage: jest.fn(),
+        onRefresh: jest.fn(),
+        advanced: createElement("div", null, "Advanced workspace"),
+      }),
+    );
+
+    const manifest = screen.getByTestId("source-simple-front-context-manifest");
+    expect(manifest.textContent).toContain(
+      "What will support Scope Memo with Boundaries",
+    );
+    expect(manifest.textContent).toContain("2 used · 2 pending");
+    expect(manifest.textContent).toContain(
+      "Application inventory · Usable Evidence",
+    );
+    expect(manifest.textContent).toContain(
+      "Prior fiscal AMS contract · Available",
+    );
+    expect(manifest.textContent).toContain("Org chart · Not Requested");
+    expect(manifest.textContent).toContain(
+      "L2/L3 ticket history · Not Requested",
+    );
+  });
+
   it("APPROVE = generate + advance in one click; no separate generate button", async () => {
     const onGenerateArtifact = jest.fn(async () => ({ ok: true as const }));
     const onAdvanceStage = jest.fn();

@@ -444,6 +444,8 @@ export function SimpleStageFront({
         </details>
       ) : null}
 
+      <ArtifactContextManifest view={view} />
+
       <div style={NEXT_GATE_STYLE} data-ready={allRequiredReady}>
         <div style={NEXT_GATE_COPY_STYLE}>
           <div style={EYEBROW_STYLE}>Approval gate</div>
@@ -498,6 +500,105 @@ export function SimpleStageFront({
       ) : null}
     </section>
   );
+}
+
+function ArtifactContextManifest({ view }: { view: SimpleStageScreenView }) {
+  const requiredReady = view.required.filter((requirement) =>
+    isRequirementReady(requirement),
+  );
+  const optionalReady = view.extras.filter((requirement) =>
+    isRequirementReady(requirement),
+  );
+  const pendingRequired = view.required.filter(
+    (requirement) => !isRequirementReady(requirement),
+  );
+  const optionalPending = view.extras.filter(
+    (requirement) => !isRequirementReady(requirement),
+  );
+  const used = [...requiredReady, ...optionalReady];
+
+  return (
+    <section
+      data-testid="source-simple-front-context-manifest"
+      aria-label="Artifact context manifest"
+      style={CONTEXT_MANIFEST_STYLE}
+    >
+      <div style={CONTEXT_MANIFEST_HEADER_STYLE}>
+        <div>
+          <div style={EYEBROW_STYLE}>Artifact context</div>
+          <h3 style={CONTEXT_MANIFEST_TITLE_STYLE}>
+            What will support {view.deliverable.name}
+          </h3>
+        </div>
+        <span style={CONTEXT_MANIFEST_BADGE_STYLE}>
+          {used.length} used · {pendingRequired.length} pending
+        </span>
+      </div>
+      <div style={CONTEXT_MANIFEST_GRID_STYLE}>
+        <ManifestColumn
+          title="Used as evidence"
+          tone="ready"
+          empty="No usable evidence yet."
+          rows={used.map((requirement) => manifestRow(requirement))}
+        />
+        <ManifestColumn
+          title="Carried as gaps"
+          tone="pending"
+          empty="No required gaps."
+          rows={pendingRequired.map((requirement) => manifestRow(requirement))}
+        />
+        <ManifestColumn
+          title="Not used yet"
+          tone="optional"
+          empty="No optional items outside the artifact context."
+          rows={optionalPending.map((requirement) => manifestRow(requirement))}
+        />
+      </div>
+      <p style={CONTEXT_MANIFEST_FOOTNOTE_STYLE}>
+        After approval, the generation receipt records the model, prompt
+        version, token usage, quality checks, and the upstream evidence codes.
+      </p>
+    </section>
+  );
+}
+
+function ManifestColumn({
+  title,
+  tone,
+  empty,
+  rows,
+}: {
+  title: string;
+  tone: "ready" | "pending" | "optional";
+  empty: string;
+  rows: string[];
+}) {
+  return (
+    <div style={CONTEXT_MANIFEST_COLUMN_STYLE}>
+      <div style={CONTEXT_MANIFEST_COLUMN_TITLE_STYLE}>
+        <span style={manifestDotStyle(tone)} aria-hidden="true" />
+        {title}
+      </div>
+      {rows.length > 0 ? (
+        <ul style={CONTEXT_MANIFEST_LIST_STYLE}>
+          {rows.slice(0, 4).map((row) => (
+            <li key={row} style={CONTEXT_MANIFEST_ITEM_STYLE}>
+              {row}
+            </li>
+          ))}
+          {rows.length > 4 ? (
+            <li style={CONTEXT_MANIFEST_ITEM_STYLE}>+{rows.length - 4} more</li>
+          ) : null}
+        </ul>
+      ) : (
+        <p style={CONTEXT_MANIFEST_EMPTY_STYLE}>{empty}</p>
+      )}
+    </div>
+  );
+}
+
+function manifestRow(requirement: SimpleStageRequirementView): string {
+  return `${requirement.label} · ${requirement.state}`;
 }
 
 function latestGeneratedDoc(
@@ -604,6 +705,23 @@ function stateChipStyle(
     fontSize: 11,
     fontWeight: 700,
   };
+}
+
+function manifestDotStyle(tone: "ready" | "pending" | "optional") {
+  const color =
+    tone === "ready"
+      ? CANVAS.ACTIVE
+      : tone === "pending"
+        ? "#b83232"
+        : "#b7791f";
+  return {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+    background: color,
+    boxShadow: `0 0 0 3px ${color}18`,
+    flex: "0 0 auto",
+  } satisfies CSSProperties;
 }
 
 const SHELL_STYLE: CSSProperties = {
@@ -865,6 +983,95 @@ const EXTRAS_HELP_STYLE: CSSProperties = {
   fontSize: 13,
   lineHeight: 1.45,
   color: CANVAS.INK_SOFT,
+};
+
+const CONTEXT_MANIFEST_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 12,
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: 10,
+  padding: "14px 16px",
+  background: "rgba(12,26,58,0.018)",
+};
+
+const CONTEXT_MANIFEST_HEADER_STYLE: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 16,
+  alignItems: "flex-start",
+};
+
+const CONTEXT_MANIFEST_TITLE_STYLE: CSSProperties = {
+  margin: "4px 0 0",
+  fontFamily: CANVAS.SANS,
+  fontSize: 15,
+  lineHeight: 1.25,
+  color: CANVAS.INK,
+};
+
+const CONTEXT_MANIFEST_BADGE_STYLE: CSSProperties = {
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: 999,
+  padding: "5px 9px",
+  background: CANVAS.CARD,
+  color: CANVAS.INK_SOFT,
+  fontFamily: CANVAS.MONO,
+  fontSize: 11,
+  whiteSpace: "nowrap",
+};
+
+const CONTEXT_MANIFEST_GRID_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  gap: 10,
+};
+
+const CONTEXT_MANIFEST_COLUMN_STYLE: CSSProperties = {
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 8,
+  background: CANVAS.CARD,
+  padding: "10px 12px",
+  minWidth: 0,
+};
+
+const CONTEXT_MANIFEST_COLUMN_TITLE_STYLE: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  fontWeight: 800,
+  color: CANVAS.INK,
+};
+
+const CONTEXT_MANIFEST_LIST_STYLE: CSSProperties = {
+  margin: "8px 0 0",
+  padding: 0,
+  listStyle: "none",
+  display: "grid",
+  gap: 5,
+};
+
+const CONTEXT_MANIFEST_ITEM_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  color: CANVAS.INK_SOFT,
+  lineHeight: 1.35,
+};
+
+const CONTEXT_MANIFEST_EMPTY_STYLE: CSSProperties = {
+  margin: "8px 0 0",
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  color: CANVAS.INK_MUTED,
+};
+
+const CONTEXT_MANIFEST_FOOTNOTE_STYLE: CSSProperties = {
+  margin: 0,
+  fontFamily: CANVAS.SANS,
+  fontSize: 11.5,
+  color: CANVAS.INK_MUTED,
+  lineHeight: 1.4,
 };
 
 const NEXT_GATE_STYLE: CSSProperties = {

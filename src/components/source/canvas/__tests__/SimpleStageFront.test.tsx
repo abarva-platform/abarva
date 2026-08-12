@@ -187,6 +187,52 @@ describe("SimpleStageFront", () => {
     ).toBeEnabled();
   });
 
+  it("shows the artifact context manifest before approval", () => {
+    renderFront({
+      ...BASE_VIEW,
+      required: [
+        BASE_VIEW.required[0],
+        {
+          ...BASE_VIEW.required[1],
+          state: "Not Requested",
+        },
+      ],
+      extras: [
+        {
+          requirementId: "EVID-SRC-SCOPE-OPTIONAL-RACI",
+          label: "Service owner RACI",
+          why: "Improves accountability and scoring confidence.",
+          acceptHint: "Operating model extract · needs available",
+          state: "Loaded",
+          sourceLabel: "Operating model extract",
+          sourceSystems: ["ServiceNow Catalog", "SharePoint"],
+          acceptedFileTypes: ["xlsx", "csv", "docx"],
+          recordGrain: "one source system, owner role, or extract per row",
+          criticalFields: ["source_system", "owner_role", "extract_method"],
+          minimumState: "Available",
+          level: "recommended",
+        },
+      ],
+    });
+
+    const manifest = screen.getByTestId("source-simple-front-context-manifest");
+    expect(manifest).toHaveTextContent(
+      "What will support Scope Memo with Boundaries",
+    );
+    expect(manifest).toHaveTextContent("1 used · 1 pending");
+    expect(manifest).toHaveTextContent("Used as evidence");
+    expect(manifest).toHaveTextContent("Application inventory · Available");
+    expect(manifest).toHaveTextContent("Carried as gaps");
+    expect(manifest).toHaveTextContent(
+      "Ticket and SLA history · Not Requested",
+    );
+    expect(manifest).toHaveTextContent("Not used yet");
+    expect(manifest).toHaveTextContent("Service owner RACI · Loaded");
+    expect(manifest).toHaveTextContent(
+      "generation receipt records the model, prompt version, token usage",
+    );
+  });
+
   it("makes the completed-state approval action explicit", () => {
     const { onGenerateArtifact, onAdvanceStage } = renderFront();
 
