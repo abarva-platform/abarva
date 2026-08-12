@@ -1894,6 +1894,7 @@ function EvidenceAskTable({
           <div
             key={step.id}
             data-testid={`source-shell-evidence-ask-row-${step.id}`}
+            data-ready={captured ? "true" : "false"}
             style={{
               display: "grid",
               gridTemplateColumns: "1.2fr 1fr 1fr 1fr 0.9fr",
@@ -1901,10 +1902,15 @@ function EvidenceAskTable({
               padding: "11px 12px",
               borderTop:
                 index === 0 ? "none" : `1px solid ${ANALYTICS.LINE_SOFT}`,
-              background: active ? "#fbfaf6" : ANALYTICS.CARD,
+              background: captured
+                ? "rgba(24, 151, 108, 0.045)"
+                : active
+                  ? "#fbfaf6"
+                  : ANALYTICS.CARD,
               color: active || captured ? ANALYTICS.INK : ANALYTICS.MUTED,
               fontSize: 12.5,
               lineHeight: 1.35,
+              opacity: captured && !active ? 0.88 : 1,
             }}
           >
             <EvidenceAskCell
@@ -1968,14 +1974,44 @@ function EvidenceAskCell({
 }) {
   return (
     <span style={{ display: "grid", gap: 3, minWidth: 0 }}>
-      <b
+      <span
         style={{
-          color: active || captured ? ANALYTICS.INK : ANALYTICS.MUTED,
-          overflowWrap: "anywhere",
+          alignItems: "center",
+          display: "flex",
+          gap: 7,
+          minWidth: 0,
         }}
       >
-        {label}
-      </b>
+        {captured ? (
+          <span
+            aria-hidden="true"
+            style={{
+              alignItems: "center",
+              background: ANALYTICS.GREEN,
+              borderRadius: 999,
+              color: "#ffffff",
+              display: "inline-flex",
+              flex: "0 0 16px",
+              fontSize: 11,
+              fontWeight: 900,
+              height: 16,
+              justifyContent: "center",
+              lineHeight: 1,
+              width: 16,
+            }}
+          >
+            ✓
+          </span>
+        ) : null}
+        <b
+          style={{
+            color: active || captured ? ANALYTICS.INK : ANALYTICS.MUTED,
+            overflowWrap: "anywhere",
+          }}
+        >
+          {label}
+        </b>
+      </span>
       <span
         style={{
           color: active ? ANALYTICS.INK_2 : ANALYTICS.MUTED,
@@ -2006,16 +2042,21 @@ function EvidenceAskStatusCell({
   return (
     <span style={{ display: "grid", gap: 6, minWidth: 0 }}>
       <b
+        data-testid={captured ? "source-shell-evidence-status-done" : undefined}
         style={{
+          alignItems: "center",
           color: captured
             ? ANALYTICS.GREEN_TEXT
             : active
               ? ANALYTICS.AMBER_TEXT
               : ANALYTICS.FAINT,
+          display: "inline-flex",
+          gap: 6,
           fontSize: 12,
         }}
       >
-        {status}
+        {captured ? "✓ " : null}
+        {captured ? "Done" : status}
       </b>
       <span
         style={{
