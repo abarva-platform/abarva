@@ -4715,6 +4715,7 @@ function GuidebookSectionBody({ body }: { body: string }) {
 
 function GuidebookWorkspace({ view }: { view: SourceEventShellView }) {
   const record = view.guidebook.record;
+  const requiredSteps = view.stage.groups.flatMap((group) => group.steps);
   return (
     <section data-testid="source-shell-v2-guidebook">
       <WorkspaceTitle
@@ -4745,6 +4746,10 @@ function GuidebookWorkspace({ view }: { view: SourceEventShellView }) {
               {record.clientKey ? "Tenant guidebook" : "Global default"}
             </span>
           </div>
+          <StageGuideEvidencePrepTable
+            steps={requiredSteps}
+            activeStepId={view.stage.activeStep?.id}
+          />
           {record.sections.map((section, index) => (
             <article
               key={`${section.type}-${index}`}
@@ -4839,6 +4844,10 @@ function DefaultStageGuidebook({ view }: { view: SourceEventShellView }) {
           without inventing tailored content.
         </p>
       </article>
+      <StageGuideEvidencePrepTable
+        steps={requiredSteps}
+        activeStepId={view.stage.activeStep?.id}
+      />
       <div
         style={{
           display: "grid",
@@ -4890,6 +4899,239 @@ function DefaultStageGuidebook({ view }: { view: SourceEventShellView }) {
               : view.stage.gateReadinessLine
           }
         />
+      </div>
+    </div>
+  );
+}
+
+function StageGuideEvidencePrepTable({
+  steps,
+  activeStepId,
+}: {
+  steps: readonly SourceShellStep[];
+  activeStepId?: string;
+}) {
+  if (!steps.length) return null;
+  return (
+    <article
+      data-testid="source-shell-guidebook-prep-table"
+      style={{
+        ...CARD_STYLE,
+        overflow: "hidden",
+        padding: 0,
+      }}
+    >
+      <div
+        style={{
+          alignItems: "baseline",
+          borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          display: "flex",
+          gap: 12,
+          justifyContent: "space-between",
+          padding: "12px 14px",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              color: ANALYTICS.BLUE,
+              fontFamily: ANALYTICS.MONO,
+              fontSize: 10,
+              fontWeight: 900,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+            }}
+          >
+            Evidence prep checklist
+          </div>
+          <p
+            style={{
+              color: ANALYTICS.MUTED,
+              fontSize: 12.5,
+              lineHeight: 1.4,
+              margin: "5px 0 0",
+            }}
+          >
+            Use this before the workshop: each row names what to collect, who
+            owns it, the upload format, and what parser/writeback it supports.
+          </p>
+        </div>
+        <span
+          style={{
+            color: ANALYTICS.FAINT,
+            fontFamily: ANALYTICS.MONO,
+            fontSize: 10,
+            fontWeight: 900,
+            textTransform: "uppercase",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {steps.length} input{steps.length === 1 ? "" : "s"}
+        </span>
+      </div>
+      <div
+        style={{
+          overflowX: "auto",
+        }}
+      >
+        <div style={{ minWidth: 840 }}>
+          <div
+            style={{
+              background: ANALYTICS.PAGE_BG,
+              color: ANALYTICS.MUTED,
+              display: "grid",
+              fontFamily: ANALYTICS.MONO,
+              fontSize: 9,
+              fontWeight: 900,
+              gridTemplateColumns:
+                "minmax(170px, 1fr) minmax(155px, 0.9fr) minmax(145px, 0.75fr) minmax(170px, 0.95fr) minmax(140px, 0.75fr)",
+              letterSpacing: "0.06em",
+              padding: "8px 14px",
+              textTransform: "uppercase",
+            }}
+          >
+            <span>Collect</span>
+            <span>Source / owner</span>
+            <span>Format / template</span>
+            <span>Parser writeback</span>
+            <span>Next</span>
+          </div>
+          {steps.map((step, index) => {
+            const captured = step.status === "captured";
+            const active = step.id === activeStepId;
+            const need = activeStepNeed(step, captured);
+            const template = step.template
+              ? `${step.template.name} · ${step.template.format}`
+              : need.formats;
+            return (
+              <div
+                key={step.id}
+                data-testid={`source-shell-guidebook-prep-row-${step.id}`}
+                style={{
+                  background: active ? "#fbfaf6" : ANALYTICS.CARD,
+                  borderTop:
+                    index === 0 ? "none" : `1px solid ${ANALYTICS.LINE_SOFT}`,
+                  color: active || captured ? ANALYTICS.INK : ANALYTICS.MUTED,
+                  display: "grid",
+                  fontSize: 12,
+                  gap: 12,
+                  gridTemplateColumns:
+                    "minmax(170px, 1fr) minmax(155px, 0.9fr) minmax(145px, 0.75fr) minmax(170px, 0.95fr) minmax(140px, 0.75fr)",
+                  lineHeight: 1.35,
+                  padding: "10px 14px",
+                }}
+              >
+                <GuidePrepCell
+                  label={step.title}
+                  detail={`${need.item} · ${need.requirement}`}
+                />
+                <GuidePrepCell label={need.sourceSystem} detail={need.owner} />
+                <GuidePrepCell
+                  label={template}
+                  detail={step.factTemplateCode ?? "No template code"}
+                />
+                <GuidePrepCell label={need.parseTarget} detail={need.status} />
+                <GuidePrepStatusCell
+                  label={captured ? "Done" : active ? "Now" : "Next"}
+                  detail={
+                    captured
+                      ? "Ready for gate"
+                      : active
+                        ? need.nextAction
+                        : "Select when ready"
+                  }
+                  captured={captured}
+                  active={active}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function GuidePrepCell({ label, detail }: { label: string; detail: string }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div
+        style={{
+          color: "inherit",
+          fontWeight: 800,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+        title={label}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          color: ANALYTICS.MUTED,
+          marginTop: 2,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+        title={detail}
+      >
+        {detail}
+      </div>
+    </div>
+  );
+}
+
+function GuidePrepStatusCell({
+  label,
+  detail,
+  captured,
+  active,
+}: {
+  label: string;
+  detail: string;
+  captured: boolean;
+  active: boolean;
+}) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <span
+        style={{
+          border: `1px solid ${
+            captured
+              ? "rgba(17, 120, 84, 0.24)"
+              : active
+                ? ANALYTICS.AMBER
+                : ANALYTICS.LINE
+          }`,
+          borderRadius: 999,
+          color: captured
+            ? ANALYTICS.GREEN_TEXT
+            : active
+              ? ANALYTICS.AMBER_TEXT
+              : ANALYTICS.MUTED,
+          display: "inline-block",
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 9,
+          fontWeight: 900,
+          padding: "3px 7px",
+          textTransform: "uppercase",
+        }}
+      >
+        {label}
+      </span>
+      <div
+        style={{
+          color: ANALYTICS.MUTED,
+          marginTop: 5,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+        title={detail}
+      >
+        {detail}
       </div>
     </div>
   );
