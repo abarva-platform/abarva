@@ -246,6 +246,7 @@ export interface SourceShellArtifactLike {
   bodyMarkdown?: string | null;
   renderedText?: string | null;
   plainTextSummary?: string | null;
+  bodyGenerationMetadata?: Record<string, unknown> | null;
   parseStatus?: string | null;
   embeddingStatus?: string | null;
   graphStatus?: string | null;

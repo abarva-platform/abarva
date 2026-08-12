@@ -1504,6 +1504,13 @@ function StageReadyPanel({
   onOpenFiles: () => void;
 }) {
   const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
+  const primaryActionLabel = hasArtifactGaps
+    ? "Review Files before approval"
+    : view.stage.approvalCtaLabel;
+  const primaryAction = hasArtifactGaps ? onOpenFiles : onOpenApprovalPage;
+  const gateStatus = hasArtifactGaps
+    ? `${view.stage.artifactReadiness.blockerCount} file review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
+    : "Ready for approval";
   return (
     <div
       data-testid="source-shell-stage-ready-panel"
@@ -1550,6 +1557,33 @@ function StageReadyPanel({
             : "The next step is the approval workspace. Review the captured evidence, record the decision, and advance the event from there."}
         </p>
       </div>
+      <div
+        data-testid="source-stage-ready-status"
+        style={{
+          border: `1px solid ${ANALYTICS.LINE}`,
+          borderRadius: 8,
+          display: "grid",
+          gap: 0,
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          overflow: "hidden",
+        }}
+      >
+        <StageReadyStatusDatum
+          label="Stage inputs"
+          value={`${view.stage.ready}/${view.stage.total} complete`}
+          tone="good"
+        />
+        <StageReadyStatusDatum
+          label="Files"
+          value={gateStatus}
+          tone={hasArtifactGaps ? "warn" : "good"}
+        />
+        <StageReadyStatusDatum
+          label="Next"
+          value={hasArtifactGaps ? "Close file review" : "Open approval gate"}
+          tone={hasArtifactGaps ? "warn" : "good"}
+        />
+      </div>
       {hasArtifactGaps ? (
         <div
           style={{
@@ -1582,8 +1616,12 @@ function StageReadyPanel({
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
         <button
           type="button"
-          data-testid="source-stage-ready-open-approval"
-          onClick={onOpenApprovalPage}
+          data-testid={
+            hasArtifactGaps
+              ? "source-stage-ready-primary-files"
+              : "source-stage-ready-open-approval"
+          }
+          onClick={primaryAction}
           style={{
             ...BUTTON_STYLE,
             background: ANALYTICS.INK,
@@ -1594,8 +1632,24 @@ function StageReadyPanel({
             width: "fit-content",
           }}
         >
-          {view.stage.approvalCtaLabel}
+          {primaryActionLabel}
         </button>
+        {hasArtifactGaps ? (
+          <button
+            type="button"
+            data-testid="source-stage-ready-open-approval"
+            onClick={onOpenApprovalPage}
+            style={{
+              ...BUTTON_STYLE,
+              display: "inline-flex",
+              justifyContent: "center",
+              padding: "12px 16px",
+              width: "fit-content",
+            }}
+          >
+            Open approval readiness
+          </button>
+        ) : null}
         <button
           type="button"
           data-testid="source-stage-ready-review-approval"
@@ -1610,22 +1664,6 @@ function StageReadyPanel({
         >
           Review readiness here
         </button>
-        {hasArtifactGaps ? (
-          <button
-            type="button"
-            data-testid="source-stage-ready-open-files"
-            onClick={onOpenFiles}
-            style={{
-              ...BUTTON_STYLE,
-              display: "inline-flex",
-              justifyContent: "center",
-              padding: "12px 16px",
-              width: "fit-content",
-            }}
-          >
-            Review file blockers
-          </button>
-        ) : null}
       </div>
       <Link
         href={view.stage.approvalHref}
@@ -1641,6 +1679,52 @@ function StageReadyPanel({
       >
         Copy/share approval workspace URL
       </Link>
+    </div>
+  );
+}
+
+function StageReadyStatusDatum({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "good" | "warn";
+}) {
+  return (
+    <div
+      style={{
+        background:
+          tone === "good" ? "rgba(17, 120, 84, 0.055)" : ANALYTICS.AMBER_TINT,
+        borderRight: `1px solid ${ANALYTICS.LINE_SOFT}`,
+        display: "grid",
+        gap: 4,
+        minWidth: 0,
+        padding: "11px 12px",
+      }}
+    >
+      <span
+        style={{
+          color: ANALYTICS.FAINT,
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 9,
+          fontWeight: 900,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+        }}
+      >
+        {label}
+      </span>
+      <strong
+        style={{
+          color: tone === "good" ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
+          fontSize: 12.5,
+          overflowWrap: "anywhere",
+        }}
+      >
+        {value}
+      </strong>
     </div>
   );
 }
