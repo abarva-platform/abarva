@@ -1,6 +1,12 @@
 "use client";
 
-import { useRef, useState, type CSSProperties, type DragEvent } from "react";
+import {
+  useRef,
+  useState,
+  type CSSProperties,
+  type DragEvent,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import { ANALYTICS, taskVerb } from "./analytics-tokens";
 import {
@@ -279,25 +285,38 @@ function TaskRow({
             {task.guide}
           </p>
 
-          {task.template ? <TemplateChip template={task.template} /> : null}
-          {factTemplateCode ? (
-            <TemplateDownloadLink
-              eventId={eventId}
-              factTemplateCode={factTemplateCode}
-            />
-          ) : null}
           {task.rows ? <ReviewRows rows={task.rows} /> : null}
-          {task.file ? (
-            <FileChip file={task.file} />
-          ) : task.type === "provide" ? (
-            <TaskProvideUpload
-              signed={/letter|commit/i.test(task.title)}
+          {task.type === "provide" ? (
+            <EvidenceRequestPanel
+              task={task}
+              isDone={isDone}
               eventId={eventId}
-              stageKey={stageKey}
               factTemplateCode={factTemplateCode}
-              onUploaded={onComplete}
-            />
-          ) : null}
+            >
+              {task.file ? (
+                <FileChip file={task.file} />
+              ) : (
+                <TaskProvideUpload
+                  signed={/letter|commit/i.test(task.title)}
+                  eventId={eventId}
+                  stageKey={stageKey}
+                  factTemplateCode={factTemplateCode}
+                  onUploaded={onComplete}
+                />
+              )}
+            </EvidenceRequestPanel>
+          ) : (
+            <>
+              {task.template ? <TemplateChip template={task.template} /> : null}
+              {factTemplateCode ? (
+                <TemplateDownloadLink
+                  eventId={eventId}
+                  factTemplateCode={factTemplateCode}
+                />
+              ) : null}
+              {task.file ? <FileChip file={task.file} /> : null}
+            </>
+          )}
 
           {task.provenance ? (
             <div
@@ -400,6 +419,187 @@ function TaskRow({
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function EvidenceRequestPanel({
+  task,
+  isDone,
+  eventId,
+  factTemplateCode,
+  children,
+}: {
+  task: StageTaskView;
+  isDone: boolean;
+  eventId?: string;
+  factTemplateCode?: string;
+  children: ReactNode;
+}) {
+  const signed = /letter|commit/i.test(task.title);
+  const format = signed ? "Signed PDF" : "CSV or XLSX";
+  const templateName = task.template?.name ?? `${task.title} file`;
+  const source = task.provenance?.source ?? "Client source extract or template";
+  const owner = task.provenance?.owner ?? "Stage owner";
+  const parseTarget = factTemplateCode
+    ? `Parse with ${factTemplateCode}; write governed Source facts`
+    : "Store file in Source artifacts; no structured fact parser for this task yet";
+
+  return (
+    <section
+      aria-label="Evidence request"
+      data-testid="task-evidence-request"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr) minmax(260px, 0.42fr)",
+        gap: 14,
+        marginTop: 10,
+        padding: 13,
+        border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+        borderRadius: ANALYTICS.RADIUS,
+        background: ANALYTICS.SOFT,
+      }}
+    >
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            marginBottom: 10,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: ANALYTICS.MONO,
+              fontSize: 10,
+              letterSpacing: 0.9,
+              textTransform: "uppercase",
+              color: ANALYTICS.BLUE,
+              fontWeight: 800,
+            }}
+          >
+            Evidence request
+          </span>
+          <span
+            style={{
+              fontFamily: ANALYTICS.MONO,
+              fontSize: 10,
+              letterSpacing: 0.5,
+              textTransform: "uppercase",
+              fontWeight: 800,
+              color: isDone ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
+              background: isDone ? ANALYTICS.GREEN_TINT : ANALYTICS.AMBER_TINT,
+              borderRadius: 999,
+              padding: "4px 8px",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {isDone ? "Accepted" : "Action needed"}
+          </span>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            gap: 8,
+          }}
+        >
+          <EvidenceRequestCell label="What to load" value={templateName} />
+          <EvidenceRequestCell label="Source system" value={source} />
+          <EvidenceRequestCell label="Owner" value={owner} />
+          <EvidenceRequestCell label="Format" value={format} />
+          <EvidenceRequestCell
+            label="Parse/writeback"
+            value={parseTarget}
+            wide
+          />
+        </div>
+
+        {factTemplateCode ? (
+          <div style={{ marginTop: 10 }}>
+            <TemplateDownloadLink
+              eventId={eventId}
+              factTemplateCode={factTemplateCode}
+            />
+          </div>
+        ) : null}
+      </div>
+
+      <div
+        style={{
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          gap: 8,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: ANALYTICS.MONO,
+            fontSize: 10,
+            letterSpacing: 0.9,
+            textTransform: "uppercase",
+            color: ANALYTICS.FAINT,
+            fontWeight: 800,
+          }}
+        >
+          Upload status
+        </span>
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function EvidenceRequestCell({
+  label,
+  value,
+  wide = false,
+}: {
+  label: string;
+  value: string;
+  wide?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        gridColumn: wide ? "1 / -1" : undefined,
+        padding: "8px 9px",
+        border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+        borderRadius: ANALYTICS.RADIUS_SM,
+        background: ANALYTICS.CARD,
+        minWidth: 0,
+      }}
+    >
+      <span
+        style={{
+          display: "block",
+          marginBottom: 3,
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 9,
+          letterSpacing: 0.5,
+          textTransform: "uppercase",
+          color: ANALYTICS.FAINT,
+          fontWeight: 800,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          display: "block",
+          fontSize: 12.5,
+          lineHeight: 1.35,
+          color: ANALYTICS.INK_2,
+          overflowWrap: "anywhere",
+        }}
+      >
+        {value}
+      </span>
     </div>
   );
 }
@@ -956,6 +1156,22 @@ export function TaskProvideUpload({
             {hint}
           </span>
         </span>
+        {canUpload ? (
+          <span
+            style={{
+              marginLeft: "auto",
+              borderRadius: ANALYTICS.RADIUS_SM,
+              background: ANALYTICS.INK,
+              color: "#fff",
+              fontSize: 12,
+              fontWeight: 800,
+              padding: "8px 12px",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Upload file
+          </span>
+        ) : null}
         {canUpload ? (
           <input
             ref={inputRef}

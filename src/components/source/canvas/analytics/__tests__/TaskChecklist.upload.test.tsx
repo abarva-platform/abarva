@@ -32,6 +32,10 @@ const PROVIDE_TASK: StageTaskView = {
   state: "todo",
   guide: "Attach the 18-month service baseline as a CSV or XLSX.",
   cta: "Confirm volumetrics",
+  provenance: {
+    owner: "IT operations owner",
+    source: "ITSM / finance baseline",
+  },
 };
 
 const EXECUTIVE_DECISION_TASK: StageTaskView = {
@@ -58,6 +62,32 @@ function selectFile(file: File) {
 }
 
 describe("TaskChecklist provide-task upload", () => {
+  it("renders the evidence request as a clear upload row before file selection", () => {
+    const boundTask: StageTaskView = {
+      ...PROVIDE_TASK,
+      factTemplateCode: "VOLUMETRICS_V1",
+    };
+    render(
+      <TaskChecklist tasks={[boundTask]} eventId="evt-1" stageKey="scope" />,
+    );
+
+    const request = screen.getByTestId("task-evidence-request");
+    expect(request).toHaveTextContent("Evidence request");
+    expect(request).toHaveTextContent("Action needed");
+    expect(request).toHaveTextContent("What to load");
+    expect(request).toHaveTextContent("Provide the volumetrics file");
+    expect(request).toHaveTextContent("Source system");
+    expect(request).toHaveTextContent("ITSM / finance baseline");
+    expect(request).toHaveTextContent("Owner");
+    expect(request).toHaveTextContent("IT operations owner");
+    expect(request).toHaveTextContent("Format");
+    expect(request).toHaveTextContent("CSV or XLSX");
+    expect(request).toHaveTextContent("Parse/writeback");
+    expect(request).toHaveTextContent("Parse with VOLUMETRICS_V1");
+    expect(request).toHaveTextContent("Upload status");
+    expect(request).toHaveTextContent("Upload file");
+  });
+
   it("POSTs the file and renders the uploaded-file card on success", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
@@ -95,6 +125,9 @@ describe("TaskChecklist provide-task upload", () => {
     // The uploaded-file card reflects the REAL persisted file.
     await screen.findByText("apex-svc-baseline-18mo.xlsx");
     expect(screen.getByText(/uploaded/)).toBeInTheDocument();
+    expect(screen.getByTestId("task-evidence-request")).toHaveTextContent(
+      "Accepted",
+    );
     // A remove affordance is present.
     expect(
       screen.getByLabelText(/Remove apex-svc-baseline-18mo\.xlsx/),
