@@ -6,6 +6,27 @@ function read(filePath: string): string {
 }
 
 describe("Source legacy route archive", () => {
+  it("archives the retired Vendor 360 list route into the Source workspace", () => {
+    const source = read("src/app/(maestro)/source/vendor-portfolio/page.tsx");
+
+    expect(source).toContain('SOURCE_WORKSPACE_ROUTE = "/source/preview/workspace"');
+    expect(source).toContain("redirect(");
+    expect(source).not.toContain("SourceVendorPortfolioPage");
+    expect(source).not.toContain("listContractVendor360");
+  });
+
+  it("archives the retired Contract 360 detail route into the Source workspace", () => {
+    const source = read(
+      "src/app/(maestro)/source/vendor-portfolio/[contractId]/page.tsx",
+    );
+
+    expect(source).toContain('SOURCE_WORKSPACE_ROUTE = "/source/preview/workspace"');
+    expect(source).toContain('next.set("contractId", contractId)');
+    expect(source).toContain("redirect(");
+    expect(source).not.toContain("SourceContract360Page");
+    expect(source).not.toContain("getContract360");
+  });
+
   it("archives the old Source event index into Portfolio", () => {
     const source = read("src/app/(maestro)/source/events/page.tsx");
 

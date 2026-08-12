@@ -127,8 +127,8 @@ function ModuleHeader({
         </div>
       </div>
       <div style={HEADER_ACTIONS_STYLE}>
-        <Link href="/source/vendor-portfolio" style={GHOST_BUTTON_STYLE}>
-          Contract 360
+        <Link href="/source/preview/workspace" style={GHOST_BUTTON_STYLE}>
+          Source workspace
         </Link>
         <Link href="/source/new" style={GHOST_BUTTON_STYLE}>
           New sourcing event

@@ -1,66 +1,33 @@
 import { redirect } from "next/navigation";
-import { SourceVendorPortfolioPage } from "@/components/source/SourceVendorPortfolioPage";
-import { getActiveClientRow } from "@/lib/active-client";
-import { requireTenancy, TenancyError } from "@/lib/auth/tenancy";
-import { canonicalClientDisplayName } from "@/lib/client-config";
-import { listContractVendor360 } from "@/lib/source/data-model/read-adapter";
 
 export const metadata = {
-  title: "Vendor & Contract Portfolio · Source · AbarVa",
+  title: "Source Workspace · AbarVa",
 };
 export const dynamic = "force-dynamic";
 
+const SOURCE_WORKSPACE_ROUTE = "/source/preview/workspace";
+
 /**
- * Vendor & Contract Portfolio — first slice of the new cross-domain Source
- * data model wired into a real page (section 2 of the recommended 8-section
- * Source workspace restructure). Reads source.contract_vendor_360 only;
- * never writes to it, never copies its facts into a Source-owned table.
+ * Archived legacy Vendor & Contract Portfolio route.
  *
- * `asOf` accepts an optional override so a demo tenant on a synthetic
- * timeline (e.g. SkyHarbor's fictional 2027 scenario) can be driven against
- * its own "current" date instead of the real-world clock — the renewal-
- * exposure math is wrong against the wrong as-of date, so this must be
- * explicit, not inferred. Defaults to the real current date for every other
- * tenant.
+ * The Source workspace is now the canonical Vendor 360 surface. Keep this
+ * shell only so old bookmarks cannot render a stale portfolio story.
  */
-export default async function SourceVendorPortfolioRoute({
+export default async function ArchivedSourceVendorPortfolioRoute({
   searchParams,
 }: {
-  searchParams: Promise<{ asOf?: string }>;
+  searchParams: Promise<{ asOf?: string; client?: string }>;
 }) {
-  let tenancy;
-  try {
-    tenancy = await requireTenancy();
-  } catch (err) {
-    if (err instanceof TenancyError && err.code === "unauthenticated") {
-      redirect("/sign-in");
-    }
-    throw err;
-  }
+  const params = await searchParams;
+  const next = new URLSearchParams();
+  const asOf = params.asOf?.trim();
+  const client = params.client?.trim();
+  if (asOf) next.set("asOf", asOf);
+  if (client) next.set("client", client);
 
-  const [activeClient, params] = await Promise.all([
-    getActiveClientRow().catch(() => null),
-    searchParams,
-  ]);
-
-  const tenantKey = activeClient?.key ?? tenancy.clientKey ?? "";
-  const asOfDateIso = params.asOf?.trim() || new Date().toISOString();
-
-  const rows = tenantKey
-    ? await listContractVendor360(tenantKey).catch(() => [])
-    : [];
-
-  const tenantName =
-    canonicalClientDisplayName({
-      key: activeClient?.key,
-      name: activeClient?.name,
-    }) ?? "AbarVa Client";
-
-  return (
-    <SourceVendorPortfolioPage
-      rows={rows}
-      tenantName={tenantName}
-      asOfDateIso={asOfDateIso}
-    />
+  redirect(
+    next.size > 0
+      ? `${SOURCE_WORKSPACE_ROUTE}?${next.toString()}`
+      : SOURCE_WORKSPACE_ROUTE,
   );
 }

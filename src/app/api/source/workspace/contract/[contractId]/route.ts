@@ -25,7 +25,7 @@ import type {
 } from '@/lib/source/data-model/types';
 
 // Lazy, per-contract detail read for the Source Workspace — mirrors exactly
-// what /source/vendor-portfolio/[contractId]/page.tsx already does server-side,
+// what the retired /source/vendor-portfolio/[contractId] route used to do,
 // exposed as JSON so the workspace's client-side Explorer/canvas can fetch it
 // on selection instead of pre-loading all 119 contracts' financial/operational/
 // evidence rows on initial page load.
