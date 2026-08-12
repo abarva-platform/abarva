@@ -14,6 +14,7 @@ Archives the retired Source Vendor & Contract Portfolio route so old bookmarks n
 
 ## Layer Impact
 
+- Release lane: `global-control-lane`.
 - Products: Source route shells and Source links now point users to the canonical workspace instead of the retired duplicate surface.
 - Canonical model: No data model, loader, migration, tenant data, or read-model change.
 
