@@ -78,3 +78,7 @@ Revert this migration with a follow-up migration that restores the prior legacy-
 ## Known Gaps
 
 Production migration apply and readback have not run yet. Retrieval indexing and Active Tenant Access promotion remain explicitly out of scope.
+
+## Follow-Up: View Shape Stability
+
+PR #6203 updates the same migration before production apply to preserve existing Source read-model column shapes across fresh replay and the already-loaded lab database. Fresh replay keeps the compact compatibility view shape; the lab projection keeps the richer Contract 360 shape from the prior Source read model. This follow-up does not add data, index retrieval, promote tenant access, or change the synthetic demo/operator-reviewed posture.
