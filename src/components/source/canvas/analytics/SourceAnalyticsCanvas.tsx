@@ -67,7 +67,11 @@ import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-respo
 import { ArtifactAcceptancePanel } from "./ArtifactAcceptancePanel";
 import { ANALYTICS } from "./analytics-tokens";
 import { IntelPanel } from "./IntelPanel";
-import { TaskProvideUpload, TemplateDownloadLink } from "./TaskChecklist";
+import {
+  TaskProvideUpload,
+  TemplateDownloadLink,
+  type TaskProvideUploadReadback,
+} from "./TaskChecklist";
 import {
   evidenceRequirementIdForTask,
   factTemplateCodeForTask,
@@ -2479,6 +2483,12 @@ function StepDetail({
     | { phase: "saving" }
     | { phase: "error"; message: string }
   >({ phase: "idle" });
+  const [uploadReadback, setUploadReadback] =
+    useState<TaskProvideUploadReadback | null>(null);
+  const activeStepId = step?.id;
+  useEffect(() => {
+    setUploadReadback(null);
+  }, [activeStepId]);
   if (!step) return null;
   const activeStep = step;
   const evidenceRequirementId = evidenceRequirementIdForTask({
@@ -2655,6 +2665,11 @@ function StepDetail({
           stageKey={stageKey}
           factTemplateCode={factTemplateCode}
           onUploaded={onComplete}
+          onUploadReadback={setUploadReadback}
+        />
+        <ActiveStepUploadReadback
+          readback={uploadReadback}
+          factTemplateCode={factTemplateCode}
         />
         {vendorCoverage ? (
           <VendorResponseCoverageList vendors={vendorCoverage} />
@@ -2682,6 +2697,77 @@ function StepDetail({
       {evidenceRow}
       {actionButton}
       {actionError}
+    </div>
+  );
+}
+
+function ActiveStepUploadReadback({
+  readback,
+  factTemplateCode,
+}: {
+  readback: TaskProvideUploadReadback | null;
+  factTemplateCode?: string;
+}) {
+  if (!readback) return null;
+  const factStatus =
+    readback.factsWritten === null
+      ? "Registry-only upload; no typed fact template on this step."
+      : `${readback.factsWritten} typed fact${
+          readback.factsWritten === 1 ? "" : "s"
+        } written${factTemplateCode ? ` through ${factTemplateCode}` : ""}.`;
+  const issues: string[] = [];
+  if (readback.unmappedColumns.length > 0) {
+    issues.push(
+      `${readback.unmappedColumns.length} unmapped column${
+        readback.unmappedColumns.length === 1 ? "" : "s"
+      }`,
+    );
+  }
+  if ((readback.rejectedRowCount ?? 0) > 0) {
+    issues.push(
+      `${readback.rejectedRowCount} rejected cell${
+        readback.rejectedRowCount === 1 ? "" : "s"
+      }`,
+    );
+  }
+  return (
+    <div
+      data-testid="source-active-upload-readback"
+      role="status"
+      style={{
+        border: `1px solid rgba(17, 120, 84, 0.24)`,
+        borderRadius: 8,
+        background: "rgba(20,140,90,0.055)",
+        color: ANALYTICS.INK_2,
+        display: "grid",
+        gap: 8,
+        marginTop: 10,
+        padding: "11px 12px",
+        fontSize: 12.5,
+        lineHeight: 1.4,
+      }}
+    >
+      <strong style={{ color: ANALYTICS.GREEN_TEXT, fontSize: 13 }}>
+        Upload readback
+      </strong>
+      <span>
+        <b style={{ color: ANALYTICS.INK }}>File stored:</b>{" "}
+        {readback.originalName} ({readback.format}
+        {readback.parseStatus ? `, ${readback.parseStatus}` : ""})
+      </span>
+      <span>
+        <b style={{ color: ANALYTICS.INK }}>Typed facts:</b> {factStatus}
+      </span>
+      <span>
+        <b style={{ color: ANALYTICS.INK }}>Issues:</b>{" "}
+        {issues.length > 0 ? issues.join(" · ") : "None reported by parser."}
+      </span>
+      <span>
+        <b style={{ color: ANALYTICS.INK }}>Refresh impact:</b>{" "}
+        {readback.refreshed
+          ? "Stage evidence, Files, Intelligence, and generated artifacts can reread this source."
+          : "File is stored; update the template before facts can refresh."}
+      </span>
     </div>
   );
 }

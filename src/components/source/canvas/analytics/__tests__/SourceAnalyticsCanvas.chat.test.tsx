@@ -820,6 +820,19 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(screen.getByTestId("fact-ingest-result")).toHaveTextContent(
       /7 facts written/i,
     );
+    const readback = screen.getByTestId("source-active-upload-readback");
+    expect(readback).toHaveTextContent("Upload readback");
+    expect(readback).toHaveTextContent("File stored:");
+    expect(readback).toHaveTextContent("volumetrics.csv");
+    expect(readback).toHaveTextContent("Typed facts:");
+    expect(readback).toHaveTextContent("7 typed facts written");
+    expect(readback).toHaveTextContent("VOLUMETRICS_V1");
+    expect(readback).toHaveTextContent("Issues:");
+    expect(readback).toHaveTextContent("None reported by parser.");
+    expect(readback).toHaveTextContent("Refresh impact:");
+    expect(readback).toHaveTextContent(
+      "Stage evidence, Files, Intelligence, and generated artifacts can reread this source.",
+    );
   });
 });
 
