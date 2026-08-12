@@ -13,6 +13,12 @@ import type {
   ContractOptimizationSourcingRequirement,
   ContractOptimizationSpine,
 } from "@/lib/source/data-model/contract-optimization-spine";
+import type { ContractOptimizationEvidencePack } from "@/lib/source/data-model/contract-optimization-evidence";
+import {
+  buildContractOptimizationEvidenceReadiness,
+  type ContractOptimizationEvidenceReadiness,
+  type ContractOptimizationEvidenceReadinessRow,
+} from "@/lib/source/data-model/contract-optimization-evidence-readiness";
 import type {
   ContractOptimizationOpportunity,
   ContractOptimizationOpportunitySet,
@@ -24,6 +30,7 @@ interface SourceOptimizeContractPageProps {
   asOfDateIso: string;
   spine: ContractOptimizationSpine;
   opportunitySet: ContractOptimizationOpportunitySet | null;
+  evidencePack?: ContractOptimizationEvidencePack | null;
 }
 
 const STAGES = [
@@ -41,8 +48,13 @@ export function SourceOptimizeContractPage({
   asOfDateIso,
   spine,
   opportunitySet,
+  evidencePack = null,
 }: SourceOptimizeContractPageProps) {
   const selected = spine.selected;
+  const readiness = useMemo(
+    () => buildContractOptimizationEvidenceReadiness({ evidencePack }),
+    [evidencePack],
+  );
   const selectedOpportunity = useMemo(() => {
     if (!opportunitySet) return null;
     const id = opportunitySet.selectedOpportunityId;
@@ -84,6 +96,7 @@ export function SourceOptimizeContractPage({
               spine={spine}
               opportunitySet={opportunitySet}
               selectedOpportunity={selectedOpportunity}
+              readiness={readiness}
             />
           ) : (
             <ContractPicker candidates={spine.topCandidates} />
@@ -238,11 +251,13 @@ function SelectedContractView({
   spine,
   opportunitySet,
   selectedOpportunity,
+  readiness,
 }: {
   candidate: ContractOptimizationCandidate;
   spine: ContractOptimizationSpine;
   opportunitySet: ContractOptimizationOpportunitySet | null;
   selectedOpportunity: ContractOptimizationOpportunity | null;
+  readiness: ContractOptimizationEvidenceReadiness;
 }) {
   const missingCount =
     spine.missingEvidenceSources.length +
@@ -251,9 +266,11 @@ function SelectedContractView({
   const primaryAction =
     !opportunitySet || opportunitySet.baseline.status !== "ready"
       ? "Build or resolve the commercial baseline before approving action."
-      : missingCount > 0
-        ? "Collect the missing evidence rows before using a value number externally."
-        : "Open the optimization case and move the evidenced opportunity through approval.";
+      : readiness.sizingBlocked
+        ? "Collect the missing required evidence families before using a value number externally."
+        : missingCount > 0
+          ? "Collect the missing evidence rows before using a value number externally."
+          : "Open the optimization case and move the evidenced opportunity through approval.";
   return (
     <div style={SELECTED_GRID_STYLE}>
       <section style={PANEL_STYLE}>
@@ -328,15 +345,16 @@ function SelectedContractView({
         />
       </section>
 
-      <section style={PANEL_STYLE}>
-        <div>
-          <h2 style={SECTION_TITLE_STYLE}>Evidence request board</h2>
-          <p style={PANEL_COPY_STYLE}>
-            Required rows name what to pull, where it comes from, and what
-            decision it blocks.
-          </p>
+      <section style={PANEL_STYLE} data-testid="optimize-evidence-readiness">
+        <div style={PANEL_HEAD_STYLE}>
+          <div>
+            <h2 style={SECTION_TITLE_STYLE}>Evidence readiness</h2>
+            <p style={PANEL_COPY_STYLE}>{readiness.summary}</p>
+          </div>
+          <ReadinessBadge readiness={readiness} />
         </div>
-        <EvidenceRequirementTable
+        <EvidenceReadinessTable rows={readiness.rows} />
+        <OpportunityAsks
           requirements={spine.missingEvidenceSources}
           opportunitySet={opportunitySet}
         />
@@ -597,7 +615,109 @@ function OpportunityTable({
   );
 }
 
-function EvidenceRequirementTable({
+function ReadinessBadge({
+  readiness,
+}: {
+  readiness: ContractOptimizationEvidenceReadiness;
+}) {
+  return (
+    <div style={SCORE_BADGE_STYLE} data-testid="optimize-evidence-readiness-badge">
+      <strong>
+        {readiness.requiredEvidenced}/{readiness.requiredTotal}
+      </strong>
+      <span>required evidenced</span>
+    </div>
+  );
+}
+
+function EvidenceReadinessTable({
+  rows,
+}: {
+  rows: readonly ContractOptimizationEvidenceReadinessRow[];
+}) {
+  if (rows.length === 0) {
+    return (
+      <div style={EMPTY_STYLE}>
+        No governed evidence families are defined for this optimization
+        archetype.
+      </div>
+    );
+  }
+  return (
+    <div style={TABLE_WRAP_STYLE}>
+      <table style={TABLE_STYLE}>
+        <thead>
+          <tr>
+            <th style={TH_STYLE}>Evidence</th>
+            <th style={TH_STYLE}>Obligation</th>
+            <th style={TH_STYLE}>Source system / owner</th>
+            <th style={TH_STYLE}>Grain / history</th>
+            <th style={TH_STYLE}>Loaded / parsed</th>
+            <th style={TH_STYLE}>Impact if missing</th>
+            <th style={TH_STYLE}>Next action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.family} data-testid={`evidence-row-${row.family}`}>
+              <td style={TD_STYLE}>
+                <strong>{row.label}</strong>
+                <div style={MUTED_SMALL_STYLE}>{row.templateFileName}</div>
+              </td>
+              <td style={TD_STYLE}>
+                <span
+                  style={{
+                    ...OBLIGATION_STYLE,
+                    ...(row.obligation === "required"
+                      ? OBLIGATION_REQUIRED_STYLE
+                      : null),
+                  }}
+                >
+                  {row.obligation}
+                </span>
+                <div style={MUTED_SMALL_STYLE}>
+                  {labelEvidenceClass(row.evidenceClass)}
+                </div>
+              </td>
+              <td style={TD_STYLE}>
+                {row.sourceSystems.join(", ")}
+                <div style={MUTED_SMALL_STYLE}>{row.ownerRole}</div>
+              </td>
+              <td style={TD_STYLE}>{row.grainHistory}</td>
+              <td style={TD_STYLE}>
+                <span
+                  aria-label={`${row.label} ${row.loadState}`}
+                  style={{
+                    ...INLINE_DOT_STYLE,
+                    ...(row.loadState === "not_loaded"
+                      ? null
+                      : row.parserState === "needs_review"
+                        ? STATE_DOT_WARNING_STYLE
+                        : STATE_DOT_READY_STYLE),
+                  }}
+                />
+                {labelLoadState(row.loadState)}
+                <div style={MUTED_SMALL_STYLE}>
+                  {labelParserState(row.parserState)} ·{" "}
+                  {row.factObjectCount === 0
+                    ? "no fact objects yet"
+                    : `${row.factObjectCount} fact object${row.factObjectCount === 1 ? "" : "s"}`}
+                </div>
+              </td>
+              <td style={TD_STYLE}>
+                {row.blocks}
+                <div style={MUTED_SMALL_STYLE}>{row.artifactImpact}</div>
+              </td>
+              <td style={TD_STYLE}>{row.nextAction}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function OpportunityAsks({
   requirements,
   opportunitySet,
 }: {
@@ -610,46 +730,50 @@ function EvidenceRequirementTable({
       requirementRowFromOpportunityRequirement,
     ) ?? []),
   ];
-  if (rows.length === 0) {
-    return (
-      <div style={EMPTY_STYLE}>
-        No required evidence rows are open in the current spine. Continue
-        through approval and value proof before making any external savings
-        claim.
-      </div>
-    );
-  }
+  if (rows.length === 0) return null;
   return (
-    <div style={TABLE_WRAP_STYLE}>
-      <table style={TABLE_STYLE}>
-        <thead>
-          <tr>
-            <th style={TH_STYLE}>Required evidence</th>
-            <th style={TH_STYLE}>Where to pull it</th>
-            <th style={TH_STYLE}>Grain / history</th>
-            <th style={TH_STYLE}>Blocks</th>
-            <th style={TH_STYLE}>Next action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((requirement) => (
-            <tr key={requirement.id}>
-              <td style={TD_STYLE}>
-                <strong>{requirement.label}</strong>
-                <div style={MUTED_SMALL_STYLE}>
-                  {requirement.requirementType}
-                </div>
-              </td>
-              <td style={TD_STYLE}>{requirement.whereToPull}</td>
-              <td style={TD_STYLE}>{requirement.grainHistory}</td>
-              <td style={TD_STYLE}>{requirement.blocks}</td>
-              <td style={TD_STYLE}>{requirement.nextAction}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div style={ASKS_STYLE} data-testid="optimize-opportunity-asks">
+      <div style={MUTED_SMALL_STYLE}>
+        Opportunity-specific asks on top of the evidence families above
+      </div>
+      {rows.map((row) => (
+        <div key={row.id} style={ASK_ROW_STYLE}>
+          <div>
+            <strong>{row.label}</strong>
+            <div style={MUTED_SMALL_STYLE}>{row.requirementType}</div>
+          </div>
+          <div>
+            {row.whereToPull}
+            <div style={MUTED_SMALL_STYLE}>{row.grainHistory}</div>
+          </div>
+          <div>
+            {row.nextAction}
+            <div style={MUTED_SMALL_STYLE}>{row.blocks}</div>
+          </div>
+        </div>
+      ))}
     </div>
   );
+}
+
+function labelEvidenceClass(value: string): string {
+  if (value === "missing") return "no governed evidence";
+  return value.replace(/_/g, " ");
+}
+
+function labelLoadState(value: string): string {
+  if (value === "not_loaded") return "Not loaded";
+  if (value === "system_loaded") return "System loaded";
+  if (value === "document_loaded") return "Document loaded";
+  return "Human confirmed";
+}
+
+function labelParserState(value: string): string {
+  if (value === "not_run") return "parser not run";
+  if (value === "needs_review") return "needs review";
+  if (value === "extracted") return "extracted";
+  if (value === "reviewed") return "reviewed";
+  return "finance validated";
 }
 
 interface BaselineReadinessRow {
@@ -1367,6 +1491,48 @@ const START_WRAP_STYLE: CSSProperties = {
   display: "grid",
   gap: 6,
   justifyItems: "end",
+};
+
+const INLINE_DOT_STYLE: CSSProperties = {
+  display: "inline-block",
+  width: 8,
+  height: 8,
+  borderRadius: 999,
+  background: ANALYTICS.MUTED,
+  marginRight: 6,
+};
+
+const OBLIGATION_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderRadius: 999,
+  color: ANALYTICS.MUTED,
+  padding: "3px 7px",
+  fontSize: 10,
+  fontWeight: 900,
+  letterSpacing: 0.8,
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+};
+
+const OBLIGATION_REQUIRED_STYLE: CSSProperties = {
+  borderColor: ANALYTICS.INK,
+  color: ANALYTICS.INK,
+};
+
+const ASKS_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 6,
+  marginTop: 12,
+  paddingTop: 12,
+  borderTop: `1px solid ${ANALYTICS.LINE}`,
+};
+
+const ASK_ROW_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 240px) minmax(0, 1fr) minmax(0, 260px)",
+  gap: 12,
+  alignItems: "baseline",
+  fontSize: 12,
 };
 
 const ERROR_STYLE: CSSProperties = {

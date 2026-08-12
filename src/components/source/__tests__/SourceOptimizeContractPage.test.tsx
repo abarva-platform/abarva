@@ -378,7 +378,7 @@ describe("SourceOptimizeContractPage", () => {
       />,
     );
 
-    expect(screen.getByText("Evidence request board")).toBeInTheDocument();
+    expect(screen.getByText("Evidence readiness")).toBeInTheDocument();
     expect(
       screen.getByText("SLA credits earned but not claimed"),
     ).toBeInTheDocument();
@@ -394,5 +394,87 @@ describe("SourceOptimizeContractPage", () => {
         "Request the SLA credit register from service management.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("shows every required evidence family as explicitly missing when no evidence pack is supplied", () => {
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({ selected: makeCandidate() })}
+        opportunitySet={makeOpportunitySet()}
+      />,
+    );
+
+    const slaRow = screen.getByTestId("evidence-row-sla_performance");
+    expect(slaRow).toHaveTextContent("required");
+    expect(slaRow).toHaveTextContent("no governed evidence");
+    expect(slaRow).toHaveTextContent("Not loaded");
+    expect(slaRow).toHaveTextContent("parser not run");
+    expect(slaRow).toHaveTextContent("no fact objects yet");
+    expect(slaRow).toHaveTextContent("Service delivery manager");
+    expect(slaRow).toHaveTextContent("sla-performance.csv");
+
+    // Missing must never be presented as a zero amount.
+    expect(slaRow).not.toHaveTextContent("$0");
+    expect(
+      screen.getByTestId("optimize-evidence-readiness-badge"),
+    ).toHaveTextContent("0/8");
+  });
+
+  it("reports governed evidence state when an evidence pack is supplied", () => {
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({ selected: makeCandidate() })}
+        opportunitySet={makeOpportunitySet()}
+        evidencePack={{
+          tenant_key: "skyharbor-air",
+          dataset_version: "source-v4-golden",
+          contract_id: "CTR-090",
+          ledger_items: [
+            {
+              ledger_item_id: "recoverable:sla-credit-gap",
+              contract_id: "CTR-090",
+              ledger_type: "recoverable_leakage",
+              amount: 620_000,
+              amount_state: "quantified",
+              evidence_class: "system_evidenced",
+              evidence_refs: [
+                "source.golden_contract_sla_incident_service_credit_monthly",
+              ],
+              source_systems: ["ServiceNow"],
+              source_record_ids: [
+                "contract:CTR-090:monthly-sla-credit-history",
+              ],
+              document_refs: [],
+              page_spans: [],
+              calculation_rule: null,
+              confidence: 0.91,
+              review_state: "procurement_reviewed",
+              decision_state: "candidate",
+              workflow_event_id: null,
+              tower_claim_id: null,
+            },
+          ],
+        }}
+      />,
+    );
+
+    const slaRow = screen.getByTestId("evidence-row-sla_performance");
+    expect(slaRow).toHaveTextContent("system evidenced");
+    expect(slaRow).toHaveTextContent("System loaded");
+    expect(slaRow).toHaveTextContent("reviewed");
+    expect(slaRow).toHaveTextContent("1 fact object");
+    expect(slaRow).toHaveTextContent("ServiceNow");
+
+    // A family the pack says nothing about stays explicitly missing.
+    expect(screen.getByTestId("evidence-row-ticket_volume")).toHaveTextContent(
+      "Not loaded",
+    );
+    expect(
+      screen.getByTestId("optimize-evidence-readiness-badge"),
+    ).toHaveTextContent("1/8");
   });
 });
