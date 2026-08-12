@@ -433,6 +433,15 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     parseTarget: "Committed value by lever",
     missingAction: "Upload award commitments before transition starts.",
   },
+  "transition.go-live-readiness": {
+    item: "Transition readiness packet",
+    requirement: "1 required readiness packet",
+    sourceSystem: "Transition tracker / go-live checklist",
+    ownerRole: "Transition owner",
+    acceptedFormats: "PDF, DOCX, XLSX, or CSV",
+    parseTarget: "Milestones, blockers, cutover, rollback, handoff evidence",
+    missingAction: "Upload readiness evidence before value tracking starts.",
+  },
   "value.realized-actuals": {
     item: "Realized value file",
     requirement: "1 required value snapshot",
