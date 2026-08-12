@@ -237,6 +237,21 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.getByTestId("source-shell-stage-ready-panel"),
     ).toHaveTextContent("artifact review items remain");
+    expect(screen.getByTestId("source-stage-ready-status")).toHaveTextContent(
+      "7/7 complete",
+    );
+    expect(screen.getByTestId("source-stage-ready-status")).toHaveTextContent(
+      "file review gaps",
+    );
+    expect(screen.getByTestId("source-stage-ready-status")).toHaveTextContent(
+      "Close file review",
+    );
+    expect(
+      screen.getByTestId("source-stage-ready-primary-files"),
+    ).toHaveTextContent("Review Files before approval");
+    expect(
+      screen.getByTestId("source-stage-ready-open-approval"),
+    ).toHaveTextContent("Open approval readiness");
 
     fireEvent.click(screen.getByTestId("source-stage-ready-open-approval"));
 
@@ -259,5 +274,134 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       "href",
       `/source/events/${EVENT.id}?stage=scope&workspace=files`,
     );
+  });
+
+  it("opens Files as the primary next action when completed workflow inputs still have artifact blockers", () => {
+    const completedScopeStage = {
+      ...SAMPLE_SCOPE_STAGE,
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((task) => ({
+        ...task,
+        state: "done" as const,
+        evidenceComplete: true,
+      })),
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={completedScopeStage}
+        approvalItems={[APPROVAL]}
+        initialWorkspace="steps"
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("source-stage-ready-primary-files"));
+
+    expect(screen.getByTestId("source-shell-v2-files")).toBeInTheDocument();
+  });
+
+  it("presents a direct approval gate action once workflow inputs and gate artifacts are ready", () => {
+    const completedScopeStage = {
+      ...SAMPLE_SCOPE_STAGE,
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((task) => ({
+        ...task,
+        state: "done" as const,
+        evidenceComplete: true,
+      })),
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={completedScopeStage}
+        artifacts={[
+          {
+            id: "scope-app-inventory",
+            artifactCode: "d04_app_inv",
+            stageKey: "scope",
+            status: "client_final",
+            title: "Application Inventory & Tiering",
+          },
+          {
+            id: "scope-memo",
+            artifactCode: "d05_scope_memo",
+            stageKey: "scope",
+            status: "client_final",
+            isClientFinal: true,
+            title: "Scope Memo with Boundaries",
+            body: `Decision requested: approve the Scope boundary for the managed-services sourcing event.
+            Executive summary: the application estate, service tower, exclusion log, ticket baseline,
+            retained responsibility model, and sponsor commitment are complete enough for a sourcing
+            owner to advance to the next gate. Scope in: Tier 1 and Tier 2 business applications,
+            L2/L3 support services, knowledge transfer, service desk escalation, incident triage,
+            and operational reporting. Scope out: end-user device support, SOC operations, business
+            process ownership, and applications already in decommission. Evidence basis: application
+            inventory, scope memo, exclusion log, ticket history, retained responsibility matrix, and
+            sponsor sign-off. Required exhibits: in scope towers, support tiers, exclusions,
+            run change boundary, open scope questions. The in scope towers are application
+            management, incident management, release support, and reporting. Support tiers are
+            Tier 1 business-critical and Tier 2 important applications. Exclusions are end-user
+            device support, SOC operations, and decommissioning apps. The run/change boundary puts
+            steady-state support in scope and project delivery out of scope. Open scope questions:
+            final vendor-facing volume bands and SLA history must be confirmed in the next gate.
+            sponsor sign-off. Remaining risk: pricing should continue to validate volumes and SLA
+            history before vendor release. Recommended action: open the Scope approval gate and
+            advance to RFP preparation.`,
+            bodyGenerationMetadata: {
+              qualityGate: {
+                passed: true,
+                overallScore: 9,
+                finalSummary: "Passed: evidence-bound scope memo.",
+                unsupportedClaims: [],
+                missingEvidence: [],
+              },
+            },
+          },
+          {
+            id: "scope-exclusions",
+            artifactCode: "d06_excl_log",
+            stageKey: "scope",
+            status: "client_final",
+            title: "Exclusion Log",
+          },
+          {
+            id: "scope-ticket-history",
+            artifactCode: "d07_ticket_synth",
+            stageKey: "scope",
+            status: "client_final",
+            title: "Ticket History Synthesis",
+          },
+        ]}
+        approvalItems={[APPROVAL]}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(
+      screen.getByTestId("source-shell-stage-ready-panel"),
+    ).toHaveTextContent("All required evidence is ready for Scope");
+    expect(screen.getByTestId("source-stage-ready-status")).toHaveTextContent(
+      "Ready for approval",
+    );
+    expect(screen.getByTestId("source-stage-ready-status")).toHaveTextContent(
+      "Open approval gate",
+    );
+    expect(
+      screen.queryByTestId("source-stage-ready-primary-files"),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("source-stage-ready-open-approval"));
+
+    expect(routerPush).toHaveBeenCalledWith(
+      `/source/events/${EVENT.id}?stage=scope&workspace=approvals`,
+    );
+    expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("source-shell-approval-readiness"),
+    ).toHaveTextContent("Ready to decide");
   });
 });
