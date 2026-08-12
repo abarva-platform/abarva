@@ -355,7 +355,7 @@ Final report must include PR link, merge commit, files changed, validation resul
 ## SRC43 — Pricing completeness drilldown
 
 **Priority:** P1
-**Status:** pending
+**Status:** done
 **Type:** feature
 **Primary surface:** Source pricing
 **Primary agent:** Nexus
