@@ -139,4 +139,77 @@ describe("VendorResponseFileReadinessPanel", () => {
     );
     expect(html).not.toMatch(/Northstar|TitanTech|CloudBridge|DataPeak/i);
   });
+
+  it("does not attribute a vendor-level blocker to an unrelated file row", () => {
+    const readiness = makeReadiness();
+    // A blocker about one file family must not become the next action on the
+    // other required rows.
+    readiness.records[0].blockers = [
+      "Vendor A: transition plan status is incomplete.",
+    ];
+
+    const html = renderToStaticMarkup(
+      createElement(VendorResponseFileReadinessPanel, {
+        readiness,
+        profileSet: buildVendorResponseMveProfiles({
+          id: "skyh-test-event",
+          code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
+          name: "Managed services sourcing event",
+          accountName: "Demo account",
+        }),
+      }),
+    );
+
+    const mainProposalRow = html
+      .split("<tr>")
+      .find(
+        (row) =>
+          row.includes("Main proposal package") && row.includes("Vendor A"),
+      );
+    expect(mainProposalRow).toBeDefined();
+    expect(mainProposalRow).not.toContain(
+      "transition plan status is incomplete",
+    );
+  });
+
+  it("counts distinct cited items rather than summing overlapping rows", () => {
+    const profileSet = buildVendorResponseMveProfiles({
+      id: "skyh-test-event",
+      code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
+      name: "Managed services sourcing event",
+      accountName: "Demo account",
+    });
+    const readiness = makeReadiness();
+
+    const html = renderToStaticMarkup(
+      createElement(VendorResponseFileReadinessPanel, {
+        readiness,
+        profileSet,
+      }),
+    );
+
+    // The main proposal row counts every reference for a vendor and the other
+    // rows re-count their own subsets, so the summary must not be their sum.
+    const distinct = new Set<string>();
+    for (const record of readiness.records) {
+      const profile = profileSet?.profiles.find((item) =>
+        item.vendorId.includes(record.vendorId.split("-")[1] ?? ""),
+      );
+      if (!profile) continue;
+      for (const card of profile.extractionCards) {
+        if (card.evidenceReference) {
+          distinct.add(`${record.vendorId}::${card.evidenceReference}`);
+        }
+      }
+      for (const exhibit of profile.exhibits) {
+        if (exhibit.evidenceReference) {
+          distinct.add(`${record.vendorId}::${exhibit.evidenceReference}`);
+        }
+      }
+    }
+
+    const citedMetric = html.match(/Cited items<\/[^>]+><[^>]+>(\d+)</);
+    expect(citedMetric).not.toBeNull();
+    expect(Number(citedMetric?.[1])).toBeLessThanOrEqual(distinct.size);
+  });
 });

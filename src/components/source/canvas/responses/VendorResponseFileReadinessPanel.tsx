@@ -35,6 +35,17 @@ interface FileReadinessRow extends FileFamily {
 
 const FILE_FAMILIES: readonly FileFamily[] = VENDOR_RESPONSE_FILE_FAMILIES;
 
+/** Which vendor-level blockers belong to which file family row. */
+const BLOCKER_PATTERNS: Record<string, RegExp> = {
+  main_proposal: /executive response|scope confirmation|main proposal/i,
+  pricing_template: /pricing/i,
+  sla_response: /sla|service level/i,
+  staffing_model: /delivery model|staffing/i,
+  transition_plan: /transition/i,
+  exceptions: /assumption|exclusion|exception/i,
+  proof_exhibits: /evidence|reference/i,
+};
+
 export function VendorResponseFileReadinessPanel({
   readiness,
   profileSet,
@@ -66,7 +77,14 @@ export function VendorResponseFileReadinessPanel({
   const minimumFilesPerVendor = FILE_FAMILIES.filter(
     (family) => family.requirement === "Required",
   ).length;
-  const citationCount = rows.reduce((sum, row) => sum + row.citationCount, 0);
+  // Per-row counts overlap by design — the main proposal row counts every
+  // reference for that vendor and the other rows count their own subsets — so
+  // summing them would report more cited items than exist. Count distinct
+  // references across the vendors on this ledger instead.
+  const citationCount = countDistinctCitations(
+    readiness?.records ?? [],
+    profilesByVendorId,
+  );
 
   return (
     <section
@@ -327,8 +345,15 @@ function nextActionFor(
     return `Load ${family.label.toLowerCase()} before parsing.`;
   if (parseTone === "review")
     return `Review ${family.label.toLowerCase()} extraction.`;
-  if (record.blockers.length > 0 && family.requirement === "Required") {
-    return record.blockers[0];
+  if (family.requirement === "Required") {
+    // Only surface a vendor-level blocker on the row it actually concerns.
+    // Showing the first blocker on every required row attributed, for example,
+    // an incomplete transition plan to the main proposal package.
+    const pattern = BLOCKER_PATTERNS[family.key];
+    const blocker = pattern
+      ? record.blockers.find((item) => pattern.test(item))
+      : undefined;
+    if (blocker) return blocker;
   }
   if (family.requirement === "Optional") {
     return "Use only if it strengthens leverage or proof.";
@@ -429,6 +454,29 @@ function hasExhibit(
       (exhibit) => exhibit.kind === kind && exhibit.status !== "missing",
     ),
   );
+}
+
+function countDistinctCitations(
+  records: readonly SourceVendorResponseCompletenessRecord[],
+  profilesByVendorId: Map<string, VendorResponseProfile>,
+): number {
+  const references: Array<string | null> = [];
+  for (const record of records) {
+    const profile = profilesByVendorId.get(simplifyVendorKey(record.vendorId));
+    if (!profile) continue;
+    // Namespace by vendor so two vendors citing "Exhibit A" count separately.
+    for (const card of profile.extractionCards) {
+      if (card.evidenceReference) {
+        references.push(`${record.vendorId}::${card.evidenceReference}`);
+      }
+    }
+    for (const exhibit of profile.exhibits) {
+      if (exhibit.evidenceReference) {
+        references.push(`${record.vendorId}::${exhibit.evidenceReference}`);
+      }
+    }
+  }
+  return unique(references).length;
 }
 
 function unique(values: Array<string | null>): string[] {

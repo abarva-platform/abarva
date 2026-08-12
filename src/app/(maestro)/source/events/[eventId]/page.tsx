@@ -46,6 +46,7 @@ import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact
 import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repository";
 import { buildSourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness";
 import { buildSourceVendorResponseCompleteness } from "@/lib/source/vendor-response-completeness";
+import { resolveVendorResponseSeedInputs } from "@/lib/source/vendor-response-completeness-from-profiles";
 import {
   buildVendorBafoInstructionPack,
   buildVendorChallengeIntelligence,
@@ -149,16 +150,6 @@ export default async function SourceEventDetailPage({
             },
           })
         : null;
-    const vendorResponseReadiness =
-      viewStage === "responses"
-        ? buildSourceVendorResponseCompleteness({
-            event: {
-              id: event.id,
-              name: event.name,
-              currentStageKey: viewStage,
-            },
-          })
-        : null;
     const vendorResponseProfiles =
       viewStage === "responses"
         ? buildVendorResponseMveProfiles({
@@ -166,6 +157,24 @@ export default async function SourceEventDetailPage({
             code: event.code,
             name: event.name,
             accountName: event.accountName,
+          })
+        : null;
+    // Events outside the vendor-response seed table take their vendor
+    // population from the same parsed profiles the rest of the stage renders,
+    // so the cockpit and the file-readiness ledger cannot report an empty
+    // stage while the ingestion panel reports parsed packages.
+    const vendorResponseReadiness =
+      viewStage === "responses"
+        ? buildSourceVendorResponseCompleteness({
+            event: {
+              id: event.id,
+              name: event.name,
+              currentStageKey: viewStage,
+              vendorResponses: resolveVendorResponseSeedInputs(
+                event.id,
+                vendorResponseProfiles,
+              ),
+            },
           })
         : null;
     const vendorChallengeIntelligence =
