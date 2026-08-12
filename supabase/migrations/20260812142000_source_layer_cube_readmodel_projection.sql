@@ -177,10 +177,10 @@ SELECT
   vendor_ref,
   vendor_name,
   vendor_category,
-  count(*) AS contract_count,
+  count(*)::int AS contract_count,
   sum(annual_value) AS annual_value,
   sum(total_committed_value) AS total_committed_value,
-  count(*) FILTER (WHERE auto_renew) AS auto_renew_contracts,
+  count(*) FILTER (WHERE auto_renew)::int AS auto_renew_contracts,
   min(end_date) AS next_end_date,
   array_agg(contract_id ORDER BY annual_value DESC NULLS LAST, contract_id) AS contract_refs
 FROM source.contract_vendor_360
@@ -202,10 +202,10 @@ LEFT JOIN (
   SELECT
     tenant_key,
     contract_id,
-    count(DISTINCT application_ref) AS scoped_application_count,
+    count(DISTINCT application_ref)::int AS scoped_application_count,
     count(DISTINCT application_ref) FILTER (
       WHERE criticality IN ('Tier 0', 'Tier 1', 'Mission critical', 'Critical')
-    ) AS critical_application_count
+    )::int AS critical_application_count
   FROM source.contract_application_scope
   GROUP BY tenant_key, contract_id
 ) app
@@ -229,7 +229,7 @@ LEFT JOIN (
   ON perf.tenant_key = c.tenant_key
  AND perf.contract_id = c.contract_id
 LEFT JOIN (
-  SELECT tenant_key, contract_id, count(*) AS dependency_count
+  SELECT tenant_key, contract_id, count(*)::int AS dependency_count
   FROM source.contract_initiative_dependency
   GROUP BY tenant_key, contract_id
 ) dep
