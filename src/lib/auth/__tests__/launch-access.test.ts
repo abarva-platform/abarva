@@ -7,7 +7,14 @@ import { inferClientKeyFromEmail } from '@/lib/client-config';
 describe('launch access roster', () => {
   it('allows approved AbarVa admin identities', () => {
     expect(isStaticLaunchApprovedEmail('admin@abarva.ai')).toBe(true);
-    expect(getStaticLaunchAccessProfile('anand@abarva.ai')).toMatchObject({ role: 'admin' });
+    expect(getStaticLaunchAccessProfile('admin@abarva.ai')).toMatchObject({
+      role: 'client',
+      clientKey: 'meridian',
+    });
+    expect(getStaticLaunchAccessProfile('anand@abarva.ai')).toMatchObject({
+      role: 'admin',
+      clientKey: 'skyharbor',
+    });
   });
 
   it('pins Anand client test aliases to the right tenant keys', () => {
