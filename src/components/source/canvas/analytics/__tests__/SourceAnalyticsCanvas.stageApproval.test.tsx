@@ -175,6 +175,29 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(continueButton).toBeDisabled();
     expect(screen.getByText(/Required before Continue/)).toBeInTheDocument();
 
+    expect(
+      screen.getByTestId("source-shell-evidence-ask-table"),
+    ).toHaveTextContent("Evidence item");
+    expect(
+      screen.getByTestId("source-shell-evidence-ask-table"),
+    ).toHaveTextContent("Source / owner");
+    expect(
+      screen.getByTestId("source-shell-evidence-ask-table"),
+    ).toHaveTextContent("Parser writeback");
+    const activeEvidenceRow = screen.getByTestId(
+      "source-shell-evidence-ask-row-scope.volumetrics",
+    );
+    expect(activeEvidenceRow).toHaveTextContent("Provide the volumetrics");
+    expect(activeEvidenceRow).toHaveTextContent("Volumetrics file");
+    expect(activeEvidenceRow).toHaveTextContent("CSV or XLSX");
+    expect(activeEvidenceRow).toHaveTextContent("ITSM / finance baseline");
+    expect(activeEvidenceRow).toHaveTextContent("Ravi Menon, IT-Ops");
+    expect(activeEvidenceRow).toHaveTextContent(
+      "Tickets, SLA misses, change orders, run volumes",
+    );
+    expect(activeEvidenceRow).toHaveTextContent("VOLUMETRICS_V1");
+    expect(activeEvidenceRow).toHaveTextContent("Upload below");
+
     fireEvent.click(
       screen.getByRole("button", {
         name: /Confirm the applications in scope/,

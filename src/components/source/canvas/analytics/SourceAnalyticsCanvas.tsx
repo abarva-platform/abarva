@@ -1685,17 +1685,17 @@ function EvidenceAskTable({
           fontFamily: ANALYTICS.MONO,
           fontSize: 9,
           fontWeight: 800,
-          gridTemplateColumns: "1.05fr 96px 1.25fr 108px 112px",
+          gridTemplateColumns:
+            "minmax(160px, 1fr) minmax(150px, 0.9fr) minmax(160px, 0.95fr) minmax(150px, 0.8fr)",
           letterSpacing: "0.06em",
           padding: "9px 12px",
           textTransform: "uppercase",
         }}
       >
-        <span>What is needed</span>
-        <span>Required</span>
-        <span>Source</span>
-        <span>Status</span>
-        <span>Action</span>
+        <span>Evidence item</span>
+        <span>Source / owner</span>
+        <span>Parser writeback</span>
+        <span>Status / next</span>
       </div>
       {group.steps.map((step, index) => {
         const active = step.id === activeStepId;
@@ -1704,9 +1704,11 @@ function EvidenceAskTable({
         return (
           <div
             key={step.id}
+            data-testid={`source-shell-evidence-ask-row-${step.id}`}
             style={{
               display: "grid",
-              gridTemplateColumns: "1.05fr 96px 1.25fr 108px 112px",
+              gridTemplateColumns:
+                "minmax(160px, 1fr) minmax(150px, 0.9fr) minmax(160px, 0.95fr) minmax(150px, 0.8fr)",
               gap: 12,
               padding: "11px 12px",
               borderTop:
@@ -1717,61 +1719,125 @@ function EvidenceAskTable({
               lineHeight: 1.35,
             }}
           >
-            <b>{step.title}</b>
-            <span
-              style={{
-                color: captured
-                  ? ANALYTICS.GREEN_TEXT
+            <EvidenceAskCell
+              label={step.title}
+              detail={`${need.item} · ${need.requirement} · ${need.formats}`}
+              active={active}
+              captured={captured}
+            />
+            <EvidenceAskCell
+              label={need.sourceSystem}
+              detail={need.owner}
+              active={active}
+              captured={captured}
+            />
+            <EvidenceAskCell
+              label={need.parseTarget}
+              detail={step.factTemplateCode ?? "No template code"}
+              active={active}
+              captured={captured}
+            />
+            <EvidenceAskStatusCell
+              status={captured ? "Reviewed" : active ? "Now" : "Pending"}
+              next={
+                captured
+                  ? "Done"
                   : active
-                    ? ANALYTICS.AMBER_TEXT
-                    : ANALYTICS.FAINT,
-                fontWeight: 800,
-              }}
-            >
-              {need.requirement}
-            </span>
-            <span style={{ color: active ? ANALYTICS.INK_2 : ANALYTICS.MUTED }}>
-              {need.sourceSystem} · {need.formats}
-            </span>
-            <span
-              style={{
-                color: captured
-                  ? ANALYTICS.GREEN_TEXT
-                  : active
-                    ? ANALYTICS.AMBER_TEXT
-                    : ANALYTICS.FAINT,
-                fontWeight: 800,
-              }}
-            >
-              {captured ? "Reviewed" : active ? "Now" : "Pending"}
-            </span>
-            <span
-              style={{
-                border: `1px solid ${captured ? "rgba(17, 120, 84, 0.24)" : ANALYTICS.LINE}`,
-                borderRadius: 999,
-                color: captured
-                  ? ANALYTICS.GREEN_TEXT
-                  : active
-                    ? ANALYTICS.INK
-                    : ANALYTICS.FAINT,
-                fontSize: 11,
-                fontWeight: 800,
-                padding: "5px 8px",
-                textAlign: "center",
-              }}
-            >
-              {captured
-                ? "Done"
-                : active
-                  ? step.type === "provide"
-                    ? "Upload below"
-                    : step.cta
-                  : "Select when ready"}
-            </span>
+                    ? step.type === "provide"
+                      ? "Upload below"
+                      : step.cta
+                    : "Select when ready"
+              }
+              active={active}
+              captured={captured}
+            />
           </div>
         );
       })}
     </div>
+  );
+}
+
+function EvidenceAskCell({
+  label,
+  detail,
+  active,
+  captured,
+}: {
+  label: string;
+  detail: string;
+  active: boolean;
+  captured: boolean;
+}) {
+  return (
+    <span style={{ display: "grid", gap: 3, minWidth: 0 }}>
+      <b
+        style={{
+          color: active || captured ? ANALYTICS.INK : ANALYTICS.MUTED,
+          overflowWrap: "anywhere",
+        }}
+      >
+        {label}
+      </b>
+      <span
+        style={{
+          color: active ? ANALYTICS.INK_2 : ANALYTICS.MUTED,
+          fontSize: 11.5,
+          lineHeight: 1.35,
+          overflowWrap: "anywhere",
+        }}
+      >
+        {detail}
+      </span>
+    </span>
+  );
+}
+
+function EvidenceAskStatusCell({
+  status,
+  next,
+  active,
+  captured,
+}: {
+  status: string;
+  next: string;
+  active: boolean;
+  captured: boolean;
+}) {
+  return (
+    <span style={{ display: "grid", gap: 6, minWidth: 0 }}>
+      <b
+        style={{
+          color: captured
+            ? ANALYTICS.GREEN_TEXT
+            : active
+              ? ANALYTICS.AMBER_TEXT
+              : ANALYTICS.FAINT,
+          fontSize: 12,
+        }}
+      >
+        {status}
+      </b>
+      <span
+        style={{
+          border: `1px solid ${
+            captured ? "rgba(17, 120, 84, 0.24)" : ANALYTICS.LINE
+          }`,
+          borderRadius: 999,
+          color: captured
+            ? ANALYTICS.GREEN_TEXT
+            : active
+              ? ANALYTICS.INK
+              : ANALYTICS.FAINT,
+          fontSize: 11,
+          fontWeight: 800,
+          padding: "5px 8px",
+          textAlign: "center",
+        }}
+      >
+        {next}
+      </span>
+    </span>
   );
 }
 
