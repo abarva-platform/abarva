@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { createElement } from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { SimpleStageFront } from "@/components/source/canvas/SimpleStageFront";
 import { SimpleFrontErrorBoundary } from "@/components/source/canvas/SimpleFrontErrorBoundary";
 import type { SimpleStageScreenView } from "@/lib/source/simple-front";
@@ -18,7 +18,12 @@ const view: SimpleStageScreenView = {
       acceptHint: "CMDB / EA tool · needs usable evidence",
       state: "Not Requested",
       sourceLabel: "CMDB / EA tool",
+      sourceSystems: ["ServiceNow CMDB", "LeanIX", "Excel portfolio inventory"],
+      acceptedFileTypes: ["xlsx", "csv"],
+      recordGrain: "one application, service, or platform per row",
+      criticalFields: ["application_id", "application_name", "criticality"],
       minimumState: "Usable Evidence",
+      level: "required",
     },
     {
       requirementId: "EVID-SRC-SCOPE-ORG",
@@ -27,7 +32,12 @@ const view: SimpleStageScreenView = {
       acceptHint: "Workday / HRIS · needs available",
       state: "Not Requested",
       sourceLabel: "Workday / HRIS",
+      sourceSystems: ["Workday", "SAP SuccessFactors", "Fieldglass"],
+      acceptedFileTypes: ["xlsx", "csv"],
+      recordGrain: "one role, team, location, or worker class per row",
+      criticalFields: ["role_ref", "role_title", "team", "fte_count"],
       minimumState: "Available",
+      level: "required",
     },
     {
       requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
@@ -36,7 +46,12 @@ const view: SimpleStageScreenView = {
       acceptHint: "ServiceNow / ITSM tool · needs available",
       state: "Not Requested",
       sourceLabel: "ServiceNow / ITSM tool",
+      sourceSystems: ["ServiceNow ITSM", "Jira Service Management"],
+      acceptedFileTypes: ["xlsx", "csv"],
+      recordGrain: "one queue, month, severity, or ticket class per row",
+      criticalFields: ["service_tower", "period", "ticket_count", "severity"],
       minimumState: "Available",
+      level: "required",
     },
   ],
   extras: [
@@ -47,7 +62,18 @@ const view: SimpleStageScreenView = {
       acceptHint: "Procurement · needs available",
       state: "Not Requested",
       sourceLabel: "Procurement",
+      sourceSystems: ["Icertis", "DocuSign CLM", "SAP S/4HANA AP"],
+      acceptedFileTypes: ["xlsx", "csv", "pdf", "docx"],
+      recordGrain:
+        "one fiscal period, spend line, or commercial baseline per row",
+      criticalFields: [
+        "contract_id",
+        "vendor_id",
+        "fiscal_year",
+        "actual_amount",
+      ],
       minimumState: "Available",
+      level: "recommended",
     },
   ],
   deliverable: {
@@ -123,7 +149,7 @@ describe("SimpleStageFront", () => {
     expect(errorSpy).toHaveBeenCalled();
   });
 
-  it("keeps skip local and still allows document generation", async () => {
+  it("does not allow required evidence to be skipped from the compact gate", async () => {
     const fetchMock = jest.fn();
     global.fetch = fetchMock as typeof fetch;
     const onGenerateArtifact = jest.fn(async () => ({ ok: true as const }));
@@ -141,21 +167,31 @@ describe("SimpleStageFront", () => {
       }),
     );
 
-    fireEvent.click(screen.getAllByText("Skip")[0]!);
-    expect(fetchMock).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByTestId("source-simple-front-approve"));
+    expect(screen.queryByRole("button", { name: "Not needed" })).toBeNull();
+    const approve = screen.getByTestId("source-simple-front-approve");
+    expect((approve as HTMLButtonElement).disabled).toBe(true);
+    expect(approve.textContent).toContain("Complete 3 inputs");
 
-    expect(onGenerateArtifact).toHaveBeenCalledWith("d05_scope_memo");
+    fireEvent.click(approve);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(onGenerateArtifact).not.toHaveBeenCalled();
   });
 
-  it("APPROVE = generate + advance in one click; no separate generate button", () => {
+  it("APPROVE = generate + advance in one click; no separate generate button", async () => {
     const onGenerateArtifact = jest.fn(async () => ({ ok: true as const }));
     const onAdvanceStage = jest.fn();
+    const readyView: SimpleStageScreenView = {
+      ...view,
+      required: view.required.map((requirement) => ({
+        ...requirement,
+        state: requirement.minimumState,
+      })),
+    };
     render(
       createElement(SimpleStageFront, {
         eventId: "event-1",
         stage: "scope",
-        view,
+        view: readyView,
         generating: false,
         registryArtifacts: [],
         onGenerateArtifact,
@@ -169,20 +205,24 @@ describe("SimpleStageFront", () => {
     // button to forget — approving the step is the single action.
     expect(screen.queryByTestId("source-simple-front-next-step")).toBeNull();
     const approve = screen.getByTestId("source-simple-front-approve");
-    expect(approve.textContent).toContain(
-      "Approve & write Scope Memo with Boundaries",
-    );
+    expect(approve.textContent).toContain("Open approval gate → RFP");
 
     fireEvent.click(approve);
-    expect(onGenerateArtifact).toHaveBeenCalledWith("d05_scope_memo");
-    expect(onAdvanceStage).toHaveBeenCalledWith("rfp");
+    await waitFor(() => {
+      expect(onGenerateArtifact).toHaveBeenCalledWith("d05_scope_memo");
+      expect(onAdvanceStage).toHaveBeenCalledWith("rfp");
+    });
   });
 
-  it("on the final stage (no next), approve just writes the deliverable", () => {
+  it("on the final stage (no next), approve just writes the deliverable", async () => {
     const onGenerateArtifact = jest.fn(async () => ({ ok: true as const }));
     const onAdvanceStage = jest.fn();
     const finalView: SimpleStageScreenView = {
       ...view,
+      required: view.required.map((requirement) => ({
+        ...requirement,
+        state: requirement.minimumState,
+      })),
       nextStep: { label: "Track the value", stage: undefined },
     };
     render(
@@ -200,10 +240,12 @@ describe("SimpleStageFront", () => {
     );
 
     const approve = screen.getByTestId("source-simple-front-approve");
-    expect(approve.textContent).toContain("Write my Scope Memo with Boundaries");
+    expect(approve.textContent).toContain("Write Scope Memo with Boundaries");
     fireEvent.click(approve);
-    expect(onGenerateArtifact).toHaveBeenCalledWith("d05_scope_memo");
-    expect(onAdvanceStage).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(onGenerateArtifact).toHaveBeenCalledWith("d05_scope_memo");
+      expect(onAdvanceStage).not.toHaveBeenCalled();
+    });
   });
 
   it("saves a just-tell-me answer through the evidence answer route", async () => {
@@ -226,7 +268,7 @@ describe("SimpleStageFront", () => {
       }),
     );
 
-    fireEvent.click(screen.getAllByText("Just tell me")[0]!);
+    fireEvent.click(screen.getAllByRole("button", { name: "Answer" })[0]!);
     fireEvent.change(
       screen.getByTestId("source-simple-front-answer-EVID-SRC-SCOPE-APP-INV"),
       {
@@ -235,15 +277,17 @@ describe("SimpleStageFront", () => {
     );
     fireEvent.click(screen.getByText("Save answer"));
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/v1/source/event-1/evidence/EVID-SRC-SCOPE-APP-INV/answer",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({
-          answer: "The app inventory is owned by EA and current.",
-          stage: "scope",
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/source/event-1/evidence/EVID-SRC-SCOPE-APP-INV/answer",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            answer: "The app inventory is owned by EA and current.",
+            stage: "scope",
+          }),
         }),
-      }),
-    );
+      );
+    });
   });
 });

@@ -42,7 +42,12 @@ export interface SimpleStageRequirementView {
   acceptHint: string;
   state: SourceEventEvidence["currentState"] | "Not Requested";
   sourceLabel: string;
+  sourceSystems: readonly string[];
+  acceptedFileTypes: readonly string[];
+  recordGrain: string;
+  criticalFields: readonly string[];
   minimumState: SourceEvidenceRequirement["minimumState"];
+  level: SourceEvidenceRequirement["level"];
 }
 
 export interface SimpleStageScreenView {
@@ -74,7 +79,10 @@ export function resolveSimpleStageScreen(
     ]),
   );
   const requirements = canonicalRequirements.map((requirement) =>
-    toRequirementView(requirement, evidenceByRequirement.get(requirement.requirementId)),
+    toRequirementView(
+      requirement,
+      evidenceByRequirement.get(requirement.requirementId),
+    ),
   );
   const ranked = [...requirements].sort((a, b) => {
     const sourceA = canonicalRequirements.find(
@@ -94,7 +102,9 @@ export function resolveSimpleStageScreen(
   });
   const nextMove = resolveStageNextMove({
     stage,
-    artifacts: (event.artifactStates ?? []).filter((row) => row.stage === stage),
+    artifacts: (event.artifactStates ?? []).filter(
+      (row) => row.stage === stage,
+    ),
     criteria: (event.gateCriterionStates ?? []).filter(
       (row) => row.fromStage === stage,
     ),
@@ -130,7 +140,12 @@ function toRequirementView(
     acceptHint: `${requirement.sourceLabel} · needs ${requirement.minimumState.toLowerCase()}`,
     state: current?.currentState ?? "Not Requested",
     sourceLabel: requirement.sourceLabel,
+    sourceSystems: requirement.sourceSystems,
+    acceptedFileTypes: requirement.acceptedFileTypes,
+    recordGrain: requirement.recordGrain,
+    criticalFields: requirement.criticalFields,
     minimumState: requirement.minimumState,
+    level: requirement.level,
   };
 }
 

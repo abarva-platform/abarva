@@ -42,7 +42,6 @@ export function SimpleStageFront({
   const [answerText, setAnswerText] = useState("");
   const [answerPending, setAnswerPending] = useState<string | null>(null);
   const [uploadPending, setUploadPending] = useState<string | null>(null);
-  const [skipped, setSkipped] = useState<Set<string>>(() => new Set());
   const [message, setMessage] = useState<string | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -175,8 +174,8 @@ export function SimpleStageFront({
           <div style={EYEBROW_STYLE}>Start here</div>
           <h2 style={TITLE_STYLE}>Complete {view.stageLabel} evidence</h2>
           <p style={SUBTITLE_STYLE}>
-            Load, confirm, or answer each required input. When the list is
-            ready, approve the stage and open {nextStageName}.
+            Required rows block approval until they reach the target state.
+            Optional rows improve confidence, artifacts, and aVa answers.
           </p>
         </div>
         <button
@@ -193,13 +192,12 @@ export function SimpleStageFront({
       <div style={EVIDENCE_TABLE_STYLE} aria-label="Required evidence">
         <div style={TABLE_HEADER_STYLE}>
           <span>Evidence needed</span>
-          <span>Source / acceptable input</span>
-          <span>Status</span>
+          <span>Where to get it and what to load</span>
+          <span>Gate status</span>
           <span>Action</span>
         </div>
         {view.required.map((requirement, index) => {
           const isAnswerOpen = answerFor === requirement.requirementId;
-          const isSkipped = skipped.has(requirement.requirementId);
           return (
             <div
               key={requirement.requirementId}
@@ -210,11 +208,12 @@ export function SimpleStageFront({
                 <div style={ASK_TITLE_ROW_STYLE}>
                   <span style={ASK_NUMBER_STYLE}>{index + 1}</span>
                   <strong style={ASK_TITLE_STYLE}>{requirement.label}</strong>
+                  <span style={REQUIRED_BADGE_STYLE}>Required</span>
                 </div>
                 <p style={ASK_META_STYLE}>{requirement.why}</p>
               </div>
               <div style={ASK_COPY_STYLE}>
-                <p style={ASK_HINT_STYLE}>{requirement.acceptHint}</p>
+                <EvidenceSourceSummary requirement={requirement} />
                 {isAnswerOpen ? (
                   <div style={ANSWER_BOX_STYLE}>
                     <textarea
@@ -248,9 +247,14 @@ export function SimpleStageFront({
                 ) : null}
               </div>
               <div>
-                <span style={stateChipStyle(requirement.state, isSkipped)}>
-                  {requirementStatusLabel(requirement, isSkipped)}
+                <span style={stateChipStyle(requirement.state)}>
+                  {requirementStatusLabel(requirement)}
                 </span>
+                <p style={STATUS_HELP_STYLE}>
+                  {isRequirementReady(requirement)
+                    ? `Meets ${requirement.minimumState}.`
+                    : `Blocks approval until ${requirement.minimumState}.`}
+                </p>
               </div>
               <div style={ASK_ACTIONS_STYLE}>
                 <a
@@ -297,17 +301,6 @@ export function SimpleStageFront({
                 >
                   Answer
                 </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSkipped((prev) =>
-                      new Set(prev).add(requirement.requirementId),
-                    )
-                  }
-                  style={QUIET_BUTTON_STYLE}
-                >
-                  Not needed
-                </button>
               </div>
             </div>
           );
@@ -330,13 +323,12 @@ export function SimpleStageFront({
             <div style={EVIDENCE_TABLE_STYLE} aria-label="Optional evidence">
               <div style={OPTIONAL_TABLE_HEADER_STYLE}>
                 <span>Optional evidence</span>
-                <span>Source / acceptable input</span>
+                <span>Where to get it and what to load</span>
                 <span>Status</span>
                 <span>Action</span>
               </div>
               {view.extras.map((requirement) => {
                 const isAnswerOpen = answerFor === requirement.requirementId;
-                const isSkipped = skipped.has(requirement.requirementId);
                 return (
                   <div
                     key={requirement.requirementId}
@@ -344,13 +336,16 @@ export function SimpleStageFront({
                     style={OPTIONAL_ROW_STYLE}
                   >
                     <div style={ASK_COPY_STYLE}>
-                      <strong style={ASK_TITLE_STYLE}>
-                        {requirement.label}
-                      </strong>
+                      <div style={ASK_TITLE_ROW_STYLE}>
+                        <strong style={ASK_TITLE_STYLE}>
+                          {requirement.label}
+                        </strong>
+                        <span style={OPTIONAL_BADGE_STYLE}>Optional</span>
+                      </div>
                       <p style={ASK_META_STYLE}>{requirement.why}</p>
                     </div>
                     <div style={ASK_COPY_STYLE}>
-                      <p style={ASK_HINT_STYLE}>{requirement.acceptHint}</p>
+                      <EvidenceSourceSummary requirement={requirement} />
                       {isAnswerOpen ? (
                         <div style={ANSWER_BOX_STYLE}>
                           <textarea
@@ -388,11 +383,12 @@ export function SimpleStageFront({
                       ) : null}
                     </div>
                     <div>
-                      <span
-                        style={stateChipStyle(requirement.state, isSkipped)}
-                      >
-                        {requirementStatusLabel(requirement, isSkipped)}
+                      <span style={stateChipStyle(requirement.state)}>
+                        {requirementStatusLabel(requirement)}
                       </span>
+                      <p style={STATUS_HELP_STYLE}>
+                        Helps confidence; does not block approval.
+                      </p>
                     </div>
                     <div style={ASK_ACTIONS_STYLE}>
                       <a
@@ -542,12 +538,39 @@ function isRequirementReady(requirement: SimpleStageRequirementView): boolean {
 
 function requirementStatusLabel(
   requirement: SimpleStageRequirementView,
-  skipped: boolean,
 ): string {
-  if (skipped) return "Not needed here";
   if (isRequirementReady(requirement)) return "Ready";
   if (requirement.state === "Not Requested") return "Needed";
   return requirement.state;
+}
+
+function EvidenceSourceSummary({
+  requirement,
+}: {
+  requirement: SimpleStageRequirementView;
+}) {
+  const systems = requirement.sourceSystems.slice(0, 3).join(", ");
+  const extraSystemCount = Math.max(0, requirement.sourceSystems.length - 3);
+  const fields = requirement.criticalFields.slice(0, 4).join(", ");
+  const extraFieldCount = Math.max(0, requirement.criticalFields.length - 4);
+  return (
+    <div style={SOURCE_SUMMARY_STYLE}>
+      <div style={SOURCE_LINE_STYLE}>
+        <strong>Get from:</strong> {systems}
+        {extraSystemCount > 0 ? ` +${extraSystemCount}` : ""}
+      </div>
+      <div style={SOURCE_LINE_STYLE}>
+        <strong>Load:</strong> {requirement.recordGrain}
+      </div>
+      <div style={SOURCE_LINE_STYLE}>
+        <strong>Parse:</strong> {fields}
+        {extraFieldCount > 0 ? ` +${extraFieldCount}` : ""}
+      </div>
+      <div style={SOURCE_LINE_STYLE}>
+        <strong>Formats:</strong> {requirement.acceptedFileTypes.join(", ")}
+      </div>
+    </div>
+  );
 }
 
 const READINESS_RANK: Record<
@@ -566,14 +589,11 @@ const READINESS_RANK: Record<
 
 function stateChipStyle(
   state: SimpleStageRequirementView["state"],
-  skipped: boolean,
 ): CSSProperties {
   const color =
     state === "Usable Evidence" || state === "Available"
       ? CANVAS.ACTIVE
-      : skipped
-        ? CANVAS.INK_MUTED
-        : "#b7791f";
+      : "#b7791f";
   return {
     border: `1px solid ${color}33`,
     borderRadius: 999,
@@ -703,6 +723,25 @@ const ASK_TITLE_STYLE: CSSProperties = {
   color: CANVAS.INK,
 };
 
+const REQUIRED_BADGE_STYLE: CSSProperties = {
+  border: "1px solid rgba(12,26,58,0.16)",
+  borderRadius: 999,
+  padding: "3px 7px",
+  background: "rgba(12,26,58,0.055)",
+  color: CANVAS.INK,
+  fontFamily: CANVAS.SANS,
+  fontSize: 10,
+  fontWeight: 800,
+  textTransform: "uppercase",
+};
+
+const OPTIONAL_BADGE_STYLE: CSSProperties = {
+  ...REQUIRED_BADGE_STYLE,
+  background: "rgba(30,124,90,0.08)",
+  borderColor: "rgba(30,124,90,0.18)",
+  color: CANVAS.ACTIVE,
+};
+
 const ASK_META_STYLE: CSSProperties = {
   margin: "5px 0 0",
   fontFamily: CANVAS.SANS,
@@ -710,11 +749,25 @@ const ASK_META_STYLE: CSSProperties = {
   color: CANVAS.INK_SOFT,
 };
 
-const ASK_HINT_STYLE: CSSProperties = {
-  margin: "4px 0 0",
+const SOURCE_SUMMARY_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 4,
+  color: CANVAS.INK_SOFT,
   fontFamily: CANVAS.SANS,
   fontSize: 12,
+  lineHeight: 1.35,
+};
+
+const SOURCE_LINE_STYLE: CSSProperties = {
+  minWidth: 0,
+};
+
+const STATUS_HELP_STYLE: CSSProperties = {
+  margin: "6px 0 0",
   color: CANVAS.INK_MUTED,
+  fontFamily: CANVAS.SANS,
+  fontSize: 11,
+  lineHeight: 1.35,
 };
 
 const ASK_ACTIONS_STYLE: CSSProperties = {
