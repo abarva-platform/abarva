@@ -593,7 +593,7 @@ function SourceShellRail({
         <WorkspaceButton
           workspaceKey="intelligence"
           label="Intelligence Explorer"
-          badge={workspace === "intelligence" ? "open" : "hidden"}
+          badge={workspace === "intelligence" ? "open" : undefined}
           active={workspace === "intelligence"}
           onClick={() => onWorkspaceChange("intelligence")}
         />
@@ -3886,9 +3886,7 @@ function WorkspaceButton({
       }}
     >
       <span>{label}</span>
-      <span style={{ color: badge ? ANALYTICS.FAINT : ANALYTICS.AMBER_TEXT }}>
-        {badge ?? "•"}
-      </span>
+      {badge ? <span style={{ color: ANALYTICS.FAINT }}>{badge}</span> : null}
     </button>
   );
 }
