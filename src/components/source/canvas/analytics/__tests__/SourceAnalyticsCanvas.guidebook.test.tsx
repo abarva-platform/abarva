@@ -30,6 +30,7 @@ jest.mock("@clerk/nextjs", () => ({
 }));
 
 import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
+import { SAMPLE_SCOPE_STAGE } from "../sample-view-model";
 import type { SourcingEventSummary } from "@/lib/source/types";
 import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
 
@@ -217,6 +218,45 @@ describe("SourceAnalyticsCanvas — guidebook workspace", () => {
       "Tickets, SLA misses, change orders, run volumes",
     );
     expect(volumetricsRow).toHaveTextContent("VOLUMETRICS_V1");
+  });
+
+  it("does not call a completed stage gate-ready while required artifacts still need review", () => {
+    const completedScopeStage = {
+      ...SAMPLE_SCOPE_STAGE,
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((task) => ({
+        ...task,
+        state: "done" as const,
+        evidenceComplete: true,
+      })),
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent({
+          currentStageKey: "scope",
+          currentStageLabel: "Scope",
+        })}
+        viewStage="scope"
+        tenantName="Lakeshore"
+        guidebook={null}
+        stageView={completedScopeStage}
+        initialWorkspace="guidebook"
+      />,
+    );
+
+    const guidebook = screen.getByTestId("source-shell-v2-guidebook");
+    expect(guidebook).toHaveTextContent("artifact review open");
+    expect(guidebook).toHaveTextContent("Clear artifact queue");
+    expect(guidebook).toHaveTextContent(
+      "required/gate artifacts still need client-final or quality review before approval",
+    );
+
+    const volumetricsRow = screen.getByTestId(
+      "source-shell-guidebook-prep-row-scope.volumetrics",
+    );
+    expect(volumetricsRow).toHaveTextContent("Review");
+    expect(volumetricsRow).toHaveTextContent("Artifact queue open");
+    expect(volumetricsRow).not.toHaveTextContent("Ready for gate");
   });
 
   it("labels a client-specific guidebook distinctly from the global default", () => {
