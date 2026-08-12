@@ -628,7 +628,11 @@ function findRule(section: string): SectionRule {
       section,
       category: "risk_positions",
       aliases: [new RegExp(escapeRegExp(section), "i")],
-      weakSignals: [/not provided/i, /tbd/i, /to be confirmed/i],
+      weakSignals: [
+        /evidence unavailable/i,
+        /not specified/i,
+        /confirmation pending/i,
+      ],
       holdback: `Do not score ${section} until evidence is cited.`,
     }
   );
