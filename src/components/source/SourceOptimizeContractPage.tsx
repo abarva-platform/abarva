@@ -23,6 +23,10 @@ import type {
   ContractOptimizationOpportunity,
   ContractOptimizationOpportunitySet,
 } from "@/lib/source/data-model/contract-optimization-opportunity";
+import {
+  summarizeOpportunityTraceability,
+  type OpportunityTraceabilitySummary,
+} from "@/lib/source/data-model/contract-optimization-traceability";
 import { buildSourceOptimizeContractHref } from "@/lib/source/optimize-routing";
 
 interface SourceOptimizeContractPageProps {
@@ -263,6 +267,9 @@ function SelectedContractView({
     spine.missingEvidenceSources.length +
     (opportunitySet?.evidenceRequirements.length ?? 0);
   const opportunityCount = opportunitySet?.opportunities.length ?? 0;
+  const traceability = summarizeOpportunityTraceability(
+    opportunitySet?.opportunities ?? [],
+  );
   const primaryAction =
     !opportunitySet || opportunitySet.baseline.status !== "ready"
       ? "Build or resolve the commercial baseline before approving action."
@@ -342,6 +349,7 @@ function SelectedContractView({
         <OpportunityTable
           opportunities={opportunitySet?.opportunities ?? []}
           selectedOpportunityId={selectedOpportunity?.opportunityId ?? null}
+          traceability={traceability}
         />
       </section>
 
@@ -547,9 +555,11 @@ function Metric({ label, value }: { label: string; value: string }) {
 function OpportunityTable({
   opportunities,
   selectedOpportunityId,
+  traceability,
 }: {
   opportunities: readonly ContractOptimizationOpportunity[];
   selectedOpportunityId: string | null;
+  traceability: OpportunityTraceabilitySummary;
 }) {
   if (opportunities.length === 0) {
     return (
@@ -558,6 +568,9 @@ function OpportunityTable({
       </div>
     );
   }
+  const traceById = new Map(
+    traceability.rows.map((row) => [row.opportunityId, row]),
+  );
   return (
     <div style={TABLE_WRAP_STYLE}>
       <table style={TABLE_STYLE}>
@@ -593,7 +606,10 @@ function OpportunityTable({
                   {opportunity.sourceSystems.join(", ") || "No source system"}
                 </div>
               </td>
-              <td style={TD_STYLE}>
+              <td
+                style={TD_STYLE}
+                data-testid={`opportunity-trace-${opportunity.opportunityId}`}
+              >
                 {opportunity.calculation ? (
                   <>
                     {opportunity.calculation.includedLineCount} included
@@ -605,12 +621,26 @@ function OpportunityTable({
                 ) : (
                   "No calculation run"
                 )}
+                <div style={MUTED_SMALL_STYLE}>
+                  {traceById.get(opportunity.opportunityId)?.label ??
+                    "Traceability not evaluated"}
+                </div>
               </td>
               <td style={TD_STYLE}>{opportunity.nextAction}</td>
             </tr>
           ))}
         </tbody>
       </table>
+      <div style={TRACE_NOTE_STYLE} data-testid="opportunity-traceability-note">
+        <strong>
+          {formatUsd(traceability.tracedAmountUsd)} reproducible from a
+          calculation run
+          {traceability.hasUntracedAmounts
+            ? ` · ${formatUsd(traceability.untracedAmountUsd)} not reproducible`
+            : ""}
+        </strong>
+        <span style={DECISION_DETAIL_STYLE}>{traceability.summary}</span>
+      </div>
     </div>
   );
 }
@@ -1491,6 +1521,15 @@ const START_WRAP_STYLE: CSSProperties = {
   display: "grid",
   gap: 6,
   justifyItems: "end",
+};
+
+const TRACE_NOTE_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 3,
+  marginTop: 10,
+  paddingTop: 10,
+  borderTop: `1px solid ${ANALYTICS.LINE}`,
+  fontSize: 12,
 };
 
 const INLINE_DOT_STYLE: CSSProperties = {

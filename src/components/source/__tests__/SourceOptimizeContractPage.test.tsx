@@ -396,6 +396,48 @@ describe("SourceOptimizeContractPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("keeps an amount with no calculation run out of the reproducible total", () => {
+    const base = makeOpportunitySet();
+    const withUntraced = {
+      ...base,
+      opportunities: [
+        ...base.opportunities,
+        {
+          ...base.opportunities[0],
+          opportunityId: "opp-090-scope",
+          shortLabel: "Scope reduction",
+          valueType: "avoided_cost" as const,
+          amountUsd: 2_400_000,
+          calculation: null,
+        },
+      ],
+    };
+
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({ selected: makeCandidate() })}
+        opportunitySet={withUntraced}
+      />,
+    );
+
+    const note = screen.getByTestId("opportunity-traceability-note");
+    // $755K is calculation-backed; $2.4M is not, and must not be folded in.
+    expect(note).toHaveTextContent("$755K reproducible from a calculation run");
+    expect(note).toHaveTextContent("$2.4M not reproducible");
+    expect(note).toHaveTextContent(
+      "Only the reproducible total may be used outside this workspace.",
+    );
+
+    expect(screen.getByTestId("opportunity-trace-opp-090-scope")).toHaveTextContent(
+      "No calculation run — amount cannot be reproduced",
+    );
+    expect(screen.getByTestId("opportunity-trace-opp-090-rate")).toHaveTextContent(
+      "Reproducible from 18 included lines",
+    );
+  });
+
   it("shows every required evidence family as explicitly missing when no evidence pack is supplied", () => {
     render(
       <SourceOptimizeContractPage
