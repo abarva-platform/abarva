@@ -223,6 +223,29 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     ).toHaveAttribute("aria-label", "Approvals");
   });
 
+  it("explains produced intelligence, evidence used, missing inputs, and next action", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Lakeshore"
+        initialWorkspace="intelligence"
+      />,
+    );
+
+    const brief = screen.getByTestId("source-shell-intelligence-readiness");
+    expect(brief).toHaveTextContent("Intelligence brief");
+    expect(brief).toHaveTextContent("What Source knows right now");
+    expect(brief).toHaveTextContent("Produced");
+    expect(brief).toHaveTextContent("Evidence used");
+    expect(brief).toHaveTextContent("Missing");
+    expect(brief).toHaveTextContent("workflow steps open");
+    expect(brief).toHaveTextContent("Next action");
+    expect(brief).toHaveTextContent(
+      "Complete the active step before approval.",
+    );
+  });
+
   it("labels file-ledger generated drafts and client finals from artifact state", () => {
     render(
       <SourceAnalyticsCanvas

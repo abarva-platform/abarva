@@ -3582,6 +3582,7 @@ function IntelligenceWorkspace({
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <IntelligenceReadinessBrief view={view} />
           {view.intelligence.stepInsight ? (
             <StepInsightPanel insight={view.intelligence.stepInsight} />
           ) : null}
@@ -3594,6 +3595,109 @@ function IntelligenceWorkspace({
       </div>
     </section>
   );
+}
+
+function IntelligenceReadinessBrief({ view }: { view: SourceEventShellView }) {
+  const currentStageFiles =
+    view.files.byStage.find((stage) => stage.stageKey === view.stage.key)
+      ?.items ?? [];
+  const missing = intelligenceMissingLine(view);
+  const produced = view.intelligence.stepInsight
+    ? "Stage insight produced"
+    : `${view.intelligence.findings.length} finding${view.intelligence.findings.length === 1 ? "" : "s"} produced`;
+  const evidenceUsed =
+    currentStageFiles.length > 0
+      ? currentStageFiles
+          .slice(0, 2)
+          .map((file) => file.name)
+          .join(", ")
+      : intelligenceBasisLabel(view.intelligence.sourceBasis);
+  const nextAction =
+    view.stage.ready < view.stage.total
+      ? "Complete the active step before approval."
+      : view.stage.artifactReadiness.blockerCount > 0
+        ? "Resolve Files blockers before approval."
+        : "Open the approval gate.";
+
+  return (
+    <section
+      data-testid="source-shell-intelligence-readiness"
+      style={{ ...CARD_STYLE, padding: 16 }}
+    >
+      <div
+        style={{
+          alignItems: "center",
+          display: "flex",
+          gap: 12,
+          justifyContent: "space-between",
+          marginBottom: 12,
+        }}
+      >
+        <div>
+          <div style={WORKSPACE_EYEBROW}>Intelligence brief</div>
+          <h3
+            style={{
+              fontFamily: ANALYTICS.SERIF,
+              fontSize: 18,
+              lineHeight: 1.2,
+              margin: "5px 0 0",
+            }}
+          >
+            What Source knows right now
+          </h3>
+        </div>
+        <span style={SMALL_STATUS_PILL}>
+          {view.intelligence.sourceBasis === "sample"
+            ? "Sample"
+            : "Evidence-bound"}
+        </span>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+          gap: 14,
+        }}
+      >
+        <StepNeedDatum label="Produced" value={produced} />
+        <StepNeedDatum label="Evidence used" value={evidenceUsed} />
+        <StepNeedDatum
+          label="Missing"
+          value={missing}
+          tone={missing === "No visible gaps" ? "good" : "warn"}
+        />
+        <StepNeedDatum label="Next action" value={nextAction} />
+      </div>
+    </section>
+  );
+}
+
+function intelligenceMissingLine(view: SourceEventShellView): string {
+  if (view.stage.ready < view.stage.total) {
+    const openCount = view.stage.total - view.stage.ready;
+    return `${openCount} workflow step${openCount === 1 ? "" : "s"} open`;
+  }
+  if (view.stage.artifactReadiness.blockerCount > 0) {
+    return view.stage.artifactReadiness.blockers[0] ?? "Files review blocker";
+  }
+  return "No visible gaps";
+}
+
+function intelligenceBasisLabel(basis: SourceShellEvidenceBasis): string {
+  switch (basis) {
+    case "live_fact":
+      return "Live facts";
+    case "live_artifact":
+      return "Live artifacts";
+    case "computed":
+      return "Computed read";
+    case "archetype":
+      return "Archetype knowledge";
+    case "sample":
+      return "Sample intelligence";
+    case "missing":
+      return "No evidence yet";
+  }
 }
 
 function ApprovalsWorkspace({
