@@ -189,6 +189,8 @@ export function SimpleStageFront({
         </button>
       </div>
 
+      <WorkingSessionGuide view={view} />
+
       <div style={EVIDENCE_TABLE_STYLE} aria-label="Required evidence">
         <div style={TABLE_HEADER_STYLE}>
           <span>Evidence needed</span>
@@ -502,6 +504,82 @@ export function SimpleStageFront({
   );
 }
 
+function WorkingSessionGuide({ view }: { view: SimpleStageScreenView }) {
+  const allRows = [...view.required, ...view.extras];
+  const sourceSystems = uniqueList(
+    allRows.flatMap((requirement) => requirement.sourceSystems),
+  );
+  const acceptedFormats = uniqueList(
+    allRows.flatMap((requirement) => requirement.acceptedFileTypes),
+  );
+  const criticalFields = uniqueList(
+    view.required.flatMap((requirement) => requirement.criticalFields),
+  );
+  const requiredOpen = view.required.filter(
+    (requirement) => !isRequirementReady(requirement),
+  );
+  const firstRequiredGrain =
+    view.required[0]?.recordGrain ?? "one governed evidence row per item";
+  const fieldPreview = previewList(criticalFields, 5);
+  const sourcePreview = previewList(sourceSystems, 5);
+  const formatPreview = previewList(acceptedFormats, 4);
+  const blockingCopy =
+    requiredOpen.length === 1
+      ? "1 blocking input remains"
+      : `${requiredOpen.length} blocking inputs remain`;
+
+  return (
+    <section
+      data-testid="source-simple-front-session-guide"
+      aria-label={`${view.stageLabel} working session guide`}
+      style={SESSION_GUIDE_STYLE}
+    >
+      <div style={SESSION_GUIDE_HEADER_STYLE}>
+        <div>
+          <div style={EYEBROW_STYLE}>Working session guide</div>
+          <h3 style={SESSION_GUIDE_TITLE_STYLE}>
+            Run the {view.stageLabel} working session with the right evidence.
+          </h3>
+        </div>
+        <span style={SESSION_GUIDE_BADGE_STYLE}>
+          {view.required.length} required · {view.extras.length} optional
+        </span>
+      </div>
+      <div style={SESSION_GUIDE_GRID_STYLE}>
+        <GuideCard
+          title="Invite"
+          body={`Sponsor, sourcing lead, finance/procurement, and owners for ${sourcePreview || "the requested systems"}.`}
+        />
+        <GuideCard
+          title="Pull"
+          body={`${sourcePreview || "Source systems"}; load at ${firstRequiredGrain}.`}
+        />
+        <GuideCard
+          title="Template"
+          body={`${formatPreview || "CSV/XLSX/PDF"} accepted. Required fields include ${fieldPreview || "the fields named in each row"}.`}
+        />
+        <GuideCard
+          title="Unlock"
+          body={
+            requiredOpen.length > 0
+              ? `${blockingCopy} before ${view.deliverable.name}.`
+              : `Approval writes ${view.deliverable.name} and opens ${view.nextStep.label.replace(/^Issue the\s+/i, "")}.`
+          }
+        />
+      </div>
+    </section>
+  );
+}
+
+function GuideCard({ title, body }: { title: string; body: string }) {
+  return (
+    <div style={SESSION_GUIDE_CARD_STYLE}>
+      <div style={SESSION_GUIDE_CARD_TITLE_STYLE}>{title}</div>
+      <p style={SESSION_GUIDE_CARD_BODY_STYLE}>{body}</p>
+    </div>
+  );
+}
+
 function ArtifactContextManifest({ view }: { view: SimpleStageScreenView }) {
   const requiredReady = view.required.filter((requirement) =>
     isRequirementReady(requirement),
@@ -599,6 +677,18 @@ function ManifestColumn({
 
 function manifestRow(requirement: SimpleStageRequirementView): string {
   return `${requirement.label} · ${requirement.state}`;
+}
+
+function uniqueList(values: readonly string[]): string[] {
+  return Array.from(
+    new Set(values.map((value) => value.trim()).filter(Boolean)),
+  );
+}
+
+function previewList(values: readonly string[], limit: number): string {
+  const visible = values.slice(0, limit);
+  const suffix = values.length > limit ? ` +${values.length - limit}` : "";
+  return `${visible.join(", ")}${suffix}`;
 }
 
 function latestGeneratedDoc(
@@ -761,6 +851,72 @@ const SUBTITLE_STYLE: CSSProperties = {
   margin: "8px 0 0",
   fontFamily: CANVAS.SANS,
   fontSize: 14,
+  color: CANVAS.INK_SOFT,
+};
+
+const SESSION_GUIDE_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 12,
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: 10,
+  padding: "14px 16px",
+  background: "rgba(30,124,90,0.045)",
+};
+
+const SESSION_GUIDE_HEADER_STYLE: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 14,
+  alignItems: "flex-start",
+};
+
+const SESSION_GUIDE_TITLE_STYLE: CSSProperties = {
+  margin: "4px 0 0",
+  fontFamily: CANVAS.SANS,
+  fontSize: 15,
+  lineHeight: 1.25,
+  color: CANVAS.INK,
+};
+
+const SESSION_GUIDE_BADGE_STYLE: CSSProperties = {
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: 999,
+  padding: "5px 9px",
+  background: CANVAS.CARD,
+  color: CANVAS.INK_SOFT,
+  fontFamily: CANVAS.MONO,
+  fontSize: 11,
+  whiteSpace: "nowrap",
+};
+
+const SESSION_GUIDE_GRID_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+  gap: 10,
+};
+
+const SESSION_GUIDE_CARD_STYLE: CSSProperties = {
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 8,
+  background: CANVAS.CARD,
+  padding: "10px 12px",
+  minWidth: 0,
+};
+
+const SESSION_GUIDE_CARD_TITLE_STYLE: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  fontWeight: 800,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  color: CANVAS.ACTIVE,
+};
+
+const SESSION_GUIDE_CARD_BODY_STYLE: CSSProperties = {
+  margin: "6px 0 0",
+  fontFamily: CANVAS.SANS,
+  fontSize: 12.5,
+  lineHeight: 1.38,
   color: CANVAS.INK_SOFT,
 };
 
