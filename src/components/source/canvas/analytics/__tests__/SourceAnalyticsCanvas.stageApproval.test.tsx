@@ -177,25 +177,38 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
 
     expect(
       screen.getByTestId("source-shell-evidence-ask-table"),
-    ).toHaveTextContent("Evidence item");
+    ).toHaveTextContent("Evidence request");
     expect(
       screen.getByTestId("source-shell-evidence-ask-table"),
-    ).toHaveTextContent("Source / owner");
+    ).toHaveTextContent("Where to get it");
     expect(
       screen.getByTestId("source-shell-evidence-ask-table"),
-    ).toHaveTextContent("Parser writeback");
+    ).toHaveTextContent("Grain / history");
+    expect(
+      screen.getByTestId("source-shell-evidence-ask-table"),
+    ).toHaveTextContent("Writeback impact");
     const activeEvidenceRow = screen.getByTestId(
       "source-shell-evidence-ask-row-scope.volumetrics",
     );
     expect(activeEvidenceRow).toHaveTextContent("Provide the volumetrics");
     expect(activeEvidenceRow).toHaveTextContent("Volumetrics file");
+    expect(activeEvidenceRow).toHaveTextContent("Required");
     expect(activeEvidenceRow).toHaveTextContent("CSV or XLSX");
     expect(activeEvidenceRow).toHaveTextContent("ITSM / finance baseline");
     expect(activeEvidenceRow).toHaveTextContent("Ravi Menon, IT-Ops");
     expect(activeEvidenceRow).toHaveTextContent(
+      "Monthly by service tower for 12-24 months",
+    );
+    expect(activeEvidenceRow).toHaveTextContent(
       "Tickets, SLA misses, change orders, run volumes",
     );
+    expect(activeEvidenceRow).toHaveTextContent(
+      "Scope volumetrics template",
+    );
     expect(activeEvidenceRow).toHaveTextContent("VOLUMETRICS_V1");
+    expect(activeEvidenceRow).toHaveTextContent(
+      "Scope memo, value lever sizing, pricing baseline",
+    );
     expect(activeEvidenceRow).toHaveTextContent("Upload below");
 
     fireEvent.click(

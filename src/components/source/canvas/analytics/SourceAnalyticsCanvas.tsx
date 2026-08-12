@@ -321,11 +321,15 @@ const FILE_CHIP_NEUTRAL: CSSProperties = {
 
 type ActiveStepNeedView = {
   item: string;
+  requiredness: string;
   requirement: string;
   sourceSystem: string;
   owner: string;
   formats: string;
+  grainHistory: string;
+  template: string;
   parseTarget: string;
+  artifactImpact: string;
   status: string;
   tone: "good" | "warn";
   nextAction: string;
@@ -333,11 +337,15 @@ type ActiveStepNeedView = {
 
 type WorkflowStepRequirement = {
   item: string;
+  requiredness?: "Required" | "Optional";
   requirement: string;
   sourceSystem: string;
   ownerRole: string;
   acceptedFormats: string;
+  grainHistory: string;
+  templateLabel: string;
   parseTarget: string;
+  artifactImpact: string;
   missingAction: string;
   uploadedAction?: string;
   completeAction?: string;
@@ -350,7 +358,10 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     sourceSystem: "Intake record / sponsor note",
     ownerRole: "Accountable sponsor",
     acceptedFormats: "No upload required",
+    grainHistory: "One sponsor-backed trigger per event",
+    templateLabel: "Strategy intake fields",
     parseTarget: "Mandate, sponsor, value thesis",
+    artifactImpact: "Strategy memo and Scope collection guide",
     missingAction: "Review the mandate and confirm the sponsor.",
   },
   "scope.volumetrics": {
@@ -359,7 +370,10 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     sourceSystem: "ITSM / finance baseline",
     ownerRole: "IT Ops / Finance",
     acceptedFormats: "CSV or XLSX",
+    grainHistory: "Monthly by service tower for 12-24 months",
+    templateLabel: "Scope volumetrics template",
     parseTarget: "Tickets, SLA misses, change orders, run volumes",
+    artifactImpact: "Scope memo, value lever sizing, pricing baseline",
     missingAction:
       "Download the template, fill one row per tower, then upload.",
   },
@@ -369,7 +383,10 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     sourceSystem: "CMDB / finance export",
     ownerRole: "IT Ops / application owner",
     acceptedFormats: "CSV or XLSX",
+    grainHistory: "One row per app/service in the current scope",
+    templateLabel: "Application inventory template",
     parseTarget: "Apps, owners, run cost, retained-FTE cost",
+    artifactImpact: "Scope boundaries, transition risk, RFP exhibits",
     missingAction: "Download the template, fill one row per app, then upload.",
   },
   "scope.vendor-commercials": {
@@ -378,7 +395,10 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     sourceSystem: "Commercial workbook / proposal",
     ownerRole: "Procurement lead",
     acceptedFormats: "CSV or XLSX",
+    grainHistory: "One row per rate, service line, term, and pricing unit",
+    templateLabel: "Vendor commercials template",
     parseTarget: "Transition fee, credits, term, productivity, SLA caps",
+    artifactImpact: "Commercial baseline, pricing traps, BAFO asks",
     missingAction: "Upload the required vendor-commercials workbook.",
   },
   "scope.sponsor": {
@@ -387,7 +407,10 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     sourceSystem: "Scope readiness pack",
     ownerRole: "Executive sponsor",
     acceptedFormats: "PDF or DOCX",
+    grainHistory: "One signed commitment for the current scope gate",
+    templateLabel: "Sponsor sign-off checklist",
     parseTarget: "Sponsor commitment evidence",
+    artifactImpact: "Scope approval and governance record",
     missingAction: "Upload the signed sponsor commitment.",
   },
   "rfp.clause-coverage": {
@@ -396,7 +419,10 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     sourceSystem: "RFP draft / clause checklist",
     ownerRole: "Sourcing lead",
     acceptedFormats: "CSV or XLSX",
+    grainHistory: "One row per value lever and RFP clause in current draft",
+    templateLabel: "RFP clause coverage checklist",
     parseTarget: "Protected vs exposed value levers",
+    artifactImpact: "RFP repair tasks and supplier response rules",
     missingAction: "Upload the clause checklist before issuing the RFP.",
   },
   "responses.coverage": {
@@ -405,7 +431,10 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     sourceSystem: "Vendor proposals / response matrix",
     ownerRole: "Sourcing lead",
     acceptedFormats: "PDF, DOCX, XLSX, or CSV",
+    grainHistory: "One proposal package per vendor/version/response round",
+    templateLabel: "Vendor response dossier intake",
     parseTarget: "Per-vendor answer coverage and missing responses",
+    artifactImpact: "Proposal dossier, scorecard, pricing normalization",
     missingAction:
       "Upload each vendor proposal or the response matrix before scoring.",
   },
@@ -415,7 +444,10 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     sourceSystem: "Vendor proposals / bid tabulation",
     ownerRole: "Evaluation lead",
     acceptedFormats: "CSV or XLSX",
+    grainHistory: "One bid row per vendor, scenario, and evaluation round",
+    templateLabel: "Evaluation bid table",
     parseTarget: "Headline bid, retained FTE delta, SLA credit cap",
+    artifactImpact: "Scorecard, shortlist, finalist conditions",
     missingAction: "Upload the bid table before score normalization.",
   },
   "pricing.normalized-supplier-pricing": {
@@ -424,7 +456,10 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     sourceSystem: "Pricing submissions / normalization workbook",
     ownerRole: "Commercial lead",
     acceptedFormats: "XLSX or CSV",
+    grainHistory: "Line-item cost by vendor, year, component, and scenario",
+    templateLabel: "Normalized pricing workbook",
     parseTarget: "Comparable TCO, assumptions, escalators, exclusions",
+    artifactImpact: "TCO comparison, trap log, BAFO price asks",
     missingAction: "Upload normalized pricing before BAFO asks are prepared.",
   },
   "bafo.concession-actuals": {
@@ -433,7 +468,10 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     sourceSystem: "BAFO round / concession log",
     ownerRole: "Sourcing lead",
     acceptedFormats: "CSV or XLSX",
+    grainHistory: "One row per concession, value lever, vendor, and round",
+    templateLabel: "BAFO concession log",
     parseTarget: "Captured concession by value lever",
+    artifactImpact: "Final ask tracker and executive decision brief",
     missingAction: "Upload BAFO actuals before the round closes.",
   },
   "executive-decision.recommendation-packet": {
@@ -442,7 +480,10 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     sourceSystem: "Decision brief / risk register / value ledger",
     ownerRole: "Executive sponsor",
     acceptedFormats: "No upload required",
+    grainHistory: "One reviewed decision packet for the current gate",
+    templateLabel: "Executive decision checklist",
     parseTarget: "Recommendation, value case, risks, approval conditions",
+    artifactImpact: "Approval record and selection conditions",
     missingAction: "Review the packet and confirm the decision conditions.",
   },
   "selection.committed-value": {
@@ -451,7 +492,10 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     sourceSystem: "Executed contract / award record",
     ownerRole: "Sourcing lead",
     acceptedFormats: "CSV or XLSX",
+    grainHistory: "One row per awarded value lever and committed baseline",
+    templateLabel: "Award commitment template",
     parseTarget: "Committed value by lever",
+    artifactImpact: "Award record, transition plan, value proof baseline",
     missingAction: "Upload award commitments before transition starts.",
   },
   "transition.go-live-readiness": {
@@ -460,7 +504,10 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     sourceSystem: "Transition tracker / go-live checklist",
     ownerRole: "Transition owner",
     acceptedFormats: "PDF, DOCX, XLSX, or CSV",
+    grainHistory: "One row per workstream, milestone, risk, and exit criterion",
+    templateLabel: "Transition readiness packet",
     parseTarget: "Milestones, blockers, cutover, rollback, handoff evidence",
+    artifactImpact: "Transition readiness, obligation tracker, value start",
     missingAction: "Upload readiness evidence before value tracking starts.",
   },
   "value.realized-actuals": {
@@ -469,7 +516,10 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     sourceSystem: "Run-cost / SLA-credit / productivity actuals",
     ownerRole: "Value realization lead",
     acceptedFormats: "CSV or XLSX",
+    grainHistory: "Monthly actuals by value lever after go-live",
+    templateLabel: "Realized value actuals template",
     parseTarget: "Realized value to date by committed lever",
+    artifactImpact: "Value proof pack and Tower realization handoff",
     missingAction: "Upload realized actuals to prove value, not promise it.",
   },
 };
@@ -1746,7 +1796,7 @@ function EvidenceAskTable({
         border: `1px solid ${ANALYTICS.LINE}`,
         borderRadius: 8,
         margin: inset ? "0 0 16px 42px" : 0,
-        maxWidth: 760,
+        maxWidth: 960,
         overflow: "hidden",
       }}
     >
@@ -1769,17 +1819,17 @@ function EvidenceAskTable({
           fontFamily: ANALYTICS.MONO,
           fontSize: 9,
           fontWeight: 800,
-          gridTemplateColumns:
-            "minmax(160px, 1fr) minmax(150px, 0.9fr) minmax(160px, 0.95fr) minmax(150px, 0.8fr)",
+          gridTemplateColumns: "1.2fr 1fr 1fr 1fr 0.9fr",
           letterSpacing: "0.06em",
           padding: "9px 12px",
           textTransform: "uppercase",
         }}
       >
-        <span>Evidence item</span>
-        <span>Source / owner</span>
-        <span>Parser writeback</span>
-        <span>Status / next</span>
+        <span>Evidence request</span>
+        <span>Where to get it</span>
+        <span>Grain / history</span>
+        <span>Writeback impact</span>
+        <span>Status / action</span>
       </div>
       {group.steps.map((step, index) => {
         const active = step.id === activeStepId;
@@ -1791,8 +1841,7 @@ function EvidenceAskTable({
             data-testid={`source-shell-evidence-ask-row-${step.id}`}
             style={{
               display: "grid",
-              gridTemplateColumns:
-                "minmax(160px, 1fr) minmax(150px, 0.9fr) minmax(160px, 0.95fr) minmax(150px, 0.8fr)",
+              gridTemplateColumns: "1.2fr 1fr 1fr 1fr 0.9fr",
               gap: 12,
               padding: "11px 12px",
               borderTop:
@@ -1805,19 +1854,25 @@ function EvidenceAskTable({
           >
             <EvidenceAskCell
               label={step.title}
-              detail={`${need.item} · ${need.requirement} · ${need.formats}`}
+              detail={`${need.item} · ${need.requiredness} · ${need.requirement}`}
               active={active}
               captured={captured}
             />
             <EvidenceAskCell
               label={need.sourceSystem}
-              detail={need.owner}
+              detail={`Owner: ${need.owner}`}
+              active={active}
+              captured={captured}
+            />
+            <EvidenceAskCell
+              label={need.grainHistory}
+              detail={`Format: ${need.formats}`}
               active={active}
               captured={captured}
             />
             <EvidenceAskCell
               label={need.parseTarget}
-              detail={step.factTemplateCode ?? "No template code"}
+              detail={`${need.template} · ${step.factTemplateCode ?? "artifact only"} · ${need.artifactImpact}`}
               active={active}
               captured={captured}
             />
@@ -1976,13 +2031,17 @@ function ActiveStepNeedsPanel({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(142px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
           gap: 12,
           padding: "11px 12px 8px",
         }}
       >
         <StepNeedDatum label="Needed" value={need.item} />
-        <StepNeedDatum label="Required" value={need.requirement} />
+        <StepNeedDatum
+          label={need.requiredness}
+          value={need.requirement}
+          tone={need.requiredness === "Required" ? "warn" : "default"}
+        />
         <StepNeedDatum label="Source system" value={need.sourceSystem} />
         <StepNeedDatum label="Owner role" value={need.owner} />
       </div>
@@ -1990,13 +2049,29 @@ function ActiveStepNeedsPanel({
         style={{
           borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(142px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
           gap: 12,
           padding: "9px 12px 11px",
         }}
       >
+        <StepNeedDatum label="Grain / history" value={need.grainHistory} />
         <StepNeedDatum label="Formats" value={need.formats} />
+        <StepNeedDatum label="Template" value={need.template} />
         <StepNeedDatum label="Parse target" value={need.parseTarget} />
+      </div>
+      <div
+        style={{
+          borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 12,
+          padding: "9px 12px 11px",
+        }}
+      >
+        <StepNeedDatum
+          label="Artifact impact"
+          value={need.artifactImpact}
+        />
         <StepNeedDatum label="Status" value={need.status} tone={need.tone} />
         <StepNeedDatum label="Next" value={need.nextAction} />
       </div>
@@ -2189,11 +2264,15 @@ function activeStepNeed(
   const tone: "good" | "warn" = isComplete || uploaded ? "good" : "warn";
   return {
     item: requirement.item,
+    requiredness: requirement.requiredness ?? "Required",
     requirement: requirement.requirement,
     sourceSystem: step.provenance?.source ?? requirement.sourceSystem,
     owner: step.provenance?.owner ?? requirement.ownerRole,
     formats: requirement.acceptedFormats,
+    grainHistory: requirement.grainHistory,
+    template: step.template?.name ?? requirement.templateLabel,
     parseTarget: requirement.parseTarget,
+    artifactImpact: requirement.artifactImpact,
     status,
     tone,
     nextAction: activeStepNextAction(step, isComplete, uploaded, requirement),
@@ -2223,6 +2302,7 @@ function stepRequirementFor(step: SourceShellStep): WorkflowStepRequirement {
 
   return {
     item: activeStepNeedItem(step),
+    requiredness: "Required",
     requirement:
       step.type === "provide"
         ? "1 required file"
@@ -2232,7 +2312,13 @@ function stepRequirementFor(step: SourceShellStep): WorkflowStepRequirement {
     sourceSystem,
     ownerRole,
     acceptedFormats,
+    grainHistory: step.type === "provide" ? "Use the template grain for this stage" : "One reviewed decision for this stage",
+    templateLabel: step.template?.name ?? (step.type === "provide" ? "Stage evidence template" : "No upload template"),
     parseTarget,
+    artifactImpact:
+      step.type === "provide"
+        ? "Updates stage evidence, intelligence, and generated artifacts"
+        : "Updates stage gate readiness and audit evidence",
     missingAction:
       step.type === "provide"
         ? "Upload the required file below."
