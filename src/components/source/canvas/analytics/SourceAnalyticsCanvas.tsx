@@ -3716,6 +3716,7 @@ function ApprovalsWorkspace({
         title="Stage decisions"
         subtitle="The workflow prepares the evidence; this page records the approval decision."
       />
+      <ApprovalReadinessBrief view={view} />
       {view.approvals.currentStageItem ? (
         <ApprovalCard
           item={view.approvals.currentStageItem}
@@ -3739,6 +3740,87 @@ function ApprovalsWorkspace({
       {view.approvals.ledger.length > 0 ? (
         <ApprovalLedgerTable ledger={view.approvals.ledger} />
       ) : null}
+    </section>
+  );
+}
+
+function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
+  const workflowComplete = view.stage.ready >= view.stage.total;
+  const filesReady = view.stage.artifactReadiness.ready;
+  const ready = workflowComplete && filesReady;
+  const decision =
+    view.approvals.currentStageItem?.ask ??
+    `No approval item is currently routed for ${view.stage.label}.`;
+  const nextAction = !workflowComplete
+    ? "Return to steps."
+    : !filesReady
+      ? "Review Files gaps."
+      : (view.approvals.currentStageItem?.actionLabel ?? "No approval action.");
+
+  return (
+    <section
+      data-testid="source-shell-approval-readiness"
+      style={{ ...CARD_STYLE, marginBottom: 14, padding: 16 }}
+    >
+      <div
+        style={{
+          alignItems: "center",
+          display: "flex",
+          gap: 12,
+          justifyContent: "space-between",
+          marginBottom: 12,
+        }}
+      >
+        <div>
+          <div style={WORKSPACE_EYEBROW}>Approval readiness</div>
+          <h3
+            style={{
+              fontFamily: ANALYTICS.SERIF,
+              fontSize: 18,
+              lineHeight: 1.2,
+              margin: "5px 0 0",
+            }}
+          >
+            {ready ? "Ready to decide" : "Not ready to decide"}
+          </h3>
+        </div>
+        <span
+          style={{
+            ...SMALL_STATUS_PILL,
+            color: ready ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
+          }}
+        >
+          {ready ? "Ready" : "Blocked"}
+        </span>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+          gap: 14,
+        }}
+      >
+        <StepNeedDatum
+          label="Workflow"
+          value={`${view.stage.ready}/${view.stage.total} steps complete`}
+          tone={workflowComplete ? "good" : "warn"}
+        />
+        <StepNeedDatum
+          label="Files"
+          value={
+            filesReady
+              ? "No file blockers"
+              : `${view.stage.artifactReadiness.blockerCount} review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
+          }
+          tone={filesReady ? "good" : "warn"}
+        />
+        <StepNeedDatum label="Decision" value={decision} />
+        <StepNeedDatum
+          label="Next action"
+          value={nextAction}
+          tone={ready ? "good" : "warn"}
+        />
+      </div>
     </section>
   );
 }

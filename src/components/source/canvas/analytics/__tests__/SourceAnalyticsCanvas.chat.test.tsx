@@ -205,6 +205,14 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     fireEvent.click(screen.getByRole("button", { name: /approvals/i }));
 
     expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
+    const readiness = screen.getByTestId("source-shell-approval-readiness");
+    expect(readiness).toHaveTextContent("Approval readiness");
+    expect(readiness).toHaveTextContent("Not ready to decide");
+    expect(readiness).toHaveTextContent("Workflow");
+    expect(readiness).toHaveTextContent("Files");
+    expect(readiness).toHaveTextContent("Decision");
+    expect(readiness).toHaveTextContent("Next action");
+    expect(readiness).toHaveTextContent("Return to steps.");
   });
 
   it("opens directly to a route-selected workspace", () => {
