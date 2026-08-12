@@ -1,5 +1,8 @@
 import { INITIAL_STATE, WorkspaceViewModel } from "../viewModel";
-import type { SourceWorkspacePortfolioData } from "../live/portfolioAdapter";
+import {
+  buildSourceVendor360Cockpit,
+  type SourceWorkspacePortfolioData,
+} from "../live/portfolioAdapter";
 import type {
   SourceContract360Row,
   SourceVendorContractPortfolioRow,
@@ -89,39 +92,53 @@ const VENDORS: SourceVendorContractPortfolioRow[] = [
 
 const EMPTY_V4_SNAPSHOT = createEmptySourceV4WorkspaceSnapshot("2027-06-30T00:00:00Z");
 
+const WORKSPACE_DIAGNOSTICS = {
+  datasetLabel: "SkyHarbor Source v4",
+  datasetId: "skyharbor-source-v4-202608",
+  datasetVersion: "v4",
+  analyticsProvider: "CubeSourceProvider",
+  activeLoadRunId: null,
+  asOfDateIso: "2027-06-30T00:00:00Z",
+  v4ContractCount: 0,
+  v4VendorCount: 0,
+  legacyContractCount: CONTRACTS.length,
+  legacyVendorCount: VENDORS.length,
+  exploreProvider: "LegacySourceContract360Provider" as const,
+  exploreMatchesV4: false,
+  mismatchWarning:
+    "Explore lens is reading 4 contracts / 3 vendors from source.contract_360 while the active Source V4 snapshot reports 0 contract families / 0 vendors.",
+};
+
+const READS = {
+  contracts: "available" as const,
+  vendors: "available" as const,
+  applicationScope: "available" as const,
+  initiativeDependencies: "available" as const,
+};
+
 const PORTFOLIO: SourceWorkspacePortfolioData = {
   tenantKey: "skyharbor_global",
   asOfDateIso: "2027-06-30T00:00:00Z",
   semanticLayer: sourceV4CubeUiCatalogForAgent(),
   v4Snapshot: EMPTY_V4_SNAPSHOT,
   categoryQuality: evaluateContractCategoryQuality(CONTRACTS),
-  workspaceDiagnostics: {
-    datasetLabel: "SkyHarbor Source v4",
-    datasetId: "skyharbor-source-v4-202608",
-    datasetVersion: "v4",
-    analyticsProvider: "CubeSourceProvider",
-    activeLoadRunId: null,
+  workspaceDiagnostics: WORKSPACE_DIAGNOSTICS,
+  cockpit: buildSourceVendor360Cockpit({
+    contracts: CONTRACTS,
+    vendors: VENDORS,
+    applicationScope: [],
+    initiativeDependencies: [],
+    v4Snapshot: EMPTY_V4_SNAPSHOT,
+    workspaceDiagnostics: WORKSPACE_DIAGNOSTICS,
+    reads: READS,
     asOfDateIso: "2027-06-30T00:00:00Z",
-    v4ContractCount: 0,
-    v4VendorCount: 0,
-    legacyContractCount: CONTRACTS.length,
-    legacyVendorCount: VENDORS.length,
-    exploreProvider: "LegacySourceContract360Provider",
-    exploreMatchesV4: false,
-    mismatchWarning:
-      "Explore lens is reading 4 contracts / 3 vendors from source.contract_360 while the active Source V4 snapshot reports 0 contract families / 0 vendors.",
-  },
+  }),
   contracts: CONTRACTS,
   vendors: VENDORS,
   applicationScope: [],
   initiativeDependencies: [],
   isEmpty: false,
-  reads: {
-    contracts: "available",
-    vendors: "available",
-    applicationScope: "available",
-    initiativeDependencies: "available",
-  },
+  reads: READS,
 };
 
 function buildVm(sliceOverride: Record<string, string[]>) {

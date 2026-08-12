@@ -1,6 +1,9 @@
 import { buildViewModel } from "../buildViewModel";
 import { INITIAL_STATE, WorkspaceViewModel } from "../viewModel";
-import type { SourceWorkspacePortfolioData } from "../live/portfolioAdapter";
+import {
+  buildSourceVendor360Cockpit,
+  type SourceWorkspacePortfolioData,
+} from "../live/portfolioAdapter";
 import type {
   SourceContract360Row,
   SourceVendorContractPortfolioRow,
@@ -165,39 +168,53 @@ const V4_SNAPSHOT: SourceV4WorkspaceSnapshot = {
   },
 };
 
+const WORKSPACE_DIAGNOSTICS = {
+  datasetLabel: "SkyHarbor Source v4",
+  datasetId: "skyharbor-source-v4-202608",
+  datasetVersion: "v4",
+  analyticsProvider: "CubeSourceProvider",
+  activeLoadRunId: "source-v4-load-20260803",
+  asOfDateIso: "2027-06-30T00:00:00Z",
+  v4ContractCount: 100,
+  v4VendorCount: 60,
+  legacyContractCount: CONTRACTS.length,
+  legacyVendorCount: VENDORS.length,
+  exploreProvider: "LegacySourceContract360Provider" as const,
+  exploreMatchesV4: false,
+  mismatchWarning:
+    "Explore lens is reading 3 contracts / 3 vendors from source.contract_360 while the active Source V4 snapshot reports 100 contract families / 60 vendors.",
+};
+
+const READS = {
+  contracts: "available" as const,
+  vendors: "available" as const,
+  applicationScope: "available" as const,
+  initiativeDependencies: "available" as const,
+};
+
 const PORTFOLIO: SourceWorkspacePortfolioData = {
   tenantKey: "skyharbor_global",
   asOfDateIso: "2027-06-30T00:00:00Z",
   semanticLayer: sourceV4CubeUiCatalogForAgent(),
   v4Snapshot: V4_SNAPSHOT,
   categoryQuality: evaluateContractCategoryQuality(CONTRACTS),
-  workspaceDiagnostics: {
-    datasetLabel: "SkyHarbor Source v4",
-    datasetId: "skyharbor-source-v4-202608",
-    datasetVersion: "v4",
-    analyticsProvider: "CubeSourceProvider",
-    activeLoadRunId: "source-v4-load-20260803",
+  workspaceDiagnostics: WORKSPACE_DIAGNOSTICS,
+  cockpit: buildSourceVendor360Cockpit({
+    contracts: CONTRACTS,
+    vendors: VENDORS,
+    applicationScope: [],
+    initiativeDependencies: [],
+    v4Snapshot: V4_SNAPSHOT,
+    workspaceDiagnostics: WORKSPACE_DIAGNOSTICS,
+    reads: READS,
     asOfDateIso: "2027-06-30T00:00:00Z",
-    v4ContractCount: 100,
-    v4VendorCount: 60,
-    legacyContractCount: CONTRACTS.length,
-    legacyVendorCount: VENDORS.length,
-    exploreProvider: "LegacySourceContract360Provider",
-    exploreMatchesV4: false,
-    mismatchWarning:
-      "Explore lens is reading 3 contracts / 3 vendors from source.contract_360 while the active Source V4 snapshot reports 100 contract families / 60 vendors.",
-  },
+  }),
   contracts: CONTRACTS,
   vendors: VENDORS,
   applicationScope: [],
   initiativeDependencies: [],
   isEmpty: false,
-  reads: {
-    contracts: "available",
-    vendors: "available",
-    applicationScope: "available",
-    initiativeDependencies: "available",
-  },
+  reads: READS,
 };
 
 function buildVm(overrides: Partial<SourceWorkspacePortfolioData> = {}) {
@@ -853,7 +870,7 @@ describe("buildViewModel numeric coercion", () => {
       valueStrip: Array<{ label: string; value: string; sub: string }>;
     };
 
-    expect(built.thesis).toContain("2,600 explicit scope links");
+    expect(built.thesis).toContain("governed Source workspace");
     expect(built.sourceV4ProofCards).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -912,6 +929,21 @@ describe("buildViewModel numeric coercion", () => {
     expect(built.ex.groups.map((group) => group.label)).toEqual(["Vendor One"]);
     expect(built.ex.chartSubtitle).toContain("compare-all is off");
     expect(built.ex.quality.showBanner).toBe(false);
+  });
+
+  it("surfaces the bound Vendor 360 cockpit without inventing document ids", () => {
+    const built = buildViewModel(buildVm());
+
+    expect(built.cockpit.verdict.bindingChip).toContain(
+      "computeRenewalExposure",
+    );
+    expect(built.cockpit.actionQueue.length).toBeLessThanOrEqual(3);
+    expect(built.cockpit.topContracts[0]?.sourceDocumentLabel).toBe(
+      "not established",
+    );
+    expect(built.cockpit.topContracts[0]?.sourceDocumentNeed).toMatch(
+      /source document id/i,
+    );
   });
 
   it("shows peer groups only when Explore compare-all mode is explicit", () => {
