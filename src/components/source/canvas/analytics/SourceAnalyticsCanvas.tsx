@@ -1050,7 +1050,11 @@ function FocusedWorkPanel({
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
   const flatSteps = useMemo(
-    () => view.stage.groups.flatMap((group) => group.steps),
+    () =>
+      view.stage.groups
+        .flatMap((group) => group.steps)
+        .slice()
+        .sort((a, b) => a.order - b.order),
     [view.stage.groups],
   );
   const [completedIds, setCompletedIds] = useState<ReadonlySet<string>>(
@@ -3960,8 +3964,9 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
   const filesReady = view.stage.artifactReadiness.ready;
   const ready = workflowComplete && filesReady;
   const decision =
-    view.approvals.currentStageItem?.ask ??
-    `No approval item is currently routed for ${view.stage.label}.`;
+    view.approvals.currentStageItem != null
+      ? `${view.stage.label} gate decision routed.`
+      : `No approval item is currently routed for ${view.stage.label}.`;
   const nextAction = !workflowComplete
     ? "Return to steps."
     : !filesReady

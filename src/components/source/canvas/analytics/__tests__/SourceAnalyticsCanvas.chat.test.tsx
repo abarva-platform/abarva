@@ -181,15 +181,15 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
 
     const needs = screen.getByTestId("source-shell-active-step-needs");
     expect(needs).toHaveTextContent("What Continue needs");
-    expect(needs).toHaveTextContent("Application inventory file");
-    expect(needs).toHaveTextContent("CMDB / finance export");
+    expect(needs).toHaveTextContent("Volumetrics file");
+    expect(needs).toHaveTextContent("ITSM / finance baseline");
     expect(needs).toHaveTextContent("Ravi Menon, IT-Ops");
     expect(needs).toHaveTextContent("CSV or XLSX");
     expect(needs).toHaveTextContent("1 required file");
-    expect(needs).toHaveTextContent("Apps, owners, run cost");
+    expect(needs).toHaveTextContent("Tickets, SLA misses, change orders");
     expect(needs).toHaveTextContent("Missing");
     expect(needs).toHaveTextContent(
-      "Download the template, fill one row per app, then upload.",
+      "Download the template, fill one row per tower, then upload.",
     );
   });
 

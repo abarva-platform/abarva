@@ -69,6 +69,7 @@ export interface SourceShellStepGroup {
 
 export interface SourceShellStep {
   id: string;
+  order: number;
   title: string;
   help: string;
   type: StageTaskView["type"];
@@ -646,10 +647,10 @@ function isTaskCaptured(task: StageTaskView): boolean {
 
 function groupSteps(tasks: readonly StageTaskView[]): SourceShellStepGroup[] {
   const groups = new Map<string, SourceShellStep[]>();
-  tasks.forEach((task) => {
+  tasks.forEach((task, index) => {
     const label = taskGroupLabel(task);
     const list = groups.get(label) ?? [];
-    list.push(toShellStep(task, list.length === 0));
+    list.push(toShellStep(task, list.length === 0, index));
     groups.set(label, list);
   });
   return Array.from(groups.entries()).map(([label, steps], index) => ({
@@ -662,10 +663,12 @@ function groupSteps(tasks: readonly StageTaskView[]): SourceShellStepGroup[] {
 function toShellStep(
   task: StageTaskView,
   firstInGroup: boolean,
+  order: number,
 ): SourceShellStep {
   const captured = isTaskCaptured(task);
   return {
     id: task.id,
+    order,
     title: task.title,
     help: task.guide || task.subtitle,
     type: task.type,
