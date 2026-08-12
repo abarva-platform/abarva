@@ -392,10 +392,12 @@ describe("buildSourceEventShellView", () => {
     });
     expect(view.approvals.readinessLine).toBe(APPROVAL.readiness);
     expect(view.stage.gateReadinessLine).toContain("before approval");
-    expect(view.stage.approvalHref).toBe(`/source/events/${EVENT.id}/approval`);
+    expect(view.stage.approvalHref).toBe(
+      `/source/events/${EVENT.id}?stage=scope&workspace=approvals`,
+    );
   });
 
-  it("routes a completed current stage to the approval page while preserving artifact gaps", () => {
+  it("routes a completed current stage to the approval workspace while preserving artifact gaps", () => {
     const completeScopeStage: StageAnalyticsView = {
       ...(SAMPLE_SCOPE_STAGE as StageAnalyticsView),
       tasks: (SAMPLE_SCOPE_STAGE as StageAnalyticsView).tasks.map((task) => ({
@@ -427,7 +429,9 @@ describe("buildSourceEventShellView", () => {
     });
 
     expect(view.stage.ready).toBe(view.stage.total);
-    expect(view.stage.approvalHref).toBe(`/source/events/${EVENT.id}/approval`);
+    expect(view.stage.approvalHref).toBe(
+      `/source/events/${EVENT.id}?stage=scope&workspace=approvals`,
+    );
     expect(view.stage.artifactReadiness.ready).toBe(false);
     expect(view.stage.artifactReadiness.blockerCount).toBeGreaterThan(0);
     expect(view.stage.gateReadinessLine).toContain("required/gate artifact");

@@ -1183,6 +1183,7 @@ function FocusedWorkPanel({
 
   const openApprovalPage = () => {
     if (view.stage.approvalHref) {
+      onWorkspaceChange("approvals");
       router.push(view.stage.approvalHref);
     }
   };
@@ -1545,8 +1546,8 @@ function StageReadyPanel({
           }}
         >
           {hasArtifactGaps
-            ? "Open the approval page to decide with a clear rationale, or return to Files to accept client-final artifacts and close quality gates before the stage advances."
-            : "The next step is the approval page. Review the captured evidence, record the decision, and advance the event from there."}
+            ? "Open the approval workspace to decide with a clear rationale, or return to Files to accept client-final artifacts and close quality gates before the stage advances."
+            : "The next step is the approval workspace. Review the captured evidence, record the decision, and advance the event from there."}
         </p>
       </div>
       {hasArtifactGaps ? (
@@ -1638,7 +1639,7 @@ function StageReadyPanel({
           width: "max-content",
         }}
       >
-        Copy/share approval URL
+        Copy/share approval workspace URL
       </Link>
     </div>
   );
@@ -5128,8 +5129,9 @@ function ApprovalCard({
 }) {
   // The featured card's stage-gate href always points at the page the user
   // is already viewing (this event, this stage) — a <Link> there is a
-  // same-URL nav that visibly does nothing. The real decision controls for a
-  // stage gate live in the Steps workspace, so switch tabs there instead.
+  // same-URL nav that visibly does nothing. If the route did not arm a real
+  // approve action, send the user back to Steps so they can finish the gate
+  // prerequisites instead of pretending the approval is available.
   // Intake approvals keep their real, distinct /approval decision page.
   const goToStepsInstead =
     featured &&

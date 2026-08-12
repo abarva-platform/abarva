@@ -180,7 +180,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.getByRole("button", { name: /Continue/ })).toBeEnabled();
   });
 
-  it("routes to the approval page once all required stage inputs are complete", () => {
+  it("opens the approval workspace once all required stage inputs are complete", () => {
     const completedScopeStage = {
       ...SAMPLE_SCOPE_STAGE,
       tasks: SAMPLE_SCOPE_STAGE.tasks.map((task) => ({
@@ -211,12 +211,8 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     fireEvent.click(screen.getByTestId("source-stage-ready-open-approval"));
 
     expect(routerPush).toHaveBeenCalledWith(
-      `/source/events/${EVENT.id}/approval`,
+      `/source/events/${EVENT.id}?stage=scope&workspace=approvals`,
     );
-    expect(screen.queryByTestId("source-shell-v2-approvals")).toBeNull();
-
-    fireEvent.click(screen.getByTestId("source-stage-ready-review-approval"));
-
     expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
     expect(
       screen.getByTestId("source-shell-approval-readiness"),
