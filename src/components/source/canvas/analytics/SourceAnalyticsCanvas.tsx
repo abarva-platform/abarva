@@ -68,6 +68,7 @@ import type { SourceVendorSelectionReadiness } from "@/lib/source/vendor-selecti
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 import { ArtifactAcceptancePanel } from "./ArtifactAcceptancePanel";
 import { ANALYTICS } from "./analytics-tokens";
+import { CommercialActiveCanvasStrip } from "./CommercialActiveCanvasStrip";
 import { IntelPanel } from "./IntelPanel";
 import {
   TaskProvideUpload,
@@ -1034,6 +1035,10 @@ function SourceWorkspace({
   return (
     <section data-testid="source-shell-v2-steps">
       <StageHeader view={view} />
+      <CommercialActiveCanvasStrip
+        view={view}
+        onWorkspaceChange={onWorkspaceChange}
+      />
       <FocusedWorkPanel view={view} onWorkspaceChange={onWorkspaceChange} />
       {view.stage.key === "responses" ? (
         <div style={{ marginTop: 16, maxWidth: 1040 }}>
@@ -5472,7 +5477,7 @@ function DefaultStageGuidebook({ view }: { view: SourceEventShellView }) {
               ? "Required evidence and gate artifacts are ready. Open the approval workspace and record the rationale before advancing."
               : workflowComplete
                 ? view.stage.artifactReadiness.line
-              : view.stage.gateReadinessLine
+                : view.stage.gateReadinessLine
           }
         />
       </div>

@@ -282,7 +282,7 @@ Final report must include PR link, merge commit, files changed, validation resul
 ## SRC42 — Commercial active canvas tab consolidation
 
 **Priority:** P1
-**Status:** pending
+**Status:** done
 **Type:** feature
 **Primary surface:** Source event canvas
 **Primary agent:** Nexus
