@@ -45,6 +45,13 @@ import {
 import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact-acceptances";
 import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repository";
 import { buildSourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness";
+import { buildSourceVendorResponseCompleteness } from "@/lib/source/vendor-response-completeness";
+import {
+  buildVendorBafoInstructionPack,
+  buildVendorChallengeIntelligence,
+  buildVendorEvaluationDecisionView,
+  buildVendorResponseMveProfiles,
+} from "@/lib/source/proposal-intelligence";
 import { requireTenancy } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
@@ -140,6 +147,41 @@ export default async function SourceEventDetailPage({
               valueAtStakeUsd: event.valueAtStakeUsd,
             },
           })
+        : null;
+    const vendorResponseReadiness =
+      viewStage === "responses"
+        ? buildSourceVendorResponseCompleteness({
+            event: {
+              id: event.id,
+              name: event.name,
+              currentStageKey: viewStage,
+            },
+          })
+        : null;
+    const vendorResponseProfiles =
+      viewStage === "responses"
+        ? buildVendorResponseMveProfiles({
+            id: event.id,
+            code: event.code,
+            name: event.name,
+            accountName: event.accountName,
+          })
+        : null;
+    const vendorChallengeIntelligence =
+      viewStage === "responses"
+        ? buildVendorChallengeIntelligence(vendorResponseProfiles)
+        : null;
+    const vendorBafoInstructionPack =
+      viewStage === "responses"
+        ? buildVendorBafoInstructionPack(vendorChallengeIntelligence)
+        : null;
+    const vendorEvaluationDecisionView =
+      viewStage === "responses"
+        ? buildVendorEvaluationDecisionView(
+            vendorResponseProfiles,
+            vendorChallengeIntelligence,
+            vendorBafoInstructionPack,
+          )
         : null;
 
     // Build the stage view. The STRATEGY (P0) stage is the mandate-confirmation
@@ -496,6 +538,11 @@ export default async function SourceEventDetailPage({
         contractOptimizationProfile={contractOptimizationProfile}
         journey={sourceJourney}
         selectionReadiness={selectionReadiness}
+        vendorResponseReadiness={vendorResponseReadiness}
+        vendorResponseProfiles={vendorResponseProfiles}
+        vendorChallengeIntelligence={vendorChallengeIntelligence}
+        vendorBafoInstructionPack={vendorBafoInstructionPack}
+        vendorEvaluationDecisionView={vendorEvaluationDecisionView}
       />
     );
   }

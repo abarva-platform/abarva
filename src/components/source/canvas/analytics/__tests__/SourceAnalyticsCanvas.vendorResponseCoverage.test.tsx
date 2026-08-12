@@ -14,7 +14,11 @@ import "@testing-library/jest-dom";
 import { render, screen, within } from "@testing-library/react";
 
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+  }),
   usePathname: () => "/source/events/evt-1",
   useSearchParams: () => new URLSearchParams(),
   useParams: () => ({ eventId: "evt-1" }),
@@ -31,6 +35,13 @@ jest.mock("@clerk/nextjs", () => ({
 
 import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
 import { SAMPLE_RESPONSES_STAGE } from "../sample-view-model";
+import { buildSourceVendorResponseCompleteness } from "@/lib/source/vendor-response-completeness";
+import {
+  buildVendorBafoInstructionPack,
+  buildVendorChallengeIntelligence,
+  buildVendorEvaluationDecisionView,
+  buildVendorResponseMveProfiles,
+} from "@/lib/source/proposal-intelligence";
 import type { SourcingEventSummary } from "@/lib/source/types";
 import type { ResponseCoverageInsightView } from "../view-model";
 
@@ -87,7 +98,61 @@ describe("SourceAnalyticsCanvas — vendor response coverage (Responses step bod
     expect(
       screen.getAllByText("Confirm vendor response coverage").length,
     ).toBeGreaterThan(0);
-    expect(screen.queryByText("Provide the volumetrics")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Provide the volumetrics"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders the live Responses cockpit on the analytics event route", () => {
+    const event = {
+      ...makeEvent(),
+      id: "skyh-response-event",
+      code: "SKYH-APPLICATION-MANAGED-SERVICES-2026",
+      name: "SkyHarbor Global Application Managed Services Sourcing Event",
+      accountName: "SkyHarbor Global",
+    };
+    const vendorResponseReadiness = buildSourceVendorResponseCompleteness({
+      event: {
+        id: event.id,
+        name: event.name,
+        currentStageKey: "responses",
+      },
+    });
+    const vendorResponseProfiles = buildVendorResponseMveProfiles(event);
+    const vendorChallengeIntelligence = buildVendorChallengeIntelligence(
+      vendorResponseProfiles,
+    );
+    const vendorBafoInstructionPack = buildVendorBafoInstructionPack(
+      vendorChallengeIntelligence,
+    );
+    const vendorEvaluationDecisionView = buildVendorEvaluationDecisionView(
+      vendorResponseProfiles,
+      vendorChallengeIntelligence,
+      vendorBafoInstructionPack,
+    );
+
+    render(
+      <SourceAnalyticsCanvas
+        event={event}
+        viewStage="responses"
+        tenantName="SkyHarbor Global"
+        stageView={SAMPLE_RESPONSES_STAGE}
+        vendorResponseReadiness={vendorResponseReadiness}
+        vendorResponseProfiles={vendorResponseProfiles}
+        vendorChallengeIntelligence={vendorChallengeIntelligence}
+        vendorBafoInstructionPack={vendorBafoInstructionPack}
+        vendorEvaluationDecisionView={vendorEvaluationDecisionView}
+      />,
+    );
+
+    expect(screen.getByText("Responses package cockpit")).toBeInTheDocument();
+    expect(screen.getByText("Proposal intelligence brief")).toBeInTheDocument();
+    expect(
+      screen.getByText("Can we move from Responses to Evaluation?"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Negotiation leverage cockpit"),
+    ).toBeInTheDocument();
   });
 
   it("renders real per-vendor coverage rows when the insight is genuinely live", () => {
@@ -148,19 +213,25 @@ describe("SourceAnalyticsCanvas — vendor response coverage (Responses step bod
     const halcyon = screen.getByTestId(
       "source-shell-vendor-coverage-Halcyon MS",
     );
-    expect(within(halcyon).getByText("5 of 5 levers addressed")).toBeInTheDocument();
+    expect(
+      within(halcyon).getByText("5 of 5 levers addressed"),
+    ).toBeInTheDocument();
     expect(within(halcyon).getByText("Complete")).toBeInTheDocument();
 
     const vantage = screen.getByTestId(
       "source-shell-vendor-coverage-Vantage Digital",
     );
-    expect(within(vantage).getByText("2 of 5 levers addressed")).toBeInTheDocument();
+    expect(
+      within(vantage).getByText("2 of 5 levers addressed"),
+    ).toBeInTheDocument();
     expect(within(vantage).getByText("Partial")).toBeInTheDocument();
 
     const cormorant = screen.getByTestId(
       "source-shell-vendor-coverage-Cormorant IT",
     );
-    expect(within(cormorant).getByText("0 of 5 levers addressed")).toBeInTheDocument();
+    expect(
+      within(cormorant).getByText("0 of 5 levers addressed"),
+    ).toBeInTheDocument();
     expect(within(cormorant).getByText("Awaiting")).toBeInTheDocument();
   });
 
