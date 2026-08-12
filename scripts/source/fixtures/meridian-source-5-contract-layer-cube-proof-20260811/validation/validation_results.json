@@ -1,0 +1,987 @@
+{
+  "generatedAt": "2026-08-11T23:45:00Z",
+  "scenarioAsOfDate": "2027-06-30",
+  "refreshedAt": "2026-08-12T00:35:00Z",
+  "validation": [
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-FIN-BPO-001-AMEND-001_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-FIN-BPO-001-AMEND-002_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-FIN-BPO-001-MSA_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-FIN-BPO-001-NOTICE-RENEWAL_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-FIN-BPO-001-PRICING-EXHIBIT_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-FIN-BPO-001-SECURITY-CONTROL_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-FIN-BPO-001-SIDE-LETTER_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-FIN-BPO-001-SLA-SCHEDULE_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-FIN-BPO-001-SOW-CORE_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-FIN-BPO-001-SOW-OPERATIONS_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-FIN-BPO-001-TRANSITION-PLAN_LEDGERWORKS-MANAGED-FINANCE-_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-HR-BPO-001-AMEND-001_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-HR-BPO-001-AMEND-002_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-HR-BPO-001-MSA_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-HR-BPO-001-NOTICE-RENEWAL_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-HR-BPO-001-PRICING-EXHIBIT_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-HR-BPO-001-SECURITY-CONTROL_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-HR-BPO-001-SIDE-LETTER_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-HR-BPO-001-SLA-SCHEDULE_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-HR-BPO-001-SOW-CORE_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-HR-BPO-001-SOW-OPERATIONS_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-HR-BPO-001-TRANSITION-PLAN_PEOPLEBRIDGE-OPERATIONS-INC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-RCM-001-AMEND-001_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-RCM-001-AMEND-002_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-RCM-001-MSA_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-RCM-001-NOTICE-RENEWAL_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-RCM-001-PRICING-EXHIBIT_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-RCM-001-SECURITY-CONTROL_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-RCM-001-SIDE-LETTER_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-RCM-001-SLA-SCHEDULE_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-RCM-001-SOW-CORE_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-RCM-001-SOW-OPERATIONS_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-RCM-001-TRANSITION-PLAN_NORTHBRIDGE-RCM-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SC-BPO-001-AMEND-001_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SC-BPO-001-AMEND-002_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SC-BPO-001-MSA_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SC-BPO-001-NOTICE-RENEWAL_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SC-BPO-001-PRICING-EXHIBIT_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SC-BPO-001-SECURITY-CONTROL_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SC-BPO-001-SIDE-LETTER_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SC-BPO-001-SLA-SCHEDULE_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SC-BPO-001-SOW-CORE_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SC-BPO-001-SOW-OPERATIONS_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SC-BPO-001-TRANSITION-PLAN_PROCUREHEALTH-SERVICES-LLC_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SSO-BPO-001-AMEND-001_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SSO-BPO-001-AMEND-002_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SSO-BPO-001-MSA_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SSO-BPO-001-NOTICE-RENEWAL_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SSO-BPO-001-PRICING-EXHIBIT_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SSO-BPO-001-SECURITY-CONTROL_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SSO-BPO-001-SIDE-LETTER_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SSO-BPO-001-SLA-SCHEDULE_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SSO-BPO-001-SOW-CORE_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SSO-BPO-001-SOW-OPERATIONS_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:documents/DOC-MER-CTR-SSO-BPO-001-TRANSITION-PLAN_HELIX-SHARED-SERVICES-GROUP_SYNTHETIC.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer2_adapter_outputs/adapter_contract_outputs.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer3_canonical/canonical_calculation_outputs.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer3_canonical/canonical_contracts.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer3_canonical/canonical_evidence.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer3_canonical/canonical_facts.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer3_canonical/canonical_suppliers.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer4_source_read_models/source_contract360_case_rooms.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer4_source_read_models/source_evidence_gates.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer4_source_read_models/source_opportunities_read_model.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer4_source_read_models/source_portfolio_read_model.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer4_tower_cube/tower_source_cube.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer4_vendor360_preview/vendor360_cpo_story.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer4_vendor360_preview/vendor360_extract_mapping.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer4_vendor360_preview/vendor360_layer_mapping.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer4_vendor360_preview/vendor360_mapping_story.html",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer4_vendor360_preview/vendor360_mapping_story.png",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer4_vendor360_preview/vendor360_preview_validation.json",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:layer4_vendor360_preview/vendor360_read_model.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:README.md",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:review/depth_review.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/calculation_inputs.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/calculation_outputs.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/contract_document_inventory.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/contract_register.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/current_meridian_file_profile.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/document_clause_extractions.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/evidence_entity_links.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/fact_assertions.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/fact_conflicts.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/reviewer_decisions.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/source_ap_po_invoice_lines.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/source_bpo_process_baseline.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/source_contract_change_orders.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/source_contract_pricing_rate_cards.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/source_contract_scope_services.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/source_finance_realization.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/source_risk_control_evidence.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/source_sla_kpi_events.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/source_sourcing_event_artifacts.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/source_transition_evidence.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "manifest_hash:source_system_extracts/supplier_master.csv",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "csv_shape:layer2_adapter_outputs/adapter_contract_outputs.csv",
+      "status": "pass",
+      "detail": "5 rows, 12 columns"
+    },
+    {
+      "check": "csv_shape:layer3_canonical/canonical_calculation_outputs.csv",
+      "status": "pass",
+      "detail": "20 rows, 8 columns"
+    },
+    {
+      "check": "csv_shape:layer3_canonical/canonical_contracts.csv",
+      "status": "pass",
+      "detail": "5 rows, 12 columns"
+    },
+    {
+      "check": "csv_shape:layer3_canonical/canonical_evidence.csv",
+      "status": "pass",
+      "detail": "35 rows, 8 columns"
+    },
+    {
+      "check": "csv_shape:layer3_canonical/canonical_facts.csv",
+      "status": "pass",
+      "detail": "30 rows, 10 columns"
+    },
+    {
+      "check": "csv_shape:layer3_canonical/canonical_suppliers.csv",
+      "status": "pass",
+      "detail": "5 rows, 6 columns"
+    },
+    {
+      "check": "csv_shape:layer4_source_read_models/source_contract360_case_rooms.csv",
+      "status": "pass",
+      "detail": "20 rows, 9 columns"
+    },
+    {
+      "check": "csv_shape:layer4_source_read_models/source_evidence_gates.csv",
+      "status": "pass",
+      "detail": "25 rows, 6 columns"
+    },
+    {
+      "check": "csv_shape:layer4_source_read_models/source_opportunities_read_model.csv",
+      "status": "pass",
+      "detail": "20 rows, 9 columns"
+    },
+    {
+      "check": "csv_shape:layer4_source_read_models/source_portfolio_read_model.csv",
+      "status": "pass",
+      "detail": "5 rows, 14 columns"
+    },
+    {
+      "check": "csv_shape:layer4_tower_cube/tower_source_cube.csv",
+      "status": "pass",
+      "detail": "20 rows, 28 columns"
+    },
+    {
+      "check": "csv_shape:layer4_vendor360_preview/vendor360_extract_mapping.csv",
+      "status": "pass",
+      "detail": "12 rows, 9 columns"
+    },
+    {
+      "check": "csv_shape:layer4_vendor360_preview/vendor360_layer_mapping.csv",
+      "status": "pass",
+      "detail": "4 rows, 5 columns"
+    },
+    {
+      "check": "csv_shape:layer4_vendor360_preview/vendor360_read_model.csv",
+      "status": "pass",
+      "detail": "5 rows, 30 columns"
+    },
+    {
+      "check": "csv_shape:review/depth_review.csv",
+      "status": "pass",
+      "detail": "110 rows, 12 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/calculation_inputs.csv",
+      "status": "pass",
+      "detail": "50 rows, 13 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/calculation_outputs.csv",
+      "status": "pass",
+      "detail": "20 rows, 12 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/contract_document_inventory.csv",
+      "status": "pass",
+      "detail": "55 rows, 24 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/contract_register.csv",
+      "status": "pass",
+      "detail": "5 rows, 31 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/current_meridian_file_profile.csv",
+      "status": "pass",
+      "detail": "4 rows, 5 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/document_clause_extractions.csv",
+      "status": "pass",
+      "detail": "220 rows, 19 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/evidence_entity_links.csv",
+      "status": "pass",
+      "detail": "35 rows, 15 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/fact_assertions.csv",
+      "status": "pass",
+      "detail": "30 rows, 16 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/fact_conflicts.csv",
+      "status": "pass",
+      "detail": "8 rows, 13 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/reviewer_decisions.csv",
+      "status": "pass",
+      "detail": "13 rows, 10 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/source_ap_po_invoice_lines.csv",
+      "status": "pass",
+      "detail": "40 rows, 23 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/source_bpo_process_baseline.csv",
+      "status": "pass",
+      "detail": "80 rows, 20 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/source_contract_change_orders.csv",
+      "status": "pass",
+      "detail": "10 rows, 17 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/source_contract_pricing_rate_cards.csv",
+      "status": "pass",
+      "detail": "25 rows, 23 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/source_contract_scope_services.csv",
+      "status": "pass",
+      "detail": "20 rows, 19 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/source_finance_realization.csv",
+      "status": "pass",
+      "detail": "20 rows, 18 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/source_risk_control_evidence.csv",
+      "status": "pass",
+      "detail": "20 rows, 15 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/source_sla_kpi_events.csv",
+      "status": "pass",
+      "detail": "90 rows, 20 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/source_sourcing_event_artifacts.csv",
+      "status": "pass",
+      "detail": "35 rows, 15 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/source_transition_evidence.csv",
+      "status": "pass",
+      "detail": "25 rows, 17 columns"
+    },
+    {
+      "check": "csv_shape:source_system_extracts/supplier_master.csv",
+      "status": "pass",
+      "detail": "5 rows, 17 columns"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-RCM-001-MSA",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-RCM-001-SOW-CORE",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-RCM-001-SOW-OPERATIONS",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-RCM-001-SLA-SCHEDULE",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-RCM-001-PRICING-EXHIBIT",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-RCM-001-AMEND-001",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-RCM-001-AMEND-002",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-RCM-001-TRANSITION-PLAN",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-RCM-001-SECURITY-CONTROL",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-RCM-001-NOTICE-RENEWAL",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-RCM-001-SIDE-LETTER",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-HR-BPO-001-MSA",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-HR-BPO-001-SOW-CORE",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-HR-BPO-001-SOW-OPERATIONS",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-HR-BPO-001-SLA-SCHEDULE",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-HR-BPO-001-PRICING-EXHIBIT",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-HR-BPO-001-AMEND-001",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-HR-BPO-001-AMEND-002",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-HR-BPO-001-TRANSITION-PLAN",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-HR-BPO-001-SECURITY-CONTROL",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-HR-BPO-001-NOTICE-RENEWAL",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-HR-BPO-001-SIDE-LETTER",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-FIN-BPO-001-MSA",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-FIN-BPO-001-SOW-CORE",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-FIN-BPO-001-SOW-OPERATIONS",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-FIN-BPO-001-SLA-SCHEDULE",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-FIN-BPO-001-PRICING-EXHIBIT",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-FIN-BPO-001-AMEND-001",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-FIN-BPO-001-AMEND-002",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-FIN-BPO-001-TRANSITION-PLAN",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-FIN-BPO-001-SECURITY-CONTROL",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-FIN-BPO-001-NOTICE-RENEWAL",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-FIN-BPO-001-SIDE-LETTER",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SC-BPO-001-MSA",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SC-BPO-001-SOW-CORE",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SC-BPO-001-SOW-OPERATIONS",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SC-BPO-001-SLA-SCHEDULE",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SC-BPO-001-PRICING-EXHIBIT",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SC-BPO-001-AMEND-001",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SC-BPO-001-AMEND-002",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SC-BPO-001-TRANSITION-PLAN",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SC-BPO-001-SECURITY-CONTROL",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SC-BPO-001-NOTICE-RENEWAL",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SC-BPO-001-SIDE-LETTER",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SSO-BPO-001-MSA",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SSO-BPO-001-SOW-CORE",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SSO-BPO-001-SOW-OPERATIONS",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SSO-BPO-001-SLA-SCHEDULE",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SSO-BPO-001-PRICING-EXHIBIT",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SSO-BPO-001-AMEND-001",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SSO-BPO-001-AMEND-002",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SSO-BPO-001-TRANSITION-PLAN",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SSO-BPO-001-SECURITY-CONTROL",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SSO-BPO-001-NOTICE-RENEWAL",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_inventory_hash:DOC-MER-CTR-SSO-BPO-001-SIDE-LETTER",
+      "status": "pass",
+      "detail": "sha256 matched"
+    },
+    {
+      "check": "document_bodies_distinct_role_specific",
+      "status": "pass",
+      "detail": "55 unique docs across 11 roles"
+    },
+    {
+      "check": "evidence_links_resolve",
+      "status": "pass",
+      "detail": "35 links checked"
+    },
+    {
+      "check": "fact_assertions_reference_existing_evidence_links",
+      "status": "pass",
+      "detail": "30 assertions checked"
+    },
+    {
+      "check": "calculation_inputs_native_source_rows",
+      "status": "pass",
+      "detail": "50 calculation inputs checked"
+    },
+    {
+      "check": "unresolved_conflicts_block_action_value_gates",
+      "status": "pass",
+      "detail": "4 blocked contracts checked"
+    },
+    {
+      "check": "dates_align_to_scenario_as_of",
+      "status": "pass",
+      "detail": "scenario_as_of_date=2027-06-30"
+    },
+    {
+      "check": "depth_review_separates_required_states",
+      "status": "pass",
+      "detail": "110 depth rows checked"
+    },
+    {
+      "check": "economics_reconcile_to_pricing_ap_sla_baseline_transition_finance",
+      "status": "pass",
+      "detail": "pricing totals tie to annual contract value; supporting rows exist for every contract"
+    },
+    {
+      "check": "vendor360_preview_validation_passes",
+      "status": "pass",
+      "detail": "8/8 preview checks pass"
+    }
+  ]
+}

@@ -63,6 +63,10 @@ function isMeridianTenantKey(tenantKey: string): boolean {
   );
 }
 
+const MERIDIAN_VENDOR360_TENANT_KEY = "meridian_health_global";
+const MERIDIAN_VENDOR360_DATASET_ID =
+  "meridian-source-5-contract-vendor360-20260811";
+
 /**
  * Resolve tenant aliases through the shared tenant service. Source data-model
  * readers must not carry tenant-specific alias lists because the same contract
@@ -115,6 +119,17 @@ async function meridianCanaryRows<R>(
   });
 }
 
+async function meridianVendor360CandidateRows<R>(
+  sql: string,
+  params: readonly unknown[] = [],
+): Promise<R[]> {
+  return azureRead.query<R>(
+    sql,
+    [MERIDIAN_VENDOR360_TENANT_KEY, MERIDIAN_VENDOR360_DATASET_ID, ...params],
+    { missingTable: "empty" },
+  );
+}
+
 async function withMeridianFallback<R>(
   tenantKey: string,
   legacyRead: () => Promise<R[]>,
@@ -129,6 +144,10 @@ async function withMeridianFallback<R>(
 export async function listContractVendor360(
   tenantKey: string,
 ): Promise<SourceContractVendor360Row[]> {
+  if (isMeridianTenantKey(tenantKey)) {
+    const candidate = await listMeridianVendor360CandidateContracts();
+    if (candidate.length > 0) return candidate;
+  }
   return queryForTenant<SourceContractVendor360Row>(
     tenantKey,
     "SELECT * FROM source.contract_vendor_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
@@ -138,6 +157,10 @@ export async function listContractVendor360(
 export async function listContract360(
   tenantKey: string,
 ): Promise<SourceContract360Row[]> {
+  if (isMeridianTenantKey(tenantKey)) {
+    const candidate = await listMeridianVendor360CandidateContracts();
+    if (candidate.length > 0) return candidate;
+  }
   return withMeridianFallback(
     tenantKey,
     () =>
@@ -225,6 +248,50 @@ export async function listContract360(
   );
 }
 
+function listMeridianVendor360CandidateContracts(): Promise<
+  SourceContract360Row[]
+> {
+  return meridianVendor360CandidateRows<SourceContract360Row>(
+    `SELECT
+       tenant_key,
+       contract_id,
+       vendor_ref,
+       vendor_name,
+       vendor_category,
+       contract_name,
+       scope_summary,
+       annual_value,
+       total_committed_value,
+       committed_annual_spend,
+       actual_annual_spend,
+       end_date,
+       notice_period_days,
+       auto_renew,
+       renewal_decision_state,
+       renewal_owner_ref,
+       benchmarking_clause,
+       exit_rights_summary,
+       alternatives_available,
+       concentration_note,
+       source_confidence,
+       resolved_annual_value,
+       annual_value_conflict_flag,
+       resolved_total_committed_value,
+       total_committed_value_conflict_flag,
+       scoped_application_count,
+       critical_application_count,
+       linked_budget_amount,
+       linked_actual_amount,
+       linked_budget_lines,
+       cloud_sev1_sev2_incidents,
+       operational_evidence_gap,
+       initiative_dependency_count
+      FROM source.meridian_vendor360_contract
+     WHERE tenant_key = $1 AND dataset_id = $2
+     ORDER BY annual_value DESC NULLS LAST`,
+  );
+}
+
 export async function getContract360(
   tenantKey: string,
   contractId: string,
@@ -245,6 +312,27 @@ export async function getContract360(
 export async function listVendorContractPortfolio(
   tenantKey: string,
 ): Promise<SourceVendorContractPortfolioRow[]> {
+  if (isMeridianTenantKey(tenantKey)) {
+    const candidate =
+      await meridianVendor360CandidateRows<SourceVendorContractPortfolioRow>(
+        `SELECT
+           tenant_key,
+           vendor_ref,
+           vendor_name,
+           vendor_category,
+           count(*)::int AS contract_count,
+           sum(annual_value)::numeric AS annual_value,
+           sum(total_committed_value)::numeric AS total_committed_value,
+           count(*) FILTER (WHERE auto_renew)::int AS auto_renew_contracts,
+           min(end_date) AS next_end_date,
+           array_agg(contract_id ORDER BY annual_value DESC NULLS LAST) AS contract_refs
+          FROM source.meridian_vendor360_contract
+         WHERE tenant_key = $1 AND dataset_id = $2
+         GROUP BY tenant_key, vendor_ref, vendor_name, vendor_category
+         ORDER BY annual_value DESC NULLS LAST`,
+      );
+    if (candidate.length > 0) return candidate;
+  }
   return withMeridianFallback(
     tenantKey,
     () =>
@@ -280,6 +368,35 @@ export async function listContractApplicationScope(
   tenantKey: string,
   contractId?: string,
 ): Promise<SourceContractApplicationScopeRow[]> {
+  if (isMeridianTenantKey(tenantKey)) {
+    const filter = contractId ? "AND contract_id = $3" : "";
+    const candidate =
+      await meridianVendor360CandidateRows<SourceContractApplicationScopeRow>(
+        `SELECT
+           tenant_key,
+           contract_id,
+           vendor_ref,
+           vendor_name,
+           application_ref,
+           application_name,
+           business_function,
+           function_ref,
+           criticality,
+           lifecycle_state,
+           hosting_model,
+           annual_run_cost,
+           modernization_plan,
+           sla_tier,
+           known_pain_risk,
+           it_portfolio_ref
+          FROM source.meridian_vendor360_application_scope
+         WHERE tenant_key = $1 AND dataset_id = $2
+           ${filter}
+         ORDER BY relationship_confidence DESC NULLS LAST, application_name`,
+        contractId ? [contractId] : [],
+      );
+    if (candidate.length > 0) return candidate;
+  }
   if (contractId) {
     return withMeridianFallback(
       tenantKey,
@@ -342,6 +459,28 @@ function listMeridianCanaryContractApplicationScope(
 export async function listContractFinancialExposure(
   tenantKey: string,
 ): Promise<SourceContractFinancialExposureRow[]> {
+  if (isMeridianTenantKey(tenantKey)) {
+    const candidate =
+      await meridianVendor360CandidateRows<SourceContractFinancialExposureRow>(
+        `SELECT
+           tenant_key,
+           contract_id,
+           vendor_ref,
+           vendor_name,
+           contracted_annual_value,
+           total_committed_value,
+           committed_annual_spend,
+           actual_annual_spend,
+           linked_budget_amount,
+           linked_forecast_amount,
+           linked_actual_amount,
+           linked_committed_amount,
+           linked_budget_lines
+          FROM source.meridian_vendor360_financial_exposure
+         WHERE tenant_key = $1 AND dataset_id = $2`,
+      );
+    if (candidate.length > 0) return candidate;
+  }
   return queryForTenant<SourceContractFinancialExposureRow>(
     tenantKey,
     "SELECT * FROM source.contract_financial_exposure WHERE tenant_key = ANY($1::text[])",
@@ -351,6 +490,27 @@ export async function listContractFinancialExposure(
 export async function listContractOperationalPerformance(
   tenantKey: string,
 ): Promise<SourceContractOperationalPerformanceRow[]> {
+  if (isMeridianTenantKey(tenantKey)) {
+    const candidate =
+      await meridianVendor360CandidateRows<SourceContractOperationalPerformanceRow>(
+        `SELECT
+           tenant_key,
+           contract_id,
+           vendor_ref,
+           vendor_name,
+           sla_summary,
+           scoped_application_count,
+           critical_application_count,
+           cloud_sev1_sev2_incidents,
+           avg_cloud_change_failure_rate,
+           service_credits_earned,
+           service_credits_claimed,
+           evidence_gap
+          FROM source.meridian_vendor360_operational_performance
+         WHERE tenant_key = $1 AND dataset_id = $2`,
+      );
+    if (candidate.length > 0) return candidate;
+  }
   return queryForTenant<SourceContractOperationalPerformanceRow>(
     tenantKey,
     "SELECT * FROM source.contract_operational_performance WHERE tenant_key = ANY($1::text[])",
@@ -1368,6 +1528,31 @@ export async function listContractInitiativeDependency(
   tenantKey: string,
   contractId?: string,
 ): Promise<SourceContractInitiativeDependencyRow[]> {
+  if (isMeridianTenantKey(tenantKey)) {
+    const filter = contractId ? "AND contract_id = $3" : "";
+    const candidate =
+      await meridianVendor360CandidateRows<SourceContractInitiativeDependencyRow>(
+        `SELECT
+           tenant_key,
+           contract_id,
+           vendor_ref,
+           vendor_name,
+           initiative_ref,
+           initiative_project_name,
+           status,
+           target_end_date,
+           approved_budget,
+           expected_business_technology_value,
+           major_risk_constraint,
+           decision_needed
+          FROM source.meridian_vendor360_initiative_dependency
+         WHERE tenant_key = $1 AND dataset_id = $2
+           ${filter}
+         ORDER BY target_end_date NULLS LAST, initiative_ref`,
+        contractId ? [contractId] : [],
+      );
+    if (candidate.length > 0) return candidate;
+  }
   if (contractId) {
     return queryForTenant<SourceContractInitiativeDependencyRow>(
       tenantKey,
