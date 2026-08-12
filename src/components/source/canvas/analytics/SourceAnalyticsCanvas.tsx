@@ -19,8 +19,15 @@ import { AskAnythingBar } from "@/components/agent/AskAnythingBar";
 import { AppShell } from "@/components/shell/AppShell";
 import { AcceptClientFinalButton } from "@/components/source/canvas/workspace-tabs/AcceptClientFinalButton";
 import { ContractOptimizationProfilePanel } from "@/components/source/canvas/contract-optimization/ContractOptimizationProfilePanel";
+import { ResponsesStageView } from "@/components/source/canvas/responses/ResponsesStageView";
 import { SourceVendorSelectionReadinessPanel } from "@/components/source/SourceVendorSelectionReadinessPanel";
 import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization";
+import type {
+  VendorBafoInstructionPack,
+  VendorChallengeIntelligence,
+  VendorEvaluationDecisionView,
+  VendorResponseProfileSet,
+} from "@/lib/source/proposal-intelligence";
 import {
   buildSourceEventShellView,
   type SourceEventShellView,
@@ -51,6 +58,7 @@ import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/t
 import type { ArtifactAcceptanceRecord } from "@/lib/source/artifact-acceptances";
 import type { SourceArtifactFamily } from "@/lib/source/artifact-registry/types";
 import type { SourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness-types";
+import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 import { ArtifactAcceptancePanel } from "./ArtifactAcceptancePanel";
 import { ANALYTICS } from "./analytics-tokens";
 import { IntelPanel } from "./IntelPanel";
@@ -156,6 +164,13 @@ interface SourceAnalyticsCanvasProps {
   journey?: SourceJourneyDefinition;
   /** Server-built Source selection readiness projection for Selection / Executive Decision stages. */
   selectionReadiness?: SourceVendorSelectionReadiness | null;
+  /** Server-built vendor response package readiness for the live Responses stage. */
+  vendorResponseReadiness?: SourceVendorResponseCompleteness | null;
+  /** Server-built proposal profile chain used by the live Responses cockpit. */
+  vendorResponseProfiles?: VendorResponseProfileSet | null;
+  vendorChallengeIntelligence?: VendorChallengeIntelligence | null;
+  vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
+  vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
 }
 
 const MAIN_STYLE: CSSProperties = {
@@ -568,6 +583,11 @@ export function SourceAnalyticsCanvas({
   contractOptimizationProfile = null,
   journey,
   selectionReadiness = null,
+  vendorResponseReadiness = null,
+  vendorResponseProfiles = null,
+  vendorChallengeIntelligence = null,
+  vendorBafoInstructionPack = null,
+  vendorEvaluationDecisionView = null,
 }: SourceAnalyticsCanvasProps) {
   const router = useRouter();
   const resolvedInitialWorkspace = initialWorkspace ?? "steps";
@@ -682,6 +702,13 @@ export function SourceAnalyticsCanvas({
                 view={shellView}
                 stageView={resolvedStageView}
                 workspace={workspace}
+                vendorResponseReadiness={vendorResponseReadiness}
+                vendorResponseProfiles={vendorResponseProfiles}
+                vendorChallengeIntelligence={vendorChallengeIntelligence}
+                vendorBafoInstructionPack={vendorBafoInstructionPack}
+                vendorEvaluationDecisionView={vendorEvaluationDecisionView}
+                eventDisplayName={event.name}
+                contractOptimizationProfile={contractOptimizationProfile}
                 onWorkspaceChange={setWorkspace}
                 onClientFinalAccepted={() => router.refresh()}
               />
@@ -893,12 +920,26 @@ function SourceWorkspace({
   view,
   stageView,
   workspace,
+  vendorResponseReadiness,
+  vendorResponseProfiles,
+  vendorChallengeIntelligence,
+  vendorBafoInstructionPack,
+  vendorEvaluationDecisionView,
+  eventDisplayName,
+  contractOptimizationProfile,
   onWorkspaceChange,
   onClientFinalAccepted,
 }: {
   view: SourceEventShellView;
   stageView: StageAnalyticsView;
   workspace: SourceShellWorkspace;
+  vendorResponseReadiness?: SourceVendorResponseCompleteness | null;
+  vendorResponseProfiles?: VendorResponseProfileSet | null;
+  vendorChallengeIntelligence?: VendorChallengeIntelligence | null;
+  vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
+  vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
+  eventDisplayName?: string;
+  contractOptimizationProfile?: ContractOptimizationMveProfile | null;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
   onClientFinalAccepted: () => void;
 }) {
@@ -927,6 +968,20 @@ function SourceWorkspace({
     <section data-testid="source-shell-v2-steps">
       <StageHeader view={view} />
       <FocusedWorkPanel view={view} onWorkspaceChange={onWorkspaceChange} />
+      {view.stage.key === "responses" ? (
+        <div style={{ marginTop: 16, maxWidth: 1040 }}>
+          <ResponsesStageView
+            readiness={vendorResponseReadiness ?? undefined}
+            profileSet={vendorResponseProfiles}
+            challengeIntelligence={vendorChallengeIntelligence}
+            bafoInstructionPack={vendorBafoInstructionPack}
+            evaluationDecisionView={vendorEvaluationDecisionView}
+            contractOptimizationProfile={contractOptimizationProfile}
+            eventDisplayName={eventDisplayName}
+            documentWorkspace={null}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }
