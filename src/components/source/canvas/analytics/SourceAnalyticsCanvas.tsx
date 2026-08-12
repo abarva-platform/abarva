@@ -26,6 +26,7 @@ import type {
   VendorBafoInstructionPack,
   VendorChallengeIntelligence,
   VendorEvaluationDecisionView,
+  VendorResponseParseReport,
   VendorResponseProfileSet,
 } from "@/lib/source/proposal-intelligence";
 import {
@@ -175,6 +176,7 @@ interface SourceAnalyticsCanvasProps {
   vendorChallengeIntelligence?: VendorChallengeIntelligence | null;
   vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
   vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
+  vendorResponseParseReports?: VendorResponseParseReport[];
 }
 
 const MAIN_STYLE: CSSProperties = {
@@ -592,6 +594,7 @@ export function SourceAnalyticsCanvas({
   vendorChallengeIntelligence = null,
   vendorBafoInstructionPack = null,
   vendorEvaluationDecisionView = null,
+  vendorResponseParseReports = [],
 }: SourceAnalyticsCanvasProps) {
   const router = useRouter();
   const resolvedInitialWorkspace = initialWorkspace ?? "steps";
@@ -711,6 +714,7 @@ export function SourceAnalyticsCanvas({
                 vendorChallengeIntelligence={vendorChallengeIntelligence}
                 vendorBafoInstructionPack={vendorBafoInstructionPack}
                 vendorEvaluationDecisionView={vendorEvaluationDecisionView}
+                vendorResponseParseReports={vendorResponseParseReports}
                 eventDisplayName={event.name}
                 contractOptimizationProfile={contractOptimizationProfile}
                 onWorkspaceChange={setWorkspace}
@@ -929,6 +933,7 @@ function SourceWorkspace({
   vendorChallengeIntelligence,
   vendorBafoInstructionPack,
   vendorEvaluationDecisionView,
+  vendorResponseParseReports,
   eventDisplayName,
   contractOptimizationProfile,
   onWorkspaceChange,
@@ -942,6 +947,7 @@ function SourceWorkspace({
   vendorChallengeIntelligence?: VendorChallengeIntelligence | null;
   vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
   vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
+  vendorResponseParseReports?: VendorResponseParseReport[];
   eventDisplayName?: string;
   contractOptimizationProfile?: ContractOptimizationMveProfile | null;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
@@ -980,6 +986,7 @@ function SourceWorkspace({
             challengeIntelligence={vendorChallengeIntelligence}
             bafoInstructionPack={vendorBafoInstructionPack}
             evaluationDecisionView={vendorEvaluationDecisionView}
+            parseReports={vendorResponseParseReports}
             contractOptimizationProfile={contractOptimizationProfile}
             eventDisplayName={eventDisplayName}
             documentWorkspace={null}

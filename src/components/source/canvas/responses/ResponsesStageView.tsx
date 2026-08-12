@@ -6,6 +6,7 @@ import type {
   VendorBafoInstructionPack,
   VendorChallengeIntelligence,
   VendorEvaluationDecisionView,
+  VendorResponseParseReport,
   VendorResponseProfileSet,
 } from "@/lib/source/proposal-intelligence";
 import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization";
@@ -16,6 +17,7 @@ import { ContractOptimizationProfilePanel } from "../contract-optimization/Contr
 import { VendorBafoInstructionPackPanel } from "./VendorBafoInstructionPackPanel";
 import { VendorChallengeLeveragePanel } from "./VendorChallengeLeveragePanel";
 import { VendorEvaluationScorecardPanel } from "./VendorEvaluationScorecardPanel";
+import { VendorResponseDecisionProofPanel } from "./VendorResponseDecisionProofPanel";
 import { VendorResponseFileReadinessPanel } from "./VendorResponseFileReadinessPanel";
 import { VendorResponseForwardGate } from "./VendorResponseForwardGate";
 import { VendorResponseIntelligenceBrief } from "./VendorResponseIntelligenceBrief";
@@ -28,6 +30,7 @@ export function ResponsesStageView({
   challengeIntelligence,
   bafoInstructionPack,
   evaluationDecisionView,
+  parseReports,
   contractOptimizationProfile,
   decisionBriefDocxHref,
   decisionBriefPdfHref,
@@ -39,6 +42,7 @@ export function ResponsesStageView({
   challengeIntelligence?: VendorChallengeIntelligence | null;
   bafoInstructionPack?: VendorBafoInstructionPack | null;
   evaluationDecisionView?: VendorEvaluationDecisionView | null;
+  parseReports?: VendorResponseParseReport[];
   contractOptimizationProfile?: ContractOptimizationMveProfile | null;
   decisionBriefDocxHref?: string;
   decisionBriefPdfHref?: string;
@@ -129,6 +133,7 @@ export function ResponsesStageView({
             challengeIntelligence={challengeIntelligence}
             bafoInstructionPack={bafoInstructionPack}
             evaluationDecisionView={evaluationDecisionView}
+            parseReports={parseReports}
           />
           <VendorResponseForwardGate
             readiness={readiness}
@@ -136,7 +141,9 @@ export function ResponsesStageView({
             challengeIntelligence={challengeIntelligence}
             bafoInstructionPack={bafoInstructionPack}
             evaluationDecisionView={evaluationDecisionView}
+            parseReports={parseReports}
           />
+          <VendorResponseDecisionProofPanel parseReports={parseReports} />
           <VendorResponseProfilesPanel profileSet={profileSet} />
           <VendorChallengeLeveragePanel intelligence={challengeIntelligence} />
           <VendorBafoInstructionPackPanel pack={bafoInstructionPack} />

@@ -50,6 +50,7 @@ import {
   buildVendorBafoInstructionPack,
   buildVendorChallengeIntelligence,
   buildVendorEvaluationDecisionView,
+  buildVendorResponseParseReportsFromProfiles,
   buildVendorResponseMveProfiles,
 } from "@/lib/source/proposal-intelligence";
 import { requireTenancy } from "@/lib/auth/tenancy";
@@ -183,6 +184,10 @@ export default async function SourceEventDetailPage({
             vendorBafoInstructionPack,
           )
         : null;
+    const vendorResponseParseReports =
+      viewStage === "responses"
+        ? buildVendorResponseParseReportsFromProfiles(vendorResponseProfiles)
+        : [];
 
     // Build the stage view. The STRATEGY (P0) stage is the mandate-confirmation
     // stage and its gate IS the P0 approval — build it from the event's captured
@@ -543,6 +548,7 @@ export default async function SourceEventDetailPage({
         vendorChallengeIntelligence={vendorChallengeIntelligence}
         vendorBafoInstructionPack={vendorBafoInstructionPack}
         vendorEvaluationDecisionView={vendorEvaluationDecisionView}
+        vendorResponseParseReports={vendorResponseParseReports}
       />
     );
   }
