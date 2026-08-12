@@ -428,7 +428,7 @@ Final report must include PR link, merge commit, files changed, validation resul
 ## SRC44 — BAFO scenario compare
 
 **Priority:** P1
-**Status:** pending
+**Status:** done
 **Type:** feature
 **Primary surface:** Source BAFO
 **Primary agent:** Atlas

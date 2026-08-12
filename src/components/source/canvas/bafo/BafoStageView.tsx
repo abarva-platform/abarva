@@ -1,10 +1,12 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import { buildBafoScenarioCompareView } from "@/lib/source/bafo-scenario-compare-view";
 import { buildSourceBafoNegotiationPlan } from "@/lib/source/bafo-negotiation";
 import { buildSourcePricingNormalization } from "@/lib/source/pricing-normalization";
 import type { SourceStageKey } from "@/lib/source/types";
 import { CANVAS } from "../canvas-tokens";
+import { BafoScenarioComparePanel } from "./BafoScenarioComparePanel";
 import { ConcessionLedger } from "./ConcessionLedger";
 import { LeverEnvelopeTable } from "./LeverEnvelopeTable";
 
@@ -30,6 +32,7 @@ export function BafoStageView({
       pricingNormalizationSnapshots: pricing.snapshots,
     },
   });
+  const scenarioCompare = buildBafoScenarioCompareView();
 
   return (
     <div data-testid="source-bafo-stage-view" style={WRAP}>
@@ -53,10 +56,14 @@ export function BafoStageView({
         </div>
       </section>
 
+      <BafoScenarioComparePanel view={scenarioCompare} />
       <LeverEnvelopeTable plans={plan.vendorNegotiationPlans} />
       <ConcessionLedger plan={plan} />
 
-      <section data-testid="source-bafo-question-pack-governance" style={PROOF_CARD}>
+      <section
+        data-testid="source-bafo-question-pack-governance"
+        style={PROOF_CARD}
+      >
         <div style={EYEBROW}>Question pack governance</div>
         <h3 style={SMALL_TITLE}>Anti-pattern flags come from the trap log</h3>
         <p style={COPY}>
