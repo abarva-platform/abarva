@@ -201,14 +201,14 @@ export function CommercialActiveCanvasStrip({
   );
 }
 
-function buildCommercialLenses(
+export function buildCommercialLenses(
   view: SourceEventShellView,
 ): readonly CommercialLens[] {
   const stageKey = view.stage.key;
   const ready = `${view.stage.ready}/${view.stage.total}`;
   const artifactBlockers = view.stage.artifactReadiness.blockerCount;
-  const stageReady =
-    view.stage.ready === view.stage.total && artifactBlockers === 0;
+  const inputsComplete = view.stage.ready === view.stage.total;
+  const stageReady = inputsComplete && artifactBlockers === 0;
   const readinessState = stageReady
     ? "ready"
     : artifactBlockers > 0
@@ -224,7 +224,9 @@ function buildCommercialLenses(
       answer: `${ready} stage inputs are complete. This lens keeps the current commercial work, required evidence, and approval path in one place.`,
       nextAction: stageReady
         ? "Open the approval gate"
-        : "Complete the highlighted step below",
+        : inputsComplete
+          ? `Review and accept ${artifactBlockers} artifact${artifactBlockers === 1 ? "" : "s"} in Files`
+          : "Complete the highlighted step below",
       evidence: "Stage checklist and artifact readiness",
     },
     {
