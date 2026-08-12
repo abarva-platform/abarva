@@ -82,3 +82,7 @@ Production migration apply and readback have not run yet. Retrieval indexing and
 ## Follow-Up: View Shape Stability
 
 PR #6203 updates the same migration before production apply to preserve existing Source read-model column shapes across fresh replay and the already-loaded lab database. Fresh replay keeps the compact compatibility view shape; the lab projection keeps the richer Contract 360 shape from the prior Source read model. This follow-up does not add data, index retrieval, promote tenant access, or change the synthetic demo/operator-reviewed posture.
+
+## Follow-Up: Legacy Union Type Stability
+
+This follow-up preserves the existing text shape for `source_confidence` when legacy read-model rows are unioned with canonical Source contract rows in the already-loaded lab database. It is a projection compatibility fix only; it does not add data, index retrieval, promote tenant access, or change the synthetic demo/operator-reviewed posture.
