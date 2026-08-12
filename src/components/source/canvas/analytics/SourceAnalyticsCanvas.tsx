@@ -5079,9 +5079,9 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
             Clear these artifact actions before approval
           </strong>
           <span>
-            Stage inputs are complete, but the approval gate is not
-            decision-ready until the current-stage artifact queue is cleared or
-            an owner records an explicit exception.
+            {workflowComplete
+              ? "Stage inputs are complete, but the approval gate is not decision-ready until the current-stage artifact queue is cleared or an owner records an explicit exception."
+              : `Stage inputs are still open (${view.stage.ready} of ${view.stage.total} complete) and the current-stage artifact queue is not cleared. Close both, or record an explicit owner exception, before the approval gate is decision-ready.`}
           </span>
           {view.stage.artifactReadiness.blockers.slice(0, 4).map((blocker) => (
             <span key={blocker}>{blocker}</span>

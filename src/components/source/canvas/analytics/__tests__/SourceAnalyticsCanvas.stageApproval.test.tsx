@@ -341,6 +341,36 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     );
   });
 
+  it("does not claim stage inputs are complete while workflow steps are still open", () => {
+    // Regression: the artifact-queue banner asserted "Stage inputs are
+    // complete" regardless of workflow state, so a stage reading
+    // "0/1 steps complete" contradicted itself inside the same panel.
+    const openScopeStage = {
+      ...SAMPLE_SCOPE_STAGE,
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((task, index) => ({
+        ...task,
+        state: index === 0 ? ("todo" as const) : task.state,
+        evidenceComplete: index === 0 ? false : task.evidenceComplete,
+      })),
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={openScopeStage}
+        approvalItems={[APPROVAL]}
+        initialWorkspace="approvals"
+      />,
+    );
+
+    const gaps = screen.getByTestId("source-shell-approval-review-gaps");
+    expect(gaps).not.toHaveTextContent("Stage inputs are complete");
+    expect(gaps).toHaveTextContent("Stage inputs are still open");
+    expect(gaps).toHaveTextContent("before the approval gate is decision-ready");
+  });
+
   it("opens Files as the primary next action when completed workflow inputs still have artifact blockers", () => {
     const completedScopeStage = {
       ...SAMPLE_SCOPE_STAGE,
