@@ -227,6 +227,35 @@ describe("SimpleStageFront", () => {
     );
   });
 
+  it("renders a stage working-session guide from substrate evidence states", () => {
+    render(
+      createElement(SimpleStageFront, {
+        eventId: "event-1",
+        stage: "scope",
+        view,
+        generating: false,
+        registryArtifacts: [],
+        onGenerateArtifact: jest.fn(async () => ({ ok: true as const })),
+        onAdvanceStage: jest.fn(),
+        onRefresh: jest.fn(),
+        advanced: createElement("div", null, "Advanced workspace"),
+      }),
+    );
+
+    const guide = screen.getByTestId("source-simple-front-session-guide");
+    expect(guide.textContent).toContain("Working session guide");
+    expect(guide.textContent).toContain("3 required · 1 optional");
+    expect(guide.textContent).toContain("Sponsor, sourcing lead");
+    expect(guide.textContent).toContain("ServiceNow CMDB");
+    expect(guide.textContent).toContain("Workday");
+    expect(guide.textContent).toContain(
+      "one application, service, or platform per row",
+    );
+    expect(guide.textContent).toContain("xlsx, csv, pdf, docx");
+    expect(guide.textContent).toContain("application_id");
+    expect(guide.textContent).toContain("3 blocking inputs remain");
+  });
+
   it("APPROVE = generate + advance in one click; no separate generate button", async () => {
     const onGenerateArtifact = jest.fn(async () => ({ ok: true as const }));
     const onAdvanceStage = jest.fn();

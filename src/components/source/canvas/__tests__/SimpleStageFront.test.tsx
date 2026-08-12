@@ -82,6 +82,39 @@ function renderFront(view: SimpleStageScreenView = BASE_VIEW) {
 }
 
 describe("SimpleStageFront", () => {
+  it("renders a compact working-session guide from the evidence requirements", () => {
+    renderFront({
+      ...BASE_VIEW,
+      required: [
+        BASE_VIEW.required[0],
+        {
+          ...BASE_VIEW.required[1],
+          state: "Not Requested",
+        },
+      ],
+    });
+
+    const guide = screen.getByTestId("source-simple-front-session-guide");
+    expect(guide).toHaveTextContent("Working session guide");
+    expect(guide).toHaveTextContent(
+      "Run the Scope working session with the right evidence.",
+    );
+    expect(guide).toHaveTextContent("2 required · 0 optional");
+    expect(guide).toHaveTextContent("Invite");
+    expect(guide).toHaveTextContent("ServiceNow CMDB");
+    expect(guide).toHaveTextContent("Pull");
+    expect(guide).toHaveTextContent(
+      "one application, service, or platform per row",
+    );
+    expect(guide).toHaveTextContent("Template");
+    expect(guide).toHaveTextContent("xlsx, csv");
+    expect(guide).toHaveTextContent("application_id");
+    expect(guide).toHaveTextContent("Unlock");
+    expect(guide).toHaveTextContent(
+      "1 blocking input remains before Scope Memo with Boundaries.",
+    );
+  });
+
   it("renders required stage asks as an evidence table with source, status, and actions", () => {
     renderFront({
       ...BASE_VIEW,
@@ -106,17 +139,22 @@ describe("SimpleStageFront", () => {
     expect(screen.getByText("Application inventory")).toBeInTheDocument();
     expect(screen.getByText("Ticket and SLA history")).toBeInTheDocument();
     expect(screen.getAllByText("Required")).toHaveLength(2);
-    expect(screen.getByText(/ServiceNow CMDB, LeanIX/)).toBeInTheDocument();
     expect(
-      screen.getByText("one application, service, or platform per row"),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/application_id/)).toBeInTheDocument();
+      screen.getAllByText(/ServiceNow CMDB, LeanIX/).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText("one application, service, or platform per row")
+        .length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/application_id/).length).toBeGreaterThanOrEqual(
+      1,
+    );
     expect(screen.getByText("Ready")).toBeInTheDocument();
     expect(screen.getByText("Needed")).toBeInTheDocument();
     expect(
       screen.getByText("Blocks approval until Usable Evidence."),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("Template")).toHaveLength(2);
+    expect(screen.getAllByText("Template").length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByRole("button", { name: "Upload" })).toHaveLength(2);
     expect(
       screen.queryByRole("button", { name: "Not needed" }),
