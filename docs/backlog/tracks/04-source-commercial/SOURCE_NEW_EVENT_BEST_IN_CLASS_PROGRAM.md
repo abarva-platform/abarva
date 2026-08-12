@@ -438,7 +438,7 @@ Track committed value versus realized value after award and prevent modeled oppo
 ### SRC57 — End-To-End Source New Event Smoke Harness
 
 **Priority:** P0
-**Status:** foundation-in-progress
+**Status:** foundation-merged
 **Type:** QA / release proof
 **Primary surface:** Full Source New Event journey
 **Primary agent:** Steward
@@ -466,6 +466,48 @@ Create repeatable before/after smoke proof for the 11-stage journey.
 - Playwright or in-app browser proof.
 - ACA runtime invariant for every deploy.
 - Proof pack saved under `/Users/anand/Downloads/source-e2e-qa-20260810/`.
+
+---
+
+### SRC58 — Simple Front Required-Row Clarity
+
+**Priority:** P0
+**Status:** implementation-in-progress
+**Type:** product / UX
+**Primary surface:** Source New Event simple front
+**Primary agent:** Nexus
+**Dependencies:** SRC48, SRC57
+
+#### Purpose
+
+Make the active stage evidence surface easier to scan by separating completed
+required rows from the next required work.
+
+#### Scope
+
+- Keep the simple front as the first-screen workflow surface.
+- Show ready required evidence rows with a green check marker and quiet styling.
+- Replace ready-row upload/answer controls with a clear done state.
+- Keep pending required rows highlighted with template, upload, and answer
+  actions.
+- Preserve the single approval gate action: it stays disabled until all required
+  inputs are ready.
+
+#### Acceptance Criteria
+
+- A user can tell which required evidence is done without reading every status
+  word.
+- A user can tell which row still needs action.
+- Ready rows do not compete visually with pending rows.
+- No workflow persistence, parser, approval automation, or data-plane behavior is
+  changed.
+
+#### Validation
+
+- Focused component test for ready versus pending required rows.
+- Scoped ESLint.
+- `git diff --check`.
+- Release control check.
 
 ## Execution Plan
 
@@ -554,7 +596,8 @@ The following still require explicit human gate per slice:
 - `SRC54` Guidebook operating system.
 - `SRC55` Client-ready artifact generation.
 - `SRC56` Post-award value realization proof.
-- `SRC57` End-to-end Source New Event smoke harness.
+- `SRC57` End-to-end Source New Event smoke harness: foundation merged.
+- `SRC58` Simple front required-row clarity.
 
 ## Non-Negotiable Boundaries
 

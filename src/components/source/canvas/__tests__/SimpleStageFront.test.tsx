@@ -187,8 +187,32 @@ describe("SimpleStageFront", () => {
     expect(
       screen.getByText("Blocks approval until Usable Evidence."),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("Template").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByRole("button", { name: "Upload" })).toHaveLength(2);
+    expect(
+      screen
+        .getByTestId("source-simple-front-requirement-EVID-SRC-SCOPE-APP-INV")
+        .getAttribute("data-ready"),
+    ).toBe("true");
+    expect(
+      screen.getByTestId("source-simple-front-done-EVID-SRC-SCOPE-APP-INV"),
+    ).toHaveTextContent("Done");
+    expect(
+      screen
+        .getByTestId(
+          "source-simple-front-requirement-EVID-SRC-SCOPE-TICKET-HISTORY",
+        )
+        .getAttribute("data-ready"),
+    ).toBe("false");
+    expect(
+      screen.queryByTestId(
+        "source-simple-front-template-EVID-SRC-SCOPE-APP-INV",
+      ),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId(
+        "source-simple-front-template-EVID-SRC-SCOPE-TICKET-HISTORY",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Upload" })).toHaveLength(1);
     expect(
       screen.queryByRole("button", { name: "Not needed" }),
     ).not.toBeInTheDocument();

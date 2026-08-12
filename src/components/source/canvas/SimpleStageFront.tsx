@@ -211,15 +211,19 @@ export function SimpleStageFront({
         </div>
         {view.required.map((requirement, index) => {
           const isAnswerOpen = answerFor === requirement.requirementId;
+          const ready = isRequirementReady(requirement);
           return (
             <div
               key={requirement.requirementId}
               data-testid={`source-simple-front-requirement-${requirement.requirementId}`}
-              style={ASK_ROW_STYLE}
+              data-ready={ready}
+              style={requirementRowStyle(ready)}
             >
               <div style={ASK_COPY_STYLE}>
                 <div style={ASK_TITLE_ROW_STYLE}>
-                  <span style={ASK_NUMBER_STYLE}>{index + 1}</span>
+                  <span style={stepMarkerStyle(ready)}>
+                    {ready ? "✓" : index + 1}
+                  </span>
                   <strong style={ASK_TITLE_STYLE}>{requirement.label}</strong>
                   <span style={REQUIRED_BADGE_STYLE}>Required</span>
                 </div>
@@ -270,50 +274,61 @@ export function SimpleStageFront({
                 </p>
               </div>
               <div style={ASK_ACTIONS_STYLE}>
-                <a
-                  href={`/api/v1/source/${eventId}/evidence/${encodeURIComponent(
-                    requirement.requirementId,
-                  )}/template`}
-                  data-testid={`source-simple-front-template-${requirement.requirementId}`}
-                  style={TEMPLATE_LINK_STYLE}
-                  title="Download a blank, pre-shaped form for this item. Fill it in and upload it back — it attaches here automatically."
-                >
-                  Template
-                </a>
-                <input
-                  ref={(node) => {
-                    fileInputs.current[requirement.requirementId] = node;
-                  }}
-                  data-testid={`source-simple-front-file-${requirement.requirementId}`}
-                  type="file"
-                  style={{ display: "none" }}
-                  onChange={(event) =>
-                    void handleUpload(
-                      requirement,
-                      event.currentTarget.files?.[0] ?? null,
-                    )
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    fileInputs.current[requirement.requirementId]?.click()
-                  }
-                  disabled={uploadPending === requirement.requirementId}
-                  style={PRIMARY_SMALL_STYLE}
-                >
-                  Upload
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAnswerFor(requirement.requirementId);
-                    setAnswerText("");
-                  }}
-                  style={SECONDARY_SMALL_STYLE}
-                >
-                  Answer
-                </button>
+                {ready ? (
+                  <span
+                    data-testid={`source-simple-front-done-${requirement.requirementId}`}
+                    style={DONE_ACTION_STYLE}
+                  >
+                    Done
+                  </span>
+                ) : (
+                  <>
+                    <a
+                      href={`/api/v1/source/${eventId}/evidence/${encodeURIComponent(
+                        requirement.requirementId,
+                      )}/template`}
+                      data-testid={`source-simple-front-template-${requirement.requirementId}`}
+                      style={TEMPLATE_LINK_STYLE}
+                      title="Download a blank, pre-shaped form for this item. Fill it in and upload it back — it attaches here automatically."
+                    >
+                      Template
+                    </a>
+                    <input
+                      ref={(node) => {
+                        fileInputs.current[requirement.requirementId] = node;
+                      }}
+                      data-testid={`source-simple-front-file-${requirement.requirementId}`}
+                      type="file"
+                      style={{ display: "none" }}
+                      onChange={(event) =>
+                        void handleUpload(
+                          requirement,
+                          event.currentTarget.files?.[0] ?? null,
+                        )
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        fileInputs.current[requirement.requirementId]?.click()
+                      }
+                      disabled={uploadPending === requirement.requirementId}
+                      style={PRIMARY_SMALL_STYLE}
+                    >
+                      Upload
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAnswerFor(requirement.requirementId);
+                        setAnswerText("");
+                      }}
+                      style={SECONDARY_SMALL_STYLE}
+                    >
+                      Answer
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           );
@@ -808,6 +823,22 @@ function stateChipStyle(
   };
 }
 
+function requirementRowStyle(ready: boolean): CSSProperties {
+  return {
+    ...ASK_ROW_STYLE,
+    background: ready ? "rgba(30,124,90,0.035)" : CANVAS.CARD,
+    opacity: ready ? 0.82 : 1,
+  };
+}
+
+function stepMarkerStyle(ready: boolean): CSSProperties {
+  return {
+    ...ASK_NUMBER_STYLE,
+    background: ready ? CANVAS.ACTIVE : "rgba(12,26,58,0.06)",
+    color: ready ? CANVAS.CARD : CANVAS.INK,
+  };
+}
+
 function manifestDotStyle(tone: "ready" | "pending" | "optional") {
   const color =
     tone === "ready"
@@ -1095,6 +1126,16 @@ const QUIET_BUTTON_STYLE: CSSProperties = {
   border: "1px solid transparent",
   background: "transparent",
   color: CANVAS.INK_MUTED,
+};
+
+const DONE_ACTION_STYLE: CSSProperties = {
+  ...BASE_BUTTON_STYLE,
+  display: "inline-flex",
+  alignItems: "center",
+  border: `1px solid rgba(30,124,90,0.18)`,
+  background: "rgba(30,124,90,0.08)",
+  color: CANVAS.ACTIVE,
+  cursor: "default",
 };
 
 const TEMPLATE_LINK_STYLE: CSSProperties = {
