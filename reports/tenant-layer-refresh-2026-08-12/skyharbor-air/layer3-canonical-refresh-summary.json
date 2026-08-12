@@ -1,0 +1,57 @@
+{
+  "tenantKey": "skyharbor-air",
+  "layer": "Layer 3 — Canonical Enterprise Model",
+  "mode": "draft-preparation-only",
+  "canonicalStoreWritten": false,
+  "activeRootAtGeneration": "datasets/tenant-inputs/active/skyharbor-air/current",
+  "dimensionsResolved": 19,
+  "dimensionsDeclared": 19,
+  "dimensionsAbsent": 0,
+  "dimensionsWithNamingDrift": 0,
+  "dimensionsWithColumnGaps": 0,
+  "unregisteredActiveFiles": [
+    "04_applications_systems.xlsx",
+    "05_data_assets_integrations.xlsx",
+    "06_infrastructure_platforms.xlsx",
+    "09_programs_initiatives.xlsx",
+    "19_data_analytics_platform_maturity.csv",
+    "19_data_analytics_platform_maturity.xlsx",
+    "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+    "SA09_AI_Tool_Usage_Feed.csv",
+    "SA10_AI_Value_Interview_Evidence.csv",
+    "SA11_AI_KPI_Operational_Outcome_Feed.csv"
+  ],
+  "checks": [
+    {
+      "check": "Every canonical object has declared identity",
+      "result": "FAIL",
+      "detail": "10 file(s) in the active root are not declared in the template contract: 04_applications_systems.xlsx; 05_data_assets_integrations.xlsx; 06_infrastructure_platforms.xlsx; 09_programs_initiatives.xlsx; 19_data_analytics_platform_maturity.csv; 19_data_analytics_platform_maturity.xlsx; SA08_AI_Benefits_Realization_Usage_Ledger.csv; SA09_AI_Tool_Usage_Feed.csv; SA10_AI_Value_Interview_Evidence.csv; SA11_AI_KPI_Operational_Outcome_Feed.csv"
+    },
+    {
+      "check": "Every fact carries source file / source row / evidence id where available",
+      "result": "PARTIAL",
+      "detail": "13_evidence_sources carries 22 row(s); per-row evidence linkage is not verified by this script."
+    },
+    {
+      "check": "Relationship rows use canonical relationship types",
+      "result": "NOT_VERIFIED",
+      "detail": "12_relationships carries 3071 row(s); the canonical relationship dictionary lives in intelligence_v6.relationship_types and was not read (no data-plane access in this lane)."
+    },
+    {
+      "check": "Planning-grade and interview-only facts remain marked",
+      "result": "PARTIAL",
+      "detail": "Classification is carried in the package manifest as synthetic_demo_planning_grade; per-row attestation is not present."
+    },
+    {
+      "check": "Money, counts, and metrics are deterministic and not model-invented",
+      "result": "FAIL",
+      "detail": "21 conflicting or divergent claim(s); see claim-reconciliation-matrix.csv."
+    },
+    {
+      "check": "Duplicate/conflicting claims are blocked pending reconciliation",
+      "result": "PASS",
+      "detail": "21 claim(s) recorded as blocked in the governed package blocked_claims.csv."
+    }
+  ],
+  "status": "draft_local_offline_only_not_active_truth_no_registry_no_load_no_retrieval_no_product_use"
+}

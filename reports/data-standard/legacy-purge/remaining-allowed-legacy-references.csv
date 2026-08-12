@@ -384,6 +384,8 @@ legacy-v-dimension-token,reports/tenant-input-consolidation/latest/summary.md,ge
 legacy-v-file-name,reports/tenant-input-consolidation/latest/summary.md,generated/historical report
 current-state-pack,reports/tenant-input-consolidation/latest/summary.md,generated/historical report
 rich-enterprise-pack,reports/tenant-input-consolidation/latest/summary.md,generated/historical report
+synthetic-v-folder-reference,reports/tenant-layer-refresh-2026-08-12/inventory/truth-inventory.csv,generated/historical report
+v6-v7-current-state,reports/tenant-layer-refresh-2026-08-12/inventory/truth-inventory.csv,generated/historical report
 synthetic-v-folder-reference,reports/v4-v5-dataset-refresh-20260627/audit.json,generated/historical report
 legacy-v-dimension-token,reports/v4-v5-dataset-refresh-20260627/audit.json,generated/historical report
 legacy-v-file-name,reports/v4-v5-dataset-refresh-20260627/audit.json,generated/historical report

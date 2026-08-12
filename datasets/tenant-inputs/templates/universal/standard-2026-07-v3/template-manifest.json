@@ -3,6 +3,9 @@
   "templateSetId": "universal-tenant-input-standard-2026-07-v3",
   "root": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3",
   "description": "Universal, industry-flexible tenant input templates. This v3 standard is the only approved tenant input/template standard; industry-specific details are captured in rows and fields, not separate legacy schemas.",
+  "clientFacingIntakeWorkstreams": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/client-intake-workstreams.json",
+  "clientFacingRule": "Clients provide raw extracts, documents, and SME answers through the smaller workstream model; Nexus maps those inputs into the 19 canonical target templates.",
+  "workbookQualityBar": "docs/governance/CLIENT_REVIEW_WORKBOOK_QUALITY_BAR.md",
   "templates": [
     {
       "file": "00_enterprise_profile.csv",

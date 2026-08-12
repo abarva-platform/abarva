@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "templateSetId": "universal-tenant-input-standard-2026-07-v3",
+  "status": "client-facing-front-door-for-template-pack",
+  "principle": "Clients provide evidence by owner/workstream; Nexus maps it into canonical dimensions. The 19 canonical files are internal targets, not 19 client questionnaires.",
+  "clientFacingWorkstreams": [
+    {
+      "workstreamId": "WS01",
+      "workstreamName": "Enterprise Strategy and Operating Model",
+      "typicalOwners": ["CEO strategy", "COO", "CIO", "enterprise transformation"],
+      "clientShouldProvide": ["strategy documents", "operating model", "business unit list", "business priorities", "capability model if available"],
+      "canonicalTargets": ["00_enterprise_profile.csv", "01_business_functions.csv", "09_programs_initiatives.csv", "15_industry_context_patterns.csv"],
+      "reviewObjectsProduced": ["enterprise profile", "business capability profile", "program context"],
+      "sourceAdapterFamily": "strategy-and-operating-model",
+      "smeValidationFocus": "Confirm business model, capability labels, strategic priorities, and which generated profiles match client language."
+    },
+    {
+      "workstreamId": "WS02",
+      "workstreamName": "Organization, Workforce, and Decision Rights",
+      "typicalOwners": ["HR", "COO", "CIO leadership", "business operations"],
+      "clientShouldProvide": ["org chart", "role catalog", "RACI", "decision forums", "business owner roster"],
+      "canonicalTargets": ["02_org_ownership.csv", "03_workforce_roles.csv", "01_business_functions.csv", "12_relationships.csv"],
+      "reviewObjectsProduced": ["owner map", "decision-rights map", "workforce role profile"],
+      "sourceAdapterFamily": "organization-and-workforce",
+      "smeValidationFocus": "Confirm owners, decision rights, role counts, business-line segmentation, and accountable reviewers."
+    },
+    {
+      "workstreamId": "WS03",
+      "workstreamName": "Applications, Infrastructure, and Architecture",
+      "typicalOwners": ["enterprise architecture", "application owners", "IT operations", "CMDB owners"],
+      "clientShouldProvide": ["CMDB export", "application inventory", "architecture diagrams", "hosting model", "cloud/data-center inventory"],
+      "nativeExtractTemplates": ["SA01_ServiceNow_CMDB_Extract_Template.xlsx", "SA05_Cloud_Inventory_Extract_Template.xlsx"],
+      "canonicalTargets": ["04_applications_systems.csv", "06_infrastructure_platforms.csv", "12_relationships.csv", "13_evidence_sources.csv"],
+      "reviewObjectsProduced": ["application profile", "technology profile", "hosting/platform context", "capability-to-system map"],
+      "sourceAdapterFamily": "application-cmdb-and-architecture",
+      "smeValidationFocus": "Confirm current-state systems, hosting, owners, lifecycle, integrations, and whether generated capability profiles include the right systems."
+    },
+    {
+      "workstreamId": "WS04",
+      "workstreamName": "Data, Integration, and Analytics",
+      "typicalOwners": ["CDAO", "data engineering", "integration teams", "BI owners", "AI platform owners"],
+      "clientShouldProvide": ["data catalog", "integration inventory", "lineage extracts", "BI/report catalog", "AI platform inventory"],
+      "canonicalTargets": ["05_data_assets_integrations.csv", "06_infrastructure_platforms.csv", "10_ai_automation_use_cases.csv", "12_relationships.csv", "13_evidence_sources.csv"],
+      "reviewObjectsProduced": ["data-domain profile", "integration map", "analytics/AI platform state", "aVa context readiness gaps"],
+      "sourceAdapterFamily": "data-catalog-integration-and-lineage",
+      "smeValidationFocus": "Confirm source systems, data domains, refresh frequency, semantic layer readiness, AI platform state, and lineage gaps."
+    },
+    {
+      "workstreamId": "WS05",
+      "workstreamName": "Vendors, Contracts, and Procurement",
+      "typicalOwners": ["procurement", "vendor management", "legal", "contract owners"],
+      "clientShouldProvide": ["vendor master", "CLM export", "contract register", "renewal calendar", "sourcing history", "rate cards where applicable"],
+      "nativeExtractTemplates": ["SA03_Vendor_Contracts_Extract_Template.xlsx"],
+      "canonicalTargets": ["07_vendors_contracts.csv", "08_spend_value.csv", "11_risks_controls.csv", "17_service_scope_managed_services.csv", "12_relationships.csv", "13_evidence_sources.csv"],
+      "reviewObjectsProduced": ["vendor profile", "contract profile", "Source readiness profile", "commercial evidence gaps"],
+      "sourceAdapterFamily": "vendor-clm-and-procurement",
+      "smeValidationFocus": "Confirm vendor/contract ownership, supported systems/functions, renewal terms, risk, spend basis, and Source readiness."
+    },
+    {
+      "workstreamId": "WS06",
+      "workstreamName": "Finance, Spend, and Value",
+      "typicalOwners": ["CFO", "FP&A", "AP", "procurement finance", "IT finance"],
+      "clientShouldProvide": ["GL export", "AP/invoice export", "budget", "purchase orders", "benefit tracker", "rate cards"],
+      "nativeExtractTemplates": ["SA02_IT_Finance_Budget_Spend_Extract_Template.xlsx"],
+      "canonicalTargets": ["08_spend_value.csv", "14_metrics_outcomes.csv", "09_programs_initiatives.csv", "07_vendors_contracts.csv", "13_evidence_sources.csv"],
+      "reviewObjectsProduced": ["spend profile", "value evidence profile", "Tower deterministic fact candidates"],
+      "sourceAdapterFamily": "finance-ap-gl-and-fpa",
+      "smeValidationFocus": "Confirm source-of-record, calculation basis, finance attestation, KPI baselines, and blocked value claims."
+    },
+    {
+      "workstreamId": "WS07",
+      "workstreamName": "Programs, Portfolio, and Change",
+      "typicalOwners": ["PMO", "transformation office", "program sponsors", "change management"],
+      "clientShouldProvide": ["portfolio register", "program list", "milestones", "dependencies", "funding status", "benefit case"],
+      "nativeExtractTemplates": ["SA04_Program_Portfolio_Extract_Template.xlsx"],
+      "canonicalTargets": ["09_programs_initiatives.csv", "10_ai_automation_use_cases.csv", "14_metrics_outcomes.csv", "11_risks_controls.csv", "12_relationships.csv"],
+      "reviewObjectsProduced": ["program profile", "Moves candidate profile", "AI use-case readiness profile"],
+      "sourceAdapterFamily": "pmo-portfolio-and-benefits",
+      "smeValidationFocus": "Confirm objectives, sponsors, phase, funding, dependencies, benefit evidence, and whether a Move is planning-ready."
+    },
+    {
+      "workstreamId": "WS08",
+      "workstreamName": "Risk, Security, Controls, and Compliance",
+      "typicalOwners": ["CISO", "risk", "audit", "compliance", "privacy/legal"],
+      "clientShouldProvide": ["risk register", "control inventory", "audit findings", "security exceptions", "incident/problem/change extracts"],
+      "nativeExtractTemplates": ["SA06_Incident_Problem_Change_Extract_Template.xlsx"],
+      "canonicalTargets": ["11_risks_controls.csv", "18_operational_process_evidence.csv", "14_metrics_outcomes.csv", "04_applications_systems.csv", "13_evidence_sources.csv"],
+      "reviewObjectsProduced": ["risk/control profile", "production-readiness blocker list", "policy evidence gaps"],
+      "sourceAdapterFamily": "grc-security-and-service-management",
+      "smeValidationFocus": "Confirm control ownership, blocked claims, risk severity, policy constraints, and evidence required before production use."
+    },
+    {
+      "workstreamId": "WS09",
+      "workstreamName": "Operations, KPIs, and Process Evidence",
+      "typicalOwners": ["COO", "process owners", "service management", "business operations"],
+      "clientShouldProvide": ["process maps", "operational metric extracts", "ticket extracts", "quality scorecards", "SLA reports", "workflow evidence"],
+      "canonicalTargets": ["18_operational_process_evidence.csv", "14_metrics_outcomes.csv", "17_service_scope_managed_services.csv", "01_business_functions.csv", "12_relationships.csv"],
+      "reviewObjectsProduced": ["process evidence profile", "KPI baseline readiness", "operations capability profile"],
+      "sourceAdapterFamily": "kpi-and-operational-telemetry",
+      "smeValidationFocus": "Confirm KPI definitions, baselines, process ownership, operational evidence, and whether issues are fair/current."
+    },
+    {
+      "workstreamId": "WS10",
+      "workstreamName": "Interviews, Questionnaires, and Executive Signals",
+      "typicalOwners": ["sponsor", "discovery lead", "executive SMEs", "functional SMEs"],
+      "clientShouldProvide": ["role-specific interviews", "workshop notes", "questionnaire answers", "SME caveats", "evidence request responses"],
+      "canonicalTargets": ["13_evidence_sources.csv", "16_expert_lenses.csv", "12_relationships.csv"],
+      "reviewObjectsProduced": ["interview signal log", "evidence request log", "SME validation matrix", "generated insight caveats"],
+      "sourceAdapterFamily": "interview-governance-and-evidence-requests",
+      "smeValidationFocus": "Confirm interview-only signals, caveats, evidence requests, and what cannot become deterministic truth yet."
+    }
+  ],
+  "implementationRule": "Each client engagement starts by selecting workstreams, source owners, and raw extracts. AbarVa maps those inputs through adapters into canonical dimensions and then generates SME-review workbooks. No canonical load or product use occurs until SME validation and promotion gates pass."
+}

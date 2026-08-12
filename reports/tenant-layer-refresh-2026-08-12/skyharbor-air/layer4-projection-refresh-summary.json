@@ -1,0 +1,65 @@
+{
+  "tenantKey": "skyharbor-air",
+  "layer": "Layer 4 — Products",
+  "mode": "readiness-report-only",
+  "runtimeOrDatabaseProjectionRefreshed": false,
+  "approvedContentFiles": 1,
+  "derivedContextFiles": 1,
+  "reportArtefacts": 337,
+  "factLineage": {
+    "source": "reports/tower-fact-lineage/lineage.json",
+    "conflictMetrics": [
+      "promised_value_usd"
+    ],
+    "singleSourceMetrics": [
+      "it_budget_usd",
+      "ai_initiative_funding_usd",
+      "ai_tool_cost_usd",
+      "vendor_run_rate_usd"
+    ],
+    "quotableFigures": "none without an explicit status caveat"
+  },
+  "surfaces": [
+    {
+      "surface": "Home context and architecture projections",
+      "localArtefact": "datasets/tenant-inputs/skyharbor-air/derived/home-context-view.json",
+      "present": false,
+      "readiness": "no-local-artefact",
+      "refreshedInThisRun": false,
+      "blockedBy": "Layer 3 fact conflicts unresolved"
+    },
+    {
+      "surface": "Intelligence / aVa context bundle",
+      "localArtefact": "datasets/tenant-inputs/skyharbor-air/derived/canonical-facts.json",
+      "present": false,
+      "readiness": "no-local-artefact",
+      "refreshedInThisRun": false,
+      "blockedBy": "Layer 3 fact conflicts unresolved"
+    },
+    {
+      "surface": "Moves context package",
+      "localArtefact": "datasets/tenant-inputs/skyharbor-air/derived/moves-context-view.json",
+      "present": false,
+      "readiness": "no-local-artefact",
+      "refreshedInThisRun": false,
+      "blockedBy": "Layer 3 fact conflicts unresolved"
+    },
+    {
+      "surface": "Source read model / package",
+      "localArtefact": "datasets/tenant-inputs/skyharbor-air/derived/evidence-registry.json",
+      "present": false,
+      "readiness": "no-local-artefact",
+      "refreshedInThisRun": false,
+      "blockedBy": "Layer 3 fact conflicts unresolved"
+    },
+    {
+      "surface": "Tower deterministic mart / cube",
+      "localArtefact": "datasets/tenant-inputs/skyharbor-air/derived/tower-dashboard-view.json",
+      "present": false,
+      "readiness": "no-local-artefact",
+      "refreshedInThisRun": false,
+      "blockedBy": "Layer 3 fact conflicts unresolved"
+    }
+  ],
+  "status": "draft_local_offline_only_not_active_truth_no_registry_no_load_no_retrieval_no_product_use"
+}
