@@ -145,10 +145,11 @@ The product must make clear where it complements or exceeds:
 ### SVV01 — Holistic Source Vendor Value Design
 
 **Priority:** P0  
-**Status:** pending  
+**Status:** candidate-for-review
 **Type:** design / architecture / product contract  
 **Primary surfaces:** New Event, Optimize Contract, Vendor 360, Contract 360, aVa  
 **Dependencies:** `SOURCE_NEW_EVENT_BEST_IN_CLASS_PROGRAM.md`, current signed-in Source routes, Source read models
+**Execution packet:** [`SOURCE_VENDOR_VALUE_EXECUTION_PACKET_SVV01_SVV02.md`](./SOURCE_VENDOR_VALUE_EXECUTION_PACKET_SVV01_SVV02.md)
 
 #### Purpose
 
@@ -192,10 +193,11 @@ Create the full design contract before deeper implementation so the team does no
 ### SVV02 — Source Data And Evidence Contract
 
 **Priority:** P0  
-**Status:** pending  
+**Status:** candidate-for-review
 **Type:** data model / ingestion / governance  
 **Primary surfaces:** Files, Vendor 360, Contract 360, Optimize Contract, aVa  
 **Dependencies:** current canonical Source model, context/corpus policy, file upload path
+**Execution packet:** [`SOURCE_VENDOR_VALUE_EXECUTION_PACKET_SVV01_SVV02.md`](./SOURCE_VENDOR_VALUE_EXECUTION_PACKET_SVV01_SVV02.md)
 
 #### Purpose
 
