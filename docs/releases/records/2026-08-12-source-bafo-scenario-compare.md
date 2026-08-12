@@ -10,11 +10,11 @@
 
 ## Plain-English Summary
 
-The Source BAFO stage now shows a deterministic scenario compare that answers what can realistically be improved before final vendor asks are sent. It separates conservative, base, and stretch negotiation scenarios, shows blockers, identifies the next useful vendor-specific action, and keeps savings caveated as directional rather than booked value.
+The Source BAFO stage now shows a deterministic scenario compare in the Start-here workflow that answers what can realistically be improved before final vendor asks are sent. It separates conservative, base, and stretch negotiation scenarios, shows blockers, identifies the next useful vendor-specific action, and keeps savings caveated as directional rather than booked value.
 
 ## Layer Impact
 
-- Product surface: Source BAFO UI only. The stage now presents a workflow-oriented scenario compare alongside the existing lever envelope and concession ledger.
+- Product surface: Source BAFO UI only. The stage now presents a workflow-oriented scenario compare in the simple workflow surface and alongside the existing advanced lever envelope and concession ledger.
 - Canonical/data layer: No schema, migration, persistence, loader, adapter, upload, parser, or live data-plane change.
 - Evidence governance: The UI reinforces that blocker resolution and human approval are required before BAFO negotiation material is treated as final.
 
@@ -30,13 +30,17 @@ The Source BAFO stage now shows a deterministic scenario compare that answers wh
 
 - Added `src/components/source/canvas/bafo/BafoScenarioComparePanel.tsx`.
 - Wired the deterministic scenario compare into `src/components/source/canvas/bafo/BafoStageView.tsx`.
+- Wired the deterministic scenario compare into the BAFO `SimpleStageFront` path through `src/components/source/canvas/UniversalCanvasShell.tsx`.
+- Added optional simple-front spotlight support in `src/components/source/canvas/SimpleStageFront.tsx`.
 - Added `src/components/source/canvas/bafo/__tests__/BafoStageView.test.tsx`.
+- Updated `src/components/source/canvas/__tests__/SimpleStageFront.test.tsx`.
 - Added this release record.
 
 ## QA / Validation
 
 - PASS: Focused Jest for the BAFO stage render contract: `npm test -- --runTestsByPath src/components/source/canvas/bafo/__tests__/BafoStageView.test.tsx --runInBand`.
-- PASS: ESLint for affected files: `npx eslint src/components/source/canvas/bafo/BafoScenarioComparePanel.tsx src/components/source/canvas/bafo/BafoStageView.tsx src/components/source/canvas/bafo/__tests__/BafoStageView.test.tsx`.
+- PASS: Focused Jest for the simple-front spotlight contract: `npm test -- --runTestsByPath src/components/source/canvas/__tests__/SimpleStageFront.test.tsx --runInBand`.
+- PASS: ESLint for affected files: `npx eslint src/components/source/canvas/bafo/BafoScenarioComparePanel.tsx src/components/source/canvas/bafo/BafoStageView.tsx src/components/source/canvas/bafo/__tests__/BafoStageView.test.tsx src/components/source/canvas/SimpleStageFront.tsx src/components/source/canvas/UniversalCanvasShell.tsx src/components/source/canvas/__tests__/SimpleStageFront.test.tsx`.
 - PASS: Whitespace diff check: `git diff --check`.
 - PASS: TypeScript check: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false`.
 - PASS: Release check: `npm run release:check -- --base origin/main --head HEAD`.
