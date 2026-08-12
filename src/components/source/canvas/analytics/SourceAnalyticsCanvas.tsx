@@ -5353,6 +5353,14 @@ function DefaultStageGuidebook({ view }: { view: SourceEventShellView }) {
   const nextNeed = nextStep
     ? activeStepNeed(nextStep, nextStep.status === "captured")
     : null;
+  const workflowComplete = view.stage.ready >= view.stage.total;
+  const artifactQueueReady = view.stage.artifactReadiness.ready;
+  const stageGateReady = workflowComplete && artifactQueueReady;
+  const readinessLabel = stageGateReady
+    ? `${view.stage.readyPct}% gate-ready`
+    : workflowComplete
+      ? "artifact review open"
+      : `${view.stage.readyPct}% inputs-ready`;
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
@@ -5368,7 +5376,7 @@ function DefaultStageGuidebook({ view }: { view: SourceEventShellView }) {
         }}
       >
         <span>Default playbook</span>
-        <span>{view.stage.readyPct}% ready</span>
+        <span>{readinessLabel}</span>
       </div>
       <article style={{ ...CARD_STYLE, padding: 18 }}>
         <h3
@@ -5397,6 +5405,7 @@ function DefaultStageGuidebook({ view }: { view: SourceEventShellView }) {
       <StageGuideEvidencePrepTable
         steps={requiredSteps}
         activeStepId={view.stage.activeStep?.id}
+        artifactReviewOpen={workflowComplete && !artifactQueueReady}
       />
       <div
         style={{
@@ -5442,10 +5451,18 @@ function DefaultStageGuidebook({ view }: { view: SourceEventShellView }) {
         />
         <DefaultGuideCard
           title="Gate condition"
-          value={view.stage.approvalCtaLabel}
+          value={
+            stageGateReady
+              ? view.stage.approvalCtaLabel
+              : workflowComplete
+                ? "Clear artifact queue"
+                : view.stage.approvalCtaLabel
+          }
           body={
-            view.stage.readyPct === 100
-              ? "Required evidence is complete. Open the approval gate and record the rationale before advancing."
+            stageGateReady
+              ? "Required evidence and gate artifacts are ready. Open the approval workspace and record the rationale before advancing."
+              : workflowComplete
+                ? view.stage.artifactReadiness.line
               : view.stage.gateReadinessLine
           }
         />
@@ -5457,9 +5474,11 @@ function DefaultStageGuidebook({ view }: { view: SourceEventShellView }) {
 function StageGuideEvidencePrepTable({
   steps,
   activeStepId,
+  artifactReviewOpen = false,
 }: {
   steps: readonly SourceShellStep[];
   activeStepId?: string;
+  artifactReviewOpen?: boolean;
 }) {
   if (!steps.length) return null;
   return (
@@ -5582,10 +5601,20 @@ function StageGuideEvidencePrepTable({
                 />
                 <GuidePrepCell label={need.parseTarget} detail={need.status} />
                 <GuidePrepStatusCell
-                  label={captured ? "Done" : active ? "Now" : "Next"}
+                  label={
+                    captured
+                      ? artifactReviewOpen
+                        ? "Review"
+                        : "Done"
+                      : active
+                        ? "Now"
+                        : "Next"
+                  }
                   detail={
                     captured
-                      ? "Ready for gate"
+                      ? artifactReviewOpen
+                        ? "Artifact queue open"
+                        : "Ready for gate"
                       : active
                         ? need.nextAction
                         : "Select when ready"
