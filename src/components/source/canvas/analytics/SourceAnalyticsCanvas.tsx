@@ -850,78 +850,97 @@ function SourceShellRail({
 
       <RailLabel>Journey</RailLabel>
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        {view.journey.map((stage) => (
-          <Link
-            key={stage.key}
-            href={`/source/events/${view.event.id}?stage=${stage.key}`}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "22px 1fr auto",
-              gap: 9,
-              alignItems: "center",
-              padding: "8px 9px",
-              borderRadius: 8,
-              border: stage.viewed
-                ? `1px solid ${ANALYTICS.LINE}`
-                : "1px solid transparent",
-              background: stage.viewed ? ANALYTICS.CARD : "transparent",
-              textDecoration: "none",
-            }}
-          >
-            <span
+        {view.journey.map((stage) => {
+          const currentStageHasArtifactBlockers =
+            stage.current &&
+            view.stage.ready >= view.stage.total &&
+            view.stage.artifactReadiness.blockerCount > 0;
+          const stageProgressLabel = stage.viewed
+            ? currentStageHasArtifactBlockers
+              ? "review files"
+              : `${stage.done}/${stage.total}`
+            : "";
+
+          return (
+            <Link
+              key={stage.key}
+              href={`/source/events/${view.event.id}?stage=${stage.key}`}
               style={{
-                width: 20,
-                height: 20,
-                borderRadius: 999,
                 display: "grid",
-                placeItems: "center",
-                background:
-                  stage.state === "past"
-                    ? ANALYTICS.INK
-                    : stage.current
-                      ? ANALYTICS.BLUE
-                      : ANALYTICS.CARD,
-                color:
-                  stage.state === "past" || stage.current
-                    ? "#fff"
+                gridTemplateColumns: "22px 1fr auto",
+                gap: 9,
+                alignItems: "center",
+                padding: "8px 9px",
+                borderRadius: 8,
+                border: stage.viewed
+                  ? `1px solid ${ANALYTICS.LINE}`
+                  : "1px solid transparent",
+                background: stage.viewed ? ANALYTICS.CARD : "transparent",
+                textDecoration: "none",
+              }}
+            >
+              <span
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: 999,
+                  display: "grid",
+                  placeItems: "center",
+                  background:
+                    stage.state === "past"
+                      ? ANALYTICS.INK
+                      : stage.current
+                        ? ANALYTICS.BLUE
+                        : ANALYTICS.CARD,
+                  color:
+                    stage.state === "past" || stage.current
+                      ? "#fff"
+                      : ANALYTICS.FAINT,
+                  border:
+                    stage.state === "past" || stage.current
+                      ? "none"
+                      : `1px solid ${ANALYTICS.LINE_STRONG}`,
+                  fontFamily: ANALYTICS.MONO,
+                  fontSize: 9,
+                  fontWeight: 800,
+                }}
+              >
+                {stage.state === "past"
+                  ? "✓"
+                  : String(stage.index).padStart(2, "0")}
+              </span>
+              <span
+                style={{
+                  color:
+                    stage.viewed || stage.current || stage.state === "past"
+                      ? ANALYTICS.INK
+                      : ANALYTICS.MUTED,
+                  fontSize: 13,
+                  fontWeight: stage.viewed ? 700 : 600,
+                }}
+              >
+                {stage.label}
+              </span>
+              <span
+                data-testid={
+                  stage.current
+                    ? "source-journey-current-stage-status"
+                    : undefined
+                }
+                style={{
+                  color: currentStageHasArtifactBlockers
+                    ? ANALYTICS.AMBER_TEXT
                     : ANALYTICS.FAINT,
-                border:
-                  stage.state === "past" || stage.current
-                    ? "none"
-                    : `1px solid ${ANALYTICS.LINE_STRONG}`,
-                fontFamily: ANALYTICS.MONO,
-                fontSize: 9,
-                fontWeight: 800,
-              }}
-            >
-              {stage.state === "past"
-                ? "✓"
-                : String(stage.index).padStart(2, "0")}
-            </span>
-            <span
-              style={{
-                color:
-                  stage.viewed || stage.current || stage.state === "past"
-                    ? ANALYTICS.INK
-                    : ANALYTICS.MUTED,
-                fontSize: 13,
-                fontWeight: stage.viewed ? 700 : 600,
-              }}
-            >
-              {stage.label}
-            </span>
-            <span
-              style={{
-                color: ANALYTICS.FAINT,
-                fontFamily: ANALYTICS.MONO,
-                fontSize: 10,
-                fontWeight: 700,
-              }}
-            >
-              {stage.viewed ? `${stage.done}/${stage.total}` : ""}
-            </span>
-          </Link>
-        ))}
+                  fontFamily: ANALYTICS.MONO,
+                  fontSize: 10,
+                  fontWeight: 700,
+                }}
+              >
+                {stageProgressLabel}
+              </span>
+            </Link>
+          );
+        })}
       </div>
 
       <div
