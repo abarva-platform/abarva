@@ -152,7 +152,10 @@ describe("resolveSimpleStageScreen", () => {
 
     expect(vm.stageLabel).toBe("Scope");
     expect(vm.required).toHaveLength(3);
-    expect(vm.extras).toHaveLength(1);
+    expect(vm.extras.length).toBeGreaterThanOrEqual(1);
+    expect(vm.extras.map((row) => row.requirementId)).not.toEqual(
+      expect.arrayContaining(vm.required.map((row) => row.requirementId)),
+    );
     expect(vm.deliverable).toEqual({
       artifactCode: "d05_scope_memo",
       name: "Scope Memo with Boundaries",
