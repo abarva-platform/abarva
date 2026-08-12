@@ -20,7 +20,12 @@ export const STATIC_LAUNCH_ACCESS_PROFILES = [
     clientKey: "meridian",
     label: "Meridian launch login",
   },
-  { email: "anand@abarva.ai", role: "admin", label: "AbarVa admin" },
+  {
+    email: "anand@abarva.ai",
+    role: "admin",
+    clientKey: "skyharbor",
+    label: "SkyHarbor founder login",
+  },
   {
     email: "anand.sundaram+apex@thesundaram.com",
     role: "client",

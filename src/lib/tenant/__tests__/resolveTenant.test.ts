@@ -203,6 +203,52 @@ describe("resolveTenant", () => {
     });
   });
 
+  it("pins anand@abarva.ai to SkyHarbor ahead of stale metadata, request, and cookie tenants", async () => {
+    currentUserMock.mockResolvedValue({
+      publicMetadata: { role: "admin", clientId: "meridian" },
+      primaryEmailAddress: { emailAddress: "anand@abarva.ai" },
+      emailAddresses: [],
+    });
+    mockCookie("apexretail");
+    mockClientRow({
+      id: "client-skyharbor",
+      name: "SkyHarbor Global",
+      industry_code: "AIRLINE",
+    });
+
+    await expect(
+      resolveTenant({ requestedClient: "meridian" }),
+    ).resolves.toMatchObject({
+      appClientKey: "skyharbor",
+      canonicalKey: "skyharbor-air",
+      clientId: "client-skyharbor",
+      source: "email",
+    });
+  });
+
+  it("pins admin@abarva.ai to Meridian ahead of stale request and cookie tenants", async () => {
+    currentUserMock.mockResolvedValue({
+      publicMetadata: { role: "client", clientId: "skyharbor" },
+      primaryEmailAddress: { emailAddress: "admin@abarva.ai" },
+      emailAddresses: [],
+    });
+    mockCookie("apexretail");
+    mockClientRow({
+      id: "client-meridian",
+      name: "Meridian Health",
+      industry_code: "HEALTHCARE_IDN",
+    });
+
+    await expect(
+      resolveTenant({ requestedClient: "skyharbor" }),
+    ).resolves.toMatchObject({
+      appClientKey: "meridian",
+      canonicalKey: "meridian-health",
+      clientId: "client-meridian",
+      source: "email",
+    });
+  });
+
   it("throws instead of falling back when strict resolution is requested", async () => {
     currentUserMock.mockResolvedValue(null);
     mockCookie(null);
