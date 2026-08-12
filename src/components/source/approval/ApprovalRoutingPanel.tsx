@@ -77,7 +77,7 @@ function RoutePerson({
 
 const PANEL_STYLE: CSSProperties = {
   display: "grid",
-  gap: 12,
+  gap: 10,
 };
 
 const EYEBROW_STYLE: CSSProperties = {
@@ -90,12 +90,12 @@ const EYEBROW_STYLE: CSSProperties = {
 
 const TITLE_STYLE: CSSProperties = {
   margin: 0,
-  fontFamily: SHELL.SERIF,
-  fontSize: 18,
-  fontWeight: 400,
+  fontFamily: SHELL.SANS,
+  fontSize: 16,
+  fontWeight: 800,
   letterSpacing: 0,
   color: SHELL.INK,
-  lineHeight: 1.18,
+  lineHeight: 1.22,
 };
 
 const ROUTE_LIST_STYLE: CSSProperties = {
@@ -111,7 +111,7 @@ const ROUTE_PERSON_STYLE: CSSProperties = {
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
   background: SHELL.CARD_WHITE,
-  padding: "12px 13px",
+  padding: "10px 11px",
 };
 
 const PERSON_LABEL_STYLE: CSSProperties = {
@@ -124,7 +124,7 @@ const PERSON_LABEL_STYLE: CSSProperties = {
 const PERSON_NAME_STYLE: CSSProperties = {
   marginTop: 4,
   fontFamily: SHELL.SANS,
-  fontSize: 14,
+  fontSize: 13,
   fontWeight: 700,
   color: SHELL.INK,
 };
@@ -150,9 +150,9 @@ const STATUS_STYLE: CSSProperties = {
 const EMPTY_ROUTE_STYLE: CSSProperties = {
   border: `1px dashed ${SHELL.CARD_LINE}`,
   borderRadius: 8,
-  padding: "12px 13px",
+  padding: "10px 11px",
   fontFamily: SHELL.SANS,
-  fontSize: 13,
+  fontSize: 12.5,
   color: SHELL.INK_SOFT,
 };
 
@@ -160,9 +160,9 @@ const READ_ONLY_STYLE: CSSProperties = {
   margin: 0,
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
-  padding: "10px 12px",
+  padding: "9px 10px",
   fontFamily: SHELL.SANS,
-  fontSize: 13,
+  fontSize: 12.5,
   lineHeight: 1.45,
   color: SHELL.INK_SOFT,
   background: "#fbfaf7",

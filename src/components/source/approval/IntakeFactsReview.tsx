@@ -34,7 +34,7 @@ export function IntakeFactsReview({ facts }: IntakeFactsReviewProps) {
 
 const SECTION_STYLE: CSSProperties = {
   display: "grid",
-  gap: 12,
+  gap: 10,
 };
 
 const EYEBROW_STYLE: CSSProperties = {
@@ -47,24 +47,24 @@ const EYEBROW_STYLE: CSSProperties = {
 
 const TITLE_STYLE: CSSProperties = {
   margin: 0,
-  fontFamily: SHELL.SERIF,
-  fontSize: 18,
-  lineHeight: 1.18,
-  fontWeight: 400,
+  fontFamily: SHELL.SANS,
+  fontSize: 16,
+  lineHeight: 1.22,
+  fontWeight: 800,
   letterSpacing: 0,
   color: SHELL.INK,
 };
 
 const FACT_LIST_STYLE: CSSProperties = {
   display: "grid",
-  gap: 10,
+  gap: 8,
 };
 
 const FACT_CARD_STYLE: CSSProperties = {
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
   background: SHELL.CARD_WHITE,
-  padding: "13px 14px",
+  padding: "10px 12px",
 };
 
 const FACT_LABEL_STYLE: CSSProperties = {
@@ -79,7 +79,7 @@ const FACT_LABEL_STYLE: CSSProperties = {
 const FACT_VALUE_STYLE: CSSProperties = {
   margin: 0,
   fontFamily: SHELL.SANS,
-  fontSize: 14,
+  fontSize: 12.5,
   lineHeight: 1.45,
   color: SHELL.INK,
 };

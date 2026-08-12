@@ -104,25 +104,34 @@ describe("EventApprovalCard", () => {
 
     expect(
       screen.getByTestId("source-approval-page").getAttribute("style"),
-    ).toContain("padding: 14px clamp(20px, 3vw, 40px) 28px");
+    ).toContain("padding: 10px clamp(18px, 2.4vw, 32px) 22px");
     expect(
       screen.getByRole("heading", { level: 1 }).getAttribute("style"),
-    ).toContain("font-size: clamp(20px, 1.25vw, 26px)");
+    ).toContain('font-family: "Inter"');
     expect(
       screen.getByRole("heading", { level: 1 }).getAttribute("style"),
-    ).toContain("line-height: 1.12");
+    ).toContain("font-size: clamp(18px, 1.05vw, 23px)");
+    expect(
+      screen.getByRole("heading", { level: 1 }).getAttribute("style"),
+    ).toContain("line-height: 1.16");
     expect(
       screen.getByText("What you are approving").getAttribute("style"),
-    ).toContain("font-size: 18px");
+    ).toContain("font-size: 16px");
+    expect(
+      screen.getByText("What you are approving").getAttribute("style"),
+    ).toContain('font-family: "Inter"');
     expect(
       screen.getByText("Approve or send back").getAttribute("style"),
-    ).toContain("font-size: 18px");
+    ).toContain("font-size: 16px");
     expect(
       screen.getByText("Who must say yes").getAttribute("style"),
-    ).toContain("font-size: 18px");
+    ).toContain("font-size: 16px");
+    expect(
+      screen.getByText("Review the five facts").getAttribute("style"),
+    ).toContain("font-size: 16px");
     expect(
       screen.getByTestId("source-approval-rationale").getAttribute("style"),
-    ).toContain("font-size: 13px");
+    ).toContain("font-size: 12.5px");
     expect(
       screen.getByTestId("source-approval-rationale").getAttribute("rows"),
     ).toBe("4");
