@@ -21,6 +21,7 @@ import { AcceptClientFinalButton } from "@/components/source/canvas/workspace-ta
 import { BafoScenarioComparePanel } from "@/components/source/canvas/bafo/BafoScenarioComparePanel";
 import { ContractOptimizationProfilePanel } from "@/components/source/canvas/contract-optimization/ContractOptimizationProfilePanel";
 import { ResponsesStageView } from "@/components/source/canvas/responses/ResponsesStageView";
+import { StageDecisionLensPanel } from "@/components/source/canvas/workspace-tabs/StageDecisionLensPanel";
 import { SourceVendorSelectionReadinessPanel } from "@/components/source/SourceVendorSelectionReadinessPanel";
 import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization";
 import type {
@@ -1039,6 +1040,11 @@ function SourceWorkspace({
         view={view}
         onWorkspaceChange={onWorkspaceChange}
       />
+      {view.stage.key === "pricing" ? (
+        <div style={{ maxWidth: 1120, marginBottom: 16 }}>
+          <StageDecisionLensPanel stage={view.stage.key} />
+        </div>
+      ) : null}
       <FocusedWorkPanel view={view} onWorkspaceChange={onWorkspaceChange} />
       {view.stage.key === "responses" ? (
         <div style={{ marginTop: 16, maxWidth: 1040 }}>
