@@ -83,11 +83,28 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 18,
+        gap: 14,
         fontFamily: TYPE.ui,
+        width: '100%',
+        minWidth: 0,
       }}
     >
+      <nav className="sw-cockpit-tabs" aria-label="Vendor 360 cockpit sections">
+        {[
+          ['#vendor360-verdict', 'Verdict'],
+          ['#vendor360-action-queue', 'Action queue'],
+          ['#vendor360-top-contracts', 'Top contracts'],
+          ['#vendor360-proof-layers', 'Proof layers'],
+        ].map(([href, label]) => (
+          <a key={href} href={href}>
+            {label}
+          </a>
+        ))}
+      </nav>
+
       <section
+        id="vendor360-verdict"
+        className="sw-cockpit-verdict"
         style={{
           background: '#0a0a0b',
           borderRadius: 8,
@@ -115,7 +132,7 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
             <h2
               style={{
                 fontFamily: TYPE.serif,
-                fontSize: 'clamp(30px,3.1vw,50px)',
+                fontSize: 'clamp(30px,2.7vw,48px)',
                 fontWeight: 500,
                 lineHeight: 1.02,
                 letterSpacing: 0,
@@ -153,6 +170,7 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
             </div>
           </div>
           <div
+            className="sw-cockpit-supports"
             style={{
               borderLeft: '1px solid rgba(255,255,255,.12)',
               display: 'grid',
@@ -204,6 +222,7 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
       </section>
 
       <section
+        className="sw-cockpit-banner"
         style={{
           background: '#fff',
           border: '1px solid rgba(10,10,11,.12)',
@@ -244,6 +263,8 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
       </section>
 
       <section
+        id="vendor360-action-queue"
+        className="sw-cockpit-card"
         style={{
           background: '#fff',
           border: '1px solid rgba(10,10,11,.12)',
@@ -289,9 +310,18 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
         ) : (
           <div style={{ overflowX: 'auto' }}>
             {cockpit.actionQueue.map((row, index) => (
-              <button
+              <div
                 key={row.contractId}
                 onClick={() => vm.openCockpitContract(row.contractId)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    vm.openCockpitContract(row.contractId);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                className="sw-cockpit-action-row"
                 style={{
                   width: '100%',
                   border: 'none',
@@ -299,10 +329,7 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
                     index === 0 ? 'none' : '1px solid rgba(10,10,11,.08)',
                   background: '#fff',
                   display: 'grid',
-                  gridTemplateColumns:
-                    'minmax(250px,1.15fr) minmax(260px,1.2fr) 130px 140px 110px 146px',
                   gap: 16,
-                  minWidth: 1120,
                   alignItems: 'center',
                   padding: '16px 22px',
                   textAlign: 'left',
@@ -380,13 +407,15 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
                     Open workflow →
                   </button>
                 </span>
-              </button>
+              </div>
             ))}
           </div>
         )}
       </section>
 
       <section
+        id="vendor360-top-contracts"
+        className="sw-cockpit-card"
         style={{
           background: '#fff',
           border: '1px solid rgba(10,10,11,.12)',
@@ -417,10 +446,10 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table
+            className="sw-cockpit-contract-table"
             style={{
               width: '100%',
               borderCollapse: 'collapse',
-              minWidth: 980,
               fontSize: 12.5,
             }}
           >
@@ -519,9 +548,10 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
       </section>
 
       <section
+        id="vendor360-proof-layers"
+        className="sw-cockpit-proof"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,320px),1fr))',
           gap: 18,
         }}
       >

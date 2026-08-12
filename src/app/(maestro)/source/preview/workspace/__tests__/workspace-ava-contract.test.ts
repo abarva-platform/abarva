@@ -17,6 +17,22 @@ const buildViewModelSource = fs.readFileSync(
   "utf8",
 );
 
+const contextLensSource = fs.readFileSync(
+  path.join(
+    process.cwd(),
+    "src/app/(maestro)/source/preview/workspace/lenses/ContextLens.tsx",
+  ),
+  "utf8",
+);
+
+const workspaceCssSource = fs.readFileSync(
+  path.join(
+    process.cwd(),
+    "src/app/(maestro)/source/preview/workspace/workspace.css",
+  ),
+  "utf8",
+);
+
 const surfaceRetrieverSource = fs.readFileSync(
   path.join(
     process.cwd(),
@@ -74,5 +90,21 @@ describe("Source Workspace aVa contract", () => {
     expect(surfaceRetrieverSource).toContain(
       "${activeClient} live ${activeModule} surface",
     );
+  });
+
+  it("keeps the Vendor 360 cockpit navigable without a fixed-width canvas", () => {
+    expect(workspaceClientSource).toContain(
+      'width: isVendor360Cockpit ? "100%" : undefined',
+    );
+    expect(workspaceClientSource).not.toContain(
+      'width: isVendor360Cockpit ? "min(100%, 1280px)"',
+    );
+    expect(contextLensSource).toContain("sw-cockpit-tabs");
+    expect(contextLensSource).toContain("Vendor 360 cockpit sections");
+    expect(contextLensSource).toContain("#vendor360-action-queue");
+    expect(contextLensSource).toContain("#vendor360-top-contracts");
+    expect(contextLensSource).toContain("#vendor360-proof-layers");
+    expect(workspaceCssSource).toContain(".sw-cockpit-action-row");
+    expect(workspaceCssSource).toContain("@media (max-width: 1180px)");
   });
 });
