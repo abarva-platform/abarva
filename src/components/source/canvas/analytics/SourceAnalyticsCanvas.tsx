@@ -2399,26 +2399,14 @@ function ActiveStepRequirementRow({
   isComplete: boolean;
   factTemplateCode?: string;
 }) {
-  const ownerSource = step.provenance
-    ? `${step.provenance.owner} / ${step.provenance.source}`
-    : step.file
-      ? step.file.name
-      : "Review on this page";
-  const format = factTemplateCode
-    ? "CSV/XLSX template"
-    : step.file
-      ? step.file.format
-      : step.type === "provide"
-        ? "Upload file"
-        : step.type === "decide"
-          ? "Decision"
-          : "Review";
-  const action =
-    step.type === "provide"
-      ? "Download template, fill it, upload here"
-      : step.type === "decide"
-        ? "Review, record decision, save"
-        : "Review and confirm";
+  const need = activeStepNeed(step, isComplete);
+  const requirement = stepRequirementFor(step);
+  const format =
+    factTemplateCode && step.type === "provide"
+      ? requirement.acceptedFormats
+      : step.file
+        ? step.file.format
+        : requirement.acceptedFormats;
   return (
     <div
       data-testid="source-active-requirement-row"
@@ -2432,59 +2420,114 @@ function ActiveStepRequirementRow({
     >
       <div
         style={{
+          alignItems: "center",
           background: ANALYTICS.PAGE_BG,
-          color: ANALYTICS.MUTED,
-          display: "grid",
-          fontFamily: ANALYTICS.MONO,
-          fontSize: 9,
-          fontWeight: 850,
-          gridTemplateColumns: "1.2fr 1.5fr 120px 116px",
-          letterSpacing: "0.06em",
-          padding: "8px 12px",
-          textTransform: "uppercase",
+          borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          display: "flex",
+          gap: 12,
+          justifyContent: "space-between",
+          padding: "9px 12px",
         }}
       >
-        <span>Required input</span>
-        <span>Owner / source</span>
-        <span>Format</span>
-        <span>Status</span>
+        <strong
+          style={{
+            color: ANALYTICS.INK,
+            fontSize: 13,
+            lineHeight: 1.25,
+          }}
+        >
+          Evidence request
+        </strong>
+        <span
+          style={{
+            border: `1px solid ${
+              isComplete ? "rgba(17, 120, 84, 0.24)" : ANALYTICS.AMBER
+            }`,
+            borderRadius: 999,
+            color: isComplete ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
+            fontFamily: ANALYTICS.MONO,
+            fontSize: 9,
+            fontWeight: 900,
+            padding: "4px 8px",
+            textTransform: "uppercase",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {isComplete ? "Accepted" : "Action needed"}
+        </span>
       </div>
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1.2fr 1.5fr 120px 116px",
+          gridTemplateColumns:
+            "minmax(190px, 1.15fr) minmax(160px, 0.9fr) minmax(130px, 0.75fr) minmax(105px, 0.55fr)",
           gap: 12,
           padding: "11px 12px",
-          color: ANALYTICS.INK,
-          fontSize: 12.5,
-          lineHeight: 1.35,
         }}
       >
-        <span>
-          <b>{step.title}</b>
-          <span
-            style={{
-              color: ANALYTICS.MUTED,
-              display: "block",
-              fontSize: 11.5,
-              marginTop: 2,
-            }}
-          >
-            {action}
-          </span>
-        </span>
-        <span style={{ color: ANALYTICS.INK_2 }}>{ownerSource}</span>
-        <span style={{ color: ANALYTICS.MUTED }}>{format}</span>
-        <span
-          style={{
-            color: isComplete ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
-            fontWeight: 850,
-          }}
-        >
-          {isComplete ? "Done" : "Needed"}
-        </span>
+        <RequirementCell label="What to load" value={need.item} />
+        <RequirementCell label="Source system" value={need.sourceSystem} />
+        <RequirementCell label="Owner" value={need.owner} />
+        <RequirementCell label="Format" value={format} />
+      </div>
+      <div
+        style={{
+          borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          display: "grid",
+          gridTemplateColumns:
+            "minmax(190px, 1fr) minmax(180px, 1fr) minmax(130px, 0.55fr)",
+          gap: 12,
+          padding: "10px 12px 12px",
+        }}
+      >
+        <RequirementCell label="Parse/writeback" value={need.parseTarget} />
+        <RequirementCell label="Next action" value={need.nextAction} />
+        <RequirementCell label="Status" value={need.status} tone={need.tone} />
       </div>
     </div>
+  );
+}
+
+function RequirementCell({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "good" | "warn";
+}) {
+  const color =
+    tone === "good"
+      ? ANALYTICS.GREEN_TEXT
+      : tone === "warn"
+        ? ANALYTICS.AMBER_TEXT
+        : ANALYTICS.INK_2;
+  return (
+    <span style={{ display: "grid", gap: 3, minWidth: 0 }}>
+      <span
+        style={{
+          color: ANALYTICS.FAINT,
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 9,
+          fontWeight: 900,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+        }}
+      >
+        {label}
+      </span>
+      <b
+        style={{
+          color,
+          fontSize: 12.5,
+          lineHeight: 1.32,
+          overflowWrap: "anywhere",
+        }}
+      >
+        {value}
+      </b>
+    </span>
   );
 }
 

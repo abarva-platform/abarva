@@ -183,13 +183,25 @@ describe("SourceAnalyticsCanvas stage fallback mapping", () => {
 
     expect(
       screen.getByTestId("source-active-requirement-row"),
-    ).toHaveTextContent(/Required input/i);
+    ).toHaveTextContent(/Evidence request/i);
+    expect(
+      screen.getByTestId("source-active-requirement-row"),
+    ).toHaveTextContent(/What to load/i);
+    expect(
+      screen.getByTestId("source-active-requirement-row"),
+    ).toHaveTextContent(/Volumetrics file/i);
     expect(
       screen.getByTestId("source-active-requirement-row"),
     ).toHaveTextContent(/ITSM \/ finance baseline/i);
     expect(
       screen.getByTestId("source-active-requirement-row"),
-    ).toHaveTextContent(/Needed/i);
+    ).toHaveTextContent(/CSV or XLSX/i);
+    expect(
+      screen.getByTestId("source-active-requirement-row"),
+    ).toHaveTextContent(/Tickets, SLA misses, change orders, run volumes/i);
+    expect(
+      screen.getByTestId("source-active-requirement-row"),
+    ).toHaveTextContent(/Action needed/i);
 
     const link = screen.getByTestId("task-template-download");
     expect(link).toHaveTextContent("Download CSV/XLSX template");
