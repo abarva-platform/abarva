@@ -199,6 +199,24 @@ describe("SourceAnalyticsCanvas — guidebook workspace", () => {
     expect(screen.getByTestId("source-shell-v2-guidebook")).toHaveTextContent(
       "Gate condition",
     );
+    expect(screen.getByTestId("source-shell-v2-guidebook")).toHaveTextContent(
+      "Evidence prep checklist",
+    );
+    expect(screen.getByTestId("source-shell-v2-guidebook")).toHaveTextContent(
+      "what to collect, who owns it, the upload format",
+    );
+    const volumetricsRow = screen.getByTestId(
+      "source-shell-guidebook-prep-row-scope.volumetrics",
+    );
+    expect(volumetricsRow).toHaveTextContent("Provide the volumetrics");
+    expect(volumetricsRow).toHaveTextContent("ITSM / finance baseline");
+    expect(volumetricsRow).toHaveTextContent("Ravi Menon, IT-Ops");
+    expect(volumetricsRow).toHaveTextContent("Volumetrics file");
+    expect(volumetricsRow).toHaveTextContent("CSV or XLSX");
+    expect(volumetricsRow).toHaveTextContent(
+      "Tickets, SLA misses, change orders, run volumes",
+    );
+    expect(volumetricsRow).toHaveTextContent("VOLUMETRICS_V1");
   });
 
   it("labels a client-specific guidebook distinctly from the global default", () => {
