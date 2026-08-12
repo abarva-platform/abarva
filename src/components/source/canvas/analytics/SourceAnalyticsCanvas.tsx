@@ -3881,6 +3881,12 @@ function ArtifactLifecyclePanel({
     ? lifecycle.rows
     : lifecycle.rows.filter((row) => row.stageLabel === view.stage.label);
   const rowsByStage = groupLifecycleRows(visibleLifecycleRows);
+  const currentStageRows = lifecycle.rows.filter(
+    (row) => row.stageLabel === view.stage.label,
+  );
+  const currentStageActionRows = currentStageRows.filter(
+    (row) => row.lifecycleState !== "client_final",
+  );
   const standardsCsvHref = `data:text/csv;charset=utf-8,${encodeURIComponent(
     buildSourceArtifactStandardsCsv(lifecycle.rows),
   )}`;
@@ -4118,6 +4124,12 @@ function ArtifactLifecyclePanel({
           ))}
         </div>
       </div>
+      <CurrentStageArtifactReviewQueue
+        eventId={view.event.id}
+        stageLabel={view.stage.label}
+        rows={currentStageActionRows}
+        onClientFinalAccepted={onClientFinalAccepted}
+      />
       {showAuditMetrics ? (
         <section
           data-testid="source-artifact-audit-metrics"
@@ -4211,6 +4223,213 @@ function ArtifactLifecyclePanel({
       </div>
     </section>
   );
+}
+
+function CurrentStageArtifactReviewQueue({
+  eventId,
+  stageLabel,
+  rows,
+  onClientFinalAccepted,
+}: {
+  eventId: string;
+  stageLabel: string;
+  rows: SourceArtifactLifecycleRow[];
+  onClientFinalAccepted: () => void;
+}) {
+  const blockers = rows.filter((row) =>
+    ["ai_draft", "not_registered"].includes(row.lifecycleState),
+  );
+  const evidenceOnly = rows.filter(
+    (row) => row.lifecycleState === "evidence_only",
+  );
+  const queueLabel =
+    blockers.length > 0
+      ? `${blockers.length} artifact review blocker${blockers.length === 1 ? "" : "s"}`
+      : evidenceOnly.length > 0
+        ? `${evidenceOnly.length} evidence item${evidenceOnly.length === 1 ? "" : "s"} to review`
+        : "Ready for approval";
+
+  return (
+    <section
+      data-testid="source-artifact-review-queue"
+      style={{
+        border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+        borderRadius: 8,
+        background: ANALYTICS.SOFT,
+        marginTop: 16,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) auto",
+          gap: 14,
+          alignItems: "start",
+          padding: "12px 14px",
+          borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+        }}
+      >
+        <div>
+          <div style={WORKSPACE_EYEBROW}>{stageLabel} approval queue</div>
+          <h3
+            style={{
+              margin: "4px 0 0",
+              color: ANALYTICS.INK,
+              fontSize: 17,
+              lineHeight: 1.2,
+            }}
+          >
+            Clear these artifact actions before opening the gate.
+          </h3>
+          <p
+            style={{
+              margin: "5px 0 0",
+              color: ANALYTICS.MUTED,
+              fontSize: 12.5,
+              lineHeight: 1.45,
+            }}
+          >
+            The full lifecycle matrix remains below for audit detail; this queue
+            shows only what affects the current stage approval.
+          </p>
+        </div>
+        <span style={SMALL_STATUS_PILL}>{queueLabel}</span>
+      </div>
+      {rows.length === 0 ? (
+        <div
+          data-testid="source-artifact-review-queue-ready"
+          style={{
+            padding: "12px 14px",
+            color: ANALYTICS.GREEN_TEXT,
+            fontSize: 13,
+            fontWeight: 800,
+          }}
+        >
+          No artifact review blockers remain for {stageLabel}. Open the approval
+          gate when the owner is ready.
+        </div>
+      ) : (
+        <div style={{ display: "grid" }}>
+          {rows.map((row) => (
+            <CurrentStageArtifactReviewRow
+              key={row.code}
+              eventId={eventId}
+              row={row}
+              onClientFinalAccepted={onClientFinalAccepted}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function CurrentStageArtifactReviewRow({
+  eventId,
+  row,
+  onClientFinalAccepted,
+}: {
+  eventId: string;
+  row: SourceArtifactLifecycleRow;
+  onClientFinalAccepted: () => void;
+}) {
+  const action = artifactReviewAction(row);
+
+  return (
+    <div
+      data-testid={`source-artifact-review-queue-row-${row.code}`}
+      style={{
+        display: "grid",
+        gridTemplateColumns:
+          "minmax(190px, 1fr) 150px minmax(220px, 1.3fr) 210px",
+        gap: 12,
+        alignItems: "start",
+        padding: "12px 14px",
+        borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+        background: ANALYTICS.CARD,
+      }}
+    >
+      <div>
+        <div style={{ color: ANALYTICS.INK, fontSize: 13, fontWeight: 850 }}>
+          {row.name}
+        </div>
+        <div
+          style={{
+            marginTop: 3,
+            color: ANALYTICS.MUTED,
+            fontFamily: ANALYTICS.MONO,
+            fontSize: 10,
+          }}
+        >
+          {row.code} · {row.requirementLabel} · {row.gateLabel}
+        </div>
+      </div>
+      <div>
+        <EvidenceBadge
+          basis={
+            row.lifecycleState === "not_registered" ? "missing" : "live_artifact"
+          }
+          label={row.lifecycleLabel}
+        />
+      </div>
+      <div
+        style={{
+          color: ANALYTICS.INK_2,
+          fontSize: 12.5,
+          lineHeight: 1.45,
+        }}
+      >
+        <strong>{action.title}</strong>
+        <div style={{ marginTop: 3, color: ANALYTICS.MUTED }}>
+          {action.detail}
+        </div>
+      </div>
+      <div>
+        {row.lifecycleState === "ai_draft" ? (
+          <AcceptClientFinalButton
+            eventId={eventId}
+            artifactCode={row.code}
+            artifactName={row.name}
+            hasGeneratedDraft
+            onAccepted={onClientFinalAccepted}
+          />
+        ) : (
+          <span style={SMALL_STATUS_PILL}>{action.cta}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function artifactReviewAction(row: SourceArtifactLifecycleRow): {
+  title: string;
+  detail: string;
+  cta: string;
+} {
+  if (row.lifecycleState === "ai_draft") {
+    return {
+      title: "Review the draft and accept the client-final version.",
+      detail:
+        "The draft exists, but it cannot clear the approval gate until a reviewed final is uploaded and accepted.",
+      cta: "Accept final",
+    };
+  }
+  if (row.lifecycleState === "not_registered") {
+    return {
+      title: "Generate or upload the missing artifact.",
+      detail:
+        row.quality.nextAction ||
+        "No artifact is registered for this required slot yet.",
+      cta: "Missing",
+    };
+  }
+  return {
+    title: "Review supporting evidence before relying on it.",
+    detail:
+      "Evidence is registered, but it is not a client-final deliverable by itself.",
+    cta: "Review evidence",
+  };
 }
 
 function LifecycleStageRows({
