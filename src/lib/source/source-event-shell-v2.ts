@@ -411,7 +411,6 @@ export function buildSourceEventShellView(
         item.stageKey === input.event.currentStageKey ||
         item.stageKey === visibleCurrentStageKey,
     ) ?? null;
-  const stageApprovalHref = `/source/events/${encodeURIComponent(input.event.id)}/approval`;
   const stageApprovalWorkspaceHref = `/source/events/${encodeURIComponent(input.event.id)}?stage=${encodeURIComponent(input.viewedStageKey)}&workspace=approvals`;
   const currentStageApprovalWorkspaceHref = `/source/events/${encodeURIComponent(input.event.id)}?stage=${encodeURIComponent(visibleCurrentStageKey)}&workspace=approvals`;
   const viewedStageIsCurrent = input.viewedStageKey === visibleCurrentStageKey;
@@ -497,7 +496,7 @@ export function buildSourceEventShellView(
             ? artifactReadiness.line
             : `${total - ready} steps left - ${total - ready} required evidence item${total - ready === 1 ? "" : "s"} before approval.`,
       artifactReadiness,
-      approvalHref: stageApprovalHref,
+      approvalHref: stageApprovalWorkspaceHref,
       approvalCtaLabel: stageReadyWithArtifactGaps
         ? `Review ${viewedStageLabel} approval gaps`
         : `Open ${viewedStageLabel} approval`,
