@@ -18,6 +18,7 @@ import rehypeSanitize from "rehype-sanitize";
 import { AskAnythingBar } from "@/components/agent/AskAnythingBar";
 import { AppShell } from "@/components/shell/AppShell";
 import { AcceptClientFinalButton } from "@/components/source/canvas/workspace-tabs/AcceptClientFinalButton";
+import { BafoScenarioComparePanel } from "@/components/source/canvas/bafo/BafoScenarioComparePanel";
 import { ContractOptimizationProfilePanel } from "@/components/source/canvas/contract-optimization/ContractOptimizationProfilePanel";
 import { ResponsesStageView } from "@/components/source/canvas/responses/ResponsesStageView";
 import { SourceVendorSelectionReadinessPanel } from "@/components/source/SourceVendorSelectionReadinessPanel";
@@ -53,6 +54,7 @@ import {
   SOURCE_STAGE_LABELS,
   normalizeSourceStageKey,
 } from "@/lib/source/constants";
+import { buildBafoScenarioCompareView } from "@/lib/source/bafo-scenario-compare-view";
 import {
   adaptStageViewToSourceJourney,
   sourceJourneyLabelForStage,
@@ -1633,13 +1635,14 @@ function StageReadyPanel({
         <StageReadyStatusDatum
           label="Next"
           value={
-            hasArtifactGaps
-              ? "Accept artifacts in Files"
-              : "Open approval gate"
+            hasArtifactGaps ? "Accept artifacts in Files" : "Open approval gate"
           }
           tone={hasArtifactGaps ? "warn" : "good"}
         />
       </div>
+      {view.stage.key === "bafo" || view.stage.key === "orals_bafo" ? (
+        <BafoScenarioComparePanel view={buildBafoScenarioCompareView()} />
+      ) : null}
       {hasArtifactGaps ? (
         <div
           style={{
@@ -2082,10 +2085,7 @@ function ActiveStepNeedsPanel({
           padding: "9px 12px 11px",
         }}
       >
-        <StepNeedDatum
-          label="Artifact impact"
-          value={need.artifactImpact}
-        />
+        <StepNeedDatum label="Artifact impact" value={need.artifactImpact} />
         <StepNeedDatum label="Readback" value={need.readback} />
         <StepNeedDatum label="Status" value={need.status} tone={need.tone} />
         <StepNeedDatum label="Next" value={need.nextAction} />
@@ -2363,8 +2363,15 @@ function stepRequirementFor(step: SourceShellStep): WorkflowStepRequirement {
     sourceSystem,
     ownerRole,
     acceptedFormats,
-    grainHistory: step.type === "provide" ? "Use the template grain for this stage" : "One reviewed decision for this stage",
-    templateLabel: step.template?.name ?? (step.type === "provide" ? "Stage evidence template" : "No upload template"),
+    grainHistory:
+      step.type === "provide"
+        ? "Use the template grain for this stage"
+        : "One reviewed decision for this stage",
+    templateLabel:
+      step.template?.name ??
+      (step.type === "provide"
+        ? "Stage evidence template"
+        : "No upload template"),
     parseTarget,
     artifactImpact:
       step.type === "provide"
@@ -4368,7 +4375,9 @@ function CurrentStageArtifactReviewRow({
       <div>
         <EvidenceBadge
           basis={
-            row.lifecycleState === "not_registered" ? "missing" : "live_artifact"
+            row.lifecycleState === "not_registered"
+              ? "missing"
+              : "live_artifact"
           }
           label={row.lifecycleLabel}
         />
