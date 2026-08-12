@@ -230,8 +230,8 @@ function readManifestContract() {
  */
 async function readMappingProfiles() {
   try {
-    const module = await import('../../src/lib/enterprise-data/source-adapters/mapping-profiles.ts');
-    return module.BUILT_IN_MAPPING_PROFILES ?? [];
+    const mappingModule = await import('../../src/lib/enterprise-data/source-adapters/mapping-profiles.ts');
+    return mappingModule.BUILT_IN_MAPPING_PROFILES ?? [];
   } catch (error) {
     console.warn(`  warning: could not load mapping profiles (${error.message}); adapter gaps reported as unknown`);
     return null;
