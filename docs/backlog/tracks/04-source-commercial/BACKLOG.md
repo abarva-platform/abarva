@@ -25,6 +25,12 @@ It connects New Event, Optimize Contract, Vendor/Contract 360, evidence
 contracts, aVa, artifact quality, guidebooks, and market differentiation into
 one signoff-driven execution plan.
 
+The first execution packet for that program is tracked in
+[`SOURCE_VENDOR_VALUE_EXECUTION_PACKET_SVV01_SVV02.md`](./SOURCE_VENDOR_VALUE_EXECUTION_PACKET_SVV01_SVV02.md).
+It is the current review candidate for `SVV01` and `SVV02`: holistic Source IA,
+the evidence/data contract, parser lifecycle, value-state rules, and the first
+implementation slice order.
+
 Before starting additional New Event implementation beyond the current narrow
 backlog slices, use that program backlog to do the holistic 11-stage design
 review first, then execute incrementally with explicit PR, QA, ACA deploy, runtime
