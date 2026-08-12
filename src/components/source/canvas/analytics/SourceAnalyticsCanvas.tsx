@@ -42,6 +42,10 @@ import {
   buildSourceArtifactStandardsCsv,
   type SourceArtifactLifecycleRow,
 } from "@/lib/source/artifact-lifecycle-matrix";
+import {
+  listSourceArtifactOperations,
+  type SourceArtifactOperation,
+} from "@/lib/source/artifact-operations";
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
 import type { ApprovalLedgerRow } from "@/lib/source/approval-ledger-model";
 import {
@@ -2640,6 +2644,17 @@ function FilesWorkspace({
   view: SourceEventShellView;
   onClientFinalAccepted: () => void;
 }) {
+  const operationByCode = useMemo(
+    () =>
+      new Map(
+        listSourceArtifactOperations().map((operation) => [
+          operation.artifactCode,
+          operation,
+        ]),
+      ),
+    [],
+  );
+
   return (
     <section data-testid="source-shell-v2-files">
       <WorkspaceTitle
@@ -2700,6 +2715,7 @@ function FilesWorkspace({
                     key={item.id}
                     item={item}
                     eventId={view.event.id}
+                    operation={operationByCode.get(item.artifactCode) ?? null}
                     onAccepted={onClientFinalAccepted}
                   />
                 ))}
@@ -4868,10 +4884,12 @@ function AskAvaLauncher({
 function FileCard({
   item,
   eventId,
+  operation,
   onAccepted,
 }: {
   item: SourceShellFileItem;
   eventId: string;
+  operation: SourceArtifactOperation | null;
   onAccepted: () => void;
 }) {
   return (
@@ -4968,6 +4986,7 @@ function FileCard({
         artifactCode={item.artifactCode}
         artifactName={item.name}
         latestAcceptance={item.latestAcceptance}
+        operation={operation}
         onAccepted={onAccepted}
       />
     </div>

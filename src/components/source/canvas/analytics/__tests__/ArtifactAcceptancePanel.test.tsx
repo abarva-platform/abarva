@@ -5,6 +5,7 @@ import "@testing-library/jest-dom";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ArtifactAcceptancePanel } from "../ArtifactAcceptancePanel";
 import type { ArtifactAcceptanceRecord } from "@/lib/source/artifact-acceptances";
+import type { SourceArtifactOperation } from "@/lib/source/artifact-operations";
 
 const LATEST: ArtifactAcceptanceRecord = {
   id: "acceptance-1",
@@ -22,6 +23,46 @@ const LATEST: ArtifactAcceptanceRecord = {
   acceptedBy: "K. Oshima",
   acceptedAt: "2026-07-22T00:00:00.000Z",
   createdAt: "2026-07-22T00:00:00.000Z",
+};
+
+const OPERATION: SourceArtifactOperation = {
+  artifactCode: "d11_response_checklist",
+  artifactName: "Response coverage matrix",
+  stage: "responses",
+  stageLabel: "Responses",
+  requirementLevel: "required",
+  gateDefining: true,
+  documentType: "Checklist / completeness report",
+  sourceOfRecord:
+    "RFP response requirements, uploaded vendor responses, and parser output.",
+  intakePath:
+    "Checklist can be generated/rendered; vendor response completeness should be built from imported response packets.",
+  acceptedFormats: ["xlsx", "csv", "pdf"],
+  parseAndStore:
+    "Generic Source upload stores the file, hashes it, and records parser state.",
+  agentUse:
+    "Sentinel uses checklist gaps to block premature evaluation and produce vendor follow-up actions.",
+  contentStandard: "Completeness report with vendor gaps and action owners.",
+  responsibleAiControl:
+    "AI can produce the gap report, but the Maestro decides whether each response is evaluation-ready.",
+  currentCapability:
+    "Partial: seeded completeness model exists; live parsing does not yet drive this report.",
+  nextGap:
+    "Connect uploaded response sections to completeness rules and gate blockers.",
+  bestInClassOutcome:
+    "Every response is complete, comparable, and exception-flagged before scoring.",
+  status: "partial",
+  goldStandard: {
+    purpose: "Make response coverage reviewable before evaluation.",
+    outcome: "Every gap has a vendor follow-up action.",
+    tableOfContents: ["Executive answer", "Evidence basis"],
+    evidenceInputs: ["Vendor response pack", "RFP requirements"],
+    bestInClassExpectations: ["Cited parser output"],
+    approvalOwner: "Procurement lead",
+    supportedUploads: ["xlsx", "csv", "pdf"],
+    supportedDownloads: ["xlsx", "pdf"],
+    dataBindingChecks: ["Artifact code matches canonical spec."],
+  },
 };
 
 describe("ArtifactAcceptancePanel", () => {
@@ -55,11 +96,45 @@ describe("ArtifactAcceptancePanel", () => {
       "source-shell-artifact-status-d11_response_checklist",
     );
     expect(panel).toHaveTextContent("Accepted by K. Oshima");
-    expect(panel).toHaveTextContent("Coverage complete across all three bidders.");
+    expect(panel).toHaveTextContent(
+      "Coverage complete across all three bidders.",
+    );
     expect(panel).toHaveTextContent("Added Cormorant IT's late response.");
     expect(panel).toHaveTextContent("current");
     expect(panel).toHaveTextContent("ready");
     expect(screen.getByText("Re-accept with a new reason")).toBeInTheDocument();
+  });
+
+  it("shows the artifact context manifest so acceptance is tied to source, parser, agent use, and the next gap", () => {
+    render(
+      <ArtifactAcceptancePanel
+        eventId="event-1"
+        artifactCode="d11_response_checklist"
+        artifactName="Response coverage matrix"
+        latestAcceptance={LATEST}
+        operation={OPERATION}
+      />,
+    );
+    const manifest = screen.getByTestId(
+      "source-shell-artifact-context-d11_response_checklist",
+    );
+    expect(manifest).toHaveTextContent("Context manifest");
+    expect(manifest).toHaveTextContent(
+      "RFP response requirements, uploaded vendor responses, and parser output.",
+    );
+    expect(manifest).toHaveTextContent(
+      "Generic Source upload stores the file, hashes it, and records parser state.",
+    );
+    expect(manifest).toHaveTextContent(
+      "Sentinel uses checklist gaps to block premature evaluation",
+    );
+    expect(manifest).toHaveTextContent(
+      "Connect uploaded response sections to completeness rules and gate blockers.",
+    );
+    expect(manifest).toHaveTextContent(
+      "Human approval owner: Procurement lead",
+    );
+    expect(manifest).toHaveTextContent("Supported uploads: xlsx, csv, pdf.");
   });
 
   it("requires a rationale before submitting — never POSTs an empty reason", async () => {
@@ -71,9 +146,15 @@ describe("ArtifactAcceptancePanel", () => {
         latestAcceptance={null}
       />,
     );
-    fireEvent.click(screen.getByTestId("source-shell-artifact-accept-toggle-d11_response_checklist"));
+    fireEvent.click(
+      screen.getByTestId(
+        "source-shell-artifact-accept-toggle-d11_response_checklist",
+      ),
+    );
     fireEvent.submit(
-      screen.getByTestId("source-shell-artifact-accept-form-d11_response_checklist"),
+      screen.getByTestId(
+        "source-shell-artifact-accept-form-d11_response_checklist",
+      ),
     );
     await waitFor(() => {
       expect(
@@ -98,13 +179,19 @@ describe("ArtifactAcceptancePanel", () => {
         onAccepted={onAccepted}
       />,
     );
-    fireEvent.click(screen.getByTestId("source-shell-artifact-accept-toggle-d11_response_checklist"));
+    fireEvent.click(
+      screen.getByTestId(
+        "source-shell-artifact-accept-toggle-d11_response_checklist",
+      ),
+    );
     fireEvent.change(
       screen.getByPlaceholderText("Why is this version being accepted now?"),
       { target: { value: "Vendor coverage matrix reviewed and complete." } },
     );
     fireEvent.submit(
-      screen.getByTestId("source-shell-artifact-accept-form-d11_response_checklist"),
+      screen.getByTestId(
+        "source-shell-artifact-accept-form-d11_response_checklist",
+      ),
     );
 
     await waitFor(() => expect(onAccepted).toHaveBeenCalledTimes(1));
@@ -122,7 +209,10 @@ describe("ArtifactAcceptancePanel", () => {
   it("shows the server error message and does not call onAccepted on failure", async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
-      json: async () => ({ error: "forbidden", detail: "Upload rights are required." }),
+      json: async () => ({
+        error: "forbidden",
+        detail: "Upload rights are required.",
+      }),
     });
     const onAccepted = jest.fn();
     render(
@@ -134,17 +224,25 @@ describe("ArtifactAcceptancePanel", () => {
         onAccepted={onAccepted}
       />,
     );
-    fireEvent.click(screen.getByTestId("source-shell-artifact-accept-toggle-d11_response_checklist"));
+    fireEvent.click(
+      screen.getByTestId(
+        "source-shell-artifact-accept-toggle-d11_response_checklist",
+      ),
+    );
     fireEvent.change(
       screen.getByPlaceholderText("Why is this version being accepted now?"),
       { target: { value: "Reviewed." } },
     );
     fireEvent.submit(
-      screen.getByTestId("source-shell-artifact-accept-form-d11_response_checklist"),
+      screen.getByTestId(
+        "source-shell-artifact-accept-form-d11_response_checklist",
+      ),
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Upload rights are required.")).toBeInTheDocument();
+      expect(
+        screen.getByText("Upload rights are required."),
+      ).toBeInTheDocument();
     });
     expect(onAccepted).not.toHaveBeenCalled();
   });
@@ -171,13 +269,19 @@ describe("ArtifactAcceptancePanel", () => {
         latestAcceptance={null}
       />,
     );
-    fireEvent.click(screen.getByTestId("source-shell-artifact-accept-toggle-d24_decision_brief"));
+    fireEvent.click(
+      screen.getByTestId(
+        "source-shell-artifact-accept-toggle-d24_decision_brief",
+      ),
+    );
     fireEvent.change(
       screen.getByPlaceholderText("Why is this version being accepted now?"),
       { target: { value: "Reviewed." } },
     );
     fireEvent.submit(
-      screen.getByTestId("source-shell-artifact-accept-form-d24_decision_brief"),
+      screen.getByTestId(
+        "source-shell-artifact-accept-form-d24_decision_brief",
+      ),
     );
     await waitFor(() => {
       expect(
@@ -220,7 +324,9 @@ describe("ArtifactAcceptancePanel", () => {
         latestAcceptance={null}
       />,
     );
-    fireEvent.click(screen.getByTestId("source-shell-artifact-accept-toggle-d05_scope_memo"));
+    fireEvent.click(
+      screen.getByTestId("source-shell-artifact-accept-toggle-d05_scope_memo"),
+    );
     fireEvent.change(
       screen.getByPlaceholderText("Why is this version being accepted now?"),
       { target: { value: "Reviewed and complete." } },

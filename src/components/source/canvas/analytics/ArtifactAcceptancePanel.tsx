@@ -9,6 +9,7 @@ import {
   type ArtifactBlockerLike,
 } from "@/lib/source/contracts/blocker-copy";
 import { ArtifactBlockerList } from "../ArtifactBlockerList";
+import type { SourceArtifactOperation } from "@/lib/source/artifact-operations";
 
 // SOURCE-SHELL-004 — the "Artifact status" panel: an explicit, reasoned
 // "accept this artifact as authoritative" action, distinct from the stage
@@ -21,6 +22,7 @@ interface ArtifactAcceptancePanelProps {
   artifactCode: string;
   artifactName: string;
   latestAcceptance: ArtifactAcceptanceRecord | null;
+  operation?: SourceArtifactOperation | null;
   onAccepted?: () => void;
 }
 
@@ -41,8 +43,10 @@ const CONTEXT_POLICY_OPTIONS: { value: string; label: string }[] = [
 ];
 
 function driftTone(status: string): { bg: string; fg: string } {
-  if (status === "current") return { bg: ANALYTICS.GREEN_TINT, fg: ANALYTICS.GREEN_TEXT };
-  if (status === "stale") return { bg: ANALYTICS.AMBER_TINT, fg: ANALYTICS.AMBER_TEXT };
+  if (status === "current")
+    return { bg: ANALYTICS.GREEN_TINT, fg: ANALYTICS.GREEN_TEXT };
+  if (status === "stale")
+    return { bg: ANALYTICS.AMBER_TINT, fg: ANALYTICS.AMBER_TEXT };
   return { bg: "rgba(10,10,11,0.06)", fg: ANALYTICS.MUTED };
 }
 
@@ -51,6 +55,7 @@ export function ArtifactAcceptancePanel({
   artifactCode,
   artifactName,
   latestAcceptance,
+  operation,
   onAccepted,
 }: ArtifactAcceptancePanelProps) {
   const [open, setOpen] = useState(false);
@@ -65,7 +70,9 @@ export function ArtifactAcceptancePanel({
     setBlockers([]);
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const approvalRationale = String(formData.get("approvalRationale") ?? "").trim();
+    const approvalRationale = String(
+      formData.get("approvalRationale") ?? "",
+    ).trim();
     if (!approvalRationale) {
       setBlockers([
         {
@@ -173,7 +180,8 @@ export function ArtifactAcceptancePanel({
             </div>
           ) : null}
           <div style={{ color: ANALYTICS.FAINT }}>
-            Gate precondition: {latestAcceptance.gatePreconditionStatus.replace("_", " ")}
+            Gate precondition:{" "}
+            {latestAcceptance.gatePreconditionStatus.replace("_", " ")}
           </div>
         </div>
       ) : null}
@@ -197,6 +205,12 @@ export function ArtifactAcceptancePanel({
           ) : null}
         </div>
       ) : null}
+      {operation ? (
+        <ArtifactContextManifest
+          artifactCode={artifactCode}
+          operation={operation}
+        />
+      ) : null}
       <button
         type="button"
         onClick={() => {
@@ -206,7 +220,9 @@ export function ArtifactAcceptancePanel({
         data-testid={`source-shell-artifact-accept-toggle-${artifactCode}`}
         style={TOGGLE_STYLE}
       >
-        {latestAcceptance ? "Re-accept with a new reason" : "Accept as authoritative"}
+        {latestAcceptance
+          ? "Re-accept with a new reason"
+          : "Accept as authoritative"}
       </button>
       {open ? (
         <form
@@ -241,7 +257,11 @@ export function ArtifactAcceptancePanel({
           </label>
           <label style={LABEL_STYLE}>
             Content drift
-            <select name="contentDriftStatus" defaultValue="unknown" style={INPUT_STYLE}>
+            <select
+              name="contentDriftStatus"
+              defaultValue="unknown"
+              style={INPUT_STYLE}
+            >
               {DRIFT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
@@ -251,7 +271,11 @@ export function ArtifactAcceptancePanel({
           </label>
           <label style={LABEL_STYLE}>
             Gate precondition
-            <select name="gatePreconditionStatus" defaultValue="ready" style={INPUT_STYLE}>
+            <select
+              name="gatePreconditionStatus"
+              defaultValue="ready"
+              style={INPUT_STYLE}
+            >
               {GATE_PRECONDITION_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
@@ -261,7 +285,11 @@ export function ArtifactAcceptancePanel({
           </label>
           <label style={LABEL_STYLE}>
             Agent context eligibility
-            <select name="downstreamContextPolicy" defaultValue="restricted" style={INPUT_STYLE}>
+            <select
+              name="downstreamContextPolicy"
+              defaultValue="restricted"
+              style={INPUT_STYLE}
+            >
               {CONTEXT_POLICY_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
@@ -274,7 +302,11 @@ export function ArtifactAcceptancePanel({
             testIdPrefix={`source-shell-artifact-accept-${artifactCode}`}
           />
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-            <button type="button" onClick={() => setOpen(false)} style={GHOST_STYLE}>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              style={GHOST_STYLE}
+            >
               Cancel
             </button>
             <button
@@ -289,6 +321,76 @@ export function ArtifactAcceptancePanel({
       ) : null}
     </div>
   );
+}
+
+function ArtifactContextManifest({
+  artifactCode,
+  operation,
+}: {
+  artifactCode: string;
+  operation: SourceArtifactOperation;
+}) {
+  return (
+    <div
+      data-testid={`source-shell-artifact-context-${artifactCode}`}
+      style={MANIFEST_STYLE}
+    >
+      <div style={MANIFEST_HEADER_STYLE}>
+        <span>Context manifest</span>
+        <span
+          style={{
+            ...MANIFEST_STATUS_STYLE,
+            ...operationStatusTone(operation.status),
+          }}
+        >
+          {operation.status}
+        </span>
+      </div>
+      <div style={MANIFEST_GRID_STYLE}>
+        <ManifestLine
+          label="Source of record"
+          value={operation.sourceOfRecord}
+        />
+        <ManifestLine label="Store and parse" value={operation.parseAndStore} />
+        <ManifestLine label="Agent use" value={operation.agentUse} />
+        <ManifestLine label="Current gap" value={operation.nextGap} />
+      </div>
+      <div style={MANIFEST_FOOTER_STYLE}>
+        Human approval owner: {operation.goldStandard.approvalOwner}. Supported
+        uploads: {operation.acceptedFormats.join(", ")}.
+      </div>
+    </div>
+  );
+}
+
+function ManifestLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={MANIFEST_LINE_STYLE}>
+      <span style={MANIFEST_LINE_LABEL_STYLE}>{label}</span>
+      <p style={MANIFEST_LINE_VALUE_STYLE}>{value}</p>
+    </div>
+  );
+}
+
+function operationStatusTone(
+  status: SourceArtifactOperation["status"],
+): CSSProperties {
+  if (status === "wired") {
+    return {
+      background: ANALYTICS.GREEN_TINT,
+      color: ANALYTICS.GREEN_TEXT,
+    };
+  }
+  if (status === "planned") {
+    return {
+      background: "rgba(10,10,11,0.06)",
+      color: ANALYTICS.MUTED,
+    };
+  }
+  return {
+    background: ANALYTICS.AMBER_TINT,
+    color: ANALYTICS.AMBER_TEXT,
+  };
 }
 
 const TOGGLE_STYLE: CSSProperties = {
@@ -360,4 +462,69 @@ const AUTHORITY_STYLE: CSSProperties = {
   fontWeight: 700,
   display: "grid",
   gap: 6,
+};
+
+const MANIFEST_STYLE: CSSProperties = {
+  marginTop: 8,
+  border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+  borderRadius: ANALYTICS.RADIUS_SM,
+  background: ANALYTICS.CARD,
+  padding: 10,
+  display: "grid",
+  gap: 8,
+};
+
+const MANIFEST_HEADER_STYLE: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 10,
+  alignItems: "center",
+  fontFamily: ANALYTICS.MONO,
+  fontSize: 10,
+  fontWeight: 900,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  color: ANALYTICS.FAINT,
+};
+
+const MANIFEST_GRID_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+  gap: 8,
+};
+
+const MANIFEST_LINE_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 3,
+  color: ANALYTICS.INK_2,
+  fontSize: 11.5,
+  lineHeight: 1.38,
+};
+
+const MANIFEST_LINE_LABEL_STYLE: CSSProperties = {
+  fontFamily: ANALYTICS.MONO,
+  fontSize: 9.5,
+  fontWeight: 900,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  color: ANALYTICS.FAINT,
+};
+
+const MANIFEST_LINE_VALUE_STYLE: CSSProperties = {
+  margin: 0,
+};
+
+const MANIFEST_STATUS_STYLE: CSSProperties = {
+  display: "inline-flex",
+  borderRadius: 999,
+  padding: "2px 7px",
+  fontWeight: 900,
+};
+
+const MANIFEST_FOOTER_STYLE: CSSProperties = {
+  borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+  paddingTop: 7,
+  color: ANALYTICS.MUTED,
+  fontSize: 11,
+  lineHeight: 1.35,
 };
