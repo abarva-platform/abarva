@@ -17,7 +17,17 @@ const BASE_VIEW: SimpleStageScreenView = {
       acceptHint: "CMDB / application owner extract · needs available",
       state: "Available",
       sourceLabel: "CMDB / application owner extract",
+      sourceSystems: ["ServiceNow CMDB", "LeanIX", "Excel portfolio inventory"],
+      acceptedFileTypes: ["xlsx", "csv"],
+      recordGrain: "one application, service, or platform per row",
+      criticalFields: [
+        "application_id",
+        "application_name",
+        "business_function",
+        "criticality",
+      ],
       minimumState: "Available",
+      level: "required",
     },
     {
       requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
@@ -26,7 +36,17 @@ const BASE_VIEW: SimpleStageScreenView = {
       acceptHint: "ITSM / service management · needs usable evidence",
       state: "Usable Evidence",
       sourceLabel: "ITSM / service management",
+      sourceSystems: [
+        "ServiceNow ITSM",
+        "Jira Service Management",
+        "Power BI ops mart",
+      ],
+      acceptedFileTypes: ["xlsx", "csv"],
+      recordGrain:
+        "one service tower, queue, month, severity, or ticket class per row",
+      criticalFields: ["service_tower", "period", "ticket_count", "severity"],
       minimumState: "Usable Evidence",
+      level: "required",
     },
   ],
   extras: [],
@@ -78,15 +98,29 @@ describe("SimpleStageFront", () => {
       screen.getByRole("heading", { name: "Complete Scope evidence" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Evidence needed")).toBeInTheDocument();
-    expect(screen.getByText("Source / acceptable input")).toBeInTheDocument();
-    expect(screen.getByText("Status")).toBeInTheDocument();
+    expect(
+      screen.getByText("Where to get it and what to load"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Gate status")).toBeInTheDocument();
     expect(screen.getByText("Action")).toBeInTheDocument();
     expect(screen.getByText("Application inventory")).toBeInTheDocument();
     expect(screen.getByText("Ticket and SLA history")).toBeInTheDocument();
+    expect(screen.getAllByText("Required")).toHaveLength(2);
+    expect(screen.getByText(/ServiceNow CMDB, LeanIX/)).toBeInTheDocument();
+    expect(
+      screen.getByText("one application, service, or platform per row"),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/application_id/)).toBeInTheDocument();
     expect(screen.getByText("Ready")).toBeInTheDocument();
     expect(screen.getByText("Needed")).toBeInTheDocument();
+    expect(
+      screen.getByText("Blocks approval until Usable Evidence."),
+    ).toBeInTheDocument();
     expect(screen.getAllByText("Template")).toHaveLength(2);
     expect(screen.getAllByRole("button", { name: "Upload" })).toHaveLength(2);
+    expect(
+      screen.queryByRole("button", { name: "Not needed" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText("1 required input still open")).toBeInTheDocument();
     const blockedButton = screen.getByRole("button", {
       name: "Complete 1 input",
@@ -105,7 +139,12 @@ describe("SimpleStageFront", () => {
           acceptHint: "Operating model extract · needs available",
           state: "Not Requested",
           sourceLabel: "Operating model extract",
+          sourceSystems: ["ServiceNow Catalog", "SharePoint"],
+          acceptedFileTypes: ["xlsx", "csv", "docx"],
+          recordGrain: "one source system, owner role, or extract per row",
+          criticalFields: ["source_system", "owner_role", "extract_method"],
           minimumState: "Available",
+          level: "recommended",
         },
       ],
     });
@@ -119,6 +158,11 @@ describe("SimpleStageFront", () => {
     expect(optionalSection).toHaveTextContent("Service owner RACI");
     expect(optionalSection).toHaveTextContent(
       "These rows do not block the gate",
+    );
+    expect(optionalSection).toHaveTextContent("Optional");
+    expect(optionalSection).toHaveTextContent("ServiceNow Catalog, SharePoint");
+    expect(optionalSection).toHaveTextContent(
+      "Helps confidence; does not block approval.",
     );
     expect(
       screen.getByTestId(
