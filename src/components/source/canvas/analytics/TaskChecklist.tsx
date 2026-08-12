@@ -927,6 +927,17 @@ type DropZoneStatus =
     }
   | { phase: "error"; message: string };
 
+export type TaskProvideUploadReadback = {
+  artifactId: string;
+  originalName: string;
+  format: string;
+  parseStatus: string | null;
+  factsWritten: number | null;
+  unmappedColumns: readonly string[];
+  rejectedRowCount: number | null;
+  refreshed: boolean;
+};
+
 interface DropZoneProps {
   signed: boolean;
   eventId?: string;
@@ -938,6 +949,7 @@ interface DropZoneProps {
    */
   factTemplateCode?: string;
   onUploaded?: () => void;
+  onUploadReadback?: (readback: TaskProvideUploadReadback) => void;
 }
 
 /**
@@ -955,6 +967,7 @@ export function TaskProvideUpload({
   stageKey,
   factTemplateCode,
   onUploaded,
+  onUploadReadback,
 }: DropZoneProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -1003,12 +1016,32 @@ export function TaskProvideUpload({
           return;
         }
         setStatus({ phase: "uploaded", result, ingest });
+        onUploadReadback?.({
+          artifactId: result.artifactId,
+          originalName: result.originalName,
+          format: result.format,
+          parseStatus: result.parseStatus,
+          factsWritten: ingest.factsWritten,
+          unmappedColumns: ingest.unmappedColumns,
+          rejectedRowCount: ingest.rejectedRowCount,
+          refreshed: ingest.factsWritten > 0,
+        });
         onUploaded?.();
         if (ingest.factsWritten > 0) router.refresh();
         return;
       }
 
       setStatus({ phase: "uploaded", result });
+      onUploadReadback?.({
+        artifactId: result.artifactId,
+        originalName: result.originalName,
+        format: result.format,
+        parseStatus: result.parseStatus,
+        factsWritten: null,
+        unmappedColumns: [],
+        rejectedRowCount: null,
+        refreshed: true,
+      });
       onUploaded?.();
       router.refresh();
     } catch (error) {
