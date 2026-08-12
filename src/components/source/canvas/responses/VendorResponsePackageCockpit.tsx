@@ -10,6 +10,12 @@ import type {
   VendorResponseProfile,
   VendorResponseProfileSet,
 } from "@/lib/source/proposal-intelligence";
+import {
+  VENDOR_RESPONSE_ACCEPTED_FORMATS,
+  VENDOR_RESPONSE_FILE_FAMILIES,
+  VENDOR_RESPONSE_REQUIRED_FILE_COUNT,
+  type VendorResponseFileRequirement,
+} from "@/lib/source/vendor-response-upload-package-policy";
 import { CANVAS } from "../canvas-tokens";
 
 type PackageCellState =
@@ -29,47 +35,18 @@ interface PackageComponent {
 
 interface PackageRequirement {
   label: string;
-  requirement: "Required" | "Conditional" | "Optional";
+  requirement: VendorResponseFileRequirement;
   detail: string;
 }
 
-const PACKAGE_REQUIREMENTS: PackageRequirement[] = [
-  {
-    label: "Main proposal",
-    requirement: "Required",
-    detail: "PDF or DOCX response narrative",
-  },
-  {
-    label: "Pricing template",
-    requirement: "Required",
-    detail: "XLSX or CSV with units and volumes",
-  },
-  {
-    label: "SLA response",
-    requirement: "Required",
-    detail: "Service levels, credits, remedies",
-  },
-  {
-    label: "Staffing model",
-    requirement: "Required",
-    detail: "Roles, locations, coverage model",
-  },
-  {
-    label: "Transition plan",
-    requirement: "Required",
-    detail: "Timeline, dependencies, cutover risk",
-  },
-  {
-    label: "Exceptions",
-    requirement: "Conditional",
-    detail: "Assumptions, exclusions, redlines",
-  },
-  {
-    label: "Proof exhibits",
-    requirement: "Optional",
-    detail: "Case studies, security, automation proof",
-  },
-];
+// Derived from the single Responses-stage upload policy so this strip and the
+// file-readiness ledger below it can never disagree about what is required.
+const PACKAGE_REQUIREMENTS: PackageRequirement[] =
+  VENDOR_RESPONSE_FILE_FAMILIES.map((family) => ({
+    label: family.label,
+    requirement: family.requirement,
+    detail: family.shortDetail,
+  }));
 
 const COMPONENTS: Array<{
   key: string;
@@ -309,8 +286,13 @@ function PackageRequirementStrip() {
     >
       <div style={REQUIREMENT_INTRO}>
         <span style={EYEBROW}>Upload package</span>
-        <strong>Required before scoring</strong>
-        <span>Accepted formats: PDF, DOCX, XLSX, CSV.</span>
+        <strong>
+          {VENDOR_RESPONSE_REQUIRED_FILE_COUNT} required files per vendor
+        </strong>
+        <span>
+          Conditional content may arrive inside the main proposal. Accepted
+          formats: {VENDOR_RESPONSE_ACCEPTED_FORMATS}.
+        </span>
       </div>
       <div style={REQUIREMENT_GRID}>
         {PACKAGE_REQUIREMENTS.map((item) => (
