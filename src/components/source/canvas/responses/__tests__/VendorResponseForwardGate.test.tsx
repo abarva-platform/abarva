@@ -4,6 +4,7 @@ import {
   buildVendorBafoInstructionPack,
   buildVendorChallengeIntelligence,
   buildVendorEvaluationDecisionView,
+  buildVendorResponseParseReportsFromProfiles,
   buildVendorResponseMveProfiles,
 } from "@/lib/source/proposal-intelligence";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
@@ -130,5 +131,41 @@ describe("VendorResponseForwardGate", () => {
     expect(html).toContain("Use the BAFO clarification pack");
     expect(html).toContain("Do not move to Evaluation");
     expect(html).not.toMatch(/Northstar|TitanTech|CloudBridge|DataPeak/i);
+  });
+
+  it("uses parser-report blockers before allowing Evaluation", () => {
+    const profileSet = buildVendorResponseMveProfiles({
+      id: "skyh-test-event",
+      code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
+      name: "Managed services sourcing event",
+      accountName: "Demo account",
+    });
+    const challengeIntelligence = buildVendorChallengeIntelligence(profileSet);
+    const bafoInstructionPack = buildVendorBafoInstructionPack(
+      challengeIntelligence,
+    );
+    const evaluationDecisionView = buildVendorEvaluationDecisionView(
+      profileSet,
+      challengeIntelligence,
+      bafoInstructionPack,
+    );
+    const parseReports =
+      buildVendorResponseParseReportsFromProfiles(profileSet);
+
+    const html = renderToStaticMarkup(
+      createElement(VendorResponseForwardGate, {
+        readiness: makeReadiness(),
+        profileSet,
+        challengeIntelligence,
+        bafoInstructionPack,
+        evaluationDecisionView,
+        parseReports,
+      }),
+    );
+
+    expect(html).toContain("Evidence parsed and cited");
+    expect(html).toContain("packages parsed with cited extraction cards");
+    expect(html).toContain("scoring holdback");
+    expect(html).toContain("Do not move to Evaluation");
   });
 });

@@ -6,6 +6,7 @@ import type {
   VendorBafoInstructionPack,
   VendorChallengeIntelligence,
   VendorEvaluationDecisionView,
+  VendorResponseParseReport,
   VendorResponseProfileSet,
 } from "@/lib/source/proposal-intelligence";
 import { CANVAS } from "../canvas-tokens";
@@ -24,12 +25,14 @@ export function VendorResponseForwardGate({
   challengeIntelligence,
   bafoInstructionPack,
   evaluationDecisionView,
+  parseReports,
 }: {
   readiness?: SourceVendorResponseCompleteness;
   profileSet?: VendorResponseProfileSet | null;
   challengeIntelligence?: VendorChallengeIntelligence | null;
   bafoInstructionPack?: VendorBafoInstructionPack | null;
   evaluationDecisionView?: VendorEvaluationDecisionView | null;
+  parseReports?: VendorResponseParseReport[];
 }) {
   const checks = buildGateChecks(
     readiness,
@@ -37,6 +40,7 @@ export function VendorResponseForwardGate({
     challengeIntelligence,
     bafoInstructionPack,
     evaluationDecisionView,
+    parseReports,
   );
   const openBlockers = checks.filter((check) => check.state !== "complete");
   const canContinue = openBlockers.length === 0;
@@ -108,10 +112,13 @@ function buildGateChecks(
   challengeIntelligence?: VendorChallengeIntelligence | null,
   bafoInstructionPack?: VendorBafoInstructionPack | null,
   evaluationDecisionView?: VendorEvaluationDecisionView | null,
+  parseReports?: VendorResponseParseReport[],
 ): GateCheck[] {
   const records = readiness?.records ?? [];
   const profiles = profileSet?.profiles ?? [];
-  const packageLoaded = records.length > 0;
+  const reports = parseReports ?? [];
+  const packageCount = reports.length || records.length;
+  const packageLoaded = records.length > 0 || reports.length > 0;
   const requiredGaps = records.flatMap((record) => [
     ...record.blockers,
     ...record.missingSections.map(
@@ -123,15 +130,40 @@ function buildGateChecks(
           `${record.vendorName}: pricing template ${record.pricingTemplateStatus}`,
         ]),
   ]);
-  const parsedCount = records.filter(
-    (record) => record.evidenceStatus === "Parsed",
-  ).length;
-  const citedProfiles = profiles.filter((profile) =>
-    profile.extractionCards.some((card) => Boolean(card.evidenceReference)),
-  ).length;
+  const parseBlockers = reports.flatMap((report) =>
+    report.missingInputs
+      .filter((missing) => missing.severity === "blocker")
+      .map((missing) => `${report.vendorName}: ${missing.request}`),
+  );
+  const effectiveRequiredGaps = [...requiredGaps, ...parseBlockers];
+  const parsedCount =
+    reports.length > 0
+      ? reports.filter(
+          (report) =>
+            report.status === "parsed" || report.status === "parsed_with_gaps",
+        ).length
+      : records.filter((record) => record.evidenceStatus === "Parsed").length;
+  const citedProfiles =
+    reports.length > 0
+      ? reports.filter((report) => report.citationCount > 0).length
+      : profiles.filter((profile) =>
+          profile.extractionCards.some((card) =>
+            Boolean(card.evidenceReference),
+          ),
+        ).length;
   const holdbackCount = bafoInstructionPack?.scoringHoldbacks.length ?? 0;
+  const parseHoldbackCount = reports.reduce(
+    (sum, report) =>
+      sum +
+      report.missingInputs.filter((missing) => missing.severity !== "optional")
+        .length,
+    0,
+  );
   const notReadyProfiles = profiles.filter(
     (profile) => profile.readyForEvaluation !== "yes",
+  );
+  const notReadyReports = reports.filter(
+    (report) => report.scoreReadiness !== "ready_to_score",
   );
 
   return [
@@ -139,20 +171,20 @@ function buildGateChecks(
       label: "Vendor packages loaded",
       state: packageLoaded ? "complete" : "pending",
       detail: packageLoaded
-        ? `${records.length} vendor package${records.length === 1 ? "" : "s"} in review.`
+        ? `${packageCount} vendor package${packageCount === 1 ? "" : "s"} in review.`
         : "Upload each vendor response package before scoring.",
     },
     {
       label: "Required package gaps closed",
       state:
-        !packageLoaded || requiredGaps.length > 0
+        !packageLoaded || effectiveRequiredGaps.length > 0
           ? packageLoaded
             ? "blocked"
             : "pending"
           : "complete",
       detail:
-        requiredGaps.length > 0
-          ? requiredGaps.slice(0, 2).join("; ")
+        effectiveRequiredGaps.length > 0
+          ? effectiveRequiredGaps.slice(0, 2).join("; ")
           : packageLoaded
             ? "No required package gap is blocking the stage."
             : "Waiting on vendor packages.",
@@ -160,15 +192,15 @@ function buildGateChecks(
     {
       label: "Evidence parsed and cited",
       state:
-        packageLoaded && parsedCount === records.length && citedProfiles > 0
+        packageLoaded && parsedCount === packageCount && citedProfiles > 0
           ? "complete"
           : packageLoaded
             ? "blocked"
             : "pending",
       detail:
-        packageLoaded && parsedCount === records.length && citedProfiles > 0
-          ? `${parsedCount}/${records.length} packages parsed with cited extraction cards.`
-          : `${parsedCount}/${records.length || 0} packages parsed; ${citedProfiles} cited profile${citedProfiles === 1 ? "" : "s"}.`,
+        packageLoaded && parsedCount === packageCount && citedProfiles > 0
+          ? `${parsedCount}/${packageCount} packages parsed with cited extraction cards.`
+          : `${parsedCount}/${packageCount || 0} packages parsed; ${citedProfiles} cited profile${citedProfiles === 1 ? "" : "s"}.`,
     },
     {
       label: "Intelligence produced",
@@ -185,18 +217,22 @@ function buildGateChecks(
       label: "Score holdbacks resolved",
       state:
         holdbackCount === 0 &&
+        parseHoldbackCount === 0 &&
         notReadyProfiles.length === 0 &&
-        profiles.length > 0
+        notReadyReports.length === 0 &&
+        (profiles.length > 0 || reports.length > 0)
           ? "complete"
-          : profiles.length > 0
+          : profiles.length > 0 || reports.length > 0
             ? "blocked"
             : "pending",
       detail:
         holdbackCount === 0 &&
+        parseHoldbackCount === 0 &&
         notReadyProfiles.length === 0 &&
-        profiles.length > 0
+        notReadyReports.length === 0 &&
+        (profiles.length > 0 || reports.length > 0)
           ? "No BAFO holdback remains before scoring."
-          : `${holdbackCount} BAFO holdback${holdbackCount === 1 ? "" : "s"}; ${notReadyProfiles.length} vendor profile${notReadyProfiles.length === 1 ? "" : "s"} not fully ready.`,
+          : `${holdbackCount + parseHoldbackCount} scoring holdback${holdbackCount + parseHoldbackCount === 1 ? "" : "s"}; ${notReadyProfiles.length + notReadyReports.length} vendor profile${notReadyProfiles.length + notReadyReports.length === 1 ? "" : "s"} not fully ready.`,
     },
     {
       label: "Human scoring view prepared",

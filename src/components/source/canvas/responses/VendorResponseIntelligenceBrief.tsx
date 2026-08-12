@@ -5,6 +5,7 @@ import type {
   VendorBafoInstructionPack,
   VendorChallengeIntelligence,
   VendorEvaluationDecisionView,
+  VendorResponseParseReport,
   VendorResponseProfileSet,
 } from "@/lib/source/proposal-intelligence";
 import { CANVAS } from "../canvas-tokens";
@@ -21,15 +22,18 @@ export function VendorResponseIntelligenceBrief({
   challengeIntelligence,
   bafoInstructionPack,
   evaluationDecisionView,
+  parseReports,
 }: {
   profileSet?: VendorResponseProfileSet | null;
   challengeIntelligence?: VendorChallengeIntelligence | null;
   bafoInstructionPack?: VendorBafoInstructionPack | null;
   evaluationDecisionView?: VendorEvaluationDecisionView | null;
+  parseReports?: VendorResponseParseReport[];
 }) {
   const profiles = profileSet?.profiles ?? [];
   if (
     profiles.length === 0 &&
+    (!parseReports || parseReports.length === 0) &&
     !challengeIntelligence &&
     !bafoInstructionPack &&
     !evaluationDecisionView
@@ -42,9 +46,18 @@ export function VendorResponseIntelligenceBrief({
     challengeIntelligence,
     bafoInstructionPack,
     evaluationDecisionView,
+    parseReports,
   );
-  const evidenceUsed = collectEvidenceUsed(profileSet, challengeIntelligence);
-  const missingInputs = collectMissingInputs(profileSet, bafoInstructionPack);
+  const evidenceUsed = collectEvidenceUsed(
+    profileSet,
+    challengeIntelligence,
+    parseReports,
+  );
+  const missingInputs = collectMissingInputs(
+    profileSet,
+    bafoInstructionPack,
+    parseReports,
+  );
   const leveragePath = collectLeveragePath(
     challengeIntelligence,
     bafoInstructionPack,
@@ -70,7 +83,10 @@ export function VendorResponseIntelligenceBrief({
         </div>
         <div style={SUMMARY}>
           <strong>
-            {profiles.length || bafoInstructionPack?.vendorCount || 0}
+            {parseReports?.length ||
+              profiles.length ||
+              bafoInstructionPack?.vendorCount ||
+              0}
           </strong>
           <span>vendors in review</span>
         </div>
@@ -107,9 +123,11 @@ export function VendorResponseIntelligenceBrief({
       </div>
 
       <div style={FOOTNOTE}>
-        {demoOnly
-          ? "Demo profiles show the intended reasoning shape. Client scoring still requires parsed, vendor-isolated files with cited evidence."
-          : "Only cited vendor-package evidence should support scoring, BAFO pressure, or executive recommendation."}
+        {parseReports && parseReports.length > 0
+          ? "Parsed reports are vendor-isolated by event, tenant, vendor, and response version. Scoring still stays human-owned."
+          : demoOnly
+            ? "Demo profiles show the intended reasoning shape. Client scoring still requires parsed, vendor-isolated files with cited evidence."
+            : "Only cited vendor-package evidence should support scoring, BAFO pressure, or executive recommendation."}
       </div>
     </section>
   );
@@ -120,22 +138,36 @@ function buildInsightItems(
   challengeIntelligence?: VendorChallengeIntelligence | null,
   bafoInstructionPack?: VendorBafoInstructionPack | null,
   evaluationDecisionView?: VendorEvaluationDecisionView | null,
+  parseReports?: VendorResponseParseReport[],
 ): BriefItem[] {
   const profileCount =
     profileSet?.profileCount ?? profileSet?.profiles.length ?? 0;
+  const parsedReportCount = parseReports?.length ?? 0;
+  const parsedWithCitations =
+    parseReports?.filter(
+      (report) =>
+        report.status !== "not_parseable" &&
+        report.status !== "isolation_blocked" &&
+        report.citationCount > 0,
+    ).length ?? 0;
   const readyCount =
     profileSet?.profiles.filter(
       (profile) => profile.readyForEvaluation === "yes",
     ).length ?? 0;
+  const parseReadyCount =
+    parseReports?.filter((report) => report.scoreReadiness === "ready_to_score")
+      .length ?? 0;
   return [
     {
-      label: "Response profiles",
-      value: String(profileCount),
+      label: parsedReportCount > 0 ? "Parsed reports" : "Response profiles",
+      value: String(parsedReportCount || profileCount),
       detail:
-        profileCount > 0
-          ? "Vendor packages reduced to scope, price, claims, evidence, exceptions, and readiness."
-          : "Awaiting parsed vendor packages.",
-      tone: profileCount > 0 ? "good" : "warn",
+        parsedReportCount > 0
+          ? `${parsedWithCitations}/${parsedReportCount} vendor packages parsed with citations and missing-input ledgers.`
+          : profileCount > 0
+            ? "Vendor packages reduced to scope, price, claims, evidence, exceptions, and readiness."
+            : "Awaiting parsed vendor packages.",
+      tone: parsedReportCount > 0 || profileCount > 0 ? "good" : "warn",
     },
     {
       label: "Challenges found",
@@ -154,9 +186,16 @@ function buildInsightItems(
     },
     {
       label: "Ready to score",
-      value: `${readyCount}/${profileCount || 0}`,
+      value:
+        parsedReportCount > 0
+          ? `${parseReadyCount}/${parsedReportCount}`
+          : `${readyCount}/${profileCount || 0}`,
       detail: "Scoring is still human-owned; AI suggestions are never final.",
-      tone: profileCount > 0 && readyCount === profileCount ? "good" : "warn",
+      tone:
+        (parsedReportCount > 0 && parseReadyCount === parsedReportCount) ||
+        (profileCount > 0 && readyCount === profileCount)
+          ? "good"
+          : "warn",
     },
     {
       label: "Decision view",
@@ -173,7 +212,17 @@ function buildInsightItems(
 function collectEvidenceUsed(
   profileSet?: VendorResponseProfileSet | null,
   challengeIntelligence?: VendorChallengeIntelligence | null,
+  parseReports?: VendorResponseParseReport[],
 ): string[] {
+  const parsedEvidence =
+    parseReports?.flatMap((report) =>
+      report.citations
+        .slice(0, 3)
+        .map(
+          (citation) =>
+            `${report.vendorName}: ${citation.locator} - ${citation.section}`,
+        ),
+    ) ?? [];
   const profileEvidence =
     profileSet?.profiles.flatMap((profile) =>
       unique([
@@ -187,6 +236,7 @@ function collectEvidenceUsed(
       ]).slice(0, 2),
     ) ?? [];
   const values = [
+    ...parsedEvidence,
     ...profileEvidence,
     ...(challengeIntelligence?.challengeLog.map(
       (challenge) => challenge.evidenceLabel,
@@ -198,8 +248,15 @@ function collectEvidenceUsed(
 function collectMissingInputs(
   profileSet?: VendorResponseProfileSet | null,
   bafoInstructionPack?: VendorBafoInstructionPack | null,
+  parseReports?: VendorResponseParseReport[],
 ): string[] {
   const values = [
+    ...(parseReports?.flatMap((report) =>
+      report.missingInputs.map(
+        (missing) =>
+          `${report.vendorName}: ${missing.request} (${missing.ownerRole})`,
+      ),
+    ) ?? []),
     ...(profileSet?.profiles.flatMap((profile) =>
       [
         ...profile.responseCompleteness.missingSections.map(

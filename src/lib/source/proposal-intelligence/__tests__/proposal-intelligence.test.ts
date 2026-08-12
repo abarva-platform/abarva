@@ -20,6 +20,13 @@ import {
   buildVendorEvaluationDecisionView,
   buildVendorResponseMveProfiles,
 } from "../mve-profile";
+import { buildVendorResponseParseReport } from "../parser";
+import {
+  buildSourceBafoLeverageOptimizer,
+  buildSourceExecutiveDecisionPack,
+  buildSourceFirstPassScorecard,
+  buildSourceValueRealizationProofPlan,
+} from "../backlog-clearance";
 import type {
   EvaluationCriterion,
   ProposalNormalizationRow,
@@ -320,6 +327,241 @@ describe("health scaffold", () => {
   });
 });
 
+describe("vendor response parser contract", () => {
+  it("turns a long response package into section citations, missing inputs, and scoring holdbacks", () => {
+    const report = buildVendorResponseParseReport({
+      sourceEventId: "source-event-1",
+      tenantKey: "tenant-a",
+      vendorName: "Vendor Alpha",
+      responseVersion: 1,
+      requiredSections: [
+        "Scope confirmation",
+        "Pricing template",
+        "SLA response",
+        "Staffing model",
+        "Transition plan",
+        "Security and compliance response",
+        "Automation / productivity roadmap",
+      ],
+      documents: [
+        {
+          fileName: "vendor-alpha-main-response.pdf",
+          role: "response_package",
+          text: [
+            "Scope: Vendor Alpha confirms in-scope application support and retained-client handoffs.",
+            "SLA response: P1 incidents carry service credits, but credits are capped at four percent.",
+            "Staffing model: Follow-the-sun staffing is provided by named FTE bands and locations.",
+            "Transition plan: Knowledge transfer is dependent on client SMEs and the fee is front-loaded.",
+            "Security and compliance response: SOC 2 bridge letter and incident notice terms are included.",
+            "Automation productivity roadmap: Vendor targets productivity opportunity, not committed price-down.",
+          ].join("\n\n"),
+        },
+        {
+          fileName: "vendor-alpha-pricing.xlsx",
+          role: "pricing_workbook",
+          text: "Pricing: Year one run-rate, transition, tooling, optional costs, and TCO are broken out by tower.",
+        },
+      ],
+    });
+
+    expect(report.vendorIsolationStatus).toBe("isolated");
+    expect(report.status).toBe("parsed_with_gaps");
+    expect(report.citationCount).toBeGreaterThanOrEqual(7);
+    expect(
+      report.fileRoleReadiness.find((row) => row.role === "pricing_workbook"),
+    ).toMatchObject({ uploaded: true, parsed: true, required: true });
+    expect(
+      report.sectionFindings.find((row) => row.section === "Pricing template"),
+    ).toMatchObject({ status: "answered" });
+    expect(
+      report.sectionFindings.find((row) => row.section === "SLA response"),
+    ).toMatchObject({ status: "weak" });
+    expect(
+      report.missingInputs.some((missing) =>
+        /Automation \/ productivity roadmap/.test(missing.request),
+      ),
+    ).toBe(true);
+    expect(report.health.scoreReadiness).not.toBe("ready_to_score");
+    expect(report.nextAction).toMatch(/Clarify weak evidence|Ask vendor/);
+  });
+
+  it("blocks parsing when a rival vendor document enters the package", () => {
+    const report = buildVendorResponseParseReport({
+      sourceEventId: "source-event-1",
+      tenantKey: "tenant-a",
+      vendorName: "Vendor Alpha",
+      responseVersion: 1,
+      requiredSections: ["Scope confirmation"],
+      documents: [
+        {
+          fileName: "vendor-alpha-main-response.pdf",
+          role: "response_package",
+          vendorName: "Vendor Alpha",
+          text: "Scope: Vendor Alpha confirms the work.",
+        },
+        {
+          fileName: "vendor-beta-main-response.pdf",
+          role: "response_package",
+          vendorName: "Vendor Beta",
+          text: "Scope: Vendor Beta confirms different work.",
+        },
+      ],
+    });
+
+    expect(report.status).toBe("isolation_blocked");
+    expect(report.vendorIsolationStatus).toBe("violation_detected");
+    expect(report.parsedDocumentCount).toBe(1);
+    expect(
+      report.citations.every(
+        (citation) => citation.vendorName === "Vendor Alpha",
+      ),
+    ).toBe(true);
+    expect(report.nextAction).toMatch(/Remove rival-vendor documents/);
+  });
+
+  it("keeps pricing workbook mandatory and proof exhibits optional", () => {
+    const report = buildVendorResponseParseReport({
+      sourceEventId: "source-event-1",
+      tenantKey: "tenant-a",
+      vendorName: "Vendor Alpha",
+      responseVersion: 1,
+      requiredSections: ["Scope confirmation"],
+      documents: [
+        {
+          fileName: "vendor-alpha-main-response.pdf",
+          role: "response_package",
+          text: "Scope: Vendor Alpha confirms in-scope support.",
+        },
+      ],
+    });
+
+    expect(
+      report.fileRoleReadiness.find((row) => row.role === "pricing_workbook"),
+    ).toMatchObject({
+      required: true,
+      uploaded: false,
+      nextAction: "Upload pricing workbook.",
+    });
+    expect(
+      report.fileRoleReadiness.find((row) => row.role === "exhibits"),
+    ).toMatchObject({
+      required: false,
+      uploaded: false,
+      nextAction: "Use only if it strengthens leverage or proof.",
+    });
+    expect(report.missingInputs[0]).toMatchObject({
+      severity: "blocker",
+      ownerRole: "Commercial lead",
+    });
+  });
+});
+
+describe("source backlog clearance engines", () => {
+  const reports = [
+    buildVendorResponseParseReport({
+      sourceEventId: "source-event-1",
+      tenantKey: "tenant-a",
+      vendorName: "Vendor Alpha",
+      responseVersion: 1,
+      requiredSections: [
+        "Scope confirmation",
+        "Pricing template",
+        "SLA response",
+        "Staffing model",
+        "Transition plan",
+        "Security and compliance response",
+        "Automation / productivity roadmap",
+      ],
+      documents: [
+        {
+          fileName: "vendor-alpha-main-response.pdf",
+          role: "response_package",
+          text: [
+            "Scope: Vendor Alpha confirms all in-scope work.",
+            "SLA response: Service credits apply, but the earn-back is easy.",
+            "Staffing model: Named FTE locations and shift coverage are provided.",
+            "Transition plan: Transition fee is not at risk and is not milestone-gated.",
+            "Security and compliance response: SOC 2 bridge letter is included.",
+            "Automation productivity roadmap: Productivity is not committed in price.",
+          ].join("\n\n"),
+        },
+        {
+          fileName: "vendor-alpha-pricing.xlsx",
+          role: "pricing_workbook",
+          text: "Pricing: year one run-rate 10000000 with tower breakout and uncapped pass-through tooling.",
+        },
+      ],
+    }),
+    buildVendorResponseParseReport({
+      sourceEventId: "source-event-1",
+      tenantKey: "tenant-a",
+      vendorName: "Vendor Beta",
+      responseVersion: 1,
+      requiredSections: [
+        "Scope confirmation",
+        "Pricing template",
+        "SLA response",
+      ],
+      documents: [
+        {
+          fileName: "vendor-beta-main-response.pdf",
+          role: "response_package",
+          text: "Scope: Vendor Beta confirms the work.\n\nSLA response: Best effort only.",
+        },
+      ],
+    }),
+  ];
+
+  it("builds first-pass scoring suggestions without final scores", () => {
+    const scorecard = buildSourceFirstPassScorecard(reports);
+
+    expect(scorecard.totalVendorCount).toBe(2);
+    expect(scorecard.scores.length).toBeGreaterThan(0);
+    expect(scorecard.scores.every((score) => score.finalScore === null)).toBe(
+      true,
+    );
+    expect(
+      scorecard.scores.every((score) => score.evaluatorScore === null),
+    ).toBe(true);
+    expect(scorecard.holdbacks.length).toBeGreaterThan(0);
+    expect(scorecard.nextAction).toMatch(/holdbacks/i);
+  });
+
+  it("optimizes BAFO leverage while separating evidenced value from opportunity to test", () => {
+    const optimizer = buildSourceBafoLeverageOptimizer(reports);
+
+    expect(optimizer.levers.length).toBeGreaterThan(0);
+    expect(optimizer.guardrail).toMatch(/not booked savings/i);
+    expect(
+      optimizer.levers.some((lever) => lever.valueBasis === "evidenced"),
+    ).toBe(true);
+    expect(
+      optimizer.levers.some(
+        (lever) => lever.valueBasis === "opportunity_to_test",
+      ),
+    ).toBe(true);
+    expect(optimizer.evidencedValueLowUsd).not.toBeNull();
+  });
+
+  it("builds a CXO decision pack and value proof plan without booking unproven savings", () => {
+    const scorecard = buildSourceFirstPassScorecard(reports);
+    const optimizer = buildSourceBafoLeverageOptimizer(reports);
+    const executivePack = buildSourceExecutiveDecisionPack(
+      scorecard,
+      optimizer,
+    );
+    const valuePlan = buildSourceValueRealizationProofPlan(optimizer);
+
+    expect(executivePack.posture).not.toBe("ready_for_cxo_review");
+    expect(executivePack.decisionConditions.length).toBeGreaterThan(0);
+    expect(executivePack.evidenceUsed.length).toBeGreaterThan(0);
+    expect(executivePack.recommendation).toMatch(/Hold|Run BAFO/i);
+    expect(valuePlan.guardrail).toMatch(/realized savings/i);
+    expect(valuePlan.bookedValueLowUsd).toBe(optimizer.evidencedValueLowUsd);
+    expect(valuePlan.missingProof.length).toBeGreaterThan(0);
+  });
+});
+
 describe("vendor isolation — structural + provable", () => {
   const objects = [
     { ref: "rfp:req-1", vendorName: null },
@@ -472,8 +714,12 @@ describe("vendor response MVE profiles", () => {
     expect(set!.profiles).toHaveLength(3);
     const profileText = JSON.stringify(set);
     expect(profileText).toMatch(/Corporate Shared Services Support/);
-    expect(profileText).toMatch(/Finance, HR, Legal, Procurement, Treasury, and Compliance coverage/);
-    expect(profileText).not.toMatch(/Airline Operations Support|IROPS|airport operations|airline-critical/i);
+    expect(profileText).toMatch(
+      /Finance, HR, Legal, Procurement, Treasury, and Compliance coverage/,
+    );
+    expect(profileText).not.toMatch(
+      /Airline Operations Support|IROPS|airport operations|airline-critical/i,
+    );
   });
 });
 
@@ -532,10 +778,10 @@ describe("vendor challenge log and commercial leverage seeds", () => {
       ),
     ).toBe(true);
     expect(
-      intelligence.leverageSeeds
-        .map((seed) => seed.vendorName)
-        .join(" "),
-    ).not.toMatch(/Northstar|TitanTech|CloudBridge|DataPeak|BlueMaster|ArcVault/i);
+      intelligence.leverageSeeds.map((seed) => seed.vendorName).join(" "),
+    ).not.toMatch(
+      /Northstar|TitanTech|CloudBridge|DataPeak|BlueMaster|ArcVault/i,
+    );
   });
 
   it("does not create challenge intelligence without a profile set", () => {
@@ -586,7 +832,9 @@ describe("vendor BAFO instruction pack", () => {
       .join(" ");
 
     expect(vendorB.priority).toBe("high");
-    expect(text).toMatch(/baseline volume|price-down|gainshare|pricing credit/i);
+    expect(text).toMatch(
+      /baseline volume|price-down|gainshare|pricing credit/i,
+    );
     expect(text).toMatch(/shift|location|FTE|24x7/i);
     expect(text).not.toMatch(/Northstar|TitanTech|CloudBridge|DataPeak/i);
   });
@@ -633,13 +881,17 @@ describe("vendor evaluation decision view", () => {
     expect(view.scoringTransparency.join(" ")).toMatch(/weights total 100/i);
     expect(view.finalistRecommendation).toMatch(/Vendor A|Vendor C|Vendor B/);
     expect(view.scoreImprovementScenarios).toHaveLength(3);
-    expect(view.scoreImprovementScenarios.find((scenario) =>
-      scenario.vendorName.includes("Vendor B"),
-    )?.potentialScore).toBeGreaterThan(7);
+    expect(
+      view.scoreImprovementScenarios.find((scenario) =>
+        scenario.vendorName.includes("Vendor B"),
+      )?.potentialScore,
+    ).toBeGreaterThan(7);
     expect(view.leadingVendorId).toContain("vendor-a");
     expect(view.cheapestVendorId).toContain("vendor-b");
     expect(view.highestTransitionRiskVendorId).toContain("vendor-b");
-    expect(view.executiveTradeoffs.join(" ")).toMatch(/Vendor A|Vendor B|Vendor C/);
+    expect(view.executiveTradeoffs.join(" ")).toMatch(
+      /Vendor A|Vendor B|Vendor C/,
+    );
     expect(JSON.stringify(view)).not.toMatch(
       /Northstar|TitanTech|CloudBridge|DataPeak|BlueMaster|ArcVault/i,
     );
