@@ -299,6 +299,12 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     ).toHaveTextContent("Readback: typed facts available.");
     expect(
       screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"),
+    ).toHaveAttribute("data-ready", "true");
+    expect(
+      screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"),
+    ).toHaveTextContent("Done");
+    expect(
+      screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"),
     ).toHaveTextContent("Captured; review Files");
 
     fireEvent.click(screen.getByTestId("source-stage-ready-open-approval"));

@@ -597,7 +597,8 @@ The following still require explicit human gate per slice:
 - `SRC55` Client-ready artifact generation.
 - `SRC56` Post-award value realization proof.
 - `SRC57` End-to-end Source New Event smoke harness: foundation merged.
-- `SRC58` Simple front required-row clarity.
+- `SRC58` Simple front required-row clarity: merged and deployed; live SkyHarbor route proof showed the current event detail page renders the canonical analytics/stage shell, not the archived simple-front path.
+- `SRC59` Live Source analytics evidence-row clarity: in progress. Apply the completed-row check/DONE treatment to the canonical `SourceAnalyticsCanvas` evidence request table so the signed-in Scope workflow visibly separates done evidence from pending work.
 
 ## Non-Negotiable Boundaries
 
