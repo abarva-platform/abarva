@@ -81,7 +81,40 @@ function renderFront(view: SimpleStageScreenView = BASE_VIEW) {
   return { onGenerateArtifact, onAdvanceStage };
 }
 
+function renderFrontWithSpotlight(view: SimpleStageScreenView = BASE_VIEW) {
+  const onGenerateArtifact = jest.fn().mockResolvedValue({ ok: true as const });
+  const onAdvanceStage = jest.fn();
+
+  render(
+    <SimpleStageFront
+      eventId="evt-1"
+      stage="scope"
+      view={view}
+      generating={false}
+      registryArtifacts={[]}
+      onGenerateArtifact={onGenerateArtifact}
+      onAdvanceStage={onAdvanceStage}
+      onRefresh={jest.fn()}
+      advanced={<div>Advanced workspace</div>}
+      spotlight={<section>Scenario spotlight</section>}
+    />,
+  );
+
+  return { onGenerateArtifact, onAdvanceStage };
+}
+
 describe("SimpleStageFront", () => {
+  it("renders an optional workflow spotlight before the evidence table", () => {
+    renderFrontWithSpotlight();
+
+    expect(
+      screen.getByTestId("source-simple-front-spotlight"),
+    ).toHaveTextContent("Scenario spotlight");
+    expect(
+      screen.getByRole("heading", { name: "Complete Scope evidence" }),
+    ).toBeInTheDocument();
+  });
+
   it("renders a compact working-session guide from the evidence requirements", () => {
     renderFront({
       ...BASE_VIEW,

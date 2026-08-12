@@ -25,6 +25,7 @@ interface SimpleStageFrontProps {
   onAdvanceStage: (stage: SourceStageKey) => void;
   onRefresh: () => void;
   advanced: ReactNode;
+  spotlight?: ReactNode;
 }
 
 export function SimpleStageFront({
@@ -37,6 +38,7 @@ export function SimpleStageFront({
   onAdvanceStage,
   onRefresh,
   advanced,
+  spotlight,
 }: SimpleStageFrontProps) {
   const [answerFor, setAnswerFor] = useState<string | null>(null);
   const [answerText, setAnswerText] = useState("");
@@ -190,6 +192,15 @@ export function SimpleStageFront({
       </div>
 
       <WorkingSessionGuide view={view} />
+
+      {spotlight ? (
+        <div
+          data-testid="source-simple-front-spotlight"
+          style={SPOTLIGHT_STYLE}
+        >
+          {spotlight}
+        </div>
+      ) : null}
 
       <div style={EVIDENCE_TABLE_STYLE} aria-label="Required evidence">
         <div style={TABLE_HEADER_STYLE}>
@@ -861,6 +872,10 @@ const SESSION_GUIDE_STYLE: CSSProperties = {
   borderRadius: 10,
   padding: "14px 16px",
   background: "rgba(30,124,90,0.045)",
+};
+
+const SPOTLIGHT_STYLE: CSSProperties = {
+  display: "grid",
 };
 
 const SESSION_GUIDE_HEADER_STYLE: CSSProperties = {

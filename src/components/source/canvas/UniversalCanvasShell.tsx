@@ -138,6 +138,7 @@ import { ResponsesStageView } from "./responses/ResponsesStageView";
 import { EvaluationStageView } from "./evaluation/EvaluationStageView";
 import { PricingStageView } from "./pricing/PricingStageView";
 import { BafoStageView } from "./bafo/BafoStageView";
+import { BafoScenarioComparePanel } from "./bafo/BafoScenarioComparePanel";
 import { ExecutiveDecisionStageView } from "./executive-decision/ExecutiveDecisionStageView";
 import { TransitionStageView } from "./transition/TransitionStageView";
 import { CommunicationDraftsPanel } from "./workspace-tabs/CommunicationDraftsPanel";
@@ -164,6 +165,7 @@ import {
   type StageNextMoveActionTarget,
 } from "@/lib/source/stage-next-move";
 import { resolveSimpleStageScreen } from "@/lib/source/simple-front";
+import { buildBafoScenarioCompareView } from "@/lib/source/bafo-scenario-compare-view";
 import { nextStepNeeds } from "@/lib/source/next-step-needs";
 import { confirmationKeysForStage } from "@/lib/source/stage-gate-confirmations";
 import type { SourceStageConfirmations } from "@/lib/source/approval-decision";
@@ -1032,9 +1034,9 @@ export function UniversalCanvasShell({
         }
         applyLine(buf);
       } else {
-        summaryLine = (await res.json().catch(() => null)) as
-          | SourceAskSummaryLine
-          | null;
+        summaryLine = (await res
+          .json()
+          .catch(() => null)) as SourceAskSummaryLine | null;
       }
 
       const body =
@@ -1268,6 +1270,11 @@ export function UniversalCanvasShell({
     />
   );
 
+  const simpleFrontSpotlight =
+    viewStage === "bafo" || viewStage === "orals_bafo" ? (
+      <BafoScenarioComparePanel view={buildBafoScenarioCompareView()} />
+    ) : null;
+
   const simpleFrontWorkspace =
     simpleFrontEnabled && simpleStageScreen ? (
       <SimpleFrontErrorBoundary
@@ -1296,6 +1303,7 @@ export function UniversalCanvasShell({
             }
             onRefresh={() => router.refresh()}
             advanced={advancedWorkspace}
+            spotlight={simpleFrontSpotlight}
           />
           {(viewStage === "responses" ||
             viewStage === "vendor_responses" ||
