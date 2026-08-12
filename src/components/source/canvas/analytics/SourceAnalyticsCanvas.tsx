@@ -4267,6 +4267,10 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
   const workflowComplete = view.stage.ready >= view.stage.total;
   const filesReady = view.stage.artifactReadiness.ready;
   const ready = workflowComplete && filesReady;
+  const stageHref = `/source/events/${encodeURIComponent(
+    view.event.id,
+  )}?stage=${encodeURIComponent(view.stage.key)}`;
+  const filesHref = `${stageHref}&workspace=files`;
   const decision =
     view.approvals.currentStageItem != null
       ? `${view.stage.label} gate decision routed.`
@@ -4367,6 +4371,48 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
             <span>
               +{view.stage.artifactReadiness.blockerCount - 4} more in Files
             </span>
+          ) : null}
+        </div>
+      ) : null}
+      {!ready ? (
+        <div
+          data-testid="source-shell-approval-next-actions"
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 10,
+            marginTop: 14,
+          }}
+        >
+          {!workflowComplete ? (
+            <Link
+              data-testid="source-shell-approval-return-steps"
+              href={stageHref}
+              style={{
+                ...BUTTON_STYLE,
+                display: "inline-flex",
+                padding: "10px 12px",
+                textDecoration: "none",
+              }}
+            >
+              Return to steps
+            </Link>
+          ) : null}
+          {!filesReady ? (
+            <Link
+              data-testid="source-shell-approval-open-files"
+              href={filesHref}
+              style={{
+                ...BUTTON_STYLE,
+                background: ANALYTICS.INK,
+                color: "#fff",
+                display: "inline-flex",
+                padding: "10px 12px",
+                textDecoration: "none",
+              }}
+            >
+              Open Files & deliverables
+            </Link>
           ) : null}
         </div>
       ) : null}
