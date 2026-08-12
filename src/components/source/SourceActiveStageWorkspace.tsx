@@ -5,6 +5,8 @@ import { buildSourceBafoNegotiationPlan } from "@/lib/source/bafo-negotiation";
 import { buildPricingComparisonViewModel } from "@/lib/source/source-pricing-comparison-view";
 import { buildSourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness";
 import { buildSourceVendorResponseCompleteness } from "@/lib/source/vendor-response-completeness";
+import { resolveVendorResponseSeedInputs } from "@/lib/source/vendor-response-completeness-from-profiles";
+import { buildVendorResponseMveProfiles } from "@/lib/source/proposal-intelligence";
 import type { SourceAgentMission } from "@/lib/source/agent-mission-types";
 import type { SourceAgentMissionReport } from "@/lib/source/agent-mission-report";
 import type { SourcingEventDetail } from "@/lib/source/types";
@@ -74,8 +76,21 @@ export function SourceActiveStageWorkspace({
     dataReadinessProjection.items.length > 0
       ? dataReadinessProjection.summary
       : undefined;
+  // Same derivation as the event canvas: events outside the seed table take
+  // their vendor population from the parsed profile set.
   const vendorResponseReadiness = buildSourceVendorResponseCompleteness({
-    event,
+    event: {
+      ...event,
+      vendorResponses: resolveVendorResponseSeedInputs(
+        event.id,
+        buildVendorResponseMveProfiles({
+          id: event.id,
+          code: event.code,
+          name: event.name,
+          accountName: event.accountName,
+        }),
+      ),
+    },
   });
 
   if (activeStage.key === "scope") {
