@@ -485,4 +485,60 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       screen.getByTestId("source-bafo-scenario-compare"),
     ).toHaveTextContent("Prepare negotiation brief");
   });
+
+  it("consolidates commercial lenses above the active workflow canvas", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={{
+          ...EVENT,
+          currentStageKey: "bafo",
+          currentStageLabel: "BAFO",
+          nextAction: "Prepare BAFO asks",
+        }}
+        viewStage="bafo"
+        tenantName="Demo Client"
+        stageView={SAMPLE_BAFO_STAGE}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(
+      screen.getByTestId("source-commercial-active-canvas"),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("source-shell-v2-steps")).toBeInTheDocument();
+    expect(screen.getByTestId("source-shell-v2-rail")).toBeInTheDocument();
+
+    [
+      "summary",
+      "pricing",
+      "bafo",
+      "risks",
+      "readiness",
+      "missions",
+      "signals",
+      "linked_program",
+    ].forEach((lens) => {
+      expect(
+        screen.getByTestId(`source-commercial-nav-${lens}`),
+      ).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId("source-commercial-nav-pricing")).toHaveAttribute(
+      "href",
+      `/source/events/${EVENT.id}?stage=pricing`,
+    );
+    expect(
+      screen.getByTestId("source-commercial-active-lens"),
+    ).toHaveTextContent("Where are we commercially in BAFO?");
+
+    fireEvent.click(screen.getByTestId("source-commercial-nav-linked_program"));
+
+    expect(
+      screen.getByTestId("source-commercial-active-lens"),
+    ).toHaveTextContent("What downstream program must be prepared?");
+    expect(
+      screen.getByTestId("source-commercial-active-lens"),
+    ).toHaveTextContent("Carry open actions into the next stage");
+    expect(screen.getByTestId("source-shell-v2-steps")).toBeInTheDocument();
+  });
 });
