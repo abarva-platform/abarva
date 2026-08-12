@@ -103,6 +103,7 @@ export default async function SourceOptimizeContractRoute({
       asOfDateIso={asOfDateIso}
       spine={spine}
       opportunitySet={opportunitySet}
+      evidencePack={evidencePack}
     />
   );
 }
