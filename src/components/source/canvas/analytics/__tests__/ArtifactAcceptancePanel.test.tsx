@@ -137,6 +137,69 @@ describe("ArtifactAcceptancePanel", () => {
     expect(manifest).toHaveTextContent("Supported uploads: xlsx, csv, pdf.");
   });
 
+  it("shows a quality gate with parser, acceptance, search, graph, operation, and compliance readiness", () => {
+    render(
+      <ArtifactAcceptancePanel
+        eventId="event-1"
+        artifactCode="d11_response_checklist"
+        artifactName="Response coverage matrix"
+        latestAcceptance={null}
+        operation={OPERATION}
+        artifactRole="authoritative"
+        parseStatus="registered"
+        embeddingStatus={null}
+        graphStatus={null}
+        needsComplianceReview={false}
+      />,
+    );
+    const gate = screen.getByTestId(
+      "source-shell-artifact-quality-d11_response_checklist",
+    );
+    expect(gate).toHaveTextContent("Quality gate");
+    expect(gate).toHaveTextContent("Parse");
+    expect(gate).toHaveTextContent("not parsed");
+    expect(gate).toHaveTextContent("Human acceptance");
+    expect(gate).toHaveTextContent("not final");
+    expect(gate).toHaveTextContent("Search");
+    expect(gate).toHaveTextContent("not indexed");
+    expect(gate).toHaveTextContent("Graph");
+    expect(gate).toHaveTextContent("not projected");
+    expect(gate).toHaveTextContent("Operation");
+    expect(gate).toHaveTextContent("partial");
+    expect(gate).toHaveTextContent("Compliance");
+    expect(gate).toHaveTextContent("clear");
+    expect(gate).toHaveTextContent(
+      "Run parser before this artifact influences scoring, aVa, or approval.",
+    );
+  });
+
+  it("shows ready quality when the artifact is parsed, accepted, indexed, projected, wired, and compliance-clear", () => {
+    render(
+      <ArtifactAcceptancePanel
+        eventId="event-1"
+        artifactCode="d11_response_checklist"
+        artifactName="Response coverage matrix"
+        latestAcceptance={LATEST}
+        operation={{ ...OPERATION, status: "wired" }}
+        artifactRole="authoritative"
+        parseStatus="parsed"
+        embeddingStatus="embedded"
+        graphStatus="projected"
+        needsComplianceReview={false}
+      />,
+    );
+    const gate = screen.getByTestId(
+      "source-shell-artifact-quality-d11_response_checklist",
+    );
+    expect(gate).toHaveTextContent("ready");
+    expect(gate).toHaveTextContent("accepted");
+    expect(gate).toHaveTextContent("indexed");
+    expect(gate).toHaveTextContent("projected");
+    expect(gate).toHaveTextContent(
+      "Ready for workflow use, subject to the acceptance decision below.",
+    );
+  });
+
   it("requires a rationale before submitting — never POSTs an empty reason", async () => {
     render(
       <ArtifactAcceptancePanel

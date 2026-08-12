@@ -23,6 +23,11 @@ interface ArtifactAcceptancePanelProps {
   artifactName: string;
   latestAcceptance: ArtifactAcceptanceRecord | null;
   operation?: SourceArtifactOperation | null;
+  artifactRole?: "authoritative" | "evidence";
+  parseStatus?: string | null;
+  embeddingStatus?: string | null;
+  graphStatus?: string | null;
+  needsComplianceReview?: boolean;
   onAccepted?: () => void;
 }
 
@@ -56,6 +61,11 @@ export function ArtifactAcceptancePanel({
   artifactName,
   latestAcceptance,
   operation,
+  artifactRole = "evidence",
+  parseStatus = null,
+  embeddingStatus = null,
+  graphStatus = null,
+  needsComplianceReview = false,
   onAccepted,
 }: ArtifactAcceptancePanelProps) {
   const [open, setOpen] = useState(false);
@@ -128,6 +138,16 @@ export function ArtifactAcceptancePanel({
 
   return (
     <div style={{ marginTop: 10 }}>
+      <ArtifactQualityGate
+        artifactCode={artifactCode}
+        artifactRole={artifactRole}
+        latestAcceptance={latestAcceptance}
+        operation={operation}
+        parseStatus={parseStatus}
+        embeddingStatus={embeddingStatus}
+        graphStatus={graphStatus}
+        needsComplianceReview={needsComplianceReview}
+      />
       {latestAcceptance ? (
         <div
           data-testid={`source-shell-artifact-status-${artifactCode}`}
@@ -323,6 +343,168 @@ export function ArtifactAcceptancePanel({
   );
 }
 
+function ArtifactQualityGate({
+  artifactCode,
+  artifactRole,
+  latestAcceptance,
+  operation,
+  parseStatus,
+  embeddingStatus,
+  graphStatus,
+  needsComplianceReview,
+}: {
+  artifactCode: string;
+  artifactRole: "authoritative" | "evidence";
+  latestAcceptance: ArtifactAcceptanceRecord | null;
+  operation?: SourceArtifactOperation | null;
+  parseStatus: string | null;
+  embeddingStatus: string | null;
+  graphStatus: string | null;
+  needsComplianceReview: boolean;
+}) {
+  const rows = [
+    readinessLine(
+      "Parse",
+      parseStatus === "parsed",
+      parseStatus === "failed"
+        ? "failed"
+        : parseStatus === "parsed"
+          ? "parsed"
+          : "not parsed",
+      "Run parser before this artifact influences scoring, aVa, or approval.",
+    ),
+    readinessLine(
+      "Human acceptance",
+      artifactRole === "evidence" || Boolean(latestAcceptance),
+      artifactRole === "authoritative"
+        ? latestAcceptance
+          ? "accepted"
+          : "not final"
+        : "supporting",
+      "Accept gate-defining artifacts as client-final before approval.",
+    ),
+    readinessLine(
+      "Search",
+      embeddingStatus === "embedded",
+      embeddingStatus === "embedded" ? "indexed" : "not indexed",
+      "Index before enterprise search or aVa citation.",
+    ),
+    readinessLine(
+      "Graph",
+      graphStatus === "projected",
+      graphStatus === "projected" ? "projected" : "not projected",
+      "Project relationships before graph-based insights.",
+    ),
+    readinessLine(
+      "Operation",
+      operation?.status === "wired",
+      operation?.status ?? "not mapped",
+      operation?.nextGap ??
+        "Map this artifact to the Source operation catalog.",
+    ),
+    readinessLine(
+      "Compliance",
+      !needsComplianceReview,
+      needsComplianceReview ? "review" : "clear",
+      "Resolve compliance review before using this artifact downstream.",
+    ),
+  ];
+  const blockers = rows.filter((row) => !row.ready);
+  const tone =
+    blockers.length === 0
+      ? "good"
+      : blockers.some(
+            (row) => row.label === "Parse" || row.label === "Human acceptance",
+          )
+        ? "warn"
+        : "neutral";
+
+  return (
+    <div
+      data-testid={`source-shell-artifact-quality-${artifactCode}`}
+      style={{
+        ...QUALITY_STYLE,
+        borderColor:
+          tone === "good"
+            ? "rgba(15,118,110,0.28)"
+            : tone === "warn"
+              ? "rgba(180,83,9,0.32)"
+              : ANALYTICS.LINE_SOFT,
+        background:
+          tone === "good"
+            ? "rgba(15,118,110,0.045)"
+            : tone === "warn"
+              ? "rgba(217,119,6,0.055)"
+              : ANALYTICS.CARD,
+      }}
+    >
+      <div style={QUALITY_HEADER_STYLE}>
+        <span>Quality gate</span>
+        <span
+          style={{
+            ...QUALITY_STATUS_STYLE,
+            ...(tone === "good"
+              ? {
+                  background: ANALYTICS.GREEN_TINT,
+                  color: ANALYTICS.GREEN_TEXT,
+                }
+              : tone === "warn"
+                ? {
+                    background: ANALYTICS.AMBER_TINT,
+                    color: ANALYTICS.AMBER_TEXT,
+                  }
+                : {
+                    background: "rgba(10,10,11,0.06)",
+                    color: ANALYTICS.MUTED,
+                  }),
+          }}
+        >
+          {blockers.length === 0
+            ? "ready"
+            : `${blockers.length} open ${blockers.length === 1 ? "item" : "items"}`}
+        </span>
+      </div>
+      <div style={QUALITY_GRID_STYLE}>
+        {rows.map((row) => (
+          <div key={row.label} style={QUALITY_ROW_STYLE}>
+            <span
+              aria-hidden="true"
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: 999,
+                background: row.ready ? "#0f9f7a" : "#b7791f",
+                marginTop: 5,
+                flex: "0 0 auto",
+              }}
+            />
+            <span style={QUALITY_ROW_COPY_STYLE}>
+              <strong>{row.label}</strong>
+              <span>{row.value}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+      {blockers.length > 0 ? (
+        <div style={QUALITY_BLOCKER_STYLE}>Next: {blockers[0]?.nextAction}</div>
+      ) : (
+        <div style={QUALITY_READY_STYLE}>
+          Ready for workflow use, subject to the acceptance decision below.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function readinessLine(
+  label: string,
+  ready: boolean,
+  value: string,
+  nextAction: string,
+) {
+  return { label, ready, value, nextAction };
+}
+
 function ArtifactContextManifest({
   artifactCode,
   operation,
@@ -462,6 +644,70 @@ const AUTHORITY_STYLE: CSSProperties = {
   fontWeight: 700,
   display: "grid",
   gap: 6,
+};
+
+const QUALITY_STYLE: CSSProperties = {
+  marginTop: 8,
+  border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+  borderRadius: ANALYTICS.RADIUS_SM,
+  background: ANALYTICS.CARD,
+  padding: 10,
+  display: "grid",
+  gap: 8,
+};
+
+const QUALITY_HEADER_STYLE: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 10,
+  alignItems: "center",
+  fontFamily: ANALYTICS.MONO,
+  fontSize: 10,
+  fontWeight: 900,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  color: ANALYTICS.FAINT,
+};
+
+const QUALITY_STATUS_STYLE: CSSProperties = {
+  display: "inline-flex",
+  borderRadius: 999,
+  padding: "2px 7px",
+  fontWeight: 900,
+};
+
+const QUALITY_GRID_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(112px, 1fr))",
+  gap: 7,
+};
+
+const QUALITY_ROW_STYLE: CSSProperties = {
+  display: "flex",
+  gap: 6,
+  minWidth: 0,
+};
+
+const QUALITY_ROW_COPY_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 1,
+  minWidth: 0,
+  color: ANALYTICS.INK_2,
+  fontSize: 11.5,
+  lineHeight: 1.28,
+};
+
+const QUALITY_BLOCKER_STYLE: CSSProperties = {
+  color: ANALYTICS.AMBER_TEXT,
+  fontSize: 11,
+  lineHeight: 1.35,
+};
+
+const QUALITY_READY_STYLE: CSSProperties = {
+  color: ANALYTICS.GREEN_TEXT,
+  fontSize: 11,
+  lineHeight: 1.35,
+  fontWeight: 700,
 };
 
 const MANIFEST_STYLE: CSSProperties = {

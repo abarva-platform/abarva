@@ -4987,6 +4987,11 @@ function FileCard({
         artifactName={item.name}
         latestAcceptance={item.latestAcceptance}
         operation={operation}
+        artifactRole={item.artifactRole}
+        parseStatus={item.parseStatus}
+        embeddingStatus={item.embeddingStatus}
+        graphStatus={item.graphStatus}
+        needsComplianceReview={item.needsComplianceReview}
         onAccepted={onAccepted}
       />
     </div>
