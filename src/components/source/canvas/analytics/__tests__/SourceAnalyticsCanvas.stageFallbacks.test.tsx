@@ -3,7 +3,7 @@
  */
 
 import "@testing-library/jest-dom";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import {
   SOURCE_STAGE_LABELS,
   SOURCE_STAGE_ORDER,
@@ -122,7 +122,9 @@ describe("SourceAnalyticsCanvas stage fallback mapping", () => {
         expect(
           screen.queryByText("Provide the volumetrics"),
         ).not.toBeInTheDocument();
-        expect(screen.queryByText("Sponsor commitment")).not.toBeInTheDocument();
+        expect(
+          screen.queryByText("Sponsor commitment"),
+        ).not.toBeInTheDocument();
       }
     },
   );
@@ -174,6 +176,20 @@ describe("SourceAnalyticsCanvas stage fallback mapping", () => {
         stageView={scopeWithoutTemplateCode}
       />,
     );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Provide the volumetrics/ }),
+    );
+
+    expect(
+      screen.getByTestId("source-active-requirement-row"),
+    ).toHaveTextContent(/Required input/i);
+    expect(
+      screen.getByTestId("source-active-requirement-row"),
+    ).toHaveTextContent(/ITSM \/ finance baseline/i);
+    expect(
+      screen.getByTestId("source-active-requirement-row"),
+    ).toHaveTextContent(/Needed/i);
 
     const link = screen.getByTestId("task-template-download");
     expect(link).toHaveTextContent("Download CSV/XLSX template");
