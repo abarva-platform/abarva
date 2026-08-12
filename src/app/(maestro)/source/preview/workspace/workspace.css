@@ -111,17 +111,17 @@
 
 .sw-cockpit-contract-table th:nth-child(1),
 .sw-cockpit-contract-table td:nth-child(1) {
-  width: 21%;
+  width: 20%;
 }
 
 .sw-cockpit-contract-table th:nth-child(2),
 .sw-cockpit-contract-table td:nth-child(2) {
-  width: 11%;
+  width: 10%;
 }
 
 .sw-cockpit-contract-table th:nth-child(3),
 .sw-cockpit-contract-table td:nth-child(3) {
-  width: 18%;
+  width: 17%;
 }
 
 .sw-cockpit-contract-table th:nth-child(4),
@@ -136,12 +136,12 @@
 
 .sw-cockpit-contract-table th:nth-child(6),
 .sw-cockpit-contract-table td:nth-child(6) {
-  width: 18%;
+  width: 17%;
 }
 
 .sw-cockpit-contract-table th:nth-child(7),
 .sw-cockpit-contract-table td:nth-child(7) {
-  width: 6%;
+  width: 10%;
 }
 
 .sw-cockpit-contract-table th,
