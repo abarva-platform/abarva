@@ -2,11 +2,9 @@
  * @jest-environment jsdom
  */
 
-// Renders the real (unmocked) SourceAnalyticsCanvas with a guidebook record
-// passed through and confirms the "Guidebook" workspace tab appears, opens,
-// and renders the real content — and that the tab is absent entirely when
-// no guidebook has been authored for the viewed stage (the empty-state
-// logic itself is covered separately in source-event-shell-v2.test.ts).
+// Renders the real (unmocked) SourceAnalyticsCanvas guidebook path. Authored
+// guidebooks render their persisted content; missing guidebooks still expose a
+// default stage playbook so users are not left without workshop guidance.
 
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen } from "@testing-library/react";
@@ -168,7 +166,7 @@ describe("SourceAnalyticsCanvas — guidebook workspace", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not show the Guidebook tab at all when no guidebook is authored for the viewed stage", () => {
+  it("keeps the Guidebook tab available with a default playbook when no guidebook is authored", () => {
     render(
       <SourceAnalyticsCanvas
         event={makeEvent({
@@ -181,9 +179,26 @@ describe("SourceAnalyticsCanvas — guidebook workspace", () => {
       />,
     );
 
-    expect(
-      screen.queryByRole("button", { name: /Guidebook/i }),
-    ).not.toBeInTheDocument();
+    const activeGuide = screen.getByTestId("source-shell-active-step-guide");
+    expect(activeGuide).toHaveTextContent("Scope working session");
+    fireEvent.click(
+      screen.getByRole("button", { name: /open full guidebook/i }),
+    );
+
+    const guidebookTab = screen.getByTestId("source-shell-workspace-guidebook");
+    expect(guidebookTab).toHaveTextContent("default");
+    expect(screen.getByTestId("source-shell-v2-guidebook")).toHaveTextContent(
+      "Default playbook",
+    );
+    expect(screen.getByTestId("source-shell-v2-guidebook")).toHaveTextContent(
+      "Run the Scope working session",
+    );
+    expect(screen.getByTestId("source-shell-v2-guidebook")).toHaveTextContent(
+      "Next input",
+    );
+    expect(screen.getByTestId("source-shell-v2-guidebook")).toHaveTextContent(
+      "Gate condition",
+    );
   });
 
   it("labels a client-specific guidebook distinctly from the global default", () => {

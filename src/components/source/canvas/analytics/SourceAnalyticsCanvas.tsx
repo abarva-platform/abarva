@@ -857,14 +857,13 @@ function SourceShellRail({
           active={workspace === "approvals"}
           onClick={() => onWorkspaceChange("approvals")}
         />
-        {view.guidebook.available ? (
-          <WorkspaceButton
-            workspaceKey="guidebook"
-            label="Guidebook"
-            active={workspace === "guidebook"}
-            onClick={() => onWorkspaceChange("guidebook")}
-          />
-        ) : null}
+        <WorkspaceButton
+          workspaceKey="guidebook"
+          label="Guidebook"
+          badge={view.guidebook.available ? undefined : "default"}
+          active={workspace === "guidebook"}
+          onClick={() => onWorkspaceChange("guidebook")}
+        />
       </div>
       <div
         style={{
@@ -1798,22 +1797,20 @@ function ActiveStepGuidePanel({
             {guide.session}
           </div>
         </div>
-        {guidebook ? (
-          <button
-            type="button"
-            aria-label="Open full guidebook"
-            onClick={onOpenGuidebook}
-            style={{
-              ...BUTTON_STYLE,
-              fontSize: 11,
-              minHeight: 32,
-              padding: "0 10px",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Guidebook
-          </button>
-        ) : null}
+        <button
+          type="button"
+          aria-label="Open full guidebook"
+          onClick={onOpenGuidebook}
+          style={{
+            ...BUTTON_STYLE,
+            fontSize: 11,
+            minHeight: 32,
+            padding: "0 10px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Guidebook
+        </button>
       </div>
       <p
         style={{
@@ -4397,7 +4394,7 @@ function GuidebookWorkspace({ view }: { view: SourceEventShellView }) {
         }
       />
       {!record ? (
-        <EmptyCard text={view.guidebook.emptyMessage} />
+        <DefaultStageGuidebook view={view} />
       ) : (
         <div style={{ display: "grid", gap: 12 }}>
           <div
@@ -4457,6 +4454,159 @@ function GuidebookWorkspace({ view }: { view: SourceEventShellView }) {
         </div>
       )}
     </section>
+  );
+}
+
+function DefaultStageGuidebook({ view }: { view: SourceEventShellView }) {
+  const activeStep = view.stage.activeStep;
+  const requiredSteps = view.stage.groups.flatMap((group) => group.steps);
+  const openSteps = requiredSteps.filter((step) => step.status !== "captured");
+  const templateSteps = requiredSteps.filter((step) => step.template);
+  const nextStep = activeStep ?? openSteps[0] ?? requiredSteps[0] ?? null;
+  const nextNeed = nextStep
+    ? activeStepNeed(nextStep, nextStep.status === "captured")
+    : null;
+
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 16,
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 11,
+          color: ANALYTICS.FAINT,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+        }}
+      >
+        <span>Default playbook</span>
+        <span>{view.stage.readyPct}% ready</span>
+      </div>
+      <article style={{ ...CARD_STYLE, padding: 18 }}>
+        <h3
+          style={{
+            fontFamily: ANALYTICS.SERIF,
+            fontSize: 18,
+            margin: 0,
+          }}
+        >
+          Run the {view.stage.label} working session
+        </h3>
+        <p
+          style={{
+            color: ANALYTICS.INK_2,
+            fontSize: 13,
+            lineHeight: 1.55,
+            margin: "8px 0 0",
+            maxWidth: 760,
+          }}
+        >
+          {view.guidebook.emptyMessage} Use this default playbook to align the
+          team on the next input, the source owner, and the approval condition
+          without inventing tailored content.
+        </p>
+      </article>
+      <div
+        style={{
+          display: "grid",
+          gap: 12,
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+        }}
+      >
+        <DefaultGuideCard
+          title="Next input"
+          value={nextStep?.title ?? "No active input"}
+          body={
+            nextNeed
+              ? `${nextNeed.item}. ${nextNeed.nextAction}`
+              : "This stage has no input rows loaded yet. Check the Evidence workspace for source requirements."
+          }
+        />
+        <DefaultGuideCard
+          title="Who to invite"
+          value={
+            nextNeed
+              ? `${nextNeed.owner} + stage approver`
+              : "Stage owner + approver"
+          }
+          body="Keep business, procurement, finance, and the data owner in the same review when evidence changes the decision."
+        />
+        <DefaultGuideCard
+          title="Templates to prepare"
+          value={
+            templateSteps.length
+              ? `${templateSteps.length} template${templateSteps.length === 1 ? "" : "s"} available`
+              : "No template required"
+          }
+          body={
+            templateSteps.length
+              ? templateSteps
+                  .slice(0, 3)
+                  .map((step) => step.template?.name)
+                  .filter(Boolean)
+                  .join(" · ")
+              : "Capture the decision directly, or use the Files workspace for supporting evidence."
+          }
+        />
+        <DefaultGuideCard
+          title="Gate condition"
+          value={view.stage.approvalCtaLabel}
+          body={
+            view.stage.readyPct === 100
+              ? "Required evidence is complete. Open the approval gate and record the rationale before advancing."
+              : view.stage.gateReadinessLine
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
+function DefaultGuideCard({
+  title,
+  value,
+  body,
+}: {
+  title: string;
+  value: string;
+  body: string;
+}) {
+  return (
+    <article style={{ ...CARD_STYLE, padding: 16 }}>
+      <div
+        style={{
+          color: ANALYTICS.BLUE,
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 10,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+        }}
+      >
+        {title}
+      </div>
+      <h3
+        style={{
+          fontFamily: ANALYTICS.SANS,
+          fontSize: 15,
+          lineHeight: 1.25,
+          margin: "8px 0 6px",
+        }}
+      >
+        {value}
+      </h3>
+      <p
+        style={{
+          color: ANALYTICS.MUTED,
+          fontSize: 12.5,
+          lineHeight: 1.45,
+          margin: 0,
+        }}
+      >
+        {body}
+      </p>
+    </article>
   );
 }
 
