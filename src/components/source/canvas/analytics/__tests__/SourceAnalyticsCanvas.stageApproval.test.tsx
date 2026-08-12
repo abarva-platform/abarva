@@ -121,6 +121,13 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.getByTestId("source-stage-gate-approval-control"),
     ).toBeInTheDocument();
+    expect(screen.getByTestId("source-stage-gate-approve")).toHaveTextContent(
+      "Approve exception and advance",
+    );
+    expect(screen.queryByText(/Approve with gaps/)).toBeNull();
+    expect(
+      screen.getByText(/Exception approval is audited/),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("source-stage-gate-approve"));
 
@@ -220,5 +227,8 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.getByTestId("source-shell-approval-readiness"),
     ).toHaveTextContent("Review Files gaps.");
+    expect(
+      screen.getByTestId("source-shell-approval-review-gaps"),
+    ).toHaveTextContent("Review gaps before approval");
   });
 });

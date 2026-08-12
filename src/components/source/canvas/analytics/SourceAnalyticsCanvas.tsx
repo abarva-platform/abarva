@@ -4341,6 +4341,35 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
           tone={ready ? "good" : "warn"}
         />
       </div>
+      {!filesReady ? (
+        <div
+          data-testid="source-shell-approval-review-gaps"
+          style={{
+            background: ANALYTICS.AMBER_TINT,
+            border: `1px solid ${ANALYTICS.AMBER}`,
+            borderRadius: 8,
+            color: ANALYTICS.AMBER_TEXT,
+            display: "grid",
+            fontSize: 12,
+            gap: 6,
+            lineHeight: 1.45,
+            marginTop: 14,
+            padding: "10px 12px",
+          }}
+        >
+          <strong style={{ color: ANALYTICS.INK }}>
+            Review gaps before approval
+          </strong>
+          {view.stage.artifactReadiness.blockers.slice(0, 4).map((blocker) => (
+            <span key={blocker}>{blocker}</span>
+          ))}
+          {view.stage.artifactReadiness.blockerCount > 4 ? (
+            <span>
+              +{view.stage.artifactReadiness.blockerCount - 4} more in Files
+            </span>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -5209,8 +5238,12 @@ function StageGateApprovalButton({
   const [error, setError] = useState<string | null>(null);
   const [rationale, setRationale] = useState(action.rationale);
   const requiresRationale = status === "ready_with_gaps";
-  const buttonLabel =
-    status === "ready_with_gaps" ? "Approve with gaps" : "Approve now";
+  const buttonLabel = requiresRationale
+    ? "Approve exception and advance"
+    : "Approve now";
+  const rationaleLabel = requiresRationale
+    ? `${stageLabel ?? "Stage"} exception rationale`
+    : `${stageLabel ?? "Stage"} approval rationale`;
   const trimmedRationale = rationale.trim();
   const disabled =
     submitting || (requiresRationale && trimmedRationale.length === 0);
@@ -5277,7 +5310,12 @@ function StageGateApprovalButton({
       }}
     >
       <textarea
-        aria-label={`${stageLabel ?? "Stage"} approval rationale`}
+        aria-label={rationaleLabel}
+        placeholder={
+          requiresRationale
+            ? "Name the review gaps accepted, why advancing is still appropriate, and who owns closure."
+            : "Record what evidence was reviewed and why this stage can advance."
+        }
         value={rationale}
         onChange={(event) => setRationale(event.currentTarget.value)}
         rows={3}
@@ -5309,8 +5347,9 @@ function StageGateApprovalButton({
         {submitting ? "Approving..." : `${buttonLabel} →`}
       </button>
       {requiresRationale ? (
-        <span style={{ color: ANALYTICS.FAINT, fontSize: 11.5 }}>
-          Rationale is required when approving with gaps.
+        <span style={{ color: ANALYTICS.AMBER_TEXT, fontSize: 11.5 }}>
+          Exception approval is audited. Name the open review gaps and the owner
+          for closure before advancing.
         </span>
       ) : null}
       {error ? (
