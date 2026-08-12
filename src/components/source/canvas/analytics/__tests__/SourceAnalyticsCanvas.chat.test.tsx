@@ -469,6 +469,16 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.getByTestId("source-artifact-lifecycle-matrix"),
     ).toHaveTextContent("Human review required");
+    const reviewQueue = screen.getByTestId("source-artifact-review-queue");
+    expect(reviewQueue).toHaveTextContent("Scope approval queue");
+    expect(reviewQueue).toHaveTextContent(
+      "Clear these artifact actions before opening the gate.",
+    );
+    expect(reviewQueue).toHaveTextContent("Review supporting evidence");
+    expect(reviewQueue).toHaveTextContent("Review evidence");
+    expect(
+      screen.getByTestId("source-artifact-review-queue-row-d07_ticket_synth"),
+    ).toHaveTextContent("Evidence registered");
     expect(
       screen.getByTestId("source-artifact-lifecycle-row-d05_scope_memo"),
     ).toHaveTextContent("Client-approved final");
@@ -505,6 +515,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.getByTestId("source-accept-client-final-toggle-d09_rfp_pack"),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("source-artifact-review-queue-row-d09_rfp_pack"),
+    ).not.toBeInTheDocument();
   });
 
   it("summarizes Source evidence parsing and search readiness without implying enterprise promotion", () => {
