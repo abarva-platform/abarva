@@ -230,5 +230,11 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.getByTestId("source-shell-approval-review-gaps"),
     ).toHaveTextContent("Review gaps before approval");
+    expect(
+      screen.getByTestId("source-shell-approval-open-files"),
+    ).toHaveAttribute(
+      "href",
+      `/source/events/${EVENT.id}?stage=scope&workspace=files`,
+    );
   });
 });
