@@ -171,67 +171,167 @@ BEGIN
 END
 $source_layer_cube_readmodel_projection$;
 
-CREATE OR REPLACE VIEW source.vendor_contract_portfolio AS
-SELECT
-  tenant_key,
-  vendor_ref,
-  vendor_name,
-  vendor_category,
-  count(*)::int AS contract_count,
-  sum(annual_value) AS annual_value,
-  sum(total_committed_value) AS total_committed_value,
-  count(*) FILTER (WHERE auto_renew)::int AS auto_renew_contracts,
-  min(end_date) AS next_end_date,
-  array_agg(contract_id ORDER BY annual_value DESC NULLS LAST, contract_id) AS contract_refs
-FROM source.contract_vendor_360
-GROUP BY tenant_key, vendor_ref, vendor_name, vendor_category;
+DO $source_layer_cube_vendor_portfolio$
+DECLARE
+  contract_count_type text;
+BEGIN
+  SELECT data_type
+  INTO contract_count_type
+  FROM information_schema.columns
+  WHERE table_schema = 'source'
+    AND table_name = 'vendor_contract_portfolio'
+    AND column_name = 'contract_count';
 
-CREATE OR REPLACE VIEW source.contract_360 AS
-SELECT
-  c.*,
-  COALESCE(app.scoped_application_count, 0) AS scoped_application_count,
-  COALESCE(app.critical_application_count, 0) AS critical_application_count,
-  COALESCE(fin.linked_budget_amount, 0) AS linked_budget_amount,
-  COALESCE(fin.linked_actual_amount, 0) AS linked_actual_amount,
-  COALESCE(fin.linked_budget_lines, 0) AS linked_budget_lines,
-  COALESCE(op.cloud_sev1_sev2_incidents, perf.cloud_sev1_sev2_incidents, 0) AS cloud_sev1_sev2_incidents,
-  COALESCE(op.evidence_gap, perf.evidence_gap) AS operational_evidence_gap,
-  COALESCE(dep.dependency_count, 0) AS initiative_dependency_count
-FROM source.contract_vendor_360 c
-LEFT JOIN (
-  SELECT
-    tenant_key,
-    contract_id,
-    count(DISTINCT application_ref)::int AS scoped_application_count,
-    count(DISTINCT application_ref) FILTER (
-      WHERE criticality IN ('Tier 0', 'Tier 1', 'Mission critical', 'Critical')
-    )::int AS critical_application_count
-  FROM source.contract_application_scope
-  GROUP BY tenant_key, contract_id
-) app
-  ON app.tenant_key = c.tenant_key
- AND app.contract_id = c.contract_id
-LEFT JOIN source.contract_financial_exposure fin
-  ON fin.tenant_key = c.tenant_key
- AND fin.contract_id = c.contract_id
-LEFT JOIN source.contract_operational_performance op
-  ON op.tenant_key = c.tenant_key
- AND op.contract_id = c.contract_id
-LEFT JOIN (
-  SELECT
-    tenant_key,
-    contract_id,
-    sum(breach_count)::int AS cloud_sev1_sev2_incidents,
-    NULL::text AS evidence_gap
-  FROM source.contract_performance_observation
-  GROUP BY tenant_key, contract_id
-) perf
-  ON perf.tenant_key = c.tenant_key
- AND perf.contract_id = c.contract_id
-LEFT JOIN (
-  SELECT tenant_key, contract_id, count(*)::int AS dependency_count
-  FROM source.contract_initiative_dependency
-  GROUP BY tenant_key, contract_id
-) dep
-  ON dep.tenant_key = c.tenant_key
- AND dep.contract_id = c.contract_id;
+  IF contract_count_type = 'integer' THEN
+    EXECUTE $view$
+      CREATE OR REPLACE VIEW source.vendor_contract_portfolio AS
+      SELECT
+        tenant_key,
+        vendor_ref,
+        vendor_name,
+        vendor_category,
+        count(*)::int AS contract_count,
+        sum(annual_value) AS annual_value,
+        sum(total_committed_value) AS total_committed_value,
+        count(*) FILTER (WHERE auto_renew)::int AS auto_renew_contracts,
+        min(end_date) AS next_end_date,
+        array_agg(contract_id ORDER BY annual_value DESC NULLS LAST, contract_id) AS contract_refs
+      FROM source.contract_vendor_360
+      GROUP BY tenant_key, vendor_ref, vendor_name, vendor_category
+    $view$;
+  ELSE
+    EXECUTE $view$
+      CREATE OR REPLACE VIEW source.vendor_contract_portfolio AS
+      SELECT
+        tenant_key,
+        vendor_ref,
+        vendor_name,
+        vendor_category,
+        count(*) AS contract_count,
+        sum(annual_value) AS annual_value,
+        sum(total_committed_value) AS total_committed_value,
+        count(*) FILTER (WHERE auto_renew) AS auto_renew_contracts,
+        min(end_date) AS next_end_date,
+        array_agg(contract_id ORDER BY annual_value DESC NULLS LAST, contract_id) AS contract_refs
+      FROM source.contract_vendor_360
+      GROUP BY tenant_key, vendor_ref, vendor_name, vendor_category
+    $view$;
+  END IF;
+END
+$source_layer_cube_vendor_portfolio$;
+
+DO $source_layer_cube_contract_360$
+DECLARE
+  has_full_contract_360 boolean;
+BEGIN
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'source'
+      AND table_name = 'contract_360'
+      AND column_name = 'scope_summary'
+  )
+  INTO has_full_contract_360;
+
+  IF has_full_contract_360 THEN
+    EXECUTE $view$
+      CREATE OR REPLACE VIEW source.contract_360 AS
+      SELECT
+        c.*,
+        COALESCE(app.scoped_application_count, 0) AS scoped_application_count,
+        COALESCE(app.critical_application_count, 0) AS critical_application_count,
+        COALESCE(fin.linked_budget_amount, 0) AS linked_budget_amount,
+        COALESCE(fin.linked_actual_amount, 0) AS linked_actual_amount,
+        COALESCE(fin.linked_budget_lines, 0) AS linked_budget_lines,
+        COALESCE(op.cloud_sev1_sev2_incidents, perf.cloud_sev1_sev2_incidents, 0) AS cloud_sev1_sev2_incidents,
+        COALESCE(op.evidence_gap, perf.evidence_gap) AS operational_evidence_gap,
+        COALESCE(dep.dependency_count, 0) AS initiative_dependency_count
+      FROM source.contract_vendor_360 c
+      LEFT JOIN (
+        SELECT
+          tenant_key,
+          contract_id,
+          count(DISTINCT application_ref) AS scoped_application_count,
+          count(DISTINCT application_ref) FILTER (
+            WHERE criticality IN ('Tier 0', 'Tier 1', 'Mission critical', 'Critical')
+          ) AS critical_application_count
+        FROM source.contract_application_scope
+        GROUP BY tenant_key, contract_id
+      ) app
+        ON app.tenant_key = c.tenant_key
+       AND app.contract_id = c.contract_id
+      LEFT JOIN source.contract_financial_exposure fin
+        ON fin.tenant_key = c.tenant_key
+       AND fin.contract_id = c.contract_id
+      LEFT JOIN source.contract_operational_performance op
+        ON op.tenant_key = c.tenant_key
+       AND op.contract_id = c.contract_id
+      LEFT JOIN (
+        SELECT
+          tenant_key,
+          contract_id,
+          sum(breach_count)::int AS cloud_sev1_sev2_incidents,
+          NULL::text AS evidence_gap
+        FROM source.contract_performance_observation
+        GROUP BY tenant_key, contract_id
+      ) perf
+        ON perf.tenant_key = c.tenant_key
+       AND perf.contract_id = c.contract_id
+      LEFT JOIN (
+        SELECT tenant_key, contract_id, count(*) AS dependency_count
+        FROM source.contract_initiative_dependency
+        GROUP BY tenant_key, contract_id
+      ) dep
+        ON dep.tenant_key = c.tenant_key
+       AND dep.contract_id = c.contract_id
+    $view$;
+  ELSE
+    EXECUTE $view$
+      CREATE OR REPLACE VIEW source.contract_360 AS
+      SELECT
+        c.tenant_key,
+        c.contract_id,
+        c.contract_name,
+        c.vendor_ref,
+        c.vendor_name,
+        c.vendor_category,
+        c.renewal_decision_state,
+        c.auto_renew,
+        c.annual_value,
+        c.actual_annual_spend,
+        c.committed_annual_spend,
+        c.total_committed_value,
+        c.end_date,
+        c.notice_period_days,
+        c.benchmarking_clause,
+        c.alternatives_available,
+        COALESCE(app.scoped_application_count, 0) AS scoped_application_count,
+        COALESCE(app.critical_application_count, 0) AS critical_application_count,
+        COALESCE(dep.dependency_count, 0) AS initiative_dependency_count,
+        c.annual_value_conflict_flag,
+        c.exit_rights_summary
+      FROM source.contract_vendor_360 c
+      LEFT JOIN (
+        SELECT
+          tenant_key,
+          contract_id,
+          count(DISTINCT application_ref)::int AS scoped_application_count,
+          count(DISTINCT application_ref) FILTER (
+            WHERE criticality IN ('Tier 0', 'Tier 1', 'Mission critical', 'Critical')
+          )::int AS critical_application_count
+        FROM source.contract_application_scope
+        GROUP BY tenant_key, contract_id
+      ) app
+        ON app.tenant_key = c.tenant_key
+       AND app.contract_id = c.contract_id
+      LEFT JOIN (
+        SELECT tenant_key, contract_id, count(*)::int AS dependency_count
+        FROM source.contract_initiative_dependency_detail
+        GROUP BY tenant_key, contract_id
+      ) dep
+        ON dep.tenant_key = c.tenant_key
+       AND dep.contract_id = c.contract_id
+    $view$;
+  END IF;
+END
+$source_layer_cube_contract_360$;
