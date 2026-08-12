@@ -651,19 +651,20 @@ function GovernanceHistory({
 const PAGE_STYLE: CSSProperties = {
   minHeight: "100%",
   background: SHELL.PAPER,
-  padding: "14px clamp(20px, 3vw, 40px) 28px",
+  padding: "10px clamp(18px, 2.4vw, 32px) 22px",
   overflow: "auto",
 };
 
 const BANNER_STYLE: CSSProperties = {
   display: "flex",
   alignItems: "center",
+  flexWrap: "wrap",
   gap: 12,
   border: `1px solid ${SHELL.PEACH_LINE}`,
   borderRadius: 8,
   background: SHELL.PEACH_BG,
-  padding: "7px 11px",
-  marginBottom: 12,
+  padding: "6px 10px",
+  marginBottom: 10,
 };
 
 const STATUS_CHIP_STYLE: CSSProperties = {
@@ -679,15 +680,15 @@ const STATUS_CHIP_STYLE: CSSProperties = {
 
 const BANNER_TEXT_STYLE: CSSProperties = {
   fontFamily: SHELL.SANS,
-  fontSize: 12.5,
+  fontSize: 12,
   color: SHELL.INK,
 };
 
 const HEADER_STYLE: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
-  gap: 20,
-  marginBottom: 12,
+  gap: 16,
+  marginBottom: 10,
 };
 
 const EYEBROW_STYLE: CSSProperties = {
@@ -699,10 +700,10 @@ const EYEBROW_STYLE: CSSProperties = {
 
 const H1_STYLE: CSSProperties = {
   margin: "4px 0 0",
-  fontFamily: SHELL.SERIF,
-  fontSize: "clamp(20px, 1.25vw, 26px)",
-  lineHeight: 1.12,
-  fontWeight: 400,
+  fontFamily: SHELL.SANS,
+  fontSize: "clamp(18px, 1.05vw, 23px)",
+  lineHeight: 1.16,
+  fontWeight: 800,
   letterSpacing: 0,
   color: SHELL.INK,
   maxWidth: 920,
@@ -710,17 +711,17 @@ const H1_STYLE: CSSProperties = {
 
 const LEDE_STYLE: CSSProperties = {
   maxWidth: 760,
-  margin: "5px 0 0",
+  margin: "4px 0 0",
   fontFamily: SHELL.SANS,
-  fontSize: 12.5,
-  lineHeight: 1.45,
+  fontSize: 12,
+  lineHeight: 1.4,
   color: SHELL.INK_SOFT,
 };
 
 const GRID_STYLE: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1.1fr) minmax(360px, 0.72fr)",
-  gap: 14,
+  gridTemplateColumns: "minmax(0, 1fr) minmax(330px, 0.58fr)",
+  gap: 12,
   alignItems: "start",
 };
 
@@ -731,12 +732,12 @@ const LEFT_COL_STYLE: CSSProperties = {
 
 const BRIEF_CARD_STYLE: CSSProperties = {
   display: "grid",
-  gap: 10,
+  gap: 8,
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
   background: SHELL.CARD_WHITE,
-  padding: 13,
-  boxShadow: "0 12px 34px rgba(15,23,42,0.05)",
+  padding: 11,
+  boxShadow: "0 10px 26px rgba(15,23,42,0.045)",
 };
 
 const SECTION_HEADER_STYLE: CSSProperties = {
@@ -748,10 +749,10 @@ const SECTION_HEADER_STYLE: CSSProperties = {
 
 const SECTION_TITLE_STYLE: CSSProperties = {
   margin: "4px 0 0",
-  fontFamily: SHELL.SERIF,
-  fontSize: 18,
-  fontWeight: 400,
-  lineHeight: 1.18,
+  fontFamily: SHELL.SANS,
+  fontSize: 16,
+  fontWeight: 800,
+  lineHeight: 1.22,
   letterSpacing: 0,
   color: SHELL.INK,
 };
@@ -779,7 +780,7 @@ const FACT_ROW_STYLE: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "minmax(150px, 0.34fr) minmax(0, 1fr)",
   gap: 16,
-  padding: "8px 0",
+  padding: "7px 0",
   borderBottom: `1px solid ${SHELL.CARD_LINE}`,
 };
 
@@ -793,7 +794,7 @@ const FACT_LABEL_STYLE: CSSProperties = {
 const FACT_VALUE_STYLE: CSSProperties = {
   margin: 0,
   fontFamily: SHELL.SANS,
-  fontSize: 13,
+  fontSize: 12.5,
   fontWeight: 700,
   lineHeight: 1.35,
   color: SHELL.INK,
@@ -808,9 +809,9 @@ const BLOCKER_STRIP_STYLE: CSSProperties = {
   borderRadius: 8,
   background: SHELL.PEACH_BG,
   color: SHELL.PEACH_TEXT,
-  padding: "8px 10px",
+  padding: "7px 9px",
   fontFamily: SHELL.SANS,
-  fontSize: 12.5,
+  fontSize: 12,
   lineHeight: 1.35,
 };
 
@@ -823,14 +824,14 @@ const READY_STRIP_STYLE: CSSProperties = {
 
 const RIGHT_PANEL_STYLE: CSSProperties = {
   position: "sticky",
-  top: 14,
+  top: 10,
   display: "grid",
-  gap: 10,
+  gap: 9,
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
   background: SHELL.CARD_WHITE,
-  padding: 13,
-  boxShadow: "0 18px 50px rgba(15,23,42,0.08)",
+  padding: 11,
+  boxShadow: "0 14px 40px rgba(15,23,42,0.065)",
 };
 
 const ACTION_PANEL_HEADER_STYLE: CSSProperties = {
@@ -840,10 +841,10 @@ const ACTION_PANEL_HEADER_STYLE: CSSProperties = {
 
 const ACTION_TITLE_STYLE: CSSProperties = {
   margin: 0,
-  fontFamily: SHELL.SERIF,
-  fontSize: 18,
-  fontWeight: 400,
-  lineHeight: 1.18,
+  fontFamily: SHELL.SANS,
+  fontSize: 16,
+  fontWeight: 800,
+  lineHeight: 1.22,
   letterSpacing: 0,
   color: SHELL.INK,
 };
@@ -851,8 +852,8 @@ const ACTION_TITLE_STYLE: CSSProperties = {
 const ACTION_COPY_STYLE: CSSProperties = {
   margin: 0,
   fontFamily: SHELL.SANS,
-  fontSize: 12.5,
-  lineHeight: 1.45,
+  fontSize: 12,
+  lineHeight: 1.4,
   color: SHELL.INK_SOFT,
 };
 
@@ -861,10 +862,10 @@ const SELF_NOTICE_STYLE: CSSProperties = {
   borderRadius: 8,
   background: SHELL.PEACH_BG,
   color: SHELL.PEACH_TEXT,
-  padding: "8px 10px",
+  padding: "7px 9px",
   fontFamily: SHELL.SANS,
-  fontSize: 12.5,
-  lineHeight: 1.45,
+  fontSize: 12,
+  lineHeight: 1.4,
 };
 
 const FIELD_STYLE: CSSProperties = {
@@ -884,9 +885,9 @@ const TEXTAREA_STYLE: CSSProperties = {
   resize: "vertical",
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
-  padding: 9,
+  padding: 8,
   fontFamily: SHELL.SANS,
-  fontSize: 13,
+  fontSize: 12.5,
   lineHeight: 1.45,
   color: SHELL.INK,
 };
@@ -902,7 +903,7 @@ const CHECKBOX_ROW_STYLE: CSSProperties = {
   alignItems: "flex-start",
   gap: 9,
   fontFamily: SHELL.SANS,
-  fontSize: 12.5,
+  fontSize: 12,
   lineHeight: 1.4,
   color: SHELL.INK,
 };
@@ -941,18 +942,18 @@ const DISCLOSURE_STYLE: CSSProperties = {
 
 const DISCLOSURE_SUMMARY_STYLE: CSSProperties = {
   cursor: "pointer",
-  padding: "12px 14px",
+  padding: "10px 12px",
   fontFamily: SHELL.SANS,
-  fontSize: 13,
+  fontSize: 12.5,
   fontWeight: 700,
   color: SHELL.INK,
 };
 
 const DISCLOSURE_BODY_STYLE: CSSProperties = {
   display: "grid",
-  gap: 14,
+  gap: 12,
   borderTop: `1px solid ${SHELL.CARD_LINE}`,
-  padding: 14,
+  padding: 12,
 };
 
 const GOVERNANCE_STYLE: CSSProperties = {
@@ -966,7 +967,7 @@ const GOVERNANCE_SECTION_STYLE: CSSProperties = {
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
   background: "#fbfaf7",
-  padding: "12px 14px",
+  padding: "10px 12px",
 };
 
 const GOVERNANCE_HEADER_STYLE: CSSProperties = {
@@ -986,7 +987,7 @@ const GOVERNANCE_LIST_STYLE: CSSProperties = {
 
 const GOVERNANCE_ROW_STYLE: CSSProperties = {
   borderTop: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-  paddingTop: 10,
+  paddingTop: 8,
 };
 
 const GOVERNANCE_ROW_MAIN_STYLE: CSSProperties = {
@@ -1034,9 +1035,9 @@ const PANEL_DISCLOSURE_BODY_STYLE: CSSProperties = {
 
 const BASE_BUTTON_STYLE: CSSProperties = {
   borderRadius: 8,
-  padding: "10px 14px",
+  padding: "8px 12px",
   fontFamily: SHELL.MONO,
-  fontSize: 11,
+  fontSize: 10.5,
   fontWeight: 700,
   cursor: "pointer",
 };
@@ -1065,30 +1066,30 @@ const DANGER_BUTTON_STYLE: CSSProperties = {
 const ERROR_STYLE: CSSProperties = {
   border: "1px solid #fecaca",
   borderRadius: 8,
-  padding: "10px 12px",
+  padding: "8px 10px",
   background: "#fff7f7",
   color: "#991b1b",
   fontFamily: SHELL.SANS,
-  fontSize: 13,
+  fontSize: 12.5,
 };
 
 const NOTICE_STYLE: CSSProperties = {
   border: `1px solid ${SHELL.MINT_LINE}`,
   borderRadius: 8,
-  padding: "10px 12px",
+  padding: "8px 10px",
   background: SHELL.MINT_BG,
   color: SHELL.MINT_TEXT,
   fontFamily: SHELL.SANS,
-  fontSize: 13,
+  fontSize: 12.5,
 };
 
 const NEXT_STYLE: CSSProperties = {
   display: "grid",
   gap: 5,
   borderTop: `1px solid ${SHELL.CARD_LINE}`,
-  paddingTop: 14,
+  paddingTop: 12,
   fontFamily: SHELL.SANS,
-  fontSize: 12.5,
+  fontSize: 12,
   lineHeight: 1.45,
   color: SHELL.INK_SOFT,
 };
