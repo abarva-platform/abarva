@@ -108,10 +108,10 @@ describe("VendorResponsePackageCockpit", () => {
     expect(html).toContain(
       "What vendors submitted, what parsed, what can be scored",
     );
-    expect(html).toContain("Required before scoring");
+    expect(html).toContain("2 required files per vendor");
     expect(html).toContain("Accepted formats: PDF, DOCX, XLSX, CSV.");
-    expect(html).toContain("Main proposal");
-    expect(html).toContain("Pricing template");
+    expect(html).toContain("Main proposal package");
+    expect(html).toContain("Pricing workbook");
     expect(html).toContain("Proof exhibits");
     expect(html).toContain("Optional");
     expect(html).toContain("Vendor A");

@@ -11,19 +11,14 @@ import type {
   VendorResponseProfile,
   VendorResponseProfileSet,
 } from "@/lib/source/proposal-intelligence";
+import {
+  VENDOR_RESPONSE_FILE_FAMILIES,
+  type VendorResponseFileFamily as FileFamily,
+  type VendorResponseFileRequirement as Requirement,
+} from "@/lib/source/vendor-response-upload-package-policy";
 import { CANVAS } from "../canvas-tokens";
 
-type Requirement = "Required" | "Conditional" | "Optional";
 type ReadinessTone = "done" | "review" | "missing" | "neutral";
-
-interface FileFamily {
-  key: string;
-  label: string;
-  requirement: Requirement;
-  sourceSystem: string;
-  ownerRole: string;
-  formats: string;
-}
 
 interface FileReadinessRow extends FileFamily {
   vendorId: string;
@@ -38,64 +33,7 @@ interface FileReadinessRow extends FileFamily {
   nextAction: string;
 }
 
-const FILE_FAMILIES: FileFamily[] = [
-  {
-    key: "main_proposal",
-    label: "Main proposal package",
-    requirement: "Required",
-    sourceSystem: "Vendor response pack",
-    ownerRole: "Vendor response lead",
-    formats: "PDF or DOCX",
-  },
-  {
-    key: "pricing_template",
-    label: "Pricing workbook",
-    requirement: "Required",
-    sourceSystem: "Commercial workbook",
-    ownerRole: "Commercial lead",
-    formats: "XLSX, CSV",
-  },
-  {
-    key: "sla_response",
-    label: "SLA commitments",
-    requirement: "Conditional",
-    sourceSystem: "Main proposal or SLA exhibit",
-    ownerRole: "Service owner",
-    formats: "PDF, DOCX, XLSX",
-  },
-  {
-    key: "staffing_model",
-    label: "Staffing and location model",
-    requirement: "Conditional",
-    sourceSystem: "Main proposal or delivery exhibit",
-    ownerRole: "Delivery lead",
-    formats: "PDF, DOCX, XLSX",
-  },
-  {
-    key: "transition_plan",
-    label: "Transition plan",
-    requirement: "Conditional",
-    sourceSystem: "Main proposal or transition exhibit",
-    ownerRole: "Transition lead",
-    formats: "PDF, DOCX, XLSX",
-  },
-  {
-    key: "exceptions",
-    label: "Exceptions and assumptions",
-    requirement: "Conditional",
-    sourceSystem: "Redlines or Q&A log",
-    ownerRole: "Legal/procurement",
-    formats: "DOCX, XLSX, PDF",
-  },
-  {
-    key: "proof_exhibits",
-    label: "Proof exhibits",
-    requirement: "Optional",
-    sourceSystem: "Reference artifacts",
-    ownerRole: "Vendor SMEs",
-    formats: "PDF, DOCX, XLSX, CSV",
-  },
-];
+const FILE_FAMILIES: readonly FileFamily[] = VENDOR_RESPONSE_FILE_FAMILIES;
 
 export function VendorResponseFileReadinessPanel({
   readiness,
