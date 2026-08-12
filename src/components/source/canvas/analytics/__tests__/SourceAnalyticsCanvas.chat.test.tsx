@@ -185,8 +185,12 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(needs).toHaveTextContent("CMDB / finance export");
     expect(needs).toHaveTextContent("Ravi Menon, IT-Ops");
     expect(needs).toHaveTextContent("CSV or XLSX");
+    expect(needs).toHaveTextContent("1 required file");
+    expect(needs).toHaveTextContent("Apps, owners, run cost");
     expect(needs).toHaveTextContent("Missing");
-    expect(needs).toHaveTextContent("Upload the required file below.");
+    expect(needs).toHaveTextContent(
+      "Download the template, fill one row per app, then upload.",
+    );
   });
 
   it("keeps gate approval handoff inside the event shell workspace", () => {

@@ -298,6 +298,152 @@ const FILE_CHIP_NEUTRAL: CSSProperties = {
   color: ANALYTICS.MUTED,
 };
 
+type ActiveStepNeedView = {
+  item: string;
+  requirement: string;
+  sourceSystem: string;
+  owner: string;
+  formats: string;
+  parseTarget: string;
+  status: string;
+  tone: "good" | "warn";
+  nextAction: string;
+};
+
+type WorkflowStepRequirement = {
+  item: string;
+  requirement: string;
+  sourceSystem: string;
+  ownerRole: string;
+  acceptedFormats: string;
+  parseTarget: string;
+  missingAction: string;
+  uploadedAction?: string;
+  completeAction?: string;
+};
+
+const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
+  "strategy.confirm": {
+    item: "Strategy and sponsor decision",
+    requirement: "1 required confirmation",
+    sourceSystem: "Intake record / sponsor note",
+    ownerRole: "Accountable sponsor",
+    acceptedFormats: "No upload required",
+    parseTarget: "Mandate, sponsor, value thesis",
+    missingAction: "Review the mandate and confirm the sponsor.",
+  },
+  "scope.volumetrics": {
+    item: "Volumetrics file",
+    requirement: "1 required file",
+    sourceSystem: "ITSM / finance baseline",
+    ownerRole: "IT Ops / Finance",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Tickets, SLA misses, change orders, run volumes",
+    missingAction:
+      "Download the template, fill one row per tower, then upload.",
+  },
+  "scope.app-inventory": {
+    item: "Application inventory file",
+    requirement: "1 required file",
+    sourceSystem: "CMDB / finance export",
+    ownerRole: "IT Ops / application owner",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Apps, owners, run cost, retained-FTE cost",
+    missingAction: "Download the template, fill one row per app, then upload.",
+  },
+  "scope.vendor-commercials": {
+    item: "Vendor commercials file",
+    requirement: "1 required file",
+    sourceSystem: "Commercial workbook / proposal",
+    ownerRole: "Procurement lead",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Transition fee, credits, term, productivity, SLA caps",
+    missingAction: "Upload the required vendor-commercials workbook.",
+  },
+  "scope.sponsor": {
+    item: "Sponsor commitment letter",
+    requirement: "1 required signed file",
+    sourceSystem: "Scope readiness pack",
+    ownerRole: "Executive sponsor",
+    acceptedFormats: "PDF or DOCX",
+    parseTarget: "Sponsor commitment evidence",
+    missingAction: "Upload the signed sponsor commitment.",
+  },
+  "rfp.clause-coverage": {
+    item: "RFP clause coverage file",
+    requirement: "1 required checklist",
+    sourceSystem: "RFP draft / clause checklist",
+    ownerRole: "Sourcing lead",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Protected vs exposed value levers",
+    missingAction: "Upload the clause checklist before issuing the RFP.",
+  },
+  "responses.coverage": {
+    item: "Vendor response package",
+    requirement: "1 required package per vendor",
+    sourceSystem: "Vendor proposals / response matrix",
+    ownerRole: "Sourcing lead",
+    acceptedFormats: "PDF, DOCX, XLSX, or CSV",
+    parseTarget: "Per-vendor answer coverage and missing responses",
+    missingAction:
+      "Upload each vendor proposal or the response matrix before scoring.",
+  },
+  "evaluation.vendor-bids": {
+    item: "Vendor bid file",
+    requirement: "1 required row per vendor",
+    sourceSystem: "Vendor proposals / bid tabulation",
+    ownerRole: "Evaluation lead",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Headline bid, retained FTE delta, SLA credit cap",
+    missingAction: "Upload the bid table before score normalization.",
+  },
+  "pricing.normalized-supplier-pricing": {
+    item: "Normalized pricing package",
+    requirement: "1 required workbook",
+    sourceSystem: "Pricing submissions / normalization workbook",
+    ownerRole: "Commercial lead",
+    acceptedFormats: "XLSX or CSV",
+    parseTarget: "Comparable TCO, assumptions, escalators, exclusions",
+    missingAction: "Upload normalized pricing before BAFO asks are prepared.",
+  },
+  "bafo.concession-actuals": {
+    item: "BAFO concession file",
+    requirement: "1 required concession log",
+    sourceSystem: "BAFO round / concession log",
+    ownerRole: "Sourcing lead",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Captured concession by value lever",
+    missingAction: "Upload BAFO actuals before the round closes.",
+  },
+  "executive-decision.recommendation-packet": {
+    item: "Executive recommendation decision",
+    requirement: "1 required decision review",
+    sourceSystem: "Decision brief / risk register / value ledger",
+    ownerRole: "Executive sponsor",
+    acceptedFormats: "No upload required",
+    parseTarget: "Recommendation, value case, risks, approval conditions",
+    missingAction: "Review the packet and confirm the decision conditions.",
+  },
+  "selection.committed-value": {
+    item: "Award commitment file",
+    requirement: "1 required award record",
+    sourceSystem: "Executed contract / award record",
+    ownerRole: "Sourcing lead",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Committed value by lever",
+    missingAction: "Upload award commitments before transition starts.",
+  },
+  "value.realized-actuals": {
+    item: "Realized value file",
+    requirement: "1 required value snapshot",
+    sourceSystem: "Run-cost / SLA-credit / productivity actuals",
+    ownerRole: "Value realization lead",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Realized value to date by committed lever",
+    missingAction: "Upload realized actuals to prove value, not promise it.",
+  },
+};
+
 function sampleStageViewFor(
   stageKey: SourceStageKey,
   journey?: SourceJourneyDefinition,
@@ -1391,26 +1537,28 @@ function EvidenceAskTable({
           fontFamily: ANALYTICS.MONO,
           fontSize: 9,
           fontWeight: 800,
-          gridTemplateColumns: "1.15fr 2fr 110px 112px",
+          gridTemplateColumns: "1.05fr 96px 1.25fr 108px 112px",
           letterSpacing: "0.06em",
           padding: "9px 12px",
           textTransform: "uppercase",
         }}
       >
         <span>What is needed</span>
-        <span>Source or instruction</span>
+        <span>Required</span>
+        <span>Source</span>
         <span>Status</span>
         <span>Action</span>
       </div>
       {group.steps.map((step, index) => {
         const active = step.id === activeStepId;
         const captured = step.status === "captured";
+        const need = activeStepNeed(step, captured);
         return (
           <div
             key={step.id}
             style={{
               display: "grid",
-              gridTemplateColumns: "1.15fr 2fr 110px 112px",
+              gridTemplateColumns: "1.05fr 96px 1.25fr 108px 112px",
               gap: 12,
               padding: "11px 12px",
               borderTop:
@@ -1422,8 +1570,20 @@ function EvidenceAskTable({
             }}
           >
             <b>{step.title}</b>
+            <span
+              style={{
+                color: captured
+                  ? ANALYTICS.GREEN_TEXT
+                  : active
+                    ? ANALYTICS.AMBER_TEXT
+                    : ANALYTICS.FAINT,
+                fontWeight: 800,
+              }}
+            >
+              {need.requirement}
+            </span>
             <span style={{ color: active ? ANALYTICS.INK_2 : ANALYTICS.MUTED }}>
-              {step.help}
+              {need.sourceSystem} · {need.formats}
             </span>
             <span
               style={{
@@ -1518,25 +1678,27 @@ function ActiveStepNeedsPanel({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(136px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(142px, 1fr))",
           gap: 12,
           padding: "11px 12px 8px",
         }}
       >
         <StepNeedDatum label="Needed" value={need.item} />
-        <StepNeedDatum label="Source" value={need.source} />
-        <StepNeedDatum label="Owner" value={need.owner} />
+        <StepNeedDatum label="Required" value={need.requirement} />
+        <StepNeedDatum label="Source system" value={need.sourceSystem} />
+        <StepNeedDatum label="Owner role" value={need.owner} />
       </div>
       <div
         style={{
           borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(136px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(142px, 1fr))",
           gap: 12,
           padding: "9px 12px 11px",
         }}
       >
         <StepNeedDatum label="Formats" value={need.formats} />
+        <StepNeedDatum label="Parse target" value={need.parseTarget} />
         <StepNeedDatum label="Status" value={need.status} tone={need.tone} />
         <StepNeedDatum label="Next" value={need.nextAction} />
       </div>
@@ -1715,17 +1877,11 @@ function StepNeedDatum({
   );
 }
 
-function activeStepNeed(step: SourceShellStep, isComplete: boolean) {
-  const source =
-    step.provenance?.source ??
-    (step.type === "provide" ? "Client upload" : "Current stage evidence");
-  const owner = step.provenance?.owner ?? "Stage owner";
-  const formats =
-    step.type === "provide"
-      ? "CSV or XLSX"
-      : step.template
-        ? `${step.template.format} template`
-        : "No upload required";
+function activeStepNeed(
+  step: SourceShellStep,
+  isComplete: boolean,
+): ActiveStepNeedView {
+  const requirement = stepRequirementFor(step);
   const uploaded = Boolean(step.file);
   const status = isComplete
     ? "Complete"
@@ -1736,13 +1892,57 @@ function activeStepNeed(step: SourceShellStep, isComplete: boolean) {
       : "Needs review";
   const tone: "good" | "warn" = isComplete || uploaded ? "good" : "warn";
   return {
-    item: activeStepNeedItem(step),
-    source,
-    owner,
-    formats,
+    item: requirement.item,
+    requirement: requirement.requirement,
+    sourceSystem: step.provenance?.source ?? requirement.sourceSystem,
+    owner: step.provenance?.owner ?? requirement.ownerRole,
+    formats: requirement.acceptedFormats,
+    parseTarget: requirement.parseTarget,
     status,
     tone,
-    nextAction: activeStepNextAction(step, isComplete, uploaded),
+    nextAction: activeStepNextAction(step, isComplete, uploaded, requirement),
+  };
+}
+
+function stepRequirementFor(step: SourceShellStep): WorkflowStepRequirement {
+  const catalogRequirement = STEP_REQUIREMENTS[step.id];
+  if (catalogRequirement) return catalogRequirement;
+
+  const templateCode = factTemplateCodeForTask(step);
+  const sourceSystem =
+    step.provenance?.source ??
+    (step.type === "provide" ? "Client upload" : "Current stage evidence");
+  const ownerRole = step.provenance?.owner ?? "Stage owner";
+  const acceptedFormats =
+    step.type === "provide"
+      ? "CSV or XLSX"
+      : step.template
+        ? `${step.template.format} template`
+        : "No upload required";
+  const parseTarget = templateCode
+    ? `${templateCode} parsed facts`
+    : step.type === "provide"
+      ? "Registered Source artifact"
+      : "Approval-ready decision evidence";
+
+  return {
+    item: activeStepNeedItem(step),
+    requirement:
+      step.type === "provide"
+        ? "1 required file"
+        : step.type === "decide"
+          ? "1 required decision"
+          : "1 required confirmation",
+    sourceSystem,
+    ownerRole,
+    acceptedFormats,
+    parseTarget,
+    missingAction:
+      step.type === "provide"
+        ? "Upload the required file below."
+        : step.type === "decide"
+          ? "Record the decision, then Continue."
+          : "Review the evidence, then confirm.",
   };
 }
 
@@ -1761,16 +1961,18 @@ function activeStepNextAction(
   step: SourceShellStep,
   isComplete: boolean,
   uploaded: boolean,
+  requirement: WorkflowStepRequirement,
 ): string {
-  if (isComplete) return "Continue is enabled.";
+  if (isComplete) return requirement.completeAction ?? "Continue is enabled.";
   if (step.type === "provide") {
-    if (uploaded) return "Review the parsed result, then Continue.";
-    return step.template
-      ? "Download the template, fill it, then upload below."
-      : "Upload the required file below.";
+    if (uploaded) {
+      return (
+        requirement.uploadedAction ?? "Review the parsed result, then Continue."
+      );
+    }
+    return requirement.missingAction;
   }
-  if (step.type === "decide") return "Record the decision, then Continue.";
-  return "Review the evidence, then confirm.";
+  return requirement.missingAction;
 }
 
 function activeStepGuide(
