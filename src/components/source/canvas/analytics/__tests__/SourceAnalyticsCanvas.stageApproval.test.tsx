@@ -179,4 +179,43 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     ).toHaveTextContent("Complete");
     expect(screen.getByRole("button", { name: /Continue/ })).toBeEnabled();
   });
+
+  it("makes the approval gate the primary action once all required stage inputs are complete", () => {
+    const completedScopeStage = {
+      ...SAMPLE_SCOPE_STAGE,
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((task) => ({
+        ...task,
+        state: "done" as const,
+        evidenceComplete: true,
+      })),
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={completedScopeStage}
+        approvalItems={[APPROVAL]}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(
+      screen.getByTestId("source-shell-stage-ready-panel"),
+    ).toHaveTextContent("Required inputs are complete");
+    expect(
+      screen.getByTestId("source-shell-stage-ready-panel"),
+    ).toHaveTextContent("artifact review items remain");
+
+    fireEvent.click(screen.getByTestId("source-stage-ready-open-approval"));
+
+    expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("source-shell-approval-readiness"),
+    ).toHaveTextContent("Not ready to decide");
+    expect(
+      screen.getByTestId("source-shell-approval-readiness"),
+    ).toHaveTextContent("Review Files gaps.");
+  });
 });
