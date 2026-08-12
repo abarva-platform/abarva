@@ -438,7 +438,7 @@ Track committed value versus realized value after award and prevent modeled oppo
 ### SRC57 — End-To-End Source New Event Smoke Harness
 
 **Priority:** P0
-**Status:** pending
+**Status:** foundation-in-progress
 **Type:** QA / release proof
 **Primary surface:** Full Source New Event journey
 **Primary agent:** Steward
