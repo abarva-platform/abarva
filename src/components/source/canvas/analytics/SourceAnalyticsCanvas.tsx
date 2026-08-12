@@ -1316,7 +1316,11 @@ function FocusedWorkPanel({
 
       <div>
         {allReady ? (
-          <StageReadyPanel view={view} />
+          <StageReadyPanel
+            view={view}
+            onOpenApprovals={() => onWorkspaceChange("approvals")}
+            onOpenFiles={() => onWorkspaceChange("files")}
+          />
         ) : activeStep ? (
           <>
             <div
@@ -1468,7 +1472,15 @@ function plainStageStepGroupLabel(label: string) {
   return label;
 }
 
-function StageReadyPanel({ view }: { view: SourceEventShellView }) {
+function StageReadyPanel({
+  view,
+  onOpenApprovals,
+  onOpenFiles,
+}: {
+  view: SourceEventShellView;
+  onOpenApprovals: () => void;
+  onOpenFiles: () => void;
+}) {
   const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
   return (
     <div
@@ -1545,20 +1557,53 @@ function StageReadyPanel({ view }: { view: SourceEventShellView }) {
           <EvidenceAskTable key={group.id} group={group} inset={false} />
         ))}
       </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+        <button
+          type="button"
+          data-testid="source-stage-ready-open-approval"
+          onClick={onOpenApprovals}
+          style={{
+            ...BUTTON_STYLE,
+            background: ANALYTICS.INK,
+            color: "#fff",
+            display: "inline-flex",
+            justifyContent: "center",
+            padding: "12px 16px",
+            width: "fit-content",
+          }}
+        >
+          {view.stage.approvalCtaLabel}
+        </button>
+        {hasArtifactGaps ? (
+          <button
+            type="button"
+            data-testid="source-stage-ready-open-files"
+            onClick={onOpenFiles}
+            style={{
+              ...BUTTON_STYLE,
+              display: "inline-flex",
+              justifyContent: "center",
+              padding: "12px 16px",
+              width: "fit-content",
+            }}
+          >
+            Review file blockers
+          </button>
+        ) : null}
+      </div>
       <Link
         href={view.stage.approvalHref}
         style={{
-          ...BUTTON_STYLE,
-          background: ANALYTICS.INK,
-          color: "#fff",
-          display: "inline-flex",
-          justifyContent: "center",
-          padding: "12px 16px",
+          color: ANALYTICS.FAINT,
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 10,
+          fontWeight: 800,
           textDecoration: "none",
-          width: "fit-content",
+          textTransform: "uppercase",
+          width: "max-content",
         }}
       >
-        {view.stage.approvalCtaLabel}
+        Copy/share approval URL
       </Link>
     </div>
   );
