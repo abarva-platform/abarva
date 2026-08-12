@@ -56,8 +56,8 @@ BEGIN
             NULLIF(c.benchmark_rights, ''),
             NULLIF(c.termination_rights, '')
           ) AS scope_summary,
-          c.annual_value,
-          c.total_committed_value,
+          c.annual_value::numeric AS annual_value,
+          c.total_committed_value::numeric AS total_committed_value,
           COALESCE(consumption.committed_annual_spend, c.annual_value) AS committed_annual_spend,
           COALESCE(consumption.actual_annual_spend, c.annual_value) AS actual_annual_spend,
           c.expiration_date AS end_date,
@@ -78,9 +78,9 @@ BEGIN
           COALESCE(c.raw_payload ->> 'alternatives_available', NULL) AS alternatives_available,
           COALESCE(v.risk_tier, v.strategic_status) AS concentration_note,
           c.confidence AS source_confidence,
-          c.annual_value AS resolved_annual_value,
+          c.annual_value::numeric AS resolved_annual_value,
           false AS annual_value_conflict_flag,
-          c.total_committed_value AS resolved_total_committed_value,
+          c.total_committed_value::numeric AS resolved_total_committed_value,
           false AS total_committed_value_conflict_flag
         FROM source.contract c
         LEFT JOIN source.vendor v
@@ -125,8 +125,8 @@ BEGIN
           NULLIF(c.benchmark_rights, ''),
           NULLIF(c.termination_rights, '')
         ) AS scope_summary,
-        c.annual_value,
-        c.total_committed_value,
+        c.annual_value::numeric AS annual_value,
+        c.total_committed_value::numeric AS total_committed_value,
         COALESCE(consumption.committed_annual_spend, c.annual_value) AS committed_annual_spend,
         COALESCE(consumption.actual_annual_spend, c.annual_value) AS actual_annual_spend,
         c.expiration_date AS end_date,
@@ -147,9 +147,9 @@ BEGIN
         COALESCE(c.raw_payload ->> 'alternatives_available', NULL) AS alternatives_available,
         COALESCE(v.risk_tier, v.strategic_status) AS concentration_note,
         c.confidence AS source_confidence,
-        c.annual_value AS resolved_annual_value,
+        c.annual_value::numeric AS resolved_annual_value,
         false AS annual_value_conflict_flag,
-        c.total_committed_value AS resolved_total_committed_value,
+        c.total_committed_value::numeric AS resolved_total_committed_value,
         false AS total_committed_value_conflict_flag
       FROM source.contract c
       LEFT JOIN source.vendor v
@@ -297,10 +297,10 @@ BEGIN
         c.vendor_category,
         c.renewal_decision_state,
         c.auto_renew,
-        c.annual_value,
-        c.actual_annual_spend,
-        c.committed_annual_spend,
-        c.total_committed_value,
+        c.annual_value::numeric AS annual_value,
+        c.actual_annual_spend::numeric AS actual_annual_spend,
+        c.committed_annual_spend::numeric AS committed_annual_spend,
+        c.total_committed_value::numeric AS total_committed_value,
         c.end_date,
         c.notice_period_days,
         c.benchmarking_clause,
