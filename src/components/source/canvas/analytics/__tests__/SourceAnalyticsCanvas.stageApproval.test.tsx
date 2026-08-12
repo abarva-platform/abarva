@@ -209,6 +209,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(activeEvidenceRow).toHaveTextContent(
       "Scope memo, value lever sizing, pricing baseline",
     );
+    expect(activeEvidenceRow).toHaveTextContent("Readback: no typed facts yet.");
     expect(activeEvidenceRow).toHaveTextContent("Upload below");
 
     fireEvent.click(
@@ -220,6 +221,12 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.getByTestId("source-shell-active-step-needs"),
     ).toHaveTextContent("Complete");
+    expect(
+      screen.getByTestId("source-shell-active-step-needs"),
+    ).toHaveTextContent("Readback: workflow confirmation captured.");
+    expect(
+      screen.getByTestId("source-shell-active-step-needs"),
+    ).toHaveTextContent("Input captured; Continue.");
     expect(screen.getByRole("button", { name: /Continue/ })).toBeEnabled();
   });
 
@@ -265,6 +272,12 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.getByTestId("source-stage-ready-open-approval"),
     ).toHaveTextContent("Open approval readiness");
+    expect(
+      screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"),
+    ).toHaveTextContent("Readback: typed facts available.");
+    expect(
+      screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"),
+    ).toHaveTextContent("Captured; review Files");
 
     fireEvent.click(screen.getByTestId("source-stage-ready-open-approval"));
 

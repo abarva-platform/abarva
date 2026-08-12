@@ -254,6 +254,54 @@ describe("buildSourceEventShellView", () => {
     });
   });
 
+  it("does not treat a template code as live facts until persisted evidence marks the task complete", () => {
+    const templateOnlyStage: StageAnalyticsView = {
+      ...(SAMPLE_SCOPE_STAGE as StageAnalyticsView),
+      tasks: [
+        {
+          id: "scope.volumetrics",
+          title: "Provide the volumetrics",
+          subtitle: "Service-tower economics",
+          type: "provide",
+          state: "done",
+          guide: "Upload service-tower volumetrics.",
+          cta: "Confirm volumetrics",
+          factTemplateCode: "VOLUMETRICS_V1",
+        },
+      ],
+    };
+
+    const templateOnlyView = buildSourceEventShellView({
+      event: EVENT,
+      tenantName: "FS Demo",
+      viewedStageKey: "scope",
+      stageView: templateOnlyStage,
+    });
+
+    expect(templateOnlyView.stage.groups[0]?.steps[0]).toMatchObject({
+      status: "captured",
+      sourceBasis: "computed",
+    });
+
+    const evidenceCompleteView = buildSourceEventShellView({
+      event: EVENT,
+      tenantName: "FS Demo",
+      viewedStageKey: "scope",
+      stageView: {
+        ...templateOnlyStage,
+        tasks: templateOnlyStage.tasks.map((task) => ({
+          ...task,
+          evidenceComplete: true,
+        })),
+      },
+    });
+
+    expect(evidenceCompleteView.stage.groups[0]?.steps[0]).toMatchObject({
+      status: "captured",
+      sourceBasis: "live_fact",
+    });
+  });
+
   it("turns artifacts into a stage-grouped file ledger with live-artifact basis", () => {
     const view = buildSourceEventShellView({
       event: EVENT,

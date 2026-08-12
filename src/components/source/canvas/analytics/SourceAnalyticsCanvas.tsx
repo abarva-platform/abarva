@@ -331,6 +331,7 @@ type ActiveStepNeedView = {
   parseTarget: string;
   artifactImpact: string;
   status: string;
+  readback: string;
   tone: "good" | "warn";
   nextAction: string;
 };
@@ -1603,7 +1604,7 @@ function StageReadyPanel({
           }}
         >
           {hasArtifactGaps
-            ? "Open the approval workspace to decide with a clear rationale, or return to Files to accept client-final artifacts and close quality gates before the stage advances."
+            ? "Review Files first to accept client-final artifacts and close quality gates. The approval workspace remains available for a with-gaps decision, but the primary path is to clear file review."
             : "The next step is the approval workspace. Review the captured evidence, record the decision, and advance the event from there."}
         </p>
       </div>
@@ -1660,7 +1661,12 @@ function StageReadyPanel({
       ) : null}
       <div style={{ display: "grid", gap: 12 }}>
         {view.stage.groups.map((group) => (
-          <EvidenceAskTable key={group.id} group={group} inset={false} />
+          <EvidenceAskTable
+            key={group.id}
+            group={group}
+            artifactReviewOpen={hasArtifactGaps}
+            inset={false}
+          />
         ))}
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
@@ -1782,10 +1788,12 @@ function StageReadyStatusDatum({
 function EvidenceAskTable({
   group,
   activeStepId,
+  artifactReviewOpen = false,
   inset = true,
 }: {
   group?: SourceShellStepGroup;
   activeStepId?: string;
+  artifactReviewOpen?: boolean;
   inset?: boolean;
 }) {
   if (!group) return null;
@@ -1877,10 +1885,13 @@ function EvidenceAskTable({
               captured={captured}
             />
             <EvidenceAskStatusCell
-              status={captured ? "Reviewed" : active ? "Now" : "Pending"}
+              status={need.status}
+              readback={need.readback}
               next={
                 captured
-                  ? "Done"
+                  ? artifactReviewOpen
+                    ? "Captured; review Files"
+                    : need.nextAction
                   : active
                     ? step.type === "provide"
                       ? "Upload below"
@@ -1934,11 +1945,13 @@ function EvidenceAskCell({
 
 function EvidenceAskStatusCell({
   status,
+  readback,
   next,
   active,
   captured,
 }: {
   status: string;
+  readback: string;
   next: string;
   active: boolean;
   captured: boolean;
@@ -1957,6 +1970,16 @@ function EvidenceAskStatusCell({
       >
         {status}
       </b>
+      <span
+        style={{
+          color: captured || active ? ANALYTICS.INK_2 : ANALYTICS.MUTED,
+          fontSize: 11,
+          lineHeight: 1.3,
+          overflowWrap: "anywhere",
+        }}
+      >
+        {readback}
+      </span>
       <span
         style={{
           border: `1px solid ${
@@ -2072,6 +2095,7 @@ function ActiveStepNeedsPanel({
           label="Artifact impact"
           value={need.artifactImpact}
         />
+        <StepNeedDatum label="Readback" value={need.readback} />
         <StepNeedDatum label="Status" value={need.status} tone={need.tone} />
         <StepNeedDatum label="Next" value={need.nextAction} />
       </div>
@@ -2262,6 +2286,7 @@ function activeStepNeed(
         : "Missing"
       : "Needs review";
   const tone: "good" | "warn" = isComplete || uploaded ? "good" : "warn";
+  const readback = stepReadbackLabel(step, isComplete, uploaded);
   return {
     item: requirement.item,
     requiredness: requirement.requiredness ?? "Required",
@@ -2274,9 +2299,44 @@ function activeStepNeed(
     parseTarget: requirement.parseTarget,
     artifactImpact: requirement.artifactImpact,
     status,
+    readback,
     tone,
     nextAction: activeStepNextAction(step, isComplete, uploaded, requirement),
   };
+}
+
+function stepReadbackLabel(
+  step: SourceShellStep,
+  isComplete: boolean,
+  uploaded: boolean,
+): string {
+  if (isComplete) {
+    switch (step.sourceBasis) {
+      case "live_fact":
+        return "Readback: typed facts available.";
+      case "live_artifact":
+        return "Readback: file stored in Source.";
+      case "computed":
+        return "Readback: workflow confirmation captured.";
+      case "archetype":
+        return "Readback: archetype support only.";
+      case "sample":
+        return "Readback: sample support only.";
+      case "missing":
+        return "Readback: captured, evidence state unclear.";
+    }
+  }
+  if (uploaded) {
+    return step.factTemplateCode
+      ? "Readback: file stored; typed facts still pending."
+      : "Readback: file stored; review still pending.";
+  }
+  if (step.type === "provide") {
+    return step.factTemplateCode
+      ? "Readback: no typed facts yet."
+      : "Readback: no file yet.";
+  }
+  return "Readback: waiting for review.";
 }
 
 function stepRequirementFor(step: SourceShellStep): WorkflowStepRequirement {
@@ -2345,7 +2405,19 @@ function activeStepNextAction(
   uploaded: boolean,
   requirement: WorkflowStepRequirement,
 ): string {
-  if (isComplete) return requirement.completeAction ?? "Continue is enabled.";
+  if (isComplete) {
+    if (requirement.completeAction) return requirement.completeAction;
+    switch (step.sourceBasis) {
+      case "live_fact":
+        return "Facts available; Continue.";
+      case "live_artifact":
+        return "File stored; verify Files.";
+      case "computed":
+        return "Input captured; Continue.";
+      default:
+        return "Continue is enabled.";
+    }
+  }
   if (step.type === "provide") {
     if (uploaded) {
       return (
@@ -2712,12 +2784,13 @@ function ActiveStepRequirementRow({
           borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
           display: "grid",
           gridTemplateColumns:
-            "minmax(190px, 1fr) minmax(180px, 1fr) minmax(130px, 0.55fr)",
+            "minmax(170px, 1fr) minmax(155px, 0.85fr) minmax(150px, 0.85fr) minmax(115px, 0.55fr)",
           gap: 12,
           padding: "10px 12px 12px",
         }}
       >
         <RequirementCell label="Parse/writeback" value={need.parseTarget} />
+        <RequirementCell label="Readback" value={need.readback} />
         <RequirementCell label="Next action" value={need.nextAction} />
         <RequirementCell label="Status" value={need.status} tone={need.tone} />
       </div>

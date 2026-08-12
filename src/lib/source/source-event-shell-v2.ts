@@ -701,7 +701,7 @@ function taskGroupLabel(task: StageTaskView): string {
 }
 
 function taskSourceBasis(task: StageTaskView): SourceShellEvidenceBasis {
-  if (task.evidenceComplete === true || task.factTemplateCode)
+  if (task.evidenceComplete === true && task.factTemplateCode)
     return "live_fact";
   if (task.file) return "live_artifact";
   return "computed";
