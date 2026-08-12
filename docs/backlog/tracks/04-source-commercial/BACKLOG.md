@@ -16,6 +16,8 @@ A coherent sourcing operating workspace that answers: what is ready, what is blo
 
 The broader Source New Event vision is tracked in
 [`SOURCE_NEW_EVENT_BEST_IN_CLASS_PROGRAM.md`](./SOURCE_NEW_EVENT_BEST_IN_CLASS_PROGRAM.md).
+The current holistic 11-stage operating-design candidate is tracked in
+[`SOURCE_NEW_EVENT_SRC48_OPERATING_DESIGN.md`](./SOURCE_NEW_EVENT_SRC48_OPERATING_DESIGN.md).
 
 Before starting additional New Event implementation beyond the current narrow
 backlog slices, use that program backlog to do the holistic 11-stage design
