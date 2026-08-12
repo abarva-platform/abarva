@@ -50,3 +50,158 @@
 .sw-quad:hover {
   border-color: #0a0a0b !important;
 }
+
+.sw-cockpit-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 24;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  overflow-x: auto;
+  padding: 8px 0 10px;
+  background: #f5f1eb;
+  border-bottom: 1px solid rgba(10, 10, 11, 0.08);
+}
+
+.sw-cockpit-tabs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 13px;
+  border: 1px solid rgba(10, 10, 11, 0.14);
+  border-radius: 6px;
+  background: #fff;
+  color: #2c2c2a;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.sw-cockpit-tabs a:hover,
+.sw-cockpit-tabs a:focus-visible {
+  color: #0a0a0b;
+  border-color: #0a0a0b;
+  outline: none;
+}
+
+.sw-cockpit-verdict {
+  scroll-margin-top: 58px;
+}
+
+.sw-cockpit-card,
+.sw-cockpit-proof {
+  scroll-margin-top: 58px;
+}
+
+.sw-cockpit-action-row {
+  grid-template-columns:
+    minmax(210px, 1.05fr) minmax(240px, 1.35fr) minmax(86px, 0.42fr)
+    minmax(104px, 0.48fr) minmax(72px, 0.36fr) minmax(132px, 0.48fr);
+}
+
+.sw-cockpit-action-row:focus-visible {
+  outline: 2px solid #0a0a0b;
+  outline-offset: -2px;
+}
+
+.sw-cockpit-contract-table {
+  table-layout: fixed;
+}
+
+.sw-cockpit-contract-table th:nth-child(1),
+.sw-cockpit-contract-table td:nth-child(1) {
+  width: 21%;
+}
+
+.sw-cockpit-contract-table th:nth-child(2),
+.sw-cockpit-contract-table td:nth-child(2) {
+  width: 11%;
+}
+
+.sw-cockpit-contract-table th:nth-child(3),
+.sw-cockpit-contract-table td:nth-child(3) {
+  width: 18%;
+}
+
+.sw-cockpit-contract-table th:nth-child(4),
+.sw-cockpit-contract-table td:nth-child(4) {
+  width: 17%;
+}
+
+.sw-cockpit-contract-table th:nth-child(5),
+.sw-cockpit-contract-table td:nth-child(5) {
+  width: 9%;
+}
+
+.sw-cockpit-contract-table th:nth-child(6),
+.sw-cockpit-contract-table td:nth-child(6) {
+  width: 18%;
+}
+
+.sw-cockpit-contract-table th:nth-child(7),
+.sw-cockpit-contract-table td:nth-child(7) {
+  width: 6%;
+}
+
+.sw-cockpit-contract-table th,
+.sw-cockpit-contract-table td {
+  overflow-wrap: anywhere;
+}
+
+.sw-cockpit-proof {
+  grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.92fr);
+}
+
+@media (max-width: 1180px) {
+  .sw-cockpit-action-row {
+    grid-template-columns: minmax(190px, 1fr) minmax(230px, 1fr) repeat(3, auto);
+  }
+
+  .sw-cockpit-action-row > span:last-child {
+    grid-column: 1 / -1;
+    justify-self: start;
+    min-width: 180px;
+  }
+
+  .sw-cockpit-proof {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .sw-cockpit-verdict > div {
+    grid-template-columns: 1fr !important;
+  }
+
+  .sw-cockpit-supports {
+    border-left: 0 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .sw-cockpit-banner {
+    align-items: flex-start !important;
+  }
+
+  .sw-cockpit-banner > span:last-child {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+
+  .sw-cockpit-action-row {
+    grid-template-columns: 1fr;
+    gap: 9px !important;
+  }
+
+  .sw-cockpit-action-row > span {
+    text-align: left !important;
+  }
+
+  .sw-cockpit-action-row > span:last-child {
+    width: 100%;
+  }
+
+  .sw-cockpit-contract-table {
+    min-width: 900px;
+  }
+}

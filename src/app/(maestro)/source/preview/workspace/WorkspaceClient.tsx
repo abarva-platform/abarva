@@ -734,15 +734,15 @@ export function WorkspaceClient({
               <div
                 style={{
                   padding: isVendor360Cockpit
-                    ? "24px min(4vw,52px) 70px"
+                    ? "18px clamp(12px,2vw,28px) 70px"
                     : vm.isContract
                       ? "14px 24px 48px"
                       : "22px 30px 60px",
                   display: "flex",
                   flexDirection: "column",
                   gap: vm.isContract ? 12 : 18,
-                  width: isVendor360Cockpit ? "min(100%, 1280px)" : undefined,
-                  margin: isVendor360Cockpit ? "0 auto" : undefined,
+                  width: isVendor360Cockpit ? "100%" : undefined,
+                  boxSizing: "border-box",
                 }}
               >
                 {isVendor360Cockpit ? <ContextLens vm={vm} /> : null}
