@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The Source stage workflow now presents evidence requests as a compact row contract: what evidence is needed, which source or owner should provide it, where the parser writes the facts, and what the next action is. This reduces ambiguity before upload without changing any evidence semantics or making missing evidence look complete.
+The Source stage workflow now presents evidence requests as an operational row contract: what evidence is needed, whether it is required, which source or owner should provide it, the expected grain and history, the template or parser target, what artifact or insight will change, current status, and the next action. This reduces ambiguity before upload without changing any evidence semantics or making missing evidence look complete.
 
 ## Layer Impact
 
@@ -36,11 +36,11 @@ The Source stage workflow now presents evidence requests as a compact row contra
 
 Candidate validation status:
 
-- Focused Jest coverage for the Scope evidence ask table: pass.
-- ESLint on the changed component and test: pass.
-- TypeScript compile check: pass.
-- `git diff --check`: pass.
-- `npm run release:check`: pass after release-record wording update.
+- `npx jest src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.stageApproval.test.tsx src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.stageFallbacks.test.tsx --runInBand` passed.
+- `npx eslint src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.stageApproval.test.tsx src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.stageFallbacks.test.tsx` passed.
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` passed.
+- `git diff --check` passed.
+- `npm run release:check` passed.
 - Signed-in browser proof on a live Source event workspace: not run before merge; required after repo-owned ACA deploy.
 
 ## Rollout Plan
@@ -70,4 +70,4 @@ Revert the PR. Since this is presentation-only, rollback does not require data r
 
 ## Known Gaps
 
-This does not implement new parsing, new source-system adapters, or artifact quality scoring. It only makes the existing required-evidence contract explicit in the stage UI.
+This does not implement new parsing, new source-system adapters, or artifact quality scoring. It only makes the existing required-evidence contract explicit in the stage UI, including the operational grain/history and artifact-impact fields the user needs before uploading.
