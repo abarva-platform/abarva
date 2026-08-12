@@ -202,6 +202,7 @@ describe("SourceOptimizeContractPage", () => {
     expect(screen.getByText("Select")).toBeInTheDocument();
     expect(screen.getByText("Lock baseline")).toBeInTheDocument();
     expect(screen.getByText("Prove value")).toBeInTheDocument();
+    expect(screen.getByText("As of Jun 30, 2027")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "New 11-stage event" }),
     ).toHaveAttribute("href", "/source/new");
