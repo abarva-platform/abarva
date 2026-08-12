@@ -102,24 +102,30 @@ describe("EventApprovalCard", () => {
   it("uses compact approval-screen typography instead of presentation-scale headers", () => {
     render(<EventApprovalCard {...baseProps} />);
 
-    expect(screen.getByRole("heading", { level: 1 }).getAttribute("style")).toContain(
-      "font-size: clamp(22px, 1.45vw, 28px)",
-    );
-    expect(screen.getByRole("heading", { level: 1 }).getAttribute("style")).toContain(
-      "line-height: 1.12",
-    );
-    expect(screen.getByText("What you are approving").getAttribute("style")).toContain(
-      "font-size: 18px",
-    );
-    expect(screen.getByText("Approve or send back").getAttribute("style")).toContain(
-      "font-size: 18px",
-    );
-    expect(screen.getByText("Who must say yes").getAttribute("style")).toContain(
-      "font-size: 18px",
-    );
-    expect(screen.getByTestId("source-approval-rationale").getAttribute("rows")).toBe(
-      "4",
-    );
+    expect(
+      screen.getByTestId("source-approval-page").getAttribute("style"),
+    ).toContain("padding: 14px clamp(20px, 3vw, 40px) 28px");
+    expect(
+      screen.getByRole("heading", { level: 1 }).getAttribute("style"),
+    ).toContain("font-size: clamp(20px, 1.25vw, 26px)");
+    expect(
+      screen.getByRole("heading", { level: 1 }).getAttribute("style"),
+    ).toContain("line-height: 1.12");
+    expect(
+      screen.getByText("What you are approving").getAttribute("style"),
+    ).toContain("font-size: 18px");
+    expect(
+      screen.getByText("Approve or send back").getAttribute("style"),
+    ).toContain("font-size: 18px");
+    expect(
+      screen.getByText("Who must say yes").getAttribute("style"),
+    ).toContain("font-size: 18px");
+    expect(
+      screen.getByTestId("source-approval-rationale").getAttribute("style"),
+    ).toContain("font-size: 13px");
+    expect(
+      screen.getByTestId("source-approval-rationale").getAttribute("rows"),
+    ).toBe("4");
   });
 
   it("shows real governance history when approvals and artifact acceptances are present", () => {
