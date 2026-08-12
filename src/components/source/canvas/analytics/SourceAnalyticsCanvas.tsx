@@ -199,6 +199,260 @@ const BUTTON_STYLE: CSSProperties = {
   fontWeight: 700,
 };
 
+const WORKSPACE_EYEBROW: CSSProperties = {
+  color: ANALYTICS.BLUE,
+  fontFamily: ANALYTICS.MONO,
+  fontSize: 10,
+  fontWeight: 900,
+  letterSpacing: 1.05,
+  textTransform: "uppercase",
+};
+
+const SMALL_STATUS_PILL: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+  borderRadius: 999,
+  background: ANALYTICS.SOFT,
+  color: ANALYTICS.INK_2,
+  fontFamily: ANALYTICS.MONO,
+  fontSize: 10,
+  fontWeight: 900,
+  padding: "6px 9px",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+};
+
+const FILE_USE_TABLE: CSSProperties = {
+  width: "100%",
+  minWidth: 920,
+  borderCollapse: "collapse",
+};
+
+const FILE_TH: CSSProperties = {
+  borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+  padding: "8px 8px",
+  color: ANALYTICS.MUTED,
+  fontFamily: ANALYTICS.MONO,
+  fontSize: 9.5,
+  fontWeight: 900,
+  letterSpacing: 0.8,
+  textAlign: "center",
+  textTransform: "uppercase",
+};
+
+const FILE_TD_LABEL: CSSProperties = {
+  borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+  padding: "9px 8px",
+  color: ANALYTICS.INK,
+  display: "grid",
+  gap: 3,
+  minWidth: 240,
+};
+
+const FILE_TD_CENTER: CSSProperties = {
+  borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+  padding: "9px 7px",
+  textAlign: "center",
+  verticalAlign: "top",
+};
+
+const FILE_TD_ACTION: CSSProperties = {
+  borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+  padding: "9px 8px",
+  color: ANALYTICS.INK,
+  display: "grid",
+  gap: 3,
+  fontSize: 12.5,
+  lineHeight: 1.38,
+  minWidth: 260,
+};
+
+const FILE_CHIP: CSSProperties = {
+  border: "1px solid",
+  borderRadius: 999,
+  display: "inline-flex",
+  justifyContent: "center",
+  minWidth: 78,
+  padding: "3px 7px",
+  fontFamily: ANALYTICS.MONO,
+  fontSize: 9,
+  fontWeight: 900,
+  letterSpacing: 0.65,
+  textTransform: "uppercase",
+};
+
+const FILE_CHIP_GOOD: CSSProperties = {
+  borderColor: ANALYTICS.GREEN,
+  background: ANALYTICS.GREEN_TINT,
+  color: ANALYTICS.GREEN_TEXT,
+};
+
+const FILE_CHIP_WARN: CSSProperties = {
+  borderColor: ANALYTICS.AMBER,
+  background: "rgba(186,117,23,0.07)",
+  color: ANALYTICS.AMBER,
+};
+
+const FILE_CHIP_NEUTRAL: CSSProperties = {
+  borderColor: ANALYTICS.LINE_SOFT,
+  background: ANALYTICS.SOFT,
+  color: ANALYTICS.MUTED,
+};
+
+type ActiveStepNeedView = {
+  item: string;
+  requirement: string;
+  sourceSystem: string;
+  owner: string;
+  formats: string;
+  parseTarget: string;
+  status: string;
+  tone: "good" | "warn";
+  nextAction: string;
+};
+
+type WorkflowStepRequirement = {
+  item: string;
+  requirement: string;
+  sourceSystem: string;
+  ownerRole: string;
+  acceptedFormats: string;
+  parseTarget: string;
+  missingAction: string;
+  uploadedAction?: string;
+  completeAction?: string;
+};
+
+const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
+  "strategy.confirm": {
+    item: "Strategy and sponsor decision",
+    requirement: "1 required confirmation",
+    sourceSystem: "Intake record / sponsor note",
+    ownerRole: "Accountable sponsor",
+    acceptedFormats: "No upload required",
+    parseTarget: "Mandate, sponsor, value thesis",
+    missingAction: "Review the mandate and confirm the sponsor.",
+  },
+  "scope.volumetrics": {
+    item: "Volumetrics file",
+    requirement: "1 required file",
+    sourceSystem: "ITSM / finance baseline",
+    ownerRole: "IT Ops / Finance",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Tickets, SLA misses, change orders, run volumes",
+    missingAction:
+      "Download the template, fill one row per tower, then upload.",
+  },
+  "scope.app-inventory": {
+    item: "Application inventory file",
+    requirement: "1 required file",
+    sourceSystem: "CMDB / finance export",
+    ownerRole: "IT Ops / application owner",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Apps, owners, run cost, retained-FTE cost",
+    missingAction: "Download the template, fill one row per app, then upload.",
+  },
+  "scope.vendor-commercials": {
+    item: "Vendor commercials file",
+    requirement: "1 required file",
+    sourceSystem: "Commercial workbook / proposal",
+    ownerRole: "Procurement lead",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Transition fee, credits, term, productivity, SLA caps",
+    missingAction: "Upload the required vendor-commercials workbook.",
+  },
+  "scope.sponsor": {
+    item: "Sponsor commitment letter",
+    requirement: "1 required signed file",
+    sourceSystem: "Scope readiness pack",
+    ownerRole: "Executive sponsor",
+    acceptedFormats: "PDF or DOCX",
+    parseTarget: "Sponsor commitment evidence",
+    missingAction: "Upload the signed sponsor commitment.",
+  },
+  "rfp.clause-coverage": {
+    item: "RFP clause coverage file",
+    requirement: "1 required checklist",
+    sourceSystem: "RFP draft / clause checklist",
+    ownerRole: "Sourcing lead",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Protected vs exposed value levers",
+    missingAction: "Upload the clause checklist before issuing the RFP.",
+  },
+  "responses.coverage": {
+    item: "Vendor response package",
+    requirement: "1 required package per vendor",
+    sourceSystem: "Vendor proposals / response matrix",
+    ownerRole: "Sourcing lead",
+    acceptedFormats: "PDF, DOCX, XLSX, or CSV",
+    parseTarget: "Per-vendor answer coverage and missing responses",
+    missingAction:
+      "Upload each vendor proposal or the response matrix before scoring.",
+  },
+  "evaluation.vendor-bids": {
+    item: "Vendor bid file",
+    requirement: "1 required row per vendor",
+    sourceSystem: "Vendor proposals / bid tabulation",
+    ownerRole: "Evaluation lead",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Headline bid, retained FTE delta, SLA credit cap",
+    missingAction: "Upload the bid table before score normalization.",
+  },
+  "pricing.normalized-supplier-pricing": {
+    item: "Normalized pricing package",
+    requirement: "1 required workbook",
+    sourceSystem: "Pricing submissions / normalization workbook",
+    ownerRole: "Commercial lead",
+    acceptedFormats: "XLSX or CSV",
+    parseTarget: "Comparable TCO, assumptions, escalators, exclusions",
+    missingAction: "Upload normalized pricing before BAFO asks are prepared.",
+  },
+  "bafo.concession-actuals": {
+    item: "BAFO concession file",
+    requirement: "1 required concession log",
+    sourceSystem: "BAFO round / concession log",
+    ownerRole: "Sourcing lead",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Captured concession by value lever",
+    missingAction: "Upload BAFO actuals before the round closes.",
+  },
+  "executive-decision.recommendation-packet": {
+    item: "Executive recommendation decision",
+    requirement: "1 required decision review",
+    sourceSystem: "Decision brief / risk register / value ledger",
+    ownerRole: "Executive sponsor",
+    acceptedFormats: "No upload required",
+    parseTarget: "Recommendation, value case, risks, approval conditions",
+    missingAction: "Review the packet and confirm the decision conditions.",
+  },
+  "selection.committed-value": {
+    item: "Award commitment file",
+    requirement: "1 required award record",
+    sourceSystem: "Executed contract / award record",
+    ownerRole: "Sourcing lead",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Committed value by lever",
+    missingAction: "Upload award commitments before transition starts.",
+  },
+  "transition.go-live-readiness": {
+    item: "Transition readiness packet",
+    requirement: "1 required readiness packet",
+    sourceSystem: "Transition tracker / go-live checklist",
+    ownerRole: "Transition owner",
+    acceptedFormats: "PDF, DOCX, XLSX, or CSV",
+    parseTarget: "Milestones, blockers, cutover, rollback, handoff evidence",
+    missingAction: "Upload readiness evidence before value tracking starts.",
+  },
+  "value.realized-actuals": {
+    item: "Realized value file",
+    requirement: "1 required value snapshot",
+    sourceSystem: "Run-cost / SLA-credit / productivity actuals",
+    ownerRole: "Value realization lead",
+    acceptedFormats: "CSV or XLSX",
+    parseTarget: "Realized value to date by committed lever",
+    missingAction: "Upload realized actuals to prove value, not promise it.",
+  },
+};
+
 function sampleStageViewFor(
   stageKey: SourceStageKey,
   journey?: SourceJourneyDefinition,
@@ -796,7 +1050,11 @@ function FocusedWorkPanel({
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
   const flatSteps = useMemo(
-    () => view.stage.groups.flatMap((group) => group.steps),
+    () =>
+      view.stage.groups
+        .flatMap((group) => group.steps)
+        .slice()
+        .sort((a, b) => a.order - b.order),
     [view.stage.groups],
   );
   const [completedIds, setCompletedIds] = useState<ReadonlySet<string>>(
@@ -1113,6 +1371,19 @@ function FocusedWorkPanel({
                 {activeStep.help}
               </p>
 
+              <ActiveStepNeedsPanel
+                step={activeStep}
+                isComplete={activeComplete}
+              />
+
+              <ActiveStepGuidePanel
+                step={activeStep}
+                stageLabel={view.stage.label}
+                isComplete={activeComplete}
+                guidebook={view.guidebook.record}
+                onOpenGuidebook={() => onWorkspaceChange("guidebook")}
+              />
+
               {activeGroup ? (
                 <EvidenceAskTable
                   group={activeGroup}
@@ -1279,26 +1550,28 @@ function EvidenceAskTable({
           fontFamily: ANALYTICS.MONO,
           fontSize: 9,
           fontWeight: 800,
-          gridTemplateColumns: "1.15fr 2fr 110px 112px",
+          gridTemplateColumns: "1.05fr 96px 1.25fr 108px 112px",
           letterSpacing: "0.06em",
           padding: "9px 12px",
           textTransform: "uppercase",
         }}
       >
         <span>What is needed</span>
-        <span>Source or instruction</span>
+        <span>Required</span>
+        <span>Source</span>
         <span>Status</span>
         <span>Action</span>
       </div>
       {group.steps.map((step, index) => {
         const active = step.id === activeStepId;
         const captured = step.status === "captured";
+        const need = activeStepNeed(step, captured);
         return (
           <div
             key={step.id}
             style={{
               display: "grid",
-              gridTemplateColumns: "1.15fr 2fr 110px 112px",
+              gridTemplateColumns: "1.05fr 96px 1.25fr 108px 112px",
               gap: 12,
               padding: "11px 12px",
               borderTop:
@@ -1310,8 +1583,20 @@ function EvidenceAskTable({
             }}
           >
             <b>{step.title}</b>
+            <span
+              style={{
+                color: captured
+                  ? ANALYTICS.GREEN_TEXT
+                  : active
+                    ? ANALYTICS.AMBER_TEXT
+                    : ANALYTICS.FAINT,
+                fontWeight: 800,
+              }}
+            >
+              {need.requirement}
+            </span>
             <span style={{ color: active ? ANALYTICS.INK_2 : ANALYTICS.MUTED }}>
-              {step.help}
+              {need.sourceSystem} · {need.formats}
             </span>
             <span
               style={{
@@ -1353,6 +1638,396 @@ function EvidenceAskTable({
       })}
     </div>
   );
+}
+
+function ActiveStepNeedsPanel({
+  step,
+  isComplete,
+}: {
+  step: SourceShellStep;
+  isComplete: boolean;
+}) {
+  const need = activeStepNeed(step, isComplete);
+  return (
+    <div
+      data-testid="source-shell-active-step-needs"
+      style={{
+        border: `1px solid ${ANALYTICS.LINE}`,
+        borderRadius: 8,
+        background: ANALYTICS.CARD,
+        margin: "0 0 16px 42px",
+        maxWidth: 760,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          alignItems: "center",
+          borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          display: "flex",
+          gap: 10,
+          justifyContent: "space-between",
+          padding: "10px 12px",
+        }}
+      >
+        <strong style={{ color: ANALYTICS.INK, fontSize: 13 }}>
+          What Continue needs
+        </strong>
+        <span
+          style={{
+            border: `1px solid ${isComplete ? "rgba(17, 120, 84, 0.24)" : ANALYTICS.LINE}`,
+            borderRadius: 999,
+            color: isComplete ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
+            fontFamily: ANALYTICS.MONO,
+            fontSize: 10,
+            fontWeight: 900,
+            padding: "5px 8px",
+            textTransform: "uppercase",
+          }}
+        >
+          {isComplete ? "Done" : "Required"}
+        </span>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(142px, 1fr))",
+          gap: 12,
+          padding: "11px 12px 8px",
+        }}
+      >
+        <StepNeedDatum label="Needed" value={need.item} />
+        <StepNeedDatum label="Required" value={need.requirement} />
+        <StepNeedDatum label="Source system" value={need.sourceSystem} />
+        <StepNeedDatum label="Owner role" value={need.owner} />
+      </div>
+      <div
+        style={{
+          borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(142px, 1fr))",
+          gap: 12,
+          padding: "9px 12px 11px",
+        }}
+      >
+        <StepNeedDatum label="Formats" value={need.formats} />
+        <StepNeedDatum label="Parse target" value={need.parseTarget} />
+        <StepNeedDatum label="Status" value={need.status} tone={need.tone} />
+        <StepNeedDatum label="Next" value={need.nextAction} />
+      </div>
+      {step.template ? (
+        <div
+          style={{
+            borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+            color: ANALYTICS.MUTED,
+            fontSize: 12,
+            lineHeight: 1.4,
+            padding: "9px 12px",
+          }}
+        >
+          Template: <strong>{step.template.name}</strong> · {step.template.meta}
+        </div>
+      ) : null}
+      {step.file ? (
+        <div
+          style={{
+            borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+            color: ANALYTICS.GREEN_TEXT,
+            fontSize: 12,
+            fontWeight: 800,
+            lineHeight: 1.4,
+            padding: "9px 12px",
+          }}
+        >
+          Uploaded: {step.file.name} · {step.file.meta}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ActiveStepGuidePanel({
+  step,
+  stageLabel,
+  isComplete,
+  guidebook,
+  onOpenGuidebook,
+}: {
+  step: SourceShellStep;
+  stageLabel: string;
+  isComplete: boolean;
+  guidebook: SourceStageGuidebookRecord | null;
+  onOpenGuidebook: () => void;
+}) {
+  const guide = activeStepGuide(step, stageLabel, isComplete, guidebook);
+  return (
+    <div
+      data-testid="source-shell-active-step-guide"
+      style={{
+        border: `1px solid ${ANALYTICS.LINE}`,
+        borderRadius: 8,
+        background: ANALYTICS.CARD,
+        margin: "0 0 16px 42px",
+        maxWidth: 760,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          alignItems: "center",
+          borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          display: "flex",
+          gap: 12,
+          justifyContent: "space-between",
+          padding: "10px 12px",
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <strong style={{ color: ANALYTICS.INK, fontSize: 13 }}>
+            Run this step
+          </strong>
+          <div
+            style={{
+              color: ANALYTICS.MUTED,
+              fontSize: 12,
+              lineHeight: 1.35,
+              marginTop: 3,
+              overflowWrap: "anywhere",
+            }}
+          >
+            {guide.session}
+          </div>
+        </div>
+        {guidebook ? (
+          <button
+            type="button"
+            aria-label="Open full guidebook"
+            onClick={onOpenGuidebook}
+            style={{
+              ...BUTTON_STYLE,
+              fontSize: 11,
+              minHeight: 32,
+              padding: "0 10px",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Guidebook
+          </button>
+        ) : null}
+      </div>
+      <p
+        style={{
+          color: ANALYTICS.INK_2,
+          fontSize: 12.5,
+          lineHeight: 1.45,
+          margin: 0,
+          padding: "10px 12px 0",
+        }}
+      >
+        {guide.brief}
+      </p>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+          gap: 12,
+          padding: "11px 12px 12px",
+        }}
+      >
+        <StepNeedDatum label="Invite" value={guide.invite} />
+        <StepNeedDatum label="Collect" value={guide.collect} />
+        <StepNeedDatum label="Template" value={guide.template} />
+        <StepNeedDatum
+          label="Unlock"
+          value={guide.unlock}
+          tone={isComplete ? "good" : "warn"}
+        />
+      </div>
+    </div>
+  );
+}
+
+function StepNeedDatum({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "good" | "warn";
+}) {
+  const color =
+    tone === "good"
+      ? ANALYTICS.GREEN_TEXT
+      : tone === "warn"
+        ? ANALYTICS.AMBER_TEXT
+        : ANALYTICS.INK;
+  return (
+    <div style={{ display: "grid", gap: 3, minWidth: 0 }}>
+      <span
+        style={{
+          color: ANALYTICS.FAINT,
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 9,
+          fontWeight: 900,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+        }}
+      >
+        {label}
+      </span>
+      <strong
+        style={{
+          color,
+          fontSize: 12.5,
+          lineHeight: 1.32,
+          overflowWrap: "anywhere",
+        }}
+      >
+        {value}
+      </strong>
+    </div>
+  );
+}
+
+function activeStepNeed(
+  step: SourceShellStep,
+  isComplete: boolean,
+): ActiveStepNeedView {
+  const requirement = stepRequirementFor(step);
+  const uploaded = Boolean(step.file);
+  const status = isComplete
+    ? "Complete"
+    : step.type === "provide"
+      ? uploaded
+        ? "Uploaded"
+        : "Missing"
+      : "Needs review";
+  const tone: "good" | "warn" = isComplete || uploaded ? "good" : "warn";
+  return {
+    item: requirement.item,
+    requirement: requirement.requirement,
+    sourceSystem: step.provenance?.source ?? requirement.sourceSystem,
+    owner: step.provenance?.owner ?? requirement.ownerRole,
+    formats: requirement.acceptedFormats,
+    parseTarget: requirement.parseTarget,
+    status,
+    tone,
+    nextAction: activeStepNextAction(step, isComplete, uploaded, requirement),
+  };
+}
+
+function stepRequirementFor(step: SourceShellStep): WorkflowStepRequirement {
+  const catalogRequirement = STEP_REQUIREMENTS[step.id];
+  if (catalogRequirement) return catalogRequirement;
+
+  const templateCode = factTemplateCodeForTask(step);
+  const sourceSystem =
+    step.provenance?.source ??
+    (step.type === "provide" ? "Client upload" : "Current stage evidence");
+  const ownerRole = step.provenance?.owner ?? "Stage owner";
+  const acceptedFormats =
+    step.type === "provide"
+      ? "CSV or XLSX"
+      : step.template
+        ? `${step.template.format} template`
+        : "No upload required";
+  const parseTarget = templateCode
+    ? `${templateCode} parsed facts`
+    : step.type === "provide"
+      ? "Registered Source artifact"
+      : "Approval-ready decision evidence";
+
+  return {
+    item: activeStepNeedItem(step),
+    requirement:
+      step.type === "provide"
+        ? "1 required file"
+        : step.type === "decide"
+          ? "1 required decision"
+          : "1 required confirmation",
+    sourceSystem,
+    ownerRole,
+    acceptedFormats,
+    parseTarget,
+    missingAction:
+      step.type === "provide"
+        ? "Upload the required file below."
+        : step.type === "decide"
+          ? "Record the decision, then Continue."
+          : "Review the evidence, then confirm.",
+  };
+}
+
+function activeStepNeedItem(step: SourceShellStep): string {
+  const cleanTitle = step.title.replace(
+    /^(provide|upload|confirm|decide|review)\s+(the\s+)?/i,
+    "",
+  );
+  const label = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
+  if (step.type === "provide") return `${label} file`;
+  if (step.type === "decide") return `${label} decision`;
+  return `${label} review`;
+}
+
+function activeStepNextAction(
+  step: SourceShellStep,
+  isComplete: boolean,
+  uploaded: boolean,
+  requirement: WorkflowStepRequirement,
+): string {
+  if (isComplete) return requirement.completeAction ?? "Continue is enabled.";
+  if (step.type === "provide") {
+    if (uploaded) {
+      return (
+        requirement.uploadedAction ?? "Review the parsed result, then Continue."
+      );
+    }
+    return requirement.missingAction;
+  }
+  return requirement.missingAction;
+}
+
+function activeStepGuide(
+  step: SourceShellStep,
+  stageLabel: string,
+  isComplete: boolean,
+  guidebook: SourceStageGuidebookRecord | null,
+) {
+  const need = activeStepNeed(step, isComplete);
+  const session = guidebook
+    ? `${guidebook.title} · ${guidebook.durationMinutes} min`
+    : `${stageLabel} working session`;
+  const brief = firstSentence(
+    guidebook?.purpose ||
+      guidebook?.sections.find((section) => section.type === "purpose")?.body ||
+      step.help,
+  );
+  const collect =
+    step.type === "provide" ? need.item : firstSentence(step.help);
+  const template = step.template
+    ? `${step.template.name} (${step.template.format})`
+    : step.type === "provide"
+      ? "Upload file"
+      : "No template";
+  return {
+    session,
+    brief,
+    invite: `${need.owner} + stage approver`,
+    collect,
+    template,
+    unlock: isComplete ? "Continue is enabled" : need.nextAction,
+  };
+}
+
+function firstSentence(value: string): string {
+  const cleaned = value
+    .replace(/[`*_>#]/g, "")
+    .replace(/^\s*[-\d.]+\s*/gm, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const match = cleaned.match(/^.*?[.!?](?:\s|$)/);
+  return (match?.[0] ?? cleaned).trim();
 }
 
 function StepDetail({
@@ -2072,7 +2747,143 @@ function EvidenceReadinessPanel({
           ))}
         </div>
       </div>
+      <FileUseReadinessMap files={files} />
     </section>
+  );
+}
+
+function FileUseReadinessMap({
+  files,
+}: {
+  files: readonly SourceShellFileItem[];
+}) {
+  const rows = files
+    .map((file) => ({
+      file,
+      nextAction: fileNextAction(file),
+      readyForUse: fileReadyForUse(file),
+    }))
+    .sort((a, b) => {
+      if (a.file.artifactRole !== b.file.artifactRole) {
+        return a.file.artifactRole === "authoritative" ? -1 : 1;
+      }
+      if (a.readyForUse !== b.readyForUse) return a.readyForUse ? 1 : -1;
+      return a.file.name.localeCompare(b.file.name);
+    })
+    .slice(0, 6);
+
+  return (
+    <div
+      data-testid="source-file-use-readiness-map"
+      style={{
+        borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+        marginTop: 12,
+        paddingTop: 12,
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) auto",
+          gap: 12,
+          alignItems: "start",
+          marginBottom: 9,
+        }}
+      >
+        <div>
+          <div style={WORKSPACE_EYEBROW}>File use map</div>
+          <p
+            style={{
+              margin: "4px 0 0",
+              color: ANALYTICS.MUTED,
+              fontSize: 12.5,
+              lineHeight: 1.45,
+            }}
+          >
+            Shows what each file can do next: gate-defining artifact, supporting
+            evidence, parser state, search readiness, graph projection, and the
+            next action.
+          </p>
+        </div>
+        <span style={SMALL_STATUS_PILL}>
+          {rows.filter((row) => row.readyForUse).length}/{rows.length} ready
+        </span>
+      </div>
+      {rows.length === 0 ? (
+        <div style={{ color: ANALYTICS.MUTED, fontSize: 12.5 }}>
+          No files are registered yet.
+        </div>
+      ) : (
+        <div style={{ overflowX: "auto" }}>
+          <table style={FILE_USE_TABLE}>
+            <thead>
+              <tr>
+                <th style={{ ...FILE_TH, textAlign: "left" }}>File</th>
+                <th style={FILE_TH}>Role</th>
+                <th style={FILE_TH}>Parse</th>
+                <th style={FILE_TH}>Search</th>
+                <th style={FILE_TH}>Graph</th>
+                <th style={{ ...FILE_TH, textAlign: "left" }}>Next action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ file, nextAction, readyForUse }) => (
+                <tr key={file.id}>
+                  <td style={FILE_TD_LABEL}>
+                    <strong>{file.name}</strong>
+                    <span>
+                      {file.stageLabel} · {file.format}
+                    </span>
+                  </td>
+                  <td style={FILE_TD_CENTER}>
+                    <ReadinessChip
+                      label={
+                        file.artifactRole === "authoritative"
+                          ? "Gate"
+                          : "Evidence"
+                      }
+                      tone={
+                        file.artifactRole === "authoritative"
+                          ? "good"
+                          : "neutral"
+                      }
+                    />
+                  </td>
+                  <td style={FILE_TD_CENTER}>
+                    <ReadinessChip
+                      label={fileParseReadinessLabel(file)}
+                      tone={file.parseStatus === "parsed" ? "good" : "warn"}
+                    />
+                  </td>
+                  <td style={FILE_TD_CENTER}>
+                    <ReadinessChip
+                      label={fileSearchReadinessLabel(file)}
+                      tone={
+                        file.embeddingStatus === "embedded" ? "good" : "neutral"
+                      }
+                    />
+                  </td>
+                  <td style={FILE_TD_CENTER}>
+                    <ReadinessChip
+                      label={fileGraphReadinessLabel(file)}
+                      tone={
+                        file.graphStatus === "projected" ? "good" : "neutral"
+                      }
+                    />
+                  </td>
+                  <td style={FILE_TD_ACTION}>
+                    <strong>
+                      {readyForUse ? "Ready for workflow use" : "Open"}
+                    </strong>
+                    <span>{nextAction}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -2098,6 +2909,67 @@ function summarizeEvidenceReadiness(files: readonly SourceShellFileItem[]) {
     registeredOnlyCount,
     searchReadyCount,
   };
+}
+
+function fileReadyForUse(file: SourceShellFileItem): boolean {
+  return (
+    file.parseStatus === "parsed" &&
+    !file.needsComplianceReview &&
+    (file.artifactRole === "evidence" || Boolean(file.latestAcceptance))
+  );
+}
+
+function fileParseReadinessLabel(file: SourceShellFileItem): string {
+  if (file.parseStatus === "parsed") return "parsed";
+  if (file.parseStatus === "failed") return "failed";
+  return "not parsed";
+}
+
+function fileSearchReadinessLabel(file: SourceShellFileItem): string {
+  return file.embeddingStatus === "embedded" ? "embedded" : "not indexed";
+}
+
+function fileGraphReadinessLabel(file: SourceShellFileItem): string {
+  return file.graphStatus === "projected" ? "projected" : "not projected";
+}
+
+function fileNextAction(file: SourceShellFileItem): string {
+  if (file.needsComplianceReview) {
+    return "Resolve compliance review before this file influences scoring or approval.";
+  }
+  if (file.parseStatus !== "parsed") {
+    return "Run or retry parser before using this file as evidence.";
+  }
+  if (file.artifactRole === "authoritative" && !file.latestAcceptance) {
+    return "Accept as client-final before it gates the stage.";
+  }
+  if (file.embeddingStatus !== "embedded") {
+    return "Usable locally; index before enterprise search or aVa citation.";
+  }
+  return "Ready for artifacts, scoring context, and approval review.";
+}
+
+function ReadinessChip({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "good" | "warn" | "neutral";
+}) {
+  return (
+    <span
+      style={{
+        ...FILE_CHIP,
+        ...(tone === "good"
+          ? FILE_CHIP_GOOD
+          : tone === "warn"
+            ? FILE_CHIP_WARN
+            : FILE_CHIP_NEUTRAL),
+      }}
+    >
+      {label}
+    </span>
+  );
 }
 
 function SessionEvidenceCapturePanel({
@@ -3041,6 +3913,7 @@ function IntelligenceWorkspace({
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <IntelligenceReadinessBrief view={view} />
           {view.intelligence.stepInsight ? (
             <StepInsightPanel insight={view.intelligence.stepInsight} />
           ) : null}
@@ -3053,6 +3926,109 @@ function IntelligenceWorkspace({
       </div>
     </section>
   );
+}
+
+function IntelligenceReadinessBrief({ view }: { view: SourceEventShellView }) {
+  const currentStageFiles =
+    view.files.byStage.find((stage) => stage.stageKey === view.stage.key)
+      ?.items ?? [];
+  const missing = intelligenceMissingLine(view);
+  const produced = view.intelligence.stepInsight
+    ? "Stage insight produced"
+    : `${view.intelligence.findings.length} finding${view.intelligence.findings.length === 1 ? "" : "s"} produced`;
+  const evidenceUsed =
+    currentStageFiles.length > 0
+      ? currentStageFiles
+          .slice(0, 2)
+          .map((file) => file.name)
+          .join(", ")
+      : intelligenceBasisLabel(view.intelligence.sourceBasis);
+  const nextAction =
+    view.stage.ready < view.stage.total
+      ? "Complete the active step before approval."
+      : view.stage.artifactReadiness.blockerCount > 0
+        ? "Resolve Files blockers before approval."
+        : "Open the approval gate.";
+
+  return (
+    <section
+      data-testid="source-shell-intelligence-readiness"
+      style={{ ...CARD_STYLE, padding: 16 }}
+    >
+      <div
+        style={{
+          alignItems: "center",
+          display: "flex",
+          gap: 12,
+          justifyContent: "space-between",
+          marginBottom: 12,
+        }}
+      >
+        <div>
+          <div style={WORKSPACE_EYEBROW}>Intelligence brief</div>
+          <h3
+            style={{
+              fontFamily: ANALYTICS.SERIF,
+              fontSize: 18,
+              lineHeight: 1.2,
+              margin: "5px 0 0",
+            }}
+          >
+            What Source knows right now
+          </h3>
+        </div>
+        <span style={SMALL_STATUS_PILL}>
+          {view.intelligence.sourceBasis === "sample"
+            ? "Sample"
+            : "Evidence-bound"}
+        </span>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+          gap: 14,
+        }}
+      >
+        <StepNeedDatum label="Produced" value={produced} />
+        <StepNeedDatum label="Evidence used" value={evidenceUsed} />
+        <StepNeedDatum
+          label="Missing"
+          value={missing}
+          tone={missing === "No visible gaps" ? "good" : "warn"}
+        />
+        <StepNeedDatum label="Next action" value={nextAction} />
+      </div>
+    </section>
+  );
+}
+
+function intelligenceMissingLine(view: SourceEventShellView): string {
+  if (view.stage.ready < view.stage.total) {
+    const openCount = view.stage.total - view.stage.ready;
+    return `${openCount} workflow step${openCount === 1 ? "" : "s"} open`;
+  }
+  if (view.stage.artifactReadiness.blockerCount > 0) {
+    return view.stage.artifactReadiness.blockers[0] ?? "Files review blocker";
+  }
+  return "No visible gaps";
+}
+
+function intelligenceBasisLabel(basis: SourceShellEvidenceBasis): string {
+  switch (basis) {
+    case "live_fact":
+      return "Live facts";
+    case "live_artifact":
+      return "Live artifacts";
+    case "computed":
+      return "Computed read";
+    case "archetype":
+      return "Archetype knowledge";
+    case "sample":
+      return "Sample intelligence";
+    case "missing":
+      return "No evidence yet";
+  }
 }
 
 function ApprovalsWorkspace({
@@ -3071,6 +4047,7 @@ function ApprovalsWorkspace({
         title="Stage decisions"
         subtitle="The workflow prepares the evidence; this page records the approval decision."
       />
+      <ApprovalReadinessBrief view={view} />
       {view.approvals.currentStageItem ? (
         <ApprovalCard
           item={view.approvals.currentStageItem}
@@ -3094,6 +4071,88 @@ function ApprovalsWorkspace({
       {view.approvals.ledger.length > 0 ? (
         <ApprovalLedgerTable ledger={view.approvals.ledger} />
       ) : null}
+    </section>
+  );
+}
+
+function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
+  const workflowComplete = view.stage.ready >= view.stage.total;
+  const filesReady = view.stage.artifactReadiness.ready;
+  const ready = workflowComplete && filesReady;
+  const decision =
+    view.approvals.currentStageItem != null
+      ? `${view.stage.label} gate decision routed.`
+      : `No approval item is currently routed for ${view.stage.label}.`;
+  const nextAction = !workflowComplete
+    ? "Return to steps."
+    : !filesReady
+      ? "Review Files gaps."
+      : (view.approvals.currentStageItem?.actionLabel ?? "No approval action.");
+
+  return (
+    <section
+      data-testid="source-shell-approval-readiness"
+      style={{ ...CARD_STYLE, marginBottom: 14, padding: 16 }}
+    >
+      <div
+        style={{
+          alignItems: "center",
+          display: "flex",
+          gap: 12,
+          justifyContent: "space-between",
+          marginBottom: 12,
+        }}
+      >
+        <div>
+          <div style={WORKSPACE_EYEBROW}>Approval readiness</div>
+          <h3
+            style={{
+              fontFamily: ANALYTICS.SERIF,
+              fontSize: 18,
+              lineHeight: 1.2,
+              margin: "5px 0 0",
+            }}
+          >
+            {ready ? "Ready to decide" : "Not ready to decide"}
+          </h3>
+        </div>
+        <span
+          style={{
+            ...SMALL_STATUS_PILL,
+            color: ready ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
+          }}
+        >
+          {ready ? "Ready" : "Blocked"}
+        </span>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+          gap: 14,
+        }}
+      >
+        <StepNeedDatum
+          label="Workflow"
+          value={`${view.stage.ready}/${view.stage.total} steps complete`}
+          tone={workflowComplete ? "good" : "warn"}
+        />
+        <StepNeedDatum
+          label="Files"
+          value={
+            filesReady
+              ? "No file blockers"
+              : `${view.stage.artifactReadiness.blockerCount} review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
+          }
+          tone={filesReady ? "good" : "warn"}
+        />
+        <StepNeedDatum label="Decision" value={decision} />
+        <StepNeedDatum
+          label="Next action"
+          value={nextAction}
+          tone={ready ? "good" : "warn"}
+        />
+      </div>
     </section>
   );
 }

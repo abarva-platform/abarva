@@ -14,7 +14,7 @@
 //      NO value-type waterfall (the value thesis is a captured fact, not a proof).
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 
 // The gate calls next/navigation's useRouter (for the live approve → advance
 // flow). Stub it so the component renders under jsdom without an App Router.
@@ -43,7 +43,9 @@ describe("Strategy (P0) stage — structure", () => {
       screen.getByRole("heading", { name: "Strategy" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Confirm the mandate and sponsor before any work begins/i),
+      screen.getByText(
+        /Confirm the mandate and sponsor before any work begins/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -93,9 +95,12 @@ describe("Strategy (P0) stage — intake honesty (no waterfall)", () => {
   });
 
   it("the Intelligence tab shows the read but renders NO waterfall", () => {
-    render(<ScopeAnalyticsStage view={SAMPLE_STRATEGY_STAGE} />);
-    // Switch to the Intelligence tab.
-    fireEvent.click(screen.getByRole("button", { name: /Intelligence/i }));
+    render(
+      <ScopeAnalyticsStage
+        view={SAMPLE_STRATEGY_STAGE}
+        activeWorkspace="intelligence"
+      />,
+    );
     // The engine read is present ("What Source brings to Strategy").
     expect(screen.getByTestId("intel-panel")).toBeInTheDocument();
     // ...but the value-type waterfall is not rendered on this intake stage.

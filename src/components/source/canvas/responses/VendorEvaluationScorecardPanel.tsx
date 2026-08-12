@@ -58,7 +58,9 @@ export function VendorEvaluationScorecardPanel({
           <div style={EYEBROW}>Evaluation decision view</div>
           <h3 style={TITLE}>Normalized Vendor Comparison + Scorecard</h3>
           <p style={COPY}>{decisionView.scoreBasis}</p>
-          <p style={RECOMMENDATION_COPY}>{decisionView.finalistRecommendation}</p>
+          <p style={RECOMMENDATION_COPY}>
+            {decisionView.finalistRecommendation}
+          </p>
         </div>
         <div style={HEADER_ACTIONS}>
           <div style={COUNT_WRAP}>
@@ -66,7 +68,10 @@ export function VendorEvaluationScorecardPanel({
             <Count label="Criteria" value={decisionView.scorecardRows.length} />
           </div>
           {hasDecisionBriefExports ? (
-            <div style={EXPORT_WRAP} aria-label="Evaluation decision brief exports">
+            <div
+              style={EXPORT_WRAP}
+              aria-label="Evaluation decision brief exports"
+            >
               <span style={EXPORT_LABEL}>Decision brief</span>
               <div style={EXPORT_LINKS}>
                 {decisionBriefDocxHref ? (
@@ -94,6 +99,8 @@ export function VendorEvaluationScorecardPanel({
           ) : null}
         </div>
       </div>
+
+      <ExecutiveDecisionCockpit decisionView={decisionView} />
 
       <div style={TRANSPARENCY_BOX}>
         <div style={EYEBROW}>How the score is defended</div>
@@ -187,7 +194,9 @@ export function VendorEvaluationScorecardPanel({
                         >
                           {value?.posture ?? "watch"}
                         </span>
-                        <strong>{moneyDisplay(value?.value ?? "Not provided")}</strong>
+                        <strong>
+                          {moneyDisplay(value?.value ?? "Not provided")}
+                        </strong>
                         <span>{value?.caveat ?? "No caveat recorded."}</span>
                       </td>
                     );
@@ -240,16 +249,16 @@ export function VendorEvaluationScorecardPanel({
                             {score.weightedContribution.toFixed(2)} weighted
                           </em>
                         ) : null}
-                        <span>{score?.rationale ?? "No rationale loaded."}</span>
+                        <span>
+                          {score?.rationale ?? "No rationale loaded."}
+                        </span>
                       </td>
                     );
                   })}
                 </tr>
               ))}
               <tr>
-                <td style={{ ...TD_LABEL, fontWeight: 800 }}>
-                  Weighted total
-                </td>
+                <td style={{ ...TD_LABEL, fontWeight: 800 }}>Weighted total</td>
                 <td style={TD_CENTER}>100%</td>
                 {vendors.map((vendor) => (
                   <td key={vendor.vendorId} style={TD_CENTER}>
@@ -285,7 +294,9 @@ export function VendorEvaluationScorecardPanel({
               {decisionView.scoreImprovementScenarios.map((scenario) => (
                 <tr key={scenario.vendorId}>
                   <td style={TD_LABEL}>
-                    <strong>{scenario.vendorName.replace(/\s+—\s+.*/, "")}</strong>
+                    <strong>
+                      {scenario.vendorName.replace(/\s+—\s+.*/, "")}
+                    </strong>
                     <span>{scenario.requiredEvidence}</span>
                   </td>
                   <td style={TD_CENTER}>{scenario.currentScore.toFixed(1)}</td>
@@ -312,6 +323,138 @@ export function VendorEvaluationScorecardPanel({
       </div>
     </section>
   );
+}
+
+function ExecutiveDecisionCockpit({
+  decisionView,
+}: {
+  decisionView: VendorEvaluationDecisionView;
+}) {
+  const lead = summaryById(decisionView, decisionView.leadingVendorId);
+  const cheapest = summaryById(decisionView, decisionView.cheapestVendorId);
+  const transitionRisk = summaryById(
+    decisionView,
+    decisionView.highestTransitionRiskVendorId,
+  );
+  const topScenario = [...decisionView.scoreImprovementScenarios].sort(
+    (a, b) => b.scoreDelta - a.scoreDelta,
+  )[0];
+  const openConditions = decisionView.vendorSummaries.flatMap((summary) =>
+    summary.conditions.map(
+      (condition) => `${shortVendor(summary.vendorName)}: ${condition}`,
+    ),
+  );
+
+  return (
+    <div style={EXEC_COCKPIT} aria-label="Executive decision cockpit">
+      <div style={EXEC_HEAD}>
+        <div>
+          <div style={EYEBROW}>Executive decision cockpit</div>
+          <p style={MINI_COPY}>
+            The executive readout separates the risk-adjusted leader from the
+            lowest-price benchmark and keeps award posture conditional until
+            BAFO evidence closes the named gaps.
+          </p>
+        </div>
+        <span style={{ ...PILL, ...WARN }}>Do not award yet</span>
+      </div>
+      <div style={EXEC_GRID}>
+        <DecisionTile
+          label="Risk-adjusted lead"
+          value={shortVendor(lead?.vendorName)}
+          detail={
+            lead
+              ? `${lead.weightedScore.toFixed(1)}/10 · ${recommendationLabel(lead.recommendation)}`
+              : "No lead calculated."
+          }
+          tone="good"
+        />
+        <DecisionTile
+          label="Price benchmark"
+          value={shortVendor(cheapest?.vendorName)}
+          detail={
+            cheapest
+              ? "Use to pressure commercials; do not confuse lowest price with lowest risk."
+              : "No price benchmark calculated."
+          }
+          tone="warn"
+        />
+        <DecisionTile
+          label="Highest transition risk"
+          value={shortVendor(transitionRisk?.vendorName)}
+          detail={
+            transitionRisk
+              ? "Needs explicit cure or executive acceptance before final award."
+              : "No transition risk posture loaded."
+          }
+          tone="bad"
+        />
+        <DecisionTile
+          label="BAFO upside to test"
+          value={
+            topScenario
+              ? `+${topScenario.scoreDelta.toFixed(1)} pts`
+              : "No scenario"
+          }
+          detail={
+            topScenario
+              ? `${shortVendor(topScenario.vendorName)}: ${topScenario.requiredEvidence}`
+              : "No improvement scenario loaded."
+          }
+          tone="good"
+        />
+      </div>
+      {openConditions.length > 0 ? (
+        <div style={EXEC_CONDITIONS}>
+          <div style={EYEBROW}>Open conditions before award</div>
+          <ul style={BULLET_LIST}>
+            {openConditions.slice(0, 4).map((condition) => (
+              <li key={condition}>{condition}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function DecisionTile({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  tone: "good" | "warn" | "bad";
+}) {
+  return (
+    <div style={{ ...DECISION_TILE, ...tileTone(tone) }}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <em>{detail}</em>
+    </div>
+  );
+}
+
+function summaryById(
+  decisionView: VendorEvaluationDecisionView,
+  vendorId: string,
+): VendorEvaluationDecisionView["vendorSummaries"][number] | undefined {
+  return decisionView.vendorSummaries.find(
+    (summary) => summary.vendorId === vendorId,
+  );
+}
+
+function shortVendor(value?: string): string {
+  return value?.replace(/\s+—\s+.*/, "") ?? "Not loaded";
+}
+
+function tileTone(tone: "good" | "warn" | "bad"): CSSProperties {
+  if (tone === "good") return GOOD;
+  if (tone === "bad") return BAD;
+  return WARN;
 }
 
 function Count({ label, value }: { label: string; value: number }) {
@@ -451,6 +594,42 @@ const SUMMARY_GRID: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
   gap: 12,
+};
+
+const EXEC_COCKPIT: CSSProperties = {
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  background: "rgba(255,255,255,0.58)",
+  padding: 12,
+  display: "grid",
+  gap: 12,
+};
+
+const EXEC_HEAD: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) auto",
+  gap: 12,
+  alignItems: "start",
+};
+
+const EXEC_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+  gap: 9,
+};
+
+const DECISION_TILE: CSSProperties = {
+  border: "1px solid",
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  padding: 10,
+  display: "grid",
+  gap: 5,
+  minHeight: 112,
+};
+
+const EXEC_CONDITIONS: CSSProperties = {
+  borderTop: `1px solid ${CANVAS.HAIRLINE}`,
+  paddingTop: 10,
 };
 
 const SUMMARY_CARD: CSSProperties = {

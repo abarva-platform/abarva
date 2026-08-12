@@ -174,7 +174,9 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       }),
     );
 
-    expect(screen.getByText("Complete")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("source-shell-active-step-needs"),
+    ).toHaveTextContent("Complete");
     expect(screen.getByRole("button", { name: /Continue/ })).toBeEnabled();
   });
 });

@@ -23,7 +23,9 @@ export function VendorChallengeLeveragePanel({
       <div style={HEADER}>
         <div>
           <div style={EYEBROW}>Challenge before scoring</div>
-          <h3 style={TITLE}>Vendor Challenge Log + Commercial Leverage Seeds</h3>
+          <h3 style={TITLE}>
+            Vendor Challenge Log + Commercial Leverage Seeds
+          </h3>
           <p style={COPY}>
             Source turns normalized response profiles into the questions,
             scoring caveats, and BAFO asks procurement should use before
@@ -35,6 +37,8 @@ export function VendorChallengeLeveragePanel({
           <Count label="Levers" value={intelligence.leverageSeedCount} />
         </div>
       </div>
+
+      <NegotiationLeverageCockpit seeds={seeds} />
 
       <div style={GRID}>
         <div style={PANEL}>
@@ -50,7 +54,9 @@ export function VendorChallengeLeveragePanel({
               <article key={challenge.challengeId} style={ROW}>
                 <div style={ROW_TOP}>
                   <strong style={ROW_VENDOR}>{challenge.vendorName}</strong>
-                  <span style={{ ...PILL, ...severityTone(challenge.severity) }}>
+                  <span
+                    style={{ ...PILL, ...severityTone(challenge.severity) }}
+                  >
                     {challenge.severity}
                   </span>
                 </div>
@@ -60,10 +66,7 @@ export function VendorChallengeLeveragePanel({
                 <p style={ROW_FINDING}>{challenge.finding}</p>
                 <dl style={DETAILS}>
                   <Detail label="Evidence" value={challenge.evidenceLabel} />
-                  <Detail
-                    label="Ask"
-                    value={challenge.clarificationQuestion}
-                  />
+                  <Detail label="Ask" value={challenge.clarificationQuestion} />
                   <Detail
                     label="Scoring"
                     value={challenge.scoringImplication}
@@ -106,6 +109,71 @@ export function VendorChallengeLeveragePanel({
   );
 }
 
+function NegotiationLeverageCockpit({
+  seeds,
+}: {
+  seeds: VendorChallengeIntelligence["leverageSeeds"];
+}) {
+  if (seeds.length === 0) return null;
+  const evidenced = seeds.filter((seed) => seed.confidence === "high");
+  const opportunity = seeds.filter((seed) => seed.confidence !== "high");
+
+  return (
+    <div style={COCKPIT}>
+      <div style={COCKPIT_HEADER}>
+        <div>
+          <div style={EYEBROW}>Negotiation leverage cockpit</div>
+          <p style={MINI_COPY}>
+            Turns proposal gaps into vendor pressure without booking unproven
+            savings. Every ask stays tied to evidence, confidence, impact, and a
+            value guardrail.
+          </p>
+        </div>
+        <div style={LEVER_SUMMARY}>
+          <Count label="Evidenced asks" value={evidenced.length} />
+          <Count label="Test only" value={opportunity.length} />
+        </div>
+      </div>
+      <div style={LEVER_CARD_GRID}>
+        {seeds.slice(0, 6).map((seed) => (
+          <article key={seed.seedId} style={LEVER_CARD}>
+            <div style={ROW_TOP}>
+              <strong style={ROW_VENDOR}>{seed.vendorName}</strong>
+              <span style={{ ...PILL, ...confidenceTone(seed.confidence) }}>
+                {seed.confidence}
+              </span>
+            </div>
+            <div style={ROW_CATEGORY}>
+              {seed.leverType.replaceAll("_", " ")}
+            </div>
+            <p style={ROW_FINDING}>{seed.finding}</p>
+            <div style={LEVER_FIELD_GRID}>
+              <LeverageField
+                label="Impact signal"
+                value={seed.estimatedImpact}
+              />
+              <LeverageField label="BAFO ask" value={seed.recommendedAsk} />
+              <LeverageField
+                label="Value guardrail"
+                value={valueGuardrail(seed.confidence)}
+              />
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LeverageField({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={LEVER_FIELD}>
+      <span style={LEVER_FIELD_LABEL}>{label}</span>
+      <strong style={LEVER_FIELD_VALUE}>{value}</strong>
+    </div>
+  );
+}
+
 function Count({ label, value }: { label: string; value: number }) {
   return (
     <div style={COUNT}>
@@ -130,6 +198,23 @@ function severityTone(
   if (severity === "high") return BAD;
   if (severity === "medium") return WARN;
   return GOOD;
+}
+
+function confidenceTone(
+  confidence: VendorChallengeIntelligence["leverageSeeds"][number]["confidence"],
+): CSSProperties {
+  if (confidence === "high") return GOOD;
+  if (confidence === "medium") return WARN;
+  return BAD;
+}
+
+function valueGuardrail(
+  confidence: VendorChallengeIntelligence["leverageSeeds"][number]["confidence"],
+): string {
+  if (confidence === "high") {
+    return "Use as BAFO pressure; book value only after revised pricing or contract exhibit.";
+  }
+  return "Opportunity to test; do not count as savings until the vendor prices and cites it.";
 }
 
 const CARD: CSSProperties = {
@@ -200,6 +285,72 @@ const GRID: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
   gap: 12,
+};
+
+const COCKPIT: CSSProperties = {
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  background: "rgba(255,255,255,0.56)",
+  padding: 12,
+  display: "grid",
+  gap: 10,
+};
+
+const COCKPIT_HEADER: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) auto",
+  gap: 14,
+  alignItems: "start",
+};
+
+const LEVER_SUMMARY: CSSProperties = {
+  display: "flex",
+  gap: 8,
+};
+
+const LEVER_CARD_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(330px, 1fr))",
+  gap: 10,
+};
+
+const LEVER_CARD: CSSProperties = {
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  background: CANVAS.CARD,
+  padding: 11,
+  display: "grid",
+  gap: 8,
+};
+
+const LEVER_FIELD_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  gap: 8,
+};
+
+const LEVER_FIELD: CSSProperties = {
+  borderTop: `1px solid ${CANVAS.HAIRLINE}`,
+  paddingTop: 7,
+  display: "grid",
+  gap: 4,
+  color: CANVAS.INK,
+  fontSize: CANVAS.T_MICRO_SMALL,
+  lineHeight: 1.35,
+};
+
+const LEVER_FIELD_LABEL: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: CANVAS.T_MICRO,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: CANVAS.INK_MUTED,
+};
+
+const LEVER_FIELD_VALUE: CSSProperties = {
+  color: CANVAS.INK,
+  fontSize: CANVAS.T_BODY_SMALL,
+  lineHeight: 1.38,
 };
 
 const PANEL: CSSProperties = {

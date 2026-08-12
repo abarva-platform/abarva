@@ -38,6 +38,14 @@ describe("VendorEvaluationScorecardPanel", () => {
     expect(html).toContain("Normalized Vendor Comparison");
     expect(html).toContain("Evaluation Scorecard");
     expect(html).toContain("Executive Tradeoff Summary");
+    expect(html).toContain("Executive decision cockpit");
+    expect(html).toContain("Risk-adjusted lead");
+    expect(html).toContain("Price benchmark");
+    expect(html).toContain("Highest transition risk");
+    expect(html).toContain("BAFO upside to test");
+    expect(html).toContain("Do not award yet");
+    expect(html).toContain("Open conditions before award");
+    expect(html).toContain("do not confuse lowest price with lowest risk");
     expect(html).toContain("How the score is defended");
     expect(html).toContain("BAFO Improvement Scenario");
     expect(html).toContain("Decision brief");
@@ -50,7 +58,9 @@ describe("VendorEvaluationScorecardPanel", () => {
     expect(html).toContain("Vendor B");
     expect(html).toContain("Vendor C");
     expect(html).toMatch(/Weighted score|5-year TCO|Transition risk/i);
-    expect(html).not.toMatch(/Northstar|TitanTech|CloudBridge|DataPeak|BlueMaster|ArcVault/i);
+    expect(html).not.toMatch(
+      /Northstar|TitanTech|CloudBridge|DataPeak|BlueMaster|ArcVault/i,
+    );
     expect(html).not.toMatch(
       /source_events|Sourcing Artifacts|Mode:|Current state:|Airline Demo|SKYH-NORMALIZE|Atlas Decision Brief|Steward sign-off|Sentinel Risk/i,
     );

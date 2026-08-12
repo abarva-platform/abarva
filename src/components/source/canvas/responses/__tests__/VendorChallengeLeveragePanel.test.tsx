@@ -22,6 +22,13 @@ describe("VendorChallengeLeveragePanel", () => {
 
     expect(html).toContain("Vendor Challenge Log");
     expect(html).toContain("Commercial Leverage Seeds");
+    expect(html).toContain("Negotiation leverage cockpit");
+    expect(html).toContain("Evidenced asks");
+    expect(html).toContain("Test only");
+    expect(html).toContain("Impact signal");
+    expect(html).toContain("Value guardrail");
+    expect(html).toContain("book value only after revised pricing");
+    expect(html).toContain("do not count as savings");
     expect(html).toContain("Vendor A");
     expect(html).toContain("Vendor B");
     expect(html).toContain("Vendor C");

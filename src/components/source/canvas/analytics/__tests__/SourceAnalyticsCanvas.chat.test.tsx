@@ -170,6 +170,29 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("shows what the active step needs before Continue can unlock", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Lakeshore"
+      />,
+    );
+
+    const needs = screen.getByTestId("source-shell-active-step-needs");
+    expect(needs).toHaveTextContent("What Continue needs");
+    expect(needs).toHaveTextContent("Volumetrics file");
+    expect(needs).toHaveTextContent("ITSM / finance baseline");
+    expect(needs).toHaveTextContent("Ravi Menon, IT-Ops");
+    expect(needs).toHaveTextContent("CSV or XLSX");
+    expect(needs).toHaveTextContent("1 required file");
+    expect(needs).toHaveTextContent("Tickets, SLA misses, change orders");
+    expect(needs).toHaveTextContent("Missing");
+    expect(needs).toHaveTextContent(
+      "Download the template, fill one row per tower, then upload.",
+    );
+  });
+
   it("keeps gate approval handoff inside the event shell workspace", () => {
     render(
       <SourceAnalyticsCanvas
@@ -186,6 +209,14 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     fireEvent.click(screen.getByRole("button", { name: /approvals/i }));
 
     expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
+    const readiness = screen.getByTestId("source-shell-approval-readiness");
+    expect(readiness).toHaveTextContent("Approval readiness");
+    expect(readiness).toHaveTextContent("Not ready to decide");
+    expect(readiness).toHaveTextContent("Workflow");
+    expect(readiness).toHaveTextContent("Files");
+    expect(readiness).toHaveTextContent("Decision");
+    expect(readiness).toHaveTextContent("Next action");
+    expect(readiness).toHaveTextContent("Return to steps.");
   });
 
   it("keeps inactive workspace tabs quiet instead of labeling them hidden", () => {
@@ -221,6 +252,29 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.getByTestId("source-shell-workspace-approvals"),
     ).toHaveAttribute("aria-label", "Approvals");
+  });
+
+  it("explains produced intelligence, evidence used, missing inputs, and next action", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Lakeshore"
+        initialWorkspace="intelligence"
+      />,
+    );
+
+    const brief = screen.getByTestId("source-shell-intelligence-readiness");
+    expect(brief).toHaveTextContent("Intelligence brief");
+    expect(brief).toHaveTextContent("What Source knows right now");
+    expect(brief).toHaveTextContent("Produced");
+    expect(brief).toHaveTextContent("Evidence used");
+    expect(brief).toHaveTextContent("Missing");
+    expect(brief).toHaveTextContent("workflow steps open");
+    expect(brief).toHaveTextContent("Next action");
+    expect(brief).toHaveTextContent(
+      "Complete the active step before approval.",
+    );
   });
 
   it("labels file-ledger generated drafts and client finals from artifact state", () => {
@@ -279,7 +333,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: /files & deliverables/i }),
+      screen.getByRole("button", { name: /^files & deliverables$/i }),
     );
     // This test checks rows across multiple stages (scope + rfp) at once —
     // the lifecycle matrix defaults to the viewed stage only, so expand to
@@ -504,7 +558,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: /files & deliverables/i }),
+      screen.getByRole("button", { name: /^files & deliverables$/i }),
     );
 
     const readiness = screen.getByTestId("source-evidence-readiness-panel");
@@ -519,6 +573,17 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.getByTestId("source-evidence-readiness-registered-only"),
     ).toHaveTextContent("Vendor call recording");
+    const fileUseMap = screen.getByTestId("source-file-use-readiness-map");
+    expect(fileUseMap).toHaveTextContent("File use map");
+    expect(fileUseMap).toHaveTextContent("Sponsor call notes");
+    expect(fileUseMap).toHaveTextContent("Scope workshop output");
+    expect(fileUseMap).toHaveTextContent("Vendor call recording");
+    expect(fileUseMap).toHaveTextContent("Evidence");
+    expect(fileUseMap).toHaveTextContent("parsed");
+    expect(fileUseMap).toHaveTextContent("embedded");
+    expect(fileUseMap).toHaveTextContent("not projected");
+    expect(fileUseMap).toHaveTextContent("Run or retry parser");
+    expect(fileUseMap).toHaveTextContent("Ready for workflow use");
     expect(
       screen.getByTestId("source-shell-file-processing-parsed-notes"),
     ).toHaveTextContent("PARSED");
@@ -561,7 +626,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: /files & deliverables/i }),
+      screen.getByRole("button", { name: /^files & deliverables$/i }),
     );
     // Viewing "scope" but this artifact is stageKey "rfp" — the lifecycle
     // matrix defaults to the viewed stage only, so expand to see it.
@@ -624,7 +689,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: /files & deliverables/i }),
+      screen.getByRole("button", { name: /^files & deliverables$/i }),
     );
     expect(
       screen.getByTestId("source-session-evidence-capture"),
@@ -673,7 +738,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
       screen.getByTestId("source-analytics-canvas").textContent,
     ).not.toContain("approval belongs in Source Approvals");
     expect(screen.getByTestId("source-analytics-canvas").textContent).toMatch(
-      /move to approval/i,
+      /approval/i,
     );
   });
 
