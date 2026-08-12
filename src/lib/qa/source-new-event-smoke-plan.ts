@@ -12,6 +12,17 @@ import {
 } from "@/lib/source/canonical-specs/artifact-specs";
 import type { SourceStageKey } from "@/lib/source/types";
 
+type SourceNewEventCanonicalStageKey = Exclude<
+  SourceStageKey,
+  | "intake"
+  | "sourcing_strategy"
+  | "rfp_rfi_package"
+  | "vendor_responses"
+  | "orals_bafo"
+  | "contract_mobilization"
+  | "value_realization"
+>;
+
 export type SourceNewEventSmokeWorkspace =
   | "steps"
   | "files"
@@ -21,7 +32,7 @@ export type SourceNewEventSmokeWorkspace =
 
 export interface SourceNewEventSmokeStage {
   index: number;
-  stageKey: SourceStageKey;
+  stageKey: SourceNewEventCanonicalStageKey;
   stageLabel: string;
   route: string;
   expectedWorkspaces: SourceNewEventSmokeWorkspace[];
@@ -71,30 +82,28 @@ const PROOF_PACK_FIELDS = [
   "next_action",
 ] as const;
 
-const PRIMARY_PROOF_QUESTIONS: Record<
-  (typeof SOURCE_STAGE_ORDER)[number],
-  string
-> = {
-  strategy:
-    "Does the user know the mandate, sponsor, value thesis, and next gate?",
-  scope:
-    "Does the user know what is in scope, out of scope, missing, and required before RFP?",
-  rfp: "Does the user know which RFP package, response template, pricing template, and rubric are ready?",
-  responses:
-    "Does the user know which vendor responses are received, parse-ready, missing, or not scoreable?",
-  evaluation:
-    "Does the user know which scores are cited, held, overridden, or blocked?",
-  pricing: "Does the user know why vendor pricing is or is not comparable?",
-  bafo: "Does the user know which vendor asks create leverage and what remains unresolved?",
-  executive_decision:
-    "Does the user know the recommendation, value case, risk, and approval conditions?",
-  selection:
-    "Does the user know what was awarded, what value was committed, and what conditions carry forward?",
-  transition:
-    "Does the user know the go-live blockers, KT evidence, and obligation readiness?",
-  value:
-    "Does the user know what value is committed, realized, at risk, or unproven?",
-};
+const PRIMARY_PROOF_QUESTIONS: Record<SourceNewEventCanonicalStageKey, string> =
+  {
+    strategy:
+      "Does the user know the mandate, sponsor, value thesis, and next gate?",
+    scope:
+      "Does the user know what is in scope, out of scope, missing, and required before RFP?",
+    rfp: "Does the user know which RFP package, response template, pricing template, and rubric are ready?",
+    responses:
+      "Does the user know which vendor responses are received, parse-ready, missing, or not scoreable?",
+    evaluation:
+      "Does the user know which scores are cited, held, overridden, or blocked?",
+    pricing: "Does the user know why vendor pricing is or is not comparable?",
+    bafo: "Does the user know which vendor asks create leverage and what remains unresolved?",
+    executive_decision:
+      "Does the user know the recommendation, value case, risk, and approval conditions?",
+    selection:
+      "Does the user know what was awarded, what value was committed, and what conditions carry forward?",
+    transition:
+      "Does the user know the go-live blockers, KT evidence, and obligation readiness?",
+    value:
+      "Does the user know what value is committed, realized, at risk, or unproven?",
+  };
 
 export function buildSourceNewEventSmokePlan(input: {
   eventId: string;
@@ -106,7 +115,11 @@ export function buildSourceNewEventSmokePlan(input: {
     eventId: input.eventId,
     persona,
     stages: SOURCE_STAGE_ORDER.map((stageKey, index) =>
-      buildStageSmoke(stageKey, index + 1, input.eventId),
+      buildStageSmoke(
+        stageKey as SourceNewEventCanonicalStageKey,
+        index + 1,
+        input.eventId,
+      ),
     ),
     totalStages: SOURCE_STAGE_ORDER.length,
     proofPackFields: [...PROOF_PACK_FIELDS],
@@ -117,7 +130,7 @@ export function buildSourceNewEventSmokePlan(input: {
 }
 
 function buildStageSmoke(
-  stageKey: (typeof SOURCE_STAGE_ORDER)[number],
+  stageKey: SourceNewEventCanonicalStageKey,
   index: number,
   eventId: string,
 ): SourceNewEventSmokeStage {
