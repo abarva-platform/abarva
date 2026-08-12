@@ -290,13 +290,22 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
     expect(
       screen.getByTestId("source-shell-approval-readiness"),
-    ).toHaveTextContent("Not ready to decide");
+    ).toHaveTextContent("Artifact queue blocks the gate");
     expect(
       screen.getByTestId("source-shell-approval-readiness"),
-    ).toHaveTextContent("Review Files gaps.");
+    ).toHaveTextContent("Not gate-ready");
+    expect(
+      screen.getByTestId("source-shell-approval-readiness"),
+    ).toHaveTextContent("Clear artifact queue.");
     expect(
       screen.getByTestId("source-shell-approval-review-gaps"),
-    ).toHaveTextContent("Review gaps before approval");
+    ).toHaveTextContent("Clear these artifact actions before approval");
+    expect(
+      screen.getByTestId("source-shell-approval-review-gaps"),
+    ).toHaveTextContent("not decision-ready until the current-stage artifact queue is cleared");
+    expect(
+      screen.getByTestId("source-shell-approval-open-files"),
+    ).toHaveTextContent("Clear artifact queue");
     expect(
       screen.getByTestId("source-shell-approval-open-files"),
     ).toHaveAttribute(

@@ -4879,8 +4879,18 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
   const nextAction = !workflowComplete
     ? "Return to steps."
     : !filesReady
-      ? "Review Files gaps."
+      ? "Clear artifact queue."
       : (view.approvals.currentStageItem?.actionLabel ?? "No approval action.");
+  const readinessTitle = ready
+    ? "Ready to decide"
+    : workflowComplete
+      ? "Artifact queue blocks the gate"
+      : "Workflow inputs still open";
+  const readinessStatus = ready
+    ? "Ready"
+    : workflowComplete
+      ? "Not gate-ready"
+      : "Inputs open";
 
   return (
     <section
@@ -4906,7 +4916,7 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
               margin: "5px 0 0",
             }}
           >
-            {ready ? "Ready to decide" : "Not ready to decide"}
+            {readinessTitle}
           </h3>
         </div>
         <span
@@ -4915,7 +4925,7 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
             color: ready ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
           }}
         >
-          {ready ? "Ready" : "Blocked"}
+          {readinessStatus}
         </span>
       </div>
       <div
@@ -4931,10 +4941,10 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
           tone={workflowComplete ? "good" : "warn"}
         />
         <StepNeedDatum
-          label="Files"
+          label="Artifact queue"
           value={
             filesReady
-              ? "No file blockers"
+              ? "No blockers"
               : `${view.stage.artifactReadiness.blockerCount} review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
           }
           tone={filesReady ? "good" : "warn"}
@@ -4963,8 +4973,13 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
           }}
         >
           <strong style={{ color: ANALYTICS.INK }}>
-            Review gaps before approval
+            Clear these artifact actions before approval
           </strong>
+          <span>
+            Stage inputs are complete, but the approval gate is not
+            decision-ready until the current-stage artifact queue is cleared or
+            an owner records an explicit exception.
+          </span>
           {view.stage.artifactReadiness.blockers.slice(0, 4).map((blocker) => (
             <span key={blocker}>{blocker}</span>
           ))}
@@ -5012,7 +5027,7 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
                 textDecoration: "none",
               }}
             >
-              Open Files & deliverables
+              Clear artifact queue
             </Link>
           ) : null}
         </div>
