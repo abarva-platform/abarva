@@ -32,6 +32,7 @@ This release corrects the Source Vendor 360 cockpit layout so the governed execu
 - `src/app/(maestro)/source/preview/workspace/workspace.css`
 - `src/app/(maestro)/source/preview/workspace/__tests__/workspace-ava-contract.test.ts`
 - Follow-up: adjusted the Top contracts table width allocation after production Chrome proof showed the confidence column wrapping too aggressively.
+- Follow-up: reserved right-side clearance for Vendor 360 action buttons so the fixed aVa launcher does not obscure workflow controls.
 
 ## QA / Validation
 
@@ -40,7 +41,7 @@ This release corrects the Source Vendor 360 cockpit layout so the governed execu
 - PASS: `NODE_OPTIONS=--max-old-space-size=4096 npx jest --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/workspace-ava-contract.test.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' --runInBand`
 - PASS: Local dev server launched with webpack for layout smoke setup.
 - PASS: Production signed-in Chrome proof after first deploy confirmed section tabs, no old Explore/Concentration page content, no horizontal viewport overflow, and a full-width cockpit.
-- FOLLOW-UP: Production signed-in Chrome proof also identified narrow confidence-cell wrapping in Top contracts; this candidate includes the table polish.
+- FOLLOW-UP: Production signed-in Chrome proof also identified narrow confidence-cell wrapping in Top contracts and a fixed launcher overlap on action controls; this candidate includes both visual polish items.
 - BLOCKED: Local signed-in visual proof, because localhost redirected to the guarded sign-in surface.
 
 ## Rollout Plan

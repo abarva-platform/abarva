@@ -98,6 +98,7 @@
   grid-template-columns:
     minmax(210px, 1.05fr) minmax(240px, 1.35fr) minmax(86px, 0.42fr)
     minmax(104px, 0.48fr) minmax(72px, 0.36fr) minmax(132px, 0.48fr);
+  padding-right: clamp(108px, 8vw, 130px) !important;
 }
 
 .sw-cockpit-action-row:focus-visible {
@@ -191,6 +192,7 @@
   .sw-cockpit-action-row {
     grid-template-columns: 1fr;
     gap: 9px !important;
+    padding-right: 22px !important;
   }
 
   .sw-cockpit-action-row > span {
