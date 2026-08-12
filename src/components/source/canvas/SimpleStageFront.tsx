@@ -315,15 +315,136 @@ export function SimpleStageFront({
       </div>
 
       {view.extras.length > 0 ? (
-        <details style={EXTRAS_STYLE}>
-          <summary style={EXTRAS_SUMMARY_STYLE}>What else would help?</summary>
-          <ul style={EXTRAS_LIST_STYLE}>
-            {view.extras.map((requirement) => (
-              <li key={requirement.requirementId}>
-                {requirement.label} · {requirement.acceptHint}
-              </li>
-            ))}
-          </ul>
+        <details
+          data-testid="source-simple-front-optional-evidence"
+          style={EXTRAS_STYLE}
+        >
+          <summary style={EXTRAS_SUMMARY_STYLE}>
+            Optional evidence that improves confidence
+          </summary>
+          <div style={EXTRAS_BODY_STYLE}>
+            <p style={EXTRAS_HELP_STYLE}>
+              These rows do not block the gate, but they make artifacts,
+              scoring, pricing, or aVa answers more defensible.
+            </p>
+            <div style={EVIDENCE_TABLE_STYLE} aria-label="Optional evidence">
+              <div style={OPTIONAL_TABLE_HEADER_STYLE}>
+                <span>Optional evidence</span>
+                <span>Source / acceptable input</span>
+                <span>Status</span>
+                <span>Action</span>
+              </div>
+              {view.extras.map((requirement) => {
+                const isAnswerOpen = answerFor === requirement.requirementId;
+                const isSkipped = skipped.has(requirement.requirementId);
+                return (
+                  <div
+                    key={requirement.requirementId}
+                    data-testid={`source-simple-front-optional-${requirement.requirementId}`}
+                    style={OPTIONAL_ROW_STYLE}
+                  >
+                    <div style={ASK_COPY_STYLE}>
+                      <strong style={ASK_TITLE_STYLE}>
+                        {requirement.label}
+                      </strong>
+                      <p style={ASK_META_STYLE}>{requirement.why}</p>
+                    </div>
+                    <div style={ASK_COPY_STYLE}>
+                      <p style={ASK_HINT_STYLE}>{requirement.acceptHint}</p>
+                      {isAnswerOpen ? (
+                        <div style={ANSWER_BOX_STYLE}>
+                          <textarea
+                            data-testid={`source-simple-front-answer-${requirement.requirementId}`}
+                            value={answerText}
+                            onChange={(event) =>
+                              setAnswerText(event.target.value)
+                            }
+                            placeholder="Type the answer you would have given in a meeting."
+                            style={ANSWER_TEXTAREA_STYLE}
+                          />
+                          <div style={ANSWER_ACTIONS_STYLE}>
+                            <button
+                              type="button"
+                              onClick={() => handleAnswer(requirement)}
+                              disabled={
+                                answerPending === requirement.requirementId
+                              }
+                              style={PRIMARY_SMALL_STYLE}
+                            >
+                              Save answer
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAnswerFor(null);
+                                setAnswerText("");
+                              }}
+                              style={QUIET_BUTTON_STYLE}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                    <div>
+                      <span
+                        style={stateChipStyle(requirement.state, isSkipped)}
+                      >
+                        {requirementStatusLabel(requirement, isSkipped)}
+                      </span>
+                    </div>
+                    <div style={ASK_ACTIONS_STYLE}>
+                      <a
+                        href={`/api/v1/source/${eventId}/evidence/${encodeURIComponent(
+                          requirement.requirementId,
+                        )}/template`}
+                        data-testid={`source-simple-front-template-${requirement.requirementId}`}
+                        style={TEMPLATE_LINK_STYLE}
+                        title="Download a blank, pre-shaped form for this item. Fill it in and upload it back — it attaches here automatically."
+                      >
+                        Template
+                      </a>
+                      <input
+                        ref={(node) => {
+                          fileInputs.current[requirement.requirementId] = node;
+                        }}
+                        data-testid={`source-simple-front-file-${requirement.requirementId}`}
+                        type="file"
+                        style={{ display: "none" }}
+                        onChange={(event) =>
+                          void handleUpload(
+                            requirement,
+                            event.currentTarget.files?.[0] ?? null,
+                          )
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          fileInputs.current[requirement.requirementId]?.click()
+                        }
+                        disabled={uploadPending === requirement.requirementId}
+                        style={SECONDARY_SMALL_STYLE}
+                      >
+                        Upload
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAnswerFor(requirement.requirementId);
+                          setAnswerText("");
+                        }}
+                        style={QUIET_BUTTON_STYLE}
+                      >
+                        Answer
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </details>
       ) : null}
 
@@ -530,6 +651,12 @@ const TABLE_HEADER_STYLE: CSSProperties = {
   color: CANVAS.INK_MUTED,
 };
 
+const OPTIONAL_TABLE_HEADER_STYLE: CSSProperties = {
+  ...TABLE_HEADER_STYLE,
+  gridTemplateColumns:
+    "minmax(220px, 1.25fr) minmax(220px, 1fr) 104px minmax(210px, auto)",
+};
+
 const ASK_ROW_STYLE: CSSProperties = {
   display: "grid",
   gridTemplateColumns:
@@ -538,6 +665,12 @@ const ASK_ROW_STYLE: CSSProperties = {
   alignItems: "start",
   padding: "14px",
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
+};
+
+const OPTIONAL_ROW_STYLE: CSSProperties = {
+  ...ASK_ROW_STYLE,
+  gridTemplateColumns:
+    "minmax(220px, 1.25fr) minmax(220px, 1fr) 104px minmax(210px, auto)",
 };
 
 const ASK_NUMBER_STYLE: CSSProperties = {
@@ -667,11 +800,17 @@ const EXTRAS_SUMMARY_STYLE: CSSProperties = {
   color: CANVAS.INK,
 };
 
-const EXTRAS_LIST_STYLE: CSSProperties = {
+const EXTRAS_BODY_STYLE: CSSProperties = {
   margin: "10px 0 0",
-  paddingLeft: 18,
+  display: "grid",
+  gap: 10,
+};
+
+const EXTRAS_HELP_STYLE: CSSProperties = {
+  margin: 0,
   fontFamily: CANVAS.SANS,
   fontSize: 13,
+  lineHeight: 1.45,
   color: CANVAS.INK_SOFT,
 };
 

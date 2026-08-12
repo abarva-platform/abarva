@@ -94,6 +94,55 @@ describe("SimpleStageFront", () => {
     expect(blockedButton).toBeDisabled();
   });
 
+  it("renders optional evidence as rows with the same template and upload affordances", () => {
+    renderFront({
+      ...BASE_VIEW,
+      extras: [
+        {
+          requirementId: "EVID-SRC-SCOPE-OPTIONAL-RACI",
+          label: "Service owner RACI",
+          why: "Improves accountability and scoring confidence.",
+          acceptHint: "Operating model extract · needs available",
+          state: "Not Requested",
+          sourceLabel: "Operating model extract",
+          minimumState: "Available",
+        },
+      ],
+    });
+
+    const optionalSection = screen.getByTestId(
+      "source-simple-front-optional-evidence",
+    );
+    expect(optionalSection).toHaveTextContent(
+      "Optional evidence that improves confidence",
+    );
+    expect(optionalSection).toHaveTextContent("Service owner RACI");
+    expect(optionalSection).toHaveTextContent(
+      "These rows do not block the gate",
+    );
+    expect(
+      screen.getByTestId(
+        "source-simple-front-optional-EVID-SRC-SCOPE-OPTIONAL-RACI",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId(
+        "source-simple-front-template-EVID-SRC-SCOPE-OPTIONAL-RACI",
+      ),
+    ).toHaveAttribute(
+      "href",
+      "/api/v1/source/evt-1/evidence/EVID-SRC-SCOPE-OPTIONAL-RACI/template",
+    );
+    expect(
+      screen.getByTestId(
+        "source-simple-front-file-EVID-SRC-SCOPE-OPTIONAL-RACI",
+      ),
+    ).toHaveAttribute("type", "file");
+    expect(
+      screen.getByRole("button", { name: "Open approval gate → RFP" }),
+    ).toBeEnabled();
+  });
+
   it("makes the completed-state approval action explicit", () => {
     const { onGenerateArtifact, onAdvanceStage } = renderFront();
 
