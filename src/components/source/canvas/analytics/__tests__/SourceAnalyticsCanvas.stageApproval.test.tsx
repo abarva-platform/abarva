@@ -265,6 +265,12 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.getByTestId("source-shell-stage-ready-panel"),
     ).toHaveTextContent("artifact review items remain");
+    expect(
+      screen.getByTestId("source-stage-header-readiness"),
+    ).toHaveTextContent("7 / 7");
+    expect(
+      screen.getByTestId("source-stage-header-readiness-label"),
+    ).toHaveTextContent(/^inputs ready$/);
     expect(screen.getByTestId("source-stage-ready-status")).toHaveTextContent(
       "7/7 complete",
     );
@@ -432,6 +438,9 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.getByTestId("source-shell-stage-ready-panel"),
     ).toHaveTextContent("All required evidence is ready for Scope");
+    expect(
+      screen.getByTestId("source-stage-header-readiness-label"),
+    ).toHaveTextContent(/^ready$/);
     expect(screen.getByTestId("source-stage-ready-status")).toHaveTextContent(
       "Ready for approval",
     );
