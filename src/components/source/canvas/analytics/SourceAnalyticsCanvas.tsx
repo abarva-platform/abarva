@@ -1389,7 +1389,6 @@ function FocusedWorkPanel({
           <StageReadyPanel
             view={view}
             onOpenApprovalPage={openApprovalPage}
-            onReviewApprovals={() => onWorkspaceChange("approvals")}
             onOpenFiles={() => onWorkspaceChange("files")}
           />
         ) : activeStep ? (
@@ -1546,17 +1545,15 @@ function plainStageStepGroupLabel(label: string) {
 function StageReadyPanel({
   view,
   onOpenApprovalPage,
-  onReviewApprovals,
   onOpenFiles,
 }: {
   view: SourceEventShellView;
   onOpenApprovalPage: () => void;
-  onReviewApprovals: () => void;
   onOpenFiles: () => void;
 }) {
   const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
   const primaryActionLabel = hasArtifactGaps
-    ? "Review Files before approval"
+    ? "Review Files and accept artifacts"
     : view.stage.approvalCtaLabel;
   const primaryAction = hasArtifactGaps ? onOpenFiles : onOpenApprovalPage;
   const gateStatus = hasArtifactGaps
@@ -1604,7 +1601,7 @@ function StageReadyPanel({
           }}
         >
           {hasArtifactGaps
-            ? "Review Files first to accept client-final artifacts and close quality gates. The approval workspace remains available for a with-gaps decision, but the primary path is to clear file review."
+            ? "Review Files first to accept client-final artifacts and close quality gates. An exception decision is available only if the owner chooses to approve with the visible gaps."
             : "The next step is the approval workspace. Review the captured evidence, record the decision, and advance the event from there."}
         </p>
       </div>
@@ -1631,7 +1628,11 @@ function StageReadyPanel({
         />
         <StageReadyStatusDatum
           label="Next"
-          value={hasArtifactGaps ? "Close file review" : "Open approval gate"}
+          value={
+            hasArtifactGaps
+              ? "Accept artifacts in Files"
+              : "Open approval gate"
+          }
           tone={hasArtifactGaps ? "warn" : "good"}
         />
       </div>
@@ -1703,23 +1704,9 @@ function StageReadyPanel({
               width: "fit-content",
             }}
           >
-            Open approval readiness
+            Open exception approval
           </button>
         ) : null}
-        <button
-          type="button"
-          data-testid="source-stage-ready-review-approval"
-          onClick={onReviewApprovals}
-          style={{
-            ...BUTTON_STYLE,
-            display: "inline-flex",
-            justifyContent: "center",
-            padding: "12px 16px",
-            width: "fit-content",
-          }}
-        >
-          Review readiness here
-        </button>
       </div>
       <Link
         href={view.stage.approvalHref}

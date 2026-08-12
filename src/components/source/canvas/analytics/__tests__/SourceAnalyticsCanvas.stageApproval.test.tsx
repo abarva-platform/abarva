@@ -264,14 +264,17 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       "file review gaps",
     );
     expect(screen.getByTestId("source-stage-ready-status")).toHaveTextContent(
-      "Close file review",
+      "Accept artifacts in Files",
     );
     expect(
       screen.getByTestId("source-stage-ready-primary-files"),
-    ).toHaveTextContent("Review Files before approval");
+    ).toHaveTextContent("Review Files and accept artifacts");
     expect(
       screen.getByTestId("source-stage-ready-open-approval"),
-    ).toHaveTextContent("Open approval readiness");
+    ).toHaveTextContent("Open exception approval");
+    expect(
+      screen.queryByTestId("source-stage-ready-review-approval"),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"),
     ).toHaveTextContent("Readback: typed facts available.");
