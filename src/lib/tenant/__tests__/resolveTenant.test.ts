@@ -39,9 +39,9 @@ function mockClientRow(
 
 describe("canonical tenant aliases", () => {
   it("normalizes app keys, substrate keys, and legacy names through one map", () => {
-    expect(canonicalTenantKey("skyharbor")).toBe("skyharbor_global");
-    expect(canonicalTenantKey("skyharbor-air")).toBe("skyharbor_global");
-    expect(canonicalTenantKey("skyharbor_global")).toBe("skyharbor_global");
+    expect(canonicalTenantKey("skyharbor")).toBe("skyharbor-air");
+    expect(canonicalTenantKey("skyharbor-air")).toBe("skyharbor-air");
+    expect(canonicalTenantKey("skyharbor_global")).toBe("skyharbor-air");
     expect(canonicalTenantKey("northstar")).toBe("northstar-clinical");
     expect(canonicalTenantKey("northstar-clinical")).toBe("northstar-clinical");
     expect(canonicalTenantKey("apexretail")).toBe("apex-retail");
@@ -89,8 +89,8 @@ describe("resolveTenant", () => {
 
     await expect(resolveTenant()).resolves.toMatchObject({
       appClientKey: "skyharbor",
-      canonicalKey: "skyharbor_global",
-      brokerKey: "skyharbor_global",
+      canonicalKey: "skyharbor-air",
+      brokerKey: "skyharbor-air",
       clientId: "client-skyharbor",
       source: "email",
     });
@@ -129,7 +129,7 @@ describe("resolveTenant", () => {
 
     await expect(resolveTenant()).resolves.toMatchObject({
       appClientKey: "skyharbor",
-      canonicalKey: "skyharbor_global",
+      canonicalKey: "skyharbor-air",
       source: "cookie",
     });
   });
