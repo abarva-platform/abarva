@@ -6,6 +6,7 @@ import {
   getClientOption,
 } from "@/lib/client-config";
 import { SourceOriginatePage } from "@/components/source/SourceOriginatePage";
+import { buildSourceOptimizeContractHref } from "@/lib/source/optimize-routing";
 
 export const metadata: Metadata = { title: "New IT Sourcing Intake · AbarVa" };
 
@@ -21,7 +22,7 @@ export default async function Page({
   const activeClient = await getActiveClientRow().catch(() => null);
   const params = await searchParams;
   if (params.intent === "contract-optimization") {
-    redirect(contractOptimizationRedirect(params));
+    redirect(buildSourceOptimizeContractHref(params));
   }
   const clientOption = getClientOption(activeClient?.key);
   const activeClientDisplayName =
@@ -37,18 +38,4 @@ export default async function Page({
       clientKey={clientOption.id}
     />
   );
-}
-
-function contractOptimizationRedirect(params: {
-  contractId?: string;
-  opportunityId?: string;
-}): string {
-  const query = new URLSearchParams();
-  if (params.contractId?.trim())
-    query.set("contractId", params.contractId.trim());
-  if (params.opportunityId?.trim()) {
-    query.set("opportunityId", params.opportunityId.trim());
-  }
-  const suffix = query.toString();
-  return suffix ? `/source/optimize?${suffix}` : "/source/optimize";
 }

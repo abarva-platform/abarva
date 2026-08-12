@@ -194,8 +194,17 @@ describe("SourceOptimizeContractPage", () => {
       screen.getByText("Optimize an existing contract"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Choose the contract worth action"),
+      screen.getByText("Select a contract to optimize"),
     ).toBeInTheDocument();
+    expect(screen.getByTestId("optimize-contract-picker")).toHaveTextContent(
+      "Optimize Contract cannot start from a blank brief.",
+    );
+    expect(screen.getByText("Select")).toBeInTheDocument();
+    expect(screen.getByText("Lock baseline")).toBeInTheDocument();
+    expect(screen.getByText("Prove value")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "New 11-stage event" }),
+    ).toHaveAttribute("href", "/source/new");
     expect(screen.getByRole("link", { name: "Review" })).toHaveAttribute(
       "href",
       "/source/optimize?contractId=CTR-090",
@@ -246,6 +255,9 @@ describe("SourceOptimizeContractPage", () => {
     );
 
     expect(screen.getByText("Optimization decision brief")).toBeInTheDocument();
+    expect(
+      screen.getByText(/focused 7-step incumbent-contract path/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("Contract exposure")).toBeInTheDocument();
     expect(screen.getByText("Opportunity rows")).toBeInTheDocument();
     expect(screen.getByText("Open evidence gaps")).toBeInTheDocument();

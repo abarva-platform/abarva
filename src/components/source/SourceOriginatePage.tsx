@@ -24,6 +24,7 @@ import {
   type IntakeFieldId,
   type SourceIntakeShape,
 } from "@/lib/source/intake-intent";
+import { buildSourceOptimizeContractHref } from "@/lib/source/optimize-routing";
 import type { SourceSourcingMotion } from "@/lib/source/sourcing-motion-journeys";
 import { parseSourceIntakeText } from "@/lib/source/intake-summary";
 import { buildAvaIntakeResponseParts } from "@/lib/source/ava-intake-response-parts";
@@ -484,10 +485,9 @@ function formatContractOptimizationUsd(
 export function buildContractOptimizationCandidateHref(
   candidate: ContractOptimizationCandidate,
 ): string {
-  const params = new URLSearchParams({
+  return buildSourceOptimizeContractHref({
     contractId: candidate.contractId,
   });
-  return `/source/optimize?${params.toString()}`;
 }
 
 function motionForIntent(

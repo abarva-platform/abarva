@@ -17,6 +17,7 @@ import type {
   ContractOptimizationOpportunity,
   ContractOptimizationOpportunitySet,
 } from "@/lib/source/data-model/contract-optimization-opportunity";
+import { buildSourceOptimizeContractHref } from "@/lib/source/optimize-routing";
 
 interface SourceOptimizeContractPageProps {
   tenantName: string;
@@ -26,13 +27,13 @@ interface SourceOptimizeContractPageProps {
 }
 
 const STAGES = [
-  "Pick",
-  "Baseline",
+  "Select",
+  "Lock baseline",
   "Evidence",
   "Diagnose",
-  "Strategy",
-  "Approval",
-  "Value proof",
+  "Plan",
+  "Approve",
+  "Prove value",
 ] as const;
 
 export function SourceOptimizeContractPage({
@@ -113,8 +114,8 @@ function ModuleHeader({
         </h1>
         <p style={SUBLINE_STYLE}>
           {selected
-            ? `${selected.contractName} · ${formatUsd(selected.annualValue)} annual value · ${selected.band}.`
-            : "Pick a current contract, inspect governed evidence, then open a dedicated optimization case."}
+            ? `${selected.contractName} · ${formatUsd(selected.annualValue)} annual value · focused 7-step incumbent-contract path.`
+            : "Select one governed contract first. This is the focused incumbent-contract path, not the 11-stage sourcing event intake."}
         </p>
         <div style={META_ROW_STYLE}>
           <span>As of {formatDate(asOfDateIso)}</span>
@@ -131,7 +132,7 @@ function ModuleHeader({
           Source workspace
         </Link>
         <Link href="/source/new" style={GHOST_BUTTON_STYLE}>
-          New sourcing event
+          New 11-stage event
         </Link>
       </div>
     </header>
@@ -165,14 +166,14 @@ function ContractPicker({
   candidates: readonly ContractOptimizationCandidate[];
 }) {
   return (
-    <section style={PANEL_STYLE}>
+    <section data-testid="optimize-contract-picker" style={PANEL_STYLE}>
       <div style={PANEL_HEAD_STYLE}>
         <div>
-          <h2 style={SECTION_TITLE_STYLE}>Choose the contract worth action</h2>
+          <h2 style={SECTION_TITLE_STYLE}>Select a contract to optimize</h2>
           <p style={PANEL_COPY_STYLE}>
-            Ranking is based on governed Source facts: annual exposure, weak
-            leverage, renewal timing, spend variance, operational pressure, and
-            enterprise dependency.
+            Optimize Contract cannot start from a blank brief. Pick a governed
+            contract so Source can bring the contract baseline, evidence
+            readiness, opportunity rows, and value-proof path into one case.
           </p>
         </div>
       </div>
@@ -214,7 +215,9 @@ function ContractPicker({
                   </td>
                   <td style={TD_STYLE}>
                     <Link
-                      href={`/source/optimize?contractId=${encodeURIComponent(candidate.contractId)}`}
+                      href={buildSourceOptimizeContractHref({
+                        contractId: candidate.contractId,
+                      })}
                       style={ROW_BUTTON_STYLE}
                     >
                       Review
