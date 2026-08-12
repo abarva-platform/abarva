@@ -8,7 +8,10 @@ import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4
 import { createEmptySourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 import { evaluateContractCategoryQuality } from "@/lib/source/data-model/contract-category-quality";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
-import { loadSourceWorkspacePortfolio } from "./live/portfolioAdapter";
+import {
+  buildSourceVendor360Cockpit,
+  loadSourceWorkspacePortfolio,
+} from "./live/portfolioAdapter";
 
 export const metadata: Metadata = {
   title: "Source Workspace · Live",
@@ -75,6 +78,27 @@ export default async function SourceWorkspacePreviewPage({
         }
       : undefined,
   );
+  const emptyWorkspaceDiagnostics = {
+    datasetLabel: emptyV4Snapshot.datasetLabel,
+    datasetId: emptyV4Snapshot.datasetId,
+    datasetVersion: emptyV4Snapshot.datasetVersion,
+    analyticsProvider: emptyV4Snapshot.analyticsProvider,
+    activeLoadRunId: emptyV4Snapshot.activeLoadRunId,
+    asOfDateIso: emptyV4Snapshot.asOfDateIso,
+    v4ContractCount: 0,
+    v4VendorCount: 0,
+    legacyContractCount: 0,
+    legacyVendorCount: 0,
+    exploreProvider: "LegacySourceContract360Provider" as const,
+    exploreMatchesV4: true,
+    mismatchWarning: null,
+  };
+  const emptyReads = {
+    contracts: "missing" as const,
+    vendors: "missing" as const,
+    applicationScope: "missing" as const,
+    initiativeDependencies: "missing" as const,
+  };
 
   const portfolio = tenantKey
     ? await loadSourceWorkspacePortfolio(tenantKey, asOfDateIso)
@@ -84,32 +108,23 @@ export default async function SourceWorkspacePreviewPage({
         semanticLayer: sourceV4CubeUiCatalogForAgent(),
         v4Snapshot: emptyV4Snapshot,
         categoryQuality: evaluateContractCategoryQuality([]),
-        workspaceDiagnostics: {
-          datasetLabel: emptyV4Snapshot.datasetLabel,
-          datasetId: emptyV4Snapshot.datasetId,
-          datasetVersion: emptyV4Snapshot.datasetVersion,
-          analyticsProvider: emptyV4Snapshot.analyticsProvider,
-          activeLoadRunId: emptyV4Snapshot.activeLoadRunId,
-          asOfDateIso: emptyV4Snapshot.asOfDateIso,
-          v4ContractCount: 0,
-          v4VendorCount: 0,
-          legacyContractCount: 0,
-          legacyVendorCount: 0,
-          exploreProvider: "LegacySourceContract360Provider" as const,
-          exploreMatchesV4: true,
-          mismatchWarning: null,
-        },
+        workspaceDiagnostics: emptyWorkspaceDiagnostics,
+        cockpit: buildSourceVendor360Cockpit({
+          contracts: [],
+          vendors: [],
+          applicationScope: [],
+          initiativeDependencies: [],
+          v4Snapshot: emptyV4Snapshot,
+          workspaceDiagnostics: emptyWorkspaceDiagnostics,
+          reads: emptyReads,
+          asOfDateIso,
+        }),
         contracts: [],
         vendors: [],
         applicationScope: [],
         initiativeDependencies: [],
         isEmpty: true,
-        reads: {
-          contracts: "missing" as const,
-          vendors: "missing" as const,
-          applicationScope: "missing" as const,
-          initiativeDependencies: "missing" as const,
-        },
+        reads: emptyReads,
       };
 
   const tenantName =

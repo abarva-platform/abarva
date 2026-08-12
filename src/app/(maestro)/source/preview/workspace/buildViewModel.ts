@@ -460,7 +460,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   if (kind === "portfolio") {
     title = (
       {
-        Portfolio: "Source portfolio: where leadership should focus first",
+        Portfolio: "Vendor 360 cockpit: decide what moves first",
         Explore: "Explore the evidence behind the executive story",
         "Concentration & Leverage":
           "Which contracts should leadership act on first?",
@@ -470,15 +470,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     thesis = (
       {
         Portfolio: v4HasPortfolio
-          ? "AbarVa frames the active Source V4 snapshot into a leadership agenda: " +
-            whole(v4Snapshot.contextCoverage.vendors) +
-            " material vendors, " +
-            whole(v4Snapshot.executivePortfolio.contractCount) +
-            " contract families, " +
-            whole(v4Snapshot.scopeConfidence.explicitScopeCount) +
-            " explicit scope links, and " +
-            whole(v4Snapshot.scopeConfidence.inferredScopeCount) +
-            " inferred scope links. Exposure, observations, and finance-confirmed value stay visibly separate."
+          ? "AbarVa turns the governed Source workspace into one executive decision view: verdict, action queue, top contracts, and proof layers stay visibly separated."
           : "AbarVa frames " +
             summary.vendorCount +
             " vendors and " +
@@ -3391,6 +3383,14 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     sourceV4AsOf: fmtDate(v4Snapshot.asOfDateIso),
     dataLayerDiagnostics: diagnostics,
     categoryQuality,
+    cockpit: vm.portfolio.cockpit,
+    portfolioIsEmpty: vm.portfolio.isEmpty,
+    openCockpitContract: (contractId: string) =>
+      vm.select("contract", contractId, "Story"),
+    startCockpitOptimization: (
+      contractId: string,
+      opportunityId?: string | null,
+    ) => vm.startContractOptimization(contractId, opportunityId),
 
     isExplore: kind === "portfolio" && activeTab === "Explore",
     ex: vm.explore(rows),
