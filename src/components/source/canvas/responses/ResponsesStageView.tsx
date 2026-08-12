@@ -20,6 +20,7 @@ import { VendorEvaluationScorecardPanel } from "./VendorEvaluationScorecardPanel
 import { VendorResponseDecisionProofPanel } from "./VendorResponseDecisionProofPanel";
 import { VendorResponseFileReadinessPanel } from "./VendorResponseFileReadinessPanel";
 import { VendorResponseForwardGate } from "./VendorResponseForwardGate";
+import { VendorResponseIngestionPathPanel } from "./VendorResponseIngestionPathPanel";
 import { VendorResponseIntelligenceBrief } from "./VendorResponseIntelligenceBrief";
 import { VendorResponsePackageCockpit } from "./VendorResponsePackageCockpit";
 import { VendorResponseProfilesPanel } from "./VendorResponseProfilesPanel";
@@ -128,6 +129,7 @@ export function ResponsesStageView({
             readiness={readiness}
             profileSet={profileSet}
           />
+          <VendorResponseIngestionPathPanel parseReports={parseReports} />
           <VendorResponseIntelligenceBrief
             profileSet={profileSet}
             challengeIntelligence={challengeIntelligence}
