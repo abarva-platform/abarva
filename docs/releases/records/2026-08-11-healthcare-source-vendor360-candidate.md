@@ -74,6 +74,8 @@ Blocked - ACA operator preflight attempt:
 
 - Execution `job-abarva-private-operator-eus-h4hg1b7` failed closed before database access because the start override did not include the database secret env.
 - Execution `job-abarva-private-operator-eus-r4rxg0n` reached the database and rolled back on duplicate native source extract IDs in the package. This follow-up fixes that loader assumption; preflight must be rerun after merge/deploy.
+- Execution `job-abarva-private-operator-eus-z0pcnb9` reached the database after the duplicate-ID fix and rolled back on the existing `doc.extraction` lineage constraint. This follow-up records CSV clause rows as column-sourced lineage with `source_table`, `source_row`, and `source_column`; it does not weaken the database constraint.
+- Read-only execution `job-abarva-private-operator-eus-57y0q30` confirmed the failed preflight did not leave the candidate tables loaded.
 
 Additional validation required before release:
 

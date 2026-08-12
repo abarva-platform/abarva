@@ -429,17 +429,23 @@ function buildModel(args) {
       proof_rule: row.proof_rule,
       cpo_readout: row.cpo_readout,
     })),
-    docExtractions: clauseRows.map((row) => ({
+    docExtractions: clauseRows.map((row, index) => ({
       extraction_id: row.source_record_id,
       tenant_key: args.tenantKey,
       load_run_id: args.loadRunId,
       concept_ref: row.concept_ref,
+      extractor_version: "meridian_source_vendor360_candidate_v1",
+      model_id: "deterministic_csv_loader",
+      prompt_version: "source_vendor360_clause_mapping_v1",
       subject_kind: "contract",
       subject_ref: row.contract_id,
       value_text: row.extracted_text,
       value_num: null,
-      source_kind: "span",
-      source_file_id: row.document_id,
+      source_kind: "column",
+      source_table: "source_system_extracts.document_clause_extractions",
+      source_row: index + 2,
+      source_column: "extracted_text",
+      source_file_id: null,
       source_page: num(row.source_page),
       source_section: row.concept_ref,
       confidence: num(row.confidence),
@@ -450,6 +456,7 @@ function buildModel(args) {
       payload_json: {
         dataset_id: args.datasetId,
         dataset_version: args.datasetVersion,
+        source_file_id: row.document_id,
         source_record_id: row.source_record_id,
         row_hash: row.row_hash,
         synthetic_notice: manifest.warning,
@@ -681,23 +688,51 @@ async function ensureSchemas(client) {
       tenant_key text not null,
       load_run_id text not null,
       concept_ref text not null,
+      extractor_version text,
+      model_id text,
+      prompt_version text,
       subject_kind text not null,
       subject_ref text not null,
       value_text text,
       value_num numeric,
+      value_date date,
+      value_bool boolean,
+      unit text,
       source_kind text not null,
+      source_span_id text,
+      source_table text,
+      source_row int,
+      source_column text,
       source_file_id text,
       source_page int,
       source_section text,
       confidence numeric,
       method text,
       review_state text not null default 'unreviewed',
+      reviewed_by_role text,
+      reviewed_at timestamptz,
+      manual_basis text,
       visibility_class text not null default 'internal',
       content_authenticity text not null,
       payload_json jsonb not null default '{}'::jsonb,
       extracted_at timestamptz default now(),
       unique (tenant_key, extraction_id)
     )`);
+  await client.query(`
+    ALTER TABLE doc.extraction
+      ADD COLUMN IF NOT EXISTS extractor_version text,
+      ADD COLUMN IF NOT EXISTS model_id text,
+      ADD COLUMN IF NOT EXISTS prompt_version text,
+      ADD COLUMN IF NOT EXISTS value_date date,
+      ADD COLUMN IF NOT EXISTS value_bool boolean,
+      ADD COLUMN IF NOT EXISTS unit text,
+      ADD COLUMN IF NOT EXISTS source_span_id text,
+      ADD COLUMN IF NOT EXISTS source_table text,
+      ADD COLUMN IF NOT EXISTS source_row int,
+      ADD COLUMN IF NOT EXISTS source_column text,
+      ADD COLUMN IF NOT EXISTS reviewed_by_role text,
+      ADD COLUMN IF NOT EXISTS reviewed_at timestamptz,
+      ADD COLUMN IF NOT EXISTS manual_basis text`);
   await client.query(`
     DO $$
     DECLARE table_name text;
@@ -828,8 +863,9 @@ async function loadModel(client, args, model) {
     );
   }
   await insertMany(client, "doc.extraction", model.docExtractions, [
-    "extraction_id", "tenant_key", "load_run_id", "concept_ref", "subject_kind", "subject_ref",
-    "value_text", "value_num", "source_kind", "source_file_id", "source_page", "source_section",
+    "extraction_id", "tenant_key", "load_run_id", "concept_ref", "extractor_version", "model_id",
+    "prompt_version", "subject_kind", "subject_ref", "value_text", "value_num", "source_kind",
+    "source_table", "source_row", "source_column", "source_file_id", "source_page", "source_section",
     "confidence", "method", "review_state", "visibility_class", "content_authenticity", "payload_json",
   ], args);
 }
