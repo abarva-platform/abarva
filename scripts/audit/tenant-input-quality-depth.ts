@@ -38,8 +38,26 @@ type TemplateManifest = {
   templates: Array<{ file: string; required: boolean; columns: string[] }>;
 };
 
+type ColumnContractWaiver = {
+  tenantKey: string;
+  reason: string;
+  owner: string;
+  expires: string;
+  remediation: string;
+};
+
 type QualityRules = {
   companySizeBands: Record<string, { minRows: Record<string, number> }>;
+  columnContractWaivers?: ColumnContractWaiver[];
+};
+
+type ColumnConformance = {
+  contractFile: string;
+  resolvedFile: string;
+  state: "conformant" | "naming-drift" | "column-gap" | "absent";
+  /** Independent of state: a file can drift in name *and* be missing columns. */
+  nameDrifted: boolean;
+  missingColumns: string[];
 };
 
 type SourceFile = {
@@ -177,6 +195,84 @@ function detectDomain(relativePath: string): string | null {
   return null;
 }
 
+/**
+ * Header row of a CSV, honouring quoted fields so a comma inside a column name
+ * cannot silently split it into two.
+ */
+function readHeaderColumns(file: string): string[] {
+  const text = fs.readFileSync(file, "utf8");
+  const firstLine = text.split(/\r?\n/, 1)[0] ?? "";
+  const columns: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  for (let index = 0; index < firstLine.length; index += 1) {
+    const character = firstLine[index];
+    if (character === '"') {
+      if (inQuotes && firstLine[index + 1] === '"') {
+        current += '"';
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (character === "," && !inQuotes) {
+      columns.push(current.trim());
+      current = "";
+    } else {
+      current += character;
+    }
+  }
+  columns.push(current.trim());
+  return columns.filter((column) => column.length > 0).map((column) => column.replace(/^﻿/, ""));
+}
+
+const numericPrefixOf = (file: string): string => /^(\d{2})_/.exec(path.basename(file))?.[1] ?? "";
+
+/**
+ * Depth alone passed a package whose columns did not match the declared contract: the
+ * files were present and full of rows, but carried a different schema, so adapters keyed
+ * on the contract found nothing. This checks the shape as well as the volume.
+ */
+function columnConformanceForTenant(tenant: Tenant, manifest: TemplateManifest): ColumnConformance[] {
+  const files = sourceFilesForTenant(tenant);
+  const byBasename = new Map(files.map((file) => [path.basename(file.relativePath), file]));
+
+  return manifest.templates.map((template) => {
+    const exact = byBasename.get(template.file);
+    const prefix = numericPrefixOf(template.file);
+    const byPrefix = prefix
+      ? files.find(
+          (file) =>
+            file.relativePath.toLowerCase().endsWith(".csv") &&
+            numericPrefixOf(file.relativePath) === prefix,
+        )
+      : undefined;
+    const resolved = exact ?? byPrefix;
+
+    if (!resolved) {
+      return {
+        contractFile: template.file,
+        resolvedFile: "",
+        state: "absent" as const,
+        nameDrifted: false,
+        missingColumns: template.columns,
+      };
+    }
+
+    const columns = readHeaderColumns(resolved.absolutePath);
+    const missingColumns = template.columns.filter((column) => !columns.includes(column));
+    const resolvedName = path.basename(resolved.relativePath);
+    const nameDrifted = resolvedName !== template.file;
+
+    if (missingColumns.length > 0) {
+      return { contractFile: template.file, resolvedFile: resolvedName, state: "column-gap" as const, nameDrifted, missingColumns };
+    }
+    if (nameDrifted) {
+      return { contractFile: template.file, resolvedFile: resolvedName, state: "naming-drift" as const, nameDrifted, missingColumns: [] };
+    }
+    return { contractFile: template.file, resolvedFile: resolvedName, state: "conformant" as const, nameDrifted, missingColumns: [] };
+  });
+}
+
 function sourceFilesForTenant(tenant: Tenant): SourceFile[] {
   return tenant.packets.flatMap((packet) => {
     const packetRoot = path.join(repoRoot, packet.path);
@@ -239,8 +335,48 @@ function run(): void {
     failures.push("Northstar is present in active tenants but must remain retired/excluded.");
   }
 
+  const waivers = new Map((rules.columnContractWaivers ?? []).map((waiver) => [waiver.tenantKey, waiver]));
+  const today = new Date().toISOString().slice(0, 10);
+  for (const waiver of waivers.values()) {
+    if (!registry.activeTenants.some((tenant) => tenant.tenantKey === waiver.tenantKey)) {
+      failures.push(`Column contract waiver names "${waiver.tenantKey}", which is not an active tenant. Remove the stale waiver.`);
+      continue;
+    }
+    if (waiver.expires < today) {
+      failures.push(
+        `Column contract waiver for ${waiver.tenantKey} expired on ${waiver.expires}. Bring the package onto the contract or renew the waiver with a new expiry and owner. Remediation: ${waiver.remediation}`,
+      );
+    }
+  }
+
   const tenantReports = registry.activeTenants.map((tenant) => {
     const files = sourceFilesForTenant(tenant);
+    const columnConformance = columnConformanceForTenant(tenant, manifest);
+    const nonConformant = columnConformance.filter((entry) => entry.state !== "conformant");
+    const waiver = waivers.get(tenant.tenantKey);
+
+    if (nonConformant.length > 0 && !waiver) {
+      const detail = nonConformant
+        .slice(0, 6)
+        .map((entry) =>
+          entry.state === "column-gap"
+            ? `${entry.resolvedFile} missing ${entry.missingColumns.length} declared column(s)`
+            : entry.state === "naming-drift"
+              ? `${entry.contractFile} carried as ${entry.resolvedFile}`
+              : `${entry.contractFile} absent`,
+        )
+        .join("; ");
+      failures.push(
+        `${tenant.tenantKey}: ${nonConformant.length} canonical dimension(s) do not match the declared column contract (${detail}${nonConformant.length > 6 ? "; …" : ""}). Fix the package, or add a dated waiver to quality-depth-rules.json.`,
+      );
+    }
+
+    if (waiver && nonConformant.length === 0) {
+      failures.push(
+        `Column contract waiver for ${tenant.tenantKey} is no longer needed — the package is fully conformant. Remove it so the gate stays honest.`,
+      );
+    }
+
     const domainRows = new Map<string, number>();
     const domainFiles = new Map<string, Set<string>>();
     const unmappedFiles = files.filter((file) => file.domain === null && file.csvRows > 0);
@@ -274,6 +410,16 @@ function run(): void {
       csvRows: files.reduce((sum, file) => sum + file.csvRows, 0),
       mappedCsvRows: files.filter((file) => file.domain).reduce((sum, file) => sum + file.csvRows, 0),
       domainDepth,
+      columnContract: {
+        declared: columnConformance.length,
+        conformant: columnConformance.length - nonConformant.length,
+        namingDrift: columnConformance.filter((entry) => entry.nameDrifted).length,
+        columnGaps: columnConformance.filter((entry) => entry.state === "column-gap").length,
+        absent: columnConformance.filter((entry) => entry.state === "absent").length,
+        waived: Boolean(waiver),
+        waiverExpires: waiver?.expires ?? "",
+        nonConformantDetail: nonConformant,
+      },
       blockers: domainDepth.filter((domain) => domain.status === "blocker"),
       warnings: [
         ...unmappedFiles.slice(0, 25).map((file) => `Unmapped source file: ${file.packetId}/${file.relativePath}`),
@@ -332,6 +478,19 @@ function run(): void {
     ...tenantReports.map(
       (tenant) =>
         `| ${tenant.displayName} | ${tenant.companySizeBand} | ${formatNumber(tenant.csvFileCount)} | ${formatNumber(tenant.csvRows)} | ${formatNumber(tenant.mappedCsvRows)} | ${tenant.blockers.length} | ${tenant.warnings.length} |`,
+    ),
+    "",
+    "## Column Contract Conformance",
+    "",
+    "Depth says a dimension has enough rows. Conformance says those rows carry the columns the",
+    "contract declares. A package can pass depth and still be unreadable to every adapter, so both",
+    "are checked.",
+    "",
+    "| Tenant | Declared | Conformant | Naming drift | Column gaps | Absent | Waived until |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | --- |",
+    ...tenantReports.map(
+      (tenant) =>
+        `| ${tenant.displayName} | ${tenant.columnContract.declared} | ${tenant.columnContract.conformant} | ${tenant.columnContract.namingDrift} | ${tenant.columnContract.columnGaps} | ${tenant.columnContract.absent} | ${tenant.columnContract.waiverExpires || "—"} |`,
     ),
     "",
     "## Domain Depth By Tenant",
