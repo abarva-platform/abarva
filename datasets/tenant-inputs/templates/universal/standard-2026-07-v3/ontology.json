@@ -79,10 +79,17 @@
     {
       "type": "interview",
       "label": "Interview or executive signal",
-      "homeDimension": "13_evidence_sources.csv",
-      "keyColumn": "source_file",
-      "resolutionMode": "evidence-backed",
-      "note": "An interview is evidence, not a canonical object. Edges from an interview carry proposed claims and must never be read as deterministic fact."
+      "homeDimension": "datasets/tenant-inputs/<tenant>/interviews/",
+      "keyColumn": "question_id",
+      "resolutionMode": "external-evidence-root",
+      "note": "Interview evidence lives outside the active intake package, so endpoints cannot resolve against a canonical dimension. Reported, never silently accepted: an interview edge is proposed signal and may never be read as deterministic fact."
+    },
+    {
+      "type": "tower_initiative",
+      "label": "Tower initiative",
+      "homeDimension": "09_programs_initiatives.csv",
+      "keyColumn": "program_name",
+      "note": "Observed in graphs but resolving to no programme record. Declared here so the gap is reported as an unresolved endpoint rather than an unknown type. The fix is data: these initiatives belong in the programmes dimension."
     }
   ],
   "relationshipTypes": [
@@ -271,10 +278,23 @@
         "data_asset",
         "infrastructure",
         "org_unit",
-        "use_case"
+        "use_case",
+        "tower_initiative"
       ],
       "evidenceOnly": true,
       "note": "Interview edges are proposed signal. They may corroborate or contradict a source-system fact; they may never replace one."
+    },
+    {
+      "type": "measures",
+      "from": [
+        "metric"
+      ],
+      "to": [
+        "function",
+        "program",
+        "use_case"
+      ],
+      "inverse": "measured_by"
     }
   ],
   "filePopulationScope": {

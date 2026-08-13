@@ -5,17 +5,28 @@
       "tenantKey": "skyharbor-air",
       "edges": 3318,
       "endpoints": 6636,
-      "violations": 1514,
-      "integrity": "96%",
+      "violations": 91,
+      "integrity": "99%",
       "detail": {
         "undeclaredNodeType": [
           {
             "key": "role",
-            "count": 1039,
+            "count": 14,
             "samples": [
-              "VP Distribution & E-Commerce",
-              "VP Commercial & Distribution Systems",
-              "VP Distribution & E-Commerce"
+              "Cybersecurity & IT Risk",
+              "Cybersecurity & IT Risk",
+              "Cybersecurity & IT Risk"
+            ]
+          }
+        ],
+        "undeclaredEdgeType": [],
+        "domainRangeViolation": [],
+        "unresolvedEndpoint": [
+          {
+            "key": "vendor",
+            "count": 1,
+            "samples": [
+              "Infosys BPM"
             ]
           },
           {
@@ -28,48 +39,7 @@
             ]
           }
         ],
-        "undeclaredEdgeType": [
-          {
-            "key": "measures",
-            "count": 26,
-            "samples": []
-          }
-        ],
-        "domainRangeViolation": [
-          {
-            "key": "has_risk.from got risk",
-            "count": 62,
-            "samples": [
-              "Standing privileged credentials outside PAM coverage",
-              "Legacy PureConnect sites lack unified agent desktop",
-              "Mainframe skills concentration risk"
-            ]
-          },
-          {
-            "key": "has_risk.to got system",
-            "count": 62,
-            "samples": [
-              "CyberArk PAM",
-              "Genesys PureConnect (legacy — 2 international sites)",
-              "CA-7 Mainframe Batch Scheduler"
-            ]
-          }
-        ],
-        "unresolvedEndpoint": [
-          {
-            "key": "function",
-            "count": 1,
-            "samples": [
-              "Fuel Management & Sustainability (fuel hedging)"
-            ]
-          },
-          {
-            "key": "vendor",
-            "count": 1,
-            "samples": [
-              "Infosys BPM"
-            ]
-          },
+        "expectedExternalEndpoint": [
           {
             "key": "interview",
             "count": 247,
