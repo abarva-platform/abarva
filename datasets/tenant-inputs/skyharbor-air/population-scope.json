@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "tenantKey": "skyharbor-air",
+  "why": "Two files can both be correct and still not be comparable. Absent these declarations a reviewer compared the spend file against the vendor file and reported an inconsistency that did not exist. Cross-file arithmetic is blocked without a declared, overlapping population.",
+  "declarations": [
+    {
+      "file": "08_spend_value.csv",
+      "scope_statement": "IT application and platform spend by category.",
+      "spend_perimeter": "Software, platform, cloud and IT services. EXCLUDES internal labour, facilities, telecom and non-IT enterprise categories.",
+      "period_basis": "full fiscal year",
+      "gross_or_net": "gross",
+      "not_comparable_to": ["07_vendors_contracts.csv"],
+      "reason": "The vendor file spans enterprise-wide third parties including ground handling and catering, which are outside this perimeter."
+    },
+    {
+      "file": "07_vendors_contracts.csv",
+      "scope_statement": "Enterprise-wide third-party contracts.",
+      "vendor_perimeter": "All contracted suppliers including non-IT categories such as ground handling, catering and BPO.",
+      "amount_basis": "contracted annual value, not in-year actual spend",
+      "not_comparable_to": ["08_spend_value.csv"],
+      "reason": "Wider population and a different basis (contracted value vs actual spend)."
+    }
+  ]
+}

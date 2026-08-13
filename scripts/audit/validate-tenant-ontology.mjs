@@ -108,6 +108,7 @@ function main() {
       undeclaredEdgeType: new Map(),
       domainRangeViolation: new Map(),
       unresolvedEndpoint: new Map(),
+      expectedExternalEndpoint: new Map(),
     };
     const bump = (bucket, key, sample) => {
       if (!bucket.has(key)) bucket.set(key, { count: 0, samples: [] });
@@ -139,7 +140,14 @@ function main() {
           }
         }
         if (!universe.get(type)?.has(name)) {
-          bump(findings.unresolvedEndpoint, type, name);
+          // A node type whose evidence lives outside the active package can never resolve
+          // against a canonical dimension. Report it, but do not count it as a violation --
+          // otherwise the gate can never go green and stops being read.
+          const bucket =
+            nodeTypes.get(type)?.resolutionMode === 'external-evidence-root'
+              ? findings.expectedExternalEndpoint
+              : findings.unresolvedEndpoint;
+          bump(bucket, type, name);
         }
       }
     }
@@ -149,6 +157,7 @@ function main() {
       [...findings.undeclaredEdgeType.values()].reduce((sum, entry) => sum + entry.count, 0) +
       [...findings.domainRangeViolation.values()].reduce((sum, entry) => sum + entry.count, 0) +
       [...findings.unresolvedEndpoint.values()].reduce((sum, entry) => sum + entry.count, 0);
+    // expectedExternalEndpoint is deliberately excluded from the violation total.
 
     if (total > 0) anyFailure = true;
 
