@@ -12,6 +12,7 @@ on:
       - scripts/**
       - tests/**
       - supabase/migrations/**
+      - datasets/tenant-inputs/**
       - scripts/verify-canonical-tenants.ts
       - scripts/verify-retired-tenant-references.mjs
       - .github/workflows/canonical-tenant-drift.yml
@@ -45,3 +46,11 @@ jobs:
 
       - name: Verify retired tenant references
         run: npm run db:verify:retired-tenants
+
+      # Tenant input packages: presence, row depth, and column-contract conformance.
+      # This audit existed but was never wired to a workflow, so a package could drift
+      # off the declared column contract and nothing failed. The daily schedule above
+      # also makes dated column-contract waivers fail on their expiry without waiting
+      # for someone to open a PR.
+      - name: Verify tenant input quality, depth, and column contract
+        run: npm run audit:tenant-input-quality
