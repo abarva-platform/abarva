@@ -27,6 +27,11 @@ import {
   summarizeOpportunityTraceability,
   type OpportunityTraceabilitySummary,
 } from "@/lib/source/data-model/contract-optimization-traceability";
+import {
+  deriveOptimizeWorkflowPosition,
+  type OptimizeWorkflowPosition,
+  type OptimizeWorkflowStep,
+} from "@/lib/source/data-model/contract-optimization-workflow-step";
 import { buildSourceOptimizeContractHref } from "@/lib/source/optimize-routing";
 
 interface SourceOptimizeContractPageProps {
@@ -36,16 +41,6 @@ interface SourceOptimizeContractPageProps {
   opportunitySet: ContractOptimizationOpportunitySet | null;
   evidencePack?: ContractOptimizationEvidencePack | null;
 }
-
-const STAGES = [
-  "Select",
-  "Lock baseline",
-  "Evidence",
-  "Diagnose",
-  "Plan",
-  "Approve",
-  "Prove value",
-] as const;
 
 export function SourceOptimizeContractPage({
   tenantName,
@@ -70,6 +65,20 @@ export function SourceOptimizeContractPage({
       null
     );
   }, [opportunitySet]);
+  const traceability = useMemo(
+    () => summarizeOpportunityTraceability(opportunitySet?.opportunities ?? []),
+    [opportunitySet],
+  );
+  const position = useMemo(
+    () =>
+      deriveOptimizeWorkflowPosition({
+        hasSelectedContract: Boolean(selected),
+        opportunitySet,
+        readiness,
+        traceability,
+      }),
+    [selected, opportunitySet, readiness, traceability],
+  );
 
   return (
     <AppShell
@@ -93,7 +102,8 @@ export function SourceOptimizeContractPage({
             selected={selected}
             selectedOpportunity={selectedOpportunity}
           />
-          <StageRail activeIndex={selected ? 1 : 0} />
+          <StageRail steps={position.steps} />
+          <NextDecisionBar position={position} />
           {selected ? (
             <SelectedContractView
               candidate={selected}
@@ -101,6 +111,7 @@ export function SourceOptimizeContractPage({
               opportunitySet={opportunitySet}
               selectedOpportunity={selectedOpportunity}
               readiness={readiness}
+              traceability={traceability}
             />
           ) : (
             <ContractPicker candidates={spine.topCandidates} />
@@ -156,24 +167,61 @@ function ModuleHeader({
   );
 }
 
-function StageRail({ activeIndex }: { activeIndex: number }) {
+function StageRail({ steps }: { steps: readonly OptimizeWorkflowStep[] }) {
   return (
     <nav aria-label="Optimize contract stages" style={STAGE_RAIL_STYLE}>
-      {STAGES.map((stage, index) => (
+      {steps.map((step) => (
         <div
-          key={stage}
+          key={step.key}
+          data-testid={`optimize-step-${step.key}`}
+          data-state={step.state}
+          aria-current={
+            step.state === "current" || step.state === "blocked"
+              ? "step"
+              : undefined
+          }
           style={{
             ...STAGE_CHIP_STYLE,
-            ...(index === activeIndex ? STAGE_CHIP_ACTIVE_STYLE : null),
+            ...(step.state === "current" || step.state === "blocked"
+              ? STAGE_CHIP_ACTIVE_STYLE
+              : null),
+            ...(step.state === "future" ? STAGE_CHIP_FUTURE_STYLE : null),
           }}
         >
           <span style={STAGE_NUMBER_STYLE}>
-            {String(index + 1).padStart(2, "0")}
+            {step.state === "complete"
+              ? "✓"
+              : String(step.index).padStart(2, "0")}
           </span>
-          {stage}
+          {step.label}
         </div>
       ))}
     </nav>
+  );
+}
+
+function NextDecisionBar({
+  position,
+}: {
+  position: OptimizeWorkflowPosition;
+}) {
+  return (
+    <section style={NEXT_BAR_STYLE} data-testid="optimize-next-decision">
+      <div style={{ minWidth: 0, display: "grid", gap: 3 }}>
+        <div style={MUTED_SMALL_STYLE}>
+          Step {position.currentIndex} of {position.steps.length} ·{" "}
+          {position.currentLabel}
+        </div>
+        <strong style={NEXT_ACTION_STYLE}>{position.primaryAction}</strong>
+        <p style={DECISION_DETAIL_STYLE}>{position.primaryActionDetail}</p>
+      </div>
+      {position.blocker ? (
+        <div style={BLOCKER_STYLE} data-testid="optimize-next-blocker">
+          <div style={MUTED_SMALL_STYLE}>Blocked by</div>
+          {position.blocker}
+        </div>
+      ) : null}
+    </section>
   );
 }
 
@@ -256,20 +304,19 @@ function SelectedContractView({
   opportunitySet,
   selectedOpportunity,
   readiness,
+  traceability,
 }: {
   candidate: ContractOptimizationCandidate;
   spine: ContractOptimizationSpine;
   opportunitySet: ContractOptimizationOpportunitySet | null;
   selectedOpportunity: ContractOptimizationOpportunity | null;
   readiness: ContractOptimizationEvidenceReadiness;
+  traceability: OpportunityTraceabilitySummary;
 }) {
   const missingCount =
     spine.missingEvidenceSources.length +
     (opportunitySet?.evidenceRequirements.length ?? 0);
   const opportunityCount = opportunitySet?.opportunities.length ?? 0;
-  const traceability = summarizeOpportunityTraceability(
-    opportunitySet?.opportunities ?? [],
-  );
   const primaryAction =
     !opportunitySet || opportunitySet.baseline.status !== "ready"
       ? "Build or resolve the commercial baseline before approving action."
@@ -1523,6 +1570,39 @@ const START_WRAP_STYLE: CSSProperties = {
   display: "grid",
   gap: 6,
   justifyItems: "end",
+};
+
+const NEXT_BAR_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderLeft: `3px solid ${ANALYTICS.INK}`,
+  borderRadius: 8,
+  background: ANALYTICS.CARD,
+  padding: "12px 14px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  gap: 16,
+};
+
+const NEXT_ACTION_STYLE: CSSProperties = {
+  fontSize: 16,
+  fontWeight: 800,
+  color: ANALYTICS.INK,
+  lineHeight: 1.25,
+};
+
+const BLOCKER_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderRadius: 8,
+  padding: "8px 10px",
+  fontSize: 12,
+  color: ANALYTICS.INK,
+  maxWidth: 320,
+  flexShrink: 0,
+};
+
+const STAGE_CHIP_FUTURE_STYLE: CSSProperties = {
+  opacity: 0.55,
 };
 
 const TRACE_NOTE_STYLE: CSSProperties = {
