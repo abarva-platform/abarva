@@ -75,6 +75,32 @@ is not in their own response set will not trust anything else in the answer.
 
 Which set is authoritative is deliberately not asserted here.
 
+## Differentiation requirement for any new vendor package
+
+Vendor responses share a section skeleton so they can be compared, but the substance of each one has
+to be genuinely its own. How a vendor brings innovation, what it is willing to invest, the format and
+shape of its pricing, where it is strong and where it dodges — these are the things a sourcing team
+actually decides on, and they differ per vendor. A set of packages generated from one boilerplate with
+the names swapped would compare cleanly and teach nothing, and every downstream surface built on top
+of them — evaluation, pricing, BAFO asks, aVa — would inherit that emptiness.
+
+The three existing fixtures already hold to this, which is worth preserving rather than rediscovering:
+
+| | Vendor A | Vendor B | Vendor C |
+| --- | --- | --- | --- |
+| Length | 92-page equivalent | 108-page equivalent | 76-page equivalent |
+| Posture | Incumbent operational continuity | Aggressive offshore and automation economics | Service discipline and SLA specificity |
+| Weakness | Productivity not fully priced back | Compelling narrative, weak structured exhibits | Narrower on ERP/corporate support |
+| Extraction cards raised | productivity, SLA, transition | productivity, staffing, assumption | SLA, exception, transition |
+
+Each vendor raises a *different mix* of extraction cards, which is the concrete test of whether a
+package is real: if every vendor surfaces the same card types with the same findings, the set is
+boilerplate no matter how long the documents are.
+
+Any package added for Gap 1 should be checked the same way — different length, different commercial
+posture, different failure mode, and a different mix of raised cards — before it is treated as
+evidence the parser works.
+
 ## Recommendation
 
 1. Do not rebuild Lane 5. Close Gap 1 by proving the upload → parse → persist → render path on one
