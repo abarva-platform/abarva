@@ -59,6 +59,15 @@ export interface SourceShellJourneyStage {
   done: number;
   total: number;
   state: "complete" | "current" | "future" | "past";
+  /**
+   * Whether an approval record exists for this stage.
+   *
+   * `state: "past"` only means the case has moved beyond this stage, which is a
+   * position, not proof. A completion tick is only honest when an approval
+   * record backs it. `null` means no approval ledger was supplied at all, so
+   * completion could not be evaluated either way.
+   */
+  approvalEvidenced: boolean | null;
 }
 
 export interface SourceShellStepGroup {
@@ -360,6 +369,17 @@ export function buildSourceEventShellView(
     : input.viewedStageKey;
   const currentStageIndex = visibleStageOrder.indexOf(visibleCurrentStageKey);
 
+  // A stage is only treated as approved when an approval record says so. With no
+  // ledger supplied there is nothing to check, so completion stays unevaluated
+  // rather than being asserted or denied.
+  const approvalLedger = input.approvalLedger ?? [];
+  const approvedStageKeys = new Set(
+    approvalLedger
+      .filter((row) => row.state === "approved")
+      .map((row) => row.stageKey),
+  );
+  const hasApprovalLedger = approvalLedger.length > 0;
+
   const journey: SourceShellJourneyStage[] = visibleStageOrder.map(
     (stageKey, index) => {
       const viewed = stageKey === input.viewedStageKey;
@@ -377,6 +397,9 @@ export function buildSourceEventShellView(
         done: stageDone,
         total: stageTotal,
         state,
+        approvalEvidenced: hasApprovalLedger
+          ? approvedStageKeys.has(stageKey)
+          : null,
       };
     },
   );
