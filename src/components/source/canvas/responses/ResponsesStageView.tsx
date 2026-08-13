@@ -111,10 +111,12 @@ export function ResponsesStageView({
             )}
           </div>
 
-          <div style={GRID}>
-            <CompletenessMatrix readiness={readiness} />
-            <QnaSymmetryLog />
-          </div>
+          {/* The completeness matrix carries one column per RFP section, so it
+              needs the full stage width. Sharing a row with the Q&A log left it
+              231px short and forced it to scroll, hiding two section columns and
+              clipping a status badge mid-pill. The log reads fine stacked below. */}
+          <CompletenessMatrix readiness={readiness} />
+          <QnaSymmetryLog />
         </>
       ) : null}
 
@@ -299,12 +301,6 @@ const STATUS_TONE: Record<"good" | "warn" | "bad", CSSProperties> = {
     background: "rgba(163,45,45,0.06)",
     borderColor: CANVAS.BLOCKED,
   },
-};
-
-const GRID: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "minmax(0, 1.2fr) minmax(280px, 0.8fr)",
-  gap: 12,
 };
 
 const DECISION: CSSProperties = {
