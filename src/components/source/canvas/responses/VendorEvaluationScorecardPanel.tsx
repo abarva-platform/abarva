@@ -177,8 +177,8 @@ export function VendorEvaluationScorecardPanel({
               {decisionView.comparisonRows.map((row) => (
                 <tr key={row.comparisonId}>
                   <td style={TD_LABEL}>
-                    <strong>{row.label}</strong>
-                    <span>{row.decisionUse}</span>
+                    <strong style={CELL_TITLE}>{row.label}</strong>
+                    <span style={CELL_NOTE}>{row.decisionUse}</span>
                   </td>
                   {vendors.map((vendor) => {
                     const value = row.values.find(
@@ -194,10 +194,12 @@ export function VendorEvaluationScorecardPanel({
                         >
                           {value?.posture ?? "watch"}
                         </span>
-                        <strong>
+                        <strong style={CELL_NOTE}>
                           {moneyDisplay(value?.value ?? "Not provided")}
                         </strong>
-                        <span>{value?.caveat ?? "No caveat recorded."}</span>
+                        <span style={CELL_NOTE}>
+                          {value?.caveat ?? "No caveat recorded."}
+                        </span>
                       </td>
                     );
                   })}
@@ -233,8 +235,8 @@ export function VendorEvaluationScorecardPanel({
               {decisionView.scorecardRows.map((row) => (
                 <tr key={row.criterionId}>
                   <td style={TD_LABEL}>
-                    <strong>{row.label}</strong>
-                    <span>{row.guidance}</span>
+                    <strong style={CELL_TITLE}>{row.label}</strong>
+                    <span style={CELL_NOTE}>{row.guidance}</span>
                   </td>
                   <td style={TD_CENTER}>{row.weight}%</td>
                   {vendors.map((vendor) => {
@@ -243,13 +245,15 @@ export function VendorEvaluationScorecardPanel({
                     );
                     return (
                       <td key={vendor.vendorId} style={TD_SCORE}>
-                        <strong>{score?.score.toFixed(1) ?? "—"}</strong>
+                        <strong style={CELL_TITLE}>
+                          {score?.score.toFixed(1) ?? "—"}
+                        </strong>
                         {score ? (
                           <em style={WEIGHTED_NOTE}>
                             {score.weightedContribution.toFixed(2)} weighted
                           </em>
                         ) : null}
-                        <span>
+                        <span style={CELL_NOTE}>
                           {score?.rationale ?? "No rationale loaded."}
                         </span>
                       </td>
@@ -294,10 +298,10 @@ export function VendorEvaluationScorecardPanel({
               {decisionView.scoreImprovementScenarios.map((scenario) => (
                 <tr key={scenario.vendorId}>
                   <td style={TD_LABEL}>
-                    <strong>
+                    <strong style={CELL_TITLE}>
                       {scenario.vendorName.replace(/\s+—\s+.*/, "")}
                     </strong>
-                    <span>{scenario.requiredEvidence}</span>
+                    <span style={CELL_NOTE}>{scenario.requiredEvidence}</span>
                   </td>
                   <td style={TD_CENTER}>{scenario.currentScore.toFixed(1)}</td>
                   <td style={TD_CENTER}>
@@ -730,6 +734,20 @@ const TH: CSSProperties = {
   textTransform: "uppercase",
   color: CANVAS.INK_MUTED,
   textAlign: "center",
+};
+
+// Cells stack a heading over supporting lines. The children were bare inline
+// <strong>/<span> siblings with no separator, so a label and its description
+// rendered as one run of text ("Normalized 5-year TCOShows cost position...").
+// These make each part its own block. The <td> stays a table-cell so column
+// alignment is unaffected.
+const CELL_TITLE: CSSProperties = {
+  display: "block",
+};
+
+const CELL_NOTE: CSSProperties = {
+  display: "block",
+  marginTop: 3,
 };
 
 const TD_LABEL: CSSProperties = {
