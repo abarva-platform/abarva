@@ -626,7 +626,9 @@ describe("Source answer engine", () => {
   });
 
   it.each([
-    ["Which vendor is leading?", "Vendor A is leading"],
+    // Answers name a vendor only from the parsed summary rows, so the
+    // assertions pin the derived shape rather than the old fixed narrative.
+    ["Which vendor is leading?", "Vendor A leads the evaluation at 7.4/10"],
     ["Which vendor is cheapest on normalized TCO?", "Vendor B is cheapest"],
     [
       "Which vendor has the highest transition risk?",
@@ -639,7 +641,7 @@ describe("Source answer engine", () => {
     ["Why is Vendor B conditional?", "Vendor B is conditional because"],
     [
       "Why should Vendor C remain in the process?",
-      "Vendor C should remain in the process",
+      "Vendor C is ranked 2 at 7.2/10 on evidenced criteria",
     ],
     [
       "Which vendor should advance to BAFO?",
@@ -647,15 +649,15 @@ describe("Source answer engine", () => {
     ],
     [
       "Show the evaluation scorecard summary.",
-      "The evaluation scorecard ranks Vendor A first",
+      "The evaluation scorecard ranks Vendor A 7.4/10",
     ],
     [
       "What is the final recommendation for the sourcing team?",
-      "Vendor A is leading",
+      "Vendor A leads the evaluation at 7.4/10",
     ],
     [
       "What are the executive tradeoffs?",
-      "continuity versus price versus service accountability",
+      "price and evidence do not necessarily point at the same vendor",
     ],
   ])("answers evaluation scorecard question: %s", (prompt, expectedLead) => {
     const contextWithEvaluationScorecard: SourceAgentContextBundle = {
@@ -1130,9 +1132,12 @@ describe("Source answer engine", () => {
     });
 
     expect(answer?.title).toBe("Evaluation scorecard answer");
-    expect(answer?.answerText).toContain("Advance Vendor A");
-    expect(answer?.answerText).toContain("Vendor C");
-    expect(answer?.answerText).toContain("Vendor B");
+    // This fallback runs when structured vendor scores cannot be read, so it
+    // must not name a leading, cheapest, or riskiest vendor.
+    expect(answer?.answerText).toContain(
+      "structured vendor scores could not be read",
+    );
+    expect(answer?.answerText).not.toMatch(/Vendor [ABC] (is|leads|carries)/);
     expect(answer?.answerText).toContain("targeted BAFO");
     expect(answer?.answerText).not.toContain("final RFP version");
     expect(answer?.answerText).not.toContain("client-final artifact");
