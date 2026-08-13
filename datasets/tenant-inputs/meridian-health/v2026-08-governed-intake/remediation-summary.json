@@ -1,0 +1,208 @@
+{
+  "tenantKey": "meridian-health",
+  "generatedBy": "scripts/data/remediate-v3-envelope-to-contract.mjs",
+  "sourceRoot": "datasets/tenant-inputs/active/meridian-health/current",
+  "outputRoot": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/canonical-dimensions",
+  "status": "draft_not_active_no_registry_no_load_no_product_use",
+  "rules": [
+    "additive: every original column preserved",
+    "deterministic: contract columns filled only by copying a named source column",
+    "no inference, no parsing of prose, no generated values"
+  ],
+  "contractColumnsTotal": 286,
+  "contractColumnsPopulated": 157,
+  "fillRate": "55%",
+  "dimensions": [
+    {
+      "contractFile": "00_enterprise_profile.csv",
+      "sourceFile": "00_enterprise_profile.csv",
+      "rows": 2,
+      "contractColumns": 20,
+      "populated": 18,
+      "empty": 2,
+      "preservedOriginalColumns": 18,
+      "sha256": "56a112fc6cc335170d778c3179d6a8f6c77873c953741174ec9c67a7d1921293"
+    },
+    {
+      "contractFile": "01_business_functions.csv",
+      "sourceFile": "01_business_functions.csv",
+      "rows": 228,
+      "contractColumns": 15,
+      "populated": 6,
+      "empty": 9,
+      "preservedOriginalColumns": 39,
+      "sha256": "6d88f8ea2d08403216979e728aecf64a571bbfcd938238da001b737121d3c691"
+    },
+    {
+      "contractFile": "02_org_ownership.csv",
+      "sourceFile": "02_org_ownership.csv",
+      "rows": 228,
+      "contractColumns": 14,
+      "populated": 7,
+      "empty": 7,
+      "preservedOriginalColumns": 39,
+      "sha256": "a6d30d853843dcb495707d6baa8bbe4be6ca8e06ff5240f8ad381d3135d401d5"
+    },
+    {
+      "contractFile": "03_workforce_roles.csv",
+      "sourceFile": "03_workforce_roles.csv",
+      "rows": 221,
+      "contractColumns": 14,
+      "populated": 6,
+      "empty": 8,
+      "preservedOriginalColumns": 45,
+      "sha256": "07ba9c224b3176fb137125ec849c8052a5b77e10619dc979982ebb447c7118df"
+    },
+    {
+      "contractFile": "04_applications_systems.csv",
+      "sourceFile": "04_applications_systems.csv",
+      "rows": 241,
+      "contractColumns": 20,
+      "populated": 10,
+      "empty": 10,
+      "preservedOriginalColumns": 41,
+      "sha256": "7e1ecc80bff96e1642c81a85143577c4ada259eac85ce77c18ac8f1d11fee15e"
+    },
+    {
+      "contractFile": "05_data_assets_integrations.csv",
+      "sourceFile": "05_data_assets_integrations.csv",
+      "rows": 242,
+      "contractColumns": 18,
+      "populated": 6,
+      "empty": 12,
+      "preservedOriginalColumns": 34,
+      "sha256": "04fbbef3d359633eb8aecefb62bf6cfa6b977ef4bdb1963480fc78ac4256364f"
+    },
+    {
+      "contractFile": "06_infrastructure_platforms.csv",
+      "sourceFile": "06_infrastructure_platforms.csv",
+      "rows": 15,
+      "contractColumns": 16,
+      "populated": 7,
+      "empty": 9,
+      "preservedOriginalColumns": 18,
+      "sha256": "b7629030fcdd1c67558a8fde943f9bfc4022b9358a8932c2fdb516875573929f"
+    },
+    {
+      "contractFile": "07_vendors_contracts.csv",
+      "sourceFile": "07_vendors_contracts.csv",
+      "rows": 231,
+      "contractColumns": 18,
+      "populated": 10,
+      "empty": 8,
+      "preservedOriginalColumns": 47,
+      "sha256": "1dd80e3b302baa6b8745e85050050a9a313e399e9f871959156dcda2b7ca6d3c"
+    },
+    {
+      "contractFile": "08_spend_value.csv",
+      "sourceFile": "08_it_budget_spend_value.csv",
+      "rows": 298,
+      "contractColumns": 13,
+      "populated": 7,
+      "empty": 6,
+      "preservedOriginalColumns": 65,
+      "sha256": "2d731bd7ce5ba6b5b277d134dff5c82c15834b64f872d0b583b0a7410a8c321f"
+    },
+    {
+      "contractFile": "09_programs_initiatives.csv",
+      "sourceFile": "09_programs_initiatives.csv",
+      "rows": 256,
+      "contractColumns": 17,
+      "populated": 10,
+      "empty": 7,
+      "preservedOriginalColumns": 55,
+      "sha256": "ea612beec21c82a23e29ec6eb4ada4ef65bdfcacbb99be8ba0cacc2565c5f535"
+    },
+    {
+      "contractFile": "10_ai_automation_use_cases.csv",
+      "sourceFile": "10_ai_automation_use_cases.csv",
+      "rows": 251,
+      "contractColumns": 15,
+      "populated": 11,
+      "empty": 4,
+      "preservedOriginalColumns": 51,
+      "sha256": "5ca8e21e8609ef8047337459a3d5d7ca2045434b5d6a9750492a65e63b020ea0"
+    },
+    {
+      "contractFile": "11_risks_controls.csv",
+      "sourceFile": "11_risks_controls.csv",
+      "rows": 249,
+      "contractColumns": 15,
+      "populated": 6,
+      "empty": 9,
+      "preservedOriginalColumns": 35,
+      "sha256": "8d4b225b136105128db4a6ee3977e705612790a724cdd6395540256acdc7dc74"
+    },
+    {
+      "contractFile": "12_relationships.csv",
+      "sourceFile": "12_relationships.csv",
+      "rows": 1037,
+      "contractColumns": 13,
+      "populated": 13,
+      "empty": 0,
+      "preservedOriginalColumns": 12,
+      "sha256": "1595b6dc835acfb9fa26f68fd6ee738add5e554ed725b4a42ee9332d60549f19"
+    },
+    {
+      "contractFile": "13_evidence_sources.csv",
+      "sourceFile": "13_evidence_sources.csv",
+      "rows": 508,
+      "contractColumns": 12,
+      "populated": 8,
+      "empty": 4,
+      "preservedOriginalColumns": 35,
+      "sha256": "e710b795394b5b6fb0ee2391fd6eb4ca4ded78101c1dd844a4efc2035367bc70"
+    },
+    {
+      "contractFile": "14_metrics_outcomes.csv",
+      "sourceFile": "14_metrics_outcomes.csv",
+      "rows": 257,
+      "contractColumns": 15,
+      "populated": 9,
+      "empty": 6,
+      "preservedOriginalColumns": 46,
+      "sha256": "7b3ae6de0d4ab5625e51f9630fe3cbb7a9e137700f7859923e25b0d6710824c5"
+    },
+    {
+      "contractFile": "15_industry_context_patterns.csv",
+      "sourceFile": "15_industry_context_patterns.csv",
+      "rows": 7,
+      "contractColumns": 11,
+      "populated": 6,
+      "empty": 5,
+      "preservedOriginalColumns": 15,
+      "sha256": "2e828594ab1ad9c467b54106ef7bc09e122f474420c3a43f9a7cf5eea7b9ee83"
+    },
+    {
+      "contractFile": "16_expert_lenses.csv",
+      "sourceFile": "16_expert_lenses.csv",
+      "rows": 7,
+      "contractColumns": 11,
+      "populated": 5,
+      "empty": 6,
+      "preservedOriginalColumns": 15,
+      "sha256": "eef1d076ce741c3188bf9a635113aaaca8aeebc654d3b7f4b93ffc9c5fbb631e"
+    },
+    {
+      "contractFile": "17_service_scope_managed_services.csv",
+      "sourceFile": "17_managed_services_scope.csv",
+      "rows": 228,
+      "contractColumns": 15,
+      "populated": 6,
+      "empty": 9,
+      "preservedOriginalColumns": 53,
+      "sha256": "cc3ac8ff1e2b7bde0b23efb9af0937d742b055286d21ba7e99ec9a5b1d47179a"
+    },
+    {
+      "contractFile": "18_operational_process_evidence.csv",
+      "sourceFile": "18_operational_process_evidence.csv",
+      "rows": 228,
+      "contractColumns": 14,
+      "populated": 6,
+      "empty": 8,
+      "preservedOriginalColumns": 38,
+      "sha256": "6e8ce991b879bf4b452a093a19b76e0ddc2f933517baa4563cccbcb70498a60b"
+    }
+  ],
+  "evidenceRequestCount": 129
+}
