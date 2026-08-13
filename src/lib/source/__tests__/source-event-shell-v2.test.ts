@@ -52,6 +52,69 @@ const APPROVAL: ApprovalsInboxItem = {
   actionLabel: "Review & decide",
 };
 
+describe("journey stage completion evidence", () => {
+  // A stage sitting before the current one has only moved past in position.
+  // That is not proof it was completed, so the rail may only claim completion
+  // when an approval record backs it.
+  function journeyWith(
+    ledger?: Parameters<typeof buildSourceEventShellView>[0]["approvalLedger"],
+  ) {
+    return buildSourceEventShellView({
+      event: EVENT,
+      tenantName: "FS Demo",
+      viewedStageKey: "scope",
+      stageView: SAMPLE_SCOPE_STAGE as StageAnalyticsView,
+      approvalLedger: ledger,
+    }).journey;
+  }
+
+  function ledgerRow(
+    stageKey: string,
+    state: "approved" | "current" | "locked",
+  ) {
+    return {
+      stageKey,
+      stageLabel: stageKey,
+      index: 1,
+      state,
+      approverName: state === "approved" ? "A. Approver" : null,
+      approvedAtIso: state === "approved" ? "2026-08-01T00:00:00.000Z" : null,
+      authorizationNote: "",
+      approverRationale: null,
+    } as never;
+  }
+
+  it("leaves completion unevaluated when no approval ledger is supplied", () => {
+    for (const stage of journeyWith(undefined)) {
+      expect(stage.approvalEvidenced).toBeNull();
+    }
+  });
+
+  it("marks a past stage evidenced only when an approval record exists", () => {
+    const journey = journeyWith([
+      ledgerRow("strategy", "approved"),
+      ledgerRow("scope", "current"),
+    ]);
+
+    const strategy = journey.find((stage) => stage.key === "strategy");
+    const scope = journey.find((stage) => stage.key === "scope");
+
+    expect(strategy?.state).toBe("past");
+    expect(strategy?.approvalEvidenced).toBe(true);
+
+    // Present in the ledger but not approved, so no completion may be claimed.
+    expect(scope?.approvalEvidenced).toBe(false);
+  });
+
+  it("does not treat an unapproved earlier stage as evidenced", () => {
+    const journey = journeyWith([ledgerRow("rfp", "approved")]);
+    const strategy = journey.find((stage) => stage.key === "strategy");
+
+    expect(strategy?.state).toBe("past");
+    expect(strategy?.approvalEvidenced).toBe(false);
+  });
+});
+
 describe("buildSourceEventShellView", () => {
   it("keeps current event stage and viewed workspace stage explicit", () => {
     const view = buildSourceEventShellView({

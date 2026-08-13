@@ -865,6 +865,12 @@ function SourceShellRail({
             <Link
               key={stage.key}
               href={`/source/events/${view.event.id}?stage=${stage.key}`}
+              data-approval-evidenced={String(stage.approvalEvidenced)}
+              title={
+                stage.state === "past" && stage.approvalEvidenced === false
+                  ? `${stage.label}: the case moved past this stage, but no approval record backs it.`
+                  : undefined
+              }
               style={{
                 display: "grid",
                 gridTemplateColumns: "22px 1fr auto",
@@ -905,7 +911,7 @@ function SourceShellRail({
                   fontWeight: 800,
                 }}
               >
-                {stage.state === "past"
+                {stage.state === "past" && stage.approvalEvidenced !== false
                   ? "✓"
                   : String(stage.index).padStart(2, "0")}
               </span>
