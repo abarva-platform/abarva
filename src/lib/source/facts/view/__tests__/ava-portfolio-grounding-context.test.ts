@@ -127,6 +127,27 @@ describe('buildAvaSourcePortfolioGrounding', () => {
     expect(result.block).toMatch(/ONLY governed Source portfolio numbers/i);
   });
 
+  it('states what its counts actually count, so another surface can be reconciled', async () => {
+    // Live-found: aVa reported 121 contracts / 30 vendors while the Source
+    // Workspace header reported 100 / 60 for the same tenant. Neither is wrong —
+    // the header counts contract FAMILIES from the V4 snapshot, this counts
+    // contract ROWS in source.contract_360. A bare number made that read as a
+    // contradiction, so the basis has to travel with the figure.
+    mockListContract360.mockResolvedValue([
+      contractRow({ contract_id: 'c1', vendor_ref: 'v1', vendor_name: 'Salesforce', annual_value: 1_000_000 }),
+    ]);
+    mockListVendorContractPortfolio.mockResolvedValue([
+      vendorRow({ vendor_ref: 'v1', vendor_name: 'Salesforce', annual_value: 1_000_000 }),
+    ]);
+
+    const result = await buildAvaSourcePortfolioGrounding('skyharbor');
+
+    expect(result.block).toContain('contract rows in source.contract_360');
+    expect(result.block).toContain('distinct vendor references');
+    expect(result.block).toContain('contract FAMILIES');
+    expect(result.block).toMatch(/do not treat either as wrong/i);
+  });
+
   it('never asserts a number for a tenant whose read fails — falls through honestly', async () => {
     mockListContract360.mockRejectedValue(new Error('connection refused'));
     mockListVendorContractPortfolio.mockRejectedValue(new Error('connection refused'));

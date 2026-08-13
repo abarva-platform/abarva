@@ -125,7 +125,14 @@ export async function buildAvaSourcePortfolioGrounding(
 
   const lines: string[] = [
     `AUTHORITATIVE SOURCE PORTFOLIO GROUNDING (LIVE — source.contract_360 / source.vendor_contract_portfolio, tenant "${tenantKey}", as of ${asOfIso.slice(0, 10)}):`,
-    `Contracts: ${summary.contractCount}. Vendors: ${summary.vendorCount} (${vendors.length} vendor rows read).`,
+    // State the basis, not just the number. The Source Workspace header counts
+    // contract FAMILIES from the active V4 snapshot; this counts contract ROWS in
+    // source.contract_360 after supplemental rows are excluded. Both are right
+    // for what they measure and they legitimately differ — the workspace itself
+    // carries a mismatchWarning for exactly this. Quoting a bare count made aVa
+    // look like it contradicted the page sitting beside it.
+    `Contracts: ${summary.contractCount} contract rows in source.contract_360 (supplemental rows excluded). Vendors: ${summary.vendorCount} distinct vendor references (${vendors.length} vendor rows read).`,
+    "Counting basis matters here: the Source Workspace header counts contract FAMILIES from the active Source V4 snapshot, a different unit that can legitimately differ from the row count above. If the user quotes a different contract or vendor count from another Source surface, do not treat either as wrong and do not silently pick one — say which unit each counts, and that one contract family can span several contract rows.",
     `Annual contract value: ${fmtUsd(summary.totalAnnualValue)}. Actual annual spend: ${fmtUsd(summary.totalActualAnnualSpend)}. Total committed value: ${fmtUsd(summary.totalCommittedValue)}.`,
     `Auto-renewing contracts: ${summary.autoRenewCount} of ${summary.contractCount}.`,
     topVendors ? `Top vendors by annual value: ${topVendors}.` : '',
