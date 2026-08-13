@@ -152,6 +152,7 @@ import {
 // aVa DETERMINISTIC GROUNDING · Source portfolio (live-bug fix — see module
 // doc). Same wire pattern as the event grounding above, aimed at
 // portfolio-level questions instead of a single event.
+import { buildAvaSourceContractGrounding } from "@/lib/source/facts/view/ava-contract-grounding-context";
 import { buildAvaSourcePortfolioGrounding } from "@/lib/source/facts/view/ava-portfolio-grounding-context";
 // Source aVa answer-mode hardening (Phase A + Phase B) — classify the question
 // into one of 16 modes, build mode-specific grounding for the 6 Phase A modes
@@ -1363,6 +1364,39 @@ export async function POST(request: Request) {
     }
   }
 
+  // ── aVa DETERMINISTIC GROUNDING · single Source contract (live-bug fix) ──────
+  //
+  // Live-found: the Optimize Contract page sends `surfaceContext.contractId`,
+  // but nothing read it, so every contract-grain question came back with an
+  // empty bundle and aVa deflected the user to Contract 360 — while they were
+  // already on the page showing the answer. See
+  // docs/testing/source-ava-hard-qa-2026-08-12.md (AVA-S-01).
+  //
+  // This reads the same governed builders the Optimize page renders from, so
+  // aVa's numbers cannot diverge from the ones on screen. Additive: no contract
+  // id, an unknown contract, or a read failure leaves the block empty.
+  const contractIdFromContext =
+    typeof surfaceContext.contractId === "string" &&
+    surfaceContext.contractId.trim()
+      ? surfaceContext.contractId.trim()
+      : null;
+  let sourceContractGroundingBlock = "";
+  let hasSourceContractGrounding = false;
+  if (isSourceSurface(surface) && effectiveClientKey && contractIdFromContext) {
+    try {
+      const contractGrounding = await buildAvaSourceContractGrounding(
+        effectiveClientKey,
+        contractIdFromContext,
+      );
+      if (contractGrounding.block) {
+        sourceContractGroundingBlock = contractGrounding.block;
+        hasSourceContractGrounding = true;
+      }
+    } catch {
+      // Best-effort — a read failure here must never break the chat turn.
+    }
+  }
+
   // ── aVa DETERMINISTIC GROUNDING · Source event (flag-gated, additive) ────────
   //
   // The Source product is deterministic: `source_event_facts` + the archetype
@@ -1657,7 +1691,10 @@ export async function POST(request: Request) {
   // grounding fires independently of event grounding (no sourceEventId
   // required), so make sure the guard is present whenever either produced a
   // block, without duplicating the guard text if both did.
-  if (hasSourcePortfolioGrounding && !sourceAvaQuoteNotComputeGuard) {
+  if (
+    (hasSourcePortfolioGrounding || hasSourceContractGrounding) &&
+    !sourceAvaQuoteNotComputeGuard
+  ) {
     sourceAvaQuoteNotComputeGuard = AVA_SOURCE_QUOTE_NOT_COMPUTE_GUARD;
   }
 
@@ -1689,7 +1726,8 @@ export async function POST(request: Request) {
   // before — unchanged behavior for every mode this fix does not target.
   const contextBundlePromptBlockForPrompt =
     (shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
-      hasSourcePortfolioGrounding)
+      hasSourcePortfolioGrounding ||
+      hasSourceContractGrounding)
       ? ""
       : contextBundlePromptBlock;
 
@@ -1733,7 +1771,8 @@ export async function POST(request: Request) {
   // non-Source surface keep receiving this block exactly as before.
   const agentTenantContextBlockForPrompt =
     (shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
-      hasSourcePortfolioGrounding)
+      hasSourcePortfolioGrounding ||
+      hasSourceContractGrounding)
       ? ""
       : agentTenantContextBlock;
 
@@ -1773,7 +1812,8 @@ export async function POST(request: Request) {
   // `tenantSystemBlock` exactly as before.
   const tenantSystemBlockForPrompt =
     (shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
-      hasSourcePortfolioGrounding)
+      hasSourcePortfolioGrounding ||
+      hasSourceContractGrounding)
       ? ""
       : tenantSystemBlock;
 
@@ -1951,6 +1991,13 @@ export async function POST(request: Request) {
     // first, then narrows to the specific event if one is active. Empty
     // string when the tenant has no governed contract rows.
     sourcePortfolioGroundingBlock,
+    "",
+    // aVa DETERMINISTIC GROUNDING · the single contract in scope on the Optimize
+    // Contract surface. Deliberately placed AFTER the portfolio block: the
+    // portfolio block tells aVa to deflect single-contract questions to Contract
+    // 360, and this block cancels that for the one contract it covers. Empty
+    // string when no contract id is on the surface.
+    sourceContractGroundingBlock,
     "",
     // aVa DETERMINISTIC GROUNDING · authoritative value numbers for the active
     // Source event (flag-gated). Positioned with the source tenant context so aVa
