@@ -8,6 +8,11 @@ import type {
   VendorResponseParseReport,
   VendorResponseProfileSet,
 } from "@/lib/source/proposal-intelligence";
+import {
+  buildResponseDecisionAgenda,
+  type DecisionAgenda,
+  type DecisionAgendaItem,
+} from "@/lib/source/vendor-response-decision-agenda";
 import { CANVAS } from "../canvas-tokens";
 
 interface BriefItem {
@@ -16,6 +21,16 @@ interface BriefItem {
   detail: string;
   tone: "good" | "warn" | "bad" | "neutral";
 }
+
+interface CappedList {
+  items: string[];
+  total: number;
+}
+
+/** How many agenda rows to show before pointing at the full log below. */
+const AGENDA_VISIBLE_LIMIT = 6;
+/** How many supporting list entries to show before reporting the remainder. */
+const LIST_VISIBLE_LIMIT = 6;
 
 export function VendorResponseIntelligenceBrief({
   profileSet,
@@ -41,13 +56,11 @@ export function VendorResponseIntelligenceBrief({
     return null;
   }
 
-  const insights = buildInsightItems(
-    profileSet,
+  const agenda = buildResponseDecisionAgenda(
     challengeIntelligence,
     bafoInstructionPack,
-    evaluationDecisionView,
-    parseReports,
   );
+  const insights = buildInsightItems(profileSet, agenda, parseReports);
   const evidenceUsed = collectEvidenceUsed(
     profileSet,
     challengeIntelligence,
@@ -76,9 +89,11 @@ export function VendorResponseIntelligenceBrief({
           <div style={EYEBROW}>Proposal intelligence brief</div>
           <h3 style={TITLE}>What Source learned before scoring</h3>
           <p style={COPY}>
-            This is the bridge from vendor files to scoring discipline: produced
-            insights, evidence used, missing inputs, and the leverage path to
-            BAFO.
+            Open items are ranked by what they block, not by when they were
+            found. Each one carries what review found, its impact signal, how it
+            affects scoring, the ask to put to the vendor, and the evidence
+            behind it. Impact signals are qualitative until a vendor prices
+            them, so an unevidenced one is marked as a test, not a saving.
           </p>
         </div>
         <div style={SUMMARY}>
@@ -101,6 +116,8 @@ export function VendorResponseIntelligenceBrief({
           </div>
         ))}
       </div>
+
+      <DecisionAgendaTable agenda={agenda} />
 
       <div style={DETAIL_GRID}>
         <BriefList
@@ -134,10 +151,8 @@ export function VendorResponseIntelligenceBrief({
 }
 
 function buildInsightItems(
-  profileSet?: VendorResponseProfileSet | null,
-  challengeIntelligence?: VendorChallengeIntelligence | null,
-  bafoInstructionPack?: VendorBafoInstructionPack | null,
-  evaluationDecisionView?: VendorEvaluationDecisionView | null,
+  profileSet: VendorResponseProfileSet | null | undefined,
+  agenda: DecisionAgenda,
   parseReports?: VendorResponseParseReport[],
 ): BriefItem[] {
   const profileCount =
@@ -157,32 +172,34 @@ function buildInsightItems(
   const parseReadyCount =
     parseReports?.filter((report) => report.scoreReadiness === "ready_to_score")
       .length ?? 0;
+
+  // These are decision counts, not activity counts. "How many challenges did
+  // we generate" does not tell a buyer what to do next; "how many of them stop
+  // a score" and "how much of our leverage is evidence-backed" do.
   return [
     {
-      label: parsedReportCount > 0 ? "Parsed reports" : "Response profiles",
-      value: String(parsedReportCount || profileCount),
+      label: "Blocks a score",
+      value: String(agenda.blocksScoringCount),
       detail:
-        parsedReportCount > 0
-          ? `${parsedWithCitations}/${parsedReportCount} vendor packages parsed with citations and missing-input ledgers.`
-          : profileCount > 0
-            ? "Vendor packages reduced to scope, price, claims, evidence, exceptions, and readiness."
-            : "Awaiting parsed vendor packages.",
-      tone: parsedReportCount > 0 || profileCount > 0 ? "good" : "warn",
+        agenda.blocksScoringCount > 0
+          ? "Must be resolved with the vendor before a score can be given."
+          : "Nothing open is holding back a score.",
+      tone: agenda.blocksScoringCount > 0 ? "bad" : "good",
     },
     {
-      label: "Challenges found",
-      value: String(challengeIntelligence?.challengeCount ?? 0),
-      detail:
-        "Issues to clarify before scores harden or vendors anchor weak positions.",
-      tone:
-        (challengeIntelligence?.challengeCount ?? 0) > 0 ? "warn" : "neutral",
+      label: "Leverage only",
+      value: String(agenda.leverageOnlyCount),
+      detail: "Does not block scoring; strengthens the buyer position at BAFO.",
+      tone: agenda.leverageOnlyCount > 0 ? "warn" : "neutral",
     },
     {
-      label: "BAFO asks",
-      value: String(bafoInstructionPack?.questionCount ?? 0),
+      label: "Evidenced impact",
+      value: `${agenda.evidencedImpactCount}/${
+        agenda.evidencedImpactCount + agenda.testOnlyImpactCount
+      }`,
       detail:
-        "Vendor-specific asks generated from evidence gaps and commercial risk.",
-      tone: (bafoInstructionPack?.questionCount ?? 0) > 0 ? "good" : "warn",
+        "Commercial impact backed by cited evidence. The rest is worth testing, not booking.",
+      tone: agenda.evidencedImpactCount > 0 ? "good" : "neutral",
     },
     {
       label: "Ready to score",
@@ -198,22 +215,106 @@ function buildInsightItems(
           : "warn",
     },
     {
-      label: "Decision view",
-      value: evaluationDecisionView
-        ? `${evaluationDecisionView.scorecardRows.length}`
-        : "0",
+      label: parsedReportCount > 0 ? "Cited packages" : "Response profiles",
+      value:
+        parsedReportCount > 0
+          ? `${parsedWithCitations}/${parsedReportCount}`
+          : String(profileCount),
       detail:
-        "Weighted criteria, tradeoffs, and score-improvement scenarios prepared.",
-      tone: evaluationDecisionView ? "good" : "neutral",
+        parsedReportCount > 0
+          ? "Vendor packages parsed with citations and a missing-input ledger."
+          : "Vendor packages reduced to scope, price, claims, evidence, exceptions, and readiness.",
+      tone: parsedWithCitations > 0 || profileCount > 0 ? "good" : "warn",
     },
   ];
+}
+
+function DecisionAgendaTable({ agenda }: { agenda: DecisionAgenda }) {
+  if (agenda.items.length === 0) return null;
+  const shown = agenda.items.slice(0, AGENDA_VISIBLE_LIMIT);
+  const hidden = agenda.totalCount - shown.length;
+
+  return (
+    <div style={AGENDA_PANEL}>
+      <div style={LIST_HEAD}>
+        <span style={EYEBROW}>What changes the decision</span>
+        <span style={AGENDA_NOTE}>
+          {hidden > 0
+            ? `Top ${shown.length} of ${agenda.totalCount}; the full log is in the challenge and BAFO panels below.`
+            : `All ${agenda.totalCount} open items.`}
+        </span>
+      </div>
+      <div style={TABLE_WRAP}>
+        <table style={TABLE}>
+          <thead>
+            <tr>
+              <th style={{ ...TH, textAlign: "left" }}>Vendor</th>
+              <th style={{ ...TH, textAlign: "left" }}>What review found</th>
+              <th style={TH}>Need</th>
+              <th style={{ ...TH, textAlign: "left" }}>Impact signal</th>
+              <th style={{ ...TH, textAlign: "left" }}>Scoring disposition</th>
+              <th style={{ ...TH, textAlign: "left" }}>Ask before BAFO</th>
+              <th style={{ ...TH, textAlign: "left" }}>Evidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((item) => (
+              <AgendaRow key={item.key} item={item} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function AgendaRow({ item }: { item: DecisionAgendaItem }) {
+  return (
+    <tr>
+      <td style={TD_VENDOR}>
+        <strong>{item.vendorName}</strong>
+      </td>
+      <td style={TD_TEXT}>{item.finding}</td>
+      <td style={TD_CENTER}>
+        <span
+          style={{
+            ...BADGE,
+            ...TONE[item.blocksScoring ? "bad" : "warn"],
+          }}
+        >
+          {item.blocksScoring ? "Blocks score" : "Leverage"}
+        </span>
+      </td>
+      <td style={TD_TEXT}>
+        {item.worth ? (
+          <>
+            {item.worth}
+            {item.impactConfidence ? (
+              <span style={CONFIDENCE}>
+                {item.impactConfidence === "high"
+                  ? "Evidenced"
+                  : "Test, do not book"}
+              </span>
+            ) : null}
+          </>
+        ) : (
+          <span style={UNQUANTIFIED}>No impact signal</span>
+        )}
+      </td>
+      <td style={TD_TEXT}>{item.blocks}</td>
+      <td style={TD_TEXT}>{item.ask}</td>
+      <td style={TD_TEXT}>
+        {item.evidence ?? <span style={UNQUANTIFIED}>No cite</span>}
+      </td>
+    </tr>
+  );
 }
 
 function collectEvidenceUsed(
   profileSet?: VendorResponseProfileSet | null,
   challengeIntelligence?: VendorChallengeIntelligence | null,
   parseReports?: VendorResponseParseReport[],
-): string[] {
+): CappedList {
   const parsedEvidence =
     parseReports?.flatMap((report) =>
       report.citations
@@ -242,14 +343,14 @@ function collectEvidenceUsed(
       (challenge) => challenge.evidenceLabel,
     ) ?? []),
   ];
-  return unique(values).slice(0, 7);
+  return capped(unique(values));
 }
 
 function collectMissingInputs(
   profileSet?: VendorResponseProfileSet | null,
   bafoInstructionPack?: VendorBafoInstructionPack | null,
   parseReports?: VendorResponseParseReport[],
-): string[] {
+): CappedList {
   const values = [
     ...(parseReports?.flatMap((report) =>
       report.missingInputs.map(
@@ -277,14 +378,14 @@ function collectMissingInputs(
     ) ?? []),
     ...(bafoInstructionPack?.scoringHoldbacks ?? []),
   ];
-  return unique(values).slice(0, 8);
+  return capped(unique(values));
 }
 
 function collectLeveragePath(
   challengeIntelligence?: VendorChallengeIntelligence | null,
   bafoInstructionPack?: VendorBafoInstructionPack | null,
   evaluationDecisionView?: VendorEvaluationDecisionView | null,
-): string[] {
+): CappedList {
   const values = [
     ...(challengeIntelligence?.leverageSeeds.map(
       (seed) => `${seed.vendorName}: ${seed.recommendedAsk}`,
@@ -299,7 +400,18 @@ function collectLeveragePath(
         `${scenario.vendorName}: ${scenario.bafoCure} (${scenario.requiredEvidence})`,
     ) ?? []),
   ];
-  return unique(values).slice(0, 8);
+  return capped(unique(values));
+}
+
+/**
+ * Cap the display list but keep the true total, so a panel never reports the
+ * capped length as if it were the whole set.
+ */
+function capped(values: string[]): CappedList {
+  return {
+    items: values.slice(0, LIST_VISIBLE_LIMIT),
+    total: values.length,
+  };
 }
 
 function unique(values: string[]): string[] {
@@ -320,22 +432,28 @@ function BriefList({
   tone = "neutral",
 }: {
   title: string;
-  items: string[];
+  items: CappedList;
   empty: string;
   tone?: "good" | "warn" | "bad" | "neutral";
 }) {
+  const hidden = items.total - items.items.length;
   return (
     <div style={LIST_PANEL}>
       <div style={LIST_HEAD}>
         <span style={EYEBROW}>{title}</span>
-        <strong style={{ ...COUNT_PILL, ...TONE[tone] }}>{items.length}</strong>
+        <strong style={{ ...COUNT_PILL, ...TONE[tone] }}>{items.total}</strong>
       </div>
-      {items.length > 0 ? (
-        <ul style={LIST}>
-          {items.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
+      {items.items.length > 0 ? (
+        <>
+          <ul style={LIST}>
+            {items.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+          {hidden > 0 ? (
+            <p style={EMPTY}>{`${hidden} more not shown here.`}</p>
+          ) : null}
+        </>
       ) : (
         <p style={EMPTY}>{empty}</p>
       )}
@@ -474,6 +592,81 @@ const FOOTNOTE: CSSProperties = {
   color: CANVAS.INK_MUTED,
   fontSize: CANVAS.T_BODY_SMALL,
   lineHeight: 1.45,
+};
+
+const AGENDA_PANEL: CSSProperties = {
+  borderTop: `1px solid ${CANVAS.RULE}`,
+  paddingTop: 10,
+  display: "grid",
+  gap: 8,
+};
+
+const AGENDA_NOTE: CSSProperties = {
+  color: CANVAS.INK_MUTED,
+  fontSize: CANVAS.T_BODY_SMALL,
+  lineHeight: 1.4,
+  textAlign: "right",
+};
+
+const TABLE_WRAP: CSSProperties = {
+  overflowX: "auto",
+};
+
+const TABLE: CSSProperties = {
+  width: "100%",
+  borderCollapse: "collapse",
+  fontSize: CANVAS.T_BODY_SMALL,
+  color: CANVAS.INK,
+};
+
+const TH: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: CANVAS.T_MICRO,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: CANVAS.INK_MUTED,
+  fontWeight: 700,
+  textAlign: "center",
+  padding: "6px 8px",
+  borderBottom: `1px solid ${CANVAS.RULE}`,
+  whiteSpace: "nowrap",
+};
+
+const TD_BASE: CSSProperties = {
+  padding: "8px",
+  borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
+  verticalAlign: "top",
+  lineHeight: 1.4,
+};
+
+const TD_VENDOR: CSSProperties = {
+  ...TD_BASE,
+  minWidth: 130,
+};
+
+const TD_TEXT: CSSProperties = {
+  ...TD_BASE,
+  minWidth: 150,
+};
+
+const TD_CENTER: CSSProperties = {
+  ...TD_BASE,
+  textAlign: "center",
+  whiteSpace: "nowrap",
+};
+
+const CONFIDENCE: CSSProperties = {
+  display: "block",
+  marginTop: 3,
+  fontFamily: CANVAS.MONO,
+  fontSize: CANVAS.T_MICRO_SMALL,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  color: CANVAS.INK_MUTED,
+};
+
+const UNQUANTIFIED: CSSProperties = {
+  color: CANVAS.INK_MUTED,
 };
 
 const TONE: Record<BriefItem["tone"], CSSProperties> = {
