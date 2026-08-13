@@ -43,6 +43,7 @@ import {
 } from "@/lib/auth/source-access-policy";
 import {
   formatRestrictedOutputPolicyForPrompt,
+  createRestrictedFinancialTextStreamer,
   sanitizeRestrictedFinancialText,
   summarizeFinancialValueForPrompt,
   type RestrictedOutputPolicyLike,
@@ -2299,14 +2300,31 @@ export async function POST(request: Request) {
       // Tool-side writes carry surface-specific sentinels (e.g. the
       // `[[program-created:<id>]]` navigation hint emitted by
       // commit_program); loop-side writes are agent text deltas.
+      // Redaction has to survive streaming. Sanitizing each delta on its own
+      // let a money token split across deltas leak its tail — live-observed
+      // "[restricted financial value].1K", i.e. digits of a restricted value
+      // reaching a user not entitled to them. The streamer holds back a
+      // fragment that could still grow into a money token so redaction always
+      // sees the whole token; `flush()` below emits whatever it still holds.
+      const restrictedFinancialStreamer =
+        createRestrictedFinancialTextStreamer(userAccessPolicy);
+      const emitAgentText = (safeText: string) => {
+        if (!safeText) return;
+        bufferedOutput += safeText;
+        heldAgentText += safeText;
+        controller.enqueue(encoder.encode(safeText));
+      };
+      const flushRestrictedFinancialTail = () => {
+        if (isDirectClaudeSurface(surface)) return;
+        emitAgentText(restrictedFinancialStreamer.flush());
+      };
       const writer = {
         write(text: string) {
-          const safeText = isDirectClaudeSurface(surface)
-            ? text
-            : sanitizeRestrictedFinancialText(text, userAccessPolicy);
-          bufferedOutput += safeText;
-          heldAgentText += safeText;
-          controller.enqueue(encoder.encode(safeText));
+          if (isDirectClaudeSurface(surface)) {
+            emitAgentText(text);
+            return;
+          }
+          emitAgentText(restrictedFinancialStreamer.push(text));
         },
       };
       try {
@@ -2429,6 +2447,9 @@ export async function POST(request: Request) {
             // Telemetry MUST NOT raise — the answer already streamed successfully.
           }
         }
+        // Emit any money-token fragment the redaction streamer is still holding,
+        // so a value at the very end of an answer is not silently dropped.
+        flushRestrictedFinancialTail();
         controller.close();
         // F0.3 post-hoc validation — non-blocking, telemetry-only.
         // The structural mechanism for action-claim integrity is F0.4

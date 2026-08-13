@@ -25,6 +25,71 @@ export function sanitizeRestrictedFinancialText(text: string, policy: Restricted
     .replace(RESTRICTED_SOURCE_ID_PATTERN, '[restricted source]');
 }
 
+/**
+ * A money token that may still be mid-emission at the end of a streamed chunk —
+ * `$`, then any digits/separators, then up to three trailing letters (`k`, `mm`,
+ * `bn`, the start of `million`). Anchored to the end of the buffer.
+ */
+const PARTIAL_MONEY_TAIL_PATTERN = /\$\s?[\d,]*\.?\d*\s?[a-z]{0,3}$/i;
+
+/** Never hold back more than this, so a stray `$` cannot stall the stream. */
+const MAX_HELD_TAIL_CHARS = 48;
+
+export interface RestrictedFinancialTextStreamer {
+  /** Sanitize what is safe to emit now, holding back any partial money token. */
+  push(text: string): string;
+  /** Sanitize and return whatever was still held back. Call once at stream end. */
+  flush(): string;
+}
+
+/**
+ * Redaction that survives streaming.
+ *
+ * `sanitizeRestrictedFinancialText` is correct on a complete string, but the
+ * agent route applies it to each streamed delta independently. Claude emits a
+ * money value across several deltas, so `$22.1K` can arrive as `$22` then `.1K`:
+ * the first delta is redacted, the second has no `$` to match and streams
+ * through untouched. Live-observed output: `[restricted financial value].1K` —
+ * digits of a restricted value reaching a user not entitled to see them.
+ *
+ * This streamer closes that boundary. It holds back a trailing fragment that
+ * could still grow into a money token and re-tests it once the next delta
+ * arrives, so redaction always sees the whole token. The hold-back is capped so
+ * a lone `$` in prose can never stall output, and `flush()` must be called when
+ * the stream ends so a value at the very end is not lost.
+ */
+export function createRestrictedFinancialTextStreamer(
+  policy: RestrictedOutputPolicyLike | null | undefined,
+): RestrictedFinancialTextStreamer {
+  // Nothing is redacted for entitled users, so stream through untouched.
+  if (policy?.outputPolicy.exactFinancialValues) {
+    return { push: (text) => text, flush: () => "" };
+  }
+
+  let held = "";
+
+  return {
+    push(text: string): string {
+      const combined = held + text;
+      const match = PARTIAL_MONEY_TAIL_PATTERN.exec(combined);
+      const holdFrom =
+        match && combined.length - match.index <= MAX_HELD_TAIL_CHARS
+          ? match.index
+          : combined.length;
+
+      held = combined.slice(holdFrom);
+      const emit = combined.slice(0, holdFrom);
+      return emit ? sanitizeRestrictedFinancialText(emit, policy) : "";
+    },
+    flush(): string {
+      if (!held) return "";
+      const remaining = sanitizeRestrictedFinancialText(held, policy);
+      held = "";
+      return remaining;
+    },
+  };
+}
+
 export function summarizeFinancialValueForPrompt(
   label: string,
   value: string | number | null | undefined,
