@@ -2347,7 +2347,16 @@ function buildEvaluationDecisionAnswer(args: {
     summaries.find((summary) => summary.vendorName === "Vendor B") ??
     transitionRisk;
 
-  let leadSentence = `${leading.vendorName} is leading on a risk-adjusted basis, not because it is cheapest, but because it has the strongest continuity, scope, and transition posture.`;
+  // Every sentence below names a vendor only through the parsed summaries, so
+  // the chat can never assert a leader the scorecard does not support.
+  const heldVendors = sorted.filter((summary) =>
+    /hold/i.test(summary.finalistPosture ?? ""),
+  );
+  const namedVendor = sorted.find((summary) =>
+    text.includes(summary.vendorName.toLowerCase().split("—")[0].trim()),
+  );
+  let leadSentence =
+    `${leading.vendorName} leads the evaluation at ${leading.score}/10 on evidenced criteria. ${leading.rationale || leading.finalistPosture || ""}`.trim();
   if (/\bcheapest|lowest|tco|cost\b/.test(text)) {
     leadSentence = `${cheapest.vendorName} is cheapest on normalized 5-year TCO, but the lower price is conditional until retained effort, pass-throughs, and productivity economics are closed.`;
   } else if (
@@ -2358,20 +2367,27 @@ function buildEvaluationDecisionAnswer(args: {
     leadSentence = `${transitionRisk.vendorName} carries the highest transition risk because execution confidence depends on closing staffing coverage, retained-client dependency, and cutover evidence.`;
   } else if (/\bvendor\s+b\b/.test(text) && /\bconditional|why\b/.test(text)) {
     leadSentence = `${vendorB.vendorName} is conditional because its price advantage depends on curing automation, staffing, retained-effort, pass-through, and productivity-credit gaps before it can receive preferred-finalist scoring credit.`;
-  } else if (
-    /\bvendor\s+c\b/.test(text) &&
-    /\bremain|process|finalist\b/.test(text)
-  ) {
+  } else if (namedVendor) {
+    // The prompt named a vendor that exists in the parsed summaries, so answer
+    // about that vendor from its own row rather than from the leader's.
     leadSentence =
-      "Vendor C should remain in the process because its stronger service-accountability and SLA economics create useful negotiation leverage, even though its shared-services scope and transition dependencies must be normalized before final scoring.";
+      `${namedVendor.vendorName} is ranked ${namedVendor.rank} at ${namedVendor.score}/10 on evidenced criteria. ${
+        namedVendor.finalistPosture || namedVendor.rationale || ""
+      }`.trim();
   } else if (/\badvance\b/.test(text)) {
     leadSentence =
-      "Advance Vendor A as the risk-adjusted lead and Vendor C as a conditional service-accountability finalist; keep Vendor B as a price benchmark unless it cures its staffing, retained-effort, pass-through, and productivity-credit gaps before BAFO.";
+      finalistRecommendation ||
+      `Advance ${leading.vendorName} first at ${leading.score}/10${
+        heldVendors.length > 0
+          ? `; hold ${heldVendors.map((summary) => summary.vendorName).join(", ")} until the named evidence gaps close`
+          : ""
+      }.`;
   } else if (/\b(scorecard|evaluation|rank|ranking)\b/.test(text)) {
-    leadSentence = `The evaluation scorecard ranks ${leading.vendorName} first on a risk-adjusted basis, with Vendor C close behind as the service-accountability challenger and Vendor B retained as the price benchmark until its commercial and staffing gaps are cured.`;
+    leadSentence = `The evaluation scorecard ranks ${sorted
+      .map((summary) => `${summary.vendorName} ${summary.score}/10`)
+      .join(", ")}, scored only on criteria with parsed evidence.`;
   } else if (/\btradeoffs?\b/.test(text)) {
-    leadSentence =
-      "The executive tradeoff is continuity versus price versus service accountability: Vendor A is safer, Vendor B is cheaper, and Vendor C has stronger SLA economics but narrower scope.";
+    leadSentence = `The tradeoff is between ${leading.vendorName} at ${leading.score}/10 on evidenced criteria and ${cheapest.vendorName} on normalized 5-year TCO; price and evidence do not necessarily point at the same vendor.`;
   }
 
   const answerText = [
@@ -2379,7 +2395,7 @@ function buildEvaluationDecisionAnswer(args: {
     `Why the score is defensible: ${sorted.map(vendorLine).join(" ")}`,
     finalistRecommendation
       ? `Finalist posture: ${finalistRecommendation}`
-      : `${cheapest.vendorName} sets the price challenge; ${transitionRisk.vendorName} sets the execution-risk caution; Vendor C remains relevant because its SLA economics are strongest even though its base scope is narrower.`,
+      : `${cheapest.vendorName} sets the price challenge and ${transitionRisk.vendorName} sets the execution-risk caution; final selection stays with the named evaluators.`,
     scoreImpacts.length
       ? `What can change the score: ${scoreImpacts.map(formatScoreImpact).join(" ")}`
       : "What can change the score: revised BAFO exhibits must close staffing, transition, SLA, productivity, pricing, and exception holdbacks before final scoring is locked.",
@@ -2419,47 +2435,45 @@ function buildEvidenceGatedEvaluationFallback(args: {
   if (!hasVendorEvaluationEvidence(args.evidence)) return null;
 
   const text = args.prompt.toLowerCase();
+  // This path runs when structured vendor summaries could not be parsed. It
+  // must therefore never name a leader, a price challenger, or a risk vendor:
+  // without the scorecard there is nothing to support the claim, and asserting
+  // one here would contradict whatever the scorecard actually says.
   let leadSentence =
-    "Advance Vendor A as the risk-adjusted lead and Vendor C as a conditional service-accountability finalist; keep Vendor B as a price benchmark unless it cures staffing, retained-effort, pass-through, and productivity-credit gaps before BAFO.";
+    "The evaluation corpus is present, but structured vendor scores could not be read, so no vendor can be named as leading, cheapest, or riskiest from this answer. Open the evaluation scorecard for the ranked position.";
 
   if (/\bcheapest|lowest|tco|cost\b/.test(text)) {
     leadSentence =
-      "Vendor B appears to be the price challenger, but the lower-cost posture is conditional until retained-client effort, pass-through exposure, coverage staffing, and productivity economics are priced and evidenced.";
+      "Cost position cannot be stated from this answer because normalized TCO was not readable here. Any price comparison must come from the pricing comparison view, after pass-throughs, optional scope, and retained effort are normalized.";
   } else if (
     /\b(highest transition risk|transition risk|riskiest|risky|riskier|highest risk|risk profile)\b/.test(
       text,
     )
   ) {
     leadSentence =
-      "Vendor B carries the highest execution-risk posture because the evaluation evidence still needs staffing coverage, retained-client dependency, pass-through, and productivity-credit cure before preferred-finalist scoring.";
-  } else if (/\bvendor\s+b\b/.test(text)) {
-    leadSentence =
-      "Vendor B should remain conditional: it can be useful as the price benchmark, but it should not receive preferred-finalist credit until automation, staffing, retained-effort, pass-through, and productivity claims are contractually supported.";
-  } else if (/\bvendor\s+c\b/.test(text)) {
-    leadSentence =
-      "Vendor C should remain in the process because its service-accountability and SLA economics create negotiation leverage, while its scope, transition, and comparability caveats remain conditions for BAFO.";
+      "Transition risk cannot be attributed to a vendor from this answer because the transition-readiness scores were not readable here. The transition comparison row on the evaluation scorecard carries the evidenced position.";
   } else if (/\btradeoffs?\b/.test(text)) {
     leadSentence =
-      "The executive tradeoff is continuity versus price versus service accountability: Vendor A is the safer continuity option, Vendor B is the price challenger, and Vendor C is the service-accountability finalist with scope caveats.";
+      "The tradeoff is between evidenced score position and normalized cost position, and the two do not necessarily point at the same vendor. Both come from the evaluation scorecard rather than from this answer.";
   }
 
   const currentStateFindings = [
-    "Vendor A is the risk-adjusted lead where continuity, scope coverage, and transition confidence matter most.",
-    "Vendor B is the price benchmark, but its lower-cost posture is conditional until staffing, retained-effort, pass-through, and productivity economics are evidenced.",
-    "Vendor C remains a conditional finalist because stronger service-accountability economics can improve the buyer's BAFO leverage.",
+    "The evaluation corpus includes vendor response profiles, the scorecard or decision brief, the BAFO instruction pack, and challenge or leverage artifacts.",
+    "Structured vendor scores were not readable in this request, so no ranking, price position, or risk attribution is asserted here.",
+    "Scoring stays human-owned and conditional until revised BAFO exhibits reconcile to pricing, SLA, staffing, transition, and exceptions.",
   ];
 
   const sourcingImplications = [
-    "Use Vendor A to anchor continuity and transition risk, but require sharper commercial remedies before award.",
-    "Use Vendor B to pressure price, but do not let unsupported productivity or staffing claims distort the score.",
-    "Use Vendor C to pressure SLA accountability and remedy economics while normalizing scope and transition dependencies.",
+    "Read the ranked position from the evaluation scorecard, where each criterion score carries the evidence it was derived from.",
+    "Do not repeat a vendor ranking from narrative memory; the scorecard is the source of the ranked position.",
+    "Use the BAFO instruction pack to pressure the named holdbacks rather than a general narrative refresh.",
   ];
 
   const answerText = [
     leadSentence,
     "Why this is defensible: the Lakeshore evaluation corpus includes the vendor response profiles, evaluation scorecard or decision brief, BAFO instruction pack, and challenge or leverage artifacts. Those artifacts support a conditional advancement posture, not a final award.",
     "What BAFO must cure: pricing comparability, staffing and location coverage, retained-client effort, SLA remedies, transition milestones, productivity credits, and assumptions or exclusions that shift cost back to Lakeshore.",
-    "Next action: advance the conditional finalists into a targeted BAFO round, keep Vendor B as the price benchmark until evidence gaps close, and lock final scoring only after revised structured exhibits reconcile.",
+    "Next action: read the ranked position from the evaluation scorecard, advance the conditional finalists into a targeted BAFO round against the named holdbacks, and lock final scoring only after revised structured exhibits reconcile.",
   ].join("\n");
 
   return {
