@@ -60,6 +60,40 @@ describe("createRestrictedFinancialTextStreamer", () => {
     expect(streamer.flush()).toBe("");
   });
 
+  it("redacts a spelled-out magnitude whole, leaving no fragment behind", () => {
+    // The alternation used to put `m` ahead of `million`, so "$5 million"
+    // matched only "$5 m" and left "illion" in the output — a corrupted line
+    // that still disclosed the magnitude of a restricted value.
+    expect(
+      sanitizeRestrictedFinancialText("$5 million of value", RESTRICTED),
+    ).toBe("[restricted financial value] of value");
+    expect(
+      sanitizeRestrictedFinancialText("$2 billion committed", RESTRICTED),
+    ).toBe("[restricted financial value] committed");
+    expect(stream(["$5 mil", "lion of value"])).toBe(
+      "[restricted financial value] of value",
+    );
+  });
+
+  it("keeps the space when a bare amount is followed by a word", () => {
+    // The space sat outside the optional magnitude group, so "$8 of value"
+    // matched "$8 " and rendered as "[restricted financial value]of value".
+    expect(
+      sanitizeRestrictedFinancialText("$8 of protected value", RESTRICTED),
+    ).toBe("[restricted financial value] of protected value");
+  });
+
+  it("still redacts compact and comma-separated amounts", () => {
+    for (const [input, expected] of [
+      ["$1.56B portfolio", "[restricted financial value] portfolio"],
+      ["$140.7M exposure", "[restricted financial value] exposure"],
+      ["costs $1,250,000 total", "costs [restricted financial value] total"],
+      ["$2M–$5M band", "[restricted financial value]–[restricted financial value] band"],
+    ] as const) {
+      expect(sanitizeRestrictedFinancialText(input, RESTRICTED)).toBe(expected);
+    }
+  });
+
   it("handles several money tokens across many deltas", () => {
     const out = stream([
       "Rate variance ",
