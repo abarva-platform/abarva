@@ -38,9 +38,13 @@ describe("VendorResponseIntelligenceBrief", () => {
 
     expect(html).toContain("Proposal intelligence brief");
     expect(html).toContain("What Source learned before scoring");
-    expect(html).toContain("Response profiles");
-    expect(html).toContain("Challenges found");
-    expect(html).toContain("BAFO asks");
+    // The metric tiles report decision counts, not activity counts.
+    expect(html).toContain("Blocks a score");
+    expect(html).toContain("Leverage only");
+    expect(html).toContain("Evidenced impact");
+    expect(html).toContain("What changes the decision");
+    expect(html).toContain("Ask before BAFO");
+    expect(html).toContain("Scoring disposition");
     expect(html).toContain("Evidence used");
     expect(html).toContain("Missing before score lock");
     expect(html).toContain("Leverage path");
@@ -77,8 +81,8 @@ describe("VendorResponseIntelligenceBrief", () => {
       }),
     );
 
-    expect(html).toContain("Parsed reports");
-    expect(html).toContain("vendor packages parsed with citations");
+    expect(html).toContain("Cited packages");
+    expect(html).toContain("parsed with citations and a missing-input ledger");
     expect(html).toContain("paragraph");
     expect(html).toContain("Parsed reports are vendor-isolated");
     expect(html).toContain("Missing before score lock");
