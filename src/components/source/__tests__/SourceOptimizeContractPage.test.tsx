@@ -199,8 +199,9 @@ describe("SourceOptimizeContractPage", () => {
     expect(screen.getByTestId("optimize-contract-picker")).toHaveTextContent(
       "Optimize Contract cannot start from a blank brief.",
     );
-    expect(screen.getByText("Select")).toBeInTheDocument();
+    expect(screen.getByText("Select contract")).toBeInTheDocument();
     expect(screen.getByText("Lock baseline")).toBeInTheDocument();
+    expect(screen.getByText("Diagnose opportunity")).toBeInTheDocument();
     expect(screen.getByText("Prove value")).toBeInTheDocument();
     expect(screen.getByText("As of Jun 30, 2027")).toBeInTheDocument();
     expect(
@@ -394,6 +395,42 @@ describe("SourceOptimizeContractPage", () => {
         "Request the SLA credit register from service management.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("drives the stage rail from real state instead of a fixed position", () => {
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({ selected: makeCandidate() })}
+        opportunitySet={makeOpportunitySet()}
+      />,
+    );
+
+    // No evidence pack supplied, so required evidence is missing and the case
+    // must hold at the evidence step — not sit on a hardcoded step 2.
+    expect(screen.getByTestId("optimize-step-select")).toHaveAttribute(
+      "data-state",
+      "complete",
+    );
+    expect(screen.getByTestId("optimize-step-evidence")).toHaveAttribute(
+      "data-state",
+      "blocked",
+    );
+    // Nothing downstream of the current step may look done.
+    for (const key of ["diagnose", "plan", "approve", "prove_value"]) {
+      expect(screen.getByTestId(`optimize-step-${key}`)).toHaveAttribute(
+        "data-state",
+        "future",
+      );
+    }
+
+    const next = screen.getByTestId("optimize-next-decision");
+    expect(next).toHaveTextContent("Step 3 of 7");
+    expect(next).toHaveTextContent("Collect 8 missing evidence families");
+    expect(screen.getByTestId("optimize-next-blocker")).toHaveTextContent(
+      "8 required evidence families have no governed evidence.",
+    );
   });
 
   it("keeps an amount with no calculation run out of the reproducible total", () => {
