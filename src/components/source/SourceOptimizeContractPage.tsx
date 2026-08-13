@@ -618,10 +618,12 @@ function OpportunityTable({
                       {opportunity.calculation.excludedLineCount} excluded
                     </div>
                   </>
-                ) : (
-                  "No calculation run"
-                )}
-                <div style={MUTED_SMALL_STYLE}>
+                ) : null}
+                <div
+                  style={
+                    opportunity.calculation ? MUTED_SMALL_STYLE : undefined
+                  }
+                >
                   {traceById.get(opportunity.opportunityId)?.label ??
                     "Traceability not evaluated"}
                 </div>
