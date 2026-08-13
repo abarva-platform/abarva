@@ -5,14 +5,22 @@ export interface RestrictedOutputPolicyLike {
   };
 }
 
-const MONEY_PATTERN = /\$\s?\d[\d,]*(?:\.\d+)?\s?(?:k|m|b|mm|bn|million|billion)?/gi;
+// The magnitude alternation is ordered longest-first, and the space before it is
+// only consumed when a unit actually follows. Both matter:
+//   - with `m` ahead of `million`, "$5 million" matched only "$5 m" and left
+//     "illion" behind — a corrupted line that still disclosed the magnitude;
+//   - with the space outside the optional group, "$8 of value" matched "$8 "
+//     and produced "[restricted financial value]of value".
+const MONEY_PATTERN =
+  /\$\s?\d[\d,]*(?:\.\d+)?(?:\s?(?:million|billion|mm|bn|k|m|b))?/gi;
 const FINANCIAL_NUMERIC_PATTERN =
   /\b\d+(?:\.\d+)?\s?(?:%|bps|bp|x)(?=(?:[^.\n]{0,80})\b(?:budget|spend|spent|cost|costs|saving|savings|revenue|margin|roi|irr|npv|payback|business case|financial|mlr|denial rate|days in ar|loss ratio|premium|collections?)\b)/gi;
 const FINANCIAL_KEYWORD_PATTERN =
   /\b(?:budget|spend|spent|cost take-?out|run[- ]rate|savings?|revenue|margin|roi|irr|npv|payback|business case|capex|opex|financial model|days in ar|denial rate|mlr|medical loss ratio)\b/i;
 const RESTRICTED_SOURCE_ID_PATTERN =
   /\b(?:fin|financial|budget|spend|business-case|kpi|restricted)[_:.-][a-z0-9_:.-]+\b/gi;
-const MONEY_TEST_PATTERN = /\$\s?\d[\d,]*(?:\.\d+)?\s?(?:k|m|b|mm|bn|million|billion)?/i;
+const MONEY_TEST_PATTERN =
+  /\$\s?\d[\d,]*(?:\.\d+)?(?:\s?(?:million|billion|mm|bn|k|m|b))?/i;
 const FINANCIAL_NUMERIC_TEST_PATTERN =
   /\b\d+(?:\.\d+)?\s?(?:%|bps|bp|x)(?=(?:[^.\n]{0,80})\b(?:budget|spend|spent|cost|costs|saving|savings|revenue|margin|roi|irr|npv|payback|business case|financial|mlr|denial rate|days in ar|loss ratio|premium|collections?)\b)/i;
 
