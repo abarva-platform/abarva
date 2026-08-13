@@ -352,8 +352,10 @@ const METRIC: CSSProperties = {
 
 const STEP_TABLE: CSSProperties = {
   display: "grid",
+  // The status column holds a nowrap pill; at 118px the longest label
+  // ("READY FOR DECISION PROOF", 162px) overflowed into the owner column.
   gridTemplateColumns:
-    "minmax(150px, 0.85fr) minmax(118px, 0.75fr) minmax(130px, 0.75fr) minmax(210px, 1.2fr) minmax(230px, 1.2fr)",
+    "minmax(150px, 0.85fr) minmax(178px, 0.75fr) minmax(130px, 0.75fr) minmax(210px, 1.2fr) minmax(230px, 1.2fr)",
   borderTop: `1px solid ${CANVAS.RULE}`,
   borderLeft: `1px solid ${CANVAS.RULE}`,
   overflowX: "auto",
