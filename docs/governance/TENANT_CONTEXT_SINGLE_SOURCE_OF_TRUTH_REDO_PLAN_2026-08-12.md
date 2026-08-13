@@ -412,10 +412,51 @@ Current execution boundary remains unchanged: no registry activation, no active-
 ### Open findings carried out of the 2026-08-12 layer classification
 
 - The airline cover tenant's active intake package conforms to the universal column contract; the
-  healthcare cover tenant's does not (18 of 19 dimensions off-contract). Which shape is authoritative
-  is a hard gate (`GATE-08`) and was not decided.
+  healthcare cover tenant's does not (18 of 19 dimensions off-contract). **Decided — see the GATE-08
+  decision below.**
 - None of the four implemented mapping profiles can run against either tenant's active root, and six
   of the ten declared adapter families have no implemented adapter.
-- `npm run audit:tenant-input-quality` validates file presence and row-count depth but not column
+- `npm run audit:tenant-input-quality` validated file presence and row-count depth but not column
   conformance against `template-manifest.json`, which is how an off-contract active package passed.
-  Adding a conformance check to that gate is the cheapest way to stop this recurring.
+  **Closed:** conformance was added to that gate, and the gate itself — which had never been invoked
+  by any workflow — was wired into CI.
+
+## GATE-08 Decision: The Column Contract Is Authoritative
+
+Decided 2026-08-13. This resolves the open fork and is binding until amended here.
+
+> The column contract in `template-manifest.json` is authoritative. The non-conforming package is
+> remediated to the contract. The contract is **not** amended to match it.
+
+### Why
+
+| Evidence | Finding |
+| --- | --- |
+| Conformance across active tenants | 6 of 7 conform 19/19. Amending the contract would make six packages non-conforming to accommodate one. |
+| Registry policy | `universalTemplateStandardV3IsOnlyApprovedStandard: true` already declares this contract the only approved standard. Amending it to fit one package inverts the policy rather than applying it. |
+| Expressive power | The non-conforming shape is a governance wrapper — `record_id / entity_id / business_name / context_item / dimension / evidence_id` plus per-dimension extras. It has no `annual_spend_usd`, `term_start`, `term_end`, `renewal_date`, `fte_count`, or `criticality`. Questions Source and Tower exist to answer ("which contracts renew next quarter", "what is the run cost of this tower") are unanswerable from it — not because values are missing but because there is nowhere to put them. |
+| Provenance | The non-conforming rows declare `source_type: synthetic_v3_context_generation`. This is a generation artifact, not client-provided evidence. There is no client to renegotiate a schema with, and regenerating it costs nothing but compute. |
+| Information density | Contract fields carrying at least one value: 99% for the two packages generated to the contract, 23% for the non-conforming one. The contract shape is demonstrably carrying more of the model, not merely a different naming of it. |
+| Coexistence | The conforming packages carry provenance columns (`original_source_file`, `source_fingerprint`, `conflict_status`, …) *on top of* the contract columns, and the gate permits extras. Governance metadata and the contract are not in tension. |
+
+### What this means in practice
+
+The remediation is additive, not destructive. The non-conforming package does not need its governance
+columns stripped; it needs the contract columns present and populated alongside them, exactly as the
+conforming packages already do.
+
+### Binding constraint on the remediation
+
+Where a contract column has no deterministic source in the existing data, it must be left **empty and
+raised as an evidence request**. It must not be inferred, back-filled from narrative text, or
+generated. Money, counts, and dates are deterministic or they are absent.
+
+This constraint has teeth: the quality gate now reports, per tenant, how many contract fields actually
+carry a value. A package that "conforms" by adding empty columns will show its fill rate collapse, so
+a hollow remediation is visible rather than green.
+
+### Explicitly not done by this decision
+
+Deciding the shape is not the same as changing the data. Regenerating the package and repointing any
+active root remain `GATE-02` and still require scoped approval, a dry run, a readback, and evidence.
+No tenant file was written when this decision was recorded.

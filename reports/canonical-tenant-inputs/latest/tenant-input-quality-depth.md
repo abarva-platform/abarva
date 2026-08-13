@@ -1,6 +1,6 @@
 # Tenant Input Quality And Depth
 
-Generated: 2026-08-13T00:30:14.690Z
+Generated: 2026-08-13T00:44:06.532Z
 
 ## Truth Split
 
@@ -35,15 +35,15 @@ Depth says a dimension has enough rows. Conformance says those rows carry the co
 contract declares. A package can pass depth and still be unreadable to every adapter, so both
 are checked.
 
-| Tenant | Declared | Conformant | Naming drift | Column gaps | Absent | Waived until |
-| --- | ---: | ---: | ---: | ---: | ---: | --- |
-| Apex Retail | 19 | 19 | 0 | 0 | 0 | — |
-| FS Demo | 19 | 19 | 0 | 0 | 0 | — |
-| Healthcare Demo | 19 | 19 | 0 | 0 | 0 | — |
-| Lakeshore Holdings | 19 | 19 | 0 | 0 | 0 | — |
-| Lakeshore Industries | 19 | 19 | 0 | 0 | 0 | — |
-| Meridian Health | 19 | 1 | 2 | 18 | 0 | 2026-09-30 |
-| Airline Demo | 19 | 19 | 0 | 0 | 0 | — |
+| Tenant | Declared | Conformant | Naming drift | Column gaps | Absent | Contract fields carrying data | Waived until |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| Apex Retail | 19 | 19 | 0 | 0 | 0 | 167/286 (58%) | — |
+| FS Demo | 19 | 19 | 0 | 0 | 0 | 167/286 (58%) | — |
+| Healthcare Demo | 19 | 19 | 0 | 0 | 0 | 284/286 (99%) | — |
+| Lakeshore Holdings | 19 | 19 | 0 | 0 | 0 | 167/286 (58%) | — |
+| Lakeshore Industries | 19 | 19 | 0 | 0 | 0 | 168/286 (59%) | — |
+| Meridian Health | 19 | 1 | 2 | 18 | 0 | 65/286 (23%) | 2026-09-30 |
+| Airline Demo | 19 | 19 | 0 | 0 | 0 | 283/286 (99%) | — |
 
 ## Domain Depth By Tenant
 
