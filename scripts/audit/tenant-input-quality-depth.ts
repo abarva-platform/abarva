@@ -58,6 +58,10 @@ type ColumnConformance = {
   /** Independent of state: a file can drift in name *and* be missing columns. */
   nameDrifted: boolean;
   missingColumns: string[];
+  /** Declared columns that carry a value somewhere in the file. */
+  populatedColumns: number;
+  /** Declared columns present in the header but blank in every row. */
+  emptyColumns: string[];
 };
 
 type SourceFile = {
@@ -228,6 +232,65 @@ function readHeaderColumns(file: string): string[] {
 const numericPrefixOf = (file: string): string => /^(\d{2})_/.exec(path.basename(file))?.[1] ?? "";
 
 /**
+ * How many declared columns actually carry a value somewhere in the file.
+ *
+ * Shape conformance on its own can be satisfied by adding the declared columns and
+ * leaving every one of them blank, which would look like remediation while changing
+ * nothing. Fill rate makes that visible. It is reported, never enforced: legitimately
+ * empty columns exist, and an arbitrary threshold would only invite padding.
+ */
+function populationOf(file: string, declaredColumns: string[]): { populatedColumns: number; emptyColumns: string[] } {
+  const text = fs.readFileSync(file, "utf8").trim();
+  const lines = text.split(/\r?\n/);
+  if (lines.length < 2) return { populatedColumns: 0, emptyColumns: [...declaredColumns] };
+
+  const header = readHeaderColumns(file);
+  const present = declaredColumns.filter((column) => header.includes(column));
+  const seen = new Set<string>();
+
+  for (const line of lines.slice(1)) {
+    if (!line.trim()) continue;
+    const cells = splitCsvLine(line);
+    for (const column of present) {
+      if (seen.has(column)) continue;
+      const value = cells[header.indexOf(column)];
+      if (value !== undefined && value.trim() !== "") seen.add(column);
+    }
+    if (seen.size === present.length) break;
+  }
+
+  return {
+    populatedColumns: seen.size,
+    emptyColumns: present.filter((column) => !seen.has(column)),
+  };
+}
+
+/** Quote-aware split shared by the header reader and the population scan. */
+function splitCsvLine(line: string): string[] {
+  const cells: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+    if (character === '"') {
+      if (inQuotes && line[index + 1] === '"') {
+        current += '"';
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (character === "," && !inQuotes) {
+      cells.push(current);
+      current = "";
+    } else {
+      current += character;
+    }
+  }
+  cells.push(current);
+  return cells;
+}
+
+/**
  * Depth alone passed a package whose columns did not match the declared contract: the
  * files were present and full of rows, but carried a different schema, so adapters keyed
  * on the contract found nothing. This checks the shape as well as the volume.
@@ -255,6 +318,8 @@ function columnConformanceForTenant(tenant: Tenant, manifest: TemplateManifest):
         state: "absent" as const,
         nameDrifted: false,
         missingColumns: template.columns,
+        populatedColumns: 0,
+        emptyColumns: [],
       };
     }
 
@@ -262,14 +327,39 @@ function columnConformanceForTenant(tenant: Tenant, manifest: TemplateManifest):
     const missingColumns = template.columns.filter((column) => !columns.includes(column));
     const resolvedName = path.basename(resolved.relativePath);
     const nameDrifted = resolvedName !== template.file;
+    const { populatedColumns, emptyColumns } = populationOf(resolved.absolutePath, template.columns);
 
     if (missingColumns.length > 0) {
-      return { contractFile: template.file, resolvedFile: resolvedName, state: "column-gap" as const, nameDrifted, missingColumns };
+      return {
+        contractFile: template.file,
+        resolvedFile: resolvedName,
+        state: "column-gap" as const,
+        nameDrifted,
+        missingColumns,
+        populatedColumns,
+        emptyColumns,
+      };
     }
     if (nameDrifted) {
-      return { contractFile: template.file, resolvedFile: resolvedName, state: "naming-drift" as const, nameDrifted, missingColumns: [] };
+      return {
+        contractFile: template.file,
+        resolvedFile: resolvedName,
+        state: "naming-drift" as const,
+        nameDrifted,
+        missingColumns: [],
+        populatedColumns,
+        emptyColumns,
+      };
     }
-    return { contractFile: template.file, resolvedFile: resolvedName, state: "conformant" as const, nameDrifted, missingColumns: [] };
+    return {
+      contractFile: template.file,
+      resolvedFile: resolvedName,
+      state: "conformant" as const,
+      nameDrifted,
+      missingColumns: [],
+      populatedColumns,
+      emptyColumns,
+    };
   });
 }
 
@@ -416,6 +506,11 @@ function run(): void {
         namingDrift: columnConformance.filter((entry) => entry.nameDrifted).length,
         columnGaps: columnConformance.filter((entry) => entry.state === "column-gap").length,
         absent: columnConformance.filter((entry) => entry.state === "absent").length,
+        declaredColumnsTotal: columnConformance.reduce(
+          (sum, entry) => sum + entry.populatedColumns + entry.emptyColumns.length + entry.missingColumns.length,
+          0,
+        ),
+        declaredColumnsPopulated: columnConformance.reduce((sum, entry) => sum + entry.populatedColumns, 0),
         waived: Boolean(waiver),
         waiverExpires: waiver?.expires ?? "",
         nonConformantDetail: nonConformant,
@@ -486,11 +581,11 @@ function run(): void {
     "contract declares. A package can pass depth and still be unreadable to every adapter, so both",
     "are checked.",
     "",
-    "| Tenant | Declared | Conformant | Naming drift | Column gaps | Absent | Waived until |",
-    "| --- | ---: | ---: | ---: | ---: | ---: | --- |",
+    "| Tenant | Declared | Conformant | Naming drift | Column gaps | Absent | Contract fields carrying data | Waived until |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
     ...tenantReports.map(
       (tenant) =>
-        `| ${tenant.displayName} | ${tenant.columnContract.declared} | ${tenant.columnContract.conformant} | ${tenant.columnContract.namingDrift} | ${tenant.columnContract.columnGaps} | ${tenant.columnContract.absent} | ${tenant.columnContract.waiverExpires || "—"} |`,
+        `| ${tenant.displayName} | ${tenant.columnContract.declared} | ${tenant.columnContract.conformant} | ${tenant.columnContract.namingDrift} | ${tenant.columnContract.columnGaps} | ${tenant.columnContract.absent} | ${tenant.columnContract.declaredColumnsPopulated}/${tenant.columnContract.declaredColumnsTotal} (${Math.round((100 * tenant.columnContract.declaredColumnsPopulated) / Math.max(1, tenant.columnContract.declaredColumnsTotal))}%) | ${tenant.columnContract.waiverExpires || "—"} |`,
     ),
     "",
     "## Domain Depth By Tenant",

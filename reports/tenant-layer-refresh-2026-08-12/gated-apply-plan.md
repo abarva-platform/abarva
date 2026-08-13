@@ -143,9 +143,13 @@ This is the decision behind B1. Two options, and they are not equivalent:
   Smaller change, but skyharbor-air then becomes the off-contract tenant and the adapters
   still do not run.
 
-`skyharbor-air` already conforms. On the evidence, the contract is the cheaper thing to
-keep and `meridian-health` is the thing to regenerate — but this is Anand's call, not a
-mechanical one, and nothing was changed either way.
+**DECIDED 2026-08-13: the column contract is authoritative.** The non-conforming package is
+remediated to the contract; the contract is not amended. Rationale and evidence are recorded in
+the GATE-08 Decision section of
+`docs/governance/TENANT_CONTEXT_SINGLE_SOURCE_OF_TRUTH_REDO_PLAN_2026-08-12.md`.
+
+Deciding the shape is not changing the data. The regeneration itself, and any active-root
+repoint, remain GATE-02 and still need scoped approval. Nothing was written.
 
 ---
 

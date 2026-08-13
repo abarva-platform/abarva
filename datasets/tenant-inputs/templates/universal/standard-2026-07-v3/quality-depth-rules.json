@@ -68,10 +68,10 @@
   "columnContractWaivers": [
     {
       "tenantKey": "meridian-health",
-      "reason": "This package predates enforcement and carries a generic record_id/context_item/dimension/evidence_id governance schema instead of the per-dimension contract columns. 18 of 19 dimensions are affected, plus 2 filename drifts. Depth passes; shape does not.",
+      "reason": "This package predates enforcement and carries a generic governance schema (record_id/entity_id/business_name/context_item/dimension/evidence_id) instead of the per-dimension contract columns. 18 of 19 dimensions are affected, plus 2 filename drifts. Depth passes; shape does not. Contract fields carrying a value: 23%, against 99% for the packages generated to the contract.",
       "owner": "Anand",
       "expires": "2026-09-30",
-      "remediation": "Decide whether the column contract or this package's schema is authoritative (GATE-08 in reports/tenant-layer-refresh-2026-08-12/gated-apply-plan.md), then regenerate the package or amend template-manifest.json and remove this waiver."
+      "remediation": "GATE-08 is decided: the column contract is authoritative and this package is remediated to it (see the GATE-08 Decision section in docs/governance/TENANT_CONTEXT_SINGLE_SOURCE_OF_TRUTH_REDO_PLAN_2026-08-12.md). Add the contract columns alongside the existing governance columns and populate them from deterministic sources only; leave the rest empty and raise evidence requests. Then remove this waiver. Regenerating the package and repointing any active root remain GATE-02 and need scoped approval."
     }
   ]
 }
