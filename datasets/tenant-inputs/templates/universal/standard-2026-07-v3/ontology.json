@@ -1,0 +1,417 @@
+{
+  "schemaVersion": 1,
+  "ontologyId": "universal-tenant-ontology-2026-08",
+  "status": "declared-contract-for-node-and-edge-types",
+  "why": "Three separate wrong conclusions were reached about a well-built tenant package in a single review, all from the same cause: the data was correct but nothing declared what it meant. An edge type pointed at a node type with no home dimension; a spend file's population was undeclared so it was compared against a differently-scoped file; a modelled subsidiary was nearly renamed because nothing declared it as an entity. A careful reader with full file access got all three wrong. A model with a retrieval window will do worse, faster, and with more confidence. This file is the missing declaration.",
+  "nodeTypes": [
+    {
+      "type": "system",
+      "label": "Application or system",
+      "homeDimension": "04_applications_systems.csv",
+      "keyColumn": "system_name",
+      "note": "A deployable application or platform the business uses."
+    },
+    {
+      "type": "infrastructure",
+      "label": "Infrastructure or hosting platform",
+      "homeDimension": "06_infrastructure_platforms.csv",
+      "keyColumn": "platform_name"
+    },
+    {
+      "type": "function",
+      "label": "Business function or capability",
+      "homeDimension": "01_business_functions.csv",
+      "keyColumn": "function_name"
+    },
+    {
+      "type": "org_unit",
+      "label": "Organisational unit or accountable executive position",
+      "homeDimension": "02_org_ownership.csv",
+      "keyColumn": "org_unit",
+      "alternateKeyColumns": [
+        "leader_name_or_role"
+      ],
+      "note": "Covers both the unit and the position accountable for it. Executive positions (CFO, CISO, CDAO) resolve here, NOT in workforce roles."
+    },
+    {
+      "type": "workforce_role",
+      "label": "Job family or persona",
+      "homeDimension": "03_workforce_roles.csv",
+      "keyColumn": "persona_or_role",
+      "note": "A job family such as Pilot or Maintenance Technician. Deliberately distinct from org_unit: 'role' previously meant both, which left 1,039 edges pointing at a type with no home dimension."
+    },
+    {
+      "type": "vendor",
+      "label": "Vendor or contracted supplier",
+      "homeDimension": "07_vendors_contracts.csv",
+      "keyColumn": "vendor_name"
+    },
+    {
+      "type": "data_asset",
+      "label": "Data asset or integration",
+      "homeDimension": "05_data_assets_integrations.csv",
+      "keyColumn": "data_asset_name"
+    },
+    {
+      "type": "program",
+      "label": "Programme or initiative",
+      "homeDimension": "09_programs_initiatives.csv",
+      "keyColumn": "program_name"
+    },
+    {
+      "type": "risk",
+      "label": "Risk or control",
+      "homeDimension": "11_risks_controls.csv",
+      "keyColumn": "risk_or_control_name"
+    },
+    {
+      "type": "metric",
+      "label": "Metric or outcome",
+      "homeDimension": "14_metrics_outcomes.csv",
+      "keyColumn": "metric_name"
+    },
+    {
+      "type": "use_case",
+      "label": "AI or automation use case",
+      "homeDimension": "10_ai_automation_use_cases.csv",
+      "keyColumn": "use_case_name"
+    },
+    {
+      "type": "interview",
+      "label": "Interview or executive signal",
+      "homeDimension": "13_evidence_sources.csv",
+      "keyColumn": "source_file",
+      "resolutionMode": "evidence-backed",
+      "note": "An interview is evidence, not a canonical object. Edges from an interview carry proposed claims and must never be read as deterministic fact."
+    }
+  ],
+  "relationshipTypes": [
+    {
+      "type": "supports",
+      "from": [
+        "system",
+        "infrastructure",
+        "vendor"
+      ],
+      "to": [
+        "function",
+        "program"
+      ],
+      "inverse": "supported_by"
+    },
+    {
+      "type": "supported_by",
+      "from": [
+        "function",
+        "program"
+      ],
+      "to": [
+        "system",
+        "infrastructure",
+        "vendor"
+      ],
+      "inverse": "supports"
+    },
+    {
+      "type": "owned_by",
+      "from": [
+        "system",
+        "infrastructure",
+        "data_asset",
+        "function",
+        "program",
+        "risk"
+      ],
+      "to": [
+        "org_unit"
+      ],
+      "note": "Business accountability."
+    },
+    {
+      "type": "technology_owned_by",
+      "from": [
+        "system",
+        "infrastructure",
+        "data_asset"
+      ],
+      "to": [
+        "org_unit"
+      ],
+      "note": "Technical accountability, which may differ from business accountability."
+    },
+    {
+      "type": "operated_by",
+      "from": [
+        "system",
+        "infrastructure"
+      ],
+      "to": [
+        "org_unit",
+        "vendor"
+      ]
+    },
+    {
+      "type": "provided_by",
+      "from": [
+        "system",
+        "infrastructure",
+        "data_asset"
+      ],
+      "to": [
+        "vendor"
+      ]
+    },
+    {
+      "type": "integrates_with",
+      "from": [
+        "system",
+        "data_asset",
+        "infrastructure"
+      ],
+      "to": [
+        "system",
+        "data_asset",
+        "infrastructure"
+      ],
+      "symmetric": true
+    },
+    {
+      "type": "hosted_on",
+      "from": [
+        "system",
+        "data_asset"
+      ],
+      "to": [
+        "infrastructure"
+      ]
+    },
+    {
+      "type": "feeds",
+      "from": [
+        "system",
+        "data_asset"
+      ],
+      "to": [
+        "system",
+        "data_asset",
+        "metric"
+      ]
+    },
+    {
+      "type": "supports_function",
+      "from": [
+        "system",
+        "infrastructure",
+        "vendor",
+        "org_unit"
+      ],
+      "to": [
+        "function"
+      ]
+    },
+    {
+      "type": "owns_function",
+      "from": [
+        "org_unit"
+      ],
+      "to": [
+        "function"
+      ]
+    },
+    {
+      "type": "has_risk",
+      "from": [
+        "system",
+        "infrastructure",
+        "function",
+        "program",
+        "vendor",
+        "data_asset"
+      ],
+      "to": [
+        "risk"
+      ]
+    },
+    {
+      "type": "impacts",
+      "from": [
+        "program",
+        "use_case",
+        "risk"
+      ],
+      "to": [
+        "function",
+        "metric",
+        "system"
+      ]
+    },
+    {
+      "type": "measured_by",
+      "from": [
+        "function",
+        "program",
+        "use_case"
+      ],
+      "to": [
+        "metric"
+      ]
+    },
+    {
+      "type": "discusses",
+      "from": [
+        "interview"
+      ],
+      "to": [
+        "system",
+        "function",
+        "vendor",
+        "program",
+        "risk",
+        "metric",
+        "data_asset",
+        "infrastructure",
+        "org_unit",
+        "use_case"
+      ],
+      "evidenceOnly": true,
+      "note": "Interview edges are proposed signal. They may corroborate or contradict a source-system fact; they may never replace one."
+    }
+  ],
+  "filePopulationScope": {
+    "why": "Two files can both be correct and still not be comparable. Declaring the population each file represents is what stops a reader — human or model — summing across incompatible scopes and reporting a defect that does not exist.",
+    "declarations": [
+      {
+        "file": "08_spend_value.csv",
+        "population": "MUST BE DECLARED PER TENANT",
+        "requiredFields": [
+          "scope_statement",
+          "spend_perimeter",
+          "period_basis",
+          "gross_or_net"
+        ],
+        "example": "IT application and platform spend only; excludes internal labour, facilities, telecom; full fiscal year; gross."
+      },
+      {
+        "file": "07_vendors_contracts.csv",
+        "population": "MUST BE DECLARED PER TENANT",
+        "requiredFields": [
+          "scope_statement",
+          "vendor_perimeter",
+          "amount_basis"
+        ],
+        "example": "Enterprise-wide third-party contracts including non-IT categories such as ground handling and catering; contracted annual value, not in-year actual spend."
+      }
+    ],
+    "rule": "A comparison across two files is only valid when both declare a population and the populations overlap. Absent a declaration, cross-file arithmetic is blocked, not estimated."
+  },
+  "interviewClaimContract": {
+    "why": "Interview content is currently free text, so it can be quoted but not reconciled. A typed claim can be corroborated, contradicted, or left open — and that state is computable rather than editorial.",
+    "requiredFields": [
+      "claim_id",
+      "subject_type",
+      "subject_name",
+      "predicate",
+      "asserted_value",
+      "basis",
+      "speaker_role",
+      "as_of_date",
+      "corroboration_state",
+      "conflicting_source",
+      "allowed_use"
+    ],
+    "corroborationStates": [
+      "uncorroborated",
+      "corroborated_by_source_system",
+      "contradicted_by_source_system",
+      "attested"
+    ],
+    "rule": "An interview claim may reach `attested` only through a named human attestation. It may never be promoted to deterministic fact by model inference."
+  },
+  "segmentation": {
+    "why": "Without declared segmentation, 'what do we use for patient engagement?' forces a model to infer which of 500+ systems are patient-facing from their names. With a declared facet it is a filter. The same applies to 'what does the health plan spend on IT' or 'who owns care delivery'. Segmentation is what turns a flat inventory into something answerable.",
+    "principle": "Segmentation is declared once on the business function and inherited through relationships. A client is never asked to tag 500 systems by hand; they tag ~20 functions, and every system, KPI, contract, org unit and interview that connects to a function inherits its segments through the graph. Inheritance yields a SET, not a single value: a system supporting both care delivery and the patient portal is correctly both middle and front.",
+    "facets": [
+      {
+        "facet": "line_of_business",
+        "label": "Line of business",
+        "vocabularySource": "tenant-declared",
+        "declaredIn": "00_enterprise_profile.csv:business_segments",
+        "note": "Tenant-specific and must match how the client describes itself. Healthcare example: health plan; hospital / delivery network; medical group; post-acute; ancillary services. Airline example: mainline; regional; cargo; loyalty; MRO. Never inferred from a system name.",
+        "appliesTo": [
+          "function",
+          "system",
+          "infrastructure",
+          "data_asset",
+          "vendor",
+          "org_unit",
+          "program",
+          "metric",
+          "use_case",
+          "risk"
+        ]
+      },
+      {
+        "facet": "function_tier",
+        "label": "Front / middle / back office",
+        "vocabularySource": "universal-structure-industry-specific-membership",
+        "values": [
+          {
+            "value": "front",
+            "label": "Customer engagement and experience",
+            "healthcare": "Patient engagement and experience: access, scheduling, portal, contact centre, digital front door, member services",
+            "airline": "Passenger engagement: booking, check-in, loyalty, disruption comms, contact centre"
+          },
+          {
+            "value": "middle",
+            "label": "Core operating engine",
+            "healthcare": "Clinical and care delivery: EHR, care management, utilisation management, claims adjudication, quality",
+            "airline": "Flight, crew and airport operations, MRO, network planning"
+          },
+          {
+            "value": "back",
+            "label": "Enterprise support",
+            "healthcare": "Finance, HR, supply chain, procurement, legal, corporate IT",
+            "airline": "Finance, HR, procurement, corporate IT"
+          }
+        ],
+        "note": "The three tiers are universal in structure; what belongs in each is industry-specific and is declared per industry, not guessed. Membership definitions live alongside 15_industry_context_patterns.csv.",
+        "appliesTo": [
+          "function",
+          "system",
+          "infrastructure",
+          "data_asset",
+          "vendor",
+          "org_unit",
+          "program",
+          "metric",
+          "use_case",
+          "risk",
+          "interview"
+        ]
+      }
+    ],
+    "inheritance": {
+      "declaredOn": "function",
+      "propagatesVia": [
+        "supports",
+        "supported_by",
+        "supports_function",
+        "owns_function",
+        "measured_by",
+        "impacts",
+        "has_risk",
+        "discusses"
+      ],
+      "rule": "A node with no directly declared facet value inherits the union of the facet values of every function it connects to. A node connected to no function has an UNDECLARED segment and must be reported, not defaulted.",
+      "antiPattern": "Do not default an unsegmented node to 'back office'. An undeclared segment is a gap to be surfaced; a defaulted one is a wrong answer that looks confident."
+    },
+    "requiredContractColumns": {
+      "01_business_functions.csv": [
+        "line_of_business",
+        "function_tier"
+      ],
+      "note": "These two columns on the ~20-row function dimension are the entire client ask. Everything else is derived. Adding them to the contract is the smallest change with the largest downstream effect in this whole model."
+    },
+    "whyThisMattersForRetrieval": "A retrieval layer can filter on a declared facet but can only guess at an implied one. Segment-aware retrieval turns 'which systems serve the health plan's front office' from a semantic-similarity gamble into a deterministic subgraph selection, and makes the answer citable."
+  }
+}
