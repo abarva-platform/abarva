@@ -89,14 +89,8 @@ export function VendorResponseProfilesPanel({
                 value={profile.productivityCommitment}
               />
               <Fact label="SLA" value={profile.slaCommitments} />
-              <Fact
-                label="Staffing"
-                value={profile.staffingModelSummary}
-              />
-              <Fact
-                label="Transition"
-                value={profile.transitionCommitments}
-              />
+              <Fact label="Staffing" value={profile.staffingModelSummary} />
+              <Fact label="Transition" value={profile.transitionCommitments} />
             </dl>
 
             <div style={ISSUE_GRID}>
@@ -126,8 +120,8 @@ export function VendorResponseProfilesPanel({
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div style={METRIC}>
-      <span>{label}</span>
-      <strong>{value}</strong>
+      <span style={METRIC_LABEL}>{label}</span>
+      <strong style={METRIC_VALUE}>{value}</strong>
     </div>
   );
 }
@@ -282,6 +276,11 @@ const METRIC_GRID: CSSProperties = {
   gap: 7,
 };
 
+// The label inherited the card's body font size, so "Completeness" and
+// "5-year TCO" were wider than their 1fr column and spilled over the
+// neighbouring tile. Matching the metric size used by the file-readiness panel
+// keeps the label inside its tile; overflowWrap is the backstop for any label
+// long enough to exceed the column on a narrow viewport.
 const METRIC: CSSProperties = {
   border: `1px solid ${CANVAS.HAIRLINE}`,
   borderRadius: 8,
@@ -289,6 +288,18 @@ const METRIC: CSSProperties = {
   display: "grid",
   gap: 2,
   minWidth: 0,
+  fontSize: CANVAS.T_MICRO_SMALL,
+  overflowWrap: "anywhere",
+};
+
+const METRIC_LABEL: CSSProperties = {
+  color: CANVAS.INK_MUTED,
+  lineHeight: 1.3,
+};
+
+const METRIC_VALUE: CSSProperties = {
+  fontSize: CANVAS.T_BODY_SMALL,
+  lineHeight: 1.25,
 };
 
 const FACT_LIST: CSSProperties = {
