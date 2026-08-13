@@ -71,7 +71,7 @@ export function CompletenessMatrix({
           </span>
         </div>
       ) : (
-        <div style={{ overflowX: "auto" }}>
+        <div style={SCROLL_WRAP}>
           <table style={TABLE}>
             <thead>
               <tr>
@@ -119,6 +119,7 @@ const CARD: CSSProperties = {
   padding: 14,
   display: "grid",
   gap: 8,
+  minWidth: 0,
 };
 
 const EYEBROW: CSSProperties = {
@@ -153,6 +154,15 @@ const EMPTY: CSSProperties = {
   display: "grid",
   gap: 4,
   color: CANVAS.INK,
+};
+
+// The table is wider than this card's column, so it must scroll inside the
+// card. A grid item defaults to min-width:auto, which lets it grow to its
+// content instead of scrolling — without minWidth:0 the table pushed its
+// badges out over the panel beside it.
+const SCROLL_WRAP: CSSProperties = {
+  overflowX: "auto",
+  minWidth: 0,
 };
 
 const TABLE: CSSProperties = {
