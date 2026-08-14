@@ -8083,6 +8083,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "VEN-cd90120ff0",
+      "type": "vendor",
+      "canonicalName": "Infosys BPM",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "VEN-86126940ea",
       "type": "vendor",
       "canonicalName": "Inmarsat (Viasat)",
@@ -8405,6 +8412,13 @@
       "firstSeen": "wave1"
     },
     {
+      "id": "WFR-7a2e886104",
+      "type": "workforce_role",
+      "canonicalName": "Enterprise Architect",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
       "id": "WFR-39f443ae60",
       "type": "workforce_role",
       "canonicalName": "Flight Attendant",
@@ -8534,6 +8548,27 @@
       "id": "WFR-d536af222b",
       "type": "workforce_role",
       "canonicalName": "Safety Analyst (SMS/ASAP)",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "WFR-2680f181f7",
+      "type": "workforce_role",
+      "canonicalName": "Workday HRIS L1 Service Desk Analyst",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "WFR-35613d5901",
+      "type": "workforce_role",
+      "canonicalName": "Workday HRIS L2 Functional Analyst",
+      "aliases": [],
+      "firstSeen": "wave1"
+    },
+    {
+      "id": "WFR-637fb08e53",
+      "type": "workforce_role",
+      "canonicalName": "Workday HRIS L3 Technical & Integration Analyst",
       "aliases": [],
       "firstSeen": "wave1"
     }
