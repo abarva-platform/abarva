@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "tenantKey": "meridian-health",
+  "status": "DRAFT — proposed by analysis, awaiting client/SME correction",
+  "why": "Segmentation is declared once here and inherited through the graph. For an integrated delivery network that also runs a health plan, the line-of-business split is the one that matters most: the same system can serve the plan, the delivery network, or both, and a question like 'what does the health plan spend on member engagement' is unanswerable without it.",
+  "reviewNote": "Only 7 of this tenant's 137 function_name values are genuine business functions. The other 130 are 'Role / Area: Initiative' composites introduced by the contract remediation, which mapped function_name from a column holding mixed content. Those are NOT segmented here — segmenting them would give a nonsense dimension the appearance of structure. Cleaning that dimension is tracked as a separate fix.",
+
+  "lineOfBusinessVocabulary": [
+    { "value": "health_plan", "label": "Health plan / payer operations" },
+    { "value": "delivery_network", "label": "Hospital and care delivery network" },
+    { "value": "medical_group", "label": "Employed and affiliated physician group", "note": "Declared for completeness; no function is currently assigned to it. Confirm whether the medical group is managed as a distinct line of business or inside the delivery network." },
+    { "value": "enterprise", "label": "Enterprise shared services (not attributable to one line of business)" }
+  ],
+
+  "functionTierMembership": {
+    "front": "Patient and member engagement and experience: access, scheduling, portal, contact centre, digital front door, member services",
+    "middle": "Clinical and care delivery: EHR, care management, utilisation management, claims adjudication, quality and provider performance",
+    "back": "Enterprise support: finance, actuarial, HR, supply chain, corporate IT, security"
+  },
+
+  "functions": [
+    { "function_name": "Clinical Operations", "line_of_business": "delivery_network", "function_tier": "middle" },
+    { "function_name": "Health Plan Operations", "line_of_business": "health_plan", "function_tier": "middle" },
+    {
+      "function_name": "Quality and Provider Performance",
+      "line_of_business": "health_plan;delivery_network",
+      "function_tier": "middle",
+      "judgementCall": "Spans both lines by design — the plan measures provider quality, the network delivers it. If quality is governed by only one side in practice, narrow this."
+    },
+    {
+      "function_name": "Finance and Actuarial",
+      "line_of_business": "enterprise;health_plan",
+      "function_tier": "back",
+      "judgementCall": "Actuarial is plan-specific and arguably middle office, since pricing and reserving are core payer operations rather than support. Kept in back with finance for now; splitting actuarial out is the cleaner model if the client sees it that way."
+    },
+    { "function_name": "Contact Center and Member Experience", "line_of_business": "health_plan;delivery_network", "function_tier": "front" },
+    { "function_name": "Enterprise Data and Analytics", "line_of_business": "enterprise", "function_tier": "back" },
+    { "function_name": "Technology Platform and Security", "line_of_business": "enterprise", "function_tier": "back" }
+  ],
+
+  "knownGap": "137 function_name values exist; 7 are segmented. The remaining 130 are composite labels that should not be in the function dimension at all. Until that is fixed, inheritance will leave a large share of this tenant's nodes UNDECLARED — which is the correct outcome, not a defect to paper over."
+}
