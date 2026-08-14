@@ -19,6 +19,13 @@ interface GateCheck {
   detail: string;
 }
 
+interface ScoreEligibilitySummary {
+  totalCells: number;
+  scoreable: number;
+  needsClarification: number;
+  notScoreable: number;
+}
+
 export function VendorResponseForwardGate({
   readiness,
   profileSet,
@@ -165,6 +172,7 @@ function buildGateChecks(
   const notReadyReports = reports.filter(
     (report) => report.scoreReadiness !== "ready_to_score",
   );
+  const scoreReadiness = summarizeScoreEligibility(evaluationDecisionView);
 
   return [
     {
@@ -235,13 +243,82 @@ function buildGateChecks(
           : `${holdbackCount + parseHoldbackCount} scoring holdback${holdbackCount + parseHoldbackCount === 1 ? "" : "s"}; ${notReadyProfiles.length + notReadyReports.length} vendor profile${notReadyProfiles.length + notReadyReports.length === 1 ? "" : "s"} not fully ready.`,
     },
     {
-      label: "Human scoring view prepared",
-      state: evaluationDecisionView ? "complete" : "pending",
-      detail: evaluationDecisionView
-        ? `${evaluationDecisionView.scorecardRows.length} weighted criteria ready for named evaluator review.`
-        : "Prepare weighted criteria and evaluator-owned scoring view.",
+      label: "Score readiness clear",
+      state: getScoreReadinessGateState(
+        Boolean(evaluationDecisionView),
+        scoreReadiness,
+      ),
+      detail: getScoreReadinessGateDetail(
+        Boolean(evaluationDecisionView),
+        scoreReadiness,
+        evaluationDecisionView?.scorecardRows.length ?? 0,
+      ),
     },
   ];
+}
+
+function summarizeScoreEligibility(
+  evaluationDecisionView?: VendorEvaluationDecisionView | null,
+): ScoreEligibilitySummary {
+  const scores =
+    evaluationDecisionView?.scorecardRows.flatMap((row) => row.scores) ?? [];
+
+  return scores.reduce<ScoreEligibilitySummary>(
+    (summary, score) => {
+      summary.totalCells += 1;
+      if (score.scoreEligibility === "scoreable") {
+        summary.scoreable += 1;
+      } else if (score.scoreEligibility === "not_scoreable") {
+        summary.notScoreable += 1;
+      } else {
+        summary.needsClarification += 1;
+      }
+      return summary;
+    },
+    {
+      totalCells: 0,
+      scoreable: 0,
+      needsClarification: 0,
+      notScoreable: 0,
+    },
+  );
+}
+
+function getScoreReadinessGateState(
+  hasEvaluationDecisionView: boolean,
+  scoreReadiness: ScoreEligibilitySummary,
+): GateState {
+  if (!hasEvaluationDecisionView) {
+    return "pending";
+  }
+
+  if (
+    scoreReadiness.needsClarification > 0 ||
+    scoreReadiness.notScoreable > 0
+  ) {
+    return "blocked";
+  }
+
+  return "complete";
+}
+
+function getScoreReadinessGateDetail(
+  hasEvaluationDecisionView: boolean,
+  scoreReadiness: ScoreEligibilitySummary,
+  criteriaCount: number,
+): string {
+  if (!hasEvaluationDecisionView) {
+    return "Prepare weighted criteria and evaluator-owned scoring view.";
+  }
+
+  if (
+    scoreReadiness.needsClarification > 0 ||
+    scoreReadiness.notScoreable > 0
+  ) {
+    return `${scoreReadiness.scoreable}/${scoreReadiness.totalCells} score cells scoreable; ${scoreReadiness.needsClarification} need clarification; ${scoreReadiness.notScoreable} not scoreable. Resolve score evidence before Evaluation.`;
+  }
+
+  return `${scoreReadiness.scoreable}/${scoreReadiness.totalCells} score cells ready across ${criteriaCount} weighted criteria; named reviewers still own final scores.`;
 }
 
 const CARD: CSSProperties = {
