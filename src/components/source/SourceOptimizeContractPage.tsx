@@ -22,6 +22,9 @@ import {
 import type {
   ContractOptimizationOpportunity,
   ContractOptimizationOpportunitySet,
+  FinanceRealizationLink,
+  OptimizationApprovalRequestRead,
+  OptimizationNegotiatedOutcomeRead,
 } from "@/lib/source/data-model/contract-optimization-opportunity";
 import {
   summarizeOpportunityTraceability,
@@ -422,6 +425,7 @@ function SelectedContractView({
           selectedOpportunity={selectedOpportunity}
           position={position}
         />
+        <ValueProofStatus opportunitySet={opportunitySet} />
         <OpportunityTable
           opportunities={opportunitySet?.opportunities ?? []}
           selectedOpportunityId={selectedOpportunity?.opportunityId ?? null}
@@ -751,6 +755,163 @@ function WorkflowActionPanel({
       ) : null}
     </div>
   );
+}
+
+function ValueProofStatus({
+  opportunitySet,
+}: {
+  opportunitySet: ContractOptimizationOpportunitySet | null;
+}) {
+  if (!opportunitySet) return null;
+  const strategyRequest = latestRequest(
+    opportunitySet.approvalRequests ?? [],
+    "vendor_outreach_strategy",
+  );
+  const financeRequest = latestRequest(
+    opportunitySet.approvalRequests ?? [],
+    "finance_value_confirmation",
+  );
+  const agreedOutcome = latestOutcome(opportunitySet.negotiatedOutcomes ?? []);
+  const financeProof = opportunitySet.financeRealizations[0] ?? null;
+
+  return (
+    <div style={VALUE_PROOF_STYLE} data-testid="optimize-value-proof-status">
+      <div style={VALUE_PROOF_HEAD_STYLE}>
+        <div>
+          <strong>Value proof status</strong>
+          <p style={DECISION_DETAIL_STYLE}>
+            Requests, vendor outcome, and realized value are separate. A
+            handoff or approval is not finance-confirmed value.
+          </p>
+        </div>
+        <span
+          style={{
+            ...BASELINE_STATUS_STYLE,
+            ...(financeProof ? null : BASELINE_STATUS_MISSING_STYLE),
+          }}
+          data-testid="optimize-value-proof-badge"
+        >
+          {financeProof ? "finance confirmed" : "realized value pending"}
+        </span>
+      </div>
+      <div style={VALUE_PROOF_ROWS_STYLE}>
+        <ValueProofRow
+          label="Strategy approval"
+          state={strategyRequest?.approvalState ?? "not requested"}
+          detail={
+            strategyRequest
+              ? latestDecisionDetail(strategyRequest) ??
+                "Vendor-outreach strategy request is recorded."
+              : "No strategy approval request has been created for this opportunity."
+          }
+        />
+        <ValueProofRow
+          label="Vendor outcome"
+          state={agreedOutcome?.outcomeState ?? "not recorded"}
+          detail={
+            agreedOutcome
+              ? `${formatMaybeUsd(agreedOutcome.agreedAmountUsd)} agreed amount; ${agreedOutcome.effectiveDate ? `effective ${formatDate(agreedOutcome.effectiveDate)}` : "effective date pending"}.`
+              : "No negotiated outcome has been recorded yet."
+          }
+        />
+        <ValueProofRow
+          label="Finance/Tower handoff"
+          state={financeRequest?.approvalState ?? "not requested"}
+          detail={
+            financeRequest
+              ? latestDecisionDetail(financeRequest) ??
+                "Finance/Tower confirmation request is recorded. Realized value remains pending until finance evidence is loaded."
+              : "No Finance/Tower confirmation request has been created yet."
+          }
+        />
+        <ValueProofRow
+          label="Realized value proof"
+          state={financeProof ? "confirmed" : "not established"}
+          detail={
+            financeProof
+              ? `${formatUsd(financeProof.amountUsd)} confirmed by ${financeProof.owner ?? "Finance"}${financeProof.confirmationDate ? ` on ${formatDate(financeProof.confirmationDate)}` : ""}.`
+              : "No source.finance_realization row is present. The case cannot close as realized value."
+          }
+        />
+      </div>
+      {financeProof ? <FinanceProofDetails proof={financeProof} /> : null}
+    </div>
+  );
+}
+
+function ValueProofRow({
+  label,
+  state,
+  detail,
+}: {
+  label: string;
+  state: string;
+  detail: string;
+}) {
+  return (
+    <div style={VALUE_PROOF_ROW_STYLE}>
+      <div>
+        <strong>{label}</strong>
+        <p style={DECISION_DETAIL_STYLE}>{detail}</p>
+      </div>
+      <span style={VALUE_PROOF_STATE_STYLE}>{state}</span>
+    </div>
+  );
+}
+
+function FinanceProofDetails({ proof }: { proof: FinanceRealizationLink }) {
+  return (
+    <div style={FINANCE_PROOF_DETAIL_STYLE}>
+      <div>
+        <strong>{proof.basis}</strong>
+        <p style={DECISION_DETAIL_STYLE}>
+          Linked opportunities: {proof.linkedOpportunityIds.join(", ") || "none recorded"}
+          {proof.towerClaimRefs.length > 0
+            ? ` · Tower claims: ${proof.towerClaimRefs.join(", ")}`
+            : ""}
+        </p>
+      </div>
+      {proof.sourceRefs.length > 0 ? (
+        <div style={MUTED_SMALL_STYLE}>
+          Evidence:{" "}
+          {proof.sourceRefs
+            .map((ref) =>
+              [ref.tableName, ref.sourceRecordId, ref.sourceFileReport]
+                .filter(Boolean)
+                .join(" / "),
+            )
+            .join("; ")}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function latestRequest(
+  requests: readonly OptimizationApprovalRequestRead[],
+  approvalType: string,
+): OptimizationApprovalRequestRead | null {
+  return (
+    requests.find((request) => request.approvalType === approvalType) ?? null
+  );
+}
+
+function latestOutcome(
+  outcomes: readonly OptimizationNegotiatedOutcomeRead[],
+): OptimizationNegotiatedOutcomeRead | null {
+  return (
+    outcomes.find((outcome) => outcome.outcomeState === "agreed") ??
+    outcomes[0] ??
+    null
+  );
+}
+
+function latestDecisionDetail(
+  request: OptimizationApprovalRequestRead,
+): string | null {
+  const decision = request.decisions[0];
+  if (!decision) return null;
+  return `${decision.decision}: ${decision.rationale}`;
 }
 
 function BaselineRead({
@@ -1857,6 +2018,53 @@ const WORKFLOW_ACTIONS_STYLE: CSSProperties = {
   gap: 8,
   justifyContent: "flex-end",
   flexWrap: "wrap",
+};
+
+const VALUE_PROOF_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderRadius: 8,
+  padding: 12,
+  display: "grid",
+  gap: 10,
+  background: ANALYTICS.CARD,
+};
+
+const VALUE_PROOF_HEAD_STYLE: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 12,
+  alignItems: "flex-start",
+};
+
+const VALUE_PROOF_ROWS_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+  gap: 8,
+};
+
+const VALUE_PROOF_ROW_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderRadius: 8,
+  padding: 10,
+  display: "grid",
+  gap: 6,
+  alignContent: "space-between",
+  minHeight: 116,
+};
+
+const VALUE_PROOF_STATE_STYLE: CSSProperties = {
+  color: ANALYTICS.MUTED,
+  fontSize: 10,
+  fontWeight: 900,
+  letterSpacing: 1,
+  textTransform: "uppercase",
+};
+
+const FINANCE_PROOF_DETAIL_STYLE: CSSProperties = {
+  borderTop: `1px solid ${ANALYTICS.LINE}`,
+  paddingTop: 10,
+  display: "grid",
+  gap: 4,
 };
 
 const NEXT_BAR_STYLE: CSSProperties = {
