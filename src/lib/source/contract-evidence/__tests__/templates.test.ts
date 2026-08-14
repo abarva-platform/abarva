@@ -24,6 +24,9 @@ describe("Source contract evidence templates", () => {
     expect(
       pack.templates.find((template) => template.family === "invoice_summary")?.notFor,
     ).toContain("raw invoice dump");
+    expect(
+      pack.templates.find((template) => template.family === "ticket_volume")?.sheetName,
+    ).toBe("Usage / Demand Volumes");
   });
 
   it("marks only evidence references as optional for AMS contract optimization", () => {
@@ -34,6 +37,18 @@ describe("Source contract evidence templates", () => {
       "sla_performance",
       "ticket_volume",
       "staffing_model",
+      "change_order",
+      "renewal_terms",
+    ]);
+  });
+
+  it("drops staffing from SaaS renewal optimization but keeps usage demand evidence", () => {
+    expect(getRequiredContractEvidenceFamilies("saas_renewal_optimization")).toEqual([
+      "contract_baseline",
+      "invoice_summary",
+      "invoice_exception",
+      "sla_performance",
+      "ticket_volume",
       "change_order",
       "renewal_terms",
     ]);
