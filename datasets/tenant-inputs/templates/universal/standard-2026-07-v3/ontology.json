@@ -90,6 +90,45 @@
       "homeDimension": "09_programs_initiatives.csv",
       "keyColumn": "program_name",
       "note": "Observed in graphs but resolving to no programme record. Declared here so the gap is reported as an unresolved endpoint rather than an unknown type. The fix is data: these initiatives belong in the programmes dimension."
+    },
+    {
+      "type": "contract",
+      "label": "Contract or agreement",
+      "homeDimension": "07_vendors_contracts.csv",
+      "keyColumn": "contract_name",
+      "note": "Distinct from vendor: one vendor can hold several contracts, and renewal and commercial terms attach to the contract, not the supplier."
+    },
+    {
+      "type": "process",
+      "label": "Business process",
+      "homeDimension": "18_operational_process_evidence.csv",
+      "keyColumn": "process_name"
+    },
+    {
+      "type": "managed_service",
+      "label": "Managed service in scope",
+      "homeDimension": "17_service_scope_managed_services.csv",
+      "keyColumn": "service_name"
+    },
+    {
+      "type": "portfolio_company",
+      "label": "Portfolio or operating company",
+      "homeDimension": "00_enterprise_profile.csv",
+      "keyColumn": "entity_name",
+      "note": "Holding-company tenants model their operating companies as graph nodes."
+    },
+    {
+      "type": "holding_company",
+      "label": "Holding company",
+      "homeDimension": "00_enterprise_profile.csv",
+      "keyColumn": "entity_name"
+    },
+    {
+      "type": "data_domain",
+      "label": "Data domain",
+      "homeDimension": "05_data_assets_integrations.csv",
+      "keyColumn": "data_domain",
+      "note": "Distinct from data_asset: a domain groups assets. Declared so the gap is reported rather than the type being unknown."
     }
   ],
   "relationshipTypes": [
@@ -295,6 +334,62 @@
         "use_case"
       ],
       "inverse": "measured_by"
+    },
+    {
+      "type": "depends_on",
+      "from": [
+        "system",
+        "data_asset",
+        "infrastructure",
+        "program"
+      ],
+      "to": [
+        "system",
+        "data_asset",
+        "infrastructure",
+        "vendor"
+      ]
+    },
+    {
+      "type": "reports_to",
+      "from": [
+        "org_unit"
+      ],
+      "to": [
+        "org_unit"
+      ],
+      "note": "Organisational hierarchy."
+    },
+    {
+      "type": "sponsored_by",
+      "from": [
+        "program",
+        "use_case"
+      ],
+      "to": [
+        "org_unit"
+      ]
+    },
+    {
+      "type": "uses_data_domain",
+      "from": [
+        "system",
+        "function",
+        "use_case",
+        "program"
+      ],
+      "to": [
+        "data_domain"
+      ]
+    },
+    {
+      "type": "has_contract",
+      "from": [
+        "vendor"
+      ],
+      "to": [
+        "contract"
+      ]
     }
   ],
   "filePopulationScope": {
@@ -442,5 +537,41 @@
       "note": "These two columns on the ~20-row function dimension are the entire client ask. Everything else is derived. Adding them to the contract is the smallest change with the largest downstream effect in this whole model."
     },
     "whyThisMattersForRetrieval": "A retrieval layer can filter on a declared facet but can only guess at an implied one. Segment-aware retrieval turns 'which systems serve the health plan's front office' from a semantic-similarity gamble into a deterministic subgraph selection, and makes the answer citable."
+  },
+  "vocabularyOrigin": "The first version of this ontology was derived from a single tenant's graph and then used to measure every other tenant. Six of seven 'failed'. That was an artifact of the sample, not evidence they were wrong: a survey of all seven found 32 node types and 40+ edge types in use, and most of the undeclared ones are plain synonyms of declared ones -- leader/owner/role all mean an accountable party, platform means infrastructure, ai_use_case means use_case. Rewriting six tenants to match one would have been a large migration justified by a sample of one. The vocabulary below is instead the union of what tenants actually express: synonyms are collapsed, and concepts that are genuinely distinct are declared rather than erased.",
+  "synonyms": {
+    "why": "A synonym is a different label for the same thing. Collapsing them at validation time costs nothing and rewrites no tenant data. A concept that is NOT a synonym must be declared as its own type instead -- collapsing a genuine distinction is how a model quietly loses information.",
+    "nodeTypes": {
+      "role": "org_unit",
+      "leader": "org_unit",
+      "owner": "org_unit",
+      "platform": "infrastructure",
+      "ai_use_case": "use_case",
+      "ai_candidate": "use_case",
+      "risk_or_control": "risk",
+      "risk_control": "risk",
+      "control": "risk",
+      "application_system": "system",
+      "corporate_shared_system": "system",
+      "dependency": "system",
+      "business_function": "function",
+      "program_initiative": "program",
+      "vendor_contract": "contract"
+    },
+    "relationshipTypes": {
+      "provides": "provided_by",
+      "supplied_by": "provided_by",
+      "sourced_from": "provided_by",
+      "owns": "owned_by",
+      "owns_technology_for": "owns_function",
+      "runs_on": "hosted_on",
+      "uses": "supported_by",
+      "requires_system": "supported_by",
+      "requires_data": "supported_by",
+      "affects": "impacts",
+      "uses_data_domain": "uses_data_domain",
+      "is_supported_by": "supported_by"
+    },
+    "note": "Several synonyms are INVERSE relations, not direct renames. `uses` runs function->system while `supports` runs system->function; mapping one onto the other reverses the meaning and produces domain/range violations that look like data defects but are mapping errors. Each entry here was checked against the direction it is actually used in."
   }
 }
