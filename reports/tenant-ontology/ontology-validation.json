@@ -4,6 +4,8 @@
     {
       "tenantKey": "apex-retail",
       "edges": 1713,
+      "emptyEndpointEdges": 0,
+      "usableEdges": 1713,
       "endpoints": 3426,
       "violations": 2427,
       "integrity": "58%",
@@ -146,6 +148,8 @@
     {
       "tenantKey": "first-capital-financial",
       "edges": 380,
+      "emptyEndpointEdges": 0,
+      "usableEdges": 380,
       "endpoints": 760,
       "violations": 1203,
       "integrity": "0%",
@@ -281,6 +285,8 @@
     {
       "tenantKey": "healthcare-demo-new",
       "edges": 2302,
+      "emptyEndpointEdges": 0,
+      "usableEdges": 2302,
       "endpoints": 4604,
       "violations": 612,
       "integrity": "92%",
@@ -380,6 +386,8 @@
     {
       "tenantKey": "lakeshore-holdings",
       "edges": 364,
+      "emptyEndpointEdges": 0,
+      "usableEdges": 364,
       "endpoints": 728,
       "violations": 431,
       "integrity": "64%",
@@ -522,6 +530,8 @@
     {
       "tenantKey": "lakeshore-industries",
       "edges": 519,
+      "emptyEndpointEdges": 519,
+      "usableEdges": 0,
       "endpoints": 0,
       "violations": 515,
       "integrity": "n/a",
@@ -567,6 +577,8 @@
     {
       "tenantKey": "meridian-health",
       "edges": 1037,
+      "emptyEndpointEdges": 0,
+      "usableEdges": 1037,
       "endpoints": 2074,
       "violations": 2788,
       "integrity": "2%",
@@ -754,6 +766,8 @@
     {
       "tenantKey": "skyharbor-air",
       "edges": 3318,
+      "emptyEndpointEdges": 0,
+      "usableEdges": 3318,
       "endpoints": 6636,
       "violations": 90,
       "integrity": "99%",
