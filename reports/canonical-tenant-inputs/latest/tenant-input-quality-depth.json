@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-14T01:11:24.022Z",
+  "generatedAt": "2026-08-14T11:46:20.383Z",
   "truthSplit": {
     "productionTenantDataWritten": false,
     "activeTenantAccessLayerUpdated": false,
@@ -209,6 +209,7 @@
         }
       ],
       "inconsistentLineEndingFiles": 0,
+      "hollowRowFiles": [],
       "columnContract": {
         "declared": 19,
         "conformant": 19,
@@ -464,6 +465,7 @@
         }
       ],
       "inconsistentLineEndingFiles": 0,
+      "hollowRowFiles": [],
       "columnContract": {
         "declared": 19,
         "conformant": 19,
@@ -721,6 +723,7 @@
         }
       ],
       "inconsistentLineEndingFiles": 0,
+      "hollowRowFiles": [],
       "columnContract": {
         "declared": 19,
         "conformant": 19,
@@ -932,6 +935,7 @@
         }
       ],
       "inconsistentLineEndingFiles": 0,
+      "hollowRowFiles": [],
       "columnContract": {
         "declared": 19,
         "conformant": 19,
@@ -1205,6 +1209,18 @@
         }
       ],
       "inconsistentLineEndingFiles": 0,
+      "hollowRowFiles": [
+        {
+          "file": "08_spend_value.csv",
+          "hollow": 54,
+          "total": 71
+        },
+        {
+          "file": "12_relationships.csv",
+          "hollow": 510,
+          "total": 519
+        }
+      ],
       "columnContract": {
         "declared": 19,
         "conformant": 19,
@@ -1461,6 +1477,7 @@
         }
       ],
       "inconsistentLineEndingFiles": 0,
+      "hollowRowFiles": [],
       "columnContract": {
         "declared": 19,
         "conformant": 1,
@@ -2099,6 +2116,7 @@
         }
       ],
       "inconsistentLineEndingFiles": 0,
+      "hollowRowFiles": [],
       "columnContract": {
         "declared": 19,
         "conformant": 19,
