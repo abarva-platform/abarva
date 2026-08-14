@@ -341,6 +341,54 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     );
   });
 
+  it("discloses when a stage was approved with required inputs still open", () => {
+    // Live-found: a stage reading 0/1 whose approval record was already in the
+    // ledger still said "1 step left before Strategy can move to approval" —
+    // describing an approved stage as pre-approval, and hiding the gap.
+    // Approve-with-gaps is a supported decision; it just has to stay visible.
+    const openScopeStage = {
+      ...SAMPLE_SCOPE_STAGE,
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((task, index) => ({
+        ...task,
+        state: index === 0 ? ("todo" as const) : task.state,
+        evidenceComplete: index === 0 ? false : task.evidenceComplete,
+      })),
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={openScopeStage}
+        approvalItems={[APPROVAL]}
+        approvalLedger={[
+          {
+            stageKey: "scope",
+            stageLabel: "Scope",
+            index: 2,
+            state: "approved",
+            approverName: "A. Approver",
+            approvedAtIso: "2026-08-01T00:00:00.000Z",
+            authorizationNote: "",
+            approverRationale: null,
+          },
+        ]}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(screen.getByText(/was approved with/i)).toHaveTextContent(
+      "required input",
+    );
+    expect(screen.getByText(/was approved with/i)).toHaveTextContent(
+      "not mistaken for completed work",
+    );
+    expect(
+      screen.queryByText(/left before Scope can move to approval/i),
+    ).not.toBeInTheDocument();
+  });
+
   it("does not claim stage inputs are complete while workflow steps are still open", () => {
     // Regression: the artifact-queue banner asserted "Stage inputs are
     // complete" regardless of workflow state, so a stage reading
