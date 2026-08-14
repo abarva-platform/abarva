@@ -684,6 +684,7 @@
     "source:cube:verify-live": "node scripts/source/verify-source-cube-parity.mjs",
     "source:cube:verify-runtime": "node scripts/source/verify-source-cube-runtime.mjs",
     "qa:source-responses-layout": "npx tsx scripts/qa/source-responses-layout-harness.ts",
+    "qa:source-stage-shell-layout": "npx tsx scripts/qa/source-stage-shell-layout-harness.ts",
     "source:v4:question-evidence:build": "node scripts/source/build-skyharbor-v4-question-evidence-contract.mjs && npx prettier --write docs/source/SKYHARBOR_SOURCE_V4_QUESTION_EVIDENCE_CONTRACT.md docs/source/SKYHARBOR_SOURCE_V4_GENERATOR_DESIGN.md docs/source/skyharbor-v4/source_v4_question_bank.json docs/source/skyharbor-v4/source_v4_question_coverage_matrix.json docs/source/skyharbor-v4/source_v4_model_fit_audit.json",
     "source:v4:question-coverage:verify": "node scripts/source/verify-skyharbor-v4-question-coverage.mjs",
     "source:v4:synthetic-package:build": "node scripts/source/build-skyharbor-v4-synthetic-package.mjs",

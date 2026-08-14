@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   source-layout-smoke:
-    name: Responses layout harness
+    name: Source layout harnesses
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -36,11 +36,14 @@ jobs:
       - name: Run Source Responses layout harness
         run: npm run qa:source-responses-layout
 
+      - name: Run Source stage shell layout harness
+        run: npm run qa:source-stage-shell-layout
+
       - name: Upload Source layout reports
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: source-layout-smoke-report
-          path: reports/source-layout/responses-matrix
+          path: reports/source-layout
           retention-days: 14
           if-no-files-found: warn
