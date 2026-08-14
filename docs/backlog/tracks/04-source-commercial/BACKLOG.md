@@ -18,6 +18,8 @@ The broader Source New Event vision is tracked in
 [`SOURCE_NEW_EVENT_BEST_IN_CLASS_PROGRAM.md`](./SOURCE_NEW_EVENT_BEST_IN_CLASS_PROGRAM.md).
 The current holistic 11-stage operating-design candidate is tracked in
 [`SOURCE_NEW_EVENT_SRC48_OPERATING_DESIGN.md`](./SOURCE_NEW_EVENT_SRC48_OPERATING_DESIGN.md).
+The active execution tracker and ranked remaining backlog are tracked in
+[`SOURCE_NEW_EVENT_EXECUTION_TRACKER_2026-08-14.md`](./SOURCE_NEW_EVENT_EXECUTION_TRACKER_2026-08-14.md).
 
 The holistic Source vendor value excellence program is tracked in
 [`SOURCE_VENDOR_VALUE_EXCELLENCE_PROGRAM.md`](./SOURCE_VENDOR_VALUE_EXCELLENCE_PROGRAM.md).
@@ -32,9 +34,9 @@ the evidence/data contract, parser lifecycle, value-state rules, and the first
 implementation slice order.
 
 Before starting additional New Event implementation beyond the current narrow
-backlog slices, use that program backlog to do the holistic 11-stage design
-review first, then execute incrementally with explicit PR, QA, ACA deploy, runtime
-invariant, and signed-in browser proof gates.
+backlog slices, use the operating design and execution tracker to do the
+holistic 11-stage design review first, then execute incrementally with explicit
+PR, QA, ACA deploy, runtime invariant, and signed-in browser proof gates.
 
 Before starting major Optimize Contract, Vendor/Contract 360, Source data model,
 or aVa Source intelligence changes, use the vendor value excellence program to
