@@ -1788,6 +1788,7 @@ function StageReadyPanel({
       ) : null}
       {hasArtifactGaps ? (
         <div
+          data-testid="source-stage-ready-approval-blocker"
           style={{
             background: ANALYTICS.AMBER_TINT,
             border: `1px solid ${ANALYTICS.AMBER}`,
@@ -1800,6 +1801,22 @@ function StageReadyPanel({
             padding: "10px 12px",
           }}
         >
+          <strong
+            style={{
+              color: ANALYTICS.AMBER_TEXT,
+              fontFamily: ANALYTICS.MONO,
+              fontSize: 10,
+              fontWeight: 900,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+            }}
+          >
+            Approval gate blocker
+          </strong>
+          <span>
+            Continue to approval is blocked until these client-final artifacts
+            are accepted in Files, or the owner records an exception.
+          </span>
           {view.stage.artifactReadiness.blockers.slice(0, 3).map((blocker) => (
             <span key={blocker}>{blocker}</span>
           ))}

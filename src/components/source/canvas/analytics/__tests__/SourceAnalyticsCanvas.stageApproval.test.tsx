@@ -292,6 +292,14 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       screen.getByTestId("source-stage-ready-open-approval"),
     ).toHaveTextContent("Open exception approval");
     expect(
+      screen.getByTestId("source-stage-ready-approval-blocker"),
+    ).toHaveTextContent("Approval gate blocker");
+    expect(
+      screen.getByTestId("source-stage-ready-approval-blocker"),
+    ).toHaveTextContent(
+      "Continue to approval is blocked until these client-final artifacts are accepted in Files, or the owner records an exception.",
+    );
+    expect(
       screen.queryByTestId("source-stage-ready-review-approval"),
     ).not.toBeInTheDocument();
     expect(
@@ -416,7 +424,9 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     const gaps = screen.getByTestId("source-shell-approval-review-gaps");
     expect(gaps).not.toHaveTextContent("Stage inputs are complete");
     expect(gaps).toHaveTextContent("Stage inputs are still open");
-    expect(gaps).toHaveTextContent("before the approval gate is decision-ready");
+    expect(gaps).toHaveTextContent(
+      "before the approval gate is decision-ready",
+    );
   });
 
   it("opens Files as the primary next action when completed workflow inputs still have artifact blockers", () => {
