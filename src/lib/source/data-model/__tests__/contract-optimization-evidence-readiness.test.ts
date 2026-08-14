@@ -291,4 +291,30 @@ describe("buildContractOptimizationEvidenceReadiness", () => {
     expect(readiness.blockingFamilies).toEqual([]);
     expect(readiness.sizingBlocked).toBe(false);
   });
+
+  it("recognizes governed change-order and renewal-term aliases", () => {
+    const readiness = buildContractOptimizationEvidenceReadiness({
+      evidencePack: buildContractOptimizationEvidencePack({
+        tenantKey: "tenant-a",
+        contractId: "CTR-TEST",
+        ledgerItems: [
+          item({
+            ledger_item_id: "change-order",
+            evidence_refs: ["source.golden_contract_change_order_register"],
+          }),
+          item({
+            ledger_item_id: "renewal-terms",
+            evidence_refs: ["doc.extraction:contract.renewal_terms"],
+          }),
+        ],
+      }),
+    });
+
+    expect(rowFor(readiness, "change_order").evidenceClass).not.toBe(
+      "missing",
+    );
+    expect(rowFor(readiness, "renewal_terms").evidenceClass).not.toBe(
+      "missing",
+    );
+  });
 });
