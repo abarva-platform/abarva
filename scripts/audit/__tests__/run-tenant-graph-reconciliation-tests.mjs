@@ -3,6 +3,9 @@
 import assert from 'node:assert/strict';
 
 import {
+  classifyQuarantineReason,
+  classifyQuarantineReasons,
+  dispositionForQuarantineClass,
   evaluateRelationshipRow,
   objectTypeForEndpoint,
   slug,
@@ -82,5 +85,19 @@ assert.equal(quarantined.candidate, null);
 assert.match(quarantined.quarantine.quarantineReasons, /unknown-relationship-type/);
 assert.match(quarantined.quarantine.quarantineReasons, /unresolved-from-node/);
 assert.match(quarantined.quarantine.quarantineReasons, /missing-evidence-basis/);
+assert.equal(quarantined.quarantine.quarantineClass, 'dangling_reference');
+assert.equal(
+  quarantined.quarantine.quarantineDisposition,
+  'catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge',
+);
+assert.equal(classifyQuarantineReason('unknown-relationship-type:foo'), 'vocabulary_or_endpoint_type_defect');
+assert.equal(
+  classifyQuarantineReasons(['missing-from-object-name', 'unresolved-to-node']),
+  'empty_endpoint_or_required_field_missing',
+);
+assert.equal(
+  dispositionForQuarantineClass('empty_endpoint_or_required_field_missing'),
+  'permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared',
+);
 
 console.log('tenant-graph-reconciliation tests passed');
