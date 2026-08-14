@@ -26,6 +26,7 @@ jest.mock(
           | "opportunity_not_ready"
           | "missing_pending_request"
           | "missing_approved_request"
+          | "missing_agreed_outcome"
           | "invalid_action",
         message: string,
       ) {
@@ -180,5 +181,50 @@ describe("POST Source Optimize workflow action", () => {
     expect(response.status).toBe(409);
     expect(payload.error).toBe("baseline_conflict");
     expect(payload.detail).toContain("Baseline inputs conflict");
+  });
+
+  it("allows a create-capable user to request Finance/Tower confirmation handoff", async () => {
+    mockRunContractOptimizationWorkflowAction.mockResolvedValueOnce({
+      ok: true,
+      action: "request_finance_confirmation",
+      tenantKey: "skyharbor_global",
+      contractId: "CTR-090",
+      datasetVersion: "v4",
+      optimizationCaseId: "CASE-CTR-090",
+      opportunityId: "OPP-CTR-090-RATE",
+      approvalRequestId:
+        "APR-CASE-CTR-090-OPP-CTR-090-RATE-FINANCE-CONFIRMATION",
+      negotiatedOutcomeId: "OUT-CASE-CTR-090-OPP-CTR-090-RATE-AGREED",
+      caseState: "finance_handoff",
+      message:
+        "Finance/Tower confirmation request is ready. No realized value has been recorded.",
+    });
+
+    const response = await POST(
+      new Request(
+        "https://app.abarva.ai/api/source/optimize/contract/CTR-090/workflow",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            action: "request_finance_confirmation",
+            opportunityId: "OPP-CTR-090-RATE",
+            rationale: "Vendor outcome is agreed; ask Finance to confirm.",
+          }),
+        },
+      ),
+      { params: Promise.resolve({ contractId: "CTR-090" }) },
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.action).toBe("request_finance_confirmation");
+    expect(mockRunContractOptimizationWorkflowAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantKey: "skyharbor_global",
+        contractId: "CTR-090",
+        opportunityId: "OPP-CTR-090-RATE",
+        action: "request_finance_confirmation",
+      }),
+    );
   });
 });

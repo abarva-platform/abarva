@@ -494,6 +494,102 @@ describe("SourceOptimizeContractPage", () => {
     });
   });
 
+  it("requests Finance/Tower confirmation after an agreed vendor outcome without claiming realized value", async () => {
+    const fetchMock = global.fetch as jest.Mock;
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        message:
+          "Finance/Tower confirmation request is ready. No realized value has been recorded.",
+      }),
+    });
+    const agreedOutcomeSet = {
+      ...makeOpportunitySet(),
+      opportunities: makeOpportunitySet().opportunities.map((opportunity) => ({
+        ...opportunity,
+        stage: "target_position" as const,
+      })),
+      approvalRequests: [
+        {
+          approvalRequestId: "APR-090-STRATEGY",
+          caseId: "CASE-090",
+          opportunityId: "opp-090-rate",
+          approvalType: "vendor_outreach_strategy",
+          approvalState: "approved" as const,
+          requestedByRole: "sourcing_owner",
+          requestedAt: "2027-06-30T00:00:00.000Z",
+          decisions: [
+            {
+              decision: "approved" as const,
+              rationale: "Approved for controlled vendor outreach.",
+              decidedByRole: "sourcing_approver",
+              decidedAt: "2027-06-30T00:00:00.000Z",
+            },
+          ],
+        },
+      ],
+      negotiatedOutcomes: [
+        {
+          outcomeId: "OUT-090",
+          caseId: "CASE-090",
+          opportunityId: "opp-090-rate",
+          outcomeState: "agreed" as const,
+          agreedAmountUsd: null,
+          effectiveDate: null,
+          sourceDocumentId: null,
+        },
+      ],
+      financeRealizations: [],
+      evidenceRequirements: [],
+      financeConfirmedUsd: 0,
+    };
+
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({
+          selected: makeCandidate(),
+          missingEvidenceSources: [],
+        })}
+        opportunitySet={agreedOutcomeSet}
+        evidencePack={makeReadySaaSEvidencePack()}
+      />,
+    );
+
+    expect(screen.getByTestId("optimize-step-prove_value")).toHaveAttribute(
+      "data-state",
+      "blocked",
+    );
+    expect(screen.getByTestId("workflow-action-panel")).toHaveTextContent(
+      "Request Finance/Tower confirmation",
+    );
+    expect(screen.getByTestId("workflow-action-panel")).toHaveTextContent(
+      "It does not write finance_realization rows or claim realized value.",
+    );
+
+    fireEvent.click(screen.getByTestId("request-optimize-finance-confirmation"));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/source/optimize/contract/CTR-090/workflow",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            action: "request_finance_confirmation",
+            opportunityId: "opp-090-rate",
+            rationale: null,
+          }),
+        }),
+      );
+      expect(refresh).toHaveBeenCalled();
+    });
+    expect(screen.getByTestId("workflow-action-message")).toHaveTextContent(
+      "No realized value has been recorded.",
+    );
+  });
+
   it("surfaces opportunity-set evidence requirements when spine rows are empty", () => {
     render(
       <SourceOptimizeContractPage

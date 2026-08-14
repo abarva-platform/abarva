@@ -11,7 +11,8 @@ export type ContractOptimizationWorkflowAction =
   | "create_approval_request"
   | "approve_request"
   | "send_back_request"
-  | "record_agreed_outcome";
+  | "record_agreed_outcome"
+  | "request_finance_confirmation";
 
 export interface ContractOptimizationWorkflowActionInput {
   readonly tenantKey: string;
@@ -63,6 +64,7 @@ export class ContractOptimizationWorkflowActionError extends Error {
       | "opportunity_not_ready"
       | "missing_pending_request"
       | "missing_approved_request"
+      | "missing_agreed_outcome"
       | "invalid_action",
     message: string,
   ) {
@@ -112,6 +114,8 @@ export function createContractOptimizationWorkflowActionRunner(
           return decideApprovalRequest(run, input, context, "sent_back");
         case "record_agreed_outcome":
           return recordAgreedOutcome(run, input, context);
+        case "request_finance_confirmation":
+          return requestFinanceConfirmation(run, input, context);
         default:
           throw new ContractOptimizationWorkflowActionError(
             "invalid_action",
@@ -304,7 +308,12 @@ async function decideApprovalRequest(
   context: Awaited<ReturnType<typeof loadActionContext>>,
   decision: "approved" | "sent_back",
 ): Promise<ContractOptimizationWorkflowActionResult> {
-  const request = await latestApprovalRequest(run, context, "pending");
+  const request = await latestApprovalRequest(
+    run,
+    context,
+    "vendor_outreach_strategy",
+    "pending",
+  );
   if (!request) {
     throw new ContractOptimizationWorkflowActionError(
       "missing_pending_request",
@@ -376,7 +385,12 @@ async function recordAgreedOutcome(
   input: ContractOptimizationWorkflowActionInput,
   context: Awaited<ReturnType<typeof loadActionContext>>,
 ): Promise<ContractOptimizationWorkflowActionResult> {
-  const request = await latestApprovalRequest(run, context, "approved");
+  const request = await latestApprovalRequest(
+    run,
+    context,
+    "vendor_outreach_strategy",
+    "approved",
+  );
   if (!request) {
     throw new ContractOptimizationWorkflowActionError(
       "missing_approved_request",
@@ -430,9 +444,83 @@ async function recordAgreedOutcome(
   });
 }
 
+async function requestFinanceConfirmation(
+  run: SqlRunner,
+  input: ContractOptimizationWorkflowActionInput,
+  context: Awaited<ReturnType<typeof loadActionContext>>,
+): Promise<ContractOptimizationWorkflowActionResult> {
+  const outcome = await latestAgreedOutcome(run, context);
+  if (!outcome) {
+    throw new ContractOptimizationWorkflowActionError(
+      "missing_agreed_outcome",
+      "No agreed negotiated outcome exists; record the vendor outcome before Finance/Tower confirmation.",
+    );
+  }
+  const negotiatedOutcomeId = textValue(outcome.outcome_id) ?? "";
+  const approvalRequestId = stableId("APR", [
+    context.caseId,
+    context.opportunityId,
+    "finance-confirmation",
+  ]);
+  const role = input.actorRole?.trim() || "finance_handoff_owner";
+  const payload = {
+    contract_id: context.contractId,
+    opportunity_id: context.opportunityId,
+    negotiated_outcome_id: negotiatedOutcomeId,
+    requested_by_user_id: input.actorUserId ?? null,
+    rationale: input.rationale?.trim() || null,
+    guardrail:
+      "This requests Finance/Tower confirmation only. It does not create finance_realization rows or realized value.",
+    required_evidence: [
+      "periodized finance actuals",
+      "measurement owner attestation",
+      "Tower claim references when applicable",
+    ],
+  };
+
+  await run(
+    `INSERT INTO source.approval_request
+       (tenant_key, dataset_version, approval_request_id, optimization_case_id,
+        opportunity_id, approval_type, approval_state, requested_by_role, payload)
+     VALUES ($1,$2,$3,$4,$5,'finance_value_confirmation','pending',$6,$7::jsonb)
+     ON CONFLICT (tenant_key, dataset_version, approval_request_id)
+     DO UPDATE SET
+       approval_state = CASE
+         WHEN source.approval_request.approval_state = 'cancelled' THEN 'pending'
+         ELSE source.approval_request.approval_state
+       END,
+       requested_by_role = EXCLUDED.requested_by_role,
+       payload = source.approval_request.payload || EXCLUDED.payload`,
+    [
+      context.tenantKey,
+      context.datasetVersion,
+      approvalRequestId,
+      context.caseId,
+      context.opportunityId,
+      role,
+      JSON.stringify(payload),
+    ],
+  );
+
+  await updateCaseState(run, context, {
+    caseState: "finance_handoff",
+    nextAction:
+      "Finance/Tower must confirm periodized realized value before closure or external value claims.",
+  });
+
+  return result(input, context, {
+    approvalRequestId,
+    negotiatedOutcomeId,
+    caseState: "finance_handoff",
+    message:
+      "Finance/Tower confirmation request is ready. No realized value has been recorded.",
+  });
+}
+
 async function latestApprovalRequest(
   run: SqlRunner,
   context: Awaited<ReturnType<typeof loadActionContext>>,
+  approvalType: string,
   state: "pending" | "approved",
 ): Promise<Row | null> {
   const rows = await run<Row>(
@@ -442,7 +530,8 @@ async function latestApprovalRequest(
         AND dataset_version = $2
         AND optimization_case_id = $3
         AND opportunity_id = $4
-        AND approval_state = $5
+        AND approval_type = $5
+        AND approval_state = $6
       ORDER BY requested_at DESC NULLS LAST, approval_request_id
       LIMIT 1`,
     [
@@ -450,7 +539,32 @@ async function latestApprovalRequest(
       context.datasetVersion,
       context.caseId,
       context.opportunityId,
+      approvalType,
       state,
+    ],
+  );
+  return rows[0] ?? null;
+}
+
+async function latestAgreedOutcome(
+  run: SqlRunner,
+  context: Awaited<ReturnType<typeof loadActionContext>>,
+): Promise<Row | null> {
+  const rows = await run<Row>(
+    `SELECT *
+       FROM source.negotiated_outcome
+      WHERE tenant_key = $1
+        AND dataset_version = $2
+        AND optimization_case_id = $3
+        AND opportunity_id = $4
+        AND outcome_state = 'agreed'
+      ORDER BY effective_date DESC NULLS LAST, outcome_id
+      LIMIT 1`,
+    [
+      context.tenantKey,
+      context.datasetVersion,
+      context.caseId,
+      context.opportunityId,
     ],
   );
   return rows[0] ?? null;
