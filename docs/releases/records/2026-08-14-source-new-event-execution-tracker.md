@@ -70,7 +70,16 @@ Revert the PR that adds the execution tracker and backlog link.
 
 ## Audit Evidence
 
-- PR URL: pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/6277
+- Merge commit: `b54c5e752cf6c749825a9ac403383175be5c839a`
+- ACA main deploy run: https://github.com/abarva-platform/abarva/actions/runs/31812088371
+- Deployment evidence artifact: `aca-main-deploy`, artifact id `9223828059`,
+  digest `sha256:d57baf063adea99c8219ec0ae06383a584ccb51c01044e903e3f2237c336024f`
+- Deployed revision: `ca-abarva-web-lab-eastus--mb54c5e75`
+- Deployed image:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:2b8a81b819d6f17fd5bb321d4337d6c4b28b41d000b3aeb8e8a0d449a6a5d352`
+- Runtime invariant: passed; template image, active revision image, and worker
+  job images matched the approved digest; production health returned `ok: true`.
 - Local validation: prettier check passed.
 - Release check: passed.
 
