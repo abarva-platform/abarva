@@ -797,7 +797,8 @@
     "ops:purge-retired-tenant-residue": "node scripts/ops/purge-retired-tenant-residue.mjs",
     "ops:purge-retired-tenant-residue:apply": "node scripts/ops/purge-retired-tenant-residue.mjs --apply",
     "ops:purge-retired-tenant-rows": "node scripts/ops/purge-retired-tenant-rows.mjs",
-    "ops:purge-retired-tenant-rows:apply": "node scripts/ops/purge-retired-tenant-rows.mjs --apply"
+    "ops:purge-retired-tenant-rows:apply": "node scripts/ops/purge-retired-tenant-rows.mjs --apply",
+    "audit:source-canvas-reachability": "node scripts/audit/source-canvas-reachability.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
