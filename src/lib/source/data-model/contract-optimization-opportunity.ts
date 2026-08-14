@@ -115,6 +115,50 @@ export interface FinanceRealizationLink {
   readonly sourceRefs: readonly OpportunitySourceReference[];
 }
 
+export interface OptimizationCaseRead {
+  readonly caseId: string;
+  readonly door1EventId: string | null;
+  readonly caseState:
+    | "intake"
+    | "baseline_confirmed"
+    | "evidence_review"
+    | "calculation_validated"
+    | "outreach_approval"
+    | "outcome_recorded"
+    | "finance_handoff"
+    | "closed";
+  readonly owner: string | null;
+  readonly nextAction: string;
+}
+
+export interface OptimizationApprovalDecisionRead {
+  readonly decision: "approved" | "sent_back" | "held";
+  readonly rationale: string;
+  readonly decidedByRole: string | null;
+  readonly decidedAt: string | null;
+}
+
+export interface OptimizationApprovalRequestRead {
+  readonly approvalRequestId: string;
+  readonly caseId: string;
+  readonly opportunityId: string | null;
+  readonly approvalType: string;
+  readonly approvalState: "pending" | "approved" | "sent_back" | "cancelled";
+  readonly requestedByRole: string | null;
+  readonly requestedAt: string | null;
+  readonly decisions: readonly OptimizationApprovalDecisionRead[];
+}
+
+export interface OptimizationNegotiatedOutcomeRead {
+  readonly outcomeId: string;
+  readonly caseId: string;
+  readonly opportunityId: string;
+  readonly outcomeState: "proposed" | "agreed" | "rejected" | "withdrawn";
+  readonly agreedAmountUsd: number | null;
+  readonly effectiveDate: string | null;
+  readonly sourceDocumentId: string | null;
+}
+
 export interface ContractOptimizationOpportunitySet {
   readonly tenantKey: string | null;
   readonly datasetVersion: string;
@@ -135,6 +179,9 @@ export interface ContractOptimizationOpportunitySet {
   readonly baseline: OptimizationBaselineRead;
   readonly selectedOpportunityId: string | null;
   readonly opportunities: readonly ContractOptimizationOpportunity[];
+  readonly optimizationCase?: OptimizationCaseRead | null;
+  readonly approvalRequests?: readonly OptimizationApprovalRequestRead[];
+  readonly negotiatedOutcomes?: readonly OptimizationNegotiatedOutcomeRead[];
   readonly financeRealizations: readonly FinanceRealizationLink[];
   readonly evidenceRequirements: readonly string[];
   readonly potentialRecoverableUsd: number;
@@ -326,6 +373,9 @@ export function buildContractOptimizationOpportunitySet(
     baseline,
     selectedOpportunityId,
     opportunities,
+    optimizationCase: null,
+    approvalRequests: [],
+    negotiatedOutcomes: [],
     financeRealizations,
     evidenceRequirements,
     potentialRecoverableUsd,

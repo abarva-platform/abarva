@@ -31,6 +31,16 @@ interface ConflictRow {
   readonly summary: string;
 }
 
+interface LifecycleRow {
+  readonly contract_id: string;
+  readonly optimization_case_count: string;
+  readonly latest_case_state: string | null;
+  readonly approval_request_count: string;
+  readonly approval_decision_count: string;
+  readonly negotiated_outcome_count: string;
+  readonly finance_realization_count: string;
+}
+
 function parseArgs(): Args {
   const argv = process.argv.slice(2);
   const value = (name: string): string | undefined => {
@@ -190,6 +200,84 @@ async function readConflicts(
   return result.rows;
 }
 
+async function readLifecycle(
+  client: Client,
+  args: Args,
+): Promise<readonly LifecycleRow[]> {
+  const result = await client.query<LifecycleRow>(
+    `WITH cases AS (
+       SELECT *
+         FROM source.optimization_case
+        WHERE tenant_key = $1
+          AND dataset_version = $2
+          AND contract_id = ANY($3::text[])
+     ),
+     latest_case AS (
+       SELECT DISTINCT ON (contract_id)
+              contract_id,
+              case_state
+         FROM cases
+        ORDER BY contract_id, updated_at DESC NULLS LAST, created_at DESC NULLS LAST, optimization_case_id
+     ),
+     approval_requests AS (
+       SELECT cases.contract_id, request.approval_request_id
+         FROM cases
+         JOIN source.approval_request request
+           ON request.tenant_key = cases.tenant_key
+          AND request.dataset_version = cases.dataset_version
+          AND request.optimization_case_id = cases.optimization_case_id
+     ),
+     approval_decisions AS (
+       SELECT approval_requests.contract_id, decision.id
+         FROM approval_requests
+         JOIN source.approval_decision decision
+           ON decision.tenant_key = $1
+          AND decision.dataset_version = $2
+          AND decision.approval_request_id = approval_requests.approval_request_id
+     ),
+     outcomes AS (
+       SELECT cases.contract_id, outcome.outcome_id
+         FROM cases
+         JOIN source.negotiated_outcome outcome
+           ON outcome.tenant_key = cases.tenant_key
+          AND outcome.dataset_version = cases.dataset_version
+          AND outcome.optimization_case_id = cases.optimization_case_id
+     ),
+     realizations AS (
+       SELECT cases.contract_id, realization.realization_id
+         FROM cases
+         JOIN source.finance_realization realization
+           ON realization.tenant_key = cases.tenant_key
+          AND realization.dataset_version = cases.dataset_version
+          AND realization.optimization_case_id = cases.optimization_case_id
+     )
+     SELECT requested.contract_id,
+            count(DISTINCT cases.optimization_case_id)::text AS optimization_case_count,
+            latest_case.case_state AS latest_case_state,
+            count(DISTINCT approval_requests.approval_request_id)::text AS approval_request_count,
+            count(DISTINCT approval_decisions.id)::text AS approval_decision_count,
+            count(DISTINCT outcomes.outcome_id)::text AS negotiated_outcome_count,
+            count(DISTINCT realizations.realization_id)::text AS finance_realization_count
+       FROM unnest($3::text[]) requested(contract_id)
+       LEFT JOIN cases
+         ON cases.contract_id = requested.contract_id
+       LEFT JOIN latest_case
+         ON latest_case.contract_id = requested.contract_id
+       LEFT JOIN approval_requests
+         ON approval_requests.contract_id = requested.contract_id
+       LEFT JOIN approval_decisions
+         ON approval_decisions.contract_id = requested.contract_id
+       LEFT JOIN outcomes
+         ON outcomes.contract_id = requested.contract_id
+       LEFT JOIN realizations
+         ON realizations.contract_id = requested.contract_id
+      GROUP BY requested.contract_id, latest_case.case_state
+      ORDER BY requested.contract_id`,
+    [args.tenantKey, args.datasetVersion, args.contractIds],
+  );
+  return result.rows;
+}
+
 function rowsByContract<T extends { readonly contract_id: string }>(
   rows: readonly T[],
 ): Record<string, readonly T[]> {
@@ -239,9 +327,10 @@ async function main(): Promise<void> {
     await client.query("SELECT set_config('app.tenant_key', $1, false)", [
       args.tenantKey,
     ]);
-    const [coverageRows, conflictRows] = await Promise.all([
+    const [coverageRows, conflictRows, lifecycleRows] = await Promise.all([
       readCoverage(client, args),
       readConflicts(client, args),
+      readLifecycle(client, args),
     ]);
     const failures = defects(args, coverageRows);
     const event = {
@@ -264,6 +353,15 @@ async function main(): Promise<void> {
           row.missing_calculation_opportunity_ids ?? [],
         mismatched_calculation_opportunity_ids:
           row.mismatched_calculation_opportunity_ids ?? [],
+      })),
+      lifecycle: lifecycleRows.map((row) => ({
+        contract_id: row.contract_id,
+        optimization_case_count: Number(row.optimization_case_count),
+        latest_case_state: row.latest_case_state,
+        approval_request_count: Number(row.approval_request_count),
+        approval_decision_count: Number(row.approval_decision_count),
+        negotiated_outcome_count: Number(row.negotiated_outcome_count),
+        finance_realization_count: Number(row.finance_realization_count),
       })),
       conflicts_by_contract: rowsByContract(conflictRows),
       failures,

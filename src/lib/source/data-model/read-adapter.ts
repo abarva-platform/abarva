@@ -27,8 +27,12 @@ import {
   type ContractOptimizationOpportunity,
   type ContractOptimizationOpportunitySet,
   type FinanceRealizationLink,
+  type OptimizationApprovalDecisionRead,
+  type OptimizationApprovalRequestRead,
   type OptimizationBaselineRead,
+  type OptimizationCaseRead,
   type OptimizationEvidenceGrade,
+  type OptimizationNegotiatedOutcomeRead,
   type OptimizationOpportunityStage,
   type OptimizationOpportunityValueType,
   type OpportunityCalculationLine,
@@ -832,6 +836,10 @@ async function getPersistedContractOptimizationOpportunitySet(
     calculationOutputRows,
     valuationRows,
     requirementRows,
+    caseRows,
+    approvalRows,
+    approvalDecisionRows,
+    outcomeRows,
     financeRows,
     financeEvidenceRows,
   ] = await Promise.all([
@@ -950,6 +958,63 @@ async function getPersistedContractOptimizationOpportunitySet(
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
+      `SELECT *
+         FROM source.optimization_case
+        WHERE tenant_key = ANY($1::text[])
+          AND dataset_version = $2
+          AND contract_id = $3
+        ORDER BY updated_at DESC NULLS LAST, created_at DESC NULLS LAST, optimization_case_id
+        LIMIT 1`,
+      [datasetVersion, contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT request.*
+         FROM source.approval_request request
+         JOIN source.optimization_case opt_case
+           ON opt_case.tenant_key = request.tenant_key
+          AND opt_case.dataset_version = request.dataset_version
+          AND opt_case.optimization_case_id = request.optimization_case_id
+        WHERE request.tenant_key = ANY($1::text[])
+          AND request.dataset_version = $2
+          AND opt_case.contract_id = $3
+        ORDER BY request.requested_at DESC NULLS LAST, request.approval_request_id`,
+      [datasetVersion, contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT decision.*
+         FROM source.approval_decision decision
+         JOIN source.approval_request request
+           ON request.tenant_key = decision.tenant_key
+          AND request.dataset_version = decision.dataset_version
+          AND request.approval_request_id = decision.approval_request_id
+         JOIN source.optimization_case opt_case
+           ON opt_case.tenant_key = request.tenant_key
+          AND opt_case.dataset_version = request.dataset_version
+          AND opt_case.optimization_case_id = request.optimization_case_id
+        WHERE decision.tenant_key = ANY($1::text[])
+          AND decision.dataset_version = $2
+          AND opt_case.contract_id = $3
+        ORDER BY decision.decided_at DESC NULLS LAST, decision.approval_request_id`,
+      [datasetVersion, contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT outcome.*
+         FROM source.negotiated_outcome outcome
+         JOIN source.optimization_case opt_case
+           ON opt_case.tenant_key = outcome.tenant_key
+          AND opt_case.dataset_version = outcome.dataset_version
+          AND opt_case.optimization_case_id = outcome.optimization_case_id
+        WHERE outcome.tenant_key = ANY($1::text[])
+          AND outcome.dataset_version = $2
+          AND opt_case.contract_id = $3
+        ORDER BY outcome.effective_date DESC NULLS LAST, outcome.outcome_id`,
+      [datasetVersion, contractId],
+    ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
       `SELECT realization.*
          FROM source.finance_realization realization
          JOIN source.optimization_opportunity opportunity
@@ -1045,6 +1110,24 @@ async function getPersistedContractOptimizationOpportunitySet(
         []
       ).map(sourceRefFromEvidence),
     }));
+  const optimizationCase = caseRows[0]
+    ? optimizationCaseFromRow(caseRows[0])
+    : null;
+  const approvalDecisionsByRequest = groupByString(
+    approvalDecisionRows,
+    "approval_request_id",
+  );
+  const approvalRequests = approvalRows.map((row) =>
+    approvalRequestFromRow(
+      row,
+      approvalDecisionsByRequest.get(
+        textValue(row.approval_request_id) ?? "",
+      ) ?? [],
+    ),
+  );
+  const negotiatedOutcomes = outcomeRows
+    .filter((row) => opportunityIds.has(textValue(row.opportunity_id) ?? ""))
+    .map(negotiatedOutcomeFromRow);
 
   const potentialRecoverableUsd = sumNumbers(
     opportunities
@@ -1106,12 +1189,91 @@ async function getPersistedContractOptimizationOpportunitySet(
     baseline: persistedBaselineRead(baselineRow, contract),
     selectedOpportunityId,
     opportunities,
+    optimizationCase,
+    approvalRequests,
+    negotiatedOutcomes,
     financeRealizations,
     evidenceRequirements: blockingRequirements,
     potentialRecoverableUsd,
     potentialAvoidableUsd,
     potentialNegotiableUsd,
     financeConfirmedUsd,
+  };
+}
+
+function optimizationCaseFromRow(row: NumericRow): OptimizationCaseRead {
+  return {
+    caseId: textValue(row.optimization_case_id) ?? "",
+    door1EventId: textValue(row.door1_event_id),
+    caseState:
+      readLiteral(row.case_state, [
+        "intake",
+        "baseline_confirmed",
+        "evidence_review",
+        "calculation_validated",
+        "outreach_approval",
+        "outcome_recorded",
+        "finance_handoff",
+        "closed",
+      ]) ?? "intake",
+    owner: textValue(row.owner),
+    nextAction:
+      textValue(row.next_action) ??
+      "Review the optimization case before taking vendor action.",
+  };
+}
+
+function approvalRequestFromRow(
+  row: NumericRow,
+  decisionRows: readonly NumericRow[],
+): OptimizationApprovalRequestRead {
+  return {
+    approvalRequestId: textValue(row.approval_request_id) ?? "",
+    caseId: textValue(row.optimization_case_id) ?? "",
+    opportunityId: textValue(row.opportunity_id),
+    approvalType: textValue(row.approval_type) ?? "optimization_approval",
+    approvalState:
+      readLiteral(row.approval_state, [
+        "pending",
+        "approved",
+        "sent_back",
+        "cancelled",
+      ]) ?? "pending",
+    requestedByRole: textValue(row.requested_by_role),
+    requestedAt: textValue(row.requested_at),
+    decisions: decisionRows.map(approvalDecisionFromRow),
+  };
+}
+
+function approvalDecisionFromRow(
+  row: NumericRow,
+): OptimizationApprovalDecisionRead {
+  return {
+    decision:
+      readLiteral(row.decision, ["approved", "sent_back", "held"]) ?? "held",
+    rationale: textValue(row.rationale) ?? "No approval rationale recorded.",
+    decidedByRole: textValue(row.decided_by_role),
+    decidedAt: textValue(row.decided_at),
+  };
+}
+
+function negotiatedOutcomeFromRow(
+  row: NumericRow,
+): OptimizationNegotiatedOutcomeRead {
+  return {
+    outcomeId: textValue(row.outcome_id) ?? "",
+    caseId: textValue(row.optimization_case_id) ?? "",
+    opportunityId: textValue(row.opportunity_id) ?? "",
+    outcomeState:
+      readLiteral(row.outcome_state, [
+        "proposed",
+        "agreed",
+        "rejected",
+        "withdrawn",
+      ]) ?? "proposed",
+    agreedAmountUsd: numberValue(row.agreed_amount_usd),
+    effectiveDate: textValue(row.effective_date),
+    sourceDocumentId: textValue(row.source_document_id),
   };
 }
 
