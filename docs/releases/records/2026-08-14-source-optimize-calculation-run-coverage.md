@@ -50,11 +50,18 @@ workflow gate unless the persisted readback proves the required rows exist.
 - `src/lib/source/data-model/__tests__/contract-optimization-opportunity.test.ts`:
   asserts every amount-bearing opportunity in the golden builder fixture has a
   matching calculation amount.
+- `scripts/source/project-contract-optimization-spine.ts`: adds a projection
+  guard that fails before write when an amount-bearing opportunity has no
+  deterministic calculation or has a calculation output that does not reconcile
+  to the opportunity amount. The job proof JSON now reports generated and
+  persisted calculation coverage by contract.
 
 ## QA / Validation
 
 - Pass: `npm test -- --runTestsByPath src/lib/source/data-model/__tests__/read-adapter.contract-optimization.test.ts src/lib/source/data-model/__tests__/contract-optimization-opportunity.test.ts src/lib/source/data-model/__tests__/contract-optimization-workflow-step.test.ts src/lib/source/data-model/__tests__/contract-optimization-evidence-readiness.test.ts src/lib/source/data-model/__tests__/contract-optimization-traceability.test.ts src/lib/source/data-model/__tests__/contract-optimization-ledger.test.ts src/lib/source/data-model/__tests__/contract-optimization-portability.test.ts src/lib/source/data-model/__tests__/contract-optimization-spine.test.ts --runInBand`
 - Pass: `npx eslint src/lib/source/data-model/contract-optimization-opportunity.ts src/lib/source/data-model/__tests__/contract-optimization-opportunity.test.ts`
+- Pass: `./node_modules/.bin/eslint scripts/source/project-contract-optimization-spine.ts`
+- Pass: `git diff --check`
 - Pending after merge/deploy: run `source:contract-optimization:spine:apply`
   through the approved ACA private-operator job using the deployed digest, then
   read back the selected canary contract to prove all amount-bearing

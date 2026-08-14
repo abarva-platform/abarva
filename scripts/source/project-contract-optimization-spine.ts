@@ -51,6 +51,15 @@ interface ContractProjection {
   readonly factLayer: ContractOptimizationFactLayer;
 }
 
+interface ContractCalculationCoverage {
+  readonly contractId: string;
+  readonly opportunityCount: number;
+  readonly amountBearingOpportunityCount: number;
+  readonly calculationRunCount: number;
+  readonly missingCalculationOpportunityIds: readonly string[];
+  readonly mismatchedCalculationOpportunityIds: readonly string[];
+}
+
 function parseArgs(): Args {
   const argv = process.argv.slice(2);
   const value = (name: string): string | undefined => {
@@ -256,6 +265,55 @@ function buildProjection(
     pdfClauseRows: rows.pdfClauseRows,
   });
   return { contractId, opportunitySet, factLayer };
+}
+
+function calculationCoverage(
+  projection: ContractProjection,
+): ContractCalculationCoverage {
+  const opportunities = projection.opportunitySet?.opportunities ?? [];
+  const amountBearing = opportunities.filter(
+    (opportunity) => opportunity.amountUsd !== null,
+  );
+  const missingCalculationOpportunityIds = amountBearing
+    .filter((opportunity) => !opportunity.calculation)
+    .map((opportunity) => opportunity.opportunityId);
+  const mismatchedCalculationOpportunityIds = amountBearing
+    .filter((opportunity) => {
+      const calculated = opportunity.calculation?.calculatedAmountUsd;
+      if (calculated === undefined) return false;
+      return Math.abs(calculated - (opportunity.amountUsd ?? 0)) > 0.01;
+    })
+    .map((opportunity) => opportunity.opportunityId);
+
+  return {
+    contractId: projection.contractId,
+    opportunityCount: opportunities.length,
+    amountBearingOpportunityCount: amountBearing.length,
+    calculationRunCount: opportunities.filter((opportunity) =>
+      Boolean(opportunity.calculation),
+    ).length,
+    missingCalculationOpportunityIds,
+    mismatchedCalculationOpportunityIds,
+  };
+}
+
+function assertCalculationCoverage(
+  projections: readonly ContractProjection[],
+): void {
+  const failures = projections
+    .map(calculationCoverage)
+    .filter(
+      (coverage) =>
+        coverage.missingCalculationOpportunityIds.length > 0 ||
+        coverage.mismatchedCalculationOpportunityIds.length > 0,
+    );
+  if (failures.length === 0) return;
+
+  throw new Error(
+    `Contract optimization projection has unreproducible amount(s): ${JSON.stringify(
+      failures,
+    )}`,
+  );
 }
 
 async function assertRequiredTables(client: Client): Promise<void> {
@@ -1133,6 +1191,88 @@ async function countPersisted(
   );
 }
 
+async function countPersistedCalculationCoverage(
+  client: Client,
+  args: Args,
+): Promise<Record<string, ContractCalculationCoverage>> {
+  const result = await client.query<{
+    contract_id: string;
+    opportunity_count: string;
+    amount_bearing_opportunity_count: string;
+    calculation_run_count: string;
+    missing_calculation_opportunity_ids: string[] | null;
+    mismatched_calculation_opportunity_ids: string[] | null;
+  }>(
+    `WITH opportunity AS (
+       SELECT opportunity_id, contract_id, amount_usd
+         FROM source.optimization_opportunity
+        WHERE tenant_key = $1
+          AND dataset_version = $2
+          AND contract_id = ANY($3::text[])
+     ),
+     calculation AS (
+       SELECT run.opportunity_id,
+              max(output.amount_usd) FILTER (WHERE output.output_key = 'calculated_amount_usd') AS calculated_amount_usd
+         FROM source.calculation_run run
+         LEFT JOIN source.calculation_output output
+           ON output.tenant_key = run.tenant_key
+          AND output.dataset_version = run.dataset_version
+          AND output.calculation_run_id = run.calculation_run_id
+        WHERE run.tenant_key = $1
+          AND run.dataset_version = $2
+        GROUP BY run.opportunity_id
+     )
+     SELECT opportunity.contract_id,
+            count(*)::text AS opportunity_count,
+            count(*) FILTER (WHERE opportunity.amount_usd IS NOT NULL)::text AS amount_bearing_opportunity_count,
+            count(calculation.opportunity_id)::text AS calculation_run_count,
+            coalesce(
+              array_agg(opportunity.opportunity_id ORDER BY opportunity.opportunity_id)
+                FILTER (
+                  WHERE opportunity.amount_usd IS NOT NULL
+                    AND calculation.opportunity_id IS NULL
+                ),
+              ARRAY[]::text[]
+            ) AS missing_calculation_opportunity_ids,
+            coalesce(
+              array_agg(opportunity.opportunity_id ORDER BY opportunity.opportunity_id)
+                FILTER (
+                  WHERE opportunity.amount_usd IS NOT NULL
+                    AND calculation.opportunity_id IS NOT NULL
+                    AND (
+                      calculation.calculated_amount_usd IS NULL
+                      OR abs(calculation.calculated_amount_usd - opportunity.amount_usd) > 0.01
+                    )
+                ),
+              ARRAY[]::text[]
+            ) AS mismatched_calculation_opportunity_ids
+       FROM opportunity
+       LEFT JOIN calculation
+         ON calculation.opportunity_id = opportunity.opportunity_id
+      GROUP BY opportunity.contract_id
+      ORDER BY opportunity.contract_id`,
+    [args.tenantKey, args.datasetVersion, args.contractIds],
+  );
+
+  return Object.fromEntries(
+    result.rows.map((row) => [
+      row.contract_id,
+      {
+        contractId: row.contract_id,
+        opportunityCount: Number(row.opportunity_count),
+        amountBearingOpportunityCount: Number(
+          row.amount_bearing_opportunity_count,
+        ),
+        calculationRunCount: Number(row.calculation_run_count),
+        missingCalculationOpportunityIds:
+          row.missing_calculation_opportunity_ids ?? [],
+        mismatchedCalculationOpportunityIds:
+          row.mismatched_calculation_opportunity_ids ?? [],
+      },
+    ]),
+  );
+}
+
 async function main(): Promise<void> {
   const args = parseArgs();
   const client = new Client(
@@ -1155,6 +1295,7 @@ async function main(): Promise<void> {
       const evidenceRows = await readContractEvidence(client, args, contractId);
       projections.push(buildProjection(args, contractId, evidenceRows));
     }
+    assertCalculationCoverage(projections);
 
     if (args.apply) {
       for (const projection of projections) {
@@ -1167,6 +1308,9 @@ async function main(): Promise<void> {
     }
 
     const persistedRows = args.apply ? await countPersisted(client, args) : {};
+    const persistedCalculationCoverage = args.apply
+      ? await countPersistedCalculationCoverage(client, args)
+      : {};
     await client.query(args.apply ? "commit" : "rollback");
 
     console.log(
@@ -1182,6 +1326,11 @@ async function main(): Promise<void> {
             opportunities: projections.reduce(
               (sum, projection) =>
                 sum + (projection.opportunitySet?.opportunities.length ?? 0),
+              0,
+            ),
+            calculation_runs: projections.reduce(
+              (sum, projection) =>
+                sum + calculationCoverage(projection).calculationRunCount,
               0,
             ),
             finance_realizations: projections.reduce(
@@ -1211,6 +1360,9 @@ async function main(): Promise<void> {
               projection.opportunitySet?.selectedOpportunityId ?? null,
             baseline_status:
               projection.opportunitySet?.baseline.status ?? "missing",
+            calculation_coverage: calculationCoverage(projection),
+            persisted_calculation_coverage:
+              persistedCalculationCoverage[projection.contractId] ?? null,
             fact_conflicts: projection.factLayer.conflicts.map((conflict) => ({
               conflict_id: conflict.conflictId,
               severity: conflict.severity,
