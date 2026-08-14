@@ -55,6 +55,18 @@ import {
   SOURCE_STAGE_LABELS,
   normalizeSourceStageKey,
 } from "@/lib/source/constants";
+import {
+  evidenceForStage,
+  type SourceEvidenceRequirement,
+} from "@/lib/source/canonical-specs";
+import type {
+  SourceEventEvidence,
+  SourceEventEvidenceCurrentState,
+} from "@/lib/source/canvas-substrate";
+import {
+  deriveSourceEvidenceLifecycle,
+  type SourceEvidenceLifecycleResult,
+} from "@/lib/source/evidence-lifecycle";
 import { buildBafoScenarioCompareView } from "@/lib/source/bafo-scenario-compare-view";
 import {
   adaptStageViewToSourceJourney,
@@ -64,7 +76,11 @@ import {
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
 import type { ArtifactAcceptanceRecord } from "@/lib/source/artifact-acceptances";
-import type { SourceArtifactFamily } from "@/lib/source/artifact-registry/types";
+import type {
+  SourceArtifactFamily,
+  SourceEmbeddingStatus,
+  SourceParseStatus,
+} from "@/lib/source/artifact-registry/types";
 import type { SourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness-types";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 import { ArtifactAcceptancePanel } from "./ArtifactAcceptancePanel";
@@ -163,6 +179,8 @@ interface SourceAnalyticsCanvasProps {
   avaLauncher?: AvaLauncherView;
   /** Latest "accept as authoritative" record per artifact (SOURCE-SHELL-004), plain array — a server->client prop must be JSON-serializable, so this is built into a Map only once it's in the client component. */
   latestArtifactAcceptances?: readonly ArtifactAcceptanceRecord[];
+  /** Durable per-requirement evidence readiness rows already read by the route. */
+  evidenceStates?: readonly SourceEventEvidence[];
   /** Initial workspace selected by the route, e.g. from ?workspace=approvals. */
   initialWorkspace?: SourceShellWorkspace;
   /**
@@ -293,6 +311,20 @@ const FILE_TD_ACTION: CSSProperties = {
   fontSize: 12.5,
   lineHeight: 1.38,
   minWidth: 260,
+};
+
+const TABLE_LINK_STYLE: CSSProperties = {
+  color: ANALYTICS.BLUE,
+  fontSize: 12,
+  fontWeight: 800,
+  textDecoration: "none",
+};
+
+const TABLE_BUTTON_STYLE: CSSProperties = {
+  ...BUTTON_STYLE,
+  background: ANALYTICS.INK,
+  color: "#fff",
+  padding: "8px 10px",
 };
 
 const FILE_CHIP: CSSProperties = {
@@ -644,6 +676,7 @@ export function SourceAnalyticsCanvas({
   approvalLedger = [],
   guidebook = null,
   latestArtifactAcceptances = [],
+  evidenceStates = [],
   initialWorkspace,
   contractOptimizationProfile = null,
   journey,
@@ -774,6 +807,7 @@ export function SourceAnalyticsCanvas({
                 vendorBafoInstructionPack={vendorBafoInstructionPack}
                 vendorEvaluationDecisionView={vendorEvaluationDecisionView}
                 vendorResponseParseReports={vendorResponseParseReports}
+                evidenceStates={evidenceStates}
                 eventDisplayName={event.name}
                 contractOptimizationProfile={contractOptimizationProfile}
                 onWorkspaceChange={setWorkspace}
@@ -1018,6 +1052,7 @@ function SourceWorkspace({
   vendorBafoInstructionPack,
   vendorEvaluationDecisionView,
   vendorResponseParseReports,
+  evidenceStates,
   eventDisplayName,
   contractOptimizationProfile,
   onWorkspaceChange,
@@ -1032,6 +1067,7 @@ function SourceWorkspace({
   vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
   vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
   vendorResponseParseReports?: VendorResponseParseReport[];
+  evidenceStates?: readonly SourceEventEvidence[];
   eventDisplayName?: string;
   contractOptimizationProfile?: ContractOptimizationMveProfile | null;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
@@ -1041,6 +1077,7 @@ function SourceWorkspace({
     return (
       <FilesWorkspace
         view={view}
+        evidenceStates={evidenceStates ?? []}
         onClientFinalAccepted={onClientFinalAccepted}
       />
     );
@@ -3216,9 +3253,11 @@ function StepActionButton({
 
 function FilesWorkspace({
   view,
+  evidenceStates,
   onClientFinalAccepted,
 }: {
   view: SourceEventShellView;
+  evidenceStates: readonly SourceEventEvidence[];
   onClientFinalAccepted: () => void;
 }) {
   const operationByCode = useMemo(
@@ -3238,6 +3277,15 @@ function FilesWorkspace({
         eyebrow="Files & deliverables"
         title="Evidence ledger"
         subtitle="Every file stays tied to its event, stage, state, and source basis."
+      />
+      <StageEvidenceChecklistPanel
+        view={view}
+        evidenceStates={evidenceStates}
+        onUploadClick={() => {
+          document
+            .getElementById("source-session-evidence-capture")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }}
       />
       <SessionEvidenceCapturePanel
         eventId={view.event.id}
@@ -3303,6 +3351,389 @@ function FilesWorkspace({
       )}
     </section>
   );
+}
+
+function StageEvidenceChecklistPanel({
+  view,
+  evidenceStates,
+  onUploadClick,
+}: {
+  view: SourceEventShellView;
+  evidenceStates: readonly SourceEventEvidence[];
+  onUploadClick: () => void;
+}) {
+  const requirements = evidenceForStage(view.stage.key).sort((a, b) => {
+    if (a.level !== b.level) return a.level === "required" ? -1 : 1;
+    return a.label.localeCompare(b.label);
+  });
+  const statesByRequirementId = new Map(
+    evidenceStates.map((state) => [state.requirementId, state]),
+  );
+  const rows = requirements.map((requirement) => {
+    const evidence = statesByRequirementId.get(requirement.requirementId);
+    const file = matchRequirementFile(requirement, evidence, view.files.items);
+    const lifecycle = deriveSourceEvidenceLifecycle({
+      requirement,
+      evidence,
+      artifact: file
+        ? {
+            parseStatus: file.parseStatus as SourceParseStatus | null,
+            embeddingStatus:
+              file.embeddingStatus as SourceEmbeddingStatus | null,
+            approvalState: file.latestAcceptance ? "approved" : null,
+          }
+        : null,
+    });
+    const ready = requirementMeetsMinimum(requirement, evidence, lifecycle);
+    return { requirement, evidence, file, lifecycle, ready };
+  });
+  const requiredRows = rows.filter(
+    (row) => row.requirement.level === "required",
+  );
+  const requiredReady = requiredRows.filter((row) => row.ready).length;
+  const allRequiredReady =
+    requiredRows.length > 0 && requiredReady === requiredRows.length;
+
+  return (
+    <section
+      data-testid="source-stage-evidence-checklist"
+      style={{
+        ...CARD_STYLE,
+        padding: 16,
+        marginBottom: 16,
+        boxShadow: "none",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) auto",
+          gap: 16,
+          alignItems: "start",
+          marginBottom: 12,
+        }}
+      >
+        <div>
+          <div style={WORKSPACE_EYEBROW}>What this stage needs</div>
+          <h2
+            style={{
+              margin: "5px 0 0",
+              fontFamily: ANALYTICS.SERIF,
+              fontSize: 21,
+              letterSpacing: 0,
+            }}
+          >
+            {requiredReady} of {requiredRows.length} required evidence items
+            ready
+          </h2>
+          <p
+            style={{
+              margin: "6px 0 0",
+              color: ANALYTICS.MUTED,
+              fontSize: 13,
+              lineHeight: 1.45,
+              maxWidth: 760,
+            }}
+          >
+            Required rows unlock the Continue and approval path. Optional rows
+            improve confidence, scoring, and negotiation leverage.
+          </p>
+        </div>
+        <ReadinessChip
+          label={allRequiredReady ? "approval ready" : "evidence open"}
+          tone={allRequiredReady ? "good" : "warn"}
+        />
+      </div>
+
+      {rows.length === 0 ? (
+        <div style={{ color: ANALYTICS.MUTED, fontSize: 13 }}>
+          No evidence checklist has been registered for this stage.
+        </div>
+      ) : (
+        <div style={{ overflowX: "auto" }}>
+          <table
+            aria-label={`${view.stage.label} evidence checklist`}
+            style={{ ...FILE_USE_TABLE, minWidth: 1180 }}
+          >
+            <thead>
+              <tr>
+                <th style={{ ...FILE_TH, textAlign: "left" }}>Evidence</th>
+                <th style={FILE_TH}>Need</th>
+                <th style={{ ...FILE_TH, textAlign: "left" }}>Source</th>
+                <th style={{ ...FILE_TH, textAlign: "left" }}>Owner</th>
+                <th style={FILE_TH}>Formats</th>
+                <th style={{ ...FILE_TH, textAlign: "left" }}>
+                  Expected upload
+                </th>
+                <th style={FILE_TH}>Template</th>
+                <th style={FILE_TH}>Upload</th>
+                <th style={FILE_TH}>Parse</th>
+                <th style={FILE_TH}>Done</th>
+                <th style={{ ...FILE_TH, textAlign: "left" }}>Next</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ requirement, evidence, file, lifecycle, ready }) => (
+                <tr
+                  key={requirement.requirementId}
+                  data-testid={`source-stage-evidence-checklist-row-${requirement.requirementId}`}
+                >
+                  <td style={FILE_TD_LABEL}>
+                    <strong>{requirement.label}</strong>
+                    <span>{requirement.description}</span>
+                  </td>
+                  <td style={FILE_TD_CENTER}>
+                    <ReadinessChip
+                      label={
+                        requirement.level === "required"
+                          ? "required"
+                          : "optional"
+                      }
+                      tone={
+                        requirement.level === "required" ? "warn" : "neutral"
+                      }
+                    />
+                  </td>
+                  <td style={FILE_TD_ACTION}>
+                    <strong>{requirement.sourceSystems[0]}</strong>
+                    <span>
+                      {requirement.sourceSystems.slice(1, 3).join(", ")}
+                    </span>
+                  </td>
+                  <td style={FILE_TD_ACTION}>
+                    <strong>{ownerRoleForRequirement(requirement)}</strong>
+                    <span>{requirement.sourceLabel}</span>
+                  </td>
+                  <td style={FILE_TD_CENTER}>
+                    {requirement.acceptedFileTypes
+                      .map((type) => type.toUpperCase())
+                      .join(", ")}
+                  </td>
+                  <td style={FILE_TD_ACTION}>
+                    <span>{expectedUploadForRequirement(requirement)}</span>
+                  </td>
+                  <td style={FILE_TD_CENTER}>
+                    <a
+                      href={`/api/v1/source/${encodeURIComponent(view.event.id)}/evidence/${encodeURIComponent(requirement.requirementId)}/template`}
+                      style={TABLE_LINK_STYLE}
+                    >
+                      Template
+                    </a>
+                  </td>
+                  <td style={FILE_TD_CENTER}>
+                    <button
+                      type="button"
+                      onClick={onUploadClick}
+                      style={TABLE_BUTTON_STYLE}
+                    >
+                      {file ? "Upload more" : "Upload"}
+                    </button>
+                  </td>
+                  <td style={FILE_TD_CENTER}>
+                    <ReadinessChip
+                      label={parseLabelForRequirement(lifecycle, evidence)}
+                      tone={
+                        lifecycle.parsed ||
+                        evidence?.currentState === "Available" ||
+                        evidence?.currentState === "Usable Evidence"
+                          ? "good"
+                          : lifecycle.uploaded
+                            ? "warn"
+                            : "neutral"
+                      }
+                    />
+                  </td>
+                  <td style={FILE_TD_CENTER}>
+                    <span
+                      aria-label={ready ? "Done" : "Open"}
+                      title={ready ? "Done" : "Open"}
+                      style={{
+                        display: "inline-grid",
+                        placeItems: "center",
+                        width: 20,
+                        height: 20,
+                        borderRadius: 999,
+                        background: ready
+                          ? ANALYTICS.GREEN_TEXT
+                          : ANALYTICS.CARD,
+                        color: ready ? "#fff" : ANALYTICS.FAINT,
+                        border: ready
+                          ? "none"
+                          : `1px solid ${ANALYTICS.LINE_STRONG}`,
+                        fontSize: 12,
+                        fontWeight: 900,
+                      }}
+                    >
+                      {ready ? "✓" : ""}
+                    </span>
+                  </td>
+                  <td style={FILE_TD_ACTION}>
+                    <strong>{ready ? "Ready" : "Open"}</strong>
+                    <span>
+                      {ready
+                        ? "Use in stage review and approval."
+                        : nextActionForRequirement(requirement, lifecycle)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function matchRequirementFile(
+  requirement: SourceEvidenceRequirement,
+  evidence: SourceEventEvidence | undefined,
+  files: readonly SourceShellFileItem[],
+): SourceShellFileItem | null {
+  if (evidence?.sourceArtifactId) {
+    const linked = files.find((file) => file.id === evidence.sourceArtifactId);
+    if (linked) return linked;
+  }
+
+  const stageFiles = files.filter(
+    (file) => file.stageKey === requirement.stage,
+  );
+  return (
+    stageFiles.find((file) =>
+      fileMatchesRequirementTokens(file, requirement),
+    ) ?? null
+  );
+}
+
+function fileMatchesRequirementTokens(
+  file: SourceShellFileItem,
+  requirement: SourceEvidenceRequirement,
+): boolean {
+  const haystack =
+    `${file.name} ${file.artifactCode} ${file.group}`.toLowerCase();
+  return requirement.filenameTokens.some((token) =>
+    haystack.includes(token.toLowerCase()),
+  );
+}
+
+const EVIDENCE_STATE_RANK: Record<SourceEventEvidenceCurrentState, number> = {
+  "Not Requested": 0,
+  Loaded: 1,
+  Parsed: 2,
+  Available: 3,
+  "Usable Evidence": 4,
+  Stale: -1,
+  "Low Confidence": -1,
+};
+
+function requirementMeetsMinimum(
+  requirement: SourceEvidenceRequirement,
+  evidence: SourceEventEvidence | undefined,
+  lifecycle: SourceEvidenceLifecycleResult,
+): boolean {
+  if (lifecycle.stageReady || lifecycle.meetsMinimumState) return true;
+  if (!evidence) return false;
+  return (
+    (EVIDENCE_STATE_RANK[evidence.currentState] ?? -1) >=
+    (EVIDENCE_STATE_RANK[requirement.minimumState] ?? 99)
+  );
+}
+
+function parseLabelForRequirement(
+  lifecycle: SourceEvidenceLifecycleResult,
+  evidence: SourceEventEvidence | undefined,
+): string {
+  if (evidence?.currentState === "Usable Evidence") return "usable";
+  if (evidence?.currentState === "Available") return "available";
+  if (lifecycle.parsed) return "parsed";
+  if (lifecycle.uploaded) return "loaded";
+  return "not loaded";
+}
+
+function nextActionForRequirement(
+  requirement: SourceEvidenceRequirement,
+  lifecycle: SourceEvidenceLifecycleResult,
+): string {
+  if (!lifecycle.uploaded) return `Upload ${requirement.label}.`;
+  return lifecycle.nextAction;
+}
+
+function expectedUploadForRequirement(
+  requirement: SourceEvidenceRequirement,
+): string {
+  if (
+    requirement.stage === "responses" &&
+    requirement.evidenceClass === "supplier_offer"
+  ) {
+    return "One package per vendor; large PDFs are expected.";
+  }
+  if (requirement.stage === "pricing") {
+    return "One workbook per vendor, or one consolidated model.";
+  }
+  if (requirement.stage === "evaluation") {
+    return "One score export covering all vendors and criteria.";
+  }
+  if (requirement.stage === "scope" && requirement.evidenceClass === "usage") {
+    return "One to three exports: ticket volumes, SLA misses, backlog.";
+  }
+  if (requirement.stage === "scope") {
+    return "One controlled workbook/export for the full scope boundary.";
+  }
+  if (requirement.stage === "rfp") {
+    return "One approved template, workbook, or policy pack.";
+  }
+  if (requirement.stage === "bafo") {
+    return "One negotiation log for all finalist vendors.";
+  }
+  if (requirement.stage === "executive_decision") {
+    return "One finalist pack or consolidated executive evidence pack.";
+  }
+  if (requirement.stage === "selection") {
+    return "One signed contract package with exhibits.";
+  }
+  if (requirement.stage === "transition") {
+    return "One project export or KT evidence pack.";
+  }
+  if (requirement.stage === "value") {
+    return "One measurement workbook or evidence pack per value cycle.";
+  }
+  return "One source file or export; rows should match the listed grain.";
+}
+
+function ownerRoleForRequirement(
+  requirement: SourceEvidenceRequirement,
+): string {
+  if (
+    requirement.sourceSystems.some((system) =>
+      /ServiceNow|Jira|BMC/i.test(system),
+    )
+  ) {
+    return "IT operations owner";
+  }
+  if (
+    requirement.sourceSystems.some((system) =>
+      /SAP|Oracle|Apptio|Anaplan|Adaptive/i.test(system),
+    )
+  ) {
+    return "Finance owner";
+  }
+  if (
+    requirement.sourceSystems.some((system) =>
+      /Icertis|DocuSign|Ironclad|Agiloft/i.test(system),
+    )
+  ) {
+    return "Legal / procurement owner";
+  }
+  if (requirement.evidenceClass === "supplier_offer") {
+    return "Sourcing lead";
+  }
+  if (requirement.evidenceClass === "workforce") {
+    return "HR / workforce owner";
+  }
+  if (requirement.evidenceClass === "risk_control") {
+    return "Risk / security owner";
+  }
+  return "Stage owner";
 }
 
 function EvidenceReadinessPanel({
@@ -3729,6 +4160,7 @@ function SessionEvidenceCapturePanel({
 
   return (
     <section
+      id="source-session-evidence-capture"
       data-testid="source-session-evidence-capture"
       style={{
         ...CARD_STYLE,

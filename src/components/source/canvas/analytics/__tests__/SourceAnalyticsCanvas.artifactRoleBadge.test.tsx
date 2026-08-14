@@ -39,6 +39,7 @@ import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
 import { specByCode } from "@/lib/source/canonical-specs/artifact-specs";
 import type { SourcingEventSummary } from "@/lib/source/types";
 import type { SourceShellArtifactLike } from "@/lib/source/source-event-shell-v2";
+import type { SourceEventEvidence } from "@/lib/source/canvas-substrate";
 
 function makeEvent(): SourcingEventSummary {
   return {
@@ -174,5 +175,83 @@ describe("SourceAnalyticsCanvas — artifact role badge (SOURCE-SHELL-002)", () 
     expect(
       within(unknownCard).queryByText("Authoritative"),
     ).not.toBeInTheDocument();
+  });
+
+  it("shows a stage evidence checklist with required uploads, readiness, and done checks in the live Files workspace", () => {
+    const scopeEvent: SourcingEventSummary = {
+      ...makeEvent(),
+      currentStageKey: "scope",
+      currentStageLabel: "Scope",
+    } as SourcingEventSummary;
+    const evidenceStates: SourceEventEvidence[] = [
+      {
+        id: "ev-ticket",
+        sourceEventId: scopeEvent.id,
+        tenantKey: "demo-client",
+        requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
+        stage: "scope",
+        currentState: "Available",
+        sourceArtifactId: "art-ticket",
+        sourceEventFactIds: ["fact-ticket-volume"],
+        notes: null,
+        lastSyncedAt: null,
+        createdAt: "2026-08-14T00:00:00.000Z",
+        updatedAt: "2026-08-14T00:00:00.000Z",
+      },
+    ];
+    const artifacts: SourceShellArtifactLike[] = [
+      {
+        id: "art-ticket",
+        artifactCode: "ticket_volume_extract",
+        stageKey: "scope",
+        title: "ServiceNow ticket volume export",
+        status: "registered",
+        parseStatus: "parsed",
+        embeddingStatus: "embedded",
+        graphStatus: "projected",
+      },
+    ];
+
+    render(
+      <SourceAnalyticsCanvas
+        event={scopeEvent}
+        viewStage="scope"
+        tenantName="Demo Client"
+        artifacts={artifacts}
+        evidenceStates={evidenceStates}
+        initialWorkspace="files"
+      />,
+    );
+
+    const checklist = screen.getByTestId("source-stage-evidence-checklist");
+    expect(checklist).toHaveTextContent("1 of 6 required evidence items ready");
+    expect(checklist).toHaveTextContent("Optional rows improve confidence");
+
+    const ticketRow = screen.getByTestId(
+      "source-stage-evidence-checklist-row-EVID-SRC-SCOPE-TICKET-HISTORY",
+    );
+    expect(ticketRow).toHaveTextContent(
+      "L2/L3 ticket history and service volumetrics",
+    );
+    expect(ticketRow).toHaveTextContent("required");
+    expect(ticketRow).toHaveTextContent(
+      "One to three exports: ticket volumes, SLA misses, backlog.",
+    );
+    expect(ticketRow).toHaveTextContent("IT operations owner");
+    expect(ticketRow).toHaveTextContent("XLSX, CSV");
+    expect(ticketRow).toHaveTextContent("available");
+    expect(within(ticketRow).getByLabelText("Done")).toBeInTheDocument();
+
+    const inventoryRow = screen.getByTestId(
+      "source-stage-evidence-checklist-row-EVID-SRC-SCOPE-APP-INV",
+    );
+    expect(inventoryRow).toHaveTextContent("Application and service inventory");
+    expect(inventoryRow).toHaveTextContent("not loaded");
+    expect(inventoryRow).toHaveTextContent(
+      "One controlled workbook/export for the full scope boundary.",
+    );
+    expect(
+      within(inventoryRow).getByRole("button", { name: "Upload" }),
+    ).toBeInTheDocument();
   });
 });
