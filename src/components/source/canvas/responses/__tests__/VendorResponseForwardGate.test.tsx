@@ -7,6 +7,7 @@ import {
   buildVendorResponseParseReportsFromProfiles,
   buildVendorResponseMveProfiles,
 } from "@/lib/source/proposal-intelligence";
+import type { VendorEvaluationDecisionView } from "@/lib/source/proposal-intelligence";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 import { VendorResponseForwardGate } from "../VendorResponseForwardGate";
 
@@ -128,6 +129,10 @@ describe("VendorResponseForwardGate", () => {
     expect(html).toContain("Required package gaps closed");
     expect(html).toContain("Evidence parsed and cited");
     expect(html).toContain("Score holdbacks resolved");
+    expect(html).toContain("Score readiness clear");
+    expect(html).toContain("score cells scoreable");
+    expect(html).toContain("need clarification");
+    expect(html).toContain("Resolve score evidence before Evaluation");
     expect(html).toContain("Use the BAFO clarification pack");
     expect(html).toContain("Do not move to Evaluation");
     expect(html).not.toMatch(/Northstar|TitanTech|CloudBridge|DataPeak/i);
@@ -167,5 +172,54 @@ describe("VendorResponseForwardGate", () => {
     expect(html).toContain("packages parsed with cited extraction cards");
     expect(html).toContain("scoring holdback");
     expect(html).toContain("Do not move to Evaluation");
+  });
+
+  it("marks score readiness complete only when every score cell is scoreable", () => {
+    const profileSet = buildVendorResponseMveProfiles({
+      id: "skyh-test-event",
+      code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
+      name: "Managed services sourcing event",
+      accountName: "Demo account",
+    });
+    const challengeIntelligence = buildVendorChallengeIntelligence(profileSet);
+    const bafoInstructionPack = buildVendorBafoInstructionPack(
+      challengeIntelligence,
+    );
+    const evaluationDecisionView = buildVendorEvaluationDecisionView(
+      profileSet,
+      challengeIntelligence,
+      bafoInstructionPack,
+    );
+    if (!evaluationDecisionView) {
+      throw new Error("Expected evaluation decision view for test fixture.");
+    }
+
+    const scoreableDecisionView: VendorEvaluationDecisionView = {
+      ...evaluationDecisionView,
+      scorecardRows: evaluationDecisionView.scorecardRows.map((row) => ({
+        ...row,
+        scores: row.scores.map((score) => ({
+          ...score,
+          scoreEligibility: "scoreable" as const,
+          scoreReadinessLabel: "Scoreable",
+          scoreReadinessAction:
+            "Ready for named evaluator review. AI suggestion is not final.",
+        })),
+      })),
+    };
+
+    const html = renderToStaticMarkup(
+      createElement(VendorResponseForwardGate, {
+        readiness: makeReadiness(),
+        profileSet,
+        challengeIntelligence,
+        bafoInstructionPack,
+        evaluationDecisionView: scoreableDecisionView,
+      }),
+    );
+
+    expect(html).toContain("Score readiness clear");
+    expect(html).toContain("score cells ready across");
+    expect(html).toContain("named reviewers still own final scores");
   });
 });
