@@ -3473,110 +3473,159 @@ function StageEvidenceChecklistPanel({
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ requirement, evidence, file, lifecycle, ready }) => (
-                <tr
-                  key={requirement.requirementId}
-                  data-testid={`source-stage-evidence-checklist-row-${requirement.requirementId}`}
-                >
-                  <td style={FILE_TD_LABEL}>
-                    <strong>{requirement.label}</strong>
-                    <span>{requirement.description}</span>
-                  </td>
-                  <td style={FILE_TD_CENTER}>
-                    <ReadinessChip
-                      label={
-                        requirement.level === "required"
-                          ? "required"
-                          : "optional"
-                      }
-                      tone={
-                        requirement.level === "required" ? "warn" : "neutral"
-                      }
-                    />
-                  </td>
-                  <td style={FILE_TD_ACTION}>
-                    <strong>{requirement.sourceSystems[0]}</strong>
-                    <span>
-                      {requirement.sourceSystems.slice(1, 3).join(", ")}
-                    </span>
-                  </td>
-                  <td style={FILE_TD_ACTION}>
-                    <strong>{ownerRoleForRequirement(requirement)}</strong>
-                    <span>{requirement.sourceLabel}</span>
-                  </td>
-                  <td style={FILE_TD_CENTER}>
-                    {requirement.acceptedFileTypes
-                      .map((type) => type.toUpperCase())
-                      .join(", ")}
-                  </td>
-                  <td style={FILE_TD_ACTION}>
-                    <span>{expectedUploadForRequirement(requirement)}</span>
-                  </td>
-                  <td style={FILE_TD_CENTER}>
-                    <a
-                      href={`/api/v1/source/${encodeURIComponent(view.event.id)}/evidence/${encodeURIComponent(requirement.requirementId)}/template`}
-                      style={TABLE_LINK_STYLE}
-                    >
-                      Template
-                    </a>
-                  </td>
-                  <td style={FILE_TD_CENTER}>
-                    <button
-                      type="button"
-                      onClick={onUploadClick}
-                      style={TABLE_BUTTON_STYLE}
-                    >
-                      {file ? "Upload more" : "Upload"}
-                    </button>
-                  </td>
-                  <td style={FILE_TD_CENTER}>
-                    <ReadinessChip
-                      label={parseLabelForRequirement(lifecycle, evidence)}
-                      tone={
-                        lifecycle.parsed ||
-                        evidence?.currentState === "Available" ||
-                        evidence?.currentState === "Usable Evidence"
-                          ? "good"
-                          : lifecycle.uploaded
-                            ? "warn"
-                            : "neutral"
-                      }
-                    />
-                  </td>
-                  <td style={FILE_TD_CENTER}>
-                    <span
-                      aria-label={ready ? "Done" : "Open"}
-                      title={ready ? "Done" : "Open"}
-                      style={{
-                        display: "inline-grid",
-                        placeItems: "center",
-                        width: 20,
-                        height: 20,
-                        borderRadius: 999,
-                        background: ready
-                          ? ANALYTICS.GREEN_TEXT
-                          : ANALYTICS.CARD,
-                        color: ready ? "#fff" : ANALYTICS.FAINT,
-                        border: ready
-                          ? "none"
-                          : `1px solid ${ANALYTICS.LINE_STRONG}`,
-                        fontSize: 12,
-                        fontWeight: 900,
-                      }}
-                    >
-                      {ready ? "✓" : ""}
-                    </span>
-                  </td>
-                  <td style={FILE_TD_ACTION}>
-                    <strong>{ready ? "Ready" : "Open"}</strong>
-                    <span>
-                      {ready
-                        ? "Use in stage review and approval."
-                        : nextActionForRequirement(requirement, lifecycle)}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {rows.map(({ requirement, evidence, file, lifecycle, ready }) => {
+                const uploaded = requirementHasUploadedEvidence(
+                  lifecycle,
+                  evidence,
+                  file,
+                );
+
+                return (
+                  <tr
+                    key={requirement.requirementId}
+                    data-testid={`source-stage-evidence-checklist-row-${requirement.requirementId}`}
+                  >
+                    <td style={FILE_TD_LABEL}>
+                      <strong>{requirement.label}</strong>
+                      <span>{requirement.description}</span>
+                    </td>
+                    <td style={FILE_TD_CENTER}>
+                      <ReadinessChip
+                        label={
+                          requirement.level === "required"
+                            ? "required"
+                            : "optional"
+                        }
+                        tone={
+                          requirement.level === "required" ? "warn" : "neutral"
+                        }
+                      />
+                    </td>
+                    <td style={FILE_TD_ACTION}>
+                      <strong>{requirement.sourceSystems[0]}</strong>
+                      <span>
+                        {requirement.sourceSystems.slice(1, 3).join(", ")}
+                      </span>
+                    </td>
+                    <td style={FILE_TD_ACTION}>
+                      <strong>{ownerRoleForRequirement(requirement)}</strong>
+                      <span>{requirement.sourceLabel}</span>
+                    </td>
+                    <td style={FILE_TD_CENTER}>
+                      {requirement.acceptedFileTypes
+                        .map((type) => type.toUpperCase())
+                        .join(", ")}
+                    </td>
+                    <td style={FILE_TD_ACTION}>
+                      <span>{expectedUploadForRequirement(requirement)}</span>
+                    </td>
+                    <td style={FILE_TD_CENTER}>
+                      <a
+                        href={`/api/v1/source/${encodeURIComponent(view.event.id)}/evidence/${encodeURIComponent(requirement.requirementId)}/template`}
+                        style={TABLE_LINK_STYLE}
+                      >
+                        Template
+                      </a>
+                    </td>
+                    <td style={FILE_TD_CENTER}>
+                      <div
+                        style={{
+                          display: "grid",
+                          justifyItems: "center",
+                          gap: 6,
+                        }}
+                      >
+                        {uploaded ? (
+                          <span
+                            aria-label="File uploaded"
+                            title="File uploaded"
+                            style={{
+                              display: "inline-grid",
+                              gridTemplateColumns: "16px auto",
+                              alignItems: "center",
+                              gap: 5,
+                              color: ANALYTICS.GREEN_TEXT,
+                              fontSize: 11,
+                              fontWeight: 800,
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            <span
+                              aria-hidden="true"
+                              style={{
+                                display: "inline-grid",
+                                placeItems: "center",
+                                width: 16,
+                                height: 16,
+                                borderRadius: 999,
+                                background: ANALYTICS.GREEN_TEXT,
+                                color: "#fff",
+                                fontSize: 10,
+                              }}
+                            >
+                              ✓
+                            </span>
+                            Uploaded
+                          </span>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={onUploadClick}
+                          style={TABLE_BUTTON_STYLE}
+                        >
+                          {uploaded ? "Upload more" : "Upload"}
+                        </button>
+                      </div>
+                    </td>
+                    <td style={FILE_TD_CENTER}>
+                      <ReadinessChip
+                        label={parseLabelForRequirement(lifecycle, evidence)}
+                        tone={
+                          lifecycle.parsed ||
+                          evidence?.currentState === "Available" ||
+                          evidence?.currentState === "Usable Evidence"
+                            ? "good"
+                            : lifecycle.uploaded
+                              ? "warn"
+                              : "neutral"
+                        }
+                      />
+                    </td>
+                    <td style={FILE_TD_CENTER}>
+                      <span
+                        aria-label={ready ? "Done" : "Open"}
+                        title={ready ? "Done" : "Open"}
+                        style={{
+                          display: "inline-grid",
+                          placeItems: "center",
+                          width: 20,
+                          height: 20,
+                          borderRadius: 999,
+                          background: ready
+                            ? ANALYTICS.GREEN_TEXT
+                            : ANALYTICS.CARD,
+                          color: ready ? "#fff" : ANALYTICS.FAINT,
+                          border: ready
+                            ? "none"
+                            : `1px solid ${ANALYTICS.LINE_STRONG}`,
+                          fontSize: 12,
+                          fontWeight: 900,
+                        }}
+                      >
+                        {ready ? "✓" : ""}
+                      </span>
+                    </td>
+                    <td style={FILE_TD_ACTION}>
+                      <strong>{ready ? "Ready" : "Open"}</strong>
+                      <span>
+                        {ready
+                          ? "Use in stage review and approval."
+                          : nextActionForRequirement(requirement, lifecycle)}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -3636,6 +3685,19 @@ function requirementMeetsMinimum(
   return (
     (EVIDENCE_STATE_RANK[evidence.currentState] ?? -1) >=
     (EVIDENCE_STATE_RANK[requirement.minimumState] ?? 99)
+  );
+}
+
+function requirementHasUploadedEvidence(
+  lifecycle: SourceEvidenceLifecycleResult,
+  evidence: SourceEventEvidence | undefined,
+  file: SourceShellFileItem | null,
+): boolean {
+  if (file || lifecycle.uploaded || lifecycle.parsed) return true;
+  if (!evidence) return false;
+  return (
+    (EVIDENCE_STATE_RANK[evidence.currentState] ?? -1) >=
+    EVIDENCE_STATE_RANK.Loaded
   );
 }
 
