@@ -53,4 +53,4 @@ jobs:
       # also makes dated column-contract waivers fail on their expiry without waiting
       # for someone to open a PR.
       - name: Verify tenant input quality, depth, and column contract
-        run: npm run audit:tenant-input-quality
+        run: npm run audit:tenant-input-quality -- --out-dir /tmp/tenant-input-quality-depth

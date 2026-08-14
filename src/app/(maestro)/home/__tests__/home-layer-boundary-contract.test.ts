@@ -1,0 +1,32 @@
+import fs from "node:fs";
+import path from "node:path";
+
+const ROOT = process.cwd();
+
+function readRepoFile(relativePath: string): string {
+  return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
+}
+
+describe("Home Layer 4 boundary contract", () => {
+  it("keeps the mounted Home runtime out of Layer 1 and derived filesystem artifacts", () => {
+    const homeRuntimeFiles = [
+      "src/app/(maestro)/home/page.tsx",
+      "src/components/home/enterprise-landscape-v2/HomeEnterpriseLandscapeV2.tsx",
+      "src/components/home/enterprise-landscape-v2/homeEnterpriseLandscapeV2Model.ts",
+    ];
+
+    for (const file of homeRuntimeFiles) {
+      const source = readRepoFile(file);
+      expect(source).not.toContain("node:fs");
+      expect(source).not.toContain("datasets/tenant-inputs");
+      expect(source).not.toContain("derived/relationship-graph.json");
+      expect(source).not.toContain("readDerivedRelationshipGraphEdges");
+    }
+
+    expect(
+      fs.existsSync(
+        path.join(ROOT, "src/lib/home/read-derived-relationship-graph.ts"),
+      ),
+    ).toBe(false);
+  });
+});

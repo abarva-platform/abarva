@@ -1,0 +1,62 @@
+{
+  "tenantKey": "apex-retail",
+  "activeRoot": "datasets/tenant-inputs/active/apex-retail/current",
+  "mode": "graph_reconciliation_quarantine_first_report_only_no_db_write_no_graph_materialization_no_product_use",
+  "nodeCandidatesIndexed": 1056,
+  "relationshipRows": 1713,
+  "relationshipCandidates": 10,
+  "quarantinedRelationships": 1703,
+  "topQuarantineReasons": [
+    {
+      "reason": "unresolved-from-node",
+      "count": 659
+    },
+    {
+      "reason": "unresolved-to-node",
+      "count": 386
+    },
+    {
+      "reason": "unknown-from-object-type:owner",
+      "count": 235
+    },
+    {
+      "reason": "unknown-relationship-type:owns",
+      "count": 235
+    },
+    {
+      "reason": "unknown-to-object-type:platform",
+      "count": 235
+    },
+    {
+      "reason": "unknown-relationship-type:owns_technology_for",
+      "count": 202
+    },
+    {
+      "reason": "unknown-relationship-type:uses_data_domain",
+      "count": 200
+    },
+    {
+      "reason": "unknown-relationship-type:provides",
+      "count": 100
+    },
+    {
+      "reason": "unknown-to-object-type:contract",
+      "count": 100
+    },
+    {
+      "reason": "unknown-to-object-type:dependency",
+      "count": 88
+    },
+    {
+      "reason": "unknown-relationship-type:has_risk",
+      "count": 80
+    },
+    {
+      "reason": "unknown-relationship-type:sponsored_by",
+      "count": 80
+    }
+  ],
+  "parseErrors": [],
+  "graphTablesWritten": false,
+  "productReadModelsUpdated": false
+}
