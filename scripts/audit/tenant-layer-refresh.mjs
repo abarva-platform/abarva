@@ -1431,6 +1431,101 @@ function layer2CodeOnlyAliasImpactReport(generatedAt, layer2FailureClassificatio
   };
 }
 
+function layer2SemanticDecisionLedgerReport(generatedAt, layer2FailureClassification) {
+  const classifications = layer2FailureClassification.classifications ?? [];
+  const gatedProfiles = classifications.filter(
+    (item) => item.recommendedAction === 'hard_gate_decision',
+  );
+
+  const decisions = gatedProfiles.map((item) => {
+    const semanticFields = item.missingFields
+      .map((field) => ({
+        field: field.field,
+        candidates: field.candidates
+          .filter((candidate) => candidate.actionClass === 'hard_gate_decision')
+          .map((candidate) => ({
+            resolutionType: candidate.resolutionType,
+            candidate: candidate.candidate,
+            rationale: candidate.rationale,
+          })),
+      }))
+      .filter((field) => field.candidates.length > 0);
+
+    return {
+      tenantKey: item.tenantKey,
+      mappingProfile: item.mappingProfile,
+      sourceClass: item.sourceClass,
+      selectedSourceFile: item.selectedSourceFile,
+      sourceFileMatchType: item.sourceFileMatchType,
+      decisionState: 'requires_explicit_approval',
+      approvalGate: 'semantic identity alias activation',
+      approvalRequiredBeforeFix: item.approvalRequiredBeforeFix,
+      semanticFields,
+      mechanicallySafeFields: item.missingFields
+        .filter((field) => field.recommendedAction === 'mapping_alias_code_only_fix')
+        .map((field) => ({
+          field: field.field,
+          candidates: field.candidates.map((candidate) => ({
+            resolutionType: candidate.resolutionType,
+            candidate: candidate.candidate,
+          })),
+        })),
+      blockedActions: [
+        'adapter/profile semantic alias activation',
+        'registry activation',
+        'tenant CSV mutation',
+        'data-plane load/write',
+        'canonical object write',
+        'runtime/product routing change',
+      ],
+    };
+  });
+
+  return {
+    generatedAt,
+    generatedBy: 'scripts/audit/tenant-layer-refresh.mjs',
+    mode: 'layer2-semantic-decision-ledger-report-only',
+    truthSplit: {
+      productionTenantDataWritten: false,
+      activeTenantAccessLayerUpdated: false,
+      moduleRuntimeBehaviorChanged: false,
+      adaptersExecuted: false,
+      aliasesActivated: false,
+      registryActivated: false,
+      canonicalObjectsWritten: false,
+    },
+    summary: {
+      profileFailuresEvaluated: classifications.length,
+      semanticDecisionProfiles: decisions.length,
+      semanticDecisionFields: decisions.reduce((total, item) => total + item.semanticFields.length, 0),
+      sourceDataGatedProfiles: classifications.filter((item) => item.recommendedAction === 'source_data_gated_fix').length,
+      activationReadyProfiles: 0,
+    },
+    decisions,
+    nextApprovalPacket: {
+      title: 'Approve or reject semantic identity aliases per mapping profile',
+      scope:
+        'For each decision entry, approve the candidate source field that may define canonical identity or reject alias activation and require source-data correction.',
+      blockedUntilApproved: [
+        'semantic identity alias activation',
+        'registry activation',
+        'data-plane load/write',
+        'runtime/product routing change',
+      ],
+    },
+    nextPrSizedSafeCodeSlice: {
+      title: 'Add test-backed semantic alias decisions after approval',
+      scope:
+        'Only after explicit approval, encode approved semantic identity aliases behind adapter/profile tests without mutating tenant CSVs.',
+      blockedBeforeActivation: [
+        'semantic identity alias approval',
+        'registry activation approval',
+        'data-plane load/write approval',
+      ],
+    },
+  };
+}
+
 function evidenceRequestRows(analysis) {
   const rows = [];
   let sequence = 0;
@@ -2062,6 +2157,11 @@ async function main() {
     path.join(outDir, 'layer2-code-only-alias-impact.json'),
     layer2CodeOnlyAliasImpact,
   );
+  const layer2SemanticDecisionLedger = layer2SemanticDecisionLedgerReport(generatedAt, layer2FailureClassification);
+  writeJson(
+    path.join(outDir, 'layer2-semantic-decision-ledger.json'),
+    layer2SemanticDecisionLedger,
+  );
   if (layer3ValidationScaffold) {
     writeJson(path.join(outDir, 'layer3-validation-scaffold.json'), layer3ValidationScaffold);
   }
@@ -2077,6 +2177,7 @@ async function main() {
     status: NOT_ACTIVE,
     factLineageSource: LINEAGE_JSON,
     layer2DryRunFailures: layer2Failures.summary,
+    layer2SemanticDecisionLedger: layer2SemanticDecisionLedger.summary,
     layer3ValidationScaffold: layer3ValidationScaffold
       ? {
           canonicalObjectDefinitions: layer3ValidationScaffold.canonicalObjectDefinitions,
@@ -2200,6 +2301,7 @@ async function main() {
       .map(([action, count]) => `${count} ${action}`)
       .join(', ') || '0 classified'}).`,
     `Code-only alias impact, if activated in a future change: **${layer2CodeOnlyAliasImpact.summary.wouldClearProfileFailuresIfActivated}** profile failures would clear; **${layer2CodeOnlyAliasImpact.summary.remainingHardGateDecisions}** remain hard-gated.`,
+    `Semantic decision ledger: **${layer2SemanticDecisionLedger.summary.semanticDecisionProfiles}** profiles require explicit semantic alias approval; **${layer2SemanticDecisionLedger.summary.activationReadyProfiles}** are activation-ready from this report.`,
     '',
     'Adapter gaps are recorded, not filled. No adapter was invented and none was executed.',
     '',
@@ -2214,6 +2316,7 @@ async function main() {
     '- `layer2-adapter-dry-run-failures.json` — machine-readable dry-run failures.',
     '- `layer2-dry-run-failure-classification.json` — machine-readable action classification for dry-run failures.',
     '- `layer2-code-only-alias-impact.json` — report-only estimate of mechanically safe alias candidates.',
+    '- `layer2-semantic-decision-ledger.json` — report-only ledger of semantic alias approvals still required.',
     '- `<tenant>/layer2-adapter-reconciliation.csv`',
     '- `hard-gate-register.csv` — actions that require explicit approval; none were executed.',
     '- `<tenant>/layer3-canonical-refresh-summary.{md,json}`',
