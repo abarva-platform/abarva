@@ -92,7 +92,11 @@ export interface SourceExecutiveStoryPayload {
   executiveMessage: string[];
   decisionRequired: string;
   commercialOpportunityMap: Array<{
-    theme: "recover_cash" | "reduce_future_spend" | "reduce_risk" | "increase_vendor_accountability";
+    theme:
+      | "recover_cash"
+      | "reduce_future_spend"
+      | "reduce_risk"
+      | "increase_vendor_accountability";
     label: string;
     findings: string[];
     action: string;
@@ -243,6 +247,36 @@ export interface EvaluationCategoryScore {
   weight: number;
   score: number;
   rationale: string;
+}
+
+export type EvaluationScoreEligibility =
+  | "scoreable"
+  | "clarification_required"
+  | "not_scoreable";
+
+export interface EvaluationCriterionEvidenceInput {
+  vendorId: string;
+  vendorName: string;
+  category: string;
+  weight: number;
+  proposedScore: number;
+  rationale: string;
+  evidenceRefs: SourceEvidenceReference[];
+  requiredEvidence: SourceEvidenceType[];
+  clarificationPrompt?: string;
+}
+
+export interface EvaluationCriterionScoreReadiness {
+  vendorId: string;
+  vendorName: string;
+  category: string;
+  eligibility: EvaluationScoreEligibility;
+  score: EvaluationCategoryScore | null;
+  evidenceCompletenessScore: number;
+  evidenceUsed: SourceEvidenceType[];
+  evidenceMissing: SourceEvidenceType[];
+  blockers: string[];
+  nextAction: string;
 }
 
 export interface VendorEvaluationInput {
