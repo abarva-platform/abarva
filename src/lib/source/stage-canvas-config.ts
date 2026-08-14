@@ -1,4 +1,4 @@
-import type { SourceStageKey } from './types';
+import type { SourceStageKey } from "./types";
 
 export interface StageChoice {
   label: string;
@@ -6,516 +6,1100 @@ export interface StageChoice {
   prompt: string;
 }
 
+export interface StageLocalStep {
+  key: string;
+  label: string;
+  requirement: string;
+  output: string;
+  artifactIds?: readonly string[];
+}
+
 export interface StageCanvasConfig {
   stageKey: SourceStageKey;
   stepNumber: number;
-  leadAgent: 'Nexus' | 'Sentinel' | 'Governance' | 'Atlas' | 'aVa';
+  leadAgent: "Nexus" | "Sentinel" | "Governance" | "Atlas" | "aVa";
   intent: string;
   exitCriteria: string[];
   choices: [StageChoice, StageChoice, StageChoice];
   artifactIds: string[];
 }
 
+const SOURCE_STAGE_LOCAL_STEPS: Partial<
+  Record<SourceStageKey, readonly StageLocalStep[]>
+> = {
+  strategy: [
+    {
+      key: "mandate",
+      label: "Mandate",
+      requirement: "Why now and why Source.",
+      output: "Event mandate is named.",
+      artifactIds: ["strategy_memo"],
+    },
+    {
+      key: "sponsor",
+      label: "Sponsor",
+      requirement: "Decision owner with authority.",
+      output: "Sponsor and approver are clear.",
+      artifactIds: ["decision_authority_log"],
+    },
+    {
+      key: "value_thesis",
+      label: "Value thesis",
+      requirement: "Target, floor, or value lever.",
+      output: "Value case has a stated basis.",
+    },
+    {
+      key: "archetype",
+      label: "Archetype",
+      requirement: "Motion and rigor selected.",
+      output: "RFP shape and evidence pattern are set.",
+    },
+    {
+      key: "approval",
+      label: "Approval",
+      requirement: "Sponsor accepts the mandate.",
+      output: "Scope can open.",
+    },
+  ],
+  scope: [
+    {
+      key: "in_scope",
+      label: "Work in scope",
+      requirement: "Services, apps, towers, and regions included.",
+      output: "Scope boundary has named inclusions.",
+      artifactIds: ["app_inventory_tiering", "scope_memo"],
+    },
+    {
+      key: "out_of_scope",
+      label: "Work out of scope",
+      requirement: "Explicit exclusions and grey areas.",
+      output: "Vendors cannot price hidden work.",
+      artifactIds: ["exclusion_log"],
+    },
+    {
+      key: "owners",
+      label: "Owners",
+      requirement: "Sponsor, service owner, finance, EA.",
+      output: "Boundary decisions have accountable owners.",
+    },
+    {
+      key: "baseline_evidence",
+      label: "Baseline evidence",
+      requirement: "Volumes, tickets, SLAs, usage, and demand.",
+      output: "Pricing can be made comparable.",
+      artifactIds: ["ticket_history_synthesis"],
+    },
+    {
+      key: "approval",
+      label: "Approval",
+      requirement: "Boundary accepted by owner.",
+      output: "RFP can begin from protected scope.",
+      artifactIds: ["scope_memo"],
+    },
+  ],
+  rfp: [
+    {
+      key: "requirements",
+      label: "Requirements",
+      requirement: "Scoreable business and service requirements.",
+      output: "Vendors know what to answer.",
+      artifactIds: ["rfp_package"],
+    },
+    {
+      key: "response_template",
+      label: "Response template",
+      requirement: "Structured answer fields and mandatory sections.",
+      output: "Responses can be parsed and compared.",
+      artifactIds: ["vendor_response_control_pack"],
+    },
+    {
+      key: "pricing_template",
+      label: "Pricing template",
+      requirement: "Common pricing tabs and assumptions.",
+      output: "Pricing can normalize later.",
+    },
+    {
+      key: "rubric",
+      label: "Rubric",
+      requirement: "Criteria, weights, and scoring rules.",
+      output: "Evaluation is defensible.",
+      artifactIds: ["evaluation_criteria_doc"],
+    },
+    {
+      key: "vendor_list",
+      label: "Vendor list",
+      requirement: "Shortlist and issue protocol.",
+      output: "RFP is ready to release.",
+      artifactIds: ["vendor_shortlist"],
+    },
+    {
+      key: "approval",
+      label: "Approval",
+      requirement: "RFP controls accepted.",
+      output: "Responses can open.",
+    },
+  ],
+  responses: [
+    {
+      key: "receive_files",
+      label: "Receive files",
+      requirement: "Proposal, workbook, attachments, Q&A.",
+      output: "Each vendor has a known package state.",
+      artifactIds: ["response_tracker"],
+    },
+    {
+      key: "completeness",
+      label: "Completeness",
+      requirement: "Mandatory sections checked.",
+      output: "Missing answers are visible.",
+      artifactIds: ["response_completeness_check"],
+    },
+    {
+      key: "exceptions",
+      label: "Exceptions",
+      requirement: "Deviations, exclusions, and caveats extracted.",
+      output: "Non-comparable answers are flagged.",
+    },
+    {
+      key: "clarifications",
+      label: "Clarifications",
+      requirement: "Vendor asks are assigned and due.",
+      output: "Evaluation holds are actionable.",
+    },
+    {
+      key: "approval",
+      label: "Approval",
+      requirement: "Responses are score-ready or held.",
+      output: "Evaluation can open.",
+      artifactIds: ["evaluation_schedule"],
+    },
+  ],
+  evaluation: [
+    {
+      key: "rubric_lock",
+      label: "Rubric lock",
+      requirement: "Weights and criteria are frozen.",
+      output: "Scoring cannot drift.",
+      artifactIds: ["scorecard_matrix"],
+    },
+    {
+      key: "first_pass_scoring",
+      label: "First-pass scoring",
+      requirement: "Cited score suggestions only.",
+      output: "Weak or unsupported scores are held.",
+    },
+    {
+      key: "evaluator_review",
+      label: "Evaluator review",
+      requirement: "Human owners confirm or override.",
+      output: "Final scores have accountable rationale.",
+      artifactIds: ["evaluation_rationale_log"],
+    },
+    {
+      key: "gaps_overrides",
+      label: "Gaps and overrides",
+      requirement: "Disputes, holds, and overrides logged.",
+      output: "Pricing inherits the caveats.",
+      artifactIds: ["vendor_comparison"],
+    },
+    {
+      key: "approval",
+      label: "Approval",
+      requirement: "Ranking accepted by evaluation owner.",
+      output: "Pricing can open.",
+    },
+  ],
+  pricing: [
+    {
+      key: "normalize",
+      label: "Normalize",
+      requirement: "Prices mapped to common scope and term.",
+      output: "Vendors are comparable or held.",
+      artifactIds: ["pricing_workbook", "tco_model"],
+    },
+    {
+      key: "compare",
+      label: "Compare",
+      requirement: "Headline, TCO, and variance reviewed.",
+      output: "Commercial spread is visible.",
+      artifactIds: ["tco_model"],
+    },
+    {
+      key: "trap_review",
+      label: "Trap review",
+      requirement: "Assumptions, exclusions, and hidden costs flagged.",
+      output: "Negotiation traps become asks.",
+      artifactIds: ["pricing_anomaly_log"],
+    },
+    {
+      key: "clarify",
+      label: "Clarify",
+      requirement: "Vendor questions assigned.",
+      output: "Unclear pricing is resolved or held.",
+    },
+    {
+      key: "approval",
+      label: "Approval",
+      requirement: "Finance accepts the comparison basis.",
+      output: "BAFO can open.",
+    },
+  ],
+  bafo: [
+    {
+      key: "ask_strategy",
+      label: "Ask strategy",
+      requirement: "Conservative, base, stretch asks.",
+      output: "Each ask has evidence and target.",
+      artifactIds: ["bafo_brief"],
+    },
+    {
+      key: "vendor_packs",
+      label: "Vendor packs",
+      requirement: "Vendor-specific ask package.",
+      output: "Dispatch is ready for approval.",
+    },
+    {
+      key: "round_tracking",
+      label: "Round tracking",
+      requirement: "Responses, refusals, and due dates.",
+      output: "Final round status is visible.",
+      artifactIds: ["bafo_comparison_table"],
+    },
+    {
+      key: "concession_ledger",
+      label: "Concession ledger",
+      requirement: "Value requested, conceded, committed.",
+      output: "Leverage is not lost.",
+    },
+    {
+      key: "approval",
+      label: "Approval",
+      requirement: "Commercial owner closes BAFO.",
+      output: "Executive Decision can open.",
+      artifactIds: ["preferred_vendor_summary"],
+    },
+  ],
+  executive_decision: [
+    {
+      key: "recommendation",
+      label: "Recommendation",
+      requirement: "Preferred path and rationale.",
+      output: "Executive knows the ask.",
+      artifactIds: ["executive_brief"],
+    },
+    {
+      key: "value_case",
+      label: "Value case",
+      requirement: "Modeled, committed, and at-risk value separated.",
+      output: "Value is not overclaimed.",
+    },
+    {
+      key: "risks",
+      label: "Risks",
+      requirement: "Open risks and owners.",
+      output: "Risk acceptance is explicit.",
+    },
+    {
+      key: "conditions",
+      label: "Conditions",
+      requirement: "Award conditions and carry-forward items.",
+      output: "Selection inherits obligations.",
+      artifactIds: ["dissent_log"],
+    },
+    {
+      key: "approval",
+      label: "Approval",
+      requirement: "Decision owner approves.",
+      output: "Selection can open.",
+      artifactIds: ["approval_record"],
+    },
+  ],
+  selection: [
+    {
+      key: "award_record",
+      label: "Award record",
+      requirement: "Selected vendor and award basis.",
+      output: "Decision is captured.",
+      artifactIds: ["award_notice"],
+    },
+    {
+      key: "contract_evidence",
+      label: "Contract evidence",
+      requirement: "Key terms and executed references.",
+      output: "Commitments can be traced.",
+      artifactIds: ["contract_summary"],
+    },
+    {
+      key: "conditions",
+      label: "Conditions",
+      requirement: "Open conditions preserved.",
+      output: "Transition sees unresolved obligations.",
+    },
+    {
+      key: "commitments",
+      label: "Commitments",
+      requirement: "Value and service commitments recorded.",
+      output: "Value baseline is committed.",
+    },
+    {
+      key: "approval",
+      label: "Approval",
+      requirement: "Award record accepted.",
+      output: "Transition can open.",
+      artifactIds: ["transition_plan_initiation"],
+    },
+  ],
+  transition: [
+    {
+      key: "plan",
+      label: "Plan",
+      requirement: "Milestones, owners, dates, dependencies.",
+      output: "Transition has a route.",
+      artifactIds: ["transition_tracker"],
+    },
+    {
+      key: "knowledge_transfer",
+      label: "Knowledge transfer",
+      requirement: "Docs, sessions, and handoff proof.",
+      output: "Run knowledge is transferred.",
+      artifactIds: ["knowledge_transfer_log"],
+    },
+    {
+      key: "cutover",
+      label: "Cutover",
+      requirement: "Execution and rollback plan.",
+      output: "Go-live can be controlled.",
+      artifactIds: ["go_live_checklist"],
+    },
+    {
+      key: "blockers",
+      label: "Blockers",
+      requirement: "Open risks and dependencies.",
+      output: "Exceptions are owned.",
+    },
+    {
+      key: "go_live",
+      label: "Go-live",
+      requirement: "Owner confirms readiness.",
+      output: "Value tracking can begin.",
+    },
+    {
+      key: "approval",
+      label: "Approval",
+      requirement: "Transition owner accepts readiness.",
+      output: "Value can open.",
+    },
+  ],
+  value: [
+    {
+      key: "baseline",
+      label: "Baseline",
+      requirement: "Committed baseline and method.",
+      output: "Measurement starts from evidence.",
+      artifactIds: ["value_ledger"],
+    },
+    {
+      key: "actuals",
+      label: "Actuals",
+      requirement: "Finance or owner-confirmed results.",
+      output: "Realized value is separate from forecast.",
+      artifactIds: ["savings_report"],
+    },
+    {
+      key: "leakage",
+      label: "Leakage",
+      requirement: "Missed, disputed, or at-risk value.",
+      output: "Value gaps are visible.",
+    },
+    {
+      key: "actions",
+      label: "Actions",
+      requirement: "Recovery actions and owners.",
+      output: "Value can be rescued.",
+    },
+    {
+      key: "review",
+      label: "Review",
+      requirement: "Sponsor accepts value posture.",
+      output: "Event closes or stays in tracking.",
+      artifactIds: ["value_realization_dashboard"],
+    },
+  ],
+};
+
 const STAGE_CONFIGS: Record<SourceStageKey, StageCanvasConfig> = {
   strategy: {
-    stageKey: 'strategy',
+    stageKey: "strategy",
     stepNumber: 1,
-    leadAgent: 'Nexus',
+    leadAgent: "Nexus",
     intent:
-      'Confirm why this event exists, who owns the decision, and what commercial outcome it must achieve. Strategy locks the event mandate before Scope can begin.',
+      "Confirm why this event exists, who owns the decision, and what commercial outcome it must achieve. Strategy locks the event mandate before Scope can begin.",
     exitCriteria: [
-      'Business trigger documented and sponsor-confirmed',
-      'Decision owner named with approval authority stated',
-      'IT category confirmed in-scope for Source',
-      'Value target or savings floor established',
-      'Baseline data owner identified',
+      "Business trigger documented and sponsor-confirmed",
+      "Decision owner named with approval authority stated",
+      "IT category confirmed in-scope for Source",
+      "Value target or savings floor established",
+      "Baseline data owner identified",
     ],
     choices: [
       {
-        label: 'Name the trigger and owner',
-        description: 'Confirm what makes this sourcing necessary and who has authority to decide.',
+        label: "Name the trigger and owner",
+        description:
+          "Confirm what makes this sourcing necessary and who has authority to decide.",
         prompt:
-          'What makes this sourcing event necessary right now, and who has the authority to make the final vendor decision? Give me the trigger and the decision owner.',
+          "What makes this sourcing event necessary right now, and who has the authority to make the final vendor decision? Give me the trigger and the decision owner.",
       },
       {
-        label: 'Size the value case',
-        description: 'Establish the commercial target Atlas and Sentinel need to frame the event.',
+        label: "Size the value case",
+        description:
+          "Establish the commercial target Atlas and Sentinel need to frame the event.",
         prompt:
-          'What is the commercial outcome this sourcing event must achieve? Give me the value target, savings floor, or cost-avoidance rationale in concrete terms.',
+          "What is the commercial outcome this sourcing event must achieve? Give me the value target, savings floor, or cost-avoidance rationale in concrete terms.",
       },
       {
-        label: 'Define IT scope',
-        description: 'State which systems, platforms, or services are candidates for this event.',
+        label: "Define IT scope",
+        description:
+          "State which systems, platforms, or services are candidates for this event.",
         prompt:
-          'Which IT systems, platforms, or services are in scope for this sourcing event, and what is explicitly excluded? Help me draw the boundary.',
+          "Which IT systems, platforms, or services are in scope for this sourcing event, and what is explicitly excluded? Help me draw the boundary.",
       },
     ],
-    artifactIds: ['strategy_memo', 'decision_authority_log', 'scope_boundary_draft'],
+    artifactIds: [
+      "strategy_memo",
+      "decision_authority_log",
+      "scope_boundary_draft",
+    ],
   },
   scope: {
-    stageKey: 'scope',
+    stageKey: "scope",
     stepNumber: 2,
-    leadAgent: 'Nexus',
+    leadAgent: "Nexus",
     intent:
-      'Define the exact boundary of what is being sourced, tier the applications or services, and confirm exclusions with sponsor sign-off. Scope memo must be signed before RFP drafting begins.',
+      "Define the exact boundary of what is being sourced, tier the applications or services, and confirm exclusions with sponsor sign-off. Scope memo must be signed before RFP drafting begins.",
     exitCriteria: [
-      'Application or service inventory with tier classification',
-      'In-scope / out-of-scope boundary confirmed by sponsor',
-      'Exclusion log reviewed and approved',
-      'Ticket or usage history parsed and available',
-      'Scope memo signed by sponsor and EA council',
+      "Application or service inventory with tier classification",
+      "In-scope / out-of-scope boundary confirmed by sponsor",
+      "Exclusion log reviewed and approved",
+      "Ticket or usage history parsed and available",
+      "Scope memo signed by sponsor and EA council",
     ],
     choices: [
       {
-        label: 'Lock boundary now',
-        description: 'Finalize in-scope / out-of-scope and advance with current evidence.',
+        label: "Lock boundary now",
+        description:
+          "Finalize in-scope / out-of-scope and advance with current evidence.",
         prompt:
-          'Help me finalize the scope boundary for this event. What is confirmed in-scope, what is explicitly excluded, and what evidence do we have to support the boundary?',
+          "Help me finalize the scope boundary for this event. What is confirmed in-scope, what is explicitly excluded, and what evidence do we have to support the boundary?",
       },
       {
-        label: 'Request missing evidence',
-        description: 'Pause scope and identify what data Sentinel still needs to parse.',
+        label: "Request missing evidence",
+        description:
+          "Pause scope and identify what data Sentinel still needs to parse.",
         prompt:
-          'What evidence is still missing or not yet parsed that would prevent us from locking scope? Give me a prioritized list of data gaps and who owns each one.',
+          "What evidence is still missing or not yet parsed that would prevent us from locking scope? Give me a prioritized list of data gaps and who owns each one.",
       },
       {
-        label: 'Split scope by criticality',
-        description: 'Proceed with Tier 1; flag Tier 2–3 as conditional scope.',
+        label: "Split scope by criticality",
+        description: "Proceed with Tier 1; flag Tier 2–3 as conditional scope.",
         prompt:
-          'Can we split scope by application criticality tier? Help me define which Tier 1 applications proceed now and what conditions Tier 2/3 would need to be included.',
+          "Can we split scope by application criticality tier? Help me define which Tier 1 applications proceed now and what conditions Tier 2/3 would need to be included.",
       },
     ],
-    artifactIds: ['app_inventory_tiering', 'scope_memo', 'exclusion_log', 'ticket_history_synthesis'],
+    artifactIds: [
+      "app_inventory_tiering",
+      "scope_memo",
+      "exclusion_log",
+      "ticket_history_synthesis",
+    ],
   },
   rfp: {
-    stageKey: 'rfp',
+    stageKey: "rfp",
     stepNumber: 3,
-    leadAgent: 'aVa',
+    leadAgent: "aVa",
     intent:
-      'Draft and finalize the RFP package based on confirmed scope. aVa is shaping the vendor response so proposals are comparable, evidence-backed, and negotiation-ready. All evaluation criteria, weighting, the single Vendor Response Workbook, pricing response tab, claim register, assumptions/exclusions, and commercial exceptions must be locked before the document ships to vendors.',
+      "Draft and finalize the RFP package based on confirmed scope. aVa is shaping the vendor response so proposals are comparable, evidence-backed, and negotiation-ready. All evaluation criteria, weighting, the single Vendor Response Workbook, pricing response tab, claim register, assumptions/exclusions, and commercial exceptions must be locked before the document ships to vendors.",
     exitCriteria: [
-      'RFP structure drafted with all required sections',
-      'Evaluation criteria defined and weights approved by governance owner',
-      'Vendor Response Control Pack and submission deadline confirmed',
-      'Legal and compliance requirements reviewed',
-      'RFP issued to qualified vendors',
+      "RFP structure drafted with all required sections",
+      "Evaluation criteria defined and weights approved by governance owner",
+      "Vendor Response Control Pack and submission deadline confirmed",
+      "Legal and compliance requirements reviewed",
+      "RFP issued to qualified vendors",
     ],
     choices: [
       {
-        label: 'Draft RFP structure',
-        description: 'Scaffold sections, requirements, evaluation criteria, and structured response controls for this event.',
+        label: "Draft RFP structure",
+        description:
+          "Scaffold sections, requirements, evaluation criteria, and structured response controls for this event.",
         prompt:
-          'Draft the RFP structure for this sourcing event. What sections are required, what requirements must vendors respond to, what structured response tables must be completed, and what evaluation criteria should be included?',
+          "Draft the RFP structure for this sourcing event. What sections are required, what requirements must vendors respond to, what structured response tables must be completed, and what evaluation criteria should be included?",
       },
       {
-        label: 'Set evaluation weights',
-        description: 'Define scorecard criteria and weights before the RFP ships.',
+        label: "Set evaluation weights",
+        description:
+          "Define scorecard criteria and weights before the RFP ships.",
         prompt:
-          'Help me define the scorecard evaluation criteria and weights for this RFP. What dimensions matter most for this category, and how should they be weighted?',
+          "Help me define the scorecard evaluation criteria and weights for this RFP. What dimensions matter most for this category, and how should they be weighted?",
       },
       {
-        label: 'Review response-control gaps',
-        description: 'Check for missing requirements or response templates before the RFP goes to vendors.',
+        label: "Review response-control gaps",
+        description:
+          "Check for missing requirements or response templates before the RFP goes to vendors.",
         prompt:
-          'Review the current RFP draft for gaps. Are there missing requirements, ambiguous scope statements, incomplete response tables, weak pricing instructions, or criteria that vendors will dispute? Flag anything that needs to be resolved before the RFP ships.',
+          "Review the current RFP draft for gaps. Are there missing requirements, ambiguous scope statements, incomplete response tables, weak pricing instructions, or criteria that vendors will dispute? Flag anything that needs to be resolved before the RFP ships.",
       },
     ],
-    artifactIds: ['rfp_package', 'vendor_response_control_pack', 'evaluation_criteria_doc', 'vendor_shortlist'],
+    artifactIds: [
+      "rfp_package",
+      "vendor_response_control_pack",
+      "evaluation_criteria_doc",
+      "vendor_shortlist",
+    ],
   },
   responses: {
-    stageKey: 'responses',
+    stageKey: "responses",
     stepNumber: 4,
-    leadAgent: 'aVa',
+    leadAgent: "aVa",
     intent:
-      'Track vendor submission status, flag incomplete or non-compliant responses, and confirm all required responses are received before evaluation scoring begins.',
+      "Track vendor submission status, flag incomplete or non-compliant responses, and confirm all required responses are received before evaluation scoring begins.",
     exitCriteria: [
-      'All shortlisted vendors have submitted responses',
-      'Incomplete or non-compliant submissions flagged and resolved',
-      'Response completeness check performed by Sentinel',
-      'Evaluation team briefed on response quality',
-      'Evaluation scoring session scheduled',
+      "All shortlisted vendors have submitted responses",
+      "Incomplete or non-compliant submissions flagged and resolved",
+      "Response completeness check performed by Sentinel",
+      "Evaluation team briefed on response quality",
+      "Evaluation scoring session scheduled",
     ],
     choices: [
       {
-        label: 'Track submission status',
-        description: 'Mark which vendors responded and flag any missing or late submissions.',
+        label: "Track submission status",
+        description:
+          "Mark which vendors responded and flag any missing or late submissions.",
         prompt:
-          'What is the current submission status across vendors? Which vendors have responded, which are outstanding, and are there any late or incomplete submissions that need follow-up?',
+          "What is the current submission status across vendors? Which vendors have responded, which are outstanding, and are there any late or incomplete submissions that need follow-up?",
       },
       {
-        label: 'Flag incomplete responses',
-        description: 'Identify vendors whose submissions have gaps or non-compliant sections.',
+        label: "Flag incomplete responses",
+        description:
+          "Identify vendors whose submissions have gaps or non-compliant sections.",
         prompt:
-          'Review the vendor responses received so far. Are there any incomplete sections, non-compliant answers, or missing required documents? Which vendors need to resubmit or clarify?',
+          "Review the vendor responses received so far. Are there any incomplete sections, non-compliant answers, or missing required documents? Which vendors need to resubmit or clarify?",
       },
       {
-        label: 'Prepare for evaluation',
-        description: 'Confirm scorecard is locked and evaluation team is ready to score.',
+        label: "Prepare for evaluation",
+        description:
+          "Confirm scorecard is locked and evaluation team is ready to score.",
         prompt:
-          'What needs to be confirmed before we move to the evaluation scoring session? Is the scorecard locked, is the evaluation team briefed, and are all responses ready for scoring?',
+          "What needs to be confirmed before we move to the evaluation scoring session? Is the scorecard locked, is the evaluation team briefed, and are all responses ready for scoring?",
       },
     ],
-    artifactIds: ['response_tracker', 'response_completeness_check', 'evaluation_schedule'],
+    artifactIds: [
+      "response_tracker",
+      "response_completeness_check",
+      "evaluation_schedule",
+    ],
   },
   evaluation: {
-    stageKey: 'evaluation',
+    stageKey: "evaluation",
     stepNumber: 5,
-    leadAgent: 'Governance',
+    leadAgent: "Governance",
     intent:
-      'Score vendor responses against weighted criteria. Governance owns the scorecard to ensure weights are locked, rationale is documented, and the evaluation is defensible before pricing begins.',
+      "Score vendor responses against weighted criteria. Governance owns the scorecard to ensure weights are locked, rationale is documented, and the evaluation is defensible before pricing begins.",
     exitCriteria: [
-      'All criteria scored for all vendors with documented rationale',
-      'Scorecard weights locked and approved',
-      'Evidence cited for each score (no unsupported assertions)',
-      'Score disputes resolved and documented',
-      'Vendor ranking confirmed by evaluation team',
+      "All criteria scored for all vendors with documented rationale",
+      "Scorecard weights locked and approved",
+      "Evidence cited for each score (no unsupported assertions)",
+      "Score disputes resolved and documented",
+      "Vendor ranking confirmed by evaluation team",
     ],
     choices: [
       {
-        label: 'Score all criteria',
-        description: "Work through each vendor's response against the locked evaluation criteria.",
+        label: "Score all criteria",
+        description:
+          "Work through each vendor's response against the locked evaluation criteria.",
         prompt:
-          'Guide me through scoring vendor responses against each criterion. What evidence supports each score, and where are there gaps or disputes that need resolution?',
+          "Guide me through scoring vendor responses against each criterion. What evidence supports each score, and where are there gaps or disputes that need resolution?",
       },
       {
-        label: 'Resolve weight dispute',
-        description: 'Handle contested scorecard weights before locking the evaluation.',
+        label: "Resolve weight dispute",
+        description:
+          "Handle contested scorecard weights before locking the evaluation.",
         prompt:
-          'Are there any scorecard weight disputes or contested criteria scores? Help me understand what the disagreement is, what evidence applies, and how the governance owner recommends resolving it.',
+          "Are there any scorecard weight disputes or contested criteria scores? Help me understand what the disagreement is, what evidence applies, and how the governance owner recommends resolving it.",
       },
       {
-        label: 'Generate comparison matrix',
-        description: 'Produce a vendor comparison summary artifact for review.',
+        label: "Generate comparison matrix",
+        description: "Produce a vendor comparison summary artifact for review.",
         prompt:
           "Generate a vendor comparison matrix based on current scores. Show each vendor's performance by criterion, weighted total, and highlight the top 2 vendors for governance review.",
       },
     ],
-    artifactIds: ['scorecard_matrix', 'vendor_comparison', 'evaluation_rationale_log'],
+    artifactIds: [
+      "scorecard_matrix",
+      "vendor_comparison",
+      "evaluation_rationale_log",
+    ],
   },
   pricing: {
-    stageKey: 'pricing',
+    stageKey: "pricing",
     stepNumber: 6,
-    leadAgent: 'Nexus',
+    leadAgent: "Nexus",
     intent:
-      'Normalize vendor pricing to a common structure, identify anomalies and hidden costs, and produce a pricing comparison table that Atlas can use for the BAFO brief and executive decision.',
+      "Normalize vendor pricing to a common structure, identify anomalies and hidden costs, and produce a pricing comparison table that Atlas can use for the BAFO brief and executive decision.",
     exitCriteria: [
-      'All vendor pricing normalized to common unit and term',
-      'Transition and implementation costs itemized separately',
-      'Pricing anomalies flagged and vendor-confirmed',
-      'Total cost of ownership (TCO) modeled for finalist vendors',
-      'Pricing table reviewed by Atlas and CFO stakeholder',
+      "All vendor pricing normalized to common unit and term",
+      "Transition and implementation costs itemized separately",
+      "Pricing anomalies flagged and vendor-confirmed",
+      "Total cost of ownership (TCO) modeled for finalist vendors",
+      "Pricing table reviewed by Atlas and CFO stakeholder",
     ],
     choices: [
       {
-        label: 'Normalize price components',
-        description: 'Map all vendor pricing to a common unit for apples-to-apples comparison.',
+        label: "Normalize price components",
+        description:
+          "Map all vendor pricing to a common unit for apples-to-apples comparison.",
         prompt:
-          'Help me normalize vendor pricing to a common structure. What pricing components have each vendor submitted, how do they need to be restructured for comparison, and what cost assumptions need to be flagged?',
+          "Help me normalize vendor pricing to a common structure. What pricing components have each vendor submitted, how do they need to be restructured for comparison, and what cost assumptions need to be flagged?",
       },
       {
-        label: 'Flag pricing anomalies',
-        description: 'Identify vendors carrying unusual pricing structures or hidden assumptions.',
+        label: "Flag pricing anomalies",
+        description:
+          "Identify vendors carrying unusual pricing structures or hidden assumptions.",
         prompt:
-          'Are there any pricing anomalies across vendor submissions? Identify vendors with unusual rate structures, transition costs embedded in run-rate, or pricing assumptions that differ from the RFP requirements.',
+          "Are there any pricing anomalies across vendor submissions? Identify vendors with unusual rate structures, transition costs embedded in run-rate, or pricing assumptions that differ from the RFP requirements.",
       },
       {
-        label: 'Build comparison table',
-        description: 'Generate the pricing matrix for executive and BAFO review.',
+        label: "Build comparison table",
+        description:
+          "Generate the pricing matrix for executive and BAFO review.",
         prompt:
-          'Generate a pricing comparison table for all vendors. Show year 1 and total contract value side-by-side, highlight the variance from the baseline, and flag any vendor where pricing requires clarification before BAFO.',
+          "Generate a pricing comparison table for all vendors. Show year 1 and total contract value side-by-side, highlight the variance from the baseline, and flag any vendor where pricing requires clarification before BAFO.",
       },
     ],
-    artifactIds: ['pricing_workbook', 'tco_model', 'pricing_anomaly_log'],
+    artifactIds: ["pricing_workbook", "tco_model", "pricing_anomaly_log"],
   },
   bafo: {
-    stageKey: 'bafo',
+    stageKey: "bafo",
     stepNumber: 7,
-    leadAgent: 'Nexus',
+    leadAgent: "Nexus",
     intent:
-      'Issue best-and-final-offer requests to finalist vendors, compare BAFO responses against initial bids, and identify the selection-ready candidate for the executive decision.',
+      "Issue best-and-final-offer requests to finalist vendors, compare BAFO responses against initial bids, and identify the selection-ready candidate for the executive decision.",
     exitCriteria: [
-      'BAFO brief issued to 2–3 finalist vendors',
-      'BAFO responses received by deadline',
-      'BAFO vs. initial bid comparison documented per vendor',
-      'Preferred vendor identified with commercial rationale',
-      'BAFO summary reviewed by Atlas before Decision stage',
+      "BAFO brief issued to 2–3 finalist vendors",
+      "BAFO responses received by deadline",
+      "BAFO vs. initial bid comparison documented per vendor",
+      "Preferred vendor identified with commercial rationale",
+      "BAFO summary reviewed by Atlas before Decision stage",
     ],
     choices: [
       {
-        label: 'Issue BAFO brief',
-        description: 'Send best-and-final-offer request with specific improvement targets.',
+        label: "Issue BAFO brief",
+        description:
+          "Send best-and-final-offer request with specific improvement targets.",
         prompt:
-          'Draft the BAFO brief for finalist vendors. What are the specific improvement targets — pricing, service levels, transition terms — we need to negotiate in the final round?',
+          "Draft the BAFO brief for finalist vendors. What are the specific improvement targets — pricing, service levels, transition terms — we need to negotiate in the final round?",
       },
       {
-        label: 'Compare BAFO vs. initial bid',
-        description: 'Measure vendor improvement per price and service level component.',
+        label: "Compare BAFO vs. initial bid",
+        description:
+          "Measure vendor improvement per price and service level component.",
         prompt:
           "Compare each vendor's BAFO response against their initial bid. Which vendors improved meaningfully, where did improvements fall short, and what does the BAFO comparison tell us about preferred vendor selection?",
       },
       {
-        label: 'Identify preferred vendor',
-        description: 'Flag the selection-ready candidate before moving to Decision.',
+        label: "Identify preferred vendor",
+        description:
+          "Flag the selection-ready candidate before moving to Decision.",
         prompt:
-          'Based on evaluation scores and BAFO responses, which vendor should be the preferred candidate? Summarize the commercial and capability rationale for the executive decision brief.',
+          "Based on evaluation scores and BAFO responses, which vendor should be the preferred candidate? Summarize the commercial and capability rationale for the executive decision brief.",
       },
     ],
-    artifactIds: ['bafo_brief', 'bafo_comparison_table', 'preferred_vendor_summary'],
+    artifactIds: [
+      "bafo_brief",
+      "bafo_comparison_table",
+      "preferred_vendor_summary",
+    ],
   },
   executive_decision: {
-    stageKey: 'executive_decision',
+    stageKey: "executive_decision",
     stepNumber: 8,
-    leadAgent: 'Atlas',
+    leadAgent: "Atlas",
     intent:
-      'Present the executive decision brief to the CIO and sponsor. aVa generates the recommendation with evidence-backed rationale. Governance confirms gate approval before contract negotiation begins.',
+      "Present the executive decision brief to the CIO and sponsor. aVa generates the recommendation with evidence-backed rationale. Governance confirms gate approval before contract negotiation begins.",
     exitCriteria: [
-      'Executive decision brief prepared with vendor recommendation',
-      'Value case and risk summary included in the brief',
-      'Approval obtained from CIO and sponsor',
-      'Any objections or dissent documented',
-      'Award decision confirmed in the event record',
+      "Executive decision brief prepared with vendor recommendation",
+      "Value case and risk summary included in the brief",
+      "Approval obtained from CIO and sponsor",
+      "Any objections or dissent documented",
+      "Award decision confirmed in the event record",
     ],
     choices: [
       {
-        label: 'Prepare decision brief',
-        description: 'Generate the executive summary with vendor recommendation and evidence.',
+        label: "Prepare decision brief",
+        description:
+          "Generate the executive summary with vendor recommendation and evidence.",
         prompt:
-          'Prepare the executive decision brief for this sourcing event. Include the preferred vendor recommendation, evidence-backed rationale, value case, key risks, and what the CIO needs to sign off on.',
+          "Prepare the executive decision brief for this sourcing event. Include the preferred vendor recommendation, evidence-backed rationale, value case, key risks, and what the CIO needs to sign off on.",
       },
       {
-        label: 'Route for CIO approval',
-        description: 'Submit the decision brief to the CIO and sponsor for sign-off.',
+        label: "Route for CIO approval",
+        description:
+          "Submit the decision brief to the CIO and sponsor for sign-off.",
         prompt:
-          'What is the approval path for this sourcing decision? Who needs to sign off, in what order, what can be delegated, and what does the sponsor need to see before approving?',
+          "What is the approval path for this sourcing decision? Who needs to sign off, in what order, what can be delegated, and what does the sponsor need to see before approving?",
       },
       {
-        label: 'Document stakeholder objections',
-        description: 'Record any dissent or conditions before the gate closes.',
+        label: "Document stakeholder objections",
+        description: "Record any dissent or conditions before the gate closes.",
         prompt:
-          'Are there any stakeholder objections, dissenting views, or conditions attached to the approval? Document the objections and how they were addressed so the audit trail is complete.',
+          "Are there any stakeholder objections, dissenting views, or conditions attached to the approval? Document the objections and how they were addressed so the audit trail is complete.",
       },
     ],
-    artifactIds: ['executive_brief', 'approval_record', 'dissent_log'],
+    artifactIds: ["executive_brief", "approval_record", "dissent_log"],
   },
   selection: {
-    stageKey: 'selection',
+    stageKey: "selection",
     stepNumber: 9,
-    leadAgent: 'Nexus',
+    leadAgent: "Nexus",
     intent:
-      'Finalize the vendor award, review contract terms, and confirm the transition team and go-live owner. Selection is complete when the award is documented and the transition plan is initiated.',
+      "Finalize the vendor award, review contract terms, and confirm the transition team and go-live owner. Selection is complete when the award is documented and the transition plan is initiated.",
     exitCriteria: [
-      'Award decision confirmed and recorded',
-      'Key contract terms reviewed: SLAs, exit clauses, pricing schedule',
-      'Unsuccessful vendors notified',
-      'Transition owner named and accepted',
-      'Transition kick-off scheduled',
+      "Award decision confirmed and recorded",
+      "Key contract terms reviewed: SLAs, exit clauses, pricing schedule",
+      "Unsuccessful vendors notified",
+      "Transition owner named and accepted",
+      "Transition kick-off scheduled",
     ],
     choices: [
       {
-        label: 'Confirm the award',
-        description: 'Finalize the selected vendor and document the decision rationale.',
+        label: "Confirm the award",
+        description:
+          "Finalize the selected vendor and document the decision rationale.",
         prompt:
-          'Confirm the vendor award for this sourcing event. What is the selected vendor, the final contract value, key terms, and what documentation is needed to close out the selection stage?',
+          "Confirm the vendor award for this sourcing event. What is the selected vendor, the final contract value, key terms, and what documentation is needed to close out the selection stage?",
       },
       {
-        label: 'Review contract terms',
-        description: 'Check SLAs, exit clauses, and pricing schedule before signing.',
+        label: "Review contract terms",
+        description:
+          "Check SLAs, exit clauses, and pricing schedule before signing.",
         prompt:
-          'What are the key contract terms that need review before we sign? Focus on SLA commitments, exit provisions, pricing schedule, and any terms that differ from the RFP requirements.',
+          "What are the key contract terms that need review before we sign? Focus on SLA commitments, exit provisions, pricing schedule, and any terms that differ from the RFP requirements.",
       },
       {
-        label: 'Assign transition owner',
-        description: 'Name the person responsible for the transition workstream.',
+        label: "Assign transition owner",
+        description:
+          "Name the person responsible for the transition workstream.",
         prompt:
-          'Who should own the transition workstream for this sourcing event? What are the key transition deliverables, go-live date, and what does the transition owner need to know on day one?',
+          "Who should own the transition workstream for this sourcing event? What are the key transition deliverables, go-live date, and what does the transition owner need to know on day one?",
       },
     ],
-    artifactIds: ['award_notice', 'contract_summary', 'transition_plan_initiation'],
+    artifactIds: [
+      "award_notice",
+      "contract_summary",
+      "transition_plan_initiation",
+    ],
   },
   transition: {
-    stageKey: 'transition',
+    stageKey: "transition",
     stepNumber: 10,
-    leadAgent: 'Nexus',
+    leadAgent: "Nexus",
     intent:
-      'Execute the transition workstream: knowledge transfer, system cutover, and go-live. Sentinel monitors milestone completion and flags blockers. Stage closes when go-live is confirmed and value measurement begins.',
+      "Execute the transition workstream: knowledge transfer, system cutover, and go-live. Sentinel monitors milestone completion and flags blockers. Stage closes when go-live is confirmed and value measurement begins.",
     exitCriteria: [
-      'All transition milestones completed or formally deferred',
-      'Knowledge transfer sessions completed and documented',
-      'System cutover executed with rollback plan in place',
-      'Go-live confirmed by transition owner',
-      'Value measurement baseline established',
+      "All transition milestones completed or formally deferred",
+      "Knowledge transfer sessions completed and documented",
+      "System cutover executed with rollback plan in place",
+      "Go-live confirmed by transition owner",
+      "Value measurement baseline established",
     ],
     choices: [
       {
-        label: 'Track milestone progress',
-        description: 'Mark transition checkpoints as completed, at risk, or blocked.',
+        label: "Track milestone progress",
+        description:
+          "Mark transition checkpoints as completed, at risk, or blocked.",
         prompt:
-          'What is the current status of transition milestones? Which checkpoints are complete, which are at risk, and what blockers need immediate attention to keep go-live on track?',
+          "What is the current status of transition milestones? Which checkpoints are complete, which are at risk, and what blockers need immediate attention to keep go-live on track?",
       },
       {
-        label: 'Flag open blockers',
-        description: 'Identify vendor, client, or governance issues blocking go-live.',
+        label: "Flag open blockers",
+        description:
+          "Identify vendor, client, or governance issues blocking go-live.",
         prompt:
-          'What are the open blockers to transition go-live? For each blocker, identify who owns resolution, what the dependency is, and what the impact is on the go-live date.',
+          "What are the open blockers to transition go-live? For each blocker, identify who owns resolution, what the dependency is, and what the impact is on the go-live date.",
       },
       {
-        label: 'Confirm knowledge transfer',
-        description: 'Verify documentation, training, and handoff are complete.',
+        label: "Confirm knowledge transfer",
+        description:
+          "Verify documentation, training, and handoff are complete.",
         prompt:
-          'Is knowledge transfer complete for this transition? What documentation exists, what training has been delivered, and what handoff activities are still outstanding before go-live can be confirmed?',
+          "Is knowledge transfer complete for this transition? What documentation exists, what training has been delivered, and what handoff activities are still outstanding before go-live can be confirmed?",
       },
     ],
-    artifactIds: ['transition_tracker', 'go_live_checklist', 'knowledge_transfer_log'],
+    artifactIds: [
+      "transition_tracker",
+      "go_live_checklist",
+      "knowledge_transfer_log",
+    ],
   },
   value: {
-    stageKey: 'value',
+    stageKey: "value",
     stepNumber: 11,
-    leadAgent: 'Atlas',
+    leadAgent: "Atlas",
     intent:
-      'Measure and report sourcing value realization. Atlas tracks projected vs. committed vs. realized savings with evidence. Value stage is open until the full contract term delivers on commitments.',
+      "Measure and report sourcing value realization. Atlas tracks projected vs. committed vs. realized savings with evidence. Value stage is open until the full contract term delivers on commitments.",
     exitCriteria: [
-      'Value baseline confirmed at go-live',
-      'Measurement methodology agreed with Finance',
-      'First savings confirmation reported',
-      'Value realization report shared with CIO sponsor',
-      'Ongoing measurement cadence established',
+      "Value baseline confirmed at go-live",
+      "Measurement methodology agreed with Finance",
+      "First savings confirmation reported",
+      "Value realization report shared with CIO sponsor",
+      "Ongoing measurement cadence established",
     ],
     choices: [
       {
-        label: 'Review value posture',
-        description: 'Compare projected vs. committed vs. realized savings.',
+        label: "Review value posture",
+        description: "Compare projected vs. committed vs. realized savings.",
         prompt:
-          'What is the current value posture for this sourcing event? Compare projected, committed, and realized savings. Where are we tracking to target and where are there gaps?',
+          "What is the current value posture for this sourcing event? Compare projected, committed, and realized savings. Where are we tracking to target and where are there gaps?",
       },
       {
-        label: 'Log realized value',
-        description: 'Record confirmed savings with evidence and audit trail.',
+        label: "Log realized value",
+        description: "Record confirmed savings with evidence and audit trail.",
         prompt:
-          'What value has been realized so far from this sourcing event? Help me log confirmed savings with the evidence, measurement period, and which stakeholder confirmed the number.',
+          "What value has been realized so far from this sourcing event? Help me log confirmed savings with the evidence, measurement period, and which stakeholder confirmed the number.",
       },
       {
-        label: 'Flag value at risk',
-        description: 'Identify commitments not tracking to target.',
+        label: "Flag value at risk",
+        description: "Identify commitments not tracking to target.",
         prompt:
-          'Which value commitments are not tracking to target? For each at-risk item, identify the gap, the root cause, and what intervention could recover the projected value.',
+          "Which value commitments are not tracking to target? For each at-risk item, identify the gap, the root cause, and what intervention could recover the projected value.",
       },
     ],
-    artifactIds: ['value_ledger', 'savings_report', 'value_realization_dashboard'],
+    artifactIds: [
+      "value_ledger",
+      "savings_report",
+      "value_realization_dashboard",
+    ],
   },
   // Legacy aliases — map to canonical configs
   intake: {
-    stageKey: 'strategy',
+    stageKey: "strategy",
     stepNumber: 1,
-    leadAgent: 'Nexus',
-    intent: 'Confirm why this event exists and who owns the decision.',
-    exitCriteria: ['Trigger documented', 'Decision owner named', 'Value target set'],
-    choices: [
-      { label: 'Name the trigger', description: 'Confirm the business trigger.', prompt: 'What is the trigger for this sourcing event?' },
-      { label: 'Name the owner', description: 'Confirm who decides.', prompt: 'Who has authority to make the final vendor decision?' },
-      { label: 'Size the value case', description: 'Establish the commercial target.', prompt: 'What commercial outcome must this event achieve?' },
+    leadAgent: "Nexus",
+    intent: "Confirm why this event exists and who owns the decision.",
+    exitCriteria: [
+      "Trigger documented",
+      "Decision owner named",
+      "Value target set",
     ],
-    artifactIds: ['strategy_memo'],
+    choices: [
+      {
+        label: "Name the trigger",
+        description: "Confirm the business trigger.",
+        prompt: "What is the trigger for this sourcing event?",
+      },
+      {
+        label: "Name the owner",
+        description: "Confirm who decides.",
+        prompt: "Who has authority to make the final vendor decision?",
+      },
+      {
+        label: "Size the value case",
+        description: "Establish the commercial target.",
+        prompt: "What commercial outcome must this event achieve?",
+      },
+    ],
+    artifactIds: ["strategy_memo"],
   },
   sourcing_strategy: {
-    stageKey: 'strategy',
+    stageKey: "strategy",
     stepNumber: 1,
-    leadAgent: 'Nexus',
-    intent: 'Confirm why this event exists and who owns the decision.',
-    exitCriteria: ['Trigger documented', 'Decision owner named'],
+    leadAgent: "Nexus",
+    intent: "Confirm why this event exists and who owns the decision.",
+    exitCriteria: ["Trigger documented", "Decision owner named"],
     choices: [
-      { label: 'Name the trigger', description: 'Confirm the business trigger.', prompt: 'What is the trigger for this sourcing event?' },
-      { label: 'Name the owner', description: 'Confirm who decides.', prompt: 'Who has authority to make the final vendor decision?' },
-      { label: 'Size the value case', description: 'Establish the commercial target.', prompt: 'What commercial outcome must this event achieve?' },
+      {
+        label: "Name the trigger",
+        description: "Confirm the business trigger.",
+        prompt: "What is the trigger for this sourcing event?",
+      },
+      {
+        label: "Name the owner",
+        description: "Confirm who decides.",
+        prompt: "Who has authority to make the final vendor decision?",
+      },
+      {
+        label: "Size the value case",
+        description: "Establish the commercial target.",
+        prompt: "What commercial outcome must this event achieve?",
+      },
     ],
-    artifactIds: ['strategy_memo'],
+    artifactIds: ["strategy_memo"],
   },
   rfp_rfi_package: {
-    stageKey: 'rfp',
+    stageKey: "rfp",
     stepNumber: 3,
-    leadAgent: 'aVa',
-    intent: 'Draft and finalize the RFP package and structured Vendor Response Control Pack.',
-    exitCriteria: ['RFP drafted', 'Criteria weighted', 'Response-control pack ready', 'RFP issued'],
-    choices: [
-      { label: 'Draft RFP structure', description: 'Scaffold the RFP.', prompt: 'Draft the RFP structure for this event.' },
-      { label: 'Set evaluation weights', description: 'Define criteria weights.', prompt: 'Define the evaluation criteria and weights.' },
-      { label: 'Review scope gaps', description: 'Check for missing requirements.', prompt: 'Review the RFP for gaps.' },
+    leadAgent: "aVa",
+    intent:
+      "Draft and finalize the RFP package and structured Vendor Response Control Pack.",
+    exitCriteria: [
+      "RFP drafted",
+      "Criteria weighted",
+      "Response-control pack ready",
+      "RFP issued",
     ],
-    artifactIds: ['rfp_package'],
+    choices: [
+      {
+        label: "Draft RFP structure",
+        description: "Scaffold the RFP.",
+        prompt: "Draft the RFP structure for this event.",
+      },
+      {
+        label: "Set evaluation weights",
+        description: "Define criteria weights.",
+        prompt: "Define the evaluation criteria and weights.",
+      },
+      {
+        label: "Review scope gaps",
+        description: "Check for missing requirements.",
+        prompt: "Review the RFP for gaps.",
+      },
+    ],
+    artifactIds: ["rfp_package"],
   },
   vendor_responses: {
-    stageKey: 'responses',
+    stageKey: "responses",
     stepNumber: 4,
-    leadAgent: 'aVa',
-    intent: 'Track vendor submission status.',
-    exitCriteria: ['All responses received', 'Completeness checked'],
+    leadAgent: "aVa",
+    intent: "Track vendor submission status.",
+    exitCriteria: ["All responses received", "Completeness checked"],
     choices: [
-      { label: 'Track submissions', description: 'Mark who responded.', prompt: 'What is the vendor submission status?' },
-      { label: 'Flag incomplete responses', description: 'Identify gaps.', prompt: 'Which vendor responses are incomplete?' },
-      { label: 'Prepare for evaluation', description: 'Confirm readiness.', prompt: 'What needs to be confirmed before evaluation scoring?' },
+      {
+        label: "Track submissions",
+        description: "Mark who responded.",
+        prompt: "What is the vendor submission status?",
+      },
+      {
+        label: "Flag incomplete responses",
+        description: "Identify gaps.",
+        prompt: "Which vendor responses are incomplete?",
+      },
+      {
+        label: "Prepare for evaluation",
+        description: "Confirm readiness.",
+        prompt: "What needs to be confirmed before evaluation scoring?",
+      },
     ],
-    artifactIds: ['response_tracker'],
+    artifactIds: ["response_tracker"],
   },
   orals_bafo: {
-    stageKey: 'bafo',
+    stageKey: "bafo",
     stepNumber: 7,
-    leadAgent: 'Nexus',
-    intent: 'Issue BAFO requests and compare responses.',
-    exitCriteria: ['BAFO issued', 'Responses compared', 'Preferred vendor identified'],
-    choices: [
-      { label: 'Issue BAFO brief', description: 'Send the BAFO request.', prompt: 'Draft the BAFO brief.' },
-      { label: 'Compare BAFO vs. initial', description: 'Measure improvement.', prompt: 'Compare BAFO vs. initial bids.' },
-      { label: 'Identify preferred vendor', description: 'Flag selection candidate.', prompt: 'Which vendor should be preferred?' },
+    leadAgent: "Nexus",
+    intent: "Issue BAFO requests and compare responses.",
+    exitCriteria: [
+      "BAFO issued",
+      "Responses compared",
+      "Preferred vendor identified",
     ],
-    artifactIds: ['bafo_brief'],
+    choices: [
+      {
+        label: "Issue BAFO brief",
+        description: "Send the BAFO request.",
+        prompt: "Draft the BAFO brief.",
+      },
+      {
+        label: "Compare BAFO vs. initial",
+        description: "Measure improvement.",
+        prompt: "Compare BAFO vs. initial bids.",
+      },
+      {
+        label: "Identify preferred vendor",
+        description: "Flag selection candidate.",
+        prompt: "Which vendor should be preferred?",
+      },
+    ],
+    artifactIds: ["bafo_brief"],
   },
   contract_mobilization: {
-    stageKey: 'transition',
+    stageKey: "transition",
     stepNumber: 10,
-    leadAgent: 'Nexus',
-    intent: 'Execute transition milestones.',
-    exitCriteria: ['Milestones complete', 'Go-live confirmed'],
+    leadAgent: "Nexus",
+    intent: "Execute transition milestones.",
+    exitCriteria: ["Milestones complete", "Go-live confirmed"],
     choices: [
-      { label: 'Track milestones', description: 'Mark transition checkpoints.', prompt: 'What is the milestone status?' },
-      { label: 'Flag blockers', description: 'Identify go-live blockers.', prompt: 'What is blocking go-live?' },
-      { label: 'Confirm handoff', description: 'Verify knowledge transfer.', prompt: 'Is knowledge transfer complete?' },
+      {
+        label: "Track milestones",
+        description: "Mark transition checkpoints.",
+        prompt: "What is the milestone status?",
+      },
+      {
+        label: "Flag blockers",
+        description: "Identify go-live blockers.",
+        prompt: "What is blocking go-live?",
+      },
+      {
+        label: "Confirm handoff",
+        description: "Verify knowledge transfer.",
+        prompt: "Is knowledge transfer complete?",
+      },
     ],
-    artifactIds: ['transition_tracker'],
+    artifactIds: ["transition_tracker"],
   },
   value_realization: {
-    stageKey: 'value',
+    stageKey: "value",
     stepNumber: 11,
-    leadAgent: 'Atlas',
-    intent: 'Measure and report value realization.',
-    exitCriteria: ['Baseline confirmed', 'Savings reported'],
+    leadAgent: "Atlas",
+    intent: "Measure and report value realization.",
+    exitCriteria: ["Baseline confirmed", "Savings reported"],
     choices: [
-      { label: 'Review value posture', description: 'Compare projected vs. realized.', prompt: 'What is the current value posture?' },
-      { label: 'Log realized value', description: 'Record confirmed savings.', prompt: 'Log confirmed savings with evidence.' },
-      { label: 'Flag value at risk', description: 'Identify gaps to target.', prompt: 'Which commitments are at risk?' },
+      {
+        label: "Review value posture",
+        description: "Compare projected vs. realized.",
+        prompt: "What is the current value posture?",
+      },
+      {
+        label: "Log realized value",
+        description: "Record confirmed savings.",
+        prompt: "Log confirmed savings with evidence.",
+      },
+      {
+        label: "Flag value at risk",
+        description: "Identify gaps to target.",
+        prompt: "Which commitments are at risk?",
+      },
     ],
-    artifactIds: ['value_ledger'],
+    artifactIds: ["value_ledger"],
   },
 };
 
-export function getStageCanvasConfig(stageKey: SourceStageKey | string): StageCanvasConfig | null {
+export function getStageCanvasConfig(
+  stageKey: SourceStageKey | string,
+): StageCanvasConfig | null {
   return (STAGE_CONFIGS as Record<string, StageCanvasConfig>)[stageKey] ?? null;
+}
+
+export function getStageLocalSteps(
+  stageKey: SourceStageKey | string,
+): readonly StageLocalStep[] {
+  const config = getStageCanvasConfig(stageKey);
+  const canonicalKey = config?.stageKey ?? stageKey;
+  return SOURCE_STAGE_LOCAL_STEPS[canonicalKey as SourceStageKey] ?? [];
 }
 
 /** Map a stage spine label ("Strategy", "Scope", "RFP", …) to a canonical key. */
 const LABEL_TO_KEY: Record<string, SourceStageKey> = {
-  Strategy: 'strategy',
-  Scope: 'scope',
-  RFP: 'rfp',
-  Responses: 'responses',
-  Evaluate: 'evaluation',
-  Evaluation: 'evaluation',
-  Pricing: 'pricing',
-  BAFO: 'bafo',
-  'Executive Decision': 'executive_decision',
-  Decision: 'executive_decision',
-  Select: 'selection',
-  Selection: 'selection',
-  Transition: 'transition',
-  Value: 'value',
+  Strategy: "strategy",
+  Scope: "scope",
+  RFP: "rfp",
+  Responses: "responses",
+  Evaluate: "evaluation",
+  Evaluation: "evaluation",
+  Pricing: "pricing",
+  BAFO: "bafo",
+  "Executive Decision": "executive_decision",
+  Decision: "executive_decision",
+  Select: "selection",
+  Selection: "selection",
+  Transition: "transition",
+  Value: "value",
 };
 
 export function stageLabelToKey(label: string): SourceStageKey | null {

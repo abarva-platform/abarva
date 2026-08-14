@@ -24,6 +24,9 @@ type StageShellResult = {
   selectedRailVisible: boolean;
   stagePanelRendered: boolean;
   stageHeading: string;
+  localWorkflowRendered: boolean;
+  localStepCount: number;
+  activeLocalStepVisible: boolean;
   hasProgressText: boolean;
   hasGateText: boolean;
   hasDeliverablesText: boolean;
@@ -233,9 +236,24 @@ async function run() {
             "section[aria-label^='Stage canvas']",
           );
           const h2 = stagePanel?.querySelector("h2");
+          const localWorkflow = document.querySelector(
+            '[data-testid="source-stage-local-workflow"]',
+          );
+          const localSteps = Array.from(
+            document.querySelectorAll(
+              '[data-testid^="source-stage-local-step-"]',
+            ),
+          );
+          const activeLocalStep = document.querySelector(
+            '[data-local-step-state="current"], [data-local-step-state="blocked"]',
+          );
           const selectedRect =
             selected instanceof HTMLElement
               ? selected.getBoundingClientRect()
+              : null;
+          const activeLocalStepRect =
+            activeLocalStep instanceof HTMLElement
+              ? activeLocalStep.getBoundingClientRect()
               : null;
           const text = document.body.textContent ?? "";
 
@@ -252,6 +270,15 @@ async function run() {
               selectedRect.right <= document.documentElement.clientWidth + 1,
             stagePanelRendered: stagePanel instanceof HTMLElement,
             stageHeading: h2?.textContent?.trim() ?? "",
+            localWorkflowRendered: localWorkflow instanceof HTMLElement,
+            localStepCount: localSteps.length,
+            activeLocalStepVisible:
+              activeLocalStepRect !== null &&
+              activeLocalStepRect.width > 0 &&
+              activeLocalStepRect.height > 0 &&
+              activeLocalStepRect.left >= -1 &&
+              activeLocalStepRect.right <=
+                document.documentElement.clientWidth + 1,
             hasProgressText: /Step\s+\d+\s+of\s+11/.test(text),
             hasGateText:
               text.includes("Gate") || text.includes("Completion criteria"),
@@ -287,6 +314,17 @@ async function run() {
             `Expected stage heading ${expectedLabel}, found ${metrics.stageHeading || "empty"}.`,
           );
         }
+        if (!metrics.localWorkflowRendered) {
+          failures.push("Local stage workflow was not rendered.");
+        }
+        if (metrics.localStepCount < 4) {
+          failures.push(
+            `Expected at least 4 local steps, found ${metrics.localStepCount}.`,
+          );
+        }
+        if (!metrics.activeLocalStepVisible) {
+          failures.push("Active local step is missing or clipped.");
+        }
         if (!metrics.hasProgressText) {
           failures.push("Stage progress text is missing.");
         }
@@ -308,6 +346,9 @@ async function run() {
           selectedRailVisible: metrics.selectedRailVisible,
           stagePanelRendered: metrics.stagePanelRendered,
           stageHeading: metrics.stageHeading,
+          localWorkflowRendered: metrics.localWorkflowRendered,
+          localStepCount: metrics.localStepCount,
+          activeLocalStepVisible: metrics.activeLocalStepVisible,
           railSteps: metrics.railSteps,
           hasProgressText: metrics.hasProgressText,
           hasGateText: metrics.hasGateText,
@@ -367,11 +408,13 @@ function renderMarkdown(summary: {
     `Generated: ${summary.generatedAt}`,
     `Status: ${summary.status}`,
     "",
-    "| Stage | Viewport | Rail steps | Selected visible | Heading | Overflow | Status |",
-    "| --- | ---: | ---: | --- | --- | --- | --- |",
+    "| Stage | Viewport | Rail steps | Local steps | Active local | Selected visible | Heading | Overflow | Status |",
+    "| --- | ---: | ---: | ---: | --- | --- | --- | --- | --- |",
     ...summary.results.map(
       (result) =>
         `| ${SOURCE_STAGE_LABELS[result.stage]} | ${result.viewport} | ${result.railSteps} | ${
+          result.localStepCount
+        } | ${result.activeLocalStepVisible ? "yes" : "no"} | ${
           result.selectedRailVisible ? "yes" : "no"
         } | ${result.stageHeading} | ${
           result.pageOverflowsHorizontally ? "yes" : "no"
