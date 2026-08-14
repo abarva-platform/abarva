@@ -416,6 +416,12 @@ function SelectedContractView({
           />
         </div>
         <BaselineRead opportunitySet={opportunitySet} />
+        <WorkflowActionPanel
+          contractId={candidate.contractId}
+          opportunitySet={opportunitySet}
+          selectedOpportunity={selectedOpportunity}
+          position={position}
+        />
         <OpportunityTable
           opportunities={opportunitySet?.opportunities ?? []}
           selectedOpportunityId={selectedOpportunity?.opportunityId ?? null}
@@ -523,6 +529,188 @@ function StartOptimizationButton({
         {state === "busy" ? "Opening..." : "Open optimize case"}
       </button>
       {message ? <div style={ERROR_STYLE}>{message}</div> : null}
+    </div>
+  );
+}
+
+function WorkflowActionPanel({
+  contractId,
+  opportunitySet,
+  selectedOpportunity,
+  position,
+}: {
+  contractId: string;
+  opportunitySet: ContractOptimizationOpportunitySet | null;
+  selectedOpportunity: ContractOptimizationOpportunity | null;
+  position: OptimizeWorkflowPosition;
+}) {
+  const router = useRouter();
+  const [state, setState] = useState<
+    "idle" | "busy" | "error" | "success"
+  >("idle");
+  const [message, setMessage] = useState<string | null>(null);
+  const [rationale, setRationale] = useState("");
+
+  if (!opportunitySet || !selectedOpportunity) return null;
+
+  const requests = opportunitySet.approvalRequests ?? [];
+  const pendingRequest = requests.find(
+    (request) => request.approvalState === "pending",
+  );
+  const sentBackRequest = requests.find(
+    (request) => request.approvalState === "sent_back",
+  );
+  const approvedRequest = requests.find(
+    (request) =>
+      request.approvalState === "approved" ||
+      request.decisions.some((decision) => decision.decision === "approved"),
+  );
+  const hasAgreedOutcome = (opportunitySet.negotiatedOutcomes ?? []).some(
+    (outcome) => outcome.outcomeState === "agreed",
+  );
+
+  const canCreate =
+    position.currentKey === "plan" &&
+    !pendingRequest &&
+    !approvedRequest &&
+    !hasAgreedOutcome;
+  const canDecide = position.currentKey === "approve" && Boolean(pendingRequest);
+  const canRecordOutcome =
+    position.currentKey === "approve" &&
+    Boolean(approvedRequest) &&
+    !hasAgreedOutcome;
+  const showPanel =
+    canCreate || canDecide || canRecordOutcome || Boolean(sentBackRequest);
+  if (!showPanel) return null;
+
+  async function submit(action: string) {
+    setState("busy");
+    setMessage(null);
+    try {
+      const response = await fetch(
+        `/api/source/optimize/contract/${encodeURIComponent(contractId)}/workflow`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            action,
+            opportunityId: selectedOpportunity?.opportunityId ?? null,
+            rationale: rationale.trim() || null,
+          }),
+        },
+      );
+      const payload = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        message?: string;
+        error?: string;
+        detail?: string;
+      } | null;
+      if (!response.ok || !payload?.ok) {
+        throw new Error(
+          payload?.detail ??
+            payload?.error ??
+            "Could not update optimization workflow.",
+        );
+      }
+      setState("success");
+      setMessage(payload.message ?? "Optimization workflow updated.");
+      router.refresh();
+    } catch (error) {
+      setState("error");
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not update optimization workflow.",
+      );
+    }
+  }
+
+  return (
+    <div style={WORKFLOW_ACTION_PANEL_STYLE} data-testid="workflow-action-panel">
+      <div style={{ minWidth: 0 }}>
+        <div style={MUTED_SMALL_STYLE}>Governed workflow action</div>
+        <strong style={WORKFLOW_ACTION_TITLE_STYLE}>
+          {canCreate
+            ? "Create the strategy approval request"
+            : canDecide
+              ? "Approve or send back the strategy request"
+              : canRecordOutcome
+                ? "Record the negotiated outcome"
+                : "Approval request needs revision"}
+        </strong>
+        <p style={DECISION_DETAIL_STYLE}>
+          {canCreate
+            ? "This writes a governed approval_request row. It does not contact the vendor or claim realized value."
+            : canDecide
+              ? "A named approver must record the decision before outreach or commercial commitment."
+              : canRecordOutcome
+                ? "This records agreement state only. Finance/Tower still controls realized value."
+                : "The prior request was sent back; revise the target position, then resubmit."}
+        </p>
+      </div>
+      {canDecide ? (
+        <textarea
+          value={rationale}
+          onChange={(event) => setRationale(event.target.value)}
+          placeholder="Decision rationale for the audit trail..."
+          style={WORKFLOW_TEXTAREA_STYLE}
+          aria-label="Approval rationale"
+        />
+      ) : null}
+      <div style={WORKFLOW_ACTIONS_STYLE}>
+        {canCreate || sentBackRequest ? (
+          <button
+            type="button"
+            disabled={state === "busy"}
+            onClick={() => submit("create_approval_request")}
+            style={PRIMARY_BUTTON_STYLE}
+            data-testid="create-optimize-approval-request"
+          >
+            {state === "busy" ? "Writing..." : "Create request"}
+          </button>
+        ) : null}
+        {canDecide ? (
+          <>
+            <button
+              type="button"
+              disabled={state === "busy"}
+              onClick={() => submit("send_back_request")}
+              style={GHOST_BUTTON_STYLE}
+              data-testid="send-back-optimize-approval-request"
+            >
+              Send back
+            </button>
+            <button
+              type="button"
+              disabled={state === "busy"}
+              onClick={() => submit("approve_request")}
+              style={PRIMARY_BUTTON_STYLE}
+              data-testid="approve-optimize-approval-request"
+            >
+              Approve
+            </button>
+          </>
+        ) : null}
+        {canRecordOutcome ? (
+          <button
+            type="button"
+            disabled={state === "busy"}
+            onClick={() => submit("record_agreed_outcome")}
+            style={PRIMARY_BUTTON_STYLE}
+            data-testid="record-optimize-negotiated-outcome"
+          >
+            Record outcome
+          </button>
+        ) : null}
+      </div>
+      {message ? (
+        <div
+          style={state === "error" ? ERROR_STYLE : SUCCESS_STYLE}
+          data-testid="workflow-action-message"
+        >
+          {message}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1595,6 +1783,44 @@ const START_WRAP_STYLE: CSSProperties = {
   justifyItems: "end",
 };
 
+const WORKFLOW_ACTION_PANEL_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderLeft: `3px solid ${ANALYTICS.BLUE}`,
+  borderRadius: 8,
+  background: "#f8fbff",
+  padding: 12,
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) minmax(220px, 320px) auto",
+  gap: 12,
+  alignItems: "center",
+};
+
+const WORKFLOW_ACTION_TITLE_STYLE: CSSProperties = {
+  display: "block",
+  marginTop: 3,
+  fontSize: 15,
+  lineHeight: 1.25,
+};
+
+const WORKFLOW_TEXTAREA_STYLE: CSSProperties = {
+  width: "100%",
+  minHeight: 68,
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderRadius: 8,
+  padding: 10,
+  font: "inherit",
+  fontSize: 13,
+  resize: "vertical",
+  background: ANALYTICS.CARD,
+};
+
+const WORKFLOW_ACTIONS_STYLE: CSSProperties = {
+  display: "flex",
+  gap: 8,
+  justifyContent: "flex-end",
+  flexWrap: "wrap",
+};
+
 const NEXT_BAR_STYLE: CSSProperties = {
   border: `1px solid ${ANALYTICS.LINE}`,
   borderLeft: `3px solid ${ANALYTICS.INK}`,
@@ -1684,4 +1910,10 @@ const ERROR_STYLE: CSSProperties = {
   fontSize: 12,
   maxWidth: 260,
   textAlign: "right",
+};
+
+const SUCCESS_STYLE: CSSProperties = {
+  color: ANALYTICS.GREEN,
+  fontSize: 12,
+  gridColumn: "1 / -1",
 };
