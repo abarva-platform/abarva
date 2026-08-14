@@ -25,7 +25,7 @@
  *      grounding.
  *
  *   2. Compounding it: the event-detail canvas passes the literal surface
- *      value `"source-detail"` (see UniversalCanvasShell.tsx and
+ *      value `"source-detail"` (see SourceAnalyticsCanvas.tsx and
  *      source/events/[eventId]/approval/page.tsx), but the route's
  *      `isSourceSurface()` helper only matched `"/source"` / `"/source/*"`.
  *      So on the actual event-detail page, the CORRECTLY Source-scoped
@@ -56,9 +56,7 @@ describe("agent route · Source aVa polish gate — Gap 2 (tenant-broker off-top
   const source = readRoute();
 
   it("derives agentTenantContextBlockForPrompt from the SAME suppression predicate as Gap 1's fix", () => {
-    expect(source).toContain(
-      "const agentTenantContextBlockForPrompt =",
-    );
+    expect(source).toContain("const agentTenantContextBlockForPrompt =");
     // Must reuse the exact predicate #4602 wired for the other leak path —
     // not a new, potentially-divergent gate.
     const derivationSite = source.slice(
@@ -85,18 +83,23 @@ describe("agent route · Source aVa polish gate — Gap 2 (tenant-broker off-top
     // only asserts the array reference changed.)
     const systemPromptArrayStart = source.indexOf("const systemPrompt = [");
     const systemPromptArrayEnd = source.indexOf(
-      ".filter((s) => s !== \"\" && s !== undefined && s !== null)",
+      '.filter((s) => s !== "" && s !== undefined && s !== null)',
       systemPromptArrayStart,
     );
     expect(systemPromptArrayStart).toBeGreaterThan(-1);
     expect(systemPromptArrayEnd).toBeGreaterThan(systemPromptArrayStart);
-    const arrayBody = source.slice(systemPromptArrayStart, systemPromptArrayEnd);
+    const arrayBody = source.slice(
+      systemPromptArrayStart,
+      systemPromptArrayEnd,
+    );
     expect(arrayBody).not.toMatch(/\n\s*agentTenantContextBlock,\n/);
     expect(arrayBody).toMatch(/\n\s*agentTenantContextBlockForPrompt,\n/);
   });
 
   it("recognizes the literal 'source-detail' surface in isSourceSurface", () => {
-    expect(source).toContain('function isSourceSurface(surface: string): boolean {');
+    expect(source).toContain(
+      "function isSourceSurface(surface: string): boolean {",
+    );
     const fnStart = source.indexOf(
       "function isSourceSurface(surface: string): boolean {",
     );
@@ -111,7 +114,7 @@ describe("isSourceSurface semantics (Gap 2) — reimplemented + asserted against
   // values used by the real Source event-detail canvas, so a future refactor
   // of the helper's implementation still has to satisfy these concrete
   // cases. Mirrors the values in:
-  //   - src/components/source/canvas/UniversalCanvasShell.tsx (surface="source-detail")
+  //   - src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx (surface="source-detail")
   //   - src/app/(maestro)/source/events/[eventId]/approval/page.tsx (surface="source-detail")
   function isSourceSurface(surface: string): boolean {
     return (

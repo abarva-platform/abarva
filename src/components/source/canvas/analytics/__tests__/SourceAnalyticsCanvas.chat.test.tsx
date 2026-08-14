@@ -34,8 +34,7 @@ jest.mock("next/navigation", () => ({
 }));
 
 // AppShell -> AppTopBar uses Clerk's useUser — mock so this renders under
-// jsdom without a real ClerkProvider, matching
-// source-event-canvas-render.test.tsx's pattern for the same shell tree.
+// jsdom without a real ClerkProvider, matching the analytics canvas shell tests.
 jest.mock("@clerk/nextjs", () => ({
   useUser: () => ({ isLoaded: true, user: null }),
   useClerk: () => ({ signOut: jest.fn() }),

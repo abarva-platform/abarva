@@ -85,7 +85,6 @@
     "src/components/source/canvas/SimpleFrontErrorBoundary.tsx",
     "src/components/source/canvas/SimpleStageFront.tsx",
     "src/components/source/canvas/StageNextMoveCard.tsx",
-    "src/components/source/canvas/UniversalCanvasShell.tsx",
     "src/components/source/canvas/bafo/BafoStageView.tsx",
     "src/components/source/canvas/bafo/ConcessionLedger.tsx",
     "src/components/source/canvas/bafo/LeverEnvelopeTable.tsx",
