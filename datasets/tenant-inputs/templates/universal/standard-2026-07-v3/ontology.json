@@ -420,10 +420,19 @@
         "measured_by",
         "impacts",
         "has_risk",
-        "discusses"
+        "discusses",
+        "hosted_on",
+        "provided_by",
+        "operated_by",
+        "technology_owned_by",
+        "feeds"
       ],
       "rule": "A node with no directly declared facet value inherits the union of the facet values of every function it connects to. A node connected to no function has an UNDECLARED segment and must be reported, not defaulted.",
-      "antiPattern": "Do not default an unsegmented node to 'back office'. An undeclared segment is a gap to be surfaced; a defaulted one is a wrong answer that looks confident."
+      "antiPattern": "Do not default an unsegmented node to 'back office'. An undeclared segment is a gap to be surfaced; a defaulted one is a wrong answer that looks confident.",
+      "excludedFromPropagation": {
+        "integrates_with": "Symmetric and promiscuous. A shared integration bus touches everything, so propagating through it would hand almost every node every segment -- technically defensible, practically uninformative, and it would hide the nodes that genuinely have no segment."
+      },
+      "hopDistance": "Segments propagate outward from functions up to 3 hops and the distance is written to `inherited_segment_hops`. A one-hop system supporting a function and a three-hop risk attached to its infrastructure are not the same strength of claim and must not look alike."
     },
     "requiredContractColumns": {
       "01_business_functions.csv": [

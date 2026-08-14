@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "tenantKey": "skyharbor-air",
+  "status": "DRAFT — proposed by analysis, awaiting client/SME correction",
+  "why": "Segmentation is declared once here, on the 22-row function dimension, and inherited through the graph by every system, contract, KPI, org unit and interview that connects to a function. Nobody hand-tags 503 systems.",
+  "reviewNote": "Every assignment below is a proposal. The ones most likely to be wrong are flagged in `judgementCall`. Correcting this file and re-running the script is the entire change — no other file is edited by hand.",
+
+  "lineOfBusinessVocabulary": [
+    { "value": "mainline", "label": "Mainline passenger network" },
+    { "value": "regional", "label": "Regional carrier (acquired 2023)" },
+    { "value": "cargo", "label": "Cargo and freight" },
+    { "value": "loyalty", "label": "Loyalty and co-brand card" },
+    { "value": "mro", "label": "Maintenance, repair and overhaul" },
+    { "value": "enterprise", "label": "Enterprise shared services (not attributable to one line of business)" }
+  ],
+
+  "functionTierMembership": {
+    "front": "Passenger engagement and experience: booking, check-in, loyalty, disruption communication, contact centre, onboard service",
+    "middle": "Core operating engine: flight, crew and airport operations, MRO, network planning, revenue management, cargo, safety",
+    "back": "Enterprise support: finance, HR, procurement, legal, corporate IT, real estate, strategy"
+  },
+
+  "functions": [
+    { "function_name": "Flight Operations", "line_of_business": "mainline;regional", "function_tier": "middle" },
+    { "function_name": "Crew Operations", "line_of_business": "mainline;regional", "function_tier": "middle" },
+    { "function_name": "Maintenance & Engineering (MRO)", "line_of_business": "mro;mainline;regional", "function_tier": "middle" },
+    { "function_name": "Revenue Management & Pricing", "line_of_business": "mainline;regional;cargo", "function_tier": "middle" },
+    { "function_name": "Network Planning & Scheduling", "line_of_business": "mainline;regional;cargo", "function_tier": "middle" },
+    { "function_name": "Loyalty & Customer Marketing", "line_of_business": "loyalty;mainline", "function_tier": "front" },
+    { "function_name": "Airport & Ground Operations", "line_of_business": "mainline;regional;cargo", "function_tier": "middle" },
+    { "function_name": "Cargo & Logistics", "line_of_business": "cargo", "function_tier": "middle" },
+    {
+      "function_name": "In-Flight Services & Catering",
+      "line_of_business": "mainline;regional",
+      "function_tier": "front",
+      "judgementCall": "Placed in front because it is passenger-facing service delivery. A operations-led view would call it middle. Worth a decision — it moves catering spend between the front and middle slices of every cube."
+    },
+    { "function_name": "Distribution, Sales & E-Commerce", "line_of_business": "mainline;regional;cargo;loyalty", "function_tier": "front" },
+    { "function_name": "Customer Experience & Contact Center", "line_of_business": "mainline;regional;loyalty", "function_tier": "front" },
+    { "function_name": "Finance & Accounting", "line_of_business": "enterprise", "function_tier": "back" },
+    { "function_name": "Procurement & Supply Chain", "line_of_business": "enterprise", "function_tier": "back" },
+    { "function_name": "Human Resources & Labor Relations", "line_of_business": "enterprise", "function_tier": "back" },
+    { "function_name": "Legal, Regulatory & Compliance", "line_of_business": "enterprise", "function_tier": "back" },
+    {
+      "function_name": "Safety & Security",
+      "line_of_business": "enterprise;mainline;regional;cargo",
+      "function_tier": "middle",
+      "judgementCall": "Placed in middle because in an airline safety is an operating function, not a support one. A pure corporate-functions view would call it back office."
+    },
+    { "function_name": "Corporate Real Estate & Facilities", "line_of_business": "enterprise", "function_tier": "back" },
+    { "function_name": "Information Technology & Digital", "line_of_business": "enterprise", "function_tier": "back" },
+    { "function_name": "Cybersecurity & IT Risk", "line_of_business": "enterprise", "function_tier": "back" },
+    { "function_name": "Data, Analytics & AI", "line_of_business": "enterprise", "function_tier": "back" },
+    {
+      "function_name": "Fuel Management & Sustainability",
+      "line_of_business": "mainline;regional;cargo",
+      "function_tier": "middle",
+      "judgementCall": "Fuel is both an operating input and a hedged commodity managed by treasury. Placed in middle on the operating reading; a finance-led view would split it."
+    },
+    { "function_name": "Corporate Strategy & M&A Integration", "line_of_business": "enterprise;regional", "function_tier": "back" }
+  ]
+}
