@@ -229,6 +229,26 @@ function readHeaderColumns(file: string): string[] {
   return columns.filter((column) => column.length > 0).map((column) => column.replace(/^﻿/, ""));
 }
 
+/**
+ * A file whose rows end inconsistently — some CRLF, some LF — parses differently depending on
+ * which reader opens it. One tenant carried this and it hid a vendor, four workforce roles and
+ * 503 ticket rows from one parser while another read them fine. The symptoms surfaced as four
+ * unrelated defects; the cause was a handful of bytes.
+ *
+ * Every active tenant is consistent today, so this can be strict from the outset.
+ */
+function mixedLineEndings(file: string): number {
+  const raw = fs.readFileSync(file);
+  let crlf = 0;
+  let bare = 0;
+  for (let i = 0; i < raw.length; i += 1) {
+    if (raw[i] !== 0x0a) continue;
+    if (i > 0 && raw[i - 1] === 0x0d) crlf += 1;
+    else if (i < raw.length - 1) bare += 1; // a trailing newline at EOF is harmless
+  }
+  return crlf > 0 && bare > 0 ? bare : 0;
+}
+
 const numericPrefixOf = (file: string): string => /^(\d{2})_/.exec(path.basename(file))?.[1] ?? "";
 
 /**
@@ -441,6 +461,18 @@ function run(): void {
 
   const tenantReports = registry.activeTenants.map((tenant) => {
     const files = sourceFilesForTenant(tenant);
+
+    const inconsistentTerminators = files
+      .map((file) => ({ path: `${file.packetId}/${file.relativePath}`, count: mixedLineEndings(file.absolutePath) }))
+      .filter((entry) => entry.count > 0);
+    if (inconsistentTerminators.length > 0) {
+      failures.push(
+        `${tenant.tenantKey}: ${inconsistentTerminators.length} file(s) mix CRLF and LF row terminators ` +
+          `(${inconsistentTerminators.slice(0, 3).map((e) => `${e.path} x${e.count}`).join('; ')}). ` +
+          'Readers disagree on how many rows such a file has, so rows go missing silently. ' +
+          'Normalise with scripts/data/normalise-csv-line-endings.mjs.',
+      );
+    }
     const columnConformance = columnConformanceForTenant(tenant, manifest);
     const nonConformant = columnConformance.filter((entry) => entry.state !== "conformant");
     const waiver = waivers.get(tenant.tenantKey);
@@ -500,6 +532,7 @@ function run(): void {
       csvRows: files.reduce((sum, file) => sum + file.csvRows, 0),
       mappedCsvRows: files.filter((file) => file.domain).reduce((sum, file) => sum + file.csvRows, 0),
       domainDepth,
+      inconsistentLineEndingFiles: inconsistentTerminators.length,
       columnContract: {
         declared: columnConformance.length,
         conformant: columnConformance.length - nonConformant.length,
