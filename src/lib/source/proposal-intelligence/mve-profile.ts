@@ -1542,6 +1542,7 @@ function buildEvaluationScorecardRows(
       guidance: criterion.guidance,
       scores: profiles.map((profile) => {
         const derived = scoreCriterionFromEvidence(profile, spec, peerCosts);
+        const readiness = scoreReadinessFromEvidence(derived);
         return {
           vendorId: profile.vendorId,
           vendorName: profile.vendorName,
@@ -1556,10 +1557,46 @@ function buildEvaluationScorecardRows(
               ? "Parsed response package"
               : "No parsed evidence for this criterion"),
           confidence: derived.confidence,
+          scoreEligibility: readiness.eligibility,
+          scoreReadinessLabel: readiness.label,
+          scoreReadinessAction: readiness.action,
         };
       }),
     };
   });
+}
+
+function scoreReadinessFromEvidence(
+  derived: ReturnType<typeof scoreCriterionFromEvidence>,
+): {
+  eligibility: VendorEvaluationScorecardRow["scores"][number]["scoreEligibility"];
+  label: string;
+  action: string;
+} {
+  if (!derived.scorable) {
+    return {
+      eligibility: "not_scoreable",
+      label: "Not scoreable",
+      action: "Load parsed evidence before suggesting a score.",
+    };
+  }
+  if (
+    derived.confidence === "low" ||
+    derived.drivers.some((driver) =>
+      /missing|unsupported|no structured exhibit/i.test(driver),
+    )
+  ) {
+    return {
+      eligibility: "clarification_required",
+      label: "Needs clarification",
+      action: "Resolve the cited evidence gap before final scoring.",
+    };
+  }
+  return {
+    eligibility: "scoreable",
+    label: "Scoreable",
+    action: "Ready for named evaluator review. AI suggestion is not final.",
+  };
 }
 
 function buildEvaluationVendorSummaries(args: {

@@ -53,6 +53,14 @@ describe("VendorEvaluationScorecardPanel", () => {
     expect(html).toContain("PDF");
     expect(html).toContain("SkyHarbor Air AMS Outsourcing RFP");
     expect(html).toContain("named client reviewers still own final scores");
+    expect(html).toContain("Scoreable");
+    expect(html).toContain("Needs clarification");
+    expect(html).toContain(
+      "Ready for named evaluator review. AI suggestion is not final.",
+    );
+    expect(html).toContain(
+      "Resolve the cited evidence gap before final scoring.",
+    );
     expect(html).toMatch(/weighted/i);
     expect(html).toContain("Vendor A");
     expect(html).toContain("Vendor B");
