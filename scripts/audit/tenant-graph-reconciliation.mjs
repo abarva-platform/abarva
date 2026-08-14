@@ -244,11 +244,14 @@ function evaluateRelationshipRow({ tenantKey, row, rowNumber, nodeIndex, normali
   };
 
   if (reasons.length > 0) {
+    const quarantineClass = classifyQuarantineReasons(reasons);
     return {
       candidate: null,
       quarantine: {
         ...base,
         quarantineReasons: reasons.join('; '),
+        quarantineClass,
+        quarantineDisposition: dispositionForQuarantineClass(quarantineClass),
         disposition: 'quarantined-no-graph-materialization',
       },
     };
@@ -263,6 +266,49 @@ function evaluateRelationshipRow({ tenantKey, row, rowNumber, nodeIndex, normali
   };
 }
 
+function classifyQuarantineReason(reason) {
+  if (reason === 'relationships-file-absent') return 'missing_relationship_source';
+  if (reason === 'tenant-key-mismatch') return 'tenant_identity_violation';
+  if (reason.startsWith('missing-evidence')) return 'evidence_gap';
+  if (reason.startsWith('missing-')) return 'empty_endpoint_or_required_field_missing';
+  if (reason === 'unresolved-from-node' || reason === 'unresolved-to-node') return 'dangling_reference';
+  if (reason.startsWith('unknown-')) return 'vocabulary_or_endpoint_type_defect';
+  return 'unclassified_quarantine';
+}
+
+function classifyQuarantineReasons(reasons) {
+  const classes = reasons.map((reason) => classifyQuarantineReason(reason));
+  const priority = [
+    'missing_relationship_source',
+    'tenant_identity_violation',
+    'empty_endpoint_or_required_field_missing',
+    'dangling_reference',
+    'vocabulary_or_endpoint_type_defect',
+    'evidence_gap',
+    'unclassified_quarantine',
+  ];
+  return priority.find((classification) => classes.includes(classification)) ?? 'unclassified_quarantine';
+}
+
+function dispositionForQuarantineClass(quarantineClass) {
+  switch (quarantineClass) {
+    case 'missing_relationship_source':
+      return 'declare-no-materializable-graph-until-relationship-source-exists';
+    case 'tenant_identity_violation':
+      return 'quarantine-until-source-tenant-identity-is-corrected';
+    case 'empty_endpoint_or_required_field_missing':
+      return 'permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared';
+    case 'dangling_reference':
+      return 'catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge';
+    case 'vocabulary_or_endpoint_type_defect':
+      return 'repair-only-through-approved-canonical-dictionary-or-endpoint-type-alias';
+    case 'evidence_gap':
+      return 'quarantine-until-source-evidence-basis-is-present';
+    default:
+      return 'quarantine-until-specific-owner-approved-repair-path-exists';
+  }
+}
+
 function summarizeQuarantineReasons(rows) {
   const counts = new Map();
   for (const row of rows) {
@@ -273,7 +319,15 @@ function summarizeQuarantineReasons(rows) {
   }
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-    .map(([reason, count]) => ({ reason, count }));
+    .map(([reason, count]) => {
+      const quarantineClass = classifyQuarantineReason(reason);
+      return {
+        reason,
+        count,
+        quarantineClass,
+        quarantineDisposition: dispositionForQuarantineClass(quarantineClass),
+      };
+    });
 }
 
 async function loadContracts() {
@@ -337,6 +391,8 @@ async function reconcileTenant({ tenant, outDir, contracts }) {
       confidence: '',
       knownGaps: '',
       quarantineReasons: 'relationships-file-absent',
+      quarantineClass: 'missing_relationship_source',
+      quarantineDisposition: dispositionForQuarantineClass('missing_relationship_source'),
       disposition: 'quarantined-no-graph-materialization',
     });
   }
@@ -402,6 +458,8 @@ function quarantineHeaders() {
   return {
     ...edgeHeaders(),
     quarantineReasons: '',
+    quarantineClass: '',
+    quarantineDisposition: '',
   };
 }
 
@@ -462,6 +520,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 
 export {
   buildNodeIndex,
+  classifyQuarantineReason,
+  classifyQuarantineReasons,
+  dispositionForQuarantineClass,
   evaluateRelationshipRow,
   objectTypeForEndpoint,
   profileContractFiles,
