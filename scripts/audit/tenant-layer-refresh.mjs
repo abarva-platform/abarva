@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Two-tenant (or N-tenant) Layer 1-4 refresh preparation.
+ * Tenant Layer 1-4 refresh preparation.
  *
  * Classifies every tenant context artifact by architecture layer and truth eligibility,
  * derives conflicts mechanically rather than by assertion, prepares the Layer 1 governed
@@ -65,7 +65,7 @@ function parseArgs(argv) {
   return args;
 }
 
-const abs = (relativePath) => path.join(ROOT, relativePath);
+const abs = (relativePath) => path.resolve(ROOT, relativePath);
 const exists = (relativePath) => fs.existsSync(abs(relativePath));
 const sha256 = (relativePath) =>
   crypto.createHash('sha256').update(fs.readFileSync(abs(relativePath))).digest('hex');
@@ -127,6 +127,108 @@ function csvShape(relativePath) {
   } catch {
     return { rows: 0, columns: [], parseErrors: -1 };
   }
+}
+
+const mappingProfileDomainAliases = {
+  'evidence-registry-minimal/v1': ['evidence_sources'],
+  'organization-business-functions/v1': ['business_functions'],
+  'organization-ownership/v1': ['org_ownership'],
+  'organization-workforce-roles/v1': ['workforce_roles'],
+  'vendor-contracts/v1': ['vendors_contracts'],
+  'spend-value/v1': ['spend_value'],
+  'managed-services-scope/v1': ['service_scope_managed_services'],
+  'metrics-outcomes/v1': ['metrics_outcomes'],
+  'data-assets-integrations/v1': ['data_assets_integrations'],
+  'infrastructure-platforms/v1': ['infrastructure_platforms'],
+  'programs-initiatives/v1': ['programs_initiatives'],
+  'ai-automation-use-cases/v1': ['ai_automation_use_cases'],
+  'risks-controls/v1': ['risks_controls'],
+  'operational-process-evidence/v1': ['operational_process_evidence'],
+  'enterprise-profile-v3/v1': ['enterprise_profile'],
+  'applications-systems-v3/v1': ['applications_systems'],
+  'evidence-sources-v3/v1': ['evidence_sources'],
+  'industry-context-patterns/v1': ['industry_context_patterns'],
+  'expert-lenses/v1': ['expert_lenses'],
+};
+
+const legacyCompatibilityMappingProfiles = new Set([
+  'applications-systems-estate/v1',
+  'enterprise-profile-foundation/v1',
+  'enterprise-profile-minimal/v1',
+  'evidence-registry-minimal/v1',
+]);
+
+function activeLayer2MappingProfiles(profiles) {
+  return (profiles ?? []).filter((profile) => !legacyCompatibilityMappingProfiles.has(profile.mappingProfile));
+}
+
+const adapterFamilySourceClassCoverage = {
+  'strategy-and-operating-model': ['enterprise_profile', 'industry_context_patterns'],
+  'organization-and-workforce': ['organization_functions'],
+  'application-cmdb-and-architecture': ['applications_systems', 'infrastructure_platforms', 'evidence_registry'],
+  'vendor-clm-and-procurement': ['vendors_contracts', 'service_scope_managed_services'],
+  'finance-ap-gl-and-fpa': ['spend_value', 'metrics_outcomes', 'vendors_contracts'],
+  'data-catalog-integration-and-lineage': [
+    'data_assets_integrations',
+    'infrastructure_platforms',
+    'ai_automation_use_cases',
+  ],
+  'pmo-portfolio-and-benefits': ['programs_priorities', 'ai_automation_use_cases', 'metrics_outcomes', 'risks_controls'],
+  'grc-security-and-service-management': [
+    'applications_systems',
+    'risks_controls',
+    'metrics_outcomes',
+    'operational_process_evidence',
+    'evidence_registry',
+  ],
+  'kpi-and-operational-telemetry': [
+    'operational_process_evidence',
+    'metrics_outcomes',
+    'service_scope_managed_services',
+    'organization_functions',
+  ],
+  'interview-governance-and-evidence-requests': ['evidence_registry', 'expert_lenses'],
+};
+
+const domainFromContractFile = (file) => path.basename(file, '.csv').replace(/^\d{2}_/, '');
+const explicitlyMappedDomains = new Set(Object.values(mappingProfileDomainAliases).flat());
+
+function profileAppliesToDomain(profile, domain) {
+  const explicitDomains = mappingProfileDomainAliases[profile.mappingProfile];
+  if (explicitDomains) return explicitDomains.includes(domain);
+  if (explicitlyMappedDomains.has(domain)) return false;
+  return profile.sourceClass === domain;
+}
+
+function profilesForContractFile(contractFile, profiles) {
+  const domain = domainFromContractFile(contractFile);
+  return (profiles ?? []).filter((profile) => profileAppliesToDomain(profile, domain));
+}
+
+function profilesForWorkstream(workstream, profiles) {
+  const family = workstream.sourceAdapterFamily ?? '';
+  const supportedSourceClasses = adapterFamilySourceClassCoverage[family] ?? [];
+  if (supportedSourceClasses.length > 0) {
+    const matched = new Map();
+    for (const target of workstream.canonicalTargets ?? []) {
+      for (const profile of profilesForContractFile(target, profiles)) {
+        if (supportedSourceClasses.includes(profile.sourceClass)) {
+          matched.set(profile.mappingProfile, profile);
+        }
+      }
+    }
+    return [...matched.values()];
+  }
+  if (family) return [];
+
+  const targets = workstream.canonicalTargets ?? [];
+  const matched = new Map();
+  for (const target of targets) {
+    for (const profile of profilesForContractFile(target, profiles)) {
+      matched.set(profile.mappingProfile, profile);
+    }
+  }
+  return [...matched.values()];
 }
 
 // --------------------------------------------------------------------------------------
@@ -234,6 +336,23 @@ async function readMappingProfiles() {
     return mappingModule.BUILT_IN_MAPPING_PROFILES ?? [];
   } catch (error) {
     console.warn(`  warning: could not load mapping profiles (${error.message}); adapter gaps reported as unknown`);
+    return null;
+  }
+}
+
+async function buildLayer3ValidationScaffold(profiles) {
+  if (!profiles) return null;
+  try {
+    const layer3Module = await import('../../src/lib/enterprise-data/contracts/layer3-validation.ts');
+    return {
+      ...layer3Module.buildLayer3ValidationScaffoldReport(activeLayer2MappingProfiles(profiles)),
+      canonicalObjectDefinitions: layer3Module.CANONICAL_OBJECT_REGISTRY.length,
+      factAuthorityDefinitions: layer3Module.FACT_AUTHORITY_REGISTRY.length,
+      relationshipDictionaryEntries: layer3Module.RELATIONSHIP_TYPE_DICTIONARY.length,
+      mode: 'scaffold-only-no-canonical-write-no-graph-materialization',
+    };
+  } catch (error) {
+    console.warn(`  warning: could not load Layer 3 validation scaffold (${error.message})`);
     return null;
   }
 }
@@ -571,6 +690,7 @@ function claimRows(analysis) {
  */
 function layer2Rows(analysis, contract, profiles) {
   const tenant = analysis.tenant;
+  const activeProfiles = activeLayer2MappingProfiles(profiles);
   const activeRoot = analysis.activeRoot;
   const activeCsvs = (analysis.roots.find((root) => root.relativePath === activeRoot)?.files ?? []).filter(
     (file) => file.endsWith('.csv'),
@@ -578,7 +698,7 @@ function layer2Rows(analysis, contract, profiles) {
   const columnsByFile = new Map(activeCsvs.map((file) => [file, csvShape(file).columns]));
 
   const implementedFamilies = new Set(
-    (profiles ?? []).map((profile) => profile.sourceClass).filter(Boolean),
+    activeProfiles.map((profile) => profile.sourceClass).filter(Boolean),
   );
 
   // Declared adapter family per workstream vs what is actually implemented.
@@ -590,12 +710,10 @@ function layer2Rows(analysis, contract, profiles) {
       .filter((row) => row && row.resolvedFile)
       .map((row) => `${activeRoot}/${row.resolvedFile}`);
 
-    // A declared family counts as implemented only if some mapping profile's source class
-    // plausibly covers it; the profile registry is keyed by source class, not family name.
-    const matchedProfiles = (profiles ?? []).filter((profile) =>
-      targets.some((target) => target.includes(profile.sourceClass.replace(/_/g, '_'))) ||
-      family.includes(profile.sourceClass.split('_')[0]),
-    );
+    // The profile registry is keyed by canonical source class, while workstreams
+    // declare client-facing adapter families. Match through the canonical target
+    // files so family coverage is auditable instead of guessed from display text.
+    const matchedProfiles = profilesForWorkstream(workstream, activeProfiles);
 
     return {
       tenantKey: tenant,
@@ -615,14 +733,16 @@ function layer2Rows(analysis, contract, profiles) {
 
   // Field-level satisfaction per implemented profile against this tenant's own files.
   const dryRunRows = [];
-  for (const profile of profiles ?? []) {
+  for (const profile of activeProfiles) {
     const required = profile.rules.filter((rule) => rule.required).map((rule) => rule.sourceField);
     const optional = profile.rules.filter((rule) => !rule.required).map((rule) => rule.sourceField);
+    const candidateFiles = activeCsvs.filter((file) => profileAppliesToDomain(profile, domainFromContractFile(file)));
 
     // "Best" only means anything once at least one required field is present; otherwise
     // reporting a filename would imply a match that does not exist.
     let best = { file: '', satisfied: 0, missing: required };
-    for (const [file, columns] of columnsByFile) {
+    for (const file of candidateFiles) {
+      const columns = columnsByFile.get(file) ?? [];
       const satisfied = required.filter((field) => columns.includes(field));
       if (satisfied.length > best.satisfied) {
         best = { file, satisfied: satisfied.length, missing: required.filter((field) => !columns.includes(field)) };
@@ -654,11 +774,161 @@ function layer2Rows(analysis, contract, profiles) {
     });
   }
 
+  const workstreamsByTarget = new Map();
+  for (const workstream of contract.workstreams.clientFacingWorkstreams) {
+    for (const target of workstream.canonicalTargets ?? []) {
+      if (!workstreamsByTarget.has(target)) workstreamsByTarget.set(target, []);
+      workstreamsByTarget.get(target).push(workstream);
+    }
+  }
+
+  const dimensionRows = analysis.dimensionRows.map((dimension) => {
+    const workstreams = workstreamsByTarget.get(dimension.contractFile) ?? [];
+    const matchedProfiles = profilesForContractFile(dimension.contractFile, activeProfiles);
+    const requiredFields = [
+      ...new Set(matchedProfiles.flatMap((profile) => profile.rules.filter((rule) => rule.required).map((rule) => rule.sourceField))),
+    ];
+    const sourceFile = dimension.resolvedFile ? `${activeRoot}/${dimension.resolvedFile}` : '';
+    const sourceColumns = sourceFile ? (columnsByFile.get(sourceFile) ?? []) : [];
+    const missingRequiredFields = requiredFields.filter((field) => !sourceColumns.includes(field));
+    const adapterState =
+      matchedProfiles.length === 0
+        ? 'no-implemented-adapter'
+        : !sourceFile
+          ? 'source-file-absent'
+          : missingRequiredFields.length === 0
+            ? 'would-run'
+            : 'would-fail-on-required-fields';
+
+    return {
+      tenantKey: tenant,
+      contractFile: dimension.contractFile,
+      resolvedFile: dimension.resolvedFile || 'absent',
+      adapterFamilies: [...new Set(workstreams.map((workstream) => workstream.sourceAdapterFamily ?? ''))]
+        .filter(Boolean)
+        .join('; '),
+      workstreamIds: workstreams.map((workstream) => workstream.workstreamId).join('; '),
+      implementedMappingProfiles: matchedProfiles.map((profile) => profile.mappingProfile).join('; '),
+      adapterState,
+      dataRows: dimension.dataRows,
+      sourceColumns: sourceColumns.length,
+      requiredFields: requiredFields.length,
+      requiredFieldsSatisfied: requiredFields.length - missingRequiredFields.length,
+      requiredFieldsMissing: missingRequiredFields.length,
+      missingFieldNames: missingRequiredFields.join('; '),
+      executed: 'no — reconciliation only, no transform, no write',
+    };
+  });
+
   return {
     familyRows,
     dryRunRows,
+    dimensionRows,
     implementedFamilies: [...implementedFamilies],
-    profileCount: profiles ? profiles.length : 'unknown',
+    profileCount: activeProfiles.length,
+    legacyCompatibilityProfileCount: profiles ? profiles.length - activeProfiles.length : 'unknown',
+  };
+}
+
+function adapterFamilyCoverageRegistry(contract, profiles) {
+  const profileList = profiles ?? [];
+  const activeProfiles = activeLayer2MappingProfiles(profileList);
+  const workstreams = contract.workstreams.clientFacingWorkstreams.map((workstream) => {
+    const matchedProfiles = profilesForWorkstream(workstream, activeProfiles);
+    return {
+      workstreamId: workstream.workstreamId,
+      workstreamName: workstream.workstreamName,
+      declaredAdapterFamily: workstream.sourceAdapterFamily ?? '',
+      canonicalTargets: workstream.canonicalTargets ?? [],
+      implementedMappingProfiles: matchedProfiles.map((profile) => ({
+        mappingProfile: profile.mappingProfile,
+        sourceClass: profile.sourceClass,
+        version: profile.version ?? '',
+        requiredFields: profile.rules.filter((rule) => rule.required).map((rule) => rule.sourceField),
+        optionalFields: profile.rules.filter((rule) => !rule.required).map((rule) => rule.sourceField),
+      })),
+      adapterState: matchedProfiles.length ? 'partially-implemented' : 'no-implemented-adapter',
+    };
+  });
+
+  return {
+    templateSetId: contract.manifest.templateSetId,
+    declaredWorkstreamAdapterFamilies: workstreams.length,
+    activeMappingProfiles: activeProfiles.length,
+    legacyCompatibilityMappingProfiles: profileList.length - activeProfiles.length,
+    implementedMappingProfiles: profileList.length,
+    activeSourceClasses: [...new Set(activeProfiles.map((profile) => profile.sourceClass))].sort(),
+    implementedSourceClasses: [...new Set(profileList.map((profile) => profile.sourceClass))].sort(),
+    workstreams,
+  };
+}
+
+function layer2DryRunFailureReport(generatedAt, tenants, allAdapterFamilyRows, allAdapterDryRunRows, allAdapterDimensionRows) {
+  const familyFailures = allAdapterFamilyRows
+    .filter((row) => row.adapterState === 'no-implemented-adapter')
+    .map((row) => ({
+      failureType: 'adapter-family-missing',
+      tenantKey: row.tenantKey,
+      workstreamId: row.workstreamId,
+      declaredAdapterFamily: row.declaredAdapterFamily,
+      message: row.gapNote,
+    }));
+
+  const profileFailures = allAdapterDryRunRows
+    .filter((row) => row.dryRunResult !== 'would-run')
+    .map((row) => ({
+      failureType: 'mapping-profile-required-fields-unsatisfied',
+      tenantKey: row.tenantKey,
+      mappingProfile: row.mappingProfile,
+      sourceClass: row.sourceClass,
+      bestMatchingSourceFile: row.bestMatchingSourceFile,
+      requiredFields: Number(row.requiredFields),
+      requiredFieldsSatisfied: Number(row.requiredFieldsSatisfied),
+      requiredFieldsMissing: Number(row.requiredFieldsMissing),
+      missingFieldNames: row.missingFieldNames,
+      dryRunResult: row.dryRunResult,
+    }));
+
+  const dimensionFailures = allAdapterDimensionRows
+    .filter((row) => row.adapterState !== 'would-run')
+    .map((row) => ({
+      failureType:
+        row.adapterState === 'no-implemented-adapter'
+          ? 'canonical-dimension-has-no-mapping-profile'
+          : row.adapterState,
+      tenantKey: row.tenantKey,
+      contractFile: row.contractFile,
+      resolvedFile: row.resolvedFile,
+      adapterFamilies: row.adapterFamilies,
+      workstreamIds: row.workstreamIds,
+      implementedMappingProfiles: row.implementedMappingProfiles,
+      requiredFields: Number(row.requiredFields),
+      requiredFieldsSatisfied: Number(row.requiredFieldsSatisfied),
+      requiredFieldsMissing: Number(row.requiredFieldsMissing),
+      missingFieldNames: row.missingFieldNames,
+    }));
+
+  return {
+    generatedAt,
+    generatedBy: 'scripts/audit/tenant-layer-refresh.mjs',
+    tenants,
+    mode: 'layer2-dry-run-only',
+    truthSplit: {
+      productionTenantDataWritten: false,
+      activeTenantAccessLayerUpdated: false,
+      moduleRuntimeBehaviorChanged: false,
+      adaptersExecuted: false,
+      canonicalObjectsWritten: false,
+    },
+    summary: {
+      familyFailures: familyFailures.length,
+      profileFailures: profileFailures.length,
+      dimensionFailures: dimensionFailures.length,
+      totalFailures: familyFailures.length + profileFailures.length + dimensionFailures.length,
+    },
+    familyFailures,
+    profileFailures,
+    dimensionFailures,
   };
 }
 
@@ -1181,10 +1451,14 @@ async function main() {
   const outDir = abs(args.out);
   fs.mkdirSync(outDir, { recursive: true });
 
-  const { activeByTenant } = readRegistry();
+  const { registry, activeByTenant } = readRegistry();
+  if (args.tenants.includes('all')) {
+    args.tenants = registry.activeTenants.map((tenant) => tenant.tenantKey);
+  }
   const contract = readManifestContract();
   const lineage = readLineage();
   const profiles = await readMappingProfiles();
+  const layer3ValidationScaffold = await buildLayer3ValidationScaffold(profiles);
   const inventoryRows = readInventory(outDir);
 
   const analyses = new Map();
@@ -1192,6 +1466,7 @@ async function main() {
   const allClaimRows = [];
   const allAdapterFamilyRows = [];
   const allAdapterDryRunRows = [];
+  const allAdapterDimensionRows = [];
   const packages = new Map();
   const layer2 = new Map();
   const layer3 = new Map();
@@ -1215,7 +1490,13 @@ async function main() {
     const adapters = layer2Rows(analysis, contract, profiles);
     allAdapterFamilyRows.push(...adapters.familyRows);
     allAdapterDryRunRows.push(...adapters.dryRunRows);
+    allAdapterDimensionRows.push(...adapters.dimensionRows);
     layer2.set(tenant, adapters);
+    writeCsv(
+      path.join(outDir, tenant, 'layer2-adapter-reconciliation.csv'),
+      Object.keys(adapters.dimensionRows[0] ?? { tenantKey: '', contractFile: '' }),
+      adapters.dimensionRows,
+    );
 
     if (args.writePackage) {
       packages.set(tenant, writeGovernedPackage(analysis, contract, claims, generatedAt));
@@ -1255,6 +1536,26 @@ async function main() {
     Object.keys(allAdapterDryRunRows[0] ?? { tenantKey: '', mappingProfile: '' }),
     allAdapterDryRunRows,
   );
+  writeCsv(
+    path.join(outDir, 'layer2-adapter-reconciliation.csv'),
+    Object.keys(allAdapterDimensionRows[0] ?? { tenantKey: '', contractFile: '' }),
+    allAdapterDimensionRows,
+  );
+  writeJson(
+    path.join(outDir, 'layer2-adapter-family-coverage-registry.json'),
+    adapterFamilyCoverageRegistry(contract, profiles),
+  );
+  const layer2Failures = layer2DryRunFailureReport(
+    generatedAt,
+    args.tenants,
+    allAdapterFamilyRows,
+    allAdapterDryRunRows,
+    allAdapterDimensionRows,
+  );
+  writeJson(path.join(outDir, 'layer2-adapter-dry-run-failures.json'), layer2Failures);
+  if (layer3ValidationScaffold) {
+    writeJson(path.join(outDir, 'layer3-validation-scaffold.json'), layer3ValidationScaffold);
+  }
 
   const gateRows = hardGateRows(args.tenants, analyses);
   writeCsv(path.join(outDir, 'hard-gate-register.csv'), Object.keys(gateRows[0]), gateRows);
@@ -1266,6 +1567,17 @@ async function main() {
     mode: 'local-offline-refresh-preparation',
     status: NOT_ACTIVE,
     factLineageSource: LINEAGE_JSON,
+    layer2DryRunFailures: layer2Failures.summary,
+    layer3ValidationScaffold: layer3ValidationScaffold
+      ? {
+          canonicalObjectDefinitions: layer3ValidationScaffold.canonicalObjectDefinitions,
+          factAuthorityDefinitions: layer3ValidationScaffold.factAuthorityDefinitions,
+          relationshipDictionaryEntries: layer3ValidationScaffold.relationshipDictionaryEntries,
+          objectRegistryGaps: layer3ValidationScaffold.objectRegistryGaps.length,
+          factAuthorityGaps: layer3ValidationScaffold.factAuthorityGaps.length,
+          relationshipDictionaryGaps: layer3ValidationScaffold.relationshipDictionaryGaps.length,
+        }
+      : 'not available',
     perTenant: Object.fromEntries(
       args.tenants.map((tenant) => {
         const analysis = analyses.get(tenant);
@@ -1301,6 +1613,12 @@ async function main() {
               profilesThatWouldRun: layer2
                 .get(tenant)
                 .dryRunRows.filter((row) => row.dryRunResult === 'would-run').length,
+              dimensionsThatWouldRun: layer2
+                .get(tenant)
+                .dimensionRows.filter((row) => row.adapterState === 'would-run').length,
+              dimensionFailures: layer2
+                .get(tenant)
+                .dimensionRows.filter((row) => row.adapterState !== 'would-run').length,
               adaptersExecuted: 0,
             },
             layer3: layer3.get(tenant),
@@ -1314,7 +1632,7 @@ async function main() {
   writeJson(path.join(outDir, 'summary.json'), summary);
 
   const md = [
-    '# Two-tenant Layer 1-4 refresh preparation',
+    '# Layer 1-4 refresh preparation',
     '',
     `Generated: ${generatedAt}`,
     `Tenants: ${args.tenants.map((tenant) => `\`${tenant}\``).join(', ')}`,
@@ -1368,6 +1686,8 @@ async function main() {
       return `| ${tenant} | ${detail.workstreamsWithNoImplementedAdapter} | ${detail.profilesThatWouldRun} | ${detail.adaptersExecuted} |`;
     }),
     '',
+    `Machine-readable Layer 2 dry-run failures: **${layer2Failures.summary.totalFailures}** total (${layer2Failures.summary.familyFailures} family, ${layer2Failures.summary.profileFailures} profile, ${layer2Failures.summary.dimensionFailures} dimension).`,
+    '',
     'Adapter gaps are recorded, not filled. No adapter was invented and none was executed.',
     '',
     '## Outputs',
@@ -1376,6 +1696,10 @@ async function main() {
     '- `claim-reconciliation-matrix.csv` — derived conflicts, duplicates, coverage gaps, and fact-lineage status.',
     '- `adapter-gap-register.csv` — declared adapter family per workstream vs what is implemented.',
     '- `layer2-adapter-dry-run.csv` — required-field satisfaction per mapping profile per tenant.',
+    '- `layer2-adapter-reconciliation.csv` — canonical dimension to adapter-family reconciliation for all tenants.',
+    '- `layer2-adapter-family-coverage-registry.json` — declared families and implemented mapping profiles.',
+    '- `layer2-adapter-dry-run-failures.json` — machine-readable dry-run failures.',
+    '- `<tenant>/layer2-adapter-reconciliation.csv`',
     '- `hard-gate-register.csv` — actions that require explicit approval; none were executed.',
     '- `<tenant>/layer3-canonical-refresh-summary.{md,json}`',
     '- `<tenant>/layer4-projection-refresh-summary.{md,json}`',

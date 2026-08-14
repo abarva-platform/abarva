@@ -1,0 +1,26 @@
+{
+  "tenantKey": "first-capital-financial",
+  "activeRoot": "datasets/tenant-inputs/active/first-capital-financial/current",
+  "mode": "graph_reconciliation_quarantine_first_report_only_no_db_write_no_graph_materialization_no_product_use",
+  "nodeCandidatesIndexed": 1337,
+  "relationshipRows": 380,
+  "relationshipCandidates": 0,
+  "quarantinedRelationships": 380,
+  "topQuarantineReasons": [
+    {
+      "reason": "unresolved-from-node",
+      "count": 380
+    },
+    {
+      "reason": "unresolved-to-node",
+      "count": 380
+    },
+    {
+      "reason": "unknown-relationship-type:blocked_by",
+      "count": 63
+    }
+  ],
+  "parseErrors": [],
+  "graphTablesWritten": false,
+  "productReadModelsUpdated": false
+}

@@ -85,7 +85,28 @@ type SourceFile = {
 
 const repoRoot = process.cwd();
 const registryPath = path.join(repoRoot, "datasets/tenant-inputs/tenant-input-registry.json");
-const outDir = path.join(repoRoot, "reports/canonical-tenant-inputs/latest");
+const defaultOutDir = path.join(repoRoot, "reports/canonical-tenant-inputs/latest");
+
+type Args = {
+  outDir: string;
+};
+
+function parseArgs(argv: string[]): Args {
+  let outDir = defaultOutDir;
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === "--out-dir" && argv[index + 1]) {
+      outDir = path.resolve(repoRoot, argv[index + 1]);
+      index += 1;
+    } else if (arg.startsWith("--out-dir=")) {
+      outDir = path.resolve(repoRoot, arg.slice("--out-dir=".length));
+    } else if (arg === "--help" || arg === "-h") {
+      console.log("usage: tenant-input-quality-depth [--out-dir <path>]");
+      process.exit(0);
+    }
+  }
+  return { outDir };
+}
 
 const domainMatchers: Array<{ domain: string; patterns: RegExp[] }> = [
   {
@@ -469,9 +490,11 @@ function writeMarkdown(file: string, lines: string[]): void {
 }
 
 function run(): void {
+  const args = parseArgs(process.argv.slice(2));
   const registry = JSON.parse(fs.readFileSync(registryPath, "utf8")) as Registry;
   const manifest = readJson<TemplateManifest>(registry.universalTemplateSet.manifest);
   const rules = readJson<QualityRules>(registry.universalTemplateSet.qualityDepthRules);
+  const outDir = args.outDir;
   ensureDir(outDir);
 
   const failures: string[] = [];

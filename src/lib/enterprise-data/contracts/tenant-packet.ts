@@ -1,40 +1,57 @@
-import type { CanonicalDomain, DataClassification, DataStatus } from './canonical-ingestion';
+import type {
+  CanonicalDomain,
+  DataClassification,
+  DataStatus,
+} from "./canonical-ingestion";
 
-export type TenantPacketContractVersion = 'tenant-packet/v1';
+export type TenantPacketContractVersion = "tenant-packet/v1";
 
 export type TenantPacketSourceClass =
-  | 'enterprise_profile'
-  | 'organization_functions'
-  | 'applications_systems'
-  | 'data_assets_integrations'
-  | 'vendors_contracts'
-  | 'spend_value'
-  | 'programs_priorities'
-  | 'risks_controls'
-  | 'metric_definitions'
-  | 'evidence_registry'
-  | 'module_memory'
-  | 'outcome_measurements'
-  | 'benchmark_context';
+  | "enterprise_profile"
+  | "organization_functions"
+  | "applications_systems"
+  | "data_assets_integrations"
+  | "infrastructure_platforms"
+  | "vendors_contracts"
+  | "spend_value"
+  | "service_scope_managed_services"
+  | "programs_priorities"
+  | "ai_automation_use_cases"
+  | "risks_controls"
+  | "metric_definitions"
+  | "metrics_outcomes"
+  | "operational_process_evidence"
+  | "industry_context_patterns"
+  | "expert_lenses"
+  | "evidence_registry"
+  | "module_memory"
+  | "outcome_measurements"
+  | "benchmark_context";
 
-export type TenantPacketModule = 'home' | 'intelligence' | 'moves' | 'source' | 'tower' | 'export';
+export type TenantPacketModule =
+  | "home"
+  | "intelligence"
+  | "moves"
+  | "source"
+  | "tower"
+  | "export";
 
 export type TenantPacketLoadState =
-  | 'packet_received'
-  | 'manifest_validated'
-  | 'source_classified'
-  | 'adapter_selected'
-  | 'mapping_validated'
-  | 'canonical_records_generated'
-  | 'canonical_records_validated'
-  | 'unmapped_fields_reported'
-  | 'quarantine_reviewed'
-  | 'target_write_planned'
-  | 'candidate_version_created'
-  | 'proof_bundle_generated'
-  | 'promotion_approved'
-  | 'active_version_promoted'
-  | 'module_consumption_verified';
+  | "packet_received"
+  | "manifest_validated"
+  | "source_classified"
+  | "adapter_selected"
+  | "mapping_validated"
+  | "canonical_records_generated"
+  | "canonical_records_validated"
+  | "unmapped_fields_reported"
+  | "quarantine_reviewed"
+  | "target_write_planned"
+  | "candidate_version_created"
+  | "proof_bundle_generated"
+  | "promotion_approved"
+  | "active_version_promoted"
+  | "module_consumption_verified";
 
 export interface TenantPacketSourceProfile {
   sourceClass: TenantPacketSourceClass;
@@ -52,7 +69,12 @@ export interface TenantPacketFile {
   adapterKey: string;
   dataStatus?: DataStatus;
   sensitivity?: DataClassification;
-  evidenceBasis: 'source_file' | 'workshop' | 'system_extract' | 'benchmark' | 'generated_artifact';
+  evidenceBasis:
+    | "source_file"
+    | "workshop"
+    | "system_extract"
+    | "benchmark"
+    | "generated_artifact";
   required: boolean;
   expectedDomains: CanonicalDomain[];
   contentFingerprint?: string;

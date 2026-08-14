@@ -19,8 +19,7 @@ import type {
 // says so.
 //
 // PURE, CLIENT-SAFE ONLY. This file must never import node:fs/node:path or
-// anything else Node-only. The filesystem-reading counterpart
-// (readDerivedRelationshipGraphEdges) lives in read-derived-relationship-graph.ts.
+// anything else Node-only.
 // =============================================================================
 
 export interface HomeRelationshipEdge {

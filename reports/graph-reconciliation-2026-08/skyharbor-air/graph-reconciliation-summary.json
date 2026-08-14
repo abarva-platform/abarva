@@ -1,0 +1,66 @@
+{
+  "tenantKey": "skyharbor-air",
+  "activeRoot": "datasets/tenant-inputs/active/skyharbor-air/current",
+  "mode": "graph_reconciliation_quarantine_first_report_only_no_db_write_no_graph_materialization_no_product_use",
+  "nodeCandidatesIndexed": 1519,
+  "relationshipRows": 3318,
+  "relationshipCandidates": 1008,
+  "quarantinedRelationships": 2310,
+  "topQuarantineReasons": [
+    {
+      "reason": "unknown-relationship-type:supported_by",
+      "count": 503
+    },
+    {
+      "reason": "unknown-relationship-type:technology_owned_by",
+      "count": 503
+    },
+    {
+      "reason": "unknown-relationship-type:integrates_with",
+      "count": 499
+    },
+    {
+      "reason": "unknown-relationship-type:provided_by",
+      "count": 265
+    },
+    {
+      "reason": "unknown-from-object-type:interview",
+      "count": 247
+    },
+    {
+      "reason": "unknown-relationship-type:discusses",
+      "count": 247
+    },
+    {
+      "reason": "unresolved-to-node",
+      "count": 89
+    },
+    {
+      "reason": "unknown-to-object-type:tower_initiative",
+      "count": 76
+    },
+    {
+      "reason": "unknown-relationship-type:supports_function",
+      "count": 74
+    },
+    {
+      "reason": "unknown-relationship-type:has_risk",
+      "count": 62
+    },
+    {
+      "reason": "unknown-relationship-type:owns_function",
+      "count": 51
+    },
+    {
+      "reason": "unknown-from-object-type:infrastructure",
+      "count": 33
+    },
+    {
+      "reason": "unknown-relationship-type:operated_by",
+      "count": 33
+    }
+  ],
+  "parseErrors": [],
+  "graphTablesWritten": false,
+  "productReadModelsUpdated": false
+}

@@ -1,0 +1,725 @@
+{
+  "templateSetId": "universal-tenant-input-standard-2026-07-v3",
+  "declaredWorkstreamAdapterFamilies": 10,
+  "activeMappingProfiles": 18,
+  "legacyCompatibilityMappingProfiles": 4,
+  "implementedMappingProfiles": 22,
+  "activeSourceClasses": [
+    "ai_automation_use_cases",
+    "applications_systems",
+    "data_assets_integrations",
+    "enterprise_profile",
+    "evidence_registry",
+    "expert_lenses",
+    "industry_context_patterns",
+    "infrastructure_platforms",
+    "metrics_outcomes",
+    "operational_process_evidence",
+    "organization_functions",
+    "programs_priorities",
+    "risks_controls",
+    "service_scope_managed_services",
+    "spend_value",
+    "vendors_contracts"
+  ],
+  "implementedSourceClasses": [
+    "ai_automation_use_cases",
+    "applications_systems",
+    "data_assets_integrations",
+    "enterprise_profile",
+    "evidence_registry",
+    "expert_lenses",
+    "industry_context_patterns",
+    "infrastructure_platforms",
+    "metrics_outcomes",
+    "operational_process_evidence",
+    "organization_functions",
+    "programs_priorities",
+    "risks_controls",
+    "service_scope_managed_services",
+    "spend_value",
+    "vendors_contracts"
+  ],
+  "workstreams": [
+    {
+      "workstreamId": "WS01",
+      "workstreamName": "Enterprise Strategy and Operating Model",
+      "declaredAdapterFamily": "strategy-and-operating-model",
+      "canonicalTargets": [
+        "00_enterprise_profile.csv",
+        "01_business_functions.csv",
+        "09_programs_initiatives.csv",
+        "15_industry_context_patterns.csv"
+      ],
+      "implementedMappingProfiles": [
+        {
+          "mappingProfile": "enterprise-profile-v3/v1",
+          "sourceClass": "enterprise_profile",
+          "version": "2026-08-14.v3-contract-pr1",
+          "requiredFields": ["entity_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "industry",
+            "sub_industry",
+            "revenue_usd",
+            "employee_count",
+            "strategic_priorities",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "industry-context-patterns/v1",
+          "sourceClass": "industry_context_patterns",
+          "version": "2026-08-14.v3-contract-pr1",
+          "requiredFields": ["pattern_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "industry",
+            "business_context",
+            "applicability",
+            "known_gaps"
+          ]
+        }
+      ],
+      "adapterState": "partially-implemented"
+    },
+    {
+      "workstreamId": "WS02",
+      "workstreamName": "Organization, Workforce, and Decision Rights",
+      "declaredAdapterFamily": "organization-and-workforce",
+      "canonicalTargets": [
+        "02_org_ownership.csv",
+        "03_workforce_roles.csv",
+        "01_business_functions.csv",
+        "12_relationships.csv"
+      ],
+      "implementedMappingProfiles": [
+        {
+          "mappingProfile": "organization-ownership/v1",
+          "sourceClass": "organization_functions",
+          "version": "2026-08-14.organization-workforce-pr1",
+          "requiredFields": ["org_unit", "tenant_key", "source_file"],
+          "optionalFields": [
+            "parent_org_unit",
+            "leader_name_or_role",
+            "role_level",
+            "decision_rights",
+            "owned_functions",
+            "owned_systems",
+            "owned_data_domains",
+            "location_scope",
+            "source_date",
+            "confidence",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "organization-workforce-roles/v1",
+          "sourceClass": "organization_functions",
+          "version": "2026-08-14.organization-workforce-pr1",
+          "requiredFields": [
+            "persona_or_role",
+            "tenant_key",
+            "function_name",
+            "source_file"
+          ],
+          "optionalFields": [
+            "role_count",
+            "location_model",
+            "employment_type",
+            "vendor_supported",
+            "skills",
+            "pain_points",
+            "automation_opportunity",
+            "source_date",
+            "confidence",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "organization-business-functions/v1",
+          "sourceClass": "organization_functions",
+          "version": "2026-08-14.organization-workforce-pr1",
+          "requiredFields": ["function_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "parent_function",
+            "executive_owner",
+            "business_capabilities",
+            "criticality",
+            "annual_budget_usd",
+            "fte_count",
+            "outsourced_support",
+            "current_state_notes",
+            "target_state_notes",
+            "source_date",
+            "confidence",
+            "known_gaps"
+          ]
+        }
+      ],
+      "adapterState": "partially-implemented"
+    },
+    {
+      "workstreamId": "WS03",
+      "workstreamName": "Applications, Infrastructure, and Architecture",
+      "declaredAdapterFamily": "application-cmdb-and-architecture",
+      "canonicalTargets": [
+        "04_applications_systems.csv",
+        "06_infrastructure_platforms.csv",
+        "12_relationships.csv",
+        "13_evidence_sources.csv"
+      ],
+      "implementedMappingProfiles": [
+        {
+          "mappingProfile": "applications-systems-v3/v1",
+          "sourceClass": "applications_systems",
+          "version": "2026-08-14.v3-contract-pr1",
+          "requiredFields": ["system_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "system_type",
+            "business_function",
+            "deployment_model",
+            "criticality",
+            "business_owner",
+            "technology_owner",
+            "vendor",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "infrastructure-platforms/v1",
+          "sourceClass": "infrastructure_platforms",
+          "version": "2026-08-14.remaining-family-pr1",
+          "requiredFields": ["platform_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "platform_type",
+            "hosting_model",
+            "technology_stack",
+            "operational_owner",
+            "criticality",
+            "future_target_flag",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "evidence-sources-v3/v1",
+          "sourceClass": "evidence_registry",
+          "version": "2026-08-14.v3-contract-pr1",
+          "requiredFields": ["source_file", "tenant_key"],
+          "optionalFields": [
+            "source_type",
+            "source_owner",
+            "domains_covered",
+            "approved_for_loading",
+            "known_gaps"
+          ]
+        }
+      ],
+      "adapterState": "partially-implemented"
+    },
+    {
+      "workstreamId": "WS04",
+      "workstreamName": "Data, Integration, and Analytics",
+      "declaredAdapterFamily": "data-catalog-integration-and-lineage",
+      "canonicalTargets": [
+        "05_data_assets_integrations.csv",
+        "06_infrastructure_platforms.csv",
+        "10_ai_automation_use_cases.csv",
+        "12_relationships.csv",
+        "13_evidence_sources.csv"
+      ],
+      "implementedMappingProfiles": [
+        {
+          "mappingProfile": "data-assets-integrations/v1",
+          "sourceClass": "data_assets_integrations",
+          "version": "2026-08-14.remaining-family-pr1",
+          "requiredFields": ["data_asset_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "data_domain",
+            "source_system",
+            "target_system",
+            "integration_type",
+            "platform_or_database",
+            "quality_status",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "infrastructure-platforms/v1",
+          "sourceClass": "infrastructure_platforms",
+          "version": "2026-08-14.remaining-family-pr1",
+          "requiredFields": ["platform_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "platform_type",
+            "hosting_model",
+            "technology_stack",
+            "operational_owner",
+            "criticality",
+            "future_target_flag",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "ai-automation-use-cases/v1",
+          "sourceClass": "ai_automation_use_cases",
+          "version": "2026-08-14.remaining-family-pr1",
+          "requiredFields": ["use_case_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "business_function",
+            "process_area",
+            "ai_pattern",
+            "current_status",
+            "required_data",
+            "required_systems",
+            "known_gaps"
+          ]
+        }
+      ],
+      "adapterState": "partially-implemented"
+    },
+    {
+      "workstreamId": "WS05",
+      "workstreamName": "Vendors, Contracts, and Procurement",
+      "declaredAdapterFamily": "vendor-clm-and-procurement",
+      "canonicalTargets": [
+        "07_vendors_contracts.csv",
+        "08_spend_value.csv",
+        "11_risks_controls.csv",
+        "17_service_scope_managed_services.csv",
+        "12_relationships.csv",
+        "13_evidence_sources.csv"
+      ],
+      "implementedMappingProfiles": [
+        {
+          "mappingProfile": "vendor-contracts/v1",
+          "sourceClass": "vendors_contracts",
+          "version": "2026-08-14.vendor-finance-pr1",
+          "requiredFields": ["vendor_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "contract_name",
+            "service_category",
+            "business_owner",
+            "contract_owner",
+            "annual_spend_usd",
+            "term_start",
+            "term_end",
+            "renewal_date",
+            "commercial_model",
+            "supported_systems",
+            "supported_functions",
+            "risk_rating",
+            "source_date",
+            "confidence",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "managed-services-scope/v1",
+          "sourceClass": "service_scope_managed_services",
+          "version": "2026-08-14.vendor-finance-pr1",
+          "requiredFields": ["service_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "service_tower",
+            "scope_description",
+            "in_scope_functions",
+            "in_scope_systems",
+            "current_provider",
+            "service_volume",
+            "sla_or_kpi",
+            "run_cost_usd",
+            "target_state_option",
+            "source_date",
+            "confidence",
+            "known_gaps"
+          ]
+        }
+      ],
+      "adapterState": "partially-implemented"
+    },
+    {
+      "workstreamId": "WS06",
+      "workstreamName": "Finance, Spend, and Value",
+      "declaredAdapterFamily": "finance-ap-gl-and-fpa",
+      "canonicalTargets": [
+        "08_spend_value.csv",
+        "14_metrics_outcomes.csv",
+        "09_programs_initiatives.csv",
+        "07_vendors_contracts.csv",
+        "13_evidence_sources.csv"
+      ],
+      "implementedMappingProfiles": [
+        {
+          "mappingProfile": "spend-value/v1",
+          "sourceClass": "spend_value",
+          "version": "2026-08-14.vendor-finance-pr1",
+          "requiredFields": ["spend_category", "tenant_key", "source_file"],
+          "optionalFields": [
+            "cost_center_or_owner",
+            "annual_spend_usd",
+            "run_change_transform_split",
+            "vendor_internal_split",
+            "value_driver",
+            "savings_opportunity_usd",
+            "confidence",
+            "calculation_basis",
+            "source_date",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "metrics-outcomes/v1",
+          "sourceClass": "metrics_outcomes",
+          "version": "2026-08-14.vendor-finance-pr1",
+          "requiredFields": ["metric_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "metric_domain",
+            "business_function",
+            "definition",
+            "baseline_value",
+            "baseline_period",
+            "target_value",
+            "owner",
+            "data_source",
+            "calculation_basis",
+            "source_date",
+            "confidence",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "vendor-contracts/v1",
+          "sourceClass": "vendors_contracts",
+          "version": "2026-08-14.vendor-finance-pr1",
+          "requiredFields": ["vendor_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "contract_name",
+            "service_category",
+            "business_owner",
+            "contract_owner",
+            "annual_spend_usd",
+            "term_start",
+            "term_end",
+            "renewal_date",
+            "commercial_model",
+            "supported_systems",
+            "supported_functions",
+            "risk_rating",
+            "source_date",
+            "confidence",
+            "known_gaps"
+          ]
+        }
+      ],
+      "adapterState": "partially-implemented"
+    },
+    {
+      "workstreamId": "WS07",
+      "workstreamName": "Programs, Portfolio, and Change",
+      "declaredAdapterFamily": "pmo-portfolio-and-benefits",
+      "canonicalTargets": [
+        "09_programs_initiatives.csv",
+        "10_ai_automation_use_cases.csv",
+        "14_metrics_outcomes.csv",
+        "11_risks_controls.csv",
+        "12_relationships.csv"
+      ],
+      "implementedMappingProfiles": [
+        {
+          "mappingProfile": "programs-initiatives/v1",
+          "sourceClass": "programs_priorities",
+          "version": "2026-08-14.remaining-family-pr1",
+          "requiredFields": ["program_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "business_sponsor",
+            "technology_owner",
+            "objective",
+            "status",
+            "budget_usd",
+            "expected_value_usd",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "ai-automation-use-cases/v1",
+          "sourceClass": "ai_automation_use_cases",
+          "version": "2026-08-14.remaining-family-pr1",
+          "requiredFields": ["use_case_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "business_function",
+            "process_area",
+            "ai_pattern",
+            "current_status",
+            "required_data",
+            "required_systems",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "metrics-outcomes/v1",
+          "sourceClass": "metrics_outcomes",
+          "version": "2026-08-14.vendor-finance-pr1",
+          "requiredFields": ["metric_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "metric_domain",
+            "business_function",
+            "definition",
+            "baseline_value",
+            "baseline_period",
+            "target_value",
+            "owner",
+            "data_source",
+            "calculation_basis",
+            "source_date",
+            "confidence",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "risks-controls/v1",
+          "sourceClass": "risks_controls",
+          "version": "2026-08-14.remaining-family-pr1",
+          "requiredFields": [
+            "risk_or_control_name",
+            "tenant_key",
+            "source_file"
+          ],
+          "optionalFields": [
+            "risk_domain",
+            "business_function",
+            "systems_impacted",
+            "severity",
+            "control_owner",
+            "control_status",
+            "known_gaps"
+          ]
+        }
+      ],
+      "adapterState": "partially-implemented"
+    },
+    {
+      "workstreamId": "WS08",
+      "workstreamName": "Risk, Security, Controls, and Compliance",
+      "declaredAdapterFamily": "grc-security-and-service-management",
+      "canonicalTargets": [
+        "11_risks_controls.csv",
+        "18_operational_process_evidence.csv",
+        "14_metrics_outcomes.csv",
+        "04_applications_systems.csv",
+        "13_evidence_sources.csv"
+      ],
+      "implementedMappingProfiles": [
+        {
+          "mappingProfile": "risks-controls/v1",
+          "sourceClass": "risks_controls",
+          "version": "2026-08-14.remaining-family-pr1",
+          "requiredFields": [
+            "risk_or_control_name",
+            "tenant_key",
+            "source_file"
+          ],
+          "optionalFields": [
+            "risk_domain",
+            "business_function",
+            "systems_impacted",
+            "severity",
+            "control_owner",
+            "control_status",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "operational-process-evidence/v1",
+          "sourceClass": "operational_process_evidence",
+          "version": "2026-08-14.remaining-family-pr1",
+          "requiredFields": ["process_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "business_function",
+            "process_owner",
+            "systems_used",
+            "volume_metric",
+            "cycle_time",
+            "automation_candidate",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "metrics-outcomes/v1",
+          "sourceClass": "metrics_outcomes",
+          "version": "2026-08-14.vendor-finance-pr1",
+          "requiredFields": ["metric_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "metric_domain",
+            "business_function",
+            "definition",
+            "baseline_value",
+            "baseline_period",
+            "target_value",
+            "owner",
+            "data_source",
+            "calculation_basis",
+            "source_date",
+            "confidence",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "applications-systems-v3/v1",
+          "sourceClass": "applications_systems",
+          "version": "2026-08-14.v3-contract-pr1",
+          "requiredFields": ["system_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "system_type",
+            "business_function",
+            "deployment_model",
+            "criticality",
+            "business_owner",
+            "technology_owner",
+            "vendor",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "evidence-sources-v3/v1",
+          "sourceClass": "evidence_registry",
+          "version": "2026-08-14.v3-contract-pr1",
+          "requiredFields": ["source_file", "tenant_key"],
+          "optionalFields": [
+            "source_type",
+            "source_owner",
+            "domains_covered",
+            "approved_for_loading",
+            "known_gaps"
+          ]
+        }
+      ],
+      "adapterState": "partially-implemented"
+    },
+    {
+      "workstreamId": "WS09",
+      "workstreamName": "Operations, KPIs, and Process Evidence",
+      "declaredAdapterFamily": "kpi-and-operational-telemetry",
+      "canonicalTargets": [
+        "18_operational_process_evidence.csv",
+        "14_metrics_outcomes.csv",
+        "17_service_scope_managed_services.csv",
+        "01_business_functions.csv",
+        "12_relationships.csv"
+      ],
+      "implementedMappingProfiles": [
+        {
+          "mappingProfile": "operational-process-evidence/v1",
+          "sourceClass": "operational_process_evidence",
+          "version": "2026-08-14.remaining-family-pr1",
+          "requiredFields": ["process_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "business_function",
+            "process_owner",
+            "systems_used",
+            "volume_metric",
+            "cycle_time",
+            "automation_candidate",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "metrics-outcomes/v1",
+          "sourceClass": "metrics_outcomes",
+          "version": "2026-08-14.vendor-finance-pr1",
+          "requiredFields": ["metric_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "metric_domain",
+            "business_function",
+            "definition",
+            "baseline_value",
+            "baseline_period",
+            "target_value",
+            "owner",
+            "data_source",
+            "calculation_basis",
+            "source_date",
+            "confidence",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "managed-services-scope/v1",
+          "sourceClass": "service_scope_managed_services",
+          "version": "2026-08-14.vendor-finance-pr1",
+          "requiredFields": ["service_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "service_tower",
+            "scope_description",
+            "in_scope_functions",
+            "in_scope_systems",
+            "current_provider",
+            "service_volume",
+            "sla_or_kpi",
+            "run_cost_usd",
+            "target_state_option",
+            "source_date",
+            "confidence",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "organization-business-functions/v1",
+          "sourceClass": "organization_functions",
+          "version": "2026-08-14.organization-workforce-pr1",
+          "requiredFields": ["function_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "parent_function",
+            "executive_owner",
+            "business_capabilities",
+            "criticality",
+            "annual_budget_usd",
+            "fte_count",
+            "outsourced_support",
+            "current_state_notes",
+            "target_state_notes",
+            "source_date",
+            "confidence",
+            "known_gaps"
+          ]
+        }
+      ],
+      "adapterState": "partially-implemented"
+    },
+    {
+      "workstreamId": "WS10",
+      "workstreamName": "Interviews, Questionnaires, and Executive Signals",
+      "declaredAdapterFamily": "interview-governance-and-evidence-requests",
+      "canonicalTargets": [
+        "13_evidence_sources.csv",
+        "16_expert_lenses.csv",
+        "12_relationships.csv"
+      ],
+      "implementedMappingProfiles": [
+        {
+          "mappingProfile": "evidence-sources-v3/v1",
+          "sourceClass": "evidence_registry",
+          "version": "2026-08-14.v3-contract-pr1",
+          "requiredFields": ["source_file", "tenant_key"],
+          "optionalFields": [
+            "source_type",
+            "source_owner",
+            "domains_covered",
+            "approved_for_loading",
+            "known_gaps"
+          ]
+        },
+        {
+          "mappingProfile": "expert-lenses/v1",
+          "sourceClass": "expert_lenses",
+          "version": "2026-08-14.v3-contract-pr1",
+          "requiredFields": ["lens_name", "tenant_key", "source_file"],
+          "optionalFields": [
+            "expert_role",
+            "questions_to_answer",
+            "required_inputs",
+            "decision_use",
+            "known_gaps"
+          ]
+        }
+      ],
+      "adapterState": "partially-implemented"
+    }
+  ]
+}

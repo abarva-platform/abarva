@@ -202,6 +202,8 @@
     "generate:synthetic-tenant": "node scripts/tenant-v3/generate-rich-synthetic-tenant.mjs",
     "tenant:data-factory": "node scripts/tenant-v3/tenant-data-factory.mjs",
     "audit:synthetic-tenant-richness": "node scripts/audit/synthetic-tenant-richness.mjs",
+    "audit:tenant-graph-reconciliation": "node scripts/audit/tenant-graph-reconciliation.mjs",
+    "audit:ava-readiness-ledger": "node scripts/audit/ava-readiness-ledger.mjs",
     "load:tenant-candidate-context": "node scripts/knowledge/load-tenant-candidate-context.mjs",
     "preload:fs-airline-azure-candidate": "FS_AIRLINE_CANDIDATE_ACTION=preload node scripts/knowledge/fs-airline-azure-candidate-load.mjs",
     "load:fs-airline-azure-candidate": "FS_AIRLINE_CANDIDATE_ACTION=load EMIT_ACA_PROOF_BUNDLE=true node scripts/knowledge/fs-airline-azure-candidate-load.mjs",

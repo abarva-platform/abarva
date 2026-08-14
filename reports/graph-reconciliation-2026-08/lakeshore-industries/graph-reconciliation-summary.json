@@ -1,0 +1,70 @@
+{
+  "tenantKey": "lakeshore-industries",
+  "activeRoot": "datasets/tenant-inputs/active/lakeshore-industries/current",
+  "mode": "graph_reconciliation_quarantine_first_report_only_no_db_write_no_graph_materialization_no_product_use",
+  "nodeCandidatesIndexed": 841,
+  "relationshipRows": 519,
+  "relationshipCandidates": 0,
+  "quarantinedRelationships": 519,
+  "topQuarantineReasons": [
+    {
+      "reason": "missing-from-object-name",
+      "count": 519
+    },
+    {
+      "reason": "missing-to-object-name",
+      "count": 519
+    },
+    {
+      "reason": "missing-from-object-type",
+      "count": 510
+    },
+    {
+      "reason": "missing-relationship-type",
+      "count": 510
+    },
+    {
+      "reason": "missing-to-object-type",
+      "count": 510
+    },
+    {
+      "reason": "unknown-from-object-type:program_initiative",
+      "count": 2
+    },
+    {
+      "reason": "unknown-from-object-type:corporate_shared_system",
+      "count": 1
+    },
+    {
+      "reason": "unknown-relationship-type:owns",
+      "count": 1
+    },
+    {
+      "reason": "unknown-relationship-type:produces_or_consumes",
+      "count": 1
+    },
+    {
+      "reason": "unknown-relationship-type:reports_to",
+      "count": 1
+    },
+    {
+      "reason": "unknown-relationship-type:requires_data_from",
+      "count": 1
+    },
+    {
+      "reason": "unknown-relationship-type:serves_portfolio_company",
+      "count": 1
+    },
+    {
+      "reason": "unknown-relationship-type:supplies_or_supports",
+      "count": 1
+    },
+    {
+      "reason": "unknown-relationship-type:uses_data_from",
+      "count": 1
+    }
+  ],
+  "parseErrors": [],
+  "graphTablesWritten": false,
+  "productReadModelsUpdated": false
+}

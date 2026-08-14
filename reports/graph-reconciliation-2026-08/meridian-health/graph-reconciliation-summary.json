@@ -1,0 +1,66 @@
+{
+  "tenantKey": "meridian-health",
+  "activeRoot": "datasets/tenant-inputs/active/meridian-health/current",
+  "mode": "graph_reconciliation_quarantine_first_report_only_no_db_write_no_graph_materialization_no_product_use",
+  "nodeCandidatesIndexed": 0,
+  "relationshipRows": 1037,
+  "relationshipCandidates": 0,
+  "quarantinedRelationships": 1037,
+  "topQuarantineReasons": [
+    {
+      "reason": "unresolved-from-node",
+      "count": 1037
+    },
+    {
+      "reason": "unresolved-to-node",
+      "count": 636
+    },
+    {
+      "reason": "unknown-relationship-type:provides",
+      "count": 226
+    },
+    {
+      "reason": "unknown-to-object-type:contract",
+      "count": 226
+    },
+    {
+      "reason": "unknown-to-object-type:dependency",
+      "count": 175
+    },
+    {
+      "reason": "unknown-relationship-type:affects",
+      "count": 139
+    },
+    {
+      "reason": "unknown-relationship-type:requires_system",
+      "count": 75
+    },
+    {
+      "reason": "unknown-relationship-type:requires_data",
+      "count": 63
+    },
+    {
+      "reason": "unknown-relationship-type:uses_data_domain",
+      "count": 54
+    },
+    {
+      "reason": "unknown-relationship-type:integrates_with",
+      "count": 50
+    },
+    {
+      "reason": "unknown-relationship-type:owns_technology_for",
+      "count": 20
+    },
+    {
+      "reason": "unknown-relationship-type:is_supported_by",
+      "count": 9
+    },
+    {
+      "reason": "unknown-relationship-type:has_risk",
+      "count": 5
+    }
+  ],
+  "parseErrors": [],
+  "graphTablesWritten": false,
+  "productReadModelsUpdated": false
+}
