@@ -17,6 +17,7 @@ export interface MappingRule {
   mappingProfile: string;
   sourceClass: TenantPacketSourceClass;
   sourceField: string;
+  sourceAliases?: string[];
   targetDomain: CanonicalDomain;
   targetObjectType: string;
   targetAttribute?: string;

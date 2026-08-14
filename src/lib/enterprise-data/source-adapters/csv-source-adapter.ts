@@ -17,6 +17,8 @@ import type {
 } from "../contracts/source-adapter";
 import { getBuiltInMappingProfile } from "./mapping-profiles";
 
+const DERIVED_SOURCE_PATH_FIELD = "__source_path";
+
 interface ParsedCsv {
   headers: string[];
   rows: Record<string, string>[];
@@ -79,7 +81,7 @@ export class CsvSourceAdapter implements SourceAdapter {
     }
 
     const mappedFields = new Set(
-      mappingProfile.rules.map((rule) => rule.sourceField),
+      mappingProfile.rules.flatMap(sourceFieldsForRule),
     );
     const unmappedFields = parsed.headers.filter(
       (header) => !mappedFields.has(header),
@@ -106,7 +108,12 @@ export class CsvSourceAdapter implements SourceAdapter {
     }
 
     const records = parsed.rows.map((row, index) => {
-      const rowFindings = validateRow(mappingProfile.rules, row, index + 1);
+      const rowFindings = validateRow(
+        input,
+        mappingProfile.rules,
+        row,
+        index + 1,
+      );
       findings.push(
         ...rowFindings.map(
           (finding) =>
@@ -209,9 +216,9 @@ function buildRecord(
   validationFindings: CanonicalValidationFinding[],
   contentFingerprint: string,
 ): CanonicalIngestionRecord {
-  const requiredIdField = rules.find((rule) => rule.required)?.sourceField;
+  const requiredIdRule = rules.find((rule) => rule.required);
   const sourceObjectId =
-    normalizeIdentifier(row[requiredIdField ?? ""]) ||
+    normalizeIdentifier(requiredIdRule ? sourceValueForRule(input, row, requiredIdRule) ?? "" : "") ||
     `${path.basename(input.sourcePath)}#row-${rowIndex + 1}`;
   const firstRule = rules[0];
   const observedAt = input.observedAt ?? new Date(0).toISOString();
@@ -226,8 +233,8 @@ function buildRecord(
 
   for (const rule of rules) {
     if (!rule.targetAttribute) continue;
-    const rawValue = row[rule.sourceField];
-    if (isMissingSourceValue(rawValue)) continue;
+    const rawValue = sourceValueForRule(input, row, rule);
+    if (!hasSourceValue(rawValue)) continue;
     attributes[rule.targetAttribute] = toCanonicalValue(rawValue, rule);
   }
 
@@ -279,20 +286,45 @@ function buildRecord(
 }
 
 function validateRow(
+  input: SourceAdapterInput,
   rules: MappingRule[],
   row: Record<string, string>,
   rowNumber: number,
 ): CanonicalValidationFinding[] {
   return rules
     .filter(
-      (rule) => rule.required && isMissingSourceValue(row[rule.sourceField]),
+      (rule) => rule.required && isMissingSourceValue(sourceValueForRule(input, row, rule)),
     )
     .map((rule) => ({
       severity: "error",
       code: "required_source_field_missing",
-      message: `Required source field ${rule.sourceField} is missing on row ${rowNumber}.`,
+      message: `Required source field ${rule.sourceField}${aliasLabel(rule)} is missing on row ${rowNumber}.`,
       sourceObjectId: `row-${rowNumber}`,
     }));
+}
+
+function sourceFieldsForRule(rule: MappingRule): string[] {
+  return [rule.sourceField, ...(rule.sourceAliases ?? [])];
+}
+
+function sourceValueForRule(
+  input: SourceAdapterInput,
+  row: Record<string, string>,
+  rule: MappingRule,
+): string | undefined {
+  for (const sourceField of sourceFieldsForRule(rule)) {
+    const value = sourceField === DERIVED_SOURCE_PATH_FIELD
+      ? input.sourcePath
+      : row[sourceField];
+    if (hasSourceValue(value)) return value;
+  }
+  return undefined;
+}
+
+function aliasLabel(rule: MappingRule): string {
+  const aliases = rule.sourceAliases?.filter((alias) => alias !== DERIVED_SOURCE_PATH_FIELD) ?? [];
+  if (aliases.length === 0) return "";
+  return ` or alias ${aliases.join("/")}`;
 }
 
 export function isMissingSourceValue(value: string | undefined): boolean {
@@ -316,6 +348,10 @@ export function isMissingSourceValue(value: string | undefined): boolean {
     normalized === "lorem_ipsum" ||
     normalized === "placeholder"
   );
+}
+
+function hasSourceValue(value: string | undefined): value is string {
+  return !isMissingSourceValue(value);
 }
 
 function toCanonicalValue(rawValue: string, rule: MappingRule): CanonicalValue {

@@ -6,6 +6,7 @@ import type {
 type OrganizationRuleSpec = {
   id: string;
   field: string;
+  aliases?: string[];
   objectType: string;
   attribute: string;
   transform?: MappingRule["transform"];
@@ -23,6 +24,7 @@ function organizationRule(
     mappingProfile,
     sourceClass: "organization_functions",
     sourceField: spec.field,
+    sourceAliases: spec.aliases,
     targetDomain: spec.targetDomain ?? "enterprise_structure",
     targetObjectType: spec.objectType,
     targetAttribute: spec.attribute,
@@ -1181,6 +1183,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         {
           id: "service-name",
           field: "service_name",
+          aliases: ["service"],
           objectType: "managed_service_scope",
           attribute: "serviceName",
           required: true,
@@ -1198,6 +1201,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         {
           id: "source-file",
           field: "source_file",
+          aliases: ["__source_path"],
           objectType: "managed_service_scope",
           attribute: "sourceFile",
           required: true,
@@ -1644,6 +1648,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         {
           id: "use-case-name",
           field: "use_case_name",
+          aliases: ["use_case"],
           objectType: "ai_use_case",
           attribute: "useCaseName",
           required: true,
@@ -1661,6 +1666,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         {
           id: "source-file",
           field: "source_file",
+          aliases: ["__source_path"],
           objectType: "ai_use_case",
           attribute: "sourceFile",
           required: true,
@@ -1723,6 +1729,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "risk-or-control-name",
         field: "risk_or_control_name",
+        aliases: ["risk_or_gap"],
         objectType: "risk_control",
         attribute: "riskOrControlName",
         required: true,
@@ -1740,6 +1747,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "source-file",
         field: "source_file",
+        aliases: ["__source_path"],
         objectType: "risk_control",
         attribute: "sourceFile",
         required: true,
@@ -1986,6 +1994,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "entity-name",
         field: "entity_name",
+        aliases: ["business_name"],
         objectType: "enterprise_profile",
         attribute: "entityName",
         required: true,
@@ -2003,6 +2012,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "source-file",
         field: "source_file",
+        aliases: ["__source_path"],
         objectType: "enterprise_profile",
         attribute: "sourceFile",
         required: true,
@@ -2141,6 +2151,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "source-file",
         field: "source_file",
+        aliases: ["evidence_location", "__source_path"],
         objectType: "evidence_source",
         attribute: "sourceFile",
         required: true,
