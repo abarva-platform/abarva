@@ -160,16 +160,25 @@ const FAMILY_SPECS: Record<SourceContractEvidenceFamily, EvidenceFamilySpec> = {
   },
   ticket_volume: {
     ownerRole: "Service delivery manager / Tower lead",
-    sourceSystems: ["ITSM / service management"],
+    sourceSystems: [
+      "ITSM / service management",
+      "SaaS / cloud admin telemetry",
+    ],
     grainHistory:
-      "Monthly queue-level aggregates by tower for the active term; 12 months preferred.",
+      "Monthly demand/usage aggregates by tower, queue, SKU, or service for the active term; 12 months preferred.",
     artifactImpact: "Locked Baseline volumetrics, Negotiation Strategy",
-    blocks: "Demand-versus-baseline comparison and volume-based repricing",
-    evidenceRefMatchers: [],
+    blocks: "Demand-versus-baseline comparison and volume/usage-based repricing",
+    evidenceRefMatchers: [
+      "ticket_volumes",
+      "ticket_volume",
+      "usage_entitlement",
+      "source.golden_contract_usage_entitlement_monthly",
+      "raw_source_v4.entra_saas_usage_monthly",
+    ],
     nextActionWhenMissing:
-      "Request monthly aggregate ticket volumes by tower; do not upload ticket text.",
+      "Request monthly aggregate demand volumes by tower, queue, SKU, or service; do not upload ticket text or user-level activity.",
     nextActionWhenPresent:
-      "Compare observed demand with the contracted baseline before repricing.",
+      "Compare observed demand or usage with the contracted baseline before repricing.",
   },
   staffing_model: {
     ownerRole: "Vendor management lead / Tower lead",
@@ -282,8 +291,10 @@ export function buildContractOptimizationEvidenceReadiness(input: {
   readonly evidencePack: ContractOptimizationEvidencePack | null;
   readonly archetypeKey?: SourceContractEvidenceArchetypeKey;
 }): ContractOptimizationEvidenceReadiness {
-  const templates: readonly SourceContractEvidenceTemplate[] = input.archetypeKey
-    ? getContractEvidenceTemplatePack(input.archetypeKey).templates
+  const archetypeKey =
+    input.archetypeKey ?? inferEvidenceArchetype(input.evidencePack);
+  const templates: readonly SourceContractEvidenceTemplate[] = archetypeKey
+    ? getContractEvidenceTemplatePack(archetypeKey).templates
     : CONTRACT_EVIDENCE_TEMPLATES;
 
   const items = input.evidencePack?.ledger_items ?? [];
@@ -321,6 +332,25 @@ export function buildContractOptimizationEvidenceReadiness(input: {
       templates,
     ),
   };
+}
+
+function inferEvidenceArchetype(
+  evidencePack: ContractOptimizationEvidencePack | null,
+): SourceContractEvidenceArchetypeKey | undefined {
+  const refs = evidencePack?.ledger_items.flatMap((item) => [
+    ...item.evidence_refs,
+    ...item.source_systems,
+  ]) ?? [];
+  const haystack = refs.join(" ").toLowerCase();
+  if (
+    haystack.includes("usage_entitlement") ||
+    haystack.includes("entra_saas_usage") ||
+    haystack.includes("saas / cloud admin") ||
+    haystack.includes("admin usage export")
+  ) {
+    return "saas_renewal_optimization";
+  }
+  return undefined;
 }
 
 function matchItems(

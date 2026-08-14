@@ -176,8 +176,8 @@ describe("buildContractOptimizationEvidenceReadiness", () => {
       }),
     });
 
-    // ticket_volume and staffing_model have no governed source in either
-    // vocabulary, so they stay required-and-missing.
+    // For the default AMS pack, demand volume and staffing remain required until
+    // actual ticket/usage and staffing evidence lands.
     expect(withEveryRequiredFamily.blockingFamilies).toEqual(
       expect.arrayContaining(["ticket_volume", "staffing_model"]),
     );
@@ -254,5 +254,41 @@ describe("buildContractOptimizationEvidenceReadiness", () => {
 
     expect(saas.rows.some((row) => row.family === "staffing_model")).toBe(false);
     expect(saas.rows.some((row) => row.family === "sla_performance")).toBe(true);
+  });
+
+  it("infers SaaS/platform evidence readiness from usage entitlement rows", () => {
+    const readiness = buildContractOptimizationEvidenceReadiness({
+      evidencePack: buildContractOptimizationEvidencePack({
+        tenantKey: "tenant-a",
+        contractId: "CTR-TEST",
+        ledgerItems: [
+          item({
+            ledger_item_id: "everything",
+            evidence_refs: [
+              "pricing_schedule",
+              "source.golden_contract_invoice_lines",
+              "source.golden_contract_rate_card_variance",
+              "source.golden_contract_sla_incident_service_credit_monthly",
+              "source.golden_contract_usage_entitlement_monthly",
+              "source.golden_contract_renewal_negotiation_history",
+              "doc.extraction:contract.benchmarking_clause",
+            ],
+            source_systems: ["SaaS / cloud admin"],
+          }),
+        ],
+      }),
+    });
+
+    expect(readiness.rows.some((row) => row.family === "staffing_model")).toBe(
+      false,
+    );
+    expect(rowFor(readiness, "ticket_volume").label).toBe(
+      "Usage / Demand Volumes",
+    );
+    expect(rowFor(readiness, "ticket_volume").evidenceClass).not.toBe(
+      "missing",
+    );
+    expect(readiness.blockingFamilies).toEqual([]);
+    expect(readiness.sizingBlocked).toBe(false);
   });
 });
