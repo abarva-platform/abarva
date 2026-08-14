@@ -1,3 +1,3 @@
 file
-src/__tests__/integration/source/source-event-canvas-render.test.tsx
-src/components/source/canvas/UniversalCanvasShell.tsx
+src/components/source/canvas/canvas-three-choices.ts
+src/components/source/index.ts
