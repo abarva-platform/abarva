@@ -143,6 +143,7 @@ const mappingProfileDomainAliases = {
   'programs-initiatives/v1': ['programs_initiatives'],
   'ai-automation-use-cases/v1': ['ai_automation_use_cases'],
   'risks-controls/v1': ['risks_controls'],
+  'relationships/v1': ['relationships'],
   'operational-process-evidence/v1': ['operational_process_evidence'],
   'enterprise-profile-v3/v1': ['enterprise_profile'],
   'applications-systems-v3/v1': ['applications_systems'],
@@ -164,16 +165,28 @@ function activeLayer2MappingProfiles(profiles) {
 
 const adapterFamilySourceClassCoverage = {
   'strategy-and-operating-model': ['enterprise_profile', 'industry_context_patterns'],
-  'organization-and-workforce': ['organization_functions'],
-  'application-cmdb-and-architecture': ['applications_systems', 'infrastructure_platforms', 'evidence_registry'],
-  'vendor-clm-and-procurement': ['vendors_contracts', 'service_scope_managed_services'],
+  'organization-and-workforce': ['organization_functions', 'relationships'],
+  'application-cmdb-and-architecture': [
+    'applications_systems',
+    'infrastructure_platforms',
+    'evidence_registry',
+    'relationships',
+  ],
+  'vendor-clm-and-procurement': ['vendors_contracts', 'service_scope_managed_services', 'relationships'],
   'finance-ap-gl-and-fpa': ['spend_value', 'metrics_outcomes', 'vendors_contracts'],
   'data-catalog-integration-and-lineage': [
     'data_assets_integrations',
     'infrastructure_platforms',
     'ai_automation_use_cases',
+    'relationships',
   ],
-  'pmo-portfolio-and-benefits': ['programs_priorities', 'ai_automation_use_cases', 'metrics_outcomes', 'risks_controls'],
+  'pmo-portfolio-and-benefits': [
+    'programs_priorities',
+    'ai_automation_use_cases',
+    'metrics_outcomes',
+    'risks_controls',
+    'relationships',
+  ],
   'grc-security-and-service-management': [
     'applications_systems',
     'risks_controls',
@@ -186,8 +199,9 @@ const adapterFamilySourceClassCoverage = {
     'metrics_outcomes',
     'service_scope_managed_services',
     'organization_functions',
+    'relationships',
   ],
-  'interview-governance-and-evidence-requests': ['evidence_registry', 'expert_lenses'],
+  'interview-governance-and-evidence-requests': ['evidence_registry', 'expert_lenses', 'relationships'],
 };
 
 const domainFromContractFile = (file) => path.basename(file, '.csv').replace(/^\d{2}_/, '');
