@@ -135,7 +135,7 @@ const mappingProfileDomainAliases = {
   'organization-ownership/v1': ['org_ownership'],
   'organization-workforce-roles/v1': ['workforce_roles'],
   'vendor-contracts/v1': ['vendors_contracts'],
-  'spend-value/v1': ['spend_value'],
+  'spend-value/v1': ['spend_value', 'it_budget_spend_value'],
   'managed-services-scope/v1': ['service_scope_managed_services', 'managed_services_scope'],
   'metrics-outcomes/v1': ['metrics_outcomes'],
   'data-assets-integrations/v1': ['data_assets_integrations'],

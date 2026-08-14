@@ -319,6 +319,117 @@ export const RELATIONSHIP_TYPE_DICTIONARY: RelationshipDictionaryEntry[] = [
   relationship("MEASURES", "measures", "is measured by", "usage"),
   relationship("USES", "uses", "is used by", "usage"),
   relationship(
+    "INTEGRATES_WITH",
+    "integrates with",
+    "is integrated with",
+    "data_flow",
+    ["integrates_with"],
+  ),
+  relationship(
+    "SUPPORTED_BY",
+    "supported by",
+    "supports",
+    "dependency",
+    ["supported_by", "is_supported_by"],
+  ),
+  relationship(
+    "TECHNOLOGY_OWNED_BY",
+    "technology owned by",
+    "owns technology",
+    "ownership",
+    ["technology_owned_by"],
+  ),
+  relationship(
+    "PROVIDED_BY",
+    "provided by",
+    "provides",
+    "vendor",
+    ["provided_by"],
+  ),
+  relationship(
+    "PROVIDES",
+    "provides",
+    "is provided by",
+    "vendor",
+    ["provides"],
+  ),
+  relationship(
+    "OWNS_TECHNOLOGY_FOR",
+    "owns technology for",
+    "technology owned by",
+    "ownership",
+    ["owns_technology_for"],
+  ),
+  relationship("OWNS", "owns", "owned by", "ownership", [
+    "owns_function",
+  ]),
+  relationship(
+    "SUPPLIED_BY",
+    "supplied by",
+    "supplies",
+    "vendor",
+    ["supplied_by", "supplies_or_supports"],
+  ),
+  relationship("REPORTS_TO", "reports to", "receives reports from", "rollup", [
+    "reports_to",
+  ]),
+  relationship("AFFECTS", "affects", "is affected by", "dependency", [
+    "affects",
+  ]),
+  relationship("SPONSORED_BY", "sponsored by", "sponsors", "governance", [
+    "sponsored_by",
+  ]),
+  relationship("HAS_RISK", "has risk", "is risk for", "risk", ["has_risk"]),
+  relationship(
+    "REQUIRES_SYSTEM",
+    "requires system",
+    "is required by",
+    "dependency",
+    ["requires_system"],
+  ),
+  relationship(
+    "SUPPORTS_FUNCTION",
+    "supports function",
+    "function supported by",
+    "dependency",
+    ["supports_function"],
+  ),
+  relationship("BLOCKED_BY", "blocked by", "blocks", "dependency", [
+    "blocked_by",
+  ]),
+  relationship("REQUIRES_DATA", "requires data", "data required by", "data_flow", [
+    "requires_data",
+    "requires_data_from",
+  ]),
+  relationship("USES_DATA_DOMAIN", "uses data domain", "is used by", "data_flow", [
+    "uses_data_domain",
+    "uses_data_from",
+  ]),
+  relationship("SOURCED_FROM", "sourced from", "sources", "data_flow", [
+    "sourced_from",
+  ]),
+  relationship("LED_BY", "led by", "leads", "governance", ["led_by"]),
+  relationship("OPERATED_BY", "operated by", "operates", "ownership", [
+    "operated_by",
+  ]),
+  relationship(
+    "PRODUCES_OR_CONSUMES",
+    "produces or consumes",
+    "produced or consumed by",
+    "data_flow",
+    ["produces_or_consumes"],
+  ),
+  relationship(
+    "SERVES_PORTFOLIO_COMPANY",
+    "serves portfolio company",
+    "served by",
+    "rollup",
+    ["serves_portfolio_company"],
+  ),
+  relationship("DISCUSSES", "discusses", "is discussed by", "usage", [
+    "discusses",
+  ]),
+  relationship(
     "MODERNIZES",
     "modernizes",
     "is modernized by",
