@@ -1333,6 +1333,15 @@ function FocusedWorkPanel({
         )) ??
     view.stage.groups[0] ??
     null;
+  const continueGuidance = activeStep
+    ? activeStepContinueGuidance(
+        activeStep,
+        activeComplete,
+        activeIndex,
+        flatSteps.length,
+        view.stage.label,
+      )
+    : null;
 
   const markComplete = (stepId: string) => {
     setCompletedIds((prev) => new Set(prev).add(stepId));
@@ -1542,29 +1551,54 @@ function FocusedWorkPanel({
                   Step {activeIndex + 1} of {flatSteps.length}
                 </div>
               </div>
-              <button
-                type="button"
-                disabled={!activeComplete}
-                onClick={goNext}
+              <div
+                data-testid="source-shell-continue-guidance"
                 style={{
-                  border: `1px solid ${activeComplete ? ANALYTICS.INK : ANALYTICS.LINE_STRONG}`,
-                  borderRadius: 8,
-                  background: activeComplete ? ANALYTICS.INK : "#e8e0d4",
-                  color: activeComplete ? "#fff" : "#81786a",
-                  cursor: activeComplete ? "pointer" : "not-allowed",
-                  fontFamily: ANALYTICS.SANS,
-                  fontSize: 13,
-                  fontWeight: 900,
-                  minHeight: 42,
-                  minWidth: activeIndex >= flatSteps.length - 1 ? 176 : 128,
-                  padding: "0 16px",
-                  whiteSpace: "nowrap",
+                  display: "grid",
+                  gap: 6,
+                  justifyItems: "end",
+                  maxWidth: 260,
                 }}
               >
-                {activeIndex >= flatSteps.length - 1
-                  ? `Open ${view.stage.label} gate →`
-                  : "Continue →"}
-              </button>
+                <button
+                  type="button"
+                  disabled={!activeComplete}
+                  onClick={goNext}
+                  style={{
+                    border: `1px solid ${activeComplete ? ANALYTICS.INK : ANALYTICS.LINE_STRONG}`,
+                    borderRadius: 8,
+                    background: activeComplete ? ANALYTICS.INK : "#e8e0d4",
+                    color: activeComplete ? "#fff" : "#81786a",
+                    cursor: activeComplete ? "pointer" : "not-allowed",
+                    fontFamily: ANALYTICS.SANS,
+                    fontSize: 13,
+                    fontWeight: 900,
+                    minHeight: 42,
+                    minWidth: activeIndex >= flatSteps.length - 1 ? 176 : 128,
+                    padding: "0 16px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {activeIndex >= flatSteps.length - 1
+                    ? `Open ${view.stage.label} gate →`
+                    : "Continue →"}
+                </button>
+                {continueGuidance ? (
+                  <span
+                    style={{
+                      color: activeComplete
+                        ? ANALYTICS.GREEN_TEXT
+                        : ANALYTICS.AMBER_TEXT,
+                      fontSize: 12,
+                      fontWeight: 800,
+                      lineHeight: 1.35,
+                      textAlign: "right",
+                    }}
+                  >
+                    {continueGuidance}
+                  </span>
+                ) : null}
+              </div>
             </div>
 
             <div
@@ -2575,6 +2609,24 @@ function activeStepNextAction(
     return requirement.missingAction;
   }
   return requirement.missingAction;
+}
+
+function activeStepContinueGuidance(
+  step: SourceShellStep,
+  isComplete: boolean,
+  activeIndex: number,
+  stepCount: number,
+  stageLabel: string,
+): string {
+  const requirement = stepRequirementFor(step);
+  const uploaded = Boolean(step.file);
+  if (!isComplete) {
+    return `Locked: ${activeStepNextAction(step, false, uploaded, requirement)}`;
+  }
+  if (activeIndex >= stepCount - 1) {
+    return `Ready: open the ${stageLabel} approval gate.`;
+  }
+  return "Ready: continue to the next step.";
 }
 
 function activeStepGuide(
