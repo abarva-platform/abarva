@@ -137,6 +137,56 @@ describe("getContractOptimizationOpportunitySet", () => {
                 "Pricing schedule totals $45.8M while the stated annual value is $35.8M.",
             },
           ];
+        } else if (
+          sql.includes("FROM source.optimization_case") &&
+          !sql.includes("JOIN source.optimization_case")
+        ) {
+          rows = [
+            {
+              optimization_case_id: "CTR-090:optimize-contract",
+              door1_event_id: "event-090",
+              case_state: "outreach_approval",
+              owner: "Strategic sourcing owner",
+              next_action: "Route the target position for outreach approval.",
+            },
+          ];
+        } else if (
+          sql.includes("FROM source.approval_request request") &&
+          sql.includes("JOIN source.optimization_case")
+        ) {
+          rows = [
+            {
+              approval_request_id: "APR-090-1",
+              optimization_case_id: "CTR-090:optimize-contract",
+              opportunity_id: "CTR-090:rate-variance",
+              approval_type: "vendor_outreach",
+              approval_state: "pending",
+              requested_by_role: "Strategic sourcing owner",
+              requested_at: "2027-06-30T12:00:00.000Z",
+            },
+          ];
+        } else if (sql.includes("FROM source.approval_decision decision")) {
+          rows = [
+            {
+              approval_request_id: "APR-090-1",
+              decision: "held",
+              rationale: "Awaiting CFO review.",
+              decided_by_role: "CFO delegate",
+              decided_at: "2027-06-30T13:00:00.000Z",
+            },
+          ];
+        } else if (sql.includes("FROM source.negotiated_outcome outcome")) {
+          rows = [
+            {
+              outcome_id: "OUT-090-1",
+              optimization_case_id: "CTR-090:optimize-contract",
+              opportunity_id: "CTR-090:rate-variance",
+              outcome_state: "proposed",
+              agreed_amount_usd: null,
+              effective_date: null,
+              source_document_id: null,
+            },
+          ];
         }
         return rows as R[];
       };
@@ -156,6 +206,33 @@ describe("getContractOptimizationOpportunitySet", () => {
     ]);
     expect(baselineSql).toHaveLength(1);
     expect(baselineSql[0]).not.toContain("created_at");
+    expect(set?.optimizationCase).toMatchObject({
+      caseId: "CTR-090:optimize-contract",
+      door1EventId: "event-090",
+      caseState: "outreach_approval",
+    });
+    expect(set?.approvalRequests).toHaveLength(1);
+    expect(set?.approvalRequests?.[0]).toMatchObject({
+      approvalRequestId: "APR-090-1",
+      approvalState: "pending",
+      decisions: [
+        {
+          decision: "held",
+          rationale: "Awaiting CFO review.",
+        },
+      ],
+    });
+    expect(set?.negotiatedOutcomes).toEqual([
+      {
+        outcomeId: "OUT-090-1",
+        caseId: "CTR-090:optimize-contract",
+        opportunityId: "CTR-090:rate-variance",
+        outcomeState: "proposed",
+        agreedAmountUsd: null,
+        effectiveDate: null,
+        sourceDocumentId: null,
+      },
+    ]);
     expect(JSON.stringify(set)).not.toContain("CTR-061");
     expect(JSON.stringify(set)).not.toContain("stated annual value is $35.8M");
   });
