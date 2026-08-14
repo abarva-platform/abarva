@@ -112,6 +112,7 @@ export function SourceOptimizeContractPage({
               selectedOpportunity={selectedOpportunity}
               readiness={readiness}
               traceability={traceability}
+              position={position}
             />
           ) : (
             <ContractPicker candidates={spine.topCandidates} />
@@ -305,6 +306,7 @@ function SelectedContractView({
   selectedOpportunity,
   readiness,
   traceability,
+  position,
 }: {
   candidate: ContractOptimizationCandidate;
   spine: ContractOptimizationSpine;
@@ -312,18 +314,33 @@ function SelectedContractView({
   selectedOpportunity: ContractOptimizationOpportunity | null;
   readiness: ContractOptimizationEvidenceReadiness;
   traceability: OpportunityTraceabilitySummary;
+  position: OptimizeWorkflowPosition;
 }) {
   const missingCount =
     spine.missingEvidenceSources.length +
     (opportunitySet?.evidenceRequirements.length ?? 0);
   const opportunityCount = opportunitySet?.opportunities.length ?? 0;
+  const valueProofGapLabel =
+    position.readyForApproval && !readiness.sizingBlocked
+      ? "Value proof gaps"
+      : "Open evidence gaps";
+  const valueProofGapDetail =
+    missingCount > 0
+      ? position.readyForApproval && !readiness.sizingBlocked
+        ? "Approval can proceed; these limit external value claims until accepted."
+        : "These block sizing or external value claims."
+      : position.readyForApproval && !readiness.sizingBlocked
+        ? "No unresolved value-proof rows for the current decision."
+        : "No missing rows in the current evidence spine.";
   const primaryAction =
     !opportunitySet || opportunitySet.baseline.status !== "ready"
       ? "Build or resolve the commercial baseline before approving action."
       : readiness.sizingBlocked
         ? "Collect the missing required evidence families before using a value number externally."
         : missingCount > 0
-          ? "Collect the missing evidence rows before using a value number externally."
+          ? position.readyForApproval
+            ? "Approval can proceed; unresolved proof rows still constrain external value claims."
+            : "Collect the missing value-proof rows before using a value number externally."
           : "Open the optimization case and move the evidenced opportunity through approval.";
   return (
     <div style={SELECTED_GRID_STYLE}>
@@ -356,13 +373,9 @@ function SelectedContractView({
             }
           />
           <DecisionCell
-            label="Open evidence gaps"
+            label={valueProofGapLabel}
             value={String(missingCount)}
-            detail={
-              missingCount > 0
-                ? "These block sizing or external value claims."
-                : "No missing rows in the current evidence spine."
-            }
+            detail={valueProofGapDetail}
           />
         </div>
         <div style={REASON_GRID_STYLE}>

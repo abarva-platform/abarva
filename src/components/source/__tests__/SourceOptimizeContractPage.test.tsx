@@ -7,6 +7,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { SourceOptimizeContractPage } from "../SourceOptimizeContractPage";
 import type { ContractOptimizationSpine } from "@/lib/source/data-model/contract-optimization-spine";
+import type { ContractOptimizationEvidencePack } from "@/lib/source/data-model/contract-optimization-evidence";
 import type { ContractOptimizationOpportunitySet } from "@/lib/source/data-model/contract-optimization-opportunity";
 
 const push = jest.fn();
@@ -145,6 +146,43 @@ function makeOpportunitySet(): ContractOptimizationOpportunitySet {
   };
 }
 
+function makeReadySaaSEvidencePack(): ContractOptimizationEvidencePack {
+  const refs = [
+    "source.golden_contract_pricing_schedule",
+    "source.golden_contract_invoice_lines",
+    "source.golden_contract_rate_card_variance",
+    "source.golden_contract_sla_incident_service_credit_monthly",
+    "source.golden_contract_usage_entitlement_monthly",
+    "source.golden_contract_change_order_register",
+    "source.golden_contract_renewal_terms",
+  ];
+
+  return {
+    tenant_key: "skyharbor_global",
+    dataset_version: "source-v4-golden-contract-evidence",
+    contract_id: "CTR-090",
+    ledger_items: refs.map((ref, index) => ({
+      ledger_item_id: `evidence-${index + 1}`,
+      contract_id: "CTR-090",
+      ledger_type: "recoverable_leakage",
+      amount: 1000,
+      amount_state: "quantified",
+      evidence_class: "system_evidenced",
+      evidence_refs: [ref],
+      source_systems: ["Governed source extract"],
+      source_record_ids: [`row-${index + 1}`],
+      document_refs: [],
+      page_spans: [],
+      calculation_rule: null,
+      confidence: 0.9,
+      review_state: "procurement_reviewed",
+      decision_state: "candidate",
+      workflow_event_id: null,
+      tower_claim_id: null,
+    })),
+  };
+}
+
 function makeConflictOpportunitySet(): ContractOptimizationOpportunitySet {
   const base = makeOpportunitySet();
   return {
@@ -270,6 +308,61 @@ describe("SourceOptimizeContractPage", () => {
     expect(screen.getByText("Finance realization proof")).toBeInTheDocument();
     expect(screen.getByText("18 included")).toBeInTheDocument();
     expect(screen.getByText("2 pending · 3 excluded")).toBeInTheDocument();
+  });
+
+  it("separates approval-stage value proof gaps from readiness blockers", () => {
+    const approvalStageSet = {
+      ...makeOpportunitySet(),
+      recommendation: "Approve the target position.",
+      recommendationDetail:
+        "The sourcing team can approve the position; value proof still needs finance acceptance.",
+      actionState: "approve_vendor_outreach" as const,
+      opportunities: makeOpportunitySet().opportunities.map((opportunity) => ({
+        ...opportunity,
+        stage: "target_position" as const,
+      })),
+      evidenceRequirements: [
+        "Finance must accept the realized-value measurement before any external value claim.",
+      ],
+    };
+
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({
+          selected: makeCandidate(),
+          missingEvidenceSources: [],
+        })}
+        opportunitySet={approvalStageSet}
+        evidencePack={makeReadySaaSEvidencePack()}
+      />,
+    );
+
+    expect(screen.getByTestId("optimize-step-approve")).toHaveAttribute(
+      "data-state",
+      "blocked",
+    );
+    expect(screen.getByTestId("optimize-next-blocker")).toHaveTextContent(
+      "No approved position or vendor agreement is recorded.",
+    );
+    expect(screen.getByText("Value proof gaps")).toBeInTheDocument();
+    expect(screen.queryByText("Open evidence gaps")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Approval can proceed; unresolved proof rows still constrain external value claims/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Approval can proceed; these limit external value claims until accepted.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "Collect the missing evidence rows before using a value number externally.",
+      ),
+    ).not.toBeInTheDocument();
   });
 
   it("surfaces opportunity-set evidence requirements when spine rows are empty", () => {
