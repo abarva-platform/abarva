@@ -203,6 +203,7 @@
     "tenant:data-factory": "node scripts/tenant-v3/tenant-data-factory.mjs",
     "audit:synthetic-tenant-richness": "node scripts/audit/synthetic-tenant-richness.mjs",
     "audit:tenant-graph-reconciliation": "node scripts/audit/tenant-graph-reconciliation.mjs",
+    "audit:graph-disposition-status": "node scripts/audit/build-graph-disposition-status-report.mjs",
     "audit:ava-readiness-ledger": "node scripts/audit/ava-readiness-ledger.mjs",
     "load:tenant-candidate-context": "node scripts/knowledge/load-tenant-candidate-context.mjs",
     "preload:fs-airline-azure-candidate": "FS_AIRLINE_CANDIDATE_ACTION=preload node scripts/knowledge/fs-airline-azure-candidate-load.mjs",
