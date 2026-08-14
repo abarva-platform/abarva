@@ -1,0 +1,300 @@
+{
+  "generatedAt": "2026-08-14T23:25:31.808Z",
+  "generatedBy": "scripts/audit/build-graph-disposition-status-report.mjs",
+  "sourceSha": "933a381c9bb3be9b919cd210892c56dcfb71cf71",
+  "graphGeneratedAt": "2026-08-14T23:25:31.572Z",
+  "mode": "report_only_no_data_mutation_no_registry_activation_no_graph_materialization_no_projection_refresh",
+  "publicDisclosure": "Tenant identifiers are anonymized. Row-level object names and source paths are intentionally omitted.",
+  "evidence": {
+    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-graph-status.1hCyv6/graph",
+    "graphDispositionStatus": "npm run audit:graph-disposition-status -- --graph-dir /tmp/nexus-graph-status.1hCyv6/graph --out-dir reports/graph-disposition-status/current-main --source-sha 933a381c9bb3be9b919cd210892c56dcfb71cf71"
+  },
+  "totals": {
+    "relationshipRows": 9633,
+    "relationshipCandidates": 4454,
+    "quarantinedRelationships": 5179,
+    "quarantineRatePercent": 53.76,
+    "classBreakdown": [
+      {
+        "quarantineClass": "dangling_reference",
+        "count": 4660,
+        "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+      },
+      {
+        "quarantineClass": "empty_endpoint_or_required_field_missing",
+        "count": 519,
+        "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
+      }
+    ],
+    "reasonBreakdown": [
+      {
+        "reason": "unresolved-to-node",
+        "count": 3440,
+        "quarantineClass": "dangling_reference",
+        "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+      },
+      {
+        "reason": "unresolved-from-node",
+        "count": 2713,
+        "quarantineClass": "dangling_reference",
+        "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+      },
+      {
+        "reason": "missing-from-object-name",
+        "count": 519,
+        "quarantineClass": "empty_endpoint_or_required_field_missing",
+        "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
+      },
+      {
+        "reason": "missing-to-object-name",
+        "count": 519,
+        "quarantineClass": "empty_endpoint_or_required_field_missing",
+        "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
+      },
+      {
+        "reason": "missing-from-object-type",
+        "count": 510,
+        "quarantineClass": "empty_endpoint_or_required_field_missing",
+        "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
+      },
+      {
+        "reason": "missing-relationship-type",
+        "count": 510,
+        "quarantineClass": "empty_endpoint_or_required_field_missing",
+        "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
+      },
+      {
+        "reason": "missing-to-object-type",
+        "count": 510,
+        "quarantineClass": "empty_endpoint_or_required_field_missing",
+        "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
+      }
+    ],
+    "graphTablesWritten": false,
+    "productReadModelsUpdated": false
+  },
+  "perTenant": [
+    {
+      "tenant": "tenant-01",
+      "relationshipRows": 1713,
+      "relationshipCandidates": 10,
+      "quarantinedRelationships": 1703,
+      "quarantineRatePercent": 99.42,
+      "classBreakdown": [
+        {
+          "quarantineClass": "dangling_reference",
+          "count": 1703,
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        }
+      ],
+      "reasonBreakdown": [
+        {
+          "reason": "unresolved-from-node",
+          "count": 894,
+          "quarantineClass": "dangling_reference",
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        },
+        {
+          "reason": "unresolved-to-node",
+          "count": 809,
+          "quarantineClass": "dangling_reference",
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        }
+      ]
+    },
+    {
+      "tenant": "tenant-02",
+      "relationshipRows": 380,
+      "relationshipCandidates": 0,
+      "quarantinedRelationships": 380,
+      "quarantineRatePercent": 100,
+      "classBreakdown": [
+        {
+          "quarantineClass": "dangling_reference",
+          "count": 380,
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        }
+      ],
+      "reasonBreakdown": [
+        {
+          "reason": "unresolved-from-node",
+          "count": 380,
+          "quarantineClass": "dangling_reference",
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        },
+        {
+          "reason": "unresolved-to-node",
+          "count": 380,
+          "quarantineClass": "dangling_reference",
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        }
+      ]
+    },
+    {
+      "tenant": "tenant-03",
+      "relationshipRows": 2302,
+      "relationshipCandidates": 1462,
+      "quarantinedRelationships": 840,
+      "quarantineRatePercent": 36.49,
+      "classBreakdown": [
+        {
+          "quarantineClass": "dangling_reference",
+          "count": 840,
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        }
+      ],
+      "reasonBreakdown": [
+        {
+          "reason": "unresolved-to-node",
+          "count": 840,
+          "quarantineClass": "dangling_reference",
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        }
+      ]
+    },
+    {
+      "tenant": "tenant-04",
+      "relationshipRows": 364,
+      "relationshipCandidates": 0,
+      "quarantinedRelationships": 364,
+      "quarantineRatePercent": 100,
+      "classBreakdown": [
+        {
+          "quarantineClass": "dangling_reference",
+          "count": 364,
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        }
+      ],
+      "reasonBreakdown": [
+        {
+          "reason": "unresolved-to-node",
+          "count": 209,
+          "quarantineClass": "dangling_reference",
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        },
+        {
+          "reason": "unresolved-from-node",
+          "count": 155,
+          "quarantineClass": "dangling_reference",
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        }
+      ]
+    },
+    {
+      "tenant": "tenant-05",
+      "relationshipRows": 519,
+      "relationshipCandidates": 0,
+      "quarantinedRelationships": 519,
+      "quarantineRatePercent": 100,
+      "classBreakdown": [
+        {
+          "quarantineClass": "empty_endpoint_or_required_field_missing",
+          "count": 519,
+          "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
+        }
+      ],
+      "reasonBreakdown": [
+        {
+          "reason": "missing-from-object-name",
+          "count": 519,
+          "quarantineClass": "empty_endpoint_or_required_field_missing",
+          "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
+        },
+        {
+          "reason": "missing-to-object-name",
+          "count": 519,
+          "quarantineClass": "empty_endpoint_or_required_field_missing",
+          "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
+        },
+        {
+          "reason": "missing-from-object-type",
+          "count": 510,
+          "quarantineClass": "empty_endpoint_or_required_field_missing",
+          "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
+        },
+        {
+          "reason": "missing-relationship-type",
+          "count": 510,
+          "quarantineClass": "empty_endpoint_or_required_field_missing",
+          "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
+        },
+        {
+          "reason": "missing-to-object-type",
+          "count": 510,
+          "quarantineClass": "empty_endpoint_or_required_field_missing",
+          "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
+        }
+      ]
+    },
+    {
+      "tenant": "tenant-06",
+      "relationshipRows": 1037,
+      "relationshipCandidates": 0,
+      "quarantinedRelationships": 1037,
+      "quarantineRatePercent": 100,
+      "classBreakdown": [
+        {
+          "quarantineClass": "dangling_reference",
+          "count": 1037,
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        }
+      ],
+      "reasonBreakdown": [
+        {
+          "reason": "unresolved-from-node",
+          "count": 1037,
+          "quarantineClass": "dangling_reference",
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        },
+        {
+          "reason": "unresolved-to-node",
+          "count": 1037,
+          "quarantineClass": "dangling_reference",
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        }
+      ]
+    },
+    {
+      "tenant": "tenant-07",
+      "relationshipRows": 3318,
+      "relationshipCandidates": 2982,
+      "quarantinedRelationships": 336,
+      "quarantineRatePercent": 10.13,
+      "classBreakdown": [
+        {
+          "quarantineClass": "dangling_reference",
+          "count": 336,
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        }
+      ],
+      "reasonBreakdown": [
+        {
+          "reason": "unresolved-from-node",
+          "count": 247,
+          "quarantineClass": "dangling_reference",
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        },
+        {
+          "reason": "unresolved-to-node",
+          "count": 165,
+          "quarantineClass": "dangling_reference",
+          "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+        }
+      ]
+    }
+  ],
+  "acceptance": {
+    "everyRemainingQuarantineHasClassAndDisposition": true,
+    "missingClassOrDispositionRows": 0,
+    "perTenantRateAndReasonBreakdownPresent": true,
+    "graphMaterializationStillBlocked": true
+  },
+  "gatesLeftClosed": [
+    "No tenant data mutation, move, deletion, or generated prose.",
+    "No Azure/Postgres write or data-plane load.",
+    "No registry/canonical store activation.",
+    "No graph table materialization.",
+    "No Layer 4 projection or product runtime refresh.",
+    "No live-client truth claim."
+  ]
+}
