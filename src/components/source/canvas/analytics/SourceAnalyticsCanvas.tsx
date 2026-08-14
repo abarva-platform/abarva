@@ -1271,6 +1271,12 @@ function FocusedWorkPanel({
   const doneCount = flatSteps.filter(isComplete).length;
   const allReady = flatSteps.length > 0 && doneCount === flatSteps.length;
   const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
+  // An approval record exists for the stage being viewed. `approvalEvidenced` is
+  // null when no approval ledger was supplied, which is not the same as "not
+  // approved" — only an explicit true means a record backs it.
+  const viewedStageApproved =
+    view.journey.find((stage) => stage.key === view.stage.key)
+      ?.approvalEvidenced === true;
   const activeStep =
     flatSteps.find((step) => step.id === activeStepId) ??
     flatSteps.find((step) => step.status !== "captured") ??
@@ -1445,7 +1451,14 @@ function FocusedWorkPanel({
             ? hasArtifactGaps
               ? `Required inputs are complete for ${view.stage.label}. Review Files first; the approval gate stays blocked until artifact review is cleared or an exception is recorded.`
               : `All required work is complete for ${view.stage.label}. Open the approval gate when the owner is ready.`
-            : `${flatSteps.length - doneCount} step${flatSteps.length - doneCount === 1 ? "" : "s"} left before ${view.stage.label} can move to approval.`}
+            : viewedStageApproved
+              ? // Approve-with-gaps is a supported decision, but it must be
+                // visible afterwards. Saying "N steps left before this can move
+                // to approval" about a stage that was already approved hides the
+                // gap and misdescribes the state — live-found on a stage reading
+                // 0/1 whose approval record was already in the ledger.
+                `${view.stage.label} was approved with ${flatSteps.length - doneCount} required input${flatSteps.length - doneCount === 1 ? "" : "s"} still open. The approval stands; the gap is recorded here so it is not mistaken for completed work.`
+              : `${flatSteps.length - doneCount} step${flatSteps.length - doneCount === 1 ? "" : "s"} left before ${view.stage.label} can move to approval.`}
         </div>
       </div>
 
