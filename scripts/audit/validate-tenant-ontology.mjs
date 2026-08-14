@@ -70,6 +70,14 @@ function main() {
   const nodeTypes = new Map(ontology.nodeTypes.map((entry) => [entry.type, entry]));
   const edgeTypes = new Map(ontology.relationshipTypes.map((entry) => [entry.type, entry]));
 
+  // Synonyms are resolved before checking. A tenant calling an accountable party `leader`
+  // rather than `org_unit` is using a different word for the same thing, and failing it for
+  // that would be measuring vocabulary rather than correctness.
+  const nodeSynonyms = new Map(Object.entries(ontology.synonyms?.nodeTypes ?? {}));
+  const edgeSynonyms = new Map(Object.entries(ontology.synonyms?.relationshipTypes ?? {}));
+  const canonicalNode = (t) => nodeSynonyms.get(t) ?? t;
+  const canonicalEdge = (t) => edgeSynonyms.get(t) ?? t;
+
   const tenants = (registry.activeTenants ?? []).filter(
     (tenant) => args.tenants.length === 0 || args.tenants.includes(tenant.tenantKey),
   );
@@ -119,12 +127,12 @@ function main() {
 
     let endpoints = 0;
     for (const edge of edges) {
-      const edgeType = String(edge.relationship_type ?? '').trim();
+      const edgeType = canonicalEdge(String(edge.relationship_type ?? '').trim());
       const spec = edgeTypes.get(edgeType);
       if (!spec) bump(findings.undeclaredEdgeType, edgeType || '(blank)', '');
 
       for (const side of ['from', 'to']) {
-        const type = String(edge[`${side}_object_type`] ?? '').trim();
+        const type = canonicalNode(String(edge[`${side}_object_type`] ?? '').trim());
         const name = String(edge[`${side}_object_name`] ?? '').trim();
         if (!type || !name) continue;
         endpoints += 1;
