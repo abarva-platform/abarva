@@ -176,6 +176,54 @@ const contractAlignedProfiles = [
   },
 ] as const;
 
+const legacyAliasProfiles = [
+  {
+    mappingProfile: "managed-services-scope/v1",
+    templateFile: "17_service_scope_managed_services.csv",
+    sourceClass: "service_scope_managed_services",
+    objectType: "managed_service_scope",
+    columns: ["tenant_key", "service", "service_tower"],
+    row: ["test-tenant", "Legacy Service", "Operations"],
+    expectedSourceObjectId: "legacy-service",
+  },
+  {
+    mappingProfile: "ai-automation-use-cases/v1",
+    templateFile: "10_ai_automation_use_cases.csv",
+    sourceClass: "ai_automation_use_cases",
+    objectType: "ai_use_case",
+    columns: ["tenant_key", "use_case", "business_function"],
+    row: ["test-tenant", "Legacy Use Case", "Finance"],
+    expectedSourceObjectId: "legacy-use-case",
+  },
+  {
+    mappingProfile: "risks-controls/v1",
+    templateFile: "11_risks_controls.csv",
+    sourceClass: "risks_controls",
+    objectType: "risk_control",
+    columns: ["tenant_key", "risk_or_gap", "risk_domain"],
+    row: ["test-tenant", "Legacy Risk", "Controls"],
+    expectedSourceObjectId: "legacy-risk",
+  },
+  {
+    mappingProfile: "enterprise-profile-v3/v1",
+    templateFile: "00_enterprise_profile.csv",
+    sourceClass: "enterprise_profile",
+    objectType: "enterprise_profile",
+    columns: ["tenant_key", "business_name", "industry"],
+    row: ["test-tenant", "Legacy Enterprise", "Healthcare"],
+    expectedSourceObjectId: "legacy-enterprise",
+  },
+  {
+    mappingProfile: "evidence-sources-v3/v1",
+    templateFile: "13_evidence_sources.csv",
+    sourceClass: "evidence_registry",
+    objectType: "evidence_source",
+    columns: ["tenant_key", "evidence_location", "source_owner"],
+    row: ["test-tenant", "evidence-location.csv", "Data Office"],
+    expectedSourceObjectId: "evidence-location-csv",
+  },
+] as const;
+
 function csvValueFor(
   field: string,
   identityField: string,
@@ -276,6 +324,57 @@ describe("contract-aligned mapping profiles", () => {
       expect(result.records[0]).toMatchObject({
         objectType,
         sourceObjectId: identityValue.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        qualityStatus: "valid",
+      });
+    },
+  );
+
+  it.each(legacyAliasProfiles)(
+    "parses mechanical aliases for $mappingProfile",
+    async ({
+      mappingProfile,
+      templateFile,
+      sourceClass,
+      objectType,
+      columns,
+      row,
+      expectedSourceObjectId,
+    }) => {
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nexus-alias-profile-"));
+      const sourcePath = path.join(dir, templateFile);
+      fs.writeFileSync(sourcePath, `${columns.join(",")}\n${row.join(",")}\n`);
+
+      const packetFile: TenantPacketFile = {
+        path: sourcePath,
+        sourceClass,
+        sourceProfile: "legacy-standard-v3",
+        mappingProfile,
+        adapterKey: "csv",
+        dataStatus: "synthetic",
+        sensitivity: "internal",
+        evidenceBasis: "source_file",
+        required: true,
+        expectedDomains: ["enterprise_structure"],
+      };
+
+      const result = await new CsvSourceAdapter().parse({
+        tenantKey: "test-tenant",
+        packetId: "test-packet",
+        packetVersion: "test-version",
+        sourcePath,
+        packetFile,
+        sourceProfile: packetFile.sourceProfile,
+        parserVersion: "csv-adapter/v1",
+        mappingProfile,
+        observedAt: "2026-08-14T00:00:00.000Z",
+      });
+
+      expect(result.requiredFieldCount).toBeGreaterThan(0);
+      expect(result.missingRequiredFieldCount).toBe(0);
+      expect(result.quarantinedRecordCount).toBe(0);
+      expect(result.records[0]).toMatchObject({
+        objectType,
+        sourceObjectId: expectedSourceObjectId,
         qualityStatus: "valid",
       });
     },

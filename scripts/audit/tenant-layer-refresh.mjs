@@ -136,7 +136,7 @@ const mappingProfileDomainAliases = {
   'organization-workforce-roles/v1': ['workforce_roles'],
   'vendor-contracts/v1': ['vendors_contracts'],
   'spend-value/v1': ['spend_value'],
-  'managed-services-scope/v1': ['service_scope_managed_services'],
+  'managed-services-scope/v1': ['service_scope_managed_services', 'managed_services_scope'],
   'metrics-outcomes/v1': ['metrics_outcomes'],
   'data-assets-integrations/v1': ['data_assets_integrations'],
   'infrastructure-platforms/v1': ['infrastructure_platforms'],
@@ -217,6 +217,14 @@ function profileAppliesToDomain(profile, domain) {
 function profilesForContractFile(contractFile, profiles) {
   const domain = domainFromContractFile(contractFile);
   return (profiles ?? []).filter((profile) => profileAppliesToDomain(profile, domain));
+}
+
+function sourceFieldsForRule(rule) {
+  return [rule.sourceField, ...(rule.sourceAliases ?? [])];
+}
+
+function sourceColumnAvailableForRule(rule, columns) {
+  return sourceFieldsForRule(rule).some((field) => field === '__source_path' || columns.includes(field));
 }
 
 function profilesForWorkstream(workstream, profiles) {
@@ -748,8 +756,9 @@ function layer2Rows(analysis, contract, profiles) {
   // Field-level satisfaction per implemented profile against this tenant's own files.
   const dryRunRows = [];
   for (const profile of activeProfiles) {
-    const required = profile.rules.filter((rule) => rule.required).map((rule) => rule.sourceField);
-    const optional = profile.rules.filter((rule) => !rule.required).map((rule) => rule.sourceField);
+    const requiredRules = profile.rules.filter((rule) => rule.required);
+    const optionalRules = profile.rules.filter((rule) => !rule.required);
+    const required = requiredRules.map((rule) => rule.sourceField);
     const candidateFiles = activeCsvs.filter((file) => profileAppliesToDomain(profile, domainFromContractFile(file)));
 
     // "Best" only means anything once at least one required field is present; otherwise
@@ -757,14 +766,20 @@ function layer2Rows(analysis, contract, profiles) {
     let best = { file: '', satisfied: 0, missing: required };
     for (const file of candidateFiles) {
       const columns = columnsByFile.get(file) ?? [];
-      const satisfied = required.filter((field) => columns.includes(field));
-      if (satisfied.length > best.satisfied) {
-        best = { file, satisfied: satisfied.length, missing: required.filter((field) => !columns.includes(field)) };
+      const satisfiedRules = requiredRules.filter((rule) => sourceColumnAvailableForRule(rule, columns));
+      if (satisfiedRules.length > best.satisfied) {
+        best = {
+          file,
+          satisfied: satisfiedRules.length,
+          missing: requiredRules
+            .filter((rule) => !sourceColumnAvailableForRule(rule, columns))
+            .map((rule) => rule.sourceField),
+        };
       }
     }
 
     const optionalHit = best.file
-      ? optional.filter((field) => (columnsByFile.get(best.file) ?? []).includes(field)).length
+      ? optionalRules.filter((rule) => sourceColumnAvailableForRule(rule, columnsByFile.get(best.file) ?? [])).length
       : 0;
 
     dryRunRows.push({
@@ -802,9 +817,12 @@ function layer2Rows(analysis, contract, profiles) {
     const requiredFields = [
       ...new Set(matchedProfiles.flatMap((profile) => profile.rules.filter((rule) => rule.required).map((rule) => rule.sourceField))),
     ];
+    const requiredRules = matchedProfiles.flatMap((profile) => profile.rules.filter((rule) => rule.required));
     const sourceFile = dimension.resolvedFile ? `${activeRoot}/${dimension.resolvedFile}` : '';
     const sourceColumns = sourceFile ? (columnsByFile.get(sourceFile) ?? []) : [];
-    const missingRequiredFields = requiredFields.filter((field) => !sourceColumns.includes(field));
+    const missingRequiredFields = requiredRules
+      .filter((rule) => !sourceColumnAvailableForRule(rule, sourceColumns))
+      .map((rule) => rule.sourceField);
     const adapterState =
       matchedProfiles.length === 0
         ? 'no-implemented-adapter'
@@ -860,6 +878,9 @@ function adapterFamilyCoverageRegistry(contract, profiles) {
         version: profile.version ?? '',
         requiredFields: profile.rules.filter((rule) => rule.required).map((rule) => rule.sourceField),
         optionalFields: profile.rules.filter((rule) => !rule.required).map((rule) => rule.sourceField),
+        requiredFieldAliases: profile.rules
+          .filter((rule) => rule.required && (rule.sourceAliases ?? []).length > 0)
+          .map((rule) => `${rule.sourceField}:${rule.sourceAliases.join('|')}`),
       })),
       adapterState: matchedProfiles.length ? 'partially-implemented' : 'no-implemented-adapter',
     };
