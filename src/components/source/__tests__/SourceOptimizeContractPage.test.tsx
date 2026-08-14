@@ -310,7 +310,7 @@ describe("SourceOptimizeContractPage", () => {
     expect(screen.getByText("2 pending · 3 excluded")).toBeInTheDocument();
   });
 
-  it("separates approval-stage value proof gaps from readiness blockers", () => {
+  it("separates strategy approval lifecycle gaps from readiness blockers", () => {
     const approvalStageSet = {
       ...makeOpportunitySet(),
       recommendation: "Approve the target position.",
@@ -321,6 +321,8 @@ describe("SourceOptimizeContractPage", () => {
         ...opportunity,
         stage: "target_position" as const,
       })),
+      approvalRequests: [],
+      negotiatedOutcomes: [],
       evidenceRequirements: [
         "Finance must accept the realized-value measurement before any external value claim.",
       ],
@@ -339,23 +341,27 @@ describe("SourceOptimizeContractPage", () => {
       />,
     );
 
-    expect(screen.getByTestId("optimize-step-approve")).toHaveAttribute(
+    expect(screen.getByTestId("optimize-step-plan")).toHaveAttribute(
       "data-state",
       "blocked",
     );
     expect(screen.getByTestId("optimize-next-blocker")).toHaveTextContent(
-      "No approved position or vendor agreement is recorded.",
+      "No governed strategy or vendor-outreach approval request is recorded.",
     );
-    expect(screen.getByText("Value proof gaps")).toBeInTheDocument();
+    expect(screen.getByTestId("optimize-step-approve")).toHaveAttribute(
+      "data-state",
+      "future",
+    );
+    expect(screen.getByText("Workflow gaps")).toBeInTheDocument();
     expect(screen.queryByText("Open evidence gaps")).not.toBeInTheDocument();
     expect(
-      screen.getByText(
-        /Approval can proceed; unresolved proof rows still constrain external value claims/i,
-      ),
-    ).toBeInTheDocument();
+      screen.getAllByText(
+        /A target position is visible, but Source needs a governed approval request/i,
+      ).length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByText(
-        "Approval can proceed; these limit external value claims until accepted.",
+        "Evidence may be ready, but approval/outcome workflow state is not complete.",
       ),
     ).toBeInTheDocument();
     expect(

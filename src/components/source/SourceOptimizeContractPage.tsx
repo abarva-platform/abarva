@@ -320,23 +320,33 @@ function SelectedContractView({
     spine.missingEvidenceSources.length +
     (opportunitySet?.evidenceRequirements.length ?? 0);
   const opportunityCount = opportunitySet?.opportunities.length ?? 0;
+  const workflowBlocked =
+    !readiness.sizingBlocked &&
+    Boolean(position.blocker) &&
+    (position.currentKey === "plan" || position.currentKey === "approve");
   const valueProofGapLabel =
-    position.readyForApproval && !readiness.sizingBlocked
-      ? "Value proof gaps"
-      : "Open evidence gaps";
-  const valueProofGapDetail =
-    missingCount > 0
-      ? position.readyForApproval && !readiness.sizingBlocked
-        ? "Approval can proceed; these limit external value claims until accepted."
-        : "These block sizing or external value claims."
+    workflowBlocked
+      ? "Workflow gaps"
       : position.readyForApproval && !readiness.sizingBlocked
-        ? "No unresolved value-proof rows for the current decision."
-        : "No missing rows in the current evidence spine.";
+        ? "Value proof gaps"
+        : "Open evidence gaps";
+  const valueProofGapDetail =
+    workflowBlocked
+      ? "Evidence may be ready, but approval/outcome workflow state is not complete."
+      : missingCount > 0
+        ? position.readyForApproval && !readiness.sizingBlocked
+          ? "Approval can proceed; these limit external value claims until accepted."
+          : "These block sizing or external value claims."
+        : position.readyForApproval && !readiness.sizingBlocked
+          ? "No unresolved value-proof rows for the current decision."
+          : "No missing rows in the current evidence spine.";
   const primaryAction =
     !opportunitySet || opportunitySet.baseline.status !== "ready"
       ? "Build or resolve the commercial baseline before approving action."
       : readiness.sizingBlocked
         ? "Collect the missing required evidence families before using a value number externally."
+        : workflowBlocked
+          ? position.primaryActionDetail
         : missingCount > 0
           ? position.readyForApproval
             ? "Approval can proceed; unresolved proof rows still constrain external value claims."

@@ -133,8 +133,27 @@ function evaluateGates(input: {
 }): readonly StepGate[] {
   const { hasSelectedContract, opportunitySet, readiness, traceability } = input;
   const opportunities = opportunitySet?.opportunities ?? [];
+  const approvalRequests = opportunitySet?.approvalRequests ?? [];
+  const negotiatedOutcomes = opportunitySet?.negotiatedOutcomes ?? [];
   const baselineStatus = opportunitySet?.baseline.status ?? null;
   const topStage = highestStageRank(opportunities);
+  const hasApprovalRequest = approvalRequests.length > 0;
+  const hasApprovedRequest = approvalRequests.some(
+    (request) =>
+      request.approvalState === "approved" ||
+      request.decisions.some((decision) => decision.decision === "approved"),
+  );
+  const hasPendingApprovalRequest = approvalRequests.some(
+    (request) => request.approvalState === "pending",
+  );
+  const hasSentBackApprovalRequest = approvalRequests.some(
+    (request) =>
+      request.approvalState === "sent_back" ||
+      request.decisions.some((decision) => decision.decision === "sent_back"),
+  );
+  const hasAgreedOutcome = negotiatedOutcomes.some(
+    (outcome) => outcome.outcomeState === "agreed",
+  );
 
   const financeConfirmed =
     (opportunitySet?.financeConfirmedUsd ?? 0) > 0 ||
@@ -199,24 +218,47 @@ function evaluateGates(input: {
             : null,
     },
     {
-      satisfied: topStage >= STAGE_RANK.target_position,
-      primaryAction: "Build the negotiation strategy",
-      primaryActionDetail:
-        "Turn validated opportunities into a target, fallback, walk-away, and vendor ask list before any outreach.",
-      blocker:
+      satisfied:
+        topStage >= STAGE_RANK.target_position && hasApprovalRequest,
+      primaryAction:
         topStage >= STAGE_RANK.target_position
-          ? null
-          : "No negotiation target position is set.",
+          ? hasApprovalRequest
+            ? "Review the strategy approval request"
+            : "Create the strategy approval request"
+          : "Build the negotiation strategy",
+      primaryActionDetail:
+        topStage >= STAGE_RANK.target_position
+          ? "A target position is visible, but Source needs a governed approval request before vendor outreach or commercial commitment."
+          : "Turn validated opportunities into a target, fallback, walk-away, and vendor ask list before any outreach.",
+      blocker:
+        topStage < STAGE_RANK.target_position
+          ? "No negotiation target position is set."
+          : hasApprovalRequest
+            ? null
+            : "No governed strategy or vendor-outreach approval request is recorded.",
     },
     {
-      satisfied: topStage >= STAGE_RANK.agreed,
-      primaryAction: "Open approval gate",
+      satisfied: hasApprovedRequest && hasAgreedOutcome,
+      primaryAction: hasApprovedRequest
+        ? "Record the negotiated outcome"
+        : hasSentBackApprovalRequest
+          ? "Revise and resubmit the approval request"
+          : hasPendingApprovalRequest
+            ? "Approve or send back the strategy request"
+            : "Open approval gate",
       primaryActionDetail:
-        "A named approver must authorize the position before any vendor outreach or commercial commitment.",
-      blocker:
-        topStage >= STAGE_RANK.agreed
+        hasApprovedRequest
+          ? "An approval exists. Record the vendor agreement, rejection, or superseded outcome before moving to value proof."
+          : "A named approver must authorize the position before any vendor outreach or commercial commitment.",
+      blocker: !hasApprovedRequest
+        ? hasSentBackApprovalRequest
+          ? "The strategy approval request was sent back."
+          : hasPendingApprovalRequest
+            ? "The strategy approval request is pending."
+            : "No approved position is recorded."
+        : hasAgreedOutcome
           ? null
-          : "No approved position or vendor agreement is recorded.",
+          : "No negotiated vendor outcome is recorded.",
     },
     {
       satisfied: financeConfirmed,
