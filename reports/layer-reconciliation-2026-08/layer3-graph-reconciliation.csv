@@ -1,0 +1,82 @@
+tenantKey,defectClass,detail,count,repairability
+apex-retail,dangling-reference,unresolvedEndpoint: org_unit,375,DECISION: catalogue the object or drop the edge
+apex-retail,dangling-reference,unresolvedEndpoint: system,323,DECISION: catalogue the object or drop the edge
+apex-retail,direction,domainRangeViolation: owned_by.from got org_unit,235,repairable-by-edge-repair
+apex-retail,direction,domainRangeViolation: owned_by.to got data_asset,235,repairable-by-edge-repair
+apex-retail,dangling-reference,unresolvedEndpoint: infrastructure,235,DECISION: catalogue the object or drop the edge
+apex-retail,dangling-reference,unresolvedEndpoint: data_domain,200,DECISION: catalogue the object or drop the edge
+apex-retail,direction,domainRangeViolation: owns_function.to got system,122,repairable-by-edge-repair
+apex-retail,dangling-reference,unresolvedEndpoint: function,122,DECISION: catalogue the object or drop the edge
+apex-retail,direction,domainRangeViolation: supports.to got system,110,repairable-by-edge-repair
+apex-retail,dangling-reference,unresolvedEndpoint: vendor,110,DECISION: catalogue the object or drop the edge
+apex-retail,direction,domainRangeViolation: provided_by.from got vendor,100,repairable-by-edge-repair
+apex-retail,direction,domainRangeViolation: provided_by.to got contract,100,repairable-by-edge-repair
+apex-retail,direction,domainRangeViolation: owns_function.to got program,80,repairable-by-edge-repair
+apex-retail,dangling-reference,unresolvedEndpoint: risk,80,DECISION: catalogue the object or drop the edge
+first-capital-financial,dangling-reference,unresolvedEndpoint: program,127,DECISION: catalogue the object or drop the edge
+first-capital-financial,dangling-reference,unresolvedEndpoint: data_asset,127,DECISION: catalogue the object or drop the edge
+first-capital-financial,dangling-reference,unresolvedEndpoint: risk,126,DECISION: catalogue the object or drop the edge
+first-capital-financial,dangling-reference,unresolvedEndpoint: vendor,126,DECISION: catalogue the object or drop the edge
+first-capital-financial,dangling-reference,unresolvedEndpoint: metric,126,DECISION: catalogue the object or drop the edge
+first-capital-financial,direction,domainRangeViolation: depends_on.to got program,64,repairable-by-edge-repair
+first-capital-financial,direction,domainRangeViolation: feeds.to got use_case,64,repairable-by-edge-repair
+first-capital-financial,dangling-reference,unresolvedEndpoint: system,64,DECISION: catalogue the object or drop the edge
+first-capital-financial,dangling-reference,unresolvedEndpoint: use_case,64,DECISION: catalogue the object or drop the edge
+first-capital-financial,vocabulary,undeclaredEdgeType: funds,63,repairable-by-declaration-or-retype
+first-capital-financial,vocabulary,undeclaredEdgeType: blocked_by,63,repairable-by-declaration-or-retype
+first-capital-financial,direction,domainRangeViolation: owned_by.to got metric,63,repairable-by-edge-repair
+first-capital-financial,direction,domainRangeViolation: supports.from got metric,63,repairable-by-edge-repair
+first-capital-financial,direction,domainRangeViolation: supports.to got data_asset,63,repairable-by-edge-repair
+healthcare-demo-new,dangling-reference,unresolvedEndpoint: org_unit,257,DECISION: catalogue the object or drop the edge
+healthcare-demo-new,direction,domainRangeViolation: provided_by.from got metric,90,repairable-by-edge-repair
+healthcare-demo-new,direction,domainRangeViolation: provided_by.to got system,90,repairable-by-edge-repair
+healthcare-demo-new,dangling-reference,unresolvedEndpoint: system,83,DECISION: catalogue the object or drop the edge
+healthcare-demo-new,vocabulary,undeclaredEdgeType: requires,25,repairable-by-declaration-or-retype
+healthcare-demo-new,vocabulary,undeclaredEdgeType: led_by,24,repairable-by-declaration-or-retype
+healthcare-demo-new,direction,domainRangeViolation: provided_by.from got managed_service,15,repairable-by-edge-repair
+healthcare-demo-new,direction,domainRangeViolation: supports.from got managed_service,15,repairable-by-edge-repair
+healthcare-demo-new,dangling-reference,unresolvedEndpoint: function,9,DECISION: catalogue the object or drop the edge
+healthcare-demo-new,dangling-reference,unresolvedEndpoint: vendor,4,DECISION: catalogue the object or drop the edge
+lakeshore-holdings,dangling-reference,unresolvedEndpoint: data_domain,75,DECISION: catalogue the object or drop the edge
+lakeshore-holdings,dangling-reference,unresolvedEndpoint: system,59,DECISION: catalogue the object or drop the edge
+lakeshore-holdings,direction,domainRangeViolation: owned_by.from got org_unit,34,repairable-by-edge-repair
+lakeshore-holdings,direction,domainRangeViolation: owned_by.to got data_asset,34,repairable-by-edge-repair
+lakeshore-holdings,dangling-reference,unresolvedEndpoint: infrastructure,34,DECISION: catalogue the object or drop the edge
+lakeshore-holdings,dangling-reference,unresolvedEndpoint: org_unit,31,DECISION: catalogue the object or drop the edge
+lakeshore-holdings,direction,domainRangeViolation: owns_function.to got system,24,repairable-by-edge-repair
+lakeshore-holdings,direction,domainRangeViolation: supports.to got system,24,repairable-by-edge-repair
+lakeshore-holdings,dangling-reference,unresolvedEndpoint: function,24,DECISION: catalogue the object or drop the edge
+lakeshore-holdings,dangling-reference,unresolvedEndpoint: vendor,24,DECISION: catalogue the object or drop the edge
+lakeshore-holdings,direction,domainRangeViolation: provided_by.from got vendor,19,repairable-by-edge-repair
+lakeshore-holdings,direction,domainRangeViolation: provided_by.to got contract,19,repairable-by-edge-repair
+lakeshore-holdings,direction,domainRangeViolation: owns_function.to got program,15,repairable-by-edge-repair
+lakeshore-holdings,dangling-reference,unresolvedEndpoint: risk,15,DECISION: catalogue the object or drop the edge
+lakeshore-industries,phantom-edges,edges with no endpoints,519,DECISION: no upstream source exists
+lakeshore-industries,vocabulary,undeclaredEdgeType: (blank),510,repairable-by-declaration-or-retype
+lakeshore-industries,vocabulary,undeclaredEdgeType: uses_data_from,1,repairable-by-declaration-or-retype
+lakeshore-industries,vocabulary,undeclaredEdgeType: supplies_or_supports,1,repairable-by-declaration-or-retype
+lakeshore-industries,vocabulary,undeclaredEdgeType: produces_or_consumes,1,repairable-by-declaration-or-retype
+lakeshore-industries,vocabulary,undeclaredEdgeType: requires_data_from,1,repairable-by-declaration-or-retype
+lakeshore-industries,vocabulary,undeclaredEdgeType: serves_portfolio_company,1,repairable-by-declaration-or-retype
+meridian-health,dangling-reference,unresolvedEndpoint: system,779,DECISION: catalogue the object or drop the edge
+meridian-health,dangling-reference,unresolvedEndpoint: vendor,286,DECISION: catalogue the object or drop the edge
+meridian-health,direction,domainRangeViolation: provided_by.from got vendor,226,repairable-by-edge-repair
+meridian-health,direction,domainRangeViolation: provided_by.to got contract,226,repairable-by-edge-repair
+meridian-health,dangling-reference,unresolvedEndpoint: contract,226,DECISION: catalogue the object or drop the edge
+meridian-health,dangling-reference,unresolvedEndpoint: program,180,DECISION: catalogue the object or drop the edge
+meridian-health,dangling-reference,unresolvedEndpoint: use_case,147,DECISION: catalogue the object or drop the edge
+meridian-health,dangling-reference,unresolvedEndpoint: risk,144,DECISION: catalogue the object or drop the edge
+meridian-health,direction,domainRangeViolation: supported_by.from got use_case,138,repairable-by-edge-repair
+meridian-health,dangling-reference,unresolvedEndpoint: data_asset,136,DECISION: catalogue the object or drop the edge
+meridian-health,dangling-reference,unresolvedEndpoint: data_domain,85,DECISION: catalogue the object or drop the edge
+meridian-health,direction,domainRangeViolation: supported_by.to got data_domain,63,repairable-by-edge-repair
+meridian-health,direction,domainRangeViolation: supports.to got system,55,repairable-by-edge-repair
+meridian-health,dangling-reference,unresolvedEndpoint: function,30,DECISION: catalogue the object or drop the edge
+meridian-health,direction,domainRangeViolation: owns_function.to got system,20,repairable-by-edge-repair
+meridian-health,dangling-reference,unresolvedEndpoint: org_unit,20,DECISION: catalogue the object or drop the edge
+meridian-health,direction,domainRangeViolation: supported_by.from got process,9,repairable-by-edge-repair
+meridian-health,direction,domainRangeViolation: supported_by.to got use_case,9,repairable-by-edge-repair
+meridian-health,dangling-reference,unresolvedEndpoint: process,9,DECISION: catalogue the object or drop the edge
+skyharbor-air,external-evidence,expectedExternalEndpoint: interview,247,"by-design, evidence lives outside the package"
+skyharbor-air,dangling-reference,unresolvedEndpoint: tower_initiative,76,DECISION: catalogue the object or drop the edge
+skyharbor-air,dangling-reference,unresolvedEndpoint: org_unit,14,DECISION: catalogue the object or drop the edge

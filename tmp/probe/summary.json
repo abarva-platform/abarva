@@ -1,0 +1,390 @@
+{
+  "generatedAt": "2026-08-14T12:56:39.204Z",
+  "generatedBy": "scripts/audit/tenant-layer-refresh.mjs",
+  "tenants": [
+    "apex-retail",
+    "lakeshore-holdings"
+  ],
+  "mode": "local-offline-refresh-preparation",
+  "status": "draft_local_offline_only_not_active_truth_no_registry_no_load_no_retrieval_no_product_use",
+  "factLineageSource": "reports/tower-fact-lineage/lineage.json",
+  "perTenant": {
+    "apex-retail": {
+      "activeRoot": "datasets/tenant-inputs/active/apex-retail/current",
+      "layerRoots": [
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/active/apex-retail/current",
+          "present": true,
+          "files": 23,
+          "truthEligibility": "active-declared-source-package"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/apex-retail/standard-2026-07-v3",
+          "present": false,
+          "files": 0,
+          "truthEligibility": "duplicate-truth-candidate"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/apex-retail/v2026-08-governed-intake",
+          "present": false,
+          "files": 0,
+          "truthEligibility": "draft-not-active"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/apex-retail/interviews",
+          "present": false,
+          "files": 0,
+          "truthEligibility": "source-signal-not-deterministic-truth"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/candidates/apex-retail",
+          "present": true,
+          "files": 2,
+          "truthEligibility": "not-active"
+        },
+        {
+          "layer": "Layer 2 — Source Adapters",
+          "path": "datasets/tenant-inputs/generated/apex-retail",
+          "present": false,
+          "files": 0,
+          "truthEligibility": "disposable-build-output"
+        },
+        {
+          "layer": "Layer 3 — Canonical Model",
+          "path": "datasets/tenant-inputs/apex-retail/derived",
+          "present": true,
+          "files": 1,
+          "truthEligibility": "derived-output-rebuildable"
+        },
+        {
+          "layer": "Layer 4 — Products",
+          "path": "datasets/tenant-inputs/apex-retail/approved-content",
+          "present": true,
+          "files": 1,
+          "truthEligibility": "product-projection"
+        }
+      ],
+      "claims": {
+        "total": 6,
+        "byState": {
+          "DIVERGENT_COPY": 2,
+          "UNREGISTERED": 4
+        }
+      },
+      "workstreamCoverage": {
+        "covered": 5,
+        "partial": 5
+      },
+      "governedPackage": "not written",
+      "layer2": {
+        "mappingProfilesImplemented": 4,
+        "workstreamsWithNoImplementedAdapter": 6,
+        "profilesThatWouldRun": 0,
+        "adaptersExecuted": 0
+      },
+      "layer3": {
+        "tenantKey": "apex-retail",
+        "layer": "Layer 3 — Canonical Enterprise Model",
+        "mode": "draft-preparation-only",
+        "canonicalStoreWritten": false,
+        "activeRootAtGeneration": "datasets/tenant-inputs/active/apex-retail/current",
+        "dimensionsResolved": 16,
+        "dimensionsDeclared": 19,
+        "dimensionsAbsent": 0,
+        "dimensionsWithNamingDrift": 0,
+        "dimensionsWithColumnGaps": 0,
+        "unregisteredActiveFiles": [
+          "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+          "SA09_AI_Tool_Usage_Feed.csv",
+          "SA10_AI_Value_Interview_Evidence.csv",
+          "SA11_AI_KPI_Operational_Outcome_Feed.csv"
+        ],
+        "checks": [
+          {
+            "check": "Every canonical object has declared identity",
+            "result": "FAIL",
+            "detail": "4 file(s) in the active root are not declared in the template contract: SA08_AI_Benefits_Realization_Usage_Ledger.csv; SA09_AI_Tool_Usage_Feed.csv; SA10_AI_Value_Interview_Evidence.csv; SA11_AI_KPI_Operational_Outcome_Feed.csv"
+          },
+          {
+            "check": "Every fact carries source file / source row / evidence id where available",
+            "result": "PARTIAL",
+            "detail": "13_evidence_sources carries 9 row(s); per-row evidence linkage is not verified by this script."
+          },
+          {
+            "check": "Relationship rows use canonical relationship types",
+            "result": "NOT_VERIFIED",
+            "detail": "12_relationships carries 1713 row(s); the canonical relationship dictionary lives in intelligence_v6.relationship_types and was not read (no data-plane access in this lane)."
+          },
+          {
+            "check": "Planning-grade and interview-only facts remain marked",
+            "result": "PARTIAL",
+            "detail": "Classification is carried in the package manifest as synthetic_demo_planning_grade; per-row attestation is not present."
+          },
+          {
+            "check": "Money, counts, and metrics are deterministic and not model-invented",
+            "result": "FAIL",
+            "detail": "2 conflicting or divergent claim(s); see claim-reconciliation-matrix.csv."
+          },
+          {
+            "check": "Duplicate/conflicting claims are blocked pending reconciliation",
+            "result": "PASS",
+            "detail": "2 claim(s) recorded as blocked in the governed package blocked_claims.csv."
+          }
+        ],
+        "status": "draft_local_offline_only_not_active_truth_no_registry_no_load_no_retrieval_no_product_use"
+      },
+      "layer4": {
+        "tenantKey": "apex-retail",
+        "layer": "Layer 4 — Products",
+        "mode": "readiness-report-only",
+        "runtimeOrDatabaseProjectionRefreshed": false,
+        "approvedContentFiles": 1,
+        "derivedContextFiles": 1,
+        "reportArtefacts": 0,
+        "factLineage": {
+          "source": "reports/tower-fact-lineage/lineage.json",
+          "conflictMetrics": [],
+          "singleSourceMetrics": [],
+          "quotableFigures": "all corroborated"
+        },
+        "surfaces": [
+          {
+            "surface": "Home context and architecture projections",
+            "localArtefact": "datasets/tenant-inputs/apex-retail/derived/home-context-view.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Intelligence / aVa context bundle",
+            "localArtefact": "datasets/tenant-inputs/apex-retail/derived/canonical-facts.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Moves context package",
+            "localArtefact": "datasets/tenant-inputs/apex-retail/derived/moves-context-view.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Source read model / package",
+            "localArtefact": "datasets/tenant-inputs/apex-retail/derived/evidence-registry.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Tower deterministic mart / cube",
+            "localArtefact": "datasets/tenant-inputs/apex-retail/derived/tower-dashboard-view.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          }
+        ],
+        "status": "draft_local_offline_only_not_active_truth_no_registry_no_load_no_retrieval_no_product_use"
+      }
+    },
+    "lakeshore-holdings": {
+      "activeRoot": "datasets/tenant-inputs/active/lakeshore-holdings/current",
+      "layerRoots": [
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/active/lakeshore-holdings/current",
+          "present": true,
+          "files": 23,
+          "truthEligibility": "active-declared-source-package"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/lakeshore-holdings/standard-2026-07-v3",
+          "present": false,
+          "files": 0,
+          "truthEligibility": "duplicate-truth-candidate"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/lakeshore-holdings/v2026-08-governed-intake",
+          "present": false,
+          "files": 0,
+          "truthEligibility": "draft-not-active"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/lakeshore-holdings/interviews",
+          "present": false,
+          "files": 0,
+          "truthEligibility": "source-signal-not-deterministic-truth"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/candidates/lakeshore-holdings",
+          "present": true,
+          "files": 2,
+          "truthEligibility": "not-active"
+        },
+        {
+          "layer": "Layer 2 — Source Adapters",
+          "path": "datasets/tenant-inputs/generated/lakeshore-holdings",
+          "present": false,
+          "files": 0,
+          "truthEligibility": "disposable-build-output"
+        },
+        {
+          "layer": "Layer 3 — Canonical Model",
+          "path": "datasets/tenant-inputs/lakeshore-holdings/derived",
+          "present": true,
+          "files": 1,
+          "truthEligibility": "derived-output-rebuildable"
+        },
+        {
+          "layer": "Layer 4 — Products",
+          "path": "datasets/tenant-inputs/lakeshore-holdings/approved-content",
+          "present": true,
+          "files": 1,
+          "truthEligibility": "product-projection"
+        }
+      ],
+      "claims": {
+        "total": 6,
+        "byState": {
+          "DIVERGENT_COPY": 2,
+          "UNREGISTERED": 4
+        }
+      },
+      "workstreamCoverage": {
+        "covered": 5,
+        "partial": 5
+      },
+      "governedPackage": "not written",
+      "layer2": {
+        "mappingProfilesImplemented": 4,
+        "workstreamsWithNoImplementedAdapter": 6,
+        "profilesThatWouldRun": 0,
+        "adaptersExecuted": 0
+      },
+      "layer3": {
+        "tenantKey": "lakeshore-holdings",
+        "layer": "Layer 3 — Canonical Enterprise Model",
+        "mode": "draft-preparation-only",
+        "canonicalStoreWritten": false,
+        "activeRootAtGeneration": "datasets/tenant-inputs/active/lakeshore-holdings/current",
+        "dimensionsResolved": 16,
+        "dimensionsDeclared": 19,
+        "dimensionsAbsent": 0,
+        "dimensionsWithNamingDrift": 0,
+        "dimensionsWithColumnGaps": 0,
+        "unregisteredActiveFiles": [
+          "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+          "SA09_AI_Tool_Usage_Feed.csv",
+          "SA10_AI_Value_Interview_Evidence.csv",
+          "SA11_AI_KPI_Operational_Outcome_Feed.csv"
+        ],
+        "checks": [
+          {
+            "check": "Every canonical object has declared identity",
+            "result": "FAIL",
+            "detail": "4 file(s) in the active root are not declared in the template contract: SA08_AI_Benefits_Realization_Usage_Ledger.csv; SA09_AI_Tool_Usage_Feed.csv; SA10_AI_Value_Interview_Evidence.csv; SA11_AI_KPI_Operational_Outcome_Feed.csv"
+          },
+          {
+            "check": "Every fact carries source file / source row / evidence id where available",
+            "result": "PARTIAL",
+            "detail": "13_evidence_sources carries 9 row(s); per-row evidence linkage is not verified by this script."
+          },
+          {
+            "check": "Relationship rows use canonical relationship types",
+            "result": "NOT_VERIFIED",
+            "detail": "12_relationships carries 364 row(s); the canonical relationship dictionary lives in intelligence_v6.relationship_types and was not read (no data-plane access in this lane)."
+          },
+          {
+            "check": "Planning-grade and interview-only facts remain marked",
+            "result": "PARTIAL",
+            "detail": "Classification is carried in the package manifest as synthetic_demo_planning_grade; per-row attestation is not present."
+          },
+          {
+            "check": "Money, counts, and metrics are deterministic and not model-invented",
+            "result": "FAIL",
+            "detail": "2 conflicting or divergent claim(s); see claim-reconciliation-matrix.csv."
+          },
+          {
+            "check": "Duplicate/conflicting claims are blocked pending reconciliation",
+            "result": "PASS",
+            "detail": "2 claim(s) recorded as blocked in the governed package blocked_claims.csv."
+          }
+        ],
+        "status": "draft_local_offline_only_not_active_truth_no_registry_no_load_no_retrieval_no_product_use"
+      },
+      "layer4": {
+        "tenantKey": "lakeshore-holdings",
+        "layer": "Layer 4 — Products",
+        "mode": "readiness-report-only",
+        "runtimeOrDatabaseProjectionRefreshed": false,
+        "approvedContentFiles": 1,
+        "derivedContextFiles": 1,
+        "reportArtefacts": 0,
+        "factLineage": {
+          "source": "reports/tower-fact-lineage/lineage.json",
+          "conflictMetrics": [],
+          "singleSourceMetrics": [],
+          "quotableFigures": "all corroborated"
+        },
+        "surfaces": [
+          {
+            "surface": "Home context and architecture projections",
+            "localArtefact": "datasets/tenant-inputs/lakeshore-holdings/derived/home-context-view.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Intelligence / aVa context bundle",
+            "localArtefact": "datasets/tenant-inputs/lakeshore-holdings/derived/canonical-facts.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Moves context package",
+            "localArtefact": "datasets/tenant-inputs/lakeshore-holdings/derived/moves-context-view.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Source read model / package",
+            "localArtefact": "datasets/tenant-inputs/lakeshore-holdings/derived/evidence-registry.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Tower deterministic mart / cube",
+            "localArtefact": "datasets/tenant-inputs/lakeshore-holdings/derived/tower-dashboard-view.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          }
+        ],
+        "status": "draft_local_offline_only_not_active_truth_no_registry_no_load_no_retrieval_no_product_use"
+      }
+    }
+  },
+  "closedGates": 16
+}

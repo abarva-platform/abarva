@@ -326,6 +326,8 @@ legacy-v-dimension-token,reports/home-summary-snapshot/latest/skyharbor-module-c
 legacy-v-file-name,reports/home-summary-snapshot/latest/skyharbor-module-context-snapshot.json,generated/historical report
 rich-substrate-pack,reports/home-summary-snapshot/latest/skyharbor-module-context-snapshot.json,generated/historical report
 upgrade-candidate-pack,reports/home-summary-snapshot/latest/skyharbor-module-context-snapshot.json,generated/historical report
+synthetic-v-folder-reference,reports/layer-reconciliation-2026-08/inventory/truth-inventory.csv,generated/historical report
+v6-v7-current-state,reports/layer-reconciliation-2026-08/inventory/truth-inventory.csv,generated/historical report
 synthetic-v-folder-reference,reports/legacy-context-retirement/inventory.csv,generated/historical report
 legacy-v-dimension-token,reports/legacy-context-retirement/inventory.csv,generated/historical report
 v6-v7-current-state,reports/legacy-context-retirement/inventory.csv,generated/historical report

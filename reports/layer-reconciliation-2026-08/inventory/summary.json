@@ -1,0 +1,102 @@
+{
+  "generatedAt": "2026-08-14T12:56:02.997Z",
+  "tenants": [
+    "meridian-health",
+    "skyharbor-air"
+  ],
+  "activeRoots": {
+    "meridian-health": "datasets/tenant-inputs/active/meridian-health/current",
+    "skyharbor-air": "datasets/tenant-inputs/active/skyharbor-air/current"
+  },
+  "totalFiles": 1685,
+  "byTenant": {
+    "meridian-health": 1047,
+    "skyharbor-air": 638
+  },
+  "byFamily": {
+    "active-canonical-dimension-candidate": 45,
+    "active-source-adapter-output": 10,
+    "legacy-standard-pack": 78,
+    "approved-content-derived": 7,
+    "derived-context-artifact": 16,
+    "interview-discovery-channel": 6,
+    "unclassified": 136,
+    "offline-proof-layer3": 33,
+    "documentation": 403,
+    "generated-tenant-pack": 55,
+    "report-artifact": 582,
+    "offline-proof-layer4": 18,
+    "script-or-loader": 176,
+    "offline-proof-layer2": 1,
+    "offline-proof-layer1": 21,
+    "runtime-reference": 93,
+    "runtime-fixture": 3,
+    "active-root-other": 1,
+    "candidate-pack": 1
+  },
+  "byLayer": {
+    "L3-canonical-candidate": 111,
+    "L2-source-adapter": 10,
+    "L2-source-adapter-template-or-output": 12,
+    "derived-narrative": 7,
+    "derived": 16,
+    "L1-client-intake-discovery": 6,
+    "unknown": 136,
+    "L3-canonical-proof": 33,
+    "documentation": 403,
+    "generated": 55,
+    "report": 582,
+    "L4-product-projection-proof": 18,
+    "tooling": 176,
+    "L2-source-adapter-proof": 1,
+    "L1-client-intake-proof": 21,
+    "L4-product-runtime": 96,
+    "review": 1,
+    "candidate": 1
+  },
+  "byEligibility": {
+    "current-active-candidate": 46,
+    "generated-output": 65,
+    "adjacent-non-active": 78,
+    "derived-output": 23,
+    "source-evidence-or-signal": 6,
+    "review-required": 136,
+    "offline-proof": 55,
+    "narrative-not-truth": 403,
+    "audit-evidence-not-truth": 582,
+    "product-projection": 18,
+    "execution-path-risk": 176,
+    "runtime-risk": 96,
+    "not-active": 1
+  },
+  "topRecommendedActions": {
+    "reconcile-and-regenerate-into-new-governed-package": 45,
+    "regenerate-from-approved-intake-before-new-package-activation": 10,
+    "compare-to-active-then-retire-or-use-as-source-evidence": 78,
+    "rebuild-after-canonical-validation": 7,
+    "regenerate-after-source-reconciliation": 16,
+    "migrate-into-first-class-interview-workstream": 6,
+    "review-and-classify": 136,
+    "compare-with-new-canonical-build": 33,
+    "keep-if-current-or-retire-by-manifest": 403,
+    "treat-as-rebuild-input-only-if-lineage-is-proven": 55,
+    "retain-as-audit-evidence-or-retire-by-manifest": 582,
+    "rebuild-from-new-canonical-package": 18,
+    "confirm-script-respects-registry-and-layer-boundaries": 176,
+    "regenerate-from-approved-intake": 1,
+    "use-as-evidence-only-after-manifest-and-attestation-review": 21,
+    "ensure-runtime-reads-canonical-projections-only": 96,
+    "inspect-before-carry-forward": 1,
+    "keep-out-of-runtime-unless-promoted-by-registry": 1
+  },
+  "registryPath": "datasets/tenant-inputs/tenant-input-registry.json",
+  "searchRoots": [
+    "datasets/tenant-inputs",
+    "reports",
+    "docs",
+    "src",
+    "scripts",
+    "tower-standardized-v1"
+  ],
+  "includeContentMatches": false
+}

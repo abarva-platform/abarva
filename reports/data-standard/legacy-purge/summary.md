@@ -6,7 +6,7 @@ Status: enforced purge of loader-visible legacy tenant templates and source pack
 - Deleted legacy files in this diff: 0
 - Blocked loader-visible legacy paths remaining: 0
 - Blocked guarded-content legacy references remaining: 0
-- Allowed historical references remaining: 616
+- Allowed historical references remaining: 618
 
 ## Purged Roots
 
