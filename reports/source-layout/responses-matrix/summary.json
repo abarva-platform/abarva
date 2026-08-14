@@ -1,0 +1,271 @@
+{
+  "generatedAt": "2026-08-14T13:40:33.144Z",
+  "status": "pass",
+  "viewports": [
+    {
+      "viewport": 1440,
+      "screenshot": "/Users/anand/Projects/nexus-source-layout-harness-sweep-20260814/reports/source-layout/responses-matrix/1440.png",
+      "pageOverflowsHorizontally": false,
+      "status": "pass",
+      "failures": [],
+      "stageWidth": 1360,
+      "matrixWidth": 1360,
+      "tableScrollWidth": 1330,
+      "tableClientWidth": 1330,
+      "scrollClientWidth": 1330,
+      "scrollScrollWidth": 1330,
+      "documentScrollWidth": 1440,
+      "documentClientWidth": 1440,
+      "qnaBelowMatrix": true,
+      "qnaCompetesForMatrixWidth": false,
+      "matrixScrollContained": true,
+      "columns": [
+        {
+          "label": "Vendor",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Scope",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Pricing",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Assumptions",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Transition",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Security",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Automation",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "References",
+          "visibleInScrollport": true
+        }
+      ],
+      "overflowOffenders": []
+    },
+    {
+      "viewport": 1292,
+      "screenshot": "/Users/anand/Projects/nexus-source-layout-harness-sweep-20260814/reports/source-layout/responses-matrix/1292.png",
+      "pageOverflowsHorizontally": false,
+      "status": "pass",
+      "failures": [],
+      "stageWidth": 1212,
+      "matrixWidth": 1212,
+      "tableScrollWidth": 1182,
+      "tableClientWidth": 1182,
+      "scrollClientWidth": 1182,
+      "scrollScrollWidth": 1182,
+      "documentScrollWidth": 1292,
+      "documentClientWidth": 1292,
+      "qnaBelowMatrix": true,
+      "qnaCompetesForMatrixWidth": false,
+      "matrixScrollContained": true,
+      "columns": [
+        {
+          "label": "Vendor",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Scope",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Pricing",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Assumptions",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Transition",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Security",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Automation",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "References",
+          "visibleInScrollport": true
+        }
+      ],
+      "overflowOffenders": []
+    },
+    {
+      "viewport": 1100,
+      "screenshot": "/Users/anand/Projects/nexus-source-layout-harness-sweep-20260814/reports/source-layout/responses-matrix/1100.png",
+      "pageOverflowsHorizontally": false,
+      "status": "pass",
+      "failures": [],
+      "stageWidth": 1020,
+      "matrixWidth": 1020,
+      "tableScrollWidth": 990,
+      "tableClientWidth": 990,
+      "scrollClientWidth": 990,
+      "scrollScrollWidth": 990,
+      "documentScrollWidth": 1100,
+      "documentClientWidth": 1100,
+      "qnaBelowMatrix": true,
+      "qnaCompetesForMatrixWidth": false,
+      "matrixScrollContained": true,
+      "columns": [
+        {
+          "label": "Vendor",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Scope",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Pricing",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Assumptions",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Transition",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Security",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Automation",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "References",
+          "visibleInScrollport": true
+        }
+      ],
+      "overflowOffenders": []
+    },
+    {
+      "viewport": 900,
+      "screenshot": "/Users/anand/Projects/nexus-source-layout-harness-sweep-20260814/reports/source-layout/responses-matrix/900.png",
+      "pageOverflowsHorizontally": false,
+      "status": "pass",
+      "failures": [],
+      "stageWidth": 820,
+      "matrixWidth": 820,
+      "tableScrollWidth": 790,
+      "tableClientWidth": 790,
+      "scrollClientWidth": 790,
+      "scrollScrollWidth": 790,
+      "documentScrollWidth": 900,
+      "documentClientWidth": 900,
+      "qnaBelowMatrix": true,
+      "qnaCompetesForMatrixWidth": false,
+      "matrixScrollContained": true,
+      "columns": [
+        {
+          "label": "Vendor",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Scope",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Pricing",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Assumptions",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Transition",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Security",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Automation",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "References",
+          "visibleInScrollport": true
+        }
+      ],
+      "overflowOffenders": []
+    },
+    {
+      "viewport": 768,
+      "screenshot": "/Users/anand/Projects/nexus-source-layout-harness-sweep-20260814/reports/source-layout/responses-matrix/768.png",
+      "pageOverflowsHorizontally": false,
+      "status": "pass",
+      "failures": [],
+      "stageWidth": 688,
+      "matrixWidth": 688,
+      "tableScrollWidth": 727,
+      "tableClientWidth": 727,
+      "scrollClientWidth": 658,
+      "scrollScrollWidth": 727,
+      "documentScrollWidth": 768,
+      "documentClientWidth": 768,
+      "qnaBelowMatrix": true,
+      "qnaCompetesForMatrixWidth": false,
+      "matrixScrollContained": true,
+      "columns": [
+        {
+          "label": "Vendor",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Scope",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Pricing",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Assumptions",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Transition",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Security",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "Automation",
+          "visibleInScrollport": true
+        },
+        {
+          "label": "References",
+          "visibleInScrollport": false
+        }
+      ],
+      "overflowOffenders": []
+    }
+  ]
+}

@@ -465,11 +465,12 @@ const CARD: CSSProperties = {
   padding: 14,
   display: "grid",
   gap: 12,
+  minWidth: 0,
 };
 
 const HEADER: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) auto",
+  gridTemplateColumns: "minmax(0, 1fr) minmax(0, 240px)",
   gap: 18,
   alignItems: "start",
 };
@@ -503,6 +504,7 @@ const SUMMARY_GRID: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(3, minmax(74px, 1fr))",
   gap: 6,
+  minWidth: 0,
 };
 
 const METRIC: CSSProperties = {
@@ -538,9 +540,10 @@ const REQUIREMENT_STRIP: CSSProperties = {
   background: CANVAS.SURFACE_HOVER,
   padding: 12,
   display: "grid",
-  gridTemplateColumns: "190px minmax(0, 1fr)",
+  gridTemplateColumns: "minmax(0, 190px) minmax(0, 1fr)",
   gap: 12,
   alignItems: "stretch",
+  minWidth: 0,
 };
 
 const REQUIREMENT_INTRO: CSSProperties = {
@@ -555,8 +558,9 @@ const REQUIREMENT_INTRO: CSSProperties = {
 
 const REQUIREMENT_GRID: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(7, minmax(104px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(104px, 1fr))",
   gap: 8,
+  minWidth: 0,
 };
 
 const REQUIREMENT_ITEM: CSSProperties = {
@@ -608,6 +612,7 @@ const REQUIREMENT_TONE: Record<
 
 const TABLE_WRAP: CSSProperties = {
   overflowX: "auto",
+  minWidth: 0,
 };
 
 const TABLE: CSSProperties = {
