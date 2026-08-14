@@ -10,6 +10,8 @@
 // event+vendor+version, and traces assert isolation); AI scores are never final; value
 // claims without evidence are 'opportunity_to_test', never quantified savings.
 
+import type { EvaluationScoreEligibility } from "../analytics/types";
+
 // ── Vendor response intake ──────────────────────────────────────────────────
 
 export type VendorResponseFileRole =
@@ -331,6 +333,9 @@ export interface VendorEvaluationScoreValue {
   rationale: string;
   evidenceLabel: string;
   confidence: "high" | "medium" | "low";
+  scoreEligibility: EvaluationScoreEligibility;
+  scoreReadinessLabel: string;
+  scoreReadinessAction: string;
 }
 
 export interface VendorEvaluationScorecardRow {

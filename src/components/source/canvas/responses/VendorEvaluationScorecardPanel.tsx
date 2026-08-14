@@ -30,6 +30,21 @@ function recommendationStyle(
   return WARN;
 }
 
+function scoreEligibilityStyle(
+  eligibility?: VendorEvaluationDecisionView["scorecardRows"][number]["scores"][number]["scoreEligibility"],
+): CSSProperties {
+  if (eligibility === "scoreable") return GOOD;
+  if (eligibility === "not_scoreable") return BAD;
+  return WARN;
+}
+
+function scoreDisplay(
+  score?: VendorEvaluationDecisionView["scorecardRows"][number]["scores"][number],
+): string {
+  if (!score || score.scoreEligibility === "not_scoreable") return "—";
+  return score.score.toFixed(1);
+}
+
 export function VendorEvaluationScorecardPanel({
   decisionView,
   decisionBriefDocxHref,
@@ -246,16 +261,31 @@ export function VendorEvaluationScorecardPanel({
                     return (
                       <td key={vendor.vendorId} style={TD_SCORE}>
                         <strong style={CELL_TITLE}>
-                          {score?.score.toFixed(1) ?? "—"}
+                          {scoreDisplay(score)}
                         </strong>
                         {score ? (
                           <em style={WEIGHTED_NOTE}>
                             {score.weightedContribution.toFixed(2)} weighted
                           </em>
                         ) : null}
+                        {score ? (
+                          <span
+                            style={{
+                              ...PILL_TINY,
+                              ...scoreEligibilityStyle(score.scoreEligibility),
+                            }}
+                          >
+                            {score.scoreReadinessLabel}
+                          </span>
+                        ) : null}
                         <span style={CELL_NOTE}>
                           {score?.rationale ?? "No rationale loaded."}
                         </span>
+                        {score ? (
+                          <span style={CELL_ACTION}>
+                            {score.scoreReadinessAction}
+                          </span>
+                        ) : null}
                       </td>
                     );
                   })}
@@ -814,6 +844,23 @@ const PILL_SMALL: CSSProperties = {
   ...PILL,
   display: "inline-block",
   marginBottom: 5,
+};
+
+const PILL_TINY: CSSProperties = {
+  ...PILL,
+  display: "inline-block",
+  marginTop: 5,
+  padding: "2px 6px",
+  fontSize: CANVAS.T_MICRO_SMALL,
+  letterSpacing: "0.06em",
+};
+
+const CELL_ACTION: CSSProperties = {
+  display: "block",
+  marginTop: 5,
+  color: CANVAS.INK_MUTED,
+  fontSize: CANVAS.T_MICRO,
+  lineHeight: 1.35,
 };
 
 const TRADEOFF_BOX: CSSProperties = {

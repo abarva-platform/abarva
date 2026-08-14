@@ -878,6 +878,11 @@ describe("vendor evaluation decision view", () => {
       ]),
     );
     expect(view.scorecardRows.length).toBeGreaterThanOrEqual(8);
+    const scoreEligibilityStates = view.scorecardRows.flatMap((row) =>
+      row.scores.map((score) => score.scoreEligibility),
+    );
+    expect(scoreEligibilityStates).toContain("scoreable");
+    expect(scoreEligibilityStates).toContain("clarification_required");
     expect(view.scoringTransparency.join(" ")).toMatch(/weights total 100/i);
     expect(view.finalistRecommendation).toMatch(/Vendor A|Vendor C|Vendor B/);
     expect(view.scoreImprovementScenarios).toHaveLength(3);
@@ -934,6 +939,16 @@ describe("vendor evaluation decision view", () => {
     )!;
 
     expect(weightTotal).toBe(100);
+    expect(
+      view.scorecardRows.flatMap((row) =>
+        row.scores.map((score) => score.scoreReadinessAction),
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "Ready for named evaluator review. AI suggestion is not final.",
+        "Resolve the cited evidence gap before final scoring.",
+      ]),
+    );
     expect(vendorB.recommendation).toBe("hold_until_clarified");
     // Posture is derived from the vendor's own evidence gaps, not from an
     // assumed vendor archetype.
