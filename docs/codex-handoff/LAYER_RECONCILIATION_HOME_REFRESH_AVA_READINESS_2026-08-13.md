@@ -85,9 +85,11 @@ For each active tenant, produce a reconciliation showing, per canonical dimensio
 family should consume it, whether an adapter exists, and whether its required source fields are
 satisfiable from that tenant's own columns.
 
-The last measurement of this: **four mapping profiles exist, none can run against any tenant.** Best
-case was 13 of 21 required fields. Six of ten declared adapter families have no implementation at all.
-Confirm whether that still holds before building anything on top of it.
+**2026-08-14 correction:** this section is stale for Layer 2. Re-measurement on
+`origin/main@d7b2de2aac93cc379052a45f9e730281bb328236` shows Layer 2 is no longer the
+blocker: 23 mapping profiles exist and 133 of 133 adapter dry-run rows are `would-run`.
+Use `reports/layer-refresh-status/current-main-v2/layer-refresh-status-v2.md` for the
+current status before building anything on top of this handoff.
 
 Do not invent an adapter to close a gap. Record the gap.
 
