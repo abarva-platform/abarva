@@ -10,6 +10,7 @@ function makeSession(options: {
   readonly baseline?: Scenario;
   readonly stage?: string;
   readonly approvalState?: "pending" | "approved" | null;
+  readonly hasAgreedOutcome?: boolean;
 }) {
   const calls: Array<{ sql: string; params: unknown[] }> = [];
   const run: SqlRunner = async <R>(sql: string, params: unknown[]) => {
@@ -57,6 +58,15 @@ function makeSession(options: {
         {
           approval_request_id: "APR-CASE-CTR090-OPP-CTR090-RATE-STRATEGY",
           approval_state: options.approvalState,
+        },
+      ] as R[];
+    }
+    if (sql.includes("FROM source.negotiated_outcome")) {
+      if (!options.hasAgreedOutcome) return [] as R[];
+      return [
+        {
+          outcome_id: "OUT-CASE-CTR090-OPP-CTR090-RATE-AGREED",
+          outcome_state: "agreed",
         },
       ] as R[];
     }
@@ -173,6 +183,71 @@ describe("contract optimization workflow actions", () => {
     expect(
       session.calls.some((call) =>
         call.sql.includes("INSERT INTO source.negotiated_outcome"),
+      ),
+    ).toBe(false);
+  });
+
+  it("creates a Finance/Tower confirmation request after an agreed outcome without recording realized value", async () => {
+    const session = makeSession({
+      baseline: "ready",
+      stage: "target_position",
+      approvalState: "approved",
+      hasAgreedOutcome: true,
+    });
+
+    const result = await session.runner({
+      tenantKey: "skyharbor_global",
+      contractId: "CTR-090",
+      opportunityId: "OPP-CTR090-RATE",
+      action: "request_finance_confirmation",
+      rationale: "Vendor outcome is agreed; Finance should confirm measured value.",
+      actorRole: "sourcing_lead",
+    });
+
+    expect(result).toMatchObject({
+      action: "request_finance_confirmation",
+      caseState: "finance_handoff",
+      approvalRequestId:
+        "APR-CASE-CTR090-OPP-CTR090-RATE-FINANCE-CONFIRMATION",
+      negotiatedOutcomeId: "OUT-CASE-CTR090-OPP-CTR090-RATE-AGREED",
+    });
+    expect(
+      session.calls.some(
+        (call) =>
+          call.sql.includes("INSERT INTO source.approval_request") &&
+          call.sql.includes("finance_value_confirmation"),
+      ),
+    ).toBe(true);
+    expect(
+      session.calls.some((call) =>
+        call.sql.includes("INSERT INTO source.finance_realization"),
+      ),
+    ).toBe(false);
+  });
+
+  it("does not request Finance/Tower confirmation before the vendor outcome is agreed", async () => {
+    const session = makeSession({
+      baseline: "ready",
+      stage: "target_position",
+      approvalState: "approved",
+      hasAgreedOutcome: false,
+    });
+
+    await expect(
+      session.runner({
+        tenantKey: "skyharbor_global",
+        contractId: "CTR-090",
+        opportunityId: "OPP-CTR090-RATE",
+        action: "request_finance_confirmation",
+      }),
+    ).rejects.toMatchObject<Partial<ContractOptimizationWorkflowActionError>>({
+      code: "missing_agreed_outcome",
+    });
+    expect(
+      session.calls.some(
+        (call) =>
+          call.sql.includes("INSERT INTO source.approval_request") &&
+          call.sql.includes("finance_value_confirmation"),
       ),
     ).toBe(false);
   });

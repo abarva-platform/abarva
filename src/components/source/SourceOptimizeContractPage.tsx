@@ -553,21 +553,30 @@ function WorkflowActionPanel({
 
   if (!opportunitySet || !selectedOpportunity) return null;
 
-  const requests = opportunitySet.approvalRequests ?? [];
-  const pendingRequest = requests.find(
+  const strategyRequests = (opportunitySet.approvalRequests ?? []).filter(
+    (request) => request.approvalType === "vendor_outreach_strategy",
+  );
+  const financeRequests = (opportunitySet.approvalRequests ?? []).filter(
+    (request) => request.approvalType === "finance_value_confirmation",
+  );
+  const pendingRequest = strategyRequests.find(
     (request) => request.approvalState === "pending",
   );
-  const sentBackRequest = requests.find(
+  const sentBackRequest = strategyRequests.find(
     (request) => request.approvalState === "sent_back",
   );
-  const approvedRequest = requests.find(
+  const approvedRequest = strategyRequests.find(
     (request) =>
       request.approvalState === "approved" ||
       request.decisions.some((decision) => decision.decision === "approved"),
   );
+  const pendingFinanceRequest = financeRequests.find(
+    (request) => request.approvalState === "pending",
+  );
   const hasAgreedOutcome = (opportunitySet.negotiatedOutcomes ?? []).some(
     (outcome) => outcome.outcomeState === "agreed",
   );
+  const hasFinanceProof = opportunitySet.financeRealizations.length > 0;
 
   const canCreate =
     position.currentKey === "plan" &&
@@ -579,8 +588,18 @@ function WorkflowActionPanel({
     position.currentKey === "approve" &&
     Boolean(approvedRequest) &&
     !hasAgreedOutcome;
+  const canRequestFinanceConfirmation =
+    position.currentKey === "prove_value" &&
+    hasAgreedOutcome &&
+    !hasFinanceProof &&
+    !pendingFinanceRequest;
   const showPanel =
-    canCreate || canDecide || canRecordOutcome || Boolean(sentBackRequest);
+    canCreate ||
+    canDecide ||
+    canRecordOutcome ||
+    canRequestFinanceConfirmation ||
+    Boolean(sentBackRequest) ||
+    Boolean(pendingFinanceRequest);
   if (!showPanel) return null;
 
   async function submit(action: string) {
@@ -636,7 +655,11 @@ function WorkflowActionPanel({
               ? "Approve or send back the strategy request"
               : canRecordOutcome
                 ? "Record the negotiated outcome"
-                : "Approval request needs revision"}
+                : canRequestFinanceConfirmation
+                  ? "Request Finance/Tower confirmation"
+                  : pendingFinanceRequest
+                    ? "Finance/Tower confirmation is pending"
+                    : "Approval request needs revision"}
         </strong>
         <p style={DECISION_DETAIL_STYLE}>
           {canCreate
@@ -645,7 +668,11 @@ function WorkflowActionPanel({
               ? "A named approver must record the decision before outreach or commercial commitment."
               : canRecordOutcome
                 ? "This records agreement state only. Finance/Tower still controls realized value."
-                : "The prior request was sent back; revise the target position, then resubmit."}
+                : canRequestFinanceConfirmation
+                  ? "This creates the Finance/Tower handoff request. It does not write finance_realization rows or claim realized value."
+                  : pendingFinanceRequest
+                    ? "The handoff has been created. Realized value remains pending until Finance/Tower records confirmation evidence."
+                    : "The prior request was sent back; revise the target position, then resubmit."}
         </p>
       </div>
       {canDecide ? (
@@ -700,6 +727,17 @@ function WorkflowActionPanel({
             data-testid="record-optimize-negotiated-outcome"
           >
             Record outcome
+          </button>
+        ) : null}
+        {canRequestFinanceConfirmation ? (
+          <button
+            type="button"
+            disabled={state === "busy"}
+            onClick={() => submit("request_finance_confirmation")}
+            style={PRIMARY_BUTTON_STYLE}
+            data-testid="request-optimize-finance-confirmation"
+          >
+            Request confirmation
           </button>
         ) : null}
       </div>

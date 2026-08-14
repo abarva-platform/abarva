@@ -139,7 +139,8 @@ function isWorkflowAction(
     action === "create_approval_request" ||
     action === "approve_request" ||
     action === "send_back_request" ||
-    action === "record_agreed_outcome"
+    action === "record_agreed_outcome" ||
+    action === "request_finance_confirmation"
   );
 }
 
@@ -156,6 +157,7 @@ function statusForActionError(
     case "opportunity_not_ready":
     case "missing_pending_request":
     case "missing_approved_request":
+    case "missing_agreed_outcome":
       return 409;
     case "invalid_action":
       return 400;
