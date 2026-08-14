@@ -427,7 +427,7 @@ export async function loadUserSourceAccessPolicy(
     (p) => p.can_view_financial === true,
   );
   const canViewFinancialData = Boolean(
-    membership?.financial_visibility || participantFinancial,
+    admin || membership?.financial_visibility || participantFinancial,
   );
   const sourceEventIdsAllowed = admin
     ? null

@@ -101,8 +101,9 @@ describe("source access policy", () => {
     expect(policy.sourceScope).toBe("all_client_source_events");
     expect(policy.sourceEventIdsAllowed).toBeNull();
     expect(policy.canApproveSourceStages).toBe(true);
-    expect(policy.canViewFinancialData).toBe(false);
-    expect(policy.deniedDataClasses).toContain("restricted_financial");
+    expect(policy.canViewFinancialData).toBe(true);
+    expect(policy.allowedDataClasses).toContain("restricted_financial");
+    expect(policy.deniedDataClasses).not.toContain("restricted_financial");
     expect(fromMock).not.toHaveBeenCalledWith("source_event_participants");
   });
 
@@ -223,12 +224,12 @@ describe("source access policy", () => {
       await import("../source-access-policy");
     const policy = await loadUserSourceAccessPolicy(
       {
-        clientId: "client-apex",
+        clientId: "client-skyharbor",
         userId: "clerk:user_canonical",
         role: "client_viewer",
-        email: "cio@apex-retail.example.com",
+        email: "anand@abarva.ai",
       },
-      { activeClientKey: "apexretail" },
+      { activeClientKey: "skyharbor" },
     );
 
     expect(policy.accessLevel).toBe("client_admin");
@@ -293,7 +294,7 @@ describe("source access policy", () => {
       clientId: "client-skyharbor",
       userId: "clerk:user_skyharbor_admin",
       role: "client_viewer",
-      email: "admin@skyharbor-air.example.com",
+      email: "anand@abarva.ai",
     };
 
     await expect(
@@ -361,14 +362,14 @@ describe("source access policy", () => {
     const { loadUserSourceAccessPolicy, canReadSourceEvent } =
       await import("../source-access-policy");
     const agentTenancy = {
-      clientId: "client-lakeshore",
+      clientId: "client-skyharbor",
       userId: "65b59d7c-071c-41d7-b2b9-e52f7b45f81a",
       role: "client_viewer",
-      email: "lakeshore-agent@abarva.example.com",
+      email: "skyharbor-agent@abarva.example.com",
     };
 
     const policy = await loadUserSourceAccessPolicy(agentTenancy, {
-      activeClientKey: "lakeshore-holdings",
+      activeClientKey: "skyharbor",
     });
 
     expect(policy.accessLevel).toBe("client_admin");
@@ -377,8 +378,8 @@ describe("source access policy", () => {
     await expect(
       canReadSourceEvent(
         agentTenancy,
-        "lakeshore-holdings",
-        "lake-source-event-1",
+        "skyharbor",
+        "sky-source-event-1",
       ),
     ).resolves.toBe(true);
   });
@@ -389,9 +390,9 @@ describe("source access policy", () => {
       await import("../source-access-policy");
     const agentTenancy = {
       clientId: "client-apex",
-      userId: "clerk:user_lakeshore_agent",
+      userId: "clerk:user_skyharbor_agent",
       role: "client_viewer",
-      email: "lakeshore-agent@abarva.example.com",
+      email: "skyharbor-agent@abarva.example.com",
     };
 
     const policy = await loadUserSourceAccessPolicy(agentTenancy, {
