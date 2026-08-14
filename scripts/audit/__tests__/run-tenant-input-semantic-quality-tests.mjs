@@ -216,10 +216,11 @@ function nonBlankRationale(result) {
   assert(result.semantic_status === "semantic_blocker", "evidence-sources with a self-referential source_ref and duplicate source_version_id is a semantic_blocker");
 }
 
-// --- Real-tenant regression: run the full audit against all 6 registry-active tenants ---
+// --- Real-tenant regression: run the full audit against all registry-active tenants ---
 {
   let ranCleanly = true;
   const results = [];
+  const activeTenantCount = registry.activeTenants.length;
   for (const tenant of registry.activeTenants) {
     try {
       results.push(auditTenant(tenant));
@@ -228,8 +229,11 @@ function nonBlankRationale(result) {
       console.error(`auditTenant threw for ${tenant.tenantKey}: ${err.stack}`);
     }
   }
-  assert(ranCleanly, "auditTenant() runs without throwing for all 6 registry-active tenants");
-  assert(results.length === 6, `all 6 registry-active tenants produced a result (got ${results.length})`);
+  assert(ranCleanly, `auditTenant() runs without throwing for all ${activeTenantCount} registry-active tenants`);
+  assert(
+    results.length === activeTenantCount,
+    `all ${activeTenantCount} registry-active tenants produced a result (got ${results.length})`,
+  );
 
   const meridian = results.find((r) => r.tenant_key === "meridian-health");
   const shapeMismatchDomains = meridian.domain_quality.filter((d) => d.shape_mismatch).map((d) => d.domain);
