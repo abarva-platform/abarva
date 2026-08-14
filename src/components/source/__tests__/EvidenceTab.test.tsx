@@ -52,7 +52,7 @@ describe("EvidenceTab", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /request evidence/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^request$/i }));
     expect(
       screen.getByTestId("source-canvas-evidence-request-panel"),
     ).toBeInTheDocument();
@@ -100,7 +100,31 @@ describe("EvidenceTab", () => {
     );
 
     expect(
-      screen.queryByRole("button", { name: /request evidence/i }),
+      screen.queryByRole("button", { name: /^request$/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("renders a compact upload checklist with required, source, format, and done signals", () => {
+    render(
+      <EvidenceTab
+        stage="strategy"
+        states={[
+          evidenceRow({
+            currentState: "Available",
+            sourceArtifactId: "artifact-1",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText(/Evidence checklist/i)).toBeInTheDocument();
+    expect(screen.getByText(/Required ready/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("table", { name: /Evidence required/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Incumbent contract package/i)).toBeInTheDocument();
+    expect(screen.getByText(/PDF, DOCX, XLSX/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Uploaded").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Done").length).toBeGreaterThanOrEqual(1);
   });
 });

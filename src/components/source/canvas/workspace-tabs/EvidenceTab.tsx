@@ -43,46 +43,56 @@ export function EvidenceTab({
     <div data-testid="source-canvas-evidence-tab" style={CONTAINER_STYLE}>
       <header style={HEADER_STYLE}>
         <div style={EYEBROW_STYLE}>
-          Evidence readiness · {SOURCE_STAGE_LABELS[stage]}
+          Evidence checklist · {SOURCE_STAGE_LABELS[stage]}
         </div>
         <h2 style={TITLE_STYLE}>
-          {totals.usable} of {states.length} required evidence items at usable
+          {totals.readyRequired} of {totals.requiredTotal} required items ready
         </h2>
         <p style={SUBLINE_STYLE}>
-          The seven-state ramp drives gate-criterion auto-promotion. Sources
-          must reach their minimum state for downstream artifacts to lock at
-          full fidelity.
+          Load the required files first. Optional evidence improves the
+          deliverable, but the Continue gate only unlocks when required evidence
+          is uploaded, parsed, and usable.
         </p>
       </header>
 
-      <div style={LEGEND_STYLE} aria-label="Seven-state ramp legend">
-        {(
-          [
-            ['Usable Evidence', CANVAS.ACTIVE, 'Validated, citable in artifacts and gates'],
-            ['Available', CANVAS.ACTIVE, 'Parsed and sample-checked'],
-            ['Parsed', CANVAS.WAITING, 'Fields extracted, not yet validated'],
-            ['Loaded', CANVAS.WAITING, 'File ingested, not yet parsed'],
-            ['Not Requested', CANVAS.GRAY, 'Known source, not yet pulled'],
-            ['Stale', CANVAS.BLOCKED, 'Older than freshness window'],
-            ['Low Confidence', CANVAS.BLOCKED, 'Flagged for review'],
-          ] as const
-        ).map(([label, color, desc]) => (
-          <div key={label} style={LEGEND_ITEM_STYLE}>
-            <span
-              aria-hidden
-              style={{ ...LEGEND_DOT_STYLE, background: color }}
-            />
-            <span style={LEGEND_LABEL_STYLE}>{label}</span>
-            <span style={LEGEND_DESC_STYLE}>{desc}</span>
-          </div>
-        ))}
+      <div style={SUMMARY_GRID_STYLE} aria-label="Evidence progress summary">
+        <SummaryStat
+          label="Required ready"
+          value={`${totals.readyRequired}/${totals.requiredTotal}`}
+          tone="good"
+        />
+        <SummaryStat
+          label="Uploaded"
+          value={`${totals.uploaded}/${states.length}`}
+          tone="neutral"
+        />
+        <SummaryStat
+          label="Still needed"
+          value={`${totals.missingRequired}`}
+          tone={totals.missingRequired > 0 ? "warn" : "good"}
+        />
       </div>
 
-      <ul style={LIST_STYLE}>
+      <div
+        style={TABLE_STYLE}
+        role="table"
+        aria-label="Evidence required for this stage"
+      >
+        <div style={TABLE_HEADER_STYLE} role="row">
+          <span>Evidence</span>
+          <span>Need</span>
+          <span>Expected upload</span>
+          <span>Source</span>
+          <span>Formats</span>
+          <span>Upload</span>
+          <span>Readiness</span>
+          <span>Done</span>
+          <span>Next</span>
+        </div>
         {states.length === 0 ? (
-          <li style={EMPTY_BODY_STYLE}>
+          <div style={EMPTY_BODY_STYLE}>
             No evidence requirements for this stage.
-          </li>
+          </div>
         ) : (
           states.map((s) => {
             const def = evidenceById(s.requirementId);
@@ -96,7 +106,7 @@ export function EvidenceTab({
             );
           })
         )}
-      </ul>
+      </div>
       {selectedState ? (
         <EvidenceRequestPanel
           eventId={eventId}
@@ -114,16 +124,46 @@ export function EvidenceTab({
 }
 
 function countByState(states: SourceEventEvidence[]): {
-  usable: number;
-  total: number;
+  readyRequired: number;
+  requiredTotal: number;
+  uploaded: number;
+  missingRequired: number;
 } {
+  const requiredStates = states.filter((s) => {
+    const def = evidenceById(s.requirementId);
+    return def?.level !== "recommended";
+  });
   return {
-    usable: states.filter(
-      (s) =>
-        s.currentState === "Usable Evidence" || s.currentState === "Available",
+    readyRequired: requiredStates.filter(isReadyState).length,
+    requiredTotal: requiredStates.length,
+    uploaded: states.filter(isUploadedState).length,
+    missingRequired: requiredStates.filter(
+      (s) => !isReadyState(s) && s.currentState === "Not Requested",
     ).length,
-    total: states.length,
   };
+}
+
+function SummaryStat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "good" | "neutral" | "warn";
+}) {
+  const color =
+    tone === "good"
+      ? CANVAS.ACTIVE
+      : tone === "warn"
+        ? CANVAS.WAITING
+        : CANVAS.INK;
+  return (
+    <div style={SUMMARY_CARD_STYLE}>
+      <span style={SUMMARY_LABEL_STYLE}>{label}</span>
+      <strong style={{ ...SUMMARY_VALUE_STYLE, color }}>{value}</strong>
+    </div>
+  );
 }
 
 function EvidenceRow({
@@ -136,40 +176,60 @@ function EvidenceRow({
   onRequest: () => void;
 }) {
   const color = colorForState(state.currentState);
+  const uploaded = isUploadedState(state);
+  const ready = isReadyState(state);
+  const blocked =
+    state.currentState === "Stale" || state.currentState === "Low Confidence";
   return (
-    <li
+    <div
       style={ROW_STYLE}
+      role="row"
       data-testid={`source-canvas-evidence-${state.requirementId}`}
     >
-      <span aria-hidden style={{ ...DOT_STYLE, background: color }} />
-      <div style={ROW_BODY_STYLE}>
-        <div style={ROW_TITLE_STYLE}>
-          {def?.label ?? state.requirementId}
-          {def?.level === "required" ? (
-            <span style={REQUIRED_TAG_STYLE}>required</span>
-          ) : null}
-        </div>
+      <div style={ROW_BODY_STYLE} role="cell">
+        <div style={ROW_TITLE_STYLE}>{def?.label ?? state.requirementId}</div>
         {def?.description ? (
           <div style={ROW_DESC_STYLE}>{def.description}</div>
         ) : null}
-        <div style={ROW_META_STYLE}>
-          {def?.sourceLabel ? <span>{def.sourceLabel}</span> : null}
-          {def?.sourceLabel ? <span style={DOT_INLINE_STYLE}>·</span> : null}
-          <span style={STATE_LABEL_STYLE}>{state.currentState}</span>
-          {def?.minimumState ? (
-            <>
-              <span style={DOT_INLINE_STYLE}>·</span>
-              <span>min: {def.minimumState}</span>
-            </>
-          ) : null}
-        </div>
-        {def ? (
-          <div style={SOURCE_GUIDANCE_STYLE}>
-            <span>Systems: {def.sourceSystems.slice(0, 4).join(", ")}</span>
-            <span>Fields: {def.criticalFields.slice(0, 5).join(", ")}</span>
-            <span>Upload: {def.acceptedFileTypes.join(", ")}</span>
-          </div>
-        ) : null}
+      </div>
+      <div style={CELL_STYLE} role="cell">
+        <span
+          style={
+            def?.level === "recommended"
+              ? OPTIONAL_TAG_STYLE
+              : REQUIRED_TAG_STYLE
+          }
+        >
+          {def?.level === "recommended" ? "optional" : "required"}
+        </span>
+      </div>
+      <div style={CELL_STYLE} role="cell">
+        {def
+          ? expectedUpload(def)
+          : "Upload the source file for this requirement."}
+      </div>
+      <div style={CELL_STYLE} role="cell">
+        {def?.sourceSystems.slice(0, 3).join(", ") ??
+          def?.sourceLabel ??
+          "Source owner"}
+      </div>
+      <div style={CELL_STYLE} role="cell">
+        {def?.acceptedFileTypes.map((type) => type.toUpperCase()).join(", ") ??
+          "PDF, XLSX, CSV"}
+      </div>
+      <div style={STATUS_CELL_STYLE} role="cell">
+        <span aria-hidden style={statusMarkStyle(uploaded, blocked)} />
+        <span>{uploaded ? "Uploaded" : "Not loaded"}</span>
+      </div>
+      <div style={STATUS_CELL_STYLE} role="cell">
+        <span aria-hidden style={{ ...DOT_STYLE, background: color }} />
+        <span>{readinessLabel(state.currentState)}</span>
+      </div>
+      <div style={STATUS_CELL_STYLE} role="cell">
+        <span aria-hidden style={statusMarkStyle(ready, blocked)} />
+        <span>{ready ? "Done" : blocked ? "Blocked" : "Open"}</span>
+      </div>
+      <div style={ACTION_CELL_STYLE} role="cell">
         {state.currentState === "Not Requested" ? (
           <button
             type="button"
@@ -177,12 +237,90 @@ function EvidenceRow({
             style={REQUEST_LINK_STYLE}
             data-testid={`source-canvas-evidence-request-${state.requirementId}`}
           >
-            Request evidence
+            Request
           </button>
-        ) : null}
+        ) : (
+          <span style={NEXT_ACTION_TEXT_STYLE}>
+            {nextActionLabel(state.currentState)}
+          </span>
+        )}
       </div>
-    </li>
+    </div>
   );
+}
+
+function isReadyState(state: SourceEventEvidence): boolean {
+  return (
+    state.currentState === "Usable Evidence" ||
+    state.currentState === "Available"
+  );
+}
+
+function isUploadedState(state: SourceEventEvidence): boolean {
+  return (
+    Boolean(state.sourceArtifactId) || state.currentState !== "Not Requested"
+  );
+}
+
+function expectedUpload(def: SourceEvidenceRequirement): string {
+  if (def.stage === "responses" && def.evidenceClass === "supplier_offer") {
+    return "One response package per vendor; large PDFs are expected.";
+  }
+  if (def.stage === "pricing") {
+    return "One pricing workbook per vendor, or one consolidated workbook.";
+  }
+  if (def.stage === "evaluation") {
+    return "One score workbook/export covering all vendors and criteria.";
+  }
+  if (def.stage === "scope" && def.evidenceClass === "usage") {
+    return "One to three exports: ticket volumes, SLA misses, and backlog.";
+  }
+  if (def.stage === "scope") {
+    return "One controlled workbook/export for the full scope boundary.";
+  }
+  if (def.stage === "rfp") {
+    return "One approved template, workbook, or policy pack for this RFP.";
+  }
+  if (def.stage === "bafo") {
+    return "One negotiation log for all finalist vendors.";
+  }
+  if (def.stage === "executive_decision") {
+    return "One finalist pack or consolidated executive evidence pack.";
+  }
+  if (def.stage === "selection") {
+    return "One signed contract package with exhibits.";
+  }
+  if (def.stage === "transition") {
+    return "One project export or KT evidence pack.";
+  }
+  if (def.stage === "value") {
+    return "One measurement workbook or evidence pack per value cycle.";
+  }
+  return "One source file or export; rows should match the listed grain.";
+}
+
+function readinessLabel(state: SourceEventEvidenceCurrentState): string {
+  if (state === "Usable Evidence") return "Usable";
+  if (state === "Not Requested") return "Missing";
+  return state;
+}
+
+function nextActionLabel(state: SourceEventEvidenceCurrentState): string {
+  if (state === "Loaded") return "Parse file";
+  if (state === "Parsed") return "Validate";
+  if (state === "Available") return "Ready for gate";
+  if (state === "Usable Evidence") return "No action";
+  if (state === "Stale") return "Refresh upload";
+  if (state === "Low Confidence") return "Review quality";
+  return "Request";
+}
+
+function statusMarkStyle(done: boolean, blocked: boolean): CSSProperties {
+  return {
+    ...DOT_STYLE,
+    background: blocked ? CANVAS.BLOCKED : done ? CANVAS.ACTIVE : "transparent",
+    border: blocked || done ? "none" : `1px solid ${CANVAS.HAIRLINE}`,
+  };
 }
 
 function EvidenceRequestPanel({
@@ -201,9 +339,9 @@ function EvidenceRequestPanel({
   const [owner, setOwner] = useState(def?.sourceLabel ?? "");
   const [dueDate, setDueDate] = useState("");
   const [note, setNote] = useState("");
-  const [status, setStatus] = useState<
-    "idle" | "saving" | "saved" | "error"
-  >("idle");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
+    "idle",
+  );
   const [error, setError] = useState<string | null>(null);
   const label = def?.label ?? state.requirementId;
 
@@ -343,8 +481,8 @@ function colorForState(s: SourceEventEvidenceCurrentState): string {
 
 const CONTAINER_STYLE: CSSProperties = {
   display: "grid",
-  gap: 24,
-  maxWidth: 880,
+  gap: 18,
+  maxWidth: "100%",
 };
 
 const HEADER_STYLE: CSSProperties = {
@@ -379,61 +517,74 @@ const SUBLINE_STYLE: CSSProperties = {
   margin: 0,
 };
 
-const LEGEND_STYLE: CSSProperties = {
+const SUMMARY_GRID_STYLE: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: 8,
-  padding: "12px 14px",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  gap: 10,
+};
+
+const SUMMARY_CARD_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 4,
+  padding: "10px 12px",
   border: `1px solid ${CANVAS.HAIRLINE}`,
   borderRadius: CANVAS.RADIUS_TIGHT,
   background: CANVAS.CARD,
 };
 
-const LEGEND_ITEM_STYLE: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "baseline",
-  gap: 8,
+const SUMMARY_LABEL_STYLE: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  letterSpacing: "0.10em",
+  textTransform: "uppercase",
+  color: CANVAS.GRAY_DK,
+};
+
+const SUMMARY_VALUE_STYLE: CSSProperties = {
   fontFamily: CANVAS.SANS,
-  fontSize: 12,
+  fontSize: 18,
+  lineHeight: 1,
 };
 
-const LEGEND_DOT_STYLE: CSSProperties = {
-  width: 8,
-  height: 8,
-  borderRadius: 999,
-  display: "inline-block",
-  flexShrink: 0,
-  alignSelf: "center",
+const TABLE_STYLE: CSSProperties = {
+  display: "grid",
+  overflowX: "auto",
+  borderTop: `1px solid ${CANVAS.RULE}`,
+  borderBottom: `1px solid ${CANVAS.RULE}`,
 };
 
-const LEGEND_LABEL_STYLE: CSSProperties = {
-  fontWeight: 600,
-  color: CANVAS.INK,
-};
-
-const LEGEND_DESC_STYLE: CSSProperties = {
-  color: CANVAS.INK_SOFT,
-};
-
-const LIST_STYLE: CSSProperties = {
-  listStyle: "none",
-  padding: 0,
-  margin: 0,
+const TABLE_HEADER_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns:
+    "minmax(180px, 1.4fr) 76px minmax(170px, 1.1fr) minmax(140px, 1fr) 92px 88px 98px 72px 80px",
+  gap: 10,
+  alignItems: "center",
+  minWidth: 1120,
+  padding: "10px 0",
+  borderBottom: `1px solid ${CANVAS.RULE}`,
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  letterSpacing: "0.10em",
+  textTransform: "uppercase",
+  color: CANVAS.GRAY_DK,
 };
 
 const ROW_STYLE: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "auto minmax(0, 1fr)",
-  gap: 14,
-  padding: "14px 0",
+  gridTemplateColumns:
+    "minmax(180px, 1.4fr) 76px minmax(170px, 1.1fr) minmax(140px, 1fr) 92px 88px 98px 72px 80px",
+  gap: 10,
+  alignItems: "start",
+  minWidth: 1120,
+  padding: "13px 0",
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
 };
 
 const DOT_STYLE: CSSProperties = {
-  width: 10,
-  height: 10,
+  width: 9,
+  height: 9,
   borderRadius: 999,
-  marginTop: 5,
+  marginTop: 2,
   flexShrink: 0,
 };
 
@@ -453,6 +604,27 @@ const ROW_TITLE_STYLE: CSSProperties = {
   color: CANVAS.INK,
 };
 
+const CELL_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  lineHeight: 1.35,
+  color: CANVAS.INK_SOFT,
+  minWidth: 0,
+};
+
+const STATUS_CELL_STYLE: CSSProperties = {
+  ...CELL_STYLE,
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 7,
+  color: CANVAS.INK,
+};
+
+const ACTION_CELL_STYLE: CSSProperties = {
+  ...CELL_STYLE,
+  minHeight: 24,
+};
+
 const REQUIRED_TAG_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 9,
@@ -462,42 +634,20 @@ const REQUIRED_TAG_STYLE: CSSProperties = {
   fontWeight: 600,
 };
 
+const OPTIONAL_TAG_STYLE: CSSProperties = {
+  ...REQUIRED_TAG_STYLE,
+  color: CANVAS.INK_SOFT,
+};
+
 const ROW_DESC_STYLE: CSSProperties = {
   fontFamily: CANVAS.SANS,
-  fontSize: 13,
-  lineHeight: 1.5,
-  color: CANVAS.INK_SOFT,
-};
-
-const ROW_META_STYLE: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  fontFamily: CANVAS.MONO,
-  fontSize: 10,
-  letterSpacing: "0.04em",
-  color: CANVAS.GRAY_DK,
-  flexWrap: "wrap",
-};
-
-const SOURCE_GUIDANCE_STYLE: CSSProperties = {
-  display: "grid",
-  gap: 3,
-  marginTop: 4,
-  fontFamily: CANVAS.SANS,
   fontSize: 12,
-  lineHeight: 1.45,
+  lineHeight: 1.35,
   color: CANVAS.INK_SOFT,
-};
-
-const STATE_LABEL_STYLE: CSSProperties = {
-  fontWeight: 600,
-  color: CANVAS.INK,
 };
 
 const REQUEST_LINK_STYLE: CSSProperties = {
   width: "fit-content",
-  marginTop: 4,
   fontFamily: CANVAS.MONO,
   fontSize: 10,
   letterSpacing: "0.08em",
@@ -510,6 +660,14 @@ const REQUEST_LINK_STYLE: CSSProperties = {
   borderTop: 0,
   borderLeft: 0,
   borderRight: 0,
+};
+
+const NEXT_ACTION_TEXT_STYLE: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  letterSpacing: "0.05em",
+  textTransform: "uppercase",
+  color: CANVAS.INK_SOFT,
 };
 
 const REQUEST_PANEL_STYLE: CSSProperties = {
@@ -636,13 +794,10 @@ const ERROR_STYLE: CSSProperties = {
   color: CANVAS.BLOCKED,
 };
 
-const DOT_INLINE_STYLE: CSSProperties = {
-  color: CANVAS.GRAY,
-};
-
 const EMPTY_BODY_STYLE: CSSProperties = {
   fontFamily: CANVAS.SANS,
   fontSize: 13,
   color: CANVAS.INK_SOFT,
   padding: "12px 0",
+  minWidth: 1120,
 };
