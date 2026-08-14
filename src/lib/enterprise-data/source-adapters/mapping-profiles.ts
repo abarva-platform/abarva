@@ -626,6 +626,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "function-name",
         field: "function_name",
+        aliases: ["business_name", "context_item"],
         objectType: "business_function",
         attribute: "functionName",
         required: true,
@@ -643,6 +644,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "source-file",
         field: "source_file",
+        aliases: ["evidence_location", "__source_path"],
         objectType: "business_function",
         attribute: "sourceFile",
         required: true,
@@ -738,6 +740,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "org-unit",
         field: "org_unit",
+        aliases: ["business_name", "owner_role"],
         objectType: "organization_unit",
         attribute: "orgUnit",
         required: true,
@@ -755,6 +758,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "source-file",
         field: "source_file",
+        aliases: ["evidence_location", "__source_path"],
         objectType: "organization_unit",
         attribute: "sourceFile",
         required: true,
@@ -842,6 +846,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "persona-or-role",
         field: "persona_or_role",
+        aliases: ["interview_group", "priority_theme"],
         objectType: "workforce_role",
         attribute: "personaOrRole",
         required: true,
@@ -859,6 +864,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "function-name",
         field: "function_name",
+        aliases: ["business_name", "context_item"],
         objectType: "workforce_role",
         attribute: "functionName",
         required: true,
@@ -867,6 +873,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "source-file",
         field: "source_file",
+        aliases: ["evidence_location", "__source_path"],
         objectType: "workforce_role",
         attribute: "sourceFile",
         required: true,
@@ -949,6 +956,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "vendor-name",
         field: "vendor_name",
+        aliases: ["vendor_id", "business_name"],
         objectType: "vendor_contract",
         attribute: "vendorName",
         required: true,
@@ -966,6 +974,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "source-file",
         field: "source_file",
+        aliases: ["evidence_location", "__source_path"],
         objectType: "vendor_contract",
         attribute: "sourceFile",
         required: true,
@@ -1083,6 +1092,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "spend-category",
         field: "spend_category",
+        aliases: ["financial_fact_type", "ai_spend_category"],
         objectType: "spend_value_signal",
         attribute: "spendCategory",
         required: true,
@@ -1100,6 +1110,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "source-file",
         field: "source_file",
+        aliases: ["evidence_location", "__source_path"],
         objectType: "spend_value_signal",
         attribute: "sourceFile",
         required: true,
@@ -1296,6 +1307,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "metric-name",
         field: "metric_name",
+        aliases: ["business_name", "benefit_id"],
         objectType: "metric_outcome",
         attribute: "metricName",
         required: true,
@@ -1313,6 +1325,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "source-file",
         field: "source_file",
+        aliases: ["evidence_location", "__source_path"],
         objectType: "metric_outcome",
         attribute: "sourceFile",
         required: true,
@@ -1406,6 +1419,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         {
           id: "data-asset-name",
           field: "data_asset_name",
+          aliases: ["data_domain", "systems"],
           objectType: "data_asset",
           attribute: "dataAssetName",
           required: true,
@@ -1423,6 +1437,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         {
           id: "source-file",
           field: "source_file",
+          aliases: ["evidence_location", "__source_path"],
           objectType: "data_asset",
           attribute: "sourceFile",
           required: true,
@@ -1486,6 +1501,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         {
           id: "platform-name",
           field: "platform_name",
+          aliases: ["capability", "vendor_id"],
           objectType: "infrastructure_platform",
           attribute: "platformName",
           required: true,
@@ -1503,6 +1519,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         {
           id: "source-file",
           field: "source_file",
+          aliases: ["__source_path"],
           objectType: "infrastructure_platform",
           attribute: "sourceFile",
           required: true,
@@ -1566,6 +1583,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "program-name",
         field: "program_name",
+        aliases: ["program_code", "initiative_id"],
         objectType: "program_initiative",
         attribute: "programName",
         required: true,
@@ -1583,6 +1601,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "source-file",
         field: "source_file",
+        aliases: ["evidence_location", "__source_path"],
         objectType: "program_initiative",
         attribute: "sourceFile",
         required: true,
@@ -1917,6 +1936,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         {
           id: "process-name",
           field: "process_name",
+          aliases: ["business_name", "use_case"],
           objectType: "operational_process",
           attribute: "processName",
           required: true,
@@ -1934,6 +1954,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         {
           id: "source-file",
           field: "source_file",
+          aliases: ["evidence_location", "__source_path"],
           objectType: "operational_process",
           attribute: "sourceFile",
           required: true,
@@ -2065,12 +2086,13 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
     version: "2026-08-14.v3-contract-pr1",
     sourceClass: "applications_systems",
     rules: sourceRules("applications_systems", "applications-systems-v3/v1", [
-      {
-        id: "system-name",
-        field: "system_name",
-        objectType: "application_system",
-        attribute: "systemName",
-        required: true,
+        {
+          id: "system-name",
+          field: "system_name",
+          aliases: ["systems", "business_name", "capability"],
+          objectType: "application_system",
+          attribute: "systemName",
+          required: true,
         confidence: 0.94,
       },
       {
@@ -2082,12 +2104,13 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         required: true,
         confidence: 0.96,
       },
-      {
-        id: "source-file",
-        field: "source_file",
-        objectType: "application_system",
-        attribute: "sourceFile",
-        required: true,
+        {
+          id: "source-file",
+          field: "source_file",
+          aliases: ["evidence_location", "__source_path"],
+          objectType: "application_system",
+          attribute: "sourceFile",
+          required: true,
         confidence: 0.9,
       },
       {
@@ -2212,6 +2235,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         {
           id: "pattern-name",
           field: "pattern_name",
+          aliases: ["industry_context", "signals"],
           objectType: "industry_context_pattern",
           attribute: "patternName",
           required: true,
@@ -2229,6 +2253,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         {
           id: "source-file",
           field: "source_file",
+          aliases: ["__source_path"],
           objectType: "industry_context_pattern",
           attribute: "sourceFile",
           required: true,
@@ -2269,6 +2294,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "lens-name",
         field: "lens_name",
+        aliases: ["industry_context", "module_next_actions"],
         objectType: "expert_lens",
         attribute: "lensName",
         required: true,
@@ -2286,6 +2312,7 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       {
         id: "source-file",
         field: "source_file",
+        aliases: ["__source_path"],
         objectType: "expert_lens",
         attribute: "sourceFile",
         required: true,

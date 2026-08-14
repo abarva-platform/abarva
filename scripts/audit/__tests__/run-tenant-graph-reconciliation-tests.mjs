@@ -35,6 +35,11 @@ const normalizeRelationshipType = (raw) =>
 assert.equal(slug('Claims Platform!'), 'claims-platform');
 assert.equal(objectTypeForEndpoint('system'), 'application_system');
 assert.equal(objectTypeForEndpoint('data domain'), 'data_asset');
+assert.equal(objectTypeForEndpoint('contract'), 'vendor_contract');
+assert.equal(objectTypeForEndpoint('platform'), 'infrastructure_platform');
+assert.equal(objectTypeForEndpoint('owner'), 'workforce_role');
+assert.equal(objectTypeForEndpoint('interview'), 'evidence_source');
+assert.equal(objectTypeForEndpoint('tower initiative'), 'program_initiative');
 
 const accepted = evaluateRelationshipRow({
   tenantKey: 'test-tenant',

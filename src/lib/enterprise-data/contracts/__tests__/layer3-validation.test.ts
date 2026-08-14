@@ -68,6 +68,21 @@ describe("Layer 3 validation scaffold", () => {
     expect(
       normalizeRelationshipType("system_of_record")?.relationshipType,
     ).toBe("SYSTEM_OF_RECORD_FOR");
+    expect(normalizeRelationshipType("integrates_with")?.relationshipType).toBe(
+      "INTEGRATES_WITH",
+    );
+    expect(normalizeRelationshipType("supported_by")?.relationshipType).toBe(
+      "SUPPORTED_BY",
+    );
+    expect(normalizeRelationshipType("uses_data_domain")?.relationshipType).toBe(
+      "USES_DATA_DOMAIN",
+    );
+    expect(normalizeRelationshipType("blocked_by")?.relationshipType).toBe(
+      "BLOCKED_BY",
+    );
+    expect(normalizeRelationshipType("discusses")?.relationshipType).toBe(
+      "DISCUSSES",
+    );
     expect(
       normalizeRelationshipType(
         "V4 application row with unresolved owner join",
@@ -89,6 +104,11 @@ describe("Layer 3 validation scaffold", () => {
         "PRIMARY_SYSTEM_FOR",
         "SYSTEM_OF_RECORD_FOR",
         "VENDOR_SUPPORTS_SYSTEM",
+        "INTEGRATES_WITH",
+        "SUPPORTED_BY",
+        "USES_DATA_DOMAIN",
+        "BLOCKED_BY",
+        "DISCUSSES",
         "ROLLS_UP_TO",
       ]),
     );

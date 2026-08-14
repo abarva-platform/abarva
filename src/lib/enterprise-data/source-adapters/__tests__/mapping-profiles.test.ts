@@ -224,6 +224,126 @@ const legacyAliasProfiles = [
   },
 ] as const;
 
+const semanticAliasProfiles = [
+  {
+    mappingProfile: "organization-business-functions/v1",
+    templateFile: "01_business_functions.csv",
+    sourceClass: "organization_functions",
+    objectType: "business_function",
+    columns: ["tenant_key", "business_name", "evidence_location"],
+    row: ["test-tenant", "Clinical Operations", "legacy-evidence.csv"],
+    expectedSourceObjectId: "clinical-operations",
+  },
+  {
+    mappingProfile: "organization-ownership/v1",
+    templateFile: "02_org_ownership.csv",
+    sourceClass: "organization_functions",
+    objectType: "organization_unit",
+    columns: ["tenant_key", "owner_role", "evidence_location"],
+    row: ["test-tenant", "Clinical Owner", "legacy-evidence.csv"],
+    expectedSourceObjectId: "clinical-owner",
+  },
+  {
+    mappingProfile: "organization-workforce-roles/v1",
+    templateFile: "03_workforce_roles.csv",
+    sourceClass: "organization_functions",
+    objectType: "workforce_role",
+    columns: ["tenant_key", "interview_group", "business_name", "evidence_location"],
+    row: ["test-tenant", "Clinical Users", "Clinical Operations", "legacy-evidence.csv"],
+    expectedSourceObjectId: "clinical-users",
+  },
+  {
+    mappingProfile: "vendor-contracts/v1",
+    templateFile: "07_vendors_contracts.csv",
+    sourceClass: "vendors_contracts",
+    objectType: "vendor_contract",
+    columns: ["tenant_key", "vendor_id", "evidence_location"],
+    row: ["test-tenant", "vendor-123", "legacy-evidence.csv"],
+    expectedSourceObjectId: "vendor-123",
+  },
+  {
+    mappingProfile: "spend-value/v1",
+    templateFile: "08_spend_value.csv",
+    sourceClass: "spend_value",
+    objectType: "spend_value_signal",
+    columns: ["tenant_key", "financial_fact_type", "evidence_location"],
+    row: ["test-tenant", "Run Spend", "legacy-evidence.csv"],
+    expectedSourceObjectId: "run-spend",
+  },
+  {
+    mappingProfile: "metrics-outcomes/v1",
+    templateFile: "14_metrics_outcomes.csv",
+    sourceClass: "metrics_outcomes",
+    objectType: "metric_outcome",
+    columns: ["tenant_key", "benefit_id", "evidence_location"],
+    row: ["test-tenant", "benefit-456", "legacy-evidence.csv"],
+    expectedSourceObjectId: "benefit-456",
+  },
+  {
+    mappingProfile: "data-assets-integrations/v1",
+    templateFile: "05_data_assets_integrations.csv",
+    sourceClass: "data_assets_integrations",
+    objectType: "data_asset",
+    columns: ["tenant_key", "data_domain", "evidence_location"],
+    row: ["test-tenant", "Revenue Data", "legacy-evidence.csv"],
+    expectedSourceObjectId: "revenue-data",
+  },
+  {
+    mappingProfile: "infrastructure-platforms/v1",
+    templateFile: "06_infrastructure_platforms.csv",
+    sourceClass: "infrastructure_platforms",
+    objectType: "infrastructure_platform",
+    columns: ["tenant_key", "capability"],
+    row: ["test-tenant", "Cloud Hosting"],
+    expectedSourceObjectId: "cloud-hosting",
+  },
+  {
+    mappingProfile: "programs-initiatives/v1",
+    templateFile: "09_programs_initiatives.csv",
+    sourceClass: "programs_priorities",
+    objectType: "program_initiative",
+    columns: ["tenant_key", "program_code", "evidence_location"],
+    row: ["test-tenant", "PROGRAM-789", "legacy-evidence.csv"],
+    expectedSourceObjectId: "program-789",
+  },
+  {
+    mappingProfile: "operational-process-evidence/v1",
+    templateFile: "18_operational_process_evidence.csv",
+    sourceClass: "operational_process_evidence",
+    objectType: "operational_process",
+    columns: ["tenant_key", "use_case", "evidence_location"],
+    row: ["test-tenant", "Prior Authorization", "legacy-evidence.csv"],
+    expectedSourceObjectId: "prior-authorization",
+  },
+  {
+    mappingProfile: "applications-systems-v3/v1",
+    templateFile: "04_applications_systems.csv",
+    sourceClass: "applications_systems",
+    objectType: "application_system",
+    columns: ["tenant_key", "systems", "evidence_location"],
+    row: ["test-tenant", "Claims Platform", "legacy-evidence.csv"],
+    expectedSourceObjectId: "claims-platform",
+  },
+  {
+    mappingProfile: "industry-context-patterns/v1",
+    templateFile: "15_industry_context_patterns.csv",
+    sourceClass: "industry_context_patterns",
+    objectType: "industry_context_pattern",
+    columns: ["tenant_key", "industry_context"],
+    row: ["test-tenant", "Margin Pressure"],
+    expectedSourceObjectId: "margin-pressure",
+  },
+  {
+    mappingProfile: "expert-lenses/v1",
+    templateFile: "16_expert_lenses.csv",
+    sourceClass: "expert_lenses",
+    objectType: "expert_lens",
+    columns: ["tenant_key", "module_next_actions"],
+    row: ["test-tenant", "CFO Lens"],
+    expectedSourceObjectId: "cfo-lens",
+  },
+] as const;
+
 function csvValueFor(
   field: string,
   identityField: string,
@@ -348,6 +468,57 @@ describe("contract-aligned mapping profiles", () => {
         path: sourcePath,
         sourceClass,
         sourceProfile: "legacy-standard-v3",
+        mappingProfile,
+        adapterKey: "csv",
+        dataStatus: "synthetic",
+        sensitivity: "internal",
+        evidenceBasis: "source_file",
+        required: true,
+        expectedDomains: ["enterprise_structure"],
+      };
+
+      const result = await new CsvSourceAdapter().parse({
+        tenantKey: "test-tenant",
+        packetId: "test-packet",
+        packetVersion: "test-version",
+        sourcePath,
+        packetFile,
+        sourceProfile: packetFile.sourceProfile,
+        parserVersion: "csv-adapter/v1",
+        mappingProfile,
+        observedAt: "2026-08-14T00:00:00.000Z",
+      });
+
+      expect(result.requiredFieldCount).toBeGreaterThan(0);
+      expect(result.missingRequiredFieldCount).toBe(0);
+      expect(result.quarantinedRecordCount).toBe(0);
+      expect(result.records[0]).toMatchObject({
+        objectType,
+        sourceObjectId: expectedSourceObjectId,
+        qualityStatus: "valid",
+      });
+    },
+  );
+
+  it.each(semanticAliasProfiles)(
+    "parses approved semantic aliases for $mappingProfile",
+    async ({
+      mappingProfile,
+      templateFile,
+      sourceClass,
+      objectType,
+      columns,
+      row,
+      expectedSourceObjectId,
+    }) => {
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nexus-semantic-alias-"));
+      const sourcePath = path.join(dir, templateFile);
+      fs.writeFileSync(sourcePath, `${columns.join(",")}\n${row.join(",")}\n`);
+
+      const packetFile: TenantPacketFile = {
+        path: sourcePath,
+        sourceClass,
+        sourceProfile: "approved-semantic-alias-v3",
         mappingProfile,
         adapterKey: "csv",
         dataStatus: "synthetic",
