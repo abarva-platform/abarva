@@ -849,11 +849,11 @@ async function getPersistedContractOptimizationOpportunitySet(
       tenantKey,
       `SELECT *
          FROM source.optimization_baseline
-        WHERE tenant_key = ANY($1::text[])
-          AND dataset_version = $2
-          AND contract_id = $3
-        ORDER BY created_at DESC NULLS LAST
-        LIMIT 1`,
+       WHERE tenant_key = ANY($1::text[])
+         AND dataset_version = $2
+         AND contract_id = $3
+      ORDER BY baseline_id
+      LIMIT 1`,
       [datasetVersion, contractId],
     ),
     safeQueryForTenant<NumericRow>(

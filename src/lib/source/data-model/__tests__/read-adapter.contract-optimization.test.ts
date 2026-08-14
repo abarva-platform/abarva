@@ -59,6 +59,7 @@ describe("getContractOptimizationOpportunitySet", () => {
   });
 
   it("does not include evidence requirements from another contract in the same dataset", async () => {
+    const baselineSql: string[] = [];
     withSessionMock.mockImplementation(async (callback) => {
       const run = async <R>(sql: string): Promise<R[]> => {
         let rows: unknown[] = [];
@@ -101,6 +102,7 @@ describe("getContractOptimizationOpportunitySet", () => {
             },
           ];
         } else if (sql.includes("FROM source.optimization_baseline")) {
+          baselineSql.push(sql);
           rows = [
             {
               tenant_key: "skyharbor_global",
@@ -152,6 +154,8 @@ describe("getContractOptimizationOpportunitySet", () => {
     expect(set?.evidenceRequirements).toEqual([
       "Review included invoice lines and complete the amendment search.",
     ]);
+    expect(baselineSql).toHaveLength(1);
+    expect(baselineSql[0]).not.toContain("created_at");
     expect(JSON.stringify(set)).not.toContain("CTR-061");
     expect(JSON.stringify(set)).not.toContain("stated annual value is $35.8M");
   });
