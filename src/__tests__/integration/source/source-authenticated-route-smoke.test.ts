@@ -64,7 +64,7 @@ describe("Source authenticated route smoke", () => {
     }
   });
 
-  it("keeps /source redirected to the analytics portfolio and preserves the legacy portfolio component", () => {
+  it("keeps /source redirected to the governed workspace and preserves the legacy portfolio component", () => {
     const routeSource = readWorkspaceFile("src/app/(maestro)/source/page.tsx");
     const queueRouteSource = readWorkspaceFile(
       "src/app/(maestro)/source/queue/page.tsx",
@@ -73,7 +73,7 @@ describe("Source authenticated route smoke", () => {
       "src/components/source/SourceIndexPage.tsx",
     );
 
-    expect(routeSource).toContain("redirect('/source/portfolio')");
+    expect(routeSource).toContain("redirect('/source/preview/workspace')");
     expect(queueRouteSource).toContain('redirect("/source/portfolio")');
     expect(queueRouteSource).not.toContain("SourceDecisionQueueView");
     expect(componentSource).toContain("AMS Vendor Consolidation 2026");
@@ -93,8 +93,8 @@ describe("Source authenticated route smoke", () => {
     expect(routeSource).not.toContain("UniversalCanvasShell");
     expect(routeSource).not.toContain("workspaceExplorerEnabled");
     expect(routeSource).not.toContain("simpleFrontEnabled");
-    expect(stageSource).toContain('Check intelligence');
-    expect(stageSource).toContain('Intelligence explorer');
+    expect(stageSource).toContain("Check intelligence");
+    expect(stageSource).toContain("Intelligence explorer");
   });
 
   it("documents the current auth test boundary without weakening auth", () => {
