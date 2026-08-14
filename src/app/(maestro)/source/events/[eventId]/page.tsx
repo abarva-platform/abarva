@@ -548,6 +548,7 @@ export default async function SourceEventDetailPage({
         approvalLedger={analyticsApprovalLedger}
         guidebook={analyticsGuidebook}
         latestArtifactAcceptances={analyticsLatestAcceptances}
+        evidenceStates={analyticsEvidenceStates}
         initialWorkspace={initialWorkspace}
         contractOptimizationProfile={contractOptimizationProfile}
         journey={sourceJourney}
