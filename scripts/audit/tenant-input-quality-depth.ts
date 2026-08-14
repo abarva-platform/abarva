@@ -46,9 +46,19 @@ type ColumnContractWaiver = {
   remediation: string;
 };
 
+type HollowRowWaiver = {
+  tenantKey: string;
+  files: string[];
+  reason: string;
+  owner: string;
+  expires: string;
+  remediation: string;
+};
+
 type QualityRules = {
   companySizeBands: Record<string, { minRows: Record<string, number> }>;
   columnContractWaivers?: ColumnContractWaiver[];
+  hollowRowWaivers?: HollowRowWaiver[];
 };
 
 type ColumnConformance = {
@@ -237,6 +247,39 @@ function readHeaderColumns(file: string): string[] {
  *
  * Every active tenant is consistent today, so this can be strict from the outset.
  */
+/**
+ * Rows that carry provenance but no payload.
+ *
+ * Depth counts rows. Conformance counts columns. Neither catches a file that has the right
+ * columns and the right number of rows where the payload columns are empty — one tenant's
+ * spend file conforms to the contract and has 71 rows, and 69 of them carry no spend at all.
+ *
+ * Only conformant files are checked. An off-contract file has few contract columns by
+ * definition, so measuring payload there would re-report the conformance gap under a second
+ * name and inflate the count with something already tracked.
+ */
+const ROW_METADATA_COLUMNS = new Set(['tenant_key', 'source_file', 'source_date', 'confidence', 'known_gaps']);
+
+function hollowRows(file: string, declaredColumns: string[]): { hollow: number; total: number } {
+  const text = fs.readFileSync(file, 'utf8').trim();
+  const lines = text.split(/\r?\n/);
+  if (lines.length < 2) return { hollow: 0, total: 0 };
+  const header = readHeaderColumns(file);
+  const payload = declaredColumns.filter((c) => header.includes(c) && !ROW_METADATA_COLUMNS.has(c));
+  if (payload.length < 3) return { hollow: 0, total: 0 };
+  const indexes = payload.map((c) => header.indexOf(c));
+
+  let hollow = 0;
+  let total = 0;
+  for (const line of lines.slice(1)) {
+    if (!line.trim()) continue;
+    total += 1;
+    const cells = splitCsvLine(line);
+    if (!indexes.some((i) => (cells[i] ?? '').trim() !== '')) hollow += 1;
+  }
+  return { hollow, total };
+}
+
 function mixedLineEndings(file: string): number {
   const raw = fs.readFileSync(file);
   let crlf = 0;
@@ -474,6 +517,34 @@ function run(): void {
       );
     }
     const columnConformance = columnConformanceForTenant(tenant, manifest);
+
+    const hollow = columnConformance
+      .filter((entry) => entry.state === 'conformant' && entry.resolvedFile)
+      .map((entry) => {
+        const match = files.find((f) => path.basename(f.relativePath) === entry.resolvedFile);
+        const declared = manifest.templates.find((t) => t.file === entry.contractFile)?.columns ?? [];
+        if (!match) return { file: entry.resolvedFile, hollow: 0, total: 0 };
+        return { file: entry.resolvedFile, ...hollowRows(match.absolutePath, declared) };
+      })
+      .filter((entry) => entry.hollow > 0);
+
+    const hollowWaiver = (rules.hollowRowWaivers ?? []).find((w) => w.tenantKey === tenant.tenantKey);
+    if (hollowWaiver && hollowWaiver.expires < today) {
+      failures.push(
+        `Hollow-row waiver for ${hollowWaiver.tenantKey} expired on ${hollowWaiver.expires}. ${hollowWaiver.remediation}`,
+      );
+    }
+    for (const entry of hollow) {
+      const share = Math.round((100 * entry.hollow) / Math.max(1, entry.total));
+      if (hollowWaiver?.files.includes(entry.file)) continue;
+      if (share >= 50) {
+        failures.push(
+          `${tenant.tenantKey}: ${entry.file} conforms to the contract and has ${entry.total} rows, ` +
+            `but ${entry.hollow} of them (${share}%) carry no payload in any declared column. ` +
+            'Row count and column conformance both pass; the file is largely empty.',
+        );
+      }
+    }
     const nonConformant = columnConformance.filter((entry) => entry.state !== "conformant");
     const waiver = waivers.get(tenant.tenantKey);
 
@@ -533,6 +604,7 @@ function run(): void {
       mappedCsvRows: files.filter((file) => file.domain).reduce((sum, file) => sum + file.csvRows, 0),
       domainDepth,
       inconsistentLineEndingFiles: inconsistentTerminators.length,
+      hollowRowFiles: hollow,
       columnContract: {
         declared: columnConformance.length,
         conformant: columnConformance.length - nonConformant.length,
