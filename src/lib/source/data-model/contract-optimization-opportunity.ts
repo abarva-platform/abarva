@@ -168,6 +168,22 @@ const RATE_VARIANCE_FORMULA =
 const VMS_RATE_CARD_RULE = "source.contract_optimization.vms_rate_card_variance.v1";
 const VMS_RATE_CARD_FORMULA =
   "SUM(hours × (billed hourly rate - operative rate-card hourly rate)) for VMS/rate-card lines with no amendment = labor rate-card variance";
+const OFF_CONTRACT_BILLING_RULE =
+  "source.contract_optimization.off_contract_billing.v1";
+const OFF_CONTRACT_BILLING_FORMULA =
+  "SUM(exception amount) for invoice lines classified as off-contract billing, excluding rate-variance lines = recoverable leakage candidate";
+const SLA_CREDIT_RECOVERY_RULE =
+  "source.contract_optimization.sla_credit_recovery.v1";
+const SLA_CREDIT_RECOVERY_FORMULA =
+  "SUM(max(service credits earned - service credits claimed, 0)) by contract month = unclaimed SLA credit opportunity";
+const SCOPE_RATIONALIZATION_RULE =
+  "source.contract_optimization.scope_rationalization.v1";
+const SCOPE_RATIONALIZATION_FORMULA =
+  "SUM(approved or review-ready renewal scope-reduction estimate) supported by usage and entitlement evidence = avoided future spend candidate";
+const NEGOTIATED_IMPROVEMENT_RULE =
+  "source.contract_optimization.negotiated_improvement.v1";
+const NEGOTIATED_IMPROVEMENT_FORMULA =
+  "SUM(documented target position or finance-approved negotiation estimate) for price, term, benchmark, or volume levers = negotiated improvement candidate";
 
 export function buildContractOptimizationOpportunitySet(
   input: BuildContractOptimizationOpportunitySetInput,
@@ -771,8 +787,30 @@ function buildInvoiceExceptionOpportunity(
       (number(row.exception_amount_usd) ?? 0) > 0,
   );
   if (rows.length === 0) return null;
+  const includedLines = rows.map((row) => ({
+    lineId:
+      text(row.invoice_line_id) ?? text(row.source_record_id) ?? "invoice-line",
+    invoiceId: text(row.invoice_id),
+    invoiceLineId: text(row.invoice_line_id),
+    servicePeriod: period(row.service_period_start, row.service_period_end),
+    skuOrService: text(row.sku_or_service_code) ?? text(row.line_description),
+    quantity: 1,
+    quantityBasis:
+      "One governed invoice exception line classified as off-contract billing.",
+    unitOfMeasure: "invoice exception line",
+    billedRateUsd: number(row.billed_rate_usd),
+    contractRateUsd: number(row.matched_contract_rate_usd),
+    amountUsd: roundCurrency(number(row.exception_amount_usd) ?? 0),
+    inclusion: "included" as const,
+    inclusionReason:
+      "Invoice line has exception_type=off_contract_billing and positive exception_amount_usd.",
+    pricingScheduleRef: text(row.sku_or_service_code),
+    contractTermRef: "doc.extraction:contract.scope",
+    amendmentRef: null,
+    sourceRefs: [sourceRef(row, "source.golden_contract_invoice_lines")],
+  }));
   const amount = roundCurrency(
-    sum(rows.map((row) => number(row.exception_amount_usd))),
+    sum(includedLines.map((line) => line.amountUsd)),
   );
   return {
     opportunityId: `${contractId}:off-contract-billing`,
@@ -796,12 +834,23 @@ function buildInvoiceExceptionOpportunity(
       "Review off-contract invoice lines against PO coverage and active agreement scope.",
     sourceSystems: ["AP / ERP invoice line extract", "Procurement / PO"],
     evidenceRefs: [
-      ...rows.map((row) =>
-        sourceRef(row, "source.golden_contract_invoice_lines"),
-      ),
+      ...includedLines.flatMap((line) => line.sourceRefs),
       ...pdfRefs.filter((ref) => ref.pageSpan?.includes("scope")).slice(0, 2),
     ],
-    calculation: null,
+    calculation: {
+      ruleId: OFF_CONTRACT_BILLING_RULE,
+      ruleVersion: "1.0.0",
+      formula: OFF_CONTRACT_BILLING_FORMULA,
+      eligibleQuantity: includedLines.length,
+      billedRateUsd: null,
+      contractRateUsd: null,
+      approvedExceptionsUsd: 0,
+      calculatedAmountUsd: amount,
+      includedLineCount: includedLines.length,
+      excludedLineCount: 0,
+      pendingLineCount: 0,
+      lines: includedLines,
+    },
     overlapTreatment:
       "Separated from rate variance. Off-contract lines are not included in the rate-variance calculation.",
     approvalState: "requires_ap_procurement_review",
@@ -830,7 +879,60 @@ function buildSlaOpportunity(
   const received = sum(
     input.slaRows.map((row) => number(row.service_credits_received_usd)),
   );
-  const gap = roundCurrency(Math.max(0, earned - claimed));
+  const includedLines = input.slaRows
+    .map((row) => {
+      const rowGap = roundCurrency(
+        Math.max(
+          0,
+          (number(row.service_credits_earned_usd) ?? 0) -
+            (number(row.service_credits_claimed_usd) ?? 0),
+        ),
+      );
+      return {
+        lineId:
+          text(row.sla_month_id) ??
+          text(row.month) ??
+          text(row.source_record_id) ??
+          "sla-month",
+        invoiceId: null,
+        invoiceLineId: null,
+        servicePeriod:
+          text(row.period_month) ??
+          text(row.month) ??
+          text(row.service_month) ??
+          text(row.reporting_month) ??
+          null,
+        skuOrService:
+          text(row.service_tower) ??
+          text(row.sla_name) ??
+          "monthly SLA credit",
+        quantity:
+          number(row.sev1_sev2_incidents) ??
+          number(row.credit_eligible_incidents) ??
+          null,
+        quantityBasis:
+          "Monthly service-credit record; amount is earned credits less claimed credits for the period.",
+        unitOfMeasure:
+          number(row.sev1_sev2_incidents) != null ? "incident" : "month",
+        billedRateUsd: null,
+        contractRateUsd: null,
+        amountUsd: rowGap,
+        inclusion: "included" as const,
+        inclusionReason:
+          "Monthly service credits earned exceed service credits claimed.",
+        pricingScheduleRef: null,
+        contractTermRef: "doc.extraction:contract.sla_credit",
+        amendmentRef: null,
+        sourceRefs: [
+          sourceRef(
+            row,
+            "source.golden_contract_sla_incident_service_credit_monthly",
+          ),
+        ],
+      };
+    })
+    .filter((line) => line.amountUsd > 0);
+  const gap = roundCurrency(sum(includedLines.map((line) => line.amountUsd)));
   if (gap <= 0) return null;
   return {
     opportunityId: `${contractId}:sla-credit-recovery`,
@@ -851,17 +953,23 @@ function buildSlaOpportunity(
       "Validate entitlement against SLA clause and service-review pack before issuing a recovery claim.",
     sourceSystems: ["ITSM / service management", "CLM / contract repository"],
     evidenceRefs: [
-      ...input.slaRows
-        .slice(0, 6)
-        .map((row) =>
-          sourceRef(
-            row,
-            "source.golden_contract_sla_incident_service_credit_monthly",
-          ),
-        ),
+      ...includedLines.slice(0, 6).flatMap((line) => line.sourceRefs),
       ...pdfRefs.filter((ref) => ref.pageSpan?.includes("credit")).slice(0, 2),
     ],
-    calculation: null,
+    calculation: {
+      ruleId: SLA_CREDIT_RECOVERY_RULE,
+      ruleVersion: "1.0.0",
+      formula: SLA_CREDIT_RECOVERY_FORMULA,
+      eligibleQuantity: includedLines.length,
+      billedRateUsd: null,
+      contractRateUsd: null,
+      approvedExceptionsUsd: 0,
+      calculatedAmountUsd: gap,
+      includedLineCount: includedLines.length,
+      excludedLineCount: input.slaRows.length - includedLines.length,
+      pendingLineCount: 0,
+      lines: includedLines,
+    },
     overlapTreatment:
       "Tracked as recoverable opportunity. Credits already received are kept out of the finance-confirmed outcome calculation.",
     approvalState: "requires_entitlement_review",
@@ -897,6 +1005,49 @@ function buildShelfwareOpportunity(
     .map((row) =>
       sourceRef(row, "source.golden_contract_usage_entitlement_monthly"),
     );
+  const calculationLine: OpportunityCalculationLine = {
+    lineId:
+      text(reviewed?.event_id) ??
+      text(reviewed?.source_record_id) ??
+      `${contractId}:scope-rationalization`,
+    invoiceId: null,
+    invoiceLineId: null,
+    servicePeriod:
+      text(reviewed?.event_date) ??
+      text(reviewed?.effective_date) ??
+      "renewal planning period",
+    skuOrService:
+      text(reviewed?.event_type) ??
+      text(reviewed?.finding_or_offer_summary) ??
+      "scope rationalization",
+    quantity:
+      number(reviewed?.quantity_delta) ??
+      number(reviewed?.affected_quantity) ??
+      null,
+    quantityBasis:
+      "Renewal scope-reduction estimate supported by usage and entitlement evidence; final inclusion requires business-owner approval.",
+    unitOfMeasure: text(reviewed?.unit_of_measure) ?? "opportunity",
+    billedRateUsd: null,
+    contractRateUsd: null,
+    amountUsd: roundCurrency(amount),
+    inclusion: "included",
+    inclusionReason:
+      "Renewal/sourcing evidence records a positive estimated avoided-cost value for scope rationalization.",
+    pricingScheduleRef: null,
+    contractTermRef: "doc.extraction:contract.scope",
+    amendmentRef: text(reviewed?.amendment_reference),
+    sourceRefs: [
+      ...(reviewed
+        ? [
+            sourceRef(
+              reviewed,
+              "source.golden_contract_renewal_negotiation_history",
+            ),
+          ]
+        : []),
+      ...usageRefs,
+    ],
+  };
   return {
     opportunityId: `${contractId}:scope-rationalization`,
     contractId,
@@ -916,18 +1067,23 @@ function buildShelfwareOpportunity(
       "Confirm reclaim list with application owners and convert approved quantity into renewal scope.",
     sourceSystems: ["Usage / entitlement platform", "Sourcing workspace"],
     evidenceRefs: [
-      ...(reviewed
-        ? [
-            sourceRef(
-              reviewed,
-              "source.golden_contract_renewal_negotiation_history",
-            ),
-          ]
-        : []),
-      ...usageRefs,
+      ...calculationLine.sourceRefs,
       ...pdfRefs.filter((ref) => ref.pageSpan?.includes("scope")).slice(0, 2),
     ],
-    calculation: null,
+    calculation: {
+      ruleId: SCOPE_RATIONALIZATION_RULE,
+      ruleVersion: "1.0.0",
+      formula: SCOPE_RATIONALIZATION_FORMULA,
+      eligibleQuantity: calculationLine.quantity ?? 1,
+      billedRateUsd: null,
+      contractRateUsd: null,
+      approvedExceptionsUsd: 0,
+      calculatedAmountUsd: roundCurrency(amount),
+      includedLineCount: 1,
+      excludedLineCount: 0,
+      pendingLineCount: 0,
+      lines: [calculationLine],
+    },
     overlapTreatment:
       "Avoided future spend only. It is not a recoverable opportunity and is not finance-confirmed until the reduced commitment is booked.",
     approvalState: "business_owner_approval_required",
@@ -956,6 +1112,53 @@ function buildNegotiatedOpportunity(
     number(input.financeRow?.negotiated_improvement_usd) ??
     number(reviewed?.estimated_value_usd);
   if (amount == null || amount <= 0) return null;
+  const calculationLine: OpportunityCalculationLine = {
+    lineId:
+      text(reviewed?.event_id) ??
+      text(reviewed?.source_record_id) ??
+      `${contractId}:negotiated-improvement`,
+    invoiceId: null,
+    invoiceLineId: null,
+    servicePeriod:
+      text(reviewed?.event_date) ??
+      text(reviewed?.effective_date) ??
+      "negotiation planning period",
+    skuOrService:
+      text(reviewed?.event_type) ??
+      text(reviewed?.finding_or_offer_summary) ??
+      "price and term improvement",
+    quantity: 1,
+    quantityBasis:
+      "One documented commercial target or approved negotiation estimate.",
+    unitOfMeasure: "negotiation target",
+    billedRateUsd: null,
+    contractRateUsd: null,
+    amountUsd: roundCurrency(amount),
+    inclusion: "included",
+    inclusionReason:
+      "Documented positive negotiated-improvement target; remains a target until vendor agreement or executed amendment.",
+    pricingScheduleRef: null,
+    contractTermRef: "doc.extraction:contract.benchmark_or_pricing",
+    amendmentRef: text(reviewed?.amendment_reference),
+    sourceRefs: [
+      ...(reviewed
+        ? [
+            sourceRef(
+              reviewed,
+              "source.golden_contract_renewal_negotiation_history",
+            ),
+          ]
+        : []),
+      ...(input.financeRow
+        ? [
+            sourceRef(
+              input.financeRow,
+              "source.golden_contract_finance_value_confirmation",
+            ),
+          ]
+        : []),
+    ],
+  };
   return {
     opportunityId: `${contractId}:negotiated-improvement`,
     contractId,
@@ -975,14 +1178,7 @@ function buildNegotiatedOpportunity(
       "Build the vendor-facing concession packet and route it through approval before outreach.",
     sourceSystems: ["CLM / contract repository", "Sourcing platform"],
     evidenceRefs: [
-      ...(reviewed
-        ? [
-            sourceRef(
-              reviewed,
-              "source.golden_contract_renewal_negotiation_history",
-            ),
-          ]
-        : []),
+      ...calculationLine.sourceRefs,
       ...pdfRefs
         .filter(
           (ref) =>
@@ -992,7 +1188,20 @@ function buildNegotiatedOpportunity(
         )
         .slice(0, 3),
     ],
-    calculation: null,
+    calculation: {
+      ruleId: NEGOTIATED_IMPROVEMENT_RULE,
+      ruleVersion: "1.0.0",
+      formula: NEGOTIATED_IMPROVEMENT_FORMULA,
+      eligibleQuantity: 1,
+      billedRateUsd: null,
+      contractRateUsd: null,
+      approvedExceptionsUsd: 0,
+      calculatedAmountUsd: roundCurrency(amount),
+      includedLineCount: 1,
+      excludedLineCount: 0,
+      pendingLineCount: 0,
+      lines: [calculationLine],
+    },
     overlapTreatment:
       "Negotiated improvement is tracked as a target position until agreement. It is not added to the finance-confirmed outcome.",
     approvalState: "vendor_outreach_not_approved",

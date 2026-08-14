@@ -285,6 +285,44 @@ describe("buildContractOptimizationOpportunitySet", () => {
       eligibleQuantity: 25,
       includedLineCount: 1,
     });
+    const offContract = set?.opportunities.find(
+      (item) => item.opportunityId === "CTR-090:off-contract-billing",
+    );
+    expect(offContract?.calculation).toMatchObject({
+      ruleId: "source.contract_optimization.off_contract_billing.v1",
+      calculatedAmountUsd: 2_000,
+      includedLineCount: 1,
+    });
+    const slaCredits = set?.opportunities.find(
+      (item) => item.opportunityId === "CTR-090:sla-credit-recovery",
+    );
+    expect(slaCredits?.calculation).toMatchObject({
+      ruleId: "source.contract_optimization.sla_credit_recovery.v1",
+      calculatedAmountUsd: 450,
+      includedLineCount: 2,
+    });
+    const scopeReduction = set?.opportunities.find(
+      (item) => item.opportunityId === "CTR-090:scope-rationalization",
+    );
+    expect(scopeReduction?.calculation).toMatchObject({
+      ruleId: "source.contract_optimization.scope_rationalization.v1",
+      calculatedAmountUsd: 3_000,
+      includedLineCount: 1,
+    });
+    const negotiatedImprovement = set?.opportunities.find(
+      (item) => item.opportunityId === "CTR-090:negotiated-improvement",
+    );
+    expect(negotiatedImprovement?.calculation).toMatchObject({
+      ruleId: "source.contract_optimization.negotiated_improvement.v1",
+      calculatedAmountUsd: 1_200,
+      includedLineCount: 1,
+    });
+    for (const opportunity of set?.opportunities ?? []) {
+      if (opportunity.amountUsd == null) continue;
+      expect(opportunity.calculation?.calculatedAmountUsd).toBe(
+        opportunity.amountUsd,
+      );
+    }
     expect(set?.financeRealizations[0]).toMatchObject({
       realizationId: "claim-090",
       amountUsd: 700,
