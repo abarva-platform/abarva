@@ -198,6 +198,20 @@ describe("SourceAnalyticsCanvas — artifact role badge (SOURCE-SHELL-002)", () 
         createdAt: "2026-08-14T00:00:00.000Z",
         updatedAt: "2026-08-14T00:00:00.000Z",
       },
+      {
+        id: "ev-sow",
+        sourceEventId: scopeEvent.id,
+        tenantKey: "demo-client",
+        requirementId: "EVID-SRC-SCOPE-CURRENT-SOW",
+        stage: "scope",
+        currentState: "Parsed",
+        sourceArtifactId: "art-sow",
+        sourceEventFactIds: [],
+        notes: null,
+        lastSyncedAt: null,
+        createdAt: "2026-08-14T00:00:00.000Z",
+        updatedAt: "2026-08-14T00:00:00.000Z",
+      },
     ];
     const artifacts: SourceShellArtifactLike[] = [
       {
@@ -205,6 +219,16 @@ describe("SourceAnalyticsCanvas — artifact role badge (SOURCE-SHELL-002)", () 
         artifactCode: "ticket_volume_extract",
         stageKey: "scope",
         title: "ServiceNow ticket volume export",
+        status: "registered",
+        parseStatus: "parsed",
+        embeddingStatus: "embedded",
+        graphStatus: "projected",
+      },
+      {
+        id: "art-sow",
+        artifactCode: "sow_scope_extract",
+        stageKey: "scope",
+        title: "Current SOW and change-order register",
         status: "registered",
         parseStatus: "parsed",
         embeddingStatus: "embedded",
@@ -240,7 +264,18 @@ describe("SourceAnalyticsCanvas — artifact role badge (SOURCE-SHELL-002)", () 
     expect(ticketRow).toHaveTextContent("IT operations owner");
     expect(ticketRow).toHaveTextContent("XLSX, CSV");
     expect(ticketRow).toHaveTextContent("available");
+    expect(
+      within(ticketRow).getByLabelText("File uploaded"),
+    ).toBeInTheDocument();
     expect(within(ticketRow).getByLabelText("Done")).toBeInTheDocument();
+
+    const sowRow = screen.getByTestId(
+      "source-stage-evidence-checklist-row-EVID-SRC-SCOPE-CURRENT-SOW",
+    );
+    expect(sowRow).toHaveTextContent("Uploaded");
+    expect(sowRow).toHaveTextContent("parsed");
+    expect(within(sowRow).getByLabelText("File uploaded")).toBeInTheDocument();
+    expect(within(sowRow).getByLabelText("Open")).toBeInTheDocument();
 
     const inventoryRow = screen.getByTestId(
       "source-stage-evidence-checklist-row-EVID-SRC-SCOPE-APP-INV",
