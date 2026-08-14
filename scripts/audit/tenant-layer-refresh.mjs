@@ -1352,6 +1352,85 @@ function layer2FailureClassificationReport(generatedAt, layer2Failures, analyses
   };
 }
 
+function layer2CodeOnlyAliasImpactReport(generatedAt, layer2FailureClassification) {
+  const classifications = layer2FailureClassification.classifications ?? [];
+  const codeOnlyCandidates = classifications.filter(
+    (item) => item.recommendedAction === 'mapping_alias_code_only_fix',
+  );
+  const gatedDecisions = classifications.filter(
+    (item) => item.recommendedAction === 'hard_gate_decision',
+  );
+  const sourceDataGated = classifications.filter(
+    (item) => item.recommendedAction === 'source_data_gated_fix',
+  );
+
+  const candidateProfiles = codeOnlyCandidates.map((item) => ({
+    tenantKey: item.tenantKey,
+    mappingProfile: item.mappingProfile,
+    sourceClass: item.sourceClass,
+    selectedSourceFile: item.selectedSourceFile,
+    sourceFileMatchType: item.sourceFileMatchType,
+    wouldClearDryRunFailure: true,
+    activationState: 'not_activated_report_only',
+    fieldResolutions: item.missingFields.map((field) => ({
+      field: field.field,
+      resolutionType: field.candidates[0]?.resolutionType ?? 'unknown',
+      candidate: field.candidates[0]?.candidate ?? '',
+      allCandidates: field.candidates.map((candidate) => ({
+        resolutionType: candidate.resolutionType,
+        candidate: candidate.candidate,
+      })),
+    })),
+  }));
+
+  return {
+    generatedAt,
+    generatedBy: 'scripts/audit/tenant-layer-refresh.mjs',
+    mode: 'layer2-code-only-alias-impact-report-only',
+    truthSplit: {
+      productionTenantDataWritten: false,
+      activeTenantAccessLayerUpdated: false,
+      moduleRuntimeBehaviorChanged: false,
+      adaptersExecuted: false,
+      aliasesActivated: false,
+      canonicalObjectsWritten: false,
+    },
+    summary: {
+      profileFailuresEvaluated: classifications.length,
+      codeOnlyAliasCandidates: codeOnlyCandidates.length,
+      wouldClearProfileFailuresIfActivated: candidateProfiles.filter((item) => item.wouldClearDryRunFailure).length,
+      remainingHardGateDecisions: gatedDecisions.length,
+      remainingSourceDataGatedFixes: sourceDataGated.length,
+    },
+    candidateProfiles,
+    gatedProfiles: gatedDecisions.map((item) => ({
+      tenantKey: item.tenantKey,
+      mappingProfile: item.mappingProfile,
+      sourceClass: item.sourceClass,
+      requiredApproval: item.approvalRequiredBeforeFix,
+      missingFields: item.missingFields.map((field) => field.field),
+    })),
+    sourceDataGatedProfiles: sourceDataGated.map((item) => ({
+      tenantKey: item.tenantKey,
+      mappingProfile: item.mappingProfile,
+      sourceClass: item.sourceClass,
+      requiredApproval: item.approvalRequiredBeforeFix,
+      missingFields: item.missingFields.map((field) => field.field),
+    })),
+    nextPrSizedSafeCodeSlice: {
+      title: 'Activate mechanically safe Layer 2 aliases behind adapter tests',
+      scope:
+        'Code-only alias activation for candidates whose missing fields are direct source fields, derived source path lineage, or non-semantic field aliases.',
+      blockedBeforeActivation: [
+        'semantic identity alias activation',
+        'tenant CSV mutation',
+        'registry activation',
+        'data-plane load/write',
+      ],
+    },
+  };
+}
+
 function evidenceRequestRows(analysis) {
   const rows = [];
   let sequence = 0;
@@ -1978,6 +2057,11 @@ async function main() {
     path.join(outDir, 'layer2-dry-run-failure-classification.json'),
     layer2FailureClassification,
   );
+  const layer2CodeOnlyAliasImpact = layer2CodeOnlyAliasImpactReport(generatedAt, layer2FailureClassification);
+  writeJson(
+    path.join(outDir, 'layer2-code-only-alias-impact.json'),
+    layer2CodeOnlyAliasImpact,
+  );
   if (layer3ValidationScaffold) {
     writeJson(path.join(outDir, 'layer3-validation-scaffold.json'), layer3ValidationScaffold);
   }
@@ -2115,6 +2199,7 @@ async function main() {
     `Layer 2 failure classifications: **${layer2FailureClassification.summary.uniqueProfileFailuresClassified}** unique profile failures (${Object.entries(layer2FailureClassification.summary.byRecommendedAction)
       .map(([action, count]) => `${count} ${action}`)
       .join(', ') || '0 classified'}).`,
+    `Code-only alias impact, if activated in a future change: **${layer2CodeOnlyAliasImpact.summary.wouldClearProfileFailuresIfActivated}** profile failures would clear; **${layer2CodeOnlyAliasImpact.summary.remainingHardGateDecisions}** remain hard-gated.`,
     '',
     'Adapter gaps are recorded, not filled. No adapter was invented and none was executed.',
     '',
@@ -2128,6 +2213,7 @@ async function main() {
     '- `layer2-adapter-family-coverage-registry.json` — declared families and implemented mapping profiles.',
     '- `layer2-adapter-dry-run-failures.json` — machine-readable dry-run failures.',
     '- `layer2-dry-run-failure-classification.json` — machine-readable action classification for dry-run failures.',
+    '- `layer2-code-only-alias-impact.json` — report-only estimate of mechanically safe alias candidates.',
     '- `<tenant>/layer2-adapter-reconciliation.csv`',
     '- `hard-gate-register.csv` — actions that require explicit approval; none were executed.',
     '- `<tenant>/layer3-canonical-refresh-summary.{md,json}`',
