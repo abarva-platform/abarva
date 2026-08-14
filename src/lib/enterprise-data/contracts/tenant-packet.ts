@@ -18,6 +18,7 @@ export type TenantPacketSourceClass =
   | "programs_priorities"
   | "ai_automation_use_cases"
   | "risks_controls"
+  | "relationships"
   | "metric_definitions"
   | "metrics_outcomes"
   | "operational_process_evidence"

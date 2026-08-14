@@ -119,6 +119,14 @@ const contractAlignedProfiles = [
     objectType: "risk_control",
   },
   {
+    mappingProfile: "relationships/v1",
+    templateFile: "12_relationships.csv",
+    sourceClass: "relationships",
+    identityField: "from_object_name",
+    identityValue: "Claims Platform",
+    objectType: "relationship_edge",
+  },
+  {
     mappingProfile: "operational-process-evidence/v1",
     templateFile: "18_operational_process_evidence.csv",
     sourceClass: "operational_process_evidence",
