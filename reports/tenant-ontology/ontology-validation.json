@@ -2,183 +2,47 @@
   "ontologyId": "universal-tenant-ontology-2026-08",
   "tenants": [
     {
-      "tenantKey": "meridian-health",
-      "edges": 1037,
-      "endpoints": 2074,
-      "violations": 2915,
-      "integrity": "33%",
+      "tenantKey": "skyharbor-air",
+      "edges": 3318,
+      "endpoints": 6636,
+      "violations": 90,
+      "integrity": "99%",
       "detail": {
         "undeclaredNodeType": [
           {
-            "key": "leader",
-            "count": 20,
+            "key": "role",
+            "count": 14,
             "samples": [
-              "Clinical Platforms",
-              "Epic Analytics",
-              "Epic Analytics"
-            ]
-          },
-          {
-            "key": "data_domain",
-            "count": 117,
-            "samples": [
-              "encounters",
-              "orders",
-              "results"
-            ]
-          },
-          {
-            "key": "contract",
-            "count": 226,
-            "samples": [
-              "Epic",
-              "Microsoft",
-              "Tableau"
-            ]
-          },
-          {
-            "key": "dependency",
-            "count": 175,
-            "samples": [
-              "Epic Clarity",
-              "Epic Caboodle",
-              "Claims administration platform"
-            ]
-          },
-          {
-            "key": "ai_use_case",
-            "count": 147,
-            "samples": [
-              "Unified clinical + claims lakehouse",
-              "Unified clinical + claims lakehouse",
-              "Unified clinical + claims lakehouse"
-            ]
-          },
-          {
-            "key": "process",
-            "count": 9,
-            "samples": [
-              "Member service",
-              "Member service",
-              "Member service"
+              "Cybersecurity & IT Risk",
+              "Cybersecurity & IT Risk",
+              "Cybersecurity & IT Risk"
             ]
           }
         ],
-        "undeclaredEdgeType": [
-          {
-            "key": "uses",
-            "count": 25,
-            "samples": []
-          },
-          {
-            "key": "owns_technology_for",
-            "count": 20,
-            "samples": []
-          },
-          {
-            "key": "uses_data_domain",
-            "count": 54,
-            "samples": []
-          },
-          {
-            "key": "provides",
-            "count": 226,
-            "samples": []
-          },
-          {
-            "key": "depends_on",
-            "count": 175,
-            "samples": []
-          },
-          {
-            "key": "requires_data",
-            "count": 63,
-            "samples": []
-          },
-          {
-            "key": "requires_system",
-            "count": 75,
-            "samples": []
-          },
-          {
-            "key": "is_supported_by",
-            "count": 9,
-            "samples": []
-          },
-          {
-            "key": "affects",
-            "count": 139,
-            "samples": []
-          }
-        ],
-        "domainRangeViolation": [
-          {
-            "key": "supports.to got system",
-            "count": 55,
-            "samples": [
-              "Epic Hyperspace",
-              "Epic Clarity",
-              "Epic Caboodle"
-            ]
-          }
-        ],
+        "undeclaredEdgeType": [],
+        "domainRangeViolation": [],
         "unresolvedEndpoint": [
           {
-            "key": "function",
-            "count": 30,
+            "key": "tower_initiative",
+            "count": 76,
             "samples": [
-              "clinical_ehr",
-              "clinical_reporting_repository",
-              "clinical_warehouse"
-            ]
-          },
-          {
-            "key": "system",
-            "count": 604,
-            "samples": [
-              "Epic Hyperspace",
-              "Epic Hyperspace",
-              "Epic Hyperspace"
-            ]
-          },
-          {
-            "key": "vendor",
-            "count": 286,
-            "samples": [
-              "MER-VEN-EPIC",
-              "MER-VEN-EPIC",
-              "MER-VEN-EPIC"
-            ]
-          },
-          {
-            "key": "data_asset",
-            "count": 136,
-            "samples": [
-              "EMR clinical",
-              "EMR clinical",
-              "EMR clinical"
-            ]
-          },
-          {
-            "key": "program",
-            "count": 180,
-            "samples": [
-              "Unified clinical + claims lakehouse: EMR clinical",
-              "Unified clinical + claims lakehouse: EMR clinical",
-              "Unified clinical + claims lakehouse: EMR clinical"
-            ]
-          },
-          {
-            "key": "risk",
-            "count": 144,
-            "samples": [
-              "AI spend can look adopted without released value",
-              "platform spend could be mistaken for AI Assist funding",
-              "AI usage without audit controls creates compliance risk"
+              "IROPS Agentic Recovery Cockpit",
+              "Crew Recovery Optimization",
+              "IROPS Agentic Recovery Cockpit"
             ]
           }
         ],
-        "expectedExternalEndpoint": []
+        "expectedExternalEndpoint": [
+          {
+            "key": "interview",
+            "count": 247,
+            "samples": [
+              "SHA-INT-01-Q01",
+              "SHA-INT-01-Q04",
+              "SHA-INT-01-Q05"
+            ]
+          }
+        ]
       }
     }
   ]
