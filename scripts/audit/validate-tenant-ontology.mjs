@@ -111,6 +111,14 @@ function main() {
       universe.set(type, names);
     }
 
+    // An edge whose endpoints are blank is not a weak edge, it is not an edge. Counting it
+    // as one lets a tenant appear to have a graph it does not have: one carries 519 such rows,
+    // provenance-stamped and indistinguishable from real edges in any row count.
+    const emptyEndpointEdges = edges.filter(
+      (edge) =>
+        !String(edge.from_object_name ?? '').trim() && !String(edge.to_object_name ?? '').trim(),
+    ).length;
+
     const findings = {
       undeclaredNodeType: new Map(),
       undeclaredEdgeType: new Map(),
@@ -169,9 +177,15 @@ function main() {
 
     if (total > 0) anyFailure = true;
 
+    if (emptyEndpointEdges === edges.length && edges.length > 0) {
+      anyFailure = true;
+    }
+
     report.push({
       tenantKey: tenant.tenantKey,
       edges: edges.length,
+      emptyEndpointEdges,
+      usableEdges: edges.length - emptyEndpointEdges,
       endpoints,
       violations: total,
       integrity: endpoints ? `${Math.round((100 * (endpoints - [...findings.unresolvedEndpoint.values()].reduce((s, e) => s + e.count, 0))) / endpoints)}%` : 'n/a',
@@ -188,7 +202,10 @@ function main() {
   fs.writeFileSync(abs(`${OUT_DIR}/ontology-validation.json`), `${JSON.stringify({ ontologyId: ontology.ontologyId, tenants: report }, null, 2)}\n`);
 
   for (const entry of report) {
-    console.log(`${entry.tenantKey}: ${entry.edges} edges, ${entry.endpoints} endpoints, integrity ${entry.integrity}, violations ${entry.violations}`);
+    const phantom = entry.emptyEndpointEdges
+      ? `  [${entry.emptyEndpointEdges} edge(s) have NO endpoints -- ${entry.usableEdges} usable]`
+      : '';
+    console.log(`${entry.tenantKey}: ${entry.edges} edges, ${entry.endpoints} endpoints, integrity ${entry.integrity}, violations ${entry.violations}${phantom}`);
     for (const [kind, items] of Object.entries(entry.detail)) {
       for (const item of items) {
         console.log(`    ${kind}: ${item.key} x${item.count} ${item.samples.length ? `e.g. ${item.samples[0]}` : ''}`);
