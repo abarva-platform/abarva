@@ -184,18 +184,129 @@ describe("deriveOptimizeWorkflowPosition", () => {
   it("offers the approval gate once a target position exists", () => {
     const position = positionFor({
       set: opportunitySet({
+        approvalRequests: [
+          {
+            approvalRequestId: "apr-1",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            approvalType: "vendor_outreach",
+            approvalState: "pending",
+            requestedByRole: "Strategic sourcing",
+            requestedAt: "2027-06-30T00:00:00Z",
+            decisions: [],
+          },
+        ],
         opportunities: [opportunity({ stage: "target_position" })],
       }),
     });
     expect(position.currentKey).toBe("approve");
-    expect(position.primaryAction).toBe("Open approval gate");
+    expect(position.primaryAction).toBe(
+      "Approve or send back the strategy request",
+    );
     expect(position.readyForApproval).toBe(true);
+  });
+
+  it("does not treat a target-position row as a governed strategy approval", () => {
+    const position = positionFor({
+      set: opportunitySet({
+        opportunities: [opportunity({ stage: "target_position" })],
+        approvalRequests: [],
+        negotiatedOutcomes: [],
+      }),
+    });
+    expect(position.currentKey).toBe("plan");
+    expect(position.primaryAction).toBe("Create the strategy approval request");
+    expect(position.blocker).toBe(
+      "No governed strategy or vendor-outreach approval request is recorded.",
+    );
+    expect(position.readyForApproval).toBe(false);
+    expect(position.steps[4].state).toBe("blocked");
+    expect(position.steps[5].state).toBe("future");
+  });
+
+  it("holds approval while a request is pending and while an outcome is missing", () => {
+    const pending = positionFor({
+      set: opportunitySet({
+        opportunities: [opportunity({ stage: "target_position" })],
+        approvalRequests: [
+          {
+            approvalRequestId: "apr-1",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            approvalType: "vendor_outreach",
+            approvalState: "pending",
+            requestedByRole: "Strategic sourcing",
+            requestedAt: "2027-06-30T00:00:00Z",
+            decisions: [],
+          },
+        ],
+        negotiatedOutcomes: [],
+      }),
+    });
+    expect(pending.currentKey).toBe("approve");
+    expect(pending.blocker).toBe("The strategy approval request is pending.");
+
+    const approvedNoOutcome = positionFor({
+      set: opportunitySet({
+        opportunities: [opportunity({ stage: "target_position" })],
+        approvalRequests: [
+          {
+            approvalRequestId: "apr-1",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            approvalType: "vendor_outreach",
+            approvalState: "approved",
+            requestedByRole: "Strategic sourcing",
+            requestedAt: "2027-06-30T00:00:00Z",
+            decisions: [
+              {
+                decision: "approved",
+                rationale: "Approved vendor outreach.",
+                decidedByRole: "Decision owner",
+                decidedAt: "2027-06-30T00:00:00Z",
+              },
+            ],
+          },
+        ],
+        negotiatedOutcomes: [],
+      }),
+    });
+    expect(approvedNoOutcome.currentKey).toBe("approve");
+    expect(approvedNoOutcome.primaryAction).toBe(
+      "Record the negotiated outcome",
+    );
+    expect(approvedNoOutcome.blocker).toBe(
+      "No negotiated vendor outcome is recorded.",
+    );
   });
 
   it("only reaches value proof after agreement, and only closes on finance confirmation", () => {
     const agreed = positionFor({
       set: opportunitySet({
         opportunities: [opportunity({ stage: "agreed" })],
+        approvalRequests: [
+          {
+            approvalRequestId: "apr-1",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            approvalType: "vendor_outreach",
+            approvalState: "approved",
+            requestedByRole: "Strategic sourcing",
+            requestedAt: "2027-06-30T00:00:00Z",
+            decisions: [],
+          },
+        ],
+        negotiatedOutcomes: [
+          {
+            outcomeId: "outcome-1",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            outcomeState: "agreed",
+            agreedAmountUsd: 200,
+            effectiveDate: "2027-07-01",
+            sourceDocumentId: "doc-1",
+          },
+        ],
       }),
     });
     expect(agreed.currentKey).toBe("prove_value");
@@ -206,6 +317,29 @@ describe("deriveOptimizeWorkflowPosition", () => {
       set: opportunitySet({
         opportunities: [opportunity({ stage: "finance_confirmed" })],
         financeConfirmedUsd: 500_000,
+        approvalRequests: [
+          {
+            approvalRequestId: "apr-1",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            approvalType: "vendor_outreach",
+            approvalState: "approved",
+            requestedByRole: "Strategic sourcing",
+            requestedAt: "2027-06-30T00:00:00Z",
+            decisions: [],
+          },
+        ],
+        negotiatedOutcomes: [
+          {
+            outcomeId: "outcome-1",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            outcomeState: "agreed",
+            agreedAmountUsd: 200,
+            effectiveDate: "2027-07-01",
+            sourceDocumentId: "doc-1",
+          },
+        ],
       }),
     });
     expect(confirmed.steps[6].state).toBe("complete");
