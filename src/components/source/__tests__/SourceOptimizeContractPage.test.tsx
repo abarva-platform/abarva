@@ -11,9 +11,10 @@ import type { ContractOptimizationEvidencePack } from "@/lib/source/data-model/c
 import type { ContractOptimizationOpportunitySet } from "@/lib/source/data-model/contract-optimization-opportunity";
 
 const push = jest.fn();
+const refresh = jest.fn();
 
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push }),
+  useRouter: () => ({ push, refresh }),
 }));
 
 jest.mock("@/components/shell/AppShell", () => ({
@@ -215,6 +216,7 @@ function makeConflictOpportunitySet(): ContractOptimizationOpportunitySet {
 describe("SourceOptimizeContractPage", () => {
   beforeEach(() => {
     push.mockReset();
+    refresh.mockReset();
     global.fetch = jest.fn();
   });
 
@@ -369,6 +371,127 @@ describe("SourceOptimizeContractPage", () => {
         "Collect the missing evidence rows before using a value number externally.",
       ),
     ).not.toBeInTheDocument();
+  });
+
+  it("creates a governed strategy approval request from the plan step", async () => {
+    const fetchMock = global.fetch as jest.Mock;
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        message: "Strategy approval request is ready for review.",
+      }),
+    });
+    const targetPositionSet = {
+      ...makeOpportunitySet(),
+      opportunities: makeOpportunitySet().opportunities.map((opportunity) => ({
+        ...opportunity,
+        stage: "target_position" as const,
+      })),
+      approvalRequests: [],
+      negotiatedOutcomes: [],
+    };
+
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({
+          selected: makeCandidate(),
+          missingEvidenceSources: [],
+        })}
+        opportunitySet={targetPositionSet}
+        evidencePack={makeReadySaaSEvidencePack()}
+      />,
+    );
+
+    expect(screen.getByTestId("workflow-action-panel")).toHaveTextContent(
+      "Create the strategy approval request",
+    );
+
+    fireEvent.click(screen.getByTestId("create-optimize-approval-request"));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/source/optimize/contract/CTR-090/workflow",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            action: "create_approval_request",
+            opportunityId: "opp-090-rate",
+            rationale: null,
+          }),
+        }),
+      );
+      expect(refresh).toHaveBeenCalled();
+    });
+    expect(screen.getByTestId("workflow-action-message")).toHaveTextContent(
+      "Strategy approval request is ready for review.",
+    );
+  });
+
+  it("records an approval decision against a pending strategy request", async () => {
+    const fetchMock = global.fetch as jest.Mock;
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        message: "Strategy approval is recorded; negotiated outcome remains pending.",
+      }),
+    });
+    const pendingApprovalSet = {
+      ...makeOpportunitySet(),
+      opportunities: makeOpportunitySet().opportunities.map((opportunity) => ({
+        ...opportunity,
+        stage: "target_position" as const,
+      })),
+      approvalRequests: [
+        {
+          approvalRequestId: "APR-090",
+          caseId: "CASE-090",
+          opportunityId: "opp-090-rate",
+          approvalType: "vendor_outreach_strategy",
+          approvalState: "pending" as const,
+          requestedByRole: "sourcing_owner",
+          requestedAt: "2027-06-30T00:00:00.000Z",
+          decisions: [],
+        },
+      ],
+      negotiatedOutcomes: [],
+    };
+
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({
+          selected: makeCandidate(),
+          missingEvidenceSources: [],
+        })}
+        opportunitySet={pendingApprovalSet}
+        evidencePack={makeReadySaaSEvidencePack()}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Approval rationale"), {
+      target: { value: "Approved for controlled vendor outreach." },
+    });
+    fireEvent.click(screen.getByTestId("approve-optimize-approval-request"));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/source/optimize/contract/CTR-090/workflow",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            action: "approve_request",
+            opportunityId: "opp-090-rate",
+            rationale: "Approved for controlled vendor outreach.",
+          }),
+        }),
+      );
+      expect(refresh).toHaveBeenCalled();
+    });
   });
 
   it("surfaces opportunity-set evidence requirements when spine rows are empty", () => {
