@@ -189,7 +189,7 @@ describe("deriveOptimizeWorkflowPosition", () => {
             approvalRequestId: "apr-1",
             caseId: "case-1",
             opportunityId: "opp-1",
-            approvalType: "vendor_outreach",
+            approvalType: "vendor_outreach_strategy",
             approvalState: "pending",
             requestedByRole: "Strategic sourcing",
             requestedAt: "2027-06-30T00:00:00Z",
@@ -224,6 +224,41 @@ describe("deriveOptimizeWorkflowPosition", () => {
     expect(position.steps[5].state).toBe("future");
   });
 
+  it("does not let a finance confirmation request satisfy strategy approval gates", () => {
+    const position = positionFor({
+      set: opportunitySet({
+        opportunities: [opportunity({ stage: "target_position" })],
+        approvalRequests: [
+          {
+            approvalRequestId: "apr-finance-1",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            approvalType: "finance_value_confirmation",
+            approvalState: "approved",
+            requestedByRole: "Finance",
+            requestedAt: "2027-07-02T00:00:00Z",
+            decisions: [
+              {
+                decision: "approved",
+                rationale: "Finance reviewed the handoff.",
+                decidedByRole: "Finance controller",
+                decidedAt: "2027-07-03T00:00:00Z",
+              },
+            ],
+          },
+        ],
+        negotiatedOutcomes: [],
+        financeConfirmedUsd: 500_000,
+      }),
+    });
+    expect(position.currentKey).toBe("plan");
+    expect(position.primaryAction).toBe("Create the strategy approval request");
+    expect(position.blocker).toBe(
+      "No governed strategy or vendor-outreach approval request is recorded.",
+    );
+    expect(position.steps[5].state).toBe("future");
+  });
+
   it("holds approval while a request is pending and while an outcome is missing", () => {
     const pending = positionFor({
       set: opportunitySet({
@@ -233,7 +268,7 @@ describe("deriveOptimizeWorkflowPosition", () => {
             approvalRequestId: "apr-1",
             caseId: "case-1",
             opportunityId: "opp-1",
-            approvalType: "vendor_outreach",
+            approvalType: "vendor_outreach_strategy",
             approvalState: "pending",
             requestedByRole: "Strategic sourcing",
             requestedAt: "2027-06-30T00:00:00Z",
@@ -254,7 +289,7 @@ describe("deriveOptimizeWorkflowPosition", () => {
             approvalRequestId: "apr-1",
             caseId: "case-1",
             opportunityId: "opp-1",
-            approvalType: "vendor_outreach",
+            approvalType: "vendor_outreach_strategy",
             approvalState: "approved",
             requestedByRole: "Strategic sourcing",
             requestedAt: "2027-06-30T00:00:00Z",
@@ -289,7 +324,7 @@ describe("deriveOptimizeWorkflowPosition", () => {
             approvalRequestId: "apr-1",
             caseId: "case-1",
             opportunityId: "opp-1",
-            approvalType: "vendor_outreach",
+            approvalType: "vendor_outreach_strategy",
             approvalState: "approved",
             requestedByRole: "Strategic sourcing",
             requestedAt: "2027-06-30T00:00:00Z",
@@ -322,7 +357,7 @@ describe("deriveOptimizeWorkflowPosition", () => {
             approvalRequestId: "apr-1",
             caseId: "case-1",
             opportunityId: "opp-1",
-            approvalType: "vendor_outreach",
+            approvalType: "vendor_outreach_strategy",
             approvalState: "approved",
             requestedByRole: "Strategic sourcing",
             requestedAt: "2027-06-30T00:00:00Z",

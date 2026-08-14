@@ -568,6 +568,17 @@ describe("SourceOptimizeContractPage", () => {
     expect(screen.getByTestId("workflow-action-panel")).toHaveTextContent(
       "It does not write finance_realization rows or claim realized value.",
     );
+    const valueProofStatus = screen.getByTestId("optimize-value-proof-status");
+    expect(valueProofStatus).toHaveTextContent("realized value pending");
+    expect(valueProofStatus).toHaveTextContent("Strategy approval");
+    expect(valueProofStatus).toHaveTextContent("approved");
+    expect(valueProofStatus).toHaveTextContent("Vendor outcome");
+    expect(valueProofStatus).toHaveTextContent("agreed");
+    expect(valueProofStatus).toHaveTextContent("Finance/Tower handoff");
+    expect(valueProofStatus).toHaveTextContent("not requested");
+    expect(valueProofStatus).toHaveTextContent(
+      "No source.finance_realization row is present.",
+    );
 
     fireEvent.click(screen.getByTestId("request-optimize-finance-confirmation"));
 
@@ -587,6 +598,115 @@ describe("SourceOptimizeContractPage", () => {
     });
     expect(screen.getByTestId("workflow-action-message")).toHaveTextContent(
       "No realized value has been recorded.",
+    );
+  });
+
+  it("renders finance-confirmed value only when a realization row exists", () => {
+    const confirmedSet = {
+      ...makeOpportunitySet(),
+      opportunities: makeOpportunitySet().opportunities.map((opportunity) => ({
+        ...opportunity,
+        stage: "finance_confirmed" as const,
+      })),
+      approvalRequests: [
+        {
+          approvalRequestId: "APR-090-STRATEGY",
+          caseId: "CASE-090",
+          opportunityId: "opp-090-rate",
+          approvalType: "vendor_outreach_strategy",
+          approvalState: "approved" as const,
+          requestedByRole: "sourcing_owner",
+          requestedAt: "2027-07-01T00:00:00.000Z",
+          decisions: [
+            {
+              decision: "approved" as const,
+              rationale: "Approved for controlled vendor outreach.",
+              decidedByRole: "sourcing_approver",
+              decidedAt: "2027-07-01T00:00:00.000Z",
+            },
+          ],
+        },
+        {
+          approvalRequestId: "APR-090-FINANCE",
+          caseId: "CASE-090",
+          opportunityId: "opp-090-rate",
+          approvalType: "finance_value_confirmation",
+          approvalState: "approved" as const,
+          requestedByRole: "finance_handoff_owner",
+          requestedAt: "2027-07-02T00:00:00.000Z",
+          decisions: [
+            {
+              decision: "approved" as const,
+              rationale: "Finance confirmed periodized credit recovery.",
+              decidedByRole: "finance_controller",
+              decidedAt: "2027-07-03T00:00:00.000Z",
+            },
+          ],
+        },
+      ],
+      negotiatedOutcomes: [
+        {
+          outcomeId: "OUT-090",
+          caseId: "CASE-090",
+          opportunityId: "opp-090-rate",
+          outcomeState: "agreed" as const,
+          agreedAmountUsd: 755_000,
+          effectiveDate: "2027-07-01",
+          sourceDocumentId: "doc-090-amendment",
+        },
+      ],
+      financeRealizations: [
+        {
+          realizationId: "REAL-090",
+          amountUsd: 740_000,
+          basis: "Confirmed credits received against corrected invoices.",
+          confirmationDate: "2027-07-31",
+          owner: "Finance controller",
+          towerClaimRefs: ["TOWER-CLAIM-090"],
+          linkedOpportunityIds: ["opp-090-rate"],
+          sourceRefs: [
+            {
+              sourceSystem: "ERP / AP",
+              sourceRecordId: "credit-memo-090",
+              sourceFileReport: "finance-realization.csv",
+              tableName: "source.finance_realization_evidence",
+              pageSpan: null,
+              reviewState: "finance_confirmed",
+            },
+          ],
+        },
+      ],
+      financeConfirmedUsd: 740_000,
+    };
+
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({
+          selected: makeCandidate(),
+          missingEvidenceSources: [],
+        })}
+        opportunitySet={confirmedSet}
+        evidencePack={makeReadySaaSEvidencePack()}
+      />,
+    );
+
+    const valueProofStatus = screen.getByTestId("optimize-value-proof-status");
+    expect(screen.getByTestId("optimize-step-prove_value")).toHaveAttribute(
+      "data-state",
+      "complete",
+    );
+    expect(screen.getByTestId("optimize-value-proof-badge")).toHaveTextContent(
+      "finance confirmed",
+    );
+    expect(valueProofStatus).toHaveTextContent("$740K");
+    expect(valueProofStatus).toHaveTextContent(
+      "Confirmed credits received against corrected invoices.",
+    );
+    expect(valueProofStatus).toHaveTextContent("TOWER-CLAIM-090");
+    expect(valueProofStatus).toHaveTextContent(
+      "source.finance_realization_evidence / credit-memo-090 / finance-realization.csv",
     );
   });
 

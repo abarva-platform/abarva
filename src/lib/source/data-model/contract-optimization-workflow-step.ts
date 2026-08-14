@@ -133,7 +133,9 @@ function evaluateGates(input: {
 }): readonly StepGate[] {
   const { hasSelectedContract, opportunitySet, readiness, traceability } = input;
   const opportunities = opportunitySet?.opportunities ?? [];
-  const approvalRequests = opportunitySet?.approvalRequests ?? [];
+  const approvalRequests = (opportunitySet?.approvalRequests ?? []).filter(
+    (request) => request.approvalType === "vendor_outreach_strategy",
+  );
   const negotiatedOutcomes = opportunitySet?.negotiatedOutcomes ?? [];
   const baselineStatus = opportunitySet?.baseline.status ?? null;
   const topStage = highestStageRank(opportunities);
