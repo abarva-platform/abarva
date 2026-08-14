@@ -191,6 +191,13 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(needs).toHaveTextContent(
       "Download the template, fill one row per tower, then upload.",
     );
+
+    const continueGuidance = screen.getByTestId(
+      "source-shell-continue-guidance",
+    );
+    expect(continueGuidance).toHaveTextContent(
+      "Locked: Download the template, fill one row per tower, then upload.",
+    );
   });
 
   it("keeps gate approval handoff inside the event shell workspace", () => {
@@ -211,9 +218,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
     const readiness = screen.getByTestId("source-shell-approval-readiness");
     expect(readiness).toHaveTextContent("Approval readiness");
-    expect(readiness).toHaveTextContent("Not ready to decide");
+    expect(readiness).toHaveTextContent("Inputs open");
     expect(readiness).toHaveTextContent("Workflow");
-    expect(readiness).toHaveTextContent("Files");
+    expect(readiness).toHaveTextContent("Artifact queue");
     expect(readiness).toHaveTextContent("Decision");
     expect(readiness).toHaveTextContent("Next action");
     expect(readiness).toHaveTextContent("Return to steps.");
