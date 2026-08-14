@@ -200,6 +200,8 @@ const FAMILY_SPECS: Record<SourceContractEvidenceFamily, EvidenceFamilySpec> = {
     artifactImpact: "Locked Baseline, Negotiated Improvement rows",
     blocks: "Separating true project change from recurring run work",
     evidenceRefMatchers: [
+      "change_order_register",
+      "change_order",
       "renewal_negotiation_history",
       "contract.indexation_terms",
     ],
@@ -216,6 +218,9 @@ const FAMILY_SPECS: Record<SourceContractEvidenceFamily, EvidenceFamilySpec> = {
     artifactImpact: "Avoided Cost rows, Negotiation Strategy timing",
     blocks: "Decision timing, leverage window, and auto-renewal risk",
     evidenceRefMatchers: [
+      "renewal_notice",
+      "contract.renewal_terms",
+      "renewal_terms",
       "benchmarking_clause",
       "exit_rights_summary",
       "clm.renewal_quote",
