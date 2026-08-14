@@ -946,6 +946,412 @@ function layer2DryRunFailureReport(generatedAt, tenants, allAdapterFamilyRows, a
   };
 }
 
+const sourceClassFileAliases = {
+  spend_value: ['08_it_budget_spend_value.csv'],
+  service_scope_managed_services: ['17_managed_services_scope.csv'],
+};
+
+const sourceFieldResolutionCatalog = {
+  source_file: [
+    {
+      resolutionType: 'derived_source_path',
+      actionClass: 'mapping_alias_code_only_fix',
+      candidate: '__source_path',
+      rationale: 'Adapter already receives sourcePath; lineage can be derived without changing Layer 1 data.',
+    },
+    {
+      resolutionType: 'field_alias',
+      actionClass: 'mapping_alias_code_only_fix',
+      candidate: 'evidence_location',
+      rationale: 'Existing intake lineage field can be treated as a source-file alias when present.',
+    },
+  ],
+  entity_name: [
+    {
+      resolutionType: 'field_alias',
+      actionClass: 'mapping_alias_code_only_fix',
+      candidate: 'business_name',
+      rationale: 'Legacy packet uses business_name for enterprise identity.',
+    },
+  ],
+  service_name: [
+    {
+      resolutionType: 'field_alias',
+      actionClass: 'mapping_alias_code_only_fix',
+      candidate: 'service',
+      rationale: 'Managed-services packet declares service as the service label.',
+    },
+  ],
+  use_case_name: [
+    {
+      resolutionType: 'field_alias',
+      actionClass: 'mapping_alias_code_only_fix',
+      candidate: 'use_case',
+      rationale: 'Legacy packet uses use_case for the use-case label.',
+    },
+  ],
+  risk_or_control_name: [
+    {
+      resolutionType: 'field_alias',
+      actionClass: 'mapping_alias_code_only_fix',
+      candidate: 'risk_or_gap',
+      rationale: 'Legacy packet records the risk/control label in risk_or_gap.',
+    },
+  ],
+  function_name: [
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'business_name',
+      rationale: 'Could be a business-function label, but identity semantics must be approved before mapping.',
+    },
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'context_item',
+      rationale: 'Could identify the function row, but this would define canonical identity from generic context.',
+    },
+  ],
+  org_unit: [
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'business_name',
+      rationale: 'Could be an org-unit label, but requires approval before canonical ownership identity mapping.',
+    },
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'owner_role',
+      rationale: 'Owner role is available, but role and org unit are not equivalent without a mapping decision.',
+    },
+  ],
+  persona_or_role: [
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'interview_group',
+      rationale: 'Could represent a persona segment, but must not be promoted as canonical role identity automatically.',
+    },
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'priority_theme',
+      rationale: 'Theme is available but is not safely equivalent to a persona or role.',
+    },
+  ],
+  vendor_name: [
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'vendor_id',
+      rationale: 'Vendor ID exists, but ID and display name are different canonical attributes.',
+    },
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'business_name',
+      rationale: 'Could be a display label in legacy rows, but vendor identity needs explicit approval.',
+    },
+  ],
+  system_name: [
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'systems',
+      rationale: 'Systems may contain one or more system labels; cardinality must be approved before canonical identity mapping.',
+    },
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'business_name',
+      rationale: 'Could be a display label in legacy rows, but system identity needs explicit approval.',
+    },
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'capability',
+      rationale: 'Capability is related context, not a declared system name.',
+    },
+  ],
+  spend_category: [
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'financial_fact_type',
+      rationale: 'Financial fact type may classify spend, but category semantics need approval.',
+    },
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'ai_spend_category',
+      rationale: 'AI spend category exists for a subset of rows and cannot silently stand in for all spend.',
+    },
+  ],
+  metric_name: [
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'business_name',
+      rationale: 'Could label the row, but metric identity must be declared explicitly.',
+    },
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'benefit_id',
+      rationale: 'Benefit IDs and metric names are different identifiers.',
+    },
+  ],
+  data_asset_name: [
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'data_domain',
+      rationale: 'Data domain is available but is broader than an asset name.',
+    },
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'systems',
+      rationale: 'Systems may reference assets but are not the declared data-asset identity.',
+    },
+  ],
+  platform_name: [
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'capability',
+      rationale: 'Capability is available but is not safely equivalent to platform identity.',
+    },
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'vendor_id',
+      rationale: 'Vendor IDs do not declare platform names.',
+    },
+  ],
+  program_name: [
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'program_code',
+      rationale: 'Program code is available but name/code mapping is a canonical identity decision.',
+    },
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'initiative_id',
+      rationale: 'Initiative identity must not be silently promoted to program identity.',
+    },
+  ],
+  process_name: [
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'business_name',
+      rationale: 'Could label a process row, but process identity needs explicit mapping approval.',
+    },
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'use_case',
+      rationale: 'Use case and operational process are distinct canonical objects.',
+    },
+  ],
+  pattern_name: [
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'industry_context',
+      rationale: 'Industry context may describe a pattern but does not declare a pattern name.',
+    },
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'signals',
+      rationale: 'Signals are evidence/context, not pattern identity.',
+    },
+  ],
+  lens_name: [
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'industry_context',
+      rationale: 'Industry context is not a declared expert lens identity.',
+    },
+    {
+      resolutionType: 'semantic_alias_candidate',
+      actionClass: 'hard_gate_decision',
+      candidate: 'module_next_actions',
+      rationale: 'Next actions are not a lens name.',
+    },
+  ],
+};
+
+function dominantActionClass(fieldResolutions) {
+  const actionClasses = new Set(fieldResolutions.map((resolution) => resolution.recommendedAction));
+  if (actionClasses.has('hard_gate_decision')) return 'hard_gate_decision';
+  if (actionClasses.has('source_data_gated_fix')) return 'source_data_gated_fix';
+  return 'mapping_alias_code_only_fix';
+}
+
+function sourceFileContextForFailure(failure, analyses) {
+  const tenantAnalysis = analyses.get(failure.tenantKey);
+  if (!tenantAnalysis) return null;
+  const activeRoot = tenantAnalysis.activeRoot;
+  const activeFiles = (tenantAnalysis.roots.find((root) => root.relativePath === activeRoot)?.files ?? []).filter(
+    (file) => file.endsWith('.csv'),
+  );
+
+  if (failure.bestMatchingSourceFile && failure.bestMatchingSourceFile !== 'none') {
+    const file = failure.bestMatchingSourceFile;
+    return {
+      matchType: 'reported_best_match',
+      sourceFile: file,
+      sourceColumns: csvShape(file).columns,
+    };
+  }
+
+  const aliases = sourceClassFileAliases[failure.sourceClass] ?? [];
+  for (const alias of aliases) {
+    const matched = activeFiles.find((file) => path.basename(file) === alias);
+    if (matched) {
+      return {
+        matchType: 'source_file_alias_candidate',
+        sourceFile: matched,
+        sourceColumns: csvShape(matched).columns,
+      };
+    }
+  }
+
+  return {
+    matchType: 'no_source_file_candidate',
+    sourceFile: 'none',
+    sourceColumns: [],
+  };
+}
+
+function resolutionForMissingField(field, sourceColumns) {
+  if (sourceColumns.includes(field)) {
+    return {
+      field,
+      recommendedAction: 'mapping_alias_code_only_fix',
+      candidates: [
+        {
+          resolutionType: 'direct_source_field_available_after_file_alias',
+          actionClass: 'mapping_alias_code_only_fix',
+          candidate: field,
+          rationale: 'The field is present once the alternate source-file/domain alias is selected.',
+        },
+      ],
+      rationale: 'The field is present once the alternate source-file/domain alias is selected.',
+    };
+  }
+
+  const catalog = sourceFieldResolutionCatalog[field] ?? [];
+  const candidates = catalog.filter(
+    (candidate) => candidate.resolutionType === 'derived_source_path' || sourceColumns.includes(candidate.candidate),
+  );
+  if (candidates.length === 0) {
+    return {
+      field,
+      recommendedAction: 'source_data_gated_fix',
+      candidates: [],
+      rationale: 'No declared source field or catalogued alias is present; resolving this requires source packet correction or a new approved mapping.',
+    };
+  }
+
+  return {
+    field,
+    recommendedAction: dominantActionClass(candidates.map((candidate) => ({ recommendedAction: candidate.actionClass }))),
+    candidates,
+    rationale: candidates.map((candidate) => candidate.rationale).join(' '),
+  };
+}
+
+function layer2FailureClassificationReport(generatedAt, layer2Failures, analyses) {
+  const analysesByTenant = analyses instanceof Map
+    ? analyses
+    : new Map(analyses.map((analysis) => [analysis.tenant, analysis]));
+  const classifications = layer2Failures.profileFailures.map((failure) => {
+    const sourceContext = sourceFileContextForFailure(failure, analysesByTenant);
+    const sourceColumns = sourceContext?.sourceColumns ?? [];
+    const missingFields = failure.missingFieldNames
+      .split(';')
+      .map((field) => field.trim())
+      .filter(Boolean)
+      .map((field) => resolutionForMissingField(field, sourceColumns));
+    const recommendedAction = sourceContext?.matchType === 'no_source_file_candidate'
+      ? 'source_data_gated_fix'
+      : dominantActionClass(missingFields);
+    const issueTypes = [
+      sourceContext?.matchType === 'source_file_alias_candidate' ? 'source-file-domain-alias' : null,
+      ...missingFields.map((field) =>
+        field.recommendedAction === 'mapping_alias_code_only_fix'
+          ? 'field-alias-or-lineage-fallback'
+          : field.recommendedAction === 'hard_gate_decision'
+            ? 'semantic-identity-alias-decision'
+            : 'source-data-required-field-gap',
+      ),
+    ].filter(Boolean);
+
+    return {
+      tenantKey: failure.tenantKey,
+      mappingProfile: failure.mappingProfile,
+      sourceClass: failure.sourceClass,
+      dryRunResult: failure.dryRunResult,
+      reportedBestMatchingSourceFile: failure.bestMatchingSourceFile,
+      selectedSourceFile: sourceContext?.sourceFile ?? 'none',
+      sourceFileMatchType: sourceContext?.matchType ?? 'unknown',
+      missingFields,
+      issueTypes: [...new Set(issueTypes)],
+      recommendedAction,
+      approvalRequiredBeforeFix:
+        recommendedAction === 'hard_gate_decision'
+          ? 'Approve the semantic alias before changing adapter/profile behavior.'
+          : recommendedAction === 'source_data_gated_fix'
+            ? 'Approve tenant source-data correction or package promotion before mutating Layer 1.'
+            : 'No hard gate for report-only or code-only alias support; merge/deploy still requires normal approval.',
+    };
+  });
+
+  const byRecommendedAction = classifications.reduce((counts, item) => {
+    counts[item.recommendedAction] = (counts[item.recommendedAction] ?? 0) + 1;
+    return counts;
+  }, {});
+
+  return {
+    generatedAt,
+    generatedBy: 'scripts/audit/tenant-layer-refresh.mjs',
+    mode: 'layer2-dry-run-failure-classification',
+    truthSplit: {
+      productionTenantDataWritten: false,
+      activeTenantAccessLayerUpdated: false,
+      moduleRuntimeBehaviorChanged: false,
+      adaptersExecuted: false,
+      canonicalObjectsWritten: false,
+    },
+    summary: {
+      uniqueProfileFailuresClassified: classifications.length,
+      mirroredDimensionFailures: layer2Failures.dimensionFailures.length,
+      byRecommendedAction,
+    },
+    classifications,
+    nextPrSizedSafeCodeSlice: {
+      title: 'Emit and test Layer 2 dry-run failure classification',
+      scope: 'Report-only classifier for adapter/profile failures; no alias resolution and no tenant CSV mutation.',
+      expectedOutput: 'layer2-dry-run-failure-classification.json',
+      hardGatesBeforeActivation: [
+        'tenant CSV mutation',
+        'registry activation',
+        'data-plane load/write',
+        'runtime routing or deploy',
+        'semantic identity alias activation',
+      ],
+    },
+  };
+}
+
 function evidenceRequestRows(analysis) {
   const rows = [];
   let sequence = 0;
@@ -1567,6 +1973,11 @@ async function main() {
     allAdapterDimensionRows,
   );
   writeJson(path.join(outDir, 'layer2-adapter-dry-run-failures.json'), layer2Failures);
+  const layer2FailureClassification = layer2FailureClassificationReport(generatedAt, layer2Failures, analyses);
+  writeJson(
+    path.join(outDir, 'layer2-dry-run-failure-classification.json'),
+    layer2FailureClassification,
+  );
   if (layer3ValidationScaffold) {
     writeJson(path.join(outDir, 'layer3-validation-scaffold.json'), layer3ValidationScaffold);
   }
@@ -1701,6 +2112,9 @@ async function main() {
     }),
     '',
     `Machine-readable Layer 2 dry-run failures: **${layer2Failures.summary.totalFailures}** total (${layer2Failures.summary.familyFailures} family, ${layer2Failures.summary.profileFailures} profile, ${layer2Failures.summary.dimensionFailures} dimension).`,
+    `Layer 2 failure classifications: **${layer2FailureClassification.summary.uniqueProfileFailuresClassified}** unique profile failures (${Object.entries(layer2FailureClassification.summary.byRecommendedAction)
+      .map(([action, count]) => `${count} ${action}`)
+      .join(', ') || '0 classified'}).`,
     '',
     'Adapter gaps are recorded, not filled. No adapter was invented and none was executed.',
     '',
@@ -1713,6 +2127,7 @@ async function main() {
     '- `layer2-adapter-reconciliation.csv` — canonical dimension to adapter-family reconciliation for all tenants.',
     '- `layer2-adapter-family-coverage-registry.json` — declared families and implemented mapping profiles.',
     '- `layer2-adapter-dry-run-failures.json` — machine-readable dry-run failures.',
+    '- `layer2-dry-run-failure-classification.json` — machine-readable action classification for dry-run failures.',
     '- `<tenant>/layer2-adapter-reconciliation.csv`',
     '- `hard-gate-register.csv` — actions that require explicit approval; none were executed.',
     '- `<tenant>/layer3-canonical-refresh-summary.{md,json}`',
