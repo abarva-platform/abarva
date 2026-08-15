@@ -225,6 +225,7 @@ Architecture that is not checked is architecture that is not followed. These exi
 | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `datasets/tenant-inputs/tenant-input-registry.json` | Declares the canonical input root per tenant. Legacy roots may not become active truth.                                                                         |
 | `scripts/tower/fact-lineage-report.mjs`             | Per Tower/tenant-intake metric per tenant, every in-scope file asserting a value and whether they agree — `AGREE` / `CONFLICT` / `ONE_SOURCE` / `ABSENT`. Run default `quote` mode before quoting Tower or tenant-intake headline metrics; use `--mode migration-audit` for legacy drift analysis. |
+| `scripts/source/source-substrate-lineage-report.mjs` | Per Source metric per tenant, every owning Source read model, Contract 360 projection, Cube, or canary source asserting a value, with counting basis attached. Run before quoting Source portfolio value, contract/vendor counts, Contract 360 totals, or Cube/consumption metrics. |
 | `scripts/tower/build-template-field-guide.mjs`      | Per-field ownership, source system, extraction guidance — and grades whether our own pack demonstrates it.                                                      |
 | `npm run validate:context-corpus`                   | Governance policy on every context/corpus object.                                                                                                               |
 | `src/lib/governance/context-corpus-policy.ts`       | Runtime contract; objects that evaluate to `block` never reach a model.                                                                                         |
@@ -235,7 +236,7 @@ Architecture that is not checked is architecture that is not followed. These exi
    exist as a single addressable thing.
 2. An adapter conformance test: every adapter emits canonical objects with upstream lineage intact.
 3. A layer-violation lint: no product module may import from an intake or adapter path.
-4. Extend `fact-lineage-report` beyond Tower metrics to every canonical object.
+4. Extend lineage reporting beyond Tower and Source headline metrics to every canonical object.
 
 ---
 
@@ -287,8 +288,9 @@ And before you state a Tower or tenant-intake headline metric: **run the lineage
 `quote` mode.** If the metric is `ONE_SOURCE`, say so when you quote it. If it is `CONFLICT`, do not
 quote it until someone decides which source is authoritative and why.
 
-For product/read-model numbers outside that script's coverage, use the owning projection's proof
-path instead. Source portfolio value, contract count, vendor count, Contract 360 totals,
-Cube/consumption metrics, and other Source read-model values must be proved from the Source read
-model, cube, or query with an explicit counting basis; the Tower lineage report is not evidence for
-those Source projection figures.
+For Source product/read-model numbers, run `node scripts/source/source-substrate-lineage-report.mjs`
+and state the counting basis. Source portfolio value, contract count, vendor count, Contract 360
+totals, Cube/consumption metrics, and other Source read-model values must be proved from the Source
+read model, cube, or query with an explicit counting basis; the Tower lineage report is not evidence
+for those Source projection figures. If a Source figure is `ONE_SOURCE`, say so when you quote it.
+If it is `CONFLICT`, do not quote it until the owning read model or calculation run is reconciled.

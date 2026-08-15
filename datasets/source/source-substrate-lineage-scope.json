@@ -1,0 +1,33 @@
+{
+  "version": "2026-08-15",
+  "defaultMode": "quote",
+  "defaultTenants": ["skyharbor_global", "meridian-health"],
+  "modes": {
+    "quote": {
+      "purpose": "Use live Source read models and Cube/canary projections only. This mode is intended before quoting Source portfolio, Contract 360, or Cube-derived figures."
+    }
+  },
+  "tenants": {
+    "skyharbor_global": {
+      "rlsKey": "skyharbor_global",
+      "aliases": ["skyharbor_global", "skyharbor"]
+    },
+    "meridian-health": {
+      "rlsKey": "meridian_health_global",
+      "aliases": ["meridian-health", "meridian", "meridian_health_global"]
+    }
+  },
+  "declaredBasisDifferences": [
+    {
+      "metric": "contract_count",
+      "bases": ["contract_row", "contract_family"],
+      "explanation": "source.contract_360 counts contract rows after supplemental rows are excluded. Source V4/Cube can count contract families, where one family can span several rows. State the basis instead of treating the two counts as a conflict."
+    },
+    {
+      "metric": "vendor_count",
+      "bases": ["vendor_ref", "vendor_family"],
+      "explanation": "source.contract_360 counts distinct vendor_ref values in the Contract 360 read model. Source V4/Cube can count normalized vendor families or vendor portfolio rows. State the basis instead of silently picking one."
+    }
+  ],
+  "supplementalVendorRefs": []
+}
