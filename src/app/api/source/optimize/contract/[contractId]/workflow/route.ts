@@ -79,7 +79,7 @@ export async function POST(request: Request, { params }: RouteContext) {
       ? Boolean(accessPolicy?.canApproveSourceStages)
       : Boolean(
           accessPolicy?.canCreateSourceEvents ||
-            accessPolicy?.canApproveSourceStages,
+          accessPolicy?.canApproveSourceStages,
         );
   if (!allowed) {
     return NextResponse.json(
@@ -159,6 +159,7 @@ function statusForActionError(
     case "missing_approved_request":
     case "missing_agreed_outcome":
       return 409;
+    case "missing_rationale":
     case "invalid_action":
       return 400;
     default:

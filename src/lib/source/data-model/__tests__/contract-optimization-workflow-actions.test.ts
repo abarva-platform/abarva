@@ -26,7 +26,8 @@ function makeSession(options: {
       if (options.baseline === "missing") return [] as R[];
       return [
         {
-          baseline_state: options.baseline === "conflict" ? "conflict" : "ready",
+          baseline_state:
+            options.baseline === "conflict" ? "conflict" : "ready",
         },
       ] as R[];
     }
@@ -94,13 +95,17 @@ function makeSession(options: {
 
 describe("contract optimization workflow actions", () => {
   it("creates an idempotent strategy approval request only after baseline and target position are ready", async () => {
-    const session = makeSession({ baseline: "ready", stage: "target_position" });
+    const session = makeSession({
+      baseline: "ready",
+      stage: "target_position",
+    });
 
     const result = await session.runner({
       tenantKey: "skyharbor_global",
       contractId: "CTR-090",
       opportunityId: "OPP-CTR090-RATE",
       action: "create_approval_request",
+      rationale: "Target position is ready for controlled strategy approval.",
       actorRole: "sourcing_lead",
       actorUserId: "user-1",
     });
@@ -146,6 +151,33 @@ describe("contract optimization workflow actions", () => {
     expect(approvalPayload.strategy_packet?.guardrails).toContain(
       "No vendor concession or realized value is recorded by this request.",
     );
+    expect(approvalPayload).toMatchObject({
+      rationale: "Target position is ready for controlled strategy approval.",
+    });
+  });
+
+  it("requires an explicit rationale before creating a strategy approval request", async () => {
+    const session = makeSession({
+      baseline: "ready",
+      stage: "target_position",
+    });
+
+    await expect(
+      session.runner({
+        tenantKey: "skyharbor_global",
+        contractId: "CTR-090",
+        opportunityId: "OPP-CTR090-RATE",
+        action: "create_approval_request",
+        rationale: "too short",
+      }),
+    ).rejects.toMatchObject<Partial<ContractOptimizationWorkflowActionError>>({
+      code: "missing_rationale",
+    });
+    expect(
+      session.calls.some((call) =>
+        call.sql.includes("INSERT INTO source.approval_request"),
+      ),
+    ).toBe(false);
   });
 
   it("does not create approval state when the baseline conflicts", async () => {
@@ -199,6 +231,30 @@ describe("contract optimization workflow actions", () => {
     ).toBe(true);
   });
 
+  it("requires an explicit rationale before recording an approval decision", async () => {
+    const session = makeSession({
+      baseline: "ready",
+      stage: "target_position",
+      approvalState: "pending",
+    });
+
+    await expect(
+      session.runner({
+        tenantKey: "skyharbor_global",
+        contractId: "CTR-090",
+        opportunityId: "OPP-CTR090-RATE",
+        action: "approve_request",
+      }),
+    ).rejects.toMatchObject<Partial<ContractOptimizationWorkflowActionError>>({
+      code: "missing_rationale",
+    });
+    expect(
+      session.calls.some((call) =>
+        call.sql.includes("INSERT INTO source.approval_decision"),
+      ),
+    ).toBe(false);
+  });
+
   it("does not record an agreed outcome without an approved request", async () => {
     const session = makeSession({
       baseline: "ready",
@@ -236,15 +292,15 @@ describe("contract optimization workflow actions", () => {
       contractId: "CTR-090",
       opportunityId: "OPP-CTR090-RATE",
       action: "request_finance_confirmation",
-      rationale: "Vendor outcome is agreed; Finance should confirm measured value.",
+      rationale:
+        "Vendor outcome is agreed; Finance should confirm measured value.",
       actorRole: "sourcing_lead",
     });
 
     expect(result).toMatchObject({
       action: "request_finance_confirmation",
       caseState: "finance_handoff",
-      approvalRequestId:
-        "APR-CASE-CTR090-OPP-CTR090-RATE-FINANCE-CONFIRMATION",
+      approvalRequestId: "APR-CASE-CTR090-OPP-CTR090-RATE-FINANCE-CONFIRMATION",
       negotiatedOutcomeId: "OUT-CASE-CTR090-OPP-CTR090-RATE-AGREED",
     });
     expect(

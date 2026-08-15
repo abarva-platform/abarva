@@ -65,6 +65,7 @@ export class ContractOptimizationWorkflowActionError extends Error {
       | "missing_pending_request"
       | "missing_approved_request"
       | "missing_agreed_outcome"
+      | "missing_rationale"
       | "invalid_action",
     message: string,
   ) {
@@ -252,6 +253,10 @@ async function createApprovalRequest(
   context: Awaited<ReturnType<typeof loadActionContext>>,
 ): Promise<ContractOptimizationWorkflowActionResult> {
   assertOpportunityReadyForApproval(context.opportunityStage);
+  const rationale = requireActionRationale(
+    input,
+    "Record why this target position is ready for strategy approval.",
+  );
   const approvalRequestId = stableId("APR", [
     context.caseId,
     context.opportunityId,
@@ -262,7 +267,7 @@ async function createApprovalRequest(
     contract_id: context.contractId,
     opportunity_id: context.opportunityId,
     requested_by_user_id: input.actorUserId ?? null,
-    rationale: input.rationale?.trim() || null,
+    rationale,
     strategy_packet: context.strategyPacket,
   };
 
@@ -322,13 +327,14 @@ async function decideApprovalRequest(
       "No pending strategy approval request is available for this contract.",
     );
   }
+  const rationale = requireActionRationale(
+    input,
+    decision === "approved"
+      ? "Record why controlled vendor outreach is approved."
+      : "Record why this strategy request is being sent back.",
+  );
   const approvalRequestId = textValue(request.approval_request_id) ?? "";
   const role = input.actorRole?.trim() || "approver";
-  const rationale =
-    input.rationale?.trim() ||
-    (decision === "approved"
-      ? "Approved for governed vendor outreach."
-      : "Sent back for revision.");
 
   await run(
     `UPDATE source.approval_request
@@ -399,6 +405,10 @@ async function recordAgreedOutcome(
       "No approved strategy request exists; record approval before outcome.",
     );
   }
+  const rationale = requireActionRationale(
+    input,
+    "Record what was agreed and what evidence supports the outcome state.",
+  );
   const approvalRequestId = textValue(request.approval_request_id) ?? "";
   const outcomeId = stableId("OUT", [
     context.caseId,
@@ -424,9 +434,8 @@ async function recordAgreedOutcome(
       context.opportunityId,
       JSON.stringify({
         recorded_by_user_id: input.actorUserId ?? null,
-        rationale: input.rationale?.trim() || null,
-        note:
-          "Agreement state only. Realized value remains pending until Finance/Tower confirmation.",
+        rationale,
+        note: "Agreement state only. Realized value remains pending until Finance/Tower confirmation.",
       }),
     ],
   );
@@ -458,6 +467,10 @@ async function requestFinanceConfirmation(
       "No agreed negotiated outcome exists; record the vendor outcome before Finance/Tower confirmation.",
     );
   }
+  const rationale = requireActionRationale(
+    input,
+    "Record why this agreed outcome is ready for Finance/Tower confirmation.",
+  );
   const negotiatedOutcomeId = textValue(outcome.outcome_id) ?? "";
   const approvalRequestId = stableId("APR", [
     context.caseId,
@@ -470,7 +483,7 @@ async function requestFinanceConfirmation(
     opportunity_id: context.opportunityId,
     negotiated_outcome_id: negotiatedOutcomeId,
     requested_by_user_id: input.actorUserId ?? null,
-    rationale: input.rationale?.trim() || null,
+    rationale,
     guardrail:
       "This requests Finance/Tower confirmation only. It does not create finance_realization rows or realized value.",
     required_evidence: [
@@ -602,6 +615,20 @@ function assertOpportunityReadyForApproval(stage: string): void {
       "No negotiation target position is set for this opportunity.",
     );
   }
+}
+
+function requireActionRationale(
+  input: ContractOptimizationWorkflowActionInput,
+  message: string,
+): string {
+  const rationale = input.rationale?.trim() ?? "";
+  if (rationale.length < 12) {
+    throw new ContractOptimizationWorkflowActionError(
+      "missing_rationale",
+      message,
+    );
+  }
+  return rationale;
 }
 
 function result(
