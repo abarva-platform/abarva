@@ -161,21 +161,6 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
               >
                 {vm.recWhy}
               </div>
-              <button
-                onClick={vm.goActions}
-                style={{
-                  border: "1px solid #0a0a0b",
-                  background: "#0a0a0b",
-                  color: "#fff",
-                  borderRadius: 6,
-                  padding: "10px 18px",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                Open optimize plan
-              </button>
             </div>
           </div>
         </>
