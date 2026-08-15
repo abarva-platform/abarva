@@ -43,6 +43,22 @@ function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+const csvCell = (value) => {
+  const text = value === null || value === undefined ? '' : String(value);
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+function writeCsv(filePath, headers, rows) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const body = [
+    headers.map((header) => header.csv).join(','),
+    ...rows.map((row) => headers.map((header) => csvCell(row[header.key])).join(',')),
+  ].join('\n');
+  fs.writeFileSync(filePath, `${body}\n`);
+}
+
+const markdownCell = (value) => String(value ?? '').replaceAll('|', '\\|');
+
 function slug(value) {
   return String(value ?? '')
     .trim()
@@ -133,16 +149,26 @@ function classifyEndpointOpportunity({ endpoint, tenantKey, buckets }) {
   const acronymMatches = candidates.filter((candidate) => acronym(candidate.displayName) === compactSlug(endpoint.objectName));
 
   if (looseMatches.length === 1) {
+    const match = looseMatches[0];
     return {
       opportunityClass: 'code_only_loose_normalization_candidate',
       candidateCount: 1,
+      matchRule: 'compact-label-match',
+      proposedCanonical: match.displayName,
+      proposedCanonicalSourceRowNumber: match.sourceRowNumber,
+      proposedCanonicalMappingProfile: match.mappingProfile,
       proposedDisposition: 'report-only-candidate-do-not-activate-without-review',
     };
   }
   if (acronymMatches.length === 1) {
+    const match = acronymMatches[0];
     return {
       opportunityClass: 'code_only_acronym_alias_candidate',
       candidateCount: 1,
+      matchRule: 'endpoint-label-is-unique-acronym-of-canonical-label',
+      proposedCanonical: match.displayName,
+      proposedCanonicalSourceRowNumber: match.sourceRowNumber,
+      proposedCanonicalMappingProfile: match.mappingProfile,
       proposedDisposition: 'semantic-identity-alias-activation-gated',
     };
   }
@@ -189,9 +215,14 @@ function analyzeAliasOpportunities({ quarantineRows, nodes }) {
         relationshipId: row.relationshipId,
         sourceRowNumber: row.sourceRowNumber,
         side: endpoint.side,
+        endpointName: endpoint.objectName,
         objectType: endpoint.objectType,
         opportunityClass: classification.opportunityClass,
         candidateCount: classification.candidateCount,
+        matchRule: classification.matchRule ?? '',
+        proposedCanonical: classification.proposedCanonical ?? '',
+        proposedCanonicalSourceRowNumber: classification.proposedCanonicalSourceRowNumber ?? '',
+        proposedCanonicalMappingProfile: classification.proposedCanonicalMappingProfile ?? '',
         proposedDisposition: classification.proposedDisposition,
       };
       endpoints.push(endpointRecord);
@@ -240,14 +271,15 @@ function writeMarkdown(filePath, report) {
     '',
     '## Direct Answer',
     '',
-    `Code-only alias candidates exist for ${report.totals.codeOnlyAliasCandidateEndpoints} unresolved endpoint(s), but semantic identity alias activation remains gated. The remaining ${report.totals.sourceDataGatedEndpoints} unresolved endpoint(s) require source evidence, dimension catalogue work, or edge retirement.`,
+    `Code-only alias candidates exist for ${report.totals.codeOnlyAliasCandidateEndpoints} unresolved endpoint occurrence(s), representing ${report.totals.distinctCodeOnlyAliasCandidates} distinct proposed alias mapping(s). Semantic identity alias activation remains gated. The remaining ${report.totals.sourceDataGatedEndpoints} unresolved endpoint(s) require source evidence, dimension catalogue work, or edge retirement.`,
     '',
     '## Totals',
     '',
     `- Relationship rows: ${report.graphTotals.relationshipRows}`,
     `- Quarantined relationships: ${report.graphTotals.quarantinedRelationships}`,
     `- Unresolved endpoints analyzed: ${report.totals.unresolvedEndpointsAnalyzed}`,
-    `- Code-only alias candidate endpoints: ${report.totals.codeOnlyAliasCandidateEndpoints}`,
+    `- Code-only alias candidate endpoint occurrences: ${report.totals.codeOnlyAliasCandidateEndpoints}`,
+    `- Distinct code-only alias candidates: ${report.totals.distinctCodeOnlyAliasCandidates}`,
     `- Fully code-only candidate rows: ${report.totals.fullyCodeOnlyCandidateRows}`,
     `- Source-data gated endpoints: ${report.totals.sourceDataGatedEndpoints}`,
     `- Semantic identity aliases activated: ${report.acceptance.semanticIdentityAliasActivationPerformed}`,
@@ -266,6 +298,17 @@ function writeMarkdown(filePath, report) {
     '| Class | Rows |',
     '| --- | ---: |',
     ...report.rowClassBreakdown.map((row) => `| \`${row.rowOpportunityClass}\` | ${row.count} |`),
+    '',
+    '## Alias Review Table',
+    '',
+    'These rows are review evidence only. They are not activated aliases.',
+    '',
+    '| Tenant | Endpoint | Proposed canonical | Evidence for mapping | Affected endpoint occurrences |',
+    '| --- | --- | --- | --- | ---: |',
+    ...report.reviewRows.map(
+      (row) =>
+        `| ${row.tenant} | \`${markdownCell(row.endpointName)}\` | \`${markdownCell(row.proposedCanonical)}\` | ${markdownCell(row.evidenceForMapping)} | ${row.affectedEndpointOccurrences} |`,
+    ),
     '',
     '## Tenant Aliases',
     '',
@@ -287,6 +330,50 @@ function writeMarkdown(filePath, report) {
   fs.writeFileSync(filePath, `${lines.join('\n')}\n`);
 }
 
+function buildReviewRows({ endpoints, tenantAliases }) {
+  const candidates = new Map();
+  for (const row of endpoints.filter((endpoint) => endpoint.opportunityClass.startsWith('code_only_'))) {
+    const key = [
+      row.tenantKey,
+      row.endpointName,
+      row.proposedCanonical,
+      row.objectType,
+      row.opportunityClass,
+      row.matchRule,
+      row.proposedCanonicalSourceRowNumber,
+      row.proposedCanonicalMappingProfile,
+    ].join('|');
+    const existing = candidates.get(key);
+    if (existing) {
+      existing.affectedEndpointOccurrences += 1;
+      continue;
+    }
+    candidates.set(key, {
+      tenant: tenantAliases.get(row.tenantKey),
+      endpointName: row.endpointName,
+      proposedCanonical: row.proposedCanonical,
+      objectType: row.objectType,
+      opportunityClass: row.opportunityClass,
+      matchRule: row.matchRule,
+      evidenceForMapping: [
+        row.matchRule,
+        `unique_candidate_count=${row.candidateCount}`,
+        `canonical_source_row=${row.proposedCanonicalSourceRowNumber}`,
+        `canonical_mapping_profile=${row.proposedCanonicalMappingProfile}`,
+      ].join('; '),
+      affectedEndpointOccurrences: 1,
+      semanticIdentityAliasActivated: false,
+      graphMaterialized: false,
+    });
+  }
+  return [...candidates.values()].sort(
+    (a, b) =>
+      a.tenant.localeCompare(b.tenant) ||
+      a.endpointName.localeCompare(b.endpointName) ||
+      a.proposedCanonical.localeCompare(b.proposedCanonical),
+  );
+}
+
 function main() {
   const args = parseArgs(process.argv.slice(2));
   const graphDir = requireArg(args, 'graph-dir');
@@ -299,6 +386,7 @@ function main() {
   const tenantKeys = summary.tenants ?? Object.keys(summary.perTenant ?? {});
   const tenantAliases = anonymizeTenants(tenantKeys);
   const { endpoints, rowClassifications } = analyzeAliasOpportunities({ quarantineRows, nodes });
+  const reviewRows = buildReviewRows({ endpoints, tenantAliases });
   const endpointClassBreakdown = countBy(endpoints, (row) => row.opportunityClass).map(({ key, count }) => {
     const sample = endpoints.find((row) => row.opportunityClass === key);
     return {
@@ -344,7 +432,8 @@ function main() {
     sourceSha,
     graphGeneratedAt: summary.generatedAt,
     mode: 'report_only_no_semantic_alias_activation_no_data_mutation_no_graph_materialization',
-    publicDisclosure: 'Tenant identifiers are anonymized. Endpoint names, node names, source values, and source paths are omitted.',
+    publicDisclosure:
+      'Tenant identifiers are anonymized. Alias review rows include endpoint and canonical labels for human review, but source paths and tenant names are omitted.',
     evidence: {
       graphReconciliation: `npm run audit:tenant-graph-reconciliation -- --tenant all --out ${graphDir}`,
       graphQuarantineAliasAnalysis: `npm run audit:graph-quarantine-alias-analysis -- --graph-dir ${graphDir} --out-dir ${outDir} --source-sha ${sourceSha}`,
@@ -360,6 +449,7 @@ function main() {
       unresolvedEndpointsAnalyzed: endpoints.length,
       rowsWithUnresolvedEndpoints: rowClassifications.length,
       codeOnlyAliasCandidateEndpoints,
+      distinctCodeOnlyAliasCandidates: reviewRows.length,
       fullyCodeOnlyCandidateRows,
       sourceDataGatedEndpoints,
       ambiguousAliasCandidateEndpoints: endpoints.filter((row) => row.opportunityClass === 'ambiguous_code_alias_candidate')
@@ -367,13 +457,16 @@ function main() {
     },
     endpointClassBreakdown,
     rowClassBreakdown,
+    reviewRows,
     perTenant,
     acceptance: {
       semanticIdentityAliasActivationPerformed: false,
       tenantDataMutated: false,
       graphTablesWritten: summary.totals.graphTablesWritten,
       productReadModelsUpdated: summary.totals.productReadModelsUpdated,
-      rowLevelNamesOmitted: true,
+      sourcePathsOmitted: true,
+      aliasReviewRowsEmitted: reviewRows.length,
+      aliasAffectedEndpointOccurrencesEmitted: codeOnlyAliasCandidateEndpoints,
     },
     nextPrSizedSafeCodeSlice: {
       title: 'Evaluate acronym alias candidates behind an explicit semantic-identity gate',
@@ -400,9 +493,25 @@ function main() {
 
   fs.mkdirSync(outDir, { recursive: true });
   writeJson(path.join(outDir, 'graph-quarantine-alias-analysis.json'), report);
+  writeCsv(
+    path.join(outDir, 'graph-quarantine-alias-review.csv'),
+    [
+      { key: 'tenant', csv: 'tenant' },
+      { key: 'endpointName', csv: 'endpoint_name' },
+      { key: 'proposedCanonical', csv: 'proposed_canonical' },
+      { key: 'evidenceForMapping', csv: 'evidence_for_the_mapping' },
+      { key: 'objectType', csv: 'object_type' },
+      { key: 'opportunityClass', csv: 'opportunity_class' },
+      { key: 'matchRule', csv: 'match_rule' },
+      { key: 'affectedEndpointOccurrences', csv: 'affected_endpoint_occurrences' },
+      { key: 'semanticIdentityAliasActivated', csv: 'semantic_identity_alias_activated' },
+      { key: 'graphMaterialized', csv: 'graph_materialized' },
+    ],
+    reviewRows,
+  );
   writeMarkdown(path.join(outDir, 'graph-quarantine-alias-analysis.md'), report);
   console.log(
-    `graph-quarantine-alias-analysis: ${endpoints.length} unresolved endpoint(s), ${codeOnlyAliasCandidateEndpoints} code-only alias candidate(s), ${sourceDataGatedEndpoints} source-data gated endpoint(s)`,
+    `graph-quarantine-alias-analysis: ${endpoints.length} unresolved endpoint(s), ${codeOnlyAliasCandidateEndpoints} code-only alias candidate occurrence(s), ${sourceDataGatedEndpoints} source-data gated endpoint(s), ${reviewRows.length} distinct review row(s)`,
   );
   console.log(`  report: ${outDir}`);
 }
@@ -414,6 +523,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 export {
   acronym,
   analyzeAliasOpportunities,
+  buildReviewRows,
   classifyEndpointOpportunity,
   compactSlug,
   splitReasons,

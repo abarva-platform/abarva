@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-08-15T04:26:35.936Z",
+  "generatedAt": "2026-08-15T10:59:54.889Z",
   "generatedBy": "scripts/audit/build-graph-quarantine-alias-analysis.mjs",
-  "sourceSha": "6ac668f96e79debb431bb1b46f798f7f72a41005",
-  "graphGeneratedAt": "2026-08-15T04:26:26.995Z",
+  "sourceSha": "cb6e35d48700dfbee001608436fd0e6839d8677e",
+  "graphGeneratedAt": "2026-08-15T10:56:12.428Z",
   "mode": "report_only_no_semantic_alias_activation_no_data_mutation_no_graph_materialization",
-  "publicDisclosure": "Tenant identifiers are anonymized. Endpoint names, node names, source values, and source paths are omitted.",
+  "publicDisclosure": "Tenant identifiers are anonymized. Alias review rows include endpoint and canonical labels for human review, but source paths and tenant names are omitted.",
   "evidence": {
-    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-graph-alias-analysis-6ac668f.uv9Dzh",
-    "graphQuarantineAliasAnalysis": "npm run audit:graph-quarantine-alias-analysis -- --graph-dir /tmp/nexus-graph-alias-analysis-6ac668f.uv9Dzh --out-dir reports/graph-quarantine-alias-analysis/current-main --source-sha 6ac668f96e79debb431bb1b46f798f7f72a41005"
+    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-graph-alias-review-cb6e35d.MPQVio",
+    "graphQuarantineAliasAnalysis": "npm run audit:graph-quarantine-alias-analysis -- --graph-dir /tmp/nexus-graph-alias-review-cb6e35d.MPQVio --out-dir reports/graph-quarantine-alias-analysis/current-main --source-sha cb6e35d48700dfbee001608436fd0e6839d8677e"
   },
   "graphTotals": {
     "relationshipRows": 9633,
@@ -20,6 +20,7 @@
     "unresolvedEndpointsAnalyzed": 6153,
     "rowsWithUnresolvedEndpoints": 4660,
     "codeOnlyAliasCandidateEndpoints": 50,
+    "distinctCodeOnlyAliasCandidates": 3,
     "fullyCodeOnlyCandidateRows": 50,
     "sourceDataGatedEndpoints": 6103,
     "ambiguousAliasCandidateEndpoints": 0
@@ -44,6 +45,44 @@
     {
       "rowOpportunityClass": "all_unresolved_endpoints_code_only_candidate",
       "count": 50
+    }
+  ],
+  "reviewRows": [
+    {
+      "tenant": "tenant-07",
+      "endpointName": "CFO",
+      "proposedCanonical": "Chief Financial Officer",
+      "objectType": "organization_unit",
+      "opportunityClass": "code_only_acronym_alias_candidate",
+      "matchRule": "endpoint-label-is-unique-acronym-of-canonical-label",
+      "evidenceForMapping": "endpoint-label-is-unique-acronym-of-canonical-label; unique_candidate_count=1; canonical_source_row=4; canonical_mapping_profile=organization-ownership/v1",
+      "affectedEndpointOccurrences": 18,
+      "semanticIdentityAliasActivated": false,
+      "graphMaterialized": false
+    },
+    {
+      "tenant": "tenant-07",
+      "endpointName": "CHRO",
+      "proposedCanonical": "Chief Human Resources Officer",
+      "objectType": "organization_unit",
+      "opportunityClass": "code_only_acronym_alias_candidate",
+      "matchRule": "endpoint-label-is-unique-acronym-of-canonical-label",
+      "evidenceForMapping": "endpoint-label-is-unique-acronym-of-canonical-label; unique_candidate_count=1; canonical_source_row=5; canonical_mapping_profile=organization-ownership/v1",
+      "affectedEndpointOccurrences": 16,
+      "semanticIdentityAliasActivated": false,
+      "graphMaterialized": false
+    },
+    {
+      "tenant": "tenant-07",
+      "endpointName": "CISO",
+      "proposedCanonical": "Chief Information Security Officer",
+      "objectType": "organization_unit",
+      "opportunityClass": "code_only_acronym_alias_candidate",
+      "matchRule": "endpoint-label-is-unique-acronym-of-canonical-label",
+      "evidenceForMapping": "endpoint-label-is-unique-acronym-of-canonical-label; unique_candidate_count=1; canonical_source_row=26; canonical_mapping_profile=organization-ownership/v1",
+      "affectedEndpointOccurrences": 16,
+      "semanticIdentityAliasActivated": false,
+      "graphMaterialized": false
     }
   ],
   "perTenant": [
@@ -109,7 +148,9 @@
     "tenantDataMutated": false,
     "graphTablesWritten": false,
     "productReadModelsUpdated": false,
-    "rowLevelNamesOmitted": true
+    "sourcePathsOmitted": true,
+    "aliasReviewRowsEmitted": 3,
+    "aliasAffectedEndpointOccurrencesEmitted": 50
   },
   "nextPrSizedSafeCodeSlice": {
     "title": "Evaluate acronym alias candidates behind an explicit semantic-identity gate",
