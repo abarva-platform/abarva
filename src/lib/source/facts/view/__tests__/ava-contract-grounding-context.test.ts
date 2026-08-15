@@ -72,6 +72,8 @@ function opportunitySet(overrides: Record<string, unknown> = {}) {
     selectedOpportunityId: "CTR-090:rate-variance",
     opportunities: [opportunity()],
     financeRealizations: [],
+    approvalRequests: [],
+    negotiatedOutcomes: [],
     evidenceRequirements: [],
     potentialRecoverableUsd: 365_000,
     potentialAvoidableUsd: 0,
@@ -198,5 +200,59 @@ describe("buildAvaSourceContractGrounding", () => {
     );
     expect(block).toContain("Finance-confirmed realized value: $0");
     expect(block).toContain("Realized value exists only where Finance has");
+  });
+
+  it("keeps aVa aligned to the pending Finance/Tower value-proof gate", async () => {
+    getContractOptimizationOpportunitySet.mockResolvedValue(
+      opportunitySet({
+        financeConfirmedUsd: 940_000,
+        approvalRequests: [
+          {
+            approvalRequestId: "apr-strategy",
+            caseId: "case-1",
+            opportunityId: "CTR-090:rate-variance",
+            approvalType: "vendor_outreach_strategy",
+            approvalState: "approved",
+            requestedByRole: "Procurement",
+            requestedAt: null,
+            decisions: [],
+          },
+          {
+            approvalRequestId: "apr-finance",
+            caseId: "case-1",
+            opportunityId: "CTR-090:rate-variance",
+            approvalType: "finance_value_confirmation",
+            approvalState: "pending",
+            requestedByRole: "Finance",
+            requestedAt: null,
+            decisions: [],
+          },
+        ],
+        negotiatedOutcomes: [
+          {
+            outcomeId: "outcome-1",
+            caseId: "case-1",
+            opportunityId: "CTR-090:rate-variance",
+            outcomeState: "agreed",
+            agreedAmountUsd: 940_000,
+            effectiveDate: "2027-07-01",
+            sourceDocumentId: "doc-1",
+          },
+        ],
+      }),
+    );
+
+    const { block } = await buildAvaSourceContractGrounding(
+      "skyharbor-air",
+      "CTR-090",
+    );
+
+    expect(block).toContain(
+      "Workflow lifecycle state: strategy approval approved; vendor outcome agreed; Finance/Tower confirmation request pending; value-proof gate open.",
+    );
+    expect(block).toContain("Finance-confirmed realized value: $940K");
+    expect(block).toContain(
+      "The value-proof gate is not closed until the Finance/Tower confirmation request is approved",
+    );
   });
 });
