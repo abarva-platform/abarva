@@ -1085,6 +1085,9 @@ For every affected stage in any implementation slice, smoke proof must verify:
 
 - Left rail shows the correct current stage and completed prior stages.
 - Main canvas shows only one active task area.
+- Active workflow content uses the available canvas width: measure the stage
+  content container against its parent work-grid cell and fail smoke if it uses
+  less than 92% of the available width without an intentional right-side rail.
 - Local substeps show current, complete, pending, and blocked states.
 - Required evidence rows are distinguishable from optional rows.
 - Uploaded accepted files show a green check or equivalent accepted state.

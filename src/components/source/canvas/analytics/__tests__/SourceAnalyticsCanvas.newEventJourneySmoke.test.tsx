@@ -115,6 +115,17 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
       }
 
       expect(screen.getByTestId("source-shell-v2-steps")).toBeInTheDocument();
+      expect(screen.getByTestId("source-shell-focused-work-panel")).toHaveStyle(
+        {
+          width: "100%",
+          maxWidth: "none",
+        },
+      );
+      expect(
+        screen.getByTestId("source-shell-active-workflow-pane"),
+      ).toHaveStyle({
+        minWidth: "0",
+      });
       expect(
         screen.queryByTestId("source-shell-v2-files"),
       ).not.toBeInTheDocument();
@@ -247,6 +258,10 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
     expect(
       screen.getByTestId("source-shell-stage-ready-panel"),
     ).toBeInTheDocument();
+    expect(screen.getByTestId("source-shell-stage-ready-panel")).toHaveStyle({
+      width: "100%",
+      maxWidth: "none",
+    });
     const readiness = screen.getByTestId("source-stage-operating-status");
     expect(readiness).toHaveTextContent("RFP gate readiness");
     expect(readiness).toHaveTextContent("RFP Package unlocks");

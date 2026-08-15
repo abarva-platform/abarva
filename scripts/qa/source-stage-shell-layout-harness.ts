@@ -30,6 +30,9 @@ type StageShellResult = {
   hasProgressText: boolean;
   hasGateText: boolean;
   hasDeliverablesText: boolean;
+  stageCardWidth: number;
+  stagePanelWidth: number;
+  canvasWidthUtilizationPct: number;
   documentScrollWidth: number;
   documentClientWidth: number;
   pageOverflowsHorizontally: boolean;
@@ -180,8 +183,9 @@ function renderStageMarkup(stage: SourceStageKey): string {
         gap: 18px;
       }
       .stage-panel-wrap {
-        max-width: 620px;
-        margin-left: auto;
+        width: 100%;
+        max-width: none;
+        margin-left: 0;
       }
       @media (max-width: 900px) {
         .harness-shell { padding: 20px 72px 36px; }
@@ -235,6 +239,8 @@ async function run() {
           const stagePanel = document.querySelector(
             "section[aria-label^='Stage canvas']",
           );
+          const stageCard = document.querySelector(".stage-card");
+          const stagePanelWrap = document.querySelector(".stage-panel-wrap");
           const h2 = stagePanel?.querySelector("h2");
           const localWorkflow = document.querySelector(
             '[data-testid="source-stage-local-workflow"]',
@@ -255,6 +261,20 @@ async function run() {
             activeLocalStep instanceof HTMLElement
               ? activeLocalStep.getBoundingClientRect()
               : null;
+          const stageCardRect =
+            stageCard instanceof HTMLElement
+              ? stageCard.getBoundingClientRect()
+              : null;
+          const stagePanelWrapRect =
+            stagePanelWrap instanceof HTMLElement
+              ? stagePanelWrap.getBoundingClientRect()
+              : null;
+          const canvasWidthUtilizationPct =
+            stageCardRect && stagePanelWrapRect && stageCardRect.width > 0
+              ? Math.round(
+                  (stagePanelWrapRect.width / stageCardRect.width) * 100,
+                )
+              : 0;
           const text = document.body.textContent ?? "";
 
           return {
@@ -283,6 +303,9 @@ async function run() {
             hasGateText:
               text.includes("Gate") || text.includes("Completion criteria"),
             hasDeliverablesText: text.includes("Step deliverables"),
+            stageCardWidth: stageCardRect?.width ?? 0,
+            stagePanelWidth: stagePanelWrapRect?.width ?? 0,
+            canvasWidthUtilizationPct,
             documentScrollWidth: document.documentElement.scrollWidth,
             documentClientWidth: document.documentElement.clientWidth,
           };
@@ -337,6 +360,11 @@ async function run() {
         if (pageOverflowsHorizontally) {
           failures.push("Page overflows horizontally.");
         }
+        if (metrics.canvasWidthUtilizationPct < 92) {
+          failures.push(
+            `Stage canvas uses only ${metrics.canvasWidthUtilizationPct}% of the available shell width.`,
+          );
+        }
 
         await page.close();
         results.push({
@@ -353,6 +381,9 @@ async function run() {
           hasProgressText: metrics.hasProgressText,
           hasGateText: metrics.hasGateText,
           hasDeliverablesText: metrics.hasDeliverablesText,
+          stageCardWidth: metrics.stageCardWidth,
+          stagePanelWidth: metrics.stagePanelWidth,
+          canvasWidthUtilizationPct: metrics.canvasWidthUtilizationPct,
           documentScrollWidth: metrics.documentScrollWidth,
           documentClientWidth: metrics.documentClientWidth,
           pageOverflowsHorizontally,
@@ -408,15 +439,15 @@ function renderMarkdown(summary: {
     `Generated: ${summary.generatedAt}`,
     `Status: ${summary.status}`,
     "",
-    "| Stage | Viewport | Rail steps | Local steps | Active local | Selected visible | Heading | Overflow | Status |",
-    "| --- | ---: | ---: | ---: | --- | --- | --- | --- | --- |",
+    "| Stage | Viewport | Rail steps | Local steps | Active local | Selected visible | Heading | Canvas utilization | Overflow | Status |",
+    "| --- | ---: | ---: | ---: | --- | --- | --- | ---: | --- | --- |",
     ...summary.results.map(
       (result) =>
         `| ${SOURCE_STAGE_LABELS[result.stage]} | ${result.viewport} | ${result.railSteps} | ${
           result.localStepCount
         } | ${result.activeLocalStepVisible ? "yes" : "no"} | ${
           result.selectedRailVisible ? "yes" : "no"
-        } | ${result.stageHeading} | ${
+        } | ${result.stageHeading} | ${result.canvasWidthUtilizationPct}% | ${
           result.pageOverflowsHorizontally ? "yes" : "no"
         } | ${result.status} |`,
     ),
