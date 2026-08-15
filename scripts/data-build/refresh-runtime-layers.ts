@@ -668,14 +668,39 @@ async function readback(
     ),
   };
   const rls = [];
-  for (const tenant of args.tenants) {
-    const otherTenants = args.tenants.filter((item) => item !== tenant);
-    await client.query("SELECT set_config('app.tenant_key', $1, true)", [tenant]);
-    const visibleOther = await count(
-      "SELECT count(*) FROM intelligence_v6.graph_edges WHERE tenant_key = ANY($1::text[]) AND contract_version=$2",
-      [otherTenants, CONTRACT_VERSION],
-    );
-    rls.push({ tenant, visibleOtherTenantRows: visibleOther, status: visibleOther === 0 ? "pass" : "fail" });
+  try {
+    for (const tenant of args.tenants) {
+      const otherTenants = args.tenants.filter((item) => item !== tenant);
+      const expectedTenantEdges = await count(
+        "SELECT count(*) FROM intelligence_v6.graph_edges WHERE tenant_key = $1 AND contract_version=$2",
+        [tenant, CONTRACT_VERSION],
+      );
+      await client.query("RESET ROLE");
+      await client.query("SELECT set_config('app.tenant_key', $1, true)", [tenant]);
+      await client.query("SELECT set_config('app.client_key', $1, true)", [tenant]);
+      await client.query("SELECT set_config('request.jwt.claims', $1, true)", [
+        JSON.stringify({ tenant_key: tenant, role: "observer", sub: "runtime-layer-refresh-readback" }),
+      ]);
+      await client.query("SET LOCAL ROLE authenticated");
+      const visibleTenant = await count(
+        "SELECT count(*) FROM intelligence_v6.graph_edges WHERE tenant_key = $1 AND contract_version=$2",
+        [tenant, CONTRACT_VERSION],
+      );
+      const visibleOther = await count(
+        "SELECT count(*) FROM intelligence_v6.graph_edges WHERE tenant_key = ANY($1::text[]) AND contract_version=$2",
+        [otherTenants, CONTRACT_VERSION],
+      );
+      rls.push({
+        tenant,
+        visibleTenantRows: visibleTenant,
+        expectedTenantRows: expectedTenantEdges,
+        visibleOtherTenantRows: visibleOther,
+        exercisedRole: "authenticated",
+        status: visibleTenant === expectedTenantEdges && visibleOther === 0 ? "pass" : "fail",
+      });
+    }
+  } finally {
+    await client.query("RESET ROLE").catch(() => undefined);
   }
   const failures = [
     counts.businessRecords === expected.canonicalObjects,
