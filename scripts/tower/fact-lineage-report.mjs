@@ -18,8 +18,10 @@
 // source trees, no index, no source-of-record declaration, and a `not_loaded`
 // in one file reads as "the tenant does not have this".
 //
-// This report is that object. For each headline metric it walks BOTH trees,
-// records every file that asserts a value, and flags:
+// This report is that object. In default quote mode it walks active tenant
+// intake files only. In migration-audit mode it also compares legacy
+// tower-standardized-v1 files so migration drift is visible without making
+// retired/template packs look like quote-ready facts.
 //
 //   AGREE      one value, or several within tolerance
 //   CONFLICT   two sources assert materially different values -- pick one and
@@ -31,6 +33,7 @@
 // Run it before quoting any number from this pack.
 //
 //   node scripts/tower/fact-lineage-report.mjs [--metric <key>]
+//   node scripts/tower/fact-lineage-report.mjs --mode migration-audit
 
 import fs from "node:fs";
 import path from "node:path";
@@ -40,9 +43,37 @@ const REGISTRY_PATH = path.join(
   ROOT,
   "datasets/tenant-inputs/tenant-input-registry.json",
 );
+const POPULATION_SCOPE_PATH = path.join(
+  ROOT,
+  "datasets/tenant-inputs/fact-lineage-population-scope.json",
+);
 
 function readJson(full) {
   return JSON.parse(fs.readFileSync(full, "utf8"));
+}
+
+function parseArgs() {
+  const metricIndex = process.argv.indexOf("--metric");
+  const modeIndex = process.argv.indexOf("--mode");
+  const includeLegacy = process.argv.includes("--include-legacy");
+  const modeFromFlag = modeIndex >= 0 ? process.argv[modeIndex + 1] : null;
+  return {
+    metric: metricIndex >= 0 ? process.argv[metricIndex + 1] : null,
+    mode: includeLegacy ? "migration-audit" : modeFromFlag,
+  };
+}
+
+function populationScope() {
+  return readJson(POPULATION_SCOPE_PATH);
+}
+
+function includedTreesForMode(scope, modeName) {
+  const mode = scope.modes?.[modeName];
+  if (!mode?.includeTrees?.length) {
+    const valid = Object.keys(scope.modes ?? {}).join(", ");
+    throw new Error(`Unknown fact-lineage mode "${modeName}". Valid modes: ${valid}`);
+  }
+  return new Set(mode.includeTrees);
 }
 
 function activeTenantsFromRegistry() {
@@ -168,10 +199,11 @@ function resolve(tree, tenant, rel) {
   return path.join(tenant.activeRoot, rel);
 }
 
-const only = (() => {
-  const i = process.argv.indexOf("--metric");
-  return i >= 0 ? process.argv[i + 1] : null;
-})();
+const args = parseArgs();
+const scope = populationScope();
+const modeName = args.mode ?? scope.defaultMode ?? "quote";
+const includedTrees = includedTreesForMode(scope, modeName);
+const only = args.metric;
 
 const results = [];
 const TENANTS = activeTenantsFromRegistry();
@@ -179,6 +211,7 @@ for (const metric of METRICS.filter((m) => !only || m.key === only)) {
   for (const t of TENANTS) {
     const claims = [];
     for (const [tree, rel, col] of metric.sources) {
+      if (!includedTrees.has(tree)) continue;
       const full = resolve(tree, t, rel);
       const rows = readRows(full);
       if (rows === null) continue; // file absent for this tenant
@@ -200,16 +233,20 @@ for (const metric of METRICS.filter((m) => !only || m.key === only)) {
       const lo = Math.min(...asserted.map((c) => c.value));
       status = (hi - lo) / hi <= TOLERANCE ? "AGREE" : "CONFLICT";
     }
-    results.push({ metric: metric.key, label: metric.label, tenant: t.key, status, claims, asserted });
+    results.push({ metric: metric.key, label: metric.label, tenant: t.key, mode: modeName, status, claims, asserted });
   }
 }
 
 // ── output ───────────────────────────────────────────────────────────────────
 const money = (n) => (n === null ? "—" : `$${(n / 1e6).toFixed(1)}M`);
 const md = ["# Tower fact lineage", ""];
-md.push(
-  "For each headline metric and tenant: every file across BOTH source trees that asserts a value, and whether they agree. Run before quoting any number from this pack.",
-);
+md.push(`Mode: \`${modeName}\`.`);
+md.push("");
+md.push(scope.modes?.[modeName]?.purpose ?? "");
+md.push("");
+md.push(`Included source trees: ${[...includedTrees].map((tree) => `\`${tree}\``).join(", ")}.`);
+md.push("");
+md.push("For each headline metric and tenant: every in-scope file that asserts a value, and whether the in-scope assertions agree. Run quote mode before quoting any number from this pack.");
 md.push("");
 md.push("| Status | Meaning |");
 md.push("| --- | --- |");
@@ -254,6 +291,7 @@ console.log(
     .map(([k, v]) => `${k} ${v}`)
     .join("   "),
 );
+console.log(`Mode ${modeName}   included trees: ${[...includedTrees].join(", ")}`);
 console.log("");
 for (const r of results.filter((x) => x.status === "CONFLICT")) {
   console.log(`CONFLICT  ${r.tenant.padEnd(20)} ${r.metric}`);
@@ -264,5 +302,8 @@ if (oneSource.length) {
   console.log(`\nONE_SOURCE (uncorroborated — do not state as fact without saying so):`);
   for (const r of oneSource)
     console.log(`  ${r.tenant.padEnd(20)} ${r.metric.padEnd(28)} ${money(r.asserted[0].value)}  ${r.asserted[0].rel.split("/").pop()}`);
+}
+if (modeName === "quote") {
+  console.log("\nTip: run with --mode migration-audit to compare active intake against legacy standardized packs.");
 }
 console.log(`\nWritten to reports/tower-fact-lineage/lineage.md`);
