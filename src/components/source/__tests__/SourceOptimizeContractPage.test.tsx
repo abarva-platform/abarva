@@ -824,7 +824,10 @@ describe("SourceOptimizeContractPage", () => {
 
     expect(screen.getByTestId("optimize-step-prove_value")).toHaveAttribute(
       "data-state",
-      "complete",
+      "blocked",
+    );
+    expect(screen.getByTestId("optimize-next-blocker")).toHaveTextContent(
+      "Finance-confirmed value exists, but no Finance/Tower handoff request is recorded.",
     );
     expect(screen.getByTestId("optimize-next-decision")).toHaveTextContent(
       "Record the Finance/Tower handoff",
