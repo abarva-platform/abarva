@@ -293,6 +293,8 @@
     "test:vendor-proposal-facts-write-regression": "npx tsx scripts/run-vendor-proposal-facts-write-isolation-regression.ts",
     "db:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry",
     "db:migrate:ci": "npx tsx src/scripts/run-migrations.ts --ci",
+    "runtime-layer-refresh:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260815162000_intelligence_v6_runtime_layer_refresh.sql",
+    "runtime-layer-refresh:migrate:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260815162000_intelligence_v6_runtime_layer_refresh.sql",
     "db:migrate:mark-applied": "npx tsx src/scripts/run-migrations.ts --mark-all-applied",
     "db:migrate:ledger": "npx tsx src/scripts/print-migration-ledger.ts",
     "audit:ai-control-schema-drift": "npx tsx src/scripts/audit-ai-control-schema-drift.ts",
