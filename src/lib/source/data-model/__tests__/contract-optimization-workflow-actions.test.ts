@@ -9,6 +9,7 @@ type Scenario = "ready" | "conflict" | "missing";
 function makeSession(options: {
   readonly baseline?: Scenario;
   readonly stage?: string;
+  readonly calculatedAmountUsd?: number | null;
   readonly approvalState?: "pending" | "approved" | null;
   readonly hasAgreedOutcome?: boolean;
 }) {
@@ -61,6 +62,15 @@ function makeSession(options: {
             short_label: "Rate-card variance",
             source_systems: ["AP / ERP", "CLM / contract repository"],
           },
+        },
+      ] as R[];
+    }
+    if (sql.includes("FROM source.calculation_run")) {
+      if (options.calculatedAmountUsd === null) return [] as R[];
+      return [
+        {
+          calculation_run_id: "CALC-CTR090-RATE",
+          calculated_amount_usd: options.calculatedAmountUsd ?? 755000,
         },
       ] as R[];
     }
@@ -140,8 +150,16 @@ describe("contract optimization workflow actions", () => {
       strategy_packet?: {
         title?: string;
         amount_usd?: number;
+        amount_basis?: string;
         target_ask?: string;
-        evidence_basis?: { source_systems?: string[] };
+        evidence_basis?: {
+          source_systems?: string[];
+          calculation_trace?: {
+            state?: string;
+            calculationRunId?: string;
+            calculatedAmountUsd?: number;
+          };
+        };
         guardrails?: string[];
       };
     };
@@ -150,15 +168,77 @@ describe("contract optimization workflow actions", () => {
       amount_usd: 755000,
       target_ask: "Ask the supplier to credit governed rate variance.",
     });
+    expect(approvalPayload.strategy_packet?.amount_basis).toContain(
+      "CALC-CTR090-RATE",
+    );
     expect(
       approvalPayload.strategy_packet?.evidence_basis?.source_systems,
     ).toEqual(["AP / ERP", "CLM / contract repository"]);
+    expect(
+      approvalPayload.strategy_packet?.evidence_basis,
+    ).toMatchObject({
+      calculation_trace: {
+        state: "traced",
+        calculationRunId: "CALC-CTR090-RATE",
+        calculatedAmountUsd: 755000,
+      },
+    });
     expect(approvalPayload.strategy_packet?.guardrails).toContain(
       "No vendor concession or realized value is recorded by this request.",
     );
     expect(approvalPayload).toMatchObject({
       rationale: "Target position is ready for controlled strategy approval.",
     });
+  });
+
+  it("does not create a strategy approval request when a stated amount has no calculation run", async () => {
+    const session = makeSession({
+      baseline: "ready",
+      stage: "target_position",
+      calculatedAmountUsd: null,
+    });
+
+    await expect(
+      session.runner({
+        tenantKey: "skyharbor_global",
+        contractId: "CTR-090",
+        opportunityId: "OPP-CTR090-RATE",
+        action: "create_approval_request",
+        rationale: "Target position needs approval but lacks a calculation.",
+      }),
+    ).rejects.toMatchObject<Partial<ContractOptimizationWorkflowActionError>>({
+      code: "untraced_opportunity_amount",
+    });
+    expect(
+      session.calls.some((call) =>
+        call.sql.includes("INSERT INTO source.approval_request"),
+      ),
+    ).toBe(false);
+  });
+
+  it("does not create a strategy approval request when the stated amount disagrees with the calculation run", async () => {
+    const session = makeSession({
+      baseline: "ready",
+      stage: "target_position",
+      calculatedAmountUsd: 700000,
+    });
+
+    await expect(
+      session.runner({
+        tenantKey: "skyharbor_global",
+        contractId: "CTR-090",
+        opportunityId: "OPP-CTR090-RATE",
+        action: "create_approval_request",
+        rationale: "Target position needs approval but amount was restated.",
+      }),
+    ).rejects.toMatchObject<Partial<ContractOptimizationWorkflowActionError>>({
+      code: "untraced_opportunity_amount",
+    });
+    expect(
+      session.calls.some((call) =>
+        call.sql.includes("INSERT INTO source.approval_request"),
+      ),
+    ).toBe(false);
   });
 
   it("requires an explicit rationale before creating a strategy approval request", async () => {

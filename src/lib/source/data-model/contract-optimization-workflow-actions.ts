@@ -40,6 +40,25 @@ export interface ContractOptimizationWorkflowActionResult {
 
 type Row = Record<string, unknown>;
 
+type CalculationTrace =
+  | {
+      readonly state: "not_sized";
+      readonly calculationRunId: null;
+      readonly calculatedAmountUsd: null;
+    }
+  | {
+      readonly state: "missing";
+      readonly calculationRunId: null;
+      readonly calculatedAmountUsd: null;
+    }
+  | {
+      readonly state: "restated" | "traced";
+      readonly calculationRunId: string;
+      readonly calculatedAmountUsd: number;
+    };
+
+const RECONCILIATION_TOLERANCE_USD = 1;
+
 const STAGE_RANK: Record<string, number> = {
   baseline_conflict: 0,
   evidence_required: 0,
@@ -62,6 +81,7 @@ export class ContractOptimizationWorkflowActionError extends Error {
       | "missing_case"
       | "missing_opportunity"
       | "opportunity_not_ready"
+      | "untraced_opportunity_amount"
       | "missing_pending_request"
       | "missing_approved_request"
       | "missing_agreed_outcome"
@@ -235,15 +255,89 @@ async function loadActionContext(
       "No governed optimization opportunity is selected for this contract.",
     );
   }
+  const opportunityId = textValue(opportunity.opportunity_id) ?? "";
+  const calculationTrace = await loadCalculationTrace(run, {
+    aliases: input.aliases,
+    datasetVersion,
+    opportunityId,
+    amountUsd: numberValue(opportunity.amount_usd),
+  });
 
   return {
     datasetVersion,
     tenantKey: textValue(opportunity.tenant_key) ?? input.aliases[0] ?? "",
     contractId: input.contractId,
     caseId: textValue(optimizationCase.optimization_case_id) ?? "",
-    opportunityId: textValue(opportunity.opportunity_id) ?? "",
+    opportunityId,
     opportunityStage: textValue(opportunity.stage) ?? "signal",
-    strategyPacket: strategyPacketFromOpportunity(opportunity),
+    calculationTrace,
+    strategyPacket: strategyPacketFromOpportunity(
+      opportunity,
+      calculationTrace,
+    ),
+  };
+}
+
+async function loadCalculationTrace(
+  run: SqlRunner,
+  input: {
+    readonly aliases: readonly string[];
+    readonly datasetVersion: string;
+    readonly opportunityId: string;
+    readonly amountUsd: number | null;
+  },
+): Promise<CalculationTrace> {
+  if (input.amountUsd == null) {
+    return {
+      state: "not_sized",
+      calculationRunId: null,
+      calculatedAmountUsd: null,
+    };
+  }
+  const rows = await run<Row>(
+    `SELECT run.calculation_run_id,
+            output.amount_usd AS calculated_amount_usd
+       FROM source.calculation_run run
+       JOIN source.calculation_output output
+         ON output.tenant_key = run.tenant_key
+        AND output.dataset_version = run.dataset_version
+        AND output.calculation_run_id = run.calculation_run_id
+      WHERE run.tenant_key = ANY($1::text[])
+        AND run.dataset_version = $2
+        AND run.opportunity_id = $3
+        AND run.run_state = 'completed'
+        AND output.output_key = 'calculated_amount_usd'
+      ORDER BY run.completed_at DESC NULLS LAST,
+               run.started_at DESC NULLS LAST,
+               run.calculation_run_id
+      LIMIT 1`,
+    [input.aliases, input.datasetVersion, input.opportunityId],
+  );
+  const row = rows[0];
+  if (!row) {
+    return {
+      state: "missing",
+      calculationRunId: null,
+      calculatedAmountUsd: null,
+    };
+  }
+  const calculatedAmountUsd = numberValue(row.calculated_amount_usd);
+  const calculationRunId = textValue(row.calculation_run_id);
+  if (calculatedAmountUsd == null || !calculationRunId) {
+    return {
+      state: "missing",
+      calculationRunId: null,
+      calculatedAmountUsd: null,
+    };
+  }
+  return {
+    state:
+      Math.abs(calculatedAmountUsd - input.amountUsd) >
+      RECONCILIATION_TOLERANCE_USD
+        ? "restated"
+        : "traced",
+    calculationRunId,
+    calculatedAmountUsd,
   };
 }
 
@@ -253,6 +347,7 @@ async function createApprovalRequest(
   context: Awaited<ReturnType<typeof loadActionContext>>,
 ): Promise<ContractOptimizationWorkflowActionResult> {
   assertOpportunityReadyForApproval(context.opportunityStage);
+  assertOpportunityAmountTraceable(context.calculationTrace);
   const rationale = requireActionRationale(
     input,
     "Record why this target position is ready for strategy approval.",
@@ -622,6 +717,21 @@ function assertOpportunityReadyForApproval(stage: string): void {
   }
 }
 
+function assertOpportunityAmountTraceable(trace: CalculationTrace): void {
+  if (trace.state === "missing") {
+    throw new ContractOptimizationWorkflowActionError(
+      "untraced_opportunity_amount",
+      "The selected opportunity states an amount without a completed calculation run.",
+    );
+  }
+  if (trace.state === "restated") {
+    throw new ContractOptimizationWorkflowActionError(
+      "untraced_opportunity_amount",
+      "The selected opportunity amount disagrees with its completed calculation run.",
+    );
+  }
+}
+
 function requireActionRationale(
   input: ContractOptimizationWorkflowActionInput,
   message: string,
@@ -671,7 +781,7 @@ function stableId(prefix: string, parts: readonly string[]): string {
   return `${prefix}-${body}`;
 }
 
-function strategyPacketFromOpportunity(row: Row) {
+function strategyPacketFromOpportunity(row: Row, trace: CalculationTrace) {
   const payload = jsonObject(row.payload);
   const label =
     textValue(payload.short_label) ??
@@ -691,10 +801,7 @@ function strategyPacketFromOpportunity(row: Row) {
     title: label,
     value_type: valueType,
     amount_usd: amountUsd,
-    amount_basis:
-      amountUsd == null
-        ? "No amount is approved. The opportunity must remain unsized until a calculation run exists."
-        : "Potential amount only. This is not realized value and cannot be claimed externally until governed approval, vendor outcome, and Finance/Tower proof exist.",
+    amount_basis: strategyAmountBasis(amountUsd, trace),
     target_ask: nextAction,
     fallback_position:
       "Fallback position must be confirmed by the sourcing owner before vendor outreach.",
@@ -709,6 +816,7 @@ function strategyPacketFromOpportunity(row: Row) {
       overlap_treatment:
         textValue(row.overlap_treatment) ??
         "Overlap treatment has not been recorded.",
+      calculation_trace: trace,
     },
     guardrails: [
       "Approval authorizes controlled outreach only.",
@@ -716,6 +824,19 @@ function strategyPacketFromOpportunity(row: Row) {
       "Missing, conflicted, excluded, or pending inputs remain visible and are not converted to zero.",
     ],
   };
+}
+
+function strategyAmountBasis(
+  amountUsd: number | null,
+  trace: CalculationTrace,
+): string {
+  if (amountUsd == null) {
+    return "No amount is approved. The opportunity remains unsized until a calculation run exists.";
+  }
+  if (trace.state === "traced") {
+    return `Potential amount only; reproduced from completed calculation run ${trace.calculationRunId}. This is not realized value until governed approval, vendor outcome, and Finance/Tower proof exist.`;
+  }
+  return "Potential amount is not traceable and must not be approved for outreach.";
 }
 
 function textValue(value: unknown): string | null {
