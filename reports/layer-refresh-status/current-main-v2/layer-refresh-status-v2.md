@@ -1,6 +1,6 @@
 # Layer Refresh Status V2
 
-Source SHA: `d7b2de2aac93cc379052a45f9e730281bb328236`
+Source SHA: `dbe4c86a91eac5ac05b218c6ba15ef396ff6fe80`
 
 This is a report-only artifact generated from a detached `origin/main` worktree. Tenant identifiers are anonymized for public-repo disclosure discipline.
 
@@ -18,35 +18,35 @@ This is a report-only artifact generated from a detached `origin/main` worktree.
 
 ## L1 Undeclared File Classification
 
-| Class | Count | Proposed disposition |
-| --- | ---: | --- |
-| `genuine_new_source_contract_candidate` | 32 | Propose as a new owner-scoped AI source family; do not amend template-manifest.json without explicit approval. |
-| `variant_of_declared_or_parallel_csv_source` | 5 | Prefer the declared CSV where present; keep the workbook quarantined from downstream refresh unless the intake contract explicitly accepts workbook variants. |
-| `source_triage_required` | 2 | Hold outside downstream refresh until the source owner classifies it as a contract source, declared-file variant, or intake-root artifact. |
+| Class                                        | Count | Proposed disposition                                                                                                                                          |
+| -------------------------------------------- | ----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `genuine_new_source_contract_candidate`      |    32 | Propose as a new owner-scoped AI source family; do not amend template-manifest.json without explicit approval.                                                |
+| `variant_of_declared_or_parallel_csv_source` |     5 | Prefer the declared CSV where present; keep the workbook quarantined from downstream refresh unless the intake contract explicitly accepts workbook variants. |
+| `source_triage_required`                     |     2 | Hold outside downstream refresh until the source owner classifies it as a contract source, declared-file variant, or intake-root artifact.                    |
 
 ## Graph Quarantine Disposition
 
-| Reason | Count | Disposition |
-| --- | ---: | --- |
-| `unresolved-to-node` | 3440 | Do not create synthetic nodes. Either catalogue the referenced object in the owning dimension from real evidence, or retire/drop the edge from materialization. |
-| `unresolved-from-node` | 2713 | Do not create synthetic nodes. Either catalogue the referenced object in the owning dimension from real evidence, or retire/drop the edge from materialization. |
-| `missing-from-object-name` | 519 | Permanent quarantine until upstream fields are populated from a real source or the tenant is declared to have no materializable graph for that slice. |
-| `missing-to-object-name` | 519 | Permanent quarantine until upstream fields are populated from a real source or the tenant is declared to have no materializable graph for that slice. |
-| `missing-from-object-type` | 510 | Permanent quarantine until upstream fields are populated from a real source or the tenant is declared to have no materializable graph for that slice. |
-| `missing-relationship-type` | 510 | Permanent quarantine until upstream fields are populated from a real source or the tenant is declared to have no materializable graph for that slice. |
-| `missing-to-object-type` | 510 | Permanent quarantine until upstream fields are populated from a real source or the tenant is declared to have no materializable graph for that slice. |
+| Reason                      | Count | Disposition                                                                                                                                                     |
+| --------------------------- | ----: | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `unresolved-to-node`        |  3440 | Do not create synthetic nodes. Either catalogue the referenced object in the owning dimension from real evidence, or retire/drop the edge from materialization. |
+| `unresolved-from-node`      |  2713 | Do not create synthetic nodes. Either catalogue the referenced object in the owning dimension from real evidence, or retire/drop the edge from materialization. |
+| `missing-from-object-name`  |   519 | Permanent quarantine until upstream fields are populated from a real source or the tenant is declared to have no materializable graph for that slice.           |
+| `missing-to-object-name`    |   519 | Permanent quarantine until upstream fields are populated from a real source or the tenant is declared to have no materializable graph for that slice.           |
+| `missing-from-object-type`  |   510 | Permanent quarantine until upstream fields are populated from a real source or the tenant is declared to have no materializable graph for that slice.           |
+| `missing-relationship-type` |   510 | Permanent quarantine until upstream fields are populated from a real source or the tenant is declared to have no materializable graph for that slice.           |
+| `missing-to-object-type`    |   510 | Permanent quarantine until upstream fields are populated from a real source or the tenant is declared to have no materializable graph for that slice.           |
 
 ## Per-Tenant Anonymized Summary
 
-| Tenant | L1 files | Undeclared files | L2 would-run | L2 failures | Graph candidates | Graph quarantined | L4 refreshed |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| tenant-01 | 23 | 4 | 19 | 0 | 10 | 1703 | 0/5 |
-| tenant-02 | 23 | 4 | 19 | 0 | 0 | 380 | 0/5 |
-| tenant-03 | 24 | 5 | 19 | 0 | 1462 | 840 | 0/5 |
-| tenant-04 | 23 | 4 | 19 | 0 | 0 | 364 | 0/5 |
-| tenant-05 | 23 | 4 | 19 | 0 | 0 | 519 | 0/5 |
-| tenant-06 | 25 | 6 | 19 | 0 | 0 | 1037 | 0/5 |
-| tenant-07 | 31 | 12 | 19 | 0 | 2982 | 336 | 0/5 |
+| Tenant    | L1 files | Undeclared files | L2 would-run | L2 failures | Graph candidates | Graph quarantined | L4 refreshed |
+| --------- | -------: | ---------------: | -----------: | ----------: | ---------------: | ----------------: | -----------: |
+| tenant-01 |       23 |                4 |           19 |           0 |               10 |              1703 |          0/5 |
+| tenant-02 |       23 |                4 |           19 |           0 |                0 |               380 |          0/5 |
+| tenant-03 |       24 |                5 |           19 |           0 |             1462 |               840 |          0/5 |
+| tenant-04 |       23 |                4 |           19 |           0 |                0 |               364 |          0/5 |
+| tenant-05 |       23 |                4 |           19 |           0 |                0 |               519 |          0/5 |
+| tenant-06 |       25 |                6 |           19 |           0 |                0 |              1037 |          0/5 |
+| tenant-07 |       31 |               12 |           19 |           0 |             2982 |               336 |          0/5 |
 
 ## Gates Left Closed
 
@@ -61,9 +61,8 @@ This is a report-only artifact generated from a detached `origin/main` worktree.
 ## Verification Commands
 
 - `npm run release:check`
-- `npm run audit:tenant-input-quality -- --out-dir /tmp/nexus-v2-layer-refresh.TD3w2Z/tenant-input-quality`
+- `npm run audit:tenant-input-quality -- --out-dir /tmp/nexus-v2-layer-refresh-current-dbe4c86/tenant-input-quality`
 - `npm run validate:context-corpus`
 - `node scripts/tower/fact-lineage-report.mjs`
-- `node scripts/audit/tenant-layer-refresh.mjs --tenant all --out /tmp/nexus-v2-layer-refresh.TD3w2Z/layer-reconciliation --no-package`
-- `npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-v2-layer-refresh.TD3w2Z/graph-reconciliation`
-
+- `node scripts/audit/tenant-layer-refresh.mjs --tenant all --out /tmp/nexus-v2-layer-refresh-current-dbe4c86/layer-reconciliation --no-package`
+- `npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-v2-layer-refresh-current-dbe4c86/graph-reconciliation`
