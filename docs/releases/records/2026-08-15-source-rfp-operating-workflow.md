@@ -12,6 +12,8 @@
 
 This release applies the Scope and Strategy reference workflow pattern to the RFP stage of New Event. RFP now shows a purpose-first local branch, keeps the active canvas focused on the RFP release task, and surfaces canonical RFP evidence readiness so the user can see what must be loaded before moving toward Responses.
 
+Follow-up ready-state fix: keep the same RFP gate-readiness strip visible after local RFP inputs are complete and the canvas switches to the stage-ready review state, so the user still sees what the RFP package unlocks and what canonical evidence remains before approval.
+
 This is an RFP-only UX/workflow slice. It does not change workflow persistence, schema, tenant data, parser ingestion, approval automation, authentication, membership, vendor messaging, vendor dispatch, or data-plane writes.
 
 ## Layer Impact
@@ -33,6 +35,7 @@ This is an RFP-only UX/workflow slice. It does not change workflow persistence, 
   - Adds an RFP-specific local work group label so the left tree names the RFP release package instead of falling back to generic evidence wording.
 - `src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx`
   - Reuses the stage gate-readiness panel for RFP.
+  - Keeps the RFP gate-readiness panel visible in the stage-ready state when local RFP inputs are already complete.
   - Keeps the panel backed by canonical evidence requirements, simple-stage screen resolution, gate auto-assessment, and requirement coverage.
   - Does not add vendor release, live parser ingestion, approval automation, or durable upload persistence.
 - Tests updated:
@@ -42,10 +45,10 @@ This is an RFP-only UX/workflow slice. It does not change workflow persistence, 
 ## QA / Validation
 
 - Pass: `npx jest src/lib/source/__tests__/source-event-shell-v2.test.ts src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.newEventJourneySmoke.test.tsx src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.stageApproval.test.tsx --runInBand`
-  - Result: 3 suites passed, 47 tests passed.
+  - Result: 3 suites passed, 48 tests passed.
   - Note: Jest printed existing duplicate manual mock warnings for markdown/GFM mocks.
 - Pass: `npm run qa:source-new-event-journey-smoke`
-  - Result: 1 suite passed, 14 tests passed.
+  - Result: 1 suite passed, 15 tests passed.
   - Note: Jest printed existing duplicate manual mock warnings for markdown/GFM mocks.
 - Pass: `npm run qa:source-stage-shell-layout`.
 - Pass: `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false`.
@@ -78,8 +81,8 @@ Revert the PR. No schema, persistence, data-plane, parser, auth, membership, ven
 - ACA deploy: pending.
 - Runtime invariant: pending.
 - Signed-in RFP browser/DOM proof: pending.
-- Local focused proof: 3 Jest suites passed, 47 tests passed.
-- Local 11-stage smoke proof: 1 Jest suite passed, 14 tests passed.
+- Local focused proof: 3 Jest suites passed, 48 tests passed.
+- Local 11-stage smoke proof: 1 Jest suite passed, 15 tests passed.
 - Local shell layout harness: passed.
 - Local typecheck, focused lint, diff check, and release check: passed.
 
