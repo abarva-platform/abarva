@@ -17,7 +17,6 @@
     "src/components/source/LinkedProgramChip.tsx",
     "src/components/source/PatternChip.tsx",
     "src/components/source/PatternSelector.tsx",
-    "src/components/source/PersistentNexusPanel.tsx",
     "src/components/source/PricingNormalizationMatrix.tsx",
     "src/components/source/PricingTrapLog.tsx",
     "src/components/source/ScorecardGovernancePanel.tsx",
