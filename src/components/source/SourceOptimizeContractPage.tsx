@@ -18,6 +18,7 @@ import {
 import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { ANALYTICS } from "@/components/source/canvas/analytics/analytics-tokens";
+import { stripArtifactsForDisplay } from "@/lib/agent/artifacts";
 import type {
   ContractOptimizationCandidate,
   ContractOptimizationSourceConnection,
@@ -210,7 +211,9 @@ export function SourceOptimizeContractPage({
         setIsAgentBusy(false);
       }
 
-      const finalBody = acc.trim() || "aVa did not return a response.";
+      const finalBody =
+        stripArtifactsForDisplay(acc).trim() ||
+        "aVa did not return a response.";
       setThread((prev) => [
         ...prev,
         { id: `a-${Date.now()}`, role: "agent", body: finalBody },
@@ -277,6 +280,7 @@ export function SourceOptimizeContractPage({
         onMessage={onMessage}
         workspace={workspace}
         isAgentBusy={isAgentBusy}
+        preserveVisibleText
         placeholder={
           selected
             ? `Ask aVa about ${selected.contractId} evidence, ledgers, or next action...`

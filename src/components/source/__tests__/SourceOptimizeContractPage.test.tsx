@@ -3,8 +3,8 @@
  */
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { TextEncoder } from "util";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { TextDecoder, TextEncoder } from "util";
 
 import { SourceOptimizeContractPage } from "../SourceOptimizeContractPage";
 import type { ContractOptimizationSpine } from "@/lib/source/data-model/contract-optimization-spine";
@@ -18,7 +18,9 @@ const mockAgentDockProps: Array<{
   defaultMode: string;
   surfaceContext: Record<string, unknown>;
   placeholder: string;
+  preserveVisibleText?: boolean;
   onMessage: (text: string, attachments: unknown[]) => Promise<void>;
+  thread?: Array<{ role: string; body: string }>;
   workspace: React.ReactNode;
 }> = [];
 
@@ -42,7 +44,9 @@ jest.mock("@/components/agent/AgentDock", () => ({
     defaultMode: string;
     surfaceContext: Record<string, unknown>;
     placeholder: string;
+    preserveVisibleText?: boolean;
     onMessage: (text: string, attachments: unknown[]) => Promise<void>;
+    thread?: Array<{ role: string; body: string }>;
     workspace: React.ReactNode;
   }) => {
     mockAgentDockProps.push(props);
@@ -253,6 +257,7 @@ describe("SourceOptimizeContractPage", () => {
     refresh.mockReset();
     mockAgentDockProps.length = 0;
     global.fetch = jest.fn();
+    global.TextDecoder = TextDecoder as typeof global.TextDecoder;
   });
 
   it("starts on a ranked contract picker when no contract is selected", () => {
@@ -370,6 +375,7 @@ describe("SourceOptimizeContractPage", () => {
       surface: "/source/optimize",
       defaultMode: "collapsed",
       placeholder: "Ask aVa about CTR-090 evidence, ledgers, or next action...",
+      preserveVisibleText: true,
     });
     expect(props?.surfaceContext).toMatchObject({
       sourceOptimizeContractMode: true,
@@ -408,7 +414,10 @@ describe("SourceOptimizeContractPage", () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
+    const initialProps = mockAgentDockProps.at(-1);
+    await act(async () => {
+      await initialProps?.onMessage("Explain current state", []);
+    });
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -431,6 +440,66 @@ describe("SourceOptimizeContractPage", () => {
       },
       conversationHistory: [],
     });
+  });
+
+  it("strips hidden stream artifacts from Optimize Contract aVa answers", async () => {
+    const encoder = new TextEncoder();
+    const fetchMock = global.fetch as jest.Mock;
+    fetchMock.mockResolvedValue({
+      ok: true,
+      body: {
+        getReader: () => ({
+          read: jest
+            .fn()
+            .mockResolvedValueOnce({
+              done: false,
+              value: encoder.encode(
+                '[[artifact:context-bundle]]{"bundle":{"tenantKey":"skyharbor_global"}}[[/artifact]]',
+              ),
+            })
+            .mockResolvedValueOnce({
+              done: false,
+              value: encoder.encode(
+                "CTR-090 has a $43.5M governed annual baseline and Finance/Tower value proof is separate.",
+              ),
+            })
+            .mockResolvedValueOnce({ done: true, value: undefined }),
+        }),
+      },
+    });
+
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({ selected: makeCandidate() })}
+        opportunitySet={makeOpportunitySet()}
+      />,
+    );
+
+    const initialProps = mockAgentDockProps.at(-1);
+    await act(async () => {
+      await initialProps?.onMessage("Explain current state", []);
+    });
+
+    await waitFor(() => {
+      const latestProps = mockAgentDockProps.at(-1);
+      expect(
+        latestProps?.thread?.some(
+          (turn) =>
+            turn.role === "agent" &&
+            turn.body.includes("$43.5M governed annual baseline"),
+        ),
+      ).toBe(true);
+    });
+
+    const latestProps = mockAgentDockProps.at(-1);
+    const agentTurn = latestProps?.thread?.find(
+      (turn) => turn.role === "agent",
+    );
+    expect(agentTurn?.body).not.toContain("[[artifact:");
+    expect(agentTurn?.body).not.toContain("context-bundle");
+    expect(agentTurn?.body).not.toContain("[restricted financial value]");
   });
 
   it("separates strategy approval lifecycle gaps from readiness blockers", () => {
