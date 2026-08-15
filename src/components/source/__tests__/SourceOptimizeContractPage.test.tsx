@@ -307,6 +307,11 @@ describe("SourceOptimizeContractPage", () => {
     expect(screen.getByText("Pricing schedule tie-out")).toBeInTheDocument();
     expect(screen.getByText("Actual spend baseline")).toBeInTheDocument();
     expect(screen.getByText("Calculation trace")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("baseline-readiness-calculation-lines"),
+    ).toHaveTextContent(
+      "1 of 1 stated amount is reproducible from calculation runs ($755K).",
+    );
     expect(screen.getByText("Finance realization proof")).toBeInTheDocument();
     expect(screen.getByText("18 included")).toBeInTheDocument();
     expect(screen.getByText("2 pending · 3 excluded")).toBeInTheDocument();
@@ -1049,6 +1054,11 @@ describe("SourceOptimizeContractPage", () => {
     expect(note).toHaveTextContent("$2.4M not reproducible");
     expect(note).toHaveTextContent(
       "Only the reproducible total may be used outside this workspace.",
+    );
+    expect(
+      screen.getByTestId("baseline-readiness-calculation-lines"),
+    ).toHaveTextContent(
+      "1 of 2 stated amounts are reproducible; $2.4M is not reproducible yet.",
     );
 
     expect(
