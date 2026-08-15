@@ -743,6 +743,119 @@ describe("SourceOptimizeContractPage", () => {
     );
   });
 
+  it("still exposes the Finance/Tower handoff action when value proof exists without a handoff request", async () => {
+    const fetchMock = global.fetch as jest.Mock;
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        message:
+          "Finance/Tower confirmation request is ready. No realized value has been recorded.",
+      }),
+    });
+    const confirmedWithoutHandoff = {
+      ...makeOpportunitySet(),
+      opportunities: makeOpportunitySet().opportunities.map((opportunity) => ({
+        ...opportunity,
+        stage: "finance_confirmed" as const,
+      })),
+      approvalRequests: [
+        {
+          approvalRequestId: "APR-090-STRATEGY",
+          caseId: "CASE-090",
+          opportunityId: "opp-090-rate",
+          approvalType: "vendor_outreach_strategy",
+          approvalState: "approved" as const,
+          requestedByRole: "sourcing_owner",
+          requestedAt: "2027-07-01T00:00:00.000Z",
+          decisions: [
+            {
+              decision: "approved" as const,
+              rationale: "Approved for controlled vendor outreach.",
+              decidedByRole: "sourcing_approver",
+              decidedAt: "2027-07-01T00:00:00.000Z",
+            },
+          ],
+        },
+      ],
+      negotiatedOutcomes: [
+        {
+          outcomeId: "OUT-090",
+          caseId: "CASE-090",
+          opportunityId: "opp-090-rate",
+          outcomeState: "agreed" as const,
+          agreedAmountUsd: 755_000,
+          effectiveDate: "2027-07-01",
+          sourceDocumentId: "doc-090-amendment",
+        },
+      ],
+      financeRealizations: [
+        {
+          realizationId: "REAL-090",
+          amountUsd: 740_000,
+          basis: "Confirmed credits received against corrected invoices.",
+          confirmationDate: "2027-07-31",
+          owner: "Finance controller",
+          towerClaimRefs: ["TOWER-CLAIM-090"],
+          linkedOpportunityIds: ["opp-090-rate"],
+          sourceRefs: [],
+        },
+      ],
+      financeConfirmedUsd: 740_000,
+    };
+
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({
+          selected: makeCandidate(),
+          missingEvidenceSources: [],
+        })}
+        opportunitySet={confirmedWithoutHandoff}
+        evidencePack={makeReadySaaSEvidencePack()}
+      />,
+    );
+
+    expect(screen.getByTestId("optimize-step-prove_value")).toHaveAttribute(
+      "data-state",
+      "complete",
+    );
+    expect(screen.getByTestId("optimize-next-decision")).toHaveTextContent(
+      "Record the Finance/Tower handoff",
+    );
+    expect(screen.getByTestId("workflow-action-panel")).toHaveTextContent(
+      "Request Finance/Tower confirmation",
+    );
+    expect(screen.getByTestId("optimize-value-proof-status")).toHaveTextContent(
+      "finance confirmed",
+    );
+    fireEvent.change(screen.getByLabelText("Approval rationale"), {
+      target: {
+        value:
+          "Finance value exists; record the handoff request for the audit trail.",
+      },
+    });
+    fireEvent.click(
+      screen.getByTestId("request-optimize-finance-confirmation"),
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/source/optimize/contract/CTR-090/workflow",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            action: "request_finance_confirmation",
+            opportunityId: "opp-090-rate",
+            rationale:
+              "Finance value exists; record the handoff request for the audit trail.",
+          }),
+        }),
+      );
+    });
+  });
+
   it("surfaces opportunity-set evidence requirements when spine rows are empty", () => {
     render(
       <SourceOptimizeContractPage
