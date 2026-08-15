@@ -136,6 +136,9 @@ function evaluateGates(input: {
   const approvalRequests = (opportunitySet?.approvalRequests ?? []).filter(
     (request) => request.approvalType === "vendor_outreach_strategy",
   );
+  const financeRequests = (opportunitySet?.approvalRequests ?? []).filter(
+    (request) => request.approvalType === "finance_value_confirmation",
+  );
   const negotiatedOutcomes = opportunitySet?.negotiatedOutcomes ?? [];
   const baselineStatus = opportunitySet?.baseline.status ?? null;
   const topStage = highestStageRank(opportunities);
@@ -156,6 +159,7 @@ function evaluateGates(input: {
   const hasAgreedOutcome = negotiatedOutcomes.some(
     (outcome) => outcome.outcomeState === "agreed",
   );
+  const hasFinanceRequest = financeRequests.length > 0;
 
   const financeConfirmed =
     (opportunitySet?.financeConfirmedUsd ?? 0) > 0 ||
@@ -264,9 +268,17 @@ function evaluateGates(input: {
     },
     {
       satisfied: financeConfirmed,
-      primaryAction: "Confirm realized value with Finance",
+      primaryAction: financeConfirmed
+        ? hasFinanceRequest
+          ? "Value proof is finance-confirmed"
+          : "Record the Finance/Tower handoff"
+        : "Confirm realized value with Finance",
       primaryActionDetail:
-        "Only finance-confirmed value counts as realized. Estimates and vendor agreement do not.",
+        financeConfirmed
+          ? hasFinanceRequest
+            ? "Finance-confirmed value exists, and the Finance/Tower confirmation request is recorded."
+            : "Finance-confirmed value exists, but the workflow still needs the Finance/Tower handoff request for the audit trail."
+          : "Only finance-confirmed value counts as realized. Estimates and vendor agreement do not.",
       blocker: financeConfirmed ? null : "No finance-confirmed value yet.",
     },
   ];

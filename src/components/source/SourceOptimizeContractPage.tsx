@@ -571,10 +571,10 @@ function WorkflowActionPanel({
   const pendingFinanceRequest = financeRequests.find(
     (request) => request.approvalState === "pending",
   );
+  const hasFinanceRequest = financeRequests.length > 0;
   const hasAgreedOutcome = (opportunitySet.negotiatedOutcomes ?? []).some(
     (outcome) => outcome.outcomeState === "agreed",
   );
-  const hasFinanceProof = opportunitySet.financeRealizations.length > 0;
 
   const canCreate =
     position.currentKey === "plan" &&
@@ -590,7 +590,7 @@ function WorkflowActionPanel({
   const canRequestFinanceConfirmation =
     position.currentKey === "prove_value" &&
     hasAgreedOutcome &&
-    !hasFinanceProof &&
+    !hasFinanceRequest &&
     !pendingFinanceRequest;
   const showPanel =
     canCreate ||

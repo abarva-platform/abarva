@@ -378,7 +378,54 @@ describe("deriveOptimizeWorkflowPosition", () => {
       }),
     });
     expect(confirmed.steps[6].state).toBe("complete");
+    expect(confirmed.primaryAction).toBe("Record the Finance/Tower handoff");
+    expect(confirmed.primaryActionDetail).toContain(
+      "workflow still needs the Finance/Tower handoff request",
+    );
     expect(confirmed.blocker).toBeNull();
+
+    const confirmedWithHandoff = positionFor({
+      set: opportunitySet({
+        opportunities: [opportunity({ stage: "finance_confirmed" })],
+        financeConfirmedUsd: 500_000,
+        approvalRequests: [
+          {
+            approvalRequestId: "apr-1",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            approvalType: "vendor_outreach_strategy",
+            approvalState: "approved",
+            requestedByRole: "Strategic sourcing",
+            requestedAt: "2027-06-30T00:00:00Z",
+            decisions: [],
+          },
+          {
+            approvalRequestId: "apr-2",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            approvalType: "finance_value_confirmation",
+            approvalState: "pending",
+            requestedByRole: "Finance",
+            requestedAt: "2027-07-02T00:00:00Z",
+            decisions: [],
+          },
+        ],
+        negotiatedOutcomes: [
+          {
+            outcomeId: "outcome-1",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            outcomeState: "agreed",
+            agreedAmountUsd: 200,
+            effectiveDate: "2027-07-01",
+            sourceDocumentId: "doc-1",
+          },
+        ],
+      }),
+    });
+    expect(confirmedWithHandoff.primaryAction).toBe(
+      "Value proof is finance-confirmed",
+    );
   });
 
   it("never marks a later step complete because an earlier one is", () => {
