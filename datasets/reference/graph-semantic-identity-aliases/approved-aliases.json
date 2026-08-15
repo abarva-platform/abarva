@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "graph-semantic-identity-aliases",
+  "mode": "approved_lookup_aliases_only_no_node_creation_no_data_write_no_graph_materialization",
+  "publicDisclosure": "Tenant identifiers are anonymized. This ledger records reviewed aliases against existing graph reconciliation node identities only.",
+  "approval": {
+    "approvalScope": "tenant-07-organization-ownership-officer-acronyms",
+    "approvedAt": "2026-08-15",
+    "approvedBy": "operator",
+    "approvalBasis": "unique acronym expansion with exactly one candidate in every active tenant organization-ownership dimension"
+  },
+  "aliases": [
+    {
+      "tenant": "tenant-07",
+      "objectType": "organization_unit",
+      "alias": "CFO",
+      "canonicalDisplayName": "Chief Financial Officer",
+      "canonicalSourceRowNumber": 4,
+      "canonicalMappingProfile": "organization-ownership/v1",
+      "matchRule": "endpoint-label-is-unique-acronym-of-canonical-label",
+      "affectedEndpointOccurrences": 18,
+      "reversible": true,
+      "active": true
+    },
+    {
+      "tenant": "tenant-07",
+      "objectType": "organization_unit",
+      "alias": "CHRO",
+      "canonicalDisplayName": "Chief Human Resources Officer",
+      "canonicalSourceRowNumber": 5,
+      "canonicalMappingProfile": "organization-ownership/v1",
+      "matchRule": "endpoint-label-is-unique-acronym-of-canonical-label",
+      "affectedEndpointOccurrences": 16,
+      "reversible": true,
+      "active": true
+    },
+    {
+      "tenant": "tenant-07",
+      "objectType": "organization_unit",
+      "alias": "CISO",
+      "canonicalDisplayName": "Chief Information Security Officer",
+      "canonicalSourceRowNumber": 26,
+      "canonicalMappingProfile": "organization-ownership/v1",
+      "matchRule": "endpoint-label-is-unique-acronym-of-canonical-label",
+      "affectedEndpointOccurrences": 16,
+      "reversible": true,
+      "active": true
+    }
+  ],
+  "closedGates": [
+    "graph dictionary activation",
+    "object registry activation",
+    "graph materialization",
+    "canonical data-plane write",
+    "Layer 4 projection refresh",
+    "tenant data mutation",
+    "live-client truth claim"
+  ]
+}

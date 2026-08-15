@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import {
+  applyApprovedSemanticNodeAliases,
   buildNodeIndex,
   classifyQuarantineReason,
   classifyQuarantineReasons,
@@ -140,6 +141,7 @@ const uniqueAliasIndex = buildNodeIndex({
   objectRegistry,
 });
 assert.equal(uniqueAliasIndex.aliasLookup.added, 2);
+assert.equal(uniqueAliasIndex.semanticAliasLookup.records, 0);
 assert.equal(
   uniqueAliasIndex.byObjectAndName.get('application_system:claims-workbench')?.nodeId,
   'test-tenant:application_system:claims-platform',
@@ -162,5 +164,71 @@ const ambiguousAliasIndex = buildNodeIndex({
 });
 assert.equal(ambiguousAliasIndex.aliasLookup.ambiguous, 1);
 assert.equal(ambiguousAliasIndex.byObjectAndName.has('application_system:shared-alias'), false);
+
+const semanticAliasRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nexus-graph-semantic-alias-'));
+fs.writeFileSync(
+  path.join(semanticAliasRoot, '02_org_ownership.csv'),
+  ['tenant_key,org_unit_name', 'test-tenant,Chief Financial Officer'].join('\n'),
+);
+const orgRegistry = [
+  {
+    objectType: 'organization_unit',
+    objectFamily: 'organization',
+    identityAttributes: ['orgUnitName'],
+  },
+];
+const orgProfiles = [
+  {
+    mappingProfile: 'organization-ownership/v1',
+    rules: [
+      {
+        sourceField: 'org_unit_name',
+        sourceAliases: [],
+        targetObjectType: 'organization_unit',
+        targetAttribute: 'orgUnitName',
+      },
+    ],
+  },
+];
+const semanticAliasIndex = buildNodeIndex({
+  tenantKey: 'test-tenant',
+  activeRoot: semanticAliasRoot,
+  profiles: orgProfiles,
+  objectRegistry: orgRegistry,
+  semanticAliases: [
+    {
+      tenant: 'tenant-01',
+      objectType: 'organization_unit',
+      alias: 'CFO',
+      canonicalDisplayName: 'Chief Financial Officer',
+      canonicalSourceRowNumber: 2,
+      canonicalMappingProfile: 'organization-ownership/v1',
+    },
+  ],
+});
+assert.equal(semanticAliasIndex.semanticAliasLookup.records, 1);
+assert.equal(semanticAliasIndex.semanticAliasLookup.added, 1);
+assert.equal(
+  semanticAliasIndex.byObjectAndName.get('organization_unit:cfo')?.nodeId,
+  'test-tenant:organization_unit:chief-financial-officer',
+);
+
+assert.throws(
+  () =>
+    applyApprovedSemanticNodeAliases({
+      byObjectAndName: semanticAliasIndex.byObjectAndName,
+      semanticAliases: [
+        {
+          tenant: 'tenant-01',
+          objectType: 'organization_unit',
+          alias: 'CHRO',
+          canonicalDisplayName: 'Chief Financial Officer',
+          canonicalSourceRowNumber: 99,
+          canonicalMappingProfile: 'organization-ownership/v1',
+        },
+      ],
+    }),
+  /canonical row mismatch/,
+);
 
 console.log('tenant-graph-reconciliation tests passed');
