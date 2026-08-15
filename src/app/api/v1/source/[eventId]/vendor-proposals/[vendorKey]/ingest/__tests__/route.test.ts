@@ -234,6 +234,66 @@ describe("POST /api/v1/source/:eventId/vendor-proposals/:vendorKey/ingest", () =
     );
   });
 
+  it("persists rich proposal dimensions from a long-form response package", async () => {
+    extractSourceUploadText.mockResolvedValueOnce({
+      text: [
+        "Page 12 - Scope: Manage data-platform run operations, reporting marts, and production support.",
+        "Page 18 - Solution architecture: Private lakehouse pattern with API gateway, dbt semantic layer, observability, and controlled AI assistant support.",
+        "Page 22 - AI automation: AIOps triage accelerator targets 15% ticket deflection after a measured baseline.",
+        "Page 29 - Accelerators: Reusable migration factory, data-quality rule pack, and KPI starter mart.",
+        "Page 41 - SLA: 99.7% availability with service credits capped at 5%.",
+        "Page 55 - Transition: 120-day plan with milestone holdbacks and runbook acceptance.",
+        "Page 63 - Exceptions: Vendor excludes legacy mainframe feed remediation from fixed fee.",
+        "Page 70 - Price: USD 14,800,000 annual run-rate.",
+      ].join("\n"),
+      method: "text",
+      warnings: [],
+    });
+
+    const res = await POST(
+      requestWithFormData({
+        file: fakeFile("vendor-alpha-92-page-response.txt", "text/plain", ""),
+      }),
+      ctx,
+    );
+
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as {
+      ok: boolean;
+      candidateFactsInserted: number;
+    };
+    expect(json.ok).toBe(true);
+    expect(json.candidateFactsInserted).toBeGreaterThanOrEqual(8);
+    expect(insertVendorProposalFacts).toHaveBeenCalledWith(
+      expect.objectContaining({ tenantKey: "apexretail" }),
+      expect.arrayContaining([
+        expect.objectContaining({
+          vendorKey: "vendor-a",
+          factKey: "solution_architecture",
+          sectionKey: "solution_architecture",
+          sourceQuote: expect.stringMatching(/Private lakehouse pattern/i),
+        }),
+        expect.objectContaining({
+          vendorKey: "vendor-a",
+          factKey: "automation_productivity",
+          sectionKey: "automation_productivity",
+          valueNumeric: 15,
+          unit: "percent",
+        }),
+        expect.objectContaining({
+          vendorKey: "vendor-a",
+          factKey: "accelerator",
+          sectionKey: "innovation_value_add",
+        }),
+        expect.objectContaining({
+          vendorKey: "vendor-a",
+          factKey: "exception",
+          sectionKey: "exceptions_redlines",
+        }),
+      ]),
+    );
+  });
+
   it("registers zero candidates for garbled/empty extracted text — never crashes", async () => {
     extractSourceUploadText.mockResolvedValueOnce({
       text: "",

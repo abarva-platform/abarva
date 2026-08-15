@@ -8,6 +8,7 @@
 import { buildModeGrounding } from "../mode-grounding";
 import { AMS_MANAGED_SERVICES } from "@/lib/source/archetypes/registry";
 import type { EventFactMap } from "@/lib/source/facts/evaluators/orchestrator";
+import type { VendorResponseProfile } from "@/lib/source/proposal-intelligence/types";
 
 const EVENT = {
   code: "SRC-AMS-2026-001",
@@ -88,6 +89,70 @@ describe("buildModeGrounding — vendor_comparison (Phase B)", () => {
     expect(result.block).toContain("VALUE-TYPE CLASSIFICATION");
     expect(result.quotableFacts.responseCoverageIsModel).toBe("false");
     expect(result.quotableFacts.shouldCostIsModel).toBe("false");
+  });
+
+  it("uses visible response profiles instead of ambient vendor rows for Responses-stage unsupported-claim asks", () => {
+    const result = buildModeGrounding({
+      mode: "vendor_comparison",
+      event: EVENT,
+      viewStageKey: "responses",
+      archetype: AMS_MANAGED_SERVICES,
+      factInputs: FACTS_TWO_LEVERS,
+      vendorResponseProfiles: [
+        {
+          vendorName: "Vendor A — incumbent operations profile",
+          readyForEvaluation: "conditional",
+          unsupportedClaims: ["Automation savings require stronger evidence"],
+          responseCompleteness: {
+            percent: 82,
+            missingSections: [],
+            partialSections: ["Productivity commitment"],
+          },
+          clarificationQuestions: ["Ask Vendor A to evidence the productivity baseline."],
+        },
+        {
+          vendorName: "Vendor B — scale transformation profile",
+          readyForEvaluation: "no",
+          unsupportedClaims: ["Staffing model does not reconcile to 24x7 coverage"],
+          responseCompleteness: {
+            percent: 71,
+            missingSections: ["Staffing and location"],
+            partialSections: [],
+          },
+          clarificationQuestions: ["Ask Vendor B for the shift/location roster."],
+        },
+        {
+          vendorName: "Vendor C — specialist service profile",
+          readyForEvaluation: "conditional",
+          unsupportedClaims: [],
+          responseCompleteness: {
+            percent: 88,
+            missingSections: [],
+            partialSections: ["Transition plan"],
+          },
+          clarificationQuestions: ["Ask Vendor C to confirm transition dates."],
+        },
+      ] as unknown as readonly VendorResponseProfile[],
+      vendorResponses: {
+        statusByVendorLever: new Map([
+          [
+            "Amadeus",
+            new Map([
+              ["AMS.ENHANCEMENT_LEAKAGE", "addressed" as const],
+              ["AMS.VOLUME_BAND_PRICING", "partial" as const],
+            ]),
+          ],
+        ]),
+        vendors: ["Amadeus"],
+      },
+    });
+
+    expect(result.block).toContain("VISIBLE RESPONSE PROFILES");
+    expect(result.block).toContain("Vendor A — incumbent operations profile");
+    expect(result.block).toContain("Vendor B — scale transformation profile");
+    expect(result.block).toContain("Vendor C — specialist service profile");
+    expect(result.block).not.toContain("Amadeus");
+    expect(result.quotableFacts.responseCoverageIsModel).toBe("false");
   });
 
   it("grounds what exists and honestly labels the other facet as model/pending when only one signal exists", () => {

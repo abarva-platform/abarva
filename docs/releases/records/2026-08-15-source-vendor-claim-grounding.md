@@ -41,6 +41,9 @@ does not change tenant data, canonical facts, adapters, calculation logic, or an
 - `src/app/api/v1/source/[eventId]/nexus/ask/__tests__/vendor-coverage-intent.test.ts`
 - `src/lib/source/ava/vendor-coverage-governed-answer.ts`
 - `src/lib/source/ava/__tests__/vendor-coverage-governed-answer.test.ts`
+- `src/app/api/chat/agent/route.ts`
+- `src/lib/source/ava/mode-grounding.ts`
+- `src/lib/source/ava/__tests__/mode-grounding-phase-b.test.ts`
 
 ## QA / Validation
 
@@ -49,6 +52,12 @@ does not change tenant data, canonical facts, adapters, calculation logic, or an
 - PASS: `npx jest src/lib/source/ava/__tests__/vendor-coverage-governed-answer.test.ts --runInBand`
   (13/13 tests passed, including a profile-grounding regression that proves unsupported-claim
   answers list only the visible response profiles and do not include ambient vendor names).
+- PASS: `npx jest --runTestsByPath src/lib/source/ava/__tests__/mode-grounding-phase-b.test.ts src/lib/source/ava/__tests__/vendor-coverage-governed-answer.test.ts src/lib/source/ava/__tests__/mode-grounding.test.ts src/components/source/__tests__/SourcingReactivePanel.test.tsx --runInBand`
+  (63/63 tests passed).
+- PASS: Local signed-in Source aVa 38-question hard QA artifact captured outside the committed
+  release payload because it contains live demo answer excerpts. All 38 API calls returned 200;
+  table-ready answer signals appeared in 16 answers; chart-ready answer signals appeared in 4
+  answers; no restricted financial-value markers appeared.
 - Required after deploy: signed-in Source event aVa proof that an unsupported-claim question renders
   only the governed event response vendors in both visible prose and structured output.
 
@@ -78,5 +87,7 @@ signed-in Source event aVa proof after deployment.
 
 ## Known Gaps
 
-This does not complete the remaining Source aVa hard-QA question rerun or the real document
-upload/parse/persist proof.
+The 38-question run still found one pre-fix response-stage unsupported-claim answer that named an
+ambient vendor instead of the visible response profiles; this candidate release adds a regression for
+that path and requires post-deploy signed-in proof. The API answers produced chart-ready data, but
+browser-rendered chart widgets were not proven in this release.

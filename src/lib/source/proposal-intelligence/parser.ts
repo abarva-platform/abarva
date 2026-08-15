@@ -185,6 +185,27 @@ const SECTION_RULES: SectionRule[] = [
       "Do not score risk controls until security evidence and compliance obligations are cited.",
   },
   {
+    section: "Solution architecture",
+    category: "solution_architecture",
+    aliases: [
+      /solution architecture/i,
+      /integration architecture/i,
+      /data architecture/i,
+      /ai architecture/i,
+      /reference architecture/i,
+      /target architecture/i,
+    ],
+    weakSignals: [
+      /to be designed/i,
+      /conceptual/i,
+      /illustrative/i,
+      /not finalized/i,
+      /architecture pending/i,
+    ],
+    holdback:
+      "Do not score technical fit until the solution architecture names integrations, data flows, controls, and ownership boundaries.",
+  },
+  {
     section: "Automation / productivity roadmap",
     category: "automation_productivity",
     aliases: [/automation/i, /productivity/i, /ai/i, /continuous improvement/i],
@@ -332,6 +353,7 @@ export function buildVendorResponseParseReportsFromProfiles(
         "Staffing model",
         "Transition plan",
         "Security and compliance response",
+        "Solution architecture",
         "Automation / productivity roadmap",
         "Assumptions and exclusions",
       ],
@@ -346,6 +368,7 @@ export function buildVendorResponseParseReportsFromProfiles(
             `Staffing model: ${profile.staffingModelSummary}`,
             `Transition plan: ${profile.transitionCommitments}`,
             `Security and compliance response: ${profile.evidenceProvided.join("; ")}`,
+            `Solution architecture: ${profile.packageSummary}`,
             `Automation productivity roadmap: ${profile.productivityCommitment}`,
             `Assumptions and exclusions: ${profile.assumptionsExclusions.join("; ")}`,
           ].join("\n\n"),
@@ -648,6 +671,7 @@ function dimensionFor(
   if (category === "transition_approach") return "transition";
   if (category === "staffing_model") return "staffing";
   if (category === "security_compliance") return "security_compliance";
+  if (category === "solution_architecture") return "delivery_model";
   if (category === "automation_productivity") return "automation_claims";
   if (category === "scope_coverage") return "completeness";
   return "answer_quality";
@@ -661,6 +685,7 @@ function ownerFor(category: NormalizedCategory): string {
   if (category === "transition_approach") return "Transition lead";
   if (category === "staffing_model") return "Delivery lead";
   if (category === "security_compliance") return "Risk/security owner";
+  if (category === "solution_architecture") return "Architecture owner";
   return "Vendor response lead";
 }
 

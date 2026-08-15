@@ -80,6 +80,7 @@ import type {
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
 import { resolveAuthoritativeArtifact } from "@/lib/source/client-final-artifacts";
 import type { SourceEventArchetype, ValueLeverRule } from "@/lib/source/archetypes/types";
+import type { VendorResponseProfile } from "@/lib/source/proposal-intelligence/types";
 import type { SourceAnswerMode } from "./answer-mode";
 
 /** Minimal shape needed from the event row for status/gate grounding. */
@@ -123,6 +124,13 @@ export interface BuildModeGroundingInput {
   realizedValueByLeverKey?: ReadonlyMap<string, number>;
   /** The vendor-response signal (from `readVendorLeverResponses`) — `vendor_comparison`. */
   vendorResponses?: VendorResponseSignal;
+  /**
+   * The response-stage proposal profiles the Source canvas visibly renders.
+   * When supplied for a vendor-comparison question, these are the authoritative
+   * vendor identities aVa may name; lower-level vendor rows are intentionally
+   * not mixed into the user-facing answer.
+   */
+  vendorResponseProfiles?: readonly VendorResponseProfile[];
   /** The vendor-bid signal (from `readVendorBids`) — `vendor_comparison`, `should_cost`. */
   vendorBids?: VendorBidSignal;
   /**
@@ -648,16 +656,24 @@ function buildValueAtStakeGrounding(input: BuildModeGroundingInput): ModeGroundi
  * exists and say the other is model/pending — never fabricate the missing one.
  */
 function buildVendorComparisonGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
-  const { archetype, factInputs = {}, vendorResponses, vendorBids } = input;
+  const {
+    archetype,
+    factInputs = {},
+    vendorResponses,
+    vendorResponseProfiles,
+    vendorBids,
+  } = input;
   if (!archetype) return EMPTY_RESULT;
 
-  const responseInsight = buildStepInsight({
-    stageKey: "responses",
-    inputs: factInputs,
-    citations: {},
-    archetypeId: archetype.id,
-    vendorResponses,
-  }) as ResponseCoverageInsightView | null;
+  const responseInsight = vendorResponseProfiles?.length
+    ? null
+    : (buildStepInsight({
+        stageKey: "responses",
+        inputs: factInputs,
+        citations: {},
+        archetypeId: archetype.id,
+        vendorResponses,
+      }) as ResponseCoverageInsightView | null);
 
   const shouldCostInsight = buildStepInsight({
     stageKey: "evaluation",
@@ -672,7 +688,29 @@ function buildVendorComparisonGrounding(input: BuildModeGroundingInput): ModeGro
   ];
   const quotableFacts: Record<string, string> = {};
 
-  if (responseInsight) {
+  if (vendorResponseProfiles?.length) {
+    lines.push(
+      "Response coverage [VISIBLE RESPONSE PROFILES — authoritative for this Responses-stage view]: use only the vendor identities below; do not mix in lower-level ambient vendor rows.",
+    );
+    for (const profile of vendorResponseProfiles) {
+      const openEvidence =
+        profile.unsupportedClaims[0] ??
+        profile.responseCompleteness.missingSections[0] ??
+        profile.responseCompleteness.partialSections[0] ??
+        "No open evidence item listed";
+      const nextAction =
+        profile.clarificationQuestions[0] ??
+        "Proceed with human score lock.";
+      lines.push(
+        `  ${profile.vendorName}: readiness ${profile.readyForEvaluation}; response completeness ${profile.responseCompleteness.percent}%; unsupported claims ${profile.unsupportedClaims.length}; open evidence: ${openEvidence}; next action: ${nextAction}`,
+      );
+    }
+    quotableFacts.responseCoverageHeadline =
+      vendorResponseProfiles.some((profile) => profile.unsupportedClaims.length > 0)
+        ? "Visible response profiles include unsupported claims that need evidence closure."
+        : "Visible response profiles have no unsupported-claim count in the profile substrate.";
+    quotableFacts.responseCoverageIsModel = "false";
+  } else if (responseInsight) {
     lines.push(
       `Response coverage [${responseInsight.isModel ? "MODEL — illustrative, no vendor-response signal yet" : "LIVE"}]: ${responseInsight.headline}`,
     );

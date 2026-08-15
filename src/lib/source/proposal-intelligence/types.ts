@@ -398,6 +398,7 @@ export type NormalizedCategory =
   | "transition_approach"
   | "staffing_model"
   | "delivery_locations"
+  | "solution_architecture"
   | "automation_productivity"
   | "governance_model"
   | "tooling_approach"
