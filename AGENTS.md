@@ -22,9 +22,16 @@ Two rules that have cost the most when broken:
 
 - **Identity is declared, never inferred.** Not from a directory name, not from a filename, not from
   a folder's label. Tenancy comes from `datasets/tenant-inputs/tenant-input-registry.json`.
-- **Run `node scripts/tower/fact-lineage-report.mjs` before quoting any number.** It reports, per
-  metric per tenant, every file that asserts a value and whether they agree. If a figure is
-  `ONE_SOURCE`, say so when you quote it. If it is `CONFLICT`, do not quote it at all.
+- **Run `node scripts/tower/fact-lineage-report.mjs` before quoting Tower or tenant-intake
+  headline metrics.** Default `quote` mode evaluates active tenant intake only; `--mode
+  migration-audit` compares active intake against legacy standardized packs. If a Tower or
+  tenant-intake figure is `ONE_SOURCE`, say so when you quote it. If it is `CONFLICT`, do not quote
+  it at all.
+- **For product/read-model figures outside that script's coverage, use the owning projection's
+  lineage and readback proof.** For Source figures such as portfolio annual value, contract count,
+  vendor count, Contract 360 totals, Cube/consumption metrics, or Source read-model values, prove
+  the value from the Source read model, cube, or query and state the counting basis. Do not present
+  the Tower lineage report as proof for Source projection numbers.
 
 # This is NOT the Next.js you know
 
