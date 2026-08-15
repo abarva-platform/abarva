@@ -36,6 +36,8 @@ interface LifecycleRow {
   readonly optimization_case_count: string;
   readonly latest_case_state: string | null;
   readonly approval_request_count: string;
+  readonly approval_request_counts_by_type: Record<string, number> | null;
+  readonly finance_value_confirmation_request_count: string;
   readonly approval_decision_count: string;
   readonly negotiated_outcome_count: string;
   readonly finance_realization_count: string;
@@ -220,12 +222,31 @@ async function readLifecycle(
         ORDER BY contract_id, updated_at DESC NULLS LAST, created_at DESC NULLS LAST, optimization_case_id
      ),
      approval_requests AS (
-       SELECT cases.contract_id, request.approval_request_id
+       SELECT cases.contract_id, request.approval_request_id, request.approval_type
          FROM cases
          JOIN source.approval_request request
            ON request.tenant_key = cases.tenant_key
           AND request.dataset_version = cases.dataset_version
           AND request.optimization_case_id = cases.optimization_case_id
+     ),
+     approval_request_type_counts AS (
+       SELECT contract_id,
+              coalesce(
+                jsonb_object_agg(approval_type, request_count ORDER BY approval_type),
+                '{}'::jsonb
+              ) AS counts_by_type,
+              coalesce(
+                sum(request_count) FILTER (WHERE approval_type = 'finance_value_confirmation'),
+                0
+              )::text AS finance_value_confirmation_request_count
+         FROM (
+           SELECT contract_id,
+                  approval_type,
+                  count(DISTINCT approval_request_id)::int AS request_count
+             FROM approval_requests
+            GROUP BY contract_id, approval_type
+         ) grouped
+        GROUP BY contract_id
      ),
      approval_decisions AS (
        SELECT approval_requests.contract_id, decision.id
@@ -255,6 +276,8 @@ async function readLifecycle(
             count(DISTINCT cases.optimization_case_id)::text AS optimization_case_count,
             latest_case.case_state AS latest_case_state,
             count(DISTINCT approval_requests.approval_request_id)::text AS approval_request_count,
+            coalesce(approval_request_type_counts.counts_by_type, '{}'::jsonb) AS approval_request_counts_by_type,
+            coalesce(approval_request_type_counts.finance_value_confirmation_request_count, '0') AS finance_value_confirmation_request_count,
             count(DISTINCT approval_decisions.id)::text AS approval_decision_count,
             count(DISTINCT outcomes.outcome_id)::text AS negotiated_outcome_count,
             count(DISTINCT realizations.realization_id)::text AS finance_realization_count
@@ -265,13 +288,18 @@ async function readLifecycle(
          ON latest_case.contract_id = requested.contract_id
        LEFT JOIN approval_requests
          ON approval_requests.contract_id = requested.contract_id
+       LEFT JOIN approval_request_type_counts
+         ON approval_request_type_counts.contract_id = requested.contract_id
        LEFT JOIN approval_decisions
          ON approval_decisions.contract_id = requested.contract_id
        LEFT JOIN outcomes
          ON outcomes.contract_id = requested.contract_id
        LEFT JOIN realizations
          ON realizations.contract_id = requested.contract_id
-      GROUP BY requested.contract_id, latest_case.case_state
+      GROUP BY requested.contract_id,
+               latest_case.case_state,
+               approval_request_type_counts.counts_by_type,
+               approval_request_type_counts.finance_value_confirmation_request_count
       ORDER BY requested.contract_id`,
     [args.tenantKey, args.datasetVersion, args.contractIds],
   );
@@ -359,6 +387,10 @@ async function main(): Promise<void> {
         optimization_case_count: Number(row.optimization_case_count),
         latest_case_state: row.latest_case_state,
         approval_request_count: Number(row.approval_request_count),
+        approval_request_counts_by_type: row.approval_request_counts_by_type ?? {},
+        finance_value_confirmation_request_count: Number(
+          row.finance_value_confirmation_request_count,
+        ),
         approval_decision_count: Number(row.approval_decision_count),
         negotiated_outcome_count: Number(row.negotiated_outcome_count),
         finance_realization_count: Number(row.finance_realization_count),
