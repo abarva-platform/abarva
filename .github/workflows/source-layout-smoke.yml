@@ -39,6 +39,9 @@ jobs:
       - name: Run Source stage shell layout harness
         run: npm run qa:source-stage-shell-layout
 
+      - name: Run Source New Event journey smoke
+        run: npm run qa:source-new-event-journey-smoke
+
       - name: Upload Source layout reports
         if: always()
         uses: actions/upload-artifact@v7
