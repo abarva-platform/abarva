@@ -272,7 +272,7 @@ export function buildContractOptimizationSpine(input: {
 
   return {
     selected,
-    candidates,
+    candidates: selected ? [] : candidates,
     topCandidates: candidates.slice(0, 5),
     sourceConnections: SOURCE_CONNECTIONS,
     missingEvidenceSources: sourcingRequirementsFor(input.ledger?.lines ?? []),
