@@ -234,6 +234,7 @@ describe("getContractOptimizationOpportunitySet", () => {
     expect(set?.approvalRequests).toHaveLength(1);
     expect(set?.approvalRequests?.[0]).toMatchObject({
       approvalRequestId: "APR-090-1",
+      approvalType: "vendor_outreach_strategy",
       approvalState: "pending",
       decisions: [
         {

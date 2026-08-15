@@ -282,6 +282,7 @@ async function createApprovalRequest(
          WHEN source.approval_request.approval_state = 'sent_back' THEN 'pending'
          ELSE source.approval_request.approval_state
        END,
+       approval_type = 'vendor_outreach_strategy',
        requested_by_role = EXCLUDED.requested_by_role,
        payload = source.approval_request.payload || EXCLUDED.payload`,
     [
@@ -538,6 +539,10 @@ async function latestApprovalRequest(
   approvalType: string,
   state: "pending" | "approved",
 ): Promise<Row | null> {
+  const approvalTypes =
+    approvalType === "vendor_outreach_strategy"
+      ? ["vendor_outreach_strategy", "vendor_outreach"]
+      : [approvalType];
   const rows = await run<Row>(
     `SELECT *
        FROM source.approval_request
@@ -545,7 +550,7 @@ async function latestApprovalRequest(
         AND dataset_version = $2
         AND optimization_case_id = $3
         AND opportunity_id = $4
-        AND approval_type = $5
+        AND approval_type = ANY($5::text[])
         AND approval_state = $6
       ORDER BY requested_at DESC NULLS LAST, approval_request_id
       LIMIT 1`,
@@ -554,7 +559,7 @@ async function latestApprovalRequest(
       context.datasetVersion,
       context.caseId,
       context.opportunityId,
-      approvalType,
+      approvalTypes,
       state,
     ],
   );

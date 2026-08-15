@@ -126,6 +126,11 @@ describe("contract optimization workflow actions", () => {
         call.sql.includes("UPDATE source.optimization_case"),
       ),
     ).toBe(true);
+    expect(
+      session.calls.some((call) =>
+        call.sql.includes("approval_type = 'vendor_outreach_strategy'"),
+      ),
+    ).toBe(true);
     const approvalInsert = session.calls.find((call) =>
       call.sql.includes("INSERT INTO source.approval_request"),
     );
@@ -277,6 +282,37 @@ describe("contract optimization workflow actions", () => {
         call.sql.includes("INSERT INTO source.negotiated_outcome"),
       ),
     ).toBe(false);
+  });
+
+  it("can continue from a legacy vendor_outreach approval request type", async () => {
+    const session = makeSession({
+      baseline: "ready",
+      stage: "target_position",
+      approvalState: "approved",
+    });
+
+    const result = await session.runner({
+      tenantKey: "skyharbor_global",
+      contractId: "CTR-090",
+      opportunityId: "OPP-CTR090-RATE",
+      action: "record_agreed_outcome",
+      rationale: "Legacy approval row was authorized for the same strategy.",
+    });
+
+    expect(result).toMatchObject({
+      action: "record_agreed_outcome",
+      caseState: "outcome_recorded",
+      negotiatedOutcomeId: "OUT-CASE-CTR090-OPP-CTR090-RATE-AGREED",
+    });
+    const requestLookup = session.calls.find(
+      (call) =>
+        call.sql.includes("FROM source.approval_request") &&
+        call.sql.includes("approval_type = ANY($5::text[])"),
+    );
+    expect(requestLookup?.params[4]).toEqual([
+      "vendor_outreach_strategy",
+      "vendor_outreach",
+    ]);
   });
 
   it("creates a Finance/Tower confirmation request after an agreed outcome without recording realized value", async () => {
