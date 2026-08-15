@@ -1,6 +1,6 @@
 # Layer Refresh Status V2
 
-Source SHA: `dbe4c86a91eac5ac05b218c6ba15ef396ff6fe80`
+Source SHA: `25f1366bf68d8a053e7b6ae78dff4051cb34b82a`
 
 This is a report-only artifact generated from a detached `origin/main` worktree. Tenant identifiers are anonymized for public-repo disclosure discipline.
 
@@ -61,8 +61,8 @@ This is a report-only artifact generated from a detached `origin/main` worktree.
 ## Verification Commands
 
 - `npm run release:check`
-- `npm run audit:tenant-input-quality -- --out-dir /tmp/nexus-v2-layer-refresh-current-dbe4c86/tenant-input-quality`
+- `npm run audit:tenant-input-quality -- --out-dir /tmp/nexus-contract-v2-tenant-quality-25f1366.GYcAOw`
 - `npm run validate:context-corpus`
 - `node scripts/tower/fact-lineage-report.mjs`
-- `node scripts/audit/tenant-layer-refresh.mjs --tenant all --out /tmp/nexus-v2-layer-refresh-current-dbe4c86/layer-reconciliation --no-package`
-- `npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-v2-layer-refresh-current-dbe4c86/graph-reconciliation`
+- `node scripts/audit/tenant-layer-refresh.mjs --tenant all --out /tmp/nexus-contract-v2-layer-refresh-25f1366.mTZLcA --no-package`
+- `npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-contract-v2-graph-reconciliation-25f1366.cBbgod`

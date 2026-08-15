@@ -321,7 +321,6 @@ function main() {
     "## Verification Commands",
     "",
     ...Object.values(report.evidence).map((command) => `- \`${command}\``),
-    "",
   ];
   fs.writeFileSync(path.join(outDir, "layer-refresh-status-v2.md"), `${lines.join("\n")}\n`);
 

@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-08-15T02:54:18.810Z",
+  "generatedAt": "2026-08-15T04:07:43.124Z",
   "generatedBy": "scripts/audit/build-graph-disposition-status-report.mjs",
-  "sourceSha": "5746c7fea8103d5a5b5a87a127ae5d1a7c2f3064",
-  "graphGeneratedAt": "2026-08-15T02:54:12.067Z",
+  "sourceSha": "25f1366bf68d8a053e7b6ae78dff4051cb34b82a",
+  "graphGeneratedAt": "2026-08-15T04:06:13.018Z",
   "mode": "report_only_no_data_mutation_no_registry_activation_no_graph_materialization_no_projection_refresh",
   "publicDisclosure": "Tenant identifiers are anonymized. Row-level object names and source paths are intentionally omitted.",
   "evidence": {
-    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-graph-disposition-current-5746c7f",
-    "graphDispositionStatus": "npm run audit:graph-disposition-status -- --graph-dir /tmp/nexus-graph-disposition-current-5746c7f --out-dir reports/graph-disposition-status/current-main --source-sha 5746c7fea8103d5a5b5a87a127ae5d1a7c2f3064"
+    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-contract-v2-graph-reconciliation-25f1366.cBbgod",
+    "graphDispositionStatus": "npm run audit:graph-disposition-status -- --graph-dir /tmp/nexus-contract-v2-graph-reconciliation-25f1366.cBbgod --out-dir reports/graph-disposition-status/current-main --source-sha 25f1366bf68d8a053e7b6ae78dff4051cb34b82a"
   },
   "totals": {
     "relationshipRows": 9633,

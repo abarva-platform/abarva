@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-08-15T03:15:31.622Z",
+  "generatedAt": "2026-08-15T04:07:43.129Z",
   "generatedBy": "scripts/audit/build-layer-refresh-status-report.mjs",
-  "sourceSha": "dbe4c86a91eac5ac05b218c6ba15ef396ff6fe80",
+  "sourceSha": "25f1366bf68d8a053e7b6ae78dff4051cb34b82a",
   "sourceWorktree": "detached_origin_main_worktree",
   "mode": "report_only_no_data_mutation_no_registry_activation_no_graph_materialization_no_projection_refresh",
   "publicDisclosure": "Tenant identifiers are anonymized in this report. Evidence commands were run against origin/main in a detached worktree.",
   "evidence": {
     "releaseCheck": "npm run release:check",
-    "tenantInputQuality": "npm run audit:tenant-input-quality -- --out-dir /tmp/nexus-v2-layer-refresh-current-dbe4c86/tenant-input-quality",
+    "tenantInputQuality": "npm run audit:tenant-input-quality -- --out-dir /tmp/nexus-contract-v2-tenant-quality-25f1366.GYcAOw",
     "contextCorpus": "npm run validate:context-corpus",
     "factLineage": "node scripts/tower/fact-lineage-report.mjs",
-    "layerRefresh": "node scripts/audit/tenant-layer-refresh.mjs --tenant all --out /tmp/nexus-v2-layer-refresh-current-dbe4c86/layer-reconciliation --no-package",
-    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-v2-layer-refresh-current-dbe4c86/graph-reconciliation"
+    "layerRefresh": "node scripts/audit/tenant-layer-refresh.mjs --tenant all --out /tmp/nexus-contract-v2-layer-refresh-25f1366.mTZLcA --no-package",
+    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-contract-v2-graph-reconciliation-25f1366.cBbgod"
   },
   "answer": {
     "allLayersRefreshingFromNewSourceFiles": false,
