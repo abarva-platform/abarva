@@ -10,6 +10,7 @@ const ROOT = process.cwd();
 const DEFAULT_OUT = 'reports/graph-reconciliation-2026-08';
 const REGISTRY = 'datasets/tenant-inputs/tenant-input-registry.json';
 const RELATIONSHIP_FILE = '12_relationships.csv';
+const SEMANTIC_ALIAS_LEDGER = 'datasets/reference/graph-semantic-identity-aliases/approved-aliases.json';
 const NOT_ACTIVE =
   'graph_reconciliation_quarantine_first_report_only_no_db_write_no_graph_materialization_no_product_use';
 
@@ -86,7 +87,7 @@ const csvCell = (value) => {
 };
 
 function parseArgs(argv) {
-  const args = { tenants: [], out: DEFAULT_OUT };
+  const args = { tenants: [], out: DEFAULT_OUT, semanticAliasLedger: SEMANTIC_ALIAS_LEDGER };
   for (let index = 2; index < argv.length; index += 1) {
     const value = argv[index];
     if (value === '--tenant') {
@@ -95,8 +96,13 @@ function parseArgs(argv) {
     } else if (value === '--out') {
       args.out = argv[index + 1];
       index += 1;
+    } else if (value === '--semantic-alias-ledger') {
+      args.semanticAliasLedger = argv[index + 1];
+      index += 1;
     } else if (value === '--help') {
-      console.log('Usage: node scripts/audit/tenant-graph-reconciliation.mjs [--tenant <key>|all] [--out <dir>]');
+      console.log(
+        'Usage: node scripts/audit/tenant-graph-reconciliation.mjs [--tenant <key>|all] [--out <dir>] [--semantic-alias-ledger <path>|none]',
+      );
       process.exit(0);
     }
   }
@@ -142,6 +148,10 @@ function isBlank(value) {
   return slug(value).length === 0 || ['unknown', 'none', 'not-loaded', 'not-provided', 'tbd'].includes(slug(value));
 }
 
+function anonymizeTenants(tenantKeys) {
+  return new Map(tenantKeys.map((tenantKey, index) => [tenantKey, `tenant-${String(index + 1).padStart(2, '0')}`]));
+}
+
 function activeProfiles(profiles) {
   return profiles.filter((profile) => !legacyCompatibilityProfiles.has(profile.mappingProfile));
 }
@@ -178,7 +188,65 @@ function addUniqueNodeAliases({ byObjectAndName, aliasCandidates }) {
   return { added, ambiguous };
 }
 
-function buildNodeIndex({ tenantKey, activeRoot, profiles, objectRegistry }) {
+function applyApprovedSemanticNodeAliases({ byObjectAndName, semanticAliases }) {
+  let added = 0;
+  let alreadyPresent = 0;
+  const applied = [];
+
+  for (const alias of semanticAliases ?? []) {
+    const aliasKey = nodeLookupKey(alias.objectType, alias.alias);
+    const canonicalKey = nodeLookupKey(alias.objectType, alias.canonicalDisplayName);
+    const canonicalNode = byObjectAndName.get(canonicalKey);
+    if (!canonicalNode) {
+      throw new Error(
+        `Approved semantic alias ${alias.tenant}:${alias.alias} cannot resolve canonical node ${alias.canonicalDisplayName}`,
+      );
+    }
+    if (
+      alias.canonicalSourceRowNumber &&
+      Number(canonicalNode.sourceRowNumber) !== Number(alias.canonicalSourceRowNumber)
+    ) {
+      throw new Error(
+        `Approved semantic alias ${alias.tenant}:${alias.alias} canonical row mismatch: expected ${alias.canonicalSourceRowNumber}, got ${canonicalNode.sourceRowNumber}`,
+      );
+    }
+    if (alias.canonicalMappingProfile && canonicalNode.mappingProfile !== alias.canonicalMappingProfile) {
+      throw new Error(
+        `Approved semantic alias ${alias.tenant}:${alias.alias} canonical profile mismatch: expected ${alias.canonicalMappingProfile}, got ${canonicalNode.mappingProfile}`,
+      );
+    }
+
+    const existing = byObjectAndName.get(aliasKey);
+    if (existing && existing.nodeId !== canonicalNode.nodeId) {
+      throw new Error(
+        `Approved semantic alias ${alias.tenant}:${alias.alias} would overwrite ${existing.nodeId} with ${canonicalNode.nodeId}`,
+      );
+    }
+    if (existing) {
+      alreadyPresent += 1;
+    } else {
+      byObjectAndName.set(aliasKey, canonicalNode);
+      added += 1;
+    }
+    applied.push({
+      tenant: alias.tenant,
+      alias: alias.alias,
+      canonicalDisplayName: alias.canonicalDisplayName,
+      objectType: alias.objectType,
+      canonicalNodeId: canonicalNode.nodeId,
+      mode: 'lookup_alias_against_existing_node_only',
+    });
+  }
+
+  return {
+    records: semanticAliases?.length ?? 0,
+    added,
+    alreadyPresent,
+    applied,
+  };
+}
+
+function buildNodeIndex({ tenantKey, activeRoot, profiles, objectRegistry, semanticAliases = [] }) {
   const objectByType = new Map(objectRegistry.map((entry) => [entry.objectType, entry]));
   const nodes = [];
   const byObjectAndName = new Map();
@@ -230,7 +298,8 @@ function buildNodeIndex({ tenantKey, activeRoot, profiles, objectRegistry }) {
   }
 
   const aliasLookup = addUniqueNodeAliases({ byObjectAndName, aliasCandidates });
-  return { nodes, byObjectAndName, aliasLookup };
+  const semanticAliasLookup = applyApprovedSemanticNodeAliases({ byObjectAndName, semanticAliases });
+  return { nodes, byObjectAndName, aliasLookup, semanticAliasLookup };
 }
 
 function nodeLookupKey(objectType, name) {
@@ -380,13 +449,56 @@ function readRegistry() {
   return registry.activeTenants ?? [];
 }
 
-async function reconcileTenant({ tenant, outDir, contracts }) {
+function readApprovedSemanticAliasLedger({ ledgerPath, tenants }) {
+  if (!ledgerPath || ledgerPath === 'none') {
+    return {
+      ledgerPath: '',
+      records: [],
+      byTenantKey: new Map(),
+    };
+  }
+  const resolvedPath = abs(ledgerPath);
+  if (!fs.existsSync(resolvedPath)) {
+    return {
+      ledgerPath,
+      records: [],
+      byTenantKey: new Map(),
+    };
+  }
+
+  const ledger = JSON.parse(fs.readFileSync(resolvedPath, 'utf8'));
+  const tenantAliases = anonymizeTenants(tenants.map((tenant) => tenant.tenantKey));
+  const tenantKeyByAlias = new Map([...tenantAliases.entries()].map(([tenantKey, tenantAlias]) => [tenantAlias, tenantKey]));
+  const records = [];
+  for (const record of ledger.aliases ?? []) {
+    if (record.active !== true) continue;
+    const tenantKey = tenantKeyByAlias.get(record.tenant);
+    if (!tenantKey) throw new Error(`Approved semantic alias references unknown anonymized tenant ${record.tenant}`);
+    records.push({ ...record, tenantKey });
+  }
+
+  const byTenantKey = new Map();
+  for (const record of records) {
+    const tenantRecords = byTenantKey.get(record.tenantKey) ?? [];
+    tenantRecords.push(record);
+    byTenantKey.set(record.tenantKey, tenantRecords);
+  }
+
+  return {
+    ledgerPath,
+    records,
+    byTenantKey,
+  };
+}
+
+async function reconcileTenant({ tenant, outDir, contracts, semanticAliases = [], semanticAliasLedgerPath = '' }) {
   const activeRoot = tenant.canonicalInputRoot;
   const nodeIndex = buildNodeIndex({
     tenantKey: tenant.tenantKey,
     activeRoot,
     profiles: contracts.profiles,
     objectRegistry: contracts.objectRegistry,
+    semanticAliases,
   });
   const relationshipPath = path.join(abs(activeRoot), RELATIONSHIP_FILE);
   const candidates = [];
@@ -439,6 +551,12 @@ async function reconcileTenant({ tenant, outDir, contracts }) {
     nodeCandidatesIndexed: nodeIndex.nodes.length,
     nodeLookupAliasesIndexed: nodeIndex.aliasLookup.added,
     ambiguousNodeLookupAliasesSkipped: nodeIndex.aliasLookup.ambiguous,
+    approvedSemanticNodeAliasRecords: nodeIndex.semanticAliasLookup.records,
+    approvedSemanticNodeAliasesIndexed: nodeIndex.semanticAliasLookup.added,
+    approvedSemanticNodeAliasesAlreadyPresent: nodeIndex.semanticAliasLookup.alreadyPresent,
+    semanticAliasLedgerPath: semanticAliases.length > 0 ? semanticAliasLedgerPath : '',
+    semanticIdentityAliasMode:
+      semanticAliases.length > 0 ? 'approved_lookup_aliases_against_existing_nodes_only' : 'none',
     relationshipRows,
     relationshipCandidates: candidates.length,
     quarantinedRelationships: quarantine.length,
@@ -512,9 +630,21 @@ async function main() {
   const outDir = abs(args.out);
   fs.mkdirSync(outDir, { recursive: true });
   const contracts = await loadContracts();
+  const semanticAliasLedger = readApprovedSemanticAliasLedger({
+    ledgerPath: args.semanticAliasLedger,
+    tenants,
+  });
   const results = [];
   for (const tenant of selected) {
-    results.push(await reconcileTenant({ tenant, outDir, contracts }));
+    results.push(
+      await reconcileTenant({
+        tenant,
+        outDir,
+        contracts,
+        semanticAliases: semanticAliasLedger.byTenantKey.get(tenant.tenantKey) ?? [],
+        semanticAliasLedgerPath: semanticAliasLedger.ledgerPath,
+      }),
+    );
   }
 
   const allNodes = results.flatMap((result) => result.nodes);
@@ -532,6 +662,24 @@ async function main() {
         (sum, result) => sum + result.summary.ambiguousNodeLookupAliasesSkipped,
         0,
       ),
+      approvedSemanticNodeAliasRecords: results.reduce(
+        (sum, result) => sum + result.summary.approvedSemanticNodeAliasRecords,
+        0,
+      ),
+      approvedSemanticNodeAliasesIndexed: results.reduce(
+        (sum, result) => sum + result.summary.approvedSemanticNodeAliasesIndexed,
+        0,
+      ),
+      approvedSemanticNodeAliasesAlreadyPresent: results.reduce(
+        (sum, result) => sum + result.summary.approvedSemanticNodeAliasesAlreadyPresent,
+        0,
+      ),
+      semanticIdentityAliasesActivated:
+        results.reduce((sum, result) => sum + result.summary.approvedSemanticNodeAliasRecords, 0) > 0,
+      semanticAliasLedgerPath:
+        results.reduce((sum, result) => sum + result.summary.approvedSemanticNodeAliasRecords, 0) > 0
+          ? semanticAliasLedger.ledgerPath
+          : '',
       relationshipRows: results.reduce((sum, result) => sum + result.summary.relationshipRows, 0),
       relationshipCandidates: allCandidates.length,
       quarantinedRelationships: allQuarantine.length,
@@ -561,7 +709,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 }
 
 export {
+  applyApprovedSemanticNodeAliases,
   buildNodeIndex,
+  readApprovedSemanticAliasLedger,
   sourceFieldsForIdentityAttributes,
   classifyQuarantineReason,
   classifyQuarantineReasons,

@@ -1,0 +1,4 @@
+tenant,alias,canonical_identity,object_type,evidence_for_mapping,affected_endpoint_occurrences,reversible,graph_materialized
+tenant-07,CFO,Chief Financial Officer,organization_unit,endpoint-label-is-unique-acronym-of-canonical-label; canonical_source_row=4; canonical_mapping_profile=organization-ownership/v1,18,true,false
+tenant-07,CHRO,Chief Human Resources Officer,organization_unit,endpoint-label-is-unique-acronym-of-canonical-label; canonical_source_row=5; canonical_mapping_profile=organization-ownership/v1,16,true,false
+tenant-07,CISO,Chief Information Security Officer,organization_unit,endpoint-label-is-unique-acronym-of-canonical-label; canonical_source_row=26; canonical_mapping_profile=organization-ownership/v1,16,true,false

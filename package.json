@@ -206,6 +206,8 @@
     "audit:graph-disposition-status": "node scripts/audit/build-graph-disposition-status-report.mjs",
     "audit:graph-quarantine-reduction": "node scripts/audit/build-graph-quarantine-reduction-plan.mjs",
     "audit:graph-quarantine-alias-analysis": "node scripts/audit/build-graph-quarantine-alias-analysis.mjs",
+    "audit:graph-semantic-alias-activation": "node scripts/audit/build-graph-semantic-alias-activation-report.mjs",
+    "audit:graph-source-data-gated-matrix": "node scripts/audit/build-graph-source-data-gated-decision-matrix.mjs",
     "audit:l1-undeclared-source-classification": "node scripts/audit/build-l1-undeclared-source-classification.mjs",
     "audit:home-layer4-boundary": "node scripts/audit/build-home-layer4-boundary-report.mjs",
     "audit:layer-refresh-status": "node scripts/audit/build-layer-refresh-status-report.mjs",

@@ -262,6 +262,9 @@ function percent(part, total) {
 
 function writeMarkdown(filePath, report) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const semanticAliasState = report.graphTotals.semanticIdentityAliasesActivated
+    ? 'Approved semantic identity aliases were already applied in the input graph reconciliation; this analysis did not activate additional aliases.'
+    : 'Semantic identity alias activation remains gated.';
   const lines = [
     '# Graph Quarantine Alias Analysis',
     '',
@@ -271,7 +274,7 @@ function writeMarkdown(filePath, report) {
     '',
     '## Direct Answer',
     '',
-    `Code-only alias candidates exist for ${report.totals.codeOnlyAliasCandidateEndpoints} unresolved endpoint occurrence(s), representing ${report.totals.distinctCodeOnlyAliasCandidates} distinct proposed alias mapping(s). Semantic identity alias activation remains gated. The remaining ${report.totals.sourceDataGatedEndpoints} unresolved endpoint(s) require source evidence, dimension catalogue work, or edge retirement.`,
+    `Code-only alias candidates exist for ${report.totals.codeOnlyAliasCandidateEndpoints} unresolved endpoint occurrence(s), representing ${report.totals.distinctCodeOnlyAliasCandidates} distinct proposed alias mapping(s). ${semanticAliasState} The remaining ${report.totals.sourceDataGatedEndpoints} unresolved endpoint(s) require source evidence, dimension catalogue work, or edge retirement.`,
     '',
     '## Totals',
     '',
@@ -442,6 +445,9 @@ function main() {
       relationshipRows: summary.totals.relationshipRows,
       relationshipCandidates: summary.totals.relationshipCandidates,
       quarantinedRelationships: summary.totals.quarantinedRelationships,
+      approvedSemanticNodeAliasRecords: summary.totals.approvedSemanticNodeAliasRecords ?? 0,
+      approvedSemanticNodeAliasesIndexed: summary.totals.approvedSemanticNodeAliasesIndexed ?? 0,
+      semanticIdentityAliasesActivated: summary.totals.semanticIdentityAliasesActivated ?? false,
       graphTablesWritten: summary.totals.graphTablesWritten,
       productReadModelsUpdated: summary.totals.productReadModelsUpdated,
     },
@@ -464,6 +470,7 @@ function main() {
       tenantDataMutated: false,
       graphTablesWritten: summary.totals.graphTablesWritten,
       productReadModelsUpdated: summary.totals.productReadModelsUpdated,
+      semanticIdentityAliasesActivatedInInputGraph: summary.totals.semanticIdentityAliasesActivated ?? false,
       sourcePathsOmitted: true,
       aliasReviewRowsEmitted: reviewRows.length,
       aliasAffectedEndpointOccurrencesEmitted: codeOnlyAliasCandidateEndpoints,

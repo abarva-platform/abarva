@@ -1,27 +1,30 @@
 {
-  "generatedAt": "2026-08-15T10:59:54.889Z",
+  "generatedAt": "2026-08-15T11:54:01.512Z",
   "generatedBy": "scripts/audit/build-graph-quarantine-alias-analysis.mjs",
-  "sourceSha": "cb6e35d48700dfbee001608436fd0e6839d8677e",
-  "graphGeneratedAt": "2026-08-15T10:56:12.428Z",
+  "sourceSha": "ee14b409a9a93ca1286d8b7b38e6823ab35db6a7",
+  "graphGeneratedAt": "2026-08-15T11:53:20.818Z",
   "mode": "report_only_no_semantic_alias_activation_no_data_mutation_no_graph_materialization",
   "publicDisclosure": "Tenant identifiers are anonymized. Alias review rows include endpoint and canonical labels for human review, but source paths and tenant names are omitted.",
   "evidence": {
-    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-graph-alias-review-cb6e35d.MPQVio",
-    "graphQuarantineAliasAnalysis": "npm run audit:graph-quarantine-alias-analysis -- --graph-dir /tmp/nexus-graph-alias-review-cb6e35d.MPQVio --out-dir reports/graph-quarantine-alias-analysis/current-main --source-sha cb6e35d48700dfbee001608436fd0e6839d8677e"
+    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-graph-reconcile-after-approved-alias.YWjncq",
+    "graphQuarantineAliasAnalysis": "npm run audit:graph-quarantine-alias-analysis -- --graph-dir /tmp/nexus-graph-reconcile-after-approved-alias.YWjncq --out-dir reports/graph-quarantine-alias-analysis/current-main --source-sha ee14b409a9a93ca1286d8b7b38e6823ab35db6a7"
   },
   "graphTotals": {
     "relationshipRows": 9633,
-    "relationshipCandidates": 4454,
-    "quarantinedRelationships": 5179,
+    "relationshipCandidates": 4504,
+    "quarantinedRelationships": 5129,
+    "approvedSemanticNodeAliasRecords": 3,
+    "approvedSemanticNodeAliasesIndexed": 3,
+    "semanticIdentityAliasesActivated": true,
     "graphTablesWritten": false,
     "productReadModelsUpdated": false
   },
   "totals": {
-    "unresolvedEndpointsAnalyzed": 6153,
-    "rowsWithUnresolvedEndpoints": 4660,
-    "codeOnlyAliasCandidateEndpoints": 50,
-    "distinctCodeOnlyAliasCandidates": 3,
-    "fullyCodeOnlyCandidateRows": 50,
+    "unresolvedEndpointsAnalyzed": 6103,
+    "rowsWithUnresolvedEndpoints": 4610,
+    "codeOnlyAliasCandidateEndpoints": 0,
+    "distinctCodeOnlyAliasCandidates": 0,
+    "fullyCodeOnlyCandidateRows": 0,
     "sourceDataGatedEndpoints": 6103,
     "ambiguousAliasCandidateEndpoints": 0
   },
@@ -30,61 +33,15 @@
       "opportunityClass": "source_data_dimension_or_edge_retirement_gate",
       "count": 6103,
       "proposedDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
-    },
-    {
-      "opportunityClass": "code_only_acronym_alias_candidate",
-      "count": 50,
-      "proposedDisposition": "semantic-identity-alias-activation-gated"
     }
   ],
   "rowClassBreakdown": [
     {
       "rowOpportunityClass": "source_data_dimension_or_edge_retirement_gate",
       "count": 4610
-    },
-    {
-      "rowOpportunityClass": "all_unresolved_endpoints_code_only_candidate",
-      "count": 50
     }
   ],
-  "reviewRows": [
-    {
-      "tenant": "tenant-07",
-      "endpointName": "CFO",
-      "proposedCanonical": "Chief Financial Officer",
-      "objectType": "organization_unit",
-      "opportunityClass": "code_only_acronym_alias_candidate",
-      "matchRule": "endpoint-label-is-unique-acronym-of-canonical-label",
-      "evidenceForMapping": "endpoint-label-is-unique-acronym-of-canonical-label; unique_candidate_count=1; canonical_source_row=4; canonical_mapping_profile=organization-ownership/v1",
-      "affectedEndpointOccurrences": 18,
-      "semanticIdentityAliasActivated": false,
-      "graphMaterialized": false
-    },
-    {
-      "tenant": "tenant-07",
-      "endpointName": "CHRO",
-      "proposedCanonical": "Chief Human Resources Officer",
-      "objectType": "organization_unit",
-      "opportunityClass": "code_only_acronym_alias_candidate",
-      "matchRule": "endpoint-label-is-unique-acronym-of-canonical-label",
-      "evidenceForMapping": "endpoint-label-is-unique-acronym-of-canonical-label; unique_candidate_count=1; canonical_source_row=5; canonical_mapping_profile=organization-ownership/v1",
-      "affectedEndpointOccurrences": 16,
-      "semanticIdentityAliasActivated": false,
-      "graphMaterialized": false
-    },
-    {
-      "tenant": "tenant-07",
-      "endpointName": "CISO",
-      "proposedCanonical": "Chief Information Security Officer",
-      "objectType": "organization_unit",
-      "opportunityClass": "code_only_acronym_alias_candidate",
-      "matchRule": "endpoint-label-is-unique-acronym-of-canonical-label",
-      "evidenceForMapping": "endpoint-label-is-unique-acronym-of-canonical-label; unique_candidate_count=1; canonical_source_row=26; canonical_mapping_profile=organization-ownership/v1",
-      "affectedEndpointOccurrences": 16,
-      "semanticIdentityAliasActivated": false,
-      "graphMaterialized": false
-    }
-  ],
+  "reviewRows": [],
   "perTenant": [
     {
       "tenant": "tenant-01",
@@ -136,11 +93,11 @@
     },
     {
       "tenant": "tenant-07",
-      "unresolvedEndpointsAnalyzed": 412,
-      "codeOnlyAliasCandidateEndpoints": 50,
+      "unresolvedEndpointsAnalyzed": 362,
+      "codeOnlyAliasCandidateEndpoints": 0,
       "sourceDataGatedEndpoints": 362,
-      "fullyCodeOnlyCandidateRows": 50,
-      "unresolvedEndpointRatePercent": 12.42
+      "fullyCodeOnlyCandidateRows": 0,
+      "unresolvedEndpointRatePercent": 10.91
     }
   ],
   "acceptance": {
@@ -148,9 +105,10 @@
     "tenantDataMutated": false,
     "graphTablesWritten": false,
     "productReadModelsUpdated": false,
+    "semanticIdentityAliasesActivatedInInputGraph": true,
     "sourcePathsOmitted": true,
-    "aliasReviewRowsEmitted": 3,
-    "aliasAffectedEndpointOccurrencesEmitted": 50
+    "aliasReviewRowsEmitted": 0,
+    "aliasAffectedEndpointOccurrencesEmitted": 0
   },
   "nextPrSizedSafeCodeSlice": {
     "title": "Evaluate acronym alias candidates behind an explicit semantic-identity gate",

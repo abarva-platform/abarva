@@ -1,0 +1,91 @@
+{
+  "generatedAt": "2026-08-15T11:53:37.775Z",
+  "generatedBy": "scripts/audit/build-graph-semantic-alias-activation-report.mjs",
+  "sourceSha": "ee14b409a9a93ca1286d8b7b38e6823ab35db6a7",
+  "mode": "semantic_identity_alias_lookup_activation_only_no_data_write_no_graph_materialization",
+  "publicDisclosure": "Tenant identifiers are anonymized. Source paths, real tenant keys, and source rows are omitted except reviewed canonical row numbers.",
+  "evidence": {
+    "beforeGraphReconciliationDir": "/tmp/nexus-graph-reconcile-before-approved-alias.nVsE6L",
+    "afterGraphReconciliationDir": "/tmp/nexus-graph-reconcile-after-approved-alias.YWjncq",
+    "semanticAliasLedger": "datasets/reference/graph-semantic-identity-aliases/approved-aliases.json",
+    "activationReport": "reports/graph-semantic-alias-activation/current-main"
+  },
+  "aliases": [
+    {
+      "tenant": "tenant-07",
+      "alias": "CFO",
+      "canonicalDisplayName": "Chief Financial Officer",
+      "objectType": "organization_unit",
+      "evidenceForMapping": "endpoint-label-is-unique-acronym-of-canonical-label; canonical_source_row=4; canonical_mapping_profile=organization-ownership/v1",
+      "affectedEndpointOccurrences": 18,
+      "reversible": true,
+      "graphMaterialized": false
+    },
+    {
+      "tenant": "tenant-07",
+      "alias": "CHRO",
+      "canonicalDisplayName": "Chief Human Resources Officer",
+      "objectType": "organization_unit",
+      "evidenceForMapping": "endpoint-label-is-unique-acronym-of-canonical-label; canonical_source_row=5; canonical_mapping_profile=organization-ownership/v1",
+      "affectedEndpointOccurrences": 16,
+      "reversible": true,
+      "graphMaterialized": false
+    },
+    {
+      "tenant": "tenant-07",
+      "alias": "CISO",
+      "canonicalDisplayName": "Chief Information Security Officer",
+      "objectType": "organization_unit",
+      "evidenceForMapping": "endpoint-label-is-unique-acronym-of-canonical-label; canonical_source_row=26; canonical_mapping_profile=organization-ownership/v1",
+      "affectedEndpointOccurrences": 16,
+      "reversible": true,
+      "graphMaterialized": false
+    }
+  ],
+  "before": {
+    "relationshipRows": 9633,
+    "relationshipCandidates": 4454,
+    "quarantinedRelationships": 5179,
+    "graphTablesWritten": false,
+    "productReadModelsUpdated": false
+  },
+  "after": {
+    "relationshipRows": 9633,
+    "relationshipCandidates": 4504,
+    "quarantinedRelationships": 5129,
+    "graphTablesWritten": false,
+    "productReadModelsUpdated": false
+  },
+  "delta": {
+    "relationshipCandidates": 50,
+    "quarantinedRelationships": -50
+  },
+  "totals": {
+    "activatedAliasRecords": 3,
+    "approvedAffectedEndpointOccurrences": 50,
+    "afterApprovedSemanticNodeAliasRecords": 3,
+    "afterApprovedSemanticNodeAliasesIndexed": 3,
+    "afterApprovedSemanticNodeAliasesAlreadyPresent": 0
+  },
+  "acceptance": {
+    "semanticIdentityAliasActivationPerformed": true,
+    "activatedOnlyApprovedAliases": true,
+    "quarantineDeltaMatchesApprovedOccurrences": true,
+    "tenantDataMutated": false,
+    "canonicalDataPlaneWritten": false,
+    "graphTablesWritten": false,
+    "productReadModelsUpdated": false,
+    "graphMaterialized": false,
+    "liveClientTruthClaimMade": false,
+    "sourcePathsOmitted": true
+  },
+  "closedGates": [
+    "No graph dictionary or object-registry activation.",
+    "No graph materialization; graphTablesWritten must stay false.",
+    "No canonical/data-plane write.",
+    "No Layer 4 projection or product read-model refresh.",
+    "No tenant data mutation.",
+    "No live-client truth claim."
+  ],
+  "nextReportOnlyLane": "Build the 6103 source-data-gated endpoint decision matrix."
+}
