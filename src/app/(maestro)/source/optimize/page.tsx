@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { SourceOptimizeContractPage } from "@/components/source/SourceOptimizeContractPage";
 import { getActiveClientRow } from "@/lib/active-client";
+import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { requireTenancy, TenancyError } from "@/lib/auth/tenancy";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { trimContractOptimizationOpportunitySetForClient } from "@/lib/source/data-model/contract-optimization-client-payload";
@@ -44,12 +45,22 @@ export default async function SourceOptimizeContractRoute({
   const tenantKey = activeClient?.key ?? tenancy.clientKey ?? "";
   if (!tenantKey) notFound();
 
+  const sourceAccessPolicy = await loadUserSourceAccessPolicy(tenancy, {
+    activeClientKey: tenantKey,
+  }).catch(() => null);
+  const canViewFinancialValues =
+    sourceAccessPolicy?.canViewFinancialData === true;
+
   const asOfDateIso = normalizeAsOfDate(params.asOf);
   const contractId = params.contractId?.trim() || null;
-  const contracts = await listContract360(tenantKey).catch(() => []);
+  const contracts = canViewFinancialValues
+    ? await listContract360(tenantKey).catch(() => [])
+    : [];
   const selectedContract = contractId
     ? (contracts.find((contract) => contract.contract_id === contractId) ??
-      (await getContract360(tenantKey, contractId).catch(() => null)))
+      (canViewFinancialValues
+        ? await getContract360(tenantKey, contractId).catch(() => null)
+        : null))
     : null;
 
   const leverageEntries = computeContractLeverageSignals(contracts);
@@ -107,6 +118,7 @@ export default async function SourceOptimizeContractRoute({
         opportunitySet,
       )}
       evidencePack={evidencePack}
+      canViewFinancialValues={canViewFinancialValues}
     />
   );
 }

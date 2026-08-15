@@ -324,6 +324,31 @@ describe("SourceOptimizeContractPage", () => {
     );
   });
 
+  it("does not expose contract candidates when financial access is unavailable", () => {
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine()}
+        opportunitySet={null}
+        canViewFinancialValues={false}
+      />,
+    );
+
+    expect(
+      screen.getByTestId("optimize-financial-access-required"),
+    ).toHaveTextContent("Financial access required");
+    expect(
+      screen.getByText(
+        "No contract optimization data has been loaded into this browser session.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("optimize-contract-picker"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Review" })).toBeNull();
+  });
+
   it("opens a selected-contract optimization case through the contract API", async () => {
     const fetchMock = global.fetch as jest.Mock;
     fetchMock.mockResolvedValue({
