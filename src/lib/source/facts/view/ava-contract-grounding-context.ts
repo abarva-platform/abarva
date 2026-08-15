@@ -102,6 +102,22 @@ export async function buildAvaSourceContractGrounding(
     )
     .map((row) => row.label);
 
+  const strategyRequest = latestRequest(
+    opportunitySet?.approvalRequests ?? [],
+    "vendor_outreach_strategy",
+  );
+  const financeRequest = latestRequest(
+    opportunitySet?.approvalRequests ?? [],
+    "finance_value_confirmation",
+  );
+  const agreedOutcome =
+    (opportunitySet?.negotiatedOutcomes ?? []).find(
+      (outcome) => outcome.outcomeState === "agreed",
+    ) ?? null;
+  const financeConfirmedUsd = opportunitySet?.financeConfirmedUsd ?? 0;
+  const valueProofClosed =
+    financeConfirmedUsd > 0 && financeRequest?.approvalState === "approved";
+
   const opportunityLines = (opportunitySet?.opportunities ?? [])
     .slice(0, 8)
     .map((opportunity) => {
@@ -138,13 +154,26 @@ export async function buildAvaSourceContractGrounding(
     `Opportunity value that a calculation run can reproduce: ${fmtUsd(traceability.tracedAmountUsd)}. Stated value with no reproducible calculation run: ${fmtUsd(
       traceability.untracedAmountUsd,
     )}.`,
-    `Finance-confirmed realized value: ${fmtUsd(opportunitySet?.financeConfirmedUsd ?? 0)}.`,
+    `Workflow lifecycle state: strategy approval ${strategyRequest?.approvalState ?? "not requested"}; vendor outcome ${agreedOutcome?.outcomeState ?? "not recorded"}; Finance/Tower confirmation request ${financeRequest?.approvalState ?? "not requested"}; value-proof gate ${valueProofClosed ? "closed" : "open"}.`,
+    `Finance-confirmed realized value: ${fmtUsd(financeConfirmedUsd)}.`,
     opportunityLines.length > 0
       ? `Opportunity rows:\n${opportunityLines.join("\n")}`
       : "Opportunity rows: none loaded for this contract.",
     `Contract-grain grounding IS available for ${trimmedId}. Answer questions about ${trimmedId} from the numbers above — do NOT deflect them to Contract 360, and do NOT fall back to portfolio-level figures or generic tenant-context retrieval for this contract.`,
-    "Rules for these numbers: a missing evidence family is missing, never zero. Only the reproducible total may be presented as value that can be defended outside this workspace; the non-reproducible figure must be described as not yet traceable to a calculation run. Realized value exists only where Finance has confirmed it. If the user asks something about this contract that is not covered above, say so plainly instead of estimating.",
+    "Rules for these numbers: a missing evidence family is missing, never zero. Only the reproducible total may be presented as value that can be defended outside this workspace; the non-reproducible figure must be described as not yet traceable to a calculation run. Realized value exists only where Finance has confirmed it. The value-proof gate is not closed until the Finance/Tower confirmation request is approved, even if a finance realization row is visible. If the user asks something about this contract that is not covered above, say so plainly instead of estimating.",
   ].filter(Boolean);
 
   return { block: lines.join("\n"), hasLiveNumbers: true };
+}
+
+function latestRequest(
+  requests: readonly {
+    readonly approvalType: string;
+    readonly approvalState: string;
+  }[],
+  approvalType: string,
+): { readonly approvalState: string } | null {
+  return (
+    requests.find((request) => request.approvalType === approvalType) ?? null
+  );
 }
