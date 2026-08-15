@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 import {
+  buildNodeIndex,
   classifyQuarantineReason,
   classifyQuarantineReasons,
   dispositionForQuarantineClass,
@@ -99,5 +103,64 @@ assert.equal(
   dispositionForQuarantineClass('empty_endpoint_or_required_field_missing'),
   'permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared',
 );
+
+const objectRegistry = [
+  {
+    objectType: 'application_system',
+    objectFamily: 'application',
+    identityAttributes: ['systemName'],
+  },
+];
+const profiles = [
+  {
+    mappingProfile: 'applications-systems-v3/v1',
+    rules: [
+      {
+        sourceField: 'system_name',
+        sourceAliases: ['business_name', 'system_code'],
+        targetObjectType: 'application_system',
+        targetAttribute: 'systemName',
+      },
+    ],
+  },
+];
+
+const uniqueAliasRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nexus-graph-alias-unique-'));
+fs.writeFileSync(
+  path.join(uniqueAliasRoot, '04_applications_systems.csv'),
+  [
+    'tenant_key,system_name,business_name,system_code',
+    'test-tenant,Claims Platform,Claims Workbench,CW-001',
+  ].join('\n'),
+);
+const uniqueAliasIndex = buildNodeIndex({
+  tenantKey: 'test-tenant',
+  activeRoot: uniqueAliasRoot,
+  profiles,
+  objectRegistry,
+});
+assert.equal(uniqueAliasIndex.aliasLookup.added, 2);
+assert.equal(
+  uniqueAliasIndex.byObjectAndName.get('application_system:claims-workbench')?.nodeId,
+  'test-tenant:application_system:claims-platform',
+);
+
+const ambiguousAliasRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nexus-graph-alias-ambiguous-'));
+fs.writeFileSync(
+  path.join(ambiguousAliasRoot, '04_applications_systems.csv'),
+  [
+    'tenant_key,system_name,business_name,system_code',
+    'test-tenant,Claims Platform,Shared Alias,CW-001',
+    'test-tenant,Policy Platform,Shared Alias,PP-001',
+  ].join('\n'),
+);
+const ambiguousAliasIndex = buildNodeIndex({
+  tenantKey: 'test-tenant',
+  activeRoot: ambiguousAliasRoot,
+  profiles,
+  objectRegistry,
+});
+assert.equal(ambiguousAliasIndex.aliasLookup.ambiguous, 1);
+assert.equal(ambiguousAliasIndex.byObjectAndName.has('application_system:shared-alias'), false);
 
 console.log('tenant-graph-reconciliation tests passed');

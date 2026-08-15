@@ -154,10 +154,35 @@ function ruleForTargetAttribute(profile, targetAttribute) {
   return profile.rules.find((rule) => rule.targetAttribute === targetAttribute);
 }
 
+function sourceFieldsForIdentityAttributes(profile, identityAttributes) {
+  return identityAttributes.flatMap((attribute) => {
+    const rule = ruleForTargetAttribute(profile, attribute);
+    if (!rule) return [];
+    return [rule.sourceField, ...(rule.sourceAliases ?? [])].filter(Boolean);
+  });
+}
+
+function addUniqueNodeAliases({ byObjectAndName, aliasCandidates }) {
+  let added = 0;
+  let ambiguous = 0;
+  for (const [lookupKey, candidates] of aliasCandidates.entries()) {
+    if (byObjectAndName.has(lookupKey)) continue;
+    const uniqueNodeIds = new Set(candidates.map((candidate) => candidate.node.nodeId));
+    if (uniqueNodeIds.size !== 1) {
+      ambiguous += 1;
+      continue;
+    }
+    byObjectAndName.set(lookupKey, candidates[0].node);
+    added += 1;
+  }
+  return { added, ambiguous };
+}
+
 function buildNodeIndex({ tenantKey, activeRoot, profiles, objectRegistry }) {
   const objectByType = new Map(objectRegistry.map((entry) => [entry.objectType, entry]));
   const nodes = [];
   const byObjectAndName = new Map();
+  const aliasCandidates = new Map();
 
   for (const profile of activeProfiles(profiles)) {
     const contractFile = profileContractFiles[profile.mappingProfile];
@@ -172,6 +197,7 @@ function buildNodeIndex({ tenantKey, activeRoot, profiles, objectRegistry }) {
     const identitySourceFields = definition.identityAttributes
       .map((attribute) => ruleForTargetAttribute(profile, attribute)?.sourceField)
       .filter(Boolean);
+    const identityAliasFields = sourceFieldsForIdentityAttributes(profile, definition.identityAttributes);
     if (identitySourceFields.length === 0) continue;
 
     parsed.rows.forEach((row, rowIndex) => {
@@ -192,10 +218,19 @@ function buildNodeIndex({ tenantKey, activeRoot, profiles, objectRegistry }) {
       };
       nodes.push(node);
       byObjectAndName.set(nodeLookupKey(objectType, displayName), node);
+      for (const sourceField of identityAliasFields) {
+        const value = row[sourceField];
+        if (isBlank(value)) continue;
+        const lookupKey = nodeLookupKey(objectType, value);
+        const candidates = aliasCandidates.get(lookupKey) ?? [];
+        candidates.push({ node, sourceField });
+        aliasCandidates.set(lookupKey, candidates);
+      }
     });
   }
 
-  return { nodes, byObjectAndName };
+  const aliasLookup = addUniqueNodeAliases({ byObjectAndName, aliasCandidates });
+  return { nodes, byObjectAndName, aliasLookup };
 }
 
 function nodeLookupKey(objectType, name) {
@@ -402,6 +437,8 @@ async function reconcileTenant({ tenant, outDir, contracts }) {
     activeRoot,
     mode: NOT_ACTIVE,
     nodeCandidatesIndexed: nodeIndex.nodes.length,
+    nodeLookupAliasesIndexed: nodeIndex.aliasLookup.added,
+    ambiguousNodeLookupAliasesSkipped: nodeIndex.aliasLookup.ambiguous,
     relationshipRows,
     relationshipCandidates: candidates.length,
     quarantinedRelationships: quarantine.length,
@@ -490,6 +527,11 @@ async function main() {
     mode: NOT_ACTIVE,
     totals: {
       nodeCandidatesIndexed: allNodes.length,
+      nodeLookupAliasesIndexed: results.reduce((sum, result) => sum + result.summary.nodeLookupAliasesIndexed, 0),
+      ambiguousNodeLookupAliasesSkipped: results.reduce(
+        (sum, result) => sum + result.summary.ambiguousNodeLookupAliasesSkipped,
+        0,
+      ),
       relationshipRows: results.reduce((sum, result) => sum + result.summary.relationshipRows, 0),
       relationshipCandidates: allCandidates.length,
       quarantinedRelationships: allQuarantine.length,
@@ -520,6 +562,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 
 export {
   buildNodeIndex,
+  sourceFieldsForIdentityAttributes,
   classifyQuarantineReason,
   classifyQuarantineReasons,
   dispositionForQuarantineClass,
