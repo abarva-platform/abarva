@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Tightens the Atlas production proof lane after the smoke gauntlet found two separate blockers: Apex is not yet a proof-ready signed-in tenant, and live Atlas answers were not consistently shaped for a CXO. The smoke profile now defaults to the tenants that can be proven end to end, while Apex remains available through an explicit opt-in flag. Atlas visible responses also receive a final executive-readability pass so Copilot and industry answers have the expected four sections, raw signal IDs are translated, legacy agent branding is removed, and every answer has a concrete next action.
+Tightens the Atlas production proof lane after the smoke gauntlet found two separate blockers: Apex is not yet a proof-ready signed-in tenant, and live Atlas answers were not consistently shaped for a CXO. The smoke profile now defaults to the tenants that can be proven end to end, while Apex remains available through an explicit opt-in flag. Atlas visible responses also receive a final executive-readability pass so Copilot and industry answers have the expected four sections, raw signal IDs are translated, legacy agent branding is removed, cross-tenant denials use user-facing evidence language, and every answer has a concrete next action.
 
 ## Layer Impact
 
@@ -30,7 +30,7 @@ Tightens the Atlas production proof lane after the smoke gauntlet found two sepa
 
 - `scripts/qa/atlas-prod-comprehensive-surface.ts`: introduces proof-ready smoke tenant scope, explicit Apex opt-in, and tenant-scope progress metadata.
 - `src/lib/atlas/rendered-response.ts`: adds the Atlas visible response cleanup and four-section executive shape.
-- `src/lib/atlas/__tests__/rendered-response.test.ts`: validates four-section response shape, visible-answer contract compliance, CXO quality compliance, and raw signal cleanup.
+- `src/lib/atlas/__tests__/rendered-response.test.ts`: validates four-section response shape, visible-answer contract compliance, CXO quality compliance, raw signal cleanup, and cross-tenant denial wording cleanup.
 - `scripts/smoke/p21-post-deploy-crawl.spec.ts`: locks the proof-scope contract into the smoke assertions.
 - `docs/backlog/tracks/04-source-commercial/BACKLOG.md`: records the execution slice against SRC-PROOF-002 and SRC-PROOF-003.
 
@@ -39,6 +39,8 @@ Tightens the Atlas production proof lane after the smoke gauntlet found two sepa
 - Pass: `npx jest src/lib/atlas/__tests__/rendered-response.test.ts src/lib/agent/quality/__tests__/cxo-answer-quality.test.ts --runInBand`
 - Pass: `npx eslint scripts/qa/atlas-prod-comprehensive-surface.ts scripts/smoke/p21-post-deploy-crawl.spec.ts src/lib/atlas/rendered-response.ts src/lib/atlas/__tests__/rendered-response.test.ts`
 - Pass: `npx tsx scripts/smoke/p21-post-deploy-crawl.spec.ts`
+- Follow-up pass: `npx jest src/lib/atlas/__tests__/rendered-response.test.ts --runInBand`
+- Follow-up pass: `npx eslint src/lib/atlas/rendered-response.ts src/lib/atlas/__tests__/rendered-response.test.ts`
 - Pending after merge/deploy: ACA deploy workflow, ACA runtime invariant, post-deploy crawl, and Atlas production smoke gauntlet on the deployed SHA.
 
 ## Rollout Plan
