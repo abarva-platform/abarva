@@ -369,7 +369,14 @@ export async function POST(
           return null;
         });
       }
-      const lines = [JSON.stringify({ type: "summary", ...response })];
+      const ndjsonSummary = agentAnswer
+        ? {
+            ...response,
+            summary: agentAnswer.directAnswer,
+            noModel: true,
+          }
+        : response;
+      const lines = [JSON.stringify({ type: "summary", ...ndjsonSummary })];
       if (agentAnswer) {
         lines.push(
           JSON.stringify({ type: "agent-answer", answer: agentAnswer }),
