@@ -30,11 +30,22 @@ const PROPOSAL_FACT_PATTERN =
 function looksLikeVendorCoverageQuestion(prompt: string | undefined): boolean {
   if (!prompt) return false;
   const q = prompt.toLowerCase();
-  return (
-    /\b(vendor|vendors|bidder|bidders|proposal|proposals)\b/.test(q) &&
+  const hasParticipantOrProposal =
+    /\b(vendor|vendors|supplier|suppliers|bidder|bidders|respondent|respondents|proposal|proposals)\b/.test(
+      q,
+    );
+  const hasResponseCoverageLanguage =
     /\b(coverage|addressed|dodged|respond|responded|response|responses|answer|answered|cover|covered)\b/.test(
       q,
-    )
+    );
+  const hasUnsupportedClaimLanguage =
+    /\b(claim|claims|assertion|assertions)\b/.test(q) &&
+    /\b(unsupported|unsubstantiated|unproven|not supported|lacks evidence|lack evidence|without evidence|no evidence)\b/.test(
+      q,
+    );
+  return (
+    (hasParticipantOrProposal && hasResponseCoverageLanguage) ||
+    hasUnsupportedClaimLanguage
   );
 }
 
@@ -129,6 +140,16 @@ describe('looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)', () => {
     expect(
       looksLikeVendorCoverageQuestion('Did the bidders respond to every lever?'),
     ).toBe(true);
+    expect(
+      looksLikeVendorCoverageQuestion(
+        'Which claims are unsupported or lack evidence?',
+      ),
+    ).toBe(true);
+    expect(
+      looksLikeVendorCoverageQuestion(
+        'Which supplier assertions are unproven?',
+      ),
+    ).toBe(true);
   });
 
   it('does not match unrelated questions (no dormant transport for other intents)', () => {
@@ -139,6 +160,9 @@ describe('looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)', () => {
     ).toBe(false);
     expect(
       looksLikeVendorCoverageQuestion('Summarize the RFP scope for this vendor.'),
+    ).toBe(false);
+    expect(
+      looksLikeVendorCoverageQuestion('What evidence is missing for the gate?'),
     ).toBe(false);
   });
 
