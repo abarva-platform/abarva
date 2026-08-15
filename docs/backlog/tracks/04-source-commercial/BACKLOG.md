@@ -43,6 +43,48 @@ or aVa Source intelligence changes, use the vendor value excellence program to
 produce the design packet, secure review/signoff, and split implementation into
 independently testable slices.
 
+## Active Execution Control — 2026-08-15
+
+Canonical execution plan:
+[`SOURCE_NEW_EVENT_EXECUTION_PLAN_2026-08-15.md`](/Users/anand/Projects/nexus/docs/codex-handoff/SOURCE_NEW_EVENT_EXECUTION_PLAN_2026-08-15.md).
+
+Immediate execution order:
+
+1. **Closed safe cleanup:** PR #6349 was merged as
+   `11300c4a9d95b01577547e264ea545667a9e1cd0`. It removed only an
+   unreachable Source presentation panel and must still receive SHA-specific
+   ACA deploy, runtime invariant, and post-deploy crawl proof before being
+   called live-proven.
+2. **SRC-PROOF-001 — Signed-in proof lane repair:** Move the Atlas production
+   CXO gauntlet from legacy human demo accounts to durable non-human agent
+   identities, use Clerk testing-token bootstrap, and rerun smoke/full gauntlet.
+   The latest known gauntlet failure was auth-blocked before tenant turns, so
+   CXO quality was not evaluated in that run.
+3. **SRC-BACKLOG-001 — Backlog consolidation:** Collapse duplicate SRC IDs and
+   scattered handoff docs into one canonical roadmap with unique IDs,
+   dependencies, proof bar, owner lane, demo impact rank, and explicit
+   exclusions.
+
+Do not start another visual cleanup slice by default. After proof/backlog
+control, execute value-driving product work in this order:
+
+1. New Event workflow reference slice, starting with Scope.
+2. Vendor response intelligence for large proposal packages.
+3. Evaluation scoring and rater/weight governance.
+4. Pricing comparability and BAFO leverage.
+5. Selection readiness.
+6. Executive Decision and advisory story pack.
+7. Transition and Tower/Finance-confirmed Value handoff.
+
+Proof discipline:
+
+- PR checks are not live proof.
+- ACA deploy completion is not live proof.
+- HTTP 200 is not live proof.
+- Signed-in route/crawl/gauntlet evidence is required for protected product
+  surfaces.
+- Auth blockers must be reported as auth-blocked, not product-passed.
+
 ## Backlog Items
 
 ---

@@ -6,6 +6,7 @@ import {
   summarizeComparison,
   type CrawlRun,
 } from "../../src/lib/crawl/baseline-compare";
+import { AGENT_CLIENT_LOGINS } from "../../src/lib/auth/agent-client-logins";
 import {
   CRAWL_PERSONAS,
   PHS_MERIDIAN_HARD_QUESTIONS,
@@ -76,6 +77,10 @@ const postDeployHarness = fs.readFileSync(
   "scripts/crawl/post-deploy-harness.ts",
   "utf8",
 );
+const atlasGauntletHarness = fs.readFileSync(
+  "scripts/qa/atlas-prod-comprehensive-surface.ts",
+  "utf8",
+);
 const personaSwitcher = fs.readFileSync(
   "src/lib/crawl/persona-switcher.ts",
   "utf8",
@@ -90,8 +95,17 @@ assert.match(postDeployHarness, /candidatePreview/);
 assert.match(postDeployHarness, /includeCandidatePreview/);
 assert.match(postDeployHarness, /isAuthAutomationBlockMessage/);
 assert.match(postDeployHarness, /candidate-preview-auth-bootstrap/);
+assert.match(atlasGauntletHarness, /agentLoginForClientKey/);
+assert.match(atlasGauntletHarness, /installClerkTestingTokenInterceptor/);
+assert.doesNotMatch(atlasGauntletHarness, /cio@apex-retail\.example\.com/);
+assert.doesNotMatch(atlasGauntletHarness, /cdio@meridian-health\.example\.com/);
+assert.doesNotMatch(atlasGauntletHarness, /cto@skyharbor-air\.example\.com/);
 assert.match(personaSwitcher, /createClerkTestingTokenForCrawl/);
 assert.match(personaSwitcher, /installClerkTestingTokenInterceptor/);
+assert.deepEqual(
+  AGENT_CLIENT_LOGINS.map((login) => login.slug),
+  ["agent-apexretail", "agent-meridian", "agent-skyharbor"],
+);
 assert.equal(SKYHARBOR_CANDIDATE_PREVIEW_PACKAGE.tenantKey, "skyharbor_global");
 assert.equal(
   isAuthAutomationBlockMessage("page.evaluate: e: You have been banned."),

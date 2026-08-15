@@ -27,6 +27,29 @@ import type { CxoPersona } from "./cxo-personas";
 /** One automation agent per active client tenant. clientKey is the canonical app key. */
 export const AGENT_CLIENT_LOGINS: ReadonlyArray<CxoPersona> = [
   {
+    slug: "agent-apexretail",
+    email: "apexretail-agent@abarva.example.com",
+    shortLabel: "agent@apex",
+    firstName: "Ava",
+    lastName: "Agent",
+    personaName: "Ava · Apex Retail Group (agent)",
+    monogram: "AV",
+    titleShort: "AGENT",
+    titleFull: "AbarVa automation agent",
+    tenant: "Apex Retail Group",
+    clientKey: "apexretail",
+    tenantKey: "apex-retail",
+    authRole: "maestro",
+    graphNodeId: "person:agent:apexretail",
+    monogramBg: "#C2410C",
+    bioShort:
+      "Automation account — signed-in proofs & crawl for Apex Retail Group.",
+    bioLong:
+      "Non-human automation identity used by signed-in proof harnesses and gauntlets to authenticate as the Apex Retail Group tenant via Clerk sign-in tokens (no password). Not a real person.",
+    workspaceTeaser:
+      "Used to verify Apex Retail Group surfaces render and ground correctly under a real signed-in session.",
+  },
+  {
     slug: "agent-meridian",
     email: "meridian-agent@abarva.example.com",
     shortLabel: "agent@meridian",
