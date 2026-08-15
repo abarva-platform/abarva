@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-08-15T00:32:48.957Z",
+  "generatedAt": "2026-08-15T02:09:55.595Z",
   "generatedBy": "scripts/audit/build-graph-quarantine-reduction-plan.mjs",
-  "sourceSha": "6e38a41e826bd61b5492c7c15199347d0d336d5f",
-  "graphGeneratedAt": "2026-08-15T00:32:48.600Z",
+  "sourceSha": "fef909cd4bae7c7fde7e21f5c6a90e9000d07bf2",
+  "graphGeneratedAt": "2026-08-15T02:09:19.999Z",
   "mode": "report_only_no_data_mutation_no_registry_activation_no_graph_materialization_no_projection_refresh",
   "publicDisclosure": "Tenant identifiers are anonymized. Row-level object names, source values, and source paths are omitted.",
   "evidence": {
-    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-graph-alias-current.czivry",
-    "graphQuarantineReductionPlan": "npm run audit:graph-quarantine-reduction -- --graph-dir /tmp/nexus-graph-alias-current.czivry --out-dir reports/graph-quarantine-reduction/current-main --source-sha 6e38a41e826bd61b5492c7c15199347d0d336d5f"
+    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-graph-current-fef909",
+    "graphQuarantineReductionPlan": "npm run audit:graph-quarantine-reduction -- --graph-dir /tmp/nexus-graph-current-fef909 --out-dir reports/graph-quarantine-reduction/current-main --source-sha fef909cd4bae7c7fde7e21f5c6a90e9000d07bf2"
   },
   "totals": {
     "relationshipRows": 9633,

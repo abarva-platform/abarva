@@ -1,6 +1,6 @@
 # Graph Quarantine Reduction Plan
 
-Source SHA: `6e38a41e826bd61b5492c7c15199347d0d336d5f`
+Source SHA: `fef909cd4bae7c7fde7e21f5c6a90e9000d07bf2`
 
 This is a sanitized, report-only reduction plan. It does not write tenant data, activate registries, materialize graph tables, refresh product projections, or make runtime truth claims.
 
