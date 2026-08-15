@@ -515,6 +515,28 @@ describe("runSourceAnswerQualityGate — Phase C: decision_recommendation / cont
     const check = result.checks.find((c) => c.id === "traceable_to_grounding");
     expect(check?.passed).toBe(true);
   });
+
+  it("accepts Source four-ledger language as the contract_optimization value-type breakdown", () => {
+    const CONTRACT_OPT_GROUNDING = [
+      "AUTHORITATIVE SOURCE CONTRACT GROUNDING:",
+      "Opportunity rows:",
+      "- SLA credits · recoverable leakage · $755K · stage quantified · amount can be reproduced",
+      "- Scope reduction · avoided cost · $2.4M · stage quantified · amount can be reproduced",
+      "- Rate relief · negotiated improvement · $1.3M · stage quantified · amount can be reproduced",
+      "Finance-confirmed realized value: $940K.",
+    ].join("\n");
+    const result = runSourceAnswerQualityGate({
+      answerText:
+        "Recoverable leakage is $755K, avoided cost is $2.4M, negotiated improvement is $1.3M, and realized value is $940K. Next: keep Finance/Tower as the realized-value gate.",
+      mode: "contract_optimization",
+      hasGroundingContext: true,
+      groundingBlockText: CONTRACT_OPT_GROUNDING,
+    });
+    const check = result.checks.find(
+      (c) => c.id === "includes_value_type_breakdown",
+    );
+    expect(check?.passed).toBe(true);
+  });
 });
 
 describe("runSourceAnswerQualityGate — Phase C: general_advisory has a lighter bar", () => {
