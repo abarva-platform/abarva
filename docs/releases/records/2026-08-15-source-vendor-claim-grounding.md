@@ -11,9 +11,9 @@
 ## Plain-English Summary
 
 Routes Source event questions about unsupported or unproven vendor claims through the governed
-vendor-response answer packet instead of letting the general chat path answer from broader context.
-This keeps response-stage answers aligned to the event's persisted response vendors and evidence
-rows.
+vendor-response answer packet instead of letting the visible drawer prose answer from broader
+context. This keeps response-stage answers aligned to the event's persisted response vendors and
+evidence rows.
 
 ## Layer Impact
 
@@ -43,6 +43,8 @@ does not change tenant data, canonical facts, adapters, calculation logic, or an
   (4/4 tests passed).
 - PASS: `npx jest src/lib/source/ava/__tests__/vendor-coverage-governed-answer.test.ts --runInBand`
   (12/12 tests passed).
+- Required after deploy: signed-in Source event aVa proof that an unsupported-claim question renders
+  only the governed event response vendors in both visible prose and structured output.
 
 ## Rollout Plan
 

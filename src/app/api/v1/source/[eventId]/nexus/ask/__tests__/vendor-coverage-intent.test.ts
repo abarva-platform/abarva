@@ -103,6 +103,7 @@ describe('looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)', () => {
     );
     expect(ROUTE_SOURCE).toContain('wantsNdjson');
     expect(ROUTE_SOURCE).toContain('buildVendorCoverageGovernedAnswer');
+    expect(ROUTE_SOURCE).toContain('summary: agentAnswer.directAnswer');
     expect(ROUTE_SOURCE).toContain('buildValueLedgerGovernedAnswer');
     expect(ROUTE_SOURCE).toContain('looksLikeValueLedgerQuestion');
     expect(ROUTE_SOURCE).toContain('buildEvidenceReadinessGovernedAnswer');
