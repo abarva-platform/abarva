@@ -55,6 +55,7 @@ interface SourceOptimizeContractPageProps {
   spine: ContractOptimizationSpine;
   opportunitySet: ContractOptimizationOpportunitySet | null;
   evidencePack?: ContractOptimizationEvidencePack | null;
+  canViewFinancialValues?: boolean;
 }
 
 export function SourceOptimizeContractPage({
@@ -63,6 +64,7 @@ export function SourceOptimizeContractPage({
   spine,
   opportunitySet,
   evidencePack = null,
+  canViewFinancialValues = true,
 }: SourceOptimizeContractPageProps) {
   const selected = spine.selected;
   const [thread, setThread] = useState<ChatMessage[]>([]);
@@ -232,7 +234,9 @@ export function SourceOptimizeContractPage({
         />
         <StageRail steps={position.steps} />
         <NextDecisionBar position={position} />
-        {selected ? (
+        {!canViewFinancialValues ? (
+          <FinancialAccessRequired />
+        ) : selected ? (
           <SelectedContractView
             candidate={selected}
             spine={spine}
@@ -294,6 +298,29 @@ export function SourceOptimizeContractPage({
         }}
       />
     </AppShell>
+  );
+}
+
+function FinancialAccessRequired() {
+  return (
+    <section
+      data-testid="optimize-financial-access-required"
+      style={PANEL_STYLE}
+    >
+      <div style={PANEL_HEAD_STYLE}>
+        <div>
+          <h2 style={SECTION_TITLE_STYLE}>Financial access required</h2>
+          <p style={PANEL_COPY_STYLE}>
+            Optimize Contract uses exact contract values, pricing baselines,
+            opportunity amounts, and Finance/Tower proof. Request Source
+            financial visibility for this client before opening this workflow.
+          </p>
+        </div>
+      </div>
+      <div style={EMPTY_STYLE}>
+        No contract optimization data has been loaded into this browser session.
+      </div>
+    </section>
   );
 }
 
