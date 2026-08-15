@@ -1149,14 +1149,11 @@ async function getPersistedContractOptimizationOpportunitySet(
   const financeConfirmedUsd = sumNumbers(
     financeRealizations.map((item) => item.amountUsd),
   );
-  const selectedOpportunityId =
-    opportunities.find((opportunity) =>
-      opportunity.opportunityId.endsWith(":rate-variance"),
-    )?.opportunityId ??
-    opportunities.find((opportunity) => opportunity.amountUsd != null)
-      ?.opportunityId ??
-    opportunities[0]?.opportunityId ??
-    null;
+  const selectedOpportunityId = selectDefaultOptimizationOpportunityId({
+    opportunities,
+    approvalRequests,
+    negotiatedOutcomes,
+  });
   const blockingRequirements = requirementRows
     .filter((row) => opportunityIds.has(textValue(row.opportunity_id) ?? ""))
     .filter((row) => textValue(row.status) !== "met")
@@ -1546,6 +1543,48 @@ function groupByString(
     groups.set(value, current);
   }
   return groups;
+}
+
+function selectDefaultOptimizationOpportunityId({
+  opportunities,
+  approvalRequests,
+  negotiatedOutcomes,
+}: {
+  readonly opportunities: readonly ContractOptimizationOpportunity[];
+  readonly approvalRequests: readonly OptimizationApprovalRequestRead[];
+  readonly negotiatedOutcomes: readonly OptimizationNegotiatedOutcomeRead[];
+}): string | null {
+  const opportunityIds = new Set(
+    opportunities.map((opportunity) => opportunity.opportunityId),
+  );
+  const activeApprovalOpportunityId = approvalRequests
+    .filter((request) =>
+      ["pending", "approved", "sent_back"].includes(request.approvalState),
+    )
+    .map((request) => request.opportunityId)
+    .find(
+      (opportunityId) => opportunityId && opportunityIds.has(opportunityId),
+    );
+  if (activeApprovalOpportunityId) return activeApprovalOpportunityId;
+
+  const activeOutcomeOpportunityId = negotiatedOutcomes
+    .filter((outcome) => ["proposed", "agreed"].includes(outcome.outcomeState))
+    .map((outcome) => outcome.opportunityId)
+    .find((opportunityId) => opportunityIds.has(opportunityId));
+  if (activeOutcomeOpportunityId) return activeOutcomeOpportunityId;
+
+  return (
+    opportunities.find((opportunity) =>
+      ["target_position", "approval_required"].includes(opportunity.stage),
+    )?.opportunityId ??
+    opportunities.find((opportunity) =>
+      opportunity.opportunityId.endsWith(":rate-variance"),
+    )?.opportunityId ??
+    opportunities.find((opportunity) => opportunity.amountUsd != null)
+      ?.opportunityId ??
+    opportunities[0]?.opportunityId ??
+    null
+  );
 }
 
 function uniqueSourceRefs(
