@@ -71,3 +71,30 @@ describe("agent route · Source aVa polish gate — Gap 1 (off-topic context-bun
     expect(source).toContain("contextBundleForOutput");
   });
 });
+
+describe("agent route · Source aVa contract optimization authority", () => {
+  const source = readRoute();
+
+  it("keeps single-contract grounding authoritative over the older event optimization block", () => {
+    expect(source).toContain(
+      "const contractGroundingIsAuthoritativeForMode =",
+    );
+    expect(source).toContain("hasSourceContractGrounding");
+    expect(source).toContain(
+      'modeClassification.mode === "contract_optimization"',
+    );
+
+    const groundingAppendStart = source.indexOf("if (");
+    const authorityCheck = source.indexOf(
+      "!contractGroundingIsAuthoritativeForMode",
+      groundingAppendStart,
+    );
+    expect(authorityCheck).toBeGreaterThan(-1);
+  });
+
+  it("passes the single-contract block to the quality gate when it suppresses the event block", () => {
+    expect(source).toContain(
+      "contractGroundingIsAuthoritativeForMode\n            ? sourceContractGroundingBlock\n            : modeGrounding.block",
+    );
+  });
+});

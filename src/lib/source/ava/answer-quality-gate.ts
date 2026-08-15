@@ -170,7 +170,7 @@ function extractUsdFigures(text: string): string[] {
 /** Value-type labels the classification lines use — matched loosely (word
  * fragments) so "protected value" and "protected" both count as a hit. */
 const VALUE_TYPE_SIGNAL_RE =
-  /\b(expected concession|incremental negotiated|solution tightening|protected( value)?|risk[- ]adjusted)\b/i;
+  /\b(expected concession|incremental negotiated|solution tightening|protected( value)?|risk[- ]adjusted|recoverable leakage|avoided cost|negotiated improvement|realized value)\b/i;
 
 // Banned model-deflection / inferiority phrases (spec-mandated list, verbatim
 // intent). Case-insensitive; matched as substrings since the model may vary

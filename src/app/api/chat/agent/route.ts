@@ -1488,6 +1488,12 @@ export async function POST(request: Request) {
         viewedStage: viewStageFromContext,
       });
       sourceAvaAnswerMode = modeClassification.mode;
+      // Contract Optimize turns can carry both `contractId` and `sourceEventId`.
+      // When the single-contract read model is present, it is the authority for
+      // this contract; do not append the older event/archetype block after it.
+      const contractGroundingIsAuthoritativeForMode =
+        hasSourceContractGrounding &&
+        modeClassification.mode === "contract_optimization";
       if (isGroundedAnswerMode(modeClassification.mode) && groundingEvent) {
         const modeStageKey =
           viewStageFromContext ?? groundingEvent.currentStageKey;
@@ -1695,7 +1701,10 @@ export async function POST(request: Request) {
               }
             : undefined,
         });
-        if (modeGrounding.block) {
+        if (
+          modeGrounding.block &&
+          !contractGroundingIsAuthoritativeForMode
+        ) {
           sourceAvaGroundingBlock = sourceAvaGroundingBlock
             ? `${sourceAvaGroundingBlock}\n\n${modeGrounding.block}`
             : modeGrounding.block;
@@ -1704,7 +1713,10 @@ export async function POST(request: Request) {
           }
         }
         sourceAvaModeGroundingFacts = modeGrounding.quotableFacts;
-        sourceAvaModeGroundingBlockText = modeGrounding.block;
+        sourceAvaModeGroundingBlockText =
+          contractGroundingIsAuthoritativeForMode
+            ? sourceContractGroundingBlock
+            : modeGrounding.block;
         sourceAvaModeEvidenceIncomplete =
           modeGrounding.quotableFacts.evidenceMissingCount !== undefined &&
           modeGrounding.quotableFacts.evidenceMissingCount !== "0";
