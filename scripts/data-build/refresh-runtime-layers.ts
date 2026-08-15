@@ -671,11 +671,11 @@ async function readback(
   try {
     for (const tenant of args.tenants) {
       const otherTenants = args.tenants.filter((item) => item !== tenant);
+      await client.query("RESET ROLE");
       const expectedTenantEdges = await count(
         "SELECT count(*) FROM intelligence_v6.graph_edges WHERE tenant_key = $1 AND contract_version=$2",
         [tenant, CONTRACT_VERSION],
       );
-      await client.query("RESET ROLE");
       await client.query("SELECT set_config('app.tenant_key', $1, true)", [tenant]);
       await client.query("SELECT set_config('app.client_key', $1, true)", [tenant]);
       await client.query("SELECT set_config('request.jwt.claims', $1, true)", [

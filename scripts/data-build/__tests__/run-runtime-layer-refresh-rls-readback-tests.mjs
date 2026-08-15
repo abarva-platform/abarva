@@ -18,6 +18,11 @@ assert.match(refreshScript, /visibleOtherTenantRows/);
 assert.match(refreshScript, /visibleTenantRows/);
 assert.match(refreshScript, /request\.jwt\.claims/);
 assert.match(refreshScript, /RESET ROLE/);
+assert.ok(
+  refreshScript.indexOf('await client.query("RESET ROLE");') <
+    refreshScript.indexOf("const expectedTenantEdges = await count"),
+  "readback must reset the operator role before computing each tenant's expected count",
+);
 
 for (const table of [
   "layer_refresh_runs",
