@@ -5,8 +5,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = process.cwd();
-const DEFAULT_OUT = 'reports/ava-readiness-ledger-2026-08';
+const DEFAULT_OUT = 'reports/ava-readiness-ledger/current-main';
 const REGISTRY = 'datasets/tenant-inputs/tenant-input-registry.json';
+const CURRENT_LAYER_STATUS_REPORT = 'reports/layer-refresh-status/current-main-v2/layer-refresh-status-v2.json';
 const LAYER_REPORT_DIR = 'reports/layer-reconciliation-2026-08';
 const GRAPH_REPORT_DIR = 'reports/graph-reconciliation-2026-08';
 const NOT_ACTIVE =
@@ -26,17 +27,24 @@ const csvCell = (value) => {
 };
 
 function parseArgs(argv) {
-  const args = { out: DEFAULT_OUT, tenants: [] };
+  const args = { includeTenantKeys: false, out: DEFAULT_OUT, sourceSha: '', tenants: [] };
   for (let index = 2; index < argv.length; index += 1) {
     const value = argv[index];
     if (value === '--out') {
       args.out = argv[index + 1];
       index += 1;
+    } else if (value === '--source-sha') {
+      args.sourceSha = argv[index + 1];
+      index += 1;
     } else if (value === '--tenant') {
       args.tenants.push(argv[index + 1]);
       index += 1;
+    } else if (value === '--include-tenant-keys') {
+      args.includeTenantKeys = true;
     } else if (value === '--help') {
-      console.log('Usage: node scripts/audit/ava-readiness-ledger.mjs [--tenant <key>|all] [--out <dir>]');
+      console.log(
+        'Usage: node scripts/audit/ava-readiness-ledger.mjs [--tenant <key>|all] [--out <dir>] [--source-sha <sha>] [--include-tenant-keys]',
+      );
       process.exit(0);
     }
   }
@@ -72,25 +80,54 @@ function readActiveTenants(selectedTenants) {
   return tenants.filter((tenant) => selectedTenants.includes(tenant.tenantKey));
 }
 
-function localProofForTenant(tenantKey) {
+function currentLayerStatusForTenant(tenantAlias) {
+  const status = readJson(CURRENT_LAYER_STATUS_REPORT, null);
+  if (!status) return null;
+  const tenantStatus = status.tenantStatuses?.find((tenant) => tenant.tenant === tenantAlias) ?? null;
+  const graphStatus = status.layer3?.graph?.perTenant?.find((tenant) => tenant.tenant === tenantAlias) ?? null;
+  return { graphStatus, tenantStatus };
+}
+
+function localProofForTenant(tenantKey, tenantAlias) {
+  const currentStatus = currentLayerStatusForTenant(tenantAlias);
+  if (currentStatus?.tenantStatus) {
+    return {
+      layer2ProfilesThatWouldRun: currentStatus.tenantStatus.layer2WouldRunRows ?? 0,
+      layer2DimensionFailures: currentStatus.tenantStatus.layer2DryRunFailures ?? null,
+      graphRelationshipCandidates: currentStatus.graphStatus?.candidateEdges ?? 0,
+      graphQuarantinedRelationships: currentStatus.graphStatus?.quarantinedEdges ?? null,
+      proofArtifactTypes: ['layer_refresh_status_current_main_v2'],
+    };
+  }
+
   const layerSummary = readJson(`${LAYER_REPORT_DIR}/summary.json`, null);
   const graphSummary = readJson(`${GRAPH_REPORT_DIR}/summary.json`, null);
   const layerTenant = layerSummary?.perTenant?.[tenantKey] ?? null;
   const graphTenant = graphSummary?.perTenant?.[tenantKey] ?? null;
+  const proofArtifacts = [
+    {
+      type: 'layer2_adapter_reconciliation',
+      file: `${LAYER_REPORT_DIR}/${tenantKey}/layer2-adapter-reconciliation.csv`,
+    },
+    {
+      type: 'layer3_canonical_refresh_summary',
+      file: `${LAYER_REPORT_DIR}/${tenantKey}/layer3-canonical-refresh-summary.json`,
+    },
+    {
+      type: 'graph_reconciliation_summary',
+      file: `${GRAPH_REPORT_DIR}/${tenantKey}/graph-reconciliation-summary.json`,
+    },
+  ].filter((artifact) => fs.existsSync(abs(artifact.file)));
   return {
     layer2ProfilesThatWouldRun: layerTenant?.layer2?.profilesThatWouldRun ?? 0,
     layer2DimensionFailures: layerTenant?.layer2?.dimensionFailures ?? null,
     graphRelationshipCandidates: graphTenant?.relationshipCandidates ?? 0,
     graphQuarantinedRelationships: graphTenant?.quarantinedRelationships ?? null,
-    proofArtifacts: [
-      `${LAYER_REPORT_DIR}/${tenantKey}/layer2-adapter-reconciliation.csv`,
-      `${LAYER_REPORT_DIR}/${tenantKey}/layer3-canonical-refresh-summary.json`,
-      `${GRAPH_REPORT_DIR}/${tenantKey}/graph-reconciliation-summary.json`,
-    ].filter((file) => fs.existsSync(abs(file))),
+    proofArtifactTypes: proofArtifacts.map((artifact) => artifact.type),
   };
 }
 
-function buildAvaReadinessRow({ tenantKey, surface, localProof }) {
+function buildAvaReadinessRow({ includeTenantKey = false, tenantAlias, tenantKey, surface, localProof }) {
   const blockers = [
     'data-plane loaded readback not captured in this lane',
     'Azure-native index proof not captured in this lane',
@@ -100,10 +137,11 @@ function buildAvaReadinessRow({ tenantKey, surface, localProof }) {
   if (Number(localProof.layer2DimensionFailures ?? 0) > 0) blockers.push('Layer 2 dimension dry-run failures remain');
   if (Number(localProof.graphQuarantinedRelationships ?? 0) > 0) blockers.push('graph relationship quarantine remains');
 
-  return {
-    tenantKey,
+  const row = {
+    tenant: tenantAlias,
     surface,
-    sourceEvidenceState: localProof.proofArtifacts.length > 0 ? READINESS_STATES.verified : READINESS_STATES.notVerified,
+    sourceEvidenceState:
+      localProof.proofArtifactTypes.length > 0 ? READINESS_STATES.verified : READINESS_STATES.notVerified,
     loadedState: READINESS_STATES.notVerified,
     indexedState: READINESS_STATES.notVerified,
     retrievableState: READINESS_STATES.notVerified,
@@ -114,18 +152,34 @@ function buildAvaReadinessRow({ tenantKey, surface, localProof }) {
     layer2DimensionFailures: localProof.layer2DimensionFailures ?? '',
     graphRelationshipCandidates: localProof.graphRelationshipCandidates,
     graphQuarantinedRelationships: localProof.graphQuarantinedRelationships ?? '',
-    proofArtifacts: localProof.proofArtifacts.join('; '),
+    proofArtifactTypes: localProof.proofArtifactTypes.join('; '),
     blockers: blockers.join('; '),
     mode: NOT_ACTIVE,
   };
+  if (includeTenantKey) row.tenantKey = tenantKey;
+  return row;
 }
 
-function buildAvaReadinessLedger(tenants) {
+function anonymizeTenants(tenantKeys) {
+  return new Map(tenantKeys.map((tenantKey, index) => [tenantKey, `tenant-${String(index + 1).padStart(2, '0')}`]));
+}
+
+function buildAvaReadinessLedger(tenants, options = {}) {
+  const tenantAliases = anonymizeTenants(tenants.map((tenant) => tenant.tenantKey));
   const rows = [];
   for (const tenant of tenants) {
-    const localProof = localProofForTenant(tenant.tenantKey);
+    const tenantAlias = tenantAliases.get(tenant.tenantKey);
+    const localProof = localProofForTenant(tenant.tenantKey, tenantAlias);
     for (const surface of AVA_SURFACES) {
-      rows.push(buildAvaReadinessRow({ tenantKey: tenant.tenantKey, surface, localProof }));
+      rows.push(
+        buildAvaReadinessRow({
+          includeTenantKey: options.includeTenantKeys === true,
+          tenantAlias,
+          tenantKey: tenant.tenantKey,
+          surface,
+          localProof,
+        }),
+      );
     }
   }
   return rows;
@@ -133,7 +187,7 @@ function buildAvaReadinessLedger(tenants) {
 
 function summarize(rows) {
   return {
-    tenants: [...new Set(rows.map((row) => row.tenantKey))].length,
+    tenants: [...new Set(rows.map((row) => row.tenant))].length,
     surfaces: AVA_SURFACES.length,
     rows: rows.length,
     loadedVerified: rows.filter((row) => row.loadedState === READINESS_STATES.verified).length,
@@ -144,19 +198,42 @@ function summarize(rows) {
   };
 }
 
+function refusalTests() {
+  return [
+    {
+      promptClass: 'conflict_metric',
+      proofState: READINESS_STATES.notVerified,
+      expectedBehavior: 'refuse_or_explain_not_available_until_fact_authority_decision_exists',
+      runtimeTestRun: false,
+    },
+    {
+      promptClass: 'undeclared_segment',
+      proofState: READINESS_STATES.notVerified,
+      expectedBehavior: 'refuse_or_explain_not_available_until_source_contract_decision_exists',
+      runtimeTestRun: false,
+    },
+  ];
+}
+
 async function main() {
   const args = parseArgs(process.argv);
   const tenants = readActiveTenants(args.tenants);
   if (tenants.length === 0) throw new Error(`No active tenants matched: ${args.tenants.join(', ')}`);
-  const rows = buildAvaReadinessLedger(tenants);
+  const rows = buildAvaReadinessLedger(tenants, { includeTenantKeys: args.includeTenantKeys });
   const outDir = abs(args.out);
   const summary = {
     generatedAt: new Date().toISOString(),
     generatedBy: 'scripts/audit/ava-readiness-ledger.mjs',
+    sourceSha: args.sourceSha || 'not-specified',
     mode: NOT_ACTIVE,
+    publicDisclosure:
+      args.includeTenantKeys === true
+        ? 'Tenant keys included by explicit operator flag.'
+        : 'Tenant identifiers are anonymized. Proof paths are summarized by artifact type.',
     truthRule: 'loaded, indexed, retrievable, and cited are independent states; agent_ready requires all proof gates.',
     summary: summarize(rows),
-    tenants: tenants.map((tenant) => tenant.tenantKey),
+    tenantAliases: [...new Set(rows.map((row) => row.tenant))],
+    refusalTests: refusalTests(),
   };
   writeJson(path.join(outDir, 'summary.json'), summary);
   writeCsv(path.join(outDir, 'ava-readiness-ledger.csv'), Object.keys(rows[0]), rows);
@@ -173,4 +250,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   });
 }
 
-export { AVA_SURFACES, READINESS_STATES, buildAvaReadinessLedger, buildAvaReadinessRow, summarize };
+export {
+  AVA_SURFACES,
+  READINESS_STATES,
+  anonymizeTenants,
+  buildAvaReadinessLedger,
+  buildAvaReadinessRow,
+  refusalTests,
+  summarize,
+};
