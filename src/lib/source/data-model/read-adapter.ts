@@ -1228,7 +1228,7 @@ function approvalRequestFromRow(
     approvalRequestId: textValue(row.approval_request_id) ?? "",
     caseId: textValue(row.optimization_case_id) ?? "",
     opportunityId: textValue(row.opportunity_id),
-    approvalType: textValue(row.approval_type) ?? "optimization_approval",
+    approvalType: normalizeOptimizationApprovalType(row.approval_type),
     approvalState:
       readLiteral(row.approval_state, [
         "pending",
@@ -1240,6 +1240,14 @@ function approvalRequestFromRow(
     requestedAt: textValue(row.requested_at),
     decisions: decisionRows.map(approvalDecisionFromRow),
   };
+}
+
+function normalizeOptimizationApprovalType(value: unknown): string {
+  const approvalType = textValue(value) ?? "optimization_approval";
+  if (approvalType === "vendor_outreach") {
+    return "vendor_outreach_strategy";
+  }
+  return approvalType;
 }
 
 function approvalDecisionFromRow(
