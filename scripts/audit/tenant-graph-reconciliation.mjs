@@ -306,45 +306,93 @@ function nodeLookupKey(objectType, name) {
   return `${objectType}:${slug(name)}`;
 }
 
-function evaluateRelationshipRow({ tenantKey, row, rowNumber, nodeIndex, normalizeRelationshipType }) {
-  const reasons = [];
-  if (row.tenant_key !== tenantKey) reasons.push('tenant-key-mismatch');
-  for (const field of ['from_object_type', 'from_object_name', 'relationship_type', 'to_object_type', 'to_object_name']) {
-    if (isBlank(row[field])) reasons.push(`missing-${field.replaceAll('_', '-')}`);
+function relationshipToken(value) {
+  return slug(value).replace(/-/g, '_');
+}
+
+function systemOwnerKey(row) {
+  return `${objectTypeForEndpoint(row.from_object_type)}:${slug(row.from_object_name)}`;
+}
+
+function buildSystemOwnerIndex(rows) {
+  const owners = new Map();
+  for (const row of rows) {
+    if (
+      objectTypeForEndpoint(row.from_object_type) !== 'application_system' ||
+      relationshipToken(row.relationship_type) !== 'owned_by' ||
+      objectTypeForEndpoint(row.to_object_type) !== 'organization_unit' ||
+      isBlank(row.to_object_name)
+    ) {
+      continue;
+    }
+    owners.set(systemOwnerKey(row), {
+      name: row.to_object_name,
+      id: row.to_object_id ?? '',
+    });
   }
-  if (isBlank(row.evidence_basis) && isBlank(row.evidence_id) && isBlank(row.source_file)) {
+  return owners;
+}
+
+function normalizeRelationshipEndpoint({ row, nodeIndex, systemOwners }) {
+  if (
+    objectTypeForEndpoint(row.from_object_type) !== 'application_system' ||
+    relationshipToken(row.relationship_type) !== 'technology_owned_by' ||
+    objectTypeForEndpoint(row.to_object_type) !== 'workforce_role'
+  ) {
+    return row;
+  }
+  const targetIsRole = nodeIndex.has(nodeLookupKey('workforce_role', row.to_object_name));
+  const targetIsFunction = nodeIndex.has(nodeLookupKey('business_function', row.to_object_name));
+  const owner = systemOwners.get(systemOwnerKey(row));
+  if (targetIsRole || !targetIsFunction || !owner) return row;
+  return {
+    ...row,
+    to_object_type: 'org_unit',
+    to_object_name: owner.name,
+    to_object_id: owner.id,
+  };
+}
+
+function evaluateRelationshipRow({ tenantKey, row, rowNumber, nodeIndex, normalizeRelationshipType, systemOwners }) {
+  const normalizedRow = normalizeRelationshipEndpoint({ row, nodeIndex, systemOwners });
+  const reasons = [];
+  if (normalizedRow.tenant_key !== tenantKey) reasons.push('tenant-key-mismatch');
+  for (const field of ['from_object_type', 'from_object_name', 'relationship_type', 'to_object_type', 'to_object_name']) {
+    if (isBlank(normalizedRow[field])) reasons.push(`missing-${field.replaceAll('_', '-')}`);
+  }
+  if (isBlank(normalizedRow.evidence_basis) && isBlank(normalizedRow.evidence_id) && isBlank(normalizedRow.source_file)) {
     reasons.push('missing-evidence-basis');
   }
 
-  const fromObjectType = objectTypeForEndpoint(row.from_object_type);
-  const toObjectType = objectTypeForEndpoint(row.to_object_type);
-  if (!fromObjectType && !isBlank(row.from_object_type)) reasons.push(`unknown-from-object-type:${row.from_object_type}`);
-  if (!toObjectType && !isBlank(row.to_object_type)) reasons.push(`unknown-to-object-type:${row.to_object_type}`);
+  const fromObjectType = objectTypeForEndpoint(normalizedRow.from_object_type);
+  const toObjectType = objectTypeForEndpoint(normalizedRow.to_object_type);
+  if (!fromObjectType && !isBlank(normalizedRow.from_object_type)) reasons.push(`unknown-from-object-type:${normalizedRow.from_object_type}`);
+  if (!toObjectType && !isBlank(normalizedRow.to_object_type)) reasons.push(`unknown-to-object-type:${normalizedRow.to_object_type}`);
 
-  const relationship = normalizeRelationshipType(row.relationship_type ?? '');
-  if (!relationship && !isBlank(row.relationship_type)) reasons.push(`unknown-relationship-type:${row.relationship_type}`);
+  const relationship = normalizeRelationshipType(normalizedRow.relationship_type ?? '');
+  if (!relationship && !isBlank(normalizedRow.relationship_type)) reasons.push(`unknown-relationship-type:${normalizedRow.relationship_type}`);
 
-  const fromNode = fromObjectType ? nodeIndex.get(nodeLookupKey(fromObjectType, row.from_object_name)) : undefined;
-  const toNode = toObjectType ? nodeIndex.get(nodeLookupKey(toObjectType, row.to_object_name)) : undefined;
-  if (fromObjectType && !fromNode && !isBlank(row.from_object_name)) reasons.push('unresolved-from-node');
-  if (toObjectType && !toNode && !isBlank(row.to_object_name)) reasons.push('unresolved-to-node');
+  const fromNode = fromObjectType ? nodeIndex.get(nodeLookupKey(fromObjectType, normalizedRow.from_object_name)) : undefined;
+  const toNode = toObjectType ? nodeIndex.get(nodeLookupKey(toObjectType, normalizedRow.to_object_name)) : undefined;
+  if (fromObjectType && !fromNode && !isBlank(normalizedRow.from_object_name)) reasons.push('unresolved-from-node');
+  if (toObjectType && !toNode && !isBlank(normalizedRow.to_object_name)) reasons.push('unresolved-to-node');
 
-  const relationshipId = row.record_id || `${tenantKey}:relationship:${rowNumber}`;
+  const relationshipId = normalizedRow.record_id || `${tenantKey}:relationship:${rowNumber}`;
   const base = {
     tenantKey,
     relationshipId,
     sourceRowNumber: rowNumber,
-    rawRelationshipType: row.relationship_type ?? '',
+    rawRelationshipType: normalizedRow.relationship_type ?? '',
     normalizedRelationshipType: relationship?.relationshipType ?? '',
     fromObjectType: fromObjectType ?? '',
-    fromObjectName: row.from_object_name ?? '',
+    fromObjectName: normalizedRow.from_object_name ?? '',
     fromNodeId: fromNode?.nodeId ?? '',
     toObjectType: toObjectType ?? '',
-    toObjectName: row.to_object_name ?? '',
+    toObjectName: normalizedRow.to_object_name ?? '',
     toNodeId: toNode?.nodeId ?? '',
-    evidenceBasis: row.evidence_basis || row.evidence_id || row.source_file || '',
-    confidence: row.confidence ?? '',
-    knownGaps: row.known_gaps ?? '',
+    evidenceBasis: normalizedRow.evidence_basis || normalizedRow.evidence_id || normalizedRow.source_file || '',
+    confidence: normalizedRow.confidence ?? '',
+    knownGaps: normalizedRow.known_gaps ?? '',
   };
 
   if (reasons.length > 0) {
@@ -510,6 +558,7 @@ async function reconcileTenant({ tenant, outDir, contracts, semanticAliases = []
     const parsed = readCsv(relationshipPath);
     relationshipRows = parsed.rows.length;
     parseErrors.push(...parsed.errors.map((error) => error.message));
+    const systemOwners = buildSystemOwnerIndex(parsed.rows);
     parsed.rows.forEach((row, index) => {
       const result = evaluateRelationshipRow({
         tenantKey: tenant.tenantKey,
@@ -517,6 +566,7 @@ async function reconcileTenant({ tenant, outDir, contracts, semanticAliases = []
         rowNumber: index + 2,
         nodeIndex: nodeIndex.byObjectAndName,
         normalizeRelationshipType: contracts.normalizeRelationshipType,
+        systemOwners,
       });
       if (result.candidate) candidates.push(result.candidate);
       if (result.quarantine) quarantine.push(result.quarantine);
