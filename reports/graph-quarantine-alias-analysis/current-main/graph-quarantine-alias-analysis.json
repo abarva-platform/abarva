@@ -1,0 +1,134 @@
+{
+  "generatedAt": "2026-08-15T04:26:35.936Z",
+  "generatedBy": "scripts/audit/build-graph-quarantine-alias-analysis.mjs",
+  "sourceSha": "6ac668f96e79debb431bb1b46f798f7f72a41005",
+  "graphGeneratedAt": "2026-08-15T04:26:26.995Z",
+  "mode": "report_only_no_semantic_alias_activation_no_data_mutation_no_graph_materialization",
+  "publicDisclosure": "Tenant identifiers are anonymized. Endpoint names, node names, source values, and source paths are omitted.",
+  "evidence": {
+    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-graph-alias-analysis-6ac668f.uv9Dzh",
+    "graphQuarantineAliasAnalysis": "npm run audit:graph-quarantine-alias-analysis -- --graph-dir /tmp/nexus-graph-alias-analysis-6ac668f.uv9Dzh --out-dir reports/graph-quarantine-alias-analysis/current-main --source-sha 6ac668f96e79debb431bb1b46f798f7f72a41005"
+  },
+  "graphTotals": {
+    "relationshipRows": 9633,
+    "relationshipCandidates": 4454,
+    "quarantinedRelationships": 5179,
+    "graphTablesWritten": false,
+    "productReadModelsUpdated": false
+  },
+  "totals": {
+    "unresolvedEndpointsAnalyzed": 6153,
+    "rowsWithUnresolvedEndpoints": 4660,
+    "codeOnlyAliasCandidateEndpoints": 50,
+    "fullyCodeOnlyCandidateRows": 50,
+    "sourceDataGatedEndpoints": 6103,
+    "ambiguousAliasCandidateEndpoints": 0
+  },
+  "endpointClassBreakdown": [
+    {
+      "opportunityClass": "source_data_dimension_or_edge_retirement_gate",
+      "count": 6103,
+      "proposedDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+    },
+    {
+      "opportunityClass": "code_only_acronym_alias_candidate",
+      "count": 50,
+      "proposedDisposition": "semantic-identity-alias-activation-gated"
+    }
+  ],
+  "rowClassBreakdown": [
+    {
+      "rowOpportunityClass": "source_data_dimension_or_edge_retirement_gate",
+      "count": 4610
+    },
+    {
+      "rowOpportunityClass": "all_unresolved_endpoints_code_only_candidate",
+      "count": 50
+    }
+  ],
+  "perTenant": [
+    {
+      "tenant": "tenant-01",
+      "unresolvedEndpointsAnalyzed": 1703,
+      "codeOnlyAliasCandidateEndpoints": 0,
+      "sourceDataGatedEndpoints": 1703,
+      "fullyCodeOnlyCandidateRows": 0,
+      "unresolvedEndpointRatePercent": 99.42
+    },
+    {
+      "tenant": "tenant-02",
+      "unresolvedEndpointsAnalyzed": 760,
+      "codeOnlyAliasCandidateEndpoints": 0,
+      "sourceDataGatedEndpoints": 760,
+      "fullyCodeOnlyCandidateRows": 0,
+      "unresolvedEndpointRatePercent": 200
+    },
+    {
+      "tenant": "tenant-03",
+      "unresolvedEndpointsAnalyzed": 840,
+      "codeOnlyAliasCandidateEndpoints": 0,
+      "sourceDataGatedEndpoints": 840,
+      "fullyCodeOnlyCandidateRows": 0,
+      "unresolvedEndpointRatePercent": 36.49
+    },
+    {
+      "tenant": "tenant-04",
+      "unresolvedEndpointsAnalyzed": 364,
+      "codeOnlyAliasCandidateEndpoints": 0,
+      "sourceDataGatedEndpoints": 364,
+      "fullyCodeOnlyCandidateRows": 0,
+      "unresolvedEndpointRatePercent": 100
+    },
+    {
+      "tenant": "tenant-05",
+      "unresolvedEndpointsAnalyzed": 0,
+      "codeOnlyAliasCandidateEndpoints": 0,
+      "sourceDataGatedEndpoints": 0,
+      "fullyCodeOnlyCandidateRows": 0,
+      "unresolvedEndpointRatePercent": 0
+    },
+    {
+      "tenant": "tenant-06",
+      "unresolvedEndpointsAnalyzed": 2074,
+      "codeOnlyAliasCandidateEndpoints": 0,
+      "sourceDataGatedEndpoints": 2074,
+      "fullyCodeOnlyCandidateRows": 0,
+      "unresolvedEndpointRatePercent": 200
+    },
+    {
+      "tenant": "tenant-07",
+      "unresolvedEndpointsAnalyzed": 412,
+      "codeOnlyAliasCandidateEndpoints": 50,
+      "sourceDataGatedEndpoints": 362,
+      "fullyCodeOnlyCandidateRows": 50,
+      "unresolvedEndpointRatePercent": 12.42
+    }
+  ],
+  "acceptance": {
+    "semanticIdentityAliasActivationPerformed": false,
+    "tenantDataMutated": false,
+    "graphTablesWritten": false,
+    "productReadModelsUpdated": false,
+    "rowLevelNamesOmitted": true
+  },
+  "nextPrSizedSafeCodeSlice": {
+    "title": "Evaluate acronym alias candidates behind an explicit semantic-identity gate",
+    "scope": "Add fault-injected tests for unique acronym alias matching without changing graph materialization, registry activation, tenant data, or product read models.",
+    "hardGatesBeforeActivation": [
+      "semantic identity alias activation",
+      "registry activation",
+      "graph table materialization",
+      "data-plane load/write",
+      "Layer 4 projection refresh"
+    ]
+  },
+  "gatesLeftClosed": [
+    "No semantic identity alias activation.",
+    "No tenant data mutation, move, deletion, or generated prose.",
+    "No Azure/Postgres write or data-plane load.",
+    "No registry/canonical store activation.",
+    "No graph table materialization.",
+    "No Layer 4 projection or product runtime refresh.",
+    "No live-client truth claim."
+  ]
+}
