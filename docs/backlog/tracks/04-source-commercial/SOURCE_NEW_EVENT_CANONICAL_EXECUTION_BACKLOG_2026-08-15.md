@@ -45,7 +45,14 @@ The operating question for every slice is simple:
 
 ### Open
 
-1. Excluded active-client proof repair
+1. `SRC57` New Event journey smoke expansion
+   - Status: in progress.
+   - Scope: testing-only expansion of the active Source canvas proof surface
+     across all 11 canonical New Event stages.
+   - Acceptance: local smoke, Source layout CI, release check, PR, and separate
+     deploy/runtime evidence before any live product claim.
+
+2. Excluded active-client proof repair
    - Backlog ID: `SRC-PROOF-002`.
    - Status: open hard-gated follow-up.
    - Required action: classify, preview, apply, and independently read back any
@@ -53,9 +60,9 @@ The operating question for every slice is simple:
    - Hard gate: do not mutate production auth/data membership without explicit
      operator classification, command preview, and readback proof.
 
-2. Backlog consolidation
+3. Backlog consolidation
    - Backlog ID: `SRC-BACKLOG-001`.
-   - Status: this document.
+   - Status: closed by `#6368`.
    - Acceptance: one ranked backlog with dependencies, owner lane, proof bar,
      demo impact, and explicit exclusions.
 
