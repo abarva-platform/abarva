@@ -19,6 +19,12 @@ This follow-up hardens the report after live readback showed four configured Sou
 failing with a SQL parameter-count error. The report now passes only the parameter values each source
 query actually uses and fails closed when any configured Source read errors remain.
 
+A second live readback showed the report was still over-strict in two places: one read model counted
+vendor portfolio rows while labeling the metric as distinct vendors, and a contract-row read model
+was being compared against a contract-family Cube projection for committed value and auto-renew
+counts. This follow-up makes the vendor count query match its declared basis and records the
+row-versus-family splits as explicit basis differences.
+
 ## Layer Impact
 
 - Release lane: `global-control-lane`.
@@ -50,6 +56,9 @@ query actually uses and fails closed when any configured Source read errors rema
 - PASS: `node --test scripts/source/__tests__/source-substrate-lineage-report.test.mjs`
 - PASS: Regression coverage confirms one-parameter Source/Cube queries no longer receive the
   supplemental-vendor parameter intended only for `source.contract_360`.
+- PASS: Regression coverage confirms vendor portfolio counts use distinct vendor references and
+  contract-row versus contract-family committed-value or auto-renew differences are declared basis
+  differences, not false conflicts.
 - PENDING: Run `npm run audit:source-substrate-lineage -- --tenant skyharbor_global` from the
   deployed ACA runtime after merge, because the configured Azure/Postgres hostname does not resolve
   from the local shell.
