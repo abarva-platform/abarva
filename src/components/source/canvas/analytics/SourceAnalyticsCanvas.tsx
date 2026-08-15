@@ -1285,6 +1285,8 @@ type StageEvidenceRequirementRow = {
 };
 
 type StageOperatingStatus = {
+  stageKey: SourceStageKey;
+  stageLabel: string;
   simpleScreen: SimpleStageScreenView;
   requiredReady: number;
   requiredTotal: number;
@@ -1341,6 +1343,8 @@ function buildStageOperatingStatus(
     requiredRows.length > 0 && requiredReady === requiredRows.length;
 
   return {
+    stageKey: view.stage.key,
+    stageLabel: view.stage.label,
     simpleScreen,
     requiredReady,
     requiredTotal: requiredRows.length,
@@ -1367,7 +1371,12 @@ function StageOperatingStatusPanel({
     status.requiredTotal > 0 && status.requiredReady === status.requiredTotal;
   return (
     <div
-      data-testid="source-scope-operating-status"
+      data-testid={
+        status.stageKey === "scope"
+          ? "source-scope-operating-status"
+          : "source-stage-operating-status"
+      }
+      data-stage-key={status.stageKey}
       style={{
         border: `1px solid ${allRequiredReady ? "rgba(17, 120, 84, 0.28)" : ANALYTICS.LINE}`,
         borderRadius: 8,
@@ -1391,7 +1400,7 @@ function StageOperatingStatusPanel({
       >
         <div style={{ minWidth: 0 }}>
           <strong style={{ color: ANALYTICS.INK, fontSize: 13 }}>
-            Scope gate readiness
+            {status.stageLabel} gate readiness
           </strong>
           <div
             style={{
@@ -1533,7 +1542,7 @@ function FocusedWorkPanel({
       )
     : null;
   const stageOperatingStatus =
-    view.stage.key === "scope"
+    view.stage.key === "strategy" || view.stage.key === "scope"
       ? buildStageOperatingStatus(view, evidenceStates)
       : null;
 
@@ -1842,7 +1851,7 @@ function FocusedWorkPanel({
                 {activeStep.help}
               </p>
 
-              {view.stage.key === "scope" && stageOperatingStatus ? (
+              {stageOperatingStatus ? (
                 <StageOperatingStatusPanel status={stageOperatingStatus} />
               ) : null}
 

@@ -192,4 +192,23 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
       screen.queryByTestId("source-shell-v2-guidebook"),
     ).not.toBeInTheDocument();
   });
+
+  it("surfaces Strategy readiness in the active task area without adding competing panels", () => {
+    renderStage("strategy");
+
+    const readiness = screen.getByTestId("source-stage-operating-status");
+    expect(readiness).toHaveTextContent("Strategy gate readiness");
+    expect(readiness).toHaveTextContent("Sourcing Strategy Memo unlocks");
+    expect(readiness).toHaveTextContent("Issue the Scope");
+    expect(readiness).toHaveTextContent("Load required evidence");
+    expect(readiness).toHaveTextContent("6 canonical asks");
+
+    expect(screen.getByTestId("source-shell-v2-steps")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("source-shell-v2-files"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("source-shell-v2-intelligence"),
+    ).not.toBeInTheDocument();
+  });
 });

@@ -54,19 +54,41 @@ The operating question for every slice is simple:
    - Result: the active Source canvas now has an automated 11-stage smoke
      harness before feature-depth slices land.
 
-### Open
-
-1. `SRC58` + `SRC59` Scope reference implementation
-   - Status: candidate in branch `codex/src58-scope-reference-20260815`.
+4. `SRC58` + `SRC59` Scope reference implementation
+   - PR: `#6379`.
+   - Merge commit: `d2c840a09c9420d2783c549653b00166049aedc7`.
    - Scope: Scope-only live `SourceAnalyticsCanvas` operating model: simpler
      local substeps, canonical required/optional evidence readiness, done checks,
      and one forward approval action.
-   - Local proof: focused Jest and ESLint passed for shell grouping, Scope
-     approval workflow, and 11-stage smoke coverage.
-   - Pending proof: PR, CI, ACA deploy, runtime invariant, and signed-in Scope
-     browser/DOM proof before any live product claim.
+   - Result: Scope is the reference implementation for generalizing the clean
+     stage operating model to the other 10 canonical New Event stages.
 
-2. Excluded active-client proof repair
+### Open
+
+1. `SRC61` Strategy operating-model generalization
+   - Status: candidate in branch `codex/src61-strategy-generalize-20260815`.
+   - Scope: apply the Scope reference pattern to Strategy without inventing
+     fake upload tasks: the left tree names the mandate, the active canvas shows
+     Strategy gate readiness from the canonical evidence registry, and the
+     next action stays in the load-evidence state until required evidence is
+     ready.
+   - Local proof: focused Jest, 11-stage smoke, shell layout harness, focused
+     ESLint, typecheck, diff check, and release check passed.
+   - Pending proof: PR, CI, ACA deploy, runtime invariant, and signed-in
+     Strategy browser/DOM proof before any live product claim.
+
+2. `SRC62`-`SRC70` remaining stage operating-model generalization
+   - Status: reserved, one PR per stage after `SRC61` closes.
+   - Stage IDs: `SRC62` RFP, `SRC63` Responses, `SRC64` Evaluation, `SRC65`
+     Pricing, `SRC66` BAFO, `SRC67` Executive Decision, `SRC68` Selection,
+     `SRC69` Transition, `SRC70` Value.
+   - Caveat: Selection and Value have no existing bespoke component in either
+     active canvas; those two are new UI surfaces and require extra scrutiny.
+   - Pending proof: each stage gets its own local smoke, PR checks, ACA deploy,
+     runtime invariant, and signed-in browser/DOM proof before the next stage
+     begins.
+
+3. Excluded active-client proof repair
    - Backlog ID: `SRC-PROOF-002`.
    - Status: open hard-gated follow-up.
    - Required action: classify, preview, apply, and independently read back any
@@ -74,7 +96,7 @@ The operating question for every slice is simple:
    - Hard gate: do not mutate production auth/data membership without explicit
      operator classification, command preview, and readback proof.
 
-3. Backlog consolidation
+4. Backlog consolidation
    - Backlog ID: `SRC-BACKLOG-001`.
    - Status: closed by `#6368`.
    - Acceptance: one ranked backlog with dependencies, owner lane, proof bar,
@@ -95,18 +117,19 @@ The operating question for every slice is simple:
 
 ## Ranked Execution Backlog
 
-| Rank | ID | Slice | Demo impact | Owner lane | Dependencies | Proof bar |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | `SRC57` | Expand the 11-stage signed-in smoke harness | Very high | QA/deploy | Current Source shell | Local smoke, deploy, runtime invariant, signed-in screenshots/DOM proof for affected stages |
-| 2 | `SRC58` + `SRC59` | Implement the clean stage operating model and evidence requirement registry | Very high | UX workflow + Evidence | `SRC48`, `SRC57` | Stage rail, local substeps, required/optional evidence rows, done checks, disabled/enabled forward action |
-| 3 | `SRC60` + `SRC49` | Build vendor response package readiness and parser substrate | Highest | Evidence + Response intelligence | Evidence registry, governed context policy | Long proposal package contract, vendor isolation tests, parser/readiness states, no raw unvalidated context to models |
-| 4 | `SRC50` | Evidence-bound first-pass evaluation scoring | Highest | Response intelligence | `SRC49`, rubric contract | Score eligibility, citations, holds, evaluator override, no uncited score claims |
-| 5 | `SRC51` | Pricing normalization and commercial trap engine | Highest | Commercial leverage | `SRC49`, accepted scope baseline | Comparable TCO, assumptions ledger, trap log, workbook citation where available |
-| 6 | `SRC52` | Clarification and BAFO squeeze workflow | Very high | Commercial leverage | `SRC50`, `SRC51` | Vendor-specific asks, concession ledger, human dispatch gate, value states separated |
-| 7 | `SRC53` | Durable approval gate and evidence acceptance | High | Governance | `SRC48`, `SRC49` | Persisted acceptance, approver, rationale, exceptions, downstream reopen behavior; migration/RLS proof if schema changes |
-| 8 | `SRC54` + `SRC55` | Guidebook operating system and client-ready artifacts | High | Guidebook/artifacts | `SRC48`, `SRC49`, `SRC53` | Guidebook coverage, accepted-evidence artifact generation, DOCX/PDF visual QA where exports are produced |
-| 9 | `SRC56` | Transition-to-Value realization proof | High | Governance + Value | `SRC52`, `SRC53`, `SRC55` | Committed vs realized value ledger, finance/evidence status, no booked savings without accepted proof |
-| 10 | `SRC47` | Operator-safe event archive and stale fact cleanup | Medium | Governance hygiene | Operator scope approval | Pre/post fact counts, stale flags, blob archive proof, no canonical vendor/contract mutation |
+| Rank | ID                | Slice                                                                       | Demo impact | Owner lane                       | Dependencies                               | Proof bar                                                                                                                |
+| ---- | ----------------- | --------------------------------------------------------------------------- | ----------- | -------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| 1    | `SRC57`           | Expand the 11-stage signed-in smoke harness                                 | Very high   | QA/deploy                        | Current Source shell                       | Local smoke, deploy, runtime invariant, signed-in screenshots/DOM proof for affected stages                              |
+| 2    | `SRC58` + `SRC59` | Implement the clean stage operating model and evidence requirement registry | Very high   | UX workflow + Evidence           | `SRC48`, `SRC57`                           | Stage rail, local substeps, required/optional evidence rows, done checks, disabled/enabled forward action                |
+| 3    | `SRC61`-`SRC70`   | Generalize the clean operating model to the remaining New Event stages      | Very high   | UX workflow + QA/deploy          | `SRC57`, `SRC58`, `SRC59`                  | One stage per PR: local smoke, PR checks, ACA deploy, runtime invariant, signed-in stage DOM proof                       |
+| 4    | `SRC60` + `SRC49` | Build vendor response package readiness and parser substrate                | Highest     | Evidence + Response intelligence | Evidence registry, governed context policy | Long proposal package contract, vendor isolation tests, parser/readiness states, no raw unvalidated context to models    |
+| 5    | `SRC50`           | Evidence-bound first-pass evaluation scoring                                | Highest     | Response intelligence            | `SRC49`, rubric contract                   | Score eligibility, citations, holds, evaluator override, no uncited score claims                                         |
+| 6    | `SRC51`           | Pricing normalization and commercial trap engine                            | Highest     | Commercial leverage              | `SRC49`, accepted scope baseline           | Comparable TCO, assumptions ledger, trap log, workbook citation where available                                          |
+| 7    | `SRC52`           | Clarification and BAFO squeeze workflow                                     | Very high   | Commercial leverage              | `SRC50`, `SRC51`                           | Vendor-specific asks, concession ledger, human dispatch gate, value states separated                                     |
+| 8    | `SRC53`           | Durable approval gate and evidence acceptance                               | High        | Governance                       | `SRC48`, `SRC49`                           | Persisted acceptance, approver, rationale, exceptions, downstream reopen behavior; migration/RLS proof if schema changes |
+| 9    | `SRC54` + `SRC55` | Guidebook operating system and client-ready artifacts                       | High        | Guidebook/artifacts              | `SRC48`, `SRC49`, `SRC53`                  | Guidebook coverage, accepted-evidence artifact generation, DOCX/PDF visual QA where exports are produced                 |
+| 10   | `SRC56`           | Transition-to-Value realization proof                                       | High        | Governance + Value               | `SRC52`, `SRC53`, `SRC55`                  | Committed vs realized value ledger, finance/evidence status, no booked savings without accepted proof                    |
+| 11   | `SRC47`           | Operator-safe event archive and stale fact cleanup                          | Medium      | Governance hygiene               | Operator scope approval                    | Pre/post fact counts, stale flags, blob archive proof, no canonical vendor/contract mutation                             |
 
 ## Next 8-Step Execution Lane
 
@@ -147,15 +170,15 @@ approved in that slice:
 
 ## Agent Lane Map
 
-| Lane | Primary responsibility | First safe task |
-| --- | --- | --- |
-| A - UX workflow | Stage rail, local substeps, active canvas, continue gate | `SRC57` screenshot targets and `SRC58` Scope reference |
-| B - Evidence | Requirement registry, file states, accepted/done status | `SRC59` stage evidence contract |
-| C - Response intelligence | Proposal packages, completeness, citations, score eligibility | `SRC60` parser-readiness contract |
-| D - Commercial leverage | Pricing normalization, traps, BAFO asks | `SRC51` trap-to-ask model after response evidence is available |
-| E - Governance | Approvals, exceptions, persistence, hard gates | `SRC53` design and migration plan only until approved |
-| F - Guidebook/artifacts | Stage facilitation and client-ready outputs | `SRC54` guidebook coverage matrix |
-| G - QA/deploy | Tests, PR checks, deploy, runtime/crawl/product proof | `SRC57` proof pack and status reporting |
+| Lane                      | Primary responsibility                                        | First safe task                                                |
+| ------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------- |
+| A - UX workflow           | Stage rail, local substeps, active canvas, continue gate      | `SRC57` screenshot targets and `SRC58` Scope reference         |
+| B - Evidence              | Requirement registry, file states, accepted/done status       | `SRC59` stage evidence contract                                |
+| C - Response intelligence | Proposal packages, completeness, citations, score eligibility | `SRC60` parser-readiness contract                              |
+| D - Commercial leverage   | Pricing normalization, traps, BAFO asks                       | `SRC51` trap-to-ask model after response evidence is available |
+| E - Governance            | Approvals, exceptions, persistence, hard gates                | `SRC53` design and migration plan only until approved          |
+| F - Guidebook/artifacts   | Stage facilitation and client-ready outputs                   | `SRC54` guidebook coverage matrix                              |
+| G - QA/deploy             | Tests, PR checks, deploy, runtime/crawl/product proof         | `SRC57` proof pack and status reporting                        |
 
 ## Done Definition
 

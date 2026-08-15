@@ -36,7 +36,11 @@ import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/t
 import type { ArtifactAcceptanceRecord } from "@/lib/source/artifact-acceptances";
 
 export type SourceShellWorkspace =
-  "steps" | "files" | "intelligence" | "approvals" | "guidebook";
+  | "steps"
+  | "files"
+  | "intelligence"
+  | "approvals"
+  | "guidebook";
 
 export type SourceShellEvidenceBasis =
   | "live_fact"
@@ -706,6 +710,7 @@ function toShellStep(
 }
 
 function taskGroupLabel(task: StageTaskView): string {
+  if (task.id.startsWith("strategy.")) return strategyTaskGroupLabel(task);
   if (task.id.startsWith("scope.")) return scopeTaskGroupLabel(task);
 
   const text = `${task.title} ${task.subtitle}`;
@@ -721,6 +726,21 @@ function taskGroupLabel(task: StageTaskView): string {
   if (task.type === "provide") return "Evidence intake";
   if (task.type === "decide") return "Decision work";
   return "Review work";
+}
+
+function strategyTaskGroupLabel(task: StageTaskView): string {
+  switch (task.id) {
+    case "strategy.confirm":
+      return "Mandate";
+    default: {
+      const text = `${task.title} ${task.subtitle}`;
+      if (/sponsor|owner|decision/i.test(text)) return "Sponsor";
+      if (/value|case|business|trigger|why/i.test(text)) {
+        return "Business case";
+      }
+      return "Approval";
+    }
+  }
 }
 
 function scopeTaskGroupLabel(task: StageTaskView): string {
@@ -740,15 +760,18 @@ function scopeTaskGroupLabel(task: StageTaskView): string {
 }
 
 function groupDisplayOrder(label: string): number {
-  const scopeOrder = [
+  const stageOrder = [
+    "Mandate",
+    "Sponsor",
+    "Business case",
     "Work in scope",
     "Work out of scope",
     "Owners",
     "Baseline evidence",
     "Approval",
   ];
-  const scopeIndex = scopeOrder.indexOf(label);
-  return scopeIndex >= 0 ? scopeIndex : 100;
+  const stageIndex = stageOrder.indexOf(label);
+  return stageIndex >= 0 ? stageIndex : 100;
 }
 
 function taskSourceBasis(task: StageTaskView): SourceShellEvidenceBasis {
