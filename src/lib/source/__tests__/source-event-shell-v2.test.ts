@@ -1,4 +1,5 @@
 import { SAMPLE_SCOPE_STAGE } from "@/components/source/canvas/analytics/sample-view-model";
+import { SAMPLE_STRATEGY_STAGE } from "@/components/source/canvas/analytics/strategy-sample-view-model";
 import type { StageAnalyticsView } from "@/components/source/canvas/analytics/view-model";
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
 import {
@@ -315,6 +316,24 @@ describe("buildSourceEventShellView", () => {
     expect(view.stage.groups[3]?.steps[0]).toMatchObject({
       id: "scope.volumetrics",
       status: "active",
+      sourceBasis: "missing",
+    });
+  });
+
+  it("uses a purpose-first Strategy group so the left tree names the mandate", () => {
+    const view = buildSourceEventShellView({
+      event: EVENT,
+      tenantName: "FS Demo",
+      viewedStageKey: "strategy",
+      stageView: SAMPLE_STRATEGY_STAGE as StageAnalyticsView,
+    });
+
+    expect(view.stage.pattern).toBe("intake");
+    expect(view.stage.activeStep?.id).toBe("strategy.confirm");
+    expect(view.stage.groups.map((group) => group.label)).toEqual(["Mandate"]);
+    expect(view.stage.groups[0]?.steps[0]).toMatchObject({
+      id: "strategy.confirm",
+      title: "Confirm strategy & sponsor",
       sourceBasis: "missing",
     });
   });
