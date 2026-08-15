@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-08-14T23:55:03.399Z",
+  "generatedAt": "2026-08-15T02:32:46.019Z",
   "generatedBy": "scripts/audit/build-layer3-canonical-write-plan.mjs",
-  "sourceSha": "274489ef8608a153a672263894b20649f2e67b71",
+  "sourceSha": "dc8f3b7169eca5ca3109c4b9ef1af41f1635a315",
   "mode": "report_only_no_canonical_write_no_registry_activation_no_data_plane_load_no_projection_refresh",
   "publicDisclosure": "Tenant identifiers are anonymized. Source paths, row-level object names, and source values are intentionally omitted.",
   "evidence": {
-    "layerRefresh": "node scripts/audit/tenant-layer-refresh.mjs --tenant all --out /tmp/nexus-layer3-plan.CwOJxC/layer-reconciliation --no-package",
-    "layer3WritePlan": "npm run audit:layer3-canonical-write-plan -- --layer-dir /tmp/nexus-layer3-plan.CwOJxC/layer-reconciliation --out-dir reports/layer3-canonical-write-plan/current-main --source-sha 274489ef8608a153a672263894b20649f2e67b71"
+    "layerRefresh": "node scripts/audit/tenant-layer-refresh.mjs --tenant all --out /tmp/nexus-layer-refresh-current-dc8 --no-package",
+    "layer3WritePlan": "npm run audit:layer3-canonical-write-plan -- --layer-dir /tmp/nexus-layer-refresh-current-dc8 --out-dir reports/layer3-canonical-write-plan/current-main --source-sha dc8f3b7169eca5ca3109c4b9ef1af41f1635a315"
   },
   "summary": {
     "tenantsPlanned": 7,
@@ -104,9 +104,7 @@
       "canonicalDomain": "transformation_ai_portfolio",
       "sourceRows": 530,
       "wouldWriteRecords": 530,
-      "identityAttributes": [
-        "useCaseName"
-      ],
+      "identityAttributes": ["useCaseName"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -116,9 +114,7 @@
       "canonicalDomain": "technology_estate",
       "sourceRows": 1550,
       "wouldWriteRecords": 1550,
-      "identityAttributes": [
-        "systemName"
-      ],
+      "identityAttributes": ["systemName"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -128,9 +124,7 @@
       "canonicalDomain": "enterprise_structure",
       "sourceRows": 400,
       "wouldWriteRecords": 400,
-      "identityAttributes": [
-        "functionName"
-      ],
+      "identityAttributes": ["functionName"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -140,9 +134,7 @@
       "canonicalDomain": "technology_estate",
       "sourceRows": 1726,
       "wouldWriteRecords": 1726,
-      "identityAttributes": [
-        "dataAssetName"
-      ],
+      "identityAttributes": ["dataAssetName"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -152,9 +144,7 @@
       "canonicalDomain": "enterprise_structure",
       "sourceRows": 15,
       "wouldWriteRecords": 15,
-      "identityAttributes": [
-        "entityName"
-      ],
+      "identityAttributes": ["entityName"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -164,9 +154,7 @@
       "canonicalDomain": "intelligence_answering",
       "sourceRows": 593,
       "wouldWriteRecords": 593,
-      "identityAttributes": [
-        "sourceFile"
-      ],
+      "identityAttributes": ["sourceFile"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -176,9 +164,7 @@
       "canonicalDomain": "intelligence_answering",
       "sourceRows": 55,
       "wouldWriteRecords": 55,
-      "identityAttributes": [
-        "lensName"
-      ],
+      "identityAttributes": ["lensName"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -188,9 +174,7 @@
       "canonicalDomain": "intelligence_answering",
       "sourceRows": 315,
       "wouldWriteRecords": 315,
-      "identityAttributes": [
-        "patternName"
-      ],
+      "identityAttributes": ["patternName"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -200,9 +184,7 @@
       "canonicalDomain": "technology_estate",
       "sourceRows": 236,
       "wouldWriteRecords": 236,
-      "identityAttributes": [
-        "platformName"
-      ],
+      "identityAttributes": ["platformName"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -212,9 +194,7 @@
       "canonicalDomain": "vendor_commercial_estate",
       "sourceRows": 262,
       "wouldWriteRecords": 262,
-      "identityAttributes": [
-        "serviceName"
-      ],
+      "identityAttributes": ["serviceName"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -224,9 +204,7 @@
       "canonicalDomain": "tower_outcomes",
       "sourceRows": 846,
       "wouldWriteRecords": 846,
-      "identityAttributes": [
-        "metricName"
-      ],
+      "identityAttributes": ["metricName"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -236,9 +214,7 @@
       "canonicalDomain": "enterprise_structure",
       "sourceRows": 400,
       "wouldWriteRecords": 400,
-      "identityAttributes": [
-        "processName"
-      ],
+      "identityAttributes": ["processName"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -248,9 +224,7 @@
       "canonicalDomain": "enterprise_structure",
       "sourceRows": 841,
       "wouldWriteRecords": 841,
-      "identityAttributes": [
-        "orgUnit"
-      ],
+      "identityAttributes": ["orgUnit"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -260,9 +234,7 @@
       "canonicalDomain": "transformation_ai_portfolio",
       "sourceRows": 531,
       "wouldWriteRecords": 531,
-      "identityAttributes": [
-        "programName"
-      ],
+      "identityAttributes": ["programName"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -272,9 +244,7 @@
       "canonicalDomain": "intelligence_answering",
       "sourceRows": 9633,
       "wouldWriteRecords": 9633,
-      "identityAttributes": [
-        "relationshipType"
-      ],
+      "identityAttributes": ["relationshipType"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -284,9 +254,7 @@
       "canonicalDomain": "risk_control_governance",
       "sourceRows": 736,
       "wouldWriteRecords": 736,
-      "identityAttributes": [
-        "riskOrControlName"
-      ],
+      "identityAttributes": ["riskOrControlName"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -296,9 +264,7 @@
       "canonicalDomain": "financial_value",
       "sourceRows": 515,
       "wouldWriteRecords": 515,
-      "identityAttributes": [
-        "spendCategory"
-      ],
+      "identityAttributes": ["spendCategory"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -308,9 +274,7 @@
       "canonicalDomain": "vendor_commercial_estate",
       "sourceRows": 625,
       "wouldWriteRecords": 625,
-      "identityAttributes": [
-        "vendorName"
-      ],
+      "identityAttributes": ["vendorName"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     },
@@ -320,10 +284,7 @@
       "canonicalDomain": "enterprise_structure",
       "sourceRows": 364,
       "wouldWriteRecords": 364,
-      "identityAttributes": [
-        "personaOrRole",
-        "functionName"
-      ],
+      "identityAttributes": ["personaOrRole", "functionName"],
       "evidenceRequired": "source_file_and_row",
       "canonicalObjectsWritten": 0
     }
@@ -458,9 +419,7 @@
       "sourceClass": "ai_automation_use_cases",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 58,
-      "targetObjectTypes": [
-        "ai_use_case"
-      ],
+      "targetObjectTypes": ["ai_use_case"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 58,
       "wouldEvaluateFactValues": 0,
@@ -473,9 +432,7 @@
       "sourceClass": "applications_systems",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 122,
-      "targetObjectTypes": [
-        "application_system"
-      ],
+      "targetObjectTypes": ["application_system"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 122,
       "wouldEvaluateFactValues": 0,
@@ -488,9 +445,7 @@
       "sourceClass": "data_assets_integrations",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 235,
-      "targetObjectTypes": [
-        "data_asset"
-      ],
+      "targetObjectTypes": ["data_asset"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 235,
       "wouldEvaluateFactValues": 0,
@@ -503,9 +458,7 @@
       "sourceClass": "enterprise_profile",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 1,
-      "targetObjectTypes": [
-        "enterprise_profile"
-      ],
+      "targetObjectTypes": ["enterprise_profile"],
       "factAuthorityKeys": [
         "enterprise_profile.employeeCount",
         "enterprise_profile.revenueUsd"
@@ -521,9 +474,7 @@
       "sourceClass": "evidence_registry",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 9,
-      "targetObjectTypes": [
-        "evidence_source"
-      ],
+      "targetObjectTypes": ["evidence_source"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 9,
       "wouldEvaluateFactValues": 0,
@@ -536,9 +487,7 @@
       "sourceClass": "expert_lenses",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 5,
-      "targetObjectTypes": [
-        "expert_lens"
-      ],
+      "targetObjectTypes": ["expert_lens"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 5,
       "wouldEvaluateFactValues": 0,
@@ -551,9 +500,7 @@
       "sourceClass": "industry_context_patterns",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 107,
-      "targetObjectTypes": [
-        "industry_context_pattern"
-      ],
+      "targetObjectTypes": ["industry_context_pattern"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 107,
       "wouldEvaluateFactValues": 0,
@@ -566,9 +513,7 @@
       "sourceClass": "infrastructure_platforms",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 0,
-      "targetObjectTypes": [
-        "infrastructure_platform"
-      ],
+      "targetObjectTypes": ["infrastructure_platform"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 0,
       "wouldEvaluateFactValues": 0,
@@ -581,12 +526,8 @@
       "sourceClass": "service_scope_managed_services",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 0,
-      "targetObjectTypes": [
-        "managed_service_scope"
-      ],
-      "factAuthorityKeys": [
-        "managed_service_scope.runCostUsd"
-      ],
+      "targetObjectTypes": ["managed_service_scope"],
+      "factAuthorityKeys": ["managed_service_scope.runCostUsd"],
       "wouldWriteCanonicalObjects": 0,
       "wouldEvaluateFactValues": 0,
       "canonicalObjectsWritten": 0,
@@ -598,9 +539,7 @@
       "sourceClass": "metrics_outcomes",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 108,
-      "targetObjectTypes": [
-        "metric_outcome"
-      ],
+      "targetObjectTypes": ["metric_outcome"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 108,
       "wouldEvaluateFactValues": 0,
@@ -613,9 +552,7 @@
       "sourceClass": "operational_process_evidence",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 0,
-      "targetObjectTypes": [
-        "operational_process"
-      ],
+      "targetObjectTypes": ["operational_process"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 0,
       "wouldEvaluateFactValues": 0,
@@ -628,9 +565,7 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 26,
-      "targetObjectTypes": [
-        "business_function"
-      ],
+      "targetObjectTypes": ["business_function"],
       "factAuthorityKeys": [
         "business_function.annualBudgetUsd",
         "business_function.fteCount"
@@ -646,9 +581,7 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 50,
-      "targetObjectTypes": [
-        "organization_unit"
-      ],
+      "targetObjectTypes": ["organization_unit"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 50,
       "wouldEvaluateFactValues": 0,
@@ -661,12 +594,8 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 12,
-      "targetObjectTypes": [
-        "workforce_role"
-      ],
-      "factAuthorityKeys": [
-        "workforce_role.roleCount"
-      ],
+      "targetObjectTypes": ["workforce_role"],
+      "factAuthorityKeys": ["workforce_role.roleCount"],
       "wouldWriteCanonicalObjects": 12,
       "wouldEvaluateFactValues": 12,
       "canonicalObjectsWritten": 0,
@@ -678,9 +607,7 @@
       "sourceClass": "programs_priorities",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 80,
-      "targetObjectTypes": [
-        "program_initiative"
-      ],
+      "targetObjectTypes": ["program_initiative"],
       "factAuthorityKeys": [
         "program_initiative.budgetUsd",
         "program_initiative.expectedValueUsd"
@@ -696,9 +623,7 @@
       "sourceClass": "relationships",
       "profileVersion": "2026-08-14.relationship-profile-pr1",
       "sourceRows": 1713,
-      "targetObjectTypes": [
-        "relationship_edge"
-      ],
+      "targetObjectTypes": ["relationship_edge"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 1713,
       "wouldEvaluateFactValues": 0,
@@ -711,9 +636,7 @@
       "sourceClass": "risks_controls",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 135,
-      "targetObjectTypes": [
-        "risk_control"
-      ],
+      "targetObjectTypes": ["risk_control"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 135,
       "wouldEvaluateFactValues": 0,
@@ -726,9 +649,7 @@
       "sourceClass": "spend_value",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 8,
-      "targetObjectTypes": [
-        "spend_value_signal"
-      ],
+      "targetObjectTypes": ["spend_value_signal"],
       "factAuthorityKeys": [
         "spend_value_signal.annualSpendUsd",
         "spend_value_signal.savingsOpportunityUsd"
@@ -744,12 +665,8 @@
       "sourceClass": "vendors_contracts",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 100,
-      "targetObjectTypes": [
-        "vendor_contract"
-      ],
-      "factAuthorityKeys": [
-        "vendor_contract.annualSpendUsd"
-      ],
+      "targetObjectTypes": ["vendor_contract"],
+      "factAuthorityKeys": ["vendor_contract.annualSpendUsd"],
       "wouldWriteCanonicalObjects": 100,
       "wouldEvaluateFactValues": 100,
       "canonicalObjectsWritten": 0,
@@ -761,9 +678,7 @@
       "sourceClass": "ai_automation_use_cases",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 146,
-      "targetObjectTypes": [
-        "ai_use_case"
-      ],
+      "targetObjectTypes": ["ai_use_case"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 146,
       "wouldEvaluateFactValues": 0,
@@ -776,9 +691,7 @@
       "sourceClass": "applications_systems",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 212,
-      "targetObjectTypes": [
-        "application_system"
-      ],
+      "targetObjectTypes": ["application_system"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 212,
       "wouldEvaluateFactValues": 0,
@@ -791,9 +704,7 @@
       "sourceClass": "data_assets_integrations",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 114,
-      "targetObjectTypes": [
-        "data_asset"
-      ],
+      "targetObjectTypes": ["data_asset"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 114,
       "wouldEvaluateFactValues": 0,
@@ -806,9 +717,7 @@
       "sourceClass": "enterprise_profile",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 1,
-      "targetObjectTypes": [
-        "enterprise_profile"
-      ],
+      "targetObjectTypes": ["enterprise_profile"],
       "factAuthorityKeys": [
         "enterprise_profile.employeeCount",
         "enterprise_profile.revenueUsd"
@@ -824,9 +733,7 @@
       "sourceClass": "evidence_registry",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 9,
-      "targetObjectTypes": [
-        "evidence_source"
-      ],
+      "targetObjectTypes": ["evidence_source"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 9,
       "wouldEvaluateFactValues": 0,
@@ -839,9 +746,7 @@
       "sourceClass": "expert_lenses",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 5,
-      "targetObjectTypes": [
-        "expert_lens"
-      ],
+      "targetObjectTypes": ["expert_lens"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 5,
       "wouldEvaluateFactValues": 0,
@@ -854,9 +759,7 @@
       "sourceClass": "industry_context_patterns",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 151,
-      "targetObjectTypes": [
-        "industry_context_pattern"
-      ],
+      "targetObjectTypes": ["industry_context_pattern"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 151,
       "wouldEvaluateFactValues": 0,
@@ -869,9 +772,7 @@
       "sourceClass": "infrastructure_platforms",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 0,
-      "targetObjectTypes": [
-        "infrastructure_platform"
-      ],
+      "targetObjectTypes": ["infrastructure_platform"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 0,
       "wouldEvaluateFactValues": 0,
@@ -884,12 +785,8 @@
       "sourceClass": "service_scope_managed_services",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 0,
-      "targetObjectTypes": [
-        "managed_service_scope"
-      ],
-      "factAuthorityKeys": [
-        "managed_service_scope.runCostUsd"
-      ],
+      "targetObjectTypes": ["managed_service_scope"],
+      "factAuthorityKeys": ["managed_service_scope.runCostUsd"],
       "wouldWriteCanonicalObjects": 0,
       "wouldEvaluateFactValues": 0,
       "canonicalObjectsWritten": 0,
@@ -901,9 +798,7 @@
       "sourceClass": "metrics_outcomes",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 157,
-      "targetObjectTypes": [
-        "metric_outcome"
-      ],
+      "targetObjectTypes": ["metric_outcome"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 157,
       "wouldEvaluateFactValues": 0,
@@ -916,9 +811,7 @@
       "sourceClass": "operational_process_evidence",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 0,
-      "targetObjectTypes": [
-        "operational_process"
-      ],
+      "targetObjectTypes": ["operational_process"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 0,
       "wouldEvaluateFactValues": 0,
@@ -931,9 +824,7 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 27,
-      "targetObjectTypes": [
-        "business_function"
-      ],
+      "targetObjectTypes": ["business_function"],
       "factAuthorityKeys": [
         "business_function.annualBudgetUsd",
         "business_function.fteCount"
@@ -949,9 +840,7 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 65,
-      "targetObjectTypes": [
-        "organization_unit"
-      ],
+      "targetObjectTypes": ["organization_unit"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 65,
       "wouldEvaluateFactValues": 0,
@@ -964,12 +853,8 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 16,
-      "targetObjectTypes": [
-        "workforce_role"
-      ],
-      "factAuthorityKeys": [
-        "workforce_role.roleCount"
-      ],
+      "targetObjectTypes": ["workforce_role"],
+      "factAuthorityKeys": ["workforce_role.roleCount"],
       "wouldWriteCanonicalObjects": 16,
       "wouldEvaluateFactValues": 16,
       "canonicalObjectsWritten": 0,
@@ -981,9 +866,7 @@
       "sourceClass": "programs_priorities",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 96,
-      "targetObjectTypes": [
-        "program_initiative"
-      ],
+      "targetObjectTypes": ["program_initiative"],
       "factAuthorityKeys": [
         "program_initiative.budgetUsd",
         "program_initiative.expectedValueUsd"
@@ -999,9 +882,7 @@
       "sourceClass": "relationships",
       "profileVersion": "2026-08-14.relationship-profile-pr1",
       "sourceRows": 380,
-      "targetObjectTypes": [
-        "relationship_edge"
-      ],
+      "targetObjectTypes": ["relationship_edge"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 380,
       "wouldEvaluateFactValues": 0,
@@ -1014,9 +895,7 @@
       "sourceClass": "risks_controls",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 210,
-      "targetObjectTypes": [
-        "risk_control"
-      ],
+      "targetObjectTypes": ["risk_control"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 210,
       "wouldEvaluateFactValues": 0,
@@ -1029,9 +908,7 @@
       "sourceClass": "spend_value",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 8,
-      "targetObjectTypes": [
-        "spend_value_signal"
-      ],
+      "targetObjectTypes": ["spend_value_signal"],
       "factAuthorityKeys": [
         "spend_value_signal.annualSpendUsd",
         "spend_value_signal.savingsOpportunityUsd"
@@ -1047,12 +924,8 @@
       "sourceClass": "vendors_contracts",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 120,
-      "targetObjectTypes": [
-        "vendor_contract"
-      ],
-      "factAuthorityKeys": [
-        "vendor_contract.annualSpendUsd"
-      ],
+      "targetObjectTypes": ["vendor_contract"],
+      "factAuthorityKeys": ["vendor_contract.annualSpendUsd"],
       "wouldWriteCanonicalObjects": 120,
       "wouldEvaluateFactValues": 120,
       "canonicalObjectsWritten": 0,
@@ -1064,9 +937,7 @@
       "sourceClass": "ai_automation_use_cases",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 18,
-      "targetObjectTypes": [
-        "ai_use_case"
-      ],
+      "targetObjectTypes": ["ai_use_case"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 18,
       "wouldEvaluateFactValues": 0,
@@ -1079,9 +950,7 @@
       "sourceClass": "applications_systems",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 296,
-      "targetObjectTypes": [
-        "application_system"
-      ],
+      "targetObjectTypes": ["application_system"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 296,
       "wouldEvaluateFactValues": 0,
@@ -1094,9 +963,7 @@
       "sourceClass": "data_assets_integrations",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 520,
-      "targetObjectTypes": [
-        "data_asset"
-      ],
+      "targetObjectTypes": ["data_asset"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 520,
       "wouldEvaluateFactValues": 0,
@@ -1109,9 +976,7 @@
       "sourceClass": "enterprise_profile",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 1,
-      "targetObjectTypes": [
-        "enterprise_profile"
-      ],
+      "targetObjectTypes": ["enterprise_profile"],
       "factAuthorityKeys": [
         "enterprise_profile.employeeCount",
         "enterprise_profile.revenueUsd"
@@ -1127,9 +992,7 @@
       "sourceClass": "evidence_registry",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 26,
-      "targetObjectTypes": [
-        "evidence_source"
-      ],
+      "targetObjectTypes": ["evidence_source"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 26,
       "wouldEvaluateFactValues": 0,
@@ -1142,9 +1005,7 @@
       "sourceClass": "expert_lenses",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 9,
-      "targetObjectTypes": [
-        "expert_lens"
-      ],
+      "targetObjectTypes": ["expert_lens"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 9,
       "wouldEvaluateFactValues": 0,
@@ -1157,9 +1018,7 @@
       "sourceClass": "industry_context_patterns",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 12,
-      "targetObjectTypes": [
-        "industry_context_pattern"
-      ],
+      "targetObjectTypes": ["industry_context_pattern"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 12,
       "wouldEvaluateFactValues": 0,
@@ -1172,9 +1031,7 @@
       "sourceClass": "infrastructure_platforms",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 60,
-      "targetObjectTypes": [
-        "infrastructure_platform"
-      ],
+      "targetObjectTypes": ["infrastructure_platform"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 60,
       "wouldEvaluateFactValues": 0,
@@ -1187,12 +1044,8 @@
       "sourceClass": "service_scope_managed_services",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 15,
-      "targetObjectTypes": [
-        "managed_service_scope"
-      ],
-      "factAuthorityKeys": [
-        "managed_service_scope.runCostUsd"
-      ],
+      "targetObjectTypes": ["managed_service_scope"],
+      "factAuthorityKeys": ["managed_service_scope.runCostUsd"],
       "wouldWriteCanonicalObjects": 15,
       "wouldEvaluateFactValues": 15,
       "canonicalObjectsWritten": 0,
@@ -1204,9 +1057,7 @@
       "sourceClass": "metrics_outcomes",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 50,
-      "targetObjectTypes": [
-        "metric_outcome"
-      ],
+      "targetObjectTypes": ["metric_outcome"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 50,
       "wouldEvaluateFactValues": 0,
@@ -1219,9 +1070,7 @@
       "sourceClass": "operational_process_evidence",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 25,
-      "targetObjectTypes": [
-        "operational_process"
-      ],
+      "targetObjectTypes": ["operational_process"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 25,
       "wouldEvaluateFactValues": 0,
@@ -1234,9 +1083,7 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 24,
-      "targetObjectTypes": [
-        "business_function"
-      ],
+      "targetObjectTypes": ["business_function"],
       "factAuthorityKeys": [
         "business_function.annualBudgetUsd",
         "business_function.fteCount"
@@ -1252,9 +1099,7 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 224,
-      "targetObjectTypes": [
-        "organization_unit"
-      ],
+      "targetObjectTypes": ["organization_unit"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 224,
       "wouldEvaluateFactValues": 0,
@@ -1267,12 +1112,8 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 45,
-      "targetObjectTypes": [
-        "workforce_role"
-      ],
-      "factAuthorityKeys": [
-        "workforce_role.roleCount"
-      ],
+      "targetObjectTypes": ["workforce_role"],
+      "factAuthorityKeys": ["workforce_role.roleCount"],
       "wouldWriteCanonicalObjects": 45,
       "wouldEvaluateFactValues": 45,
       "canonicalObjectsWritten": 0,
@@ -1284,9 +1125,7 @@
       "sourceClass": "programs_priorities",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 28,
-      "targetObjectTypes": [
-        "program_initiative"
-      ],
+      "targetObjectTypes": ["program_initiative"],
       "factAuthorityKeys": [
         "program_initiative.budgetUsd",
         "program_initiative.expectedValueUsd"
@@ -1302,9 +1141,7 @@
       "sourceClass": "relationships",
       "profileVersion": "2026-08-14.relationship-profile-pr1",
       "sourceRows": 2302,
-      "targetObjectTypes": [
-        "relationship_edge"
-      ],
+      "targetObjectTypes": ["relationship_edge"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 2302,
       "wouldEvaluateFactValues": 0,
@@ -1317,9 +1154,7 @@
       "sourceClass": "risks_controls",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 40,
-      "targetObjectTypes": [
-        "risk_control"
-      ],
+      "targetObjectTypes": ["risk_control"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 40,
       "wouldEvaluateFactValues": 0,
@@ -1332,9 +1167,7 @@
       "sourceClass": "spend_value",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 24,
-      "targetObjectTypes": [
-        "spend_value_signal"
-      ],
+      "targetObjectTypes": ["spend_value_signal"],
       "factAuthorityKeys": [
         "spend_value_signal.annualSpendUsd",
         "spend_value_signal.savingsOpportunityUsd"
@@ -1350,12 +1183,8 @@
       "sourceClass": "vendors_contracts",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 71,
-      "targetObjectTypes": [
-        "vendor_contract"
-      ],
-      "factAuthorityKeys": [
-        "vendor_contract.annualSpendUsd"
-      ],
+      "targetObjectTypes": ["vendor_contract"],
+      "factAuthorityKeys": ["vendor_contract.annualSpendUsd"],
       "wouldWriteCanonicalObjects": 71,
       "wouldEvaluateFactValues": 71,
       "canonicalObjectsWritten": 0,
@@ -1367,9 +1196,7 @@
       "sourceClass": "ai_automation_use_cases",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 8,
-      "targetObjectTypes": [
-        "ai_use_case"
-      ],
+      "targetObjectTypes": ["ai_use_case"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 8,
       "wouldEvaluateFactValues": 0,
@@ -1382,9 +1209,7 @@
       "sourceClass": "applications_systems",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 24,
-      "targetObjectTypes": [
-        "application_system"
-      ],
+      "targetObjectTypes": ["application_system"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 24,
       "wouldEvaluateFactValues": 0,
@@ -1397,9 +1222,7 @@
       "sourceClass": "data_assets_integrations",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 34,
-      "targetObjectTypes": [
-        "data_asset"
-      ],
+      "targetObjectTypes": ["data_asset"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 34,
       "wouldEvaluateFactValues": 0,
@@ -1412,9 +1235,7 @@
       "sourceClass": "enterprise_profile",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 1,
-      "targetObjectTypes": [
-        "enterprise_profile"
-      ],
+      "targetObjectTypes": ["enterprise_profile"],
       "factAuthorityKeys": [
         "enterprise_profile.employeeCount",
         "enterprise_profile.revenueUsd"
@@ -1430,9 +1251,7 @@
       "sourceClass": "evidence_registry",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 9,
-      "targetObjectTypes": [
-        "evidence_source"
-      ],
+      "targetObjectTypes": ["evidence_source"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 9,
       "wouldEvaluateFactValues": 0,
@@ -1445,9 +1264,7 @@
       "sourceClass": "expert_lenses",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 4,
-      "targetObjectTypes": [
-        "expert_lens"
-      ],
+      "targetObjectTypes": ["expert_lens"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 4,
       "wouldEvaluateFactValues": 0,
@@ -1460,9 +1277,7 @@
       "sourceClass": "industry_context_patterns",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 4,
-      "targetObjectTypes": [
-        "industry_context_pattern"
-      ],
+      "targetObjectTypes": ["industry_context_pattern"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 4,
       "wouldEvaluateFactValues": 0,
@@ -1475,9 +1290,7 @@
       "sourceClass": "infrastructure_platforms",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 0,
-      "targetObjectTypes": [
-        "infrastructure_platform"
-      ],
+      "targetObjectTypes": ["infrastructure_platform"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 0,
       "wouldEvaluateFactValues": 0,
@@ -1490,12 +1303,8 @@
       "sourceClass": "service_scope_managed_services",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 0,
-      "targetObjectTypes": [
-        "managed_service_scope"
-      ],
-      "factAuthorityKeys": [
-        "managed_service_scope.runCostUsd"
-      ],
+      "targetObjectTypes": ["managed_service_scope"],
+      "factAuthorityKeys": ["managed_service_scope.runCostUsd"],
       "wouldWriteCanonicalObjects": 0,
       "wouldEvaluateFactValues": 0,
       "canonicalObjectsWritten": 0,
@@ -1507,9 +1316,7 @@
       "sourceClass": "metrics_outcomes",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 12,
-      "targetObjectTypes": [
-        "metric_outcome"
-      ],
+      "targetObjectTypes": ["metric_outcome"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 12,
       "wouldEvaluateFactValues": 0,
@@ -1522,9 +1329,7 @@
       "sourceClass": "operational_process_evidence",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 0,
-      "targetObjectTypes": [
-        "operational_process"
-      ],
+      "targetObjectTypes": ["operational_process"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 0,
       "wouldEvaluateFactValues": 0,
@@ -1537,9 +1342,7 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 14,
-      "targetObjectTypes": [
-        "business_function"
-      ],
+      "targetObjectTypes": ["business_function"],
       "factAuthorityKeys": [
         "business_function.annualBudgetUsd",
         "business_function.fteCount"
@@ -1555,9 +1358,7 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 8,
-      "targetObjectTypes": [
-        "organization_unit"
-      ],
+      "targetObjectTypes": ["organization_unit"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 8,
       "wouldEvaluateFactValues": 0,
@@ -1570,12 +1371,8 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 10,
-      "targetObjectTypes": [
-        "workforce_role"
-      ],
-      "factAuthorityKeys": [
-        "workforce_role.roleCount"
-      ],
+      "targetObjectTypes": ["workforce_role"],
+      "factAuthorityKeys": ["workforce_role.roleCount"],
       "wouldWriteCanonicalObjects": 10,
       "wouldEvaluateFactValues": 10,
       "canonicalObjectsWritten": 0,
@@ -1587,9 +1384,7 @@
       "sourceClass": "programs_priorities",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 15,
-      "targetObjectTypes": [
-        "program_initiative"
-      ],
+      "targetObjectTypes": ["program_initiative"],
       "factAuthorityKeys": [
         "program_initiative.budgetUsd",
         "program_initiative.expectedValueUsd"
@@ -1605,9 +1400,7 @@
       "sourceClass": "relationships",
       "profileVersion": "2026-08-14.relationship-profile-pr1",
       "sourceRows": 364,
-      "targetObjectTypes": [
-        "relationship_edge"
-      ],
+      "targetObjectTypes": ["relationship_edge"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 364,
       "wouldEvaluateFactValues": 0,
@@ -1620,9 +1413,7 @@
       "sourceClass": "risks_controls",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 10,
-      "targetObjectTypes": [
-        "risk_control"
-      ],
+      "targetObjectTypes": ["risk_control"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 10,
       "wouldEvaluateFactValues": 0,
@@ -1635,9 +1426,7 @@
       "sourceClass": "spend_value",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 86,
-      "targetObjectTypes": [
-        "spend_value_signal"
-      ],
+      "targetObjectTypes": ["spend_value_signal"],
       "factAuthorityKeys": [
         "spend_value_signal.annualSpendUsd",
         "spend_value_signal.savingsOpportunityUsd"
@@ -1653,12 +1442,8 @@
       "sourceClass": "vendors_contracts",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 19,
-      "targetObjectTypes": [
-        "vendor_contract"
-      ],
-      "factAuthorityKeys": [
-        "vendor_contract.annualSpendUsd"
-      ],
+      "targetObjectTypes": ["vendor_contract"],
+      "factAuthorityKeys": ["vendor_contract.annualSpendUsd"],
       "wouldWriteCanonicalObjects": 19,
       "wouldEvaluateFactValues": 19,
       "canonicalObjectsWritten": 0,
@@ -1670,9 +1455,7 @@
       "sourceClass": "ai_automation_use_cases",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 36,
-      "targetObjectTypes": [
-        "ai_use_case"
-      ],
+      "targetObjectTypes": ["ai_use_case"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 36,
       "wouldEvaluateFactValues": 0,
@@ -1685,9 +1468,7 @@
       "sourceClass": "applications_systems",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 152,
-      "targetObjectTypes": [
-        "application_system"
-      ],
+      "targetObjectTypes": ["application_system"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 152,
       "wouldEvaluateFactValues": 0,
@@ -1700,9 +1481,7 @@
       "sourceClass": "data_assets_integrations",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 82,
-      "targetObjectTypes": [
-        "data_asset"
-      ],
+      "targetObjectTypes": ["data_asset"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 82,
       "wouldEvaluateFactValues": 0,
@@ -1715,9 +1494,7 @@
       "sourceClass": "enterprise_profile",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 8,
-      "targetObjectTypes": [
-        "enterprise_profile"
-      ],
+      "targetObjectTypes": ["enterprise_profile"],
       "factAuthorityKeys": [
         "enterprise_profile.employeeCount",
         "enterprise_profile.revenueUsd"
@@ -1733,9 +1510,7 @@
       "sourceClass": "evidence_registry",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 10,
-      "targetObjectTypes": [
-        "evidence_source"
-      ],
+      "targetObjectTypes": ["evidence_source"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 10,
       "wouldEvaluateFactValues": 0,
@@ -1748,9 +1523,7 @@
       "sourceClass": "expert_lenses",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 18,
-      "targetObjectTypes": [
-        "expert_lens"
-      ],
+      "targetObjectTypes": ["expert_lens"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 18,
       "wouldEvaluateFactValues": 0,
@@ -1763,9 +1536,7 @@
       "sourceClass": "industry_context_patterns",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 24,
-      "targetObjectTypes": [
-        "industry_context_pattern"
-      ],
+      "targetObjectTypes": ["industry_context_pattern"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 24,
       "wouldEvaluateFactValues": 0,
@@ -1778,9 +1549,7 @@
       "sourceClass": "infrastructure_platforms",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 128,
-      "targetObjectTypes": [
-        "infrastructure_platform"
-      ],
+      "targetObjectTypes": ["infrastructure_platform"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 128,
       "wouldEvaluateFactValues": 0,
@@ -1793,12 +1562,8 @@
       "sourceClass": "service_scope_managed_services",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 8,
-      "targetObjectTypes": [
-        "managed_service_scope"
-      ],
-      "factAuthorityKeys": [
-        "managed_service_scope.runCostUsd"
-      ],
+      "targetObjectTypes": ["managed_service_scope"],
+      "factAuthorityKeys": ["managed_service_scope.runCostUsd"],
       "wouldWriteCanonicalObjects": 8,
       "wouldEvaluateFactValues": 8,
       "canonicalObjectsWritten": 0,
@@ -1810,9 +1575,7 @@
       "sourceClass": "metrics_outcomes",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 236,
-      "targetObjectTypes": [
-        "metric_outcome"
-      ],
+      "targetObjectTypes": ["metric_outcome"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 236,
       "wouldEvaluateFactValues": 0,
@@ -1825,9 +1588,7 @@
       "sourceClass": "operational_process_evidence",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 112,
-      "targetObjectTypes": [
-        "operational_process"
-      ],
+      "targetObjectTypes": ["operational_process"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 112,
       "wouldEvaluateFactValues": 0,
@@ -1840,9 +1601,7 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 59,
-      "targetObjectTypes": [
-        "business_function"
-      ],
+      "targetObjectTypes": ["business_function"],
       "factAuthorityKeys": [
         "business_function.annualBudgetUsd",
         "business_function.fteCount"
@@ -1858,9 +1617,7 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 116,
-      "targetObjectTypes": [
-        "organization_unit"
-      ],
+      "targetObjectTypes": ["organization_unit"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 116,
       "wouldEvaluateFactValues": 0,
@@ -1873,12 +1630,8 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 22,
-      "targetObjectTypes": [
-        "workforce_role"
-      ],
-      "factAuthorityKeys": [
-        "workforce_role.roleCount"
-      ],
+      "targetObjectTypes": ["workforce_role"],
+      "factAuthorityKeys": ["workforce_role.roleCount"],
       "wouldWriteCanonicalObjects": 22,
       "wouldEvaluateFactValues": 22,
       "canonicalObjectsWritten": 0,
@@ -1890,9 +1643,7 @@
       "sourceClass": "programs_priorities",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 36,
-      "targetObjectTypes": [
-        "program_initiative"
-      ],
+      "targetObjectTypes": ["program_initiative"],
       "factAuthorityKeys": [
         "program_initiative.budgetUsd",
         "program_initiative.expectedValueUsd"
@@ -1908,9 +1659,7 @@
       "sourceClass": "relationships",
       "profileVersion": "2026-08-14.relationship-profile-pr1",
       "sourceRows": 519,
-      "targetObjectTypes": [
-        "relationship_edge"
-      ],
+      "targetObjectTypes": ["relationship_edge"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 519,
       "wouldEvaluateFactValues": 0,
@@ -1923,9 +1672,7 @@
       "sourceClass": "risks_controls",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 48,
-      "targetObjectTypes": [
-        "risk_control"
-      ],
+      "targetObjectTypes": ["risk_control"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 48,
       "wouldEvaluateFactValues": 0,
@@ -1938,9 +1685,7 @@
       "sourceClass": "spend_value",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 71,
-      "targetObjectTypes": [
-        "spend_value_signal"
-      ],
+      "targetObjectTypes": ["spend_value_signal"],
       "factAuthorityKeys": [
         "spend_value_signal.annualSpendUsd",
         "spend_value_signal.savingsOpportunityUsd"
@@ -1956,12 +1701,8 @@
       "sourceClass": "vendors_contracts",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 19,
-      "targetObjectTypes": [
-        "vendor_contract"
-      ],
-      "factAuthorityKeys": [
-        "vendor_contract.annualSpendUsd"
-      ],
+      "targetObjectTypes": ["vendor_contract"],
+      "factAuthorityKeys": ["vendor_contract.annualSpendUsd"],
       "wouldWriteCanonicalObjects": 19,
       "wouldEvaluateFactValues": 19,
       "canonicalObjectsWritten": 0,
@@ -1973,9 +1714,7 @@
       "sourceClass": "ai_automation_use_cases",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 251,
-      "targetObjectTypes": [
-        "ai_use_case"
-      ],
+      "targetObjectTypes": ["ai_use_case"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 251,
       "wouldEvaluateFactValues": 0,
@@ -1988,9 +1727,7 @@
       "sourceClass": "applications_systems",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 241,
-      "targetObjectTypes": [
-        "application_system"
-      ],
+      "targetObjectTypes": ["application_system"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 241,
       "wouldEvaluateFactValues": 0,
@@ -2003,9 +1740,7 @@
       "sourceClass": "data_assets_integrations",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 242,
-      "targetObjectTypes": [
-        "data_asset"
-      ],
+      "targetObjectTypes": ["data_asset"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 242,
       "wouldEvaluateFactValues": 0,
@@ -2018,9 +1753,7 @@
       "sourceClass": "enterprise_profile",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 2,
-      "targetObjectTypes": [
-        "enterprise_profile"
-      ],
+      "targetObjectTypes": ["enterprise_profile"],
       "factAuthorityKeys": [
         "enterprise_profile.employeeCount",
         "enterprise_profile.revenueUsd"
@@ -2036,9 +1769,7 @@
       "sourceClass": "evidence_registry",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 508,
-      "targetObjectTypes": [
-        "evidence_source"
-      ],
+      "targetObjectTypes": ["evidence_source"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 508,
       "wouldEvaluateFactValues": 0,
@@ -2051,9 +1782,7 @@
       "sourceClass": "expert_lenses",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 7,
-      "targetObjectTypes": [
-        "expert_lens"
-      ],
+      "targetObjectTypes": ["expert_lens"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 7,
       "wouldEvaluateFactValues": 0,
@@ -2066,9 +1795,7 @@
       "sourceClass": "industry_context_patterns",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 7,
-      "targetObjectTypes": [
-        "industry_context_pattern"
-      ],
+      "targetObjectTypes": ["industry_context_pattern"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 7,
       "wouldEvaluateFactValues": 0,
@@ -2081,9 +1808,7 @@
       "sourceClass": "infrastructure_platforms",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 15,
-      "targetObjectTypes": [
-        "infrastructure_platform"
-      ],
+      "targetObjectTypes": ["infrastructure_platform"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 15,
       "wouldEvaluateFactValues": 0,
@@ -2096,12 +1821,8 @@
       "sourceClass": "service_scope_managed_services",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 228,
-      "targetObjectTypes": [
-        "managed_service_scope"
-      ],
-      "factAuthorityKeys": [
-        "managed_service_scope.runCostUsd"
-      ],
+      "targetObjectTypes": ["managed_service_scope"],
+      "factAuthorityKeys": ["managed_service_scope.runCostUsd"],
       "wouldWriteCanonicalObjects": 228,
       "wouldEvaluateFactValues": 228,
       "canonicalObjectsWritten": 0,
@@ -2113,9 +1834,7 @@
       "sourceClass": "metrics_outcomes",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 257,
-      "targetObjectTypes": [
-        "metric_outcome"
-      ],
+      "targetObjectTypes": ["metric_outcome"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 257,
       "wouldEvaluateFactValues": 0,
@@ -2128,9 +1847,7 @@
       "sourceClass": "operational_process_evidence",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 228,
-      "targetObjectTypes": [
-        "operational_process"
-      ],
+      "targetObjectTypes": ["operational_process"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 228,
       "wouldEvaluateFactValues": 0,
@@ -2143,9 +1860,7 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 228,
-      "targetObjectTypes": [
-        "business_function"
-      ],
+      "targetObjectTypes": ["business_function"],
       "factAuthorityKeys": [
         "business_function.annualBudgetUsd",
         "business_function.fteCount"
@@ -2161,9 +1876,7 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 228,
-      "targetObjectTypes": [
-        "organization_unit"
-      ],
+      "targetObjectTypes": ["organization_unit"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 228,
       "wouldEvaluateFactValues": 0,
@@ -2176,12 +1889,8 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 221,
-      "targetObjectTypes": [
-        "workforce_role"
-      ],
-      "factAuthorityKeys": [
-        "workforce_role.roleCount"
-      ],
+      "targetObjectTypes": ["workforce_role"],
+      "factAuthorityKeys": ["workforce_role.roleCount"],
       "wouldWriteCanonicalObjects": 221,
       "wouldEvaluateFactValues": 221,
       "canonicalObjectsWritten": 0,
@@ -2193,9 +1902,7 @@
       "sourceClass": "programs_priorities",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 256,
-      "targetObjectTypes": [
-        "program_initiative"
-      ],
+      "targetObjectTypes": ["program_initiative"],
       "factAuthorityKeys": [
         "program_initiative.budgetUsd",
         "program_initiative.expectedValueUsd"
@@ -2211,9 +1918,7 @@
       "sourceClass": "relationships",
       "profileVersion": "2026-08-14.relationship-profile-pr1",
       "sourceRows": 1037,
-      "targetObjectTypes": [
-        "relationship_edge"
-      ],
+      "targetObjectTypes": ["relationship_edge"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 1037,
       "wouldEvaluateFactValues": 0,
@@ -2226,9 +1931,7 @@
       "sourceClass": "risks_controls",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 249,
-      "targetObjectTypes": [
-        "risk_control"
-      ],
+      "targetObjectTypes": ["risk_control"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 249,
       "wouldEvaluateFactValues": 0,
@@ -2241,9 +1944,7 @@
       "sourceClass": "spend_value",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 298,
-      "targetObjectTypes": [
-        "spend_value_signal"
-      ],
+      "targetObjectTypes": ["spend_value_signal"],
       "factAuthorityKeys": [
         "spend_value_signal.annualSpendUsd",
         "spend_value_signal.savingsOpportunityUsd"
@@ -2259,12 +1960,8 @@
       "sourceClass": "vendors_contracts",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 231,
-      "targetObjectTypes": [
-        "vendor_contract"
-      ],
-      "factAuthorityKeys": [
-        "vendor_contract.annualSpendUsd"
-      ],
+      "targetObjectTypes": ["vendor_contract"],
+      "factAuthorityKeys": ["vendor_contract.annualSpendUsd"],
       "wouldWriteCanonicalObjects": 231,
       "wouldEvaluateFactValues": 231,
       "canonicalObjectsWritten": 0,
@@ -2276,9 +1973,7 @@
       "sourceClass": "ai_automation_use_cases",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 13,
-      "targetObjectTypes": [
-        "ai_use_case"
-      ],
+      "targetObjectTypes": ["ai_use_case"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 13,
       "wouldEvaluateFactValues": 0,
@@ -2291,9 +1986,7 @@
       "sourceClass": "applications_systems",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 503,
-      "targetObjectTypes": [
-        "application_system"
-      ],
+      "targetObjectTypes": ["application_system"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 503,
       "wouldEvaluateFactValues": 0,
@@ -2306,9 +1999,7 @@
       "sourceClass": "data_assets_integrations",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 499,
-      "targetObjectTypes": [
-        "data_asset"
-      ],
+      "targetObjectTypes": ["data_asset"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 499,
       "wouldEvaluateFactValues": 0,
@@ -2321,9 +2012,7 @@
       "sourceClass": "enterprise_profile",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 1,
-      "targetObjectTypes": [
-        "enterprise_profile"
-      ],
+      "targetObjectTypes": ["enterprise_profile"],
       "factAuthorityKeys": [
         "enterprise_profile.employeeCount",
         "enterprise_profile.revenueUsd"
@@ -2339,9 +2028,7 @@
       "sourceClass": "evidence_registry",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 22,
-      "targetObjectTypes": [
-        "evidence_source"
-      ],
+      "targetObjectTypes": ["evidence_source"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 22,
       "wouldEvaluateFactValues": 0,
@@ -2354,9 +2041,7 @@
       "sourceClass": "expert_lenses",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 7,
-      "targetObjectTypes": [
-        "expert_lens"
-      ],
+      "targetObjectTypes": ["expert_lens"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 7,
       "wouldEvaluateFactValues": 0,
@@ -2369,9 +2054,7 @@
       "sourceClass": "industry_context_patterns",
       "profileVersion": "2026-08-14.v3-contract-pr1",
       "sourceRows": 10,
-      "targetObjectTypes": [
-        "industry_context_pattern"
-      ],
+      "targetObjectTypes": ["industry_context_pattern"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 10,
       "wouldEvaluateFactValues": 0,
@@ -2384,9 +2067,7 @@
       "sourceClass": "infrastructure_platforms",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 33,
-      "targetObjectTypes": [
-        "infrastructure_platform"
-      ],
+      "targetObjectTypes": ["infrastructure_platform"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 33,
       "wouldEvaluateFactValues": 0,
@@ -2399,12 +2080,8 @@
       "sourceClass": "service_scope_managed_services",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 11,
-      "targetObjectTypes": [
-        "managed_service_scope"
-      ],
-      "factAuthorityKeys": [
-        "managed_service_scope.runCostUsd"
-      ],
+      "targetObjectTypes": ["managed_service_scope"],
+      "factAuthorityKeys": ["managed_service_scope.runCostUsd"],
       "wouldWriteCanonicalObjects": 11,
       "wouldEvaluateFactValues": 11,
       "canonicalObjectsWritten": 0,
@@ -2416,9 +2093,7 @@
       "sourceClass": "metrics_outcomes",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 26,
-      "targetObjectTypes": [
-        "metric_outcome"
-      ],
+      "targetObjectTypes": ["metric_outcome"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 26,
       "wouldEvaluateFactValues": 0,
@@ -2431,9 +2106,7 @@
       "sourceClass": "operational_process_evidence",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 35,
-      "targetObjectTypes": [
-        "operational_process"
-      ],
+      "targetObjectTypes": ["operational_process"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 35,
       "wouldEvaluateFactValues": 0,
@@ -2446,9 +2119,7 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 22,
-      "targetObjectTypes": [
-        "business_function"
-      ],
+      "targetObjectTypes": ["business_function"],
       "factAuthorityKeys": [
         "business_function.annualBudgetUsd",
         "business_function.fteCount"
@@ -2464,9 +2135,7 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 150,
-      "targetObjectTypes": [
-        "organization_unit"
-      ],
+      "targetObjectTypes": ["organization_unit"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 150,
       "wouldEvaluateFactValues": 0,
@@ -2479,12 +2148,8 @@
       "sourceClass": "organization_functions",
       "profileVersion": "2026-08-14.organization-workforce-pr1",
       "sourceRows": 38,
-      "targetObjectTypes": [
-        "workforce_role"
-      ],
-      "factAuthorityKeys": [
-        "workforce_role.roleCount"
-      ],
+      "targetObjectTypes": ["workforce_role"],
+      "factAuthorityKeys": ["workforce_role.roleCount"],
       "wouldWriteCanonicalObjects": 38,
       "wouldEvaluateFactValues": 38,
       "canonicalObjectsWritten": 0,
@@ -2496,9 +2161,7 @@
       "sourceClass": "programs_priorities",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 20,
-      "targetObjectTypes": [
-        "program_initiative"
-      ],
+      "targetObjectTypes": ["program_initiative"],
       "factAuthorityKeys": [
         "program_initiative.budgetUsd",
         "program_initiative.expectedValueUsd"
@@ -2514,9 +2177,7 @@
       "sourceClass": "relationships",
       "profileVersion": "2026-08-14.relationship-profile-pr1",
       "sourceRows": 3318,
-      "targetObjectTypes": [
-        "relationship_edge"
-      ],
+      "targetObjectTypes": ["relationship_edge"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 3318,
       "wouldEvaluateFactValues": 0,
@@ -2529,9 +2190,7 @@
       "sourceClass": "risks_controls",
       "profileVersion": "2026-08-14.remaining-family-pr1",
       "sourceRows": 44,
-      "targetObjectTypes": [
-        "risk_control"
-      ],
+      "targetObjectTypes": ["risk_control"],
       "factAuthorityKeys": [],
       "wouldWriteCanonicalObjects": 44,
       "wouldEvaluateFactValues": 0,
@@ -2544,9 +2203,7 @@
       "sourceClass": "spend_value",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 20,
-      "targetObjectTypes": [
-        "spend_value_signal"
-      ],
+      "targetObjectTypes": ["spend_value_signal"],
       "factAuthorityKeys": [
         "spend_value_signal.annualSpendUsd",
         "spend_value_signal.savingsOpportunityUsd"
@@ -2562,12 +2219,8 @@
       "sourceClass": "vendors_contracts",
       "profileVersion": "2026-08-14.vendor-finance-pr1",
       "sourceRows": 65,
-      "targetObjectTypes": [
-        "vendor_contract"
-      ],
-      "factAuthorityKeys": [
-        "vendor_contract.annualSpendUsd"
-      ],
+      "targetObjectTypes": ["vendor_contract"],
+      "factAuthorityKeys": ["vendor_contract.annualSpendUsd"],
       "wouldWriteCanonicalObjects": 65,
       "wouldEvaluateFactValues": 65,
       "canonicalObjectsWritten": 0,
