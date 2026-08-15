@@ -74,6 +74,25 @@ type ColumnConformance = {
   emptyColumns: string[];
 };
 
+type PlaceholderIdentityRows = {
+  file: string;
+  rows: number;
+  columns: string[];
+  examples: string[];
+};
+
+type IdentityLocation = {
+  file: string;
+  column: string;
+  value: string;
+};
+
+type TypeCollisionRepairRows = {
+  file: string;
+  rows: number;
+  examples: string[];
+};
+
 type SourceFile = {
   tenantKey: string;
   packetId: string;
@@ -280,6 +299,55 @@ function readHeaderColumns(file: string): string[] {
  * name and inflate the count with something already tracked.
  */
 const ROW_METADATA_COLUMNS = new Set(['tenant_key', 'source_file', 'source_date', 'confidence', 'known_gaps']);
+const HUMAN_IDENTITY_COLUMNS = new Set([
+  'entity_name',
+  'function_name',
+  'org_unit',
+  'persona_or_role',
+  'system_name',
+  'data_asset_name',
+  'platform_name',
+  'vendor_name',
+  'spend_category',
+  'program_name',
+  'use_case_name',
+  'risk_or_control_name',
+  'metric_name',
+  'pattern_name',
+  'lens_name',
+  'service_name',
+  'process_name',
+]);
+const GENERATED_ID_AS_NAME_PATTERN = /^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-\d{3,6}$/;
+const GRAPH_ENDPOINT_SOURCE_VALUE_REPAIR_RULE = 'graph_endpoint_source_value_repair_2026_08_15';
+const PRIMARY_IDENTITY_COLUMN_BY_TEMPLATE = new Map([
+  ['00_enterprise_profile.csv', 'entity_name'],
+  ['01_business_functions.csv', 'function_name'],
+  ['02_org_ownership.csv', 'org_unit'],
+  ['03_workforce_roles.csv', 'persona_or_role'],
+  ['04_applications_systems.csv', 'system_name'],
+  ['05_data_assets_integrations.csv', 'data_asset_name'],
+  ['06_infrastructure_platforms.csv', 'platform_name'],
+  ['07_vendors_contracts.csv', 'vendor_name'],
+  ['08_spend_value.csv', 'spend_category'],
+  ['09_programs_initiatives.csv', 'program_name'],
+  ['10_ai_automation_use_cases.csv', 'use_case_name'],
+  ['11_risks_controls.csv', 'risk_or_control_name'],
+  ['13_metrics_outcomes.csv', 'metric_name'],
+  ['15_industry_context_patterns.csv', 'pattern_name'],
+  ['16_expert_lenses.csv', 'lens_name'],
+  ['17_service_scope_managed_services.csv', 'service_name'],
+  ['18_operational_process_evidence.csv', 'process_name'],
+]);
+
+function normalizeIdentityValue(value: string): string {
+  return value.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function primaryIdentityColumns(templateFile: string, header: string[]): string[] {
+  const primaryColumn = PRIMARY_IDENTITY_COLUMN_BY_TEMPLATE.get(templateFile);
+  return primaryColumn && header.includes(primaryColumn) ? [primaryColumn] : [];
+}
 
 function hollowRows(file: string, declaredColumns: string[]): { hollow: number; total: number } {
   const text = fs.readFileSync(file, 'utf8').trim();
@@ -299,6 +367,118 @@ function hollowRows(file: string, declaredColumns: string[]): { hollow: number; 
     if (!indexes.some((i) => (cells[i] ?? '').trim() !== '')) hollow += 1;
   }
   return { hollow, total };
+}
+
+function placeholderIdentityRows(file: string, declaredColumns: string[]): PlaceholderIdentityRows {
+  const text = fs.readFileSync(file, 'utf8').trim();
+  const lines = text.split(/\r?\n/);
+  if (lines.length < 2) return { file: path.basename(file), rows: 0, columns: [], examples: [] };
+  const header = readHeaderColumns(file);
+  const identityColumns = declaredColumns.filter((column) => header.includes(column) && HUMAN_IDENTITY_COLUMNS.has(column));
+  if (identityColumns.length === 0) return { file: path.basename(file), rows: 0, columns: [], examples: [] };
+  const indexes = identityColumns.map((column) => ({ column, index: header.indexOf(column) }));
+  const examples: string[] = [];
+  const columns = new Set<string>();
+  let rows = 0;
+
+  for (const line of lines.slice(1)) {
+    if (!line.trim()) continue;
+    const cells = splitCsvLine(line);
+    const generatedValues = indexes
+      .map(({ column, index }) => ({ column, value: (cells[index] ?? '').trim() }))
+      .filter(({ value }) => GENERATED_ID_AS_NAME_PATTERN.test(value));
+    if (generatedValues.length === 0) continue;
+    rows += 1;
+    for (const value of generatedValues) columns.add(value.column);
+    if (examples.length < 5) {
+      examples.push(generatedValues.map(({ column, value }) => `${column}=${value}`).join(', '));
+    }
+  }
+
+  return {
+    file: path.basename(file),
+    rows,
+    columns: Array.from(columns).sort(),
+    examples,
+  };
+}
+
+function identityIndexForTenant(
+  files: SourceFile[],
+  manifest: TemplateManifest,
+  conformance: ColumnConformance[],
+): Map<string, IdentityLocation[]> {
+  const index = new Map<string, IdentityLocation[]>();
+
+  for (const entry of conformance) {
+    if (entry.state !== 'conformant' || !entry.resolvedFile) continue;
+    const match = files.find((file) => path.basename(file.relativePath) === entry.resolvedFile);
+    const declared = manifest.templates.find((template) => template.file === entry.contractFile)?.columns ?? [];
+    if (!match) continue;
+
+    const text = fs.readFileSync(match.absolutePath, 'utf8').trim();
+    const lines = text.split(/\r?\n/);
+    if (lines.length < 2) continue;
+    const header = readHeaderColumns(match.absolutePath);
+    const identityColumns = primaryIdentityColumns(entry.contractFile, header);
+    if (identityColumns.length === 0) continue;
+
+    for (const line of lines.slice(1)) {
+      if (!line.trim()) continue;
+      const cells = splitCsvLine(line);
+      for (const column of identityColumns) {
+        const value = (cells[header.indexOf(column)] ?? '').trim();
+        const normalized = normalizeIdentityValue(value);
+        if (!normalized) continue;
+        if (!index.has(normalized)) index.set(normalized, []);
+        index.get(normalized)?.push({ file: path.basename(match.relativePath), column, value });
+      }
+    }
+  }
+
+  return index;
+}
+
+function typeCollisionRepairRows(
+  file: string,
+  contractFile: string,
+  identityIndex: Map<string, IdentityLocation[]>,
+): TypeCollisionRepairRows {
+  const text = fs.readFileSync(file, 'utf8').trim();
+  const lines = text.split(/\r?\n/);
+  if (lines.length < 2) return { file: path.basename(file), rows: 0, examples: [] };
+
+  const header = readHeaderColumns(file);
+  const repairRuleIndex = header.indexOf('consolidation_rule_used');
+  if (repairRuleIndex < 0) return { file: path.basename(file), rows: 0, examples: [] };
+
+  const identityColumns = primaryIdentityColumns(contractFile, header);
+  if (identityColumns.length === 0) return { file: path.basename(file), rows: 0, examples: [] };
+
+  const basename = path.basename(file);
+  const examples: string[] = [];
+  let rows = 0;
+
+  for (const line of lines.slice(1)) {
+    if (!line.trim()) continue;
+    const cells = splitCsvLine(line);
+    if ((cells[repairRuleIndex] ?? '').trim() !== GRAPH_ENDPOINT_SOURCE_VALUE_REPAIR_RULE) continue;
+
+    const collisions = identityColumns.flatMap((column) => {
+      const value = (cells[header.indexOf(column)] ?? '').trim();
+      const normalized = normalizeIdentityValue(value);
+      if (!normalized) return [];
+      return (identityIndex.get(normalized) ?? [])
+        .filter((location) => !(location.file === basename && location.column === column))
+        .map((location) => `${column}=${value} collides with ${location.file}:${location.column}`);
+    });
+    if (collisions.length === 0) continue;
+
+    rows += 1;
+    if (examples.length < 5) examples.push(collisions.slice(0, 2).join(', '));
+  }
+
+  return { file: basename, rows, examples };
 }
 
 function mixedLineEndings(file: string): number {
@@ -540,6 +720,7 @@ function run(): void {
       );
     }
     const columnConformance = columnConformanceForTenant(tenant, manifest);
+    const identityIndex = identityIndexForTenant(files, manifest, columnConformance);
 
     const hollow = columnConformance
       .filter((entry) => entry.state === 'conformant' && entry.resolvedFile)
@@ -550,6 +731,23 @@ function run(): void {
         return { file: entry.resolvedFile, ...hollowRows(match.absolutePath, declared) };
       })
       .filter((entry) => entry.hollow > 0);
+    const placeholderIdentity = columnConformance
+      .filter((entry) => entry.state === 'conformant' && entry.resolvedFile)
+      .map((entry) => {
+        const match = files.find((f) => path.basename(f.relativePath) === entry.resolvedFile);
+        const declared = manifest.templates.find((t) => t.file === entry.contractFile)?.columns ?? [];
+        if (!match) return { file: entry.resolvedFile, rows: 0, columns: [], examples: [] };
+        return placeholderIdentityRows(match.absolutePath, declared);
+      })
+      .filter((entry) => entry.rows > 0);
+    const typeCollisionRepair = columnConformance
+      .filter((entry) => entry.state === 'conformant' && entry.resolvedFile)
+      .map((entry) => {
+        const match = files.find((f) => path.basename(f.relativePath) === entry.resolvedFile);
+        if (!match) return { file: entry.resolvedFile, rows: 0, examples: [] };
+        return typeCollisionRepairRows(match.absolutePath, entry.contractFile, identityIndex);
+      })
+      .filter((entry) => entry.rows > 0);
 
     const hollowWaiver = (rules.hollowRowWaivers ?? []).find((w) => w.tenantKey === tenant.tenantKey);
     if (hollowWaiver && hollowWaiver.expires < today) {
@@ -567,6 +765,20 @@ function run(): void {
             'Row count and column conformance both pass; the file is largely empty.',
         );
       }
+    }
+    for (const entry of placeholderIdentity) {
+      failures.push(
+        `${tenant.tenantKey}: ${entry.file} has ${entry.rows} row(s) where a human identity column ` +
+          `contains a generated ID pattern instead of a name (${entry.columns.join(', ')}; examples: ${entry.examples.join('; ')}). ` +
+          'Do not create placeholder nodes to satisfy graph endpoints; catalogue source-backed objects or leave the relationship quarantined.',
+      );
+    }
+    for (const entry of typeCollisionRepair) {
+      failures.push(
+        `${tenant.tenantKey}: ${entry.file} has ${entry.rows} repair-stamped row(s) where a catalogued identity already exists ` +
+          `as another dimension identity (${entry.examples.join('; ')}). Repair-by-cataloguing must not fix a wrong endpoint type; ` +
+          'retype the relationship or leave it quarantined.',
+      );
     }
     const nonConformant = columnConformance.filter((entry) => entry.state !== "conformant");
     const waiver = waivers.get(tenant.tenantKey);
@@ -628,6 +840,8 @@ function run(): void {
       domainDepth,
       inconsistentLineEndingFiles: inconsistentTerminators.length,
       hollowRowFiles: hollow,
+      placeholderIdentityRows: placeholderIdentity,
+      typeCollisionRepairRows: typeCollisionRepair,
       columnContract: {
         declared: columnConformance.length,
         conformant: columnConformance.length - nonConformant.length,

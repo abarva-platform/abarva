@@ -72,7 +72,7 @@ function classifyReductionPath(reasons) {
     return 'upstream_source_absence_or_no_graph_disposition';
   }
   if (reasons.includes('unresolved-from-node') || reasons.includes('unresolved-to-node')) {
-    return 'source_data_dimension_or_edge_retirement_gate';
+    return 'source_data_dimension_or_edge_type_correction_gate';
   }
   return 'manual_review_gate';
 }
@@ -87,8 +87,8 @@ function dispositionForReductionPath(pathName) {
       return 'source-row-evidence-basis-must-exist-before-materialization';
     case 'upstream_source_absence_or_no_graph_disposition':
       return 'permanent-quarantine-or-declare-no-graph-until-required-endpoint-fields-exist';
-    case 'source_data_dimension_or_edge_retirement_gate':
-      return 'catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge';
+    case 'source_data_dimension_or_edge_type_correction_gate':
+      return 'catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge';
     default:
       return 'quarantine-until-specific-owner-approved-repair-path-exists';
   }

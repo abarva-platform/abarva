@@ -1,30 +1,30 @@
 {
-  "generatedAt": "2026-08-15T02:09:55.595Z",
+  "generatedAt": "2026-08-15T15:02:57.891Z",
   "generatedBy": "scripts/audit/build-graph-quarantine-reduction-plan.mjs",
-  "sourceSha": "fef909cd4bae7c7fde7e21f5c6a90e9000d07bf2",
-  "graphGeneratedAt": "2026-08-15T02:09:19.999Z",
+  "sourceSha": "c6fde1b7380db40f0527d326142dd1fd2d1368a5",
+  "graphGeneratedAt": "2026-08-15T15:02:47.991Z",
   "mode": "report_only_no_data_mutation_no_registry_activation_no_graph_materialization_no_projection_refresh",
   "publicDisclosure": "Tenant identifiers are anonymized. Row-level object names, source values, and source paths are omitted.",
   "evidence": {
-    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-graph-current-fef909",
-    "graphQuarantineReductionPlan": "npm run audit:graph-quarantine-reduction -- --graph-dir /tmp/nexus-graph-current-fef909 --out-dir reports/graph-quarantine-reduction/current-main --source-sha fef909cd4bae7c7fde7e21f5c6a90e9000d07bf2"
+    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-graph-reconcile-type-collision-guard-20260815T150246Z",
+    "graphQuarantineReductionPlan": "npm run audit:graph-quarantine-reduction -- --graph-dir /tmp/nexus-graph-reconcile-type-collision-guard-20260815T150246Z --out-dir reports/graph-quarantine-reduction/current-main --source-sha c6fde1b7380db40f0527d326142dd1fd2d1368a5"
   },
   "totals": {
     "relationshipRows": 9633,
-    "relationshipCandidates": 4454,
-    "quarantinedRelationships": 5179,
-    "quarantineRatePercent": 53.76,
-    "nodeCandidatesIndexed": 6499,
-    "nodeLookupAliasesIndexed": 246,
-    "ambiguousNodeLookupAliasesSkipped": 61,
+    "relationshipCandidates": 5810,
+    "quarantinedRelationships": 3823,
+    "quarantineRatePercent": 39.69,
+    "nodeCandidatesIndexed": 9376,
+    "nodeLookupAliasesIndexed": 717,
+    "ambiguousNodeLookupAliasesSkipped": 100,
     "graphTablesWritten": false,
     "productReadModelsUpdated": false
   },
   "reductionBreakdown": [
     {
-      "reductionPath": "source_data_dimension_or_edge_retirement_gate",
-      "count": 4660,
-      "disposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+      "reductionPath": "source_data_dimension_or_edge_type_correction_gate",
+      "count": 3304,
+      "disposition": "catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge"
     },
     {
       "reductionPath": "upstream_source_absence_or_no_graph_disposition",
@@ -35,11 +35,11 @@
   "reasonBreakdown": [
     {
       "reason": "unresolved-to-node",
-      "count": 3440
+      "count": 2255
     },
     {
       "reason": "unresolved-from-node",
-      "count": 2713
+      "count": 1429
     },
     {
       "reason": "missing-from-object-name",
@@ -69,12 +69,12 @@
       "relationshipCandidates": 10,
       "quarantinedRelationships": 1703,
       "quarantineRatePercent": 99.42,
-      "topReductionPath": "source_data_dimension_or_edge_retirement_gate",
+      "topReductionPath": "source_data_dimension_or_edge_type_correction_gate",
       "reductionBreakdown": [
         {
-          "reductionPath": "source_data_dimension_or_edge_retirement_gate",
+          "reductionPath": "source_data_dimension_or_edge_type_correction_gate",
           "count": 1703,
-          "disposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+          "disposition": "catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge"
         }
       ],
       "reasonBreakdown": [
@@ -94,12 +94,12 @@
       "relationshipCandidates": 0,
       "quarantinedRelationships": 380,
       "quarantineRatePercent": 100,
-      "topReductionPath": "source_data_dimension_or_edge_retirement_gate",
+      "topReductionPath": "source_data_dimension_or_edge_type_correction_gate",
       "reductionBreakdown": [
         {
-          "reductionPath": "source_data_dimension_or_edge_retirement_gate",
+          "reductionPath": "source_data_dimension_or_edge_type_correction_gate",
           "count": 380,
-          "disposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+          "disposition": "catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge"
         }
       ],
       "reasonBreakdown": [
@@ -119,12 +119,12 @@
       "relationshipCandidates": 1462,
       "quarantinedRelationships": 840,
       "quarantineRatePercent": 36.49,
-      "topReductionPath": "source_data_dimension_or_edge_retirement_gate",
+      "topReductionPath": "source_data_dimension_or_edge_type_correction_gate",
       "reductionBreakdown": [
         {
-          "reductionPath": "source_data_dimension_or_edge_retirement_gate",
+          "reductionPath": "source_data_dimension_or_edge_type_correction_gate",
           "count": 840,
-          "disposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+          "disposition": "catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge"
         }
       ],
       "reasonBreakdown": [
@@ -140,12 +140,12 @@
       "relationshipCandidates": 0,
       "quarantinedRelationships": 364,
       "quarantineRatePercent": 100,
-      "topReductionPath": "source_data_dimension_or_edge_retirement_gate",
+      "topReductionPath": "source_data_dimension_or_edge_type_correction_gate",
       "reductionBreakdown": [
         {
-          "reductionPath": "source_data_dimension_or_edge_retirement_gate",
+          "reductionPath": "source_data_dimension_or_edge_type_correction_gate",
           "count": 364,
-          "disposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+          "disposition": "catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge"
         }
       ],
       "reasonBreakdown": [
@@ -199,50 +199,42 @@
     {
       "tenant": "tenant-06",
       "relationshipRows": 1037,
-      "relationshipCandidates": 0,
-      "quarantinedRelationships": 1037,
-      "quarantineRatePercent": 100,
-      "topReductionPath": "source_data_dimension_or_edge_retirement_gate",
+      "relationshipCandidates": 1034,
+      "quarantinedRelationships": 3,
+      "quarantineRatePercent": 0.29,
+      "topReductionPath": "source_data_dimension_or_edge_type_correction_gate",
       "reductionBreakdown": [
         {
-          "reductionPath": "source_data_dimension_or_edge_retirement_gate",
-          "count": 1037,
-          "disposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+          "reductionPath": "source_data_dimension_or_edge_type_correction_gate",
+          "count": 3,
+          "disposition": "catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge"
         }
       ],
       "reasonBreakdown": [
         {
-          "reason": "unresolved-from-node",
-          "count": 1037
-        },
-        {
           "reason": "unresolved-to-node",
-          "count": 1037
+          "count": 3
         }
       ]
     },
     {
       "tenant": "tenant-07",
       "relationshipRows": 3318,
-      "relationshipCandidates": 2982,
-      "quarantinedRelationships": 336,
-      "quarantineRatePercent": 10.13,
-      "topReductionPath": "source_data_dimension_or_edge_retirement_gate",
+      "relationshipCandidates": 3304,
+      "quarantinedRelationships": 14,
+      "quarantineRatePercent": 0.42,
+      "topReductionPath": "source_data_dimension_or_edge_type_correction_gate",
       "reductionBreakdown": [
         {
-          "reductionPath": "source_data_dimension_or_edge_retirement_gate",
-          "count": 336,
-          "disposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
+          "reductionPath": "source_data_dimension_or_edge_type_correction_gate",
+          "count": 14,
+          "disposition": "catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge"
         }
       ],
       "reasonBreakdown": [
         {
-          "reason": "unresolved-from-node",
-          "count": 247
-        },
-        {
           "reason": "unresolved-to-node",
-          "count": 165
+          "count": 14
         }
       ]
     }
@@ -250,7 +242,7 @@
   "acceptance": {
     "codeOnlyDictionaryOrEndpointAliasRepairRows": 0,
     "codeOnlyDictionaryOrEndpointAliasRepairAvailable": false,
-    "sourceDataOrDispositionRows": 5179,
+    "sourceDataOrDispositionRows": 3823,
     "graphMaterializationStillBlocked": true
   },
   "gatesLeftClosed": [
