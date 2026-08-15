@@ -34,6 +34,7 @@
 import { buildContractOptimizationEvidenceReadiness } from "@/lib/source/data-model/contract-optimization-evidence-readiness";
 import { summarizeOpportunityTraceability } from "@/lib/source/data-model/contract-optimization-traceability";
 import { deriveOptimizeWorkflowPosition } from "@/lib/source/data-model/contract-optimization-workflow-step";
+import type { OptimizationOpportunityValueType } from "@/lib/source/data-model/contract-optimization-opportunity";
 import {
   getContract360,
   getContractOptimizationEvidencePack,
@@ -51,6 +52,12 @@ function fmtUsd(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return "not established";
   return USD_COMPACT.format(value);
 }
+
+const VALUE_TYPE_LABEL: Record<OptimizationOpportunityValueType, string> = {
+  recoverable_leakage: "Recoverable leakage",
+  avoided_cost: "Avoided cost",
+  negotiable_improvement: "Negotiated improvement",
+};
 
 export interface AvaSourceContractGrounding {
   /** Grounding block for the agent system prompt. Empty when unavailable. */
@@ -118,6 +125,17 @@ export async function buildAvaSourceContractGrounding(
   const valueProofClosed =
     financeConfirmedUsd > 0 && financeRequest?.approvalState === "approved";
 
+  const ledgerTotals = buildLedgerTotals({
+    tracedByValueType: traceability.tracedByValueType,
+    financeConfirmedUsd,
+  });
+  const largestLedger = ledgerTotals
+    .filter((row) => row.valueType !== "realized_value")
+    .reduce<(typeof ledgerTotals)[number] | null>(
+      (best, row) => (best == null || row.amountUsd > best.amountUsd ? row : best),
+      null,
+    );
+
   const opportunityLines = (opportunitySet?.opportunities ?? [])
     .slice(0, 8)
     .map((opportunity) => {
@@ -131,6 +149,7 @@ export async function buildAvaSourceContractGrounding(
 
   const lines: string[] = [
     `AUTHORITATIVE SOURCE CONTRACT GROUNDING (LIVE — the same governed reads the Optimize Contract page renders, tenant "${tenantKey}", contract ${trimmedId}):`,
+    `Exact contract display name: "${contract.contract_name ?? trimmedId}". Exact vendor display name: "${contract.vendor_name ?? "not established"}". Use these exact names; do not substitute a similar name from generic context or prior examples.`,
     // `resolved_annual_value` wins whenever extraction disagreed with the
     // stated value; quoting the raw column there would repeat a known conflict.
     `Contract: ${contract.contract_name ?? trimmedId}. Vendor: ${contract.vendor_name ?? "not established"}. Annual value: ${fmtUsd(
@@ -154,16 +173,58 @@ export async function buildAvaSourceContractGrounding(
     `Opportunity value that a calculation run can reproduce: ${fmtUsd(traceability.tracedAmountUsd)}. Stated value with no reproducible calculation run: ${fmtUsd(
       traceability.untracedAmountUsd,
     )}.`,
+    `Chart-safe ledger totals from reproducible calculation runs: ${ledgerTotals
+      .map((row) => `${row.label} ${fmtUsd(row.amountUsd)}`)
+      .join("; ")}.`,
+    largestLedger
+      ? `Largest reproducible non-realized ledger for chart narration: ${largestLedger.label} at ${fmtUsd(largestLedger.amountUsd)}. Quote this line instead of recomputing totals from the opportunity rows.`
+      : "",
     `Workflow lifecycle state: strategy approval ${strategyRequest?.approvalState ?? "not requested"}; vendor outcome ${agreedOutcome?.outcomeState ?? "not recorded"}; Finance/Tower confirmation request ${financeRequest?.approvalState ?? "not requested"}; value-proof gate ${valueProofClosed ? "closed" : "open"}.`,
     `Finance-confirmed realized value: ${fmtUsd(financeConfirmedUsd)}.`,
     opportunityLines.length > 0
       ? `Opportunity rows:\n${opportunityLines.join("\n")}`
       : "Opportunity rows: none loaded for this contract.",
     `Contract-grain grounding IS available for ${trimmedId}. Answer questions about ${trimmedId} from the numbers above — do NOT deflect them to Contract 360, and do NOT fall back to portfolio-level figures or generic tenant-context retrieval for this contract.`,
-    "Rules for these numbers: a missing evidence family is missing, never zero. Only the reproducible total may be presented as value that can be defended outside this workspace; the non-reproducible figure must be described as not yet traceable to a calculation run. Realized value exists only where Finance has confirmed it. The value-proof gate is not closed until the Finance/Tower confirmation request is approved, even if a finance realization row is visible. If the user asks something about this contract that is not covered above, say so plainly instead of estimating.",
+    "Rules for these numbers: a missing evidence family is missing, never zero. Only the reproducible total and the chart-safe ledger totals may be presented as value that can be defended outside this workspace; the non-reproducible figure must be described as not yet traceable to a calculation run. Realized value exists only where Finance has confirmed it. The value-proof gate is not closed until the Finance/Tower confirmation request is approved, even if a finance realization row is visible. If the user asks for a chart, graph, or table, use the chart-safe ledger totals above and do not add or recompute row-level amounts yourself. If the user asks something about this contract that is not covered above, say so plainly instead of estimating.",
   ].filter(Boolean);
 
   return { block: lines.join("\n"), hasLiveNumbers: true };
+}
+
+function buildLedgerTotals(input: {
+  tracedByValueType: Readonly<
+    Partial<Record<OptimizationOpportunityValueType, number>>
+  >;
+  financeConfirmedUsd: number;
+}): readonly {
+  readonly valueType:
+    | OptimizationOpportunityValueType
+    | "realized_value";
+  readonly label: string;
+  readonly amountUsd: number;
+}[] {
+  return [
+    {
+      valueType: "recoverable_leakage",
+      label: VALUE_TYPE_LABEL.recoverable_leakage,
+      amountUsd: input.tracedByValueType.recoverable_leakage ?? 0,
+    },
+    {
+      valueType: "avoided_cost",
+      label: VALUE_TYPE_LABEL.avoided_cost,
+      amountUsd: input.tracedByValueType.avoided_cost ?? 0,
+    },
+    {
+      valueType: "negotiable_improvement",
+      label: VALUE_TYPE_LABEL.negotiable_improvement,
+      amountUsd: input.tracedByValueType.negotiable_improvement ?? 0,
+    },
+    {
+      valueType: "realized_value",
+      label: "Realized value",
+      amountUsd: input.financeConfirmedUsd,
+    },
+  ];
 }
 
 function latestRequest(
