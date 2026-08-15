@@ -164,6 +164,7 @@ function evaluateGates(input: {
   const financeConfirmed =
     (opportunitySet?.financeConfirmedUsd ?? 0) > 0 ||
     (opportunitySet?.financeRealizations.length ?? 0) > 0;
+  const valueProofComplete = financeConfirmed && hasFinanceRequest;
 
   return [
     {
@@ -267,7 +268,7 @@ function evaluateGates(input: {
           : "No negotiated vendor outcome is recorded.",
     },
     {
-      satisfied: financeConfirmed,
+      satisfied: valueProofComplete,
       primaryAction: financeConfirmed
         ? hasFinanceRequest
           ? "Value proof is finance-confirmed"
@@ -279,7 +280,11 @@ function evaluateGates(input: {
             ? "Finance-confirmed value exists, and the Finance/Tower confirmation request is recorded."
             : "Finance-confirmed value exists, but the workflow still needs the Finance/Tower handoff request for the audit trail."
           : "Only finance-confirmed value counts as realized. Estimates and vendor agreement do not.",
-      blocker: financeConfirmed ? null : "No finance-confirmed value yet.",
+      blocker: valueProofComplete
+        ? null
+        : financeConfirmed
+          ? "Finance-confirmed value exists, but no Finance/Tower handoff request is recorded."
+          : "No finance-confirmed value yet.",
     },
   ];
 }

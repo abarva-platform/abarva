@@ -377,12 +377,14 @@ describe("deriveOptimizeWorkflowPosition", () => {
         ],
       }),
     });
-    expect(confirmed.steps[6].state).toBe("complete");
+    expect(confirmed.steps[6].state).toBe("blocked");
     expect(confirmed.primaryAction).toBe("Record the Finance/Tower handoff");
     expect(confirmed.primaryActionDetail).toContain(
       "workflow still needs the Finance/Tower handoff request",
     );
-    expect(confirmed.blocker).toBeNull();
+    expect(confirmed.blocker).toBe(
+      "Finance-confirmed value exists, but no Finance/Tower handoff request is recorded.",
+    );
 
     const confirmedWithHandoff = positionFor({
       set: opportunitySet({
@@ -426,6 +428,54 @@ describe("deriveOptimizeWorkflowPosition", () => {
     expect(confirmedWithHandoff.primaryAction).toBe(
       "Value proof is finance-confirmed",
     );
+    expect(confirmedWithHandoff.steps[6].state).toBe("complete");
+    expect(confirmedWithHandoff.blocker).toBeNull();
+  });
+
+  it("does not close value proof from a Finance handoff request without finance-confirmed value", () => {
+    const position = positionFor({
+      set: opportunitySet({
+        opportunities: [opportunity({ stage: "agreed" })],
+        financeConfirmedUsd: 0,
+        approvalRequests: [
+          {
+            approvalRequestId: "apr-1",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            approvalType: "vendor_outreach_strategy",
+            approvalState: "approved",
+            requestedByRole: "Strategic sourcing",
+            requestedAt: "2027-06-30T00:00:00Z",
+            decisions: [],
+          },
+          {
+            approvalRequestId: "apr-2",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            approvalType: "finance_value_confirmation",
+            approvalState: "pending",
+            requestedByRole: "Finance",
+            requestedAt: "2027-07-02T00:00:00Z",
+            decisions: [],
+          },
+        ],
+        negotiatedOutcomes: [
+          {
+            outcomeId: "outcome-1",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            outcomeState: "agreed",
+            agreedAmountUsd: 200,
+            effectiveDate: "2027-07-01",
+            sourceDocumentId: "doc-1",
+          },
+        ],
+      }),
+    });
+    expect(position.currentKey).toBe("prove_value");
+    expect(position.primaryAction).toBe("Confirm realized value with Finance");
+    expect(position.blocker).toBe("No finance-confirmed value yet.");
+    expect(position.steps[6].state).toBe("blocked");
   });
 
   it("never marks a later step complete because an earlier one is", () => {
