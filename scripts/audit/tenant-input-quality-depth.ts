@@ -194,7 +194,7 @@ const domainMatchers: Array<{ domain: string; patterns: RegExp[] }> = [
   },
   {
     domain: "operational_process_evidence",
-    patterns: [/operational[_-]evidence/i, /process[_-]intelligence/i, /incidents/i],
+    patterns: [/operational[_-]process[_-]evidence/i, /operational[_-]evidence/i, /process[_-]intelligence/i, /incidents/i],
   },
 ];
 

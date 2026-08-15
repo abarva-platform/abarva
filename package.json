@@ -205,6 +205,7 @@
     "audit:tenant-graph-reconciliation": "node scripts/audit/tenant-graph-reconciliation.mjs",
     "audit:graph-disposition-status": "node scripts/audit/build-graph-disposition-status-report.mjs",
     "audit:graph-quarantine-reduction": "node scripts/audit/build-graph-quarantine-reduction-plan.mjs",
+    "audit:l1-undeclared-source-classification": "node scripts/audit/build-l1-undeclared-source-classification.mjs",
     "audit:layer3-canonical-write-plan": "node scripts/audit/build-layer3-canonical-write-plan.mjs",
     "audit:ava-readiness-ledger": "node scripts/audit/ava-readiness-ledger.mjs",
     "load:tenant-candidate-context": "node scripts/knowledge/load-tenant-candidate-context.mjs",
