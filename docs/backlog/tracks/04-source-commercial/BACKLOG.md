@@ -85,6 +85,50 @@ Proof discipline:
   surfaces.
 - Auth blockers must be reported as auth-blocked, not product-passed.
 
+Latest proof result after PR #6353:
+
+- Deployed SHA: `cc006f71e10cb4550bb5b3d6cc5dca98b3bce1c0`.
+- ACA main deploy: passed, including runtime invariant and production health
+  endpoint (`31882344995`).
+- Atlas production CXO gauntlet smoke: failed but advanced past the prior
+  harness blocker (`31882722216`).
+- What improved: the gauntlet now uses non-human agent identities, Clerk
+  testing-token bootstrap, tenant-key API requests, and 429 retry behavior. The
+  run completed all 18 expected turns with no aborted sessions, no fallback
+  turns, no tenant leak turns, and no network interruption turns.
+- Remaining P0 proof gap: Apex Retail still resolves to
+  `{"error":"no_client","detail":"No active client for this user"}` even with
+  `abarva_active_client=apexretail`; do not count Apex Atlas as proof-ready
+  until active-client/membership resolution is fixed or an approved proof scope
+  excludes Apex.
+- Remaining P0 answer-quality gap: Meridian/SkyHarbor produce live `200`
+  Atlas answers, but the smoke quality bar failed: only 1 of 18 turns passed,
+  0 of 6 required four-section answers passed, and most failures are missing
+  the required next-action shape. One Meridian signal-ID question hit the
+  visible-answer contract with HTTP `422`.
+
+New proof/backlog items from that result:
+
+1. **SRC-PROOF-002 — Apex active-client resolution for signed-in Atlas proof**
+   - Priority: P0.
+   - Decide whether Apex is in the required production proof scope. If yes,
+     repair/provision the Apex active-client and membership path so
+     `apexretail-agent@abarva.example.com` can resolve a real active client
+     without bypassing tenancy. If no, remove Apex from the Atlas gauntlet with
+     a tracked proof-scope decision rather than leaving a known failing tenant
+     in the required smoke.
+   - Hard gate: do not mutate production auth/data membership without explicit
+     operator classification, command preview, and readback proof.
+2. **SRC-PROOF-003 — Atlas CXO response shape quality bar**
+   - Priority: P0.
+   - For Meridian and SkyHarbor, enforce the visible answer shape expected by
+     the gauntlet: consistent next action, required four-section response when
+     requested, concise executive structure, and no visible-answer-contract
+     `422` for signal-ID/plain-English questions.
+   - Acceptance: rerun Atlas smoke on deployed SHA and show `status200`,
+     four-section count, next-action checks, leak checks, and pass count moving
+     to the agreed threshold.
+
 ## Backlog Items
 
 ---
