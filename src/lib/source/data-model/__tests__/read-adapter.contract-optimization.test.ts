@@ -77,6 +77,26 @@ describe("getContractOptimizationOpportunitySet", () => {
             {
               tenant_key: "skyharbor_global",
               dataset_version: "source-v1-1-canary",
+              opportunity_id: "CTR-090:scope-reduction",
+              contract_id: "CTR-090",
+              vendor_id: "salesforce",
+              value_type: "avoided_cost",
+              stage: "approval_required",
+              amount_usd: 2_400_000,
+              amount_state: "exact",
+              evidence_grade: "human_validated",
+              confidence: 0.76,
+              next_action:
+                "Confirm reclaim list with application owners and convert approved quantity into renewal scope.",
+              overlap_treatment: "Distinct from negotiated improvement.",
+              approval_state: "requires_scope_owner_approval",
+              narrative:
+                "Scope reduction is ready for an internal reclaim decision.",
+              payload: { label: "Scope reduction" },
+            },
+            {
+              tenant_key: "skyharbor_global",
+              dataset_version: "source-v1-1-canary",
               opportunity_id: "CTR-090:rate-variance",
               contract_id: "CTR-090",
               vendor_id: "salesforce",

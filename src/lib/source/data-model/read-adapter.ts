@@ -1574,8 +1574,10 @@ function selectDefaultOptimizationOpportunityId({
   if (activeOutcomeOpportunityId) return activeOutcomeOpportunityId;
 
   return (
-    opportunities.find((opportunity) =>
-      ["target_position", "approval_required"].includes(opportunity.stage),
+    opportunities.find((opportunity) => opportunity.stage === "target_position")
+      ?.opportunityId ??
+    opportunities.find(
+      (opportunity) => opportunity.stage === "approval_required",
     )?.opportunityId ??
     opportunities.find((opportunity) =>
       opportunity.opportunityId.endsWith(":rate-variance"),
