@@ -188,6 +188,37 @@ describe('buildVendorCoverageGovernedAnswer', () => {
     jest.resetAllMocks();
   });
 
+  it('prefers visible response-stage profile vendors for unsupported-claim questions', async () => {
+    const answer = await buildVendorCoverageGovernedAnswer({
+      eventId: 'fa4d9a8f-85ab-4245-9b9b-2906710dd22e',
+      clientKey: 'skyharbor',
+      tenantId: 'tenant-skyharbor',
+      question: 'Which vendor claims are unsupported or lack evidence?',
+      eventType: 'infrastructure',
+      event: {
+        id: 'fa4d9a8f-85ab-4245-9b9b-2906710dd22e',
+        code: 'SKYH-SKYHARBOR-AMS-OUTSOURCING-2026',
+        name: 'SkyHarbor Global Application Managed Services (AMS) Sourcing Event',
+        accountName: 'SkyHarbor Air',
+      },
+    });
+
+    expect(readEventFacts).not.toHaveBeenCalled();
+    expect(readVendorLeverResponses).not.toHaveBeenCalled();
+    expect(readVendorLeverResponseFacts).not.toHaveBeenCalled();
+    expect(answer).not.toBeNull();
+    const table = answer!.artifacts.find(
+      (artifact) => artifact.artifact === 'table',
+    );
+    expect(table?.rows.map((row) => row.vendor)).toEqual([
+      'Vendor A — incumbent operations profile',
+      'Vendor B — scale transformation profile',
+      'Vendor C — specialist service profile',
+    ]);
+    expect(JSON.stringify(answer)).not.toContain('Amadeus');
+    expect(answer!.caveats?.[0]?.detail).toMatch(/Vendor A\/B\/C/);
+  });
+
   it('reads Source facts with the legacy client key but emits a canonical governed answer', async () => {
     mockReadEventFacts.mockResolvedValue({ inputs: {}, citations: {} });
     mockReadVendorLeverResponses.mockResolvedValue({

@@ -41,6 +41,14 @@ import {
 import type { FactConfidence } from '@/lib/source/facts/fact-types';
 import { buildResponseCoverageInsight } from '@/lib/source/facts/view/step-insight-builder';
 import { resolveValueArchetype } from '@/lib/source/facts/view/stage-analytics-builder';
+import {
+  buildVendorResponseMveProfiles,
+  type VendorResponseProfileEventRef,
+} from '@/lib/source/proposal-intelligence/mve-profile';
+import type {
+  VendorExtractionCard,
+  VendorResponseProfile,
+} from '@/lib/source/proposal-intelligence/types';
 import { composeAvaAnswer } from '@/lib/ava-answer/composeAvaAnswer';
 import type {
   AnswerCitation,
@@ -128,6 +136,8 @@ export interface BuildVendorCoverageGovernedAnswerInput {
   question: string;
   /** The event's raw event_type, used to resolve the value archetype. */
   eventType?: string | null;
+  /** Event display identity for response-stage proposal-profile grounding. */
+  event?: VendorResponseProfileEventRef | null;
 }
 
 /**
@@ -140,6 +150,181 @@ export function governedClientKeyForSourceClientKey(
 ): string | null {
   const governedClientKey = canonicalTenantKey(clientKey);
   return isCanonicalClientKey(governedClientKey) ? governedClientKey : null;
+}
+
+function proposalCardConfidenceToConfidenceLevel(
+  confidence: VendorExtractionCard['confidence'],
+): ConfidenceLevel {
+  switch (confidence) {
+    case 'low':
+      return 'low';
+    case 'medium':
+      return 'medium';
+    case 'high':
+      return 'high';
+  }
+}
+
+function governedCandidateFromProposalCard(
+  profile: VendorResponseProfile,
+  card: VendorExtractionCard,
+  scope: { clientKey: string; tenantId: string | null },
+): GovernedCandidate {
+  const sourceBasis = card.evidenceReference ?? profile.packageSummary;
+  return {
+    id: `${profile.vendorId}:${card.cardId}`,
+    client_key: scope.clientKey,
+    tenant_id: scope.tenantId,
+    source_layer: 'vendor',
+    source_basis: sourceBasis,
+    classification: 'confidential',
+    retrievability: 'not_indexed',
+    agent_readiness_status: 'not_reviewed',
+    confidence_level: proposalCardConfidenceToConfidenceLevel(card.confidence),
+    cited_render_verified_at: null,
+    title: `${profile.vendorName} · ${card.title}`,
+    citations: sourceBasis ? [sourceBasis] : [],
+  };
+}
+
+function firstMissingOrPartial(profile: VendorResponseProfile): string {
+  const openSections = [
+    ...profile.responseCompleteness.missingSections.map(
+      (section) => `Missing: ${section}`,
+    ),
+    ...profile.responseCompleteness.partialSections.map(
+      (section) => `Partial: ${section}`,
+    ),
+  ];
+  return openSections[0] ?? 'No missing or partial response sections';
+}
+
+function buildProfileGroundedVendorCoverageAnswer(
+  input: BuildVendorCoverageGovernedAnswerInput & {
+    governedClientKey: string;
+    profiles: readonly VendorResponseProfile[];
+  },
+): AvaAnswerPacket | null {
+  if (input.profiles.length === 0) return null;
+
+  const candidates = input.profiles.flatMap((profile) =>
+    profile.extractionCards.map((card) =>
+      governedCandidateFromProposalCard(profile, card, {
+        clientKey: input.governedClientKey,
+        tenantId: input.tenantId,
+      }),
+    ),
+  );
+  const bundle = buildValidatedAgentContextBundle(candidates, {
+    requireAgentReady: false,
+  });
+
+  if (bundle.decision === 'block') {
+    return composeAvaAnswer({
+      surface: 'source',
+      mode: 'SOURCE',
+      tenantKey: input.governedClientKey,
+      question: input.question,
+      intent: 'vendor_response_coverage',
+      status: 'blocked',
+      tenantFencePassed: false,
+      gaps: [
+        {
+          id: 'vendor-profile-governance-blocked',
+          label: 'Vendor-response profile evidence blocked by governance policy',
+          detail:
+            bundle.blocked
+              .flatMap((b) => b.errors)
+              .slice(0, 3)
+              .join('; ') || 'The governance gate blocked every profile row.',
+        },
+      ],
+    });
+  }
+
+  const citations = avaCitationsFromGovernedCandidates(bundle.usable);
+  const unresolvedProfiles = input.profiles.filter(
+    (profile) =>
+      profile.readyForEvaluation !== 'yes' ||
+      profile.unsupportedClaims.length > 0 ||
+      profile.responseCompleteness.missingSections.length > 0 ||
+      profile.responseCompleteness.partialSections.length > 0,
+  );
+  const unresolvedNames = unresolvedProfiles
+    .slice(0, 3)
+    .map((profile) => profile.vendorName)
+    .join(', ');
+  const headline = unresolvedProfiles.length
+    ? `${unresolvedNames} still need evidence closure before their claims can be treated as clean.`
+    : 'All visible response profiles are complete enough for evaluation setup.';
+
+  const table: AnswerTable = {
+    id: 'vendor-response-profile-coverage',
+    title: 'Vendor response profile coverage',
+    columns: [
+      { key: 'vendor', label: 'Vendor', format: 'text' },
+      {
+        key: 'readiness',
+        label: 'Readiness',
+        format: 'text',
+      },
+      {
+        key: 'unsupportedClaims',
+        label: 'Unsupported claims',
+        format: 'number',
+        align: 'right',
+      },
+      {
+        key: 'responseCompleteness',
+        label: 'Response complete',
+        format: 'percent',
+        align: 'right',
+      },
+      { key: 'openEvidence', label: 'Open evidence', format: 'text' },
+      { key: 'nextAction', label: 'Next action', format: 'text' },
+    ],
+    rows: input.profiles.map((profile) => ({
+      vendor: profile.vendorName,
+      readiness: profile.readyForEvaluation,
+      unsupportedClaims: profile.unsupportedClaims.length,
+      responseCompleteness: profile.responseCompleteness.percent / 100,
+      openEvidence:
+        profile.unsupportedClaims[0] ?? firstMissingOrPartial(profile),
+      nextAction:
+        profile.clarificationQuestions[0] ??
+        'Proceed with human score lock.',
+    })),
+    note: headline,
+    citationIds: citations.map((c) => c.id),
+  };
+
+  return composeAvaAnswer({
+    surface: 'source',
+    mode: 'SOURCE',
+    tenantKey: input.governedClientKey,
+    question: input.question,
+    intent: 'vendor_response_coverage',
+    status: 'answered',
+    tenantFencePassed: true,
+    directAnswer: headline,
+    artifacts: [{ ...table, artifact: 'table' as const }],
+    citations,
+    caveats: [
+      {
+        id: 'vendor-profile-grounding',
+        label: 'Grounded to visible response profiles',
+        detail:
+          'This answer uses the same Vendor A/B/C proposal-profile substrate rendered on the Responses stage; lower-level ambient vendor rows are not mixed into this view.',
+      },
+    ],
+    retrievalSummary: {
+      substrate: 'module_read_model',
+      sourceCount: citations.length,
+      hasTenantFacts: citations.length > 0,
+      hasCorpus: false,
+      hasExperts: false,
+    },
+  });
 }
 
 /**
@@ -171,6 +356,26 @@ export async function buildVendorCoverageGovernedAnswer(
   if (!governedClientKey) {
     trace('not_governable_client_key', {});
     return null;
+  }
+
+  const profileSet = input.event
+    ? buildVendorResponseMveProfiles({
+        id: input.event.id,
+        code: input.event.code,
+        name: input.event.name,
+        accountName: input.event.accountName,
+      })
+    : null;
+  if (profileSet?.profiles.length) {
+    trace('using_response_profile_grounding', {
+      profileCount: profileSet.profiles.length,
+      profileVendors: profileSet.profiles.map((profile) => profile.vendorName),
+    });
+    return buildProfileGroundedVendorCoverageAnswer({
+      ...input,
+      governedClientKey,
+      profiles: profileSet.profiles,
+    });
   }
 
   const [factsRead, vendorResponses, vendorLeverFacts] = await Promise.all([

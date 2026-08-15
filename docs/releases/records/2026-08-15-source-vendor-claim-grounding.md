@@ -15,6 +15,10 @@ vendor-response answer packet instead of letting the visible drawer prose answer
 context. This keeps response-stage answers aligned to the event's persisted response vendors and
 evidence rows.
 
+Follow-up hardening keeps response-stage answers grounded to the same proposal-profile substrate the
+Responses page renders when that substrate exists, instead of falling through to lower-level vendor
+lever rows from a different response view.
+
 ## Layer Impact
 
 Release lane: `global-control-lane`.
@@ -35,6 +39,7 @@ does not change tenant data, canonical facts, adapters, calculation logic, or an
 
 - `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`
 - `src/app/api/v1/source/[eventId]/nexus/ask/__tests__/vendor-coverage-intent.test.ts`
+- `src/lib/source/ava/vendor-coverage-governed-answer.ts`
 - `src/lib/source/ava/__tests__/vendor-coverage-governed-answer.test.ts`
 
 ## QA / Validation
@@ -42,7 +47,8 @@ does not change tenant data, canonical facts, adapters, calculation logic, or an
 - PASS: `npx jest --runTestsByPath 'src/app/api/v1/source/[eventId]/nexus/ask/__tests__/vendor-coverage-intent.test.ts' --runInBand`
   (4/4 tests passed).
 - PASS: `npx jest src/lib/source/ava/__tests__/vendor-coverage-governed-answer.test.ts --runInBand`
-  (12/12 tests passed).
+  (13/13 tests passed, including a profile-grounding regression that proves unsupported-claim
+  answers list only the visible response profiles and do not include ambient vendor names).
 - Required after deploy: signed-in Source event aVa proof that an unsupported-claim question renders
   only the governed event response vendors in both visible prose and structured output.
 
