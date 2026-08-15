@@ -437,7 +437,7 @@ export function SourcingReactivePanel({ artifacts }: SourcingReactivePanelProps)
           fontWeight: 700,
         }}
       >
-        Ava sourcing reasoning - live
+        aVa sourcing reasoning
       </header>
       {visible.map((artifact) => {
         const key = stableSourcingArtifactKey(artifact);

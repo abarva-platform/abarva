@@ -125,6 +125,12 @@ export interface BuildModeGroundingInput {
   vendorResponses?: VendorResponseSignal;
   /** The vendor-bid signal (from `readVendorBids`) — `vendor_comparison`, `should_cost`. */
   vendorBids?: VendorBidSignal;
+  /**
+   * Stage keys with real approval evidence from the Source approval ledger.
+   * When supplied, event-status completion claims must use this list instead
+   * of deriving completion from stage position.
+   */
+  approvedStageKeys?: readonly string[];
 }
 
 export interface ModeGroundingResult {
@@ -201,16 +207,44 @@ function buildEventStatusGrounding(input: BuildModeGroundingInput): ModeGroundin
   const currentStage = normalizeSourceStageKey(event.currentStageKey) ?? "strategy";
   const currentIndex = SOURCE_STAGE_ORDER.indexOf(currentStage);
   const stageOfEleven = currentIndex >= 0 ? currentIndex + 1 : 1;
-  const completeStages = currentIndex >= 0 ? SOURCE_STAGE_ORDER.slice(0, currentIndex) : [];
+  const priorStages = currentIndex >= 0 ? SOURCE_STAGE_ORDER.slice(0, currentIndex) : [];
+  const approvedStageKeys =
+    input.approvedStageKeys === undefined
+      ? null
+      : new Set(
+          input.approvedStageKeys
+            .map((stageKey) => normalizeSourceStageKey(stageKey))
+            .filter((stageKey): stageKey is NonNullable<typeof stageKey> =>
+              Boolean(stageKey),
+            ),
+        );
+  const completeStages =
+    approvedStageKeys === null
+      ? priorStages
+      : priorStages.filter((stageKey) => approvedStageKeys.has(stageKey));
+  const priorStagesWithoutApproval =
+    approvedStageKeys === null
+      ? []
+      : priorStages.filter((stageKey) => !approvedStageKeys.has(stageKey));
   const remainingStages = currentIndex >= 0 ? SOURCE_STAGE_ORDER.slice(currentIndex + 1) : [];
 
   const lines: string[] = [
     "EVENT STATUS GROUNDING (authoritative — the exact stage-rail state this event is in):",
     `Event: ${event.name} (${event.code}).`,
     `Current stage: ${SOURCE_STAGE_LABELS[currentStage]} — stage ${stageOfEleven} of ${SOURCE_STAGE_ORDER.length}.`,
-    completeStages.length > 0
-      ? `Completed stages: ${completeStages.map((s) => SOURCE_STAGE_LABELS[s]).join(", ")}.`
-      : "Completed stages: none yet — this event is at the first stage.",
+    approvedStageKeys === null
+      ? completeStages.length > 0
+        ? `Completed stages: ${completeStages.map((s) => SOURCE_STAGE_LABELS[s]).join(", ")}.`
+        : "Completed stages: none yet — this event is at the first stage."
+      : completeStages.length > 0
+        ? `Completed stages with approval evidence: ${completeStages.map((s) => SOURCE_STAGE_LABELS[s]).join(", ")}.`
+        : "Completed stages with approval evidence: none.",
+    ...(approvedStageKeys !== null && priorStagesWithoutApproval.length > 0
+      ? [
+          `Prior stages without approval evidence: ${priorStagesWithoutApproval.map((s) => SOURCE_STAGE_LABELS[s]).join(", ")}.`,
+          "Completion rule: do not say all prior stages are completed unless every prior stage is listed as approval-evidenced.",
+        ]
+      : []),
     remainingStages.length > 0
       ? `Remaining stages: ${remainingStages.map((s) => SOURCE_STAGE_LABELS[s]).join(", ")}.`
       : "Remaining stages: none — this is the final stage.",
@@ -247,6 +281,12 @@ function buildEventStatusGrounding(input: BuildModeGroundingInput): ModeGroundin
     // count, the exact same one the canvas checklist counter renders.
     quotableFacts.taskChecklistDone = String(doneCount);
     quotableFacts.taskChecklistTotal = String(stageView.tasks.length);
+  }
+  if (approvedStageKeys !== null) {
+    quotableFacts.approvalEvidencedStageCount = String(completeStages.length);
+    quotableFacts.priorStagesWithoutApprovalEvidence = String(
+      priorStagesWithoutApproval.length,
+    );
   }
 
   return {

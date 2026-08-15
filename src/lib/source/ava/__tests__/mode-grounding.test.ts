@@ -79,6 +79,28 @@ describe("buildModeGrounding — event_status", () => {
     expect(result.block).toContain("Remaining stages:");
     expect(result.block).toContain("Value"); // last stage should be in remaining list
   });
+
+  it("does not call prior stages complete from position when approval evidence is absent", () => {
+    const result = buildModeGrounding({
+      mode: "event_status",
+      event: { ...EVENT, currentStageKey: "scope" },
+      viewStageKey: "scope",
+      approvedStageKeys: [],
+    });
+
+    expect(result.block).toContain(
+      "Completed stages with approval evidence: none.",
+    );
+    expect(result.block).toContain(
+      "Prior stages without approval evidence: Strategy.",
+    );
+    expect(result.block).toContain(
+      "do not say all prior stages are completed",
+    );
+    expect(result.block).not.toContain("Completed stages: Strategy.");
+    expect(result.quotableFacts.approvalEvidencedStageCount).toBe("0");
+    expect(result.quotableFacts.priorStagesWithoutApprovalEvidence).toBe("1");
+  });
 });
 
 describe("buildModeGrounding — workflow_how_to", () => {

@@ -198,6 +198,7 @@ import {
 // event/stage — the exact invariant violation this import fixes.
 import { hydrateTaskEvidenceState } from "@/lib/source/facts/view/task-evidence-hydration";
 import { getSourcingEvent, listSourcingEvents } from "@/lib/source/queries";
+import { loadApprovalLedger } from "@/lib/source/approval-ledger";
 import { buildSourceLifecycleContract } from "@/lib/lifecycle-operating-system";
 import type { SourceStageKey } from "@/lib/source/types";
 import { getStageVoiceDepth } from "@/lib/source/stage-voice-depth";
@@ -1521,6 +1522,7 @@ export async function POST(request: Request) {
           realizedSignal,
           vendorResponseSignal,
           vendorBidSignal,
+          modeApprovalLedger,
         ] = await Promise.all([
           readEventFacts({
             eventId: sourceEventIdFromContext,
@@ -1628,6 +1630,10 @@ export async function POST(request: Request) {
                 bidsByVendor: new Map<string, VendorBidInputs>(),
                 vendors: [] as string[],
               }),
+          loadApprovalLedger(
+            sourceEventIdFromContext,
+            groundingEvent.currentStageKey,
+          ).catch(() => null),
         ]);
 
         const modeStageViewRaw = buildLiveStageView({
@@ -1699,6 +1705,11 @@ export async function POST(request: Request) {
                 bids: [...vendorBidSignal.bidsByVendor.values()],
                 vendors: vendorBidSignal.vendors,
               }
+            : undefined,
+          approvedStageKeys: modeApprovalLedger
+            ? modeApprovalLedger
+                .filter((row) => row.state === "approved")
+                .map((row) => row.stageKey)
             : undefined,
         });
         if (
