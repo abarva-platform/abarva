@@ -247,7 +247,7 @@ describe("source access policy", () => {
     );
   });
 
-  it("treats canonical client admin accounts as one-client client admins for Source", async () => {
+  it("treats canonical client admin accounts as one-client client admins with Source financial visibility", async () => {
     setupRows({});
     const { loadUserSourceAccessPolicy } =
       await import("../source-access-policy");
@@ -265,7 +265,9 @@ describe("source access policy", () => {
     expect(policy.sourceEventIdsAllowed).toBeNull();
     expect(policy.canCreateSourceEvents).toBe(true);
     expect(policy.canApproveSourceStages).toBe(true);
-    expect(policy.canViewFinancialData).toBe(false);
+    expect(policy.canViewFinancialData).toBe(true);
+    expect(policy.outputPolicy.exactFinancialValues).toBe(true);
+    expect(policy.allowedDataClasses).toContain("restricted_financial");
   });
 
   // Security regression guard (SEC-P1-* fix on canonical-admin shortcut at
@@ -365,6 +367,8 @@ describe("source access policy", () => {
     expect(policy.canCreateSourceEvents).toBe(true);
     expect(policy.canApproveSourceStages).toBe(true);
     expect(policy.canApproveAward).toBe(true);
+    expect(policy.canViewFinancialData).toBe(true);
+    expect(policy.outputPolicy.exactFinancialValues).toBe(true);
   });
 
   it("does not grant pinned AbarVa admin/test accounts cross-tenant Source access", async () => {
@@ -404,6 +408,8 @@ describe("source access policy", () => {
     expect(policy.accessLevel).toBe("client_admin");
     expect(policy.sourceScope).toBe("all_client_source_events");
     expect(policy.sourceEventIdsAllowed).toBeNull();
+    expect(policy.canViewFinancialData).toBe(true);
+    expect(policy.outputPolicy.exactFinancialValues).toBe(true);
     await expect(
       canReadSourceEvent(
         agentTenancy,
