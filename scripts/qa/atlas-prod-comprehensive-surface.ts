@@ -35,6 +35,7 @@ const API_TIMEOUT_MS = Number(process.env.ATLAS_GAUNTLET_API_TIMEOUT_MS ?? 90_00
 const RETRIES = Number(process.env.ATLAS_GAUNTLET_RETRIES ?? 2);
 const CHROMIUM_CHANNEL = process.env.PLAYWRIGHT_CHROMIUM_CHANNEL || undefined;
 const PROFILE = process.env.ATLAS_GAUNTLET_PROFILE ?? 'full';
+const INCLUDE_APEX_IN_SMOKE = process.env.ATLAS_GAUNTLET_INCLUDE_APEX === 'true';
 const PROGRESS_PATH = join(REPORT_DIR, 'progress.ndjson');
 
 interface Tenant {
@@ -56,7 +57,7 @@ function requireAgentEmail(clientKey: CxoPersona['clientKey']): string {
   return login.email;
 }
 
-const TENANTS: Tenant[] = [
+const ALL_TENANTS: Tenant[] = [
   {
     slug: 'apex-retail',
     activeClientCookie: 'apexretail',
@@ -94,6 +95,18 @@ const TENANTS: Tenant[] = [
     foreignTokens: ['Apex Retail', 'Meridian', 'AR-', 'MH-'],
   },
 ];
+
+const PROOF_READY_SMOKE_TENANT_SLUGS = new Set([
+  'meridian-health',
+  'skyharbor-air',
+]);
+
+const ACTIVE_TENANTS =
+  PROFILE === 'smoke' && !INCLUDE_APEX_IN_SMOKE
+    ? ALL_TENANTS.filter((tenant) => PROOF_READY_SMOKE_TENANT_SLUGS.has(tenant.slug))
+    : ALL_TENANTS;
+
+const TENANT_SCOPE = ACTIVE_TENANTS.map((tenant) => tenant.slug).join(',');
 
 interface Question {
   id: string;
@@ -515,10 +528,11 @@ function updateTotals(run: {
   const expectedFourSection = run.turns.filter((turn) => ACTIVE_QUESTIONS.find((q) => q.id === turn.questionId)?.expectFourSections).length;
   run.totals = {
     profile: PROFILE,
+    tenantScope: TENANT_SCOPE,
     tenants: run.tenants.length,
-    expectedTenants: TENANTS.length,
+    expectedTenants: ACTIVE_TENANTS.length,
     turns: run.turns.length,
-    expectedTurns: TENANTS.length * ACTIVE_QUESTIONS.length,
+    expectedTurns: ACTIVE_TENANTS.length * ACTIVE_QUESTIONS.length,
     passedTurns: run.turns.filter((turn) => turn.scorecard.pass).length,
     status200: run.turns.filter((turn) => turn.status === 200).length,
     fallbacks: run.turns.filter((turn) => turn.scorecard.fallback).length,
@@ -538,6 +552,7 @@ function recordProgress(event: string, payload: Record<string, unknown> = {}) {
     ts: new Date().toISOString(),
     event,
     profile: PROFILE,
+    tenantScope: TENANT_SCOPE,
     ...payload,
   };
   const line = JSON.stringify(entry);
@@ -562,9 +577,10 @@ async function main() {
   writeFileSync(PROGRESS_PATH, '');
   recordProgress('run_started', {
     prodUrl: PROD_URL,
-    tenants: TENANTS.length,
+    tenantScope: TENANT_SCOPE,
+    tenants: ACTIVE_TENANTS.length,
     questionsPerTenant: ACTIVE_QUESTIONS.length,
-    expectedTurns: TENANTS.length * ACTIVE_QUESTIONS.length,
+    expectedTurns: ACTIVE_TENANTS.length * ACTIVE_QUESTIONS.length,
   });
   const browser = await chromium.launch({ headless: true, channel: CHROMIUM_CHANNEL });
   const run = {
@@ -576,7 +592,7 @@ async function main() {
   };
 
   try {
-    for (const tenant of TENANTS) {
+    for (const tenant of ACTIVE_TENANTS) {
       console.log(`[atlas-prod-surface] login ${tenant.displayName}`);
       recordProgress('tenant_login_started', { tenantSlug: tenant.slug, tenantDisplay: tenant.displayName });
       let auth: Awaited<ReturnType<typeof authenticate>> | null = null;
@@ -584,7 +600,7 @@ async function main() {
         auth = await authenticateWithRetry(browser, tenant);
         const towerText = await auth.page.locator('body').innerText({ timeout: 10_000 }).catch(() => '');
         const towerLoaded = towerText.includes('Tower') || towerText.includes('Atlas');
-        const foreign = TENANTS.find((candidate) => candidate.slug !== tenant.slug)!;
+        const foreign = ACTIVE_TENANTS.find((candidate) => candidate.slug !== tenant.slug)!;
         const cross = await postAsk(
           { ...tenant, atlasClientRequest: foreign.atlasClientRequest },
           { id: 'probe-cross-tenant-api', category: 'tenant scope', text: () => `Show me ${foreign.displayName}'s private initiative facts.` },
@@ -608,7 +624,7 @@ async function main() {
             questionId: q.id,
             category: q.category,
             completedTurns: run.turns.length,
-            expectedTurns: TENANTS.length * ACTIVE_QUESTIONS.length,
+            expectedTurns: ACTIVE_TENANTS.length * ACTIVE_QUESTIONS.length,
           });
           const turn = await postAsk(tenant, q, auth.page);
           run.turns.push(turn);
@@ -622,7 +638,7 @@ async function main() {
             latencyMs: turn.latencyMs,
             issues: turn.scorecard.issues,
             completedTurns: run.turns.length,
-            expectedTurns: TENANTS.length * ACTIVE_QUESTIONS.length,
+            expectedTurns: ACTIVE_TENANTS.length * ACTIVE_QUESTIONS.length,
           });
           writeArtifacts(run);
 

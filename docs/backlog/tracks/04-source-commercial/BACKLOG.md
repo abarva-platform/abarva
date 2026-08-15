@@ -111,6 +111,10 @@ New proof/backlog items from that result:
 
 1. **SRC-PROOF-002 — Apex active-client resolution for signed-in Atlas proof**
    - Priority: P0.
+   - Current execution slice: the Atlas smoke profile now defaults to the
+     proof-ready Meridian and SkyHarbor tenants, with
+     `ATLAS_GAUNTLET_INCLUDE_APEX=true` as the explicit opt-in path for Apex
+     once active-client provisioning is repaired.
    - Decide whether Apex is in the required production proof scope. If yes,
      repair/provision the Apex active-client and membership path so
      `apexretail-agent@abarva.example.com` can resolve a real active client
@@ -121,6 +125,11 @@ New proof/backlog items from that result:
      operator classification, command preview, and readback proof.
 2. **SRC-PROOF-003 — Atlas CXO response shape quality bar**
    - Priority: P0.
+   - Current execution slice: Atlas rendered responses get a deterministic
+     executive-readability pass that preserves the model answer, adds a
+     concrete next action when missing, enforces the four-section shape for
+     Copilot/industry questions, and scrubs visible raw signal IDs or legacy
+     agent branding before API contract enforcement.
    - For Meridian and SkyHarbor, enforce the visible answer shape expected by
      the gauntlet: consistent next action, required four-section response when
      requested, concise executive structure, and no visible-answer-contract
