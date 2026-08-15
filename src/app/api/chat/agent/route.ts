@@ -186,6 +186,7 @@ import {
   buildLiveStageView,
   resolveValueArchetype,
 } from "@/lib/source/facts/view/stage-analytics-builder";
+import { buildVendorResponseMveProfiles } from "@/lib/source/proposal-intelligence/mve-profile";
 // The canvas page (source/events/[eventId]/page.tsx) always re-derives each
 // stage task's done-state from ALREADY-PERSISTED evidence via
 // `hydrateTaskEvidenceState` before rendering "N of M complete" / the gate's
@@ -365,6 +366,20 @@ const PROGRAM_DELIVERABLE_NOUN_RE =
 const PROGRAM_MULTI_DELIVERABLE_RE =
   /\b(separate\s+signed\s+deliverables|type\s+keys|business_case|funding_approval|sponsor_alignment|readiness_and_change_plan|tower_handoff_plan)\b/i;
 const L9_PROVIDER_OVERLOAD_DRILL_HEADER = "x-abarva-l9-provider-drill-token";
+
+function looksLikeUnsupportedVendorResponseClaimQuestion(prompt: string): boolean {
+  const q = prompt.toLowerCase();
+  const hasVendorOrResponse =
+    /\b(vendor|vendors|supplier|suppliers|bidder|bidders|response|responses|proposal|proposals)\b/.test(
+      q,
+    );
+  const hasClaimLanguage = /\b(claim|claims|assertion|assertions)\b/.test(q);
+  const hasUnsupportedLanguage =
+    /\b(unsupported|unsubstantiated|unproven|not supported|lacks evidence|lack evidence|without evidence|no evidence|follow[- ]?up)\b/.test(
+      q,
+    );
+  return hasVendorOrResponse && hasClaimLanguage && hasUnsupportedLanguage;
+}
 
 class AgentProviderOverloadDrillError extends Error {
   readonly status = 529;
@@ -1500,6 +1515,26 @@ export async function POST(request: Request) {
           viewStageFromContext ?? groundingEvent.currentStageKey;
         const isPhaseB = isPhaseBImplementedMode(modeClassification.mode);
         const isPhaseC = isPhaseCImplementedMode(modeClassification.mode);
+        const visibleResponseProfileSet =
+          modeStageKey === "responses" &&
+          modeClassification.mode === "vendor_comparison" &&
+          looksLikeUnsupportedVendorResponseClaimQuestion(message)
+            ? buildVendorResponseMveProfiles({
+                id: sourceEventIdFromContext,
+                code: groundingEvent.code,
+                name: groundingEvent.name,
+                accountName: activeClientDisplayName,
+              })
+            : null;
+        const hasVisibleResponseProfiles =
+          (visibleResponseProfileSet?.profiles.length ?? 0) > 0;
+        const shouldReadVendorComparisonSignals =
+          ((isPhaseB && modeClassification.mode === "vendor_comparison") ||
+            (isPhaseC && modeClassification.mode === "decision_recommendation")) &&
+          !hasVisibleResponseProfiles;
+        const shouldReadVendorBidSignals =
+          (isPhaseB && modeClassification.mode === "should_cost") ||
+          shouldReadVendorComparisonSignals;
         // decision_recommendation and contract_optimization ALWAYS need the
         // archetype (they composite Phase B builders / call buildStepInsight
         // directly); general_advisory only benefits from it opportunistically
@@ -1592,8 +1627,7 @@ export async function POST(request: Request) {
               }),
           // decision_recommendation composites the vendor comparison facet
           // (buildVendorComparisonGrounding) — it needs the same signals.
-          (isPhaseB && modeClassification.mode === "vendor_comparison") ||
-          (isPhaseC && modeClassification.mode === "decision_recommendation")
+          shouldReadVendorComparisonSignals
             ? readVendorLeverResponses({
                 eventId: sourceEventIdFromContext,
                 clientKey: activeClientKey,
@@ -1613,10 +1647,7 @@ export async function POST(request: Request) {
                 >(),
                 vendors: [] as string[],
               }),
-          (isPhaseB &&
-            (modeClassification.mode === "vendor_comparison" ||
-              modeClassification.mode === "should_cost")) ||
-          (isPhaseC && modeClassification.mode === "decision_recommendation")
+          shouldReadVendorBidSignals
             ? readVendorBids({
                 eventId: sourceEventIdFromContext,
                 clientKey: activeClientKey,
@@ -1699,6 +1730,9 @@ export async function POST(request: Request) {
                 statusByVendorLever: vendorResponseSignal.statusByVendorLever,
                 vendors: vendorResponseSignal.vendors,
               }
+            : undefined,
+          vendorResponseProfiles: hasVisibleResponseProfiles
+            ? visibleResponseProfileSet?.profiles
             : undefined,
           vendorBids: vendorBidSignal.signalPresent
             ? {

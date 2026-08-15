@@ -341,6 +341,7 @@ describe("vendor response parser contract", () => {
         "Staffing model",
         "Transition plan",
         "Security and compliance response",
+        "Solution architecture",
         "Automation / productivity roadmap",
       ],
       documents: [
@@ -353,6 +354,7 @@ describe("vendor response parser contract", () => {
             "Staffing model: Follow-the-sun staffing is provided by named FTE bands and locations.",
             "Transition plan: Knowledge transfer is dependent on client SMEs and the fee is front-loaded.",
             "Security and compliance response: SOC 2 bridge letter and incident notice terms are included.",
+            "Solution architecture: Private lakehouse integration, service-management workflow, and controlled AI assistant pattern are described with ownership boundaries.",
             "Automation productivity roadmap: Vendor targets productivity opportunity, not committed price-down.",
           ].join("\n\n"),
         },
@@ -376,6 +378,14 @@ describe("vendor response parser contract", () => {
     expect(
       report.sectionFindings.find((row) => row.section === "SLA response"),
     ).toMatchObject({ status: "weak" });
+    expect(
+      report.sectionFindings.find(
+        (row) => row.section === "Solution architecture",
+      ),
+    ).toMatchObject({
+      status: "answered",
+      normalizedCategory: "solution_architecture",
+    });
     expect(
       report.missingInputs.some((missing) =>
         /Automation \/ productivity roadmap/.test(missing.request),
