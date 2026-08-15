@@ -1,9 +1,20 @@
 "use client";
 
-import React, { useMemo, useState, type CSSProperties } from "react";
+import React, {
+  useCallback,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import {
+  AgentDock,
+  type AttachmentRef,
+  type ChatMessage,
+  type SuggestedAction,
+} from "@/components/agent/AgentDock";
 import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { ANALYTICS } from "@/components/source/canvas/analytics/analytics-tokens";
@@ -53,6 +64,8 @@ export function SourceOptimizeContractPage({
   evidencePack = null,
 }: SourceOptimizeContractPageProps) {
   const selected = spine.selected;
+  const [thread, setThread] = useState<ChatMessage[]>([]);
+  const [isAgentBusy, setIsAgentBusy] = useState(false);
   const readiness = useMemo(
     () => buildContractOptimizationEvidenceReadiness({ evidencePack }),
     [evidencePack],
@@ -82,15 +95,162 @@ export function SourceOptimizeContractPage({
       }),
     [selected, opportunitySet, readiness, traceability],
   );
+  const surfaceContext = useMemo(
+    () => ({
+      sourceOptimizeContractMode: true,
+      contractId: selected?.contractId,
+      selection: selected
+        ? `${selected.vendorName} · ${selected.contractName}`
+        : "Optimize Contract portfolio",
+      lens: "Optimize Contract",
+      selectedOpportunityId: selectedOpportunity?.opportunityId,
+      selectedOpportunityLabel: selectedOpportunity?.shortLabel,
+      workflowStep: position.currentKey,
+      workflowState: position.currentLabel,
+      blocker: position.blocker,
+    }),
+    [position, selected, selectedOpportunity],
+  );
+  const suggestedActions = useMemo<SuggestedAction[]>(
+    () => [
+      {
+        id: "current-state",
+        label: "Explain current state",
+        body:
+          selected == null
+            ? "Which contracts should I optimize first, and why?"
+            : `Explain the current Optimize Contract state for ${selected.contractId}.`,
+      },
+      {
+        id: "four-ledgers",
+        label: "Show four ledgers",
+        body:
+          selected == null
+            ? "Show the four value ledgers for the top optimization candidates."
+            : `Show the four value ledgers for ${selected.contractId}. Do not invent realized value.`,
+      },
+      {
+        id: "missing-proof",
+        label: "What proof is missing?",
+        body:
+          selected == null
+            ? "What evidence is missing before we can size contract value?"
+            : `What evidence is still missing for ${selected.contractId}, and who should provide it?`,
+      },
+    ],
+    [selected],
+  );
+  const onMessage = useCallback(
+    async (text: string, attachments: AttachmentRef[]) => {
+      const trimmed = text.trim();
+      if (!trimmed && attachments.length === 0) return;
+      const userBody =
+        attachments.length > 0
+          ? `${trimmed}\n\n[attached: ${attachments
+              .map((attachment) => attachment.file_name)
+              .join(", ")}]`
+          : trimmed;
+      setThread((prev) => [
+        ...prev,
+        { id: `u-${Date.now()}`, role: "user", body: userBody },
+      ]);
+
+      const attachmentContext = attachments
+        .filter(
+          (attachment) =>
+            attachment.extracted_text_preview &&
+            attachment.extracted_text_preview.trim().length > 0,
+        )
+        .map(
+          (attachment) =>
+            `--- attachment: ${attachment.file_name} (${attachment.mime}) ---\n${attachment.extracted_text_preview}\n--- end attachment ---`,
+        )
+        .join("\n\n");
+      const messageForRuntime = attachmentContext
+        ? `${trimmed}\n\n${attachmentContext}`
+        : trimmed;
+
+      setIsAgentBusy(true);
+      let acc = "";
+      try {
+        const res = await fetch("/api/chat/agent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: messageForRuntime,
+            tenantName,
+            agentName: "aVa",
+            surface: "/source/optimize",
+            surfaceContext,
+            conversationHistory: thread
+              .slice(-6)
+              .map((turn) => ({
+                role: turn.role === "user" ? "user" : "assistant",
+                content: turn.body,
+              })),
+          }),
+        });
+        if (!res.ok) throw new Error(`aVa returned ${res.status}`);
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error("No response body");
+        const decoder = new TextDecoder();
+        let streaming = true;
+        while (streaming) {
+          const { done, value } = await reader.read();
+          if (done) {
+            streaming = false;
+            break;
+          }
+          acc += decoder.decode(value, { stream: true });
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Connection error";
+        acc = `I hit an error: ${message}`;
+      } finally {
+        setIsAgentBusy(false);
+      }
+
+      const finalBody = acc.trim() || "aVa did not return a response.";
+      setThread((prev) => [
+        ...prev,
+        { id: `a-${Date.now()}`, role: "agent", body: finalBody },
+      ]);
+    },
+    [surfaceContext, tenantName, thread],
+  );
+
+  const workspace = (
+    <main data-testid="source-optimize-contract" style={MAIN_STYLE}>
+      <div style={CONTAINER_STYLE}>
+        <ModuleHeader
+          asOfDateIso={asOfDateIso}
+          selected={selected}
+          selectedOpportunity={selectedOpportunity}
+        />
+        <StageRail steps={position.steps} />
+        <NextDecisionBar position={position} />
+        {selected ? (
+          <SelectedContractView
+            candidate={selected}
+            spine={spine}
+            opportunitySet={opportunitySet}
+            selectedOpportunity={selectedOpportunity}
+            readiness={readiness}
+            traceability={traceability}
+            position={position}
+          />
+        ) : (
+          <ContractPicker candidates={spine.topCandidates} />
+        )}
+      </div>
+    </main>
+  );
 
   return (
     <AppShell
       surface="source"
       agentName="Ava"
-      surfaceContext={{
-        sourceOptimizeContractMode: true,
-        contractId: selected?.contractId,
-      }}
+      surfaceContext={surfaceContext}
       topBarProps={{
         tenantName,
         showLocked: true,
@@ -98,30 +258,37 @@ export function SourceOptimizeContractPage({
       }}
       subNav={<SourceSubNav />}
     >
-      <main data-testid="source-optimize-contract" style={MAIN_STYLE}>
-        <div style={CONTAINER_STYLE}>
-          <ModuleHeader
-            asOfDateIso={asOfDateIso}
-            selected={selected}
-            selectedOpportunity={selectedOpportunity}
-          />
-          <StageRail steps={position.steps} />
-          <NextDecisionBar position={position} />
-          {selected ? (
-            <SelectedContractView
-              candidate={selected}
-              spine={spine}
-              opportunitySet={opportunitySet}
-              selectedOpportunity={selectedOpportunity}
-              readiness={readiness}
-              traceability={traceability}
-              position={position}
-            />
-          ) : (
-            <ContractPicker candidates={spine.topCandidates} />
-          )}
-        </div>
-      </main>
+      <AgentDock
+        agent={{
+          initials: "aVa",
+          mark: "ava",
+          name: "aVa",
+          role: "Contract optimization advisor",
+        }}
+        surface="/source/optimize"
+        defaultMode="collapsed"
+        disableStoredMode
+        collapsedRestoreMode="side-rail-right"
+        defaultLeftPercent={70}
+        minLeftPx={320}
+        surfaceContext={surfaceContext}
+        suggestedActions={suggestedActions}
+        thread={thread}
+        onMessage={onMessage}
+        workspace={workspace}
+        isAgentBusy={isAgentBusy}
+        placeholder={
+          selected
+            ? `Ask aVa about ${selected.contractId} evidence, ledgers, or next action...`
+            : "Ask aVa which contracts are ready to optimize..."
+        }
+        collapsedSummary={{
+          label: "aVa",
+          detail: selected
+            ? `Ask about ${selected.contractId}`
+            : "Ask about Optimize Contract",
+        }}
+      />
     </AppShell>
   );
 }
