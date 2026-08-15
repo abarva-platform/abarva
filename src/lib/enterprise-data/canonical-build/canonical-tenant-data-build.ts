@@ -12,9 +12,13 @@ import type {
   EvidenceReference,
   QualityStatus,
 } from "../contracts/canonical-ingestion";
-import { isMissingSourceValue, parseCsv } from "../source-adapters/csv-source-adapter";
+import {
+  isMissingSourceValue,
+  parseCsv,
+} from "../source-adapters/csv-source-adapter";
 
-export const CANONICAL_DATA_BUILD_REPORT_DIR = "reports/canonical-data-build/latest";
+export const CANONICAL_DATA_BUILD_REPORT_DIR =
+  "reports/canonical-data-build/latest";
 export const CANONICAL_DATA_BUILD_REGISTRY_PATH =
   "datasets/tenant-inputs/tenant-input-registry.json";
 export const CANONICAL_DATA_BUILD_VERSION = "canonical-tenant-data-build/v1";
@@ -73,7 +77,12 @@ type Registry = {
     qualityDepthRules: string;
   };
   activeTenants: Tenant[];
-  retiredTenants: Array<{ tenantKey: string; displayName: string; status: string; reason?: string }>;
+  retiredTenants: Array<{
+    tenantKey: string;
+    displayName: string;
+    status: string;
+    reason?: string;
+  }>;
 };
 
 type DomainKey =
@@ -171,7 +180,11 @@ type EnterpriseProfileBuild = {
     asOf?: string;
   };
   missingFields: string[];
-  sourceLineage: Array<{ sourcePath: string; rowNumber: number; evidenceKey: string }>;
+  sourceLineage: Array<{
+    sourcePath: string;
+    rowNumber: number;
+    evidenceKey: string;
+  }>;
 };
 
 type RelationshipCandidate = {
@@ -240,7 +253,12 @@ export type CanonicalDataBuildReport = {
     totalSourceRows: number;
     totalAcceptedRecords: number;
     domainsMeetingDepth: number;
-    domainsBelowDepth: Array<{ domain: string; rows: number; minimumRows: number; gap: number }>;
+    domainsBelowDepth: Array<{
+      domain: string;
+      rows: number;
+      minimumRows: number;
+      gap: number;
+    }>;
     qualityScore: number;
   }>;
   homeAvaReadiness: Array<{
@@ -289,7 +307,13 @@ const DOMAIN_CONFIG: Record<
   enterprise_profile: {
     canonicalDomain: "enterprise_structure",
     objectType: "tenant_profile",
-    primaryFields: ["entity_name", "client_display_name", "legal_name", "tenant_key", "company_name"],
+    primaryFields: [
+      "entity_name",
+      "client_display_name",
+      "legal_name",
+      "tenant_key",
+      "company_name",
+    ],
     nameLabel: "entity",
   },
   business_functions: {
@@ -298,28 +322,65 @@ const DOMAIN_CONFIG: Record<
     primaryFields: ["function_name", "business_capability", "capability_name"],
     nameLabel: "function",
     relationshipFields: [
-      { field: "parent_function", relationshipType: "rolls_up_to", targetObjectType: "business_function" },
-      { field: "executive_owner", relationshipType: "owned_by", targetObjectType: "person_or_role" },
+      {
+        field: "parent_function",
+        relationshipType: "rolls_up_to",
+        targetObjectType: "business_function",
+      },
+      {
+        field: "executive_owner",
+        relationshipType: "owned_by",
+        targetObjectType: "person_or_role",
+      },
     ],
   },
   org_ownership: {
     canonicalDomain: "enterprise_structure",
     objectType: "org_owner",
-    primaryFields: ["org_unit", "org_unit_name", "leader_name_or_role", "leader_role", "role_name", "team_name"],
+    primaryFields: [
+      "org_unit",
+      "org_unit_name",
+      "leader_name_or_role",
+      "leader_role",
+      "role_name",
+      "team_name",
+    ],
     nameLabel: "org owner",
     relationshipFields: [
-      { field: "owned_functions", relationshipType: "owns_function", targetObjectType: "business_function" },
-      { field: "owned_systems", relationshipType: "owns_system", targetObjectType: "application_system" },
-      { field: "owned_data_domains", relationshipType: "owns_data_domain", targetObjectType: "data_domain" },
+      {
+        field: "owned_functions",
+        relationshipType: "owns_function",
+        targetObjectType: "business_function",
+      },
+      {
+        field: "owned_systems",
+        relationshipType: "owns_system",
+        targetObjectType: "application_system",
+      },
+      {
+        field: "owned_data_domains",
+        relationshipType: "owns_data_domain",
+        targetObjectType: "data_domain",
+      },
     ],
   },
   workforce_roles: {
     canonicalDomain: "enterprise_structure",
     objectType: "workforce_role",
-    primaryFields: ["persona_or_role", "persona_name", "role", "persona", "role_name"],
+    primaryFields: [
+      "persona_or_role",
+      "persona_name",
+      "role",
+      "persona",
+      "role_name",
+    ],
     nameLabel: "role",
     relationshipFields: [
-      { field: "function_name", relationshipType: "supports_function", targetObjectType: "business_function" },
+      {
+        field: "function_name",
+        relationshipType: "supports_function",
+        targetObjectType: "business_function",
+      },
     ],
   },
   applications_systems: {
@@ -328,38 +389,115 @@ const DOMAIN_CONFIG: Record<
     primaryFields: ["system_name", "application_name", "app_name", "name"],
     nameLabel: "system",
     relationshipFields: [
-      { field: "business_function", relationshipType: "supports_function", targetObjectType: "business_function" },
-      { field: "business_owner", relationshipType: "business_owned_by", targetObjectType: "person_or_role" },
-      { field: "technology_owner", relationshipType: "technology_owned_by", targetObjectType: "person_or_role" },
-      { field: "vendor", relationshipType: "provided_by", targetObjectType: "vendor" },
-      { field: "data_domains", relationshipType: "handles_data_domain", targetObjectType: "data_domain" },
-      { field: "hosting_location", relationshipType: "hosted_on", targetObjectType: "infrastructure_platform" },
-      { field: "platform_or_database", relationshipType: "runs_on", targetObjectType: "infrastructure_platform" },
+      {
+        field: "business_function",
+        relationshipType: "supports_function",
+        targetObjectType: "business_function",
+      },
+      {
+        field: "business_owner",
+        relationshipType: "business_owned_by",
+        targetObjectType: "person_or_role",
+      },
+      {
+        field: "technology_owner",
+        relationshipType: "technology_owned_by",
+        targetObjectType: "person_or_role",
+      },
+      {
+        field: "vendor",
+        relationshipType: "provided_by",
+        targetObjectType: "vendor",
+      },
+      {
+        field: "data_domains",
+        relationshipType: "handles_data_domain",
+        targetObjectType: "data_domain",
+      },
+      {
+        field: "hosting_location",
+        relationshipType: "hosted_on",
+        targetObjectType: "infrastructure_platform",
+      },
+      {
+        field: "platform_or_database",
+        relationshipType: "runs_on",
+        targetObjectType: "infrastructure_platform",
+      },
     ],
   },
   data_assets_integrations: {
     canonicalDomain: "technology_estate",
     objectType: "data_asset_or_integration",
-    primaryFields: ["data_asset_name", "integration_name", "edge_id", "asset_name", "data_product_name"],
+    primaryFields: [
+      "data_asset_name",
+      "integration_name",
+      "edge_id",
+      "asset_name",
+      "data_product_name",
+    ],
     nameLabel: "data asset",
     relationshipFields: [
-      { field: "source_system", relationshipType: "sourced_from", targetObjectType: "application_system" },
-      { field: "source_app_id", relationshipType: "sourced_from", targetObjectType: "application_system" },
-      { field: "target_system", relationshipType: "feeds", targetObjectType: "application_system" },
-      { field: "target_app_id", relationshipType: "feeds", targetObjectType: "application_system" },
-      { field: "platform_or_database", relationshipType: "stored_on", targetObjectType: "infrastructure_platform" },
-      { field: "data_owner", relationshipType: "owned_by", targetObjectType: "person_or_role" },
-      { field: "data_steward", relationshipType: "stewarded_by", targetObjectType: "person_or_role" },
+      {
+        field: "source_system",
+        relationshipType: "sourced_from",
+        targetObjectType: "application_system",
+      },
+      {
+        field: "source_app_id",
+        relationshipType: "sourced_from",
+        targetObjectType: "application_system",
+      },
+      {
+        field: "target_system",
+        relationshipType: "feeds",
+        targetObjectType: "application_system",
+      },
+      {
+        field: "target_app_id",
+        relationshipType: "feeds",
+        targetObjectType: "application_system",
+      },
+      {
+        field: "platform_or_database",
+        relationshipType: "stored_on",
+        targetObjectType: "infrastructure_platform",
+      },
+      {
+        field: "data_owner",
+        relationshipType: "owned_by",
+        targetObjectType: "person_or_role",
+      },
+      {
+        field: "data_steward",
+        relationshipType: "stewarded_by",
+        targetObjectType: "person_or_role",
+      },
     ],
   },
   infrastructure_platforms: {
     canonicalDomain: "technology_estate",
     objectType: "infrastructure_platform",
-    primaryFields: ["platform_name", "estate_item_name", "asset_name", "platform", "data_center_or_region", "technology_stack"],
+    primaryFields: [
+      "platform_name",
+      "estate_item_name",
+      "asset_name",
+      "platform",
+      "data_center_or_region",
+      "technology_stack",
+    ],
     nameLabel: "platform",
     relationshipFields: [
-      { field: "operational_owner", relationshipType: "operated_by", targetObjectType: "person_or_role" },
-      { field: "owner", relationshipType: "owned_by", targetObjectType: "person_or_role" },
+      {
+        field: "operational_owner",
+        relationshipType: "operated_by",
+        targetObjectType: "person_or_role",
+      },
+      {
+        field: "owner",
+        relationshipType: "owned_by",
+        targetObjectType: "person_or_role",
+      },
     ],
   },
   vendors_contracts: {
@@ -368,84 +506,214 @@ const DOMAIN_CONFIG: Record<
     primaryFields: ["vendor_name", "contract_name", "supplier_name"],
     nameLabel: "vendor",
     relationshipFields: [
-      { field: "supported_systems", relationshipType: "supports_system", targetObjectType: "application_system" },
-      { field: "supported_functions", relationshipType: "supports_function", targetObjectType: "business_function" },
-      { field: "business_owner", relationshipType: "business_owned_by", targetObjectType: "person_or_role" },
-      { field: "contract_owner", relationshipType: "contract_owned_by", targetObjectType: "person_or_role" },
+      {
+        field: "supported_systems",
+        relationshipType: "supports_system",
+        targetObjectType: "application_system",
+      },
+      {
+        field: "supported_functions",
+        relationshipType: "supports_function",
+        targetObjectType: "business_function",
+      },
+      {
+        field: "business_owner",
+        relationshipType: "business_owned_by",
+        targetObjectType: "person_or_role",
+      },
+      {
+        field: "contract_owner",
+        relationshipType: "contract_owned_by",
+        targetObjectType: "person_or_role",
+      },
     ],
   },
   spend_value: {
     canonicalDomain: "financial_value",
     objectType: "spend_value_fact",
-    primaryFields: ["spend_category", "spend_id", "cost_center_or_owner", "value_driver", "metric_name"],
+    primaryFields: [
+      "spend_category",
+      "spend_id",
+      "cost_center_or_owner",
+      "value_driver",
+      "metric_name",
+    ],
     nameLabel: "spend category",
     relationshipFields: [
-      { field: "cost_center_or_owner", relationshipType: "owned_by", targetObjectType: "person_or_role" },
-      { field: "value_driver", relationshipType: "drives_value", targetObjectType: "value_driver" },
+      {
+        field: "cost_center_or_owner",
+        relationshipType: "owned_by",
+        targetObjectType: "person_or_role",
+      },
+      {
+        field: "value_driver",
+        relationshipType: "drives_value",
+        targetObjectType: "value_driver",
+      },
     ],
   },
   programs_initiatives: {
     canonicalDomain: "transformation_ai_portfolio",
     objectType: "program_initiative",
-    primaryFields: ["program_name", "program_id", "initiative_name", "priority_name"],
+    primaryFields: [
+      "program_name",
+      "program_id",
+      "initiative_name",
+      "priority_name",
+    ],
     nameLabel: "program",
     relationshipFields: [
-      { field: "business_sponsor", relationshipType: "sponsored_by", targetObjectType: "person_or_role" },
-      { field: "technology_owner", relationshipType: "technology_owned_by", targetObjectType: "person_or_role" },
-      { field: "business_function", relationshipType: "changes_function", targetObjectType: "business_function" },
-      { field: "target_outcomes", relationshipType: "targets_metric", targetObjectType: "metric" },
-      { field: "dependencies", relationshipType: "depends_on", targetObjectType: "dependency" },
+      {
+        field: "business_sponsor",
+        relationshipType: "sponsored_by",
+        targetObjectType: "person_or_role",
+      },
+      {
+        field: "technology_owner",
+        relationshipType: "technology_owned_by",
+        targetObjectType: "person_or_role",
+      },
+      {
+        field: "business_function",
+        relationshipType: "changes_function",
+        targetObjectType: "business_function",
+      },
+      {
+        field: "target_outcomes",
+        relationshipType: "targets_metric",
+        targetObjectType: "metric",
+      },
+      {
+        field: "dependencies",
+        relationshipType: "depends_on",
+        targetObjectType: "dependency",
+      },
     ],
   },
   ai_automation_use_cases: {
     canonicalDomain: "transformation_ai_portfolio",
     objectType: "ai_automation_use_case",
-    primaryFields: ["use_case_name", "use_case", "initiative_name", "ai_initiative", "tool_name"],
+    primaryFields: [
+      "use_case_name",
+      "use_case",
+      "initiative_name",
+      "ai_initiative",
+      "tool_name",
+    ],
     nameLabel: "AI use case",
     relationshipFields: [
-      { field: "business_function", relationshipType: "automates_function", targetObjectType: "business_function" },
-      { field: "dependent_systems", relationshipType: "depends_on_system", targetObjectType: "application_system" },
-      { field: "data_domains", relationshipType: "uses_data_domain", targetObjectType: "data_domain" },
+      {
+        field: "business_function",
+        relationshipType: "automates_function",
+        targetObjectType: "business_function",
+      },
+      {
+        field: "dependent_systems",
+        relationshipType: "depends_on_system",
+        targetObjectType: "application_system",
+      },
+      {
+        field: "data_domains",
+        relationshipType: "uses_data_domain",
+        targetObjectType: "data_domain",
+      },
     ],
   },
   risks_controls: {
     canonicalDomain: "risk_control_governance",
     objectType: "risk_or_control",
-    primaryFields: ["risk_or_control_name", "process_control_name", "risk_name", "control_name", "control", "risk", "process"],
+    primaryFields: [
+      "risk_or_control_name",
+      "process_control_name",
+      "risk_name",
+      "control_name",
+      "control",
+      "risk",
+      "process",
+    ],
     nameLabel: "risk/control",
     relationshipFields: [
-      { field: "linked_control", relationshipType: "mitigated_by", targetObjectType: "control" },
-      { field: "control_owner", relationshipType: "owned_by", targetObjectType: "person_or_role" },
-      { field: "affected_systems", relationshipType: "affects_system", targetObjectType: "application_system" },
+      {
+        field: "linked_control",
+        relationshipType: "mitigated_by",
+        targetObjectType: "control",
+      },
+      {
+        field: "control_owner",
+        relationshipType: "owned_by",
+        targetObjectType: "person_or_role",
+      },
+      {
+        field: "affected_systems",
+        relationshipType: "affects_system",
+        targetObjectType: "application_system",
+      },
     ],
   },
   relationships: {
     canonicalDomain: "memory_learning",
     objectType: "relationship_source_row",
-    primaryFields: ["source_name", "from_entity", "source_object", "relationship_id", "edge_id"],
+    primaryFields: [
+      "source_name",
+      "from_entity",
+      "source_object",
+      "relationship_id",
+      "edge_id",
+    ],
     nameLabel: "relationship",
   },
   evidence_sources: {
     canonicalDomain: "intelligence_answering",
     objectType: "evidence_source",
-    primaryFields: ["evidence_id", "source_artifact_label", "source_artifact_uri", "source_file", "document_name", "title"],
+    primaryFields: [
+      "evidence_id",
+      "source_artifact_label",
+      "source_artifact_uri",
+      "source_file",
+      "document_name",
+      "title",
+    ],
     nameLabel: "evidence",
   },
   metrics_outcomes: {
     canonicalDomain: "tower_outcomes",
     objectType: "metric_outcome",
-    primaryFields: ["metric_name", "kpi_name", "outcome_name", "team_id", "sla_id", "metric"],
+    primaryFields: [
+      "metric_name",
+      "kpi_name",
+      "outcome_name",
+      "team_id",
+      "sla_id",
+      "metric",
+    ],
     nameLabel: "metric",
     relationshipFields: [
-      { field: "business_function", relationshipType: "measures_function", targetObjectType: "business_function" },
-      { field: "owner", relationshipType: "owned_by", targetObjectType: "person_or_role" },
-      { field: "owner_role", relationshipType: "owned_by", targetObjectType: "person_or_role" },
+      {
+        field: "business_function",
+        relationshipType: "measures_function",
+        targetObjectType: "business_function",
+      },
+      {
+        field: "owner",
+        relationshipType: "owned_by",
+        targetObjectType: "person_or_role",
+      },
+      {
+        field: "owner_role",
+        relationshipType: "owned_by",
+        targetObjectType: "person_or_role",
+      },
     ],
   },
   industry_context_patterns: {
     canonicalDomain: "intelligence_answering",
     objectType: "industry_context_pattern",
-    primaryFields: ["pattern_name", "industry_pattern", "theme", "market_pattern_id"],
+    primaryFields: [
+      "pattern_name",
+      "industry_pattern",
+      "theme",
+      "market_pattern_id",
+    ],
     nameLabel: "pattern",
   },
   expert_lenses: {
@@ -457,46 +725,178 @@ const DOMAIN_CONFIG: Record<
   service_scope_managed_services: {
     canonicalDomain: "sourcing_procurement",
     objectType: "managed_service_scope",
-    primaryFields: ["service_tower", "service_scope", "service_name", "tower_name"],
+    primaryFields: [
+      "service_tower",
+      "service_scope",
+      "service_name",
+      "tower_name",
+    ],
     nameLabel: "service scope",
     relationshipFields: [
-      { field: "supported_functions", relationshipType: "supports_function", targetObjectType: "business_function" },
-      { field: "supported_systems", relationshipType: "supports_system", targetObjectType: "application_system" },
+      {
+        field: "supported_functions",
+        relationshipType: "supports_function",
+        targetObjectType: "business_function",
+      },
+      {
+        field: "supported_systems",
+        relationshipType: "supports_system",
+        targetObjectType: "application_system",
+      },
     ],
   },
   operational_process_evidence: {
     canonicalDomain: "moves_execution",
     objectType: "operational_process_evidence",
-    primaryFields: ["process_name", "process", "process_id", "incident_id", "evidence_name", "event_name", "case_id"],
+    primaryFields: [
+      "process_name",
+      "process",
+      "process_id",
+      "incident_id",
+      "evidence_name",
+      "event_name",
+      "case_id",
+    ],
     nameLabel: "process evidence",
     relationshipFields: [
-      { field: "related_systems", relationshipType: "uses_system", targetObjectType: "application_system" },
-      { field: "system_id", relationshipType: "uses_system", targetObjectType: "application_system" },
-      { field: "business_function", relationshipType: "evidences_function", targetObjectType: "business_function" },
+      {
+        field: "related_systems",
+        relationshipType: "uses_system",
+        targetObjectType: "application_system",
+      },
+      {
+        field: "system_id",
+        relationshipType: "uses_system",
+        targetObjectType: "application_system",
+      },
+      {
+        field: "business_function",
+        relationshipType: "evidences_function",
+        targetObjectType: "business_function",
+      },
     ],
   },
 };
 
 const DOMAIN_MATCHERS: Array<{ domain: DomainKey; patterns: RegExp[] }> = [
-  { domain: "enterprise_profile", patterns: [/enterprise[_-]profile/i, /portfolio[_-]entity[_-]registry/i] },
-  { domain: "business_functions", patterns: [/business[_-]functions/i, /business[_-]capabilities/i] },
-  { domain: "org_ownership", patterns: [/org[_-]ownership/i, /org[_-]roles/i, /team[_-]topology/i] },
-  { domain: "workforce_roles", patterns: [/workforce[_-](roles|personas)/i, /personas/i] },
-  { domain: "applications_systems", patterns: [/applications[_-]systems/i, /application[_-]portfolio/i, /apps?[_-]systems?/i] },
-  { domain: "data_assets_integrations", patterns: [/data[_-]assets?[_-]integrations?/i, /integration[_-]topology/i, /data[_-]inventory/i] },
-  { domain: "infrastructure_platforms", patterns: [/infrastructure/i, /cloud[_-]estate/i, /data[_-]center/i] },
-  { domain: "vendors_contracts", patterns: [/vendors?[_-]contracts?/i, /vendor[_-]contracts?/i] },
-  { domain: "spend_value", patterns: [/spend[_-]value/i, /it[_-]financials/i, /financial[_-]kpi/i, /rate[_-]card/i, /cost[_-]basis/i] },
-  { domain: "programs_initiatives", patterns: [/programs?[_-]initiatives?/i, /(^|\/)initiatives\.csv$/i, /business[_-]priorities/i] },
-  { domain: "ai_automation_use_cases", patterns: [/ai[_-](automation[_-])?use[_-]cases/i, /ai[_-]initiatives/i, /ai[_-]tooling/i] },
-  { domain: "risks_controls", patterns: [/risks?[_-]controls?/i, /operations[_-]risk[_-]controls/i, /qms/i] },
-  { domain: "relationships", patterns: [/relationships?/i, /graph[_-]edges?/i, /bridge/i] },
-  { domain: "evidence_sources", patterns: [/evidence[_-]sources/i, /source[_-]evidence[_-]registry/i, /chunk[_-]retrieval[_-]registry/i] },
-  { domain: "metrics_outcomes", patterns: [/metrics?[_-]outcomes?/i, /metric[_-]definitions/i, /dora[_-]baseline/i, /sla[_-]register/i] },
-  { domain: "industry_context_patterns", patterns: [/industry[_-](context|corpus|market|knowledge)[_-]patterns/i, /market[_-]corpus/i] },
+  {
+    domain: "enterprise_profile",
+    patterns: [/enterprise[_-]profile/i, /portfolio[_-]entity[_-]registry/i],
+  },
+  {
+    domain: "business_functions",
+    patterns: [/business[_-]functions/i, /business[_-]capabilities/i],
+  },
+  {
+    domain: "org_ownership",
+    patterns: [/org[_-]ownership/i, /org[_-]roles/i, /team[_-]topology/i],
+  },
+  {
+    domain: "workforce_roles",
+    patterns: [/workforce[_-](roles|personas)/i, /personas/i],
+  },
+  {
+    domain: "applications_systems",
+    patterns: [
+      /applications[_-]systems/i,
+      /application[_-]portfolio/i,
+      /apps?[_-]systems?/i,
+    ],
+  },
+  {
+    domain: "data_assets_integrations",
+    patterns: [
+      /data[_-]assets?[_-]integrations?/i,
+      /integration[_-]topology/i,
+      /data[_-]inventory/i,
+    ],
+  },
+  {
+    domain: "infrastructure_platforms",
+    patterns: [/infrastructure/i, /cloud[_-]estate/i, /data[_-]center/i],
+  },
+  {
+    domain: "vendors_contracts",
+    patterns: [/vendors?[_-]contracts?/i, /vendor[_-]contracts?/i],
+  },
+  {
+    domain: "spend_value",
+    patterns: [
+      /spend[_-]value/i,
+      /it[_-]financials/i,
+      /financial[_-]kpi/i,
+      /rate[_-]card/i,
+      /cost[_-]basis/i,
+    ],
+  },
+  {
+    domain: "programs_initiatives",
+    patterns: [
+      /programs?[_-]initiatives?/i,
+      /(^|\/)initiatives\.csv$/i,
+      /business[_-]priorities/i,
+    ],
+  },
+  {
+    domain: "ai_automation_use_cases",
+    patterns: [
+      /ai[_-](automation[_-])?use[_-]cases/i,
+      /ai[_-]initiatives/i,
+      /ai[_-]tooling/i,
+    ],
+  },
+  {
+    domain: "risks_controls",
+    patterns: [
+      /risks?[_-]controls?/i,
+      /operations[_-]risk[_-]controls/i,
+      /qms/i,
+    ],
+  },
+  {
+    domain: "relationships",
+    patterns: [/relationships?/i, /graph[_-]edges?/i, /bridge/i],
+  },
+  {
+    domain: "evidence_sources",
+    patterns: [
+      /evidence[_-]sources/i,
+      /source[_-]evidence[_-]registry/i,
+      /chunk[_-]retrieval[_-]registry/i,
+    ],
+  },
+  {
+    domain: "metrics_outcomes",
+    patterns: [
+      /metrics?[_-]outcomes?/i,
+      /metric[_-]definitions/i,
+      /dora[_-]baseline/i,
+      /sla[_-]register/i,
+    ],
+  },
+  {
+    domain: "industry_context_patterns",
+    patterns: [
+      /industry[_-](context|corpus|market|knowledge)[_-]patterns/i,
+      /market[_-]corpus/i,
+    ],
+  },
   { domain: "expert_lenses", patterns: [/expert[_-]lenses/i] },
-  { domain: "service_scope_managed_services", patterns: [/service[_-](scope|tower)[_-]managed[_-]services/i, /managed[_-]services[_-]scope/i] },
-  { domain: "operational_process_evidence", patterns: [/operational[_-]evidence/i, /process[_-]intelligence/i, /incidents/i] },
+  {
+    domain: "service_scope_managed_services",
+    patterns: [
+      /service[_-](scope|tower)[_-]managed[_-]services/i,
+      /managed[_-]services[_-]scope/i,
+    ],
+  },
+  {
+    domain: "operational_process_evidence",
+    patterns: [
+      /operational[_-]evidence/i,
+      /process[_-]intelligence/i,
+      /incidents/i,
+    ],
+  },
 ];
 
 const REQUIRED_PROFILE_FIELDS = [
@@ -519,12 +919,22 @@ export async function buildCanonicalTenantDataReport(options: {
   repoRoot: string;
   outputDir?: string;
   generatedAt?: string;
+  tenantKeys?: string[];
 }): Promise<CanonicalDataBuildReport> {
   const generatedAt = options.generatedAt ?? new Date().toISOString();
   const repoRoot = options.repoRoot;
-  const registry = await readJson<Registry>(repoRoot, CANONICAL_DATA_BUILD_REGISTRY_PATH);
-  const manifest = await readJson<TemplateManifest>(repoRoot, registry.universalTemplateSet.manifest);
-  const qualityRules = await readJson<QualityDepthRules>(repoRoot, registry.universalTemplateSet.qualityDepthRules);
+  const registry = await readJson<Registry>(
+    repoRoot,
+    CANONICAL_DATA_BUILD_REGISTRY_PATH,
+  );
+  const manifest = await readJson<TemplateManifest>(
+    repoRoot,
+    registry.universalTemplateSet.manifest,
+  );
+  const qualityRules = await readJson<QualityDepthRules>(
+    repoRoot,
+    registry.universalTemplateSet.qualityDepthRules,
+  );
   const findings: CanonicalBuildFinding[] = [];
 
   const tenants = [];
@@ -534,20 +944,31 @@ export async function buildCanonicalTenantDataReport(options: {
   const sourcePathViolations: CanonicalBuildFinding[] = [];
 
   const northstarExcluded =
-    !registry.activeTenants.some((tenant) => BLOCKED_TENANT_KEYS.has(tenant.tenantKey)) &&
-    registry.retiredTenants.some((tenant) => BLOCKED_TENANT_KEYS.has(tenant.tenantKey));
+    !registry.activeTenants.some((tenant) =>
+      BLOCKED_TENANT_KEYS.has(tenant.tenantKey),
+    ) &&
+    registry.retiredTenants.some((tenant) =>
+      BLOCKED_TENANT_KEYS.has(tenant.tenantKey),
+    );
 
   if (!northstarExcluded) {
     findings.push({
       tenantKey: "global",
       severity: "error",
       code: "northstar_not_retired",
-      message: "Northstar must be absent from active tenants and explicitly retired/excluded.",
+      message:
+        "Northstar must be absent from active tenants and explicitly retired/excluded.",
     });
   }
 
-  for (const template of manifest.templates.filter((template) => template.required)) {
-    const absoluteTemplate = path.resolve(repoRoot, registry.universalTemplateSet.root, template.file);
+  for (const template of manifest.templates.filter(
+    (template) => template.required,
+  )) {
+    const absoluteTemplate = path.resolve(
+      repoRoot,
+      registry.universalTemplateSet.root,
+      template.file,
+    );
     if (!(await exists(absoluteTemplate))) {
       findings.push({
         tenantKey: "global",
@@ -558,8 +979,33 @@ export async function buildCanonicalTenantDataReport(options: {
     }
   }
 
-  for (const tenant of registry.activeTenants) {
-    const sourceFiles = await discoverTenantSourceFiles(repoRoot, registry, tenant, findings, sourcePathViolations);
+  const requestedTenantKeys = options.tenantKeys
+    ? new Set(options.tenantKeys)
+    : null;
+  const activeTenants = requestedTenantKeys
+    ? registry.activeTenants.filter((tenant) =>
+        requestedTenantKeys.has(tenant.tenantKey),
+      )
+    : registry.activeTenants;
+  if (
+    requestedTenantKeys &&
+    activeTenants.length !== requestedTenantKeys.size
+  ) {
+    const found = new Set(activeTenants.map((tenant) => tenant.tenantKey));
+    const missing = [...requestedTenantKeys].filter(
+      (tenantKey) => !found.has(tenantKey),
+    );
+    throw new Error(`Unknown or inactive tenant key(s): ${missing.join(", ")}`);
+  }
+
+  for (const tenant of activeTenants) {
+    const sourceFiles = await discoverTenantSourceFiles(
+      repoRoot,
+      registry,
+      tenant,
+      findings,
+      sourcePathViolations,
+    );
     tenants.push({
       tenantKey: tenant.tenantKey,
       displayName: tenant.displayName,
@@ -584,24 +1030,49 @@ export async function buildCanonicalTenantDataReport(options: {
         placeholderRejectionReport.push(...result.placeholderRejections);
         if (result.record) {
           canonicalRecords.push(result.record);
-          relationshipCandidates.push(...relationshipCandidatesForRecord(result.record, sourceFile, row, rowIndex + 2));
+          relationshipCandidates.push(
+            ...relationshipCandidatesForRecord(
+              result.record,
+              sourceFile,
+              row,
+              rowIndex + 2,
+            ),
+          );
         }
       });
     }
   }
 
-  const canonicalRecordSummary = summarizeCanonicalRecords(tenants, canonicalRecords, findings);
-  const evidenceAttachmentSummary = tenants.map((tenant) => evidenceSummaryForTenant(tenant.tenantKey, canonicalRecords));
+  const canonicalRecordSummary = summarizeCanonicalRecords(
+    tenants,
+    canonicalRecords,
+    findings,
+  );
+  const evidenceAttachmentSummary = tenants.map((tenant) =>
+    evidenceSummaryForTenant(tenant.tenantKey, canonicalRecords),
+  );
   const relationshipCandidatesSummary = tenants.map((tenant) =>
-    relationshipSummaryForTenant(tenant.tenantKey, relationshipCandidates, findings),
+    relationshipSummaryForTenant(
+      tenant.tenantKey,
+      relationshipCandidates,
+      findings,
+    ),
   );
   const enterpriseProfileBuild = tenants.map((tenant) =>
-    profileBuildForTenant(tenant.tenantKey, tenant.displayName, canonicalRecords, findings),
+    profileBuildForTenant(
+      tenant.tenantKey,
+      tenant.displayName,
+      canonicalRecords,
+      findings,
+    ),
   );
   const tenantGaps = Object.fromEntries(
     tenants.map((tenant) => [
       tenant.tenantKey,
-      findings.filter((finding) => finding.tenantKey === tenant.tenantKey && finding.severity !== "info"),
+      findings.filter(
+        (finding) =>
+          finding.tenantKey === tenant.tenantKey && finding.severity !== "info",
+      ),
     ]),
   );
   const tenantQualityDepth = tenants.map((tenant) =>
@@ -618,7 +1089,9 @@ export async function buildCanonicalTenantDataReport(options: {
     ),
   );
 
-  const archiveReadViolations = sourcePathViolations.filter((finding) => finding.code === "archive_or_legacy_source_read");
+  const archiveReadViolations = sourcePathViolations.filter(
+    (finding) => finding.code === "archive_or_legacy_source_read",
+  );
   const report: CanonicalDataBuildReport = {
     generatedAt,
     sourceRoot: registry.activeRoot,
@@ -643,7 +1116,10 @@ export async function buildCanonicalTenantDataReport(options: {
         "Downloads",
         "/private/tmp",
       ],
-      activeFilesInspected: tenants.reduce((sum, tenant) => sum + tenant.sourceFiles.length, 0),
+      activeFilesInspected: tenants.reduce(
+        (sum, tenant) => sum + tenant.sourceFiles.length,
+        0,
+      ),
       violations: sourcePathViolations,
     },
     archiveReadViolations,
@@ -661,13 +1137,21 @@ export async function buildCanonicalTenantDataReport(options: {
     findings,
     summary: {
       tenantsProcessed: tenants.length,
-      canonicalRecordsAccepted: canonicalRecords.filter((record) => record.qualityStatus !== "quarantined").length,
-      canonicalRecordsQuarantined: canonicalRecords.filter((record) => record.qualityStatus === "quarantined").length,
-      evidenceAttachments: canonicalRecords.reduce((sum, record) => sum + record.evidenceReferences.length, 0),
+      canonicalRecordsAccepted: canonicalRecords.filter(
+        (record) => record.qualityStatus !== "quarantined",
+      ).length,
+      canonicalRecordsQuarantined: canonicalRecords.filter(
+        (record) => record.qualityStatus === "quarantined",
+      ).length,
+      evidenceAttachments: canonicalRecords.reduce(
+        (sum, record) => sum + record.evidenceReferences.length,
+        0,
+      ),
       relationshipCandidates: relationshipCandidates.length,
       placeholderRejections: placeholderRejectionReport.length,
       archiveReadViolations: archiveReadViolations.length,
-      errorCount: findings.filter((finding) => finding.severity === "error").length,
+      errorCount: findings.filter((finding) => finding.severity === "error")
+        .length,
       inactiveOnly: true,
     },
   };
@@ -686,15 +1170,30 @@ export async function writeCanonicalTenantDataReport(
 ): Promise<void> {
   const absoluteOutputDir = path.resolve(repoRoot, outputDir);
   await fs.mkdir(absoluteOutputDir, { recursive: true });
-  await fs.writeFile(path.join(absoluteOutputDir, "summary.md"), summaryMarkdown(report));
-  await fs.writeFile(path.join(absoluteOutputDir, "tenant-build-index.json"), json(report.tenants));
-  await fs.writeFile(path.join(absoluteOutputDir, "canonical-records-summary.json"), json(report.canonicalRecordSummary));
-  await fs.writeFile(path.join(absoluteOutputDir, "evidence-attachment-summary.json"), json(report.evidenceAttachmentSummary));
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "summary.md"),
+    summaryMarkdown(report),
+  );
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "tenant-build-index.json"),
+    json(report.tenants),
+  );
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "canonical-records-summary.json"),
+    json(report.canonicalRecordSummary),
+  );
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "evidence-attachment-summary.json"),
+    json(report.evidenceAttachmentSummary),
+  );
   await fs.writeFile(
     path.join(absoluteOutputDir, "relationship-candidates-summary.json"),
     json(report.relationshipCandidatesSummary),
   );
-  await fs.writeFile(path.join(absoluteOutputDir, "enterprise-profile-build.json"), json(report.enterpriseProfileBuild));
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "enterprise-profile-build.json"),
+    json(report.enterpriseProfileBuild),
+  );
   await fs.writeFile(
     path.join(absoluteOutputDir, "placeholder-rejection-report.json"),
     json(compactFindings(report.placeholderRejectionReport)),
@@ -710,11 +1209,26 @@ export async function writeCanonicalTenantDataReport(
       ),
     ),
   );
-  await fs.writeFile(path.join(absoluteOutputDir, "tenant-quality-depth.json"), json(report.tenantQualityDepth));
-  await fs.writeFile(path.join(absoluteOutputDir, "home-ava-readiness.json"), json(report.homeAvaReadiness));
-  await fs.writeFile(path.join(absoluteOutputDir, "source-path-enforcement.json"), json(report.sourcePathEnforcement));
-  await fs.writeFile(path.join(absoluteOutputDir, "archive-read-violations.json"), json(report.archiveReadViolations));
-  await fs.writeFile(path.join(absoluteOutputDir, "all-tenant-build-control.html"), controlHtml(report));
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "tenant-quality-depth.json"),
+    json(report.tenantQualityDepth),
+  );
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "home-ava-readiness.json"),
+    json(report.homeAvaReadiness),
+  );
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "source-path-enforcement.json"),
+    json(report.sourcePathEnforcement),
+  );
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "archive-read-violations.json"),
+    json(report.archiveReadViolations),
+  );
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "all-tenant-build-control.html"),
+    controlHtml(report),
+  );
 }
 
 function buildRecordFromRow(args: {
@@ -807,12 +1321,29 @@ function buildRecordFromRow(args: {
     attributes[toAttributeName(field)] = canonicalValue(value);
   }
 
-  attributes.displayName = { value: primary, valueType: "string", confidence: 0.9 };
-  attributes.sourcePath = { value: sourceFile.repoRelativePath, valueType: "string", confidence: 1 };
-  attributes.sourceRowNumber = { value: rowNumber, valueType: "number", confidence: 1 };
+  attributes.displayName = {
+    value: primary,
+    valueType: "string",
+    confidence: 0.9,
+  };
+  attributes.sourcePath = {
+    value: sourceFile.repoRelativePath,
+    valueType: "string",
+    confidence: 1,
+  };
+  attributes.sourceRowNumber = {
+    value: rowNumber,
+    valueType: "number",
+    confidence: 1,
+  };
 
   const sourceObjectId = `${sourceFile.domain}:${normalizeIdentifier(primary)}:${rowNumber}`;
-  const relationships = relationshipCandidatesForRow(sourceFile.domain as DomainKey, primary, row, evidence).map(
+  const relationships = relationshipCandidatesForRow(
+    sourceFile.domain as DomainKey,
+    primary,
+    row,
+    evidence,
+  ).map(
     (candidate): CanonicalRelationship => ({
       relationshipType: candidate.relationshipType,
       targetObjectType: candidate.targetObjectType,
@@ -822,12 +1353,13 @@ function buildRecordFromRow(args: {
     }),
   );
 
-  const qualityStatus: QualityStatus =
-    validationFindings.some((finding) => finding.severity === "error")
-      ? "quarantined"
-      : validationFindings.length > 0
-        ? "warning"
-        : "valid";
+  const qualityStatus: QualityStatus = validationFindings.some(
+    (finding) => finding.severity === "error",
+  )
+    ? "quarantined"
+    : validationFindings.length > 0
+      ? "warning"
+      : "valid";
 
   return {
     record: {
@@ -844,7 +1376,9 @@ function buildRecordFromRow(args: {
         sourceSystem: "canonical-tenant-inputs",
         sourceType: sourceFile.domain ?? "unknown",
         owner: sourceFile.packetId,
-        authority: sourceFile.classification.includes("benchmark") ? "benchmark" : "self_reported",
+        authority: sourceFile.classification.includes("benchmark")
+          ? "benchmark"
+          : "self_reported",
       },
       observedAt: generatedAt,
       confidence: confidenceFor(row),
@@ -860,7 +1394,8 @@ function buildRecordFromRow(args: {
           adapterKey: "canonical-csv-file-builder",
           mappingProfile: `${sourceFile.domain}/canonical-input`,
           contractVersion: "canonical-tenant-input-standard-2026-07",
-          notes: "Inactive file-based build output only. No production data writes, promotion, or module runtime reads.",
+          notes:
+            "Inactive file-based build output only. No production data writes, promotion, or module runtime reads.",
         },
       ],
     },
@@ -923,7 +1458,9 @@ async function discoverTenantSourceFiles(
       });
     }
   }
-  return sourceFiles.sort((left, right) => left.repoRelativePath.localeCompare(right.repoRelativePath));
+  return sourceFiles.sort((left, right) =>
+    left.repoRelativePath.localeCompare(right.repoRelativePath),
+  );
 }
 
 function relationshipCandidatesForRecord(
@@ -932,21 +1469,26 @@ function relationshipCandidatesForRecord(
   row: Record<string, string>,
   rowNumber: number,
 ): RelationshipCandidate[] {
-  const sourceName = String(record.attributes.displayName?.value ?? record.sourceObjectId);
-  return relationshipCandidatesForRow(sourceFile.domain as DomainKey, sourceName, row, record.evidenceReferences[0]).map(
-    (candidate) => ({
-      tenantKey: record.tenantKey,
-      relationshipType: candidate.relationshipType,
-      sourceObjectType: record.objectType,
-      sourceObjectName: sourceName,
-      targetObjectType: candidate.targetObjectType,
-      targetObjectName: candidate.targetObjectName,
-      confidence: candidate.confidence,
-      evidenceKey: candidate.evidenceKey,
-      sourcePath: sourceFile.repoRelativePath,
-      rowNumber,
-    }),
+  const sourceName = String(
+    record.attributes.displayName?.value ?? record.sourceObjectId,
   );
+  return relationshipCandidatesForRow(
+    sourceFile.domain as DomainKey,
+    sourceName,
+    row,
+    record.evidenceReferences[0],
+  ).map((candidate) => ({
+    tenantKey: record.tenantKey,
+    relationshipType: candidate.relationshipType,
+    sourceObjectType: record.objectType,
+    sourceObjectName: sourceName,
+    targetObjectType: candidate.targetObjectType,
+    targetObjectName: candidate.targetObjectName,
+    confidence: candidate.confidence,
+    evidenceKey: candidate.evidenceKey,
+    sourcePath: sourceFile.repoRelativePath,
+    rowNumber,
+  }));
 }
 
 function relationshipCandidatesForRow(
@@ -965,7 +1507,11 @@ function relationshipCandidatesForRow(
   const candidates = [];
   for (const relation of config.relationshipFields ?? []) {
     for (const target of splitValues(row[relation.field])) {
-      if (isPlaceholder(target) || normalizeName(target) === normalizeName(sourceName)) continue;
+      if (
+        isPlaceholder(target) ||
+        normalizeName(target) === normalizeName(sourceName)
+      )
+        continue;
       candidates.push({
         relationshipType: relation.relationshipType,
         targetObjectType: relation.targetObjectType,
@@ -976,12 +1522,21 @@ function relationshipCandidatesForRow(
     }
   }
   if (domain === "relationships") {
-    const target = firstValue(row, ["target_name", "to_entity", "target_object"]);
-    const type = firstValue(row, ["relationship_type", "relationship", "edge_type"]);
+    const target = firstValue(row, [
+      "target_name",
+      "to_entity",
+      "target_object",
+    ]);
+    const type = firstValue(row, [
+      "relationship_type",
+      "relationship",
+      "edge_type",
+    ]);
     if (target && type && !isPlaceholder(target) && !isPlaceholder(type)) {
       candidates.push({
         relationshipType: normalizeIdentifier(type),
-        targetObjectType: firstValue(row, ["target_type", "to_type"]) || "related_object",
+        targetObjectType:
+          firstValue(row, ["target_type", "to_type"]) || "related_object",
         targetObjectName: target,
         confidence: 0.78,
         evidenceKey: evidence.evidenceKey,
@@ -997,21 +1552,35 @@ function summarizeCanonicalRecords(
   findings: CanonicalBuildFinding[],
 ): CanonicalRecordSummary[] {
   return tenants.map((tenant) => {
-    const tenantRecords = records.filter((record) => record.tenantKey === tenant.tenantKey);
+    const tenantRecords = records.filter(
+      (record) => record.tenantKey === tenant.tenantKey,
+    );
     const byDomain: CanonicalRecordSummary["byDomain"] = {};
     for (const domain of Object.keys(DOMAIN_CONFIG)) {
-      const domainFiles = tenant.sourceFiles.filter((file) => file.domain === domain);
-      const domainRecords = tenantRecords.filter(
-        (record) => record.lineage[0]?.mappingProfile === `${domain}/canonical-input`,
+      const domainFiles = tenant.sourceFiles.filter(
+        (file) => file.domain === domain,
       );
-      const names = domainRecords.map((record) => normalizeName(String(record.attributes.displayName?.value ?? "")));
+      const domainRecords = tenantRecords.filter(
+        (record) =>
+          record.lineage[0]?.mappingProfile === `${domain}/canonical-input`,
+      );
+      const names = domainRecords.map((record) =>
+        normalizeName(String(record.attributes.displayName?.value ?? "")),
+      );
       byDomain[domain] = {
         sourceFiles: domainFiles.length,
         sourceRows: domainFiles.reduce((sum, file) => sum + file.rowCount, 0),
-        acceptedRecords: domainRecords.filter((record) => record.qualityStatus !== "quarantined").length,
-        quarantinedRecords: domainRecords.filter((record) => record.qualityStatus === "quarantined").length,
+        acceptedRecords: domainRecords.filter(
+          (record) => record.qualityStatus !== "quarantined",
+        ).length,
+        quarantinedRecords: domainRecords.filter(
+          (record) => record.qualityStatus === "quarantined",
+        ).length,
         skippedRows: findings.filter(
-          (finding) => finding.tenantKey === tenant.tenantKey && finding.domain === domain && finding.code === "primary_identity_missing_or_placeholder",
+          (finding) =>
+            finding.tenantKey === tenant.tenantKey &&
+            finding.domain === domain &&
+            finding.code === "primary_identity_missing_or_placeholder",
         ).length,
         duplicateNames: names.length - new Set(names).size,
       };
@@ -1019,16 +1588,26 @@ function summarizeCanonicalRecords(
     return {
       tenantKey: tenant.tenantKey,
       tenantDisplayName: tenant.displayName,
-      totalAcceptedRecords: tenantRecords.filter((record) => record.qualityStatus !== "quarantined").length,
-      totalQuarantinedRecords: tenantRecords.filter((record) => record.qualityStatus === "quarantined").length,
+      totalAcceptedRecords: tenantRecords.filter(
+        (record) => record.qualityStatus !== "quarantined",
+      ).length,
+      totalQuarantinedRecords: tenantRecords.filter(
+        (record) => record.qualityStatus === "quarantined",
+      ).length,
       totalSkippedRows: findings.filter(
-        (finding) => finding.tenantKey === tenant.tenantKey && finding.code === "primary_identity_missing_or_placeholder",
+        (finding) =>
+          finding.tenantKey === tenant.tenantKey &&
+          finding.code === "primary_identity_missing_or_placeholder",
       ).length,
       byDomain,
       sampleObjects: tenantRecords.slice(0, 25).map((record) => ({
-        domain: record.lineage[0]?.mappingProfile?.replace("/canonical-input", "") ?? record.domain,
+        domain:
+          record.lineage[0]?.mappingProfile?.replace("/canonical-input", "") ??
+          record.domain,
         objectType: record.objectType,
-        name: String(record.attributes.displayName?.value ?? record.sourceObjectId),
+        name: String(
+          record.attributes.displayName?.value ?? record.sourceObjectId,
+        ),
         sourcePath: String(record.attributes.sourcePath?.value ?? ""),
         rowNumber: Number(record.attributes.sourceRowNumber?.value ?? 0),
       })),
@@ -1036,16 +1615,30 @@ function summarizeCanonicalRecords(
   });
 }
 
-function evidenceSummaryForTenant(tenantKey: string, records: CanonicalIngestionRecord[]) {
-  const tenantRecords = records.filter((record) => record.tenantKey === tenantKey);
+function evidenceSummaryForTenant(
+  tenantKey: string,
+  records: CanonicalIngestionRecord[],
+) {
+  const tenantRecords = records.filter(
+    (record) => record.tenantKey === tenantKey,
+  );
   const sourceFiles = new Set(
-    tenantRecords.map((record) => String(record.attributes.sourcePath?.value ?? "")).filter(Boolean),
+    tenantRecords
+      .map((record) => String(record.attributes.sourcePath?.value ?? ""))
+      .filter(Boolean),
   );
   return {
     tenantKey,
-    recordsWithEvidence: tenantRecords.filter((record) => record.evidenceReferences.length > 0).length,
-    recordsWithoutEvidence: tenantRecords.filter((record) => record.evidenceReferences.length === 0).length,
-    evidenceAttachmentCount: tenantRecords.reduce((sum, record) => sum + record.evidenceReferences.length, 0),
+    recordsWithEvidence: tenantRecords.filter(
+      (record) => record.evidenceReferences.length > 0,
+    ).length,
+    recordsWithoutEvidence: tenantRecords.filter(
+      (record) => record.evidenceReferences.length === 0,
+    ).length,
+    evidenceAttachmentCount: tenantRecords.reduce(
+      (sum, record) => sum + record.evidenceReferences.length,
+      0,
+    ),
     sourceFileCount: sourceFiles.size,
   };
 }
@@ -1055,16 +1648,23 @@ function relationshipSummaryForTenant(
   candidates: RelationshipCandidate[],
   findings: CanonicalBuildFinding[],
 ) {
-  const tenantCandidates = candidates.filter((candidate) => candidate.tenantKey === tenantKey);
+  const tenantCandidates = candidates.filter(
+    (candidate) => candidate.tenantKey === tenantKey,
+  );
   const byType: Record<string, number> = {};
   for (const candidate of tenantCandidates) {
-    byType[candidate.relationshipType] = (byType[candidate.relationshipType] ?? 0) + 1;
+    byType[candidate.relationshipType] =
+      (byType[candidate.relationshipType] ?? 0) + 1;
   }
   return {
     tenantKey,
     candidateCount: tenantCandidates.length,
     byType,
-    gapCount: findings.filter((finding) => finding.tenantKey === tenantKey && finding.code.includes("relationship")).length,
+    gapCount: findings.filter(
+      (finding) =>
+        finding.tenantKey === tenantKey &&
+        finding.code.includes("relationship"),
+    ).length,
     samples: tenantCandidates.slice(0, 20),
   };
 }
@@ -1075,24 +1675,97 @@ function profileBuildForTenant(
   records: CanonicalIngestionRecord[],
   findings: CanonicalBuildFinding[],
 ): EnterpriseProfileBuild {
-  const profileRecords = records.filter((record) => record.tenantKey === tenantKey && record.objectType === "tenant_profile");
-  const sourceFiles = [...new Set(profileRecords.map((record) => String(record.attributes.sourcePath?.value ?? "")))];
+  const profileRecords = records.filter(
+    (record) =>
+      record.tenantKey === tenantKey && record.objectType === "tenant_profile",
+  );
+  const sourceFiles = [
+    ...new Set(
+      profileRecords.map((record) =>
+        String(record.attributes.sourcePath?.value ?? ""),
+      ),
+    ),
+  ];
   const facts: EnterpriseProfileBuild["facts"] = {};
   for (const record of profileRecords) {
     facts.industry ??= stringAttribute(record, ["industry"]);
-    facts.subIndustry ??= stringAttribute(record, ["subIndustry", "sub_industry"]);
+    facts.subIndustry ??= stringAttribute(record, [
+      "subIndustry",
+      "sub_industry",
+    ]);
     facts.headquarters ??= stringAttribute(record, ["headquarters"]);
     facts.revenueUsd ??= stringAttribute(record, ["revenueUsd", "revenue_usd"]);
-    facts.employeeCount ??= stringAttribute(record, ["employeeCount", "employee_count"]);
-    facts.businessModel ??= stringAttribute(record, ["businessModel", "business_model"]);
-    facts.mission ??= stringAttribute(record, ["mission", "missionStatement", "mission_statement"]);
-    facts.vision ??= stringAttribute(record, ["vision", "visionStatement", "vision_statement"]);
+    facts.employeeCount ??= stringAttribute(record, [
+      "employeeCount",
+      "employee_count",
+    ]);
+    facts.businessModel ??= stringAttribute(record, [
+      "businessModel",
+      "business_model",
+    ]);
+    facts.mission ??= stringAttribute(record, [
+      "mission",
+      "missionStatement",
+      "mission_statement",
+    ]);
+    facts.vision ??= stringAttribute(record, [
+      "vision",
+      "visionStatement",
+      "vision_statement",
+    ]);
     facts.source ??= stringAttribute(record, ["sourceFile", "source_file"]);
-    facts.asOf ??= stringAttribute(record, ["sourceDate", "source_date", "sourceAsOfDate", "source_as_of_date"]);
-    fillListFact(facts, "locations", splitValues(stringAttribute(record, ["operatingRegions", "operating_regions", "globalLocations", "global_locations"])));
-    fillListFact(facts, "leadership", splitValues(stringAttribute(record, ["leadershipTeam", "leadership_team", "leadershipRoles", "leadership_roles"])));
-    fillListFact(facts, "strategy", splitValues(stringAttribute(record, ["strategicPriorities", "strategic_priorities"])));
-    fillListFact(facts, "segments", splitValues(stringAttribute(record, ["customerSegments", "customer_segments", "businessSegments", "business_segments"])));
+    facts.asOf ??= stringAttribute(record, [
+      "sourceDate",
+      "source_date",
+      "sourceAsOfDate",
+      "source_as_of_date",
+    ]);
+    fillListFact(
+      facts,
+      "locations",
+      splitValues(
+        stringAttribute(record, [
+          "operatingRegions",
+          "operating_regions",
+          "globalLocations",
+          "global_locations",
+        ]),
+      ),
+    );
+    fillListFact(
+      facts,
+      "leadership",
+      splitValues(
+        stringAttribute(record, [
+          "leadershipTeam",
+          "leadership_team",
+          "leadershipRoles",
+          "leadership_roles",
+        ]),
+      ),
+    );
+    fillListFact(
+      facts,
+      "strategy",
+      splitValues(
+        stringAttribute(record, [
+          "strategicPriorities",
+          "strategic_priorities",
+        ]),
+      ),
+    );
+    fillListFact(
+      facts,
+      "segments",
+      splitValues(
+        stringAttribute(record, [
+          "customerSegments",
+          "customer_segments",
+          "businessSegments",
+          "business_segments",
+        ]),
+      ),
+    );
   }
 
   const missingFields = REQUIRED_PROFILE_FIELDS.filter((field) => {
@@ -1113,7 +1786,12 @@ function profileBuildForTenant(
     tenantKey,
     tenantDisplayName,
     sourceFiles,
-    status: profileRecords.length === 0 ? "missing" : missingFields.length > 0 ? "gaps" : "ready",
+    status:
+      profileRecords.length === 0
+        ? "missing"
+        : missingFields.length > 0
+          ? "gaps"
+          : "ready",
     facts,
     missingFields,
     sourceLineage: profileRecords.map((record) => ({
@@ -1148,26 +1826,45 @@ function qualityDepthForTenant(
   records: CanonicalIngestionRecord[],
   qualityRules: QualityDepthRules,
 ) {
-  const thresholds = qualityRules.companySizeBands[tenant.companySizeBand]?.minRows ?? {};
-  const tenantRecords = records.filter((record) => record.tenantKey === tenant.tenantKey);
+  const thresholds =
+    qualityRules.companySizeBands[tenant.companySizeBand]?.minRows ?? {};
+  const tenantRecords = records.filter(
+    (record) => record.tenantKey === tenant.tenantKey,
+  );
   const domainsBelowDepth = Object.entries(thresholds)
     .map(([domain, minimumRows]) => {
       const rows = tenant.sourceFiles
         .filter((file) => file.domain === domain)
         .reduce((sum, file) => sum + file.rowCount, 0);
-      return { domain, rows, minimumRows, gap: Math.max(0, minimumRows - rows) };
+      return {
+        domain,
+        rows,
+        minimumRows,
+        gap: Math.max(0, minimumRows - rows),
+      };
     })
     .filter((item) => item.gap > 0);
   const totalDomains = Object.keys(thresholds).length;
-  const domainsMeetingDepth = Math.max(0, totalDomains - domainsBelowDepth.length);
+  const domainsMeetingDepth = Math.max(
+    0,
+    totalDomains - domainsBelowDepth.length,
+  );
   return {
     tenantKey: tenant.tenantKey,
     companySizeBand: tenant.companySizeBand,
-    totalSourceRows: tenant.sourceFiles.reduce((sum, file) => sum + file.rowCount, 0),
-    totalAcceptedRecords: tenantRecords.filter((record) => record.qualityStatus !== "quarantined").length,
+    totalSourceRows: tenant.sourceFiles.reduce(
+      (sum, file) => sum + file.rowCount,
+      0,
+    ),
+    totalAcceptedRecords: tenantRecords.filter(
+      (record) => record.qualityStatus !== "quarantined",
+    ).length,
     domainsMeetingDepth,
     domainsBelowDepth,
-    qualityScore: totalDomains === 0 ? 0 : Math.round((domainsMeetingDepth / totalDomains) * 100),
+    qualityScore:
+      totalDomains === 0
+        ? 0
+        : Math.round((domainsMeetingDepth / totalDomains) * 100),
   };
 }
 
@@ -1179,16 +1876,31 @@ function readinessForTenant(
   qualityDepth: CanonicalDataBuildReport["tenantQualityDepth"],
   findings: CanonicalBuildFinding[],
 ) {
-  const tenantRecords = records.filter((record) => record.tenantKey === tenantKey);
-  const evidenceAttachmentCount = tenantRecords.reduce((sum, record) => sum + record.evidenceReferences.length, 0);
-  const relationshipCandidateCount = candidates.filter((candidate) => candidate.tenantKey === tenantKey).length;
+  const tenantRecords = records.filter(
+    (record) => record.tenantKey === tenantKey,
+  );
+  const evidenceAttachmentCount = tenantRecords.reduce(
+    (sum, record) => sum + record.evidenceReferences.length,
+    0,
+  );
+  const relationshipCandidateCount = candidates.filter(
+    (candidate) => candidate.tenantKey === tenantKey,
+  ).length;
   const profile = profiles.find((item) => item.tenantKey === tenantKey);
   const quality = qualityDepth.find((item) => item.tenantKey === tenantKey);
-  const blockingFindings = findings.filter((finding) => finding.tenantKey === tenantKey && finding.severity === "error");
+  const blockingFindings = findings.filter(
+    (finding) =>
+      finding.tenantKey === tenantKey && finding.severity === "error",
+  );
   const profileReady = profile?.status === "ready";
-  const evidenceReady = evidenceAttachmentCount >= tenantRecords.length && tenantRecords.length > 0;
+  const evidenceReady =
+    evidenceAttachmentCount >= tenantRecords.length && tenantRecords.length > 0;
   const relationshipReady = relationshipCandidateCount > 0;
-  const ready = blockingFindings.length === 0 && profileReady && evidenceReady && relationshipReady;
+  const ready =
+    blockingFindings.length === 0 &&
+    profileReady &&
+    evidenceReady &&
+    relationshipReady;
   return {
     tenantKey,
     ready,
@@ -1199,8 +1911,12 @@ function readinessForTenant(
     evidenceAttachmentCount,
     relationshipCandidateCount,
     caveats: [
-      ...(profile?.missingFields.map((field) => `Enterprise profile missing ${field}.`) ?? []),
-      ...(quality?.domainsBelowDepth.slice(0, 8).map((gap) => `${gap.domain} below depth by ${gap.gap} rows.`) ?? []),
+      ...(profile?.missingFields.map(
+        (field) => `Enterprise profile missing ${field}.`,
+      ) ?? []),
+      ...(quality?.domainsBelowDepth
+        .slice(0, 8)
+        .map((gap) => `${gap.domain} below depth by ${gap.gap} rows.`) ?? []),
       ...blockingFindings.map((finding) => finding.message),
     ],
     canAnswer: [
@@ -1221,7 +1937,8 @@ function readinessForTenant(
 
 function detectDomain(relativePath: string): DomainKey | null {
   for (const matcher of DOMAIN_MATCHERS) {
-    if (matcher.patterns.some((pattern) => pattern.test(relativePath))) return matcher.domain;
+    if (matcher.patterns.some((pattern) => pattern.test(relativePath)))
+      return matcher.domain;
   }
   return null;
 }
@@ -1249,22 +1966,33 @@ function bestExcerpt(row: Record<string, string>, fallback: string): string {
   return values.length > 0 ? values.join("; ").slice(0, 500) : fallback;
 }
 
-function firstValue(row: Record<string, string>, fields: string[]): string | undefined {
+function firstValue(
+  row: Record<string, string>,
+  fields: string[],
+): string | undefined {
   for (const field of fields) {
     const value = row[field];
-    if (value && !isMissingSourceValue(value) && !isPlaceholder(value)) return value.trim();
+    if (value && !isMissingSourceValue(value) && !isPlaceholder(value))
+      return value.trim();
   }
   return undefined;
 }
 
-function stringAttribute(record: CanonicalIngestionRecord, fields: string[]): string | undefined {
+function stringAttribute(
+  record: CanonicalIngestionRecord,
+  fields: string[],
+): string | undefined {
   for (const field of fields) {
-    const value = record.attributes[toAttributeName(field)]?.value ?? record.attributes[field]?.value;
+    const value =
+      record.attributes[toAttributeName(field)]?.value ??
+      record.attributes[field]?.value;
     if (typeof value === "string" && value.trim()) return value;
     if (typeof value === "number") return String(value);
     if (Array.isArray(value) && value.length > 0) {
       const joined = value
-        .filter((item): item is string | number | boolean => ["string", "number", "boolean"].includes(typeof item))
+        .filter((item): item is string | number | boolean =>
+          ["string", "number", "boolean"].includes(typeof item),
+        )
         .map((item) => String(item).trim())
         .filter(Boolean)
         .join("; ");
@@ -1279,7 +2007,10 @@ function splitValues(value: string | undefined): string[] {
   return value
     .split(/\s*[|;]\s*/)
     .map((item) => item.trim())
-    .filter((item) => item.length > 0 && !isPlaceholder(item) && !isMissingSourceValue(item));
+    .filter(
+      (item) =>
+        item.length > 0 && !isPlaceholder(item) && !isMissingSourceValue(item),
+    );
 }
 
 function isPlaceholder(value: string | undefined): boolean {
@@ -1293,7 +2024,12 @@ function canonicalValue(rawValue: string): CanonicalValue {
   const value = rawValue.trim();
   const numberValue = Number(value.replace(/[$,%]/g, "").replace(/,/g, ""));
   if (/^\$?[\d,]+(?:\.\d+)?$/.test(value)) {
-    return { value: numberValue, valueType: value.includes("$") ? "currency" : "number", unit: value.includes("$") ? "USD" : undefined, confidence: 0.8 };
+    return {
+      value: numberValue,
+      valueType: value.includes("$") ? "currency" : "number",
+      unit: value.includes("$") ? "USD" : undefined,
+      confidence: 0.8,
+    };
   }
   if (/^[\d.]+%$/.test(value)) {
     return { value: numberValue / 100, valueType: "percent", confidence: 0.8 };
@@ -1308,11 +2044,17 @@ function canonicalValue(rawValue: string): CanonicalValue {
 }
 
 function confidenceFor(row: Record<string, string>): number {
-  const value = firstValue(row, ["confidence", "confidence_score", "source_confidence"]);
+  const value = firstValue(row, [
+    "confidence",
+    "confidence_score",
+    "source_confidence",
+  ]);
   if (!value) return 0.78;
   const parsed = Number(value.replace("%", ""));
   if (!Number.isFinite(parsed)) return 0.78;
-  return parsed > 1 ? Math.max(0, Math.min(1, parsed / 100)) : Math.max(0, Math.min(1, parsed));
+  return parsed > 1
+    ? Math.max(0, Math.min(1, parsed / 100))
+    : Math.max(0, Math.min(1, parsed));
 }
 
 function dataStatusFor(classification: string): DataStatus {
@@ -1322,7 +2064,9 @@ function dataStatusFor(classification: string): DataStatus {
 }
 
 function toAttributeName(field: string): string {
-  return field.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
+  return field.replace(/_([a-z])/g, (_, letter: string) =>
+    letter.toUpperCase(),
+  );
 }
 
 function normalizeName(value: string): string {
@@ -1376,12 +2120,24 @@ async function exists(target: string): Promise<boolean> {
 }
 
 async function readJson<T>(repoRoot: string, relativePath: string): Promise<T> {
-  return JSON.parse(await fs.readFile(path.resolve(repoRoot, relativePath), "utf8")) as T;
+  return JSON.parse(
+    await fs.readFile(path.resolve(repoRoot, relativePath), "utf8"),
+  ) as T;
 }
 
-function isUnder(repoRoot: string, childRelativePath: string, parentRelativePath: string): boolean {
-  const relative = path.relative(path.resolve(repoRoot, parentRelativePath), path.resolve(repoRoot, childRelativePath));
-  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+function isUnder(
+  repoRoot: string,
+  childRelativePath: string,
+  parentRelativePath: string,
+): boolean {
+  const relative = path.relative(
+    path.resolve(repoRoot, parentRelativePath),
+    path.resolve(repoRoot, childRelativePath),
+  );
+  return (
+    relative === "" ||
+    (!relative.startsWith("..") && !path.isAbsolute(relative))
+  );
 }
 
 function json(value: unknown): string {
@@ -1420,10 +2176,18 @@ function summaryMarkdown(report: CanonicalDataBuildReport): string {
     "| Tenant | Source files | Source rows | Accepted records | Relationship candidates | Profile | Home/aVa ready |",
     "| --- | ---: | ---: | ---: | ---: | --- | --- |",
     ...report.tenants.map((tenant) => {
-      const recordSummary = report.canonicalRecordSummary.find((item) => item.tenantKey === tenant.tenantKey);
-      const relationSummary = report.relationshipCandidatesSummary.find((item) => item.tenantKey === tenant.tenantKey);
-      const profile = report.enterpriseProfileBuild.find((item) => item.tenantKey === tenant.tenantKey);
-      const readiness = report.homeAvaReadiness.find((item) => item.tenantKey === tenant.tenantKey);
+      const recordSummary = report.canonicalRecordSummary.find(
+        (item) => item.tenantKey === tenant.tenantKey,
+      );
+      const relationSummary = report.relationshipCandidatesSummary.find(
+        (item) => item.tenantKey === tenant.tenantKey,
+      );
+      const profile = report.enterpriseProfileBuild.find(
+        (item) => item.tenantKey === tenant.tenantKey,
+      );
+      const readiness = report.homeAvaReadiness.find(
+        (item) => item.tenantKey === tenant.tenantKey,
+      );
       return `| ${tenant.displayName} | ${tenant.sourceFiles.length.toLocaleString()} | ${tenant.sourceFiles.reduce((sum, file) => sum + file.rowCount, 0).toLocaleString()} | ${(recordSummary?.totalAcceptedRecords ?? 0).toLocaleString()} | ${(relationSummary?.candidateCount ?? 0).toLocaleString()} | ${profile?.status ?? "missing"} | ${readiness?.ready ? "ready" : "not ready"} |`;
     }),
     "",
@@ -1460,21 +2224,39 @@ function summaryMarkdown(report: CanonicalDataBuildReport): string {
 function controlHtml(report: CanonicalDataBuildReport): string {
   const tenantRows = report.tenants
     .map((tenant) => {
-      const records = report.canonicalRecordSummary.find((item) => item.tenantKey === tenant.tenantKey);
-      const readiness = report.homeAvaReadiness.find((item) => item.tenantKey === tenant.tenantKey);
-      const quality = report.tenantQualityDepth.find((item) => item.tenantKey === tenant.tenantKey);
+      const records = report.canonicalRecordSummary.find(
+        (item) => item.tenantKey === tenant.tenantKey,
+      );
+      const readiness = report.homeAvaReadiness.find(
+        (item) => item.tenantKey === tenant.tenantKey,
+      );
+      const quality = report.tenantQualityDepth.find(
+        (item) => item.tenantKey === tenant.tenantKey,
+      );
       return `<tr><td>${escapeHtml(tenant.displayName)}</td><td>${tenant.sourceFiles.length}</td><td>${tenant.sourceFiles.reduce((sum, file) => sum + file.rowCount, 0).toLocaleString()}</td><td>${(records?.totalAcceptedRecords ?? 0).toLocaleString()}</td><td>${quality?.qualityScore ?? 0}%</td><td>${readiness?.ready ? "Ready" : "Not ready"}</td></tr>`;
     })
     .join("");
   const cards = [
     ["Tenants", report.summary.tenantsProcessed],
-    ["Accepted Records", report.summary.canonicalRecordsAccepted.toLocaleString()],
-    ["Evidence Attachments", report.summary.evidenceAttachments.toLocaleString()],
-    ["Relationship Candidates", report.summary.relationshipCandidates.toLocaleString()],
+    [
+      "Accepted Records",
+      report.summary.canonicalRecordsAccepted.toLocaleString(),
+    ],
+    [
+      "Evidence Attachments",
+      report.summary.evidenceAttachments.toLocaleString(),
+    ],
+    [
+      "Relationship Candidates",
+      report.summary.relationshipCandidates.toLocaleString(),
+    ],
     ["Archive Reads", report.summary.archiveReadViolations],
     ["Runtime Writes", "false"],
   ]
-    .map(([label, value]) => `<section><span>${label}</span><strong>${value}</strong></section>`)
+    .map(
+      ([label, value]) =>
+        `<section><span>${label}</span><strong>${value}</strong></section>`,
+    )
     .join("");
   return `<!doctype html>
 <html lang="en">
@@ -1534,7 +2316,8 @@ function compactFindings(findings: CanonicalBuildFinding[]): {
   for (const finding of findings) {
     byCode[finding.code] = (byCode[finding.code] ?? 0) + 1;
     bySeverity[finding.severity] = (bySeverity[finding.severity] ?? 0) + 1;
-    if (finding.domain) byDomain[finding.domain] = (byDomain[finding.domain] ?? 0) + 1;
+    if (finding.domain)
+      byDomain[finding.domain] = (byDomain[finding.domain] ?? 0) + 1;
   }
   return {
     total: findings.length,
