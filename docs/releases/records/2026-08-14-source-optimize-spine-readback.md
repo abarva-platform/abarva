@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -50,10 +50,19 @@ the deployment lane and for future canary tenant checks.
 - Pass: `./node_modules/.bin/eslint scripts/source/readback-contract-optimization-spine.ts`
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit --pretty false`
 - Pass: `git diff --check`
-- Pending after merge/deploy: run
-  `source:contract-optimization:spine:readback` through the approved ACA
-  private-operator job using the deployed digest-pinned image and capture the
-  structured JSON event.
+- Pass: `source:contract-optimization:spine:readback` ran through the approved
+  ACA private-operator job execution
+  `job-abarva-private-operator-eus-wf3w72o` using the deployed digest-pinned
+  image, restored the operator to idle, and emitted the structured
+  `source_contract_optimization_spine_readback` event.
+- Pass: the ready-baseline canary contract returned 6 opportunity rows, 6
+  amount-bearing rows, 6 calculation runs, 150 calculation inputs, 12
+  calculation outputs, and no missing or mismatched calculation coverage.
+- Pass: the conflict-baseline canary contract returned a governed baseline
+  conflict rather than a missing-data or zero-value state.
+- Pass: signed-in browser proof showed the Source Optimize route reaching the
+  final Finance/Tower confirmation gate with 6 of 6 stated amounts
+  reproducible.
 
 ## Rollout Plan
 
@@ -86,6 +95,11 @@ rollback is required because the release is read-only.
 - ACA runtime invariant output after deploy.
 - ACA private-operator readback proof event:
   `source_contract_optimization_spine_readback`.
+- Live proof captured through ACA deployment run `31886533505` with
+  `ca-abarva-web-lab-eastus--m8dc5e2c5` receiving 100% traffic on image
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:f9e9109e2914fcfb186ee49aef24a0e4c20a3dccc7b17a9eac232af125a43f71`.
+- Private operator execution:
+  `job-abarva-private-operator-eus-wf3w72o`.
 
 ## Known Gaps
 
