@@ -110,8 +110,8 @@ describe('SourcingReactivePanel', () => {
   it('renders Sentinel Source empty-state prompts', () => {
     const html = renderToStaticMarkup(createElement(SourcingReactivePanel, { artifacts: [] }));
 
-    expect(html).toContain('Ava sourcing reasoning - live');
-    expect(html).toContain('Ask Ava to compare vendors');
+    expect(html).toContain('aVa sourcing reasoning');
+    expect(html).toContain('Ask aVa to compare vendors');
     expect(html).toContain('Compare vendors');
     expect(html).toContain('Run BAFO check');
     expect(html).toContain('walkaway');
