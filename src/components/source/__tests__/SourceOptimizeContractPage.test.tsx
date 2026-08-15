@@ -429,10 +429,14 @@ describe("SourceOptimizeContractPage", () => {
     expect(screen.getByTestId("agent-dock-collapsed-chip")).toHaveTextContent(
       "aVa",
     );
+    expect(mockAgentDockProps).toHaveLength(0);
+
+    fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
+
     const props = mockAgentDockProps.at(-1);
     expect(props).toMatchObject({
       surface: "/source/optimize",
-      defaultMode: "collapsed",
+      defaultMode: "side-rail-right",
       placeholder: "Ask aVa about CTR-090 evidence, ledgers, or next action...",
       preserveVisibleText: true,
     });
@@ -473,6 +477,7 @@ describe("SourceOptimizeContractPage", () => {
       />,
     );
 
+    fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
     const initialProps = mockAgentDockProps.at(-1);
     await act(async () => {
       await initialProps?.onMessage("Explain current state", []);
@@ -536,6 +541,7 @@ describe("SourceOptimizeContractPage", () => {
       />,
     );
 
+    fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
     const initialProps = mockAgentDockProps.at(-1);
     await act(async () => {
       await initialProps?.onMessage("Explain current state", []);

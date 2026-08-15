@@ -67,6 +67,7 @@ export function SourceOptimizeContractPage({
   canViewFinancialValues = true,
 }: SourceOptimizeContractPageProps) {
   const selected = spine.selected;
+  const [dockOpen, setDockOpen] = useState(false);
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [isAgentBusy, setIsAgentBusy] = useState(false);
   const readiness = useMemo(
@@ -253,18 +254,41 @@ export function SourceOptimizeContractPage({
     </main>
   );
 
+  const shellProps = {
+    surface: "source" as const,
+    agentName: "Ava",
+    surfaceContext,
+    topBarProps: {
+      tenantName,
+      showLocked: true,
+      context: "Source · Optimize Contract",
+    },
+    subNav: <SourceSubNav />,
+  };
+
+  if (!dockOpen) {
+    return (
+      <AppShell {...shellProps}>
+        {workspace}
+        <button
+          type="button"
+          aria-label={
+            selected
+              ? `Open aVa for ${selected.contractId}`
+              : "Open aVa for Optimize Contract"
+          }
+          data-testid="agent-dock-collapsed-chip"
+          onClick={() => setDockOpen(true)}
+          style={AVA_LAUNCHER_STYLE}
+        >
+          aVa
+        </button>
+      </AppShell>
+    );
+  }
+
   return (
-    <AppShell
-      surface="source"
-      agentName="Ava"
-      surfaceContext={surfaceContext}
-      topBarProps={{
-        tenantName,
-        showLocked: true,
-        context: "Source · Optimize Contract",
-      }}
-      subNav={<SourceSubNav />}
-    >
+    <AppShell {...shellProps}>
       <AgentDock
         agent={{
           initials: "aVa",
@@ -273,7 +297,7 @@ export function SourceOptimizeContractPage({
           role: "Contract optimization advisor",
         }}
         surface="/source/optimize"
-        defaultMode="collapsed"
+        defaultMode="side-rail-right"
         disableStoredMode
         collapsedRestoreMode="side-rail-right"
         defaultLeftPercent={70}
@@ -2065,6 +2089,24 @@ const PRIMARY_BUTTON_STYLE: CSSProperties = {
   background: ANALYTICS.INK,
   fontSize: 13,
   fontWeight: 900,
+  cursor: "pointer",
+};
+
+const AVA_LAUNCHER_STYLE: CSSProperties = {
+  position: "fixed",
+  right: 24,
+  bottom: 24,
+  zIndex: 60,
+  width: 76,
+  height: 56,
+  border: "none",
+  borderRadius: 18,
+  background: ANALYTICS.INK,
+  color: "#fff",
+  boxShadow: "0 18px 34px rgba(15, 23, 42, 0.28)",
+  fontWeight: 900,
+  fontSize: 22,
+  letterSpacing: 0,
   cursor: "pointer",
 };
 
