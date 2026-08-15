@@ -51,7 +51,6 @@
     "src/components/source/SourceDecisionCanvasClient.tsx",
     "src/components/source/SourceDecisionQueueView.tsx",
     "src/components/source/SourceEmptyState.tsx",
-    "src/components/source/SourceEventAgentCanvas.tsx",
     "src/components/source/SourceEventsAgentDockView.tsx",
     "src/components/source/SourceEventsPortfolio.tsx",
     "src/components/source/SourceEvidenceDrawer.tsx",
@@ -122,13 +121,6 @@
     "src/components/source/learn/SourceLearnSideNav.tsx",
     "src/components/source/portfolio/AttentionStack.tsx",
     "src/components/source/portfolio/KpiStrip.tsx",
-    "src/components/source/portfolio/PortfolioHeader.tsx",
-    "src/components/source/stage-canvases/BAFOCanvas.tsx",
-    "src/components/source/stage-canvases/EvaluationCanvas.tsx",
-    "src/components/source/stage-canvases/ExecutiveDecisionCanvas.tsx",
-    "src/components/source/stage-canvases/PricingCanvas.tsx",
-    "src/components/source/stage-canvases/StageCanvasRouter.tsx",
-    "src/components/source/stage-canvases/StageGateBlock.tsx",
-    "src/components/source/stage-canvases/StrategyCanvas.tsx"
+    "src/components/source/portfolio/PortfolioHeader.tsx"
   ]
 }
