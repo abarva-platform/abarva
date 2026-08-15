@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-08-14T22:48:58.502Z",
+  "generatedAt": "2026-08-15T03:15:31.622Z",
   "generatedBy": "scripts/audit/build-layer-refresh-status-report.mjs",
-  "sourceSha": "d7b2de2aac93cc379052a45f9e730281bb328236",
-  "sourceWorktree": "/tmp/verify",
+  "sourceSha": "dbe4c86a91eac5ac05b218c6ba15ef396ff6fe80",
+  "sourceWorktree": "detached_origin_main_worktree",
   "mode": "report_only_no_data_mutation_no_registry_activation_no_graph_materialization_no_projection_refresh",
   "publicDisclosure": "Tenant identifiers are anonymized in this report. Evidence commands were run against origin/main in a detached worktree.",
   "evidence": {
     "releaseCheck": "npm run release:check",
-    "tenantInputQuality": "npm run audit:tenant-input-quality -- --out-dir /tmp/nexus-v2-layer-refresh.TD3w2Z/tenant-input-quality",
+    "tenantInputQuality": "npm run audit:tenant-input-quality -- --out-dir /tmp/nexus-v2-layer-refresh-current-dbe4c86/tenant-input-quality",
     "contextCorpus": "npm run validate:context-corpus",
     "factLineage": "node scripts/tower/fact-lineage-report.mjs",
-    "layerRefresh": "node scripts/audit/tenant-layer-refresh.mjs --tenant all --out /tmp/nexus-v2-layer-refresh.TD3w2Z/layer-reconciliation --no-package",
-    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-v2-layer-refresh.TD3w2Z/graph-reconciliation"
+    "layerRefresh": "node scripts/audit/tenant-layer-refresh.mjs --tenant all --out /tmp/nexus-v2-layer-refresh-current-dbe4c86/layer-reconciliation --no-package",
+    "graphReconciliation": "npm run audit:tenant-graph-reconciliation -- --tenant all --out /tmp/nexus-v2-layer-refresh-current-dbe4c86/graph-reconciliation"
   },
   "answer": {
     "allLayersRefreshingFromNewSourceFiles": false,
@@ -357,37 +357,53 @@
       "mode": "graph_reconciliation_quarantine_first_report_only_no_db_write_no_graph_materialization_no_product_use",
       "totals": {
         "nodeCandidatesIndexed": 6499,
+        "nodeLookupAliasesIndexed": 246,
+        "ambiguousNodeLookupAliasesSkipped": 61,
         "relationshipRows": 9633,
         "relationshipCandidates": 4454,
         "quarantinedRelationships": 5179,
         "topQuarantineReasons": [
           {
             "reason": "unresolved-to-node",
-            "count": 3440
+            "count": 3440,
+            "quarantineClass": "dangling_reference",
+            "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
           },
           {
             "reason": "unresolved-from-node",
-            "count": 2713
+            "count": 2713,
+            "quarantineClass": "dangling_reference",
+            "quarantineDisposition": "catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge"
           },
           {
             "reason": "missing-from-object-name",
-            "count": 519
+            "count": 519,
+            "quarantineClass": "empty_endpoint_or_required_field_missing",
+            "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
           },
           {
             "reason": "missing-to-object-name",
-            "count": 519
+            "count": 519,
+            "quarantineClass": "empty_endpoint_or_required_field_missing",
+            "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
           },
           {
             "reason": "missing-from-object-type",
-            "count": 510
+            "count": 510,
+            "quarantineClass": "empty_endpoint_or_required_field_missing",
+            "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
           },
           {
             "reason": "missing-relationship-type",
-            "count": 510
+            "count": 510,
+            "quarantineClass": "empty_endpoint_or_required_field_missing",
+            "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
           },
           {
             "reason": "missing-to-object-type",
-            "count": 510
+            "count": 510,
+            "quarantineClass": "empty_endpoint_or_required_field_missing",
+            "quarantineDisposition": "permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared"
           }
         ],
         "graphTablesWritten": false,
