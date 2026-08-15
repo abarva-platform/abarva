@@ -5,6 +5,7 @@ import { SourceOptimizeContractPage } from "@/components/source/SourceOptimizeCo
 import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy, TenancyError } from "@/lib/auth/tenancy";
 import { canonicalClientDisplayName } from "@/lib/client-config";
+import { trimContractOptimizationOpportunitySetForClient } from "@/lib/source/data-model/contract-optimization-client-payload";
 import { buildContractOptimizationLedger } from "@/lib/source/data-model/contract-optimization-ledger";
 import { buildContractOptimizationSpine } from "@/lib/source/data-model/contract-optimization-spine";
 import {
@@ -102,7 +103,9 @@ export default async function SourceOptimizeContractRoute({
       tenantName={tenantName}
       asOfDateIso={asOfDateIso}
       spine={spine}
-      opportunitySet={opportunitySet}
+      opportunitySet={trimContractOptimizationOpportunitySetForClient(
+        opportunitySet,
+      )}
       evidencePack={evidencePack}
     />
   );
