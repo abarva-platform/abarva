@@ -75,7 +75,7 @@ describe("source access policy", () => {
     fromMock.mockReset();
   });
 
-  it("treats client_admin as all source events inside one active client only", async () => {
+  it("treats client_admin as all source events inside one active client only without implicit financial visibility", async () => {
     setupRows({
       person_client_memberships: {
         role: "maestro",
@@ -101,10 +101,39 @@ describe("source access policy", () => {
     expect(policy.sourceScope).toBe("all_client_source_events");
     expect(policy.sourceEventIdsAllowed).toBeNull();
     expect(policy.canApproveSourceStages).toBe(true);
+    expect(policy.canViewFinancialData).toBe(false);
+    expect(policy.allowedDataClasses).not.toContain("restricted_financial");
+    expect(policy.deniedDataClasses).toContain("restricted_financial");
+    expect(fromMock).not.toHaveBeenCalledWith("source_event_participants");
+  });
+
+  it("grants client_admin financial visibility only when the membership explicitly allows it", async () => {
+    setupRows({
+      person_client_memberships: {
+        role: "maestro",
+        access_level: "client_admin",
+        financial_visibility: true,
+        can_admin_users: true,
+        can_approve_gates: true,
+      },
+      source_event_participants: [],
+    });
+    const { loadUserSourceAccessPolicy } =
+      await import("../source-access-policy");
+    const policy = await loadUserSourceAccessPolicy(
+      {
+        clientId: "client-apex",
+        userId: "00000000-0000-4000-8000-000000000001",
+        role: "client_admin",
+      },
+      { activeClientKey: "apexretail" },
+    );
+
+    expect(policy.accessLevel).toBe("client_admin");
+    expect(policy.sourceEventIdsAllowed).toBeNull();
     expect(policy.canViewFinancialData).toBe(true);
     expect(policy.allowedDataClasses).toContain("restricted_financial");
     expect(policy.deniedDataClasses).not.toContain("restricted_financial");
-    expect(fromMock).not.toHaveBeenCalledWith("source_event_participants");
   });
 
   it("grants a Clerk tenant-admin with NO membership row source admin for their own active client (entry-path fix)", async () => {
