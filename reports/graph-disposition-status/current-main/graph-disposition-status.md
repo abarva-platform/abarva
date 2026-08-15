@@ -1,7 +1,7 @@
 # Graph Disposition Status
 
-Source SHA: `5746c7fea8103d5a5b5a87a127ae5d1a7c2f3064`
-Graph dry-run generated at: `2026-08-15T02:54:12.067Z`
+Source SHA: `25f1366bf68d8a053e7b6ae78dff4051cb34b82a`
+Graph dry-run generated at: `2026-08-15T04:06:13.018Z`
 
 This is a sanitized, report-only graph status artifact. Tenant identifiers are anonymized, and no graph tables, product projections, registry activations, or tenant data writes are performed.
 
