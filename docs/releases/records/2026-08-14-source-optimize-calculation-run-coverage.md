@@ -88,9 +88,15 @@ workflow gate unless the persisted readback proves the required rows exist.
   calculation opportunities. The conflict-baseline contract has 1 opportunity,
   0 amount-bearing opportunities, 0 calculation runs, and 1 blocker fact
   conflict; no amount was converted to validated value.
-- Pending: signed-in browser proof that the Source Optimize UI renders the
-  persisted amount traceability. A prior Chrome bridge attempt timed out before
-  body-level DOM proof, so this is not yet live-browser-proven.
+- Pass: signed-in browser proof on the current deployed image showed the Source
+  Optimize UI rendering the persisted amount traceability: step 7 remained
+  blocked on Finance/Tower confirmation while 6 of 6 stated amount rows were
+  reproducible from calculation runs.
+- Pass: follow-up private-operator readback execution
+  `job-abarva-private-operator-eus-wf3w72o` on the deployed digest returned
+  `source_contract_optimization_spine_readback.ok=true` for the ready-baseline
+  and conflict-baseline canary contracts, then verified operator idle
+  restoration.
 
 ## Rollout Plan
 
@@ -98,7 +104,7 @@ Merged to `main`. The repo-owned Azure Container Apps main deploy workflow built
 and deployed the digest-pinned web image. The Source optimization spine
 projection was submitted through the approved ACA data-build job path using the
 deployed image digest, followed by independent data readback. Signed-in browser
-proof remains pending.
+proof has since passed on the selected Source Optimize route.
 
 ## Deployment Authority
 
@@ -114,7 +120,7 @@ proof remains pending.
   for the projection run and restored to the documented idle image/command
   afterward.
 - Feature/env flag update path: not applicable.
-- Live signed-in proof required: yes, after data readback.
+- Live signed-in proof required: passed on the selected Source Optimize route.
 
 ## Rollback Plan
 
@@ -135,8 +141,10 @@ rollback window. No schema rollback is required.
   `job-abarva-private-operator-eus-gkmtvop`.
 - Data readback showing amount-bearing opportunity count, calculation-run count,
   calculation input/output counts, and untraced amount count by canary contract.
-- Pending: signed-in browser proof that amount traceability is visible while
-  separate evidence-readiness blockers remain explicit.
+- Signed-in browser proof that amount traceability is visible while the
+  Finance/Tower blocker remains explicit.
+- Follow-up ACA private-operator readback proof:
+  `job-abarva-private-operator-eus-wf3w72o`.
 
 ## Known Gaps
 
@@ -144,7 +152,6 @@ This release does not resolve missing evidence families, does not approve vendor
 outreach, and does not convert negotiated targets or avoided-cost estimates into
 realized value. Those remain separate Source Optimize gates.
 
-Signed-in browser proof is still pending because the available Chrome bridge
-timed out before body-level DOM/screenshot proof in the prior verification
-attempt. Do not mark this release browser-proven until that route is captured
-with an authenticated session.
+Signed-in browser proof is now complete for the selected Source Optimize route.
+This release still does not approve Finance/Tower confirmation or convert
+negotiated targets into realized value.

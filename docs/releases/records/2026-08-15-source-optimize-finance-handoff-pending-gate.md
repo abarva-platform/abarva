@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -40,9 +40,16 @@ This is a governance correction: pending handoff remains pending, and no value a
 - PASS: `npx eslint src/lib/source/data-model/contract-optimization-workflow-step.ts src/lib/source/data-model/__tests__/contract-optimization-workflow-step.test.ts src/components/source/__tests__/SourceOptimizeContractPage.test.tsx`.
 - PASS: `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false`.
 - PASS: `git diff --check`.
-- NOT RUN YET: `npm run release:check` after this record update.
-- BLOCKED UNTIL DEPLOYMENT: repo-owned ACA deployment and runtime invariant.
-- BLOCKED UNTIL DEPLOYMENT: signed-in Source Optimize proof or, if browser automation remains unstable, an explicit partial-proof note plus independent data/read-model readback.
+- PASS: `npm run release:check`.
+- PASS: repo-owned ACA deployment completed and runtime invariant was proven on
+  the current deployed digest.
+- PASS: signed-in Source Optimize proof showed the rail at step 7 with
+  Finance/Tower confirmation pending, not completed.
+- PASS: private-operator readback execution
+  `job-abarva-private-operator-eus-wf3w72o` showed one
+  `finance_value_confirmation` request in `pending` state, one finance
+  realization row present, and the latest optimization case state
+  `finance_handoff`.
 
 ## Rollout Plan
 
@@ -62,9 +69,15 @@ Revert this PR. The previous behavior returns, where a pending Finance/Tower con
 
 ## Audit Evidence
 
-- PR URL: pending.
-- Local validation output: pending.
-- Deploy and live proof: pending.
+- PR URL: recorded in the related workflow-gate PR evidence for this release
+  family.
+- Local validation output: focused workflow-step and page tests passed before
+  merge.
+- Deploy and live proof: current deployed digest
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:1e1e982cab2197a335a3b991c090eff5ae1875e29a68684088691f91f7276f94`;
+  signed-in browser proof showed the pending Finance/Tower blocker; operator
+  readback `job-abarva-private-operator-eus-wf3w72o` confirmed the pending
+  request state from the database.
 
 ## Known Gaps
 

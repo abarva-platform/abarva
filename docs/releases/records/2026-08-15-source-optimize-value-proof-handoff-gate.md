@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -59,9 +59,18 @@ Revert this PR to restore the previous rail completion rule.
 
 ## Audit Evidence
 
-- PR URL: to be added after PR creation.
+- PR URL: recorded in the related value-proof workflow PR evidence for this
+  release family.
 - Local focused Jest and ESLint output in the Codex task log.
-- Post-merge ACA deploy artifact and runtime-invariant proof required before live claim.
+- Current deployed digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:1e1e982cab2197a335a3b991c090eff5ae1875e29a68684088691f91f7276f94`.
+- ACA runtime invariant: revision `ca-abarva-web-lab-eastus--m8dac6271`,
+  100% traffic on the deployed digest.
+- Signed-in browser proof: the final Source Optimize rail stayed open at
+  `07 Prove value` because Finance/Tower confirmation remained pending.
+- Operator readback: `job-abarva-private-operator-eus-wf3w72o` confirmed one
+  finance realization row and one pending Finance/Tower confirmation request,
+  which is exactly the blocked final-state invariant.
 
 ## Known Gaps
 

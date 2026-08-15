@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -45,8 +45,14 @@ rule, evidence state, entitlement rule, or workflow gate.
 - PASS: `npx eslint 'src/app/(maestro)/source/optimize/page.tsx' src/components/source/__tests__/SourceOptimizeContractPage.test.tsx src/lib/source/data-model/contract-optimization-client-payload.ts`.
 - PASS: `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false`.
 - PASS: `git diff --check`.
-- NOT RUN YET: `npm run release:check` after this record update.
-- BLOCKED UNTIL DEPLOYMENT: ACA runtime invariant and live signed-in browser proof.
+- PASS: `npm run release:check`.
+- PASS: repo-owned ACA main deploy run `31883168226` completed successfully.
+- PASS: ACA runtime invariant after deploy showed revision
+  `ca-abarva-web-lab-eastus--m1a55519c` receiving 100% traffic on image
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:fe3d86b0d96d146731996c0cc099467f2e289a57795904edbd3d8f56cd520231`.
+- PASS: signed-in browser proof showed the selected Optimize page rendering
+  step 7 with the Finance/Tower confirmation blocker, 6 of 6 traced amount
+  rows, approximately 157 KB of HTML, and approximately 633 DOM nodes.
 
 ## Rollout Plan
 
@@ -70,10 +76,15 @@ data rollback is required.
 
 ## Audit Evidence
 
-- PR URL: pending.
-- GitHub Actions deploy run: pending.
-- ACA runtime invariant: pending.
-- Live signed-in proof: pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/6357.
+- Merge commit: `1a55519cd1ae271c21f7c77d59a814f17f5da6d0`.
+- GitHub Actions ACA deploy run: `31883168226`.
+- ACA runtime invariant: revision `ca-abarva-web-lab-eastus--m1a55519c`,
+  image `acrabarvalab001.azurecr.io/abarva/web@sha256:fe3d86b0d96d146731996c0cc099467f2e289a57795904edbd3d8f56cd520231`,
+  100% traffic.
+- Signed-in browser proof: Source Optimize selected-contract page rendered
+  traceable amount state and the pending Finance/Tower gate without the
+  duplicated heavy payload previously observed.
 
 ## Known Gaps
 
