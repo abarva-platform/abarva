@@ -7,6 +7,8 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { TextDecoder, TextEncoder } from "util";
 
 import { SourceOptimizeContractPage } from "../SourceOptimizeContractPage";
+import { trimContractOptimizationOpportunitySetForClient } from "@/lib/source/data-model/contract-optimization-client-payload";
+import { summarizeOpportunityTraceability } from "@/lib/source/data-model/contract-optimization-traceability";
 import type { ContractOptimizationSpine } from "@/lib/source/data-model/contract-optimization-spine";
 import type { ContractOptimizationEvidencePack } from "@/lib/source/data-model/contract-optimization-evidence";
 import type { ContractOptimizationOpportunitySet } from "@/lib/source/data-model/contract-optimization-opportunity";
@@ -169,7 +171,36 @@ function makeOpportunitySet(): ContractOptimizationOpportunitySet {
           includedLineCount: 18,
           excludedLineCount: 3,
           pendingLineCount: 2,
-          lines: [],
+          lines: [
+            {
+              lineId: "invoice-raw-line-001",
+              invoiceId: "INV-090-001",
+              invoiceLineId: "INV-090-001-L1",
+              servicePeriod: "2027-01",
+              skuOrService: "Salesforce Data Cloud",
+              quantity: 100,
+              quantityBasis: "Invoice quantity matched to pricing schedule.",
+              unitOfMeasure: "seat",
+              billedRateUsd: 12,
+              contractRateUsd: 10,
+              amountUsd: 200,
+              inclusion: "included",
+              inclusionReason: "Line is covered by the active rate card.",
+              pricingScheduleRef: "PS-090-001",
+              contractTermRef: "TERM-090-RATE",
+              amendmentRef: null,
+              sourceRefs: [
+                {
+                  sourceSystem: "AP / ERP",
+                  sourceRecordId: "INV-090-001-L1",
+                  sourceFileReport: "invoice-lines.csv",
+                  tableName: "source.calculation_input",
+                  pageSpan: null,
+                  reviewState: "included",
+                },
+              ],
+            },
+          ],
         },
         overlapTreatment: "included",
         approvalState: "draft",
@@ -1356,6 +1387,33 @@ describe("SourceOptimizeContractPage", () => {
     expect(
       screen.getByTestId("opportunity-trace-opp-090-rate"),
     ).toHaveTextContent("Reproducible from 18 included lines");
+  });
+
+  it("trims raw calculation lines from the client payload without losing traceability totals", () => {
+    const opportunitySet = makeOpportunitySet();
+    const originalCalculation = opportunitySet.opportunities[0].calculation;
+    expect(originalCalculation?.lines.length).toBeGreaterThan(0);
+
+    const trimmed =
+      trimContractOptimizationOpportunitySetForClient(opportunitySet);
+    const trimmedCalculation = trimmed?.opportunities[0].calculation;
+
+    expect(trimmedCalculation?.lines).toEqual([]);
+    expect(trimmedCalculation).toMatchObject({
+      calculatedAmountUsd: originalCalculation?.calculatedAmountUsd,
+      includedLineCount: originalCalculation?.includedLineCount,
+      excludedLineCount: originalCalculation?.excludedLineCount,
+      pendingLineCount: originalCalculation?.pendingLineCount,
+      formula: originalCalculation?.formula,
+    });
+    expect(
+      summarizeOpportunityTraceability(trimmed?.opportunities ?? [])
+        .tracedAmountUsd,
+    ).toBe(
+      summarizeOpportunityTraceability(opportunitySet.opportunities)
+        .tracedAmountUsd,
+    );
+    expect(JSON.stringify(trimmed)).not.toContain("invoice-raw-line-001");
   });
 
   it("shows every required evidence family as explicitly missing when no evidence pack is supplied", () => {
