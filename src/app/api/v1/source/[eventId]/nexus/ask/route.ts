@@ -63,11 +63,22 @@ export const dynamic = "force-dynamic";
 function looksLikeVendorCoverageQuestion(prompt: string | undefined): boolean {
   if (!prompt) return false;
   const q = prompt.toLowerCase();
-  return (
-    /\b(vendor|vendors|bidder|bidders|proposal|proposals)\b/.test(q) &&
+  const hasParticipantOrProposal =
+    /\b(vendor|vendors|supplier|suppliers|bidder|bidders|respondent|respondents|proposal|proposals)\b/.test(
+      q,
+    );
+  const hasResponseCoverageLanguage =
     /\b(coverage|addressed|dodged|respond|responded|response|responses|answer|answered|cover|covered)\b/.test(
       q,
-    )
+    );
+  const hasUnsupportedClaimLanguage =
+    /\b(claim|claims|assertion|assertions)\b/.test(q) &&
+    /\b(unsupported|unsubstantiated|unproven|not supported|lacks evidence|lack evidence|without evidence|no evidence)\b/.test(
+      q,
+    );
+  return (
+    (hasParticipantOrProposal && hasResponseCoverageLanguage) ||
+    hasUnsupportedClaimLanguage
   );
 }
 

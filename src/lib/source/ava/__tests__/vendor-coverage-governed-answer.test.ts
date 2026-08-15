@@ -11,7 +11,10 @@ import {
   readVendorLeverResponseFacts,
   readVendorLeverResponses,
 } from '@/lib/source/facts/event-facts-reader';
-import type { VendorLeverResponseFact } from '@/lib/source/facts/event-facts-reader';
+import type {
+  ResponseStatus,
+  VendorLeverResponseFact,
+} from '@/lib/source/facts/event-facts-reader';
 
 jest.mock('@/lib/source/facts/event-facts-reader', () => ({
   readEventFacts: jest.fn(),
@@ -233,5 +236,79 @@ describe('buildVendorCoverageGovernedAnswer', () => {
     expect(answer!.status).toBe('answered');
     expect(answer!.artifacts[0]?.artifact).toBe('table');
     expect(answer!.citations[0]?.recordId).toBe('fact-alpha-volume');
+  });
+
+  it('answers unsupported-claim questions only from event response vendors, never ambient vendor names', async () => {
+    const statusByVendorLever = new Map<
+      string,
+      Map<string, ResponseStatus>
+    >([
+      [
+        'Vendor A',
+        new Map<string, ResponseStatus>([
+          ['AMS.VOLUME_BAND_PRICING', 'addressed'],
+          ['AMS.ENHANCEMENT_LEAKAGE', 'partial'],
+        ]),
+      ],
+      [
+        'Vendor B',
+        new Map<string, ResponseStatus>([
+          ['AMS.VOLUME_BAND_PRICING', 'dodged'],
+          ['AMS.ENHANCEMENT_LEAKAGE', 'partial'],
+        ]),
+      ],
+      [
+        'Vendor C',
+        new Map<string, ResponseStatus>([
+          ['AMS.VOLUME_BAND_PRICING', 'addressed'],
+          ['AMS.ENHANCEMENT_LEAKAGE', 'dodged'],
+        ]),
+      ],
+    ]);
+    mockReadEventFacts.mockResolvedValue({ inputs: {}, citations: {} });
+    mockReadVendorLeverResponses.mockResolvedValue({
+      signalPresent: true,
+      vendors: ['Vendor A', 'Vendor B', 'Vendor C'],
+      statusByVendorLever,
+    });
+    mockReadVendorLeverResponseFacts.mockResolvedValue([
+      fact({
+        id: 'fact-vendor-a-volume',
+        vendorId: 'Vendor A',
+        leverKey: 'AMS.VOLUME_BAND_PRICING',
+        status: 'addressed',
+      }),
+      fact({
+        id: 'fact-vendor-b-volume',
+        vendorId: 'Vendor B',
+        leverKey: 'AMS.VOLUME_BAND_PRICING',
+        status: 'dodged',
+      }),
+      fact({
+        id: 'fact-vendor-c-leakage',
+        vendorId: 'Vendor C',
+        leverKey: 'AMS.ENHANCEMENT_LEAKAGE',
+        status: 'dodged',
+      }),
+    ]);
+
+    const answer = await buildVendorCoverageGovernedAnswer({
+      eventId: 'event-1',
+      clientKey: 'skyharbor',
+      tenantId: 'tenant-skyharbor',
+      question: 'Which claims are unsupported or lack evidence?',
+      eventType: 'infrastructure',
+    });
+
+    expect(answer).not.toBeNull();
+    const table = answer!.artifacts.find(
+      (artifact) => artifact.artifact === 'table',
+    );
+    expect(table?.rows.map((row) => row.vendor)).toEqual([
+      'Vendor A',
+      'Vendor B',
+      'Vendor C',
+    ]);
+    expect(JSON.stringify(answer)).not.toContain('Amadeus');
   });
 });
