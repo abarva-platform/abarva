@@ -146,6 +146,38 @@ export const INITIAL_STATE: WorkspaceState = {
   optimizationLaunch: {},
 };
 
+const CONTRACT_TABS = new Set([
+  'Story',
+  'Scope',
+  'Economics',
+  'Performance',
+  'Relationship',
+  'Evidence',
+  'Optimize',
+]);
+
+export function buildInitialWorkspaceState(input?: {
+  contractId?: string | null;
+  contractTab?: string | null;
+}): WorkspaceState {
+  const contractId = input?.contractId?.trim();
+  if (!contractId) return INITIAL_STATE;
+
+  const requestedTab = input?.contractTab?.trim();
+  const contractTab =
+    requestedTab && CONTRACT_TABS.has(requestedTab)
+      ? requestedTab
+      : INITIAL_STATE.tabs.contract;
+
+  return {
+    ...INITIAL_STATE,
+    sel: { kind: 'contract', id: contractId },
+    tabs: { ...INITIAL_STATE.tabs, contract: contractTab },
+    hist: [{ kind: 'contract', id: contractId, tab: contractTab }],
+    hi: 0,
+  };
+}
+
 // ── enriched per-contract row (real columns + a per-contract join of the
 // real leverage/renewal function outputs; day counts are chart-geometry
 // only, never used to re-derive a passed/expiring classification) ──────────

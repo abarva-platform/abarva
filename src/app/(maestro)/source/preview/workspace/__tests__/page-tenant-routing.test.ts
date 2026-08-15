@@ -20,4 +20,13 @@ describe("Source workspace requested-client routing", () => {
   it("does not fall back to the session tenant when an explicit client cannot resolve", () => {
     expect(pageSource).toContain('(!requestedClient ? tenancy.clientKey : "")');
   });
+
+  it("threads contract deep links into the workspace client", () => {
+    expect(pageSource).toContain("contractId?: string");
+    expect(pageSource).toContain(
+      "const requestedContractId = params.contractId?.trim() || null;",
+    );
+    expect(pageSource).toContain("initialContractId={requestedContractId}");
+    expect(pageSource).toContain("initialContractTab={requestedContractTab}");
+  });
 });

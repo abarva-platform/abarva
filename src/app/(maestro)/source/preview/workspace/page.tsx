@@ -38,7 +38,13 @@ const SKYHARBOR_SYNTHETIC_AS_OF = "2027-06-30T00:00:00Z";
 export default async function SourceWorkspacePreviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ asOf?: string; client?: string }>;
+  searchParams: Promise<{
+    asOf?: string;
+    client?: string;
+    contractId?: string;
+    contractTab?: string;
+    tab?: string;
+  }>;
 }) {
   let tenancy;
   try {
@@ -52,6 +58,9 @@ export default async function SourceWorkspacePreviewPage({
 
   const params = await searchParams;
   const requestedClient = params.client?.trim() || null;
+  const requestedContractId = params.contractId?.trim() || null;
+  const requestedContractTab =
+    params.contractTab?.trim() || params.tab?.trim() || null;
   const tenant = await resolveTenant({
     requestedClient,
     allowFallback: !requestedClient,
@@ -144,7 +153,12 @@ export default async function SourceWorkspacePreviewPage({
         minHeight: 0,
       }}
     >
-      <WorkspaceClient portfolio={portfolio} tenantName={tenantName} />
+      <WorkspaceClient
+        portfolio={portfolio}
+        tenantName={tenantName}
+        initialContractId={requestedContractId}
+        initialContractTab={requestedContractTab}
+      />
     </div>
   );
 }

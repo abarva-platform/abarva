@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "./workspace.css";
 import {
-  INITIAL_STATE,
+  buildInitialWorkspaceState,
   WorkspaceViewModel,
   type WorkspaceState,
 } from "./viewModel";
@@ -93,11 +93,20 @@ function resolveSourceAssistantAnswerText(
 export function WorkspaceClient({
   portfolio,
   tenantName,
+  initialContractId,
+  initialContractTab,
 }: {
   portfolio: SourceWorkspacePortfolioData;
   tenantName: string;
+  initialContractId?: string | null;
+  initialContractTab?: string | null;
 }) {
-  const [state, setStateRaw] = useState<WorkspaceState>(INITIAL_STATE);
+  const [state, setStateRaw] = useState<WorkspaceState>(() =>
+    buildInitialWorkspaceState({
+      contractId: initialContractId,
+      contractTab: initialContractTab,
+    }),
+  );
   const [thread, setThread] = useState<ChatMessage[]>([]);
 
   const setState = useMemo(
@@ -217,6 +226,11 @@ export function WorkspaceClient({
     },
     [],
   );
+
+  useEffect(() => {
+    if (!initialContractId?.trim()) return;
+    fetchContractDetail(initialContractId.trim());
+  }, [fetchContractDetail, initialContractId]);
 
   const vm = useMemo(() => {
     const logic = new WorkspaceViewModel(
