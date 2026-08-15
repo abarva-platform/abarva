@@ -299,4 +299,106 @@ describe("getContractOptimizationOpportunitySet", () => {
     expect(set?.baseline.totalCommittedValueUsd).toBe(173_900_000);
     expect(set?.baseline.pricingScheduleAnnualValueUsd).toBeNull();
   });
+
+  it("selects the approval-ready target position before diagnostic rate variance when no request exists", async () => {
+    withSessionMock.mockImplementation(async (callback) => {
+      const run = async <R>(sql: string): Promise<R[]> => {
+        let rows: unknown[] = [];
+        if (sql.includes("set_config")) return [];
+        if (
+          sql.includes("FROM source.optimization_opportunity") &&
+          sql.includes("GROUP BY dataset_version")
+        ) {
+          rows = [{ dataset_version: "source-v1-1-canary" }];
+        } else if (
+          sql.includes("FROM source.optimization_opportunity") &&
+          sql.includes("ORDER BY amount_usd")
+        ) {
+          rows = [
+            {
+              tenant_key: "skyharbor_global",
+              dataset_version: "source-v1-1-canary",
+              opportunity_id: "CTR-090:rate-variance",
+              contract_id: "CTR-090",
+              vendor_id: "salesforce",
+              value_type: "recoverable_leakage",
+              stage: "quantified",
+              amount_usd: 365_000,
+              amount_state: "exact",
+              evidence_grade: "system_evidenced",
+              confidence: 0.86,
+              next_action:
+                "Review included invoice lines and complete the amendment search.",
+              overlap_treatment: "Distinct from off-contract billing.",
+              approval_state: "requires_amendment_exception_review",
+              narrative:
+                "Rate variance rows are visible for this selected contract.",
+              payload: { label: "Rate variance" },
+            },
+            {
+              tenant_key: "skyharbor_global",
+              dataset_version: "source-v1-1-canary",
+              opportunity_id: "CTR-090:negotiated-improvement",
+              contract_id: "CTR-090",
+              vendor_id: "salesforce",
+              value_type: "negotiated_improvement",
+              stage: "target_position",
+              amount_usd: 1_300_000,
+              amount_state: "exact",
+              evidence_grade: "document_evidenced",
+              confidence: 0.72,
+              next_action:
+                "Build the vendor-facing concession packet and route it through approval.",
+              overlap_treatment: "Negotiated improvement target.",
+              approval_state: "requires_strategy_approval",
+              narrative:
+                "The target position is ready for approval before outreach.",
+              payload: { label: "Negotiated improvement" },
+            },
+          ];
+        } else if (sql.includes("FROM source.optimization_baseline")) {
+          rows = [
+            {
+              tenant_key: "skyharbor_global",
+              dataset_version: "source-v1-1-canary",
+              contract_id: "CTR-090",
+              baseline_state: "ready",
+              detail:
+                "The pricing schedule ties to the selected contract baseline.",
+              annual_value_usd: 43_500_000,
+              pricing_schedule_annual_value_usd: 43_500_000,
+              actual_annual_spend_usd: 37_400_000,
+              total_committed_value_usd: 173_900_000,
+              conflict_amount_usd: 0,
+              source_refs: [],
+              payload: { headline: "Commercial baseline reconciles." },
+            },
+          ];
+        } else if (
+          sql.includes("FROM source.optimization_case") &&
+          !sql.includes("JOIN source.optimization_case")
+        ) {
+          rows = [
+            {
+              optimization_case_id: "CTR-090:optimize-contract",
+              door1_event_id: "event-090",
+              case_state: "calculation_validated",
+              owner: "Strategic sourcing owner",
+              next_action: "Route the target position for outreach approval.",
+            },
+          ];
+        }
+        return rows as R[];
+      };
+      return callback(run);
+    });
+
+    const set = await getContractOptimizationOpportunitySet(
+      "skyharbor_global",
+      "CTR-090",
+      contract(),
+    );
+
+    expect(set?.selectedOpportunityId).toBe("CTR-090:negotiated-improvement");
+  });
 });
