@@ -76,21 +76,33 @@ The operating question for every slice is simple:
    - Result: Strategy is now closed; continue with RFP as the next
      one-stage slice.
 
+6. `SRC62` RFP operating-model generalization
+   - PRs: `#6387`, `#6390`.
+   - Merge commits: `fab6594e7b53bcf67725f544bdb770ded1e631c9`,
+     `6ede9de5dec6899362365d11e73807bd4c6fd743`.
+   - Scope: RFP-only application of the Scope/Strategy reference pattern:
+     purpose-first Release Package branch, RFP gate-readiness panel backed by
+     canonical evidence requirements, evidence ask table with upload/parse/done
+     states, and a visible file-review/approval next action when local inputs
+     are complete.
+   - Follow-up proof gap closed: the completed-input stage-ready state now keeps
+     the RFP gate-readiness strip visible instead of hiding what the RFP package
+     unlocks.
+   - ACA deploy proofs: `31908782127`, superseded by `31909712086`.
+   - Runtime invariant: passed for deployed digest
+     `sha256:8e109061ebaa6c27a8326cb451f6355da64a2d94aa916b692c4b7575707053b5`,
+     active revision `ca-abarva-web-lab-eastus--m6ede9de5`, 100% traffic, health
+     checks, and worker jobs.
+   - Signed-in browser/DOM proof: passed on the provisioned Source RFP route;
+     confirmed the 11-stage rail, Stage 03 RFP, Release Package branch,
+     `source-shell-stage-ready-panel`, `source-stage-operating-status`, RFP
+     package unlock copy, canonical ask count, and the RFP evidence ask table.
+   - Result: RFP is now closed; continue with Responses as the next one-stage
+     slice.
+
 ### Open
 
-1. `SRC62` RFP operating-model generalization
-   - Status: candidate in branch `codex/src62-rfp-generalize-20260815`.
-   - Scope: apply the Scope/Strategy reference pattern to RFP without adding
-     parser ingestion or vendor dispatch: the left tree names the release
-     package, the active canvas shows RFP gate readiness from the canonical
-     evidence registry, and the next action stays in the load-evidence state
-     until required evidence is ready.
-   - Local proof: focused Jest, 11-stage smoke, shell layout harness, focused
-     ESLint, typecheck, diff check, and release check passed.
-   - Pending proof: PR, CI, ACA deploy, runtime invariant, and signed-in RFP
-     browser/DOM proof before any live product claim.
-
-2. `SRC63`-`SRC70` remaining stage operating-model generalization
+1. `SRC63`-`SRC70` remaining stage operating-model generalization
    - Status: reserved, one PR per stage after `SRC62` closes.
    - Stage IDs: `SRC63` Responses, `SRC64` Evaluation, `SRC65` Pricing,
      `SRC66` BAFO, `SRC67` Executive Decision, `SRC68` Selection, `SRC69`
@@ -101,7 +113,7 @@ The operating question for every slice is simple:
      runtime invariant, and signed-in browser/DOM proof before the next stage
      begins.
 
-3. Excluded active-client proof repair
+2. Excluded active-client proof repair
    - Backlog ID: `SRC-PROOF-002`.
    - Status: open hard-gated follow-up.
    - Required action: classify, preview, apply, and independently read back any
@@ -109,7 +121,7 @@ The operating question for every slice is simple:
    - Hard gate: do not mutate production auth/data membership without explicit
      operator classification, command preview, and readback proof.
 
-4. Backlog consolidation
+3. Backlog consolidation
    - Backlog ID: `SRC-BACKLOG-001`.
    - Status: closed by `#6368`.
    - Acceptance: one ranked backlog with dependencies, owner lane, proof bar,
