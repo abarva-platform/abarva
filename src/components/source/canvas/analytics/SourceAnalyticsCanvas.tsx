@@ -1386,7 +1386,7 @@ function StageOperatingStatusPanel({
           ? "rgba(24, 151, 108, 0.045)"
           : ANALYTICS.CARD,
         margin: embedded ? 0 : "0 0 16px 42px",
-        maxWidth: embedded ? "none" : 900,
+        maxWidth: "none",
         overflow: "hidden",
       }}
     >
@@ -1578,13 +1578,15 @@ function FocusedWorkPanel({
 
   return (
     <section
+      data-testid="source-shell-focused-work-panel"
       style={{
         ...CARD_STYLE,
         display: "grid",
         gridTemplateColumns: "286px minmax(0, 1fr)",
-        maxWidth: 1120,
+        maxWidth: "none",
         overflow: "hidden",
         boxShadow: ANALYTICS.SHADOW_SM,
+        width: "100%",
       }}
     >
       <div
@@ -1715,7 +1717,10 @@ function FocusedWorkPanel({
         </div>
       </div>
 
-      <div>
+      <div
+        data-testid="source-shell-active-workflow-pane"
+        style={{ minWidth: 0 }}
+      >
         {allReady ? (
           <StageReadyPanel
             view={view}
@@ -1928,7 +1933,8 @@ function StageReadyPanel({
       style={{
         display: "grid",
         gap: 18,
-        maxWidth: 760,
+        maxWidth: "none",
+        width: "100%",
       }}
     >
       <div>
@@ -2175,7 +2181,7 @@ function EvidenceAskTable({
         border: `1px solid ${ANALYTICS.LINE}`,
         borderRadius: 8,
         margin: inset ? "0 0 16px 42px" : 0,
-        maxWidth: 960,
+        maxWidth: "none",
         overflow: "hidden",
       }}
     >
@@ -2439,7 +2445,7 @@ function ActiveStepNeedsPanel({
         borderRadius: 8,
         background: ANALYTICS.CARD,
         margin: "0 0 16px 42px",
-        maxWidth: 760,
+        maxWidth: "none",
         overflow: "hidden",
       }}
     >
@@ -2569,7 +2575,7 @@ function ActiveStepGuidePanel({
         borderRadius: 8,
         background: ANALYTICS.CARD,
         margin: "0 0 16px 42px",
-        maxWidth: 760,
+        maxWidth: "none",
         overflow: "hidden",
       }}
     >
@@ -3038,14 +3044,14 @@ function StepDetail({
 
   if (activeStep.rows.length > 0) {
     return (
-      <div style={{ marginLeft: 42, maxWidth: 760 }}>
+      <div style={{ marginLeft: 42, maxWidth: "none" }}>
         {evidenceRow}
         <div
           style={{
             border: `1px solid ${ANALYTICS.LINE}`,
             borderRadius: 8,
             overflow: "hidden",
-            maxWidth: 680,
+            maxWidth: "none",
           }}
         >
           {activeStep.rows.map((row, index) => (
@@ -3102,7 +3108,7 @@ function StepDetail({
         ? stepInsight.vendors
         : null;
     return (
-      <div style={{ marginLeft: 42, maxWidth: 680 }}>
+      <div style={{ marginLeft: 42, maxWidth: "none" }}>
         {evidenceRow}
         {factTemplateCode ? (
           <TemplateDownloadLink
@@ -3247,7 +3253,7 @@ function ActiveStepRequirementRow({
         border: `1px solid ${ANALYTICS.LINE}`,
         borderRadius: 8,
         marginBottom: 14,
-        maxWidth: 760,
+        maxWidth: "none",
         overflow: "hidden",
       }}
     >
