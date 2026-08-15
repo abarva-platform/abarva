@@ -98,3 +98,44 @@ describe("agent route · Source aVa contract optimization authority", () => {
     );
   });
 });
+
+describe("agent route · Source aVa vendor-response grounding — Gap 2", () => {
+  const source = readRoute();
+
+  it("honors the top-level stage when the request omits surfaceContext.viewStage", () => {
+    expect(source).toContain("const viewStageFromContext =");
+    expect(source).toContain(
+      'typeof surfaceContext.viewStage === "string" &&',
+    );
+    expect(source).toContain('typeof stage === "string" && stage.trim()');
+    expect(source.indexOf('typeof stage === "string" && stage.trim()')).toBeGreaterThan(
+      source.indexOf("surfaceContext.viewStage"),
+    );
+  });
+
+  it("uses event-visible response profiles for unsupported-claim asks even after the event leaves Responses", () => {
+    const visibleProfileStart = source.indexOf(
+      "const visibleResponseProfileSet =",
+    );
+    const visibleProfileEnd = source.indexOf(
+      "const hasVisibleResponseProfiles =",
+      visibleProfileStart,
+    );
+    const visibleProfileBlock = source.slice(
+      visibleProfileStart,
+      visibleProfileEnd,
+    );
+
+    expect(visibleProfileStart).toBeGreaterThan(-1);
+    expect(visibleProfileBlock).toContain(
+      'modeClassification.mode === "vendor_comparison"',
+    );
+    expect(visibleProfileBlock).toContain(
+      "looksLikeUnsupportedVendorResponseClaimQuestion(message)",
+    );
+    expect(visibleProfileBlock).toContain("buildVendorResponseMveProfiles");
+    expect(visibleProfileBlock).not.toContain(
+      'modeStageKey === "responses"',
+    );
+  });
+});

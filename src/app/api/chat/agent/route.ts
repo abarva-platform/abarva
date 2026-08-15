@@ -1472,7 +1472,9 @@ export async function POST(request: Request) {
         typeof surfaceContext.viewStage === "string" &&
         surfaceContext.viewStage.trim()
           ? surfaceContext.viewStage.trim()
-          : (groundingEvent?.currentStageKey ?? null);
+          : typeof stage === "string" && stage.trim()
+            ? stage.trim()
+            : (groundingEvent?.currentStageKey ?? null);
       const grounding = await buildAvaSourceGrounding({
         eventId: sourceEventIdFromContext,
         clientKey: activeClientKey,
@@ -1516,7 +1518,6 @@ export async function POST(request: Request) {
         const isPhaseB = isPhaseBImplementedMode(modeClassification.mode);
         const isPhaseC = isPhaseCImplementedMode(modeClassification.mode);
         const visibleResponseProfileSet =
-          modeStageKey === "responses" &&
           modeClassification.mode === "vendor_comparison" &&
           looksLikeUnsupportedVendorResponseClaimQuestion(message)
             ? buildVendorResponseMveProfiles({
