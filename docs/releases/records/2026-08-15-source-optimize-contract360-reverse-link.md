@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -36,7 +36,7 @@ The Optimize Contract header now returns a selected-contract user to that contra
 - `npm test -- --runTestsByPath src/components/source/__tests__/SourceOptimizeContractPage.test.tsx --runInBand` passed.
 - `npx eslint src/components/source/SourceOptimizeContractPage.tsx src/components/source/__tests__/SourceOptimizeContractPage.test.tsx` passed.
 - `git diff --check` passed.
-- Live signed-in browser proof pending after deploy.
+- Live signed-in browser proof passed after deploy.
 
 ## Rollout Plan
 
@@ -46,9 +46,12 @@ Merge to `main`, let the repo-owned Azure Container Apps main deploy workflow bu
 
 - Repo-owned deploy workflow: Required.
 - Shared runtime mutators: Not used by this release.
-- Approved image digest: Pending repo-owned deploy workflow.
-- ACA runtime invariant: Pending after deploy.
-- Worker image invariant: Pending after deploy.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:1e1e982cab2197a335a3b991c090eff5ae1875e29a68684088691f91f7276f94`.
+- ACA runtime invariant: Passed on revision
+  `ca-abarva-web-lab-eastus--m8dac6271` with 100% traffic.
+- Worker image invariant: Required delivery worker jobs read back on the same
+  deployed digest.
 - Feature/env flag update path: None.
 - Live signed-in proof required: Yes.
 
@@ -58,10 +61,16 @@ Revert the PR and allow the repo-owned ACA deploy workflow to publish the previo
 
 ## Audit Evidence
 
-- PR URL: Pending.
-- Repo-owned ACA deploy run: Pending.
-- ACA runtime invariant proof: Pending.
-- Signed-in browser proof: Pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/6358.
+- Merge commit: `8dac627114da003bb0678ff9f08724c08466b041`.
+- Repo-owned ACA deploy run: `31885345436`.
+- ACA runtime invariant proof: revision `ca-abarva-web-lab-eastus--m8dac6271`,
+  image `acrabarvalab001.azurecr.io/abarva/web@sha256:1e1e982cab2197a335a3b991c090eff5ae1875e29a68684088691f91f7276f94`,
+  100% traffic.
+- Signed-in browser proof: `/source/optimize?contractId=CTR-090` rendered the
+  selected-contract Optimize page; the `Source workspace` link resolved to
+  `/source/preview/workspace?contractId=CTR-090`; clicking it opened the
+  selected Contract 360 workspace with the same contract context.
 
 ## Known Gaps
 
