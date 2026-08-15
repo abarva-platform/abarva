@@ -16,6 +16,12 @@ import { join } from 'node:path';
 import { createClerkClient } from '@clerk/backend';
 import { chromium, type Browser, type BrowserContext, type Page } from 'playwright';
 
+import { agentLoginForClientKey } from '@/lib/auth/agent-client-logins';
+import type { CxoPersona } from '@/lib/auth/cxo-personas';
+import {
+  createClerkTestingTokenForCrawl,
+  installClerkTestingTokenInterceptor,
+} from '@/lib/crawl/clerk-testing-token';
 import {
   validateCxoAnswer,
   type CxoAnswerIssue,
@@ -44,12 +50,18 @@ interface Tenant {
   foreignTokens: string[];
 }
 
+function requireAgentEmail(clientKey: CxoPersona['clientKey']): string {
+  const login = agentLoginForClientKey(clientKey);
+  if (!login) throw new Error(`Atlas gauntlet missing automation agent for ${clientKey}`);
+  return login.email;
+}
+
 const TENANTS: Tenant[] = [
   {
     slug: 'apex-retail',
     activeClientCookie: 'apexretail',
     displayName: 'Apex Retail Group',
-    email: 'cio@apex-retail.example.com',
+    email: requireAgentEmail('apexretail'),
     clientId: 'bb8ed961-a049-4d0c-a38f-f8912138fceb',
     qualityTenantKey: 'apex-retail',
     representativeDisplayId: 'AR-01',
@@ -61,7 +73,7 @@ const TENANTS: Tenant[] = [
     slug: 'meridian-health',
     activeClientCookie: 'meridian',
     displayName: 'Meridian Health System',
-    email: 'cdio@meridian-health.example.com',
+    email: requireAgentEmail('meridian'),
     clientId: 'a20ecef5-f0ea-4890-b9d5-7375fab223ff',
     qualityTenantKey: 'meridian-health',
     representativeDisplayId: 'MH-01',
@@ -73,7 +85,7 @@ const TENANTS: Tenant[] = [
     slug: 'skyharbor-air',
     activeClientCookie: 'skyharbor',
     displayName: 'SkyHarbor Air',
-    email: 'cto@skyharbor-air.example.com',
+    email: requireAgentEmail('skyharbor'),
     clientId: '6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301',
     qualityTenantKey: 'skyharbor-air',
     representativeDisplayId: 'SHA-01',
@@ -303,10 +315,18 @@ async function authenticate(browser: Browser, tenant: Tenant): Promise<{
   const clerk = createClerkClient({ secretKey: secret });
   const user = (await clerk.users.getUserList({ emailAddress: [tenant.email], limit: 1 })).data[0];
   if (!user) throw new Error(`No Clerk user found for ${tenant.email}`);
+  if (user.banned) {
+    throw new Error(`Atlas automation user is banned: ${tenant.email}. Run scripts/provision-cxo-personas.ts --agents --clerk-only --apply to unban/reconcile proof accounts before rerunning the gauntlet.`);
+  }
   const ticket = await clerk.signInTokens.createSignInToken({ userId: user.id, expiresInSeconds: 300 });
 
   const context = await browser.newContext();
   const page = await context.newPage();
+  const testingToken = await createClerkTestingTokenForCrawl();
+  await installClerkTestingTokenInterceptor(page, testingToken);
+  if (testingToken) {
+    console.log(`[atlas-prod-surface] clerk testing token installed for ${tenant.slug}`);
+  }
   await page.goto(`${PROD_URL}/`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(
     () => (window as Window & { Clerk?: { loaded?: boolean } }).Clerk?.loaded === true,
