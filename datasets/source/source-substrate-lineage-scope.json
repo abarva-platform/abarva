@@ -27,6 +27,16 @@
       "metric": "vendor_count",
       "bases": ["vendor_ref", "vendor_family"],
       "explanation": "source.contract_360 counts distinct vendor_ref values in the Contract 360 read model. Source V4/Cube can count normalized vendor families or vendor portfolio rows. State the basis instead of silently picking one."
+    },
+    {
+      "metric": "total_committed_value_usd",
+      "bases": ["committed_value_total", "committed_value_contract_family_total"],
+      "explanation": "Contract 360 read models sum total committed value over the row-level contract register. Source V4/Cube can sum normalized contract families. State the basis before quoting total committed value."
+    },
+    {
+      "metric": "auto_renew_contract_count",
+      "bases": ["contract_row", "contract_family"],
+      "explanation": "Contract 360 read models count auto-renewing contract rows. Source V4/Cube can count auto-renewing contract families. State the basis before quoting auto-renew counts."
     }
   ],
   "supplementalVendorRefs": []

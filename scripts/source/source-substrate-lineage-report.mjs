@@ -27,7 +27,7 @@ const SCOPE_PATH = path.join(
 const OUT_DIR = path.join(ROOT, "reports/source-substrate-lineage");
 const TOLERANCE = 0.02;
 
-const SOURCE_DEFINITIONS = [
+export const SOURCE_DEFINITIONS = [
   {
     id: "source.contract_360",
     label: "Contract 360 read model",
@@ -65,7 +65,7 @@ const SOURCE_DEFINITIONS = [
     sql: `
       SELECT
         COALESCE(SUM(contract_count), 0)::numeric AS contract_count,
-        COUNT(*)::numeric AS vendor_count,
+        COUNT(DISTINCT vendor_ref)::numeric AS vendor_count,
         COALESCE(SUM(annual_value), 0)::numeric AS portfolio_annual_value_usd,
         COALESCE(SUM(total_committed_value), 0)::numeric AS total_committed_value_usd,
         COALESCE(SUM(auto_renew_contracts), 0)::numeric AS auto_renew_contract_count
@@ -100,7 +100,7 @@ const SOURCE_DEFINITIONS = [
     basisByMetric: {
       contract_count: "contract_family",
       portfolio_annual_value_usd: "annual_value_total",
-      total_committed_value_usd: "committed_value_total",
+      total_committed_value_usd: "committed_value_contract_family_total",
       auto_renew_contract_count: "contract_family",
     },
     sql: `
