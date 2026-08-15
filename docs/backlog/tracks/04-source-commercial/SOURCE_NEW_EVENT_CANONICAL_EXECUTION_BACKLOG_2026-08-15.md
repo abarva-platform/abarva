@@ -43,14 +43,28 @@ The operating question for every slice is simple:
      active-client membership repair is still open and must not be implied as
      passed.
 
-### Open
-
-1. `SRC57` New Event journey smoke expansion
-   - Status: in progress.
+3. `SRC57` New Event journey smoke expansion
+   - PR: `#6373`.
+   - Merge commit: `0c363678535f4ee530bf58161a444b98edb4b966`.
    - Scope: testing-only expansion of the active Source canvas proof surface
      across all 11 canonical New Event stages.
-   - Acceptance: local smoke, Source layout CI, release check, PR, and separate
-     deploy/runtime evidence before any live product claim.
+   - ACA deploy proof: `31901793414`.
+   - Superseding deployed main proof: `31902387291`.
+   - Post-deploy crawl proof: `31902823363`.
+   - Result: the active Source canvas now has an automated 11-stage smoke
+     harness before feature-depth slices land.
+
+### Open
+
+1. `SRC58` + `SRC59` Scope reference implementation
+   - Status: candidate in branch `codex/src58-scope-reference-20260815`.
+   - Scope: Scope-only live `SourceAnalyticsCanvas` operating model: simpler
+     local substeps, canonical required/optional evidence readiness, done checks,
+     and one forward approval action.
+   - Local proof: focused Jest and ESLint passed for shell grouping, Scope
+     approval workflow, and 11-stage smoke coverage.
+   - Pending proof: PR, CI, ACA deploy, runtime invariant, and signed-in Scope
+     browser/DOM proof before any live product claim.
 
 2. Excluded active-client proof repair
    - Backlog ID: `SRC-PROOF-002`.

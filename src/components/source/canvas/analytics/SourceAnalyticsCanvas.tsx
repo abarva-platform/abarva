@@ -56,17 +56,31 @@ import {
   normalizeSourceStageKey,
 } from "@/lib/source/constants";
 import {
+  criteriaForStage,
   evidenceForStage,
+  requiredEvidenceForStage,
+  requiredSpecsForStage,
   type SourceEvidenceRequirement,
 } from "@/lib/source/canonical-specs";
 import type {
+  SourceEventArtifactState,
   SourceEventEvidence,
   SourceEventEvidenceCurrentState,
+  SourceEventGateCriterion,
 } from "@/lib/source/canvas-substrate";
 import {
   deriveSourceEvidenceLifecycle,
   type SourceEvidenceLifecycleResult,
 } from "@/lib/source/evidence-lifecycle";
+import {
+  assessStageGate,
+  buildStageRecommendation,
+} from "@/lib/source/gate-auto-assessment";
+import { computeStageRequirementCoverage } from "@/lib/source/requirement-coverage";
+import {
+  resolveSimpleStageScreen,
+  type SimpleStageScreenView,
+} from "@/lib/source/simple-front";
 import { buildBafoScenarioCompareView } from "@/lib/source/bafo-scenario-compare-view";
 import {
   adaptStageViewToSourceJourney,
@@ -1107,7 +1121,11 @@ function SourceWorkspace({
           <StageDecisionLensPanel stage={view.stage.key} />
         </div>
       ) : null}
-      <FocusedWorkPanel view={view} onWorkspaceChange={onWorkspaceChange} />
+      <FocusedWorkPanel
+        view={view}
+        evidenceStates={evidenceStates ?? []}
+        onWorkspaceChange={onWorkspaceChange}
+      />
       {view.stage.key === "responses" ? (
         <div style={{ marginTop: 16, maxWidth: 1040 }}>
           <ResponsesStageView
@@ -1257,11 +1275,183 @@ function StageHeader({ view }: { view: SourceEventShellView }) {
   );
 }
 
+type StageEvidenceRequirementRow = {
+  requirement: SourceEvidenceRequirement;
+  evidence: SourceEventEvidence | undefined;
+  file: SourceShellFileItem | null;
+  lifecycle: SourceEvidenceLifecycleResult;
+  ready: boolean;
+  uploaded: boolean;
+};
+
+type StageOperatingStatus = {
+  simpleScreen: SimpleStageScreenView;
+  requiredReady: number;
+  requiredTotal: number;
+  optionalTotal: number;
+  coverageValue: string;
+  canonicalRequiredTotal: number;
+  gateReady: number;
+  gateTotal: number;
+  blockedCount: number;
+  nextActionLabel: string;
+};
+
+function buildStageOperatingStatus(
+  view: SourceEventShellView,
+  evidenceStates: readonly SourceEventEvidence[],
+): StageOperatingStatus | null {
+  const rows = buildStageEvidenceRequirementRows(view, evidenceStates);
+  if (rows.length === 0) return null;
+
+  const stageEvidence = evidenceStates.filter(
+    (row) => row.stage === view.stage.key,
+  );
+  const artifactStates = sourceArtifactStatesFromFiles(
+    view.files.items.filter((file) => file.stageKey === view.stage.key),
+    view,
+  );
+  const gateCriterionStates = virtualGateCriteriaForStage(view);
+  const simpleScreen = resolveSimpleStageScreen(
+    {
+      artifactStates,
+      gateCriterionStates,
+      evidenceStates: stageEvidence,
+    },
+    view.stage.key,
+  );
+  const coverage = computeStageRequirementCoverage({
+    stageKey: view.stage.key,
+    artifactStates,
+    evidenceStates: stageEvidence,
+  });
+  const recommendation = buildStageRecommendation(
+    assessStageGate({
+      fromStage: view.stage.key,
+      criteria: gateCriterionStates,
+      artifacts: artifactStates,
+      evidence: stageEvidence,
+    }),
+  );
+  const requiredRows = rows.filter(
+    (row) => row.requirement.level === "required",
+  );
+  const requiredReady = requiredRows.filter((row) => row.ready).length;
+  const allRequiredReady =
+    requiredRows.length > 0 && requiredReady === requiredRows.length;
+
+  return {
+    simpleScreen,
+    requiredReady,
+    requiredTotal: requiredRows.length,
+    optionalTotal: rows.length - requiredRows.length,
+    coverageValue: coverage.displayValue,
+    canonicalRequiredTotal:
+      requiredEvidenceForStage(view.stage.key).length +
+      requiredSpecsForStage(view.stage.key).length,
+    gateReady: recommendation.requiredMet,
+    gateTotal: recommendation.requiredTotal,
+    blockedCount: recommendation.blockers.length,
+    nextActionLabel: allRequiredReady
+      ? "Open approval gate"
+      : "Load required evidence",
+  };
+}
+
+function StageOperatingStatusPanel({
+  status,
+}: {
+  status: StageOperatingStatus;
+}) {
+  const allRequiredReady =
+    status.requiredTotal > 0 && status.requiredReady === status.requiredTotal;
+  return (
+    <div
+      data-testid="source-scope-operating-status"
+      style={{
+        border: `1px solid ${allRequiredReady ? "rgba(17, 120, 84, 0.28)" : ANALYTICS.LINE}`,
+        borderRadius: 8,
+        background: allRequiredReady
+          ? "rgba(24, 151, 108, 0.045)"
+          : ANALYTICS.CARD,
+        margin: "0 0 16px 42px",
+        maxWidth: 900,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          alignItems: "center",
+          borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          display: "flex",
+          gap: 12,
+          justifyContent: "space-between",
+          padding: "10px 12px",
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <strong style={{ color: ANALYTICS.INK, fontSize: 13 }}>
+            Scope gate readiness
+          </strong>
+          <div
+            style={{
+              color: ANALYTICS.MUTED,
+              fontSize: 12,
+              lineHeight: 1.35,
+              marginTop: 3,
+            }}
+          >
+            {status.simpleScreen.deliverable.name} unlocks{" "}
+            {status.simpleScreen.nextStep.label}.
+          </div>
+        </div>
+        <ReadinessChip
+          label={status.nextActionLabel}
+          tone={allRequiredReady ? "good" : "warn"}
+        />
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+          gap: 12,
+          padding: "11px 12px",
+        }}
+      >
+        <StepNeedDatum
+          label="Required"
+          value={`${status.requiredReady}/${status.requiredTotal} ready`}
+          tone={allRequiredReady ? "good" : "warn"}
+        />
+        <StepNeedDatum
+          label="Optional"
+          value={`${status.optionalTotal} listed`}
+        />
+        <StepNeedDatum
+          label="Coverage"
+          value={`${status.coverageValue} total`}
+        />
+        <StepNeedDatum
+          label="Gate"
+          value={`${status.gateReady}/${status.gateTotal || 0} criteria`}
+          tone={status.blockedCount > 0 ? "warn" : "good"}
+        />
+        <StepNeedDatum
+          label="Controls"
+          value={`${status.canonicalRequiredTotal} canonical asks`}
+        />
+      </div>
+    </div>
+  );
+}
+
 function FocusedWorkPanel({
   view,
+  evidenceStates,
   onWorkspaceChange,
 }: {
   view: SourceEventShellView;
+  evidenceStates: readonly SourceEventEvidence[];
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
   const router = useRouter();
@@ -1342,6 +1532,10 @@ function FocusedWorkPanel({
         view.stage.label,
       )
     : null;
+  const stageOperatingStatus =
+    view.stage.key === "scope"
+      ? buildStageOperatingStatus(view, evidenceStates)
+      : null;
 
   const markComplete = (stepId: string) => {
     setCompletedIds((prev) => new Set(prev).add(stepId));
@@ -1647,6 +1841,10 @@ function FocusedWorkPanel({
               >
                 {activeStep.help}
               </p>
+
+              {view.stage.key === "scope" && stageOperatingStatus ? (
+                <StageOperatingStatusPanel status={stageOperatingStatus} />
+              ) : null}
 
               <ActiveStepNeedsPanel
                 step={activeStep}
@@ -1981,22 +2179,28 @@ function EvidenceAskTable({
           fontFamily: ANALYTICS.MONO,
           fontSize: 9,
           fontWeight: 800,
-          gridTemplateColumns: "1.2fr 1fr 1fr 1fr 0.9fr",
+          gridTemplateColumns:
+            "minmax(170px, 1.15fr) 82px minmax(145px, 0.9fr) minmax(92px, 0.55fr) minmax(105px, 0.7fr) 82px 82px 52px minmax(125px, 0.85fr)",
           letterSpacing: "0.06em",
           padding: "9px 12px",
           textTransform: "uppercase",
         }}
       >
-        <span>Evidence request</span>
-        <span>Where to get it</span>
-        <span>Grain / history</span>
-        <span>Writeback impact</span>
-        <span>Status / action</span>
+        <span>Evidence item</span>
+        <span>Need</span>
+        <span>Source / owner</span>
+        <span>Formats</span>
+        <span>Template</span>
+        <span>Upload</span>
+        <span>Parse</span>
+        <span>Done</span>
+        <span>Next</span>
       </div>
       {group.steps.map((step, index) => {
         const active = step.id === activeStepId;
         const captured = step.status === "captured";
         const need = activeStepNeed(step, captured);
+        const uploaded = Boolean(step.file);
         return (
           <div
             key={step.id}
@@ -2004,7 +2208,8 @@ function EvidenceAskTable({
             data-ready={captured ? "true" : "false"}
             style={{
               display: "grid",
-              gridTemplateColumns: "1.2fr 1fr 1fr 1fr 0.9fr",
+              gridTemplateColumns:
+                "minmax(170px, 1.15fr) 82px minmax(145px, 0.9fr) minmax(92px, 0.55fr) minmax(105px, 0.7fr) 82px 82px 52px minmax(125px, 0.85fr)",
               gap: 12,
               padding: "11px 12px",
               borderTop:
@@ -2022,10 +2227,16 @@ function EvidenceAskTable({
           >
             <EvidenceAskCell
               label={step.title}
-              detail={`${need.item} · ${need.requiredness} · ${need.requirement}`}
+              detail={`${need.item} · ${need.requirement}`}
               active={active}
               captured={captured}
             />
+            <span style={{ alignSelf: "start" }}>
+              <ReadinessChip
+                label={need.requiredness}
+                tone={need.requiredness === "Required" ? "warn" : "neutral"}
+              />
+            </span>
             <EvidenceAskCell
               label={need.sourceSystem}
               detail={`Owner: ${need.owner}`}
@@ -2033,31 +2244,39 @@ function EvidenceAskTable({
               captured={captured}
             />
             <EvidenceAskCell
-              label={need.grainHistory}
-              detail={`Format: ${need.formats}`}
+              label={need.formats}
+              detail={need.grainHistory}
               active={active}
               captured={captured}
             />
             <EvidenceAskCell
-              label={need.parseTarget}
-              detail={`${need.template} · ${step.factTemplateCode ?? "artifact only"} · ${need.artifactImpact}`}
+              label={need.template}
+              detail={step.factTemplateCode ?? "artifact only"}
               active={active}
               captured={captured}
             />
-            <EvidenceAskStatusCell
-              status={need.status}
-              readback={need.readback}
-              next={
+            <EvidenceAskMicroStatus
+              label={uploaded || captured ? "Uploaded" : "Upload"}
+              done={uploaded || captured}
+            />
+            <EvidenceAskMicroStatus
+              label={captured ? "Parsed" : need.status}
+              done={captured}
+            />
+            <EvidenceAskMicroStatus label="" done={captured} iconOnly />
+            <EvidenceAskCell
+              label={
                 captured
                   ? artifactReviewOpen
                     ? "Captured; review Files"
-                    : need.nextAction
+                    : "Continue"
                   : active
                     ? step.type === "provide"
                       ? "Upload below"
                       : step.cta
                     : "Select when ready"
               }
+              detail={captured ? need.readback : need.nextAction}
               active={active}
               captured={captured}
             />
@@ -2133,67 +2352,54 @@ function EvidenceAskCell({
   );
 }
 
-function EvidenceAskStatusCell({
-  status,
-  readback,
-  next,
-  active,
-  captured,
+function EvidenceAskMicroStatus({
+  label,
+  done,
+  iconOnly = false,
 }: {
-  status: string;
-  readback: string;
-  next: string;
-  active: boolean;
-  captured: boolean;
+  label: string;
+  done: boolean;
+  iconOnly?: boolean;
 }) {
   return (
-    <span style={{ display: "grid", gap: 6, minWidth: 0 }}>
-      <b
-        data-testid={captured ? "source-shell-evidence-status-done" : undefined}
+    <span
+      data-testid={done ? "source-shell-evidence-status-done" : undefined}
+      aria-label={done ? "Done" : label || "Open"}
+      title={done ? "Done" : label || "Open"}
+      style={{
+        alignItems: "center",
+        color: done ? ANALYTICS.GREEN_TEXT : ANALYTICS.FAINT,
+        display: "inline-flex",
+        gap: 5,
+        fontSize: 11,
+        fontWeight: 900,
+        minWidth: 0,
+      }}
+    >
+      <span
+        aria-hidden="true"
         style={{
           alignItems: "center",
-          color: captured
-            ? ANALYTICS.GREEN_TEXT
-            : active
-              ? ANALYTICS.AMBER_TEXT
-              : ANALYTICS.FAINT,
-          display: "inline-flex",
-          gap: 6,
-          fontSize: 12,
-        }}
-      >
-        {captured ? "✓ " : null}
-        {captured ? "Done" : status}
-      </b>
-      <span
-        style={{
-          color: captured || active ? ANALYTICS.INK_2 : ANALYTICS.MUTED,
-          fontSize: 11,
-          lineHeight: 1.3,
-          overflowWrap: "anywhere",
-        }}
-      >
-        {readback}
-      </span>
-      <span
-        style={{
-          border: `1px solid ${
-            captured ? "rgba(17, 120, 84, 0.24)" : ANALYTICS.LINE
-          }`,
+          background: done ? ANALYTICS.GREEN_TEXT : ANALYTICS.CARD,
+          border: done ? "none" : `1px solid ${ANALYTICS.LINE_STRONG}`,
           borderRadius: 999,
-          color: captured
-            ? ANALYTICS.GREEN_TEXT
-            : active
-              ? ANALYTICS.INK
-              : ANALYTICS.FAINT,
-          fontSize: 11,
-          fontWeight: 800,
-          padding: "5px 8px",
-          textAlign: "center",
+          color: done ? "#fff" : "transparent",
+          display: "inline-flex",
+          flex: "0 0 16px",
+          fontSize: 10,
+          height: 16,
+          justifyContent: "center",
+          lineHeight: 1,
+          width: 16,
         }}
       >
-        {next}
+        {done ? "✓" : ""}
       </span>
+      {iconOnly ? null : (
+        <span style={{ overflowWrap: "anywhere" }}>
+          {done ? label || "Done" : label}
+        </span>
+      )}
     </span>
   );
 }
@@ -3422,15 +3628,10 @@ function FilesWorkspace({
   );
 }
 
-function StageEvidenceChecklistPanel({
-  view,
-  evidenceStates,
-  onUploadClick,
-}: {
-  view: SourceEventShellView;
-  evidenceStates: readonly SourceEventEvidence[];
-  onUploadClick: () => void;
-}) {
+function buildStageEvidenceRequirementRows(
+  view: SourceEventShellView,
+  evidenceStates: readonly SourceEventEvidence[],
+): StageEvidenceRequirementRow[] {
   const requirements = evidenceForStage(view.stage.key).sort((a, b) => {
     if (a.level !== b.level) return a.level === "required" ? -1 : 1;
     return a.label.localeCompare(b.label);
@@ -3438,7 +3639,8 @@ function StageEvidenceChecklistPanel({
   const statesByRequirementId = new Map(
     evidenceStates.map((state) => [state.requirementId, state]),
   );
-  const rows = requirements.map((requirement) => {
+
+  return requirements.map((requirement) => {
     const evidence = statesByRequirementId.get(requirement.requirementId);
     const file = matchRequirementFile(requirement, evidence, view.files.items);
     const lifecycle = deriveSourceEvidenceLifecycle({
@@ -3454,8 +3656,85 @@ function StageEvidenceChecklistPanel({
         : null,
     });
     const ready = requirementMeetsMinimum(requirement, evidence, lifecycle);
-    return { requirement, evidence, file, lifecycle, ready };
+    const uploaded = requirementHasUploadedEvidence(lifecycle, evidence, file);
+    return { requirement, evidence, file, lifecycle, ready, uploaded };
   });
+}
+
+function sourceArtifactStatesFromFiles(
+  files: readonly SourceShellFileItem[],
+  view: SourceEventShellView,
+): SourceEventArtifactState[] {
+  return files.flatMap((file) => {
+    const stage = normalizeSourceStageKey(file.stageKey);
+    if (!stage) return [];
+    const accepted = Boolean(file.latestAcceptance);
+    const locked = /locked/i.test(file.state);
+    const approved = accepted || /approved|client_final/i.test(file.state);
+    const status: SourceEventArtifactState["status"] = locked
+      ? "locked"
+      : approved
+        ? "approved"
+        : "not_started";
+
+    return [
+      {
+        id: file.id,
+        sourceEventId: view.event.id,
+        tenantKey: view.event.accountName,
+        artifactCode: file.artifactCode,
+        stage,
+        family: "scope_document",
+        tier: "stub",
+        status,
+        requirementLevel:
+          file.artifactRole === "authoritative" ? "required" : "optional",
+        gateDefining: file.artifactRole === "authoritative",
+        linkedArtifactId: null,
+        notes: null,
+        body: null,
+        bodyFormat: "markdown",
+        bodyAuthoredBy: null,
+        bodyUpdatedAt: null,
+        bodyGenerationMetadata: null,
+        createdAt: "",
+        updatedAt: "",
+      } satisfies SourceEventArtifactState,
+    ];
+  });
+}
+
+function virtualGateCriteriaForStage(
+  view: SourceEventShellView,
+): SourceEventGateCriterion[] {
+  return criteriaForStage(view.stage.key).map((criterion, index) => ({
+    id: `${view.event.id}:${criterion.criterionId}`,
+    sourceEventId: view.event.id,
+    tenantKey: view.event.accountName,
+    criterionId: criterion.criterionId,
+    fromStage: criterion.fromStage,
+    toStage: criterion.toStage,
+    state: "pending",
+    reviewerUserId: null,
+    reviewedAt: null,
+    notes: null,
+    evidenceArtifactIds: [],
+    waiverApprovalId: null,
+    createdAt: `virtual-${index}`,
+    updatedAt: `virtual-${index}`,
+  }));
+}
+
+function StageEvidenceChecklistPanel({
+  view,
+  evidenceStates,
+  onUploadClick,
+}: {
+  view: SourceEventShellView;
+  evidenceStates: readonly SourceEventEvidence[];
+  onUploadClick: () => void;
+}) {
+  const rows = buildStageEvidenceRequirementRows(view, evidenceStates);
   const requiredRows = rows.filter(
     (row) => row.requirement.level === "required",
   );
@@ -3542,159 +3821,157 @@ function StageEvidenceChecklistPanel({
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ requirement, evidence, file, lifecycle, ready }) => {
-                const uploaded = requirementHasUploadedEvidence(
-                  lifecycle,
-                  evidence,
-                  file,
-                );
-
-                return (
-                  <tr
-                    key={requirement.requirementId}
-                    data-testid={`source-stage-evidence-checklist-row-${requirement.requirementId}`}
-                  >
-                    <td style={FILE_TD_LABEL}>
-                      <strong>{requirement.label}</strong>
-                      <span>{requirement.description}</span>
-                    </td>
-                    <td style={FILE_TD_CENTER}>
-                      <ReadinessChip
-                        label={
-                          requirement.level === "required"
-                            ? "required"
-                            : "optional"
-                        }
-                        tone={
-                          requirement.level === "required" ? "warn" : "neutral"
-                        }
-                      />
-                    </td>
-                    <td style={FILE_TD_ACTION}>
-                      <strong>{requirement.sourceSystems[0]}</strong>
-                      <span>
-                        {requirement.sourceSystems.slice(1, 3).join(", ")}
-                      </span>
-                    </td>
-                    <td style={FILE_TD_ACTION}>
-                      <strong>{ownerRoleForRequirement(requirement)}</strong>
-                      <span>{requirement.sourceLabel}</span>
-                    </td>
-                    <td style={FILE_TD_CENTER}>
-                      {requirement.acceptedFileTypes
-                        .map((type) => type.toUpperCase())
-                        .join(", ")}
-                    </td>
-                    <td style={FILE_TD_ACTION}>
-                      <span>{expectedUploadForRequirement(requirement)}</span>
-                    </td>
-                    <td style={FILE_TD_CENTER}>
-                      <a
-                        href={`/api/v1/source/${encodeURIComponent(view.event.id)}/evidence/${encodeURIComponent(requirement.requirementId)}/template`}
-                        style={TABLE_LINK_STYLE}
-                      >
-                        Template
-                      </a>
-                    </td>
-                    <td style={FILE_TD_CENTER}>
-                      <div
-                        style={{
-                          display: "grid",
-                          justifyItems: "center",
-                          gap: 6,
-                        }}
-                      >
-                        {uploaded ? (
-                          <span
-                            aria-label="File uploaded"
-                            title="File uploaded"
-                            style={{
-                              display: "inline-grid",
-                              gridTemplateColumns: "16px auto",
-                              alignItems: "center",
-                              gap: 5,
-                              color: ANALYTICS.GREEN_TEXT,
-                              fontSize: 11,
-                              fontWeight: 800,
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            <span
-                              aria-hidden="true"
-                              style={{
-                                display: "inline-grid",
-                                placeItems: "center",
-                                width: 16,
-                                height: 16,
-                                borderRadius: 999,
-                                background: ANALYTICS.GREEN_TEXT,
-                                color: "#fff",
-                                fontSize: 10,
-                              }}
-                            >
-                              ✓
-                            </span>
-                            Uploaded
-                          </span>
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={onUploadClick}
-                          style={TABLE_BUTTON_STYLE}
-                        >
-                          {uploaded ? "Upload more" : "Upload"}
-                        </button>
-                      </div>
-                    </td>
-                    <td style={FILE_TD_CENTER}>
-                      <ReadinessChip
-                        label={parseLabelForRequirement(lifecycle, evidence)}
-                        tone={
-                          lifecycle.parsed ||
-                          evidence?.currentState === "Available" ||
-                          evidence?.currentState === "Usable Evidence"
-                            ? "good"
-                            : lifecycle.uploaded
+              {rows.map(
+                ({ requirement, evidence, lifecycle, ready, uploaded }) => {
+                  return (
+                    <tr
+                      key={requirement.requirementId}
+                      data-testid={`source-stage-evidence-checklist-row-${requirement.requirementId}`}
+                    >
+                      <td style={FILE_TD_LABEL}>
+                        <strong>{requirement.label}</strong>
+                        <span>{requirement.description}</span>
+                      </td>
+                      <td style={FILE_TD_CENTER}>
+                        <ReadinessChip
+                          label={
+                            requirement.level === "required"
+                              ? "required"
+                              : "optional"
+                          }
+                          tone={
+                            requirement.level === "required"
                               ? "warn"
                               : "neutral"
-                        }
-                      />
-                    </td>
-                    <td style={FILE_TD_CENTER}>
-                      <span
-                        aria-label={ready ? "Done" : "Open"}
-                        title={ready ? "Done" : "Open"}
-                        style={{
-                          display: "inline-grid",
-                          placeItems: "center",
-                          width: 20,
-                          height: 20,
-                          borderRadius: 999,
-                          background: ready
-                            ? ANALYTICS.GREEN_TEXT
-                            : ANALYTICS.CARD,
-                          color: ready ? "#fff" : ANALYTICS.FAINT,
-                          border: ready
-                            ? "none"
-                            : `1px solid ${ANALYTICS.LINE_STRONG}`,
-                          fontSize: 12,
-                          fontWeight: 900,
-                        }}
-                      >
-                        {ready ? "✓" : ""}
-                      </span>
-                    </td>
-                    <td style={FILE_TD_ACTION}>
-                      <strong>{ready ? "Ready" : "Open"}</strong>
-                      <span>
-                        {ready
-                          ? "Use in stage review and approval."
-                          : nextActionForRequirement(requirement, lifecycle)}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+                          }
+                        />
+                      </td>
+                      <td style={FILE_TD_ACTION}>
+                        <strong>{requirement.sourceSystems[0]}</strong>
+                        <span>
+                          {requirement.sourceSystems.slice(1, 3).join(", ")}
+                        </span>
+                      </td>
+                      <td style={FILE_TD_ACTION}>
+                        <strong>{ownerRoleForRequirement(requirement)}</strong>
+                        <span>{requirement.sourceLabel}</span>
+                      </td>
+                      <td style={FILE_TD_CENTER}>
+                        {requirement.acceptedFileTypes
+                          .map((type) => type.toUpperCase())
+                          .join(", ")}
+                      </td>
+                      <td style={FILE_TD_ACTION}>
+                        <span>{expectedUploadForRequirement(requirement)}</span>
+                      </td>
+                      <td style={FILE_TD_CENTER}>
+                        <a
+                          href={`/api/v1/source/${encodeURIComponent(view.event.id)}/evidence/${encodeURIComponent(requirement.requirementId)}/template`}
+                          style={TABLE_LINK_STYLE}
+                        >
+                          Template
+                        </a>
+                      </td>
+                      <td style={FILE_TD_CENTER}>
+                        <div
+                          style={{
+                            display: "grid",
+                            justifyItems: "center",
+                            gap: 6,
+                          }}
+                        >
+                          {uploaded ? (
+                            <span
+                              aria-label="File uploaded"
+                              title="File uploaded"
+                              style={{
+                                display: "inline-grid",
+                                gridTemplateColumns: "16px auto",
+                                alignItems: "center",
+                                gap: 5,
+                                color: ANALYTICS.GREEN_TEXT,
+                                fontSize: 11,
+                                fontWeight: 800,
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              <span
+                                aria-hidden="true"
+                                style={{
+                                  display: "inline-grid",
+                                  placeItems: "center",
+                                  width: 16,
+                                  height: 16,
+                                  borderRadius: 999,
+                                  background: ANALYTICS.GREEN_TEXT,
+                                  color: "#fff",
+                                  fontSize: 10,
+                                }}
+                              >
+                                ✓
+                              </span>
+                              Uploaded
+                            </span>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={onUploadClick}
+                            style={TABLE_BUTTON_STYLE}
+                          >
+                            {uploaded ? "Upload more" : "Upload"}
+                          </button>
+                        </div>
+                      </td>
+                      <td style={FILE_TD_CENTER}>
+                        <ReadinessChip
+                          label={parseLabelForRequirement(lifecycle, evidence)}
+                          tone={
+                            lifecycle.parsed ||
+                            evidence?.currentState === "Available" ||
+                            evidence?.currentState === "Usable Evidence"
+                              ? "good"
+                              : lifecycle.uploaded
+                                ? "warn"
+                                : "neutral"
+                          }
+                        />
+                      </td>
+                      <td style={FILE_TD_CENTER}>
+                        <span
+                          aria-label={ready ? "Done" : "Open"}
+                          title={ready ? "Done" : "Open"}
+                          style={{
+                            display: "inline-grid",
+                            placeItems: "center",
+                            width: 20,
+                            height: 20,
+                            borderRadius: 999,
+                            background: ready
+                              ? ANALYTICS.GREEN_TEXT
+                              : ANALYTICS.CARD,
+                            color: ready ? "#fff" : ANALYTICS.FAINT,
+                            border: ready
+                              ? "none"
+                              : `1px solid ${ANALYTICS.LINE_STRONG}`,
+                            fontSize: 12,
+                            fontWeight: 900,
+                          }}
+                        >
+                          {ready ? "✓" : ""}
+                        </span>
+                      </td>
+                      <td style={FILE_TD_ACTION}>
+                        <strong>{ready ? "Ready" : "Open"}</strong>
+                        <span>
+                          {ready
+                            ? "Use in stage review and approval."
+                            : nextActionForRequirement(requirement, lifecycle)}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                },
+              )}
             </tbody>
           </table>
         </div>

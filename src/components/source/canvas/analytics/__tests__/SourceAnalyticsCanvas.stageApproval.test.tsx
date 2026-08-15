@@ -181,16 +181,28 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
 
     expect(
       screen.getByTestId("source-shell-evidence-ask-table"),
-    ).toHaveTextContent("Evidence request");
+    ).toHaveTextContent("Evidence item");
     expect(
       screen.getByTestId("source-shell-evidence-ask-table"),
-    ).toHaveTextContent("Where to get it");
+    ).toHaveTextContent("Source / owner");
     expect(
       screen.getByTestId("source-shell-evidence-ask-table"),
-    ).toHaveTextContent("Grain / history");
+    ).toHaveTextContent("Template");
     expect(
       screen.getByTestId("source-shell-evidence-ask-table"),
-    ).toHaveTextContent("Writeback impact");
+    ).toHaveTextContent("Done");
+    expect(
+      screen.getByTestId("source-scope-operating-status"),
+    ).toHaveTextContent("Scope gate readiness");
+    expect(
+      screen.getByTestId("source-scope-operating-status"),
+    ).toHaveTextContent("0/6 ready");
+    expect(
+      screen.getByTestId("source-scope-operating-status"),
+    ).toHaveTextContent("Load required evidence");
+    expect(
+      screen.getByTestId("source-scope-operating-status"),
+    ).toHaveTextContent("Scope Memo with Boundaries");
     const activeEvidenceRow = screen.getByTestId(
       "source-shell-evidence-ask-row-scope.volumetrics",
     );
@@ -203,18 +215,18 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(activeEvidenceRow).toHaveTextContent(
       "Monthly by service tower for 12-24 months",
     );
-    expect(activeEvidenceRow).toHaveTextContent(
-      "Tickets, SLA misses, change orders, run volumes",
-    );
     expect(activeEvidenceRow).toHaveTextContent("Scope volumetrics template");
     expect(activeEvidenceRow).toHaveTextContent("VOLUMETRICS_V1");
-    expect(activeEvidenceRow).toHaveTextContent(
-      "Scope memo, value lever sizing, pricing baseline",
-    );
-    expect(activeEvidenceRow).toHaveTextContent(
-      "Readback: no typed facts yet.",
-    );
     expect(activeEvidenceRow).toHaveTextContent("Upload below");
+    expect(
+      screen.getByTestId("source-shell-active-step-needs"),
+    ).toHaveTextContent("Tickets, SLA misses, change orders, run volumes");
+    expect(
+      screen.getByTestId("source-shell-active-step-needs"),
+    ).toHaveTextContent("Scope memo, value lever sizing, pricing baseline");
+    expect(
+      screen.getByTestId("source-shell-active-step-needs"),
+    ).toHaveTextContent("Readback: no typed facts yet.");
 
     fireEvent.click(
       screen.getByRole("button", {
@@ -308,9 +320,6 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"),
     ).toHaveAttribute("data-ready", "true");
-    expect(
-      screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"),
-    ).toHaveTextContent("Done");
     expect(
       screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"),
     ).toHaveTextContent("Captured; review Files");
