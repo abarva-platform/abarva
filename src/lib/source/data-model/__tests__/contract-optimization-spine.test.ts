@@ -63,6 +63,56 @@ function leverage(overrides: Partial<ContractLeverageEntry> = {}): ContractLever
 describe('buildContractOptimizationSpine', () => {
   const asOfDateIso = '2027-06-30';
 
+  it('omits the full candidate list from selected-contract payloads while preserving picker data', () => {
+    const selected = row({
+      contract_id: 'CTR-SELECTED',
+      vendor_ref: 'vendor-selected',
+      vendor_name: 'Selected Vendor',
+      contract_name: 'Selected Platform Agreement',
+      annual_value: 45_000_000,
+    });
+    const peers = Array.from({ length: 8 }, (_, index) =>
+      row({
+        contract_id: `CTR-PEER-${index + 1}`,
+        vendor_ref: `vendor-peer-${index + 1}`,
+        vendor_name: `Peer Vendor ${index + 1}`,
+        contract_name: `Peer Agreement ${index + 1}`,
+        annual_value: 30_000_000 - index * 1_000_000,
+      }),
+    );
+    const contracts = [selected, ...peers];
+    const leverageEntries = contracts.map((contract) =>
+      leverage({
+        contractId: contract.contract_id,
+        vendorRef: contract.vendor_ref,
+        vendorName: contract.vendor_name,
+        annualValue: contract.annual_value ?? 0,
+      }),
+    );
+
+    const selectedSpine = buildContractOptimizationSpine({
+      contract: selected,
+      contracts,
+      leverageEntries,
+      ledger: null,
+      asOfDateIso,
+    });
+    const landingSpine = buildContractOptimizationSpine({
+      contract: null,
+      contracts,
+      leverageEntries,
+      ledger: null,
+      asOfDateIso,
+    });
+
+    expect(selectedSpine.selected?.contractId).toBe('CTR-SELECTED');
+    expect(selectedSpine.candidates).toHaveLength(0);
+    expect(selectedSpine.topCandidates).toHaveLength(5);
+    expect(landingSpine.selected).toBeNull();
+    expect(landingSpine.candidates).toHaveLength(9);
+    expect(landingSpine.topCandidates).toHaveLength(5);
+  });
+
   it('ranks material weak-leverage contracts ahead of clean monitor contracts', () => {
     const material = row({
       contract_id: 'CTR-MATERIAL',
