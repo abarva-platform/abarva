@@ -955,7 +955,7 @@ describe("SourceOptimizeContractPage", () => {
       "complete",
     );
     expect(screen.getByTestId("optimize-value-proof-badge")).toHaveTextContent(
-      "finance confirmed",
+      "value proof confirmed",
     );
     expect(valueProofStatus).toHaveTextContent("$740K");
     expect(valueProofStatus).toHaveTextContent(
@@ -1050,11 +1050,12 @@ describe("SourceOptimizeContractPage", () => {
       "Wait for Finance/Tower confirmation",
     );
     expect(screen.getByTestId("optimize-next-blocker")).toHaveTextContent(
-      "Finance/Tower confirmation request is pending.",
+      "Finance/Tower confirmation request is pending approval.",
     );
     const valueProofStatus = screen.getByTestId("optimize-value-proof-status");
     expect(valueProofStatus).toHaveTextContent("Finance/Tower handoff");
     expect(valueProofStatus).toHaveTextContent("pending");
+    expect(valueProofStatus).toHaveTextContent("finance evidence loaded");
     expect(valueProofStatus).toHaveTextContent("$740K");
   });
 
@@ -1147,7 +1148,7 @@ describe("SourceOptimizeContractPage", () => {
       "blocked",
     );
     expect(screen.getByTestId("optimize-next-blocker")).toHaveTextContent(
-      "Finance-confirmed value exists, but no Finance/Tower handoff request is recorded.",
+      "Finance evidence is loaded, but no Finance/Tower handoff request is recorded.",
     );
     expect(screen.getByTestId("optimize-next-decision")).toHaveTextContent(
       "Record the Finance/Tower handoff",
@@ -1156,7 +1157,7 @@ describe("SourceOptimizeContractPage", () => {
       "Request Finance/Tower confirmation",
     );
     expect(screen.getByTestId("optimize-value-proof-status")).toHaveTextContent(
-      "finance confirmed",
+      "finance evidence loaded",
     );
     fireEvent.change(screen.getByLabelText("Approval rationale"), {
       target: {
