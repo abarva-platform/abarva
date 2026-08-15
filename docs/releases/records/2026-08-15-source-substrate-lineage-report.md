@@ -15,6 +15,10 @@ Contract 360 totals, and Cube or canary metrics can be proved from the owning So
 they are quoted. The report keeps legitimate counting-basis differences visible instead of turning
 them into false conflicts.
 
+This follow-up hardens the report after live readback showed four configured Source/Cube sources were
+failing with a SQL parameter-count error. The report now passes only the parameter values each source
+query actually uses and fails closed when any configured Source read errors remain.
+
 ## Layer Impact
 
 - Release lane: `global-control-lane`.
@@ -44,24 +48,28 @@ them into false conflicts.
 
 - PASS: `node --check scripts/source/source-substrate-lineage-report.mjs`
 - PASS: `node --test scripts/source/__tests__/source-substrate-lineage-report.test.mjs`
-- BLOCKED: `npm run audit:source-substrate-lineage -- --tenant skyharbor_global` could not complete
-  from the local machine because the configured Azure/Postgres hostname did not resolve.
+- PASS: Regression coverage confirms one-parameter Source/Cube queries no longer receive the
+  supplemental-vendor parameter intended only for `source.contract_360`.
+- PENDING: Run `npm run audit:source-substrate-lineage -- --tenant skyharbor_global` from the
+  deployed ACA runtime after merge, because the configured Azure/Postgres hostname does not resolve
+  from the local shell.
 - PASS: `npm run release:check`
 
 ## Rollout Plan
 
-Merge to main. No Azure Container Apps runtime deploy is required because this is a docs and
-read-only audit-script change. Operators and agents can run the report from the repo after merge.
+Merge to main and deploy through the repo-owned ACA workflow so the read-only report can be run from
+the same runtime that has the Source database binding. No tenant data is mutated.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: not required.
+- Repo-owned deploy workflow: required for the live DB-backed proof run.
 - Shared runtime mutators: none.
-- Approved image digest: not applicable.
-- ACA runtime invariant: not applicable.
-- Worker image invariant: not applicable.
+- Approved image digest: captured by the ACA main deploy workflow after merge.
+- ACA runtime invariant: required before claiming live proof.
+- Worker image invariant: required before claiming live proof.
 - Feature/env flag update path: none.
-- Live signed-in proof required: no, because no product runtime path changes.
+- Live signed-in proof required: no browser proof required because no product runtime path changes;
+  live ACA readback of the report is required.
 
 ## Rollback Plan
 

@@ -292,10 +292,10 @@ function assertedValue(value) {
 
 async function querySource(client, tenant, source, supplementalVendorRefs) {
   try {
-    const result = await client.query(source.sql, [
-      tenant.aliases,
-      supplementalVendorRefs,
-    ]);
+    const result = await client.query(
+      source.sql,
+      queryParameterValuesForSource(source, tenant, supplementalVendorRefs),
+    );
     return { ok: true, rows: result.rows };
   } catch (error) {
     return {
@@ -304,6 +304,23 @@ async function querySource(client, tenant, source, supplementalVendorRefs) {
       error: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+export function queryParameterValuesForSource(
+  source,
+  tenant,
+  supplementalVendorRefs,
+) {
+  const placeholderNumbers = Array.from(source.sql.matchAll(/\$(\d+)/g)).map(
+    (match) => Number(match[1]),
+  );
+  const maxPlaceholder = placeholderNumbers.length
+    ? Math.max(...placeholderNumbers)
+    : 0;
+  if (maxPlaceholder <= 0) return [];
+  const values = [tenant.aliases];
+  if (maxPlaceholder >= 2) values.push(supplementalVendorRefs);
+  return values;
 }
 
 function assertionsFromSource(tenantKey, source, rows) {
@@ -640,7 +657,10 @@ async function main() {
     }
     console.log("");
     console.log(`Written to ${path.relative(ROOT, mdPath)}`);
-    if (result.groups.some((group) => group.status === "CONFLICT")) {
+    if (
+      sourceErrors.length ||
+      result.groups.some((group) => group.status === "CONFLICT")
+    ) {
       process.exitCode = 2;
     }
   } finally {
