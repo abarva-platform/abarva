@@ -1,0 +1,362 @@
+{
+  "meridian-health": {
+    "total": 1071,
+    "byCode": {
+      "placeholder_value_omitted": 1071
+    },
+    "bySeverity": {
+      "warning": 1071
+    },
+    "byDomain": {
+      "business_functions": 24,
+      "workforce_roles": 17,
+      "applications_systems": 83,
+      "data_assets_integrations": 73,
+      "vendors_contracts": 236,
+      "spend_value": 276,
+      "programs_initiatives": 362
+    },
+    "samples": [
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "rowNumber": 230,
+        "domain": "business_functions",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv",
+        "rowNumber": 223,
+        "domain": "workforce_roles",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv",
+        "rowNumber": 243,
+        "domain": "applications_systems",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/05_data_assets_integrations.csv",
+        "rowNumber": 244,
+        "domain": "data_assets_integrations",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv",
+        "rowNumber": 233,
+        "domain": "vendors_contracts",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field amount_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/08_it_budget_spend_value.csv",
+        "rowNumber": 2,
+        "domain": "spend_value",
+        "field": "amount_usd",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field realized_value_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/08_it_budget_spend_value.csv",
+        "rowNumber": 2,
+        "domain": "spend_value",
+        "field": "realized_value_usd",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field ai_spend_type was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/08_it_budget_spend_value.csv",
+        "rowNumber": 2,
+        "domain": "spend_value",
+        "field": "ai_spend_type",
+        "value": "none"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field ai_spend_type was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv",
+        "rowNumber": 2,
+        "domain": "programs_initiatives",
+        "field": "ai_spend_type",
+        "value": "none"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv",
+        "rowNumber": 258,
+        "domain": "programs_initiatives",
+        "field": "conflict_status",
+        "value": "none"
+      }
+    ]
+  },
+  "skyharbor-air": {
+    "total": 1903,
+    "byCode": {
+      "placeholder_value_omitted": 1656,
+      "primary_identity_missing_or_placeholder": 247
+    },
+    "bySeverity": {
+      "warning": 1903
+    },
+    "byDomain": {
+      "enterprise_profile": 1,
+      "business_functions": 22,
+      "org_ownership": 153,
+      "workforce_roles": 38,
+      "applications_systems": 503,
+      "data_assets_integrations": 499,
+      "infrastructure_platforms": 33,
+      "vendors_contracts": 65,
+      "spend_value": 20,
+      "programs_initiatives": 28,
+      "ai_automation_use_cases": 13,
+      "risks_controls": 44,
+      "relationships": 247,
+      "evidence_sources": 183,
+      "metrics_outcomes": 26,
+      "industry_context_patterns": 10,
+      "expert_lenses": 7,
+      "service_scope_managed_services": 11
+    },
+    "samples": [
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/00_enterprise_profile.csv",
+        "rowNumber": 2,
+        "domain": "enterprise_profile",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+        "rowNumber": 2,
+        "domain": "business_functions",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 2,
+        "domain": "org_ownership",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/03_workforce_roles.csv",
+        "rowNumber": 2,
+        "domain": "workforce_roles",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
+        "rowNumber": 2,
+        "domain": "applications_systems",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/05_data_assets_integrations.csv",
+        "rowNumber": 2,
+        "domain": "data_assets_integrations",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/06_infrastructure_platforms.csv",
+        "rowNumber": 2,
+        "domain": "infrastructure_platforms",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/07_vendors_contracts.csv",
+        "rowNumber": 2,
+        "domain": "vendors_contracts",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/08_spend_value.csv",
+        "rowNumber": 2,
+        "domain": "spend_value",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/09_programs_initiatives.csv",
+        "rowNumber": 2,
+        "domain": "programs_initiatives",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/10_ai_automation_use_cases.csv",
+        "rowNumber": 2,
+        "domain": "ai_automation_use_cases",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/11_risks_controls.csv",
+        "rowNumber": 2,
+        "domain": "risks_controls",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "primary_identity_missing_or_placeholder",
+        "message": "Row cannot become a canonical relationship_source_row because relationship identity is missing or placeholder.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/12_relationships.csv",
+        "rowNumber": 3073,
+        "domain": "relationships",
+        "field": "source_name|from_entity|source_object|relationship_id|edge_id",
+        "value": ""
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/13_evidence_sources.csv",
+        "rowNumber": 2,
+        "domain": "evidence_sources",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/14_metrics_outcomes.csv",
+        "rowNumber": 2,
+        "domain": "metrics_outcomes",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/15_industry_context_patterns.csv",
+        "rowNumber": 2,
+        "domain": "industry_context_patterns",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/16_expert_lenses.csv",
+        "rowNumber": 2,
+        "domain": "expert_lenses",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/17_service_scope_managed_services.csv",
+        "rowNumber": 2,
+        "domain": "service_scope_managed_services",
+        "field": "conflict_status",
+        "value": "none"
+      }
+    ]
+  }
+}
