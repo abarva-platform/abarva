@@ -17,6 +17,7 @@ const APPROVED_TENANTS = new Set(["meridian-health", "skyharbor-air"]);
 const DEFAULT_TENANTS = ["meridian-health", "skyharbor-air"];
 const CONTRACT_VERSION = "enterprise-intelligence-template-pack-v6-runtime-baseline";
 const DEFAULT_OUT_DIR = "reports/runtime-layer-refresh/latest";
+const TRUE_VALUES = new Set(["1", "true", "yes"]);
 
 type CsvRow = Record<string, string>;
 
@@ -32,6 +33,17 @@ type Args = {
 
 function parseArgs(argv: readonly string[]): Args {
   const tenants: string[] = [];
+  const envList = (name: string): string[] =>
+    String(process.env[name] ?? "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+  const envValue = (name: string): string | undefined => {
+    const value = process.env[name]?.trim();
+    return value ? value : undefined;
+  };
+  const envFlag = (name: string): boolean =>
+    TRUE_VALUES.has(String(process.env[name] ?? "").trim().toLowerCase());
   const get = (name: string): string | undefined => {
     const index = argv.indexOf(name);
     if (index === -1) return undefined;
@@ -46,14 +58,22 @@ function parseArgs(argv: readonly string[]): Args {
       index += 1;
     }
   }
+  const envTenants = envList("RUNTIME_LAYER_REFRESH_TENANTS");
   return {
-    tenants: tenants.length > 0 ? tenants : DEFAULT_TENANTS,
-    outDir: get("--out-dir") ?? DEFAULT_OUT_DIR,
-    buildVersion: get("--build-version") ?? `runtime-layer-refresh-${new Date().toISOString().slice(0, 10)}`,
-    inputSourceVersion: get("--input-source-version") ?? gitSha(),
-    idempotencyKey: get("--idempotency-key") ?? `runtime-layer-refresh:${gitSha()}:${Date.now()}`,
-    write: argv.includes("--write"),
-    emitProofBundle: argv.includes("--emit-proof-bundle"),
+    tenants: tenants.length > 0 ? tenants : envTenants.length > 0 ? envTenants : DEFAULT_TENANTS,
+    outDir: get("--out-dir") ?? envValue("RUNTIME_LAYER_REFRESH_OUT_DIR") ?? DEFAULT_OUT_DIR,
+    buildVersion:
+      get("--build-version") ??
+      envValue("RUNTIME_LAYER_REFRESH_BUILD_VERSION") ??
+      `runtime-layer-refresh-${new Date().toISOString().slice(0, 10)}`,
+    inputSourceVersion:
+      get("--input-source-version") ?? envValue("RUNTIME_LAYER_REFRESH_INPUT_SOURCE_VERSION") ?? gitSha(),
+    idempotencyKey:
+      get("--idempotency-key") ??
+      envValue("RUNTIME_LAYER_REFRESH_IDEMPOTENCY_KEY") ??
+      `runtime-layer-refresh:${gitSha()}:${Date.now()}`,
+    write: argv.includes("--write") || envFlag("RUNTIME_LAYER_REFRESH_WRITE"),
+    emitProofBundle: argv.includes("--emit-proof-bundle") || envFlag("RUNTIME_LAYER_REFRESH_EMIT_PROOF_BUNDLE"),
   };
 }
 
