@@ -22,6 +22,7 @@ import {
   buildContractOptimizationEvidencePack,
   type ContractOptimizationEvidenceItem,
 } from "./contract-optimization-evidence";
+import { classifyOpportunityTrace } from "./contract-optimization-traceability";
 import {
   buildContractOptimizationOpportunitySet,
   type ContractOptimizationOpportunity,
@@ -1581,19 +1582,28 @@ function selectDefaultOptimizationOpportunityId({
     .find((opportunityId) => opportunityIds.has(opportunityId));
   if (activeOutcomeOpportunityId) return activeOutcomeOpportunityId;
 
-  return (
-    opportunities.find((opportunity) => opportunity.stage === "target_position")
+  const tracedOpportunities = opportunities.filter(
+    (opportunity) => classifyOpportunityTrace(opportunity).state === "traced",
+  );
+  const selectFrom = (candidates: readonly ContractOptimizationOpportunity[]) =>
+    candidates.find((opportunity) => opportunity.stage === "target_position")
       ?.opportunityId ??
-    opportunities.find(
+    candidates.find(
       (opportunity) => opportunity.stage === "approval_required",
     )?.opportunityId ??
-    opportunities.find((opportunity) =>
+    candidates.find((opportunity) =>
       opportunity.opportunityId.endsWith(":rate-variance"),
     )?.opportunityId ??
-    opportunities.find((opportunity) => opportunity.amountUsd != null)
+    candidates.find((opportunity) => opportunity.amountUsd != null)
       ?.opportunityId ??
-    opportunities[0]?.opportunityId ??
-    null
+    candidates[0]?.opportunityId ??
+    null;
+
+  const tracedOpportunityId = selectFrom(tracedOpportunities);
+  if (tracedOpportunityId) return tracedOpportunityId;
+
+  return (
+    selectFrom(opportunities)
   );
 }
 
