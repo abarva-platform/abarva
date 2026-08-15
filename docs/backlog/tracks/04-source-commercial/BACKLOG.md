@@ -20,6 +20,8 @@ The current holistic 11-stage operating-design candidate is tracked in
 [`SOURCE_NEW_EVENT_SRC48_OPERATING_DESIGN.md`](./SOURCE_NEW_EVENT_SRC48_OPERATING_DESIGN.md).
 The active execution tracker and ranked remaining backlog are tracked in
 [`SOURCE_NEW_EVENT_EXECUTION_TRACKER_2026-08-14.md`](./SOURCE_NEW_EVENT_EXECUTION_TRACKER_2026-08-14.md).
+The canonical current execution backlog and proof register are tracked in
+[`SOURCE_NEW_EVENT_CANONICAL_EXECUTION_BACKLOG_2026-08-15.md`](./SOURCE_NEW_EVENT_CANONICAL_EXECUTION_BACKLOG_2026-08-15.md).
 
 The holistic Source vendor value excellence program is tracked in
 [`SOURCE_VENDOR_VALUE_EXCELLENCE_PROGRAM.md`](./SOURCE_VENDOR_VALUE_EXCELLENCE_PROGRAM.md).
@@ -52,18 +54,25 @@ Immediate execution order:
 
 1. **Closed safe cleanup:** PR #6349 was merged as
    `11300c4a9d95b01577547e264ea545667a9e1cd0`. It removed only an
-   unreachable Source presentation panel and must still receive SHA-specific
-   ACA deploy, runtime invariant, and post-deploy crawl proof before being
-   called live-proven.
-2. **SRC-PROOF-001 — Signed-in proof lane repair:** Move the Atlas production
-   CXO gauntlet from legacy human demo accounts to durable non-human agent
-   identities, use Clerk testing-token bootstrap, and rerun smoke/full gauntlet.
-   The latest known gauntlet failure was auth-blocked before tenant turns, so
-   CXO quality was not evaluated in that run.
-3. **SRC-BACKLOG-001 — Backlog consolidation:** Collapse duplicate SRC IDs and
-   scattered handoff docs into one canonical roadmap with unique IDs,
-   dependencies, proof bar, owner lane, demo impact rank, and explicit
-   exclusions.
+   unreachable Source presentation panel. Current `main` containing this change
+   has passed ACA main deploy (`31892068923`) and post-deploy crawl
+   (`31892493437`), but this is runtime coverage, not a claim that a reachable
+   Source workflow changed.
+2. **Closed for the provisioned default scope — SRC-PROOF-001/SRC-PROOF-003:**
+   PR #6363 and PR #6366 repaired the proof scope and Atlas visible answer
+   shape. The deployed Atlas smoke gauntlet on
+   `58a697259c5b28756ce51cbba3ee1c7ee7766973` passed `12/12` default-scope
+   turns with `0` tenant leaks, `0` fallback turns, and `2/2` default-scope
+   tenant sessions passed (`31891539660`).
+3. **Still open — SRC-PROOF-002:** one active-client membership repair remains
+   excluded from the default proof scope. Do not describe the proof lane as
+   all-tenant complete until that repair is classified, applied with explicit
+   approval, read back, and opt-in smoke-proven.
+4. **Active — SRC-BACKLOG-001:** collapse duplicate SRC IDs and scattered
+   handoff docs into one canonical roadmap with unique IDs, dependencies, proof
+   bar, owner lane, demo impact rank, and explicit exclusions. Canonical current
+   file:
+   [`SOURCE_NEW_EVENT_CANONICAL_EXECUTION_BACKLOG_2026-08-15.md`](./SOURCE_NEW_EVENT_CANONICAL_EXECUTION_BACKLOG_2026-08-15.md).
 
 Do not start another visual cleanup slice by default. After proof/backlog
 control, execute value-driving product work in this order:
@@ -85,27 +94,19 @@ Proof discipline:
   surfaces.
 - Auth blockers must be reported as auth-blocked, not product-passed.
 
-Latest proof result after PR #6353:
+Latest proof result after PR #6366:
 
-- Deployed SHA: `cc006f71e10cb4550bb5b3d6cc5dca98b3bce1c0`.
+- Deployed proof SHA: `58a697259c5b28756ce51cbba3ee1c7ee7766973`.
 - ACA main deploy: passed, including runtime invariant and production health
-  endpoint (`31882344995`).
-- Atlas production CXO gauntlet smoke: failed but advanced past the prior
-  harness blocker (`31882722216`).
-- What improved: the gauntlet now uses non-human agent identities, Clerk
-  testing-token bootstrap, tenant-key API requests, and 429 retry behavior. The
-  run completed all 18 expected turns with no aborted sessions, no fallback
-  turns, no tenant leak turns, and no network interruption turns.
-- Remaining P0 proof gap: Apex Retail still resolves to
-  `{"error":"no_client","detail":"No active client for this user"}` even with
-  `abarva_active_client=apexretail`; do not count Apex Atlas as proof-ready
-  until active-client/membership resolution is fixed or an approved proof scope
-  excludes Apex.
-- Remaining P0 answer-quality gap: Meridian/SkyHarbor produce live `200`
-  Atlas answers, but the smoke quality bar failed: only 1 of 18 turns passed,
-  0 of 6 required four-section answers passed, and most failures are missing
-  the required next-action shape. One Meridian signal-ID question hit the
-  visible-answer contract with HTTP `422`.
+  endpoint (`31891161508`).
+- Post-deploy crawl: passed (`31891515211`).
+- Atlas production CXO gauntlet smoke: passed for the provisioned default scope
+  (`31891539660`).
+- Result: `12/12` default-scope turns passed, `0` fallback turns, `0` tenant
+  leak turns, `0` network interruptions, `6` four-section answers against `4`
+  expected, and `2/2` default-scope tenant sessions passed.
+- Caveat: the excluded active-client membership repair remains open. This is an
+  explicit proof-scope decision, not an all-tenant proof claim.
 
 New proof/backlog items from that result:
 

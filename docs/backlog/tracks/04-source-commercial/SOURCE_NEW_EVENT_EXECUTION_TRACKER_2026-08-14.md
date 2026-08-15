@@ -4,6 +4,25 @@
 
 `active-execution`
 
+## Current Canonical Control
+
+The current consolidated backlog and proof register are in
+[`SOURCE_NEW_EVENT_CANONICAL_EXECUTION_BACKLOG_2026-08-15.md`](./SOURCE_NEW_EVENT_CANONICAL_EXECUTION_BACKLOG_2026-08-15.md).
+
+The proof lane is closed for the provisioned default smoke scope after PR #6363
+and PR #6366:
+
+- Deployed proof SHA: `58a697259c5b28756ce51cbba3ee1c7ee7766973`.
+- ACA main deploy: `31891161508`.
+- Post-deploy crawl: `31891515211`.
+- Atlas production CXO gauntlet: `31891539660`.
+- Result: `12/12` default-scope turns passed, `0` fallback turns, `0` tenant
+  leaks, `2/2` default-scope tenant sessions passed.
+
+One excluded active-client membership repair remains open. Do not restate the
+proof result as all-tenant complete until that repair is separately approved,
+read back, and opt-in smoke-proven.
+
 ## Purpose
 
 Track the remaining work required to make Source New Event a best-in-class
@@ -269,29 +288,29 @@ to realized value.
 
 1. **SRC57 - Stage smoke harness expansion.** Expand the current layout smoke
    protection across the 11-stage shell and active-canvas states.
-2. **SRC58 - Stage operating model implementation.** Implement the local substep
-   contract, one active canvas, disabled/enabled forward action, and clean stage
-   states.
-3. **SRC49 - Evidence intake and parser substrate.** Create the governed
-   uploaded-to-cited-to-accepted evidence lifecycle.
-4. **SRC59 - Evidence requirement registry.** Define required/optional evidence,
-   expected counts, owners, formats, templates, and next actions per stage.
-5. **SRC60 - Vendor response package parser contract.** Add the response package
-   model, section mapping, missing-answer ledger, and vendor isolation tests.
-6. **SRC50 - Evidence-bound first-pass scoring.** Add citation-backed score
+2. **SRC58 + SRC59 - Stage operating model and evidence registry.** Implement
+   the local substep contract, one active canvas, disabled/enabled forward
+   action, clean stage states, required/optional evidence, counts, owners,
+   formats, templates, and next actions.
+3. **SRC60 + SRC49 - Vendor response package readiness and parser substrate.**
+   Add the response package model, section mapping, missing-answer ledger,
+   upload-to-cited-to-accepted lifecycle, and vendor isolation tests.
+4. **SRC50 - Evidence-bound first-pass scoring.** Add citation-backed score
    suggestions, holds, and evaluator override audit.
-7. **SRC51 - Pricing normalization and commercial trap engine.** Harden pricing
+5. **SRC51 - Pricing normalization and commercial trap engine.** Harden pricing
    comparability and trap-to-ask conversion.
-8. **SRC52 - Vendor clarification and BAFO squeeze workflow.** Manage asks,
+6. **SRC52 - Vendor clarification and BAFO squeeze workflow.** Manage asks,
    concessions, refusals, and carry-forward conditions.
-9. **SRC53 - Durable stage gate and evidence acceptance.** Persist approvals,
+7. **SRC53 - Durable stage gate and evidence acceptance.** Persist approvals,
    exceptions, and reopen logic behind explicit human gate.
-10. **SRC54 - Guidebook operating system.** Author and wire stage facilitator
-    surfaces.
-11. **SRC55 - Client-ready artifact generation.** Generate artifact packs from
-    accepted evidence with render QA.
-12. **SRC56 - Post-award value realization proof.** Track committed to realized
-    value without overclaiming.
+8. **SRC54 + SRC55 - Guidebook operating system and client-ready artifacts.**
+   Author stage facilitator surfaces and generate accepted-evidence artifact
+   packs with render QA.
+9. **SRC56 - Post-award value realization proof.** Track committed to realized
+   value without overclaiming.
+10. **SRC47 - Source event archive and stale fact cleanup.** Keep as bounded
+    operator hygiene after value-driving workflow slices unless cleanup becomes
+    a demo blocker.
 
 ## Multi-Agent Execution Lane
 

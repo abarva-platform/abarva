@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`merged-deployed-proven`
 
 ## Plain-English Summary
 
@@ -41,11 +41,14 @@ Tightens the Atlas production proof lane after the smoke gauntlet found two sepa
 - Pass: `npx tsx scripts/smoke/p21-post-deploy-crawl.spec.ts`
 - Follow-up pass: `npx jest src/lib/atlas/__tests__/rendered-response.test.ts --runInBand`
 - Follow-up pass: `npx eslint src/lib/atlas/rendered-response.ts src/lib/atlas/__tests__/rendered-response.test.ts`
-- Pending after merge/deploy: ACA deploy workflow, ACA runtime invariant, post-deploy crawl, and Atlas production smoke gauntlet on the deployed SHA.
+- Pass after merge/deploy: ACA deploy workflow, ACA runtime invariant, post-deploy crawl, and Atlas production smoke gauntlet on the deployed SHA.
 
 ## Rollout Plan
 
-Merge to `main`. The repo-owned Azure Container Apps main deploy workflow builds and deploys the new image. After deployment, run the post-deploy crawl and the Atlas production smoke gauntlet with the default smoke scope. Use `ATLAS_GAUNTLET_INCLUDE_APEX=true` only after Apex active-client membership has separate proof.
+Merged to `main`. The repo-owned Azure Container Apps main deploy workflow built
+and deployed the image. Post-deploy crawl and the Atlas production smoke gauntlet
+passed with the default smoke scope. Use the excluded-tenant opt-in only after
+the active-client membership repair has separate proof.
 
 ## Deployment Authority
 
@@ -63,11 +66,14 @@ Revert this PR to restore the previous all-tenant smoke scope and prior Atlas re
 
 ## Audit Evidence
 
-- PR URL after opening.
-- GitHub Actions checks for the PR.
-- ACA main deploy workflow run after merge.
-- Post-deploy crawl workflow run after deploy.
-- Atlas production smoke gauntlet artifact with `raw.json`, `progress.ndjson`, and `index.html`.
+- PRs: `#6363`, `#6366`.
+- Merge commits: `68dca9dcc0015317bd41adc6a3bb8b93ba67efc9`,
+  `58a697259c5b28756ce51cbba3ee1c7ee7766973`.
+- ACA main deploy workflow run after merge: `31891161508`.
+- Post-deploy crawl workflow run after deploy: `31891515211`.
+- Atlas production smoke gauntlet: `31891539660`, with `12/12`
+  default-scope turns passed, `0` fallback turns, `0` tenant leaks, and `2/2`
+  default-scope tenant sessions passed.
 
 ## Known Gaps
 

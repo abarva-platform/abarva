@@ -6,11 +6,17 @@
 
 ## Status
 
-`candidate`
+`merged-superseded-by-follow-up-proof`
 
 ## Plain-English Summary
 
 This release makes the Source execution lane auditable before more feature work continues. It records the execution plan, updates the Source backlog with the first two required moves, and moves the Atlas production gauntlet toward durable automation identities instead of legacy human demo accounts.
+
+Follow-up proof-scope and response-shape releases closed the default-scope proof
+lane after this release. See
+`2026-08-15-atlas-proof-scope-answer-shape.md` and
+`2026-08-15-source-new-event-backlog-consolidation.md` for the current proof
+register and remaining excluded hard gate.
 
 ## Layer Impact
 
@@ -38,7 +44,7 @@ Layer 4 Products and internal proof tooling only. Product data, workflow persist
 - PASS: `npx eslint src/lib/auth/agent-client-logins.ts scripts/qa/atlas-prod-comprehensive-surface.ts scripts/smoke/p21-post-deploy-crawl.spec.ts`
 - PASS: `git diff --check`
 - PASS: `npm run release:check`
-- Pending: PR checks.
+- PR checks passed before merge.
 
 ## Rollout Plan
 
@@ -60,11 +66,11 @@ Revert the PR. The rollback returns the Atlas gauntlet to its previous user rost
 
 ## Audit Evidence
 
-- PR: Pending.
-- Local validation: Pending.
-- Deploy proof: Pending.
-- Runtime invariant proof: Pending.
-- Atlas gauntlet rerun: Pending.
+- PR: merged as part of the proof/backlog control sequence.
+- Local validation: recorded above.
+- Follow-up deploy proof: `31891161508` for the proof-scope response-shape SHA.
+- Follow-up runtime/crawl proof: `31891515211`.
+- Follow-up Atlas gauntlet rerun: `31891539660`, default-scope pass.
 
 ## Known Gaps
 
