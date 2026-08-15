@@ -386,7 +386,7 @@ describe("deriveOptimizeWorkflowPosition", () => {
       "Finance-confirmed value exists, but no Finance/Tower handoff request is recorded.",
     );
 
-    const confirmedWithHandoff = positionFor({
+    const confirmedWithPendingHandoff = positionFor({
       set: opportunitySet({
         opportunities: [opportunity({ stage: "finance_confirmed" })],
         financeConfirmedUsd: 500_000,
@@ -425,11 +425,65 @@ describe("deriveOptimizeWorkflowPosition", () => {
         ],
       }),
     });
-    expect(confirmedWithHandoff.primaryAction).toBe(
+    expect(confirmedWithPendingHandoff.primaryAction).toBe(
+      "Wait for Finance/Tower confirmation",
+    );
+    expect(confirmedWithPendingHandoff.steps[6].state).toBe("blocked");
+    expect(confirmedWithPendingHandoff.blocker).toBe(
+      "Finance/Tower confirmation request is pending.",
+    );
+
+    const confirmedWithApprovedHandoff = positionFor({
+      set: opportunitySet({
+        opportunities: [opportunity({ stage: "finance_confirmed" })],
+        financeConfirmedUsd: 500_000,
+        approvalRequests: [
+          {
+            approvalRequestId: "apr-1",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            approvalType: "vendor_outreach_strategy",
+            approvalState: "approved",
+            requestedByRole: "Strategic sourcing",
+            requestedAt: "2027-06-30T00:00:00Z",
+            decisions: [],
+          },
+          {
+            approvalRequestId: "apr-2",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            approvalType: "finance_value_confirmation",
+            approvalState: "approved",
+            requestedByRole: "Finance",
+            requestedAt: "2027-07-02T00:00:00Z",
+            decisions: [
+              {
+                decision: "approved",
+                rationale: "Finance confirmed the value proof handoff.",
+                decidedByRole: "Finance controller",
+                decidedAt: "2027-07-03T00:00:00Z",
+              },
+            ],
+          },
+        ],
+        negotiatedOutcomes: [
+          {
+            outcomeId: "outcome-1",
+            caseId: "case-1",
+            opportunityId: "opp-1",
+            outcomeState: "agreed",
+            agreedAmountUsd: 200,
+            effectiveDate: "2027-07-01",
+            sourceDocumentId: "doc-1",
+          },
+        ],
+      }),
+    });
+    expect(confirmedWithApprovedHandoff.primaryAction).toBe(
       "Value proof is finance-confirmed",
     );
-    expect(confirmedWithHandoff.steps[6].state).toBe("complete");
-    expect(confirmedWithHandoff.blocker).toBeNull();
+    expect(confirmedWithApprovedHandoff.steps[6].state).toBe("complete");
+    expect(confirmedWithApprovedHandoff.blocker).toBeNull();
   });
 
   it("does not close value proof from a Finance handoff request without finance-confirmed value", () => {

@@ -748,6 +748,97 @@ describe("SourceOptimizeContractPage", () => {
     );
   });
 
+  it("keeps value proof blocked while the Finance/Tower request is still pending", () => {
+    const pendingFinanceHandoffSet = {
+      ...makeOpportunitySet(),
+      opportunities: makeOpportunitySet().opportunities.map((opportunity) => ({
+        ...opportunity,
+        stage: "finance_confirmed" as const,
+      })),
+      approvalRequests: [
+        {
+          approvalRequestId: "APR-090-STRATEGY",
+          caseId: "CASE-090",
+          opportunityId: "opp-090-rate",
+          approvalType: "vendor_outreach_strategy",
+          approvalState: "approved" as const,
+          requestedByRole: "sourcing_owner",
+          requestedAt: "2027-07-01T00:00:00.000Z",
+          decisions: [
+            {
+              decision: "approved" as const,
+              rationale: "Approved for controlled vendor outreach.",
+              decidedByRole: "sourcing_approver",
+              decidedAt: "2027-07-01T00:00:00.000Z",
+            },
+          ],
+        },
+        {
+          approvalRequestId: "APR-090-FINANCE",
+          caseId: "CASE-090",
+          opportunityId: "opp-090-rate",
+          approvalType: "finance_value_confirmation",
+          approvalState: "pending" as const,
+          requestedByRole: "finance_handoff_owner",
+          requestedAt: "2027-07-02T00:00:00.000Z",
+          decisions: [],
+        },
+      ],
+      negotiatedOutcomes: [
+        {
+          outcomeId: "OUT-090",
+          caseId: "CASE-090",
+          opportunityId: "opp-090-rate",
+          outcomeState: "agreed" as const,
+          agreedAmountUsd: 755_000,
+          effectiveDate: "2027-07-01",
+          sourceDocumentId: "doc-090-amendment",
+        },
+      ],
+      financeRealizations: [
+        {
+          realizationId: "REAL-090",
+          amountUsd: 740_000,
+          basis: "Confirmed credits received against corrected invoices.",
+          confirmationDate: "2027-07-31",
+          owner: "Finance controller",
+          towerClaimRefs: ["TOWER-CLAIM-090"],
+          linkedOpportunityIds: ["opp-090-rate"],
+          sourceRefs: [],
+        },
+      ],
+      financeConfirmedUsd: 740_000,
+    };
+
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({
+          selected: makeCandidate(),
+          missingEvidenceSources: [],
+        })}
+        opportunitySet={pendingFinanceHandoffSet}
+        evidencePack={makeReadySaaSEvidencePack()}
+      />,
+    );
+
+    expect(screen.getByTestId("optimize-step-prove_value")).toHaveAttribute(
+      "data-state",
+      "blocked",
+    );
+    expect(screen.getByTestId("optimize-next-decision")).toHaveTextContent(
+      "Wait for Finance/Tower confirmation",
+    );
+    expect(screen.getByTestId("optimize-next-blocker")).toHaveTextContent(
+      "Finance/Tower confirmation request is pending.",
+    );
+    const valueProofStatus = screen.getByTestId("optimize-value-proof-status");
+    expect(valueProofStatus).toHaveTextContent("Finance/Tower handoff");
+    expect(valueProofStatus).toHaveTextContent("pending");
+    expect(valueProofStatus).toHaveTextContent("$740K");
+  });
+
   it("still exposes the Finance/Tower handoff action when value proof exists without a handoff request", async () => {
     const fetchMock = global.fetch as jest.Mock;
     fetchMock.mockResolvedValue({
