@@ -27,6 +27,7 @@ jest.mock(
           | "missing_pending_request"
           | "missing_approved_request"
           | "missing_agreed_outcome"
+          | "missing_rationale"
           | "invalid_action",
         message: string,
       ) {
@@ -181,6 +182,35 @@ describe("POST Source Optimize workflow action", () => {
     expect(response.status).toBe(409);
     expect(payload.error).toBe("baseline_conflict");
     expect(payload.detail).toContain("Baseline inputs conflict");
+  });
+
+  it("returns a bad request response when the workflow action lacks an audit rationale", async () => {
+    mockRunContractOptimizationWorkflowAction.mockRejectedValueOnce(
+      new ContractOptimizationWorkflowActionError(
+        "missing_rationale",
+        "Record why this target position is ready for strategy approval.",
+      ),
+    );
+
+    const response = await POST(
+      new Request(
+        "https://app.abarva.ai/api/source/optimize/contract/CTR-090/workflow",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            action: "create_approval_request",
+            opportunityId: "OPP-CTR-090-RATE",
+            rationale: "",
+          }),
+        },
+      ),
+      { params: Promise.resolve({ contractId: "CTR-090" }) },
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload.error).toBe("missing_rationale");
+    expect(payload.detail).toContain("strategy approval");
   });
 
   it("allows a create-capable user to request Finance/Tower confirmation handoff", async () => {

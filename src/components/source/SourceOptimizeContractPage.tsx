@@ -204,11 +204,7 @@ function StageRail({ steps }: { steps: readonly OptimizeWorkflowStep[] }) {
   );
 }
 
-function NextDecisionBar({
-  position,
-}: {
-  position: OptimizeWorkflowPosition;
-}) {
+function NextDecisionBar({ position }: { position: OptimizeWorkflowPosition }) {
   return (
     <section style={NEXT_BAR_STYLE} data-testid="optimize-next-decision">
       <div style={{ minWidth: 0, display: "grid", gap: 3 }}>
@@ -327,22 +323,20 @@ function SelectedContractView({
     !readiness.sizingBlocked &&
     Boolean(position.blocker) &&
     (position.currentKey === "plan" || position.currentKey === "approve");
-  const valueProofGapLabel =
-    workflowBlocked
-      ? "Workflow gaps"
+  const valueProofGapLabel = workflowBlocked
+    ? "Workflow gaps"
+    : position.readyForApproval && !readiness.sizingBlocked
+      ? "Value proof gaps"
+      : "Open evidence gaps";
+  const valueProofGapDetail = workflowBlocked
+    ? "Evidence may be ready, but approval/outcome workflow state is not complete."
+    : missingCount > 0
+      ? position.readyForApproval && !readiness.sizingBlocked
+        ? "Approval can proceed; these limit external value claims until accepted."
+        : "These block sizing or external value claims."
       : position.readyForApproval && !readiness.sizingBlocked
-        ? "Value proof gaps"
-        : "Open evidence gaps";
-  const valueProofGapDetail =
-    workflowBlocked
-      ? "Evidence may be ready, but approval/outcome workflow state is not complete."
-      : missingCount > 0
-        ? position.readyForApproval && !readiness.sizingBlocked
-          ? "Approval can proceed; these limit external value claims until accepted."
-          : "These block sizing or external value claims."
-        : position.readyForApproval && !readiness.sizingBlocked
-          ? "No unresolved value-proof rows for the current decision."
-          : "No missing rows in the current evidence spine.";
+        ? "No unresolved value-proof rows for the current decision."
+        : "No missing rows in the current evidence spine.";
   const primaryAction =
     !opportunitySet || opportunitySet.baseline.status !== "ready"
       ? "Build or resolve the commercial baseline before approving action."
@@ -350,11 +344,11 @@ function SelectedContractView({
         ? "Collect the missing required evidence families before using a value number externally."
         : workflowBlocked
           ? position.primaryActionDetail
-        : missingCount > 0
-          ? position.readyForApproval
-            ? "Approval can proceed; unresolved proof rows still constrain external value claims."
-            : "Collect the missing value-proof rows before using a value number externally."
-          : "Open the optimization case and move the evidenced opportunity through approval.";
+          : missingCount > 0
+            ? position.readyForApproval
+              ? "Approval can proceed; unresolved proof rows still constrain external value claims."
+              : "Collect the missing value-proof rows before using a value number externally."
+            : "Open the optimization case and move the evidenced opportunity through approval.";
   return (
     <div style={SELECTED_GRID_STYLE}>
       <section style={PANEL_STYLE}>
@@ -549,9 +543,9 @@ function WorkflowActionPanel({
   position: OptimizeWorkflowPosition;
 }) {
   const router = useRouter();
-  const [state, setState] = useState<
-    "idle" | "busy" | "error" | "success"
-  >("idle");
+  const [state, setState] = useState<"idle" | "busy" | "error" | "success">(
+    "idle",
+  );
   const [message, setMessage] = useState<string | null>(null);
   const [rationale, setRationale] = useState("");
 
@@ -587,7 +581,8 @@ function WorkflowActionPanel({
     !pendingRequest &&
     !approvedRequest &&
     !hasAgreedOutcome;
-  const canDecide = position.currentKey === "approve" && Boolean(pendingRequest);
+  const canDecide =
+    position.currentKey === "approve" && Boolean(pendingRequest);
   const canRecordOutcome =
     position.currentKey === "approve" &&
     Boolean(approvedRequest) &&
@@ -606,7 +601,29 @@ function WorkflowActionPanel({
     Boolean(pendingFinanceRequest);
   if (!showPanel) return null;
 
+  const requiresRationale =
+    canCreate ||
+    canDecide ||
+    canRecordOutcome ||
+    canRequestFinanceConfirmation ||
+    Boolean(sentBackRequest);
+  const rationaleText = rationale.trim();
+  const rationaleReady = !requiresRationale || rationaleText.length >= 12;
+  const rationalePlaceholder =
+    canCreate || sentBackRequest
+      ? "Why is this target position ready for strategy approval?"
+      : canDecide
+        ? "Decision rationale for the audit trail..."
+        : canRecordOutcome
+          ? "What was agreed, and what evidence supports the outcome state?"
+          : "Why is this outcome ready for Finance/Tower confirmation?";
+
   async function submit(action: string) {
+    if (requiresRationale && !rationaleReady) {
+      setState("error");
+      setMessage("Record a rationale of at least 12 characters.");
+      return;
+    }
     setState("busy");
     setMessage(null);
     try {
@@ -618,7 +635,7 @@ function WorkflowActionPanel({
           body: JSON.stringify({
             action,
             opportunityId: selectedOpportunity?.opportunityId ?? null,
-            rationale: rationale.trim() || null,
+            rationale: rationaleText || null,
           }),
         },
       );
@@ -649,7 +666,10 @@ function WorkflowActionPanel({
   }
 
   return (
-    <div style={WORKFLOW_ACTION_PANEL_STYLE} data-testid="workflow-action-panel">
+    <div
+      style={WORKFLOW_ACTION_PANEL_STYLE}
+      data-testid="workflow-action-panel"
+    >
       <div style={{ minWidth: 0 }}>
         <div style={MUTED_SMALL_STYLE}>Governed workflow action</div>
         <strong style={WORKFLOW_ACTION_TITLE_STYLE}>
@@ -680,11 +700,11 @@ function WorkflowActionPanel({
         </p>
       </div>
       <StrategyApprovalPacket opportunity={selectedOpportunity} />
-      {canDecide ? (
+      {requiresRationale ? (
         <textarea
           value={rationale}
           onChange={(event) => setRationale(event.target.value)}
-          placeholder="Decision rationale for the audit trail..."
+          placeholder={rationalePlaceholder}
           style={WORKFLOW_TEXTAREA_STYLE}
           aria-label="Approval rationale"
         />
@@ -693,7 +713,7 @@ function WorkflowActionPanel({
         {canCreate || sentBackRequest ? (
           <button
             type="button"
-            disabled={state === "busy"}
+            disabled={state === "busy" || !rationaleReady}
             onClick={() => submit("create_approval_request")}
             style={PRIMARY_BUTTON_STYLE}
             data-testid="create-optimize-approval-request"
@@ -705,7 +725,7 @@ function WorkflowActionPanel({
           <>
             <button
               type="button"
-              disabled={state === "busy"}
+              disabled={state === "busy" || !rationaleReady}
               onClick={() => submit("send_back_request")}
               style={GHOST_BUTTON_STYLE}
               data-testid="send-back-optimize-approval-request"
@@ -714,7 +734,7 @@ function WorkflowActionPanel({
             </button>
             <button
               type="button"
-              disabled={state === "busy"}
+              disabled={state === "busy" || !rationaleReady}
               onClick={() => submit("approve_request")}
               style={PRIMARY_BUTTON_STYLE}
               data-testid="approve-optimize-approval-request"
@@ -726,7 +746,7 @@ function WorkflowActionPanel({
         {canRecordOutcome ? (
           <button
             type="button"
-            disabled={state === "busy"}
+            disabled={state === "busy" || !rationaleReady}
             onClick={() => submit("record_agreed_outcome")}
             style={PRIMARY_BUTTON_STYLE}
             data-testid="record-optimize-negotiated-outcome"
@@ -737,7 +757,7 @@ function WorkflowActionPanel({
         {canRequestFinanceConfirmation ? (
           <button
             type="button"
-            disabled={state === "busy"}
+            disabled={state === "busy" || !rationaleReady}
             onClick={() => submit("request_finance_confirmation")}
             style={PRIMARY_BUTTON_STYLE}
             data-testid="request-optimize-finance-confirmation"
@@ -771,19 +791,13 @@ function StrategyApprovalPacket({
       ? opportunity.sourceSystems.join(", ")
       : "source systems not recorded";
   return (
-    <div
-      style={STRATEGY_PACKET_STYLE}
-      data-testid="strategy-approval-packet"
-    >
+    <div style={STRATEGY_PACKET_STYLE} data-testid="strategy-approval-packet">
       <div style={MUTED_SMALL_STYLE}>Strategy packet for approval</div>
       <strong style={WORKFLOW_ACTION_TITLE_STYLE}>
         {opportunity.shortLabel}
       </strong>
       <div style={STRATEGY_PACKET_GRID_STYLE}>
-        <StrategyPacketItem
-          label="Target ask"
-          value={opportunity.nextAction}
-        />
+        <StrategyPacketItem label="Target ask" value={opportunity.nextAction} />
         <StrategyPacketItem
           label="Value basis"
           value={`${labelValueType(opportunity.valueType)} · ${formatMaybeUsd(opportunity.amountUsd)} · ${labelAmountState(opportunity.amountState)}`}
@@ -839,8 +853,8 @@ function ValueProofStatus({
         <div>
           <strong>Value proof status</strong>
           <p style={DECISION_DETAIL_STYLE}>
-            Requests, vendor outcome, and realized value are separate. A
-            handoff or approval is not finance-confirmed value.
+            Requests, vendor outcome, and realized value are separate. A handoff
+            or approval is not finance-confirmed value.
           </p>
         </div>
         <span
@@ -859,8 +873,8 @@ function ValueProofStatus({
           state={strategyRequest?.approvalState ?? "not requested"}
           detail={
             strategyRequest
-              ? latestDecisionDetail(strategyRequest) ??
-                "Vendor-outreach strategy request is recorded."
+              ? (latestDecisionDetail(strategyRequest) ??
+                "Vendor-outreach strategy request is recorded.")
               : "No strategy approval request has been created for this opportunity."
           }
         />
@@ -878,8 +892,8 @@ function ValueProofStatus({
           state={financeRequest?.approvalState ?? "not requested"}
           detail={
             financeRequest
-              ? latestDecisionDetail(financeRequest) ??
-                "Finance/Tower confirmation request is recorded. Realized value remains pending until finance evidence is loaded."
+              ? (latestDecisionDetail(financeRequest) ??
+                "Finance/Tower confirmation request is recorded. Realized value remains pending until finance evidence is loaded.")
               : "No Finance/Tower confirmation request has been created yet."
           }
         />
@@ -924,7 +938,8 @@ function FinanceProofDetails({ proof }: { proof: FinanceRealizationLink }) {
       <div>
         <strong>{proof.basis}</strong>
         <p style={DECISION_DETAIL_STYLE}>
-          Linked opportunities: {proof.linkedOpportunityIds.join(", ") || "none recorded"}
+          Linked opportunities:{" "}
+          {proof.linkedOpportunityIds.join(", ") || "none recorded"}
           {proof.towerClaimRefs.length > 0
             ? ` · Tower claims: ${proof.towerClaimRefs.join(", ")}`
             : ""}
@@ -1169,7 +1184,10 @@ function ReadinessBadge({
   readiness: ContractOptimizationEvidenceReadiness;
 }) {
   return (
-    <div style={SCORE_BADGE_STYLE} data-testid="optimize-evidence-readiness-badge">
+    <div
+      style={SCORE_BADGE_STYLE}
+      data-testid="optimize-evidence-readiness-badge"
+    >
       <strong>
         {readiness.requiredEvidenced}/{readiness.requiredTotal}
       </strong>

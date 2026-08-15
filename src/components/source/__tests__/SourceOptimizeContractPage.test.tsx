@@ -421,6 +421,14 @@ describe("SourceOptimizeContractPage", () => {
       "Controlled outreach only; Finance/Tower still controls realized value.",
     );
 
+    expect(
+      screen.getByTestId("create-optimize-approval-request"),
+    ).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Approval rationale"), {
+      target: {
+        value: "Target position is ready for controlled strategy approval.",
+      },
+    });
     fireEvent.click(screen.getByTestId("create-optimize-approval-request"));
 
     await waitFor(() => {
@@ -431,7 +439,8 @@ describe("SourceOptimizeContractPage", () => {
           body: JSON.stringify({
             action: "create_approval_request",
             opportunityId: "opp-090-rate",
-            rationale: null,
+            rationale:
+              "Target position is ready for controlled strategy approval.",
           }),
         }),
       );
@@ -448,7 +457,8 @@ describe("SourceOptimizeContractPage", () => {
       ok: true,
       json: async () => ({
         ok: true,
-        message: "Strategy approval is recorded; negotiated outcome remains pending.",
+        message:
+          "Strategy approval is recorded; negotiated outcome remains pending.",
       }),
     });
     const pendingApprovalSet = {
@@ -592,7 +602,17 @@ describe("SourceOptimizeContractPage", () => {
       "No source.finance_realization row is present.",
     );
 
-    fireEvent.click(screen.getByTestId("request-optimize-finance-confirmation"));
+    expect(
+      screen.getByTestId("request-optimize-finance-confirmation"),
+    ).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Approval rationale"), {
+      target: {
+        value: "Vendor outcome is agreed; ask Finance to confirm value.",
+      },
+    });
+    fireEvent.click(
+      screen.getByTestId("request-optimize-finance-confirmation"),
+    );
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -602,7 +622,8 @@ describe("SourceOptimizeContractPage", () => {
           body: JSON.stringify({
             action: "request_finance_confirmation",
             opportunityId: "opp-090-rate",
-            rationale: null,
+            rationale:
+              "Vendor outcome is agreed; ask Finance to confirm value.",
           }),
         }),
       );
@@ -917,12 +938,12 @@ describe("SourceOptimizeContractPage", () => {
       "Only the reproducible total may be used outside this workspace.",
     );
 
-    expect(screen.getByTestId("opportunity-trace-opp-090-scope")).toHaveTextContent(
-      "No calculation run — amount cannot be reproduced",
-    );
-    expect(screen.getByTestId("opportunity-trace-opp-090-rate")).toHaveTextContent(
-      "Reproducible from 18 included lines",
-    );
+    expect(
+      screen.getByTestId("opportunity-trace-opp-090-scope"),
+    ).toHaveTextContent("No calculation run — amount cannot be reproduced");
+    expect(
+      screen.getByTestId("opportunity-trace-opp-090-rate"),
+    ).toHaveTextContent("Reproducible from 18 included lines");
   });
 
   it("shows every required evidence family as explicitly missing when no evidence pack is supplied", () => {
