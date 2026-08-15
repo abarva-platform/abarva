@@ -160,11 +160,16 @@ function evaluateGates(input: {
     (outcome) => outcome.outcomeState === "agreed",
   );
   const hasFinanceRequest = financeRequests.length > 0;
+  const hasApprovedFinanceRequest = financeRequests.some(
+    (request) =>
+      request.approvalState === "approved" ||
+      request.decisions.some((decision) => decision.decision === "approved"),
+  );
 
   const financeConfirmed =
     (opportunitySet?.financeConfirmedUsd ?? 0) > 0 ||
     (opportunitySet?.financeRealizations.length ?? 0) > 0;
-  const valueProofComplete = financeConfirmed && hasFinanceRequest;
+  const valueProofComplete = financeConfirmed && hasApprovedFinanceRequest;
 
   return [
     {
@@ -270,20 +275,26 @@ function evaluateGates(input: {
     {
       satisfied: valueProofComplete,
       primaryAction: financeConfirmed
-        ? hasFinanceRequest
+        ? hasApprovedFinanceRequest
           ? "Value proof is finance-confirmed"
+          : hasFinanceRequest
+            ? "Wait for Finance/Tower confirmation"
           : "Record the Finance/Tower handoff"
         : "Confirm realized value with Finance",
       primaryActionDetail:
         financeConfirmed
-          ? hasFinanceRequest
+          ? hasApprovedFinanceRequest
             ? "Finance-confirmed value exists, and the Finance/Tower confirmation request is recorded."
+            : hasFinanceRequest
+              ? "Finance-confirmed value exists, but the Finance/Tower confirmation request is still pending approval."
             : "Finance-confirmed value exists, but the workflow still needs the Finance/Tower handoff request for the audit trail."
           : "Only finance-confirmed value counts as realized. Estimates and vendor agreement do not.",
       blocker: valueProofComplete
         ? null
         : financeConfirmed
-          ? "Finance-confirmed value exists, but no Finance/Tower handoff request is recorded."
+          ? hasFinanceRequest
+            ? "Finance/Tower confirmation request is pending."
+            : "Finance-confirmed value exists, but no Finance/Tower handoff request is recorded."
           : "No finance-confirmed value yet.",
     },
   ];
