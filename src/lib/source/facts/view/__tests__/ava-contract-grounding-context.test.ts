@@ -128,12 +128,120 @@ describe("buildAvaSourceContractGrounding", () => {
     expect(hasLiveNumbers).toBe(true);
     expect(block).toContain("CTR-090");
     expect(block).toContain("Salesforce");
+    expect(block).toContain(
+      'Exact contract display name: "Salesforce Data Platform Agreement 3"',
+    );
     expect(block).toContain("Commercial baseline status: missing");
     expect(block).toContain("Workflow position: step");
     // No evidence pack, so every required family is missing — and said so.
     expect(block).toContain("0 of 8 required evidence families");
     expect(block).toContain("Missing:");
     expect(block).toContain("Rate variance");
+  });
+
+  it("gives aVa chart-safe ledger totals so it does not recompute opportunity rows", async () => {
+    getContractOptimizationOpportunitySet.mockResolvedValue(
+      opportunitySet({
+        opportunities: [
+          opportunity({
+            opportunityId: "CTR-090:sla-credit",
+            shortLabel: "SLA credits earned but not claimed",
+            valueType: "recoverable_leakage",
+            amountUsd: 754_720,
+            calculation: {
+              ruleId: "sla",
+              ruleVersion: "1",
+              formula: "earned - claimed",
+              eligibleQuantity: 24,
+              billedRateUsd: null,
+              contractRateUsd: null,
+              approvedExceptionsUsd: 0,
+              calculatedAmountUsd: 754_720,
+              includedLineCount: 24,
+              excludedLineCount: 0,
+              pendingLineCount: 0,
+              lines: [],
+            },
+          }),
+          opportunity({
+            opportunityId: "CTR-090:invoice-exception",
+            shortLabel: "Invoice exceptions",
+            valueType: "recoverable_leakage",
+            amountUsd: 2_386_700,
+            calculation: {
+              ruleId: "invoice",
+              ruleVersion: "1",
+              formula: "sum exceptions",
+              eligibleQuantity: 18,
+              billedRateUsd: null,
+              contractRateUsd: null,
+              approvedExceptionsUsd: 0,
+              calculatedAmountUsd: 2_386_700,
+              includedLineCount: 18,
+              excludedLineCount: 2,
+              pendingLineCount: 0,
+              lines: [],
+            },
+          }),
+          opportunity({
+            opportunityId: "CTR-090:scope",
+            shortLabel: "Shelfware reduction",
+            valueType: "avoided_cost",
+            amountUsd: 2_420_000,
+            calculation: {
+              ruleId: "scope",
+              ruleVersion: "1",
+              formula: "usage reduction",
+              eligibleQuantity: 1,
+              billedRateUsd: null,
+              contractRateUsd: null,
+              approvedExceptionsUsd: 0,
+              calculatedAmountUsd: 2_420_000,
+              includedLineCount: 1,
+              excludedLineCount: 0,
+              pendingLineCount: 0,
+              lines: [],
+            },
+          }),
+          opportunity({
+            opportunityId: "CTR-090:negotiated",
+            shortLabel: "Price and term improvement",
+            valueType: "negotiable_improvement",
+            amountUsd: 1_300_000,
+            calculation: {
+              ruleId: "terms",
+              ruleVersion: "1",
+              formula: "target agreement",
+              eligibleQuantity: 1,
+              billedRateUsd: null,
+              contractRateUsd: null,
+              approvedExceptionsUsd: 0,
+              calculatedAmountUsd: 1_300_000,
+              includedLineCount: 1,
+              excludedLineCount: 0,
+              pendingLineCount: 0,
+              lines: [],
+            },
+          }),
+        ],
+        financeConfirmedUsd: 940_000,
+      }),
+    );
+
+    const { block } = await buildAvaSourceContractGrounding(
+      "skyharbor-air",
+      "CTR-090",
+    );
+
+    expect(block).toContain(
+      "Chart-safe ledger totals from reproducible calculation runs: Recoverable leakage $3.1M; Avoided cost $2.4M; Negotiated improvement $1.3M; Realized value $940K.",
+    );
+    expect(block).toContain(
+      "Largest reproducible non-realized ledger for chart narration: Recoverable leakage at $3.1M.",
+    );
+    expect(block).toContain(
+      "If the user asks for a chart, graph, or table, use the chart-safe ledger totals above",
+    );
   });
 
   it("separates reproducible value from value nothing can rebuild", async () => {
