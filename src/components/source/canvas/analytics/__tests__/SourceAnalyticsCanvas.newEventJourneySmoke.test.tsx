@@ -15,7 +15,9 @@ import {
   SOURCE_STAGE_ORDER,
 } from "@/lib/source/constants";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
+import { SAMPLE_RFP_STAGE } from "../sample-view-model";
 import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
+import type { StageAnalyticsView } from "../view-model";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -80,13 +82,13 @@ function makeEvent(stageKey: SourceStageKey): SourcingEventSummary {
   } as SourcingEventSummary;
 }
 
-function renderStage(stageKey: SourceStageKey) {
+function renderStage(stageKey: SourceStageKey, stageView?: StageAnalyticsView) {
   return render(
     <SourceAnalyticsCanvas
       event={makeEvent(stageKey)}
       viewStage={stageKey}
       tenantName="AbarVa QA"
-      stageView={undefined}
+      stageView={stageView}
     />,
   );
 }
@@ -229,5 +231,27 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
     expect(
       screen.queryByTestId("source-shell-v2-intelligence"),
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps RFP release readiness visible when local inputs are complete", () => {
+    const completedRfpView: StageAnalyticsView = {
+      ...SAMPLE_RFP_STAGE,
+      tasks: SAMPLE_RFP_STAGE.tasks.map((task) => ({
+        ...task,
+        state: "done",
+      })),
+    };
+
+    renderStage("rfp", completedRfpView);
+
+    expect(
+      screen.getByTestId("source-shell-stage-ready-panel"),
+    ).toBeInTheDocument();
+    const readiness = screen.getByTestId("source-stage-operating-status");
+    expect(readiness).toHaveTextContent("RFP gate readiness");
+    expect(readiness).toHaveTextContent("RFP Package unlocks");
+    expect(readiness).toHaveTextContent("Responses");
+    expect(readiness).toHaveTextContent("Load required evidence");
+    expect(readiness).toHaveTextContent("7 canonical asks");
   });
 });

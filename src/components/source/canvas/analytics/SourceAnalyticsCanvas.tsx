@@ -1364,8 +1364,10 @@ function buildStageOperatingStatus(
 
 function StageOperatingStatusPanel({
   status,
+  embedded = false,
 }: {
   status: StageOperatingStatus;
+  embedded?: boolean;
 }) {
   const allRequiredReady =
     status.requiredTotal > 0 && status.requiredReady === status.requiredTotal;
@@ -1383,8 +1385,8 @@ function StageOperatingStatusPanel({
         background: allRequiredReady
           ? "rgba(24, 151, 108, 0.045)"
           : ANALYTICS.CARD,
-        margin: "0 0 16px 42px",
-        maxWidth: 900,
+        margin: embedded ? 0 : "0 0 16px 42px",
+        maxWidth: embedded ? "none" : 900,
         overflow: "hidden",
       }}
     >
@@ -1717,6 +1719,7 @@ function FocusedWorkPanel({
         {allReady ? (
           <StageReadyPanel
             view={view}
+            stageOperatingStatus={stageOperatingStatus}
             onOpenApprovalPage={openApprovalPage}
             onOpenFiles={() => onWorkspaceChange("files")}
           />
@@ -1902,10 +1905,12 @@ function plainStageStepGroupLabel(label: string) {
 
 function StageReadyPanel({
   view,
+  stageOperatingStatus,
   onOpenApprovalPage,
   onOpenFiles,
 }: {
   view: SourceEventShellView;
+  stageOperatingStatus: StageOperatingStatus | null;
   onOpenApprovalPage: () => void;
   onOpenFiles: () => void;
 }) {
@@ -1963,6 +1968,9 @@ function StageReadyPanel({
             : "The next step is the approval workspace. Review the captured evidence, record the decision, and advance the event from there."}
         </p>
       </div>
+      {stageOperatingStatus ? (
+        <StageOperatingStatusPanel status={stageOperatingStatus} embedded />
+      ) : null}
       <div
         data-testid="source-stage-ready-status"
         style={{
