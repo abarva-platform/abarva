@@ -412,7 +412,10 @@ function SelectedContractView({
             opportunityId={selectedOpportunity?.opportunityId ?? null}
           />
         </div>
-        <BaselineRead opportunitySet={opportunitySet} />
+        <BaselineRead
+          opportunitySet={opportunitySet}
+          traceability={traceability}
+        />
         <WorkflowActionPanel
           contractId={candidate.contractId}
           opportunitySet={opportunitySet}
@@ -990,8 +993,10 @@ function latestDecisionDetail(
 
 function BaselineRead({
   opportunitySet,
+  traceability,
 }: {
   opportunitySet: ContractOptimizationOpportunitySet | null;
+  traceability: OpportunityTraceabilitySummary;
 }) {
   if (!opportunitySet) {
     return (
@@ -1005,7 +1010,7 @@ function BaselineRead({
     );
   }
   const baseline = opportunitySet.baseline;
-  const readinessRows = baselineReadinessRows(opportunitySet);
+  const readinessRows = baselineReadinessRows(opportunitySet, traceability);
   return (
     <div style={BASELINE_STYLE}>
       <div style={BASELINE_HEADER_STYLE}>
@@ -1050,7 +1055,11 @@ function BaselineRead({
       </div>
       <div style={BASELINE_READINESS_STYLE}>
         {readinessRows.map((row) => (
-          <div key={row.id} style={BASELINE_READINESS_ROW_STYLE}>
+          <div
+            key={row.id}
+            data-testid={`baseline-readiness-${row.id}`}
+            style={BASELINE_READINESS_ROW_STYLE}
+          >
             <span
               aria-label={`${row.label} ${row.state}`}
               style={{
@@ -1351,11 +1360,18 @@ interface BaselineReadinessRow {
 
 function baselineReadinessRows(
   opportunitySet: ContractOptimizationOpportunitySet,
+  traceability: OpportunityTraceabilitySummary,
 ): readonly BaselineReadinessRow[] {
   const baseline = opportunitySet.baseline;
-  const calculationCount = opportunitySet.opportunities.filter(
-    (opportunity) => opportunity.calculation,
-  ).length;
+  const sizedAmountCount =
+    traceability.tracedCount +
+    traceability.untracedCount +
+    traceability.restatedCount;
+  const calculationTraceRow = calculationReadinessRow(
+    traceability,
+    sizedAmountCount,
+    opportunitySet.opportunities.length,
+  );
   return [
     {
       id: "pricing-schedule",
@@ -1385,13 +1401,8 @@ function baselineReadinessRows(
     {
       id: "calculation-lines",
       label: "Calculation trace",
-      detail:
-        calculationCount > 0
-          ? `${calculationCount} opportunity row(s) have line-level calculation detail.`
-          : opportunitySet.opportunities.length > 0
-            ? "Opportunity rows exist, but line-level calculation runs are not persisted for this case yet."
-            : "No opportunity rows are loaded yet.",
-      state: calculationCount > 0 ? "included" : "pending",
+      detail: calculationTraceRow.detail,
+      state: calculationTraceRow.state,
     },
     {
       id: "finance-proof",
@@ -1403,6 +1414,44 @@ function baselineReadinessRows(
       state: opportunitySet.financeConfirmedUsd > 0 ? "included" : "pending",
     },
   ];
+}
+
+function calculationReadinessRow(
+  traceability: OpportunityTraceabilitySummary,
+  sizedAmountCount: number,
+  opportunityCount: number,
+): Pick<BaselineReadinessRow, "detail" | "state"> {
+  if (opportunityCount === 0) {
+    return {
+      detail: "No opportunity rows are loaded yet.",
+      state: "pending",
+    };
+  }
+  if (sizedAmountCount === 0) {
+    return {
+      detail:
+        "Opportunity rows are loaded, but none state an amount yet. This is not a zero-value finding.",
+      state: "pending",
+    };
+  }
+  const amountNoun = `stated amount${sizedAmountCount === 1 ? "" : "s"}`;
+  const amountVerb = sizedAmountCount === 1 ? "is" : "are";
+  if (traceability.restatedCount > 0) {
+    return {
+      detail: `${traceability.tracedCount} of ${sizedAmountCount} ${amountNoun} ${amountVerb} reproducible; ${traceability.restatedCount} disagree with their calculation run and ${formatUsd(traceability.untracedAmountUsd)} cannot be used externally.`,
+      state: "conflict",
+    };
+  }
+  if (traceability.untracedCount > 0) {
+    return {
+      detail: `${traceability.tracedCount} of ${sizedAmountCount} ${amountNoun} ${amountVerb} reproducible; ${formatUsd(traceability.untracedAmountUsd)} is not reproducible yet.`,
+      state: "pending",
+    };
+  }
+  return {
+    detail: `${traceability.tracedCount} of ${sizedAmountCount} ${amountNoun} ${amountVerb} reproducible from calculation runs (${formatUsd(traceability.tracedAmountUsd)}).`,
+    state: "included",
+  };
 }
 
 interface EvidenceRequirementRow {
