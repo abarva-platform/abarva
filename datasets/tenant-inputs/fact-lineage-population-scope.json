@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "defaultMode": "quote",
+  "why": "Fact lineage has two different jobs: quote-readiness and migration audit. Active tenant intake is the quote-readiness population. Legacy standardized packs are useful for migration comparison, but they are not active truth and must not create quote-blocking conflicts by default.",
+  "treeScopes": {
+    "active": {
+      "role": "active_quote_candidate",
+      "rootBasis": "datasets/tenant-inputs/tenant-input-registry.json activeTenants[*].canonicalInputRoot",
+      "includedInQuoteMode": true,
+      "includedInMigrationAuditMode": true,
+      "statement": "Current governed tenant intake files. These are the only default population for deciding whether a number is quotable."
+    },
+    "std": {
+      "role": "legacy_migration_reference",
+      "rootBasis": "tower-standardized-v1/<tenant_key>",
+      "includedInQuoteMode": false,
+      "includedInMigrationAuditMode": true,
+      "statement": "Legacy standardized/demo pack files. These can reveal migration drift, but are not active quote-readiness facts unless explicitly promoted through the active intake registry."
+    }
+  },
+  "modes": {
+    "quote": {
+      "includeTrees": ["active"],
+      "purpose": "Default mode. Use before quoting a metric in product copy, QA, or a client-facing narrative."
+    },
+    "migration-audit": {
+      "includeTrees": ["active", "std"],
+      "purpose": "Optional mode. Use to find drift between active intake and legacy standardized packs."
+    }
+  }
+}
