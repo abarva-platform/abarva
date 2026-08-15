@@ -408,6 +408,18 @@ describe("SourceOptimizeContractPage", () => {
     expect(screen.getByTestId("workflow-action-panel")).toHaveTextContent(
       "Create the strategy approval request",
     );
+    expect(screen.getByTestId("strategy-approval-packet")).toHaveTextContent(
+      "Strategy packet for approval",
+    );
+    expect(screen.getByTestId("strategy-approval-packet")).toHaveTextContent(
+      "Target ask",
+    );
+    expect(screen.getByTestId("strategy-approval-packet")).toHaveTextContent(
+      "Review calculation lines.",
+    );
+    expect(screen.getByTestId("strategy-approval-packet")).toHaveTextContent(
+      "Controlled outreach only; Finance/Tower still controls realized value.",
+    );
 
     fireEvent.click(screen.getByTestId("create-optimize-approval-request"));
 

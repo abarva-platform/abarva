@@ -49,6 +49,17 @@ function makeSession(options: {
           tenant_key: "skyharbor_global",
           opportunity_id: "OPP-CTR090-RATE",
           stage: options.stage ?? "target_position",
+          value_type: "recoverable_leakage",
+          amount_usd: 755000,
+          evidence_grade: "system_evidenced",
+          confidence: 0.88,
+          owner: "Procurement",
+          next_action: "Ask the supplier to credit governed rate variance.",
+          overlap_treatment: "included",
+          payload: {
+            short_label: "Rate-card variance",
+            source_systems: ["AP / ERP", "CLM / contract repository"],
+          },
         },
       ] as R[];
     }
@@ -110,6 +121,31 @@ describe("contract optimization workflow actions", () => {
         call.sql.includes("UPDATE source.optimization_case"),
       ),
     ).toBe(true);
+    const approvalInsert = session.calls.find((call) =>
+      call.sql.includes("INSERT INTO source.approval_request"),
+    );
+    const approvalPayload = JSON.parse(
+      String(approvalInsert?.params[6] ?? "{}"),
+    ) as {
+      strategy_packet?: {
+        title?: string;
+        amount_usd?: number;
+        target_ask?: string;
+        evidence_basis?: { source_systems?: string[] };
+        guardrails?: string[];
+      };
+    };
+    expect(approvalPayload.strategy_packet).toMatchObject({
+      title: "Rate-card variance",
+      amount_usd: 755000,
+      target_ask: "Ask the supplier to credit governed rate variance.",
+    });
+    expect(
+      approvalPayload.strategy_packet?.evidence_basis?.source_systems,
+    ).toEqual(["AP / ERP", "CLM / contract repository"]);
+    expect(approvalPayload.strategy_packet?.guardrails).toContain(
+      "No vendor concession or realized value is recorded by this request.",
+    );
   });
 
   it("does not create approval state when the baseline conflicts", async () => {

@@ -679,6 +679,7 @@ function WorkflowActionPanel({
                     : "The prior request was sent back; revise the target position, then resubmit."}
         </p>
       </div>
+      <StrategyApprovalPacket opportunity={selectedOpportunity} />
       {canDecide ? (
         <textarea
           value={rationale}
@@ -747,12 +748,70 @@ function WorkflowActionPanel({
       </div>
       {message ? (
         <div
-          style={state === "error" ? ERROR_STYLE : SUCCESS_STYLE}
+          style={{
+            ...(state === "error" ? ERROR_STYLE : SUCCESS_STYLE),
+            gridColumn: "1 / -1",
+          }}
           data-testid="workflow-action-message"
         >
           {message}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function StrategyApprovalPacket({
+  opportunity,
+}: {
+  opportunity: ContractOptimizationOpportunity;
+}) {
+  const sourceSystems =
+    opportunity.sourceSystems.length > 0
+      ? opportunity.sourceSystems.join(", ")
+      : "source systems not recorded";
+  return (
+    <div
+      style={STRATEGY_PACKET_STYLE}
+      data-testid="strategy-approval-packet"
+    >
+      <div style={MUTED_SMALL_STYLE}>Strategy packet for approval</div>
+      <strong style={WORKFLOW_ACTION_TITLE_STYLE}>
+        {opportunity.shortLabel}
+      </strong>
+      <div style={STRATEGY_PACKET_GRID_STYLE}>
+        <StrategyPacketItem
+          label="Target ask"
+          value={opportunity.nextAction}
+        />
+        <StrategyPacketItem
+          label="Value basis"
+          value={`${labelValueType(opportunity.valueType)} · ${formatMaybeUsd(opportunity.amountUsd)} · ${labelAmountState(opportunity.amountState)}`}
+        />
+        <StrategyPacketItem
+          label="Evidence basis"
+          value={`${labelEvidenceGrade(opportunity.evidenceGrade)} · ${sourceSystems}`}
+        />
+        <StrategyPacketItem
+          label="Approval guardrail"
+          value="Controlled outreach only; Finance/Tower still controls realized value."
+        />
+      </div>
+    </div>
+  );
+}
+
+function StrategyPacketItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div style={STRATEGY_PACKET_ITEM_STYLE}>
+      <span style={MUTED_SMALL_STYLE}>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }
@@ -1608,6 +1667,23 @@ function labelValueType(value: string): string {
   return value;
 }
 
+function labelAmountState(value: string): string {
+  if (value === "exact") return "calculation run present";
+  if (value === "range") return "range estimate";
+  if (value === "not_sized") return "not sized";
+  return value;
+}
+
+function labelEvidenceGrade(value: string): string {
+  if (value === "system_evidenced") return "system evidenced";
+  if (value === "document_evidenced") return "document evidenced";
+  if (value === "human_validated") return "human validated";
+  if (value === "finance_confirmed") return "finance confirmed";
+  if (value === "conflicted") return "conflicted";
+  if (value === "missing") return "missing";
+  return value;
+}
+
 const MAIN_STYLE: CSSProperties = {
   minHeight: "100vh",
   background: ANALYTICS.PAGE_BG,
@@ -1989,7 +2065,8 @@ const WORKFLOW_ACTION_PANEL_STYLE: CSSProperties = {
   background: "#f8fbff",
   padding: 12,
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) minmax(220px, 320px) auto",
+  gridTemplateColumns:
+    "minmax(0, 0.8fr) minmax(320px, 1.2fr) minmax(220px, 320px) auto",
   gap: 12,
   alignItems: "center",
 };
@@ -1998,6 +2075,31 @@ const WORKFLOW_ACTION_TITLE_STYLE: CSSProperties = {
   display: "block",
   marginTop: 3,
   fontSize: 15,
+  lineHeight: 1.25,
+};
+
+const STRATEGY_PACKET_STYLE: CSSProperties = {
+  border: `1px solid ${ANALYTICS.LINE}`,
+  borderRadius: 8,
+  background: ANALYTICS.CARD,
+  padding: 10,
+  display: "grid",
+  gap: 8,
+  minWidth: 0,
+};
+
+const STRATEGY_PACKET_GRID_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: 8,
+};
+
+const STRATEGY_PACKET_ITEM_STYLE: CSSProperties = {
+  borderTop: `1px solid ${ANALYTICS.LINE}`,
+  paddingTop: 7,
+  display: "grid",
+  gap: 3,
+  fontSize: 12,
   lineHeight: 1.25,
 };
 

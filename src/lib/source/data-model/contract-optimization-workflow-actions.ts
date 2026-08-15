@@ -242,6 +242,7 @@ async function loadActionContext(
     caseId: textValue(optimizationCase.optimization_case_id) ?? "",
     opportunityId: textValue(opportunity.opportunity_id) ?? "",
     opportunityStage: textValue(opportunity.stage) ?? "signal",
+    strategyPacket: strategyPacketFromOpportunity(opportunity),
   };
 }
 
@@ -262,6 +263,7 @@ async function createApprovalRequest(
     opportunity_id: context.opportunityId,
     requested_by_user_id: input.actorUserId ?? null,
     rationale: input.rationale?.trim() || null,
+    strategy_packet: context.strategyPacket,
   };
 
   await run(
@@ -637,8 +639,100 @@ function stableId(prefix: string, parts: readonly string[]): string {
   return `${prefix}-${body}`;
 }
 
+function strategyPacketFromOpportunity(row: Row) {
+  const payload = jsonObject(row.payload);
+  const label =
+    textValue(payload.short_label) ??
+    textValue(payload.label) ??
+    textValue(row.opportunity_id) ??
+    "Optimization opportunity";
+  const amountUsd = numberValue(row.amount_usd);
+  const valueType = textValue(row.value_type) ?? "unknown_value_type";
+  const stage = textValue(row.stage) ?? "unknown_stage";
+  const nextAction =
+    textValue(row.next_action) ??
+    "Review the governed opportunity evidence before vendor outreach.";
+  const owner = textValue(row.owner) ?? "owner not recorded";
+  const sourceSystems = jsonArray(payload.source_systems);
+
+  return {
+    title: label,
+    value_type: valueType,
+    amount_usd: amountUsd,
+    amount_basis:
+      amountUsd == null
+        ? "No amount is approved. The opportunity must remain unsized until a calculation run exists."
+        : "Potential amount only. This is not realized value and cannot be claimed externally until governed approval, vendor outcome, and Finance/Tower proof exist.",
+    target_ask: nextAction,
+    fallback_position:
+      "Fallback position must be confirmed by the sourcing owner before vendor outreach.",
+    walk_away_condition:
+      "Walk-away condition is not recorded yet; approver must confirm it before external commitment.",
+    evidence_basis: {
+      stage,
+      evidence_grade: textValue(row.evidence_grade) ?? "not_recorded",
+      confidence: numberValue(row.confidence),
+      owner,
+      source_systems: sourceSystems,
+      overlap_treatment:
+        textValue(row.overlap_treatment) ??
+        "Overlap treatment has not been recorded.",
+    },
+    guardrails: [
+      "Approval authorizes controlled outreach only.",
+      "No vendor concession or realized value is recorded by this request.",
+      "Missing, conflicted, excluded, or pending inputs remain visible and are not converted to zero.",
+    ],
+  };
+}
+
 function textValue(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function numberValue(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return null;
+  const normalized = value.replace(/[$,]/g, "").trim();
+  if (!normalized) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function jsonObject(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  if (typeof value === "string" && value.trim()) {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+function jsonArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === "string" ? item.trim() : ""))
+      .filter(Boolean);
+  }
+  if (typeof value === "string" && value.trim()) {
+    try {
+      return jsonArray(JSON.parse(value) as unknown);
+    } catch {
+      return value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
 }
