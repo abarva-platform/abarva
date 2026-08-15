@@ -553,6 +553,7 @@ function WorkflowActionPanel({
   const [rationale, setRationale] = useState("");
 
   if (!opportunitySet || !selectedOpportunity) return null;
+  const selectedOpportunityId = selectedOpportunity.opportunityId;
 
   const strategyRequests = (opportunitySet.approvalRequests ?? []).filter(
     (request) => request.approvalType === "vendor_outreach_strategy",
@@ -578,6 +579,11 @@ function WorkflowActionPanel({
   const hasAgreedOutcome = (opportunitySet.negotiatedOutcomes ?? []).some(
     (outcome) => outcome.outcomeState === "agreed",
   );
+  const financeConfirmationOpportunityId =
+    (opportunitySet.negotiatedOutcomes ?? []).find(
+      (outcome) => outcome.outcomeState === "agreed",
+    )?.opportunityId ??
+    selectedOpportunityId;
 
   const canCreate =
     position.currentKey === "plan" &&
@@ -621,7 +627,7 @@ function WorkflowActionPanel({
           ? "What was agreed, and what evidence supports the outcome state?"
           : "Why is this outcome ready for Finance/Tower confirmation?";
 
-  async function submit(action: string) {
+  async function submit(action: string, opportunityId?: string | null) {
     if (requiresRationale && !rationaleReady) {
       setState("error");
       setMessage("Record a rationale of at least 12 characters.");
@@ -637,7 +643,7 @@ function WorkflowActionPanel({
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             action,
-            opportunityId: selectedOpportunity?.opportunityId ?? null,
+            opportunityId: opportunityId ?? selectedOpportunityId,
             rationale: rationaleText || null,
           }),
         },
@@ -761,7 +767,12 @@ function WorkflowActionPanel({
           <button
             type="button"
             disabled={state === "busy" || !rationaleReady}
-            onClick={() => submit("request_finance_confirmation")}
+            onClick={() =>
+              submit(
+                "request_finance_confirmation",
+                financeConfirmationOpportunityId,
+              )
+            }
             style={PRIMARY_BUTTON_STYLE}
             data-testid="request-optimize-finance-confirmation"
           >
