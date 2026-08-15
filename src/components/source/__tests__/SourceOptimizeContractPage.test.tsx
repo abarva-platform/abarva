@@ -4,6 +4,7 @@
 
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { TextEncoder } from "util";
 
 import { SourceOptimizeContractPage } from "../SourceOptimizeContractPage";
 import type { ContractOptimizationSpine } from "@/lib/source/data-model/contract-optimization-spine";
@@ -12,6 +13,14 @@ import type { ContractOptimizationOpportunitySet } from "@/lib/source/data-model
 
 const push = jest.fn();
 const refresh = jest.fn();
+const mockAgentDockProps: Array<{
+  surface: string;
+  defaultMode: string;
+  surfaceContext: Record<string, unknown>;
+  placeholder: string;
+  onMessage: (text: string, attachments: unknown[]) => Promise<void>;
+  workspace: React.ReactNode;
+}> = [];
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push, refresh }),
@@ -25,6 +34,31 @@ jest.mock("@/components/shell/AppShell", () => ({
 
 jest.mock("@/components/source/SourceSubNav", () => ({
   SourceSubNav: () => <nav data-testid="subnav-mock" />,
+}));
+
+jest.mock("@/components/agent/AgentDock", () => ({
+  AgentDock: (props: {
+    surface: string;
+    defaultMode: string;
+    surfaceContext: Record<string, unknown>;
+    placeholder: string;
+    onMessage: (text: string, attachments: unknown[]) => Promise<void>;
+    workspace: React.ReactNode;
+  }) => {
+    mockAgentDockProps.push(props);
+    return (
+      <div data-testid="agent-dock-mock">
+        {props.workspace}
+        <button
+          data-testid="agent-dock-collapsed-chip"
+          type="button"
+          onClick={() => props.onMessage("Explain current state", [])}
+        >
+          aVa
+        </button>
+      </div>
+    );
+  },
 }));
 
 function makeCandidate(overrides = {}) {
@@ -217,6 +251,7 @@ describe("SourceOptimizeContractPage", () => {
   beforeEach(() => {
     push.mockReset();
     refresh.mockReset();
+    mockAgentDockProps.length = 0;
     global.fetch = jest.fn();
   });
 
@@ -315,6 +350,87 @@ describe("SourceOptimizeContractPage", () => {
     expect(screen.getByText("Finance realization proof")).toBeInTheDocument();
     expect(screen.getByText("18 included")).toBeInTheDocument();
     expect(screen.getByText("2 pending · 3 excluded")).toBeInTheDocument();
+  });
+
+  it("mounts aVa on Optimize Contract with selected-contract surface context", () => {
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({ selected: makeCandidate() })}
+        opportunitySet={makeOpportunitySet()}
+      />,
+    );
+
+    expect(screen.getByTestId("agent-dock-collapsed-chip")).toHaveTextContent(
+      "aVa",
+    );
+    const props = mockAgentDockProps.at(-1);
+    expect(props).toMatchObject({
+      surface: "/source/optimize",
+      defaultMode: "collapsed",
+      placeholder: "Ask aVa about CTR-090 evidence, ledgers, or next action...",
+    });
+    expect(props?.surfaceContext).toMatchObject({
+      sourceOptimizeContractMode: true,
+      contractId: "CTR-090",
+      selection: "Salesforce · Salesforce Data Platform Agreement 3",
+      lens: "Optimize Contract",
+      selectedOpportunityId: "opp-090-rate",
+      selectedOpportunityLabel: "Rate-card variance",
+    });
+  });
+
+  it("sends Optimize Contract aVa questions through the shared chat route with contract context", async () => {
+    const encoder = new TextEncoder();
+    const fetchMock = global.fetch as jest.Mock;
+    fetchMock.mockResolvedValue({
+      ok: true,
+      body: {
+        getReader: () => ({
+          read: jest
+            .fn()
+            .mockResolvedValueOnce({
+              done: false,
+              value: encoder.encode("Use the governed baseline."),
+            })
+            .mockResolvedValueOnce({ done: true, value: undefined }),
+        }),
+      },
+    });
+
+    render(
+      <SourceOptimizeContractPage
+        tenantName="SkyHarbor Global"
+        asOfDateIso="2027-06-30T00:00:00.000Z"
+        spine={makeSpine({ selected: makeCandidate() })}
+        opportunitySet={makeOpportunitySet()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/chat/agent",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+    const [, init] = fetchMock.mock.calls[0];
+    expect(JSON.parse(init.body)).toMatchObject({
+      message: "Explain current state",
+      tenantName: "SkyHarbor Global",
+      agentName: "aVa",
+      surface: "/source/optimize",
+      surfaceContext: {
+        sourceOptimizeContractMode: true,
+        contractId: "CTR-090",
+        selection: "Salesforce · Salesforce Data Platform Agreement 3",
+        selectedOpportunityId: "opp-090-rate",
+        selectedOpportunityLabel: "Rate-card variance",
+      },
+      conversationHistory: [],
+    });
   });
 
   it("separates strategy approval lifecycle gaps from readiness blockers", () => {
