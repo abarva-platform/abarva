@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { evaluateAssertions } from "../source-substrate-lineage-report.mjs";
+import {
+  evaluateAssertions,
+  queryParameterValuesForSource,
+} from "../source-substrate-lineage-report.mjs";
 
 const metrics = [
   { key: "portfolio_annual_value_usd", label: "Portfolio annual value" },
@@ -147,4 +150,33 @@ test("same basis conflict still wins even when another declared basis exists", (
   assert.equal(rowGroup.status, "CONFLICT");
   assert.equal(familyGroup.status, "ONE_SOURCE");
   assert.equal(result.basisDifferences[0].declared, true);
+});
+
+test("query parameters match the highest SQL placeholder used by a source", () => {
+  const tenant = { aliases: ["skyharbor_global", "skyharbor"] };
+  const supplementalVendorRefs = ["SUPPLEMENTAL"];
+
+  assert.deepEqual(
+    queryParameterValuesForSource(
+      { sql: "SELECT 1 WHERE tenant_key = ANY($1::text[])" },
+      tenant,
+      supplementalVendorRefs,
+    ),
+    [tenant.aliases],
+  );
+
+  assert.deepEqual(
+    queryParameterValuesForSource(
+      {
+        sql: `
+          SELECT 1
+          WHERE tenant_key = ANY($1::text[])
+            AND NOT (vendor_ref = ANY($2::text[]))
+        `,
+      },
+      tenant,
+      supplementalVendorRefs,
+    ),
+    [tenant.aliases, supplementalVendorRefs],
+  );
 });
