@@ -13,12 +13,12 @@ assert.equal(classifyReductionPath(['unknown-relationship-type:foo']), 'code_dic
 assert.equal(classifyReductionPath(['tenant-key-mismatch']), 'tenant_identity_source_gate');
 assert.equal(classifyReductionPath(['missing-evidence-basis']), 'evidence_basis_source_gate');
 assert.equal(classifyReductionPath(['missing-from-object-name']), 'upstream_source_absence_or_no_graph_disposition');
-assert.equal(classifyReductionPath(['unresolved-to-node']), 'source_data_dimension_or_edge_retirement_gate');
+assert.equal(classifyReductionPath(['unresolved-to-node']), 'source_data_dimension_or_edge_type_correction_gate');
 assert.equal(classifyReductionPath(['unclassified']), 'manual_review_gate');
 
 assert.equal(
-  dispositionForReductionPath('source_data_dimension_or_edge_retirement_gate'),
-  'catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge',
+  dispositionForReductionPath('source_data_dimension_or_edge_type_correction_gate'),
+  'catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge',
 );
 
 const rows = [
@@ -40,9 +40,9 @@ assert.deepEqual(buildReductionBreakdown(rows), [
     disposition: 'safe-code-slice-if-a-canonical-dictionary-or-unique-identity-alias-can-resolve-it',
   },
   {
-    reductionPath: 'source_data_dimension_or_edge_retirement_gate',
+    reductionPath: 'source_data_dimension_or_edge_type_correction_gate',
     count: 1,
-    disposition: 'catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge',
+    disposition: 'catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge',
   },
   {
     reductionPath: 'upstream_source_absence_or_no_graph_disposition',

@@ -63,7 +63,7 @@ assert.equal(
     tenantKey: 'tenant-a',
     buckets,
   }).opportunityClass,
-  'source_data_dimension_or_edge_retirement_gate',
+  'source_data_dimension_or_edge_type_correction_gate',
 );
 
 const analysis = analyzeAliasOpportunities({

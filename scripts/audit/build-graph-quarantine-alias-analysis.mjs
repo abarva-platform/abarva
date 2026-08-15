@@ -180,9 +180,9 @@ function classifyEndpointOpportunity({ endpoint, tenantKey, buckets }) {
     };
   }
   return {
-    opportunityClass: 'source_data_dimension_or_edge_retirement_gate',
+    opportunityClass: 'source_data_dimension_or_edge_type_correction_gate',
     candidateCount: 0,
-    proposedDisposition: 'catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge',
+    proposedDisposition: 'catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge',
   };
 }
 
@@ -248,7 +248,7 @@ function analyzeAliasOpportunities({ quarantineRows, nodes }) {
     } else if (row.ambiguousEndpointCount > 0) {
       row.rowOpportunityClass = 'ambiguous_alias_review_gate';
     } else {
-      row.rowOpportunityClass = 'source_data_dimension_or_edge_retirement_gate';
+      row.rowOpportunityClass = 'source_data_dimension_or_edge_type_correction_gate';
     }
   }
 
@@ -274,7 +274,7 @@ function writeMarkdown(filePath, report) {
     '',
     '## Direct Answer',
     '',
-    `Code-only alias candidates exist for ${report.totals.codeOnlyAliasCandidateEndpoints} unresolved endpoint occurrence(s), representing ${report.totals.distinctCodeOnlyAliasCandidates} distinct proposed alias mapping(s). ${semanticAliasState} The remaining ${report.totals.sourceDataGatedEndpoints} unresolved endpoint(s) require source evidence, dimension catalogue work, or edge retirement.`,
+    `Code-only alias candidates exist for ${report.totals.codeOnlyAliasCandidateEndpoints} unresolved endpoint occurrence(s), representing ${report.totals.distinctCodeOnlyAliasCandidates} distinct proposed alias mapping(s). ${semanticAliasState} The remaining ${report.totals.sourceDataGatedEndpoints} unresolved endpoint(s) require source evidence, dimension catalogue work, or endpoint type correction; edge retirement remains a separate explicit gate.`,
     '',
     '## Totals',
     '',
@@ -405,7 +405,7 @@ function main() {
 
   const codeOnlyAliasCandidateEndpoints = endpoints.filter((row) => row.opportunityClass.startsWith('code_only_')).length;
   const sourceDataGatedEndpoints = endpoints.filter(
-    (row) => row.opportunityClass === 'source_data_dimension_or_edge_retirement_gate',
+    (row) => row.opportunityClass === 'source_data_dimension_or_edge_type_correction_gate',
   ).length;
   const fullyCodeOnlyCandidateRows = rowClassifications.filter(
     (row) => row.rowOpportunityClass === 'all_unresolved_endpoints_code_only_candidate',
@@ -420,7 +420,7 @@ function main() {
       codeOnlyAliasCandidateEndpoints: tenantEndpoints.filter((row) => row.opportunityClass.startsWith('code_only_'))
         .length,
       sourceDataGatedEndpoints: tenantEndpoints.filter(
-        (row) => row.opportunityClass === 'source_data_dimension_or_edge_retirement_gate',
+        (row) => row.opportunityClass === 'source_data_dimension_or_edge_type_correction_gate',
       ).length,
       fullyCodeOnlyCandidateRows: tenantRows.filter(
         (row) => row.rowOpportunityClass === 'all_unresolved_endpoints_code_only_candidate',

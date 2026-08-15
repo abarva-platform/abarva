@@ -403,7 +403,7 @@ function dispositionForQuarantineClass(quarantineClass) {
     case 'empty_endpoint_or_required_field_missing':
       return 'permanent-quarantine-until-upstream-source-fields-exist-or-no-graph-is-declared';
     case 'dangling_reference':
-      return 'catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge';
+      return 'catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge';
     case 'vocabulary_or_endpoint_type_defect':
       return 'repair-only-through-approved-canonical-dictionary-or-endpoint-type-alias';
     case 'evidence_gap':

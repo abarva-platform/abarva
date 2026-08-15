@@ -12,7 +12,7 @@ const endpoints = [
     sourceRowNumber: '12',
     objectType: 'application_system',
     endpointName: 'Missing System',
-    opportunityClass: 'source_data_dimension_or_edge_retirement_gate',
+    opportunityClass: 'source_data_dimension_or_edge_type_correction_gate',
   },
   {
     tenantKey: 'tenant-key-a',
@@ -20,7 +20,7 @@ const endpoints = [
     sourceRowNumber: '22',
     objectType: 'application_system',
     endpointName: 'Missing System',
-    opportunityClass: 'source_data_dimension_or_edge_retirement_gate',
+    opportunityClass: 'source_data_dimension_or_edge_type_correction_gate',
   },
   {
     tenantKey: 'tenant-key-a',

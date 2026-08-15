@@ -86,7 +86,7 @@ function countBy(rows, keyFn) {
 function buildDecisionRows({ endpoints, tenantAliases, includeEndpointLabels }) {
   const groups = new Map();
   for (const endpoint of endpoints) {
-    if (endpoint.opportunityClass !== 'source_data_dimension_or_edge_retirement_gate') continue;
+    if (endpoint.opportunityClass !== 'source_data_dimension_or_edge_type_correction_gate') continue;
     const tenant = tenantAliases.get(endpoint.tenantKey);
     const endpointHash = stableHash(`${tenant}|${endpoint.objectType}|${endpoint.endpointName}`);
     const key = `${tenant}|${endpoint.objectType}|${endpointHash}`;
@@ -100,9 +100,9 @@ function buildDecisionRows({ endpoints, tenantAliases, includeEndpointLabels }) 
       affectedRelationshipRows: new Set(),
       firstSourceRowNumber: Number(endpoint.sourceRowNumber) || '',
       proposedDecisionRequired:
-        'catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge',
+        'catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge',
       allowedDecisionOne: 'catalogue_existing_or_new_canonical_object_from_source_evidence',
-      allowedDecisionTwo: 'retire_or_correct_relationship_edge_with_source_owner_approval',
+      allowedDecisionTwo: 'correct_relationship_endpoint_type_with_source_owner_approval',
       blockedDecision: 'never_create_placeholder_node_to_satisfy_edge',
       hardGateRequiredBeforeWrite: true,
       reportOnly: true,
@@ -145,7 +145,7 @@ function writeMarkdown(filePath, report) {
     '',
     '## Required Decision',
     '',
-    'Every row requires one of two source-owner decisions: catalogue the object from real evidence, or retire/correct the relationship edge. Creating placeholder nodes just to satisfy edges remains blocked.',
+    'Every row requires one of two source-owner decisions: catalogue the object from real evidence, or correct the relationship endpoint type. Creating placeholder nodes just to satisfy edges remains blocked, and edge retirement remains a separate explicit gate.',
     '',
     '## Totals',
     '',

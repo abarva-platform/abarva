@@ -93,7 +93,7 @@ assert.match(quarantined.quarantine.quarantineReasons, /missing-evidence-basis/)
 assert.equal(quarantined.quarantine.quarantineClass, 'dangling_reference');
 assert.equal(
   quarantined.quarantine.quarantineDisposition,
-  'catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge',
+  'catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge',
 );
 assert.equal(classifyQuarantineReason('unknown-relationship-type:foo'), 'vocabulary_or_endpoint_type_defect');
 assert.equal(

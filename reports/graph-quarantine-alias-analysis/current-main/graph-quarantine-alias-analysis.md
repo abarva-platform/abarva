@@ -1,36 +1,36 @@
 # Graph Quarantine Alias Analysis
 
-Source SHA: `ee14b409a9a93ca1286d8b7b38e6823ab35db6a7`
+Source SHA: `c6fde1b7380db40f0527d326142dd1fd2d1368a5`
 
 This is a sanitized, report-only alias-opportunity analysis. It does not activate semantic identity aliases, write tenant data, materialize graph tables, refresh product projections, or make runtime truth claims.
 
 ## Direct Answer
 
-Code-only alias candidates exist for 0 unresolved endpoint occurrence(s), representing 0 distinct proposed alias mapping(s). Approved semantic identity aliases were already applied in the input graph reconciliation; this analysis did not activate additional aliases. The remaining 6103 unresolved endpoint(s) require source evidence, dimension catalogue work, or edge retirement.
+Code-only alias candidates exist for 0 unresolved endpoint occurrence(s), representing 0 distinct proposed alias mapping(s). Approved semantic identity aliases were already applied in the input graph reconciliation; this analysis did not activate additional aliases. The remaining 3684 unresolved endpoint(s) require source evidence, dimension catalogue work, or endpoint type correction; edge retirement remains a separate explicit gate.
 
 ## Totals
 
 - Relationship rows: 9633
-- Quarantined relationships: 5129
-- Unresolved endpoints analyzed: 6103
+- Quarantined relationships: 3823
+- Unresolved endpoints analyzed: 3684
 - Code-only alias candidate endpoint occurrences: 0
 - Distinct code-only alias candidates: 0
 - Fully code-only candidate rows: 0
-- Source-data gated endpoints: 6103
+- Source-data gated endpoints: 3684
 - Semantic identity aliases activated: false
 - Graph tables written: false
 
 ## Endpoint Opportunity Classes
 
-| Class                                           | Endpoints | Disposition                                                                            |
-| ----------------------------------------------- | --------: | -------------------------------------------------------------------------------------- |
-| `source_data_dimension_or_edge_retirement_gate` |      6103 | `catalogue-object-from-real-evidence-or-retire-edge-never-create-node-to-satisfy-edge` |
+| Class                                                | Endpoints | Disposition                                                                                  |
+| ---------------------------------------------------- | --------: | -------------------------------------------------------------------------------------------- |
+| `source_data_dimension_or_edge_type_correction_gate` |      3684 | `catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge` |
 
 ## Row Opportunity Classes
 
-| Class                                           | Rows |
-| ----------------------------------------------- | ---: |
-| `source_data_dimension_or_edge_retirement_gate` | 4610 |
+| Class                                                | Rows |
+| ---------------------------------------------------- | ---: |
+| `source_data_dimension_or_edge_type_correction_gate` | 3304 |
 
 ## Alias Review Table
 
@@ -48,8 +48,8 @@ These rows are review evidence only. They are not activated aliases.
 | tenant-03 |                  840 |                             0 |                         840 |                              0 |
 | tenant-04 |                  364 |                             0 |                         364 |                              0 |
 | tenant-05 |                    0 |                             0 |                           0 |                              0 |
-| tenant-06 |                 2074 |                             0 |                        2074 |                              0 |
-| tenant-07 |                  362 |                             0 |                         362 |                              0 |
+| tenant-06 |                    3 |                             0 |                           3 |                              0 |
+| tenant-07 |                   14 |                             0 |                          14 |                              0 |
 
 ## Next Safe Slice
 
