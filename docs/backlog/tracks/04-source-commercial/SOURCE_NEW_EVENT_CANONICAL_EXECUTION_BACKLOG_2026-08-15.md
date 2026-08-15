@@ -63,25 +63,38 @@ The operating question for every slice is simple:
    - Result: Scope is the reference implementation for generalizing the clean
      stage operating model to the other 10 canonical New Event stages.
 
+5. `SRC61` Strategy operating-model generalization
+   - PR: `#6383`.
+   - Merge commit: `0e8880d76a9e8767384e240c67b4a5bda0f75813`.
+   - Scope: Strategy-only application of the Scope reference pattern: purpose-first
+     Mandate branch, active Strategy gate-readiness panel, canonical evidence
+     readiness, and one load-evidence next action.
+   - ACA deploy proof: `31906973945`.
+   - Runtime invariant: passed for the deployed digest and worker jobs.
+   - Signed-in browser/DOM proof: passed on the provisioned Source Strategy
+     route.
+   - Result: Strategy is now closed; continue with RFP as the next
+     one-stage slice.
+
 ### Open
 
-1. `SRC61` Strategy operating-model generalization
-   - Status: candidate in branch `codex/src61-strategy-generalize-20260815`.
-   - Scope: apply the Scope reference pattern to Strategy without inventing
-     fake upload tasks: the left tree names the mandate, the active canvas shows
-     Strategy gate readiness from the canonical evidence registry, and the
-     next action stays in the load-evidence state until required evidence is
-     ready.
+1. `SRC62` RFP operating-model generalization
+   - Status: candidate in branch `codex/src62-rfp-generalize-20260815`.
+   - Scope: apply the Scope/Strategy reference pattern to RFP without adding
+     parser ingestion or vendor dispatch: the left tree names the release
+     package, the active canvas shows RFP gate readiness from the canonical
+     evidence registry, and the next action stays in the load-evidence state
+     until required evidence is ready.
    - Local proof: focused Jest, 11-stage smoke, shell layout harness, focused
      ESLint, typecheck, diff check, and release check passed.
-   - Pending proof: PR, CI, ACA deploy, runtime invariant, and signed-in
-     Strategy browser/DOM proof before any live product claim.
+   - Pending proof: PR, CI, ACA deploy, runtime invariant, and signed-in RFP
+     browser/DOM proof before any live product claim.
 
-2. `SRC62`-`SRC70` remaining stage operating-model generalization
-   - Status: reserved, one PR per stage after `SRC61` closes.
-   - Stage IDs: `SRC62` RFP, `SRC63` Responses, `SRC64` Evaluation, `SRC65`
-     Pricing, `SRC66` BAFO, `SRC67` Executive Decision, `SRC68` Selection,
-     `SRC69` Transition, `SRC70` Value.
+2. `SRC63`-`SRC70` remaining stage operating-model generalization
+   - Status: reserved, one PR per stage after `SRC62` closes.
+   - Stage IDs: `SRC63` Responses, `SRC64` Evaluation, `SRC65` Pricing,
+     `SRC66` BAFO, `SRC67` Executive Decision, `SRC68` Selection, `SRC69`
+     Transition, `SRC70` Value.
    - Caveat: Selection and Value have no existing bespoke component in either
      active canvas; those two are new UI surfaces and require extra scrutiny.
    - Pending proof: each stage gets its own local smoke, PR checks, ACA deploy,

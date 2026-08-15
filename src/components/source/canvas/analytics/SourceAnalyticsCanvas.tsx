@@ -1542,7 +1542,9 @@ function FocusedWorkPanel({
       )
     : null;
   const stageOperatingStatus =
-    view.stage.key === "strategy" || view.stage.key === "scope"
+    view.stage.key === "strategy" ||
+    view.stage.key === "scope" ||
+    view.stage.key === "rfp"
       ? buildStageOperatingStatus(view, evidenceStates)
       : null;
 

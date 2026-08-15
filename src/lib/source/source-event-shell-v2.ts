@@ -712,6 +712,7 @@ function toShellStep(
 function taskGroupLabel(task: StageTaskView): string {
   if (task.id.startsWith("strategy.")) return strategyTaskGroupLabel(task);
   if (task.id.startsWith("scope.")) return scopeTaskGroupLabel(task);
+  if (task.id.startsWith("rfp.")) return rfpTaskGroupLabel(task);
 
   const text = `${task.title} ${task.subtitle}`;
   if (/exclusion|included|applications?|inventory/i.test(text)) {
@@ -759,6 +760,26 @@ function scopeTaskGroupLabel(task: StageTaskView): string {
   }
 }
 
+function rfpTaskGroupLabel(task: StageTaskView): string {
+  switch (task.id) {
+    case "rfp.clause-coverage":
+      return "Release package";
+    default: {
+      const text = `${task.title} ${task.subtitle}`;
+      if (/clause|requirement|response|package/i.test(text)) {
+        return "Release package";
+      }
+      if (/legal|term|privacy|security|governance/i.test(text)) {
+        return "Release governance";
+      }
+      if (/vendor|shortlist|supplier|market/i.test(text)) {
+        return "Vendor list";
+      }
+      return "Approval";
+    }
+  }
+}
+
 function groupDisplayOrder(label: string): number {
   const stageOrder = [
     "Mandate",
@@ -768,6 +789,9 @@ function groupDisplayOrder(label: string): number {
     "Work out of scope",
     "Owners",
     "Baseline evidence",
+    "Release package",
+    "Release governance",
+    "Vendor list",
     "Approval",
   ];
   const stageIndex = stageOrder.indexOf(label);

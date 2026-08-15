@@ -211,4 +211,23 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
       screen.queryByTestId("source-shell-v2-intelligence"),
     ).not.toBeInTheDocument();
   });
+
+  it("surfaces RFP release readiness in the active task area", () => {
+    renderStage("rfp");
+
+    const readiness = screen.getByTestId("source-stage-operating-status");
+    expect(readiness).toHaveTextContent("RFP gate readiness");
+    expect(readiness).toHaveTextContent("RFP Package unlocks");
+    expect(readiness).toHaveTextContent("Responses");
+    expect(readiness).toHaveTextContent("Load required evidence");
+    expect(readiness).toHaveTextContent("7 canonical asks");
+
+    expect(screen.getByTestId("source-shell-v2-steps")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("source-shell-v2-files"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("source-shell-v2-intelligence"),
+    ).not.toBeInTheDocument();
+  });
 });

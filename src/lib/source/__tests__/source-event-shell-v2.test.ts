@@ -1,4 +1,7 @@
-import { SAMPLE_SCOPE_STAGE } from "@/components/source/canvas/analytics/sample-view-model";
+import {
+  SAMPLE_RFP_STAGE,
+  SAMPLE_SCOPE_STAGE,
+} from "@/components/source/canvas/analytics/sample-view-model";
 import { SAMPLE_STRATEGY_STAGE } from "@/components/source/canvas/analytics/strategy-sample-view-model";
 import type { StageAnalyticsView } from "@/components/source/canvas/analytics/view-model";
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
@@ -334,6 +337,26 @@ describe("buildSourceEventShellView", () => {
     expect(view.stage.groups[0]?.steps[0]).toMatchObject({
       id: "strategy.confirm",
       title: "Confirm strategy & sponsor",
+      sourceBasis: "missing",
+    });
+  });
+
+  it("uses a purpose-first RFP group so the left tree names the release package", () => {
+    const view = buildSourceEventShellView({
+      event: EVENT,
+      tenantName: "FS Demo",
+      viewedStageKey: "rfp",
+      stageView: SAMPLE_RFP_STAGE as StageAnalyticsView,
+    });
+
+    expect(view.stage.pattern).toBe("upload-heavy");
+    expect(view.stage.activeStep?.id).toBe("rfp.clause-coverage");
+    expect(view.stage.groups.map((group) => group.label)).toEqual([
+      "Release package",
+    ]);
+    expect(view.stage.groups[0]?.steps[0]).toMatchObject({
+      id: "rfp.clause-coverage",
+      title: "Confirm RFP clause coverage",
       sourceBasis: "missing",
     });
   });
