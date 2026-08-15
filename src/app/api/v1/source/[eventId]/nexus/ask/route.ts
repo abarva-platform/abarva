@@ -258,6 +258,14 @@ export async function POST(
           tenantId: tenancy.clientId ?? null,
           question: normalizedBody.prompt ?? "",
           eventType: liveEventDetail?.archetype ?? null,
+          event: liveEventDetail
+            ? {
+                id: liveEventDetail.id,
+                code: liveEventDetail.code,
+                name: liveEventDetail.name,
+                accountName: liveEventDetail.accountName,
+              }
+            : { id: eventId },
         }).catch((err) => {
           // A failure here must never break the chat turn — the caller
           // still gets the prose summary line. But swallowing silently
