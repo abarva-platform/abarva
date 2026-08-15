@@ -331,7 +331,16 @@ function ModuleHeader({
         </div>
       </div>
       <div style={HEADER_ACTIONS_STYLE}>
-        <Link href="/source/preview/workspace" style={GHOST_BUTTON_STYLE}>
+        <Link
+          href={
+            selected
+              ? `/source/preview/workspace?contractId=${encodeURIComponent(
+                  selected.contractId,
+                )}`
+              : "/source/preview/workspace"
+          }
+          style={GHOST_BUTTON_STYLE}
+        >
           Source workspace
         </Link>
         <Link href="/source/new" style={GHOST_BUTTON_STYLE}>
