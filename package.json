@@ -226,6 +226,7 @@
     "audit:intelligence-candidate-retrieval": "node scripts/audit/candidate-consumption-proof.mjs --mode intelligence",
     "audit:moves-candidate-consumption": "node scripts/audit/candidate-consumption-proof.mjs --mode moves",
     "audit:source-candidate-consumption": "node scripts/audit/candidate-consumption-proof.mjs --mode source",
+    "audit:source-substrate-lineage": "node scripts/source/source-substrate-lineage-report.mjs",
     "audit:default-runtime-invisibility": "node scripts/audit/default-runtime-invisibility.mjs",
     "demo:skyharbor:capture": "node scripts/demo/skyharbor-demo-capture.mjs",
     "demo:environment:verify": "tsx scripts/demo/verify-demo-environment-readiness.ts",
