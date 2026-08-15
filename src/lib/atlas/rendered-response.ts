@@ -82,6 +82,7 @@ function normalizeAtlasVisibleText(text: string): string {
     .replace(/\bindustry standard\b/gi, 'market benchmark')
     .replace(/\bbest practice\b/gi, 'strong operating pattern')
     .replace(/\beveryone is doing\b/gi, 'market adoption is moving toward')
+    .replace(/\btenant evidence\b/gi, 'client evidence')
     .replace(/\bdata rows\b/gi, 'records')
     .replace(/\brows\b/gi, 'records')
     .replace(/\n{3,}/g, '\n\n')
