@@ -1,4 +1,8 @@
-import { INITIAL_STATE, WorkspaceViewModel } from "../viewModel";
+import {
+  buildInitialWorkspaceState,
+  INITIAL_STATE,
+  WorkspaceViewModel,
+} from "../viewModel";
 import {
   buildSourceVendor360Cockpit,
   type SourceWorkspacePortfolioData,
@@ -152,6 +156,30 @@ function buildVm(sliceOverride: Record<string, string[]>) {
 }
 
 describe("WorkspaceViewModel.explore — associative selection", () => {
+  it("initializes a contract deep link directly in Contract 360 mode", () => {
+    const state = buildInitialWorkspaceState({
+      contractId: "CTR-090",
+      contractTab: "Evidence",
+    });
+
+    expect(state.sel).toEqual({ kind: "contract", id: "CTR-090" });
+    expect(state.tabs.contract).toBe("Evidence");
+    expect(state.hist).toEqual([
+      { kind: "contract", id: "CTR-090", tab: "Evidence" },
+    ]);
+    expect(state.hi).toBe(0);
+  });
+
+  it("keeps contract deep-link tab requests inside known Contract 360 tabs", () => {
+    const state = buildInitialWorkspaceState({
+      contractId: "CTR-090",
+      contractTab: "Not a real tab",
+    });
+
+    expect(state.sel).toEqual({ kind: "contract", id: "CTR-090" });
+    expect(state.tabs.contract).toBe(INITIAL_STATE.tabs.contract);
+  });
+
   it("with no filters, every vendor bucket is live", () => {
     const vm = buildVm({});
     const ex = vm.explore(vm.enrich());
