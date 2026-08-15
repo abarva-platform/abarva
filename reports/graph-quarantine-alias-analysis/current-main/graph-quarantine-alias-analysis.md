@@ -1,19 +1,20 @@
 # Graph Quarantine Alias Analysis
 
-Source SHA: `6ac668f96e79debb431bb1b46f798f7f72a41005`
+Source SHA: `cb6e35d48700dfbee001608436fd0e6839d8677e`
 
 This is a sanitized, report-only alias-opportunity analysis. It does not activate semantic identity aliases, write tenant data, materialize graph tables, refresh product projections, or make runtime truth claims.
 
 ## Direct Answer
 
-Code-only alias candidates exist for 50 unresolved endpoint(s), but semantic identity alias activation remains gated. The remaining 6103 unresolved endpoint(s) require source evidence, dimension catalogue work, or edge retirement.
+Code-only alias candidates exist for 50 unresolved endpoint occurrence(s), representing 3 distinct proposed alias mapping(s). Semantic identity alias activation remains gated. The remaining 6103 unresolved endpoint(s) require source evidence, dimension catalogue work, or edge retirement.
 
 ## Totals
 
 - Relationship rows: 9633
 - Quarantined relationships: 5179
 - Unresolved endpoints analyzed: 6153
-- Code-only alias candidate endpoints: 50
+- Code-only alias candidate endpoint occurrences: 50
+- Distinct code-only alias candidates: 3
 - Fully code-only candidate rows: 50
 - Source-data gated endpoints: 6103
 - Semantic identity aliases activated: false
@@ -32,6 +33,16 @@ Code-only alias candidates exist for 50 unresolved endpoint(s), but semantic ide
 | ----------------------------------------------- | ---: |
 | `source_data_dimension_or_edge_retirement_gate` | 4610 |
 | `all_unresolved_endpoints_code_only_candidate`  |   50 |
+
+## Alias Review Table
+
+These rows are review evidence only. They are not activated aliases.
+
+| Tenant    | Endpoint | Proposed canonical                   | Evidence for mapping                                                                                                                                        | Affected endpoint occurrences |
+| --------- | -------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------: |
+| tenant-07 | `CFO`    | `Chief Financial Officer`            | endpoint-label-is-unique-acronym-of-canonical-label; unique_candidate_count=1; canonical_source_row=4; canonical_mapping_profile=organization-ownership/v1  |                            18 |
+| tenant-07 | `CHRO`   | `Chief Human Resources Officer`      | endpoint-label-is-unique-acronym-of-canonical-label; unique_candidate_count=1; canonical_source_row=5; canonical_mapping_profile=organization-ownership/v1  |                            16 |
+| tenant-07 | `CISO`   | `Chief Information Security Officer` | endpoint-label-is-unique-acronym-of-canonical-label; unique_candidate_count=1; canonical_source_row=26; canonical_mapping_profile=organization-ownership/v1 |                            16 |
 
 ## Tenant Aliases
 
