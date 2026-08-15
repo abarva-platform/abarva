@@ -1040,6 +1040,12 @@ function ValueProofStatus({
   );
   const agreedOutcome = latestOutcome(opportunitySet.negotiatedOutcomes ?? []);
   const financeProof = opportunitySet.financeRealizations[0] ?? null;
+  const financeHandoffApproved =
+    financeRequest?.approvalState === "approved" ||
+    financeRequest?.decisions.some(
+      (decision) => decision.decision === "approved",
+    ) === true;
+  const valueProofComplete = Boolean(financeProof && financeHandoffApproved);
 
   return (
     <div style={VALUE_PROOF_STYLE} data-testid="optimize-value-proof-status">
@@ -1047,18 +1053,22 @@ function ValueProofStatus({
         <div>
           <strong>Value proof status</strong>
           <p style={DECISION_DETAIL_STYLE}>
-            Requests, vendor outcome, and realized value are separate. A handoff
-            or approval is not finance-confirmed value.
+            Finance evidence, Tower handoff, and realized-value approval are
+            separate. The case is not complete until the handoff is approved.
           </p>
         </div>
         <span
           style={{
             ...BASELINE_STATUS_STYLE,
-            ...(financeProof ? null : BASELINE_STATUS_MISSING_STYLE),
+            ...(valueProofComplete ? null : BASELINE_STATUS_MISSING_STYLE),
           }}
           data-testid="optimize-value-proof-badge"
         >
-          {financeProof ? "finance confirmed" : "realized value pending"}
+          {valueProofComplete
+            ? "value proof confirmed"
+            : financeProof
+              ? "finance evidence loaded"
+              : "realized value pending"}
         </span>
       </div>
       <div style={VALUE_PROOF_ROWS_STYLE}>
@@ -1087,16 +1097,24 @@ function ValueProofStatus({
           detail={
             financeRequest
               ? (latestDecisionDetail(financeRequest) ??
-                "Finance/Tower confirmation request is recorded. Realized value remains pending until finance evidence is loaded.")
+                (financeHandoffApproved
+                  ? "Finance/Tower confirmation request is approved."
+                  : "Finance/Tower confirmation request is recorded but not approved yet."))
               : "No Finance/Tower confirmation request has been created yet."
           }
         />
         <ValueProofRow
-          label="Realized value proof"
-          state={financeProof ? "confirmed" : "not established"}
+          label="Finance evidence"
+          state={
+            financeProof
+              ? financeHandoffApproved
+                ? "approved"
+                : "loaded"
+              : "not established"
+          }
           detail={
             financeProof
-              ? `${formatUsd(financeProof.amountUsd)} confirmed by ${financeProof.owner ?? "Finance"}${financeProof.confirmationDate ? ` on ${formatDate(financeProof.confirmationDate)}` : ""}.`
+              ? `${formatUsd(financeProof.amountUsd)} loaded from ${financeProof.owner ?? "Finance"}${financeProof.confirmationDate ? ` on ${formatDate(financeProof.confirmationDate)}` : ""}. ${financeHandoffApproved ? "Approved for value proof." : "Not approved as completed value proof yet."}`
               : "No source.finance_realization row is present. The case cannot close as realized value."
           }
         />

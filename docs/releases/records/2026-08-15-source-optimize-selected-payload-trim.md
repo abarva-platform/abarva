@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -38,8 +38,7 @@ The selected-contract Optimize page keeps the same visible workflow and evidence
 - Pass: `npx eslint src/lib/source/data-model/contract-optimization-spine.ts src/lib/source/data-model/__tests__/contract-optimization-spine.test.ts docs/releases/records/2026-08-15-source-optimize-selected-payload-trim.md` with one expected ignored-file warning for the Markdown release record.
 - Pass: `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false`.
 - Pass: `npm run release:check`.
-- Pending: signed-in live proof after repo-owned ACA deployment.
-- Pending: signed-in live proof after repo-owned ACA deployment.
+- Live signed-in browser proof after ACA deployment: selected-contract Optimize rendered with `Selected opportunity: Negotiated improvement`, Step 7, and a 163 KB HTML payload; reverse handoff to Contract 360 preserved `CTR-090`.
 
 ## Rollout Plan
 
@@ -49,11 +48,11 @@ Merge to `main`; the repo-owned Azure Container Apps deploy workflow builds and 
 
 - Repo-owned deploy workflow: Required.
 - Shared runtime mutators: None outside the repo-owned workflow.
-- Approved image digest: Pending deploy.
-- ACA runtime invariant: Pending deploy.
-- Worker image invariant: Pending deploy.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:49cbbda5bfeebcbc64c2d50f2b992de784620933c7c2d9aa64a9b4186b842228`.
+- ACA runtime invariant: proven on `ca-abarva-web-lab-eastus--m36cd2c7f` with 100% traffic.
+- Worker image invariant: delivery worker jobs matched the same approved digest; historical jobs are outside this release proof.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Yes, selected Optimize page and aVa grounding remain functional.
+- Live signed-in proof required: completed for selected Optimize route and Contract 360 handoff. aVa grounding remains covered by its own release records and is not claimed here.
 
 ## Rollback Plan
 
@@ -61,10 +60,11 @@ Revert the PR and redeploy through the repo-owned ACA workflow. This is a presen
 
 ## Audit Evidence
 
-- Pending PR URL.
-- Pending CI or local validation output.
-- Pending ACA deploy proof.
-- Pending signed-in browser proof.
+- PR URL: https://github.com/abarva-platform/abarva/pull/6359
+- Merge commit: `8dc5e2c564f3c512c2a6873ed0c077150fad21f4`
+- ACA deployment run: `31886533505`
+- Runtime revision: `ca-abarva-web-lab-eastus--m36cd2c7f`
+- Signed-in browser proof: selected Optimize route rendered 163 KB HTML / 635 DOM nodes; Contract 360 reverse handoff rendered `CTR-090`, `Salesforce Data Platform Agreement 3`, and `Open optimize plan`.
 
 ## Known Gaps
 

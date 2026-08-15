@@ -383,7 +383,7 @@ describe("deriveOptimizeWorkflowPosition", () => {
       "workflow still needs the Finance/Tower handoff request",
     );
     expect(confirmed.blocker).toBe(
-      "Finance-confirmed value exists, but no Finance/Tower handoff request is recorded.",
+      "Finance evidence is loaded, but no Finance/Tower handoff request is recorded.",
     );
 
     const confirmedWithPendingHandoff = positionFor({
@@ -430,7 +430,7 @@ describe("deriveOptimizeWorkflowPosition", () => {
     );
     expect(confirmedWithPendingHandoff.steps[6].state).toBe("blocked");
     expect(confirmedWithPendingHandoff.blocker).toBe(
-      "Finance/Tower confirmation request is pending.",
+      "Finance/Tower confirmation request is pending approval.",
     );
 
     const confirmedWithApprovedHandoff = positionFor({

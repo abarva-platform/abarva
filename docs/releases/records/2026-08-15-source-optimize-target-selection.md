@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -36,6 +36,7 @@ The Optimize Contract read model now selects the opportunity that matches the cu
 - `npm test -- --runTestsByPath src/lib/source/data-model/__tests__/read-adapter.contract-optimization.test.ts --runInBand` passed.
 - `npx eslint src/lib/source/data-model/read-adapter.ts src/lib/source/data-model/__tests__/read-adapter.contract-optimization.test.ts` passed.
 - `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false` passed.
+- Live signed-in browser proof after ACA deployment: direct `/source/optimize?contractId=CTR-090` selected the governed traceable opportunity and advanced to the correct value-proof gate.
 
 ## Rollout Plan
 
@@ -45,11 +46,11 @@ Merge to `main`; the repo-owned Azure Container Apps main deploy workflow builds
 
 - Repo-owned deploy workflow: required.
 - Shared runtime mutators: none outside the repo-owned deploy workflow.
-- Approved image digest: assigned by the repo-owned deploy workflow.
-- ACA runtime invariant: required before claiming live.
-- Worker image invariant: required before claiming live.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:49cbbda5bfeebcbc64c2d50f2b992de784620933c7c2d9aa64a9b4186b842228`.
+- ACA runtime invariant: proven on `ca-abarva-web-lab-eastus--m36cd2c7f` with 100% traffic.
+- Worker image invariant: delivery worker jobs matched the same approved digest; historical jobs are outside this release proof.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes.
+- Live signed-in proof required: completed.
 
 ## Rollback Plan
 
@@ -57,10 +58,13 @@ Revert the PR and redeploy through the repo-owned ACA workflow. No data rollback
 
 ## Audit Evidence
 
-- PR URL: pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/6359
+- Merge commit: `8dc5e2c564f3c512c2a6873ed0c077150fad21f4`
+- ACA deployment run: `31886533505`
+- Runtime revision: `ca-abarva-web-lab-eastus--m36cd2c7f`
+- Signed-in browser proof: `/source/optimize?contractId=CTR-090` rendered `Selected opportunity: Negotiated improvement` and `Step 7 of 7`.
 - Local test output for the focused read-adapter regression.
-- ACA workflow and live signed-in proof after merge.
 
 ## Known Gaps
 
-Pending release checks, PR review/merge, ACA deploy, and live signed-in proof.
+This release only chooses the active opportunity for the Optimize workflow. It does not create new opportunity rows or change the amount calculation model.

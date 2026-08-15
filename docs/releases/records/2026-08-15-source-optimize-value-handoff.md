@@ -10,12 +10,12 @@
 
 ## Plain-English Summary
 
-Optimize Contract now keeps the final value-proof step auditable when finance evidence already exists before the explicit Finance/Tower handoff request is recorded. The page surfaces a Finance/Tower handoff action in that state, and the action records the handoff request without changing realized-value amounts.
+Optimize Contract now keeps the final value-proof step auditable when finance evidence already exists before the explicit Finance/Tower handoff request is recorded or approved. The page distinguishes loaded finance evidence from completed value proof, surfaces the Finance/Tower handoff action in that state, and records the handoff request without changing realized-value amounts.
 
 ## Layer Impact
 
 - Release lane: `global-control-lane`
-- Products: Source Optimize Contract page and workflow-position text now expose the final Finance/Tower handoff action when finance proof exists but the handoff request is not recorded.
+- Products: Source Optimize Contract page and workflow-position text now expose the final Finance/Tower handoff action when finance proof exists but the handoff request is not recorded. The status badge now says finance evidence is loaded until the Finance/Tower handoff is approved, so the page does not imply completed value proof while the gate remains pending.
 - Canonical model: No schema or data mutation is introduced by the release itself. The existing workflow action continues to write the governed Finance/Tower confirmation request only when the user invokes it.
 
 ## Client Applicability
@@ -37,6 +37,7 @@ Optimize Contract now keeps the final value-proof step auditable when finance ev
 
 - `npm test -- --runTestsByPath src/lib/source/data-model/__tests__/contract-optimization-workflow-step.test.ts --runInBand` — passed.
 - `npm test -- --runTestsByPath src/components/source/__tests__/SourceOptimizeContractPage.test.tsx --runInBand` — passed.
+- `npm test -- --runTestsByPath src/lib/source/data-model/__tests__/contract-optimization-workflow-step.test.ts src/components/source/__tests__/SourceOptimizeContractPage.test.tsx --runInBand` — passed after the copy/status clarification.
 - Full lint, typecheck, release check, diff check, ACA deployment, runtime invariant, and signed-in browser proof are required before this can be called released.
 
 ## Rollout Plan

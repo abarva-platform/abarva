@@ -286,15 +286,15 @@ function evaluateGates(input: {
           ? hasApprovedFinanceRequest
             ? "Finance-confirmed value exists, and the Finance/Tower confirmation request is recorded."
             : hasFinanceRequest
-              ? "Finance-confirmed value exists, but the Finance/Tower confirmation request is still pending approval."
-            : "Finance-confirmed value exists, but the workflow still needs the Finance/Tower handoff request for the audit trail."
+              ? "Finance evidence is loaded, but value proof stays blocked until Finance/Tower approves the confirmation request."
+            : "Finance evidence is loaded, but the workflow still needs the Finance/Tower handoff request for the audit trail."
           : "Only finance-confirmed value counts as realized. Estimates and vendor agreement do not.",
       blocker: valueProofComplete
         ? null
         : financeConfirmed
           ? hasFinanceRequest
-            ? "Finance/Tower confirmation request is pending."
-            : "Finance-confirmed value exists, but no Finance/Tower handoff request is recorded."
+            ? "Finance/Tower confirmation request is pending approval."
+            : "Finance evidence is loaded, but no Finance/Tower handoff request is recorded."
           : "No finance-confirmed value yet.",
     },
   ];

@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -47,6 +47,7 @@ when a traceable opportunity is available.
 - Passed: `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false`
 - Passed: `git diff --check`
 - Passed: `npm run release:check`
+- Live signed-in browser proof after ACA deploy: direct navigation to `/source/optimize?contractId=CTR-090` rendered the Optimize Contract module, selected `Negotiated improvement`, showed Step 7, and retained the calculation-run traceability summary.
 
 ## Rollout Plan
 
@@ -57,12 +58,11 @@ new image to the shared ACA runtime.
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: No ad hoc runtime mutation in this release.
-- Approved image digest: Produced by the repo-owned deploy workflow after merge.
-- ACA runtime invariant: Required before claiming live deployment.
-- Worker image invariant: Required before claiming live deployment.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:49cbbda5bfeebcbc64c2d50f2b992de784620933c7c2d9aa64a9b4186b842228`.
+- ACA runtime invariant: Proven on `ca-abarva-web-lab-eastus--m36cd2c7f` with 100% traffic.
+- Worker image invariant: Delivery worker jobs matched the same approved digest; historical data/operator jobs are not part of this proof.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Required before claiming signed-in product proof;
-  ACA invariant and health proof are not sufficient by themselves.
+- Live signed-in proof required: Completed for the direct selected-contract Optimize route.
 
 ## Rollback Plan
 
@@ -71,9 +71,12 @@ previous behavior. No schema rollback is required.
 
 ## Audit Evidence
 
-- Pull request URL and deployment run after merge.
+- Pull request URL: https://github.com/abarva-platform/abarva/pull/6359
+- Merge commit: `8dc5e2c564f3c512c2a6873ed0c077150fad21f4`
+- ACA deployment run: `31886533505`
+- Runtime revision: `ca-abarva-web-lab-eastus--m36cd2c7f`
+- Signed-in browser proof: `/source/optimize?contractId=CTR-090` rendered `Selected opportunity: Negotiated improvement`, `Step 7 of 7`, and `6 of 6 stated amounts are reproducible from calculation runs ($6.8M)`.
 - Focused Jest output showing the traceable-default regression test.
-- ACA deployment evidence artifact after merge.
 
 ## Known Gaps
 
