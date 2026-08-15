@@ -121,44 +121,33 @@ async function loadContext(client: Client, args: Args): Promise<Context> {
     throw new Error("No governed optimization case exists for this contract.");
   }
 
-  const opportunityResult = await client.query<Row>(
-    `SELECT opportunity.*
-       FROM source.optimization_opportunity opportunity
-       LEFT JOIN source.case_opportunity case_opportunity
-         ON case_opportunity.tenant_key = opportunity.tenant_key
-        AND case_opportunity.dataset_version = opportunity.dataset_version
-        AND case_opportunity.opportunity_id = opportunity.opportunity_id
-        AND case_opportunity.selected_for_action = true
-      WHERE opportunity.tenant_key = $1
-        AND opportunity.dataset_version = $2
-        AND opportunity.contract_id = $3
-      ORDER BY case_opportunity.selected_for_action DESC NULLS LAST,
-               opportunity.amount_usd DESC NULLS LAST,
-               opportunity.opportunity_id
-      LIMIT 1`,
-    [args.tenantKey, args.datasetVersion, args.contractId],
-  );
-  const opportunityId = textValue(opportunityResult.rows[0]?.opportunity_id);
-  if (!opportunityId) {
-    throw new Error("No governed optimization opportunity is selected for this contract.");
-  }
-
   const outcomeResult = await client.query<Row>(
-    `SELECT outcome_id
-       FROM source.negotiated_outcome
-      WHERE tenant_key = $1
-        AND dataset_version = $2
-        AND optimization_case_id = $3
-        AND opportunity_id = $4
-        AND outcome_state = 'agreed'
-      ORDER BY effective_date DESC NULLS LAST, outcome_id
+    `SELECT outcome.outcome_id,
+            outcome.opportunity_id
+       FROM source.negotiated_outcome outcome
+       JOIN source.optimization_opportunity opportunity
+         ON opportunity.tenant_key = outcome.tenant_key
+        AND opportunity.dataset_version = outcome.dataset_version
+        AND opportunity.opportunity_id = outcome.opportunity_id
+      WHERE outcome.tenant_key = $1
+        AND outcome.dataset_version = $2
+        AND outcome.optimization_case_id = $3
+        AND outcome.outcome_state = 'agreed'
+        AND opportunity.contract_id = $4
+      ORDER BY outcome.effective_date DESC NULLS LAST, outcome.outcome_id
       LIMIT 1`,
-    [args.tenantKey, args.datasetVersion, optimizationCaseId, opportunityId],
+    [args.tenantKey, args.datasetVersion, optimizationCaseId, args.contractId],
   );
   const negotiatedOutcomeId = textValue(outcomeResult.rows[0]?.outcome_id);
+  const opportunityId = textValue(outcomeResult.rows[0]?.opportunity_id);
   if (!negotiatedOutcomeId) {
     throw new Error(
       "No agreed negotiated outcome exists; record the vendor outcome before Finance/Tower confirmation.",
+    );
+  }
+  if (!opportunityId) {
+    throw new Error(
+      "The agreed negotiated outcome is not tied to a governed optimization opportunity.",
     );
   }
 

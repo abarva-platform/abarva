@@ -760,10 +760,20 @@ describe("SourceOptimizeContractPage", () => {
     });
     const confirmedWithoutHandoff = {
       ...makeOpportunitySet(),
-      opportunities: makeOpportunitySet().opportunities.map((opportunity) => ({
-        ...opportunity,
-        stage: "finance_confirmed" as const,
-      })),
+      selectedOpportunityId: "opp-090-scope",
+      opportunities: [
+        ...makeOpportunitySet().opportunities.map((opportunity) => ({
+          ...opportunity,
+          stage: "finance_confirmed" as const,
+        })),
+        {
+          ...makeOpportunitySet().opportunities[0],
+          opportunityId: "opp-090-scope",
+          label: "Scope rationalization",
+          shortLabel: "Scope rationalization",
+          stage: "finance_confirmed" as const,
+        },
+      ],
       approvalRequests: [
         {
           approvalRequestId: "APR-090-STRATEGY",
