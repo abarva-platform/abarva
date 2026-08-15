@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-15T01:42:19.782Z",
+  "generatedAt": "2026-08-15T03:38:02.815Z",
   "generatedBy": "scripts/audit/ava-readiness-ledger.mjs",
-  "sourceSha": "9c845b30ac16c39e2a1ffc91c24bc8c735da87af",
+  "sourceSha": "f607155c1c695d8bbb0f471227b707733508cc81",
   "mode": "ava_readiness_ledger_report_only_no_index_no_retrieval_no_runtime_claim_no_agent_ready_promotion",
   "publicDisclosure": "Tenant identifiers are anonymized. Proof paths are summarized by artifact type.",
   "truthRule": "loaded, indexed, retrievable, and cited are independent states; agent_ready requires all proof gates.",
