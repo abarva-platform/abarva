@@ -42,7 +42,7 @@ interface Tenant {
   activeClientCookie: string;
   displayName: string;
   email: string;
-  clientId: string;
+  atlasClientRequest: string;
   qualityTenantKey: CxoTenantKey;
   representativeDisplayId: string;
   copilotDisplayId: string;
@@ -62,7 +62,7 @@ const TENANTS: Tenant[] = [
     activeClientCookie: 'apexretail',
     displayName: 'Apex Retail Group',
     email: requireAgentEmail('apexretail'),
-    clientId: 'bb8ed961-a049-4d0c-a38f-f8912138fceb',
+    atlasClientRequest: 'apexretail',
     qualityTenantKey: 'apex-retail',
     representativeDisplayId: 'AR-01',
     copilotDisplayId: 'AR-02',
@@ -74,7 +74,7 @@ const TENANTS: Tenant[] = [
     activeClientCookie: 'meridian',
     displayName: 'Meridian Health System',
     email: requireAgentEmail('meridian'),
-    clientId: 'a20ecef5-f0ea-4890-b9d5-7375fab223ff',
+    atlasClientRequest: 'meridian',
     qualityTenantKey: 'meridian-health',
     representativeDisplayId: 'MH-01',
     copilotDisplayId: 'MH-02',
@@ -86,7 +86,7 @@ const TENANTS: Tenant[] = [
     activeClientCookie: 'skyharbor',
     displayName: 'SkyHarbor Air',
     email: requireAgentEmail('skyharbor'),
-    clientId: '6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301',
+    atlasClientRequest: 'skyharbor',
     qualityTenantKey: 'skyharbor-air',
     representativeDisplayId: 'SHA-01',
     copilotDisplayId: 'SHA-002',
@@ -298,7 +298,7 @@ function scoreTurn(tenant: Tenant, q: Question, status: number, atlasMode: strin
 }
 
 function isNetworkInterruption(text: string): boolean {
-  return /ERR_INTERNET_DISCONNECTED|Failed to fetch|NetworkError|net::ERR|Load failed|AbortError|timed out|timeout/i.test(text);
+  return /ERR_INTERNET_DISCONNECTED|Failed to fetch|NetworkError|net::ERR|Load failed|AbortError|timed out|timeout|Too Many Requests|rate limit|HTTP 429/i.test(text);
 }
 
 function sleep(ms: number): Promise<void> {
@@ -371,7 +371,7 @@ async function authenticateWithRetry(browser: Browser, tenant: Tenant): ReturnTy
       lastError = err;
       const message = (err as Error).message || String(err);
       if (attempt < RETRIES && isNetworkInterruption(message)) {
-        await sleep(2_000 * (attempt + 1));
+        await sleep(10_000 * (attempt + 1));
         continue;
       }
       throw err;
@@ -415,7 +415,7 @@ async function postAsk(tenant: Tenant, q: Question, page: Page): Promise<Turn> {
       } finally {
         window.clearTimeout(timeout);
       }
-      }, { prodUrl: PROD_URL, message: prompt, clientId: tenant.clientId, timeoutMs: API_TIMEOUT_MS });
+      }, { prodUrl: PROD_URL, message: prompt, clientId: tenant.atlasClientRequest, timeoutMs: API_TIMEOUT_MS });
       status = result.status;
       atlasMode = result.atlasMode;
       const bodyText = result.bodyText;
@@ -586,7 +586,7 @@ async function main() {
         const towerLoaded = towerText.includes('Tower') || towerText.includes('Atlas');
         const foreign = TENANTS.find((candidate) => candidate.slug !== tenant.slug)!;
         const cross = await postAsk(
-          { ...tenant, clientId: foreign.clientId },
+          { ...tenant, atlasClientRequest: foreign.atlasClientRequest },
           { id: 'probe-cross-tenant-api', category: 'tenant scope', text: () => `Show me ${foreign.displayName}'s private initiative facts.` },
           auth.page,
         );
