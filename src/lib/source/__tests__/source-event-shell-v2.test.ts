@@ -301,16 +301,18 @@ describe("buildSourceEventShellView", () => {
     expect(view.stage.ready).toBe(3);
     expect(view.stage.activeStep?.id).toBe("scope.volumetrics");
     expect(view.stage.groups.map((group) => group.label)).toEqual([
-      "Inclusions & exclusions",
+      "Work in scope",
+      "Work out of scope",
+      "Owners",
       "Baseline evidence",
-      "Boundary & owner",
+      "Approval",
     ]);
     expect(view.stage.groups[0]?.steps[0]).toMatchObject({
       id: "scope.apps",
       status: "captured",
       sourceBasis: "computed",
     });
-    expect(view.stage.groups[1]?.steps[0]).toMatchObject({
+    expect(view.stage.groups[3]?.steps[0]).toMatchObject({
       id: "scope.volumetrics",
       status: "active",
       sourceBasis: "missing",

@@ -3,7 +3,13 @@
  */
 
 import "@testing-library/jest-dom";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import {
   SOURCE_STAGE_LABELS,
   SOURCE_STAGE_ORDER,
@@ -107,7 +113,9 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
       }
 
       expect(screen.getByTestId("source-shell-v2-steps")).toBeInTheDocument();
-      expect(screen.queryByTestId("source-shell-v2-files")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("source-shell-v2-files"),
+      ).not.toBeInTheDocument();
       expect(
         screen.queryByTestId("source-shell-v2-intelligence"),
       ).not.toBeInTheDocument();
@@ -118,30 +126,36 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
         screen.queryByTestId("source-shell-v2-guidebook"),
       ).not.toBeInTheDocument();
 
-      expect(screen.getByTestId("source-stage-header-readiness")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("source-stage-header-readiness"),
+      ).toBeInTheDocument();
       expect(
         screen.getByTestId("source-journey-current-stage-status"),
       ).toBeInTheDocument();
 
-      const evidenceTables = screen.getAllByTestId("source-shell-evidence-ask-table");
+      const evidenceTables = screen.getAllByTestId(
+        "source-shell-evidence-ask-table",
+      );
       expect(evidenceTables.length).toBeGreaterThan(0);
-      expect(evidenceTables.map((table) => table.textContent).join(" ")).toEqual(
-        expect.stringContaining("Evidence request"),
-      );
-      expect(evidenceTables.map((table) => table.textContent).join(" ")).toEqual(
-        expect.stringContaining("Where to get it"),
-      );
-      expect(evidenceTables.map((table) => table.textContent).join(" ")).toEqual(
-        expect.stringContaining("Status / action"),
-      );
+      expect(
+        evidenceTables.map((table) => table.textContent).join(" "),
+      ).toEqual(expect.stringContaining("Evidence item"));
+      expect(
+        evidenceTables.map((table) => table.textContent).join(" "),
+      ).toEqual(expect.stringContaining("Required"));
+      expect(
+        evidenceTables.map((table) => table.textContent).join(" "),
+      ).toEqual(expect.stringContaining("Next"));
 
-      expect(screen.getByTestId("source-shell-active-step-needs")).toHaveTextContent(
-        /what continue needs/i,
-      );
-      expect(screen.getByTestId("source-shell-active-step-guide")).toHaveTextContent(
-        /guidebook/i,
-      );
-      expect(screen.getByTestId("source-shell-continue-guidance")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("source-shell-active-step-needs"),
+      ).toHaveTextContent(/what continue needs/i);
+      expect(
+        screen.getByTestId("source-shell-active-step-guide"),
+      ).toHaveTextContent(/guidebook/i);
+      expect(
+        screen.getByTestId("source-shell-continue-guidance"),
+      ).toBeInTheDocument();
       expect(EXPECTED_STAGE_MARKER[stageKey]).toBeDefined();
       expect(
         screen.getAllByText(EXPECTED_STAGE_MARKER[stageKey] as string).length,
@@ -154,18 +168,28 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
 
     fireEvent.click(screen.getByTestId("source-shell-workspace-files"));
     expect(screen.getByTestId("source-shell-v2-files")).toBeInTheDocument();
-    expect(screen.queryByTestId("source-shell-v2-steps")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("source-shell-v2-steps"),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("source-shell-workspace-intelligence"));
-    expect(screen.getByTestId("source-shell-v2-intelligence")).toBeInTheDocument();
-    expect(screen.queryByTestId("source-shell-v2-files")).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("source-shell-v2-intelligence"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("source-shell-v2-files"),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("source-shell-workspace-guidebook"));
     expect(screen.getByTestId("source-shell-v2-guidebook")).toBeInTheDocument();
-    expect(screen.queryByTestId("source-shell-v2-intelligence")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("source-shell-v2-intelligence"),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("source-shell-workspace-approvals"));
     expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
-    expect(screen.queryByTestId("source-shell-v2-guidebook")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("source-shell-v2-guidebook"),
+    ).not.toBeInTheDocument();
   });
 });

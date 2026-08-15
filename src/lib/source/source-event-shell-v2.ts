@@ -36,11 +36,7 @@ import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/t
 import type { ArtifactAcceptanceRecord } from "@/lib/source/artifact-acceptances";
 
 export type SourceShellWorkspace =
-  | "steps"
-  | "files"
-  | "intelligence"
-  | "approvals"
-  | "guidebook";
+  "steps" | "files" | "intelligence" | "approvals" | "guidebook";
 
 export type SourceShellEvidenceBasis =
   | "live_fact"
@@ -677,11 +673,13 @@ function groupSteps(tasks: readonly StageTaskView[]): SourceShellStepGroup[] {
     list.push(toShellStep(task, list.length === 0, index));
     groups.set(label, list);
   });
-  return Array.from(groups.entries()).map(([label, steps], index) => ({
-    id: `group-${index + 1}-${slug(label)}`,
-    label,
-    steps,
-  }));
+  return Array.from(groups.entries())
+    .sort(([a], [b]) => groupDisplayOrder(a) - groupDisplayOrder(b))
+    .map(([label, steps], index) => ({
+      id: `group-${index + 1}-${slug(label)}`,
+      label,
+      steps,
+    }));
 }
 
 function toShellStep(
@@ -708,6 +706,8 @@ function toShellStep(
 }
 
 function taskGroupLabel(task: StageTaskView): string {
+  if (task.id.startsWith("scope.")) return scopeTaskGroupLabel(task);
+
   const text = `${task.title} ${task.subtitle}`;
   if (/exclusion|included|applications?|inventory/i.test(text)) {
     return "Inclusions & exclusions";
@@ -721,6 +721,34 @@ function taskGroupLabel(task: StageTaskView): string {
   if (task.type === "provide") return "Evidence intake";
   if (task.type === "decide") return "Decision work";
   return "Review work";
+}
+
+function scopeTaskGroupLabel(task: StageTaskView): string {
+  switch (task.id) {
+    case "scope.apps":
+    case "scope.app-inventory":
+      return "Work in scope";
+    case "scope.exclusions":
+      return "Work out of scope";
+    case "scope.matrix":
+      return "Owners";
+    case "scope.sponsor":
+      return "Approval";
+    default:
+      return "Baseline evidence";
+  }
+}
+
+function groupDisplayOrder(label: string): number {
+  const scopeOrder = [
+    "Work in scope",
+    "Work out of scope",
+    "Owners",
+    "Baseline evidence",
+    "Approval",
+  ];
+  const scopeIndex = scopeOrder.indexOf(label);
+  return scopeIndex >= 0 ? scopeIndex : 100;
 }
 
 function taskSourceBasis(task: StageTaskView): SourceShellEvidenceBasis {
