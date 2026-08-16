@@ -99,6 +99,27 @@ describe("agent route · Source aVa contract optimization authority", () => {
     ).toBeLessThan(resolver.indexOf("const eventId ="));
   });
 
+  it("uses explicit governed tenant context for contract-grain Source reads", () => {
+    expect(source).toContain("const sourceContractReadTenantKey =");
+    expect(source).toContain(
+      "const contractGroundingTenantKey =\n    sourceContractReadTenantKey ?? effectiveClientKey;",
+    );
+    expect(source).toContain(
+      "await buildAvaSourceContractGrounding(\n        contractGroundingTenantKey,",
+    );
+    expect(source).toContain("function resolveSourceContractReadTenantKey");
+    expect(source).toContain("return explicitTenantKey;");
+  });
+
+  it("recognizes nested Source workspace selected-contract context", () => {
+    expect(source).toContain("function resolveSourceContractId");
+    expect(source).toContain("sourceV4.selectedContract");
+    expect(source).toContain("selectedContract.contractId");
+    expect(source).toContain(
+      "const contractIdFromContext = resolveSourceContractId(surfaceContext);",
+    );
+  });
+
   it("keeps single-contract grounding authoritative over the older event optimization block", () => {
     expect(source).toContain(
       "const contractGroundingIsAuthoritativeForMode =",

@@ -47,8 +47,12 @@ describe("listContractVendor360 tenant-key resolution", () => {
 
   it("resolves the audit-verified SkyHarbor spelling to canonical before alias fallback", async () => {
     await listContractVendor360("skyharbor_global");
+    expect(run.mock.calls[0]).toEqual([
+      "SELECT set_config('app.tenant_key', $1, false)",
+      ["skyharbor_global"],
+    ]);
     const [, params] = run.mock.calls[1];
-    expect(params[0]).toEqual(["skyharbor-air"]);
+    expect(params[0]).toEqual(["skyharbor_global", "skyharbor-air"]);
     const [, fallbackParams] = run.mock.calls[3];
     expect(fallbackParams[0]).toEqual(
       expect.arrayContaining([
