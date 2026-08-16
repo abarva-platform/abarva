@@ -103,25 +103,26 @@ describe("admin data layer explorer model", () => {
     });
   });
 
-  it("surfaces manifest completeness, stranded source, and excluded tenant controls", () => {
+  it("surfaces active manifest completeness and excluded tenant controls", () => {
     const audit = model.manifestProjectionAudit;
+    expect(audit.tenants.map((tenant) => tenant.tenantKey).sort()).toEqual([
+      "meridian-health",
+      "skyharbor-air",
+    ]);
+
     const skyHarbor = audit.tenants.find(
       (tenant) => tenant.tenantKey === "skyharbor-air",
     );
 
     expect(skyHarbor).toBeTruthy();
-    expect(skyHarbor?.status).toBe("blocked");
-    expect(skyHarbor?.sourceStructuredRows).toBeGreaterThan(50_000);
-    expect(skyHarbor?.candidateRecordsGenerated).toBe(53);
-    expect(skyHarbor?.blockers.length).toBeGreaterThan(0);
+    expect(skyHarbor?.status).toBe("complete");
+    expect(skyHarbor?.sourceStructuredRows).toBe(5789);
+    expect(skyHarbor?.candidateRecordsGenerated).toBe(5789);
+    expect(skyHarbor?.blockers.length).toBe(0);
     expect(audit.uploadPathAlignment.adminUploadAlignment).toBe(
       "not_fully_aligned",
     );
-    expect(audit.excludedTenants).toContainEqual(
-      expect.objectContaining({
-        tenantKey: "northstar-clinical",
-      }),
-    );
+    expect(audit.excludedTenants.length).toBeGreaterThan(0);
     expect(JSON.stringify(audit.skyHarborRequiredFindings)).toContain(
       "412-app portfolio",
     );

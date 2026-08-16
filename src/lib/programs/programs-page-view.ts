@@ -12,13 +12,6 @@
 // Execution Roadmap / Approval & Mobilization / Tower Handoff) per the
 // Programs strategy-to-approval operating model.
 //
-// Demo anchor (CORR — aligned to pages.yaml §demo-data-baseline):
-//   Flagship: APX-CDP-2026 · Apex Retail CDP Activation · P3 Design
-//   Gate:     Design gate cleared Apr 27 · Roadmap gate (P3→P4) pending 2/5 criteria
-//   Blockers: Vendor C contract · privacy architecture sign-off · roadmap brief
-//   Evidence: 100% (Design gate cleared)
-//   Source:   AMS Vendor Consolidation 2026 · Stage 7 BAFO · Vendor C selected
-//
 // Do NOT modify types.ui.ts solely to accommodate these types.
 
 import type {
@@ -33,8 +26,8 @@ import type {
   ProgramFullState,
   ProgramSummary,
   ViewerRole,
-} from './types.ui';
-import { getClientOption } from '@/lib/client-config';
+} from "./types.ui";
+import { getClientOption } from "@/lib/client-config";
 
 // ── Canonical phase model (7-phase P0–P6) ─────────────────────────────
 // Shell wave canonical lifecycle per PHASE_LABEL_MAP in programs-fixture.ts.
@@ -42,13 +35,17 @@ import { getClientOption } from '@/lib/client-config';
 // P5 entry (Approval & Mobilization approved). Soft transitions on remaining phases.
 
 export const CANONICAL_SEVEN_PHASES = [
-  { canonicalPhase: 0, name: 'Originate',  gateType: 'none' as const },
-  { canonicalPhase: 1, name: 'Discovery',  gateType: 'hard' as const },
-  { canonicalPhase: 2, name: 'Synthesis',  gateType: 'soft' as const },
-  { canonicalPhase: 3, name: 'Design',     gateType: 'hard' as const },
-  { canonicalPhase: 4, name: 'Execution Roadmap', gateType: 'soft' as const },
-  { canonicalPhase: 5, name: 'Approval & Mobilization', gateType: 'hard' as const },
-  { canonicalPhase: 6, name: 'Tower Handoff', gateType: 'none' as const },
+  { canonicalPhase: 0, name: "Originate", gateType: "none" as const },
+  { canonicalPhase: 1, name: "Discovery", gateType: "hard" as const },
+  { canonicalPhase: 2, name: "Synthesis", gateType: "soft" as const },
+  { canonicalPhase: 3, name: "Design", gateType: "hard" as const },
+  { canonicalPhase: 4, name: "Execution Roadmap", gateType: "soft" as const },
+  {
+    canonicalPhase: 5,
+    name: "Approval & Mobilization",
+    gateType: "hard" as const,
+  },
+  { canonicalPhase: 6, name: "Tower Handoff", gateType: "none" as const },
 ] as const;
 
 // Back-compat alias — remove after all consumers migrate to CANONICAL_SEVEN_PHASES
@@ -56,7 +53,8 @@ export const CANONICAL_SEVEN_PHASES = [
 export const CANONICAL_SIX_PHASES = CANONICAL_SEVEN_PHASES;
 
 export type CanonicalPhaseNumber = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-export type CanonicalPhaseName = typeof CANONICAL_SEVEN_PHASES[number]['name'];
+export type CanonicalPhaseName =
+  (typeof CANONICAL_SEVEN_PHASES)[number]["name"];
 
 // ── ProgramsIndexView ─────────────────────────────────────────────────
 // Props for the portfolio index page (/programs).
@@ -97,7 +95,9 @@ export interface ProgramsIndexView {
   };
 
   // Origin paths available on this surface (used to render action chips)
-  availableOriginPaths: Array<'intelligence_thread' | 'tower_signal' | 'user_initiated'>;
+  availableOriginPaths: Array<
+    "intelligence_thread" | "tower_signal" | "user_initiated"
+  >;
 
   // Summary statistics (computed from programs array, duplicated here
   // so the header can render without iterating the list)
@@ -119,13 +119,13 @@ export interface ProgramsIndexView {
 // here so server components can supply a resolved initial value.
 
 export type ProgramDetailTab =
-  | 'overview'      // Phase journey + sponsor dashboard
-  | 'workshop'      // Active module workspace
-  | 'deliverables'  // Versioned artifact list
-  | 'evidence'      // Evidence artifacts
-  | 'actions'       // Open work items and risks
-  | 'gate'          // Phase gate check + approvals
-  | 'decisions';    // Decision log
+  | "overview" // Phase journey + sponsor dashboard
+  | "workshop" // Active module workspace
+  | "deliverables" // Versioned artifact list
+  | "evidence" // Evidence artifacts
+  | "actions" // Open work items and risks
+  | "gate" // Phase gate check + approvals
+  | "decisions"; // Decision log
 
 export interface ProgramDetailView {
   // Core program state (DB-derived via buildProgramFullState)
@@ -159,7 +159,12 @@ export interface ProgramDetailView {
 }
 
 export interface ProgramDetailNextAction {
-  type: 'complete_module' | 'review_deliverable' | 'clear_gate' | 'resolve_risk' | 'approve_request';
+  type:
+    | "complete_module"
+    | "review_deliverable"
+    | "clear_gate"
+    | "resolve_risk"
+    | "approve_request";
   label: string;
   moduleKey?: string;
   deliverableId?: string;
@@ -177,17 +182,17 @@ export interface ProgramDetailNextAction {
 // view transitions to the pattern-selection step.
 
 export type OriginationSource =
-  | 'user_initiated'
-  | 'intelligence_thread'
-  | 'tower_signal';
+  | "user_initiated"
+  | "intelligence_thread"
+  | "tower_signal";
 
 export type OriginationStep =
-  | 'intake'          // Fill out the origination form
-  | 'classifying'     // Classifier is running (loading state)
-  | 'pattern_select'  // Classifier returned matches; user selects
-  | 'confirming'      // Shape confirmed; user reviews before submit
-  | 'creating'        // POST in flight
-  | 'complete';       // Program created; redirect pending
+  | "intake" // Fill out the origination form
+  | "classifying" // Classifier is running (loading state)
+  | "pattern_select" // Classifier returned matches; user selects
+  | "confirming" // Shape confirmed; user reviews before submit
+  | "creating" // POST in flight
+  | "complete"; // Program created; redirect pending
 
 export interface OriginationPrefill {
   name?: string;
@@ -218,8 +223,8 @@ export interface ProgramOriginationView {
   // Thread / signal context when source !== 'user_initiated'
   sourceRef?: {
     id: string;
-    type: 'intelligence_thread' | 'tower_signal';
-    label: string;         // Shown in the "sourced from" banner
+    type: "intelligence_thread" | "tower_signal";
+    label: string; // Shown in the "sourced from" banner
     preloadDepthPct: number; // 0–100; determines pre-load badge
   };
 
@@ -229,7 +234,7 @@ export interface ProgramOriginationView {
 
   // Accepted shape override (when user picks custom or template instead
   // of the top pattern match)
-  shapeOverride: 'template' | 'custom' | null;
+  shapeOverride: "template" | "custom" | null;
 
   // Sponsor + lead candidate lists for the person pickers
   sponsorOptions: PersonRef[];
@@ -252,7 +257,7 @@ export interface OriginationClassifierStage {
   id: string;
   label: string;
   detail: string;
-  state: 'pending' | 'running' | 'complete' | 'error';
+  state: "pending" | "running" | "complete" | "error";
 }
 
 // ── buildProgramsIndexView ────────────────────────────────────────────────
@@ -265,67 +270,69 @@ import type {
   ProgramRow,
   ProgramWorkbenchContent,
   ProgramsIndexView as ProgramsIndexViewV2,
-} from './programs-types';
-import { APEX_PROGRAMS_FIXTURE } from './programs-fixture';
-import { MERIDIAN_PROGRAMS_FIXTURE } from './meridian-fixture';
+} from "./programs-types";
+import { MERIDIAN_PROGRAMS_FIXTURE } from "./meridian-fixture";
 
-export type ProgramsIndexTenant = 'apex-retail' | 'meridian-health' | 'first-capital' | 'northstar-clinical' | 'skyharbor-air';
+export type ProgramsIndexTenant = "meridian-health" | "skyharbor-air";
 
 const PROGRAM_FIXTURES_BY_TENANT: Record<ProgramsIndexTenant, ProgramRow[]> = {
-  'apex-retail': APEX_PROGRAMS_FIXTURE,
-  'meridian-health': MERIDIAN_PROGRAMS_FIXTURE,
-  'first-capital': [],
-  'northstar-clinical': [],
-  'skyharbor-air': [],
+  "meridian-health": MERIDIAN_PROGRAMS_FIXTURE,
+  "skyharbor-air": [],
 };
 
 const PROGRAM_TENANT_LABELS: Record<ProgramsIndexTenant, string> = {
-  'apex-retail': getClientOption('apexretail').name,
-  'meridian-health': getClientOption('meridian').name,
-  'first-capital': getClientOption('arcturus').name,
-  'northstar-clinical': getClientOption('northstar').name,
-  'skyharbor-air': getClientOption('skyharbor').name,
+  "meridian-health": getClientOption("meridian").name,
+  "skyharbor-air": getClientOption("skyharbor").name,
 };
 
-const PHASE_FILTER_TENANT_BY_INDEX_TENANT: Record<ProgramsIndexTenant, string> = {
-  'apex-retail': 'apex-retail',
-  'meridian-health': 'meridian-health',
-  'first-capital': 'first-capital',
-  'northstar-clinical': 'northstar-clinical',
-  'skyharbor-air': 'skyharbor-air',
-};
+const PHASE_FILTER_TENANT_BY_INDEX_TENANT: Record<ProgramsIndexTenant, string> =
+  {
+    "meridian-health": "meridian-health",
+    "skyharbor-air": "skyharbor-air",
+  };
 
-export type ProgramsIndexFilterKey = 'all' | 'active' | 'idle' | 'gated';
+export type ProgramsIndexFilterKey = "all" | "active" | "idle" | "gated";
 
-export function normalizeProgramsIndexFilter(value: string | null): ProgramsIndexFilterKey {
-  if (value === 'active' || value === 'idle' || value === 'gated') return value;
-  return 'all';
+export function normalizeProgramsIndexFilter(
+  value: string | null,
+): ProgramsIndexFilterKey {
+  if (value === "active" || value === "idle" || value === "gated") return value;
+  return "all";
 }
 
 export function filterProgramRowsForIndex(
   programs: ReadonlyArray<ProgramRow>,
   filter: ProgramsIndexFilterKey,
 ): ProgramRow[] {
-  if (filter === 'active') return programs.filter((p) => !p.isIdle && !p.isCompleted);
-  if (filter === 'idle') return programs.filter((p) => p.isIdle);
-  if (filter === 'gated') return programs.filter((p) => p.gateStatus === 'pending');
+  if (filter === "active")
+    return programs.filter((p) => !p.isIdle && !p.isCompleted);
+  if (filter === "idle") return programs.filter((p) => p.isIdle);
+  if (filter === "gated")
+    return programs.filter((p) => p.gateStatus === "pending");
   return [...programs];
 }
 
-export function getProgramsIndexEmptyStateCopy(filter: ProgramsIndexFilterKey): string {
-  if (filter === 'idle') return 'No strategic moves are currently idle.';
-  if (filter === 'active') return 'No strategic moves are currently active.';
-  if (filter === 'gated') return 'No strategic moves have pending gate reviews.';
-  return 'No strategic moves are in this workspace yet.';
+export function getProgramsIndexEmptyStateCopy(
+  filter: ProgramsIndexFilterKey,
+): string {
+  if (filter === "idle") return "No strategic moves are currently idle.";
+  if (filter === "active") return "No strategic moves are currently active.";
+  if (filter === "gated")
+    return "No strategic moves have pending gate reviews.";
+  return "No strategic moves are in this workspace yet.";
 }
 
-export function getProgramsIndexEmptyStateTitle(filter: ProgramsIndexFilterKey): string {
-  if (filter === 'all') return 'No strategic moves yet';
+export function getProgramsIndexEmptyStateTitle(
+  filter: ProgramsIndexFilterKey,
+): string {
+  if (filter === "all") return "No strategic moves yet";
   return `No ${filter} moves`;
 }
 
-export function getProgramsIndexFilterHref(filter: ProgramsIndexFilterKey): string {
-  if (filter === 'all') return '/programs';
+export function getProgramsIndexFilterHref(
+  filter: ProgramsIndexFilterKey,
+): string {
+  if (filter === "all") return "/programs";
   return `/programs?filter=${filter}`;
 }
 
@@ -334,103 +341,73 @@ export function getProgramsIndexFilterSummary(
   visibleCount: number,
   totalCount: number,
 ): string {
-  if (filter === 'all') return `${totalCount} moves shown`;
+  if (filter === "all") return `${totalCount} moves shown`;
   return `${visibleCount} of ${totalCount} moves shown · ${filter} filter`;
 }
 
-export function buildProgramsIndexView(tenant: ProgramsIndexTenant): ProgramsIndexViewV2 {
+export function buildProgramsIndexView(
+  tenant: ProgramsIndexTenant,
+): ProgramsIndexViewV2 {
   const tenantLabel = PROGRAM_TENANT_LABELS[tenant];
   const phaseFilterTenantSlug = PHASE_FILTER_TENANT_BY_INDEX_TENANT[tenant];
   const programs: ProgramRow[] = [...PROGRAM_FIXTURES_BY_TENANT[tenant]];
 
   const totalActive = programs.filter((p) => !p.isIdle).length;
-  const gatesPending = programs.filter((p) => p.gateStatus === 'pending').length;
+  const gatesPending = programs.filter(
+    (p) => p.gateStatus === "pending",
+  ).length;
   const idleCount = programs.filter((p) => p.isIdle).length;
 
-  const portfolioWorkbench: ProgramWorkbenchContent =
-    tenant === 'apex-retail'
-      ? {
-          title: 'Nexus Portfolio Workbench',
-          prose:
-            'Six programs in flight across the Apex Retail portfolio. APX-CDP-2026 is the critical path — Design gate cleared Apr 27, now in P3 Design with Execution Roadmap gate 2 of 5 criteria met. Vendor C contract is the near-term blocker. APX-MRC-2025 has been idle 9 days; sponsor re-engagement recommended before the Q3 cadence review.',
-          actionsLabel: 'Nexus recommends',
-          actions: [
-            {
-              letter: 'A',
-              text: 'Advance APX-CDP-2026 roadmap gate',
-              detail: 'Close Vendor C contract · privacy architecture sign-off · build brief scoping',
-            },
-            {
-              letter: 'B',
-              text: 'Resume APX-MRC-2025',
-              detail: 'Idle 9 days — engage sponsor before Q3 review',
-            },
-            {
-              letter: 'C',
-              text: 'Review APX-CC-2026 roadmap progress',
-              detail: 'Approval & Mobilization gate approaching — IVR migration critical path',
-            },
-          ],
-        }
-      : {
-          title: 'Nexus Portfolio Workbench',
-          prose: `${tenantLabel} portfolio view is scoped to the active tenant. Nexus is reading the tenant-specific program list and will show seeded rows only when they belong to this client.`,
-          actionsLabel: 'Nexus recommends',
-          actions: [
-            {
-              letter: 'A',
-              text: 'Review active phase gates',
-              detail: 'Focus on open gates and missing evidence before advancing programs.',
-            },
-            {
-              letter: 'B',
-              text: 'Check idle programs',
-              detail: 'Confirm sponsor ownership for any program without recent activity.',
-            },
-            {
-              letter: 'C',
-              text: 'Create a new program',
-              detail: 'Use Steward on /programs/new when the portfolio needs a new P0 brief.',
-            },
-          ],
-        };
+  const portfolioWorkbench: ProgramWorkbenchContent = {
+    title: "Nexus Portfolio Workbench",
+    prose: `${tenantLabel} portfolio view is scoped to the active tenant. Nexus is reading the tenant-specific program list and will show seeded rows only when they belong to this client.`,
+    actionsLabel: "Nexus recommends",
+    actions: [
+      {
+        letter: "A",
+        text: "Review active phase gates",
+        detail:
+          "Focus on open gates and missing evidence before advancing programs.",
+      },
+      {
+        letter: "B",
+        text: "Check idle programs",
+        detail:
+          "Confirm sponsor ownership for any program without recent activity.",
+      },
+      {
+        letter: "C",
+        text: "Create a new program",
+        detail:
+          "Use Steward on /programs/new when the portfolio needs a new P0 brief.",
+      },
+    ],
+  };
 
   const agentRail: ProgramAgentRailItem[] = [
     {
-      initials: 'Nx',
-      name: 'Nexus',
-      job:
-        tenant === 'apex-retail'
-          ? 'Orchestrating 6 programs · APX-CDP-2026 critical path'
-          : `Orchestrating ${tenantLabel} programs`,
-      state: 'active',
+      initials: "Nx",
+      name: "Nexus",
+      job: `Orchestrating ${tenantLabel} programs`,
+      state: "active",
     },
     {
-      initials: 'Sn',
-      name: 'Sentinel',
-      job:
-        tenant === 'apex-retail'
-          ? 'Design gate review · APX-CDP-2026 evidence gap'
-          : `${tenantLabel} gate evidence watch`,
-      state: 'on_call',
+      initials: "Sn",
+      name: "Sentinel",
+      job: `${tenantLabel} gate evidence watch`,
+      state: "on_call",
     },
     {
-      initials: 'At',
-      name: 'Atlas',
-      job:
-        tenant === 'apex-retail'
-          ? 'APX-CC-2026 approval brief ready · DFV2 Tower monitoring active'
-          : `${tenantLabel} portfolio synthesis ready`,
-      state: 'on_call',
+      initials: "At",
+      name: "Atlas",
+      job: `${tenantLabel} portfolio synthesis ready`,
+      state: "on_call",
     },
     {
-      initials: 'St',
-      name: 'Steward',
-      job:
-        tenant === 'apex-retail'
-          ? 'APX-CDP-2026 privacy boundary review pending'
-          : `${tenantLabel} P0 intake support`,
-      state: 'advisory',
+      initials: "St",
+      name: "Steward",
+      job: `${tenantLabel} P0 intake support`,
+      state: "advisory",
     },
   ];
 
@@ -440,7 +417,7 @@ export function buildProgramsIndexView(tenant: ProgramsIndexTenant): ProgramsInd
     totalActive,
     gatesPending,
     idleCount,
-    capacityLabel: 'Q3 60% capacity',
+    capacityLabel: "Q3 60% capacity",
     portfolioWorkbench,
     agentRail,
     programs,
