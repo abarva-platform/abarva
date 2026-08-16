@@ -29,6 +29,7 @@ Layer 4 / Products (`internal-admin` lane): tightens the Source read-model and c
 - `scripts/data-build/refresh-source-l4-cube.ts` records active Source L4/cube load runs for the approved tenant scope.
 - The runner rebuilds Source read-model views so Contract 360, vendor portfolio, and application scope expose the active build only.
 - The runner rebuilds Source Cube consumption views so vendor, contract, scope, spend, performance, opportunity, event, and event-supplier slices expose the active build only.
+- The opportunity consumption view exposes `timing_window` so the Cube opportunity pipeline model and the refreshed L4 view contract stay aligned.
 - The runner now fails readback when Source read-model counts or consumption-view counts do not match the current build's source-table counts.
 
 ## QA / Validation
