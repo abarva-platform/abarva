@@ -69,6 +69,11 @@ function fmtPct(share: number): string {
   return `${(share * 100).toFixed(1)}%`;
 }
 
+function cleanCategory(value: string | null | undefined): string {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : 'Unclassified';
+}
+
 // Mirrors the exact as-of resolution the Workspace page itself uses
 // (src/app/(maestro)/source/preview/workspace/page.tsx) so the grounding
 // block's renewal-window numbers can never diverge from the canvas the user
@@ -122,6 +127,20 @@ export async function buildAvaSourcePortfolioGrounding(
     .slice(0, 5)
     .map((v) => `${v.vendorName} ${fmtUsd(v.annualValue)} (${fmtPct(v.shareOfTotal)})`)
     .join('; ');
+  const categoryTotals = [...contracts.reduce((acc, contract) => {
+    const category = cleanCategory(contract.vendor_category);
+    acc.set(category, (acc.get(category) ?? 0) + (contract.annual_value ?? 0));
+    return acc;
+  }, new Map<string, number>()).entries()]
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 6);
+  const topCategories = categoryTotals
+    .map(([category, annualValue]) => {
+      const share =
+        summary.totalAnnualValue > 0 ? annualValue / summary.totalAnnualValue : 0;
+      return `${category} ${fmtUsd(annualValue)} (${fmtPct(share)})`;
+    })
+    .join('; ');
 
   const lines: string[] = [
     `AUTHORITATIVE SOURCE PORTFOLIO GROUNDING (LIVE — source.contract_360 / source.vendor_contract_portfolio, tenant "${tenantKey}", as of ${asOfIso.slice(0, 10)}):`,
@@ -136,10 +155,13 @@ export async function buildAvaSourcePortfolioGrounding(
     `Annual contract value: ${fmtUsd(summary.totalAnnualValue)}. Actual annual spend: ${fmtUsd(summary.totalActualAnnualSpend)}. Total committed value: ${fmtUsd(summary.totalCommittedValue)}.`,
     `Auto-renewing contracts: ${summary.autoRenewCount} of ${summary.contractCount}.`,
     topVendors ? `Top vendors by annual value: ${topVendors}.` : '',
+    topCategories
+      ? `Top effective categories by annual value: ${topCategories}.`
+      : '',
     `Contracts with two or more weak leverage signals (the four checked signals are: no benchmark clause, no alternatives on record, skill dependency, regional dependency): ${weakLeverage.length}, combined annual value ${fmtUsd(weakLeverageValue)}.`,
     `Renewal exposure within 180 days: ${renewal180.expiringWithinWindow.length} contracts, ${fmtUsd(renewal180.expiringWithinWindowAnnualValue)}. Notice deadline already passed while the contract remains active: ${renewal180.noticeDeadlinePassed.length} contracts, ${fmtUsd(renewal180.noticeDeadlinePassedAnnualValue)}.`,
     `Deterministic sourcing opportunities (computeSourcingOpportunities — weak leverage, missed notice deadlines, top-concentration vendor status, never a fabricated priority score): ${opportunitiesResult.opportunities.length}, combined annual value ${fmtUsd(opportunityValue)}.`,
-    'These are the ONLY governed Source portfolio numbers for this tenant. For a portfolio-wide contract/vendor/spend/leverage/renewal question, use ONLY these numbers — never a figure from generic tenant-context retrieval, a different corpus, or your own estimate. If the user asks about a single contract or vendor by name that is not listed above, say the portfolio-level grounding above does not include that contract\'s detail and it should be looked up on its Contract 360 page instead of guessed.',
+    'These are the ONLY governed Source portfolio numbers for this tenant. For a portfolio-wide contract/vendor/category/spend/leverage/renewal question, use ONLY these numbers — never a figure from generic tenant-context retrieval, a different corpus, or your own estimate. If the user asks for a portfolio concentration chart by vendor and category, use the Top vendors line and the Top effective categories line above. If the user asks about a single contract or vendor by name that is not listed above, say the portfolio-level grounding above does not include that contract\'s detail and it should be looked up on its Contract 360 page instead of guessed.',
   ].filter(Boolean);
 
   return { block: lines.join('\n'), hasLiveNumbers: true };

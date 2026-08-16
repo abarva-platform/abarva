@@ -98,9 +98,9 @@ describe('buildAvaSourcePortfolioGrounding', () => {
 
   it('quotes portfolio totals that match summarizePortfolio for the same rows — the anti-divergence guarantee', async () => {
     const rows: SourceContract360Row[] = [
-      contractRow({ contract_id: 'c1', vendor_ref: 'v1', vendor_name: 'Salesforce', annual_value: 43_500_000, actual_annual_spend: 37_400_000, auto_renew: true, benchmarking_clause: 'none', alternatives_available: 'none' }),
-      contractRow({ contract_id: 'c2', vendor_ref: 'v2', vendor_name: 'CloudPeak Managed Services', annual_value: 25_000_000, actual_annual_spend: 20_000_000, benchmarking_clause: 'strong' }),
-      contractRow({ contract_id: 'c3', vendor_ref: 'v1', vendor_name: 'Salesforce', annual_value: 5_000_000, actual_annual_spend: 4_500_000 }),
+      contractRow({ contract_id: 'c1', vendor_ref: 'v1', vendor_name: 'Salesforce', vendor_category: 'SaaS', annual_value: 43_500_000, actual_annual_spend: 37_400_000, auto_renew: true, benchmarking_clause: 'none', alternatives_available: 'none' }),
+      contractRow({ contract_id: 'c2', vendor_ref: 'v2', vendor_name: 'CloudPeak Managed Services', vendor_category: 'Cloud platform', annual_value: 25_000_000, actual_annual_spend: 20_000_000, benchmarking_clause: 'strong' }),
+      contractRow({ contract_id: 'c3', vendor_ref: 'v1', vendor_name: 'Salesforce', vendor_category: 'SaaS', annual_value: 5_000_000, actual_annual_spend: 4_500_000 }),
     ];
     mockListContract360.mockResolvedValue(rows);
     mockListVendorContractPortfolio.mockResolvedValue([
@@ -119,6 +119,10 @@ describe('buildAvaSourcePortfolioGrounding', () => {
     // Real vendor names from the fixture must appear; nothing fabricated.
     expect(result.block).toContain('Salesforce');
     expect(result.block).toContain('CloudPeak Managed Services');
+    expect(result.block).toContain('Top effective categories by annual value');
+    expect(result.block).toContain('SaaS $48.5M');
+    expect(result.block).toContain('Cloud platform $25M');
+    expect(result.block).toContain('portfolio concentration chart by vendor and category');
     // No fabricated vendor/contract id from the live-found bug should ever
     // appear — this is the literal regression signature.
     expect(result.block).not.toContain('Sabre');

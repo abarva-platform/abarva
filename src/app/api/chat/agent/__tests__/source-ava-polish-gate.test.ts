@@ -118,6 +118,19 @@ describe("agent route · Source aVa contract optimization authority", () => {
     expect(source).toContain("return explicitTenantKey;");
   });
 
+  it("uses the same tenant-key fallback discipline for portfolio-grain Source reads", () => {
+    expect(source).toContain(
+      "const sourcePortfolioTenantKeys = uniqueNonEmptyStrings([",
+    );
+    expect(source).toContain("sourceContractReadTenantKey,");
+    expect(source).toContain(
+      "for (const sourcePortfolioTenantKey of sourcePortfolioTenantKeys)",
+    );
+    expect(source).toContain(
+      "await buildAvaSourcePortfolioGrounding(sourcePortfolioTenantKey)",
+    );
+  });
+
   it("recognizes nested Source workspace selected-contract context", () => {
     expect(source).toContain("function resolveSourceContractId");
     expect(source).toContain("sourceV4.selectedContract");
@@ -177,6 +190,14 @@ describe("agent route · Source aVa visual and table output discipline", () => {
     expect(source).toContain("include a compact markdown table");
     expect(source).toContain("state the counting basis");
     expect(source).toContain("rather than zero");
+  });
+
+  it("keeps portfolio charts and contract lineage answers grounded instead of scrubbed after generation", () => {
+    expect(source).toContain("SOURCE PORTFOLIO CHART DISCIPLINE");
+    expect(source).toContain("AUTHORITATIVE SOURCE PORTFOLIO GROUNDING only");
+    expect(source).toContain("SOURCE LINEAGE DISCIPLINE");
+    expect(source).toContain("source systems, extracts, fields, grain, history, update frequency");
+    expect(source).toContain("do not deflect as platform architecture");
   });
 });
 
