@@ -32,6 +32,7 @@ This release tightens Source aVa contract answers so pending Finance/Tower evide
 - `src/lib/source/ava/answer-quality-gate.ts`
 - Focused regression tests for the grounding block and answer-quality repair.
 - Follow-up guard for pending evidence phrasing: aVa must not imply a pending Finance/Tower amount automatically becomes realized value when approval occurs.
+- Follow-up guard for deterministic conversion phrasing: pending evidence must not be described as converting or moving from pending into approved value.
 
 ## QA / Validation
 
