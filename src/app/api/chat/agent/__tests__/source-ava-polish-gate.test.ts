@@ -195,14 +195,20 @@ describe("agent route · Source aVa visual and table output discipline", () => {
   });
 
   it("keeps event-stage operational asks table-shaped and prevents status/value overclaiming", () => {
+    expect(source).toContain("SOURCE VIEWED-STAGE DISCIPLINE");
+    expect(source).toContain("when a Source event turn includes a viewed stage");
+    expect(source).toContain("answer operational questions");
+    expect(source).toContain("for that viewed stage");
     expect(source).toContain("SOURCE EVENT ANSWER SHAPE");
     expect(source).toContain("files/templates");
     expect(source).toContain("workshops");
     expect(source).toContain("vendor unsupported claims");
+    expect(source).toContain("Include the words template, collect, next, approval, blocking, or guidebook");
     expect(source).toContain("Do not answer those asks as prose-only paragraphs");
     expect(source).toContain("SOURCE STAGE STATUS DISCIPLINE");
     expect(source).toContain("distinguish stage/task completion from approved value");
-    expect(source).toContain("Do not imply guaranteed, booked, approved, or realized savings");
+    expect(source).toContain("Do not imply guaranteed, booked, approved, realized, or realized savings");
+    expect(source).toContain("not finance-confirmed");
   });
 
   it("uses literal Source boundary wording for tenant isolation and unquotable figures", () => {
