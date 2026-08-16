@@ -5,8 +5,6 @@ import path from "node:path";
 import process from "node:process";
 
 const RETIRED_KEYS = Object.freeze([
-  "meridian-health",
-  "meridian",
   "apex-retail",
   "apex",
   "apexretail",
@@ -15,10 +13,19 @@ const RETIRED_KEYS = Object.freeze([
   "first-capital",
   "firstcapital",
   "first-capital-financial",
-  "skyharbor-air",
+  "northstar-clinical",
+  "northstar",
+  "northstar-clinical-tech",
+  "northstar-medtech",
 ]);
 
-const KEEP_KEYS = Object.freeze(["skyharbor_global"]);
+const KEEP_KEYS = Object.freeze([
+  "meridian-health",
+  "meridian",
+  "skyharbor-air",
+  "skyharbor",
+  "skyharbor_global",
+]);
 
 const TENANT_COLUMN_NAMES = new Set([
   "tenant_key",

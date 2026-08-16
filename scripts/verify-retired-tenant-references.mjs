@@ -24,6 +24,13 @@ const ALLOWED_PATH_PATTERNS = [
   /^docs\//,
   /^datasets\//,
   /^scripts\/verify-retired-tenant-references\.mjs$/,
+  // Retired-tenant operator scripts must name retired keys in order to audit
+  // and purge them. Keep this allowlist narrow; active/runtime scripts stay
+  // subject to the retired-reference guard.
+  /^scripts\/governance\/retired-tenant-inventory\.mjs$/,
+  /^scripts\/ops\/audit-retired-tenant-residue\.mjs$/,
+  /^scripts\/ops\/purge-retired-tenant-residue\.mjs$/,
+  /^scripts\/ops\/purge-retired-tenant-rows\.mjs$/,
   // Fix A — Atlas retrieval alias normalization MUST reference the retired
   // names in order to NORMALIZE them; these two paths are the only place in
   // src/ where the retired names legitimately appear, and they appear inside
