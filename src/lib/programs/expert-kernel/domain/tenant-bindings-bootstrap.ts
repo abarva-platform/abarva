@@ -29,13 +29,8 @@
 import './meridian-vbc-decision-home';
 import './meridian-vbc-bet-selection';
 
-// Apex Retail × customer care.
-import './apex-decision-home';
-import './apex-bet-selection';
-
-// First Capital Financial × fraud & financial crime.
-import './firstcapital-decision-home';
-import './firstcapital-bet-selection';
+// The Apex Retail × customer care and First Capital × fraud bindings were removed with those
+// tenants in the 2026-08-16 sunset.
 
 /**
  * Marker export — exists so a TypeScript consumer can `import { bootstrapped }`

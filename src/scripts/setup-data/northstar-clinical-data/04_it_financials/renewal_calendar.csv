@@ -1,4 +1,0 @@
-contract_id,vendor_name,renewal_date,notice_deadline,annual_value_usd,domain,relationship_owner,last_reviewed,confidence
-contract:northstar:erp-si,Nova ERP Services,2026-10-31,2026-07-31,18500000,ERP transformation,person:northstar:vp-sourcing,2026-05-20,high
-contract:northstar:qms,Atlas Quality Systems,2026-09-15,2026-06-17,7200000,Quality systems,person:northstar:vp-digital,2026-05-18,medium
-

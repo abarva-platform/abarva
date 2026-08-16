@@ -1,7 +1,0 @@
-vendor,type,recommended,overall_score,total_cost_3yr,implementation_weeks,go_live_date,key_rationale,key_risk
-Finzly,Fintech API Layer,true,91,4200000,16,2026-04-01,"Pre-certified FedNow participant; native FIS HORIZON connector; only vendor meeting 90-120 day client deadline","Fintech vendor perception; mitigate with SLA and escrow"
-Fiserv Now Gateway,Established Financial Technology,false,74,18200000,42,2026-Q4,"Strong compliance posture and industry footprint","No native FIS HORIZON connector; misses commercial client deadline"
-Jack Henry PayZur,Financial Technology,false,68,7800000,36,2026-Q3,"Competitive pricing and community-bank focus","Limited FIS HORIZON references; custom integration"
-Q2 PTAP,Existing Vendor Expansion,false,62,9400000,28,2026-Q2,"Existing Q2 relationship creates commercial leverage","Deepens Q2 dependency while mobile performance is already weak"
-Build In-House,Internal Development,false,28,11600000,80,2027-Q2,"Retains control and avoids new vendor dependency","18-24 month timeline; internal FIS HORIZON expertise too thin"
-

@@ -1,4 +1,0 @@
-vendor_id,vendor_name,scope_fit,validated_systems_experience,commercial_completeness,risk_flag,relationship_owner,last_reviewed,confidence
-vendor:northstar:nova,Nova ERP Services,high,medium,incomplete,pricing_excludes_data_conversion,person:northstar:vp-sourcing,2026-05-20,medium
-vendor:northstar:parallax,Parallax Consulting,medium,high,complete,transition_capacity_unproven,person:northstar:vp-sourcing,2026-05-20,medium
-

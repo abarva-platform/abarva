@@ -1,8 +1,0 @@
-system_id,name,vendor,owner_id,domain,criticality,regulated_scope,last_reviewed,confidence
-system:northstar:erp-core,Enterprise ERP Core,Nova ERP Services,person:northstar:cio,ERP,P0,GxP-adjacent,2026-05-18,high
-system:northstar:mes,Manufacturing Execution Platform,Lineage Manufacturing Cloud,person:northstar:vp-digital,Manufacturing,P0,GxP,2026-05-16,high
-system:northstar:qms,Global Quality Management System,Atlas Quality Systems,person:northstar:vp-digital,Quality,P0,GxP,2026-05-16,high
-system:northstar:plm,Product Lifecycle Management,Vector PLM,person:northstar:vp-digital,Engineering,P1,Design-control,2026-05-15,medium
-system:northstar:crm,Commercial CRM,Beacon CRM,person:northstar:cio,Commercial,P1,Customer-data,2026-05-13,medium
-system:northstar:data-lake,Enterprise Data Lake,Orion Cloud Data,person:northstar:cio,Data,P1,Controlled-data,2026-05-12,medium
-

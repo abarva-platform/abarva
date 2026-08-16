@@ -1,6 +1,0 @@
-id,category,annual_spend_usd,owner_id,last_reviewed,confidence
-itspend:northstar:erp,ERP and corporate applications,92000000,person:northstar:cio,2026-05-20,high
-itspend:northstar:quality,Quality and manufacturing systems,64000000,person:northstar:vp-digital,2026-05-20,high
-itspend:northstar:data,Data platform and analytics,38000000,person:northstar:cio,2026-05-19,medium
-itspend:northstar:security,Security and compliance tooling,41000000,person:northstar:cio,2026-05-19,medium
-

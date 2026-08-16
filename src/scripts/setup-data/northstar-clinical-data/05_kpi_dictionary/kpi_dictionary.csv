@@ -1,8 +1,0 @@
-kpi_id,metric,definition,source_system,baseline_value,target_value,unit,last_reviewed,confidence
-kpi:northstar:release-cycle,Quality release cycle time,Average days from batch completion to quality release,system:northstar:qms,11.8,8.5,days,2026-05-16,medium
-kpi:northstar:deviation-aging,Deviation aging,Open quality deviations older than 30 days,system:northstar:qms,214,150,count,2026-05-16,medium
-kpi:northstar:erp-change-failure,ERP change failure rate,Percent of production ERP releases requiring emergency fix,system:northstar:erp-core,18,9,percent,2026-05-15,medium
-kpi:northstar:vendor-overlap,Duplicate application-vendor overlap,Count of vendors with overlapping scope across divisions,system:northstar:data-lake,37,20,count,2026-05-14,low
-kpi:northstar:data-quality,Master-data exception rate,Percent of product/customer/vendor master records failing quality rules,system:northstar:data-lake,7.8,4.0,percent,2026-05-14,medium
-kpi:northstar:manufacturing-downtime,Manufacturing-system downtime,Monthly downtime hours across validated manufacturing systems,system:northstar:mes,42,25,hours,2026-05-13,medium
-
