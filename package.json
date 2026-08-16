@@ -816,10 +816,15 @@
     "ops:purge-retired-tenant-rows": "node scripts/ops/purge-retired-tenant-rows.mjs",
     "ops:purge-retired-tenant-rows:apply": "node scripts/ops/purge-retired-tenant-rows.mjs --apply",
     "audit:source-canvas-reachability": "node scripts/audit/source-canvas-reachability.mjs",
-    "packet:generate": "node scripts/data/contract-packet/generate-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --out .artifacts/contract-packets",
-    "packet:reconcile": "node scripts/data/contract-packet/reconcile-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --packets .artifacts/contract-packets",
-    "packet:benchmark": "node scripts/data/contract-packet/benchmark-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --packets .artifacts/contract-packets",
+    "packet:generate": "node scripts/data/contract-packet/generate-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --out .artifacts/contract-packets/staging-fixture",
+    "packet:reconcile": "node scripts/data/contract-packet/reconcile-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --packets .artifacts/contract-packets/staging-fixture",
+    "packet:benchmark": "node scripts/data/contract-packet/benchmark-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --packets .artifacts/contract-packets/staging-fixture",
     "packet:check": "npm run packet:generate && npm run packet:reconcile && npm run packet:benchmark",
+    "packet:prepare:meridian": "node scripts/data/contract-packet/prepare-tenant-contract-fixture.mjs --tenant meridian-health --out .artifacts/contract-packets/meridian-health-fixture --limit 8",
+    "packet:generate:meridian": "node scripts/data/contract-packet/generate-contract-packet.mjs --in .artifacts/contract-packets/meridian-health-fixture --out .artifacts/contract-packets/meridian-health",
+    "packet:reconcile:meridian": "node scripts/data/contract-packet/reconcile-contract-packet.mjs --in .artifacts/contract-packets/meridian-health-fixture --packets .artifacts/contract-packets/meridian-health",
+    "packet:benchmark:meridian": "node scripts/data/contract-packet/benchmark-contract-packet.mjs --in .artifacts/contract-packets/meridian-health-fixture --packets .artifacts/contract-packets/meridian-health",
+    "packet:check:meridian": "npm run packet:prepare:meridian && npm run packet:generate:meridian && npm run packet:reconcile:meridian && npm run packet:benchmark:meridian",
     "validate:no-real-vendor-parties": "node scripts/audit/validate-no-real-vendor-parties.mjs"
   },
   "dependencies": {
