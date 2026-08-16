@@ -85,15 +85,25 @@ function tenantKeyAliases(tenantKey: string): string[] {
 }
 
 function canonicalSourceTenantKeys(tenantKey: string): string[] {
-  return [canonicalTenantKey(tenantKey)];
+  const trimmed = tenantKey.trim();
+  return Array.from(
+    new Set(
+      [trimmed.endsWith("_global") ? trimmed : null, canonicalTenantKey(tenantKey)]
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
 }
 
 function tenantRlsKey(tenantKey: string): string {
   if (isMeridianTenantKey(tenantKey)) return "meridian_health_global";
+  const trimmed = tenantKey.trim();
+  if (trimmed.endsWith("_global")) return trimmed;
   return canonicalTenantKey(tenantKey);
 }
 
 function canonicalTenantRlsKey(tenantKey: string): string {
+  const trimmed = tenantKey.trim();
+  if (trimmed.endsWith("_global")) return trimmed;
   return canonicalTenantKey(tenantKey);
 }
 

@@ -1066,6 +1066,9 @@ export async function POST(request: Request) {
   const sourceClientKey = isSourceSurface(surface)
     ? resolveSourceClientKey(surfaceContext)
     : null;
+  const sourceContractReadTenantKey = isSourceSurface(surface)
+    ? resolveSourceContractReadTenantKey(surfaceContext)
+    : null;
   const effectiveClientKey = sourceClientKey ?? activeClientKey ?? null;
   const crossTenantWriteIntent =
     isProgramsSurface(surface) || surface === "/home"
@@ -1398,17 +1401,19 @@ export async function POST(request: Request) {
   // This reads the same governed builders the Optimize page renders from, so
   // aVa's numbers cannot diverge from the ones on screen. Additive: no contract
   // id, an unknown contract, or a read failure leaves the block empty.
-  const contractIdFromContext =
-    typeof surfaceContext.contractId === "string" &&
-    surfaceContext.contractId.trim()
-      ? surfaceContext.contractId.trim()
-      : null;
+  const contractIdFromContext = resolveSourceContractId(surfaceContext);
   let sourceContractGroundingBlock = "";
   let hasSourceContractGrounding = false;
-  if (isSourceSurface(surface) && effectiveClientKey && contractIdFromContext) {
+  const contractGroundingTenantKey =
+    sourceContractReadTenantKey ?? effectiveClientKey;
+  if (
+    isSourceSurface(surface) &&
+    contractGroundingTenantKey &&
+    contractIdFromContext
+  ) {
     try {
       const contractGrounding = await buildAvaSourceContractGrounding(
-        effectiveClientKey,
+        contractGroundingTenantKey,
         contractIdFromContext,
       );
       if (contractGrounding.block) {
@@ -3668,6 +3673,60 @@ function resolveSourceClientKey(
   }
 
   return null;
+}
+
+function resolveSourceContractReadTenantKey(
+  surfaceContext: Record<string, unknown>,
+): string | null {
+  const explicitTenantKey =
+    typeof surfaceContext.tenantKey === "string" &&
+    surfaceContext.tenantKey.trim()
+      ? surfaceContext.tenantKey.trim()
+      : null;
+  if (explicitTenantKey) return explicitTenantKey;
+
+  const sourceV4 = isRecordValue(surfaceContext.sourceV4)
+    ? surfaceContext.sourceV4
+    : null;
+  const sourceV4TenantKey =
+    sourceV4 &&
+    typeof sourceV4.tenantKey === "string" &&
+    sourceV4.tenantKey.trim()
+      ? sourceV4.tenantKey.trim()
+      : null;
+  if (sourceV4TenantKey) return sourceV4TenantKey;
+
+  return null;
+}
+
+function resolveSourceContractId(
+  surfaceContext: Record<string, unknown>,
+): string | null {
+  const explicitContractId =
+    typeof surfaceContext.contractId === "string" &&
+    surfaceContext.contractId.trim()
+      ? surfaceContext.contractId.trim()
+      : null;
+  if (explicitContractId) return explicitContractId;
+
+  const sourceV4 = isRecordValue(surfaceContext.sourceV4)
+    ? surfaceContext.sourceV4
+    : null;
+  const selectedContract =
+    sourceV4 && isRecordValue(sourceV4.selectedContract)
+      ? sourceV4.selectedContract
+      : null;
+  const selectedContractId =
+    selectedContract &&
+    typeof selectedContract.contractId === "string" &&
+    selectedContract.contractId.trim()
+      ? selectedContract.contractId.trim()
+      : null;
+  return selectedContractId;
+}
+
+function isRecordValue(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function buildSourceEventSeedPromptBlock(

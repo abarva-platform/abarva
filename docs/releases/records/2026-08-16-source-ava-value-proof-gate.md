@@ -34,11 +34,13 @@ This release tightens Source aVa contract answers so pending Finance/Tower evide
 - Follow-up guard for pending evidence phrasing: aVa must not imply a pending Finance/Tower amount automatically becomes realized value when approval occurs.
 - Follow-up guard for deterministic conversion phrasing: pending evidence must not be described as converting or moving from pending into approved value.
 - Follow-up route grounding fix: Source aVa now honors explicit Source `clientKey` / `tenantKey` context before older event/account-name fallbacks, so contract-level questions can load the selected contract grounding instead of falling back to portfolio context.
+- Follow-up Source read-key fix: contract-grain Source reads preserve explicit governed tenant keys such as `*_global` for RLS and row matching, while portfolio/session routing can continue using app client keys.
 
 ## QA / Validation
 
 - `npm test -- --runTestsByPath src/lib/source/facts/view/__tests__/ava-contract-grounding-context.test.ts src/lib/source/ava/__tests__/answer-quality-gate.test.ts --runInBand` — passed, 50 tests.
 - `npm test -- --runTestsByPath src/app/api/chat/agent/__tests__/source-ava-polish-gate.test.ts src/lib/source/facts/view/__tests__/ava-contract-grounding-context.test.ts src/lib/source/ava/__tests__/answer-quality-gate.test.ts --runInBand` — passed, 62 tests after the route grounding follow-up.
+- `npm test -- --runTestsByPath src/app/api/chat/agent/__tests__/source-ava-polish-gate.test.ts src/lib/source/facts/view/__tests__/ava-contract-grounding-context.test.ts src/lib/source/data-model/__tests__/read-adapter.test.ts src/lib/source/ava/__tests__/answer-quality-gate.test.ts --runInBand` — passed, 72 tests after the governed-tenant read-key follow-up.
 - `npx eslint src/lib/source/facts/view/ava-contract-grounding-context.ts src/lib/source/ava/answer-quality-gate.ts src/lib/source/ava/__tests__/answer-quality-gate.test.ts` — passed.
 - Wider lint, typecheck, release check, PR CI, ACA deploy, and live proof are required before this can be marked released.
 
