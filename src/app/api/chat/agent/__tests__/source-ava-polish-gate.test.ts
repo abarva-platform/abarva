@@ -220,12 +220,27 @@ describe("agent route · Source aVa visual and table output discipline", () => {
 
   it("keeps portfolio charts and contract lineage answers grounded instead of scrubbed after generation", () => {
     expect(source).toContain("SOURCE PORTFOLIO CHART DISCIPLINE");
+    expect(source).toContain("SOURCE PORTFOLIO CHART DATASET DISCIPLINE");
     expect(source).toContain("AUTHORITATIVE SOURCE PORTFOLIO GROUNDING only");
+    expect(source).toContain("copy labels and numeric values only from the Top vendors");
+    expect(source).toContain("Do not add a vendor, supplier, category, spend total, or percentage");
     expect(source).toContain("governed Source portfolio grounding is unavailable");
     expect(source).toContain("old intake-corpus totals");
     expect(source).toContain("SOURCE LINEAGE DISCIPLINE");
     expect(source).toContain("source systems, extracts, fields, grain, history, update frequency");
     expect(source).toContain("do not deflect as platform architecture");
+  });
+
+  it("suppresses generic Source broker context on portfolio-wide chart/concentration asks", () => {
+    expect(source).toContain("function looksLikeSourcePortfolioChartOrConcentrationRequest");
+    expect(source).toContain("const shouldUseSourcePortfolioGroundingExclusively =");
+    expect(source).toContain("hasSourcePortfolioGrounding");
+    expect(source).toContain("!contractIdFromContext");
+    expect(source).toContain("!sourceEventIdFromContext");
+    expect(source).toContain("looksLikeSourcePortfolioChartOrConcentrationRequest(message)");
+    expect(source).toContain("const sourceTenantContextBlockForPrompt =");
+    expect(source).toContain("shouldUseSourcePortfolioGroundingExclusively ? \"\" : sourceTenantContextBlock");
+    expect(source).toContain("sourceTenantContextBlockForPrompt,");
   });
 });
 
