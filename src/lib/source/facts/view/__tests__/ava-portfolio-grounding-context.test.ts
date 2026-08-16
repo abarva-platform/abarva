@@ -18,11 +18,17 @@ import type {
 
 const mockListContract360 = jest.fn();
 const mockListVendorContractPortfolio = jest.fn();
+const mockLoadSourceV4WorkspaceSnapshot = jest.fn();
 
 jest.mock('@/lib/source/data-model/read-adapter', () => ({
   listContract360: (...args: unknown[]) => mockListContract360(...args),
   listVendorContractPortfolio: (...args: unknown[]) =>
     mockListVendorContractPortfolio(...args),
+}));
+
+jest.mock('@/lib/source/data-model/source-v4-workspace-snapshot', () => ({
+  loadSourceV4WorkspaceSnapshot: (...args: unknown[]) =>
+    mockLoadSourceV4WorkspaceSnapshot(...args),
 }));
 
 function contractRow(
@@ -82,10 +88,47 @@ function vendorRow(
   };
 }
 
+function v4Snapshot(overrides: Record<string, unknown> = {}) {
+  return {
+    asOfDateIso: '2027-06-30T00:00:00Z',
+    contextCoverage: {
+      vendors: 0,
+      contracts: 0,
+      annualValue: 0,
+      scopeRows: 0,
+      invoiceLines: 0,
+      saasUsageRows: 0,
+      cloudRows: 0,
+      performanceRows: 0,
+    },
+    executivePortfolio: {
+      contractCount: 0,
+      annualValue: 0,
+      totalCommittedValue: 0,
+      autoRenewCount: 0,
+      notice90DayCount: 0,
+    },
+    spendConsumption: {
+      invoiceLines: 0,
+      actualSpend: 0,
+      offContractSpend: 0,
+    },
+    performanceCredits: {
+      breachCount: 0,
+      creditCalculated: 0,
+      unclaimedCredit: 0,
+    },
+    topVendors: [],
+    ...overrides,
+  };
+}
+
 describe('buildAvaSourcePortfolioGrounding', () => {
   beforeEach(() => {
     mockListContract360.mockReset();
     mockListVendorContractPortfolio.mockReset();
+    mockLoadSourceV4WorkspaceSnapshot.mockReset();
+    mockLoadSourceV4WorkspaceSnapshot.mockResolvedValue(v4Snapshot());
   });
 
   it('returns an empty block when the tenant has no governed contract rows', async () => {
@@ -94,6 +137,73 @@ describe('buildAvaSourcePortfolioGrounding', () => {
     const result = await buildAvaSourcePortfolioGrounding('empty_tenant');
     expect(result.block).toBe('');
     expect(result.hasLiveNumbers).toBe(false);
+  });
+
+  it('falls back to the active Source V4 cube snapshot when contract_360 has no rows', async () => {
+    mockListContract360.mockResolvedValue([]);
+    mockListVendorContractPortfolio.mockResolvedValue([]);
+    mockLoadSourceV4WorkspaceSnapshot.mockResolvedValue(
+      v4Snapshot({
+        contextCoverage: {
+          vendors: 60,
+          contracts: 100,
+          annualValue: 1_480_500_000,
+          scopeRows: 800,
+          invoiceLines: 2400,
+          saasUsageRows: 0,
+          cloudRows: 0,
+          performanceRows: 480,
+        },
+        executivePortfolio: {
+          contractCount: 100,
+          annualValue: 1_480_500_000,
+          totalCommittedValue: 4_200_000_000,
+          autoRenewCount: 34,
+          notice90DayCount: 2,
+        },
+        spendConsumption: {
+          invoiceLines: 2400,
+          actualSpend: 1_120_000_000,
+          offContractSpend: 19_000_000,
+        },
+        performanceCredits: {
+          breachCount: 118,
+          creditCalculated: 3_200_000,
+          unclaimedCredit: 755_000,
+        },
+        topVendors: [
+          {
+            vendorId: 'v1',
+            legalName: 'Salesforce',
+            supplierCategory: 'SaaS',
+            strategicStatus: null,
+            riskTier: null,
+            annualValue: 133_900_000,
+            contractCount: 4,
+          },
+          {
+            vendorId: 'v2',
+            legalName: 'CloudPeak Managed Services',
+            supplierCategory: 'Cloud platform',
+            strategicStatus: null,
+            riskTier: null,
+            annualValue: 109_900_000,
+            contractCount: 5,
+          },
+        ],
+      }),
+    );
+
+    const result = await buildAvaSourcePortfolioGrounding('skyharbor');
+
+    expect(result.hasLiveNumbers).toBe(true);
+    expect(result.block).toContain('Source V4 cube snapshot');
+    expect(result.block).toContain('100 contract families');
+    expect(result.block).toContain('60 vendors');
+    expect(result.block).toContain('$1.5B');
+    expect(result.block).toContain('Salesforce $133.9M');
+    expect(result.block).toContain('SaaS $133.9M');
+    expect(result.block).toMatch(/do not use generic tenant-context vendor names/i);
   });
 
   it('quotes portfolio totals that match summarizePortfolio for the same rows — the anti-divergence guarantee', async () => {

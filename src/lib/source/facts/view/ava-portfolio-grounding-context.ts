@@ -45,6 +45,7 @@ import {
   listContract360,
   listVendorContractPortfolio,
 } from '@/lib/source/data-model/read-adapter';
+import { loadSourceV4WorkspaceSnapshot } from '@/lib/source/data-model/source-v4-workspace-snapshot';
 import {
   computeContractLeverageSignals,
   computeRenewalExposure,
@@ -72,6 +73,70 @@ function fmtPct(share: number): string {
 function cleanCategory(value: string | null | undefined): string {
   const trimmed = value?.trim();
   return trimmed ? trimmed : 'Unclassified';
+}
+
+function joinNonEmpty(parts: readonly string[]): string {
+  return parts.filter((part) => part.trim().length > 0).join('; ');
+}
+
+function fallbackSourceV4PortfolioBlock(
+  tenantKey: string,
+  asOfIso: string,
+): Promise<AvaSourcePortfolioGrounding> {
+  return loadSourceV4WorkspaceSnapshot(tenantKey, asOfIso)
+    .then((snapshot) => {
+      const annualValue =
+        snapshot.executivePortfolio.annualValue ||
+        snapshot.contextCoverage.annualValue;
+      const contractCount =
+        snapshot.executivePortfolio.contractCount ||
+        snapshot.contextCoverage.contracts;
+      const vendorCount = snapshot.contextCoverage.vendors;
+      const hasLiveNumbers =
+        annualValue > 0 || contractCount > 0 || vendorCount > 0;
+      if (!hasLiveNumbers) return { block: '', hasLiveNumbers: false };
+
+      const topVendors = snapshot.topVendors
+        .slice(0, 5)
+        .map((vendor) => {
+          const share = annualValue > 0 ? vendor.annualValue / annualValue : 0;
+          return `${vendor.legalName} ${fmtUsd(vendor.annualValue)} (${fmtPct(share)})`;
+        })
+        .join('; ');
+      const topCategories = joinNonEmpty(
+        [
+          ...snapshot.topVendors.reduce((acc, vendor) => {
+            const category = cleanCategory(vendor.supplierCategory);
+            acc.set(category, (acc.get(category) ?? 0) + vendor.annualValue);
+            return acc;
+          }, new Map<string, number>()).entries(),
+        ]
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 6)
+          .map(([category, value]) => {
+            const share = annualValue > 0 ? value / annualValue : 0;
+            return `${category} ${fmtUsd(value)} (${fmtPct(share)})`;
+          }),
+      );
+
+      const lines = [
+        `AUTHORITATIVE SOURCE PORTFOLIO GROUNDING (LIVE — Source V4 cube snapshot / consumption views, tenant "${tenantKey}", as of ${snapshot.asOfDateIso.slice(0, 10)}):`,
+        `Contracts: ${contractCount} contract families in the active Source V4 snapshot. Vendors: ${vendorCount} vendors. Counting basis: contract families, not raw contract_360 rows.`,
+        `Annual contract value: ${fmtUsd(annualValue)}. Total committed value: ${fmtUsd(snapshot.executivePortfolio.totalCommittedValue)}.`,
+        `Auto-renewing contracts: ${snapshot.executivePortfolio.autoRenewCount} of ${contractCount}. Notice decisions due within 90 days: ${snapshot.executivePortfolio.notice90DayCount}.`,
+        topVendors ? `Top vendors by annual value: ${topVendors}.` : '',
+        topCategories
+          ? `Top supplier categories visible in the V4 vendor snapshot: ${topCategories}.`
+          : '',
+        `Context coverage: ${snapshot.contextCoverage.contracts} contracts, ${snapshot.contextCoverage.invoiceLines} invoice lines, ${snapshot.contextCoverage.scopeRows} scope rows, ${snapshot.contextCoverage.performanceRows} performance rows.`,
+        `Spend/consumption: ${snapshot.spendConsumption.invoiceLines} invoice lines, ${fmtUsd(snapshot.spendConsumption.actualSpend)} actual spend, ${fmtUsd(snapshot.spendConsumption.offContractSpend)} off-contract spend.`,
+        `Performance credits: ${snapshot.performanceCredits.breachCount} breaches, ${fmtUsd(snapshot.performanceCredits.creditCalculated)} calculated credits, ${fmtUsd(snapshot.performanceCredits.unclaimedCredit)} unclaimed credits.`,
+        'These are the ONLY governed Source portfolio numbers for this tenant when source.contract_360 rows are unavailable. For portfolio concentration charts, use the Top vendors line and the category snapshot line above; state that the basis is the active Source V4 cube snapshot. Do not use generic tenant-context vendor names, legacy workbook figures, or old intake-corpus totals.',
+      ].filter(Boolean);
+
+      return { block: lines.join('\n'), hasLiveNumbers: true };
+    })
+    .catch(() => ({ block: '', hasLiveNumbers: false }));
 }
 
 // Mirrors the exact as-of resolution the Workspace page itself uses
@@ -108,7 +173,10 @@ export async function buildAvaSourcePortfolioGrounding(
   ]);
   const contracts = excludeSupplementalContracts(contractsRaw);
   if (contracts.length === 0) {
-    return { block: '', hasLiveNumbers: false };
+    return fallbackSourceV4PortfolioBlock(
+      tenantKey,
+      resolveAsOfIso(tenantKey),
+    );
   }
 
   const asOfIso = resolveAsOfIso(tenantKey);
