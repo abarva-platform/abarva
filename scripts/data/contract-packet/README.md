@@ -13,6 +13,20 @@ npm run packet:check
 
 That runs all three stages against the staging fixture and fails if any of them does.
 
+Once an active tenant has a settled vendor register, generate a client-showable packet set from
+that tenant through the tenant fixture adapter:
+
+```bash
+npm run packet:check:meridian
+```
+
+The adapter reads `datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv`,
+selects the highest-value rows with dates and annual value, and writes a packet fixture under
+`.artifacts/contract-packets/meridian-health-fixture/`. It deliberately substitutes invented
+supplier legal entities before the legal documents are rendered. The generated packets keep the
+tenant's commercial shape — annual value, term, renewal window, risk posture and service category —
+but do **not** emit source vendor names into synthetic agreements.
+
 ## The three stages
 
 **`generate-contract-packet.mjs`** renders eight documents per contract — master agreement, order
@@ -23,7 +37,7 @@ fixture does not carry, the fix is to add it to the fixture, not to type it into
 unsourced figure is exactly what the reconciler exists to catch, and the professional services rate
 card was moved into `contract_rate_card.csv` for that reason.
 
-**`reconcile-contract-packet.mjs`** reads the *rendered text* back out and compares it to the source
+**`reconcile-contract-packet.mjs`** reads the _rendered text_ back out and compares it to the source
 rows. It deliberately shares no state with the generator — if it did, the proof would be circular.
 It fails when a value disagrees with its row, when the pricing lines do not sum to the register's
 annual value, when invoice lines do not match the invoice CSV, when a cross-referenced document does
@@ -32,10 +46,12 @@ falls under its length floor.
 
 **`benchmark-contract-packet.mjs`** scores each document against the clause topics a practitioner
 expects to find, defined in `document-benchmark.json`. This answers a different question from the
-reconciler: not *are the numbers true* but *is the document complete*. The BAA clause list is
+reconciler: not _are the numbers true_ but _is the document complete_. The BAA clause list is
 regulatory — 45 CFR 164.504(e)(2)(ii)(A)–(J) and (e)(2)(iii) — so a gap there is a defective
 agreement, not a stylistic one. The rest come from published procurement checklists and represent
-common practice.
+common practice. This benchmark covers the eight document types this generator renders. It is not
+the Source product's full extraction taxonomy, which currently spans more concepts and document
+types than this packet slice.
 
 ## Both gates were fault-injected
 
@@ -69,3 +85,8 @@ The fixture under `datasets/source/contract-intelligence/_staging-fixture/` is a
 contract, not tenant data. It exists so the machinery can be built and proven while the healthcare
 tenant merge is still unsettled. Running the generator against a settled tenant register is a
 separate, gated step — point `--in` at that register once the merge decision lands.
+
+For tenant runs, do not point the document generator directly at a universal tenant CSV directory.
+Run `prepare-tenant-contract-fixture.mjs` first. That keeps Layer 1 tenant input separate from the
+packet-specific fixture, creates the pricing/SLA/invoice/rate-card rows the documents need, and
+prevents recognizable vendor names from being rendered into executed-looking synthetic legal text.

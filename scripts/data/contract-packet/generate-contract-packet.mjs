@@ -730,5 +730,10 @@ for (const c of register) {
 
 console.log(`packets written: ${new Set(summary.map((s) => s.contract)).size} contract(s), ${written} documents -> ${args.out}`);
 const byDoc = {};
-for (const s of summary) byDoc[s.doc.replace(/^CTR-H-\d+-/, '')] = (byDoc[s.doc.replace(/^CTR-H-\d+-/, '')] ?? 0) + s.words;
-for (const [d, w] of Object.entries(byDoc)) console.log(`   ${d.padEnd(24)} ${Math.round(w / register.length)} words avg`);
+const docCounts = {};
+for (const s of summary) {
+  const docType = s.doc.replace(`${s.contract}-`, '');
+  byDoc[docType] = (byDoc[docType] ?? 0) + s.words;
+  docCounts[docType] = (docCounts[docType] ?? 0) + 1;
+}
+for (const [d, w] of Object.entries(byDoc)) console.log(`   ${d.padEnd(24)} ${Math.round(w / docCounts[d])} words avg`);
