@@ -212,10 +212,10 @@ describe("agent route · Source aVa visual and table output discipline", () => {
     expect(source).toContain("SOURCE STAGE STATUS DISCIPLINE");
     expect(source).toContain("distinguish stage/task completion from approved value");
     expect(source).toContain("Do not imply guaranteed, booked, approved, realized, realized value, or realized savings");
-    expect(source).toContain("approved/booked value remains $0");
+    expect(source).toContain("never write the exact phrase");
     expect(source).toContain("realized value is");
-    expect(source).toContain("Never use the phrase");
     expect(source).toContain("realized savings");
+    expect(source).toContain("pending value remains pending Finance/Tower approval; approved/booked value remains $0");
     expect(source).toContain("not finance-confirmed");
     expect(source).toContain("SOURCE CALCULATION-RUN DISCIPLINE");
     expect(source).toContain("missing a calculation run");
