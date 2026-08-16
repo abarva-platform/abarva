@@ -276,6 +276,7 @@ import {
   clientKeyToBrokerTenantKey,
   clientKeyToInventorySubstrateKey,
 } from "@/lib/agent/tools/intelligence/_shared";
+import { appClientKeyForTenant } from "@/lib/tenant/aliases";
 import {
   getAskSessionContextById,
   getAskSessionForMove,
@@ -3634,6 +3635,21 @@ function buildAgentQualityAnswerKeyBlock(input: {
 function resolveSourceClientKey(
   surfaceContext: Record<string, unknown>,
 ): string | null {
+  const explicitClientKey =
+    typeof surfaceContext.clientKey === "string" &&
+    surfaceContext.clientKey.trim()
+      ? surfaceContext.clientKey.trim()
+      : null;
+  if (explicitClientKey) return explicitClientKey;
+
+  const explicitTenantKey =
+    typeof surfaceContext.tenantKey === "string" &&
+    surfaceContext.tenantKey.trim()
+      ? surfaceContext.tenantKey.trim()
+      : null;
+  const clientKeyFromTenant = appClientKeyForTenant(explicitTenantKey);
+  if (clientKeyFromTenant) return clientKeyFromTenant;
+
   const eventId =
     typeof surfaceContext.eventId === "string" ? surfaceContext.eventId : "";
   const accountName =
