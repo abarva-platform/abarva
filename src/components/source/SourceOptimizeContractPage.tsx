@@ -2045,6 +2045,7 @@ const MAIN_STYLE: CSSProperties = {
 };
 
 const CONTAINER_STYLE: CSSProperties = {
+  boxSizing: "border-box",
   width: "100%",
   maxWidth: "none",
   margin: 0,
@@ -2145,6 +2146,7 @@ const ROW_BUTTON_STYLE: CSSProperties = {
 };
 
 const WORKFLOW_FRAME_STYLE: CSSProperties = {
+  boxSizing: "border-box",
   display: "grid",
   gridTemplateColumns: "264px minmax(0, 1fr)",
   gap: 28,
@@ -2153,6 +2155,7 @@ const WORKFLOW_FRAME_STYLE: CSSProperties = {
 };
 
 const WORKFLOW_PANE_STYLE: CSSProperties = {
+  boxSizing: "border-box",
   minWidth: 0,
   width: "100%",
   display: "grid",

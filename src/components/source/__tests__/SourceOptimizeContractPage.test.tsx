@@ -317,18 +317,21 @@ describe("SourceOptimizeContractPage", () => {
     expect(
       screen.getByTestId("source-optimize-contract-container"),
     ).toHaveStyle({
+      boxSizing: "border-box",
       width: "100%",
       maxWidth: "none",
     });
     expect(
       screen.getByTestId("source-optimize-contract-frame"),
     ).toHaveStyle({
+      boxSizing: "border-box",
       gridTemplateColumns: "264px minmax(0, 1fr)",
       width: "100%",
     });
     expect(
       screen.getByTestId("source-optimize-contract-workflow-pane"),
     ).toHaveStyle({
+      boxSizing: "border-box",
       width: "100%",
       minWidth: "0",
     });
