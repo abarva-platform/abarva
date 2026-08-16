@@ -826,7 +826,8 @@
     "packet:benchmark:meridian": "node scripts/data/contract-packet/benchmark-contract-packet.mjs --in .artifacts/contract-packets/meridian-health-fixture --packets .artifacts/contract-packets/meridian-health",
     "packet:check:meridian": "npm run packet:prepare:meridian && npm run packet:generate:meridian && npm run packet:reconcile:meridian && npm run packet:benchmark:meridian",
     "validate:no-real-vendor-parties": "node scripts/audit/validate-no-real-vendor-parties.mjs",
-    "validate:no-sunset-tenant-residue": "node scripts/audit/validate-no-sunset-tenant-residue.mjs"
+    "validate:no-sunset-tenant-residue": "node scripts/audit/validate-no-sunset-tenant-residue.mjs",
+    "validate:migration-allowlist": "node scripts/audit/validate-migration-allowlist.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
