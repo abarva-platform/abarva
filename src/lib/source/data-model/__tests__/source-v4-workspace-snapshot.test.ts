@@ -185,12 +185,12 @@ describe("loadSourceV4WorkspaceSnapshot", () => {
 
     expect(run.mock.calls[0]).toEqual([
       "SELECT set_config('app.tenant_key', $1, false)",
-      ["skyharbor-air"],
+      ["skyharbor_global"],
     ]);
     const firstDataQuery = run.mock.calls.find((call) =>
       String(call[0]).includes("sourcing_context_coverage_v1"),
     );
-    expect(firstDataQuery?.[1][0]).toEqual(["skyharbor-air"]);
+    expect(firstDataQuery?.[1][0]).toEqual(["skyharbor_global", "skyharbor-air"]);
     expect(snapshot.datasetId).toBe("skyharbor-source-v4-202608");
     expect(snapshot.datasetVersion).toBe("v4");
     expect(snapshot.datasetLabel).toBe("SkyHarbor Source v4");

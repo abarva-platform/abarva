@@ -4,6 +4,7 @@ import { azureRead } from "@/lib/data-plane/azureRead";
 import {
   appClientKeyForTenant,
   canonicalTenantKey,
+  tenantAliasesFor,
 } from "@/lib/tenant/aliases";
 import { numberFromDb } from "./vendor-contract-portfolio";
 import {
@@ -1078,11 +1079,26 @@ function tenantKeyAliases(tenantKey: string): string[] {
 }
 
 function loadGovernedSourceTenantKeys(tenantKey: string): string[] {
-  return [canonicalTenantKey(tenantKey)];
+  const trimmed = tenantKey.trim();
+  const globalAliases = tenantAliasesFor(tenantKey).filter((alias) =>
+    alias.trim().endsWith("_global"),
+  );
+  return Array.from(
+    new Set([
+      trimmed.endsWith("_global") ? trimmed : null,
+      ...globalAliases,
+      canonicalTenantKey(tenantKey),
+    ].filter((value): value is string => Boolean(value))),
+  );
 }
 
 function tenantRlsKey(tenantKey: string): string {
-  return canonicalTenantKey(tenantKey);
+  const trimmed = tenantKey.trim();
+  if (trimmed.endsWith("_global")) return trimmed;
+  const globalAlias = tenantAliasesFor(tenantKey).find((alias) =>
+    alias.trim().endsWith("_global"),
+  );
+  return globalAlias ?? canonicalTenantKey(tenantKey);
 }
 
 function datasetMetadataForTenant(

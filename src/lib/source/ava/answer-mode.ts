@@ -299,7 +299,7 @@ const RULES: ModeRule[] = [
     mode: "vendor_comparison",
     id: "vendor_comparison.core",
     test: (q) =>
-      /\b(compare vendors?|vendor comparison|which vendor|best vendor|vendor scorecard|vendor coverage|who (addressed|dodged))\b/.test(
+      /\b(compare vendors?|vendor comparison|which vendor|best vendor|vendor scorecard|vendor coverage|vendor response|response coverage|response completeness|response readiness|proposal completeness|proposal coverage|who (addressed|dodged))\b/.test(
         q,
       ),
   },

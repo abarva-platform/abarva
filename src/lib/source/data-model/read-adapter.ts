@@ -84,11 +84,28 @@ function tenantKeyAliases(tenantKey: string): string[] {
   return Array.from(new Set(aliases));
 }
 
+function preferredGovernedSourceTenantKey(tenantKey: string): string {
+  const trimmed = tenantKey.trim();
+  if (trimmed.endsWith("_global")) return trimmed;
+  const globalAlias = tenantAliasesFor(tenantKey).find((alias) =>
+    alias.trim().endsWith("_global"),
+  );
+  if (globalAlias) return globalAlias;
+  return canonicalTenantKey(tenantKey);
+}
+
 function canonicalSourceTenantKeys(tenantKey: string): string[] {
   const trimmed = tenantKey.trim();
+  const globalAliases = tenantAliasesFor(tenantKey).filter((alias) =>
+    alias.trim().endsWith("_global"),
+  );
   return Array.from(
     new Set(
-      [trimmed.endsWith("_global") ? trimmed : null, canonicalTenantKey(tenantKey)]
+      [
+        trimmed.endsWith("_global") ? trimmed : null,
+        ...globalAliases,
+        canonicalTenantKey(tenantKey),
+      ]
         .filter((value): value is string => Boolean(value)),
     ),
   );
@@ -96,15 +113,11 @@ function canonicalSourceTenantKeys(tenantKey: string): string[] {
 
 function tenantRlsKey(tenantKey: string): string {
   if (isMeridianTenantKey(tenantKey)) return "meridian_health_global";
-  const trimmed = tenantKey.trim();
-  if (trimmed.endsWith("_global")) return trimmed;
-  return canonicalTenantKey(tenantKey);
+  return preferredGovernedSourceTenantKey(tenantKey);
 }
 
 function canonicalTenantRlsKey(tenantKey: string): string {
-  const trimmed = tenantKey.trim();
-  if (trimmed.endsWith("_global")) return trimmed;
-  return canonicalTenantKey(tenantKey);
+  return preferredGovernedSourceTenantKey(tenantKey);
 }
 
 async function queryForTenant<R>(
