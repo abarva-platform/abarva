@@ -10,11 +10,11 @@
 
 ## Plain-English Summary
 
-The governed Source L4/cube refresh now marks one active cube build per scoped tenant and rebuilds the Cube-facing consumption views from that active build only. This prevents stale rows from earlier loads from being counted as part of the current refresh proof.
+The governed Source L4/cube refresh now marks one active cube build per scoped tenant and rebuilds both the Source read-model views and Cube-facing consumption views from that active build only. This prevents stale rows from earlier loads from being counted as part of the current refresh proof or shown through product-facing Source projections.
 
 ## Layer Impact
 
-Layer 4 / Products (`internal-admin` lane): tightens the Source cube/read-model boundary so consumption views expose current-build rows with `load_run_id` provenance. It does not create new facts; it makes refresh proof and Cube reads build-scoped.
+Layer 4 / Products (`internal-admin` lane): tightens the Source read-model and cube boundary so Source L4 views and consumption views expose current-build rows with `load_run_id` provenance. It does not create new facts; it makes refresh proof, Source product reads, and Cube reads build-scoped.
 
 ## Client Applicability
 
@@ -27,19 +27,20 @@ Layer 4 / Products (`internal-admin` lane): tightens the Source cube/read-model 
 ## Changes Included
 
 - `scripts/data-build/refresh-source-l4-cube.ts` records active Source L4/cube load runs for the approved tenant scope.
+- The runner rebuilds Source read-model views so Contract 360, vendor portfolio, and application scope expose the active build only.
 - The runner rebuilds Source Cube consumption views so vendor, contract, scope, spend, performance, opportunity, event, and event-supplier slices expose the active build only.
-- The runner now fails readback when consumption-view counts do not match the current build's source-table counts.
+- The runner now fails readback when Source read-model counts or consumption-view counts do not match the current build's source-table counts.
 
 ## QA / Validation
 
 - Pass: `npx eslint scripts/data-build/refresh-source-l4-cube.ts`.
-- Pass: `npm run data-build:source-l4-cube-refresh -- --out-dir /tmp/nexus-source-l4-cube-provenance-local-dry-run`.
+- Pass: `npm run data-build:source-l4-cube-refresh -- --out-dir /tmp/nexus-source-l4-active-read-models-local-dry-run`.
 - Pass: `npm run release:check`.
 - Pending: ACA Source L4/cube write and readback rerun using the deployed digest-pinned image.
 
 ## Rollout Plan
 
-Merge through PR and deploy through the repo-owned Azure Container Apps main workflow. Then rerun the approved Source L4/cube write job so the active-build ledger and view definitions are applied, followed by a readback job that proves consumption counts match the current build.
+Merge through PR and deploy through the repo-owned Azure Container Apps main workflow. Then rerun the approved Source L4/cube write job so the active-build ledger and view definitions are applied, followed by a readback job that proves Source read-model and consumption counts match the current build.
 
 ## Deployment Authority
 
