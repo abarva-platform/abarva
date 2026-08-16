@@ -460,6 +460,20 @@ async function tableCount(client: Client, table: string, tenants: string[], load
   return Number(result.rows[0]?.count ?? 0);
 }
 
+async function tenantScopedTableCount(client: Client, table: string, tenants: string[]): Promise<number> {
+  let total = 0;
+  for (const tenant of tenants) {
+    await client.query("SELECT set_config('app.tenant_key', $1, false)", [tenant]);
+    const result = await client.query(
+      `SELECT count(*)::int AS count FROM ${table} WHERE tenant_key = $1`,
+      [tenant],
+    );
+    total += Number(result.rows[0]?.count ?? 0);
+  }
+  await client.query("SELECT set_config('app.tenant_key', '', false)");
+  return total;
+}
+
 async function readback(client: Client, args: Args): Promise<Record<string, number>> {
   return {
     source_vendor: await tableCount(client, "source.vendor", args.tenants, args.buildVersion),
@@ -475,11 +489,27 @@ async function readback(client: Client, args: Args): Promise<Record<string, numb
     source_contract_360: await tableCount(client, "source.contract_360", args.tenants),
     source_vendor_contract_portfolio: await tableCount(client, "source.vendor_contract_portfolio", args.tenants),
     source_contract_application_scope: await tableCount(client, "source.contract_application_scope", args.tenants),
-    consumption_sourcing_contract_v1: await tableCount(client, "consumption.sourcing_contract_v1", args.tenants),
-    consumption_sourcing_vendor_v1: await tableCount(client, "consumption.sourcing_vendor_v1", args.tenants),
-    consumption_sourcing_contract_scope_v1: await tableCount(client, "consumption.sourcing_contract_scope_v1", args.tenants),
-    consumption_sourcing_spend_monthly_v1: await tableCount(client, "consumption.sourcing_spend_monthly_v1", args.tenants),
-    consumption_sourcing_opportunity_v1: await tableCount(client, "consumption.sourcing_opportunity_v1", args.tenants),
+    consumption_sourcing_contract_v1: await tenantScopedTableCount(
+      client,
+      "consumption.sourcing_contract_v1",
+      args.tenants,
+    ),
+    consumption_sourcing_vendor_v1: await tenantScopedTableCount(client, "consumption.sourcing_vendor_v1", args.tenants),
+    consumption_sourcing_contract_scope_v1: await tenantScopedTableCount(
+      client,
+      "consumption.sourcing_contract_scope_v1",
+      args.tenants,
+    ),
+    consumption_sourcing_spend_monthly_v1: await tenantScopedTableCount(
+      client,
+      "consumption.sourcing_spend_monthly_v1",
+      args.tenants,
+    ),
+    consumption_sourcing_opportunity_v1: await tenantScopedTableCount(
+      client,
+      "consumption.sourcing_opportunity_v1",
+      args.tenants,
+    ),
   };
 }
 
