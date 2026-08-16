@@ -4,7 +4,6 @@ import { azureRead } from "@/lib/data-plane/azureRead";
 import {
   appClientKeyForTenant,
   canonicalTenantKey,
-  tenantAliasesFor,
 } from "@/lib/tenant/aliases";
 import { numberFromDb } from "./vendor-contract-portfolio";
 import {
@@ -1074,15 +1073,15 @@ function isMeridianTenantKey(tenantKey: string): boolean {
 }
 
 function tenantKeyAliases(tenantKey: string): string[] {
-  const aliases = tenantAliasesFor(tenantKey);
-  if (isMeridianTenantKey(tenantKey)) aliases.push("meridian_health_global");
+  const aliases = loadGovernedSourceTenantKeys(tenantKey);
   return Array.from(new Set(aliases));
 }
 
+function loadGovernedSourceTenantKeys(tenantKey: string): string[] {
+  return [canonicalTenantKey(tenantKey)];
+}
+
 function tenantRlsKey(tenantKey: string): string {
-  if (isMeridianTenantKey(tenantKey)) return "meridian_health_global";
-  if (appClientKeyForTenant(tenantKey) === "skyharbor")
-    return "skyharbor_global";
   return canonicalTenantKey(tenantKey);
 }
 
