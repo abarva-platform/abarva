@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Source aVa now receives explicit instructions to return renderable visual and table output when the user asks for it. The prior Source prompt allowed chart-style prose but discouraged chart fences, so visual requests could produce useful words without a chart the interface could render.
+Source aVa now receives explicit instructions to return renderable visual and table output when the user asks for it. The prior Source prompt allowed chart-style prose but discouraged chart fences, so visual requests could produce useful words without a chart the interface could render. A follow-up tightening removes the remaining Source-specific chart-fence ban and adds a turn-level visual contract whenever the user's message asks for a chart, graph, trend, or similar visual.
 
 ## Layer Impact
 
@@ -28,12 +28,14 @@ Source aVa now receives explicit instructions to return renderable visual and ta
 ## Changes Included
 
 - `src/app/api/chat/agent/route.ts`: Source prompt now requires `abarva-chart` fenced output for explicit visual requests and compact markdown tables for explicit table/ranking requests.
+- `src/app/api/chat/agent/route.ts`: Source prompt now adds a turn-specific visual directive when the incoming Source message asks for chart/graph/trend output, so chart requests are handled by prompt discipline instead of post-response filtering.
 - `src/app/api/chat/agent/__tests__/source-ava-polish-gate.test.ts`: regression coverage pins the Source visual/table output contract.
 
 ## QA / Validation
 
 - Pass: `npm test -- --runTestsByPath src/app/api/chat/agent/__tests__/source-ava-polish-gate.test.ts --runInBand`
 - Pass: `npx eslint src/app/api/chat/agent/route.ts src/app/api/chat/agent/__tests__/source-ava-polish-gate.test.ts`
+- Pass: `npm run release:check`
 - Pending: post-deploy signed-in Source aVa chart/table prompt rerun.
 
 ## Rollout Plan
@@ -60,4 +62,4 @@ Revert this PR to restore the previous Source prompt wording.
 
 ## Known Gaps
 
-This change improves model instruction discipline. It does not add new source data, new chart renderers, or upload/parse persistence.
+This change improves model instruction discipline. It does not add new source data, new chart renderers, answer post-processing, or upload/parse persistence.
