@@ -204,6 +204,7 @@ describe("agent route · Source aVa visual and table output discipline", () => {
     expect(source).toContain("workshops");
     expect(source).toContain("vendor unsupported claims");
     expect(source).toContain("Include the exact words template, collect, next, approval, blocking, workshop, attend, and data");
+    expect(source).toContain("collect the template before the next stage");
     expect(source).toContain("approval gate");
     expect(source).toContain("blocking");
     expect(source).toContain("workshop, attend, and data");
@@ -219,6 +220,7 @@ describe("agent route · Source aVa visual and table output discipline", () => {
     expect(source).toContain("SOURCE CALCULATION-RUN DISCIPLINE");
     expect(source).toContain("missing a calculation run");
     expect(source).toContain("do not quote");
+    expect(source).toContain("source, ask, and next");
   });
 
   it("uses literal Source boundary wording for tenant isolation and unquotable figures", () => {
