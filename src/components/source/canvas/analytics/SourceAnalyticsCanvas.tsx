@@ -22,6 +22,7 @@ import { BafoScenarioComparePanel } from "@/components/source/canvas/bafo/BafoSc
 import { ContractOptimizationProfilePanel } from "@/components/source/canvas/contract-optimization/ContractOptimizationProfilePanel";
 import { ResponsesStageView } from "@/components/source/canvas/responses/ResponsesStageView";
 import { StageDecisionLensPanel } from "@/components/source/canvas/workspace-tabs/StageDecisionLensPanel";
+import { SourceWorkflowFrame } from "@/components/source/SourceWorkflowFrame";
 import { SourceVendorSelectionReadinessPanel } from "@/components/source/SourceVendorSelectionReadinessPanel";
 import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization";
 import type {
@@ -232,14 +233,6 @@ const WORK_PANE_STYLE: CSSProperties = {
   flex: 1,
   minHeight: 0,
   overflowY: "auto",
-};
-
-const CANVAS_STYLE: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "264px minmax(0, 1fr)",
-  gap: 0,
-  minHeight: "100%",
-  alignItems: "stretch",
 };
 
 const CARD_STYLE: CSSProperties = {
@@ -787,48 +780,53 @@ export function SourceAnalyticsCanvas({
     >
       <main data-testid="source-analytics-canvas" style={MAIN_STYLE}>
         <div style={WORK_PANE_STYLE}>
-          <div style={CANVAS_STYLE}>
-            <SourceShellRail
-              view={shellView}
-              workspace={workspace}
-              onWorkspaceChange={setWorkspace}
-            />
-            <div style={{ minWidth: 0, padding: "28px 28px 150px" }}>
-              {contractOptimizationProfile ? (
-                <div style={{ marginBottom: 28 }}>
-                  <ContractOptimizationProfilePanel
-                    profile={contractOptimizationProfile}
-                  />
-                </div>
-              ) : null}
-              {selectionReadiness && workspace === "steps" ? (
-                <div
-                  data-testid="source-shell-selection-readiness-bridge"
-                  style={{ maxWidth: 1040, marginBottom: 12 }}
-                >
-                  <SourceVendorSelectionReadinessPanel
-                    readiness={selectionReadiness}
-                  />
-                </div>
-              ) : null}
-              <SourceWorkspace
+          <SourceWorkflowFrame
+            testId="source-workflow-frame"
+            rail={
+              <SourceShellRail
                 view={shellView}
-                stageView={resolvedStageView}
                 workspace={workspace}
-                vendorResponseReadiness={vendorResponseReadiness}
-                vendorResponseProfiles={vendorResponseProfiles}
-                vendorChallengeIntelligence={vendorChallengeIntelligence}
-                vendorBafoInstructionPack={vendorBafoInstructionPack}
-                vendorEvaluationDecisionView={vendorEvaluationDecisionView}
-                vendorResponseParseReports={vendorResponseParseReports}
-                evidenceStates={evidenceStates}
-                eventDisplayName={event.name}
-                contractOptimizationProfile={contractOptimizationProfile}
                 onWorkspaceChange={setWorkspace}
-                onClientFinalAccepted={() => router.refresh()}
               />
-            </div>
-          </div>
+            }
+            minHeight="100%"
+            alignItems="stretch"
+            paneStyle={{ padding: "28px 28px 150px" }}
+          >
+            {contractOptimizationProfile ? (
+              <div style={{ marginBottom: 28 }}>
+                <ContractOptimizationProfilePanel
+                  profile={contractOptimizationProfile}
+                />
+              </div>
+            ) : null}
+            {selectionReadiness && workspace === "steps" ? (
+              <div
+                data-testid="source-shell-selection-readiness-bridge"
+                style={{ maxWidth: 1040, marginBottom: 12 }}
+              >
+                <SourceVendorSelectionReadinessPanel
+                  readiness={selectionReadiness}
+                />
+              </div>
+            ) : null}
+            <SourceWorkspace
+              view={shellView}
+              stageView={resolvedStageView}
+              workspace={workspace}
+              vendorResponseReadiness={vendorResponseReadiness}
+              vendorResponseProfiles={vendorResponseProfiles}
+              vendorChallengeIntelligence={vendorChallengeIntelligence}
+              vendorBafoInstructionPack={vendorBafoInstructionPack}
+              vendorEvaluationDecisionView={vendorEvaluationDecisionView}
+              vendorResponseParseReports={vendorResponseParseReports}
+              evidenceStates={evidenceStates}
+              eventDisplayName={event.name}
+              contractOptimizationProfile={contractOptimizationProfile}
+              onWorkspaceChange={setWorkspace}
+              onClientFinalAccepted={() => router.refresh()}
+            />
+          </SourceWorkflowFrame>
         </div>
       </main>
       <AskAvaLauncher
