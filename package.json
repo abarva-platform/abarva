@@ -199,6 +199,7 @@
     "audit:l1-undeclared-source-classification": "node scripts/audit/build-l1-undeclared-source-classification.mjs",
     "audit:home-layer4-boundary": "node scripts/audit/build-home-layer4-boundary-report.mjs",
     "audit:layer-refresh-status": "node scripts/audit/build-layer-refresh-status-report.mjs",
+    "audit:integrated-layer-refresh-inventory": "node scripts/audit/build-integrated-layer-refresh-inventory.mjs",
     "audit:layer3-canonical-write-plan": "node scripts/audit/build-layer3-canonical-write-plan.mjs",
     "audit:ava-readiness-ledger": "node scripts/audit/ava-readiness-ledger.mjs",
     "load:tenant-candidate-context": "node scripts/knowledge/load-tenant-candidate-context.mjs",
