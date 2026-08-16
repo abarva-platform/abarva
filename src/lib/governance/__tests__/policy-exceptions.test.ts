@@ -8,7 +8,7 @@ function exception(over: Partial<PolicyException> = {}): PolicyException {
   return {
     id: "exc-1",
     rule: "missing_confidence",
-    scope: "lakeshore-holdings",
+    scope: "skyharbor-air",
     reason: "pilot backfill in progress",
     granted_by: "anand",
     granted_at: "2026-06-01",

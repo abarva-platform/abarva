@@ -1,7 +1,7 @@
 {
   "dataset_id": "lakeshore-holdings-current-state-v1",
   "title": "Lakeshore Holdings — Current-State Context (canonical reconciliation)",
-  "client_key": "lakeshore-holdings",
+  "client_key": "corpus_global",
   "source_layer": "tenant_context",
   "classification": "internal",
   "owner": "abarva-platform",
@@ -13,5 +13,5 @@
   "expected_object_count": 1329,
   "approved_by": "anand",
   "approved_at": "2026-06-09",
-  "notes": "Reconciles the previously-loaded Lakeshore current-state context (docs/build/lakeshore/loaded/data/*.csv, 1,329 records committed, ~8,987 Azure Search docs) into the canonical CONTEXT_FRAMEWORK_v1 dimensions and the governed Admin bulk path. Cover name only; diversified/private-holdings shape. Mapping in LAKESHORE_CANONICAL_RECONCILIATION_2026-06-09.md."
+  "notes": "Historical current-state context manifest retained for audit continuity after tenant-scope sunset. It is not an active tenant manifest and does not authorize new retrieval promotion, Azure/Postgres mutation, or default runtime visibility."
 }
