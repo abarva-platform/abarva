@@ -227,29 +227,42 @@ export function SourceOptimizeContractPage({
 
   const workspace = (
     <main data-testid="source-optimize-contract" style={MAIN_STYLE}>
-      <div style={CONTAINER_STYLE}>
+      <div
+        data-testid="source-optimize-contract-container"
+        style={CONTAINER_STYLE}
+      >
         <ModuleHeader
           asOfDateIso={asOfDateIso}
           selected={selected}
           selectedOpportunity={selectedOpportunity}
         />
-        <StageRail steps={position.steps} />
-        <NextDecisionBar position={position} />
-        {!canViewFinancialValues ? (
-          <FinancialAccessRequired />
-        ) : selected ? (
-          <SelectedContractView
-            candidate={selected}
-            spine={spine}
-            opportunitySet={opportunitySet}
-            selectedOpportunity={selectedOpportunity}
-            readiness={readiness}
-            traceability={traceability}
-            position={position}
-          />
-        ) : (
-          <ContractPicker candidates={spine.topCandidates} />
-        )}
+        <div
+          data-testid="source-optimize-contract-frame"
+          style={WORKFLOW_FRAME_STYLE}
+        >
+          <StageRail steps={position.steps} />
+          <div
+            data-testid="source-optimize-contract-workflow-pane"
+            style={WORKFLOW_PANE_STYLE}
+          >
+            <NextDecisionBar position={position} />
+            {!canViewFinancialValues ? (
+              <FinancialAccessRequired />
+            ) : selected ? (
+              <SelectedContractView
+                candidate={selected}
+                spine={spine}
+                opportunitySet={opportunitySet}
+                selectedOpportunity={selectedOpportunity}
+                readiness={readiness}
+                traceability={traceability}
+                position={position}
+              />
+            ) : (
+              <ContractPicker candidates={spine.topCandidates} />
+            )}
+          </div>
+        </div>
       </div>
     </main>
   );
@@ -404,34 +417,48 @@ function ModuleHeader({
 
 function StageRail({ steps }: { steps: readonly OptimizeWorkflowStep[] }) {
   return (
-    <nav aria-label="Optimize contract stages" style={STAGE_RAIL_STYLE}>
-      {steps.map((step) => (
-        <div
-          key={step.key}
-          data-testid={`optimize-step-${step.key}`}
-          data-state={step.state}
-          aria-current={
-            step.state === "current" || step.state === "blocked"
-              ? "step"
-              : undefined
-          }
-          style={{
-            ...STAGE_CHIP_STYLE,
-            ...(step.state === "current" || step.state === "blocked"
-              ? STAGE_CHIP_ACTIVE_STYLE
-              : null),
-            ...(step.state === "future" ? STAGE_CHIP_FUTURE_STYLE : null),
-          }}
-        >
-          <span style={STAGE_NUMBER_STYLE}>
-            {step.state === "complete"
-              ? "✓"
-              : String(step.index).padStart(2, "0")}
-          </span>
-          {step.label}
-        </div>
-      ))}
-    </nav>
+    <aside
+      aria-label="Optimize contract journey"
+      data-testid="source-optimize-contract-journey"
+      style={STAGE_RAIL_WRAP_STYLE}
+    >
+      <div style={RAIL_LABEL_STYLE}>Journey</div>
+      <nav aria-label="Optimize contract stages" style={STAGE_RAIL_STYLE}>
+        {steps.map((step) => (
+          <div
+            key={step.key}
+            data-testid={`optimize-step-${step.key}`}
+            data-state={step.state}
+            aria-current={
+              step.state === "current" || step.state === "blocked"
+                ? "step"
+                : undefined
+            }
+            style={{
+              ...STAGE_CHIP_STYLE,
+              ...(step.state === "current" || step.state === "blocked"
+                ? STAGE_CHIP_ACTIVE_STYLE
+                : null),
+              ...(step.state === "future" ? STAGE_CHIP_FUTURE_STYLE : null),
+            }}
+          >
+            <span style={STAGE_NUMBER_STYLE}>
+              {step.state === "complete"
+                ? "✓"
+                : String(step.index).padStart(2, "0")}
+            </span>
+            <span style={STAGE_LABEL_STYLE}>{step.label}</span>
+            <span style={STAGE_STATE_STYLE}>
+              {step.state === "complete"
+                ? "Done"
+                : step.state === "future"
+                  ? "Locked"
+                  : "Now"}
+            </span>
+          </div>
+        ))}
+      </nav>
+    </aside>
   );
 }
 
@@ -2018,11 +2045,13 @@ const MAIN_STYLE: CSSProperties = {
 };
 
 const CONTAINER_STYLE: CSSProperties = {
-  maxWidth: 1480,
-  margin: "0 auto",
-  padding: "24px 28px 48px",
+  boxSizing: "border-box",
+  width: "100%",
+  maxWidth: "none",
+  margin: 0,
+  padding: "22px 28px 48px",
   display: "grid",
-  gap: 16,
+  gap: 14,
 };
 
 const HEADER_STYLE: CSSProperties = {
@@ -2050,7 +2079,7 @@ const EYEBROW_STYLE: CSSProperties = {
 const H1_STYLE: CSSProperties = {
   margin: 0,
   fontFamily: "Georgia, serif",
-  fontSize: 30,
+  fontSize: 28,
   lineHeight: 1.1,
   letterSpacing: 0,
 };
@@ -2116,36 +2145,86 @@ const ROW_BUTTON_STYLE: CSSProperties = {
   textDecoration: "none",
 };
 
+const WORKFLOW_FRAME_STYLE: CSSProperties = {
+  boxSizing: "border-box",
+  display: "grid",
+  gridTemplateColumns: "264px minmax(0, 1fr)",
+  gap: 28,
+  alignItems: "start",
+  width: "100%",
+};
+
+const WORKFLOW_PANE_STYLE: CSSProperties = {
+  boxSizing: "border-box",
+  minWidth: 0,
+  width: "100%",
+  display: "grid",
+  gap: 14,
+};
+
+const STAGE_RAIL_WRAP_STYLE: CSSProperties = {
+  borderRight: `1px solid ${ANALYTICS.LINE}`,
+  padding: "8px 20px 24px 0",
+  position: "sticky",
+  top: 96,
+  display: "grid",
+  gap: 10,
+};
+
+const RAIL_LABEL_STYLE: CSSProperties = {
+  color: ANALYTICS.MUTED,
+  fontSize: 10,
+  fontWeight: 900,
+  letterSpacing: 1.6,
+  textTransform: "uppercase",
+};
+
 const STAGE_RAIL_STYLE: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-  gap: 8,
+  gap: 6,
 };
 
 const STAGE_CHIP_STYLE: CSSProperties = {
-  border: `1px solid ${ANALYTICS.LINE}`,
+  border: "1px solid transparent",
   borderRadius: 8,
-  background: "#fff",
-  padding: "9px 10px",
+  background: "transparent",
+  padding: "8px 9px",
   fontSize: 12,
-  fontWeight: 850,
+  fontWeight: 800,
   color: ANALYTICS.MUTED,
-  display: "flex",
+  display: "grid",
+  gridTemplateColumns: "24px minmax(0, 1fr) auto",
   gap: 8,
   alignItems: "center",
-  minHeight: 42,
+  minHeight: 38,
 };
 
 const STAGE_CHIP_ACTIVE_STYLE: CSSProperties = {
-  background: ANALYTICS.INK,
-  color: "#fff",
-  borderColor: ANALYTICS.INK,
+  background: "#fff",
+  color: ANALYTICS.INK,
+  borderColor: ANALYTICS.LINE,
+  boxShadow: "inset 3px 0 0 #2a5aa8",
 };
 
 const STAGE_NUMBER_STYLE: CSSProperties = {
-  color: ANALYTICS.BLUE,
+  color: "inherit",
   fontSize: 11,
   fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+};
+
+const STAGE_LABEL_STYLE: CSSProperties = {
+  minWidth: 0,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
+const STAGE_STATE_STYLE: CSSProperties = {
+  color: ANALYTICS.MUTED,
+  fontSize: 10,
+  fontWeight: 900,
+  letterSpacing: 0.6,
+  textTransform: "uppercase",
 };
 
 const PANEL_STYLE: CSSProperties = {
