@@ -3,7 +3,7 @@
 Status: enforced purge of loader-visible legacy tenant templates and source packs.
 
 - Approved standard: `standard-2026-07-v3`
-- Deleted legacy files in this diff: 0
+- Deleted legacy files in this diff: 2
 - Blocked loader-visible legacy paths remaining: 0
 - Blocked guarded-content legacy references remaining: 0
 - Allowed historical references remaining: 616
