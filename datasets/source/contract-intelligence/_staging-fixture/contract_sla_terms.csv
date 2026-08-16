@@ -1,0 +1,6 @@
+contract_id,severity,description,response_target,restore_target,monthly_availability_percent,service_credit_percent,credit_cap_percent
+CTR-H-001,Sev1,Complete loss of clinical documentation,15 minutes,4 hours,99.90,5,25
+CTR-H-001,Sev2,Major functional degradation,1 hour,8 hours,99.90,3,25
+CTR-H-002,Sev1,Tenant-wide service outage,30 minutes,4 hours,99.95,10,30
+CTR-H-002,Sev2,Degraded regional performance,2 hours,12 hours,99.95,5,30
+CTR-H-003,Sev1,Claims submission pipeline halted,30 minutes,6 hours,99.50,4,20
