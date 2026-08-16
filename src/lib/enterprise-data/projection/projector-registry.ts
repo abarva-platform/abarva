@@ -38,6 +38,16 @@ export const CANONICAL_OBJECT_TYPES = [
   "tenant_profile",
   "vendor_contract",
   "workforce_role",
+  // Added 2026-08-16 with their intake domains. These files sat in every active tenant root
+  // matching no domain, so they were never read. They are largely Tower and Moves inputs —
+  // which is the likely reason Tower ingests observed equivalents from live tool APIs instead.
+  "benefit_realization_record",
+  "capability_maturity_assessment",
+  "interview_object_crosswalk",
+  "kpi_outcome_observation",
+  "process_performance_observation",
+  "tool_usage_observation",
+  "value_interview_evidence",
 ] as const;
 
 export type CanonicalObjectType = (typeof CANONICAL_OBJECT_TYPES)[number];

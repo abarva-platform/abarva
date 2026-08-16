@@ -104,7 +104,20 @@ type DomainKey =
   | "industry_context_patterns"
   | "expert_lenses"
   | "service_scope_managed_services"
-  | "operational_process_evidence";
+  | "operational_process_evidence"
+  // Domains added 2026-08-16. These files were present in every active tenant root and matched
+  // no domain, so they were never read: the AI benefits, tool usage, interview evidence and KPI
+  // outcome feeds, ITSM SLA performance, platform maturity, and the interview-to-object
+  // crosswalk. They are disproportionately Tower and Moves inputs, which is a plausible reason
+  // Tower built its own telemetry ingest — the client-declared data it needed was not reaching
+  // the canonical model.
+  | "benefit_realization"
+  | "tool_usage"
+  | "value_interview_evidence"
+  | "kpi_outcome"
+  | "process_performance"
+  | "capability_maturity"
+  | "interview_object_crosswalk";
 
 type SourceFile = {
   tenantKey: string;
@@ -776,6 +789,114 @@ const DOMAIN_CONFIG: Record<
       },
     ],
   },
+
+  // ---- Domains added 2026-08-16 for files that previously matched nothing ----
+  //
+  // Each of these carries facts the client declares about themselves. Where telemetry ingest
+  // later observes the same thing from a live system, both belong in the canonical model —
+  // the declared figure and the observed one are different facts, and their difference is
+  // worth more than either alone.
+
+  benefit_realization: {
+    canonicalDomain: "tower_outcomes",
+    objectType: "benefit_realization_record",
+    primaryFields: ["program_name", "tool_name", "ai_use_case_id", "ai_program_id"],
+    nameLabel: "benefit record",
+    relationshipFields: [
+      {
+        field: "business_function",
+        relationshipType: "benefits_function",
+        targetObjectType: "business_function",
+      },
+      {
+        field: "vendor_name",
+        relationshipType: "delivered_by",
+        targetObjectType: "vendor_contract",
+      },
+    ],
+  },
+
+  tool_usage: {
+    canonicalDomain: "transformation_ai_portfolio",
+    objectType: "tool_usage_observation",
+    primaryFields: ["tool_name", "tool_category", "ai_use_case_id"],
+    nameLabel: "tool usage",
+    relationshipFields: [
+      {
+        field: "vendor_name",
+        relationshipType: "supplied_by",
+        targetObjectType: "vendor_contract",
+      },
+      {
+        field: "business_function",
+        relationshipType: "used_by_function",
+        targetObjectType: "business_function",
+      },
+    ],
+  },
+
+  value_interview_evidence: {
+    canonicalDomain: "intelligence_answering",
+    objectType: "value_interview_evidence",
+    primaryFields: ["question", "stakeholder_role", "interview_track", "source_record_id"],
+    nameLabel: "interview evidence",
+    relationshipFields: [
+      {
+        field: "ai_use_case_id",
+        relationshipType: "evidences_use_case",
+        targetObjectType: "ai_automation_use_case",
+      },
+    ],
+  },
+
+  kpi_outcome: {
+    canonicalDomain: "tower_outcomes",
+    objectType: "kpi_outcome_observation",
+    primaryFields: ["kpi_name", "kpi_definition", "ai_use_case_id"],
+    nameLabel: "KPI outcome",
+    relationshipFields: [
+      {
+        field: "business_function",
+        relationshipType: "measures_function",
+        targetObjectType: "business_function",
+      },
+    ],
+  },
+
+  process_performance: {
+    canonicalDomain: "tower_outcomes",
+    objectType: "process_performance_observation",
+    primaryFields: ["system_name", "servicenow_ci_sys_id", "reporting_period"],
+    nameLabel: "process performance",
+    relationshipFields: [
+      {
+        field: "system_name",
+        relationshipType: "measures_system",
+        targetObjectType: "application_system",
+      },
+    ],
+  },
+
+  capability_maturity: {
+    canonicalDomain: "technology_estate",
+    objectType: "capability_maturity_assessment",
+    primaryFields: ["platform_or_capability", "maturity_dimension"],
+    nameLabel: "maturity assessment",
+    relationshipFields: [
+      {
+        field: "platform_or_capability",
+        relationshipType: "assesses_platform",
+        targetObjectType: "infrastructure_platform",
+      },
+    ],
+  },
+
+  interview_object_crosswalk: {
+    canonicalDomain: "intelligence_answering",
+    objectType: "interview_object_crosswalk",
+    primaryFields: ["canonical_object_name", "interview_mention_text"],
+    nameLabel: "interview crosswalk",
+  },
 };
 
 const DOMAIN_MATCHERS: Array<{ domain: DomainKey; patterns: RegExp[] }> = [
@@ -901,6 +1022,39 @@ const DOMAIN_MATCHERS: Array<{ domain: DomainKey; patterns: RegExp[] }> = [
       /process[_-]intelligence/i,
       /incidents/i,
     ],
+  },
+
+  // Matchers for the domains added 2026-08-16. Anchored on the distinctive part of each
+  // template filename rather than on a loose keyword: /usage/ or /evidence/ alone would collide
+  // with several existing domains, and an ambiguous match is reported as unclaimed by
+  // validate-intake-coverage, which is the same failure as no match at all.
+  {
+    domain: "benefit_realization",
+    patterns: [/benefits[_-]realization/i, /benefit[_-]realisation/i],
+  },
+  {
+    domain: "tool_usage",
+    patterns: [/ai[_-]tool[_-]usage/i, /tool[_-]usage[_-]feed/i],
+  },
+  {
+    domain: "value_interview_evidence",
+    patterns: [/value[_-]interview[_-]evidence/i],
+  },
+  {
+    domain: "kpi_outcome",
+    patterns: [/kpi[_-]operational[_-]outcome/i, /kpi[_-]outcome[_-]feed/i],
+  },
+  {
+    domain: "process_performance",
+    patterns: [/itsm[_-]ticket[_-]sla[_-]performance/i, /ticket[_-]sla[_-]performance/i],
+  },
+  {
+    domain: "capability_maturity",
+    patterns: [/analytics[_-]platform[_-]maturity/i, /platform[_-]maturity/i],
+  },
+  {
+    domain: "interview_object_crosswalk",
+    patterns: [/interview[_-]initiative[_-]metric[_-]crosswalk/i, /interview[_-].*[_-]crosswalk/i],
   },
 ];
 
