@@ -421,7 +421,51 @@ async function upsertRows(client: Client, table: string, rows: Row[], conflict: 
   return written;
 }
 
-async function refreshViews(client: Client): Promise<void> {
+async function refreshViews(client: Client, args: Args): Promise<void> {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS source.l4_cube_active_load_run (
+      tenant_key TEXT PRIMARY KEY,
+      load_run_id TEXT NOT NULL,
+      input_source_version TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL,
+      activated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb
+    )`);
+
+  for (const tenant of args.tenants) {
+    await client.query(
+      `INSERT INTO source.l4_cube_active_load_run
+         (tenant_key, load_run_id, input_source_version, idempotency_key, raw_payload)
+       VALUES ($1, $2, $3, $4, $5::jsonb)
+       ON CONFLICT (tenant_key)
+       DO UPDATE SET
+         load_run_id = EXCLUDED.load_run_id,
+         input_source_version = EXCLUDED.input_source_version,
+         idempotency_key = EXCLUDED.idempotency_key,
+         activated_at = now(),
+         raw_payload = EXCLUDED.raw_payload`,
+      [
+        tenant,
+        args.buildVersion,
+        args.inputSourceVersion,
+        args.idempotencyKey,
+        JSON.stringify({ projection: "source-l4-cube", contractVersion: CONTRACT_VERSION }),
+      ],
+    );
+  }
+
+  await client.query(`
+    DROP VIEW IF EXISTS consumption.sourcing_context_coverage_v1;
+    DROP VIEW IF EXISTS consumption.sourcing_vendor_semantic_v1;
+    DROP VIEW IF EXISTS consumption.sourcing_event_supplier_v1;
+    DROP VIEW IF EXISTS consumption.sourcing_event_v1;
+    DROP VIEW IF EXISTS consumption.sourcing_opportunity_v1;
+    DROP VIEW IF EXISTS consumption.sourcing_performance_v1;
+    DROP VIEW IF EXISTS consumption.sourcing_spend_monthly_v1;
+    DROP VIEW IF EXISTS consumption.sourcing_contract_scope_v1;
+    DROP VIEW IF EXISTS consumption.sourcing_contract_v1;
+    DROP VIEW IF EXISTS consumption.sourcing_vendor_v1`);
+
   await client.query(`
     CREATE OR REPLACE VIEW source.contract_application_scope AS
     SELECT
@@ -440,14 +484,569 @@ async function refreshViews(client: Client): Promise<void> {
       cs.raw_payload->>'modernization_plan' AS modernization_plan,
       NULL::text AS sla_tier,
       cs.raw_payload->>'known_pain_risk' AS known_pain_risk,
-      cs.scope_ref AS it_portfolio_ref
+      cs.scope_ref AS it_portfolio_ref,
+      cs.load_run_id
     FROM source.contract_scope cs
+    JOIN source.l4_cube_active_load_run active
+      ON active.tenant_key = cs.tenant_key
+     AND active.load_run_id = cs.load_run_id
     LEFT JOIN source.contract c
       ON c.tenant_key = cs.tenant_key
      AND c.contract_id = cs.contract_id
+     AND c.load_run_id = cs.load_run_id
     LEFT JOIN source.vendor v
       ON v.tenant_key = c.tenant_key
-     AND v.vendor_id = c.vendor_id`);
+     AND v.vendor_id = c.vendor_id
+     AND v.load_run_id = c.load_run_id`);
+
+  await client.query(`
+    CREATE OR REPLACE VIEW consumption.sourcing_vendor_v1 AS
+    WITH contract_rollup AS (
+      SELECT
+        c.tenant_key,
+        c.vendor_id,
+        count(*)::bigint AS contract_count,
+        sum(c.annual_value) AS annual_value,
+        sum(c.total_committed_value) AS total_committed_value,
+        count(*) FILTER (WHERE c.auto_renew)::bigint AS auto_renew_contracts,
+        min(c.expiration_date) AS next_end_date,
+        array_agg(c.contract_id ORDER BY c.annual_value DESC NULLS LAST, c.contract_id) AS contract_refs,
+        max(c.load_run_id) AS load_run_id
+      FROM source.contract c
+      JOIN source.l4_cube_active_load_run active
+        ON active.tenant_key = c.tenant_key
+       AND active.load_run_id = c.load_run_id
+      GROUP BY c.tenant_key, c.vendor_id
+    ),
+    base AS (
+      SELECT
+        r.tenant_key,
+        r.vendor_id AS vendor_ref,
+        r.vendor_id,
+        COALESCE(v.legal_name, r.vendor_id) AS vendor_name,
+        COALESCE(v.legal_name, r.vendor_id) AS legal_name,
+        COALESCE(v.parent_company, v.legal_name, r.vendor_id) AS parent_vendor,
+        v.supplier_category AS category,
+        v.supplier_category,
+        v.strategic_status,
+        v.country,
+        v.region,
+        v.diversity_status,
+        v.risk_tier,
+        v.financial_health_status,
+        v.security_risk_status,
+        v.relationship_owner_role,
+        r.contract_count,
+        r.annual_value AS annual_contract_value,
+        r.annual_value,
+        r.total_committed_value,
+        r.auto_renew_contracts,
+        r.next_end_date,
+        r.contract_refs,
+        row_number() OVER (PARTITION BY r.tenant_key ORDER BY r.annual_value DESC NULLS LAST, COALESCE(v.legal_name, r.vendor_id)) AS vendor_rank,
+        CASE
+          WHEN sum(r.annual_value) OVER (PARTITION BY r.tenant_key) > 0
+            THEN r.annual_value / sum(r.annual_value) OVER (PARTITION BY r.tenant_key)
+          ELSE NULL
+        END AS portfolio_share_pct,
+        CASE
+          WHEN sum(r.annual_value) OVER (PARTITION BY r.tenant_key) > 0
+            THEN sum(r.annual_value) OVER (
+              PARTITION BY r.tenant_key
+              ORDER BY r.annual_value DESC NULLS LAST, COALESCE(v.legal_name, r.vendor_id)
+              ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+            ) / sum(r.annual_value) OVER (PARTITION BY r.tenant_key)
+          ELSE NULL
+        END AS cumulative_portfolio_share_pct,
+        COALESCE(scope.critical_application_count, 0) AS critical_application_count,
+        0::bigint AS lock_in_signal_count,
+        COALESCE(v.as_of_date, DATE '${AS_OF_DATE}') AS as_of_date,
+        r.load_run_id AS knowledge_baseline_ref,
+        'sourcing-consumption-v1'::text AS projection_contract_version,
+        'accepted'::text AS authority_state,
+        COALESCE(v.quality_state, 'reviewed') AS quality_state,
+        'current'::text AS freshness_state,
+        'available'::text AS availability_state,
+        r.load_run_id
+      FROM contract_rollup r
+      LEFT JOIN source.vendor v
+        ON v.tenant_key = r.tenant_key
+       AND v.vendor_id = r.vendor_id
+       AND v.load_run_id = r.load_run_id
+      LEFT JOIN (
+        SELECT
+          tenant_key,
+          vendor_ref,
+          count(DISTINCT application_ref) FILTER (
+            WHERE criticality IN ('Tier 0', 'Tier 1', 'Mission critical', 'Critical')
+          ) AS critical_application_count
+        FROM source.contract_application_scope
+        GROUP BY tenant_key, vendor_ref
+      ) scope
+        ON scope.tenant_key = r.tenant_key
+       AND scope.vendor_ref = r.vendor_id
+    )
+    SELECT
+      tenant_key,
+      vendor_ref,
+      vendor_id,
+      vendor_name,
+      legal_name,
+      parent_vendor,
+      category,
+      supplier_category,
+      strategic_status,
+      country,
+      region,
+      diversity_status,
+      risk_tier,
+      financial_health_status,
+      security_risk_status,
+      relationship_owner_role,
+      contract_count,
+      annual_contract_value,
+      annual_value,
+      total_committed_value,
+      auto_renew_contracts,
+      next_end_date,
+      contract_refs,
+      vendor_rank,
+      portfolio_share_pct,
+      cumulative_portfolio_share_pct,
+      vendor_rank <= 5 AS top_5_flag,
+      vendor_rank <= 10 AS top_10_flag,
+      critical_application_count,
+      lock_in_signal_count,
+      as_of_date,
+      knowledge_baseline_ref,
+      projection_contract_version,
+      authority_state,
+      quality_state,
+      freshness_state,
+      availability_state,
+      load_run_id
+    FROM base
+    WHERE source.can_read_sourcing_tenant(tenant_key)`);
+
+  await client.query(`
+    CREATE VIEW consumption.sourcing_vendor_semantic_v1 AS
+    SELECT * FROM consumption.sourcing_vendor_v1;
+    GRANT SELECT ON consumption.sourcing_vendor_semantic_v1 TO authenticated, service_role`);
+
+  await client.query(`
+    CREATE OR REPLACE VIEW consumption.sourcing_contract_v1 AS
+    SELECT
+      c.tenant_key,
+      c.contract_id AS contract_ref,
+      c.contract_id,
+      c.contract_name,
+      c.vendor_id AS vendor_ref,
+      c.vendor_id,
+      COALESCE(v.legal_name, c.vendor_id) AS vendor_name,
+      v.supplier_category AS contract_category,
+      c.agreement_type,
+      c.renewal_type,
+      CASE
+        WHEN c.expiration_date IS NOT NULL AND c.expiration_date < DATE '${AS_OF_DATE}' THEN 'expired'
+        ELSE 'active'
+      END AS contract_state,
+      c.renewal_type AS renewal_state,
+      COALESCE(c.auto_renew, false) AS auto_renew,
+      c.annual_value AS annual_contract_value,
+      c.annual_value,
+      COALESCE(consumption.actual_annual_spend, c.annual_value) AS actual_annual_spend,
+      COALESCE(consumption.committed_annual_spend, c.annual_value) AS committed_annual_spend,
+      c.total_committed_value,
+      c.effective_date,
+      c.expiration_date,
+      c.notice_deadline,
+      CASE WHEN c.notice_deadline IS NULL THEN NULL ELSE c.notice_deadline - DATE '${AS_OF_DATE}' END AS days_to_notice_deadline,
+      CASE WHEN c.expiration_date IS NULL THEN NULL ELSE c.expiration_date - DATE '${AS_OF_DATE}' END AS days_to_contract_expiry,
+      CASE
+        WHEN c.notice_deadline IS NULL THEN 'unknown'
+        WHEN c.notice_deadline < DATE '${AS_OF_DATE}' THEN 'passed_active'
+        WHEN c.notice_deadline <= DATE '${AS_OF_DATE}' + 90 THEN 'within_90_days'
+        WHEN c.notice_deadline <= DATE '${AS_OF_DATE}' + 180 THEN 'within_180_days'
+        ELSE 'future'
+      END AS notice_deadline_state,
+      CASE
+        WHEN c.expiration_date IS NULL THEN 'unknown'
+        WHEN c.expiration_date <= DATE '${AS_OF_DATE}' + 90 THEN 'within_90_days'
+        WHEN c.expiration_date <= DATE '${AS_OF_DATE}' + 180 THEN 'within_180_days'
+        ELSE 'beyond_180_days'
+      END AS renewal_urgency_state,
+      COALESCE(c.benchmark_rights, '') <> '' AS benchmark_rights_present,
+      CASE
+        WHEN COALESCE(c.benchmark_rights, '') = '' THEN 'not_loaded'
+        WHEN c.benchmark_rights ILIKE '%weak%' OR c.benchmark_rights ILIKE '%limited%' THEN 'weak'
+        ELSE 'present'
+      END AS benchmark_status,
+      CASE
+        WHEN COALESCE(c.raw_payload->>'alternatives_available', '') ILIKE '%limited%'
+          OR COALESCE(c.raw_payload->>'alternatives_available', '') ILIKE '%none%'
+          OR COALESCE(c.raw_payload->>'alternatives_available', '') = ''
+          THEN 'limited'
+        ELSE 'available'
+      END AS alternatives_status,
+      COALESCE(c.benchmark_rights, '') = ''
+        OR c.benchmark_rights ILIKE '%weak%'
+        OR c.benchmark_rights ILIKE '%limited%' AS weak_benchmark_flag,
+      COALESCE(c.raw_payload->>'alternatives_available', '') ILIKE '%limited%'
+        OR COALESCE(c.raw_payload->>'alternatives_available', '') ILIKE '%none%'
+        OR COALESCE(c.raw_payload->>'alternatives_available', '') = '' AS limited_alternatives_flag,
+      COALESCE(scope.scoped_application_count, 0) AS scoped_application_count,
+      COALESCE(scope.critical_application_count, 0) AS critical_application_count,
+      0::bigint AS modernization_dependency_count,
+      COALESCE(scope.critical_application_count, 0) AS lock_in_signal_count,
+      true AS portfolio_rollup_eligible,
+      COALESCE(c.confidence, 0.9) AS confidence,
+      c.currency,
+      COALESCE(c.as_of_date, DATE '${AS_OF_DATE}') AS as_of_date,
+      c.load_run_id AS knowledge_baseline_ref,
+      'sourcing-consumption-v1'::text AS projection_contract_version,
+      'accepted'::text AS authority_state,
+      COALESCE(c.quality_state, 'reviewed') AS quality_state,
+      'current'::text AS freshness_state,
+      CASE WHEN c.annual_value IS NULL THEN 'partial' ELSE 'available' END AS availability_state,
+      c.load_run_id
+    FROM source.contract c
+    JOIN source.l4_cube_active_load_run active
+      ON active.tenant_key = c.tenant_key
+     AND active.load_run_id = c.load_run_id
+    LEFT JOIN source.vendor v
+      ON v.tenant_key = c.tenant_key
+     AND v.vendor_id = c.vendor_id
+     AND v.load_run_id = c.load_run_id
+    LEFT JOIN (
+      SELECT
+        tenant_key,
+        contract_id,
+        load_run_id,
+        sum(committed_amount)::numeric AS committed_annual_spend,
+        sum(actual_spend)::numeric AS actual_annual_spend
+      FROM source.contract_consumption_observation
+      GROUP BY tenant_key, contract_id, load_run_id
+    ) consumption
+      ON consumption.tenant_key = c.tenant_key
+     AND consumption.contract_id = c.contract_id
+     AND consumption.load_run_id = c.load_run_id
+    LEFT JOIN (
+      SELECT
+        tenant_key,
+        contract_id,
+        load_run_id,
+        count(*)::bigint AS scoped_application_count,
+        count(*) FILTER (WHERE criticality IN ('Tier 0', 'Tier 1', 'Mission critical', 'Critical'))::bigint AS critical_application_count
+      FROM source.contract_scope
+      GROUP BY tenant_key, contract_id, load_run_id
+    ) scope
+      ON scope.tenant_key = c.tenant_key
+     AND scope.contract_id = c.contract_id
+     AND scope.load_run_id = c.load_run_id
+    WHERE source.can_read_sourcing_tenant(c.tenant_key)`);
+
+  await client.query(`
+    CREATE OR REPLACE VIEW consumption.sourcing_contract_scope_v1 AS
+    SELECT
+      cs.tenant_key,
+      cs.contract_scope_id AS scope_relationship_ref,
+      cs.contract_scope_id,
+      cs.contract_id AS contract_ref,
+      cs.contract_id,
+      c.vendor_id AS vendor_ref,
+      c.vendor_id,
+      COALESCE(v.legal_name, c.vendor_id) AS vendor_name,
+      cs.scope_type,
+      cs.scope_ref,
+      cs.scope_name,
+      cs.raw_payload->>'business_function' AS business_function,
+      NULL::text AS function_ref,
+      cs.criticality,
+      cs.raw_payload->>'lifecycle_state' AS lifecycle_state,
+      cs.raw_payload->>'modernization_plan' AS modernization_plan,
+      cs.relationship_method,
+      cs.relationship_confidence,
+      cs.criticality IN ('Tier 0', 'Tier 1', 'Mission critical', 'Critical') AS critical_application_flag,
+      COALESCE(cs.raw_payload->>'lifecycle_state', '') ILIKE '%retire%' AS retire_application_flag,
+      COALESCE(cs.raw_payload->>'modernization_plan', '') ILIKE '%replace%' AS replace_application_flag,
+      COALESCE(cs.as_of_date, DATE '${AS_OF_DATE}') AS as_of_date,
+      cs.load_run_id AS knowledge_baseline_ref,
+      'sourcing-consumption-v1'::text AS projection_contract_version,
+      'accepted'::text AS authority_state,
+      COALESCE(cs.quality_state, 'reviewed') AS quality_state,
+      'current'::text AS freshness_state,
+      'available'::text AS availability_state,
+      cs.load_run_id
+    FROM source.contract_scope cs
+    JOIN source.contract c
+      ON c.tenant_key = cs.tenant_key
+     AND c.contract_id = cs.contract_id
+     AND c.load_run_id = cs.load_run_id
+    JOIN source.l4_cube_active_load_run active
+      ON active.tenant_key = cs.tenant_key
+     AND active.load_run_id = cs.load_run_id
+    LEFT JOIN source.vendor v
+      ON v.tenant_key = c.tenant_key
+     AND v.vendor_id = c.vendor_id
+     AND v.load_run_id = c.load_run_id
+    WHERE source.can_read_sourcing_tenant(cs.tenant_key)`);
+
+  await client.query(`
+    CREATE OR REPLACE VIEW consumption.sourcing_spend_monthly_v1 AS
+    SELECT
+      o.tenant_key,
+      o.observation_id,
+      o.contract_id AS contract_ref,
+      o.contract_id,
+      o.service_id AS service_ref,
+      o.service_id,
+      o.business_unit,
+      o.cost_center,
+      NULL::text AS service_category,
+      o.period_start AS month,
+      o.committed_amount,
+      o.invoice_amount,
+      o.paid_amount,
+      o.actual_spend,
+      o.consumed_quantity AS consumed_amount,
+      o.overage_amount,
+      o.service_credit_amount AS credit_eligible_amount,
+      o.service_credit_amount AS credit_recovered_amount,
+      o.service_credit_amount,
+      CASE WHEN o.committed_amount IS NOT NULL AND o.actual_spend IS NOT NULL THEN o.committed_amount - o.actual_spend ELSE NULL END AS unused_commitment_amount,
+      CASE WHEN o.committed_amount IS NOT NULL AND o.committed_amount <> 0 AND o.actual_spend IS NOT NULL THEN o.actual_spend / o.committed_amount ELSE NULL END AS consumption_rate,
+      CASE WHEN o.service_credit_amount IS NOT NULL AND o.service_credit_amount <> 0 THEN 1 ELSE NULL END AS credit_recovery_rate,
+      1::int AS invoice_lines,
+      'contract_matched'::text AS matching_state,
+      o.currency,
+      COALESCE(o.as_of_date, DATE '${AS_OF_DATE}') AS as_of_date,
+      o.load_run_id AS knowledge_baseline_ref,
+      'sourcing-consumption-v1'::text AS projection_contract_version,
+      'accepted'::text AS authority_state,
+      'current'::text AS freshness_state,
+      CASE WHEN o.actual_spend IS NULL AND o.invoice_amount IS NULL THEN 'partial' ELSE 'available' END AS availability_state,
+      o.load_run_id
+    FROM source.contract_consumption_observation o
+    JOIN source.contract c
+      ON c.tenant_key = o.tenant_key
+     AND c.contract_id = o.contract_id
+     AND c.load_run_id = o.load_run_id
+    JOIN source.l4_cube_active_load_run active
+      ON active.tenant_key = o.tenant_key
+     AND active.load_run_id = o.load_run_id
+    WHERE source.can_read_sourcing_tenant(o.tenant_key)`);
+
+  await client.query(`
+    CREATE OR REPLACE VIEW consumption.sourcing_performance_v1 AS
+    SELECT
+      o.tenant_key,
+      o.observation_id,
+      o.contract_id AS contract_ref,
+      o.contract_id,
+      o.service_id AS service_ref,
+      o.service_id,
+      o.metric_name AS metric_ref,
+      o.metric_name,
+      o.period_start AS period,
+      o.period_start,
+      o.period_end,
+      o.unit,
+      CASE WHEN COALESCE(o.breach_count, 0) > 0 THEN 'breached' WHEN o.actual_value IS NULL AND o.value_num IS NULL THEN 'not_loaded' ELSE 'met_or_unclassified' END AS performance_state,
+      CASE WHEN COALESCE(o.credit_recovered, 0) > 0 THEN 'recovered' WHEN COALESCE(o.credit_claimed, 0) > 0 THEN 'claimed' WHEN COALESCE(o.credit_calculated, 0) > 0 THEN 'earned_unclaimed' ELSE 'none' END AS credit_state,
+      CASE WHEN o.evidence_reference IS NULL OR o.evidence_reference = '' THEN 'missing' ELSE 'present' END AS evidence_state,
+      o.breach_count,
+      o.credit_eligible,
+      o.credit_calculated AS credit_eligible_amount,
+      o.credit_calculated AS credit_calculated_amount,
+      o.credit_calculated,
+      o.credit_claimed AS credit_claimed_amount,
+      o.credit_claimed,
+      o.credit_recovered AS credit_recovered_amount,
+      o.credit_recovered,
+      o.currency,
+      COALESCE(o.as_of_date, DATE '${AS_OF_DATE}') AS as_of_date,
+      o.load_run_id AS knowledge_baseline_ref,
+      'sourcing-consumption-v1'::text AS projection_contract_version,
+      'accepted'::text AS authority_state,
+      'current'::text AS freshness_state,
+      CASE WHEN o.actual_value IS NULL AND o.value_num IS NULL THEN 'partial' ELSE 'available' END AS availability_state,
+      o.load_run_id
+    FROM source.contract_performance_observation o
+    JOIN source.contract c
+      ON c.tenant_key = o.tenant_key
+     AND c.contract_id = o.contract_id
+     AND c.load_run_id = o.load_run_id
+    JOIN source.l4_cube_active_load_run active
+      ON active.tenant_key = o.tenant_key
+     AND active.load_run_id = o.load_run_id
+    WHERE source.can_read_sourcing_tenant(o.tenant_key)`);
+
+  await client.query(`
+    CREATE OR REPLACE VIEW consumption.sourcing_opportunity_v1 AS
+    SELECT
+      o.tenant_key,
+      o.opportunity_id AS opportunity_ref,
+      o.opportunity_id,
+      o.vendor_id AS vendor_ref,
+      o.vendor_id,
+      o.contract_id AS contract_ref,
+      o.contract_id,
+      o.event_id AS event_ref,
+      o.event_id,
+      o.opportunity_type AS action_type,
+      o.opportunity_type,
+      o.title,
+      o.finding_summary,
+      o.deterministic_basis,
+      o.value_low,
+      o.value_high,
+      COALESCE(o.value_high, o.value_low) AS annual_value_exposed,
+      COALESCE(o.value_low, 0) AS addressable_spend,
+      CASE WHEN COALESCE(o.value_high, o.value_low, 0) >= 10000000 THEN 'high' WHEN COALESCE(o.value_high, o.value_low, 0) >= 1000000 THEN 'medium' ELSE 'low' END AS priority,
+      o.confidence,
+      CASE WHEN o.quality_state = 'accepted' AND o.confidence >= 0.75 THEN 'ready_to_act' WHEN o.quality_state IN ('missing_evidence', 'blocked') THEN 'evidence_blocked' ELSE 'review_required' END AS readiness_state,
+      CASE WHEN o.evidence_reference IS NULL OR o.evidence_reference = '' THEN 'missing' ELSE 'present' END AS evidence_state,
+      o.recommended_action,
+      o.accountable_role,
+      NULL::date AS decision_due_date,
+      o.opportunity_type AS finding_rule_ref,
+      COALESCE(o.as_of_date, DATE '${AS_OF_DATE}') AS as_of_date,
+      o.load_run_id AS knowledge_baseline_ref,
+      'sourcing-consumption-v1'::text AS projection_contract_version,
+      o.quality_state AS authority_state,
+      'current'::text AS freshness_state,
+      'available'::text AS availability_state,
+      o.load_run_id
+    FROM source.sourcing_opportunity o
+    JOIN source.contract c
+      ON c.tenant_key = o.tenant_key
+     AND c.contract_id = o.contract_id
+     AND c.load_run_id = o.load_run_id
+    JOIN source.l4_cube_active_load_run active
+      ON active.tenant_key = o.tenant_key
+     AND active.load_run_id = o.load_run_id
+    WHERE source.can_read_sourcing_tenant(o.tenant_key)`);
+
+  await client.query(`
+    CREATE OR REPLACE VIEW consumption.sourcing_event_v1 AS
+    SELECT
+      e.tenant_key,
+      e.event_id AS event_ref,
+      e.event_id,
+      e.event_id AS event_name,
+      e.event_type,
+      NULL::text AS category,
+      e.business_outcome,
+      e.event_status AS stage,
+      e.event_status AS status,
+      e.event_status,
+      e.incumbent_contracts[1] AS incumbent_contract_ref,
+      NULL::text AS incumbent_vendor_ref,
+      e.decision_due_date AS target_decision_date,
+      e.accountable_role AS event_owner_role,
+      e.accountable_role,
+      e.decision_due_date,
+      COALESCE(NULLIF(e.baseline_volumes->>'estimated_annual_value', '')::numeric, 0) AS estimated_annual_value,
+      COALESCE(NULLIF(e.raw_payload->>'requirement_count', '')::numeric, 0) AS requirement_count,
+      COALESCE(NULLIF(e.raw_payload->>'invited_supplier_count', '')::numeric, 0) AS invited_supplier_count,
+      COALESCE(NULLIF(e.raw_payload->>'response_count', '')::numeric, 0) AS response_count,
+      COALESCE(NULLIF(e.raw_payload->>'qualified_supplier_count', '')::numeric, 0) AS qualified_supplier_count,
+      COALESCE(NULLIF(e.raw_payload->>'evaluation_completion_pct', '')::numeric, 0) AS evaluation_completion_pct,
+      COALESCE(NULLIF(e.raw_payload->>'commercial_normalization_completion_pct', '')::numeric, 0) AS commercial_normalization_completion_pct,
+      CASE WHEN e.as_of_date IS NOT NULL THEN DATE '${AS_OF_DATE}' - e.as_of_date ELSE NULL END AS days_in_current_stage,
+      COALESCE(e.as_of_date, DATE '${AS_OF_DATE}') AS as_of_date,
+      e.load_run_id AS knowledge_baseline_ref,
+      'sourcing-consumption-v1'::text AS projection_contract_version,
+      e.quality_state AS authority_state,
+      'current'::text AS freshness_state,
+      'available'::text AS availability_state,
+      e.load_run_id,
+      e.service_scope
+    FROM source.sourcing_event e
+    JOIN source.l4_cube_active_load_run active
+      ON active.tenant_key = e.tenant_key
+     AND active.load_run_id = e.load_run_id
+    WHERE source.can_read_sourcing_tenant(e.tenant_key)`);
+
+  await client.query(`
+    CREATE OR REPLACE VIEW consumption.sourcing_event_supplier_v1 AS
+    SELECT
+      s.tenant_key,
+      s.event_supplier_id,
+      s.event_id AS event_ref,
+      s.event_id,
+      s.vendor_id AS supplier_ref,
+      s.vendor_id,
+      s.supplier_name,
+      s.response_status AS response_state,
+      s.response_status,
+      s.supplier_status AS qualification_state,
+      s.supplier_status,
+      s.recommendation AS recommendation_state,
+      s.recommendation,
+      COALESCE(s.raw_payload->>'bafo_state', 'not_started') AS bafo_state,
+      COALESCE(NULLIF(s.commercial_normalization->>'normalized_annual_value', '')::numeric, 0) AS normalized_annual_value,
+      COALESCE(NULLIF(s.commercial_normalization->>'normalized_total_contract_value', '')::numeric, 0) AS normalized_total_contract_value,
+      s.weighted_score,
+      COALESCE(NULLIF(s.raw_payload->>'commercial_score', '')::numeric, NULL) AS commercial_score,
+      COALESCE(NULLIF(s.raw_payload->>'technical_score', '')::numeric, NULL) AS technical_score,
+      s.risk_score,
+      COALESCE(NULLIF(s.raw_payload->>'exception_count', '')::numeric, 0) AS exception_count,
+      COALESCE(s.as_of_date, DATE '${AS_OF_DATE}') AS as_of_date,
+      s.load_run_id AS knowledge_baseline_ref,
+      'sourcing-consumption-v1'::text AS projection_contract_version,
+      s.quality_state AS authority_state,
+      'current'::text AS freshness_state,
+      'available'::text AS availability_state,
+      s.load_run_id
+    FROM source.sourcing_event_supplier s
+    JOIN source.sourcing_event e
+      ON e.tenant_key = s.tenant_key
+     AND e.event_id = s.event_id
+     AND e.load_run_id = s.load_run_id
+    JOIN source.l4_cube_active_load_run active
+      ON active.tenant_key = s.tenant_key
+     AND active.load_run_id = s.load_run_id
+    WHERE source.can_read_sourcing_tenant(s.tenant_key)`);
+
+  await client.query(`
+    CREATE VIEW consumption.sourcing_context_coverage_v1 AS
+    SELECT tenant_key, 'contracts' AS context_area, count(*) AS row_count, count(*) FILTER (WHERE annual_contract_value IS NOT NULL) AS populated_count
+    FROM consumption.sourcing_contract_v1
+    GROUP BY tenant_key
+    UNION ALL
+    SELECT tenant_key, 'contract_scope', count(*), count(*) FILTER (WHERE relationship_method <> 'unresolved')
+    FROM consumption.sourcing_contract_scope_v1
+    GROUP BY tenant_key
+    UNION ALL
+    SELECT tenant_key, 'monthly_spend_consumption', count(*), count(*) FILTER (WHERE actual_spend IS NOT NULL OR invoice_amount IS NOT NULL)
+    FROM consumption.sourcing_spend_monthly_v1
+    GROUP BY tenant_key
+    UNION ALL
+    SELECT tenant_key, 'performance_sla', count(*), count(*) FILTER (WHERE performance_state <> 'not_loaded')
+    FROM consumption.sourcing_performance_v1
+    GROUP BY tenant_key
+    UNION ALL
+    SELECT tenant_key, 'opportunities', count(*), count(*) FILTER (WHERE evidence_state = 'present')
+    FROM consumption.sourcing_opportunity_v1
+    GROUP BY tenant_key
+    UNION ALL
+    SELECT tenant_key, 'sourcing_events', count(*), count(*) FILTER (WHERE status IS NOT NULL)
+    FROM consumption.sourcing_event_v1
+    GROUP BY tenant_key`);
+
+  await client.query(`
+    GRANT SELECT ON
+      consumption.sourcing_vendor_v1,
+      consumption.sourcing_contract_v1,
+      consumption.sourcing_contract_scope_v1,
+      consumption.sourcing_spend_monthly_v1,
+      consumption.sourcing_performance_v1,
+      consumption.sourcing_opportunity_v1,
+      consumption.sourcing_event_v1,
+      consumption.sourcing_event_supplier_v1,
+      consumption.sourcing_context_coverage_v1
+    TO authenticated, service_role`);
 }
 
 async function tableCount(client: Client, table: string, tenants: string[], loadRunId?: string): Promise<number> {
@@ -460,13 +1059,20 @@ async function tableCount(client: Client, table: string, tenants: string[], load
   return Number(result.rows[0]?.count ?? 0);
 }
 
-async function tenantScopedTableCount(client: Client, table: string, tenants: string[]): Promise<number> {
+async function tenantScopedTableCount(
+  client: Client,
+  table: string,
+  tenants: string[],
+  loadRunId?: string,
+): Promise<number> {
   let total = 0;
   for (const tenant of tenants) {
     await client.query("SELECT set_config('app.tenant_key', $1, false)", [tenant]);
+    const loadPredicate = loadRunId ? "AND load_run_id = $2" : "";
+    const params: unknown[] = loadRunId ? [tenant, loadRunId] : [tenant];
     const result = await client.query(
-      `SELECT count(*)::int AS count FROM ${table} WHERE tenant_key = $1`,
-      [tenant],
+      `SELECT count(*)::int AS count FROM ${table} WHERE tenant_key = $1 ${loadPredicate}`,
+      params,
     );
     total += Number(result.rows[0]?.count ?? 0);
   }
@@ -486,6 +1092,19 @@ async function readback(client: Client, args: Args): Promise<Record<string, numb
       args.buildVersion,
     ),
     source_sourcing_opportunity: await tableCount(client, "source.sourcing_opportunity", args.tenants, args.buildVersion),
+    source_contract_performance_observation: await tableCount(
+      client,
+      "source.contract_performance_observation",
+      args.tenants,
+      args.buildVersion,
+    ),
+    source_sourcing_event: await tableCount(client, "source.sourcing_event", args.tenants, args.buildVersion),
+    source_sourcing_event_supplier: await tableCount(
+      client,
+      "source.sourcing_event_supplier",
+      args.tenants,
+      args.buildVersion,
+    ),
     source_contract_360: await tableCount(client, "source.contract_360", args.tenants),
     source_vendor_contract_portfolio: await tableCount(client, "source.vendor_contract_portfolio", args.tenants),
     source_contract_application_scope: await tableCount(client, "source.contract_application_scope", args.tenants),
@@ -493,24 +1112,82 @@ async function readback(client: Client, args: Args): Promise<Record<string, numb
       client,
       "consumption.sourcing_contract_v1",
       args.tenants,
+      args.buildVersion,
     ),
-    consumption_sourcing_vendor_v1: await tenantScopedTableCount(client, "consumption.sourcing_vendor_v1", args.tenants),
+    consumption_sourcing_vendor_v1: await tenantScopedTableCount(
+      client,
+      "consumption.sourcing_vendor_v1",
+      args.tenants,
+      args.buildVersion,
+    ),
+    consumption_sourcing_vendor_semantic_v1: await tenantScopedTableCount(
+      client,
+      "consumption.sourcing_vendor_semantic_v1",
+      args.tenants,
+      args.buildVersion,
+    ),
     consumption_sourcing_contract_scope_v1: await tenantScopedTableCount(
       client,
       "consumption.sourcing_contract_scope_v1",
       args.tenants,
+      args.buildVersion,
     ),
     consumption_sourcing_spend_monthly_v1: await tenantScopedTableCount(
       client,
       "consumption.sourcing_spend_monthly_v1",
       args.tenants,
+      args.buildVersion,
+    ),
+    consumption_sourcing_performance_v1: await tenantScopedTableCount(
+      client,
+      "consumption.sourcing_performance_v1",
+      args.tenants,
+      args.buildVersion,
     ),
     consumption_sourcing_opportunity_v1: await tenantScopedTableCount(
       client,
       "consumption.sourcing_opportunity_v1",
       args.tenants,
+      args.buildVersion,
+    ),
+    consumption_sourcing_event_v1: await tenantScopedTableCount(
+      client,
+      "consumption.sourcing_event_v1",
+      args.tenants,
+      args.buildVersion,
+    ),
+    consumption_sourcing_event_supplier_v1: await tenantScopedTableCount(
+      client,
+      "consumption.sourcing_event_supplier_v1",
+      args.tenants,
+      args.buildVersion,
     ),
   };
+}
+
+function assertReadbackMatchesCurrentBuild(readbackRows: Record<string, number>): void {
+  const expectedPairs: Array<[string, string]> = [
+    ["source_vendor", "consumption_sourcing_vendor_v1"],
+    ["source_vendor", "consumption_sourcing_vendor_semantic_v1"],
+    ["source_contract", "consumption_sourcing_contract_v1"],
+    ["source_contract_scope", "consumption_sourcing_contract_scope_v1"],
+    ["source_contract_consumption_observation", "consumption_sourcing_spend_monthly_v1"],
+    ["source_contract_performance_observation", "consumption_sourcing_performance_v1"],
+    ["source_sourcing_opportunity", "consumption_sourcing_opportunity_v1"],
+    ["source_sourcing_event", "consumption_sourcing_event_v1"],
+    ["source_sourcing_event_supplier", "consumption_sourcing_event_supplier_v1"],
+  ];
+  const mismatches = expectedPairs
+    .map(([sourceKey, consumptionKey]) => ({
+      sourceKey,
+      consumptionKey,
+      sourceRows: readbackRows[sourceKey] ?? 0,
+      consumptionRows: readbackRows[consumptionKey] ?? 0,
+    }))
+    .filter((row) => row.sourceRows !== row.consumptionRows);
+  if (mismatches.length > 0) {
+    throw new Error(`Cube readback does not match current build: ${JSON.stringify(mismatches)}`);
+  }
 }
 
 function writeJson(filePath: string, value: unknown): void {
@@ -580,7 +1257,7 @@ async function main(): Promise<void> {
           throw new Error("Refusing write: set SOURCE_L4_CUBE_WRITE_APPROVED=true in the governed ACA job.");
         }
         await (client as Client).query("BEGIN");
-        await refreshViews(client as Client);
+        await refreshViews(client as Client, args);
         const conflicts: Record<string, string[]> = {
           vendor: ["tenant_key", "vendor_id"],
           contract: ["tenant_key", "contract_id"],
@@ -596,6 +1273,7 @@ async function main(): Promise<void> {
     }
     if (client && (args.write || args.readbackOnly)) {
       readbackRows = await readback(client, args);
+      assertReadbackMatchesCurrentBuild(readbackRows);
     }
   } catch (error) {
     if (client) await client.query("ROLLBACK").catch(() => undefined);
@@ -626,9 +1304,13 @@ async function main(): Promise<void> {
       "source.contract_application_scope",
       "consumption.sourcing_contract_v1",
       "consumption.sourcing_vendor_v1",
+      "consumption.sourcing_vendor_semantic_v1",
       "consumption.sourcing_contract_scope_v1",
       "consumption.sourcing_spend_monthly_v1",
+      "consumption.sourcing_performance_v1",
       "consumption.sourcing_opportunity_v1",
+      "consumption.sourcing_event_v1",
+      "consumption.sourcing_event_supplier_v1",
     ],
     cubeHierarchyCoverage: {
       vendor_portfolio: "consumption.sourcing_vendor_v1",
@@ -636,10 +1318,13 @@ async function main(): Promise<void> {
       renewal_calendar: "consumption.sourcing_contract_v1",
       scope_confidence: "consumption.sourcing_contract_scope_v1",
       spend_consumption: "consumption.sourcing_spend_monthly_v1",
+      service_credit_path: "consumption.sourcing_performance_v1",
       opportunity_pipeline: "consumption.sourcing_opportunity_v1",
+      event_pipeline: "consumption.sourcing_event_v1",
+      supplier_response_path: "consumption.sourcing_event_supplier_v1",
     },
     caveat:
-      "This refresh updates governed Source L4 read models and Cube-facing consumption views. Source V4 canary/raw-source-only slices remain separately reported until retired or reprojected.",
+      "This refresh updates governed Source L4 read models and Cube-facing consumption views for the active build only. Performance and event cubes are verified as current-build scoped; zero rows means the projector has not produced those facts for this build.",
   };
   writeJson(path.join(outDir, "summary.json"), summary);
   writeMarkdown(path.join(outDir, "summary.md"), summary);
