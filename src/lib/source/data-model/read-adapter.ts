@@ -95,20 +95,7 @@ function preferredGovernedSourceTenantKey(tenantKey: string): string {
 }
 
 function canonicalSourceTenantKeys(tenantKey: string): string[] {
-  const trimmed = tenantKey.trim();
-  const globalAliases = tenantAliasesFor(tenantKey).filter((alias) =>
-    alias.trim().endsWith("_global"),
-  );
-  return Array.from(
-    new Set(
-      [
-        trimmed.endsWith("_global") ? trimmed : null,
-        ...globalAliases,
-        canonicalTenantKey(tenantKey),
-      ]
-        .filter((value): value is string => Boolean(value)),
-    ),
-  );
+  return [canonicalTenantKey(tenantKey)];
 }
 
 function tenantRlsKey(tenantKey: string): string {
@@ -117,7 +104,7 @@ function tenantRlsKey(tenantKey: string): string {
 }
 
 function canonicalTenantRlsKey(tenantKey: string): string {
-  return preferredGovernedSourceTenantKey(tenantKey);
+  return canonicalTenantKey(tenantKey);
 }
 
 async function queryForTenant<R>(
