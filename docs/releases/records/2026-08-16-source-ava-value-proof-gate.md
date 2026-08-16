@@ -33,10 +33,12 @@ This release tightens Source aVa contract answers so pending Finance/Tower evide
 - Focused regression tests for the grounding block and answer-quality repair.
 - Follow-up guard for pending evidence phrasing: aVa must not imply a pending Finance/Tower amount automatically becomes realized value when approval occurs.
 - Follow-up guard for deterministic conversion phrasing: pending evidence must not be described as converting or moving from pending into approved value.
+- Follow-up route grounding fix: Source aVa now honors explicit Source `clientKey` / `tenantKey` context before older event/account-name fallbacks, so contract-level questions can load the selected contract grounding instead of falling back to portfolio context.
 
 ## QA / Validation
 
 - `npm test -- --runTestsByPath src/lib/source/facts/view/__tests__/ava-contract-grounding-context.test.ts src/lib/source/ava/__tests__/answer-quality-gate.test.ts --runInBand` — passed, 50 tests.
+- `npm test -- --runTestsByPath src/app/api/chat/agent/__tests__/source-ava-polish-gate.test.ts src/lib/source/facts/view/__tests__/ava-contract-grounding-context.test.ts src/lib/source/ava/__tests__/answer-quality-gate.test.ts --runInBand` — passed, 62 tests after the route grounding follow-up.
 - `npx eslint src/lib/source/facts/view/ava-contract-grounding-context.ts src/lib/source/ava/answer-quality-gate.ts src/lib/source/ava/__tests__/answer-quality-gate.test.ts` — passed.
 - Wider lint, typecheck, release check, PR CI, ACA deploy, and live proof are required before this can be marked released.
 

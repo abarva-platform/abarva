@@ -75,6 +75,30 @@ describe("agent route · Source aVa polish gate — Gap 1 (off-topic context-bun
 describe("agent route · Source aVa contract optimization authority", () => {
   const source = readRoute();
 
+  it("resolves Source contract grounding from explicit client or tenant context before event/account fallbacks", () => {
+    const resolverStart = source.indexOf("function resolveSourceClientKey");
+    const resolverEnd = source.indexOf(
+      "function buildSourceEventSeedPromptBlock",
+      resolverStart,
+    );
+    const resolver = source.slice(resolverStart, resolverEnd);
+
+    expect(resolverStart).toBeGreaterThan(-1);
+    expect(source).toContain(
+      'import { appClientKeyForTenant } from "@/lib/tenant/aliases";',
+    );
+    expect(resolver).toContain("const explicitClientKey =");
+    expect(resolver).toContain("return explicitClientKey;");
+    expect(resolver).toContain("const explicitTenantKey =");
+    expect(resolver).toContain("appClientKeyForTenant(explicitTenantKey)");
+    expect(resolver.indexOf("return explicitClientKey;")).toBeLessThan(
+      resolver.indexOf("const eventId ="),
+    );
+    expect(
+      resolver.indexOf("appClientKeyForTenant(explicitTenantKey)"),
+    ).toBeLessThan(resolver.indexOf("const eventId ="));
+  });
+
   it("keeps single-contract grounding authoritative over the older event optimization block", () => {
     expect(source).toContain(
       "const contractGroundingIsAuthoritativeForMode =",
