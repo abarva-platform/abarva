@@ -49,6 +49,7 @@ interface Props {
   portfolio: StrategicMovePortfolio;
   initialListView: StrategicMovesListView;
   initialSort: StrategicMovesSort;
+  tenantName: string;
 }
 
 function moveValueScore(move: StrategicMove): number | null {
@@ -80,6 +81,7 @@ export function StrategicMovesHomeClient({
   portfolio,
   initialListView,
   initialSort,
+  tenantName,
 }: Props) {
   const [listView, setListView] =
     useState<StrategicMovesListView>(initialListView);
@@ -169,15 +171,15 @@ export function StrategicMovesHomeClient({
   if (portfolio.moves.length === 0) {
     return (
       <div className={styles.page}>
-        <Header />
-        <StrategicMovesEmptyState />
+        <Header tenantName={tenantName} />
+        <StrategicMovesEmptyState tenantName={tenantName} />
       </div>
     );
   }
 
   return (
     <div className={styles.page}>
-      <Header />
+      <Header tenantName={tenantName} />
 
       <section className={styles.statCards} aria-label="Portfolio summary">
         <StatCard value={String(stats.active)} label="Active" />
@@ -440,12 +442,17 @@ function MoveCard({ move }: { move: StrategicMove }) {
       <div className={styles.cardStrip} aria-hidden />
       <div className={styles.cardHead}>
         <div className={styles.cardHeadLeft}>
-          <div className={styles.cardTitle}>{demoSafeClientText(move.name)}</div>
+          <div className={styles.cardTitle}>
+            {demoSafeClientText(move.name)}
+          </div>
           <div className={styles.cardId}>
-            {demoSafeClientText(move.displayCode)} · {demoSafeClientText(move.tenant.name)}
+            {demoSafeClientText(move.displayCode)} ·{" "}
+            {demoSafeClientText(move.tenant.name)}
           </div>
         </div>
-        <span className={styles.archetypeTag}>{demoSafeClientText(move.archetype)}</span>
+        <span className={styles.archetypeTag}>
+          {demoSafeClientText(move.archetype)}
+        </span>
       </div>
       <div
         className={`${styles.gateLine} ${
@@ -459,14 +466,19 @@ function MoveCard({ move }: { move: StrategicMove }) {
         }`}
       >
         <span className={styles.pulse} aria-hidden />
-        <span className={styles.statusText}>{demoSafeClientText(move.status.text)}</span>
+        <span className={styles.statusText}>
+          {demoSafeClientText(move.status.text)}
+        </span>
         <span className={styles.gateDetail}>
           · {demoSafeClientText(move.status.description)}
         </span>
       </div>
       <div className={styles.cardMeta}>
         <span>
-          Sponsor: <strong>{demoSafeClientText(sponsorDisplayName(move.sponsor))}</strong>
+          Sponsor:{" "}
+          <strong>
+            {demoSafeClientText(sponsorDisplayName(move.sponsor))}
+          </strong>
         </span>
         <span>
           Value:{" "}
@@ -482,10 +494,23 @@ function MoveCard({ move }: { move: StrategicMove }) {
   );
 }
 
-function Header() {
+function Header({ tenantName }: { tenantName: string }) {
   return (
     <div className={styles.topbar}>
       <div>
+        <p
+          style={{
+            margin: "0 0 6px",
+            color: SHELL.INK_SOFT,
+            fontFamily: SHELL.MONO,
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+          }}
+        >
+          {tenantName}
+        </p>
         <h1 className={styles.pageTitle}>Strategic Moves</h1>
         <p className={styles.pageSub}>
           Track active work, decisions, value, and approvals
@@ -520,7 +545,7 @@ function StatCard({
   );
 }
 
-function StrategicMovesEmptyState() {
+function StrategicMovesEmptyState({ tenantName }: { tenantName: string }) {
   return (
     <section
       aria-label="No Strategic Moves yet"
@@ -543,7 +568,7 @@ function StrategicMovesEmptyState() {
             fontWeight: 700,
           }}
         >
-          No Moves yet
+          {tenantName} · No Moves yet
         </p>
         <h2
           style={{

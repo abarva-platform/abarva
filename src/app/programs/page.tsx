@@ -2,36 +2,48 @@
 // Server Component: calls buildProgramsIndexView and passes view to client.
 // Tries real DB portfolio first; merges any non-fixture programs into the view.
 
-import { Suspense } from 'react';
-import { getActiveClientRow } from '@/lib/active-client';
-import type { ClientKey } from '@/lib/client-config';
-import { buildProgramsIndexView, type ProgramsIndexTenant } from '@/lib/programs/programs-page-view';
-import { buildPhaseSlots, PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
-import { ProgramsIndexPage } from '@/components/programs/ProgramsIndexPage';
-import { getProgramPortfolio } from '@/lib/programs/queries';
-import { getCurrentUser } from '@/lib/auth/current-user';
-import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
-import { requireProductModule } from '@/lib/auth/server-module-access';
-import { getLiveProgramDisplayId } from '@/lib/programs/live-program-display';
-import type { ProgramPhaseId, ProgramRow } from '@/lib/programs/programs-types';
+import { Suspense } from "react";
+import { getActiveClientRow } from "@/lib/active-client";
+import type { ClientKey } from "@/lib/client-config";
+import {
+  buildProgramsIndexView,
+  type ProgramsIndexTenant,
+} from "@/lib/programs/programs-page-view";
+import {
+  buildPhaseSlots,
+  PHASE_LABEL_MAP,
+} from "@/lib/programs/programs-fixture";
+import { ProgramsIndexPage } from "@/components/programs/ProgramsIndexPage";
+import { getProgramPortfolio } from "@/lib/programs/queries";
+import { getCurrentUser } from "@/lib/auth/current-user";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
+import { requireProductModule } from "@/lib/auth/server-module-access";
+import { getLiveProgramDisplayId } from "@/lib/programs/live-program-display";
+import type { ProgramPhaseId, ProgramRow } from "@/lib/programs/programs-types";
 
 export const metadata = {
-  title: 'Programs · AbarVa',
+  title: "Programs · AbarVa",
 };
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-const PROGRAM_TENANT_BY_CLIENT_KEY: Partial<Record<ClientKey, ProgramsIndexTenant>> = {
-  apexretail: 'apex-retail',
-  meridian: 'meridian-health',
-  arcturus: 'first-capital',
+const PROGRAM_TENANT_BY_CLIENT_KEY: Partial<
+  Record<ClientKey, ProgramsIndexTenant>
+> = {
+  meridian: "meridian-health",
+  skyharbor: "skyharbor-air",
 };
 
 export default async function ProgramsPage() {
-  await requireProductModule('programs');
+  await requireProductModule("programs");
   const activeClient = await getActiveClientRow();
-  const tenant = activeClient ? (PROGRAM_TENANT_BY_CLIENT_KEY[activeClient.key] ?? 'apex-retail') : 'apex-retail';
+  const tenant = activeClient
+    ? (PROGRAM_TENANT_BY_CLIENT_KEY[activeClient.key] ?? "meridian-health")
+    : "meridian-health";
   const view = buildProgramsIndexView(tenant);
+  if (activeClient?.name) {
+    view.tenant = activeClient.name;
+  }
   let allowedProgramIds: Set<string> | null = null;
 
   // Try DB portfolio; merge only rows scoped to the active client UUID.
@@ -40,46 +52,61 @@ export default async function ProgramsPage() {
     if (activeClient) {
       const ctx = {
         clientId: activeClient.id,
-        userId: user?.personId ?? (user?.clerkUserId ? `clerk:${user.clerkUserId}` : 'programs-page'),
+        userId:
+          user?.personId ??
+          (user?.clerkUserId ? `clerk:${user.clerkUserId}` : "programs-page"),
         role: user?.primaryRole,
       };
       const policy = await loadUserProgramAccessPolicy(ctx);
-      allowedProgramIds = policy.programIdsAllowed ? new Set(policy.programIdsAllowed) : null;
+      allowedProgramIds = policy.programIdsAllowed
+        ? new Set(policy.programIdsAllowed)
+        : null;
       const dbPrograms = await getProgramPortfolio(ctx);
 
       if (dbPrograms && dbPrograms.length > 0) {
         // Build a name→fixture-index map so DB programs can update fixture entries
         // when they match by name (DB IDs are UUIDs; fixture IDs are short strings).
         const fixtureIdxByName = new Map<string, number>();
-        view.programs.forEach((p, i) => fixtureIdxByName.set(p.name.toLowerCase(), i));
+        view.programs.forEach((p, i) =>
+          fixtureIdxByName.set(p.name.toLowerCase(), i),
+        );
 
         const fixtureIds = new Set(view.programs.map((p) => p.id));
         const newPrograms: ProgramRow[] = [];
 
         for (const p of dbPrograms) {
           const rawPhase = p.currentPhase ?? 0;
-          const currentPhase = Math.max(0, Math.min(6, rawPhase)) as ProgramPhaseId;
+          const currentPhase = Math.max(
+            0,
+            Math.min(6, rawPhase),
+          ) as ProgramPhaseId;
           const phaseLabel = PHASE_LABEL_MAP[currentPhase];
-          const lifecycleState = p.lifecycleState ?? (p.status === 'active' ? 'approved' : null);
-          const waitingForSetupApproval = lifecycleState === 'submitted_for_approval';
-          const completed = lifecycleState === 'completed' || p.status === 'completed';
-          const approvedForP0 = lifecycleState === 'approved' && currentPhase === 0;
-          const isIdle = p.status === 'idle' || waitingForSetupApproval;
+          const lifecycleState =
+            p.lifecycleState ?? (p.status === "active" ? "approved" : null);
+          const waitingForSetupApproval =
+            lifecycleState === "submitted_for_approval";
+          const completed =
+            lifecycleState === "completed" || p.status === "completed";
+          const approvedForP0 =
+            lifecycleState === "approved" && currentPhase === 0;
+          const isIdle = p.status === "idle" || waitingForSetupApproval;
           const gateStatus = completed
-            ? ('completed' as const)
-            : waitingForSetupApproval || approvedForP0 ? ('pending' as const) : ('open' as const);
+            ? ("completed" as const)
+            : waitingForSetupApproval || approvedForP0
+              ? ("pending" as const)
+              : ("open" as const);
           const lifecycleNote = waitingForSetupApproval
-            ? 'Submitted for Setup approval — Phase 0 locked'
+            ? "Submitted for Setup approval — Phase 0 locked"
             : completed
-            ? `P${currentPhase} ${phaseLabel} · Completed — Tower observing`
-            : approvedForP0
-            ? 'Approved for Phase 0 — complete Origination criteria'
-            : currentPhase >= 1
-            ? `P${currentPhase} ${phaseLabel} · Active`
-            : 'Program created — initial setup in progress.';
+              ? `P${currentPhase} ${phaseLabel} · Completed — Tower observing`
+              : approvedForP0
+                ? "Approved for Phase 0 — complete Origination criteria"
+                : currentPhase >= 1
+                  ? `P${currentPhase} ${phaseLabel} · Active`
+                  : "Program created — initial setup in progress.";
 
           // If the DB program name matches a fixture program, update the fixture entry
-          // to reflect the real DB phase (e.g. APX-CDP-2026 after gate approval to P3)
+          // to reflect the real DB phase after gate approval.
           const fixtureIdx = fixtureIdxByName.get(p.name.toLowerCase());
           if (fixtureIdx !== undefined) {
             const existing = view.programs[fixtureIdx];
@@ -91,7 +118,10 @@ export default async function ProgramsPage() {
               nexusNote: lifecycleNote,
               isCompleted: completed,
               lastActiveLabel: p.createdAt
-                ? new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                ? new Date(p.createdAt).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })
                 : existing.lastActiveLabel,
             };
             continue;
@@ -107,10 +137,15 @@ export default async function ProgramsPage() {
               phases: buildPhaseSlots(currentPhase),
               gateStatus,
               lastActiveLabel: p.createdAt
-                ? new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                : 'Unknown',
+                ? new Date(p.createdAt).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })
+                : "Unknown",
               nexusNote: lifecycleNote,
-              actionLabel: waitingForSetupApproval ? ('Review' as const) : ('Continue' as const),
+              actionLabel: waitingForSetupApproval
+                ? ("Review" as const)
+                : ("Continue" as const),
               isIdle,
               isCompleted: completed,
             });
@@ -124,19 +159,28 @@ export default async function ProgramsPage() {
   }
 
   if (allowedProgramIds) {
-    view.programs = view.programs.filter((program) =>
-      allowedProgramIds!.has(program.id) ||
-      allowedProgramIds!.has(program.displayId.toLowerCase()) ||
-      allowedProgramIds!.has(program.displayId),
+    view.programs = view.programs.filter(
+      (program) =>
+        allowedProgramIds!.has(program.id) ||
+        allowedProgramIds!.has(program.displayId.toLowerCase()) ||
+        allowedProgramIds!.has(program.displayId),
     );
   }
 
-  view.totalActive = view.programs.filter((program) => !program.isIdle && !program.isCompleted).length;
-  view.gatesPending = view.programs.filter((program) => program.gateStatus === 'pending').length;
+  view.totalActive = view.programs.filter(
+    (program) => !program.isIdle && !program.isCompleted,
+  ).length;
+  view.gatesPending = view.programs.filter(
+    (program) => program.gateStatus === "pending",
+  ).length;
   view.idleCount = view.programs.filter((program) => program.isIdle).length;
 
   return (
-    <Suspense fallback={<div style={{ padding: 40, fontFamily: 'sans-serif' }}>Loading...</div>}>
+    <Suspense
+      fallback={
+        <div style={{ padding: 40, fontFamily: "sans-serif" }}>Loading...</div>
+      }
+    >
       <ProgramsIndexPage view={view} hasTenantKey={Boolean(activeClient)} />
     </Suspense>
   );

@@ -26,6 +26,7 @@ import {
   type CandidateVersionBuildReport,
   type TenantCandidateVersion,
 } from "@/lib/enterprise-data/candidate-version-build/candidate-version-build";
+import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 import { SHELL } from "@/lib/shell/shell-tokens";
 
 export const metadata = {
@@ -58,7 +59,9 @@ export default async function AdminDataLayerExplorerPage() {
   await connection();
   const tenant = await resolveAdminTenant();
   const model = buildAdminDataLayerExplorerModel(tenant.tenantName);
-  const tenantQualityMatrix = await readLatestTenantQualityMatrix(process.cwd());
+  const tenantQualityMatrix = await readLatestTenantQualityMatrix(
+    process.cwd(),
+  );
   const candidateVersionBuildState = await loadCandidateVersionBuildForAdmin({
     repoRoot: process.cwd(),
   });
@@ -398,10 +401,9 @@ function CandidateVersionBuildPanel({
             }}
           >
             Source build <code>{report.sourceBuildId}</code> produced{" "}
-            {report.summary.candidateVersionsCreated} candidate versions.
-            Active tenant access, promotion, default Home reads, and module
-            runtime reads remain unchanged. Load source:{" "}
-            <code>{loadSource}</code>.
+            {report.summary.candidateVersionsCreated} candidate versions. Active
+            tenant access, promotion, default Home reads, and module runtime
+            reads remain unchanged. Load source: <code>{loadSource}</code>.
           </p>
         </div>
         <TruthTile
@@ -455,7 +457,10 @@ function CandidateTenantProofCard({
   focus: string;
 }) {
   const domains = Object.fromEntries(
-    candidate.domainCounts.map((entry) => [entry.domain, entry.acceptedRecords]),
+    candidate.domainCounts.map((entry) => [
+      entry.domain,
+      entry.acceptedRecords,
+    ]),
   );
   return (
     <article style={{ ...cardStyle, padding: 16, background: "#FFFFFF" }}>
@@ -495,7 +500,8 @@ function CandidateTenantProofCard({
         />
       </div>
       <p style={{ margin: "12px 0 0", color: "#475569", fontSize: 13 }}>
-        Status: {candidate.creationStatus} · profile {candidate.enterpriseProfileStatus} ·{" "}
+        Status: {candidate.creationStatus} · profile{" "}
+        {candidate.enterpriseProfileStatus} ·{" "}
         {candidate.promotionBlockers.length} promotion blockers.
       </p>
     </article>
@@ -551,15 +557,42 @@ function AllTenantQualityPanel({
           Audit bundle not generated yet.
         </h2>
         <p style={{ margin: 0, color: "#7C2D12", fontSize: 14 }}>
-          Run <code>npm run audit:data-quality:all-tenants</code> to create
-          the read-only quality matrix consumed by this page.
+          Run <code>npm run audit:data-quality:all-tenants</code> to create the
+          read-only quality matrix consumed by this page.
         </p>
       </section>
     );
   }
 
-  const topRisks = matrix.tenants
-    .filter((tenant) => tenant.sourceRichCandidateThin || tenant.promotionUnsafe)
+  const activeTenantKeys = new Set<string>(CANONICAL_TENANT_KEYS);
+  const activeTenants = matrix.tenants.filter((tenant) =>
+    activeTenantKeys.has(tenant.tenantKey),
+  );
+  const activeRollup = {
+    tenantsScanned: activeTenants.length,
+    sourceRichCandidateThinTenants: activeTenants.filter(
+      (tenant) => tenant.sourceRichCandidateThin,
+    ).length,
+    falseGreenRiskTenants: activeTenants.filter(
+      (tenant) => tenant.falseGreenRisk,
+    ).length,
+    relationshipGapTenants: activeTenants.filter(
+      (tenant) => tenant.relationshipOperationCount === 0,
+    ).length,
+    generatedDataWatchTenants: activeTenants.filter(
+      (tenant) => tenant.generatedDataRisk !== "pass",
+    ).length,
+    tenantIsolationFailures: activeTenants.filter(
+      (tenant) => tenant.tenantIsolationStatus !== "pass",
+    ).length,
+    promotionUnsafeTenants: activeTenants.filter(
+      (tenant) => tenant.promotionUnsafe,
+    ).length,
+  };
+  const topRisks = activeTenants
+    .filter(
+      (tenant) => tenant.sourceRichCandidateThin || tenant.promotionUnsafe,
+    )
     .slice(0, 6);
 
   return (
@@ -584,7 +617,7 @@ function AllTenantQualityPanel({
       >
         <div>
           <p style={{ ...labelStyle, margin: 0, color: "#BE123C" }}>
-            All-tenant data quality · latest audit
+            Active-tenant data quality · latest audit
           </p>
           <h2 style={{ margin: "6px 0", color: SHELL.INK, fontSize: 22 }}>
             Source richness, candidate coverage, graph gaps, and promotion
@@ -601,12 +634,12 @@ function AllTenantQualityPanel({
           >
             This panel is read-only. It does not create candidates, promote
             data, write production tables, update Active Tenant Access, or
-            change module runtime reads. It exposes false-green risk when a
-            tenant has rich source evidence but thin candidate or graph
-            coverage.
+            change module runtime reads. It renders only the active canonical
+            tenants even when the stored audit artifact still contains retired
+            tenant history.
           </p>
         </div>
-        <StatusPill>{`${matrix.rollup.promotionUnsafeTenants} promotion unsafe`}</StatusPill>
+        <StatusPill>{`${activeRollup.promotionUnsafeTenants} promotion unsafe`}</StatusPill>
       </div>
 
       <div
@@ -619,27 +652,27 @@ function AllTenantQualityPanel({
       >
         <QualityMetric
           label="Tenants"
-          value={String(matrix.rollup.tenantsScanned)}
+          value={String(activeRollup.tenantsScanned)}
         />
         <QualityMetric
           label="Source-rich thin"
-          value={String(matrix.rollup.sourceRichCandidateThinTenants)}
+          value={String(activeRollup.sourceRichCandidateThinTenants)}
         />
         <QualityMetric
           label="False green"
-          value={String(matrix.rollup.falseGreenRiskTenants)}
+          value={String(activeRollup.falseGreenRiskTenants)}
         />
         <QualityMetric
           label="Graph gaps"
-          value={String(matrix.rollup.relationshipGapTenants)}
+          value={String(activeRollup.relationshipGapTenants)}
         />
         <QualityMetric
           label="Generated watch"
-          value={String(matrix.rollup.generatedDataWatchTenants)}
+          value={String(activeRollup.generatedDataWatchTenants)}
         />
         <QualityMetric
           label="Isolation fail"
-          value={String(matrix.rollup.tenantIsolationFailures)}
+          value={String(activeRollup.tenantIsolationFailures)}
         />
       </div>
 
@@ -879,7 +912,8 @@ function ManifestProjectionPanel({
   );
   const mappingGapItems = formatDomainGapItems(
     audit,
-    (domain) => domain.sourceFilesDiscovered > 0 && !domain.mappingProfileExists,
+    (domain) =>
+      domain.sourceFilesDiscovered > 0 && !domain.mappingProfileExists,
     (tenant, domain) =>
       `${tenant.displayName} · ${domain.label}: mapping missing; manifest included ${domain.candidateManifestIncluded}; Home rows ${domain.activeHomeRows.toLocaleString()}.`,
   );
@@ -923,8 +957,8 @@ function ManifestProjectionPanel({
             Tenant manifest completeness · source projection
           </p>
           <h2 style={{ margin: "6px 0", color: SHELL.INK, fontSize: 22 }}>
-            Rich source must be visible before candidate, Home, or aVa can
-            claim readiness.
+            Rich source must be visible before candidate, Home, or aVa can claim
+            readiness.
           </h2>
           <p
             style={{
@@ -937,9 +971,9 @@ function ManifestProjectionPanel({
           >
             This read-only audit compares discovered source files against
             candidate manifests, adapter and mapping coverage, active Home
-            representation, aVa readability, and promotion blockers. It does
-            not regenerate candidates, promote data, write tenant tables, or
-            change module runtime reads.
+            representation, aVa readability, and promotion blockers. It does not
+            regenerate candidates, promote data, write tenant tables, or change
+            module runtime reads.
           </p>
         </div>
         <StatusPill>{`${audit.promotionBlockers.length} blockers`}</StatusPill>
@@ -989,10 +1023,11 @@ function ManifestProjectionPanel({
           }}
         >
           Canonical landing should be{" "}
-          <code>{`${audit.uploadPathAlignment.canonicalLandingContainer}/${audit.uploadPathAlignment.canonicalLandingPrefix}`}</code>.
-          Current loader scan is{" "}
-          <code>{`${audit.uploadPathAlignment.currentLoaderLandingContainer}/${audit.uploadPathAlignment.currentLoaderLandingPrefix}`}</code>.
-          Legacy staging remains <code>{audit.uploadPathAlignment.legacyStagingContainer}</code>.
+          <code>{`${audit.uploadPathAlignment.canonicalLandingContainer}/${audit.uploadPathAlignment.canonicalLandingPrefix}`}</code>
+          . Current loader scan is{" "}
+          <code>{`${audit.uploadPathAlignment.currentLoaderLandingContainer}/${audit.uploadPathAlignment.currentLoaderLandingPrefix}`}</code>
+          . Legacy staging remains{" "}
+          <code>{audit.uploadPathAlignment.legacyStagingContainer}</code>.
           Required correction: {audit.uploadPathAlignment.requiredCorrection}
         </p>
       </div>
@@ -1040,7 +1075,9 @@ function ManifestProjectionPanel({
                 <td style={manifestCellStyle}>
                   <StatusPill>{tenant.status}</StatusPill>
                 </td>
-                <td style={manifestCellStyle}>{tenant.sourceFilesDiscovered}</td>
+                <td style={manifestCellStyle}>
+                  {tenant.sourceFilesDiscovered}
+                </td>
                 <td style={manifestCellStyle}>
                   {tenant.sourceStructuredRows.toLocaleString()}
                 </td>
@@ -1128,9 +1165,9 @@ function ManifestProjectionPanel({
         />
         <AuditList
           title="Retired / excluded tenants"
-          items={audit.excludedTenants.map(
-            (tenant) => `${tenant.tenantKey}: ${tenant.reason}`,
-          )}
+          items={[
+            `${audit.excludedTenants.length} retired registry record${audit.excludedTenants.length === 1 ? "" : "s"} hidden from live admin rendering.`,
+          ]}
         />
       </div>
     </section>
@@ -1179,10 +1216,10 @@ function SkyHarborApplicationsRemediationPanel({
               maxWidth: 1080,
             }}
           >
-            This dry-run selects the authoritative Airline Demo application/system
-            estate, maps it into canonical candidate records, attaches row-level
-            evidence, plans relationship candidates, and keeps default Home and
-            runtime module reads unchanged.
+            This dry-run selects the authoritative Airline Demo
+            application/system estate, maps it into canonical candidate records,
+            attaches row-level evidence, plans relationship candidates, and
+            keeps default Home and runtime module reads unchanged.
           </p>
         </div>
         <StatusPill>
@@ -1238,8 +1275,9 @@ function SkyHarborApplicationsRemediationPanel({
             lineHeight: 1.5,
           }}
         >
-          <strong>{selectedSource.label}</strong> · {selectedSource.rowCount} rows ·{" "}
-          <code>{selectedSource.path}</code>. {selectedSource.selectionReason}
+          <strong>{selectedSource.label}</strong> · {selectedSource.rowCount}{" "}
+          rows · <code>{selectedSource.path}</code>.{" "}
+          {selectedSource.selectionReason}
         </p>
       </div>
 

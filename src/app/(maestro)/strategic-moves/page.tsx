@@ -8,6 +8,7 @@ import {
 } from "@/lib/programs/strategic-moves-preferences";
 import { StrategicMovesHomeClient } from "@/components/strategic-moves/StrategicMovesHomeClient";
 import { AppShell } from "@/components/shell/AppShell";
+import { getActiveClientRow } from "@/lib/active-client";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,8 @@ export default async function StrategicMovesPage() {
       () => DEFAULT_STRATEGIC_MOVES_PREFERENCES,
     ),
   ]);
+  const activeClient = await getActiveClientRow().catch(() => null);
+  const tenantName = activeClient?.name ?? "Active tenant";
 
   return (
     <AppShell surface="programs">
@@ -38,6 +41,7 @@ export default async function StrategicMovesPage() {
         initialListView={prefs.listView}
         initialSort={prefs.sort}
         portfolio={portfolio}
+        tenantName={tenantName}
       />
     </AppShell>
   );
