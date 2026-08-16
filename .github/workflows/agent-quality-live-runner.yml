@@ -33,7 +33,7 @@ on:
         required: false
         default: ""
       tenant:
-        description: "Optional tenant filter: apex-retail, meridian-health, first-capital."
+        description: "Optional tenant filter: meridian-health or skyharbor-air."
         required: false
         default: ""
       limit:

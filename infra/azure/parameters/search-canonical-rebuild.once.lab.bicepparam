@@ -18,7 +18,7 @@ param containerAppsEnvironmentName = 'cae-abarva-scale-lab-eastus'
 param scaleRuntimeManagedIdentityName = 'id-abarva-scale-runtime-lab-eastus'
 
 param ingestionWorkerJobName = 'job-a24-search-canon-eus'
-param imageName = 'acrabarvalab001.azurecr.io/abarva/web:lab-search-backfill-20260515-r2'
+param imageName = 'acrabarvalab001.azurecr.io/abarva/web@sha256:8a3533af71b5fd4a81f919245fc9026b946023c34b6a479a12d113d0e7afaa74'
 param registryServer = 'acrabarvalab001.azurecr.io'
 param workerCommand = '''
 node -e 'const {DefaultAzureCredential}=require("@azure/identity");(async()=>{const service=process.env.AZURE_SEARCH_SERVICE_NAME||"srch-abarva-context-lab-eastus";const credential=new DefaultAzureCredential(process.env.AZURE_CLIENT_ID?{managedIdentityClientId:process.env.AZURE_CLIENT_ID}:undefined);const token=await credential.getToken("https://search.azure.com/.default");if(!token||!token.token)throw new Error("managed_identity_token_missing");const url=`https://${service}.search.windows.net/indexes/tenant-context-v1?api-version=2024-07-01`;const res=await fetch(url,{method:"DELETE",headers:{Authorization:`Bearer ${token.token}`}});const text=await res.text();if(!res.ok&&res.status!==404)throw new Error(`tenant_context_delete_failed:${res.status}:${text}`);console.log(JSON.stringify({event:"azure_search_index_deleted",index:"tenant-context-v1",status:res.status}));})().catch(e=>{console.error(e.stack||e.message);process.exit(1)})'
@@ -28,18 +28,10 @@ const { DefaultAzureCredential } = require("@azure/identity");
 const { Client } = require("pg");
 
 const aliasMap = {
-  apexretail: "apex-retail",
-  "apex-retail-group": "apex-retail",
-  arcturus: "first-capital",
-  firstcapital: "first-capital",
-  "first-capital-bank": "first-capital",
   meridian: "meridian-health",
   "meridian-healthcare": "meridian-health",
-  lakeshore: "lakeshore-holdings",
-  "lakeshore-holding": "lakeshore-holdings",
   skyharbor: "skyharbor-air",
   "skyharbor-airlines": "skyharbor-air",
-  northstar: "northstar-clinical",
 };
 
 function canonicalTenantKey(value) {

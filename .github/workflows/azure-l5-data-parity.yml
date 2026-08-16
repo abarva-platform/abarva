@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       tenant:
-        description: "Optional tenant key: apex-retail, meridian-health, first-capital, or northstar-medtech."
+        description: "Optional tenant key: meridian-health or skyharbor-air."
         required: false
-        default: ''
+        default: ""
       warn_only:
         description: Report failures without failing the workflow.
         required: false

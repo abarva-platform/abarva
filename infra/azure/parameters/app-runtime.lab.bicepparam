@@ -18,7 +18,7 @@ param containerAppsEnvironmentName = 'cae-abarva-scale-lab-eastus'
 param scaleRuntimeManagedIdentityName = 'id-abarva-scale-runtime-lab-eastus'
 
 param webContainerAppName = 'ca-abarva-web-lab-eastus'
-param webImageName = 'acrabarvalab001.azurecr.io/abarva/web:lab-parallel-run-20260515-r1'
+param webImageName = 'acrabarvalab001.azurecr.io/abarva/web@sha256:8a3533af71b5fd4a81f919245fc9026b946023c34b6a479a12d113d0e7afaa74'
 param registryServer = 'acrabarvalab001.azurecr.io'
 param webMinReplicas = 0
 param webMaxReplicas = 2
@@ -38,7 +38,7 @@ param plainRuntimeEnv = [
   }
   {
     name: 'ABARVA_FEATURE_RETRIEVAL_AZURE_SEARCH_TENANTS'
-    value: 'apex-retail,meridian-health,first-capital,lakeshore-holdings,skyharbor-air,northstar-clinical'
+    value: 'meridian-health,skyharbor-air'
   }
   {
     name: 'AZURE_CLIENT_ID'
