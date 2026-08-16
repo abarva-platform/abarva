@@ -1,0 +1,33 @@
+{
+  "generatedAt": "2026-08-16T11:26:47.401Z",
+  "generatedBy": "scripts/audit/tenant-layer-refresh.mjs",
+  "mode": "layer2-code-only-alias-impact-report-only",
+  "truthSplit": {
+    "productionTenantDataWritten": false,
+    "activeTenantAccessLayerUpdated": false,
+    "moduleRuntimeBehaviorChanged": false,
+    "adaptersExecuted": false,
+    "aliasesActivated": false,
+    "canonicalObjectsWritten": false
+  },
+  "summary": {
+    "profileFailuresEvaluated": 0,
+    "codeOnlyAliasCandidates": 0,
+    "wouldClearProfileFailuresIfActivated": 0,
+    "remainingHardGateDecisions": 0,
+    "remainingSourceDataGatedFixes": 0
+  },
+  "candidateProfiles": [],
+  "gatedProfiles": [],
+  "sourceDataGatedProfiles": [],
+  "nextPrSizedSafeCodeSlice": {
+    "title": "Activate mechanically safe Layer 2 aliases behind adapter tests",
+    "scope": "Code-only alias activation for candidates whose missing fields are direct source fields, derived source path lineage, or non-semantic field aliases.",
+    "blockedBeforeActivation": [
+      "semantic identity alias activation",
+      "tenant CSV mutation",
+      "registry activation",
+      "data-plane load/write"
+    ]
+  }
+}

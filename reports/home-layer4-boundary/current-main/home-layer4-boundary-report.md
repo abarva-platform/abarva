@@ -1,6 +1,6 @@
 # Home Layer 4 Boundary Report
 
-Source SHA: `5f58bb3f0a7329d47f5bdcf54079f7400342c375`
+Source SHA: `c4d5afd301ab24ec23ed86510f06469255b1b807`
 
 This is a sanitized, report-only Layer 4 boundary audit. It does not rewire Home, refresh product projections, activate registries, write the data plane, mutate tenant data, or make runtime truth claims.
 

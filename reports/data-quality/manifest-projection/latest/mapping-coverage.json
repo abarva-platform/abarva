@@ -1,5 +1,635 @@
 [
   {
+    "tenantKey": "apex-retail",
+    "displayName": "Apex Retail",
+    "domains": [
+      {
+        "domain": "enterprise_profile",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "business_functions",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "organization_ownership",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "workforce_personas",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "applications_systems",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "data_assets_data_products",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "integrations",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "vendors_contracts",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "spend_value",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "programs_initiatives",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "ai_initiatives",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "risks_controls",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "relationships",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "evidence_sources",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "metric_definitions",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "infrastructure_cloud_estate",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "source_event_pack",
+        "mappingProfileExists": false,
+        "candidateManifestIncluded": false,
+        "status": "missing"
+      },
+      {
+        "domain": "moves_program_pack",
+        "mappingProfileExists": false,
+        "candidateManifestIncluded": false,
+        "status": "missing"
+      },
+      {
+        "domain": "tower_outcome_pack",
+        "mappingProfileExists": false,
+        "candidateManifestIncluded": false,
+        "status": "missing"
+      },
+      {
+        "domain": "benchmark_industry_inputs",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      }
+    ]
+  },
+  {
+    "tenantKey": "first-capital-financial",
+    "displayName": "FS Demo",
+    "domains": [
+      {
+        "domain": "enterprise_profile",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "business_functions",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "organization_ownership",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "workforce_personas",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "applications_systems",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "data_assets_data_products",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "integrations",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "vendors_contracts",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "spend_value",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "programs_initiatives",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "ai_initiatives",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "risks_controls",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "relationships",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "evidence_sources",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "metric_definitions",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "infrastructure_cloud_estate",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "source_event_pack",
+        "mappingProfileExists": false,
+        "candidateManifestIncluded": false,
+        "status": "missing"
+      },
+      {
+        "domain": "moves_program_pack",
+        "mappingProfileExists": false,
+        "candidateManifestIncluded": false,
+        "status": "missing"
+      },
+      {
+        "domain": "tower_outcome_pack",
+        "mappingProfileExists": false,
+        "candidateManifestIncluded": false,
+        "status": "missing"
+      },
+      {
+        "domain": "benchmark_industry_inputs",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      }
+    ]
+  },
+  {
+    "tenantKey": "lakeshore-holdings",
+    "displayName": "Lakeshore Holdings",
+    "domains": [
+      {
+        "domain": "enterprise_profile",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "business_functions",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "organization_ownership",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "workforce_personas",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "applications_systems",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "data_assets_data_products",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "integrations",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "vendors_contracts",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "spend_value",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "programs_initiatives",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "ai_initiatives",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "risks_controls",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "relationships",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "evidence_sources",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "metric_definitions",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "infrastructure_cloud_estate",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "source_event_pack",
+        "mappingProfileExists": false,
+        "candidateManifestIncluded": false,
+        "status": "missing"
+      },
+      {
+        "domain": "moves_program_pack",
+        "mappingProfileExists": false,
+        "candidateManifestIncluded": false,
+        "status": "missing"
+      },
+      {
+        "domain": "tower_outcome_pack",
+        "mappingProfileExists": false,
+        "candidateManifestIncluded": false,
+        "status": "missing"
+      },
+      {
+        "domain": "benchmark_industry_inputs",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      }
+    ]
+  },
+  {
+    "tenantKey": "lakeshore-industries",
+    "displayName": "Lakeshore Industries",
+    "domains": [
+      {
+        "domain": "enterprise_profile",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "business_functions",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "organization_ownership",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "workforce_personas",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "applications_systems",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "data_assets_data_products",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "integrations",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "vendors_contracts",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "spend_value",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "programs_initiatives",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "ai_initiatives",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "risks_controls",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "relationships",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "evidence_sources",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "metric_definitions",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "infrastructure_cloud_estate",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "source_event_pack",
+        "mappingProfileExists": false,
+        "candidateManifestIncluded": false,
+        "status": "missing"
+      },
+      {
+        "domain": "moves_program_pack",
+        "mappingProfileExists": false,
+        "candidateManifestIncluded": false,
+        "status": "missing"
+      },
+      {
+        "domain": "tower_outcome_pack",
+        "mappingProfileExists": false,
+        "candidateManifestIncluded": false,
+        "status": "missing"
+      },
+      {
+        "domain": "benchmark_industry_inputs",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      }
+    ]
+  },
+  {
+    "tenantKey": "meridian-health",
+    "displayName": "Meridian Health",
+    "domains": [
+      {
+        "domain": "enterprise_profile",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "business_functions",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "organization_ownership",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "workforce_personas",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "applications_systems",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "data_assets_data_products",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "integrations",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "vendors_contracts",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "spend_value",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "programs_initiatives",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "ai_initiatives",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "risks_controls",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "relationships",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "evidence_sources",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "metric_definitions",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "infrastructure_cloud_estate",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      },
+      {
+        "domain": "source_event_pack",
+        "mappingProfileExists": false,
+        "candidateManifestIncluded": false,
+        "status": "missing"
+      },
+      {
+        "domain": "moves_program_pack",
+        "mappingProfileExists": false,
+        "candidateManifestIncluded": false,
+        "status": "missing"
+      },
+      {
+        "domain": "tower_outcome_pack",
+        "mappingProfileExists": false,
+        "candidateManifestIncluded": false,
+        "status": "missing"
+      },
+      {
+        "domain": "benchmark_industry_inputs",
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
+      }
+    ]
+  },
+  {
     "tenantKey": "skyharbor-air",
     "displayName": "Airline Demo",
     "domains": [
@@ -12,49 +642,49 @@
       {
         "domain": "business_functions",
         "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
+        "candidateManifestIncluded": true,
         "status": "available"
       },
       {
         "domain": "organization_ownership",
         "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
+        "candidateManifestIncluded": true,
         "status": "available"
       },
       {
         "domain": "workforce_personas",
         "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
+        "candidateManifestIncluded": true,
         "status": "available"
       },
       {
         "domain": "applications_systems",
         "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
+        "candidateManifestIncluded": true,
         "status": "available"
       },
       {
         "domain": "data_assets_data_products",
         "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
+        "candidateManifestIncluded": true,
         "status": "available"
       },
       {
         "domain": "integrations",
         "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
+        "candidateManifestIncluded": true,
         "status": "available"
       },
       {
         "domain": "vendors_contracts",
         "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
+        "candidateManifestIncluded": true,
         "status": "available"
       },
       {
         "domain": "spend_value",
         "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
+        "candidateManifestIncluded": true,
         "status": "available"
       },
       {
@@ -66,38 +696,38 @@
       {
         "domain": "ai_initiatives",
         "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
+        "candidateManifestIncluded": true,
         "status": "available"
       },
       {
         "domain": "risks_controls",
         "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
+        "candidateManifestIncluded": true,
         "status": "available"
       },
       {
         "domain": "relationships",
         "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
+        "candidateManifestIncluded": true,
         "status": "available"
       },
       {
         "domain": "evidence_sources",
         "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
+        "candidateManifestIncluded": true,
         "status": "available"
       },
       {
         "domain": "metric_definitions",
         "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
+        "candidateManifestIncluded": true,
         "status": "available"
       },
       {
         "domain": "infrastructure_cloud_estate",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
+        "mappingProfileExists": true,
+        "candidateManifestIncluded": true,
+        "status": "available"
       },
       {
         "domain": "source_event_pack",
@@ -120,511 +750,7 @@
       {
         "domain": "benchmark_industry_inputs",
         "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      }
-    ]
-  },
-  {
-    "tenantKey": "meridian-health",
-    "displayName": "Healthcare Demo",
-    "domains": [
-      {
-        "domain": "enterprise_profile",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "business_functions",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "organization_ownership",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "workforce_personas",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "applications_systems",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "data_assets_data_products",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "integrations",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "vendors_contracts",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "spend_value",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "programs_initiatives",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "ai_initiatives",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "risks_controls",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "relationships",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "evidence_sources",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "metric_definitions",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "infrastructure_cloud_estate",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "source_event_pack",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "moves_program_pack",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "tower_outcome_pack",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "benchmark_industry_inputs",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      }
-    ]
-  },
-  {
-    "tenantKey": "first-capital",
-    "displayName": "Financial Services Demo",
-    "domains": [
-      {
-        "domain": "enterprise_profile",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "business_functions",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "organization_ownership",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "workforce_personas",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "applications_systems",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "data_assets_data_products",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "integrations",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "vendors_contracts",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "spend_value",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "programs_initiatives",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "ai_initiatives",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "risks_controls",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "relationships",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "evidence_sources",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "metric_definitions",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "infrastructure_cloud_estate",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "source_event_pack",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "moves_program_pack",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "tower_outcome_pack",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "benchmark_industry_inputs",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      }
-    ]
-  },
-  {
-    "tenantKey": "apex-retail",
-    "displayName": "Retail Demo",
-    "domains": [
-      {
-        "domain": "enterprise_profile",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "business_functions",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "organization_ownership",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "workforce_personas",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "applications_systems",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "data_assets_data_products",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "integrations",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "vendors_contracts",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "spend_value",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "programs_initiatives",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "ai_initiatives",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "risks_controls",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "relationships",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "evidence_sources",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "metric_definitions",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "infrastructure_cloud_estate",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "source_event_pack",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "moves_program_pack",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "tower_outcome_pack",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "benchmark_industry_inputs",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      }
-    ]
-  },
-  {
-    "tenantKey": "lakeshore-holdings",
-    "displayName": "Lakeshore Holdings",
-    "domains": [
-      {
-        "domain": "enterprise_profile",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "business_functions",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "organization_ownership",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "workforce_personas",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "applications_systems",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "data_assets_data_products",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "integrations",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "vendors_contracts",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "spend_value",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "programs_initiatives",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "ai_initiatives",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "risks_controls",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "relationships",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "evidence_sources",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "metric_definitions",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
-        "status": "available"
-      },
-      {
-        "domain": "infrastructure_cloud_estate",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "source_event_pack",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "moves_program_pack",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "tower_outcome_pack",
-        "mappingProfileExists": false,
-        "candidateManifestIncluded": false,
-        "status": "missing"
-      },
-      {
-        "domain": "benchmark_industry_inputs",
-        "mappingProfileExists": true,
-        "candidateManifestIncluded": false,
+        "candidateManifestIncluded": true,
         "status": "available"
       }
     ]

@@ -1,10 +1,10 @@
 [
   {
     "tenantKey": "meridian-health",
-    "recordsWithEvidence": 5059,
+    "recordsWithEvidence": 1471,
     "recordsWithoutEvidence": 0,
-    "evidenceAttachmentCount": 5059,
-    "sourceFileCount": 18
+    "evidenceAttachmentCount": 1471,
+    "sourceFileCount": 17
   },
   {
     "tenantKey": "skyharbor-air",

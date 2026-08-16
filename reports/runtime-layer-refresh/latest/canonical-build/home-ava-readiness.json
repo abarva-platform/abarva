@@ -5,14 +5,10 @@
     "profileReady": true,
     "evidenceReady": true,
     "relationshipReady": true,
-    "canonicalRecordCount": 5059,
-    "evidenceAttachmentCount": 5059,
-    "relationshipCandidateCount": 173,
-    "caveats": [
-      "infrastructure_platforms below depth by 5 rows.",
-      "industry_context_patterns below depth by 3 rows.",
-      "operational_process_evidence below depth by 10 rows."
-    ],
+    "canonicalRecordCount": 1471,
+    "evidenceAttachmentCount": 1471,
+    "relationshipCandidateCount": 5635,
+    "caveats": ["operational_process_evidence below depth by 10 rows."],
     "canAnswer": [
       "which active canonical input files were loaded",
       "what source-backed records exist by domain",

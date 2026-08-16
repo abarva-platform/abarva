@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-08-16T11:26:47.401Z",
+  "generatedBy": "scripts/audit/tenant-layer-refresh.mjs",
+  "mode": "layer2-semantic-decision-ledger-report-only",
+  "truthSplit": {
+    "productionTenantDataWritten": false,
+    "activeTenantAccessLayerUpdated": false,
+    "moduleRuntimeBehaviorChanged": false,
+    "adaptersExecuted": false,
+    "aliasesActivated": false,
+    "registryActivated": false,
+    "canonicalObjectsWritten": false
+  },
+  "summary": {
+    "profileFailuresEvaluated": 0,
+    "semanticDecisionProfiles": 0,
+    "semanticDecisionFields": 0,
+    "sourceDataGatedProfiles": 0,
+    "activationReadyProfiles": 0
+  },
+  "decisions": [],
+  "nextApprovalPacket": {
+    "title": "Approve or reject semantic identity aliases per mapping profile",
+    "scope": "For each decision entry, approve the candidate source field that may define canonical identity or reject alias activation and require source-data correction.",
+    "blockedUntilApproved": [
+      "semantic identity alias activation",
+      "registry activation",
+      "data-plane load/write",
+      "runtime/product routing change"
+    ]
+  },
+  "nextPrSizedSafeCodeSlice": {
+    "title": "Add test-backed semantic alias decisions after approval",
+    "scope": "Only after explicit approval, encode approved semantic identity aliases behind adapter/profile tests without mutating tenant CSVs.",
+    "blockedBeforeActivation": [
+      "semantic identity alias approval",
+      "registry activation approval",
+      "data-plane load/write approval"
+    ]
+  }
+}

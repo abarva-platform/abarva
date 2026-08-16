@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-08-15T01:21:00.171Z",
+  "generatedAt": "2026-08-16T11:25:33.391Z",
   "generatedBy": "scripts/audit/build-home-layer4-boundary-report.mjs",
-  "sourceSha": "5f58bb3f0a7329d47f5bdcf54079f7400342c375",
+  "sourceSha": "c4d5afd301ab24ec23ed86510f06469255b1b807",
   "mode": "report_only_no_runtime_routing_change_no_projection_refresh_no_data_plane_write",
   "publicDisclosure": "Tenant identifiers and tenant-specific path segments are redacted in committed findings.",
   "evidence": {
-    "homeLayer4Boundary": "npm run audit:home-layer4-boundary -- --out-dir reports/home-layer4-boundary/current-main --source-sha 5f58bb3f0a7329d47f5bdcf54079f7400342c375"
+    "homeLayer4Boundary": "npm run audit:home-layer4-boundary -- --out-dir reports/home-layer4-boundary/current-main --source-sha c4d5afd301ab24ec23ed86510f06469255b1b807"
   },
   "summary": {
     "runtimeFilesScanned": 116,

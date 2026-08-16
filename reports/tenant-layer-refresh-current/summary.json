@@ -1,0 +1,419 @@
+{
+  "generatedAt": "2026-08-16T11:26:47.401Z",
+  "generatedBy": "scripts/audit/tenant-layer-refresh.mjs",
+  "tenants": ["meridian-health", "skyharbor-air"],
+  "mode": "local-offline-refresh-preparation",
+  "status": "draft_local_offline_only_not_active_truth_no_registry_no_load_no_retrieval_no_product_use",
+  "factLineageSource": "reports/tower-fact-lineage/lineage.json",
+  "layer2DryRunFailures": {
+    "familyFailures": 0,
+    "profileFailures": 0,
+    "dimensionFailures": 0,
+    "totalFailures": 0
+  },
+  "layer2SemanticDecisionLedger": {
+    "profileFailuresEvaluated": 0,
+    "semanticDecisionProfiles": 0,
+    "semanticDecisionFields": 0,
+    "sourceDataGatedProfiles": 0,
+    "activationReadyProfiles": 0
+  },
+  "layer3ValidationScaffold": {
+    "canonicalObjectDefinitions": 19,
+    "factAuthorityDefinitions": 11,
+    "relationshipDictionaryEntries": 40,
+    "objectRegistryGaps": 0,
+    "factAuthorityGaps": 0,
+    "relationshipDictionaryGaps": 0
+  },
+  "perTenant": {
+    "meridian-health": {
+      "activeRoot": "datasets/tenant-inputs/active/meridian-health/current",
+      "layerRoots": [
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/active/meridian-health/current",
+          "present": true,
+          "files": 24,
+          "truthEligibility": "active-declared-source-package"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3",
+          "present": true,
+          "files": 25,
+          "truthEligibility": "duplicate-truth-candidate"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake",
+          "present": true,
+          "files": 27,
+          "truthEligibility": "draft-not-active"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/meridian-health/interviews",
+          "present": true,
+          "files": 1,
+          "truthEligibility": "source-signal-not-deterministic-truth"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/candidates/meridian-health",
+          "present": false,
+          "files": 0,
+          "truthEligibility": "not-active"
+        },
+        {
+          "layer": "Layer 2 — Source Adapters",
+          "path": "datasets/tenant-inputs/generated/meridian-health",
+          "present": true,
+          "files": 53,
+          "truthEligibility": "disposable-build-output"
+        },
+        {
+          "layer": "Layer 3 — Canonical Model",
+          "path": "datasets/tenant-inputs/meridian-health/derived",
+          "present": true,
+          "files": 11,
+          "truthEligibility": "derived-output-rebuildable"
+        },
+        {
+          "layer": "Layer 4 — Products",
+          "path": "datasets/tenant-inputs/meridian-health/approved-content",
+          "present": true,
+          "files": 5,
+          "truthEligibility": "product-projection"
+        }
+      ],
+      "claims": {
+        "total": 29,
+        "byState": {
+          "DIVERGENT_COPY": 24,
+          "UNREGISTERED": 5
+        }
+      },
+      "workstreamCoverage": {
+        "covered": 10
+      },
+      "governedPackage": "not written",
+      "layer2": {
+        "mappingProfilesImplemented": 19,
+        "workstreamsWithNoImplementedAdapter": 0,
+        "profilesThatWouldRun": 19,
+        "dimensionsThatWouldRun": 19,
+        "dimensionFailures": 0,
+        "adaptersExecuted": 0
+      },
+      "layer3": {
+        "tenantKey": "meridian-health",
+        "layer": "Layer 3 — Canonical Enterprise Model",
+        "mode": "draft-preparation-only",
+        "canonicalStoreWritten": false,
+        "activeRootAtGeneration": "datasets/tenant-inputs/active/meridian-health/current",
+        "dimensionsResolved": 19,
+        "dimensionsDeclared": 19,
+        "dimensionsAbsent": 0,
+        "dimensionsWithNamingDrift": 0,
+        "dimensionsWithColumnGaps": 0,
+        "unregisteredActiveFiles": [
+          "19_data_analytics_platform_maturity.csv",
+          "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+          "SA09_AI_Tool_Usage_Feed.csv",
+          "SA10_AI_Value_Interview_Evidence.csv",
+          "SA11_AI_KPI_Operational_Outcome_Feed.csv"
+        ],
+        "checks": [
+          {
+            "check": "Every canonical object has declared identity",
+            "result": "FAIL",
+            "detail": "5 file(s) in the active root are not declared in the template contract: 19_data_analytics_platform_maturity.csv; SA08_AI_Benefits_Realization_Usage_Ledger.csv; SA09_AI_Tool_Usage_Feed.csv; SA10_AI_Value_Interview_Evidence.csv; SA11_AI_KPI_Operational_Outcome_Feed.csv"
+          },
+          {
+            "check": "Every fact carries source file / source row / evidence id where available",
+            "result": "PARTIAL",
+            "detail": "13_evidence_sources carries 27 row(s); per-row evidence linkage is not verified by this script."
+          },
+          {
+            "check": "Relationship rows use canonical relationship types",
+            "result": "NOT_VERIFIED",
+            "detail": "12_relationships carries 2302 row(s); the canonical relationship dictionary lives in intelligence_v6.relationship_types and was not read (no data-plane access in this lane)."
+          },
+          {
+            "check": "Planning-grade and interview-only facts remain marked",
+            "result": "PARTIAL",
+            "detail": "Classification is carried in the package manifest as synthetic_demo_planning_grade; per-row attestation is not present."
+          },
+          {
+            "check": "Money, counts, and metrics are deterministic and not model-invented",
+            "result": "FAIL",
+            "detail": "24 conflicting or divergent claim(s); see claim-reconciliation-matrix.csv."
+          },
+          {
+            "check": "Duplicate/conflicting claims are blocked pending reconciliation",
+            "result": "PASS",
+            "detail": "24 claim(s) recorded as blocked in the governed package blocked_claims.csv."
+          }
+        ],
+        "status": "draft_local_offline_only_not_active_truth_no_registry_no_load_no_retrieval_no_product_use"
+      },
+      "layer4": {
+        "tenantKey": "meridian-health",
+        "layer": "Layer 4 — Products",
+        "mode": "readiness-report-only",
+        "runtimeOrDatabaseProjectionRefreshed": false,
+        "approvedContentFiles": 5,
+        "derivedContextFiles": 11,
+        "reportArtefacts": 0,
+        "factLineage": {
+          "source": "reports/tower-fact-lineage/lineage.json",
+          "conflictMetrics": [],
+          "singleSourceMetrics": [],
+          "quotableFigures": "all corroborated"
+        },
+        "surfaces": [
+          {
+            "surface": "Home context and architecture projections",
+            "localArtefact": "datasets/tenant-inputs/meridian-health/derived/home-context-view.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Intelligence / aVa context bundle",
+            "localArtefact": "datasets/tenant-inputs/meridian-health/derived/canonical-facts.json",
+            "present": true,
+            "readiness": "local-artefact-present-not-refreshed",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Moves context package",
+            "localArtefact": "datasets/tenant-inputs/meridian-health/derived/moves-context-view.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Source read model / package",
+            "localArtefact": "datasets/tenant-inputs/meridian-health/derived/evidence-registry.json",
+            "present": true,
+            "readiness": "local-artefact-present-not-refreshed",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Tower deterministic mart / cube",
+            "localArtefact": "datasets/tenant-inputs/meridian-health/derived/tower-dashboard-view.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          }
+        ],
+        "status": "draft_local_offline_only_not_active_truth_no_registry_no_load_no_retrieval_no_product_use"
+      }
+    },
+    "skyharbor-air": {
+      "activeRoot": "datasets/tenant-inputs/active/skyharbor-air/current",
+      "layerRoots": [
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current",
+          "present": true,
+          "files": 31,
+          "truthEligibility": "active-declared-source-package"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3",
+          "present": false,
+          "files": 0,
+          "truthEligibility": "duplicate-truth-candidate"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/skyharbor-air/v2026-08-governed-intake",
+          "present": true,
+          "files": 6,
+          "truthEligibility": "draft-not-active"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/skyharbor-air/interviews",
+          "present": true,
+          "files": 5,
+          "truthEligibility": "source-signal-not-deterministic-truth"
+        },
+        {
+          "layer": "Layer 1 — Client Intake",
+          "path": "datasets/tenant-inputs/candidates/skyharbor-air",
+          "present": true,
+          "files": 1,
+          "truthEligibility": "not-active"
+        },
+        {
+          "layer": "Layer 2 — Source Adapters",
+          "path": "datasets/tenant-inputs/generated/skyharbor-air",
+          "present": false,
+          "files": 0,
+          "truthEligibility": "disposable-build-output"
+        },
+        {
+          "layer": "Layer 3 — Canonical Model",
+          "path": "datasets/tenant-inputs/skyharbor-air/derived",
+          "present": true,
+          "files": 1,
+          "truthEligibility": "derived-output-rebuildable"
+        },
+        {
+          "layer": "Layer 4 — Products",
+          "path": "datasets/tenant-inputs/skyharbor-air/approved-content",
+          "present": true,
+          "files": 2,
+          "truthEligibility": "product-projection"
+        }
+      ],
+      "claims": {
+        "total": 13,
+        "byState": {
+          "DIVERGENT_COPY": 1,
+          "UNREGISTERED": 12
+        }
+      },
+      "workstreamCoverage": {
+        "covered": 10
+      },
+      "governedPackage": "not written",
+      "layer2": {
+        "mappingProfilesImplemented": 19,
+        "workstreamsWithNoImplementedAdapter": 0,
+        "profilesThatWouldRun": 19,
+        "dimensionsThatWouldRun": 19,
+        "dimensionFailures": 0,
+        "adaptersExecuted": 0
+      },
+      "layer3": {
+        "tenantKey": "skyharbor-air",
+        "layer": "Layer 3 — Canonical Enterprise Model",
+        "mode": "draft-preparation-only",
+        "canonicalStoreWritten": false,
+        "activeRootAtGeneration": "datasets/tenant-inputs/active/skyharbor-air/current",
+        "dimensionsResolved": 19,
+        "dimensionsDeclared": 19,
+        "dimensionsAbsent": 0,
+        "dimensionsWithNamingDrift": 0,
+        "dimensionsWithColumnGaps": 0,
+        "unregisteredActiveFiles": [
+          "04_applications_systems.xlsx",
+          "05_data_assets_integrations.xlsx",
+          "06_infrastructure_platforms.xlsx",
+          "09_programs_initiatives.xlsx",
+          "12b_interview_initiative_metric_crosswalk.csv",
+          "19_data_analytics_platform_maturity.csv",
+          "19_data_analytics_platform_maturity.xlsx",
+          "20_itsm_ticket_sla_performance.csv",
+          "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+          "SA09_AI_Tool_Usage_Feed.csv",
+          "SA10_AI_Value_Interview_Evidence.csv",
+          "SA11_AI_KPI_Operational_Outcome_Feed.csv"
+        ],
+        "checks": [
+          {
+            "check": "Every canonical object has declared identity",
+            "result": "FAIL",
+            "detail": "12 file(s) in the active root are not declared in the template contract: 04_applications_systems.xlsx; 05_data_assets_integrations.xlsx; 06_infrastructure_platforms.xlsx; 09_programs_initiatives.xlsx; 12b_interview_initiative_metric_crosswalk.csv; 19_data_analytics_platform_maturity.csv; 19_data_analytics_platform_maturity.xlsx; 20_itsm_ticket_sla_performance.csv; SA08_AI_Benefits_Realization_Usage_Ledger.csv; SA09_AI_Tool_Usage_Feed.csv; SA10_AI_Value_Interview_Evidence.csv; SA11_AI_KPI_Operational_Outcome_Feed.csv"
+          },
+          {
+            "check": "Every fact carries source file / source row / evidence id where available",
+            "result": "PARTIAL",
+            "detail": "13_evidence_sources carries 183 row(s); per-row evidence linkage is not verified by this script."
+          },
+          {
+            "check": "Relationship rows use canonical relationship types",
+            "result": "NOT_VERIFIED",
+            "detail": "12_relationships carries 3318 row(s); the canonical relationship dictionary lives in intelligence_v6.relationship_types and was not read (no data-plane access in this lane)."
+          },
+          {
+            "check": "Planning-grade and interview-only facts remain marked",
+            "result": "PARTIAL",
+            "detail": "Classification is carried in the package manifest as synthetic_demo_planning_grade; per-row attestation is not present."
+          },
+          {
+            "check": "Money, counts, and metrics are deterministic and not model-invented",
+            "result": "FAIL",
+            "detail": "1 conflicting or divergent claim(s); see claim-reconciliation-matrix.csv."
+          },
+          {
+            "check": "Duplicate/conflicting claims are blocked pending reconciliation",
+            "result": "PASS",
+            "detail": "1 claim(s) recorded as blocked in the governed package blocked_claims.csv."
+          }
+        ],
+        "status": "draft_local_offline_only_not_active_truth_no_registry_no_load_no_retrieval_no_product_use"
+      },
+      "layer4": {
+        "tenantKey": "skyharbor-air",
+        "layer": "Layer 4 — Products",
+        "mode": "readiness-report-only",
+        "runtimeOrDatabaseProjectionRefreshed": false,
+        "approvedContentFiles": 2,
+        "derivedContextFiles": 1,
+        "reportArtefacts": 0,
+        "factLineage": {
+          "source": "reports/tower-fact-lineage/lineage.json",
+          "conflictMetrics": [],
+          "singleSourceMetrics": [],
+          "quotableFigures": "all corroborated"
+        },
+        "surfaces": [
+          {
+            "surface": "Home context and architecture projections",
+            "localArtefact": "datasets/tenant-inputs/skyharbor-air/derived/home-context-view.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Intelligence / aVa context bundle",
+            "localArtefact": "datasets/tenant-inputs/skyharbor-air/derived/canonical-facts.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Moves context package",
+            "localArtefact": "datasets/tenant-inputs/skyharbor-air/derived/moves-context-view.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Source read model / package",
+            "localArtefact": "datasets/tenant-inputs/skyharbor-air/derived/evidence-registry.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          },
+          {
+            "surface": "Tower deterministic mart / cube",
+            "localArtefact": "datasets/tenant-inputs/skyharbor-air/derived/tower-dashboard-view.json",
+            "present": false,
+            "readiness": "no-local-artefact",
+            "refreshedInThisRun": false,
+            "blockedBy": "Layer 1 SME validation not complete"
+          }
+        ],
+        "status": "draft_local_offline_only_not_active_truth_no_registry_no_load_no_retrieval_no_product_use"
+      }
+    }
+  },
+  "closedGates": 16
+}

@@ -1,645 +1,138 @@
 [
   {
-    "tenantKey": "skyharbor-air",
-    "displayName": "Airline Demo",
-    "homeRepresentationScore": 53,
-    "avaRepresentationScore": 53,
-    "activeHomeContextRows": 31316,
+    "tenantKey": "apex-retail",
+    "displayName": "Apex Retail",
+    "homeRepresentationScore": 0,
+    "avaRepresentationScore": 0,
+    "activeHomeContextRows": 0,
     "domains": [
       {
         "domain": "enterprise_profile",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 2,
-        "richestSourceRows": 13,
-        "warning": "Active Home context shows fewer records than the richest discovered source for this domain."
-      },
-      {
-        "domain": "business_functions",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 61,
-        "richestSourceRows": 55,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "organization_ownership",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 72,
-        "richestSourceRows": 900,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "workforce_personas",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 24,
-        "richestSourceRows": 146,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "applications_systems",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 969,
-        "richestSourceRows": 956,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "data_assets_data_products",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 2271,
-        "richestSourceRows": 2236,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "integrations",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 2271,
-        "richestSourceRows": 2236,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "vendors_contracts",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 330,
-        "richestSourceRows": 1000,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "spend_value",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 501,
-        "richestSourceRows": 491,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "programs_initiatives",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 14680,
-        "richestSourceRows": 7230,
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 1,
         "warning": null
       },
       {
-        "domain": "ai_initiatives",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 358,
-        "richestSourceRows": 355,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "risks_controls",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 1550,
-        "richestSourceRows": 1522,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "relationships",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 7304,
-        "richestSourceRows": 7230,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "evidence_sources",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 96,
-        "richestSourceRows": 1000,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "metric_definitions",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 318,
-        "richestSourceRows": 900,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "infrastructure_cloud_estate",
-        "homeVisible": false,
-        "avaReadable": false,
-        "activeHomeRows": 0,
-        "richestSourceRows": 686,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "source_event_pack",
-        "homeVisible": false,
-        "avaReadable": false,
-        "activeHomeRows": 0,
-        "richestSourceRows": 95,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "moves_program_pack",
-        "homeVisible": false,
-        "avaReadable": false,
-        "activeHomeRows": 0,
-        "richestSourceRows": 95,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "tower_outcome_pack",
-        "homeVisible": false,
-        "avaReadable": false,
-        "activeHomeRows": 0,
-        "richestSourceRows": 150,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "benchmark_industry_inputs",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 509,
-        "richestSourceRows": 2760,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      }
-    ]
-  },
-  {
-    "tenantKey": "meridian-health",
-    "displayName": "Healthcare Demo",
-    "homeRepresentationScore": 34,
-    "avaRepresentationScore": 34,
-    "activeHomeContextRows": 7557,
-    "domains": [
-      {
-        "domain": "enterprise_profile",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 2,
-        "richestSourceRows": 1,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
         "domain": "business_functions",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 32,
-        "richestSourceRows": 25,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 26,
+        "warning": null
       },
       {
         "domain": "organization_ownership",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 80,
-        "richestSourceRows": 150,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "workforce_personas",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 20,
-        "richestSourceRows": 30,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "applications_systems",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 177,
-        "richestSourceRows": 162,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "data_assets_data_products",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 396,
-        "richestSourceRows": 360,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "integrations",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 396,
-        "richestSourceRows": 380,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "vendors_contracts",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 102,
-        "richestSourceRows": 700,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "spend_value",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 188,
-        "richestSourceRows": 200,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "programs_initiatives",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 3662,
-        "richestSourceRows": 5040,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "ai_initiatives",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 153,
-        "richestSourceRows": 150,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "risks_controls",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 377,
-        "richestSourceRows": 349,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "relationships",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 1620,
-        "richestSourceRows": 1551,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "evidence_sources",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 18,
-        "richestSourceRows": 700,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "metric_definitions",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 127,
-        "richestSourceRows": 184,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "infrastructure_cloud_estate",
-        "homeVisible": false,
-        "avaReadable": false,
-        "activeHomeRows": 0,
-        "richestSourceRows": 35,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "source_event_pack",
-        "homeVisible": false,
-        "avaReadable": false,
-        "activeHomeRows": 0,
-        "richestSourceRows": 0,
-        "warning": "No source file discovered for this domain."
-      },
-      {
-        "domain": "moves_program_pack",
-        "homeVisible": false,
-        "avaReadable": false,
-        "activeHomeRows": 0,
-        "richestSourceRows": 42,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "tower_outcome_pack",
-        "homeVisible": false,
-        "avaReadable": false,
-        "activeHomeRows": 0,
-        "richestSourceRows": 70,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "benchmark_industry_inputs",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 207,
-        "richestSourceRows": 190,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      }
-    ]
-  },
-  {
-    "tenantKey": "first-capital",
-    "displayName": "Financial Services Demo",
-    "homeRepresentationScore": 64,
-    "avaRepresentationScore": 64,
-    "activeHomeContextRows": 16591,
-    "domains": [
-      {
-        "domain": "enterprise_profile",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 1,
-        "richestSourceRows": 1,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "business_functions",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 27,
-        "richestSourceRows": 27,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "organization_ownership",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 65,
-        "richestSourceRows": 260,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "workforce_personas",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 16,
-        "richestSourceRows": 30,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "applications_systems",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 272,
-        "richestSourceRows": 272,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "data_assets_data_products",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 460,
-        "richestSourceRows": 460,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "integrations",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 460,
-        "richestSourceRows": 460,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "vendors_contracts",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 120,
-        "richestSourceRows": 700,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "spend_value",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 5609,
-        "richestSourceRows": 2614,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "programs_initiatives",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 5609,
-        "richestSourceRows": 2614,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "ai_initiatives",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 282,
-        "richestSourceRows": 282,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "risks_controls",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 547,
-        "richestSourceRows": 547,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "relationships",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 2614,
-        "richestSourceRows": 2614,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "evidence_sources",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 42,
-        "richestSourceRows": 1800,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "metric_definitions",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 168,
-        "richestSourceRows": 288,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "infrastructure_cloud_estate",
-        "homeVisible": false,
-        "avaReadable": false,
-        "activeHomeRows": 0,
-        "richestSourceRows": 35,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "source_event_pack",
-        "homeVisible": false,
-        "avaReadable": false,
-        "activeHomeRows": 0,
-        "richestSourceRows": 0,
-        "warning": "No source file discovered for this domain."
-      },
-      {
-        "domain": "moves_program_pack",
-        "homeVisible": false,
-        "avaReadable": false,
-        "activeHomeRows": 0,
-        "richestSourceRows": 6,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "tower_outcome_pack",
-        "homeVisible": false,
-        "avaReadable": false,
-        "activeHomeRows": 0,
-        "richestSourceRows": 167,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "benchmark_industry_inputs",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 299,
-        "richestSourceRows": 294,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      }
-    ]
-  },
-  {
-    "tenantKey": "apex-retail",
-    "displayName": "Retail Demo",
-    "homeRepresentationScore": 42,
-    "avaRepresentationScore": 42,
-    "activeHomeContextRows": 7404,
-    "domains": [
-      {
-        "domain": "enterprise_profile",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 1,
-        "richestSourceRows": 1,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "business_functions",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 26,
-        "richestSourceRows": 35,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "organization_ownership",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 50,
-        "richestSourceRows": 170,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "workforce_personas",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 12,
-        "richestSourceRows": 1420,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "applications_systems",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 182,
-        "richestSourceRows": 200,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "data_assets_data_products",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 385,
-        "richestSourceRows": 385,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "integrations",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 385,
-        "richestSourceRows": 385,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "vendors_contracts",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 100,
-        "richestSourceRows": 1000,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "spend_value",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 188,
-        "richestSourceRows": 300,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "programs_initiatives",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 3589,
-        "richestSourceRows": 1605,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "ai_initiatives",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 155,
-        "richestSourceRows": 155,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "risks_controls",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 375,
-        "richestSourceRows": 375,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "relationships",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 1605,
-        "richestSourceRows": 1605,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "evidence_sources",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 14,
-        "richestSourceRows": 1000,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "metric_definitions",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 126,
-        "richestSourceRows": 200,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
-      },
-      {
-        "domain": "infrastructure_cloud_estate",
         "homeVisible": false,
         "avaReadable": false,
         "activeHomeRows": 0,
         "richestSourceRows": 50,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "warning": null
+      },
+      {
+        "domain": "workforce_personas",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 12,
+        "warning": null
+      },
+      {
+        "domain": "applications_systems",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 122,
+        "warning": null
+      },
+      {
+        "domain": "data_assets_data_products",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 235,
+        "warning": null
+      },
+      {
+        "domain": "integrations",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 235,
+        "warning": null
+      },
+      {
+        "domain": "vendors_contracts",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 100,
+        "warning": null
+      },
+      {
+        "domain": "spend_value",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 8,
+        "warning": null
+      },
+      {
+        "domain": "programs_initiatives",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 80,
+        "warning": null
+      },
+      {
+        "domain": "ai_initiatives",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 58,
+        "warning": null
+      },
+      {
+        "domain": "risks_controls",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 135,
+        "warning": null
+      },
+      {
+        "domain": "relationships",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 1713,
+        "warning": null
+      },
+      {
+        "domain": "evidence_sources",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 9,
+        "warning": null
+      },
+      {
+        "domain": "metric_definitions",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 108,
+        "warning": null
+      },
+      {
+        "domain": "infrastructure_cloud_estate",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 0,
+        "warning": null
       },
       {
         "domain": "source_event_pack",
@@ -647,160 +140,498 @@
         "avaReadable": false,
         "activeHomeRows": 0,
         "richestSourceRows": 0,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "warning": "No source file discovered for this domain."
       },
       {
         "domain": "moves_program_pack",
         "homeVisible": false,
         "avaReadable": false,
         "activeHomeRows": 0,
-        "richestSourceRows": 6,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
       },
       {
         "domain": "tower_outcome_pack",
         "homeVisible": false,
         "avaReadable": false,
         "activeHomeRows": 0,
-        "richestSourceRows": 70,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
       },
       {
         "domain": "benchmark_industry_inputs",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 211,
-        "richestSourceRows": 206,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 107,
+        "warning": null
+      }
+    ]
+  },
+  {
+    "tenantKey": "first-capital-financial",
+    "displayName": "FS Demo",
+    "homeRepresentationScore": 0,
+    "avaRepresentationScore": 0,
+    "activeHomeContextRows": 0,
+    "domains": [
+      {
+        "domain": "enterprise_profile",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 1,
+        "warning": null
+      },
+      {
+        "domain": "business_functions",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 27,
+        "warning": null
+      },
+      {
+        "domain": "organization_ownership",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 65,
+        "warning": null
+      },
+      {
+        "domain": "workforce_personas",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 16,
+        "warning": null
+      },
+      {
+        "domain": "applications_systems",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 212,
+        "warning": null
+      },
+      {
+        "domain": "data_assets_data_products",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 114,
+        "warning": null
+      },
+      {
+        "domain": "integrations",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 114,
+        "warning": null
+      },
+      {
+        "domain": "vendors_contracts",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 120,
+        "warning": null
+      },
+      {
+        "domain": "spend_value",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 380,
+        "warning": null
+      },
+      {
+        "domain": "programs_initiatives",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 96,
+        "warning": null
+      },
+      {
+        "domain": "ai_initiatives",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 146,
+        "warning": null
+      },
+      {
+        "domain": "risks_controls",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 210,
+        "warning": null
+      },
+      {
+        "domain": "relationships",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 380,
+        "warning": null
+      },
+      {
+        "domain": "evidence_sources",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 9,
+        "warning": null
+      },
+      {
+        "domain": "metric_definitions",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 157,
+        "warning": null
+      },
+      {
+        "domain": "infrastructure_cloud_estate",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 0,
+        "warning": null
+      },
+      {
+        "domain": "source_event_pack",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
+      },
+      {
+        "domain": "moves_program_pack",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
+      },
+      {
+        "domain": "tower_outcome_pack",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
+      },
+      {
+        "domain": "benchmark_industry_inputs",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 151,
+        "warning": null
       }
     ]
   },
   {
     "tenantKey": "lakeshore-holdings",
     "displayName": "Lakeshore Holdings",
-    "homeRepresentationScore": 7,
-    "avaRepresentationScore": 7,
-    "activeHomeContextRows": 1239,
+    "homeRepresentationScore": 0,
+    "avaRepresentationScore": 0,
+    "activeHomeContextRows": 0,
     "domains": [
       {
         "domain": "enterprise_profile",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 1,
-        "richestSourceRows": 8,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 1,
+        "warning": null
       },
       {
         "domain": "business_functions",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 14,
-        "richestSourceRows": 96,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 14,
+        "warning": null
       },
       {
         "domain": "organization_ownership",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 8,
-        "richestSourceRows": 130,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 8,
+        "warning": null
       },
       {
         "domain": "workforce_personas",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 10,
-        "richestSourceRows": 82,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 10,
+        "warning": null
       },
       {
         "domain": "applications_systems",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 24,
-        "richestSourceRows": 152,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 24,
+        "warning": null
       },
       {
         "domain": "data_assets_data_products",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 34,
-        "richestSourceRows": 105,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 34,
+        "warning": null
       },
       {
         "domain": "integrations",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 34,
-        "richestSourceRows": 200,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 34,
+        "warning": null
       },
       {
         "domain": "vendors_contracts",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 19,
-        "richestSourceRows": 2400,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 19,
+        "warning": null
       },
       {
         "domain": "spend_value",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 238,
-        "richestSourceRows": 153,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 86,
+        "warning": null
       },
       {
         "domain": "programs_initiatives",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 610,
-        "richestSourceRows": 955,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 15,
+        "warning": null
       },
       {
         "domain": "ai_initiatives",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 8,
-        "richestSourceRows": 36,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 8,
+        "warning": null
       },
       {
         "domain": "risks_controls",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 10,
-        "richestSourceRows": 60,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 10,
+        "warning": null
       },
       {
         "domain": "relationships",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 199,
-        "richestSourceRows": 850,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 364,
+        "warning": null
       },
       {
         "domain": "evidence_sources",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 10,
-        "richestSourceRows": 2400,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 9,
+        "warning": null
       },
       {
         "domain": "metric_definitions",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 12,
-        "richestSourceRows": 384,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 12,
+        "warning": null
+      },
+      {
+        "domain": "infrastructure_cloud_estate",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 0,
+        "warning": null
+      },
+      {
+        "domain": "source_event_pack",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
+      },
+      {
+        "domain": "moves_program_pack",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
+      },
+      {
+        "domain": "tower_outcome_pack",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
+      },
+      {
+        "domain": "benchmark_industry_inputs",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 4,
+        "warning": null
+      }
+    ]
+  },
+  {
+    "tenantKey": "lakeshore-industries",
+    "displayName": "Lakeshore Industries",
+    "homeRepresentationScore": 0,
+    "avaRepresentationScore": 0,
+    "activeHomeContextRows": 0,
+    "domains": [
+      {
+        "domain": "enterprise_profile",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 8,
+        "warning": null
+      },
+      {
+        "domain": "business_functions",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 59,
+        "warning": null
+      },
+      {
+        "domain": "organization_ownership",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 116,
+        "warning": null
+      },
+      {
+        "domain": "workforce_personas",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 22,
+        "warning": null
+      },
+      {
+        "domain": "applications_systems",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 152,
+        "warning": null
+      },
+      {
+        "domain": "data_assets_data_products",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 82,
+        "warning": null
+      },
+      {
+        "domain": "integrations",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 82,
+        "warning": null
+      },
+      {
+        "domain": "vendors_contracts",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 19,
+        "warning": null
+      },
+      {
+        "domain": "spend_value",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 71,
+        "warning": null
+      },
+      {
+        "domain": "programs_initiatives",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 36,
+        "warning": null
+      },
+      {
+        "domain": "ai_initiatives",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 36,
+        "warning": null
+      },
+      {
+        "domain": "risks_controls",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 48,
+        "warning": null
+      },
+      {
+        "domain": "relationships",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 519,
+        "warning": null
+      },
+      {
+        "domain": "evidence_sources",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 112,
+        "warning": null
+      },
+      {
+        "domain": "metric_definitions",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 236,
+        "warning": null
       },
       {
         "domain": "infrastructure_cloud_estate",
@@ -808,39 +639,377 @@
         "avaReadable": false,
         "activeHomeRows": 0,
         "richestSourceRows": 128,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "warning": null
       },
       {
         "domain": "source_event_pack",
         "homeVisible": false,
         "avaReadable": false,
         "activeHomeRows": 0,
-        "richestSourceRows": 12,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
       },
       {
         "domain": "moves_program_pack",
         "homeVisible": false,
         "avaReadable": false,
         "activeHomeRows": 0,
-        "richestSourceRows": 5,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
       },
       {
         "domain": "tower_outcome_pack",
         "homeVisible": false,
         "avaReadable": false,
         "activeHomeRows": 0,
-        "richestSourceRows": 64,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
       },
       {
         "domain": "benchmark_industry_inputs",
-        "homeVisible": true,
-        "avaReadable": true,
-        "activeHomeRows": 8,
-        "richestSourceRows": 80,
-        "warning": "Source domain exists upstream but is not included in the candidate manifest."
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 24,
+        "warning": null
+      }
+    ]
+  },
+  {
+    "tenantKey": "meridian-health",
+    "displayName": "Meridian Health",
+    "homeRepresentationScore": 0,
+    "avaRepresentationScore": 0,
+    "activeHomeContextRows": 0,
+    "domains": [
+      {
+        "domain": "enterprise_profile",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 1,
+        "warning": null
+      },
+      {
+        "domain": "business_functions",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 24,
+        "warning": null
+      },
+      {
+        "domain": "organization_ownership",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 225,
+        "warning": null
+      },
+      {
+        "domain": "workforce_personas",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 45,
+        "warning": null
+      },
+      {
+        "domain": "applications_systems",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 301,
+        "warning": null
+      },
+      {
+        "domain": "data_assets_data_products",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 520,
+        "warning": null
+      },
+      {
+        "domain": "integrations",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 520,
+        "warning": null
+      },
+      {
+        "domain": "vendors_contracts",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 72,
+        "warning": null
+      },
+      {
+        "domain": "spend_value",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 24,
+        "warning": null
+      },
+      {
+        "domain": "programs_initiatives",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 28,
+        "warning": null
+      },
+      {
+        "domain": "ai_initiatives",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 18,
+        "warning": null
+      },
+      {
+        "domain": "risks_controls",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 40,
+        "warning": null
+      },
+      {
+        "domain": "relationships",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 2302,
+        "warning": null
+      },
+      {
+        "domain": "evidence_sources",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 27,
+        "warning": null
+      },
+      {
+        "domain": "metric_definitions",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 50,
+        "warning": null
+      },
+      {
+        "domain": "infrastructure_cloud_estate",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 60,
+        "warning": null
+      },
+      {
+        "domain": "source_event_pack",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
+      },
+      {
+        "domain": "moves_program_pack",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
+      },
+      {
+        "domain": "tower_outcome_pack",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
+      },
+      {
+        "domain": "benchmark_industry_inputs",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 12,
+        "warning": null
+      }
+    ]
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "displayName": "Airline Demo",
+    "homeRepresentationScore": 0,
+    "avaRepresentationScore": 0,
+    "activeHomeContextRows": 0,
+    "domains": [
+      {
+        "domain": "enterprise_profile",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 1,
+        "warning": null
+      },
+      {
+        "domain": "business_functions",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 22,
+        "warning": null
+      },
+      {
+        "domain": "organization_ownership",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 153,
+        "warning": null
+      },
+      {
+        "domain": "workforce_personas",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 38,
+        "warning": null
+      },
+      {
+        "domain": "applications_systems",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 503,
+        "warning": null
+      },
+      {
+        "domain": "data_assets_data_products",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 499,
+        "warning": null
+      },
+      {
+        "domain": "integrations",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 499,
+        "warning": null
+      },
+      {
+        "domain": "vendors_contracts",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 65,
+        "warning": null
+      },
+      {
+        "domain": "spend_value",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 20,
+        "warning": null
+      },
+      {
+        "domain": "programs_initiatives",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 230,
+        "warning": null
+      },
+      {
+        "domain": "ai_initiatives",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 13,
+        "warning": null
+      },
+      {
+        "domain": "risks_controls",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 44,
+        "warning": null
+      },
+      {
+        "domain": "relationships",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 3318,
+        "warning": null
+      },
+      {
+        "domain": "evidence_sources",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 183,
+        "warning": null
+      },
+      {
+        "domain": "metric_definitions",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 230,
+        "warning": null
+      },
+      {
+        "domain": "infrastructure_cloud_estate",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 33,
+        "warning": null
+      },
+      {
+        "domain": "source_event_pack",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
+      },
+      {
+        "domain": "moves_program_pack",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
+      },
+      {
+        "domain": "tower_outcome_pack",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 0,
+        "warning": "No source file discovered for this domain."
+      },
+      {
+        "domain": "benchmark_industry_inputs",
+        "homeVisible": false,
+        "avaReadable": false,
+        "activeHomeRows": 0,
+        "richestSourceRows": 10,
+        "warning": null
       }
     ]
   }
