@@ -781,7 +781,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       label: "Material vendors",
       value: whole(v4Snapshot.contextCoverage.vendors),
       note: "V4 context coverage",
-      source: "consumption_v4_canary.sourcing_context_coverage_v1",
+      source: "consumption.sourcing_context_coverage_v1",
     },
     {
       label: "Contract families",
@@ -899,7 +899,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           " contracts / " +
           whole(diagnostics.v4VendorCount) +
           " vendors.",
-        "consumption_v4_canary.*",
+        "consumption.*",
       ],
       [
         "Vendor register",
@@ -993,7 +993,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           weight: 600,
           color: diagnostics.activeLoadRunId ? COL.ink : COL.amber,
         }),
-        vm.cell("consumption_v4_canary.sourcing_contract_v1.load_run_id", {
+        vm.cell("source.contract.load_run_id", {
           color: "#5f5e5a",
           mono: true,
         }),

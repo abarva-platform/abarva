@@ -222,6 +222,12 @@ export async function loadSourceV4WorkspaceSnapshot(
   const datasetMetadata = datasetMetadataForTenant(tenantKey);
   if (!tenantKey.trim())
     return createEmptySourceV4WorkspaceSnapshot(asOfDateIso, datasetMetadata);
+  const governedSnapshot = await loadGovernedSourceWorkspaceSnapshot(
+    tenantKey,
+    asOfDateIso,
+    datasetMetadata,
+  );
+  if (governedSnapshot) return governedSnapshot;
   if (isMeridianTenantKey(tenantKey)) {
     return loadMeridianCanarySourceV4WorkspaceSnapshot(tenantKey, asOfDateIso);
   }
@@ -535,6 +541,251 @@ export async function loadSourceV4WorkspaceSnapshot(
   };
 }
 
+async function loadGovernedSourceWorkspaceSnapshot(
+  tenantKey: string,
+  asOfDateIso: string,
+  datasetMetadata: SourceV4DatasetMetadata,
+): Promise<SourceV4WorkspaceSnapshot | null> {
+  const asOfDate = asOfDateIso.slice(0, 10);
+  const [
+    coverage,
+    executive,
+    vendorSummary,
+    topVendors,
+    spend,
+    performance,
+    opportunity,
+    scope,
+    metadata,
+  ] = await Promise.all([
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          context_area,
+          COALESCE(SUM(row_count), 0) AS row_count,
+          COALESCE(SUM(populated_count), 0) AS populated_count
+         FROM consumption.sourcing_context_coverage_v1
+        WHERE tenant_key = ANY($1::text[])
+        GROUP BY context_area`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          COUNT(*) AS contract_count,
+          COALESCE(SUM(annual_value), 0) AS annual_value,
+          COALESCE(SUM(total_committed_value), 0) AS total_committed_value,
+          COALESCE(SUM(CASE WHEN auto_renew THEN 1 ELSE 0 END), 0) AS auto_renew_count,
+          COALESCE(SUM(CASE WHEN notice_deadline <= $2::date + INTERVAL '90 days' THEN 1 ELSE 0 END), 0) AS notice_90_day_count
+         FROM consumption.sourcing_contract_v1
+        WHERE tenant_key = ANY($1::text[])`,
+      [asOfDate],
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT COUNT(*) AS vendor_count
+         FROM consumption.sourcing_vendor_v1
+        WHERE tenant_key = ANY($1::text[])`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          vendor_id,
+          legal_name,
+          supplier_category,
+          strategic_status,
+          risk_tier,
+          annual_value,
+          contract_count
+         FROM consumption.sourcing_vendor_v1
+        WHERE tenant_key = ANY($1::text[])
+        ORDER BY annual_value DESC NULLS LAST
+        LIMIT 8`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          COUNT(*) AS row_count,
+          COALESCE(SUM(invoice_lines), 0) AS invoice_lines,
+          COALESCE(SUM(actual_spend), 0) AS actual_spend,
+          COALESCE(SUM(committed_amount), 0) AS committed_amount,
+          COALESCE(SUM(CASE WHEN matching_state = 'off_contract' THEN actual_spend ELSE 0 END), 0) AS off_contract_spend
+         FROM consumption.sourcing_spend_monthly_v1
+        WHERE tenant_key = ANY($1::text[])`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          COUNT(*) AS row_count,
+          COALESCE(SUM(breach_count), 0) AS breach_count,
+          COALESCE(SUM(credit_calculated), 0) AS credit_calculated,
+          COALESCE(SUM(credit_claimed), 0) AS credit_claimed,
+          COALESCE(SUM(credit_recovered), 0) AS credit_recovered,
+          COALESCE(SUM(COALESCE(credit_calculated, 0) - COALESCE(credit_claimed, 0)), 0) AS unclaimed_credit
+         FROM consumption.sourcing_performance_v1
+        WHERE tenant_key = ANY($1::text[])`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          COUNT(*) AS row_count,
+          COALESCE(SUM(addressable_spend), 0) AS normalized_cost,
+          COALESCE(SUM(annual_value_exposed), 0) AS line_item_cost,
+          AVG(confidence) AS average_weighted_score
+         FROM consumption.sourcing_opportunity_v1
+        WHERE tenant_key = ANY($1::text[])`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT
+          COUNT(*) AS row_count,
+          COALESCE(SUM(CASE WHEN relationship_method = 'explicit_contract_scope' THEN 1 ELSE 0 END), 0) AS explicit_scope_count,
+          COALESCE(SUM(CASE WHEN relationship_method <> 'explicit_contract_scope' THEN 1 ELSE 0 END), 0) AS inferred_scope_count
+         FROM consumption.sourcing_contract_scope_v1
+        WHERE tenant_key = ANY($1::text[])`,
+    ),
+    safeQuery<NumericRow>(
+      tenantKey,
+      `SELECT MAX(load_run_id) AS active_load_run_id
+         FROM source.contract
+        WHERE tenant_key = ANY($1::text[])`,
+    ),
+  ]);
+
+  const executiveRow = firstRow(executive);
+  const contractCount = num(executiveRow, "contract_count");
+  if (executive.state === "error" || contractCount <= 0) return null;
+
+  const coverageByArea = new Map(
+    coverage.rows.map((row) => [String(row.context_area ?? ""), row]),
+  );
+  const coverageCount = (area: string): number =>
+    num(coverageByArea.get(area), "row_count");
+  const spendRow = firstRow(spend);
+  const vendorSummaryRow = firstRow(vendorSummary);
+  const performanceRow = firstRow(performance);
+  const opportunityRow = firstRow(opportunity);
+  const scopeRow = firstRow(scope);
+  const metadataRow = firstRow(metadata);
+
+  return {
+    datasetId: datasetMetadata.datasetId,
+    datasetVersion: "v4",
+    datasetLabel: datasetMetadata.datasetLabel,
+    analyticsProvider: "CubeSourceProvider",
+    activeLoadRunId: nullableString(metadataRow?.active_load_run_id),
+    asOfDateIso,
+    availability: [
+      availability("executive_portfolio", "available", contractCount),
+      availability(
+        "vendor_concentration",
+        stateFromRows(topVendors),
+        num(vendorSummaryRow, "vendor_count"),
+      ),
+      availability(
+        "renewal_exposure",
+        "available",
+        num(executiveRow, "notice_90_day_count"),
+      ),
+      availability(
+        "scope_confidence",
+        stateFromAggregate(scope),
+        num(scopeRow, "row_count"),
+      ),
+      availability(
+        "spend_consumption",
+        stateFromAggregate(spend),
+        num(spendRow, "row_count"),
+      ),
+      availability(
+        "performance_credits",
+        stateFromAggregate(performance),
+        num(performanceRow, "row_count"),
+      ),
+      availability("ai_usage_value_proof", "missing", 0),
+      availability("cloud_optimization", "missing", 0),
+      availability("workforce_rate_card", "missing", 0),
+      availability(
+        "sourcing_event_bafo",
+        stateFromAggregate(opportunity),
+        num(opportunityRow, "row_count"),
+      ),
+      availability(
+        "context_coverage",
+        stateFromRows(coverage),
+        coverage.rows.length,
+      ),
+    ],
+    contextCoverage: {
+      vendors: num(vendorSummaryRow, "vendor_count"),
+      contracts: contractCount,
+      annualValue: num(executiveRow, "annual_value"),
+      scopeRows: coverageCount("contract_scope"),
+      invoiceLines: num(spendRow, "invoice_lines"),
+      saasUsageRows: 0,
+      cloudRows: 0,
+      performanceRows: coverageCount("performance_sla"),
+    },
+    scopeConfidence: {
+      rowCount: num(scopeRow, "row_count"),
+      explicitScopeCount: num(scopeRow, "explicit_scope_count"),
+      inferredScopeCount: num(scopeRow, "inferred_scope_count"),
+    },
+    executivePortfolio: {
+      contractCount,
+      annualValue: num(executiveRow, "annual_value"),
+      totalCommittedValue: num(executiveRow, "total_committed_value"),
+      autoRenewCount: num(executiveRow, "auto_renew_count"),
+      notice90DayCount: num(executiveRow, "notice_90_day_count"),
+    },
+    spendConsumption: {
+      rowCount: num(spendRow, "row_count"),
+      invoiceLines: num(spendRow, "invoice_lines"),
+      actualSpend: num(spendRow, "actual_spend"),
+      committedAmount: num(spendRow, "committed_amount"),
+      offContractSpend: num(spendRow, "off_contract_spend"),
+    },
+    performanceCredits: {
+      rowCount: num(performanceRow, "row_count"),
+      breachCount: num(performanceRow, "breach_count"),
+      creditCalculated: num(performanceRow, "credit_calculated"),
+      creditClaimed: num(performanceRow, "credit_claimed"),
+      creditRecovered: num(performanceRow, "credit_recovered"),
+      unclaimedCredit: num(performanceRow, "unclaimed_credit"),
+    },
+    aiUsageValueProof: {
+      rowCount: 0,
+      assignedSeats: 0,
+      activeUsers: 0,
+      actualCost: 0,
+      claimableRows: 0,
+      topProducts: [],
+    },
+    cloudOptimization: {
+      rowCount: 0,
+      actualCost: 0,
+      amortizedCost: 0,
+      overageAmount: 0,
+      topServices: [],
+    },
+    workforceRateCards: {
+      rowCount: 0,
+      hours: 0,
+      averageBillRate: null,
+      unapprovedVarianceCount: 0,
+    },
+    sourcingEvents: {
+      rowCount: num(opportunityRow, "row_count"),
+      normalizedCost: num(opportunityRow, "normalized_cost"),
+      lineItemCost: num(opportunityRow, "line_item_cost"),
+      averageWeightedScore: nullableNum(
+        opportunityRow,
+        "average_weighted_score",
+      ),
+    },
+    topVendors: topVendors.rows.map(vendorSnapshot),
+  };
+}
+
 async function loadMeridianCanarySourceV4WorkspaceSnapshot(
   tenantKey: string,
   asOfDateIso: string,
@@ -830,6 +1081,8 @@ function tenantKeyAliases(tenantKey: string): string[] {
 
 function tenantRlsKey(tenantKey: string): string {
   if (isMeridianTenantKey(tenantKey)) return "meridian_health_global";
+  if (appClientKeyForTenant(tenantKey) === "skyharbor")
+    return "skyharbor_global";
   return canonicalTenantKey(tenantKey);
 }
 

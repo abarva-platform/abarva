@@ -18,6 +18,38 @@ describe("loadSourceV4WorkspaceSnapshot", () => {
       if (sql.includes("MAX(load_run_id)")) {
         return [{ active_load_run_id: "source-v4-load-20260803" }];
       }
+      if (
+        sql.includes("consumption.sourcing_context_coverage_v1") &&
+        sql.includes("context_area")
+      ) {
+        return [
+          {
+            context_area: "contracts",
+            row_count: "100",
+            populated_count: "100",
+          },
+          {
+            context_area: "contract_scope",
+            row_count: "15840",
+            populated_count: "15840",
+          },
+          {
+            context_area: "monthly_spend_consumption",
+            row_count: "7200",
+            populated_count: "7200",
+          },
+          {
+            context_area: "performance_sla",
+            row_count: "21600",
+            populated_count: "21600",
+          },
+          {
+            context_area: "opportunities",
+            row_count: "3600",
+            populated_count: "3600",
+          },
+        ];
+      }
       if (sql.includes("sourcing_context_coverage_v1")) {
         return [
           {
@@ -31,6 +63,9 @@ describe("loadSourceV4WorkspaceSnapshot", () => {
             performance_rows: "21600",
           },
         ];
+      }
+      if (sql.includes("COUNT(*) AS vendor_count")) {
+        return [{ vendor_count: "60" }];
       }
       if (sql.includes("sourcing_contract_v1")) {
         return [
@@ -167,21 +202,31 @@ describe("loadSourceV4WorkspaceSnapshot", () => {
     expect(snapshot.datasetLabel).toBe("SkyHarbor Source v4");
     expect(snapshot.analyticsProvider).toBe("CubeSourceProvider");
     expect(snapshot.activeLoadRunId).toBe("source-v4-load-20260803");
+    expect(snapshot.contextCoverage.vendors).toBe(60);
     expect(snapshot.contextCoverage.contracts).toBe(100);
     expect(snapshot.executivePortfolio.annualValue).toBe(1480500000);
     expect(snapshot.scopeConfidence.rowCount).toBe(15840);
     expect(snapshot.scopeConfidence.explicitScopeCount).toBe(6400);
     expect(snapshot.scopeConfidence.inferredScopeCount).toBe(9440);
     expect(snapshot.performanceCredits.unclaimedCredit).toBe(345000);
-    expect(snapshot.aiUsageValueProof.topProducts[0]).toEqual({
-      name: "Claude Code",
-      count: 960,
-      amount: 8700000,
-    });
+    expect(snapshot.aiUsageValueProof.rowCount).toBe(0);
     expect(snapshot.topVendors[0]?.legalName).toBe("Northstar Cloud Services");
-    expect(
-      snapshot.availability.every((slice) => slice.state === "available"),
-    ).toBe(true);
+    expect(snapshot.availability).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          lensId: "executive_portfolio",
+          state: "available",
+        }),
+        expect.objectContaining({
+          lensId: "ai_usage_value_proof",
+          state: "missing",
+        }),
+        expect.objectContaining({
+          lensId: "cloud_optimization",
+          state: "missing",
+        }),
+      ]),
+    );
   });
 
   it("marks a missing table family as an error without failing the whole workspace", async () => {

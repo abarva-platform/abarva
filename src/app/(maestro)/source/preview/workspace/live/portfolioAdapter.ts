@@ -191,11 +191,17 @@ export async function loadSourceWorkspacePortfolio(
 
   const contracts = excludeSupplementalContracts(contractsRaw);
   const categoryQuality = evaluateContractCategoryQuality(contracts);
-  const legacyVendorRefs = new Set(contracts.map((contract) => contract.vendor_ref));
+  const legacyVendorRefs = new Set(
+    contracts.map((contract) => contract.vendor_ref),
+  );
   const legacyVendorCount = legacyVendorRefs.size;
-  const v4ContractCount = v4Snapshot.executivePortfolio.contractCount || v4Snapshot.contextCoverage.contracts;
-  const v4VendorCount = v4Snapshot.contextCoverage.vendors || v4Snapshot.topVendors.length;
-  const exploreMatchesV4 = contracts.length === v4ContractCount && legacyVendorCount === v4VendorCount;
+  const v4ContractCount =
+    v4Snapshot.executivePortfolio.contractCount ||
+    v4Snapshot.contextCoverage.contracts;
+  const v4VendorCount =
+    v4Snapshot.contextCoverage.vendors || v4Snapshot.topVendors.length;
+  const exploreMatchesV4 =
+    contracts.length === v4ContractCount && legacyVendorCount === v4VendorCount;
   const workspaceDiagnostics = {
     datasetLabel: v4Snapshot.datasetLabel,
     datasetId: v4Snapshot.datasetId,
@@ -214,12 +220,17 @@ export async function loadSourceWorkspacePortfolio(
       : `Explore lens is reading ${contracts.length} contracts / ${legacyVendorCount} vendors from source.contract_360 while the active Source V4 snapshot reports ${v4ContractCount} contract families / ${v4VendorCount} vendors.`,
   };
   const reads = {
-    contracts: contractsRaw.length > 0 ? ("available" as const) : ("missing" as const),
+    contracts:
+      contractsRaw.length > 0 ? ("available" as const) : ("missing" as const),
     vendors: vendors.length > 0 ? ("available" as const) : ("missing" as const),
     applicationScope:
-      applicationScope.length > 0 ? ("available" as const) : ("missing" as const),
+      applicationScope.length > 0
+        ? ("available" as const)
+        : ("missing" as const),
     initiativeDependencies:
-      initiativeDependencies.length > 0 ? ("available" as const) : ("missing" as const),
+      initiativeDependencies.length > 0
+        ? ("available" as const)
+        : ("missing" as const),
   };
 
   return {
@@ -271,7 +282,9 @@ export function buildSourceVendor360Cockpit(input: {
   const asOf = validDate(asOfDateIso);
   const summary = summarizePortfolio(contracts);
   const renewal180 = computeRenewalExposure(contracts, asOfDateIso, 180);
-  const contractById = new Map(contracts.map((contract) => [contract.contract_id, contract]));
+  const contractById = new Map(
+    contracts.map((contract) => [contract.contract_id, contract]),
+  );
   const leverageEntries = computeContractLeverageSignals(contracts);
   const leverageByContract = new Map(
     leverageEntries.map((entry) => [entry.contractId, entry]),
@@ -294,7 +307,8 @@ export function buildSourceVendor360Cockpit(input: {
     .filter((contract): contract is SourceContract360Row => Boolean(contract))
     .slice()
     .sort((a, b) => compareIso(a.end_date, b.end_date));
-  const verdictRows = exposureRows.length > 0 ? exposureRows : fallbackExpiryRows;
+  const verdictRows =
+    exposureRows.length > 0 ? exposureRows : fallbackExpiryRows;
   const headlineAnchor = upcomingNotice[0] ?? null;
   const expiryAnchor = exposureRows.length === 0 ? fallbackExpiryRows[0] : null;
   const exposedAnnualValue = sumAnnual(verdictRows);
@@ -323,9 +337,10 @@ export function buildSourceVendor360Cockpit(input: {
         verdictRows.length > 0
           ? `${verdictRows.length} active contract${verdictRows.length === 1 ? "" : "s"} sit inside the governed decision set; treat the date first, then the leverage flag.`
           : "No qualifying row is rendered as exposure; missing timing stays not established.",
-      bindingChip: exposureRows.length > 0
-        ? "computeRenewalExposure(source.contract_360, as_of_date)"
-        : "computeRenewalExposure(source.contract_360, as_of_date).expiringWithinWindow",
+      bindingChip:
+        exposureRows.length > 0
+          ? "computeRenewalExposure(source.contract_360, as_of_date)"
+          : "computeRenewalExposure(source.contract_360, as_of_date).expiringWithinWindow",
       supports: [
         {
           label: "Exposed annual value",
@@ -341,20 +356,36 @@ export function buildSourceVendor360Cockpit(input: {
         },
         {
           label: "Decision window",
-          value: minDeadlineDays == null ? "not established" : `${minDeadlineDays} days`,
+          value:
+            minDeadlineDays == null
+              ? "not established"
+              : `${minDeadlineDays} days`,
           note: minDeadlineContract
             ? `${minDeadlineContract.vendor_name} · ${minDeadlineContract.contract_id} sets the minimum.`
             : "Needs notice_deadline or end_date.",
-          tone: minDeadlineDays == null ? "pass" : minDeadlineDays < 0 ? "fail" : "warn",
+          tone:
+            minDeadlineDays == null
+              ? "pass"
+              : minDeadlineDays < 0
+                ? "fail"
+                : "warn",
         },
         {
           label: "Mean confidence",
-          value: meanConfidence == null ? "not established" : pctLabel(meanConfidence),
+          value:
+            meanConfidence == null
+              ? "not established"
+              : pctLabel(meanConfidence),
           note:
             meanConfidence == null
               ? "Needs numeric source_confidence on the exposure rows."
               : "Average over numeric source_confidence only.",
-          tone: meanConfidence == null ? "warn" : meanConfidence < 0.8 ? "warn" : "pass",
+          tone:
+            meanConfidence == null
+              ? "warn"
+              : meanConfidence < 0.8
+                ? "warn"
+                : "pass",
         },
       ],
     },
@@ -377,7 +408,11 @@ export function buildSourceVendor360Cockpit(input: {
       .sort((a, b) => valueOf(b.annual_value) - valueOf(a.annual_value))
       .slice(0, 5)
       .map((contract) =>
-        topContractRow(contract, leverageByContract.get(contract.contract_id), asOf),
+        topContractRow(
+          contract,
+          leverageByContract.get(contract.contract_id),
+          asOf,
+        ),
       ),
     proofLayers: {
       evidenceBehindVerdict: [
@@ -401,17 +436,47 @@ export function buildSourceVendor360Cockpit(input: {
         },
       ],
       sourceSystems: [
-        readRow("Contract register", "source.contract_360", "active contract", contracts.length, reads.contracts),
-        readRow("Vendor rollup", "source.vendor_contract_portfolio", "vendor", vendors.length, reads.vendors),
-        readRow("Application scope", "source.contract_application_scope", "contract x application", applicationScope.length, reads.applicationScope),
-        readRow("Initiative dependency", "source.contract_initiative_dependency", "contract x initiative", initiativeDependencies.length, reads.initiativeDependencies),
+        readRow(
+          "Contract register",
+          "source.contract_360",
+          "active contract",
+          contracts.length,
+          reads.contracts,
+        ),
+        readRow(
+          "Vendor rollup",
+          "source.vendor_contract_portfolio",
+          "vendor",
+          vendors.length,
+          reads.vendors,
+        ),
+        readRow(
+          "Application scope",
+          "source.contract_application_scope",
+          "contract x application",
+          applicationScope.length,
+          reads.applicationScope,
+        ),
+        readRow(
+          "Initiative dependency",
+          "source.contract_initiative_dependency",
+          "contract x initiative",
+          initiativeDependencies.length,
+          reads.initiativeDependencies,
+        ),
         ...v4Snapshot.availability.map((item) => ({
           name: item.lensId,
           binding: item.lensId,
-          grain: item.lensId === "scope_confidence" ? "contract x application" : "semantic cube slice",
+          grain:
+            item.lensId === "scope_confidence"
+              ? "contract x application"
+              : "semantic cube slice",
           rowCount: item.rowCount,
           state: item.state,
-          note: item.state === "available" ? "Returned by governed V4 snapshot." : "No rows returned for this slice.",
+          note:
+            item.state === "available"
+              ? "Returned by governed V4 snapshot."
+              : "No rows returned for this slice.",
         })),
       ],
       reconciliation: {
@@ -423,16 +488,36 @@ export function buildSourceVendor360Cockpit(input: {
         mismatchWarning: workspaceDiagnostics.mismatchWarning,
       },
       sourceMappingTable: [
-        mappingRow("source.contract_360", "active contract", contracts.length, reads.contracts),
-        mappingRow("source.vendor_contract_portfolio", "vendor", vendors.length, reads.vendors),
-        mappingRow("source.contract_application_scope", "contract x application", applicationScope.length, reads.applicationScope),
-        mappingRow("source.contract_initiative_dependency", "contract x initiative", initiativeDependencies.length, reads.initiativeDependencies),
+        mappingRow(
+          "source.contract_360",
+          "active contract",
+          contracts.length,
+          reads.contracts,
+        ),
+        mappingRow(
+          "source.vendor_contract_portfolio",
+          "vendor",
+          vendors.length,
+          reads.vendors,
+        ),
+        mappingRow(
+          "source.contract_application_scope",
+          "contract x application",
+          applicationScope.length,
+          reads.applicationScope,
+        ),
+        mappingRow(
+          "source.contract_initiative_dependency",
+          "contract x initiative",
+          initiativeDependencies.length,
+          reads.initiativeDependencies,
+        ),
       ],
       lineageRail: [
         "CLM / ERP / AP / ITSM extracts -> source.* governed views -> Source workspace measures",
         "source.contract_360 -> computeRenewalExposure -> verdict and action queue",
         "source.contract_360 -> computeContractLeverageSignals -> gate and action verb",
-        "consumption_v4_canary.* -> Source V4 cube slices -> proof layers",
+        "consumption.* -> Source governed cube slices -> proof layers",
       ],
     },
   };
@@ -451,7 +536,9 @@ function buildActionQueue(input: {
   readonly v4Snapshot: SourceV4WorkspaceSnapshot;
 }): readonly CockpitActionRow[] {
   const noticePassed = new Set(
-    input.renewal180.noticeDeadlinePassed.map((contract) => contract.contract_id),
+    input.renewal180.noticeDeadlinePassed.map(
+      (contract) => contract.contract_id,
+    ),
   );
   return input.contracts
     .map((contract) => {
@@ -466,7 +553,10 @@ function buildActionQueue(input: {
     })
     .filter((item) => item.deadline != null || item.gate !== "pass")
     .sort((a, b) => {
-      const dateCmp = compareIso(a.deadline?.toISOString() ?? null, b.deadline?.toISOString() ?? null);
+      const dateCmp = compareIso(
+        a.deadline?.toISOString() ?? null,
+        b.deadline?.toISOString() ?? null,
+      );
       return dateCmp !== 0
         ? dateCmp
         : valueOf(b.contract.annual_value) - valueOf(a.contract.annual_value);
@@ -476,14 +566,21 @@ function buildActionQueue(input: {
       const { contract, deadline, gate, leverage } = item;
       return {
         contractId: contract.contract_id,
-        actionVerb: actionVerbFor(contract, leverage, input.asOf, input.v4Snapshot),
+        actionVerb: actionVerbFor(
+          contract,
+          leverage,
+          input.asOf,
+          input.v4Snapshot,
+        ),
         counterparty: contract.vendor_name,
         contractNumber: contract.contract_id,
         why: whyFor(contract, leverage, input.asOf, input.v4Snapshot),
         annualValue: numberFromDb(contract.annual_value),
         annualValueLabel: moneyLabel(contract.annual_value),
         deadlineIso: deadline?.toISOString() ?? null,
-        deadlineLabel: deadline ? formatDate(deadline.toISOString()) : "not established",
+        deadlineLabel: deadline
+          ? formatDate(deadline.toISOString())
+          : "not established",
         gate,
         gateLabel: gate,
         opportunityId: null,
@@ -515,8 +612,10 @@ function topContractRow(
     sourceDocumentNeed:
       "Needs source document id on the portfolio row or contract detail evidence.",
     confidence,
-    confidenceLabel: confidence == null ? "not established" : confidence.toFixed(2),
-    confidenceGate: confidence == null ? "warn" : confidence < 0.8 ? "warn" : "pass",
+    confidenceLabel:
+      confidence == null ? "not established" : confidence.toFixed(2),
+    confidenceGate:
+      confidence == null ? "warn" : confidence < 0.8 ? "warn" : "pass",
   };
 }
 
@@ -536,10 +635,15 @@ function actionVerbFor(
   if ((snapshot.workforceRateCards.unapprovedVarianceCount ?? 0) > 0) {
     return "Approve or reject rate variance";
   }
-  if ((numberFromDb(contract.annual_value) ?? 0) > (numberFromDb(contract.actual_annual_spend) ?? 0)) {
+  if (
+    (numberFromDb(contract.annual_value) ?? 0) >
+    (numberFromDb(contract.actual_annual_spend) ?? 0)
+  ) {
     return "Benchmark before expiry";
   }
-  return leverage?.weakSignalCount ? "Renegotiate leverage" : "Confirm renewal posture";
+  return leverage?.weakSignalCount
+    ? "Renegotiate leverage"
+    : "Confirm renewal posture";
 }
 
 function whyFor(
@@ -585,7 +689,9 @@ function renewalLabelFor(contract: SourceContract360Row, asOf: Date): string {
   if (deadline && deadline.getTime() < asOf.getTime()) {
     return `Notice passed ${formatDate(deadline.toISOString())}`;
   }
-  return contract.end_date ? `Expires ${formatDate(contract.end_date)}` : "not established";
+  return contract.end_date
+    ? `Expires ${formatDate(contract.end_date)}`
+    : "not established";
 }
 
 function withNoticeDeadline(
@@ -604,16 +710,26 @@ function withNoticeDeadline(
 }
 
 function deadlineFor(contract: SourceContract360Row, asOf: Date): Date | null {
-  return withNoticeDeadline(contract, asOf)?.noticeDeadline ??
-    (contract.end_date ? validDate(contract.end_date) : null);
+  return (
+    withNoticeDeadline(contract, asOf)?.noticeDeadline ??
+    (contract.end_date ? validDate(contract.end_date) : null)
+  );
 }
 
-function compareDeadlineThenValue(a: ContractWithDeadline, b: ContractWithDeadline): number {
+function compareDeadlineThenValue(
+  a: ContractWithDeadline,
+  b: ContractWithDeadline,
+): number {
   const dateCmp = a.noticeDeadline.getTime() - b.noticeDeadline.getTime();
-  return dateCmp !== 0 ? dateCmp : valueOf(b.contract.annual_value) - valueOf(a.contract.annual_value);
+  return dateCmp !== 0
+    ? dateCmp
+    : valueOf(b.contract.annual_value) - valueOf(a.contract.annual_value);
 }
 
-function compareIso(a: string | null | undefined, b: string | null | undefined): number {
+function compareIso(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): number {
   if (!a && !b) return 0;
   if (!a) return 1;
   if (!b) return -1;
@@ -646,14 +762,17 @@ function moneyLabel(value: unknown): string {
   const amount = numberFromDb(value);
   if (amount == null) return "not established";
   const abs = Math.abs(amount);
-  if (abs >= 1_000_000_000) return `$${(amount / 1_000_000_000).toFixed(3).replace(/0+$/, "").replace(/\.$/, "")}B`;
+  if (abs >= 1_000_000_000)
+    return `$${(amount / 1_000_000_000).toFixed(3).replace(/0+$/, "").replace(/\.$/, "")}B`;
   if (abs >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`;
   if (abs >= 1_000) return `$${(amount / 1_000).toFixed(0)}K`;
   return `$${amount.toFixed(0)}`;
 }
 
 function pctLabel(value: number): string {
-  return Number.isFinite(value) ? `${(value * 100).toFixed(1)}%` : "not established";
+  return Number.isFinite(value)
+    ? `${(value * 100).toFixed(1)}%`
+    : "not established";
 }
 
 function formatDate(iso: string | null | undefined): string {
@@ -678,7 +797,9 @@ function formatDayMonth(iso: string | null | undefined): string {
 }
 
 function whole(value: number): string {
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(
+    value,
+  );
 }
 
 function readRow(
@@ -694,7 +815,10 @@ function readRow(
     grain,
     rowCount,
     state,
-    note: state === "available" ? "Returned rows in this governed read." : "No rows returned; downstream labels stay not established.",
+    note:
+      state === "available"
+        ? "Returned rows in this governed read."
+        : "No rows returned; downstream labels stay not established.",
   };
 }
 
