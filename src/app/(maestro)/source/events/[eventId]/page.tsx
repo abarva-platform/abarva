@@ -44,6 +44,7 @@ import { resolveVendorResponseSeedInputs } from "@/lib/source/vendor-response-co
 import {
   buildVendorBafoInstructionPack,
   buildVendorChallengeIntelligence,
+  compactVendorResponseParseReportsForRoute,
   buildVendorEvaluationDecisionView,
   buildVendorResponseParseReportsFromProfiles,
   buildVendorResponseMveProfiles,
@@ -189,7 +190,9 @@ export default async function SourceEventDetailPage({
         : null;
     const vendorResponseParseReports =
       viewStage === "responses"
-        ? buildVendorResponseParseReportsFromProfiles(vendorResponseProfiles)
+        ? compactVendorResponseParseReportsForRoute(
+            buildVendorResponseParseReportsFromProfiles(vendorResponseProfiles),
+          )
         : [];
 
     // Build the stage view. The STRATEGY (P0) stage is the mandate-confirmation

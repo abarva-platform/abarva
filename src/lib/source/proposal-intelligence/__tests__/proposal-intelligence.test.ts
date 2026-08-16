@@ -20,7 +20,11 @@ import {
   buildVendorEvaluationDecisionView,
   buildVendorResponseMveProfiles,
 } from "../mve-profile";
-import { buildVendorResponseParseReport } from "../parser";
+import {
+  buildVendorResponseParseReport,
+  buildVendorResponseParseReportsFromProfiles,
+  compactVendorResponseParseReportsForRoute,
+} from "../parser";
 import {
   buildSourceBafoLeverageOptimizer,
   buildSourceExecutiveDecisionPack,
@@ -463,6 +467,45 @@ describe("vendor response parser contract", () => {
       severity: "blocker",
       ownerRole: "Commercial lead",
     });
+  });
+
+  it("compacts route parse reports while preserving scoring and leverage inputs", () => {
+    const profileSet = buildVendorResponseMveProfiles({
+      id: "skyh-test-event",
+      code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
+      name: "Managed services sourcing event",
+      accountName: "Demo account",
+    });
+    const fullReports = buildVendorResponseParseReportsFromProfiles(profileSet);
+    const compactReports = compactVendorResponseParseReportsForRoute(fullReports);
+
+    expect(Buffer.byteLength(JSON.stringify(compactReports))).toBeLessThan(
+      Buffer.byteLength(JSON.stringify(fullReports)) * 0.75,
+    );
+    expect(compactReports).toHaveLength(fullReports.length);
+    expect(compactReports[0]?.sectionFindings.length).toBe(
+      fullReports[0]?.sectionFindings.length,
+    );
+    expect(compactReports[0]?.missingInputs.length).toBe(
+      fullReports[0]?.missingInputs.length,
+    );
+    expect(compactReports[0]?.citations.length).toBeLessThanOrEqual(
+      fullReports[0]?.citations.length ?? 0,
+    );
+
+    const scorecard = buildSourceFirstPassScorecard(compactReports);
+    const optimizer = buildSourceBafoLeverageOptimizer(compactReports);
+    const decisionPack = buildSourceExecutiveDecisionPack(
+      scorecard,
+      optimizer,
+    );
+    const valuePlan = buildSourceValueRealizationProofPlan(optimizer);
+
+    expect(scorecard.totalVendorCount).toBe(fullReports.length);
+    expect(scorecard.holdbacks.length).toBeGreaterThan(0);
+    expect(optimizer.levers.length).toBeGreaterThan(0);
+    expect(decisionPack.decisionConditions.length).toBeGreaterThan(0);
+    expect(valuePlan.guardrail).toMatch(/not realized savings/i);
   });
 });
 
