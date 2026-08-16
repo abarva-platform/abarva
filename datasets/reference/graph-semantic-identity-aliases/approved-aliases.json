@@ -20,7 +20,8 @@
       "matchRule": "endpoint-label-is-unique-acronym-of-canonical-label",
       "affectedEndpointOccurrences": 18,
       "reversible": true,
-      "active": true
+      "active": false,
+      "inactiveReason": "Retired after active tenant registry consolidation changed anonymized tenant numbering; do not reapply without a fresh review table."
     },
     {
       "tenant": "tenant-07",
@@ -32,7 +33,8 @@
       "matchRule": "endpoint-label-is-unique-acronym-of-canonical-label",
       "affectedEndpointOccurrences": 16,
       "reversible": true,
-      "active": true
+      "active": false,
+      "inactiveReason": "Retired after active tenant registry consolidation changed anonymized tenant numbering; do not reapply without a fresh review table."
     },
     {
       "tenant": "tenant-07",
@@ -44,7 +46,8 @@
       "matchRule": "endpoint-label-is-unique-acronym-of-canonical-label",
       "affectedEndpointOccurrences": 16,
       "reversible": true,
-      "active": true
+      "active": false,
+      "inactiveReason": "Retired after active tenant registry consolidation changed anonymized tenant numbering; do not reapply without a fresh review table."
     }
   ],
   "closedGates": [
