@@ -3,11 +3,8 @@ import { SourceAnalyticsCanvas } from "@/components/source/canvas/analytics";
 import { getSourcingEvent, isUuid } from "@/lib/source/queries";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
-import { listSourceArtifactsForSourceEventIdWithContent } from "@/lib/source/artifact-registry";
-import {
-  listArtifactStatesForEvent,
-  listEffectiveEvidenceStatesForEvent,
-} from "@/lib/source/canvas-substrate";
+import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
+import { listEffectiveEvidenceStatesForEvent } from "@/lib/source/canvas-substrate";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import {
@@ -38,10 +35,7 @@ import {
   buildStrategyStageView,
   deriveStrategyIntakeFacts,
 } from "@/lib/source/facts/view/strategy-stage-builder";
-import {
-  mergeSourceShellArtifactsWithArtifactStateBodies,
-  type SourceShellWorkspace,
-} from "@/lib/source/source-event-shell-v2";
+import { type SourceShellWorkspace } from "@/lib/source/source-event-shell-v2";
 import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact-acceptances";
 import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repository";
 import { buildSourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness";
@@ -215,8 +209,14 @@ export default async function SourceEventDetailPage({
     let analyticsEvidenceStates: Awaited<
       ReturnType<typeof listEffectiveEvidenceStatesForEvent>
     > = [];
+    // Keep the event workflow shell metadata-first. The Steps / Responses /
+    // approval surfaces only need registry status, provenance and acceptance
+    // metadata; hydrating full generated bodies for every artifact in an
+    // 11-stage event can push the RSC payload into megabytes and freeze browser
+    // verification. File cards do not render body previews, so content remains a
+    // server-side artifact concern rather than default route payload.
     const analyticsRegistryArtifacts =
-      await listSourceArtifactsForSourceEventIdWithContent(event.id).catch(
+      await listSourceArtifactsForSourceEventId(event.id).catch(
         (error) => {
           console.error(
             "[SourceEventDetailPage] source_artifacts registry read failed for analytics shell",
@@ -225,15 +225,6 @@ export default async function SourceEventDetailPage({
           return [];
         },
       );
-    const analyticsArtifactStates = await listArtifactStatesForEvent(
-      event.id,
-    ).catch((error) => {
-      console.error(
-        "[SourceEventDetailPage] source artifact states read failed for analytics shell",
-        error instanceof Error ? error.message : String(error),
-      );
-      return [];
-    });
     analyticsEvidenceStates = await listEffectiveEvidenceStatesForEvent(
       event.id,
     ).catch((error) => {
@@ -243,10 +234,7 @@ export default async function SourceEventDetailPage({
       );
       return [];
     });
-    const analyticsArtifacts = mergeSourceShellArtifactsWithArtifactStateBodies(
-      analyticsRegistryArtifacts,
-      analyticsArtifactStates,
-    );
+    const analyticsArtifacts = [...analyticsRegistryArtifacts];
     const analyticsHydrationArtifacts = analyticsArtifacts.flatMap(
       (artifact) =>
         artifact.stageKey ? [{ stageKey: artifact.stageKey }] : [],
