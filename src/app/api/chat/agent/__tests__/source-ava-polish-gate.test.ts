@@ -99,6 +99,28 @@ describe("agent route · Source aVa contract optimization authority", () => {
   });
 });
 
+describe("agent route · Source aVa visual and table output discipline", () => {
+  const source = readRoute();
+
+  it("requires Source visual requests to emit a renderable abarva-chart fence instead of prose-only renderer advice", () => {
+    expect(source).toContain("SOURCE VISUAL OUTPUT CONTRACT");
+    expect(source).toContain("```abarva-chart");
+    expect(source).toContain('"type":"bar"|"line"|"waterfall"|"matrix"');
+    expect(source).toContain("using only grounded values already present in the Source context");
+    expect(source).toContain("do not invent them");
+    expect(source).not.toContain(
+      "do not print chart JSON, inline object literals, code fences, or renderer instructions",
+    );
+  });
+
+  it("requires Source table/ranking requests to include a compact markdown table and preserve missing values", () => {
+    expect(source).toContain("SOURCE TABLE OUTPUT CONTRACT");
+    expect(source).toContain("include a compact markdown table");
+    expect(source).toContain("state the counting basis");
+    expect(source).toContain("rather than zero");
+  });
+});
+
 describe("agent route · Source aVa vendor-response grounding — Gap 2", () => {
   const source = readRoute();
 
