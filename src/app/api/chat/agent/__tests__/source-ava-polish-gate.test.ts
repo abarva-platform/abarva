@@ -194,6 +194,24 @@ describe("agent route · Source aVa visual and table output discipline", () => {
     expect(source).toContain("rather than zero");
   });
 
+  it("keeps event-stage operational asks table-shaped and prevents status/value overclaiming", () => {
+    expect(source).toContain("SOURCE EVENT ANSWER SHAPE");
+    expect(source).toContain("files/templates");
+    expect(source).toContain("workshops");
+    expect(source).toContain("vendor unsupported claims");
+    expect(source).toContain("Do not answer those asks as prose-only paragraphs");
+    expect(source).toContain("SOURCE STAGE STATUS DISCIPLINE");
+    expect(source).toContain("distinguish stage/task completion from approved value");
+    expect(source).toContain("Do not imply guaranteed, booked, approved, or realized savings");
+  });
+
+  it("uses literal Source boundary wording for tenant isolation and unquotable figures", () => {
+    expect(source).toContain("SOURCE TENANT BOUNDARY WORDING");
+    expect(source).toContain("I can't access another tenant from the current tenant session");
+    expect(source).toContain("SOURCE QUOTE BOUNDARY WORDING");
+    expect(source).toContain("Do not quote missing, conflicting, unproven, or non-governed Source figures");
+  });
+
   it("keeps portfolio charts and contract lineage answers grounded instead of scrubbed after generation", () => {
     expect(source).toContain("SOURCE PORTFOLIO CHART DISCIPLINE");
     expect(source).toContain("AUTHORITATIVE SOURCE PORTFOLIO GROUNDING only");
