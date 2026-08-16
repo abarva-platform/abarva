@@ -395,6 +395,91 @@ export function buildVendorResponseParseReportsFromProfiles(
   );
 }
 
+/**
+ * Keep the first-page Responses route payload small without changing the
+ * parser's governed output. The route needs readiness, score holdbacks,
+ * evidence labels and leverage inputs; it does not need every full citation
+ * excerpt or every repeated health sentence in the RSC payload.
+ */
+export function compactVendorResponseParseReportForRoute(
+  report: VendorResponseParseReport,
+): VendorResponseParseReport {
+  const citationIdsToKeep = new Set<string>();
+  for (const finding of report.sectionFindings) {
+    for (const id of finding.citationIds.slice(0, 1)) {
+      citationIdsToKeep.add(id);
+    }
+  }
+
+  const citations = report.citations
+    .filter(
+      (citation, index) => citationIdsToKeep.has(citation.citationId) || index < 3,
+    )
+    .slice(0, 6)
+    .map((citation) => ({
+      ...citation,
+      excerpt: compactText(citation.excerpt, 120),
+    }));
+
+  return {
+    ...report,
+    fileRoleReadiness: report.fileRoleReadiness.map((role) => ({
+      ...role,
+      nextAction: compactText(role.nextAction, 120),
+    })),
+    sectionFindings: report.sectionFindings.map((finding) => ({
+      ...finding,
+      summary: compactText(finding.summary, 140),
+      citationIds: finding.citationIds.slice(0, 1),
+      missingReason: compactNullableText(finding.missingReason, 140),
+      evaluatorHoldback: compactNullableText(finding.evaluatorHoldback, 160),
+    })),
+    missingInputs: report.missingInputs.map((missing) => ({
+      ...missing,
+      request: compactText(missing.request, 150),
+      scoringImpact: compactText(missing.scoringImpact, 170),
+    })),
+    citations,
+    normalizationRows: report.normalizationRows.map((row) => ({
+      ...row,
+      vendorResponseSummary: compactText(row.vendorResponseSummary, 140),
+      normalizedAnswer: compactNullableText(row.normalizedAnswer, 140),
+      deviations: row.deviations.slice(0, 2).map((value) => compactText(value, 150)),
+      assumptions: row.assumptions.slice(0, 2).map((value) => compactText(value, 150)),
+      evaluatorNotes: compactNullableText(row.evaluatorNotes, 150),
+    })),
+    health: {
+      ...report.health,
+      missingSections: report.health.missingSections.slice(0, 12),
+      findings: report.health.findings.slice(0, 12).map((finding) => ({
+        ...finding,
+        finding: compactText(finding.finding, 170),
+        clarificationQuestion: compactNullableText(
+          finding.clarificationQuestion,
+          170,
+        ),
+      })),
+      strengths: report.health.strengths.slice(0, 6).map((value) =>
+        compactText(value, 150),
+      ),
+      weaknesses: report.health.weaknesses.slice(0, 6).map((value) =>
+        compactText(value, 150),
+      ),
+      clarificationQuestions: report.health.clarificationQuestions
+        .slice(0, 12)
+        .map((value) => compactText(value, 170)),
+      evaluatorFocusAreas: report.health.evaluatorFocusAreas.slice(0, 12),
+    },
+    nextAction: compactText(report.nextAction, 150),
+  };
+}
+
+export function compactVendorResponseParseReportsForRoute(
+  reports: VendorResponseParseReport[],
+): VendorResponseParseReport[] {
+  return reports.map(compactVendorResponseParseReportForRoute);
+}
+
 function buildCitations(
   input: VendorResponseParseInput,
   documents: VendorResponseDocumentInput[],
@@ -704,6 +789,19 @@ function dedupeCitations(
     seen.add(key);
     return true;
   });
+}
+
+function compactNullableText(
+  value: string | null,
+  maxLength: number,
+): string | null {
+  return value === null ? null : compactText(value, maxLength);
+}
+
+function compactText(value: string, maxLength: number): string {
+  const collapsed = collapseWhitespace(value);
+  if (collapsed.length <= maxLength) return collapsed;
+  return `${collapsed.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
 }
 
 function collapseWhitespace(value: string): string {

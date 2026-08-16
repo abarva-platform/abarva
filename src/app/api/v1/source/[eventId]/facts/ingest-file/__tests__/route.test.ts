@@ -71,6 +71,8 @@ jest.mock("@/lib/source/artifact-registry", () => ({
 
 import { POST } from "../route";
 import { updateSourceArtifactProcessingState } from "@/lib/source/artifact-registry";
+import { hydrateTaskEvidenceState } from "@/lib/source/facts/view/task-evidence-hydration";
+import type { StageTaskView } from "@/components/source/canvas/analytics/view-model";
 
 function fakeFluentClient() {
   return {
@@ -157,6 +159,40 @@ describe("POST facts/ingest-file — happy path", () => {
     expect(json.factsWritten).toBe(5);
     expect(json.unmappedColumns).toContain("Notes");
     expect(insertFacts).toHaveBeenCalledTimes(1);
+  });
+
+  it("writes facts that hydrate the matching workflow upload task on readback", async () => {
+    const res = await POST(fileRequest({ artifactId: "artifact-1" }), ctx);
+    expect(res.status).toBe(200);
+
+    const writtenFacts = insertFacts.mock.calls[0][0] as Array<{
+      fact_key: string;
+      value_numeric: number | null;
+    }>;
+    const factInputs = writtenFacts.reduce<Record<string, number>>((acc, fact) => {
+      if (typeof fact.value_numeric === "number") {
+        acc[fact.fact_key] = fact.value_numeric;
+      }
+      return acc;
+    }, {});
+    const volumetricsTask: StageTaskView = {
+      id: "scope.volumetrics",
+      title: "Provide the volumetrics",
+      subtitle: "Ticket history",
+      type: "provide",
+      state: "todo",
+      guide: "Upload service-tower volumetrics.",
+      cta: "Upload volumetrics",
+      factTemplateCode: "VOLUMETRICS_V1",
+    };
+
+    const [hydrated] = hydrateTaskEvidenceState({
+      tasks: [volumetricsTask],
+      factInputs,
+      stageKey: "scope",
+    });
+
+    expect(hydrated.evidenceComplete).toBe(true);
   });
 
   it("marks the uploaded artifact parsed only when typed facts are written", async () => {
