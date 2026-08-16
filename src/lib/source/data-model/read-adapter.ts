@@ -84,8 +84,16 @@ function tenantKeyAliases(tenantKey: string): string[] {
   return Array.from(new Set(aliases));
 }
 
+function canonicalSourceTenantKeys(tenantKey: string): string[] {
+  return [canonicalTenantKey(tenantKey)];
+}
+
 function tenantRlsKey(tenantKey: string): string {
   if (isMeridianTenantKey(tenantKey)) return "meridian_health_global";
+  return canonicalTenantKey(tenantKey);
+}
+
+function canonicalTenantRlsKey(tenantKey: string): string {
   return canonicalTenantKey(tenantKey);
 }
 
@@ -98,6 +106,20 @@ async function queryForTenant<R>(
   return azureRead.withSession(async (run) => {
     await run("SELECT set_config('app.tenant_key', $1, false)", [
       tenantRlsKey(tenantKey),
+    ]);
+    return run(sql, [aliases, ...params]);
+  });
+}
+
+async function queryCanonicalSourceForTenant<R>(
+  tenantKey: string,
+  sql: string,
+  params: readonly unknown[] = [],
+): Promise<R[]> {
+  const aliases = canonicalSourceTenantKeys(tenantKey);
+  return azureRead.withSession(async (run) => {
+    await run("SELECT set_config('app.tenant_key', $1, false)", [
+      canonicalTenantRlsKey(tenantKey),
     ]);
     return run(sql, [aliases, ...params]);
   });
@@ -149,6 +171,12 @@ async function withMeridianFallback<R>(
 export async function listContractVendor360(
   tenantKey: string,
 ): Promise<SourceContractVendor360Row[]> {
+  const governedRows =
+    await queryCanonicalSourceForTenant<SourceContractVendor360Row>(
+      tenantKey,
+      "SELECT * FROM source.contract_vendor_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
+    );
+  if (governedRows.length > 0) return governedRows;
   if (isMeridianTenantKey(tenantKey)) {
     const candidate = await listMeridianVendor360CandidateContracts();
     if (candidate.length > 0) return candidate;
@@ -162,6 +190,12 @@ export async function listContractVendor360(
 export async function listContract360(
   tenantKey: string,
 ): Promise<SourceContract360Row[]> {
+  const governedRows =
+    await queryCanonicalSourceForTenant<SourceContract360Row>(
+      tenantKey,
+      "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
+    );
+  if (governedRows.length > 0) return governedRows;
   if (isMeridianTenantKey(tenantKey)) {
     const candidate = await listMeridianVendor360CandidateContracts();
     if (candidate.length > 0) return candidate;
@@ -301,6 +335,13 @@ export async function getContract360(
   tenantKey: string,
   contractId: string,
 ): Promise<SourceContract360Row | null> {
+  const governedRows =
+    await queryCanonicalSourceForTenant<SourceContract360Row>(
+      tenantKey,
+      "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) AND contract_id = $2 LIMIT 1",
+      [contractId],
+    );
+  if (governedRows[0]) return governedRows[0];
   if (isMeridianTenantKey(tenantKey)) {
     const rows = await listContract360(tenantKey);
     return rows.find((row) => row.contract_id === contractId) ?? null;
@@ -317,6 +358,12 @@ export async function getContract360(
 export async function listVendorContractPortfolio(
   tenantKey: string,
 ): Promise<SourceVendorContractPortfolioRow[]> {
+  const governedRows =
+    await queryCanonicalSourceForTenant<SourceVendorContractPortfolioRow>(
+      tenantKey,
+      "SELECT * FROM source.vendor_contract_portfolio WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
+    );
+  if (governedRows.length > 0) return governedRows;
   if (isMeridianTenantKey(tenantKey)) {
     const candidate =
       await meridianVendor360CandidateRows<SourceVendorContractPortfolioRow>(
@@ -373,6 +420,17 @@ export async function listContractApplicationScope(
   tenantKey: string,
   contractId?: string,
 ): Promise<SourceContractApplicationScopeRow[]> {
+  const governedRows = contractId
+    ? await queryCanonicalSourceForTenant<SourceContractApplicationScopeRow>(
+        tenantKey,
+        "SELECT * FROM source.contract_application_scope WHERE tenant_key = ANY($1::text[]) AND contract_id = $2",
+        [contractId],
+      )
+    : await queryCanonicalSourceForTenant<SourceContractApplicationScopeRow>(
+        tenantKey,
+        "SELECT * FROM source.contract_application_scope WHERE tenant_key = ANY($1::text[])",
+      );
+  if (governedRows.length > 0) return governedRows;
   if (isMeridianTenantKey(tenantKey)) {
     const filter = contractId ? "AND contract_id = $3" : "";
     const candidate =
@@ -1588,9 +1646,8 @@ function selectDefaultOptimizationOpportunityId({
   const selectFrom = (candidates: readonly ContractOptimizationOpportunity[]) =>
     candidates.find((opportunity) => opportunity.stage === "target_position")
       ?.opportunityId ??
-    candidates.find(
-      (opportunity) => opportunity.stage === "approval_required",
-    )?.opportunityId ??
+    candidates.find((opportunity) => opportunity.stage === "approval_required")
+      ?.opportunityId ??
     candidates.find((opportunity) =>
       opportunity.opportunityId.endsWith(":rate-variance"),
     )?.opportunityId ??
@@ -1602,9 +1659,7 @@ function selectDefaultOptimizationOpportunityId({
   const tracedOpportunityId = selectFrom(tracedOpportunities);
   if (tracedOpportunityId) return tracedOpportunityId;
 
-  return (
-    selectFrom(opportunities)
-  );
+  return selectFrom(opportunities);
 }
 
 function uniqueSourceRefs(
@@ -1749,6 +1804,17 @@ export async function listContractInitiativeDependency(
   tenantKey: string,
   contractId?: string,
 ): Promise<SourceContractInitiativeDependencyRow[]> {
+  const governedRows = contractId
+    ? await queryCanonicalSourceForTenant<SourceContractInitiativeDependencyRow>(
+        tenantKey,
+        "SELECT * FROM source.contract_initiative_dependency WHERE tenant_key = ANY($1::text[]) AND contract_id = $2",
+        [contractId],
+      )
+    : await queryCanonicalSourceForTenant<SourceContractInitiativeDependencyRow>(
+        tenantKey,
+        "SELECT * FROM source.contract_initiative_dependency WHERE tenant_key = ANY($1::text[])",
+      );
+  if (governedRows.length > 0) return governedRows;
   if (isMeridianTenantKey(tenantKey)) {
     const filter = contractId ? "AND contract_id = $3" : "";
     const candidate =

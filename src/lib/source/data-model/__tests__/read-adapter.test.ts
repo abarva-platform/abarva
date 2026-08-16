@@ -17,7 +17,7 @@ const mockedQuery = azureRead.query as jest.Mock;
 const mockedWithSession = azureRead.withSession as jest.Mock;
 const run = jest.fn();
 
-describe("listContractVendor360 tenant-key aliasing", () => {
+describe("listContractVendor360 tenant-key resolution", () => {
   beforeEach(() => {
     mockedQuery.mockReset();
     run.mockReset();
@@ -27,14 +27,16 @@ describe("listContractVendor360 tenant-key aliasing", () => {
     run.mockResolvedValue([]);
   });
 
-  it("expands a known SkyHarbor alias to the full alias family, including the audit-verified spelling", async () => {
+  it("reads refreshed SkyHarbor Source rows by canonical tenant key before alias fallback", async () => {
     await listContractVendor360("skyharbor-air");
     expect(run.mock.calls[0]).toEqual([
       "SELECT set_config('app.tenant_key', $1, false)",
       ["skyharbor-air"],
     ]);
     const [, params] = run.mock.calls[1];
-    expect(params[0]).toEqual(
+    expect(params[0]).toEqual(["skyharbor-air"]);
+    const [, fallbackParams] = run.mock.calls[3];
+    expect(fallbackParams[0]).toEqual(
       expect.arrayContaining([
         "skyharbor",
         "skyharbor-air",
@@ -43,10 +45,12 @@ describe("listContractVendor360 tenant-key aliasing", () => {
     );
   });
 
-  it("expands the audit-verified spelling itself to the same family", async () => {
+  it("resolves the audit-verified SkyHarbor spelling to canonical before alias fallback", async () => {
     await listContractVendor360("skyharbor_global");
     const [, params] = run.mock.calls[1];
-    expect(params[0]).toEqual(
+    expect(params[0]).toEqual(["skyharbor-air"]);
+    const [, fallbackParams] = run.mock.calls[3];
+    expect(fallbackParams[0]).toEqual(
       expect.arrayContaining([
         "skyharbor",
         "skyharbor-air",
@@ -55,34 +59,38 @@ describe("listContractVendor360 tenant-key aliasing", () => {
     );
   });
 
-  it("resolves a different tenant through the same shared alias service", async () => {
+  it("resolves a different tenant through canonical Source first, then its shared alias service", async () => {
     await listContractVendor360("meridian");
     expect(run.mock.calls[0][0]).toBe(
       "SELECT set_config('app.tenant_key', $1, false)",
     );
     expect(run.mock.calls[0][1]).not.toEqual(["skyharbor-air"]);
     const [, params] = run.mock.calls[1];
-    expect(params[0]).toEqual(
+    expect(params[0]).toEqual(["meridian-health"]);
+    const [, fallbackParams] = run.mock.calls[3];
+    expect(fallbackParams[0]).toEqual(
       expect.arrayContaining([
         "meridian",
         "meridian-health",
         "healthcare demo",
       ]),
     );
-    expect(params[0]).not.toContain("skyharbor_global");
+    expect(fallbackParams[0]).not.toContain("skyharbor_global");
   });
 
-  it("resolves another known tenant through its own aliases without defaulting to SkyHarbor", async () => {
+  it("resolves another known tenant through canonical Source first without defaulting to SkyHarbor", async () => {
     await listContractVendor360("apex-retail");
     expect(run.mock.calls[0]).toEqual([
       "SELECT set_config('app.tenant_key', $1, false)",
       ["apex-retail"],
     ]);
     const [, params] = run.mock.calls[1];
-    expect(params[0]).toEqual(
+    expect(params[0]).toEqual(["apex-retail"]);
+    const [, fallbackParams] = run.mock.calls[3];
+    expect(fallbackParams[0]).toEqual(
       expect.arrayContaining(["apexretail", "apex-retail", "retail demo"]),
     );
-    expect(params[0]).not.toContain("skyharbor_global");
+    expect(fallbackParams[0]).not.toContain("skyharbor_global");
   });
 
   it("reads Meridian contract detail through the same canary projection as the portfolio", async () => {
@@ -117,12 +125,12 @@ describe("listContractVendor360 tenant-key aliasing", () => {
 
     expect(row?.contract_id).toBe("CF-001");
     expect(row?.vendor_name).toBe("Crestline Analytics Services LLC");
+    expect(run.mock.calls[1]).toEqual([
+      expect.stringContaining("source.contract_360"),
+      [["meridian-health"], "CF-001"],
+    ]);
     expect(mockedQuery.mock.calls[0][0]).toContain(
       "source.meridian_vendor360_contract",
-    );
-    expect(run).not.toHaveBeenCalledWith(
-      expect.stringContaining("source.contract_360"),
-      expect.anything(),
     );
   });
 
@@ -159,7 +167,10 @@ describe("listContractVendor360 tenant-key aliasing", () => {
     expect(row?.contract_id).toBe("MER-CTR-RCM-001");
     expect(row?.vendor_name).toBe("NorthBridge RCM Services LLC");
     expect(mockedQuery).toHaveBeenCalledTimes(1);
-    expect(run).not.toHaveBeenCalled();
+    expect(run.mock.calls[1]).toEqual([
+      expect.stringContaining("source.contract_360"),
+      [["meridian-health"], "MER-CTR-RCM-001"],
+    ]);
   });
 
   it("quantifies unapproved rate-card variance inside recoverable leakage evidence", async () => {
