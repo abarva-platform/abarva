@@ -85,7 +85,7 @@ describe("agent route · Source aVa contract optimization authority", () => {
 
     expect(resolverStart).toBeGreaterThan(-1);
     expect(source).toContain(
-      'import { appClientKeyForTenant } from "@/lib/tenant/aliases";',
+      'import { appClientKeyForTenant, tenantAliasesFor } from "@/lib/tenant/aliases";',
     );
     expect(resolver).toContain("const explicitClientKey =");
     expect(resolver).toContain("return explicitClientKey;");
@@ -102,7 +102,7 @@ describe("agent route · Source aVa contract optimization authority", () => {
   it("uses explicit governed tenant context for contract-grain Source reads", () => {
     expect(source).toContain("const sourceContractReadTenantKey =");
     expect(source).toContain(
-      "const contractGroundingTenantKeys = uniqueNonEmptyStrings([",
+      "const contractGroundingTenantKeys = uniqueSourceTenantCandidates([",
     );
     expect(source).toContain(
       "sourceContractReadTenantKey,",
@@ -120,9 +120,11 @@ describe("agent route · Source aVa contract optimization authority", () => {
 
   it("uses the same tenant-key fallback discipline for portfolio-grain Source reads", () => {
     expect(source).toContain(
-      "const sourcePortfolioTenantKeys = uniqueNonEmptyStrings([",
+      "const sourcePortfolioTenantKeys = uniqueSourceTenantCandidates([",
     );
     expect(source).toContain("sourceContractReadTenantKey,");
+    expect(source).toContain("function uniqueSourceTenantCandidates");
+    expect(source).toContain("...tenantAliasesFor(trimmed)");
     expect(source).toContain(
       "for (const sourcePortfolioTenantKey of sourcePortfolioTenantKeys)",
     );
@@ -195,6 +197,8 @@ describe("agent route · Source aVa visual and table output discipline", () => {
   it("keeps portfolio charts and contract lineage answers grounded instead of scrubbed after generation", () => {
     expect(source).toContain("SOURCE PORTFOLIO CHART DISCIPLINE");
     expect(source).toContain("AUTHORITATIVE SOURCE PORTFOLIO GROUNDING only");
+    expect(source).toContain("governed Source portfolio grounding is unavailable");
+    expect(source).toContain("old intake-corpus totals");
     expect(source).toContain("SOURCE LINEAGE DISCIPLINE");
     expect(source).toContain("source systems, extracts, fields, grain, history, update frequency");
     expect(source).toContain("do not deflect as platform architecture");
@@ -233,11 +237,18 @@ describe("agent route · Source aVa vendor-response grounding — Gap 2", () => 
       'modeClassification.mode === "vendor_comparison"',
     );
     expect(visibleProfileBlock).toContain(
-      "looksLikeUnsupportedVendorResponseClaimQuestion(message)",
+      "looksLikeVisibleVendorResponseProfileQuestion(message)",
     );
     expect(visibleProfileBlock).toContain("buildVendorResponseMveProfiles");
     expect(visibleProfileBlock).not.toContain(
       'modeStageKey === "responses"',
     );
+  });
+
+  it("uses event-visible response profiles for generic comparison and completeness asks, not only unsupported-claim asks", () => {
+    expect(source).toContain("function looksLikeVisibleVendorResponseProfileQuestion");
+    expect(source).toContain("completeness");
+    expect(source).toContain("coverage");
+    expect(source).toContain("asksAboutComparisonOrCoverage");
   });
 });

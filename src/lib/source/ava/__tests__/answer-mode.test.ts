@@ -86,6 +86,8 @@ describe("classifySourceAnswerMode — Phase B implemented modes + the 2 remaini
   const cases: Array<{ question: string; expected: SourceAnswerMode }> = [
     { question: "What's our value at stake?", expected: "value_at_stake" },
     { question: "Compare vendors for this event", expected: "vendor_comparison" },
+    { question: "Show me a chart of vendor response completeness", expected: "vendor_comparison" },
+    { question: "Which proposal has the strongest response coverage?", expected: "vendor_comparison" },
     { question: "What's the transition risk exposure?", expected: "risk_exposure" },
     { question: "What's our clause coverage?", expected: "clause_coverage" },
     { question: "What's the BAFO strategy here?", expected: "bafo_strategy" },

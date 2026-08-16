@@ -276,7 +276,7 @@ import {
   clientKeyToBrokerTenantKey,
   clientKeyToInventorySubstrateKey,
 } from "@/lib/agent/tools/intelligence/_shared";
-import { appClientKeyForTenant } from "@/lib/tenant/aliases";
+import { appClientKeyForTenant, tenantAliasesFor } from "@/lib/tenant/aliases";
 import {
   getAskSessionContextById,
   getAskSessionForMove,
@@ -380,6 +380,22 @@ function looksLikeUnsupportedVendorResponseClaimQuestion(prompt: string): boolea
       q,
     );
   return hasVendorOrResponse && hasClaimLanguage && hasUnsupportedLanguage;
+}
+
+function looksLikeVisibleVendorResponseProfileQuestion(prompt: string): boolean {
+  const q = prompt.toLowerCase();
+  const hasVendorOrResponse =
+    /\b(vendor|vendors|supplier|suppliers|bidder|bidders|response|responses|proposal|proposals)\b/.test(
+      q,
+    );
+  const asksAboutComparisonOrCoverage =
+    /\b(compare|comparison|scorecard|coverage|complete|completeness|readiness|rank|ranking|best|worst|table|chart|visual|matrix)\b/.test(
+      q,
+    );
+  return (
+    looksLikeUnsupportedVendorResponseClaimQuestion(prompt) ||
+    (hasVendorOrResponse && asksAboutComparisonOrCoverage)
+  );
 }
 
 class AgentProviderOverloadDrillError extends Error {
@@ -1377,7 +1393,7 @@ export async function POST(request: Request) {
   // this block empty and the chat falls through to existing behavior.
   let sourcePortfolioGroundingBlock = "";
   let hasSourcePortfolioGrounding = false;
-  const sourcePortfolioTenantKeys = uniqueNonEmptyStrings([
+  const sourcePortfolioTenantKeys = uniqueSourceTenantCandidates([
     sourceClientKey,
     activeClientKey,
     effectiveClientKey,
@@ -1413,7 +1429,7 @@ export async function POST(request: Request) {
   const contractIdFromContext = resolveSourceContractId(surfaceContext);
   let sourceContractGroundingBlock = "";
   let hasSourceContractGrounding = false;
-  const contractGroundingTenantKeys = uniqueNonEmptyStrings([
+  const contractGroundingTenantKeys = uniqueSourceTenantCandidates([
     sourceClientKey,
     activeClientKey,
     effectiveClientKey,
@@ -1541,7 +1557,7 @@ export async function POST(request: Request) {
         const isPhaseC = isPhaseCImplementedMode(modeClassification.mode);
         const visibleResponseProfileSet =
           modeClassification.mode === "vendor_comparison" &&
-          looksLikeUnsupportedVendorResponseClaimQuestion(message)
+          looksLikeVisibleVendorResponseProfileQuestion(message)
             ? buildVendorResponseMveProfiles({
                 id: sourceEventIdFromContext,
                 code: groundingEvent.code,
@@ -2274,7 +2290,7 @@ export async function POST(request: Request) {
           "- Default Source reply shape: (1) one-sentence read of what you heard, (2) one sentence on why it matters, (3) exactly ONE next question or action.",
           '- SOURCE VISUAL OUTPUT CONTRACT: if the user asks for a chart, graph, visual, trend, waterfall, matrix, heatmap, or Recharts-style output, answer with one short interpretation sentence and then emit exactly one compact ```abarva-chart fenced JSON block using only grounded values already present in the Source context. The chart JSON shape is {"type":"bar"|"line"|"waterfall"|"matrix","title":"...","data":[{"label":"...","value":123}]}; labels must be business-readable and values must be numbers, not formatted strings. If the necessary grounded values are missing, do not invent them; say the visual is blocked by missing evidence and name the source family needed.',
           "- SOURCE TABLE OUTPUT CONTRACT: if the user asks for a table, matrix, scorecard, ranking, comparison, or heatmap-ready output, include a compact markdown table in the visible answer. Keep it to the smallest useful set of columns, state the counting basis in prose, and keep unknowns as 'missing' or 'not established' rather than zero.",
-          "- SOURCE PORTFOLIO CHART DISCIPLINE: if the user asks for portfolio concentration, vendor/category spend, or a portfolio chart while no single contract is selected, use AUTHORITATIVE SOURCE PORTFOLIO GROUNDING only. Do not use generic tenant-context vendor names or legacy workbook figures for Source portfolio charts.",
+          "- SOURCE PORTFOLIO CHART DISCIPLINE: if the user asks for portfolio concentration, vendor/category spend, or a portfolio chart while no single contract is selected, use AUTHORITATIVE SOURCE PORTFOLIO GROUNDING only. If that block is absent, say the governed Source portfolio grounding is unavailable for this turn and name the Source portfolio read model needed; do not use generic tenant-context vendor names, legacy workbook figures, or old intake-corpus totals for Source portfolio charts.",
           "- SOURCE LINEAGE DISCIPLINE: source systems, extracts, fields, grain, history, update frequency, and Contract 360 data lineage are in-scope Source questions. If AUTHORITATIVE SOURCE CONTRACT GROUNDING includes a source-system evidence map, answer from it in a compact table; do not deflect as platform architecture.",
           "- Ask at most ONE question in the chat reply. If several fields are missing, pick the single highest-leverage blocker and let the right pane/artifact cards carry the rest.",
           "- Keep most Source replies under 75 words unless the user explicitly asks for a deep dive, draft, comparison, or executive brief.",
@@ -3757,6 +3773,18 @@ function uniqueNonEmptyStrings(
         .filter((value) => value.length > 0),
     ),
   );
+}
+
+function uniqueSourceTenantCandidates(
+  values: readonly (string | null | undefined)[],
+): string[] {
+  const expanded: string[] = [];
+  for (const value of values) {
+    const trimmed = typeof value === "string" ? value.trim() : "";
+    if (!trimmed) continue;
+    expanded.push(trimmed, ...tenantAliasesFor(trimmed));
+  }
+  return uniqueNonEmptyStrings(expanded);
 }
 
 function buildSourceEventSeedPromptBlock(

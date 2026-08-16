@@ -31,10 +31,10 @@ describe("listContractVendor360 tenant-key resolution", () => {
     await listContractVendor360("skyharbor-air");
     expect(run.mock.calls[0]).toEqual([
       "SELECT set_config('app.tenant_key', $1, false)",
-      ["skyharbor-air"],
+      ["skyharbor_global"],
     ]);
     const [, params] = run.mock.calls[1];
-    expect(params[0]).toEqual(["skyharbor-air"]);
+    expect(params[0]).toEqual(["skyharbor_global", "skyharbor-air"]);
     const [, fallbackParams] = run.mock.calls[3];
     expect(fallbackParams[0]).toEqual(
       expect.arrayContaining([
@@ -70,7 +70,7 @@ describe("listContractVendor360 tenant-key resolution", () => {
     );
     expect(run.mock.calls[0][1]).not.toEqual(["skyharbor-air"]);
     const [, params] = run.mock.calls[1];
-    expect(params[0]).toEqual(["meridian-health"]);
+    expect(params[0]).toEqual(["meridian_health_global", "meridian-health"]);
     const [, fallbackParams] = run.mock.calls[3];
     expect(fallbackParams[0]).toEqual(
       expect.arrayContaining([
@@ -131,7 +131,7 @@ describe("listContractVendor360 tenant-key resolution", () => {
     expect(row?.vendor_name).toBe("Crestline Analytics Services LLC");
     expect(run.mock.calls[1]).toEqual([
       expect.stringContaining("source.contract_360"),
-      [["meridian-health"], "CF-001"],
+      [["meridian_health_global", "meridian-health"], "CF-001"],
     ]);
     expect(mockedQuery.mock.calls[0][0]).toContain(
       "source.meridian_vendor360_contract",
@@ -173,7 +173,7 @@ describe("listContractVendor360 tenant-key resolution", () => {
     expect(mockedQuery).toHaveBeenCalledTimes(1);
     expect(run.mock.calls[1]).toEqual([
       expect.stringContaining("source.contract_360"),
-      [["meridian-health"], "MER-CTR-RCM-001"],
+      [["meridian_health_global", "meridian-health"], "MER-CTR-RCM-001"],
     ]);
   });
 
