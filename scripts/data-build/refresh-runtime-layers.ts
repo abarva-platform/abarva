@@ -462,7 +462,9 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
         JSON.stringify({ validationFindings: record.validationFindings ?? [] }),
       ]),
       `ON CONFLICT (tenant_key, contract_version, object_type, source_object_id)
-       DO UPDATE SET attributes=excluded.attributes, relationships=excluded.relationships, source_evidence_refs=excluded.source_evidence_refs,
+       DO UPDATE SET build_version=excluded.build_version, input_source_version=excluded.input_source_version,
+         idempotency_key=excluded.idempotency_key,
+         attributes=excluded.attributes, relationships=excluded.relationships, source_evidence_refs=excluded.source_evidence_refs,
          quality_status=excluded.quality_status, fact_status=excluded.fact_status, blocked_claims=excluded.blocked_claims,
          quarantine_ratio=excluded.quarantine_ratio, metadata=excluded.metadata, updated_at=now()`,
     );
@@ -552,7 +554,9 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
         JSON.stringify({ fromNodeId: edge.fromNodeId, toNodeId: edge.toNodeId, rawRelationshipType: edge.rawRelationshipType }),
       ]),
       `ON CONFLICT (tenant_key, contract_version, relationship_id, source_file, source_row_number)
-       DO UPDATE SET relationship_type=excluded.relationship_type, evidence_basis=excluded.evidence_basis,
+       DO UPDATE SET build_version=excluded.build_version, input_source_version=excluded.input_source_version,
+       idempotency_key=excluded.idempotency_key,
+       relationship_type=excluded.relationship_type, evidence_basis=excluded.evidence_basis,
        node_resolution_state=excluded.node_resolution_state, quarantine_ratio=excluded.quarantine_ratio,
        metadata=excluded.metadata, updated_at=now()`,
     );

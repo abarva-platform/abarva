@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This change aligns the runtime layer refresh job with the canonical Layer 3 relationship dictionary before graph edges are materialized. The job now upserts the canonical relationship types inside the governed refresh transaction, fails early if an emitted edge type is not present in that dictionary, and validates write counts against the current build/idempotency instead of historical rows for the same contract version.
+This change aligns the runtime layer refresh job with the canonical Layer 3 relationship dictionary before graph edges are materialized. The job now upserts the canonical relationship types inside the governed refresh transaction, fails early if an emitted edge type is not present in that dictionary, stamps existing canonical/raw rows with the current run identity during upsert, and validates write counts against the current build/idempotency instead of historical rows for the same contract version.
 
 ## Layer Impact
 
@@ -31,7 +31,7 @@ This change aligns the runtime layer refresh job with the canonical Layer 3 rela
 
 ## Changes Included
 
-- `scripts/data-build/refresh-runtime-layers.ts`: imports the canonical Layer 3 relationship dictionary, verifies emitted edge types are covered, upserts `intelligence_v6.relationship_types` before graph edge insertion, and scopes internal readback counts to the current build/idempotency.
+- `scripts/data-build/refresh-runtime-layers.ts`: imports the canonical Layer 3 relationship dictionary, verifies emitted edge types are covered, upserts `intelligence_v6.relationship_types` before graph edge insertion, stamps upserted canonical/raw rows with the current run identity, and scopes internal readback counts to the current build/idempotency.
 
 ## QA / Validation
 
@@ -58,6 +58,7 @@ Revert this PR to restore the prior runtime refresh job behavior. If a governed 
 - Local dry-run output: `/tmp/nexus-runtime-layer-refresh-dry-6705461e-dictfix/summary.json`
 - Prior failed operator proof folder: `/tmp/nexus-runtime-layer-refresh-write-6705461e-s1`
 - Historical-row readback proof folder: `/tmp/nexus-runtime-layer-refresh-write-459299e3-s2`
+- Upsert-stamping readback proof folder: `/tmp/nexus-runtime-layer-refresh-write-524ef61c-s3`
 
 ## Known Gaps
 
