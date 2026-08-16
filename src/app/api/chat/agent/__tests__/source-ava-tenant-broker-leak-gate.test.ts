@@ -96,7 +96,7 @@ describe("agent route · Source aVa polish gate — Gap 2 (tenant-broker off-top
     expect(arrayBody).toMatch(/\n\s*agentTenantContextBlockForPrompt,\n/);
   });
 
-  it("recognizes the literal 'source-detail' surface in isSourceSurface", () => {
+  it("recognizes the literal Source surfaces in isSourceSurface", () => {
     expect(source).toContain(
       "function isSourceSurface(surface: string): boolean {",
     );
@@ -104,6 +104,7 @@ describe("agent route · Source aVa polish gate — Gap 2 (tenant-broker off-top
       "function isSourceSurface(surface: string): boolean {",
     );
     const fnBody = source.slice(fnStart, fnStart + 1200);
+    expect(fnBody).toContain('surface === "source"');
     expect(fnBody).toContain('surface === "source-detail"');
   });
 });
@@ -118,6 +119,7 @@ describe("isSourceSurface semantics (Gap 2) — reimplemented + asserted against
   //   - src/app/(maestro)/source/events/[eventId]/approval/page.tsx (surface="source-detail")
   function isSourceSurface(surface: string): boolean {
     return (
+      surface === "source" ||
       surface === "/source" ||
       surface.startsWith("/source/") ||
       surface === "source-detail"
@@ -125,6 +127,7 @@ describe("isSourceSurface semantics (Gap 2) — reimplemented + asserted against
   }
 
   it("matches the literal surface the event-detail canvas actually sends", () => {
+    expect(isSourceSurface("source")).toBe(true);
     expect(isSourceSurface("source-detail")).toBe(true);
   });
 
