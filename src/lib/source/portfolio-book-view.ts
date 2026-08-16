@@ -22,6 +22,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { SourcingEventSummary } from "./types";
+import type { SourceV4WorkspaceSnapshot } from "./data-model/source-v4-workspace-snapshot";
 import { computePortfolioKpis, attentionEvents } from "./portfolio-filtering";
 import { deriveValuePosture } from "./portfolio-derivations";
 import {
@@ -155,9 +156,12 @@ function formatValuePosture(
  */
 export function buildPortfolioBookView(
   events: SourcingEventSummary[],
-  opts: { canViewFinancialValues: boolean },
+  opts: {
+    canViewFinancialValues: boolean;
+    governedSnapshot?: SourceV4WorkspaceSnapshot | null;
+  },
 ): PortfolioBookView {
-  const { canViewFinancialValues } = opts;
+  const { canViewFinancialValues, governedSnapshot = null } = opts;
   const kpis = computePortfolioKpis(events);
 
   const openEvents = events.filter(
@@ -181,7 +185,20 @@ export function buildPortfolioBookView(
   const hasValueCaptured = canViewFinancialValues && valueCapturedUsd > 0;
 
   const spendUnderMgmtUsd = kpis.valueAtStakeUsd;
-  const hasSpend = canViewFinancialValues && spendUnderMgmtUsd > 0;
+  const governedContractCount =
+    governedSnapshot?.contextCoverage.contracts ??
+    governedSnapshot?.executivePortfolio.contractCount ??
+    0;
+  const governedVendorCount = governedSnapshot?.contextCoverage.vendors ?? 0;
+  const governedAnnualValue =
+    governedSnapshot?.contextCoverage.annualValue ??
+    governedSnapshot?.executivePortfolio.annualValue ??
+    0;
+  const hasGovernedPortfolio =
+    governedContractCount > 0 && governedAnnualValue > 0;
+  const hasSpend =
+    canViewFinancialValues &&
+    (hasGovernedPortfolio ? governedAnnualValue > 0 : spendUnderMgmtUsd > 0);
 
   const statCards: PortfolioStatCard[] = [
     {
@@ -203,13 +220,21 @@ export function buildPortfolioBookView(
     },
     {
       key: "spend",
-      label: "Spend under management",
-      value: hasSpend ? formatCompactUsd(spendUnderMgmtUsd) : "—",
-      sub: hasSpend
-        ? `across ${contractCount} contract${contractCount === 1 ? "" : "s"}`
-        : canViewFinancialValues
-          ? "No open value at stake yet"
-          : "Financial visibility off",
+      label: hasGovernedPortfolio
+        ? "Governed contract base"
+        : "Spend under management",
+      value: hasSpend
+        ? formatCompactUsd(
+            hasGovernedPortfolio ? governedAnnualValue : spendUnderMgmtUsd,
+          )
+        : "—",
+      sub: hasGovernedPortfolio
+        ? `${governedContractCount} source.contract_360 row${governedContractCount === 1 ? "" : "s"} · ${governedVendorCount} vendor${governedVendorCount === 1 ? "" : "s"}`
+        : hasSpend
+          ? `across ${contractCount} contract${contractCount === 1 ? "" : "s"}`
+          : canViewFinancialValues
+            ? "No open value at stake yet"
+            : "Financial visibility off",
       tone: "ink",
       empty: !hasSpend,
     },

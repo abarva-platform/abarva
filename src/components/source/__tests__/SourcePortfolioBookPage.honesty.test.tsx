@@ -27,6 +27,7 @@ jest.mock("@/components/source/SourceSubNav", () => ({
 
 import { SourcePortfolioBookPage } from "../SourcePortfolioBookPage";
 import type { SourcingEventSummary } from "@/lib/source/types";
+import type { SourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 
 function makeEvent(over: Partial<SourcingEventSummary>): SourcingEventSummary {
   return {
@@ -55,6 +56,86 @@ function makeEvent(over: Partial<SourcingEventSummary>): SourcingEventSummary {
     realizedValueUsd: 0,
     nextDecision: "Confirm shortlist",
     classifiedCategory: null,
+    ...over,
+  };
+}
+
+function makeGovernedSnapshot(
+  over: Partial<SourceV4WorkspaceSnapshot> = {},
+): SourceV4WorkspaceSnapshot {
+  return {
+    datasetId: "test-source",
+    datasetVersion: "v4",
+    datasetLabel: "Test Source",
+    analyticsProvider: "CubeSourceProvider",
+    activeLoadRunId: "runtime-layer-refresh-test",
+    asOfDateIso: "2026-06-30T00:00:00Z",
+    availability: [],
+    contextCoverage: {
+      vendors: 65,
+      contracts: 65,
+      annualValue: 778_350_000,
+      scopeRows: 107,
+      invoiceLines: 0,
+      saasUsageRows: 0,
+      cloudRows: 0,
+      performanceRows: 0,
+    },
+    scopeConfidence: {
+      rowCount: 107,
+      explicitScopeCount: 43,
+      inferredScopeCount: 64,
+    },
+    executivePortfolio: {
+      contractCount: 65,
+      annualValue: 778_350_000,
+      totalCommittedValue: 0,
+      autoRenewCount: 0,
+      notice90DayCount: 0,
+    },
+    spendConsumption: {
+      rowCount: 65,
+      invoiceLines: 0,
+      actualSpend: 778_350_000,
+      committedAmount: 778_350_000,
+      offContractSpend: 0,
+    },
+    performanceCredits: {
+      rowCount: 0,
+      breachCount: 0,
+      creditCalculated: 0,
+      creditClaimed: 0,
+      creditRecovered: 0,
+      unclaimedCredit: 0,
+    },
+    aiUsageValueProof: {
+      rowCount: 0,
+      assignedSeats: 0,
+      activeUsers: 0,
+      actualCost: 0,
+      claimableRows: 0,
+      topProducts: [],
+    },
+    cloudOptimization: {
+      rowCount: 0,
+      actualCost: 0,
+      amortizedCost: 0,
+      overageAmount: 0,
+      topServices: [],
+    },
+    workforceRateCards: {
+      rowCount: 0,
+      hours: 0,
+      averageBillRate: null,
+      unapprovedVarianceCount: 0,
+    },
+    sourcingEvents: {
+      rowCount: 0,
+      normalizedCost: 0,
+      lineItemCost: 0,
+      averageWeightedScore: null,
+    },
+    topVendors: [],
     ...over,
   };
 }
@@ -106,6 +187,23 @@ describe("SourcePortfolioBookPage — honesty invariants", () => {
     // Projected value renders as a band with the v2-pending caveat, not a point.
     expect(card).toHaveTextContent(/–/);
     expect(card).toHaveTextContent(/v2 pending/i);
+  });
+
+  it("uses governed L4 contract rows for the portfolio financial headline when present", () => {
+    render(
+      <SourcePortfolioBookPage
+        events={[makeEvent({ valueAtStakeUsd: 12_000_000 })]}
+        tenantName="Airline Demo"
+        governedSnapshot={makeGovernedSnapshot()}
+      />,
+    );
+
+    const spend = screen.getByTestId("source-book-stat-spend");
+    expect(spend).toHaveTextContent("Governed contract base");
+    expect(spend).toHaveTextContent("$778.4M");
+    expect(spend).toHaveTextContent("65 source.contract_360 rows");
+    expect(spend).toHaveTextContent("65 vendors");
+    expect(spend).not.toHaveTextContent("$12.0M");
   });
 
   it("renders renegotiation events on the optimization journey, not the RFP journey", () => {
