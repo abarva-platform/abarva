@@ -45,15 +45,15 @@ const contracts = [
     owner: "LDR-MER-SOURCE-011",
     functions: "Enterprise analytics; clinical quality reporting; payer performance; finance analytics; executive dashboards",
     systems:
-      "Azure Synapse; Databricks; Power BI Premium; clinical analytics marts; payer margin data products",
+      "Azure Synapse; Databricks; Northgate Insight Premium; clinical analytics marts; payer margin data products",
     overview:
       "Crestline operates Meridian's enterprise analytics managed-services tower. The agreement covers data-platform operations, clinical and financial data products, BI support, data engineering squads, production incident response, and release management for executive, payer, quality, and operational reporting. Spend is driven by named managed-service towers, offshore and onshore data-engineering capacity, platform administration, premium support, and change-order capacity. The optimization question is whether Meridian can recover missed service credits, stop paying premium blended rates where rate cards were not amended, reduce underused platform support capacity, and lock a narrower renewal scope before the next sourcing gate.",
     sourceExamples:
-      "Icertis CLM; SharePoint contract repository; ServiceNow ITSM; Workday Supplier Invoices; Coupa; Apptio; Power BI admin export; Azure Cost Management",
+      "Icertis CLM; SharePoint contract repository; ServiceNow ITSM; Sterling Supplier Invoices; Coupa; Apptio; Northgate Insight admin export; Azure Cost Management",
     pricing: [
       ["MER-CF001-P01", "DATA-OPS-MANAGED", "24x7 data platform operations and monitoring", "managed service tower", 12, "monthly tower", 780_000],
       ["MER-CF001-P02", "DATA-ENG-SQUAD", "Data engineering product squad capacity", "role capacity", 96, "FTE month", 42_500],
-      ["MER-CF001-P03", "BI-SUPPORT", "Power BI premium workspace administration and report support", "workspace and user support", 18_000, "active user", 108],
+      ["MER-CF001-P03", "BI-SUPPORT", "Northgate Insight premium workspace administration and report support", "workspace and user support", 18_000, "active user", 108],
       ["MER-CF001-P04", "CLIN-MARTS", "Clinical quality and payer performance data product support", "data product", 22, "managed data product", 245_000],
       ["MER-CF001-P05", "CHANGE-BANK", "Change-order bank for regulatory and executive dashboard requests", "change capacity", 14_400, "engineering hour", 116],
       ["MER-CF001-P06", "PREMIUM-SUPPORT", "Vendor premium support and service-management overlay", "support tier", 1, "annual package", 2_350_000],
@@ -61,7 +61,7 @@ const contracts = [
     scope: [
       ["APP-MER-041", "Enterprise Quality Analytics Hub", "Clinical quality", "Tier 1", "clinical quality mart and executive reporting", 5_200_000],
       ["APP-MER-052", "Payer Margin Analytics", "Finance and payer performance", "Critical", "payer margin data product", 4_750_000],
-      ["APP-MER-064", "Executive Performance Dashboard", "Enterprise performance management", "Tier 1", "Power BI executive workspace", 2_900_000],
+      ["APP-MER-064", "Executive Performance Dashboard", "Enterprise performance management", "Tier 1", "Northgate Insight executive workspace", 2_900_000],
       ["APP-MER-077", "Population Health Data Mart", "Population health", "Tier 1", "population health analytics pipeline", 3_650_000],
       ["APP-MER-089", "Revenue Cycle Analytics", "Revenue cycle", "Tier 1", "RCM analytics model support", 3_200_000],
       ["APP-MER-103", "Clinical Registry Extracts", "Clinical operations", "Tier 2", "registry extract automation", 1_450_000],
@@ -77,8 +77,8 @@ const contracts = [
   {
     contract_id: "CF-003",
     vendor_id: "VND-003",
-    vendor_name: "Workday Inc.",
-    contract_name: "Workday Finance HCM SaaS and Services",
+    vendor_name: "Sterling Workforce Systems, Inc.",
+    contract_name: "Sterling Finance HCM SaaS and Services",
     archetype: "enterprise SaaS and implementation services",
     annual_value_usd: 12_500_000,
     actual_annual_spend_usd: 11_680_000,
@@ -91,25 +91,25 @@ const contracts = [
     owner: "LDR-MER-SOURCE-019",
     functions: "Finance operations; HR operations; payroll; workforce planning; procurement intake",
     systems:
-      "Workday Financials; Workday HCM; Adaptive Planning; Prism Analytics; Workday Extend",
+      "Sterling Financials; Sterling HCM; Sterling Planning; Sterling Prism; Sterling Extend",
     overview:
-      "Workday provides Meridian's finance and workforce SaaS platform, subscription modules, integration support, release-management advisory, and selected optimization services. The agreement includes named enterprise modules, worker and financial seat entitlements, premium support, integration capacity, and transformation advisory hours. The optimization question is whether Meridian can remove shelfware, reduce underused Extend and Prism capacity, claim service-performance credits where available, cap renewal uplift, and convert loosely scoped advisory work into outcome-bound work packages.",
+      "Sterling provides Meridian's finance and workforce SaaS platform, subscription modules, integration support, release-management advisory, and selected optimization services. The agreement includes named enterprise modules, worker and financial seat entitlements, premium support, integration capacity, and transformation advisory hours. The optimization question is whether Meridian can remove shelfware, reduce underused Extend and Prism capacity, claim service-performance credits where available, cap renewal uplift, and convert loosely scoped advisory work into outcome-bound work packages.",
     sourceExamples:
-      "Workday tenant admin exports; Icertis CLM; Workday Supplier Invoices; Coupa PO lines; ServiceNow integration incidents; Adaptive Planning usage export; Finance value attestation",
+      "Sterling tenant admin exports; Icertis CLM; Sterling Supplier Invoices; Coupa PO lines; ServiceNow integration incidents; Sterling Planning usage export; Finance value attestation",
     pricing: [
-      ["MER-CF003-P01", "WD-FIN-CORE", "Workday Financials enterprise subscription", "module subscription", 18_500, "employee or worker equivalent", 178],
-      ["MER-CF003-P02", "WD-HCM-CORE", "Workday HCM enterprise subscription", "module subscription", 38_000, "worker", 112],
-      ["MER-CF003-P03", "WD-PRISM", "Prism Analytics capacity", "analytics capacity", 5_200, "named user or capacity unit", 210],
-      ["MER-CF003-P04", "WD-EXTEND", "Workday Extend app capacity", "app capacity", 38, "app entitlement", 42_000],
+      ["MER-CF003-P01", "WD-FIN-CORE", "Sterling Financials enterprise subscription", "module subscription", 18_500, "employee or worker equivalent", 178],
+      ["MER-CF003-P02", "WD-HCM-CORE", "Sterling HCM enterprise subscription", "module subscription", 38_000, "worker", 112],
+      ["MER-CF003-P03", "WD-PRISM", "Sterling Prism capacity", "analytics capacity", 5_200, "named user or capacity unit", 210],
+      ["MER-CF003-P04", "WD-EXTEND", "Sterling Extend app capacity", "app capacity", 38, "app entitlement", 42_000],
       ["MER-CF003-P05", "WD-ADVISORY", "Optimization and release advisory hours", "advisory capacity", 9_600, "hour", 154],
     ],
     scope: [
-      ["APP-MER-201", "Workday Financials", "Finance operations", "Critical", "financial ledger and close", 3_500_000],
-      ["APP-MER-202", "Workday HCM", "HR and workforce", "Critical", "core HR and employee record", 3_100_000],
-      ["APP-MER-203", "Workday Payroll Integrations", "Payroll", "Tier 1", "payroll integration services", 1_200_000],
-      ["APP-MER-204", "Adaptive Planning", "Finance planning", "Tier 1", "planning and forecast model", 1_150_000],
-      ["APP-MER-205", "Prism Analytics", "Finance and HR analytics", "Tier 2", "analytics module", 1_050_000],
-      ["APP-MER-206", "Workday Extend Apps", "HR operations", "Tier 2", "custom app entitlement", 900_000],
+      ["APP-MER-201", "Sterling Financials", "Finance operations", "Critical", "financial ledger and close", 3_500_000],
+      ["APP-MER-202", "Sterling HCM", "HR and workforce", "Critical", "core HR and employee record", 3_100_000],
+      ["APP-MER-203", "Sterling Payroll Integrations", "Payroll", "Tier 1", "payroll integration services", 1_200_000],
+      ["APP-MER-204", "Sterling Planning", "Finance planning", "Tier 1", "planning and forecast model", 1_150_000],
+      ["APP-MER-205", "Sterling Prism", "Finance and HR analytics", "Tier 2", "analytics module", 1_050_000],
+      ["APP-MER-206", "Sterling Extend Apps", "HR operations", "Tier 2", "custom app entitlement", 900_000],
       ["APP-MER-207", "Identity Integration", "Technology operations", "Tier 1", "identity and access integration", 820_000],
       ["APP-MER-208", "Procurement Intake Bridge", "Procurement operations", "Tier 2", "supplier and procurement integration", 780_000],
     ],
@@ -320,7 +320,7 @@ function buildRows(documentsByContract) {
         annual_value_usd: money(qty * unitPrice),
         evidence_source: "executed agreement pricing schedule and PO baseline",
         source_system: "CLM/pricing schedule plus ERP PO line",
-        source_system_examples: "Icertis CLM; SharePoint contract repository; Coupa; Workday Supplier Invoices",
+        source_system_examples: "Icertis CLM; SharePoint contract repository; Coupa; Sterling Supplier Invoices",
         source_record_id: id,
         source_file_report: `${contract.contract_id}_pricing_schedule.csv`,
         extraction_grain: "one row per contract pricing line or rate band",
@@ -363,7 +363,7 @@ function buildRows(documentsByContract) {
         buyer_role_ref: "ROLE-SOURCING-MANAGER",
         cost_center_ref: index % 2 === 0 ? "CC-FINANCE-OPS" : "CC-TECH-PLATFORM",
         source_system: "Procurement / S2P",
-        source_system_examples: "Coupa; Ariba; Workday Procurement; Oracle Procurement Cloud",
+        source_system_examples: "Coupa; Ariba; Sterling Procurement; Oracle Procurement Cloud",
         source_record_id: `PO-MATCH-${contract.contract_id}-${String(index + 1).padStart(3, "0")}`,
         source_file_report: `${contract.contract_id}_po_contract_match.csv`,
         extraction_grain: "one row per PO line to active contract coverage check",
@@ -397,7 +397,7 @@ function buildRows(documentsByContract) {
           exception_amount_usd: money(exception),
           payment_status: monthIndex < 20 ? "paid" : "approved_not_paid",
           source_system: "AP / ERP financial subledger",
-          source_system_examples: "Workday Supplier Invoices; Oracle AP; SAP AP; Coupa invoice match",
+          source_system_examples: "Sterling Supplier Invoices; Oracle AP; SAP AP; Coupa invoice match",
           source_record_id: `AP-${contract.contract_id}-${String(monthIndex + 1).padStart(2, "0")}-${lineIndex + 1}`,
           source_file_report: `${contract.contract_id}_invoice_lines.csv`,
           extraction_grain: "one row per supplier invoice line",
@@ -411,14 +411,14 @@ function buildRows(documentsByContract) {
       ? [
           ["Data platform lead", "US", 178, 196, 920],
           ["Clinical data engineer", "India", 74, 84, 1880],
-          ["Power BI workspace admin", "US", 138, 151, 740],
+          ["Northgate Insight workspace admin", "US", 138, 151, 740],
           ["Data quality analyst", "Philippines", 48, 56, 1260],
           ["Release manager", "US", 164, 178, 520],
           ["API integration engineer", "India", 88, 98, 1110],
         ]
       : [
-          ["Workday financials consultant", "US", 188, 204, 530],
-          ["Workday HCM analyst", "India", 82, 90, 810],
+          ["Sterling financials consultant", "US", 188, 204, 530],
+          ["Sterling HCM analyst", "India", 82, 90, 810],
           ["Integration developer", "India", 92, 101, 760],
           ["Release advisor", "US", 168, 184, 380],
           ["Prism analytics specialist", "US", 156, 171, 410],
@@ -448,7 +448,7 @@ function buildRows(documentsByContract) {
 
     const towers = contract.contract_id === "CF-001"
       ? ["Data platform operations", "BI service desk"]
-      : ["Workday tenant operations", "Integration service desk"];
+      : ["Sterling tenant operations", "Integration service desk"];
     for (let monthIndex = 0; monthIndex < months.length; monthIndex += 1) {
       for (let towerIndex = 0; towerIndex < towers.length; towerIndex += 1) {
         const miss = (monthIndex + towerIndex) % 4 === 0;
@@ -480,13 +480,13 @@ function buildRows(documentsByContract) {
 
     const usageServices = contract.contract_id === "CF-001"
       ? [
-          ["Power BI premium support", 18_000, 13_900, 104_000],
+          ["Northgate Insight premium support", 18_000, 13_900, 104_000],
           ["Data engineering change bank", 14_400, 10_750, 92_000],
           ["Clinical data-product support", 22, 18, 132_000],
         ]
       : [
-          ["Prism Analytics users", 5200, 3300, 74_000],
-          ["Workday Extend app entitlement", 38, 21, 94_000],
+          ["Sterling Prism users", 5200, 3300, 74_000],
+          ["Sterling Extend app entitlement", 38, 21, 94_000],
           ["Release advisory hours", 9600, 6800, 61_000],
         ];
     for (let monthIndex = 0; monthIndex < months.length; monthIndex += 1) {
@@ -503,8 +503,8 @@ function buildRows(documentsByContract) {
           optimization_signal: activeQty / entitled < 0.8 ? "underused_entitlement_review" : "within_expected_band",
           source_system: "usage / entitlement / consumption platforms",
           source_system_examples: contract.contract_id === "CF-001"
-            ? "Power BI admin export; Azure Cost Management; vendor monthly operating report"
-            : "Workday tenant admin export; Prism usage export; vendor monthly service pack",
+            ? "Northgate Insight admin export; Azure Cost Management; vendor monthly operating report"
+            : "Sterling tenant admin export; Prism usage export; vendor monthly service pack",
           source_record_id: `USE-${contract.contract_id}-${months[monthIndex].slice(0, 7)}-${service.replace(/[^A-Za-z0-9]+/gu, "-")}`,
           source_file_report: `${contract.contract_id}_usage_entitlement_monthly.csv`,
           extraction_grain: "one row per month per subscription, capacity or service entitlement",
@@ -543,7 +543,7 @@ function buildRows(documentsByContract) {
         owner_role_ref: "ROLE-SOURCING-LEAD",
         next_action: "Prepare renewal scenario with entitlement removal and service tower reduction",
         source_system: "Usage plus sourcing workbench",
-        source_system_examples: "Workday admin exports; Power BI admin; Coupa sourcing; Icertis CLM",
+        source_system_examples: "Sterling admin exports; Northgate Insight admin; Coupa sourcing; Icertis CLM",
         source_record_id: `REN-${contract.contract_id}-002`,
         source_file_report: `${contract.contract_id}_renewal_negotiation_history.csv`,
         extraction_grain: "one row per renewal, offer, concession, or decision milestone",
@@ -753,11 +753,11 @@ function writeStaticGuides() {
     ["field_id", "field_name", "meaning", "expected_owner", "source_system_examples", "validation_instruction", "data_type", "applies_to_files"],
     [
       ["FLD-001", "contract_english_overview", "Plain-English scope of the contract, including services, platforms, commercial drivers, and optimization question.", "Sourcing owner plus legal operations", "Icertis CLM; SharePoint contract repository; executed agreement PDF", "Must be extracted or human-reviewed from executed agreement, SOW, order form, or statement of work.", "text", "contract_overview.csv; contract_pdf_clause_extractions.csv"],
-      ["FLD-002", "annual_value_usd", "Current annual contract value from governed contract register or executed order form.", "Procurement finance", "CLM register; Coupa contract workspace; Workday Supplier Invoices", "Must reconcile to contract register or documented approved contract value.", "number_usd", "contract_overview.csv; golden_contract_reconciliation.csv"],
-      ["FLD-003", "invoice_line_exception_amount_usd", "Dollar difference where invoice line exceeds active contract rate or lacks active contract coverage.", "AP operations", "Workday Supplier Invoices; Oracle AP; SAP AP; Coupa invoice match", "Must be derived from invoice line, PO, active contract coverage, billed rate, contract rate, and quantity.", "number_usd", "invoice_lines.csv"],
+      ["FLD-002", "annual_value_usd", "Current annual contract value from governed contract register or executed order form.", "Procurement finance", "CLM register; Coupa contract workspace; Sterling Supplier Invoices", "Must reconcile to contract register or documented approved contract value.", "number_usd", "contract_overview.csv; golden_contract_reconciliation.csv"],
+      ["FLD-003", "invoice_line_exception_amount_usd", "Dollar difference where invoice line exceeds active contract rate or lacks active contract coverage.", "AP operations", "Sterling Supplier Invoices; Oracle AP; SAP AP; Coupa invoice match", "Must be derived from invoice line, PO, active contract coverage, billed rate, contract rate, and quantity.", "number_usd", "invoice_lines.csv"],
       ["FLD-004", "service_credit_gap_usd", "Earned service credits not claimed.", "Service management owner", "ServiceNow SLA module; monthly service review pack; CLM SLA schedule", "Must equal earned minus claimed at monthly service-tower grain.", "number_usd", "sla_incident_service_credit_monthly.csv"],
       ["FLD-005", "rate_card_variance_usd", "Billed role or service rate above current contract rate card.", "Vendor management office", "Fieldglass; Beeline; CLM rate schedule; invoice detail", "Must equal billed rate minus contract rate times observed hours.", "number_usd", "rate_card_variance.csv"],
-      ["FLD-006", "unused_or_underused_quantity", "Entitled capacity not actively used during the month.", "Platform owner", "Workday admin; Power BI admin; Azure Cost Management; SaaS admin exports", "Must preserve entitlement and active quantity separately; do not infer value without commercial mapping.", "number", "usage_entitlement_monthly.csv"],
+      ["FLD-006", "unused_or_underused_quantity", "Entitled capacity not actively used during the month.", "Platform owner", "Sterling admin; Northgate Insight admin; Azure Cost Management; SaaS admin exports", "Must preserve entitlement and active quantity separately; do not infer value without commercial mapping.", "number", "usage_entitlement_monthly.csv"],
       ["FLD-007", "realized_value_usd", "Finance-confirmed value after action, not opportunity size.", "Finance value owner", "Finance value ledger; AP run-rate report; amendment tracker", "Must have confirmation date, owner role, basis, and claim reference.", "number_usd", "finance_value_confirmation.csv"],
     ],
   );

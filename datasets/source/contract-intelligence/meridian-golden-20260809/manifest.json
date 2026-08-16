@@ -18,8 +18,8 @@
     {
       "contract_id": "CF-003",
       "vendor_id": "VND-003",
-      "vendor_name": "Workday Inc.",
-      "contract_name": "Workday Finance HCM SaaS and Services",
+      "vendor_name": "Sterling Workforce Systems, Inc.",
+      "contract_name": "Sterling Finance HCM SaaS and Services",
       "contract_archetype": "enterprise SaaS and implementation services",
       "annual_value_usd": 12500000,
       "evidence_contract": "complete_for_demo_canary_not_client_fact"

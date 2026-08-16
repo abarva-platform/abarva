@@ -9,8 +9,8 @@ Status: synthetic demo package, not loaded
 
 This package creates two true golden contracts for Source Contract 360 and Door 1 optimization:
 
-1. CTR-090 - Salesforce Data Platform Agreement 3
-2. CTR-061 - Microsoft Cloud Platform Agreement 2
+1. CTR-090 - Vantage Data Platform Agreement 3
+2. CTR-061 - Northgate Cloud Platform Agreement 2
 
 The package is designed to align before loading. It contains client-facing extraction templates, populated synthetic source-system extracts, a data dictionary, reconciliation totals, and a compact UI wireframe for the Contract 360 redesign.
 
