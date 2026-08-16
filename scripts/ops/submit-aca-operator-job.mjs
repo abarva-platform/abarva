@@ -423,18 +423,33 @@ function extractStructuredEvents(logText, outDir) {
 }
 
 function extractProofBundle(logText, outDir) {
-  const begin = "__SEMANTIC2_PROOF_TGZ_BEGIN__";
-  const end = "__SEMANTIC2_PROOF_TGZ_END__";
+  const markerPairs = [
+    {
+      begin: "__SEMANTIC2_PROOF_TGZ_BEGIN__",
+      end: "__SEMANTIC2_PROOF_TGZ_END__",
+      marker: "semantic2",
+    },
+    {
+      begin: "__SOURCE_L4_CUBE_PROOF_TGZ_BEGIN__",
+      end: "__SOURCE_L4_CUBE_PROOF_TGZ_END__",
+      marker: "source_l4_cube",
+    },
+  ];
   const lines = logText.split(/\r?\n/);
   const payload = [];
+  let activeMarker = null;
   let collecting = false;
   for (const rawLine of lines) {
     const line = stripLogPrefix(rawLine).trim();
-    if (line === begin) {
-      collecting = true;
-      continue;
+    if (!collecting) {
+      const pair = markerPairs.find((candidate) => line === candidate.begin);
+      if (pair) {
+        activeMarker = pair;
+        collecting = true;
+        continue;
+      }
     }
-    if (line === end) break;
+    if (collecting && activeMarker && line === activeMarker.end) break;
     if (collecting && line) payload.push(line);
   }
   if (!payload.length) {
@@ -452,7 +467,7 @@ function extractProofBundle(logText, outDir) {
   if (result.status !== 0) {
     return { extracted: false, tarPath, reason: result.stderr || result.stdout || "tar extraction failed" };
   }
-  return { extracted: true, tarPath, extractDir };
+  return { extracted: true, tarPath, extractDir, marker: activeMarker?.marker ?? "unknown" };
 }
 
 function restoreIdle(options, outDir) {
@@ -759,6 +774,16 @@ function selfTest() {
   ].join("\n");
   const result = extractProofBundle(logText, dir);
   if (!result.extracted) throw new Error(`proof extraction self-test failed: ${result.reason}`);
+  const sourceMarkerDir = fs.mkdtempSync(path.join(os.tmpdir(), "aca-operator-source-l4-proof-self-test-"));
+  const sourceMarkerLogText = [
+    "2026-01-01 stdout F __SOURCE_L4_CUBE_PROOF_TGZ_BEGIN__",
+    `2026-01-01 stdout F ${encoded}`,
+    "2026-01-01 stdout F __SOURCE_L4_CUBE_PROOF_TGZ_END__",
+  ].join("\n");
+  const sourceMarkerResult = extractProofBundle(sourceMarkerLogText, sourceMarkerDir);
+  if (!sourceMarkerResult.extracted || sourceMarkerResult.marker !== "source_l4_cube") {
+    throw new Error(`Source L4 proof extraction self-test failed: ${JSON.stringify(sourceMarkerResult)}`);
+  }
   const eventDir = fs.mkdtempSync(path.join(os.tmpdir(), "aca-operator-json-event-self-test-"));
   const eventLogText = [
     '2026-01-01 stdout F {',
