@@ -234,7 +234,10 @@ describe("buildAvaSourceContractGrounding", () => {
     );
 
     expect(block).toContain(
-      "Chart-safe ledger totals from reproducible calculation runs: Recoverable leakage $3.1M; Avoided cost $2.4M; Negotiated improvement $1.3M; Realized value $940K.",
+      "Chart-safe ledger totals from reproducible calculation runs: Recoverable leakage $3.1M; Avoided cost $2.4M; Negotiated improvement $1.3M; Approved realized value $0.",
+    );
+    expect(block).toContain(
+      "Finance/Tower evidence pending approval: $940K. Approved realized value: $0 until the Finance/Tower confirmation request is approved.",
     );
     expect(block).toContain(
       "Largest reproducible non-realized ledger for chart narration: Recoverable leakage at $3.1M.",
@@ -301,13 +304,15 @@ describe("buildAvaSourceContractGrounding", () => {
     expect(block).toContain("disagreed");
   });
 
-  it("states realized value only from finance confirmation", async () => {
+  it("states approved realized value only from Finance/Tower approval", async () => {
     const { block } = await buildAvaSourceContractGrounding(
       "skyharbor-air",
       "CTR-090",
     );
-    expect(block).toContain("Finance-confirmed realized value: $0");
-    expect(block).toContain("Realized value exists only where Finance has");
+    expect(block).toContain("Approved realized value: $0");
+    expect(block).toContain(
+      "Approved realized value exists only when the finance evidence is present AND the Finance/Tower confirmation request is approved",
+    );
   });
 
   it("keeps aVa aligned to the pending Finance/Tower value-proof gate", async () => {
@@ -358,9 +363,12 @@ describe("buildAvaSourceContractGrounding", () => {
     expect(block).toContain(
       "Workflow lifecycle state: strategy approval approved; vendor outcome agreed; Finance/Tower confirmation request pending; value-proof gate open.",
     );
-    expect(block).toContain("Finance-confirmed realized value: $940K");
+    expect(block).toContain("Finance/Tower evidence pending approval: $940K");
+    expect(block).toContain("Approved realized value: $0 until");
+    expect(block).toContain("Approved realized value $0");
+    expect(block).not.toContain("Finance-confirmed realized value: $940K");
     expect(block).toContain(
-      "The value-proof gate is not closed until the Finance/Tower confirmation request is approved",
+      "do not say Finance has confirmed",
     );
   });
 });

@@ -128,6 +128,7 @@ export async function buildAvaSourceContractGrounding(
   const ledgerTotals = buildLedgerTotals({
     tracedByValueType: traceability.tracedByValueType,
     financeConfirmedUsd,
+    valueProofClosed,
   });
   const largestLedger = ledgerTotals
     .filter((row) => row.valueType !== "realized_value")
@@ -180,12 +181,12 @@ export async function buildAvaSourceContractGrounding(
       ? `Largest reproducible non-realized ledger for chart narration: ${largestLedger.label} at ${fmtUsd(largestLedger.amountUsd)}. Quote this line instead of recomputing totals from the opportunity rows.`
       : "",
     `Workflow lifecycle state: strategy approval ${strategyRequest?.approvalState ?? "not requested"}; vendor outcome ${agreedOutcome?.outcomeState ?? "not recorded"}; Finance/Tower confirmation request ${financeRequest?.approvalState ?? "not requested"}; value-proof gate ${valueProofClosed ? "closed" : "open"}.`,
-    `Finance-confirmed realized value: ${fmtUsd(financeConfirmedUsd)}.`,
+    buildValueProofLine({ financeConfirmedUsd, valueProofClosed }),
     opportunityLines.length > 0
       ? `Opportunity rows:\n${opportunityLines.join("\n")}`
       : "Opportunity rows: none loaded for this contract.",
     `Contract-grain grounding IS available for ${trimmedId}. Answer questions about ${trimmedId} from the numbers above — do NOT deflect them to Contract 360, and do NOT fall back to portfolio-level figures or generic tenant-context retrieval for this contract.`,
-    "Rules for these numbers: a missing evidence family is missing, never zero. Only the reproducible total and the chart-safe ledger totals may be presented as value that can be defended outside this workspace; the non-reproducible figure must be described as not yet traceable to a calculation run. Realized value exists only where Finance has confirmed it. The value-proof gate is not closed until the Finance/Tower confirmation request is approved, even if a finance realization row is visible. If the user asks for a chart, graph, or table, use the chart-safe ledger totals above and do not add or recompute row-level amounts yourself. If the user asks something about this contract that is not covered above, say so plainly instead of estimating.",
+    "Rules for these numbers: a missing evidence family is missing, never zero. Only the reproducible total and the chart-safe ledger totals may be presented as value that can be defended outside this workspace; the non-reproducible figure must be described as not yet traceable to a calculation run. Approved realized value exists only when the finance evidence is present AND the Finance/Tower confirmation request is approved. If the value-proof gate is open, do not say Finance has confirmed, do not say realized value to date, do not call the pending evidence booked, claimable, confirmed, or approved. If the user asks for a chart, graph, or table, use the chart-safe ledger totals above and do not add or recompute row-level amounts yourself. If the user asks something about this contract that is not covered above, say so plainly instead of estimating.",
   ].filter(Boolean);
 
   return { block: lines.join("\n"), hasLiveNumbers: true };
@@ -196,6 +197,7 @@ function buildLedgerTotals(input: {
     Partial<Record<OptimizationOpportunityValueType, number>>
   >;
   financeConfirmedUsd: number;
+  valueProofClosed: boolean;
 }): readonly {
   readonly valueType:
     | OptimizationOpportunityValueType
@@ -221,10 +223,25 @@ function buildLedgerTotals(input: {
     },
     {
       valueType: "realized_value",
-      label: "Realized value",
-      amountUsd: input.financeConfirmedUsd,
+      label: "Approved realized value",
+      amountUsd: input.valueProofClosed ? input.financeConfirmedUsd : 0,
     },
   ];
+}
+
+function buildValueProofLine(input: {
+  financeConfirmedUsd: number;
+  valueProofClosed: boolean;
+}): string {
+  if (input.financeConfirmedUsd <= 0) {
+    return "Approved realized value: $0. No Finance/Tower realization evidence is loaded for this contract yet.";
+  }
+
+  if (input.valueProofClosed) {
+    return `Finance/Tower-approved realized value: ${fmtUsd(input.financeConfirmedUsd)}.`;
+  }
+
+  return `Finance/Tower evidence pending approval: ${fmtUsd(input.financeConfirmedUsd)}. Approved realized value: $0 until the Finance/Tower confirmation request is approved.`;
 }
 
 function latestRequest(

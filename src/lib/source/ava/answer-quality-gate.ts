@@ -275,6 +275,15 @@ const NEXT_STEP_SIGNAL_RE =
 const CAVEAT_SIGNAL_RE =
   /\b(not (yet )?(computed|available|complete|persisted)|missing|outstanding|still (need|open)|has not been)\b/i;
 
+const OPEN_VALUE_PROOF_SIGNAL_RE =
+  /\bvalue-proof gate open\b|Finance\/Tower evidence pending approval|Approved realized value:\s*\$0/i;
+
+const CONFIRMED_REALIZED_VALUE_CLAIM_RE =
+  /\b(?:Finance(?:\/Tower)?\s+(?:has\s+)?confirmed|Finance-confirmed)\b[^.!?\n]*(?:realized value|value)|\brealized value (?:to date|is|of)\b[^.!?\n]*\$\s?[\d,]+(?:\.\d+)?\s?(?:[KkMmBb]|thousand|million|billion)?\b/i;
+
+const CONFIRMED_REALIZED_VALUE_SENTENCE_RE =
+  /(^|[.!?\n]\s*)[^.!?\n]*(?:(?:Finance(?:\/Tower)?\s+(?:has\s+)?confirmed|Finance-confirmed)[^.!?\n]*(?:realized value|value)|realized value (?:to date|is|of)[^.!?\n]*\$\s?[\d,]+(?:\.\d+)?\s?(?:[KkMmBb]|thousand|million|billion)?\b)[^.!?\n]*[.!?]?/gi;
+
 // Vague negotiation-posture phrases that dodge naming the SPECIFIC vendor/lever
 // ask the grounding block already carries (e.g. the archetype's `bafoAsk` text,
 // or a named vendor/lever). Flagged only when the grounding actually HAS a
@@ -364,6 +373,15 @@ function runChecks(
     } else if (matchesWorkflowState) {
       matchesDetail = `${matchesDetail} No task-count contradiction (grounded: ${groundingTaskDone} of ${groundingTaskTotal}).`;
     }
+  }
+  if (
+    input.groundingBlockText &&
+    OPEN_VALUE_PROOF_SIGNAL_RE.test(input.groundingBlockText) &&
+    CONFIRMED_REALIZED_VALUE_CLAIM_RE.test(text)
+  ) {
+    matchesWorkflowState = false;
+    matchesDetail =
+      "Answer claims finance-confirmed or realized value while the grounding says the value-proof gate is open and Finance/Tower approval is pending.";
   }
   checks.push({
     id: "matches_workflow_state",
@@ -558,6 +576,20 @@ function repairAnswer(
       repaired =
         `${repaired.trim()} (Corrected to match this event's actual stage checklist — ${groundedDone} of ${groundedTotal} — rather than a stale or invented count.)`.trim();
     }
+  }
+
+  if (
+    failedIds.has("matches_workflow_state") &&
+    input.groundingBlockText &&
+    OPEN_VALUE_PROOF_SIGNAL_RE.test(input.groundingBlockText) &&
+    CONFIRMED_REALIZED_VALUE_CLAIM_RE.test(repaired)
+  ) {
+    repaired = repaired.replace(
+      CONFIRMED_REALIZED_VALUE_SENTENCE_RE,
+      (match, prefix: string) =>
+        `${prefix}Finance/Tower evidence is loaded but still pending approval; approved realized value remains $0 until the confirmation request is approved.`,
+    );
+    repaired = repaired.replace(/[ \t]{2,}/g, " ").trim();
   }
 
   if (failedIds.has("has_direct_answer") && repaired.trim().length === 0) {

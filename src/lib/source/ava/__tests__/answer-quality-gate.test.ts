@@ -537,6 +537,30 @@ describe("runSourceAnswerQualityGate — Phase C: decision_recommendation / cont
     );
     expect(check?.passed).toBe(true);
   });
+
+  it("repairs pending Finance/Tower evidence that is overstated as confirmed realized value", () => {
+    const CONTRACT_OPT_GROUNDING = [
+      "AUTHORITATIVE SOURCE CONTRACT GROUNDING:",
+      "Workflow lifecycle state: strategy approval approved; vendor outcome agreed; Finance/Tower confirmation request pending; value-proof gate open.",
+      "Finance/Tower evidence pending approval: $940K. Approved realized value: $0 until the Finance/Tower confirmation request is approved.",
+      "Rules for these numbers: If the value-proof gate is open, do not say Finance has confirmed, do not say realized value to date, do not call the pending evidence booked, claimable, confirmed, or approved.",
+    ].join("\n");
+    const result = runSourceAnswerQualityGate({
+      answerText:
+        "Finance has confirmed $940K in realized value, but the Finance/Tower confirmation request is still pending approval. Next: wait for approval.",
+      mode: "contract_optimization",
+      hasGroundingContext: true,
+      groundingBlockText: CONTRACT_OPT_GROUNDING,
+    });
+
+    expect(result.repaired).toBe(true);
+    expect(result.passed).toBe(true);
+    expect(result.finalText).toContain(
+      "Finance/Tower evidence is loaded but still pending approval",
+    );
+    expect(result.finalText).toContain("approved realized value remains $0");
+    expect(result.finalText).not.toMatch(/Finance has confirmed \$940K/i);
+  });
 });
 
 describe("runSourceAnswerQualityGate — Phase C: general_advisory has a lighter bar", () => {
