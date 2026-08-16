@@ -2668,6 +2668,7 @@ function isSourceSurface(surface: string): boolean {
   // ran — while the generic tenant-wide `agentTenantContextBlock` still did
   // (see the Gap 2 fix above), compounding the off-topic-content bug.
   return (
+    surface === "source" ||
     surface === "/source" ||
     surface.startsWith("/source/") ||
     surface === "source-detail"
