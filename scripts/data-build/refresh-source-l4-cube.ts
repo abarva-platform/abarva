@@ -464,7 +464,10 @@ async function refreshViews(client: Client, args: Args): Promise<void> {
     DROP VIEW IF EXISTS consumption.sourcing_spend_monthly_v1;
     DROP VIEW IF EXISTS consumption.sourcing_contract_scope_v1;
     DROP VIEW IF EXISTS consumption.sourcing_contract_v1;
-    DROP VIEW IF EXISTS consumption.sourcing_vendor_v1`);
+    DROP VIEW IF EXISTS consumption.sourcing_vendor_v1;
+    DROP VIEW IF EXISTS source.contract_360;
+    DROP VIEW IF EXISTS source.vendor_contract_portfolio;
+    DROP VIEW IF EXISTS source.contract_vendor_360`);
 
   await client.query(`
     CREATE OR REPLACE VIEW source.contract_application_scope AS
@@ -498,6 +501,131 @@ async function refreshViews(client: Client, args: Args): Promise<void> {
       ON v.tenant_key = c.tenant_key
      AND v.vendor_id = c.vendor_id
      AND v.load_run_id = c.load_run_id`);
+
+  await client.query(`
+    CREATE VIEW source.contract_vendor_360 AS
+    SELECT
+      c.tenant_key,
+      c.contract_id,
+      c.vendor_id AS vendor_ref,
+      COALESCE(v.legal_name, c.vendor_id, 'Unknown vendor') AS vendor_name,
+      v.supplier_category AS vendor_category,
+      c.contract_name,
+      concat_ws(
+        ' - ',
+        NULLIF(c.agreement_type, ''),
+        NULLIF(c.payment_terms, ''),
+        NULLIF(c.benchmark_rights, ''),
+        NULLIF(c.termination_rights, '')
+      ) AS scope_summary,
+      c.annual_value::numeric AS annual_value,
+      c.total_committed_value::numeric AS total_committed_value,
+      COALESCE(consumption.committed_annual_spend, c.annual_value) AS committed_annual_spend,
+      COALESCE(consumption.actual_annual_spend, c.annual_value) AS actual_annual_spend,
+      c.expiration_date AS end_date,
+      CASE
+        WHEN c.expiration_date IS NOT NULL AND c.notice_deadline IS NOT NULL
+          THEN (c.expiration_date - c.notice_deadline)::numeric
+        ELSE NULL::numeric
+      END AS notice_period_days,
+      c.auto_renew,
+      c.renewal_type AS renewal_decision_state,
+      c.renewal_owner_role AS renewal_owner_ref,
+      c.benchmark_rights AS benchmarking_clause,
+      concat_ws(
+        ' - ',
+        NULLIF(c.termination_rights, ''),
+        NULLIF(c.exit_assistance_terms, '')
+      ) AS exit_rights_summary,
+      COALESCE(c.raw_payload ->> 'alternatives_available', NULL) AS alternatives_available,
+      COALESCE(v.risk_tier, v.strategic_status) AS concentration_note,
+      c.confidence::text AS source_confidence,
+      c.annual_value::numeric AS resolved_annual_value,
+      false AS annual_value_conflict_flag,
+      c.total_committed_value::numeric AS resolved_total_committed_value,
+      false AS total_committed_value_conflict_flag,
+      c.load_run_id
+    FROM source.contract c
+    JOIN source.l4_cube_active_load_run active
+      ON active.tenant_key = c.tenant_key
+     AND active.load_run_id = c.load_run_id
+    LEFT JOIN source.vendor v
+      ON v.tenant_key = c.tenant_key
+     AND v.vendor_id = c.vendor_id
+     AND v.load_run_id = c.load_run_id
+    LEFT JOIN (
+      SELECT
+        tenant_key,
+        contract_id,
+        load_run_id,
+        sum(committed_amount)::numeric AS committed_annual_spend,
+        sum(actual_spend)::numeric AS actual_annual_spend
+      FROM source.contract_consumption_observation
+      GROUP BY tenant_key, contract_id, load_run_id
+    ) consumption
+      ON consumption.tenant_key = c.tenant_key
+     AND consumption.contract_id = c.contract_id
+     AND consumption.load_run_id = c.load_run_id
+    WHERE source.can_read_sourcing_tenant(c.tenant_key)`);
+
+  await client.query(`
+    CREATE VIEW source.vendor_contract_portfolio AS
+    SELECT
+      tenant_key,
+      vendor_ref,
+      vendor_name,
+      vendor_category,
+      count(*) AS contract_count,
+      sum(annual_value) AS annual_value,
+      sum(total_committed_value) AS total_committed_value,
+      count(*) FILTER (WHERE auto_renew) AS auto_renew_contracts,
+      min(end_date) AS next_end_date,
+      array_agg(contract_id ORDER BY annual_value DESC NULLS LAST, contract_id) AS contract_refs,
+      load_run_id
+    FROM source.contract_vendor_360
+    GROUP BY tenant_key, vendor_ref, vendor_name, vendor_category, load_run_id`);
+
+  await client.query(`
+    CREATE VIEW source.contract_360 AS
+    SELECT
+      c.*,
+      COALESCE(app.scoped_application_count, 0) AS scoped_application_count,
+      COALESCE(app.critical_application_count, 0) AS critical_application_count,
+      0::numeric AS linked_budget_amount,
+      0::numeric AS linked_actual_amount,
+      0::bigint AS linked_budget_lines,
+      COALESCE(perf.cloud_sev1_sev2_incidents, 0) AS cloud_sev1_sev2_incidents,
+      perf.evidence_gap AS operational_evidence_gap,
+      0::bigint AS initiative_dependency_count
+    FROM source.contract_vendor_360 c
+    LEFT JOIN (
+      SELECT
+        tenant_key,
+        contract_id,
+        load_run_id,
+        count(DISTINCT application_ref) AS scoped_application_count,
+        count(DISTINCT application_ref) FILTER (
+          WHERE criticality IN ('Tier 0', 'Tier 1', 'Mission critical', 'Critical')
+        ) AS critical_application_count
+      FROM source.contract_application_scope
+      GROUP BY tenant_key, contract_id, load_run_id
+    ) app
+      ON app.tenant_key = c.tenant_key
+     AND app.contract_id = c.contract_id
+     AND app.load_run_id = c.load_run_id
+    LEFT JOIN (
+      SELECT
+        tenant_key,
+        contract_id,
+        load_run_id,
+        sum(breach_count)::int AS cloud_sev1_sev2_incidents,
+        NULL::text AS evidence_gap
+      FROM source.contract_performance_observation
+      GROUP BY tenant_key, contract_id, load_run_id
+    ) perf
+      ON perf.tenant_key = c.tenant_key
+     AND perf.contract_id = c.contract_id
+     AND perf.load_run_id = c.load_run_id`);
 
   await client.query(`
     CREATE OR REPLACE VIEW consumption.sourcing_vendor_v1 AS
@@ -1105,9 +1233,25 @@ async function readback(client: Client, args: Args): Promise<Record<string, numb
       args.tenants,
       args.buildVersion,
     ),
-    source_contract_360: await tableCount(client, "source.contract_360", args.tenants),
-    source_vendor_contract_portfolio: await tableCount(client, "source.vendor_contract_portfolio", args.tenants),
-    source_contract_application_scope: await tableCount(client, "source.contract_application_scope", args.tenants),
+    source_contract_vendor_360: await tableCount(
+      client,
+      "source.contract_vendor_360",
+      args.tenants,
+      args.buildVersion,
+    ),
+    source_contract_360: await tableCount(client, "source.contract_360", args.tenants, args.buildVersion),
+    source_vendor_contract_portfolio: await tableCount(
+      client,
+      "source.vendor_contract_portfolio",
+      args.tenants,
+      args.buildVersion,
+    ),
+    source_contract_application_scope: await tableCount(
+      client,
+      "source.contract_application_scope",
+      args.tenants,
+      args.buildVersion,
+    ),
     consumption_sourcing_contract_v1: await tenantScopedTableCount(
       client,
       "consumption.sourcing_contract_v1",
@@ -1169,8 +1313,12 @@ function assertReadbackMatchesCurrentBuild(readbackRows: Record<string, number>)
   const expectedPairs: Array<[string, string]> = [
     ["source_vendor", "consumption_sourcing_vendor_v1"],
     ["source_vendor", "consumption_sourcing_vendor_semantic_v1"],
+    ["source_vendor", "source_vendor_contract_portfolio"],
     ["source_contract", "consumption_sourcing_contract_v1"],
+    ["source_contract", "source_contract_vendor_360"],
+    ["source_contract", "source_contract_360"],
     ["source_contract_scope", "consumption_sourcing_contract_scope_v1"],
+    ["source_contract_scope", "source_contract_application_scope"],
     ["source_contract_consumption_observation", "consumption_sourcing_spend_monthly_v1"],
     ["source_contract_performance_observation", "consumption_sourcing_performance_v1"],
     ["source_sourcing_opportunity", "consumption_sourcing_opportunity_v1"],
