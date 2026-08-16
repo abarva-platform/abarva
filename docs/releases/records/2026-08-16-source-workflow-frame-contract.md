@@ -60,7 +60,7 @@ Revert the PR. Both Source workflows would return to their prior local layout de
 
 ## Audit Evidence
 
-- PR URL: pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/6403.
 - Local focused tests: passed as listed above.
 - Local eslint: passed as listed above.
 - Release gate: pending rerun after record correction.
