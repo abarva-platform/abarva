@@ -78,8 +78,8 @@ describe("agent route · Source aVa polish gate — 3rd attempt (cross-Source-ev
   });
 
   it("passes the resolved guard into buildTenantContextBlock (not a bare tenantKey-only call)", () => {
-    expect(source).toContain(
-      "buildTenantContextBlock(tenantInventoryKey, sourceEventScopeGuard)",
+    expect(source).toMatch(
+      /buildTenantContextBlock\(\s*tenantInventoryKey,\s*sourceEventScopeGuard,\s*\)/,
     );
     // Guard against regressing to the bare, unscoped call this bug shipped with.
     expect(source).not.toMatch(
