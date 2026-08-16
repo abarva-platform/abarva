@@ -208,6 +208,9 @@ describe("agent route · Source aVa visual and table output discipline", () => {
     expect(source).toContain("approval gate");
     expect(source).toContain("blocking");
     expect(source).toContain("workshop, attend, and data");
+    expect(source).toContain("SOURCE EVENT PROVENANCE WORDING");
+    expect(source).toContain("Foundation, Vendor 360, and fact");
+    expect(source).toContain("Do not collapse this into a generic value-bridge answer");
     expect(source).toContain("Do not answer those asks as prose-only paragraphs");
     expect(source).toContain("SOURCE STAGE STATUS DISCIPLINE");
     expect(source).toContain("distinguish stage/task completion from approved value");
