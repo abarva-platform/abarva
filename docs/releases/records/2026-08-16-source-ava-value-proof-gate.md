@@ -31,11 +31,12 @@ This release tightens Source aVa contract answers so pending Finance/Tower evide
 - `src/lib/source/facts/view/ava-contract-grounding-context.ts`
 - `src/lib/source/ava/answer-quality-gate.ts`
 - Focused regression tests for the grounding block and answer-quality repair.
+- Follow-up guard for pending evidence phrasing: aVa must not imply a pending Finance/Tower amount automatically becomes realized value when approval occurs.
 
 ## QA / Validation
 
-- `npm test -- --runTestsByPath src/lib/source/facts/view/__tests__/ava-contract-grounding-context.test.ts --runInBand` — passed.
-- `npm test -- --runTestsByPath src/lib/source/ava/__tests__/answer-quality-gate.test.ts --runInBand` — passed.
+- `npm test -- --runTestsByPath src/lib/source/facts/view/__tests__/ava-contract-grounding-context.test.ts src/lib/source/ava/__tests__/answer-quality-gate.test.ts --runInBand` — passed, 50 tests.
+- `npx eslint src/lib/source/facts/view/ava-contract-grounding-context.ts src/lib/source/ava/answer-quality-gate.ts src/lib/source/ava/__tests__/answer-quality-gate.test.ts` — passed.
 - Wider lint, typecheck, release check, PR CI, ACA deploy, and live proof are required before this can be marked released.
 
 ## Rollout Plan
