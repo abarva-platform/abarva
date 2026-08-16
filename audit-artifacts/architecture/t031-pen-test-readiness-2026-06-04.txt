@@ -1,5 +1,0 @@
-
-> abarva@0.1.0 security:pen-test-readiness:verify
-> node scripts/security/verify-pen-test-readiness.mjs
-
-pen-test readiness verification passed

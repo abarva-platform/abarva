@@ -1,9 +1,0 @@
-claim_id,source_record_id,program_name,promised_value_usd,finance_validated_value_usd,usage_validation_status,kpi_validation_status,finance_validation_status,value_claim_status,claimable,evidence_id
-tower_value_claim:SA08-BEN-001,SA08-BEN-001,Microsoft 365 Copilot Productivity Enablement,14000000,2100000,usage_loaded,kpi_loaded,partial_finance_validation,measured_partial,false,MER-V3-EVID-BEN-001
-tower_value_claim:SA08-BEN-002,SA08-BEN-002,ServiceNow AI / ITSM Automation Pilot,6000000,800000,usage_loaded,kpi_loaded,partial_finance_validation,measured_partial,false,MER-V3-EVID-BEN-002
-tower_value_claim:SA08-BEN-003,SA08-BEN-003,Workday HR/Finance AI Workflow Pilot,3000000,400000,usage_loaded,kpi_loaded,partial_finance_validation,measured_partial,false,MER-V3-EVID-BEN-003
-tower_value_claim:SA08-BEN-004,SA08-BEN-004,Developer Productivity AI / SDLC Automation,4500000,500000,usage_loaded,kpi_loaded,partial_finance_validation,measured_partial,false,MER-V3-EVID-BEN-004
-tower_value_claim:SA08-BEN-005,SA08-BEN-005,Contact Center Platform / Knowledge Modernization,8000000,0,usage_missing,kpi_missing,finance_validation_missing,baseline_only,false,MER-V3-EVID-BEN-005
-tower_value_claim:SA08-BEN-006,SA08-BEN-006,Data Foundation / Lakehouse Modernization,0,0,usage_loaded,kpi_loaded,finance_validation_missing,readiness_only,false,MER-V3-EVID-BEN-006
-tower_value_claim:SA08-BEN-007,SA08-BEN-007,AI Governance / Model Risk Controls,0,0,usage_loaded,kpi_loaded,finance_validation_missing,readiness_only,false,MER-V3-EVID-BEN-007
-tower_value_claim:SA08-BEN-008,SA08-BEN-008,Member Service AI Assist Candidate,0,0,usage_missing,kpi_missing,finance_validation_missing,not_claimable,false,MER-V3-EVID-BEN-008

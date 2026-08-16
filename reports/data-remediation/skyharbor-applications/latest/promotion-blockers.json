@@ -1,7 +1,0 @@
-[
-  "Candidate preview only; active promotion is out of scope for DATA-PR32.",
-  "Selected source is synthetic demo-safe source, not real SkyHarbor production data.",
-  "Upload landing path alignment remains open for DATA-PR33 before production data-build use.",
-  "Operator/source-owner approval is required before any candidate can become active tenant truth.",
-  "1312 source conflicts were reported and not merged."
-]

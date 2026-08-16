@@ -1,9 +1,0 @@
-step_id,label,owner,output,proof_gate
-packet-intake,Collect the standardized Tenant Packet.,client,packet manifest plus source file inventory,required_before_candidate
-contract-validation,Validate required files and attest synthetic/client-safe boundaries.,abarva,validated packet contract,required_before_candidate
-adapter-dry-run,Run source adapters into canonical ingestion records.,abarva,canonical ingestion records and quarantine report,required_before_candidate
-target-writer-plan,Build the target writer dry-run plan.,abarva,fact/evidence/graph/derived write plan,required_before_candidate
-candidate-version,Persist candidate metadata only.,abarva,inactive candidate tenant data version,required_before_promotion
-preview-and-readiness,Generate module preview and readiness proof.,joint,Home/Intelligence/Moves/Source/Tower readiness,required_before_promotion
-promotion-dry-run,Rehearse promotion execution and rollback.,abarva,dry-run ledger and rollback proof,required_before_promotion
-operator-decision,Approve or reject active access promotion.,joint,operator decision record,required_before_promotion

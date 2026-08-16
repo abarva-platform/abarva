@@ -1,7 +1,0 @@
-tenant_key,artifact_file,exists,tenant_key_matches,validation_status,sha256,status
-meridian-health,datasets/context-artifacts/approved/meridian-health/home-knowledge/approved-cxo-story-blocks.json,true,true,pass,255efd286e90f1462976f76e642e1fd69671a00c875979fe695e6e647eefdd6a,PASS
-meridian-health,datasets/context-artifacts/approved/meridian-health/home-knowledge/approved-cxo-visual-specs.json,true,true,pass,09dbf548e1782cbe754a5c8e0b2f1b69bbb8774b8f32e8d3c0e9014b92d60282,PASS
-skyharbor-air,datasets/context-artifacts/approved/skyharbor-air/home-knowledge/approved-cxo-story-blocks.json,true,true,pass,eae745fb10081dee73071f70014108d6a9806baa16c1a073131e34bdf7a55f35,PASS
-skyharbor-air,datasets/context-artifacts/approved/skyharbor-air/home-knowledge/approved-cxo-visual-specs.json,true,true,pass,85df55437feced2cb473674da68b5363fddd9df58a2066c9a81e0fa59383c2b2,PASS
-first-capital,datasets/context-artifacts/approved/first-capital/home-knowledge/approved-cxo-story-blocks.json,true,true,pass,9300332083736b8afd6f1bc1b49400f973ae28390710e09a0e7ac038334c8e23,PASS
-first-capital,datasets/context-artifacts/approved/first-capital/home-knowledge/approved-cxo-visual-specs.json,true,true,pass,b9459e6417b31cd7b86cb106eabbfe6da142d5416eb542b2b92a268d1ddb67d4,PASS

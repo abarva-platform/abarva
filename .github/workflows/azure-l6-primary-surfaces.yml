@@ -19,7 +19,7 @@ on:
           - staging
           - production
       only_tenant:
-        description: "Optional tenant key: apexretail, meridian, or arcturus"
+        description: "Optional tenant key: meridian-health or skyharbor-air"
         required: false
         type: string
 

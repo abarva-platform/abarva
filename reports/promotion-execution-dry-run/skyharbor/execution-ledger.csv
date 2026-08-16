@@ -1,6 +1,0 @@
-step_id,label,status,evidence,detail
-select-safe-demo-tenant,Select the safe demo tenant for promotion rehearsal.,dry_run_pass,reports/all-tenant-readiness-closure/all-tenant-readiness-closure.json,skyharbor-air selected; all other tenants remain blocked from this dry-run.
-capture-prior-active-version,Capture prior active version before simulated pointer update.,dry_run_pass,reports/candidate-tenant-data-versions/skyharbor/candidate-version-record.json,Prior active version remains skyharbor-air:active-runtime-truth:unchanged.
-simulate-active-access-update,Simulate Active Tenant Access pointer update.,dry_run_pass,reports/candidate-promotion-gates/skyharbor/promotion-gate-result.json,Would point skyharbor-air to skyharbor-air:skyharbor-air-pr10-candidate:candidate-dry-run; no pointer was written.
-simulate-module-readiness-lock,Verify modules do not read candidate data by default.,dry_run_pass,reports/operator-promotion-workflow/skyharbor/operator-promotion-workflow.json,Module runtime consumption remains unchanged in dry-run.
-simulate-rollback,Simulate rollback to the prior active version.,dry_run_pass,rollback-proof.json,Rollback target remains skyharbor-air:active-runtime-truth:unchanged; no production rollback was executed.

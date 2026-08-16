@@ -1,6 +1,0 @@
-tenant_key,mode,check,status,detail
-skyharbor-air,home,19 Home dimensions load,pass,19 dimensions
-skyharbor-air,home,Data tabs deterministic,pass,generation_method checked
-skyharbor-air,home,Evidence refs resolve,pass,dimension evidence refs checked
-skyharbor-air,home,Candidate preview only,pass,render pack default visibility checked
-skyharbor-air,home,Azure/Postgres not mutated,pass,manifest boundary checked

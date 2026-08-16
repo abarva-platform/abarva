@@ -1,6 +1,0 @@
-canonical_tenant_key,active_source_root,promotion_status,notes
-apex-retail,datasets/apex-retail-synthetic-v4,promote_with_minor_gaps,"CapEx/OpEx and named person owner gaps remain, but core metric/graph joins are clean."
-first-capital,datasets/first-capital-financial-synthetic-v4,hold_until_data_product_map_fixed,F21 data_product_id does not resolve to F09; evidence lineage fields missing in Tower files.
-lakeshore-industries,datasets/lakeshore-industries-synthetic-v4,hold_until_profile_and_data_product_map_fixed,Canonical IT budget/AI spend conflicts; F21 data product map unresolved; one team alias mismatch.
-meridian-health,datasets/meridian-health-synthetic-v4,hold_until_profile_and_data_product_map_fixed,Canonical IT budget/AI spend conflicts; F21 data product map unresolved; one team alias mismatch.
-skyharbor-air,datasets/skyharbor-air-synthetic-v4,hold_until_app_id_reconciliation_fixed,F05 uses APP-* while F06/F17/F20 use SHA-APP-*; F10 endpoints only ~36% resolve; run/change and CapEx/OpEx split incomplete.

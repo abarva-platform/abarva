@@ -1,4 +1,0 @@
-tenant_key,check,expected,observed,status
-skyharbor-air,graph nodes,1500,1600,pass
-skyharbor-air,graph edges,2500,2600,pass
-skyharbor-air,orphan edges,0,0,pass

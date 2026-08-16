@@ -1,2 +1,0 @@
-deployment_id,scope,environment,branch,pr,merge_sha,deployed_sha,image_digest,migration_applied,vnet_job,proof,rollback,status,next_action
-F2-DEP-000,implementation-control,local,codex/foundation-v2-implementation,,,,,NO,,,not_applicable,IN_PROGRESS,prepare first technical PR

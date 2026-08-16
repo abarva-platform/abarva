@@ -1,7 +1,0 @@
-HTTP/2 307 
-location: https://boss-griffon-61.accounts.dev/sign-in?redirect_url=https%3A%2F%2Fapp.abarva.ai%2Fapi%2Fhome%2Fknow%2Fask
-x-clerk-auth-reason: dev-browser-missing
-x-clerk-auth-status: signed-out
-x-clerk-redirect-to: true
-date: Mon, 06 Jul 2026 13:26:26 GMT
-

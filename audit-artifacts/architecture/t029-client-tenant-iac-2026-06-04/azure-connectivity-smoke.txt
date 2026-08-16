@@ -1,3 +1,0 @@
-
-> abarva@0.1.0 azure:connectivity:smoke
-> npx tsx src/scripts/azure-connectivity-smoke.ts

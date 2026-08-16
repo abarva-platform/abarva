@@ -1,6 +1,0 @@
-check,command,status
-generate-tenant-v3-data-neutral-wrapper,node scripts/tenant-v3/generate-tenant-v3-inputs.mjs,PASS
-audit-tenant-v3-data-neutral-wrapper,node scripts/tenant-v3/audit-tenant-v3-inputs.mjs,PASS
-tenant-v6:generate-blocked,node scripts/audit/block-legacy-dataset-generation.mjs tenant-v6:generate,PASS
-tenant-v6:validate-blocked,node scripts/audit/block-legacy-dataset-generation.mjs tenant-v6:validate,PASS
-tenant-v6:tower-sync-blocked,node scripts/audit/block-legacy-dataset-generation.mjs tenant-v6:tower-sync,PASS

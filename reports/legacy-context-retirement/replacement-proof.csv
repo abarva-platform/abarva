@@ -1,9 +1,0 @@
-check,status,evidence
-v3-inputs:meridian-health,PASS,19 standard v3 files present
-approved-home-knowledge:meridian-health,PASS,approved story blocks and visual specs present
-v3-inputs:skyharbor-air,PASS,19 standard v3 files present
-approved-home-knowledge:skyharbor-air,PASS,approved story blocks and visual specs present
-v3-inputs:first-capital,PASS,19 standard v3 files present
-approved-home-knowledge:first-capital,PASS,approved story blocks and visual specs present
-candidate-invisibility-guard,PASS,default runtime requires active pointer; candidate preview is explicit
-local-runtime-retrieval-proof,PASS,local runtime retrieval proof bundle exists

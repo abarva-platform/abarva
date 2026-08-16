@@ -1,7 +1,0 @@
-Local signed-in browser smoke:
-- Clerk refresh loop / access-denied prevented local signed-in Home crawl.
-- No Home/aVa answer-rendering console errors were captured because local signed-in navigation did not reach `/home`.
-
-Production signed-in auth-state smoke:
-- SkyHarbor and Lakeshore storage states reached signed-in Home.
-- Detailed browser console capture for the new Home dossier answer path is pending deployment.

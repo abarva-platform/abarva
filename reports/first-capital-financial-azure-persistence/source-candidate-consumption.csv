@@ -1,5 +1,0 @@
-tenant_key,mode,check,status,detail
-first-capital-financial,source,Source vendor contexts exist,pass,12 source contexts
-first-capital-financial,source,No savings claim allowed,pass,savings claim boundary checked
-first-capital-financial,source,Contract/SLA/invoice evidence requested,pass,evidence_required checked
-first-capital-financial,source,Azure/Postgres not mutated,pass,manifest boundary checked

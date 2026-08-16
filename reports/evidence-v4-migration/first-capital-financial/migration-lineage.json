@@ -1,9 +1,0 @@
-[
-  {
-    "tenant_key": "first-capital-financial",
-    "input_file": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_13_evidence_sources.csv",
-    "recovered_via_commit": "b10b118439355ff5c6035f93dec9c302d9a5f1b2",
-    "row_count": 42,
-    "detected_shape": "v6_hybrid"
-  }
-]

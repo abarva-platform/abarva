@@ -1,3 +1,0 @@
-id,file,status,evidence
-default-home-route-no-preview-unless-flagged,src/app/(maestro)/home/page.tsx,PASS,Home route defaults to active mode and only enters candidate preview from an intentional preview flag.
-candidate-preview-labels-visible,src/components/home/HomeSurface.tsx,PASS,HomeSurface renders candidate preview warning labels.

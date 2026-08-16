@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       tenant:
-        description: "Tenant key to copy: apex-retail, meridian-health, first-capital, or northstar-medtech."
+        description: "Tenant key to copy: meridian-health or skyharbor-air."
         required: true
-        default: northstar-medtech
+        default: meridian-health
       replace:
         description: "Replace existing tenant rows in the Azure target before copy."
         required: false
@@ -78,4 +78,3 @@ jobs:
           name: azure-tenant-context-copy
           path: azure-tenant-context-copy.json
           if-no-files-found: ignore
-

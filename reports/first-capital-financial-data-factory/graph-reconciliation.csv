@@ -1,4 +1,0 @@
-tenant_key,check,expected,observed,status
-first-capital-financial,graph nodes,1500,1600,pass
-first-capital-financial,graph edges,2500,2600,pass
-first-capital-financial,orphan edges,0,0,pass

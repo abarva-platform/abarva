@@ -1,5 +1,0 @@
-check,expected_usd,actual_usd,result
-run_total,487500000,487500000,PASS
-change_total,162500000,162500000,PASS
-total_budget,650000000,650000000,PASS
-ai_tagged_spend_non_additive,formula_sum,53700000,PASS

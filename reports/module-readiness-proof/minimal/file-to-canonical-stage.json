@@ -1,8 +1,0 @@
-{
-  "stage": "file_to_canonical_object",
-  "status": "pass",
-  "filesProcessed": 2,
-  "canonicalRecords": 5,
-  "quarantinedRecords": 0,
-  "minimumObservedMappingCoveragePercent": 88.89
-}

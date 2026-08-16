@@ -1,7 +1,0 @@
-dimension_key,file_name,row_count,fact_count,evidence_count,projection_status
-08_spend_value,08_it_budget_spend_value.csv,298,298,298,v3_context_pack_ready
-09_programs_initiatives,09_programs_initiatives.csv,256,256,256,v3_context_pack_ready
-11_risks_controls,11_risks_controls.csv,249,249,249,v3_context_pack_ready
-14_metrics_outcomes,14_metrics_outcomes.csv,257,257,257,v3_context_pack_ready
-17_service_scope_managed_services,17_managed_services_scope.csv,228,228,228,v3_context_pack_ready
-18_operational_process_evidence,18_operational_process_evidence.csv,228,228,228,v3_context_pack_ready

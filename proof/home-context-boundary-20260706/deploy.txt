@@ -1,3 +1,0 @@
-revision=ca-abarva-web-lab-eastus--mc74ceccf
-digest=sha256:e0b113b490464c2721cbbb106ac96047ccaa69dd6364010abe71afa543f04a15
-merge=c74ceccf8765b524fc8248db282a45734af83ba4

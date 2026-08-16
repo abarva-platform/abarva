@@ -1,7 +1,0 @@
-id,file,status,evidence
-default-active-pointer-home-browser,src/lib/home/v7-context-browser.ts,PASS,Home V7 default query joins active_tenant_contract_versions.
-home-know-active-pointer,src/lib/home/know/v7-home-ask.ts,PASS,Home/Knowledge ask reads active pointer directly.
-intelligence-dossier-active-pointer,src/lib/intelligence/ask/retrievers/v7-dossier.ts,PASS,Intelligence V7 dossier reads active pointer directly.
-tower-projection-active-pointer,src/lib/tower/v7-tower-projection.ts,PASS,Tower V7 projection reads active pointer directly.
-no-runtime-current-pack-view,src,PASS,Runtime source does not depend on loader-defined current_tenant_pack_runs.
-no-default-latest-loaded-runtime-read,src,PASS,Loaded/validated runtime reads are guarded by active pointer or explicit candidate preview.

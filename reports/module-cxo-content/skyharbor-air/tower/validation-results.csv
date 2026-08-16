@@ -1,9 +1,0 @@
-artifact_id,artifact_kind,status,score,failures
-skyharbor-air-tower-block-01,block,Pass,4.63,
-skyharbor-air-tower-block-02,block,Pass,4.63,
-skyharbor-air-tower-block-03,block,Pass,4.63,
-skyharbor-air-tower-block-04,block,Pass,4.63,
-skyharbor-air-tower-visual-01,visual_spec,Pass,4.63,
-skyharbor-air-tower-visual-02,visual_spec,Pass,4.63,
-skyharbor-air-tower-visual-03,visual_spec,Pass,4.63,
-skyharbor-air-tower-visual-04,visual_spec,Pass,4.63,

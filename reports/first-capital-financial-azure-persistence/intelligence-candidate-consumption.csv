@@ -1,6 +1,0 @@
-tenant_key,mode,check,status,detail
-first-capital-financial,intelligence,Candidate chunks exist,pass,4600 chunks
-first-capital-financial,intelligence,Candidate retrieval scope only,pass,retrieval_scope checked
-first-capital-financial,intelligence,Default active retrieval excluded,pass,default_runtime_visible checked
-first-capital-financial,intelligence,Chunk lineage exists,pass,fact/evidence lineage checked
-first-capital-financial,intelligence,Azure/Postgres not mutated,pass,manifest boundary checked

@@ -1,5 +1,0 @@
-{
-  "status": "not_run",
-  "reason": "This deterministic cutover audit does not claim signed-in browser proof. Run signed-in Meridian crawl after PR deploy.",
-  "screenshotsDir": "reports/tower-v3-default-runtime-cutover/screenshots"
-}

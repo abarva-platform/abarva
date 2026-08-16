@@ -1,4 +1,0 @@
-{
-  "status": "not_rerun_in_this_increment",
-  "reason": "Kernel, report wiring, hard-question fallback and robustness harness were validated locally. Full live browser crawl remains next because this environment cannot push/deploy the local branch."
-}

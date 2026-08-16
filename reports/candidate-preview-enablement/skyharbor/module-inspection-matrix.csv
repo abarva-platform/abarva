@@ -1,6 +1,0 @@
-module,accepted_for_explicit_preview,banner,default_runtime_source,preview_source,preview_mode,runtime_eligible,facts,relationships,derived_insights,graph_plan_available,evidence_keys
-home,true,"Candidate Preview Mode - inactive candidate data. Not active tenant truth.",active_tenant_access_layer,candidate_context_packet,true,false,21,0,1,false,47
-intelligence,true,"Candidate Preview Mode - inactive candidate data. Not active tenant truth.",active_tenant_access_layer,candidate_context_packet,true,false,21,0,2,false,47
-moves,true,"Candidate Preview Mode - inactive candidate data. Not active tenant truth.",active_tenant_access_layer,candidate_context_packet,true,false,24,48,1,true,47
-source,true,"Candidate Preview Mode - inactive candidate data. Not active tenant truth.",active_tenant_access_layer,candidate_context_packet,true,false,24,48,1,true,47
-tower,true,"Candidate Preview Mode - inactive candidate data. Not active tenant truth.",active_tenant_access_layer,candidate_context_packet,true,false,24,48,1,true,47

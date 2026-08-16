@@ -1,5 +1,0 @@
-step_id,status,detail
-verify-promoted-active-pointer,pass,Promoted active pointer is skyharbor-air:skyharbor-air-pr10-candidate:candidate-dry-run.
-verify-rollback-target,pass,Rollback target is skyharbor-air:active-runtime-truth:unchanged.
-verify-module-read-proof-before-rollback,pass,5 module read proofs passed before rollback rehearsal.
-rehearse-restore,pass,Restore path was rehearsed in proof mode; active metadata pointer was intentionally left unchanged.

@@ -1,9 +1,0 @@
-key,action,reason
-lakefront-capital,quarantine_or_delete,not one of five approved demo tenants; appears in Azure clients/semantic2 rows
-northstar-clinical,quarantine_or_delete,old synthetic tenant; not approved active tenant for current five-client refresh
-roosevelt-holdings,quarantine_or_delete,not approved active tenant for current five-client refresh
-archived:first-capital,keep_archived_but_exclude_from_runtime,historical rows must not be runtime candidates
-unknown,quarantine,cannot safely attribute facts/dossiers
-uuid tenant keys,alias_to_canonical_or_quarantine,UUID-keyed semantic rows should not bypass canonical tenant keys
-lakeshore-holdings / lakeshore / lakeshore-industries,canonicalize,choose one product key and one dataset broker key; prevent split dashboards/dossiers
-skyharbor / skyharbor-air,canonicalize,app key can be skyharbor but data key must map deterministically to skyharbor-air

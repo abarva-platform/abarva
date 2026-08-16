@@ -1,6 +1,0 @@
-tenant_key,source_tenant_key,display_name,status,relationship_rows,missing_relationship_endpoints,relationship_self_loops,graph_nodes,graph_edges,graph_self_loops,dimensions,data_tabs,story_tabs,evidence_tabs,gap_tabs,issues
-skyharbor-air,skyharbor-air,Airline Demo,pass,380,0,0,2203,2278,0,19,19,19,19,19,
-first-capital,first-capital-financial,FS Demo,pass,380,0,0,790,1425,0,19,19,19,19,19,
-lakeshore-holdings,lakeshore-holdings,Lakeshore Holdings,pass,364,0,0,316,364,0,19,19,19,19,19,
-apex-retail,apex-retail,Retail Demo,pass,1713,0,0,892,1713,0,19,19,19,19,19,
-meridian-health,meridian-health,Healthcare Demo,pass,1037,0,0,1668,2642,0,19,19,19,19,19,

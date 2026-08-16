@@ -1,9 +1,0 @@
-id,label,status,detail
-manifest_declared,Dataset manifest exists before load,pass,Meridian Tower candidate preview must have a dataset manifest before any data-plane load.
-tower_dimensions_present,Tower dimensions 08/09/11/14/17/18 present,pass,Candidate load requires all six Tower-relevant v3 dimensions.
-tower_records_have_evidence,Every Tower metric/value record has evidence,pass,Tower candidate records must remain source-backed before preview or promotion.
-value_claims_gated,Every Tower value claim has a gate result,pass,Value language must go through TowerValueClaim gating.
-realized_value_blocked,Realized-value language is blocked,pass,"Candidate preview cannot say realized, proven, achieved, savings, or ROI unless measured evidence allows it."
-cio_tower_bridge_only,cio_tower remains bridge-only,pass,The legacy read model must not become Tower source truth.
-no_runtime_mutation,No active/runtime mutation,pass,This proof may build a candidate load plan only; it cannot write production tenant data or change runtime reads.
-candidate_preview_inactive,Candidate preview is inactive,pass,Candidate preview requires explicit promotion before runtime eligibility.

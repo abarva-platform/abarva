@@ -1,6 +1,0 @@
-tenant_key,mode,check,status,detail
-first-capital-financial,home,19 Home dimensions load,pass,19 dimensions
-first-capital-financial,home,Data tabs deterministic,pass,generation_method checked
-first-capital-financial,home,Evidence refs resolve,pass,dimension evidence refs checked
-first-capital-financial,home,Candidate preview only,pass,render pack default visibility checked
-first-capital-financial,home,Azure/Postgres not mutated,pass,manifest boundary checked

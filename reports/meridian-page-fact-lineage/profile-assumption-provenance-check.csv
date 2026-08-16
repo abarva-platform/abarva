@@ -1,2 +1,0 @@
-record_id,evidence_id,confidence,source_type,source_basis,evidence_boundary,status
-MER-V3-0002,MER-V3-EVID-0500,low,profile_planning_assumption,synthetic_demo_profile_sizing_assumption_not_client_attested,planning_assumption_only_not_client_validated_not_finance_attested,Pass

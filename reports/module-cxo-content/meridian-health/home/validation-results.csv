@@ -1,9 +1,0 @@
-artifact_id,artifact_kind,status,score,failures
-meridian-health-home-block-01,block,Pass,4.63,
-meridian-health-home-block-02,block,Pass,4.63,
-meridian-health-home-block-03,block,Pass,4.63,
-meridian-health-home-block-04,block,Pass,4.63,
-meridian-health-home-visual-01,visual_spec,Pass,4.63,
-meridian-health-home-visual-02,visual_spec,Pass,4.63,
-meridian-health-home-visual-03,visual_spec,Pass,4.63,
-meridian-health-home-visual-04,visual_spec,Pass,4.63,

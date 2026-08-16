@@ -1,9 +1,0 @@
-{
-  "responseId": "Q3-blocked-no-claude-response",
-  "status": "blocked",
-  "claudeCalled": false,
-  "reason": "Deterministic audit did not call Claude. Set up an approved signed-in Intelligence workflow with Anthropic/egress credentials to complete live answer-quality proof.",
-  "rawResponse": null,
-  "parsedRenderedResponse": null,
-  "validationResult": "blocked"
-}

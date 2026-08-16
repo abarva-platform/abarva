@@ -1,3 +1,0 @@
-tenant_key,display_name,short_code,operational_storage,evaluator_storage,validation_passed,package_root
-hc-demo-new,HC Demo New,hcdn,stabhcdemonewlab001,stabhcdemonewevallab001,true,clients/hc-demo-new/18-phase2b3c-azure-lab-implementation
-airline-demo-new,Airline Demo New,airdn,stabairdnlabeus001,stabairdnevallab001,true,clients/airline-demo-new/18-phase2b3c-azure-lab-implementation

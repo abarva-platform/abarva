@@ -1,5 +1,0 @@
-{
-  "evidenceReferencesAttached": 900,
-  "missingEvidence": 0,
-  "evidenceBindingRule": "Each accepted record binds to the selected source file plus row number; rows without source path and row provenance are quarantined."
-}

@@ -1,1 +1,0 @@
-# Lakeshore App Demo Readiness QA\n\n- Status: ready_with_warnings\n- Base URL: https://app.abarva.ai\n- Persona: cfo@lakeshore-holdings.example.com\n- Active client cookie: lakeshore\n- Checks: 26\n- Pass / watch / fail: 26 / 0 / 0\n- HTML report: report.html\n

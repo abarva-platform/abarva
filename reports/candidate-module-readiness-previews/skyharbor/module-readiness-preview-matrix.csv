@@ -1,6 +1,0 @@
-module,evidence_available,fact_plan_available,graph_plan_available,derived_plan_available,preview_packet_available,runtime_consumption_ready,readiness_status,blocker_count,next_proof_needed
-home,true,true,false,true,true,false,preview_packet_available,4,"Persist and promote the candidate version, then prove Home reads the promoted active tenant slice."
-intelligence,true,true,false,true,true,false,preview_packet_available,4,Run signed-in answer retrieval with citations from the promoted active tenant slice.
-moves,true,true,true,true,true,false,preview_packet_available,3,"Run a phase workspace proof that consumes promoted facts, evidence, graph context, and derived readiness."
-source,true,true,true,true,true,false,preview_packet_available,3,"Run a sourcing workflow proof that consumes promoted vendor, contract, evidence, and value context."
-tower,true,true,true,true,true,false,preview_packet_available,3,Run an outcome-ledger proof before any realized value or ROI claim.

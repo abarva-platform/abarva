@@ -1,6 +1,0 @@
-tenant_key,mode,check,status,detail
-skyharbor-air,tower,Executive Command context exists,pass,budget posture and lanes checked
-skyharbor-air,tower,Approved programs count,pass,12 programs
-skyharbor-air,tower,Candidate AI count,pass,12 AI opportunities
-skyharbor-air,tower,Value proof ladder blocks realized claims,pass,hypothesis; baseline needed; KPI owner needed; finance validation needed; not realized
-skyharbor-air,tower,Azure/Postgres not mutated,pass,manifest boundary checked

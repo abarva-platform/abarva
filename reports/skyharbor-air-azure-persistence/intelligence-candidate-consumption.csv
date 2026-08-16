@@ -1,6 +1,0 @@
-tenant_key,mode,check,status,detail
-skyharbor-air,intelligence,Candidate chunks exist,pass,4600 chunks
-skyharbor-air,intelligence,Candidate retrieval scope only,pass,retrieval_scope checked
-skyharbor-air,intelligence,Default active retrieval excluded,pass,default_runtime_visible checked
-skyharbor-air,intelligence,Chunk lineage exists,pass,fact/evidence lineage checked
-skyharbor-air,intelligence,Azure/Postgres not mutated,pass,manifest boundary checked

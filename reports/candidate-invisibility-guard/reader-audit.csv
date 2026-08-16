@@ -1,7 +1,0 @@
-file,reads_tenant_pack_runs,joins_active_pointer,exposes_candidate_preview,status
-src/lib/home/v7-context-browser.ts,yes,yes,yes,inspected
-src/app/(maestro)/home/page.tsx,no,no,yes,inspected
-src/lib/home/know/v7-home-ask.ts,yes,yes,no,inspected
-src/lib/intelligence/ask/retrievers/v7-dossier.ts,yes,yes,no,inspected
-src/lib/tower/v7-tower-projection.ts,yes,yes,no,inspected
-src/components/home/HomeSurface.tsx,no,no,yes,inspected

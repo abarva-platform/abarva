@@ -1,5 +1,0 @@
-path,current_reader,current_writer,status,canonical_yes_no,stale_risk,recommended_action
-datasets/tenant-inputs/meridian-health/approved-content/home,getLocalCxoRuntimeBrowser/readCanonicalApprovedHomeContent,generate:meridian-v3-derived-layer and generate:meridian-v3-approved-claude-content,present,yes,low,primary Home approved-content path
-datasets/tenant-inputs/meridian-health/approved-content/tower,none in Tower runtime today,generate:meridian-v3-derived-layer and generate:meridian-v3-approved-claude-content,present,yes,low,load through governed data-plane before Tower runtime use
-datasets/context-artifacts/approved/meridian-health/home-knowledge,legacy fallback only after canonical Home approved content is absent,legacy knowledge generators,present,no,high,keep only as backward-compatible fallback
-datasets/meridian-health-v6-v7-current-state-v1/derived/knowledge,legacy V6/V7 paths only,legacy V6/V7 generators,missing,no,high,do not use as Meridian V3 approved-content source

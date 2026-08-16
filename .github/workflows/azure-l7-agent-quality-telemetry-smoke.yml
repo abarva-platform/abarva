@@ -7,7 +7,7 @@ on:
         description: Tenant key to insert/query.
         required: false
         type: string
-        default: apex-retail
+        default: skyharbor-air
       other_tenant_key:
         description: Different tenant key used to prove cross-tenant RLS denial.
         required: false

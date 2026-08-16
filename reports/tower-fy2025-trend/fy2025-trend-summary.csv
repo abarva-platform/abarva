@@ -1,6 +1,0 @@
-tenant_key,generated_rows,headline_rows,component_rows,output_file,fy25_value_usd,fy25_initiative_budget_usd,fy25_it_budget_usd
-apex-retail,104,64,40,tower-standardized-v1/apex-retail/derived/tower_financial_amounts_fy2025_trend.csv,324072000,96385000,1418208000
-first-capital-financial,227,175,52,tower-standardized-v1/first-capital-financial/derived/tower_financial_amounts_fy2025_trend.csv,682209000,127844000,2014740000
-lakeshore-industries,90,50,40,tower-standardized-v1/lakeshore-industries/derived/tower_financial_amounts_fy2025_trend.csv,179619000,68261000,812078000
-meridian-health,116,68,48,tower-standardized-v1/meridian-health/derived/tower_financial_amounts_fy2025_trend.csv,371068000,140965000,1005330000
-skyharbor-air,346,119,227,tower-standardized-v1/skyharbor-air/derived/tower_financial_amounts_fy2025_trend.csv,1370175000,157050000,2358870000

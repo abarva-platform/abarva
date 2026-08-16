@@ -1,9 +1,0 @@
-artifact_id,artifact_kind,status,score,failures
-first-capital-intelligence-block-01,block,Pass,4.63,
-first-capital-intelligence-block-02,block,Pass,4.63,
-first-capital-intelligence-block-03,block,Pass,4.63,
-first-capital-intelligence-block-04,block,Pass,4.63,
-first-capital-intelligence-visual-01,visual_spec,Pass,4.63,
-first-capital-intelligence-visual-02,visual_spec,Pass,4.63,
-first-capital-intelligence-visual-03,visual_spec,Pass,4.63,
-first-capital-intelligence-visual-04,visual_spec,Pass,4.63,

@@ -1,3 +1,0 @@
-tenant_key,display_name,final_status,source_template_files,source_template_rows,interview_rows,canonical_records,canonical_facts,entity_profiles,graph_nodes,graph_edges,context_gaps,evidence_references,retrieval_chunks,approved_programs,candidate_ai_opportunities,budget_rows,interview_support_rows
-first-capital-financial,FS Demo,BLOCKED_BEFORE_PROMOTION,19,4840,216,4840,9680,1100,1600,2600,2100,140,4600,12,12,76,216
-skyharbor-air,Airline Demo,BLOCKED_BEFORE_PROMOTION,19,4840,216,4840,9680,1100,1600,2600,2100,140,4600,12,12,76,216

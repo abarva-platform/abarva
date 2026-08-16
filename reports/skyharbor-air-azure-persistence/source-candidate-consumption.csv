@@ -1,5 +1,0 @@
-tenant_key,mode,check,status,detail
-skyharbor-air,source,Source vendor contexts exist,pass,12 source contexts
-skyharbor-air,source,No savings claim allowed,pass,savings claim boundary checked
-skyharbor-air,source,Contract/SLA/invoice evidence requested,pass,evidence_required checked
-skyharbor-air,source,Azure/Postgres not mutated,pass,manifest boundary checked

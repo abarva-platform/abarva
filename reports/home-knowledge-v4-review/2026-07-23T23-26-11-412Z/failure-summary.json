@@ -1,8 +1,0 @@
-{
-  "failed_at": "2026-07-23T23:26:11.419Z",
-  "message": "ANTHROPIC_API_KEY is required; refusing to fabricate candidate content.",
-  "stack": "Error: ANTHROPIC_API_KEY is required; refusing to fabricate candidate content.\n    at main (file:///Users/anand/Projects/nexus-home-v4-visuals/scripts/knowledge/build-home-knowledge-v4-review-pack.mjs:1730:11)\n    at file:///Users/anand/Projects/nexus-home-v4-visuals/scripts/knowledge/build-home-knowledge-v4-review-pack.mjs:1789:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:437:25)\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:639:26)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)",
-  "model": "claude-opus-4-8",
-  "prompt_contract_version": "home-knowledge-v4-business-transformation-prompt-first-20260723-single-dimension-v1",
-  "output_schema_version": "home-knowledge-v4-candidate-review-v2"
-}

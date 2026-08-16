@@ -1,8 +1,0 @@
-{
-  "domain": "executive_interviews",
-  "raw_row_count": 0,
-  "semantic_status": "not_applicable",
-  "blocking_reasons": [],
-  "not_applicable_rationale": "No interview evidence was recovered for this tenant -- an honest not_applicable, not a fabricated finding.",
-  "recommended_remediation": ""
-}

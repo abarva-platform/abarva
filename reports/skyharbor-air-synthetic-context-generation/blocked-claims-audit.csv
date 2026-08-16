@@ -1,4 +1,0 @@
-tenant_key,claim_class,allowed,status,reason
-skyharbor-air,realized value,false,pass,finance validation is not present
-skyharbor-air,vendor savings,false,pass,contract/SLA/invoice evidence remains candidate and unvalidated
-skyharbor-air,production readiness,false,pass,candidate context is not active runtime truth

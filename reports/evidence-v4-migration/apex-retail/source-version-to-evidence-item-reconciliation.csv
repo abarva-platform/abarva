@@ -1,6 +1,0 @@
-tenant_key,source_version_id,source_ref,source_kind,evidence_item_count,evidence_ids
-apex-retail,SRCV-APEXRETAIL-4E48F7A07F3C,ai-control-tower/T10_evidence-items.csv,external_reference,14,APX-EVID-001|APX-EVID-002|APX-EVID-003|APX-EVID-004|APX-EVID-005|APX-EVID-006|APX-EVID-007|APX-EVID-008|APX-EVID-009|APX-EVID-010|APX-EVID-011|APX-EVID-012|APX-EVID-013|APX-EVID-014
-apex-retail,SRCV-APEXRETAIL-63700F3194A2,Microsoft 365 Admin Center / Copilot usage export,api_export,2,APX-DAY1-AI-EVID-001|APX-DAY1-AI-EVID-008
-apex-retail,SRCV-APEXRETAIL-1042DF132576,ServiceNow Virtual Agent and ITSM analytics,api_export,1,APX-DAY1-AI-EVID-002
-apex-retail,SRCV-APEXRETAIL-1132F6257B94,GitHub Copilot metrics and DORA dashboard,api_export,1,APX-DAY1-AI-EVID-003
-apex-retail,SRCV-APEXRETAIL-68C09AE05BC5,AI platform usage and KPI export,api_export,4,APX-DAY1-AI-EVID-004|APX-DAY1-AI-EVID-005|APX-DAY1-AI-EVID-006|APX-DAY1-AI-EVID-007

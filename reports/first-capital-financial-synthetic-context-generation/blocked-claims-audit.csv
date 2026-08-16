@@ -1,4 +1,0 @@
-tenant_key,claim_class,allowed,status,reason
-first-capital-financial,realized value,false,pass,finance validation is not present
-first-capital-financial,vendor savings,false,pass,contract/SLA/invoice evidence remains candidate and unvalidated
-first-capital-financial,production readiness,false,pass,candidate context is not active runtime truth

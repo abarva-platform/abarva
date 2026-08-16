@@ -1,6 +1,0 @@
-ACA revision: ca-abarva-web-lab-eastus--mffc7cb4f
-Image digest: sha256:b50273be847865430cf56e7de3a6cc74981db425b9be770c40b32bc01192f2ca
-Traffic: 100%
-Health: Healthy
-Merge SHA: ffc7cb4fbcef867d33e0492cb6f2db75412d8753
-Proof summary: /Users/anand/Projects/nexus/proof/home-context-boundary-20260706/final-cookie-api-proof-summary.json

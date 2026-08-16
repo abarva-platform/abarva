@@ -1,4 +1,0 @@
-tenant_key,expected_mode,approved_artifact_found,fallback_behavior,status
-skyharbor-air,approved-artifact,true,not used,Pass
-first-capital,approved-artifact,true,not used,Pass
-meridian-health,approved-artifact,true,not used,Pass

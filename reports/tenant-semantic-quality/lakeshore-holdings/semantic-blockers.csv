@@ -1,8 +1,0 @@
-domain,reason,remediation
-business_functions,"substantively_empty_despite_row_count: 14 rows, 0 pass the substantive-row rule for business_functions","Governed data enrichment required: real, non-placeholder business_functions content is missing for most rows, not just a formatting gap."
-infrastructure_platforms,zero_rows: this domain is required and has no data for this tenant,Load at least one real row for this required domain before semantic validation can pass.
-ai_automation_use_cases,"substantively_empty_despite_row_count: 8 rows, 0 pass the substantive-row rule for ai_automation_use_cases","Governed data enrichment required: real, non-placeholder ai_automation_use_cases content is missing for most rows, not just a formatting gap."
-industry_context_patterns,"substantively_empty_despite_row_count: 4 rows, 0 pass the substantive-row rule for industry_context_patterns","Governed data enrichment required: real, non-placeholder industry_context_patterns content is missing for most rows, not just a formatting gap."
-expert_lenses,"substantively_empty_despite_row_count: 4 rows, 0 pass the substantive-row rule for expert_lenses","Governed data enrichment required: real, non-placeholder expert_lenses content is missing for most rows, not just a formatting gap."
-service_scope_managed_services,zero_rows: this domain is required and has no data for this tenant,Load at least one real row for this required domain before semantic validation can pass.
-operational_process_evidence,zero_rows: this domain is required and has no data for this tenant,Load at least one real row for this required domain before semantic validation can pass.

@@ -1,5 +1,0 @@
-check,status,detail
-canonical_home_story_blocks_present,pass,datasets/tenant-inputs/meridian-health/approved-content/home/story-blocks.json
-canonical_home_visual_specs_present,pass,datasets/tenant-inputs/meridian-health/approved-content/home/visual-specs.json
-runtime_uses_canonical_content_source,pass,canonical-v3-approved-content
-stale_content_absent,pass,none

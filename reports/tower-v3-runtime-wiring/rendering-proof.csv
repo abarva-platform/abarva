@@ -1,7 +1,0 @@
-check,result,evidence
-flag_off_preserves_existing_behavior,pass,Runtime helper defaults ENABLE_TOWER_V3_CONTEXT_RUNTIME to false.
-flag_on_uses_tower_context_pack,pass,Selected Meridian runtime view is built from TowerContextPack.
-row_level_gaps_aggregated,pass,410 row-level gaps grouped into 6 executive blocker themes.
-unsupported_outcome_language_blocked,pass,Visible runtime model does not contain unsupported outcome-proof language.
-cio_tower_bridge_only,pass,Existing Tower read model retained only as collapsed diagnostics/fallback.
-browser_proof,not_run,Signed-in browser proof must be run after stacked PR review or runtime deploy.

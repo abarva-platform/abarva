@@ -1,9 +1,0 @@
-rule,expected,observed,status,notes
-current_state_legacy_fragmented,present,present,pass,Meridian current state should be legacy/on-prem-heavy and fragmented.
-known_agent_assist_systems,present,present,pass,Agent Assist known systems/data context should be present.
-required_gaps_present,present,present,pass,Known Agent Assist evidence gaps should be present.
-aws_databricks_target_not_current,present,present,pass,AWS/Databricks should appear as target/future/readiness context.
-no_certified_production_claim,absent,absent,pass,Must not claim certified production readiness.
-no_realized_roi_claim,absent,absent,pass,Must not claim realized value without Tower/measured evidence.
-no_phi_ingestion_claim,absent,absent,pass,Must not claim PHI evidence was ingested.
-no_legacy_v_named_artifacts,absent,absent,pass,Must not use old V-named pack language in answer context.

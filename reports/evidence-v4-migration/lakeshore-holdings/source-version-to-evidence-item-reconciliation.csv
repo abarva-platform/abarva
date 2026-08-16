@@ -1,8 +1,0 @@
-tenant_key,source_version_id,source_ref,source_kind,evidence_item_count,evidence_ids
-lakeshore-holdings,SRCV-LAKESHOREHOLDINGS-5B24499A1CF2,holdco/evidence-sources.csv,external_reference,10,LH-EVID-001|LH-EVID-002|LH-EVID-003|LH-EVID-004|LH-EVID-005|LH-EVID-006|LH-EVID-007|LH-EVID-008|LH-EVID-009|LH-EVID-010
-lakeshore-holdings,SRCV-LAKESHOREHOLDINGS-63700F3194A2,Microsoft 365 Admin Center / Copilot usage export,api_export,1,LKH-DAY1-AI-EVID-001
-lakeshore-holdings,SRCV-LAKESHOREHOLDINGS-1042DF132576,ServiceNow Virtual Agent and ITSM analytics,api_export,1,LKH-DAY1-AI-EVID-002
-lakeshore-holdings,SRCV-LAKESHOREHOLDINGS-1132F6257B94,GitHub Copilot metrics and DORA dashboard,api_export,1,LKH-DAY1-AI-EVID-003
-lakeshore-holdings,SRCV-LAKESHOREHOLDINGS-D59FFBC66924,Workday analytics export,api_export,1,LKH-DAY1-AI-EVID-004
-lakeshore-holdings,SRCV-LAKESHOREHOLDINGS-89B07E49BBAD,ERP workflow analytics export,api_export,1,LKH-DAY1-AI-EVID-005
-lakeshore-holdings,SRCV-LAKESHOREHOLDINGS-68C09AE05BC5,AI platform usage and KPI export,api_export,3,LKH-DAY1-AI-EVID-006|LKH-DAY1-AI-EVID-007|LKH-DAY1-AI-EVID-008

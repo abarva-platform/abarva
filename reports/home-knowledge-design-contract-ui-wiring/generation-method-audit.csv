@@ -1,7 +1,0 @@
-"component","generation_method","source","prompt","rendered_path"
-"Boardroom summary","claude_tool_payload_only","reports/home-knowledge-design-contract/raw-claude-response.json","reports/home-knowledge-design-contract/actual-claude-prompt.txt","design_slots.BRIEF_COLS / PRIORITIES / SIGNALS"
-"Enterprise brief narrative","claude_executive_consultant_tool_payload_only","reports/home-knowledge-design-contract/raw-claude-response-overview.json","reports/home-knowledge-design-contract/actual-claude-overview-prompt.txt","narrative_sections.enterprise_brief_title / enterprise_brief_summary"
-"Dimension summaries","claude_tool_payload_only","design_slots.STORY and design_slots.INSIGHTS","reports/home-knowledge-design-contract/actual-claude-prompt.txt","dimension Summary tab"
-"Data tabs","deterministic_canonical_projection","datasets/tenant-inputs/meridian-health/standard-2026-07-v3","not_applicable","design_slots.DATA"
-"Evidence tabs","deterministic_evidence_lineage_projection","design_slots.EVID / source_context","not_applicable","dimension Evidence tab"
-"Relationship and gap tabs","claude_tool_payload_only_from_canonical_context","design_slots.REL / design_slots.DGAPS","reports/home-knowledge-design-contract/actual-claude-prompt.txt","dimension Relationships and Gaps tabs"

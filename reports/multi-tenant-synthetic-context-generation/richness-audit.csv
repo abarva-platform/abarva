@@ -1,3 +1,0 @@
-tenant_key,status,source_template_rows,interview_rows,canonical_facts,entity_profiles,graph_nodes,graph_edges,context_gaps,evidence_references,failure_count
-first-capital-financial,pass,4840,216,9680,1100,1600,2600,2100,140,0
-skyharbor-air,pass,4840,216,9680,1100,1600,2600,2100,140,0

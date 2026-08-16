@@ -1,5 +1,0 @@
-
-> abarva@0.1.0 data-plane:tenant-connection:verify
-> node scripts/data-plane/verify-tenant-connection-resolution.mjs
-
-tenant-connection-resolution verifier passed

@@ -1,5 +1,0 @@
-
-> abarva@0.1.0 tenant:bootstrap:dry
-> npx tsx scripts/tenant-bootstrap.ts --dry-run
-
-◇ injected env (0) from .env.local // tip: ◈ encrypted .env [www.dotenvx.com]

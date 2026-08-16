@@ -1,9 +1,0 @@
-artifact_id,artifact_kind,status,score,failures
-meridian-health-tower-block-01,block,Pass,4.63,
-meridian-health-tower-block-02,block,Pass,4.63,
-meridian-health-tower-block-03,block,Pass,4.63,
-meridian-health-tower-block-04,block,Pass,4.63,
-meridian-health-tower-visual-01,visual_spec,Pass,4.63,
-meridian-health-tower-visual-02,visual_spec,Pass,4.63,
-meridian-health-tower-visual-03,visual_spec,Pass,4.63,
-meridian-health-tower-visual-04,visual_spec,Pass,4.63,

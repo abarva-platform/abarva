@@ -1,9 +1,0 @@
-artifact_set,path_glob,owner,write_allowed,review_agents_allowed,notes
-implementation_control,proof/foundation-v2-implementation-20260730/*,Foundation V2 implementation agent,YES,READ_ONLY,Local proof and ledger for this lane
-foundation_v2_scripts,scripts/foundation-v2/*,Foundation V2 implementation agent,YES,READ_ONLY,Path-safe package and gate tooling
-foundation_v2_tests,scripts/foundation-v2/__tests__/*,Foundation V2 implementation agent,YES,READ_ONLY,Self-contained test runners for implementation controls
-foundation_v2_migrations,supabase/migrations/*foundation_v2*,Foundation V2 implementation agent,YES,READ_ONLY,V2-only migrations; no V1 governed history mutation
-v1_data_layer,/Users/anand/Projects/nexus-airline-v1-reconciliation-closure/*,Agent A,NO,NO,Frozen unless precise regression is found
-foundation_b1_reapproval,/Users/anand/Projects/nexus-foundation-v2-b1-reapproval/*,Agent B reapproval archive,NO,READ_ONLY,Approved architecture package input only
-knowledge_ui_worktrees,/Users/anand/Projects/nexus-knowledge-*/*,Knowledge UI agent,NO,NO,Separate provider reconciliation lane
-source_demo_worktrees,/Users/anand/Projects/nexus-*source*/*,Source demo agent,NO,NO,Separate Source demo orchestration lane

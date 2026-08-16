@@ -1,5 +1,0 @@
-item_id,label,required,status,evidence_required
-operator-identity,"Named operator identity captured.",true,not_requested,"Approver name, role, and timestamp."
-scope-acknowledgement,"Candidate scope and tenant acknowledged.",true,not_requested,"Tenant key, candidate version, and module scope."
-not-active-truth-acknowledgement,"Candidate is not active runtime truth until promotion executes.",true,not_requested,"Explicit acknowledgement."
-rollback-approval,"Rollback plan accepted.",true,not_requested,"Rollback plan signoff and rehearsal result."

@@ -1,5 +1,0 @@
-tenant_key,mode,check,status,detail
-skyharbor-air,moves,Moves candidate opportunities exist,pass,12 moves
-skyharbor-air,moves,No active execution commitments,pass,active_execution_commitment checked
-skyharbor-air,moves,Phase gates reflect gaps,pass,evidence requirements checked
-skyharbor-air,moves,Azure/Postgres not mutated,pass,manifest boundary checked

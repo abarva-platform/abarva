@@ -1,9 +1,0 @@
-benefit_id,program_code,use_case_id,vendor_name,tool_name,promised_value_usd,finance_validated_value_usd,value_claim_status,tower_claim_allowed
-BEN-001,PROG-COPILOT-ADOPT,AI-UC-006,Microsoft,Microsoft 365 Copilot,14000000,2100000,measured_partial,partial
-BEN-002,PROG-SNOW-AI,AI-UC-007,ServiceNow,ServiceNow AI Agent Assist,6000000,800000,measured_partial,partial
-BEN-003,PROG-WORKDAY-AI,AI-UC-008,Workday,Workday AI HR/Finance Assist,3000000,400000,measured_partial,partial
-BEN-004,PROG-DEV-PRODUCTIVITY,AI-UC-009,GitHub,GitHub Copilot Enterprise,4500000,500000,measured_partial,partial
-BEN-005,PROG-CONTACT-KNOW,AI-UC-002,Genesys / Salesforce,Contact Center Knowledge Foundation,8000000,0,baseline_only,no
-BEN-006,PROG-DATA-FOUNDATION,,Databricks / AWS / Collibra,Data and AI Platform Enablement,0,0,readiness_only,no
-BEN-007,PROG-AI-GOV,,AbarVa / ServiceNow / Legal,AI Governance Controls,0,0,readiness_only,no
-BEN-008,PROG-AI-ASSIST-CANDIDATE,AI-UC-001,TBD,Member Service AI Assist,0,0,not_claimable,no

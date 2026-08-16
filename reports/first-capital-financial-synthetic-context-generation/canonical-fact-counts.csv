@@ -1,9 +1,0 @@
-tenant_key,artifact,count,status
-first-capital-financial,canonical_records,4840,pass
-first-capital-financial,canonical_facts,9680,pass
-first-capital-financial,entity_profiles,1100,pass
-first-capital-financial,graph_nodes,1600,pass
-first-capital-financial,graph_edges,2600,pass
-first-capital-financial,context_gaps,2100,pass
-first-capital-financial,evidence_references,140,pass
-first-capital-financial,retrieval_chunks,4600,pass

@@ -1,8 +1,0 @@
-{
-  "stage": "canonical_object_to_fact_plan",
-  "status": "pass",
-  "operationsPlanned": 10,
-  "factOperations": 5,
-  "evidenceOperations": 5,
-  "quarantineOperations": 0
-}

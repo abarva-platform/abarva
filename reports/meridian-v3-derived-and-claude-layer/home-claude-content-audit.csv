@@ -1,9 +1,0 @@
-story_block_id,section,fact_refs,evidence_refs,gap_refs,approved_status
-home:story:enterprise-brief,Enterprise Brief,30,30,18,source_grounded_pending_claude_key
-home:story:context-strength,Context Strength,120,120,18,source_grounded_pending_claude_key
-home:story:what-nexus-knows,What Nexus Knows,160,160,18,source_grounded_pending_claude_key
-home:story:candidate-ai-opportunity-portfolio,Candidate AI Opportunity Portfolio,242,242,247,source_grounded_pending_claude_key
-home:story:evidence-gaps,Evidence Gaps,160,160,18,source_grounded_pending_claude_key
-home:story:module-readiness,Module Readiness,100,100,18,source_grounded_pending_claude_key
-home:story:next-evidence-requests,Next Evidence Requests,120,120,18,source_grounded_pending_claude_key
-home:story:what-more-context-unlocks,What More Context Unlocks,265,5,18,source_grounded_pending_claude_key

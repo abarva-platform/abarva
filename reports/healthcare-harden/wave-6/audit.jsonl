@@ -1,3 +1,0 @@
-{"id":"W6-AUDIT-MERIDIAN-PROFILE","verdict":"PASS","notes":"Wave 6 uses the corrected Meridian profile: Sacramento-based integrated health system with a 30+ hospital footprint.","source":"intelligence/seeds/tenant-portfolios/meridian.json"}
-{"id":"W6-AUDIT-GOVERNED-LOADER","verdict":"PASS","notes":"Wave 6 generates import-ready JSONL and does not write directly to Postgres. Loading must occur through /admin/context-layer/uploads or the guarded corpus-import API."}
-{"id":"W6-AUDIT-STALE-PROFILE-GUARD","verdict":"PASS","notes":"Patterns must not contain stale 14-hospital, 220-ambulatory-site, or $7.8B revenue claims."}

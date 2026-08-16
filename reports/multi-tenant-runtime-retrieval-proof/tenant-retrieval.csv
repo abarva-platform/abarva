@@ -1,5 +1,0 @@
-tenant_key,client_alias,expected_mode,resolved_tenant_key,runtime_source,dataset_dir,dimensions,story_blocks,visual_specs,canonical_input_path,no_default_legacy_dataset_read,status
-skyharbor-air,skyharbor,approved-artifact,skyharbor-air,local-v3-standard,datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3,19,20,12,true,true,Pass
-first-capital,arcturus,approved-artifact,first-capital,local-v3-standard,datasets/tenant-inputs/first-capital/standard-2026-07-v3,19,20,12,true,true,Pass
-meridian-health,meridian,approved-artifact,meridian-health,local-v3-standard,datasets/tenant-inputs/meridian-health/standard-2026-07-v3,19,20,12,true,true,Pass
-__missing-artifact-probe__,__missing-artifact-probe__,missing-fallback,,none,,0,0,0,false,true,Pass

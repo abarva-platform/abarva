@@ -1,8 +1,0 @@
-{
-  "active": true,
-  "health": "Healthy",
-  "image": "acrabarvalab001.azurecr.io/abarva/web:main-9e4e483833",
-  "revision": "ca-abarva-web-lab-eastus--0000069",
-  "running": "Running",
-  "traffic": "100%"
-}

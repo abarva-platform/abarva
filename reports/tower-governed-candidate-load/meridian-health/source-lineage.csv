@@ -1,7 +1,0 @@
-dimension_key,path,row_count,evidence_count,projection_status
-08_spend_value,datasets/tenant-inputs/active/meridian-health/current/08_spend_value.csv,24,20,v3_context_pack_ready
-09_programs_initiatives,datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv,86,86,v3_context_pack_ready
-11_risks_controls,datasets/tenant-inputs/active/meridian-health/current/11_risks_controls.csv,172,172,v3_context_pack_ready
-14_metrics_outcomes,datasets/tenant-inputs/active/meridian-health/current/14_metrics_outcomes.csv,116,116,v3_context_pack_ready
-17_service_scope_managed_services,datasets/tenant-inputs/active/meridian-health/current/17_service_scope_managed_services.csv,2,2,v3_context_pack_ready
-18_operational_process_evidence,datasets/tenant-inputs/active/meridian-health/current/18_operational_process_evidence.csv,10,10,v3_context_pack_ready

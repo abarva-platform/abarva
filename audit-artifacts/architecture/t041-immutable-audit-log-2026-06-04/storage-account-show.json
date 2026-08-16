@@ -1,8 +1,0 @@
-{
-  "allowBlobPublicAccess": false,
-  "defaultAction": "Deny",
-  "id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-private-dataplane-lab-eastus/providers/Microsoft.Storage/storageAccounts/stabarvaprivatedplab001",
-  "name": "stabarvaprivatedplab001",
-  "publicNetworkAccess": "Disabled",
-  "resourceGroup": "rg-abarva-private-dataplane-lab-eastus"
-}

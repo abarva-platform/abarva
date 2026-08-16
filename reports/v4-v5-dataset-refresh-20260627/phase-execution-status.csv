@@ -1,7 +1,0 @@
-phase,task,owner,status,percent,output,next
-0,Freeze active source set,codex,done,100,curated-source-promotion-manifest.csv,Use only canonical v4 roots until a supplement is promoted.
-1,Quarantine noncanonical tenant keys,codex/db operator,ready,20,tenant-key-cleanup-plan.csv,"Map or quarantine lakefront-capital, northstar-clinical, roosevelt-holdings, UUID keys, unknown, archived:first-capital."
-2,Resolve business metadata conflicts,data design,ready,0,business-profile-reconciliation.csv,"Choose canonical profile source for Lakeshore, Meridian, SkyHarbor IT budget and AI spend."
-3,Repair graph and metric contracts,data engineering,ready,0,gap-register.csv,Fix SkyHarbor APP/SHA-APP mismatch; fix data product ids; add CapEx/OpEx and named owner policy.
-4,Refresh deterministic semantic2/L3 dossiers,db operator,blocked,0,not started,Run only after phases 1-3 pass.
-5,Runtime browser proof,codex/browser,blocked,0,not started,Home/Tower/Intelligence proof after refreshed eligible dossiers.

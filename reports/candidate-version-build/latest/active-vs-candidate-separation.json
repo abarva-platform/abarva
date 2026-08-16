@@ -1,9 +1,0 @@
-{
-  "defaultHomeRuntimeSource": "active_home_context",
-  "candidatePreviewRuntimeSource": "inactive_candidate_read_model",
-  "defaultHomeReadsCandidateData": false,
-  "moduleRuntimeReadsCandidateByDefault": false,
-  "activeTenantAccessLayerUpdated": false,
-  "candidatePromoted": false,
-  "productionTenantDataWritten": false
-}

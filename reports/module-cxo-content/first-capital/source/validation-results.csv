@@ -1,9 +1,0 @@
-artifact_id,artifact_kind,status,score,failures
-first-capital-source-block-01,block,Pass,4.63,
-first-capital-source-block-02,block,Pass,4.63,
-first-capital-source-block-03,block,Pass,4.63,
-first-capital-source-block-04,block,Pass,4.63,
-first-capital-source-visual-01,visual_spec,Pass,4.63,
-first-capital-source-visual-02,visual_spec,Pass,4.63,
-first-capital-source-visual-03,visual_spec,Pass,4.63,
-first-capital-source-visual-04,visual_spec,Pass,4.63,
