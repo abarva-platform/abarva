@@ -29,25 +29,32 @@ import {
   type PortfolioBookView,
 } from "@/lib/source/portfolio-book-view";
 import type { SourcingEventSummary } from "@/lib/source/types";
+import type { SourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 
 interface SourcePortfolioBookPageProps {
   events: SourcingEventSummary[];
   tenantName: string;
   canViewFinancialValues?: boolean;
+  governedSnapshot?: SourceV4WorkspaceSnapshot | null;
 }
 
 export function SourcePortfolioBookPage({
   events,
   tenantName,
   canViewFinancialValues = true,
+  governedSnapshot = null,
 }: SourcePortfolioBookPageProps) {
   const visibleEvents = useMemo(
     () => selectVisibleSourceEvents(events),
     [events],
   );
   const view = useMemo(
-    () => buildPortfolioBookView(visibleEvents, { canViewFinancialValues }),
-    [visibleEvents, canViewFinancialValues],
+    () =>
+      buildPortfolioBookView(visibleEvents, {
+        canViewFinancialValues,
+        governedSnapshot,
+      }),
+    [visibleEvents, canViewFinancialValues, governedSnapshot],
   );
 
   return (
