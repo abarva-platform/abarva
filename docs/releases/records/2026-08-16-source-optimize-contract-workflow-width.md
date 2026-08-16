@@ -54,7 +54,7 @@ Revert the PR and redeploy. Rollback restores the prior centered Optimize Contra
 
 ## Audit Evidence
 
-- PR URL: to be added after PR creation.
+- PR URL: https://github.com/abarva-platform/abarva/pull/6398
 - Focused unit test and ESLint output from this release branch.
 - Post-deploy ACA runtime invariant and signed-in browser screenshot should be attached to the merge/deploy proof.
 
