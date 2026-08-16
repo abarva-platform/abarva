@@ -1028,6 +1028,7 @@ async function refreshViews(client: Client, args: Args): Promise<void> {
       o.deterministic_basis,
       o.value_low,
       o.value_high,
+      o.timing_window,
       COALESCE(o.value_high, o.value_low) AS annual_value_exposed,
       COALESCE(o.value_low, 0) AS addressable_spend,
       CASE WHEN COALESCE(o.value_high, o.value_low, 0) >= 10000000 THEN 'high' WHEN COALESCE(o.value_high, o.value_low, 0) >= 1000000 THEN 'medium' ELSE 'low' END AS priority,
