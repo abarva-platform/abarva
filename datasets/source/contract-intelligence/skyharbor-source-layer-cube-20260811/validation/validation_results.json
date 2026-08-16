@@ -265,304 +265,304 @@
       "detail": "expected=48 actual=48"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-090-MSA_Salesforce_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-090-MSA_Vantage_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-MSA_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-MSA_Vantage_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-090-SOW-CORE_Salesforce_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-090-SOW-CORE_Vantage_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-SOW-CORE_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-SOW-CORE_Vantage_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-090-SOW-TRANSITION_Salesforce_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-090-SOW-TRANSITION_Vantage_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-SOW-TRANSITION_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-SOW-TRANSITION_Vantage_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-090-ORDER-BASE_Salesforce_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-090-ORDER-BASE_Vantage_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-ORDER-BASE_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-ORDER-BASE_Vantage_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-090-ORDER-TRUEUP_Salesforce_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-090-ORDER-TRUEUP_Vantage_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-ORDER-TRUEUP_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-ORDER-TRUEUP_Vantage_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-090-AMEND-001_Salesforce_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-090-AMEND-001_Vantage_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-AMEND-001_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-AMEND-001_Vantage_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-090-AMEND-002_Salesforce_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-090-AMEND-002_Vantage_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-AMEND-002_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-AMEND-002_Vantage_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-090-PRICING-EXHIBIT_Salesforce_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-090-PRICING-EXHIBIT_Vantage_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-PRICING-EXHIBIT_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-PRICING-EXHIBIT_Vantage_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-090-SLA-SCHEDULE_Salesforce_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-090-SLA-SCHEDULE_Vantage_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-SLA-SCHEDULE_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-SLA-SCHEDULE_Vantage_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-090-SUPPORT-POLICY_Salesforce_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-090-SUPPORT-POLICY_Vantage_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-SUPPORT-POLICY_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-SUPPORT-POLICY_Vantage_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-090-SECURITY-DPA_Salesforce_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-090-SECURITY-DPA_Vantage_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-SECURITY-DPA_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-SECURITY-DPA_Vantage_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-090-NOTICE-RENEWAL_Salesforce_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-090-NOTICE-RENEWAL_Vantage_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-NOTICE-RENEWAL_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-NOTICE-RENEWAL_Vantage_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-090-RENEWAL-QUOTE_Salesforce_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-090-RENEWAL-QUOTE_Vantage_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-RENEWAL-QUOTE_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-RENEWAL-QUOTE_Vantage_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-090-SIDE-LETTER_Salesforce_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-090-SIDE-LETTER_Vantage_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-SIDE-LETTER_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-SIDE-LETTER_Vantage_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-090-EXIT-PLAN_Salesforce_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-090-EXIT-PLAN_Vantage_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-EXIT-PLAN_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-EXIT-PLAN_Vantage_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-061-MSA_Microsoft_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-061-MSA_Northgate_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-MSA_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-MSA_Northgate_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-061-SOW-CORE_Microsoft_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-061-SOW-CORE_Northgate_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-SOW-CORE_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-SOW-CORE_Northgate_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-061-SOW-TRANSITION_Microsoft_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-061-SOW-TRANSITION_Northgate_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-SOW-TRANSITION_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-SOW-TRANSITION_Northgate_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-061-ORDER-BASE_Microsoft_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-061-ORDER-BASE_Northgate_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-ORDER-BASE_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-ORDER-BASE_Northgate_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-061-ORDER-TRUEUP_Microsoft_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-061-ORDER-TRUEUP_Northgate_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-ORDER-TRUEUP_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-ORDER-TRUEUP_Northgate_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-061-AMEND-001_Microsoft_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-061-AMEND-001_Northgate_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-AMEND-001_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-AMEND-001_Northgate_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-061-AMEND-002_Microsoft_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-061-AMEND-002_Northgate_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-AMEND-002_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-AMEND-002_Northgate_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-061-PRICING-EXHIBIT_Microsoft_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-061-PRICING-EXHIBIT_Northgate_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-PRICING-EXHIBIT_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-PRICING-EXHIBIT_Northgate_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-061-SLA-SCHEDULE_Microsoft_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-061-SLA-SCHEDULE_Northgate_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-SLA-SCHEDULE_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-SLA-SCHEDULE_Northgate_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-061-SUPPORT-POLICY_Microsoft_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-061-SUPPORT-POLICY_Northgate_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-SUPPORT-POLICY_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-SUPPORT-POLICY_Northgate_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-061-SECURITY-DPA_Microsoft_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-061-SECURITY-DPA_Northgate_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-SECURITY-DPA_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-SECURITY-DPA_Northgate_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-061-NOTICE-RENEWAL_Microsoft_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-061-NOTICE-RENEWAL_Northgate_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-NOTICE-RENEWAL_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-NOTICE-RENEWAL_Northgate_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-061-RENEWAL-QUOTE_Microsoft_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-061-RENEWAL-QUOTE_Northgate_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-RENEWAL-QUOTE_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-RENEWAL-QUOTE_Northgate_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-061-SIDE-LETTER_Microsoft_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-061-SIDE-LETTER_Northgate_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-SIDE-LETTER_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-SIDE-LETTER_Northgate_SYNTHETIC.md"
     },
     {
-      "check": "manifest_sha:documents/DOC-CTR-061-EXIT-PLAN_Microsoft_SYNTHETIC.md",
+      "check": "manifest_sha:documents/DOC-CTR-061-EXIT-PLAN_Northgate_SYNTHETIC.md",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-EXIT-PLAN_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-EXIT-PLAN_Northgate_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-090-MSA",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-MSA_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-MSA_Vantage_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-090-SOW-CORE",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-SOW-CORE_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-SOW-CORE_Vantage_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-090-SOW-TRANSITION",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-SOW-TRANSITION_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-SOW-TRANSITION_Vantage_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-090-ORDER-BASE",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-ORDER-BASE_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-ORDER-BASE_Vantage_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-090-ORDER-TRUEUP",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-ORDER-TRUEUP_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-ORDER-TRUEUP_Vantage_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-090-AMEND-001",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-AMEND-001_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-AMEND-001_Vantage_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-090-AMEND-002",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-AMEND-002_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-AMEND-002_Vantage_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-090-PRICING-EXHIBIT",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-PRICING-EXHIBIT_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-PRICING-EXHIBIT_Vantage_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-090-SLA-SCHEDULE",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-SLA-SCHEDULE_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-SLA-SCHEDULE_Vantage_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-090-SUPPORT-POLICY",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-SUPPORT-POLICY_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-SUPPORT-POLICY_Vantage_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-090-SECURITY-DPA",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-SECURITY-DPA_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-SECURITY-DPA_Vantage_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-090-NOTICE-RENEWAL",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-NOTICE-RENEWAL_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-NOTICE-RENEWAL_Vantage_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-090-RENEWAL-QUOTE",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-RENEWAL-QUOTE_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-RENEWAL-QUOTE_Vantage_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-090-SIDE-LETTER",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-SIDE-LETTER_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-SIDE-LETTER_Vantage_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-090-EXIT-PLAN",
       "status": "pass",
-      "detail": "documents/DOC-CTR-090-EXIT-PLAN_Salesforce_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-090-EXIT-PLAN_Vantage_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-061-MSA",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-MSA_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-MSA_Northgate_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-061-SOW-CORE",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-SOW-CORE_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-SOW-CORE_Northgate_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-061-SOW-TRANSITION",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-SOW-TRANSITION_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-SOW-TRANSITION_Northgate_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-061-ORDER-BASE",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-ORDER-BASE_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-ORDER-BASE_Northgate_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-061-ORDER-TRUEUP",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-ORDER-TRUEUP_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-ORDER-TRUEUP_Northgate_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-061-AMEND-001",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-AMEND-001_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-AMEND-001_Northgate_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-061-AMEND-002",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-AMEND-002_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-AMEND-002_Northgate_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-061-PRICING-EXHIBIT",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-PRICING-EXHIBIT_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-PRICING-EXHIBIT_Northgate_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-061-SLA-SCHEDULE",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-SLA-SCHEDULE_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-SLA-SCHEDULE_Northgate_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-061-SUPPORT-POLICY",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-SUPPORT-POLICY_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-SUPPORT-POLICY_Northgate_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-061-SECURITY-DPA",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-SECURITY-DPA_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-SECURITY-DPA_Northgate_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-061-NOTICE-RENEWAL",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-NOTICE-RENEWAL_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-NOTICE-RENEWAL_Northgate_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-061-RENEWAL-QUOTE",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-RENEWAL-QUOTE_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-RENEWAL-QUOTE_Northgate_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-061-SIDE-LETTER",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-SIDE-LETTER_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-SIDE-LETTER_Northgate_SYNTHETIC.md"
     },
     {
       "check": "document_inventory_sha:DOC-CTR-061-EXIT-PLAN",
       "status": "pass",
-      "detail": "documents/DOC-CTR-061-EXIT-PLAN_Microsoft_SYNTHETIC.md"
+      "detail": "documents/DOC-CTR-061-EXIT-PLAN_Northgate_SYNTHETIC.md"
     },
     {
       "check": "evidence_links_resolve",

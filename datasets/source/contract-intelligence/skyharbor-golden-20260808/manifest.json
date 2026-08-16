@@ -7,8 +7,8 @@
   "contracts": [
     {
       "contract_id": "CTR-090",
-      "vendor_name": "Salesforce",
-      "contract_name": "Salesforce Data Platform Agreement 3",
+      "vendor_name": "Vantage",
+      "contract_name": "Vantage Data Platform Agreement 3",
       "archetype": "SaaS data platform",
       "annual_value_usd": 43500000,
       "actual_annual_spend_usd": 37413299,
@@ -22,8 +22,8 @@
     },
     {
       "contract_id": "CTR-061",
-      "vendor_name": "Microsoft",
-      "contract_name": "Microsoft Cloud Platform Agreement 2",
+      "vendor_name": "Northgate",
+      "contract_name": "Northgate Cloud Platform Agreement 2",
       "archetype": "Cloud platform enterprise agreement",
       "annual_value_usd": 35800000,
       "actual_annual_spend_usd": 28289093,
@@ -118,12 +118,12 @@
       "sha256": "87add049101ddf07fecb05a8656b2a0fbaf000722ded22dd08301de16946cacb"
     },
     {
-      "file": "documents/CTR-090_Salesforce_Executed_Agreement_SYNTHETIC.pdf",
+      "file": "documents/CTR-090_Vantage_Executed_Agreement_SYNTHETIC.pdf",
       "rows": null,
       "sha256": "7fc4e2924ff58271d5941795a4dd6ac67d0cc15ae0c39f7efd945e5de10e90f4"
     },
     {
-      "file": "documents/CTR-061_Microsoft_Executed_Agreement_SYNTHETIC.pdf",
+      "file": "documents/CTR-061_Northgate_Executed_Agreement_SYNTHETIC.pdf",
       "rows": null,
       "sha256": "46bf5af8d3b0ad76d3bfdc488c0e62f4e7de1886bd16f5c74d3a0b6a25933808"
     },

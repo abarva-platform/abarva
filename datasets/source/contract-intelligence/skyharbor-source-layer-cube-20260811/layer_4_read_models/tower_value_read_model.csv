@@ -1,3 +1,3 @@
 tenant_key,contract_id,vendor_name,annual_value_usd,accepted_opportunity_base_usd,finance_confirmed_value_usd,tower_claim_allowed,claim_caveat,read_model_status
-skyharbor_global,CTR-090,"Salesforce, Inc.",43500000,2058029.73,191952.0,yes,Synthetic offline proof only; not client truth.,offline_tower_value_projection_ready
-skyharbor_global,CTR-061,Microsoft Corporation,35800000,0,0.0,no,Synthetic offline proof only; not client truth.,offline_tower_value_projection_ready
+skyharbor_global,CTR-090,"Vantage Data Cloud, Inc.",43500000,2058029.73,191952.0,yes,Synthetic offline proof only; not client truth.,offline_tower_value_projection_ready
+skyharbor_global,CTR-061,Northgate Cloud Corporation,35800000,0,0.0,no,Synthetic offline proof only; not client truth.,offline_tower_value_projection_ready

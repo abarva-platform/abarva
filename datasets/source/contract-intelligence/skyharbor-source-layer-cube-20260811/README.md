@@ -4,7 +4,7 @@ SYNTHETIC DEMO DATA - NOT CLIENT DATA - OFFLINE LAYER/CUBE PROOF ONLY
 
 Input package: `reports/source-golden-contract-production-reconciled-v2-20260811`.
 
-This is a local/offline population of the four Enterprise Information Architecture layers plus a cube-style proof. It does not load Azure/Postgres, update Active Tenant Access, backfill retrieval indexes, deploy, or make a live-client claim.
+This is a local/offline population of the four Enterprise Information Architecture layers plus a cube-style proof. It does not load Northgate Cloud/Postgres, update Active Tenant Access, backfill retrieval indexes, deploy, or make a live-client claim.
 
 ## Produced Layers
 

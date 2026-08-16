@@ -819,7 +819,8 @@
     "packet:generate": "node scripts/data/contract-packet/generate-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --out .artifacts/contract-packets",
     "packet:reconcile": "node scripts/data/contract-packet/reconcile-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --packets .artifacts/contract-packets",
     "packet:benchmark": "node scripts/data/contract-packet/benchmark-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --packets .artifacts/contract-packets",
-    "packet:check": "npm run packet:generate && npm run packet:reconcile && npm run packet:benchmark"
+    "packet:check": "npm run packet:generate && npm run packet:reconcile && npm run packet:benchmark",
+    "validate:no-real-vendor-parties": "node scripts/audit/validate-no-real-vendor-parties.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

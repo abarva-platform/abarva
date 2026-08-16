@@ -7,13 +7,13 @@
   "contracts": [
     {
       "contract_id": "CTR-090",
-      "pdf_file": "documents/CTR-090_Salesforce_Executed_Agreement_SYNTHETIC.pdf",
+      "pdf_file": "documents/CTR-090_Vantage_Executed_Agreement_SYNTHETIC.pdf",
       "expected_clause_count": 16,
       "extracted_clause_count": 16
     },
     {
       "contract_id": "CTR-061",
-      "pdf_file": "documents/CTR-061_Microsoft_Executed_Agreement_SYNTHETIC.pdf",
+      "pdf_file": "documents/CTR-061_Northgate_Executed_Agreement_SYNTHETIC.pdf",
       "expected_clause_count": 16,
       "extracted_clause_count": 16
     }
