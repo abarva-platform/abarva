@@ -102,11 +102,18 @@ describe("agent route · Source aVa contract optimization authority", () => {
   it("uses explicit governed tenant context for contract-grain Source reads", () => {
     expect(source).toContain("const sourceContractReadTenantKey =");
     expect(source).toContain(
-      "const contractGroundingTenantKey =\n    sourceContractReadTenantKey ?? effectiveClientKey;",
+      "const contractGroundingTenantKeys = uniqueNonEmptyStrings([",
     );
     expect(source).toContain(
-      "await buildAvaSourceContractGrounding(\n        contractGroundingTenantKey,",
+      "sourceContractReadTenantKey,",
     );
+    expect(source).toContain(
+      "for (const contractGroundingTenantKey of contractGroundingTenantKeys)",
+    );
+    expect(source).toContain(
+      "await buildAvaSourceContractGrounding(\n          contractGroundingTenantKey,",
+    );
+    expect(source).toContain("function uniqueNonEmptyStrings");
     expect(source).toContain("function resolveSourceContractReadTenantKey");
     expect(source).toContain("return explicitTenantKey;");
   });

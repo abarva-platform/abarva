@@ -81,14 +81,15 @@ export async function buildAvaSourceContractGrounding(
   if (!tenantKey || !trimmedId) return { block: "", hasLiveNumbers: false };
 
   const contract = await getContract360(tenantKey, trimmedId).catch(() => null);
-  if (!contract) return { block: "", hasLiveNumbers: false };
-
   const [opportunitySet, evidencePack] = await Promise.all([
     getContractOptimizationOpportunitySet(tenantKey, trimmedId, contract).catch(
       () => null,
     ),
     getContractOptimizationEvidencePack(tenantKey, trimmedId).catch(() => null),
   ]);
+  if (!contract && !opportunitySet) {
+    return { block: "", hasLiveNumbers: false };
+  }
 
   const readiness = buildContractOptimizationEvidenceReadiness({
     evidencePack: evidencePack ?? null,
@@ -150,15 +151,17 @@ export async function buildAvaSourceContractGrounding(
 
   const lines: string[] = [
     `AUTHORITATIVE SOURCE CONTRACT GROUNDING (LIVE — the same governed reads the Optimize Contract page renders, tenant "${tenantKey}", contract ${trimmedId}):`,
-    `Exact contract display name: "${contract.contract_name ?? trimmedId}". Exact vendor display name: "${contract.vendor_name ?? "not established"}". Use these exact names; do not substitute a similar name from generic context or prior examples.`,
+    `Exact contract display name: "${contract?.contract_name ?? opportunitySet?.contractName ?? trimmedId}". Exact vendor display name: "${contract?.vendor_name ?? opportunitySet?.vendorName ?? "not established"}". Use these exact names; do not substitute a similar name from generic context or prior examples.`,
     // `resolved_annual_value` wins whenever extraction disagreed with the
     // stated value; quoting the raw column there would repeat a known conflict.
-    `Contract: ${contract.contract_name ?? trimmedId}. Vendor: ${contract.vendor_name ?? "not established"}. Annual value: ${fmtUsd(
-      contract.annual_value_conflict_flag
-        ? contract.resolved_annual_value
-        : contract.annual_value,
+    `Contract: ${contract?.contract_name ?? opportunitySet?.contractName ?? trimmedId}. Vendor: ${contract?.vendor_name ?? opportunitySet?.vendorName ?? "not established"}. Annual value: ${fmtUsd(
+      contract
+        ? contract.annual_value_conflict_flag
+          ? contract.resolved_annual_value
+          : contract.annual_value
+        : opportunitySet?.baseline.annualValueUsd,
     )}.${
-      contract.annual_value_conflict_flag
+      contract?.annual_value_conflict_flag
         ? " (Stated annual value and extracted value disagreed; the resolved value is quoted.)"
         : ""
     }`,

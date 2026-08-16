@@ -86,7 +86,12 @@ function opportunitySet(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   getContract360.mockResolvedValue(contractRow());
-  getContractOptimizationOpportunitySet.mockResolvedValue(opportunitySet());
+  getContractOptimizationOpportunitySet.mockImplementation(
+    (_tenantKey: string, contractId: string) =>
+      Promise.resolve(
+        contractId === "CTR-090" ? opportunitySet({ contractId }) : null,
+      ),
+  );
   getContractOptimizationEvidencePack.mockResolvedValue(null);
 });
 
@@ -112,11 +117,41 @@ describe("buildAvaSourceContractGrounding", () => {
 
   it("never breaks the turn when a read fails", async () => {
     getContract360.mockRejectedValue(new Error("db down"));
+    getContractOptimizationOpportunitySet.mockRejectedValue(
+      new Error("db down"),
+    );
     const result = await buildAvaSourceContractGrounding(
       "skyharbor-air",
       "CTR-090",
     );
     expect(result.block).toBe("");
+  });
+
+  it("grounds from the persisted opportunity set when Contract 360 misses the row", async () => {
+    getContract360.mockResolvedValue(null);
+    getContractOptimizationOpportunitySet.mockResolvedValue(
+      opportunitySet({
+        contractName: "Salesforce Data Platform Agreement 3",
+        vendorName: "Salesforce",
+        baseline: {
+          status: "ready",
+          annualValueUsd: 43_500_000,
+        },
+      }),
+    );
+
+    const { block, hasLiveNumbers } = await buildAvaSourceContractGrounding(
+      "skyharbor-air",
+      "CTR-090",
+    );
+
+    expect(hasLiveNumbers).toBe(true);
+    expect(block).toContain(
+      'Exact contract display name: "Salesforce Data Platform Agreement 3"',
+    );
+    expect(block).toContain('Exact vendor display name: "Salesforce"');
+    expect(block).toContain("Annual value: $43.5M");
+    expect(block).toContain("Contract-grain grounding IS available for CTR-090");
   });
 
   it("grounds the contract with baseline, readiness, and traceability", async () => {
