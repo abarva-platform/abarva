@@ -583,6 +583,28 @@ describe("runSourceAnswerQualityGate — Phase C: decision_recommendation / cont
     expect(result.finalText).toContain("approved realized value remains $0");
     expect(result.finalText).not.toMatch(/moves into confirmed realized value/i);
   });
+
+  it("repairs pending Finance/Tower evidence that is described as converting from pending to approved", () => {
+    const CONTRACT_OPT_GROUNDING = [
+      "AUTHORITATIVE SOURCE CONTRACT GROUNDING:",
+      "Workflow lifecycle state: strategy approval approved; vendor outcome agreed; Finance/Tower confirmation request pending; value-proof gate open.",
+      "Finance/Tower evidence pending approval: $940K. Approved realized value: $0 until the Finance/Tower confirmation request is approved.",
+      "Rules for these numbers: If the value-proof gate is open, do not say Finance has confirmed, do not say realized value to date, do not call the pending evidence booked, claimable, confirmed, or approved. Do not say the pending amount converts into approved value or moves from pending to approved.",
+    ].join("\n");
+    const result = runSourceAnswerQualityGate({
+      answerText:
+        "Approved realized value remains $0 today. The single move that converts $940K from pending to approved is getting that confirmation request approved by Finance or Tower. Next: wait for Finance/Tower approval.",
+      mode: "contract_optimization",
+      hasGroundingContext: true,
+      groundingBlockText: CONTRACT_OPT_GROUNDING,
+    });
+
+    expect(result.repaired).toBe(true);
+    expect(result.passed).toBe(true);
+    expect(result.finalText).toContain("becomes eligible");
+    expect(result.finalText).toContain("approved realized value remains $0");
+    expect(result.finalText).not.toMatch(/converts \$940K from pending to approved/i);
+  });
 });
 
 describe("runSourceAnswerQualityGate — Phase C: general_advisory has a lighter bar", () => {

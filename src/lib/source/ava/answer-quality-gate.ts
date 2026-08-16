@@ -285,10 +285,10 @@ const CONFIRMED_REALIZED_VALUE_SENTENCE_RE =
   /(^|[.!?\n]\s*)[^.!?\n]*(?:(?:Finance(?:\/Tower)?\s+(?:has\s+)?confirmed|Finance-confirmed)[^.!?\n]*(?:realized value|value)|realized value (?:to date|is|of)[^.!?\n]*\$\s?[\d,]+(?:\.\d+)?\s?(?:[KkMmBb]|thousand|million|billion)?\b)[^.!?\n]*[.!?]?/gi;
 
 const PENDING_VALUE_AUTOMATIC_CONVERSION_RE =
-  /\b(?:the moment|when|once)\s+Finance(?:\/Tower)?\s+(?:approves|signs off)[^.!?\n]*(?:moves?|becomes?|turns into|converts? into)[^.!?\n]*(?:confirmed|approved|booked|realized value)|\b(?:moves?|becomes?|turns into|converts? into)[^.!?\n]*(?:confirmed|approved|booked|realized value)[^.!?\n]*(?:when|once)\s+Finance(?:\/Tower)?\s+(?:approves|signs off)\b/i;
+  /\b(?:the moment|when|once)\s+Finance(?:\/Tower)?\s+(?:approves|signs off)[^.!?\n]*(?:moves?|becomes?|turns into|converts?(?: into)?)[^.!?\n]*(?:confirmed|approved|booked|realized value)|\b(?:moves?|becomes?|turns into|converts?(?: into)?)[^.!?\n]*(?:confirmed|approved|booked|realized value)[^.!?\n]*(?:when|once)\s+Finance(?:\/Tower)?\s+(?:approves|signs off)\b|\b(?:converts?|moves?|turns into)[^.!?\n]*(?:pending|\$\s?[\d,]+(?:\.\d+)?\s?(?:[KkMmBb]|thousand|million|billion)?)[^.!?\n]*(?:approved|confirmed|booked|realized value)\b/i;
 
 const PENDING_VALUE_AUTOMATIC_CONVERSION_SENTENCE_RE =
-  /(^|[.!?\n]\s*)[^.!?\n]*(?:(?:the moment|when|once)\s+Finance(?:\/Tower)?\s+(?:approves|signs off)[^.!?\n]*(?:moves?|becomes?|turns into|converts? into)[^.!?\n]*(?:confirmed|approved|booked|realized value)|(?:moves?|becomes?|turns into|converts? into)[^.!?\n]*(?:confirmed|approved|booked|realized value)[^.!?\n]*(?:when|once)\s+Finance(?:\/Tower)?\s+(?:approves|signs off))[^.!?\n]*[.!?]?/gi;
+  /(^|[.!?\n]\s*)[^.!?\n]*(?:(?:the moment|when|once)\s+Finance(?:\/Tower)?\s+(?:approves|signs off)[^.!?\n]*(?:moves?|becomes?|turns into|converts?(?: into)?)[^.!?\n]*(?:confirmed|approved|booked|realized value)|(?:moves?|becomes?|turns into|converts?(?: into)?)[^.!?\n]*(?:confirmed|approved|booked|realized value)[^.!?\n]*(?:when|once)\s+Finance(?:\/Tower)?\s+(?:approves|signs off)|(?:converts?|moves?|turns into)[^.!?\n]*(?:pending|\$\s?[\d,]+(?:\.\d+)?\s?(?:[KkMmBb]|thousand|million|billion)?)[^.!?\n]*(?:approved|confirmed|booked|realized value))[^.!?\n]*[.!?]?/gi;
 
 // Vague negotiation-posture phrases that dodge naming the SPECIFIC vendor/lever
 // ask the grounding block already carries (e.g. the archetype's `bafoAsk` text,
