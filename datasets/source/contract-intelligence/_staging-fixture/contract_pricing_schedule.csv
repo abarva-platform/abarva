@@ -1,0 +1,8 @@
+contract_id,line_no,sku,description,unit,quantity,unit_price_usd,annual_line_total_usd,price_cap_percent
+CTR-H-001,1,VER-EHR-CORE,EHR core platform subscription,licensed bed,620,5400,3348000,3.0
+CTR-H-001,2,VER-EHR-AMB,Ambulatory module subscription,provider,1180,900,1062000,3.0
+CTR-H-001,3,VER-EHR-SUP,Platinum support and maintenance,annual,1,410000,410000,3.0
+CTR-H-002,1,NW-M365-E5,Productivity suite E5,user,14200,132,1874400,5.0
+CTR-H-002,2,NW-CLD-COMMIT,Cloud consumption commitment,annual,1,265600,265600,5.0
+CTR-H-003,1,HAL-RCM-BASE,Revenue cycle managed service base fee,annual,1,2610000,2610000,4.0
+CTR-H-003,2,HAL-RCM-VAR,Variable claims processing,claim,1275000,0.60,765000,4.0

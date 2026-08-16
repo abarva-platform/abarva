@@ -81,3 +81,6 @@ parallel-run-diff-results.md
 .auth/
 out/
 .tcc-harness/
+
+# Generated contract packets (regenerate with npm run packet:check)
+.artifacts/contract-packets/

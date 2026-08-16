@@ -1,0 +1,8 @@
+contract_id,role,rate_usd,unit,rate_hold_scope
+CTR-H-001,Engagement lead,310.00,per hour,initial term and transition period
+CTR-H-001,Solution architect,285.00,per hour,initial term and transition period
+CTR-H-001,Implementation consultant,215.00,per hour,initial term and transition period
+CTR-H-002,Cloud architect,295.00,per hour,initial term and transition period
+CTR-H-002,Platform engineer,205.00,per hour,initial term and transition period
+CTR-H-003,Engagement lead,320.00,per hour,initial term and transition period
+CTR-H-003,Revenue cycle analyst,190.00,per hour,initial term and transition period
