@@ -7,15 +7,17 @@ import {
 
 describe("tenant compliance metadata", () => {
   it("defaults tenants without regulated healthcare posture to not-required compliance states", () => {
-    expect(getTenantComplianceMetadata("apex-retail")).toEqual(
+    expect(getTenantComplianceMetadata("skyharbor-air")).toEqual(
       DEFAULT_TENANT_COMPLIANCE_METADATA,
     );
-    expect(getTenantComplianceMetadata("first-capital")).toMatchObject({
-      regulatedDataProfile: "none",
-      baa: { status: "not_required", executionDate: null },
-      hipaaRiskAssessment: { status: "not_required", assessmentDate: null },
-      evidencePointer: null,
-    });
+    expect(getTenantComplianceMetadata("unknown-retired-tenant")).toMatchObject(
+      {
+        regulatedDataProfile: "none",
+        baa: { status: "not_required", executionDate: null },
+        hipaaRiskAssessment: { status: "not_required", assessmentDate: null },
+        evidencePointer: null,
+      },
+    );
   });
 
   it("tracks Meridian as a healthcare-provider PHS placeholder without claiming BAA execution", () => {
@@ -47,10 +49,10 @@ describe("tenant compliance metadata", () => {
     expect(compliance.notes).toContain("completed HIPAA risk assessment");
   });
 
-  it("declares Apex Retail as subscribed to the core and retail-v1 pattern overlays", () => {
-    expect(getTenantPatternOverlays("apex-retail")).toEqual([
+  it("declares the airline tenant as subscribed to the core and airline pattern overlays", () => {
+    expect(getTenantPatternOverlays("skyharbor-air")).toEqual([
       "core",
-      "retail-v1",
+      "airline-industry-v1",
     ]);
   });
 

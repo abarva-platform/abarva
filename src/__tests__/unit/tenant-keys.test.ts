@@ -32,12 +32,16 @@ describe("canonicalTenantKey", () => {
       meridian: "meridian-health",
       "meridian health": "meridian-health",
       "meridian health system": "meridian-health",
+      "meridian-health-global": "meridian-health",
       northstar: "northstar-clinical",
       "northstar clinical technologies": "northstar-clinical",
       "retail demo": "apex-retail",
       skyharbor: "skyharbor-air",
       "skyharbor air": "skyharbor-air",
       "skyharbor airlines": "skyharbor-air",
+      "skyharbor global": "skyharbor-air",
+      "skyharbor global airlines group": "skyharbor-air",
+      "skyharbor-global": "skyharbor-air",
     });
   });
 
@@ -52,8 +56,12 @@ describe("canonicalTenantKey", () => {
   });
 
   it("does not silently normalize retired Lakeshore aliases", () => {
-    expect(canonicalTenantKey("lakeshore-industries")).toBe("lakeshore-industries");
-    expect(canonicalTenantKey("lakeshore industries")).toBe("lakeshore industries");
+    expect(canonicalTenantKey("lakeshore-industries")).toBe(
+      "lakeshore-industries",
+    );
+    expect(canonicalTenantKey("lakeshore industries")).toBe(
+      "lakeshore industries",
+    );
     expect(canonicalTenantKey("morganstreet")).toBe("morganstreet");
     expect(canonicalTenantKey("morgan-street")).toBe("morgan-street");
     expect(canonicalTenantKey("mona-street")).toBe("mona-street");

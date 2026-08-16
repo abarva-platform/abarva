@@ -1,7 +1,7 @@
 {
   "dataset_id": "first-capital-rich-synthetic-v3-candidate-20260717",
   "title": "FS Demo Rich Synthetic V3 Candidate Context",
-  "client_key": "first-capital",
+  "client_key": "corpus_global",
   "source_layer": "tenant_context",
   "classification": "internal",
   "owner": "AbarVa Data Governance",
@@ -13,5 +13,5 @@
   "expected_object_count": 9680,
   "approved_by": "Anand Sundaram",
   "approved_at": "2026-07-17",
-  "notes": "FS Demo candidate-only synthetic context for AbarVa pages. Physical tenant label is First Capital Financial; physical input tenant key is first-capital-financial. No Azure/Postgres mutation, active pointer update, default runtime visibility, PHI, PII, PCI, payment-card, account-level, passenger-level, or real customer data is authorized by this manifest."
+  "notes": "Historical candidate-only synthetic context manifest retained for audit continuity after tenant-scope sunset. It is not an active tenant manifest and does not authorize Azure/Postgres mutation, active pointer update, default runtime visibility, PHI, PII, PCI, payment-card, account-level, passenger-level, or real customer data."
 }
