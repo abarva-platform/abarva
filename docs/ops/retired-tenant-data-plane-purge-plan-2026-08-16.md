@@ -120,12 +120,23 @@ After approval, the safe order is:
    approval for the focused residue purge. Do not combine this with the generic
    purge approval.
 
+The focused residue purge is fail-closed for `--truncate-empty-keep`: every
+resolved truncate table must have a `tenant_key` column, and every table must
+show zero protected keep-key rows before truncation. If the script cannot count
+keep-key rows for a table, the truncate strategy is not allowed.
+
+The chunked residue delete strategy also treats keep-key row counts as a guard,
+not just telemetry. Each table delete is committed only after the after-count
+matches the before-count for protected keep keys.
+
 ## Hard Stops
 
 Stop and do not apply if any proof shows:
 
 - a protected keep key in the retired-key match set
 - a keep client ID overlapping a retired client ID
+- a focused residue truncate table without a `tenant_key` column
+- a focused residue delete that changes protected keep-key row counts
 - a table without a tenant/client predicate being targeted for deletion
 - a delete plan requiring `CASCADE`
 - an unreviewed JSON/text payload scan finding

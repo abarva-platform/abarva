@@ -23,6 +23,11 @@ ledger entry is created by this plan-only change because no ingestion or
 database mutation is performed; any future replacement load must use the Admin
 Data Loader or a loader-backed path that records that ledger evidence.
 
+The focused residue purge now fails closed for protected tenants: truncate mode
+requires every resolved table to have a `tenant_key` column and zero protected
+keep-key rows, and chunked delete mode rolls back the table if protected
+keep-key counts change.
+
 ## Layer Impact
 
 - `client-data-lane`: corrects operator tooling that would be used to audit or

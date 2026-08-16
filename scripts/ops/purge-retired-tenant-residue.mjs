@@ -48,7 +48,8 @@ function usage() {
 
 Options:
   --apply                  Delete matching rows. Env: RETIRED_TENANT_RESIDUE_PURGE_APPLY=1
-  --truncate-empty-keep    In apply mode, truncate scoped tables only if all have zero keep-key rows.
+  --truncate-empty-keep    In apply mode, truncate tenant-scoped tables only if every table has tenant_key
+                           and all have zero keep-key rows.
                            Env: RETIRED_TENANT_RESIDUE_PURGE_TRUNCATE_EMPTY_KEEP=1
   --database-url <url>     Postgres URL. Defaults to DATABASE_URL / ABARVA_AZURE_DATABASE_URL / AZURE_DATABASE_URL.
   --out-dir <path>         Output directory. Defaults to /tmp/retired-tenant-residue-purge.
@@ -300,10 +301,15 @@ async function truncateEmptyKeepTables(client, tableRefs) {
   }
   for (const tableRef of existingTableRefs) {
     const tenantScoped = await hasTenantKey(client, tableRef);
+    if (!tenantScoped) {
+      throw new Error(
+        `${tableRef.qualifiedName} has no tenant_key column; refusing truncate because keep-key rows cannot be counted.`,
+      );
+    }
     const beforeTotalRows = await countAllRows(client, tableRef);
-    const beforeRetiredRows = tenantScoped ? await countRows(client, tableRef, RETIRED_KEYS) : null;
-    const beforeKeepRows = tenantScoped ? await countRows(client, tableRef, KEEP_KEYS) : null;
-    if (beforeKeepRows !== null && beforeKeepRows !== 0) {
+    const beforeRetiredRows = await countRows(client, tableRef, RETIRED_KEYS);
+    const beforeKeepRows = await countRows(client, tableRef, KEEP_KEYS);
+    if (beforeKeepRows !== 0) {
       throw new Error(`${tableRef.qualifiedName} has ${beforeKeepRows} keep-key rows; refusing truncate.`);
     }
     actions.push({
@@ -335,12 +341,12 @@ async function truncateEmptyKeepTables(client, tableRefs) {
     if (action.skipped) continue;
     const tableRef = parseQualifiedName(action.qualifiedName);
     action.afterTotalRows = await countAllRows(client, tableRef);
-    action.afterRetiredRows = action.tenantScoped ? await countRows(client, tableRef, RETIRED_KEYS) : null;
-    action.afterKeepRows = action.tenantScoped ? await countRows(client, tableRef, KEEP_KEYS) : null;
+    action.afterRetiredRows = await countRows(client, tableRef, RETIRED_KEYS);
+    action.afterKeepRows = await countRows(client, tableRef, KEEP_KEYS);
     action.complete =
       action.afterTotalRows === 0 &&
-      (action.afterRetiredRows === null || action.afterRetiredRows === 0) &&
-      (action.afterKeepRows === null || action.afterKeepRows === 0);
+      action.afterRetiredRows === 0 &&
+      action.afterKeepRows === 0;
   }
   return {
     actions,
@@ -366,26 +372,58 @@ async function applyDeletes(client, tableRefs, { chunkSize, budgetSeconds, state
     await prepareIndex(client, tableRef);
     const referencingIndexes = await prepareReferencingIndexes(client, tableRef);
 
-    const beforeRetiredRows = await countRows(client, tableRef, RETIRED_KEYS);
-    const beforeKeepRows = await countRows(client, tableRef, KEEP_KEYS);
     let rowsDeleted = 0;
     let chunks = 0;
-    console.log(JSON.stringify({ event: "retired_tenant_residue_table_start", qualifiedName: tableRef.qualifiedName, beforeRetiredRows, beforeKeepRows }));
+    let beforeRetiredRows = 0;
+    let beforeKeepRows = 0;
+    let afterRetiredRows = 0;
+    let afterKeepRows = 0;
 
-    while (beforeRetiredRows - rowsDeleted > 0) {
-      if (elapsedSeconds(startedAt) >= budgetSeconds) {
-        budgetExhausted = true;
-        break;
+    await client.query("begin");
+    try {
+      beforeRetiredRows = await countRows(client, tableRef, RETIRED_KEYS);
+      beforeKeepRows = await countRows(client, tableRef, KEEP_KEYS);
+      console.log(
+        JSON.stringify({
+          event: "retired_tenant_residue_table_start",
+          qualifiedName: tableRef.qualifiedName,
+          beforeRetiredRows,
+          beforeKeepRows,
+        }),
+      );
+
+      while (beforeRetiredRows - rowsDeleted > 0) {
+        if (elapsedSeconds(startedAt) >= budgetSeconds) {
+          budgetExhausted = true;
+          break;
+        }
+        const deleted = await deleteChunk(client, tableRef, chunkSize);
+        chunks += 1;
+        rowsDeleted += deleted;
+        console.log(
+          JSON.stringify({
+            event: "retired_tenant_residue_chunk",
+            qualifiedName: tableRef.qualifiedName,
+            chunk: chunks,
+            rowsDeleted,
+            lastChunkRows: deleted,
+          }),
+        );
+        if (deleted === 0 || deleted < chunkSize) break;
       }
-      const deleted = await deleteChunk(client, tableRef, chunkSize);
-      chunks += 1;
-      rowsDeleted += deleted;
-      console.log(JSON.stringify({ event: "retired_tenant_residue_chunk", qualifiedName: tableRef.qualifiedName, chunk: chunks, rowsDeleted, lastChunkRows: deleted }));
-      if (deleted === 0 || deleted < chunkSize) break;
-    }
 
-    const afterRetiredRows = await countRows(client, tableRef, RETIRED_KEYS);
-    const afterKeepRows = await countRows(client, tableRef, KEEP_KEYS);
+      afterRetiredRows = await countRows(client, tableRef, RETIRED_KEYS);
+      afterKeepRows = await countRows(client, tableRef, KEEP_KEYS);
+      if (afterKeepRows !== beforeKeepRows) {
+        throw new Error(
+          `${tableRef.qualifiedName} keep-key row count changed from ${beforeKeepRows} to ${afterKeepRows}; rolling back table purge.`,
+        );
+      }
+      await client.query("commit");
+    } catch (error) {
+      await client.query("rollback").catch(() => undefined);
+      throw error;
+    }
     actions.push({
       qualifiedName: tableRef.qualifiedName,
       beforeRetiredRows,
@@ -395,7 +433,7 @@ async function applyDeletes(client, tableRefs, { chunkSize, budgetSeconds, state
       referencingIndexes,
       rowsDeleted,
       chunks,
-      complete: afterRetiredRows === 0,
+      complete: afterRetiredRows === 0 && afterKeepRows === beforeKeepRows,
     });
     console.log(JSON.stringify({ event: "retired_tenant_residue_table_done", ...actions[actions.length - 1] }));
     if (budgetExhausted) break;
