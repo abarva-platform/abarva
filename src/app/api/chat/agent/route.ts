@@ -2021,6 +2021,17 @@ export async function POST(request: Request) {
           .groundingBlock
       : "";
 
+  const sourceVisualTurnDirective =
+    isSourceSurface(surface) && looksLikeSourceVisualRequest(message)
+      ? [
+          "SOURCE VISUAL TURN CONTRACT",
+          "This user turn explicitly asks for a visual/chart/trend output. You must include exactly one compact ```abarva-chart fenced JSON block after one short interpretation sentence.",
+          "Do not substitute a markdown-only table for the visual. A markdown table is optional only if the user separately asks for a table.",
+          'Use this exact chart block shape: ```abarva-chart\n{"type":"bar","title":"...","data":[{"label":"...","value":123}]}\n```',
+          "Use only grounded Source values from this turn's context. If a value is missing or not established, omit it from the chart and name the missing evidence in prose instead of inventing or zero-filling.",
+        ].join("\n")
+      : "";
+
   const systemPrompt = [
     voiceLine,
     "",
@@ -2207,7 +2218,7 @@ export async function POST(request: Request) {
     // pane is conversational; the structured workspace is on the
     // RIGHT (artifacts). Keep the chat in flowing prose.
     isSourceSurface(surface)
-      ? "- Write in flowing prose. Markdown tables are allowed when the user asks to compare options, risks, vendors, milestones, or economics; keep them compact and add a one-sentence interpretation. Do NOT use SQL snippets, raw JSON dumps, bracketed identifier dumps, generic code blocks, inline JSON objects, or `abarva-chart` blocks. On Source surfaces, chart requests should be answered as a named visual recommendation in prose unless a supported rich artifact renderer is active."
+      ? "- Write in flowing prose. Markdown tables are allowed when the user asks to compare options, risks, vendors, milestones, or economics; keep them compact and add a one-sentence interpretation. Do NOT use SQL snippets, raw JSON dumps, bracketed identifier dumps, generic code blocks, or inline JSON objects. For explicit Source visual/chart requests, the only allowed fenced block is the supported `abarva-chart` artifact block described below."
       : '- Write in flowing prose. Markdown tables are allowed when the user asks to compare options, risks, vendors, milestones, or economics; keep them compact and add a one-sentence interpretation. Do NOT use SQL snippets, raw JSON dumps, bracketed identifier dumps, or generic code blocks. The only allowed fenced block is a compact ```abarva-chart JSON block for a response-window bar chart with {"type":"bar","title":"...","data":[{"label":"...","value":123}]}; never expose internal ids in it.',
     '- Reference patterns, programs, and people by NAME, not raw ID. Say "AMS Consolidation" not "[PAT-PRG-AMS-CONSOLIDATION-001]". The right-pane card carries the ID; you carry the conversation.',
     "- Bullet lists are fine sparingly (≤ 3 bullets). When the user asks an open question, lead with one or two sentences before any list.",
@@ -2243,6 +2254,7 @@ export async function POST(request: Request) {
           "- SOURCE TABLE OUTPUT CONTRACT: if the user asks for a table, matrix, scorecard, ranking, comparison, or heatmap-ready output, include a compact markdown table in the visible answer. Keep it to the smallest useful set of columns, state the counting basis in prose, and keep unknowns as 'missing' or 'not established' rather than zero.",
           "- Ask at most ONE question in the chat reply. If several fields are missing, pick the single highest-leverage blocker and let the right pane/artifact cards carry the rest.",
           "- Keep most Source replies under 75 words unless the user explicitly asks for a deep dive, draft, comparison, or executive brief.",
+          sourceVisualTurnDirective,
           ...(typeof surfaceContext.sourceEventId === "string" &&
           surfaceContext.sourceEventId.trim()
             ? [
@@ -2619,6 +2631,13 @@ function isSourceSurface(surface: string): boolean {
     surface === "/source" ||
     surface.startsWith("/source/") ||
     surface === "source-detail"
+  );
+}
+
+function looksLikeSourceVisualRequest(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return /\b(chart|charts|graph|graphs|visual|visuals|trend|trends|waterfall|recharts|plot|plots|bar chart|line chart|donut|heatmap)\b/.test(
+    normalized,
   );
 }
 
