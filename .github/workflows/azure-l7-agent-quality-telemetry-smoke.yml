@@ -7,12 +7,12 @@ on:
         description: Tenant key to insert/query.
         required: false
         type: string
-        default: apex-retail
+        default: meridian-health
       other_tenant_key:
         description: Different tenant key used to prove cross-tenant RLS denial.
         required: false
         type: string
-        default: meridian-health
+        default: skyharbor-air
       commit_fixture:
         description: Commit one synthetic telemetry row as durable evidence.
         required: false

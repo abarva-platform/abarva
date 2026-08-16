@@ -20,7 +20,7 @@
 # the worker image changes, update BOTH jobs:
 #   az containerapp job update -n job-abarva-deliv-worker        -g <rg> --image <img>
 #   az containerapp job update -n job-abarva-deliv-worker-event  -g <rg> --image <img>
-# The `image:` below reflects what was applied at authoring time.
+# The `image:` below is digest-pinned for runtime-invariant safety.
 #
 identity:
   type: UserAssigned
@@ -45,7 +45,7 @@ properties:
             type: postgresql
             metadata:
               query: SELECT count(*) FROM deliverable_runs WHERE status = 'queued'
-              targetQueryValue: '1'
+              targetQueryValue: "1"
             auth:
               - secretRef: azure-postgres-control-database-url
                 triggerParameter: connection
@@ -94,43 +94,43 @@ properties:
   template:
     containers:
       - args:
-          - '--eval=eval(Buffer.from(''Y29uc3R7ZXhlY1N5bmN9PXJlcXVpcmUoJ25vZGU6Y2hpbGRfcHJvY2VzcycpO2V4ZWNTeW5jKCducHggdHN4IC0tY29uZGl0aW9ucz1yZWFjdC1zZXJ2ZXIgc3JjL3NjcmlwdHMvcHJvY2Vzcy1kZWxpdmVyYWJsZS1xdWV1ZS50cycse3N0ZGlvOidpbmhlcml0JyxlbnY6cHJvY2Vzcy5lbnZ9KTs='',''base64'').toString())'
+          - "--eval=eval(Buffer.from('Y29uc3R7ZXhlY1N5bmN9PXJlcXVpcmUoJ25vZGU6Y2hpbGRfcHJvY2VzcycpO2V4ZWNTeW5jKCducHggdHN4IC0tY29uZGl0aW9ucz1yZWFjdC1zZXJ2ZXIgc3JjL3NjcmlwdHMvcHJvY2Vzcy1kZWxpdmVyYWJsZS1xdWV1ZS50cycse3N0ZGlvOidpbmhlcml0JyxlbnY6cHJvY2Vzcy5lbnZ9KTs=','base64').toString())"
         command:
           - node
         env:
           - name: NODE_ENV
             value: production
           - name: NEXT_TELEMETRY_DISABLED
-            value: '1'
+            value: "1"
           - name: PORT
-            value: '3000'
+            value: "3000"
           - name: HOSTNAME
             value: 0.0.0.0
           - name: NEXT_PUBLIC_DEMO_MODE
-            value: 'true'
+            value: "true"
           - name: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
             value: pk_test_Ym9zcy1ncmlmZm9uLTYxLmNsZXJrLmFjY291bnRzLmRldiQ
           - name: NEXUS_COMPOSER_MODEL
             value: claude-opus-4-7
           - name: CLERK_SECRET_KEY
             secretRef: clerk-secret-key
-            value: ''
+            value: ""
           - name: DATABASE_URL
             secretRef: azure-postgres-control-database-url
-            value: ''
+            value: ""
           - name: ANTHROPIC_API_KEY
             secretRef: anthropic-api-key
-            value: ''
+            value: ""
           - name: OPENAI_API_KEY
             secretRef: openai-api-key
-            value: ''
+            value: ""
           - name: DEMO_LOGIN_PASSWORD
             secretRef: demo-login-password
-            value: ''
+            value: ""
           - name: AZURE_SEARCH_SERVICE_NAME
             value: srch-abarva-context-lab-eastus
           - name: ABARVA_FEATURE_RETRIEVAL_AZURE_SEARCH_TENANTS
-            value: apex-retail,meridian-health,first-capital,lakeshore-holdings,skyharbor-air,northstar-clinical
+            value: meridian-health,skyharbor-air
           - name: INGESTION_SMOKE_STORAGE_ACCOUNT_NAME
             value: stabarvaprivatedplab001
           - name: INGESTION_SMOKE_CONTAINER_NAME
@@ -149,7 +149,7 @@ properties:
             value: 3b6e0c9d-2265-499f-af46-965e0ad78b95
           - name: PARALLEL_RUN_INVARIANT_TOKEN
             secretRef: parallel-run-token
-            value: ''
+            value: ""
           - name: ABARVA_DATA_PLANE
             value: azure-postgres
           - name: AZURE_CONNECTIVITY_SERVICE_BUS_QUEUE_NAME
@@ -159,7 +159,7 @@ properties:
           - name: DATA_PLANE_OBJECT_STORE_CONTAINER
             value: context-drops
           - name: ABARVA_FEATURE_DISCOVERY_INTAKE_V2_TENANTS
-            value: meridian,apexretail,lakeshore
+            value: meridian,skyharbor
           - name: SOURCE_APPROVAL_FROM_EMAIL
             value: support@send.abarva.ai
           - name: SOURCE_APPROVAL_NOTIFY_TO
@@ -180,7 +180,7 @@ properties:
             value: skyharbor,skyharbor-air
           - name: ABARVA_DOCGEN_QUALITY_PROFILE
             value: premium_final
-        image: acrabarvalab001.azurecr.io/abarva/web:main-ac6b4095
+        image: acrabarvalab001.azurecr.io/abarva/web@sha256:8a3533af71b5fd4a81f919245fc9026b946023c34b6a479a12d113d0e7afaa74
         imageType: ContainerImage
         name: worker
         resources:

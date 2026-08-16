@@ -18,7 +18,7 @@ param containerAppsEnvironmentName = 'cae-abarva-scale-lab-eastus'
 param scaleRuntimeManagedIdentityName = 'id-abarva-scale-runtime-lab-eastus'
 
 param ingestionWorkerJobName = 'job-a2b-smoke-send-eus'
-param imageName = 'acrabarvalab001.azurecr.io/abarva/web:lab-eventgrid-normalizer-20260515-r1'
+param imageName = 'acrabarvalab001.azurecr.io/abarva/web@sha256:8a3533af71b5fd4a81f919245fc9026b946023c34b6a479a12d113d0e7afaa74'
 param registryServer = 'acrabarvalab001.azurecr.io'
 param workerCommand = 'npx tsx src/scripts/azure-ingestion-e2e-smoke.ts'
 
@@ -33,7 +33,7 @@ param plainRuntimeEnv = [
   }
   {
     name: 'INGESTION_SMOKE_TENANT_CLIENT_KEY'
-    value: 'apex-retail'
+    value: 'meridian-health'
   }
   {
     name: 'INGESTION_SMOKE_STORAGE_ACCOUNT_NAME'
