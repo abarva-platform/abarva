@@ -1037,6 +1037,7 @@ async function refreshViews(client: Client, args: Args): Promise<void> {
       CASE WHEN o.evidence_reference IS NULL OR o.evidence_reference = '' THEN 'missing' ELSE 'present' END AS evidence_state,
       o.recommended_action,
       o.accountable_role,
+      o.quality_state,
       NULL::date AS decision_due_date,
       o.opportunity_type AS finding_rule_ref,
       COALESCE(o.as_of_date, DATE '${AS_OF_DATE}') AS as_of_date,
