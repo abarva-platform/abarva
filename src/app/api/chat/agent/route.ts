@@ -1404,24 +1404,31 @@ export async function POST(request: Request) {
   const contractIdFromContext = resolveSourceContractId(surfaceContext);
   let sourceContractGroundingBlock = "";
   let hasSourceContractGrounding = false;
-  const contractGroundingTenantKey =
-    sourceContractReadTenantKey ?? effectiveClientKey;
+  const contractGroundingTenantKeys = uniqueNonEmptyStrings([
+    sourceClientKey,
+    activeClientKey,
+    effectiveClientKey,
+    sourceContractReadTenantKey,
+  ]);
   if (
     isSourceSurface(surface) &&
-    contractGroundingTenantKey &&
+    contractGroundingTenantKeys.length > 0 &&
     contractIdFromContext
   ) {
-    try {
-      const contractGrounding = await buildAvaSourceContractGrounding(
-        contractGroundingTenantKey,
-        contractIdFromContext,
-      );
-      if (contractGrounding.block) {
-        sourceContractGroundingBlock = contractGrounding.block;
-        hasSourceContractGrounding = true;
+    for (const contractGroundingTenantKey of contractGroundingTenantKeys) {
+      try {
+        const contractGrounding = await buildAvaSourceContractGrounding(
+          contractGroundingTenantKey,
+          contractIdFromContext,
+        );
+        if (contractGrounding.block) {
+          sourceContractGroundingBlock = contractGrounding.block;
+          hasSourceContractGrounding = true;
+          break;
+        }
+      } catch {
+        // Best-effort — try the next tenant/read key before giving up.
       }
-    } catch {
-      // Best-effort — a read failure here must never break the chat turn.
     }
   }
 
@@ -3727,6 +3734,18 @@ function resolveSourceContractId(
 
 function isRecordValue(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function uniqueNonEmptyStrings(
+  values: readonly (string | null | undefined)[],
+): string[] {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => (typeof value === "string" ? value.trim() : ""))
+        .filter((value) => value.length > 0),
+    ),
+  );
 }
 
 function buildSourceEventSeedPromptBlock(
