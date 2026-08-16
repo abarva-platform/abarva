@@ -778,7 +778,9 @@
     "validate:no-real-vendor-parties": "node scripts/audit/validate-no-real-vendor-parties.mjs",
     "validate:no-sunset-tenant-residue": "node scripts/audit/validate-no-sunset-tenant-residue.mjs",
     "validate:projection-coverage": "node scripts/audit/validate-projection-coverage.mjs",
-    "validate:projection-coverage:strict": "node scripts/audit/validate-projection-coverage.mjs --strict"
+    "validate:projection-coverage:strict": "node scripts/audit/validate-projection-coverage.mjs --strict",
+    "validate:intake-coverage": "node scripts/audit/validate-intake-coverage.mjs",
+    "validate:intake-coverage:strict": "node scripts/audit/validate-intake-coverage.mjs --strict"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

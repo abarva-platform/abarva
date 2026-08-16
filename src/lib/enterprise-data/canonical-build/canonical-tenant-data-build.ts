@@ -892,6 +892,11 @@ const DOMAIN_MATCHERS: Array<{ domain: DomainKey; patterns: RegExp[] }> = [
   {
     domain: "operational_process_evidence",
     patterns: [
+      // The active template names this file `18_operational_process_evidence.csv`. The two
+      // patterns below it never matched that name — "process" sits between "operational" and
+      // "evidence" — so the domain matched nothing and the build silently emitted 18 object
+      // types while declaring 19. Caught by validate-intake-coverage's dead-domain check.
+      /operational[_-]process[_-]evidence/i,
       /operational[_-]evidence/i,
       /process[_-]intelligence/i,
       /incidents/i,
