@@ -444,6 +444,8 @@
     "build:canonical-tenant-data": "npx tsx scripts/data-build/build-canonical-tenant-data.ts",
     "data-build:runtime-layer-refresh": "npx tsx scripts/data-build/refresh-runtime-layers.ts",
     "data-build:runtime-layer-refresh:readback": "npx tsx scripts/data-build/verify-runtime-layer-refresh-readback.ts",
+    "data-build:source-l4-cube-refresh": "npx tsx scripts/data-build/refresh-source-l4-cube.ts",
+    "data-build:source-l4-cube-refresh:readback": "npx tsx scripts/data-build/refresh-source-l4-cube.ts --readback-only",
     "audit:canonical-data-build": "npx tsx scripts/data-build/audit-canonical-data-build.ts",
     "audit:enterprise-profile-foundation": "npx tsx scripts/data-build/audit-enterprise-profile-foundation.ts",
     "audit:home-ava-build-readiness": "npx tsx scripts/data-build/audit-home-ava-build-readiness.ts",
