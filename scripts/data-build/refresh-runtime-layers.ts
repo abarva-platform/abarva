@@ -686,20 +686,36 @@ async function readback(
   };
   const counts = {
     businessRecords: await count(
-      "SELECT count(*) FROM intelligence_v6.business_records WHERE tenant_key = ANY($1::text[]) AND contract_version=$2",
-      [args.tenants, CONTRACT_VERSION],
+      `SELECT count(*) FROM intelligence_v6.business_records
+        WHERE tenant_key = ANY($1::text[])
+          AND contract_version=$2
+          AND build_version=$3
+          AND input_source_version=$4
+          AND idempotency_key=$5`,
+      [args.tenants, CONTRACT_VERSION, args.buildVersion, args.inputSourceVersion, args.idempotencyKey],
     ),
     relationshipEdges: await count(
-      "SELECT count(*) FROM intelligence_v6.relationship_edges WHERE tenant_key = ANY($1::text[]) AND contract_version=$2",
-      [args.tenants, CONTRACT_VERSION],
+      `SELECT count(*) FROM intelligence_v6.relationship_edges
+        WHERE tenant_key = ANY($1::text[])
+          AND contract_version=$2
+          AND build_version=$3
+          AND input_source_version=$4
+          AND idempotency_key=$5`,
+      [args.tenants, CONTRACT_VERSION, args.buildVersion, args.inputSourceVersion, args.idempotencyKey],
     ),
     graphNodes: await count(
-      "SELECT count(*) FROM intelligence_v6.graph_nodes WHERE tenant_key = ANY($1::text[]) AND contract_version=$2",
-      [args.tenants, CONTRACT_VERSION],
+      `SELECT count(*) FROM intelligence_v6.graph_nodes
+        WHERE tenant_key = ANY($1::text[])
+          AND contract_version=$2
+          AND metadata->>'buildVersion'=$3`,
+      [args.tenants, CONTRACT_VERSION, args.buildVersion],
     ),
     graphEdges: await count(
-      "SELECT count(*) FROM intelligence_v6.graph_edges WHERE tenant_key = ANY($1::text[]) AND contract_version=$2",
-      [args.tenants, CONTRACT_VERSION],
+      `SELECT count(*) FROM intelligence_v6.graph_edges
+        WHERE tenant_key = ANY($1::text[])
+          AND contract_version=$2
+          AND metadata->>'buildVersion'=$3`,
+      [args.tenants, CONTRACT_VERSION, args.buildVersion],
     ),
   };
   const rls = [];
@@ -708,8 +724,11 @@ async function readback(
       const otherTenants = args.tenants.filter((item) => item !== tenant);
       await client.query("RESET ROLE");
       const expectedTenantEdges = await count(
-        "SELECT count(*) FROM intelligence_v6.graph_edges WHERE tenant_key = $1 AND contract_version=$2",
-        [tenant, CONTRACT_VERSION],
+        `SELECT count(*) FROM intelligence_v6.graph_edges
+          WHERE tenant_key = $1
+            AND contract_version=$2
+            AND metadata->>'buildVersion'=$3`,
+        [tenant, CONTRACT_VERSION, args.buildVersion],
       );
       await client.query("SELECT set_config('app.tenant_key', $1, true)", [tenant]);
       await client.query("SELECT set_config('app.client_key', $1, true)", [tenant]);
@@ -718,12 +737,18 @@ async function readback(
       ]);
       await client.query("SET LOCAL ROLE authenticated");
       const visibleTenant = await count(
-        "SELECT count(*) FROM intelligence_v6.graph_edges WHERE tenant_key = $1 AND contract_version=$2",
-        [tenant, CONTRACT_VERSION],
+        `SELECT count(*) FROM intelligence_v6.graph_edges
+          WHERE tenant_key = $1
+            AND contract_version=$2
+            AND metadata->>'buildVersion'=$3`,
+        [tenant, CONTRACT_VERSION, args.buildVersion],
       );
       const visibleOther = await count(
-        "SELECT count(*) FROM intelligence_v6.graph_edges WHERE tenant_key = ANY($1::text[]) AND contract_version=$2",
-        [otherTenants, CONTRACT_VERSION],
+        `SELECT count(*) FROM intelligence_v6.graph_edges
+          WHERE tenant_key = ANY($1::text[])
+            AND contract_version=$2
+            AND metadata->>'buildVersion'=$3`,
+        [otherTenants, CONTRACT_VERSION, args.buildVersion],
       );
       rls.push({
         tenant,
