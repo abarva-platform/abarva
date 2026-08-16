@@ -314,6 +314,24 @@ describe("SourceOptimizeContractPage", () => {
     expect(screen.getByText("Lock baseline")).toBeInTheDocument();
     expect(screen.getByText("Diagnose opportunity")).toBeInTheDocument();
     expect(screen.getByText("Prove value")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("source-optimize-contract-container"),
+    ).toHaveStyle({
+      width: "100%",
+      maxWidth: "none",
+    });
+    expect(
+      screen.getByTestId("source-optimize-contract-frame"),
+    ).toHaveStyle({
+      gridTemplateColumns: "264px minmax(0, 1fr)",
+      width: "100%",
+    });
+    expect(
+      screen.getByTestId("source-optimize-contract-workflow-pane"),
+    ).toHaveStyle({
+      width: "100%",
+      minWidth: "0",
+    });
     expect(screen.getByText("As of Jun 30, 2027")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "New 11-stage event" }),
