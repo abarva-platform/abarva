@@ -18,6 +18,7 @@ import {
 import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { ANALYTICS } from "@/components/source/canvas/analytics/analytics-tokens";
+import { SourceWorkflowFrame } from "@/components/source/SourceWorkflowFrame";
 import { stripArtifactsForDisplay } from "@/lib/agent/artifacts";
 import type {
   ContractOptimizationCandidate,
@@ -236,33 +237,35 @@ export function SourceOptimizeContractPage({
           selected={selected}
           selectedOpportunity={selectedOpportunity}
         />
-        <div
-          data-testid="source-optimize-contract-frame"
-          style={WORKFLOW_FRAME_STYLE}
+        <SourceWorkflowFrame
+          testId="source-optimize-contract-frame"
+          rail={<StageRail steps={position.steps} />}
+          gap={28}
+          alignItems="start"
+          style={{ width: "100%" }}
+          paneTestId="source-optimize-contract-workflow-pane"
+          paneStyle={{
+            display: "grid",
+            gap: 14,
+          }}
         >
-          <StageRail steps={position.steps} />
-          <div
-            data-testid="source-optimize-contract-workflow-pane"
-            style={WORKFLOW_PANE_STYLE}
-          >
-            <NextDecisionBar position={position} />
-            {!canViewFinancialValues ? (
-              <FinancialAccessRequired />
-            ) : selected ? (
-              <SelectedContractView
-                candidate={selected}
-                spine={spine}
-                opportunitySet={opportunitySet}
-                selectedOpportunity={selectedOpportunity}
-                readiness={readiness}
-                traceability={traceability}
-                position={position}
-              />
-            ) : (
-              <ContractPicker candidates={spine.topCandidates} />
-            )}
-          </div>
-        </div>
+          <NextDecisionBar position={position} />
+          {!canViewFinancialValues ? (
+            <FinancialAccessRequired />
+          ) : selected ? (
+            <SelectedContractView
+              candidate={selected}
+              spine={spine}
+              opportunitySet={opportunitySet}
+              selectedOpportunity={selectedOpportunity}
+              readiness={readiness}
+              traceability={traceability}
+              position={position}
+            />
+          ) : (
+            <ContractPicker candidates={spine.topCandidates} />
+          )}
+        </SourceWorkflowFrame>
       </div>
     </main>
   );
@@ -2143,23 +2146,6 @@ const ROW_BUTTON_STYLE: CSSProperties = {
   ...PRIMARY_BUTTON_STYLE,
   display: "inline-block",
   textDecoration: "none",
-};
-
-const WORKFLOW_FRAME_STYLE: CSSProperties = {
-  boxSizing: "border-box",
-  display: "grid",
-  gridTemplateColumns: "264px minmax(0, 1fr)",
-  gap: 28,
-  alignItems: "start",
-  width: "100%",
-};
-
-const WORKFLOW_PANE_STYLE: CSSProperties = {
-  boxSizing: "border-box",
-  minWidth: 0,
-  width: "100%",
-  display: "grid",
-  gap: 14,
 };
 
 const STAGE_RAIL_WRAP_STYLE: CSSProperties = {
