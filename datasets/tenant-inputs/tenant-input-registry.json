@@ -59,28 +59,6 @@
       ]
     },
     {
-      "tenantKey": "healthcare-demo-new",
-      "displayName": "Healthcare Demo",
-      "companySizeBand": "large",
-      "canonicalInputRoot": "datasets/tenant-inputs/active/healthcare-demo-new/current",
-      "packets": [
-        {
-          "packetId": "foundation-v2-progressive-golden-slice-v1",
-          "path": "fixtures/foundation-v2/healthcare-golden-slice",
-          "classification": "synthetic-demo",
-          "status": "isolated-foundation-v2-golden-slice-input",
-          "note": "Synthetic PHI-free Healthcare Foundation V2 progressive golden-slice fixture for isolated DB execution only."
-        },
-        {
-          "packetId": "current-universal",
-          "path": "datasets/tenant-inputs/active/healthcare-demo-new/current",
-          "classification": "synthetic-demo",
-          "status": "active-input",
-          "note": "Consolidated universal one-file-per-domain packet (Universal Tenant Input Standard v3), instantiated against the Phase-0 design corpus in clients/healthcare-demo-new/19-template-instantiation-source-corpus/."
-        }
-      ]
-    },
-    {
       "tenantKey": "lakeshore-holdings",
       "displayName": "Lakeshore Holdings",
       "companySizeBand": "mid_market",
@@ -117,11 +95,11 @@
       "canonicalInputRoot": "datasets/tenant-inputs/active/meridian-health/current",
       "packets": [
         {
-          "packetId": "current-universal",
+          "packetId": "current-universal-integrated-healthcare",
           "path": "datasets/tenant-inputs/active/meridian-health/current",
           "classification": "synthetic-demo",
           "status": "active-input",
-          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
+          "note": "Integrated healthcare tenant packet: stronger healthcare fixture rekeyed to meridian-health, with healthcare-demo-new retired from active registry. Repo-local only; no data-plane, canonical, retrieval, projection, or runtime activation by this registry update."
         }
       ]
     },
@@ -148,6 +126,13 @@
       "status": "retired-excluded",
       "archivePaths": [],
       "reason": "Operator instruction: there should be no Northstar active tenant. Legacy source files are no longer retained in loader-visible repository paths."
+    },
+    {
+      "tenantKey": "healthcare-demo-new",
+      "displayName": "Healthcare Demo",
+      "status": "retired-excluded",
+      "archivePaths": [],
+      "reason": "Merged into meridian-health as the sole active integrated healthcare tenant; historical rollback via git history or external archive. No runtime/data-plane activation performed by this repo-local integration."
     }
   ],
   "legacyRootsPendingArchiveCleanup": [],

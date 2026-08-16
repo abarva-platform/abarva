@@ -65,22 +65,11 @@
       "description": "Placeholder values such as TBD, unknown, sample, lorem ipsum, not_loaded, or owner to confirm do not count as valid facts."
     }
   ],
-  "columnContractWaivers": [
-    {
-      "tenantKey": "meridian-health",
-      "reason": "This package predates enforcement and carries a generic governance schema (record_id/entity_id/business_name/context_item/dimension/evidence_id) instead of the per-dimension contract columns. 18 of 19 dimensions are affected, plus 2 filename drifts. Depth passes; shape does not. Contract fields carrying a value: 23%, against 99% for the packages generated to the contract.",
-      "owner": "Anand",
-      "expires": "2026-09-30",
-      "remediation": "GATE-08 is decided: the column contract is authoritative and this package is remediated to it (see the GATE-08 Decision section in docs/governance/TENANT_CONTEXT_SINGLE_SOURCE_OF_TRUTH_REDO_PLAN_2026-08-12.md). Add the contract columns alongside the existing governance columns and populate them from deterministic sources only; leave the rest empty and raise evidence requests. Then remove this waiver. Regenerating the package and repointing any active root remain GATE-02 and need scoped approval."
-    }
-  ],
+  "columnContractWaivers": [],
   "hollowRowWaivers": [
     {
       "tenantKey": "lakeshore-industries",
-      "files": [
-        "08_spend_value.csv",
-        "12_relationships.csv"
-      ],
+      "files": ["08_spend_value.csv", "12_relationships.csv"],
       "reason": "Both files conform to the contract and pass row-count depth while carrying almost no payload: 54 of 71 spend rows and 510 of 519 relationship rows are empty in every declared column. The relationships file is a schema illustration that was provenance-stamped and thereafter counted as a graph; its original_source_file points at itself, so there is no upstream copy to restore.",
       "owner": "Anand",
       "expires": "2026-09-30",
