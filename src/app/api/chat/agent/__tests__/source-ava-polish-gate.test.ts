@@ -203,16 +203,22 @@ describe("agent route · Source aVa visual and table output discipline", () => {
     expect(source).toContain("files/templates");
     expect(source).toContain("workshops");
     expect(source).toContain("vendor unsupported claims");
-    expect(source).toContain("Include the exact words template, collect, next, approval, blocking, or guidebook");
+    expect(source).toContain("Include the exact words template, collect, next, approval, blocking, workshop, attend, and data");
     expect(source).toContain("approval gate");
     expect(source).toContain("blocking");
+    expect(source).toContain("workshop, attend, and data");
     expect(source).toContain("Do not answer those asks as prose-only paragraphs");
     expect(source).toContain("SOURCE STAGE STATUS DISCIPLINE");
     expect(source).toContain("distinguish stage/task completion from approved value");
     expect(source).toContain("Do not imply guaranteed, booked, approved, realized, realized value, or realized savings");
     expect(source).toContain("approved/booked value remains $0");
     expect(source).toContain("realized value is");
+    expect(source).toContain("Never use the phrase");
+    expect(source).toContain("realized savings");
     expect(source).toContain("not finance-confirmed");
+    expect(source).toContain("SOURCE CALCULATION-RUN DISCIPLINE");
+    expect(source).toContain("missing a calculation run");
+    expect(source).toContain("do not quote");
   });
 
   it("uses literal Source boundary wording for tenant isolation and unquotable figures", () => {
