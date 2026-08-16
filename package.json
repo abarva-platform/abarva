@@ -420,6 +420,7 @@
     "audit:home-ava-snapshot-alignment": "tsx scripts/audit/build-home-summary-snapshot.ts",
     "build:canonical-tenant-data": "npx tsx scripts/data-build/build-canonical-tenant-data.ts",
     "data-build:integrated-layer-refresh": "node scripts/data-build/run-integrated-layer-refresh.mjs",
+    "data-build:product-fanout": "npx tsx scripts/data-build/project-products-from-canonical.ts",
     "data-build:runtime-layer-refresh": "npx tsx scripts/data-build/refresh-runtime-layers.ts",
     "data-build:runtime-layer-refresh:readback": "npx tsx scripts/data-build/verify-runtime-layer-refresh-readback.ts",
     "data-build:source-l4-cube-refresh": "npx tsx scripts/data-build/refresh-source-l4-cube.ts",
