@@ -11,6 +11,7 @@ import {
   type CanonicalDataBuildReport,
 } from "../../src/lib/enterprise-data/canonical-build/canonical-tenant-data-build";
 import type { CanonicalIngestionRecord } from "../../src/lib/enterprise-data/contracts/canonical-ingestion";
+import { RELATIONSHIP_TYPE_DICTIONARY } from "../../src/lib/enterprise-data/contracts/layer3-validation";
 import { postgresClientOptions } from "../../src/scripts/postgres-client-options";
 
 const APPROVED_TENANTS = new Set(["meridian-health", "skyharbor-air"]);
@@ -176,33 +177,39 @@ function confidence(raw: string | undefined): string {
   return "unknown";
 }
 
+const relationshipDictionaryByType = new Map(
+  RELATIONSHIP_TYPE_DICTIONARY.map((entry) => [entry.relationshipType, entry]),
+);
+
+function relationshipDictionaryRows(): unknown[][] {
+  return RELATIONSHIP_TYPE_DICTIONARY.map((entry) => [
+    entry.relationshipType,
+    entry.canonicalLabel,
+    entry.inverseLabel,
+    entry.category,
+    entry.directed ? "directed" : "bidirectional",
+    entry.executiveSafe,
+    entry.allowedSourceFamilies,
+    entry.allowedTargetFamilies,
+    entry.description,
+  ]);
+}
+
 function relationshipCategory(type: string): string {
-  const map: Record<string, string> = {
-    AFFECTS: "impact",
-    DEPENDS_ON: "dependency",
-    DISCUSSES: "evidence",
-    FEEDS: "data_flow",
-    HAS_RISK: "risk_control",
-    HOSTED_ON: "infrastructure",
-    IMPACTS: "impact",
-    INTEGRATES_WITH: "data_flow",
-    MEASURES: "measurement",
-    OPERATED_BY: "ownership",
-    OWNED_BY: "ownership",
-    OWNS: "ownership",
-    OWNS_TECHNOLOGY_FOR: "ownership",
-    PROVIDED_BY: "vendor_system",
-    PROVIDES: "vendor_system",
-    REQUIRES_DATA: "data_flow",
-    REQUIRES_SYSTEM: "dependency",
-    SUPPORTED_BY: "dependency",
-    SUPPORTS: "dependency",
-    SUPPORTS_FUNCTION: "dependency",
-    TECHNOLOGY_OWNED_BY: "ownership",
-    USES: "usage",
-    USES_DATA_DOMAIN: "data_flow",
-  };
-  return map[type] ?? "dependency";
+  return relationshipDictionaryByType.get(type)?.category ?? "dependency";
+}
+
+function assertRelationshipTypesCovered(edges: readonly CsvRow[]): void {
+  const missing = Array.from(
+    new Set(
+      edges
+        .map((edge) => edge.normalizedRelationshipType)
+        .filter((relationshipType) => !relationshipDictionaryByType.has(relationshipType)),
+    ),
+  ).sort();
+  if (missing.length > 0) {
+    throw new Error(`Runtime relationship dictionary missing type(s): ${missing.join(", ")}`);
+  }
 }
 
 function uniqueRowsBy<T>(rows: T[], keyFn: (row: T) => string): T[] {
@@ -367,6 +374,34 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
         JSON.stringify({ stage: "starting", tenants: args.tenants }),
         "docs/releases/records/2026-08-15-runtime-layer-refresh.md",
       ],
+    );
+
+    await insertRows(
+      client,
+      "intelligence_v6.relationship_types",
+      [
+        "relationship_type",
+        "canonical_label",
+        "inverse_relationship_type",
+        "relationship_category",
+        "directionality",
+        "executive_safe",
+        "allowed_from_object_families",
+        "allowed_to_object_families",
+        "description",
+      ],
+      relationshipDictionaryRows(),
+      `ON CONFLICT (relationship_type) DO UPDATE SET
+       canonical_label=excluded.canonical_label,
+       inverse_relationship_type=excluded.inverse_relationship_type,
+       relationship_category=excluded.relationship_category,
+       directionality=excluded.directionality,
+       executive_safe=excluded.executive_safe,
+       allowed_from_object_families=excluded.allowed_from_object_families,
+       allowed_to_object_families=excluded.allowed_to_object_families,
+       description=excluded.description,
+       active=true,
+       updated_at=now()`,
     );
 
     await insertRows(
@@ -721,6 +756,7 @@ async function main(): Promise<void> {
   fs.rmSync(absoluteOutDir, { recursive: true, force: true });
   fs.mkdirSync(absoluteOutDir, { recursive: true });
   const input = await buildInputs(args, repoRoot);
+  assertRelationshipTypesCovered(input.edges);
   const ratio = quarantineRatio(input.edges.length, input.quarantine.length);
   const planned = {
     canonicalObjectsWritten: input.canonical.canonicalRecords.filter((record) => record.qualityStatus !== "quarantined").length,
