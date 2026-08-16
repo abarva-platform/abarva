@@ -104,7 +104,14 @@ type DomainKey =
   | "industry_context_patterns"
   | "expert_lenses"
   | "service_scope_managed_services"
-  | "operational_process_evidence";
+  | "operational_process_evidence"
+  | "interview_initiative_metric_crosswalk"
+  | "data_analytics_platform_maturity"
+  | "itsm_ticket_sla_performance"
+  | "ai_benefits_realization_usage_ledger"
+  | "ai_tool_usage_feed"
+  | "ai_value_interview_evidence"
+  | "ai_kpi_operational_outcome_feed";
 
 type SourceFile = {
   tenantKey: string;
@@ -200,6 +207,23 @@ type RelationshipCandidate = {
   rowNumber: number;
 };
 
+type SourceIntegrationCoverage = {
+  tenantKey: string;
+  sourcePath: string;
+  domain: DomainKey | null;
+  sourceRows: number;
+  canonicalRecords: number;
+  acceptedRecords: number;
+  quarantinedRecords: number;
+  relationshipCandidates: number;
+  disposition:
+    | "integrated"
+    | "no_rows"
+    | "blocked_unmapped_source_file"
+    | "blocked_no_canonical_records";
+  message: string;
+};
+
 export type CanonicalDataBuildReport = {
   generatedAt: string;
   sourceRoot: string;
@@ -244,6 +268,7 @@ export type CanonicalDataBuildReport = {
     gapCount: number;
     samples: RelationshipCandidate[];
   }>;
+  sourceIntegrationCoverage: SourceIntegrationCoverage[];
   enterpriseProfileBuild: EnterpriseProfileBuild[];
   placeholderRejectionReport: CanonicalBuildFinding[];
   tenantGaps: Record<string, CanonicalBuildFinding[]>;
@@ -283,6 +308,9 @@ export type CanonicalDataBuildReport = {
     canonicalRecordsQuarantined: number;
     evidenceAttachments: number;
     relationshipCandidates: number;
+    sourceRowsInspected: number;
+    sourceRowsIntegrated: number;
+    sourceRowsBlocked: number;
     placeholderRejections: number;
     archiveReadViolations: number;
     errorCount: number;
@@ -655,6 +683,7 @@ const DOMAIN_CONFIG: Record<
     objectType: "relationship_source_row",
     primaryFields: [
       "source_name",
+      "from_object_name",
       "from_entity",
       "source_object",
       "relationship_id",
@@ -765,6 +794,11 @@ const DOMAIN_CONFIG: Record<
         targetObjectType: "application_system",
       },
       {
+        field: "systems_used",
+        relationshipType: "uses_system",
+        targetObjectType: "application_system",
+      },
+      {
         field: "system_id",
         relationshipType: "uses_system",
         targetObjectType: "application_system",
@@ -772,6 +806,134 @@ const DOMAIN_CONFIG: Record<
       {
         field: "business_function",
         relationshipType: "evidences_function",
+        targetObjectType: "business_function",
+      },
+    ],
+  },
+  interview_initiative_metric_crosswalk: {
+    canonicalDomain: "intelligence_answering",
+    objectType: "semantic_crosswalk_evidence",
+    primaryFields: [
+      "canonical_object_name",
+      "interview_mention_text",
+      "source_record_id",
+    ],
+    nameLabel: "crosswalk evidence",
+    relationshipFields: [
+      {
+        field: "canonical_object_name",
+        relationshipType: "references_canonical_object",
+        targetObjectType: "canonical_object",
+      },
+    ],
+  },
+  data_analytics_platform_maturity: {
+    canonicalDomain: "technology_estate",
+    objectType: "platform_maturity_assessment",
+    primaryFields: [
+      "platform_or_capability",
+      "platform_name",
+      "capability_name",
+      "source_record_id",
+    ],
+    nameLabel: "platform maturity assessment",
+  },
+  itsm_ticket_sla_performance: {
+    canonicalDomain: "tower_outcomes",
+    objectType: "service_performance_observation",
+    primaryFields: ["system_name", "servicenow_ci_sys_id", "source_record_id"],
+    nameLabel: "service performance observation",
+    relationshipFields: [
+      {
+        field: "system_name",
+        relationshipType: "measures_system",
+        targetObjectType: "application_system",
+      },
+    ],
+  },
+  ai_benefits_realization_usage_ledger: {
+    canonicalDomain: "tower_outcomes",
+    objectType: "ai_value_realization_signal",
+    primaryFields: [
+      "source_record_id",
+      "ai_program_id",
+      "program_name",
+      "ai_use_case_id",
+    ],
+    nameLabel: "AI value realization signal",
+    relationshipFields: [
+      {
+        field: "program_name",
+        relationshipType: "measures_program",
+        targetObjectType: "program_initiative",
+      },
+      {
+        field: "business_function",
+        relationshipType: "measures_function",
+        targetObjectType: "business_function",
+      },
+      {
+        field: "vendor_name",
+        relationshipType: "uses_vendor",
+        targetObjectType: "vendor",
+      },
+    ],
+  },
+  ai_tool_usage_feed: {
+    canonicalDomain: "tower_outcomes",
+    objectType: "ai_tool_usage_observation",
+    primaryFields: [
+      "source_record_id",
+      "tool_name",
+      "ai_program_id",
+      "ai_use_case_id",
+    ],
+    nameLabel: "AI tool usage observation",
+    relationshipFields: [
+      {
+        field: "business_function",
+        relationshipType: "measures_function",
+        targetObjectType: "business_function",
+      },
+      {
+        field: "vendor_name",
+        relationshipType: "uses_vendor",
+        targetObjectType: "vendor",
+      },
+    ],
+  },
+  ai_value_interview_evidence: {
+    canonicalDomain: "intelligence_answering",
+    objectType: "ai_value_interview_evidence",
+    primaryFields: [
+      "source_record_id",
+      "question",
+      "answer_summary",
+      "ai_program_id",
+    ],
+    nameLabel: "AI value interview evidence",
+    relationshipFields: [
+      {
+        field: "ai_program_id",
+        relationshipType: "discusses_program",
+        targetObjectType: "program_initiative",
+      },
+    ],
+  },
+  ai_kpi_operational_outcome_feed: {
+    canonicalDomain: "tower_outcomes",
+    objectType: "ai_kpi_outcome_observation",
+    primaryFields: [
+      "source_record_id",
+      "kpi_name",
+      "ai_program_id",
+      "ai_use_case_id",
+    ],
+    nameLabel: "AI KPI outcome observation",
+    relationshipFields: [
+      {
+        field: "business_function",
+        relationshipType: "measures_function",
         targetObjectType: "business_function",
       },
     ],
@@ -892,10 +1054,39 @@ const DOMAIN_MATCHERS: Array<{ domain: DomainKey; patterns: RegExp[] }> = [
   {
     domain: "operational_process_evidence",
     patterns: [
+      /operational[_-]process[_-]evidence/i,
       /operational[_-]evidence/i,
       /process[_-]intelligence/i,
       /incidents/i,
     ],
+  },
+  {
+    domain: "interview_initiative_metric_crosswalk",
+    patterns: [/12b[_-]interview[_-]initiative[_-]metric[_-]crosswalk/i],
+  },
+  {
+    domain: "data_analytics_platform_maturity",
+    patterns: [/19[_-]data[_-]analytics[_-]platform[_-]maturity/i],
+  },
+  {
+    domain: "itsm_ticket_sla_performance",
+    patterns: [/20[_-]itsm[_-]ticket[_-]sla[_-]performance/i],
+  },
+  {
+    domain: "ai_benefits_realization_usage_ledger",
+    patterns: [/SA08[_-]AI[_-]Benefits[_-]Realization[_-]Usage[_-]Ledger/i],
+  },
+  {
+    domain: "ai_tool_usage_feed",
+    patterns: [/SA09[_-]AI[_-]Tool[_-]Usage[_-]Feed/i],
+  },
+  {
+    domain: "ai_value_interview_evidence",
+    patterns: [/SA10[_-]AI[_-]Value[_-]Interview[_-]Evidence/i],
+  },
+  {
+    domain: "ai_kpi_operational_outcome_feed",
+    patterns: [/SA11[_-]AI[_-]KPI[_-]Operational[_-]Outcome[_-]Feed/i],
   },
 ];
 
@@ -1058,6 +1249,26 @@ export async function buildCanonicalTenantDataReport(options: {
       findings,
     ),
   );
+  const sourceIntegrationCoverage = buildSourceIntegrationCoverage(
+    tenants,
+    canonicalRecords,
+    relationshipCandidates,
+  );
+  for (const coverage of sourceIntegrationCoverage) {
+    if (
+      coverage.disposition === "blocked_unmapped_source_file" ||
+      coverage.disposition === "blocked_no_canonical_records"
+    ) {
+      findings.push({
+        tenantKey: coverage.tenantKey,
+        severity: "error",
+        code: coverage.disposition,
+        message: coverage.message,
+        sourcePath: coverage.sourcePath,
+        domain: coverage.domain ?? undefined,
+      });
+    }
+  }
   const enterpriseProfileBuild = tenants.map((tenant) =>
     profileBuildForTenant(
       tenant.tenantKey,
@@ -1127,6 +1338,7 @@ export async function buildCanonicalTenantDataReport(options: {
     canonicalRecordSummary,
     evidenceAttachmentSummary,
     relationshipCandidatesSummary,
+    sourceIntegrationCoverage,
     enterpriseProfileBuild,
     placeholderRejectionReport,
     tenantGaps,
@@ -1148,6 +1360,23 @@ export async function buildCanonicalTenantDataReport(options: {
         0,
       ),
       relationshipCandidates: relationshipCandidates.length,
+      sourceRowsInspected: sourceIntegrationCoverage.reduce(
+        (sum, item) => sum + item.sourceRows,
+        0,
+      ),
+      sourceRowsIntegrated: sourceIntegrationCoverage
+        .filter(
+          (item) =>
+            item.disposition === "integrated" || item.disposition === "no_rows",
+        )
+        .reduce((sum, item) => sum + item.sourceRows, 0),
+      sourceRowsBlocked: sourceIntegrationCoverage
+        .filter(
+          (item) =>
+            item.disposition === "blocked_unmapped_source_file" ||
+            item.disposition === "blocked_no_canonical_records",
+        )
+        .reduce((sum, item) => sum + item.sourceRows, 0),
       placeholderRejections: placeholderRejectionReport.length,
       archiveReadViolations: archiveReadViolations.length,
       errorCount: findings.filter((finding) => finding.severity === "error")
@@ -1189,6 +1418,10 @@ export async function writeCanonicalTenantDataReport(
   await fs.writeFile(
     path.join(absoluteOutputDir, "relationship-candidates-summary.json"),
     json(report.relationshipCandidatesSummary),
+  );
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "source-integration-coverage.json"),
+    json(report.sourceIntegrationCoverage),
   );
   await fs.writeFile(
     path.join(absoluteOutputDir, "enterprise-profile-build.json"),
@@ -1525,6 +1758,7 @@ function relationshipCandidatesForRow(
     const target = firstValue(row, [
       "target_name",
       "to_entity",
+      "to_object_name",
       "target_object",
     ]);
     const type = firstValue(row, [
@@ -1536,7 +1770,8 @@ function relationshipCandidatesForRow(
       candidates.push({
         relationshipType: normalizeIdentifier(type),
         targetObjectType:
-          firstValue(row, ["target_type", "to_type"]) || "related_object",
+          firstValue(row, ["target_type", "to_type", "to_object_type"]) ||
+          "related_object",
         targetObjectName: target,
         confidence: 0.78,
         evidenceKey: evidence.evidenceKey,
@@ -1667,6 +1902,59 @@ function relationshipSummaryForTenant(
     ).length,
     samples: tenantCandidates.slice(0, 20),
   };
+}
+
+function buildSourceIntegrationCoverage(
+  tenants: CanonicalDataBuildReport["tenants"],
+  records: CanonicalIngestionRecord[],
+  candidates: RelationshipCandidate[],
+): SourceIntegrationCoverage[] {
+  return tenants.flatMap((tenant) =>
+    tenant.sourceFiles.map((sourceFile) => {
+      const sourceRecords = records.filter(
+        (record) =>
+          record.tenantKey === tenant.tenantKey &&
+          record.attributes.sourcePath?.value === sourceFile.repoRelativePath,
+      );
+      const sourceCandidates = candidates.filter(
+        (candidate) =>
+          candidate.tenantKey === tenant.tenantKey &&
+          candidate.sourcePath === sourceFile.repoRelativePath,
+      );
+      const acceptedRecords = sourceRecords.filter(
+        (record) => record.qualityStatus !== "quarantined",
+      ).length;
+      const quarantinedRecords = sourceRecords.length - acceptedRecords;
+      const disposition: SourceIntegrationCoverage["disposition"] =
+        sourceFile.rowCount === 0
+          ? "no_rows"
+          : !sourceFile.domain
+            ? "blocked_unmapped_source_file"
+            : sourceRecords.length > 0 || sourceCandidates.length > 0
+              ? "integrated"
+              : "blocked_no_canonical_records";
+      const message =
+        disposition === "blocked_unmapped_source_file"
+          ? "Active source file has rows but no canonical domain mapping."
+          : disposition === "blocked_no_canonical_records"
+            ? "Active source file mapped to a domain but produced no canonical records or relationship candidates."
+            : disposition === "no_rows"
+              ? "Active source file has no rows to integrate."
+              : "Active source file is represented in the canonical build.";
+      return {
+        tenantKey: tenant.tenantKey,
+        sourcePath: sourceFile.repoRelativePath,
+        domain: sourceFile.domain,
+        sourceRows: sourceFile.rowCount,
+        canonicalRecords: sourceRecords.length,
+        acceptedRecords,
+        quarantinedRecords,
+        relationshipCandidates: sourceCandidates.length,
+        disposition,
+        message,
+      };
+    }),
+  );
 }
 
 function profileBuildForTenant(
@@ -2167,6 +2455,9 @@ function summaryMarkdown(report: CanonicalDataBuildReport): string {
     `- Quarantined canonical records: ${report.summary.canonicalRecordsQuarantined.toLocaleString()}`,
     `- Evidence attachments: ${report.summary.evidenceAttachments.toLocaleString()}`,
     `- Relationship candidates: ${report.summary.relationshipCandidates.toLocaleString()}`,
+    `- Source rows inspected: ${report.summary.sourceRowsInspected.toLocaleString()}`,
+    `- Source rows integrated: ${report.summary.sourceRowsIntegrated.toLocaleString()}`,
+    `- Source rows blocked: ${report.summary.sourceRowsBlocked.toLocaleString()}`,
     `- Placeholder rejections/gaps: ${report.summary.placeholderRejections.toLocaleString()}`,
     `- Archive/legacy read violations: ${report.summary.archiveReadViolations}`,
     `- Error findings: ${report.summary.errorCount}`,
@@ -2191,6 +2482,15 @@ function summaryMarkdown(report: CanonicalDataBuildReport): string {
       return `| ${tenant.displayName} | ${tenant.sourceFiles.length.toLocaleString()} | ${tenant.sourceFiles.reduce((sum, file) => sum + file.rowCount, 0).toLocaleString()} | ${(recordSummary?.totalAcceptedRecords ?? 0).toLocaleString()} | ${(relationSummary?.candidateCount ?? 0).toLocaleString()} | ${profile?.status ?? "missing"} | ${readiness?.ready ? "ready" : "not ready"} |`;
     }),
     "",
+    "## Source Integration Coverage",
+    "",
+    "| Tenant | File | Rows | Domain | Records | Relationship candidates | Disposition |",
+    "| --- | --- | ---: | --- | ---: | ---: | --- |",
+    ...report.sourceIntegrationCoverage.map(
+      (coverage) =>
+        `| ${coverage.tenantKey} | ${coverage.sourcePath} | ${coverage.sourceRows.toLocaleString()} | ${coverage.domain ?? "unmapped"} | ${coverage.canonicalRecords.toLocaleString()} | ${coverage.relationshipCandidates.toLocaleString()} | ${coverage.disposition} |`,
+    ),
+    "",
     "## Domain Counts",
     "",
     "| Tenant | Domain | Source rows | Accepted records | Skipped rows | Duplicate names |",
@@ -2208,6 +2508,7 @@ function summaryMarkdown(report: CanonicalDataBuildReport): string {
     "- `canonical-records-summary.json`",
     "- `evidence-attachment-summary.json`",
     "- `relationship-candidates-summary.json`",
+    "- `source-integration-coverage.json`",
     "- `enterprise-profile-build.json`",
     "- `placeholder-rejection-report.json`",
     "- `tenant-gaps.json`",
