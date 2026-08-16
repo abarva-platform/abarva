@@ -1233,20 +1233,25 @@ async function readback(client: Client, args: Args): Promise<Record<string, numb
       args.tenants,
       args.buildVersion,
     ),
-    source_contract_vendor_360: await tableCount(
+    source_contract_vendor_360: await tenantScopedTableCount(
       client,
       "source.contract_vendor_360",
       args.tenants,
       args.buildVersion,
     ),
-    source_contract_360: await tableCount(client, "source.contract_360", args.tenants, args.buildVersion),
-    source_vendor_contract_portfolio: await tableCount(
+    source_contract_360: await tenantScopedTableCount(
+      client,
+      "source.contract_360",
+      args.tenants,
+      args.buildVersion,
+    ),
+    source_vendor_contract_portfolio: await tenantScopedTableCount(
       client,
       "source.vendor_contract_portfolio",
       args.tenants,
       args.buildVersion,
     ),
-    source_contract_application_scope: await tableCount(
+    source_contract_application_scope: await tenantScopedTableCount(
       client,
       "source.contract_application_scope",
       args.tenants,
