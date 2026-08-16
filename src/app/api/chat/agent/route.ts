@@ -1489,6 +1489,14 @@ export async function POST(request: Request) {
   // Reuse the hoisted resolution above (cross-event leak guard) so this
   // turn only reads `surfaceContext.sourceEventId` once.
   const sourceEventIdFromContext = earlySourceEventIdFromContext;
+  const shouldUseSourcePortfolioGroundingExclusively =
+    isSourceSurface(surface) &&
+    hasSourcePortfolioGrounding &&
+    !contractIdFromContext &&
+    !sourceEventIdFromContext &&
+    looksLikeSourcePortfolioChartOrConcentrationRequest(message);
+  const sourceTenantContextBlockForPrompt =
+    shouldUseSourcePortfolioGroundingExclusively ? "" : sourceTenantContextBlock;
   const sourceAnalyticsGroundingEnabled = isFeatureEnabled(
     { clientKey: activeClientKey ?? null, clientId: activeClient?.id ?? null },
     "source_analytics",
@@ -2133,7 +2141,7 @@ export async function POST(request: Request) {
     // tenant data when relevant. Empty string elsewhere.
     crossProgramSignalsBlock,
     "",
-    sourceTenantContextBlock,
+    sourceTenantContextBlockForPrompt,
     "",
     // aVa DETERMINISTIC GROUNDING · authoritative portfolio numbers (live-bug
     // fix — see ava-portfolio-grounding-context.ts module doc). Positioned
@@ -2294,6 +2302,7 @@ export async function POST(request: Request) {
           "- SOURCE EVENT ANSWER SHAPE: event-stage asks about required files/templates, workshops, data to collect, vendor unsupported claims, or gate readiness are operational decisions. Use a compact markdown table with columns such as Item | Owner | Evidence needed | Next action, then add one sentence on the decision. Include the words template, collect, next, approval, blocking, or guidebook when those words are in the user's ask. Do not answer those asks as prose-only paragraphs.",
           "- SOURCE STAGE STATUS DISCIPLINE: when describing where a sourcing event is in the workflow, distinguish stage/task completion from approved value or realized savings. Say complete only for the gate/checklist state the page proves. Do not imply guaranteed, booked, approved, realized, or realized savings unless the grounding explicitly says Finance/Tower approval is complete. If a value is pending, say it is not finance-confirmed.",
           "- SOURCE PORTFOLIO CHART DISCIPLINE: if the user asks for portfolio concentration, vendor/category spend, or a portfolio chart while no single contract is selected, use AUTHORITATIVE SOURCE PORTFOLIO GROUNDING only. If that block is absent, say the governed Source portfolio grounding is unavailable for this turn and name the Source portfolio read model needed; do not use generic tenant-context vendor names, legacy workbook figures, or old intake-corpus totals for Source portfolio charts.",
+          "- SOURCE PORTFOLIO CHART DATASET DISCIPLINE: for portfolio-wide Source chart JSON, copy labels and numeric values only from the Top vendors, Top supplier categories, Annual contract value, Context coverage, Spend/consumption, or Performance credits lines in AUTHORITATIVE SOURCE PORTFOLIO GROUNDING. Do not add a vendor, supplier, category, spend total, or percentage that is absent from that block. If the block does not contain the values needed for the requested visual, say the chart is blocked by missing governed Source portfolio grounding instead of substituting ambient tenant context.",
           "- SOURCE TENANT BOUNDARY WORDING: if the user asks for another tenant's records, say literally: \"I can't access another tenant from the current tenant session.\" Then stop or redirect to the active tenant. Do not soften this into a generic access-policy answer.",
           "- SOURCE QUOTE BOUNDARY WORDING: if the user asks what should not be quoted, say literally: \"Do not quote missing, conflicting, unproven, or non-governed Source figures.\" Name the owning read model or evidence family needed before the figure can be quoted.",
           "- SOURCE LINEAGE DISCIPLINE: source systems, extracts, fields, grain, history, update frequency, and Contract 360 data lineage are in-scope Source questions. If AUTHORITATIVE SOURCE CONTRACT GROUNDING includes a source-system evidence map, answer from it in a compact table; do not deflect as platform architecture.",
@@ -2684,6 +2693,24 @@ function looksLikeSourceVisualRequest(message: string): boolean {
   const normalized = message.toLowerCase();
   return /\b(chart|charts|graph|graphs|visual|visuals|trend|trends|waterfall|recharts|plot|plots|bar chart|line chart|donut|heatmap)\b/.test(
     normalized,
+  );
+}
+
+function looksLikeSourcePortfolioChartOrConcentrationRequest(
+  message: string,
+): boolean {
+  const normalized = message.toLowerCase();
+  const asksForPortfolioSlice =
+    /\b(portfolio|concentration|vendor|vendors|supplier|suppliers|category|categories|annual contract value|contract value|annual value|spend|top)\b/.test(
+      normalized,
+    );
+  const asksForPortfolioRanking =
+    /\b(top vendors|top suppliers|vendor concentration|supplier concentration|category concentration|top categories|annual contract value by vendor|annual value by vendor|spend by vendor|spend by category|portfolio concentration)\b/.test(
+      normalized,
+    );
+  return (
+    (looksLikeSourceVisualRequest(message) && asksForPortfolioSlice) ||
+    asksForPortfolioRanking
   );
 }
 
