@@ -284,6 +284,12 @@ const CONFIRMED_REALIZED_VALUE_CLAIM_RE =
 const CONFIRMED_REALIZED_VALUE_SENTENCE_RE =
   /(^|[.!?\n]\s*)[^.!?\n]*(?:(?:Finance(?:\/Tower)?\s+(?:has\s+)?confirmed|Finance-confirmed)[^.!?\n]*(?:realized value|value)|realized value (?:to date|is|of)[^.!?\n]*\$\s?[\d,]+(?:\.\d+)?\s?(?:[KkMmBb]|thousand|million|billion)?\b)[^.!?\n]*[.!?]?/gi;
 
+const PENDING_VALUE_AUTOMATIC_CONVERSION_RE =
+  /\b(?:the moment|when|once)\s+Finance(?:\/Tower)?\s+(?:approves|signs off)[^.!?\n]*(?:moves?|becomes?|turns into|converts? into)[^.!?\n]*(?:confirmed|approved|booked|realized value)|\b(?:moves?|becomes?|turns into|converts? into)[^.!?\n]*(?:confirmed|approved|booked|realized value)[^.!?\n]*(?:when|once)\s+Finance(?:\/Tower)?\s+(?:approves|signs off)\b/i;
+
+const PENDING_VALUE_AUTOMATIC_CONVERSION_SENTENCE_RE =
+  /(^|[.!?\n]\s*)[^.!?\n]*(?:(?:the moment|when|once)\s+Finance(?:\/Tower)?\s+(?:approves|signs off)[^.!?\n]*(?:moves?|becomes?|turns into|converts? into)[^.!?\n]*(?:confirmed|approved|booked|realized value)|(?:moves?|becomes?|turns into|converts? into)[^.!?\n]*(?:confirmed|approved|booked|realized value)[^.!?\n]*(?:when|once)\s+Finance(?:\/Tower)?\s+(?:approves|signs off))[^.!?\n]*[.!?]?/gi;
+
 // Vague negotiation-posture phrases that dodge naming the SPECIFIC vendor/lever
 // ask the grounding block already carries (e.g. the archetype's `bafoAsk` text,
 // or a named vendor/lever). Flagged only when the grounding actually HAS a
@@ -377,7 +383,8 @@ function runChecks(
   if (
     input.groundingBlockText &&
     OPEN_VALUE_PROOF_SIGNAL_RE.test(input.groundingBlockText) &&
-    CONFIRMED_REALIZED_VALUE_CLAIM_RE.test(text)
+    (CONFIRMED_REALIZED_VALUE_CLAIM_RE.test(text) ||
+      PENDING_VALUE_AUTOMATIC_CONVERSION_RE.test(text))
   ) {
     matchesWorkflowState = false;
     matchesDetail =
@@ -582,12 +589,18 @@ function repairAnswer(
     failedIds.has("matches_workflow_state") &&
     input.groundingBlockText &&
     OPEN_VALUE_PROOF_SIGNAL_RE.test(input.groundingBlockText) &&
-    CONFIRMED_REALIZED_VALUE_CLAIM_RE.test(repaired)
+    (CONFIRMED_REALIZED_VALUE_CLAIM_RE.test(repaired) ||
+      PENDING_VALUE_AUTOMATIC_CONVERSION_RE.test(repaired))
   ) {
     repaired = repaired.replace(
       CONFIRMED_REALIZED_VALUE_SENTENCE_RE,
       (match, prefix: string) =>
         `${prefix}Finance/Tower evidence is loaded but still pending approval; approved realized value remains $0 until the confirmation request is approved.`,
+    );
+    repaired = repaired.replace(
+      PENDING_VALUE_AUTOMATIC_CONVERSION_SENTENCE_RE,
+      (match, prefix: string) =>
+        `${prefix}If Finance/Tower approves the confirmation request, the pending evidence becomes eligible to be recorded as realized value; until then approved realized value remains $0.`,
     );
     repaired = repaired.replace(/[ \t]{2,}/g, " ").trim();
   }
