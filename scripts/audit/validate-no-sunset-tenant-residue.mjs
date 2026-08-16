@@ -58,6 +58,24 @@ const HISTORY = [
   /^scripts\/audit\/validate-no-sunset-tenant-residue\.mjs$/, // this file names them by design
 ];
 
+/**
+ * Configuration and infrastructure. Called out separately because this is the surface that
+ * forklifts silently during an environment migration: a bicepparam naming a dead tenant will
+ * happily provision a Postgres server and Container App for it in the new environment, and a
+ * dispatchable workflow will happily load it. Code that references a dead tenant fails loudly;
+ * config that does simply costs money and creates a tenant nobody meant to create.
+ */
+const CONFIG = [
+  /^\.github\/workflows\//,
+  /^infra\//,
+  /^Dockerfile/,
+  /^docker-compose/,
+  /\.(bicep|bicepparam|tf|tfvars)$/,
+  /^\.env/,
+  /^supabase\/config/,
+  /^(package\.json|vercel\.(json|ts)|next\.config\.[jt]s)$/,
+];
+
 const ARCHIVE_EXT = new Set(['.xlsx', '.xlsm', '.docx', '.pptx', '.zip']);
 const SKIP_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.ico', '.woff', '.woff2', '.ttf', '.mp4']);
 
@@ -66,9 +84,12 @@ const tracked = execFileSync('git', ['ls-files'], { cwd: ROOT, maxBuffer: 1 << 2
 
 const isHistory = (rel) => HISTORY.some((re) => re.test(rel));
 
-const findings = { paths: [], text: [], archives: [], pdf: [], history: [] };
+const findings = { config: [], paths: [], text: [], archives: [], pdf: [], history: [] };
+const isConfig = (rel) => CONFIG.some((re) => re.test(rel));
 const push = (cat, rel, detail) => {
-  (isHistory(rel) ? findings.history : findings[cat]).push({ rel, detail });
+  const bucket = isHistory(rel) ? 'history' : isConfig(rel) ? 'config' : cat;
+  if (findings[bucket].some((f) => f.rel === rel)) return;
+  findings[bucket].push({ rel, detail });
 };
 
 /** Read the entries of a ZIP-based container without a dependency, via the central directory. */
@@ -156,7 +177,7 @@ for (const rel of tracked) {
   } catch { /* unreadable */ }
 }
 
-const live = ['paths', 'text', 'archives', 'pdf'];
+const live = ['config', 'paths', 'text', 'archives', 'pdf'];
 const liveCount = live.reduce((n, k) => n + findings[k].length, 0);
 
 if (AS_JSON) {
@@ -167,7 +188,8 @@ if (AS_JSON) {
   if (!pdftotext) console.log('  note: pdftotext unavailable — PDF text was NOT scanned');
   console.log('');
   for (const k of live) {
-    console.log(`  ${k.padEnd(10)} ${String(findings[k].length).padStart(5)}`);
+    const note = k === 'config' ? '   <- forklifts silently into a new environment' : '';
+    console.log(`  ${k.padEnd(10)} ${String(findings[k].length).padStart(5)}${note}`);
   }
   console.log(`  ${'history'.padEnd(10)} ${String(findings.history.length).padStart(5)}   (audit evidence — not failed)`);
 
