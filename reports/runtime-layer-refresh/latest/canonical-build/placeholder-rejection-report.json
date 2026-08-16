@@ -1,26 +1,26 @@
 {
-  "total": 2974,
+  "total": 4205,
   "byCode": {
-    "placeholder_value_omitted": 2727,
-    "primary_identity_missing_or_placeholder": 247
+    "primary_identity_missing_or_placeholder": 2549,
+    "placeholder_value_omitted": 1656
   },
   "bySeverity": {
-    "warning": 2974
+    "warning": 4205
   },
   "byDomain": {
-    "business_functions": 46,
-    "workforce_roles": 55,
-    "applications_systems": 586,
-    "data_assets_integrations": 572,
-    "vendors_contracts": 301,
-    "spend_value": 296,
-    "programs_initiatives": 390,
+    "relationships": 2549,
     "enterprise_profile": 1,
+    "business_functions": 22,
     "org_ownership": 153,
+    "workforce_roles": 38,
+    "applications_systems": 503,
+    "data_assets_integrations": 499,
     "infrastructure_platforms": 33,
+    "vendors_contracts": 65,
+    "spend_value": 20,
+    "programs_initiatives": 28,
     "ai_automation_use_cases": 13,
     "risks_controls": 44,
-    "relationships": 247,
     "evidence_sources": 183,
     "metrics_outcomes": 26,
     "industry_context_patterns": 10,
@@ -31,112 +31,13 @@
     {
       "tenantKey": "meridian-health",
       "severity": "warning",
-      "code": "placeholder_value_omitted",
-      "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
-      "rowNumber": 230,
-      "domain": "business_functions",
-      "field": "conflict_status",
-      "value": "none"
-    },
-    {
-      "tenantKey": "meridian-health",
-      "severity": "warning",
-      "code": "placeholder_value_omitted",
-      "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv",
-      "rowNumber": 223,
-      "domain": "workforce_roles",
-      "field": "conflict_status",
-      "value": "none"
-    },
-    {
-      "tenantKey": "meridian-health",
-      "severity": "warning",
-      "code": "placeholder_value_omitted",
-      "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv",
-      "rowNumber": 243,
-      "domain": "applications_systems",
-      "field": "conflict_status",
-      "value": "none"
-    },
-    {
-      "tenantKey": "meridian-health",
-      "severity": "warning",
-      "code": "placeholder_value_omitted",
-      "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/05_data_assets_integrations.csv",
-      "rowNumber": 244,
-      "domain": "data_assets_integrations",
-      "field": "conflict_status",
-      "value": "none"
-    },
-    {
-      "tenantKey": "meridian-health",
-      "severity": "warning",
-      "code": "placeholder_value_omitted",
-      "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv",
-      "rowNumber": 233,
-      "domain": "vendors_contracts",
-      "field": "conflict_status",
-      "value": "none"
-    },
-    {
-      "tenantKey": "meridian-health",
-      "severity": "warning",
-      "code": "placeholder_value_omitted",
-      "message": "Placeholder value in field amount_usd was omitted and recorded as a gap, not a fact.",
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/08_it_budget_spend_value.csv",
+      "code": "primary_identity_missing_or_placeholder",
+      "message": "Row cannot become a canonical relationship_source_row because relationship identity is missing or placeholder.",
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/12_relationships.csv",
       "rowNumber": 2,
-      "domain": "spend_value",
-      "field": "amount_usd",
-      "value": "not_provided"
-    },
-    {
-      "tenantKey": "meridian-health",
-      "severity": "warning",
-      "code": "placeholder_value_omitted",
-      "message": "Placeholder value in field realized_value_usd was omitted and recorded as a gap, not a fact.",
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/08_it_budget_spend_value.csv",
-      "rowNumber": 2,
-      "domain": "spend_value",
-      "field": "realized_value_usd",
-      "value": "not_provided"
-    },
-    {
-      "tenantKey": "meridian-health",
-      "severity": "warning",
-      "code": "placeholder_value_omitted",
-      "message": "Placeholder value in field ai_spend_type was omitted and recorded as a gap, not a fact.",
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/08_it_budget_spend_value.csv",
-      "rowNumber": 2,
-      "domain": "spend_value",
-      "field": "ai_spend_type",
-      "value": "none"
-    },
-    {
-      "tenantKey": "meridian-health",
-      "severity": "warning",
-      "code": "placeholder_value_omitted",
-      "message": "Placeholder value in field ai_spend_type was omitted and recorded as a gap, not a fact.",
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv",
-      "rowNumber": 2,
-      "domain": "programs_initiatives",
-      "field": "ai_spend_type",
-      "value": "none"
-    },
-    {
-      "tenantKey": "meridian-health",
-      "severity": "warning",
-      "code": "placeholder_value_omitted",
-      "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv",
-      "rowNumber": 258,
-      "domain": "programs_initiatives",
-      "field": "conflict_status",
-      "value": "none"
+      "domain": "relationships",
+      "field": "source_name|from_entity|source_object|relationship_id|edge_id",
+      "value": ""
     },
     {
       "tenantKey": "skyharbor-air",

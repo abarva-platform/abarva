@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-08-16T11:26:47.401Z",
+  "generatedBy": "scripts/audit/tenant-layer-refresh.mjs",
+  "mode": "layer2-dry-run-failure-classification",
+  "truthSplit": {
+    "productionTenantDataWritten": false,
+    "activeTenantAccessLayerUpdated": false,
+    "moduleRuntimeBehaviorChanged": false,
+    "adaptersExecuted": false,
+    "canonicalObjectsWritten": false
+  },
+  "summary": {
+    "uniqueProfileFailuresClassified": 0,
+    "mirroredDimensionFailures": 0,
+    "byRecommendedAction": {}
+  },
+  "classifications": [],
+  "nextPrSizedSafeCodeSlice": {
+    "title": "Emit and test Layer 2 dry-run failure classification",
+    "scope": "Report-only classifier for adapter/profile failures; no alias resolution and no tenant CSV mutation.",
+    "expectedOutput": "layer2-dry-run-failure-classification.json",
+    "hardGatesBeforeActivation": [
+      "tenant CSV mutation",
+      "registry activation",
+      "data-plane load/write",
+      "runtime routing or deploy",
+      "semantic identity alias activation"
+    ]
+  }
+}

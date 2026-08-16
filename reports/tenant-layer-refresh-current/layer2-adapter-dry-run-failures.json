@@ -1,0 +1,22 @@
+{
+  "generatedAt": "2026-08-16T11:26:47.401Z",
+  "generatedBy": "scripts/audit/tenant-layer-refresh.mjs",
+  "tenants": ["meridian-health", "skyharbor-air"],
+  "mode": "layer2-dry-run-only",
+  "truthSplit": {
+    "productionTenantDataWritten": false,
+    "activeTenantAccessLayerUpdated": false,
+    "moduleRuntimeBehaviorChanged": false,
+    "adaptersExecuted": false,
+    "canonicalObjectsWritten": false
+  },
+  "summary": {
+    "familyFailures": 0,
+    "profileFailures": 0,
+    "dimensionFailures": 0,
+    "totalFailures": 0
+  },
+  "familyFailures": [],
+  "profileFailures": [],
+  "dimensionFailures": []
+}

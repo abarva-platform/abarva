@@ -2,22 +2,10 @@
   {
     "tenantKey": "meridian-health",
     "companySizeBand": "large",
-    "totalSourceRows": 5408,
-    "totalAcceptedRecords": 5059,
-    "domainsMeetingDepth": 16,
+    "totalSourceRows": 3887,
+    "totalAcceptedRecords": 1471,
+    "domainsMeetingDepth": 18,
     "domainsBelowDepth": [
-      {
-        "domain": "infrastructure_platforms",
-        "rows": 15,
-        "minimumRows": 20,
-        "gap": 5
-      },
-      {
-        "domain": "industry_context_patterns",
-        "rows": 7,
-        "minimumRows": 10,
-        "gap": 3
-      },
       {
         "domain": "operational_process_evidence",
         "rows": 0,
@@ -25,7 +13,7 @@
         "gap": 10
       }
     ],
-    "qualityScore": 84
+    "qualityScore": 95
   },
   {
     "tenantKey": "skyharbor-air",

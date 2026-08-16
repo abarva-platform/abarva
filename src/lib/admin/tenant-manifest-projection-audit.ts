@@ -142,6 +142,8 @@ interface TenantAuditConfig {
   displayName: string;
   appClientKey: string;
   aliases: string[];
+  canonicalInputRoot: string | null;
+  registryPacketCount: number;
   activeHomeDataset: string | null;
   externalObservedPaths?: Array<{
     label: string;
@@ -160,6 +162,19 @@ interface CandidateManifestEvidence {
 interface BuildOptions {
   root?: string;
   includeDownloads?: boolean;
+}
+
+interface TenantInputRegistry {
+  activeTenants?: Array<{
+    tenantKey: string;
+    displayName?: string;
+    canonicalInputRoot?: string;
+    packets?: Array<{ path?: string }>;
+  }>;
+  retiredTenants?: Array<{
+    tenantKey: string;
+    reason?: string;
+  }>;
 }
 
 const SOURCE_EXTENSIONS = new Set([
@@ -424,76 +439,67 @@ const DOMAINS: Array<{
   },
 ];
 
-const TENANTS: TenantAuditConfig[] = [
-  {
-    tenantKey: "skyharbor-air",
-    displayName: "Airline Demo",
-    appClientKey: "skyharbor",
-    aliases: ["skyharbor-air", "skyharbor", "airline demo"],
-    activeHomeDataset: "datasets/skyharbor-air-synthetic-v6/templates",
-    externalObservedPaths: [
-      {
-        label: "412-app portfolio CSV from Downloads",
-        filePath:
-          "/Users/anand/Downloads/SkyHarbor-E2E-Data/01-evidence-uploads/01_Application_Portfolio_InScope_412Apps.csv",
-        note: "Operator-observed rich source evidence; include only when accessible in the local/test environment.",
-      },
-      {
-        label: "900-row older app/system estate",
-        filePath:
-          "datasets/skyharbor-air-synthetic-v4/family-2-technology-estate/F05_applications-systems.csv",
-        note: "Older rich source estate that must be reconciled before candidate promotion.",
-      },
-      {
-        label: "956-row transformed app/system template",
-        filePath:
-          "datasets/skyharbor-air-synthetic-v6/templates/V6_05_applications_systems.csv",
-        note: "Transformed template used by active Home fallback/read model.",
-      },
-      {
-        label: "13-row current upgrade candidate app/system file",
-        filePath:
-          "datasets/skyharbor-air-v6-v7-upgrade-candidate-20260710/templates/V6_05_applications_systems.csv",
-        note: "Known thin candidate source from prior runway; may be absent from this checkout.",
-      },
-    ],
-  },
-  {
-    tenantKey: "meridian-health",
-    displayName: "Healthcare Demo",
-    appClientKey: "meridian",
-    aliases: ["meridian-health", "meridian", "healthcare demo"],
-    activeHomeDataset: "datasets/meridian-health-synthetic-v6/templates",
-  },
-  {
-    tenantKey: "first-capital",
-    displayName: "FS Demo",
-    appClientKey: "arcturus",
-    aliases: [
-      "first-capital",
-      "first-capital-financial",
-      "firstcapital",
-      "arcturus",
-      "financial services demo",
-    ],
-    activeHomeDataset:
-      "datasets/first-capital-financial-synthetic-v6/templates",
-  },
-  {
-    tenantKey: "apex-retail",
-    displayName: "Retail Demo",
-    appClientKey: "apexretail",
-    aliases: ["apex-retail", "apexretail", "apex", "retail demo"],
-    activeHomeDataset: "datasets/apex-retail-synthetic-v6/templates",
-  },
-  {
-    tenantKey: "lakeshore-holdings",
-    displayName: "Lakeshore Holdings",
-    appClientKey: "lakeshore",
-    aliases: ["lakeshore-holdings", "lakeshore-industries", "lakeshore"],
-    activeHomeDataset: "datasets/lakeshore-holdings-synthetic-v6/templates",
-  },
-];
+const REGISTRY_PATH = "datasets/tenant-inputs/tenant-input-registry.json";
+
+const KNOWN_TENANT_ALIASES: Record<string, string[]> = {
+  "apex-retail": ["apexretail", "apex", "retail demo"],
+  "first-capital-financial": [
+    "first-capital",
+    "firstcapital",
+    "arcturus",
+    "financial services demo",
+  ],
+  "lakeshore-holdings": ["lakeshore"],
+  "lakeshore-industries": ["lakeshore-industries"],
+  "meridian-health": ["meridian", "healthcare demo"],
+  "skyharbor-air": ["skyharbor", "airline demo"],
+};
+
+const APP_CLIENT_KEYS: Record<string, string> = {
+  "apex-retail": "apexretail",
+  "first-capital-financial": "arcturus",
+  "lakeshore-holdings": "lakeshore",
+  "lakeshore-industries": "lakeshore-industries",
+  "meridian-health": "meridian",
+  "skyharbor-air": "skyharbor",
+};
+
+const LEGACY_HOME_DATASETS: Record<string, string> = {
+  "apex-retail": "datasets/apex-retail-synthetic-v6/templates",
+  "first-capital-financial":
+    "datasets/first-capital-financial-synthetic-v6/templates",
+  "lakeshore-holdings": "datasets/lakeshore-holdings-synthetic-v6/templates",
+  "meridian-health": "datasets/meridian-health-synthetic-v6/templates",
+  "skyharbor-air": "datasets/skyharbor-air-synthetic-v6/templates",
+};
+
+const SKYHARBOR_EXTERNAL_OBSERVED_PATHS: TenantAuditConfig["externalObservedPaths"] =
+  [
+    {
+      label: "412-app portfolio CSV from Downloads",
+      filePath:
+        "/Users/anand/Downloads/SkyHarbor-E2E-Data/01-evidence-uploads/01_Application_Portfolio_InScope_412Apps.csv",
+      note: "Operator-observed rich source evidence; include only when accessible in the local/test environment.",
+    },
+    {
+      label: "900-row older app/system estate",
+      filePath:
+        "datasets/skyharbor-air-synthetic-v4/family-2-technology-estate/F05_applications-systems.csv",
+      note: "Older rich source estate that must be reconciled before candidate promotion.",
+    },
+    {
+      label: "956-row transformed app/system template",
+      filePath:
+        "datasets/skyharbor-air-synthetic-v6/templates/V6_05_applications_systems.csv",
+      note: "Transformed template used by active Home fallback/read model.",
+    },
+    {
+      label: "13-row current upgrade candidate app/system file",
+      filePath:
+        "datasets/skyharbor-air-v6-v7-upgrade-candidate-20260710/templates/V6_05_applications_systems.csv",
+      note: "Known thin candidate source from prior runway; may be absent from this checkout.",
+    },
+  ];
 
 const EXCLUDED_TENANTS = [
   {
@@ -514,6 +520,41 @@ const DOWNLOAD_SOURCE_ROOTS = [
   "/Users/anand/Downloads/Lakeshore Legal Contract Intake Demo Pack",
   "/Users/anand/Downloads/FirstCapital-AITradeFinance-Engagement/02-inputs-evidence",
 ];
+
+function readTenantRegistry(root: string): TenantInputRegistry {
+  const registryPath = path.join(root, REGISTRY_PATH);
+  try {
+    return JSON.parse(fs.readFileSync(registryPath, "utf8"));
+  } catch {
+    return { activeTenants: [] };
+  }
+}
+
+function activeTenantConfigs(root: string): TenantAuditConfig[] {
+  const registry = readTenantRegistry(root);
+  return (registry.activeTenants ?? []).map((tenant) => {
+    const aliases = Array.from(
+      new Set([
+        tenant.tenantKey,
+        tenant.displayName ?? tenant.tenantKey,
+        ...(KNOWN_TENANT_ALIASES[tenant.tenantKey] ?? []),
+      ]),
+    );
+    return {
+      tenantKey: tenant.tenantKey,
+      displayName: tenant.displayName ?? tenant.tenantKey,
+      appClientKey: APP_CLIENT_KEYS[tenant.tenantKey] ?? tenant.tenantKey,
+      aliases,
+      canonicalInputRoot: tenant.canonicalInputRoot ?? null,
+      registryPacketCount: tenant.packets?.length ?? 0,
+      activeHomeDataset: LEGACY_HOME_DATASETS[tenant.tenantKey] ?? null,
+      externalObservedPaths:
+        tenant.tenantKey === "skyharbor-air"
+          ? SKYHARBOR_EXTERNAL_OBSERVED_PATHS
+          : undefined,
+    };
+  });
+}
 
 const normalize = (value: string): string =>
   value.toLowerCase().replace(/[^a-z0-9]+/g, "");
@@ -642,8 +683,10 @@ function discoverTenantSourceFiles(
   tenant: TenantAuditConfig,
   includeDownloads: boolean,
 ): string[] {
-  const roots = [path.join(root, "datasets")];
-  if (includeDownloads) {
+  const roots = tenant.canonicalInputRoot
+    ? [path.join(root, tenant.canonicalInputRoot)]
+    : [path.join(root, "datasets")];
+  if (includeDownloads && !tenant.canonicalInputRoot) {
     roots.push(
       ...DOWNLOAD_SOURCE_ROOTS.filter((sourceRoot) => safeExists(sourceRoot)),
     );
@@ -662,10 +705,28 @@ function candidateEvidenceForTenant(
 ): CandidateManifestEvidence {
   const evidence: CandidateManifestEvidence = {
     files: new Set(),
-    manifestCount: 0,
+    manifestCount: tenant.registryPacketCount,
     canonicalRecordsGenerated: 0,
     relationshipOperationsPlanned: 0,
   };
+
+  if (tenant.canonicalInputRoot) {
+    const fullRoot = path.join(root, tenant.canonicalInputRoot);
+    const activeFiles = walkFiles(fullRoot, 2);
+    for (const file of activeFiles) {
+      const relativePath = rel(root, file);
+      const basename = path.basename(file);
+      evidence.files.add(relativePath);
+      evidence.files.add(basename);
+      const rows = rowCount(file);
+      if (STRUCTURED_EXTENSIONS.has(path.extname(file).toLowerCase())) {
+        evidence.canonicalRecordsGenerated += rows ?? 0;
+      }
+      if (domainsForPath(file).includes("relationships")) {
+        evidence.relationshipOperationsPlanned += rows ?? 0;
+      }
+    }
+  }
 
   for (const searchRoot of CANDIDATE_SEARCH_ROOTS) {
     const fullRoot = path.join(root, searchRoot);
@@ -743,6 +804,7 @@ export function buildTenantManifestProjectionAudit(
   const root = options.root ?? process.cwd();
   const includeDownloads =
     options.includeDownloads ?? safeExists("/Users/anand/Downloads");
+  const tenantConfigs = activeTenantConfigs(root);
   const sourceFiles: SourceFileFinding[] = [];
   const tenants: TenantManifestProjectionFinding[] = [];
   const promotionBlockers: TenantManifestProjectionAudit["promotionBlockers"] =
@@ -750,7 +812,7 @@ export function buildTenantManifestProjectionAudit(
   const skyHarborRequiredFindings: TenantManifestProjectionAudit["skyHarborRequiredFindings"] =
     [];
 
-  for (const tenant of TENANTS) {
+  for (const tenant of tenantConfigs) {
     const candidateEvidence = candidateEvidenceForTenant(root, tenant);
     const homeFiles = activeHomeSourceFiles(root, tenant);
     const discovered = discoverTenantSourceFiles(

@@ -1,6 +1,6 @@
 # Canonical Tenant Data Build
 
-Generated: 2026-08-15T17:56:30.829Z
+Generated: 2026-08-16T11:26:36.536Z
 
 ## Truth Split
 
@@ -15,11 +15,11 @@ Generated: 2026-08-15T17:56:30.829Z
 - Source root: `datasets/tenant-inputs/active`
 - Template set: `universal-tenant-input-standard-2026-07-v3`
 - Tenants processed: 2
-- Accepted canonical records: 9,786
+- Accepted canonical records: 6,198
 - Quarantined canonical records: 0
-- Evidence attachments: 9,786
-- Relationship candidates: 6,722
-- Placeholder rejections/gaps: 2,974
+- Evidence attachments: 6,198
+- Relationship candidates: 12,184
+- Placeholder rejections/gaps: 4,205
 - Archive/legacy read violations: 0
 - Error findings: 0
 
@@ -27,31 +27,31 @@ Generated: 2026-08-15T17:56:30.829Z
 
 | Tenant          | Source files | Source rows | Accepted records | Relationship candidates | Profile | Home/aVa ready |
 | --------------- | -----------: | ----------: | ---------------: | ----------------------: | ------- | -------------- |
-| Meridian Health |           25 |       5,408 |            5,059 |                     173 | ready   | ready          |
+| Meridian Health |           24 |       3,887 |            1,471 |                   5,635 | ready   | ready          |
 | Airline Demo    |           26 |       5,789 |            4,727 |                   6,549 | ready   | ready          |
 
 ## Domain Counts
 
 | Tenant          | Domain                         | Source rows | Accepted records | Skipped rows | Duplicate names |
 | --------------- | ------------------------------ | ----------: | ---------------: | -----------: | --------------: |
-| Meridian Health | enterprise_profile             |           2 |                2 |            0 |               1 |
-| Meridian Health | business_functions             |         252 |              252 |            0 |              91 |
-| Meridian Health | org_ownership                  |         228 |              228 |            0 |               0 |
-| Meridian Health | workforce_roles                |         238 |              238 |            0 |              91 |
-| Meridian Health | applications_systems           |         324 |              324 |            0 |              91 |
-| Meridian Health | data_assets_integrations       |         315 |              315 |            0 |              92 |
-| Meridian Health | infrastructure_platforms       |          15 |               15 |            0 |               0 |
-| Meridian Health | vendors_contracts              |         467 |              467 |            0 |              91 |
-| Meridian Health | spend_value                    |         298 |              298 |            0 |               0 |
-| Meridian Health | programs_initiatives           |         376 |              376 |            0 |             105 |
-| Meridian Health | ai_automation_use_cases        |         251 |              251 |            0 |             105 |
-| Meridian Health | risks_controls                 |         249 |              249 |            0 |              91 |
-| Meridian Health | relationships                  |       1,037 |            1,037 |            0 |               0 |
-| Meridian Health | evidence_sources               |         508 |              508 |            0 |               5 |
-| Meridian Health | metrics_outcomes               |         257 |              257 |            0 |               0 |
-| Meridian Health | industry_context_patterns      |           7 |                7 |            0 |               0 |
-| Meridian Health | expert_lenses                  |           7 |                7 |            0 |               0 |
-| Meridian Health | service_scope_managed_services |         228 |              228 |            0 |               0 |
+| Meridian Health | enterprise_profile             |           1 |                1 |            0 |               0 |
+| Meridian Health | business_functions             |          24 |               24 |            0 |               0 |
+| Meridian Health | org_ownership                  |         225 |              225 |            0 |               0 |
+| Meridian Health | workforce_roles                |          45 |               45 |            0 |               0 |
+| Meridian Health | applications_systems           |         301 |              301 |            0 |               0 |
+| Meridian Health | data_assets_integrations       |         520 |              520 |            0 |               0 |
+| Meridian Health | infrastructure_platforms       |          60 |               60 |            0 |               0 |
+| Meridian Health | vendors_contracts              |          72 |               72 |            0 |               0 |
+| Meridian Health | spend_value                    |          24 |               24 |            0 |               0 |
+| Meridian Health | programs_initiatives           |          28 |               28 |            0 |               0 |
+| Meridian Health | ai_automation_use_cases        |          18 |               18 |            0 |               0 |
+| Meridian Health | risks_controls                 |          40 |               40 |            0 |               0 |
+| Meridian Health | relationships                  |       2,302 |                0 |        2,302 |               0 |
+| Meridian Health | evidence_sources               |          27 |               27 |            0 |               0 |
+| Meridian Health | metrics_outcomes               |          50 |               50 |            0 |               0 |
+| Meridian Health | industry_context_patterns      |          12 |               12 |            0 |               0 |
+| Meridian Health | expert_lenses                  |           9 |                9 |            0 |               0 |
+| Meridian Health | service_scope_managed_services |          15 |               15 |            0 |               0 |
 | Meridian Health | operational_process_evidence   |           0 |                0 |            0 |               0 |
 | Airline Demo    | enterprise_profile             |           1 |                1 |            0 |               0 |
 | Airline Demo    | business_functions             |          22 |               22 |            0 |               0 |

@@ -8,45 +8,48 @@
     "status": "ready",
     "facts": {
       "industry": "Healthcare",
-      "subIndustry": "Integrated delivery network and health plan",
-      "headquarters": "Sacramento, CA",
-      "revenueUsd": "16800000000",
-      "employeeCount": "58000",
-      "businessModel": "Integrated provider-payer healthcare enterprise with clinical delivery, health-plan administration, shared services, and enterprise technology operations.",
-      "mission": "Deliver integrated care and health-plan services with reliable, governed data and measurable operating outcomes.",
-      "vision": "Create a trusted healthcare operating platform where clinical, claims, member-service, finance, and analytics teams can safely scale automation and AI.",
-      "source": "00_enterprise_profile.csv",
-      "asOf": "2026-07-17",
-      "locations": ["Northern California", "Central California", "Nevada"],
+      "subIndustry": "Integrated Delivery Network & Medicare Advantage Health Plan",
+      "headquarters": "Lakeview, IL",
+      "revenueUsd": "24000000000",
+      "employeeCount": "68000",
+      "businessModel": "Vertically integrated delivery system (22 owned hospitals, 214 ambulatory clinic sites, employed and affiliated physician network) paired with an owned Medicare Advantage and commercial health plan (Meridian Health Plan). Meridian Health Plan generates approximately 54% of consolidated revenue (roughly $13.0B of the $24.0B total), with the remaining ~46% from care-delivery operations (hospitals, clinics, pharmacy) — the health plan, not the delivery system, is the larger revenue segment. Approximately 80% of health-plan covered lives are Medicare or Medicare Advantage, a tenant-specific synthetic assumption rather than an industry-wide claim.",
+      "mission": "Deliver connected, measurably better health outcomes for the communities Meridian serves by unifying clinical care and health plan operations under one accountable system.",
+      "vision": "Be the region's most trusted integrated health system, closing care gaps proactively through data rather than reactively through claims review.",
+      "source": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
+      "asOf": "2026-07-31",
+      "locations": [
+        "22-hospital regional footprint across Illinois, Indiana and Wisconsin",
+        "Meridian Medical Group affiliated practices across the same multi-state service area"
+      ],
       "leadership": [
-        "CEO",
+        "President & CEO",
+        "COO",
         "CFO",
         "CIO",
-        "CTO",
+        "CMIO",
+        "CNO",
+        "CMO",
         "CDAO",
         "CISO",
-        "COO",
-        "Chief Medical Officer",
-        "Chief Experience Officer",
-        "VP Innovation",
-        "VP Shared Services"
+        "CHRO",
+        "CLO",
+        "CQO",
+        "President, Meridian Health Plan",
+        "President, Meridian Medical Group"
       ],
       "strategy": [
-        "Build governed clinical and claims data foundation",
-        "certify patient/member identity spine",
-        "modernize Epic and analytics estate",
-        "baseline AI benefits before scale",
-        "improve member service and contact-center performance",
-        "strengthen PHI and model-risk controls"
+        "1) Improve Medicare Advantage overall Star Rating from 3.5 to 4.5+ stars by measurement year 2028",
+        "2) Begin modernizing the on-premises SQL Server datamart sprawl by evaluating Databricks as a future lakehouse target — evaluation-stage only, nothing implemented yet",
+        "3) Expand Epic Community Connect to affiliated practices to reduce interface sprawl",
+        "4) Reduce claims denial write-offs and RAF evidence gaps",
+        "5) Govern AI use cases with human-in-the-loop review as they move from concept to pilot"
       ],
       "segments": [
-        "Clinical operations",
-        "Health plan operations",
-        "Claims and benefits administration",
-        "Member service",
-        "Finance and actuarial",
-        "Enterprise data and analytics",
-        "Shared services"
+        "Medicare Advantage members",
+        "Medicare fee-for-service beneficiaries",
+        "commercial health plan members",
+        "Medicaid managed-care members",
+        "self-pay and commercially insured patients across acute, ambulatory and behavioral health service lines"
       ]
     },
     "missingFields": [],
@@ -54,12 +57,7 @@
       {
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
         "rowNumber": 2,
-        "evidenceKey": "meridian-health:current-universal:00_enterprise_profile.csv:2"
-      },
-      {
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
-        "rowNumber": 3,
-        "evidenceKey": "meridian-health:current-universal:00_enterprise_profile.csv:3"
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:00_enterprise_profile.csv:2"
       }
     ]
   },

@@ -1,0 +1,299 @@
+{
+  "generatedAt": "2026-08-16T11:27:34.913Z",
+  "generatedBy": "scripts/audit/build-layer-refresh-status-report.mjs",
+  "sourceSha": "c4d5afd301ab24ec23ed86510f06469255b1b807",
+  "sourceWorktree": "current_worktree",
+  "mode": "report_only_no_data_mutation_no_registry_activation_no_graph_materialization_no_projection_refresh",
+  "publicDisclosure": "Tenant identifiers are anonymized in this report. Evidence paths are operator-supplied artifacts from the current worktree.",
+  "evidence": {
+    "releaseCheck": "npm run release:check",
+    "tenantInputQuality": "npm run audit:tenant-input-quality -- --out-dir /tmp/nexus-tenant-input-quality-20260816",
+    "contextCorpus": "npm run validate:context-corpus",
+    "factLineage": "node scripts/tower/fact-lineage-report.mjs",
+    "layerRefreshArtifact": "reports/tenant-layer-refresh-current",
+    "graphReconciliationArtifact": "reports/runtime-layer-refresh/latest/graph-reconciliation"
+  },
+  "answer": {
+    "allLayersRefreshingFromNewSourceFiles": false,
+    "reason": "Layer 2 dry-run is complete, but Layer 3 canonical writes, graph materialization, Layer 4 projection refresh, data-plane loads, and live proof remain closed."
+  },
+  "layer1": {
+    "activeTenantPackages": 2,
+    "activeSourceFiles": 55,
+    "undeclaredActiveFiles": 17,
+    "undeclaredFilesByClass": [
+      {
+        "key": "genuine_new_source_contract_candidate",
+        "count": 12
+      },
+      {
+        "key": "variant_of_declared_or_parallel_csv_source",
+        "count": 5
+      }
+    ],
+    "files": [
+      {
+        "tenant": "tenant-01",
+        "fileName": "19_data_analytics_platform_maturity.csv",
+        "class": "genuine_new_source_contract_candidate",
+        "proposedDisposition": "Propose as a new operational or maturity source candidate; do not flow to L3/L4 until the intake owner and template contract are approved.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-01",
+        "fileName": "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+        "class": "genuine_new_source_contract_candidate",
+        "proposedDisposition": "Propose as a new owner-scoped AI source family; do not amend template-manifest.json without explicit approval.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-01",
+        "fileName": "SA09_AI_Tool_Usage_Feed.csv",
+        "class": "genuine_new_source_contract_candidate",
+        "proposedDisposition": "Propose as a new owner-scoped AI source family; do not amend template-manifest.json without explicit approval.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-01",
+        "fileName": "SA10_AI_Value_Interview_Evidence.csv",
+        "class": "genuine_new_source_contract_candidate",
+        "proposedDisposition": "Propose as a new owner-scoped AI source family; do not amend template-manifest.json without explicit approval.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-01",
+        "fileName": "SA11_AI_KPI_Operational_Outcome_Feed.csv",
+        "class": "genuine_new_source_contract_candidate",
+        "proposedDisposition": "Propose as a new owner-scoped AI source family; do not amend template-manifest.json without explicit approval.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-02",
+        "fileName": "04_applications_systems.xlsx",
+        "class": "variant_of_declared_or_parallel_csv_source",
+        "proposedDisposition": "Prefer the declared CSV where present; keep the workbook quarantined from downstream refresh unless the intake contract explicitly accepts workbook variants.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-02",
+        "fileName": "05_data_assets_integrations.xlsx",
+        "class": "variant_of_declared_or_parallel_csv_source",
+        "proposedDisposition": "Prefer the declared CSV where present; keep the workbook quarantined from downstream refresh unless the intake contract explicitly accepts workbook variants.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-02",
+        "fileName": "06_infrastructure_platforms.xlsx",
+        "class": "variant_of_declared_or_parallel_csv_source",
+        "proposedDisposition": "Prefer the declared CSV where present; keep the workbook quarantined from downstream refresh unless the intake contract explicitly accepts workbook variants.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-02",
+        "fileName": "09_programs_initiatives.xlsx",
+        "class": "variant_of_declared_or_parallel_csv_source",
+        "proposedDisposition": "Prefer the declared CSV where present; keep the workbook quarantined from downstream refresh unless the intake contract explicitly accepts workbook variants.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-02",
+        "fileName": "12b_interview_initiative_metric_crosswalk.csv",
+        "class": "genuine_new_source_contract_candidate",
+        "proposedDisposition": "Propose as a relationship/crosswalk source candidate; keep report-only until the owning dimension and relationship semantics are approved.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-02",
+        "fileName": "19_data_analytics_platform_maturity.csv",
+        "class": "genuine_new_source_contract_candidate",
+        "proposedDisposition": "Propose as a new operational or maturity source candidate; do not flow to L3/L4 until the intake owner and template contract are approved.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-02",
+        "fileName": "19_data_analytics_platform_maturity.xlsx",
+        "class": "variant_of_declared_or_parallel_csv_source",
+        "proposedDisposition": "Prefer the declared CSV where present; keep the workbook quarantined from downstream refresh unless the intake contract explicitly accepts workbook variants.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-02",
+        "fileName": "20_itsm_ticket_sla_performance.csv",
+        "class": "genuine_new_source_contract_candidate",
+        "proposedDisposition": "Propose as a new operational or maturity source candidate; do not flow to L3/L4 until the intake owner and template contract are approved.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-02",
+        "fileName": "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+        "class": "genuine_new_source_contract_candidate",
+        "proposedDisposition": "Propose as a new owner-scoped AI source family; do not amend template-manifest.json without explicit approval.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-02",
+        "fileName": "SA09_AI_Tool_Usage_Feed.csv",
+        "class": "genuine_new_source_contract_candidate",
+        "proposedDisposition": "Propose as a new owner-scoped AI source family; do not amend template-manifest.json without explicit approval.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-02",
+        "fileName": "SA10_AI_Value_Interview_Evidence.csv",
+        "class": "genuine_new_source_contract_candidate",
+        "proposedDisposition": "Propose as a new owner-scoped AI source family; do not amend template-manifest.json without explicit approval.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      },
+      {
+        "tenant": "tenant-02",
+        "fileName": "SA11_AI_KPI_Operational_Outcome_Feed.csv",
+        "class": "genuine_new_source_contract_candidate",
+        "proposedDisposition": "Propose as a new owner-scoped AI source family; do not amend template-manifest.json without explicit approval.",
+        "gate": "Classification only. Amending template-manifest.json is explicitly gated."
+      }
+    ]
+  },
+  "layer2": {
+    "implementedMappingProfiles": 23,
+    "dryRunRows": 38,
+    "dryRunWouldRunRows": 38,
+    "dryRunFailures": {
+      "familyFailures": 0,
+      "profileFailures": 0,
+      "dimensionFailures": 0,
+      "totalFailures": 0
+    },
+    "failureClassificationSummary": {
+      "uniqueProfileFailuresClassified": 0,
+      "mirroredDimensionFailures": 0,
+      "byRecommendedAction": {}
+    },
+    "semanticDecisionLedgerSummary": {
+      "profileFailuresEvaluated": 0,
+      "semanticDecisionProfiles": 0,
+      "semanticDecisionFields": 0,
+      "sourceDataGatedProfiles": 0,
+      "activationReadyProfiles": 0
+    },
+    "codeOnlyAliasImpactSummary": {
+      "profileFailuresEvaluated": 0,
+      "codeOnlyAliasCandidates": 0,
+      "wouldClearProfileFailuresIfActivated": 0,
+      "remainingHardGateDecisions": 0,
+      "remainingSourceDataGatedFixes": 0
+    },
+    "status": "done_for_current_contract_dry_run_not_a_blocker"
+  },
+  "layer3": {
+    "scaffold": {
+      "canonicalObjectDefinitions": 19,
+      "factAuthorityDefinitions": 11,
+      "relationshipDictionaryEntries": 40,
+      "objectRegistryGaps": 0,
+      "factAuthorityGaps": 0,
+      "relationshipDictionaryGaps": 0,
+      "mode": "scaffold-only-no-canonical-write-no-graph-materialization"
+    },
+    "canonicalObjectsWritten": 0,
+    "graph": {
+      "mode": "graph_reconciliation_quarantine_first_report_only_no_db_write_no_graph_materialization_no_product_use",
+      "totals": {
+        "nodeCandidatesIndexed": 3187,
+        "nodeLookupAliasesIndexed": 187,
+        "ambiguousNodeLookupAliasesSkipped": 61,
+        "approvedSemanticNodeAliasRecords": 0,
+        "approvedSemanticNodeAliasesIndexed": 0,
+        "approvedSemanticNodeAliasesAlreadyPresent": 0,
+        "semanticIdentityAliasesActivated": false,
+        "semanticAliasLedgerPath": "",
+        "relationshipRows": 5620,
+        "relationshipCandidates": 5556,
+        "quarantinedRelationships": 64,
+        "topQuarantineReasons": [
+          {
+            "reason": "unresolved-to-node",
+            "count": 64,
+            "quarantineClass": "dangling_reference",
+            "quarantineDisposition": "catalogue-object-from-real-evidence-or-correct-edge-type-never-create-node-to-satisfy-edge"
+          }
+        ],
+        "graphTablesWritten": false,
+        "productReadModelsUpdated": false
+      },
+      "reasonDispositions": [
+        {
+          "reason": "unresolved-to-node",
+          "count": 64,
+          "disposition": "Do not create synthetic nodes. Either catalogue the referenced object in the owning dimension from real evidence, or retire/drop the edge from materialization."
+        }
+      ],
+      "perTenant": [
+        {
+          "tenant": "tenant-01",
+          "relationshipRows": 2302,
+          "candidateEdges": 2302,
+          "quarantinedEdges": 0,
+          "quarantineRate": 0,
+          "reasonBreakdown": []
+        },
+        {
+          "tenant": "tenant-02",
+          "relationshipRows": 3318,
+          "candidateEdges": 3254,
+          "quarantinedEdges": 64,
+          "quarantineRate": 0.0193,
+          "reasonBreakdown": [
+            {
+              "reason": "unresolved-to-node",
+              "count": 64,
+              "disposition": "Do not create synthetic nodes. Either catalogue the referenced object in the owning dimension from real evidence, or retire/drop the edge from materialization."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "layer4": {
+    "productSurfacesChecked": 10,
+    "productSurfacesRefreshed": 0,
+    "status": "not_refreshed_report_only"
+  },
+  "quality": {
+    "tenantInputQualityStatus": "passed",
+    "tenantInputQualityTenantsAudited": 6,
+    "contextCorpusStatus": "passed",
+    "factLineageStatus": "passed",
+    "conflictFiguresSurfaced": false
+  },
+  "tenantStatuses": [
+    {
+      "tenant": "tenant-01",
+      "activeSourceFileCount": 24,
+      "undeclaredActiveFileCount": 5,
+      "layer2WouldRunRows": 19,
+      "layer2DryRunFailures": 0,
+      "canonicalStoreWritten": false,
+      "layer4SurfacesRefreshed": 0,
+      "layer4SurfaceCount": 5
+    },
+    {
+      "tenant": "tenant-02",
+      "activeSourceFileCount": 31,
+      "undeclaredActiveFileCount": 12,
+      "layer2WouldRunRows": 19,
+      "layer2DryRunFailures": 0,
+      "canonicalStoreWritten": false,
+      "layer4SurfacesRefreshed": 0,
+      "layer4SurfaceCount": 5
+    }
+  ],
+  "gatesLeftClosed": [
+    "No template-manifest.json amendment.",
+    "No tenant data mutation, movement, deletion, or generated prose.",
+    "No Azure/Postgres write or data-plane load.",
+    "No registry/canonical store activation.",
+    "No graph table materialization.",
+    "No Layer 4 projection or product runtime refresh.",
+    "No live-client truth claim."
+  ]
+}

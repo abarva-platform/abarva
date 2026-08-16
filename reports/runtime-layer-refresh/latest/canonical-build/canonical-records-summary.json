@@ -2,150 +2,150 @@
   {
     "tenantKey": "meridian-health",
     "tenantDisplayName": "Meridian Health",
-    "totalAcceptedRecords": 5059,
+    "totalAcceptedRecords": 1471,
     "totalQuarantinedRecords": 0,
-    "totalSkippedRows": 0,
+    "totalSkippedRows": 2302,
     "byDomain": {
       "enterprise_profile": {
         "sourceFiles": 1,
-        "sourceRows": 2,
-        "acceptedRecords": 2,
+        "sourceRows": 1,
+        "acceptedRecords": 1,
         "quarantinedRecords": 0,
         "skippedRows": 0,
-        "duplicateNames": 1
+        "duplicateNames": 0
       },
       "business_functions": {
         "sourceFiles": 1,
-        "sourceRows": 252,
-        "acceptedRecords": 252,
+        "sourceRows": 24,
+        "acceptedRecords": 24,
         "quarantinedRecords": 0,
         "skippedRows": 0,
-        "duplicateNames": 91
+        "duplicateNames": 0
       },
       "org_ownership": {
         "sourceFiles": 1,
-        "sourceRows": 228,
-        "acceptedRecords": 228,
+        "sourceRows": 225,
+        "acceptedRecords": 225,
         "quarantinedRecords": 0,
         "skippedRows": 0,
         "duplicateNames": 0
       },
       "workforce_roles": {
         "sourceFiles": 1,
-        "sourceRows": 238,
-        "acceptedRecords": 238,
+        "sourceRows": 45,
+        "acceptedRecords": 45,
         "quarantinedRecords": 0,
         "skippedRows": 0,
-        "duplicateNames": 91
+        "duplicateNames": 0
       },
       "applications_systems": {
         "sourceFiles": 1,
-        "sourceRows": 324,
-        "acceptedRecords": 324,
+        "sourceRows": 301,
+        "acceptedRecords": 301,
         "quarantinedRecords": 0,
         "skippedRows": 0,
-        "duplicateNames": 91
+        "duplicateNames": 0
       },
       "data_assets_integrations": {
         "sourceFiles": 1,
-        "sourceRows": 315,
-        "acceptedRecords": 315,
+        "sourceRows": 520,
+        "acceptedRecords": 520,
         "quarantinedRecords": 0,
         "skippedRows": 0,
-        "duplicateNames": 92
+        "duplicateNames": 0
       },
       "infrastructure_platforms": {
         "sourceFiles": 1,
-        "sourceRows": 15,
-        "acceptedRecords": 15,
+        "sourceRows": 60,
+        "acceptedRecords": 60,
         "quarantinedRecords": 0,
         "skippedRows": 0,
         "duplicateNames": 0
       },
       "vendors_contracts": {
         "sourceFiles": 1,
-        "sourceRows": 467,
-        "acceptedRecords": 467,
+        "sourceRows": 72,
+        "acceptedRecords": 72,
         "quarantinedRecords": 0,
         "skippedRows": 0,
-        "duplicateNames": 91
+        "duplicateNames": 0
       },
       "spend_value": {
         "sourceFiles": 1,
-        "sourceRows": 298,
-        "acceptedRecords": 298,
+        "sourceRows": 24,
+        "acceptedRecords": 24,
         "quarantinedRecords": 0,
         "skippedRows": 0,
         "duplicateNames": 0
       },
       "programs_initiatives": {
         "sourceFiles": 1,
-        "sourceRows": 376,
-        "acceptedRecords": 376,
-        "quarantinedRecords": 0,
-        "skippedRows": 0,
-        "duplicateNames": 105
-      },
-      "ai_automation_use_cases": {
-        "sourceFiles": 1,
-        "sourceRows": 251,
-        "acceptedRecords": 251,
-        "quarantinedRecords": 0,
-        "skippedRows": 0,
-        "duplicateNames": 105
-      },
-      "risks_controls": {
-        "sourceFiles": 1,
-        "sourceRows": 249,
-        "acceptedRecords": 249,
-        "quarantinedRecords": 0,
-        "skippedRows": 0,
-        "duplicateNames": 91
-      },
-      "relationships": {
-        "sourceFiles": 1,
-        "sourceRows": 1037,
-        "acceptedRecords": 1037,
+        "sourceRows": 28,
+        "acceptedRecords": 28,
         "quarantinedRecords": 0,
         "skippedRows": 0,
         "duplicateNames": 0
       },
-      "evidence_sources": {
+      "ai_automation_use_cases": {
         "sourceFiles": 1,
-        "sourceRows": 508,
-        "acceptedRecords": 508,
+        "sourceRows": 18,
+        "acceptedRecords": 18,
         "quarantinedRecords": 0,
         "skippedRows": 0,
-        "duplicateNames": 5
+        "duplicateNames": 0
+      },
+      "risks_controls": {
+        "sourceFiles": 1,
+        "sourceRows": 40,
+        "acceptedRecords": 40,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "relationships": {
+        "sourceFiles": 1,
+        "sourceRows": 2302,
+        "acceptedRecords": 0,
+        "quarantinedRecords": 0,
+        "skippedRows": 2302,
+        "duplicateNames": 0
+      },
+      "evidence_sources": {
+        "sourceFiles": 1,
+        "sourceRows": 27,
+        "acceptedRecords": 27,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
       },
       "metrics_outcomes": {
         "sourceFiles": 1,
-        "sourceRows": 257,
-        "acceptedRecords": 257,
+        "sourceRows": 50,
+        "acceptedRecords": 50,
         "quarantinedRecords": 0,
         "skippedRows": 0,
         "duplicateNames": 0
       },
       "industry_context_patterns": {
         "sourceFiles": 1,
-        "sourceRows": 7,
-        "acceptedRecords": 7,
+        "sourceRows": 12,
+        "acceptedRecords": 12,
         "quarantinedRecords": 0,
         "skippedRows": 0,
         "duplicateNames": 0
       },
       "expert_lenses": {
         "sourceFiles": 1,
-        "sourceRows": 7,
-        "acceptedRecords": 7,
+        "sourceRows": 9,
+        "acceptedRecords": 9,
         "quarantinedRecords": 0,
         "skippedRows": 0,
         "duplicateNames": 0
       },
       "service_scope_managed_services": {
         "sourceFiles": 1,
-        "sourceRows": 228,
-        "acceptedRecords": 228,
+        "sourceRows": 15,
+        "acceptedRecords": 15,
         "quarantinedRecords": 0,
         "skippedRows": 0,
         "duplicateNames": 0
@@ -163,177 +163,177 @@
       {
         "domain": "enterprise_profile",
         "objectType": "tenant_profile",
-        "name": "meridian-health",
+        "name": "Meridian Health System",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
         "rowNumber": 2
       },
       {
-        "domain": "enterprise_profile",
-        "objectType": "tenant_profile",
-        "name": "meridian-health",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
-        "rowNumber": 3
-      },
-      {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "Enterprise Data and Analytics",
+        "name": "Acute Care Clinical Operations",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 2
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "Clinical Operations",
+        "name": "Ambulatory & Physician Network Operations",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 3
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "Health Plan Operations",
+        "name": "Nursing Operations",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 4
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "Quality and Provider Performance",
+        "name": "Emergency Services",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 5
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "Finance and Actuarial",
+        "name": "Behavioral Health",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 6
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "Contact Center and Member Experience",
+        "name": "Pharmacy Services",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 7
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "Technology Platform and Security",
+        "name": "Revenue Cycle",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 8
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CEO / Enterprise Strategy: Unified clinical + claims lakehouse",
+        "name": "Patient Access & Registration",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 9
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CEO / Enterprise Strategy: Governed data foundation for AI / LLM automation",
+        "name": "Health Plan & Payer Operations",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 10
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CEO / Enterprise Strategy: Call center optimization",
+        "name": "Population Health & Care Management",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 11
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CEO / Enterprise Strategy: Provider quality and performance",
+        "name": "Quality & Regulatory Affairs",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 12
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CEO / Enterprise Strategy: End-to-end cost transparency",
+        "name": "Clinical Informatics",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 13
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CEO / Enterprise Strategy: Payment integrity and leakage reduction",
+        "name": "Information Technology & Digital",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 14
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CEO / Enterprise Strategy: Automated close and reporting",
+        "name": "Data Analytics & AI",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 15
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CEO / Enterprise Strategy: Unified clinical + claims lakehouse",
+        "name": "Cybersecurity & IT Risk",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 16
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CEO / Enterprise Strategy: Governed data foundation for AI / LLM automation",
+        "name": "Enterprise Architecture",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 17
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CEO / Enterprise Strategy: Call center optimization",
+        "name": "Finance & Accounting",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 18
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CEO / Enterprise Strategy: Provider quality and performance",
+        "name": "Human Resources & Workforce",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 19
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CEO / Enterprise Strategy: End-to-end cost transparency",
+        "name": "Legal, Compliance & Privacy",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 20
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CFO / Finance & Value: Governed data foundation for AI / LLM automation",
+        "name": "Supply Chain & Procurement",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 21
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CFO / Finance & Value: Call center optimization",
+        "name": "Facilities & Real Estate",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 22
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CFO / Finance & Value: Provider quality and performance",
+        "name": "Member Services & Patient Experience",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 23
       },
       {
         "domain": "business_functions",
         "objectType": "business_function",
-        "name": "CFO / Finance & Value: End-to-end cost transparency",
+        "name": "Marketing & Growth",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 24
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Actuarial & Underwriting",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "rowNumber": 25
       }
     ]
   },
