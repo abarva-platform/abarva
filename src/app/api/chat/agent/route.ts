@@ -1377,16 +1377,25 @@ export async function POST(request: Request) {
   // this block empty and the chat falls through to existing behavior.
   let sourcePortfolioGroundingBlock = "";
   let hasSourcePortfolioGrounding = false;
-  if (isSourceSurface(surface) && effectiveClientKey) {
-    try {
-      const portfolioGrounding =
-        await buildAvaSourcePortfolioGrounding(effectiveClientKey);
-      if (portfolioGrounding.block) {
-        sourcePortfolioGroundingBlock = portfolioGrounding.block;
-        hasSourcePortfolioGrounding = true;
+  const sourcePortfolioTenantKeys = uniqueNonEmptyStrings([
+    sourceClientKey,
+    activeClientKey,
+    effectiveClientKey,
+    sourceContractReadTenantKey,
+  ]);
+  if (isSourceSurface(surface) && sourcePortfolioTenantKeys.length > 0) {
+    for (const sourcePortfolioTenantKey of sourcePortfolioTenantKeys) {
+      try {
+        const portfolioGrounding =
+          await buildAvaSourcePortfolioGrounding(sourcePortfolioTenantKey);
+        if (portfolioGrounding.block) {
+          sourcePortfolioGroundingBlock = portfolioGrounding.block;
+          hasSourcePortfolioGrounding = true;
+          break;
+        }
+      } catch {
+        // Best-effort — try the next tenant/read key before giving up.
       }
-    } catch {
-      // Best-effort — a read failure here must never break the chat turn.
     }
   }
 
@@ -2265,6 +2274,8 @@ export async function POST(request: Request) {
           "- Default Source reply shape: (1) one-sentence read of what you heard, (2) one sentence on why it matters, (3) exactly ONE next question or action.",
           '- SOURCE VISUAL OUTPUT CONTRACT: if the user asks for a chart, graph, visual, trend, waterfall, matrix, heatmap, or Recharts-style output, answer with one short interpretation sentence and then emit exactly one compact ```abarva-chart fenced JSON block using only grounded values already present in the Source context. The chart JSON shape is {"type":"bar"|"line"|"waterfall"|"matrix","title":"...","data":[{"label":"...","value":123}]}; labels must be business-readable and values must be numbers, not formatted strings. If the necessary grounded values are missing, do not invent them; say the visual is blocked by missing evidence and name the source family needed.',
           "- SOURCE TABLE OUTPUT CONTRACT: if the user asks for a table, matrix, scorecard, ranking, comparison, or heatmap-ready output, include a compact markdown table in the visible answer. Keep it to the smallest useful set of columns, state the counting basis in prose, and keep unknowns as 'missing' or 'not established' rather than zero.",
+          "- SOURCE PORTFOLIO CHART DISCIPLINE: if the user asks for portfolio concentration, vendor/category spend, or a portfolio chart while no single contract is selected, use AUTHORITATIVE SOURCE PORTFOLIO GROUNDING only. Do not use generic tenant-context vendor names or legacy workbook figures for Source portfolio charts.",
+          "- SOURCE LINEAGE DISCIPLINE: source systems, extracts, fields, grain, history, update frequency, and Contract 360 data lineage are in-scope Source questions. If AUTHORITATIVE SOURCE CONTRACT GROUNDING includes a source-system evidence map, answer from it in a compact table; do not deflect as platform architecture.",
           "- Ask at most ONE question in the chat reply. If several fields are missing, pick the single highest-leverage blocker and let the right pane/artifact cards carry the rest.",
           "- Keep most Source replies under 75 words unless the user explicitly asks for a deep dive, draft, comparison, or executive brief.",
           sourceVisualTurnDirective,

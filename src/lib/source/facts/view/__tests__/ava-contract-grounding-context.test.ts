@@ -174,6 +174,25 @@ describe("buildAvaSourceContractGrounding", () => {
     expect(block).toContain("Rate variance");
   });
 
+  it("grounds Contract 360 lineage questions with source systems, fields, grain, history, and update frequency", async () => {
+    const { block } = await buildAvaSourceContractGrounding(
+      "skyharbor-air",
+      "CTR-090",
+    );
+
+    expect(block).toContain("Source-system evidence map for this contract view");
+    expect(block).toContain("CLM / contract repository");
+    expect(block).toContain("AP / ERP / financial subledger");
+    expect(block).toContain("ITSM / service management");
+    expect(block).toContain("Usage / entitlement / consumption platforms");
+    expect(block).toContain("fields:");
+    expect(block).toContain("grain:");
+    expect(block).toContain("history:");
+    expect(block).toContain("update frequency:");
+    expect(block).toContain("not a platform-architecture question");
+    expect(block).toContain("Prefer a compact markdown table");
+  });
+
   it("gives aVa chart-safe ledger totals so it does not recompute opportunity rows", async () => {
     getContractOptimizationOpportunitySet.mockResolvedValue(
       opportunitySet({

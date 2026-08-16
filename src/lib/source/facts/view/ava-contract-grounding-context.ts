@@ -59,6 +59,70 @@ const VALUE_TYPE_LABEL: Record<OptimizationOpportunityValueType, string> = {
   negotiable_improvement: "Negotiated improvement",
 };
 
+const CONTRACT_SOURCE_EVIDENCE_MAP = [
+  {
+    sourceSystem: "CLM / contract repository",
+    extracts: "Executed agreement, SOW, order forms, pricing schedules, renewal and termination clauses",
+    fields:
+      "annual value, total committed value, end date, notice period, auto-renew flag, benchmark rights, exit rights",
+    grain: "contract document, clause, order form, pricing schedule line",
+    history: "current executed terms plus amended versions/change orders when supplied",
+    updateFrequency: "on contract upload, amendment, order-form change, or renewal package update",
+  },
+  {
+    sourceSystem: "Procurement / S2P",
+    extracts: "POs, sourcing events, supplier responses, award summary, approved savings case",
+    fields:
+      "PO value, supplier offer, concession, award decision, negotiated improvement, approval status",
+    grain: "event, supplier response, PO line, award item",
+    history: "per sourcing event and per approved commercial change",
+    updateFrequency: "at intake, response receipt, BAFO, award, and approval gates",
+  },
+  {
+    sourceSystem: "AP / ERP / financial subledger",
+    extracts: "Invoice lines, payments, PO match, GL coding, credits, disputes, taxes, pass-throughs",
+    fields:
+      "billed amount, contracted rate, quantity, PO coverage, exception amount, payment status, credit received",
+    grain: "invoice line and payment transaction",
+    history: "monthly or full contract lookback period; 24 months is the preferred baseline for optimization",
+    updateFrequency: "monthly close or AP extract refresh",
+  },
+  {
+    sourceSystem: "ITSM / service management",
+    extracts: "SLA performance, incident severity, breach logs, service review packs, credit eligibility",
+    fields:
+      "incident count, Sev1/Sev2 count, SLA target, actual performance, credit earned, credit claimed, credit received",
+    grain: "service, severity, month, SLA obligation",
+    history: "monthly performance history; 24 months is the preferred baseline for recurring services",
+    updateFrequency: "monthly service review or ITSM export refresh",
+  },
+  {
+    sourceSystem: "Usage / entitlement / consumption platforms",
+    extracts: "Seats, active users, consumption, storage, workload, feature adoption, license assignment",
+    fields:
+      "entitled quantity, assigned quantity, active usage, consumed units, shelfware, overage, workload owner",
+    grain: "product, entitlement, account/workload, month",
+    history: "monthly entitlement and usage trend; 12-24 months depending on product lifecycle",
+    updateFrequency: "monthly admin-console, SaaS, or cloud-consumption export",
+  },
+  {
+    sourceSystem: "Finance / Tower confirmation",
+    extracts: "Approved value claim, finance confirmation request, realization ledger, periodized proof",
+    fields:
+      "approved realized value, claim state, confirmation owner, approval timestamp, period, Tower handoff reference",
+    grain: "value claim, accounting period, confirmation request",
+    history: "periodized from approval forward; prior periods remain pending until approved",
+    updateFrequency: "on finance approval, monthly close, or Tower value-proof refresh",
+  },
+] as const;
+
+function buildSourceEvidenceMapLine(): string {
+  return `Source-system evidence map for this contract view:\n${CONTRACT_SOURCE_EVIDENCE_MAP.map(
+    (row) =>
+      `- ${row.sourceSystem} | extracts: ${row.extracts} | fields: ${row.fields} | grain: ${row.grain} | history: ${row.history} | update frequency: ${row.updateFrequency}`,
+  ).join("\n")}`;
+}
+
 export interface AvaSourceContractGrounding {
   /** Grounding block for the agent system prompt. Empty when unavailable. */
   block: string;
@@ -188,7 +252,9 @@ export async function buildAvaSourceContractGrounding(
     opportunityLines.length > 0
       ? `Opportunity rows:\n${opportunityLines.join("\n")}`
       : "Opportunity rows: none loaded for this contract.",
+    buildSourceEvidenceMapLine(),
     `Contract-grain grounding IS available for ${trimmedId}. Answer questions about ${trimmedId} from the numbers above — do NOT deflect them to Contract 360, and do NOT fall back to portfolio-level figures or generic tenant-context retrieval for this contract.`,
+    "If the user asks which source systems feed the contract view, which fields they contribute, what extracts are needed, the grain/history/update frequency, or the data lineage behind Contract 360, answer from the Source-system evidence map above. That is an in-scope Source contract-evidence question, not a platform-architecture question. Prefer a compact markdown table when the user asks for a table.",
     "Rules for these numbers: a missing evidence family is missing, never zero. Only the reproducible total and the chart-safe ledger totals may be presented as value that can be defended outside this workspace; the non-reproducible figure must be described as not yet traceable to a calculation run. Approved realized value exists only when the finance evidence is present AND the Finance/Tower confirmation request is approved. If the value-proof gate is open, do not say Finance has confirmed, do not say realized value to date, do not call the pending evidence booked, claimable, confirmed, or approved. Do not say the pending amount automatically becomes realized value, converts into approved value, or moves from pending to approved; say it is eligible to be recorded only if Finance/Tower approves the confirmation request. If the user asks for a chart, graph, or table, use the chart-safe ledger totals above and do not add or recompute row-level amounts yourself. If the user asks something about this contract that is not covered above, say so plainly instead of estimating.",
   ].filter(Boolean);
 
