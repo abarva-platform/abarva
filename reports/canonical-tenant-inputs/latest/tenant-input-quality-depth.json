@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-14T11:46:20.383Z",
+  "generatedAt": "2026-08-16T00:53:26.159Z",
   "truthSplit": {
     "productionTenantDataWritten": false,
     "activeTenantAccessLayerUpdated": false,
@@ -204,12 +204,16 @@
           "domain": "operational_process_evidence",
           "rows": 0,
           "minimumRows": 10,
-          "sourceFiles": [],
+          "sourceFiles": [
+            "current-universal/18_operational_process_evidence.csv"
+          ],
           "status": "blocker"
         }
       ],
       "inconsistentLineEndingFiles": 0,
       "hollowRowFiles": [],
+      "placeholderIdentityRows": [],
+      "typeCollisionRepairRows": [],
       "columnContract": {
         "declared": 19,
         "conformant": 19,
@@ -272,7 +276,9 @@
           "domain": "operational_process_evidence",
           "rows": 0,
           "minimumRows": 10,
-          "sourceFiles": [],
+          "sourceFiles": [
+            "current-universal/18_operational_process_evidence.csv"
+          ],
           "status": "blocker"
         }
       ],
@@ -460,12 +466,16 @@
           "domain": "operational_process_evidence",
           "rows": 0,
           "minimumRows": 10,
-          "sourceFiles": [],
+          "sourceFiles": [
+            "current-universal/18_operational_process_evidence.csv"
+          ],
           "status": "blocker"
         }
       ],
       "inconsistentLineEndingFiles": 0,
       "hollowRowFiles": [],
+      "placeholderIdentityRows": [],
+      "typeCollisionRepairRows": [],
       "columnContract": {
         "declared": 19,
         "conformant": 19,
@@ -528,7 +538,9 @@
           "domain": "operational_process_evidence",
           "rows": 0,
           "minimumRows": 10,
-          "sourceFiles": [],
+          "sourceFiles": [
+            "current-universal/18_operational_process_evidence.csv"
+          ],
           "status": "blocker"
         }
       ],
@@ -549,7 +561,7 @@
       ],
       "csvFileCount": 24,
       "csvRows": 3879,
-      "mappedCsvRows": 3782,
+      "mappedCsvRows": 3807,
       "domainDepth": [
         {
           "domain": "enterprise_profile",
@@ -716,14 +728,18 @@
         },
         {
           "domain": "operational_process_evidence",
-          "rows": 0,
+          "rows": 25,
           "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
+          "sourceFiles": [
+            "current-universal/18_operational_process_evidence.csv"
+          ],
+          "status": "pass"
         }
       ],
       "inconsistentLineEndingFiles": 0,
       "hollowRowFiles": [],
+      "placeholderIdentityRows": [],
+      "typeCollisionRepairRows": [],
       "columnContract": {
         "declared": 19,
         "conformant": 19,
@@ -736,17 +752,8 @@
         "waiverExpires": "",
         "nonConformantDetail": []
       },
-      "blockers": [
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
-        }
-      ],
+      "blockers": [],
       "warnings": [
-        "Unmapped source file: current-universal/18_operational_process_evidence.csv",
         "Unmapped source file: current-universal/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
         "Unmapped source file: current-universal/SA09_AI_Tool_Usage_Feed.csv",
         "Unmapped source file: current-universal/SA10_AI_Value_Interview_Evidence.csv",
@@ -930,12 +937,16 @@
           "domain": "operational_process_evidence",
           "rows": 0,
           "minimumRows": 5,
-          "sourceFiles": [],
+          "sourceFiles": [
+            "current-universal/18_operational_process_evidence.csv"
+          ],
           "status": "blocker"
         }
       ],
       "inconsistentLineEndingFiles": 0,
       "hollowRowFiles": [],
+      "placeholderIdentityRows": [],
+      "typeCollisionRepairRows": [],
       "columnContract": {
         "declared": 19,
         "conformant": 19,
@@ -1016,7 +1027,9 @@
           "domain": "operational_process_evidence",
           "rows": 0,
           "minimumRows": 5,
-          "sourceFiles": [],
+          "sourceFiles": [
+            "current-universal/18_operational_process_evidence.csv"
+          ],
           "status": "blocker"
         }
       ],
@@ -1036,7 +1049,7 @@
       ],
       "csvFileCount": 23,
       "csvRows": 1736,
-      "mappedCsvRows": 1592,
+      "mappedCsvRows": 1704,
       "domainDepth": [
         {
           "domain": "enterprise_profile",
@@ -1202,10 +1215,12 @@
         },
         {
           "domain": "operational_process_evidence",
-          "rows": 0,
+          "rows": 112,
           "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
+          "sourceFiles": [
+            "current-universal/18_operational_process_evidence.csv"
+          ],
+          "status": "pass"
         }
       ],
       "inconsistentLineEndingFiles": 0,
@@ -1221,6 +1236,8 @@
           "total": 519
         }
       ],
+      "placeholderIdentityRows": [],
+      "typeCollisionRepairRows": [],
       "columnContract": {
         "declared": 19,
         "conformant": 19,
@@ -1278,17 +1295,9 @@
             "current-universal/17_service_scope_managed_services.csv"
           ],
           "status": "blocker"
-        },
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
         }
       ],
       "warnings": [
-        "Unmapped source file: current-universal/18_operational_process_evidence.csv",
         "Unmapped source file: current-universal/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
         "Unmapped source file: current-universal/SA09_AI_Tool_Usage_Feed.csv",
         "Unmapped source file: current-universal/SA10_AI_Value_Interview_Evidence.csv",
@@ -1303,8 +1312,8 @@
         "current-universal"
       ],
       "csvFileCount": 25,
-      "csvRows": 4850,
-      "mappedCsvRows": 4506,
+      "csvRows": 5408,
+      "mappedCsvRows": 5292,
       "domainDepth": [
         {
           "domain": "enterprise_profile",
@@ -1317,7 +1326,7 @@
         },
         {
           "domain": "business_functions",
-          "rows": 228,
+          "rows": 252,
           "minimumRows": 15,
           "sourceFiles": [
             "current-universal/01_business_functions.csv"
@@ -1335,7 +1344,7 @@
         },
         {
           "domain": "workforce_roles",
-          "rows": 221,
+          "rows": 238,
           "minimumRows": 25,
           "sourceFiles": [
             "current-universal/03_workforce_roles.csv"
@@ -1344,7 +1353,7 @@
         },
         {
           "domain": "applications_systems",
-          "rows": 241,
+          "rows": 324,
           "minimumRows": 75,
           "sourceFiles": [
             "current-universal/04_applications_systems.csv"
@@ -1353,7 +1362,7 @@
         },
         {
           "domain": "data_assets_integrations",
-          "rows": 242,
+          "rows": 315,
           "minimumRows": 100,
           "sourceFiles": [
             "current-universal/05_data_assets_integrations.csv"
@@ -1371,7 +1380,7 @@
         },
         {
           "domain": "vendors_contracts",
-          "rows": 231,
+          "rows": 467,
           "minimumRows": 25,
           "sourceFiles": [
             "current-universal/07_vendors_contracts.csv"
@@ -1389,7 +1398,7 @@
         },
         {
           "domain": "programs_initiatives",
-          "rows": 256,
+          "rows": 376,
           "minimumRows": 20,
           "sourceFiles": [
             "current-universal/09_programs_initiatives.csv"
@@ -1470,14 +1479,18 @@
         },
         {
           "domain": "operational_process_evidence",
-          "rows": 0,
+          "rows": 233,
           "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
+          "sourceFiles": [
+            "current-universal/18_operational_process_evidence.csv"
+          ],
+          "status": "pass"
         }
       ],
       "inconsistentLineEndingFiles": 0,
       "hollowRowFiles": [],
+      "placeholderIdentityRows": [],
+      "typeCollisionRepairRows": [],
       "columnContract": {
         "declared": 19,
         "conformant": 1,
@@ -1485,7 +1498,7 @@
         "columnGaps": 18,
         "absent": 0,
         "declaredColumnsTotal": 286,
-        "declaredColumnsPopulated": 65,
+        "declaredColumnsPopulated": 95,
         "waived": true,
         "waiverExpires": "2026-09-30",
         "nonConformantDetail": [
@@ -1513,7 +1526,6 @@
             "state": "column-gap",
             "nameDrifted": false,
             "missingColumns": [
-              "function_name",
               "parent_function",
               "executive_owner",
               "business_capabilities",
@@ -1522,12 +1534,9 @@
               "fte_count",
               "outsourced_support",
               "current_state_notes",
-              "target_state_notes",
-              "source_file",
-              "source_date",
-              "known_gaps"
+              "target_state_notes"
             ],
-            "populatedColumns": 2,
+            "populatedColumns": 6,
             "emptyColumns": []
           },
           {
@@ -1558,7 +1567,6 @@
             "state": "column-gap",
             "nameDrifted": false,
             "missingColumns": [
-              "persona_or_role",
               "function_name",
               "role_count",
               "location_model",
@@ -1566,12 +1574,9 @@
               "vendor_supported",
               "skills",
               "pain_points",
-              "automation_opportunity",
-              "source_file",
-              "source_date",
-              "known_gaps"
+              "automation_opportunity"
             ],
-            "populatedColumns": 2,
+            "populatedColumns": 6,
             "emptyColumns": []
           },
           {
@@ -1580,7 +1585,6 @@
             "state": "column-gap",
             "nameDrifted": false,
             "missingColumns": [
-              "system_name",
               "system_type",
               "system_category",
               "business_function",
@@ -1593,12 +1597,9 @@
               "vendor",
               "data_domains",
               "interfaces_count",
-              "current_state_or_target_state",
-              "source_file",
-              "source_date",
-              "known_gaps"
+              "current_state_or_target_state"
             ],
-            "populatedColumns": 3,
+            "populatedColumns": 7,
             "emptyColumns": []
           },
           {
@@ -1607,7 +1608,6 @@
             "state": "column-gap",
             "nameDrifted": false,
             "missingColumns": [
-              "data_asset_name",
               "source_system",
               "target_system",
               "integration_type",
@@ -1618,12 +1618,9 @@
               "data_steward",
               "quality_status",
               "regulated_data_flag",
-              "analytics_usage",
-              "source_file",
-              "source_date",
-              "known_gaps"
+              "analytics_usage"
             ],
-            "populatedColumns": 3,
+            "populatedColumns": 7,
             "emptyColumns": []
           },
           {
@@ -1655,7 +1652,6 @@
             "state": "column-gap",
             "nameDrifted": false,
             "missingColumns": [
-              "vendor_name",
               "contract_name",
               "service_category",
               "business_owner",
@@ -1667,12 +1663,9 @@
               "commercial_model",
               "supported_systems",
               "supported_functions",
-              "risk_rating",
-              "source_file",
-              "source_date",
-              "known_gaps"
+              "risk_rating"
             ],
-            "populatedColumns": 2,
+            "populatedColumns": 6,
             "emptyColumns": []
           },
           {
@@ -1702,7 +1695,6 @@
             "state": "column-gap",
             "nameDrifted": false,
             "missingColumns": [
-              "program_name",
               "business_sponsor",
               "technology_owner",
               "objective",
@@ -1713,12 +1705,9 @@
               "dependencies",
               "risks",
               "budget_usd",
-              "expected_value_usd",
-              "source_file",
-              "source_date",
-              "known_gaps"
+              "expected_value_usd"
             ],
-            "populatedColumns": 2,
+            "populatedColumns": 6,
             "emptyColumns": []
           },
           {
@@ -1727,7 +1716,6 @@
             "state": "column-gap",
             "nameDrifted": false,
             "missingColumns": [
-              "use_case_name",
               "business_function",
               "process_area",
               "ai_pattern",
@@ -1735,13 +1723,14 @@
               "required_data",
               "required_systems",
               "human_approval_points",
-              "risk_controls",
+              "risk_controls"
+            ],
+            "populatedColumns": 4,
+            "emptyColumns": [
               "source_file",
               "source_date",
               "known_gaps"
-            ],
-            "populatedColumns": 3,
-            "emptyColumns": []
+            ]
           },
           {
             "contractFile": "11_risks_controls.csv",
@@ -1749,7 +1738,6 @@
             "state": "column-gap",
             "nameDrifted": false,
             "missingColumns": [
-              "risk_or_control_name",
               "risk_domain",
               "business_function",
               "systems_impacted",
@@ -1758,13 +1746,14 @@
               "control_owner",
               "control_status",
               "evidence_required",
-              "mitigation_plan",
+              "mitigation_plan"
+            ],
+            "populatedColumns": 3,
+            "emptyColumns": [
               "source_file",
               "source_date",
               "known_gaps"
-            ],
-            "populatedColumns": 2,
-            "emptyColumns": []
+            ]
           },
           {
             "contractFile": "13_evidence_sources.csv",
@@ -1875,7 +1864,6 @@
             "state": "column-gap",
             "nameDrifted": false,
             "missingColumns": [
-              "process_name",
               "business_function",
               "process_owner",
               "systems_used",
@@ -1883,12 +1871,9 @@
               "cycle_time",
               "pain_points",
               "control_points",
-              "automation_candidate",
-              "source_file",
-              "source_date",
-              "known_gaps"
+              "automation_candidate"
             ],
-            "populatedColumns": 2,
+            "populatedColumns": 6,
             "emptyColumns": []
           }
         ]
@@ -1911,17 +1896,9 @@
             "current-universal/15_industry_context_patterns.csv"
           ],
           "status": "blocker"
-        },
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
         }
       ],
       "warnings": [
-        "Unmapped source file: current-universal/18_operational_process_evidence.csv",
         "Unmapped source file: current-universal/SA02_IT_Finance_Budget_Spend_Extract.csv",
         "Unmapped source file: current-universal/SA04_Program_Portfolio_Extract.csv",
         "Unmapped source file: current-universal/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
@@ -1941,8 +1918,8 @@
         "current-universal"
       ],
       "csvFileCount": 26,
-      "csvRows": 5617,
-      "mappedCsvRows": 4817,
+      "csvRows": 5792,
+      "mappedCsvRows": 5027,
       "domainDepth": [
         {
           "domain": "enterprise_profile",
@@ -1964,7 +1941,7 @@
         },
         {
           "domain": "org_ownership",
-          "rows": 150,
+          "rows": 154,
           "minimumRows": 10,
           "sourceFiles": [
             "current-universal/02_org_ownership.csv"
@@ -1973,7 +1950,7 @@
         },
         {
           "domain": "workforce_roles",
-          "rows": 38,
+          "rows": 39,
           "minimumRows": 25,
           "sourceFiles": [
             "current-universal/03_workforce_roles.csv"
@@ -2028,7 +2005,7 @@
         },
         {
           "domain": "programs_initiatives",
-          "rows": 20,
+          "rows": 29,
           "minimumRows": 20,
           "sourceFiles": [
             "current-universal/09_programs_initiatives.csv"
@@ -2073,7 +2050,7 @@
         },
         {
           "domain": "evidence_sources",
-          "rows": 22,
+          "rows": 183,
           "minimumRows": 20,
           "sourceFiles": [
             "current-universal/13_evidence_sources.csv"
@@ -2109,14 +2086,34 @@
         },
         {
           "domain": "operational_process_evidence",
-          "rows": 0,
+          "rows": 35,
           "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
+          "sourceFiles": [
+            "current-universal/18_operational_process_evidence.csv"
+          ],
+          "status": "pass"
         }
       ],
       "inconsistentLineEndingFiles": 0,
-      "hollowRowFiles": [],
+      "hollowRowFiles": [
+        {
+          "file": "02_org_ownership.csv",
+          "hollow": 1,
+          "total": 154
+        },
+        {
+          "file": "03_workforce_roles.csv",
+          "hollow": 1,
+          "total": 39
+        },
+        {
+          "file": "09_programs_initiatives.csv",
+          "hollow": 1,
+          "total": 29
+        }
+      ],
+      "placeholderIdentityRows": [],
+      "typeCollisionRepairRows": [],
       "columnContract": {
         "declared": 19,
         "conformant": 19,
@@ -2124,23 +2121,14 @@
         "columnGaps": 0,
         "absent": 0,
         "declaredColumnsTotal": 286,
-        "declaredColumnsPopulated": 283,
+        "declaredColumnsPopulated": 285,
         "waived": false,
         "waiverExpires": "",
         "nonConformantDetail": []
       },
-      "blockers": [
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
-        }
-      ],
+      "blockers": [],
       "warnings": [
         "Unmapped source file: current-universal/12b_interview_initiative_metric_crosswalk.csv",
-        "Unmapped source file: current-universal/18_operational_process_evidence.csv",
         "Unmapped source file: current-universal/20_itsm_ticket_sla_performance.csv",
         "Unmapped source file: current-universal/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
         "Unmapped source file: current-universal/SA09_AI_Tool_Usage_Feed.csv",

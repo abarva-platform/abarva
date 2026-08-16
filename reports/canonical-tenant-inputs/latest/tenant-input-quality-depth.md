@@ -1,6 +1,6 @@
 # Tenant Input Quality And Depth
 
-Generated: 2026-08-14T11:46:20.383Z
+Generated: 2026-08-16T00:53:26.159Z
 
 ## Truth Split
 
@@ -23,11 +23,11 @@ Generated: 2026-08-14T11:46:20.383Z
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | Apex Retail | large | 23 | 2,801 | 2,769 | 6 | 4 |
 | FS Demo | large | 23 | 1,749 | 1,717 | 6 | 4 |
-| Healthcare Demo | large | 24 | 3,879 | 3,782 | 1 | 5 |
+| Healthcare Demo | large | 24 | 3,879 | 3,807 | 0 | 4 |
 | Lakeshore Holdings | mid_market | 23 | 654 | 622 | 8 | 4 |
-| Lakeshore Industries | large | 23 | 1,736 | 1,592 | 6 | 5 |
-| Meridian Health | large | 25 | 4,850 | 4,506 | 3 | 10 |
-| Airline Demo | large | 26 | 5,617 | 4,817 | 1 | 9 |
+| Lakeshore Industries | large | 23 | 1,736 | 1,704 | 5 | 4 |
+| Meridian Health | large | 25 | 5,408 | 5,292 | 2 | 9 |
+| Airline Demo | large | 26 | 5,792 | 5,027 | 0 | 8 |
 
 ## Column Contract Conformance
 
@@ -42,8 +42,8 @@ are checked.
 | Healthcare Demo | 19 | 19 | 0 | 0 | 0 | 284/286 (99%) | — |
 | Lakeshore Holdings | 19 | 19 | 0 | 0 | 0 | 167/286 (58%) | — |
 | Lakeshore Industries | 19 | 19 | 0 | 0 | 0 | 168/286 (59%) | — |
-| Meridian Health | 19 | 1 | 2 | 18 | 0 | 65/286 (23%) | 2026-09-30 |
-| Airline Demo | 19 | 19 | 0 | 0 | 0 | 283/286 (99%) | — |
+| Meridian Health | 19 | 1 | 2 | 18 | 0 | 95/286 (33%) | 2026-09-30 |
+| Airline Demo | 19 | 19 | 0 | 0 | 0 | 285/286 (100%) | — |
 
 ## Domain Depth By Tenant
 
@@ -69,7 +69,7 @@ are checked.
 | industry_context_patterns | 107 | 10 | pass | `current-universal/15_industry_context_patterns.csv` |
 | expert_lenses | 5 | 5 | pass | `current-universal/16_expert_lenses.csv` |
 | service_scope_managed_services | 0 | 10 | blocker | `current-universal/17_service_scope_managed_services.csv` |
-| operational_process_evidence | 0 | 10 | blocker | none |
+| operational_process_evidence | 0 | 10 | blocker | `current-universal/18_operational_process_evidence.csv` |
 
 Warnings:
 
@@ -100,7 +100,7 @@ Warnings:
 | industry_context_patterns | 151 | 10 | pass | `current-universal/15_industry_context_patterns.csv` |
 | expert_lenses | 5 | 5 | pass | `current-universal/16_expert_lenses.csv` |
 | service_scope_managed_services | 0 | 10 | blocker | `current-universal/17_service_scope_managed_services.csv` |
-| operational_process_evidence | 0 | 10 | blocker | none |
+| operational_process_evidence | 0 | 10 | blocker | `current-universal/18_operational_process_evidence.csv` |
 
 Warnings:
 
@@ -131,11 +131,10 @@ Warnings:
 | industry_context_patterns | 12 | 10 | pass | `current-universal/15_industry_context_patterns.csv` |
 | expert_lenses | 9 | 5 | pass | `current-universal/16_expert_lenses.csv` |
 | service_scope_managed_services | 15 | 10 | pass | `current-universal/17_service_scope_managed_services.csv` |
-| operational_process_evidence | 0 | 10 | blocker | none |
+| operational_process_evidence | 25 | 10 | pass | `current-universal/18_operational_process_evidence.csv` |
 
 Warnings:
 
-- Unmapped source file: current-universal/18_operational_process_evidence.csv
 - Unmapped source file: current-universal/SA08_AI_Benefits_Realization_Usage_Ledger.csv
 - Unmapped source file: current-universal/SA09_AI_Tool_Usage_Feed.csv
 - Unmapped source file: current-universal/SA10_AI_Value_Interview_Evidence.csv
@@ -163,7 +162,7 @@ Warnings:
 | industry_context_patterns | 4 | 5 | blocker | `current-universal/15_industry_context_patterns.csv` |
 | expert_lenses | 4 | 3 | pass | `current-universal/16_expert_lenses.csv` |
 | service_scope_managed_services | 0 | 5 | blocker | `current-universal/17_service_scope_managed_services.csv` |
-| operational_process_evidence | 0 | 5 | blocker | none |
+| operational_process_evidence | 0 | 5 | blocker | `current-universal/18_operational_process_evidence.csv` |
 
 Warnings:
 
@@ -194,11 +193,10 @@ Warnings:
 | industry_context_patterns | 24 | 10 | pass | `current-universal/15_industry_context_patterns.csv` |
 | expert_lenses | 18 | 5 | pass | `current-universal/16_expert_lenses.csv` |
 | service_scope_managed_services | 8 | 10 | blocker | `current-universal/17_service_scope_managed_services.csv` |
-| operational_process_evidence | 0 | 10 | blocker | none |
+| operational_process_evidence | 112 | 10 | pass | `current-universal/18_operational_process_evidence.csv` |
 
 Warnings:
 
-- Unmapped source file: current-universal/18_operational_process_evidence.csv
 - Unmapped source file: current-universal/SA08_AI_Benefits_Realization_Usage_Ledger.csv
 - Unmapped source file: current-universal/SA09_AI_Tool_Usage_Feed.csv
 - Unmapped source file: current-universal/SA10_AI_Value_Interview_Evidence.csv
@@ -209,15 +207,15 @@ Warnings:
 | Domain | Rows | Minimum | Status | Source files |
 | --- | ---: | ---: | --- | --- |
 | enterprise_profile | 2 | 1 | pass | `current-universal/00_enterprise_profile.csv` |
-| business_functions | 228 | 15 | pass | `current-universal/01_business_functions.csv` |
+| business_functions | 252 | 15 | pass | `current-universal/01_business_functions.csv` |
 | org_ownership | 228 | 10 | pass | `current-universal/02_org_ownership.csv` |
-| workforce_roles | 221 | 25 | pass | `current-universal/03_workforce_roles.csv` |
-| applications_systems | 241 | 75 | pass | `current-universal/04_applications_systems.csv` |
-| data_assets_integrations | 242 | 100 | pass | `current-universal/05_data_assets_integrations.csv` |
+| workforce_roles | 238 | 25 | pass | `current-universal/03_workforce_roles.csv` |
+| applications_systems | 324 | 75 | pass | `current-universal/04_applications_systems.csv` |
+| data_assets_integrations | 315 | 100 | pass | `current-universal/05_data_assets_integrations.csv` |
 | infrastructure_platforms | 15 | 20 | blocker | `current-universal/06_infrastructure_platforms.csv` |
-| vendors_contracts | 231 | 25 | pass | `current-universal/07_vendors_contracts.csv` |
+| vendors_contracts | 467 | 25 | pass | `current-universal/07_vendors_contracts.csv` |
 | spend_value | 298 | 10 | pass | `current-universal/08_it_budget_spend_value.csv` |
-| programs_initiatives | 256 | 20 | pass | `current-universal/09_programs_initiatives.csv` |
+| programs_initiatives | 376 | 20 | pass | `current-universal/09_programs_initiatives.csv` |
 | ai_automation_use_cases | 251 | 10 | pass | `current-universal/10_ai_automation_use_cases.csv` |
 | risks_controls | 249 | 40 | pass | `current-universal/11_risks_controls.csv` |
 | relationships | 1,037 | 100 | pass | `current-universal/12_relationships.csv` |
@@ -226,11 +224,10 @@ Warnings:
 | industry_context_patterns | 7 | 10 | blocker | `current-universal/15_industry_context_patterns.csv` |
 | expert_lenses | 7 | 5 | pass | `current-universal/16_expert_lenses.csv` |
 | service_scope_managed_services | 228 | 10 | pass | `current-universal/17_managed_services_scope.csv` |
-| operational_process_evidence | 0 | 10 | blocker | none |
+| operational_process_evidence | 233 | 10 | pass | `current-universal/18_operational_process_evidence.csv` |
 
 Warnings:
 
-- Unmapped source file: current-universal/18_operational_process_evidence.csv
 - Unmapped source file: current-universal/SA02_IT_Finance_Budget_Spend_Extract.csv
 - Unmapped source file: current-universal/SA04_Program_Portfolio_Extract.csv
 - Unmapped source file: current-universal/SA08_AI_Benefits_Realization_Usage_Ledger.csv
@@ -247,28 +244,27 @@ Warnings:
 | --- | ---: | ---: | --- | --- |
 | enterprise_profile | 1 | 1 | pass | `current-universal/00_enterprise_profile.csv` |
 | business_functions | 22 | 15 | pass | `current-universal/01_business_functions.csv` |
-| org_ownership | 150 | 10 | pass | `current-universal/02_org_ownership.csv` |
-| workforce_roles | 38 | 25 | pass | `current-universal/03_workforce_roles.csv` |
+| org_ownership | 154 | 10 | pass | `current-universal/02_org_ownership.csv` |
+| workforce_roles | 39 | 25 | pass | `current-universal/03_workforce_roles.csv` |
 | applications_systems | 503 | 75 | pass | `current-universal/04_applications_systems.csv` |
 | data_assets_integrations | 499 | 100 | pass | `current-universal/05_data_assets_integrations.csv` |
 | infrastructure_platforms | 48 | 20 | pass | `current-universal/06_infrastructure_platforms.csv`<br>`current-universal/19_data_analytics_platform_maturity.csv` |
 | vendors_contracts | 65 | 25 | pass | `current-universal/07_vendors_contracts.csv` |
 | spend_value | 20 | 10 | pass | `current-universal/08_spend_value.csv` |
-| programs_initiatives | 20 | 20 | pass | `current-universal/09_programs_initiatives.csv` |
+| programs_initiatives | 29 | 20 | pass | `current-universal/09_programs_initiatives.csv` |
 | ai_automation_use_cases | 13 | 10 | pass | `current-universal/10_ai_automation_use_cases.csv` |
 | risks_controls | 44 | 40 | pass | `current-universal/11_risks_controls.csv` |
 | relationships | 3,318 | 100 | pass | `current-universal/12_relationships.csv` |
 | metrics_outcomes | 26 | 25 | pass | `current-universal/14_metrics_outcomes.csv` |
-| evidence_sources | 22 | 20 | pass | `current-universal/13_evidence_sources.csv` |
+| evidence_sources | 183 | 20 | pass | `current-universal/13_evidence_sources.csv` |
 | industry_context_patterns | 10 | 10 | pass | `current-universal/15_industry_context_patterns.csv` |
 | expert_lenses | 7 | 5 | pass | `current-universal/16_expert_lenses.csv` |
 | service_scope_managed_services | 11 | 10 | pass | `current-universal/17_service_scope_managed_services.csv` |
-| operational_process_evidence | 0 | 10 | blocker | none |
+| operational_process_evidence | 35 | 10 | pass | `current-universal/18_operational_process_evidence.csv` |
 
 Warnings:
 
 - Unmapped source file: current-universal/12b_interview_initiative_metric_crosswalk.csv
-- Unmapped source file: current-universal/18_operational_process_evidence.csv
 - Unmapped source file: current-universal/20_itsm_ticket_sla_performance.csv
 - Unmapped source file: current-universal/SA08_AI_Benefits_Realization_Usage_Ledger.csv
 - Unmapped source file: current-universal/SA09_AI_Tool_Usage_Feed.csv
