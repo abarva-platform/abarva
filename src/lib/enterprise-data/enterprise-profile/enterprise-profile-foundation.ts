@@ -24,7 +24,15 @@ export const ENTERPRISE_PROFILE_FOUNDATION_REPORT_DIR =
 export const ENTERPRISE_PROFILE_FOUNDATION_MAPPING_PROFILE =
   "enterprise-profile-foundation/v1";
 
-const RETIRED_TENANT_KEYS = new Set(["northstar-clinical"]);
+/**
+ * Tenants that remain in CANONICAL_TENANTS but are excluded from active service.
+ *
+ * Empty since the 2026-08-16 sunset: the retired tenants were removed from CANONICAL_TENANTS
+ * outright rather than left in place and filtered, so there is nothing left to exclude. The
+ * mechanism stays as the hook for any future retirement that wants to keep a tenant visible
+ * in inventory while marking it inactive.
+ */
+const RETIRED_TENANT_KEYS = new Set<string>([]);
 
 export const REQUIRED_ENTERPRISE_PROFILE_FIELDS = [
   "tenant_key",

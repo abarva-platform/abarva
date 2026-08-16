@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-14T11:46:20.383Z",
+  "generatedAt": "2026-08-16T11:40:08.863Z",
   "truthSplit": {
     "productionTenantDataWritten": false,
     "activeTenantAccessLayerUpdated": false,
@@ -28,535 +28,22 @@
   },
   "tenants": [
     {
-      "tenantKey": "apex-retail",
-      "displayName": "Apex Retail",
+      "tenantKey": "meridian-health",
+      "displayName": "Meridian Health",
       "companySizeBand": "large",
       "packets": [
-        "current-universal"
-      ],
-      "csvFileCount": 23,
-      "csvRows": 2801,
-      "mappedCsvRows": 2769,
-      "domainDepth": [
-        {
-          "domain": "enterprise_profile",
-          "rows": 1,
-          "minimumRows": 1,
-          "sourceFiles": [
-            "current-universal/00_enterprise_profile.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "business_functions",
-          "rows": 26,
-          "minimumRows": 15,
-          "sourceFiles": [
-            "current-universal/01_business_functions.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "org_ownership",
-          "rows": 50,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/02_org_ownership.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "workforce_roles",
-          "rows": 12,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/03_workforce_roles.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "applications_systems",
-          "rows": 122,
-          "minimumRows": 75,
-          "sourceFiles": [
-            "current-universal/04_applications_systems.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "data_assets_integrations",
-          "rows": 235,
-          "minimumRows": 100,
-          "sourceFiles": [
-            "current-universal/05_data_assets_integrations.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "infrastructure_platforms",
-          "rows": 0,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/06_infrastructure_platforms.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "vendors_contracts",
-          "rows": 100,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/07_vendors_contracts.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "spend_value",
-          "rows": 8,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/08_spend_value.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "programs_initiatives",
-          "rows": 80,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/09_programs_initiatives.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "ai_automation_use_cases",
-          "rows": 58,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/10_ai_automation_use_cases.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "risks_controls",
-          "rows": 135,
-          "minimumRows": 40,
-          "sourceFiles": [
-            "current-universal/11_risks_controls.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "relationships",
-          "rows": 1713,
-          "minimumRows": 100,
-          "sourceFiles": [
-            "current-universal/12_relationships.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "metrics_outcomes",
-          "rows": 108,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/14_metrics_outcomes.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "evidence_sources",
-          "rows": 9,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/13_evidence_sources.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "industry_context_patterns",
-          "rows": 107,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/15_industry_context_patterns.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "expert_lenses",
-          "rows": 5,
-          "minimumRows": 5,
-          "sourceFiles": [
-            "current-universal/16_expert_lenses.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "service_scope_managed_services",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/17_service_scope_managed_services.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
-        }
-      ],
-      "inconsistentLineEndingFiles": 0,
-      "hollowRowFiles": [],
-      "columnContract": {
-        "declared": 19,
-        "conformant": 19,
-        "namingDrift": 0,
-        "columnGaps": 0,
-        "absent": 0,
-        "declaredColumnsTotal": 286,
-        "declaredColumnsPopulated": 167,
-        "waived": false,
-        "waiverExpires": "",
-        "nonConformantDetail": []
-      },
-      "blockers": [
-        {
-          "domain": "workforce_roles",
-          "rows": 12,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/03_workforce_roles.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "infrastructure_platforms",
-          "rows": 0,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/06_infrastructure_platforms.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "spend_value",
-          "rows": 8,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/08_spend_value.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "evidence_sources",
-          "rows": 9,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/13_evidence_sources.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "service_scope_managed_services",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/17_service_scope_managed_services.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
-        }
-      ],
-      "warnings": [
-        "Unmapped source file: current-universal/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-        "Unmapped source file: current-universal/SA09_AI_Tool_Usage_Feed.csv",
-        "Unmapped source file: current-universal/SA10_AI_Value_Interview_Evidence.csv",
-        "Unmapped source file: current-universal/SA11_AI_KPI_Operational_Outcome_Feed.csv"
-      ]
-    },
-    {
-      "tenantKey": "first-capital-financial",
-      "displayName": "FS Demo",
-      "companySizeBand": "large",
-      "packets": [
-        "current-universal"
-      ],
-      "csvFileCount": 23,
-      "csvRows": 1749,
-      "mappedCsvRows": 1717,
-      "domainDepth": [
-        {
-          "domain": "enterprise_profile",
-          "rows": 1,
-          "minimumRows": 1,
-          "sourceFiles": [
-            "current-universal/00_enterprise_profile.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "business_functions",
-          "rows": 27,
-          "minimumRows": 15,
-          "sourceFiles": [
-            "current-universal/01_business_functions.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "org_ownership",
-          "rows": 65,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/02_org_ownership.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "workforce_roles",
-          "rows": 16,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/03_workforce_roles.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "applications_systems",
-          "rows": 212,
-          "minimumRows": 75,
-          "sourceFiles": [
-            "current-universal/04_applications_systems.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "data_assets_integrations",
-          "rows": 114,
-          "minimumRows": 100,
-          "sourceFiles": [
-            "current-universal/05_data_assets_integrations.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "infrastructure_platforms",
-          "rows": 0,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/06_infrastructure_platforms.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "vendors_contracts",
-          "rows": 120,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/07_vendors_contracts.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "spend_value",
-          "rows": 8,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/08_spend_value.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "programs_initiatives",
-          "rows": 96,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/09_programs_initiatives.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "ai_automation_use_cases",
-          "rows": 146,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/10_ai_automation_use_cases.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "risks_controls",
-          "rows": 210,
-          "minimumRows": 40,
-          "sourceFiles": [
-            "current-universal/11_risks_controls.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "relationships",
-          "rows": 380,
-          "minimumRows": 100,
-          "sourceFiles": [
-            "current-universal/12_relationships.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "metrics_outcomes",
-          "rows": 157,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/14_metrics_outcomes.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "evidence_sources",
-          "rows": 9,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/13_evidence_sources.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "industry_context_patterns",
-          "rows": 151,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/15_industry_context_patterns.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "expert_lenses",
-          "rows": 5,
-          "minimumRows": 5,
-          "sourceFiles": [
-            "current-universal/16_expert_lenses.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "service_scope_managed_services",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/17_service_scope_managed_services.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
-        }
-      ],
-      "inconsistentLineEndingFiles": 0,
-      "hollowRowFiles": [],
-      "columnContract": {
-        "declared": 19,
-        "conformant": 19,
-        "namingDrift": 0,
-        "columnGaps": 0,
-        "absent": 0,
-        "declaredColumnsTotal": 286,
-        "declaredColumnsPopulated": 167,
-        "waived": false,
-        "waiverExpires": "",
-        "nonConformantDetail": []
-      },
-      "blockers": [
-        {
-          "domain": "workforce_roles",
-          "rows": 16,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/03_workforce_roles.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "infrastructure_platforms",
-          "rows": 0,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/06_infrastructure_platforms.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "spend_value",
-          "rows": 8,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/08_spend_value.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "evidence_sources",
-          "rows": 9,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/13_evidence_sources.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "service_scope_managed_services",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/17_service_scope_managed_services.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
-        }
-      ],
-      "warnings": [
-        "Unmapped source file: current-universal/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-        "Unmapped source file: current-universal/SA09_AI_Tool_Usage_Feed.csv",
-        "Unmapped source file: current-universal/SA10_AI_Value_Interview_Evidence.csv",
-        "Unmapped source file: current-universal/SA11_AI_KPI_Operational_Outcome_Feed.csv"
-      ]
-    },
-    {
-      "tenantKey": "healthcare-demo-new",
-      "displayName": "Healthcare Demo",
-      "companySizeBand": "large",
-      "packets": [
-        "foundation-v2-progressive-golden-slice-v1",
-        "current-universal"
+        "current-universal-integrated-healthcare"
       ],
       "csvFileCount": 24,
-      "csvRows": 3879,
-      "mappedCsvRows": 3782,
+      "csvRows": 3887,
+      "mappedCsvRows": 3815,
       "domainDepth": [
         {
           "domain": "enterprise_profile",
           "rows": 1,
           "minimumRows": 1,
           "sourceFiles": [
-            "current-universal/00_enterprise_profile.csv"
+            "current-universal-integrated-healthcare/00_enterprise_profile.csv"
           ],
           "status": "pass"
         },
@@ -565,16 +52,16 @@
           "rows": 24,
           "minimumRows": 15,
           "sourceFiles": [
-            "current-universal/01_business_functions.csv"
+            "current-universal-integrated-healthcare/01_business_functions.csv"
           ],
           "status": "pass"
         },
         {
           "domain": "org_ownership",
-          "rows": 224,
+          "rows": 225,
           "minimumRows": 10,
           "sourceFiles": [
-            "current-universal/02_org_ownership.csv"
+            "current-universal-integrated-healthcare/02_org_ownership.csv"
           ],
           "status": "pass"
         },
@@ -583,16 +70,16 @@
           "rows": 45,
           "minimumRows": 25,
           "sourceFiles": [
-            "current-universal/03_workforce_roles.csv"
+            "current-universal-integrated-healthcare/03_workforce_roles.csv"
           ],
           "status": "pass"
         },
         {
           "domain": "applications_systems",
-          "rows": 296,
+          "rows": 301,
           "minimumRows": 75,
           "sourceFiles": [
-            "current-universal/04_applications_systems.csv"
+            "current-universal-integrated-healthcare/04_applications_systems.csv"
           ],
           "status": "pass"
         },
@@ -601,7 +88,7 @@
           "rows": 520,
           "minimumRows": 100,
           "sourceFiles": [
-            "current-universal/05_data_assets_integrations.csv"
+            "current-universal-integrated-healthcare/05_data_assets_integrations.csv"
           ],
           "status": "pass"
         },
@@ -610,17 +97,17 @@
           "rows": 77,
           "minimumRows": 20,
           "sourceFiles": [
-            "current-universal/06_infrastructure_platforms.csv",
-            "current-universal/19_data_analytics_platform_maturity.csv"
+            "current-universal-integrated-healthcare/06_infrastructure_platforms.csv",
+            "current-universal-integrated-healthcare/19_data_analytics_platform_maturity.csv"
           ],
           "status": "pass"
         },
         {
           "domain": "vendors_contracts",
-          "rows": 71,
+          "rows": 72,
           "minimumRows": 25,
           "sourceFiles": [
-            "current-universal/07_vendors_contracts.csv"
+            "current-universal-integrated-healthcare/07_vendors_contracts.csv"
           ],
           "status": "pass"
         },
@@ -629,7 +116,7 @@
           "rows": 24,
           "minimumRows": 10,
           "sourceFiles": [
-            "current-universal/08_spend_value.csv"
+            "current-universal-integrated-healthcare/08_spend_value.csv"
           ],
           "status": "pass"
         },
@@ -638,7 +125,7 @@
           "rows": 28,
           "minimumRows": 20,
           "sourceFiles": [
-            "current-universal/09_programs_initiatives.csv"
+            "current-universal-integrated-healthcare/09_programs_initiatives.csv"
           ],
           "status": "pass"
         },
@@ -647,7 +134,7 @@
           "rows": 18,
           "minimumRows": 10,
           "sourceFiles": [
-            "current-universal/10_ai_automation_use_cases.csv"
+            "current-universal-integrated-healthcare/10_ai_automation_use_cases.csv"
           ],
           "status": "pass"
         },
@@ -656,7 +143,7 @@
           "rows": 40,
           "minimumRows": 40,
           "sourceFiles": [
-            "current-universal/11_risks_controls.csv"
+            "current-universal-integrated-healthcare/11_risks_controls.csv"
           ],
           "status": "pass"
         },
@@ -665,7 +152,7 @@
           "rows": 2302,
           "minimumRows": 100,
           "sourceFiles": [
-            "current-universal/12_relationships.csv"
+            "current-universal-integrated-healthcare/12_relationships.csv"
           ],
           "status": "pass"
         },
@@ -674,16 +161,16 @@
           "rows": 50,
           "minimumRows": 25,
           "sourceFiles": [
-            "current-universal/14_metrics_outcomes.csv"
+            "current-universal-integrated-healthcare/14_metrics_outcomes.csv"
           ],
           "status": "pass"
         },
         {
           "domain": "evidence_sources",
-          "rows": 26,
+          "rows": 27,
           "minimumRows": 20,
           "sourceFiles": [
-            "current-universal/13_evidence_sources.csv"
+            "current-universal-integrated-healthcare/13_evidence_sources.csv"
           ],
           "status": "pass"
         },
@@ -692,7 +179,7 @@
           "rows": 12,
           "minimumRows": 10,
           "sourceFiles": [
-            "current-universal/15_industry_context_patterns.csv"
+            "current-universal-integrated-healthcare/15_industry_context_patterns.csv"
           ],
           "status": "pass"
         },
@@ -701,7 +188,7 @@
           "rows": 9,
           "minimumRows": 5,
           "sourceFiles": [
-            "current-universal/16_expert_lenses.csv"
+            "current-universal-integrated-healthcare/16_expert_lenses.csv"
           ],
           "status": "pass"
         },
@@ -710,20 +197,24 @@
           "rows": 15,
           "minimumRows": 10,
           "sourceFiles": [
-            "current-universal/17_service_scope_managed_services.csv"
+            "current-universal-integrated-healthcare/17_service_scope_managed_services.csv"
           ],
           "status": "pass"
         },
         {
           "domain": "operational_process_evidence",
-          "rows": 0,
+          "rows": 25,
           "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
+          "sourceFiles": [
+            "current-universal-integrated-healthcare/18_operational_process_evidence.csv"
+          ],
+          "status": "pass"
         }
       ],
       "inconsistentLineEndingFiles": 0,
       "hollowRowFiles": [],
+      "placeholderIdentityRows": [],
+      "typeCollisionRepairRows": [],
       "columnContract": {
         "declared": 19,
         "conformant": 19,
@@ -731,1206 +222,17 @@
         "columnGaps": 0,
         "absent": 0,
         "declaredColumnsTotal": 286,
-        "declaredColumnsPopulated": 284,
+        "declaredColumnsPopulated": 285,
         "waived": false,
         "waiverExpires": "",
         "nonConformantDetail": []
       },
-      "blockers": [
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
-        }
-      ],
+      "blockers": [],
       "warnings": [
-        "Unmapped source file: current-universal/18_operational_process_evidence.csv",
-        "Unmapped source file: current-universal/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-        "Unmapped source file: current-universal/SA09_AI_Tool_Usage_Feed.csv",
-        "Unmapped source file: current-universal/SA10_AI_Value_Interview_Evidence.csv",
-        "Unmapped source file: current-universal/SA11_AI_KPI_Operational_Outcome_Feed.csv"
-      ]
-    },
-    {
-      "tenantKey": "lakeshore-holdings",
-      "displayName": "Lakeshore Holdings",
-      "companySizeBand": "mid_market",
-      "packets": [
-        "current-universal"
-      ],
-      "csvFileCount": 23,
-      "csvRows": 654,
-      "mappedCsvRows": 622,
-      "domainDepth": [
-        {
-          "domain": "enterprise_profile",
-          "rows": 1,
-          "minimumRows": 1,
-          "sourceFiles": [
-            "current-universal/00_enterprise_profile.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "business_functions",
-          "rows": 14,
-          "minimumRows": 8,
-          "sourceFiles": [
-            "current-universal/01_business_functions.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "org_ownership",
-          "rows": 8,
-          "minimumRows": 5,
-          "sourceFiles": [
-            "current-universal/02_org_ownership.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "workforce_roles",
-          "rows": 10,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/03_workforce_roles.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "applications_systems",
-          "rows": 24,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/04_applications_systems.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "data_assets_integrations",
-          "rows": 34,
-          "minimumRows": 40,
-          "sourceFiles": [
-            "current-universal/05_data_assets_integrations.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "infrastructure_platforms",
-          "rows": 0,
-          "minimumRows": 8,
-          "sourceFiles": [
-            "current-universal/06_infrastructure_platforms.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "vendors_contracts",
-          "rows": 19,
-          "minimumRows": 12,
-          "sourceFiles": [
-            "current-universal/07_vendors_contracts.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "spend_value",
-          "rows": 86,
-          "minimumRows": 5,
-          "sourceFiles": [
-            "current-universal/08_spend_value.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "programs_initiatives",
-          "rows": 15,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/09_programs_initiatives.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "ai_automation_use_cases",
-          "rows": 8,
-          "minimumRows": 5,
-          "sourceFiles": [
-            "current-universal/10_ai_automation_use_cases.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "risks_controls",
-          "rows": 10,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/11_risks_controls.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "relationships",
-          "rows": 364,
-          "minimumRows": 40,
-          "sourceFiles": [
-            "current-universal/12_relationships.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "metrics_outcomes",
-          "rows": 12,
-          "minimumRows": 12,
-          "sourceFiles": [
-            "current-universal/14_metrics_outcomes.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "evidence_sources",
-          "rows": 9,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/13_evidence_sources.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "industry_context_patterns",
-          "rows": 4,
-          "minimumRows": 5,
-          "sourceFiles": [
-            "current-universal/15_industry_context_patterns.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "expert_lenses",
-          "rows": 4,
-          "minimumRows": 3,
-          "sourceFiles": [
-            "current-universal/16_expert_lenses.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "service_scope_managed_services",
-          "rows": 0,
-          "minimumRows": 5,
-          "sourceFiles": [
-            "current-universal/17_service_scope_managed_services.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 5,
-          "sourceFiles": [],
-          "status": "blocker"
-        }
-      ],
-      "inconsistentLineEndingFiles": 0,
-      "hollowRowFiles": [],
-      "columnContract": {
-        "declared": 19,
-        "conformant": 19,
-        "namingDrift": 0,
-        "columnGaps": 0,
-        "absent": 0,
-        "declaredColumnsTotal": 286,
-        "declaredColumnsPopulated": 167,
-        "waived": false,
-        "waiverExpires": "",
-        "nonConformantDetail": []
-      },
-      "blockers": [
-        {
-          "domain": "applications_systems",
-          "rows": 24,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/04_applications_systems.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "data_assets_integrations",
-          "rows": 34,
-          "minimumRows": 40,
-          "sourceFiles": [
-            "current-universal/05_data_assets_integrations.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "infrastructure_platforms",
-          "rows": 0,
-          "minimumRows": 8,
-          "sourceFiles": [
-            "current-universal/06_infrastructure_platforms.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "risks_controls",
-          "rows": 10,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/11_risks_controls.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "evidence_sources",
-          "rows": 9,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/13_evidence_sources.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "industry_context_patterns",
-          "rows": 4,
-          "minimumRows": 5,
-          "sourceFiles": [
-            "current-universal/15_industry_context_patterns.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "service_scope_managed_services",
-          "rows": 0,
-          "minimumRows": 5,
-          "sourceFiles": [
-            "current-universal/17_service_scope_managed_services.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 5,
-          "sourceFiles": [],
-          "status": "blocker"
-        }
-      ],
-      "warnings": [
-        "Unmapped source file: current-universal/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-        "Unmapped source file: current-universal/SA09_AI_Tool_Usage_Feed.csv",
-        "Unmapped source file: current-universal/SA10_AI_Value_Interview_Evidence.csv",
-        "Unmapped source file: current-universal/SA11_AI_KPI_Operational_Outcome_Feed.csv"
-      ]
-    },
-    {
-      "tenantKey": "lakeshore-industries",
-      "displayName": "Lakeshore Industries",
-      "companySizeBand": "large",
-      "packets": [
-        "current-universal"
-      ],
-      "csvFileCount": 23,
-      "csvRows": 1736,
-      "mappedCsvRows": 1592,
-      "domainDepth": [
-        {
-          "domain": "enterprise_profile",
-          "rows": 8,
-          "minimumRows": 1,
-          "sourceFiles": [
-            "current-universal/00_enterprise_profile.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "business_functions",
-          "rows": 59,
-          "minimumRows": 15,
-          "sourceFiles": [
-            "current-universal/01_business_functions.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "org_ownership",
-          "rows": 116,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/02_org_ownership.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "workforce_roles",
-          "rows": 22,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/03_workforce_roles.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "applications_systems",
-          "rows": 152,
-          "minimumRows": 75,
-          "sourceFiles": [
-            "current-universal/04_applications_systems.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "data_assets_integrations",
-          "rows": 82,
-          "minimumRows": 100,
-          "sourceFiles": [
-            "current-universal/05_data_assets_integrations.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "infrastructure_platforms",
-          "rows": 128,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/06_infrastructure_platforms.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "vendors_contracts",
-          "rows": 19,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/07_vendors_contracts.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "spend_value",
-          "rows": 71,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/08_spend_value.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "programs_initiatives",
-          "rows": 36,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/09_programs_initiatives.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "ai_automation_use_cases",
-          "rows": 36,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/10_ai_automation_use_cases.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "risks_controls",
-          "rows": 48,
-          "minimumRows": 40,
-          "sourceFiles": [
-            "current-universal/11_risks_controls.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "relationships",
-          "rows": 519,
-          "minimumRows": 100,
-          "sourceFiles": [
-            "current-universal/12_relationships.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "metrics_outcomes",
-          "rows": 236,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/14_metrics_outcomes.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "evidence_sources",
-          "rows": 10,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/13_evidence_sources.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "industry_context_patterns",
-          "rows": 24,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/15_industry_context_patterns.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "expert_lenses",
-          "rows": 18,
-          "minimumRows": 5,
-          "sourceFiles": [
-            "current-universal/16_expert_lenses.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "service_scope_managed_services",
-          "rows": 8,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/17_service_scope_managed_services.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
-        }
-      ],
-      "inconsistentLineEndingFiles": 0,
-      "hollowRowFiles": [
-        {
-          "file": "08_spend_value.csv",
-          "hollow": 54,
-          "total": 71
-        },
-        {
-          "file": "12_relationships.csv",
-          "hollow": 510,
-          "total": 519
-        }
-      ],
-      "columnContract": {
-        "declared": 19,
-        "conformant": 19,
-        "namingDrift": 0,
-        "columnGaps": 0,
-        "absent": 0,
-        "declaredColumnsTotal": 286,
-        "declaredColumnsPopulated": 168,
-        "waived": false,
-        "waiverExpires": "",
-        "nonConformantDetail": []
-      },
-      "blockers": [
-        {
-          "domain": "workforce_roles",
-          "rows": 22,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/03_workforce_roles.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "data_assets_integrations",
-          "rows": 82,
-          "minimumRows": 100,
-          "sourceFiles": [
-            "current-universal/05_data_assets_integrations.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "vendors_contracts",
-          "rows": 19,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/07_vendors_contracts.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "evidence_sources",
-          "rows": 10,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/13_evidence_sources.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "service_scope_managed_services",
-          "rows": 8,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/17_service_scope_managed_services.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
-        }
-      ],
-      "warnings": [
-        "Unmapped source file: current-universal/18_operational_process_evidence.csv",
-        "Unmapped source file: current-universal/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-        "Unmapped source file: current-universal/SA09_AI_Tool_Usage_Feed.csv",
-        "Unmapped source file: current-universal/SA10_AI_Value_Interview_Evidence.csv",
-        "Unmapped source file: current-universal/SA11_AI_KPI_Operational_Outcome_Feed.csv"
-      ]
-    },
-    {
-      "tenantKey": "meridian-health",
-      "displayName": "Meridian Health",
-      "companySizeBand": "large",
-      "packets": [
-        "current-universal"
-      ],
-      "csvFileCount": 25,
-      "csvRows": 4850,
-      "mappedCsvRows": 4506,
-      "domainDepth": [
-        {
-          "domain": "enterprise_profile",
-          "rows": 2,
-          "minimumRows": 1,
-          "sourceFiles": [
-            "current-universal/00_enterprise_profile.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "business_functions",
-          "rows": 228,
-          "minimumRows": 15,
-          "sourceFiles": [
-            "current-universal/01_business_functions.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "org_ownership",
-          "rows": 228,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/02_org_ownership.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "workforce_roles",
-          "rows": 221,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/03_workforce_roles.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "applications_systems",
-          "rows": 241,
-          "minimumRows": 75,
-          "sourceFiles": [
-            "current-universal/04_applications_systems.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "data_assets_integrations",
-          "rows": 242,
-          "minimumRows": 100,
-          "sourceFiles": [
-            "current-universal/05_data_assets_integrations.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "infrastructure_platforms",
-          "rows": 15,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/06_infrastructure_platforms.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "vendors_contracts",
-          "rows": 231,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/07_vendors_contracts.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "spend_value",
-          "rows": 298,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/08_it_budget_spend_value.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "programs_initiatives",
-          "rows": 256,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/09_programs_initiatives.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "ai_automation_use_cases",
-          "rows": 251,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/10_ai_automation_use_cases.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "risks_controls",
-          "rows": 249,
-          "minimumRows": 40,
-          "sourceFiles": [
-            "current-universal/11_risks_controls.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "relationships",
-          "rows": 1037,
-          "minimumRows": 100,
-          "sourceFiles": [
-            "current-universal/12_relationships.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "metrics_outcomes",
-          "rows": 257,
-          "minimumRows": 25,
-          "sourceFiles": [
-            "current-universal/14_metrics_outcomes.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "evidence_sources",
-          "rows": 508,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/13_evidence_sources.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "industry_context_patterns",
-          "rows": 7,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/15_industry_context_patterns.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "expert_lenses",
-          "rows": 7,
-          "minimumRows": 5,
-          "sourceFiles": [
-            "current-universal/16_expert_lenses.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "service_scope_managed_services",
-          "rows": 228,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/17_managed_services_scope.csv"
-          ],
-          "status": "pass"
-        },
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
-        }
-      ],
-      "inconsistentLineEndingFiles": 0,
-      "hollowRowFiles": [],
-      "columnContract": {
-        "declared": 19,
-        "conformant": 1,
-        "namingDrift": 2,
-        "columnGaps": 18,
-        "absent": 0,
-        "declaredColumnsTotal": 286,
-        "declaredColumnsPopulated": 65,
-        "waived": true,
-        "waiverExpires": "2026-09-30",
-        "nonConformantDetail": [
-          {
-            "contractFile": "00_enterprise_profile.csv",
-            "resolvedFile": "00_enterprise_profile.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "entity_name",
-              "customer_segments",
-              "mission",
-              "vision",
-              "leadership_team",
-              "current_state_notes",
-              "target_state_notes",
-              "known_gaps"
-            ],
-            "populatedColumns": 12,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "01_business_functions.csv",
-            "resolvedFile": "01_business_functions.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "function_name",
-              "parent_function",
-              "executive_owner",
-              "business_capabilities",
-              "criticality",
-              "annual_budget_usd",
-              "fte_count",
-              "outsourced_support",
-              "current_state_notes",
-              "target_state_notes",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 2,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "02_org_ownership.csv",
-            "resolvedFile": "02_org_ownership.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "org_unit",
-              "parent_org_unit",
-              "leader_name_or_role",
-              "role_level",
-              "decision_rights",
-              "owned_functions",
-              "owned_systems",
-              "owned_data_domains",
-              "location_scope",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 2,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "03_workforce_roles.csv",
-            "resolvedFile": "03_workforce_roles.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "persona_or_role",
-              "function_name",
-              "role_count",
-              "location_model",
-              "employment_type",
-              "vendor_supported",
-              "skills",
-              "pain_points",
-              "automation_opportunity",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 2,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "04_applications_systems.csv",
-            "resolvedFile": "04_applications_systems.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "system_name",
-              "system_type",
-              "system_category",
-              "business_function",
-              "system_scope",
-              "deployment_model",
-              "hosting_location",
-              "lifecycle_state",
-              "business_owner",
-              "technology_owner",
-              "vendor",
-              "data_domains",
-              "interfaces_count",
-              "current_state_or_target_state",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 3,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "05_data_assets_integrations.csv",
-            "resolvedFile": "05_data_assets_integrations.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "data_asset_name",
-              "source_system",
-              "target_system",
-              "integration_type",
-              "platform_or_database",
-              "current_state_or_target_state",
-              "refresh_frequency",
-              "data_owner",
-              "data_steward",
-              "quality_status",
-              "regulated_data_flag",
-              "analytics_usage",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 3,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "06_infrastructure_platforms.csv",
-            "resolvedFile": "06_infrastructure_platforms.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "platform_name",
-              "platform_type",
-              "hosting_model",
-              "data_center_or_region",
-              "technology_stack",
-              "operational_owner",
-              "lifecycle_state",
-              "capacity_or_scale",
-              "constraints",
-              "future_target_flag",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 3,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "07_vendors_contracts.csv",
-            "resolvedFile": "07_vendors_contracts.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "vendor_name",
-              "contract_name",
-              "service_category",
-              "business_owner",
-              "contract_owner",
-              "annual_spend_usd",
-              "term_start",
-              "term_end",
-              "renewal_date",
-              "commercial_model",
-              "supported_systems",
-              "supported_functions",
-              "risk_rating",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 2,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "08_spend_value.csv",
-            "resolvedFile": "08_it_budget_spend_value.csv",
-            "state": "column-gap",
-            "nameDrifted": true,
-            "missingColumns": [
-              "spend_category",
-              "cost_center_or_owner",
-              "annual_spend_usd",
-              "run_change_transform_split",
-              "vendor_internal_split",
-              "value_driver",
-              "savings_opportunity_usd",
-              "calculation_basis",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 2,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "09_programs_initiatives.csv",
-            "resolvedFile": "09_programs_initiatives.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "program_name",
-              "business_sponsor",
-              "technology_owner",
-              "objective",
-              "scope",
-              "status",
-              "phase",
-              "target_outcomes",
-              "dependencies",
-              "risks",
-              "budget_usd",
-              "expected_value_usd",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 2,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "10_ai_automation_use_cases.csv",
-            "resolvedFile": "10_ai_automation_use_cases.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "use_case_name",
-              "business_function",
-              "process_area",
-              "ai_pattern",
-              "current_status",
-              "required_data",
-              "required_systems",
-              "human_approval_points",
-              "risk_controls",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 3,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "11_risks_controls.csv",
-            "resolvedFile": "11_risks_controls.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "risk_or_control_name",
-              "risk_domain",
-              "business_function",
-              "systems_impacted",
-              "severity",
-              "likelihood",
-              "control_owner",
-              "control_status",
-              "evidence_required",
-              "mitigation_plan",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 2,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "13_evidence_sources.csv",
-            "resolvedFile": "13_evidence_sources.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "source_file",
-              "source_owner",
-              "source_date",
-              "as_of_date",
-              "confidentiality",
-              "domains_covered",
-              "row_count_or_pages",
-              "quality_notes",
-              "approved_for_loading",
-              "known_gaps"
-            ],
-            "populatedColumns": 2,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "14_metrics_outcomes.csv",
-            "resolvedFile": "14_metrics_outcomes.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "metric_name",
-              "metric_domain",
-              "business_function",
-              "definition",
-              "baseline_period",
-              "owner",
-              "data_source",
-              "calculation_basis",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 4,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "15_industry_context_patterns.csv",
-            "resolvedFile": "15_industry_context_patterns.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "pattern_name",
-              "industry",
-              "business_context",
-              "applicability",
-              "evidence_basis",
-              "caveats",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 2,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "16_expert_lenses.csv",
-            "resolvedFile": "16_expert_lenses.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "lens_name",
-              "expert_role",
-              "questions_to_answer",
-              "required_inputs",
-              "decision_use",
-              "limitations",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 2,
-            "emptyColumns": []
-          },
-          {
-            "contractFile": "17_service_scope_managed_services.csv",
-            "resolvedFile": "17_managed_services_scope.csv",
-            "state": "column-gap",
-            "nameDrifted": true,
-            "missingColumns": [
-              "service_name",
-              "scope_description",
-              "in_scope_functions",
-              "in_scope_systems",
-              "current_provider",
-              "service_volume",
-              "sla_or_kpi",
-              "run_cost_usd",
-              "target_state_option",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 2,
-            "emptyColumns": [
-              "service_tower"
-            ]
-          },
-          {
-            "contractFile": "18_operational_process_evidence.csv",
-            "resolvedFile": "18_operational_process_evidence.csv",
-            "state": "column-gap",
-            "nameDrifted": false,
-            "missingColumns": [
-              "process_name",
-              "business_function",
-              "process_owner",
-              "systems_used",
-              "volume_metric",
-              "cycle_time",
-              "pain_points",
-              "control_points",
-              "automation_candidate",
-              "source_file",
-              "source_date",
-              "known_gaps"
-            ],
-            "populatedColumns": 2,
-            "emptyColumns": []
-          }
-        ]
-      },
-      "blockers": [
-        {
-          "domain": "infrastructure_platforms",
-          "rows": 15,
-          "minimumRows": 20,
-          "sourceFiles": [
-            "current-universal/06_infrastructure_platforms.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "industry_context_patterns",
-          "rows": 7,
-          "minimumRows": 10,
-          "sourceFiles": [
-            "current-universal/15_industry_context_patterns.csv"
-          ],
-          "status": "blocker"
-        },
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
-        }
-      ],
-      "warnings": [
-        "Unmapped source file: current-universal/18_operational_process_evidence.csv",
-        "Unmapped source file: current-universal/SA02_IT_Finance_Budget_Spend_Extract.csv",
-        "Unmapped source file: current-universal/SA04_Program_Portfolio_Extract.csv",
-        "Unmapped source file: current-universal/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
-        "Unmapped source file: current-universal/SA09_AI_Tool_Usage_Feed.csv",
-        "Unmapped source file: current-universal/SA10_AI_Value_Interview_Evidence.csv",
-        "Unmapped source file: current-universal/SA11_AI_KPI_Operational_Outcome_Feed.csv",
-        "Potential current/target blend: current-universal/04_applications_systems.csv",
-        "Potential current/target blend: current-universal/05_data_assets_integrations.csv",
-        "Potential current/target blend: current-universal/06_infrastructure_platforms.csv"
+        "Unmapped source file: current-universal-integrated-healthcare/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+        "Unmapped source file: current-universal-integrated-healthcare/SA09_AI_Tool_Usage_Feed.csv",
+        "Unmapped source file: current-universal-integrated-healthcare/SA10_AI_Value_Interview_Evidence.csv",
+        "Unmapped source file: current-universal-integrated-healthcare/SA11_AI_KPI_Operational_Outcome_Feed.csv"
       ]
     },
     {
@@ -1941,8 +243,8 @@
         "current-universal"
       ],
       "csvFileCount": 26,
-      "csvRows": 5617,
-      "mappedCsvRows": 4817,
+      "csvRows": 5792,
+      "mappedCsvRows": 5027,
       "domainDepth": [
         {
           "domain": "enterprise_profile",
@@ -1964,7 +266,7 @@
         },
         {
           "domain": "org_ownership",
-          "rows": 150,
+          "rows": 154,
           "minimumRows": 10,
           "sourceFiles": [
             "current-universal/02_org_ownership.csv"
@@ -1973,7 +275,7 @@
         },
         {
           "domain": "workforce_roles",
-          "rows": 38,
+          "rows": 39,
           "minimumRows": 25,
           "sourceFiles": [
             "current-universal/03_workforce_roles.csv"
@@ -2028,7 +330,7 @@
         },
         {
           "domain": "programs_initiatives",
-          "rows": 20,
+          "rows": 29,
           "minimumRows": 20,
           "sourceFiles": [
             "current-universal/09_programs_initiatives.csv"
@@ -2073,7 +375,7 @@
         },
         {
           "domain": "evidence_sources",
-          "rows": 22,
+          "rows": 183,
           "minimumRows": 20,
           "sourceFiles": [
             "current-universal/13_evidence_sources.csv"
@@ -2109,14 +411,34 @@
         },
         {
           "domain": "operational_process_evidence",
-          "rows": 0,
+          "rows": 35,
           "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
+          "sourceFiles": [
+            "current-universal/18_operational_process_evidence.csv"
+          ],
+          "status": "pass"
         }
       ],
       "inconsistentLineEndingFiles": 0,
-      "hollowRowFiles": [],
+      "hollowRowFiles": [
+        {
+          "file": "02_org_ownership.csv",
+          "hollow": 1,
+          "total": 154
+        },
+        {
+          "file": "03_workforce_roles.csv",
+          "hollow": 1,
+          "total": 39
+        },
+        {
+          "file": "09_programs_initiatives.csv",
+          "hollow": 1,
+          "total": 29
+        }
+      ],
+      "placeholderIdentityRows": [],
+      "typeCollisionRepairRows": [],
       "columnContract": {
         "declared": 19,
         "conformant": 19,
@@ -2124,23 +446,14 @@
         "columnGaps": 0,
         "absent": 0,
         "declaredColumnsTotal": 286,
-        "declaredColumnsPopulated": 283,
+        "declaredColumnsPopulated": 285,
         "waived": false,
         "waiverExpires": "",
         "nonConformantDetail": []
       },
-      "blockers": [
-        {
-          "domain": "operational_process_evidence",
-          "rows": 0,
-          "minimumRows": 10,
-          "sourceFiles": [],
-          "status": "blocker"
-        }
-      ],
+      "blockers": [],
       "warnings": [
         "Unmapped source file: current-universal/12b_interview_initiative_metric_crosswalk.csv",
-        "Unmapped source file: current-universal/18_operational_process_evidence.csv",
         "Unmapped source file: current-universal/20_itsm_ticket_sla_performance.csv",
         "Unmapped source file: current-universal/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
         "Unmapped source file: current-universal/SA09_AI_Tool_Usage_Feed.csv",
@@ -2158,6 +471,85 @@
       "status": "retired-excluded",
       "archivePaths": [],
       "reason": "Operator instruction: there should be no Northstar active tenant. Legacy source files are no longer retained in loader-visible repository paths."
+    },
+    {
+      "tenantKey": "healthcare-demo-new",
+      "displayName": "Healthcare Demo",
+      "status": "retired-excluded",
+      "archivePaths": [],
+      "reason": "Merged into meridian-health as the sole active integrated healthcare tenant; historical rollback via git history or external archive. No runtime/data-plane activation performed by this repo-local integration."
+    },
+    {
+      "tenantKey": "apex-retail",
+      "displayName": "Apex Retail",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/apex-retail/current",
+      "packets": [
+        {
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/apex-retail/current",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
+        }
+      ],
+      "status": "retired-excluded",
+      "retiredOn": "2026-08-16",
+      "retiredReason": "Tenant sunset; only meridian-health and skyharbor-air remain active."
+    },
+    {
+      "tenantKey": "first-capital-financial",
+      "displayName": "FS Demo",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/first-capital-financial/current",
+      "packets": [
+        {
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/first-capital-financial/current",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
+        }
+      ],
+      "status": "retired-excluded",
+      "retiredOn": "2026-08-16",
+      "retiredReason": "Tenant sunset; only meridian-health and skyharbor-air remain active."
+    },
+    {
+      "tenantKey": "lakeshore-holdings",
+      "displayName": "Lakeshore Holdings",
+      "companySizeBand": "mid_market",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/lakeshore-holdings/current",
+      "packets": [
+        {
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/lakeshore-holdings/current",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
+        }
+      ],
+      "status": "retired-excluded",
+      "retiredOn": "2026-08-16",
+      "retiredReason": "Tenant sunset; only meridian-health and skyharbor-air remain active."
+    },
+    {
+      "tenantKey": "lakeshore-industries",
+      "displayName": "Lakeshore Industries",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/lakeshore-industries/current",
+      "packets": [
+        {
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/lakeshore-industries/current",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
+        }
+      ],
+      "status": "retired-excluded",
+      "retiredOn": "2026-08-16",
+      "retiredReason": "Tenant sunset; only meridian-health and skyharbor-air remain active."
     }
   ],
   "failures": []

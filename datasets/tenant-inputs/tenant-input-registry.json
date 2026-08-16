@@ -29,66 +29,6 @@
   },
   "activeTenants": [
     {
-      "tenantKey": "apex-retail",
-      "displayName": "Apex Retail",
-      "companySizeBand": "large",
-      "canonicalInputRoot": "datasets/tenant-inputs/active/apex-retail/current",
-      "packets": [
-        {
-          "packetId": "current-universal",
-          "path": "datasets/tenant-inputs/active/apex-retail/current",
-          "classification": "synthetic-demo",
-          "status": "active-input",
-          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
-        }
-      ]
-    },
-    {
-      "tenantKey": "first-capital-financial",
-      "displayName": "FS Demo",
-      "companySizeBand": "large",
-      "canonicalInputRoot": "datasets/tenant-inputs/active/first-capital-financial/current",
-      "packets": [
-        {
-          "packetId": "current-universal",
-          "path": "datasets/tenant-inputs/active/first-capital-financial/current",
-          "classification": "synthetic-demo",
-          "status": "active-input",
-          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
-        }
-      ]
-    },
-    {
-      "tenantKey": "lakeshore-holdings",
-      "displayName": "Lakeshore Holdings",
-      "companySizeBand": "mid_market",
-      "canonicalInputRoot": "datasets/tenant-inputs/active/lakeshore-holdings/current",
-      "packets": [
-        {
-          "packetId": "current-universal",
-          "path": "datasets/tenant-inputs/active/lakeshore-holdings/current",
-          "classification": "synthetic-demo",
-          "status": "active-input",
-          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
-        }
-      ]
-    },
-    {
-      "tenantKey": "lakeshore-industries",
-      "displayName": "Lakeshore Industries",
-      "companySizeBand": "large",
-      "canonicalInputRoot": "datasets/tenant-inputs/active/lakeshore-industries/current",
-      "packets": [
-        {
-          "packetId": "current-universal",
-          "path": "datasets/tenant-inputs/active/lakeshore-industries/current",
-          "classification": "synthetic-demo",
-          "status": "active-input",
-          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
-        }
-      ]
-    },
-    {
       "tenantKey": "meridian-health",
       "displayName": "Meridian Health",
       "companySizeBand": "large",
@@ -133,6 +73,78 @@
       "status": "retired-excluded",
       "archivePaths": [],
       "reason": "Merged into meridian-health as the sole active integrated healthcare tenant; historical rollback via git history or external archive. No runtime/data-plane activation performed by this repo-local integration."
+    },
+    {
+      "tenantKey": "apex-retail",
+      "displayName": "Apex Retail",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/apex-retail/current",
+      "packets": [
+        {
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/apex-retail/current",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
+        }
+      ],
+      "status": "retired-excluded",
+      "retiredOn": "2026-08-16",
+      "retiredReason": "Tenant sunset; only meridian-health and skyharbor-air remain active."
+    },
+    {
+      "tenantKey": "first-capital-financial",
+      "displayName": "FS Demo",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/first-capital-financial/current",
+      "packets": [
+        {
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/first-capital-financial/current",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
+        }
+      ],
+      "status": "retired-excluded",
+      "retiredOn": "2026-08-16",
+      "retiredReason": "Tenant sunset; only meridian-health and skyharbor-air remain active."
+    },
+    {
+      "tenantKey": "lakeshore-holdings",
+      "displayName": "Lakeshore Holdings",
+      "companySizeBand": "mid_market",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/lakeshore-holdings/current",
+      "packets": [
+        {
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/lakeshore-holdings/current",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
+        }
+      ],
+      "status": "retired-excluded",
+      "retiredOn": "2026-08-16",
+      "retiredReason": "Tenant sunset; only meridian-health and skyharbor-air remain active."
+    },
+    {
+      "tenantKey": "lakeshore-industries",
+      "displayName": "Lakeshore Industries",
+      "companySizeBand": "large",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/lakeshore-industries/current",
+      "packets": [
+        {
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/lakeshore-industries/current",
+          "classification": "synthetic-demo",
+          "status": "active-input",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
+        }
+      ],
+      "status": "retired-excluded",
+      "retiredOn": "2026-08-16",
+      "retiredReason": "Tenant sunset; only meridian-health and skyharbor-air remain active."
     }
   ],
   "legacyRootsPendingArchiveCleanup": [],

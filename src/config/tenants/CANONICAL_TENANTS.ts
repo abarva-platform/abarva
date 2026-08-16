@@ -80,14 +80,16 @@ export const MERIDIAN_PHS_COMPLIANCE_METADATA = {
     "docs/enterprise-context/synthetic/meridian/15-risk-compliance-register.csv",
 } as const satisfies TenantComplianceMetadata;
 
+/**
+ * The tenants this product serves.
+ *
+ * Sunset on 2026-08-16: apex-retail, first-capital, lakeshore-holdings,
+ * lakeshore-industries and northstar-clinical were removed entirely rather than merely marked
+ * retired. `CanonicalTenantKey` derives from this array, so the type system now rejects any
+ * reference to a sunset tenant — that is deliberate, and is what makes the purge verifiable
+ * instead of best-effort.
+ */
 export const CANONICAL_TENANTS = [
-  {
-    key: "apex-retail",
-    name: "Apex Retail",
-    industry: "retail",
-    mimics: "Generic mass-market retailer",
-    patternOverlays: ["core", "retail-v1"],
-  },
   {
     key: "meridian-health",
     name: "Meridian Health System",
@@ -97,32 +99,11 @@ export const CANONICAL_TENANTS = [
     compliance: MERIDIAN_PHS_COMPLIANCE_METADATA,
   },
   {
-    key: "northstar-clinical",
-    name: "Northstar Clinical Technologies",
-    industry: "healthcare_medtech",
-    mimics: "Solventum-shape healthcare products and devices company",
-    patternOverlays: ["core"],
-  },
-  {
-    key: "first-capital",
-    name: "FS Demo",
-    industry: "financial_services_banking",
-    mimics: "Mid-tier banking institution",
-    patternOverlays: ["core"],
-  },
-  {
     key: "skyharbor-air",
     name: "Airline Demo",
     industry: "airline",
     mimics: "Delta-shape global airline",
     patternOverlays: ["core", "airline-industry-v1"],
-  },
-  {
-    key: "lakeshore-holdings",
-    name: "Lakeshore Holdings",
-    industry: "diversified",
-    mimics: "Morgan Street Holdings-shape diversified holding company",
-    patternOverlays: ["core"],
   },
 ] as const satisfies readonly CanonicalTenant[];
 
