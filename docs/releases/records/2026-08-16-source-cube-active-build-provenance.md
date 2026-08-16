@@ -35,6 +35,7 @@ Layer 4 / Products (`internal-admin` lane): tightens the Source read-model and c
 
 - Pass: `npx eslint scripts/data-build/refresh-source-l4-cube.ts`.
 - Pass: `npm run data-build:source-l4-cube-refresh -- --out-dir /tmp/nexus-source-l4-active-read-models-local-dry-run`.
+- Pass: `npm run data-build:source-l4-cube-refresh -- --out-dir /tmp/nexus-source-l4-active-readmodel-rls-local-dry-run` confirms Source read-model readback uses tenant session context for tenant-filtered views.
 - Pass: `npm run release:check`.
 - Pending: ACA Source L4/cube write and readback rerun using the deployed digest-pinned image.
 
