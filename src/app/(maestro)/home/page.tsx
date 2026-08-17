@@ -16,6 +16,10 @@ import {
 } from "@/lib/source/data-model/read-adapter";
 import { loadSourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 import {
+  loadHomeLandscape,
+  type HomeLandscape,
+} from "@/lib/home/landscape-read-adapter";
+import {
   ACTIVE_CLIENT_COOKIE,
   resolveTenant,
 } from "@/lib/tenant/resolveTenant";
@@ -190,12 +194,73 @@ function withSourceSummaryAnchors(
   };
 }
 
+function EnterpriseLandscapePanel({
+  landscape,
+}: {
+  landscape: HomeLandscape | null;
+}) {
+  if (!landscape) {
+    return (
+      <section className="rounded-md border border-[#d9ddd2] bg-white p-6">
+        <h2 className="text-xl font-semibold text-[#111827]">
+          Enterprise landscape
+        </h2>
+        <p className="mt-3 text-sm leading-6 text-[#475467]">
+          Not available. The landscape projection has not run for this client, so there is
+          nothing to show. This panel stays empty rather than displaying another product&rsquo;s
+          figures.
+        </p>
+      </section>
+    );
+  }
+  return (
+    <section className="rounded-md border border-[#d9ddd2] bg-white p-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-xl font-semibold text-[#111827]">
+          Enterprise landscape
+        </h2>
+        <p className="font-mono text-[11px] uppercase tracking-wider text-[#667085]">
+          {landscape.totalEntities.toLocaleString()} entities · build{" "}
+          {landscape.buildVersion}
+        </p>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {landscape.dimensions.map((dimension) => (
+          <div
+            key={dimension.dimensionKey}
+            className="rounded border border-[#e4e7ec] bg-[#fbfcfd] p-4"
+          >
+            <p className="text-sm font-semibold text-[#111827]">
+              {dimension.displayName}
+            </p>
+            <p className="mt-1 font-mono text-2xl tabular-nums text-[#111827]">
+              {dimension.recordCount.toLocaleString()}
+            </p>
+            <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-[#667085]">
+              {dimension.confidenceStatus === "not_available"
+                ? "not supplied"
+                : `${dimension.evidenceCount.toLocaleString()} evidence`}
+            </p>
+          </div>
+        ))}
+      </div>
+      {landscape.gaps.length > 0 ? (
+        <p className="mt-4 text-sm leading-6 text-[#b54708]">
+          Not supplied by this client: {landscape.gaps.join(", ")}.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 function MeridianHome({
   tenantName,
   sourceSummary,
+  landscape,
 }: {
   tenantName: string;
   sourceSummary: HomeSourceRuntimeSummary | null;
+  landscape: HomeLandscape | null;
 }) {
   const priorities = [
     [
@@ -257,6 +322,8 @@ function MeridianHome({
             ))}
           </div>
 
+          <EnterpriseLandscapePanel landscape={landscape} />
+
           <SourceRuntimeSummaryPanel summary={sourceSummary} />
 
           <section className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
@@ -307,7 +374,10 @@ export default async function HomePage() {
     }) ??
     tenant?.displayName ??
     "AbarVa Client";
-  const sourceSummary = await loadHomeSourceRuntimeSummary(clientKey);
+  const [sourceSummary, landscape] = await Promise.all([
+    loadHomeSourceRuntimeSummary(clientKey),
+    loadHomeLandscape(clientKey),
+  ]);
 
   if (clientKey === "skyharbor") {
     const model = withSourceSummaryAnchors(
@@ -331,5 +401,11 @@ export default async function HomePage() {
     );
   }
 
-  return <MeridianHome tenantName={tenantName} sourceSummary={sourceSummary} />;
+  return (
+    <MeridianHome
+      tenantName={tenantName}
+      sourceSummary={sourceSummary}
+      landscape={landscape}
+    />
+  );
 }
