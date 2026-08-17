@@ -97,7 +97,8 @@ interface Subject {
   subjectRef: string;
   subjectKind: string;
   initiativeRef: string | null;
-  label: string;
+  /** `tower.tracked_subject.title`. Named to match the column rather than to read nicely here. */
+  title: string;
 }
 interface Claim {
   tenantKey: string;
@@ -176,7 +177,7 @@ async function main(): Promise<number> {
         subjectRef,
         subjectKind: "ai_use_case",
         initiativeRef: str(a.aiProgramId),
-        label: useCase,
+        title: useCase,
       });
 
       const periodStart = isoDate(a.measurementPeriodStart);
@@ -238,7 +239,7 @@ async function main(): Promise<number> {
         subjectRef,
         subjectKind: "business_function",
         initiativeRef: null,
-        label: fn,
+        title: fn,
       });
       const period = str(a.baselinePeriod);
       const baselineId = addObservation(subjectRef, metricRef, "baseline", numeric(a.baselineValue), null, null);
@@ -357,24 +358,24 @@ async function main(): Promise<number> {
       await client.query("begin");
       for (const s of uniqueSubjects) {
         await client.query(
-          `insert into tower.tracked_subject (tenant_key, subject_ref, subject_kind, initiative_ref, label)
+          `insert into tower.tracked_subject (tenant_key, subject_ref, subject_kind, initiative_ref, title)
            values ($1,$2,$3,$4,$5)
            on conflict (tenant_key, subject_ref) do update
              set subject_kind = excluded.subject_kind,
                  initiative_ref = excluded.initiative_ref,
-                 label = excluded.label`,
-          [s.tenantKey, s.subjectRef, s.subjectKind, s.initiativeRef, s.label],
+                 title = excluded.title`,
+          [s.tenantKey, s.subjectRef, s.subjectKind, s.initiativeRef, s.title],
         );
         summary.rowsWritten += 1;
       }
       for (const o of uniqueObservations) {
         await client.query(
           `insert into tower.metric_observation
-             (tenant_key, observation_id, subject_ref, metric_ref, scenario, value,
+             (tenant_key, observation_id, subject_ref, metric_ref, scenario, value_num,
               period_start, period_end, source_result_hash)
            values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
            on conflict (tenant_key, observation_id) do update
-             set value = excluded.value,
+             set value_num = excluded.value_num,
                  period_start = excluded.period_start,
                  period_end = excluded.period_end,
                  source_result_hash = excluded.source_result_hash`,
