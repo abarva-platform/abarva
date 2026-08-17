@@ -4,7 +4,13 @@
   "defaultTenants": ["skyharbor-air", "meridian-health"],
   "modes": {
     "quote": {
-      "purpose": "Use live Source read models and Cube/canary projections only. This mode is intended before quoting Source portfolio, Contract 360, or Cube-derived figures."
+      "purpose": "Use current build-scoped Source read models and Cube projections only. This mode is intended before quoting Source portfolio, Contract 360, or Cube-derived figures.",
+      "sourceIds": [
+        "source.contract_360",
+        "source.vendor_contract_portfolio",
+        "consumption.sourcing_contract_v1",
+        "consumption.sourcing_vendor_v1"
+      ]
     }
   },
   "tenants": {

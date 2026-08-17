@@ -74,6 +74,48 @@ export const SOURCE_DEFINITIONS = [
     `,
   },
   {
+    id: "consumption.sourcing_contract_v1",
+    label: "Current Source contract cube",
+    table: "consumption.sourcing_contract_v1",
+    basisByMetric: {
+      contract_count: "contract_row",
+      portfolio_annual_value_usd: "annual_value_total",
+      total_committed_value_usd: "committed_value_total",
+      auto_renew_contract_count: "contract_row",
+    },
+    sql: `
+      SELECT
+        COUNT(*)::numeric AS contract_count,
+        COALESCE(SUM(annual_value), 0)::numeric AS portfolio_annual_value_usd,
+        COALESCE(SUM(total_committed_value), 0)::numeric AS total_committed_value_usd,
+        COALESCE(SUM(CASE WHEN auto_renew THEN 1 ELSE 0 END), 0)::numeric AS auto_renew_contract_count
+      FROM consumption.sourcing_contract_v1
+      WHERE tenant_key = ANY($1::text[])
+    `,
+  },
+  {
+    id: "consumption.sourcing_vendor_v1",
+    label: "Current Source vendor cube",
+    table: "consumption.sourcing_vendor_v1",
+    basisByMetric: {
+      contract_count: "contract_row",
+      vendor_count: "vendor_ref",
+      portfolio_annual_value_usd: "annual_value_total",
+      total_committed_value_usd: "committed_value_total",
+      auto_renew_contract_count: "contract_row",
+    },
+    sql: `
+      SELECT
+        COALESCE(SUM(contract_count), 0)::numeric AS contract_count,
+        COUNT(DISTINCT vendor_ref)::numeric AS vendor_count,
+        COALESCE(SUM(annual_value), 0)::numeric AS portfolio_annual_value_usd,
+        COALESCE(SUM(total_committed_value), 0)::numeric AS total_committed_value_usd,
+        COALESCE(SUM(auto_renew_contracts), 0)::numeric AS auto_renew_contract_count
+      FROM consumption.sourcing_vendor_v1
+      WHERE tenant_key = ANY($1::text[])
+    `,
+  },
+  {
     id: "consumption_v4_canary.sourcing_context_coverage_v1",
     label: "Source V4 context coverage",
     tenantFamilies: ["skyharbor"],
@@ -536,7 +578,9 @@ async function collectAssertions({ client, scope, tenants }) {
       tenant.rlsKey,
     ]);
 
+    const selectedSourceIds = scope.modes?.[scope.defaultMode ?? "quote"]?.sourceIds ?? [];
     for (const source of SOURCE_DEFINITIONS) {
+      if (selectedSourceIds.length > 0 && !selectedSourceIds.includes(source.id)) continue;
       if (!sourceAppliesToTenant(source, tenantKey)) continue;
       const result = await querySource(
         client,
