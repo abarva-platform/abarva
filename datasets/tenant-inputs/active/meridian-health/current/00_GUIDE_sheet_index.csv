@@ -1,0 +1,27 @@
+sheet,likely_owner,question_it_answers,where_it_surfaces,priority
+00_enterprise_profile,CIO office / Strategy,"Who the organisation is, its scale and segments",Home executive summary,critical
+01_business_functions,COO / Function leads,What the business does and what each function costs,"Home, Intelligence, Moves",critical
+02_org_ownership,HR / Chief of Staff,"Who owns what, and who decides",Every ownership reference in the model,critical
+03_workforce_roles,HR / Workforce planning,"Roles, headcount and skills",Intelligence workforce section,high
+04_applications_systems,Enterprise Architecture,"Every application, its owner, cost, lifecycle and criticality","Home, Intelligence, Source, Tower",critical
+05_data_assets_integrations,Data / Integration lead,Data assets and how systems exchange data,Intelligence data section,high
+06_infrastructure_platforms,Infrastructure lead,"Platforms, hosting, utilisation and lifecycle","Home, Intelligence, Tower",high
+07_vendors_contracts,Procurement / Vendor management,"Contracts, terms, renewal levers and exit cost","Source, Tower",critical
+08_spend_value,Technology Finance,"Technology spend by category, prior year and forecast","Home economics, Tower, Source",critical
+09_programs_initiatives,PMO / Portfolio,"What is in flight, its progress and expected value","Moves, Tower",critical
+10_ai_automation_use_cases,AI / Innovation lead,AI use cases and their deployment stage,"Intelligence, Tower, Moves",high
+11_risks_controls,Risk / Security,"Risks, controls, scores and test dates","Home, Intelligence, Tower",high
+12_relationships,Enterprise Architecture,How everything connects,The graph behind every surface,critical
+13_evidence_sources,Engagement lead,Where each dataset came from,Provenance on every figure,high
+14_metrics_outcomes,Business Metric Owners + Finance,"Baselines, targets, actuals and claim readiness",Tower value proof,critical
+15_industry_context_patterns,Engagement lead,Outside-in industry context,Intelligence benchmarks,medium
+16_expert_lenses,Engagement lead,Analytical lenses applied to this client,Intelligence benchmarks,medium
+17_service_scope_managed_services,Vendor management,What is outsourced and to whom,"Source, Tower",high
+18_operational_process_evidence,Process owners,"Process volumes, error rates and unit cost",Moves automation cases,high
+19_data_analytics_platform_maturity,Data lead,Maturity of the data and analytics estate,"Intelligence, Home",medium
+20_itsm_ticket_sla_performance,Service management,Incident and SLA performance,Tower service quality,high
+SA08_AI_Benefits_Realization,AI lead + Finance,Realised AI benefit and its evidence,Tower value proof,high
+SA09_AI_Tool_Usage_Feed,AI lead / Platform admins,"AI adoption, consumption and acceptance",Tower AI portfolio,high
+SA10_AI_Value_Interview_Evidence,Engagement lead,What stakeholders said about AI value,"Intelligence, Tower",medium
+SA11_AI_KPI_Operational_Outcome,Business Metric Owners,"AI KPI baselines, targets and actuals",Tower value proof,high
+extracts/*,Platform administrators,"Raw exports from Copilot, ServiceNow, Workday and coding assistants","Tower AI portfolio, consumption reconciliation",high
