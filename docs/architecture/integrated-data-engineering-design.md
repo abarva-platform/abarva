@@ -35,6 +35,150 @@ The operational plane cannot repair a weak canonical layer. The RAG plane cannot
 the canonical layer is missing entities or unresolved references. Product-specific read models are
 allowed, but only as projections from the canonical truth and governed workflow state.
 
+## Claude Code Design Delta
+
+This section reconciles the design above with the design Claude Code has been building and, in two
+cases, has already shipped. It exists so a reader does not have to hold two documents in their head
+and guess which one describes reality.
+
+**The two designs agree on the shape.** Four layers, medallion crosswalk, canonical as source of
+truth, products as projections, deterministic numbers with models explaining rather than
+calculating. Nothing below disputes that. What differs is the granularity of the product-projection
+contract, the definition of a conflict, and — most importantly — which parts are written down versus
+running.
+
+### 1. One dimension registry, not one mart contract per product
+
+**This document** gives each mart its own grain and drill path: a Source example, a Home example, a
+Tower example, each declaring `projection_name`, `row_grain`, `source_domains`, and so on.
+
+**Claude Code's design** puts a single registry underneath all of them. One list covers all
+twenty-six canonical object types; each entry declares the attribute that names an instance, the
+advisory section it answers, and — the load-bearing field — the `products[]` that consume it. Adding
+a reader is an entry in a list, not a new pipeline.
+
+The reason is the failure mode this whole exercise exists to fix. Today there are three parallel
+supply chains: Source has its adapters, Tower has `project-tower-mart.ts` plus ten `ingest-*.ts`
+adapters feeding `consumption.tower_*_v` views, and Home had tables with no reader at all. A design
+where each product declares its own mart contract is one honest step from becoming the fourth.
+
+**These are not exclusive, and the synthesis matters more than either.** The registry is the spine;
+per-mart grain declarations sit on top of it wherever a genuine drill path is required — Tower spend
+by cost basis, Source contract portfolio by renewal. But where a product needs counts, named
+entities, and evidence status (Home, Intelligence), the shared projection _is_ the whole answer, and
+giving it a bespoke mart would recreate the problem.
+
+Status: **shipped.** `scripts/data-build/refresh-home-landscape.ts`, twenty-six dimensions, consumed
+by Home and Intelligence, with Moves and Tower named as future consumers in the same list.
+
+### 2. `CONFLICT` is too blunt — facts need a basis
+
+**This document** defines `CONFLICT` as "sources disagree → do not quote; surface decision needed."
+
+That rule discards the most useful thing the data can say. A client workbook declares annual spend of
+$44M; metered cloud cost reports $51M. Neither is wrong — one is a budget, the other is consumption,
+and the 16% gap is the finding. Under the rule as written, the metric is marked `CONFLICT` and never
+quoted.
+
+**Claude Code's amendment:** every canonical fact carries `basis` — `declared`, `observed`, or
+`derived`. `CONFLICT` then means _two sources of the same basis disagree_, which is a real problem.
+Two different bases differing is `VARIANCE`, and it is the answer rather than the error.
+
+| Status       | Amended meaning                                           |
+| ------------ | --------------------------------------------------------- |
+| `AGREE`      | Multiple sources, same basis, same value                  |
+| `ONE_SOURCE` | One source asserts the value                              |
+| `CONFLICT`   | Same basis, sources disagree — do not quote               |
+| `VARIANCE`   | Different bases differ — quote both, and quote the gap    |
+| `ABSENT`     | No source asserts the value — show the gap, do not invent |
+
+Status: **shipped.** `FactBasis` on `SourceAuthority`, gate `validate:fact-basis`, 5,553 canonical
+records all currently `declared`. Nothing carries two bases yet because the ten telemetry collectors
+still write to `public.tower_*` rather than canonical; the gate reports that honestly rather than
+implying the capability is exercised.
+
+### 3. Readback must happen before commit, not after
+
+**This document** requires `readback_assertion`: "persisted equals readback, filtered by build."
+
+**Amendment:** the readback belongs _inside the writing transaction, before commit_. A readback after
+commit detects a bad write. It does not prevent one, and by the time it fires the half-written pack
+is already the newest pack a product will read.
+
+Status: **shipped** in the landscape projector — a count mismatch throws, the transaction rolls back,
+and the previous build stays newest.
+
+### 4. Counts alone are not proof — acceptance must require names
+
+The first run of the landscape projector returned **every count correctly and every name empty**.
+Canonical attributes are `CanonicalValue` wrappers, so reading `attributes[key]` yields an object
+rather than a string, and name extraction silently produced nothing.
+
+A proof bundle asserting record counts would have passed. The surface would have rendered a fully
+populated landscape with no content in it.
+
+**Amendment to Proof and Acceptance Criteria:** add a required question — _do the counts carry
+names?_ — answered by sample entities per dimension. `804 applications` is an inventory total;
+`804 applications, including Epic Hyperspace and Kronos` is a landscape, and only the second can be
+checked by a human who knows the client.
+
+### 5. Record count and distinct-name count are different numbers
+
+**Amendment:** every projection reports both. On relationship-derived dimensions they differ by
+nearly threefold — 825 relationship rows naming roughly 300 distinct systems. Publishing 825 as
+"systems" inflates the estate by a factor of three using a number that came from a real table, which
+is exactly the kind of error that survives review.
+
+This is also the honest reading of the entity-resolution numbers: of the reduction from 9,676 raw
+rows to 5,553 canonical records, only about 196 are genuine entity merges. The rest is relationship
+rows collapsing by origin name. The mechanism is proven; the capability is not yet delivered.
+
+Status: **shipped** as a reported field; entity-resolution coverage itself remains open.
+
+### 6. Status of Slice S5 — and a finding this document does not contain
+
+The roadmap lists **S5: Home/Tower/Moves projection fanout** as a future slice. Current state:
+
+| Product          | Reads canonical? | Detail                                                            |
+| ---------------- | ---------------- | ----------------------------------------------------------------- |
+| **Source**       | Yes              | Pre-existing; the only one that did                               |
+| **Home**         | Yes — shipped    | PR #6462, merged and deployed                                     |
+| **Intelligence** | Yes — shipped    | PR #6464, merged and deploying                                    |
+| **Moves**        | No               | Reads `program_*` operational tables                              |
+| **Tower**        | No               | Reads `consumption.tower_*_v`, fed by its own ten ingest adapters |
+
+The finding this document does not contain, and which is worse than the anti-patterns it does list:
+**Intelligence rendered no client data at all.** `enterprise-landscape-view-model.ts` is 661 lines
+with zero database calls. One tenant received hand-authored sections naming specific platforms and
+carrying specific maturity scores; every other tenant received `buildGenericSections`, which emits
+sentences like _"the section is ready for client-specific evidence"_ — formatted exactly like an
+assessment, under the heading CURRENT STATE ASSESSMENT.
+
+The listed anti-patterns cover a product adapter bypassing Layer 3. This was a surface with no data
+path at all, and it is the more dangerous shape: an empty screen announces itself, while a full one
+whose content came from a file someone wrote is indistinguishable, to a reader, from a client fact.
+
+### 7. Design-only versus running
+
+**This document** states it is design-only and approves no load, routing change, or live claim. That
+is the right posture for a design document and is not a criticism.
+
+It does mean the two documents describe different things, and the difference should be stated
+plainly rather than blurred:
+
+| State               | Meaning                                   | Home / Intelligence      |
+| ------------------- | ----------------------------------------- | ------------------------ |
+| Designed            | Written down and reviewable               | Yes                      |
+| Code proven         | Dry-run passes, typecheck and gates clean | Yes                      |
+| Merged and deployed | Running in the product                    | Yes                      |
+| **Data loaded**     | **The projector has run in write mode**   | **No — pending ACA Job** |
+| Live-proven         | Signed-in surface renders it, captured    | No                       |
+
+Until the projector runs as an ACA Job with write approval, Home shows "not available" and
+Intelligence falls back to the authored view model. **Merged and deployed is not loaded.** The
+distinction is the same one this document already draws for RAG — loaded, indexed, retrievable,
+cited — applied to product projections.
+
 ## Design Goals
 
 | Goal                                 | Requirement                                                                                                                                   |

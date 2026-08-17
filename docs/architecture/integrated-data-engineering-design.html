@@ -148,6 +148,14 @@
       <a class="toc-l1" href="#integrated-data-engineering-design">Integrated Data Engineering Design</a>
 <a class="toc-l2" href="#purpose">Purpose</a>
 <a class="toc-l2" href="#executive-summary">Executive Summary</a>
+<a class="toc-l2" href="#claude-code-design-delta">Claude Code Design Delta</a>
+<a class="toc-l3" href="#1-one-dimension-registry-not-one-mart-contract-per-product">1. One dimension registry, not one mart contract per product</a>
+<a class="toc-l3" href="#2-conflict-is-too-blunt-facts-need-a-basis">2. CONFLICT is too blunt — facts need a basis</a>
+<a class="toc-l3" href="#3-readback-must-happen-before-commit-not-after">3. Readback must happen before commit, not after</a>
+<a class="toc-l3" href="#4-counts-alone-are-not-proof-acceptance-must-require-names">4. Counts alone are not proof — acceptance must require names</a>
+<a class="toc-l3" href="#5-record-count-and-distinct-name-count-are-different-numbers">5. Record count and distinct-name count are different numbers</a>
+<a class="toc-l3" href="#6-status-of-slice-s5-and-a-finding-this-document-does-not-contain">6. Status of Slice S5 — and a finding this document does not contain</a>
+<a class="toc-l3" href="#7-design-only-versus-running">7. Design-only versus running</a>
 <a class="toc-l2" href="#design-goals">Design Goals</a>
 <a class="toc-l2" href="#conceptual-architecture">Conceptual Architecture</a>
 <a class="toc-l2" href="#medallion-crosswalk">Medallion Crosswalk</a>
@@ -183,7 +191,7 @@
     <main>
       <div class="banner"><strong>Review artifact:</strong> generated from <code>docs/architecture/integrated-data-engineering-design.md</code>. Design-only; no data-plane, runtime, registry, graph, or index activation.</div>
       <h1 id="integrated-data-engineering-design">Integrated Data Engineering Design</h1>
-<p>Status: review candidate. This document is design-only. It does not approve a data-plane load, registry activation, product routing change, graph activation, index refresh, or live-client claim.</p>
+<p>Status: review candidate, amended by Claude Code. The sections under <strong>Claude Code Design Delta</strong> describe work that is merged and deployed; the rest of this document remains design-only. It does not approve a data-plane load, registry activation, product routing change, graph activation, index refresh, or live-client claim.</p>
 <h2 id="purpose">Purpose</h2>
 <p>This document defines the target data-engineering design for AbarVa's integrated enterprise data stack. It is meant to be reviewed by engineering agents and humans before more implementation work continues.</p>
 <p>The design has one central rule:</p>
@@ -204,6 +212,64 @@
 <p>serve agent answers.</p>
 </ol>
 <p>The planes are connected by explicit contracts and build manifests. They are not interchangeable. The operational plane cannot repair a weak canonical layer. The RAG plane cannot invent truth when the canonical layer is missing entities or unresolved references. Product-specific read models are allowed, but only as projections from the canonical truth and governed workflow state.</p>
+<h2 id="claude-code-design-delta">Claude Code Design Delta</h2>
+<p>This section reconciles the design above with the design Claude Code has been building and, in two cases, has already shipped. It exists so a reader does not have to hold two documents in their head and guess which one describes reality.</p>
+<p><strong>The two designs agree on the shape.</strong> Four layers, medallion crosswalk, canonical as source of truth, products as projections, deterministic numbers with models explaining rather than calculating. Nothing below disputes that. What differs is the granularity of the product-projection contract, the definition of a conflict, and — most importantly — which parts are written down versus running.</p>
+<h3 id="1-one-dimension-registry-not-one-mart-contract-per-product">1. One dimension registry, not one mart contract per product</h3>
+<p><strong>This document</strong> gives each mart its own grain and drill path: a Source example, a Home example, a Tower example, each declaring <code>projection_name</code>, <code>row_grain</code>, <code>source_domains</code>, and so on.</p>
+<p><strong>Claude Code&#x27;s design</strong> puts a single registry underneath all of them. One list covers all twenty-six canonical object types; each entry declares the attribute that names an instance, the advisory section it answers, and — the load-bearing field — the <code>products[]</code> that consume it. Adding a reader is an entry in a list, not a new pipeline.</p>
+<p>The reason is the failure mode this whole exercise exists to fix. Today there are three parallel supply chains: Source has its adapters, Tower has <code>project-tower-mart.ts</code> plus ten <code>ingest-*.ts</code> adapters feeding <code>consumption.tower_*_v</code> views, and Home had tables with no reader at all. A design where each product declares its own mart contract is one honest step from becoming the fourth.</p>
+<p><strong>These are not exclusive, and the synthesis matters more than either.</strong> The registry is the spine; per-mart grain declarations sit on top of it wherever a genuine drill path is required — Tower spend by cost basis, Source contract portfolio by renewal. But where a product needs counts, named entities, and evidence status (Home, Intelligence), the shared projection <em>is</em> the whole answer, and giving it a bespoke mart would recreate the problem.</p>
+<p>Status: <strong>shipped.</strong> <code>scripts/data-build/refresh-home-landscape.ts</code>, twenty-six dimensions, consumed by Home and Intelligence, with Moves and Tower named as future consumers in the same list.</p>
+<h3 id="2-conflict-is-too-blunt-facts-need-a-basis">2. <code>CONFLICT</code> is too blunt — facts need a basis</h3>
+<p><strong>This document</strong> defines <code>CONFLICT</code> as &quot;sources disagree → do not quote; surface decision needed.&quot;</p>
+<p>That rule discards the most useful thing the data can say. A client workbook declares annual spend of $44M; metered cloud cost reports $51M. Neither is wrong — one is a budget, the other is consumption, and the 16% gap is the finding. Under the rule as written, the metric is marked <code>CONFLICT</code> and never quoted.</p>
+<p><strong>Claude Code&#x27;s amendment:</strong> every canonical fact carries <code>basis</code> — <code>declared</code>, <code>observed</code>, or <code>derived</code>. <code>CONFLICT</code> then means <em>two sources of the same basis disagree</em>, which is a real problem. Two different bases differing is <code>VARIANCE</code>, and it is the answer rather than the error.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Status</th><th>Amended meaning</th></tr></thead><tbody>
+<tr><td><code>AGREE</code></td><td>Multiple sources, same basis, same value</td></tr>
+<tr><td><code>ONE_SOURCE</code></td><td>One source asserts the value</td></tr>
+<tr><td><code>CONFLICT</code></td><td>Same basis, sources disagree — do not quote</td></tr>
+<tr><td><code>VARIANCE</code></td><td>Different bases differ — quote both, and quote the gap</td></tr>
+<tr><td><code>ABSENT</code></td><td>No source asserts the value — show the gap, do not invent</td></tr>
+</tbody></table></div>
+<p>Status: <strong>shipped.</strong> <code>FactBasis</code> on <code>SourceAuthority</code>, gate <code>validate:fact-basis</code>, 5,553 canonical records all currently <code>declared</code>. Nothing carries two bases yet because the ten telemetry collectors still write to <code>public.tower_*</code> rather than canonical; the gate reports that honestly rather than implying the capability is exercised.</p>
+<h3 id="3-readback-must-happen-before-commit-not-after">3. Readback must happen before commit, not after</h3>
+<p><strong>This document</strong> requires <code>readback_assertion</code>: &quot;persisted equals readback, filtered by build.&quot;</p>
+<p><strong>Amendment:</strong> the readback belongs <em>inside the writing transaction, before commit</em>. A readback after commit detects a bad write. It does not prevent one, and by the time it fires the half-written pack is already the newest pack a product will read.</p>
+<p>Status: <strong>shipped</strong> in the landscape projector — a count mismatch throws, the transaction rolls back, and the previous build stays newest.</p>
+<h3 id="4-counts-alone-are-not-proof-acceptance-must-require-names">4. Counts alone are not proof — acceptance must require names</h3>
+<p>The first run of the landscape projector returned <strong>every count correctly and every name empty</strong>. Canonical attributes are <code>CanonicalValue</code> wrappers, so reading <code>attributes[key]</code> yields an object rather than a string, and name extraction silently produced nothing.</p>
+<p>A proof bundle asserting record counts would have passed. The surface would have rendered a fully populated landscape with no content in it.</p>
+<p><strong>Amendment to Proof and Acceptance Criteria:</strong> add a required question — <em>do the counts carry names?</em> — answered by sample entities per dimension. <code>804 applications</code> is an inventory total; <code>804 applications, including Epic Hyperspace and Kronos</code> is a landscape, and only the second can be checked by a human who knows the client.</p>
+<h3 id="5-record-count-and-distinct-name-count-are-different-numbers">5. Record count and distinct-name count are different numbers</h3>
+<p><strong>Amendment:</strong> every projection reports both. On relationship-derived dimensions they differ by nearly threefold — 825 relationship rows naming roughly 300 distinct systems. Publishing 825 as &quot;systems&quot; inflates the estate by a factor of three using a number that came from a real table, which is exactly the kind of error that survives review.</p>
+<p>This is also the honest reading of the entity-resolution numbers: of the reduction from 9,676 raw rows to 5,553 canonical records, only about 196 are genuine entity merges. The rest is relationship rows collapsing by origin name. The mechanism is proven; the capability is not yet delivered.</p>
+<p>Status: <strong>shipped</strong> as a reported field; entity-resolution coverage itself remains open.</p>
+<h3 id="6-status-of-slice-s5-and-a-finding-this-document-does-not-contain">6. Status of Slice S5 — and a finding this document does not contain</h3>
+<p>The roadmap lists <strong>S5: Home/Tower/Moves projection fanout</strong> as a future slice. Current state:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Product</th><th>Reads canonical?</th><th>Detail</th></tr></thead><tbody>
+<tr><td><strong>Source</strong></td><td>Yes</td><td>Pre-existing; the only one that did</td></tr>
+<tr><td><strong>Home</strong></td><td>Yes — shipped</td><td>PR #6462, merged and deployed</td></tr>
+<tr><td><strong>Intelligence</strong></td><td>Yes — shipped</td><td>PR #6464, merged and deploying</td></tr>
+<tr><td><strong>Moves</strong></td><td>No</td><td>Reads <code>program_*</code> operational tables</td></tr>
+<tr><td><strong>Tower</strong></td><td>No</td><td>Reads <code>consumption.tower_*_v</code>, fed by its own ten ingest adapters</td></tr>
+</tbody></table></div>
+<p>The finding this document does not contain, and which is worse than the anti-patterns it does list: <strong>Intelligence rendered no client data at all.</strong> <code>enterprise-landscape-view-model.ts</code> is 661 lines with zero database calls. One tenant received hand-authored sections naming specific platforms and carrying specific maturity scores; every other tenant received <code>buildGenericSections</code>, which emits sentences like <em>&quot;the section is ready for client-specific evidence&quot;</em> — formatted exactly like an assessment, under the heading CURRENT STATE ASSESSMENT.</p>
+<p>The listed anti-patterns cover a product adapter bypassing Layer 3. This was a surface with no data path at all, and it is the more dangerous shape: an empty screen announces itself, while a full one whose content came from a file someone wrote is indistinguishable, to a reader, from a client fact.</p>
+<h3 id="7-design-only-versus-running">7. Design-only versus running</h3>
+<p><strong>This document</strong> states it is design-only and approves no load, routing change, or live claim. That is the right posture for a design document and is not a criticism.</p>
+<p>It does mean the two documents describe different things, and the difference should be stated plainly rather than blurred:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>State</th><th>Meaning</th><th>Home / Intelligence</th></tr></thead><tbody>
+<tr><td>Designed</td><td>Written down and reviewable</td><td>Yes</td></tr>
+<tr><td>Code proven</td><td>Dry-run passes, typecheck and gates clean</td><td>Yes</td></tr>
+<tr><td>Merged and deployed</td><td>Running in the product</td><td>Yes</td></tr>
+<tr><td><strong>Data loaded</strong></td><td><strong>The projector has run in write mode</strong></td><td><strong>No — pending ACA Job</strong></td></tr>
+<tr><td>Live-proven</td><td>Signed-in surface renders it, captured</td><td>No</td></tr>
+</tbody></table></div>
+<p>Until the projector runs as an ACA Job with write approval, Home shows &quot;not available&quot; and Intelligence falls back to the authored view model. <strong>Merged and deployed is not loaded.</strong> The distinction is the same one this document already draws for RAG — loaded, indexed, retrievable, cited — applied to product projections.</p>
 <h2 id="design-goals">Design Goals</h2>
 <div class="table-wrap"><table>
 <thead><tr><th>Goal</th><th>Requirement</th></tr></thead>
