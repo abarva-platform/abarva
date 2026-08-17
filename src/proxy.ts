@@ -119,6 +119,24 @@ export const PUBLIC_ROUTE_PATTERNS = [
 ] as const;
 
 const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
+
+/**
+ * Should a non-public request be answered with a JSON 401 instead of Clerk's
+ * HTML sign-in redirect?
+ *
+ * Only for `/api/*`, and only when there is no session. A redirect is correct
+ * for a page — a human should land on sign-in. It is wrong for an API call:
+ * the redirect reaches `fetch()` as an opaque cross-document navigation, so the
+ * caller sees `TypeError: Failed to fetch` and an expired session is
+ * indistinguishable from a network fault.
+ */
+export function shouldAnswerUnauthenticatedApiWithJson(
+  pathname: string,
+  userId: string | null | undefined,
+): boolean {
+  return !userId && pathname.startsWith("/api/");
+}
+
 const isTokenGuardedPublicOpsRoute = createRouteMatcher([
   "/api/admin/parallel-run-invariants",
 ]);
@@ -824,6 +842,31 @@ const clerkProtectedProxy = clerkMiddleware(
     }
 
     if (!isPublicRoute(request) && !privateProofSession) {
+      // An unauthenticated API call must fail as JSON 401, not as an HTML
+      // sign-in redirect. `auth.protect()` redirects, and a redirect to a
+      // different document reaches `fetch()` as an opaque navigation — the
+      // caller sees `TypeError: Failed to fetch`, so an expired session is
+      // indistinguishable from the network being down. Live-found: every
+      // authenticated probe against a signed-out session failed that way, with
+      // nothing in the response saying "you are signed out".
+      //
+      // This is also why several endpoints were previously moved into the
+      // public list purely to "avoid Clerk HTML redirects" (see
+      // /api/health/azure-connectivity, /api/health/postgres-disruption,
+      // /api/admin/parallel-run-invariants). Making a route public to fix an
+      // error *format* trades away its auth gate; returning a correct 401
+      // removes that pressure. Page routes still redirect, which is right —
+      // a human hitting a page should land on sign-in.
+      if (shouldAnswerUnauthenticatedApiWithJson(request.nextUrl.pathname, userId)) {
+        return NextResponse.json(
+          {
+            error: "unauthenticated",
+            detail:
+              "This endpoint requires a signed-in session. The session is missing or expired.",
+          },
+          { status: 401, headers: { "cache-control": "no-store" } },
+        );
+      }
       await auth.protect();
     }
 
