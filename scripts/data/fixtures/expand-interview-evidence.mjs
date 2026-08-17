@@ -42,7 +42,14 @@ const ACTIVE = path.join(ROOT, "datasets/tenant-inputs/active");
 const TENANTS = ["skyharbor-air", "meridian-health"];
 
 const QUESTIONS_PER_LEADER = [20, 25];
-const TARGET_LEADERS = 14;
+/**
+ * Everyone at CXO, SVP or VP level gets an interview.
+ *
+ * Not a sample — the roster. A discovery that interviews four executives produces four opinions; one
+ * that interviews every function and IT leader produces a map, and the disagreements between them are
+ * the part worth having.
+ */
+const LEADER_PATTERN = /^(chief|ceo|cfo|cio|coo|cto|president|evp|svp|vp )/i;
 
 /**
  * The question bank.
@@ -107,8 +114,81 @@ const BANK = [
  * Each returns the substance of an answer plus the theme it belongs to, so corroboration can be
  * counted on what was actually said rather than on wording.
  */
+/**
+ * Theme prevalence.
+ *
+ * Sampling answers uniformly gave every theme roughly the same number of voices, so with twenty-six
+ * leaders everything came back `corroborated_multi_source` — the third flat-distribution error in
+ * this work, after the vendor book and the application lifecycle. A corpus where every theme is
+ * equally corroborated discriminates nothing, which is the same outcome as no corroboration field at
+ * all.
+ *
+ * Real discovery is uneven. Two or three problems are named by almost everyone, a middle band by a
+ * handful, and a long tail by exactly one person who happens to own that corner. The tail is often
+ * the most valuable part: a single credible voice raising something nobody else sees is a lead, and
+ * it is invisible in a corpus that has been smoothed.
+ *
+ * Weights are relative selection likelihood, not counts.
+ */
+/**
+ * Themes only the owner of that corner can raise.
+ *
+ * Weighting alone did not produce a tail: with five hundred answers across thirty-two themes, even a
+ * one-in-a-hundred theme lands six times, across six different leaders, and comes back corroborated.
+ *
+ * The realistic model is not rarity, it is *standing*. The oldest unresolved audit finding is known
+ * to the security lead and nobody else. Renewal leverage is known to procurement. A single credible
+ * voice raising something no peer can see is the most valuable row in a discovery, and it exists
+ * because of who they are, not because of a dice roll.
+ */
+const THEME_OWNERS = {
+  stale_finding: /security|risk|compliance|audit|ciso/i,
+  regulatory_exposure: /risk|compliance|legal|quality|clinical|ciso/i,
+  renewal_leverage: /procurement|vendor|commercial|finance|cfo/i,
+  shelfware: /procurement|vendor|finance|enterprise applications|cfo/i,
+  run_change_ratio: /cio|cto|infrastructure|operations|engineering/i,
+  ai_governance: /cio|cto|risk|security|clinical|safety|ciso/i,
+  attribution: /finance|cfo|portfolio|transformation/i,
+  finance_evidence: /finance|cfo|portfolio/i,
+  duplicate_effort: /cio|cto|architect|portfolio|pmo/i,
+  stop_candidate: /cio|cfo|coo|president|chief/i,
+  priority_divergence: /chief|president|evp|svp/i,
+  escalation_fatigue: /vp |director/i,
+};
+
+const THEME_PREVALENCE = {
+  manual_effort: 9, value_realisation: 8, data_trust: 7, capability_gap: 6,
+  integration_debt: 5, governance_friction: 5, vendor_dependency: 4, data_latency: 4,
+  estate_fragmentation: 4, key_person_risk: 3, shelfware: 3, throughput_constraint: 3,
+  legacy_gravity: 3, ai_pilot_stall: 3, decision_latency: 2, accepted_risk: 2,
+  investment_priority: 2, run_change_ratio: 2, date_confidence: 2, attribution: 2,
+  duplicate_effort: 1, stop_candidate: 1, unheard_risk: 1, visibility_gap: 1,
+  regulatory_exposure: 1, stale_finding: 1, escalation_fatigue: 1, renewal_leverage: 1,
+  ai_governance: 1, priority_divergence: 1, success_definition: 1, finance_evidence: 1,
+};
+
 function answerFor(track, ctx, r) {
-  const pick = (xs) => xs[Math.floor(r() * xs.length)];
+  // Weighted pick: a theme's prevalence decides how likely it is to be the answer, so common
+  // problems accumulate many voices and rare ones stay rare.
+  const pick = (xs) => {
+    if (!xs.length) return xs[0];
+    // An owner-gated theme is unavailable to anyone else, which is what creates the long tail.
+    const eligible = xs.filter((x) => {
+      const owner = THEME_OWNERS[x?.theme];
+      return !owner || owner.test(ctx.role ?? "");
+    });
+    const pool = eligible.length ? eligible : xs.filter((x) => !THEME_OWNERS[x?.theme]);
+    if (!pool.length) return xs[0];
+    xs = pool;
+    const weights = xs.map((x) => THEME_PREVALENCE[x?.theme] ?? 2);
+    const total = weights.reduce((a, b) => a + b, 0);
+    let roll = r() * total;
+    for (let i = 0; i < xs.length; i += 1) {
+      roll -= weights[i];
+      if (roll <= 0) return xs[i];
+    }
+    return xs[xs.length - 1];
+  };
   switch (track) {
     case "current_state":
       return pick([
@@ -240,10 +320,15 @@ for (const tenantKey of TENANTS) {
   // Leaders drawn from the org sheet, preferring the most senior — these are the people whose view
   // of priorities is worth twenty-five questions.
   const leaders = [...new Map(
-    org.filter((o) => o.leader_name_or_role)
-      .sort((a, b) => (/chief|ceo|cfo|cio|cto|coo/i.test(b.role_level ?? "") ? 1 : 0) - (/chief|ceo|cfo|cio|cto|coo/i.test(a.role_level ?? "") ? 1 : 0))
+    org.filter((o) => LEADER_PATTERN.test(o.leader_name_or_role ?? ""))
+      // Most senior first, so the CXO slate is generated before the VP slate and reads that way.
+      .sort((a, b) => {
+        const rank = (x) => (/^(chief|ceo|cfo|cio|coo|cto|president)/i.test(x.leader_name_or_role) ? 0
+          : /^(evp|svp)/i.test(x.leader_name_or_role) ? 1 : 2);
+        return rank(a) - rank(b);
+      })
       .map((o) => [o.leader_name_or_role, o]),
-  ).values()].slice(0, TARGET_LEADERS);
+  ).values()];
 
   const rows = [];
   let seq = 0;
@@ -260,6 +345,7 @@ for (const tenantKey of TENANTS) {
 
     for (const [track, question] of slate) {
       const ctx = {
+        role,
         app: pick(apps)?.system_name ?? "the core platform",
         fn: (leader.owned_functions ?? "").split(/[;,]/)[0]?.trim() || pick(fns)?.function_name || "the function",
         vendor: pick(vendors)?.vendor_name ?? "the supplier",
