@@ -45,8 +45,22 @@ const STANDARD = {
   minApplications: 180,
   minPrograms: 35,
   minInfrastructure: 40,
-  /** Vendor contracts per $10B of revenue. */
-  minVendorsPer10B: 25,
+  /**
+   * Vendor coverage and value, not a raw contract count.
+   *
+   * This began as "contracts per $10B of revenue" and demanded ~204 for the airline against 65 held.
+   * Checking the estate first showed why that was wrong: every vendor named in the applications
+   * inventory already had a contract. Meeting the threshold would have meant inventing 140 suppliers
+   * that appear nowhere in the estate, breaking the register-to-estate consistency that is one of
+   * the fixture's genuine strengths — a metric driving fabrication rather than fidelity, for the
+   * third time in this gate's history.
+   *
+   * The real defect was value. A $778M vendor book against a $3.4B technology budget is 23%, where
+   * third-party spend is typically 50–70% of IT. Coverage was fine; the money was not.
+   */
+  minVendorEstateCoverage: 0.95,
+  minVendorShareOfItBudget: 0.45,
+  maxVendorShareOfItBudget: 0.8,
   /** The largest contract should be at least this share of the vendor book. */
   minTopContractShare: 0.08,
   /** No column on the vendor register may be emptier than this. */
@@ -200,9 +214,31 @@ for (const tenantKey of tenants) {
   let topShare = null;
   let vendorTotal = 0;
   if (vendors.length) {
-    const expected = Math.round((revenue / 10e9) * STANDARD.minVendorsPer10B);
-    if (revenue > 0 && vendors.length < expected) {
-      add("VENDOR_DEPTH", `${vendors.length} vendor contracts for ${usd(revenue)} of revenue; a credible book at this scale is nearer ${expected}.`);
+    // Does every supplier the estate names actually have a contract?
+    const estateVendors = new Set(
+      apps.map((a) => (a.vendor ?? "").trim()).filter((v) => v && !/^internal |^oem /i.test(v)),
+    );
+    const contracted = new Set(vendors.map((v) => (v.vendor_name ?? "").trim()).filter(Boolean));
+    const uncovered = [...estateVendors].filter((v) => !contracted.has(v));
+    const coverage = estateVendors.size ? 1 - uncovered.length / estateVendors.size : 1;
+    if (estateVendors.size && coverage < STANDARD.minVendorEstateCoverage) {
+      add("VENDOR_COVERAGE",
+        `${uncovered.length} of ${estateVendors.size} suppliers named in the application estate have no contract ` +
+        `(${uncovered.slice(0, 4).join(", ")}). A system with a vendor and no contract cannot be sourced.`);
+    }
+
+    // Is the vendor book a credible share of the technology budget?
+    const spendRows = read("08_spend_value.csv");
+    const itBudget = spendRows.reduce((sum, r) => sum + num(r.annual_spend_usd), 0);
+    if (itBudget > 0) {
+      const bookTotal = vendors.reduce((sum, v) => sum + num(v.annual_spend_usd), 0);
+      const share = bookTotal / itBudget;
+      if (share < STANDARD.minVendorShareOfItBudget || share > STANDARD.maxVendorShareOfItBudget) {
+        add("VENDOR_VALUE",
+          `Vendor book is ${usd(bookTotal)} against an ${usd(itBudget)} technology budget — ${(share * 100).toFixed(0)}%, ` +
+          `outside the ${STANDARD.minVendorShareOfItBudget * 100}–${STANDARD.maxVendorShareOfItBudget * 100}% band ` +
+          `third-party spend normally occupies. Either the contracts or the budget is wrong.`);
+      }
     }
     const values = vendors.map((v) => num(v.annual_spend_usd)).sort((a, b) => b - a);
     vendorTotal = values.reduce((a, b) => a + b, 0);

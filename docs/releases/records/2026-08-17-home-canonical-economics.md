@@ -261,3 +261,53 @@ Two further defects from the same review, also fixed:
 gate", which was true, and used that to imply the model was sound, which was not. A gate that checks
 a total cannot detect a distribution that ignores the model producing it. The check and the claim
 were measuring different things, and I did not notice because both came out green.
+
+## Addendum — the vendor book, and a threshold that would have made things worse
+
+The airline's vendor book was $778M against a $3.42B technology budget — **23%**, where third-party
+spend is normally 50–70% of IT — with a flat ceiling: four contracts within $21M of each other at the
+top, the largest only 8.0% of the book. A portfolio shaped like that has no concentration to find, so
+it cannot demonstrate renewal leverage, concentration risk, or a savings case.
+
+**The obvious reading was wrong.** The gate said 65 contracts for an $81B carrier against an expected
+~204, so this looked like a count problem. Checking the estate first showed it was not: **every
+supplier named in the application inventory already had a contract.** Meeting that count would have
+meant inventing 140 vendors appearing nowhere in the estate — breaking the register-to-estate
+consistency that is one of this fixture's real strengths.
+
+That is the **third** threshold in this gate that would have driven fabrication rather than fidelity,
+after document coverage and documents-per-contract. The pattern is consistent enough to name: a
+metric chosen because it is easy to compute, rather than because it describes the property that
+matters, does not fail safe — it produces confident, specific, wrong work.
+
+The count check is replaced by two that describe the actual properties:
+
+- **`VENDOR_COVERAGE`** — does every supplier the estate names have a contract? A system with a vendor
+  and no contract cannot be sourced.
+- **`VENDOR_VALUE`** — is the book a credible share of the technology budget?
+
+### The rescale
+
+Values only; **no rows added**. A supplier's share is driven by how much of the estate it actually
+supplies — applications naming it, weighted by criticality — blended with existing value, which
+carries real commercial information an outsourced managed-service contract would otherwise lose.
+
+| | Before | After |
+| --- | --- | --- |
+| Airline book | $778M (22.8% of IT) | **$2,045M (59.8%)** |
+| Largest contract | 8.0% of book | **13.9%** |
+| Top ten | 52.8% | 57.7% |
+| Health system | 51.7% — **left untouched** | unchanged |
+
+Two guards, both from getting it wrong first:
+
+- **A tenant already inside the 45–80% band is skipped.** The health system was at 51.7%; churning a
+  passing number is not a fix.
+- **No single contract may exceed 14% of the book.** Uncapped, the estate's tier-1 attribution put the
+  airline's most pervasive supplier at $360M — roughly a quarter of that vendor's entire global
+  revenue from one customer. Estate footprint is a good signal of importance and a poor one of
+  billing scale. What the cap removes is redistributed below it, so the book still totals the target
+  rather than quietly shrinking to satisfy the ceiling.
+
+The contract document packets were regenerated against the new register and still reconcile
+**784/784** — every figure in every document traces to its source row.
