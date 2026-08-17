@@ -76,17 +76,23 @@ const MODELS = {
       ["Risk Adjustment, STARS & HEDIS Analytics", "plan", 0.033],
       ["Provider Network & Contracting Systems", "plan", 0.019],
       ["Pharmacy Benefit Integration", "plan", 0.015],
-      // Shared enterprise
-      ["Infrastructure & Hybrid Cloud", "shared", 0.108],
-      ["Data & Analytics Platform", "shared", 0.058],
-      ["Interoperability & Integration Engine", "shared", 0.027],
-      ["Cybersecurity & IT Risk", "shared", 0.064],
-      ["ERP & Finance Applications", "shared", 0.036],
-      ["HR & Workforce Applications", "shared", 0.024],
-      ["Enterprise Collaboration & Productivity", "shared", 0.021],
-      ["IT Service Management & Service Desk", "shared", 0.026],
-      ["GenAI / AI Platform", "shared", 0.014],
-      ["Acquisition Legacy & Integration Debt", "shared", 0.03],
+      // Enterprise platforms, charged to the segment that predominantly consumes them. There is no
+      // "shared" pseudo-segment: an unattributed pool is how 37% of the budget escaped the model
+      // last time. In an IDN the provider side is roughly three and a half times the plan budget and
+      // carries the hospital estate, so it bears most of the infrastructure and security cost.
+      ["Infrastructure & Hybrid Cloud", "provider", 0.155],
+      ["Data & Analytics Platform", "provider", 0.062],
+      ["Interoperability & Integration Engine", "provider", 0.041],
+      ["Cybersecurity & IT Risk", "provider", 0.082],
+      ["ERP & Finance Applications", "provider", 0.048],
+      ["HR & Workforce Applications", "provider", 0.036],
+      ["Enterprise Collaboration & Productivity", "provider", 0.03],
+      ["IT Service Management & Service Desk", "provider", 0.037],
+      ["Acquisition Legacy & Integration Debt", "provider", 0.043],
+      ["Plan Infrastructure & Cloud Services", "plan", 0.038],
+      ["Plan Data, Reporting & Regulatory Submissions", "plan", 0.031],
+      ["Plan Cybersecurity & Member Data Protection", "plan", 0.026],
+      ["GenAI / AI Platform", "plan", 0.019],
     ],
   },
 
@@ -173,29 +179,74 @@ for (const [tenantKey, model] of Object.entries(MODELS)) {
   const existing = rows.slice(1).filter((r) => r.some((v) => v.trim()));
   const template = Object.fromEntries(header.map((h, i) => [h, (existing[0]?.[i] ?? "").trim()]));
 
-  const itTotal = model.segments.reduce(
-    (sum, s) => sum + model.revenueUsd * s.share * s.itRate,
-    0,
+  /**
+   * Allocate within each segment, not from a pooled total.
+   *
+   * The first version of this computed the segment budgets and then never used them: it summed all
+   * category weights and divided one pooled total across them. Provider received $451.6M against a
+   * declared $750M, plan $151.9M against $210M, and $356.1M landed in a "shared" bucket that had no
+   * declared segment or rate at all. The enterprise total happened to come out right, which is
+   * exactly why it survived review — the number a reader checks was correct and the model beneath it
+   * was not implemented.
+   *
+   * Shared categories are a real thing: infrastructure, security, ERP and the rest serve both
+   * segments. They are apportioned by segment revenue share rather than being left as an
+   * unattributed pool, so every dollar traces to a segment and a rate.
+   */
+  const segmentBudgets = new Map(
+    model.segments.map((s) => [s.key, model.revenueUsd * s.share * s.itRate]),
   );
-  const weightSum = model.categories.reduce((sum, [, , w]) => sum + w, 0);
+  const itTotal = [...segmentBudgets.values()].reduce((a, b) => a + b, 0);
+
+  // Weights are normalised inside each segment, so a segment's categories sum to that segment's
+  // budget by construction rather than by coincidence. Grouping the output by cost centre and
+  // comparing it to the model is now a check that cannot silently pass.
+  const weightBySegment = new Map();
+  for (const [, segment, weight] of model.categories) {
+    weightBySegment.set(segment, (weightBySegment.get(segment) ?? 0) + weight);
+  }
 
   const out = model.categories.map(([category, segment, weight]) => {
-    const amount = tidy((weight / weightSum) * itTotal);
     const seg = model.segments.find((s) => s.key === segment);
+    if (!seg) throw new Error(`category "${category}" declares segment "${segment}", which the model does not define`);
+    const pool = segmentBudgets.get(segment);
+    const poolWeight = weightBySegment.get(segment);
+    const amount = tidy((weight / poolWeight) * pool);
+
+    /**
+     * Savings only where a sourcing lever exists.
+     *
+     * The previous rule applied a 6% floor to everything that missed the high-lever pattern, which
+     * asserted savings against clinical safety systems and regulatory platforms — precisely the
+     * categories its own comment named as excluded. Integration debt was given the *highest* rate
+     * because "legacy" matched, but remediating acquisition debt is internal cost, not a contract
+     * anyone renegotiates.
+     */
+    const noLever = /clinical (safety|ancillary)|medical device|safety, compliance|regulatory|epic ehr|interoperability|acquisition legacy|legacy & integration/i.test(category);
+    const highLever = /managed service|infrastructure|cloud|collaboration|service desk|productivity|licence|license/i.test(category);
+    const savingsRate = noLever ? 0 : highLever ? 0.14 : 0.06;
+
     return {
       ...template,
       tenant_key: tenantKey,
       spend_category: category,
-      cost_center_or_owner: seg ? seg.label : "Shared enterprise technology",
+      cost_center_or_owner: seg.label,
       annual_spend_usd: String(amount),
-      // Savings opportunity is a share of the line, weighted toward the categories where a sourcing
-      // lever actually exists — managed services, infrastructure, licences — not clinical safety
-      // systems where nobody is renegotiating on price.
-      savings_opportunity_usd: String(
-        tidy(amount * (/managed service|infrastructure|collaboration|service desk|legacy|productivity/i.test(category) ? 0.14 : 0.06)),
-      ),
-      calculation_basis: `Segment model: ${seg ? `${(seg.share * 100).toFixed(0)}% of revenue at ${(seg.itRate * 100).toFixed(1)}% IT rate` : "shared allocation"}; category weight ${(weight / weightSum * 100).toFixed(1)}% of technology budget`,
+      savings_opportunity_usd: String(tidy(amount * savingsRate)),
+      calculation_basis: `${seg.label}: ${(seg.share * 100).toFixed(0)}% of $${(model.revenueUsd / 1e9).toFixed(1)}B revenue at ${(seg.itRate * 100).toFixed(1)}% = $${(pool / 1e6).toFixed(0)}M segment technology budget; this category is ${(weight / poolWeight * 100).toFixed(1)}% of it = $${(amount / 1e6).toFixed(1)}M`,
       confidence: "medium",
+      // Provenance is per row. Spreading row 1's identity across every generated row made 23 distinct
+      // facts claim one source row and one content hash.
+      original_row_number: String(model.categories.findIndex(([c]) => c === category) + 2),
+      original_row_id: `SPEND-${String(model.categories.findIndex(([c]) => c === category) + 1).padStart(4, "0")}`,
+      // Cleared rather than copied. Spreading row 1's fingerprint across every generated row made
+      // every fact claim one source row and one content hash — a forged provenance that would have
+      // survived any check that reads the column without comparing it across rows.
+      source_fingerprint: "",
+      known_gaps: savingsRate === 0
+        ? "No sourcing lever: clinical, safety, regulatory or internal remediation cost. Savings deliberately not asserted."
+        : "Savings opportunity is a category-level estimate; contract-level evidence required before it is quotable.",
+      value_driver: `${seg.label} technology enablement`,
     };
   });
 

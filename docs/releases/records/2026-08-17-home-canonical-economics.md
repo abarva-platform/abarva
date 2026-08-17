@@ -216,3 +216,48 @@ demanding their removal — judging them by word count judges them against a pur
 **Three counting errors in one check, each caught only by asking what the number was for.** Coverage
 instead of depth, documents instead of words, filename convention instead of content. None would have
 failed a test of the gate's code.
+
+## Correction — the segment model was not implemented
+
+An adversarial review of this work found that the rescale's central claim was false in the code.
+
+`rescale-spend-fixtures.mjs` computed each segment's budget and then **never used it**. It summed
+every category weight and divided one pooled total across them. The result:
+
+| Segment | Model declared | CSV actually contained | Delta |
+| --- | --- | --- | --- |
+| Provider | $750.0M | $451.6M | −39.8% |
+| Plan | $210.0M | $151.9M | −27.7% |
+| "Shared" — no declared segment, no rate | — | $356.1M | 37.1% of the budget |
+
+The enterprise total was correct, which is exactly why it survived: **the number a reader checks was
+right and the model beneath it was not implemented.** Worse, every row carried a `calculation_basis`
+string asserting a derivation that did not reproduce its own figure — provenance that lies is worse
+than provenance that is absent, because it invites the check it fails.
+
+Three fixes:
+
+- **Weights normalise inside each segment**, so a segment's categories sum to its budget by
+  construction. Provider now lands at $750.7M and plan at $210.1M against declared $750M/$210M —
+  0.09% and 0.05%, entirely rounding.
+- **The "shared" pseudo-segment is gone.** Enterprise platforms are charged to the segment that
+  predominantly consumes them, with plan-side infrastructure, data and security as their own lines.
+  An unattributed pool is how 37% of the budget escaped the model.
+- **`calculation_basis` states the arithmetic that produces the row**, and a category naming a
+  segment the model does not define now throws rather than silently falling through.
+
+Two further defects from the same review, also fixed:
+
+- **Row provenance was forged.** The generator spread row 1's `original_row_id`, `original_row_number`
+  and `source_fingerprint` across every generated row, so 23 distinct facts claimed one source row and
+  one content hash. Ids are now per row and the inherited fingerprint is cleared rather than copied.
+- **The savings rule contradicted its own comment.** It claimed to exclude clinical safety systems and
+  applied a 6% floor to everything instead, asserting savings against Epic EHR, medical device
+  integration, and safety/regulatory systems — while giving integration debt the *highest* rate
+  because "legacy" matched, though remediating acquisition debt is internal cost nobody renegotiates.
+  There is now a genuine zero-lever bucket: 6 categories for the health system, 2 for the airline.
+
+**What this says about the first release note.** It reported "both now pass the spend plausibility
+gate", which was true, and used that to imply the model was sound, which was not. A gate that checks
+a total cannot detect a distribution that ignores the model producing it. The check and the claim
+were measuring different things, and I did not notice because both came out green.

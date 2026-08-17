@@ -1,0 +1,288 @@
+[
+  {
+    "metric": "it_budget_usd",
+    "label": "IT budget (FY26)",
+    "tenant": "meridian-health",
+    "mode": "migration-audit",
+    "status": "ABSENT",
+    "claims": [
+      {
+        "tree": "std",
+        "rel": "family-4-financial-commercial/F12_it-budget-financials.csv",
+        "col": "budget_fy26_usd",
+        "value": null,
+        "note": "column present, no values"
+      }
+    ],
+    "asserted": []
+  },
+  {
+    "metric": "it_budget_usd",
+    "label": "IT budget (FY26)",
+    "tenant": "skyharbor-air",
+    "mode": "migration-audit",
+    "status": "ONE_SOURCE",
+    "claims": [
+      {
+        "tree": "std",
+        "rel": "family-4-financial-commercial/F12_it-budget-financials.csv",
+        "col": "budget_fy26_usd",
+        "value": 2578000000
+      }
+    ],
+    "asserted": [
+      {
+        "tree": "std",
+        "rel": "family-4-financial-commercial/F12_it-budget-financials.csv",
+        "col": "budget_fy26_usd",
+        "value": 2578000000
+      }
+    ]
+  },
+  {
+    "metric": "ai_tagged_budget_usd",
+    "label": "AI-tagged budget",
+    "tenant": "meridian-health",
+    "mode": "migration-audit",
+    "status": "ABSENT",
+    "claims": [
+      {
+        "tree": "std",
+        "rel": "family-4-financial-commercial/F12_it-budget-financials.csv",
+        "col": "ai_data_budget_fy26_usd",
+        "value": null,
+        "note": "column present, no values"
+      }
+    ],
+    "asserted": []
+  },
+  {
+    "metric": "ai_tagged_budget_usd",
+    "label": "AI-tagged budget",
+    "tenant": "skyharbor-air",
+    "mode": "migration-audit",
+    "status": "ABSENT",
+    "claims": [
+      {
+        "tree": "std",
+        "rel": "family-4-financial-commercial/F12_it-budget-financials.csv",
+        "col": "ai_data_budget_fy26_usd",
+        "value": null,
+        "note": "column present, no values"
+      }
+    ],
+    "asserted": []
+  },
+  {
+    "metric": "ai_initiative_funding_usd",
+    "label": "AI initiative funding",
+    "tenant": "meridian-health",
+    "mode": "migration-audit",
+    "status": "ABSENT",
+    "claims": [
+      {
+        "tree": "std",
+        "rel": "ai-control-tower/T08_spend-contracts.csv",
+        "col": "budget_fy26_usd",
+        "value": null,
+        "note": "column present, no values"
+      }
+    ],
+    "asserted": []
+  },
+  {
+    "metric": "ai_initiative_funding_usd",
+    "label": "AI initiative funding",
+    "tenant": "skyharbor-air",
+    "mode": "migration-audit",
+    "status": "ONE_SOURCE",
+    "claims": [
+      {
+        "tree": "std",
+        "rel": "ai-control-tower/T08_spend-contracts.csv",
+        "col": "budget_fy26_usd",
+        "value": 1031250000
+      }
+    ],
+    "asserted": [
+      {
+        "tree": "std",
+        "rel": "ai-control-tower/T08_spend-contracts.csv",
+        "col": "budget_fy26_usd",
+        "value": 1031250000
+      }
+    ]
+  },
+  {
+    "metric": "promised_value_usd",
+    "label": "Promised benefit",
+    "tenant": "meridian-health",
+    "mode": "migration-audit",
+    "status": "CONFLICT",
+    "claims": [
+      {
+        "tree": "std",
+        "rel": "ai-control-tower/T07_benefit-realization.csv",
+        "col": "promised_benefit_usd",
+        "value": 742000000
+      },
+      {
+        "tree": "std",
+        "rel": "ai-control-tower/T00_ai-investment-super-template.csv",
+        "col": "promised_benefit_usd",
+        "value": 742000000
+      },
+      {
+        "tree": "active",
+        "rel": "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+        "col": "promised_value_usd",
+        "value": 63766000
+      }
+    ],
+    "asserted": [
+      {
+        "tree": "std",
+        "rel": "ai-control-tower/T07_benefit-realization.csv",
+        "col": "promised_benefit_usd",
+        "value": 742000000
+      },
+      {
+        "tree": "std",
+        "rel": "ai-control-tower/T00_ai-investment-super-template.csv",
+        "col": "promised_benefit_usd",
+        "value": 742000000
+      },
+      {
+        "tree": "active",
+        "rel": "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+        "col": "promised_value_usd",
+        "value": 63766000
+      }
+    ]
+  },
+  {
+    "metric": "promised_value_usd",
+    "label": "Promised benefit",
+    "tenant": "skyharbor-air",
+    "mode": "migration-audit",
+    "status": "CONFLICT",
+    "claims": [
+      {
+        "tree": "std",
+        "rel": "ai-control-tower/T07_benefit-realization.csv",
+        "col": "promised_benefit_usd",
+        "value": 3374000000
+      },
+      {
+        "tree": "std",
+        "rel": "ai-control-tower/T00_ai-investment-super-template.csv",
+        "col": "promised_benefit_usd",
+        "value": 2874000000
+      },
+      {
+        "tree": "active",
+        "rel": "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+        "col": "promised_value_usd",
+        "value": 80200000
+      }
+    ],
+    "asserted": [
+      {
+        "tree": "std",
+        "rel": "ai-control-tower/T07_benefit-realization.csv",
+        "col": "promised_benefit_usd",
+        "value": 3374000000
+      },
+      {
+        "tree": "std",
+        "rel": "ai-control-tower/T00_ai-investment-super-template.csv",
+        "col": "promised_benefit_usd",
+        "value": 2874000000
+      },
+      {
+        "tree": "active",
+        "rel": "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+        "col": "promised_value_usd",
+        "value": 80200000
+      }
+    ]
+  },
+  {
+    "metric": "ai_tool_cost_usd",
+    "label": "AI tool cost",
+    "tenant": "meridian-health",
+    "mode": "migration-audit",
+    "status": "ABSENT",
+    "claims": [],
+    "asserted": []
+  },
+  {
+    "metric": "ai_tool_cost_usd",
+    "label": "AI tool cost",
+    "tenant": "skyharbor-air",
+    "mode": "migration-audit",
+    "status": "ONE_SOURCE",
+    "claims": [
+      {
+        "tree": "std",
+        "rel": "ai-control-tower/T03_tool-usage-monthly.csv",
+        "col": "cost_usd",
+        "value": 10200000
+      }
+    ],
+    "asserted": [
+      {
+        "tree": "std",
+        "rel": "ai-control-tower/T03_tool-usage-monthly.csv",
+        "col": "cost_usd",
+        "value": 10200000
+      }
+    ]
+  },
+  {
+    "metric": "vendor_run_rate_usd",
+    "label": "Vendor run rate",
+    "tenant": "meridian-health",
+    "mode": "migration-audit",
+    "status": "ONE_SOURCE",
+    "claims": [
+      {
+        "tree": "std",
+        "rel": "family-4-financial-commercial/F11_vendors-contracts-licenses.csv",
+        "col": "annual_contract_value_usd",
+        "value": 1697475000
+      }
+    ],
+    "asserted": [
+      {
+        "tree": "std",
+        "rel": "family-4-financial-commercial/F11_vendors-contracts-licenses.csv",
+        "col": "annual_contract_value_usd",
+        "value": 1697475000
+      }
+    ]
+  },
+  {
+    "metric": "vendor_run_rate_usd",
+    "label": "Vendor run rate",
+    "tenant": "skyharbor-air",
+    "mode": "migration-audit",
+    "status": "ONE_SOURCE",
+    "claims": [
+      {
+        "tree": "std",
+        "rel": "family-4-financial-commercial/F11_vendors-contracts-licenses.csv",
+        "col": "annual_contract_value_usd",
+        "value": 21938539988
+      }
+    ],
+    "asserted": [
+      {
+        "tree": "std",
+        "rel": "family-4-financial-commercial/F11_vendors-contracts-licenses.csv",
+        "col": "annual_contract_value_usd",
+        "value": 21938539988
+      }
+    ]
+  }
+]
