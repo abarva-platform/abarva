@@ -172,3 +172,47 @@ not fail safe: it generates confident, specific, wrong work. The counter bug mad
 times too small, and the premise error would have turned that wrong number into fifty files of
 fabrication. Neither would have been caught by testing the gate's code, only by asking whether the
 thing it measures is the thing that matters.
+
+## Addendum — real contract documents, and a third counting error
+
+The document check was corrected once to measure depth rather than breadth. That correction was also
+incomplete: it counted **documents per contract**, not words per document. Sixteen files of
+thirty-four lines each passed it.
+
+Those files are clause headings with a one-sentence summary under each. No rate, no notice period, no
+obligation — nothing a reviewer could extract or dispute. They pass every structural check and
+contain no contract.
+
+The generator built earlier in this work produces real documents, and had only ever been run against
+a staging fixture:
+
+| Document | Words | Required clauses |
+| --- | --- | --- |
+| MSA | 1,246–1,253 | 216/216 |
+| BAA | 752–947 | 80–107/107 |
+| SOW | 810–813 | 136/136 |
+| SLA | 808–809 | 136/136 |
+| PRICING | 571–572 | 104/104 |
+| ORDER | 482–484 | 104/104 |
+| AMEND-001 | 507–508 | 80/80 |
+| INVOICE-EVIDENCE | 415–416 | 112/112 |
+
+Both tenants now carry **8 contracts × 8 documents**, median ~750 words, at **784/784 reconciliation
+assertions** each — every figure in every document traces to a source row — and a passing clause
+benchmark.
+
+Two defects fixed on the way:
+
+- **The contract id prefix was hardcoded** to the tenant the lane was first built for, so every
+  tenant afterwards produced contracts labelled `CTR-MH-*`. It now derives from the tenant key.
+- **The document walker required "synthetic" in the filename**, so it skipped an entire generated
+  packet set that names files by contract and document type.
+
+The short citation-span documents are **kept, not deleted**: they carry `<!-- page:N span:X-Y -->`
+markers, feed `scripts/source/load-skyharbor-source-layer-cube-package.mjs`, and exist to test
+citation extraction rather than to be read as contracts. The gate now recognises them instead of
+demanding their removal — judging them by word count judges them against a purpose they never had.
+
+**Three counting errors in one check, each caught only by asking what the number was for.** Coverage
+instead of depth, documents instead of words, filename convention instead of content. None would have
+failed a test of the gate's code.

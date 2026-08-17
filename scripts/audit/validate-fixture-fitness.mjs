@@ -67,6 +67,8 @@ const STANDARD = {
    */
   minDocumentedContracts: 2,
   minDocumentsPerContract: 6,
+  /** A document below this is a stub: clause headings with a summary line, no operative language. */
+  minWordsPerDocument: 300,
   /** A documented contract should be in the top slice of the register by value. */
   documentedContractTopPercentile: 0.35,
 };
@@ -125,12 +127,29 @@ function documentsByContract(tenantKey) {
     for (const entry of entries) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) { walk(full); continue; }
-      if (!/synthetic/i.test(entry.name)) continue;
+      // Everything under these roots is synthetic; requiring the word in the filename skipped a
+      // whole generated packet set that simply names its files by contract and document type.
+      if (!/\.(md|pdf|txt)$/i.test(entry.name)) continue;
       // Ids appear as CTR-090 or CF-001, with or without a DOC- prefix.
-      const id = /((?:CTR|CF|CT)-\d+)/i.exec(entry.name)?.[1]?.toUpperCase();
+      // Contract ids appear as CTR-090, CF-001, and CTR-MH-004 — an optional tenant infix.
+      const id = /((?:CTR|CF|CT)-(?:[A-Z]{2,3}-)?\d+)/i.exec(entry.name)?.[1]?.toUpperCase();
       if (!id) continue;
       if (!byContract.has(id)) byContract.set(id, new Set());
-      byContract.get(id).add(entry.name);
+      // Word count, not just the filename. Counting documents was the same mistake as counting
+      // records without names: sixteen files of thirty-four lines each is a directory listing that
+      // looks like a contract file. A stub passes every count and contains no obligation, no rate,
+      // no notice period — nothing a reviewer could actually extract or dispute.
+      let words = 0;
+      let citationFixture = false;
+      try {
+        const text = fs.readFileSync(full, "utf8");
+        words = text.split(/\s+/).filter(Boolean).length;
+        // Some documents are deliberately short: they carry `<!-- page:N span:X-Y -->` markers and
+        // exist to test citation-span extraction, not to be read as contracts. Judging them by word
+        // count is judging them against a purpose they never had.
+        citationFixture = /<!--\s*page:\d+\s+span:/.test(text);
+      } catch { /* unreadable file counts as empty */ }
+      byContract.get(id).add({ file: entry.name, words, citationFixture });
     }
   };
 
@@ -203,7 +222,16 @@ for (const tenantKey of tenants) {
   }
 
   const docs = documentsByContract(tenantKey);
-  const documented = [...docs.entries()].map(([id, files]) => ({ id, documents: files.size }));
+  const documented = [...docs.entries()].map(([id, files]) => {
+    const list = [...files];
+    return {
+      id,
+      documents: list.length,
+      medianWords: list.map((f) => f.words).sort((a, b) => a - b)[Math.floor(list.length / 2)] ?? 0,
+      stubs: list.filter((f) => !f.citationFixture && f.words < STANDARD.minWordsPerDocument).length,
+      citationFixtures: list.filter((f) => f.citationFixture).length,
+    };
+  });
   const totalDocuments = documented.reduce((n, d) => n + d.documents, 0);
 
   if (documented.length < STANDARD.minDocumentedContracts) {
@@ -211,7 +239,16 @@ for (const tenantKey of tenants) {
       `${documented.length} contracts have document files. An engagement needs at least ` +
       `${STANDARD.minDocumentedContracts} fully documented contracts to demonstrate contract intelligence.`);
   }
-  const shallow = documented.filter((d) => d.documents < STANDARD.minDocumentsPerContract);
+  const stubby = documented.filter((d) => d.stubs > 0);
+  if (stubby.length) {
+    add("DOC_SUBSTANCE",
+      `${stubby.length} documented contract(s) contain stub documents under ${STANDARD.minWordsPerDocument} words ` +
+      `(${stubby.map((d) => `${d.id}:${d.stubs}/${d.documents} stubs, median ${d.medianWords}w`).join("; ")}). ` +
+      `A clause heading with a summary line contains no obligation, rate or notice period — nothing a reviewer can extract or dispute.`);
+  }
+  const shallow = documented.filter(
+    (d) => d.documents - d.citationFixtures > 0 && d.documents < STANDARD.minDocumentsPerContract,
+  );
   if (shallow.length) {
     add("DOC_DEPTH",
       `${shallow.length} documented contract(s) carry fewer than ${STANDARD.minDocumentsPerContract} documents ` +
@@ -231,7 +268,7 @@ for (const tenantKey of tenants) {
     topContractShare: topShare === null ? null : Number((topShare * 100).toFixed(1)),
     documentedContracts: documented.length,
     totalDocuments,
-    documentsPerContract: documented.map((d) => `${d.id}:${d.documents}`),
+    documentsPerContract: documented.map((d) => `${d.id}:${d.documents}@${d.medianWords}w`),
   });
 }
 

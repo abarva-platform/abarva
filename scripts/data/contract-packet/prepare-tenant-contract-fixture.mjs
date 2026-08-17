@@ -148,9 +148,19 @@ const slas = [];
 const invoices = [];
 const rates = [];
 
+// Contract ids carry the tenant, so packets from two tenants never collide in a shared corpus.
+// The prefix was hardcoded to the tenant this lane was first built for, which meant every tenant
+// afterwards produced contracts labelled as that one's.
+const tenantPrefix = args.tenant
+  .split('-')
+  .map((part) => part[0])
+  .join('')
+  .toUpperCase()
+  .slice(0, 3);
+
 vendors.forEach((row, idx) => {
   const n = String(idx + 1).padStart(3, '0');
-  const contractId = `CTR-MH-${n}`;
+  const contractId = `CTR-${tenantPrefix}-${n}`;
   const risk = riskTerms[String(row.risk_rating || 'medium').toLowerCase()] ?? riskTerms.medium;
   const category = categoryOf(row);
   const service = serviceLabelFor(category);

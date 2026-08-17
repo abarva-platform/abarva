@@ -786,7 +786,12 @@
     "validate:spend-plausibility": "node scripts/audit/validate-spend-plausibility.mjs",
     "validate:spend-plausibility:strict": "node scripts/audit/validate-spend-plausibility.mjs --strict",
     "validate:fixture-fitness": "node scripts/audit/validate-fixture-fitness.mjs",
-    "validate:fixture-fitness:strict": "node scripts/audit/validate-fixture-fitness.mjs --strict"
+    "validate:fixture-fitness:strict": "node scripts/audit/validate-fixture-fitness.mjs --strict",
+    "packet:prepare:skyharbor": "node scripts/data/contract-packet/prepare-tenant-contract-fixture.mjs --tenant skyharbor-air --out .artifacts/contract-packets/skyharbor-air-fixture --limit 8",
+    "packet:generate:skyharbor": "node scripts/data/contract-packet/generate-contract-packet.mjs --in .artifacts/contract-packets/skyharbor-air-fixture --out .artifacts/contract-packets/skyharbor-air",
+    "packet:reconcile:skyharbor": "node scripts/data/contract-packet/reconcile-contract-packet.mjs --in .artifacts/contract-packets/skyharbor-air-fixture --packets .artifacts/contract-packets/skyharbor-air",
+    "packet:benchmark:skyharbor": "node scripts/data/contract-packet/benchmark-contract-packet.mjs --in .artifacts/contract-packets/skyharbor-air-fixture --packets .artifacts/contract-packets/skyharbor-air",
+    "packet:check:skyharbor": "npm run packet:prepare:skyharbor && npm run packet:generate:skyharbor && npm run packet:reconcile:skyharbor && npm run packet:benchmark:skyharbor"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
