@@ -781,7 +781,8 @@
     "validate:no-sunset-tenant-residue": "node scripts/audit/validate-no-sunset-tenant-residue.mjs",
     "validate:fact-basis": "node scripts/audit/validate-fact-basis.mjs",
     "validate:fact-basis:strict": "node scripts/audit/validate-fact-basis.mjs --strict",
-    "data-build:home-landscape": "npx tsx scripts/data-build/refresh-home-landscape.ts"
+    "data-build:home-landscape": "npx tsx scripts/data-build/refresh-home-landscape.ts",
+    "data-build:home-landscape:verify": "npx tsx scripts/data-build/verify-home-landscape.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
