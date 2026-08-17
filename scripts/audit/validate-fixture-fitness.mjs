@@ -51,8 +51,24 @@ const STANDARD = {
   minTopContractShare: 0.08,
   /** No column on the vendor register may be emptier than this. */
   minColumnFill: 0.5,
-  /** Share of the contract register that should have generated document packets. */
-  minDocumentCoverage: 0.25,
+  /**
+   * Document depth, not breadth.
+   *
+   * The first version of this gate asked what share of the register had document packets and
+   * reported 3%. Both halves of that were wrong. The counter only matched PDFs in a `documents/`
+   * directory, so it missed the markdown contract files entirely — there are 41 documents, not 8.
+   * And the threshold encoded a premise that does not survive contact with an engagement: no client
+   * hands over executed agreements for every contract they hold. They hand over the ones in scope —
+   * the largest, the ones renewing, the one being renegotiated.
+   *
+   * Chasing breadth would have manufactured fifty document sets no client would ever produce, making
+   * the fixture less credible rather than more. So the question is depth: do the contracts that *are*
+   * documented carry a full file, and are they the contracts that would actually be in scope?
+   */
+  minDocumentedContracts: 2,
+  minDocumentsPerContract: 6,
+  /** A documented contract should be in the top slice of the register by value. */
+  documentedContractTopPercentile: 0.35,
 };
 
 function parseCsv(text) {
@@ -88,28 +104,44 @@ const usd = (n) => (n >= 1e9 ? `$${(n / 1e9).toFixed(2)}B` : `$${(n / 1e6).toFix
 const findings = [];
 const report = [];
 
-/** Documents generated per contract, so coverage is measured against contracts rather than files. */
-function documentCoverage(tenantKey, contractCount) {
+/**
+ * Every synthetic contract document under the source roots, grouped by contract id.
+ *
+ * Walks the tree rather than looking in one directory: documents live under `documents/`,
+ * `synthetic/`, and `layer_1_client_intake/documents/` depending on which lane produced them, and a
+ * counter that knows about only one of those undercounts by a factor of five.
+ */
+function documentsByContract(tenantKey) {
   const roots = [
     path.join(ROOT, "datasets/source/contract-intelligence"),
     path.join(ROOT, "datasets/source/contract-optimization"),
   ];
   const stem = tenantKey.split("-")[0];
-  const covered = new Set();
+  const byContract = new Map();
+
+  const walk = (dir) => {
+    let entries;
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) { walk(full); continue; }
+      if (!/synthetic/i.test(entry.name)) continue;
+      // Ids appear as CTR-090 or CF-001, with or without a DOC- prefix.
+      const id = /((?:CTR|CF|CT)-\d+)/i.exec(entry.name)?.[1]?.toUpperCase();
+      if (!id) continue;
+      if (!byContract.has(id)) byContract.set(id, new Set());
+      byContract.get(id).add(entry.name);
+    }
+  };
+
   for (const root of roots) {
     if (!fs.existsSync(root)) continue;
     for (const dir of fs.readdirSync(root)) {
       if (!dir.toLowerCase().includes(stem)) continue;
-      const docs = path.join(root, dir, "documents");
-      if (!fs.existsSync(docs)) continue;
-      for (const file of fs.readdirSync(docs)) {
-        // Documents are named <CONTRACT-ID>_<Vendor>_<DOCTYPE>_SYNTHETIC.*; the id is the key.
-        const id = /^([A-Z]+-\d+)/.exec(file)?.[1];
-        if (id) covered.add(id);
-      }
+      walk(path.join(root, dir));
     }
   }
-  return { contractsWithDocuments: covered.size, contractCount };
+  return byContract;
 }
 
 const tenants = fs.existsSync(ACTIVE)
@@ -170,12 +202,21 @@ for (const tenantKey of tenants) {
     }
   }
 
-  const cov = documentCoverage(tenantKey, vendors.length);
-  const covShare = cov.contractCount > 0 ? cov.contractsWithDocuments / cov.contractCount : 0;
-  if (cov.contractCount > 0 && covShare < STANDARD.minDocumentCoverage) {
-    add("DOC_COVERAGE",
-      `${cov.contractsWithDocuments} of ${cov.contractCount} contracts have document packets (${(covShare * 100).toFixed(0)}%). ` +
-      `Contract intelligence cannot be demonstrated against a register that is almost entirely undocumented.`);
+  const docs = documentsByContract(tenantKey);
+  const documented = [...docs.entries()].map(([id, files]) => ({ id, documents: files.size }));
+  const totalDocuments = documented.reduce((n, d) => n + d.documents, 0);
+
+  if (documented.length < STANDARD.minDocumentedContracts) {
+    add("DOC_DEPTH",
+      `${documented.length} contracts have document files. An engagement needs at least ` +
+      `${STANDARD.minDocumentedContracts} fully documented contracts to demonstrate contract intelligence.`);
+  }
+  const shallow = documented.filter((d) => d.documents < STANDARD.minDocumentsPerContract);
+  if (shallow.length) {
+    add("DOC_DEPTH",
+      `${shallow.length} documented contract(s) carry fewer than ${STANDARD.minDocumentsPerContract} documents ` +
+      `(${shallow.map((d) => `${d.id}:${d.documents}`).join(", ")}). A contract file with only an agreement and a ` +
+      `pricing schedule cannot show amendment drift, renewal leverage, or exit terms.`);
   }
 
   report.push({
@@ -188,8 +229,9 @@ for (const tenantKey of tenants) {
     programs: programs.length,
     vendorBook: vendorTotal,
     topContractShare: topShare === null ? null : Number((topShare * 100).toFixed(1)),
-    contractsWithDocuments: cov.contractsWithDocuments,
-    documentCoveragePct: Number((covShare * 100).toFixed(0)),
+    documentedContracts: documented.length,
+    totalDocuments,
+    documentsPerContract: documented.map((d) => `${d.id}:${d.documents}`),
   });
 }
 

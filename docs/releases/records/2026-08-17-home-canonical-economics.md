@@ -139,3 +139,36 @@ check, because a flat portfolio is perfectly well-formed.
 
 Every tenant fails today. A gate that fails from the day it lands gets switched off rather than
 satisfied. Both report loudly now and block under `--strict` once the fixtures are corrected.
+
+## Correction — the document coverage check was wrong twice
+
+The first version of the fitness gate reported **3% document coverage** and framed it as a major gap.
+Both halves of that were wrong.
+
+**The counter was broken.** It matched PDFs in a `documents/` directory only, so it missed the
+markdown contract files under `layer_1_client_intake/documents/` and `synthetic/`. There are **41
+synthetic contract documents**, not 8. One airline contract alone carries sixteen document types —
+MSA, SOW core and transition, base and true-up orders, pricing exhibit, SLA schedule, security DPA,
+side letter, two amendments, renewal quote, renewal notice, support policy, exit plan.
+
+**The threshold encoded a premise that does not survive contact with an engagement.** No client hands
+over executed agreements for every contract they hold. They hand over the ones in scope — the
+largest, the ones renewing, the one being renegotiated. Chasing 25% coverage would have manufactured
+around fifty document sets no client would ever produce, making the fixture *less* credible rather
+than more.
+
+The check now asks about **depth rather than breadth**: do the documented contracts carry a full file?
+
+| Tenant | Documented contracts | Documents | Verdict |
+| --- | --- | --- | --- |
+| Airline | 2 | 32 (16 each) | passes |
+| Health system | 2 | 6 (3 each) | shallow — agreement, pricing, SLA only |
+
+The remaining work is roughly 26 documents to bring two existing health-system contracts up to the
+airline's depth. Not fifty contract sets.
+
+**This is worth recording as a gate-design lesson.** A threshold that measures the wrong quantity does
+not fail safe: it generates confident, specific, wrong work. The counter bug made the number five
+times too small, and the premise error would have turned that wrong number into fifty files of
+fabrication. Neither would have been caught by testing the gate's code, only by asking whether the
+thing it measures is the thing that matters.
