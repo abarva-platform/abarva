@@ -1,16 +1,16 @@
 {
   "version": "2026-08-15",
   "defaultMode": "quote",
-  "defaultTenants": ["skyharbor_global", "meridian-health"],
+  "defaultTenants": ["skyharbor-air", "meridian-health"],
   "modes": {
     "quote": {
       "purpose": "Use live Source read models and Cube/canary projections only. This mode is intended before quoting Source portfolio, Contract 360, or Cube-derived figures."
     }
   },
   "tenants": {
-    "skyharbor_global": {
-      "rlsKey": "skyharbor_global",
-      "aliases": ["skyharbor_global", "skyharbor"]
+    "skyharbor-air": {
+      "rlsKey": "skyharbor-air",
+      "aliases": ["skyharbor-air", "skyharbor_global", "skyharbor"]
     },
     "meridian-health": {
       "rlsKey": "meridian_health_global",
@@ -30,7 +30,10 @@
     },
     {
       "metric": "total_committed_value_usd",
-      "bases": ["committed_value_total", "committed_value_contract_family_total"],
+      "bases": [
+        "committed_value_total",
+        "committed_value_contract_family_total"
+      ],
       "explanation": "Contract 360 read models sum total committed value over the row-level contract register. Source V4/Cube can sum normalized contract families. State the basis before quoting total committed value."
     },
     {
