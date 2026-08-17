@@ -784,7 +784,9 @@
     "data-build:home-landscape": "npx tsx scripts/data-build/refresh-home-landscape.ts",
     "data-build:home-landscape:verify": "npx tsx scripts/data-build/verify-home-landscape.ts",
     "validate:spend-plausibility": "node scripts/audit/validate-spend-plausibility.mjs",
-    "validate:spend-plausibility:strict": "node scripts/audit/validate-spend-plausibility.mjs --strict"
+    "validate:spend-plausibility:strict": "node scripts/audit/validate-spend-plausibility.mjs --strict",
+    "validate:fixture-fitness": "node scripts/audit/validate-fixture-fitness.mjs",
+    "validate:fixture-fitness:strict": "node scripts/audit/validate-fixture-fitness.mjs --strict"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

@@ -107,3 +107,35 @@ Revert. The anchors return to the authored literals and the gate stops running.
   coherence, trajectory, watchlist — labelled "synthetic current-state package".
 - The industry bands are wide by design: they exist to catch an order-of-magnitude error, not to
   enforce a benchmark on a client whose spend is genuinely unusual.
+
+## Addendum — fixture fitness gate
+
+The spend gate answers "is this number plausible". It does not answer "is this substrate worth
+loading at all", and that turned out to be the larger gap.
+
+`scripts/audit/validate-fixture-fitness.mjs` checks whether a synthetic tenant is credible at its
+stated scale: revenue against the locked standard, application/program/infrastructure counts against
+their floors, vendor book depth against revenue, contract value distribution, vendor column fill, and
+contract document coverage.
+
+It is a **fixture** gate. None of these thresholds should ever be applied to a real client — a real
+client's data is whatever their business actually is. Synthetic data has no such excuse: it is
+authored, so if it is not credible, that is a choice someone made.
+
+### What it found on the current fixtures
+
+| Tenant | Finding |
+| --- | --- |
+| Airline | 28 programs (floor 35) · 33 infrastructure platforms for 503 applications · 65 vendor contracts where ~204 is credible for $81.4B · largest contract 8.0% of the book · 3% document coverage |
+| Health system | $24B revenue against the $50B standard · 28 programs · 4 vendor columns under 50% filled · 3% document coverage |
+| Three retired tenants | Still present under `datasets/tenant-inputs/active/`, with their own volume, column-fill and coverage failures |
+
+The distribution check is the one worth keeping. A register whose largest contract is 8% of the book
+has no concentration to find, so it cannot demonstrate renewal leverage, concentration risk, or a
+savings case — the three things the product exists to show. That is invisible to every structural
+check, because a flat portfolio is perfectly well-formed.
+
+### Why neither gate is strict yet
+
+Every tenant fails today. A gate that fails from the day it lands gets switched off rather than
+satisfied. Both report loudly now and block under `--strict` once the fixtures are corrected.
