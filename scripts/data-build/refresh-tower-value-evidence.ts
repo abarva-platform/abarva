@@ -351,6 +351,8 @@ async function main(): Promise<number> {
     readbackClaims: 0,
     towerMartUpdated: false as boolean,
     schemaPreflight: null as unknown,
+    metricDimension: null as unknown,
+    metricDimensionRowsEnsured: 0,
   };
 
   if (WRITE) {
@@ -460,7 +462,66 @@ async function main(): Promise<number> {
         scenarioAllowed: scenarios ? [...scenarios] : "unconstrained",
       };
 
+      /**
+       * Resolve and populate the metric dimension this projector depends on.
+       *
+       * `metric_observation.metric_ref` carries a foreign key to a metric definition table, and that
+       * constraint — like the five columns before it — exists in the database and in no migration.
+       * The vocabulary is semantic (`project.approved_budget`, `ai.active_users`), not hashed, so
+       * generated refs can never satisfy it.
+       *
+       * Guessing the table name would be a seventh guess. The FK definition names it, so read the
+       * definition and write the dimension rows this run needs before writing the facts that
+       * reference them. A projector that depends on a dimension should be able to populate it;
+       * otherwise every refresh is hostage to someone else having seeded it first.
+       */
+      const metricFk = foreignKeys.rows.find(
+        (r) => r.table_name === "metric_observation" && r.def.includes("metric_ref"),
+      );
+      const referenced = metricFk ? /REFERENCES ([a-z_.]+)\s*\(([a-z_]+)\)/i.exec(metricFk.def) : null;
+      summary.metricDimension = referenced
+        ? { table: referenced[1], column: referenced[2] }
+        : "no foreign key on metric_ref";
+
       await client.query("begin");
+
+      if (referenced) {
+        const [refTable, refColumn] = [referenced[1], referenced[2]];
+        const cols = await client.query<{ column_name: string; is_nullable: string; column_default: string | null }>(
+          `select column_name, is_nullable, column_default from information_schema.columns
+            where table_schema = split_part($1,'.',1) and table_name = split_part($1,'.',2)`,
+          [refTable.includes(".") ? refTable : `tower.${refTable}`],
+        );
+        const mandatory = cols.rows
+          .filter((c) => c.is_nullable === "NO" && c.column_default === null)
+          .map((c) => c.column_name);
+        const names = new Map<string, string>();
+        for (const o of uniqueObservations) {
+          if (!names.has(o.metricRef)) names.set(o.metricRef, o.metricRef);
+        }
+        // Only the mandatory columns are supplied, plus the key. Anything the dimension marks
+        // optional stays empty rather than being invented to look complete.
+        const supplyable = ["tenant_key", refColumn, "metric_name", "metric_label", "title", "name", "unit", "metric_unit", "direction", "owner_role"];
+        const insertCols = [...new Set([refColumn, ...mandatory])].filter((c) => supplyable.includes(c));
+        if (insertCols.includes(refColumn)) {
+          for (const [ref] of names) {
+            const values = insertCols.map((c) =>
+              c === refColumn ? ref
+                : c === "tenant_key" ? TENANTS[0]
+                  : /name|label|title/.test(c) ? ref
+                    : /unit/.test(c) ? "count"
+                      : /direction/.test(c) ? "increase"
+                        : "canonical-projection");
+            await client.query(
+              `insert into ${refTable.includes(".") ? refTable : `tower.${refTable}`} (${insertCols.join(",")})
+               values (${insertCols.map((_, i) => `$${i + 1}`).join(",")})
+               on conflict do nothing`,
+              values,
+            );
+          }
+          summary.metricDimensionRowsEnsured = names.size;
+        }
+      }
       for (const s of uniqueSubjects) {
         await client.query(
           `insert into tower.tracked_subject (tenant_key, subject_ref, subject_kind, initiative_ref, title)
