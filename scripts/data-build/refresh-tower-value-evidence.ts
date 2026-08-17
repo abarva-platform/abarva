@@ -112,6 +112,8 @@ interface Claim {
   actualObservationId: string | null;
   qualityGuardrailState: string;
   nextGateOwnerRole: string | null;
+  /** `tower.value_claim.outcome_metric_ref` — the metric this claim is about. */
+  outcomeMetricRef: string;
   missing: string[];
   /** The client's own account of what is in the way, when they gave one. */
   blockedReason: string | null;
@@ -206,6 +208,7 @@ async function main(): Promise<number> {
         tenantKey,
         claimId: `CLM-${hash([tenantKey, kpi, useCase])}`,
         subjectRef,
+        outcomeMetricRef: metricRef,
         promisedValue: numeric(a.targetValue),
         // Only a claim with a real actual and a finance-attested amount carries a calculated value.
         // Deriving one from a target would turn an expectation into a result, which is the exact
@@ -275,6 +278,7 @@ async function main(): Promise<number> {
         tenantKey,
         claimId: `CLM-${hash([tenantKey, metric, fn])}`,
         subjectRef,
+        outcomeMetricRef: metricRef,
         promisedValue: numeric(a.targetValue),
         calculatedValue: actualId && attested !== null ? attested : null,
         // The client's declared readiness governs. A metric they call `not_ready` stays blocked even
@@ -390,8 +394,8 @@ async function main(): Promise<number> {
        */
       const supplied: Record<string, Set<string>> = {
         tracked_subject: new Set(["tenant_key", "subject_ref", "subject_kind", "initiative_ref", "title"]),
-        metric_observation: new Set(["tenant_key", "observation_id", "subject_ref", "metric_ref", "scenario", "value_num", "period_start", "period_end", "source_result_hash"]),
-        value_claim: new Set(["tenant_key", "claim_id", "subject_ref", "promised_value", "calculated_value", "claim_state", "baseline_observation_id", "target_observation_id", "actual_observation_id", "quality_guardrail_state", "next_gate_owner_role", "claim_rule_version"]),
+        metric_observation: new Set(["tenant_key", "observation_id", "subject_ref", "metric_ref", "scenario", "value_num", "period_start", "period_end", "source_result_hash", "provenance_id"]),
+        value_claim: new Set(["tenant_key", "claim_id", "subject_ref", "promised_value", "calculated_value", "claim_state", "baseline_observation_id", "target_observation_id", "actual_observation_id", "quality_guardrail_state", "next_gate_owner_role", "claim_rule_version", "outcome_metric_ref", "claim_input_hash"]),
       };
       const unmet: string[] = [];
       const tablesSeen = new Set(schema.rows.map((r) => r.table_name));
@@ -424,6 +428,17 @@ async function main(): Promise<number> {
         const values = [...def.matchAll(/'([^']+)'::text/g)].map((m) => m[1]);
         return values.length ? new Set(values) : null;
       };
+      // Foreign keys too. A NOT NULL column that is also a reference cannot be satisfied by any
+      // generated value, and finding that out at insert time costs another cycle.
+      const foreignKeys = await client.query<{ table_name: string; def: string }>(
+        `select t.relname as table_name, pg_get_constraintdef(c.oid) as def
+           from pg_constraint c
+           join pg_class t on t.oid = c.conrelid
+           join pg_namespace n on n.oid = t.relnamespace
+          where n.nspname = 'tower' and c.contype = 'f'
+            and t.relname in ('tracked_subject','metric_observation','value_claim')`,
+      );
+
       const kinds = allowed("subject_kind");
       const states = allowed("claim_state");
       const scenarios = allowed("scenario");
@@ -439,6 +454,7 @@ async function main(): Promise<number> {
       }
       summary.schemaPreflight = {
         mandatoryColumnsSatisfied: true,
+        foreignKeys: foreignKeys.rows.map((r) => `${r.table_name}: ${r.def}`),
         subjectKindAllowed: kinds ? [...kinds] : "unconstrained",
         claimStateAllowed: states ? [...states] : "unconstrained",
         scenarioAllowed: scenarios ? [...scenarios] : "unconstrained",
@@ -461,15 +477,18 @@ async function main(): Promise<number> {
         await client.query(
           `insert into tower.metric_observation
              (tenant_key, observation_id, subject_ref, metric_ref, scenario, value_num,
-              period_start, period_end, source_result_hash)
-           values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+              period_start, period_end, source_result_hash, provenance_id)
+           values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
            on conflict (tenant_key, observation_id) do update
              set value_num = excluded.value_num,
                  period_start = excluded.period_start,
                  period_end = excluded.period_end,
                  source_result_hash = excluded.source_result_hash`,
           [o.tenantKey, o.observationId, o.subjectRef, o.metricRef, o.scenario, o.value,
-           o.periodStart, o.periodEnd, o.sourceResultHash],
+           o.periodStart, o.periodEnd, o.sourceResultHash,
+           // Provenance identifies which build produced the observation, so a figure on screen can
+           // be traced to the run that wrote it rather than only to the row it lives in.
+           `PROV-${CLAIM_RULE_VERSION}-${BUILD_VERSION}`],
         );
         summary.rowsWritten += 1;
       }
@@ -478,8 +497,9 @@ async function main(): Promise<number> {
           `insert into tower.value_claim
              (tenant_key, claim_id, subject_ref, promised_value, calculated_value, claim_state,
               baseline_observation_id, target_observation_id, actual_observation_id,
-              quality_guardrail_state, next_gate_owner_role, claim_rule_version, updated_at)
-           values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, now())
+              quality_guardrail_state, next_gate_owner_role, claim_rule_version,
+              outcome_metric_ref, claim_input_hash, updated_at)
+           values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14, now())
            on conflict (tenant_key, claim_id) do update
              set promised_value = excluded.promised_value,
                  calculated_value = excluded.calculated_value,
@@ -490,10 +510,17 @@ async function main(): Promise<number> {
                  quality_guardrail_state = excluded.quality_guardrail_state,
                  next_gate_owner_role = excluded.next_gate_owner_role,
                  claim_rule_version = excluded.claim_rule_version,
+                 outcome_metric_ref = excluded.outcome_metric_ref,
+                 claim_input_hash = excluded.claim_input_hash,
                  updated_at = now()`,
           [c.tenantKey, c.claimId, c.subjectRef, c.promisedValue, c.calculatedValue, c.claimState,
            c.baselineObservationId, c.targetObservationId, c.actualObservationId,
-           c.qualityGuardrailState, c.nextGateOwnerRole, CLAIM_RULE_VERSION],
+           c.qualityGuardrailState, c.nextGateOwnerRole, CLAIM_RULE_VERSION,
+           c.outcomeMetricRef,
+           // A hash of what the claim was computed from, so an unchanged claim is recognisable as
+           // unchanged across builds rather than looking rewritten every run.
+           hash([c.subjectRef, c.promisedValue, c.calculatedValue, c.baselineObservationId,
+                 c.targetObservationId, c.actualObservationId, c.claimState])],
         );
         summary.rowsWritten += 1;
       }
