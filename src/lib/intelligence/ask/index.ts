@@ -33,6 +33,7 @@ import {
   type CoverageReport,
 } from "@/lib/knowledge/coverage";
 import { formatCoverageReportForPrompt } from "@/lib/knowledge/coverageReport";
+import { buildCanonicalLandscapeSource } from "./canonical-landscape-source";
 import {
   classifyAbarvaAnswerMode,
   isBroadCurrentStateQuestion,
@@ -414,7 +415,18 @@ export async function* askIntelligence(
     );
     const conciseAsk = isExplicitConciseAsk(trimmed);
     const sourceLimit = conciseAsk ? 9 : 18;
+    // Canonical as a floor. When every other retriever comes back empty -- which is how aVa ended up
+    // telling a client their estate was not loaded while thousands of their records sat in the
+    // projection -- this still grounds the answer.
+    const canonicalLandscapeSource = await buildCanonicalLandscapeSource([
+      opts.tenantClientKey,
+      opts.tenantInventoryKey,
+      opts.tenant?.appClientKey,
+      opts.tenant?.canonicalKey,
+      opts.surfaceContext?.clientKey,
+    ]).catch(() => null);
     const currentTenantSources = [
+      ...(canonicalLandscapeSource ? [canonicalLandscapeSource] : []),
       ...curatedDossier.sources,
       ...tenantStructuredFacts,
       ...tenantEnterprise,
