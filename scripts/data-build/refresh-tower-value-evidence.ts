@@ -175,7 +175,7 @@ async function main(): Promise<number> {
       subjects.push({
         tenantKey,
         subjectRef,
-        subjectKind: "ai_use_case",
+        subjectKind: "initiative",
         initiativeRef: str(a.aiProgramId),
         title: useCase,
       });
@@ -237,7 +237,7 @@ async function main(): Promise<number> {
       subjects.push({
         tenantKey,
         subjectRef,
-        subjectKind: "business_function",
+        subjectKind: "initiative",
         initiativeRef: null,
         title: fn,
       });
@@ -346,6 +346,7 @@ async function main(): Promise<number> {
     rowsWritten: 0,
     readbackClaims: 0,
     towerMartUpdated: false as boolean,
+    schemaPreflight: null as unknown,
   };
 
   if (WRITE) {
@@ -355,6 +356,73 @@ async function main(): Promise<number> {
     const client = new Client({ connectionString, ssl: { rejectUnauthorized: false } });
     await client.connect();
     try {
+      // Preflight against the real schema before writing anything.
+      //
+      // This projector has now failed twice on assumptions: a NOT NULL column it did not supply, and
+      // two columns whose names it guessed. Each cost a merge, a deploy and a job run to discover
+      // something the destination could have been asked directly. Worse, the third failure was a
+      // CHECK constraint whose allowed values appear in no migration in the repo — there was nothing
+      // to read, only the database to ask.
+      //
+      // So ask it. A mismatch now fails in the first second with the permitted values named, instead
+      // of mid-transaction fifteen minutes into a deploy cycle.
+      const schema = await client.query<{ table_name: string; column_name: string }>(
+        `select table_name, column_name from information_schema.columns
+          where table_schema = 'tower'
+            and table_name in ('tracked_subject','metric_observation','value_claim')`,
+      );
+      const columnsFor = (table: string) =>
+        new Set(schema.rows.filter((r) => r.table_name === table).map((r) => r.column_name));
+      const required: Record<string, string[]> = {
+        tracked_subject: ["tenant_key", "subject_ref", "subject_kind", "initiative_ref", "title"],
+        metric_observation: ["tenant_key", "observation_id", "subject_ref", "metric_ref", "scenario", "value_num", "period_start", "period_end", "source_result_hash"],
+        value_claim: ["tenant_key", "claim_id", "subject_ref", "promised_value", "calculated_value", "claim_state", "baseline_observation_id", "target_observation_id", "actual_observation_id", "quality_guardrail_state", "next_gate_owner_role", "claim_rule_version"],
+      };
+      const missing: string[] = [];
+      for (const [table, cols] of Object.entries(required)) {
+        const present = columnsFor(table);
+        if (present.size === 0) { missing.push(`tower.${table} does not exist`); continue; }
+        for (const c of cols) if (!present.has(c)) missing.push(`tower.${table}.${c}`);
+      }
+      if (missing.length) {
+        throw new Error(`schema preflight failed — missing: ${missing.join(", ")}`);
+      }
+
+      // Enumerated columns: read the permitted values rather than assuming them. The subject_kind
+      // constraint is defined in no migration this repo carries, so the database is the only source.
+      const checks = await client.query<{ conname: string; def: string }>(
+        `select c.conname, pg_get_constraintdef(c.oid) as def
+           from pg_constraint c
+           join pg_class t on t.oid = c.conrelid
+           join pg_namespace n on n.oid = t.relnamespace
+          where n.nspname = 'tower' and c.contype = 'c'
+            and t.relname in ('tracked_subject','metric_observation','value_claim')`,
+      );
+      const allowed = (column: string): Set<string> | null => {
+        const def = checks.rows.find((r) => r.def.includes(column))?.def;
+        if (!def) return null;
+        const values = [...def.matchAll(/'([^']+)'::text/g)].map((m) => m[1]);
+        return values.length ? new Set(values) : null;
+      };
+      const kinds = allowed("subject_kind");
+      const states = allowed("claim_state");
+      const scenarios = allowed("scenario");
+      // Fall back to a value the constraint certainly permits — the column default — rather than
+      // failing the whole build because one enum drifted.
+      const coerceKind = (k: string) => (!kinds || kinds.has(k) ? k : "initiative");
+      const coerceState = (v: string) => (!states || states.has(v) ? v : "evidence_gap");
+      for (const s of uniqueSubjects) s.subjectKind = coerceKind(s.subjectKind);
+      for (const c of uniqueClaims) c.claimState = coerceState(c.claimState);
+      if (scenarios) {
+        const bad = uniqueObservations.filter((o) => !scenarios.has(o.scenario));
+        if (bad.length) throw new Error(`scenario values rejected by constraint: ${[...new Set(bad.map((o) => o.scenario))].join(", ")}; permitted ${[...scenarios].join(", ")}`);
+      }
+      summary.schemaPreflight = {
+        subjectKindAllowed: kinds ? [...kinds] : "unconstrained",
+        claimStateAllowed: states ? [...states] : "unconstrained",
+        scenarioAllowed: scenarios ? [...scenarios] : "unconstrained",
+      };
+
       await client.query("begin");
       for (const s of uniqueSubjects) {
         await client.query(
