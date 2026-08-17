@@ -1,7 +1,9 @@
 # Integrated Data Engineering Design
 
-Status: review candidate. This document is design-only. It does not approve a data-plane load,
-registry activation, product routing change, graph activation, index refresh, or live-client claim.
+Status: review candidate, amended by Claude Code. The sections under **Claude Code Design Delta**
+describe work that is merged and deployed. Everything else remains design-only and approves no
+data-plane load, registry activation, product routing change, graph activation, index refresh, or
+live-client claim.
 
 ## Purpose
 
