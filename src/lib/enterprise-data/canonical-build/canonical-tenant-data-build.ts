@@ -199,12 +199,40 @@ type RelationshipCandidate = {
   relationshipType: string;
   sourceObjectType: string;
   sourceObjectName: string;
+  sourceObjectKey?: string;
   targetObjectType: string;
   targetObjectName: string;
+  targetObjectKey?: string;
+  resolutionStatus?: "resolved" | "unresolved";
   confidence: number;
   evidenceKey: string;
   sourcePath: string;
   rowNumber: number;
+};
+
+type SourceMention = {
+  sourcePath: string;
+  rowNumber: number;
+  evidenceKey: string;
+  displayName: string;
+};
+
+type EntityResolutionSummary = {
+  tenantKey: string;
+  sourceMentions: number;
+  distinctEntities: number;
+  duplicateMentionsCollapsed: number;
+  referenceMentions: number;
+  referencesResolved: number;
+  referencesUnresolved: number;
+  referenceResolutionRate: number;
+  byObjectType: Array<{
+    objectType: string;
+    sourceMentions: number;
+    distinctEntities: number;
+    duplicateMentionsCollapsed: number;
+  }>;
+  unresolvedSamples: RelationshipCandidate[];
 };
 
 type SourceIntegrationCoverage = {
@@ -212,6 +240,8 @@ type SourceIntegrationCoverage = {
   sourcePath: string;
   domain: DomainKey | null;
   sourceRows: number;
+  sourceMentions: number;
+  distinctEntities: number;
   canonicalRecords: number;
   acceptedRecords: number;
   quarantinedRecords: number;
@@ -264,10 +294,14 @@ export type CanonicalDataBuildReport = {
   relationshipCandidatesSummary: Array<{
     tenantKey: string;
     candidateCount: number;
+    resolvedCount: number;
+    unresolvedCount: number;
+    resolutionRate: number;
     byType: Record<string, number>;
     gapCount: number;
     samples: RelationshipCandidate[];
   }>;
+  entityResolutionSummary: EntityResolutionSummary[];
   sourceIntegrationCoverage: SourceIntegrationCoverage[];
   enterpriseProfileBuild: EnterpriseProfileBuild[];
   placeholderRejectionReport: CanonicalBuildFinding[];
@@ -309,7 +343,12 @@ export type CanonicalDataBuildReport = {
     evidenceAttachments: number;
     relationshipCandidates: number;
     sourceRowsInspected: number;
-    sourceRowsIntegrated: number;
+    sourceMentionsRepresented: number;
+    distinctEntitiesAccepted: number;
+    duplicateMentionsCollapsed: number;
+    referenceMentions: number;
+    referencesResolved: number;
+    referenceResolutionRate: number;
     sourceRowsBlocked: number;
     placeholderRejections: number;
     archiveReadViolations: number;
@@ -1129,8 +1168,10 @@ export async function buildCanonicalTenantDataReport(options: {
   const findings: CanonicalBuildFinding[] = [];
 
   const tenants = [];
-  const canonicalRecords: CanonicalIngestionRecord[] = [];
-  const relationshipCandidates: RelationshipCandidate[] = [];
+  const sourceMentionRecords: CanonicalIngestionRecord[] = [];
+  const rawRelationshipCandidates: RelationshipCandidate[] = [];
+  let canonicalRecords: CanonicalIngestionRecord[] = [];
+  let relationshipCandidates: RelationshipCandidate[] = [];
   const placeholderRejectionReport: CanonicalBuildFinding[] = [];
   const sourcePathViolations: CanonicalBuildFinding[] = [];
 
@@ -1220,8 +1261,8 @@ export async function buildCanonicalTenantDataReport(options: {
         findings.push(...result.findings);
         placeholderRejectionReport.push(...result.placeholderRejections);
         if (result.record) {
-          canonicalRecords.push(result.record);
-          relationshipCandidates.push(
+          sourceMentionRecords.push(result.record);
+          rawRelationshipCandidates.push(
             ...relationshipCandidatesForRecord(
               result.record,
               sourceFile,
@@ -1233,6 +1274,14 @@ export async function buildCanonicalTenantDataReport(options: {
       });
     }
   }
+
+  canonicalRecords = resolveCanonicalEntities(sourceMentionRecords, findings);
+  relationshipCandidates = resolveRelationshipCandidates(
+    canonicalRecords,
+    rawRelationshipCandidates,
+    findings,
+  );
+  applyResolvedRelationships(canonicalRecords, relationshipCandidates);
 
   const canonicalRecordSummary = summarizeCanonicalRecords(
     tenants,
@@ -1247,6 +1296,13 @@ export async function buildCanonicalTenantDataReport(options: {
       tenant.tenantKey,
       relationshipCandidates,
       findings,
+    ),
+  );
+  const entityResolutionSummary = tenants.map((tenant) =>
+    entityResolutionForTenant(
+      tenant.tenantKey,
+      canonicalRecords,
+      relationshipCandidates,
     ),
   );
   const sourceIntegrationCoverage = buildSourceIntegrationCoverage(
@@ -1338,6 +1394,7 @@ export async function buildCanonicalTenantDataReport(options: {
     canonicalRecordSummary,
     evidenceAttachmentSummary,
     relationshipCandidatesSummary,
+    entityResolutionSummary,
     sourceIntegrationCoverage,
     enterpriseProfileBuild,
     placeholderRejectionReport,
@@ -1364,12 +1421,35 @@ export async function buildCanonicalTenantDataReport(options: {
         (sum, item) => sum + item.sourceRows,
         0,
       ),
-      sourceRowsIntegrated: sourceIntegrationCoverage
-        .filter(
-          (item) =>
-            item.disposition === "integrated" || item.disposition === "no_rows",
-        )
-        .reduce((sum, item) => sum + item.sourceRows, 0),
+      sourceMentionsRepresented: entityResolutionSummary.reduce(
+        (sum, item) => sum + item.sourceMentions,
+        0,
+      ),
+      distinctEntitiesAccepted: canonicalRecords.filter(
+        (record) => record.qualityStatus !== "quarantined",
+      ).length,
+      duplicateMentionsCollapsed: entityResolutionSummary.reduce(
+        (sum, item) => sum + item.duplicateMentionsCollapsed,
+        0,
+      ),
+      referenceMentions: entityResolutionSummary.reduce(
+        (sum, item) => sum + item.referenceMentions,
+        0,
+      ),
+      referencesResolved: entityResolutionSummary.reduce(
+        (sum, item) => sum + item.referencesResolved,
+        0,
+      ),
+      referenceResolutionRate: ratio(
+        entityResolutionSummary.reduce(
+          (sum, item) => sum + item.referencesResolved,
+          0,
+        ),
+        entityResolutionSummary.reduce(
+          (sum, item) => sum + item.referenceMentions,
+          0,
+        ),
+      ),
       sourceRowsBlocked: sourceIntegrationCoverage
         .filter(
           (item) =>
@@ -1418,6 +1498,10 @@ export async function writeCanonicalTenantDataReport(
   await fs.writeFile(
     path.join(absoluteOutputDir, "relationship-candidates-summary.json"),
     json(report.relationshipCandidatesSummary),
+  );
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "entity-resolution-summary.json"),
+    json(report.entityResolutionSummary),
   );
   await fs.writeFile(
     path.join(absoluteOutputDir, "source-integration-coverage.json"),
@@ -1601,7 +1685,7 @@ function buildRecordFromRow(args: {
       domain: config.canonicalDomain,
       objectType: config.objectType,
       sourceObjectId,
-      canonicalObjectKey: `${tenant.tenantKey}:${config.objectType}:${normalizeIdentifier(primary)}:${rowNumber}`,
+      canonicalObjectKey: `${tenant.tenantKey}:${config.objectType}:${normalizeIdentifier(primary)}`,
       attributes,
       relationships,
       evidenceReferences: [evidence],
@@ -1635,6 +1719,295 @@ function buildRecordFromRow(args: {
     findings,
     placeholderRejections,
   };
+}
+
+function resolveCanonicalEntities(
+  sourceMentions: CanonicalIngestionRecord[],
+  findings: CanonicalBuildFinding[],
+): CanonicalIngestionRecord[] {
+  const byEntity = new Map<string, CanonicalIngestionRecord[]>();
+  for (const mention of sourceMentions) {
+    const key = entityKeyForRecord(mention);
+    const existing = byEntity.get(key) ?? [];
+    existing.push(mention);
+    byEntity.set(key, existing);
+  }
+
+  return [...byEntity.values()].map((mentions) => {
+    const [primary, ...duplicates] = mentions;
+    const merged = cloneRecord(primary);
+    const identity = identityPartsForRecord(primary);
+    const sourceMentionsValue: SourceMention[] = mentions.map((mention) => ({
+      sourcePath: String(mention.attributes.sourcePath?.value ?? ""),
+      rowNumber: Number(mention.attributes.sourceRowNumber?.value ?? 0),
+      evidenceKey: mention.evidenceReferences[0]?.evidenceKey ?? "",
+      displayName: String(mention.attributes.displayName?.value ?? ""),
+    }));
+
+    merged.sourceObjectId = `${identity.domain}:${identity.normalizedName}`;
+    merged.canonicalObjectKey = `${primary.tenantKey}:${primary.objectType}:${identity.normalizedName}`;
+    merged.evidenceReferences = mergeEvidenceReferences(mentions);
+    merged.relationships = [];
+    merged.attributes = mergeAttributes(mentions);
+    merged.attributes.displayName = {
+      value: String(
+        primary.attributes.displayName?.value ?? identity.normalizedName,
+      ),
+      valueType: "string",
+      confidence: 0.9,
+    };
+    merged.attributes.sourceMentionCount = {
+      value: mentions.length,
+      valueType: "number",
+      confidence: 1,
+    };
+    merged.attributes.sourceMentions = {
+      value: sourceMentionsValue,
+      valueType: "json",
+      confidence: 1,
+    };
+    merged.attributes.sourcePaths = {
+      value: [
+        ...new Set(
+          sourceMentionsValue
+            .map((mention) => mention.sourcePath)
+            .filter(Boolean),
+        ),
+      ],
+      valueType: "json",
+      confidence: 1,
+    };
+    merged.validationFindings = [
+      ...(merged.validationFindings ?? []),
+      ...duplicates.map((duplicate) => ({
+        severity: "info" as const,
+        code: "source_mention_collapsed",
+        message: `Source row mention ${duplicate.sourceObjectId} was collapsed into canonical entity ${merged.canonicalObjectKey}.`,
+        evidenceKey: duplicate.evidenceReferences[0]?.evidenceKey,
+        sourceObjectId: duplicate.sourceObjectId,
+      })),
+    ];
+
+    if (duplicates.length > 0) {
+      findings.push({
+        tenantKey: primary.tenantKey,
+        severity: "info",
+        code: "source_mentions_collapsed_to_entity",
+        message: `${mentions.length} source mentions collapsed into canonical ${primary.objectType} entity ${merged.canonicalObjectKey}.`,
+        sourcePath: String(primary.attributes.sourcePath?.value ?? ""),
+        rowNumber: Number(primary.attributes.sourceRowNumber?.value ?? 0),
+        domain: domainForRecord(primary) ?? undefined,
+      });
+    }
+
+    return merged;
+  });
+}
+
+function resolveRelationshipCandidates(
+  records: CanonicalIngestionRecord[],
+  rawCandidates: RelationshipCandidate[],
+  findings: CanonicalBuildFinding[],
+): RelationshipCandidate[] {
+  const index = buildEntityLookup(records);
+  return rawCandidates.map((candidate) => {
+    const sourceObjectKey = resolveEntityReference(index, {
+      tenantKey: candidate.tenantKey,
+      objectType: candidate.sourceObjectType,
+      objectName: candidate.sourceObjectName,
+    });
+    const targetObjectKey = resolveEntityReference(index, {
+      tenantKey: candidate.tenantKey,
+      objectType: candidate.targetObjectType,
+      objectName: candidate.targetObjectName,
+    });
+    const resolved: RelationshipCandidate = {
+      ...candidate,
+      sourceObjectKey,
+      targetObjectKey,
+      resolutionStatus:
+        sourceObjectKey && targetObjectKey ? "resolved" : "unresolved",
+    };
+    if (resolved.resolutionStatus === "unresolved") {
+      findings.push({
+        tenantKey: candidate.tenantKey,
+        severity: "warning",
+        code: "canonical_reference_unresolved",
+        message: `Relationship ${candidate.relationshipType} could not resolve ${candidate.sourceObjectType}:${candidate.sourceObjectName} -> ${candidate.targetObjectType}:${candidate.targetObjectName} to canonical entity IDs.`,
+        sourcePath: candidate.sourcePath,
+        rowNumber: candidate.rowNumber,
+        value: candidate.targetObjectName,
+      });
+    }
+    return resolved;
+  });
+}
+
+function applyResolvedRelationships(
+  records: CanonicalIngestionRecord[],
+  candidates: RelationshipCandidate[],
+): void {
+  const byKey = new Map(
+    records.map((record) => [record.canonicalObjectKey, record]),
+  );
+  for (const candidate of candidates) {
+    if (
+      candidate.resolutionStatus !== "resolved" ||
+      !candidate.sourceObjectKey ||
+      !candidate.targetObjectKey
+    ) {
+      continue;
+    }
+    const record = byKey.get(candidate.sourceObjectKey);
+    if (!record) continue;
+    const exists = record.relationships.some(
+      (relationship) =>
+        relationship.relationshipType === candidate.relationshipType &&
+        relationship.targetObjectType === candidate.targetObjectType &&
+        relationship.targetObjectKey === candidate.targetObjectKey,
+    );
+    if (exists) continue;
+    record.relationships.push({
+      relationshipType: candidate.relationshipType,
+      targetObjectType: candidate.targetObjectType,
+      targetObjectKey: candidate.targetObjectKey,
+      evidenceReferences: [
+        {
+          evidenceKey: candidate.evidenceKey,
+          sourceObjectId: candidate.sourceObjectKey,
+          excerpt: `${candidate.sourceObjectName} ${candidate.relationshipType} ${candidate.targetObjectName}`,
+          confidence: candidate.confidence,
+        },
+      ],
+      confidence: candidate.confidence,
+    });
+  }
+}
+
+function buildEntityLookup(
+  records: CanonicalIngestionRecord[],
+): Map<string, string | null> {
+  const grouped = new Map<string, Set<string>>();
+  for (const record of records) {
+    const canonicalKey = record.canonicalObjectKey;
+    if (!canonicalKey) continue;
+    for (const objectType of lookupObjectTypes(record.objectType)) {
+      const key = lookupKey(
+        record.tenantKey,
+        objectType,
+        String(record.attributes.displayName?.value ?? ""),
+      );
+      const values = grouped.get(key) ?? new Set<string>();
+      values.add(canonicalKey);
+      grouped.set(key, values);
+    }
+  }
+  return new Map(
+    [...grouped.entries()].map(([key, values]) => [
+      key,
+      values.size === 1 ? [...values][0] : null,
+    ]),
+  );
+}
+
+function resolveEntityReference(
+  index: Map<string, string | null>,
+  reference: { tenantKey: string; objectType: string; objectName: string },
+): string | undefined {
+  for (const objectType of lookupObjectTypes(reference.objectType)) {
+    const match = index.get(
+      lookupKey(reference.tenantKey, objectType, reference.objectName),
+    );
+    if (match) return match;
+    if (match === null) return undefined;
+  }
+  return undefined;
+}
+
+function lookupObjectTypes(objectType: string): string[] {
+  const aliases: Record<string, string[]> = {
+    canonical_object: Object.values(DOMAIN_CONFIG).map(
+      (config) => config.objectType,
+    ),
+    vendor: ["vendor", "vendor_contract"],
+    vendor_contract: ["vendor_contract", "vendor"],
+    person_or_role: ["person_or_role", "org_owner", "workforce_role"],
+    org_owner: ["org_owner", "person_or_role"],
+    workforce_role: ["workforce_role", "person_or_role"],
+    data_domain: ["data_domain", "data_asset_or_integration"],
+    data_asset_or_integration: ["data_asset_or_integration", "data_domain"],
+    metric: ["metric", "metric_outcome"],
+    metric_outcome: ["metric_outcome", "metric"],
+    control: ["control", "risk_or_control"],
+    risk_or_control: ["risk_or_control", "control"],
+  };
+  return [...new Set([objectType, ...(aliases[objectType] ?? [])])];
+}
+
+function lookupKey(
+  tenantKey: string,
+  objectType: string,
+  name: string,
+): string {
+  return [tenantKey, objectType, normalizeIdentifier(name)].join("|");
+}
+
+function cloneRecord(
+  record: CanonicalIngestionRecord,
+): CanonicalIngestionRecord {
+  return JSON.parse(JSON.stringify(record)) as CanonicalIngestionRecord;
+}
+
+function mergeAttributes(
+  mentions: CanonicalIngestionRecord[],
+): Record<string, CanonicalValue> {
+  const merged: Record<string, CanonicalValue> = {};
+  for (const mention of mentions) {
+    for (const [key, value] of Object.entries(mention.attributes)) {
+      merged[key] ??= value;
+    }
+  }
+  return merged;
+}
+
+function mergeEvidenceReferences(
+  mentions: CanonicalIngestionRecord[],
+): EvidenceReference[] {
+  const byKey = new Map<string, EvidenceReference>();
+  for (const mention of mentions) {
+    for (const evidence of mention.evidenceReferences) {
+      byKey.set(evidence.evidenceKey, evidence);
+    }
+  }
+  return [...byKey.values()];
+}
+
+function entityKeyForRecord(record: CanonicalIngestionRecord): string {
+  const identity = identityPartsForRecord(record);
+  return [record.tenantKey, record.objectType, identity.normalizedName].join(
+    "|",
+  );
+}
+
+function identityPartsForRecord(record: CanonicalIngestionRecord): {
+  domain: string;
+  normalizedName: string;
+} {
+  const displayName = String(
+    record.attributes.displayName?.value ??
+      record.canonicalObjectKey ??
+      record.sourceObjectId,
+  );
+  return {
+    domain: domainForRecord(record) ?? record.objectType,
+    normalizedName: normalizeIdentifier(displayName),
+  };
+}
+
+function domainForRecord(record: CanonicalIngestionRecord): DomainKey | null {
+  const mappingProfile = record.lineage[0]?.mappingProfile;
+  const domain = mappingProfile?.replace("/canonical-input", "");
+  return domain && domain in DOMAIN_CONFIG ? (domain as DomainKey) : null;
 }
 
 async function discoverTenantSourceFiles(
@@ -1891,9 +2264,16 @@ function relationshipSummaryForTenant(
     byType[candidate.relationshipType] =
       (byType[candidate.relationshipType] ?? 0) + 1;
   }
+  const resolvedCount = tenantCandidates.filter(
+    (candidate) => candidate.resolutionStatus === "resolved",
+  ).length;
+  const unresolvedCount = tenantCandidates.length - resolvedCount;
   return {
     tenantKey,
     candidateCount: tenantCandidates.length,
+    resolvedCount,
+    unresolvedCount,
+    resolutionRate: ratio(resolvedCount, tenantCandidates.length),
     byType,
     gapCount: findings.filter(
       (finding) =>
@@ -1901,6 +2281,65 @@ function relationshipSummaryForTenant(
         finding.code.includes("relationship"),
     ).length,
     samples: tenantCandidates.slice(0, 20),
+  };
+}
+
+function entityResolutionForTenant(
+  tenantKey: string,
+  records: CanonicalIngestionRecord[],
+  candidates: RelationshipCandidate[],
+): EntityResolutionSummary {
+  const tenantRecords = records.filter(
+    (record) => record.tenantKey === tenantKey,
+  );
+  const sourceMentions = tenantRecords.reduce(
+    (sum, record) =>
+      sum + Number(record.attributes.sourceMentionCount?.value ?? 1),
+    0,
+  );
+  const distinctEntities = tenantRecords.filter(
+    (record) => record.qualityStatus !== "quarantined",
+  ).length;
+  const tenantCandidates = candidates.filter(
+    (candidate) => candidate.tenantKey === tenantKey,
+  );
+  const referencesResolved = tenantCandidates.filter(
+    (candidate) => candidate.resolutionStatus === "resolved",
+  ).length;
+  const objectTypes = [
+    ...new Set(tenantRecords.map((record) => record.objectType)),
+  ].sort();
+  return {
+    tenantKey,
+    sourceMentions,
+    distinctEntities,
+    duplicateMentionsCollapsed: Math.max(0, sourceMentions - distinctEntities),
+    referenceMentions: tenantCandidates.length,
+    referencesResolved,
+    referencesUnresolved: tenantCandidates.length - referencesResolved,
+    referenceResolutionRate: ratio(referencesResolved, tenantCandidates.length),
+    byObjectType: objectTypes.map((objectType) => {
+      const typedRecords = tenantRecords.filter(
+        (record) => record.objectType === objectType,
+      );
+      const typedMentions = typedRecords.reduce(
+        (sum, record) =>
+          sum + Number(record.attributes.sourceMentionCount?.value ?? 1),
+        0,
+      );
+      return {
+        objectType,
+        sourceMentions: typedMentions,
+        distinctEntities: typedRecords.length,
+        duplicateMentionsCollapsed: Math.max(
+          0,
+          typedMentions - typedRecords.length,
+        ),
+      };
+    }),
+    unresolvedSamples: tenantCandidates
+      .filter((candidate) => candidate.resolutionStatus === "unresolved")
+      .slice(0, 25),
   };
 }
 
@@ -1914,7 +2353,7 @@ function buildSourceIntegrationCoverage(
       const sourceRecords = records.filter(
         (record) =>
           record.tenantKey === tenant.tenantKey &&
-          record.attributes.sourcePath?.value === sourceFile.repoRelativePath,
+          recordSourcePaths(record).includes(sourceFile.repoRelativePath),
       );
       const sourceCandidates = candidates.filter(
         (candidate) =>
@@ -1946,6 +2385,15 @@ function buildSourceIntegrationCoverage(
         sourcePath: sourceFile.repoRelativePath,
         domain: sourceFile.domain,
         sourceRows: sourceFile.rowCount,
+        sourceMentions: sourceRecords.reduce(
+          (sum, record) =>
+            sum +
+            recordSourceMentions(record).filter(
+              (mention) => mention.sourcePath === sourceFile.repoRelativePath,
+            ).length,
+          0,
+        ),
+        distinctEntities: sourceRecords.length,
         canonicalRecords: sourceRecords.length,
         acceptedRecords,
         quarantinedRecords,
@@ -2088,6 +2536,46 @@ function profileBuildForTenant(
       evidenceKey: record.evidenceReferences[0]?.evidenceKey ?? "",
     })),
   };
+}
+
+function recordSourcePaths(record: CanonicalIngestionRecord): string[] {
+  const sourcePaths = record.attributes.sourcePaths?.value;
+  if (Array.isArray(sourcePaths)) {
+    return sourcePaths.map((item) => String(item)).filter(Boolean);
+  }
+  const sourcePath = record.attributes.sourcePath?.value;
+  return sourcePath ? [String(sourcePath)] : [];
+}
+
+function recordSourceMentions(
+  record: CanonicalIngestionRecord,
+): SourceMention[] {
+  const sourceMentions = record.attributes.sourceMentions?.value;
+  if (!Array.isArray(sourceMentions)) {
+    return [
+      {
+        sourcePath: String(record.attributes.sourcePath?.value ?? ""),
+        rowNumber: Number(record.attributes.sourceRowNumber?.value ?? 0),
+        evidenceKey: record.evidenceReferences[0]?.evidenceKey ?? "",
+        displayName: String(record.attributes.displayName?.value ?? ""),
+      },
+    ];
+  }
+  return sourceMentions
+    .filter(
+      (mention): mention is Record<string, unknown> =>
+        Boolean(mention) && typeof mention === "object",
+    )
+    .map((mention) => ({
+      sourcePath: String(mention.sourcePath ?? ""),
+      rowNumber: Number(mention.rowNumber ?? 0),
+      evidenceKey: String(mention.evidenceKey ?? ""),
+      displayName: String(mention.displayName ?? ""),
+    }));
+}
+
+function ratio(numerator: number, denominator: number): number {
+  return denominator === 0 ? 0 : Number((numerator / denominator).toFixed(4));
 }
 
 function fillListFact(
@@ -2456,7 +2944,10 @@ function summaryMarkdown(report: CanonicalDataBuildReport): string {
     `- Evidence attachments: ${report.summary.evidenceAttachments.toLocaleString()}`,
     `- Relationship candidates: ${report.summary.relationshipCandidates.toLocaleString()}`,
     `- Source rows inspected: ${report.summary.sourceRowsInspected.toLocaleString()}`,
-    `- Source rows integrated: ${report.summary.sourceRowsIntegrated.toLocaleString()}`,
+    `- Source mentions represented: ${report.summary.sourceMentionsRepresented.toLocaleString()}`,
+    `- Distinct entities accepted: ${report.summary.distinctEntitiesAccepted.toLocaleString()}`,
+    `- Duplicate mentions collapsed: ${report.summary.duplicateMentionsCollapsed.toLocaleString()}`,
+    `- References resolved: ${report.summary.referencesResolved.toLocaleString()} / ${report.summary.referenceMentions.toLocaleString()} (${Math.round(report.summary.referenceResolutionRate * 100)}%)`,
     `- Source rows blocked: ${report.summary.sourceRowsBlocked.toLocaleString()}`,
     `- Placeholder rejections/gaps: ${report.summary.placeholderRejections.toLocaleString()}`,
     `- Archive/legacy read violations: ${report.summary.archiveReadViolations}`,
@@ -2464,13 +2955,13 @@ function summaryMarkdown(report: CanonicalDataBuildReport): string {
     "",
     "## Tenants",
     "",
-    "| Tenant | Source files | Source rows | Accepted records | Relationship candidates | Profile | Home/aVa ready |",
-    "| --- | ---: | ---: | ---: | ---: | --- | --- |",
+    "| Tenant | Source files | Source rows | Source mentions | Distinct entities | References resolved | Profile | Home/aVa ready |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | --- | --- |",
     ...report.tenants.map((tenant) => {
       const recordSummary = report.canonicalRecordSummary.find(
         (item) => item.tenantKey === tenant.tenantKey,
       );
-      const relationSummary = report.relationshipCandidatesSummary.find(
+      const entitySummary = report.entityResolutionSummary.find(
         (item) => item.tenantKey === tenant.tenantKey,
       );
       const profile = report.enterpriseProfileBuild.find(
@@ -2479,21 +2970,21 @@ function summaryMarkdown(report: CanonicalDataBuildReport): string {
       const readiness = report.homeAvaReadiness.find(
         (item) => item.tenantKey === tenant.tenantKey,
       );
-      return `| ${tenant.displayName} | ${tenant.sourceFiles.length.toLocaleString()} | ${tenant.sourceFiles.reduce((sum, file) => sum + file.rowCount, 0).toLocaleString()} | ${(recordSummary?.totalAcceptedRecords ?? 0).toLocaleString()} | ${(relationSummary?.candidateCount ?? 0).toLocaleString()} | ${profile?.status ?? "missing"} | ${readiness?.ready ? "ready" : "not ready"} |`;
+      return `| ${tenant.displayName} | ${tenant.sourceFiles.length.toLocaleString()} | ${tenant.sourceFiles.reduce((sum, file) => sum + file.rowCount, 0).toLocaleString()} | ${(entitySummary?.sourceMentions ?? 0).toLocaleString()} | ${(recordSummary?.totalAcceptedRecords ?? 0).toLocaleString()} | ${(entitySummary?.referencesResolved ?? 0).toLocaleString()} / ${(entitySummary?.referenceMentions ?? 0).toLocaleString()} | ${profile?.status ?? "missing"} | ${readiness?.ready ? "ready" : "not ready"} |`;
     }),
     "",
-    "## Source Integration Coverage",
+    "## Source Mention Coverage",
     "",
-    "| Tenant | File | Rows | Domain | Records | Relationship candidates | Disposition |",
-    "| --- | --- | ---: | --- | ---: | ---: | --- |",
+    "| Tenant | File | Rows | Domain | Source mentions | Distinct entities | Relationship candidates | Disposition |",
+    "| --- | --- | ---: | --- | ---: | ---: | ---: | --- |",
     ...report.sourceIntegrationCoverage.map(
       (coverage) =>
-        `| ${coverage.tenantKey} | ${coverage.sourcePath} | ${coverage.sourceRows.toLocaleString()} | ${coverage.domain ?? "unmapped"} | ${coverage.canonicalRecords.toLocaleString()} | ${coverage.relationshipCandidates.toLocaleString()} | ${coverage.disposition} |`,
+        `| ${coverage.tenantKey} | ${coverage.sourcePath} | ${coverage.sourceRows.toLocaleString()} | ${coverage.domain ?? "unmapped"} | ${coverage.sourceMentions.toLocaleString()} | ${coverage.distinctEntities.toLocaleString()} | ${coverage.relationshipCandidates.toLocaleString()} | ${coverage.disposition} |`,
     ),
     "",
-    "## Domain Counts",
+    "## Entity Resolution By Domain",
     "",
-    "| Tenant | Domain | Source rows | Accepted records | Skipped rows | Duplicate names |",
+    "| Tenant | Domain | Source rows | Distinct entities | Skipped rows | Duplicate mentions |",
     "| --- | --- | ---: | ---: | ---: | ---: |",
     ...report.canonicalRecordSummary.flatMap((tenant) =>
       Object.entries(tenant.byDomain).map(
@@ -2508,6 +2999,7 @@ function summaryMarkdown(report: CanonicalDataBuildReport): string {
     "- `canonical-records-summary.json`",
     "- `evidence-attachment-summary.json`",
     "- `relationship-candidates-summary.json`",
+    "- `entity-resolution-summary.json`",
     "- `source-integration-coverage.json`",
     "- `enterprise-profile-build.json`",
     "- `placeholder-rejection-report.json`",
@@ -2540,8 +3032,16 @@ function controlHtml(report: CanonicalDataBuildReport): string {
   const cards = [
     ["Tenants", report.summary.tenantsProcessed],
     [
-      "Accepted Records",
-      report.summary.canonicalRecordsAccepted.toLocaleString(),
+      "Distinct Entities",
+      report.summary.distinctEntitiesAccepted.toLocaleString(),
+    ],
+    [
+      "Source Mentions",
+      report.summary.sourceMentionsRepresented.toLocaleString(),
+    ],
+    [
+      "References Resolved",
+      `${report.summary.referencesResolved.toLocaleString()} / ${report.summary.referenceMentions.toLocaleString()}`,
     ],
     [
       "Evidence Attachments",

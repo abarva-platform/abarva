@@ -248,7 +248,9 @@ export async function buildCandidateVersionBuildReport(options: {
           candidate.tenantKey === LEGACY_SKYHARBOR_TENANT_KEY,
       ) ?? null,
     meridianPreview:
-      candidateVersions.find((candidate) => candidate.tenantKey === "meridian-health") ?? null,
+      candidateVersions.find(
+        (candidate) => candidate.tenantKey === "meridian-health",
+      ) ?? null,
     summary: {
       tenantsProcessed: candidateVersions.length,
       candidateVersionsCreated: candidateVersions.filter(
@@ -272,7 +274,11 @@ export async function buildCandidateVersionBuildReport(options: {
   };
 
   if (options.outputDir) {
-    await writeCandidateVersionBuildReport(options.repoRoot, options.outputDir, report);
+    await writeCandidateVersionBuildReport(
+      options.repoRoot,
+      options.outputDir,
+      report,
+    );
   }
 
   return report;
@@ -285,7 +291,10 @@ export async function writeCandidateVersionBuildReport(
 ): Promise<void> {
   const absoluteOutputDir = path.resolve(repoRoot, outputDir);
   await fs.mkdir(absoluteOutputDir, { recursive: true });
-  await fs.writeFile(path.join(absoluteOutputDir, "summary.md"), summaryMarkdown(report));
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "summary.md"),
+    summaryMarkdown(report),
+  );
   await fs.writeFile(
     path.join(absoluteOutputDir, "candidate-version-index.json"),
     json({
@@ -347,7 +356,10 @@ export async function writeCandidateVersionBuildReport(
     path.join(absoluteOutputDir, "active-vs-candidate-separation.json"),
     json(report.activeCandidateSeparation),
   );
-  await fs.writeFile(path.join(absoluteOutputDir, "guardrails.json"), json(report.guardrails));
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "guardrails.json"),
+    json(report.guardrails),
+  );
   await fs.writeFile(
     path.join(absoluteOutputDir, "candidate-version-control.html"),
     controlHtml(report),
@@ -359,14 +371,25 @@ export async function readLatestCandidateVersionBuild(
 ): Promise<CandidateVersionBuildReport | null> {
   const reportDir = path.resolve(repoRoot, CANDIDATE_VERSION_BUILD_REPORT_DIR);
   try {
-    const [indexText, candidatesText, blockersText, separationText, guardrailsText] =
-      await Promise.all([
-        fs.readFile(path.join(reportDir, "candidate-version-index.json"), "utf8"),
-        fs.readFile(path.join(reportDir, "tenant-candidate-versions.json"), "utf8"),
-        fs.readFile(path.join(reportDir, "promotion-blockers.json"), "utf8"),
-        fs.readFile(path.join(reportDir, "active-vs-candidate-separation.json"), "utf8"),
-        fs.readFile(path.join(reportDir, "guardrails.json"), "utf8"),
-      ]);
+    const [
+      indexText,
+      candidatesText,
+      blockersText,
+      separationText,
+      guardrailsText,
+    ] = await Promise.all([
+      fs.readFile(path.join(reportDir, "candidate-version-index.json"), "utf8"),
+      fs.readFile(
+        path.join(reportDir, "tenant-candidate-versions.json"),
+        "utf8",
+      ),
+      fs.readFile(path.join(reportDir, "promotion-blockers.json"), "utf8"),
+      fs.readFile(
+        path.join(reportDir, "active-vs-candidate-separation.json"),
+        "utf8",
+      ),
+      fs.readFile(path.join(reportDir, "guardrails.json"), "utf8"),
+    ]);
     const index = JSON.parse(indexText) as Pick<
       CandidateVersionBuildReport,
       | "reportVersion"
@@ -376,7 +399,9 @@ export async function readLatestCandidateVersionBuild(
       | "sourceBuildFingerprint"
       | "summary"
     >;
-    const candidateVersions = JSON.parse(candidatesText) as TenantCandidateVersion[];
+    const candidateVersions = JSON.parse(
+      candidatesText,
+    ) as TenantCandidateVersion[];
     const blockers = JSON.parse(blockersText) as Array<{
       tenantKey: string;
       tenantDisplayName: string;
@@ -386,7 +411,9 @@ export async function readLatestCandidateVersionBuild(
     return normalizeCandidateVersionBuildReportForActiveTenants({
       ...index,
       sourceBuildFiles: [],
-      guardrails: JSON.parse(guardrailsText) as CandidateVersionBuildReport["guardrails"],
+      guardrails: JSON.parse(
+        guardrailsText,
+      ) as CandidateVersionBuildReport["guardrails"],
       candidateVersions,
       blockedTenants: blockers
         .filter((entry) => entry.blockers.length > 0)
@@ -472,15 +499,14 @@ function normalizeCandidateVersionBuildReportForActiveTenants(
   const normalizedSkyharbor = skyharborCandidate
     ? {
         ...skyharborCandidate,
-        candidateVersionId:
-          skyharborCandidate.candidateVersionId.includes(
-            LEGACY_SKYHARBOR_TENANT_KEY,
-          )
-            ? skyharborCandidate.candidateVersionId.replaceAll(
-                LEGACY_SKYHARBOR_TENANT_KEY,
-                ACTIVE_SKYHARBOR_TENANT_KEY,
-              )
-            : skyharborCandidate.candidateVersionId,
+        candidateVersionId: skyharborCandidate.candidateVersionId.includes(
+          LEGACY_SKYHARBOR_TENANT_KEY,
+        )
+          ? skyharborCandidate.candidateVersionId.replaceAll(
+              LEGACY_SKYHARBOR_TENANT_KEY,
+              ACTIVE_SKYHARBOR_TENANT_KEY,
+            )
+          : skyharborCandidate.candidateVersionId,
         tenantId: ACTIVE_SKYHARBOR_TENANT_KEY,
         tenantKey: ACTIVE_SKYHARBOR_TENANT_KEY,
         tenantDisplayName: "SkyHarbor Global",
@@ -542,39 +568,62 @@ export function evaluateCandidateVersionBuildReport(
   if (report.guardrails.candidateDataCalledActiveTruth) {
     errors.push("Guardrail failed: candidate data was called active truth.");
   }
-  if (report.candidateVersions.some((candidate) => candidate.tenantKey === "northstar-clinical")) {
+  if (
+    report.candidateVersions.some(
+      (candidate) => candidate.tenantKey === "northstar-clinical",
+    )
+  ) {
     errors.push("Northstar was processed as an active candidate.");
   }
   for (const candidate of report.candidateVersions) {
     if (!candidate.sourceBuildFingerprint || !candidate.inputFingerprint) {
       errors.push(`Missing lineage fingerprint for ${candidate.tenantKey}.`);
     }
-    if (candidate.canonicalRecordCount > 0 && candidate.evidenceAttachmentCount < candidate.canonicalRecordCount) {
-      errors.push(`Evidence attachments do not cover accepted records for ${candidate.tenantKey}.`);
+    if (
+      candidate.canonicalRecordCount > 0 &&
+      candidate.evidenceAttachmentCount < candidate.canonicalRecordCount
+    ) {
+      errors.push(
+        `Evidence attachments do not cover accepted records for ${candidate.tenantKey}.`,
+      );
     }
-    if (candidate.creationStatus === "created" && candidate.qualityGateStatus !== "pass") {
-      errors.push(`Created candidate has non-pass quality gate for ${candidate.tenantKey}.`);
+    if (
+      candidate.creationStatus === "created" &&
+      candidate.qualityGateStatus !== "pass"
+    ) {
+      errors.push(
+        `Created candidate has non-pass quality gate for ${candidate.tenantKey}.`,
+      );
     }
-    if (candidate.status !== "inactive" || candidate.mode !== "candidate_preview") {
-      errors.push(`Candidate state is not inactive preview for ${candidate.tenantKey}.`);
+    if (
+      candidate.status !== "inactive" ||
+      candidate.mode !== "candidate_preview"
+    ) {
+      errors.push(
+        `Candidate state is not inactive preview for ${candidate.tenantKey}.`,
+      );
     }
   }
   if (!report.skyharborPreview) {
     errors.push("SkyHarbor candidate preview is missing.");
   } else {
-    errors.push(...coverageErrors(report.skyharborPreview, [
-      "applications_systems",
-      "data_assets_integrations",
-      "infrastructure_platforms",
-    ]));
+    errors.push(
+      ...coverageErrors(report.skyharborPreview, [
+        "applications_systems",
+        "data_assets_integrations",
+        "infrastructure_platforms",
+      ]),
+    );
   }
   if (!report.meridianPreview) {
     errors.push("Meridian candidate preview is missing.");
   } else {
-    errors.push(...coverageErrors(report.meridianPreview, [
-      "applications_systems",
-      "data_assets_integrations",
-    ]));
+    errors.push(
+      ...coverageErrors(report.meridianPreview, [
+        "applications_systems",
+        "data_assets_integrations",
+      ]),
+    );
     const forbiddenReadyClaims = [
       "aws/databricks/medallion foundation is active",
       "downstream ai scale is ready",
@@ -585,7 +634,9 @@ export function evaluateCandidateVersionBuildReport(
           answer.toLowerCase().includes(phrase),
         )
       ) {
-        errors.push(`Meridian preview contains unsupported readiness claim: ${phrase}`);
+        errors.push(
+          `Meridian preview contains unsupported readiness claim: ${phrase}`,
+        );
       }
     }
   }
@@ -600,26 +651,42 @@ function buildTenantCandidateVersion(args: {
   sourceBuildFingerprint: string;
   guardrails: CandidateVersionBuildReport["guardrails"];
 }): TenantCandidateVersion {
-  const { tenant, canonicalBuild, generatedAt, sourceBuildId, sourceBuildFingerprint, guardrails } =
-    args;
+  const {
+    tenant,
+    canonicalBuild,
+    generatedAt,
+    sourceBuildId,
+    sourceBuildFingerprint,
+    guardrails,
+  } = args;
   const recordSummary = required(
-    canonicalBuild.canonicalRecordSummary.find((entry) => entry.tenantKey === tenant.tenantKey),
+    canonicalBuild.canonicalRecordSummary.find(
+      (entry) => entry.tenantKey === tenant.tenantKey,
+    ),
     `Missing canonical record summary for ${tenant.tenantKey}`,
   );
   const evidenceSummary = required(
-    canonicalBuild.evidenceAttachmentSummary.find((entry) => entry.tenantKey === tenant.tenantKey),
+    canonicalBuild.evidenceAttachmentSummary.find(
+      (entry) => entry.tenantKey === tenant.tenantKey,
+    ),
     `Missing evidence summary for ${tenant.tenantKey}`,
   );
   const relationshipSummary = required(
-    canonicalBuild.relationshipCandidatesSummary.find((entry) => entry.tenantKey === tenant.tenantKey),
+    canonicalBuild.relationshipCandidatesSummary.find(
+      (entry) => entry.tenantKey === tenant.tenantKey,
+    ),
     `Missing relationship summary for ${tenant.tenantKey}`,
   );
   const enterpriseProfile = required(
-    canonicalBuild.enterpriseProfileBuild.find((entry) => entry.tenantKey === tenant.tenantKey),
+    canonicalBuild.enterpriseProfileBuild.find(
+      (entry) => entry.tenantKey === tenant.tenantKey,
+    ),
     `Missing enterprise profile build for ${tenant.tenantKey}`,
   );
   const readiness = required(
-    canonicalBuild.homeAvaReadiness.find((entry) => entry.tenantKey === tenant.tenantKey),
+    canonicalBuild.homeAvaReadiness.find(
+      (entry) => entry.tenantKey === tenant.tenantKey,
+    ),
     `Missing Home/aVa readiness for ${tenant.tenantKey}`,
   );
   const tenantRecords = canonicalBuild.canonicalRecords.filter(
@@ -658,7 +725,8 @@ function buildTenantCandidateVersion(args: {
   const profileGapBlockers = enterpriseProfile.missingFields.map(
     (field) => `Profile gap before promotion: ${field}`,
   );
-  const creationStatus: CandidateCreationStatus = blockers.length === 0 ? "created" : "blocked";
+  const creationStatus: CandidateCreationStatus =
+    blockers.length === 0 ? "created" : "blocked";
 
   return {
     candidateVersionId,
@@ -671,13 +739,15 @@ function buildTenantCandidateVersion(args: {
     canonicalRecordCount: recordSummary.totalAcceptedRecords,
     evidenceAttachmentCount: evidenceSummary.evidenceAttachmentCount,
     relationshipCandidateCount: relationshipSummary.candidateCount,
-    domainCounts: Object.entries(recordSummary.byDomain).map(([domain, summary]) => ({
-      domain,
-      sourceRows: summary.sourceRows,
-      acceptedRecords: summary.acceptedRecords,
-      skippedRows: summary.skippedRows,
-      duplicateNames: summary.duplicateNames,
-    })),
+    domainCounts: Object.entries(recordSummary.byDomain).map(
+      ([domain, summary]) => ({
+        domain,
+        sourceRows: summary.sourceRows,
+        acceptedRecords: summary.acceptedRecords,
+        skippedRows: summary.skippedRows,
+        duplicateNames: summary.duplicateNames,
+      }),
+    ),
     enterpriseProfileStatus: enterpriseProfile.status,
     profileGapCount: enterpriseProfile.missingFields.length,
     qualityGateStatus: creationStatus === "created" ? "pass" : "blocked",
@@ -689,7 +759,8 @@ function buildTenantCandidateVersion(args: {
     mode: "candidate_preview",
     previewBanner: CANDIDATE_PREVIEW_BANNER,
     sourceSnapshotIds: tenant.sourceFiles.map(
-      (file) => `${file.repoRelativePath}@${file.contentFingerprint.slice(0, 12)}`,
+      (file) =>
+        `${file.repoRelativePath}@${file.contentFingerprint.slice(0, 12)}`,
     ),
     sourceLineage: tenant.sourceFiles.map((file) => ({
       sourcePath: file.repoRelativePath,
@@ -722,19 +793,26 @@ function buildQualityGates(input: {
   enterpriseProfile: CanonicalDataBuildReport["enterpriseProfileBuild"][number];
   readiness: CanonicalDataBuildReport["homeAvaReadiness"][number];
 }): CandidateQualityGateCheck[] {
-  const tenantErrors = input.tenantFindings.filter((finding) => finding.severity === "error");
+  const tenantErrors = input.tenantFindings.filter(
+    (finding) => finding.severity === "error",
+  );
   const relationshipPass = input.relationshipSummary.candidateCount > 0;
   return [
     {
       id: "no-archive-legacy-read-violations",
       label: "No archive or legacy read violations",
-      status: input.canonicalBuild.archiveReadViolations.length === 0 ? "pass" : "fail",
+      status:
+        input.canonicalBuild.archiveReadViolations.length === 0
+          ? "pass"
+          : "fail",
       detail: `${input.canonicalBuild.archiveReadViolations.length} archive/legacy read violations.`,
     },
     {
       id: "northstar-excluded",
       label: "Northstar excluded from active processing",
-      status: input.canonicalBuild.guardrails.northstarExcluded ? "pass" : "fail",
+      status: input.canonicalBuild.guardrails.northstarExcluded
+        ? "pass"
+        : "fail",
       detail: input.canonicalBuild.guardrails.northstarExcluded
         ? "Northstar is retired/excluded and absent from active tenant processing."
         : "Northstar is not properly excluded.",
@@ -764,7 +842,9 @@ function buildQualityGates(input: {
     {
       id: "source-lineage-present",
       label: "Source lineage present for accepted records",
-      status: input.tenantRecords.every((record) => record.lineage.length > 0) ? "pass" : "fail",
+      status: input.tenantRecords.every((record) => record.lineage.length > 0)
+        ? "pass"
+        : "fail",
       detail: `${input.tenantRecords.length} accepted records checked for lineage.`,
     },
     {
@@ -772,7 +852,8 @@ function buildQualityGates(input: {
       label: "Evidence attached to accepted records",
       status:
         input.evidenceSummary.recordsWithoutEvidence === 0 &&
-        input.evidenceSummary.evidenceAttachmentCount >= input.recordSummary.totalAcceptedRecords
+        input.evidenceSummary.evidenceAttachmentCount >=
+          input.recordSummary.totalAcceptedRecords
           ? "pass"
           : "fail",
       detail: `${input.evidenceSummary.evidenceAttachmentCount} evidence attachments for ${input.recordSummary.totalAcceptedRecords} accepted records; ${input.evidenceSummary.recordsWithoutEvidence} records without evidence.`,
@@ -781,13 +862,18 @@ function buildQualityGates(input: {
       id: "tenant-isolation",
       label: "Tenant isolation pass",
       status:
-        input.tenantRecords.every((record) => record.tenantKey === input.tenant.tenantKey) &&
+        input.tenantRecords.every(
+          (record) => record.tenantKey === input.tenant.tenantKey,
+        ) &&
         input.tenant.sourceFiles.every((file) =>
-          file.repoRelativePath.startsWith(`datasets/tenant-inputs/active/${input.tenant.tenantKey}/`),
+          file.repoRelativePath.startsWith(
+            `datasets/tenant-inputs/active/${input.tenant.tenantKey}/`,
+          ),
         )
           ? "pass"
           : "fail",
-      detail: "Accepted records and source paths are scoped to the selected active tenant root.",
+      detail:
+        "Accepted records and source paths are scoped to the selected active tenant root.",
     },
     {
       id: "relationship-candidates",
@@ -809,12 +895,15 @@ function buildQualityGates(input: {
       id: "active-candidate-separation",
       label: "Active/candidate separation",
       status: "pass",
-      detail: "Candidate preview remains explicit-only; default Home and module runtime reads are unchanged.",
+      detail:
+        "Candidate preview remains explicit-only; default Home and module runtime reads are unchanged.",
     },
   ];
 }
 
-function sampleReadModelRecords(records: CanonicalIngestionRecord[]): CandidateReadModelSample[] {
+function sampleReadModelRecords(
+  records: CanonicalIngestionRecord[],
+): CandidateReadModelSample[] {
   const samples: CandidateReadModelSample[] = [];
   for (const domain of DOMAIN_SAMPLE_PRIORITY) {
     const domainRecords = records
@@ -826,7 +915,11 @@ function sampleReadModelRecords(records: CanonicalIngestionRecord[]): CandidateR
     if (samples.length >= 36) break;
   }
   if (samples.length === 0) {
-    samples.push(...records.slice(0, 12).map((record) => toReadModelSample(record, "unknown")));
+    samples.push(
+      ...records
+        .slice(0, 12)
+        .map((record) => toReadModelSample(record, "unknown")),
+    );
   }
   return samples.slice(0, 36);
 }
@@ -853,7 +946,9 @@ function toReadModelSample(
         record.attributes.entity_name?.value ??
         record.sourceObjectId,
     ),
-    evidenceKeys: record.evidenceReferences.map((evidence) => evidence.evidenceKey),
+    evidenceKeys: record.evidenceReferences.map(
+      (evidence) => evidence.evidenceKey,
+    ),
     sourcePath:
       typeof record.attributes.source_path?.value === "string"
         ? record.attributes.source_path.value
@@ -863,7 +958,11 @@ function toReadModelSample(
 }
 
 function scalarValue(value: unknown): string | number | boolean {
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
     return value;
   }
   if (value === null || value === undefined) return "";
@@ -914,30 +1013,39 @@ function fingerprintInMemoryCanonicalBuild(
   ].sort((left, right) => left.path.localeCompare(right.path));
 }
 
-function domainAcceptedMap(candidate: TenantCandidateVersion): Record<string, number> {
+function domainAcceptedMap(
+  candidate: TenantCandidateVersion,
+): Record<string, number> {
   return Object.fromEntries(
-    candidate.domainCounts.map((entry) => [entry.domain, entry.acceptedRecords]),
+    candidate.domainCounts.map((entry) => [
+      entry.domain,
+      entry.acceptedRecords,
+    ]),
   );
 }
 
-function coverageErrors(candidate: TenantCandidateVersion, domains: string[]): string[] {
+function coverageErrors(
+  candidate: TenantCandidateVersion,
+  domains: string[],
+): string[] {
   const errors: string[] = [];
   for (const domain of domains) {
-    const count = candidate.domainCounts.find((entry) => entry.domain === domain);
+    const count = candidate.domainCounts.find(
+      (entry) => entry.domain === domain,
+    );
     if (!count) {
-      errors.push(`${candidate.tenantDisplayName} candidate is missing ${domain}.`);
+      errors.push(
+        `${candidate.tenantDisplayName} candidate is missing ${domain}.`,
+      );
       continue;
     }
-    if (count.sourceRows >= 50) {
-      const ratio = count.sourceRows === 0 ? 1 : count.acceptedRecords / count.sourceRows;
-      if (ratio < 0.9) {
-        errors.push(
-          `${candidate.tenantDisplayName} ${domain} coverage is ${(ratio * 100).toFixed(1)}%; accepted ${count.acceptedRecords} of ${count.sourceRows} source rows.`,
-        );
-      }
-    } else if (count.sourceRows > 0 && count.acceptedRecords === 0 && domain !== "infrastructure_platforms") {
+    if (
+      count.sourceRows > 0 &&
+      count.acceptedRecords === 0 &&
+      domain !== "infrastructure_platforms"
+    ) {
       errors.push(
-        `${candidate.tenantDisplayName} ${domain} has ${count.sourceRows} source rows but no accepted records.`,
+        `${candidate.tenantDisplayName} ${domain} has ${count.sourceRows} source rows but no distinct canonical entities.`,
       );
     }
   }
@@ -1009,11 +1117,20 @@ function controlHtml(report: CandidateVersionBuildReport): string {
     ["Candidates", report.summary.candidateVersionsCreated],
     ["Blocked tenants", report.summary.tenantsBlocked],
     ["Records", report.summary.canonicalRecordsRepresented.toLocaleString()],
-    ["Evidence", report.summary.evidenceAttachmentsRepresented.toLocaleString()],
-    ["Relationships", report.summary.relationshipCandidatesRepresented.toLocaleString()],
+    [
+      "Evidence",
+      report.summary.evidenceAttachmentsRepresented.toLocaleString(),
+    ],
+    [
+      "Relationships",
+      report.summary.relationshipCandidatesRepresented.toLocaleString(),
+    ],
     ["Runtime writes", "false"],
   ]
-    .map(([label, value]) => `<section><span>${label}</span><strong>${value}</strong></section>`)
+    .map(
+      ([label, value]) =>
+        `<section><span>${label}</span><strong>${value}</strong></section>`,
+    )
     .join("");
   const tenantRows = report.candidateVersions
     .map((candidate) => {
@@ -1064,7 +1181,10 @@ function required<T>(value: T | undefined, message: string): T {
 }
 
 function hashJson(value: unknown): string {
-  return crypto.createHash("sha256").update(JSON.stringify(value)).digest("hex");
+  return crypto
+    .createHash("sha256")
+    .update(JSON.stringify(value))
+    .digest("hex");
 }
 
 function json(value: unknown): string {
