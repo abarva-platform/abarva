@@ -31,6 +31,10 @@ export interface HomeLandscapeDimension {
   readonly distinctNameCount: number;
   /** Named examples, so a count reads as a landscape rather than an inventory total. */
   readonly sampleEntities: readonly string[];
+  /** Summed money for dimensions that carry it, with how many records contributed. Null is absent, not zero. */
+  readonly money: { total: number; contributing: number } | null;
+  /** Summed opportunity or expected value, kept separate from spend so the two are never added together. */
+  readonly value: { total: number; contributing: number } | null;
 }
 
 export interface HomeLandscape {
@@ -38,6 +42,8 @@ export interface HomeLandscape {
   readonly generatedAt: string | null;
   readonly dimensions: readonly HomeLandscapeDimension[];
   readonly totalEntities: number;
+  /** Look up one dimension by key, for surfaces that need a specific figure rather than the whole set. */
+  readonly byKey: (dimensionKey: string) => HomeLandscapeDimension | null;
   /** Dimensions the client has not supplied. Shown as gaps, not hidden. */
   readonly gaps: readonly string[];
 }
@@ -49,6 +55,21 @@ export interface HomeLandscape {
  * without its landscape is a degraded surface, but a Home page that renders a stale one is a
  * wrong answer, and the second is worse.
  */
+function readTotal(
+  raw: unknown,
+): { total: number; contributing: number } | null {
+  if (!raw || typeof raw !== "object") return null;
+  const candidate = raw as { total?: unknown; contributing?: unknown };
+  const total = Number(candidate.total);
+  const contributing = Number(candidate.contributing);
+  // A total nothing contributed to is absent. Coercing it to zero would put a confident $0 on an
+  // executive surface, which is the one thing worse than an empty panel.
+  if (!Number.isFinite(total) || !Number.isFinite(contributing) || contributing <= 0) {
+    return null;
+  }
+  return { total, contributing };
+}
+
 export async function loadHomeLandscape(
   tenantKey: string | null | undefined,
 ): Promise<HomeLandscape | null> {
@@ -101,6 +122,8 @@ export async function loadHomeLandscape(
         section: typeof meta.section === "string" ? meta.section : null,
         distinctNameCount: Number(meta.distinctNameCount ?? 0),
         sampleEntities: samples.filter((v): v is string => typeof v === "string"),
+        money: readTotal(meta.money),
+        value: readTotal(meta.value),
       };
     });
 
@@ -109,6 +132,8 @@ export async function loadHomeLandscape(
       generatedAt: rows[0].created_at,
       dimensions,
       totalEntities: dimensions.reduce((n, d) => n + d.recordCount, 0),
+      byKey: (dimensionKey: string) =>
+        dimensions.find((d) => d.dimensionKey === dimensionKey) ?? null,
       gaps: dimensions.filter((d) => d.recordCount === 0).map((d) => d.displayName),
     };
   } catch {

@@ -104,6 +104,52 @@ const LANDSCAPE_DIMENSIONS: LandscapeDimension[] = [
 /** How many named examples to carry per dimension, so a count can be shown as a landscape. */
 const SAMPLE_LIMIT = 8;
 
+/**
+ * Money attributes worth totalling per dimension.
+ *
+ * A count answers "how many contracts"; it cannot answer "what are we spending". Home's headline
+ * economics were string literals — a technology budget and a prior-year actual with no data path at
+ * all — while the client's own declared spend sat in canonical reaching no product. Carrying the
+ * total here is what lets a headline figure be traced to a build instead of to a file someone wrote.
+ */
+const MONEY_ATTRIBUTES: Record<string, string> = {
+  spend_value_fact: "annualSpendUsd",
+  vendor_contract: "annualSpendUsd",
+  business_function: "annualBudgetUsd",
+  program_initiative: "budgetUsd",
+};
+
+/** Savings and value attributes, kept separate from spend so the two can never be summed together. */
+const VALUE_ATTRIBUTES: Record<string, string> = {
+  spend_value_fact: "savingsOpportunityUsd",
+  program_initiative: "expectedValueUsd",
+};
+
+function sumAttribute(
+  rows: Array<{ attributes?: Record<string, { value?: unknown } | undefined> }>,
+  attribute: string | undefined,
+): { total: number; contributing: number } | null {
+  if (!attribute) return null;
+  let total = 0;
+  let contributing = 0;
+  for (const row of rows) {
+    const raw = row.attributes?.[attribute]?.value;
+    // Currency arrives as a number or as a formatted string depending on the intake column.
+    const n =
+      typeof raw === "number"
+        ? raw
+        : typeof raw === "string"
+          ? Number(raw.replace(/[^0-9.-]/g, ""))
+          : Number.NaN;
+    if (Number.isFinite(n) && n !== 0) {
+      total += n;
+      contributing += 1;
+    }
+  }
+  // A total nothing contributed to is absent, not zero.
+  return contributing === 0 ? null : { total, contributing };
+}
+
 const GENERATOR_VERSION = "home-landscape-projector/v2";
 
 function arg(name: string, fallback?: string): string | undefined {
@@ -163,6 +209,8 @@ async function main(): Promise<number> {
         distinctNameCount: names.length,
         sampleEntities: names.slice(0, SAMPLE_LIMIT),
         evidenceCount: evidence,
+        money: sumAttribute(rows, MONEY_ATTRIBUTES[dim.objectType]),
+        value: sumAttribute(rows, VALUE_ATTRIBUTES[dim.objectType]),
         // A dimension with no entities is reported as a gap, never as a confident zero.
         confidenceStatus: rows.length === 0 ? "not_available" : evidence > 0 ? "evidenced" : "directional",
       };
@@ -252,6 +300,8 @@ async function main(): Promise<number> {
                 products: d.products,
                 distinctNameCount: d.distinctNameCount,
                 sampleEntities: d.sampleEntities,
+                money: d.money,
+                value: d.value,
               }),
               i,
             ],

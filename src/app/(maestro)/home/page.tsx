@@ -155,6 +155,66 @@ function SourceRuntimeSummaryPanel({
   );
 }
 
+/**
+ * Feed the headline anchors from canonical.
+ *
+ * These four tiles were string literals — a technology budget of $2.35B and a prior-year actual of
+ * $2.18B with no data path behind either. The first attempt to fix that quoted a sum of
+ * `spend_value_fact` and was wrong for a different reason: the two tenants' spend sheets did not
+ * share a grain. One listed technology spend by category; the other listed *enterprise* spend by
+ * business function — facilities, HR, behavioural health — so its total was operating cost, not a
+ * technology budget, and quoting it would have overstated by more than fiftyfold.
+ *
+ * Both sheets are now genuinely technology-scoped, generated from a segment model and checked by
+ * `validate:spend-plausibility` against published industry rates. So the grain objection is gone and
+ * the figures are quotable — with the basis stated on the tile, because a number a reader cannot
+ * attribute is only marginally better than one that was typed.
+ *
+ * Prior-year actual stays absent. Nothing canonical carries an observed prior-year figure: every fact
+ * in the model is `declared`, and inventing continuity across a year we never measured would be the
+ * same defect this function exists to remove.
+ */
+function withCanonicalEconomics(
+  model: HomeEnterpriseLandscapeV2Model,
+  landscape: HomeLandscape | null,
+): HomeEnterpriseLandscapeV2Model {
+  if (!landscape) return model;
+  const spend = landscape.byKey("spend");
+  const vendors = landscape.byKey("vendors");
+  const anchors = model.anchors.map((anchor) => {
+    if (anchor.label === "Technology budget" && spend?.money) {
+      return {
+        ...anchor,
+        value: money(spend.money.total),
+        detail: `Declared across ${spend.money.contributing} technology categories · build ${landscape.buildVersion}`,
+      };
+    }
+    if (anchor.label === "Prior-year actual") {
+      return {
+        ...anchor,
+        value: "Not established",
+        detail: "No observed prior-year figure — every canonical fact is declared",
+      };
+    }
+    if (anchor.label === "Committed base" && vendors?.money) {
+      return {
+        ...anchor,
+        value: money(vendors.money.total),
+        detail: `Annual contract value across ${vendors.money.contributing} contracts`,
+      };
+    }
+    if (anchor.label === "Contract register" && vendors) {
+      return {
+        ...anchor,
+        value: vendors.distinctNameCount.toLocaleString(),
+        detail: `Distinct suppliers · ${vendors.recordCount.toLocaleString()} contract records`,
+      };
+    }
+    return anchor;
+  });
+  return { ...model, anchors };
+}
+
 function withSourceSummaryAnchors(
   model: HomeEnterpriseLandscapeV2Model,
   summary: HomeSourceRuntimeSummary | null,
@@ -390,10 +450,18 @@ export default async function HomePage() {
   ]);
 
   if (clientKey === "skyharbor") {
-    const model = withSourceSummaryAnchors(
-      SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2,
-      sourceSummary,
-      tenantName,
+    // Source first, then canonical. Canonical wins where both have a figure: Source projects the
+    // contract register, canonical carries what the client declared about their whole estate.
+    // Source overlay first, canonical second. Source projects the contract register from its own
+    // L4; canonical carries what the client declared about the whole estate, and where both have a
+    // figure the declared one is the tenant's own assertion rather than a product's projection of it.
+    const model = withCanonicalEconomics(
+      withSourceSummaryAnchors(
+        SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2,
+        sourceSummary,
+        tenantName,
+      ),
+      landscape,
     );
     return (
       <AppShell

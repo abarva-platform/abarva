@@ -101,6 +101,11 @@ const METRICS = [
       ["active", "08_it_budget_spend_value.csv", "approved_budget_usd", "sum"],
       ["active", "08_spend_value.csv", "budget_amount_usd", "sum"],
       ["active", "08_spend_value.csv", "approved_budget_usd", "sum"],
+      // The active spend sheet carries its amount in `annual_spend_usd`. Registering the file
+      // without its actual amount column meant this reporter read the sheet, found neither of the
+      // columns above, and reported the metric ABSENT for a tenant whose budget was sitting in it.
+      // A governance instrument that silently sees nothing is worse than one that is not run.
+      ["active", "08_spend_value.csv", "annual_spend_usd", "sum"],
       ["active", "SA02_IT_Finance_Budget_Spend_Extract.csv", "budget_amount_usd", "sum"],
     ],
   },
