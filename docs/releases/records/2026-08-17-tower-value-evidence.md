@@ -164,3 +164,61 @@ a person and a date rather than a null column.
 client following the current guidance would supply metrics with no readiness assessment, and the
 projector would silently fall back to inference for all of them. The instructions are the deliverable
 that makes this work at a real engagement, and they are owed.
+
+## Addendum — AI usage telemetry against what the platforms publish
+
+The AI usage feed captured a seat-adoption view: licensed, enabled, active and power users, an event
+count, and adoption against target. That answers "how many people log in" and reconciles to no
+invoice.
+
+What the platforms actually expose:
+
+| Platform | Billed unit | Endpoint | Refresh |
+| --- | --- | --- | --- |
+| Microsoft 365 Copilot | prompts | Graph `getMicrosoft365CopilotUsageUserDetail` | ~48h |
+| ServiceNow Now Assist | assists | `sys_gen_ai_usage_log` + Now Assist Analytics | ~24h |
+| Workday | assisted transactions | Prism analytics extract | ~24h |
+| Coding assistants | tokens | vendor seat and token report | ~12h |
+
+Copilot also splits activity by app — Word, Excel, PowerPoint, Outlook, Teams, chat — and its agent
+report segments by license state and agent creator type. ServiceNow publishes workflow latency and
+task closure rate.
+
+Three gaps mattered:
+
+- **No metered unit.** `usage_events` is generic and ties to no invoice. Every platform bills on
+  something specific, and a consumption figure that cannot be reconciled to a bill cannot support a
+  cost conversation.
+- **No quality signal.** 306 active users who discard every suggestion is not adoption. Acceptance
+  rate is the difference between a tool being opened and a tool being used.
+- **No collection provenance.** A 48-hour-stale export presented as current is a different claim from
+  a live read, and nothing recorded which it was.
+
+Fourteen columns added, including `metered_unit`, `metered_quantity`, `contracted_quantity`,
+`acceptance_rate_pct`, `task_completion_rate_pct`, `median_latency_seconds`,
+`license_state_breakdown`, `per_surface_breakdown`, `collection_method`, `collection_endpoint`,
+`refresh_lag_hours` and `shadow_usage_flag`.
+
+### What one row now says
+
+```
+1,035 licensed · 900 enabled · 135 disabled-but-billed · 594 enabled-never-active
+31,536 prompts against 39,000 contracted
+20% acceptance
+Teams 54% · Outlook 45% · Word 35% · Excel 26% · PowerPoint 16% · chat 7%
+MS Graph · getMicrosoft365CopilotUsageUserDetail · 48h lag
+```
+
+That is a renewal conversation. None of it was visible from "34% adoption".
+
+### How this is meant to work in practice
+
+**The sheet is a bootstrap, not the mechanism.** The first engagement exports a quarter by hand from
+each admin centre. After that it has to become a collector on a cadence, because a spreadsheet cannot
+track a 48-hour refresh and nobody will re-key it.
+
+That is the **F2 pattern** in §21: observed telemetry publishing into canonical with `basis: observed`.
+The declared adoption target is `declared`; the metered actual arrives from Graph and ServiceNow as
+`observed`; the gap is the finding. `shadow_usage_flag` distinguishes `none_detected` from
+`unknown_not_instrumented` — a manual export cannot see usage outside the licensed tenant, and that
+absence is a different statement from "no shadow usage".
