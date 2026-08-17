@@ -241,6 +241,11 @@ function EnterpriseLandscapePanel({
                 ? "not supplied"
                 : `${dimension.evidenceCount.toLocaleString()} evidence`}
             </p>
+            {dimension.sampleEntities.length > 0 ? (
+              <p className="mt-2 text-[11px] leading-4 text-[#667085]">
+                {dimension.sampleEntities.slice(0, 3).join(" · ")}
+              </p>
+            ) : null}
           </div>
         ))}
       </div>
