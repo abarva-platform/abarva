@@ -139,7 +139,10 @@ function buildMarkdown(summary) {
     `| L1 CSV rows | ${summary.volumetrics.l1CsvRows} | tenant input quality audit |`,
     `| L1 mapped source rows | ${summary.volumetrics.l1MappedSourceRows} | tenant input quality audit |`,
     `| L3 source rows inspected | ${summary.volumetrics.l3SourceRowsInspected} | canonical source integration coverage |`,
-    `| L3 source rows integrated | ${summary.volumetrics.l3SourceRowsIntegrated} | canonical source integration coverage |`,
+    `| L3 source mentions represented | ${summary.volumetrics.l3SourceMentionsRepresented} | canonical entity resolution summary |`,
+    `| L3 distinct entities accepted | ${summary.volumetrics.l3DistinctEntitiesAccepted} | canonical entity resolution summary |`,
+    `| L3 duplicate mentions collapsed | ${summary.volumetrics.l3DuplicateMentionsCollapsed} | canonical entity resolution summary |`,
+    `| L3 references resolved | ${summary.volumetrics.l3ReferencesResolved} / ${summary.volumetrics.l3ReferenceMentions} (${Math.round(summary.volumetrics.l3ReferenceResolutionRate * 100)}%) | canonical entity resolution summary |`,
     `| L3 source rows blocked | ${summary.volumetrics.l3SourceRowsBlocked} | canonical source integration coverage |`,
     `| L2 dry-run failures | ${summary.volumetrics.l2DryRunFailures} | adapter dry-run report |`,
     `| L3 canonical objects planned | ${summary.volumetrics.l3CanonicalObjectsPlanned} | runtime layer dry-run |`,
@@ -165,15 +168,25 @@ function deriveVolumetrics(args) {
   const sourceCoverage =
     summarizePhaseOutput(path.join(args.outDir, "03-l3-runtime", "canonical-build"), "source-integration-coverage.json") ??
     [];
+  const entityResolution =
+    summarizePhaseOutput(path.join(args.outDir, "03-l3-runtime", "canonical-build"), "entity-resolution-summary.json") ??
+    [];
   const sourceCube = summarizePhaseOutput(path.join(args.outDir, "04-l4-source-cube"), "summary.json");
   const projectedRows = Object.values(sourceCube?.projectedRows ?? {}).reduce((total, value) => total + Number(value || 0), 0);
   return {
     l1CsvRows: (quality?.tenants ?? []).reduce((total, tenant) => total + Number(tenant.csvRows ?? 0), 0),
     l1MappedSourceRows: (quality?.tenants ?? []).reduce((total, tenant) => total + Number(tenant.mappedCsvRows ?? 0), 0),
     l3SourceRowsInspected: sourceCoverage.reduce((total, item) => total + Number(item.sourceRows ?? 0), 0),
-    l3SourceRowsIntegrated: sourceCoverage
-      .filter((item) => item.disposition === "integrated" || item.disposition === "no_rows")
-      .reduce((total, item) => total + Number(item.sourceRows ?? 0), 0),
+    l3SourceMentionsRepresented: entityResolution.reduce((total, item) => total + Number(item.sourceMentions ?? 0), 0),
+    l3DistinctEntitiesAccepted: entityResolution.reduce((total, item) => total + Number(item.distinctEntities ?? 0), 0),
+    l3DuplicateMentionsCollapsed: entityResolution.reduce((total, item) => total + Number(item.duplicateMentionsCollapsed ?? 0), 0),
+    l3ReferenceMentions: entityResolution.reduce((total, item) => total + Number(item.referenceMentions ?? 0), 0),
+    l3ReferencesResolved: entityResolution.reduce((total, item) => total + Number(item.referencesResolved ?? 0), 0),
+    l3ReferenceResolutionRate: (() => {
+      const resolved = entityResolution.reduce((total, item) => total + Number(item.referencesResolved ?? 0), 0);
+      const mentions = entityResolution.reduce((total, item) => total + Number(item.referenceMentions ?? 0), 0);
+      return mentions === 0 ? 0 : Number((resolved / mentions).toFixed(4));
+    })(),
     l3SourceRowsBlocked: sourceCoverage
       .filter(
         (item) =>

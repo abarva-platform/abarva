@@ -14,7 +14,7 @@ async function main() {
   });
 
   console.log(
-    `Canonical tenant data build complete: ${report.summary.tenantsProcessed} tenants, ${report.summary.canonicalRecordsAccepted} accepted records, ${report.summary.relationshipCandidates} relationship candidates.`,
+    `Canonical tenant data build complete: ${report.summary.tenantsProcessed} tenants, ${report.summary.sourceMentionsRepresented} source mentions, ${report.summary.distinctEntitiesAccepted} distinct entities, ${report.summary.referencesResolved}/${report.summary.referenceMentions} references resolved.`,
   );
   console.log(`Proof bundle: ${CANONICAL_DATA_BUILD_REPORT_DIR}`);
 }
