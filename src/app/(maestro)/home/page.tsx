@@ -155,6 +155,69 @@ function SourceRuntimeSummaryPanel({
   );
 }
 
+/**
+ * Replace authored headline economics with canonical figures — where canonical can support the
+ * claim, and only there.
+ *
+ * The model's anchors were string literals: a technology budget of $2.35B and a prior-year actual of
+ * $2.18B with no data path behind either. Replacing them with a sum of `spend_value_fact` looked
+ * obvious and is wrong, because the two tenants' spend sheets do not share a grain. One lists
+ * technology spend by category and totals $663M. The other lists *enterprise* spend by business
+ * function — facilities, HR, behavioural health — and totals $5.4B, of which the IT line is $103M.
+ * Summing the second and calling it a technology budget overstates it more than fiftyfold.
+ *
+ * The intake declares no scope for that sheet, so neither total can be labelled. The honest anchor
+ * is therefore not a smaller number; it is the absence of one. Contract value is different: an
+ * annual contract value means the same thing on both sheets, so it is quoted.
+ */
+function withCanonicalEconomics(
+  model: HomeEnterpriseLandscapeV2Model,
+  landscape: HomeLandscape | null,
+): HomeEnterpriseLandscapeV2Model {
+  if (!landscape) return model;
+  const vendors = landscape.byKey("vendors");
+  const spend = landscape.byKey("spend");
+  const anchors = model.anchors.map((anchor) => {
+    // Not established, and deliberately so. The spend sheet has no declared scope, so a total from
+    // it cannot be called a technology budget without asserting something the client never said.
+    if (anchor.label === "Technology budget") {
+      return {
+        ...anchor,
+        value: "Not established",
+        detail: spend?.money
+          ? `${spend.money.contributing} spend categories declared, scope not stated in intake`
+          : "No declared spend supplied",
+      };
+    }
+    // Nothing canonical carries an observed prior-year actual. Every fact in the model is declared,
+    // so there is no measured figure here and inventing continuity would be worse than a gap.
+    if (anchor.label === "Prior-year actual") {
+      return {
+        ...anchor,
+        value: "Not established",
+        detail: "No observed prior-year figure in the canonical model",
+      };
+    }
+    // Annual contract value means the same thing on every intake, so it is safe to quote.
+    if (anchor.label === "Committed base" && vendors?.money) {
+      return {
+        ...anchor,
+        value: money(vendors.money.total),
+        detail: `Annual contract value across ${vendors.money.contributing} contracts · build ${landscape.buildVersion}`,
+      };
+    }
+    if (anchor.label === "Contract register" && vendors) {
+      return {
+        ...anchor,
+        value: vendors.distinctNameCount.toLocaleString(),
+        detail: `Distinct vendors · ${vendors.recordCount.toLocaleString()} contract records`,
+      };
+    }
+    return anchor;
+  });
+  return { ...model, anchors };
+}
+
 function withSourceSummaryAnchors(
   model: HomeEnterpriseLandscapeV2Model,
   summary: HomeSourceRuntimeSummary | null,
@@ -390,10 +453,15 @@ export default async function HomePage() {
   ]);
 
   if (clientKey === "skyharbor") {
-    const model = withSourceSummaryAnchors(
-      SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2,
-      sourceSummary,
-      tenantName,
+    // Source first, then canonical. Canonical wins where both have a figure: Source projects the
+    // contract register, canonical carries what the client declared about their whole estate.
+    const model = withCanonicalEconomics(
+      withSourceSummaryAnchors(
+        SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2,
+        sourceSummary,
+        tenantName,
+      ),
+      landscape,
     );
     return (
       <AppShell
