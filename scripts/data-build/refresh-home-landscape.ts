@@ -24,6 +24,7 @@
  *   npx tsx scripts/data-build/refresh-home-landscape.ts --out-dir <dir> [--tenant <key>]...
  */
 
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { Client } from "pg";
@@ -194,6 +195,13 @@ async function main(): Promise<number> {
       await client.query("begin");
       for (const tenantKey of TENANTS) {
         const dims = projected.filter((d) => d.tenantKey === tenantKey);
+        // Hash of what this pack actually asserts, not of the build label. Two builds of the same
+        // canonical input produce the same hash, which is what makes the run comparable across
+        // versions — and it is the idempotency key the data-build job rule asks for.
+        const contentHash = crypto
+          .createHash("sha256")
+          .update(JSON.stringify(dims))
+          .digest("hex");
         // One pack per tenant per build. Re-running the same build replaces its own rows rather
         // than accumulating, so the job is safe to retry.
         await client.query(
@@ -204,8 +212,9 @@ async function main(): Promise<number> {
         const pack = await client.query<{ id: string }>(
           `insert into public.home_knowledge_packs
              (tenant_key, tenant_name, pack_version, status, artifact_type,
-              source_pack_hash, source_dataset_version, generator_version, generated_by)
-           values ($1, $2, $3, 'candidate', 'NexusHomeLandscapeV1', $4, $5, $6, $7)
+              source_pack_hash, source_dataset_version, generator_version, generated_by,
+              content_hash)
+           values ($1, $2, $3, 'candidate', 'NexusHomeLandscapeV1', $4, $5, $6, $7, $8)
            returning id`,
           [
             tenantKey,
@@ -215,6 +224,7 @@ async function main(): Promise<number> {
             INPUT_SOURCE,
             GENERATOR_VERSION,
             "refresh-home-landscape",
+            contentHash,
           ],
         );
         const packId = pack.rows[0].id;
