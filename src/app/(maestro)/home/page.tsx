@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 
 import { AppShell } from "@/components/shell/AppShell";
+import { ProductFanoutSummaryStrip } from "@/components/enterprise-data/ProductFanoutSummaryStrip";
 import { HomeEnterpriseLandscapeV2 } from "@/components/home/enterprise-landscape-v2/HomeEnterpriseLandscapeV2";
 import {
   SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2,
@@ -19,6 +20,7 @@ import {
   ACTIVE_CLIENT_COOKIE,
   resolveTenant,
 } from "@/lib/tenant/resolveTenant";
+import { listProductFanoutTotals } from "@/lib/enterprise-data/product-fanout-summary";
 
 export const metadata: Metadata = {
   title: "Enterprise Landscape | AbarVa",
@@ -193,9 +195,11 @@ function withSourceSummaryAnchors(
 function MeridianHome({
   tenantName,
   sourceSummary,
+  productFanout,
 }: {
   tenantName: string;
   sourceSummary: HomeSourceRuntimeSummary | null;
+  productFanout: Awaited<ReturnType<typeof listProductFanoutTotals>>;
 }) {
   const priorities = [
     [
@@ -258,6 +262,10 @@ function MeridianHome({
           </div>
 
           <SourceRuntimeSummaryPanel summary={sourceSummary} />
+          <ProductFanoutSummaryStrip
+            rows={productFanout}
+            activeProduct="home"
+          />
 
           <section className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="rounded-md border border-[#d9ddd2] bg-white p-6">
@@ -307,7 +315,17 @@ export default async function HomePage() {
     }) ??
     tenant?.displayName ??
     "AbarVa Client";
-  const sourceSummary = await loadHomeSourceRuntimeSummary(clientKey);
+  const [sourceSummary, productFanout] = await Promise.all([
+    loadHomeSourceRuntimeSummary(clientKey),
+    listProductFanoutTotals({
+      tenantKeyCandidates: [
+        clientKey,
+        tenant?.canonicalKey,
+        tenant?.brokerKey,
+        tenant?.appClientKey,
+      ],
+    }),
+  ]);
 
   if (clientKey === "skyharbor") {
     const model = withSourceSummaryAnchors(
@@ -326,10 +344,24 @@ export default async function HomePage() {
         }}
         hasTenantKey
       >
-        <HomeEnterpriseLandscapeV2 model={model} />
+        <div className="min-h-screen bg-[#f7f7f2] px-8 py-8">
+          <div className="mx-auto mb-6 max-w-7xl">
+            <ProductFanoutSummaryStrip
+              rows={productFanout}
+              activeProduct="home"
+            />
+          </div>
+          <HomeEnterpriseLandscapeV2 model={model} />
+        </div>
       </AppShell>
     );
   }
 
-  return <MeridianHome tenantName={tenantName} sourceSummary={sourceSummary} />;
+  return (
+    <MeridianHome
+      tenantName={tenantName}
+      sourceSummary={sourceSummary}
+      productFanout={productFanout}
+    />
+  );
 }

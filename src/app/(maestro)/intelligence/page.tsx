@@ -1,6 +1,7 @@
 // /intelligence · Advisory board surface.
 
 import { AppShell } from "@/components/shell/AppShell";
+import { ProductFanoutSummaryStrip } from "@/components/enterprise-data/ProductFanoutSummaryStrip";
 import { AdvisoryIntelligencePage } from "@/components/intelligence-advisory/AdvisoryIntelligencePage";
 import {
   getActiveClientRow,
@@ -10,6 +11,7 @@ import { canonicalClientDisplayName } from "@/lib/client-config";
 import { getEnterpriseLandscapeViewModel } from "@/lib/home/enterprise-landscape-view-model";
 import { resolveIntelligenceViewModelClientKey } from "@/lib/intelligence/intelligence-view-model-client-key";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
+import { listProductFanoutTotals } from "@/lib/enterprise-data/product-fanout-summary";
 
 export const metadata = {
   title: "Intelligence · Advisory Board | AbarVa",
@@ -68,6 +70,15 @@ export default async function IntelligencePage({
     client?.name ??
     tenant?.displayName ??
     "AbarVa Client";
+  const productFanout = await listProductFanoutTotals({
+    tenantKeyCandidates: [
+      effectiveClientKey,
+      requestedClient,
+      contextTenantKey,
+      tenant?.canonicalKey,
+      tenant?.brokerKey,
+    ],
+  });
 
   return (
     <AppShell
@@ -79,6 +90,14 @@ export default async function IntelligencePage({
       }}
       hasTenantKey={Boolean(effectiveClientKey)}
     >
+      <div className="bg-[#f7f7f2] px-8 pt-8">
+        <div className="mx-auto max-w-7xl">
+          <ProductFanoutSummaryStrip
+            rows={productFanout}
+            activeProduct="intelligence"
+          />
+        </div>
+      </div>
       <AdvisoryIntelligencePage
         viewModel={getEnterpriseLandscapeViewModel({
           clientKey: viewModelClientKey,

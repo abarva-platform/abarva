@@ -7,6 +7,7 @@
 import { Suspense } from "react";
 
 import { AppShell } from "@/components/shell/AppShell";
+import { ProductFanoutSummaryStrip } from "@/components/enterprise-data/ProductFanoutSummaryStrip";
 import { TowerCommandCenterAvaShell } from "@/components/tower/command-center/TowerCommandCenterAvaShell";
 import {
   getActiveClientRow,
@@ -16,6 +17,7 @@ import { canonicalClientDisplayName } from "@/lib/client-config";
 import { readTowerCommandCenter } from "@/lib/tower/readTowerCommandCenter";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
+import { listProductFanoutTotals } from "@/lib/enterprise-data/product-fanout-summary";
 
 export const metadata = { title: "Tower · AbarVa" };
 export const dynamic = "force-dynamic";
@@ -73,18 +75,22 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
     tenant?.displayName ??
     "AbarVa Client";
 
-  const towerView = await withTowerReadTimeout(
-    readTowerCommandCenter({
-      tenantKeyCandidates: [
-        effectiveClientKey,
-        requestedClient,
-        client?.id,
-        tenant?.canonicalKey,
-        tenant?.brokerKey,
-      ],
-    }),
-    null,
-  );
+  const tenantKeyCandidates = [
+    effectiveClientKey,
+    requestedClient,
+    client?.id,
+    tenant?.canonicalKey,
+    tenant?.brokerKey,
+  ];
+  const [towerView, productFanout] = await Promise.all([
+    withTowerReadTimeout(
+      readTowerCommandCenter({
+        tenantKeyCandidates,
+      }),
+      null,
+    ),
+    listProductFanoutTotals({ tenantKeyCandidates }),
+  ]);
   const commandCenterView = buildTowerCommandCenterView(towerView, {
     tenantName,
   });
@@ -101,6 +107,14 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
         context: `Command Center · ${tenantName}`,
       }}
     >
+      <div className="bg-[#f7f7f2] px-8 pt-8">
+        <div className="mx-auto max-w-7xl">
+          <ProductFanoutSummaryStrip
+            rows={productFanout}
+            activeProduct="tower"
+          />
+        </div>
+      </div>
       <Suspense fallback={null}>
         <TowerCommandCenterAvaShell
           view={commandCenterView}
