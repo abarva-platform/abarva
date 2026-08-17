@@ -1893,18 +1893,44 @@ function buildEntityLookup(
   records: CanonicalIngestionRecord[],
 ): Map<string, string | null> {
   const grouped = new Map<string, Set<string>>();
+  const add = (
+    tenantKey: string,
+    objectType: string,
+    name: string,
+    canonicalKey: string,
+  ) => {
+    if (!name.trim()) return;
+    const key = lookupKey(tenantKey, objectType, name);
+    const values = grouped.get(key) ?? new Set<string>();
+    values.add(canonicalKey);
+    grouped.set(key, values);
+  };
+
   for (const record of records) {
     const canonicalKey = record.canonicalObjectKey;
     if (!canonicalKey) continue;
+    const displayName = String(record.attributes.displayName?.value ?? "");
     for (const objectType of lookupObjectTypes(record.objectType)) {
-      const key = lookupKey(
-        record.tenantKey,
-        objectType,
-        String(record.attributes.displayName?.value ?? ""),
-      );
-      const values = grouped.get(key) ?? new Set<string>();
-      values.add(canonicalKey);
-      grouped.set(key, values);
+      add(record.tenantKey, objectType, displayName, canonicalKey);
+      // Resolution rule 4: a source-system id, scoped by type. Intake carries these in declared id
+      // columns — `system_id` holds `APP-0003`, and the integrations tab references applications by
+      // that id rather than by name. It is a legitimate reference, not the placeholder leakage it
+      // resembles: the id identifies an entity we hold, and refusing it drops a real edge to guard
+      // against a different problem.
+      //
+      // Only declared id attributes are indexed, never a value that merely looks like an id, so a
+      // name that happens to resemble a key cannot silently become one.
+      add(record.tenantKey, objectType, record.sourceObjectId, canonicalKey);
+      for (const [attributeKey, attributeValue] of Object.entries(
+        record.attributes,
+      )) {
+        if (!/(^|[a-z])Id$/.test(attributeKey)) continue;
+        if (attributeKey === "sourceRowNumber") continue;
+        const value = attributeValue?.value;
+        if (typeof value === "string" && value.trim()) {
+          add(record.tenantKey, objectType, value, canonicalKey);
+        }
+      }
     }
   }
   return new Map(
@@ -1929,6 +1955,21 @@ function resolveEntityReference(
   return undefined;
 }
 
+/**
+ * Type vocabulary used by relationship rows, mapped onto canonical object types.
+ *
+ * Client intake names entity types in the language of the business — `system`, `function`,
+ * `org_unit`, `program` — while the canonical model names them `application_system`,
+ * `business_function`, `org_owner`, `program_initiative`. Without a mapping, an edge pointing at a
+ * type name the model does not have can never resolve, no matter how well the target is catalogued.
+ * 5,620 of 10,738 unresolved references were exactly this: the entity existed, under a different
+ * type name.
+ *
+ * Order matters and is a safety property. `resolveEntityReference` walks this list and returns on
+ * the first match, and the declared type is always first — so an alias can only ever resolve a
+ * reference that would otherwise have failed. It cannot redirect one that already resolves
+ * correctly.
+ */
 function lookupObjectTypes(objectType: string): string[] {
   const aliases: Record<string, string[]> = {
     canonical_object: Object.values(DOMAIN_CONFIG).map(
@@ -1937,14 +1978,44 @@ function lookupObjectTypes(objectType: string): string[] {
     vendor: ["vendor", "vendor_contract"],
     vendor_contract: ["vendor_contract", "vendor"],
     person_or_role: ["person_or_role", "org_owner", "workforce_role"],
-    org_owner: ["org_owner", "person_or_role"],
+    org_owner: ["org_owner", "person_or_role", "org_unit"],
     workforce_role: ["workforce_role", "person_or_role"],
-    data_domain: ["data_domain", "data_asset_or_integration"],
-    data_asset_or_integration: ["data_asset_or_integration", "data_domain"],
     metric: ["metric", "metric_outcome"],
     metric_outcome: ["metric_outcome", "metric"],
     control: ["control", "risk_or_control"],
     risk_or_control: ["risk_or_control", "control"],
+
+    // Organisational units are referenced as `org_unit`; the model catalogues them as `org_owner`,
+    // whose grain is the unit and its accountable leader.
+    org_unit: ["org_unit", "org_owner", "person_or_role"],
+
+    // Business shorthand for the estate.
+    system: ["system", "application_system", "infrastructure_platform"],
+    function: ["function", "business_function"],
+    program: ["program", "program_initiative", "ai_automation_use_case"],
+    risk: ["risk", "risk_or_control"],
+
+    // Tower names portfolio items `tower_initiative`; canonically they are programs.
+    tower_initiative: ["tower_initiative", "program_initiative"],
+
+    // Integration middleware is catalogued as an application in one intake and referenced as
+    // infrastructure in another. Both readings are defensible, so each falls back to the other.
+    infrastructure_platform: ["infrastructure_platform", "application_system"],
+    application_system: ["application_system", "infrastructure_platform"],
+
+    // A data domain is sometimes a business function and sometimes a data asset, depending on which
+    // intake tab raised the reference.
+    data_domain: [
+      "data_domain",
+      "data_asset_or_integration",
+      "business_function",
+    ],
+    data_asset_or_integration: ["data_asset_or_integration", "data_domain"],
+    business_function: ["business_function", "data_domain"],
+
+    // AI use cases are referenced as programs by the transformation intake.
+    program_initiative: ["program_initiative", "ai_automation_use_case"],
+    ai_automation_use_case: ["ai_automation_use_case", "program_initiative"],
   };
   return [...new Set([objectType, ...(aliases[objectType] ?? [])])];
 }
