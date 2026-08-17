@@ -109,16 +109,25 @@ for (const projector of registry) {
   }
 }
 
-// 2. coverage — reported always, enforced under --strict
+// 2. unassigned types — a design hole, not a scheduling one. Fails by default.
+//    An unbuilt projector is scheduled work. An unassigned type is data the platform collects
+//    and has not decided what to do with, which is the thing that silently accumulates.
+for (const type of summary.unassigned) {
+  failures.push(
+    `canonical type "${type}" is assigned to no product, not even a planned one — decide which surface owns it`,
+  );
+}
+
+// 3. build progress — reported always, enforced under --strict
 const strictFailures = [];
-if (summary.uncovered.length > 0) {
+if (summary.awaitingProjector.length > 0) {
   strictFailures.push(
-    `${summary.uncovered.length} canonical type(s) reach no product: ${summary.uncovered.join(", ")}`,
+    `${summary.awaitingProjector.length} assigned type(s) await an unbuilt projector: ${summary.awaitingProjector.join(", ")}`,
   );
 }
 if (summary.surfacesOffSpine.length > 0) {
   strictFailures.push(
-    `${summary.surfacesOffSpine.length} product surface(s) have no projector reading canonical: ${summary.surfacesOffSpine.join(", ")}`,
+    `${summary.surfacesOffSpine.length} product surface(s) have no built projector reading canonical: ${summary.surfacesOffSpine.join(", ")}`,
   );
 }
 
@@ -127,9 +136,17 @@ if (AS_JSON) {
 } else {
   console.log("projection coverage");
   console.log(`  canonical types      : ${summary.canonicalTypeCount}`);
-  console.log(`  reaching a product   : ${summary.coveredTypeCount}  (${summary.coveragePercent}%)`);
+  console.log(`  assigned to a product: ${summary.assignedCount}  (${summary.assignedPercent}%)   <- design completeness`);
+  console.log(`  reaching one today   : ${summary.builtCount}  (${summary.builtPercent}%)   <- build progress`);
   console.log(`  surfaces on spine    : ${summary.surfacesOnSpine.join(", ") || "none"}`);
   console.log(`  surfaces off spine   : ${summary.surfacesOffSpine.join(", ") || "none"}`);
+
+  if (summary.plannedProjectors.length) {
+    console.log("\n  planned projectors (assigned, not yet built):");
+    for (const p of summary.plannedProjectors) {
+      console.log(`    - ${p.id.padEnd(22)} ${p.surface.padEnd(13)} ${p.consumes.length} types`);
+    }
+  }
 
   if (summary.parallelProjectors.length) {
     console.log("\n  projectors reading a parallel store (working, but not fed by the spine):");
@@ -139,9 +156,13 @@ if (AS_JSON) {
     }
   }
 
-  if (summary.uncovered.length) {
-    console.log(`\n  canonical types reaching no product (${summary.uncovered.length}):`);
-    for (const type of summary.uncovered) console.log(`    - ${type}`);
+  if (summary.unassigned.length) {
+    console.log(`\n  canonical types assigned to NOTHING (${summary.unassigned.length}):`);
+    for (const type of summary.unassigned) console.log(`    - ${type}`);
+  }
+  if (summary.awaitingProjector.length) {
+    console.log(`\n  assigned, awaiting an unbuilt projector (${summary.awaitingProjector.length}):`);
+    for (const type of summary.awaitingProjector) console.log(`    - ${type}`);
   }
 
   if (failures.length) {
@@ -161,7 +182,7 @@ if (failures.length > 0 || (STRICT && strictFailures.length > 0)) {
 if (!AS_JSON) {
   console.log(
     strictFailures.length
-      ? "\npass — registry is consistent with the canonical build. Coverage gaps above are reported, not enforced; run with --strict to enforce."
-      : "\npass — registry consistent and every canonical type reaches a product.",
+      ? "\npass — every canonical type is assigned to a product and the registry matches the build. Unbuilt projectors above are reported, not enforced; run with --strict to enforce."
+      : "\npass — every canonical type is assigned and reaches a product today.",
   );
 }
