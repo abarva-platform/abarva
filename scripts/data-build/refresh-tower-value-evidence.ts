@@ -112,6 +112,17 @@ interface Claim {
   qualityGuardrailState: string;
   nextGateOwnerRole: string | null;
   missing: string[];
+  /** The client's own account of what is in the way, when they gave one. */
+  blockedReason: string | null;
+  unblockAction: string | null;
+  unblockTargetPeriod: string | null;
+  evidenceBasis: string | null;
+  /**
+   * `declared` when the client stated the reason at intake, `inferred` when it was reconstructed
+   * from which fields are empty. A derived reason is accurate and nearly useless: it tells you a
+   * field is blank, where the declared one tells you who to call.
+   */
+  reasonSource: "declared" | "inferred";
 }
 
 async function main(): Promise<number> {
@@ -184,7 +195,13 @@ async function main(): Promise<number> {
       if (financeValidated === null) missing.push("finance_attestation");
       if (!str(a.evidenceId)) missing.push("attribution");
 
+      const kpiDeclaredReason = str(a.claimBlockedReason) ?? str(a.caveat);
       claims.push({
+        blockedReason: kpiDeclaredReason,
+        unblockAction: str(a.unblockAction),
+        unblockTargetPeriod: str(a.unblockTargetPeriod),
+        evidenceBasis: str(a.evidenceBasis) ?? str(a.sourceSystem),
+        reasonSource: kpiDeclaredReason ? "declared" : "inferred",
         tenantKey,
         claimId: `CLM-${hash([tenantKey, kpi, useCase])}`,
         subjectRef,
@@ -243,19 +260,40 @@ async function main(): Promise<number> {
       if (!actualId) missing.push("actual");
       if (attested === null) missing.push("finance_attestation");
       if (!period) missing.push("baseline_period");
+      // The metrics intake now asks what the client accepts as evidence, who attests, why a claim is
+      // blocked, what unblocks it and by when. Where they answered, that answer wins over anything
+      // this projector could work out from empty fields.
+      const declaredReason = str(a.claimBlockedReason);
+      const declaredReadiness = str(a.claimReadiness);
       claims.push({
+        blockedReason: declaredReason,
+        unblockAction: str(a.unblockAction),
+        unblockTargetPeriod: str(a.unblockTargetPeriod),
+        evidenceBasis: str(a.evidenceBasis),
+        reasonSource: declaredReason ? "declared" : "inferred",
         tenantKey,
         claimId: `CLM-${hash([tenantKey, metric, fn])}`,
         subjectRef,
         promisedValue: numeric(a.targetValue),
         calculatedValue: actualId && attested !== null ? attested : null,
-        claimState: missing.length === 0 ? "claimable" : "evidence_gap",
+        // The client's declared readiness governs. A metric they call `not_ready` stays blocked even
+        // when every field happens to be populated, because they know something the columns do not.
+        claimState:
+          declaredReadiness === "claimable" && missing.length === 0
+            ? "claimable"
+            : declaredReadiness === "pending_attestation"
+              ? "awaiting_attestation"
+              : declaredReadiness === "not_ready"
+                ? "blocked_by_owner"
+                : missing.length === 0
+                  ? "claimable"
+                  : "evidence_gap",
         baselineObservationId: baselineId,
         targetObservationId: targetId,
         actualObservationId: actualId,
         qualityGuardrailState:
           missing.length === 0 ? "clear" : actualId ? "awaiting_attestation" : baselineId && targetId ? "awaiting_actual" : "incomplete",
-        nextGateOwnerRole: str(a.owner),
+        nextGateOwnerRole: str(a.attestationOwner) ?? str(a.owner),
         missing,
       });
     }
@@ -289,8 +327,20 @@ async function main(): Promise<number> {
     claimsByState: {
       claimable: uniqueClaims.filter((c) => c.claimState === "claimable").length,
       blocked_by_policy: uniqueClaims.filter((c) => c.claimState === "blocked_by_policy").length,
+      blocked_by_owner: uniqueClaims.filter((c) => c.claimState === "blocked_by_owner").length,
+      awaiting_attestation: uniqueClaims.filter((c) => c.claimState === "awaiting_attestation").length,
       evidence_gap: uniqueClaims.filter((c) => c.claimState === "evidence_gap").length,
     },
+    reasonSource: {
+      declared: uniqueClaims.filter((c) => c.reasonSource === "declared").length,
+      inferred: uniqueClaims.filter((c) => c.reasonSource === "inferred").length,
+    },
+    topBlockedReasons: Object.fromEntries(
+      [...uniqueClaims.reduce((m, c) => {
+        if (!c.blockedReason) return m;
+        return m.set(c.blockedReason, (m.get(c.blockedReason) ?? 0) + 1);
+      }, new Map<string, number>())].sort((a, b) => b[1] - a[1]).slice(0, 6),
+    ),
     remainingGaps: Object.fromEntries([...gapCounts].sort((a, b) => b[1] - a[1])),
     rowsWritten: 0,
     readbackClaims: 0,

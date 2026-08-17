@@ -107,3 +107,60 @@ upserts by a deterministic id rather than deleting.
 - **The template change is not yet reflected in the client intake instructions** (§20 of the
   engineering design). A client following the current guidance would still supply metrics without
   actuals.
+
+## Addendum — ask the client why, do not infer it
+
+The projector derived a claim state from which observations existed: no actual meant `evidence_gap`,
+no attestation meant not claimable. Defensible, and the wrong place for the answer to come from.
+
+Sitting with a client filling in the metrics sheet, these are the questions asked out loud:
+
+- What evidence would you accept that this outcome happened?
+- Who has to sign it off before it goes in front of the board?
+- What is stopping you claiming it today?
+- What would have to be true, and by when?
+
+**None of that had a column.** So the reason a claim was blocked got reconstructed downstream from
+the shape of the data, producing a label that is technically accurate and nearly useless. *Missing
+actual* tells you a field is blank. *The instrumentation was never funded* tells you who to call.
+
+Six columns added to the metrics intake — `evidence_basis`, `attestation_owner`, `claim_readiness`,
+`claim_blocked_reason`, `unblock_action`, `unblock_target_period` — and the projector now prefers the
+client's answer over its own inference.
+
+### What that changed
+
+| State | Derived-only | With declared readiness |
+| --- | --- | --- |
+| `claimable` | 80 | **16** |
+| `awaiting_attestation` | — | 41 |
+| `blocked_by_owner` | — | 24 |
+| `blocked_by_policy` | 21 | 21 |
+| `evidence_gap` | 1 | **0** |
+
+**Claimable dropped from 80 to 16, and that is the improvement.** The derived rule said any metric
+with an actual and an attestation is claimable. The client's own assessment says most of them are
+not — the benefit is not separable from concurrent changes, the cohort is disputed, the supplier owns
+the evidence. A board seeing 80 claimable would have been reading a number the client would not
+stand behind.
+
+The declared reason wins over the derived one whenever both exist. A metric the client marks
+`not_ready` stays blocked even when every field is populated, because they know something the columns
+do not. `reasonSource` records `declared` (41) against `inferred` (61) so a reader can tell which is
+which.
+
+### Top declared reasons
+
+- 11 — Instrumentation for this metric was never funded, so no post-change measurement exists.
+- 9 — Benefit is real but not separable from two other concurrent changes in the same process.
+- 8 — Operational KPI movement must be reconciled to finance before realized value is presentable.
+
+Each carries an `attestation_owner`, an `unblock_action` and a target period, so the gap report names
+a person and a date rather than a null column.
+
+### Gap this opens
+
+**The client intake instructions (§20 of the engineering design) do not yet cover these columns.** A
+client following the current guidance would supply metrics with no readiness assessment, and the
+projector would silently fall back to inference for all of them. The instructions are the deliverable
+that makes this work at a real engagement, and they are owed.
