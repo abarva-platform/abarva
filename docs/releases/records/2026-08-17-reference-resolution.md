@@ -1,4 +1,4 @@
-# 2026-08-17-reference-resolution — Reference resolution from 41% to 77%
+# 2026-08-17-reference-resolution — Reference resolution from 41% to 91%
 
 ## Release ID
 
@@ -26,7 +26,13 @@ The cause was not data quality. Two mechanical gaps:
    and the integrations tab references applications by that id rather than by name. Resolution rule 4
    allows this and the lookup did not implement it.
 
-Result: **40.9% → 77.0%**, 6,567 additional references resolved.
+3. **Entities the client declared in columns were never catalogued.** Applications get their own
+   intake tab; the people who own them do not — they appear as `businessOwner`, `technologyOwner`,
+   `dataSteward`. Data domains and integration platforms are the same. So `owned_by →
+   person_or_role:CMO` had nothing to point at, even though the client named that owner on hundreds
+   of rows.
+
+Result: **40.9% → 91.0%**, 9,108 additional references resolved.
 
 ## Layer Impact
 
@@ -48,12 +54,15 @@ Result: **40.9% → 77.0%**, 6,567 additional references resolved.
 - `src/lib/enterprise-data/canonical-build/canonical-tenant-data-build.ts`
   - `lookupObjectTypes` — intake vocabulary mapped onto canonical types.
   - `buildEntityLookup` — declared source-system id attributes indexed alongside display names.
+  - `promoteDeclaredAttributeEntities` — catalogues entities from declared attribute values.
 
 ## QA / Validation
 
-- Pass: resolution **40.9% → 77.0%** (7,433 → 14,000 of 18,171). Per tenant: 49.8% → 76.7%, and
-  33.7% → 77.3%.
-- Pass: canonical records **5,553 before and after** — no entity was created, merged, or lost.
+- Pass: resolution **40.9% → 91.0%** (7,433 → 16,541 of 18,171). Per tenant: 49.8% → 91.4%, and
+  33.7% → 90.8%.
+- Pass: canonical records 5,553 → **5,933**. The 380 additions are entities catalogued from declared
+  attribute values — 348 data domains, 26 owners, 6 platforms — each carrying the evidence reference
+  of the row that declared it. No entity was merged or lost.
 - Pass: `tsc -p tsconfig.json --noEmit` — 0 errors.
 - Pass: `eslint` — 0 errors.
 - Pass: `npm run validate:fact-basis`.

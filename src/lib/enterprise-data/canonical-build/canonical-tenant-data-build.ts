@@ -1276,6 +1276,24 @@ export async function buildCanonicalTenantDataReport(options: {
   }
 
   canonicalRecords = resolveCanonicalEntities(sourceMentionRecords, findings);
+
+  // Two passes. The first finds which references have nothing to point at; the second resolves them
+  // against entities catalogued from the client's own declared attribute values. Only findings from
+  // the second pass are kept — a reference rescued by promotion is resolved, and reporting the first
+  // pass's failure alongside it would double-count the gap.
+  const firstPass = resolveRelationshipCandidates(
+    canonicalRecords,
+    rawRelationshipCandidates,
+    [],
+  );
+  const promotedRecords = promoteDeclaredAttributeEntities(
+    canonicalRecords,
+    firstPass,
+    generatedAt,
+    findings,
+  );
+  if (promotedRecords.length > 0) canonicalRecords.push(...promotedRecords);
+
   relationshipCandidates = resolveRelationshipCandidates(
     canonicalRecords,
     rawRelationshipCandidates,
@@ -1809,6 +1827,172 @@ function resolveCanonicalEntities(
   });
 }
 
+/**
+ * Attributes that name an instance of a canonical type, and therefore declare an entity.
+ *
+ * A client can describe the same thing two ways: on its own intake tab, or as a value in a column
+ * on some other object. Applications get a tab; the people who own them do not — they appear as
+ * `businessOwner`, `technologyOwner`, `dataSteward`. Data domains and integration platforms are the
+ * same. So when a relationship says `owned_by → person_or_role:CMO`, there is nothing to point at,
+ * and the edge is dropped even though the client named that owner on four hundred rows.
+ *
+ * This is the architecture's own "catalogue from evidence": the entity is real, the client declared
+ * it, and the row that declared it is its evidence.
+ *
+ * The list is deliberately narrow. `roleLevel` holds "VP" and "Director" — a seniority band, not a
+ * person. `dataCenterOrRegion` and `locationScope` hold places, not platforms. Promoting those would
+ * manufacture entities out of classifications and inflate the estate, which is a worse failure than
+ * the dangling edge it would fix.
+ */
+const PROMOTABLE_ATTRIBUTES: Record<string, readonly string[]> = {
+  person_or_role: [
+    "businessOwner",
+    "technologyOwner",
+    "executiveOwner",
+    "operationalOwner",
+    "contractOwner",
+    "processOwner",
+    "controlOwner",
+    "dataOwner",
+    "dataSteward",
+    "sourceOwner",
+    "measurementOwner",
+    "namedOwner",
+    "businessSponsor",
+    "leaderNameOrRole",
+    "costCenterOrOwner",
+    "owner",
+  ],
+  data_domain: ["dataDomains", "dataDomain", "ownedDataDomains", "metricDomain"],
+  infrastructure_platform: ["platformOrDatabase"],
+};
+
+const PROMOTED_DOMAIN: Record<string, CanonicalDomain> = {
+  person_or_role: "enterprise_structure",
+  data_domain: "technology_estate",
+  infrastructure_platform: "technology_estate",
+};
+
+/**
+ * Create canonical entities for values the client declared in attribute columns.
+ *
+ * Only values that an unresolved reference actually points at are promoted. Promoting every distinct
+ * owner string would also be defensible, but it would add thousands of entities nobody asked about
+ * and change every count on every surface to fix a relationship problem. Demand-driven promotion
+ * catalogues exactly what the client's own edges require and nothing speculative.
+ */
+function promoteDeclaredAttributeEntities(
+  records: CanonicalIngestionRecord[],
+  candidates: RelationshipCandidate[],
+  generatedAt: string,
+  findings: CanonicalBuildFinding[],
+): CanonicalIngestionRecord[] {
+  const wanted = new Map<string, { objectType: string; name: string; tenantKey: string }>();
+  for (const candidate of candidates) {
+    if (candidate.resolutionStatus === "resolved") continue;
+    for (const side of ["source", "target"] as const) {
+      const key = side === "source" ? candidate.sourceObjectKey : candidate.targetObjectKey;
+      if (key) continue;
+      const objectType =
+        side === "source" ? candidate.sourceObjectType : candidate.targetObjectType;
+      const name = side === "source" ? candidate.sourceObjectName : candidate.targetObjectName;
+      if (!PROMOTABLE_ATTRIBUTES[objectType] || !name?.trim()) continue;
+      wanted.set(
+        `${candidate.tenantKey}|${objectType}|${normalizeIdentifier(name)}`,
+        { objectType, name: name.trim(), tenantKey: candidate.tenantKey },
+      );
+    }
+  }
+  if (wanted.size === 0) return [];
+
+  // Which record declared each value, so the promoted entity carries real evidence rather than
+  // asserting itself.
+  const declaredBy = new Map<string, CanonicalIngestionRecord>();
+  for (const record of records) {
+    for (const [objectType, attributeKeys] of Object.entries(PROMOTABLE_ATTRIBUTES)) {
+      for (const attributeKey of attributeKeys) {
+        const raw = record.attributes[attributeKey]?.value;
+        if (typeof raw !== "string" || !raw.trim()) continue;
+        // Multi-value columns list several instances in one cell, and the separator varies by
+        // intake — semicolons, pipes, or commas. Commas are ambiguous, because a single name can
+        // contain one ("Distribution, Sales & E-Commerce"), so the whole value is offered first and
+        // the comma-split parts only afterwards. A part is promoted only if some reference actually
+        // asks for it, which is what makes splitting on a comma safe here: a wrong split produces a
+        // fragment nothing points at, and nothing points at it means nothing is created.
+        for (const part of [raw, ...raw.split(/[;|,]/)]) {
+          const value = part.trim();
+          if (!value) continue;
+          const key = `${record.tenantKey}|${objectType}|${normalizeIdentifier(value)}`;
+          if (wanted.has(key) && !declaredBy.has(key)) declaredBy.set(key, record);
+        }
+      }
+    }
+  }
+
+  const promoted: CanonicalIngestionRecord[] = [];
+  for (const [key, want] of wanted) {
+    const source = declaredBy.get(key);
+    // No declaring attribute means the client referenced something they never named anywhere. That
+    // is a genuine intake gap and stays a gap; inventing the entity would hide it.
+    if (!source) continue;
+    promoted.push({
+      tenantKey: want.tenantKey,
+      packetVersion: source.packetVersion,
+      domain: PROMOTED_DOMAIN[want.objectType] ?? source.domain,
+      objectType: want.objectType,
+      sourceObjectId: `promoted:${want.objectType}:${normalizeIdentifier(want.name)}`,
+      canonicalObjectKey: `${want.tenantKey}:${want.objectType}:${normalizeIdentifier(want.name)}`,
+      attributes: {
+        tenantKey: { value: want.tenantKey, valueType: "string" },
+        displayName: { value: want.name, valueType: "string" },
+        promotedFrom: { value: source.objectType, valueType: "string" },
+        sourceFile: source.attributes.sourceFile ?? { value: "", valueType: "string" },
+        sourcePath: source.attributes.sourcePath ?? { value: "", valueType: "string" },
+      },
+      relationships: [],
+      evidenceReferences: source.evidenceReferences.slice(0, 1),
+      sourceAuthority: {
+        ...source.sourceAuthority,
+        // Still the client asserting something about themselves — just in a column rather than on a
+        // tab of its own. The basis does not change because the shape of the cell changed.
+        basis: "declared",
+      },
+      observedAt: generatedAt,
+      confidence: source.confidence,
+      sensitivity: source.sensitivity,
+      dataStatus: source.dataStatus,
+      qualityStatus: source.qualityStatus,
+      lineage: [
+        {
+          step: "promote_declared_attribute_to_canonical_entity",
+          version: CANONICAL_DATA_BUILD_VERSION,
+          at: generatedAt,
+          adapterKey: "declared-attribute-entity-promoter",
+          mappingProfile: `${source.objectType}/${want.objectType}`,
+          contractVersion: "canonical-tenant-input-standard-2026-07",
+          notes: `Catalogued from evidence: the client declared this ${want.objectType} as an attribute value on a ${source.objectType} row.`,
+        },
+      ],
+    });
+  }
+
+  if (promoted.length > 0) {
+    const byTenant = new Map<string, number>();
+    for (const record of promoted) {
+      byTenant.set(record.tenantKey, (byTenant.get(record.tenantKey) ?? 0) + 1);
+    }
+    for (const [tenantKey, count] of byTenant) {
+      findings.push({
+        tenantKey,
+        severity: "info",
+        code: "declared_attribute_promoted_to_entity",
+        message: `${count} entities catalogued from declared attribute values so referenced owners, data domains, and platforms resolve.`,
+      });
+    }
+  }
+  return promoted;
+}
+
 function resolveRelationshipCandidates(
   records: CanonicalIngestionRecord[],
   rawCandidates: RelationshipCandidate[],
@@ -1978,6 +2162,7 @@ function lookupObjectTypes(objectType: string): string[] {
     vendor: ["vendor", "vendor_contract"],
     vendor_contract: ["vendor_contract", "vendor"],
     person_or_role: ["person_or_role", "org_owner", "workforce_role"],
+    role: ["role", "person_or_role", "workforce_role", "org_owner"],
     org_owner: ["org_owner", "person_or_role", "org_unit"],
     workforce_role: ["workforce_role", "person_or_role"],
     metric: ["metric", "metric_outcome"],
