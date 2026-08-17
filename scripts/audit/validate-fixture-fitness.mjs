@@ -36,7 +36,12 @@ const ACTIVE = path.join(ROOT, "datasets/tenant-inputs/active");
  * demonstrate concentration risk, renewal leverage, or a credible savings case.
  */
 const STANDARD = {
-  minRevenueUsd: 50e9,
+  /**
+   * Enterprise scale, not a blanket $50B. The original standard was a single number, and a $25B
+   * integrated delivery network fails it while being an entirely credible enterprise client — the
+   * rule was proxying for "not an SMB" and a flat threshold is the wrong instrument for that.
+   */
+  minRevenueUsd: 20e9,
   minApplications: 180,
   minPrograms: 35,
   minInfrastructure: 40,
