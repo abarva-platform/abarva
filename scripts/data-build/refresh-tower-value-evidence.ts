@@ -366,26 +366,46 @@ async function main(): Promise<number> {
       //
       // So ask it. A mismatch now fails in the first second with the permitted values named, instead
       // of mid-transaction fifteen minutes into a deploy cycle.
-      const schema = await client.query<{ table_name: string; column_name: string }>(
-        `select table_name, column_name from information_schema.columns
+      const schema = await client.query<{
+        table_name: string; column_name: string; is_nullable: string; column_default: string | null;
+      }>(
+        `select table_name, column_name, is_nullable, column_default
+           from information_schema.columns
           where table_schema = 'tower'
             and table_name in ('tracked_subject','metric_observation','value_claim')`,
       );
-      const columnsFor = (table: string) =>
-        new Set(schema.rows.filter((r) => r.table_name === table).map((r) => r.column_name));
-      const required: Record<string, string[]> = {
-        tracked_subject: ["tenant_key", "subject_ref", "subject_kind", "initiative_ref", "title"],
-        metric_observation: ["tenant_key", "observation_id", "subject_ref", "metric_ref", "scenario", "value_num", "period_start", "period_end", "source_result_hash"],
-        value_claim: ["tenant_key", "claim_id", "subject_ref", "promised_value", "calculated_value", "claim_state", "baseline_observation_id", "target_observation_id", "actual_observation_id", "quality_guardrail_state", "next_gate_owner_role", "claim_rule_version"],
+
+      /**
+       * Ask what the destination *requires*, not whether it has what we expect.
+       *
+       * The first preflight checked that the columns this projector writes exist. That is the wrong
+       * direction: it passes when the table has an extra mandatory column nobody here knows about,
+       * which is exactly what happened — `metric_observation.provenance_id` is NOT NULL, appears in
+       * no migration in this repository, and stopped the run after the preflight said everything was
+       * fine.
+       *
+       * That divergence is itself worth naming: the live schema and the repo's migrations have
+       * drifted, so the database is the only accurate description of its own shape. Enumerating what
+       * it demands is the only way to find that out in one run rather than four.
+       */
+      const supplied: Record<string, Set<string>> = {
+        tracked_subject: new Set(["tenant_key", "subject_ref", "subject_kind", "initiative_ref", "title"]),
+        metric_observation: new Set(["tenant_key", "observation_id", "subject_ref", "metric_ref", "scenario", "value_num", "period_start", "period_end", "source_result_hash"]),
+        value_claim: new Set(["tenant_key", "claim_id", "subject_ref", "promised_value", "calculated_value", "claim_state", "baseline_observation_id", "target_observation_id", "actual_observation_id", "quality_guardrail_state", "next_gate_owner_role", "claim_rule_version"]),
       };
-      const missing: string[] = [];
-      for (const [table, cols] of Object.entries(required)) {
-        const present = columnsFor(table);
-        if (present.size === 0) { missing.push(`tower.${table} does not exist`); continue; }
-        for (const c of cols) if (!present.has(c)) missing.push(`tower.${table}.${c}`);
+      const unmet: string[] = [];
+      const tablesSeen = new Set(schema.rows.map((r) => r.table_name));
+      for (const table of Object.keys(supplied)) {
+        if (!tablesSeen.has(table)) { unmet.push(`tower.${table} does not exist`); continue; }
+        for (const row of schema.rows.filter((r) => r.table_name === table)) {
+          const mandatory = row.is_nullable === "NO" && row.column_default === null;
+          if (mandatory && !supplied[table].has(row.column_name)) {
+            unmet.push(`tower.${table}.${row.column_name} is NOT NULL with no default and is not supplied`);
+          }
+        }
       }
-      if (missing.length) {
-        throw new Error(`schema preflight failed — missing: ${missing.join(", ")}`);
+      if (unmet.length) {
+        throw new Error(`schema preflight failed:\n  ${unmet.join("\n  ")}`);
       }
 
       // Enumerated columns: read the permitted values rather than assuming them. The subject_kind
@@ -418,6 +438,7 @@ async function main(): Promise<number> {
         if (bad.length) throw new Error(`scenario values rejected by constraint: ${[...new Set(bad.map((o) => o.scenario))].join(", ")}; permitted ${[...scenarios].join(", ")}`);
       }
       summary.schemaPreflight = {
+        mandatoryColumnsSatisfied: true,
         subjectKindAllowed: kinds ? [...kinds] : "unconstrained",
         claimStateAllowed: states ? [...states] : "unconstrained",
         scenarioAllowed: scenarios ? [...scenarios] : "unconstrained",
