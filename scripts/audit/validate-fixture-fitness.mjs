@@ -257,8 +257,20 @@ for (const tenantKey of tenants) {
     }
   }
 
+  // Scope to contracts the tenant actually holds. CF-001 and CF-003 are a legacy demo package with
+  // no row in the active register; judging them as engagement contract files judges artefacts for a
+  // corpus they are not part of. They stay — tests and a build script reference them — but they are
+  // not evidence of this tenant's contract depth either way.
+  const registerIds = new Set(
+    vendors.map((v) => (v.contract_id ?? v.vendor_id ?? "").trim().toUpperCase()).filter(Boolean),
+  );
   const docs = documentsByContract(tenantKey);
-  const documented = [...docs.entries()].map(([id, files]) => {
+  const documented = [...docs.entries()]
+    // The registers carry no contract-id column, so the current corpus is identified by the packet
+    // lane's own id shape (CTR-<tenant>-NNN). Falling back to "accept everything when the register
+    // has no ids" defeated the filter entirely — the legacy package kept being judged.
+    .filter(([id]) => registerIds.has(id) || /^CTR-[A-Z]{2,3}-\d+$/.test(id))
+    .map(([id, files]) => {
     const list = [...files];
     return {
       id,
