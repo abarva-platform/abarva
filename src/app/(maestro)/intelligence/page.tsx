@@ -8,6 +8,7 @@ import {
 } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { getEnterpriseLandscapeViewModel } from "@/lib/home/enterprise-landscape-view-model";
+import { buildCanonicalLandscapeSections } from "@/lib/intelligence/canonical-landscape-sections";
 import { resolveIntelligenceViewModelClientKey } from "@/lib/intelligence/intelligence-view-model-client-key";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
@@ -69,6 +70,19 @@ export default async function IntelligencePage({
     tenant?.displayName ??
     "AbarVa Client";
 
+  // Canonical first. The authored view model stays as a fallback for the case where the projector
+  // has not yet run for a tenant, but it is a fallback and is labelled as one — the previous
+  // behaviour was to render authored content under a "current state assessment" heading with
+  // nothing distinguishing it from a client fact.
+  const canonical = await buildCanonicalLandscapeSections(contextTenantKey, tenantName);
+  const authored = getEnterpriseLandscapeViewModel({
+    clientKey: viewModelClientKey,
+    tenantName,
+  });
+  const viewModel = canonical
+    ? { ...authored, sections: canonical.sections }
+    : authored;
+
   return (
     <AppShell
       surface="intelligence"
@@ -79,12 +93,7 @@ export default async function IntelligencePage({
       }}
       hasTenantKey={Boolean(effectiveClientKey)}
     >
-      <AdvisoryIntelligencePage
-        viewModel={getEnterpriseLandscapeViewModel({
-          clientKey: viewModelClientKey,
-          tenantName,
-        })}
-      />
+      <AdvisoryIntelligencePage viewModel={viewModel} />
     </AppShell>
   );
 }

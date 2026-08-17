@@ -23,6 +23,14 @@ export interface HomeLandscapeDimension {
   readonly evidenceCount: number;
   /** `evidenced` · `directional` · `not_available` — never silently a confident zero. */
   readonly confidenceStatus: string;
+  /** Canonical object type this dimension projects, carried so a reader can trace a count back. */
+  readonly objectType: string | null;
+  /** Intelligence advisory section this dimension answers, or null when no section asks it. */
+  readonly section: string | null;
+  /** Distinct named instances, which is usually lower than `recordCount`. */
+  readonly distinctNameCount: number;
+  /** Named examples, so a count reads as a landscape rather than an inventory total. */
+  readonly sampleEntities: readonly string[];
 }
 
 export interface HomeLandscape {
@@ -54,6 +62,7 @@ export async function loadHomeLandscape(
       record_count: number;
       evidence_count: number;
       confidence_status: string;
+      metadata: Record<string, unknown> | null;
     }>(
       `select p.pack_version,
               p.created_at,
@@ -61,7 +70,8 @@ export async function loadHomeLandscape(
               d.display_name,
               d.record_count,
               d.evidence_count,
-              d.confidence_status
+              d.confidence_status,
+              d.metadata
          from public.home_knowledge_dimensions d
          join public.home_knowledge_packs p on p.id = d.pack_id
         where d.tenant_key = $1
@@ -78,13 +88,21 @@ export async function loadHomeLandscape(
     );
     if (rows.length === 0) return null;
 
-    const dimensions = rows.map((r) => ({
-      dimensionKey: r.dimension_key,
-      displayName: r.display_name,
-      recordCount: Number(r.record_count ?? 0),
-      evidenceCount: Number(r.evidence_count ?? 0),
-      confidenceStatus: r.confidence_status,
-    }));
+    const dimensions = rows.map((r) => {
+      const meta = (r.metadata ?? {}) as Record<string, unknown>;
+      const samples = Array.isArray(meta.sampleEntities) ? meta.sampleEntities : [];
+      return {
+        dimensionKey: r.dimension_key,
+        displayName: r.display_name,
+        recordCount: Number(r.record_count ?? 0),
+        evidenceCount: Number(r.evidence_count ?? 0),
+        confidenceStatus: r.confidence_status,
+        objectType: typeof meta.objectType === "string" ? meta.objectType : null,
+        section: typeof meta.section === "string" ? meta.section : null,
+        distinctNameCount: Number(meta.distinctNameCount ?? 0),
+        sampleEntities: samples.filter((v): v is string => typeof v === "string"),
+      };
+    });
 
     return {
       buildVersion: rows[0].pack_version,
