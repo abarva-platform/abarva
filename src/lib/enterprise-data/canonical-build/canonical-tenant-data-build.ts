@@ -1693,6 +1693,11 @@ function buildRecordFromRow(args: {
         sourceSystem: "canonical-tenant-inputs",
         sourceType: sourceFile.domain ?? "unknown",
         owner: sourceFile.packetId,
+        // Everything from a client intake workbook is the client asserting something about
+        // themselves. Collectors reading a live system set `observed` at their own call site.
+        basis: "declared",
+        // Everything from a client intake workbook is the client asserting something about
+        // themselves. Collectors reading a live system set `observed` at their own call site.
         authority: sourceFile.classification.includes("benchmark")
           ? "benchmark"
           : "self_reported",
