@@ -193,12 +193,12 @@ for (const tenantKey of TENANTS) {
       const modules = ["Absence", "Recruiting", "Journeys", "Expenses"];
       for (let i = 0; i < Math.max(40, active); i += 1) {
         const p = person(rand, domain);
-        const module = modules[Math.floor(rand() * modules.length)];
+        const functionalArea = modules[Math.floor(rand() * modules.length)];
         workdayRows.push({
           Extract_Date: refreshDate,
           Worker_ID: `WD-${String(100000 + i)}`,
           Worker_Name: p.displayName,
-          Functional_Area: module,
+          Functional_Area: functionalArea,
           Assisted_Transactions: String(Math.floor(rand() * 40)),
           Assisted_Transaction_Minutes_Saved: String(Math.floor(rand() * 220)),
           Manual_Fallback_Count: String(Math.floor(rand() * 9)),
