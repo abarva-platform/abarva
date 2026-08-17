@@ -19,6 +19,7 @@ import {
   loadHomeLandscape,
   type HomeLandscape,
 } from "@/lib/home/landscape-read-adapter";
+import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import {
   ACTIVE_CLIENT_COOKIE,
   resolveTenant,
@@ -379,9 +380,13 @@ export default async function HomePage() {
     }) ??
     tenant?.displayName ??
     "AbarVa Client";
+  // The landscape is keyed by canonical tenant key ("skyharbor-air"), while the rest of this page
+  // works in app client keys ("skyharbor"). Passing the app key here looks up a tenant that does
+  // not exist and renders "not available" over data that is present — the failure is silent
+  // because a missing pack is a legitimate state.
   const [sourceSummary, landscape] = await Promise.all([
     loadHomeSourceRuntimeSummary(clientKey),
-    loadHomeLandscape(clientKey),
+    loadHomeLandscape(canonicalTenantKey(clientKey)),
   ]);
 
   if (clientKey === "skyharbor") {
@@ -401,7 +406,10 @@ export default async function HomePage() {
         }}
         hasTenantKey
       >
-        <HomeEnterpriseLandscapeV2 model={model} />
+        <div className="space-y-6">
+          <EnterpriseLandscapePanel landscape={landscape} />
+          <HomeEnterpriseLandscapeV2 model={model} />
+        </div>
       </AppShell>
     );
   }
