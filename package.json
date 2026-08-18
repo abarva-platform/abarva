@@ -633,6 +633,7 @@
     "source:skyharbor-layer-cube:plan": "npx tsx scripts/source/load-skyharbor-source-layer-cube-package.mjs --tenant-key skyharbor",
     "source:skyharbor-layer-cube:apply": "SOURCE_SKYHARBOR_LAYER_CUBE_APPLY=true npx tsx scripts/source/load-skyharbor-source-layer-cube-package.mjs --tenant-key skyharbor --apply",
     "source:inspect-contract-360-definition": "node scripts/source/inspect-source-contract-360-definition.mjs",
+    "source:inspect-golden-pricing-schedule-rows": "node scripts/source/inspect-golden-pricing-schedule-rows.mjs",
     "source:skyharbor-layer-cube:readmodel:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260812142000_source_layer_cube_readmodel_projection.sql",
     "source:skyharbor-layer-cube:readmodel:migrate:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260812142000_source_layer_cube_readmodel_projection.sql",
     "source:contract-optimization:schema:plan": "npx tsx scripts/source/apply-contract-optimization-source-schema.ts",
