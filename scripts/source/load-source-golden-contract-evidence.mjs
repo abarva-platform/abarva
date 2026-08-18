@@ -249,10 +249,16 @@ async function loadPackageCsvTable(client, args, table, relativePath) {
   const rows = readCsv(relativePath);
   const headers = Object.keys(rows[0] || {});
   await ensureSourceCsvTable(client, table, headers);
+  // Scope the delete to the declared tenant-key aliases (not just args.tenantKey), matching
+  // deleteDocumentRows below. This table's own row keys carry no alias fallback -- a load
+  // under one alias for this synthetic tenant leaves rows behind under that alias, and the
+  // live read path (listContractEvidencePricing et al.) queries _tenant_key = ANY(aliases)
+  // with no _dataset_id filter, so a stale copy is included alongside a corrected reload
+  // with no guarantee the corrected rows win.
   await client.query(
     `DELETE FROM ${quoteIdent(SOURCE_SCHEMA)}.${quoteIdent(table)}
-      WHERE _tenant_key = $1 AND _dataset_id = $2`,
-    [args.tenantKey, args.datasetId],
+      WHERE _tenant_key = ANY($1::text[]) AND _dataset_id = $2`,
+    [tenantAliases(args), args.datasetId],
   );
   for (const [index, row] of rows.entries()) {
     const logical = {
