@@ -172,7 +172,7 @@ export const HOME_LANDSCAPE_TABS: Array<{
   /** Orientation pack blocks this tab renders. Empty for authored tabs. */
   blocks?: readonly string[];
 }> = [
-  { id: "identity", label: "Who we are", blocks: ["identity", "organisation"] },
+  { id: "identity", label: "Who we are", blocks: ["identity", "organization"] },
   { id: "strategy", label: "Strategy", blocks: ["strategy"] },
   { id: "measurement", label: "How we're measured", blocks: ["measurement"] },
   { id: "estate", label: "What we run", blocks: ["estate"] },

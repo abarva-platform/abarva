@@ -5,7 +5,7 @@ import { validateNarrative } from "../../scripts/data-build/build-home-orientati
  *
  * Everything else in the orientation pack is deterministic and inspectable. This one component
  * decides whether prose a language model produced gets stored as an assertion about a real
- * organisation, so it is tested against the ways that goes wrong rather than the ways it goes right:
+ * organization, so it is tested against the ways that goes wrong rather than the ways it goes right:
  * a number nobody computed, a vendor nobody supplied, a recommendation nobody asked for.
  *
  * It is intentionally biased toward rejection. A false rejection costs a block that shows its facts
@@ -26,7 +26,7 @@ const ENTITIES = ["Amadeus Altéa Reservations", "SITA"];
 describe("orientation pack narrative validation", () => {
   it("accepts prose whose every figure appears in the aggregate", () => {
     const result = validateNarrative(
-      "This organisation runs 503 applications against a technology budget of $3.42B. Of that, $2.05B is contracted to third parties.",
+      "This organization runs 503 applications against a technology budget of $3.42B. Of that, $2.05B is contracted to third parties.",
       AGGREGATE,
       ENTITIES,
     );
@@ -36,7 +36,7 @@ describe("orientation pack narrative validation", () => {
   it("rejects a number the model computed rather than quoted", () => {
     // 503 and $3.42B are both present; $6.8M per application is arithmetic the model performed.
     const result = validateNarrative(
-      "This organisation runs 503 applications, averaging $6.8M per application.",
+      "This organization runs 503 applications, averaging $6.8M per application.",
       AGGREGATE,
       ENTITIES,
     );
@@ -84,7 +84,7 @@ describe("orientation pack narrative validation", () => {
 
   it("rejects recommendation and causation", () => {
     for (const text of [
-      "The organisation should consolidate its 503 applications.",
+      "The organization should consolidate its 503 applications.",
       "This concentration indicates that resilience is at risk.",
       "The estate is likely to grow.",
     ]) {
@@ -129,7 +129,7 @@ describe("orientation pack narrative validation — comma and formatting fixes",
   it("accepts a comma-formatted number that is comma-formatted identically in the aggregate", () => {
     const aggregate = { facts: [{ label: "People", value: "68,000" }] };
     const result = validateNarrative(
-      "This organisation has 68,000 people.",
+      "This organization has 68,000 people.",
       aggregate,
       [],
     );
@@ -139,7 +139,7 @@ describe("orientation pack narrative validation — comma and formatting fixes",
   it("still rejects a comma-formatted number nowhere in the aggregate", () => {
     const aggregate = { facts: [{ label: "People", value: "68,000" }] };
     const result = validateNarrative(
-      "This organisation has 71,500 people.",
+      "This organization has 71,500 people.",
       aggregate,
       [],
     );
