@@ -462,10 +462,18 @@ async function main() {
     console.log(`\n=== ${tenantKey} ===`);
     const { signalPacket, thesis, structuralIssues, verifierResults, usage } = await buildTenant(tenantKey, client);
 
+    const result = { tenantKey, signalPacket, thesis, structuralIssues, verifierResults };
     const outFile = path.join(OUT_DIR, `${tenantKey}-enterprise-thesis.json`);
-    fs.writeFileSync(outFile, JSON.stringify({ signalPacket, thesis, structuralIssues, verifierResults }, null, 2));
+    fs.writeFileSync(outFile, JSON.stringify(result, null, 2));
     console.log(`  → ${outFile}`);
     if (usage.output) console.log(`  tokens in ${usage.input} / out ${usage.output}`);
+
+    // The out-dir above is inside the job's ephemeral container and is lost when it exits. Print
+    // the full result to stdout too, one line per tenant, so it survives in the captured job log
+    // and can be parsed back out locally -- the same reason the orientation-pack build's rejection
+    // reasons were readable from console output earlier this session, just generalized to the
+    // whole result instead of a summary line.
+    console.log(`__ENTERPRISE_THESIS_RESULT_BEGIN__${JSON.stringify(result)}__ENTERPRISE_THESIS_RESULT_END__`);
 
     if (!WRITE || !thesis) continue;
 
