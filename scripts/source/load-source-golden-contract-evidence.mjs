@@ -766,6 +766,27 @@ function reconciliationRowsByContract(contractIds) {
 }
 
 async function upsertTowerClaim(client, args, contract, reconciliationRow) {
+  // tracked_subject.subject_ref and value_claim.claim_id are each a bare
+  // primary key with no tenant column in the key itself (same shape as the
+  // doc.* tables above), while both are keyed here on the tenant-agnostic
+  // contract id. A load of this same package under a different (equally
+  // valid) tenant-key alias for this synthetic tenant left rows behind under
+  // that alias, which the ON CONFLICT (tenant_key, ...) targets below cannot
+  // see (that composite is a secondary unique constraint, not the primary
+  // key). Reclaim across the declared alias set first, child before parent,
+  // so the upserts below land cleanly under the current run's tenant key.
+  const towerAliases = tenantAliases(args);
+  const claimId = `claim-source-contract-golden-${contract.contract_id.toLowerCase()}`;
+  await client.query(
+    `DELETE FROM ${quoteIdent(TOWER_SCHEMA)}.value_claim
+      WHERE tenant_key = ANY($1::text[]) AND claim_id = $2`,
+    [towerAliases, claimId],
+  );
+  await client.query(
+    `DELETE FROM ${quoteIdent(TOWER_SCHEMA)}.tracked_subject
+      WHERE tenant_key = ANY($1::text[]) AND subject_ref = $2`,
+    [towerAliases, contract.contract_id],
+  );
   await client.query(
     `INSERT INTO ${quoteIdent(TOWER_SCHEMA)}.metric_definition (
        metric_ref, domain, label, description, value_type, unit, aggregation_rule,
@@ -838,7 +859,7 @@ async function upsertTowerClaim(client, args, contract, reconciliationRow) {
        next_gate_owner_role = null,
        evaluated_at = now()`,
     [
-      `claim-source-contract-golden-${contract.contract_id.toLowerCase()}`,
+      claimId,
       args.tenantKey,
       contract.contract_id,
       numericValue(reconciliationRow.negotiated_improvement_usd),
