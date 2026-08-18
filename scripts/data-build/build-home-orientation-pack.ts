@@ -279,7 +279,12 @@ function buildBlocks(
 
   const itSpend = sum("spend_value_fact", "annualSpendUsd");
   const vendorBook = sum("vendor_contract", "annualSpendUsd");
-  const evidenced = records.filter((r) => str(r.attributes.sourceFile)).length;
+  // sourcePath is present on every canonical object type; sourceFile is missing on six of them
+  // (AI-usage and service-performance types among others). Checking sourceFile alone understates
+  // real coverage for exactly those six -- found while building the enterprise signal packet,
+  // where the same bug produced a false "0% evidenced" data-quality signal for real, fully-sourced
+  // interview evidence.
+  const evidenced = records.filter((r) => str(r.attributes.sourcePath) ?? str(r.attributes.sourceFile)).length;
 
   return [
     {
@@ -658,7 +663,7 @@ function profileDimension(
     label,
     recordCount: n,
     distinctNameCount: distinctNames.size,
-    evidencedCount: records.filter((r) => str(r.attributes.sourceFile)).length,
+    evidencedCount: records.filter((r) => str(r.attributes.sourcePath) ?? str(r.attributes.sourceFile)).length,
     sampleEntities: [...distinctNames].slice(0, 8),
     categories: categories.slice(0, 5),
     numerics: numerics.slice(0, 4),

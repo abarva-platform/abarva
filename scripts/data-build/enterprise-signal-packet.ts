@@ -385,10 +385,19 @@ export function buildContextQualityManifest(
     byType.get(r.objectType)!.push(r);
   }
 
+  // sourcePath is the universal evidence-reference field -- present on every one of the 28
+  // canonical object types checked this session. sourceFile is missing on exactly six of them
+  // (the AI-usage and service-performance types among others), and checking sourceFile alone
+  // reported those six as 0% evidenced when they are fully sourced -- a false, alarming
+  // data-quality signal that would have flowed straight into the EnterpriseThesis prompt as a
+  // fabricated-sounding limitation. Checking both, preferring sourcePath, covers every type seen
+  // and degrades safely if a future type only carries one of the two.
   const dimensionCoverage = [...byType.entries()].map(([key, rows]) => ({
     key,
     recordCount: rows.length,
-    evidencedShare: rows.length ? rows.filter((r) => str(r.attributes.sourceFile)).length / rows.length : 0,
+    evidencedShare: rows.length
+      ? rows.filter((r) => str(r.attributes.sourcePath) ?? str(r.attributes.sourceFile)).length / rows.length
+      : 0,
   }));
 
   const resolvable = crosswalkRows.filter((r) => r.canonicalObjectType !== "no_canonical_match");
