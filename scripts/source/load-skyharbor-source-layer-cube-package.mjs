@@ -18,7 +18,8 @@ const DEFAULT_PACKAGE_ROOT =
   "datasets/source/contract-intelligence/skyharbor-source-layer-cube-20260811";
 const DEFAULT_TENANT_KEY = "skyharbor-air";
 const APPROVED_CANONICAL_TENANT_KEY = "skyharbor-air";
-const LOAD_RUN_ID = `${DATASET_ID}:operator-reviewed`;
+const DEFAULT_LOAD_RUN_ID = `${DATASET_ID}:operator-reviewed`;
+let LOAD_RUN_ID = DEFAULT_LOAD_RUN_ID;
 const AS_OF_DATE = "2027-06-30";
 
 const REQUIRED_TABLES = Object.freeze([
@@ -619,6 +620,13 @@ async function main() {
   if (!fs.existsSync(packageRoot)) {
     throw new Error(`Package root not found: ${packageRoot}`);
   }
+  // source.contract_vendor_360 joins source.contract to source.l4_cube_active_load_run on
+  // (tenant_key, load_run_id) -- exactly one load_run_id is "active" per tenant, and rows
+  // under any other load_run_id are invisible to the view even though they exist in the
+  // base table. Default to this package's own run id (safe, isolated); pass
+  // --load-run-id/LOAD_RUN_ID explicitly to coexist with whatever load_run_id is currently
+  // active for the tenant instead.
+  LOAD_RUN_ID = arg("--load-run-id", process.env.LOAD_RUN_ID || DEFAULT_LOAD_RUN_ID);
 
   const loaded = loadPackage(packageRoot, tenantKey);
   const generatedRows = Object.fromEntries(
