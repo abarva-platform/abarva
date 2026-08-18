@@ -789,8 +789,18 @@ export function validateNarrative(
   for (const match of text.matchAll(/\b[A-Z][A-Za-z0-9&'-]+(?:\s+[A-Z][A-Za-z0-9&'-]+)*/g)) {
     const raw = match[0];
     if (raw.length < 6) continue;
-    // A possessive is the same entity: "Meridian's priorities" must resolve to "Meridian".
-    const candidate = raw.replace(/[''`]s$/, "");
+    // Strip the grammatical scaffolding around a candidate before judging its core token.
+    // "The Enterprise profile shows..." glues the sentence-initial "The" onto the next
+    // capitalised word into one candidate, "The Enterprise" -- and "The Enterprise" is not an
+    // entity anyone supplied, even though "Enterprise" is the client's own dimension label sitting
+    // right there in the aggregate. Every one of these was a real, grounded reference wearing a
+    // determiner it never needed checked. Stripping "The"/"This"/"A"/etc. from the front, the same
+    // way a trailing possessive is already stripped, does not weaken what the check requires of
+    // the word underneath it -- "Northgate" in "The Northgate deal" still has to be found.
+    const determinerMatch = raw.match(/^(The|This|These|Those|A|An|Our|Their|Its)\s+/);
+    const candidate = raw
+      .replace(/^(The|This|These|Those|A|An|Our|Their|Its)\s+/, "")
+      .replace(/[''`]s$/, "");
     const lower = candidate.toLowerCase();
     if (haystack.includes(lower)) continue;
     if (allowed.some((e) => e.includes(lower) || lower.includes(e))) continue;
@@ -800,9 +810,15 @@ export function validateNarrative(
     // the model's vocabulary forever; checking the actual grammatical position does not. Multi-word
     // phrases at a sentence's start are still checked, because a real name can legitimately open a
     // sentence.
+    //
+    // The exemption must not fire when a determiner was stripped off the front. "However" is
+    // capitalised by nothing but its position; "Northgate" in "The Northgate deal" is capitalised
+    // because it is a name, and the "The" in front of it says nothing about whether the name
+    // underneath is real. Letting the strip feed the exemption would have quietly reopened the
+    // exact hole the possessive- and determiner-stripping was built to close.
     const precedingText = text.slice(0, match.index).replace(/\s+$/, "");
     const atSentenceStart = precedingText === "" || /[.!?]$/.test(precedingText);
-    if (atSentenceStart && !candidate.includes(" ")) continue;
+    if (atSentenceStart && !determinerMatch && !candidate.includes(" ")) continue;
     return { ok: false, reason: `entity not in aggregate: ${candidate}` };
   }
 

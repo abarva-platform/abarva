@@ -223,3 +223,40 @@ describe("orientation pack narrative validation — sentence-boundary fixes", ()
     expect(result.ok).toBe(false);
   });
 });
+
+describe("orientation pack narrative validation — leading determiner strip", () => {
+  // Found from the third live run: "The Enterprise profile shows..." glues the sentence-initial
+  // "The" onto the client's own dimension label into one candidate, "The Enterprise" -- which was
+  // never supplied as an entity, even though "Enterprise" (as part of "Enterprise profile") is
+  // sitting right there in the aggregate. Every rejection in this class was a real, grounded
+  // reference wearing a determiner nobody asked it to carry.
+  it("resolves a determiner-prefixed label to its grounded core", () => {
+    const aggregate = { label: "Enterprise profile", recordCount: 1 };
+    const result = validateNarrative(
+      "The Enterprise profile shows one record.",
+      aggregate,
+      [],
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it("still rejects a determiner-prefixed phrase whose core is not grounded", () => {
+    // Stripping "The" must not weaken what the check requires of the word underneath it.
+    const result = validateNarrative(
+      "The Northgate deal fell through entirely.",
+      { label: "Enterprise profile" },
+      [],
+    );
+    expect(result.ok).toBe(false);
+  });
+
+  it("resolves a multi-word determiner-prefixed phrase via containment", () => {
+    const aggregate = { label: "AI KPI outcomes" };
+    const result = validateNarrative(
+      "The AI KPI figures are limited in number.",
+      aggregate,
+      [],
+    );
+    expect(result.ok).toBe(true);
+  });
+});
