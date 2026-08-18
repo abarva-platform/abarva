@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "packId": "abarva-client-reference-pack",
+  "version": "v1.0-2026-08-15",
+  "status": "FINAL \u2014 canonical reference pack for a new client engagement",
+  "supersedes": "all prior template pack variants; no other template set is approved",
+  "whatThisIs": "The pack a new client receives. It contains the workbooks a client fills or reviews, the column contracts those workbooks map into, the governance files that define types and segmentation, and a worked example showing what a complete package looks like. Nothing outside this folder is an approved starting point.",
+  "howAClientUsesIt": [
+    "Open AbarVa_Template_Pack_Index_v3.xlsx. It is the front door.",
+    "Read Start Here, then Intake Workstreams: ten workstreams, each owned by a group the client already has.",
+    "Use Review Queue to assign an owner and a date per workstream.",
+    "Send the exports and documents listed. Source Extract Map shows where a ready-made extract template exists.",
+    "AbarVa maps the evidence into the 19 canonical files. Canonical Mapping shows where each workstream lands.",
+    "SMEs review the result and record decisions in SME Review Matrix.",
+    "Evidence and Gates lists what stays closed until that review completes."
+  ],
+  "contents": {
+    "clientWorkbooks": {
+      "count": 26,
+      "frontDoor": "AbarVa_Template_Pack_Index_v3.xlsx",
+      "note": "Every workbook opens on a Start Here sheet naming its workstream, owner group, populating evidence and canonical role."
+    },
+    "canonicalColumnContracts": {
+      "count": 19,
+      "authority": "template-manifest.json is the sole authority on columns"
+    },
+    "governance": {
+      "files": [
+        "client-intake-workstreams.json",
+        "manifest.json",
+        "ontology.json",
+        "quality-depth-rules.json",
+        "template-manifest.json"
+      ],
+      "note": "ontology.json declares node and relationship types; client-intake-workstreams.json declares the ten client-facing workstreams; quality-depth-rules.json declares minimum depth and waivers."
+    }
+  },
+  "completenessBar": {
+    "why": "A package is complete when it passes these, not when it has a lot of rows.",
+    "dimensionsConformant": "19 of 19 against template-manifest.json",
+    "contractFieldsCarryingData": "at least 95%",
+    "graphEndpointsResolving": "at least 99%; unresolved endpoints are quarantined, never satisfied with placeholder nodes",
+    "rowTerminators": "consistent within every file",
+    "hollowRows": "no conformant file where half or more rows carry no payload",
+    "enforcedBy": [
+      "npm run audit:tenant-input-quality",
+      "npm run audit:tenant-graph-reconciliation",
+      "npm run validate:context-corpus"
+    ]
+  },
+  "workedExample": {
+    "tenant": "skyharbor-air",
+    "path": "datasets/tenant-inputs/active/skyharbor-air/current",
+    "why": "The reference for what a completed package looks like. Synthetic, but built to this contract and passing every gate.",
+    "dimensionsConformant": "19/19",
+    "contractFieldsCarryingData": "285/286 (99%)",
+    "rows": 5009,
+    "graphEndpointsResolving": "99.6%"
+  },
+  "rulesThatDoNotBend": [
+    "Columns come from template-manifest.json. A package that does not match it is not conformant, whatever its row count.",
+    "An empty field is an evidence request. It is never filled with a placeholder, a generated identifier, or invented prose.",
+    "A relationship endpoint is never satisfied by creating a node for it. Unresolved endpoints are quarantined.",
+    "Money, counts and dates are deterministic or absent. A figure reported CONFLICT by fact lineage is not quoted at all.",
+    "Completing this pack approves nothing. Loading, indexing, assistant use and product projection each remain gated until SME review passes."
+  ],
+  "fileHashes": {
+    "00_enterprise_profile.csv": "77e45087663c67a9009ba80cb4cd7cbcde3f79cdb35ac5d750abdc4af7247ddf",
+    "00_enterprise_profile.xlsx": "300b052522fea1ccb93fbc523163c4b366e54f872d1964580eb91b50a299ccf8",
+    "01_business_functions.csv": "65519e7b1892c3d9dc34a81b8ec1b42ec8c6f4ea9f0eb106211bdfd53baef5c0",
+    "01_business_functions.xlsx": "45be7fe96932ed7c9ad6c9b964df0a778d04cbe7cdfdbe65a3238de839349f40",
+    "02_org_ownership.csv": "c55eac8c4fc7b4818a128fd81f586c3fb356bff67b2523e3dee98cbf69564582",
+    "02_org_ownership.xlsx": "a37416807d8d08190e5b5af4f6c7495326aaf9354e062de3237ccc253dc81d3f",
+    "03_workforce_roles.csv": "4e3fddee18ea5d66487e26a6ec19ed3ad4ef4b2fa6f80d90fc10d460d906cbc9",
+    "03_workforce_roles.xlsx": "436677aa1db121fe63376c20c052036bff0142b22c85042dd857120fae057849",
+    "04_applications_systems.csv": "2bbf78b8f9416f8b507dc1bb0a7482d2c3896a1799fafa84c649af6d34810997",
+    "04_applications_systems.xlsx": "8ce7eea95a42dce7e5828c291649873c43a74f757e37ab893435da17e6b5efc8",
+    "05_data_assets_integrations.csv": "777d1a78029da2e8cc0d938236f5cdc61c7659f62fcd125367c6f90a19366380",
+    "05_data_assets_integrations.xlsx": "07e94492cc8afcfbce59c218f05cffe1c35e039b12f947c9ae826cb5a2e33c96",
+    "06_infrastructure_platforms.csv": "d8d65006f02f5825b15a7697f24808e69a9dfb511a9f6e565f1e70904597b39e",
+    "06_infrastructure_platforms.xlsx": "b1c63718c2ae68d295c68e360f408a5aebcdd9c114417ef7968b6afc565f67e1",
+    "07_vendors_contracts.csv": "cea1cc9fdb8168b720474f0e3e3a428405eefffaeac2e2c233f56c2ebb3c0f81",
+    "07_vendors_contracts.xlsx": "b0f9a08f10aee76f09694db8786063a00cb0753f9f56779568dc742977d9bdd5",
+    "08_it_budget_spend_value.xlsx": "ff57aed30ce3512c91b239350351780570084901bbe89f613b4b8b3d1a2150a2",
+    "08_spend_value.csv": "801416ece90963884ef1b209e446ecf8c3308e98be323ac9432015005e417de2",
+    "09_programs_initiatives.csv": "f8e8152f7bfb00eb64d636204215d8acb7f82e58b94ea690a7cf5c5f573a50e6",
+    "09_programs_initiatives.xlsx": "d15f278a8c14669ca7e57c5808161b020a61328b45f80dd6776ed6fb4f6c9e0d",
+    "10_ai_automation_use_cases.csv": "7769150a33c038ee9eff33c3d29f2efefdaf6582b9b8296a58858712d3106b11",
+    "10_ai_automation_use_cases.xlsx": "fecf04c6ffc0cc986b05bb0b31dd2e82bf28a0be3d2cf120e121849b81cd0048",
+    "11_risks_controls.csv": "f4018c5a1d28517d347fdd117f2ce8fe3331a17056fd90644cd0f84364e6303a",
+    "11_risks_controls.xlsx": "3ca2dc22169f4e8c1e403544a26accc75519adbd2a5cf282496f570ee46a1e0b",
+    "12_relationships.csv": "7a4a4959c2fbf344a49d8caceed8bf18e2c89e0806e25f9ea36414d4c98de47c",
+    "12_relationships.xlsx": "1f17fbc98fe4429b8ead6f3b73deef2e7b015abbcfeeba8382e337fec0aa3266",
+    "13_evidence_sources.csv": "b72a85ed2abaa427d5cc7eaad1b388ca2226dc24f9ecdf413ee8e2c51ca1c2b6",
+    "13_evidence_sources.xlsx": "21b1fae1e798723b863b12e648558ceb5ddf2d5b2b2a616e9f7f8dda89695bab",
+    "14_metrics_outcomes.csv": "a8bd380b33633208a3a740a6ad1efc297af268b45665fd562e24e414b6bf97a4",
+    "14_metrics_outcomes.xlsx": "02043681543ae7ba35f499b67bb9809244ea380b452cf0c02bd8346db94002aa",
+    "15_industry_context_patterns.csv": "c6dd03ffdb373d89dcff6e681204ee83b3009b0a742dbd0f8bb35bd2d786223b",
+    "15_industry_context_patterns.xlsx": "f3df165f28a329ef9825e8bd1b911e972d5fe7bc31a101963a9dfe710aa31408",
+    "16_expert_lenses.csv": "24f607fdfa336f0ae5061c17063199418d06fa4defed61bd9d31ed6a4ba7aa11",
+    "16_expert_lenses.xlsx": "f02e1f19f9ca5938031c7e0d6d34e6ce5d65134266809f66f709adeee42c91a3",
+    "17_managed_services_scope.xlsx": "3ea6ef93f6c00aed4c32f0f1bcc68a47851bdfcf1af392fd649b040de6fd9acd",
+    "17_service_scope_managed_services.csv": "1b50abf96c9989375aa94f4939049333eae4d22a0373a513458b28ad06165bf1",
+    "18_operational_process_evidence.csv": "cc288b2a4994d118e9737f891947299cc2720dd0380709d673c83802a37d2d4c",
+    "18_operational_process_evidence.xlsx": "cac95cad5dc891af3fb2007cd6027da9186ef5d318bc0d61b9b432a7b8c68e25",
+    "AbarVa_Template_Pack_Index_v3.xlsx": "eadce8f23a56a0777693172c3437a071fbb0f68e44abed919b75bdaf2cb8769f",
+    "README.md": "fa5d84c7969e6bebcaf1a5ea69ba9514037782bb0da6ee756417922c4e9e3b99",
+    "SA01_ServiceNow_CMDB_Extract_Template.xlsx": "ec9f903d69d203e51f1e8fe130b3a684c68b51d99723600eb55c30db96a6d0b4",
+    "SA02_IT_Finance_Budget_Spend_Extract_Template.xlsx": "c28f0268928e987c9f9bf3eb19184ea1ceb0c5517cb89018f1dc742b95b31c78",
+    "SA03_Vendor_Contracts_Extract_Template.xlsx": "f989df068c1564a6e030a4b0149b23632448669bfef7aa8450d389f2dc9f6de4",
+    "SA04_Program_Portfolio_Extract_Template.xlsx": "d6e77e37dc465ddd57702633e73461a07d7675e6371207fc880bb39a95b5d05a",
+    "SA05_Cloud_Inventory_Extract_Template.xlsx": "2c3ce044b7d057d0f40ca690e1cb19563ea25742eec809f1141303b28b47ec09",
+    "SA06_Incident_Problem_Change_Extract_Template.xlsx": "7923babce73ac4bef7911de3e1a914d68b1e63021f83053d45a99930a1d3a2c2",
+    "client-intake-workstreams.json": "ed083fa9d0d569c65c880fc44319ca95a112d5a70fa86767f47862e483aefc92",
+    "manifest.json": "1d7ae3a34ce2568341320330a1b291bd5004ba15dd90e6aec2fe6ae051143e85",
+    "ontology.json": "87da67502be7203cd8e9cec70323e2e9a0501a840f62e47f5582939e153c8b8a",
+    "quality-depth-rules.json": "cb2dd4fc4569ab36a3d62bf56b28a83f2b5c994a6ef367c6aa195a83cf14d574",
+    "template-manifest.json": "ecfc76ee433de131615d6fa83e97366666f4ee5600ce063d49661fd5e7886cbc"
+  }
+}
