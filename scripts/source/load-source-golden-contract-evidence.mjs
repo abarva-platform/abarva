@@ -546,7 +546,22 @@ async function loadDocumentEvidence(client, args) {
          duplicate_state, visibility_class, content_authenticity, metadata_json
        )
        VALUES ($1, $2, $3, $4, $5, 'application/pdf', $6, $7, $8, $9, $10,
-               'not_checked', 'internal', 'synthetic', $11::jsonb)`,
+               'not_checked', 'internal', 'synthetic', $11::jsonb)
+       ON CONFLICT (file_id) DO UPDATE SET
+         tenant_key = excluded.tenant_key,
+         blob_uri = excluded.blob_uri,
+         content_sha256 = excluded.content_sha256,
+         file_name = excluded.file_name,
+         media_type = excluded.media_type,
+         page_count = excluded.page_count,
+         load_run_id = excluded.load_run_id,
+         document_role = excluded.document_role,
+         document_type = excluded.document_type,
+         contract_ref = excluded.contract_ref,
+         duplicate_state = excluded.duplicate_state,
+         visibility_class = excluded.visibility_class,
+         content_authenticity = excluded.content_authenticity,
+         metadata_json = excluded.metadata_json`,
       [
         row.source_file_id,
         args.tenantKey,
@@ -577,7 +592,14 @@ async function loadDocumentEvidence(client, args) {
       `INSERT INTO ${quoteIdent(DOC_SCHEMA)}.page (
          page_id, tenant_key, file_id, page_no, page_text, char_start, char_end, page_sha256
        )
-       VALUES ($1, $2, $3, $4, $5, 0, $6, $7)`,
+       VALUES ($1, $2, $3, $4, $5, 0, $6, $7)
+       ON CONFLICT (page_id) DO UPDATE SET
+         tenant_key = excluded.tenant_key,
+         file_id = excluded.file_id,
+         page_no = excluded.page_no,
+         page_text = excluded.page_text,
+         char_end = excluded.char_end,
+         page_sha256 = excluded.page_sha256`,
       [
         pageId(row),
         args.tenantKey,
@@ -596,7 +618,15 @@ async function loadDocumentEvidence(client, args) {
          span_id, tenant_key, file_id, span_kind, heading, span_text, page_from, page_to,
          char_start, char_end, visibility_class, content_authenticity
        )
-       VALUES ($1, $2, $3, 'clause', $4, $5, $6, $6, 0, $7, 'internal', 'synthetic')`,
+       VALUES ($1, $2, $3, 'clause', $4, $5, $6, $6, 0, $7, 'internal', 'synthetic')
+       ON CONFLICT (span_id) DO UPDATE SET
+         tenant_key = excluded.tenant_key,
+         file_id = excluded.file_id,
+         heading = excluded.heading,
+         span_text = excluded.span_text,
+         page_from = excluded.page_from,
+         page_to = excluded.page_to,
+         char_end = excluded.char_end`,
       [
         spanId(row),
         args.tenantKey,
@@ -618,7 +648,26 @@ async function loadDocumentEvidence(client, args) {
          payload_json, extracted_at
        )
        VALUES ($1, $2, $3, $4, $5, null, 'contract_pdf_adapter_v1', $6, $7, $8, $9, $10,
-               'span', $11, $12, $13, $14, $15, $16, $17, 'internal', 'synthetic', $18::jsonb, now())`,
+               'span', $11, $12, $13, $14, $15, $16, $17, 'internal', 'synthetic', $18::jsonb, now())
+       ON CONFLICT (extraction_id) DO UPDATE SET
+         tenant_key = excluded.tenant_key,
+         load_run_id = excluded.load_run_id,
+         concept_ref = excluded.concept_ref,
+         extractor_version = excluded.extractor_version,
+         subject_kind = excluded.subject_kind,
+         subject_ref = excluded.subject_ref,
+         value_text = excluded.value_text,
+         value_num = excluded.value_num,
+         unit = excluded.unit,
+         source_span_id = excluded.source_span_id,
+         source_file_id = excluded.source_file_id,
+         source_page = excluded.source_page,
+         source_section = excluded.source_section,
+         confidence = excluded.confidence,
+         method = excluded.method,
+         review_state = excluded.review_state,
+         payload_json = excluded.payload_json,
+         extracted_at = excluded.extracted_at`,
       [
         row.extraction_id,
         args.tenantKey,
