@@ -687,7 +687,10 @@ Absolute rules — output violating any of these is discarded:
    what it does not show. "Forty percent of applications have no owner recorded" is allowed.
    "This creates governance risk" is not.
 4. If the aggregate is thin, say so plainly and stop. A short honest summary beats a padded one.
-5. No preamble, no headings, no bullet points, no markdown. Plain sentences only.`;
+5. No preamble, no headings, no bullet points, no markdown. Plain sentences only.
+6. Always write numbers as digits. Never spell one out ("26", not "twenty-six").
+7. When a field ending in "Percent" is present, quote it exactly as given. Never compute your own
+   percentage or round a raw fraction yourself.`;
 
 /**
  * Numbers that need no evidence: small counting words and years read as prose, not as claims.
@@ -718,12 +721,33 @@ export function isFreeNumber(token: string, following = ""): boolean {
  * shows its facts without narration — which is the state Home is in today and is survivable. When a
  * loose validator accepts bad prose, the cost is a fabricated number in front of a client.
  */
+/**
+ * Remove the thousands-separator commas from a string, without touching any other comma.
+ *
+ * Applied to both sides of every numeric comparison. The first real run of this gate against real
+ * data rejected "68,000" — a figure copied verbatim from the aggregate's own "People" fact — because
+ * the candidate token had its commas stripped before comparison and the haystack never did. The
+ * aggregate contained "68,000"; the search term was "68000"; neither side was wrong, the comparison
+ * was. Every comma-formatted fact value (population counts, evidence-coverage counts) failed
+ * identically. This was a defect in the gate, not evidence of fabrication, and it silently withheld
+ * real, correct narration.
+ */
+function stripThousandsCommas(value: string): string {
+  let previous: string;
+  let current = value;
+  do {
+    previous = current;
+    current = current.replace(/(\d),(\d{3})/g, "$1$2");
+  } while (current !== previous);
+  return current;
+}
+
 export function validateNarrative(
   text: string,
   aggregate: unknown,
   allowedEntities: string[],
 ): { ok: true } | { ok: false; reason: string } {
-  const haystack = JSON.stringify(aggregate).toLowerCase();
+  const haystack = stripThousandsCommas(JSON.stringify(aggregate).toLowerCase());
 
   // Numbers. Compare on digits so "1,204" in prose matches 1204 in JSON, and percentages match a
   // stored share of 0.42 written as 42%.
@@ -746,13 +770,15 @@ export function validateNarrative(
   // Entities. Capitalised multi-word runs are the shape of a proper noun; each must be quotable.
   const proper = text.match(/\b[A-Z][A-Za-z0-9&.'-]+(?:\s+[A-Z][A-Za-z0-9&.'-]+)*/g) ?? [];
   const allowed = allowedEntities.map((e) => e.toLowerCase());
-  for (const candidate of proper) {
-    if (candidate.length < 6) continue;
+  for (const raw of proper) {
+    if (raw.length < 6) continue;
+    // A possessive is the same entity: "Meridian's priorities" must resolve to "Meridian".
+    const candidate = raw.replace(/[''`]s$/, "");
     const lower = candidate.toLowerCase();
     // Sentence-initial ordinary words look like proper nouns; ignore anything already in the JSON.
     if (haystack.includes(lower)) continue;
     if (allowed.some((e) => e.includes(lower) || lower.includes(e))) continue;
-    if (/^(The|This|These|Those|Every|Each|Most|Some|No |None|Neither|Across|Within|Where|While|Only|Both|All |Nothing|Nearly|Fewer|More|Half|One |Two |Three)/.test(candidate)) continue;
+    if (/^(The|This|These|Those|Every|Each|Most|Some|No |None|Neither|Across|Within|Where|While|Only|Both|All |Nothing|Nearly|Fewer|More|Half|One |Two |Three|Four|Five|Six|Seven|Eight|Nine|Ten|Twenty|Thirty|Forty|Fifty)/.test(candidate)) continue;
     return { ok: false, reason: `entity not in aggregate: ${candidate}` };
   }
 
@@ -878,12 +904,45 @@ async function buildTenant(
   }
 
   for (const profile of profiles) {
-    // Send the profile minus the fields the model must not narrate from.
-    const { insight: _i, insightRejectedBecause: _r, ...aggregate } = profile;
+    // Send the profile minus the fields the model must not narrate from, and with every share
+    // pre-rounded and pre-formatted as a percentage string.
+    //
+    // The stored profile carries raw fractions -- 0.6283185840707965 -- because that is what a
+    // consumer computing further from it needs. A model asked to narrate that number does what any
+    // person would: it rounds to "62.8%". The unrounded float can never appear verbatim in prose, so
+    // every dimension with a concentration or coverage figure failed validation on the first real
+    // run, not because the figure was wrong but because the aggregate never contained a quotable
+    // form of it. Rounding here, once, and handing the model the same string a human would write,
+    // removes the mismatch instead of loosening what counts as a match.
+    const { insight: _i, insightRejectedBecause: _r, ...rest } = profile;
+    const aggregate = {
+      ...rest,
+      categories: rest.categories.map((category) => ({
+        ...category,
+        topSharePercent: `${(category.topShare * 100).toFixed(1)}%`,
+        top: category.top.map((entry) => ({
+          ...entry,
+          sharePercent: `${(entry.share * 100).toFixed(1)}%`,
+        })),
+      })),
+      numerics: rest.numerics.map((numeric) => ({
+        ...numeric,
+        sum: Math.round(numeric.sum),
+        min: Math.round(numeric.min),
+        median: Math.round(numeric.median),
+        max: Math.round(numeric.max),
+        topTenSharePercent: `${(numeric.topTenShare * 100).toFixed(1)}%`,
+      })),
+      sparseAttributes: rest.sparseAttributes.map((sparse) => ({
+        ...sparse,
+        populatedSharePercent: `${(sparse.populatedShare * 100).toFixed(1)}%`,
+      })),
+    };
     const out = await generate(
       client,
-      `In two or three sentences, describe what this client's "${profile.label}" data actually shows — ` +
-        `its shape, any concentration, and what is missing. Do not evaluate it.`,
+      `In two or three sentences, describe what this client's "${profile.label}" data actually shows -- ` +
+        `its shape, any concentration, and what is missing. Do not evaluate it. Quote the *Percent ` +
+        `fields exactly as given rather than rounding a raw share yourself.`,
       aggregate,
       profile.sampleEntities.concat(profile.notable.map((x) => x.name)),
     );

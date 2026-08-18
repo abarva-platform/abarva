@@ -120,3 +120,53 @@ describe("orientation pack narrative validation", () => {
     expect(result.ok).toBe(false);
   });
 });
+
+describe("orientation pack narrative validation — comma and formatting fixes", () => {
+  // Found from the first real run against live data: every comma-formatted fact value was
+  // rejected because the candidate token had its commas stripped for comparison but the source
+  // JSON never did. The aggregate said "68,000"; the search term was "68000"; the number was
+  // right and the comparison was wrong.
+  it("accepts a comma-formatted number that is comma-formatted identically in the aggregate", () => {
+    const aggregate = { facts: [{ label: "People", value: "68,000" }] };
+    const result = validateNarrative(
+      "This organisation has 68,000 people.",
+      aggregate,
+      [],
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it("still rejects a comma-formatted number nowhere in the aggregate", () => {
+    const aggregate = { facts: [{ label: "People", value: "68,000" }] };
+    const result = validateNarrative(
+      "This organisation has 71,500 people.",
+      aggregate,
+      [],
+    );
+    expect(result.ok).toBe(false);
+  });
+
+  it("accepts a percentage quoted from a pre-formatted *Percent field", () => {
+    // Dimension aggregates now carry a rounded, pre-formatted companion (e.g. topSharePercent)
+    // alongside the raw fraction, precisely so the model has a string it can quote verbatim
+    // instead of rounding an unrounded float itself.
+    const aggregate = { topShare: 0.6283185840707965, topSharePercent: "62.8%" };
+    const result = validateNarrative(
+      "The largest value holds 62.8% of the total.",
+      aggregate,
+      [],
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it("accepts a possessive form of a supplied entity", () => {
+    // The sentence must not introduce any other capitalised phrase, or the test would be
+    // exercising the entity check on an unrelated token rather than the possessive strip.
+    const result = validateNarrative(
+      "Meridian's priorities are stated in full.",
+      {},
+      ["Meridian Health System"],
+    );
+    expect(result.ok).toBe(true);
+  });
+});
