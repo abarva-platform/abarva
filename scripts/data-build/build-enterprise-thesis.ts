@@ -341,11 +341,24 @@ async function callClaude(
     messages: [{ role: "user", content: userPrompt }],
   })) as {
     model: string;
+    stop_reason?: string;
     usage?: { input_tokens?: number; output_tokens?: number };
     content: Array<{ type: string; text?: string }>;
   };
   const text = response.content.filter((b) => b.type === "text").map((b) => b.text ?? "").join("\n").trim();
-  if (!text) return null;
+  if (!text) {
+    // The first real run against both tenants returned empty text from every call with no other
+    // signal to explain why. Guessing at a fix (a bigger max_tokens budget) without knowing the
+    // actual cause is exactly the mistake this session spent four deploy cycles unlearning on the
+    // orientation pack's validator. Print what the API actually said -- block types and the stop
+    // reason -- so a second empty response is diagnosable instead of another guess.
+    const blockTypes = response.content.map((b) => b.type).join(",") || "(no content blocks)";
+    console.log(
+      `    ! empty text -- stop_reason=${response.stop_reason ?? "unknown"} blocks=[${blockTypes}] ` +
+        `output_tokens=${response.usage?.output_tokens ?? "unknown"} max_tokens=${maxTokens}`,
+    );
+    return null;
+  }
   return {
     text,
     inputTokens: response.usage?.input_tokens ?? 0,
@@ -411,7 +424,11 @@ async function buildTenant(tenantKey: string, client: Parameters<typeof callClau
 
   const userPrompt = buildUserPrompt(signalPacket);
   const usage = { input: 0, output: 0 };
-  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, 4000);
+  // The schema asks for up to a dozen array fields, several holding multiple GroundedClaim
+  // objects (statement + evidence_ids + confidence each). 4000 tokens produced empty output on
+  // the first real run against both tenants -- raised well above what the schema should need in
+  // the worst case, on a claim-count-bounded prompt, rather than guessed at a second time.
+  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, 16000);
   if (!generation) {
     console.log("  ! thesis generation returned no text");
     return { signalPacket, thesis: null, structuralIssues: [], verifierResults: [], usage };
