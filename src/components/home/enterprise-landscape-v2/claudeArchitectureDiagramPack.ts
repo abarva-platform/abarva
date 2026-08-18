@@ -33,10 +33,13 @@ const pack = {
   generated_model: "codex-static-seed",
   prompt_version: "home-claude-architecture-diagram-pack-v1",
   no_post_claude_mutation: true,
+  // Diagrams are bound to the tab whose question they answer, not to the tab they were first
+  // drawn for. When the tab set was renamed from our deliverable sections to the reader's
+  // questions, these bindings had to move with them or five real SVGs would have gone unrendered.
   diagrams: [
     {
       id: "patterns-enterprise-operating-system",
-      tab: "patterns",
+      tab: "identity",
       title: "Enterprise operating system pattern map",
       subtitle:
         "Connects airline mission domains, technology lanes, and proof gates into one board-readable operating view.",
@@ -47,7 +50,7 @@ const pack = {
     },
     {
       id: "economics-value-control",
-      tab: "economics",
+      tab: "standing",
       title: "Economics and value-control architecture",
       subtitle:
         "Shows the value path from spend and commitments through governed claims and validated outcomes.",
@@ -58,7 +61,7 @@ const pack = {
     },
     {
       id: "posture-evidence-authority",
-      tab: "posture",
+      tab: "evidence",
       title: "Evidence and authority posture map",
       subtitle:
         "Separates loaded context, indexed evidence, cited answers, and finance-grade value authority.",
@@ -69,7 +72,7 @@ const pack = {
     },
     {
       id: "coherence-domain-architecture-index",
-      tab: "coherence",
+      tab: "architecture",
       title: "Scoped architecture diagram index",
       subtitle:
         "Splits enterprise architecture into smaller, executive-consumable domains rather than one oversized map.",
@@ -80,7 +83,7 @@ const pack = {
     },
     {
       id: "trajectory-executive-shifts",
-      tab: "trajectory",
+      tab: "strategy",
       title: "Executive architecture trajectory",
       subtitle:
         "Frames current-state constraints and governed shifts across estate, data, AI, and value realization.",

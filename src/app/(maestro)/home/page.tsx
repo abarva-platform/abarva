@@ -16,6 +16,10 @@ import {
 } from "@/lib/source/data-model/read-adapter";
 import { loadSourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 import {
+  loadOrientationPack,
+  type OrientationPack,
+} from "@/lib/home/orientation-pack-read-adapter";
+import {
   loadHomeLandscape,
   type HomeLandscape,
 } from "@/lib/home/landscape-read-adapter";
@@ -318,15 +322,47 @@ function withSourceSummaryAnchors(
     ],
   };
 }
+/**
+ * Home for tenants other than the one the landscape content was authored for.
+ *
+ * When an orientation pack exists this renders the same generated shell every tenant gets, with the
+ * authored architecture and evidence tabs withheld — that content was written for one client and
+ * showing it to another would be a cross-tenant leak, not a gap.
+ *
+ * The authored page below is the fallback for tenants with no pack yet. It is tenant-labelled and
+ * hand-written, which is exactly why it is a fallback rather than the destination.
+ */
 function MeridianHome({
   tenantName,
   sourceSummary,
   landscape,
+  orientationPack,
 }: {
   tenantName: string;
   sourceSummary: HomeSourceRuntimeSummary | null;
   landscape: HomeLandscape | null;
+  orientationPack: OrientationPack | null;
 }) {
+  if (orientationPack) {
+    return (
+      <AppShell
+        surface="home"
+        topBarProps={{
+          tenantName,
+          preserveTenantName: true,
+          showLocked: true,
+          context: "Enterprise Landscape",
+        }}
+        hasTenantKey
+      >
+        <HomeEnterpriseLandscapeV2
+          pack={orientationPack}
+          showAuthoredTabs={false}
+        />
+      </AppShell>
+    );
+  }
+
   const priorities = [
     [
       "Vendor 360",
@@ -442,9 +478,13 @@ export default async function HomePage() {
   // works in app client keys ("skyharbor"). Passing the app key here looks up a tenant that does
   // not exist and renders "not available" over data that is present — the failure is silent
   // because a missing pack is a legitimate state.
-  const [sourceSummary, landscape] = await Promise.all([
+  // The orientation pack is what the tabs render. It is keyed on the same canonical tenant key as
+  // the landscape, and is null until a build has run — a legitimate state that the panels report
+  // as "not yet generated" rather than as an empty estate.
+  const [sourceSummary, landscape, orientationPack] = await Promise.all([
     loadHomeSourceRuntimeSummary(clientKey),
     loadHomeLandscape(canonicalTenantKey(clientKey)),
+    loadOrientationPack(canonicalTenantKey(clientKey)),
   ]);
 
   if (clientKey === "skyharbor") {
@@ -472,7 +512,7 @@ export default async function HomePage() {
         }}
         hasTenantKey
       >
-        <HomeEnterpriseLandscapeV2 model={model} />
+        <HomeEnterpriseLandscapeV2 model={model} pack={orientationPack} />
       </AppShell>
     );
   }
@@ -482,6 +522,7 @@ export default async function HomePage() {
       tenantName={tenantName}
       sourceSummary={sourceSummary}
       landscape={landscape}
+      orientationPack={orientationPack}
     />
   );
 }
