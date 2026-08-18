@@ -24,6 +24,17 @@ tenant key. It performs no writes. The goal is to see the view's actual live def
 how to reconcile it with the canonical `source.contract` rows, rather than guessing from migration
 files that may no longer describe what is actually deployed.
 
+**Update:** the first live run of this diagnostic returned 0 rows for every view — a false signal. The
+script never set the `app.tenant_key` session variable that `source.can_read_sourcing_tenant()` (an RLS
+gate this view's live definition depends on, not present in the migration files this investigation
+started from) fails closed without. Fixed to set it, matching the pattern already used elsewhere
+(`inspect-skyharbor-v3-live-proof.ts`). Also added a check against `source.l4_cube_active_load_run` and
+a per-`load_run_id` row count on `source.contract`: the view's live definition joins `source.contract`
+to that active-load-run pointer table per tenant, so rows inserted under a `load_run_id` that isn't
+marked active for the tenant exist in the base table but never surface through the view — a much
+simpler and less risky explanation than the schema-drift theory this record started with, and one that
+does not require dropping or recreating anything.
+
 ## Layer Impact
 
 - Release lane: `internal-admin`
