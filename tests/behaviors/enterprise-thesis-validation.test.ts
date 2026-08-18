@@ -44,6 +44,16 @@ function minimalThesis(overrides: Partial<EnterpriseThesis> = {}): EnterpriseThe
 }
 
 const packet = {
+  enterpriseIdentity: { businessModel: null, industry: null, revenue: null, employeeCount: null },
+  businessEconomics: { operatingSegments: [], customerSegments: [], technologyBudget: 0, technologyBudgetShareOfRevenue: null },
+  strategicPriorities: [] as string[],
+  coverageManifest: {
+    dimensionCoverage: [],
+    leadershipToPortfolioLinkage: { resolvableRows: 0, totalRows: 0, coveragePct: 0, linkedPrograms: 0, interpretation: "" },
+    vendorDocumentEvidence: { contractsWithExtraction: 0, totalContracts: 0, interpretation: "" },
+    metricComparability: { comparable: 0, total: 0, inconsistentNotation: 0, interpretation: "" },
+    prohibitedComparisons: [] as string[],
+  },
   signals: [
     signal("sig_a", ["vendor_contract"]),
     signal("sig_b", ["risk_or_control"]),
