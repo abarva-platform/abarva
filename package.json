@@ -445,6 +445,8 @@
     "audit:home-knowledge-preview": "npx tsx scripts/audit/build-home-knowledge-preview-proof.ts",
     "audit:home-knowledge-pressure": "npx tsx scripts/audit/build-home-knowledge-pressure-proof.ts",
     "audit:home-knowledge-cutover": "npx tsx scripts/audit/build-home-knowledge-cutover-proof.ts",
+    "data-build:home-orientation-pack:plan": "npx tsx scripts/data-build/build-home-orientation-pack.ts --out-dir /tmp/home-orientation-pack",
+    "data-build:home-orientation-pack:apply": "HOME_PACK_WRITE=true HOME_PACK_WRITE_APPROVED=true npx tsx scripts/data-build/build-home-orientation-pack.ts --out-dir /tmp/home-orientation-pack",
     "home:knowledge-pack-v2:write": "node scripts/knowledge/build-home-knowledge-pack-v2.mjs --tenant=all --use-claude --write-db --approve",
     "home:knowledge-v4:replay": "node scripts/knowledge/build-home-knowledge-v4-review-pack.mjs --validate-candidate",
     "home:knowledge-v4:cost-ledger": "node scripts/knowledge/build-home-knowledge-v4-review-pack.mjs --cost-ledger",
