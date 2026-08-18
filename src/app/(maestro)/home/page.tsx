@@ -181,6 +181,9 @@ function withCanonicalEconomics(
   if (!landscape) return model;
   const spend = landscape.byKey("spend");
   const vendors = landscape.byKey("vendors");
+  const applications = landscape.byKey("applications");
+  const infrastructure = landscape.byKey("infrastructure");
+  const dataAssets = landscape.byKey("data_assets");
   const anchors = model.anchors.map((anchor) => {
     if (anchor.label === "Technology budget" && spend?.money) {
       return {
@@ -212,7 +215,68 @@ function withCanonicalEconomics(
     }
     return anchor;
   });
-  return { ...model, anchors };
+
+  /**
+   * Canonical belongs inside the tabs this page already has.
+   *
+   * The first attempt added an "Enterprise landscape" section of its own above them. That was a
+   * layout change nobody asked for, and it read as a second page stapled to the top of the first:
+   * Context and Evidence already answer these questions, and putting the same facts outside them
+   * tells a reader there are two landscapes rather than one.
+   */
+  const canonicalDomains = [
+    applications && {
+      label: "APPLICATIONS",
+      title: `${applications.distinctNameCount.toLocaleString()} distinct systems catalogued`,
+      body: applications.sampleEntities.slice(0, 3).join(" · "),
+      evidence: `${applications.evidenceCount.toLocaleString()} evidence references · canonical build ${landscape.buildVersion}`,
+      tone: applications.evidenceCount > 0 ? ("teal" as const) : ("amber" as const),
+    },
+    infrastructure && {
+      label: "INFRASTRUCTURE",
+      title: `${infrastructure.distinctNameCount.toLocaleString()} platforms carrying the estate`,
+      body: infrastructure.sampleEntities.slice(0, 3).join(" · "),
+      evidence: `${infrastructure.evidenceCount.toLocaleString()} evidence references`,
+      tone: infrastructure.evidenceCount > 0 ? ("teal" as const) : ("amber" as const),
+    },
+    dataAssets && {
+      label: "DATA",
+      title: `${dataAssets.distinctNameCount.toLocaleString()} data assets and integrations`,
+      body: dataAssets.sampleEntities.slice(0, 3).join(" · "),
+      evidence: `${dataAssets.evidenceCount.toLocaleString()} evidence references`,
+      tone: dataAssets.evidenceCount > 0 ? ("teal" as const) : ("amber" as const),
+    },
+  ].filter((d): d is NonNullable<typeof d> => Boolean(d));
+
+  // Dimensions the client supplied nothing for are named rather than dropped, so the Evidence tab's
+  // "missing sources" question has a real answer instead of an implied clean bill.
+  const notSupplied = landscape.dimensions
+    .filter((d) => d.recordCount === 0)
+    .map((d) => d.displayName);
+
+  const canonicalEvidence = [
+    {
+      label: "Canonical model",
+      value: `${landscape.totalEntities.toLocaleString()} records`,
+      detail: `${landscape.dimensions.length} dimensions · build ${landscape.buildVersion}`,
+      tone: "teal" as const,
+    },
+    ...(notSupplied.length
+      ? [{
+          label: "Not supplied",
+          value: String(notSupplied.length),
+          detail: notSupplied.join(", "),
+          tone: "amber" as const,
+        }]
+      : []),
+  ];
+
+  return {
+    ...model,
+    anchors,
+    contextDomains: [...canonicalDomains, ...model.contextDomains],
+    evidence: [...canonicalEvidence, ...model.evidence],
+  };
 }
 
 function withSourceSummaryAnchors(
@@ -254,71 +318,6 @@ function withSourceSummaryAnchors(
     ],
   };
 }
-
-function EnterpriseLandscapePanel({
-  landscape,
-}: {
-  landscape: HomeLandscape | null;
-}) {
-  if (!landscape) {
-    return (
-      <section className="rounded-md border border-[#d9ddd2] bg-white p-6">
-        <h2 className="text-xl font-semibold text-[#111827]">
-          Enterprise landscape
-        </h2>
-        <p className="mt-3 text-sm leading-6 text-[#475467]">
-          Not available. The landscape projection has not run for this client, so there is
-          nothing to show. This panel stays empty rather than displaying another product&rsquo;s
-          figures.
-        </p>
-      </section>
-    );
-  }
-  return (
-    <section className="rounded-md border border-[#d9ddd2] bg-white p-6">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-xl font-semibold text-[#111827]">
-          Enterprise landscape
-        </h2>
-        <p className="font-mono text-[11px] uppercase tracking-wider text-[#667085]">
-          {landscape.totalEntities.toLocaleString()} entities · build{" "}
-          {landscape.buildVersion}
-        </p>
-      </div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {landscape.dimensions.map((dimension) => (
-          <div
-            key={dimension.dimensionKey}
-            className="rounded border border-[#e4e7ec] bg-[#fbfcfd] p-4"
-          >
-            <p className="text-sm font-semibold text-[#111827]">
-              {dimension.displayName}
-            </p>
-            <p className="mt-1 font-mono text-2xl tabular-nums text-[#111827]">
-              {dimension.recordCount.toLocaleString()}
-            </p>
-            <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-[#667085]">
-              {dimension.confidenceStatus === "not_available"
-                ? "not supplied"
-                : `${dimension.evidenceCount.toLocaleString()} evidence`}
-            </p>
-            {dimension.sampleEntities.length > 0 ? (
-              <p className="mt-2 text-[11px] leading-4 text-[#667085]">
-                {dimension.sampleEntities.slice(0, 3).join(" · ")}
-              </p>
-            ) : null}
-          </div>
-        ))}
-      </div>
-      {landscape.gaps.length > 0 ? (
-        <p className="mt-4 text-sm leading-6 text-[#b54708]">
-          Not supplied by this client: {landscape.gaps.join(", ")}.
-        </p>
-      ) : null}
-    </section>
-  );
-}
-
 function MeridianHome({
   tenantName,
   sourceSummary,
@@ -388,7 +387,6 @@ function MeridianHome({
             ))}
           </div>
 
-          <EnterpriseLandscapePanel landscape={landscape} />
 
           <SourceRuntimeSummaryPanel summary={sourceSummary} />
 
@@ -474,10 +472,7 @@ export default async function HomePage() {
         }}
         hasTenantKey
       >
-        <div className="space-y-6">
-          <EnterpriseLandscapePanel landscape={landscape} />
-          <HomeEnterpriseLandscapeV2 model={model} />
-        </div>
+        <HomeEnterpriseLandscapeV2 model={model} />
       </AppShell>
     );
   }
