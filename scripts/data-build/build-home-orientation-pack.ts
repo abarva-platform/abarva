@@ -690,7 +690,10 @@ Absolute rules — output violating any of these is discarded:
 5. No preamble, no headings, no bullet points, no markdown. Plain sentences only.
 6. Always write numbers as digits. Never spell one out ("26", not "twenty-six").
 7. When a field ending in "Percent" is present, quote it exactly as given. Never compute your own
-   percentage or round a raw fraction yourself.`;
+   percentage or round a raw fraction yourself.
+8. When you name a programme, priority, metric or role drawn from the aggregate, quote it exactly
+   as it appears there. Do not abbreviate, compress, or drop a word from it -- "Medicare Advantage
+   overall Star Rating" must not become "Medicare Advantage Star Rating".`;
 
 /**
  * Numbers that need no evidence: small counting words and years read as prose, not as claims.
@@ -751,7 +754,13 @@ export function validateNarrative(
 
   // Numbers. Compare on digits so "1,204" in prose matches 1204 in JSON, and percentages match a
   // stored share of 0.42 written as 42%.
-  const numberPattern = /\$?\d[\d,]*\.?\d*%?/g;
+  //
+  // The decimal group only consumes a "." when at least one digit follows it. The live run found
+  // the bug in the obvious way: a figure at the end of a sentence -- "...totalling $482,030,000."
+  // -- had the sentence-ending period swallowed into the token, because the old pattern's `\.?\d*`
+  // allowed a bare trailing dot with zero digits after it. The aggregate held "482030000"; the
+  // search term became "482030000." with a dot nothing could strip.
+  const numberPattern = /\$?\d[\d,]*(?:\.\d+)?%?/g;
   for (const match of text.matchAll(numberPattern)) {
     const token = match[0];
     const following = text.slice(match.index + token.length, match.index + token.length + 12);
@@ -768,17 +777,32 @@ export function validateNarrative(
   }
 
   // Entities. Capitalised multi-word runs are the shape of a proper noun; each must be quotable.
-  const proper = text.match(/\b[A-Z][A-Za-z0-9&.'-]+(?:\s+[A-Z][A-Za-z0-9&.'-]+)*/g) ?? [];
+  //
+  // The interior character class no longer allows a bare period. It used to, so a real entity
+  // could carry an abbreviation like "U.S." -- but the same allowance let the match run straight
+  // through a sentence-ending period into the next sentence's capitalised opener: "...across
+  // Illinois, Indiana and Wisconsin. Revenue splits..." was captured as one candidate,
+  // "Wisconsin. Revenue", which is not an entity at all and could never be found anywhere. Losing
+  // embedded abbreviation periods is the acceptable side of that trade; gluing two sentences
+  // together was not.
   const allowed = allowedEntities.map((e) => e.toLowerCase());
-  for (const raw of proper) {
+  for (const match of text.matchAll(/\b[A-Z][A-Za-z0-9&'-]+(?:\s+[A-Z][A-Za-z0-9&'-]+)*/g)) {
+    const raw = match[0];
     if (raw.length < 6) continue;
     // A possessive is the same entity: "Meridian's priorities" must resolve to "Meridian".
     const candidate = raw.replace(/[''`]s$/, "");
     const lower = candidate.toLowerCase();
-    // Sentence-initial ordinary words look like proper nouns; ignore anything already in the JSON.
     if (haystack.includes(lower)) continue;
     if (allowed.some((e) => e.includes(lower) || lower.includes(e))) continue;
-    if (/^(The|This|These|Those|Every|Each|Most|Some|No |None|Neither|Across|Within|Where|While|Only|Both|All |Nothing|Nearly|Fewer|More|Half|One |Two |Three|Four|Five|Six|Seven|Eight|Nine|Ten|Twenty|Thirty|Forty|Fifty)/.test(candidate)) continue;
+    // A single capitalised word opening a sentence is ordinary English grammar, not a claim about
+    // an entity -- "However, spend rose" and "Progress has been steady" capitalise "However" and
+    // "Progress" for no reason connected to the aggregate. A hardcoded list of exempt words chases
+    // the model's vocabulary forever; checking the actual grammatical position does not. Multi-word
+    // phrases at a sentence's start are still checked, because a real name can legitimately open a
+    // sentence.
+    const precedingText = text.slice(0, match.index).replace(/\s+$/, "");
+    const atSentenceStart = precedingText === "" || /[.!?]$/.test(precedingText);
+    if (atSentenceStart && !candidate.includes(" ")) continue;
     return { ok: false, reason: `entity not in aggregate: ${candidate}` };
   }
 

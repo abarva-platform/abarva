@@ -170,3 +170,56 @@ describe("orientation pack narrative validation — comma and formatting fixes",
     expect(result.ok).toBe(true);
   });
 });
+
+describe("orientation pack narrative validation — sentence-boundary fixes", () => {
+  // Found from the second live run: a number at the very end of a sentence had the trailing
+  // period swallowed into the token, so "$482,030,000." never matched the aggregate's
+  // "482030000" no matter how the digits were normalised, because nothing stripped a bare
+  // trailing dot with no digits after it.
+  it("does not swallow a sentence-ending period into a trailing number", () => {
+    const aggregate = { facts: [{ label: "Infrastructure spend", value: "$482,030,000" }] };
+    const result = validateNarrative(
+      "Infrastructure spend totals $482,030,000. Nothing else is recorded.",
+      aggregate,
+      [],
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  // The entity regex used to allow a bare period inside a match, which let it run straight
+  // through a sentence boundary: "...across Illinois, Indiana and Wisconsin. Revenue splits..."
+  // was captured as one candidate, "Wisconsin. Revenue" -- not a real entity, and unfindable
+  // anywhere because it never existed as a phrase.
+  it("does not glue two sentences into one entity across a period", () => {
+    const result = validateNarrative(
+      "The footprint spans Illinois, Indiana and Wisconsin. Revenue splits across two lines.",
+      {},
+      ["Illinois", "Indiana", "Wisconsin"],
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  // A single capitalised word opening a sentence is English grammar, not a claim. A hardcoded
+  // allowlist of exempt words chases the model's vocabulary forever; checking sentence position
+  // does not.
+  it("does not flag an ordinary word that is capitalised only because it opens a sentence", () => {
+    const aggregate = { facts: [{ label: "Programmes", value: "38" }] };
+    const result = validateNarrative(
+      "However, 38 programmes are recorded. Progress varies by function.",
+      aggregate,
+      [],
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it("still checks a multi-word phrase that opens a sentence", () => {
+    // Losing the single-word exemption must not also exempt real names that happen to lead a
+    // sentence -- that would be a bigger hole than the one just closed.
+    const result = validateNarrative(
+      "Acme Global Holdings is not named anywhere in this client's data.",
+      {},
+      ["Meridian Health System"],
+    );
+    expect(result.ok).toBe(false);
+  });
+});
