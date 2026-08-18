@@ -792,7 +792,8 @@
     "packet:reconcile:skyharbor": "node scripts/data/contract-packet/reconcile-contract-packet.mjs --in .artifacts/contract-packets/skyharbor-air-fixture --packets .artifacts/contract-packets/skyharbor-air",
     "packet:benchmark:skyharbor": "node scripts/data/contract-packet/benchmark-contract-packet.mjs --in .artifacts/contract-packets/skyharbor-air-fixture --packets .artifacts/contract-packets/skyharbor-air",
     "packet:check:skyharbor": "npm run packet:prepare:skyharbor && npm run packet:generate:skyharbor && npm run packet:reconcile:skyharbor && npm run packet:benchmark:skyharbor",
-    "data-build:tower-evidence": "npx tsx scripts/data-build/refresh-tower-value-evidence.ts"
+    "data-build:tower-evidence": "npx tsx scripts/data-build/refresh-tower-value-evidence.ts",
+    "audit:tower-schema": "npx tsx scripts/audit/dump-tower-live-schema.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
