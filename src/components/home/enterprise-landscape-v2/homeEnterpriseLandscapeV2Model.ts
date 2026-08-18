@@ -1,14 +1,24 @@
+/**
+ * Home's tabs, named after the reader's question rather than our deliverable sections.
+ *
+ * The previous set — Patterns, Posture, Coherence, Trajectory, Watchlist — described the analysis
+ * we perform. Nobody arrives at Home asking to see coherence. They arrive asking how the company
+ * is organised and what it is trying to do, and those are now the tab names.
+ *
+ * `architecture` and `architectureEvidence` are retained deliberately: they are authored content
+ * that carries real diagram work, and they answer the question an incoming IT executive actually
+ * has. Everything else routes to the stored orientation pack.
+ */
 export type HomeLandscapeTabId =
-  | "summary"
-  | "patterns"
-  | "context"
-  | "economics"
+  | "identity"
+  | "strategy"
+  | "measurement"
+  | "estate"
+  | "voice"
+  | "standing"
+  | "explore"
   | "architecture"
   | "architectureEvidence"
-  | "posture"
-  | "coherence"
-  | "trajectory"
-  | "watchlist"
   | "evidence";
 
 export type SignalTone = "blue" | "teal" | "amber" | "slate" | "red";
@@ -159,17 +169,18 @@ export interface HomeEnterpriseLandscapeV2Model {
 export const HOME_LANDSCAPE_TABS: Array<{
   id: HomeLandscapeTabId;
   label: string;
+  /** Orientation pack blocks this tab renders. Empty for authored tabs. */
+  blocks?: readonly string[];
 }> = [
-  { id: "summary", label: "Summary" },
-  { id: "patterns", label: "Patterns" },
-  { id: "context", label: "Context" },
-  { id: "economics", label: "Economics" },
+  { id: "identity", label: "Who we are", blocks: ["identity", "organisation"] },
+  { id: "strategy", label: "Strategy", blocks: ["strategy"] },
+  { id: "measurement", label: "How we're measured", blocks: ["measurement"] },
+  { id: "estate", label: "What we run", blocks: ["estate"] },
+  { id: "voice", label: "What people say", blocks: ["voice"] },
+  { id: "standing", label: "Where we stand", blocks: ["standing"] },
+  { id: "explore", label: "Explore the data" },
   { id: "architecture", label: "Architecture" },
   { id: "architectureEvidence", label: "Architecture Evidence" },
-  { id: "posture", label: "Posture" },
-  { id: "coherence", label: "Coherence" },
-  { id: "trajectory", label: "Trajectory" },
-  { id: "watchlist", label: "Watchlist" },
   { id: "evidence", label: "Evidence" },
 ];
 
