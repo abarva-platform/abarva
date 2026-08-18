@@ -456,32 +456,39 @@ async function deleteDocumentRows(client, args, inventory, pages, clauses) {
   const pageIds = pages.map(pageId);
   const spanIds = clauses.map(spanId);
   const extractionIds = clauses.map((row) => row.extraction_id);
+  // file_id/page_id/span_id/extraction_id are content-derived, not tenant-scoped,
+  // so a load of the same package under a different (equally valid) tenant-key
+  // alias for this synthetic tenant leaves rows behind under that alias. Scope
+  // the delete to the declared alias set (not just args.tenantKey) so a rerun
+  // under the canonical key reclaims those rows instead of colliding with them
+  // on insert. This never reaches outside the declared alias set for this run.
+  const aliases = tenantAliases(args);
   if (extractionIds.length) {
     await client.query(
       `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.extraction
-        WHERE tenant_key = $1 AND (extraction_id = ANY($2::text[]) OR source_file_id = ANY($3::text[]))`,
-      [args.tenantKey, extractionIds, fileIds],
+        WHERE tenant_key = ANY($1::text[]) AND (extraction_id = ANY($2::text[]) OR source_file_id = ANY($3::text[]))`,
+      [aliases, extractionIds, fileIds],
     );
   }
   if (spanIds.length) {
     await client.query(
       `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.span
-        WHERE tenant_key = $1 AND span_id = ANY($2::text[])`,
-      [args.tenantKey, spanIds],
+        WHERE tenant_key = ANY($1::text[]) AND span_id = ANY($2::text[])`,
+      [aliases, spanIds],
     );
   }
   if (pageIds.length) {
     await client.query(
       `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.page
-        WHERE tenant_key = $1 AND page_id = ANY($2::text[])`,
-      [args.tenantKey, pageIds],
+        WHERE tenant_key = ANY($1::text[]) AND page_id = ANY($2::text[])`,
+      [aliases, pageIds],
     );
   }
   if (fileIds.length) {
     await client.query(
       `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.file
-        WHERE tenant_key = $1 AND file_id = ANY($2::text[])`,
-      [args.tenantKey, fileIds],
+        WHERE tenant_key = ANY($1::text[]) AND file_id = ANY($2::text[])`,
+      [aliases, fileIds],
     );
   }
 }
