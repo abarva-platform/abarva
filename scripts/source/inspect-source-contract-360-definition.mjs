@@ -43,6 +43,31 @@ async function main() {
   );
   await client.connect();
   try {
+    // source.can_read_sourcing_tenant() reads this session var; without it every RLS-gated
+    // view returns zero rows regardless of what the underlying tables hold.
+    await client.query("SELECT set_config('app.tenant_key', $1, false)", [tenantKey]);
+
+    const activeLoadRun = await client.query(
+      `SELECT to_regclass('source.l4_cube_active_load_run') AS table_exists`,
+    );
+    let activeLoadRunRows = [];
+    if (activeLoadRun.rows[0]?.table_exists) {
+      const r = await client.query(
+        `SELECT * FROM source.l4_cube_active_load_run WHERE tenant_key = $1`,
+        [tenantKey],
+      );
+      activeLoadRunRows = r.rows;
+    }
+
+    const contractLoadRuns = await client.query(
+      `SELECT load_run_id, count(*)::int AS row_count
+         FROM source.contract
+        WHERE tenant_key = $1
+        GROUP BY load_run_id
+        ORDER BY row_count DESC`,
+      [tenantKey],
+    );
+
     const relkind = await client.query(
       `SELECT c.relname, c.relkind
          FROM pg_class c
@@ -75,6 +100,9 @@ async function main() {
           tenantKey,
           relkinds: relkind.rows,
           regclassExists: regclassExists.rows[0],
+          activeLoadRunTableExists: Boolean(activeLoadRun.rows[0]?.table_exists),
+          activeLoadRunRows,
+          contractLoadRuns: contractLoadRuns.rows,
           counts: counts.rows[0],
           contract_vendor_360_def: viewdefs.rows[0].contract_vendor_360_def,
           contract_360_def: viewdefs.rows[0].contract_360_def,
