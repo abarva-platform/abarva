@@ -60,9 +60,61 @@ const ARTIFACT_TYPE = "NexusHomeOrientationPackV1";
 const CLAUDE_MODEL = "claude-sonnet-5";
 
 type Value = { value?: unknown } | undefined;
+
+/**
+ * Read an attribute as text.
+ *
+ * Multi-value attributes arrive as arrays, not delimited strings. An earlier version of this only
+ * accepted `typeof raw === "string"`, and every array-valued attribute silently returned null — which
+ * is how a pack built from a client with six declared strategic priorities, six customer segments,
+ * five operating regions and eleven named leaders reported "Stated priorities: not supplied" and
+ * described the organisation entirely through its application estate.
+ *
+ * The tech dimensions survived that bug because they are row-per-thing: 503 applications are 503
+ * records with scalar attributes. The business is described in a single record whose interesting
+ * fields are all lists. So a defect that only dropped arrays read, on screen, as a company that is
+ * nothing but its IT.
+ */
 const str = (v: Value): string | null => {
   const raw = v?.value;
+  if (Array.isArray(raw)) {
+    const parts = raw.map((x) => String(x ?? "").trim()).filter(Boolean);
+    return parts.length ? parts.join("; ") : null;
+  }
+  if (typeof raw === "number") return Number.isFinite(raw) ? String(raw) : null;
   return typeof raw === "string" && raw.trim() ? raw.trim() : null;
+};
+
+/**
+ * Read a metric value as a measurement.
+ *
+ * `numeric()` deliberately refuses anything with characters left over, which is right for money and
+ * counts and wrong here: metric sheets are written by people, and a target arrives as "76.9% by
+ * MY2028" — a quantity, a unit and a period in one cell. Refusing that made every metric on both
+ * tenants incomparable and the standing block reported nothing.
+ *
+ * So this takes the leading quantity and reports the notation alongside it, rather than discarding
+ * the row or quietly normalising it. Notation drift within one metric — a baseline written "69.1%"
+ * against an actual written "71.8" — is real and is surfaced as a finding, not smoothed over.
+ */
+function measurement(v: Value): { quantity: number; notation: "percent" | "bare" } | null {
+  const raw = v?.value;
+  if (typeof raw === "number") return Number.isFinite(raw) ? { quantity: raw, notation: "bare" } : null;
+  if (typeof raw !== "string") return null;
+  const match = raw.trim().match(/^-?[\d,]+(?:\.\d+)?/);
+  if (!match) return null;
+  const quantity = Number(match[0].replace(/,/g, ""));
+  if (!Number.isFinite(quantity)) return null;
+  const rest = raw.trim().slice(match[0].length);
+  return { quantity, notation: rest.trimStart().startsWith("%") ? "percent" : "bare" };
+}
+
+/** Read an attribute as a list, preserving the items rather than flattening them into a sentence. */
+const list = (v: Value): string[] => {
+  const raw = v?.value;
+  if (Array.isArray(raw)) return raw.map((x) => String(x ?? "").trim()).filter(Boolean);
+  const single = str(v);
+  return single ? [single] : [];
 };
 /**
  * Parse a value as a number only when it genuinely is one.
@@ -107,8 +159,17 @@ interface Block {
 /**
  * Build the deterministic aggregate — the whole factual content of the pack.
  *
- * Ordered as a new executive would ask: how are we arranged, what are we trying to do, how is it
- * measured, what do we run, what do people here think, and where do we stand.
+ * Ordered as a new executive would ask, and the order is the point. An earlier version opened with
+ * the application estate and closed by benchmarking technology spend as a share of revenue, which
+ * described a $81.4B airline as though it were an IT department with some planes attached. That was
+ * partly a bug (every array-valued business attribute was being dropped) and partly this: the
+ * canonical model holds 503 application records and exactly one record describing the business, so
+ * ranking anything by volume buries the company under its own tooling.
+ *
+ * Volume is therefore not what decides prominence here. The single enterprise-profile record leads,
+ * the estate is one section of seven, and metrics are grouped by whether they measure the business or
+ * the technology — because on both tenants most of them measure the business, and presenting airline
+ * on-time performance as an IT benefits claim gets the subject of the sentence wrong.
  */
 function buildBlocks(
   tenantKey: string,
@@ -123,6 +184,12 @@ function buildBlocks(
 
   const profile = of("tenant_profile")[0]?.attributes ?? {};
   const revenue = numeric(profile.revenueUsd);
+  const employees = numeric(profile.employeeCount);
+  const priorities = list(profile.strategicPriorities);
+  const segmentsServed = list(profile.customerSegments);
+  const regions = list(profile.operatingRegions);
+  const leaders = list(profile.leadershipTeam);
+
   const functions = of("business_function");
   const segments = [
     ...new Set(functions.map((f) => str(f.attributes.businessSegment)).filter(Boolean)),
@@ -133,8 +200,61 @@ function buildBlocks(
     return acc;
   }, {});
 
+  // Metrics carry a declared domain. Grouping on it separates "how is the business performing" from
+  // "how is the technology performing" — two questions with different audiences that were previously
+  // answered as one list.
   const metrics = of("metric_outcome");
+  const TECH_DOMAINS = /^(technology|cyber|data_|integration|ai_|platform)/i;
+  const techMetrics = metrics.filter((m) => TECH_DOMAINS.test(str(m.attributes.metricDomain) ?? ""));
+  const bizMetrics = metrics.filter((m) => !TECH_DOMAINS.test(str(m.attributes.metricDomain) ?? ""));
+  const domainCounts = metrics.reduce<Record<string, number>>((acc, m) => {
+    const d = str(m.attributes.metricDomain) ?? "unclassified";
+    acc[d] = (acc[d] ?? 0) + 1;
+    return acc;
+  }, {});
+  const topDomains = Object.entries(domainCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([d, c]) => `${d} ${c}`)
+    .join(" · ");
   const withActual = metrics.filter((m) => numeric(m.attributes.actualValue) !== null);
+
+  /**
+   * Has a metric moved toward its target?
+   *
+   * The intake captures baseline, target and actual, but never which direction counts as good — and
+   * it differs per metric: on-time performance should rise, mishandled baggage rate should fall.
+   * Comparing actual against target without that would call roughly half of them backwards.
+   *
+   * It does not need to be captured, because it is implied: the client put the target somewhere
+   * relative to the baseline, and that placement *is* the declared direction. So improvement is
+   * movement whose sign matches the sign of (target − baseline). No new column, no assumption.
+   *
+   * Metrics whose three values are not all numeric are excluded and counted separately rather than
+   * defaulted either way.
+   */
+  const trend = metrics.reduce(
+    (acc, m) => {
+      const base = measurement(m.attributes.baselineValue);
+      const target = measurement(m.attributes.targetValue);
+      const actual = measurement(m.attributes.actualValue);
+      if (!base || !target || !actual || target.quantity === base.quantity) {
+        acc.notComparable += 1;
+        return acc;
+      }
+      if (new Set([base.notation, target.notation, actual.notation]).size > 1) {
+        acc.notationDrift += 1;
+      }
+      const intended = Math.sign(target.quantity - base.quantity);
+      const moved = Math.sign(actual.quantity - base.quantity);
+      if (moved === 0) acc.flat += 1;
+      else if (moved === intended) acc.improving += 1;
+      else acc.worsening += 1;
+      return acc;
+    },
+    { improving: 0, worsening: 0, flat: 0, notComparable: 0, notationDrift: 0 },
+  );
+  const comparable = trend.improving + trend.worsening + trend.flat;
   const claimable = metrics.filter((m) => str(m.attributes.claimReadiness) === "claimable");
   const notReady = metrics.filter((m) => str(m.attributes.claimReadiness) === "not_ready");
 
@@ -143,7 +263,7 @@ function buildBlocks(
   const replaceableCost = replaceable.reduce((n, a) => n + (numeric(a.attributes.annualCostUsd) ?? 0), 0);
 
   const interviews = of("ai_value_interview_evidence");
-  const leaders = new Set(interviews.map((i) => str(i.attributes.stakeholderRole)).filter(Boolean));
+  const interviewed = new Set(interviews.map((i) => str(i.attributes.stakeholderRole)).filter(Boolean));
   const themeLeaders = new Map<string, Set<string>>();
   for (const row of interviews) {
     const theme = str(row.attributes.themeTags);
@@ -159,9 +279,47 @@ function buildBlocks(
 
   const itSpend = sum("spend_value_fact", "annualSpendUsd");
   const vendorBook = sum("vendor_contract", "annualSpendUsd");
-  const evidenced = records.filter((r) => (r.attributes.sourceFile ? 1 : 0)).length;
+  const evidenced = records.filter((r) => str(r.attributes.sourceFile)).length;
 
   return [
+    {
+      id: "identity",
+      heading: "Who this organisation is",
+      question: "What business are we actually in?",
+      facts: [
+        { label: "Business model", value: str(profile.businessModel) ?? "Not supplied" },
+        { label: "Industry", value: [str(profile.industry), str(profile.subIndustry)].filter(Boolean).join(" — ") || "Not supplied" },
+        { label: "Revenue", value: revenue ? usd(revenue) : "Not supplied" },
+        { label: "People", value: employees ? employees.toLocaleString() : "Not supplied" },
+        { label: "Headquarters", value: str(profile.headquarters) ?? "Not supplied" },
+        { label: "Where we operate", value: regions.join("; ") || "Not supplied", detail: `${regions.length} declared regions` },
+        { label: "Who we serve", value: segmentsServed.join("; ") || "Not supplied", detail: `${segmentsServed.length} declared customer segments` },
+      ],
+      entities: [str(profile.entityName), ...segmentsServed, ...regions].filter((v): v is string => Boolean(v)),
+      narrative: null,
+    },
+    {
+      id: "strategy",
+      heading: "What this organisation is trying to do",
+      question: "What is our strategy, and what is funded against it?",
+      facts: [
+        { label: "Mission", value: str(profile.mission) ?? "Not supplied" },
+        {
+          label: "Stated priorities",
+          value: priorities.length ? priorities.join(" · ") : "Not supplied",
+          detail: `${priorities.length} declared by the client`,
+        },
+        { label: "Programmes in flight", value: String(of("program_initiative").length) },
+        { label: "Programme budget", value: usd(sum("program_initiative", "budgetUsd")) },
+        {
+          label: "Expected value",
+          value: usd(sum("program_initiative", "expectedValueUsd")),
+          detail: "declared by the client, not independently verified",
+        },
+      ],
+      entities: priorities.concat(names("program_initiative", "programName").slice(0, 8)),
+      narrative: null,
+    },
     {
       id: "organisation",
       heading: "How the organisation is arranged",
@@ -170,26 +328,14 @@ function buildBlocks(
         { label: "Operating segments", value: String(segments.length), detail: segments.join(" · ") },
         { label: "Business functions", value: String(functions.length) },
         { label: "Organisational units", value: String(of("org_owner").length) },
+        { label: "Leadership team", value: leaders.join(" · ") || "Not supplied", detail: `${leaders.length} declared roles` },
         {
           label: "Function mix",
           value: Object.entries(offices).map(([k, v]) => `${v} ${k}`).join(" · "),
           detail: "front / middle / back is an AbarVa analytical lens, not the client's own classification",
         },
       ],
-      entities: segments.concat(names("business_function", "functionName").slice(0, 6)),
-      narrative: null,
-    },
-    {
-      id: "strategy",
-      heading: "What the organisation is trying to do",
-      question: "What is our strategy, and what is funded against it?",
-      facts: [
-        { label: "Stated priorities", value: str(profile.strategicPriorities) ?? "Not supplied" },
-        { label: "Programmes in flight", value: String(of("program_initiative").length) },
-        { label: "Programme budget", value: usd(sum("program_initiative", "budgetUsd")) },
-        { label: "Expected value", value: usd(sum("program_initiative", "expectedValueUsd")) },
-      ],
-      entities: names("program_initiative", "programName").slice(0, 8),
+      entities: segments.concat(leaders, names("business_function", "functionName").slice(0, 6)),
       narrative: null,
     },
     {
@@ -197,13 +343,18 @@ function buildBlocks(
       heading: "How performance is measured",
       question: "What KPIs matter, and can we prove movement on them?",
       facts: [
-        { label: "Tracked metrics", value: String(metrics.length) },
-        { label: "Measured since baseline", value: `${withActual.length} of ${metrics.length}` },
-        { label: "Claimable today", value: String(claimable.length) },
         {
-          label: "Blocked by the owner",
-          value: String(notReady.length),
-          detail: "the client's own assessment, not ours",
+          label: "Business and operating metrics",
+          value: String(bizMetrics.length),
+          detail: names("metric_outcome", "metricName").slice(0, 4).join(" · "),
+        },
+        { label: "Technology metrics", value: String(techMetrics.length) },
+        { label: "By domain", value: topDomains || "Not classified" },
+        { label: "Measured since baseline", value: `${withActual.length} of ${metrics.length}` },
+        {
+          label: "Value claimable today",
+          value: `${claimable.length} claimable · ${notReady.length} blocked`,
+          detail: "readiness is the client's own assessment, and applies to value claims — not to whether the metric itself is tracked",
         },
       ],
       entities: names("metric_outcome", "metricName").slice(0, 8),
@@ -228,7 +379,7 @@ function buildBlocks(
       heading: "What the people here say",
       question: "What do leaders actually think is going on?",
       facts: [
-        { label: "Leaders interviewed", value: String(leaders.size) },
+        { label: "Leaders interviewed", value: String(interviewed.size) },
         { label: "Responses captured", value: String(interviews.length) },
         {
           label: "Most widely raised",
@@ -254,14 +405,36 @@ function buildBlocks(
       question: "How do we compare — to our own targets, and to the industry?",
       facts: [
         {
+          label: "Moving toward target",
+          value: comparable
+            ? `${trend.improving} of ${comparable} comparable metrics`
+            : "No metric has a comparable baseline, target and actual",
+          detail: "direction of good is inferred from where the client placed the target relative to the baseline",
+        },
+        {
+          label: "Moving away from target",
+          value: String(trend.worsening),
+          detail: trend.flat ? `${trend.flat} unchanged since baseline` : undefined,
+        },
+        {
+          label: "Not comparable",
+          value: String(trend.notComparable),
+          detail: "missing a baseline, target or actual, so no direction can be established",
+        },
+        {
+          label: "Inconsistent notation",
+          value: String(trend.notationDrift),
+          detail: "baseline, target and actual written in different notation on the same metric — a data-quality defect in the source sheet, not a measurement",
+        },
+        {
+          label: "Measured since baseline",
+          value: `${withActual.filter((m) => !TECH_DOMAINS.test(str(m.attributes.metricDomain) ?? "")).length} of ${bizMetrics.length} business · ` +
+            `${withActual.filter((m) => TECH_DOMAINS.test(str(m.attributes.metricDomain) ?? "")).length} of ${techMetrics.length} technology`,
+        },
+        {
           label: "Technology spend against industry",
           value: revenue ? `${((itSpend / revenue) * 100).toFixed(2)}% of revenue` : "Revenue not supplied",
           detail: "published bands: airlines ~4%, health providers 5–8%, payers 3–5%",
-        },
-        {
-          label: "Metrics moving toward target",
-          value: `${withActual.length} of ${metrics.length}`,
-          detail: `${metrics.length - withActual.length} unmeasured since baseline`,
         },
         {
           label: "Estate rationalisation candidates",
