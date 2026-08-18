@@ -135,7 +135,10 @@ for (const pkg of PACKAGES) {
       const f = path.join(docsDir, r.source_file_name);
       if (fs.existsSync(f)) r.source_file_sha256 = sha256File(f);
     }
-    fs.writeFileSync(csvPath, `${Papa.unparse(rows, { columns: parsed.meta.fields })}\n`);
+    // Papa.unparse's default row separator is \r\n; appending a bare \n here leaves the
+    // file's own trailing terminator inconsistent with every other row, which PapaParse's
+    // own line-ending autodetection then misreads as a malformed final record.
+    fs.writeFileSync(csvPath, `${Papa.unparse(rows, { columns: parsed.meta.fields })}\r\n`);
     csvsUpdated += 1;
   }
 }
