@@ -456,32 +456,39 @@ async function deleteDocumentRows(client, args, inventory, pages, clauses) {
   const pageIds = pages.map(pageId);
   const spanIds = clauses.map(spanId);
   const extractionIds = clauses.map((row) => row.extraction_id);
+  // file_id/page_id/span_id/extraction_id are content-derived, not tenant-scoped,
+  // so a load of the same package under a different (equally valid) tenant-key
+  // alias for this synthetic tenant leaves rows behind under that alias. Scope
+  // the delete to the declared alias set (not just args.tenantKey) so a rerun
+  // under the canonical key reclaims those rows instead of colliding with them
+  // on insert. This never reaches outside the declared alias set for this run.
+  const aliases = tenantAliases(args);
   if (extractionIds.length) {
     await client.query(
       `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.extraction
-        WHERE tenant_key = $1 AND (extraction_id = ANY($2::text[]) OR source_file_id = ANY($3::text[]))`,
-      [args.tenantKey, extractionIds, fileIds],
+        WHERE tenant_key = ANY($1::text[]) AND (extraction_id = ANY($2::text[]) OR source_file_id = ANY($3::text[]))`,
+      [aliases, extractionIds, fileIds],
     );
   }
   if (spanIds.length) {
     await client.query(
       `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.span
-        WHERE tenant_key = $1 AND span_id = ANY($2::text[])`,
-      [args.tenantKey, spanIds],
+        WHERE tenant_key = ANY($1::text[]) AND span_id = ANY($2::text[])`,
+      [aliases, spanIds],
     );
   }
   if (pageIds.length) {
     await client.query(
       `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.page
-        WHERE tenant_key = $1 AND page_id = ANY($2::text[])`,
-      [args.tenantKey, pageIds],
+        WHERE tenant_key = ANY($1::text[]) AND page_id = ANY($2::text[])`,
+      [aliases, pageIds],
     );
   }
   if (fileIds.length) {
     await client.query(
       `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.file
-        WHERE tenant_key = $1 AND file_id = ANY($2::text[])`,
-      [args.tenantKey, fileIds],
+        WHERE tenant_key = ANY($1::text[]) AND file_id = ANY($2::text[])`,
+      [aliases, fileIds],
     );
   }
 }
@@ -546,22 +553,7 @@ async function loadDocumentEvidence(client, args) {
          duplicate_state, visibility_class, content_authenticity, metadata_json
        )
        VALUES ($1, $2, $3, $4, $5, 'application/pdf', $6, $7, $8, $9, $10,
-               'not_checked', 'internal', 'synthetic', $11::jsonb)
-       ON CONFLICT (file_id) DO UPDATE SET
-         tenant_key = excluded.tenant_key,
-         blob_uri = excluded.blob_uri,
-         content_sha256 = excluded.content_sha256,
-         file_name = excluded.file_name,
-         media_type = excluded.media_type,
-         page_count = excluded.page_count,
-         load_run_id = excluded.load_run_id,
-         document_role = excluded.document_role,
-         document_type = excluded.document_type,
-         contract_ref = excluded.contract_ref,
-         duplicate_state = excluded.duplicate_state,
-         visibility_class = excluded.visibility_class,
-         content_authenticity = excluded.content_authenticity,
-         metadata_json = excluded.metadata_json`,
+               'not_checked', 'internal', 'synthetic', $11::jsonb)`,
       [
         row.source_file_id,
         args.tenantKey,
@@ -592,14 +584,7 @@ async function loadDocumentEvidence(client, args) {
       `INSERT INTO ${quoteIdent(DOC_SCHEMA)}.page (
          page_id, tenant_key, file_id, page_no, page_text, char_start, char_end, page_sha256
        )
-       VALUES ($1, $2, $3, $4, $5, 0, $6, $7)
-       ON CONFLICT (page_id) DO UPDATE SET
-         tenant_key = excluded.tenant_key,
-         file_id = excluded.file_id,
-         page_no = excluded.page_no,
-         page_text = excluded.page_text,
-         char_end = excluded.char_end,
-         page_sha256 = excluded.page_sha256`,
+       VALUES ($1, $2, $3, $4, $5, 0, $6, $7)`,
       [
         pageId(row),
         args.tenantKey,
@@ -618,15 +603,7 @@ async function loadDocumentEvidence(client, args) {
          span_id, tenant_key, file_id, span_kind, heading, span_text, page_from, page_to,
          char_start, char_end, visibility_class, content_authenticity
        )
-       VALUES ($1, $2, $3, 'clause', $4, $5, $6, $6, 0, $7, 'internal', 'synthetic')
-       ON CONFLICT (span_id) DO UPDATE SET
-         tenant_key = excluded.tenant_key,
-         file_id = excluded.file_id,
-         heading = excluded.heading,
-         span_text = excluded.span_text,
-         page_from = excluded.page_from,
-         page_to = excluded.page_to,
-         char_end = excluded.char_end`,
+       VALUES ($1, $2, $3, 'clause', $4, $5, $6, $6, 0, $7, 'internal', 'synthetic')`,
       [
         spanId(row),
         args.tenantKey,
@@ -648,26 +625,7 @@ async function loadDocumentEvidence(client, args) {
          payload_json, extracted_at
        )
        VALUES ($1, $2, $3, $4, $5, null, 'contract_pdf_adapter_v1', $6, $7, $8, $9, $10,
-               'span', $11, $12, $13, $14, $15, $16, $17, 'internal', 'synthetic', $18::jsonb, now())
-       ON CONFLICT (extraction_id) DO UPDATE SET
-         tenant_key = excluded.tenant_key,
-         load_run_id = excluded.load_run_id,
-         concept_ref = excluded.concept_ref,
-         extractor_version = excluded.extractor_version,
-         subject_kind = excluded.subject_kind,
-         subject_ref = excluded.subject_ref,
-         value_text = excluded.value_text,
-         value_num = excluded.value_num,
-         unit = excluded.unit,
-         source_span_id = excluded.source_span_id,
-         source_file_id = excluded.source_file_id,
-         source_page = excluded.source_page,
-         source_section = excluded.source_section,
-         confidence = excluded.confidence,
-         method = excluded.method,
-         review_state = excluded.review_state,
-         payload_json = excluded.payload_json,
-         extracted_at = excluded.extracted_at`,
+               'span', $11, $12, $13, $14, $15, $16, $17, 'internal', 'synthetic', $18::jsonb, now())`,
       [
         row.extraction_id,
         args.tenantKey,
