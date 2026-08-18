@@ -4,7 +4,7 @@
  *
  * The question this answers is the one a new executive actually has. Someone joins as CIO or strategy
  * lead, is told "Nexus has our context loaded, go and learn who we are", and needs — in this order —
- * how the organisation is arranged, what the strategy is, what is measured and how, what is run, what
+ * how the organization is arranged, what the strategy is, what is measured and how, what is run, what
  * the people here think, and where they stand. Home today answers roughly one of those.
  *
  * Two decisions shape this file, and both are about where the model sits.
@@ -68,7 +68,7 @@ type Value = { value?: unknown } | undefined;
  * accepted `typeof raw === "string"`, and every array-valued attribute silently returned null — which
  * is how a pack built from a client with six declared strategic priorities, six customer segments,
  * five operating regions and eleven named leaders reported "Stated priorities: not supplied" and
- * described the organisation entirely through its application estate.
+ * described the organization entirely through its application estate.
  *
  * The tech dimensions survived that bug because they are row-per-thing: 503 applications are 503
  * records with scalar attributes. The business is described in a single record whose interesting
@@ -284,7 +284,7 @@ function buildBlocks(
   return [
     {
       id: "identity",
-      heading: "Who this organisation is",
+      heading: "Who this organization is",
       question: "What business are we actually in?",
       facts: [
         { label: "Business model", value: str(profile.businessModel) ?? "Not supplied" },
@@ -300,7 +300,7 @@ function buildBlocks(
     },
     {
       id: "strategy",
-      heading: "What this organisation is trying to do",
+      heading: "What this organization is trying to do",
       question: "What is our strategy, and what is funded against it?",
       facts: [
         { label: "Mission", value: str(profile.mission) ?? "Not supplied" },
@@ -321,13 +321,13 @@ function buildBlocks(
       narrative: null,
     },
     {
-      id: "organisation",
-      heading: "How the organisation is arranged",
+      id: "organization",
+      heading: "How the organization is arranged",
       question: "How are we organised, and who owns what?",
       facts: [
         { label: "Operating segments", value: String(segments.length), detail: segments.join(" · ") },
         { label: "Business functions", value: String(functions.length) },
-        { label: "Organisational units", value: String(of("org_owner").length) },
+        { label: "Organizational units", value: String(of("org_owner").length) },
         { label: "Leadership team", value: leaders.join(" · ") || "Not supplied", detail: `${leaders.length} declared roles` },
         {
           label: "Function mix",
@@ -401,7 +401,7 @@ function buildBlocks(
     },
     {
       id: "standing",
-      heading: "Where this organisation stands",
+      heading: "Where this organization stands",
       question: "How do we compare — to our own targets, and to the industry?",
       facts: [
         {
@@ -528,7 +528,7 @@ const NOT_CATEGORICAL =
  * "originalPacket: universal-standard-v3, 100%" beats "lifecycle status" every time and says nothing.
  *
  * Excluded from profiling, not from the record. The provenance still travels with the data; it just
- * does not get narrated as though it were a fact about the client's organisation.
+ * does not get narrated as though it were a fact about the client's organization.
  */
 const PROVENANCE_ATTRIBUTES = new Set([
   "originalPacket",
@@ -680,7 +680,7 @@ executive understand what the aggregate shows.
 Absolute rules — output violating any of these is discarded:
 1. Every number you write must appear in the aggregate. Never compute, round, estimate, or infer a
    number. If you want to express a proportion, use one already present.
-2. Every organisation, system, vendor, programme, metric or person you name must appear in the
+2. Every organization, system, vendor, programme, metric or person you name must appear in the
    aggregate. Never name anything else — no industry examples, no comparable companies, no vendors
    you happen to know.
 3. Never state a cause, a risk, a recommendation, or a prediction. Describe what the data shows and
@@ -825,6 +825,19 @@ export function validateNarrative(
   if (/\b(should|must|recommend|we suggest|risk of|likely to|could lead|indicates that|suggests that)\b/i.test(text)) {
     return { ok: false, reason: "narrative asserts judgement or causation" };
   }
+
+  // A narrative that describes its own input rather than the client's business. Found live: a
+  // dimension with an empty category/numeric breakdown produced "The Enterprise profile aggregate
+  // contains a single record... with no categories, numerics, sparse attributes, or notable
+  // entries populated" -- fully grounded (no invented number, no invented name) and completely
+  // wrong to show a reader, because it narrates this file's own field names back as if they were
+  // a fact about the company. Grounding was never the problem here; every one of these checks
+  // grounding. This is the one check in the gate that is not about truth, it is about audience --
+  // an executive reading Home does not know or care what an "aggregate" or a "sparse attribute" is,
+  // and a sentence that uses those words was written for a developer, not for them.
+  if (/\b(aggregate|the json|sparse attribute|notable entr|the data (provided|shown|given)|this dataset|data structure)\b/i.test(text)) {
+    return { ok: false, reason: "narrative describes its own input rather than the client's business" };
+  }
   return { ok: true };
 }
 
@@ -930,7 +943,7 @@ async function buildTenant(
     const aggregate = { heading: block.heading, question: block.question, facts: block.facts };
     const out = await generate(
       client,
-      `Answer this question in two to four sentences for someone who has just joined this organisation: "${block.question}"`,
+      `Answer this question in two to four sentences for someone who has just joined this organization: "${block.question}"`,
       aggregate,
       block.entities,
     );
@@ -944,6 +957,34 @@ async function buildTenant(
   }
 
   for (const profile of profiles) {
+    // A dimension with nothing to profile gets no narration attempt.
+    //
+    // "Enterprise profile" is exactly one record, every tenant, always -- the profiler requires at
+    // least three populated values before it will compute a category or a numeric summary, so for
+    // this dimension categories, numerics, sparseAttributes and notable are permanently empty. Asked
+    // to "describe the shape, any concentration, and what is missing" of an object whose only content
+    // is four empty arrays, a literal-minded model does exactly that: it describes the shape of the
+    // empty arrays, using their own field names as vocabulary because those names are the only
+    // labels in what it was handed. The result reads back this file's own TypeScript interface --
+    // "the aggregate contains... with no categories, numerics, sparse attributes, or notable entries
+    // populated" -- as though it were a sentence about a company. It is fully grounded (no invented
+    // number, no invented name) and completely useless, because grounding was never the problem.
+    //
+    // The header already shows the record count and the sample name. A sentence about the absence of
+    // fields adds nothing a reader doesn't already see, so the fix is not a better prompt for
+    // describing nothing -- it is not asking for a sentence about nothing at all.
+    if (
+      profile.categories.length === 0 &&
+      profile.numerics.length === 0 &&
+      profile.sparseAttributes.length === 0 &&
+      profile.notable.length === 0
+    ) {
+      profile.insight = null;
+      profile.insightRejectedBecause = "aggregate too thin to narrate -- no categories, quantities or notable entries beyond the record count";
+      issues.push(`dimension:${profile.key} — ${profile.insightRejectedBecause}`);
+      continue;
+    }
+
     // Send the profile minus the fields the model must not narrate from, and with every share
     // pre-rounded and pre-formatted as a percentage string.
     //
