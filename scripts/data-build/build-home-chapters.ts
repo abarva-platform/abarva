@@ -114,6 +114,12 @@ function touchesAny(domains: Set<string>, target: Set<string>): boolean {
   return false;
 }
 
+/** Verifier-rejected claims survive as `null` in place (see dropClaim) rather than being spliced
+ * out, so every consumer of a GroundedClaim array must filter dead entries before use. */
+function alive(arr: (GroundedClaim | null)[]): GroundedClaim[] {
+  return arr.filter((c): c is GroundedClaim => c !== null);
+}
+
 /** Named dataset -> preferred chapter, extended from the 3-chapter prototype to all 8. */
 const VISUAL_PREFERRED_CHAPTER: Record<string, ChapterId> = {
   vendor_spend_concentration: "technology_data",
@@ -154,24 +160,30 @@ const CHAPTER_QUESTION_KEYWORDS: Partial<Record<ChapterId, string[]>> = {
   leadership_perspective: ["leader", "leadership", "sentiment", "contradict"],
 };
 
+/** questions_for_management is a GroundedClaim[] like every other thesis section (a live run found
+ * questions embedding fabricated factual premises with zero evidence backing, and a question is
+ * not exempt from the evidence rule just because it's phrased as a question) -- so this, like
+ * assembleChapterSlices, must drop verifier-rejected (null) entries before routing, and route by
+ * the question's own statement text rather than a raw string. */
 export function assignQuestions(thesis: EnterpriseThesis): Record<ChapterId, string[]> {
+  const questions = alive(thesis.questions_for_management);
   const byChapter: Record<ChapterId, string[]> = {
-    executive_brief: thesis.questions_for_management.slice(0, 5),
+    executive_brief: questions.slice(0, 5).map((q) => q.statement),
     our_business: [], strategy_value_creation: [], how_we_operate: [],
     technology_data: [], performance_value: [], leadership_perspective: [], what_needs_attention: [],
   };
   const claimed = new Set<string>();
   for (const [chapterId, keywords] of Object.entries(CHAPTER_QUESTION_KEYWORDS) as Array<[ChapterId, string[]]>) {
-    for (const q of thesis.questions_for_management) {
-      if (claimed.has(q)) continue;
-      if (keywords.some((k) => q.toLowerCase().includes(k))) {
-        byChapter[chapterId].push(q);
-        claimed.add(q);
+    for (const q of questions) {
+      if (claimed.has(q.statement)) continue;
+      if (keywords.some((k) => q.statement.toLowerCase().includes(k))) {
+        byChapter[chapterId].push(q.statement);
+        claimed.add(q.statement);
       }
     }
   }
-  const leftover = thesis.questions_for_management.filter((q) => !claimed.has(q));
-  byChapter.what_needs_attention.push(...leftover);
+  const leftover = questions.filter((q) => !claimed.has(q.statement));
+  byChapter.what_needs_attention.push(...leftover.map((q) => q.statement));
   return byChapter;
 }
 
@@ -182,7 +194,6 @@ export function assembleChapterSlices(
   thesis: EnterpriseThesis,
   signalPacket: ReturnType<typeof import("./enterprise-signal-packet").buildEnterpriseSignalPacket>,
 ): Record<ChapterId, { key_insights: GroundedClaim[]; tensions: GroundedClaim[]; what_to_watch: GroundedClaim[] }> {
-  const alive = (arr: (GroundedClaim | null)[]) => arr.filter((c): c is GroundedClaim => c !== null);
   const structural = alive(thesis.structural_constraints);
   const operating = alive(thesis.operating_tensions);
   const techStructural = structural.filter((c) => touchesAny(claimDomains(c, signalPacket), TECH_DOMAINS));

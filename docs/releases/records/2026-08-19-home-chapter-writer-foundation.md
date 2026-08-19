@@ -133,8 +133,46 @@ model change, no database write path, no product route change.
   the same run, which is a real cost (another ~15 minute ACA Job cycle) independent of what caused
   the one call to fail. The `:apply` DB-write path is deliberately left to still fail loudly on
   error -- a partial or failed write is not something to silently skip past.
-- Fourth live-proof attempt pending: confirm both tenants now generate a complete thesis and all
-  16 chapter-synthesis calls succeed with the streaming fix in place.
+- Fourth live-proof attempt, both tenants: **clean at the plumbing level.** Both tenants generated
+  a complete thesis and all 16 of 16 chapter-synthesis calls succeeded with real, non-placeholder
+  headlines and executive syntheses. One `parseJsonLoose` diagnostic fired (a claim-verifier
+  response with a genuinely malformed JSON string -- an unescaped inner quote, not a fence-wrapping
+  issue) and degraded safely to `UNSUPPORTED` per its documented fallback, exactly as designed:
+  visible in the log, not silently swallowed, and no crash.
+- An independent content review of that run's actual output (six-criteria acceptance gate: story
+  quality, analytical quality, evidence quality, specificity, visual quality, executive usefulness,
+  scored per chapter per tenant) found the plumbing fix above was necessary but not sufficient: it
+  confirmed no recurrence of the "well-capitalized"-class zero-evidence adjective anywhere in a
+  headline or executive_synthesis, and every evidence_id cited across both tenants' 8 claim-typed
+  arrays resolved to a real signal with a statement that actually supported the claim -- but it
+  found a genuine, confirmed regression in a section this hardening pass had not touched:
+  SkyHarbor's `performance_value` chapter published a claim ("The IROPS AI Recovery Cockpit
+  Expansion, at 23% complete...") naming a specific program and percentage that appear nowhere in
+  the tenant's real data, citing a real evidence id (`sig_portfolio_033`) that in fact describes a
+  *different* program at a *different* completion percentage (7%, not 23%). Root cause:
+  `performance_story` was deliberately excluded from entailment verification on the documented
+  theory that "purely descriptive sections rarely overstate" -- this run falsified that theory with
+  a concrete counterexample. It had only the cheap structural check (evidence id resolves, domain
+  count met), which a claim with a real-but-mismatched citation passes trivially.
+  Separately, `questions_for_management` -- a plain `string[]` with no `evidence_ids` at all, so
+  structurally unable to go through any check -- carried fabricated specifics in 5 places across
+  both tenants (a "PAM Rollout program... at 0% completion", an "IROPS AI Recovery Cockpit
+  Expansion" sharing a dependency that was never established, a PAM "sponsor change"), none of
+  which exist in either tenant's signal packet. Both are the same failure class as the
+  "well-capitalized" bug this whole workstream started from -- an assertion with no real evidence
+  behind it -- just relocated to two sections the first hardening pass didn't cover.
+  Fixed: `performance_story.where_improving/where_off_track/where_unknown` added to entailment
+  verification (same mechanism as everything else -- no new architecture); `where_unknown` was also
+  found missing from even the cheap structural check and added there too. `questions_for_management`
+  converted from `string[]` to `GroundedClaim[]` (statement = the question text, evidence_ids ground
+  any fact/number/named-entity the question references) and now runs through the identical
+  verify/repair/entailment pipeline as every other section -- a question is not exempt from the
+  evidence rule just because it's phrased as a question instead of an assertion.
+  (The review's third observation -- `what_needs_attention` sharing content with `executive_brief`
+  -- is the deliberate, already-tested landing-page-echo design, not a defect; left unchanged.)
+- Fifth live-proof attempt pending: confirm both tenants still generate clean output with
+  `performance_story` and `questions_for_management` now verified, and specifically that the
+  IROPS/PAM-class fabrications do not recur.
 
 ## Rollout Plan
 

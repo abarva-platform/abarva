@@ -154,7 +154,14 @@ export interface EnterpriseThesis {
   what_needs_attention: GroundedClaim[];
   evidence_gaps: string[];
   things_a_new_cxo_should_know: GroundedClaim[];
-  questions_for_management: string[];
+  /** Was a plain string[] until a live run found questions embedding fabricated factual premises
+   * with no evidence backing them at all ("given the PAM Rollout program is at 0% completion,
+   * what's the plan to...") -- a question is not exempt from the evidence rule just because it's
+   * phrased as a question instead of an assertion; the premise inside it is still a claim. Now a
+   * GroundedClaim like everything else, entailment-verified the same way: `statement` is the
+   * question text, `evidence_ids` ground whatever specific fact, number, or named entity the
+   * question references. */
+  questions_for_management: GroundedClaim[];
   /** Optional by nature -- a visualization is proposed only where it strengthens the story, not
    * for every section. See VisualOpportunity for the grammar and dataset_ref constraint. */
   visual_opportunities: VisualOpportunity[];
@@ -333,7 +340,12 @@ mind at once.
   each.
 - leadership_consensus: 3-5 items. leadership_disagreements: 2-3 items.
 - performance_story: 2-3 items in each of where_improving / where_off_track / where_unknown.
-- things_a_new_cxo_should_know: 5-7 items. questions_for_management: 5-7 items.
+- things_a_new_cxo_should_know: 5-7 items. questions_for_management: 5-7 items, each a
+  GroundedClaim whose statement is the question text -- if the question references a specific
+  fact, number, program, or named entity, cite the evidence_ids that establish it exists; do not
+  invent a detail (a percentage, a sponsor change, a dependency) to make a question sound sharper
+  than the evidence supports. A genuinely open question with no factual premise ("what would it
+  take to accelerate X?") should still cite the evidence_ids for whatever X is.
 - visual_opportunities: 0-6 items across the whole thesis -- propose fewer if fewer genuinely earn
   a visual.
 Do not pad a section to reach a minimum, and do not exceed the maximum to fit in one more
@@ -373,7 +385,7 @@ function buildUserPrompt(signalPacket: ReturnType<typeof buildEnterpriseSignalPa
         what_needs_attention: ["3-5 GroundedClaim -- whatever most needs a decision or a look, drawn from any domain, not limited to risk"],
         evidence_gaps: ["string, as many as genuinely material"],
         things_a_new_cxo_should_know: ["5-7 GroundedClaim"],
-        questions_for_management: ["string, 5-7 items"],
+        questions_for_management: ["5-7 GroundedClaim -- statement is the question text; evidence_ids ground any fact, number, program, or named entity the question references"],
         visual_opportunities: [
           "0-6 VisualOpportunity: { visual_type: <from the allowed list>, title (answer-first), purpose, " +
             `dataset_ref (must be exactly one of: ${datasetNames.join(", ") || "(none available)"}), ` +
@@ -452,11 +464,15 @@ export function validateStructure(thesis: EnterpriseThesis, signalPacket: Return
   thesis.leadership_disagreements.forEach((c, i) => checkClaim(`leadership_disagreements[${i}]`, c));
   thesis.performance_story.where_improving.forEach((c, i) => checkClaim(`performance_story.where_improving[${i}]`, c));
   thesis.performance_story.where_off_track.forEach((c, i) => checkClaim(`performance_story.where_off_track[${i}]`, c));
+  // where_unknown was missing from this list entirely -- found while adding performance_story to
+  // entailment verification below; it had neither the structural nor the semantic check.
+  thesis.performance_story.where_unknown.forEach((c, i) => checkClaim(`performance_story.where_unknown[${i}]`, c));
   thesis.technology_and_data_implications.forEach((c, i) => checkClaim(`technology_and_data_implications[${i}]`, c));
   thesis.material_risks.forEach((c, i) => checkClaim(`material_risks[${i}]`, c));
   thesis.value_realization_tensions.forEach((c, i) => checkClaim(`value_realization_tensions[${i}]`, c));
   thesis.what_needs_attention.forEach((c, i) => checkClaim(`what_needs_attention[${i}]`, c));
   thesis.things_a_new_cxo_should_know.forEach((c, i) => checkClaim(`things_a_new_cxo_should_know[${i}]`, c));
+  thesis.questions_for_management.forEach((c, i) => checkClaim(`questions_for_management[${i}]`, c));
 
   // Visuals get their own check: dataset_ref must be a real, precomputed dataset (nothing else is
   // plottable) and visual_type must be one of the fixed grammar's shapes -- the two guardrails
@@ -661,9 +677,19 @@ async function synthesizeProseFromClaims(
 }
 
 /** Claim categories verified — the surfaces carrying comparative, causal, consensus, or
- * strategic-alignment claims, the shapes most prone to overstepping their evidence. Purely
- * descriptive sections (performance_story) are left unverified: verifying every sentence adds
- * cost and latency for a shape that rarely overstates, and flattens the writing for no gain. */
+ * strategic-alignment claims, the shapes most prone to overstepping their evidence.
+ *
+ * performance_story used to be excluded here on the theory that "purely descriptive sections
+ * rarely overstate." A live run falsified that: a where_improving claim asserted a specific named
+ * program ("IROPS AI Recovery Cockpit Expansion") at a specific completion percentage (23%) that
+ * appear nowhere in the tenant's real data, citing a real evidence_id (sig_portfolio_033) that in
+ * fact describes a completely different program at a completely different completion percentage
+ * (7%). It passed the structural check (a real evidence_id, correct claim_type) because structural
+ * validation checks that evidence_ids resolve and the domain count is met -- it does not check
+ * that the claim's specific numbers are actually what the cited evidence says, which is exactly
+ * what the entailment verifier below does for every other section. "Descriptive" is not a reason a
+ * claim can't invent a number; it just means the earlier assumption that it wouldn't wasn't
+ * checked against real output. */
 function claimsRequiringVerification(thesis: EnterpriseThesis): Array<{ path: string; claim: GroundedClaim }> {
   const out: Array<{ path: string; claim: GroundedClaim }> = [];
   thesis.enterprise_story_claims.forEach((c, i) => out.push({ path: `enterprise_story_claims[${i}]`, claim: c }));
@@ -674,11 +700,15 @@ function claimsRequiringVerification(thesis: EnterpriseThesis): Array<{ path: st
   thesis.operating_tensions.forEach((c, i) => out.push({ path: `operating_tensions[${i}]`, claim: c }));
   thesis.leadership_consensus.forEach((c, i) => out.push({ path: `leadership_consensus[${i}]`, claim: c }));
   thesis.leadership_disagreements.forEach((c, i) => out.push({ path: `leadership_disagreements[${i}]`, claim: c }));
+  thesis.performance_story.where_improving.forEach((c, i) => out.push({ path: `performance_story.where_improving[${i}]`, claim: c }));
+  thesis.performance_story.where_off_track.forEach((c, i) => out.push({ path: `performance_story.where_off_track[${i}]`, claim: c }));
+  thesis.performance_story.where_unknown.forEach((c, i) => out.push({ path: `performance_story.where_unknown[${i}]`, claim: c }));
   thesis.technology_and_data_implications.forEach((c, i) => out.push({ path: `technology_and_data_implications[${i}]`, claim: c }));
   thesis.material_risks.forEach((c, i) => out.push({ path: `material_risks[${i}]`, claim: c }));
   thesis.value_realization_tensions.forEach((c, i) => out.push({ path: `value_realization_tensions[${i}]`, claim: c }));
   thesis.what_needs_attention.forEach((c, i) => out.push({ path: `what_needs_attention[${i}]`, claim: c }));
   thesis.things_a_new_cxo_should_know.forEach((c, i) => out.push({ path: `things_a_new_cxo_should_know[${i}]`, claim: c }));
+  thesis.questions_for_management.forEach((c, i) => out.push({ path: `questions_for_management[${i}]`, claim: c }));
   return out;
 }
 
