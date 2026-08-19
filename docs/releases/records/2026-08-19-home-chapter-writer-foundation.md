@@ -107,8 +107,16 @@ model change, no database write path, no product route change.
   on parse failure (call-site label + parse error + response head) so a future occurrence is visible
   instead of silently swallowed. The thesis-level calls happened not to hit this failure mode on the
   first live run (0/107+); that was sample luck, not evidence the gap wasn't real, which is why all
-  five call sites were hardened uniformly rather than only the one that failed. Re-run after the fix
-  to confirm 0 parse failures is the remaining validation step before the acceptance-gate review.
+  five call sites were hardened uniformly rather than only the one that failed.
+- Re-running the live proof after the `parseJsonLoose` fix surfaced a second, more serious issue:
+  the main thesis generation call itself truncated (`stop_reason=max_tokens`, unterminated JSON
+  string) for both tenants at the existing `max_tokens: 16000` ceiling -- a ceiling that had passed
+  clean on the first live run of this same code path an hour earlier. That's run-to-run output-length
+  variance putting a marginal ceiling on the wrong side of failure, not a regression from either fix
+  above. Raised to `28000`, comfortably above the observed failure point and still well under the
+  `34000` this codebase already runs in production for a comparably large structured generation
+  (`src/lib/deliverables/strategic-moves-artifact-standard.ts`). Re-run pending to confirm both
+  tenants now generate a complete, parseable thesis and all 16 chapter calls succeed.
 
 ## Rollout Plan
 
