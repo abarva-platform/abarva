@@ -97,6 +97,12 @@ export interface EnterpriseThesis {
   technology_and_data_implications: GroundedClaim[];
   material_risks: GroundedClaim[];
   value_realization_tensions: GroundedClaim[];
+  /** A named executive surface in its own right (mirrors the "What Needs Attention" Home
+   * chapter), not just an alias for material_risks -- risks are what could go wrong; this is
+   * whatever most needs a decision or a look, which may be a risk, a gap, a stalled program, or
+   * a tension, and is worth a reader being able to find in one place rather than assembling it
+   * themselves from five other arrays. */
+  what_needs_attention: GroundedClaim[];
   evidence_gaps: string[];
   things_a_new_cxo_should_know: GroundedClaim[];
   questions_for_management: string[];
@@ -165,6 +171,35 @@ Each major thesis statement should connect at least two domains from the list ab
 connect three or more. Write like an adviser who has studied this enterprise closely — not like a
 reporting engine describing a database.
 
+INFERENCE, NOT JUST RESTATEMENT
+You are not limited to sentences a signal already states verbatim. A reasonable synthesis across
+two or more signals is exactly what you are for -- "this estate's rationalization candidates could
+fund part of the modernization portfolio" is a legitimate inference if the packet shows both a
+rationalization figure and a funded modernization program, even though no single signal says it.
+The discipline is not "never infer" -- it is "never claim more certainty, scope, ranking, or
+causality than the cited evidence actually supports." A claim can be a genuine, useful, un-hedged
+observation, or it can be a careful inference phrased with appropriate uncertainty ("could",
+"may", "is consistent with") -- both are welcome. What is not welcome is either one dressed up as
+more certain than it is: a topic every leader raised is not the same as leaders agreeing on a
+solution; two named risks are not "the most severe" without a comparison across every risk; a
+program at 7% complete is not "the most consequential in the portfolio" without a portfolio-wide
+ranking behind it. Say what the evidence supports, including a well-reasoned inference -- just say
+it at the certainty the evidence actually earns.
+
+LENGTH -- THIS IS A SPINE, NOT A REPORT
+Keep every section within these bounds. The eight chapter writers built on top of this thesis
+later provide the depth; this object stays sharp enough that a reader can hold the whole thing in
+mind at once.
+- enterprise_story: 250-400 words.
+- strategic_bets, structural_constraints, operating_tensions, material_risks,
+  value_realization_tensions, what_needs_attention, technology_and_data_implications: 3-5 items
+  each.
+- leadership_consensus: 3-5 items. leadership_disagreements: 2-3 items.
+- performance_story: 2-3 items in each of where_improving / where_off_track / where_unknown.
+- things_a_new_cxo_should_know: 5-7 items. questions_for_management: 5-7 items.
+Do not pad a section to reach a minimum, and do not exceed the maximum to fit in one more
+observation -- pick the strongest ones.
+
 Output strict JSON matching the schema you are given. No prose outside the JSON.`;
 
 function buildUserPrompt(signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>): string {
@@ -173,24 +208,25 @@ function buildUserPrompt(signalPacket: ReturnType<typeof buildEnterpriseSignalPa
     `Every claim needs evidence_ids from the signals list. Return JSON matching this shape exactly:\n\n` +
     JSON.stringify(
       {
-        enterprise_story: "string, 120-180 words",
-        value_creation_model: { summary: "string", primary_value_drivers: ["string"], economic_dependencies: ["string"], evidence_ids: ["sig_xxx"] },
-        strategic_bets: [{ statement: "string", evidence_ids: ["sig_xxx"], confidence: "low|medium|high" }],
-        structural_constraints: [{ statement: "string", evidence_ids: ["sig_xxx"], confidence: "low|medium|high" }],
-        operating_tensions: [{ statement: "string", evidence_ids: ["sig_xxx"], confidence: "low|medium|high" }],
-        leadership_consensus: [{ statement: "string", evidence_ids: ["sig_xxx"], confidence: "low|medium|high" }],
-        leadership_disagreements: [{ statement: "string", evidence_ids: ["sig_xxx"], confidence: "low|medium|high" }],
+        enterprise_story: "string, 250-400 words",
+        value_creation_model: { summary: "string", primary_value_drivers: ["string, 2-4 items"], economic_dependencies: ["string, 2-4 items"], evidence_ids: ["sig_xxx"] },
+        strategic_bets: ["3-5 GroundedClaim: { statement, evidence_ids: [sig_xxx], confidence: low|medium|high }"],
+        structural_constraints: ["3-5 GroundedClaim"],
+        operating_tensions: ["3-5 GroundedClaim"],
+        leadership_consensus: ["3-5 GroundedClaim"],
+        leadership_disagreements: ["2-3 GroundedClaim"],
         performance_story: {
-          where_improving: [{ statement: "string", evidence_ids: ["sig_xxx"], confidence: "low|medium|high" }],
-          where_off_track: [{ statement: "string", evidence_ids: ["sig_xxx"], confidence: "low|medium|high" }],
-          where_unknown: [{ statement: "string", evidence_ids: ["sig_xxx"], confidence: "low|medium|high" }],
+          where_improving: ["2-3 GroundedClaim"],
+          where_off_track: ["2-3 GroundedClaim"],
+          where_unknown: ["2-3 GroundedClaim"],
         },
-        technology_and_data_implications: [{ statement: "string", evidence_ids: ["sig_xxx"], confidence: "low|medium|high" }],
-        material_risks: [{ statement: "string", evidence_ids: ["sig_xxx"], confidence: "low|medium|high" }],
-        value_realization_tensions: [{ statement: "string", evidence_ids: ["sig_xxx"], confidence: "low|medium|high" }],
-        evidence_gaps: ["string"],
-        things_a_new_cxo_should_know: [{ statement: "string", evidence_ids: ["sig_xxx"], confidence: "low|medium|high" }],
-        questions_for_management: ["string"],
+        technology_and_data_implications: ["3-5 GroundedClaim"],
+        material_risks: ["3-5 GroundedClaim"],
+        value_realization_tensions: ["3-5 GroundedClaim"],
+        what_needs_attention: ["3-5 GroundedClaim -- whatever most needs a decision or a look, drawn from any domain, not limited to risk"],
+        evidence_gaps: ["string, as many as genuinely material"],
+        things_a_new_cxo_should_know: ["5-7 GroundedClaim"],
+        questions_for_management: ["string, 5-7 items"],
       },
       null,
       2,
@@ -250,6 +286,7 @@ export function validateStructure(thesis: EnterpriseThesis, signalPacket: Return
   thesis.technology_and_data_implications.forEach((c, i) => checkClaim(`technology_and_data_implications[${i}]`, c));
   thesis.material_risks.forEach((c, i) => checkClaim(`material_risks[${i}]`, c));
   thesis.value_realization_tensions.forEach((c, i) => checkClaim(`value_realization_tensions[${i}]`, c));
+  thesis.what_needs_attention.forEach((c, i) => checkClaim(`what_needs_attention[${i}]`, c));
   thesis.things_a_new_cxo_should_know.forEach((c, i) => checkClaim(`things_a_new_cxo_should_know[${i}]`, c));
 
   return issues;
@@ -271,19 +308,43 @@ export function validateStructure(thesis: EnterpriseThesis, signalPacket: Return
  * generator uses, applied to checking instead of writing.
  * ---------------------------------------------------------------------------------------------- */
 
-type Verdict = "SUPPORTED" | "PARTIALLY_SUPPORTED" | "UNSUPPORTED" | "OVERSTATED";
+/**
+ * Four states, not three, and the fourth (SUPPORTED_INFERENCE) is the whole point of paying for a
+ * model here instead of a template. A synthesis across two facts that no single fact states
+ * verbatim is not a defect to be caught -- it is the advisory judgment this layer exists to
+ * produce. What makes it acceptable is not that it was already written somewhere; it is that it
+ * follows reasonably from what was, and says so at the certainty it has actually earned. Collapsing
+ * SUPPORTED_INFERENCE into OVERSTATED would strip every genuine insight down to a restated fact;
+ * collapsing it into SUPPORTED would stop distinguishing "the packet says this" from "this is a
+ * reasonable read of the packet" -- a distinction worth keeping visible to a reader, not just to
+ * the pipeline.
+ */
+type Verdict = "SUPPORTED" | "SUPPORTED_INFERENCE" | "OVERSTATED" | "UNSUPPORTED";
 
 const VERIFIER_SYSTEM_PROMPT = `You are a skeptical fact-checker. You will be given a claim and a list of
 facts. Your only job is to decide whether the claim follows from exactly those facts and nothing else.
 
-Return one of:
-SUPPORTED — every part of the claim is directly stated or is a direct, unambiguous consequence of the facts.
-PARTIALLY_SUPPORTED — some of the claim follows from the facts, but part of it goes beyond what they state.
-UNSUPPORTED — the claim does not follow from the facts at all.
-OVERSTATED — the claim's direction is right but its strength, certainty, or scope exceeds the facts (e.g. the facts show a correlation and the claim asserts causation, or the facts describe two of something and the claim implies a pattern).
+Return exactly one of:
 
-Default to UNSUPPORTED or OVERSTATED when uncertain. A missed real insight costs a sentence. A
-false pass costs a fabricated claim reaching an executive.
+SUPPORTED — every part of the claim is directly stated by the facts. No interpretation required.
+
+SUPPORTED_INFERENCE — the claim is not a literal fact, but is a reasonable synthesis of two or more
+of the given facts, and is phrased with uncertainty appropriate to an inference rather than stated
+as settled ("could", "may", "is consistent with", "suggests" -- not "is" or "proves"). The
+connection must be one a careful reader would accept as a fair reading of the facts, not a leap.
+
+OVERSTATED — the claim's direction is defensible, but its certainty, ranking, causality, scope, or
+consensus exceeds what the facts support. This includes: a comparative or superlative ("the most
+severe", "the largest") with no comparison across the full set in the facts; causation asserted
+from coexistence; a topic being "raised" turned into leaders "agreeing" or having "conviction"; a
+single case generalized into a pattern; scope broadened beyond what was named (e.g. "the
+organization" when the facts name one system or one program).
+
+UNSUPPORTED — the claim does not follow from the facts at all, even as an inference.
+
+Default to OVERSTATED over SUPPORTED_INFERENCE when genuinely unsure whether a leap is reasonable
+or too far -- a demoted insight costs a rewrite; a false SUPPORTED_INFERENCE costs a confident
+claim with no real basis reaching an executive under the cover of "inference."
 
 Respond with strict JSON: { "verdict": "...", "reasoning": "one sentence" }`;
 
@@ -317,15 +378,67 @@ async function verifyClaim(
   }
 }
 
-/** Claim categories verified in V1 — the highest-stakes surfaces, per the standing instruction not
- * to defer entailment checking on Executive Brief / What Needs Attention material. Not every array
- * needs this cost; these are the ones carrying the strongest synthesized, cross-domain claims. */
+/**
+ * Targeted repair for an OVERSTATED claim -- not a delete, not a full-paragraph rewrite by a
+ * second, more conservative pass. That second failure mode is real: a pipeline that hands a
+ * "write this more carefully" instruction to a fresh model call tends to sand every claim down to
+ * the same cautious register, which is exactly the bland-summary problem this whole layer was
+ * built to escape in the first place. This call sees only the original sentence, the facts that
+ * were actually cited, and the verifier's specific objection -- and is told to fix only what the
+ * objection named, keeping everything else about the sentence's specificity and shape intact.
+ */
+const REPAIR_SYSTEM_PROMPT = `A claim you wrote was flagged as overstated. You will be given the
+original claim, the facts it was allowed to use, and specifically what about it overstepped them.
+
+Rewrite the claim so it no longer makes that overstated assertion, while preserving everything else
+that was good about it: the specific numbers, the named entities, the connection between facts, the
+executive usefulness. Do not become generic. Do not hedge more than the flagged problem requires.
+Do not add new facts.
+
+If the underlying observation is still interesting once the overstated part is removed, keep it and
+phrase the remaining connection as an appropriately uncertain inference ("could", "may", "is
+consistent with") rather than deleting the insight entirely. Losing a good observation because one
+word overstepped is worse than fixing the word.
+
+Respond with strict JSON: { "repaired_statement": "..." }`;
+
+async function repairClaim(
+  client: Parameters<typeof callClaude>[0],
+  claim: GroundedClaim,
+  verifierReasoning: string,
+  signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>,
+): Promise<string | null> {
+  const byId = new Map(signalPacket.signals.map((s) => [s.id, s]));
+  const facts = claim.evidence_ids.map((id) => byId.get(id)?.statement).filter(Boolean);
+  const userPrompt =
+    `Original claim:\n${claim.statement}\n\n` +
+    `Facts it was allowed to use:\n${facts.map((f, i) => `${i + 1}. ${f}`).join("\n")}\n\n` +
+    `What overstepped them:\n${verifierReasoning}`;
+  const result = await callClaude(client, REPAIR_SYSTEM_PROMPT, userPrompt, 2048);
+  if (!result) return null;
+  try {
+    const parsed = JSON.parse(result.text) as { repaired_statement: string };
+    return parsed.repaired_statement || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Claim categories verified — the surfaces carrying comparative, causal, consensus, or
+ * strategic-alignment claims, the shapes most prone to overstepping their evidence. Purely
+ * descriptive sections (performance_story) are left unverified: verifying every sentence adds
+ * cost and latency for a shape that rarely overstates, and flattens the writing for no gain. */
 function claimsRequiringVerification(thesis: EnterpriseThesis): Array<{ path: string; claim: GroundedClaim }> {
   const out: Array<{ path: string; claim: GroundedClaim }> = [];
   thesis.strategic_bets.forEach((c, i) => out.push({ path: `strategic_bets[${i}]`, claim: c }));
+  thesis.structural_constraints.forEach((c, i) => out.push({ path: `structural_constraints[${i}]`, claim: c }));
   thesis.operating_tensions.forEach((c, i) => out.push({ path: `operating_tensions[${i}]`, claim: c }));
+  thesis.leadership_consensus.forEach((c, i) => out.push({ path: `leadership_consensus[${i}]`, claim: c }));
+  thesis.leadership_disagreements.forEach((c, i) => out.push({ path: `leadership_disagreements[${i}]`, claim: c }));
+  thesis.technology_and_data_implications.forEach((c, i) => out.push({ path: `technology_and_data_implications[${i}]`, claim: c }));
   thesis.material_risks.forEach((c, i) => out.push({ path: `material_risks[${i}]`, claim: c }));
   thesis.value_realization_tensions.forEach((c, i) => out.push({ path: `value_realization_tensions[${i}]`, claim: c }));
+  thesis.what_needs_attention.forEach((c, i) => out.push({ path: `what_needs_attention[${i}]`, claim: c }));
   thesis.things_a_new_cxo_should_know.forEach((c, i) => out.push({ path: `things_a_new_cxo_should_know[${i}]`, claim: c }));
   return out;
 }
@@ -426,49 +539,79 @@ async function buildTenant(tenantKey: string, client: Parameters<typeof callClau
   console.log(`  ${records.length.toLocaleString()} records → ${signalPacket.signals.length} material signals`);
 
   if (!client) {
-    return { signalPacket, thesis: null, structuralIssues: [], verifierResults: [], usage: { input: 0, output: 0 } };
+    return {
+      signalPacket, rawGeneration: null, publishedGeneration: null,
+      structuralIssues: [], verificationLedger: [], usage: { input: 0, output: 0 },
+    };
   }
 
   const userPrompt = buildUserPrompt(signalPacket);
   const usage = { input: 0, output: 0 };
-  // The schema asks for up to a dozen array fields, several holding multiple GroundedClaim
-  // objects (statement + evidence_ids + confidence each). 4000 tokens produced empty output on
-  // the first real run against both tenants -- raised well above what the schema should need in
-  // the worst case, on a claim-count-bounded prompt, rather than guessed at a second time.
-  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, 16000);
+  // The schema's array bounds are now stated explicitly in SYSTEM_PROMPT (a spine, not a report --
+  // 3-5 items per array, 250-400 words for enterprise_story). 16000 was a blunt fix for an earlier
+  // empty-output bug and let the schema sprawl into report-length output on Meridian, truncating
+  // mid-JSON. With the bounds now enforced in the prompt itself, this ceiling only needs to cover
+  // the worst case of a fully-populated, bounded schema.
+  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, 6000);
   if (!generation) {
     console.log("  ! thesis generation returned no text");
-    return { signalPacket, thesis: null, structuralIssues: [], verifierResults: [], usage };
+    return {
+      signalPacket, rawGeneration: null, publishedGeneration: null,
+      structuralIssues: [], verificationLedger: [], usage,
+    };
   }
   usage.input += generation.inputTokens;
   usage.output += generation.outputTokens;
 
-  const thesis = parseThesisJson(generation.text);
-  if (!thesis) {
+  const rawGeneration = parseThesisJson(generation.text);
+  if (!rawGeneration) {
     console.log("  ! thesis did not parse as JSON — first 300 chars:");
     console.log("   ", generation.text.slice(0, 300));
-    return { signalPacket, thesis: null, structuralIssues: [], verifierResults: [], usage };
+    return {
+      signalPacket, rawGeneration: null, publishedGeneration: null,
+      structuralIssues: [], verificationLedger: [], usage,
+    };
   }
 
-  const structuralIssues = validateStructure(thesis, signalPacket);
+  const structuralIssues = validateStructure(rawGeneration, signalPacket);
   console.log(`  structural check: ${structuralIssues.length} issue(s)`);
   for (const issue of structuralIssues.slice(0, 10)) console.log(`    - ${issue.path}: ${issue.reason}`);
 
-  const toVerify = claimsRequiringVerification(thesis);
+  // raw_generation is the untouched model output -- captured before any repair or drop mutates
+  // the working copy, so it survives independently of what verification decides to do with it.
+  const publishedGeneration: EnterpriseThesis = JSON.parse(JSON.stringify(rawGeneration));
+
+  const toVerify = claimsRequiringVerification(publishedGeneration);
   console.log(`  verifying ${toVerify.length} high-stakes claims...`);
-  const verifierResults: Array<{ path: string; verdict: Verdict; reasoning: string }> = [];
+  const verificationLedger: Array<{ path: string; verdict: Verdict; reasoning: string; action: string }> = [];
   for (const { path: claimPath, claim } of toVerify) {
     const result = await verifyClaim(client, claim, signalPacket);
-    verifierResults.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning });
-    if (result.verdict === "UNSUPPORTED" || result.verdict === "OVERSTATED") {
-      dropClaim(thesis, claimPath);
+    if (result.verdict === "UNSUPPORTED") {
+      dropClaim(publishedGeneration, claimPath);
+      verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "dropped" });
+    } else if (result.verdict === "OVERSTATED") {
+      const repaired = await repairClaim(client, claim, result.reasoning, signalPacket);
+      if (repaired) {
+        claim.statement = repaired;
+        verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "repaired" });
+      } else {
+        // Repair itself failed (no client response, or bad JSON back) -- an overstated claim that
+        // can't be corrected is worse than no claim, so this is the one place drop still applies
+        // to an OVERSTATED verdict.
+        dropClaim(publishedGeneration, claimPath);
+        verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "dropped (repair failed)" });
+      }
+    } else {
+      // SUPPORTED and SUPPORTED_INFERENCE are both publishable as-is -- SUPPORTED_INFERENCE is
+      // reasonable, appropriately-hedged synthesis, not a defect to correct.
+      verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "kept" });
     }
   }
   const tally: Record<string, number> = {};
-  for (const r of verifierResults) tally[r.verdict] = (tally[r.verdict] ?? 0) + 1;
+  for (const r of verificationLedger) tally[r.verdict] = (tally[r.verdict] ?? 0) + 1;
   console.log(`  verifier verdicts:`, tally);
 
-  return { signalPacket, thesis, structuralIssues, verifierResults, usage };
+  return { signalPacket, rawGeneration, publishedGeneration, structuralIssues, verificationLedger, usage };
 }
 
 async function main() {
@@ -484,9 +627,10 @@ async function main() {
 
   for (const tenantKey of TENANTS) {
     console.log(`\n=== ${tenantKey} ===`);
-    const { signalPacket, thesis, structuralIssues, verifierResults, usage } = await buildTenant(tenantKey, client);
+    const { signalPacket, rawGeneration, publishedGeneration, structuralIssues, verificationLedger, usage } =
+      await buildTenant(tenantKey, client);
 
-    const result = { tenantKey, signalPacket, thesis, structuralIssues, verifierResults };
+    const result = { tenantKey, signalPacket, rawGeneration, publishedGeneration, structuralIssues, verificationLedger };
     const outFile = path.join(OUT_DIR, `${tenantKey}-enterprise-thesis.json`);
     fs.writeFileSync(outFile, JSON.stringify(result, null, 2));
     console.log(`  → ${outFile}`);
@@ -499,7 +643,7 @@ async function main() {
     // whole result instead of a summary line.
     console.log(`__ENTERPRISE_THESIS_RESULT_BEGIN__${JSON.stringify(result)}__ENTERPRISE_THESIS_RESULT_END__`);
 
-    if (!WRITE || !thesis) continue;
+    if (!WRITE || !publishedGeneration) continue;
 
     const contentHash = require("node:crypto")
       .createHash("sha256")
@@ -547,14 +691,18 @@ async function main() {
           CLAUDE_MODEL,
           "enterprise-thesis/v1",
           contentHash,
-          JSON.stringify({ signalPacket, thesis }),
-          JSON.stringify({ structuralIssues, verifierResults }),
+          // Three separate objects, per the standing rule against silent post-hoc scrubbing: the
+          // unmodified model output, what's actually published after repair/drop, and the full
+          // ledger of what the verifier decided and why -- each independently inspectable rather
+          // than only the end state.
+          JSON.stringify({ signalPacket, raw_generation: rawGeneration, published_generation: publishedGeneration }),
+          JSON.stringify({ structuralIssues, verificationLedger }),
           structuralIssues.length === 0 ? "pass" : "warn",
           JSON.stringify(structuralIssues),
         ],
       );
       const readback = await db.query<{ has_thesis: boolean }>(
-        `SELECT (render_pack->'thesis') IS NOT NULL AS has_thesis FROM public.home_knowledge_packs WHERE id = $1`,
+        `SELECT (render_pack->'published_generation') IS NOT NULL AS has_thesis FROM public.home_knowledge_packs WHERE id = $1`,
         [inserted.rows[0].id],
       );
       if (!readback.rows[0]?.has_thesis) throw new Error("readback found no thesis in stored render_pack");
