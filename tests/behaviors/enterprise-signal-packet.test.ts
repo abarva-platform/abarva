@@ -139,4 +139,51 @@ describe("buildEnterpriseSignalPacket", () => {
     expect(packet.signals.some((s) => s.kind === "consensus" && s.statement.includes("shared_theme"))).toBe(true);
     expect(packet.signals.some((s) => s.kind === "dissent" && s.statement.includes("lone_theme"))).toBe(true);
   });
+
+  it("gives enterprise identity and declared priorities a stable, citeable ctx_* id", () => {
+    // Before contextItems existed, a claim about revenue or a declared priority had nothing real
+    // to cite -- the model fell back to bare, unresolvable references like "(enterpriseIdentity)".
+    const records = [
+      record("tenant_profile", { revenueUsd: 5000, strategicPriorities: ["Modernize the estate"], customerSegments: ["Enterprise buyers"] }),
+    ];
+    const dc = buildDecisionContext(records);
+    const quality = buildContextQualityManifest(records, []);
+    const packet = buildEnterpriseSignalPacket(dc, quality);
+    expect(packet.contextItems.every((c) => c.id.startsWith("ctx_"))).toBe(true);
+    expect(packet.contextItems.some((c) => c.statement.includes("$5,000"))).toBe(true);
+    expect(packet.contextItems.some((c) => c.statement.includes("Modernize the estate"))).toBe(true);
+    expect(packet.contextItems.some((c) => c.statement.includes("Enterprise buyers"))).toBe(true);
+  });
+
+  it("does not emit a context item for a fact that was never declared", () => {
+    const dc = buildDecisionContext([]);
+    const quality = buildContextQualityManifest([], []);
+    const packet = buildEnterpriseSignalPacket(dc, quality);
+    expect(packet.contextItems).toEqual([]);
+  });
+
+  it("only exposes a visual dataset when the underlying figures actually exist", () => {
+    const noVendorRecords = [record("program_initiative", { programName: "Only Program", budgetUsd: 100, expectedValueUsd: 120 })];
+    const dc = buildDecisionContext(noVendorRecords);
+    const quality = buildContextQualityManifest(noVendorRecords, []);
+    const packet = buildEnterpriseSignalPacket(dc, quality);
+    expect(packet.visualDatasets.vendor_spend_concentration).toBeUndefined();
+    expect(packet.visualDatasets.program_investment_distribution).toBeDefined();
+    expect(packet.visualDatasets.program_investment_distribution[0]).toMatchObject({ program: "Only Program", expectedValue: 120 });
+  });
+
+  it("computes the technology spend mix as real numbers a chart could render directly", () => {
+    const records = [
+      record("vendor_contract", { vendorName: "Vendor A", annualSpendUsd: 400 }),
+      record("spend_value_fact", { annualSpendUsd: 1000 }),
+    ];
+    const dc = buildDecisionContext(records);
+    const quality = buildContextQualityManifest(records, []);
+    const packet = buildEnterpriseSignalPacket(dc, quality);
+    const mix = packet.visualDatasets.technology_spend_mix;
+    expect(mix).toEqual([
+      { category: "Third-party contracted", amount: 400 },
+      { category: "Other technology spend", amount: 600 },
+    ]);
+  });
 });

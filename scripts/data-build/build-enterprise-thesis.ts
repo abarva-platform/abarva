@@ -41,6 +41,7 @@ import {
   buildContextQualityManifest,
   buildEnterpriseSignalPacket,
   type Signal,
+  type ContextItem,
 } from "./enterprise-signal-packet";
 
 const TENANTS = (() => {
@@ -69,20 +70,67 @@ const GOLDEN_EVIDENCE_CONTRACTS: Record<string, string[]> = {
  * Thesis shape
  * ---------------------------------------------------------------------------------------------- */
 
+/**
+ * What kind of claim this is, not just what it says -- the two-domain bar for "a real connection"
+ * only makes sense for a claim that's actually claiming a connection. A FACT restating one signal
+ * ("the program is 12% complete") was never trying to connect two domains and shouldn't be
+ * penalized for not doing so; a CROSS_DOMAIN_INSIGHT or ADVISORY_INFERENCE is exactly the shape
+ * that bar exists to police. Untyped, every claim got the same bar regardless of what it was
+ * attempting, which is why a live run flagged 34-36 single-domain program-status facts per tenant
+ * as "issues" -- they were never wrong, the check just didn't know what it was looking at.
+ */
+export type ClaimType = "FACT" | "OBSERVATION" | "CROSS_DOMAIN_INSIGHT" | "ADVISORY_INFERENCE";
+
 /** Every substantive claim in the thesis takes this shape. Nothing floats free of its evidence. */
 export interface GroundedClaim {
   statement: string;
   evidence_ids: string[];
   confidence: "low" | "medium" | "high";
+  claim_type: ClaimType;
+}
+
+/** The fixed grammar of visualizable shapes. Claude selects a type and a dataset_ref from what
+ * the deterministic compiler actually computed (`signalPacket.visualDatasets`); it never supplies
+ * or adjusts a plotted value, and it may not invent a renderer outside this list. Recharts owns
+ * the quantitative half (bar..heatmap); governed SVG components own the relational/structural half
+ * (capability_map..timeline) -- the split locked in this session's Home visual-architecture design. */
+export type VisualType =
+  | "bar" | "stacked_bar" | "horizontal_bar" | "line" | "slope" | "scatter" | "bubble"
+  | "treemap" | "donut" | "bullet" | "heatmap"
+  | "capability_map" | "dependency_graph" | "organization_map" | "strategy_tree"
+  | "risk_chain" | "value_chain" | "timeline";
+
+export const VISUAL_TYPES: readonly VisualType[] = [
+  "bar", "stacked_bar", "horizontal_bar", "line", "slope", "scatter", "bubble",
+  "treemap", "donut", "bullet", "heatmap",
+  "capability_map", "dependency_graph", "organization_map", "strategy_tree",
+  "risk_chain", "value_chain", "timeline",
+];
+
+export interface VisualOpportunity {
+  visual_type: VisualType;
+  /** Answer-first, consulting-style -- "A small number of vendors carry a disproportionate share
+   * of technology dependency," never "Vendor Spend." */
+  title: string;
+  purpose: string;
+  /** Must be an exact key in signalPacket.visualDatasets. Nothing else is plottable. */
+  dataset_ref: string;
+  key_message: string;
+  evidence_ids: string[];
+  priority: "high" | "medium" | "low";
 }
 
 export interface EnterpriseThesis {
   enterprise_story: string;
+  /** The material claims enterprise_story's prose is built from, decomposed and individually
+   * cited/verified -- the top-of-thesis narrative is the highest-visibility surface in the whole
+   * object and was, until this field existed, the one place a claim could ship without ever
+   * passing through the verification ledger. */
+  enterprise_story_claims: GroundedClaim[];
   value_creation_model: {
     summary: string;
-    primary_value_drivers: string[];
-    economic_dependencies: string[];
-    evidence_ids: string[];
+    primary_value_drivers: GroundedClaim[];
+    economic_dependencies: GroundedClaim[];
   };
   strategic_bets: GroundedClaim[];
   structural_constraints: GroundedClaim[];
@@ -106,6 +154,9 @@ export interface EnterpriseThesis {
   evidence_gaps: string[];
   things_a_new_cxo_should_know: GroundedClaim[];
   questions_for_management: string[];
+  /** Optional by nature -- a visualization is proposed only where it strengthens the story, not
+   * for every section. See VisualOpportunity for the grammar and dataset_ref constraint. */
+  visual_opportunities: VisualOpportunity[];
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -143,8 +194,14 @@ investment <-> expected value <-> measured outcome
 EVIDENCE DISCIPLINE
 - The signals and facts in the packet are authoritative. Never recompute a number that appears
   there; quote it exactly.
-- Every claim you make must carry evidence_ids citing the specific signals it draws on. A claim
-  with no evidence_ids will be discarded before a person ever sees it.
+- Every claim you make must carry evidence_ids citing the specific signals or context items it
+  draws on. A claim with no evidence_ids will be discarded before a person ever sees it.
+- The packet carries two kinds of citeable evidence: signals (sig_*), which are computed
+  observations, and context items (ctx_*), which are plain governed facts -- enterprise identity,
+  business economics, declared customer segments, declared strategic priorities. A claim resting
+  on revenue, industry, a declared priority, or a customer segment must cite the matching ctx_* id.
+  Never write a bare parenthetical like "(enterpriseIdentity)" -- that names an object, not a
+  citation, and cannot be checked. Cite the real id.
 - Leadership perspectives are perspectives, not enterprise facts. Say so.
 - Never translate an enterprise-wide leadership theme into program-specific sentiment unless a
   signal in the packet explicitly resolves that specific link. The packet tells you the resolution
@@ -186,31 +243,83 @@ program at 7% complete is not "the most consequential in the portfolio" without 
 ranking behind it. Say what the evidence supports, including a well-reasoned inference -- just say
 it at the certainty the evidence actually earns.
 
+CLAIM TYPE -- TAG WHAT KIND OF CLAIM THIS IS
+Every GroundedClaim carries a claim_type, and the two-domain bar below only applies to two of the
+four:
+- FACT: a direct restatement of one signal or context item, in your own words. Single-domain is
+  fine -- a fact was never claiming a connection.
+- OBSERVATION: a pattern noticed within one domain (e.g. "three of the five largest risks concern
+  the same system"). Still single-domain is fine.
+- CROSS_DOMAIN_INSIGHT: a claim connecting two or more domains from the list above. This is where
+  the two-domain evidence bar applies.
+- ADVISORY_INFERENCE: a recommendation or implication for management, synthesized rather than
+  stated verbatim anywhere. This is also where the two-domain bar applies.
+Do not inflate a FACT into a CROSS_DOMAIN_INSIGHT to sound more significant, and do not undersell
+a genuine connection as a FACT to dodge the evidence bar -- tag it honestly.
+
+VISUALS -- PROPOSE ONLY WHERE THEY STRENGTHEN THE STORY
+You may propose visual_opportunities: each one selects a visual_type from a fixed list and a
+dataset_ref that must be an exact key in the packet's visualDatasets object -- nothing else is
+plottable, and you never supply or adjust a plotted value yourself. A visualization is not
+required for every section; recommend one only when spatial, relational, comparative, trend,
+concentration, composition, or dependency information is materially easier to understand visually
+than in prose. Do not propose a chart for every array — most sections need none.
+
+Allowed visual_type values:
+- Quantitative (Recharts): bar, stacked_bar, horizontal_bar, line, slope, scatter, bubble,
+  treemap, donut, bullet, heatmap.
+- Relational/structural (governed SVG): capability_map, dependency_graph, organization_map,
+  strategy_tree, risk_chain, value_chain, timeline.
+
+Every visual's title must be answer-first, consulting-exhibit style, not a BI chart label: not
+"Vendor Spend" but "A small number of vendors carry a disproportionate share of technology
+dependency." The title must be something the dataset actually supports -- do not title a chart
+with a claim stronger than what dataset_ref's rows show.
+
+Do not propose a dependency_graph, strategy_tree, or any relational visual that would draw a
+priority-to-program, priority-to-spend, or priority-to-KPI line -- no canonical linkage supports
+that connection (see the packet's prohibitedComparisons), and drawing it visually would present a
+candidate relationship as fact more persuasively than stating it in prose would.
+
 LENGTH -- THIS IS A SPINE, NOT A REPORT
 Keep every section within these bounds. The eight chapter writers built on top of this thesis
 later provide the depth; this object stays sharp enough that a reader can hold the whole thing in
 mind at once.
-- enterprise_story: 250-400 words.
+- enterprise_story: 250-400 words. enterprise_story_claims: 3-5 items -- the material assertions
+  the story prose is built from, each individually cited and claim_type-tagged. Every material
+  claim in the prose should be represented here; this is the auditable backbone under the words.
+- value_creation_model.primary_value_drivers: 2-4 GroundedClaim items.
+  value_creation_model.economic_dependencies: 2-4 GroundedClaim items.
 - strategic_bets, structural_constraints, operating_tensions, material_risks,
   value_realization_tensions, what_needs_attention, technology_and_data_implications: 3-5 items
   each.
 - leadership_consensus: 3-5 items. leadership_disagreements: 2-3 items.
 - performance_story: 2-3 items in each of where_improving / where_off_track / where_unknown.
 - things_a_new_cxo_should_know: 5-7 items. questions_for_management: 5-7 items.
+- visual_opportunities: 0-6 items across the whole thesis -- propose fewer if fewer genuinely earn
+  a visual.
 Do not pad a section to reach a minimum, and do not exceed the maximum to fit in one more
 observation -- pick the strongest ones.
 
 Output strict JSON matching the schema you are given. No prose outside the JSON.`;
 
 function buildUserPrompt(signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>): string {
+  const claimShape = "{ statement, evidence_ids: [sig_xxx or ctx_xxx], confidence: low|medium|high, claim_type: FACT|OBSERVATION|CROSS_DOMAIN_INSIGHT|ADVISORY_INFERENCE }";
+  const datasetNames = Object.keys(signalPacket.visualDatasets);
   return (
     `Build the EnterpriseThesis for this enterprise from the governed context packet below. ` +
-    `Every claim needs evidence_ids from the signals list. Return JSON matching this shape exactly:\n\n` +
+    `Every claim needs evidence_ids from the signals or context items list, and a claim_type. ` +
+    `Return JSON matching this shape exactly:\n\n` +
     JSON.stringify(
       {
         enterprise_story: "string, 250-400 words",
-        value_creation_model: { summary: "string", primary_value_drivers: ["string, 2-4 items"], economic_dependencies: ["string, 2-4 items"], evidence_ids: ["sig_xxx"] },
-        strategic_bets: ["3-5 GroundedClaim: { statement, evidence_ids: [sig_xxx], confidence: low|medium|high }"],
+        enterprise_story_claims: [`3-5 GroundedClaim: ${claimShape} -- the material assertions the story is built from`],
+        value_creation_model: {
+          summary: "string",
+          primary_value_drivers: [`2-4 GroundedClaim: ${claimShape}`],
+          economic_dependencies: [`2-4 GroundedClaim: ${claimShape}`],
+        },
+        strategic_bets: [`3-5 GroundedClaim: ${claimShape}`],
         structural_constraints: ["3-5 GroundedClaim"],
         operating_tensions: ["3-5 GroundedClaim"],
         leadership_consensus: ["3-5 GroundedClaim"],
@@ -227,11 +336,17 @@ function buildUserPrompt(signalPacket: ReturnType<typeof buildEnterpriseSignalPa
         evidence_gaps: ["string, as many as genuinely material"],
         things_a_new_cxo_should_know: ["5-7 GroundedClaim"],
         questions_for_management: ["string, 5-7 items"],
+        visual_opportunities: [
+          "0-6 VisualOpportunity: { visual_type: <from the allowed list>, title (answer-first), purpose, " +
+            `dataset_ref (must be exactly one of: ${datasetNames.join(", ") || "(none available)"}), ` +
+            "key_message, evidence_ids, priority: high|medium|low }",
+        ],
       },
       null,
       2,
     ) +
-    `\n\nGoverned context packet:\n` +
+    `\n\nGoverned context packet (signals are sig_*, context facts are ctx_*, plottable datasets ` +
+    `are under visualDatasets):\n` +
     JSON.stringify(signalPacket, null, 2)
   );
 }
@@ -255,7 +370,13 @@ interface StructuralIssue {
  */
 export function validateStructure(thesis: EnterpriseThesis, signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>): StructuralIssue[] {
   const issues: StructuralIssue[] = [];
-  const byId = new Map<string, Signal>(signalPacket.signals.map((s) => [s.id, s]));
+  // sig_* and ctx_* share one evidence namespace as far as a claim is concerned -- both are
+  // "governed things this claim is allowed to cite" -- so they resolve through the same lookup.
+  const byId = new Map<string, Signal | ContextItem>([
+    ...signalPacket.signals.map((s): [string, Signal | ContextItem] => [s.id, s]),
+    ...signalPacket.contextItems.map((c): [string, Signal | ContextItem] => [c.id, c]),
+  ]);
+  const domainRequiringTypes: ClaimType[] = ["CROSS_DOMAIN_INSIGHT", "ADVISORY_INFERENCE"];
 
   function checkClaim(path: string, claim: GroundedClaim) {
     if (claim.evidence_ids.length === 0) {
@@ -264,18 +385,27 @@ export function validateStructure(thesis: EnterpriseThesis, signalPacket: Return
     }
     const domains = new Set<string>();
     for (const evId of claim.evidence_ids) {
-      const sig = byId.get(evId);
-      if (!sig) {
+      const item = byId.get(evId);
+      if (!item) {
         issues.push({ path, reason: `cites unknown evidence id: ${evId}` });
         continue;
       }
-      sig.domains.forEach((d) => domains.add(d));
+      item.domains.forEach((d) => domains.add(d));
     }
-    if (domains.size < 2) {
-      issues.push({ path, reason: `claim spans only ${domains.size} domain(s), below the two-domain bar for a real connection` });
+    // The two-domain bar only polices claims that are actually attempting a cross-domain
+    // connection. A FACT or OBSERVATION restating a single signal was never trying to connect
+    // anything and isn't a structural problem for staying single-domain.
+    if (domainRequiringTypes.includes(claim.claim_type) && domains.size < 2) {
+      issues.push({
+        path,
+        reason: `claim_type=${claim.claim_type} spans only ${domains.size} domain(s), below the two-domain bar for a real connection`,
+      });
     }
   }
 
+  thesis.enterprise_story_claims.forEach((c, i) => checkClaim(`enterprise_story_claims[${i}]`, c));
+  thesis.value_creation_model.primary_value_drivers.forEach((c, i) => checkClaim(`value_creation_model.primary_value_drivers[${i}]`, c));
+  thesis.value_creation_model.economic_dependencies.forEach((c, i) => checkClaim(`value_creation_model.economic_dependencies[${i}]`, c));
   thesis.strategic_bets.forEach((c, i) => checkClaim(`strategic_bets[${i}]`, c));
   thesis.structural_constraints.forEach((c, i) => checkClaim(`structural_constraints[${i}]`, c));
   thesis.operating_tensions.forEach((c, i) => checkClaim(`operating_tensions[${i}]`, c));
@@ -288,6 +418,22 @@ export function validateStructure(thesis: EnterpriseThesis, signalPacket: Return
   thesis.value_realization_tensions.forEach((c, i) => checkClaim(`value_realization_tensions[${i}]`, c));
   thesis.what_needs_attention.forEach((c, i) => checkClaim(`what_needs_attention[${i}]`, c));
   thesis.things_a_new_cxo_should_know.forEach((c, i) => checkClaim(`things_a_new_cxo_should_know[${i}]`, c));
+
+  // Visuals get their own check: dataset_ref must be a real, precomputed dataset (nothing else is
+  // plottable) and visual_type must be one of the fixed grammar's shapes -- the two guardrails
+  // that keep a visual honest without needing a model call to verify it.
+  (thesis.visual_opportunities ?? []).forEach((v, i) => {
+    const path = `visual_opportunities[${i}]`;
+    if (!VISUAL_TYPES.includes(v.visual_type)) {
+      issues.push({ path, reason: `visual_type "${v.visual_type}" is not in the allowed grammar` });
+    }
+    if (!(v.dataset_ref in signalPacket.visualDatasets)) {
+      issues.push({ path, reason: `dataset_ref "${v.dataset_ref}" does not exist in visualDatasets` });
+    }
+    for (const evId of v.evidence_ids ?? []) {
+      if (!byId.has(evId)) issues.push({ path, reason: `cites unknown evidence id: ${evId}` });
+    }
+  });
 
   return issues;
 }
@@ -348,12 +494,21 @@ claim with no real basis reaching an executive under the cover of "inference."
 
 Respond with strict JSON: { "verdict": "...", "reasoning": "one sentence" }`;
 
+/** sig_* and ctx_* share one evidence namespace -- a verifier resolving a claim's citations must
+ * be able to see every governed context item cited, not only computed signals. */
+function evidenceLookup(signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>) {
+  return new Map<string, { statement: string }>([
+    ...signalPacket.signals.map((s): [string, { statement: string }] => [s.id, s]),
+    ...signalPacket.contextItems.map((c): [string, { statement: string }] => [c.id, c]),
+  ]);
+}
+
 async function verifyClaim(
   client: Parameters<typeof callClaude>[0],
   claim: GroundedClaim,
   signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>,
 ): Promise<{ verdict: Verdict; reasoning: string }> {
-  const byId = new Map(signalPacket.signals.map((s) => [s.id, s]));
+  const byId = evidenceLookup(signalPacket);
   const facts = claim.evidence_ids.map((id) => byId.get(id)?.statement).filter(Boolean);
   if (facts.length === 0) return { verdict: "UNSUPPORTED", reasoning: "no resolvable evidence ids" };
 
@@ -403,7 +558,7 @@ async function repairClaim(
   verifierReasoning: string,
   signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>,
 ): Promise<string | null> {
-  const byId = new Map(signalPacket.signals.map((s) => [s.id, s]));
+  const byId = evidenceLookup(signalPacket);
   const facts = claim.evidence_ids.map((id) => byId.get(id)?.statement).filter(Boolean);
   const userPrompt =
     `Original claim:\n${claim.statement}\n\n` +
@@ -421,12 +576,56 @@ async function repairClaim(
   }
 }
 
+/**
+ * Reconciles narrative prose against a claims list after verification has repaired or dropped one
+ * or more of those claims. Without this, the published claims array can say one corrected thing
+ * while the prose paragraph next to it still says the original, uncorrected thing -- a real
+ * inconsistency, not a cosmetic one, since enterprise_story is the single highest-visibility
+ * surface in the whole thesis. Only called when something actually changed; unlike repairClaim
+ * (which touches one sentence), this rewrites the whole paragraph, so it's reserved for the case
+ * where skipping it would leave the story visibly contradicting its own evidence base.
+ */
+const RECONCILE_SYSTEM_PROMPT = `You wrote a narrative paragraph, and separately decomposed its
+material claims into a list. Verification has since corrected one or more of those claims --
+either repaired to remove an unsupported assertion, or dropped entirely because it did not hold up.
+
+Rewrite the paragraph so it is fully consistent with the corrected claims list: no sentence in the
+paragraph should assert something the corrected claims no longer support. Preserve the original's
+tone, structure, and level of detail as closely as possible -- this is a consistency correction,
+not a rewrite from scratch. Keep it within the same approximate length as the original.
+
+Respond with strict JSON: { "revised_text": "..." }`;
+
+async function reconcileNarrative(
+  client: Parameters<typeof callClaude>[0],
+  originalText: string,
+  correctedClaims: GroundedClaim[],
+): Promise<string | null> {
+  const userPrompt =
+    `Original paragraph:\n${originalText}\n\n` +
+    `Corrected claims list (this is what the paragraph must now be consistent with):\n` +
+    correctedClaims.map((c, i) => `${i + 1}. ${c.statement}`).join("\n");
+  // A full-paragraph rewrite against a short claims list -- low effort is proportionate, and this
+  // only ever fires when something actually needs reconciling, not on every run.
+  const result = await callClaude(client, RECONCILE_SYSTEM_PROMPT, userPrompt, 4096, "low");
+  if (!result) return null;
+  try {
+    const parsed = JSON.parse(result.text) as { revised_text: string };
+    return parsed.revised_text || null;
+  } catch {
+    return null;
+  }
+}
+
 /** Claim categories verified — the surfaces carrying comparative, causal, consensus, or
  * strategic-alignment claims, the shapes most prone to overstepping their evidence. Purely
  * descriptive sections (performance_story) are left unverified: verifying every sentence adds
  * cost and latency for a shape that rarely overstates, and flattens the writing for no gain. */
 function claimsRequiringVerification(thesis: EnterpriseThesis): Array<{ path: string; claim: GroundedClaim }> {
   const out: Array<{ path: string; claim: GroundedClaim }> = [];
+  thesis.enterprise_story_claims.forEach((c, i) => out.push({ path: `enterprise_story_claims[${i}]`, claim: c }));
+  thesis.value_creation_model.primary_value_drivers.forEach((c, i) => out.push({ path: `value_creation_model.primary_value_drivers[${i}]`, claim: c }));
+  thesis.value_creation_model.economic_dependencies.forEach((c, i) => out.push({ path: `value_creation_model.economic_dependencies[${i}]`, claim: c }));
   thesis.strategic_bets.forEach((c, i) => out.push({ path: `strategic_bets[${i}]`, claim: c }));
   thesis.structural_constraints.forEach((c, i) => out.push({ path: `structural_constraints[${i}]`, claim: c }));
   thesis.operating_tensions.forEach((c, i) => out.push({ path: `operating_tensions[${i}]`, claim: c }));
@@ -627,6 +826,43 @@ async function buildTenant(tenantKey: string, client: Parameters<typeof callClau
   const tally: Record<string, number> = {};
   for (const r of verificationLedger) tally[r.verdict] = (tally[r.verdict] ?? 0) + 1;
   console.log(`  verifier verdicts:`, tally);
+
+  // If verification touched any claim underneath the story or the value-creation summary, the
+  // prose next to those claims is now stale -- reconcile it so the highest-visibility text in the
+  // thesis doesn't visibly contradict the claims it was supposedly built from.
+  const storyClaimsChanged = verificationLedger.some(
+    (r) => r.path.startsWith("enterprise_story_claims[") && r.action !== "kept",
+  );
+  if (storyClaimsChanged) {
+    const survivingClaims = publishedGeneration.enterprise_story_claims.filter((c): c is GroundedClaim => c !== null);
+    const revised = await reconcileNarrative(client, publishedGeneration.enterprise_story, survivingClaims);
+    if (revised) {
+      publishedGeneration.enterprise_story = revised;
+      console.log("  reconciled enterprise_story against corrected claims");
+    } else {
+      console.log("  ! enterprise_story reconciliation failed -- prose may be stale relative to corrected claims");
+    }
+  }
+
+  const vcmClaimsChanged = verificationLedger.some(
+    (r) =>
+      (r.path.startsWith("value_creation_model.primary_value_drivers[") ||
+        r.path.startsWith("value_creation_model.economic_dependencies[")) &&
+      r.action !== "kept",
+  );
+  if (vcmClaimsChanged) {
+    const survivingClaims = [
+      ...publishedGeneration.value_creation_model.primary_value_drivers,
+      ...publishedGeneration.value_creation_model.economic_dependencies,
+    ].filter((c): c is GroundedClaim => c !== null);
+    const revised = await reconcileNarrative(client, publishedGeneration.value_creation_model.summary, survivingClaims);
+    if (revised) {
+      publishedGeneration.value_creation_model.summary = revised;
+      console.log("  reconciled value_creation_model.summary against corrected claims");
+    } else {
+      console.log("  ! value_creation_model.summary reconciliation failed -- prose may be stale relative to corrected claims");
+    }
+  }
 
   return { signalPacket, rawGeneration, publishedGeneration, structuralIssues, verificationLedger, usage };
 }

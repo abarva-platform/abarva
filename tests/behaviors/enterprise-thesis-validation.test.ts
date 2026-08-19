@@ -19,14 +19,17 @@ function signal(id: string, domains: string[]): Signal {
   return { id, kind: "concentration", statement: `statement for ${id}`, domains, evidenceRefs: [] };
 }
 
-function claim(statement: string, evidence_ids: string[]): GroundedClaim {
-  return { statement, evidence_ids, confidence: "medium" };
+// Defaults to CROSS_DOMAIN_INSIGHT so existing domain-span assertions keep testing that logic
+// unchanged; tests targeting the new claim_type scoping pass an explicit type.
+function claim(statement: string, evidence_ids: string[], claim_type: GroundedClaim["claim_type"] = "CROSS_DOMAIN_INSIGHT"): GroundedClaim {
+  return { statement, evidence_ids, confidence: "medium", claim_type };
 }
 
 function minimalThesis(overrides: Partial<EnterpriseThesis> = {}): EnterpriseThesis {
   return {
     enterprise_story: "story",
-    value_creation_model: { summary: "s", primary_value_drivers: [], economic_dependencies: [], evidence_ids: [] },
+    enterprise_story_claims: [],
+    value_creation_model: { summary: "s", primary_value_drivers: [], economic_dependencies: [] },
     strategic_bets: [],
     structural_constraints: [],
     operating_tensions: [],
@@ -40,6 +43,7 @@ function minimalThesis(overrides: Partial<EnterpriseThesis> = {}): EnterpriseThe
     evidence_gaps: [],
     things_a_new_cxo_should_know: [],
     questions_for_management: [],
+    visual_opportunities: [],
     ...overrides,
   };
 }
@@ -60,6 +64,8 @@ const packet = {
     signal("sig_b", ["risk_or_control"]),
     signal("sig_c", ["vendor_contract"]),
   ],
+  contextItems: [{ id: "ctx_identity_001", statement: "Revenue is $1B.", domains: ["tenant_profile"] }],
+  visualDatasets: { technology_spend_mix: [{ category: "Third party", amount: 100 }] } as Record<string, Array<Record<string, unknown>>>,
 };
 
 describe("validateStructure", () => {
@@ -101,6 +107,87 @@ describe("validateStructure", () => {
     expect(issues.map((i) => i.path)).toEqual(
       expect.arrayContaining(["material_risks[0]", "things_a_new_cxo_should_know[0]"]),
     );
+  });
+
+  it("does not require two domains for a FACT claim", () => {
+    const thesis = minimalThesis({ strategic_bets: [claim("single-domain fact", ["sig_a"], "FACT")] });
+    const issues = validateStructure(thesis, packet);
+    expect(issues).toEqual([]);
+  });
+
+  it("does not require two domains for an OBSERVATION claim", () => {
+    const thesis = minimalThesis({ strategic_bets: [claim("single-domain observation", ["sig_a", "sig_c"], "OBSERVATION")] });
+    const issues = validateStructure(thesis, packet);
+    expect(issues).toEqual([]);
+  });
+
+  it("still requires two domains for a CROSS_DOMAIN_INSIGHT claim", () => {
+    const thesis = minimalThesis({ strategic_bets: [claim("single-domain insight", ["sig_a"], "CROSS_DOMAIN_INSIGHT")] });
+    const issues = validateStructure(thesis, packet);
+    expect(issues).toHaveLength(1);
+    expect(issues[0].reason).toContain("1 domain");
+  });
+
+  it("still requires two domains for an ADVISORY_INFERENCE claim", () => {
+    const thesis = minimalThesis({ strategic_bets: [claim("single-domain advice", ["sig_a"], "ADVISORY_INFERENCE")] });
+    const issues = validateStructure(thesis, packet);
+    expect(issues).toHaveLength(1);
+    expect(issues[0].reason).toContain("1 domain");
+  });
+
+  it("resolves a ctx_* evidence id the same as a sig_* one", () => {
+    const thesis = minimalThesis({ strategic_bets: [claim("identity fact", ["ctx_identity_001"], "FACT")] });
+    const issues = validateStructure(thesis, packet);
+    expect(issues).toEqual([]);
+  });
+
+  it("verifies enterprise_story_claims and value_creation_model claims, not just the named arrays", () => {
+    const thesis = minimalThesis({
+      enterprise_story_claims: [claim("bad story claim", [])],
+      value_creation_model: {
+        summary: "s",
+        primary_value_drivers: [claim("bad driver", [])],
+        economic_dependencies: [],
+      },
+    });
+    const issues = validateStructure(thesis, packet);
+    expect(issues.map((i) => i.path)).toEqual(
+      expect.arrayContaining(["enterprise_story_claims[0]", "value_creation_model.primary_value_drivers[0]"]),
+    );
+  });
+
+  it("flags a visual_opportunity with an unknown dataset_ref", () => {
+    const thesis = minimalThesis({
+      visual_opportunities: [{
+        visual_type: "bar", title: "t", purpose: "p", dataset_ref: "does_not_exist",
+        key_message: "m", evidence_ids: ["sig_a"], priority: "medium",
+      }],
+    });
+    const issues = validateStructure(thesis, packet);
+    expect(issues.some((i) => i.reason.includes("does not exist in visualDatasets"))).toBe(true);
+  });
+
+  it("flags a visual_opportunity with a visual_type outside the allowed grammar", () => {
+    const thesis = minimalThesis({
+      visual_opportunities: [{
+        // @ts-expect-error -- deliberately invalid to test the allowlist check
+        visual_type: "pie_of_doom", title: "t", purpose: "p", dataset_ref: "technology_spend_mix",
+        key_message: "m", evidence_ids: ["sig_a"], priority: "medium",
+      }],
+    });
+    const issues = validateStructure(thesis, packet);
+    expect(issues.some((i) => i.reason.includes("not in the allowed grammar"))).toBe(true);
+  });
+
+  it("passes a valid visual_opportunity", () => {
+    const thesis = minimalThesis({
+      visual_opportunities: [{
+        visual_type: "bar", title: "t", purpose: "p", dataset_ref: "technology_spend_mix",
+        key_message: "m", evidence_ids: ["sig_a"], priority: "medium",
+      }],
+    });
+    const issues = validateStructure(thesis, packet);
+    expect(issues).toEqual([]);
   });
 });
 
