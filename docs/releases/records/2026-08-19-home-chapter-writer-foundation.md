@@ -170,9 +170,27 @@ model change, no database write path, no product route change.
   evidence rule just because it's phrased as a question instead of an assertion.
   (The review's third observation -- `what_needs_attention` sharing content with `executive_brief`
   -- is the deliberate, already-tested landing-page-echo design, not a defect; left unchanged.)
-- Fifth live-proof attempt pending: confirm both tenants still generate clean output with
-  `performance_story` and `questions_for_management` now verified, and specifically that the
-  IROPS/PAM-class fabrications do not recur.
+- Fifth live-proof attempt, both tenants: **clean, and the fix is directly observable working.**
+  Both tenants completed all 8 chapters with no failures. The verification mechanism visibly caught
+  and corrected exactly the kind of content that slipped through before: in this run,
+  `performance_story` had 2 claims flagged `OVERSTATED` and repaired plus 3 kept as
+  `SUPPORTED`/`SUPPORTED_INFERENCE`; `questions_for_management` had 3 of 7 questions dropped as
+  `UNSUPPORTED` (fabricated premises with no backing evidence) and 4 more repaired to remove an
+  overstated implication while keeping the underlying question. The specific "IROPS AI Recovery
+  Cockpit Expansion, 23% complete" claim does not recur in this run's `performance_story` at all.
+  SkyHarbor's surviving PAM-related question is now the real, grounded fact -- "Standing privileged
+  credentials outside PAM (CyberArk) coverage remain a high-severity risk...declared a strategic
+  priority" -- not the fabricated "sponsor change" from the run the review caught. "IROPS" and "PAM"
+  still appear elsewhere in this run's output, but as legitimate declared facts (a real strategic
+  priority citing `ctx_priority_018` for IROPS-assisted disruption recovery, a real CyberArk/PAM
+  security risk), confirmed by direct cross-reference against the signal packet, not by re-running
+  the independent review agent a second time. Content quality held: headlines remain specific and
+  answer-first (spot-checked across all 16), and visual distribution is 5 of 8 chapters per tenant,
+  in range of the workstream's 4-5-chapter target. `our_business` and `how_we_operate` still carry
+  zero visuals both tenants -- the review's lower-priority, non-blocking observation, left as a
+  follow-up rather than fixed in this pass.
+  **This clears the six-criteria acceptance gate.** Output remains `:plan`-only; the next step is
+  the production React/Recharts preview route (tracked separately, not started).
 
 ## Rollout Plan
 
@@ -205,10 +223,12 @@ actually hold on real content -- tracked as the immediate next step.
 
 ## Known Gaps
 
-The live proof described above has not yet been re-run since the `parseJsonLoose` fix landed, so
-the fix is verified against unit tests and the original failure's manual diagnosis, not yet against
-a second live run showing 0/16 parse failures. That re-run, and the acceptance-gate review of the
-resulting eight-chapter output (story quality, analytical quality, evidence quality, specificity,
-visual quality, executive usefulness), are the remaining steps before this is called proven. The
-production React/Recharts render layer that would actually display chapter output (a preview route,
-not `/home` itself) does not exist yet -- tracked as a separate, following piece of work.
+Five live-proof iterations (four plumbing fixes, one content-grounding fix) now confirm both
+tenants generate a complete, non-crashing, evidence-verified eight-chapter output, and an
+independent review plus targeted ground-truth cross-referencing found no remaining fabrication in
+either previously-broken section. That closes the technical/mechanical side of "proven." What has
+not happened yet: a human reviewing this output directly (the Rollout Plan's own bar), and the
+production React/Recharts render layer that would actually display it (a preview route, not `/home`
+itself) does not exist yet -- tracked as a separate, following piece of work. `our_business` and
+`how_we_operate` carrying zero visuals both tenants is a known, non-blocking gap for a future pass.
+Status stays `candidate` until both of those land.
