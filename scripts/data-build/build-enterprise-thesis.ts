@@ -300,7 +300,14 @@ async function verifyClaim(
     `Claim:\n${claim.statement}\n\nFacts (this is all you may use):\n` +
     facts.map((f, i) => `${i + 1}. ${f}`).join("\n");
 
-  const result = await callClaude(client, VERIFIER_SYSTEM_PROMPT, userPrompt, 200);
+  // 200 tokens produced the same empty-text failure as the main thesis call, for the same reason:
+  // the diagnostic logging added after the first run showed stop_reason=max_tokens with only a
+  // "thinking" content block and zero output tokens spent on visible text -- the model's internal
+  // reasoning consumed the entire budget before it could write the one-sentence verdict. 3072
+  // gives comfortable headroom above the observed failure point rather than the minimum that
+  // might clear it -- a second budget-too-small cycle on the same call costs a full deploy, and
+  // the marginal cost of extra unused headroom on a short classification response is negligible.
+  const result = await callClaude(client, VERIFIER_SYSTEM_PROMPT, userPrompt, 3072);
   if (!result) return { verdict: "UNSUPPORTED", reasoning: "verifier call failed" };
   try {
     const parsed = JSON.parse(result.text) as { verdict: Verdict; reasoning: string };
