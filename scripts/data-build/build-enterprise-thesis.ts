@@ -261,6 +261,26 @@ program at 7% complete is not "the most consequential in the portfolio" without 
 ranking behind it. Say what the evidence supports, including a well-reasoned inference -- just say
 it at the certainty the evidence actually earns.
 
+VALUE CREATION MODEL -- LEAD WITH THE BUSINESS, NOT THE TECHNOLOGY ESTATE
+value_creation_model exists to answer one question: how does this enterprise actually make money
+and create value? That is a business-economics question first -- revenue segments and their
+relative scale, customer/channel mix, what drives volume or margin, how operating segments relate
+to each other economically. Technology is something that ENABLES that value creation; it is not
+the value creation itself. A live run got this backwards on a tenant where segment-level economics
+were sparse in the packet: value_creation_model.summary led with "Airport & Ground Operations has
+217 applications and $471.2M of technology cost" -- a real fact, but a technology-estate fact
+standing in for a business-value fact, useful to a CIO and useless to a new CEO trying to
+understand how the company works.
+- If the packet's business context (enterpriseIdentity, businessEconomics, ctx_* segment and
+  customer items) gives you enough to describe real revenue/customer/channel economics, lead with
+  that. Technology facts belong in economic_dependencies as what the business model depends on,
+  not as the model itself.
+- If that business-economics context is genuinely thin in the packet -- check before assuming --
+  say so explicitly in the summary (e.g. "segment-level revenue economics are not represented in
+  the current context; what follows describes technology dependency, not business value creation")
+  rather than silently substituting technology cost as if it answered the value-creation question.
+  An honest gap is better than a confident answer to the wrong question.
+
 CLAIM TYPE -- TAG WHAT KIND OF CLAIM THIS IS
 Every GroundedClaim carries a claim_type, and the two-domain bar below only applies to two of the
 four:
@@ -596,41 +616,57 @@ async function repairClaim(
 }
 
 /**
- * Reconciles narrative prose against a claims list after verification has repaired or dropped one
- * or more of those claims. Without this, the published claims array can say one corrected thing
- * while the prose paragraph next to it still says the original, uncorrected thing -- a real
- * inconsistency, not a cosmetic one, since enterprise_story is the single highest-visibility
- * surface in the whole thesis. Only called when something actually changed; unlike repairClaim
- * (which touches one sentence), this rewrites the whole paragraph, so it's reserved for the case
- * where skipping it would leave the story visibly contradicting its own evidence base.
+ * Synthesizes final, publishable prose FROM the verified claim ledger -- run unconditionally
+ * after every claim underneath a narrative paragraph has been through verification, not only when
+ * verification happened to flag something. That distinction is the actual fix, not a nicety: a
+ * "reconcile only if something changed" pass cannot catch a claim that was never decomposed into
+ * the claims array in the first place -- a live run produced "a well-capitalized, strategically
+ * clear organization" in enterprise_story with nothing in enterprise_story_claims establishing
+ * "well-capitalized" at all, so it sailed through unverified no matter how carefully the claims
+ * that DID exist were checked. Feeding the draft to the model only for tone/structure reference,
+ * never as a source of facts, and building the sentence content strictly from the approved claims
+ * list closes that gap regardless of whether anything was actually repaired or dropped.
  */
-const RECONCILE_SYSTEM_PROMPT = `You wrote a narrative paragraph, and separately decomposed its
-material claims into a list. Verification has since corrected one or more of those claims --
-either repaired to remove an unsupported assertion, or dropped entirely because it did not hold up.
+const PROSE_SYNTHESIS_SYSTEM_PROMPT = `You are producing the final, publishable version of a
+narrative paragraph. You will be given a draft paragraph and the final, verified list of claims
+this paragraph is allowed to be built from -- every claim on that list has already passed
+entailment verification; some may have been corrected or removed from what the draft originally
+said.
 
-Rewrite the paragraph so it is fully consistent with the corrected claims list: no sentence in the
-paragraph should assert something the corrected claims no longer support. Preserve the original's
-tone, structure, and level of detail as closely as possible -- this is a consistency correction,
-not a rewrite from scratch. Keep it within the same approximate length as the original.
+Write a new paragraph that:
+- Reads naturally as flowing prose in the same voice and register as the draft -- do not write a
+  list of claims stitched together.
+- Asserts nothing that is not directly supported by the claims list. This includes adjectives and
+  characterizations, not just factual statements: if the draft calls the enterprise
+  "well-capitalized" or "strategically clear" and no claim on the list establishes that, drop the
+  characterization entirely rather than keep it because it sounds natural.
+- May combine, reorder, or lightly connect claims for readability, but must not introduce any new
+  fact, number, ranking, causal link, or degree of certainty beyond what the claims themselves
+  state.
+- Stays within approximately the same length as the draft.
 
-Respond with strict JSON: { "revised_text": "..." }`;
+The draft is reference material for tone and shape only. Every substantive sentence in your output
+must trace to a specific claim on the list below it.
 
-async function reconcileNarrative(
+Respond with strict JSON: { "final_text": "..." }`;
+
+async function synthesizeProseFromClaims(
   client: Parameters<typeof callClaude>[0],
-  originalText: string,
-  correctedClaims: GroundedClaim[],
+  draftText: string,
+  approvedClaims: GroundedClaim[],
 ): Promise<string | null> {
   const userPrompt =
-    `Original paragraph:\n${originalText}\n\n` +
-    `Corrected claims list (this is what the paragraph must now be consistent with):\n` +
-    correctedClaims.map((c, i) => `${i + 1}. ${c.statement}`).join("\n");
-  // A full-paragraph rewrite against a short claims list -- low effort is proportionate, and this
-  // only ever fires when something actually needs reconciling, not on every run.
-  const result = await callClaude(client, RECONCILE_SYSTEM_PROMPT, userPrompt, 4096, "low");
+    `Draft paragraph (tone/structure reference only -- not a source of facts):\n${draftText}\n\n` +
+    `Approved claims (the ONLY source of content for the final paragraph):\n` +
+    approvedClaims.map((c, i) => `${i + 1}. ${c.statement}`).join("\n");
+  // A full-paragraph synthesis against a short claims list -- low effort is proportionate. This
+  // now runs on every generation, not only when verification flagged something, so it's kept cheap
+  // deliberately.
+  const result = await callClaude(client, PROSE_SYNTHESIS_SYSTEM_PROMPT, userPrompt, 4096, "low");
   if (!result) return null;
   try {
-    const parsed = JSON.parse(result.text) as { revised_text: string };
-    return parsed.revised_text || null;
+    const parsed = JSON.parse(result.text) as { final_text: string };
+    return parsed.final_text || null;
   } catch {
     return null;
   }
@@ -662,10 +698,14 @@ function claimsRequiringVerification(thesis: EnterpriseThesis): Array<{ path: st
  * Claude call plumbing
  * ---------------------------------------------------------------------------------------------- */
 
-type ReasoningEffort = "low" | "medium" | "high" | "xhigh" | "max";
+export type ReasoningEffort = "low" | "medium" | "high" | "xhigh" | "max";
 
-async function callClaude(
-  client: { messages: { create: (p: Record<string, unknown>) => Promise<unknown> } } | null,
+/** Shared client shape so downstream scripts (e.g. the chapter writer) can reuse the exact same
+ * call plumbing -- adaptive thinking config, diagnostics -- instead of reimplementing it. */
+export type AnthropicLikeClient = { messages: { create: (p: Record<string, unknown>) => Promise<unknown> } } | null;
+
+export async function callClaude(
+  client: AnthropicLikeClient,
   system: string,
   userPrompt: string,
   maxTokens: number,
@@ -757,7 +797,7 @@ export function dropClaim(thesis: EnterpriseThesis, path: string) {
  * Build
  * ---------------------------------------------------------------------------------------------- */
 
-async function buildTenant(tenantKey: string, client: Parameters<typeof callClaude>[0]) {
+export async function buildTenant(tenantKey: string, client: Parameters<typeof callClaude>[0]) {
   const report = await buildCanonicalTenantDataReport({ repoRoot: process.cwd(), tenantKeys: [tenantKey] });
   const records = report.canonicalRecords.filter((r: any) => r.tenantKey === tenantKey) as any;
   if (records.length === 0) throw new Error(`no canonical records for ${tenantKey}`);
@@ -877,40 +917,32 @@ async function buildTenant(tenantKey: string, client: Parameters<typeof callClau
   for (const r of verificationLedger) tally[r.verdict] = (tally[r.verdict] ?? 0) + 1;
   console.log(`  verifier verdicts:`, tally);
 
-  // If verification touched any claim underneath the story or the value-creation summary, the
-  // prose next to those claims is now stale -- reconcile it so the highest-visibility text in the
-  // thesis doesn't visibly contradict the claims it was supposedly built from.
-  const storyClaimsChanged = verificationLedger.some(
-    (r) => r.path.startsWith("enterprise_story_claims[") && r.action !== "kept",
-  );
-  if (storyClaimsChanged) {
+  // Published prose is always synthesized FROM the final approved claims, not conditionally
+  // patched only when verification happened to flag something in that specific section. A claim
+  // never decomposed into enterprise_story_claims in the first place would sail through a
+  // change-gated reconcile untouched -- this runs every time, on the full surviving claim set,
+  // so the prose can never assert more than the claims underneath it support regardless of
+  // whether anything was actually repaired or dropped.
+  {
     const survivingClaims = publishedGeneration.enterprise_story_claims.filter((c): c is GroundedClaim => c !== null);
-    const revised = await reconcileNarrative(client, publishedGeneration.enterprise_story, survivingClaims);
-    if (revised) {
-      publishedGeneration.enterprise_story = revised;
-      console.log("  reconciled enterprise_story against corrected claims");
+    const finalText = await synthesizeProseFromClaims(client, publishedGeneration.enterprise_story, survivingClaims);
+    if (finalText) {
+      publishedGeneration.enterprise_story = finalText;
     } else {
-      console.log("  ! enterprise_story reconciliation failed -- prose may be stale relative to corrected claims");
+      console.log("  ! enterprise_story prose synthesis failed -- publishing raw draft prose, verify manually before use");
     }
   }
 
-  const vcmClaimsChanged = verificationLedger.some(
-    (r) =>
-      (r.path.startsWith("value_creation_model.primary_value_drivers[") ||
-        r.path.startsWith("value_creation_model.economic_dependencies[")) &&
-      r.action !== "kept",
-  );
-  if (vcmClaimsChanged) {
+  {
     const survivingClaims = [
       ...publishedGeneration.value_creation_model.primary_value_drivers,
       ...publishedGeneration.value_creation_model.economic_dependencies,
     ].filter((c): c is GroundedClaim => c !== null);
-    const revised = await reconcileNarrative(client, publishedGeneration.value_creation_model.summary, survivingClaims);
-    if (revised) {
-      publishedGeneration.value_creation_model.summary = revised;
-      console.log("  reconciled value_creation_model.summary against corrected claims");
+    const finalText = await synthesizeProseFromClaims(client, publishedGeneration.value_creation_model.summary, survivingClaims);
+    if (finalText) {
+      publishedGeneration.value_creation_model.summary = finalText;
     } else {
-      console.log("  ! value_creation_model.summary reconciliation failed -- prose may be stale relative to corrected claims");
+      console.log("  ! value_creation_model.summary prose synthesis failed -- publishing raw draft prose, verify manually before use");
     }
   }
 
