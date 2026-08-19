@@ -690,7 +690,9 @@ export type ReasoningEffort = "low" | "medium" | "high" | "xhigh" | "max";
 
 /** Shared client shape so downstream scripts (e.g. the chapter writer) can reuse the exact same
  * call plumbing -- adaptive thinking config, diagnostics -- instead of reimplementing it. */
-export type AnthropicLikeClient = { messages: { create: (p: Record<string, unknown>) => Promise<unknown> } } | null;
+export type AnthropicLikeClient = {
+  messages: { stream: (p: Record<string, unknown>) => { finalMessage: () => Promise<unknown> } };
+} | null;
 
 export async function callClaude(
   client: AnthropicLikeClient,
@@ -708,14 +710,24 @@ export async function callClaude(
   // combined, so it's sized generously per call rather than as a precise thinkingBudget + content
   // sum -- the two empty-response bugs this ceiling was originally chasing (ceiling too low for
   // either the response or the model's own reasoning) are still guarded by the diagnostic below.
-  const response = (await client.messages.create({
+  //
+  // Uses messages.stream().finalMessage() rather than messages.create(): the Anthropic SDK's own
+  // client-side guard throws synchronously, before any network call, whenever a non-streaming
+  // request's max_tokens implies it could plausibly run past 10 minutes wall-clock (a fixed
+  // maxTokens/128000 * 60min heuristic, independent of whether this specific call is actually that
+  // slow) -- raising this call's ceiling to 28000 to fix a truncation bug crossed that threshold and
+  // crashed the whole batch with an uncaught AnthropicError before either tenant finished. Streaming
+  // is the SDK's own documented fix for exactly this, and it produces the identical final Message
+  // shape (content/usage/stop_reason/model) once complete, so nothing below this call needed to
+  // change.
+  const response = (await client.messages.stream({
     model: CLAUDE_MODEL,
     max_tokens: maxTokens,
     thinking: { type: "adaptive" },
     output_config: { effort },
     system,
     messages: [{ role: "user", content: userPrompt }],
-  })) as {
+  }).finalMessage()) as {
     model: string;
     stop_reason?: string;
     usage?: { input_tokens?: number; output_tokens?: number; output_tokens_details?: { thinking_tokens?: number } };
@@ -970,8 +982,21 @@ async function main() {
 
   for (const tenantKey of TENANTS) {
     console.log(`\n=== ${tenantKey} ===`);
-    const { signalPacket, rawGeneration, publishedGeneration, structuralIssues, verificationLedger, usage } =
-      await buildTenant(tenantKey, client);
+    // One tenant's uncaught error must not cost a sibling tenant its own already-completed output
+    // -- a live run of the downstream chapter writer (which calls buildTenant the same way) hit
+    // exactly this: an SDK-level error on the first tenant crashed the whole process before the
+    // second tenant was even attempted. This only wraps the :plan-relevant work (build + write +
+    // stdout marker); the :apply DB-write block below intentionally still fails loudly on error --
+    // a partial/failed write is not something to silently skip past.
+    let generationResult: Awaited<ReturnType<typeof buildTenant>>;
+    try {
+      generationResult = await buildTenant(tenantKey, client);
+    } catch (error) {
+      console.log(`  ! ${tenantKey} failed with an uncaught error -- continuing to the next tenant:`);
+      console.log(`   `, error instanceof Error ? error.stack ?? error.message : error);
+      continue;
+    }
+    const { signalPacket, rawGeneration, publishedGeneration, structuralIssues, verificationLedger, usage } = generationResult;
 
     const result = { tenantKey, signalPacket, rawGeneration, publishedGeneration, structuralIssues, verificationLedger };
     const outFile = path.join(OUT_DIR, `${tenantKey}-enterprise-thesis.json`);

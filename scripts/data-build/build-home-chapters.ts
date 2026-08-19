@@ -350,23 +350,33 @@ async function main() {
 
   for (const tenantKey of TENANTS) {
     console.log(`\n=== ${tenantKey} ===`);
-    const result = await buildChaptersForTenant(tenantKey, client);
-    if (!result.chapters) {
-      console.log("  ! no published thesis available -- see thesisResult for the underlying failure");
-      continue;
-    }
-    for (const ch of result.chapters) {
-      console.log(`  [${ch.chapterId}] ${ch.headline}`);
-      console.log(`    insights=${ch.key_insights.length} tensions=${ch.tensions.length} watch=${ch.what_to_watch.length} visuals=${ch.visual_opportunities.length}`);
-    }
+    // One tenant's uncaught error (a transient API failure, an SDK-level guard, anything not
+    // already handled inside buildChaptersForTenant) must not cost a sibling tenant its own
+    // already-completed output -- a live run hit exactly this: an SDK error on the first tenant
+    // crashed the whole process before the second tenant was even attempted, and before the first
+    // tenant's partial signal-packet work could be written anywhere.
+    try {
+      const result = await buildChaptersForTenant(tenantKey, client);
+      if (!result.chapters) {
+        console.log("  ! no published thesis available -- see thesisResult for the underlying failure");
+        continue;
+      }
+      for (const ch of result.chapters) {
+        console.log(`  [${ch.chapterId}] ${ch.headline}`);
+        console.log(`    insights=${ch.key_insights.length} tensions=${ch.tensions.length} watch=${ch.what_to_watch.length} visuals=${ch.visual_opportunities.length}`);
+      }
 
-    const outFile = path.join(OUT_DIR, `${tenantKey}-home-chapters.json`);
-    fs.writeFileSync(outFile, JSON.stringify(result, null, 2));
-    console.log(`  -> ${outFile}`);
+      const outFile = path.join(OUT_DIR, `${tenantKey}-home-chapters.json`);
+      fs.writeFileSync(outFile, JSON.stringify(result, null, 2));
+      console.log(`  -> ${outFile}`);
 
-    // Same reason as build-enterprise-thesis.ts: the out-dir is inside the job's ephemeral
-    // container and lost on exit; stdout survives in the captured job log.
-    console.log(`__HOME_CHAPTERS_RESULT_BEGIN__${JSON.stringify(result)}__HOME_CHAPTERS_RESULT_END__`);
+      // Same reason as build-enterprise-thesis.ts: the out-dir is inside the job's ephemeral
+      // container and lost on exit; stdout survives in the captured job log.
+      console.log(`__HOME_CHAPTERS_RESULT_BEGIN__${JSON.stringify(result)}__HOME_CHAPTERS_RESULT_END__`);
+    } catch (error) {
+      console.log(`  ! ${tenantKey} failed with an uncaught error -- continuing to the next tenant:`);
+      console.log(`   `, error instanceof Error ? error.stack ?? error.message : error);
+    }
   }
 
   console.log("\nPlan-only build complete. No database write exists in this script -- :apply, /home,");

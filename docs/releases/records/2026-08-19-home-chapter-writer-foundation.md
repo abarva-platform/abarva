@@ -115,8 +115,26 @@ model change, no database write path, no product route change.
   variance putting a marginal ceiling on the wrong side of failure, not a regression from either fix
   above. Raised to `28000`, comfortably above the observed failure point and still well under the
   `34000` this codebase already runs in production for a comparably large structured generation
-  (`src/lib/deliverables/strategic-moves-artifact-standard.ts`). Re-run pending to confirm both
-  tenants now generate a complete, parseable thesis and all 16 chapter calls succeed.
+  (`src/lib/deliverables/strategic-moves-artifact-standard.ts`).
+- Re-running the live proof a third time after the `max_tokens` raise surfaced a third issue, this
+  one an infrastructure-level crash rather than a content problem: the Anthropic SDK's own
+  client-side guard (`Messages.create`, `calculateNonstreamingTimeout`) throws synchronously,
+  before any network call, whenever `max_tokens` implies a non-streaming request could plausibly
+  run past 10 minutes wall-clock (a fixed `maxTokens/128000 * 60min` heuristic in the SDK, unrelated
+  to whether this specific call is actually that slow) -- `28000` crossed that threshold (`28000 *
+  60/128000 ≈ 13.1min > 10min`) and crashed the whole job with an uncaught `AnthropicError` on the
+  very first tenant, before either tenant produced any output. Fixed properly rather than tuned
+  around: `callClaude` now uses `client.messages.stream(...).finalMessage()` instead of
+  `client.messages.create(...)` -- the SDK's own documented fix for this guard, and it returns the
+  identical final `Message` shape once complete, so nothing downstream of the call changed. Also
+  hardened both `main()` loops (`build-enterprise-thesis.ts` and `build-home-chapters.ts`) to wrap
+  each tenant's `:plan`-relevant work in its own try/catch: this exact crash had taken down the
+  *entire* job on the first tenant's error, discarding any work already done for other tenants in
+  the same run, which is a real cost (another ~15 minute ACA Job cycle) independent of what caused
+  the one call to fail. The `:apply` DB-write path is deliberately left to still fail loudly on
+  error -- a partial or failed write is not something to silently skip past.
+- Fourth live-proof attempt pending: confirm both tenants now generate a complete thesis and all
+  16 chapter-synthesis calls succeed with the streaming fix in place.
 
 ## Rollout Plan
 
