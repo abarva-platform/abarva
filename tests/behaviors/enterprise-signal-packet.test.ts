@@ -187,3 +187,164 @@ describe("buildEnterpriseSignalPacket", () => {
     ]);
   });
 });
+
+/**
+ * Fourteen source files (workforce, infrastructure, data assets, AI use cases/realization/tool
+ * usage, relationships, evidence governance, managed services, operational process evidence,
+ * platform maturity, industry patterns, expert lenses) were previously never read by the
+ * compiler at all -- confirmed by grepping this file for `of("...")` calls against the tenant's
+ * real file list. These tests cover the extraction logic added to close that gap, including two
+ * real bugs a live probe against actual meridian-health data caught before this shipped:
+ * relationshipRows carrying the row's own canonical type ("relationship_source_row") instead of
+ * the CSV's `from_object_type` column in the naive reading, and consent_to_attribute being
+ * "named"/"anonymous"/"role_only" rather than the yes/no this file first assumed.
+ */
+describe("buildDecisionContext -- newly-read domains", () => {
+  it("flags a workforce role only when it has a documented automation opportunity", () => {
+    const records = [
+      record("workforce_role", { personaOrRole: "Has opportunity", functionName: "Ops", roleCount: 10, automationOpportunity: "High" }),
+      record("workforce_role", { personaOrRole: "No opportunity noted", functionName: "Ops", roleCount: 500 }),
+    ];
+    const dc = buildDecisionContext(records);
+    expect(dc.workforce.automationOpportunityRoles).toHaveLength(1);
+    expect(dc.workforce.automationOpportunityRoles[0].role).toBe("Has opportunity");
+    expect(dc.workforce.totalHeadcount).toBe(510);
+  });
+
+  it("flags a tier1/tier2 platform as at-risk only when headroom is thin or DR tier is cold", () => {
+    const records = [
+      record("infrastructure_platform", { platformName: "Healthy tier1", criticality: "tier1", capacityHeadroomPct: 60, drTier: "tier1_hot" }),
+      record("infrastructure_platform", { platformName: "Thin headroom tier1", criticality: "tier1", capacityHeadroomPct: 5, drTier: "tier1_hot" }),
+      record("infrastructure_platform", { platformName: "Cold DR tier2", criticality: "tier2", capacityHeadroomPct: 60, drTier: "tier3_backup_only" }),
+      record("infrastructure_platform", { platformName: "Non-critical thin", criticality: "tier3", capacityHeadroomPct: 5, drTier: "tier1_hot" }),
+    ];
+    const dc = buildDecisionContext(records);
+    const names = dc.infrastructure.atRiskPlatforms.map((p) => p.name);
+    expect(names).toEqual(expect.arrayContaining(["Thin headroom tier1", "Cold DR tier2"]));
+    expect(names).not.toContain("Healthy tier1");
+    expect(names).not.toContain("Non-critical thin");
+  });
+
+  it("computes AI portfolio status counts and finance-validated value separately from promised value", () => {
+    const records = [
+      record("ai_automation_use_case", { useCaseName: "A", currentStatus: "production_enterprise_wide" }),
+      record("ai_automation_use_case", { useCaseName: "B", currentStatus: "evaluation" }),
+      record("ai_value_realization_signal", { promisedValueUsd: 1000, financeValidatedValueUsd: 200 }),
+      record("ai_tool_usage_observation", { toolName: "Big gap tool", adoptionGapPct: 40 }),
+      record("ai_tool_usage_observation", { toolName: "Small gap tool", adoptionGapPct: 5 }),
+    ];
+    const dc = buildDecisionContext(records);
+    expect(dc.aiPortfolio.useCaseCount).toBe(2);
+    expect(dc.aiPortfolio.promisedValue).toBe(1000);
+    expect(dc.aiPortfolio.financeValidatedValue).toBe(200);
+    expect(dc.aiPortfolio.toolAdoptionGaps.map((t) => t.tool)).toEqual(["Big gap tool"]);
+  });
+
+  it("reads relationship hub systems from the from_object_type column, not the row's own canonical type", () => {
+    // Regression test for a real bug: report.relationshipCandidates tags every row's
+    // sourceObjectType as "relationship_source_row" (the row's own canonical type), never the
+    // declared from_object_type column -- so this function must accept relationship rows shaped
+    // like the raw CSV (sourceObjectType = the real from-entity type), not that structure.
+    const relRows = [
+      { relationshipType: "integrates_with", sourceObjectType: "system", sourceObjectName: "Hub System", targetObjectType: "system", targetObjectName: "A", sourcePath: "x/12_relationships.csv" },
+      { relationshipType: "integrates_with", sourceObjectType: "system", sourceObjectName: "Hub System", targetObjectType: "system", targetObjectName: "B", sourcePath: "x/12_relationships.csv" },
+      { relationshipType: "integrates_with", sourceObjectType: "system", sourceObjectName: "Hub System", targetObjectType: "system", targetObjectName: "C", sourcePath: "x/12_relationships.csv" },
+      { relationshipType: "integrates_with", sourceObjectType: "system", sourceObjectName: "Hub System", targetObjectType: "system", targetObjectName: "D", sourcePath: "x/12_relationships.csv" },
+      { relationshipType: "integrates_with", sourceObjectType: "system", sourceObjectName: "Lightly connected", targetObjectType: "system", targetObjectName: "A", sourcePath: "x/12_relationships.csv" },
+    ];
+    const dc = buildDecisionContext([], relRows);
+    expect(dc.relationships.hubSystems).toEqual([{ system: "Hub System", integrationCount: 4 }]);
+  });
+
+  it("surfaces a declared risk-to-program impact as a real link, not a candidate relationship", () => {
+    const relRows = [
+      { relationshipType: "impacts", sourceObjectType: "risk_or_control", sourceObjectName: "PAM gap", targetObjectType: "program", targetObjectName: "PAM Rollout", sourcePath: "x/12_relationships.csv" },
+      { relationshipType: "impacts", sourceObjectType: "risk_or_control", sourceObjectName: "Unrelated risk", targetObjectType: "function", targetObjectName: "Some function", sourcePath: "x/12_relationships.csv" },
+    ];
+    const dc = buildDecisionContext([], relRows);
+    expect(dc.relationships.riskToProgramImpacts).toEqual([{ risk: "PAM gap", program: "PAM Rollout" }]);
+  });
+
+  it("excludes an unresolved relationship row from the declared graph", () => {
+    const relRows = [
+      { relationshipType: "impacts", sourceObjectType: "risk_or_control", sourceObjectName: "R", targetObjectType: "program", targetObjectName: "P", sourcePath: "x/12_relationships.csv", resolutionStatus: "unresolved" as const },
+    ];
+    const dc = buildDecisionContext([], relRows);
+    expect(dc.relationships.riskToProgramImpacts).toEqual([]);
+  });
+
+  it("selects a real verbatim quote only when consent is named or role_only, never anonymous", () => {
+    // Regression test for a real bug: this file's consent_to_attribute values are
+    // "named"/"anonymous"/"role_only", not yes/no -- the first version of this check compared
+    // against "yes" and silently selected zero quotes from real data.
+    const records = [
+      record("ai_value_interview_evidence", { stakeholderRole: "CFO", themeTags: "consensus_theme", verbatimQuote: "Named quote", consentToAttribute: "named" }),
+      record("ai_value_interview_evidence", { stakeholderRole: "CFO", themeTags: "consensus_theme", verbatimQuote: "Named quote", consentToAttribute: "named" }),
+      record("ai_value_interview_evidence", { stakeholderRole: "CIO", themeTags: "no_consent_theme", verbatimQuote: "Should never appear", consentToAttribute: "anonymous" }),
+      record("ai_value_interview_evidence", { stakeholderRole: "CIO", themeTags: "no_consent_theme", verbatimQuote: "Should never appear", consentToAttribute: "anonymous" }),
+    ];
+    const dc = buildDecisionContext(records);
+    const quotes = dc.leadershipVoice.testimony.map((t) => t.quote);
+    expect(quotes).toContain("Named quote");
+    expect(quotes).not.toContain("Should never appear");
+  });
+
+  it("flags an operational process as high-friction on error rate or on a high automation candidate with low actual automation", () => {
+    const records = [
+      record("operational_process_evidence", { processName: "High error", errorRatePct: 8, automationPct: 90, automationCandidate: "Low" }),
+      record("operational_process_evidence", { processName: "Candidate not automated", errorRatePct: 1, automationPct: 10, automationCandidate: "High" }),
+      record("operational_process_evidence", { processName: "Fine", errorRatePct: 1, automationPct: 90, automationCandidate: "Low" }),
+    ];
+    const dc = buildDecisionContext(records);
+    const names = dc.operationalProcesses.highFrictionProcesses.map((p) => p.name);
+    expect(names).toEqual(expect.arrayContaining(["High error", "Candidate not automated"]));
+    expect(names).not.toContain("Fine");
+  });
+
+  it("only reports a platform maturity gap when target exceeds current by a material margin", () => {
+    const records = [
+      record("platform_maturity_assessment", { platformOrCapability: "Big gap", maturityDimension: "Architecture", currentLevel: 2, targetLevel: 4 }),
+      record("platform_maturity_assessment", { platformOrCapability: "At target", maturityDimension: "Architecture", currentLevel: 3, targetLevel: 3 }),
+    ];
+    const dc = buildDecisionContext(records);
+    expect(dc.platformMaturity.gaps.map((g) => g.platform)).toEqual(["Big gap"]);
+  });
+
+  it("keeps industry patterns and expert lenses structurally separate from citeable signals", () => {
+    const records = [
+      record("industry_context_pattern", { patternName: "Some industry pattern" }),
+      record("expert_lens", { lensName: "Some expert lens" }),
+    ];
+    const dc = buildDecisionContext(records);
+    expect(dc.analyticalLenses).toEqual([
+      { kind: "industry_pattern", label: "Some industry pattern" },
+      { kind: "expert_lens", label: "Some expert lens" },
+    ]);
+  });
+});
+
+describe("buildEnterpriseSignalPacket -- newly-read domains", () => {
+  it("carries analyticalLenses through to the packet without ids, so they can never be cited as evidence", () => {
+    const records = [record("industry_context_pattern", { patternName: "A pattern" })];
+    const dc = buildDecisionContext(records);
+    const quality = buildContextQualityManifest(records, []);
+    const packet = buildEnterpriseSignalPacket(dc, quality);
+    expect(packet.analyticalLenses).toEqual([{ kind: "industry_pattern", label: "A pattern" }]);
+    // No `id` field anywhere on a lens entry -- structurally impossible to reference one the same
+    // way a claim references sig_* or ctx_*.
+    expect(packet.analyticalLenses[0]).not.toHaveProperty("id");
+  });
+
+  it("emits a real quote as a testimony signal, not just a theme-frequency count", () => {
+    const records = [
+      record("ai_value_interview_evidence", { stakeholderRole: "CFO", themeTags: "shared_theme", verbatimQuote: "A real quote about the enterprise.", consentToAttribute: "named" }),
+      record("ai_value_interview_evidence", { stakeholderRole: "CIO", themeTags: "shared_theme", verbatimQuote: "Another quote.", consentToAttribute: "named" }),
+    ];
+    const dc = buildDecisionContext(records);
+    const quality = buildContextQualityManifest(records, []);
+    const packet = buildEnterpriseSignalPacket(dc, quality);
+    const testimonySignals = packet.signals.filter((s) => s.kind === "testimony");
+    expect(testimonySignals.length).toBeGreaterThan(0);
+    expect(testimonySignals[0].statement).toContain("A real quote about the enterprise.");
+  });
+});

@@ -42,6 +42,7 @@ import {
   buildEnterpriseSignalPacket,
   type Signal,
   type ContextItem,
+  type RelationshipRow,
 } from "./enterprise-signal-packet";
 
 const TENANTS = (() => {
@@ -190,8 +191,25 @@ data <-> operational capability <-> transformation
 leadership perspective <-> system evidence
 risk <-> capability <-> system <-> owner
 investment <-> expected value <-> measured outcome
+workforce <-> automation opportunity <-> operating model
+infrastructure risk <-> platform criticality <-> continuity
+AI portfolio status <-> promised value <-> finance-validated value
+declared system relationships <-> integration concentration <-> dependency
+declared risk-to-program linkage <-> program delivery <-> risk exposure
+data/analytics maturity gap <-> platform investment <-> capability
 
 EVIDENCE DISCIPLINE
+- The packet includes real leadership testimony (verbatim, consented quotes) as citeable signals,
+  not just theme-frequency counts. When a quote materially supports a claim, quote it or closely
+  paraphrase it -- this is what makes leadership perspective a voice, not a tally.
+- The packet includes real, declared relationship data (system integrations, risk-to-program
+  impacts, program sponsorship) from a source the client explicitly provided. This is not the
+  same thing as a "candidate relationship" and may be cited as fact -- it is a declared linkage,
+  not an inference.
+- The packet includes analyticalLenses: industry patterns and named expert lenses. These are
+  framing material, not facts about this enterprise. Never cite an analyticalLenses entry as
+  evidence_ids for a claim about this specific enterprise -- they exist to help you recognize a
+  pattern worth investigating, not to be quoted as something true of this tenant.
 - The signals and facts in the packet are authoritative. Never recompute a number that appears
   there; quote it exactly.
 - Every claim you make must carry evidence_ids citing the specific signals or context items it
@@ -346,7 +364,8 @@ function buildUserPrompt(signalPacket: ReturnType<typeof buildEnterpriseSignalPa
       2,
     ) +
     `\n\nGoverned context packet (signals are sig_*, context facts are ctx_*, plottable datasets ` +
-    `are under visualDatasets):\n` +
+    `are under visualDatasets; analyticalLenses are framing material, never citable as evidence_ids ` +
+    `for a claim about this specific enterprise):\n` +
     JSON.stringify(signalPacket, null, 2)
   );
 }
@@ -756,7 +775,25 @@ async function buildTenant(tenantKey: string, client: Parameters<typeof callClau
     }));
   }
 
-  const dc = buildDecisionContext(records);
+  // Read the declared relationship graph directly, the same precedented pattern as the crosswalk
+  // file above -- report.relationshipCandidates does not surface this file's own from_object_type
+  // column (it tags every row's sourceObjectType as the row's own canonical type,
+  // "relationship_source_row", not the entity the row is actually describing), so it cannot
+  // answer "which systems does this system integrate with." The raw file can.
+  const relationshipsPath = path.join(process.cwd(), `datasets/tenant-inputs/active/${tenantKey}/current/12_relationships.csv`);
+  let relationshipRows: RelationshipRow[] = [];
+  if (fs.existsSync(relationshipsPath)) {
+    const parsed = Papa.parse(fs.readFileSync(relationshipsPath, "utf8"), { header: true, skipEmptyLines: true });
+    relationshipRows = (parsed.data as any[]).map((r) => ({
+      relationshipType: r.relationship_type,
+      sourceObjectType: r.from_object_type,
+      sourceObjectName: r.from_object_name,
+      targetObjectType: r.to_object_type,
+      targetObjectName: r.to_object_name,
+      sourcePath: relationshipsPath,
+    }));
+  }
+  const dc = buildDecisionContext(records, relationshipRows);
   const quality = buildContextQualityManifest(records, crosswalkRows, GOLDEN_EVIDENCE_CONTRACTS[tenantKey] ?? []);
   const signalPacket = buildEnterpriseSignalPacket(dc, quality);
 
