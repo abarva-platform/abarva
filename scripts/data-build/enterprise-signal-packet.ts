@@ -76,6 +76,21 @@ export interface Signal {
   evidenceRefs: string[];
 }
 
+/**
+ * A citable governed-context fact -- enterprise identity, business economics, declared strategic
+ * priorities, customer/segment context. Before this existed, the thesis prompt could only cite
+ * `sig_*` signals, so any claim resting on plain context (revenue, industry, a declared priority)
+ * had nothing real to cite and the model fell back to bare parenthetical references like
+ * "(enterpriseIdentity)" -- not a resolvable id, so the verifier could never actually check those
+ * claims. `ctx_*` ids close that gap: same shape as a Signal, same evidence discipline, just
+ * sourced from context rather than a computed signal.
+ */
+export interface ContextItem {
+  id: string;
+  statement: string;
+  domains: string[];
+}
+
 /** A relationship the compiler could not confirm from an explicit canonical link, only propose. */
 export interface CandidateRelationship {
   id: string;
@@ -489,6 +504,127 @@ const THRESHOLDS = {
   dissentLeaderCount: 1,
 };
 
+/**
+ * Deterministic context facts, each citeable by id -- enterprise identity, business economics,
+ * declared customer segments, declared strategic priorities. No relationships are asserted here
+ * (e.g. no priority-to-program link); each item is a single standalone fact. Connections between
+ * facts are the signal layer's job, not this one's.
+ */
+function buildContextItems(dc: DecisionContext): ContextItem[] {
+  const items: ContextItem[] = [];
+  let n = 0;
+  const id = (kind: string) => `ctx_${kind}_${String(++n).padStart(3, "0")}`;
+
+  if (dc.business.businessModel) {
+    items.push({ id: id("identity"), statement: `Business model: ${dc.business.businessModel}.`, domains: ["tenant_profile"] });
+  }
+  if (dc.business.industry) {
+    items.push({ id: id("identity"), statement: `Industry: ${dc.business.industry}.`, domains: ["tenant_profile"] });
+  }
+  if (dc.business.revenue !== null) {
+    items.push({ id: id("identity"), statement: `Annual revenue: ${usd(dc.business.revenue)}.`, domains: ["tenant_profile"] });
+  }
+  if (dc.business.employeeCount !== null) {
+    items.push({ id: id("identity"), statement: `Employee count: ${dc.business.employeeCount.toLocaleString()}.`, domains: ["tenant_profile"] });
+  }
+  if (dc.strategy.mission) {
+    items.push({ id: id("identity"), statement: `Declared mission: ${dc.strategy.mission}.`, domains: ["tenant_profile"] });
+  }
+  if (dc.business.operatingSegments.length) {
+    items.push({ id: id("economics"), statement: `Operating segments: ${dc.business.operatingSegments.join(", ")}.`, domains: ["business_function"] });
+  }
+  if (dc.technology.technologyBudget > 0 && dc.business.revenue) {
+    const pct = ((dc.technology.technologyBudget / dc.business.revenue) * 100).toFixed(2);
+    items.push({
+      id: id("economics"),
+      statement: `Technology budget is ${usd(dc.technology.technologyBudget)}, ${pct}% of revenue.`,
+      domains: ["spend_value_fact", "tenant_profile"],
+    });
+  }
+  if (dc.business.operatingRegions.length) {
+    items.push({ id: id("economics"), statement: `Declared operating regions: ${dc.business.operatingRegions.join(", ")}.`, domains: ["tenant_profile"] });
+  }
+  for (const seg of dc.business.customerSegments) {
+    items.push({ id: id("segment"), statement: `Declared customer segment: ${seg}.`, domains: ["tenant_profile"] });
+  }
+  for (const p of dc.strategy.statedPriorities) {
+    items.push({ id: id("priority"), statement: `Declared strategic priority: ${p}.`, domains: ["tenant_profile"] });
+  }
+
+  return items;
+}
+
+/**
+ * Named, precomputed datasets a chapter can point a visual at. Every value here is arithmetic
+ * already done in this file -- a model choosing to visualize `vendor_spend_concentration` gets
+ * the real rows, never a chance to invent or adjust one. Names are the only thing the model is
+ * allowed to reference (`dataset_ref`); the allowlist of what a name may be plotted as lives in
+ * the thesis prompt, not here.
+ */
+export function buildVisualDatasets(dc: DecisionContext): Record<string, Array<Record<string, unknown>>> {
+  const datasets: Record<string, Array<Record<string, unknown>>> = {};
+
+  if (dc.technology.technologyBudget > 0) {
+    datasets.technology_spend_mix = [
+      { category: "Third-party contracted", amount: dc.vendors.totalSpend },
+      { category: "Other technology spend", amount: Math.max(0, dc.technology.technologyBudget - dc.vendors.totalSpend) },
+    ];
+  }
+
+  if (dc.vendors.topByShare.length) {
+    datasets.vendor_spend_concentration = dc.vendors.topByShare.map((v) => ({
+      vendor: v.name, spend: v.spend, sharePct: Math.round(v.share * 1000) / 10,
+    }));
+  }
+
+  if (dc.technology.byFunction.length) {
+    datasets.application_landscape_by_function = dc.technology.byFunction.map((f) => ({
+      function: f.function, applicationCount: f.count, annualCost: f.cost,
+    }));
+  }
+
+  if (dc.portfolio.topByValue.length) {
+    datasets.program_investment_distribution = dc.portfolio.topByValue.map((p) => ({
+      program: p.name, expectedValue: p.expectedValue,
+    }));
+  }
+
+  if (dc.portfolio.stalledPrograms.length) {
+    datasets.stalled_programs = dc.portfolio.stalledPrograms.map((p) => ({
+      program: p.name, pctComplete: p.pctComplete, blocked: p.blockedReason ?? null,
+    }));
+  }
+
+  if (dc.leadershipVoice.themeFrequency.length) {
+    datasets.leadership_theme_frequency = dc.leadershipVoice.themeFrequency.map((t) => ({
+      theme: t.theme, leaderCount: t.leaderCount,
+    }));
+  }
+
+  if (dc.leadershipVoice.interviewCount > 0) {
+    datasets.leadership_evidence_alignment = [
+      { category: "Consistent with system record", count: dc.leadershipVoice.interviewCount - dc.leadershipVoice.contradictionCount },
+      { category: "Contradicts system record", count: dc.leadershipVoice.contradictionCount },
+    ];
+  }
+
+  if (dc.performance.metricCount > 0) {
+    datasets.metric_target_attainment = [
+      { category: "Improving toward target", count: dc.performance.improving },
+      { category: "Moving away from target", count: dc.performance.worsening },
+      { category: "Not comparable", count: dc.performance.notComparable },
+    ];
+  }
+
+  if (dc.risk.bySystemConcentration.length) {
+    datasets.risk_system_concentration = dc.risk.bySystemConcentration.map((s) => ({
+      system: s.system, riskCount: s.riskCount,
+    }));
+  }
+
+  return datasets;
+}
+
 export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: ContextQualityManifest) {
   const signals: Signal[] = [];
   let n = 0;
@@ -691,6 +827,8 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
     },
     strategicPriorities: dc.strategy.statedPriorities,
     signals,
+    contextItems: buildContextItems(dc),
+    visualDatasets: buildVisualDatasets(dc),
     coverageManifest: quality,
   };
 }
