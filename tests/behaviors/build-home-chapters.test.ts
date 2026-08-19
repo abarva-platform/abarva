@@ -125,11 +125,15 @@ describe("assignVisuals", () => {
 });
 
 describe("assignQuestions", () => {
+  // questions_for_management became a GroundedClaim[] (statement = the question text) after a live
+  // run found questions embedding fabricated factual premises with zero evidence backing -- a
+  // question is not exempt from the evidence rule just because it's phrased as a question.
+
   it("routes a question to the chapter whose keywords it matches", () => {
     const thesis = minimalThesis({
       questions_for_management: [
-        "What is the funding plan for the vendor contract renewal?",
-        "How was the declared portfolio return calculated for this strategic priority?",
+        claim("What is the funding plan for the vendor contract renewal?"),
+        claim("How was the declared portfolio return calculated for this strategic priority?"),
       ],
     });
     const byChapter = assignQuestions(thesis);
@@ -138,17 +142,30 @@ describe("assignQuestions", () => {
   });
 
   it("routes an unmatched question to What Needs Attention rather than dropping it", () => {
-    const thesis = minimalThesis({ questions_for_management: ["Completely unrelated phrasing with no keyword match."] });
+    const thesis = minimalThesis({ questions_for_management: [claim("Completely unrelated phrasing with no keyword match.")] });
     const byChapter = assignQuestions(thesis);
     expect(byChapter.what_needs_attention).toContain("Completely unrelated phrasing with no keyword match.");
   });
 
   it("gives Executive Brief a top slice of questions regardless of keyword, capped at 5", () => {
     const thesis = minimalThesis({
-      questions_for_management: ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7"],
+      questions_for_management: ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7"].map((q) => claim(q)),
     });
     const byChapter = assignQuestions(thesis);
     expect(byChapter.executive_brief).toEqual(["Q1", "Q2", "Q3", "Q4", "Q5"]);
+  });
+
+  it("drops a null (verifier-rejected) question rather than crashing or leaking it through", () => {
+    const thesis = minimalThesis({
+      questions_for_management: [claim("Survivor question?"), null as unknown as GroundedClaim],
+    });
+    const byChapter = assignQuestions(thesis);
+    // The single survivor legitimately appears twice by design (Executive Brief echoes the top
+    // slice, same as visuals) -- what this test actually pins down is that the null entry never
+    // appears anywhere as "null"/"undefined" text and doesn't crash the routing.
+    const allRouted = Object.values(byChapter).flat();
+    expect(allRouted).toContain("Survivor question?");
+    expect(allRouted.every((q) => q === "Survivor question?")).toBe(true);
   });
 });
 
