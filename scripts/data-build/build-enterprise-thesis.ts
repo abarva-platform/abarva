@@ -691,6 +691,18 @@ async function callClaude(
     );
     return null;
   }
+  if (response.stop_reason === "max_tokens") {
+    // Non-empty text can still be an incomplete, truncated response -- exactly what happened on a
+    // live run of the hardened schema, where added required fields (claim_type, decomposed story
+    // claims, structured value-creation claims, visual_opportunities) pushed real content past a
+    // ceiling that was sized for the pre-hardening schema. Logging the thinking/output split here,
+    // not only on the empty-text branch, means the next time a ceiling proves too low the actual
+    // split is on record instead of requiring another live failure to find out.
+    console.log(
+      `    ! stop_reason=max_tokens (response may be truncated) output_tokens=${response.usage?.output_tokens ?? "unknown"} ` +
+        `thinking_tokens=${response.usage?.output_tokens_details?.thinking_tokens ?? "unknown"} max_tokens=${maxTokens} effort=${effort}`,
+    );
+  }
   return {
     text,
     inputTokens: response.usage?.input_tokens ?? 0,
@@ -759,16 +771,17 @@ async function buildTenant(tenantKey: string, client: Parameters<typeof callClau
 
   const userPrompt = buildUserPrompt(signalPacket);
   const usage = { input: 0, output: 0 };
-  // The schema's array bounds are now stated explicitly in SYSTEM_PROMPT (a spine, not a report --
-  // 3-5 items per array, 250-400 words for enterprise_story), targeting roughly 6000 tokens of
-  // actual content in the worst case. This call's thinking is not a token budget the caller
-  // reserves (this model rejects that shape entirely -- see callClaude) but an effort tier the
-  // model manages itself; "medium" is proportionate to genuine cross-domain synthesis across a
-  // 40+ signal packet without inviting the runaway reasoning that ate an entire fixed budget on
-  // the first live attempt. max_tokens is a generous ceiling on thinking + content combined, not a
-  // precise split -- if a future run shows this still truncating, the diagnostic in callClaude now
-  // reports the actual thinking/output token split instead of requiring another guess.
-  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, 10000, "medium");
+  // The schema's array bounds are stated explicitly in SYSTEM_PROMPT (a spine, not a report -- 3-5
+  // items per array, 250-400 words for enterprise_story) and haven't grown; what changed in the
+  // hardening pass is real required structure per item: claim_type on every GroundedClaim,
+  // enterprise_story_claims (3-5 more claims), value_creation_model's drivers/dependencies going
+  // from bare strings to full claims, and up to 6 visual_opportunities. A live run at 10000 hit the
+  // ceiling on both tenants with content still incomplete -- not a schema regression, a genuine
+  // content-size increase this session's own hardening changes required. 16000 restores the
+  // headroom this call had before the array-bound-driven reduction, with those bounds still in
+  // force so the ceiling is slack, not an invitation to sprawl. "medium" effort is unchanged --
+  // proportionate to genuine cross-domain synthesis across a 40+ signal packet.
+  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, 16000, "medium");
   if (!generation) {
     console.log("  ! thesis generation returned no text");
     return {
