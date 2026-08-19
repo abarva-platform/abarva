@@ -1,13 +1,6 @@
 import { composeHomeKnowAvaAnswer } from "@/lib/ava-answer/homeComposer";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
-import type {
-  HomeKnowAskRequest,
-  HomeKnowResponse,
-} from "@/lib/home/know/home-know-contract";
-import { sanitizeHomeKnowVisiblePayload } from "@/lib/home/know/home-demo-safe-response";
-import { applyHomeV6ExecutiveSynthesis } from "@/lib/home/know/home-v6-executive-synthesis";
-import { answerHomeKnowFromV6 } from "@/lib/home/know/v6-home-ask";
-import { toHomeKnowResponseFromV6 } from "@/lib/home/know/v6-home-know-response";
+import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
 import type { AskSurfaceContext } from "@/lib/intelligence/ask";
 
 export function shouldUseHomeKnowAgentAnswer(input: {
@@ -18,27 +11,12 @@ export function shouldUseHomeKnowAgentAnswer(input: {
   return input.query.trim().length > 0;
 }
 
-export async function buildHomeKnowAgentAnswer(
-  input: HomeKnowAskRequest,
-): Promise<{ response: HomeKnowResponse; answer: AvaAnswerPacket }> {
-  const v6Result = answerHomeKnowFromV6({
-    question: input.question,
-    tenantKey: input.tenantKey ?? input.client ?? "apexretail",
-    includeTrace: false,
-  });
-  const deterministicResponse = toHomeKnowResponseFromV6(v6Result, {
-    question: input.question,
-  });
-  const synthesized = await applyHomeV6ExecutiveSynthesis({
-    response: deterministicResponse,
-    v6Result,
-    question: input.question,
-    tenantKey: v6Result.tenant.canonicalKey,
-    includeTrace: false,
-  });
-  const response = sanitizeHomeKnowVisiblePayload(synthesized.response);
-  return { response, answer: homeKnowResponseToAvaAnswer(response) };
-}
+// buildHomeKnowAgentAnswer used to live here, composing an answer via the V6 file-reading path
+// (answerHomeKnowFromV6 -> applyHomeV6ExecutiveSynthesis -> toHomeKnowResponseFromV6). That path
+// expected a V6_GENERATED_MANIFEST.json under a synthetic dataset directory deleted from the repo
+// in the tenant-input-standard cleanup, so it threw on every tenant, every call -- the sole caller
+// (src/app/api/intelligence/ask/route.ts) now calls buildHomeKnowResponse from home-know-engine.ts
+// directly instead, the same live engine /api/home/know/ask already serves real answers with.
 
 export function homeKnowResponseToAvaAnswer(
   response: HomeKnowResponse,

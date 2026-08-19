@@ -55,10 +55,10 @@ import {
 } from "@/lib/ava-answer/public-answer-scrub";
 import { sanitizeAgentAnswerForRender } from "@/lib/intelligence/answer/answer-safety";
 import {
-  buildHomeKnowAgentAnswer,
   homeKnowResponseToAvaAnswer,
   shouldUseHomeKnowAgentAnswer,
 } from "@/lib/home/know/home-know-agent-answer";
+import { buildHomeKnowResponse } from "@/lib/home/know/home-know-engine";
 import { appClientKeyForTenant, tenantAliasesFor } from "@/lib/tenant/aliases";
 import { isFoundationTenantKey } from "@/lib/tenant/foundation-tenants";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
@@ -554,7 +554,17 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           let response: HomeKnowResponse;
           let answer: AvaAnswerPacket;
           try {
-            const built = await buildHomeKnowAgentAnswer({
+            // buildHomeKnowAgentAnswer's V6 file-reading path (loadV6Dataset) throws on every
+            // tenant, every time -- it expects a V6_GENERATED_MANIFEST.json under a synthetic
+            // dataset directory that was deleted from the repo in the tenant-input-standard
+            // cleanup, and nothing regenerates it. That made this whole branch a 100%-failure
+            // path silently absorbed by the catch below (the "[home-know.blank-guard]" log line
+            // this codebase already carries specifically because this kept firing) -- every user
+            // asking aVa a question on Home always got the degraded fallback response instead of
+            // a real one. buildHomeKnowResponse is the same live engine /api/home/know/ask
+            // already serves real answers with; using it here instead of the dead V6 path is the
+            // actual fix, not a workaround.
+            response = await buildHomeKnowResponse({
               question: query,
               tenantKey: homeTenantKey,
               client:
@@ -562,8 +572,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 tenantClientKey ??
                 requestedOrSurfaceClient,
             });
-            response = built.response;
-            answer = built.answer;
+            answer = homeKnowResponseToAvaAnswer(response);
           } catch (err) {
             console.warn("[home-know.blank-guard]", err);
             response = buildHomeKnowRouteFallbackResponse({
