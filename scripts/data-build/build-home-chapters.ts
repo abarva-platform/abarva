@@ -32,6 +32,7 @@ import path from "node:path";
 import {
   buildTenant,
   callClaude,
+  parseJsonLoose,
   type EnterpriseThesis,
   type GroundedClaim,
   type VisualOpportunity,
@@ -286,11 +287,7 @@ async function synthesizeChapterNarrative(
     claims.map((c, i) => `${i + 1}. [${c.claim_type}] ${c.statement}`).join("\n");
   const result = await callClaude(client, CHAPTER_SYNTHESIS_SYSTEM_PROMPT, userPrompt, 3072, "low");
   if (!result) return null;
-  try {
-    return JSON.parse(result.text) as { headline: string; executive_synthesis: string };
-  } catch {
-    return null;
-  }
+  return parseJsonLoose<{ headline: string; executive_synthesis: string }>(result.text, `chapter synthesis (${def.title})`);
 }
 
 /* ------------------------------------------------------------------------------------------------
