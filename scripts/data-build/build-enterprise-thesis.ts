@@ -368,7 +368,7 @@ async function verifyClaim(
   // gives comfortable headroom above the observed failure point rather than the minimum that
   // might clear it -- a second budget-too-small cycle on the same call costs a full deploy, and
   // the marginal cost of extra unused headroom on a short classification response is negligible.
-  const result = await callClaude(client, VERIFIER_SYSTEM_PROMPT, userPrompt, 3072);
+  const result = await callClaude(client, VERIFIER_SYSTEM_PROMPT, userPrompt, 3072, 1024);
   if (!result) return { verdict: "UNSUPPORTED", reasoning: "verifier call failed" };
   try {
     const parsed = JSON.parse(result.text) as { verdict: Verdict; reasoning: string };
@@ -414,7 +414,7 @@ async function repairClaim(
     `Original claim:\n${claim.statement}\n\n` +
     `Facts it was allowed to use:\n${facts.map((f, i) => `${i + 1}. ${f}`).join("\n")}\n\n` +
     `What overstepped them:\n${verifierReasoning}`;
-  const result = await callClaude(client, REPAIR_SYSTEM_PROMPT, userPrompt, 2048);
+  const result = await callClaude(client, REPAIR_SYSTEM_PROMPT, userPrompt, 3072, 1024);
   if (!result) return null;
   try {
     const parsed = JSON.parse(result.text) as { repaired_statement: string };
@@ -452,11 +452,23 @@ async function callClaude(
   system: string,
   userPrompt: string,
   maxTokens: number,
+  thinkingBudget: number,
 ): Promise<{ text: string; inputTokens: number; outputTokens: number; model: string } | null> {
   if (!client) return null;
+  // The empty-response failures diagnosed earlier this session (main thesis call at 4000 tokens,
+  // verifier at 200) were both "stop_reason=max_tokens, blocks=[thinking], output_tokens=<ceiling>,
+  // zero text" -- this model engages extended thinking whether or not it's explicitly requested,
+  // and per the SDK's own docs that thinking spend counts against max_tokens. Raising max_tokens
+  // without bounding thinking only widens the pool both are drawing from; it doesn't guarantee text
+  // gets any of it, which is exactly what a live run reproduced again at max_tokens=6000 (Meridian:
+  // thinking alone consumed all 6000; SkyHarbor: thinking left enough room for text to start, but
+  // not enough for it to finish, truncating mid-JSON). Giving thinking its own capped budget, on
+  // top of a max_tokens ceiling sized for thinkingBudget + the actual expected content length,
+  // makes the two pools independent instead of a race.
   const response = (await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: maxTokens,
+    thinking: { type: "enabled", budget_tokens: thinkingBudget },
     system,
     messages: [{ role: "user", content: userPrompt }],
   })) as {
@@ -548,11 +560,13 @@ async function buildTenant(tenantKey: string, client: Parameters<typeof callClau
   const userPrompt = buildUserPrompt(signalPacket);
   const usage = { input: 0, output: 0 };
   // The schema's array bounds are now stated explicitly in SYSTEM_PROMPT (a spine, not a report --
-  // 3-5 items per array, 250-400 words for enterprise_story). 16000 was a blunt fix for an earlier
-  // empty-output bug and let the schema sprawl into report-length output on Meridian, truncating
-  // mid-JSON. With the bounds now enforced in the prompt itself, this ceiling only needs to cover
-  // the worst case of a fully-populated, bounded schema.
-  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, 6000);
+  // 3-5 items per array, 250-400 words for enterprise_story), targeting roughly 6000 tokens of
+  // actual content in the worst case. That figure is the content budget, not the request ceiling:
+  // thinking is capped separately at 2000 (comfortable for reasoning across a signal packet this
+  // size, per the live run where the model's uncapped thinking alone consumed a full 6000-token
+  // ceiling on one tenant and left too little for text on the other) and max_tokens is set to the
+  // sum, so the two no longer compete for the same pool.
+  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, 8000, 2000);
   if (!generation) {
     console.log("  ! thesis generation returned no text");
     return {
