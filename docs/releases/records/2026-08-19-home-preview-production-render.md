@@ -133,13 +133,21 @@ change. No product route change to `/home` itself.
   item in the same bundle (test: `golden-snapshot.test.ts`, "every chapter's evidence_ids resolve
   to a real signal or context item in the same bundle") -- the same discipline the generator's own
   verification enforces, checked again at the render layer as a second, independent guard.
-- Not yet done: a live, signed-in browser check of the deployed route. Clerk credentials for a
-  platform-admin session are not available in this local environment (per AGENTS.md, only a
-  validly-formatted placeholder key gets the app past the homepage; no working session can be
-  established without real credentials this session doesn't have). Verification plan: after
-  merge/deploy, drive the deployed lab URL via a browser session with real platform-admin
-  credentials and confirm the page renders, both tenants switch correctly, evidence expansion
-  works, and no console errors -- tracked as the immediate next step, not skipped.
+- **Live signed-in browser check, done post-merge/deploy against `https://app.abarva.ai/home/preview`,
+  signed in as the real platform-admin session (Anand Sundaram):** page renders past the admin
+  gate; both chapters' real content displays (Meridian's Executive Brief headline and body,
+  SkyHarbor's after switching); the tenant switcher swaps content instantly with no page
+  navigation and no stale content bleed-through; a `ClaimCard`'s "Why do we believe this?" click
+  correctly expanded to show the two real resolved signals (`sig_concentration_001`,
+  `sig_dependency_076`) with their actual statements and source records, then collapsed again on
+  a second click; the `horizontal_bar` exhibit rendered with a working hover tooltip showing the
+  real vendor name and formatted dollar value; Browse the Data rendered "114 of 114 shown" and
+  correctly narrowed to the 2 real Cotiviti-related facts on a live search; the
+  `questions_for_management` fix (PR #6519) held on this exact deployed build -- the rendered
+  question was the real, grounded PAM/CyberArk coverage-gap question, not the earlier fabricated
+  "sponsor change" text. Console showed zero errors from this change (one pre-existing, unrelated,
+  already-documented Clerk dev-keys warning). This is the audit evidence the "not yet done" note
+  below used to flag as outstanding -- now complete.
 - The acceptance question itself -- "would a newly appointed CXO spend 20 minutes here and come
   away feeling Abarva understands their enterprise exceptionally well" -- is explicitly the
   workstream owner's call, not a QA checkbox. This release provides the surface to answer it, not
@@ -161,10 +169,10 @@ explicit decision to authorize `:apply` and a `/home` pivot.
 - Approved image digest: recorded at merge, verified independently against
   `az containerapp show`/`az containerapp revision list` before any live-proof claim, per this
   repo's standing runtime-invariant discipline.
-- Live signed-in proof required: yes, for the route to be genuinely reviewed -- see QA/Validation's
-  "not yet done" note. Not required to merge (the route is admin-gated and inert for every
-  non-admin session), but required before the acceptance review this route exists to support can
-  be considered complete.
+- Live signed-in proof required and complete: see QA/Validation's live browser check against
+  `https://app.abarva.ai/home/preview`. Was not required to merge (the route is admin-gated and
+  inert for every non-admin session), but was required before the acceptance review this route
+  exists to support could be considered ready for a human review pass.
 
 ## Rollback Plan
 
@@ -175,13 +183,15 @@ never touched, so there is nothing to roll back there.
 
 ## Audit Evidence
 
-PR link recorded at merge. The live signed-in browser check (once run) and any resulting
-content/UX corrections become the audit trail for whether this preview actually cleared the
-workstream's acceptance bar -- tracked as the immediate next step.
+PR link recorded at merge. The live signed-in browser check against
+`https://app.abarva.ai/home/preview` (see QA/Validation) is the audit trail for the mechanical
+side of this release -- render correctness, evidence interaction, chart rendering, tenant
+switching, search. The still-open audit item is the human acceptance review itself (does this read
+like an extraordinary CXO briefing), which is a separate, explicit decision the workstream owner
+makes directly against the live URL, not something this record can certify.
 
 ## Known Gaps
 
-Live signed-in browser verification has not yet happened in this environment (see QA/Validation).
 The relational/structural visual types (`capability_map`, `dependency_graph`, `organization_map`,
 `strategy_tree`, `risk_chain`, `value_chain`, `timeline`) have no chart renderer yet -- none of
 them appear in either accepted tenant's current output, so this is a real but currently-inert gap;
