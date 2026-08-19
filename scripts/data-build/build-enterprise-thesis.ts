@@ -858,12 +858,15 @@ export async function buildTenant(tenantKey: string, client: Parameters<typeof c
   // hardening pass is real required structure per item: claim_type on every GroundedClaim,
   // enterprise_story_claims (3-5 more claims), value_creation_model's drivers/dependencies going
   // from bare strings to full claims, and up to 6 visual_opportunities. A live run at 10000 hit the
-  // ceiling on both tenants with content still incomplete -- not a schema regression, a genuine
-  // content-size increase this session's own hardening changes required. 16000 restores the
-  // headroom this call had before the array-bound-driven reduction, with those bounds still in
-  // force so the ceiling is slack, not an invitation to sprawl. "medium" effort is unchanged --
+  // ceiling on both tenants with content still incomplete; 16000 fixed that run, but a later live
+  // run truncated again on both tenants (stop_reason=max_tokens, unterminated JSON string) --
+  // confirmation that 16000 is marginal, not safely clear, for this schema's real output length,
+  // since the model's own response length varies run to run for the same input. 28000 gives
+  // meaningfully more headroom above the observed failure point while staying well under the
+  // 34000 this codebase already runs in production for a comparably large structured generation
+  // (src/lib/deliverables/strategic-moves-artifact-standard.ts). "medium" effort is unchanged --
   // proportionate to genuine cross-domain synthesis across a 40+ signal packet.
-  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, 16000, "medium");
+  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, 28000, "medium");
   if (!generation) {
     console.log("  ! thesis generation returned no text");
     return {
