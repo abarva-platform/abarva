@@ -36,6 +36,7 @@ function minimalThesis(overrides: Partial<EnterpriseThesis> = {}): EnterpriseThe
     technology_and_data_implications: [],
     material_risks: [],
     value_realization_tensions: [],
+    what_needs_attention: [],
     evidence_gaps: [],
     things_a_new_cxo_should_know: [],
     questions_for_management: [],
