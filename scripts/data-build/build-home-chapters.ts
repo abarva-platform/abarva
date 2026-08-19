@@ -26,6 +26,7 @@
  *   npx tsx scripts/data-build/build-home-chapters.ts [--tenant <key>] [--out-dir <dir>]
  */
 
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -33,11 +34,63 @@ import {
   buildTenant,
   callClaude,
   parseJsonLoose,
+  THESIS_PROMPT_VERSION,
   type EnterpriseThesis,
   type GroundedClaim,
   type VisualOpportunity,
 } from "./build-enterprise-thesis";
-import type { Signal, ContextItem } from "./enterprise-signal-packet";
+import type { Signal, ContextItem, buildEnterpriseSignalPacket } from "./enterprise-signal-packet";
+
+type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
+
+/* ------------------------------------------------------------------------------------------------
+ * Provenance -- the generated institutional narrative needs lineage the same way any other
+ * governed artifact does. Bump home_synthesis_contract_version when ChapterView's shape changes
+ * in a way a consumer needs to know about; bump the prompt versions when SYSTEM_PROMPT or
+ * CHAPTER_SYNTHESIS_SYSTEM_PROMPT change meaningfully; bump verification_version when the
+ * verification/repair architecture itself changes (e.g. this session's targeted-repair-v2, which
+ * extended entailment verification to performance_story and questions_for_management).
+ * ---------------------------------------------------------------------------------------------- */
+
+const HOME_SYNTHESIS_CONTRACT_VERSION = "home-chapters-v1";
+const CHAPTER_PROMPT_VERSION = "home-chapters/v1";
+const VERIFICATION_VERSION = "targeted-repair-v2";
+
+export interface HomeReviewBundleProvenance {
+  home_synthesis_contract_version: string;
+  thesis_prompt_version: string;
+  chapter_prompt_version: string;
+  model: string;
+  signal_packet_version: string;
+  /** sha256 of the signal packet's own JSON -- identical algorithm to the content-hash already
+   * used in build-enterprise-thesis.ts's DB-write dedup check, so the two stay comparable. */
+  canonical_snapshot_hash: string;
+  verification_version: string;
+  generated_at: string;
+  /** Only populated when run as an ACA operator job (see scripts/ops/submit-aca-operator-job.mjs,
+   * which sets these env vars) -- null for a local run. generation_commit_sha is the operator's
+   * local `git rev-parse HEAD` at job-submission time (useful for reproducing a run during dev,
+   * NOT necessarily the deployed image's build SHA if the caller's branch was ahead of what was
+   * actually built). generation_image_digest is the authoritative one: the exact digest-pinned
+   * image that ran, which is traceable back to its build commit via the ACR/GitHub Actions log. */
+  generation_commit_sha: string | null;
+  generation_image_digest: string | null;
+}
+
+function buildProvenance(signalPacket: EnterpriseSignalPacket, thesisPromptVersion: string, generatedAt: string): HomeReviewBundleProvenance {
+  return {
+    home_synthesis_contract_version: HOME_SYNTHESIS_CONTRACT_VERSION,
+    thesis_prompt_version: thesisPromptVersion,
+    chapter_prompt_version: CHAPTER_PROMPT_VERSION,
+    model: "claude-sonnet-5",
+    signal_packet_version: "v1",
+    canonical_snapshot_hash: crypto.createHash("sha256").update(JSON.stringify(signalPacket)).digest("hex"),
+    verification_version: VERIFICATION_VERSION,
+    generated_at: generatedAt,
+    generation_commit_sha: process.env.ABARVA_OPERATOR_BRANCH_COMMIT ?? null,
+    generation_image_digest: process.env.ABARVA_OPERATOR_IMAGE_DIGEST ?? null,
+  };
+}
 
 const TENANTS = (() => {
   const i = process.argv.indexOf("--tenant");
@@ -308,10 +361,11 @@ async function synthesizeChapterNarrative(
 async function buildChaptersForTenant(tenantKey: string, client: Parameters<typeof callClaude>[0]) {
   const built = await buildTenant(tenantKey, client);
   if (!built.publishedGeneration) {
-    return { tenantKey, chapters: null, thesisResult: built };
+    return { tenantKey, chapters: null, thesisResult: built, provenance: null };
   }
   const thesis = built.publishedGeneration;
   const signalPacket = built.signalPacket;
+  const provenance = buildProvenance(signalPacket, THESIS_PROMPT_VERSION, new Date().toISOString());
 
   const slices = assembleChapterSlices(thesis, signalPacket);
   const visuals = assignVisuals(thesis);
@@ -344,7 +398,7 @@ async function buildChaptersForTenant(tenantKey: string, client: Parameters<type
     });
   }
 
-  return { tenantKey, chapters, thesisResult: built };
+  return { tenantKey, chapters, thesisResult: built, provenance };
 }
 
 async function main() {

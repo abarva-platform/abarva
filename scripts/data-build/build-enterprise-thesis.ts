@@ -56,6 +56,9 @@ const OUT_DIR = (() => {
 const WRITE = process.env.THESIS_WRITE === "true" && process.env.THESIS_WRITE_APPROVED === "true";
 const CLAUDE_MODEL = "claude-sonnet-5";
 const ARTIFACT_TYPE = "NexusEnterpriseThesisV1";
+/** Shared with build-home-chapters.ts's provenance stamp -- one source of truth for what prompt
+ * version produced a given thesis, rather than the same string hardcoded in two files. */
+export const THESIS_PROMPT_VERSION = "enterprise-thesis/v1";
 
 /**
  * Contracts with document-level extraction, per tenant. Not derivable from canonical -- that
@@ -406,7 +409,7 @@ function buildUserPrompt(signalPacket: ReturnType<typeof buildEnterpriseSignalPa
  * Structural validation — cheap, automatic, runs on every claim before anything else does
  * ---------------------------------------------------------------------------------------------- */
 
-interface StructuralIssue {
+export interface StructuralIssue {
   path: string;
   reason: string;
 }
@@ -520,7 +523,13 @@ export function validateStructure(thesis: EnterpriseThesis, signalPacket: Return
  * reasonable read of the packet" -- a distinction worth keeping visible to a reader, not just to
  * the pipeline.
  */
-type Verdict = "SUPPORTED" | "SUPPORTED_INFERENCE" | "OVERSTATED" | "UNSUPPORTED";
+export type Verdict = "SUPPORTED" | "SUPPORTED_INFERENCE" | "OVERSTATED" | "UNSUPPORTED";
+export interface VerificationLedgerEntry {
+  path: string;
+  verdict: Verdict;
+  reasoning: string;
+  action: string;
+}
 
 const VERIFIER_SYSTEM_PROMPT = `You are a skeptical fact-checker. You will be given a claim and a list of
 facts. Your only job is to decide whether the claim follows from exactly those facts and nothing else.
@@ -1083,11 +1092,11 @@ async function main() {
           `${ARTIFACT_TYPE}:${contentHash.slice(0, 12)}`,
           ARTIFACT_TYPE,
           contentHash,
-          "enterprise-thesis/v1",
+          THESIS_PROMPT_VERSION,
           "build-enterprise-thesis",
           CLAUDE_MODEL,
           CLAUDE_MODEL,
-          "enterprise-thesis/v1",
+          THESIS_PROMPT_VERSION,
           contentHash,
           // Three separate objects, per the standing rule against silent post-hoc scrubbing: the
           // unmodified model output, what's actually published after repair/drop, and the full

@@ -1,0 +1,3665 @@
+{
+  "tenantKey": "meridian-health",
+  "provenance": {
+    "home_synthesis_contract_version": "home-chapters-v1",
+    "thesis_prompt_version": "enterprise-thesis/v1",
+    "chapter_prompt_version": "home-chapters/v1",
+    "model": "claude-sonnet-5",
+    "signal_packet_version": "v1",
+    "canonical_snapshot_hash": "8efab88b60ea1c174273f7a3fa05cd62471ec845ddcab69efc5aaa3128bc0e43",
+    "verification_version": "targeted-repair-v2",
+    "generated_at": "2026-08-19T21:05:42.770Z",
+    "generation_commit_sha": "072f0cc49595d831d018980871661b3862135616",
+    "generation_image_digest": "sha256:fe9319a04cb3e74a4b0ada383ada75892c06befe1fba8582c6e84b3b668807b2"
+  },
+  "chapters": [
+    {
+      "chapterId": "executive_brief",
+      "title": "Executive Brief",
+      "guidingQuestion": "What should I understand in my first ten minutes?",
+      "headline": "Meridian's leadership is aligned on the right problems but has not yet delivered against them, and several of the numbers used to justify investment — AI value, program completion, metric baselines — are not yet fully verifiable.",
+      "executive_synthesis": "In the first ten minutes, three things matter. First, Meridian's economics are dual-engine — 60% provider, 40% health plan revenue, with 70% of plan revenue tied to Medicare Advantage/FFS — meaning Star Ratings and RAF accuracy act as revenue levers, not just compliance work, and a high-severity RAF evidence gap tied to Cotiviti directly threatens that priority. Second, leadership alignment is real: all 44 interviewed leaders raised the same core issues, yet execution lags, with the STARS 5.0 program only 8% complete. Third, the numbers behind the narrative need scrutiny before they're trusted: only 24% of the promised $63.8M in AI value is finance-validated, a third of tracked metrics lack usable baselines, 127 leadership statements contradict system-of-record evidence, and concentrated infrastructure risk sits in Epic and an unencrypted Corepoint interface. Together, these suggest a well-diagnosed organization whose evidence base still needs verification before further investment or board reporting.",
+      "key_insights": [
+        {
+          "statement": "Meridian's economics are dual-engine: 60% provider revenue and 40% health plan revenue, with 70% of plan revenue tied to Medicare Advantage/FFS — given this mix, Star Ratings and RAF accuracy could function as direct revenue levers rather than pure compliance overhead.",
+          "evidence_ids": [
+            "ctx_identity_001"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Epic represents a significant concentration point: it accounts for 17.4% of total vendor spend ($86.2M of $496.4M) supporting Clinical Informatics, and Epic Clarity — Test integrates with 82 other systems, making it a notable node in the integration graph.",
+          "evidence_ids": [
+            "sig_concentration_001",
+            "sig_dependency_076"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Leadership is unusually aligned on the core diagnosis — value realization, investment priority, and capability gaps were raised by every one of 44 interviewed leaders — but that alignment has not yet translated into delivery, at least for the STARS 5.0 Improvement Program, which is only 8% complete.",
+          "evidence_ids": [
+            "sig_consensus_019",
+            "sig_consensus_020",
+            "sig_consensus_021",
+            "sig_portfolio_035"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "The declared AI portfolio promises $63.8M of value but only $15.2M is finance-validated (24%), so AI benefit figures presented to the board should be treated as provisional.",
+          "evidence_ids": [
+            "sig_ai_value_072"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "A meaningful share of leadership testimony (127 of 996 responses) contradicts the documented system-of-record on the same topics, so leadership narrative and system evidence should be checked against each other before either is relied on alone.",
+          "evidence_ids": [
+            "sig_contradiction_018"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "tensions": [
+        {
+          "statement": "AI value realization confirmation is low ($15.2M finance-validated of $63.8M promised value, 24%), and value realization was raised by all 44 interviewed leaders as a shared topic of focus — a combination that could warrant closer scrutiny of how AI value is validated before further investment.",
+          "evidence_ids": [
+            "sig_ai_value_072",
+            "sig_consensus_019"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "Metric infrastructure itself needs attention: 16 of 50 tracked metrics (roughly a third) lack a comparable baseline, target, or actual, and 18 of the remaining 34 mix notation between those fields, meaning performance claims on this portion of metrics are unsupported.",
+          "evidence_ids": [
+            "sig_gap_009"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        }
+      ],
+      "what_to_watch": [
+        {
+          "statement": "PHI exposure via an unencrypted legacy interface (Corepoint Integration Engine) is rated high severity, and Corepoint is also named across 2 separate risk/control entries, indicating concentrated exposure on aging integration infrastructure.",
+          "evidence_ids": [
+            "sig_risk_013",
+            "sig_dependency_007"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "RAF evidence gap on suspect conditions is rated high severity and tied to Cotiviti, directly threatening the declared priority of reducing RAF evidence gaps.",
+          "evidence_ids": [
+            "sig_risk_014",
+            "ctx_priority_017"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        }
+      ],
+      "questions_to_ask": [
+        "Why is the Privileged Access Management Rollout still at 0% complete when the high-severity risk it is meant to close is already declared as directly impacting it?",
+        "AI value realization tracking shows $63.8M of promised value against $15.2M finance-validated — 24% confirmed. What is driving the gap between promised and validated value, and what would it take to close it?",
+        "Epic Community Connect Expansion is blocked because year-two funding is unconfirmed, despite being tied to the strategic priority of reducing interface sprawl — is year-two funding being pursued?",
+        "With the Databricks lakehouse target itself only at maturity level 1 of a target 2, is the modernization sequence (evaluate lakehouse, then migrate datamarts) realistic, or does it risk replacing one immature platform with another?"
+      ],
+      "visual_opportunities": [
+        {
+          "visual_type": "horizontal_bar",
+          "title": "A handful of vendors, led by Epic, carry a disproportionate share of technology dependency",
+          "purpose": "Show vendor spend concentration to support the single-vendor dependency narrative",
+          "dataset_ref": "vendor_spend_concentration",
+          "key_message": "Epic and Microsoft together represent over a quarter of vendor spend, anchoring both capability and dependency risk",
+          "evidence_ids": [
+            "sig_concentration_001",
+            "sig_concentration_002"
+          ],
+          "priority": "high"
+        }
+      ],
+      "limitations": []
+    },
+    {
+      "chapterId": "our_business",
+      "title": "Our Business",
+      "guidingQuestion": "How does this enterprise work and create value?",
+      "headline": "Value is created through a vertically integrated model where 60% of revenue comes from owning care delivery (34 hospitals, 214 ambulatory sites) and 40% from an owned health plan whose economics hinge heavily on Medicare Advantage performance, all underpinned by a technology stack with concentrated vendor dependencies.",
+      "executive_synthesis": "This enterprise creates value by owning both sides of care: provider operations across 34 hospitals and 214 ambulatory sites generate 60% of revenue, while an owned health plan contributes the remaining 40%. Within that health plan, 70% of revenue flows from Medicare Advantage and FFS, meaning Star Ratings and risk-adjustment accuracy function as direct economic levers, not just quality indicators. The model serves five distinct customer segments spanning Medicare, commercial, Medicaid, and self-pay populations, though whether these populations overlap across the plan and provider sides isn't established. Operationally, this value chain depends heavily on technology: more than half of the $960.8M technology budget goes to third-party contracts, with Epic alone representing 17.4% of vendor spend supporting clinical informatics. The systems underpinning the health plan's core economic levers—Cotiviti for risk-adjustment evidence and the HEDIS engine for quality measurement—carry flagged risk exposures, as does the Finance/GL Mart system, suggesting the mechanisms that translate care delivery into revenue are not without vulnerability.",
+      "key_insights": [
+        {
+          "statement": "Revenue is generated through a vertically integrated model spanning 34 hospitals, 214 ambulatory sites, and an owned health plan, with 60% of revenue from provider operations and 40% from the health plan.",
+          "evidence_ids": [
+            "ctx_identity_001",
+            "ctx_economics_006"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Within the health plan, 70% of revenue comes from Medicare Advantage/FFS, making Star Rating and risk-adjustment accuracy direct economic levers rather than quality-only metrics.",
+          "evidence_ids": [
+            "ctx_identity_001",
+            "ctx_priority_014",
+            "ctx_priority_017"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Five customer segments are declared: Medicare Advantage members, Medicare fee-for-service beneficiaries, commercial health plan members, Medicaid managed-care members, and self-pay/commercially insured patients across acute, ambulatory and behavioral health service lines. Whether these populations overlap across plan and provider revenue streams is not established by the facts, though the segment names suggest some populations could plausibly touch both.",
+          "evidence_ids": [
+            "ctx_segment_009",
+            "ctx_segment_010",
+            "ctx_segment_011",
+            "ctx_segment_012",
+            "ctx_segment_013"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "Epic Systems represents 17.4% of total vendor spend ($86.2M of $496.4M), supporting Clinical Informatics via Epic Hyperspace, and this single-vendor dependency is flagged as a medium-severity risk.",
+          "evidence_ids": [
+            "sig_concentration_001",
+            "sig_risk_017"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Third-party contracted spend ($496.4M) is 52% of the total technology budget ($960.8M), meaning more than half of the technology budget is allocated to third-party contracts.",
+          "evidence_ids": [
+            "sig_complexity_042"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "RAF evidence generation depends on the Cotiviti Quality Intelligence Platform, which carries a high-severity risk entry for evidence gaps on suspect conditions, while HEDIS numerator accuracy depends on the NCQA HEDIS Certified Measure Engine, which carries a medium-severity risk entry for abstraction-backlog undercounts. Separately, Finance/GL Mart (SQL Server On-Prem) shows a concentration of risk exposure with 4 open risk or control entries tied to that one system.",
+          "evidence_ids": [
+            "sig_dependency_005",
+            "sig_risk_014",
+            "sig_risk_015"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        }
+      ],
+      "tensions": [],
+      "what_to_watch": [],
+      "questions_to_ask": [],
+      "visual_opportunities": [],
+      "limitations": []
+    },
+    {
+      "chapterId": "strategy_value_creation",
+      "title": "Strategy & Value Creation",
+      "guidingQuestion": "Where are we trying to go, and what bets are we making?",
+      "headline": "The strategy is a coherent set of high-conviction bets — Stars improvement, Community Connect, lakehouse consolidation, and governed AI — but every one of them is early-stage, underfunded or unconfirmed, and the portfolio's declared 1.14x return remains unvalidated.",
+      "executive_synthesis": "The organization has named where it wants to go: a Medicare Advantage Star Rating of 4.5+ by 2028, consolidation of interface sprawl through Epic Community Connect, replacement of on-prem datamart sprawl with a Databricks lakehouse, and disciplined, human-in-the-loop AI adoption. These are real bets, not aspirations alone. But the evidence shows each is early and constrained: STARS improvement is 8% complete, Community Connect is 1% complete and blocked on unconfirmed funding, and the lakehouse initiative is still at evaluation with lock-in risk unassessed. Governance, meant to make the AI bet safe, is already pausing two of eighteen use cases and is flagged by 41 of 44 leaders as a friction point — a possible sign the safeguard is constraining throughput. Even automation opportunities rated highly, like interface failure triage, remain barely realized. Across the priority set, execution lags conviction, and the portfolio's headline 1.14x return on $739.7M is self-declared, not yet finance-confirmed — echoing a similar validation gap already seen in AI value claims.",
+      "key_insights": [
+        {
+          "statement": "Management has declared a strategic priority to lift the Medicare Advantage overall Star Rating from 3.5 to 4.5+ stars by measurement year 2028; the associated STARS 5.0 Improvement Program is currently only 8% complete.",
+          "evidence_ids": [
+            "ctx_priority_014",
+            "sig_portfolio_035"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Management is pursuing Epic Community Connect expansion to affiliated practices to reduce interface sprawl, but the program is 1% complete and blocked because year-two funding is unconfirmed.",
+          "evidence_ids": [
+            "ctx_priority_016",
+            "sig_portfolio_037"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Management has only reached evaluation stage on replacing the on-prem SQL Server datamart sprawl with a Databricks lakehouse, with the associated program at 12% completion and lock-in risk not yet assessed.",
+          "evidence_ids": [
+            "ctx_priority_015",
+            "sig_portfolio_039",
+            "sig_risk_080"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "AI use cases are being deliberately governed with human-in-the-loop review, yet two of 18 declared use cases are already paused pending governance review, suggesting the governance bet is actively constraining rollout, not just theoretical.",
+          "evidence_ids": [
+            "ctx_priority_018",
+            "sig_ai_value_071"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "tensions": [
+        {
+          "statement": "Leadership consensus names governance friction as a near-universal concern (41 of 44 leaders), coinciding with a declared strategic priority to govern AI use cases with human-in-the-loop review as they move from concept to pilot. This raises the possibility that the governance model intended to reduce risk is itself being perceived as a throughput constraint, though the two facts alone do not confirm a direct causal link.",
+          "evidence_ids": [
+            "sig_consensus_022",
+            "ctx_priority_018"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Interface Failure Alert Triage is rated a \"High\" automation candidate but sits at only 6% automation with a 6% error rate, suggesting a gap between recognized automation opportunity and realized capability for this process.",
+          "evidence_ids": [
+            "sig_operational_090"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "The declared portfolio shows $739.7M of budget against $845.9M of expected value (a 1.14x declared return) across 38 programs, self-declared and not yet finance-confirmed. This unvalidated status echoes the AI portfolio, where only 24% of promised value ($15.2M of $63.8M) has been finance-validated so far, though the confirmation rate for the 38-program portfolio itself is not yet known.",
+          "evidence_ids": [
+            "sig_portfolio_040",
+            "sig_ai_value_072"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Programs directly tied to declared strategic priorities (STARS, RAF, Community Connect, SQL sprawl) are all in the low single-to-low-double-digit percent complete range, suggesting the transformation load exceeds current execution capacity across the priority set, not just one program.",
+          "evidence_ids": [
+            "sig_portfolio_035",
+            "sig_portfolio_036",
+            "sig_portfolio_037",
+            "sig_portfolio_039"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "what_to_watch": [],
+      "questions_to_ask": [
+        "AI value realization tracking shows $63.8M of promised value against $15.2M finance-validated — 24% confirmed. What is driving the gap between promised and validated value, and what would it take to close it?",
+        "Epic Community Connect Expansion is blocked because year-two funding is unconfirmed, despite being tied to the strategic priority of reducing interface sprawl — is year-two funding being pursued?"
+      ],
+      "visual_opportunities": [
+        {
+          "visual_type": "horizontal_bar",
+          "title": "Nearly every strategic-priority-linked program is still in its earliest stage of delivery",
+          "purpose": "Show the portfolio-wide pattern of low completion percentages among flagship programs",
+          "dataset_ref": "stalled_programs",
+          "key_message": "Priority-linked programs sit in the single-to-low-double-digit percent complete range, several with explicit funding or scope blockers",
+          "evidence_ids": [
+            "sig_portfolio_035",
+            "sig_portfolio_036",
+            "sig_portfolio_037",
+            "sig_portfolio_039"
+          ],
+          "priority": "high"
+        }
+      ],
+      "limitations": []
+    },
+    {
+      "chapterId": "how_we_operate",
+      "title": "How We Operate",
+      "guidingQuestion": "How is the enterprise organized and how does work get done?",
+      "headline": "The enterprise's operating rhythm cannot yet be verified through its own metrics, since half of tracked performance measures suffer from inconsistent or missing baseline/target/actual data.",
+      "executive_synthesis": "A clear picture of how work actually gets done depends on being able to trust the metrics used to track it, and that trust is currently only partial. Of the 50 performance metrics tracked, 34 have a comparable baseline, target, and actual figure, but 18 of those mix inconsistent notation across the three fields, undermining confidence in direct comparison. The remaining 16 metrics lack a comparable baseline, target, and actual entirely, meaning any performance claims tied to them cannot currently be trusted at face value. This does not tell us how the organization is structured or how workflows move through it, but it does establish an important limit: operational performance, as currently measured, is only reliably assessable for a minority of tracked metrics. Until notation is standardized and missing baselines are filled in, statements about operational effectiveness drawn from this metric set should be treated cautiously rather than as settled fact.",
+      "key_insights": [
+        {
+          "statement": "34 of 50 tracked performance metrics have a comparable baseline/target/actual, but 18 of those mix inconsistent notation between the fields, and the remaining 16 metrics lack a comparable baseline/target/actual entirely, so metric-level performance claims for those 16 cannot currently be trusted at face value.",
+          "evidence_ids": [
+            "sig_gap_009"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        }
+      ],
+      "tensions": [],
+      "what_to_watch": [],
+      "questions_to_ask": [],
+      "visual_opportunities": [],
+      "limitations": []
+    },
+    {
+      "chapterId": "technology_data",
+      "title": "Technology & Data",
+      "guidingQuestion": "What enables the business, and where is complexity or dependency concentrated?",
+      "headline": "Epic Clarity anchors reporting as the single most-connected system while sitting a full level below its architecture target, making it the clearest concentration of both operational dependency and modernization risk in the technology estate.",
+      "executive_synthesis": "What enables the business today is a data and analytics estate built around Epic Clarity, the most-integrated system with 82 connections, but it operates below its architecture maturity target — a gap echoed across the on-prem SQL Server datamart, SSIS/SSAS/SSRS ETL estate, Tableau Server, and even the proposed Databricks lakehouse replacement, none of which yet decisively clears its target. Complexity is compounded by scale and sensitivity: 72% of tracked data assets carry regulated data, yet all 27 declared evidence sources remain unapproved for loading, suggesting governance for Star Rating and RAF-critical analytics is still early-stage. Dependency risk extends beyond software — critical infrastructure such as the Marsh Point server room and VMware compute cluster have thin capacity headroom, constraining how fast new initiatives can be layered on. Financially, 19% of the application estate ($52.2M) is already flagged for replacement, and none of 72 vendor contracts have document-level evidence, limiting visibility into pricing and renewal exposure. Together these point to concentrated, thinly governed dependency rather than a modernized foundation.",
+      "key_insights": [
+        {
+          "statement": "Epic Clarity's position as the most-integrated system (82 connections) combined with its below-target architecture maturity (level 3 of 4) suggests it could be a single point of both operational dependency and modernization risk across whatever reporting functions rely on it.",
+          "evidence_ids": [
+            "sig_dependency_076",
+            "sig_gap_092"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "The on-prem SQL Server datamart estate, SSIS/SSAS/SSRS ETL/cube estate, and Tableau Server are each one point below their respective maturity targets (2 of 3, 2 of 3, and 2 of 3), while the proposed Databricks lakehouse replacement is evaluated at maturity level 1 against a target of 2 on AI/ML Capability. Though these scores span different dimensions (architecture/scalability, analytics, and AI/ML) and aren't directly comparable, the gap-to-target pattern is similar across the current estate and its proposed replacement, suggesting the modernization target may not yet represent a decisively more mature state.",
+          "evidence_ids": [
+            "sig_gap_093",
+            "sig_gap_094",
+            "sig_gap_095",
+            "sig_gap_096"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "376 of 520 tracked data assets/integrations (about 72%) carry regulated data, indicating that most of the tracked estate is compliance-sensitive.",
+          "evidence_ids": [
+            "sig_complexity_070"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "27 of 27 declared evidence sources are not yet approved for loading, which could suggest the analytics foundation intended to support Star Rating and RAF decision-making is still in an early stage of governance.",
+          "evidence_ids": [
+            "sig_data_quality_083"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "tensions": [
+        {
+          "statement": "57 applications (19% of the estate, $52.2M) are already flagged as replacement candidates, which could represent a significant baseline cost tied to the existing estate before any new investment.",
+          "evidence_ids": [
+            "sig_concentration_003"
+          ],
+          "confidence": "medium",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Core data platforms show maturity gaps against their targets: Epic Clarity's Platform Architecture & Scalability sits at level 3 of a target 4, on-prem datamarts' Platform Architecture & Scalability at 2 of a target 3, and the Databricks lakehouse's AI/ML Capability at only level 1 of a target 2.",
+          "evidence_ids": [
+            "sig_gap_092",
+            "sig_gap_093",
+            "sig_gap_096"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "Critical infrastructure has thin capacity headroom — Marsh Point Regional Server Room (tier2-critical) at 8% and VMware compute cluster (tier1-critical) at 14% — which could constrain the pace at which new digital and analytics initiatives can be layered on.",
+          "evidence_ids": [
+            "sig_infra_067",
+            "sig_infra_068"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "None of 72 declared vendor contracts have document-level evidence behind them, limiting management's ability to interrogate pricing, SLA, or renewal exposure at the enterprise level.",
+          "evidence_ids": [
+            "sig_gap_010"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        }
+      ],
+      "what_to_watch": [],
+      "questions_to_ask": [
+        "With the Databricks lakehouse target itself only at maturity level 1 of a target 2, is the modernization sequence (evaluate lakehouse, then migrate datamarts) realistic, or does it risk replacing one immature platform with another?"
+      ],
+      "visual_opportunities": [
+        {
+          "visual_type": "horizontal_bar",
+          "title": "A handful of vendors, led by Epic, carry a disproportionate share of technology dependency",
+          "purpose": "Show vendor spend concentration to support the single-vendor dependency narrative",
+          "dataset_ref": "vendor_spend_concentration",
+          "key_message": "Epic and Microsoft together represent over a quarter of vendor spend, anchoring both capability and dependency risk",
+          "evidence_ids": [
+            "sig_concentration_001",
+            "sig_concentration_002"
+          ],
+          "priority": "high"
+        }
+      ],
+      "limitations": []
+    },
+    {
+      "chapterId": "performance_value",
+      "title": "Performance & Value",
+      "guidingQuestion": "Are we moving toward outcomes, and can we prove the value?",
+      "headline": "The portfolio is not yet proving value: only 24% of promised AI benefit is finance-validated, adoption of flagship AI tools lags targets by roughly 50 points, and a third of tracked metrics can't even support a verdict.",
+      "executive_synthesis": "The evidence does not yet show a confirmed shift toward outcomes. Flagship AI tools are far below adoption targets, and priority programs like STARS, RAF, and Community Connect remain in single-to-low-double-digit completion. Of the $63.8M in promised AI value, only $15.2M (24%) has been finance-validated — a gap echoed at the portfolio level, where the declared 1.14x expected-value-to-budget ratio across 38 programs is self-declared, not finance-confirmed. Structural measurement gaps compound the problem: 16 of 50 tracked metrics lack a usable baseline/target/actual, and 18 more mix notation, leaving a third of the metric portfolio unable to support a performance verdict. Contract-level evidence is similarly absent, with zero of 72 vendor contracts supporting document-level assessment. The CEO's own account of an unverified benefit case, and Finance's testimony that it has never signed off on a baseline or cohort definition, reinforce a recurring theme across leadership: benefit claims are being made faster than they can be validated. Whether this is systemic or incidental remains unestablished, but proof of value is currently lacking.",
+      "key_insights": [
+        {
+          "statement": "AI adoption is materially below target for flagship tools: Sepsis Early-Warning Model is 52.8 points below its adoption target and STARS Member Outreach Next-Best-Action is 47.7 points below target.",
+          "evidence_ids": [
+            "sig_ai_value_073",
+            "sig_ai_value_075"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Only 24% of promised AI value ($15.2M of $63.8M) is finance-validated, and priority-linked programs (STARS, RAF, Community Connect) are all in single-digit-to-low-double-digit percent completion.",
+          "evidence_ids": [
+            "sig_ai_value_072",
+            "sig_portfolio_035",
+            "sig_portfolio_036",
+            "sig_portfolio_037"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "16 of 50 tracked metrics lack a comparable baseline/target/actual, and 18 more mix notation, meaning a third of the metric portfolio cannot currently support a performance verdict either way.",
+          "evidence_ids": [
+            "sig_gap_009"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "No vendor contracts (0 of 72) have document-level evidence extraction, so contract performance (pricing, SLA compliance) cannot currently be assessed at the enterprise level.",
+          "evidence_ids": [
+            "sig_gap_010"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        }
+      ],
+      "tensions": [
+        {
+          "statement": "The CEO's own testimony that Actuarial & Underwriting Analytics Modernization was approved with a benefit number nobody has since verified is a concrete example of the value-realization theme that was raised, in some form, by all 44 interviewed leaders.",
+          "evidence_ids": [
+            "sig_testimony_043",
+            "sig_consensus_019"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "The declared portfolio's 1.14x expected-value-to-budget ratio ($845.9M vs $739.7M across 38 programs) is self-declared and not finance-confirmed — the same caveat that applies to the AI value figures ($63.8M promised vs $15.2M finance-validated, 24% confirmed). These are two separate instances of unconfirmed benefit cases; whether they reflect a broader pattern across the wider portfolio is not established by these figures alone but may warrant further validation.",
+          "evidence_ids": [
+            "sig_portfolio_040",
+            "sig_ai_value_072"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "VP Finance Operations testimony that Finance has never been given a baseline or cohort definition it would sign off on suggests a persistent gap between program benefit claims and finance validation capability, though whether this reflects a structural pattern or an incidental lapse isn't established by this statement alone.",
+          "evidence_ids": [
+            "sig_testimony_057"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "what_to_watch": [],
+      "questions_to_ask": [],
+      "visual_opportunities": [],
+      "limitations": []
+    },
+    {
+      "chapterId": "leadership_perspective",
+      "title": "Leadership Perspective",
+      "guidingQuestion": "What do leaders agree on, disagree on, and worry about?",
+      "headline": "Leadership is nearly unanimous that value realization, investment priority, and capability gaps are unresolved, but perception diverges from documented system state in roughly one in eight cases.",
+      "executive_synthesis": "Across all 44 interviewed leaders, consensus is striking: every one raised value realization, investment priority, and capability gap as live concerns, suggesting shared unease that ambition is outrunning resources and skills. Near-consensus extends to vendor dependency and data trust (36 of 44 each), grounded in concrete testimony like an eight-week vendor queue and a CEO who keeps personal data extracts rather than trust reported numbers, and to governance friction (41 of 44), epitomized by a six-week architecture review process leaders call sensible in standard but broken in practice. Disagreement, where it exists, is narrow rather than sharp: ai_governance and finance_evidence were each flagged by only a single leader, meaning these are isolated observations rather than shared worries, and leadership has not yet converged on them. Underlying all of this is a caution about the reliability of leadership perception itself: 127 of 996 interview responses contradict system-of-record evidence, showing that what leaders believe and what systems document diverge in a material minority of cases.",
+      "key_insights": [
+        {
+          "statement": "All 44 interviewed leaders raised value realization as a concern, indicating a strong consensus among them about whether investments are delivering claimed benefit.",
+          "evidence_ids": [
+            "sig_consensus_019"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "All 44 interviewed leaders raised both investment priority and capability gap, indicating broad consensus that these are top-of-mind issues; this pattern is consistent with, though does not itself confirm, a view that resources and skills are misaligned to ambition.",
+          "evidence_ids": [
+            "sig_consensus_020",
+            "sig_consensus_021"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "36 of 44 leaders raised vendor dependency and 36 raised data trust as concerns, both echoed in specific testimony (e.g., the CFO's comment on Zelis Healthcare's eight-week queue, the CEO's comment on keeping personal data extracts rather than trusting reported numbers).",
+          "evidence_ids": [
+            "sig_consensus_026",
+            "sig_consensus_025",
+            "sig_testimony_054",
+            "sig_testimony_049"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "Governance friction was raised by 41 of 44 leaders, with the CEO specifically characterizing architecture review as adding six weeks with standards that are sensible but a process that is not.",
+          "evidence_ids": [
+            "sig_consensus_022",
+            "sig_testimony_045"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "tensions": [
+        {
+          "statement": "While enterprise-wide themes are near-universal, ai_governance and finance_evidence were each raised by only a single leader, indicating these are not shared concerns but isolated observations (from a VP Finance Operations, on the absence of an agreed finance baseline) that leadership as a whole has not yet converged on.",
+          "evidence_ids": [
+            "sig_dissent_033",
+            "sig_dissent_034",
+            "sig_testimony_057"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "127 of 996 leadership interview responses contradict the system-of-record evidence on the same topic, indicating leadership perception and documented system state diverge in a material minority of cases.",
+          "evidence_ids": [
+            "sig_contradiction_018"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "what_to_watch": [],
+      "questions_to_ask": [],
+      "visual_opportunities": [
+        {
+          "visual_type": "bar",
+          "title": "AI value promised far exceeds AI value finance has confirmed",
+          "purpose": "Make the AI value realization gap immediately visible to a new executive",
+          "dataset_ref": "leadership_evidence_alignment",
+          "key_message": "Only 24% of promised AI value is finance-validated, echoing broader leadership concern about value realization",
+          "evidence_ids": [
+            "sig_ai_value_072"
+          ],
+          "priority": "medium"
+        }
+      ],
+      "limitations": []
+    },
+    {
+      "chapterId": "what_needs_attention",
+      "title": "What Needs Attention",
+      "guidingQuestion": "What tensions, risks, dependencies and decisions deserve executive attention?",
+      "headline": "Executive attention should concentrate on four converging exposures — unvalidated AI value claims, unreliable metric infrastructure, aging integration and migration risk, and thin infrastructure headroom — each rated high severity or material enough to warrant decision-level scrutiny before further investment or reliance.",
+      "executive_synthesis": "The clearest signal for executive attention is a validation gap: only 24% of promised AI value has been finance-confirmed, yet all 44 interviewed leaders flagged value realization as a shared concern, suggesting further AI investment should be paired with tighter proof requirements. That concern is compounded by the state of the metrics themselves — a third lack basic baseline, target, or actual data, and over half of the remainder mix notation, meaning many performance claims across the organization cannot currently be trusted at face value. Infrastructure and migration risks add further urgency: an unencrypted legacy interface (Corepoint) presents high-severity PHI exposure and recurs across multiple risk entries, a high-severity RAF evidence gap tied to Cotiviti threatens a declared reduction priority, and the Cerner-to-Epic migration at St. Anselm remains high-risk with its decommission only 10% complete. Separately, a tier2-critical server room operating with just 8% capacity headroom and backup-only disaster recovery raises continuity questions disproportionate to its designated importance. Together these form a set of dependencies and open exposures warranting near-term decisions.",
+      "key_insights": [
+        {
+          "statement": "AI value realization confirmation is low ($15.2M finance-validated of $63.8M promised value, 24%), and value realization was raised by all 44 interviewed leaders as a shared topic of focus — a combination that could warrant closer scrutiny of how AI value is validated before further investment.",
+          "evidence_ids": [
+            "sig_ai_value_072",
+            "sig_consensus_019"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "Metric infrastructure itself needs attention: 16 of 50 tracked metrics (roughly a third) lack a comparable baseline, target, or actual, and 18 of the remaining 34 mix notation between those fields, meaning performance claims on this portion of metrics are unsupported.",
+          "evidence_ids": [
+            "sig_gap_009"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        }
+      ],
+      "tensions": [
+        {
+          "statement": "PHI exposure via an unencrypted legacy interface (Corepoint Integration Engine) is rated high severity, and Corepoint is also named across 2 separate risk/control entries, indicating concentrated exposure on aging integration infrastructure.",
+          "evidence_ids": [
+            "sig_risk_013",
+            "sig_dependency_007"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "RAF evidence gap on suspect conditions is rated high severity and tied to Cotiviti, directly threatening the declared priority of reducing RAF evidence gaps.",
+          "evidence_ids": [
+            "sig_risk_014",
+            "ctx_priority_017"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "The Cerner-to-Epic data migration integrity risk at St. Anselm is rated high severity while the associated decommission program is only 10% complete, leaving the exposure window open for an extended period.",
+          "evidence_ids": [
+            "sig_risk_016",
+            "sig_portfolio_038"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Marsh Point Regional Server Room is tier2-critical but has only 8% capacity headroom and a backup-only DR tier, a combination that could pose continuity risk given its critical designation.",
+          "evidence_ids": [
+            "sig_infra_067"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "what_to_watch": [],
+      "questions_to_ask": [
+        "Why is the Privileged Access Management Rollout still at 0% complete when the high-severity risk it is meant to close is already declared as directly impacting it?"
+      ],
+      "visual_opportunities": [
+        {
+          "visual_type": "horizontal_bar",
+          "title": "Risk exposure is concentrated on a small set of systems, not spread evenly across the estate",
+          "purpose": "Show which systems carry the most declared risk/control entries",
+          "dataset_ref": "risk_system_concentration",
+          "key_message": "Epic Tapestry and the on-prem Finance/GL Mart each appear in four separate risk entries, more than any other system",
+          "evidence_ids": [
+            "sig_dependency_004",
+            "sig_dependency_005"
+          ],
+          "priority": "medium"
+        }
+      ],
+      "limitations": []
+    }
+  ],
+  "thesis": {
+    "signalPacket": {
+      "enterpriseIdentity": {
+        "businessModel": "Vertically integrated delivery system (34 owned hospitals, 214 ambulatory clinic sites, employed and affiliated physician network) paired with an owned health plan. Revenue splits 60% provider / 40% health plan; plan revenue splits 70% Medicare Advantage and Medicare FFS / 30% commercial and Medicaid managed care.",
+        "industry": "Healthcare — Integrated Delivery Network & Medicare Advantage Health Plan",
+        "revenue": 25000000000,
+        "employeeCount": 68000
+      },
+      "businessEconomics": {
+        "operatingSegments": [
+          "Hospital & Acute Delivery",
+          "Ambulatory & Physician Network",
+          "Health Plan Operations",
+          "Shared Enterprise Services"
+        ],
+        "customerSegments": [
+          "Medicare Advantage members",
+          "Medicare fee-for-service beneficiaries",
+          "commercial health plan members",
+          "Medicaid managed-care members",
+          "self-pay and commercially insured patients across acute, ambulatory and behavioral health service lines"
+        ],
+        "technologyBudget": 960800000,
+        "technologyBudgetShareOfRevenue": 0.038432
+      },
+      "strategicPriorities": [
+        "1) Improve Medicare Advantage overall Star Rating from 3.5 to 4.5+ stars by measurement year 2028",
+        "2) Begin modernizing the on-premises SQL Server datamart sprawl by evaluating Databricks as a future lakehouse target — evaluation-stage only, nothing implemented yet",
+        "3) Expand Epic Community Connect to affiliated practices to reduce interface sprawl",
+        "4) Reduce claims denial write-offs and RAF evidence gaps",
+        "5) Govern AI use cases with human-in-the-loop review as they move from concept to pilot"
+      ],
+      "signals": [
+        {
+          "id": "sig_concentration_001",
+          "kind": "concentration",
+          "statement": "Epic Systems Corporation represents 17.4% of total vendor spend ($86.2M of $496.4M), supporting Clinical Informatics.",
+          "domains": [
+            "vendor_contract"
+          ],
+          "value": 0.17363448996984002,
+          "evidenceRefs": [
+            "Epic Systems Corporation"
+          ]
+        },
+        {
+          "id": "sig_concentration_002",
+          "kind": "concentration",
+          "statement": "Microsoft Corporation represents 9.1% of total vendor spend ($45.0M of $496.4M), supporting Information Technology & Digital.",
+          "domains": [
+            "vendor_contract"
+          ],
+          "value": 0.09063912175407422,
+          "evidenceRefs": [
+            "Microsoft Corporation"
+          ]
+        },
+        {
+          "id": "sig_concentration_003",
+          "kind": "concentration",
+          "statement": "57 applications (19% of the estate, $52.2M) are already identified as replacement candidates.",
+          "domains": [
+            "application_system"
+          ],
+          "value": 0.1893687707641196,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_dependency_004",
+          "kind": "dependency",
+          "statement": "Epic Tapestry is named in 4 separate risk or control entries — a concentration of risk exposure on one system.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "value": 4,
+          "evidenceRefs": [
+            "Epic Tapestry"
+          ]
+        },
+        {
+          "id": "sig_dependency_005",
+          "kind": "dependency",
+          "statement": "Finance/GL Mart (SQL Server On-Prem) is named in 4 separate risk or control entries — a concentration of risk exposure on one system.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "value": 4,
+          "evidenceRefs": [
+            "Finance/GL Mart (SQL Server On-Prem)"
+          ]
+        },
+        {
+          "id": "sig_dependency_006",
+          "kind": "dependency",
+          "statement": "ServiceNow ITSM/CMDB Platform is named in 3 separate risk or control entries — a concentration of risk exposure on one system.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "value": 3,
+          "evidenceRefs": [
+            "ServiceNow ITSM/CMDB Platform"
+          ]
+        },
+        {
+          "id": "sig_dependency_007",
+          "kind": "dependency",
+          "statement": "Corepoint Integration Engine (legacy) is named in 2 separate risk or control entries — a concentration of risk exposure on one system.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "value": 2,
+          "evidenceRefs": [
+            "Corepoint Integration Engine (legacy)"
+          ]
+        },
+        {
+          "id": "sig_dependency_008",
+          "kind": "dependency",
+          "statement": "Cotiviti Quality Intelligence Platform is named in 2 separate risk or control entries — a concentration of risk exposure on one system.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "value": 2,
+          "evidenceRefs": [
+            "Cotiviti Quality Intelligence Platform"
+          ]
+        },
+        {
+          "id": "sig_gap_009",
+          "kind": "gap",
+          "statement": "34 of 50 tracked metrics have a comparable baseline, target and actual; 16 do not, and 18 of the comparable set mix notation between those three fields. Metric-level performance claims outside the comparable set are unsupported.",
+          "domains": [
+            "metric_outcome"
+          ],
+          "value": 0.68,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_gap_010",
+          "kind": "gap",
+          "statement": "None of the 72 declared vendor contracts have document-level evidence extraction behind them in this packet. Contract-level claims (pricing terms, SLA history, invoice detail) are not available at the enterprise level — only the declared register (name, value, term).",
+          "domains": [
+            "vendor_contract"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_gap_011",
+          "kind": "gap",
+          "statement": "Program-specific leadership sentiment is sparsely linked (0% of interview mentions resolve to a canonical object). Do not generalize enterprise-wide leadership themes into program-specific sentiment unless an explicit resolved crosswalk row supports that specific connection.",
+          "domains": [
+            "ai_value_interview_evidence",
+            "program_initiative"
+          ],
+          "value": 0,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_risk_012",
+          "kind": "risk",
+          "statement": "Standing privileged credentials outside PAM coverage is rated high severity, tied to CyberArk Privileged Access Management.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "evidenceRefs": [
+            "Standing privileged credentials outside PAM coverage"
+          ]
+        },
+        {
+          "id": "sig_risk_013",
+          "kind": "risk",
+          "statement": "PHI exposure via unencrypted legacy interface is rated high severity, tied to Corepoint Integration Engine (legacy).",
+          "domains": [
+            "risk_or_control"
+          ],
+          "evidenceRefs": [
+            "PHI exposure via unencrypted legacy interface"
+          ]
+        },
+        {
+          "id": "sig_risk_014",
+          "kind": "risk",
+          "statement": "RAF evidence gap on suspect conditions is rated high severity, tied to Cotiviti Quality Intelligence Platform.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "evidenceRefs": [
+            "RAF evidence gap on suspect conditions"
+          ]
+        },
+        {
+          "id": "sig_risk_015",
+          "kind": "risk",
+          "statement": "HEDIS measure numerator undercount from abstraction backlog is rated medium severity, tied to NCQA HEDIS Certified Measure Engine.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "evidenceRefs": [
+            "HEDIS measure numerator undercount from abstraction backlog"
+          ]
+        },
+        {
+          "id": "sig_risk_016",
+          "kind": "risk",
+          "statement": "Cerner-to-Epic conversion data-migration integrity risk is rated high severity, tied to Cerner Millennium (legacy — St. Anselm).",
+          "domains": [
+            "risk_or_control"
+          ],
+          "evidenceRefs": [
+            "Cerner-to-Epic conversion data-migration integrity risk"
+          ]
+        },
+        {
+          "id": "sig_risk_017",
+          "kind": "risk",
+          "statement": "Vendor concentration — single-vendor Epic dependency is rated medium severity, tied to Epic Hyperspace.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "evidenceRefs": [
+            "Vendor concentration — single-vendor Epic dependency"
+          ]
+        },
+        {
+          "id": "sig_contradiction_018",
+          "kind": "contradiction",
+          "statement": "127 of 996 leadership interview responses contradict the system-of-record evidence on the same topic.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 127,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_019",
+          "kind": "consensus",
+          "statement": "\"value_realisation\" was raised by 44 of 44 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 44,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_020",
+          "kind": "consensus",
+          "statement": "\"investment_priority\" was raised by 44 of 44 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 44,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_021",
+          "kind": "consensus",
+          "statement": "\"capability_gap\" was raised by 44 of 44 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 44,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_022",
+          "kind": "consensus",
+          "statement": "\"governance_friction\" was raised by 41 of 44 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 41,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_023",
+          "kind": "consensus",
+          "statement": "\"manual_effort\" was raised by 38 of 44 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 38,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_024",
+          "kind": "consensus",
+          "statement": "\"integration_debt\" was raised by 38 of 44 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 38,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_025",
+          "kind": "consensus",
+          "statement": "\"data_trust\" was raised by 36 of 44 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 36,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_026",
+          "kind": "consensus",
+          "statement": "\"vendor_dependency\" was raised by 36 of 44 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 36,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_027",
+          "kind": "consensus",
+          "statement": "\"estate_fragmentation\" was raised by 34 of 44 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 34,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_028",
+          "kind": "consensus",
+          "statement": "\"accepted_risk\" was raised by 29 of 44 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 29,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_029",
+          "kind": "consensus",
+          "statement": "\"throughput_constraint\" was raised by 23 of 44 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 23,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_030",
+          "kind": "consensus",
+          "statement": "\"decision_latency\" was raised by 23 of 44 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 23,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_031",
+          "kind": "consensus",
+          "statement": "\"legacy_gravity\" was raised by 23 of 44 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 23,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_032",
+          "kind": "consensus",
+          "statement": "\"data_latency\" was raised by 22 of 44 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 22,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_dissent_033",
+          "kind": "dissent",
+          "statement": "\"ai_governance\" was raised by exactly one interviewed leader — a minority view with no corroboration elsewhere in the interview set.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_dissent_034",
+          "kind": "dissent",
+          "statement": "\"finance_evidence\" was raised by exactly one interviewed leader — a minority view with no corroboration elsewhere in the interview set.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_portfolio_035",
+          "kind": "portfolio",
+          "statement": "STARS 5.0 Improvement Program is 8% complete.",
+          "domains": [
+            "program_initiative"
+          ],
+          "evidenceRefs": [
+            "STARS 5.0 Improvement Program"
+          ]
+        },
+        {
+          "id": "sig_portfolio_036",
+          "kind": "portfolio",
+          "statement": "RAF Capture & Risk Adjustment Modernization is 3% complete.",
+          "domains": [
+            "program_initiative"
+          ],
+          "evidenceRefs": [
+            "RAF Capture & Risk Adjustment Modernization"
+          ]
+        },
+        {
+          "id": "sig_portfolio_037",
+          "kind": "portfolio",
+          "statement": "Epic Community Connect Expansion is 1% complete and blocked: Funding approved for year one only; year two is unconfirmed..",
+          "domains": [
+            "program_initiative"
+          ],
+          "evidenceRefs": [
+            "Epic Community Connect Expansion"
+          ]
+        },
+        {
+          "id": "sig_portfolio_038",
+          "kind": "portfolio",
+          "statement": "Legacy Cerner Decommission — St. Anselm is 10% complete.",
+          "domains": [
+            "program_initiative"
+          ],
+          "evidenceRefs": [
+            "Legacy Cerner Decommission — St. Anselm"
+          ]
+        },
+        {
+          "id": "sig_portfolio_039",
+          "kind": "portfolio",
+          "statement": "SQL Server Sprawl Rationalization & Databricks Lakehouse Evaluation is 12% complete.",
+          "domains": [
+            "program_initiative"
+          ],
+          "evidenceRefs": [
+            "SQL Server Sprawl Rationalization & Databricks Lakehouse Evaluation"
+          ]
+        },
+        {
+          "id": "sig_portfolio_040",
+          "kind": "portfolio",
+          "statement": "The declared portfolio carries $739.7M of budget against $845.9M of expected value across 38 programs (a declared 1.14x return) — declared, not yet finance-confirmed.",
+          "domains": [
+            "program_initiative"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_complexity_041",
+          "kind": "complexity",
+          "statement": "Clinical Informatics carries the largest technology footprint by cost: 99 applications, $169.9M annually.",
+          "domains": [
+            "application_system"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_complexity_042",
+          "kind": "complexity",
+          "statement": "Third-party contracted spend ($496.4M) represents 52% of the total technology budget ($960.8M).",
+          "domains": [
+            "vendor_contract",
+            "spend_value_fact"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_testimony_043",
+          "kind": "testimony",
+          "statement": "A President & Chief Executive Officer said, on the theme of \"value_realisation\" (negative sentiment): \"\"We approved Actuarial & Underwriting Analytics Modernization with a benefit number and nobody has been back to check whether it landed.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "President & Chief Executive Officer"
+          ]
+        },
+        {
+          "id": "sig_testimony_044",
+          "kind": "testimony",
+          "statement": "A President & Chief Executive Officer said, on the theme of \"estate_fragmentation\" (negative sentiment): \"\"Epic Resolute Professional Billing — Production does the job it was bought for, but we run three other systems alongside it for regions it never covered. Nobody has owned consolidating them.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "President & Chief Executive Officer"
+          ]
+        },
+        {
+          "id": "sig_testimony_045",
+          "kind": "testimony",
+          "statement": "A President & Chief Executive Officer said, on the theme of \"governance_friction\" (negative sentiment): \"\"Architecture review adds six weeks and rarely changes the outcome. The standards are sensible; the process around them is not.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "President & Chief Executive Officer"
+          ]
+        },
+        {
+          "id": "sig_testimony_046",
+          "kind": "testimony",
+          "statement": "A President & Chief Executive Officer said, on the theme of \"manual_effort\" (negative sentiment): \"\"Reconciling Corporate Strategy data between STARS/HEDIS Quality Mart (SQL Server On-Prem) and the ledger is manual and takes days at every close.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "President & Chief Executive Officer"
+          ]
+        },
+        {
+          "id": "sig_testimony_047",
+          "kind": "testimony",
+          "statement": "A President & Chief Executive Officer said, on the theme of \"data_latency\" (negative sentiment): \"\"Corporate Strategy decisions are made on data that is a day old. By the time we see it, the operational window has closed.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "President & Chief Executive Officer"
+          ]
+        },
+        {
+          "id": "sig_testimony_048",
+          "kind": "testimony",
+          "statement": "A President & Chief Executive Officer said, on the theme of \"investment_priority\" (neutral sentiment): \"\"Stabilising the Corporate Strategy platform, ahead of anything new. We keep adding capability on a foundation that cannot carry it.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "President & Chief Executive Officer"
+          ]
+        },
+        {
+          "id": "sig_testimony_049",
+          "kind": "testimony",
+          "statement": "A President & Chief Executive Officer said, on the theme of \"data_trust\" (negative sentiment): \"\"I do not trust the Corporate Strategy numbers without checking them against the source. Most of my team keeps their own extract.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "President & Chief Executive Officer"
+          ]
+        },
+        {
+          "id": "sig_testimony_050",
+          "kind": "testimony",
+          "statement": "A President & Chief Executive Officer said, on the theme of \"capability_gap\" (negative sentiment): \"\"We cover the Epic Care Everywhere — Production skill gap with a contractor who has been here two years. That is not a plan, it is a habit.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "President & Chief Executive Officer"
+          ]
+        },
+        {
+          "id": "sig_testimony_051",
+          "kind": "testimony",
+          "statement": "A President & Chief Executive Officer said, on the theme of \"accepted_risk\" (negative sentiment): \"\"The Corporate Strategy recovery position is accepted rather than mitigated. It has been on the register for three years with the same owner.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "President & Chief Executive Officer"
+          ]
+        },
+        {
+          "id": "sig_testimony_052",
+          "kind": "testimony",
+          "statement": "A President & Chief Executive Officer said, on the theme of \"throughput_constraint\" (negative sentiment): \"\"We are not short of ideas, we are short of people who can safely change Provider Data Reports (SQL Server On-Prem). Everything queues behind the same four engineers.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "President & Chief Executive Officer"
+          ]
+        },
+        {
+          "id": "sig_testimony_053",
+          "kind": "testimony",
+          "statement": "A Chief Financial Officer said, on the theme of \"integration_debt\" (negative sentiment): \"\"Most of the fragility is not in the systems, it is between them. The interfaces around Workday HCM & Payroll break whenever either end is patched.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "Chief Financial Officer"
+          ]
+        },
+        {
+          "id": "sig_testimony_054",
+          "kind": "testimony",
+          "statement": "A Chief Financial Officer said, on the theme of \"vendor_dependency\" (negative sentiment): \"\"Zelis Healthcare. We cannot change anything without their professional services and their queue is eight weeks.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "Chief Financial Officer"
+          ]
+        },
+        {
+          "id": "sig_testimony_055",
+          "kind": "testimony",
+          "statement": "A Chief Data & Analytics Officer said, on the theme of \"decision_latency\" (negative sentiment): \"\"A decision needing three functions takes a quarter. Most people have learned to avoid needing one.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "Chief Data & Analytics Officer"
+          ]
+        },
+        {
+          "id": "sig_testimony_056",
+          "kind": "testimony",
+          "statement": "A Chief Information Officer said, on the theme of \"legacy_gravity\" (negative sentiment): \"\"The core is stable and old. Epic Community Connect — Millbrook Internal Medicine Group has not materially changed in six years and everything new has to route around it.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "Chief Information Officer"
+          ]
+        },
+        {
+          "id": "sig_testimony_057",
+          "kind": "testimony",
+          "statement": "A VP Finance Operations said, on the theme of \"finance_evidence\" (negative sentiment): \"\"Finance want a baseline they agree with and a cohort definition. We have never given them either in a form they would sign.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "VP Finance Operations"
+          ]
+        },
+        {
+          "id": "sig_testimony_058",
+          "kind": "testimony",
+          "statement": "A President & Chief Executive Officer said, on the theme of \"data_trust\" (negative sentiment): \"\"I do not trust the Corporate Strategy numbers without checking them against the source. Most of my team keeps their own extract.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "President & Chief Executive Officer"
+          ]
+        },
+        {
+          "id": "sig_testimony_059",
+          "kind": "testimony",
+          "statement": "A President & Chief Executive Officer said, on the theme of \"accepted_risk\" (negative sentiment): \"\"The Corporate Strategy recovery position is accepted rather than mitigated. It has been on the register for three years with the same owner.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "President & Chief Executive Officer"
+          ]
+        },
+        {
+          "id": "sig_workforce_060",
+          "kind": "workforce",
+          "statement": "Registered Nurse — Inpatient (Nursing Operations, 3,365 people) has a documented automation opportunity: Medium",
+          "domains": [
+            "workforce_role"
+          ],
+          "evidenceRefs": [
+            "Registered Nurse — Inpatient"
+          ]
+        },
+        {
+          "id": "sig_workforce_061",
+          "kind": "workforce",
+          "statement": "Medical Assistant (Ambulatory & Physician Network Operations, 787 people) has a documented automation opportunity: Medium",
+          "domains": [
+            "workforce_role"
+          ],
+          "evidenceRefs": [
+            "Medical Assistant"
+          ]
+        },
+        {
+          "id": "sig_workforce_062",
+          "kind": "workforce",
+          "statement": "Registered Nurse — Ambulatory (Ambulatory & Physician Network Operations, 663 people) has a documented automation opportunity: Low",
+          "domains": [
+            "workforce_role"
+          ],
+          "evidenceRefs": [
+            "Registered Nurse — Ambulatory"
+          ]
+        },
+        {
+          "id": "sig_workforce_063",
+          "kind": "workforce",
+          "statement": "Employed Physician (Specialty) (Ambulatory & Physician Network Operations, 444 people) has a documented automation opportunity: Medium",
+          "domains": [
+            "workforce_role"
+          ],
+          "evidenceRefs": [
+            "Employed Physician (Specialty)"
+          ]
+        },
+        {
+          "id": "sig_workforce_064",
+          "kind": "workforce",
+          "statement": "Patient Access Representative (Patient Access & Registration, 429 people) has a documented automation opportunity: Medium-High",
+          "domains": [
+            "workforce_role"
+          ],
+          "evidenceRefs": [
+            "Patient Access Representative"
+          ]
+        },
+        {
+          "id": "sig_infra_065",
+          "kind": "risk",
+          "statement": "Lakeview Primary Data Center is tier1-critical with only 58% capacity headroom, DR tier tier2_warm.",
+          "domains": [
+            "infrastructure_platform"
+          ],
+          "evidenceRefs": [
+            "Lakeview Primary Data Center"
+          ]
+        },
+        {
+          "id": "sig_infra_066",
+          "kind": "risk",
+          "statement": "Riverton Regional Server Room is tier2-critical with only 42% capacity headroom, DR tier tier3_backup_only.",
+          "domains": [
+            "infrastructure_platform"
+          ],
+          "evidenceRefs": [
+            "Riverton Regional Server Room"
+          ]
+        },
+        {
+          "id": "sig_infra_067",
+          "kind": "risk",
+          "statement": "Marsh Point Regional Server Room is tier2-critical with only 8% capacity headroom, DR tier tier3_backup_only.",
+          "domains": [
+            "infrastructure_platform"
+          ],
+          "evidenceRefs": [
+            "Marsh Point Regional Server Room"
+          ]
+        },
+        {
+          "id": "sig_infra_068",
+          "kind": "risk",
+          "statement": "VMware vSphere Compute Cluster is tier1-critical with only 14% capacity headroom, DR tier tier2_warm.",
+          "domains": [
+            "infrastructure_platform"
+          ],
+          "evidenceRefs": [
+            "VMware vSphere Compute Cluster"
+          ]
+        },
+        {
+          "id": "sig_infra_069",
+          "kind": "risk",
+          "statement": "NetApp Enterprise Storage Estate is tier1-critical with only 25% capacity headroom, DR tier tier2_warm.",
+          "domains": [
+            "infrastructure_platform"
+          ],
+          "evidenceRefs": [
+            "NetApp Enterprise Storage Estate"
+          ]
+        },
+        {
+          "id": "sig_complexity_070",
+          "kind": "complexity",
+          "statement": "376 of 520 tracked data assets/integrations carry regulated data.",
+          "domains": [
+            "data_asset_or_integration"
+          ],
+          "value": 376,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_ai_value_071",
+          "kind": "ai_value",
+          "statement": "18 declared AI/automation use cases by status: 6 pilot_multi_facility, 4 production_enterprise_wide, 4 evaluation, 2 paused_pending_governance_review, 2 pilot_single_facility.",
+          "domains": [
+            "ai_automation_use_case"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_ai_value_072",
+          "kind": "ai_value",
+          "statement": "AI value realization tracking shows $63.8M of promised value against $15.2M finance-validated — 24% confirmed.",
+          "domains": [
+            "ai_value_realization_signal"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_ai_value_073",
+          "kind": "ai_value",
+          "statement": "Sepsis Early-Warning Model adoption is 52.8 points below its adoption target.",
+          "domains": [
+            "ai_tool_usage_observation"
+          ],
+          "evidenceRefs": [
+            "Sepsis Early-Warning Model"
+          ]
+        },
+        {
+          "id": "sig_ai_value_074",
+          "kind": "ai_value",
+          "statement": "Charge Capture Anomaly Detection adoption is 48.1 points below its adoption target.",
+          "domains": [
+            "ai_tool_usage_observation"
+          ],
+          "evidenceRefs": [
+            "Charge Capture Anomaly Detection"
+          ]
+        },
+        {
+          "id": "sig_ai_value_075",
+          "kind": "ai_value",
+          "statement": "STARS Member Outreach Next-Best-Action adoption is 47.7 points below its adoption target.",
+          "domains": [
+            "ai_tool_usage_observation"
+          ],
+          "evidenceRefs": [
+            "STARS Member Outreach Next-Best-Action"
+          ]
+        },
+        {
+          "id": "sig_dependency_076",
+          "kind": "dependency",
+          "statement": "Epic Clarity — Test integrates with 82 other systems — a concentration point in the integration graph.",
+          "domains": [
+            "relationship_source_row"
+          ],
+          "value": 82,
+          "evidenceRefs": [
+            "Epic Clarity — Test"
+          ]
+        },
+        {
+          "id": "sig_dependency_077",
+          "kind": "dependency",
+          "statement": "Epic Clarity — Production integrates with 81 other systems — a concentration point in the integration graph.",
+          "domains": [
+            "relationship_source_row"
+          ],
+          "value": 81,
+          "evidenceRefs": [
+            "Epic Clarity — Production"
+          ]
+        },
+        {
+          "id": "sig_dependency_078",
+          "kind": "dependency",
+          "statement": "Epic Clarity — Training integrates with 73 other systems — a concentration point in the integration graph.",
+          "domains": [
+            "relationship_source_row"
+          ],
+          "value": 73,
+          "evidenceRefs": [
+            "Epic Clarity — Training"
+          ]
+        },
+        {
+          "id": "sig_risk_079",
+          "kind": "risk",
+          "statement": "Standing privileged credentials outside PAM coverage is declared as directly impacting Privileged Access Management (PAM) Rollout (a canonical link, not inferred).",
+          "domains": [
+            "relationship_source_row",
+            "risk_or_control",
+            "program_initiative"
+          ],
+          "evidenceRefs": [
+            "Standing privileged credentials outside PAM coverage",
+            "Privileged Access Management (PAM) Rollout"
+          ]
+        },
+        {
+          "id": "sig_risk_080",
+          "kind": "risk",
+          "statement": "Databricks lakehouse evaluation — vendor selection / lock-in risk not yet assessed is declared as directly impacting SQL Server Sprawl Rationalization & Databricks Lakehouse Evaluation (a canonical link, not inferred).",
+          "domains": [
+            "relationship_source_row",
+            "risk_or_control",
+            "program_initiative"
+          ],
+          "evidenceRefs": [
+            "Databricks lakehouse evaluation — vendor selection / lock-in risk not yet assessed",
+            "SQL Server Sprawl Rationalization & Databricks Lakehouse Evaluation"
+          ]
+        },
+        {
+          "id": "sig_risk_081",
+          "kind": "risk",
+          "statement": "Contract renewal lapse risk — top-10 vendor is declared as directly impacting Pharmacy Robotics & Willow Optimization (a canonical link, not inferred).",
+          "domains": [
+            "relationship_source_row",
+            "risk_or_control",
+            "program_initiative"
+          ],
+          "evidenceRefs": [
+            "Contract renewal lapse risk — top-10 vendor",
+            "Pharmacy Robotics & Willow Optimization"
+          ]
+        },
+        {
+          "id": "sig_risk_082",
+          "kind": "risk",
+          "statement": "Supply chain single-source risk — pharmacy robotics parts is declared as directly impacting Pharmacy Robotics & Willow Optimization (a canonical link, not inferred).",
+          "domains": [
+            "relationship_source_row",
+            "risk_or_control",
+            "program_initiative"
+          ],
+          "evidenceRefs": [
+            "Supply chain single-source risk — pharmacy robotics parts",
+            "Pharmacy Robotics & Willow Optimization"
+          ]
+        },
+        {
+          "id": "sig_data_quality_083",
+          "kind": "data_quality",
+          "statement": "27 of 27 declared evidence sources are not yet approved for loading.",
+          "domains": [
+            "evidence_source"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_complexity_084",
+          "kind": "complexity",
+          "statement": "R1 RCM Back-Office Revenue Cycle Services (Revenue Cycle Outsourced Operations) runs at $9.4M annually via R1 RCM.",
+          "domains": [
+            "managed_service_scope"
+          ],
+          "evidenceRefs": [
+            "R1 RCM Back-Office Revenue Cycle Services"
+          ]
+        },
+        {
+          "id": "sig_complexity_085",
+          "kind": "complexity",
+          "statement": "Internal + Overflow Contingent Staffing (IT Service Desk Tier-1 Support) runs at $8.2M annually via Internal IT Service Management team.",
+          "domains": [
+            "managed_service_scope"
+          ],
+          "evidenceRefs": [
+            "Internal + Overflow Contingent Staffing"
+          ]
+        },
+        {
+          "id": "sig_complexity_086",
+          "kind": "complexity",
+          "statement": "Internal Facilities Engineering with Vendor Support (Facilities & Biomedical Equipment Managed Services) runs at $7.4M annually via Internal Facilities Engineering team with OEM service contracts.",
+          "domains": [
+            "managed_service_scope"
+          ],
+          "evidenceRefs": [
+            "Internal Facilities Engineering with Vendor Support"
+          ]
+        },
+        {
+          "id": "sig_operational_087",
+          "kind": "operational",
+          "statement": "Prior Authorization Intake & Review runs a 6.8% error rate at 42% automation, despite a \"Medium\" automation-candidate rating.",
+          "domains": [
+            "operational_process_evidence"
+          ],
+          "value": 6.8,
+          "evidenceRefs": [
+            "Prior Authorization Intake & Review"
+          ]
+        },
+        {
+          "id": "sig_operational_088",
+          "kind": "operational",
+          "statement": "Compliance Investigation Intake & Triage runs a 6.6% error rate at 39% automation, despite a \"Low\" automation-candidate rating.",
+          "domains": [
+            "operational_process_evidence"
+          ],
+          "value": 6.6,
+          "evidenceRefs": [
+            "Compliance Investigation Intake & Triage"
+          ]
+        },
+        {
+          "id": "sig_operational_089",
+          "kind": "operational",
+          "statement": "RAF Suspect Condition Review Process runs a 6.4% error rate at 36% automation, despite a \"High\" automation-candidate rating.",
+          "domains": [
+            "operational_process_evidence"
+          ],
+          "value": 6.4,
+          "evidenceRefs": [
+            "RAF Suspect Condition Review Process"
+          ]
+        },
+        {
+          "id": "sig_operational_090",
+          "kind": "operational",
+          "statement": "Interface Failure Alert Triage runs a 6% error rate at 6% automation, despite a \"High\" automation-candidate rating.",
+          "domains": [
+            "operational_process_evidence"
+          ],
+          "value": 6,
+          "evidenceRefs": [
+            "Interface Failure Alert Triage"
+          ]
+        },
+        {
+          "id": "sig_operational_091",
+          "kind": "operational",
+          "statement": "Surgical Scheduling & Block Time Management runs a 5.3% error rate at 19% automation, despite a \"Medium\" automation-candidate rating.",
+          "domains": [
+            "operational_process_evidence"
+          ],
+          "value": 5.3,
+          "evidenceRefs": [
+            "Surgical Scheduling & Block Time Management"
+          ]
+        },
+        {
+          "id": "sig_gap_092",
+          "kind": "gap",
+          "statement": "Epic Clarity (Operational Reporting Database): Platform Architecture & Scalability sits at maturity level 3 against a target of 4.",
+          "domains": [
+            "platform_maturity_assessment"
+          ],
+          "value": 1,
+          "evidenceRefs": [
+            "Epic Clarity (Operational Reporting Database)"
+          ]
+        },
+        {
+          "id": "sig_gap_093",
+          "kind": "gap",
+          "statement": "On-Prem SQL Server Datamart Estate (Finance/Quality/RAF/RevCycle): Platform Architecture & Scalability sits at maturity level 2 against a target of 3.",
+          "domains": [
+            "platform_maturity_assessment"
+          ],
+          "value": 1,
+          "evidenceRefs": [
+            "On-Prem SQL Server Datamart Estate (Finance/Quality/RAF/RevCycle)"
+          ]
+        },
+        {
+          "id": "sig_gap_094",
+          "kind": "gap",
+          "statement": "SSIS/SSAS/SSRS On-Prem ETL & Cube Estate: Platform Architecture & Scalability sits at maturity level 2 against a target of 3.",
+          "domains": [
+            "platform_maturity_assessment"
+          ],
+          "value": 1,
+          "evidenceRefs": [
+            "SSIS/SSAS/SSRS On-Prem ETL & Cube Estate"
+          ]
+        },
+        {
+          "id": "sig_gap_095",
+          "kind": "gap",
+          "statement": "Tableau Server (On-Prem Self-Service BI): Analytics Capability sits at maturity level 2 against a target of 3.",
+          "domains": [
+            "platform_maturity_assessment"
+          ],
+          "value": 1,
+          "evidenceRefs": [
+            "Tableau Server (On-Prem Self-Service BI)"
+          ]
+        },
+        {
+          "id": "sig_gap_096",
+          "kind": "gap",
+          "statement": "Databricks Lakehouse (Evaluation Stage — Not Implemented): AI/ML Capability sits at maturity level 1 against a target of 2.",
+          "domains": [
+            "platform_maturity_assessment"
+          ],
+          "value": 1,
+          "evidenceRefs": [
+            "Databricks Lakehouse (Evaluation Stage — Not Implemented)"
+          ]
+        }
+      ],
+      "contextItems": [
+        {
+          "id": "ctx_identity_001",
+          "statement": "Business model: Vertically integrated delivery system (34 owned hospitals, 214 ambulatory clinic sites, employed and affiliated physician network) paired with an owned health plan. Revenue splits 60% provider / 40% health plan; plan revenue splits 70% Medicare Advantage and Medicare FFS / 30% commercial and Medicaid managed care..",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_identity_002",
+          "statement": "Industry: Healthcare — Integrated Delivery Network & Medicare Advantage Health Plan.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_identity_003",
+          "statement": "Annual revenue: $25.00B.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_identity_004",
+          "statement": "Employee count: 68,000.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_identity_005",
+          "statement": "Declared mission: Deliver connected, measurably better health outcomes for the communities Meridian serves by unifying clinical care and health plan operations under one accountable system..",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_economics_006",
+          "statement": "Operating segments: Hospital & Acute Delivery, Ambulatory & Physician Network, Health Plan Operations, Shared Enterprise Services.",
+          "domains": [
+            "business_function"
+          ]
+        },
+        {
+          "id": "ctx_economics_007",
+          "statement": "Technology budget is $960.8M, 3.84% of revenue.",
+          "domains": [
+            "spend_value_fact",
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_economics_008",
+          "statement": "Declared operating regions: 34-hospital regional footprint across Illinois, Indiana and Wisconsin, Meridian Medical Group affiliated practices across the same multi-state service area.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_segment_009",
+          "statement": "Declared customer segment: Medicare Advantage members.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_segment_010",
+          "statement": "Declared customer segment: Medicare fee-for-service beneficiaries.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_segment_011",
+          "statement": "Declared customer segment: commercial health plan members.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_segment_012",
+          "statement": "Declared customer segment: Medicaid managed-care members.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_segment_013",
+          "statement": "Declared customer segment: self-pay and commercially insured patients across acute, ambulatory and behavioral health service lines.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_priority_014",
+          "statement": "Declared strategic priority: 1) Improve Medicare Advantage overall Star Rating from 3.5 to 4.5+ stars by measurement year 2028.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_priority_015",
+          "statement": "Declared strategic priority: 2) Begin modernizing the on-premises SQL Server datamart sprawl by evaluating Databricks as a future lakehouse target — evaluation-stage only, nothing implemented yet.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_priority_016",
+          "statement": "Declared strategic priority: 3) Expand Epic Community Connect to affiliated practices to reduce interface sprawl.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_priority_017",
+          "statement": "Declared strategic priority: 4) Reduce claims denial write-offs and RAF evidence gaps.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_priority_018",
+          "statement": "Declared strategic priority: 5) Govern AI use cases with human-in-the-loop review as they move from concept to pilot.",
+          "domains": [
+            "tenant_profile"
+          ]
+        }
+      ],
+      "visualDatasets": {
+        "technology_spend_mix": [
+          {
+            "category": "Third-party contracted",
+            "amount": 496353000
+          },
+          {
+            "category": "Other technology spend",
+            "amount": 464447000
+          }
+        ],
+        "vendor_spend_concentration": [
+          {
+            "vendor": "Epic Systems Corporation",
+            "spend": 86184000,
+            "sharePct": 17.4
+          },
+          {
+            "vendor": "Microsoft Corporation",
+            "spend": 44989000,
+            "sharePct": 9.1
+          },
+          {
+            "vendor": "Workday, Inc.",
+            "spend": 14464000,
+            "sharePct": 2.9
+          },
+          {
+            "vendor": "Infor (Lawson)",
+            "spend": 9916000,
+            "sharePct": 2
+          },
+          {
+            "vendor": "Cisco Systems",
+            "spend": 9321000,
+            "sharePct": 1.9
+          },
+          {
+            "vendor": "TransUnion Healthcare",
+            "spend": 9311000,
+            "sharePct": 1.9
+          },
+          {
+            "vendor": "CaseNet (Casenet, LLC)",
+            "spend": 9303000,
+            "sharePct": 1.9
+          },
+          {
+            "vendor": "VMware (Broadcom)",
+            "spend": 9084000,
+            "sharePct": 1.8
+          }
+        ],
+        "application_landscape_by_function": [
+          {
+            "function": "Clinical Informatics",
+            "applicationCount": 99,
+            "annualCost": 169926000
+          },
+          {
+            "function": "Acute Care Clinical Operations",
+            "applicationCount": 56,
+            "annualCost": 94603000
+          },
+          {
+            "function": "Nursing Operations",
+            "applicationCount": 46,
+            "annualCost": 64034000
+          },
+          {
+            "function": "Population Health & Care Management",
+            "applicationCount": 15,
+            "annualCost": 12648000
+          },
+          {
+            "function": "Ambulatory & Physician Network Operations",
+            "applicationCount": 13,
+            "annualCost": 12246000
+          },
+          {
+            "function": "Health Plan & Payer Operations",
+            "applicationCount": 10,
+            "annualCost": 10361000
+          },
+          {
+            "function": "Information Technology & Digital",
+            "applicationCount": 6,
+            "annualCost": 9863000
+          },
+          {
+            "function": "Human Resources & Workforce",
+            "applicationCount": 7,
+            "annualCost": 9417000
+          },
+          {
+            "function": "Supply Chain & Procurement",
+            "applicationCount": 6,
+            "annualCost": 7534000
+          },
+          {
+            "function": "Quality & Regulatory Affairs",
+            "applicationCount": 8,
+            "annualCost": 7042000
+          },
+          {
+            "function": "Data Analytics & AI",
+            "applicationCount": 6,
+            "annualCost": 6546000
+          },
+          {
+            "function": "Pharmacy Services",
+            "applicationCount": 5,
+            "annualCost": 5651000
+          },
+          {
+            "function": "Revenue Cycle",
+            "applicationCount": 4,
+            "annualCost": 4215000
+          },
+          {
+            "function": "Patient Access & Registration",
+            "applicationCount": 4,
+            "annualCost": 3768000
+          },
+          {
+            "function": "Behavioral Health",
+            "applicationCount": 4,
+            "annualCost": 3768000
+          },
+          {
+            "function": "Finance & Accounting",
+            "applicationCount": 3,
+            "annualCost": 3767000
+          },
+          {
+            "function": "Member Services & Patient Experience",
+            "applicationCount": 4,
+            "annualCost": 2286000
+          },
+          {
+            "function": "Emergency Services",
+            "applicationCount": 2,
+            "annualCost": 1884000
+          },
+          {
+            "function": "Cybersecurity & IT Risk",
+            "applicationCount": 1,
+            "annualCost": 1883000
+          },
+          {
+            "function": "Facilities & Real Estate",
+            "applicationCount": 2,
+            "annualCost": 896000
+          }
+        ],
+        "program_investment_distribution": [
+          {
+            "program": "RAF Capture & Risk Adjustment Modernization",
+            "expectedValue": 56540001
+          },
+          {
+            "program": "Legacy Cerner Decommission — St. Anselm",
+            "expectedValue": 51173844
+          },
+          {
+            "program": "Telehealth & Hospital-at-Home Scale-Up",
+            "expectedValue": 48805443
+          },
+          {
+            "program": "Provider Data Management Golden Record",
+            "expectedValue": 43888252
+          },
+          {
+            "program": "Actuarial & Underwriting Analytics Modernization",
+            "expectedValue": 39782303
+          }
+        ],
+        "stalled_programs": [
+          {
+            "program": "STARS 5.0 Improvement Program",
+            "pctComplete": 8,
+            "blocked": null
+          },
+          {
+            "program": "RAF Capture & Risk Adjustment Modernization",
+            "pctComplete": 3,
+            "blocked": null
+          },
+          {
+            "program": "Epic Community Connect Expansion",
+            "pctComplete": 1,
+            "blocked": "Funding approved for year one only; year two is unconfirmed."
+          },
+          {
+            "program": "Legacy Cerner Decommission — St. Anselm",
+            "pctComplete": 10,
+            "blocked": null
+          },
+          {
+            "program": "SQL Server Sprawl Rationalization & Databricks Lakehouse Evaluation",
+            "pctComplete": 12,
+            "blocked": null
+          },
+          {
+            "program": "AI Use-Case Governance & Evaluation Roadmap",
+            "pctComplete": 2,
+            "blocked": null
+          },
+          {
+            "program": "Revenue Cycle Denials AI Program",
+            "pctComplete": 5,
+            "blocked": null
+          },
+          {
+            "program": "CAHPS Experience Improvement Initiative",
+            "pctComplete": 8,
+            "blocked": "Key supplier resource unavailable until the next contract period."
+          },
+          {
+            "program": "Interface Engine Consolidation (Bridges/Rhapsody)",
+            "pctComplete": 12,
+            "blocked": "Dependency on a platform migration that has slipped two quarters."
+          },
+          {
+            "program": "MyChart Digital Front Door Expansion",
+            "pctComplete": 9,
+            "blocked": null
+          },
+          {
+            "program": "Care Management Platform Rationalization",
+            "pctComplete": 6,
+            "blocked": null
+          },
+          {
+            "program": "Tableau Workbook Governance & Consolidation",
+            "pctComplete": 3,
+            "blocked": null
+          },
+          {
+            "program": "Privileged Access Management (PAM) Rollout",
+            "pctComplete": 0,
+            "blocked": null
+          },
+          {
+            "program": "Nurse Call & RTLS Modernization",
+            "pctComplete": 6,
+            "blocked": null
+          },
+          {
+            "program": "Telehealth & Hospital-at-Home Scale-Up",
+            "pctComplete": 1,
+            "blocked": "Funding approved for year one only; year two is unconfirmed."
+          },
+          {
+            "program": "Claims Auto-Adjudication Rate Improvement",
+            "pctComplete": 12,
+            "blocked": null
+          },
+          {
+            "program": "HEDIS Abstraction Automation Program",
+            "pctComplete": 12,
+            "blocked": null
+          },
+          {
+            "program": "Provider Data Management Golden Record",
+            "pctComplete": 10,
+            "blocked": null
+          },
+          {
+            "program": "ServiceNow ITSM/CMDB Modernization",
+            "pctComplete": 3,
+            "blocked": null
+          },
+          {
+            "program": "Pharmacy Robotics & Willow Optimization",
+            "pctComplete": 3,
+            "blocked": null
+          },
+          {
+            "program": "Ambient Clinical Documentation (DAX) Rollout",
+            "pctComplete": 5,
+            "blocked": null
+          },
+          {
+            "program": "Supply Chain Contract Analytics Modernization",
+            "pctComplete": 14,
+            "blocked": "Business sponsor changed; scope is being re-agreed."
+          },
+          {
+            "program": "Behavioral Health Access Expansion",
+            "pctComplete": 10,
+            "blocked": null
+          },
+          {
+            "program": "Emergency Department Throughput Program",
+            "pctComplete": 4,
+            "blocked": null
+          },
+          {
+            "program": "Actuarial & Underwriting Analytics Modernization",
+            "pctComplete": 5,
+            "blocked": null
+          },
+          {
+            "program": "Data Governance & Stewardship Foundation",
+            "pctComplete": 5,
+            "blocked": null
+          },
+          {
+            "program": "Epic Tapestry Payer Core Optimization",
+            "pctComplete": 13,
+            "blocked": null
+          },
+          {
+            "program": "Patient Financial Clearance & Propensity-to-Pay",
+            "pctComplete": 13,
+            "blocked": null
+          }
+        ],
+        "leadership_theme_frequency": [
+          {
+            "theme": "value_realisation",
+            "leaderCount": 44
+          },
+          {
+            "theme": "investment_priority",
+            "leaderCount": 44
+          },
+          {
+            "theme": "capability_gap",
+            "leaderCount": 44
+          },
+          {
+            "theme": "governance_friction",
+            "leaderCount": 41
+          },
+          {
+            "theme": "manual_effort",
+            "leaderCount": 38
+          },
+          {
+            "theme": "integration_debt",
+            "leaderCount": 38
+          },
+          {
+            "theme": "data_trust",
+            "leaderCount": 36
+          },
+          {
+            "theme": "vendor_dependency",
+            "leaderCount": 36
+          },
+          {
+            "theme": "estate_fragmentation",
+            "leaderCount": 34
+          },
+          {
+            "theme": "accepted_risk",
+            "leaderCount": 29
+          },
+          {
+            "theme": "throughput_constraint",
+            "leaderCount": 23
+          },
+          {
+            "theme": "decision_latency",
+            "leaderCount": 23
+          },
+          {
+            "theme": "legacy_gravity",
+            "leaderCount": 23
+          },
+          {
+            "theme": "data_latency",
+            "leaderCount": 22
+          },
+          {
+            "theme": "success_definition",
+            "leaderCount": 21
+          },
+          {
+            "theme": "key_person_risk",
+            "leaderCount": 20
+          },
+          {
+            "theme": "ai_pilot_stall",
+            "leaderCount": 19
+          },
+          {
+            "theme": "date_confidence",
+            "leaderCount": 17
+          },
+          {
+            "theme": "visibility_gap",
+            "leaderCount": 9
+          },
+          {
+            "theme": "unheard_risk",
+            "leaderCount": 8
+          },
+          {
+            "theme": "priority_divergence",
+            "leaderCount": 5
+          },
+          {
+            "theme": "stale_finding",
+            "leaderCount": 4
+          },
+          {
+            "theme": "escalation_fatigue",
+            "leaderCount": 4
+          },
+          {
+            "theme": "stop_candidate",
+            "leaderCount": 3
+          },
+          {
+            "theme": "regulatory_exposure",
+            "leaderCount": 3
+          },
+          {
+            "theme": "run_change_ratio",
+            "leaderCount": 3
+          },
+          {
+            "theme": "shelfware",
+            "leaderCount": 2
+          },
+          {
+            "theme": "ai_governance",
+            "leaderCount": 1
+          },
+          {
+            "theme": "finance_evidence",
+            "leaderCount": 1
+          }
+        ],
+        "leadership_evidence_alignment": [
+          {
+            "category": "Consistent with system record",
+            "count": 869
+          },
+          {
+            "category": "Contradicts system record",
+            "count": 127
+          }
+        ],
+        "metric_target_attainment": [
+          {
+            "category": "Improving toward target",
+            "count": 34
+          },
+          {
+            "category": "Moving away from target",
+            "count": 0
+          },
+          {
+            "category": "Not comparable",
+            "count": 16
+          }
+        ],
+        "risk_system_concentration": [
+          {
+            "system": "Epic Tapestry",
+            "riskCount": 4
+          },
+          {
+            "system": "Finance/GL Mart (SQL Server On-Prem)",
+            "riskCount": 4
+          },
+          {
+            "system": "ServiceNow ITSM/CMDB Platform",
+            "riskCount": 3
+          },
+          {
+            "system": "Corepoint Integration Engine (legacy)",
+            "riskCount": 2
+          },
+          {
+            "system": "Cotiviti Quality Intelligence Platform",
+            "riskCount": 2
+          }
+        ]
+      },
+      "analyticalLenses": [
+        {
+          "kind": "industry_pattern",
+          "label": "On-premises SQL Server/Epic Clarity estate precedes any cloud evaluation"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "Medicare Advantage-heavy payer-provider convergence drives STARS/HEDIS investment priority"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "Epic single-vendor consolidation with a residual legacy EHR at one acquired facility"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "On-prem SQL Server sprawl precedes, and outlasts, any cloud lakehouse evaluation"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "Ambient clinical documentation adoption pattern"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "Claims clearinghouse and EDI vendor layering"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "Community Connect as an affiliated-practice interface-reduction strategy"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "Behavioral health capacity constraint as a persistent, not transient, risk"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "RAF/risk-adjustment vendor tooling as evidence infrastructure, not just reporting"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "Print/mail and member-correspondence outsourcing as a low-differentiation function"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "Legacy interface-engine consolidation lag"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "Health-plan actuarial dependence on Epic Clarity, the same source clinical quality reporting uses"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "Medicare Advantage STARS/HEDIS Readiness Lens"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "RAF/Risk Adjustment Integrity Lens"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "Epic Single-Instance Consolidation Lens"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "SQL Server Sprawl & Databricks Evaluation Readiness Lens"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "Revenue Cycle & Denials AI Lens"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "Interface & Integration Consolidation Lens"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "Behavioral Health Access & Capacity Lens"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "AI Use-Case Portfolio Governance Lens"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "Vendor Concentration & Third-Party Risk Lens"
+        }
+      ],
+      "coverageManifest": {
+        "dimensionCoverage": [
+          {
+            "key": "tenant_profile",
+            "recordCount": 1,
+            "evidencedShare": 1
+          },
+          {
+            "key": "business_function",
+            "recordCount": 24,
+            "evidencedShare": 1
+          },
+          {
+            "key": "org_owner",
+            "recordCount": 225,
+            "evidencedShare": 1
+          },
+          {
+            "key": "workforce_role",
+            "recordCount": 45,
+            "evidencedShare": 1
+          },
+          {
+            "key": "application_system",
+            "recordCount": 301,
+            "evidencedShare": 1
+          },
+          {
+            "key": "data_asset_or_integration",
+            "recordCount": 520,
+            "evidencedShare": 1
+          },
+          {
+            "key": "infrastructure_platform",
+            "recordCount": 65,
+            "evidencedShare": 1
+          },
+          {
+            "key": "vendor_contract",
+            "recordCount": 72,
+            "evidencedShare": 1
+          },
+          {
+            "key": "spend_value_fact",
+            "recordCount": 27,
+            "evidencedShare": 1
+          },
+          {
+            "key": "program_initiative",
+            "recordCount": 38,
+            "evidencedShare": 1
+          },
+          {
+            "key": "ai_automation_use_case",
+            "recordCount": 18,
+            "evidencedShare": 1
+          },
+          {
+            "key": "risk_or_control",
+            "recordCount": 40,
+            "evidencedShare": 1
+          },
+          {
+            "key": "relationship_source_row",
+            "recordCount": 825,
+            "evidencedShare": 1
+          },
+          {
+            "key": "evidence_source",
+            "recordCount": 27,
+            "evidencedShare": 1
+          },
+          {
+            "key": "metric_outcome",
+            "recordCount": 50,
+            "evidencedShare": 1
+          },
+          {
+            "key": "industry_context_pattern",
+            "recordCount": 12,
+            "evidencedShare": 1
+          },
+          {
+            "key": "expert_lens",
+            "recordCount": 9,
+            "evidencedShare": 1
+          },
+          {
+            "key": "managed_service_scope",
+            "recordCount": 15,
+            "evidencedShare": 1
+          },
+          {
+            "key": "operational_process_evidence",
+            "recordCount": 25,
+            "evidencedShare": 1
+          },
+          {
+            "key": "platform_maturity_assessment",
+            "recordCount": 17,
+            "evidencedShare": 1
+          },
+          {
+            "key": "ai_value_realization_signal",
+            "recordCount": 18,
+            "evidencedShare": 1
+          },
+          {
+            "key": "ai_tool_usage_observation",
+            "recordCount": 18,
+            "evidencedShare": 1
+          },
+          {
+            "key": "ai_value_interview_evidence",
+            "recordCount": 996,
+            "evidencedShare": 1
+          },
+          {
+            "key": "ai_kpi_outcome_observation",
+            "recordCount": 18,
+            "evidencedShare": 1
+          },
+          {
+            "key": "person_or_role",
+            "recordCount": 16,
+            "evidencedShare": 1
+          },
+          {
+            "key": "data_domain",
+            "recordCount": 83,
+            "evidencedShare": 1
+          }
+        ],
+        "leadershipToPortfolioLinkage": {
+          "resolvableRows": 0,
+          "totalRows": 0,
+          "coveragePct": 0,
+          "linkedPrograms": 0,
+          "interpretation": "Program-specific leadership sentiment is sparsely linked (0% of interview mentions resolve to a canonical object). Do not generalize enterprise-wide leadership themes into program-specific sentiment unless an explicit resolved crosswalk row supports that specific connection."
+        },
+        "vendorDocumentEvidence": {
+          "contractsWithExtraction": 0,
+          "totalContracts": 72,
+          "interpretation": "None of the 72 declared vendor contracts have document-level evidence extraction behind them in this packet. Contract-level claims (pricing terms, SLA history, invoice detail) are not available at the enterprise level — only the declared register (name, value, term)."
+        },
+        "metricComparability": {
+          "comparable": 34,
+          "total": 50,
+          "inconsistentNotation": 18,
+          "interpretation": "34 of 50 tracked metrics have a comparable baseline, target and actual; 16 do not, and 18 of the comparable set mix notation between those three fields. Metric-level performance claims outside the comparable set are unsupported."
+        },
+        "prohibitedComparisons": [
+          "Do not compare this organization against industry benchmarks for a different industry than its declared one.",
+          "Do not state a priority-to-program, priority-to-spend, or priority-to-KPI linkage as fact — no canonical field currently links them. Only the candidate-relationship engine may propose such a link, and only as labeled, non-authoritative, client-unattested output."
+        ]
+      }
+    },
+    "publishedGeneration": {
+      "enterprise_story": "Meridian's economics run on a single connected model: 60% of revenue comes from owned providers and 40% from its health plan, itself 70% Medicare Advantage/FFS, tying clinical delivery and payer economics together. The technology estate shows a matching concentration — Epic accounts for 17.4% of vendor spend ($86.2M of $496.4M) and Epic Clarity sits at the center of the integration graph with 82 connections, a level of connectivity suggesting clinical, quality, and actuarial data may share common infrastructure, though the specific systems and data types involved aren't confirmed. Leadership is unusually unified on the diagnosis: value realization, investment priority, and capability gap were each raised by all 44 interviewed leaders. Yet that consensus has not yet translated into delivery — the STARS 5.0 and RAF Capture Modernization programs most tied to declared strategic priorities are only 8% and 3% complete, and of the $63.8M in promised AI value, only $15.2M (24%) is finance-validated. Together these point to a gap between strategic intent and the organization's demonstrated capacity to deliver against it.",
+      "enterprise_story_claims": [
+        {
+          "statement": "Meridian's revenue splits 60% provider / 40% health plan, with plan revenue 70% Medicare Advantage/FFS — linking clinical delivery and payer economics as a single value model.",
+          "evidence_ids": [
+            "ctx_identity_001"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Epic Systems Corporation accounts for 17.4% of total vendor spend ($86.2M of $496.4M), supporting Clinical Informatics, and Epic Clarity — Test is a concentration point in the integration graph with 82 integrations. This level of connectivity suggests clinical, quality, and actuarial data may share common infrastructure, though the specific systems and data types involved are not confirmed.",
+          "evidence_ids": [
+            "sig_concentration_001",
+            "sig_dependency_076"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Leadership consensus is unusually strong: value realization, investment priority, and capability gap were each raised by all 44 interviewed leaders.",
+          "evidence_ids": [
+            "sig_consensus_019",
+            "sig_consensus_020",
+            "sig_consensus_021"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "The programs most tied to declared strategic priorities (STARS 5.0, RAF Capture Modernization) are only 8% and 3% complete, indicating a gap between strategic intent and portfolio delivery.",
+          "evidence_ids": [
+            "sig_portfolio_035",
+            "sig_portfolio_036",
+            "ctx_priority_014",
+            "ctx_priority_017"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "AI value tracking shows only 24% of promised value ($15.2M of $63.8M) is finance-validated, indicating an investment/outcome gap in the AI portfolio.",
+          "evidence_ids": [
+            "sig_ai_value_072"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        }
+      ],
+      "value_creation_model": {
+        "summary": "Meridian's revenue comes from a vertically integrated model spanning 34 hospitals, 214 ambulatory sites, and an owned health plan, with 60% of revenue from provider operations and 40% from the health plan. Within the health plan, 70% of revenue comes from Medicare Advantage/FFS, which makes Star Rating and risk-adjustment accuracy direct economic levers rather than quality-only metrics. Five customer segments are declared — Medicare Advantage members, Medicare FFS beneficiaries, commercial health plan members, Medicaid managed-care members, and self-pay/commercially insured patients across acute, ambulatory, and behavioral health lines — though whether these populations overlap across plan and provider revenue streams isn't established, even if the segment names suggest some plausibly touch both. Supporting evidence generation for these metrics carries its own risks: the Cotiviti Quality Intelligence Platform, which underpins RAF evidence, has a high-severity risk entry for evidence gaps on suspect conditions, while the NCQA HEDIS Certified Measure Engine carries a medium-severity risk for abstraction-backlog undercounts, and Finance/GL Mart (SQL Server On-Prem) shows a concentration of risk with four open entries tied to that single system. Epic Systems, which supports Clinical Informatics via Epic Hyperspace, represents 17.4% of total vendor spend ($86.2M of $496.4M) and is flagged as a medium-severity single-vendor dependency risk. More broadly, third-party contracted spend of $496.4M makes up 52% of the total $960.8M technology budget, meaning more than half of the technology budget goes to third-party contracts.",
+        "primary_value_drivers": [
+          {
+            "statement": "Revenue is generated through a vertically integrated model spanning 34 hospitals, 214 ambulatory sites, and an owned health plan, with 60% of revenue from provider operations and 40% from the health plan.",
+            "evidence_ids": [
+              "ctx_identity_001",
+              "ctx_economics_006"
+            ],
+            "confidence": "high",
+            "claim_type": "FACT"
+          },
+          {
+            "statement": "Within the health plan, 70% of revenue comes from Medicare Advantage/FFS, making Star Rating and risk-adjustment accuracy direct economic levers rather than quality-only metrics.",
+            "evidence_ids": [
+              "ctx_identity_001",
+              "ctx_priority_014",
+              "ctx_priority_017"
+            ],
+            "confidence": "high",
+            "claim_type": "CROSS_DOMAIN_INSIGHT"
+          },
+          {
+            "statement": "Five customer segments are declared: Medicare Advantage members, Medicare fee-for-service beneficiaries, commercial health plan members, Medicaid managed-care members, and self-pay/commercially insured patients across acute, ambulatory and behavioral health service lines. Whether these populations overlap across plan and provider revenue streams is not established by the facts, though the segment names suggest some populations could plausibly touch both.",
+            "evidence_ids": [
+              "ctx_segment_009",
+              "ctx_segment_010",
+              "ctx_segment_011",
+              "ctx_segment_012",
+              "ctx_segment_013"
+            ],
+            "confidence": "medium",
+            "claim_type": "OBSERVATION"
+          }
+        ],
+        "economic_dependencies": [
+          {
+            "statement": "Epic Systems represents 17.4% of total vendor spend ($86.2M of $496.4M), supporting Clinical Informatics via Epic Hyperspace, and this single-vendor dependency is flagged as a medium-severity risk.",
+            "evidence_ids": [
+              "sig_concentration_001",
+              "sig_risk_017"
+            ],
+            "confidence": "high",
+            "claim_type": "CROSS_DOMAIN_INSIGHT"
+          },
+          {
+            "statement": "Third-party contracted spend ($496.4M) is 52% of the total technology budget ($960.8M), meaning more than half of the technology budget is allocated to third-party contracts.",
+            "evidence_ids": [
+              "sig_complexity_042"
+            ],
+            "confidence": "high",
+            "claim_type": "FACT"
+          },
+          {
+            "statement": "RAF evidence generation depends on the Cotiviti Quality Intelligence Platform, which carries a high-severity risk entry for evidence gaps on suspect conditions, while HEDIS numerator accuracy depends on the NCQA HEDIS Certified Measure Engine, which carries a medium-severity risk entry for abstraction-backlog undercounts. Separately, Finance/GL Mart (SQL Server On-Prem) shows a concentration of risk exposure with 4 open risk or control entries tied to that one system.",
+            "evidence_ids": [
+              "sig_dependency_005",
+              "sig_risk_014",
+              "sig_risk_015"
+            ],
+            "confidence": "medium",
+            "claim_type": "CROSS_DOMAIN_INSIGHT"
+          }
+        ]
+      },
+      "strategic_bets": [
+        {
+          "statement": "Management has declared a strategic priority to lift the Medicare Advantage overall Star Rating from 3.5 to 4.5+ stars by measurement year 2028; the associated STARS 5.0 Improvement Program is currently only 8% complete.",
+          "evidence_ids": [
+            "ctx_priority_014",
+            "sig_portfolio_035"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Management is pursuing Epic Community Connect expansion to affiliated practices to reduce interface sprawl, but the program is 1% complete and blocked because year-two funding is unconfirmed.",
+          "evidence_ids": [
+            "ctx_priority_016",
+            "sig_portfolio_037"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Management has only reached evaluation stage on replacing the on-prem SQL Server datamart sprawl with a Databricks lakehouse, with the associated program at 12% completion and lock-in risk not yet assessed.",
+          "evidence_ids": [
+            "ctx_priority_015",
+            "sig_portfolio_039",
+            "sig_risk_080"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "AI use cases are being deliberately governed with human-in-the-loop review, yet two of 18 declared use cases are already paused pending governance review, suggesting the governance bet is actively constraining rollout, not just theoretical.",
+          "evidence_ids": [
+            "ctx_priority_018",
+            "sig_ai_value_071"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "structural_constraints": [
+        {
+          "statement": "57 applications (19% of the estate, $52.2M) are already flagged as replacement candidates, which could represent a significant baseline cost tied to the existing estate before any new investment.",
+          "evidence_ids": [
+            "sig_concentration_003"
+          ],
+          "confidence": "medium",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Core data platforms show maturity gaps against their targets: Epic Clarity's Platform Architecture & Scalability sits at level 3 of a target 4, on-prem datamarts' Platform Architecture & Scalability at 2 of a target 3, and the Databricks lakehouse's AI/ML Capability at only level 1 of a target 2.",
+          "evidence_ids": [
+            "sig_gap_092",
+            "sig_gap_093",
+            "sig_gap_096"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "Critical infrastructure has thin capacity headroom — Marsh Point Regional Server Room (tier2-critical) at 8% and VMware compute cluster (tier1-critical) at 14% — which could constrain the pace at which new digital and analytics initiatives can be layered on.",
+          "evidence_ids": [
+            "sig_infra_067",
+            "sig_infra_068"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "None of 72 declared vendor contracts have document-level evidence behind them, limiting management's ability to interrogate pricing, SLA, or renewal exposure at the enterprise level.",
+          "evidence_ids": [
+            "sig_gap_010"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "34 of 50 tracked performance metrics have a comparable baseline/target/actual, but 18 of those mix inconsistent notation between the fields, and the remaining 16 metrics lack a comparable baseline/target/actual entirely, so metric-level performance claims for those 16 cannot currently be trusted at face value.",
+          "evidence_ids": [
+            "sig_gap_009"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        }
+      ],
+      "operating_tensions": [
+        {
+          "statement": "Leadership consensus names governance friction as a near-universal concern (41 of 44 leaders), coinciding with a declared strategic priority to govern AI use cases with human-in-the-loop review as they move from concept to pilot. This raises the possibility that the governance model intended to reduce risk is itself being perceived as a throughput constraint, though the two facts alone do not confirm a direct causal link.",
+          "evidence_ids": [
+            "sig_consensus_022",
+            "ctx_priority_018"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Interface Failure Alert Triage is rated a \"High\" automation candidate but sits at only 6% automation with a 6% error rate, suggesting a gap between recognized automation opportunity and realized capability for this process.",
+          "evidence_ids": [
+            "sig_operational_090"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "The declared portfolio shows $739.7M of budget against $845.9M of expected value (a 1.14x declared return) across 38 programs, self-declared and not yet finance-confirmed. This unvalidated status echoes the AI portfolio, where only 24% of promised value ($15.2M of $63.8M) has been finance-validated so far, though the confirmation rate for the 38-program portfolio itself is not yet known.",
+          "evidence_ids": [
+            "sig_portfolio_040",
+            "sig_ai_value_072"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Programs directly tied to declared strategic priorities (STARS, RAF, Community Connect, SQL sprawl) are all in the low single-to-low-double-digit percent complete range, suggesting the transformation load exceeds current execution capacity across the priority set, not just one program.",
+          "evidence_ids": [
+            "sig_portfolio_035",
+            "sig_portfolio_036",
+            "sig_portfolio_037",
+            "sig_portfolio_039"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "leadership_consensus": [
+        {
+          "statement": "All 44 interviewed leaders raised value realization as a concern, indicating a strong consensus among them about whether investments are delivering claimed benefit.",
+          "evidence_ids": [
+            "sig_consensus_019"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "All 44 interviewed leaders raised both investment priority and capability gap, indicating broad consensus that these are top-of-mind issues; this pattern is consistent with, though does not itself confirm, a view that resources and skills are misaligned to ambition.",
+          "evidence_ids": [
+            "sig_consensus_020",
+            "sig_consensus_021"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "36 of 44 leaders raised vendor dependency and 36 raised data trust as concerns, both echoed in specific testimony (e.g., the CFO's comment on Zelis Healthcare's eight-week queue, the CEO's comment on keeping personal data extracts rather than trusting reported numbers).",
+          "evidence_ids": [
+            "sig_consensus_026",
+            "sig_consensus_025",
+            "sig_testimony_054",
+            "sig_testimony_049"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "Governance friction was raised by 41 of 44 leaders, with the CEO specifically characterizing architecture review as adding six weeks with standards that are sensible but a process that is not.",
+          "evidence_ids": [
+            "sig_consensus_022",
+            "sig_testimony_045"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "leadership_disagreements": [
+        {
+          "statement": "While enterprise-wide themes are near-universal, ai_governance and finance_evidence were each raised by only a single leader, indicating these are not shared concerns but isolated observations (from a VP Finance Operations, on the absence of an agreed finance baseline) that leadership as a whole has not yet converged on.",
+          "evidence_ids": [
+            "sig_dissent_033",
+            "sig_dissent_034",
+            "sig_testimony_057"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "127 of 996 leadership interview responses contradict the system-of-record evidence on the same topic, indicating leadership perception and documented system state diverge in a material minority of cases.",
+          "evidence_ids": [
+            "sig_contradiction_018"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "performance_story": {
+        "where_improving": [
+          null
+        ],
+        "where_off_track": [
+          {
+            "statement": "AI adoption is materially below target for flagship tools: Sepsis Early-Warning Model is 52.8 points below its adoption target and STARS Member Outreach Next-Best-Action is 47.7 points below target.",
+            "evidence_ids": [
+              "sig_ai_value_073",
+              "sig_ai_value_075"
+            ],
+            "confidence": "high",
+            "claim_type": "FACT"
+          },
+          {
+            "statement": "Only 24% of promised AI value ($15.2M of $63.8M) is finance-validated, and priority-linked programs (STARS, RAF, Community Connect) are all in single-digit-to-low-double-digit percent completion.",
+            "evidence_ids": [
+              "sig_ai_value_072",
+              "sig_portfolio_035",
+              "sig_portfolio_036",
+              "sig_portfolio_037"
+            ],
+            "confidence": "high",
+            "claim_type": "OBSERVATION"
+          }
+        ],
+        "where_unknown": [
+          {
+            "statement": "16 of 50 tracked metrics lack a comparable baseline/target/actual, and 18 more mix notation, meaning a third of the metric portfolio cannot currently support a performance verdict either way.",
+            "evidence_ids": [
+              "sig_gap_009"
+            ],
+            "confidence": "high",
+            "claim_type": "FACT"
+          },
+          {
+            "statement": "No vendor contracts (0 of 72) have document-level evidence extraction, so contract performance (pricing, SLA compliance) cannot currently be assessed at the enterprise level.",
+            "evidence_ids": [
+              "sig_gap_010"
+            ],
+            "confidence": "high",
+            "claim_type": "FACT"
+          }
+        ]
+      },
+      "technology_and_data_implications": [
+        {
+          "statement": "Epic Clarity's position as the most-integrated system (82 connections) combined with its below-target architecture maturity (level 3 of 4) suggests it could be a single point of both operational dependency and modernization risk across whatever reporting functions rely on it.",
+          "evidence_ids": [
+            "sig_dependency_076",
+            "sig_gap_092"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "The on-prem SQL Server datamart estate, SSIS/SSAS/SSRS ETL/cube estate, and Tableau Server are each one point below their respective maturity targets (2 of 3, 2 of 3, and 2 of 3), while the proposed Databricks lakehouse replacement is evaluated at maturity level 1 against a target of 2 on AI/ML Capability. Though these scores span different dimensions (architecture/scalability, analytics, and AI/ML) and aren't directly comparable, the gap-to-target pattern is similar across the current estate and its proposed replacement, suggesting the modernization target may not yet represent a decisively more mature state.",
+          "evidence_ids": [
+            "sig_gap_093",
+            "sig_gap_094",
+            "sig_gap_095",
+            "sig_gap_096"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "376 of 520 tracked data assets/integrations (about 72%) carry regulated data, indicating that most of the tracked estate is compliance-sensitive.",
+          "evidence_ids": [
+            "sig_complexity_070"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "27 of 27 declared evidence sources are not yet approved for loading, which could suggest the analytics foundation intended to support Star Rating and RAF decision-making is still in an early stage of governance.",
+          "evidence_ids": [
+            "sig_data_quality_083"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "material_risks": [
+        null,
+        {
+          "statement": "PHI exposure via an unencrypted legacy interface (Corepoint Integration Engine) is rated high severity, and Corepoint is also named across 2 separate risk/control entries, indicating concentrated exposure on aging integration infrastructure.",
+          "evidence_ids": [
+            "sig_risk_013",
+            "sig_dependency_007"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "RAF evidence gap on suspect conditions is rated high severity and tied to Cotiviti, directly threatening the declared priority of reducing RAF evidence gaps.",
+          "evidence_ids": [
+            "sig_risk_014",
+            "ctx_priority_017"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "The Cerner-to-Epic data migration integrity risk at St. Anselm is rated high severity while the associated decommission program is only 10% complete, leaving the exposure window open for an extended period.",
+          "evidence_ids": [
+            "sig_risk_016",
+            "sig_portfolio_038"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Marsh Point Regional Server Room is tier2-critical but has only 8% capacity headroom and a backup-only DR tier, a combination that could pose continuity risk given its critical designation.",
+          "evidence_ids": [
+            "sig_infra_067"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "value_realization_tensions": [
+        {
+          "statement": "The CEO's own testimony that Actuarial & Underwriting Analytics Modernization was approved with a benefit number nobody has since verified is a concrete example of the value-realization theme that was raised, in some form, by all 44 interviewed leaders.",
+          "evidence_ids": [
+            "sig_testimony_043",
+            "sig_consensus_019"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        null,
+        {
+          "statement": "The declared portfolio's 1.14x expected-value-to-budget ratio ($845.9M vs $739.7M across 38 programs) is self-declared and not finance-confirmed — the same caveat that applies to the AI value figures ($63.8M promised vs $15.2M finance-validated, 24% confirmed). These are two separate instances of unconfirmed benefit cases; whether they reflect a broader pattern across the wider portfolio is not established by these figures alone but may warrant further validation.",
+          "evidence_ids": [
+            "sig_portfolio_040",
+            "sig_ai_value_072"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "VP Finance Operations testimony that Finance has never been given a baseline or cohort definition it would sign off on suggests a persistent gap between program benefit claims and finance validation capability, though whether this reflects a structural pattern or an incidental lapse isn't established by this statement alone.",
+          "evidence_ids": [
+            "sig_testimony_057"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "what_needs_attention": [
+        null,
+        null,
+        {
+          "statement": "AI value realization confirmation is low ($15.2M finance-validated of $63.8M promised value, 24%), and value realization was raised by all 44 interviewed leaders as a shared topic of focus — a combination that could warrant closer scrutiny of how AI value is validated before further investment.",
+          "evidence_ids": [
+            "sig_ai_value_072",
+            "sig_consensus_019"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "Metric infrastructure itself needs attention: 16 of 50 tracked metrics (roughly a third) lack a comparable baseline, target, or actual, and 18 of the remaining 34 mix notation between those fields, meaning performance claims on this portion of metrics are unsupported.",
+          "evidence_ids": [
+            "sig_gap_009"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        }
+      ],
+      "evidence_gaps": [
+        "Program-specific leadership sentiment cannot be resolved to canonical programs (0% crosswalk coverage), so enterprise-wide leadership themes should not be read as commentary on any named program.",
+        "No vendor contracts have document-level evidence extraction, so pricing, SLA, and invoice-level claims about the vendor base are not verifiable from this packet.",
+        "16 of 50 tracked metrics lack comparable baseline/target/actual data, and 18 more mix notation, limiting the scope of defensible metric-level performance claims.",
+        "27 of 27 declared evidence sources are not yet approved for loading, meaning much of the analytics foundation behind reported figures is still pre-governed."
+      ],
+      "things_a_new_cxo_should_know": [
+        {
+          "statement": "Meridian's economics are dual-engine: 60% provider revenue and 40% health plan revenue, with 70% of plan revenue tied to Medicare Advantage/FFS — given this mix, Star Ratings and RAF accuracy could function as direct revenue levers rather than pure compliance overhead.",
+          "evidence_ids": [
+            "ctx_identity_001"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Epic represents a significant concentration point: it accounts for 17.4% of total vendor spend ($86.2M of $496.4M) supporting Clinical Informatics, and Epic Clarity — Test integrates with 82 other systems, making it a notable node in the integration graph.",
+          "evidence_ids": [
+            "sig_concentration_001",
+            "sig_dependency_076"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Leadership is unusually aligned on the core diagnosis — value realization, investment priority, and capability gaps were raised by every one of 44 interviewed leaders — but that alignment has not yet translated into delivery, at least for the STARS 5.0 Improvement Program, which is only 8% complete.",
+          "evidence_ids": [
+            "sig_consensus_019",
+            "sig_consensus_020",
+            "sig_consensus_021",
+            "sig_portfolio_035"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "The declared AI portfolio promises $63.8M of value but only $15.2M is finance-validated (24%), so AI benefit figures presented to the board should be treated as provisional.",
+          "evidence_ids": [
+            "sig_ai_value_072"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        null,
+        null,
+        {
+          "statement": "A meaningful share of leadership testimony (127 of 996 responses) contradicts the documented system-of-record on the same topics, so leadership narrative and system evidence should be checked against each other before either is relied on alone.",
+          "evidence_ids": [
+            "sig_contradiction_018"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "questions_for_management": [
+        null,
+        {
+          "statement": "Why is the Privileged Access Management Rollout still at 0% complete when the high-severity risk it is meant to close is already declared as directly impacting it?",
+          "evidence_ids": [
+            "sig_portfolio_040",
+            "sig_risk_079",
+            "sig_risk_012"
+          ],
+          "confidence": "high",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "AI value realization tracking shows $63.8M of promised value against $15.2M finance-validated — 24% confirmed. What is driving the gap between promised and validated value, and what would it take to close it?",
+          "evidence_ids": [
+            "sig_ai_value_072"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "Epic Community Connect Expansion is blocked because year-two funding is unconfirmed, despite being tied to the strategic priority of reducing interface sprawl — is year-two funding being pursued?",
+          "evidence_ids": [
+            "sig_portfolio_037",
+            "ctx_priority_016"
+          ],
+          "confidence": "high",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        null,
+        null,
+        {
+          "statement": "With the Databricks lakehouse target itself only at maturity level 1 of a target 2, is the modernization sequence (evaluate lakehouse, then migrate datamarts) realistic, or does it risk replacing one immature platform with another?",
+          "evidence_ids": [
+            "sig_gap_096",
+            "sig_gap_093",
+            "ctx_priority_015"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        }
+      ],
+      "visual_opportunities": [
+        {
+          "visual_type": "horizontal_bar",
+          "title": "A handful of vendors, led by Epic, carry a disproportionate share of technology dependency",
+          "purpose": "Show vendor spend concentration to support the single-vendor dependency narrative",
+          "dataset_ref": "vendor_spend_concentration",
+          "key_message": "Epic and Microsoft together represent over a quarter of vendor spend, anchoring both capability and dependency risk",
+          "evidence_ids": [
+            "sig_concentration_001",
+            "sig_concentration_002"
+          ],
+          "priority": "high"
+        },
+        {
+          "visual_type": "bar",
+          "title": "AI value promised far exceeds AI value finance has confirmed",
+          "purpose": "Make the AI value realization gap immediately visible to a new executive",
+          "dataset_ref": "leadership_evidence_alignment",
+          "key_message": "Only 24% of promised AI value is finance-validated, echoing broader leadership concern about value realization",
+          "evidence_ids": [
+            "sig_ai_value_072"
+          ],
+          "priority": "medium"
+        },
+        {
+          "visual_type": "horizontal_bar",
+          "title": "Nearly every strategic-priority-linked program is still in its earliest stage of delivery",
+          "purpose": "Show the portfolio-wide pattern of low completion percentages among flagship programs",
+          "dataset_ref": "stalled_programs",
+          "key_message": "Priority-linked programs sit in the single-to-low-double-digit percent complete range, several with explicit funding or scope blockers",
+          "evidence_ids": [
+            "sig_portfolio_035",
+            "sig_portfolio_036",
+            "sig_portfolio_037",
+            "sig_portfolio_039"
+          ],
+          "priority": "high"
+        },
+        {
+          "visual_type": "horizontal_bar",
+          "title": "Risk exposure is concentrated on a small set of systems, not spread evenly across the estate",
+          "purpose": "Show which systems carry the most declared risk/control entries",
+          "dataset_ref": "risk_system_concentration",
+          "key_message": "Epic Tapestry and the on-prem Finance/GL Mart each appear in four separate risk entries, more than any other system",
+          "evidence_ids": [
+            "sig_dependency_004",
+            "sig_dependency_005"
+          ],
+          "priority": "medium"
+        }
+      ]
+    },
+    "verificationLedger": [
+      {
+        "path": "enterprise_story_claims[0]",
+        "verdict": "SUPPORTED",
+        "reasoning": "The revenue splits and MA/FFS percentage are directly stated in the facts, though 'single value model' framing is a mild descriptive gloss on the vertically integrated structure also stated.",
+        "action": "kept"
+      },
+      {
+        "path": "enterprise_story_claims[1]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts don't establish Epic as the 'largest' vendor concentration (no comparison across all vendors) nor confirm 'most connected' vs others, and the conclusion about clinical/quality/actuarial data sharing infrastructure is an unsupported leap beyond the stated 82 integrations.",
+        "action": "repaired"
+      },
+      {
+        "path": "enterprise_story_claims[2]",
+        "verdict": "SUPPORTED",
+        "reasoning": "Each fact confirms all 44 leaders raised each of the three topics, matching the claim exactly.",
+        "action": "kept"
+      },
+      {
+        "path": "enterprise_story_claims[3]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The facts confirm the completion percentages and relevant strategic priorities, but linking these two programs as 'most tied' to priorities and framing the low completion as a 'gap between strategic intent and delivery' is an inference beyond directly stated facts.",
+        "action": "kept"
+      },
+      {
+        "path": "enterprise_story_claims[4]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The 24% figure and dollar amounts are directly stated, but characterizing this as an 'investment/outcome gap in the AI portfolio' is an interpretive synthesis rather than a literal fact.",
+        "action": "kept"
+      },
+      {
+        "path": "value_creation_model.primary_value_drivers[0]",
+        "verdict": "SUPPORTED",
+        "reasoning": "All figures and structure directly match fact 1.",
+        "action": "kept"
+      },
+      {
+        "path": "value_creation_model.primary_value_drivers[1]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The 70% MA/FFS plan revenue split is a stated fact, and combining it with the Star Rating and RAF/denial priorities to infer that these are direct economic levers is a reasonable synthesis, though the causal framing itself is not explicitly stated.",
+        "action": "kept"
+      },
+      {
+        "path": "value_creation_model.primary_value_drivers[2]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts only list five customer segments without any statement linking them to plan vs. provider revenue streams or asserting overlap between the two sides.",
+        "action": "repaired"
+      },
+      {
+        "path": "value_creation_model.economic_dependencies[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts support the spend percentage and medium-severity single-vendor risk, but characterizing the entire business model as 'depending on' this and adding 'financial core' scope beyond Clinical Informatics/Hyperspace is unsupported broadening.",
+        "action": "repaired"
+      },
+      {
+        "path": "value_creation_model.economic_dependencies[1]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The fact only states the percentage figure; interpreting this as meaning enablement is 'externally sourced rather than owned' adds an interpretive claim about ownership not stated in the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "value_creation_model.economic_dependencies[2]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts don't establish that Finance/GL Mart is tied to RAF/HEDIS evidence generation, nor that Cotiviti or NCQA engine each carry 'multiple' open risk entries—only Finance/GL Mart has 4, while the others each have one entry cited.",
+        "action": "repaired"
+      },
+      {
+        "path": "strategic_bets[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts state the priority and completion percentage but do not describe this as management's 'bet' or explicitly link the program name/status as a direct revenue lever characterization beyond what's stated.",
+        "action": "repaired"
+      },
+      {
+        "path": "strategic_bets[1]",
+        "verdict": "SUPPORTED",
+        "reasoning": "Both the priority description and the 1% completion/funding block are directly stated in the facts.",
+        "action": "kept"
+      },
+      {
+        "path": "strategic_bets[2]",
+        "verdict": "SUPPORTED",
+        "reasoning": "All elements—evaluation-stage only, 12% completion, and lock-in risk not yet assessed—are directly stated in facts 1-3.",
+        "action": "kept"
+      },
+      {
+        "path": "strategic_bets[3]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The facts confirm the governance priority and the count of paused-pending-review cases, but concluding this shows governance 'actively constraining rollout' is a reasonable interpretive synthesis rather than a directly stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "structural_constraints[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts only state the identification of 57 replacement candidates and their cost, but do not support the characterization of this as a 'material legacy tax on the technology budget before any new investment.'",
+        "action": "repaired"
+      },
+      {
+        "path": "structural_constraints[1]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The claim treats all three as the same 'architecture' maturity gap, but fact 3 refers to AI/ML Capability, not Platform Architecture & Scalability, so the claim misrepresents the scope of the comparison.",
+        "action": "repaired"
+      },
+      {
+        "path": "structural_constraints[2]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts confirm the two capacity figures and tier designations, but nothing supports the added causal claim that this constrains the pace of new digital and analytics initiatives.",
+        "action": "repaired"
+      },
+      {
+        "path": "structural_constraints[3]",
+        "verdict": "SUPPORTED",
+        "reasoning": "The claim directly restates fact 1's statement about lack of document-level evidence and its limiting effect on enterprise-level contract analysis.",
+        "action": "kept"
+      },
+      {
+        "path": "structural_constraints[4]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts say metric-level claims outside the comparable set (16) are unsupported, but the claim extends distrust to 'most' metrics including the 18 with mixed notation within the comparable set, which isn't stated as unsupported in the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "operating_tensions[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts support that governance friction is a widespread concern and that human-in-the-loop governance is a priority, but nothing directly links the two as cause and perceived constraint—that connection is an inferential leap stated as if settled.",
+        "action": "repaired"
+      },
+      {
+        "path": "operating_tensions[1]",
+        "verdict": "OVERSTATED",
+        "reasoning": "Only one process is given in the facts, but the claim generalizes to 'several' high-automation-candidate processes showing this gap.",
+        "action": "repaired"
+      },
+      {
+        "path": "operating_tensions[2]",
+        "verdict": "OVERSTATED",
+        "reasoning": "Fact 1 supports the portfolio numbers, but the claim's comparison to the AI portfolio implies a validated parallel gap rate, whereas fact 2 gives no percentage confirmation status for the 38-program portfolio to actually parallel.",
+        "action": "repaired"
+      },
+      {
+        "path": "operating_tensions[3]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The four completion percentages (8%, 3%, 1%, 12%) are directly stated and all fall in low single-to-double-digit range, so noting this pattern across the priority set is a reasonable inference, though the claim about 'execution capacity' exceeding load is an interpretive synthesis beyond bare facts.",
+        "action": "kept"
+      },
+      {
+        "path": "leadership_consensus[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts support that all 44 leaders raised the concern, but 'enterprise-wide unease' broadens scope beyond the interviewed leaders to the whole enterprise, which isn't stated.",
+        "action": "repaired"
+      },
+      {
+        "path": "leadership_consensus[1]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts show both topics were raised by all leaders, but 'raised' does not establish that they interpreted it as 'resources and skills misaligned to ambition' — that framing is an added interpretive leap beyond mere topic mention.",
+        "action": "repaired"
+      },
+      {
+        "path": "leadership_consensus[2]",
+        "verdict": "SUPPORTED",
+        "reasoning": "All elements—counts, themes, and quotes—are directly stated in the facts.",
+        "action": "kept"
+      },
+      {
+        "path": "leadership_consensus[3]",
+        "verdict": "SUPPORTED",
+        "reasoning": "Both parts are directly stated in facts 1 and 2.",
+        "action": "kept"
+      },
+      {
+        "path": "leadership_disagreements[0]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The facts confirm both themes were raised by only one leader each, supporting the isolated/not-converged framing as a reasonable inference, though 'not shared concerns' and 'not converged' are interpretive extensions beyond bare fact statements.",
+        "action": "kept"
+      },
+      {
+        "path": "leadership_disagreements[1]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The fact only states the raw count/ratio of contradictions; it does not establish 'strong thematic consensus' elsewhere, which is an added claim not supported by the given fact.",
+        "action": "repaired"
+      },
+      {
+        "path": "performance_story.where_improving[0]",
+        "verdict": "UNSUPPORTED",
+        "reasoning": "The facts state 34 of 50 metrics have comparable baseline/target/actual data, but say nothing about how many of those 34 show improvement toward target, so the claim's core figure is unsupported.",
+        "action": "dropped"
+      },
+      {
+        "path": "performance_story.where_off_track[0]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The specific numbers are directly stated, but characterizing these two tools as 'flagship' and framing this as a general pattern of 'AI adoption' being materially below target is an added interpretation not explicitly stated in the facts.",
+        "action": "kept"
+      },
+      {
+        "path": "performance_story.where_off_track[1]",
+        "verdict": "SUPPORTED",
+        "reasoning": "All figures (24%, $15.2M/$63.8M, and 8%/3%/1% completion for STARS/RAF/Community Connect) are directly stated in the facts and fall within the claimed single-digit-to-low-double-digit range.",
+        "action": "kept"
+      },
+      {
+        "path": "performance_story.where_unknown[0]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The 16 and 18 figures are directly stated, but combining them into 'a third of the portfolio cannot support a verdict' and framing mixed-notation metrics as equally unable to support a verdict is an inferential synthesis rather than a directly stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "performance_story.where_unknown[1]",
+        "verdict": "SUPPORTED",
+        "reasoning": "Both the 0/72 figure and the resulting inability to assess pricing/SLA compliance at the enterprise level are directly stated in the facts.",
+        "action": "kept"
+      },
+      {
+        "path": "technology_and_data_implications[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts don't mention clinical, quality, or actuarial reporting dependencies specifically, so that scope claim exceeds what's stated.",
+        "action": "repaired"
+      },
+      {
+        "path": "technology_and_data_implications[1]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts cover different dimensions (Platform Architecture/Scalability vs Analytics Capability vs AI/ML Capability), so directly comparing them as 'nearly as immature' overstates comparability, and 'downstream ETL/BI layers are all below target maturity' generalizes from three specific cases into a broader claim.",
+        "action": "repaired"
+      },
+      {
+        "path": "technology_and_data_implications[2]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts only give the count of regulated assets; the claim adds unsupported framing about leadership's description of 'fragmentation' and the stakes this raises, which is not stated in the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "technology_and_data_implications[3]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The fact only states the approval count, but the claim's interpretive conclusion about the 'analytics foundation' supporting Star Rating and RAF decision-making being in a 'pre-governed state' is not stated or supported by any fact.",
+        "action": "repaired"
+      },
+      {
+        "path": "material_risks[0]",
+        "verdict": "UNSUPPORTED",
+        "reasoning": "The facts do not mention the program being at 0% complete, so that part of the claim is fabricated.",
+        "action": "dropped"
+      },
+      {
+        "path": "material_risks[1]",
+        "verdict": "SUPPORTED",
+        "reasoning": "Both parts of the claim are directly stated in facts 1 and 2.",
+        "action": "kept"
+      },
+      {
+        "path": "material_risks[2]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The severity and Cotiviti link are stated facts, but framing it as 'directly threatening' the priority is a reasonable inferential connection rather than an explicit fact.",
+        "action": "kept"
+      },
+      {
+        "path": "material_risks[3]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The two facts confirm high severity and 10% completion, but the conclusion that this 'leaves the exposure window open for an extended period' is a reasonable inference rather than a stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "material_risks[4]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts only establish one tier2 site's low headroom and backup-only DR, not a general pattern across critical infrastructure or explicit tier1/tier2 dependency claims about clinical and plan operations.",
+        "action": "repaired"
+      },
+      {
+        "path": "value_realization_tensions[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts support linking the CEO's example to the broader theme, but claiming it 'illustrates the same value-realization concern raised enterprise-wide by all 44 leaders' overstates consensus by implying all 44 specifically endorsed or agreed on this exact concern rather than merely raising the theme.",
+        "action": "repaired"
+      },
+      {
+        "path": "value_realization_tensions[1]",
+        "verdict": "UNSUPPORTED",
+        "reasoning": "verifier returned non-JSON",
+        "action": "dropped"
+      },
+      {
+        "path": "value_realization_tensions[2]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts only show two separate instances of self-declared/unconfirmed figures, not evidence of a broader systemic pattern across 'both traditional and AI programs' as claimed.",
+        "action": "repaired"
+      },
+      {
+        "path": "value_realization_tensions[3]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The fact supports the gap in baseline/cohort sign-off but calling it 'structural, not incidental' is an interpretive judgment beyond the single quoted statement.",
+        "action": "repaired"
+      },
+      {
+        "path": "what_needs_attention[0]",
+        "verdict": "UNSUPPORTED",
+        "reasoning": "The facts do not state that the PAM Rollout is at 0% complete or that the risk remains open, so this key element of the claim has no basis in the given facts.",
+        "action": "dropped"
+      },
+      {
+        "path": "what_needs_attention[1]",
+        "verdict": "UNSUPPORTED",
+        "reasoning": "verifier returned non-JSON",
+        "action": "dropped"
+      },
+      {
+        "path": "what_needs_attention[2]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts show the topic was raised by all leaders, not that they unanimously expressed 'concern,' and the recommendation to establish a finance-validation process is an unsupported prescriptive leap beyond the data given.",
+        "action": "repaired"
+      },
+      {
+        "path": "what_needs_attention[3]",
+        "verdict": "OVERSTATED",
+        "reasoning": "Facts show 16/50 (32%, roughly a third) lack comparable baselines, but the claim adds a causal 'undermining confidence in the remaining two-thirds' conclusion not stated in the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "things_a_new_cxo_should_know[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The revenue split figures are directly stated, but the claim's assertion that 'Star Ratings and RAF accuracy are direct revenue levers, not compliance overhead' is an interpretive conclusion not stated in the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "things_a_new_cxo_should_know[1]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts give Epic's vendor spend share and one integration's connection count, but do not establish Epic as 'strategic backbone' nor confirm it is the largest single point of concentration compared to all others.",
+        "action": "repaired"
+      },
+      {
+        "path": "things_a_new_cxo_should_know[2]",
+        "verdict": "OVERSTATED",
+        "reasoning": "While the three consensus facts support alignment, linking that specifically to 'delivered programs' via the single STARS 5.0 8% completion fact generalizes one program into a broader claim about program delivery.",
+        "action": "repaired"
+      },
+      {
+        "path": "things_a_new_cxo_should_know[3]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The dollar figures and 24% ratio are stated directly, but the recommendation to treat board figures as provisional is a reasonable inference from the low validation rate rather than a stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "things_a_new_cxo_should_know[4]",
+        "verdict": "UNSUPPORTED",
+        "reasoning": "The facts list only four programs with no mention of strategic priorities ranking, five programs, or a second blocker involving supplier availability.",
+        "action": "dropped"
+      },
+      {
+        "path": "things_a_new_cxo_should_know[5]",
+        "verdict": "UNSUPPORTED",
+        "reasoning": "The facts state the risk is tied to the PAM Rollout program but do not mention its completion status or 0% progress at all.",
+        "action": "dropped"
+      },
+      {
+        "path": "things_a_new_cxo_should_know[6]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The count is directly stated, but the recommendation to cross-check both sources is a reasonable inference from that discrepancy rate, not a stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "questions_for_management[0]",
+        "verdict": "UNSUPPORTED",
+        "reasoning": "The facts state only the completion percentage and the target, with no information about a credible path or timeline to close the gap, which the claim demands.",
+        "action": "dropped"
+      },
+      {
+        "path": "questions_for_management[1]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The facts establish the risk-program link and severity but don't state the 0% completion figure, so the claim's framing is a reasonable inferential question rather than a directly stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "questions_for_management[2]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts only state the tracking figures; they don't address what would be required for full validation or whether investment should be paused, which are unsupported prescriptive/causal extensions.",
+        "action": "repaired"
+      },
+      {
+        "path": "questions_for_management[3]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts confirm the funding block and strategic goal, but the claim's questions about funding being secured and the 'cost of continued interface sprawl' introduce speculative framing and quantification not supported by the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "questions_for_management[4]",
+        "verdict": "UNSUPPORTED",
+        "reasoning": "The facts state the risk rating and spend concentration but say nothing about any contingency plan for pricing or delivery term changes.",
+        "action": "dropped"
+      },
+      {
+        "path": "questions_for_management[5]",
+        "verdict": "UNSUPPORTED",
+        "reasoning": "The facts only report the CEO's statement about one program never being checked; there is no information about any governance process for verifying other programs' benefit cases.",
+        "action": "dropped"
+      },
+      {
+        "path": "questions_for_management[6]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The facts establish both the low maturity of Databricks and the sequencing priority, making the risk of replacing one immature platform with another a reasonable inference, phrased appropriately as a question.",
+        "action": "kept"
+      }
+    ],
+    "structuralIssues": [
+      {
+        "path": "value_creation_model.primary_value_drivers[1]",
+        "reason": "claim_type=CROSS_DOMAIN_INSIGHT spans only 1 domain(s), below the two-domain bar for a real connection"
+      },
+      {
+        "path": "value_creation_model.economic_dependencies[2]",
+        "reason": "claim_type=CROSS_DOMAIN_INSIGHT spans only 1 domain(s), below the two-domain bar for a real connection"
+      },
+      {
+        "path": "operating_tensions[1]",
+        "reason": "claim_type=CROSS_DOMAIN_INSIGHT spans only 1 domain(s), below the two-domain bar for a real connection"
+      },
+      {
+        "path": "value_realization_tensions[0]",
+        "reason": "claim_type=CROSS_DOMAIN_INSIGHT spans only 1 domain(s), below the two-domain bar for a real connection"
+      },
+      {
+        "path": "what_needs_attention[1]",
+        "reason": "claim_type=ADVISORY_INFERENCE spans only 1 domain(s), below the two-domain bar for a real connection"
+      },
+      {
+        "path": "what_needs_attention[3]",
+        "reason": "claim_type=ADVISORY_INFERENCE spans only 1 domain(s), below the two-domain bar for a real connection"
+      },
+      {
+        "path": "questions_for_management[2]",
+        "reason": "claim_type=ADVISORY_INFERENCE spans only 1 domain(s), below the two-domain bar for a real connection"
+      },
+      {
+        "path": "questions_for_management[5]",
+        "reason": "claim_type=ADVISORY_INFERENCE spans only 1 domain(s), below the two-domain bar for a real connection"
+      }
+    ]
+  }
+}
