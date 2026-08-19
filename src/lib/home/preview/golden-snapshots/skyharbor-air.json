@@ -1,0 +1,3751 @@
+{
+  "tenantKey": "skyharbor-air",
+  "provenance": {
+    "home_synthesis_contract_version": "home-chapters-v1",
+    "thesis_prompt_version": "enterprise-thesis/v1",
+    "chapter_prompt_version": "home-chapters/v1",
+    "model": "claude-sonnet-5",
+    "signal_packet_version": "v1",
+    "canonical_snapshot_hash": "5b0bd117be427138b4e49cf7b1add748b4a898217a85bcf25bb30353d2e99642",
+    "verification_version": "targeted-repair-v2",
+    "generated_at": "2026-08-19T21:05:42.770Z",
+    "generation_commit_sha": "072f0cc49595d831d018980871661b3862135616",
+    "generation_image_digest": "sha256:fe9319a04cb3e74a4b0ada383ada75892c06befe1fba8582c6e84b3b668807b2"
+  },
+  "chapters": [
+    {
+      "chapterId": "executive_brief",
+      "title": "Executive Brief",
+      "guidingQuestion": "What should I understand in my first ten minutes?",
+      "headline": "Leadership consensus, financial validation, and program status all converge on the same signal: value claims and priority investments are not yet proven, and the enterprise's flagship modernization effort is stalled.",
+      "executive_synthesis": "In your first ten minutes, focus on three converging facts. All 26 interviewed leaders independently flagged value realization and investment priority as concerns — a rare unanimous signal, though it doesn't tell us whether current tech spend is actually paying off. That concern is backed by numbers: only 7% ($5.7M of $80.2M) of promised AI value is finance-validated, and the Meridian Regional Technology Integration, a declared strategic priority, is only 7% complete and blocked by a platform migration slipped two quarters. Layer onto this a PAM coverage gap left open despite being a named priority, standing privileged credentials outside that coverage, mainframe key-person risk on CA-7 scheduling, and nearly a quarter of the application estate ($284.1M, 117 apps) flagged for replacement. Finally, treat performance metrics cautiously — only 15 of 26 tracked metrics have comparable baseline, target, and actual data, and even those are inconsistently recorded. The pattern is consistency of concern, not yet resolution.",
+      "key_insights": [
+        {
+          "statement": "All 26 interviewed leaders raised both value realization and investment priority as topics — a rare enterprise-wide consensus that these are areas of concern, though the interviews do not establish whether current technology investment is or isn't proving its worth.",
+          "evidence_ids": [
+            "sig_consensus_015",
+            "sig_consensus_016"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "That perception is corroborated by hard numbers: only $5.7M of $80.2M promised AI value (7%) has been finance-validated.",
+          "evidence_ids": [
+            "sig_ai_value_072"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Meridian Regional Technology Integration — a strategically significant program — is only 7% complete and explicitly blocked, with dependency on a platform migration that has slipped two quarters.",
+          "evidence_ids": [
+            "sig_portfolio_033"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Nearly a quarter of the application estate ($284.1M, 117 apps) is already flagged as a replacement candidate — a significant portion of the estate that could warrant attention when prioritizing modernization efforts.",
+          "evidence_ids": [
+            "sig_concentration_002"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "Metric evidence is thin: only 15 of 26 tracked metrics have a comparable baseline, target and actual, and even within that set notation is inconsistent — treat most performance claims cautiously.",
+          "evidence_ids": [
+            "sig_gap_005"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "tensions": [
+        {
+          "statement": "The Meridian integration program, a declared strategic priority, is 7% complete and blocked by a platform migration that has slipped two quarters — a delay that warrants executive attention given the program's priority status.",
+          "evidence_ids": [
+            "sig_portfolio_033",
+            "ctx_priority_015"
+          ],
+          "confidence": "high",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "AI value realization tracking shows $80.2M of promised value against only $5.7M finance-validated—about 7% confirmed—a gap finance validation should close to give visibility into further AI investment decisions.",
+          "evidence_ids": [
+            "sig_ai_value_072"
+          ],
+          "confidence": "high",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "The PAM coverage gap remains a high-severity open risk despite being a named strategic priority, and needs an executive owner and timeline.",
+          "evidence_ids": [
+            "sig_risk_008",
+            "ctx_priority_019"
+          ],
+          "confidence": "high",
+          "claim_type": "ADVISORY_INFERENCE"
+        }
+      ],
+      "what_to_watch": [
+        {
+          "statement": "Standing privileged credentials outside PAM coverage is a high-severity risk that directly contradicts a named strategic priority to close the PAM gap.",
+          "evidence_ids": [
+            "sig_risk_008",
+            "ctx_priority_019"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Mainframe skills concentration on CA-7 Batch Scheduler is rated high severity, exposing the enterprise to key-person and continuity risk on a core scheduling system.",
+          "evidence_ids": [
+            "sig_risk_010"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        }
+      ],
+      "questions_to_ask": [
+        "SITA represents 13.9% of vendor spend ($285.0M of $2.05B), and a VP Commercial & Distribution Systems flagged that the renewal window is narrow — the notice date passes before the budget conversation happens. Given this, is there a plan to align the notice date with the budget cycle for the next SITA renewal, and has the option of alternative providers been considered?",
+        "81 of 586 leadership interview responses contradict the system-of-record evidence on the same topic. A topic-level breakdown of where these contradictions concentrate is not yet available, but identifying it could help determine which source should be trusted for decisions on those specific topics.",
+        "Contact Center Workforce Forecasting is rated a High automation candidate yet runs at just 2% automation with a 6.8% error rate — what could be blocking automation investment there?",
+        "Standing privileged credentials outside PAM (CyberArk) coverage remain a high-severity risk, and closing this PAM coverage gap has been declared a strategic priority. What is the current plan and owner for closing this gap, if one has been established?"
+      ],
+      "visual_opportunities": [
+        {
+          "visual_type": "horizontal_bar",
+          "title": "Most of the transformation portfolio is stalled in single digits of completion, not just the flagged Meridian program",
+          "purpose": "Show that program delivery risk is portfolio-wide, not isolated to one acquisition integration effort.",
+          "dataset_ref": "stalled_programs",
+          "key_message": "The vast majority of tracked programs sit below 15% completion, several explicitly blocked.",
+          "evidence_ids": [
+            "sig_portfolio_033",
+            "sig_portfolio_034",
+            "sig_portfolio_035",
+            "sig_portfolio_036",
+            "sig_portfolio_037"
+          ],
+          "priority": "high"
+        }
+      ],
+      "limitations": []
+    },
+    {
+      "chapterId": "our_business",
+      "title": "Our Business",
+      "guidingQuestion": "How does this enterprise work and create value?",
+      "headline": "Value creation rests on a diversified but interdependent network — mainline, regional, cargo, MRO, and loyalty — whose day-to-day delivery increasingly depends on third-party vendors and an unresolved acquisition integration.",
+      "executive_synthesis": "This enterprise creates value through a hub-and-spoke mainline network that anchors distinct but connected businesses: regional feed, cargo, maintenance (MRO), and a co-brand loyalty program, together reaching passengers, shippers, and codeshare partners. That structure is currently in motion — the mid-acquisition integration of Meridian Regional Airways is expanding scale and route density, but the technology and operational work to fully absorb it is not yet resolved, meaning some execution risk remains open rather than settled. Underneath this network sits a $3.42B technology budget, 4.2% of revenue, which is genuinely load-bearing for operations — and 60% of it is contracted to third parties, so vendor performance and vendor economics are not a side issue but central to how the business runs. That reliance extends to the frontline: ground handling (Menzies Aviation/Swissport, $74.5M annually) and inflight catering (Gate Gourmet/dnata, $62.0M annually) are outsourced, suggesting that aspects of passenger-facing service quality depend on external partners' performance rather than being fully controlled in-house.",
+      "key_insights": [
+        {
+          "statement": "Value is created through a hub-and-spoke mainline passenger network supplemented by a regional carrier, cargo division, MRO capability, and a co-brand loyalty program, serving distinct customer segments from leisure/business passengers to cargo shippers and codeshare partners.",
+          "evidence_ids": [
+            "ctx_identity_001",
+            "ctx_segment_009",
+            "ctx_segment_010",
+            "ctx_segment_012",
+            "ctx_segment_014"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "The enterprise is mid-acquisition, integrating Meridian Regional Airways into the mainline network, expanding scale and route density but adding technology and operational integration risk that is not yet resolved.",
+          "evidence_ids": [
+            "ctx_economics_008",
+            "sig_portfolio_033"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "A $3.42B technology budget (4.2% of revenue) underpins operations, with 60% of it contracted to third parties — vendor performance and vendor economics are load-bearing for the business, not peripheral.",
+          "evidence_ids": [
+            "ctx_economics_007",
+            "sig_complexity_040"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Ground handling is outsourced to Menzies Aviation/Swissport ($74.5M annually) and inflight catering to Gate Gourmet/dnata ($62.0M annually), which could mean aspects of frontline service quality depend on these vendors' performance rather than being fully managed in-house.",
+          "evidence_ids": [
+            "sig_complexity_076",
+            "sig_complexity_077"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "tensions": [],
+      "what_to_watch": [],
+      "questions_to_ask": [],
+      "visual_opportunities": [],
+      "limitations": []
+    },
+    {
+      "chapterId": "strategy_value_creation",
+      "title": "Strategy & Value Creation",
+      "guidingQuestion": "Where are we trying to go, and what bets are we making?",
+      "headline": "The strategy names the right bets — Meridian integration, data/AI modernization, AI-assisted IROPS, PAM closure, automation — but nearly every one is stalled far behind its own targets, and the projected 1.12x return has not been finance-confirmed.",
+      "executive_synthesis": "The declared direction is coherent: integrate Meridian, modernize the data and AI platform, use AI to recover faster from disruptions, close a known cybersecurity gap, and automate high-volume manual work. But the bets are still bets, not progress. Meridian integration sits at 7% completion behind a slipped platform migration; the Snowflake modernization is 12% complete while underlying platforms remain below target maturity; Crew Recovery AI and Copilot both trail adoption targets by 26 points despite IROPS being a named priority; standing privileged credentials outside PAM remain a high-severity open risk; and a process rated a high automation candidate, Contact Center Workforce Forecasting, is still 2% automated with a 6.8% error rate. Leadership itself flags governance friction — six weeks added with little change to outcomes — as a tension against the pace these priorities demand. Layered on top, the portfolio's headline 1.12x return figure has not been finance-confirmed, echoing a leadership concern that benefit claims are rarely checked against actual outcomes.",
+      "key_insights": [
+        {
+          "statement": "Completing the Meridian Regional Airways technology and operational integration is a declared strategic priority, but the associated program is only 7% complete and blocked on a platform migration that has slipped two quarters.",
+          "evidence_ids": [
+            "ctx_priority_015",
+            "sig_portfolio_033"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Modernizing the data and AI platform (Teradata-to-Snowflake) is a declared priority at 12% program completion, while platform maturity assessments show Snowflake, Databricks, Kafka and Informatica all below their target architecture and enablement levels.",
+          "evidence_ids": [
+            "ctx_priority_017",
+            "sig_portfolio_036",
+            "sig_gap_084",
+            "sig_gap_085",
+            "sig_gap_086",
+            "sig_gap_087"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "AI-assisted disruption recovery (IROPS) is a named strategic bet, but adoption of the related Crew Recovery AI tool already trails its adoption target by 26 points.",
+          "evidence_ids": [
+            "ctx_priority_018",
+            "sig_ai_value_074"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Closing the cybersecurity PAM coverage gap is a declared priority, yet standing privileged credentials outside PAM coverage remain rated a high-severity open risk.",
+          "evidence_ids": [
+            "ctx_priority_019",
+            "sig_risk_008"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        }
+      ],
+      "tensions": [
+        {
+          "statement": "Microsoft 365 Copilot and Crew Recovery AI both trail their adoption targets by the same 26 points, even as improving on-time performance and disruption recovery via AI-assisted IROPS is a declared strategic priority — a gap between stated priority and actual uptake worth investigating.",
+          "evidence_ids": [
+            "sig_ai_value_073",
+            "sig_ai_value_074",
+            "ctx_priority_018"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Leadership describes architecture governance as adding six weeks with little change to outcomes, creating tension between the pace modernization priorities demand and the process meant to control it.",
+          "evidence_ids": [
+            "sig_testimony_044",
+            "ctx_priority_017"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Processes rated High automation candidates remain largely manual — Contact Center Workforce Forecasting sits at 2% automation despite a High rating and a 6.8% error rate — while broad workforce automation opportunity across large operational roles is rated only Medium or Low.",
+          "evidence_ids": [
+            "sig_operational_081",
+            "sig_workforce_060",
+            "sig_workforce_064"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "The portfolio declares a 1.12x return ($457.4M expected value against $407.4M budget) that is not yet finance-confirmed, echoing a CEO's own complaint that approved benefit numbers are never checked back against outcomes.",
+          "evidence_ids": [
+            "sig_portfolio_038",
+            "sig_testimony_041"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        }
+      ],
+      "what_to_watch": [],
+      "questions_to_ask": [
+        "Standing privileged credentials outside PAM (CyberArk) coverage remain a high-severity risk, and closing this PAM coverage gap has been declared a strategic priority. What is the current plan and owner for closing this gap, if one has been established?"
+      ],
+      "visual_opportunities": [
+        {
+          "visual_type": "horizontal_bar",
+          "title": "Most of the transformation portfolio is stalled in single digits of completion, not just the flagged Meridian program",
+          "purpose": "Show that program delivery risk is portfolio-wide, not isolated to one acquisition integration effort.",
+          "dataset_ref": "stalled_programs",
+          "key_message": "The vast majority of tracked programs sit below 15% completion, several explicitly blocked.",
+          "evidence_ids": [
+            "sig_portfolio_033",
+            "sig_portfolio_034",
+            "sig_portfolio_035",
+            "sig_portfolio_036",
+            "sig_portfolio_037"
+          ],
+          "priority": "high"
+        }
+      ],
+      "limitations": []
+    },
+    {
+      "chapterId": "how_we_operate",
+      "title": "How We Operate",
+      "guidingQuestion": "How is the enterprise organized and how does work get done?",
+      "headline": "Operational throughput across the enterprise is constrained not by lack of ideas or resources but by structural bottlenecks — scarce specialist skills, unreconciled legacy systems, and evidence not yet actionable.",
+      "executive_synthesis": "Work in this enterprise gets done through a small number of critical human and system chokepoints rather than broad, distributed capacity. Mainframe operations depend heavily on CA-7 Batch Scheduler expertise held by a scarce specialist pool, a high-severity structural risk. Cargo booking changes similarly queue behind the same four engineers, a bottleneck a COO attributes explicitly to structure, not a shortage of ideas. At the regional level, Meridian's legacy systems remain unreconciled with the mainline, directly working against the enterprise's stated top integration priority — a sign that operational reality and strategic intent are not yet aligned. Compounding this, none of the 183 declared evidence sources are yet approved for loading, meaning the organization's own evidence base is not fully actionable today. Together these claims suggest an enterprise whose operating model is shaped less by deliberate design than by inherited constraints — key-person dependencies, unresolved legacy integration, and limited evidentiary readiness. The available claims do not establish broader organizational structure beyond these specific bottlenecks.",
+      "key_insights": [
+        {
+          "statement": "Mainframe skills concentration on CA-7 Batch Scheduler is rated a high-severity structural risk, reflecting reliance on a scarce specialist skillset.",
+          "evidence_ids": [
+            "sig_risk_010"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Meridian Regional's legacy systems remain unreconciled with the mainline, a structural drag directly opposing the enterprise's own top integration priority.",
+          "evidence_ids": [
+            "sig_risk_011",
+            "ctx_priority_015"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "A COO reports that cargo booking system changes queue behind the same four engineers, describing a structural throughput bottleneck rather than a resourcing shortfall of ideas.",
+          "evidence_ids": [
+            "sig_testimony_055"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "None of the 183 declared evidence sources are yet approved for loading, which could limit how much of the underlying evidence base can currently be acted on.",
+          "evidence_ids": [
+            "sig_data_quality_075"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "tensions": [],
+      "what_to_watch": [],
+      "questions_to_ask": [
+        "Contact Center Workforce Forecasting is rated a High automation candidate yet runs at just 2% automation with a 6.8% error rate — what could be blocking automation investment there?"
+      ],
+      "visual_opportunities": [],
+      "limitations": []
+    },
+    {
+      "chapterId": "technology_data",
+      "title": "Technology & Data",
+      "guidingQuestion": "What enables the business, and where is complexity or dependency concentrated?",
+      "headline": "Technology capability is concentrated and externally dependent: 60% of the $3.42B budget flows to third parties, with a single vendor (SITA) holding 13.9% of that spend and no contract-level evidence to validate its terms.",
+      "executive_synthesis": "The enterprise's technology base is enabled less by internal capability than by external providers: 60% of the $3.42B technology budget, or $2.05B, is contracted out, and SITA alone accounts for 13.9% of vendor spend, creating structural dependency on a small set of external partners. This dependency is compounded by a lack of document-level evidence behind any of the 65 declared vendor contracts, leaving the enterprise unable to confirm renewal terms or negotiating leverage for its largest vendor relationship. Application complexity is also concentrated functionally, with Airport & Ground Operations carrying the largest single footprint (217 applications, $471.2M), while 23% of the estate ($284.1M) is already flagged for replacement, though not yet tied to any funded program. Underlying data infrastructure adds further risk: Collibra governance maturity sits at level 2 against a target of 4, a gap consistent with reports that Corporate Strategy & M&A Integration leadership distrusts shared numbers enough to keep private extracts.",
+      "key_insights": [
+        {
+          "statement": "117 applications (23% of the estate, $284.1M) are already flagged as replacement candidates; this has not been linked to any specific funded program in this packet.",
+          "evidence_ids": [
+            "sig_concentration_002"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "60% of the $3.42B technology budget ($2.05B) is contracted to third parties, meaning a majority of technology spend is directed to external vendors rather than internal resources.",
+          "evidence_ids": [
+            "sig_complexity_040",
+            "ctx_economics_007"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Data governance and catalog maturity (Collibra, level 2 against a target of 4) shows a notable gap, which could be consistent with the CEO's concern that his team keeps private extracts because they do not trust the Corporate Strategy & M&A Integration numbers.",
+          "evidence_ids": [
+            "sig_gap_088",
+            "sig_testimony_043"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Airport & Ground Operations carries the largest single technology footprint in the estate by cost (217 applications, $471.2M annually), concentrating spend in one function.",
+          "evidence_ids": [
+            "sig_complexity_039"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "With no document-level evidence extraction behind any of the 65 declared vendor contracts, the enterprise cannot currently validate renewal terms or leverage for its largest vendor dependency (SITA, 13.9% of vendor spend).",
+          "evidence_ids": [
+            "sig_gap_006",
+            "sig_concentration_001"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        }
+      ],
+      "tensions": [
+        {
+          "statement": "Third-party contracted spend (60% of the tech budget) combined with SITA alone representing 13.9% of vendor spend creates a structural dependency on a small number of external providers.",
+          "evidence_ids": [
+            "sig_complexity_040",
+            "sig_concentration_001"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        }
+      ],
+      "what_to_watch": [],
+      "questions_to_ask": [
+        "SITA represents 13.9% of vendor spend ($285.0M of $2.05B), and a VP Commercial & Distribution Systems flagged that the renewal window is narrow — the notice date passes before the budget conversation happens. Given this, is there a plan to align the notice date with the budget cycle for the next SITA renewal, and has the option of alternative providers been considered?"
+      ],
+      "visual_opportunities": [
+        {
+          "visual_type": "horizontal_bar",
+          "title": "A single vendor carries the largest share of technology vendor spend",
+          "purpose": "Highlight vendor concentration risk ahead of renewal planning.",
+          "dataset_ref": "vendor_spend_concentration",
+          "key_message": "SITA alone represents 13.9% of total vendor spend, more than double the next-largest vendor.",
+          "evidence_ids": [
+            "sig_concentration_001"
+          ],
+          "priority": "medium"
+        }
+      ],
+      "limitations": []
+    },
+    {
+      "chapterId": "performance_value",
+      "title": "Performance & Value",
+      "guidingQuestion": "Are we moving toward outcomes, and can we prove the value?",
+      "headline": "Where metrics exist, most are trending toward target, but the measurement base is too thin and value too unverified to call the portfolio's progress proven.",
+      "executive_synthesis": "There are encouraging signals: 13 of 15 metrics with comparable baselines, targets, and actuals are moving toward target. But that comparable set covers only 15 of 26 tracked metrics, with 11 lacking baseline data entirely and 9 more mixing inconsistent notation — so the good news applies to little more than half the portfolio. On value, the picture is weaker: the declared 1.12x return remains finance-unconfirmed, AI value realization sits at just 7% of what was promised, and a CEO acknowledges a major program's benefit case was never checked against results. Flagship modernization programs — Meridian integration, NDC, PureConnect, Teradata-to-Snowflake, CDP — cluster in low completion ranges, and adoption gaps (Copilot, Crew Recovery AI) plus underused automation candidates (Contact Center Forecasting) reinforce a pattern of promised value not yet realized. Vendor contract terms, including for a top spend concentration, also can't be independently verified. The honest answer: directional movement exists, but proof of value does not.",
+      "key_insights": [
+        {
+          "statement": "13 of the 15 metrics with a comparable baseline, target and actual are moving toward their target, though this is only 15 of 26 tracked metrics overall.",
+          "evidence_ids": [
+            "sig_outlier_032",
+            "sig_gap_005"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "The Meridian Regional Technology Integration Program is 7% complete and blocked by a platform migration that has slipped two quarters. This program may relate to the declared strategic priority of completing Meridian Regional Airways technology and operational integration, though the two are not explicitly linked.",
+          "evidence_ids": [
+            "sig_portfolio_033",
+            "ctx_priority_015"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "AI value realization is confirmed at only 7% of what was promised ($5.7M of $80.2M), well below the declared portfolio-wide expectation.",
+          "evidence_ids": [
+            "sig_ai_value_072"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Multiple flagship modernization programs beyond Meridian (NDC completion, PureConnect migration, Teradata-to-Snowflake, CDP cutover) all sit in a similar single-to-low-double-digit completion range, suggesting a portfolio-wide delivery pattern rather than an isolated program issue.",
+          "evidence_ids": [
+            "sig_portfolio_034",
+            "sig_portfolio_035",
+            "sig_portfolio_036",
+            "sig_portfolio_037"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "11 of 26 tracked metrics lack a comparable baseline, target and actual, and 9 of the remaining 15 mix notation across those fields — metric-level performance claims outside the comparable set are unsupported.",
+          "evidence_ids": [
+            "sig_gap_005"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "The portfolio's declared 1.12x return is not yet finance-confirmed, so whether the $457.4M of expected value against $407.4M of budget will actually materialize is unknown.",
+          "evidence_ids": [
+            "sig_portfolio_038"
+          ],
+          "confidence": "medium",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "None of the 65 declared vendor contracts have document-level evidence extraction behind them in this packet, so contract terms and renewal risk cannot currently be independently verified — including for SITA, which represents 13.9% of total vendor spend ($285.0M of $2.05B) supporting Airport & Ground Operations.",
+          "evidence_ids": [
+            "sig_gap_006",
+            "sig_concentration_001"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "tensions": [
+        {
+          "statement": "Only $5.7M of $80.2M in promised AI value (7%) has been finance-validated, which is consistent with the value realization concern raised by all 26 of 26 interviewed leaders.",
+          "evidence_ids": [
+            "sig_ai_value_072",
+            "sig_consensus_015"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "The declared portfolio-wide 1.12x return ($457.4M expected value against $407.4M budget) is a declared figure, not yet finance-confirmed.",
+          "evidence_ids": [
+            "sig_portfolio_038"
+          ],
+          "confidence": "medium",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "A CEO states directly that the Infrastructure & Cloud Modernization Program was approved with a benefit number that nobody has since checked against actual results.",
+          "evidence_ids": [
+            "sig_testimony_041"
+          ],
+          "confidence": "medium",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Microsoft 365 Copilot and Crew Recovery AI are both 26 points below their adoption targets, suggesting the value gap may not be limited to a single tool.",
+          "evidence_ids": [
+            "sig_ai_value_073",
+            "sig_ai_value_074"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "A process rated a High automation candidate (Contact Center Workforce Forecasting) runs at only 2% automation with a 6.8% error rate, suggesting that in this case the identified automation potential has not translated into deployed capability or improved outcomes.",
+          "evidence_ids": [
+            "sig_operational_081"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        }
+      ],
+      "what_to_watch": [],
+      "questions_to_ask": [],
+      "visual_opportunities": [],
+      "limitations": []
+    },
+    {
+      "chapterId": "leadership_perspective",
+      "title": "Leadership Perspective",
+      "guidingQuestion": "What do leaders agree on, disagree on, and worry about?",
+      "headline": "Leaders are unanimous on the big worries — value realization, investment priority, governance friction, capability and data-trust gaps — but this consensus masks sharp disagreement on specifics and a few isolated warnings that may deserve more attention than they've gotten.",
+      "executive_synthesis": "Across all 26 leaders interviewed, agreement is near-total on the questions that matter most: whether technology investment is paying off, where investment should be prioritized, and whether governance, capability, and data trust are creating drag — the last three flagged by 23-24 of 26 leaders each. Yet this consensus is looser than it appears. Even on value realization, where sentiment is unanimous, 81 of 586 interview statements contradict system-of-record evidence on the same topic, showing perception and documented reality diverge on details even as overall concern converges. Meanwhile, some worries remain isolated rather than shared: a CFO alone flagged unused licensing costs on a case management system, and a VP alone warned that the renewal window for a vendor representing 13.9% of total spend is too narrow to negotiate. Neither view was echoed elsewhere, suggesting visibility into cost waste and vendor risk is uneven across leadership — singleton concerns that, given the dollars involved, may warrant broader attention than one voice has given them.",
+      "key_insights": [
+        {
+          "statement": "Leadership perspective: all 26 interviewed leaders raised value realization as a concern — a consensus view on whether technology investment is proving out, not a settled fact about the enterprise.",
+          "evidence_ids": [
+            "sig_consensus_015"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Leadership perspective: all 26 interviewed leaders raised investment priority as a concern.",
+          "evidence_ids": [
+            "sig_consensus_016"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Leadership perspective: 24 of 26 leaders raised governance friction as a concern — a consensus view, though the specific impact on delivery speed was not confirmed.",
+          "evidence_ids": [
+            "sig_consensus_017"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Leadership perspective: 24 of 26 leaders raised capability gaps, and 23 of 26 raised data trust concerns.",
+          "evidence_ids": [
+            "sig_consensus_018",
+            "sig_consensus_020"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        }
+      ],
+      "tensions": [
+        {
+          "statement": "Even amid near-unanimous leadership concern about value realization, 81 of 586 recorded interview statements contradict the system-of-record evidence on the same topic — perception and system data diverge on specifics even where the overall sentiment converges.",
+          "evidence_ids": [
+            "sig_contradiction_014",
+            "sig_consensus_015"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "A CFO's observation about unused licensing on the Leave-of-Absence Case Management system is a lone view with no corroboration elsewhere in the interview set, which could suggest visibility into cost waste is uneven across leadership.",
+          "evidence_ids": [
+            "sig_dissent_030",
+            "sig_testimony_056"
+          ],
+          "confidence": "low",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "A VP's warning that the SITA renewal window is too narrow to negotiate is a singleton view, not echoed by other leaders, even though SITA accounts for 13.9% of total vendor spend ($285.0M of $2.05B) supporting Airport & Ground Operations — a concentration that may warrant broader attention than a single voice has given it.",
+          "evidence_ids": [
+            "sig_dissent_031",
+            "sig_testimony_057",
+            "sig_concentration_001"
+          ],
+          "confidence": "low",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        }
+      ],
+      "what_to_watch": [],
+      "questions_to_ask": [
+        "81 of 586 leadership interview responses contradict the system-of-record evidence on the same topic. A topic-level breakdown of where these contradictions concentrate is not yet available, but identifying it could help determine which source should be trusted for decisions on those specific topics."
+      ],
+      "visual_opportunities": [
+        {
+          "visual_type": "donut",
+          "title": "Leadership testimony aligns with system evidence most of the time, but disagrees in a material minority of cases",
+          "purpose": "Frame the scale of leadership-vs-system divergence without overstating it.",
+          "dataset_ref": "leadership_evidence_alignment",
+          "key_message": "505 of 586 interview statements are consistent with system evidence; 81 contradict it.",
+          "evidence_ids": [
+            "sig_contradiction_014"
+          ],
+          "priority": "medium"
+        }
+      ],
+      "limitations": []
+    },
+    {
+      "chapterId": "what_needs_attention",
+      "title": "What Needs Attention",
+      "guidingQuestion": "What tensions, risks, dependencies and decisions deserve executive attention?",
+      "headline": "A cluster of stalled strategic priorities—Meridian integration, PAM coverage, and AI value validation—are each running behind commitment with no clear executive owner, while concentrated dependencies on vendors, legacy systems, and scarce skills quietly compound the risk of any one of them slipping further.",
+      "executive_synthesis": "Several named strategic priorities are not tracking to plan: Meridian integration sits at 7% completion, blocked by a platform migration slipped two quarters, while its unreconciled legacy Sabre DCS systems compound that same risk. PAM coverage remains a high-severity open risk despite priority status, made more urgent by standing privileged credentials sitting outside its control. AI value realization shows only about 7% of promised value finance-validated, limiting confidence in further investment. Separately, the Teradata-to-Snowflake migration is proceeding without first closing a data governance maturity gap, risking carrying existing trust issues onto the new platform. These strategic threads are set against structural dependencies deserving attention in their own right: vendor concentration in SITA with a narrow renewal window, key-person exposure on mainframe scheduling skills, repeated risk concentration on the Meridian Legacy Finance System and ServiceNow CMDB, and thin capacity headroom on three tier-1 infrastructure platforms. Together these point to a common need — named executive owners, timelines, and validation discipline — rather than any single fix.”",
+      "key_insights": [
+        {
+          "statement": "The Meridian integration program, a declared strategic priority, is 7% complete and blocked by a platform migration that has slipped two quarters — a delay that warrants executive attention given the program's priority status.",
+          "evidence_ids": [
+            "sig_portfolio_033",
+            "ctx_priority_015"
+          ],
+          "confidence": "high",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "AI value realization tracking shows $80.2M of promised value against only $5.7M finance-validated—about 7% confirmed—a gap finance validation should close to give visibility into further AI investment decisions.",
+          "evidence_ids": [
+            "sig_ai_value_072"
+          ],
+          "confidence": "high",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "The PAM coverage gap remains a high-severity open risk despite being a named strategic priority, and needs an executive owner and timeline.",
+          "evidence_ids": [
+            "sig_risk_008",
+            "ctx_priority_019"
+          ],
+          "confidence": "high",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "SITA's 13.9% vendor spend concentration, combined with a leadership warning about a narrow renewal window, warrants a proactive renewal and diversification review.",
+          "evidence_ids": [
+            "sig_concentration_001",
+            "sig_testimony_057"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "The Teradata-to-Snowflake migration priority (12% complete) should be paired with closing the Collibra Data Governance & Stewardship gap (currently at maturity level 2 against a target of 4), since migrating platforms without addressing governance maturity could carry existing data trust issues onto the new system.",
+          "evidence_ids": [
+            "ctx_priority_017",
+            "sig_portfolio_036",
+            "sig_gap_088"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        }
+      ],
+      "tensions": [
+        {
+          "statement": "Standing privileged credentials outside PAM coverage is a high-severity risk that directly contradicts a named strategic priority to close the PAM gap.",
+          "evidence_ids": [
+            "sig_risk_008",
+            "ctx_priority_019"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Mainframe skills concentration on CA-7 Batch Scheduler is rated high severity, exposing the enterprise to key-person and continuity risk on a core scheduling system.",
+          "evidence_ids": [
+            "sig_risk_010"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Meridian Regional legacy systems unreconciled with mainline is a high-severity risk tied to Meridian Legacy Sabre DCS, and it may compound the risk to the Meridian Regional Airways integration priority, which is currently only 7% complete and blocked by a platform migration slip of two quarters.",
+          "evidence_ids": [
+            "sig_risk_011",
+            "sig_portfolio_033",
+            "ctx_priority_015"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Risk exposure repeatedly concentrates on two systems — Meridian Legacy Finance System and ServiceNow CMDB — each named in two separate risk or control entries.",
+          "evidence_ids": [
+            "sig_dependency_003",
+            "sig_dependency_004"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "Three tier1-critical infrastructure platforms (DC-East Primary Data Center, IBM z16 Mainframe PROD1, SkyHarbor Private Cloud DC-East VMware Cluster) run with capacity headroom as low as 16-53%, constraining continuity margin on core platforms.",
+          "evidence_ids": [
+            "sig_infra_065",
+            "sig_infra_068",
+            "sig_infra_069"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "what_to_watch": [],
+      "questions_to_ask": [],
+      "visual_opportunities": [
+        {
+          "visual_type": "horizontal_bar",
+          "title": "Risk exposure concentrates repeatedly on the same two systems",
+          "purpose": "Show where continuity and control risk clusters in the estate.",
+          "dataset_ref": "risk_system_concentration",
+          "key_message": "Meridian Legacy Finance System and ServiceNow CMDB each carry two separate named risk entries, more than any other system.",
+          "evidence_ids": [
+            "sig_dependency_003",
+            "sig_dependency_004"
+          ],
+          "priority": "medium"
+        }
+      ],
+      "limitations": []
+    }
+  ],
+  "thesis": {
+    "signalPacket": {
+      "enterpriseIdentity": {
+        "businessModel": "Full-service network passenger and cargo airline operating hub-and-spoke mainline service plus an acquired regional carrier, with a co-brand credit card loyalty program, cargo division, and MRO capability",
+        "industry": "Airlines & Air Transportation — Full-Service Network Passenger and Cargo Carrier",
+        "revenue": 81400000000,
+        "employeeCount": 92000
+      },
+      "businessEconomics": {
+        "operatingSegments": [
+          "Flight & Ground Operations",
+          "Passenger & Commercial",
+          "Shared Enterprise Services",
+          "Cargo"
+        ],
+        "customerSegments": [
+          "Passengers (leisure, business, corporate)",
+          "SkyHarbor Rewards loyalty members",
+          "corporate travel buyers and travel agencies",
+          "cargo shippers and freight forwarders",
+          "airport station and ground handling partners",
+          "codeshare and interline partner carriers"
+        ],
+        "technologyBudget": 3417400000,
+        "technologyBudgetShareOfRevenue": 0.04198280098280098
+      },
+      "strategicPriorities": [
+        "Complete the Meridian Regional Airways technology and operational integration",
+        "scale NDC/direct distribution",
+        "modernize the data and AI platform (Teradata-to-Snowflake migration, governed GenAI expansion)",
+        "improve on-time performance and disruption recovery via AI-assisted IROPS",
+        "close the cybersecurity PAM coverage gap",
+        "advance sustainable aviation fuel adoption"
+      ],
+      "signals": [
+        {
+          "id": "sig_concentration_001",
+          "kind": "concentration",
+          "statement": "SITA represents 13.9% of total vendor spend ($285.0M of $2.05B), supporting Airport & Ground Operations.",
+          "domains": [
+            "vendor_contract"
+          ],
+          "value": 0.13935067475063564,
+          "evidenceRefs": [
+            "SITA"
+          ]
+        },
+        {
+          "id": "sig_concentration_002",
+          "kind": "concentration",
+          "statement": "117 applications (23% of the estate, $284.1M) are already identified as replacement candidates.",
+          "domains": [
+            "application_system"
+          ],
+          "value": 0.23260437375745527,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_dependency_003",
+          "kind": "dependency",
+          "statement": "Meridian Legacy Finance System is named in 2 separate risk or control entries — a concentration of risk exposure on one system.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "value": 2,
+          "evidenceRefs": [
+            "Meridian Legacy Finance System"
+          ]
+        },
+        {
+          "id": "sig_dependency_004",
+          "kind": "dependency",
+          "statement": "ServiceNow CMDB is named in 2 separate risk or control entries — a concentration of risk exposure on one system.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "value": 2,
+          "evidenceRefs": [
+            "ServiceNow CMDB"
+          ]
+        },
+        {
+          "id": "sig_gap_005",
+          "kind": "gap",
+          "statement": "15 of 26 tracked metrics have a comparable baseline, target and actual; 11 do not, and 9 of the comparable set mix notation between those three fields. Metric-level performance claims outside the comparable set are unsupported.",
+          "domains": [
+            "metric_outcome"
+          ],
+          "value": 0.5769230769230769,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_gap_006",
+          "kind": "gap",
+          "statement": "None of the 65 declared vendor contracts have document-level evidence extraction behind them in this packet. Document-level evidence exists for 2 contracts (Vantage, Northgate) that do not correspond by name to any entry in this tenant's declared vendor register — a separate, unreconciled evidence set, not partial coverage of the 65.",
+          "domains": [
+            "vendor_contract"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_gap_007",
+          "kind": "gap",
+          "statement": "Program-specific leadership sentiment is sparsely linked (9.6% of interview mentions resolve to a canonical object). Do not generalize enterprise-wide leadership themes into program-specific sentiment unless an explicit resolved crosswalk row supports that specific connection.",
+          "domains": [
+            "ai_value_interview_evidence",
+            "program_initiative"
+          ],
+          "value": 9.6,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_risk_008",
+          "kind": "risk",
+          "statement": "Standing privileged credentials outside PAM coverage is rated high severity, tied to CyberArk PAM.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "evidenceRefs": [
+            "Standing privileged credentials outside PAM coverage"
+          ]
+        },
+        {
+          "id": "sig_risk_009",
+          "kind": "risk",
+          "statement": "Legacy PureConnect sites lack unified agent desktop is rated medium severity, tied to Genesys PureConnect (legacy — 2 international sites).",
+          "domains": [
+            "risk_or_control"
+          ],
+          "evidenceRefs": [
+            "Legacy PureConnect sites lack unified agent desktop"
+          ]
+        },
+        {
+          "id": "sig_risk_010",
+          "kind": "risk",
+          "statement": "Mainframe skills concentration risk is rated high severity, tied to CA-7 Mainframe Batch Scheduler.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "evidenceRefs": [
+            "Mainframe skills concentration risk"
+          ]
+        },
+        {
+          "id": "sig_risk_011",
+          "kind": "risk",
+          "statement": "Meridian Regional legacy systems unreconciled with mainline is rated high severity, tied to Meridian Legacy Sabre DCS.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "evidenceRefs": [
+            "Meridian Regional legacy systems unreconciled with mainline"
+          ]
+        },
+        {
+          "id": "sig_risk_012",
+          "kind": "risk",
+          "statement": "Data catalog coverage below governance target is rated medium severity, tied to Collibra Data Catalog.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "evidenceRefs": [
+            "Data catalog coverage below governance target"
+          ]
+        },
+        {
+          "id": "sig_risk_013",
+          "kind": "risk",
+          "statement": "Aircraft lease accounting still spreadsheet-based is rated medium severity, tied to SAP S/4HANA — Fixed Assets.",
+          "domains": [
+            "risk_or_control"
+          ],
+          "evidenceRefs": [
+            "Aircraft lease accounting still spreadsheet-based"
+          ]
+        },
+        {
+          "id": "sig_contradiction_014",
+          "kind": "contradiction",
+          "statement": "81 of 586 leadership interview responses contradict the system-of-record evidence on the same topic.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 81,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_015",
+          "kind": "consensus",
+          "statement": "\"value_realisation\" was raised by 26 of 26 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 26,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_016",
+          "kind": "consensus",
+          "statement": "\"investment_priority\" was raised by 26 of 26 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 26,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_017",
+          "kind": "consensus",
+          "statement": "\"governance_friction\" was raised by 24 of 26 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 24,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_018",
+          "kind": "consensus",
+          "statement": "\"capability_gap\" was raised by 24 of 26 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 24,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_019",
+          "kind": "consensus",
+          "statement": "\"manual_effort\" was raised by 23 of 26 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 23,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_020",
+          "kind": "consensus",
+          "statement": "\"data_trust\" was raised by 23 of 26 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 23,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_021",
+          "kind": "consensus",
+          "statement": "\"success_definition\" was raised by 22 of 26 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 22,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_022",
+          "kind": "consensus",
+          "statement": "\"vendor_dependency\" was raised by 22 of 26 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 22,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_023",
+          "kind": "consensus",
+          "statement": "\"integration_debt\" was raised by 21 of 26 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 21,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_024",
+          "kind": "consensus",
+          "statement": "\"estate_fragmentation\" was raised by 20 of 26 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 20,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_025",
+          "kind": "consensus",
+          "statement": "\"accepted_risk\" was raised by 19 of 26 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 19,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_026",
+          "kind": "consensus",
+          "statement": "\"ai_pilot_stall\" was raised by 15 of 26 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 15,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_027",
+          "kind": "consensus",
+          "statement": "\"legacy_gravity\" was raised by 15 of 26 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 15,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_028",
+          "kind": "consensus",
+          "statement": "\"date_confidence\" was raised by 14 of 26 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 14,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_consensus_029",
+          "kind": "consensus",
+          "statement": "\"throughput_constraint\" was raised by 13 of 26 interviewed leaders — a consensus view, not an isolated opinion.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "value": 13,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_dissent_030",
+          "kind": "dissent",
+          "statement": "\"shelfware\" was raised by exactly one interviewed leader — a minority view with no corroboration elsewhere in the interview set.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_dissent_031",
+          "kind": "dissent",
+          "statement": "\"renewal_leverage\" was raised by exactly one interviewed leader — a minority view with no corroboration elsewhere in the interview set.",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_outlier_032",
+          "kind": "outlier",
+          "statement": "2 of 15 comparable metrics are moving away from their target, not toward it.",
+          "domains": [
+            "metric_outcome"
+          ],
+          "value": 2,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_portfolio_033",
+          "kind": "portfolio",
+          "statement": "Meridian Regional Technology Integration Program is 7% complete and blocked: Dependency on a platform migration that has slipped two quarters..",
+          "domains": [
+            "program_initiative"
+          ],
+          "evidenceRefs": [
+            "Meridian Regional Technology Integration Program"
+          ]
+        },
+        {
+          "id": "sig_portfolio_034",
+          "kind": "portfolio",
+          "statement": "NDC Distribution Completion Program is 11% complete.",
+          "domains": [
+            "program_initiative"
+          ],
+          "evidenceRefs": [
+            "NDC Distribution Completion Program"
+          ]
+        },
+        {
+          "id": "sig_portfolio_035",
+          "kind": "portfolio",
+          "statement": "PureConnect to Genesys Cloud CX Migration is 9% complete.",
+          "domains": [
+            "program_initiative"
+          ],
+          "evidenceRefs": [
+            "PureConnect to Genesys Cloud CX Migration"
+          ]
+        },
+        {
+          "id": "sig_portfolio_036",
+          "kind": "portfolio",
+          "statement": "Teradata to Snowflake Migration Program is 12% complete.",
+          "domains": [
+            "program_initiative"
+          ],
+          "evidenceRefs": [
+            "Teradata to Snowflake Migration Program"
+          ]
+        },
+        {
+          "id": "sig_portfolio_037",
+          "kind": "portfolio",
+          "statement": "Member Data Platform (CDP) Cutover is 10% complete.",
+          "domains": [
+            "program_initiative"
+          ],
+          "evidenceRefs": [
+            "Member Data Platform (CDP) Cutover"
+          ]
+        },
+        {
+          "id": "sig_portfolio_038",
+          "kind": "portfolio",
+          "statement": "The declared portfolio carries $407.4M of budget against $457.4M of expected value across 38 programs (a declared 1.12x return) — declared, not yet finance-confirmed.",
+          "domains": [
+            "program_initiative"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_complexity_039",
+          "kind": "complexity",
+          "statement": "Airport & Ground Operations carries the largest technology footprint by cost: 217 applications, $471.2M annually.",
+          "domains": [
+            "application_system"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_complexity_040",
+          "kind": "complexity",
+          "statement": "Third-party contracted spend ($2.05B) represents 60% of the total technology budget ($3.42B).",
+          "domains": [
+            "vendor_contract",
+            "spend_value_fact"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_testimony_041",
+          "kind": "testimony",
+          "statement": "A CEO said, on the theme of \"value_realisation\" (negative sentiment): \"\"We approved Infrastructure & Cloud Modernization Program with a benefit number and nobody has been back to check whether it landed.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CEO"
+          ]
+        },
+        {
+          "id": "sig_testimony_042",
+          "kind": "testimony",
+          "statement": "A CEO said, on the theme of \"manual_effort\" (negative sentiment): \"\"Reconciling Corporate Strategy & M&A Integration data between Teradata Enterprise Warehouse — Loyalty Legacy Subject Area and the ledger is manual and takes days at every close.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CEO"
+          ]
+        },
+        {
+          "id": "sig_testimony_043",
+          "kind": "testimony",
+          "statement": "A CEO said, on the theme of \"data_trust\" (negative sentiment): \"\"I do not trust the Corporate Strategy & M&A Integration numbers without checking them against the source. Most of my team keeps their own extract.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CEO"
+          ]
+        },
+        {
+          "id": "sig_testimony_044",
+          "kind": "testimony",
+          "statement": "A CEO said, on the theme of \"governance_friction\" (negative sentiment): \"\"Architecture review adds six weeks and rarely changes the outcome. The standards are sensible; the process around them is not.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CEO"
+          ]
+        },
+        {
+          "id": "sig_testimony_045",
+          "kind": "testimony",
+          "statement": "A CEO said, on the theme of \"accepted_risk\" (negative sentiment): \"\"The Corporate Strategy & M&A Integration recovery position is accepted rather than mitigated. It has been on the register for three years with the same owner.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CEO"
+          ]
+        },
+        {
+          "id": "sig_testimony_046",
+          "kind": "testimony",
+          "statement": "A CEO said, on the theme of \"investment_priority\" (neutral sentiment): \"\"Data quality before more analytics. Another dashboard on the current foundation makes the problem worse, not better.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CEO"
+          ]
+        },
+        {
+          "id": "sig_testimony_047",
+          "kind": "testimony",
+          "statement": "A CEO said, on the theme of \"ai_pilot_stall\" (negative sentiment): \"\"The pilot proved the capability and then stopped, because nobody owned the operational rollout or the funding beyond the trial.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CEO"
+          ]
+        },
+        {
+          "id": "sig_testimony_048",
+          "kind": "testimony",
+          "statement": "A CEO said, on the theme of \"capability_gap\" (negative sentiment): \"\"We cover the Catering Planning & Ordering System skill gap with a contractor who has been here two years. That is not a plan, it is a habit.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CEO"
+          ]
+        },
+        {
+          "id": "sig_testimony_049",
+          "kind": "testimony",
+          "statement": "A CEO said, on the theme of \"legacy_gravity\" (negative sentiment): \"\"The core is stable and old. Crew Training Records / LMS has not materially changed in six years and everything new has to route around it.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CEO"
+          ]
+        },
+        {
+          "id": "sig_testimony_050",
+          "kind": "testimony",
+          "statement": "A CEO said, on the theme of \"success_definition\" (neutral sentiment): \"\"In eighteen months I want to be able to answer what Corporate Strategy & M&A Integration costs and what it delivers, without a three-week exercise.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CEO"
+          ]
+        },
+        {
+          "id": "sig_testimony_051",
+          "kind": "testimony",
+          "statement": "A CEO said, on the theme of \"integration_debt\" (negative sentiment): \"\"Most of the fragility is not in the systems, it is between them. The interfaces around Salesforce Marketing Cloud (Loyalty Campaigns) break whenever either end is patched.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CEO"
+          ]
+        },
+        {
+          "id": "sig_testimony_052",
+          "kind": "testimony",
+          "statement": "A CEO said, on the theme of \"vendor_dependency\" (negative sentiment): \"\"ATPCO. We cannot change anything without their professional services and their queue is eight weeks.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CEO"
+          ]
+        },
+        {
+          "id": "sig_testimony_053",
+          "kind": "testimony",
+          "statement": "A CEO said, on the theme of \"date_confidence\" (negative sentiment): \"\"PureConnect to Genesys Cloud CX Migration will land, but not on the date in the plan. The dependency on the platform migration slipped two quarters and we never re-baselined.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CEO"
+          ]
+        },
+        {
+          "id": "sig_testimony_054",
+          "kind": "testimony",
+          "statement": "A COO said, on the theme of \"estate_fragmentation\" (negative sentiment): \"\"Data Product Catalog (Internal) does the job it was bought for, but we run three other systems alongside it for regions it never covered. Nobody has owned consolidating them.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "COO"
+          ]
+        },
+        {
+          "id": "sig_testimony_055",
+          "kind": "testimony",
+          "statement": "A COO said, on the theme of \"throughput_constraint\" (negative sentiment): \"\"We are not short of ideas, we are short of people who can safely change iCargo Booking & Management. Everything queues behind the same four engineers.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "COO"
+          ]
+        },
+        {
+          "id": "sig_testimony_056",
+          "kind": "testimony",
+          "statement": "A CFO said, on the theme of \"shelfware\" (negative sentiment): \"\"We are paying for entitlements on Leave-Of-Absence Case Management Status Board that a third of the licensed population has never opened.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CFO"
+          ]
+        },
+        {
+          "id": "sig_testimony_057",
+          "kind": "testimony",
+          "statement": "A VP Commercial & Distribution Systems said, on the theme of \"renewal_leverage\" (negative sentiment): \"\"The SITA agreement, and the window is narrow — the notice date passes before the budget conversation happens.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "VP Commercial & Distribution Systems"
+          ]
+        },
+        {
+          "id": "sig_testimony_058",
+          "kind": "testimony",
+          "statement": "A CEO said, on the theme of \"value_realisation\" (negative sentiment): \"\"We approved Infrastructure & Cloud Modernization Program with a benefit number and nobody has been back to check whether it landed.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CEO"
+          ]
+        },
+        {
+          "id": "sig_testimony_059",
+          "kind": "testimony",
+          "statement": "A CEO said, on the theme of \"investment_priority\" (neutral sentiment): \"\"Data quality before more analytics. Another dashboard on the current foundation makes the problem worse, not better.\"\"",
+          "domains": [
+            "ai_value_interview_evidence"
+          ],
+          "evidenceRefs": [
+            "CEO"
+          ]
+        },
+        {
+          "id": "sig_workforce_060",
+          "kind": "workforce",
+          "statement": "Flight Attendant (Crew Operations, 9,200 people) has a documented automation opportunity: Medium",
+          "domains": [
+            "workforce_role"
+          ],
+          "evidenceRefs": [
+            "Flight Attendant"
+          ]
+        },
+        {
+          "id": "sig_workforce_061",
+          "kind": "workforce",
+          "statement": "Airline Pilot (Captain/First Officer) (Flight Operations, 6,800 people) has a documented automation opportunity: Medium",
+          "domains": [
+            "workforce_role"
+          ],
+          "evidenceRefs": [
+            "Airline Pilot (Captain/First Officer)"
+          ]
+        },
+        {
+          "id": "sig_workforce_062",
+          "kind": "workforce",
+          "statement": "Airport Station Agent (Airport & Ground Operations, 5,400 people) has a documented automation opportunity: Medium",
+          "domains": [
+            "workforce_role"
+          ],
+          "evidenceRefs": [
+            "Airport Station Agent"
+          ]
+        },
+        {
+          "id": "sig_workforce_063",
+          "kind": "workforce",
+          "statement": "Aircraft Maintenance Technician (A&P) (Maintenance & Engineering (MRO), 4,100 people) has a documented automation opportunity: Medium",
+          "domains": [
+            "workforce_role"
+          ],
+          "evidenceRefs": [
+            "Aircraft Maintenance Technician (A&P)"
+          ]
+        },
+        {
+          "id": "sig_workforce_064",
+          "kind": "workforce",
+          "statement": "Ramp Agent / Load Controller (Airport & Ground Operations, 3,100 people) has a documented automation opportunity: Low",
+          "domains": [
+            "workforce_role"
+          ],
+          "evidenceRefs": [
+            "Ramp Agent / Load Controller"
+          ]
+        },
+        {
+          "id": "sig_infra_065",
+          "kind": "risk",
+          "statement": "DC-East Primary Data Center is tier1-critical with only 53% capacity headroom, DR tier tier2_warm.",
+          "domains": [
+            "infrastructure_platform"
+          ],
+          "evidenceRefs": [
+            "DC-East Primary Data Center"
+          ]
+        },
+        {
+          "id": "sig_infra_066",
+          "kind": "risk",
+          "statement": "Fort Worth Tech Ops Data Closet is tier2-critical with only 26% capacity headroom, DR tier tier3_backup_only.",
+          "domains": [
+            "infrastructure_platform"
+          ],
+          "evidenceRefs": [
+            "Fort Worth Tech Ops Data Closet"
+          ]
+        },
+        {
+          "id": "sig_infra_067",
+          "kind": "risk",
+          "statement": "Denver Meridian Co-lo Facility is tier2-critical with only 22% capacity headroom, DR tier tier3_backup_only.",
+          "domains": [
+            "infrastructure_platform"
+          ],
+          "evidenceRefs": [
+            "Denver Meridian Co-lo Facility"
+          ]
+        },
+        {
+          "id": "sig_infra_068",
+          "kind": "risk",
+          "statement": "IBM z16 Mainframe LPAR — PROD1 is tier1-critical with only 27% capacity headroom, DR tier tier2_warm.",
+          "domains": [
+            "infrastructure_platform"
+          ],
+          "evidenceRefs": [
+            "IBM z16 Mainframe LPAR — PROD1"
+          ]
+        },
+        {
+          "id": "sig_infra_069",
+          "kind": "risk",
+          "statement": "SkyHarbor Private Cloud — DC-East VMware Cluster is tier1-critical with only 16% capacity headroom, DR tier tier2_warm.",
+          "domains": [
+            "infrastructure_platform"
+          ],
+          "evidenceRefs": [
+            "SkyHarbor Private Cloud — DC-East VMware Cluster"
+          ]
+        },
+        {
+          "id": "sig_complexity_070",
+          "kind": "complexity",
+          "statement": "38 of 310 tracked data assets/integrations carry regulated data.",
+          "domains": [
+            "data_asset_or_integration"
+          ],
+          "value": 38,
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_ai_value_071",
+          "kind": "ai_value",
+          "statement": "13 declared AI/automation use cases by status: 3 pilot, 2 production_partial, 2 planned_not_started, 1 pilot_single_hub, 1 production_partial_fleet, 1 production_limited_intents, 1 pilot_day1_telemetry, 1 production_enterprise_wide, 1 target_state_pending_cdp.",
+          "domains": [
+            "ai_automation_use_case"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_ai_value_072",
+          "kind": "ai_value",
+          "statement": "AI value realization tracking shows $80.2M of promised value against $5.7M finance-validated — 7% confirmed.",
+          "domains": [
+            "ai_value_realization_signal"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_ai_value_073",
+          "kind": "ai_value",
+          "statement": "Microsoft 365 Copilot adoption is 26 points below its adoption target.",
+          "domains": [
+            "ai_tool_usage_observation"
+          ],
+          "evidenceRefs": [
+            "Microsoft 365 Copilot"
+          ]
+        },
+        {
+          "id": "sig_ai_value_074",
+          "kind": "ai_value",
+          "statement": "Crew Recovery AI adoption is 26 points below its adoption target.",
+          "domains": [
+            "ai_tool_usage_observation"
+          ],
+          "evidenceRefs": [
+            "Crew Recovery AI"
+          ]
+        },
+        {
+          "id": "sig_data_quality_075",
+          "kind": "data_quality",
+          "statement": "183 of 183 declared evidence sources are not yet approved for loading.",
+          "domains": [
+            "evidence_source"
+          ],
+          "evidenceRefs": []
+        },
+        {
+          "id": "sig_complexity_076",
+          "kind": "complexity",
+          "statement": "Menzies/Swissport Ground Handling (Outstation Ground Handling) runs at $74.5M annually via Menzies Aviation; Swissport International.",
+          "domains": [
+            "managed_service_scope"
+          ],
+          "evidenceRefs": [
+            "Menzies/Swissport Ground Handling"
+          ]
+        },
+        {
+          "id": "sig_complexity_077",
+          "kind": "complexity",
+          "statement": "Gate Gourmet / dnata Catering (Inflight Catering Supply) runs at $62.0M annually via Gate Gourmet (dnata).",
+          "domains": [
+            "managed_service_scope"
+          ],
+          "evidenceRefs": [
+            "Gate Gourmet / dnata Catering"
+          ]
+        },
+        {
+          "id": "sig_complexity_078",
+          "kind": "complexity",
+          "statement": "Foundever Overflow Agent Services (Contact Center Overflow) runs at $22.8M annually via Foundever (Sitel Group).",
+          "domains": [
+            "managed_service_scope"
+          ],
+          "evidenceRefs": [
+            "Foundever Overflow Agent Services"
+          ]
+        },
+        {
+          "id": "sig_operational_079",
+          "kind": "operational",
+          "statement": "Loyalty Award Redemption Process runs a 7.3% error rate at 29% automation, despite a \"Low\" automation-candidate rating.",
+          "domains": [
+            "operational_process_evidence"
+          ],
+          "value": 7.3,
+          "evidenceRefs": [
+            "Loyalty Award Redemption Process"
+          ]
+        },
+        {
+          "id": "sig_operational_080",
+          "kind": "operational",
+          "statement": "Line Maintenance Work Order Process runs a 7.1% error rate at 20% automation, despite a \"Medium\" automation-candidate rating.",
+          "domains": [
+            "operational_process_evidence"
+          ],
+          "value": 7.1,
+          "evidenceRefs": [
+            "Line Maintenance Work Order Process"
+          ]
+        },
+        {
+          "id": "sig_operational_081",
+          "kind": "operational",
+          "statement": "Contact Center Workforce Forecasting Process runs a 6.8% error rate at 2% automation, despite a \"High\" automation-candidate rating.",
+          "domains": [
+            "operational_process_evidence"
+          ],
+          "value": 6.8,
+          "evidenceRefs": [
+            "Contact Center Workforce Forecasting Process"
+          ]
+        },
+        {
+          "id": "sig_operational_082",
+          "kind": "operational",
+          "statement": "Schedule Construction & Fleet Assignment Process runs a 6.3% error rate at 67% automation, despite a \"Medium\" automation-candidate rating.",
+          "domains": [
+            "operational_process_evidence"
+          ],
+          "value": 6.3,
+          "evidenceRefs": [
+            "Schedule Construction & Fleet Assignment Process"
+          ]
+        },
+        {
+          "id": "sig_operational_083",
+          "kind": "operational",
+          "statement": "Airport Check-in & Boarding Process runs a 5.9% error rate at 44% automation, despite a \"Medium\" automation-candidate rating.",
+          "domains": [
+            "operational_process_evidence"
+          ],
+          "value": 5.9,
+          "evidenceRefs": [
+            "Airport Check-in & Boarding Process"
+          ]
+        },
+        {
+          "id": "sig_gap_084",
+          "kind": "gap",
+          "statement": "Snowflake — Commercial & Loyalty Domains: Platform Architecture & Scalability sits at maturity level 4 against a target of 5.",
+          "domains": [
+            "platform_maturity_assessment"
+          ],
+          "value": 1,
+          "evidenceRefs": [
+            "Snowflake — Commercial & Loyalty Domains"
+          ]
+        },
+        {
+          "id": "sig_gap_085",
+          "kind": "gap",
+          "statement": "Databricks Lakehouse (MRO/Ops/Customer AI): AI/ML & Automation Enablement sits at maturity level 3 against a target of 4.",
+          "domains": [
+            "platform_maturity_assessment"
+          ],
+          "value": 1,
+          "evidenceRefs": [
+            "Databricks Lakehouse (MRO/Ops/Customer AI)"
+          ]
+        },
+        {
+          "id": "sig_gap_086",
+          "kind": "gap",
+          "statement": "Confluent Kafka Event Backbone: Platform Architecture & Scalability sits at maturity level 3 against a target of 4.",
+          "domains": [
+            "platform_maturity_assessment"
+          ],
+          "value": 1,
+          "evidenceRefs": [
+            "Confluent Kafka Event Backbone"
+          ]
+        },
+        {
+          "id": "sig_gap_087",
+          "kind": "gap",
+          "statement": "Informatica PowerCenter ETL: Platform Architecture & Scalability sits at maturity level 2 against a target of 3.",
+          "domains": [
+            "platform_maturity_assessment"
+          ],
+          "value": 1,
+          "evidenceRefs": [
+            "Informatica PowerCenter ETL"
+          ]
+        },
+        {
+          "id": "sig_gap_088",
+          "kind": "gap",
+          "statement": "Collibra Data Governance & Catalog: Data Governance & Stewardship sits at maturity level 2 against a target of 4.",
+          "domains": [
+            "platform_maturity_assessment"
+          ],
+          "value": 2,
+          "evidenceRefs": [
+            "Collibra Data Governance & Catalog"
+          ]
+        }
+      ],
+      "contextItems": [
+        {
+          "id": "ctx_identity_001",
+          "statement": "Business model: Full-service network passenger and cargo airline operating hub-and-spoke mainline service plus an acquired regional carrier, with a co-brand credit card loyalty program, cargo division, and MRO capability.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_identity_002",
+          "statement": "Industry: Airlines & Air Transportation — Full-Service Network Passenger and Cargo Carrier.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_identity_003",
+          "statement": "Annual revenue: $81.40B.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_identity_004",
+          "statement": "Employee count: 92,000.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_identity_005",
+          "statement": "Declared mission: Connect people and commerce safely and reliably across a global network, operated with operational excellence and a growing digital and AI-enabled capability..",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_economics_006",
+          "statement": "Operating segments: Flight & Ground Operations, Passenger & Commercial, Shared Enterprise Services, Cargo.",
+          "domains": [
+            "business_function"
+          ]
+        },
+        {
+          "id": "ctx_economics_007",
+          "statement": "Technology budget is $3.42B, 4.20% of revenue.",
+          "domains": [
+            "spend_value_fact",
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_economics_008",
+          "statement": "Declared operating regions: North America (mainline hub network), Latin America and Caribbean, Europe, select transpacific gateways, Meridian Regional Airways regional network (acquired 2023, integration in progress).",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_segment_009",
+          "statement": "Declared customer segment: Passengers (leisure, business, corporate).",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_segment_010",
+          "statement": "Declared customer segment: SkyHarbor Rewards loyalty members.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_segment_011",
+          "statement": "Declared customer segment: corporate travel buyers and travel agencies.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_segment_012",
+          "statement": "Declared customer segment: cargo shippers and freight forwarders.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_segment_013",
+          "statement": "Declared customer segment: airport station and ground handling partners.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_segment_014",
+          "statement": "Declared customer segment: codeshare and interline partner carriers.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_priority_015",
+          "statement": "Declared strategic priority: Complete the Meridian Regional Airways technology and operational integration.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_priority_016",
+          "statement": "Declared strategic priority: scale NDC/direct distribution.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_priority_017",
+          "statement": "Declared strategic priority: modernize the data and AI platform (Teradata-to-Snowflake migration, governed GenAI expansion).",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_priority_018",
+          "statement": "Declared strategic priority: improve on-time performance and disruption recovery via AI-assisted IROPS.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_priority_019",
+          "statement": "Declared strategic priority: close the cybersecurity PAM coverage gap.",
+          "domains": [
+            "tenant_profile"
+          ]
+        },
+        {
+          "id": "ctx_priority_020",
+          "statement": "Declared strategic priority: advance sustainable aviation fuel adoption.",
+          "domains": [
+            "tenant_profile"
+          ]
+        }
+      ],
+      "visualDatasets": {
+        "technology_spend_mix": [
+          {
+            "category": "Third-party contracted",
+            "amount": 2045200000
+          },
+          {
+            "category": "Other technology spend",
+            "amount": 1372200000
+          }
+        ],
+        "vendor_spend_concentration": [
+          {
+            "vendor": "SITA",
+            "spend": 285000000,
+            "sharePct": 13.9
+          },
+          {
+            "vendor": "Amadeus IT Group",
+            "spend": 125000000,
+            "sharePct": 6.1
+          },
+          {
+            "vendor": "Menzies Aviation",
+            "spend": 125000000,
+            "sharePct": 6.1
+          },
+          {
+            "vendor": "Jeppesen (Boeing Digital Aviation)",
+            "spend": 115000000,
+            "sharePct": 5.6
+          },
+          {
+            "vendor": "Gate Gourmet (dnata)",
+            "spend": 115000000,
+            "sharePct": 5.6
+          },
+          {
+            "vendor": "Swissport International",
+            "spend": 100000000,
+            "sharePct": 4.9
+          },
+          {
+            "vendor": "SAP SE",
+            "spend": 96000000,
+            "sharePct": 4.7
+          },
+          {
+            "vendor": "Amazon Web Services",
+            "spend": 88000000,
+            "sharePct": 4.3
+          }
+        ],
+        "application_landscape_by_function": [
+          {
+            "function": "Airport & Ground Operations",
+            "applicationCount": 217,
+            "annualCost": 471154000
+          },
+          {
+            "function": "Data, Analytics & AI",
+            "applicationCount": 26,
+            "annualCost": 131630000
+          },
+          {
+            "function": "Flight Operations",
+            "applicationCount": 19,
+            "annualCost": 72017000
+          },
+          {
+            "function": "Maintenance & Engineering (MRO)",
+            "applicationCount": 19,
+            "annualCost": 68257000
+          },
+          {
+            "function": "Information Technology & Digital",
+            "applicationCount": 17,
+            "annualCost": 66188000
+          },
+          {
+            "function": "Cybersecurity & IT Risk",
+            "applicationCount": 14,
+            "annualCost": 64686000
+          },
+          {
+            "function": "Distribution, Sales & E-Commerce",
+            "applicationCount": 16,
+            "annualCost": 64308000
+          },
+          {
+            "function": "Finance & Accounting",
+            "applicationCount": 18,
+            "annualCost": 64308000
+          },
+          {
+            "function": "Crew Operations",
+            "applicationCount": 18,
+            "annualCost": 62428000
+          },
+          {
+            "function": "Cargo & Logistics",
+            "applicationCount": 12,
+            "annualCost": 48890000
+          },
+          {
+            "function": "Loyalty & Customer Marketing",
+            "applicationCount": 12,
+            "annualCost": 48701000
+          },
+          {
+            "function": "Human Resources & Labor Relations",
+            "applicationCount": 16,
+            "annualCost": 48323000
+          },
+          {
+            "function": "Revenue Management & Pricing",
+            "applicationCount": 11,
+            "annualCost": 44941000
+          },
+          {
+            "function": "Network Planning & Scheduling",
+            "applicationCount": 10,
+            "annualCost": 43250000
+          },
+          {
+            "function": "Safety & Security",
+            "applicationCount": 15,
+            "annualCost": 42494000
+          },
+          {
+            "function": "Customer Experience & Contact Center",
+            "applicationCount": 9,
+            "annualCost": 41181000
+          },
+          {
+            "function": "Legal, Regulatory & Compliance",
+            "applicationCount": 12,
+            "annualCost": 32905000
+          },
+          {
+            "function": "Procurement & Supply Chain",
+            "applicationCount": 10,
+            "annualCost": 31025000
+          },
+          {
+            "function": "Corporate Real Estate & Facilities",
+            "applicationCount": 11,
+            "annualCost": 31025000
+          },
+          {
+            "function": "In-Flight Services & Catering",
+            "applicationCount": 10,
+            "annualCost": 27076000
+          },
+          {
+            "function": "Fuel Management & Sustainability",
+            "applicationCount": 7,
+            "annualCost": 25385000
+          },
+          {
+            "function": "Corporate Strategy & M&A Integration",
+            "applicationCount": 4,
+            "annualCost": 7520000
+          }
+        ],
+        "program_investment_distribution": [
+          {
+            "program": "Infrastructure & Cloud Modernization Program",
+            "expectedValue": 69300000
+          },
+          {
+            "program": "Passenger Service System & Distribution Modernization Program",
+            "expectedValue": 62400000
+          },
+          {
+            "program": "Crew & Flight Operations Modernization Program",
+            "expectedValue": 35100000
+          },
+          {
+            "program": "Data & Analytics Modernization Program",
+            "expectedValue": 30700000
+          },
+          {
+            "program": "Digital Channels, NDC & Offer/Order Modernization Program",
+            "expectedValue": 29700000
+          }
+        ],
+        "stalled_programs": [
+          {
+            "program": "Meridian Regional Technology Integration Program",
+            "pctComplete": 7,
+            "blocked": "Dependency on a platform migration that has slipped two quarters."
+          },
+          {
+            "program": "NDC Distribution Completion Program",
+            "pctComplete": 11,
+            "blocked": null
+          },
+          {
+            "program": "PureConnect to Genesys Cloud CX Migration",
+            "pctComplete": 9,
+            "blocked": null
+          },
+          {
+            "program": "Teradata to Snowflake Migration Program",
+            "pctComplete": 12,
+            "blocked": null
+          },
+          {
+            "program": "Member Data Platform (CDP) Cutover",
+            "pctComplete": 10,
+            "blocked": null
+          },
+          {
+            "program": "CyberArk PAM Full Coverage Rollout",
+            "pctComplete": 7,
+            "blocked": "Business sponsor changed; scope is being re-agreed."
+          },
+          {
+            "program": "Outstation CUTE/CUPPS Refresh Program",
+            "pctComplete": 11,
+            "blocked": null
+          },
+          {
+            "program": "RFID Bag Tracking Expansion",
+            "pctComplete": 1,
+            "blocked": null
+          },
+          {
+            "program": "IROPS AI Recovery Cockpit Expansion",
+            "pctComplete": 23,
+            "blocked": "Dependency on a platform migration that has slipped two quarters."
+          },
+          {
+            "program": "Aircraft Lease Accounting (ASC 842) Automation",
+            "pctComplete": 8,
+            "blocked": null
+          },
+          {
+            "program": "Tech Records Digitization — Legacy Widebody Fleet",
+            "pctComplete": 10,
+            "blocked": null
+          },
+          {
+            "program": "MRO Predictive Model Monitoring Automation",
+            "pctComplete": 1,
+            "blocked": null
+          },
+          {
+            "program": "Corporate Badge / Access Control Consolidation",
+            "pctComplete": 10,
+            "blocked": null
+          },
+          {
+            "program": "GenAI Use Case Expansion Program",
+            "pctComplete": 13,
+            "blocked": null
+          },
+          {
+            "program": "Crew and Station Productivity Copilot",
+            "pctComplete": 10,
+            "blocked": "Funding approved for year one only; year two is unconfirmed."
+          },
+          {
+            "program": "Data Catalog Coverage Expansion",
+            "pctComplete": 4,
+            "blocked": null
+          },
+          {
+            "program": "Cargo Regional Belly Capacity Automation",
+            "pctComplete": 9,
+            "blocked": null
+          },
+          {
+            "program": "SAF Blend & Regulatory Reporting Automation",
+            "pctComplete": 4,
+            "blocked": null
+          },
+          {
+            "program": "Slot Coordination Workflow Automation",
+            "pctComplete": 4,
+            "blocked": null
+          },
+          {
+            "program": "Union Grievance Tracker Replacement Evaluation",
+            "pctComplete": 2,
+            "blocked": null
+          },
+          {
+            "program": "IROPS Agentic Recovery Cockpit",
+            "pctComplete": 6,
+            "blocked": null
+          },
+          {
+            "program": "Crew Recovery Optimization",
+            "pctComplete": 3,
+            "blocked": null
+          },
+          {
+            "program": "Digital concierge and journey orchestration modernization",
+            "pctComplete": 1,
+            "blocked": null
+          },
+          {
+            "program": "Airport turn management modernization",
+            "pctComplete": 2,
+            "blocked": null
+          },
+          {
+            "program": "Baggage tracking and recovery modernization",
+            "pctComplete": 11,
+            "blocked": null
+          },
+          {
+            "program": "Loyalty personalization modernization",
+            "pctComplete": 11,
+            "blocked": null
+          },
+          {
+            "program": "Contact Center Agent Assist",
+            "pctComplete": 9,
+            "blocked": null
+          },
+          {
+            "program": "Revenue management and pricing modernization",
+            "pctComplete": 4,
+            "blocked": null
+          }
+        ],
+        "leadership_theme_frequency": [
+          {
+            "theme": "value_realisation",
+            "leaderCount": 26
+          },
+          {
+            "theme": "investment_priority",
+            "leaderCount": 26
+          },
+          {
+            "theme": "governance_friction",
+            "leaderCount": 24
+          },
+          {
+            "theme": "capability_gap",
+            "leaderCount": 24
+          },
+          {
+            "theme": "manual_effort",
+            "leaderCount": 23
+          },
+          {
+            "theme": "data_trust",
+            "leaderCount": 23
+          },
+          {
+            "theme": "success_definition",
+            "leaderCount": 22
+          },
+          {
+            "theme": "vendor_dependency",
+            "leaderCount": 22
+          },
+          {
+            "theme": "integration_debt",
+            "leaderCount": 21
+          },
+          {
+            "theme": "estate_fragmentation",
+            "leaderCount": 20
+          },
+          {
+            "theme": "accepted_risk",
+            "leaderCount": 19
+          },
+          {
+            "theme": "ai_pilot_stall",
+            "leaderCount": 15
+          },
+          {
+            "theme": "legacy_gravity",
+            "leaderCount": 15
+          },
+          {
+            "theme": "date_confidence",
+            "leaderCount": 14
+          },
+          {
+            "theme": "throughput_constraint",
+            "leaderCount": 13
+          },
+          {
+            "theme": "visibility_gap",
+            "leaderCount": 11
+          },
+          {
+            "theme": "data_latency",
+            "leaderCount": 11
+          },
+          {
+            "theme": "decision_latency",
+            "leaderCount": 10
+          },
+          {
+            "theme": "key_person_risk",
+            "leaderCount": 9
+          },
+          {
+            "theme": "unheard_risk",
+            "leaderCount": 6
+          },
+          {
+            "theme": "escalation_fatigue",
+            "leaderCount": 6
+          },
+          {
+            "theme": "run_change_ratio",
+            "leaderCount": 5
+          },
+          {
+            "theme": "priority_divergence",
+            "leaderCount": 2
+          },
+          {
+            "theme": "shelfware",
+            "leaderCount": 1
+          },
+          {
+            "theme": "renewal_leverage",
+            "leaderCount": 1
+          }
+        ],
+        "leadership_evidence_alignment": [
+          {
+            "category": "Consistent with system record",
+            "count": 505
+          },
+          {
+            "category": "Contradicts system record",
+            "count": 81
+          }
+        ],
+        "metric_target_attainment": [
+          {
+            "category": "Improving toward target",
+            "count": 13
+          },
+          {
+            "category": "Moving away from target",
+            "count": 2
+          },
+          {
+            "category": "Not comparable",
+            "count": 11
+          }
+        ],
+        "risk_system_concentration": [
+          {
+            "system": "Meridian Legacy Finance System",
+            "riskCount": 2
+          },
+          {
+            "system": "ServiceNow CMDB",
+            "riskCount": 2
+          },
+          {
+            "system": "CyberArk PAM",
+            "riskCount": 1
+          },
+          {
+            "system": "tier-1 systems not yet onboarded",
+            "riskCount": 1
+          },
+          {
+            "system": "Genesys PureConnect (legacy — 2 international sites)",
+            "riskCount": 1
+          }
+        ]
+      },
+      "analyticalLenses": [
+        {
+          "kind": "industry_pattern",
+          "label": "Legacy mainframe reservations/rev-acct core retained through cloud transformation"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "PSS/DCS vendor consolidation onto Amadeus or Sabre Altéa/SabreSonic"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "Revenue management suite (PROS/Sabre AirVision) migrating from static fare tables to dynamic offer/order management"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "MRO digital twin / predictive maintenance adoption via engine OEM data feeds"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "Contact center platform migration from on-prem PBX/PureConnect to cloud CCaaS (Genesys Cloud CX / Amazon Connect)"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "Enterprise data warehouse migration from on-prem MPP appliance (Teradata/Netezza) to cloud data platform (Snowflake/Databricks)"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "M&A technology integration lag between close and full systems cutover"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "Privileged access management (PAM) rollout lag behind identity federation rollout"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "Data catalog/governance coverage lagging data platform investment"
+        },
+        {
+          "kind": "industry_pattern",
+          "label": "GenAI production use cases concentrated in productivity copilots before agentic/autonomous use cases"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "Airline IROPS Readiness Lens"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "PSS/Distribution Modernization Lens"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "MRO & Fleet Technical Debt Lens"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "Data & AI Platform Maturity Lens"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "Cybersecurity & Third-Party Risk Lens"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "M&A Technology Integration Lens"
+        },
+        {
+          "kind": "expert_lens",
+          "label": "Workforce & Labor Relations Technology Lens"
+        }
+      ],
+      "coverageManifest": {
+        "dimensionCoverage": [
+          {
+            "key": "tenant_profile",
+            "recordCount": 1,
+            "evidencedShare": 1
+          },
+          {
+            "key": "business_function",
+            "recordCount": 22,
+            "evidencedShare": 1
+          },
+          {
+            "key": "org_owner",
+            "recordCount": 153,
+            "evidencedShare": 1
+          },
+          {
+            "key": "workforce_role",
+            "recordCount": 38,
+            "evidencedShare": 1
+          },
+          {
+            "key": "application_system",
+            "recordCount": 503,
+            "evidencedShare": 1
+          },
+          {
+            "key": "data_asset_or_integration",
+            "recordCount": 310,
+            "evidencedShare": 1
+          },
+          {
+            "key": "infrastructure_platform",
+            "recordCount": 47,
+            "evidencedShare": 1
+          },
+          {
+            "key": "vendor_contract",
+            "recordCount": 65,
+            "evidencedShare": 1
+          },
+          {
+            "key": "spend_value_fact",
+            "recordCount": 23,
+            "evidencedShare": 1
+          },
+          {
+            "key": "program_initiative",
+            "recordCount": 38,
+            "evidencedShare": 1
+          },
+          {
+            "key": "ai_automation_use_case",
+            "recordCount": 13,
+            "evidencedShare": 1
+          },
+          {
+            "key": "risk_or_control",
+            "recordCount": 44,
+            "evidencedShare": 1
+          },
+          {
+            "key": "relationship_source_row",
+            "recordCount": 868,
+            "evidencedShare": 1
+          },
+          {
+            "key": "semantic_crosswalk_evidence",
+            "recordCount": 227,
+            "evidencedShare": 1
+          },
+          {
+            "key": "evidence_source",
+            "recordCount": 183,
+            "evidencedShare": 1
+          },
+          {
+            "key": "metric_outcome",
+            "recordCount": 26,
+            "evidencedShare": 1
+          },
+          {
+            "key": "industry_context_pattern",
+            "recordCount": 10,
+            "evidencedShare": 1
+          },
+          {
+            "key": "expert_lens",
+            "recordCount": 7,
+            "evidencedShare": 1
+          },
+          {
+            "key": "managed_service_scope",
+            "recordCount": 11,
+            "evidencedShare": 1
+          },
+          {
+            "key": "operational_process_evidence",
+            "recordCount": 35,
+            "evidencedShare": 1
+          },
+          {
+            "key": "platform_maturity_assessment",
+            "recordCount": 11,
+            "evidencedShare": 1
+          },
+          {
+            "key": "service_performance_observation",
+            "recordCount": 503,
+            "evidencedShare": 1
+          },
+          {
+            "key": "ai_value_realization_signal",
+            "recordCount": 8,
+            "evidencedShare": 1
+          },
+          {
+            "key": "ai_tool_usage_observation",
+            "recordCount": 8,
+            "evidencedShare": 1
+          },
+          {
+            "key": "ai_value_interview_evidence",
+            "recordCount": 586,
+            "evidencedShare": 1
+          },
+          {
+            "key": "ai_kpi_outcome_observation",
+            "recordCount": 8,
+            "evidencedShare": 1
+          },
+          {
+            "key": "person_or_role",
+            "recordCount": 13,
+            "evidencedShare": 1
+          },
+          {
+            "key": "data_domain",
+            "recordCount": 265,
+            "evidencedShare": 1
+          }
+        ],
+        "leadershipToPortfolioLinkage": {
+          "resolvableRows": 22,
+          "totalRows": 230,
+          "coveragePct": 9.6,
+          "linkedPrograms": 13,
+          "interpretation": "Program-specific leadership sentiment is sparsely linked (9.6% of interview mentions resolve to a canonical object). Do not generalize enterprise-wide leadership themes into program-specific sentiment unless an explicit resolved crosswalk row supports that specific connection."
+        },
+        "vendorDocumentEvidence": {
+          "contractsWithExtraction": 0,
+          "totalContracts": 65,
+          "interpretation": "None of the 65 declared vendor contracts have document-level evidence extraction behind them in this packet. Document-level evidence exists for 2 contracts (Vantage, Northgate) that do not correspond by name to any entry in this tenant's declared vendor register — a separate, unreconciled evidence set, not partial coverage of the 65."
+        },
+        "metricComparability": {
+          "comparable": 15,
+          "total": 26,
+          "inconsistentNotation": 9,
+          "interpretation": "15 of 26 tracked metrics have a comparable baseline, target and actual; 11 do not, and 9 of the comparable set mix notation between those three fields. Metric-level performance claims outside the comparable set are unsupported."
+        },
+        "prohibitedComparisons": [
+          "Do not compare this organization against industry benchmarks for a different industry than its declared one.",
+          "Do not state a priority-to-program, priority-to-spend, or priority-to-KPI linkage as fact — no canonical field currently links them. Only the candidate-relationship engine may propose such a link, and only as labeled, non-authoritative, client-unattested output."
+        ]
+      }
+    },
+    "publishedGeneration": {
+      "enterprise_story": "This is an $81.4B full-service network airline — a hub-and-spoke mainline layered with an acquired regional carrier, a cargo division, MRO capability, and a co-brand loyalty program — serving passenger and cargo shipper/freight forwarder customers. Technology is a $3.42B layer, 4.2% of revenue, but 60% of that ($2.05B) is contracted to third parties, meaning a majority of the technology budget relies on external vendors.\n\nThe defining tension right now is between stated ambition and delivered proof. Every one of 26 interviewed leaders raised value realization and investment priority as live concerns, and hard measurement corroborates them: of $80.2M in AI value promised, only $5.7M (7%) has been finance-validated. The Meridian Regional Technology Integration Program, tied to the top declared strategic priority, embodies this gap — it sits at 7% complete, blocked by a slipped platform migration, while Meridian's legacy systems remain unreconciled with the mainline as a named high-severity risk.\n\nLeadership perception and system-of-record evidence are mostly aligned, but they diverge often enough to matter: 81 of 586 interview statements contradict the system-of-record evidence on the same topic, meaning neither source can be taken as sufficient on its own.",
+      "enterprise_story_claims": [
+        {
+          "statement": "The enterprise is a full-service network passenger and cargo airline with a hub-and-spoke mainline, an acquired regional carrier, a co-brand credit card loyalty program, cargo division, and MRO capability, generating $81.4B in annual revenue across its passenger (leisure, business, corporate) and cargo shipper/freight forwarder customer segments.",
+          "evidence_ids": [
+            "ctx_identity_001",
+            "ctx_identity_003",
+            "ctx_segment_009",
+            "ctx_segment_012"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Technology spend is $3.42B, 4.2% of revenue, and 60% of it ($2.05B) is contracted to third parties, indicating that a majority of the technology budget relies on external vendors.",
+          "evidence_ids": [
+            "ctx_economics_007",
+            "sig_complexity_040"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "All 26 interviewed leaders raised value realization and investment priority as concerns, and this consensus is corroborated by hard measurement: only $5.7M of $80.2M in promised AI value (7%) has been finance-validated.",
+          "evidence_ids": [
+            "sig_consensus_015",
+            "sig_consensus_016",
+            "sig_ai_value_072"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "The Meridian Regional Technology Integration Program — tied to the top declared strategic priority — is 7% complete and blocked by a platform migration slip, while Meridian's legacy systems remain unreconciled with the mainline as a named high-severity risk.",
+          "evidence_ids": [
+            "ctx_priority_015",
+            "sig_portfolio_033",
+            "sig_risk_011"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Leadership testimony and system-of-record evidence are mostly aligned but diverge in a minority of cases: 81 of 586 interview statements contradict the system-of-record evidence on the same topic.",
+          "evidence_ids": [
+            "sig_contradiction_014"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "value_creation_model": {
+        "summary": "Segment-level revenue economics are not represented in the current context — the packet describes operating segments and customer types qualitatively but does not break down revenue or margin by segment. What can be said is that value is created through a hub-and-spoke mainline passenger network supplemented by a regional carrier, cargo division, MRO capability, and a co-brand loyalty program, serving customers ranging from leisure and business passengers to cargo shippers and codeshare partners. The enterprise is mid-acquisition, integrating Meridian Regional Airways into the mainline network to expand scale and route density, though this adds technology and operational integration risk that is not yet resolved. Underpinning operations is a $3.42B technology budget (4.2% of revenue), 60% of which is contracted to third parties, making vendor performance and economics load-bearing rather than peripheral. Similarly, ground handling is outsourced to Menzies Aviation/Swissport ($74.5M annually) and inflight catering to Gate Gourmet/dnata ($62.0M annually), meaning aspects of frontline service quality may depend on these vendors' performance rather than being fully managed in-house.",
+        "primary_value_drivers": [
+          {
+            "statement": "Value is created through a hub-and-spoke mainline passenger network supplemented by a regional carrier, cargo division, MRO capability, and a co-brand loyalty program, serving distinct customer segments from leisure/business passengers to cargo shippers and codeshare partners.",
+            "evidence_ids": [
+              "ctx_identity_001",
+              "ctx_segment_009",
+              "ctx_segment_010",
+              "ctx_segment_012",
+              "ctx_segment_014"
+            ],
+            "confidence": "high",
+            "claim_type": "FACT"
+          },
+          {
+            "statement": "The enterprise is mid-acquisition, integrating Meridian Regional Airways into the mainline network, expanding scale and route density but adding technology and operational integration risk that is not yet resolved.",
+            "evidence_ids": [
+              "ctx_economics_008",
+              "sig_portfolio_033"
+            ],
+            "confidence": "medium",
+            "claim_type": "OBSERVATION"
+          }
+        ],
+        "economic_dependencies": [
+          {
+            "statement": "A $3.42B technology budget (4.2% of revenue) underpins operations, with 60% of it contracted to third parties — vendor performance and vendor economics are load-bearing for the business, not peripheral.",
+            "evidence_ids": [
+              "ctx_economics_007",
+              "sig_complexity_040"
+            ],
+            "confidence": "high",
+            "claim_type": "CROSS_DOMAIN_INSIGHT"
+          },
+          {
+            "statement": "Ground handling is outsourced to Menzies Aviation/Swissport ($74.5M annually) and inflight catering to Gate Gourmet/dnata ($62.0M annually), which could mean aspects of frontline service quality depend on these vendors' performance rather than being fully managed in-house.",
+            "evidence_ids": [
+              "sig_complexity_076",
+              "sig_complexity_077"
+            ],
+            "confidence": "medium",
+            "claim_type": "OBSERVATION"
+          }
+        ]
+      },
+      "strategic_bets": [
+        {
+          "statement": "Completing the Meridian Regional Airways technology and operational integration is a declared strategic priority, but the associated program is only 7% complete and blocked on a platform migration that has slipped two quarters.",
+          "evidence_ids": [
+            "ctx_priority_015",
+            "sig_portfolio_033"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Modernizing the data and AI platform (Teradata-to-Snowflake) is a declared priority at 12% program completion, while platform maturity assessments show Snowflake, Databricks, Kafka and Informatica all below their target architecture and enablement levels.",
+          "evidence_ids": [
+            "ctx_priority_017",
+            "sig_portfolio_036",
+            "sig_gap_084",
+            "sig_gap_085",
+            "sig_gap_086",
+            "sig_gap_087"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "AI-assisted disruption recovery (IROPS) is a named strategic bet, but adoption of the related Crew Recovery AI tool already trails its adoption target by 26 points.",
+          "evidence_ids": [
+            "ctx_priority_018",
+            "sig_ai_value_074"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Closing the cybersecurity PAM coverage gap is a declared priority, yet standing privileged credentials outside PAM coverage remain rated a high-severity open risk.",
+          "evidence_ids": [
+            "ctx_priority_019",
+            "sig_risk_008"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        }
+      ],
+      "structural_constraints": [
+        {
+          "statement": "Mainframe skills concentration on CA-7 Batch Scheduler is rated a high-severity structural risk, reflecting reliance on a scarce specialist skillset.",
+          "evidence_ids": [
+            "sig_risk_010"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Meridian Regional's legacy systems remain unreconciled with the mainline, a structural drag directly opposing the enterprise's own top integration priority.",
+          "evidence_ids": [
+            "sig_risk_011",
+            "ctx_priority_015"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Third-party contracted spend (60% of the tech budget) combined with SITA alone representing 13.9% of vendor spend creates a structural dependency on a small number of external providers.",
+          "evidence_ids": [
+            "sig_complexity_040",
+            "sig_concentration_001"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "A COO reports that cargo booking system changes queue behind the same four engineers, describing a structural throughput bottleneck rather than a resourcing shortfall of ideas.",
+          "evidence_ids": [
+            "sig_testimony_055"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "None of the 183 declared evidence sources are yet approved for loading, which could limit how much of the underlying evidence base can currently be acted on.",
+          "evidence_ids": [
+            "sig_data_quality_075"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "operating_tensions": [
+        {
+          "statement": "Microsoft 365 Copilot and Crew Recovery AI both trail their adoption targets by the same 26 points, even as improving on-time performance and disruption recovery via AI-assisted IROPS is a declared strategic priority — a gap between stated priority and actual uptake worth investigating.",
+          "evidence_ids": [
+            "sig_ai_value_073",
+            "sig_ai_value_074",
+            "ctx_priority_018"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Leadership describes architecture governance as adding six weeks with little change to outcomes, creating tension between the pace modernization priorities demand and the process meant to control it.",
+          "evidence_ids": [
+            "sig_testimony_044",
+            "ctx_priority_017"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Processes rated High automation candidates remain largely manual — Contact Center Workforce Forecasting sits at 2% automation despite a High rating and a 6.8% error rate — while broad workforce automation opportunity across large operational roles is rated only Medium or Low.",
+          "evidence_ids": [
+            "sig_operational_081",
+            "sig_workforce_060",
+            "sig_workforce_064"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "The portfolio declares a 1.12x return ($457.4M expected value against $407.4M budget) that is not yet finance-confirmed, echoing a CEO's own complaint that approved benefit numbers are never checked back against outcomes.",
+          "evidence_ids": [
+            "sig_portfolio_038",
+            "sig_testimony_041"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        }
+      ],
+      "leadership_consensus": [
+        {
+          "statement": "Leadership perspective: all 26 interviewed leaders raised value realization as a concern — a consensus view on whether technology investment is proving out, not a settled fact about the enterprise.",
+          "evidence_ids": [
+            "sig_consensus_015"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Leadership perspective: all 26 interviewed leaders raised investment priority as a concern.",
+          "evidence_ids": [
+            "sig_consensus_016"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Leadership perspective: 24 of 26 leaders raised governance friction as a concern — a consensus view, though the specific impact on delivery speed was not confirmed.",
+          "evidence_ids": [
+            "sig_consensus_017"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Leadership perspective: 24 of 26 leaders raised capability gaps, and 23 of 26 raised data trust concerns.",
+          "evidence_ids": [
+            "sig_consensus_018",
+            "sig_consensus_020"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        }
+      ],
+      "leadership_disagreements": [
+        {
+          "statement": "Even amid near-unanimous leadership concern about value realization, 81 of 586 recorded interview statements contradict the system-of-record evidence on the same topic — perception and system data diverge on specifics even where the overall sentiment converges.",
+          "evidence_ids": [
+            "sig_contradiction_014",
+            "sig_consensus_015"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "A CFO's observation about unused licensing on the Leave-of-Absence Case Management system is a lone view with no corroboration elsewhere in the interview set, which could suggest visibility into cost waste is uneven across leadership.",
+          "evidence_ids": [
+            "sig_dissent_030",
+            "sig_testimony_056"
+          ],
+          "confidence": "low",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "A VP's warning that the SITA renewal window is too narrow to negotiate is a singleton view, not echoed by other leaders, even though SITA accounts for 13.9% of total vendor spend ($285.0M of $2.05B) supporting Airport & Ground Operations — a concentration that may warrant broader attention than a single voice has given it.",
+          "evidence_ids": [
+            "sig_dissent_031",
+            "sig_testimony_057",
+            "sig_concentration_001"
+          ],
+          "confidence": "low",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        }
+      ],
+      "performance_story": {
+        "where_improving": [
+          {
+            "statement": "13 of the 15 metrics with a comparable baseline, target and actual are moving toward their target, though this is only 15 of 26 tracked metrics overall.",
+            "evidence_ids": [
+              "sig_outlier_032",
+              "sig_gap_005"
+            ],
+            "confidence": "medium",
+            "claim_type": "OBSERVATION"
+          }
+        ],
+        "where_off_track": [
+          {
+            "statement": "The Meridian Regional Technology Integration Program is 7% complete and blocked by a platform migration that has slipped two quarters. This program may relate to the declared strategic priority of completing Meridian Regional Airways technology and operational integration, though the two are not explicitly linked.",
+            "evidence_ids": [
+              "sig_portfolio_033",
+              "ctx_priority_015"
+            ],
+            "confidence": "high",
+            "claim_type": "FACT"
+          },
+          {
+            "statement": "AI value realization is confirmed at only 7% of what was promised ($5.7M of $80.2M), well below the declared portfolio-wide expectation.",
+            "evidence_ids": [
+              "sig_ai_value_072"
+            ],
+            "confidence": "high",
+            "claim_type": "FACT"
+          },
+          {
+            "statement": "Multiple flagship modernization programs beyond Meridian (NDC completion, PureConnect migration, Teradata-to-Snowflake, CDP cutover) all sit in a similar single-to-low-double-digit completion range, suggesting a portfolio-wide delivery pattern rather than an isolated program issue.",
+            "evidence_ids": [
+              "sig_portfolio_034",
+              "sig_portfolio_035",
+              "sig_portfolio_036",
+              "sig_portfolio_037"
+            ],
+            "confidence": "medium",
+            "claim_type": "OBSERVATION"
+          }
+        ],
+        "where_unknown": [
+          {
+            "statement": "11 of 26 tracked metrics lack a comparable baseline, target and actual, and 9 of the remaining 15 mix notation across those fields — metric-level performance claims outside the comparable set are unsupported.",
+            "evidence_ids": [
+              "sig_gap_005"
+            ],
+            "confidence": "medium",
+            "claim_type": "OBSERVATION"
+          },
+          {
+            "statement": "The portfolio's declared 1.12x return is not yet finance-confirmed, so whether the $457.4M of expected value against $407.4M of budget will actually materialize is unknown.",
+            "evidence_ids": [
+              "sig_portfolio_038"
+            ],
+            "confidence": "medium",
+            "claim_type": "FACT"
+          },
+          {
+            "statement": "None of the 65 declared vendor contracts have document-level evidence extraction behind them in this packet, so contract terms and renewal risk cannot currently be independently verified — including for SITA, which represents 13.9% of total vendor spend ($285.0M of $2.05B) supporting Airport & Ground Operations.",
+            "evidence_ids": [
+              "sig_gap_006",
+              "sig_concentration_001"
+            ],
+            "confidence": "medium",
+            "claim_type": "OBSERVATION"
+          }
+        ]
+      },
+      "technology_and_data_implications": [
+        {
+          "statement": "117 applications (23% of the estate, $284.1M) are already flagged as replacement candidates; this has not been linked to any specific funded program in this packet.",
+          "evidence_ids": [
+            "sig_concentration_002"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "60% of the $3.42B technology budget ($2.05B) is contracted to third parties, meaning a majority of technology spend is directed to external vendors rather than internal resources.",
+          "evidence_ids": [
+            "sig_complexity_040",
+            "ctx_economics_007"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Data governance and catalog maturity (Collibra, level 2 against a target of 4) shows a notable gap, which could be consistent with the CEO's concern that his team keeps private extracts because they do not trust the Corporate Strategy & M&A Integration numbers.",
+          "evidence_ids": [
+            "sig_gap_088",
+            "sig_testimony_043"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Airport & Ground Operations carries the largest single technology footprint in the estate by cost (217 applications, $471.2M annually), concentrating spend in one function.",
+          "evidence_ids": [
+            "sig_complexity_039"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "With no document-level evidence extraction behind any of the 65 declared vendor contracts, the enterprise cannot currently validate renewal terms or leverage for its largest vendor dependency (SITA, 13.9% of vendor spend).",
+          "evidence_ids": [
+            "sig_gap_006",
+            "sig_concentration_001"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        }
+      ],
+      "material_risks": [
+        {
+          "statement": "Standing privileged credentials outside PAM coverage is a high-severity risk that directly contradicts a named strategic priority to close the PAM gap.",
+          "evidence_ids": [
+            "sig_risk_008",
+            "ctx_priority_019"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Mainframe skills concentration on CA-7 Batch Scheduler is rated high severity, exposing the enterprise to key-person and continuity risk on a core scheduling system.",
+          "evidence_ids": [
+            "sig_risk_010"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Meridian Regional legacy systems unreconciled with mainline is a high-severity risk tied to Meridian Legacy Sabre DCS, and it may compound the risk to the Meridian Regional Airways integration priority, which is currently only 7% complete and blocked by a platform migration slip of two quarters.",
+          "evidence_ids": [
+            "sig_risk_011",
+            "sig_portfolio_033",
+            "ctx_priority_015"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "Risk exposure repeatedly concentrates on two systems — Meridian Legacy Finance System and ServiceNow CMDB — each named in two separate risk or control entries.",
+          "evidence_ids": [
+            "sig_dependency_003",
+            "sig_dependency_004"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "Three tier1-critical infrastructure platforms (DC-East Primary Data Center, IBM z16 Mainframe PROD1, SkyHarbor Private Cloud DC-East VMware Cluster) run with capacity headroom as low as 16-53%, constraining continuity margin on core platforms.",
+          "evidence_ids": [
+            "sig_infra_065",
+            "sig_infra_068",
+            "sig_infra_069"
+          ],
+          "confidence": "high",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "value_realization_tensions": [
+        {
+          "statement": "Only $5.7M of $80.2M in promised AI value (7%) has been finance-validated, which is consistent with the value realization concern raised by all 26 of 26 interviewed leaders.",
+          "evidence_ids": [
+            "sig_ai_value_072",
+            "sig_consensus_015"
+          ],
+          "confidence": "high",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        },
+        {
+          "statement": "The declared portfolio-wide 1.12x return ($457.4M expected value against $407.4M budget) is a declared figure, not yet finance-confirmed.",
+          "evidence_ids": [
+            "sig_portfolio_038"
+          ],
+          "confidence": "medium",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "A CEO states directly that the Infrastructure & Cloud Modernization Program was approved with a benefit number that nobody has since checked against actual results.",
+          "evidence_ids": [
+            "sig_testimony_041"
+          ],
+          "confidence": "medium",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Microsoft 365 Copilot and Crew Recovery AI are both 26 points below their adoption targets, suggesting the value gap may not be limited to a single tool.",
+          "evidence_ids": [
+            "sig_ai_value_073",
+            "sig_ai_value_074"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "A process rated a High automation candidate (Contact Center Workforce Forecasting) runs at only 2% automation with a 6.8% error rate, suggesting that in this case the identified automation potential has not translated into deployed capability or improved outcomes.",
+          "evidence_ids": [
+            "sig_operational_081"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        }
+      ],
+      "what_needs_attention": [
+        {
+          "statement": "The Meridian integration program, a declared strategic priority, is 7% complete and blocked by a platform migration that has slipped two quarters — a delay that warrants executive attention given the program's priority status.",
+          "evidence_ids": [
+            "sig_portfolio_033",
+            "ctx_priority_015"
+          ],
+          "confidence": "high",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "AI value realization tracking shows $80.2M of promised value against only $5.7M finance-validated—about 7% confirmed—a gap finance validation should close to give visibility into further AI investment decisions.",
+          "evidence_ids": [
+            "sig_ai_value_072"
+          ],
+          "confidence": "high",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "The PAM coverage gap remains a high-severity open risk despite being a named strategic priority, and needs an executive owner and timeline.",
+          "evidence_ids": [
+            "sig_risk_008",
+            "ctx_priority_019"
+          ],
+          "confidence": "high",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "SITA's 13.9% vendor spend concentration, combined with a leadership warning about a narrow renewal window, warrants a proactive renewal and diversification review.",
+          "evidence_ids": [
+            "sig_concentration_001",
+            "sig_testimony_057"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "The Teradata-to-Snowflake migration priority (12% complete) should be paired with closing the Collibra Data Governance & Stewardship gap (currently at maturity level 2 against a target of 4), since migrating platforms without addressing governance maturity could carry existing data trust issues onto the new system.",
+          "evidence_ids": [
+            "ctx_priority_017",
+            "sig_portfolio_036",
+            "sig_gap_088"
+          ],
+          "confidence": "medium",
+          "claim_type": "CROSS_DOMAIN_INSIGHT"
+        }
+      ],
+      "evidence_gaps": [
+        "Program-specific leadership sentiment resolves in only 9.6% of interview-mention rows (22 of 230); enterprise-wide leadership themes cannot be safely attributed to specific programs beyond that linked set.",
+        "None of the 65 declared vendor contracts carry document-level evidence extraction in this packet; the 2 documents present (Vantage, Northgate) do not reconcile by name to the declared vendor register.",
+        "183 of 183 declared evidence sources remain unapproved for loading, limiting confidence in the granular data underlying several claims in this thesis.",
+        "11 of 26 tracked metrics lack a comparable baseline, target and actual, and 9 of the remaining 15 mix notation across those fields, so most metric-level performance claims outside the comparable set are unsupported."
+      ],
+      "things_a_new_cxo_should_know": [
+        null,
+        {
+          "statement": "All 26 interviewed leaders raised both value realization and investment priority as topics — a rare enterprise-wide consensus that these are areas of concern, though the interviews do not establish whether current technology investment is or isn't proving its worth.",
+          "evidence_ids": [
+            "sig_consensus_015",
+            "sig_consensus_016"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "That perception is corroborated by hard numbers: only $5.7M of $80.2M promised AI value (7%) has been finance-validated.",
+          "evidence_ids": [
+            "sig_ai_value_072"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Meridian Regional Technology Integration — a strategically significant program — is only 7% complete and explicitly blocked, with dependency on a platform migration that has slipped two quarters.",
+          "evidence_ids": [
+            "sig_portfolio_033"
+          ],
+          "confidence": "high",
+          "claim_type": "FACT"
+        },
+        {
+          "statement": "Nearly a quarter of the application estate ($284.1M, 117 apps) is already flagged as a replacement candidate — a significant portion of the estate that could warrant attention when prioritizing modernization efforts.",
+          "evidence_ids": [
+            "sig_concentration_002"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "Metric evidence is thin: only 15 of 26 tracked metrics have a comparable baseline, target and actual, and even within that set notation is inconsistent — treat most performance claims cautiously.",
+          "evidence_ids": [
+            "sig_gap_005"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        },
+        {
+          "statement": "Leadership perception and system-of-record evidence disagree in 81 of 586 recorded interview statements — a material minority worth probing before accepting testimony at face value.",
+          "evidence_ids": [
+            "sig_contradiction_014"
+          ],
+          "confidence": "medium",
+          "claim_type": "OBSERVATION"
+        }
+      ],
+      "questions_for_management": [
+        null,
+        null,
+        {
+          "statement": "SITA represents 13.9% of vendor spend ($285.0M of $2.05B), and a VP Commercial & Distribution Systems flagged that the renewal window is narrow — the notice date passes before the budget conversation happens. Given this, is there a plan to align the notice date with the budget cycle for the next SITA renewal, and has the option of alternative providers been considered?",
+          "evidence_ids": [
+            "sig_concentration_001",
+            "sig_testimony_057"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        null,
+        {
+          "statement": "81 of 586 leadership interview responses contradict the system-of-record evidence on the same topic. A topic-level breakdown of where these contradictions concentrate is not yet available, but identifying it could help determine which source should be trusted for decisions on those specific topics.",
+          "evidence_ids": [
+            "sig_contradiction_014"
+          ],
+          "confidence": "low",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "Contact Center Workforce Forecasting is rated a High automation candidate yet runs at just 2% automation with a 6.8% error rate — what could be blocking automation investment there?",
+          "evidence_ids": [
+            "sig_operational_081"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        },
+        {
+          "statement": "Standing privileged credentials outside PAM (CyberArk) coverage remain a high-severity risk, and closing this PAM coverage gap has been declared a strategic priority. What is the current plan and owner for closing this gap, if one has been established?",
+          "evidence_ids": [
+            "sig_risk_008",
+            "ctx_priority_019"
+          ],
+          "confidence": "medium",
+          "claim_type": "ADVISORY_INFERENCE"
+        }
+      ],
+      "visual_opportunities": [
+        {
+          "visual_type": "horizontal_bar",
+          "title": "Most of the transformation portfolio is stalled in single digits of completion, not just the flagged Meridian program",
+          "purpose": "Show that program delivery risk is portfolio-wide, not isolated to one acquisition integration effort.",
+          "dataset_ref": "stalled_programs",
+          "key_message": "The vast majority of tracked programs sit below 15% completion, several explicitly blocked.",
+          "evidence_ids": [
+            "sig_portfolio_033",
+            "sig_portfolio_034",
+            "sig_portfolio_035",
+            "sig_portfolio_036",
+            "sig_portfolio_037"
+          ],
+          "priority": "high"
+        },
+        {
+          "visual_type": "donut",
+          "title": "Leadership testimony aligns with system evidence most of the time, but disagrees in a material minority of cases",
+          "purpose": "Frame the scale of leadership-vs-system divergence without overstating it.",
+          "dataset_ref": "leadership_evidence_alignment",
+          "key_message": "505 of 586 interview statements are consistent with system evidence; 81 contradict it.",
+          "evidence_ids": [
+            "sig_contradiction_014"
+          ],
+          "priority": "medium"
+        },
+        {
+          "visual_type": "horizontal_bar",
+          "title": "A single vendor carries the largest share of technology vendor spend",
+          "purpose": "Highlight vendor concentration risk ahead of renewal planning.",
+          "dataset_ref": "vendor_spend_concentration",
+          "key_message": "SITA alone represents 13.9% of total vendor spend, more than double the next-largest vendor.",
+          "evidence_ids": [
+            "sig_concentration_001"
+          ],
+          "priority": "medium"
+        },
+        {
+          "visual_type": "horizontal_bar",
+          "title": "Risk exposure concentrates repeatedly on the same two systems",
+          "purpose": "Show where continuity and control risk clusters in the estate.",
+          "dataset_ref": "risk_system_concentration",
+          "key_message": "Meridian Legacy Finance System and ServiceNow CMDB each carry two separate named risk entries, more than any other system.",
+          "evidence_ids": [
+            "sig_dependency_003",
+            "sig_dependency_004"
+          ],
+          "priority": "medium"
+        }
+      ]
+    },
+    "verificationLedger": [
+      {
+        "path": "enterprise_story_claims[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts don't name the regional carrier as 'Meridian' nor list loyalty, corporate, ground-partner, or codeshare as separate customer segments beyond passengers and cargo shippers.",
+        "action": "repaired"
+      },
+      {
+        "path": "enterprise_story_claims[1]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts support the spend figures but not the added claim of 'structural dependency' or reduced 'operating capability,' which is an unsupported causal interpretation.",
+        "action": "repaired"
+      },
+      {
+        "path": "enterprise_story_claims[2]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The facts confirm both consensus counts and the validation figures separately, but linking them as corroboration is a reasonable synthesis rather than a stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "enterprise_story_claims[3]",
+        "verdict": "SUPPORTED",
+        "reasoning": "All elements—priority tie, 7% completion, migration slip block, and high-severity unreconciled legacy systems risk—are directly stated in the facts.",
+        "action": "kept"
+      },
+      {
+        "path": "enterprise_story_claims[4]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The fact only supports the contradiction count; the broader conclusion that 'neither source alone is sufficient for executive decision-making' is an added interpretive claim not stated in the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "value_creation_model.primary_value_drivers[0]",
+        "verdict": "SUPPORTED",
+        "reasoning": "All elements—hub-and-spoke mainline, regional carrier, cargo division, MRO, co-brand loyalty program, and the named customer segments—are directly stated in the facts.",
+        "action": "kept"
+      },
+      {
+        "path": "value_creation_model.primary_value_drivers[1]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The facts confirm the acquisition and in-progress integration plus a stalled tech program, supporting the claim's characterization but requiring synthesis to phrase it as unresolved risk affecting scale/route density.",
+        "action": "kept"
+      },
+      {
+        "path": "value_creation_model.economic_dependencies[0]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The budget figures are directly stated, but the conclusion that vendor performance/economics are 'load-bearing, not peripheral' is an interpretive synthesis rather than a stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "value_creation_model.economic_dependencies[1]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts only give vendor names and annual costs, not that these outsourced services constitute 'core passenger-facing capacity' or that they make frontline service quality 'partly outside direct operational control' — that causal/interpretive framing exceeds the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "strategic_bets[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts state this is a declared strategic priority but do not establish it as the 'top' priority among others.",
+        "action": "repaired"
+      },
+      {
+        "path": "strategic_bets[1]",
+        "verdict": "SUPPORTED",
+        "reasoning": "Each element of the claim—priority declaration, 12% completion, and below-target maturity for Snowflake, Databricks, Kafka, and Informatica—is directly stated in facts 1-6.",
+        "action": "kept"
+      },
+      {
+        "path": "strategic_bets[2]",
+        "verdict": "SUPPORTED",
+        "reasoning": "Both facts directly state the strategic priority and the 26-point adoption gap, matching the claim exactly.",
+        "action": "kept"
+      },
+      {
+        "path": "strategic_bets[3]",
+        "verdict": "SUPPORTED",
+        "reasoning": "Both parts of the claim are directly stated in facts 1 and 2.",
+        "action": "kept"
+      },
+      {
+        "path": "structural_constraints[0]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The facts confirm the risk rating and system link, but the 'scarce specialist skillset' reasoning is an inferred elaboration not stated directly.",
+        "action": "kept"
+      },
+      {
+        "path": "structural_constraints[1]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The facts establish the unreconciled legacy systems as a high-severity issue and integration as a top priority, so framing the former as opposing the latter is a reasonable inference, not a stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "structural_constraints[2]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The two figures are directly stated, and inferring structural dependency on a concentrated set of external providers is a reasonable synthesis rather than a stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "structural_constraints[3]",
+        "verdict": "SUPPORTED",
+        "reasoning": "The claim directly restates the COO's quote about iCargo Booking & Management changes queuing behind the same four engineers and the 'not short of ideas' framing.",
+        "action": "kept"
+      },
+      {
+        "path": "structural_constraints[4]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The fact only states none are approved for loading, but the claim adds an unsupported interpretive framing of it being a 'structural data-governance bottleneck' limiting trust in the evidence base, which goes beyond the bare fact.",
+        "action": "repaired"
+      },
+      {
+        "path": "operating_tensions[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts only give two adoption gaps and one declared priority; there's no evidence these tools are being 'funded and piloted' as part of that priority, so the claim overstates connections not established in the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "operating_tensions[1]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The CEO quote directly supports the six-weeks/little-change claim; connecting it to tension with modernization pace is a reasonable inference from the stated priority, phrased with appropriate framing.",
+        "action": "kept"
+      },
+      {
+        "path": "operating_tensions[2]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The individual facts are accurately stated, but combining them into a general pattern ('broad workforce automation opportunity... rated only Medium or Low') from just two roles is a reasonable but inferential generalization rather than a directly stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "operating_tensions[3]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The two facts are directly stated, and connecting the unconfirmed portfolio-wide return to the CEO's specific complaint about unchecked benefits is a reasonable but interpretive synthesis rather than a stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "leadership_consensus[0]",
+        "verdict": "SUPPORTED",
+        "reasoning": "The fact directly states 26 of 26 leaders raised value_realisation as a consensus view, matching the claim exactly.",
+        "action": "kept"
+      },
+      {
+        "path": "leadership_consensus[1]",
+        "verdict": "SUPPORTED",
+        "reasoning": "Fact states investment_priority was raised by 26 of 26 interviewed leaders, matching the claim exactly.",
+        "action": "kept"
+      },
+      {
+        "path": "leadership_consensus[2]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts state the topic was raised by 24 of 26 leaders, but do not confirm they attributed it specifically to 'slowing delivery'.",
+        "action": "repaired"
+      },
+      {
+        "path": "leadership_consensus[3]",
+        "verdict": "SUPPORTED",
+        "reasoning": "Both counts directly match the given facts.",
+        "action": "kept"
+      },
+      {
+        "path": "leadership_disagreements[0]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The two facts individually support the numbers and consensus claim, but combining them into a claim about convergence/divergence 'on the same topic' being about value realization specifically is a reasonable but inferential synthesis not explicitly stated.",
+        "action": "kept"
+      },
+      {
+        "path": "leadership_disagreements[1]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts support the lone-view/no-corroboration claim but not the further inference that this indicates uneven visibility into cost waste across leadership.",
+        "action": "repaired"
+      },
+      {
+        "path": "leadership_disagreements[2]",
+        "verdict": "OVERSTATED",
+        "reasoning": "13.9% vendor spend doesn't establish SITA as the single largest vendor concentration since no comparison to other vendors is given in the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "performance_story.where_improving[0]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "Fact 1 directly implies 13 of 15 are moving toward target (15-2), and fact 2 confirms the 15-of-26 scope, so this is a straightforward arithmetic synthesis rather than a stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "performance_story.where_off_track[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts declare a strategic priority about Meridian Regional Airways integration but never explicitly link it to the Technology Integration Program or call it the 'top' priority, so the claim's certainty exceeds the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "performance_story.where_off_track[1]",
+        "verdict": "SUPPORTED",
+        "reasoning": "The fact directly states $80.2M promised vs $5.7M finance-validated, a 7% confirmation rate, matching the claim exactly.",
+        "action": "kept"
+      },
+      {
+        "path": "performance_story.where_off_track[2]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The four programs' completion percentages (11%,9%,12%,10%) are all single-to-low-double-digit, and framing this as suggesting a portfolio-wide pattern is a reasonable hedged inference rather than a stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "performance_story.where_unknown[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The fact states performance claims outside the comparable set are unsupported outright, whereas the claim hedges with 'most... cannot be supported,' misrepresenting the certainty and scope of the original statement.",
+        "action": "repaired"
+      },
+      {
+        "path": "performance_story.where_unknown[1]",
+        "verdict": "SUPPORTED",
+        "reasoning": "Fact 1 directly states the figures and that the return is declared but not yet finance-confirmed, matching the claim.",
+        "action": "kept"
+      },
+      {
+        "path": "performance_story.where_unknown[2]",
+        "verdict": "OVERSTATED",
+        "reasoning": "Fact 2 gives SITA's spend share but never labels it 'the largest vendor,' so that comparative claim isn't supported by the given facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "technology_and_data_implications[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts only state the identification of 117 replacement-candidate applications; the claim's added framing as a 'potential internal funding source for modernization' is an interpretive leap not supported by the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "technology_and_data_implications[1]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts support the 60%/$2.05B figure but do not state or imply that this means enterprise technology capability 'sits outside direct operational control'—that is an interpretive leap not established by the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "technology_and_data_implications[2]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts don't compare Collibra's gap to other platforms, so 'lags furthest behind of any platform assessed' is an unsupported superlative, and the CEO's quote refers to a specific numbers-checking issue not explicitly tied to Collibra's maturity gap.",
+        "action": "repaired"
+      },
+      {
+        "path": "technology_and_data_implications[3]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The fact supports it being the largest by cost, but 'concentrating both cost and complexity' adds an unsupported complexity claim not stated in the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "technology_and_data_implications[4]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "Facts establish no evidence extraction across the 65 contracts and SITA's 13.9% spend share, so inferring inability to validate renewal terms/leverage for this largest vendor dependency is a reasonable synthesis, though it assumes SITA is indeed the largest without explicit ranking confirmation.",
+        "action": "kept"
+      },
+      {
+        "path": "material_risks[0]",
+        "verdict": "SUPPORTED",
+        "reasoning": "Fact 1 states high severity for standing credentials outside PAM coverage and fact 2 names closing the PAM gap as a strategic priority, so the contradiction directly follows.",
+        "action": "kept"
+      },
+      {
+        "path": "material_risks[1]",
+        "verdict": "SUPPORTED",
+        "reasoning": "The claim directly restates fact 1, that mainframe skills concentration risk is high severity and tied to CA-7 Batch Scheduler, with continuity/key-person risk being a reasonable restatement of skills concentration risk.",
+        "action": "kept"
+      },
+      {
+        "path": "material_risks[2]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts show the risk is high severity and tied to Meridian Legacy Sabre DCS, and separately that the integration program is 7% complete and blocked by a migration slip, but no fact directly links the unreconciled legacy systems risk as the cause of that specific blockage.",
+        "action": "repaired"
+      },
+      {
+        "path": "material_risks[3]",
+        "verdict": "SUPPORTED",
+        "reasoning": "Both facts directly state each system appears in 2 separate risk/control entries, matching the claim exactly.",
+        "action": "kept"
+      },
+      {
+        "path": "material_risks[4]",
+        "verdict": "SUPPORTED",
+        "reasoning": "All three platforms, their tier1-critical status, and their specific headroom percentages (53%, 27%, 16%) are directly stated in facts 1-3.",
+        "action": "kept"
+      },
+      {
+        "path": "value_realization_tensions[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts support the 7% figure and consensus concern, but calling it 'the clearest quantified expression' of that concern is an added interpretive claim not stated in the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "value_realization_tensions[1]",
+        "verdict": "SUPPORTED",
+        "reasoning": "The claim directly restates fact 1 verbatim in substance.",
+        "action": "kept"
+      },
+      {
+        "path": "value_realization_tensions[2]",
+        "verdict": "SUPPORTED",
+        "reasoning": "The CEO's quoted statement directly matches the claim's content and attribution.",
+        "action": "kept"
+      },
+      {
+        "path": "value_realization_tensions[3]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts only state two identical gaps, without categorizing them as 'productivity' vs 'operational' or supporting the generalized conclusion that the gap spans use cases/functions broadly.",
+        "action": "repaired"
+      },
+      {
+        "path": "value_realization_tensions[4]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The fact supports a single case gap between rating and deployment, but claiming this shows a general pattern of automation potential 'not translating' broadens one instance into a systemic conclusion.",
+        "action": "repaired"
+      },
+      {
+        "path": "what_needs_attention[0]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts state the program is blocked by a slipped migration, but there is no mention of a re-baselined plan needing executive decision or reliance on synergy assumptions, which broadens scope beyond what is stated.",
+        "action": "repaired"
+      },
+      {
+        "path": "what_needs_attention[1]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts state the tracking gap but do not mention any requirement or recommendation tying finance validation to approval of further AI investment.",
+        "action": "repaired"
+      },
+      {
+        "path": "what_needs_attention[2]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The facts establish both the high-severity rating and the strategic priority status, but the conclusion that it 'remains' unresolved needing an owner/timeline is a reasonable inference not explicitly stated.",
+        "action": "kept"
+      },
+      {
+        "path": "what_needs_attention[3]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The facts establish both SITA's significant spend concentration and a leader's explicit warning about a narrow renewal window, making a proactive review a reasonable synthesis rather than a stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "what_needs_attention[4]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts don't compare Collibra's gap to other assessed platforms to establish it as the furthest below target, and the claim asserts a causal 'trust problem' risk not stated in the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "things_a_new_cxo_should_know[0]",
+        "verdict": "UNSUPPORTED",
+        "reasoning": "The facts only give revenue and tech budget figures; there is no mention of a full-service network airline, an acquisition, or a carrier named Meridian.",
+        "action": "dropped"
+      },
+      {
+        "path": "things_a_new_cxo_should_know[1]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts confirm consensus on both topics being 'raised', but claiming this proves technology investment 'is not yet proving its worth' asserts a conclusion beyond merely raising a concern topic.",
+        "action": "repaired"
+      },
+      {
+        "path": "things_a_new_cxo_should_know[2]",
+        "verdict": "SUPPORTED",
+        "reasoning": "Fact 1 directly states the $80.2M promised, $5.7M finance-validated, and 7% figures matching the claim.",
+        "action": "kept"
+      },
+      {
+        "path": "things_a_new_cxo_should_know[3]",
+        "verdict": "OVERSTATED",
+        "reasoning": "Facts confirm the 7% completion and blocked status but give no comparison to other programs to support it being 'the single most strategically important' one.",
+        "action": "repaired"
+      },
+      {
+        "path": "things_a_new_cxo_should_know[4]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts only state the count/cost of replacement candidates; the claim's framing as an unconnected 'funding lever for modernization' and reference to a 'funded program' introduces information not present in the facts.",
+        "action": "repaired"
+      },
+      {
+        "path": "things_a_new_cxo_should_know[5]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The counts (15/26, 11 missing, 9 mixed notation) are directly stated, but the cautionary framing 'treat most performance claims cautiously' is a reasonable synthesis rather than a literal fact statement.",
+        "action": "kept"
+      },
+      {
+        "path": "things_a_new_cxo_should_know[6]",
+        "verdict": "SUPPORTED_INFERENCE",
+        "reasoning": "The count matches the facts exactly, but calling it 'a material minority worth probing' is an interpretive judgment rather than a stated fact.",
+        "action": "kept"
+      },
+      {
+        "path": "questions_for_management[0]",
+        "verdict": "UNSUPPORTED",
+        "reasoning": "The facts give no data on a re-baselined completion date or the cost of delay against acquisition synergies, so the claim's specific asks are not supported.",
+        "action": "dropped"
+      },
+      {
+        "path": "questions_for_management[1]",
+        "verdict": "UNSUPPORTED",
+        "reasoning": "The facts only state the value tracking figures; no governance change or verification process is mentioned in the facts.",
+        "action": "dropped"
+      },
+      {
+        "path": "questions_for_management[2]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts support the spend percentage and narrow renewal window quote, but there is no information about a plan for the next renewal cycle or testing against alternative providers, so that portion is unsupported.",
+        "action": "repaired"
+      },
+      {
+        "path": "questions_for_management[3]",
+        "verdict": "UNSUPPORTED",
+        "reasoning": "The facts list maturity gaps and a named migration priority, but nothing describes the migration's scope or whether it addresses governance, so the claim's question cannot be answered from these facts.",
+        "action": "dropped"
+      },
+      {
+        "path": "questions_for_management[4]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts confirm the 81/586 contradiction count but provide no breakdown of which topics carry highest disagreement or guidance on source trust, so those parts exceed the given evidence.",
+        "action": "repaired"
+      },
+      {
+        "path": "questions_for_management[5]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts confirm the ratings and metrics but give no information about what is blocking automation investment, which the claim implies exists.",
+        "action": "repaired"
+      },
+      {
+        "path": "questions_for_management[6]",
+        "verdict": "OVERSTATED",
+        "reasoning": "The facts confirm severity and strategic priority but say nothing about a current plan or owner for closing the gap, which the claim implicitly asks for as if it should exist.",
+        "action": "repaired"
+      }
+    ],
+    "structuralIssues": [
+      {
+        "path": "leadership_disagreements[0]",
+        "reason": "claim_type=CROSS_DOMAIN_INSIGHT spans only 1 domain(s), below the two-domain bar for a real connection"
+      },
+      {
+        "path": "technology_and_data_implications[0]",
+        "reason": "claim_type=ADVISORY_INFERENCE spans only 1 domain(s), below the two-domain bar for a real connection"
+      },
+      {
+        "path": "technology_and_data_implications[4]",
+        "reason": "claim_type=CROSS_DOMAIN_INSIGHT spans only 1 domain(s), below the two-domain bar for a real connection"
+      },
+      {
+        "path": "value_realization_tensions[4]",
+        "reason": "claim_type=CROSS_DOMAIN_INSIGHT spans only 1 domain(s), below the two-domain bar for a real connection"
+      },
+      {
+        "path": "what_needs_attention[1]",
+        "reason": "claim_type=ADVISORY_INFERENCE spans only 1 domain(s), below the two-domain bar for a real connection"
+      },
+      {
+        "path": "things_a_new_cxo_should_know[4]",
+        "reason": "claim_type=ADVISORY_INFERENCE spans only 1 domain(s), below the two-domain bar for a real connection"
+      },
+      {
+        "path": "questions_for_management[1]",
+        "reason": "claim_type=ADVISORY_INFERENCE spans only 1 domain(s), below the two-domain bar for a real connection"
+      },
+      {
+        "path": "questions_for_management[4]",
+        "reason": "claim_type=ADVISORY_INFERENCE spans only 1 domain(s), below the two-domain bar for a real connection"
+      },
+      {
+        "path": "questions_for_management[5]",
+        "reason": "claim_type=ADVISORY_INFERENCE spans only 1 domain(s), below the two-domain bar for a real connection"
+      }
+    ]
+  }
+}
