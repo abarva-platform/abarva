@@ -89,12 +89,26 @@ model change, no database write path, no product route change.
 - `NODE_OPTIONS="--max-old-space-size=6144" npx tsc --noEmit -p tsconfig.json` -- PASS, 0 errors.
 - `npx eslint` on all changed/new files -- PASS, 0 errors.
 - `npx jest tests/behaviors/build-home-chapters.test.ts tests/behaviors/enterprise-thesis-validation.test.ts
-  tests/behaviors/enterprise-signal-packet.test.ts` -- PASS, 57/57 (12 new cases, 45 pre-existing
-  unaffected).
-- Not yet run: a live generation pass exercising the unconditional prose synthesis and the chapter
-  router against real tenant data. Tracked as a required follow-up before any conclusion is drawn
-  about output quality -- this release is architecture and routing logic, verified against
-  fixtures; the live proof is the next step.
+  tests/behaviors/enterprise-signal-packet.test.ts` -- PASS, 60/60 (15 new cases across the original
+  merge and the fast-follow below, 45 pre-existing unaffected).
+- Live proof, both tenants, run as ACA Jobs against the merged digest-pinned image: a
+  `data-build:enterprise-thesis:plan` pass confirmed the unconditional prose synthesis holds --
+  Meridian's `enterprise_story` is now sentence-by-sentence claim-bound (no recurrence of the
+  "well-capitalized" gap), SkyHarbor's `value_creation_model.summary` now opens with an honest gap
+  statement about segment economics instead of leading with technology cost, no truncation, no
+  empty responses across 107+ verifier/repair/prose calls. A follow-up `data-build:home-chapters:plan`
+  pass then found a real bug this design hadn't hit yet: 5 of 16 per-chapter synthesis calls (2
+  tenants x 8 chapters) failed silently with "Chapter synthesis call failed" -- the model
+  occasionally wraps its JSON response in a markdown code fence despite instructions, a known
+  failure mode already handled for the main thesis parse (`parseThesisJson`) but not replicated to
+  the four smaller structured-output calls (verifier, repair, prose synthesis, chapter synthesis),
+  which each did a bare `JSON.parse` with a silent `catch {}`. Fixed by extracting the fence-strip
+  logic into a shared `parseJsonLoose<T>()` used by all five call sites, with a diagnostic log line
+  on parse failure (call-site label + parse error + response head) so a future occurrence is visible
+  instead of silently swallowed. The thesis-level calls happened not to hit this failure mode on the
+  first live run (0/107+); that was sample luck, not evidence the gap wasn't real, which is why all
+  five call sites were hardened uniformly rather than only the one that failed. Re-run after the fix
+  to confirm 0 parse failures is the remaining validation step before the acceptance-gate review.
 
 ## Rollout Plan
 
@@ -127,8 +141,10 @@ actually hold on real content -- tracked as the immediate next step.
 
 ## Known Gaps
 
-No live model call has exercised `synthesizeProseFromClaims`'s unconditional path or
-`build-home-chapters.ts`'s per-chapter synthesis yet -- validated only by type/lint/unit tests
-against fixtures so far, the same caveat as every generation-mechanics change this stretch. The
-production React/Recharts render layer that would actually display chapter output (a preview
-route, not `/home` itself) does not exist yet -- tracked as a separate, following piece of work.
+The live proof described above has not yet been re-run since the `parseJsonLoose` fix landed, so
+the fix is verified against unit tests and the original failure's manual diagnosis, not yet against
+a second live run showing 0/16 parse failures. That re-run, and the acceptance-gate review of the
+resulting eight-chapter output (story quality, analytical quality, evidence quality, specificity,
+visual quality, executive usefulness), are the remaining steps before this is called proven. The
+production React/Recharts render layer that would actually display chapter output (a preview route,
+not `/home` itself) does not exist yet -- tracked as a separate, following piece of work.

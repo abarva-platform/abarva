@@ -1,6 +1,7 @@
 import {
   validateStructure,
   parseThesisJson,
+  parseJsonLoose,
   dropClaim,
   type EnterpriseThesis,
   type GroundedClaim,
@@ -206,6 +207,31 @@ describe("parseThesisJson", () => {
 
   it("returns null rather than throwing on malformed output", () => {
     expect(parseThesisJson("not json at all")).toBeNull();
+  });
+});
+
+describe("parseJsonLoose", () => {
+  /**
+   * The shared parser every small structured-output call in the pipeline (verifier, repair, prose
+   * synthesis, chapter synthesis) now goes through. A live run found a real, non-hypothetical gap
+   * here: the chapter-writer's calls hit a fenced response on 5 of 16 attempts before this helper
+   * existed, and failed silently. This pins down the fence-stripping behavior generically (not just
+   * for the EnterpriseThesis shape parseThesisJson wraps it for) so any future small-object call
+   * site inherits the same protection by construction.
+   */
+  it("parses a small object shape, not just a full EnterpriseThesis", () => {
+    const shape = { headline: "h", executive_synthesis: "e" };
+    expect(parseJsonLoose<typeof shape>(JSON.stringify(shape), "test")).toEqual(shape);
+  });
+
+  it("strips a markdown code fence for a small object shape", () => {
+    const shape = { verdict: "SUPPORTED", reasoning: "r" };
+    const fenced = "```json\n" + JSON.stringify(shape) + "\n```";
+    expect(parseJsonLoose<typeof shape>(fenced, "test")).toEqual(shape);
+  });
+
+  it("returns null rather than throwing on malformed output", () => {
+    expect(parseJsonLoose("not json at all", "test")).toBeNull();
   });
 });
 

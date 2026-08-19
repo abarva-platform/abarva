@@ -559,12 +559,8 @@ async function verifyClaim(
   // 4096 gives headroom above every ceiling this call has previously failed at (200, then 3072).
   const result = await callClaude(client, VERIFIER_SYSTEM_PROMPT, userPrompt, 4096, "low");
   if (!result) return { verdict: "UNSUPPORTED", reasoning: "verifier call failed" };
-  try {
-    const parsed = JSON.parse(result.text) as { verdict: Verdict; reasoning: string };
-    return parsed;
-  } catch {
-    return { verdict: "UNSUPPORTED", reasoning: "verifier returned non-JSON" };
-  }
+  const parsed = parseJsonLoose<{ verdict: Verdict; reasoning: string }>(result.text, "claim verifier");
+  return parsed ?? { verdict: "UNSUPPORTED", reasoning: "verifier returned non-JSON" };
 }
 
 /**
@@ -607,12 +603,8 @@ async function repairClaim(
   // ceiling as the verifier call above.
   const result = await callClaude(client, REPAIR_SYSTEM_PROMPT, userPrompt, 4096, "low");
   if (!result) return null;
-  try {
-    const parsed = JSON.parse(result.text) as { repaired_statement: string };
-    return parsed.repaired_statement || null;
-  } catch {
-    return null;
-  }
+  const parsed = parseJsonLoose<{ repaired_statement: string }>(result.text, "claim repair");
+  return parsed?.repaired_statement || null;
 }
 
 /**
@@ -664,12 +656,8 @@ async function synthesizeProseFromClaims(
   // deliberately.
   const result = await callClaude(client, PROSE_SYNTHESIS_SYSTEM_PROMPT, userPrompt, 4096, "low");
   if (!result) return null;
-  try {
-    const parsed = JSON.parse(result.text) as { final_text: string };
-    return parsed.final_text || null;
-  } catch {
-    return null;
-  }
+  const parsed = parseJsonLoose<{ final_text: string }>(result.text, "prose synthesis");
+  return parsed?.final_text || null;
 }
 
 /** Claim categories verified — the surfaces carrying comparative, causal, consensus, or
@@ -770,14 +758,31 @@ export async function callClaude(
   };
 }
 
-export function parseThesisJson(text: string): EnterpriseThesis | null {
-  // Models occasionally wrap JSON in a code fence despite instructions. Strip it if present.
+/**
+ * Every small structured-output call in this pipeline (verifier, repair, prose synthesis, chapter
+ * synthesis) asks the model for "strict JSON" and occasionally gets it back wrapped in a ```json
+ * code fence anyway. A live run surfaced this concretely: the chapter-writer's calls hit this on
+ * 5 of 16 attempts and failed silently (bare `catch {}`, no logged reason) while the thesis-level
+ * calls happened not to hit it that same run -- "didn't reproduce this time" is not evidence the
+ * gap isn't real, it's evidence the sample was too small. `label` is only used for the diagnostic
+ * log line so a real failure names which call site produced it instead of vanishing into a null.
+ */
+export function parseJsonLoose<T>(text: string, label: string): T | null {
   const cleaned = text.trim().replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
   try {
-    return JSON.parse(cleaned) as EnterpriseThesis;
-  } catch {
+    return JSON.parse(cleaned) as T;
+  } catch (error) {
+    console.log(
+      `    ! ${label}: model response was not valid JSON even after code-fence stripping -- ` +
+        `${error instanceof Error ? error.message : String(error)}; raw text (first 200 chars): ` +
+        JSON.stringify(cleaned.slice(0, 200)),
+    );
     return null;
   }
+}
+
+export function parseThesisJson(text: string): EnterpriseThesis | null {
+  return parseJsonLoose<EnterpriseThesis>(text, "thesis generation");
 }
 
 /** Drop a claim from its array in place. Used after verification rejects it. */
