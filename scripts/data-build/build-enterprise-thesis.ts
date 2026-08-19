@@ -361,14 +361,9 @@ async function verifyClaim(
     `Claim:\n${claim.statement}\n\nFacts (this is all you may use):\n` +
     facts.map((f, i) => `${i + 1}. ${f}`).join("\n");
 
-  // 200 tokens produced the same empty-text failure as the main thesis call, for the same reason:
-  // the diagnostic logging added after the first run showed stop_reason=max_tokens with only a
-  // "thinking" content block and zero output tokens spent on visible text -- the model's internal
-  // reasoning consumed the entire budget before it could write the one-sentence verdict. 3072
-  // gives comfortable headroom above the observed failure point rather than the minimum that
-  // might clear it -- a second budget-too-small cycle on the same call costs a full deploy, and
-  // the marginal cost of extra unused headroom on a short classification response is negligible.
-  const result = await callClaude(client, VERIFIER_SYSTEM_PROMPT, userPrompt, 3072, 1024);
+  // A single-claim classification against a handful of facts -- low effort is proportionate, and
+  // 4096 gives headroom above every ceiling this call has previously failed at (200, then 3072).
+  const result = await callClaude(client, VERIFIER_SYSTEM_PROMPT, userPrompt, 4096, "low");
   if (!result) return { verdict: "UNSUPPORTED", reasoning: "verifier call failed" };
   try {
     const parsed = JSON.parse(result.text) as { verdict: Verdict; reasoning: string };
@@ -414,7 +409,9 @@ async function repairClaim(
     `Original claim:\n${claim.statement}\n\n` +
     `Facts it was allowed to use:\n${facts.map((f, i) => `${i + 1}. ${f}`).join("\n")}\n\n` +
     `What overstepped them:\n${verifierReasoning}`;
-  const result = await callClaude(client, REPAIR_SYSTEM_PROMPT, userPrompt, 3072, 1024);
+  // Rewriting one sentence against a named, specific objection -- low effort, same generous
+  // ceiling as the verifier call above.
+  const result = await callClaude(client, REPAIR_SYSTEM_PROMPT, userPrompt, 4096, "low");
   if (!result) return null;
   try {
     const parsed = JSON.parse(result.text) as { repaired_statement: string };
@@ -447,34 +444,35 @@ function claimsRequiringVerification(thesis: EnterpriseThesis): Array<{ path: st
  * Claude call plumbing
  * ---------------------------------------------------------------------------------------------- */
 
+type ReasoningEffort = "low" | "medium" | "high" | "xhigh" | "max";
+
 async function callClaude(
   client: { messages: { create: (p: Record<string, unknown>) => Promise<unknown> } } | null,
   system: string,
   userPrompt: string,
   maxTokens: number,
-  thinkingBudget: number,
+  effort: ReasoningEffort,
 ): Promise<{ text: string; inputTokens: number; outputTokens: number; model: string } | null> {
   if (!client) return null;
-  // The empty-response failures diagnosed earlier this session (main thesis call at 4000 tokens,
-  // verifier at 200) were both "stop_reason=max_tokens, blocks=[thinking], output_tokens=<ceiling>,
-  // zero text" -- this model engages extended thinking whether or not it's explicitly requested,
-  // and per the SDK's own docs that thinking spend counts against max_tokens. Raising max_tokens
-  // without bounding thinking only widens the pool both are drawing from; it doesn't guarantee text
-  // gets any of it, which is exactly what a live run reproduced again at max_tokens=6000 (Meridian:
-  // thinking alone consumed all 6000; SkyHarbor: thinking left enough room for text to start, but
-  // not enough for it to finish, truncating mid-JSON). Giving thinking its own capped budget, on
-  // top of a max_tokens ceiling sized for thinkingBudget + the actual expected content length,
-  // makes the two pools independent instead of a race.
+  // A live run against this model rejected `thinking: {type: "enabled", budget_tokens}` outright --
+  // 400 "\"thinking.type.enabled\" is not supported for this model. Use \"thinking.type.adaptive\"
+  // and \"output_config.effort\" to control thinking behavior." That's the model family's actual
+  // contract: thinking is adaptive (not a fixed token allotment the caller reserves) and its depth
+  // is steered by an effort tier instead. max_tokens is still the ceiling on thinking + text
+  // combined, so it's sized generously per call rather than as a precise thinkingBudget + content
+  // sum -- the two empty-response bugs this ceiling was originally chasing (ceiling too low for
+  // either the response or the model's own reasoning) are still guarded by the diagnostic below.
   const response = (await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: maxTokens,
-    thinking: { type: "enabled", budget_tokens: thinkingBudget },
+    thinking: { type: "adaptive" },
+    output_config: { effort },
     system,
     messages: [{ role: "user", content: userPrompt }],
   })) as {
     model: string;
     stop_reason?: string;
-    usage?: { input_tokens?: number; output_tokens?: number };
+    usage?: { input_tokens?: number; output_tokens?: number; output_tokens_details?: { thinking_tokens?: number } };
     content: Array<{ type: string; text?: string }>;
   };
   const text = response.content.filter((b) => b.type === "text").map((b) => b.text ?? "").join("\n").trim();
@@ -482,12 +480,15 @@ async function callClaude(
     // The first real run against both tenants returned empty text from every call with no other
     // signal to explain why. Guessing at a fix (a bigger max_tokens budget) without knowing the
     // actual cause is exactly the mistake this session spent four deploy cycles unlearning on the
-    // orientation pack's validator. Print what the API actually said -- block types and the stop
-    // reason -- so a second empty response is diagnosable instead of another guess.
+    // orientation pack's validator. Print what the API actually said -- block types, stop reason,
+    // and the thinking/output token split -- so a second empty response is diagnosable instead of
+    // another guess.
     const blockTypes = response.content.map((b) => b.type).join(",") || "(no content blocks)";
     console.log(
       `    ! empty text -- stop_reason=${response.stop_reason ?? "unknown"} blocks=[${blockTypes}] ` +
-        `output_tokens=${response.usage?.output_tokens ?? "unknown"} max_tokens=${maxTokens}`,
+        `output_tokens=${response.usage?.output_tokens ?? "unknown"} ` +
+        `thinking_tokens=${response.usage?.output_tokens_details?.thinking_tokens ?? "unknown"} ` +
+        `max_tokens=${maxTokens} effort=${effort}`,
     );
     return null;
   }
@@ -561,12 +562,14 @@ async function buildTenant(tenantKey: string, client: Parameters<typeof callClau
   const usage = { input: 0, output: 0 };
   // The schema's array bounds are now stated explicitly in SYSTEM_PROMPT (a spine, not a report --
   // 3-5 items per array, 250-400 words for enterprise_story), targeting roughly 6000 tokens of
-  // actual content in the worst case. That figure is the content budget, not the request ceiling:
-  // thinking is capped separately at 2000 (comfortable for reasoning across a signal packet this
-  // size, per the live run where the model's uncapped thinking alone consumed a full 6000-token
-  // ceiling on one tenant and left too little for text on the other) and max_tokens is set to the
-  // sum, so the two no longer compete for the same pool.
-  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, 8000, 2000);
+  // actual content in the worst case. This call's thinking is not a token budget the caller
+  // reserves (this model rejects that shape entirely -- see callClaude) but an effort tier the
+  // model manages itself; "medium" is proportionate to genuine cross-domain synthesis across a
+  // 40+ signal packet without inviting the runaway reasoning that ate an entire fixed budget on
+  // the first live attempt. max_tokens is a generous ceiling on thinking + content combined, not a
+  // precise split -- if a future run shows this still truncating, the diagnostic in callClaude now
+  // reports the actual thinking/output token split instead of requiring another guess.
+  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, 10000, "medium");
   if (!generation) {
     console.log("  ! thesis generation returned no text");
     return {
