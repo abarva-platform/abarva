@@ -205,6 +205,49 @@ export function assignVisuals(thesis: EnterpriseThesis): Record<ChapterId, Visua
   return byChapter;
 }
 
+/** What each chapter's readers would recognise as *their* gap. Deliberately narrower than the
+ * question keywords: a question routed to a slightly-off chapter is a mild misfile, but a gap
+ * routed everywhere stops reading as a finding and starts reading as boilerplate. */
+const CHAPTER_GAP_KEYWORDS: Partial<Record<ChapterId, string[]>> = {
+  our_business: ["segment", "revenue", "customer"],
+  strategy_value_creation: ["program", "initiative", "portfolio", "bet"],
+  how_we_operate: ["workforce", "process", "org ", "role"],
+  technology_data: ["vendor", "contract", "application", "integration", "system", "platform", "infrastructure"],
+  performance_value: ["metric", "baseline", "target", "kpi", "notation"],
+  leadership_perspective: ["leadership", "sentiment", "interview"],
+};
+
+/** Routes thesis-level `evidence_gaps` to the chapters they actually bear on.
+ *
+ * Gaps are the only client-safe absence signal the thesis produces. `structuralIssues` and the
+ * verification ledger are *builder* records -- they speak in claim paths and verdict vocabulary
+ * (`value_creation_model.primary_value_drivers[1]`, `claim_type=CROSS_DOMAIN_INSIGHT`) and must
+ * never reach a client surface -- and most ledger entries are repairs rather than absences anyway.
+ *
+ * Unlike questions, a gap is not exclusive: one missing dataset can legitimately limit two
+ * chapters, so a gap may route to more than one and is not consumed by the first match. A gap
+ * matching no chapter is a whole-build limitation and belongs in the Executive Brief, where the
+ * reader is being told what this record can and cannot support. */
+export function assignEvidenceGaps(thesis: EnterpriseThesis): Record<ChapterId, string[]> {
+  const gaps = thesis.evidence_gaps ?? [];
+  const byChapter: Record<ChapterId, string[]> = {
+    executive_brief: [], our_business: [], strategy_value_creation: [], how_we_operate: [],
+    technology_data: [], performance_value: [], leadership_perspective: [], what_needs_attention: [],
+  };
+  for (const gap of gaps) {
+    const text = gap.toLowerCase();
+    let routed = false;
+    for (const [chapterId, keywords] of Object.entries(CHAPTER_GAP_KEYWORDS) as Array<[ChapterId, string[]]>) {
+      if (keywords.some((k) => text.includes(k))) {
+        byChapter[chapterId].push(gap);
+        routed = true;
+      }
+    }
+    if (!routed) byChapter.executive_brief.push(gap);
+  }
+  return byChapter;
+}
+
 const CHAPTER_QUESTION_KEYWORDS: Partial<Record<ChapterId, string[]>> = {
   our_business: ["business", "segment", "revenue", "customer", "channel"],
   strategy_value_creation: ["priority", "program", "bet", "strategic", "portfolio", "return"],
@@ -375,13 +418,14 @@ async function buildChaptersForTenant(tenantKey: string, client: Parameters<type
   const slices = assembleChapterSlices(thesis, signalPacket);
   const visuals = assignVisuals(thesis);
   const questions = assignQuestions(thesis);
+  const gaps = assignEvidenceGaps(thesis);
 
   const chapters: ChapterView[] = [];
   for (const def of CHAPTER_DEFS) {
     const slice = slices[def.id];
     const allClaims = [...slice.key_insights, ...slice.tensions, ...slice.what_to_watch];
     const synthesis = await synthesizeChapterNarrative(client, def, allClaims);
-    const limitations: string[] = [];
+    const limitations: string[] = [...gaps[def.id]];
     if (allClaims.length === 0) {
       limitations.push("No verified claims were routed to this chapter from the current thesis -- treat as a coverage gap.");
     }

@@ -132,7 +132,9 @@
           "priority": "high"
         }
       ],
-      "limitations": []
+      "limitations": [
+        "183 of 183 declared evidence sources remain unapproved for loading, limiting confidence in the granular data underlying several claims in this thesis."
+      ]
     },
     {
       "chapterId": "our_business",
@@ -296,7 +298,9 @@
           "priority": "high"
         }
       ],
-      "limitations": []
+      "limitations": [
+        "Program-specific leadership sentiment resolves in only 9.6% of interview-mention rows (22 of 230); enterprise-wide leadership themes cannot be safely attributed to specific programs beyond that linked set."
+      ]
     },
     {
       "chapterId": "how_we_operate",
@@ -426,7 +430,9 @@
           "priority": "medium"
         }
       ],
-      "limitations": []
+      "limitations": [
+        "None of the 65 declared vendor contracts carry document-level evidence extraction in this packet; the 2 documents present (Vantage, Northgate) do not reconcile by name to the declared vendor register."
+      ]
     },
     {
       "chapterId": "performance_value",
@@ -545,7 +551,9 @@
       "what_to_watch": [],
       "questions_to_ask": [],
       "visual_opportunities": [],
-      "limitations": []
+      "limitations": [
+        "11 of 26 tracked metrics lack a comparable baseline, target and actual, and 9 of the remaining 15 mix notation across those fields, so most metric-level performance claims outside the comparable set are unsupported."
+      ]
     },
     {
       "chapterId": "leadership_perspective",
@@ -635,7 +643,9 @@
           "priority": "medium"
         }
       ],
-      "limitations": []
+      "limitations": [
+        "Program-specific leadership sentiment resolves in only 9.6% of interview-mention rows (22 of 230); enterprise-wide leadership themes cannot be safely attributed to specific programs beyond that linked set."
+      ]
     },
     {
       "chapterId": "what_needs_attention",

@@ -1,6 +1,7 @@
 import {
   assignVisuals,
   assignQuestions,
+  assignEvidenceGaps,
   assembleChapterSlices,
   type ChapterId,
 } from "../../scripts/data-build/build-home-chapters";
@@ -228,5 +229,42 @@ describe("assembleChapterSlices", () => {
     const slices = assembleChapterSlices(thesis, packet);
     expect(slices.strategy_value_creation.key_insights).toHaveLength(1);
     expect(slices.strategy_value_creation.key_insights[0].statement).toBe("Survivor");
+  });
+});
+
+describe("assignEvidenceGaps", () => {
+  it("routes a gap to every chapter it bears on, not just the first match", () => {
+    // A gap naming both vendor contracts and metrics genuinely limits two chapters. Questions are
+    // consumed by their first match; gaps must not be, or one chapter silently absorbs the warning
+    // the other chapter's reader needed.
+    const gap = "Vendor contract records carry no baseline, so contract-level metric claims are unsupported.";
+    const byChapter = assignEvidenceGaps(minimalThesis({ evidence_gaps: [gap] }));
+    expect(byChapter.technology_data).toContain(gap);
+    expect(byChapter.performance_value).toContain(gap);
+  });
+
+  it("sends a gap that names no chapter's subject to the Executive Brief", () => {
+    const gap = "27 of 27 declared evidence sources are not yet approved for loading.";
+    const byChapter = assignEvidenceGaps(minimalThesis({ evidence_gaps: [gap] }));
+    expect(byChapter.executive_brief).toEqual([gap]);
+    // A whole-build limitation is not a technology finding; it must not leak into a topic chapter.
+    expect(byChapter.technology_data).toEqual([]);
+  });
+
+  it("lands every gap somewhere -- a dropped gap is silently lost honesty", () => {
+    const gaps = [
+      "Leadership sentiment does not resolve to programs.",
+      "No vendor contracts carry document-level evidence extraction.",
+      "16 of 50 tracked metrics lack a comparable baseline and target.",
+      "Declared evidence sources remain unapproved for loading.",
+    ];
+    const byChapter = assignEvidenceGaps(minimalThesis({ evidence_gaps: gaps }));
+    const routed = new Set(Object.values(byChapter).flat());
+    for (const gap of gaps) expect(routed.has(gap)).toBe(true);
+  });
+
+  it("returns an empty array per chapter when the thesis declares no gaps", () => {
+    const byChapter = assignEvidenceGaps(minimalThesis());
+    expect(Object.values(byChapter).flat()).toEqual([]);
   });
 });

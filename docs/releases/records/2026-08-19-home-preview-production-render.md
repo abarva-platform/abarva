@@ -480,3 +480,38 @@ internal machinery rendered onto a surface an executive reads.
 QA: 3 new regression tests assert the demo-safe name renders, the physical label never does, the
 surface is marked as demo/synthetic, and no control exists that names or switches to another
 client. Full preview suite green; typecheck clean.
+
+**Ninth iteration -- thesis evidence gaps now reach the chapters they limit.** Auditing the
+approved next-generation Home design against the real payload surfaced a silent content defect:
+the chapter assembler computed thesis-level `evidence_gaps` but never routed them to chapters, so
+`ChapterView.limitations[]` was empty on all 16 chapters across both demo tenants. A design that
+gives "what is not established" its own section -- the approved one does -- would therefore have
+rendered an empty heading on every chapter, removing precisely the honesty signal the field exists
+to carry, and doing it silently.
+
+`assignEvidenceGaps()` routes each gap by subject keyword. Unlike question routing, a gap is not
+consumed by its first match: one missing dataset can legitimately limit two chapters, and letting
+the first match absorb it would hide the warning from the other chapter's reader. A gap matching no
+chapter's subject is a whole-build limitation and lands in the executive brief. After routing, 5 of
+8 chapters carry a gap and 3 do not -- so the absent state is a real state any renderer must handle,
+not an edge case.
+
+Golden snapshots were backfilled deterministically rather than regenerated. The routing reads only
+text already verified and present in each snapshot's own thesis, so it needs no model call; a full
+chapter rebuild would have risked changing verified prose to achieve a change that requires none.
+The backfill script is idempotent and the resulting diff is 32 lines, every one a `limitations`
+entry -- no generated prose changed.
+
+One correction worth recording, because the wrong version of it was briefly circulated: an earlier
+draft of the design audit listed `structuralIssues` and the UNSUPPORTED/OVERSTATED verification
+ledger entries as further unrouted absence content. They are not usable. Both are builder records
+-- they speak in claim paths and verdict vocabulary that must never reach a client surface -- and
+most ledger entries are repairs rather than absences. `evidence_gaps` is the only client-safe
+absence signal the thesis produces.
+
+Lane: `global-control-lane`. Layer: canonical model assembly (layer 3), no product surface changed.
+Clients affected: both demo tenants' Home preview content; no production client surface reads these
+snapshots yet. QA: 4 new routing tests (multi-chapter fan-out, whole-build fallback, no-gap-lost,
+empty-thesis) plus the 13 existing chapter-assembly tests, all green; typecheck clean; snapshot diff
+inspected line by line. Rollout: merge to main, no data-plane migration, no job run required.
+Rollback: revert the commit -- the snapshots return to empty `limitations` and no other field moves.
