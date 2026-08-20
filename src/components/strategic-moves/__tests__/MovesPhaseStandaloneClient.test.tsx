@@ -1737,7 +1737,7 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not show the Risk Assessment rail entry point on a non-P2 phase, even with the flag on", () => {
+  it("also shows the Risk Assessment rail entry point on P3 when the flag is on — starts at P2, finalizes at P3", () => {
     render(
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
@@ -1752,7 +1752,84 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
     expect(
+      screen.getByRole("button", { name: /Risk Assessment/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show the Risk Assessment rail entry point on P4 (or any phase other than P2/P3), even with the flag on", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({ currentPhase: 4, phaseLabel: "P4 Build the Plan" })}
+        phaseNum={4}
+        phaseTallies={[...phaseTallies]}
+        riskAssessmentEnabled
+      />,
+    );
+    expect(
       screen.queryByRole("button", { name: /Risk Assessment/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides the Solutioning rail entry point when moves_solution_pattern_gate_v1 is off (the default)", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({
+          currentPhase: 3,
+          phaseLabel: "P3 Choose the Approach",
+        })}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: /Solutioning/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the Solutioning rail entry point only on P3 when the flag is on, and opens the panel", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({
+          currentPhase: 3,
+          phaseLabel: "P3 Choose the Approach",
+        })}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+        solutionPatternGateEnabled
+      />,
+    );
+    const solutioningButton = screen.getByRole("button", {
+      name: /Solutioning/i,
+    });
+    expect(solutioningButton).toBeInTheDocument();
+    fireEvent.click(solutioningButton);
+    expect(
+      screen.getByRole("heading", { name: "Solutioning" }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show the Solutioning rail entry point on a non-P3 phase, even with the flag on", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Discover & Diagnose",
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+        solutionPatternGateEnabled
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: /Solutioning/i }),
     ).not.toBeInTheDocument();
   });
 

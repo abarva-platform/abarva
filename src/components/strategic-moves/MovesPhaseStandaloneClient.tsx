@@ -27,6 +27,7 @@ import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateAppr
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
 import { CostEffortWizard } from "@/components/strategic-moves/cost-effort";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
+import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import {
   getPhaseCaptureSections,
@@ -108,8 +109,10 @@ interface MovesPhaseStandaloneClientProps {
   initialSubstepKey?: SubstepKey;
   /** `moves_pricing_engine` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Cost & Effort" rail entry point entirely; when false the button does not render at all. */
   pricingEngineEnabled?: boolean;
-  /** `moves_risk_tier_scoring_v1` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Risk Assessment" rail entry point entirely; when false the button does not render at all. Same pattern as pricingEngineEnabled. */
+  /** `moves_risk_tier_scoring_v1` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Risk Assessment" rail entry point on P2 AND P3 (starts at P2, finalized at P3); when false the button does not render at all. Same pattern as pricingEngineEnabled. */
   riskAssessmentEnabled?: boolean;
+  /** `moves_solution_pattern_gate_v1` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Solutioning" rail entry point entirely (P3 only); when false the button does not render at all. Same pattern as pricingEngineEnabled. */
+  solutionPatternGateEnabled?: boolean;
   /** The signed-in session's identity, resolved server-side (never client-supplied)
    *  — shown in the gate-approval confirmation dialog so an approver sees who
    *  they're approving as before committing. Absent (null) degrades gracefully:
@@ -123,7 +126,8 @@ type WorkspaceView =
   | "intelligence"
   | "approvals"
   | "pricing"
-  | "risk";
+  | "risk"
+  | "solutioning";
 
 type UploadWorkStatus = "idle" | "uploading" | "uploaded" | "error";
 type DecisionOptionSaveStatus = "idle" | "saving" | "saved" | "error";
@@ -393,6 +397,7 @@ export function MovesPhaseStandaloneClient({
   initialSubstepKey,
   pricingEngineEnabled = false,
   riskAssessmentEnabled = false,
+  solutionPatternGateEnabled = false,
   currentUser = null,
 }: MovesPhaseStandaloneClientProps) {
   const router = useRouter();
@@ -489,7 +494,9 @@ export function MovesPhaseStandaloneClient({
             ? "Cost & Effort"
             : workspaceView === "risk"
               ? "Risk Assessment"
-              : "Phase Intelligence";
+              : workspaceView === "solutioning"
+                ? "Solutioning"
+                : "Phase Intelligence";
   const supportLine = useMemo(() => {
     const industry = move.tenant.industryCode
       ? move.tenant.industryCode.toUpperCase()
@@ -1208,7 +1215,8 @@ export function MovesPhaseStandaloneClient({
                     {!collapsedRail && "Cost & Effort"}
                   </button>
                 ) : null}
-                {phase.phase === 2 && riskAssessmentEnabled ? (
+                {(phase.phase === 2 || phase.phase === 3) &&
+                riskAssessmentEnabled ? (
                   <button
                     className={`mxw-lib-link ${workspaceView === "risk" ? "viewing" : ""}`}
                     onClick={() => {
@@ -1220,6 +1228,20 @@ export function MovesPhaseStandaloneClient({
                   >
                     <span>!</span>
                     {!collapsedRail && "Risk Assessment"}
+                  </button>
+                ) : null}
+                {phase.phase === 3 && solutionPatternGateEnabled ? (
+                  <button
+                    className={`mxw-lib-link ${workspaceView === "solutioning" ? "viewing" : ""}`}
+                    onClick={() => {
+                      setWorkspaceView("solutioning");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    title={collapsedRail ? "Solutioning" : undefined}
+                    type="button"
+                  >
+                    <span>◆</span>
+                    {!collapsedRail && "Solutioning"}
                   </button>
                 ) : null}
               </div>
@@ -1352,6 +1374,31 @@ export function MovesPhaseStandaloneClient({
                     </p>
                   </div>
                   <RiskAssessmentPanel moveId={move.id} />
+                </>
+              ) : workspaceView === "solutioning" ? (
+                <>
+                  <div className="mxw-crumb">
+                    <button
+                      onClick={() => setWorkspaceView("phase")}
+                      type="button"
+                    >
+                      {move.name}
+                    </button>
+                    <span>/</span>
+                    Solutioning
+                  </div>
+                  <div className="mxw-stage-head">
+                    <div className="mxw-agent-chip">
+                      <span />
+                      AVA · MOVES
+                    </div>
+                    <h1>Solutioning</h1>
+                    <p>
+                      Classify which of the five platform-fit patterns this Move
+                      actually is — only one pattern needs the platform.
+                    </p>
+                  </div>
+                  <SolutioningPanel moveId={move.id} />
                 </>
               ) : workspaceView === "approvals" ? (
                 <>
