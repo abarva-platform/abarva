@@ -1,6 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import { requireProductModule } from "@/lib/auth/server-module-access";
-import { getStrategicMoveById } from "@/lib/programs/queries";
+import { getModuleState, getStrategicMoveById } from "@/lib/programs/queries";
+import {
+  getPhaseCaptureSections,
+  phaseCaptureModuleKey,
+} from "@/lib/programs/phase-capture-contract";
+import { computeCaptureRevision } from "@/lib/programs/phase-capture-integrity";
 import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
 import { MovesPhaseStandaloneClient } from "@/components/strategic-moves/MovesPhaseStandaloneClient";
 import {
@@ -144,6 +149,27 @@ export default async function StrategicMovePhaseWorkspacePage({
     currentStateReadiness = null;
   }
 
+  // Preload the AUTHORITATIVE phase-capture values server-side rather than
+  // letting the client synthesize or fetch-after-mount. The client previously
+  // fell back to a hardcoded draft list when it had nothing, rendered that
+  // boilerplate as if it were the client's own answers, and POSTed it back over
+  // the real data. Handing it one authoritative snapshot removes both the
+  // synthesis and the loading window in which it happened.
+  const captureModules = await getModuleState(ctx, move.id).catch(() => []);
+  const initialPhaseCaptureValues: Record<string, string> = {};
+  for (const section of getPhaseCaptureSections(parsedPhase)) {
+    const moduleRow = captureModules.find(
+      (entry) =>
+        entry.moduleKey === phaseCaptureModuleKey(parsedPhase, section.key),
+    );
+    const value = moduleRow?.state?.value;
+    initialPhaseCaptureValues[section.key] =
+      typeof value === "string" ? value : "";
+  }
+  const initialPhaseCaptureRevision = computeCaptureRevision(
+    initialPhaseCaptureValues,
+  );
+
   return (
     <AppShell
       surface="programs-detail"
@@ -164,6 +190,8 @@ export default async function StrategicMovePhaseWorkspacePage({
           role: ctx.tenantRole ?? ctx.role ?? null,
         }}
         evidenceNeedPackets={evidenceNeedPackets}
+        initialPhaseCaptureRevision={initialPhaseCaptureRevision}
+        initialPhaseCaptureValues={initialPhaseCaptureValues}
         initialSubstepKey={
           parsedPhase === 0 && resolvedSearchParams.focus === "gate"
             ? "approve"

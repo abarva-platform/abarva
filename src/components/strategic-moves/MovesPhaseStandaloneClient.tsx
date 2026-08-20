@@ -100,6 +100,15 @@ interface PhaseContract {
 }
 
 interface MovesPhaseStandaloneClientProps {
+  /**
+   * Authoritative phase-capture values, preloaded server-side. Passed as a prop
+   * rather than fetched after mount so the page never renders a synthesized or
+   * empty-then-corrected state — the window in which the previous defect
+   * displayed boilerplate as if it were the client's own answers.
+   */
+  initialPhaseCaptureValues?: Record<string, string>;
+  /** Revision of those values; echoed on save so a stale write is rejected. */
+  initialPhaseCaptureRevision?: string;
   move: StrategicMove;
   phaseNum: number;
   phaseTallies: PhaseTallyRow[];
@@ -388,6 +397,8 @@ function moneyRange(valueAtStake: StrategicMove["valueAtStake"]): string {
 }
 
 export function MovesPhaseStandaloneClient({
+  initialPhaseCaptureValues,
+  initialPhaseCaptureRevision,
   move,
   phaseNum,
   phaseTallies,
@@ -454,7 +465,6 @@ export function MovesPhaseStandaloneClient({
   const [gateApprovalMessage, setGateApprovalMessage] = useState<string | null>(
     null,
   );
-  const [draftedBrief] = useState<Record<number, string>>({});
   const substep = phase.substeps[substepIndex] ?? phase.substeps[0];
   const topLevelHardGateCriteria = move.gateCriteria.filter(
     (criterion) => criterion.severity === "hard",
@@ -587,7 +597,7 @@ export function MovesPhaseStandaloneClient({
   const [phaseCaptureValues, setPhaseCaptureValues] =
     useState<PhaseCaptureValues>(() =>
       buildPhaseCaptureItems({
-        draftedBrief,
+        persistedCaptureValues: initialPhaseCaptureValues ?? {},
         move,
         phase,
         selectedOption,
@@ -816,6 +826,13 @@ export function MovesPhaseStandaloneClient({
       phase: phase.phase,
       complete: true,
       sections: phaseCaptureValues,
+      // Fence the write against the revision this page loaded. If the server
+      // has moved on, it rejects with 409 rather than applying a stale payload
+      // over newer data. The server also performs the no-op diff, so a finalize
+      // with no edits writes nothing at all.
+      ...(initialPhaseCaptureRevision
+        ? { expectedRevision: initialPhaseCaptureRevision }
+        : {}),
     };
     const finalizeRes = await fetch(
       `/api/v1/programs/${move.id}/phase-capture`,
@@ -3452,43 +3469,6 @@ function PhaseBody({
   );
 }
 
-const ORIGINATE_FIELDS = [
-  {
-    title: "What's the bet / hypothesis",
-    draft:
-      "A focused AI/transformation bet that improves a measurable business workflow without bypassing human decision rights.",
-  },
-  {
-    title: "Archetype classification",
-    draft:
-      "Assisted workflow automation with governed data, human approval, and explicit value tracking.",
-  },
-  {
-    title: "Sponsor candidate",
-    draft: "Business sponsor and technology owner to confirm at charter.",
-  },
-  {
-    title: "Scope / boundary",
-    draft:
-      "In: the target workflow, evidence set, decision gates, and value metrics. Out: unrelated platform rebuilds.",
-  },
-  {
-    title: "Evidence family selection",
-    draft:
-      "Operational logs, system exports, workflow samples, KPI baselines, and owner-reviewed session notes.",
-  },
-  {
-    title: "Value hypothesis",
-    draft:
-      "Reduce cycle time, run cost, and leakage while improving reliability and adoption.",
-  },
-  {
-    title: "Readiness checks",
-    draft:
-      "Confirm data quality, security posture, process ownership, and evaluation controls before automation expands.",
-  },
-];
-
 function charterText(
   charter: Record<string, unknown> | null | undefined,
   key: string,
@@ -3596,13 +3576,6 @@ function P0OriginationHandoff({ move }: { move: StrategicMove }) {
   );
 }
 
-function textOrDraft(
-  draftedBrief: Record<number, string>,
-  index: number,
-): string {
-  return draftedBrief[index]?.trim() || ORIGINATE_FIELDS[index]?.draft || "";
-}
-
 function charterString(
   charter: Record<string, unknown> | null | undefined,
   ...keys: string[]
@@ -3623,30 +3596,28 @@ function charterString(
 }
 
 function buildPhaseCaptureItems({
-  draftedBrief,
+  persistedCaptureValues,
   move,
   phase,
   selectedOption,
   selectedOptionLabel,
 }: {
-  draftedBrief: Record<number, string>;
+  /** Authoritative values already persisted server-side for this phase. */
+  persistedCaptureValues: Record<string, string>;
   move: StrategicMove;
   phase: PhaseContract;
   selectedOption: string;
   selectedOptionLabel?: string;
 }): Record<string, string> {
   if (phase.phase === 0) {
-    return {
-      business_trigger: textOrDraft(draftedBrief, 0),
-      problem_statement: textOrDraft(draftedBrief, 0),
-      affected_function_process: textOrDraft(draftedBrief, 3),
-      initial_value_hypothesis: textOrDraft(draftedBrief, 5),
-      stakeholder_owner_view: textOrDraft(draftedBrief, 2),
-      known_evidence: textOrDraft(draftedBrief, 4),
-      missing_evidence_open_questions: textOrDraft(draftedBrief, 6),
-      recommendation_to_advance:
-        "Advance to Charter after sponsor review; retain open evidence questions as explicit gate caveats.",
-    };
+    // P0 values are authoritative and already persisted by origination
+    // (charter.scaffold -> buildP0PhaseCaptureValues -> phase_0_* modules).
+    // The client renders what the server holds and NEVER synthesizes a value:
+    // a previous version fell back to a hardcoded draft list, displayed that
+    // boilerplate as if it were the client's answers, and POSTed it back over
+    // the real data. An empty field here means "not captured", which is the
+    // truth, and is what the gate should act on.
+    return { ...persistedCaptureValues };
   }
 
   const selectedOptionDisplay =
