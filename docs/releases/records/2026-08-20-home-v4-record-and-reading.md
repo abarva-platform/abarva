@@ -130,3 +130,22 @@ disk and still imported by nothing else. No data moves.
   explicit per-chapter generation-state field; adding one is the more durable fix.
 - The previous chapter layout is still on disk. Deleting it, repointing `/home`, and adding the CI
   guard are later steps in the sunset sequence and deliberately not bundled here.
+
+## Post-deploy addendum — 2026-08-20
+
+Deployed and live-proven signed-in on both tenants. Runtime invariant confirmed independently
+against Azure: ACR tag `main-2b1aea64` digest, Container App template image, and the 100%-traffic
+revision `m2b1aea64` all resolve to `sha256:1bac3ac9...`.
+
+Live verification walked all eight chapters on each tenant. Band composition on the live page
+matches the pre-merge static renders exactly, including the thin shapes: one chapter renders a
+single band, and What Needs Attention renders no "What the record shows" band on either tenant. No
+internal taxonomy or per-claim confidence vocabulary appears anywhere. Neither tenant's page
+contains the other tenant's name, and the physical source label does not render.
+
+**One defect found on the deployed page and fixed in a follow-up.** The evidence group's rail
+progress read "2 of 6 drafted" above six items, all of them drafted and none marked NOT IN DRAFT --
+a hardcoded numerator over a computed denominator. Progress is now derived from the items
+themselves so the two cannot disagree. Both halves were individually correct; only their
+disagreement on screen was wrong, which is why nothing but looking at the page would have caught
+it.

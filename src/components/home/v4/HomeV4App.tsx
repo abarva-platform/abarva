@@ -11,7 +11,7 @@ import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 import type { ChapterId, HomeReviewBundle, TechObjectType } from "@/lib/home/preview/types";
 import { ChapterPage } from "./ChapterPage";
 import { NotDraftedPage } from "./NotDraftedPage";
-import { Rail, type RailGroup } from "./Rail";
+import { Rail, type RailGroup, type RailItem } from "./Rail";
 import { SANS, V4 } from "./tokens";
 
 /**
@@ -29,11 +29,6 @@ const TENANT_LABEL: Record<HomePreviewTenantKey, string> = {
 };
 
 type ActiveView = ChapterId | "current-state" | "browse-the-data" | `tech:${TechObjectType}`;
-
-/** The evidence surfaces that exist as their own views today. Everything else in the estate is
- * reachable but not yet given a designed page, and the rail says so rather than implying the
- * record is thinner than it is. */
-const DRAFTED_EVIDENCE_VIEWS: ReadonlySet<string> = new Set(["current-state", "browse-the-data"]);
 
 export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; tenantKey: HomePreviewTenantKey }) {
   const [activeView, setActiveView] = useState<ActiveView>("executive_brief");
@@ -72,28 +67,30 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
     return Boolean(chapter?.headline && !chapter.headline.endsWith("synthesis unavailable"));
   };
 
-  const draftedCount = chapters.filter((c) => isDrafted(c.chapterId)).length;
+  /** Progress is counted from the items themselves rather than asserted alongside them. Stating a
+   * numerator separately is how a rail ends up reading "2 of 6 drafted" above six items that are
+   * all drafted -- a label contradicting the list beneath it, which makes the reader trust neither. */
+  const group = (title: string, items: RailItem[]): RailGroup => ({
+    title,
+    progress: `${items.filter((i) => i.drafted).length} of ${items.length} drafted`,
+    items,
+  });
 
   const groups: RailGroup[] = [
-    {
-      title: "The briefing",
-      progress: `${draftedCount} of ${chapters.length} drafted`,
-      items: chapters.map((c) => ({ id: c.chapterId, label: c.title, drafted: isDrafted(c.chapterId) })),
-    },
-    {
-      title: "The evidence",
-      progress: `${DRAFTED_EVIDENCE_VIEWS.size} of ${2 + techRecordTypes.length} drafted`,
-      items: [
-        { id: "current-state", label: "Current-state data flow", drafted: true },
-        { id: "browse-the-data", label: "Browse the record", drafted: true },
-        ...techRecordTypes.map((t) => ({
-          id: `tech:${t.objectType}`,
-          label: t.label,
-          count: t.rows.length,
-          drafted: true,
-        })),
-      ],
-    },
+    group(
+      "The briefing",
+      chapters.map((c) => ({ id: c.chapterId, label: c.title, drafted: isDrafted(c.chapterId) })),
+    ),
+    group("The evidence", [
+      { id: "current-state", label: "Current-state data flow", drafted: true },
+      { id: "browse-the-data", label: "Browse the record", drafted: true },
+      ...techRecordTypes.map((t) => ({
+        id: `tech:${t.objectType}`,
+        label: t.label,
+        count: t.rows.length,
+        drafted: true,
+      })),
+    ]),
   ];
 
   const provenance = bundle.provenance;
