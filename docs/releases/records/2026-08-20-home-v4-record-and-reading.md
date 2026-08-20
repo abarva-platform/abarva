@@ -214,3 +214,25 @@ Per-tile marks now come from the node's own `metrics.replacementCandidates` and
 `metrics.agingSystems`. Verified against the source rows: Clinical Informatics 5 of 99, Acute Care
 6 of 56, Nursing 5 of 46 -- each tile now states its own figure. The overlay's estate-wide total
 belongs once, at view level, not repeated as if it described each part.
+
+
+### The weighted landscape was inverting its own ranking
+
+Measured on the deployed page: Nursing Operations at 15.3% of the estate rendered a tile 914px
+wide, while Acute Care Clinical Operations at 18.6% rendered 561px. The smaller function looked
+larger.
+
+Tile widths were relative to their own row, and row heights came from a clamped affine curve, so
+area only tracked share *within* a row. Across rows the comparison broke: by area, Nursing measured
+121k against Acute Care's 89k -- an inversion of the true ranking, on the one view whose entire
+claim is that the concentration answers itself before a number is read. A weighted landscape whose
+weights invert the ranking is worse than an unweighted grid: it answers confidently and wrong.
+
+Row heights are now proportional to each row's share of everything drawn, which makes tile area
+track share exactly across the whole figure (area/share = 1.00 for every tile). One documented
+exception remains: a row pinned to the legibility floor may overstate a small function, and can
+never understate one -- hiding real weight is the failure that matters, inflating a small tile is
+not.
+
+Two tests lock it: proportionality across freely-sized rows, and an ordering assertion that the
+largest function can never render smaller than a smaller one whatever the row packing.
