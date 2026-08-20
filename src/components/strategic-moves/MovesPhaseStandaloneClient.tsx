@@ -585,11 +585,6 @@ export function MovesPhaseStandaloneClient({
       p3DesignInputsPack,
     ],
   );
-  const selectedP3OptionLabel = useMemo(
-    () =>
-      p3OptionSet.options.find((option) => option.id === selectedOption)?.label,
-    [p3OptionSet.options, selectedOption],
-  );
   const selectedP3Option = useMemo(
     () => p3OptionSet.options.find((option) => option.id === selectedOption),
     [p3OptionSet.options, selectedOption],
@@ -598,31 +593,15 @@ export function MovesPhaseStandaloneClient({
     useState<PhaseCaptureValues>(() =>
       buildPhaseCaptureItems({
         persistedCaptureValues: initialPhaseCaptureValues ?? {},
-        move,
-        phase,
-        selectedOption,
-        selectedOptionLabel: selectedP3OptionLabel,
       }),
     );
   const phaseCaptureSections = useMemo(
     () => getPhaseCaptureSections(phase.phase),
     [phase.phase],
   );
-  const selectP3Option = useCallback(
-    (optionId: string) => {
-      setSelectedOption(optionId);
-      const option = p3OptionSet.options.find((item) => item.id === optionId);
-      if (phase.phase !== 3 || !option) return;
-      setPhaseCaptureValues((current) => ({
-        ...current,
-        solution_approach: `${option.label}. ${option.summary}`,
-        recommendation:
-          current.recommendation?.trim() ||
-          `${option.recommendationLabel}. ${option.evidenceBasis.join(" ")}`,
-      }));
-    },
-    [p3OptionSet.options, phase.phase],
-  );
+  const selectP3Option = useCallback((optionId: string) => {
+    setSelectedOption(optionId);
+  }, []);
   useEffect(() => {
     setFinderSelectedSectionKey(
       getInitialFinderSectionKey(
@@ -3576,127 +3555,17 @@ function P0OriginationHandoff({ move }: { move: StrategicMove }) {
   );
 }
 
-function charterString(
-  charter: Record<string, unknown> | null | undefined,
-  ...keys: string[]
-): string {
-  const scaffold =
-    charter?.scaffold && typeof charter.scaffold === "object"
-      ? (charter.scaffold as Record<string, unknown>)
-      : null;
-  for (const key of keys) {
-    const value = charter?.[key];
-    if (typeof value === "string" && value.trim()) return value.trim();
-    const scaffoldValue = scaffold?.[key];
-    if (typeof scaffoldValue === "string" && scaffoldValue.trim()) {
-      return scaffoldValue.trim();
-    }
-  }
-  return "";
-}
-
 function buildPhaseCaptureItems({
   persistedCaptureValues,
-  move,
-  phase,
-  selectedOption,
-  selectedOptionLabel,
 }: {
   /** Authoritative values already persisted server-side for this phase. */
   persistedCaptureValues: Record<string, string>;
-  move: StrategicMove;
-  phase: PhaseContract;
-  selectedOption: string;
-  selectedOptionLabel?: string;
 }): Record<string, string> {
-  if (phase.phase === 0) {
-    // P0 values are authoritative and already persisted by origination
-    // (charter.scaffold -> buildP0PhaseCaptureValues -> phase_0_* modules).
-    // The client renders what the server holds and NEVER synthesizes a value:
-    // a previous version fell back to a hardcoded draft list, displayed that
-    // boilerplate as if it were the client's answers, and POSTed it back over
-    // the real data. An empty field here means "not captured", which is the
-    // truth, and is what the gate should act on.
-    return { ...persistedCaptureValues };
-  }
-
-  const selectedOptionDisplay =
-    selectedOptionLabel || optionLabelForPhase(phase.phase, selectedOption);
-  if (phase.phase === 1) {
-    const scope =
-      charterString(
-        move.charter,
-        "scope_boundary",
-        "scopeBoundary",
-        "affected_function_process",
-        "affectedFunctionProcess",
-      ) || "Scope boundary to be confirmed during Charter.";
-    const value =
-      charterString(
-        move.charter,
-        "value_hypothesis",
-        "valueHypothesis",
-        "initial_value_hypothesis",
-        "initialValueHypothesis",
-        "target_outcome",
-        "targetOutcome",
-      ) || "Directional value hypothesis to validate in P2.";
-    const evidence =
-      charterString(
-        move.charter,
-        "known_evidence",
-        "knownEvidence",
-        "evidence_family",
-        "evidenceFamily",
-      ) || "Evidence families and source owners to confirm in Discovery.";
-    const sponsor =
-      move.sponsor?.role ||
-      charterString(
-        move.charter,
-        "sponsor_candidate",
-        "sponsorCandidate",
-        "stakeholder_owner_view",
-        "stakeholderOwnerView",
-      ) ||
-      "Executive sponsor role to confirm.";
-    return {
-      sponsor_commitment: `Sponsor/title: ${sponsor}. Operating owners and technology/data co-sponsors must confirm cadence, authority, and phase-gate attendance.`,
-      scope_boundary: scope,
-      success_criteria: `${value} Discovery should validate baseline, target direction, measurement owner, evidence confidence, and what cannot yet be claimed.`,
-      stakeholder_map:
-        "Core roles: executive sponsor, operating owner, technology/data owner, risk/privacy/compliance owner, finance value owner, and change/adoption owner.",
-      decision_rights:
-        "Sponsor approves scope and phase advancement; operating owner approves process fit; technology/data owner approves platform and integration assumptions; risk/privacy/compliance approve controls and PHI boundaries; finance validates value logic.",
-      evidence_plan: `${evidence} P2 must collect enough process, technology, data, controls, org/change, and baseline metric evidence to decide whether to proceed, hold, or narrow the Move.`,
-    };
-  }
-
-  const optionContext =
-    phase.phase === 1
-      ? `Initial transformation posture to validate in P2: ${selectedOptionDisplay}.`
-      : `Selected approach: ${selectedOptionDisplay}.`;
-  const evidenceSummary =
-    move.linkedEvidence.length > 0
-      ? move.linkedEvidence.map((item) => item.summary).join("; ")
-      : "Uploaded phase files, completed templates, workshop outputs, and owner attestations in Files & Evidence.";
-
-  return Object.fromEntries(
-    getPhaseCaptureSections(phase.phase).map((section) => [
-      section.key,
-      phase.phase === 3 &&
-      !selectedOptionLabel &&
-      (section.key === "solution_approach" || section.key === "recommendation")
-        ? ""
-        : [
-            `${section.label}: ${section.description}`,
-            `Move: ${move.name}.`,
-            `Phase: ${phase.code} ${phase.title}.`,
-            optionContext,
-            `Evidence basis: ${evidenceSummary}`,
-            "Approval note: accountable owner review and caveats must remain attached to the gate record.",
-          ].join(" "),
-    ]),
-  );
+  // Authoritative values are the values already persisted server-side for this
+  // phase. The client must not synthesize capture from charter fallbacks,
+  // selected options, phase templates, or evidence summaries and then POST that
+  // text back as if a human captured it. Empty means not captured.
+  return { ...persistedCaptureValues };
 }
 
 function statusLabel(status: MoveEvidenceNeedPacket["status"]): string {
@@ -4776,19 +4645,6 @@ function PostureCards({
       ))}
     </div>
   );
-}
-
-function optionLabelForPhase(phase: number, selectedOption: string): string {
-  if (phase === 1) {
-    if (selectedOption === "A") return "Improve the current process";
-    if (selectedOption === "C")
-      return "Evaluate major transformation potential";
-    return "Explore a balanced transformation";
-  }
-
-  if (selectedOption === "A") return "Optimize the current workflow";
-  if (selectedOption === "C") return "Large transformation program";
-  return "Phased platform + operating-model shift";
 }
 
 function MovesStandaloneStyles() {
