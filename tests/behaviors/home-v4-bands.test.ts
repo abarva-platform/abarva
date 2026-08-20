@@ -163,32 +163,41 @@ describe("v4 architecture tile weighting", () => {
 
     const CANVAS_W = 1300;
     const MIN_ROW_HEIGHT_PX = 104;
-    const measured = layout.rows.flatMap((row) => {
-      const rowFlex = row.items.reduce((s, t) => s + t.flex, 0);
-      return row.items.map((tile) => ({
+    const measured = layout.rows.flatMap((row) =>
+      row.items.map((tile) => ({
         label: tile.label,
         sharePct: tile.sharePct,
-        areaPerShare: ((tile.flex / rowFlex) * CANVAS_W * row.height) / tile.sharePct,
+        areaPerShare: ((tile.widthPct / 100) * CANVAS_W * row.height) / tile.sharePct,
         floored: row.height === MIN_ROW_HEIGHT_PX,
-      }));
-    });
+      })),
+    );
 
     // Rows tall enough to size freely are exactly proportional to one another.
     const free = measured.filter((m) => !m.floored);
     expect(free.length).toBeGreaterThan(1);
     for (const m of free) expect(m.areaPerShare / free[0].areaPerShare).toBeCloseTo(1, 1);
 
-    // A row pinned to the legibility floor is the one place area stops being exact. It may only
-    // ever OVERSTATE a small function -- never understate one, which would hide real weight.
-    for (const m of measured.filter((m) => m.floored)) {
-      expect(m.areaPerShare).toBeGreaterThanOrEqual(free[0].areaPerShare * 0.99);
-    }
+    // Widths are derived from target area, so even a floored row stays proportional -- a tile
+    // alone on a short row must not stretch across the canvas and read as twice its weight.
+    for (const m of measured) expect(m.areaPerShare / free[0].areaPerShare).toBeCloseTo(1, 1);
 
     // Whatever the row packing, the largest function must never render smaller than a smaller one.
     const byShare = [...measured].sort((a, b) => b.sharePct - a.sharePct);
     const areaOf = (m: (typeof measured)[number]) => m.areaPerShare * m.sharePct;
     expect(areaOf(byShare[0])).toBeGreaterThan(areaOf(byShare[1]));
     expect(areaOf(byShare[1])).toBeGreaterThan(areaOf(byShare[2]));
+  });
+
+  it("does not stretch a lone small tile across a trailing row", () => {
+    // One tenant's estate is one dominant function plus a long tail. The small drawable function
+    // lands alone on a trailing row; stretching it to fill that row rendered it at twice its
+    // proportional area.
+    const layout = buildTileLayout(view([["Airport & Ground Operations", 217], ["Data, Analytics & AI", 26]]));
+    const all = layout.rows.flatMap((r) => r.items.map((t) => ({ t, h: r.height })));
+    const perShare = all.map(({ t, h }) => ((t.widthPct / 100) * 1300 * h) / t.sharePct);
+    expect(perShare[1] / perShare[0]).toBeCloseTo(1, 1);
+    const lone = all.find((x) => x.t.label === "Data, Analytics & AI")!;
+    expect(lone.t.widthPct).toBeLessThan(100);
   });
 
   it("never renders a tile too small to hold its label -- it moves to the tail, still named and counted", () => {

@@ -236,3 +236,27 @@ not.
 
 Two tests lock it: proportionality across freely-sized rows, and an ordering assertion that the
 largest function can never render smaller than a smaller one whatever the row packing.
+
+
+### The same weighting bug, one layer down
+
+Proportional row heights fixed the first tenant but not the second. On an estate that is one
+dominant function plus a long tail, the only other drawable function (5.2% of the estate) sat alone
+on a trailing row, was pinned to the legibility floor, and then stretched to fill that row's full
+width -- rendering at **2.05x** its proportional area.
+
+That was inside the "may overstate a small function" exception documented with the previous fix,
+which is exactly why the exception was too generous to keep. Tile width is now derived from the
+tile's target *area* at its row's height, rather than from its share of the row, so a tile never
+fills a row it has not earned. Measured on the deployed page after the fix: ratio 0.99 against 1.00
+for the dominant tile.
+
+Both tenants now hold across every drawn tile:
+
+| tenant | area/share range |
+| --- | --- |
+| meridian-health | 0.97 – 1.07 |
+| skyharbor-air | 0.99 – 1.00 |
+
+A third test covers the lone-small-tile-on-a-trailing-row case directly, since that shape appears
+in only one of the two tenants and would otherwise go unexercised.

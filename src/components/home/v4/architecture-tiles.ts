@@ -22,6 +22,9 @@ const ROW_TARGET_SHARE_PCT = 34;
  * proportion to their share, which is what makes tile AREA track share across the whole figure and
  * not merely within a row. */
 const CANVAS_HEIGHT_PX = 470;
+/** Nominal canvas width used to turn a target area into a width percentage. Only the ratio
+ * matters, so the real rendered width can differ without changing any proportion. */
+const CANVAS_WIDTH_PX = 1300;
 /** No row shorter than this, or its tiles cannot hold a label. A row that hits the floor is the
  * one place area stops being exact -- and it can only ever overstate a small row, never understate
  * a large one. */
@@ -33,8 +36,9 @@ export interface Tile {
   systems: number;
   sharePct: number;
   note?: string;
-  /** Share of its row's width. */
-  flex: number;
+  /** Explicit width as a percentage of the canvas. Derived from the tile's target AREA and its
+   * row's height, so a tile never stretches to fill a row it does not deserve. */
+  widthPct: number;
   overlayMark?: string;
 }
 
@@ -95,7 +99,7 @@ export function buildTileLayout(view: ArchitectureView): TileLayout {
         systems,
         sharePct: (systems / totalSystems) * 100,
         note: n.note,
-        flex: systems,
+        widthPct: 0, // assigned once its row height is known
         overlayMark: markFor(n),
       };
     })
@@ -129,13 +133,25 @@ export function buildTileLayout(view: ArchitectureView): TileLayout {
   // read as larger -- than an 18% function sharing a tall one. A weighted landscape whose weights
   // invert the ranking is worse than an unweighted grid, because it answers confidently and wrong.
   const drawableShare = packedShares.reduce((a, b) => a + b, 0);
-  const rows: TileRow[] = packed.map((items, i) => ({
-    items,
-    height: Math.max(
-      MIN_ROW_HEIGHT_PX,
-      Math.round(drawableShare > 0 ? (packedShares[i] / drawableShare) * CANVAS_HEIGHT_PX : MIN_ROW_HEIGHT_PX),
-    ),
-  }));
+  const totalArea = CANVAS_WIDTH_PX * CANVAS_HEIGHT_PX;
+
+  const rows: TileRow[] = packed.map((items, i) => {
+    const rowShare = packedShares[i];
+    const naturalHeight = drawableShare > 0 ? (rowShare / drawableShare) * CANVAS_HEIGHT_PX : MIN_ROW_HEIGHT_PX;
+    const height = Math.max(MIN_ROW_HEIGHT_PX, Math.round(naturalHeight));
+    // Width is derived from the tile's target AREA at this row's height -- not from its share of
+    // the row. A trailing row holding one small function must not stretch that tile across the
+    // full canvas: on one tenant a 5.2% function rendered at twice its proportional area exactly
+    // that way, because it sat alone on a row pinned to the legibility floor.
+    return {
+      items: items.map((tile) => {
+        const targetArea = drawableShare > 0 ? (tile.sharePct / drawableShare) * totalArea : 0;
+        const widthPx = targetArea / height;
+        return { ...tile, widthPct: Math.min(100, (widthPx / CANVAS_WIDTH_PX) * 100) };
+      }),
+      height,
+    };
+  });
 
   const tail: TileTail | null =
     tailItems.length > 0
