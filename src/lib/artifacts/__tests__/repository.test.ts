@@ -139,6 +139,7 @@ import {
   getGeneratedArtifactById,
   getLatestGeneratedArtifact,
   renderedHtmlFromGeneratedArtifact,
+  saveRenderedBoardGradeMoveArtifact,
   saveGeneratedArtifact,
 } from "../repository";
 import type { BoardPackRenderInput, BoardPackRenderResult } from "../types";
@@ -302,5 +303,38 @@ describe("generated artifact repository", () => {
       clientId: "codex-fs-e2e",
     });
     expect(secondStillCurrent?.supersededBy).toBeNull();
+  });
+
+  it("persists structured renderable metadata for board-grade Move artifacts", async () => {
+    const record = await saveRenderedBoardGradeMoveArtifact({
+      clientId: "meridian",
+      moveId: "move-structured",
+      artifactId: "discover-brief",
+      title: "Discover Brief",
+      html: "<html><body>structured projection</body></html>",
+      renderableDoc: {
+        title: "Discover Brief",
+        generatedSections: [{ key: "summary", title: "Summary" }],
+      },
+      renderableMetadata: {
+        artifactType: "discover-brief",
+        source: "moves_orchestrated_deliverables",
+        evidenceRefs: ["ctx:1"],
+      },
+      renderedBy: "jest-user",
+      routePath: "/api/v1/moves/board-grade-discover-brief",
+      generatedOn: "2026-08-20",
+    });
+
+    expect(record.metadata.renderedHtml).toContain("structured projection");
+    expect(record.metadata.renderableDoc).toEqual(
+      expect.objectContaining({ title: "Discover Brief" }),
+    );
+    expect(record.metadata.renderableMetadata).toEqual(
+      expect.objectContaining({
+        artifactType: "discover-brief",
+        source: "moves_orchestrated_deliverables",
+      }),
+    );
   });
 });

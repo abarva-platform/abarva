@@ -85,7 +85,7 @@ export async function maybeRenderOrchestratedMoveArtifact(
     return null;
   });
 
-  if (!run?.ok || !run.html) {
+  if (!run?.ok || !run.html || !run.document) {
     console.warn(
       `[GET ${input.routePath}] orchestration not used; falling back to deterministic deck`,
       {
@@ -106,6 +106,17 @@ export async function maybeRenderOrchestratedMoveArtifact(
     artifactId: input.artifactId,
     title: input.title,
     html: run.html,
+    renderableDoc: {
+      ...run.document,
+      deliverableType: input.deliverableType,
+      deliverableTypeKey: input.artifactId,
+    },
+    renderableMetadata: {
+      artifactType: input.artifactId,
+      source: "moves_orchestrated_deliverables",
+      routePath: input.routePath,
+      evidenceRefs: run.citedInputIds,
+    },
     renderedBy: input.renderedBy,
     routePath: input.routePath,
     generatedOn: input.generatedOn,

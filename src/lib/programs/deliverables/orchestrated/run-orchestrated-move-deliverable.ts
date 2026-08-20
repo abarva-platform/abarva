@@ -13,6 +13,7 @@ import type {
   ModelCaller,
   OrchestrationResult,
 } from "@/lib/deliverables/orchestrator/orchestrator";
+import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 import { createAuditedModelCaller } from "@/lib/deliverables/orchestrator/model-caller";
 import {
   buildMoveDeliverableRequest,
@@ -33,6 +34,7 @@ export interface RunOrchestratedMoveDeliverableInput extends BuildMoveDeliverabl
 export interface RunOrchestratedMoveDeliverableResult {
   ok: boolean;
   html?: string;
+  document?: RenderableDeliverable;
   blockedReason?: string;
   evidenceCount: number;
   citedInputIds: string[];
@@ -103,6 +105,7 @@ export async function runOrchestratedMoveDeliverable(
   return {
     ok: true,
     html: renderDeliverableHtml(result.document, input.generatedOn),
+    document: result.document,
     evidenceCount,
     citedInputIds,
     quality: result.quality,

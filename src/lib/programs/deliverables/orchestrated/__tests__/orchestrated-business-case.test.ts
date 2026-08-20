@@ -19,6 +19,7 @@ import type {
   DeliverableGenerationPlan,
   DeliverableIntelligenceRequest,
   RenderableDeliverable,
+  RenderableSection,
 } from "@/lib/deliverables/orchestrator/types";
 import type { MoveBusinessCaseInput } from "../../../move-business-case";
 
@@ -53,17 +54,38 @@ function passingStub(): ModelCaller {
   return async (prompt, req: DeliverableIntelligenceRequest) => {
     const brief = getArtifactBrief(req);
     if (prompt.pass === "architect") {
+      const baselineSections = brief.requiredSections.map((key) => ({
+        key,
+        title: key,
+        groundingMode: "mixed" as const,
+        evidenceCitations: [1],
+        assumptionsUsed: [],
+        placeholders: [],
+        rationale:
+          "Derived from the brief structure and the governed evidence.",
+      }));
+      const minimumSections =
+        req.deliverableType === "target_architecture" ? 10 : 9;
+      const extraSections = [
+        "Strategic Options Considered",
+        "Operating Implications",
+        "Evidence Gaps And Open Inputs",
+        "Governance And Decision Path",
+      ].map((title) => ({
+        key: title.toLowerCase().replace(/[^a-z]+/g, "_"),
+        title,
+        groundingMode: "mixed" as const,
+        evidenceCitations: [1],
+        assumptionsUsed: [],
+        placeholders: [],
+        rationale:
+          "Adds board-grade decision depth while staying grounded in evidence.",
+      }));
       const plan: DeliverableGenerationPlan = {
-        sectionPlan: brief.requiredSections.map((key) => ({
-          key,
-          title: key,
-          groundingMode: "mixed",
-          evidenceCitations: [1],
-          assumptionsUsed: [],
-          placeholders: [],
-          rationale:
-            "Derived from the brief structure and the governed evidence.",
-        })),
+        sectionPlan: [...baselineSections, ...extraSections].slice(
+          0,
+          Math.max(minimumSections, baselineSections.length),
+        ),
         evidenceMapping: [
           {
             citationNumber: 1,
@@ -97,38 +119,42 @@ function passingStub(): ModelCaller {
       };
       return { text: "```json\n" + JSON.stringify(plan) + "\n```" };
     }
-    if (prompt.pass === "render_package") {
-      const para =
+    if (prompt.pass === "section_draft") {
+      const para = [
         "The recorded charter and baseline establish the starting point for this initiative, and the governed evidence anchors the case [1]. " +
-        "This section synthesises the operational reality the sponsor confirmed, draws the implication for the recovery workflow, and frames the decision the board must take. " +
-        "It avoids generic filler and commits to a position grounded in what the organisation has actually recorded [1]. " +
-        "The operating model implication is made explicit so leadership can see how the change lands in the relevant teams and where ownership sits. " +
-        "Dependencies on adjacent systems are named, the sequencing is laid out, and the trade-offs are stated plainly rather than smoothed over. " +
-        "Where the recorded evidence is thin, the gap is labelled for the client to complete rather than papered over with an invented figure. " +
-        "The narrative ties each claim back to the source register so a reviewer can trace every assertion to what was actually captured [1].";
-      const sections = [
-        "Executive Summary",
-        "Current State & Evidence",
-        "Target State & Approach",
-        "Risks & Dependencies",
-        "Recommendation & Decision",
-        "Roadmap & Next Steps",
-      ].map((title) => ({
+          "This section synthesises the operational reality the sponsor confirmed, draws the implication for the recovery workflow, and frames the decision the board must take. " +
+          "It avoids generic filler and commits to a position grounded in what the organisation has actually recorded [1]. " +
+          "The operating model implication is made explicit so leadership can see how the change lands in the relevant teams and where ownership sits. " +
+          "Dependencies on adjacent systems are named, the sequencing is laid out, and the trade-offs are stated plainly rather than smoothed over. " +
+          "Where the recorded evidence is thin, the gap is labelled for the client to complete rather than papered over with an invented figure. " +
+          "The narrative ties each claim back to the source register so a reviewer can trace every assertion to what was actually captured [1].",
+        "The case for change is not treated as a slogan: it names the operating tension, the decision required, the likely implementation friction, and the evidence that still needs sponsor confirmation. " +
+          "Options considered include holding current operations, piloting the workflow at one hub, or funding a broader rollout after the decision gate [1]. " +
+          "The recommended path is deliberately bounded so the executive team can approve learning without pretending the entire enterprise rollout has already been proven. " +
+          "The section also names what would change the answer, which keeps the artifact useful as a governance instrument rather than a polished narrative.",
+        "The practical implication is that leadership can separate facts already captured from judgments still pending. " +
+          "The drafted decision therefore stays evidence-led: it does not add a financial claim, performance promise, or implementation dependency unless that item is carried as cited evidence, an explicit assumption, or a client-to-complete input. " +
+          "That discipline is what makes the artifact safe to project into HTML now and into document formats later without changing the underlying source.",
+      ].join(" ");
+      const title =
+        prompt.user.match(/WRITE ONLY THIS SECTION:\s*"([^"]+)"/)?.[1]?.trim() ??
+        "Executive Summary";
+      const section: RenderableSection = {
         key: title.toLowerCase().replace(/[^a-z]+/g, "_"),
         title,
         bodyMarkdown:
-          title === "Recommendation & Decision"
+          /recommendation|decision/i.test(title)
             ? `We recommend the board approve a scoped pilot; the decision ask is explicit and the kill condition is named. ${para}`
-            : para,
+            : `${para} Options considered include holding current operations, piloting the workflow at one hub, or funding a broader rollout after the decision gate [1]. The case for change is explicit because the recovery workflow is where the current operating tension lands.`,
         groundingMode: "mixed" as const,
         citationsUsed: [1],
-      }));
-      const doc: RenderableDeliverable = {
+      };
+      return { text: JSON.stringify(section) };
+    }
+    if (prompt.pass === "synthesis") {
+      const synth: Partial<RenderableDeliverable> = {
         title: "Costed Business-Case Pack",
         subtitle: "Board-grade, governed",
-        clientDisplayName: req.clientDisplayName,
-        initiativeDisplayName: req.initiativeDisplayName,
-        generatedSections: sections,
         tables: [
           {
             key: "risk_table",
@@ -157,9 +183,9 @@ function passingStub(): ModelCaller {
           "Stand up the OCC co-design workshop",
         ],
       };
-      return { text: JSON.stringify(doc) };
+      return { text: JSON.stringify(synth) };
     }
-    // evidence_grounding / full_draft / red_team / board_grade_rewrite — threaded text only.
+    // Legacy monolithic passes — threaded text only when older paths exercise them.
     return { text: `pass ${prompt.pass} output` };
   };
 }
@@ -246,11 +272,13 @@ describe("runOrchestratedBusinessCase — multi-pass flow + quality gate", () =>
     });
     expect(res.ok).toBe(true);
     expect(res.quality?.pass).toBe(true);
-    expect(res.html).toContain("Costed Business-Case Pack");
+    expect(res.html).toContain("Business Case Readiness Memo");
     expect(res.html).toContain("Source Register");
     expect(res.html).toContain("We recommend");
-    // six passes were exercised
-    expect(res.passTrace?.length).toBe(6);
+    // architect + decomposed section drafts + synthesis were exercised
+    expect(res.passTrace?.map((p) => p.pass)).toEqual(
+      expect.arrayContaining(["architect", "section_draft", "synthesis"]),
+    );
   });
 
   it("blocks (no HTML) when the Move has no recorded evidence — honest fallback", async () => {
@@ -358,8 +386,13 @@ describe("runOrchestratedBusinessCase — multi-pass flow + quality gate", () =>
     });
 
     expect(res.ok).toBe(true);
-    expect(res.passTrace).toHaveLength(6);
+    expect(res.passTrace?.map((p) => p.pass)).toEqual(
+      expect.arrayContaining(["architect", "section_draft", "synthesis"]),
+    );
     expect(res.html).toContain("Source Register");
+    expect(res.document?.title).toBeTruthy();
+    expect(res.document?.subtitle).toContain("Board-grade");
+    expect(res.document?.generatedSections.length).toBeGreaterThan(0);
 
     const { request } = buildMoveDeliverableRequest(FULL_MOVE, {
       deliverableType: "target_architecture",
