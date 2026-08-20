@@ -9,6 +9,7 @@ import { TechnologyEstateTable } from "@/components/home/preview/TechnologyEstat
 import { demoSafeClientText } from "@/lib/client-config";
 import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 import type { ChapterId, HomeReviewBundle, TechObjectType } from "@/lib/home/preview/types";
+import { ArchitecturePage } from "./ArchitecturePage";
 import { ChapterPage } from "./ChapterPage";
 import { NotDraftedPage } from "./NotDraftedPage";
 import { Rail, type RailGroup, type RailItem } from "./Rail";
@@ -28,7 +29,7 @@ const TENANT_LABEL: Record<HomePreviewTenantKey, string> = {
   "skyharbor-air": demoSafeClientText("SkyHarbor Air"),
 };
 
-type ActiveView = ChapterId | "current-state" | "browse-the-data" | `tech:${TechObjectType}`;
+type ActiveView = ChapterId | "architecture" | "current-state" | "browse-the-data" | `tech:${TechObjectType}`;
 
 export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; tenantKey: HomePreviewTenantKey }) {
   const [activeView, setActiveView] = useState<ActiveView>("executive_brief");
@@ -41,6 +42,7 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
     ? techRecordTypes.find((t) => `tech:${t.objectType}` === activeView)
     : undefined;
 
+  const applications = techRecordTypes.find((r) => r.objectType === "application_system");
   const signalPacket = bundle.thesis.signalPacket;
   const visualDatasets = signalPacket.visualDatasets ?? {};
 
@@ -82,7 +84,12 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
       chapters.map((c) => ({ id: c.chapterId, label: c.title, drafted: isDrafted(c.chapterId) })),
     ),
     group("The evidence", [
-      { id: "current-state", label: "Current-state data flow", drafted: true },
+      // Architecture first: it is the only view here that answers what shape the estate is in.
+      // Everything below it answers what is in the record, which is a different question.
+      { id: "architecture", label: "Current-state architecture", drafted: Boolean(applications), count: applications?.rows.length },
+      // Renamed from "Current-state data flow", which promised a data flow and delivered a
+      // per-domain fact inventory. A nav label that oversells its page is worse than a plain one.
+      { id: "current-state", label: "What has been loaded", drafted: true },
       { id: "browse-the-data", label: "Browse the record", drafted: true },
       ...techRecordTypes.map((t) => ({
         id: `tech:${t.objectType}`,
@@ -141,6 +148,15 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
                 guidingQuestion={activeChapter.guidingQuestion}
               />
             )
+          ) : null}
+
+          {activeView === "architecture" && applications ? (
+            <ArchitecturePage
+              tenantKey={tenantKey}
+              tenantDisplayName={TENANT_LABEL[tenantKey]}
+              applications={applications}
+              canonicalBuild={bundle.provenance.canonical_snapshot_hash}
+            />
           ) : null}
 
           {activeView === "current-state" ? (

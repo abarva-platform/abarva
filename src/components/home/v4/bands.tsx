@@ -351,18 +351,6 @@ export function QuestionsSection({ questions }: { questions: string[] }) {
   );
 }
 
-/**
- * Above this length a standfirst stops working as a standfirst.
- *
- * The design pairs the headline with a short paragraph beside it -- its own sample runs about 220
- * characters. Real `executive_synthesis` values in this corpus run four to five times that, and
- * setting a 1,100-character paragraph in a half-width column produces a column of text taller than
- * the headline it is meant to support, which is what an early render of this page looked like.
- * Past the threshold the synthesis moves below the headline and gets a full reading measure, which
- * is what long-form prose needs anyway.
- */
-const STANDFIRST_MAX_CHARS = 420;
-
 export function ChapterHeader({
   eyebrowText,
   guidingQuestion,
@@ -374,9 +362,6 @@ export function ChapterHeader({
   headline: string;
   standfirst?: string;
 }) {
-  const beside = Boolean(standfirst && standfirst.length <= STANDFIRST_MAX_CHARS);
-  const below = Boolean(standfirst && !beside);
-
   return (
     <header style={{ padding: `54px ${PAGE_X}px 0` }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 18, flexWrap: "wrap" }}>
@@ -385,10 +370,13 @@ export function ChapterHeader({
           {guidingQuestion}
         </span>
       </div>
+      {/* Two columns, always. The design pairs the headline with the lede across the full canvas and
+          bottom-aligns them; collapsing to a single column leaves the right half of a wide screen
+          empty, which is exactly the dead canvas this layout exists to avoid. */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: beside ? "repeat(auto-fit,minmax(min(100%,max(30rem,46%)),1fr))" : "minmax(0,1fr)",
+          gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,max(30rem,46%)),1fr))",
           gap: "clamp(20px,3vw,56px)",
           alignItems: "end",
           marginTop: 24,
@@ -402,33 +390,17 @@ export function ChapterHeader({
             lineHeight: 1.16,
             letterSpacing: "-0.026em",
             margin: 0,
-            maxWidth: beside ? undefined : "34ch",
             textWrap: "pretty",
           }}
         >
           {headline}
         </h1>
-        {beside ? (
+        {standfirst ? (
           <p style={{ margin: 0, fontFamily: SANS, fontSize: 17, lineHeight: 1.62, color: V4.slate, textWrap: "pretty" }}>
             {standfirst}
           </p>
         ) : null}
       </div>
-      {below ? (
-        <p
-          style={{
-            margin: "26px 0 0",
-            fontFamily: SANS,
-            fontSize: 17,
-            lineHeight: 1.66,
-            color: V4.slate,
-            maxWidth: "72ch",
-            textWrap: "pretty",
-          }}
-        >
-          {standfirst}
-        </p>
-      ) : null}
     </header>
   );
 }

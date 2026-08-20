@@ -1,0 +1,127 @@
+import type { ArchitectureView, ArchitectureViewNode } from "@/lib/visual-system/architecture-view-contract";
+
+/**
+ * Turns a validated capability-landscape view into the row/tile geometry the approved Architecture
+ * Explorer design calls for: footprint proportional to recorded system count, so concentration
+ * answers itself before a number is read.
+ *
+ * Two rules the design is explicit about, and both are honesty rules rather than layout ones:
+ *
+ *  1. A tile below a legible width is not drawn small -- it moves to the tail, where its share is
+ *     carried by a bar and it is still listed by name with its own count. Shrinking a tile until
+ *     its label is unreadable loses the record without admitting it.
+ *  2. Grouping and counts are identical whichever treatment is shown. The weighting changes how
+ *     fast the concentration reads, never what the model says.
+ */
+
+/** Below this share of the estate a tile cannot hold its label at a readable size. */
+const MIN_TILE_SHARE_PCT = 4;
+/** Rows break when they have accumulated roughly this share, giving 2-4 tiles per row. */
+const ROW_TARGET_SHARE_PCT = 34;
+
+export interface Tile {
+  id: string;
+  label: string;
+  systems: number;
+  sharePct: number;
+  note?: string;
+  /** Share of its row's width. */
+  flex: number;
+  overlayMark?: string;
+}
+
+export interface TileRow {
+  items: Tile[];
+  /** Row height in px, scaled to the row's share of the estate. */
+  height: number;
+}
+
+export interface TileTail {
+  items: Tile[];
+  count: number;
+  systems: number;
+  sharePct: number;
+}
+
+export interface TileLayout {
+  rows: TileRow[];
+  tail: TileTail | null;
+  totalSystems: number;
+}
+
+function systemsOf(node: ArchitectureViewNode): number {
+  const metric = node.metrics?.systems;
+  if (typeof metric === "number") return metric;
+  return node.aggregation?.memberCount ?? 0;
+}
+
+/** Overlay marks are the design's way of saying a group carries a flagged condition without
+ * inventing a severity of our own -- the overlay itself comes from the projection. */
+function overlayMarksFor(view: ArchitectureView): Map<string, string> {
+  const marks = new Map<string, string>();
+  for (const overlay of view.overlays ?? []) {
+    for (const id of overlay.nodeIds ?? []) {
+      const existing = marks.get(id);
+      marks.set(id, existing ? `${existing} · ${overlay.label}` : overlay.label);
+    }
+  }
+  return marks;
+}
+
+export function buildTileLayout(view: ArchitectureView): TileLayout {
+  const marks = overlayMarksFor(view);
+  const nodes = view.nodes.filter((n) => systemsOf(n) > 0);
+  const totalSystems = nodes.reduce((sum, n) => sum + systemsOf(n), 0);
+  if (totalSystems === 0) return { rows: [], tail: null, totalSystems: 0 };
+
+  const all: Tile[] = nodes
+    .map((n) => {
+      const systems = systemsOf(n);
+      return {
+        id: n.id,
+        label: n.label,
+        systems,
+        sharePct: (systems / totalSystems) * 100,
+        note: n.note,
+        flex: systems,
+        overlayMark: marks.get(n.id),
+      };
+    })
+    .sort((a, b) => b.systems - a.systems);
+
+  const drawable = all.filter((t) => t.sharePct >= MIN_TILE_SHARE_PCT);
+  const tailItems = all.filter((t) => t.sharePct < MIN_TILE_SHARE_PCT);
+
+  const rows: TileRow[] = [];
+  let current: Tile[] = [];
+  let currentShare = 0;
+  for (const tile of drawable) {
+    current.push(tile);
+    currentShare += tile.sharePct;
+    if (currentShare >= ROW_TARGET_SHARE_PCT) {
+      rows.push({ items: current, height: rowHeight(currentShare) });
+      current = [];
+      currentShare = 0;
+    }
+  }
+  if (current.length > 0) rows.push({ items: current, height: rowHeight(currentShare) });
+
+  const tail: TileTail | null =
+    tailItems.length > 0
+      ? {
+          items: tailItems,
+          count: tailItems.length,
+          systems: tailItems.reduce((s, t) => s + t.systems, 0),
+          sharePct: tailItems.reduce((s, t) => s + t.sharePct, 0),
+        }
+      : null;
+
+  return { rows, tail, totalSystems };
+}
+
+/** Row height carries the row's share too, so a row of large functions reads heavier than a row of
+ * small ones. Clamped: past these bounds the tiles stop being comparable and start being scenery. */
+function rowHeight(sharePct: number): number {
+  const scaled = 96 + sharePct * 2.2;
+  return Math.round(Math.max(104, Math.min(190, scaled)));
+}
