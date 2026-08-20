@@ -12,6 +12,8 @@ import {
   type AgentProfile,
   type AttachmentRef,
   type ChatMessage,
+  type DockMode,
+  type RestorableDockMode,
   type SuggestedAction,
 } from "@/components/agent/AgentDock";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
@@ -42,6 +44,11 @@ export type AvaChatShellProps = {
   placeholder?: string;
   agent?: Partial<AgentProfile>;
   layout?: "dock" | "chat-only";
+  /** Defaults to "side-rail" (always-open, current Intelligence behavior). Pass "collapsed" for a
+   * surface where aVa should start as an opt-in floating chip rather than claiming layout space
+   * by default. */
+  defaultMode?: DockMode;
+  collapsedRestoreMode?: RestorableDockMode;
 };
 
 const DEFAULT_AVA_AGENT: AgentProfile = {
@@ -103,6 +110,8 @@ export function AvaChatShell({
   placeholder = "Ask aVa about this enterprise context...",
   agent,
   layout = "dock",
+  defaultMode = "side-rail",
+  collapsedRestoreMode,
 }: AvaChatShellProps) {
   const profile: AgentProfile = {
     ...DEFAULT_AVA_AGENT,
@@ -121,7 +130,8 @@ export function AvaChatShell({
         surface={surface}
         layout={layout}
         variant="focused"
-        defaultMode="side-rail"
+        defaultMode={defaultMode}
+        collapsedRestoreMode={collapsedRestoreMode}
         defaultLeftPercent={defaultLeftPercent}
         minLeftPx={minLeftPx}
         surfaceContext={safeSurfaceContext}

@@ -321,4 +321,46 @@ nav with real counts per section: What Matters, Exhibit, Tensions & What to Watc
 the freed width does real work instead of sitting empty; (2) `main` in `HomePreviewApp` now
 centers its active view within a shared `maxWidth: 1280` container, so leftover space on very wide
 screens is distributed evenly rather than dumped entirely on one side, applied once at the shell
+
+**Fourth iteration -- Ask aVa, additive:** the Technology Estate explorer (tabular/tree drill-down
+into real canonical records) shipped and was live-verified separately. This iteration adds an
+opt-in chat layer, `HomeAvaChat`, wrapping the whole preview app: `AvaChatShell`/`AgentDock` (the
+same branded shell Intelligence's own "Ask aVa" uses, extended with a new `defaultMode` prop so it
+starts as a collapsed floating chip rather than always-open side-rail -- the existing full-width
+chapter layout stays exactly as-is until a reader opts in) send a question to a new route,
+`POST /api/home/preview/ask`, gated behind the identical platform-admin/foundation-preview-operator
+check the preview page itself uses.
+
+Deliberately **not** built the way Intelligence's own `/api/intelligence/ask` works. That endpoint
+composites ~8 independent live-DB retrievers per request and does not call
+`buildValidatedAgentContextBundle` despite the governance policy's stated requirement -- a real,
+separately-tracked gap this workstream found but did not fix here (out of scope for a preview-only
+surface). Home preview has no live DB dependency at all -- every chapter, claim, and Technology
+Estate count already lives in the accepted golden-snapshot JSON, already through this workstream's
+own entailment-verification pass. `answerHomeAvaQuestion`
+(`src/lib/home/preview/ava-answer.ts`) grounds a single Claude call in that JSON alone: every claim
+is offered to the model pre-tagged (e.g. `TD-K1`), and the model must cite the exact tag it used --
+a tag it invents is dropped server-side, never trusted. Any chart or table the model requests must
+name a `dataset_ref` this function itself precomputed from real `dimensionCounts` records; the
+model never supplies a plotted value, the same anti-fabrication pattern `build-enterprise-thesis.ts`
+already uses for `visual_opportunities`. A question outside the supplied context returns an honest
+`no_data`/`partial` status rather than a guess. Chart kind is constrained to what
+`AnswerChartKind`/`AgentAnswerRenderer`'s Recharts path actually supports (`bar`/`horizontal-bar`
+only for now -- the fuller kind list, and the still-unbuilt relational/structural SVG renderers
+noted above, remain future work, not silently promised here).
+
+QA so far: 7 new unit tests in `ava-answer.test.ts` cover the anti-fabrication path directly --
+grounded citation resolves to the real claim text, an invented citation tag is dropped, a chart
+artifact's data is asserted to equal the real `dimensionCounts` values (not anything the mocked
+model response wrote), a `dataset_ref` that doesn't exist produces no artifact, an honest `no_data`
+status passes through, and both an unparseable-JSON model response and a thrown client error fall
+back to a safe `no_data` packet rather than crashing the route. Full existing Home preview suite
+(54 tests) still green; typecheck and targeted ESLint clean. Confirmed, via `git stash`, that 9
+pre-existing failures in `AgentDock.test.tsx`/`AdvisoryIntelligencePage.test.tsx` predate this
+change entirely and are unrelated (not part of `npm run test:behaviors`, reproduced identically
+with this change stashed out) -- left untouched as out of scope. Live signed-in browser proof
+against `https://app.abarva.ai/home/preview` -- asking a real grounded question, confirming the
+chart/citation render, and confirming an honest `no_data` response for an out-of-context question
+-- is the next required step before this is considered complete, per this record's own standing
+discipline.
 level so every view (chapters, Current State, Browse the Data) benefits consistently.
