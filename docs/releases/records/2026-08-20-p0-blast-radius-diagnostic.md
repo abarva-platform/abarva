@@ -112,11 +112,19 @@ schema change, no writes).
 - New: `scripts/moves/p0-blast-radius.mjs` — read-only runner
   (`--detail`, `--json`, `--out=<dir>`), emitting a durable CSV + JSON audit
   artifact on every run.
+- Follow-up hardening: the runner detects an available reporting label on
+  `clients` from `information_schema` instead of assuming a fixed
+  `clients.client_key` column. This affects only the diagnostic report's
+  `tenant_key` label; classification still uses engagement/module payloads.
 
 ## QA / Validation
 
 - `npx tsc --noEmit --pretty false`: passed, 0 errors, full project.
 - `npx eslint` on both new source files: passed, 0 errors, 0 warnings.
+- Production-like operator smoke after merge: blocked before hardening by a
+  read-only schema mismatch on the optional client reporting label
+  (`clients.client_key` absent). The runner now detects the reporting label
+  column before building the query.
 - 18 new tests: passed. The important ones assert what the diagnostic **refuses** to do:
   bland-but-real text is not flagged; an empty capture value is clean rather
   than corrupt ("never captured" is a legitimate state); boilerplate with no
@@ -166,6 +174,7 @@ state exactly.
   should be built against a real diagnostic output, not in anticipation of one.
 - **`recommendation_to_advance` can never be auto-restored** — no origination
   source exists. Every Move corrupt in that field will require human review.
-- **The script assumes `clients.client_key` is the tenant identifier.** If the
-  join is wrong the tenant column will read `(unknown)`; that affects reporting
-  only, not classification.
+- **The tenant label is best-effort reporting metadata.** The runner selects a
+  label from available `clients` columns when present and falls back to
+  `(unknown)` only if no supported label exists; this affects reporting only,
+  not classification.

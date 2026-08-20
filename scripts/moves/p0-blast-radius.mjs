@@ -43,6 +43,16 @@ const AS_JSON = process.argv.includes("--json");
 const OUT_DIR =
   process.argv.find((a) => a.startsWith("--out="))?.slice(6) ??
   "reports/p0-blast-radius";
+const CLIENT_LABEL_COLUMNS = [
+  "client_key",
+  "tenant_key",
+  "key",
+  "slug",
+  "client_slug",
+  "name",
+  "display_name",
+  "id",
+];
 
 function csvCell(value) {
   const s = value === null || value === undefined ? "" : String(value);
@@ -121,6 +131,29 @@ function asObject(value) {
   return typeof value === "object" ? value : {};
 }
 
+function quoteIdentifier(value) {
+  if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(value)) {
+    throw new Error(`Unsafe SQL identifier: ${value}`);
+  }
+  return `"${value}"`;
+}
+
+async function getClientTenantSelect(client) {
+  const { rows } = await client.query(`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'clients'
+  `);
+  const columns = new Set(rows.map((row) => row.column_name));
+  const labelColumn = CLIENT_LABEL_COLUMNS.find((column) =>
+    columns.has(column),
+  );
+  if (!labelColumn) {
+    return "NULL::text AS tenant_key";
+  }
+  return `c.${quoteIdentifier(labelColumn)}::text AS tenant_key`;
+}
+
 async function main() {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
@@ -132,10 +165,11 @@ async function main() {
   await client.connect();
 
   try {
+    const clientTenantSelect = await getClientTenantSelect(client);
     // One read per layer. No transaction, no locks — this must be safe to run
     // against production while people are working.
     const { rows: engagements } = await client.query(`
-      SELECT e.id, e.name, e.charter, c.client_key AS tenant_key
+      SELECT e.id, e.name, e.charter, ${clientTenantSelect}
       FROM engagements e
       LEFT JOIN clients c ON c.id = e.client_id
       ORDER BY e.created_at
