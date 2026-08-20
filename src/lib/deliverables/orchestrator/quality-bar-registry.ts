@@ -79,6 +79,10 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // advisoryMaxWords in artifact-contracts.ts for the rationale.
     advisoryBandMax: CHARTER_CONTRACT.wordBudget.advisoryMaxWords,
     enforceMaxAsBlocker: true,
+    // Charter is deliberately table-led (decision box, scope table, discovery
+    // preparation tables). Enforce the word band on prose so the gate blocks
+    // narrative bloat without penalizing the required tables.
+    excludeNonProseFromBody: true,
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
   },

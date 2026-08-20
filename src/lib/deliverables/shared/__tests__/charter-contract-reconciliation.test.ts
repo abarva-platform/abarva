@@ -42,13 +42,19 @@ describe("Charter contract reconciliation — real runtime output, both pipeline
   it("orchestrator's actual resolved quality bar states the canonical word numbers", () => {
     const qb = resolveQualityBar("moves", "charter");
     expect(qb.minBodyWords).toBe(CHARTER_CONTRACT.wordBudget.minWords);
-    expect(qb.targetBodyWordsMax).toBe(CHARTER_CONTRACT.wordBudget.hardMaxWords);
+    expect(qb.targetBodyWordsMax).toBe(
+      CHARTER_CONTRACT.wordBudget.hardMaxWords,
+    );
     expect(qb.enforceMaxAsBlocker).toBe(true);
+    expect(qb.excludeNonProseFromBody).toBe(true);
   });
 
   it("orchestrator's actual resolved token budget for charter's content-drafting passes equals the canonical ceiling", () => {
     expect(
-      resolvePassTokenBudget({ pass: "section_draft", deliverableType: "charter" }),
+      resolvePassTokenBudget({
+        pass: "section_draft",
+        deliverableType: "charter",
+      }),
     ).toBe(CHARTER_CONTRACT.maxOutputTokens);
     expect(
       resolvePassTokenBudget({ pass: "synthesis", deliverableType: "charter" }),

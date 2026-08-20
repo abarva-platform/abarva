@@ -22,6 +22,11 @@ describe("resolveQualityBar", () => {
     expect(qb.targetBodyWordsMax!).toBe(1_300);
   });
 
+  it("measures Charter length as prose only, so required tables do not consume the band", () => {
+    const qb = resolveQualityBar("moves", "charter");
+    expect(qb.excludeNonProseFromBody).toBe(true);
+  });
+
   it("gives Target State Architecture a substantial band whose ceiling only WARNS", () => {
     const qb = resolveQualityBar("moves", "target_state_architecture");
     expect(qb.minBodyWords).toBeGreaterThanOrEqual(9_000);
@@ -58,7 +63,6 @@ describe("resolveQualityBar", () => {
 
   it("leaves every other artifact on whole-body counting", () => {
     for (const type of [
-      "charter",
       "target_state_architecture",
       "solution_design",
       "roadmap",
