@@ -35,7 +35,7 @@ function BandHeading({
         <h2 style={bandHeading(color)}>{title}</h2>
         <span style={{ flex: 1, height: 1, background: ruleColor }} />
       </div>
-      <p style={{ margin: "10px 0 0", fontFamily: SANS, fontSize: 14, lineHeight: 1.55, color: V4.slate, maxWidth: "64ch" }}>
+      <p style={{ margin: "10px 0 0", fontFamily: SANS, fontSize: 14, lineHeight: 1.55, color: V4.slate, maxWidth: "48ch" }}>
         {rubric}
       </p>
     </div>
@@ -66,7 +66,7 @@ function ClaimRow({
         {severityLabel ? (
           <div style={{ ...eyebrow(spine), letterSpacing: "0.11em", marginBottom: 10 }}>{severityLabel}</div>
         ) : null}
-        <p style={{ margin: 0, fontFamily: SANS, fontSize: 18, lineHeight: 1.54, color: V4.ink, maxWidth: "64ch", textWrap: "pretty" }}>
+        <p style={{ margin: 0, fontFamily: SANS, fontSize: 18, lineHeight: 1.54, color: V4.ink, maxWidth: "46ch", textWrap: "pretty" }}>
           {claim.statement}
         </p>
       </div>
@@ -129,7 +129,7 @@ export function FollowsBand({ claims, signalPacket }: { claims: GroundedClaim[];
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,340px),1fr))",
+          gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,340px),1fr))",
           gap: "0 clamp(20px,3vw,56px)",
           marginTop: 20,
         }}
@@ -280,7 +280,7 @@ export function NotEstablishedBand({
                   fontSize: 13.5,
                   lineHeight: 1.6,
                   color: V4.slate,
-                  maxWidth: "80ch",
+                  maxWidth: "58ch",
                 }}
               >
                 A blank here is a reported gap. An invented number would not be.
@@ -325,7 +325,7 @@ export function QuestionsSection({ questions }: { questions: string[] }) {
           margin: 0,
           padding: 0,
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,340px),1fr))",
+          gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,340px),1fr))",
           gap: "0 clamp(20px,3vw,56px)",
         }}
       >
@@ -343,7 +343,7 @@ export function QuestionsSection({ questions }: { questions: string[] }) {
             <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate, paddingTop: 5 }}>
               {String(i + 1).padStart(2, "0")}
             </span>
-            <span style={{ fontFamily: SANS, fontSize: 16, lineHeight: 1.56, color: V4.inkSoft, textWrap: "pretty" }}>{q}</span>
+            <span style={{ fontFamily: SANS, fontSize: 16, lineHeight: 1.56, color: V4.inkSoft, maxWidth: "52ch", textWrap: "pretty" }}>{q}</span>
           </li>
         ))}
       </ol>
@@ -396,7 +396,7 @@ export function ChapterHeader({
           {headline}
         </h1>
         {standfirst ? (
-          <p style={{ margin: 0, fontFamily: SANS, fontSize: 17, lineHeight: 1.62, color: V4.slate, textWrap: "pretty" }}>
+          <p style={{ margin: 0, fontFamily: SANS, fontSize: 17, lineHeight: 1.62, color: V4.slate, maxWidth: "52ch", textWrap: "pretty" }}>
             {standfirst}
           </p>
         ) : null}

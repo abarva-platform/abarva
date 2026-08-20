@@ -301,3 +301,39 @@ accounted for by an aggregate.
 
 The rail item "Current-state data flow" is restored to that name, because it now describes what the
 page shows.
+
+
+## Fourth addendum — the page filled its canvas and still did not read
+
+Canvas utilisation measured 93% on every block, so the dead-space problem was genuinely gone. The
+page was still below par, and measuring line length said why: **15 of 23 text elements sat outside
+the readable 40-85 characters-per-line band.**
+
+| element | width | chars/line |
+| --- | --- | --- |
+| "Take these into the room" question | 1538px | **220** |
+| Evidence sidenote | 745px | 112 |
+| "A blank here is a reported gap" | 680px | 106 |
+| Exhibit caption | 694px | 103 |
+| Standfirst | 741px | 98 |
+| Record claims | 720px | 90 |
+
+Two causes, both invisible to every existing gate:
+
+- **`repeat(auto-fit, ...)` collapses to a single full-width track when a band holds one item.** A
+  chapter with one question rendered that question across the entire canvas at 220 characters per
+  line. Changed to `auto-fill`, which keeps the track structure so a lone item stays one column
+  wide.
+- **`ch` is the advance of the digit zero**, roughly 40% wider than Inter's average glyph. Every
+  `64ch` cap was landing near 90 characters per line rather than the 65-75 that reads. Caps
+  recalibrated against measured glyph width.
+
+`scripts/qa/measure-reading-quality.tsx` now measures this across every rendered chapter. It
+reports rather than fails, because line length has legitimate exceptions -- a mono identifier, a
+label -- but the number is now visible instead of being a matter of taste. After the fix: 125
+capped elements, all inside 40-85.
+
+Worth naming the general lesson. Canvas utilisation and line length pull in opposite directions:
+filling the width improves one and destroys the other. Optimising the metric that was complained
+about, without measuring its opposite, is how a page ends up using all of its space and being
+harder to read than before.

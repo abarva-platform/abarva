@@ -220,7 +220,7 @@ export function Exhibit({
           gap: "clamp(20px,3vw,48px)",
         }}
       >
-        <p style={{ margin: 0, fontFamily: SANS, fontSize: 14.5, lineHeight: 1.6, color: fg, maxWidth: "76ch", textWrap: "pretty" }}>
+        <p style={{ margin: 0, fontFamily: SANS, fontSize: 14.5, lineHeight: 1.6, color: fg, maxWidth: "54ch", textWrap: "pretty" }}>
           {visual.title}
         </p>
         <div>
