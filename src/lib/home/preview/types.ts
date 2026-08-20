@@ -10,6 +10,7 @@ import type {
   ChapterView,
   HomeReviewBundleProvenance,
 } from "../../../../scripts/data-build/build-home-chapters";
+import type { TechnologyEstateBundle, TechRecordType, TechObjectType } from "../../../../scripts/data-build/technology-estate";
 import type {
   EnterpriseThesis,
   GroundedClaim,
@@ -36,6 +37,9 @@ export type {
   VisualType,
   ContextItem,
   Signal,
+  TechnologyEstateBundle,
+  TechRecordType,
+  TechObjectType,
 };
 
 export type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
@@ -54,4 +58,13 @@ export interface HomeReviewBundle {
     verificationLedger: VerificationLedgerEntry[];
     structuralIssues: StructuralIssue[];
   };
+  /** Real, structured technology-estate records (applications, vendor contracts, infrastructure
+   * platforms, data assets/integrations) -- raw canonical CSV fields, not derived signals. Feeds
+   * the Technology Estate tree-nav explorer, distinct from Browse the Data's flat signal list.
+   * Optional, not required: a golden snapshot generated before this field existed genuinely won't
+   * have it, and every reader of this field must degrade gracefully (hide the tree section) rather
+   * than assume it's always present -- there is no runtime schema validation on the JSON these
+   * types describe, so "optional in the type" here is honest about what "old fixture" looks like
+   * at runtime, not just a formality. */
+  technologyEstate?: TechnologyEstateBundle;
 }

@@ -40,6 +40,7 @@ import {
   type VisualOpportunity,
 } from "./build-enterprise-thesis";
 import type { Signal, ContextItem, buildEnterpriseSignalPacket } from "./enterprise-signal-packet";
+import { buildTechnologyEstateBundle } from "./technology-estate";
 
 type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
 
@@ -360,8 +361,12 @@ async function synthesizeChapterNarrative(
 
 async function buildChaptersForTenant(tenantKey: string, client: Parameters<typeof callClaude>[0]) {
   const built = await buildTenant(tenantKey, client);
+  // Deterministic, no model call, no dependency on the thesis succeeding -- computed here
+  // regardless of whether generation below produces a usable thesis, so a Claude failure doesn't
+  // also cost the one part of this bundle that never needed Claude in the first place.
+  const technologyEstate = buildTechnologyEstateBundle(built.canonicalRecords);
   if (!built.publishedGeneration) {
-    return { tenantKey, chapters: null, thesisResult: built, provenance: null };
+    return { tenantKey, chapters: null, thesisResult: built, provenance: null, technologyEstate };
   }
   const thesis = built.publishedGeneration;
   const signalPacket = built.signalPacket;
@@ -398,7 +403,7 @@ async function buildChaptersForTenant(tenantKey: string, client: Parameters<type
     });
   }
 
-  return { tenantKey, chapters, thesisResult: built, provenance };
+  return { tenantKey, chapters, thesisResult: built, provenance, technologyEstate };
 }
 
 async function main() {

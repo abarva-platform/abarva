@@ -36,6 +36,7 @@ import Papa from "papaparse";
 import { Client } from "pg";
 
 import { buildCanonicalTenantDataReport } from "../../src/lib/enterprise-data/canonical-build/canonical-tenant-data-build";
+import type { CanonicalIngestionRecord } from "../../src/lib/enterprise-data/contracts/canonical-ingestion";
 import {
   buildDecisionContext,
   buildContextQualityManifest,
@@ -855,7 +856,7 @@ export function dropClaim(thesis: EnterpriseThesis, path: string) {
 
 export async function buildTenant(tenantKey: string, client: Parameters<typeof callClaude>[0]) {
   const report = await buildCanonicalTenantDataReport({ repoRoot: process.cwd(), tenantKeys: [tenantKey] });
-  const records = report.canonicalRecords.filter((r: any) => r.tenantKey === tenantKey) as any;
+  const records: CanonicalIngestionRecord[] = report.canonicalRecords.filter((r) => r.tenantKey === tenantKey);
   if (records.length === 0) throw new Error(`no canonical records for ${tenantKey}`);
 
   const crosswalkPath = path.join(
@@ -898,7 +899,7 @@ export async function buildTenant(tenantKey: string, client: Parameters<typeof c
   if (!client) {
     return {
       signalPacket, rawGeneration: null, publishedGeneration: null,
-      structuralIssues: [], verificationLedger: [], usage: { input: 0, output: 0 },
+      structuralIssues: [], verificationLedger: [], usage: { input: 0, output: 0 }, canonicalRecords: records,
     };
   }
 
@@ -922,7 +923,7 @@ export async function buildTenant(tenantKey: string, client: Parameters<typeof c
     console.log("  ! thesis generation returned no text");
     return {
       signalPacket, rawGeneration: null, publishedGeneration: null,
-      structuralIssues: [], verificationLedger: [], usage,
+      structuralIssues: [], verificationLedger: [], usage, canonicalRecords: records,
     };
   }
   usage.input += generation.inputTokens;
@@ -934,7 +935,7 @@ export async function buildTenant(tenantKey: string, client: Parameters<typeof c
     console.log("   ", generation.text.slice(0, 300));
     return {
       signalPacket, rawGeneration: null, publishedGeneration: null,
-      structuralIssues: [], verificationLedger: [], usage,
+      structuralIssues: [], verificationLedger: [], usage, canonicalRecords: records,
     };
   }
 
@@ -1005,7 +1006,7 @@ export async function buildTenant(tenantKey: string, client: Parameters<typeof c
     }
   }
 
-  return { signalPacket, rawGeneration, publishedGeneration, structuralIssues, verificationLedger, usage };
+  return { signalPacket, rawGeneration, publishedGeneration, structuralIssues, verificationLedger, usage, canonicalRecords: records };
 }
 
 async function main() {

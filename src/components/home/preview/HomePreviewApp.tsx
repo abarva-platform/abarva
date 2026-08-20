@@ -5,9 +5,10 @@ import { useState } from "react";
 import { BrowseTheData } from "./BrowseTheData";
 import { ChapterSection } from "./ChapterSection";
 import { CurrentState } from "./CurrentState";
+import { TechnologyEstateTable } from "./TechnologyEstateTable";
 import { HOME_HEX } from "./visuals/home-chart-kit";
 import { StateBadge } from "@/components/knowledge/state/StateBanner";
-import type { ChapterId, HomeReviewBundle } from "@/lib/home/preview/types";
+import type { ChapterId, HomeReviewBundle, TechObjectType } from "@/lib/home/preview/types";
 import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 
 const TENANT_LABEL: Record<HomePreviewTenantKey, string> = {
@@ -15,7 +16,7 @@ const TENANT_LABEL: Record<HomePreviewTenantKey, string> = {
   "skyharbor-air": "SkyHarbor Air",
 };
 
-type ActiveView = ChapterId | "current-state" | "browse-the-data";
+type ActiveView = ChapterId | "current-state" | "browse-the-data" | `tech:${TechObjectType}`;
 
 const SIDEBAR_WIDTH = 268;
 
@@ -36,7 +37,13 @@ export function HomePreviewApp({
   onTenantChange: (next: HomePreviewTenantKey) => void;
 }) {
   const [activeView, setActiveView] = useState<ActiveView>("executive_brief");
+  const [techTreeExpanded, setTechTreeExpanded] = useState(true);
   const activeChapter = bundle.chapters.find((c) => c.chapterId === activeView);
+  const techRecordTypes = bundle.technologyEstate?.recordTypes ?? [];
+  const activeTechRecordType =
+    activeView.startsWith("tech:")
+      ? techRecordTypes.find((t) => `tech:${t.objectType}` === activeView)
+      : undefined;
 
   return (
     <div style={{ display: "flex", alignItems: "flex-start", background: "#FFFFFF", minHeight: "100%" }}>
@@ -95,6 +102,44 @@ export function HomePreviewApp({
         <div style={{ borderTop: `1px solid ${HOME_HEX.border}`, paddingTop: 10, display: "flex", flexDirection: "column", gap: 1 }}>
           <SidebarLink label="Current State" active={activeView === "current-state"} onClick={() => setActiveView("current-state")} accent />
           <SidebarLink label="Browse the Data" active={activeView === "browse-the-data"} onClick={() => setActiveView("browse-the-data")} accent />
+          {techRecordTypes.length > 0 ? (
+            <div>
+              <button
+                type="button"
+                onClick={() => setTechTreeExpanded((v) => !v)}
+                aria-expanded={techTreeExpanded}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "7px 10px",
+                  border: "none",
+                  background: "transparent",
+                  color: HOME_HEX.teal,
+                  fontFamily: "var(--font-body-sans)",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                <span style={{ fontSize: 10, width: 10, display: "inline-block" }}>{techTreeExpanded ? "▾" : "▸"}</span>
+                Technology Estate
+              </button>
+              {techTreeExpanded ? (
+                <div style={{ paddingLeft: 16, display: "flex", flexDirection: "column", gap: 1 }}>
+                  {techRecordTypes.map((t) => (
+                    <SidebarLink
+                      key={t.objectType}
+                      label={`${t.label} (${t.rows.length})`}
+                      active={activeView === `tech:${t.objectType}`}
+                      onClick={() => setActiveView(`tech:${t.objectType}`)}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         <div style={{ marginTop: "auto", paddingTop: 10 }}>
@@ -108,6 +153,8 @@ export function HomePreviewApp({
             <CurrentState signalPacket={bundle.thesis.signalPacket} />
           ) : activeView === "browse-the-data" ? (
             <BrowseTheData signalPacket={bundle.thesis.signalPacket} />
+          ) : activeTechRecordType ? (
+            <TechnologyEstateTable recordType={activeTechRecordType} />
           ) : activeChapter ? (
             <ChapterSection chapter={activeChapter} signalPacket={bundle.thesis.signalPacket} visualDatasets={bundle.thesis.signalPacket.visualDatasets} />
           ) : null}

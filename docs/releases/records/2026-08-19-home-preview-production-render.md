@@ -148,6 +148,41 @@ change. No product route change to `/home` itself.
   throws loudly, not silently, if a snapshot file is missing. Wrapped in `<AppShell surface="home">`
   like every other Home surface.
 
+**Fourth iteration, same day -- Technology Estate tabular explorer:** direct follow-up feedback
+named the actual use case: "I may want to tag and know the data and analytics platform servicing
+finance needs or clinical needs or population health... what is used for ETL, reporting,
+analytics... how many ETL jobs, tables, or reports." That's real structured data, and it wasn't
+exposed anywhere -- every prior view (Browse the Data, Current State) reads only the derived,
+one-sentence `signalPacket` signals, never the raw canonical CSV records with their real columns.
+- `scripts/data-build/build-enterprise-thesis.ts` -- `buildTenant()` now returns `canonicalRecords:
+  CanonicalIngestionRecord[]` (the full raw records `buildCanonicalTenantDataReport` already
+  computes internally, previously discarded after building the signal packet) on every return
+  path, including the early-return failure branches, since this data doesn't depend on Claude
+  succeeding at all.
+- `scripts/data-build/technology-estate.ts` (new) -- pure, deterministic extraction (no model
+  call, nothing to verify -- every value is a direct CSV field) for four object types named
+  directly in the request: `application_system`, `vendor_contract`, `infrastructure_platform`,
+  `data_asset_or_integration` (301/72/65/520 real records respectively on Meridian). Strips
+  ingestion-bookkeeping fields (`sourceFile`, `confidence`, etc.) and narrative-text fields
+  (anything ending `Narrative`/`Notes`) from the column set, keeping every real structured field
+  (`businessFunction`, `systemCategory`, `vendor`, `criticality`, `annualCostUsd`, `userCount`,
+  etc.) in the source CSV's own column order. Precomputes a `primaryDimension` per object type --
+  `businessFunction` for applications, `dataDomain` for data assets, `serviceCategory` for vendor
+  contracts, `platformType` for infrastructure -- with real counts per value, directly answering
+  "servicing finance needs or clinical needs or population health" as an at-a-glance segmentation,
+  not a generic low-cardinality-column heuristic.
+- `src/components/home/preview/TechnologyEstateTable.tsx` (new) -- one object type's table:
+  dimension rollup as clickable count chips (doubles as filter and segmentation-at-a-glance),
+  free-text search across every column, an honest "no records match" empty state.
+- `src/components/home/preview/HomePreviewApp.tsx` -- sidebar gains a collapsible "Technology
+  Estate" tree under Browse the Data, one entry per object type with a real row count, satisfying
+  the earlier "tree/branch structure" request. `HomeReviewBundle.technologyEstate` is typed
+  **optional**, not required: a golden snapshot generated before this field existed genuinely
+  won't have it, there is no runtime schema validation on the JSON these types describe, and every
+  reader degrades gracefully (the tree section simply doesn't render) rather than assuming the
+  field is always present -- this is what let the code ship safely ahead of regenerating the two
+  tenants' fixtures, with no window where the live page could crash against stale data.
+
 ## QA / Validation
 
 - `NODE_OPTIONS="--max-old-space-size=6144" npx tsc --noEmit -p tsconfig.json` -- PASS, 0 errors.
@@ -166,6 +201,16 @@ change. No product route change to `/home` itself.
   item in the same bundle (test: `golden-snapshot.test.ts`, "every chapter's evidence_ids resolve
   to a real signal or context item in the same bundle") -- the same discipline the generator's own
   verification enforces, checked again at the render layer as a second, independent guard.
+- Technology Estate iteration: `npx jest tests/behaviors/technology-estate.test.ts` (8 cases, pure
+  extraction logic including the dimension-rollup counting and the null-vs-fabricated-guess
+  distinction for `primaryDimension`) plus `TechnologyEstateTable.test.tsx` (6 cases: dimension
+  chip filtering, free-text search across every column, honest empty state, no rollup rendered
+  when `primaryDimension` is null) -- PASS, 47/47 across the full preview test suite. **Not yet
+  regenerated**: the two tenants' golden-snapshot JSON files were built before this field existed,
+  so `technologyEstate` is genuinely absent on the currently-deployed fixtures -- by design (see
+  Changes Included), the sidebar's Technology Estate tree simply doesn't render until the
+  fixtures are regenerated via a live `data-build:home-chapters:plan` run, tracked as the
+  immediate next step after this PR merges/deploys.
 - **Live signed-in browser check, done post-merge/deploy against `https://app.abarva.ai/home/preview`,
   signed in as the real platform-admin session (Anand Sundaram):** page renders past the admin
   gate; both chapters' real content displays (Meridian's Executive Brief headline and body,
