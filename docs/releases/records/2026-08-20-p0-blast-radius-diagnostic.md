@@ -115,9 +115,9 @@ schema change, no writes).
 
 ## QA / Validation
 
-- `npx tsc --noEmit --pretty false` — 0 errors, full project.
-- `npx eslint` on both new source files — 0 errors, 0 warnings.
-- 18 new tests. The important ones assert what the diagnostic **refuses** to do:
+- `npx tsc --noEmit --pretty false`: passed, 0 errors, full project.
+- `npx eslint` on both new source files: passed, 0 errors, 0 warnings.
+- 18 new tests: passed. The important ones assert what the diagnostic **refuses** to do:
   bland-but-real text is not flagged; an empty capture value is clean rather
   than corrupt ("never captured" is a legitimate state); boilerplate with no
   scaffold source is `corrupt_unrestorable` rather than silently repairable; a
@@ -126,8 +126,8 @@ schema change, no writes).
   is `not_applicable` rather than flagged.
 - Both layers are asserted independently — a corrupt charter mirror is detected
   even when the capture row is clean, and vice versa.
-- Regression sweep `src/lib/programs` + `src/components/strategic-moves`: 3,567
-  tests, 9 failing — the same 9 pre-existing failures. Zero new.
+- Regression sweep `src/lib/programs` + `src/components/strategic-moves`: blocked by 9
+  pre-existing failures across 3,567 tests. Zero new failures attributed to this change.
 
 ## Rollout Plan
 
