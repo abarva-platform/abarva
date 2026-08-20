@@ -235,7 +235,15 @@ design-token change requires updating both places. This route intentionally does
 side-by-side (two-column) rendering of both tenants at once; the instant tenant switcher was judged
 a better reading experience for a full executive briefing than two narrower columns, but this is a
 design choice worth confirming against the reviewer's actual expectation, not an oversight.
-The layout-and-explorer iteration (sidebar shell, Current State) has been verified by
-typecheck/lint/unit tests but not yet by a second live signed-in browser pass -- the first live
-check (documented above) was against the earlier single-scrolling-page shell, before this
-iteration existed. A follow-up live check against the sidebar shell is the immediate next step.
+**Second live signed-in browser check, done post-merge/deploy against the sidebar shell
+(`https://app.abarva.ai/home/preview`, same real platform-admin session):** the sidebar renders
+with all eight chapters, Current State, and Browse the Data visible at once, no scrolling needed
+to see any navigation destination; clicking a chapter swaps the main pane instantly with the
+sidebar staying fixed in place -- the specific "one large page that keeps scrolling" complaint no
+longer applies, since only one view's content renders at a time. Current State renders its
+category-card grid across the full remaining width; the four categories expected to be
+open-by-default (Applications & Systems, Data & Integrations, Infrastructure & Platforms, Vendors
+& Contracts) showed real facts immediately, and the collapsed ones (Enterprise Profile, Business
+Functions) toggled open correctly on click. Console showed zero new errors -- only the same
+pre-existing, unrelated Clerk dev-keys warning already noted above. This closes the "immediate
+next step" the first version of this note flagged as outstanding.
