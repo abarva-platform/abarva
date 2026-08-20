@@ -115,6 +115,17 @@ behaviour on the next generation with no data to migrate.
 - Motivating audit: `docs/design/strategic-moves/SOLUTION_PRICING_ENGINE_AUDIT.md`
   §5.5, which identified the blocker as structurally unreachable.
 
+## Deployment Outcome (verified)
+
+- Merged to `main` in PR #6536; `main` at `36f1da7b1`.
+- `aca-main-deploy` run for `36f1da7b` completed **success**.
+- ACA runtime invariant **verified**: Container App template image and the
+  100%-traffic revision image are the same digest
+  (`acrabarvalab001.azurecr.io/abarva/web@sha256:6a65a33d2dd2...`), revision
+  `ca-abarva-web-lab-eastus--m36f1da7b` reports `Healthy` / `Running`, and
+  `https://app.abarva.ai/` returns HTTP 200.
+- Live signed-in generation proof is still outstanding — see Known Gaps.
+
 ## Known Gaps
 
 - **Expected to increase gate blocks on the two orchestrated tenants.** That is
