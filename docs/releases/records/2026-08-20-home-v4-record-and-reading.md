@@ -149,3 +149,68 @@ a hardcoded numerator over a computed denominator. Progress is now derived from 
 themselves so the two cannot disagree. Both halves were individually correct; only their
 disagreement on screen was wrong, which is why nothing but looking at the page would have caught
 it.
+
+
+## Second addendum — architecture view, and two fidelity corrections
+
+### Architecture was missing entirely
+
+Under "The evidence" the page offered four record tables and a per-domain fact inventory. Nothing
+answered *what shape is this estate in* — the question a reader actually arrives with, and one that
+301, 72, 65 and 520 rows cannot answer however well sorted. Worse, the item labelled "Current-state
+data flow" rendered a fact-count inventory, not a data flow: a nav label overselling its page is
+worse than a plain one, so it now reads "What has been loaded", which is what it is.
+
+A "Current-state architecture" view is added, rendered to the approved Architecture Explorer design:
+
+- **L0/L1 weighted landscape.** Tile footprint proportional to recorded system count, so
+  concentration answers itself before a number is read. A function below the legible tile width is
+  not shrunk until its label is unreadable — it moves to a tail where its share is carried by a bar
+  and it is still listed by name with its own count.
+- **L2 capability drill.** The fan-in rule: a capability supported by N groups declares the verb
+  once in a single pill rather than printing N identical `supports` labels. Every relationship stays
+  in the model.
+- **Hatched fill means "group, not system"** and is never decorative.
+
+Semantics come from the shared projections, which produce a validated `ArchitectureView`. The page
+is a rendering profile over that model and decides nothing about what a node means or what is
+related to what.
+
+**Correcting an approach, not just code:** the first attempt wired the engineering SVG renderer —
+the artefact the design brief itself calls "the engineering baseline, not the visual target". The
+approved Architecture Explorer design already existed in the design project and had not been read.
+Shipping the baseline would have shipped the thing the brief explicitly said was not a design.
+
+### Two fidelity corrections against the approved design
+
+1. **The header no longer collapses to one column.** A previous change made the chapter header drop
+   to a single column when the synthesis ran long, on the reasoning that the design's own standfirst
+   is ~220 characters and real ones run ~1,100. Measured against the design's standalone export at
+   1900px, its header is two columns of 741px each, always. Collapsing it left the right half of a
+   wide screen empty — the dead canvas that was reported. The design's grid is restored.
+2. **The aVa panel stays collapsed by default**, matching the design's resting state. It was briefly
+   opened as a side rail to reclaim that width; that was treating the symptom. The canvas does not go
+   slack at full width because the header spans it — the panel was never what filled the page.
+
+Verified against the design's standalone export: heading hierarchy, order, and the reserved colours
+match exactly, including `rgb(163,45,45)` for Open exposures and `rgb(186,117,23)` for Not
+established. Remaining differences are data-driven — this tenant's brief routes one exhibit and one
+gap where the design's sample had two of each.
+
+
+### A fabrication caught by rendering the architecture view
+
+The first render of the tile landscape stamped the same sentence on every tile -- "57 systems
+flagged to replace · 121 systems legacy, sunset-planned or deprecated" -- on Clinical Informatics,
+Nursing Operations and Population Health alike.
+
+The projection's overlays carry an estate-wide total in their `label` and list in `nodeIds` merely
+which capabilities contain any. Rendering that label per tile therefore asserted something false
+about every tile it touched: a capability holding 46 systems cannot have 57 flagged for
+replacement. Both halves were individually correct -- the total is right, the membership list is
+right -- and the combination on screen was a fabricated per-capability number on a client surface.
+
+Per-tile marks now come from the node's own `metrics.replacementCandidates` and
+`metrics.agingSystems`. Verified against the source rows: Clinical Informatics 5 of 99, Acute Care
+6 of 56, Nursing 5 of 46 -- each tile now states its own figure. The overlay's estate-wide total
+belongs once, at view level, not repeated as if it described each part.

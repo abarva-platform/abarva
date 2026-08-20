@@ -84,6 +84,10 @@ export function HomeAvaChat({
       agent={{ initials: "aVa", mark: "ava", name: "aVa", role: "Home advisor" }}
       placeholder="Ask aVa about this enterprise..."
       layout="dock"
+      // Collapsed by default, matching the approved v4 design's own resting state: the panel is an
+      // edge tab until asked for, and the chapter takes the full canvas. The canvas does not go
+      // slack at that width because the design's header runs two columns across it -- the panel is
+      // not what fills the page.
       defaultMode="collapsed"
       collapsedRestoreMode="side-rail"
       defaultLeftPercent={34}
