@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { BrowseTheData } from "@/components/home/preview/BrowseTheData";
 import { CurrentState } from "@/components/home/preview/CurrentState";
 import { HomeAvaChat } from "@/components/home/preview/HomeAvaChat";
-import { TechnologyEstateTable } from "@/components/home/preview/TechnologyEstateTable";
+import { RecordBrowser } from "./RecordBrowser";
 import { demoSafeClientText } from "@/lib/client-config";
 import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 import type { ChapterId, HomeReviewBundle, TechObjectType } from "@/lib/home/preview/types";
@@ -187,9 +187,7 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
           ) : null}
 
           {activeTechRecordType ? (
-            <div style={{ padding: "54px 56px 0" }}>
-              <TechnologyEstateTable key={activeTechRecordType.objectType} recordType={activeTechRecordType} />
-            </div>
+            <RecordBrowser key={activeTechRecordType.objectType} recordType={activeTechRecordType} />
           ) : null}
         </main>
       </div>

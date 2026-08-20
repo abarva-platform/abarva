@@ -301,3 +301,93 @@ accounted for by an aggregate.
 
 The rail item "Current-state data flow" is restored to that name, because it now describes what the
 page shows.
+
+
+## Fourth addendum — the page filled its canvas and still did not read
+
+Canvas utilisation measured 93% on every block, so the dead-space problem was genuinely gone. The
+page was still below par, and measuring line length said why: **15 of 23 text elements sat outside
+the readable 40-85 characters-per-line band.**
+
+| element | width | chars/line |
+| --- | --- | --- |
+| "Take these into the room" question | 1538px | **220** |
+| Evidence sidenote | 745px | 112 |
+| "A blank here is a reported gap" | 680px | 106 |
+| Exhibit caption | 694px | 103 |
+| Standfirst | 741px | 98 |
+| Record claims | 720px | 90 |
+
+Two causes, both invisible to every existing gate:
+
+- **`repeat(auto-fit, ...)` collapses to a single full-width track when a band holds one item.** A
+  chapter with one question rendered that question across the entire canvas at 220 characters per
+  line. Changed to `auto-fill`, which keeps the track structure so a lone item stays one column
+  wide.
+- **`ch` is the advance of the digit zero**, roughly 40% wider than Inter's average glyph. Every
+  `64ch` cap was landing near 90 characters per line rather than the 65-75 that reads. Caps
+  recalibrated against measured glyph width.
+
+`scripts/qa/measure-reading-quality.tsx` now measures this across every rendered chapter. It
+reports rather than fails, because line length has legitimate exceptions -- a mono identifier, a
+label -- but the number is now visible instead of being a matter of taste. After the fix: 125
+capped elements, all inside 40-85.
+
+Worth naming the general lesson. Canvas utilisation and line length pull in opposite directions:
+filling the width improves one and destroys the other. Optimising the metric that was complained
+about, without measuring its opposite, is how a page ends up using all of its space and being
+harder to read than before.
+
+
+## Fifth addendum — the record browser was never rebuilt
+
+The v4 shell was wired to the previous `TechnologyEstateTable` and left there. The design has a
+record-browser page; its spec was read during the audit and then not implemented. Every other
+surface moved to v4 while the page holding 301, 72, 65 and 520 rows kept the old chrome.
+
+`RecordBrowser` implements it: a computed stat strip, seven columns on a fixed layout with mono
+uppercase headers, lifecycle as the one coloured column because it is the one recorded value that
+carries consequence, right-aligned tabular figures, and the two lowest-priority columns dropping at
+1320px with the cue beneath the table switching with them so it can never describe the wrong state.
+
+The part worth keeping is what the column does *not* show. `annualCostUsd` holds **3 distinct
+values across 301 records** -- a data defect identified earlier in this workstream and never
+surfaced anywhere a reader would see it. The cell reads `not usable`, with a sidebar note
+explaining that totals are fine and ranking systems by cost is not. The rule is computed from
+cardinality rather than hardcoded to that column, so a field that improves starts showing values on
+its own, and any other field that degrades gets caught the same way.
+
+Search is kept working rather than reproduced as the design's `NOT IN DRAFT` placeholder --
+removing functioning behaviour to match a mockup's stub would be following the design past the
+point where it is describing intent.
+
+
+## Correction — a database is not an integration component
+
+The first topology placed every value of `platformOrDatabase` in a lane labelled **Integration**.
+For one tenant that lane therefore read:
+
+| value | what it actually is |
+| --- | --- |
+| Rhapsody Integration Engine | integration engine |
+| SSIS package | ETL tool |
+| **Epic Caboodle** | Epic's enterprise **data warehouse** |
+| **Epic Clarity (SQL Server)** | operational **reporting database** |
+| **SQL Server (on-prem)** | a **database** |
+| **Tableau extract (.hyper)** | a BI **extract file** |
+
+Four of six are not integration. The field name says "or database" and was not believed. Worse,
+the same field means different things per tenant -- the other tenant's five values genuinely are
+middleware (Informatica, Kafka, MuleSoft, EDI gateway, direct point-to-point) -- so no single lane
+assignment from that field can be correct for both.
+
+This is the failure this projection's own header warns against: asserting a classification the
+record does not make. It would be spotted immediately by anyone who works in the domain, which is
+the worst kind, because it costs credibility on a page whose entire argument is that every value
+shown is recorded.
+
+The integration lane now reads `integrationType`, which is unambiguous by definition -- HL7v2
+interface, FHIR API, EDI X12 transaction, batch file transfer (SFTP), database replication, SSIS
+ETL pipeline. The platform each flow crosses is named on the connector, where it is a recorded fact
+about where a mechanism runs rather than a claim about what tier the platform belongs to. The
+limitation states plainly why the field is not used for placement.
