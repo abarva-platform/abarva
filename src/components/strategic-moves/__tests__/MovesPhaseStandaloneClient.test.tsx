@@ -355,6 +355,35 @@ describe("MovesPhaseStandaloneClient", () => {
           } as Response;
         }
 
+        if (
+          url.includes("/stage-readiness-workbook") &&
+          init?.method === "POST"
+        ) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              ok: true,
+              metadata: {
+                workbookId: "move-1:p1-p2:stage-readiness",
+                moveId: "move-1",
+                phase: 1,
+                nextPhase: 2,
+              },
+              responses: [{ questionId: "q-1", response: "Confirmed" }],
+              issues: [],
+              summary: {
+                totalQuestions: 2,
+                answeredQuestions: 1,
+                requiredAnswered: 1,
+                requiredTotal: 2,
+                warningCount: 0,
+                errorCount: 0,
+              },
+            }),
+          } as Response;
+        }
+
         if (url.includes("/api/chat/agent")) {
           const encoder = new TextEncoder();
           const body = new ReadableStream({
@@ -549,7 +578,7 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
-    it("P1 renders the contract canvas while preserving real workflow controls", () => {
+    it("P1 renders the contract canvas while preserving real workflow controls", async () => {
       const move = makeMove({
         currentPhase: 1,
         phaseLabel: "P1 Charter",
@@ -572,6 +601,27 @@ describe("MovesPhaseStandaloneClient", () => {
         `/api/v1/programs/${move.id}/stage-readiness-workbook?phase=1`,
       );
       expect(workbookLink).toHaveAttribute("download");
+
+      fireEvent.change(
+        screen.getByLabelText("Upload completed readiness workbook"),
+        {
+          target: {
+            files: [
+              new File([Buffer.from("xlsx")], "completed-workbook.xlsx", {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              }),
+            ],
+          },
+        },
+      );
+      await waitFor(() => {
+        expect(screen.getByText(/Parsed 1\/2 responses/)).toBeInTheDocument();
+      });
+      expect(screen.getByText("1/2 required")).toBeInTheDocument();
+      expect(global.fetch).toHaveBeenCalledWith(
+        `/api/v1/programs/${move.id}/stage-readiness-workbook?phase=1`,
+        expect.objectContaining({ method: "POST", credentials: "include" }),
+      );
 
       const contractCard = screen.getByTestId("mxw-contract-card");
       expect(contractCard).toBeInTheDocument();
