@@ -247,3 +247,15 @@ open-by-default (Applications & Systems, Data & Integrations, Infrastructure & P
 Functions) toggled open correctly on click. Console showed zero new errors -- only the same
 pre-existing, unrelated Clerk dev-keys warning already noted above. This closes the "immediate
 next step" the first version of this note flagged as outstanding.
+
+**Third iteration, same day:** the user pointed at a live screenshot on a wide monitor showing a
+large dead void to the right of a chapter's prose column -- the sidebar fixed the scrolling
+complaint but `ChapterSection`'s content was still capped narrow (860px) and left-anchored within
+`main`, so a wide viewport just moved the wasted space rather than using it. Fixed two ways: (1)
+`ChapterSection` is now a two-column layout -- prose stays a readable ~720px (wider paragraphs
+hurt reading, not help it) alongside a new sticky "On this page" rail (guiding question + a jump
+nav with real counts per section: What Matters, Exhibit, Tensions & What to Watch, Questions), so
+the freed width does real work instead of sitting empty; (2) `main` in `HomePreviewApp` now
+centers its active view within a shared `maxWidth: 1280` container, so leftover space on very wide
+screens is distributed evenly rather than dumped entirely on one side, applied once at the shell
+level so every view (chapters, Current State, Browse the Data) benefits consistently.

@@ -102,14 +102,16 @@ export function HomePreviewApp({
         </div>
       </aside>
 
-      <main style={{ flex: 1, minWidth: 0 }}>
-        {activeView === "current-state" ? (
-          <CurrentState signalPacket={bundle.thesis.signalPacket} />
-        ) : activeView === "browse-the-data" ? (
-          <BrowseTheData signalPacket={bundle.thesis.signalPacket} />
-        ) : activeChapter ? (
-          <ChapterSection chapter={activeChapter} signalPacket={bundle.thesis.signalPacket} visualDatasets={bundle.thesis.signalPacket.visualDatasets} />
-        ) : null}
+      <main style={{ flex: 1, minWidth: 0, display: "flex", justifyContent: "center" }}>
+        <div style={{ width: "100%", maxWidth: 1280 }}>
+          {activeView === "current-state" ? (
+            <CurrentState signalPacket={bundle.thesis.signalPacket} />
+          ) : activeView === "browse-the-data" ? (
+            <BrowseTheData signalPacket={bundle.thesis.signalPacket} />
+          ) : activeChapter ? (
+            <ChapterSection chapter={activeChapter} signalPacket={bundle.thesis.signalPacket} visualDatasets={bundle.thesis.signalPacket.visualDatasets} />
+          ) : null}
+        </div>
       </main>
     </div>
   );
