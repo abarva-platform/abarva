@@ -150,6 +150,16 @@ const ESCALATOR_FIELDS: EscalatorField[] = [
   },
 ];
 
+/**
+ * Every answerable key, dimensions and escalators together. Kept as a key list
+ * rather than a concatenated field list because `DimensionField` carries a
+ * `hint` that `EscalatorField` does not — the two arrays are not one type.
+ */
+const ALL_FIELD_KEYS: ReadonlyArray<keyof RiskTierInputs> = [
+  ...DIMENSION_FIELDS.map((f) => f.key),
+  ...ESCALATOR_FIELDS.map((f) => f.key),
+];
+
 const BAND_TONE: Record<
   RiskTierResult["band"],
   "neutral" | "green" | "amber" | "red"
@@ -222,9 +232,7 @@ export function RiskAssessmentPanel({ moveId }: RiskAssessmentPanelProps) {
   const isDirty =
     allFieldsAnswered &&
     (!lastSavedInputs ||
-      DIMENSION_FIELDS.concat(ESCALATOR_FIELDS).some(
-        (f) => values[f.key] !== lastSavedInputs[f.key],
-      ));
+      ALL_FIELD_KEYS.some((key) => values[key] !== lastSavedInputs[key]));
 
   const livePreview: RiskTierResult | null =
     allFieldsAnswered && isDirty
