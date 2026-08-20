@@ -35,10 +35,18 @@
 // its own PHASE CAPTURE EVIDENCE INTEGRITY comment).
 
 import { NextRequest } from "next/server";
-import { requireTenancy, tenancyErrorResponse } from "@/app/api/v1/programs/_auth";
+import {
+  requireTenancy,
+  tenancyErrorResponse,
+} from "@/app/api/v1/programs/_auth";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { getModuleState, getProgramById } from "@/lib/programs/queries";
 import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
+import {
+  computeCaptureRevision,
+  diffCaptureValues,
+  findPlaceholderValues,
+} from "@/lib/programs/phase-capture-integrity";
 import {
   evaluatePhaseCapture,
   getPhaseCaptureSections,
@@ -55,7 +63,9 @@ function parsePhase(value: string | null | undefined): number | null {
   return parsed;
 }
 
-function readModuleValue(moduleState: Record<string, unknown> | null | undefined): string {
+function readModuleValue(
+  moduleState: Record<string, unknown> | null | undefined,
+): string {
   const value = moduleState?.value;
   return typeof value === "string" ? value : "";
 }
@@ -102,6 +112,11 @@ export async function GET(
       phase,
       currentPhase: program.currentPhase,
       capture: evaluation,
+      // The authoritative values, flat, plus the revision a client must echo
+      // back on write. Surfaced so a page can render persisted state directly
+      // instead of synthesizing it — the defect this route now guards against.
+      values,
+      revision: computeCaptureRevision(values),
       savePath: `/api/v1/programs/${programId}/phase-capture`,
       approvalPath: `/api/v1/programs/${programId}/phase-gate-approval`,
     });
@@ -131,9 +146,13 @@ export async function POST(
       items?: Record<string, unknown>;
       sections?: Record<string, unknown>;
       complete?: boolean;
+      /** Revision the client loaded. A mismatch means the write is stale. */
+      expectedRevision?: string;
     };
     const phase = parsePhase(
-      body.phase === undefined ? String(program.currentPhase ?? 0) : String(body.phase),
+      body.phase === undefined
+        ? String(program.currentPhase ?? 0)
+        : String(body.phase),
     );
     if (phase === null) {
       return Response.json(
@@ -146,6 +165,56 @@ export async function POST(
     const currentValues = await loadCaptureValues(ctx, programId, phase).catch(
       () => ({}),
     );
+    const currentRevision = computeCaptureRevision(currentValues);
+
+    // GUARD 1 — revision fence. A client that loaded revision R may only write
+    // against revision R. If the persisted state has moved on, the write is
+    // stale by definition and is rejected rather than applied over newer data.
+    // Optional so existing non-Move callers keep working; clients that send it
+    // get the protection.
+    if (
+      typeof body.expectedRevision === "string" &&
+      body.expectedRevision !== currentRevision
+    ) {
+      return Response.json(
+        {
+          error: "stale_revision",
+          phase,
+          expectedRevision: body.expectedRevision,
+          currentRevision,
+          values: currentValues,
+          capture: evaluatePhaseCapture(phase, currentValues),
+          detail:
+            "This page was loaded before the capture state changed. Reload the authoritative values and re-apply the edit.",
+        },
+        { status: 409 },
+      );
+    }
+
+    // GUARD 2 — placeholder rejection. Known synthetic draft text must never be
+    // persisted as an authoritative client answer, whatever sends it. This is
+    // the floor that survives an old browser tab replaying the original bug.
+    const placeholders = findPlaceholderValues(incoming);
+    if (placeholders.length > 0) {
+      return Response.json(
+        {
+          error: "placeholder_value_rejected",
+          phase,
+          rejected: placeholders.map((p) => p.key),
+          detail:
+            "Synthetic placeholder text cannot be saved as phase capture. Send the authoritative persisted value or a real edit.",
+        },
+        { status: 422 },
+      );
+    }
+
+    // Only sections that actually changed are written. A no-edit save therefore
+    // performs no write at all — which is the point: the destructive path was a
+    // read-into-browser-then-POST-it-all-back round-trip, and removing the write
+    // removes the opportunity to get it wrong.
+    const changedSections = diffCaptureValues(currentValues, incoming);
+    const hasEdits = changedSections.length > 0;
+
     const mergedValues = { ...currentValues, ...incoming };
     const evaluation = evaluatePhaseCapture(phase, mergedValues);
     const markComplete = body.complete === true;
@@ -157,7 +226,8 @@ export async function POST(
           phase,
           missing: evaluation.missing,
           capture: evaluation,
-          detail: "Required capture sections must be completed before phase capture can be marked complete.",
+          detail:
+            "Required capture sections must be completed before phase capture can be marked complete.",
         },
         { status: 409 },
       );
@@ -175,13 +245,27 @@ export async function POST(
       .in("module_key", moduleKeys);
     if (existingError) throw existingError;
     const existingByKey = new Map(
-      ((existingRows as Array<{ id: string; module_key: string; status: string }> | null) ?? [])
-        .map((row) => [row.module_key, row]),
+      (
+        (existingRows as Array<{
+          id: string;
+          module_key: string;
+          status: string;
+        }> | null) ?? []
+      ).map((row) => [row.module_key, row]),
     );
 
+    const changedKeys = new Set(changedSections.map((c) => c.key));
     for (const [order, section] of evaluation.sections.entries()) {
+      // Untouched sections are skipped entirely unless this call is also
+      // marking the phase complete, which legitimately changes their status.
+      if (!changedKeys.has(section.key) && !markComplete) continue;
       const moduleKey = phaseCaptureModuleKey(phase, section.key);
-      const status = markComplete && section.complete ? "completed" : section.complete ? "in_progress" : "not_started";
+      const status =
+        markComplete && section.complete
+          ? "completed"
+          : section.complete
+            ? "in_progress"
+            : "not_started";
       const state = {
         capture_section_key: section.key,
         label: section.label,
@@ -223,30 +307,51 @@ export async function POST(
       }
     }
 
-    if (phase === 0) {
+    // The phase-0 charter mirror is the most dangerous write in this route:
+    // `engagements.charter` is the authoritative origination record and the
+    // rehydration source of last resort. Only mirror when a capture value
+    // actually changed — a no-edit save must never touch it.
+    if (phase === 0 && hasEdits) {
       const knownEvidence =
-        evaluation.sections.find((s) => s.key === "known_evidence")?.value ?? "";
+        evaluation.sections.find((s) => s.key === "known_evidence")?.value ??
+        "";
       const charter = {
         ...(program.charter ?? {}),
-        business_trigger: evaluation.sections.find((s) => s.key === "business_trigger")?.value ?? "",
-        problem_statement: evaluation.sections.find((s) => s.key === "problem_statement")?.value ?? "",
-        affected_function_process: evaluation.sections.find((s) => s.key === "affected_function_process")?.value ?? "",
-        value_hypothesis: evaluation.sections.find((s) => s.key === "initial_value_hypothesis")?.value ?? "",
-        sponsor_candidate: evaluation.sections.find((s) => s.key === "stakeholder_owner_view")?.value ?? "",
-        scope_boundary: evaluation.sections.find((s) => s.key === "affected_function_process")?.value ?? "",
+        business_trigger:
+          evaluation.sections.find((s) => s.key === "business_trigger")
+            ?.value ?? "",
+        problem_statement:
+          evaluation.sections.find((s) => s.key === "problem_statement")
+            ?.value ?? "",
+        affected_function_process:
+          evaluation.sections.find((s) => s.key === "affected_function_process")
+            ?.value ?? "",
+        value_hypothesis:
+          evaluation.sections.find((s) => s.key === "initial_value_hypothesis")
+            ?.value ?? "",
+        sponsor_candidate:
+          evaluation.sections.find((s) => s.key === "stakeholder_owner_view")
+            ?.value ?? "",
+        scope_boundary:
+          evaluation.sections.find((s) => s.key === "affected_function_process")
+            ?.value ?? "",
         evidence_family: knownEvidence,
         known_evidence: knownEvidence,
         missing_evidence_open_questions:
-          evaluation.sections.find((s) => s.key === "missing_evidence_open_questions")?.value ?? "",
+          evaluation.sections.find(
+            (s) => s.key === "missing_evidence_open_questions",
+          )?.value ?? "",
         recommendation_to_advance:
-          evaluation.sections.find((s) => s.key === "recommendation_to_advance")?.value ?? "",
+          evaluation.sections.find((s) => s.key === "recommendation_to_advance")
+            ?.value ?? "",
         phase_capture_completed_at: markComplete ? nowIso : null,
       };
       const { error } = await sb
         .from("engagements")
         .update({
           charter,
-          problem_statement: charter.problem_statement || program.problemStatement,
+          problem_statement:
+            charter.problem_statement || program.problemStatement,
           target_outcome: charter.value_hypothesis || program.targetOutcome,
           updated_at: nowIso,
         })
@@ -258,12 +363,18 @@ export async function POST(
     await writeProgramAuditLogBestEffort(ctx, {
       programId,
       engagementId: programId,
-      action: markComplete ? "phase_capture_completed" : "phase_capture_saved",
+      action: markComplete
+        ? "phase_capture_completed"
+        : hasEdits
+          ? "phase_capture_saved"
+          : "phase_capture_validated_no_change",
       fromState: null,
       toState: `P${phase}`,
       rationale: markComplete
         ? `Phase ${phase} capture completed through signed-in capture path.`
-        : `Phase ${phase} capture saved through signed-in capture path.`,
+        : hasEdits
+          ? `Phase ${phase} capture saved (${changedSections.length} field(s) changed) through signed-in capture path.`
+          : `Phase ${phase} capture validated with no changes; no values written.`,
       evidenceRefs: moduleKeys,
     });
 
@@ -276,7 +387,9 @@ export async function POST(
       ok: true,
       programId,
       phase,
-      persisted: true,
+      persisted: hasEdits || markComplete,
+      changedFields: changedSections.map((c) => c.key),
+      revision: computeCaptureRevision(mergedValues),
       savedFields: evaluation.sections
         .filter((section) => section.complete)
         .map((section) => section.key),
