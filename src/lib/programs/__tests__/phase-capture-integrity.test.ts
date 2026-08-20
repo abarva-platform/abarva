@@ -93,15 +93,36 @@ describe("invariant 6 — a stale revision cannot overwrite newer data", () => {
   });
 
   it("cannot be confused by values that concatenate to the same string", () => {
-    // A naive join would collide these two; the delimiter must prevent it.
+    // A naive join would collide these two; the encoding must prevent it.
     expect(computeCaptureRevision({ a: "xy", b: "z" })).not.toBe(
       computeCaptureRevision({ a: "x", b: "yz" }),
     );
   });
 
-  it("treats null and empty as the same absent value", () => {
-    expect(computeCaptureRevision({ a: null })).toBe(
-      computeCaptureRevision({ a: "" }),
+  it("is injective when a value contains the separator itself", () => {
+    // REGRESSION: `key + " " + value` joined with "" collided here — both
+    // encode to "a xb b ", so two genuinely different capture states produced
+    // the same revision and a stale write would have passed the fence.
+    // Keep this test permanently.
+    expect(computeCaptureRevision({ a: "xb ", b: "" })).not.toBe(
+      computeCaptureRevision({ a: "x", b: "b " }),
+    );
+  });
+
+  it("distinguishes absent from null from empty string", () => {
+    // "never captured", "explicitly null" and "captured then cleared" are
+    // different facts. A fence that conflates them accepts a stale write that
+    // crossed between the two.
+    const absent = computeCaptureRevision({});
+    const nulled = computeCaptureRevision({ a: null });
+    const empty = computeCaptureRevision({ a: "" });
+    expect(new Set([absent, nulled, empty]).size).toBe(3);
+  });
+
+  it("includes field NAMES, not values alone", () => {
+    // Same values under different keys must not share a revision.
+    expect(computeCaptureRevision({ a: "one" })).not.toBe(
+      computeCaptureRevision({ b: "one" }),
     );
   });
 });

@@ -85,6 +85,22 @@ phase page; no schema change, no migration).
 the sorted persisted values. No migration, it cannot drift out of sync with the
 rows it describes, and it detects change regardless of which path wrote it.
 
+The encoding is **length-prefixed, not delimiter-joined**, and this matters. The
+first implementation used `key + " " + value` joined on `""`, which is not
+injective: `{a:"xb ", b:""}` and `{a:"x", b:"b "}` both encode to `"a xb b "`
+and therefore produced the _same revision_ — two genuinely different capture
+states the fence could not tell apart, so a stale write would have passed.
+Caught during review before merge; a permanent regression test pins it.
+
+The canonical form also distinguishes **absent / null / empty-string** as three
+different states. "Never captured", "explicitly null" and "captured then
+cleared" are different facts, and conflating them would let a stale write that
+crossed between them slip through. Field _names_ are included, so identical
+values under different keys never share a revision.
+
+A successful write returns the **new** revision, so a client does not become
+stale against its own accepted save.
+
 **Server-side preload rather than fetch-after-mount.** The phase page already
 renders on the server. Passing one authoritative snapshot avoids the loading
 window in which the previous defect displayed boilerplate as real answers. The
@@ -98,16 +114,18 @@ how the two drifted apart in the first place.
 
 - `npx tsc --noEmit --pretty false` — 0 errors, full project.
 - `npx eslint` on all five touched files — 0 errors, 0 warnings.
-- 19 new tests covering the invariants provable without I/O:
+- 21 new tests covering the invariants provable without I/O:
   - **Invariant 7** (defaults can never serialize): every legacy boilerplate
     string is recognised, including under reformatting, case change and
     whitespace padding; real client answers are not rejected; empty and
     non-string values are correctly treated as not-placeholder; offending keys
     are named so the sending client can be fixed.
   - **Invariant 6** (stale revision cannot overwrite): revision is stable across
-    key order, changes on any value/key change, cannot be confused by values
-    that concatenate identically (`{a:"xy",b:"z"}` vs `{a:"x",b:"yz"}`), and
-    treats null and empty as the same absent value.
+    key order; changes on any value/key change; includes field names so the same
+    value under a different key differs; distinguishes absent/null/empty as three
+    states; and is injective when a value contains the separator itself — the
+    `{a:"xb ",b:""}` vs `{a:"x",b:"b "}` case that collided in the first
+    implementation and is now pinned permanently.
   - **Invariants 3 and 4** (reload and no-edit save change nothing): an exact
     echo, a partial echo, and whitespace drift from a round-trip all diff to
     zero changes.
@@ -115,9 +133,9 @@ how the two drifted apart in the first place.
     the edited key with before/after; detects filling an empty field; detects
     clearing a field as a real edit; treats an absent key as untouched rather
     than cleared.
-- Regression sweep `src/lib/programs` + `src/components/strategic-moves`: 3,550
+- Regression sweep `src/lib/programs` + `src/components/strategic-moves`: 3,552
   tests, 9 failing. Stashed-baseline: 3,531 tests, the **same 9** failing.
-  Net: 19 added, all passing, **zero new failures**.
+  Net: 21 added, all passing, **zero new failures**.
 
 ## Rollout Plan
 
