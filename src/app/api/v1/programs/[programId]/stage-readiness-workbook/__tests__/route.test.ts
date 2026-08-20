@@ -4,6 +4,7 @@ const mockLoadDiscoveryEvidenceReadiness = jest.fn();
 const mockBuildMoveEvidenceNeedPackets = jest.fn();
 const mockBuildStageReadinessWorkbookSpec = jest.fn();
 const mockRenderStageReadinessWorkbookXlsx = jest.fn();
+const mockParseStageReadinessWorkbookXlsx = jest.fn();
 
 jest.mock("@/app/api/v1/programs/_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -40,6 +41,11 @@ jest.mock("@/lib/programs/stage-readiness-workbooks/xlsx", () => ({
     mockRenderStageReadinessWorkbookXlsx(spec),
 }));
 
+jest.mock("@/lib/programs/stage-readiness-workbooks/parser", () => ({
+  parseStageReadinessWorkbookXlsx: (input: unknown, options: unknown) =>
+    mockParseStageReadinessWorkbookXlsx(input, options),
+}));
+
 const params = Promise.resolve({ programId: "move-1" });
 const ctx = {
   clientId: "client-1",
@@ -51,6 +57,14 @@ function req(
   url = "http://test/api/v1/programs/move-1/stage-readiness-workbook",
 ) {
   return new Request(url);
+}
+
+function uploadReq(
+  url = "http://test/api/v1/programs/move-1/stage-readiness-workbook",
+) {
+  const form = new FormData();
+  form.set("file", new File([Buffer.from("xlsx")], "workbook.xlsx"));
+  return new Request(url, { method: "POST", body: form });
 }
 
 beforeEach(() => {
@@ -75,6 +89,31 @@ beforeEach(() => {
     metadata: { workbookContentHash: "abc123" },
   });
   mockRenderStageReadinessWorkbookXlsx.mockResolvedValue(Buffer.from("xlsx"));
+  mockParseStageReadinessWorkbookXlsx.mockResolvedValue({
+    ok: true,
+    metadata: {
+      workbookId: "move-1:p1-p2:stage-readiness",
+      moveId: "move-1",
+      phase: 1,
+      nextPhase: 2,
+    },
+    responses: [
+      {
+        questionId: "q-1",
+        dimensionId: "business_process",
+        response: "Confirmed",
+      },
+    ],
+    issues: [],
+    summary: {
+      totalQuestions: 1,
+      answeredQuestions: 1,
+      requiredAnswered: 1,
+      requiredTotal: 1,
+      warningCount: 0,
+      errorCount: 0,
+    },
+  });
 });
 
 describe("GET /api/v1/programs/[programId]/stage-readiness-workbook", () => {
@@ -137,6 +176,84 @@ describe("GET /api/v1/programs/[programId]/stage-readiness-workbook", () => {
 
     expect(res.status).toBe(400);
     expect(mockRenderStageReadinessWorkbookXlsx).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/v1/programs/[programId]/stage-readiness-workbook", () => {
+  it("parses an uploaded workbook without persisting the responses", async () => {
+    const { POST } = await import("../route");
+    const res = await POST(uploadReq(), { params });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      ok: true,
+      metadata: {
+        workbookId: "move-1:p1-p2:stage-readiness",
+        moveId: "move-1",
+      },
+      summary: { totalQuestions: 1, answeredQuestions: 1 },
+    });
+    expect(mockParseStageReadinessWorkbookXlsx).toHaveBeenCalledWith(
+      expect.any(Buffer),
+      { expectedMoveId: "move-1", expectedPhase: 1 },
+    );
+    expect(mockBuildStageReadinessWorkbookSpec).not.toHaveBeenCalled();
+    expect(mockRenderStageReadinessWorkbookXlsx).not.toHaveBeenCalled();
+  });
+
+  it("returns 422 when workbook metadata does not match the route context", async () => {
+    mockParseStageReadinessWorkbookXlsx.mockResolvedValueOnce({
+      ok: false,
+      metadata: {
+        workbookId: "other:p1-p2:stage-readiness",
+        moveId: "other",
+        phase: 1,
+        nextPhase: 2,
+      },
+      responses: [],
+      issues: [
+        {
+          severity: "error",
+          code: "move_mismatch",
+          message:
+            "Workbook moveId other does not match expected moveId move-1.",
+        },
+      ],
+      summary: {
+        totalQuestions: 0,
+        answeredQuestions: 0,
+        requiredAnswered: 0,
+        requiredTotal: 0,
+        warningCount: 0,
+        errorCount: 1,
+      },
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(uploadReq(), { params });
+
+    expect(res.status).toBe(422);
+    await expect(res.json()).resolves.toMatchObject({
+      ok: false,
+      issues: [expect.objectContaining({ code: "move_mismatch" })],
+    });
+  });
+
+  it("rejects requests without a workbook file", async () => {
+    const { POST } = await import("../route");
+    const res = await POST(
+      new Request(
+        "http://test/api/v1/programs/move-1/stage-readiness-workbook",
+        {
+          method: "POST",
+          body: new FormData(),
+        },
+      ),
+      { params },
+    );
+
+    expect(res.status).toBe(400);
+    expect(mockParseStageReadinessWorkbookXlsx).not.toHaveBeenCalled();
   });
 });
 
