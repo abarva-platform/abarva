@@ -108,8 +108,12 @@ export interface ConsolidatedOpenInput {
 
 function normalizeOpenInputDetail(detail: string): string {
   const normalized = detail
-    .replace(/\[CLIENT TO COMPLETE:?\s*([^\]]*)\]/gi, (_match, inner: string) =>
-      inner?.trim() ? `Client input required: ${inner.trim()}` : "Client input required",
+    .replace(
+      /\[CLIENT TO COMPLETE:?\s*([^\]]*)\]/gi,
+      (_match, inner: string) =>
+        inner?.trim()
+          ? `Client input required: ${inner.trim()}`
+          : "Client input required",
     )
     .replace(/\bTBC\b/g, "requires confirmation")
     .replace(/\bto be confirmed\b/gi, "requires confirmation")
@@ -120,7 +124,8 @@ function normalizeOpenInputDetail(detail: string): string {
 
 function normalizeUnsupportedClaimForOpenInputs(claim: string): string {
   const normalized = normalizeOpenInputDetail(claim);
-  if (!FACT_LIKE.test(normalized) || SUPPORTED.test(normalized)) return normalized;
+  if (!FACT_LIKE.test(normalized) || SUPPORTED.test(normalized))
+    return normalized;
   return `${normalized} [ASSUMPTION TO VALIDATE: numeric/date/value claim requires client confirmation or cited source before it is treated as committed.]`;
 }
 
@@ -132,7 +137,9 @@ function repairStructuredTable(table: RenderableTable): RenderableTable {
   return {
     ...table,
     columns: table.columns.map((column) => normalizeOpenInputDetail(column)),
-    rows: table.rows.map((row) => row.map((cell) => repairStructuredClientFactText(cell))),
+    rows: table.rows.map((row) =>
+      row.map((cell) => repairStructuredClientFactText(cell)),
+    ),
   };
 }
 
@@ -145,7 +152,9 @@ function repairStructuredChecklist(
     owner: repairStructuredClientFactText(String(item.owner)),
     reason: item.reason,
     ...(item.placeholderText
-      ? { placeholderText: repairStructuredClientFactText(item.placeholderText) }
+      ? {
+          placeholderText: repairStructuredClientFactText(item.placeholderText),
+        }
       : {}),
   }));
 }
@@ -454,13 +463,18 @@ export function assembleDeliverable(
 ): RenderableDeliverable {
   const { sections: cleanedSections, harvested } =
     consolidateOpenInputPlaceholders(sections);
-  // Consolidation is itself a transformation after the per-section repair. Run
-  // the same deterministic repair once more on the final body surface that the
-  // quality validator scans, so no later normalization can reintroduce an
-  // unsupported numeric/date claim.
+  // Consolidation is itself a transformation after the per-section repair, so
+  // repair runs once more on the RENDERED surface — a later normalization must
+  // not reintroduce an untagged figure into what a reader sees.
+  //
+  // `rawBodyMarkdown` is deliberately carried through untouched: the quality
+  // gate judges what the model actually wrote. Repairing before validation made
+  // the unsupported-claim blocker unreachable, because the tag repair appends is
+  // itself one of the gate's own "supported" markers.
   const finalSections = cleanedSections.map((section) => ({
     ...section,
     bodyMarkdown: repairUncitedFigures(section.bodyMarkdown),
+    rawBodyMarkdown: section.rawBodyMarkdown ?? section.bodyMarkdown,
   }));
   const combinedClaims: UnsupportedFigureClaim[] = [
     ...(options.unsupportedClaims ?? []),
@@ -482,7 +496,9 @@ export function assembleDeliverable(
     synth.clientCompleteChecklist && synth.clientCompleteChecklist.length > 0
       ? repairStructuredChecklist(synth.clientCompleteChecklist)
       : repairStructuredChecklist(req.clientCompleteItems ?? []);
-  const nextActions = (synth.nextActions ?? []).map(repairStructuredClientFactText);
+  const nextActions = (synth.nextActions ?? []).map(
+    repairStructuredClientFactText,
+  );
   return {
     title: honestTitle(req, synth),
     subtitle: synth.subtitle,

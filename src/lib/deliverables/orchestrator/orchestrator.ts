@@ -18,12 +18,15 @@ import type {
   QualityValidationResult,
   RenderableDeliverable,
   RenderableSection,
-} from './types';
-import { getArtifactBrief } from './artifact-brief-registry';
-import { buildGenerationProgress, type GenerationProgress } from './progress';
-import { buildPassPrompt } from './prompt-builder';
-import { sanitizeGenerationPlan, validateGenerationPlan } from './generation-plan';
-import { validateDeliverableQuality } from './quality-validator';
+} from "./types";
+import { getArtifactBrief } from "./artifact-brief-registry";
+import { buildGenerationProgress, type GenerationProgress } from "./progress";
+import { buildPassPrompt } from "./prompt-builder";
+import {
+  sanitizeGenerationPlan,
+  validateGenerationPlan,
+} from "./generation-plan";
+import { validateDeliverableQuality } from "./quality-validator";
 import {
   mapWithConcurrency,
   extractUnsupportedFigureClaims,
@@ -32,7 +35,7 @@ import {
   assembleDeliverable,
   type SynthesisResult,
   type UnsupportedFigureClaim,
-} from './section-generation';
+} from "./section-generation";
 
 export interface ModelCallResult {
   text: string;
@@ -79,14 +82,20 @@ function scanJson<T>(candidate: string): T | null {
   const start = candidate.search(/[[{]/);
   if (start === -1) return null;
   const open = candidate[start];
-  const close = open === '{' ? '}' : ']';
+  const close = open === "{" ? "}" : "]";
   let depth = 0;
   let inStr = false;
   let esc = false;
   for (let i = start; i < candidate.length; i++) {
     const ch = candidate[i];
-    if (esc) { esc = false; continue; }
-    if (ch === '\\') { esc = true; continue; }
+    if (esc) {
+      esc = false;
+      continue;
+    }
+    if (ch === "\\") {
+      esc = true;
+      continue;
+    }
     if (ch === '"') inStr = !inStr;
     if (inStr) continue;
     if (ch === open) depth++;
@@ -141,7 +150,9 @@ async function call(
   // sections + synthesis) is known only after the plan is parsed, so the
   // architect call omits it and reports the "planning" percent. The callback
   // persists the event so the UI can show a live band during generation.
-  onProgress?.(buildGenerationProgress(prompt.pass, trace.length, expectedTotal));
+  onProgress?.(
+    buildGenerationProgress(prompt.pass, trace.length, expectedTotal),
+  );
   return res;
 }
 
@@ -167,11 +178,23 @@ export async function runDeliverableOrchestration(
   const trace: PassTraceEntry[] = [];
 
   // Pass 1 — architect
-  const architectRes = await call(modelCall, buildPassPrompt('architect', { req, brief, evidence }), req, trace, opts.onProgress);
+  const architectRes = await call(
+    modelCall,
+    buildPassPrompt("architect", { req, brief, evidence }),
+    req,
+    trace,
+    opts.onProgress,
+  );
   const plan = extractJson<DeliverableGenerationPlan>(architectRes.text);
   trace[trace.length - 1].parsedOk = !!plan;
   if (!plan) {
-    return { ok: false, brief, passTrace: trace, blockedReason: 'architect pass did not return a parseable generation plan' };
+    return {
+      ok: false,
+      brief,
+      passTrace: trace,
+      blockedReason:
+        "architect pass did not return a parseable generation plan",
+    };
   }
   // Deterministically repair the LLM's invalid citations / ungrounded sections
   // before the gate — the architect won't reliably self-constrain (it cites
@@ -179,7 +202,14 @@ export async function runDeliverableOrchestration(
   sanitizeGenerationPlan(plan, req, brief);
   const planValidation = validateGenerationPlan(plan, req, brief);
   if (!planValidation.ok && enforcePlanGate) {
-    return { ok: false, brief, plan, planValidation, passTrace: trace, blockedReason: `plan failed validation: ${planValidation.errors.join('; ')}` };
+    return {
+      ok: false,
+      brief,
+      plan,
+      planValidation,
+      passTrace: trace,
+      blockedReason: `plan failed validation: ${planValidation.errors.join("; ")}`,
+    };
   }
   // ── DECOMPOSED GENERATION ──
   // One bounded-parallel call per planned section → deterministic citation-repair → a
@@ -187,8 +217,8 @@ export async function runDeliverableOrchestration(
   // draft/rewrite/render call, so truncation is structurally impossible and total length
   // scales with section COUNT, not a single call's output ceiling.
   const outlineSummary = plan.sectionPlan
-    .map((s, i) => `${i + 1}. ${s.title} — ${s.rationale || ''}`)
-    .join('\n');
+    .map((s, i) => `${i + 1}. ${s.title} — ${s.rationale || ""}`)
+    .join("\n");
   // architect (1) + one call per planned section + synthesis (1) → the band denominator.
   const expectedTotal = plan.sectionPlan.length + 2;
   const concurrency = (() => {
@@ -201,17 +231,26 @@ export async function runDeliverableOrchestration(
     plan.sectionPlan,
     concurrency,
     async (s) => {
-      const assignedEvidence = evidence.filter((e) => s.evidenceCitations.includes(e.citationNumber));
+      const assignedEvidence = evidence.filter((e) =>
+        s.evidenceCitations.includes(e.citationNumber),
+      );
       const res = await call(
         modelCall,
-        buildPassPrompt('section_draft', { req, brief, evidence: assignedEvidence, section: s, outlineSummary }),
+        buildPassPrompt("section_draft", {
+          req,
+          brief,
+          evidence: assignedEvidence,
+          section: s,
+          outlineSummary,
+        }),
         req,
         trace,
         opts.onProgress,
         expectedTotal,
       );
       const parsed = extractJson<RenderableSection>(res.text);
-      const body = parsed && parsed.bodyMarkdown ? parsed.bodyMarkdown : res.text;
+      const body =
+        parsed && parsed.bodyMarkdown ? parsed.bodyMarkdown : res.text;
       const unsupported = extractUnsupportedFigureClaims(body);
       for (const claim of unsupported) {
         unsupportedFigureClaims.push({
@@ -219,22 +258,26 @@ export async function runDeliverableOrchestration(
           sectionTitle: (parsed && parsed.title) || s.title,
           claim,
           treatment:
-            req.deliverableType === 'business_case' ||
-            req.deliverableType === 'estimate_model' ||
-            req.deliverableType === 'financial_model' ||
-            req.deliverableType === 'value_measurement_contract'
-              ? 'open_input_required'
-              : 'assumption_to_validate',
+            req.deliverableType === "business_case" ||
+            req.deliverableType === "estimate_model" ||
+            req.deliverableType === "financial_model" ||
+            req.deliverableType === "value_measurement_contract"
+              ? "open_input_required"
+              : "assumption_to_validate",
         });
       }
-      const citationsUsed = (parsed && Array.isArray(parsed.citationsUsed)
-        ? parsed.citationsUsed
-        : s.evidenceCitations
+      const citationsUsed = (
+        parsed && Array.isArray(parsed.citationsUsed)
+          ? parsed.citationsUsed
+          : s.evidenceCitations
       ).filter((n) => validCitation.has(n));
       return {
         key: s.key,
         title: (parsed && parsed.title) || s.title,
         bodyMarkdown: repairUncitedFigures(body),
+        // Keep what the model actually wrote, so the quality gate judges the
+        // original claim rather than the repaired one — see RenderableSection.
+        rawBodyMarkdown: body,
         groundingMode: s.groundingMode,
         citationsUsed,
       };
@@ -245,17 +288,28 @@ export async function runDeliverableOrchestration(
   // risk/issues/dependencies table, client-to-complete checklist).
   const synthRes = await call(
     modelCall,
-    buildPassPrompt('synthesis', { req, brief, evidence, sectionDrafts: sections.map(summariseSection) }),
+    buildPassPrompt("synthesis", {
+      req,
+      brief,
+      evidence,
+      sectionDrafts: sections.map(summariseSection),
+    }),
     req,
     trace,
     opts.onProgress,
     expectedTotal,
   );
   const synth = extractJson<SynthesisResult>(synthRes.text) ?? {};
-  const document: RenderableDeliverable = assembleDeliverable(req, sections, synth, evidence, {
-    brief,
-    unsupportedClaims: unsupportedFigureClaims,
-  });
+  const document: RenderableDeliverable = assembleDeliverable(
+    req,
+    sections,
+    synth,
+    evidence,
+    {
+      brief,
+      unsupportedClaims: unsupportedFigureClaims,
+    },
+  );
 
   // Quality gate
   const quality = validateDeliverableQuality(document, req);
@@ -268,6 +322,8 @@ export async function runDeliverableOrchestration(
     document,
     quality,
     passTrace: trace,
-    blockedReason: ok ? undefined : `quality gate blocked export: ${quality.blockers.join('; ')}`,
+    blockedReason: ok
+      ? undefined
+      : `quality gate blocked export: ${quality.blockers.join("; ")}`,
   };
 }

@@ -107,12 +107,20 @@ export function validateDeliverableQuality(
   const sectionCount = doc.generatedSections.length;
   const tableCount = doc.tables.length;
   const leakedInternalTags = scanForInternalLeaks(body);
-  // Section titles are structural labels, not factual prose. Including a title
-  // such as "FY2026 transition horizon" in the sentence scanner creates a
-  // blocker that the deterministic body repair can never resolve. Scan the
-  // same bodyMarkdown surface that repairUncitedFigures normalizes.
+  // Section titles are structural labels, not factual prose — a title such as
+  // "FY2026 transition horizon" would raise a blocker no repair could resolve,
+  // so only body text is scanned.
+  //
+  // Scan what the MODEL wrote, not what repair rewrote. `repairUncitedFigures`
+  // appends "[ASSUMPTION TO VALIDATE: ...]" to every uncited figure, and that
+  // tag is itself one of the `supported` markers — so scanning the repaired body
+  // made this blocker structurally unreachable, and an invented figure passed
+  // purely because it had been relabelled. An assumption the model DECLARED
+  // still passes; one it was caught inventing now fails.
   const unsupportedClaimCount = countUnsupportedClaims(
-    doc.generatedSections.map((s) => s.bodyMarkdown).join("\n\n"),
+    doc.generatedSections
+      .map((s) => s.rawBodyMarkdown ?? s.bodyMarkdown)
+      .join("\n\n"),
   );
 
   const hasSourceRegister = doc.sourceRegister.length > 0;
