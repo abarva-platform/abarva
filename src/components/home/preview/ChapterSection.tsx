@@ -43,8 +43,8 @@ export function ChapterSection({
   ].filter((s): s is OnPageSection => s !== null);
 
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: 48, padding: "40px 40px 96px" }}>
-      <section style={{ flex: "1 1 480px", maxWidth: 720, minWidth: 0 }}>
+    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: 56, padding: "40px 56px 72px" }}>
+      <section style={{ flex: "1 1 520px", maxWidth: 780, minWidth: 0 }}>
         <p style={{ margin: "0 0 8px", fontFamily: "var(--font-body-sans)", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: HOME_HEX.teal }}>
           {chapter.title}
         </p>
@@ -133,7 +133,7 @@ function OnPageRail({ sections, guidingQuestion }: { sections: OnPageSection[]; 
   return (
     <aside
       style={{
-        width: 240,
+        width: 264,
         flexShrink: 0,
         position: "sticky",
         top: 40,

@@ -43,7 +43,7 @@ export function BrowseTheData({ signalPacket }: { signalPacket: EnterpriseSignal
   }, [rows, query, domainFilter]);
 
   return (
-    <section style={{ maxWidth: 1040, padding: "40px 40px 96px" }}>
+    <section style={{ maxWidth: 1040, padding: "40px 56px 72px" }}>
       <p style={{ margin: "0 0 8px", fontFamily: "var(--font-body-sans)", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: HOME_HEX.teal }}>
         Browse the data
       </p>

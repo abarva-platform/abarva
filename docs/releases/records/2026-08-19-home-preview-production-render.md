@@ -434,3 +434,22 @@ surfaced a gap in this workstream's own verification habit: prior live-proof che
 the desktop viewport this route was designed for -- tablet width (768px) was never checked and
 this bug went unnoticed for two prior iterations as a result. Live proof for this iteration
 explicitly includes a tablet-width check.
+
+**Seventh iteration -- layout density.** The reviewer flagged large dead gutters on a wide
+(~1900px) monitor: one between the left explorer and the content, another after the content.
+Root cause was in `HomePreviewApp`'s `main`: it centered a fixed `maxWidth: 1280` container inside
+the space remaining after the 268px sidebar, so on a wide screen the leftover split into two
+gutters of roughly 176px each rather than one margin. Compounding it, `ChapterSection`'s flex row
+only consumed about 1088px of that 1280 (720px prose + 48px gap + 240px rail + 80px padding),
+leaving a further ~190px of unused slack at its right edge. Fixed by dropping the centering so
+content is left-aligned and begins immediately after the rail, raising the container cap to 1340,
+widening the prose measure to 780 and the rail to 264, and standardising horizontal padding at
+56px across all four views (chapters, Current State, Browse the Data, Technology Estate) so every
+view shares one left edge. Any remaining slack on very wide screens now collects as a single right
+margin instead of being distributed into gutters between elements.
+
+This is a targeted density fix, not the broader visual redesign -- a separate design direction for
+the chapter reader has been drafted against the locked brand canon (Fraunces/Inter/JetBrains Mono,
+paper ground, evidence surfaced as margin sidenotes rather than behind a click) and pushed to the
+AbarVa Design System project as `preview/20-home-chapter-reader.html` for review. That redesign is
+not implemented in React and is explicitly not part of this change.

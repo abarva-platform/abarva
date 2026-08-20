@@ -149,8 +149,12 @@ export function HomePreviewApp({
         </div>
       </aside>
 
-      <main style={{ flex: 1, minWidth: 0, display: "flex", justifyContent: "center" }}>
-        <div style={{ width: "100%", maxWidth: 1280 }}>
+      {/* Left-aligned, not centered: centering a fixed container inside the space left over
+          after the sidebar split the slack into two dead gutters -- one between the sidebar and
+          the content, one after it. Content now starts right after the rail and any leftover
+          collects as a single right margin. */}
+      <main style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ width: "100%", maxWidth: 1340 }}>
           {activeView === "current-state" ? (
             <CurrentState signalPacket={bundle.thesis.signalPacket} />
           ) : activeView === "browse-the-data" ? (
