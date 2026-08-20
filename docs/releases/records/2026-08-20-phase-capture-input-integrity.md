@@ -68,6 +68,8 @@ guard.
 - `src/lib/programs/phase-capture-status.ts` (new) — pure state machine:
   `resolvePhaseCaptureStatus` and `statusSatisfiesDurabilityInvariant`.
 - `src/lib/programs/__tests__/phase-capture-status.test.ts` (new) — 14 tests.
+- `src/components/strategic-moves/__tests__/phase-capture-autosave-lanes.test.tsx`
+  (new) — behavioural regression guard proving fast typing loses no characters.
 
 ## QA / Validation
 
@@ -77,6 +79,14 @@ outstanding at time of writing.
 - `jest src/lib/programs/__tests__/phase-capture-status.test.ts` — **pass**, 14/14.
   Includes an exhaustive sweep asserting the invariant holds across every
   combination of draft value, persisted value and save status.
+- `jest .../phase-capture-autosave-lanes.test.tsx` — **pass**, 4/4. This is the
+  guard for the defect itself rather than for what the badge says, and it carries
+  a control case: it mounts the broken topology alongside the fixed one and
+  asserts the broken one still loses characters. Measured in the harness, the
+  effect-body variant raises 5 `Maximum update depth exceeded` errors over 300
+  characters and loses exactly 5 characters — one per error, matching both the
+  1:1 relationship predicted by React's controlled-input restore and the ~1-per-53
+  rate observed on the live app. The fixed variant loses none.
 - `tsc --noEmit` — **pass**, clean.
 - `eslint` on both touched files — **pass**, clean.
 - `jest src/lib/programs src/lib/deliverables` — **pass**, 4,122 tests passing.
@@ -115,6 +125,13 @@ revert. Reverting restores the character-loss defect, which is the reason not to
 
 ## Known Gaps
 
+- **A React Testing Library test cannot cover this defect.** RTL wraps
+  interactions in `act()`, which changes the exact scheduling semantics that
+  cause it: under `act()` the broken topology loses zero characters and the bug
+  is invisible. This was verified, not assumed — an RTL version of the guard
+  passed against the broken code before being rewritten to use `createRoot` and
+  native input events. Anyone adding coverage here must not "simplify" it back
+  onto RTL.
 - The live proof is not yet captured; this record may not be called `live-proven`
   until it is.
 - The autosave debounce still re-arms on every change to the captured values, so a
