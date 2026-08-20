@@ -38,6 +38,19 @@ fixtures.
 new, separate, admin-gated route reading static fixture files; `/home` itself and every existing
 reader are completely untouched.
 
+**Iteration after the first live look (same day, same review cycle):** direct feedback on the
+first version -- "one large page that keeps scrolling," "full canvas width," "an explorer... a
+current state tech/architecture view" -- drove a structural rebuild of the shell, not a cosmetic
+tweak. The app is now a persistent left sidebar (tenant identity, candidate badge, switcher, and
+every navigation destination) plus a single active view in the main pane, instead of all eight
+chapters concatenated into one continuously scrolling document. A new **Current State** view groups
+every loaded signal and governed fact by its real domain (Applications & Systems, Vendors &
+Contracts, Infrastructure & Platforms, Workforce, Programs & Initiatives, Risk & Controls, AI &
+Automation, and twelve more) into expandable category cards with real counts -- the "what has been
+loaded" survey the feedback asked for, distinct from Browse the Data's flat searchable list. A fact
+spanning multiple domains (e.g. a vendor concentration that is also a spend fact) genuinely appears
+under each domain it belongs to, not deduplicated to one "primary" category.
+
 ## Layer Impact
 
 Release lane: `internal-admin` (gated to platform admin / foundation-preview operator only; not a
@@ -109,9 +122,25 @@ change. No product route change to `/home` itself.
   governed context item in the tenant's packet, searchable by text and filterable by domain,
   independent of whether any chapter cited it.
 - `src/components/home/preview/ChapterSection.tsx`, `HomePreviewApp.tsx`,
-  `HomePreviewAppRoot.tsx` (new) -- the full chapter composition and the page-level app shell
-  (tenant switcher, candidate-status badge reusing the existing governed `StateBadge` component's
-  `candidate` tone, chapter jump nav, generation-provenance strip).
+  `HomePreviewAppRoot.tsx` (new) -- the full chapter composition and the page-level app shell.
+  **Rebuilt after first live feedback**: `HomePreviewApp` is now a persistent left sidebar
+  (tenant identity, candidate-status badge reusing the existing governed `StateBadge` component's
+  `candidate` tone, tenant switcher, chapter nav, Current State and Browse the Data links,
+  generation-provenance footer) with a single active view in the main pane -- clicking a sidebar
+  item swaps `main`'s content entirely rather than scrolling to an anchor within one long page.
+  Local `activeView` state lives in `HomePreviewApp` itself (not lifted to the root), so it
+  naturally survives a tenant switch since the same component instance persists.
+- `src/components/home/preview/domain-labels.ts` (new) -- human-readable labels and a fixed
+  display order for the twenty raw `domains` tags (`vendor_contract`, `application_system`, etc.)
+  that appear on every signal/context item. A domain not yet in the table title-cases the raw
+  identifier rather than showing it verbatim.
+- `src/components/home/preview/CurrentState.tsx` (new) -- the "what has been loaded" survey added
+  in response to feedback asking for "an explorer... a current state tech/architecture view."
+  Groups every signal and governed fact under every domain it belongs to (not deduplicated to one
+  "primary" domain) as expandable category cards with real counts, ordered enterprise-identity ->
+  technology -> people -> risk/programs/AI. Five categories most relevant to "what does the estate
+  look like" (Applications & Systems, Infrastructure & Platforms, Vendors & Contracts, Data &
+  Integrations, Workforce) are expanded by default; the rest are one click away.
 - `src/app/(maestro)/home/preview/page.tsx` (new) -- the route itself. Follows the
   `knowledge-preview` route's established convention: `force-dynamic`, gated on
   `isPlatformAdminSession() || isFoundationPreviewOperatorSession()`, `notFound()` otherwise. Loads
@@ -123,12 +152,16 @@ change. No product route change to `/home` itself.
 
 - `NODE_OPTIONS="--max-old-space-size=6144" npx tsc --noEmit -p tsconfig.json` -- PASS, 0 errors.
 - `npx eslint` on every new/changed file -- PASS, 0 errors.
-- `npx jest` across the new test suites -- PASS, 87/87 (61 pre-existing data-build tests
-  unaffected + 26 new: golden-snapshot loading and evidence-id resolution against the real
+- `npx jest` across the new test suites -- PASS, 94/94 (61 pre-existing data-build tests
+  unaffected + 33 new: golden-snapshot loading and evidence-id resolution against the real
   fixtures, dataset field configuration against the real visual datasets, `GovernedVisual`'s three
   fallback boundary cases -- unresolvable dataset_ref, unconfigured dataset, empty dataset --
   `ClaimCard`'s expand/collapse evidence interaction against a real claim, `BrowseTheData`'s
-  search/filter/empty-state behavior).
+  search/filter/empty-state behavior, `domainLabel`'s coverage of every domain actually present in
+  either accepted tenant's real data (a new domain the generator starts emitting fails this test
+  rather than silently rendering as a title-cased guess), and `CurrentState`'s category grouping --
+  including a real multi-domain fact confirmed to render once per category it genuinely belongs
+  to, not deduplicated to a single "primary" domain).
 - Every chapter's `evidence_ids` independently re-verified to resolve to a real signal or context
   item in the same bundle (test: `golden-snapshot.test.ts`, "every chapter's evidence_ids resolve
   to a real signal or context item in the same bundle") -- the same discipline the generator's own
@@ -202,3 +235,7 @@ design-token change requires updating both places. This route intentionally does
 side-by-side (two-column) rendering of both tenants at once; the instant tenant switcher was judged
 a better reading experience for a full executive briefing than two narrower columns, but this is a
 design choice worth confirming against the reviewer's actual expectation, not an oversight.
+The layout-and-explorer iteration (sidebar shell, Current State) has been verified by
+typecheck/lint/unit tests but not yet by a second live signed-in browser pass -- the first live
+check (documented above) was against the earlier single-scrolling-page shell, before this
+iteration existed. A follow-up live check against the sidebar shell is the immediate next step.

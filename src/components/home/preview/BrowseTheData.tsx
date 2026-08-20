@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { domainLabel } from "./domain-labels";
 import { HOME_HEX } from "./visuals/home-chart-kit";
 import type { ContextItem, EnterpriseSignalPacket, Signal } from "@/lib/home/preview/types";
 
@@ -42,7 +43,7 @@ export function BrowseTheData({ signalPacket }: { signalPacket: EnterpriseSignal
   }, [rows, query, domainFilter]);
 
   return (
-    <section id="browse-the-data" style={{ maxWidth: 920, margin: "0 auto", padding: "56px 24px 96px", scrollMarginTop: 24 }}>
+    <section style={{ maxWidth: 1040, padding: "40px 40px 96px" }}>
       <p style={{ margin: "0 0 8px", fontFamily: "var(--font-body-sans)", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: HOME_HEX.teal }}>
         Browse the data
       </p>
@@ -79,7 +80,7 @@ export function BrowseTheData({ signalPacket }: { signalPacket: EnterpriseSignal
           <option value="all">All domains</option>
           {domains.map((d) => (
             <option key={d} value={d}>
-              {d}
+              {domainLabel(d)}
             </option>
           ))}
         </select>
@@ -98,7 +99,7 @@ export function BrowseTheData({ signalPacket }: { signalPacket: EnterpriseSignal
                 {r.origin === "signal" ? (r.kind ?? "signal").toUpperCase() : "GOVERNED FACT"}
               </span>
               <span style={{ fontFamily: "var(--font-body-sans)", fontSize: 10, color: HOME_HEX.textDisabled, marginLeft: "auto" }}>
-                {r.domains.join(", ")}
+                {r.domains.map(domainLabel).join(", ")}
               </span>
             </div>
             <p style={{ margin: 0, fontFamily: "var(--font-body-sans)", fontSize: 13, lineHeight: 1.5, color: HOME_HEX.textSecondary }}>

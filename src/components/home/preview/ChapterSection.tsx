@@ -24,10 +24,7 @@ export function ChapterSection({
 }) {
   const hasContent = chapter.key_insights.length > 0 || chapter.tensions.length > 0;
   return (
-    <section
-      id={chapter.chapterId}
-      style={{ maxWidth: 760, margin: "0 auto", padding: "56px 24px", scrollMarginTop: 24 }}
-    >
+    <section style={{ maxWidth: 860, padding: "40px 40px 96px" }}>
       <p style={{ margin: "0 0 8px", fontFamily: "var(--font-body-sans)", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: HOME_HEX.teal }}>
         {chapter.title}
       </p>
