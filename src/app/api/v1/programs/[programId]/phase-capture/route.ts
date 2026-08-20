@@ -182,6 +182,7 @@ export async function POST(
           phase,
           expectedRevision: body.expectedRevision,
           currentRevision,
+          revision: currentRevision,
           values: currentValues,
           capture: evaluatePhaseCapture(phase, currentValues),
           detail:
@@ -390,6 +391,7 @@ export async function POST(
       persisted: hasEdits || markComplete,
       changedFields: changedSections.map((c) => c.key),
       revision: computeCaptureRevision(mergedValues),
+      values: mergedValues,
       savedFields: evaluation.sections
         .filter((section) => section.complete)
         .map((section) => section.key),
