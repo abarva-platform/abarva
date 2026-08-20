@@ -23,8 +23,20 @@ import type { TechRecordType } from "@/lib/home/preview/types";
  *
  * Lanes, in `enterprise_estate_v1` order so orientation validates as forward:
  *   applications_core_platforms   systems that originate data
- *   integration                   the engines and gateways it crosses
+ *   integration                   the recorded MECHANISM the flow uses
  *   data / analytics_ai           where it lands
+ *
+ * The middle lane reads `integrationType`, not `platformOrDatabase`. That matters and was got
+ * wrong first: `platformOrDatabase` mixes integration engines with data stores -- for one tenant
+ * its six values are Rhapsody and SSIS (engines) alongside Epic Caboodle (an enterprise data
+ * warehouse), Epic Clarity (an operational reporting database), SQL Server, and a Tableau extract
+ * file. Placing all six in a lane labelled Integration asserts a classification the record does
+ * not make, and states something a reader in that domain knows to be false. The field name says
+ * "or database"; it has to be believed.
+ *
+ * `integrationType` is unambiguous -- HL7v2 interface, FHIR API, EDI X12, SFTP, database
+ * replication -- so it is what the integration lane holds. The platform each flow crosses is
+ * carried on the connector instead, where it is a recorded fact and not a tier claim.
  *
  * Density: a real estate holds hundreds of systems, far past any audience ceiling. Rather than
  * truncate to a top-N and imply that is everything, the tail of each lane collapses into one
@@ -102,7 +114,10 @@ export function buildCurrentStateFlowView(options: CurrentStateFlowOptions): Arc
   const excludedTargetState = all.length - rows.length;
 
   const sourceCounts = new Map<string, number>();
-  const platformCounts = new Map<string, number>();
+  /** The integration MECHANISM -- what the record calls integrationType. */
+  const mechanismCounts = new Map<string, number>();
+  /** Kept for the connector note only. Never used to place a node in a lane. */
+  const platformsByMechanism = new Map<string, Map<string, number>>();
   const targetCounts = new Map<string, number>();
   const verbBySource = new Map<string, Map<string, number>>();
   const verbByTarget = new Map<string, Map<string, number>>();
@@ -121,7 +136,10 @@ export function buildCurrentStateFlowView(options: CurrentStateFlowOptions): Arc
     const platform = str(row.platformOrDatabase) || "(no platform recorded)";
     const verb = str(row.integrationType) || "integration";
     sourceCounts.set(source, (sourceCounts.get(source) ?? 0) + 1);
-    platformCounts.set(platform, (platformCounts.get(platform) ?? 0) + 1);
+    mechanismCounts.set(verb, (mechanismCounts.get(verb) ?? 0) + 1);
+    const pm = platformsByMechanism.get(verb) ?? new Map<string, number>();
+    pm.set(platform, (pm.get(platform) ?? 0) + 1);
+    platformsByMechanism.set(verb, pm);
     targetCounts.set(target, (targetCounts.get(target) ?? 0) + 1);
     if (str(row.regulatedDataFlag) === "true") regulated += 1;
 
@@ -134,7 +152,7 @@ export function buildCurrentStateFlowView(options: CurrentStateFlowOptions): Arc
   }
 
   const sources = topAndTail(sourceCounts, perLaneLimit);
-  const platforms = topAndTail(platformCounts, perLaneLimit);
+  const mechanisms = topAndTail(mechanismCounts, perLaneLimit + 3);
   const targets = topAndTail(targetCounts, perLaneLimit);
 
   const nodes: ArchitectureViewNode[] = [];
@@ -190,35 +208,43 @@ export function buildCurrentStateFlowView(options: CurrentStateFlowOptions): Arc
     });
   }
 
-  for (const p of platforms.top) {
+  for (const m of mechanisms.top) {
+    const platforms = [...(platformsByMechanism.get(m.name) ?? new Map<string, number>()).entries()].sort((a, b) => b[1] - a[1]);
     nodes.push({
-      id: platformId(p.name),
-      label: p.name,
+      id: platformId(m.name),
+      label: m.name,
       semanticRole: "integration",
       layer: "integration",
       evidenceBasis: "CANONICAL",
-      evidenceIds: [`${integrations.objectType}.platformOrDatabase=${p.name}`],
-      metrics: { flowsCarried: p.flows },
-      note: `${p.flows} flows`,
+      evidenceIds: [`${integrations.objectType}.integrationType=${m.name}`],
+      metrics: { flowsCarried: m.flows, platformsRecorded: platforms.length },
+      // The platform is stated as a recorded fact about where this mechanism runs -- not as a
+      // claim that the platform is itself an integration component.
+      note:
+        platforms.length === 0
+          ? `${m.flows} flows`
+          : platforms.length === 1
+            ? `${m.flows} flows · on ${platforms[0][0]}`
+            : `${m.flows} flows · across ${platforms.length} platforms`,
     });
   }
-  if (platforms.tailNames.length > 0) {
+  if (mechanisms.tailNames.length > 0) {
     nodes.push({
       id: "plat-remaining",
-      label: `${platforms.tailNames.length} other platforms`,
+      label: `${mechanisms.tailNames.length} other mechanisms`,
       semanticRole: "integration",
       layer: "integration",
       evidenceBasis: "ABARVA_DERIVED",
-      evidenceIds: [`${integrations.objectType}.platformOrDatabase`],
+      evidenceIds: [`${integrations.objectType}.integrationType`],
       aggregation: {
-        groupByField: "platformOrDatabase",
+        groupByField: "integrationType",
         groupByValue: "(remaining)",
-        memberNodeIds: platforms.tailNames.map(platformId),
-        memberCount: platforms.tailNames.length,
+        memberNodeIds: mechanisms.tailNames.map(platformId),
+        memberCount: mechanisms.tailNames.length,
         basis: "CANONICAL_FIELD",
       },
-      metrics: { flowsCarried: platforms.tailFlows },
-      note: `${platforms.tailFlows} flows`,
+      metrics: { flowsCarried: mechanisms.tailFlows },
+      note: `${mechanisms.tailFlows} flows`,
     });
   }
 
@@ -257,7 +283,7 @@ export function buildCurrentStateFlowView(options: CurrentStateFlowOptions): Arc
 
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const nodeIdForSource = (n: string) => (byId.has(sourceId(n)) ? sourceId(n) : "src-remaining");
-  const nodeIdForPlatform = (n: string) => (byId.has(platformId(n)) ? platformId(n) : "plat-remaining");
+  const nodeIdForMechanism = (n: string) => (byId.has(platformId(n)) ? platformId(n) : "plat-remaining");
   const nodeIdForTarget = (n: string) => (byId.has(targetId(n)) ? targetId(n) : "tgt-remaining");
 
   // Edges are collapsed by (from, to) pair. Each carries how many recorded flows it stands for and
@@ -279,8 +305,8 @@ export function buildCurrentStateFlowView(options: CurrentStateFlowOptions): Arc
     const platform = str(row.platformOrDatabase) || "(no platform recorded)";
     const verb = str(row.integrationType) || "integration";
     const rowId = str(row.dataAssetName) || `${integrations.objectType}[${i}]`;
-    addPair(nodeIdForSource(source), nodeIdForPlatform(platform), verb, rowId);
-    addPair(nodeIdForPlatform(platform), nodeIdForTarget(target), verb, rowId);
+    addPair(nodeIdForSource(source), nodeIdForMechanism(verb), platform, rowId);
+    addPair(nodeIdForMechanism(verb), nodeIdForTarget(target), platform, rowId);
   });
 
   // Labelling all 65 connectors produces a band of overlapping 9px text between every pair of
@@ -318,7 +344,7 @@ export function buildCurrentStateFlowView(options: CurrentStateFlowOptions): Arc
                 ? dominantVerb
                 : dominantShare >= 0.6
                   ? `mostly ${dominantVerb}`
-                  : "mixed",
+                  : `${pair.verbs.size} platforms`,
           }
         : {}),
       mechanism: dominantVerb,
@@ -338,6 +364,7 @@ export function buildCurrentStateFlowView(options: CurrentStateFlowOptions): Arc
   const groupedSources = sources.top.filter((s) => (environmentsOf.get(s.name)?.size ?? 1) > 1);
   const limitations: string[] = [
     "Lanes are role in the flow -- originates, carries, receives -- not a stated architecture tier. The record does not declare which tier a system belongs to.",
+    "The middle lane is the recorded integration mechanism. The platform each flow crosses is named on the connector rather than drawn as a node, because the source field mixes integration engines with data warehouses and reporting databases and does not distinguish them.",
     `Only systems that appear in a recorded integration are drawn. A system with no integration row is absent from this view whether or not it exists.`,
   ];
   if (sources.tailNames.length + targets.tailNames.length > 0) {

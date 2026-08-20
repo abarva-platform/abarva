@@ -360,3 +360,34 @@ its own, and any other field that degrades gets caught the same way.
 Search is kept working rather than reproduced as the design's `NOT IN DRAFT` placeholder --
 removing functioning behaviour to match a mockup's stub would be following the design past the
 point where it is describing intent.
+
+
+## Correction — a database is not an integration component
+
+The first topology placed every value of `platformOrDatabase` in a lane labelled **Integration**.
+For one tenant that lane therefore read:
+
+| value | what it actually is |
+| --- | --- |
+| Rhapsody Integration Engine | integration engine |
+| SSIS package | ETL tool |
+| **Epic Caboodle** | Epic's enterprise **data warehouse** |
+| **Epic Clarity (SQL Server)** | operational **reporting database** |
+| **SQL Server (on-prem)** | a **database** |
+| **Tableau extract (.hyper)** | a BI **extract file** |
+
+Four of six are not integration. The field name says "or database" and was not believed. Worse,
+the same field means different things per tenant -- the other tenant's five values genuinely are
+middleware (Informatica, Kafka, MuleSoft, EDI gateway, direct point-to-point) -- so no single lane
+assignment from that field can be correct for both.
+
+This is the failure this projection's own header warns against: asserting a classification the
+record does not make. It would be spotted immediately by anyone who works in the domain, which is
+the worst kind, because it costs credibility on a page whose entire argument is that every value
+shown is recorded.
+
+The integration lane now reads `integrationType`, which is unambiguous by definition -- HL7v2
+interface, FHIR API, EDI X12 transaction, batch file transfer (SFTP), database replication, SSIS
+ETL pipeline. The platform each flow crosses is named on the connector, where it is a recorded fact
+about where a mechanism runs rather than a claim about what tier the platform belongs to. The
+limitation states plainly why the field is not used for placement.
