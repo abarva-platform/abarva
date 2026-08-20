@@ -36,6 +36,12 @@ export interface ArtifactWordBudget {
    * whichever pipeline's number happened to already exist.
    */
   minWords: number;
+  /**
+   * Optional floor when a pipeline measures prose only. Table-led artifacts can
+   * carry substantial decision content in required tables, so their prose floor
+   * can be lower than the whole-body floor without making the document thin.
+   */
+  minProseWords?: number;
   /** The range to aim for when evidence/context is rich. */
   targetWords: { min: number; max: number };
   /**
@@ -104,6 +110,7 @@ export const CHARTER_CONTRACT: ArtifactContract = {
   deliverableType: "charter",
   wordBudget: {
     minWords: 900,
+    minProseWords: 700,
     targetWords: { min: 900, max: 1_100 },
     hardMaxWords: 1_300,
     advisoryMaxWords: 1_500,
