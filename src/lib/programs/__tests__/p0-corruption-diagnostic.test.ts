@@ -70,7 +70,7 @@ describe("corruption requires all three conditions", () => {
       }),
     );
     const field = d.fields.find((f) => f.captureKey === "problem_statement")!;
-    expect(field.captureAssessment).toBe("corrupt_restorable");
+    expect(field.captureAssessment).toBe("likely_corrupt_repairable");
     expect(d.affected).toBe(true);
     expect(d.corruptCaptureKeys).toContain("problem_statement");
   });
@@ -91,12 +91,13 @@ describe("corruption requires all three conditions", () => {
     ).toBe("clean");
   });
 
-  it("calls boilerplate with NO scaffold source unrestorable, not clean", () => {
+  it("calls boilerplate with NO scaffold source ambiguous, not clean", () => {
     const d = diagnoseMove(
       layers({ captureValues: { problem_statement: BOILER_PROBLEM } }),
     );
     const field = d.fields.find((f) => f.captureKey === "problem_statement")!;
-    expect(field.captureAssessment).toBe("corrupt_unrestorable");
+    expect(field.captureAssessment).toBe("ambiguous");
+    expect(field.captureAction).toBe("human_review");
     expect(d.ambiguousKeys).toContain("problem_statement");
     expect(d.fullyRestorable).toBe(false);
   });
@@ -116,7 +117,7 @@ describe("corruption requires all three conditions", () => {
     expect(d.fullyRestorable).toBe(false);
   });
 
-  it("treats an empty capture value as clean, not corrupt", () => {
+  it("treats an empty capture value as never_captured, not corrupt", () => {
     // "Never captured" is a legitimate state, not damage.
     const d = diagnoseMove(
       layers({
@@ -125,6 +126,22 @@ describe("corruption requires all three conditions", () => {
       }),
     );
     expect(d.affected).toBe(false);
+    expect(
+      d.fields.find((f) => f.captureKey === "problem_statement")!
+        .captureAssessment,
+    ).toBe("never_captured");
+  });
+
+  it("recommends restore only for the deterministically repairable case", () => {
+    const d = diagnoseMove(
+      layers({
+        scaffold: { problem_statement: REAL_PROBLEM },
+        captureValues: { problem_statement: BOILER_PROBLEM },
+      }),
+    );
+    expect(
+      d.fields.find((f) => f.captureKey === "problem_statement")!.captureAction,
+    ).toBe("restore_from_scaffold");
   });
 });
 

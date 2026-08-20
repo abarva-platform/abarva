@@ -28,6 +28,8 @@
 // from inside the VNet — not from a laptop.
 
 import process from "node:process";
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import pg from "pg";
 import {
   diagnoseMove,
@@ -36,6 +38,76 @@ import {
 
 const DETAIL = process.argv.includes("--detail");
 const AS_JSON = process.argv.includes("--json");
+// Durable audit artifact. Any repair PR must cite this file — a repair whose
+// evidence was a console scrollback is not auditable.
+const OUT_DIR =
+  process.argv.find((a) => a.startsWith("--out="))?.slice(6) ??
+  "reports/p0-blast-radius";
+
+function csvCell(value) {
+  const s = value === null || value === undefined ? "" : String(value);
+  return `"${s.replace(/"/g, '""').replace(/\r?\n/g, " ")}"`;
+}
+
+/**
+ * Full per-field record. Values are written VERBATIM and untruncated: this is
+ * the before-image a repair would be judged against, so an abbreviated value
+ * would make the audit unfalsifiable.
+ */
+function writeArtifacts(summary, diagnoses, stamp) {
+  mkdirSync(OUT_DIR, { recursive: true });
+  const rows = [
+    [
+      "move_id",
+      "tenant_key",
+      "move_name",
+      "capture_key",
+      "scaffold_value",
+      "charter_mirror_value",
+      "phase_0_value",
+      "capture_assessment",
+      "charter_assessment",
+      "capture_action",
+      "charter_action",
+    ]
+      .map(csvCell)
+      .join(","),
+  ];
+  for (const move of diagnoses) {
+    for (const f of move.fields) {
+      rows.push(
+        [
+          move.moveId,
+          move.tenantKey,
+          move.moveName,
+          f.captureKey,
+          f.scaffoldValue,
+          f.charterMirrorValue,
+          f.captureValue,
+          f.captureAssessment,
+          f.charterAssessment,
+          f.captureAction,
+          f.charterAction,
+        ]
+          .map(csvCell)
+          .join(","),
+      );
+    }
+  }
+  const csvPath = path.join(OUT_DIR, `p0-blast-radius-${stamp}.csv`);
+  const jsonPath = path.join(OUT_DIR, `p0-blast-radius-${stamp}.json`);
+  writeFileSync(csvPath, rows.join("\n") + "\n", "utf8");
+  writeFileSync(
+    jsonPath,
+    JSON.stringify(
+      { generatedAt: stamp, readOnly: true, summary, moves: diagnoses },
+      null,
+      2,
+    ),
+    "utf8",
+  );
+  return { csvPath, jsonPath };
+}
 
 function asObject(value) {
   if (!value) return {};
@@ -100,6 +172,10 @@ async function main() {
 
     const summary = summarizeBlastRadius(diagnoses);
     const affected = diagnoses.filter((d) => d.affected);
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    // Written for EVERY run, including a clean one. "We looked and found
+    // nothing" is itself an audit record worth keeping.
+    const artifacts = writeArtifacts(summary, diagnoses, stamp);
 
     if (AS_JSON) {
       console.log(JSON.stringify({ summary, affected }, null, 2));
@@ -128,8 +204,11 @@ async function main() {
 
     if (summary.movesAffected === 0) {
       console.log(
-        "\n  No deterministic corruption found. No repair candidates.\n",
+        "\n  No deterministic corruption found. No repair candidates.",
       );
+      console.log(`\n  Audit artifacts written (no DB writes):`);
+      console.log(`    ${artifacts.csvPath}`);
+      console.log(`    ${artifacts.jsonPath}\n`);
       return;
     }
 
@@ -157,8 +236,11 @@ async function main() {
       }
     }
 
+    console.log(`\n  Audit artifacts written (no DB writes):`);
+    console.log(`    ${artifacts.csvPath}`);
+    console.log(`    ${artifacts.jsonPath}`);
     console.log(
-      "\n  Repair is a separate, reviewed change. This script wrote nothing.\n",
+      "\n  Repair is a separate, reviewed change and must cite these files.\n",
     );
   } finally {
     await client.end();

@@ -53,6 +53,34 @@ wrote, "no charter value" is the _correct_ state, and the diagnostic marks it
 `not_applicable` rather than flagging it. Without that distinction the report
 would flag correct rows on exactly the fields that were never at risk.
 
+## Classification
+
+| Assessment                  | Meaning                                             | Action                |
+| --------------------------- | --------------------------------------------------- | --------------------- |
+| `clean`                     | Real, non-placeholder text                          | none                  |
+| `never_captured`            | Empty — a legitimate state, not damage              | none                  |
+| `likely_corrupt_repairable` | Known boilerplate, differing scaffold value exists  | restore from scaffold |
+| `corrupt_unrestorable`      | Boilerplate on both sides — nothing to restore _to_ | human review          |
+| `ambiguous`                 | Boilerplate with no scaffold source at all          | human review          |
+| `not_applicable`            | The broken path never wrote this layer              | none                  |
+
+`never_captured` is separated from `clean` deliberately: counting an empty field
+as damage would inflate the blast radius with Moves that were simply never
+filled in.
+
+## The audit artifact
+
+Every run writes a timestamped CSV and JSON to `reports/p0-blast-radius/`
+(override with `--out=`), carrying `move_id`, `tenant_key`, `move_name`,
+`capture_key`, the **verbatim untruncated** scaffold / charter-mirror / phase_0
+values, both assessments and both recommended actions.
+
+Values are untruncated on purpose: this is the before-image any repair would be
+judged against, and an abbreviated value would make the audit unfalsifiable.
+The artifact is written even on a clean run — "we looked and found nothing" is
+itself a record worth keeping, and any repair PR must cite the file rather than
+a console scrollback.
+
 ## Ambiguity is reported, not resolved
 
 `recommendation_to_advance` has **no scaffold origin** — the old client hardcoded
@@ -82,13 +110,14 @@ schema change, no writes).
   `CHARTER_MIRROR_TARGETS`, `SCAFFOLD_SOURCE_KEYS`.
 - New: `src/lib/programs/__tests__/p0-corruption-diagnostic.test.ts`.
 - New: `scripts/moves/p0-blast-radius.mjs` — read-only runner
-  (`--detail`, `--json`).
+  (`--detail`, `--json`, `--out=<dir>`), emitting a durable CSV + JSON audit
+  artifact on every run.
 
 ## QA / Validation
 
 - `npx tsc --noEmit --pretty false` — 0 errors, full project.
 - `npx eslint` on both new source files — 0 errors, 0 warnings.
-- 17 new tests. The important ones assert what the diagnostic **refuses** to do:
+- 18 new tests. The important ones assert what the diagnostic **refuses** to do:
   bland-but-real text is not flagged; an empty capture value is clean rather
   than corrupt ("never captured" is a legitimate state); boilerplate with no
   scaffold source is `corrupt_unrestorable` rather than silently repairable; a

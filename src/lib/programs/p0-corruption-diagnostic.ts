@@ -76,14 +76,45 @@ export const SCAFFOLD_SOURCE_KEYS: Readonly<Record<string, string>> = {
 };
 
 export type FieldAssessment =
-  /** Placeholder in the live layer AND a different non-empty scaffold value exists. */
-  | "corrupt_restorable"
-  /** Placeholder in the live layer but no usable scaffold source — human review. */
-  | "corrupt_unrestorable"
-  /** Live layer matches scaffold, or holds real non-placeholder text. */
+  /** Real, non-placeholder text. Nothing to do. */
   | "clean"
-  /** Never written by the broken path; nothing to assess. */
+  /** Empty. A legitimate state — the field was simply never filled in. */
+  | "never_captured"
+  /** Known boilerplate AND a different non-empty scaffold value exists. Deterministically repairable. */
+  | "likely_corrupt_repairable"
+  /** Known boilerplate, a scaffold value exists, but it is identical — nothing to restore to. */
+  | "corrupt_unrestorable"
+  /** Known boilerplate with NO scaffold source at all. Provenance unknown; human review. */
+  | "ambiguous"
+  /** The broken path never wrote this layer; nothing to assess. */
   | "not_applicable";
+
+/** The action an operator should take. Never inferred beyond the evidence. */
+export type RecommendedAction =
+  | "none"
+  | "restore_from_scaffold"
+  | "human_review";
+
+export function recommendedActionFor(
+  assessment: FieldAssessment,
+): RecommendedAction {
+  switch (assessment) {
+    case "likely_corrupt_repairable":
+      return "restore_from_scaffold";
+    case "corrupt_unrestorable":
+    case "ambiguous":
+      return "human_review";
+    default:
+      return "none";
+  }
+}
+
+/** Assessments that represent actual damage, whatever the remedy. */
+const DAMAGED: ReadonlySet<FieldAssessment> = new Set<FieldAssessment>([
+  "likely_corrupt_repairable",
+  "corrupt_unrestorable",
+  "ambiguous",
+]);
 
 export interface FieldDiagnosis {
   captureKey: string;
@@ -96,6 +127,8 @@ export interface FieldDiagnosis {
   charterMirrorIsPlaceholder: boolean;
   captureAssessment: FieldAssessment;
   charterAssessment: FieldAssessment;
+  captureAction: RecommendedAction;
+  charterAction: RecommendedAction;
 }
 
 export interface MoveDiagnosis {
@@ -134,12 +167,24 @@ function assessLayer(
   if (!applicable)
     return { isPlaceholder: false, assessment: "not_applicable" };
   const isPlaceholder = isKnownPlaceholderValue(liveValue);
-  if (!isPlaceholder) return { isPlaceholder: false, assessment: "clean" };
-  const restorable = scaffoldValue.length > 0 && scaffoldValue !== liveValue;
-  return {
-    isPlaceholder: true,
-    assessment: restorable ? "corrupt_restorable" : "corrupt_unrestorable",
-  };
+  if (!isPlaceholder) {
+    // Empty is reported distinctly from real text: "never captured" is a
+    // legitimate state and must not be counted as damage.
+    return {
+      isPlaceholder: false,
+      assessment: liveValue.length === 0 ? "never_captured" : "clean",
+    };
+  }
+  if (scaffoldValue.length === 0) {
+    // Boilerplate with no origination source — we cannot tell whether it was
+    // overwritten or was always this. A human decides.
+    return { isPlaceholder: true, assessment: "ambiguous" };
+  }
+  if (scaffoldValue === liveValue) {
+    // Boilerplate on both sides: nothing to restore TO.
+    return { isPlaceholder: true, assessment: "corrupt_unrestorable" };
+  }
+  return { isPlaceholder: true, assessment: "likely_corrupt_repairable" };
 }
 
 export interface MoveLayers {
@@ -185,23 +230,29 @@ export function diagnoseMove(layers: MoveLayers): MoveDiagnosis {
         charterMirrorIsPlaceholder: charter.isPlaceholder,
         captureAssessment: capture.assessment,
         charterAssessment: charter.assessment,
+        captureAction: recommendedActionFor(capture.assessment),
+        charterAction: recommendedActionFor(charter.assessment),
       };
     },
   );
 
   const corruptCaptureKeys = fields
-    .filter((f) => f.captureAssessment.startsWith("corrupt"))
+    .filter((f) => DAMAGED.has(f.captureAssessment))
     .map((f) => f.captureKey);
   const corruptCharterKeys = fields
-    .filter((f) => f.charterAssessment.startsWith("corrupt"))
+    .filter((f) => DAMAGED.has(f.charterAssessment))
     .map((f) => f.captureKey);
+  const needsReview: ReadonlySet<FieldAssessment> = new Set<FieldAssessment>([
+    "corrupt_unrestorable",
+    "ambiguous",
+  ]);
   const ambiguousKeys = Array.from(
     new Set(
       fields
         .filter(
           (f) =>
-            f.captureAssessment === "corrupt_unrestorable" ||
-            f.charterAssessment === "corrupt_unrestorable",
+            needsReview.has(f.captureAssessment) ||
+            needsReview.has(f.charterAssessment),
         )
         .map((f) => f.captureKey),
     ),
