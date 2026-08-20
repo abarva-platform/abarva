@@ -155,6 +155,20 @@ interface PhaseEvidenceArtifact {
 }
 type PhaseCaptureValues = Record<string, string>;
 
+interface StageReadinessWorkbookParsePreview {
+  ok: boolean;
+  issues?: Array<{ severity?: string; code?: string; message?: string }>;
+  responses?: Array<{ questionId?: string; response?: string }>;
+  summary?: {
+    totalQuestions?: number;
+    answeredQuestions?: number;
+    requiredAnswered?: number;
+    requiredTotal?: number;
+    warningCount?: number;
+    errorCount?: number;
+  };
+}
+
 function normalizePhaseCaptureValues(
   values: Record<string, string> | null | undefined,
 ): PhaseCaptureValues {
@@ -1640,6 +1654,9 @@ export function MovesPhaseStandaloneClient({
                         >
                           Download P{phase.phase + 1} readiness workbook
                         </a>
+                        <StageReadinessWorkbookPreviewControl
+                          apiPath={readinessWorkbookHref}
+                        />
                       </div>
                     ) : null}
                     <div
@@ -4699,6 +4716,100 @@ function EvidenceUploadControl({
   );
 }
 
+function StageReadinessWorkbookPreviewControl({
+  apiPath,
+}: {
+  apiPath: string;
+}) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [status, setStatus] = useState<"idle" | "parsing" | "parsed" | "error">(
+    "idle",
+  );
+  const [message, setMessage] = useState("");
+  const [preview, setPreview] =
+    useState<StageReadinessWorkbookParsePreview | null>(null);
+
+  async function parseWorkbook(file: File | null | undefined) {
+    if (!file) return;
+    setStatus("parsing");
+    setMessage(`Parsing ${file.name}...`);
+    setPreview(null);
+    const form = new FormData();
+    form.set("file", file);
+    try {
+      const res = await fetch(apiPath, {
+        method: "POST",
+        credentials: "include",
+        body: form,
+      });
+      const payload = (await res.json().catch(() => ({}))) as
+        | StageReadinessWorkbookParsePreview
+        | { detail?: string; error?: string };
+      if (!res.ok || !("summary" in payload)) {
+        throw new Error(
+          "detail" in payload
+            ? (payload.detail ?? `Parse failed (HTTP ${res.status})`)
+            : `Parse failed (HTTP ${res.status})`,
+        );
+      }
+      setPreview(payload);
+      const summary = payload.summary ?? {};
+      const issueCount =
+        (summary.errorCount ?? 0) + (summary.warningCount ?? 0);
+      setStatus(payload.ok ? "parsed" : "error");
+      setMessage(
+        `Parsed ${summary.answeredQuestions ?? 0}/${summary.totalQuestions ?? 0} responses` +
+          (issueCount > 0
+            ? ` · ${issueCount} issue${issueCount === 1 ? "" : "s"}`
+            : ""),
+      );
+    } catch (err) {
+      setStatus("error");
+      setMessage(err instanceof Error ? err.message : "Parse failed.");
+    } finally {
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  const firstIssue = preview?.issues?.[0]?.message ?? null;
+  const required =
+    preview?.summary?.requiredTotal !== undefined
+      ? `${preview.summary.requiredAnswered ?? 0}/${preview.summary.requiredTotal} required`
+      : null;
+
+  return (
+    <div className="mxw-workbook-preview">
+      <input
+        accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        aria-label="Upload completed readiness workbook"
+        className="mxw-hidden-file"
+        onChange={(event) =>
+          void parseWorkbook(event.currentTarget.files?.[0] ?? null)
+        }
+        ref={inputRef}
+        type="file"
+      />
+      <button
+        className="mxw-stage-download"
+        disabled={status === "parsing"}
+        onClick={() => inputRef.current?.click()}
+        type="button"
+      >
+        {status === "parsing"
+          ? "Parsing workbook..."
+          : "Preview completed workbook"}
+      </button>
+      {message ? (
+        <span className={`mxw-workbook-preview-status ${status}`}>
+          {message}
+          {required ? <em>{required}</em> : null}
+          {firstIssue ? <small>{firstIssue}</small> : null}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function TemplatesAndSessions({ phase }: { phase: PhaseContract }) {
   return (
     <div className="mxw-ts-grid">
@@ -5042,6 +5153,13 @@ function MovesStandaloneStyles() {
 .mxw-stage-actions{grid-column:1;display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
 .mxw-stage-download{display:inline-flex;align-items:center;min-height:34px;border:1px solid var(--line-2);border-radius:9px;background:#fff;color:#2a5aa8;padding:8px 12px;font-size:12.5px;font-weight:850;text-decoration:none;box-shadow:0 1px 2px rgba(12,26,58,.04)}
 .mxw-stage-download:hover{border-color:rgba(42,90,168,.35);background:#f8fbff;color:#173f7a}
+.mxw-stage-download:disabled{opacity:.55;cursor:default}
+.mxw-workbook-preview{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mxw-workbook-preview-status{display:inline-flex;align-items:center;gap:7px;flex-wrap:wrap;color:#5b6c8a;font-size:12px;font-weight:700}
+.mxw-workbook-preview-status.parsed{color:#147c5b}
+.mxw-workbook-preview-status.error{color:#8a5a12}
+.mxw-workbook-preview-status em{font-style:normal;border-radius:999px;background:#e4ecf9;color:#2a5aa8;padding:3px 7px;font-size:11px}
+.mxw-workbook-preview-status small{width:100%;color:#8a5a12;font-size:11.5px;font-weight:650}
 .mxw-progress-card{grid-column:2;grid-row:1 / span 4;align-self:center;width:230px;border:1px solid var(--line-2);border-radius:12px;background:#fff;padding:14px 16px;box-shadow:none}
 .mxw-progress-card strong{display:block;font-family:Fraunces, Georgia, serif;font-size:20px;font-weight:650;line-height:1.05;margin-bottom:9px;color:var(--ink)}
 .mxw-progress-meta{display:grid;gap:6px;margin-top:10px}
