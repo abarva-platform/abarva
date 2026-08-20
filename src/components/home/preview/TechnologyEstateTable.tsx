@@ -64,7 +64,7 @@ export function TechnologyEstateTable({ recordType }: { recordType: TechRecordTy
   }
 
   return (
-    <div style={{ padding: "40px 40px 96px" }}>
+    <div style={{ padding: "40px 56px 72px" }}>
       <p style={{ margin: "0 0 8px", fontFamily: "var(--font-body-sans)", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: HOME_HEX.teal }}>
         Technology estate
       </p>
