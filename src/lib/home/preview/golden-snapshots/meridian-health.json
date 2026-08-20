@@ -124,7 +124,9 @@
           "priority": "high"
         }
       ],
-      "limitations": []
+      "limitations": [
+        "27 of 27 declared evidence sources are not yet approved for loading, meaning much of the analytics foundation behind reported figures is still pre-governed."
+      ]
     },
     {
       "chapterId": "our_business",
@@ -303,7 +305,9 @@
           "priority": "high"
         }
       ],
-      "limitations": []
+      "limitations": [
+        "Program-specific leadership sentiment cannot be resolved to canonical programs (0% crosswalk coverage), so enterprise-wide leadership themes should not be read as commentary on any named program."
+      ]
     },
     {
       "chapterId": "how_we_operate",
@@ -426,7 +430,9 @@
           "priority": "high"
         }
       ],
-      "limitations": []
+      "limitations": [
+        "No vendor contracts have document-level evidence extraction, so pricing, SLA, and invoice-level claims about the vendor base are not verifiable from this packet."
+      ]
     },
     {
       "chapterId": "performance_value",
@@ -503,7 +509,9 @@
       "what_to_watch": [],
       "questions_to_ask": [],
       "visual_opportunities": [],
-      "limitations": []
+      "limitations": [
+        "16 of 50 tracked metrics lack comparable baseline/target/actual data, and 18 more mix notation, limiting the scope of defensible metric-level performance claims."
+      ]
     },
     {
       "chapterId": "leadership_perspective",
@@ -585,7 +593,9 @@
           "priority": "medium"
         }
       ],
-      "limitations": []
+      "limitations": [
+        "Program-specific leadership sentiment cannot be resolved to canonical programs (0% crosswalk coverage), so enterprise-wide leadership themes should not be read as commentary on any named program."
+      ]
     },
     {
       "chapterId": "what_needs_attention",
