@@ -18,9 +18,9 @@ import type {
   FormattingProfile,
   GovernedEvidenceItem,
   MissingEvidenceItem,
-  QualityBar,
   SourceRegisterEntry,
 } from "@/lib/deliverables/orchestrator/types";
+import { resolveQualityBar } from "@/lib/deliverables/orchestrator/quality-bar-registry";
 
 /** Board-grade defaults shared by orchestrated Move deliverables. */
 const FORMATTING_PROFILE: FormattingProfile = {
@@ -31,18 +31,6 @@ const FORMATTING_PROFILE: FormattingProfile = {
   includeCoverPage: true,
   includeTableOfContents: true,
   includeSourceRegisterSection: true,
-};
-
-const QUALITY_BAR: QualityBar = {
-  minSections: 5,
-  minBodyWords: 600,
-  requiresCitations: true,
-  requiresDecisionSection: true,
-  requiresRecommendation: true,
-  requiresRiskTable: true,
-  requiresSourceRegister: true,
-  requiresClientCompleteChecklistWhenGaps: true,
-  tone: "board_grade_consulting",
 };
 
 /** Charter fields captured at P1, in the order they read on a board deck. */
@@ -306,7 +294,19 @@ export function buildMoveDeliverableRequest(
     artifactStandard: options.artifactStandard,
     outputFormats: options.outputFormats ?? ["html"],
     formattingProfile: FORMATTING_PROFILE,
-    qualityBar: QUALITY_BAR,
+    // The canonical per-artifact contract, not a generic floor. Previously this
+    // was a hardcoded bar and `resolveQualityBar` was never called on the Moves
+    // path at all — so the registry's per-artifact depth bands, ceilings and
+    // narrative-spine requirements were written, reviewed, and never executed.
+    //
+    // `requiresSourceRegister` stays hard-true rather than adopting the generic
+    // builder's `evidence.length > 0`: a board-grade Move artifact is gated on
+    // having at least one governed evidence item upstream, so a missing register
+    // here is a real defect, not an empty-bundle edge case.
+    qualityBar: {
+      ...resolveQualityBar("moves", options.deliverableType),
+      requiresSourceRegister: true,
+    },
     clientDisplayName,
     initiativeDisplayName,
   };

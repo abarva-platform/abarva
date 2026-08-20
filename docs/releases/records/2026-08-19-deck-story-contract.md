@@ -17,8 +17,16 @@ slide-like documents (bullet fragments where argument belongs) and
 document-like slides (paragraph walls nobody reads in a room).
 
 This adds `DeckStoryContract` — mandatory slide flows for the P2 discovery
-readout, the P3 solution decision, and the P4 business case — as a sibling of
-the document contract, not something inside it.
+readout, the P3 solution decision, the P4 business case and the P4 roadmap — as
+a sibling of the document contract, not something inside it.
+
+The roadmap deck gets its OWN spine (`p4_roadmap_commitment`) rather than a
+reordering of the investment case. A roadmap argues "is this the sequence to
+commit to?", must lead with the sequence, and is not linear: the work splits
+into parallel lanes (platform foundation, ingestion/medallion, governance,
+analytics/reporting, activation) that carry their own milestones and block each
+other. Dependencies, critical path and gates are unreadable until the lanes are
+established, which no projection of the funding argument can express.
 
 Every narrative slide names the shared story beat it carries, so a deck and its
 document cannot tell different stories. Slides that legitimately carry no single
@@ -63,18 +71,21 @@ no schema change, no runtime behavior change in this pass).
 
 - New: `src/lib/deliverables/shared/deck-story-contract.ts`
 - New: `src/lib/deliverables/shared/__tests__/deck-story-contract.test.ts`
+- Modified: `src/lib/deliverables/shared/executive-story-contract.ts` — adds the
+  `p4_roadmap_commitment` spine (11 beats) and `ROADMAP_LANES`; remaps
+  `execution_roadmap` off the investment spine onto it.
 
 Contract surface: `SLIDE_DENSITY` + `classifySlideDensity` +
 `slideDensityBlocks`, `CORE_SLIDE_COUNT`, `MAX_SUPPORTING_POINTS`,
 `DECK_OUTPUT_TOKEN_BUDGET`, `SlideContract`, `DeckStoryContract`,
-`DECK_STORY_CONTRACTS` (3 decks), `deckContract`, `unknownBeatIds`,
+`DECK_STORY_CONTRACTS` (4 decks), `deckContract`, `unknownBeatIds`,
 `isGenericSlideTitle`, `renderDeckContractPrompt`.
 
 ## QA / Validation
 
 - `npx tsc --noEmit --pretty false` — 0 errors, full project.
 - `npx eslint` on both new files — 0 errors, 0 warnings.
-- 25 new tests, asserting behavior and contract invariants: each density band at
+- 37 new tests across the deck and story modules, asserting behavior and contract invariants: each density band at
   its exact boundary (34/35, 70/71, 100/101) and that blocking starts only past
   the hard ceiling; every deck's beats exist in its declared spine; every
   beatless slide explains itself; the beats a deck carries appear in spine
@@ -83,7 +94,7 @@ Contract surface: `SLIDE_DENSITY` + `classifySlideDensity` +
   "what not to fund yet" required on the recommendation slide; generic slide
   titles rejected and conclusion-stating titles accepted.
 - Regression sweep: `src/lib/deliverables` + `src/lib/programs/deliverables` —
-  728 tests, 8 failing. The same 8 pre-existing failures recorded in the two
+  740 tests, 8 failing. The same 8 pre-existing failures recorded in the two
   preceding release records, unchanged. Net: 25 added, all passing, zero new
   failures.
 
@@ -115,17 +126,8 @@ the prior state exactly. No migration, no tenant to un-enroll.
 
 ## Known Gaps
 
-- **`REF_DECK_P4_ROADMAP` is deliberately not defined.** A roadmap deck argues
-  "is this sequence right?", which wants to lead with the sequence — but the
-  investment spine reaches `roadmap` only after `value` and `delivery`.
-  Projecting it onto `p4_investment_case` either violates the spine order or
-  forces a reading order no one would present. It needs its own spine, and
-  inventing one without agreement would be guessing at a story rather than
-  encoding one. This was caught by the spine-order test rather than reasoned
-  about in advance.
-- **`REF_DECK_TECHNICAL_ARCHITECTURE` is not defined** for the same reason — its
-  audience and argument are not the executive decision journey these three
-  contracts encode.
+- **`REF_DECK_TECHNICAL_ARCHITECTURE` is not defined** — its audience and
+  argument are not the executive decision journey these contracts encode.
 - **Nothing consumes this yet.** No prompt injection, no renderer, no PPTX
   generation. Deliberate: deck instructions must not leak into the document
   prompt, so the injection is its own increment.

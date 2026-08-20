@@ -442,6 +442,19 @@ export interface RenderableSection {
   key: string;
   title: string;
   bodyMarkdown: string; // 11pt body, headings, lists — markdown
+  /**
+   * The model's output BEFORE any deterministic repair pass touched it.
+   *
+   * The quality gate must judge what the model actually wrote. Repair appends
+   * an assumption tag to any uncited figure, and a tag satisfies the gate's own
+   * "supported" pattern — so validating repaired text made the unsupported-claim
+   * blocker unreachable, and an invented figure passed simply because it had
+   * been relabelled. Validation reads this; rendering reads `bodyMarkdown`.
+   *
+   * Optional so sections built by paths that never repair stay valid; the
+   * validator falls back to `bodyMarkdown` when it is absent.
+   */
+  rawBodyMarkdown?: string;
   groundingMode: SectionGroundingMode;
   citationsUsed: number[];
 }

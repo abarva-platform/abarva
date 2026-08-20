@@ -39,7 +39,53 @@ export interface StoryBeat {
 export type StorySpineId =
   | "p2_discovery"
   | "p3_solution_decision"
-  | "p4_investment_case";
+  | "p4_investment_case"
+  | "p4_roadmap_commitment";
+
+/**
+ * The canonical delivery lanes a data/AI roadmap splits into. A roadmap is not
+ * one sequence — it is parallel tracks that each carry their own milestones and
+ * block each other at specific points. Naming the lanes once means every
+ * roadmap is readable against the same structure, and a dependency can be
+ * expressed as "lane X's milestone blocks lane Y" rather than as prose.
+ *
+ * Lanes are a vocabulary, not a mandate: a Move that genuinely has no
+ * governance work should omit that lane rather than pad it.
+ */
+export const ROADMAP_LANES = [
+  {
+    id: "foundation",
+    label: "Platform foundation",
+    scope:
+      "Accounts, environments, networking, identity, secrets, CI/CD, observability, security baseline.",
+  },
+  {
+    id: "ingestion_medallion",
+    label: "Ingestion and medallion build",
+    scope:
+      "Source onboarding, landing, and the bronze/silver/gold pipelines that conform enterprise entities.",
+  },
+  {
+    id: "governance",
+    label: "Data governance enablement",
+    scope:
+      "Catalog, lineage, data quality, access policy, and the controls that make the estate usable and auditable.",
+  },
+  {
+    id: "analytics_reporting",
+    label: "Analytics and reporting",
+    scope:
+      "Semantic layer, data products, models, and the reporting surfaces built on governed data.",
+  },
+  {
+    id: "activation",
+    label: "Activation and adoption",
+    scope:
+      "Workflow integration, write-back, operating-procedure change, training and adoption.",
+  },
+] as const;
+
+export type RoadmapLaneId = (typeof ROADMAP_LANES)[number]["id"];
 
 /**
  * P2 — Discovery readout. The story runs from the answer, through what was
@@ -257,12 +303,101 @@ const P4_INVESTMENT_CASE: readonly StoryBeat[] = [
   },
 ];
 
+/**
+ * P4 — Roadmap commitment. A DIFFERENT argument from the investment case, which
+ * is why it gets its own spine rather than a reordered projection of that one.
+ *
+ * The investment case argues "is this worth funding?" and reaches sequencing
+ * late, after value and delivery. A roadmap argues "is this the right sequence
+ * to commit to?" and must lead with the sequence. It is also not linear: the
+ * work splits into parallel lanes (see `ROADMAP_LANES`) that carry their own
+ * milestones and block each other, so the story has to establish the lanes
+ * before it can discuss dependencies, critical path, or gates.
+ */
+const P4_ROADMAP_COMMITMENT: readonly StoryBeat[] = [
+  {
+    id: "commitment_required",
+    label: "Commitment required",
+    question: "What sequence are we being asked to commit to?",
+    decisionRole: "Names the commitment before defending it.",
+  },
+  {
+    id: "sequencing_logic",
+    label: "Why this sequence",
+    question: "Why this order, and not another?",
+    decisionRole:
+      "Turns the plan into an argument — sequence is a choice, not a given.",
+  },
+  {
+    id: "workstream_lanes",
+    label: "Workstream lanes",
+    question: "What parallel tracks does this work actually split into?",
+    decisionRole:
+      "Establishes the lanes, without which dependencies and critical path cannot be read.",
+  },
+  {
+    id: "lane_milestones",
+    label: "Milestones by lane",
+    question: "What lands when, in each lane?",
+    decisionRole:
+      "Makes progress observable per track rather than in aggregate.",
+  },
+  {
+    id: "cross_lane_dependencies",
+    label: "Cross-lane dependencies",
+    question: "What blocks what, across lanes?",
+    decisionRole:
+      "Exposes where one lane's slip becomes another lane's idle time.",
+  },
+  {
+    id: "critical_path",
+    label: "Critical path",
+    question: "What actually determines the end date?",
+    decisionRole:
+      "Focuses attention on the few items where delay is not recoverable.",
+  },
+  {
+    id: "decision_gates",
+    label: "Decision gates",
+    question: "Where can leadership stop, slow, or redirect?",
+    decisionRole:
+      "Gives the sponsor exits, not just a start date — a plan with no gate is a commitment to everything.",
+  },
+  {
+    id: "value_milestones",
+    label: "Value milestones",
+    question: "When does value actually reach the business?",
+    decisionRole:
+      "Separates delivery milestones from value milestones, which rarely coincide.",
+  },
+  {
+    id: "capacity_and_delivery",
+    label: "Capacity and delivery",
+    question: "Who does this work, and do they exist yet?",
+    decisionRole: "Tests whether the sequence is staffable, not just logical.",
+  },
+  {
+    id: "schedule_risk",
+    label: "Schedule risk",
+    question: "What would break this sequence?",
+    decisionRole: "Names the failure modes the gates are meant to catch.",
+  },
+  {
+    id: "commitment",
+    label: "Commitment",
+    question: "What are we committing to now, and what stays optional?",
+    decisionRole:
+      "Closes with a bounded commitment rather than open-ended endorsement.",
+  },
+];
+
 export const EXECUTIVE_STORY_SPINES: Readonly<
   Record<StorySpineId, readonly StoryBeat[]>
 > = {
   p2_discovery: P2_DISCOVERY,
   p3_solution_decision: P3_SOLUTION_DECISION,
   p4_investment_case: P4_INVESTMENT_CASE,
+  p4_roadmap_commitment: P4_ROADMAP_COMMITMENT,
 };
 
 /**
@@ -277,7 +412,9 @@ const ARTIFACT_SPINE: Partial<Record<MovesDeliverableKey, StorySpineId>> = {
   target_state_architecture: "p3_solution_decision",
   solution_design: "p3_solution_decision",
   business_case: "p4_investment_case",
-  execution_roadmap: "p4_investment_case",
+  // The roadmap argues a commitment to a sequence, not a funding case — see
+  // P4_ROADMAP_COMMITMENT for why it is not a reordering of the investment story.
+  execution_roadmap: "p4_roadmap_commitment",
 };
 
 export function storySpineFor(
