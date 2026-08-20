@@ -33,6 +33,7 @@ function wordBandFrom(
   | "targetBodyWordsMax"
   | "advisoryBandMax"
   | "enforceMaxAsBlocker"
+  | "excludeNonProseFromBody"
 > {
   const c = P3_P4_WORD_BAND_CONTRACTS[key];
   return {
@@ -40,6 +41,9 @@ function wordBandFrom(
     targetBodyWordsMax: c.targetWordsMax,
     advisoryBandMax: c.advisoryMaxWords,
     enforceMaxAsBlocker: c.enforceMaxAsBlocker,
+    // Carried through so a band and the counting rule it was calibrated
+    // against can never drift apart — see WordBandContract.
+    excludeNonProseFromBody: c.excludeNonProseFromBody,
   };
 }
 
