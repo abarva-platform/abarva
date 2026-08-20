@@ -98,7 +98,9 @@ export type FeatureFlagKey =
   | "moves_governed_roadmap_downloads"
   | "home_knowledge_vnext"
   | "moves_extended_intake_fields_v1"
-  | "moves_classify_fast_lane_v1";
+  | "moves_classify_fast_lane_v1"
+  | "moves_risk_tier_scoring_v1"
+  | "moves_solution_pattern_gate_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -277,6 +279,20 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_classify_fast_lane_v1",
     summary:
       "Governance: lets a Move tagged complexity tier 'straightforward' (captured via moves_extended_intake_fields_v1) advance directly from P1 Charter to P5 Mobilize & Handoff, skipping P2 Discover/P3 Design/P4 Business Case, via a single named-owner decision gate. Deliberately a SEPARATE flag from moves_extended_intake_fields_v1 — a tenant can capture the tier tag without the gate engine acting on it. Off by default; off = findGateRule(1,5) still returns null exactly as before, so every other transition and every other tenant is byte-identical. On only changes behavior for a Move that is BOTH tagged 'straightforward' AND whose tenant has this flag — every other (fromPhase,toPhase) pair is unaffected regardless.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_risk_tier_scoring_v1",
+    summary:
+      "Adds a 'Risk Assessment' workspace entry point to P2 Discover & Diagnose AND P3 Design Future State (same pattern as moves_pricing_engine's P4 'Cost & Effort' entry point — a new top-level rail view, not a change to the shared phase-capture flow). Captures the D1-D5 structural-risk dimensions and E1-E8 usage escalators, scores them via the additive risk-tiering model (dimension 5-20 + escalator 0-4 each -> Unknown/Low/Moderate/High/Critical band), and surfaces the Governance Council routing signal (any escalator triggered routes regardless of numeric band). Available on both P2 (starts) and P3 (finalize, once Build Origin/Integration Impact/Human Oversight are actually decided by the solution design) per the target model's own framing. Persisted via an isolated charter-JSONB seam, not phase-capture-contract.ts, so tenants without the flag see zero change. Off by default.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_solution_pattern_gate_v1",
+    summary:
+      "Adds a 'Solutioning' workspace entry point to P3 Design Future State — the 5-pattern platform-fit gate (Build on the Platform / Point Automation / Embedded in a Licensed Product / Native to the Core Clinical System / New Third-Party Platform). Captured as a named owner's explicit classification with a rationale, not an auto-derived score — the source model's own calculation formula (from Discovery answers) isn't available, so this doesn't invent one, consistent with how Complexity Tier is handled. Persisted via an isolated charter-JSONB seam. Does NOT yet wire a governance.ts gate consequence for non-Platform patterns (Check-coverage/Challenge-by-default routing is surfaced as UI context only in this pass) — see the release record. Off by default.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },

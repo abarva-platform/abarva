@@ -64,6 +64,14 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_pricing_engine",
   );
+  const riskAssessmentEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_risk_tier_scoring_v1",
+  );
+  const solutionPatternGateEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_solution_pattern_gate_v1",
+  );
 
   // State reconciliation: current_phase is the single source of truth for where
   // the Move actually is. A user must not work a phase ahead of it (e.g. open
@@ -84,7 +92,10 @@ export default async function StrategicMovePhaseWorkspacePage({
   let evidenceNeedPackets: MoveEvidenceNeedPacket[] = [];
   try {
     const tctx = await requireTenancy();
-    const evidenceReadiness = await loadDiscoveryEvidenceReadiness(tctx, moveId);
+    const evidenceReadiness = await loadDiscoveryEvidenceReadiness(
+      tctx,
+      moveId,
+    );
     evidenceNeedPackets = buildMoveEvidenceNeedPackets({
       moveId,
       moveName: move.name,
@@ -102,7 +113,9 @@ export default async function StrategicMovePhaseWorkspacePage({
   // honestly rather than inventing a punch list.
   let carriesForwardContent: DeliverableContentSignal[] = [];
   try {
-    const gateArtifactTypeKeys = getGateArtifacts(parsedPhase).map((d) => d.deliverableTypeKey);
+    const gateArtifactTypeKeys = getGateArtifacts(parsedPhase).map(
+      (d) => d.deliverableTypeKey,
+    );
     const signalsByKey = new Map<string, DeliverableContentSignal>();
     for (const typeKey of gateArtifactTypeKeys) {
       const signals = await readDeliverableContentSignals(moveId, typeKey);
@@ -160,6 +173,8 @@ export default async function StrategicMovePhaseWorkspacePage({
         phaseNum={parsedPhase}
         phaseTallies={getMovePhaseTallies(move)}
         pricingEngineEnabled={pricingEngineEnabled}
+        riskAssessmentEnabled={riskAssessmentEnabled}
+        solutionPatternGateEnabled={solutionPatternGateEnabled}
       />
     </AppShell>
   );
