@@ -1668,7 +1668,9 @@ describe("MovesPhaseStandaloneClient", () => {
         pricingEngineEnabled
       />,
     );
-    const costEffortButton = screen.getByRole("button", { name: /Cost & Effort/i });
+    const costEffortButton = screen.getByRole("button", {
+      name: /Cost & Effort/i,
+    });
     expect(costEffortButton).toBeInTheDocument();
     fireEvent.click(costEffortButton);
     expect(
@@ -1681,7 +1683,10 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
-        move={makeMove({ currentPhase: 3, phaseLabel: "P3 Choose the Approach" })}
+        move={makeMove({
+          currentPhase: 3,
+          phaseLabel: "P3 Choose the Approach",
+        })}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
         pricingEngineEnabled
@@ -1689,6 +1694,65 @@ describe("MovesPhaseStandaloneClient", () => {
     );
     expect(
       screen.queryByRole("button", { name: /Cost & Effort/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides the Risk Assessment rail entry point when moves_risk_tier_scoring_v1 is off (the default)", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Discover & Diagnose",
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: /Risk Assessment/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the Risk Assessment rail entry point only on P2 when the flag is on, and opens the panel", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Discover & Diagnose",
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+        riskAssessmentEnabled
+      />,
+    );
+    const riskButton = screen.getByRole("button", { name: /Risk Assessment/i });
+    expect(riskButton).toBeInTheDocument();
+    fireEvent.click(riskButton);
+    expect(
+      screen.getByRole("heading", { name: "Risk Assessment" }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show the Risk Assessment rail entry point on a non-P2 phase, even with the flag on", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({
+          currentPhase: 3,
+          phaseLabel: "P3 Choose the Approach",
+        })}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+        riskAssessmentEnabled
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: /Risk Assessment/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -2043,9 +2107,7 @@ describe("MovesPhaseStandaloneClient", () => {
         name: "Upload evidence for approach decision",
       }),
     ).toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", { name: /\(recommended\)/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /\(recommended\)/i }));
 
     fireEvent.click(contractStepButton(/Approve & Build/i));
 
@@ -2172,9 +2234,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Stage workspace/i }));
     fireEvent.click(contractStepButton(/Record Decision/i));
-    fireEvent.click(
-      screen.getByRole("button", { name: /\(recommended\)/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /\(recommended\)/i }));
     fireEvent.click(contractStepButton(/Approve & Build/i));
     expect(
       screen.queryByRole("button", { name: /Review governed build/i }),
@@ -2293,9 +2353,7 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     fireEvent.click(contractStepButton(/Record Decision/i));
-    fireEvent.click(
-      screen.getByRole("button", { name: /\(recommended\)/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /\(recommended\)/i }));
     fireEvent.click(contractStepButton(/Approve & Build/i));
     fireEvent.click(
       screen.getByRole("button", {
@@ -2334,9 +2392,7 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     fireEvent.click(contractStepButton(/Record Decision/i));
-    fireEvent.click(
-      screen.getByRole("button", { name: /\(recommended\)/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /\(recommended\)/i }));
     fireEvent.click(contractStepButton(/Approve & Build/i));
     fireEvent.click(
       screen.getByRole("button", {

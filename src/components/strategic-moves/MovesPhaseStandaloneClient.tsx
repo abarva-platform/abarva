@@ -26,6 +26,7 @@ import { PhaseRoleApprovalsSummary } from "@/components/strategic-moves/PhaseRol
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
 import { CostEffortWizard } from "@/components/strategic-moves/cost-effort";
+import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import {
   getPhaseCaptureSections,
@@ -107,6 +108,8 @@ interface MovesPhaseStandaloneClientProps {
   initialSubstepKey?: SubstepKey;
   /** `moves_pricing_engine` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Cost & Effort" rail entry point entirely; when false the button does not render at all. */
   pricingEngineEnabled?: boolean;
+  /** `moves_risk_tier_scoring_v1` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Risk Assessment" rail entry point entirely; when false the button does not render at all. Same pattern as pricingEngineEnabled. */
+  riskAssessmentEnabled?: boolean;
   /** The signed-in session's identity, resolved server-side (never client-supplied)
    *  — shown in the gate-approval confirmation dialog so an approver sees who
    *  they're approving as before committing. Absent (null) degrades gracefully:
@@ -114,7 +117,13 @@ interface MovesPhaseStandaloneClientProps {
   currentUser?: { email: string | null; role: string | null } | null;
 }
 
-type WorkspaceView = "phase" | "files" | "intelligence" | "approvals" | "pricing";
+type WorkspaceView =
+  | "phase"
+  | "files"
+  | "intelligence"
+  | "approvals"
+  | "pricing"
+  | "risk";
 
 type UploadWorkStatus = "idle" | "uploading" | "uploaded" | "error";
 type DecisionOptionSaveStatus = "idle" | "saving" | "saved" | "error";
@@ -383,6 +392,7 @@ export function MovesPhaseStandaloneClient({
   currentStateReadiness = null,
   initialSubstepKey,
   pricingEngineEnabled = false,
+  riskAssessmentEnabled = false,
   currentUser = null,
 }: MovesPhaseStandaloneClientProps) {
   const router = useRouter();
@@ -477,7 +487,9 @@ export function MovesPhaseStandaloneClient({
           ? "Approvals overview"
           : workspaceView === "pricing"
             ? "Cost & Effort"
-            : "Phase Intelligence";
+            : workspaceView === "risk"
+              ? "Risk Assessment"
+              : "Phase Intelligence";
   const supportLine = useMemo(() => {
     const industry = move.tenant.industryCode
       ? move.tenant.industryCode.toUpperCase()
@@ -616,10 +628,10 @@ export function MovesPhaseStandaloneClient({
     phase.phase === 3 && !selectedP3Option
       ? "Select the solution option that architecture should implement before Approve & Build."
       : phase.phase >= 1 && phaseCaptureMissingCount > 0
-      ? `Complete ${phaseCaptureMissingCount} phase input${
-          phaseCaptureMissingCount === 1 ? "" : "s"
-        } before Approve & Build.`
-      : null;
+        ? `Complete ${phaseCaptureMissingCount} phase input${
+            phaseCaptureMissingCount === 1 ? "" : "s"
+          } before Approve & Build.`
+        : null;
   // MOVES-UI-001 Steps two-column "Coming up" card. Same real inputs and same
   // function (`buildNextPhaseReadinessPack`) the Approve substep already uses
   // for its "Next phase readiness" section below — computed once here so the
@@ -849,7 +861,9 @@ export function MovesPhaseStandaloneClient({
             tradeoffsAccepted: [
               `Effort: ${selectedP3Option.effort}`,
               `Time to value: ${selectedP3Option.timeToValue}`,
-              ...selectedP3Option.risks.map((risk) => `Risk accepted for design: ${risk}`),
+              ...selectedP3Option.risks.map(
+                (risk) => `Risk accepted for design: ${risk}`,
+              ),
             ],
             options: p3OptionSet.options.map((option) => ({
               id: option.id,
@@ -863,7 +877,11 @@ export function MovesPhaseStandaloneClient({
       );
       const optionApproval = (await optionApprovalRes
         .json()
-        .catch(() => ({}))) as { ok?: boolean; detail?: string; error?: string };
+        .catch(() => ({}))) as {
+        ok?: boolean;
+        detail?: string;
+        error?: string;
+      };
       if (!optionApprovalRes.ok || !optionApproval.ok) {
         setGateApprovalStatus("blocked");
         throw new Error(
@@ -1190,6 +1208,20 @@ export function MovesPhaseStandaloneClient({
                     {!collapsedRail && "Cost & Effort"}
                   </button>
                 ) : null}
+                {phase.phase === 2 && riskAssessmentEnabled ? (
+                  <button
+                    className={`mxw-lib-link ${workspaceView === "risk" ? "viewing" : ""}`}
+                    onClick={() => {
+                      setWorkspaceView("risk");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    title={collapsedRail ? "Risk Assessment" : undefined}
+                    type="button"
+                  >
+                    <span>!</span>
+                    {!collapsedRail && "Risk Assessment"}
+                  </button>
+                ) : null}
               </div>
               {!collapsedRail && (
                 <p className="mxw-foot">
@@ -1290,8 +1322,36 @@ export function MovesPhaseStandaloneClient({
                   </div>
                   <CostEffortWizard
                     moveId={move.id}
-                    defaultCurrency={move.valueAtStake.projected?.currency ?? null}
+                    defaultCurrency={
+                      move.valueAtStake.projected?.currency ?? null
+                    }
                   />
+                </>
+              ) : workspaceView === "risk" ? (
+                <>
+                  <div className="mxw-crumb">
+                    <button
+                      onClick={() => setWorkspaceView("phase")}
+                      type="button"
+                    >
+                      {move.name}
+                    </button>
+                    <span>/</span>
+                    Risk Assessment
+                  </div>
+                  <div className="mxw-stage-head">
+                    <div className="mxw-agent-chip">
+                      <span />
+                      AVA · MOVES
+                    </div>
+                    <h1>Risk Assessment</h1>
+                    <p>
+                      Score this Move&apos;s structural risk and usage
+                      escalators — the same discovery answers you&apos;re
+                      already capturing on this phase.
+                    </p>
+                  </div>
+                  <RiskAssessmentPanel moveId={move.id} />
                 </>
               ) : workspaceView === "approvals" ? (
                 <>
