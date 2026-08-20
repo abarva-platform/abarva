@@ -399,3 +399,38 @@ ceiling) is excluded, an all-null column is excluded, the matrix correctly bucke
 "(not specified)", and row/column totals sum to the exact same record count as the existing
 `dimensionCounts` (proving the cross-tab isn't double-counting or dropping rows). Full existing
 Home preview suite (62 tests) green; typecheck and targeted ESLint clean.
+
+**Sixth iteration -- overall page-quality pass.** Found and fixed two real, pre-existing defects
+while reviewing the whole preview end-to-end:
+
+1. **Degenerate dimension-chip filters.** `vendor_contract`'s `serviceCategory` is 90-100%
+   singleton per tenant (every distinct value appears on exactly one record) and
+   `infrastructure_platform`'s `platformType` is 60-71% singleton -- the flat chip row rendered
+   dozens of one-record chips with zero real segmentation value (each chip narrowed to exactly the
+   record it came from). `TechnologyEstateTable` now only renders chips for values with a real
+   cluster (count > 1); a plain-language note explains the rest exist and points to search or
+   "Cross with" instead. When every value is a singleton (the vendor_contract case), the chip row
+   is replaced entirely by that note -- no wall of unclickable noise. Nothing is hidden from the
+   data itself: every singleton record is still fully reachable via search or the table.
+2. **Tablet-width text clipping in `ChapterSection`.** At 768px (tablet), the two-column chapter
+   layout (720px prose + 240px sticky rail, `gap: 48`) doesn't fit inside the ~500px `main` has
+   available once the 268px nav sidebar is subtracted. The prose `<section>` had `flexShrink: 0`
+   -- an explicit "never shrink" -- so instead of wrapping, headline and body text were silently
+   clipped past the visible viewport edge by an ancestor `overflow: hidden` (no scrollbar, so the
+   text just vanished with no visible symptom other than a truncated sentence). Fixed with the
+   standard flexbox pattern: the row now wraps (`flexWrap: "wrap"`), and the prose column uses
+   `flex: "1 1 480px"` with `minWidth: 0` instead of a rigid `flexShrink: 0` -- it still prefers
+   720px on a normal desktop width (unchanged there), but now shrinks and wraps text properly when
+   space is tight, and the sticky rail drops below the prose column rather than being squeezed off
+   past the edge. Grepped the rest of `src/components/home/preview/*.tsx` for the same
+   `flexShrink: 0` pattern -- the other two instances (a small monospace citation-id label, the
+   268px nav sidebar itself) are genuinely fixed-width elements, not columns that need to reflow,
+   so left as-is.
+
+QA: existing 63-test suite still green (`TechnologyEstateTable.test.tsx` updated -- its fixture's
+`businessFunction` values now both have real clusters, matching realistic production data, plus a
+new test asserting the singleton-note path); typecheck and targeted ESLint clean. This pass also
+surfaced a gap in this workstream's own verification habit: prior live-proof checks only exercised
+the desktop viewport this route was designed for -- tablet width (768px) was never checked and
+this bug went unnoticed for two prior iterations as a result. Live proof for this iteration
+explicitly includes a tablet-width check.

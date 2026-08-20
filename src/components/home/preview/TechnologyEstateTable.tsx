@@ -21,6 +21,15 @@ export function TechnologyEstateTable({ recordType }: { recordType: TechRecordTy
   const [crossFilter, setCrossFilter] = useState<string | null>(null);
 
   const crossOptions = useMemo(() => eligibleCrossDimensions(recordType), [recordType]);
+  // A primary dimension that's nearly one distinct value per record (e.g. a vendor contract's
+  // free-text service category) filters to a single row per chip -- real, but not a useful
+  // segmentation. Surface only values with a real cluster (count > 1); note the rest exist rather
+  // than rendering dozens of one-record chips nobody would click.
+  const clusteredDimensionCounts = useMemo(
+    () => recordType.dimensionCounts.filter((d) => d.count > 1),
+    [recordType],
+  );
+  const singletonDimensionCount = recordType.dimensionCounts.length - clusteredDimensionCounts.length;
   const crossTab = useMemo(
     () => (crossDimension ? computeCrossTab(recordType, crossDimension) : null),
     [recordType, crossDimension],
@@ -104,13 +113,23 @@ export function TechnologyEstateTable({ recordType }: { recordType: TechRecordTy
                 setCrossFilter(null);
               }}
             />
-          ) : (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          ) : clusteredDimensionCounts.length > 0 ? (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
               <DimensionChip label="All" count={recordType.rows.length} active={dimensionFilter === null} onClick={() => setDimensionFilter(null)} />
-              {recordType.dimensionCounts.map((d) => (
+              {clusteredDimensionCounts.map((d) => (
                 <DimensionChip key={d.value} label={d.value} count={d.count} active={dimensionFilter === d.value} onClick={() => setDimensionFilter(d.value)} />
               ))}
+              {singletonDimensionCount > 0 ? (
+                <span style={{ fontFamily: "var(--font-body-sans)", fontSize: 11.5, color: HOME_HEX.textDisabled, fontStyle: "italic" }}>
+                  +{singletonDimensionCount} more {recordType.primaryDimension} values, 1 record each -- use search below
+                </span>
+              ) : null}
             </div>
+          ) : (
+            <p style={{ margin: 0, fontFamily: "var(--font-body-sans)", fontSize: 12.5, color: HOME_HEX.textDisabled, fontStyle: "italic" }}>
+              Every {recordType.primaryDimension} value here is unique to one record -- this field doesn&rsquo;t cluster.
+              Use search below, or Cross with a broader field above.
+            </p>
           )}
         </div>
       ) : null}
