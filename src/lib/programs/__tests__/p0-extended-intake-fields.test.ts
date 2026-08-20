@@ -2,6 +2,7 @@ import {
   applyExtendedIntakeFieldsIfEnabled,
   embedExtendedIntakeFieldsInCharter,
   readExtendedIntakeFieldsFromCharter,
+  resolveMoveTier,
 } from "../p0-extended-intake-fields";
 
 describe("p0-extended-intake-fields", () => {
@@ -83,6 +84,38 @@ describe("p0-extended-intake-fields", () => {
         existing: "value",
         p0_extended_intake_fields_v1: fields,
       });
+    });
+  });
+
+  describe("resolveMoveTier", () => {
+    it("reads a valid tier off the charter", () => {
+      const charter = embedExtendedIntakeFieldsInCharter(
+        {},
+        {
+          tier: "Straightforward",
+        },
+      );
+      expect(resolveMoveTier(charter)).toBe("Straightforward");
+    });
+
+    it("returns null for a legacy/missing charter", () => {
+      expect(resolveMoveTier(null)).toBeNull();
+      expect(resolveMoveTier({})).toBeNull();
+    });
+
+    it("returns null for an unrecognized tier value (defends against malformed/tampered JSONB)", () => {
+      const charter = { p0_extended_intake_fields_v1: { tier: "urgent" } };
+      expect(resolveMoveTier(charter)).toBeNull();
+    });
+
+    it("returns null when tier was never set even though other extended fields are present", () => {
+      const charter = embedExtendedIntakeFieldsInCharter(
+        {},
+        {
+          businessSegment: "Health Plan Operations",
+        },
+      );
+      expect(resolveMoveTier(charter)).toBeNull();
     });
   });
 });

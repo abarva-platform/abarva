@@ -608,7 +608,7 @@ describe("StrategicMoveOriginateClient", () => {
       ).not.toBeInTheDocument();
     });
 
-    it("adds a Segment group of 6 steps (16 total) when the flag is on, with Business Segment options from the tenant prop", () => {
+    it("adds a Segment group of 7 steps (17 total) when the flag is on, with Business Segment options from the tenant prop", () => {
       render(
         <StrategicMoveOriginateClient
           tenantName="Meridian Health"
@@ -621,7 +621,7 @@ describe("StrategicMoveOriginateClient", () => {
           ]}
         />,
       );
-      expect(screen.getByText(/0 \/ 16/)).toBeInTheDocument();
+      expect(screen.getByText(/0 \/ 17/)).toBeInTheDocument();
 
       fireEvent.click(
         screen.getByRole("button", { name: /business segment/i }),
@@ -796,6 +796,17 @@ describe("StrategicMoveOriginateClient", () => {
       });
 
       fireEvent.click(
+        screen.getByRole("button", { name: /^complexity tier$/i }),
+      );
+      fireEvent.change(
+        document.querySelector("#orig-canvas-brief-section-17-input")!,
+        { target: { value: "Straightforward" } },
+      );
+      fireEvent.click(
+        screen.getAllByRole("button", { name: /submit section/i })[0],
+      );
+
+      fireEvent.click(
         screen.getByRole("button", { name: /approve and build the charter/i }),
       );
       await act(async () => {
@@ -822,6 +833,7 @@ describe("StrategicMoveOriginateClient", () => {
         valueHypothesisQuant: "Est. $2-4M/yr in recoverable revenue.",
         valueHypothesisQual: "Coding team trusts the data more.",
         stakeholders: "Coding team lead; Actuarial; Compliance.",
+        tier: "Straightforward",
       });
     });
 
