@@ -5,6 +5,7 @@ import { useState } from "react";
 import { BrowseTheData } from "./BrowseTheData";
 import { ChapterSection } from "./ChapterSection";
 import { CurrentState } from "./CurrentState";
+import { HomeAvaChat } from "./HomeAvaChat";
 import { TechnologyEstateTable } from "./TechnologyEstateTable";
 import { HOME_HEX } from "./visuals/home-chart-kit";
 import { StateBadge } from "@/components/knowledge/state/StateBanner";
@@ -46,6 +47,7 @@ export function HomePreviewApp({
       : undefined;
 
   return (
+    <HomeAvaChat key={tenantKey} tenantKey={tenantKey} activeChapterId={activeChapter?.chapterId}>
     <div style={{ display: "flex", alignItems: "flex-start", background: "#FFFFFF", minHeight: "100%" }}>
       <aside
         style={{
@@ -161,6 +163,7 @@ export function HomePreviewApp({
         </div>
       </main>
     </div>
+    </HomeAvaChat>
   );
 }
 
