@@ -10,6 +10,7 @@ import {
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
 import {
   getHomeReviewBundle,
+  isHomePreviewTenantKey,
   HOME_PREVIEW_TENANT_KEYS,
 } from "@/lib/home/preview/golden-snapshot";
 
@@ -30,7 +31,11 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function HomePreviewPage() {
+export default async function HomePreviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tenant?: string }>;
+}) {
   await connection();
 
   const hasPlatformAdmin = await isPlatformAdminSession();
@@ -39,18 +44,22 @@ export default async function HomePreviewPage() {
     notFound();
   }
 
-  const loaded = HOME_PREVIEW_TENANT_KEYS.map((key) => [key, getHomeReviewBundle(key)] as const);
-  const missing = loaded.filter(([, bundle]) => !bundle).map(([key]) => key);
-  if (missing.length > 0) {
+  // One tenant per render. Reviewers pick with ?tenant=<key>; the page never loads a second
+  // tenant's bundle, so no other client's data reaches the response and the UI carries no
+  // cross-client control. A client-facing surface must look tenant-isolated because it is.
+  const { tenant } = await searchParams;
+  const tenantKey = tenant && isHomePreviewTenantKey(tenant) ? tenant : HOME_PREVIEW_TENANT_KEYS[0];
+
+  const bundle = getHomeReviewBundle(tenantKey);
+  if (!bundle) {
     // Fail loudly and specifically rather than rendering a blank page -- a missing golden
     // snapshot file is a real setup defect, not something to paper over with an empty state.
-    throw new Error(`Home preview: missing golden snapshot for ${missing.join(", ")}. Expected a file under src/lib/home/preview/golden-snapshots/.`);
+    throw new Error(`Home preview: missing golden snapshot for ${tenantKey}. Expected a file under src/lib/home/preview/golden-snapshots/.`);
   }
-  const bundles = Object.fromEntries(loaded) as Record<(typeof HOME_PREVIEW_TENANT_KEYS)[number], NonNullable<(typeof loaded)[number][1]>>;
 
   return (
     <AppShell surface="home" topBarProps={{ context: "Home preview — candidate, not yet reviewed" }}>
-      <HomePreviewAppRoot bundles={bundles} />
+      <HomePreviewAppRoot bundle={bundle} tenantKey={tenantKey} />
     </AppShell>
   );
 }

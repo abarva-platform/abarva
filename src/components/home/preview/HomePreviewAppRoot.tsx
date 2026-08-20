@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
-
 import { HomePreviewApp } from "./HomePreviewApp";
 import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 import type { HomeReviewBundle } from "@/lib/home/preview/types";
 
-/** Client boundary that owns which tenant is currently shown, so switching between the two
- * accepted tenants is instant (both golden snapshots are already loaded server-side) rather than
- * a full page navigation. */
+/** Client boundary for one tenant's preview. Deliberately holds no tenant-switching state and
+ * receives only the one bundle it renders: a client-facing surface must not carry a control that
+ * implies another client's data is reachable, and the other tenant's payload should never be in
+ * the response at all. Reviewers select a tenant with `?tenant=<key>` on the route. */
 export function HomePreviewAppRoot({
-  bundles,
+  bundle,
+  tenantKey,
 }: {
-  bundles: Record<HomePreviewTenantKey, HomeReviewBundle>;
+  bundle: HomeReviewBundle;
+  tenantKey: HomePreviewTenantKey;
 }) {
-  const [tenantKey, setTenantKey] = useState<HomePreviewTenantKey>("meridian-health");
-  return <HomePreviewApp bundle={bundles[tenantKey]} tenantKey={tenantKey} onTenantChange={setTenantKey} />;
+  return <HomePreviewApp bundle={bundle} tenantKey={tenantKey} />;
 }
