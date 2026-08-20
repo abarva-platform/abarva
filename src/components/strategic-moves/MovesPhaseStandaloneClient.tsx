@@ -10,6 +10,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import {
+  resolvePhaseCaptureStatus,
+  type PhaseCaptureSaveStatus,
+  type PhaseCaptureStatusView,
+} from "@/lib/programs/phase-capture-status";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
@@ -140,7 +145,6 @@ type WorkspaceView =
 
 type UploadWorkStatus = "idle" | "uploading" | "uploaded" | "error";
 type DecisionOptionSaveStatus = "idle" | "saving" | "saved" | "error";
-type PhaseCaptureSaveStatus = "idle" | "editing" | "saving" | "saved" | "error";
 interface PhaseEvidenceArtifact {
   artifactId: string;
   fileName: string | null;
@@ -739,13 +743,38 @@ export function MovesPhaseStandaloneClient({
 
     let cancelled = false;
     const keysToSave = [...phaseCaptureDirtyKeys];
-    setPhaseCaptureSaveStatus((prev) => {
-      const next = { ...prev };
-      for (const key of keysToSave) next[key] = "saving";
-      return next;
-    });
 
     const timer = window.setTimeout(async () => {
+      // "Saving" is set HERE, inside the timeout, not in the effect body. This
+      // is load-bearing, not cosmetic.
+      //
+      // React 19 throws #185 ("Maximum update depth exceeded") when a run of
+      // consecutive SyncLane commits each leave a DefaultLane update pending.
+      // An input event commits on SyncLane, which makes React flush passive
+      // effects synchronously inside that commit — so a setState in this
+      // effect's BODY left DefaultLane work pending on every keystroke and
+      // `nestedUpdateCount` never reset. React 18 tested
+      // `remainingLanes === SyncLane`; React 19 widened it to include
+      // DefaultLane, which is what made this reachable at all.
+      //
+      // The throw surfaced inside the textarea's own onChange, and React's
+      // controlled-input restore runs in a `finally` — so it wrote the stale
+      // committed value back onto the DOM and the keystroke was destroyed.
+      // Measured on the live app: one throw and one lost character per ~53
+      // characters typed. 480 characters lost exactly 9.
+      //
+      // Scheduling this inside the timeout means a keystroke commit leaves NO
+      // React lane pending — only a `window.setTimeout`, which React does not
+      // track. The counter resets every keystroke and the defect is
+      // structurally unreachable at any typing speed, rather than merely made
+      // less likely by slowing input down.
+      if (cancelled) return;
+      setPhaseCaptureSaveStatus((prev) => {
+        const next = { ...prev };
+        for (const key of keysToSave) next[key] = "saving";
+        return next;
+      });
+
       const sectionsToSave: Record<string, string> = {};
       for (const key of keysToSave) {
         sectionsToSave[key] = phaseCaptureValues[key] ?? "";
@@ -2221,24 +2250,16 @@ function phaseCaptureStatusForSection(
   draftValues: PhaseCaptureValues,
   persistedValues: PhaseCaptureValues,
   saveStatus: Record<string, PhaseCaptureSaveStatus>,
-): { label: string; complete: boolean; tone: PhaseCaptureSaveStatus | "open" } {
-  const key = section.key;
-  const draft = String(draftValues[key] ?? "");
-  const persisted = String(persistedValues[key] ?? "");
-  const serverComplete = persisted.trim().length > 0;
-  if (saveStatus[key] === "saving") {
-    return { label: "Saving", complete: false, tone: "saving" };
-  }
-  if (saveStatus[key] === "error") {
-    return { label: "Unsaved", complete: false, tone: "error" };
-  }
-  if (draft !== persisted) {
-    return { label: "Editing", complete: false, tone: "editing" };
-  }
-  if (serverComplete) {
-    return { label: "Done", complete: true, tone: "saved" };
-  }
-  return { label: "Open", complete: false, tone: "open" };
+): PhaseCaptureStatusView {
+  // Delegates to the shared, unit-tested state machine so the badge's meaning
+  // is asserted somewhere other than a browser run. See phase-capture-status.ts
+  // for the invariant: Done means the visible value is reproducible from the
+  // server after a no-store reload.
+  return resolvePhaseCaptureStatus({
+    draft: String(draftValues[section.key] ?? ""),
+    persisted: String(persistedValues[section.key] ?? ""),
+    saveStatus: saveStatus[section.key],
+  });
 }
 
 function workflowIndexForSelectedSection(
@@ -2579,6 +2600,19 @@ function FinderStepsColumns({
       ) ?? null)
     : null;
 
+  // Both the step badge and this note come from resolvePhaseCaptureStatus, so
+  // an unsaved edit cannot show "Done" in one place and nothing in the other.
+  // Reading the raw save-status map here used to miss the case that matters
+  // most: a value that diverges from the server with no in-flight save.
+  const selectedDetailStatus = selectedSection
+    ? phaseCaptureStatusForSection(
+        selectedSection,
+        phaseCaptureValues,
+        persistedPhaseCaptureValues,
+        phaseCaptureSaveStatus,
+      )
+    : null;
+
   return (
     <div className="mxw-finder-steps" data-testid="mxw-finder-steps">
       <nav aria-label="Phase steps" className="mxw-finder-steps-menu">
@@ -2711,21 +2745,16 @@ function FinderStepsColumns({
               rows={selectedSection.structured === "facts" ? 3 : 6}
               value={phaseCaptureValues[selectedSection.key] ?? ""}
             />
-            {selectedSection &&
-            phaseCaptureSaveStatus[selectedSection.key] === "error" ? (
+            {selectedDetailStatus?.tone === "error" ? (
               <p className="mxw-capture-save-error" role="alert">
                 {phaseCaptureSaveErrors[selectedSection.key] ||
                   "This edit is not saved. Try again before continuing."}
               </p>
-            ) : selectedSection &&
-              (phaseCaptureSaveStatus[selectedSection.key] === "saving" ||
-                phaseCaptureSaveStatus[selectedSection.key] === "editing") ? (
+            ) : selectedDetailStatus?.tone === "saving" ||
+              selectedDetailStatus?.tone === "editing" ? (
               <p className="mxw-capture-save-note">
-                {phaseCaptureSaveStatus[selectedSection.key] === "saving"
-                  ? "Saving"
-                  : "Editing"}{" "}
-                - Approve &amp; Build will stay blocked until this value is
-                saved.
+                {selectedDetailStatus.label} - Approve &amp; Build will stay
+                blocked until this value is saved.
               </p>
             ) : null}
           </section>
