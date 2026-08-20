@@ -196,3 +196,21 @@ Verified against the design's standalone export: heading hierarchy, order, and t
 match exactly, including `rgb(163,45,45)` for Open exposures and `rgb(186,117,23)` for Not
 established. Remaining differences are data-driven — this tenant's brief routes one exhibit and one
 gap where the design's sample had two of each.
+
+
+### A fabrication caught by rendering the architecture view
+
+The first render of the tile landscape stamped the same sentence on every tile -- "57 systems
+flagged to replace · 121 systems legacy, sunset-planned or deprecated" -- on Clinical Informatics,
+Nursing Operations and Population Health alike.
+
+The projection's overlays carry an estate-wide total in their `label` and list in `nodeIds` merely
+which capabilities contain any. Rendering that label per tile therefore asserted something false
+about every tile it touched: a capability holding 46 systems cannot have 57 flagged for
+replacement. Both halves were individually correct -- the total is right, the membership list is
+right -- and the combination on screen was a fabricated per-capability number on a client surface.
+
+Per-tile marks now come from the node's own `metrics.replacementCandidates` and
+`metrics.agingSystems`. Verified against the source rows: Clinical Informatics 5 of 99, Acute Care
+6 of 56, Nursing 5 of 46 -- each tile now states its own figure. The overlay's estate-wide total
+belongs once, at view level, not repeated as if it described each part.

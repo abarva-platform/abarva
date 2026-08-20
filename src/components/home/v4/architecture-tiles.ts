@@ -55,21 +55,25 @@ function systemsOf(node: ArchitectureViewNode): number {
   return node.aggregation?.memberCount ?? 0;
 }
 
-/** Overlay marks are the design's way of saying a group carries a flagged condition without
- * inventing a severity of our own -- the overlay itself comes from the projection. */
-function overlayMarksFor(view: ArchitectureView): Map<string, string> {
-  const marks = new Map<string, string>();
-  for (const overlay of view.overlays ?? []) {
-    for (const id of overlay.nodeIds ?? []) {
-      const existing = marks.get(id);
-      marks.set(id, existing ? `${existing} · ${overlay.label}` : overlay.label);
-    }
-  }
-  return marks;
+/**
+ * Per-tile marks come from the node's OWN metrics, never from a view-level overlay.
+ *
+ * The projection's overlays carry an estate-wide total in their label ("57 systems flagged to
+ * replace") and list in `nodeIds` merely which capabilities contain any. Stamping that label onto
+ * each tile therefore asserts something false about every tile it touches -- a capability holding
+ * 46 systems cannot have 57 flagged. The overlay belongs once, at view level; the per-tile number
+ * has to be the node's own.
+ */
+function markFor(node: ArchitectureViewNode): string | undefined {
+  const replace = node.metrics?.replacementCandidates;
+  const aging = node.metrics?.agingSystems;
+  const parts: string[] = [];
+  if (typeof replace === "number" && replace > 0) parts.push(`${replace} to replace`);
+  if (typeof aging === "number" && aging > 0) parts.push(`${aging} aging`);
+  return parts.length ? parts.join(" · ") : undefined;
 }
 
 export function buildTileLayout(view: ArchitectureView): TileLayout {
-  const marks = overlayMarksFor(view);
   const nodes = view.nodes.filter((n) => systemsOf(n) > 0);
   const totalSystems = nodes.reduce((sum, n) => sum + systemsOf(n), 0);
   if (totalSystems === 0) return { rows: [], tail: null, totalSystems: 0 };
@@ -84,7 +88,7 @@ export function buildTileLayout(view: ArchitectureView): TileLayout {
         sharePct: (systems / totalSystems) * 100,
         note: n.note,
         flex: systems,
-        overlayMark: marks.get(n.id),
+        overlayMark: markFor(n),
       };
     })
     .sort((a, b) => b.systems - a.systems);
