@@ -265,7 +265,9 @@ function TileCard({ tile, onClick }: { tile: Tile; onClick: () => void }) {
       onClick={onClick}
       title={`${tile.label} — ${tile.systems} systems`}
       style={{
-        flex: `${tile.flex} 1 0`,
+        flexGrow: 0,
+        flexShrink: 1,
+        flexBasis: `${tile.widthPct.toFixed(2)}%`,
         minWidth: 0,
         display: "flex",
         flexDirection: "column",
