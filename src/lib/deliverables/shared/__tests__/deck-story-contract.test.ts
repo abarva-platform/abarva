@@ -177,6 +177,47 @@ describe("P4 business-case deck", () => {
   });
 });
 
+describe("P4 roadmap deck", () => {
+  const c = deckContract("REF_DECK_P4_ROADMAP");
+
+  it("projects the roadmap spine, not the investment case", () => {
+    expect(c.spine).toBe("p4_roadmap_commitment");
+  });
+
+  it("puts the swimlane view second, spanning the whole sequence", () => {
+    const onAPage = c.slides[1];
+    expect(onAPage.id).toBe("roadmap_on_a_page");
+    expect(onAPage.beatId).toBeNull();
+    expect(onAPage.primaryVisual).toBe("roadmap");
+    expect(onAPage.requiredElements.join(" | ")).toMatch(/one lane per/i);
+  });
+
+  it("shows dependencies as cross-lane blocking, not prose", () => {
+    const deps = c.slides.find((s) => s.id === "cross_lane_dependencies")!;
+    expect(deps.primaryVisual).toBe("matrix");
+    expect(deps.requiredElements.join(" | ")).toMatch(/between lanes/i);
+    expect(deps.requiredElements.join(" | ")).toMatch(/releases each block/i);
+  });
+
+  it("keeps value milestones distinct from lane milestones", () => {
+    const ids = c.slides.map((s) => s.id);
+    expect(ids).toContain("milestones_by_lane");
+    expect(ids).toContain("value_milestones");
+  });
+
+  it("requires gates to say what is decided and on what evidence", () => {
+    const gates = c.slides.find((s) => s.id === "decision_gates")!;
+    expect(gates.requiredElements.join(" | ")).toMatch(/what is decided/i);
+    expect(gates.requiredElements.join(" | ")).toMatch(/evidence/i);
+  });
+
+  it("closes on a bounded commitment, not open-ended endorsement", () => {
+    const last = c.slides.at(-1)!;
+    expect(last.id).toBe("commitment");
+    expect(last.requiredElements.join(" | ")).toMatch(/stays optional/i);
+  });
+});
+
 describe("isGenericSlideTitle", () => {
   it("rejects bare category labels", () => {
     for (const title of [

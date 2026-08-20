@@ -127,19 +127,11 @@ export interface SlideContract {
   required: boolean;
 }
 
-/**
- * `REF_DECK_P4_ROADMAP` is deliberately NOT defined yet. A roadmap deck argues
- * "is this sequence the right one?", which is a different argument from the
- * investment case — it wants to lead with the sequence, where the investment
- * spine reaches roadmap only after value and delivery. Projecting it onto
- * `p4_investment_case` would either violate the spine order or force a reading
- * order no one would present. It needs its own spine, and inventing one without
- * agreement would be guessing at a story rather than encoding one.
- */
 export type DeckContractId =
   | "REF_DECK_P2_DISCOVERY_READOUT"
   | "REF_DECK_P3_SOLUTION_DECISION"
-  | "REF_DECK_P4_BUSINESS_CASE";
+  | "REF_DECK_P4_BUSINESS_CASE"
+  | "REF_DECK_P4_ROADMAP";
 
 export interface DeckStoryContract {
   id: DeckContractId;
@@ -571,12 +563,183 @@ const P3_SOLUTION_DECISION: DeckStoryContract = {
   ],
 };
 
+// ---------------------------------------------------------------------------
+// P4 — Roadmap commitment deck
+// ---------------------------------------------------------------------------
+
+/**
+ * Projects `p4_roadmap_commitment`, NOT the investment case. A roadmap must
+ * lead with the sequence and then establish its lanes before dependencies,
+ * critical path or gates can be read — which is a different argument from
+ * "is this worth funding", and the reason it has its own spine.
+ */
+const P4_ROADMAP: DeckStoryContract = {
+  id: "REF_DECK_P4_ROADMAP",
+  spine: "p4_roadmap_commitment",
+  audience: ["Sponsor", "SteerCo", "Delivery leadership", "CIO"],
+  executiveQuestion: "Is this the sequence we should commit to?",
+  appendixAllowed: true,
+  appendixContent: [
+    "detailed plan",
+    "dependency register",
+    "resourcing detail",
+    "per-lane backlog",
+    "assumptions behind durations",
+  ],
+  messageLedTitles: true,
+  onePrimaryMessagePerSlide: true,
+  onePrimaryVisualPerSlide: true,
+  slides: [
+    {
+      id: "commitment_ask",
+      label: "Commitment / Ask",
+      purpose: "State the sequence being committed to and by whom.",
+      beatId: "commitment_required",
+      primaryVisual: "decision_card",
+      requiredElements: [
+        "the commitment sought",
+        "the approving body",
+        "the horizon it covers",
+      ],
+      required: true,
+    },
+    {
+      id: "roadmap_on_a_page",
+      label: "Roadmap on a Page",
+      purpose:
+        "Show the whole sequence as swimlanes so the shape is legible before any detail.",
+      beatId: null,
+      spansStory:
+        "Deliberately spans the whole sequence — the swimlane view of everything, not one step of the argument.",
+      primaryVisual: "roadmap",
+      requiredElements: [
+        "one lane per workstream",
+        "milestones positioned in time",
+        "decision gates marked",
+      ],
+      required: true,
+    },
+    {
+      id: "why_this_sequence",
+      label: "Why This Sequence",
+      purpose: "Argue the order rather than presenting it as given.",
+      beatId: "sequencing_logic",
+      primaryVisual: "none",
+      requiredElements: [
+        "what must come first and why",
+        "what was deliberately deferred",
+      ],
+      required: true,
+    },
+    {
+      id: "workstream_lanes",
+      label: "Workstream Lanes",
+      purpose: "Establish the parallel tracks the work splits into.",
+      beatId: "workstream_lanes",
+      primaryVisual: "roadmap",
+      requiredElements: ["each lane and its scope", "lane owner"],
+      required: true,
+    },
+    {
+      id: "milestones_by_lane",
+      label: "Milestones by Lane",
+      purpose: "Make progress observable per track, not in aggregate.",
+      beatId: "lane_milestones",
+      primaryVisual: "roadmap",
+      requiredElements: ["milestones per lane", "dates or horizons"],
+      required: true,
+    },
+    {
+      id: "cross_lane_dependencies",
+      label: "Cross-Lane Dependencies",
+      purpose: "Show where one lane's slip becomes another lane's idle time.",
+      beatId: "cross_lane_dependencies",
+      primaryVisual: "matrix",
+      requiredElements: [
+        "blocking relationships between lanes",
+        "the milestone that releases each block",
+      ],
+      required: true,
+    },
+    {
+      id: "critical_path",
+      label: "Critical Path",
+      purpose: "Focus attention where delay is not recoverable.",
+      beatId: "critical_path",
+      primaryVisual: "roadmap",
+      requiredElements: ["the driving chain", "float elsewhere"],
+      required: true,
+    },
+    {
+      id: "decision_gates",
+      label: "Decision Gates",
+      purpose: "Give the sponsor exits, not just a start date.",
+      beatId: "decision_gates",
+      primaryVisual: "table",
+      requiredElements: [
+        "each gate",
+        "what is decided there",
+        "what evidence it needs",
+      ],
+      required: true,
+    },
+    {
+      id: "value_milestones",
+      label: "Value Milestones",
+      purpose:
+        "Separate delivery milestones from value milestones, which rarely coincide.",
+      beatId: "value_milestones",
+      primaryVisual: "chart",
+      requiredElements: ["when value lands", "how it is measured"],
+      required: true,
+    },
+    {
+      id: "capacity_and_delivery",
+      label: "Capacity & Delivery",
+      purpose: "Test whether the sequence is staffable, not just logical.",
+      beatId: "capacity_and_delivery",
+      primaryVisual: "matrix",
+      requiredElements: [
+        "who delivers each lane",
+        "capacity gaps or hiring lead time",
+      ],
+      required: true,
+    },
+    {
+      id: "schedule_risk",
+      label: "Schedule Risk",
+      purpose: "Name the failure modes the gates are meant to catch.",
+      beatId: "schedule_risk",
+      primaryVisual: "heatmap",
+      requiredElements: [
+        "what would break the sequence",
+        "mitigation",
+        "owner",
+      ],
+      required: true,
+    },
+    {
+      id: "commitment",
+      label: "Commitment",
+      purpose: "Close with a bounded commitment, not open-ended endorsement.",
+      beatId: "commitment",
+      primaryVisual: "decision_card",
+      requiredElements: [
+        "what is committed now",
+        "what stays optional pending a gate",
+      ],
+      required: true,
+    },
+  ],
+};
+
 export const DECK_STORY_CONTRACTS: Readonly<
   Record<DeckContractId, DeckStoryContract>
 > = {
   REF_DECK_P2_DISCOVERY_READOUT: P2_DISCOVERY_READOUT,
   REF_DECK_P3_SOLUTION_DECISION: P3_SOLUTION_DECISION,
   REF_DECK_P4_BUSINESS_CASE: P4_BUSINESS_CASE,
+  REF_DECK_P4_ROADMAP: P4_ROADMAP,
 };
 
 export function deckContract(id: DeckContractId): DeckStoryContract {

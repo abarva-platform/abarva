@@ -1,6 +1,7 @@
 import {
   EXECUTIVE_STORY_SPINES,
   renderStorySpinePrompt,
+  ROADMAP_LANES,
   storyBeatsFor,
   storySpineFor,
   type StorySpineId,
@@ -45,6 +46,13 @@ describe("EXECUTIVE_STORY_SPINES", () => {
     expect(EXECUTIVE_STORY_SPINES.p4_investment_case[0].id).toBe("decision");
     expect(EXECUTIVE_STORY_SPINES.p4_investment_case.at(-1)!.id).toBe(
       "recommendation",
+    );
+
+    expect(EXECUTIVE_STORY_SPINES.p4_roadmap_commitment[0].id).toBe(
+      "commitment_required",
+    );
+    expect(EXECUTIVE_STORY_SPINES.p4_roadmap_commitment.at(-1)!.id).toBe(
+      "commitment",
     );
   });
 
@@ -91,6 +99,76 @@ describe("EXECUTIVE_STORY_SPINES", () => {
   });
 });
 
+describe("p4_roadmap_commitment", () => {
+  const ids = EXECUTIVE_STORY_SPINES.p4_roadmap_commitment.map((b) => b.id);
+
+  it("is a distinct argument from the investment case, not a reordering", () => {
+    const investment = new Set(
+      EXECUTIVE_STORY_SPINES.p4_investment_case.map((b) => b.id),
+    );
+    // Only the generic notion of value is shared; the rest is roadmap-specific.
+    const overlap = ids.filter((id) => investment.has(id));
+    expect(overlap).toEqual([]);
+  });
+
+  it("leads with the sequence, which is why it cannot project the investment spine", () => {
+    // In the investment case, roadmap comes 8th. Here sequencing is 2nd.
+    expect(ids.indexOf("sequencing_logic")).toBeLessThan(3);
+  });
+
+  it("establishes lanes before anything that depends on them", () => {
+    // Dependencies, critical path and gates are unreadable without the lanes.
+    for (const dependent of [
+      "lane_milestones",
+      "cross_lane_dependencies",
+      "critical_path",
+    ]) {
+      expect(ids.indexOf("workstream_lanes")).toBeLessThan(
+        ids.indexOf(dependent),
+      );
+    }
+  });
+
+  it("separates value milestones from delivery milestones", () => {
+    expect(ids).toContain("lane_milestones");
+    expect(ids).toContain("value_milestones");
+    expect(ids.indexOf("lane_milestones")).not.toBe(
+      ids.indexOf("value_milestones"),
+    );
+  });
+});
+
+describe("ROADMAP_LANES", () => {
+  it("names the canonical delivery lanes with unique ids and real scope", () => {
+    const laneIds = ROADMAP_LANES.map((l) => l.id);
+    expect(new Set(laneIds).size).toBe(laneIds.length);
+    expect(laneIds).toEqual([
+      "foundation",
+      "ingestion_medallion",
+      "governance",
+      "analytics_reporting",
+      "activation",
+    ]);
+    for (const lane of ROADMAP_LANES) {
+      expect(lane.label).toEqual(expect.stringMatching(/\S/));
+      expect(lane.scope.length).toBeGreaterThan(30);
+    }
+  });
+
+  it("orders lanes so a lane's typical prerequisites precede it", () => {
+    const laneIds = ROADMAP_LANES.map((l) => l.id) as string[];
+    expect(laneIds.indexOf("foundation")).toBeLessThan(
+      laneIds.indexOf("ingestion_medallion"),
+    );
+    expect(laneIds.indexOf("ingestion_medallion")).toBeLessThan(
+      laneIds.indexOf("analytics_reporting"),
+    );
+    expect(laneIds.indexOf("analytics_reporting")).toBeLessThan(
+      laneIds.indexOf("activation"),
+    );
+  });
+});
+
 describe("storySpineFor", () => {
   it("maps each argument artifact to its phase story", () => {
     expect(storySpineFor("discovery_report")).toBe("p2_discovery");
@@ -99,7 +177,8 @@ describe("storySpineFor", () => {
       "p3_solution_decision",
     );
     expect(storySpineFor("business_case")).toBe("p4_investment_case");
-    expect(storySpineFor("execution_roadmap")).toBe("p4_investment_case");
+    // The roadmap argues a commitment to a sequence, not a funding case.
+    expect(storySpineFor("execution_roadmap")).toBe("p4_roadmap_commitment");
   });
 
   it("returns null for instruments that have a job but no narrative arc", () => {
