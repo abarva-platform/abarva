@@ -550,18 +550,28 @@ describe("MovesPhaseStandaloneClient", () => {
     });
 
     it("P1 renders the contract canvas while preserving real workflow controls", () => {
+      const move = makeMove({
+        currentPhase: 1,
+        phaseLabel: "P1 Charter",
+      });
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
-          move={makeMove({
-            currentPhase: 1,
-            phaseLabel: "P1 Charter",
-          })}
+          move={move}
           phaseNum={1}
           phaseTallies={[...phaseTallies]}
         />,
       );
+
+      const workbookLink = screen.getByRole("link", {
+        name: "Download P2 readiness workbook",
+      });
+      expect(workbookLink).toHaveAttribute(
+        "href",
+        `/api/v1/programs/${move.id}/stage-readiness-workbook?phase=1`,
+      );
+      expect(workbookLink).toHaveAttribute("download");
 
       const contractCard = screen.getByTestId("mxw-contract-card");
       expect(contractCard).toBeInTheDocument();

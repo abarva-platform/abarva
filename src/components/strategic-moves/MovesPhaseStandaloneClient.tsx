@@ -426,6 +426,10 @@ export function MovesPhaseStandaloneClient({
       ? `${currentUser.email} · ${currentUser.role}`
       : (currentUser?.email ?? null);
   const phase = phaseFor(phaseNum);
+  const readinessWorkbookHref =
+    phase.phase < 5
+      ? `/api/v1/programs/${encodeURIComponent(move.id)}/stage-readiness-workbook?phase=${phase.phase}`
+      : null;
   const currentPhase = move.currentPhase ?? 0;
   const terminalComplete = Boolean(move.terminalComplete);
   const isHistoricalPhase = terminalComplete || phase.phase < currentPhase;
@@ -1627,6 +1631,17 @@ export function MovesPhaseStandaloneClient({
                     <h1>{phase.title}</h1>
                     <div className="mxw-question">{phase.question}</div>
                     <p>{phase.lede}</p>
+                    {readinessWorkbookHref ? (
+                      <div className="mxw-stage-actions">
+                        <a
+                          className="mxw-stage-download"
+                          download
+                          href={readinessWorkbookHref}
+                        >
+                          Download P{phase.phase + 1} readiness workbook
+                        </a>
+                      </div>
+                    ) : null}
                     <div
                       className="mxw-progress-card"
                       aria-label="Phase progress"
@@ -5024,6 +5039,9 @@ function MovesStandaloneStyles() {
 .mxw-stage-head h1{grid-column:1;font-family:Fraunces, Georgia, serif;font-size:34px;font-weight:600;letter-spacing:-.9px;line-height:1.08;margin:0 0 7px;color:var(--ink)}
 .mxw-question{grid-column:1;font-size:14.5px;font-weight:700;color:var(--ink);margin-bottom:2px}
 .mxw-stage-head p{grid-column:1;font-size:14.5px;color:var(--muted);line-height:1.5;max-width:82ch;margin:0}
+.mxw-stage-actions{grid-column:1;display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.mxw-stage-download{display:inline-flex;align-items:center;min-height:34px;border:1px solid var(--line-2);border-radius:9px;background:#fff;color:#2a5aa8;padding:8px 12px;font-size:12.5px;font-weight:850;text-decoration:none;box-shadow:0 1px 2px rgba(12,26,58,.04)}
+.mxw-stage-download:hover{border-color:rgba(42,90,168,.35);background:#f8fbff;color:#173f7a}
 .mxw-progress-card{grid-column:2;grid-row:1 / span 4;align-self:center;width:230px;border:1px solid var(--line-2);border-radius:12px;background:#fff;padding:14px 16px;box-shadow:none}
 .mxw-progress-card strong{display:block;font-family:Fraunces, Georgia, serif;font-size:20px;font-weight:650;line-height:1.05;margin-bottom:9px;color:var(--ink)}
 .mxw-progress-meta{display:grid;gap:6px;margin-top:10px}
