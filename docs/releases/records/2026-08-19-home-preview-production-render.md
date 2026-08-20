@@ -321,6 +321,7 @@ nav with real counts per section: What Matters, Exhibit, Tensions & What to Watc
 the freed width does real work instead of sitting empty; (2) `main` in `HomePreviewApp` now
 centers its active view within a shared `maxWidth: 1280` container, so leftover space on very wide
 screens is distributed evenly rather than dumped entirely on one side, applied once at the shell
+level so every view (chapters, Current State, Browse the Data) benefits consistently.
 
 **Fourth iteration -- Ask aVa, additive:** the Technology Estate explorer (tabular/tree drill-down
 into real canonical records) shipped and was live-verified separately. This iteration adds an
@@ -358,9 +359,43 @@ back to a safe `no_data` packet rather than crashing the route. Full existing Ho
 (54 tests) still green; typecheck and targeted ESLint clean. Confirmed, via `git stash`, that 9
 pre-existing failures in `AgentDock.test.tsx`/`AdvisoryIntelligencePage.test.tsx` predate this
 change entirely and are unrelated (not part of `npm run test:behaviors`, reproduced identically
-with this change stashed out) -- left untouched as out of scope. Live signed-in browser proof
-against `https://app.abarva.ai/home/preview` -- asking a real grounded question, confirming the
-chart/citation render, and confirming an honest `no_data` response for an out-of-context question
--- is the next required step before this is considered complete, per this record's own standing
-discipline.
-level so every view (chapters, Current State, Browse the Data) benefits consistently.
+with this change stashed out) -- left untouched as out of scope.
+
+**Live signed-in browser proof, post-merge/deploy against `https://app.abarva.ai/home/preview`:**
+asked a real question ("Which business function has the most applications?") -- the answer
+correctly named Clinical Informatics at 99 applications (the real dimensionCounts value) and cited
+a real chapter claim (Epic's $86.2M vendor spend, 82 integrations) alongside it, with a real
+horizontal-bar chart artifact rendering below the prose, built from the same real counts. A second,
+deliberately out-of-context question ("What is Meridian's current stock price?") returned an honest
+"I'm not able to answer this question from the current materials" rather than a guess. Switching
+tenants (Meridian to SkyHarbor) reset the chat thread to empty, confirming no cross-tenant context
+leakage via the `key={tenantKey}` remount. Console showed zero new errors on either tenant.
+
+**Fifth iteration -- real 2D segmentation matrix.** Extends the Technology Estate explorer's flat
+dimension-chip filter into a genuine two-dimensional cross-tab: rows stay the record type's
+existing `primaryDimension` (e.g. business function), and a new "Cross with" picker lets the reader
+add a second real column as columns (e.g. system type, deployment model, data classification,
+analytics usage) -- a business-segment-rows x categorical-lens-columns shape, built here entirely
+from grounded fields rather than any authored/derived bucket. `eligibleCrossDimensions`
+(`src/lib/home/preview/segmentation.ts`)
+only offers columns that already exist verbatim in the source canonical data, are string-valued
+(excludes quantitative fields like `annualCostUsd`), and have between 2 and 12 distinct values --
+never invents a category. `computeCrossTab` counts real per-record combinations into a matrix;
+every cell is a clickable button that filters the table below to that exact (row, column)
+combination, reusing the existing `dimensionFilter` state plus a new `crossFilter`. This directly
+answers the earlier "which data & analytics platform services finance vs. clinical needs" question:
+crossing `dataDomain` against `analyticsUsage`/`integrationType`/`platformOrDatabase` on the
+`data_asset_or_integration` record type surfaces real ETL/reporting/analytics platform counts per
+business domain -- no fabricated "lens" needed since those fields already exist as raw canonical
+columns. Also fixed a related pre-existing bug found while extending this component: switching
+between Technology Estate object types (e.g. Applications to Vendor Contracts) did not reset
+`TechnologyEstateTable`'s internal filter state, since the component was not keyed per object type
+-- fixed with `key={activeTechRecordType.objectType}` at the call site in `HomePreviewApp.tsx`.
+
+QA: 8 new unit tests in `segmentation.test.ts` cover the anti-fabrication path directly --
+low-cardinality string columns are offered, the primary dimension itself is excluded, a
+quantitative column is excluded, a column with too many distinct values (over the 12-value
+ceiling) is excluded, an all-null column is excluded, the matrix correctly buckets null values as
+"(not specified)", and row/column totals sum to the exact same record count as the existing
+`dimensionCounts` (proving the cross-tab isn't double-counting or dropping rows). Full existing
+Home preview suite (62 tests) green; typecheck and targeted ESLint clean.
