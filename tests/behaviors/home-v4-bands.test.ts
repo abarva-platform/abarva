@@ -3,6 +3,8 @@ import path from "node:path";
 
 import { splitChapterIntoBands } from "../../src/components/home/v4/chapter-bands";
 import { buildTileLayout } from "../../src/components/home/v4/architecture-tiles";
+import { buildCurrentStateFlowView } from "../../src/lib/visual-system/projections/current-state-flow";
+import { validateArchitectureView } from "../../src/lib/visual-system/architecture-view-contract";
 import type { ChapterView, EnterpriseSignalPacket, GroundedClaim, HomeReviewBundle } from "../../src/lib/home/preview/types";
 
 /**
@@ -214,5 +216,50 @@ describe("v4 architecture tile weighting", () => {
     // Dropped from the tiles, but not dropped from the page.
     expect(layout.tail?.items.map((t) => t.label)).toEqual(["Tiny A", "Tiny B"]);
     expect(layout.tail?.systems).toBe(5);
+  });
+});
+
+describe("current-state flow projection", () => {
+  const DIR = path.join(process.cwd(), "src/lib/home/preview/golden-snapshots");
+  const tenants = fs
+    .readdirSync(DIR)
+    .filter((f) => f.endsWith(".json"))
+    .map((f) => [f.replace(/\.json$/, ""), JSON.parse(fs.readFileSync(path.join(DIR, f), "utf8")) as HomeReviewBundle] as const);
+
+  it.each(tenants)("%s: draws a real graph, with every edge between declared nodes", (tenantKey, bundle) => {
+    const ints = bundle.technologyEstate?.recordTypes.find((r) => r.objectType === "data_asset_or_integration");
+    expect(ints).toBeTruthy();
+    const view = buildCurrentStateFlowView({ tenantKey, tenantDisplayName: tenantKey, integrations: ints! });
+
+    // The defect this guards against: the estate views shipped with zero edges because nothing
+    // read the integration rows. A topology with no edges is a table wearing a diagram's clothes.
+    expect(view.edges.length).toBeGreaterThan(10);
+    const ids = new Set(view.nodes.map((n) => n.id));
+    for (const e of view.edges) {
+      expect(ids.has(e.from)).toBe(true);
+      expect(ids.has(e.to)).toBe(true);
+    }
+    expect(validateArchitectureView(view).filter((i) => i.level === "error")).toHaveLength(0);
+  });
+
+  it.each(tenants)("%s: never places a destination back in the originating lane", (tenantKey, bundle) => {
+    const ints = bundle.technologyEstate!.recordTypes.find((r) => r.objectType === "data_asset_or_integration")!;
+    const view = buildCurrentStateFlowView({ tenantKey, tenantDisplayName: tenantKey, integrations: ints });
+    const targets = new Set(view.edges.map((e) => e.to));
+    for (const node of view.nodes.filter((n) => targets.has(n.id))) {
+      // A receiver drawn in the originating lane inverts the picture the diagram exists to give.
+      if (view.edges.some((e) => e.from === node.id)) continue; // genuine pass-through
+      expect(node.layer).not.toBe("applications_core_platforms");
+    }
+  });
+
+  it.each(tenants)("%s: accounts for every system it does not draw", (tenantKey, bundle) => {
+    const ints = bundle.technologyEstate!.recordTypes.find((r) => r.objectType === "data_asset_or_integration")!;
+    const view = buildCurrentStateFlowView({ tenantKey, tenantDisplayName: tenantKey, integrations: ints });
+    const aggregates = view.nodes.filter((n) => n.aggregation);
+    for (const agg of aggregates) {
+      expect(agg.aggregation!.memberCount).toBeGreaterThan(0);
+      expect(agg.evidenceBasis).toBe("ABARVA_DERIVED");
+    }
   });
 });

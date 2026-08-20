@@ -11,6 +11,7 @@ import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 import type { ChapterId, HomeReviewBundle, TechObjectType } from "@/lib/home/preview/types";
 import { ArchitecturePage } from "./ArchitecturePage";
 import { ChapterPage } from "./ChapterPage";
+import { DataFlowPage } from "./DataFlowPage";
 import { NotDraftedPage } from "./NotDraftedPage";
 import { Rail, type RailGroup, type RailItem } from "./Rail";
 import { SANS, V4 } from "./tokens";
@@ -29,7 +30,7 @@ const TENANT_LABEL: Record<HomePreviewTenantKey, string> = {
   "skyharbor-air": demoSafeClientText("SkyHarbor Air"),
 };
 
-type ActiveView = ChapterId | "architecture" | "current-state" | "browse-the-data" | `tech:${TechObjectType}`;
+type ActiveView = ChapterId | "architecture" | "data-flow" | "current-state" | "browse-the-data" | `tech:${TechObjectType}`;
 
 export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; tenantKey: HomePreviewTenantKey }) {
   const [activeView, setActiveView] = useState<ActiveView>("executive_brief");
@@ -43,6 +44,7 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
     : undefined;
 
   const applications = techRecordTypes.find((r) => r.objectType === "application_system");
+  const integrations = techRecordTypes.find((r) => r.objectType === "data_asset_or_integration");
   const signalPacket = bundle.thesis.signalPacket;
   const visualDatasets = signalPacket.visualDatasets ?? {};
 
@@ -87,6 +89,10 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
       // Architecture first: it is the only view here that answers what shape the estate is in.
       // Everything below it answers what is in the record, which is a different question.
       { id: "architecture", label: "Current-state architecture", drafted: Boolean(applications), count: applications?.rows.length },
+      // The topology: what moves data to what, through what. Named for the question it answers,
+      // and it now genuinely answers it -- the earlier item carrying this name showed a fact
+      // inventory.
+      { id: "data-flow", label: "Current-state data flow", drafted: Boolean(integrations), count: integrations?.rows.length },
       // Renamed from "Current-state data flow", which promised a data flow and delivered a
       // per-domain fact inventory. A nav label that oversells its page is worse than a plain one.
       { id: "current-state", label: "What has been loaded", drafted: true },
@@ -155,6 +161,15 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
               tenantKey={tenantKey}
               tenantDisplayName={TENANT_LABEL[tenantKey]}
               applications={applications}
+              canonicalBuild={bundle.provenance.canonical_snapshot_hash}
+            />
+          ) : null}
+
+          {activeView === "data-flow" && integrations ? (
+            <DataFlowPage
+              tenantKey={tenantKey}
+              tenantDisplayName={TENANT_LABEL[tenantKey]}
+              integrations={integrations}
               canonicalBuild={bundle.provenance.canonical_snapshot_hash}
             />
           ) : null}

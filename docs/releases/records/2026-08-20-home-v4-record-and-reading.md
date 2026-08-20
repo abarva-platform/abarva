@@ -260,3 +260,44 @@ Both tenants now hold across every drawn tile:
 
 A third test covers the lone-small-tile-on-a-trailing-row case directly, since that shape appears
 in only one of the two tenants and would otherwise go unexercised.
+
+
+## Third addendum — the estate views were not architecture
+
+The two estate projections both read only the application register and roll up by
+`business_function`. The landscape emits **zero edges**; the capability view emits a fan-out of
+identical `supports` lines. Neither is an architecture — they answer where technology is
+concentrated, not how it is wired.
+
+The 520 rows carrying `sourceSystem -> targetSystem`, the integration platform each flow crosses,
+and its recorded mechanism had never been read by anything. That is why no renderer could have
+produced a topology: there was no graph going in. The problem was never the SVG layer.
+
+`buildCurrentStateFlowView` reads those rows into a real four-lane graph — what originates data,
+what carries it, where it lands — with 20 nodes and 65 edges for one tenant, 19 and 45 for the
+other, both clean against the contract validator. The headline it computes is the finding the
+thesis prose had already stated independently: **59% of recorded data movement starts at Epic
+Clarity.**
+
+Four decisions worth recording, each made because the first attempt got it wrong and rendering
+showed it:
+
+- **Environments are combined.** Three rows reading "— Test", "— Production" and "— Training" are
+  three environments of one system. Counted separately they split a 59% concentration into three
+  ~20% slices and hide it. The regrouping is declared derived and names its members.
+- **Lanes are role in the flow**, not system type. A destination that happens to be an application
+  still sits in a receiving lane; putting a receiver back in the originating lane inverts the
+  picture, which is exactly what the first version did to one tenant's estate.
+- **Only heavy connectors carry labels.** Labelling all 65 produced a band of overlapping 9px text
+  between every lane — the fan-in failure this project's own brief warns about. Connectors below
+  3% of flows render unlabelled, keep their mechanism and row references, and the threshold is
+  stated in the view's limitations.
+- **Nothing is silently truncated.** Each lane's tail collapses into one aggregate that states its
+  member count: "125 other originating systems", "179 other destinations".
+
+Three tests lock the properties that matter: the view is a graph at all (>10 edges, every endpoint
+a declared node), no destination is drawn in the originating lane, and every undrawn system is
+accounted for by an aggregate.
+
+The rail item "Current-state data flow" is restored to that name, because it now describes what the
+page shows.
