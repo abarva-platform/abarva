@@ -371,6 +371,25 @@ describe("MovesPhaseStandaloneClient", () => {
           return { ok: true, status: 200, body } as unknown as Response;
         }
 
+        if (
+          url.includes("/api/v1/programs/") &&
+          url.includes("/phase-capture") &&
+          init?.method === "POST"
+        ) {
+          const payload = JSON.parse(String(init.body ?? "{}")) as {
+            sections?: Record<string, string>;
+          };
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              ok: true,
+              values: payload.sections ?? {},
+              revision: "test-phase-capture-revision",
+            }),
+          } as Response;
+        }
+
         if (url.includes("/api/v1/deliverables/generate-phase")) {
           return {
             ok: true,
@@ -1171,6 +1190,146 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.queryByText("Phased platform + operating-model shift"),
     ).not.toBeInTheDocument();
     expect(screen.queryByText(/aVa recommends/i)).not.toBeInTheDocument();
+  });
+
+  it("does not mark a typed P1 draft done when the server save fails", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (
+          url.includes("/api/v1/programs/") &&
+          url.includes("/phase-capture") &&
+          init?.method === "POST"
+        ) {
+          return {
+            ok: false,
+            status: 500,
+            json: async () => ({
+              error: "synthetic_save_failure",
+              detail: "Synthetic save failure",
+            }),
+          } as Response;
+        }
+        return defaultFetch?.(input, init) as Promise<Response>;
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="prepare"
+        move={makeMove({
+          currentPhase: 1,
+          phaseLabel: "P1 Charter",
+        })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(contractStepButton(/Sponsor commitment/i));
+    const sponsorInput = screen.getAllByLabelText(
+      "Sponsor commitment",
+    )[0] as HTMLTextAreaElement;
+    fireEvent.change(sponsorInput, {
+      target: { value: "Sponsor confirms weekly charter review cadence." },
+    });
+
+    expect(screen.queryByText(/^Done$/i)).not.toBeInTheDocument();
+
+    await waitFor(
+      () => {
+        expect(screen.getAllByText(/^Unsaved$/i).length).toBeGreaterThan(0);
+      },
+      { timeout: 2_000 },
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /Synthetic save failure/i,
+    );
+
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+    expect(
+      screen.getByRole("button", {
+        name: /Complete phase inputs before build/i,
+      }),
+    ).toBeDisabled();
+    expect(
+      screen.getAllByText(
+        /Resolve 1 unsaved phase input before Approve & Build/i,
+      ).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("marks a P1 field done only after save acknowledgment and reload reproduces it", async () => {
+    const savedText = "Sponsor confirms weekly charter review cadence.";
+    const { unmount } = render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialPhaseCaptureRevision="revision-before-edit"
+        initialSubstepKey="prepare"
+        move={makeMove({
+          currentPhase: 1,
+          phaseLabel: "P1 Charter",
+        })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(contractStepButton(/Sponsor commitment/i));
+    const sponsorInput = screen.getAllByLabelText(
+      "Sponsor commitment",
+    )[0] as HTMLTextAreaElement;
+    fireEvent.change(sponsorInput, {
+      target: { value: savedText },
+    });
+
+    await waitFor(
+      () => {
+        expect(screen.getAllByText(/^Done$/i).length).toBeGreaterThan(0);
+      },
+      { timeout: 2_000 },
+    );
+    const phaseCaptureCall = (global.fetch as jest.Mock).mock.calls.find(
+      ([url]) => String(url).includes("/phase-capture"),
+    );
+    expect(phaseCaptureCall).toBeTruthy();
+    const phaseCaptureBody = JSON.parse(
+      String(phaseCaptureCall?.[1]?.body ?? "{}"),
+    );
+    expect(phaseCaptureBody).toEqual(
+      expect.objectContaining({
+        expectedRevision: "revision-before-edit",
+        phase: 1,
+        sections: { sponsor_commitment: savedText },
+      }),
+    );
+
+    unmount();
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialPhaseCaptureRevision="revision-after-edit"
+        initialPhaseCaptureValues={{ sponsor_commitment: savedText }}
+        initialSubstepKey="prepare"
+        move={makeMove({
+          currentPhase: 1,
+          phaseLabel: "P1 Charter",
+        })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+    fireEvent.click(contractStepButton(/Sponsor commitment/i));
+    expect(
+      (screen.getAllByLabelText("Sponsor commitment")[0] as HTMLTextAreaElement)
+        .value,
+    ).toBe(savedText);
+    expect(screen.getAllByText(/^Done$/i).length).toBeGreaterThan(0);
   });
 
   it("uses P1 step 2 for uploading evidence, with multiple files enabled", async () => {

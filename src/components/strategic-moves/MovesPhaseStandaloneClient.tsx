@@ -140,6 +140,7 @@ type WorkspaceView =
 
 type UploadWorkStatus = "idle" | "uploading" | "uploaded" | "error";
 type DecisionOptionSaveStatus = "idle" | "saving" | "saved" | "error";
+type PhaseCaptureSaveStatus = "idle" | "editing" | "saving" | "saved" | "error";
 interface PhaseEvidenceArtifact {
   artifactId: string;
   fileName: string | null;
@@ -153,6 +154,14 @@ interface PhaseEvidenceArtifact {
   downloadUrl: string;
 }
 type PhaseCaptureValues = Record<string, string>;
+
+function normalizePhaseCaptureValues(
+  values: Record<string, string> | null | undefined,
+): PhaseCaptureValues {
+  return buildPhaseCaptureItems({
+    persistedCaptureValues: values ?? {},
+  });
+}
 
 const PHASES: PhaseContract[] = [
   {
@@ -589,12 +598,23 @@ export function MovesPhaseStandaloneClient({
     () => p3OptionSet.options.find((option) => option.id === selectedOption),
     [p3OptionSet.options, selectedOption],
   );
+  const [persistedPhaseCaptureValues, setPersistedPhaseCaptureValues] =
+    useState<PhaseCaptureValues>(() =>
+      normalizePhaseCaptureValues(initialPhaseCaptureValues),
+    );
   const [phaseCaptureValues, setPhaseCaptureValues] =
     useState<PhaseCaptureValues>(() =>
-      buildPhaseCaptureItems({
-        persistedCaptureValues: initialPhaseCaptureValues ?? {},
-      }),
+      normalizePhaseCaptureValues(initialPhaseCaptureValues),
     );
+  const [phaseCaptureRevision, setPhaseCaptureRevision] = useState(
+    initialPhaseCaptureRevision ?? "",
+  );
+  const [phaseCaptureSaveStatus, setPhaseCaptureSaveStatus] = useState<
+    Record<string, PhaseCaptureSaveStatus>
+  >({});
+  const [phaseCaptureSaveErrors, setPhaseCaptureSaveErrors] = useState<
+    Record<string, string>
+  >({});
   const phaseCaptureSections = useMemo(
     () => getPhaseCaptureSections(phase.phase),
     [phase.phase],
@@ -614,20 +634,50 @@ export function MovesPhaseStandaloneClient({
   const phaseCaptureCompleteCount = useMemo(
     () =>
       phaseCaptureSections.filter((section) =>
-        String(phaseCaptureValues[section.key] ?? "").trim(),
+        String(persistedPhaseCaptureValues[section.key] ?? "").trim(),
       ).length,
-    [phaseCaptureSections, phaseCaptureValues],
+    [phaseCaptureSections, persistedPhaseCaptureValues],
   );
+  const phaseCaptureDirtyKeys = useMemo(
+    () =>
+      phaseCaptureSections
+        .filter(
+          (section) =>
+            String(phaseCaptureValues[section.key] ?? "") !==
+            String(persistedPhaseCaptureValues[section.key] ?? ""),
+        )
+        .map((section) => section.key),
+    [phaseCaptureSections, phaseCaptureValues, persistedPhaseCaptureValues],
+  );
+  const phaseCaptureDirtyCount = phaseCaptureDirtyKeys.length;
+  const phaseCaptureSavingCount = phaseCaptureSections.filter(
+    (section) => phaseCaptureSaveStatus[section.key] === "saving",
+  ).length;
+  const phaseCaptureFailedCount = phaseCaptureSections.filter(
+    (section) => phaseCaptureSaveStatus[section.key] === "error",
+  ).length;
   const phaseCaptureMissingCount =
     phaseCaptureSections.length - phaseCaptureCompleteCount;
   const phaseCaptureBlocker =
     phase.phase === 3 && !selectedP3Option
       ? "Select the solution option that architecture should implement before Approve & Build."
-      : phase.phase >= 1 && phaseCaptureMissingCount > 0
-        ? `Complete ${phaseCaptureMissingCount} phase input${
-            phaseCaptureMissingCount === 1 ? "" : "s"
+      : phase.phase >= 1 && phaseCaptureFailedCount > 0
+        ? `Resolve ${phaseCaptureFailedCount} unsaved phase input${
+            phaseCaptureFailedCount === 1 ? "" : "s"
           } before Approve & Build.`
-        : null;
+        : phase.phase >= 1 && phaseCaptureSavingCount > 0
+          ? `Wait for ${phaseCaptureSavingCount} phase input${
+              phaseCaptureSavingCount === 1 ? "" : "s"
+            } to save before Approve & Build.`
+          : phase.phase >= 1 && phaseCaptureDirtyCount > 0
+            ? `Save ${phaseCaptureDirtyCount} phase input${
+                phaseCaptureDirtyCount === 1 ? "" : "s"
+              } before Approve & Build.`
+            : phase.phase >= 1 && phaseCaptureMissingCount > 0
+              ? `Complete ${phaseCaptureMissingCount} phase input${
+                  phaseCaptureMissingCount === 1 ? "" : "s"
+                } before Approve & Build.`
+              : null;
   // MOVES-UI-001 Steps two-column "Coming up" card. Same real inputs and same
   // function (`buildNextPhaseReadinessPack`) the Approve substep already uses
   // for its "Next phase readiness" section below — computed once here so the
@@ -658,7 +708,131 @@ export function MovesPhaseStandaloneClient({
     finderComingUpOpen ?? finderReadinessPack.openNeeds.length > 0;
   const setPhaseCaptureValue = useCallback((key: string, value: string) => {
     setPhaseCaptureValues((prev) => ({ ...prev, [key]: value }));
+    setPhaseCaptureSaveStatus((prev) => ({ ...prev, [key]: "editing" }));
+    setPhaseCaptureSaveErrors((prev) => {
+      if (!(key in prev)) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   }, []);
+  useEffect(() => {
+    if (phase.phase === 0 || phaseCaptureDirtyKeys.length === 0) return;
+
+    let cancelled = false;
+    const keysToSave = [...phaseCaptureDirtyKeys];
+    setPhaseCaptureSaveStatus((prev) => {
+      const next = { ...prev };
+      for (const key of keysToSave) next[key] = "saving";
+      return next;
+    });
+
+    const timer = window.setTimeout(async () => {
+      const sectionsToSave: Record<string, string> = {};
+      for (const key of keysToSave) {
+        sectionsToSave[key] = phaseCaptureValues[key] ?? "";
+      }
+
+      try {
+        const res = await fetch(`/api/v1/programs/${move.id}/phase-capture`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phase: phase.phase,
+            sections: sectionsToSave,
+            ...(phaseCaptureRevision
+              ? { expectedRevision: phaseCaptureRevision }
+              : {}),
+          }),
+        });
+        const body = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          values?: Record<string, string>;
+          revision?: string;
+          detail?: string;
+          error?: string;
+        };
+        if (
+          res.status === 409 &&
+          body.error === "stale_revision" &&
+          body.values &&
+          body.revision
+        ) {
+          if (cancelled) return;
+          setPersistedPhaseCaptureValues(
+            normalizePhaseCaptureValues(body.values),
+          );
+          setPhaseCaptureRevision(body.revision);
+          setPhaseCaptureSaveStatus((prev) => {
+            const next = { ...prev };
+            for (const key of keysToSave) next[key] = "editing";
+            return next;
+          });
+          return;
+        }
+        if (!res.ok || !body.ok || !body.values) {
+          throw new Error(
+            body.detail ||
+              body.error ||
+              `Phase capture save failed (HTTP ${res.status})`,
+          );
+        }
+        if (cancelled) return;
+        const savedValues = normalizePhaseCaptureValues(body.values);
+        setPersistedPhaseCaptureValues(savedValues);
+        if (body.revision) setPhaseCaptureRevision(body.revision);
+        setPhaseCaptureSaveStatus((prev) => {
+          const next = { ...prev };
+          for (const key of keysToSave) next[key] = "saved";
+          return next;
+        });
+        setPhaseCaptureSaveErrors((prev) => {
+          const next = { ...prev };
+          for (const key of keysToSave) delete next[key];
+          return next;
+        });
+      } catch (err) {
+        if (cancelled) return;
+        const message =
+          err instanceof Error ? err.message : "Phase capture save failed.";
+        setPhaseCaptureSaveStatus((prev) => {
+          const next = { ...prev };
+          for (const key of keysToSave) next[key] = "error";
+          return next;
+        });
+        setPhaseCaptureSaveErrors((prev) => {
+          const next = { ...prev };
+          for (const key of keysToSave) next[key] = message;
+          return next;
+        });
+      }
+    }, 450);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [
+    move.id,
+    phase.phase,
+    phaseCaptureDirtyKeys,
+    phaseCaptureRevision,
+    phaseCaptureValues,
+  ]);
+  const phaseCaptureHasUnsavedWork =
+    phaseCaptureDirtyCount > 0 ||
+    phaseCaptureSavingCount > 0 ||
+    phaseCaptureFailedCount > 0;
+  useEffect(() => {
+    if (!phaseCaptureHasUnsavedWork) return;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [phaseCaptureHasUnsavedWork]);
   const refreshPhase = useCallback(() => {
     router.refresh();
   }, [router]);
@@ -804,13 +978,13 @@ export function MovesPhaseStandaloneClient({
     const finalizeBody: Record<string, unknown> = {
       phase: phase.phase,
       complete: true,
-      sections: phaseCaptureValues,
+      sections: persistedPhaseCaptureValues,
       // Fence the write against the revision this page loaded. If the server
       // has moved on, it rejects with 409 rather than applying a stale payload
       // over newer data. The server also performs the no-op diff, so a finalize
       // with no edits writes nothing at all.
-      ...(initialPhaseCaptureRevision
-        ? { expectedRevision: initialPhaseCaptureRevision }
+      ...(phaseCaptureRevision
+        ? { expectedRevision: phaseCaptureRevision }
         : {}),
     };
     const finalizeRes = await fetch(
@@ -859,7 +1033,7 @@ export function MovesPhaseStandaloneClient({
             chosenOption: selectedP3Option.label,
             approach: `${selectedP3Option.label}. ${selectedP3Option.summary}`,
             rationale:
-              String(phaseCaptureValues.recommendation ?? "").trim() ||
+              String(persistedPhaseCaptureValues.recommendation ?? "").trim() ||
               `${selectedP3Option.recommendationLabel}. ${selectedP3Option.evidenceBasis.join(" ")}`,
             tradeoffsAccepted: [
               `Effort: ${selectedP3Option.effort}`,
@@ -1501,6 +1675,9 @@ export function MovesPhaseStandaloneClient({
                       phase={phase}
                       phaseCaptureSections={phaseCaptureSections}
                       phaseCaptureValues={phaseCaptureValues}
+                      persistedPhaseCaptureValues={persistedPhaseCaptureValues}
+                      phaseCaptureSaveErrors={phaseCaptureSaveErrors}
+                      phaseCaptureSaveStatus={phaseCaptureSaveStatus}
                       readinessPack={finderReadinessPack}
                       selectedSectionKey={finderSelectedSectionKey}
                       substepBody={
@@ -1529,6 +1706,11 @@ export function MovesPhaseStandaloneClient({
                           phase={phase}
                           phaseCaptureBlocker={phaseCaptureBlocker}
                           phaseCaptureCompleteCount={phaseCaptureCompleteCount}
+                          persistedPhaseCaptureValues={
+                            persistedPhaseCaptureValues
+                          }
+                          phaseCaptureSaveErrors={phaseCaptureSaveErrors}
+                          phaseCaptureSaveStatus={phaseCaptureSaveStatus}
                           phaseCaptureSections={phaseCaptureSections}
                           phaseCaptureValues={phaseCaptureValues}
                           selectedOption={selectedOption}
@@ -1552,6 +1734,9 @@ export function MovesPhaseStandaloneClient({
                       phase={phase}
                       phaseCaptureSections={phaseCaptureSections}
                       phaseCaptureValues={phaseCaptureValues}
+                      persistedPhaseCaptureValues={persistedPhaseCaptureValues}
+                      phaseCaptureSaveErrors={phaseCaptureSaveErrors}
+                      phaseCaptureSaveStatus={phaseCaptureSaveStatus}
                       readinessPack={finderReadinessPack}
                       selectedSectionKey={finderSelectedSectionKey}
                       substepBody={
@@ -1580,6 +1765,11 @@ export function MovesPhaseStandaloneClient({
                           phase={phase}
                           phaseCaptureBlocker={phaseCaptureBlocker}
                           phaseCaptureCompleteCount={phaseCaptureCompleteCount}
+                          persistedPhaseCaptureValues={
+                            persistedPhaseCaptureValues
+                          }
+                          phaseCaptureSaveErrors={phaseCaptureSaveErrors}
+                          phaseCaptureSaveStatus={phaseCaptureSaveStatus}
                           phaseCaptureSections={phaseCaptureSections}
                           phaseCaptureValues={phaseCaptureValues}
                           selectedOption={selectedOption}
@@ -1994,11 +2184,29 @@ function getInitialSubstepIndex(
   return 0;
 }
 
-function finderSectionHasValue(
+function phaseCaptureStatusForSection(
   section: PhaseCaptureSection,
-  values: PhaseCaptureValues,
-): boolean {
-  return Boolean(String(values[section.key] ?? "").trim());
+  draftValues: PhaseCaptureValues,
+  persistedValues: PhaseCaptureValues,
+  saveStatus: Record<string, PhaseCaptureSaveStatus>,
+): { label: string; complete: boolean; tone: PhaseCaptureSaveStatus | "open" } {
+  const key = section.key;
+  const draft = String(draftValues[key] ?? "");
+  const persisted = String(persistedValues[key] ?? "");
+  const serverComplete = persisted.trim().length > 0;
+  if (saveStatus[key] === "saving") {
+    return { label: "Saving", complete: false, tone: "saving" };
+  }
+  if (saveStatus[key] === "error") {
+    return { label: "Unsaved", complete: false, tone: "error" };
+  }
+  if (draft !== persisted) {
+    return { label: "Editing", complete: false, tone: "editing" };
+  }
+  if (serverComplete) {
+    return { label: "Done", complete: true, tone: "saved" };
+  }
+  return { label: "Open", complete: false, tone: "open" };
 }
 
 function workflowIndexForSelectedSection(
@@ -2086,6 +2294,9 @@ function PhaseContractStepsCanvas({
   phase,
   phaseCaptureSections,
   phaseCaptureValues,
+  persistedPhaseCaptureValues,
+  phaseCaptureSaveErrors,
+  phaseCaptureSaveStatus,
   readinessPack,
   selectedSectionKey,
   substepBody,
@@ -2099,6 +2310,9 @@ function PhaseContractStepsCanvas({
   phase: PhaseContract;
   phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
   phaseCaptureValues: PhaseCaptureValues;
+  persistedPhaseCaptureValues: PhaseCaptureValues;
+  phaseCaptureSaveErrors: Record<string, string>;
+  phaseCaptureSaveStatus: Record<string, PhaseCaptureSaveStatus>;
   readinessPack: NextPhaseReadinessPack;
   selectedSectionKey: string | null;
   substepBody: ReactNode;
@@ -2124,10 +2338,23 @@ function PhaseContractStepsCanvas({
       : phaseCaptureSections.length + substepIndex + 1;
   const totalStepCount = phaseCaptureSections.length + phase.substeps.length;
   const detailComplete = selectedSection
-    ? finderSectionHasValue(selectedSection, phaseCaptureValues)
+    ? phaseCaptureStatusForSection(
+        selectedSection,
+        phaseCaptureValues,
+        persistedPhaseCaptureValues,
+        phaseCaptureSaveStatus,
+      ).complete
     : substepIndex < phase.substeps.length - 1
       ? true
       : false;
+  const detailStatus = selectedSection
+    ? phaseCaptureStatusForSection(
+        selectedSection,
+        phaseCaptureValues,
+        persistedPhaseCaptureValues,
+        phaseCaptureSaveStatus,
+      )
+    : null;
   const detailTitle =
     selectedSection?.label ??
     phase.substeps[substepIndex]?.label ??
@@ -2143,7 +2370,12 @@ function PhaseContractStepsCanvas({
         <div className="mxw-contract-group">
           <div className="mxw-contract-group-label">Inputs</div>
           {phaseCaptureSections.map((section) => {
-            const complete = finderSectionHasValue(section, phaseCaptureValues);
+            const status = phaseCaptureStatusForSection(
+              section,
+              phaseCaptureValues,
+              persistedPhaseCaptureValues,
+              phaseCaptureSaveStatus,
+            );
             const selected = selectedSectionKey === section.key;
             return (
               <button
@@ -2152,8 +2384,8 @@ function PhaseContractStepsCanvas({
                 onClick={() => onSelectSection(section.key)}
                 type="button"
               >
-                <span className={complete ? "done" : ""} aria-hidden>
-                  {complete ? "✓" : ""}
+                <span className={status.complete ? "done" : ""} aria-hidden>
+                  {status.complete ? "✓" : ""}
                 </span>
                 <strong>{section.label}</strong>
               </button>
@@ -2231,7 +2463,7 @@ function PhaseContractStepsCanvas({
             Step {Math.max(detailStepNumber, 1)} of {totalStepCount}
           </small>
           <h2>{detailTitle}</h2>
-          <b>{detailComplete ? "Done" : "Open"}</b>
+          <b>{detailStatus?.label ?? (detailComplete ? "Done" : "Open")}</b>
         </div>
 
         {selectedSection ? (
@@ -2255,6 +2487,18 @@ function PhaseContractStepsCanvas({
               rows={selectedSection.structured === "facts" ? 4 : 6}
               value={phaseCaptureValues[selectedSection.key] ?? ""}
             />
+            {detailStatus?.tone === "error" ? (
+              <p className="mxw-capture-save-error" role="alert">
+                {phaseCaptureSaveErrors[selectedSection.key] ||
+                  "This edit is not saved. Try again before continuing."}
+              </p>
+            ) : detailStatus?.tone === "saving" ||
+              detailStatus?.tone === "editing" ? (
+              <p className="mxw-capture-save-note">
+                {detailStatus.label} - Approve &amp; Build will stay blocked
+                until this value is saved.
+              </p>
+            ) : null}
           </div>
         ) : (
           <div className="mxw-contract-legacy-body">{substepBody}</div>
@@ -2273,6 +2517,9 @@ function FinderStepsColumns({
   phase,
   phaseCaptureSections,
   phaseCaptureValues,
+  persistedPhaseCaptureValues,
+  phaseCaptureSaveErrors,
+  phaseCaptureSaveStatus,
   readinessPack,
   selectedSectionKey,
   substepBody,
@@ -2286,6 +2533,9 @@ function FinderStepsColumns({
   phase: PhaseContract;
   phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
   phaseCaptureValues: PhaseCaptureValues;
+  persistedPhaseCaptureValues: PhaseCaptureValues;
+  phaseCaptureSaveErrors: Record<string, string>;
+  phaseCaptureSaveStatus: Record<string, PhaseCaptureSaveStatus>;
   readinessPack: NextPhaseReadinessPack;
   selectedSectionKey: string | null;
   substepBody: ReactNode;
@@ -2304,17 +2554,19 @@ function FinderStepsColumns({
           <h3>{phase.code} inputs</h3>
           <ul>
             {phaseCaptureSections.map((section) => {
-              const complete = finderSectionHasValue(
+              const status = phaseCaptureStatusForSection(
                 section,
                 phaseCaptureValues,
+                persistedPhaseCaptureValues,
+                phaseCaptureSaveStatus,
               );
-              const blocked = section.required && !complete;
+              const blocked = section.required && !status.complete;
               const selected = selectedSectionKey === section.key;
               return (
                 <li key={section.key}>
                   <button
                     aria-current={selected ? "true" : undefined}
-                    className={`mxw-finder-step-row${selected ? " selected" : ""}${blocked ? " blocked" : ""}${complete ? " complete" : ""}`}
+                    className={`mxw-finder-step-row${selected ? " selected" : ""}${blocked ? " blocked" : ""}${status.complete ? " complete" : ""}`}
                     onClick={() => onSelectSection(section.key)}
                     type="button"
                   >
@@ -2324,7 +2576,7 @@ function FinderStepsColumns({
                     </span>
                     {blocked ? (
                       <span className="mxw-finder-step-subtitle">
-                        Needs input
+                        {status.label === "Open" ? "Needs input" : status.label}
                       </span>
                     ) : null}
                   </button>
@@ -2427,6 +2679,23 @@ function FinderStepsColumns({
               rows={selectedSection.structured === "facts" ? 3 : 6}
               value={phaseCaptureValues[selectedSection.key] ?? ""}
             />
+            {selectedSection &&
+            phaseCaptureSaveStatus[selectedSection.key] === "error" ? (
+              <p className="mxw-capture-save-error" role="alert">
+                {phaseCaptureSaveErrors[selectedSection.key] ||
+                  "This edit is not saved. Try again before continuing."}
+              </p>
+            ) : selectedSection &&
+              (phaseCaptureSaveStatus[selectedSection.key] === "saving" ||
+                phaseCaptureSaveStatus[selectedSection.key] === "editing") ? (
+              <p className="mxw-capture-save-note">
+                {phaseCaptureSaveStatus[selectedSection.key] === "saving"
+                  ? "Saving"
+                  : "Editing"}{" "}
+                - Approve &amp; Build will stay blocked until this value is
+                saved.
+              </p>
+            ) : null}
           </section>
         ) : (
           substepBody
@@ -2526,6 +2795,9 @@ function PhaseBody({
   phaseCaptureCompleteCount,
   phaseCaptureSections,
   phaseCaptureValues,
+  persistedPhaseCaptureValues,
+  phaseCaptureSaveErrors,
+  phaseCaptureSaveStatus,
   selectedOption,
   substep,
   terminalComplete,
@@ -2560,6 +2832,9 @@ function PhaseBody({
   phaseCaptureCompleteCount: number;
   phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
   phaseCaptureValues: PhaseCaptureValues;
+  persistedPhaseCaptureValues: PhaseCaptureValues;
+  phaseCaptureSaveErrors: Record<string, string>;
+  phaseCaptureSaveStatus: Record<string, PhaseCaptureSaveStatus>;
   selectedOption: string;
   substep: SubstepKey;
   terminalComplete: boolean;
@@ -2577,6 +2852,9 @@ function PhaseBody({
             completeCount={phaseCaptureCompleteCount}
             onChange={onPhaseCaptureValueChange}
             phase={phase}
+            persistedValues={persistedPhaseCaptureValues}
+            saveErrors={phaseCaptureSaveErrors}
+            saveStatus={phaseCaptureSaveStatus}
             sections={phaseCaptureSections}
             values={phaseCaptureValues}
           />
@@ -2972,6 +3250,9 @@ function PhaseBody({
           completeCount={phaseCaptureCompleteCount}
           onChange={onPhaseCaptureValueChange}
           phase={phase}
+          persistedValues={persistedPhaseCaptureValues}
+          saveErrors={phaseCaptureSaveErrors}
+          saveStatus={phaseCaptureSaveStatus}
           sections={phaseCaptureSections}
           values={phaseCaptureValues}
         />
@@ -4440,6 +4721,9 @@ function PhaseCaptureEditor({
   completeCount,
   onChange,
   phase,
+  persistedValues,
+  saveErrors,
+  saveStatus,
   sections,
   values,
 }: {
@@ -4447,6 +4731,9 @@ function PhaseCaptureEditor({
   completeCount: number;
   onChange: (key: string, value: string) => void;
   phase: PhaseContract;
+  persistedValues: PhaseCaptureValues;
+  saveErrors: Record<string, string>;
+  saveStatus: Record<string, PhaseCaptureSaveStatus>;
   sections: ReturnType<typeof getPhaseCaptureSections>;
   values: PhaseCaptureValues;
 }) {
@@ -4472,15 +4759,21 @@ function PhaseCaptureEditor({
       <div className="mxw-capture-grid">
         {sections.map((section, index) => {
           const value = values[section.key] ?? "";
-          const complete = value.trim().length > 0;
+          const status = phaseCaptureStatusForSection(
+            section,
+            values,
+            persistedValues,
+            saveStatus,
+          );
           return (
             <label
-              className={`mxw-capture-card ${complete ? "complete" : ""}`}
+              className={`mxw-capture-card ${status.complete ? "complete" : ""} ${status.tone}`}
               key={section.key}
             >
               <span>{String(index + 1).padStart(2, "0")}</span>
               <strong>{section.label}</strong>
               <small>{section.description}</small>
+              <em>{status.label}</em>
               <textarea
                 aria-label={section.label}
                 onChange={(event) => onChange(section.key, event.target.value)}
@@ -4488,6 +4781,17 @@ function PhaseCaptureEditor({
                 rows={compact ? 2 : 3}
                 value={value}
               />
+              {status.tone === "error" ? (
+                <small className="mxw-capture-save-error" role="alert">
+                  {saveErrors[section.key] ||
+                    "This edit is not saved. Try again before continuing."}
+                </small>
+              ) : status.tone === "saving" || status.tone === "editing" ? (
+                <small className="mxw-capture-save-note">
+                  Approve &amp; Build will stay blocked until this value is
+                  saved.
+                </small>
+              ) : null}
             </label>
           );
         })}
@@ -4773,12 +5077,23 @@ function MovesStandaloneStyles() {
 .mxw-capture-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .mxw-capture-card{display:grid;grid-template-columns:32px minmax(0,1fr);gap:3px 10px;border:1px solid var(--line);border-radius:11px;background:var(--card);padding:12px 13px}
 .mxw-capture-card.complete{border-color:rgba(29,143,104,.28)}
+.mxw-capture-card.saving{border-color:rgba(0,87,184,.34)}
+.mxw-capture-card.editing{border-color:rgba(178,112,0,.36)}
+.mxw-capture-card.error{border-color:rgba(183,43,43,.4)}
 .mxw-capture-card>span{grid-row:1 / span 2;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--ink);color:#fff;font-size:10px;font-weight:900}
 .mxw-capture-card.complete>span{background:var(--green)}
 .mxw-capture-card strong{font-size:13.5px;color:var(--ink);line-height:1.25}
 .mxw-capture-card small{font-size:12px;color:var(--muted);line-height:1.35}
+.mxw-capture-card em{justify-self:start;border-radius:8px;background:rgba(12,26,58,.06);color:var(--muted);font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;font-style:normal;font-weight:800;letter-spacing:.12em;padding:4px 7px;text-transform:uppercase}
+.mxw-capture-card.complete em{background:rgba(29,158,117,.13);color:#147c5b}
+.mxw-capture-card.saving em{background:rgba(0,87,184,.12);color:var(--blue)}
+.mxw-capture-card.editing em{background:rgba(178,112,0,.12);color:#8a5a00}
+.mxw-capture-card.error em{background:rgba(183,43,43,.12);color:#9f2626}
 .mxw-capture-card textarea{grid-column:1 / -1;width:100%;resize:vertical;border:1px solid var(--line-2);border-radius:9px;background:#fff;color:var(--ink);font:inherit;font-size:13px;line-height:1.45;padding:9px 10px;margin-top:7px;min-height:74px}
 .mxw-capture-card textarea:focus{outline:2px solid rgba(0,87,184,.22);border-color:rgba(0,87,184,.5)}
+.mxw-capture-save-note,.mxw-capture-save-error{grid-column:1 / -1;margin:8px 0 0;font-size:12px;line-height:1.4}
+.mxw-capture-save-note{color:#6f5200}
+.mxw-capture-save-error{color:#9f2626}
 .mxw-ts-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,1fr);gap:16px}
 .mxw-ts-col{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
 .mxw-ts-col header{padding:13px 16px;border-bottom:1px solid var(--line);background:var(--soft);display:flex;align-items:center;gap:9px}
