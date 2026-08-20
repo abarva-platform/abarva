@@ -156,7 +156,7 @@ export function HomePreviewApp({
           ) : activeView === "browse-the-data" ? (
             <BrowseTheData signalPacket={bundle.thesis.signalPacket} />
           ) : activeTechRecordType ? (
-            <TechnologyEstateTable recordType={activeTechRecordType} />
+            <TechnologyEstateTable key={activeTechRecordType.objectType} recordType={activeTechRecordType} />
           ) : activeChapter ? (
             <ChapterSection chapter={activeChapter} signalPacket={bundle.thesis.signalPacket} visualDatasets={bundle.thesis.signalPacket.visualDatasets} />
           ) : null}
