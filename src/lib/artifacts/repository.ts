@@ -385,6 +385,8 @@ export async function saveRenderedBoardGradeMoveArtifact(input: {
   artifactId: string;
   title: string;
   html: string;
+  renderableDoc?: Record<string, unknown>;
+  renderableMetadata?: Record<string, unknown>;
   renderedBy: string;
   routePath: string;
   generatedOn: string;
@@ -418,6 +420,10 @@ export async function saveRenderedBoardGradeMoveArtifact(input: {
         routePath: input.routePath,
         generatedOn: input.generatedOn,
         renderedHtml: input.html,
+        ...(input.renderableDoc ? { renderableDoc: input.renderableDoc } : {}),
+        ...(input.renderableMetadata
+          ? { renderableMetadata: input.renderableMetadata }
+          : {}),
       },
     })
     .select("*")

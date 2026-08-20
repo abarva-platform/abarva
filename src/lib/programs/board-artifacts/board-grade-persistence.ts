@@ -24,6 +24,8 @@ export async function persistBoardGradeMoveArtifact(input: {
   artifactId: string;
   title: string;
   html: string;
+  renderableDoc?: Record<string, unknown>;
+  renderableMetadata?: Record<string, unknown>;
   renderedBy: string;
   routePath: string;
   generatedOn: string;

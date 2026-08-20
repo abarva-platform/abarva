@@ -49,6 +49,33 @@ describe("persistBoardGradeMoveArtifact — clientId resolution", () => {
     expect(mockActive).not.toHaveBeenCalled();
   });
 
+  it("forwards the structured renderable document when one exists", async () => {
+    const renderableDoc = {
+      title: "Structured Decision Pack",
+      generatedSections: [{ key: "summary", title: "Summary" }],
+    };
+    const renderableMetadata = {
+      artifactType: "discover-brief",
+      source: "moves_orchestrated_deliverables",
+      evidenceRefs: ["ctx:1"],
+    };
+
+    await persistBoardGradeMoveArtifact({
+      ...baseInput,
+      clientId: "apex-retail",
+      renderableDoc,
+      renderableMetadata,
+    });
+
+    expect(mockSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: "apex-retail",
+        renderableDoc,
+        renderableMetadata,
+      }),
+    );
+  });
+
   it("falls back to the active tenant when clientId is null (the silent-no-op fix)", async () => {
     mockActive.mockResolvedValue("apexretail");
     const r = await persistBoardGradeMoveArtifact({
