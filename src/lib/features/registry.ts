@@ -96,7 +96,8 @@ export type FeatureFlagKey =
   | "tower_command_center_v2"
   | "moves_pricing_engine"
   | "moves_governed_roadmap_downloads"
-  | "home_knowledge_vnext";
+  | "home_knowledge_vnext"
+  | "moves_extended_intake_fields_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -263,6 +264,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
       "Discovery Intake — persist DiscoveryShape (P0 Originate) and DiscoveryPlan (P1 Charter) to engagements.charter JSONB and wire the enhanced capture. Tenant opt-in; default off for staged rollout.",
     policy: "tenant",
     includeTenants: [],
+  },
+  {
+    key: "moves_extended_intake_fields_v1",
+    summary:
+      "P0 Originate: add Business Segment, Front/Middle/Back Office lens, Care Type, a quant/qual value-hypothesis split, and a Stakeholders field to the intake scaffold, mirroring a client's grounded-fact intake model (segment = the tenant's real org structure; office lens and care type are analytical, not org-chart facts). Persisted via the same charter-JSONB seam as discovery_intake_v2, not via P0_CAPTURE_SECTIONS, so it never touches gate evaluation or the P1+ phase workspace for tenants without the flag. Tenant opt-in; default off. Flag off = byte-identical P0 (same 10 fields, same step count).",
+    policy: "tenant",
+    includeTenants: ["meridian"],
   },
   {
     key: "intelligence_brief_v4",
