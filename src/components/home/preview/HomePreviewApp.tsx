@@ -9,12 +9,16 @@ import { HomeAvaChat } from "./HomeAvaChat";
 import { TechnologyEstateTable } from "./TechnologyEstateTable";
 import { HOME_HEX } from "./visuals/home-chart-kit";
 import { StateBadge } from "@/components/knowledge/state/StateBanner";
+import { demoSafeClientText } from "@/lib/client-config";
 import type { ChapterId, HomeReviewBundle, TechObjectType } from "@/lib/home/preview/types";
 import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 
+/** Routed through demoSafeClientText so the client-facing label comes from the canonical
+ * DEMO_SAFE_CLIENT_NAMES map rather than a hand-typed string. The physical/source label
+ * ("SkyHarbor Air") must never render on an AbarVa-facing page -- only the demo-safe name. */
 const TENANT_LABEL: Record<HomePreviewTenantKey, string> = {
-  "meridian-health": "Meridian Health",
-  "skyharbor-air": "SkyHarbor Air",
+  "meridian-health": demoSafeClientText("Meridian Health"),
+  "skyharbor-air": demoSafeClientText("SkyHarbor Air"),
 };
 
 type ActiveView = ChapterId | "current-state" | "browse-the-data" | `tech:${TechObjectType}`;
@@ -31,11 +35,9 @@ const SIDEBAR_WIDTH = 268;
 export function HomePreviewApp({
   bundle,
   tenantKey,
-  onTenantChange,
 }: {
   bundle: HomeReviewBundle;
   tenantKey: HomePreviewTenantKey;
-  onTenantChange: (next: HomePreviewTenantKey) => void;
 }) {
   const [activeView, setActiveView] = useState<ActiveView>("executive_brief");
   const [techTreeExpanded, setTechTreeExpanded] = useState(true);
@@ -63,36 +65,17 @@ export function HomePreviewApp({
           gap: 16,
         }}
       >
+        {/* One client, named. No cross-tenant control: a client-facing surface must never imply
+            another client's data is one click away. Tenant is chosen by URL for review, and the
+            page only ever loads the one tenant's bundle. */}
         <div>
-          <h1 style={{ margin: "0 0 6px", fontFamily: "var(--font-body-serif)", fontSize: 18, fontWeight: 600, color: HOME_HEX.textPrimary, lineHeight: 1.25 }}>
+          <p style={{ margin: "0 0 5px", fontFamily: "var(--font-body-mono)", fontSize: 9.5, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: HOME_HEX.textDisabled }}>
+            Demo client · synthetic data
+          </p>
+          <h1 style={{ margin: "0 0 7px", fontFamily: "var(--font-body-serif)", fontSize: 19, fontWeight: 600, color: HOME_HEX.textPrimary, lineHeight: 1.2, letterSpacing: "-0.01em" }}>
             {TENANT_LABEL[tenantKey]}
           </h1>
           <StateBadge tone="candidate" label="Candidate — not yet reviewed" />
-        </div>
-
-        <div style={{ display: "flex", gap: 6 }}>
-          {(Object.keys(TENANT_LABEL) as HomePreviewTenantKey[]).map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => onTenantChange(key)}
-              aria-pressed={key === tenantKey}
-              style={{
-                flex: 1,
-                padding: "6px 8px",
-                borderRadius: 6,
-                border: `1px solid ${key === tenantKey ? HOME_HEX.navy : HOME_HEX.border}`,
-                background: key === tenantKey ? HOME_HEX.navy : "#FFFFFF",
-                color: key === tenantKey ? "#FFFFFF" : HOME_HEX.textSecondary,
-                fontFamily: "var(--font-body-sans)",
-                fontSize: 11.5,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              {TENANT_LABEL[key].split(" ")[0]}
-            </button>
-          ))}
         </div>
 
         <nav aria-label="Chapters" style={{ display: "flex", flexDirection: "column", gap: 1 }}>

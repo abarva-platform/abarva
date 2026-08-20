@@ -6,11 +6,15 @@ import { HOME_HEX } from "./visuals/home-chart-kit";
 import { resolveEvidence } from "./evidence-resolver";
 import type { EnterpriseSignalPacket, GroundedClaim } from "@/lib/home/preview/types";
 
+/** Reader-facing wording, not the internal taxonomy. A CXO does not need to know a claim is a
+ * CROSS_DOMAIN_INSIGHT; they need to know whether they are being told a fact about their own
+ * business or being given our judgement. The distinction is kept because it is the honesty
+ * mechanism -- the vocabulary is what changes. */
 const CLAIM_TYPE_LABEL: Record<GroundedClaim["claim_type"], string> = {
   FACT: "Fact",
   OBSERVATION: "Observation",
-  CROSS_DOMAIN_INSIGHT: "Cross-domain insight",
-  ADVISORY_INFERENCE: "Advisory inference",
+  CROSS_DOMAIN_INSIGHT: "Analysis",
+  ADVISORY_INFERENCE: "Our interpretation",
 };
 
 const CONFIDENCE_LABEL: Record<GroundedClaim["confidence"], string> = {
@@ -89,9 +93,9 @@ export function ClaimCard({
                   {item.id}
                 </span>
                 {item.signalKind === "testimony" ? (
-                  <span style={{ fontSize: 10, color: HOME_HEX.indigo, fontWeight: 600 }}>LEADERSHIP TESTIMONY</span>
+                  <span style={{ fontSize: 10, color: HOME_HEX.indigo, fontWeight: 600 }}>From leadership interviews</span>
                 ) : item.origin === "context" ? (
-                  <span style={{ fontSize: 10, color: HOME_HEX.textDisabled, fontWeight: 600 }}>GOVERNED FACT</span>
+                  <span style={{ fontSize: 10, color: HOME_HEX.textDisabled, fontWeight: 600 }}>From your systems</span>
                 ) : null}
               </div>
               <p style={{ margin: "2px 0 0", color: item.unresolved ? HOME_HEX.red : HOME_HEX.textSecondary, lineHeight: 1.5 }}>

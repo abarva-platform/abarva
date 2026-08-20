@@ -453,3 +453,30 @@ the chapter reader has been drafted against the locked brand canon (Fraunces/Int
 paper ground, evidence surfaced as margin sidenotes rather than behind a click) and pushed to the
 AbarVa Design System project as `preview/20-home-chapter-reader.html` for review. That redesign is
 not implemented in React and is explicitly not part of this change.
+
+**Eighth iteration -- client-facing hygiene.** Three defects, all the same underlying mistake:
+internal machinery rendered onto a surface an executive reads.
+
+1. **Cross-tenant switcher removed.** The rail carried Meridian/SkyHarbor toggle buttons. Even in
+   a preview this is the wrong pattern -- a client-facing surface must never imply another
+   client's data is one click away. The switcher is gone and tenant selection moved to the route
+   (`?tenant=<key>`), so the page now loads exactly one tenant's bundle: the other tenant's
+   payload no longer reaches the response at all, rather than merely being hidden from view.
+2. **Physical source label was leaking.** `HomePreviewApp` hardcoded `"SkyHarbor Air"`. The
+   canonical `DEMO_SAFE_CLIENT_NAMES` map resolves that tenant to `"SkyHarbor Global"`, and the
+   tenant's own promotion manifest is explicit that the physical/source label must not appear on
+   AbarVa-facing pages. This is why Intelligence displayed "SkyHarbor Global" while this preview
+   displayed "SkyHarbor Air" -- Intelligence routes through `demoSafeClientText`, the preview
+   bypassed it. Labels now derive from that function rather than hand-typed strings, and the
+   header states plainly that this is a demo client on synthetic data.
+3. **Internal taxonomy shown to readers.** Claims rendered `"Cross-domain insight"` and
+   `"Advisory inference"`, with `GOVERNED FACT` / `LEADERSHIP TESTIMONY` badges on evidence.
+   These are pipeline vocabulary, not executive language. Reworded to `"Analysis"`,
+   `"Our interpretation"`, `"From your systems"`, and `"From leadership interviews"`. The
+   fact-versus-judgement distinction is deliberately kept -- it is the honesty mechanism, and a
+   CXO does need to know whether they are being told a fact about their business or given our
+   opinion. Only the vocabulary changed.
+
+QA: 3 new regression tests assert the demo-safe name renders, the physical label never does, the
+surface is marked as demo/synthetic, and no control exists that names or switches to another
+client. Full preview suite green; typecheck clean.
