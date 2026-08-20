@@ -205,12 +205,30 @@ one-sentence `signalPacket` signals, never the raw canonical CSV records with th
   extraction logic including the dimension-rollup counting and the null-vs-fabricated-guess
   distinction for `primaryDimension`) plus `TechnologyEstateTable.test.tsx` (6 cases: dimension
   chip filtering, free-text search across every column, honest empty state, no rollup rendered
-  when `primaryDimension` is null) -- PASS, 47/47 across the full preview test suite. **Not yet
-  regenerated**: the two tenants' golden-snapshot JSON files were built before this field existed,
-  so `technologyEstate` is genuinely absent on the currently-deployed fixtures -- by design (see
-  Changes Included), the sidebar's Technology Estate tree simply doesn't render until the
-  fixtures are regenerated via a live `data-build:home-chapters:plan` run, tracked as the
-  immediate next step after this PR merges/deploys.
+  when `primaryDimension` is null) -- PASS, 47/47 across the full preview test suite.
+- **Fixture regeneration, done differently than every prior iteration this workstream, for a real
+  reason:** the standard path (a full live `data-build:home-chapters:plan` ACA Job run) hit four
+  distinct, unrelated `az containerapp job logs show` failures in a row while retrieving this run's
+  output (a bad `--tail` value on one attempt was mine; the other three -- "No replicas found",
+  a mid-stream connection reset, and a live `--follow` session that silently closed after
+  connecting with no data -- were not). A Log Analytics fallback confirmed the underlying job
+  executions themselves succeeded every time, but also surfaced that the ~150-200KB
+  `__HOME_CHAPTERS_RESULT_BEGIN__` marker lines this whole workstream's retrieval convention
+  depends on are being dropped entirely by Container Apps' console-log ingestion (max captured
+  line length: 454 characters, out of runs that should include two ~150KB+ single lines) -- a real
+  platform limitation for any future run producing output at this scale, not something a retry
+  fixes. Rather than keep fighting fetch reliability for data that doesn't actually need a live
+  model call: `technologyEstate` is pure canonical-CSV extraction (see `technology-estate.ts`'s
+  own docstring -- "never touches Claude, needs no verification"), so it was computed locally
+  (`buildCanonicalTenantDataReport` runs fine offline, confirmed earlier in this same workstream)
+  and merged directly into the two tenants' existing, already-verified, already-live-proven golden
+  snapshots -- `chapters`/`thesis`/`provenance` untouched, only the new `technologyEstate` key
+  added. This is the correct scope for this specific field (it has no live-model dependency to
+  reprove) but is not a substitute for a full regeneration the next time `chapters`/`thesis`
+  content itself changes -- that will still need the ACA Job path, and the console-log size
+  limitation above is worth fixing at the pipeline level (e.g. a blob-based proof bundle, which
+  `docs/ops/aca-data-build-job-rule.md` already specifies as the intended mechanism for this class
+  of job) before the next iteration that produces output this large runs into it again.
 - **Live signed-in browser check, done post-merge/deploy against `https://app.abarva.ai/home/preview`,
   signed in as the real platform-admin session (Anand Sundaram):** page renders past the admin
   gate; both chapters' real content displays (Meridian's Executive Brief headline and body,
