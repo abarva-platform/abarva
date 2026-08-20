@@ -18,6 +18,14 @@ import type { ArchitectureView, ArchitectureViewNode } from "@/lib/visual-system
 const MIN_TILE_SHARE_PCT = 4;
 /** Rows break when they have accumulated roughly this share, giving 2-4 tiles per row. */
 const ROW_TARGET_SHARE_PCT = 34;
+/** Total vertical space the drawn rows divide between them. Rows take a slice of this in
+ * proportion to their share, which is what makes tile AREA track share across the whole figure and
+ * not merely within a row. */
+const CANVAS_HEIGHT_PX = 470;
+/** No row shorter than this, or its tiles cannot hold a label. A row that hits the floor is the
+ * one place area stops being exact -- and it can only ever overstate a small row, never understate
+ * a large one. */
+const MIN_ROW_HEIGHT_PX = 104;
 
 export interface Tile {
   id: string;
@@ -96,19 +104,38 @@ export function buildTileLayout(view: ArchitectureView): TileLayout {
   const drawable = all.filter((t) => t.sharePct >= MIN_TILE_SHARE_PCT);
   const tailItems = all.filter((t) => t.sharePct < MIN_TILE_SHARE_PCT);
 
-  const rows: TileRow[] = [];
+  // Pack into rows first, then size them: a row's height cannot be known until its members are.
+  const packed: Tile[][] = [];
+  const packedShares: number[] = [];
   let current: Tile[] = [];
   let currentShare = 0;
   for (const tile of drawable) {
     current.push(tile);
     currentShare += tile.sharePct;
     if (currentShare >= ROW_TARGET_SHARE_PCT) {
-      rows.push({ items: current, height: rowHeight(currentShare) });
+      packed.push(current);
+      packedShares.push(currentShare);
       current = [];
       currentShare = 0;
     }
   }
-  if (current.length > 0) rows.push({ items: current, height: rowHeight(currentShare) });
+  if (current.length > 0) {
+    packed.push(current);
+    packedShares.push(currentShare);
+  }
+
+  // Height in proportion to the row's share of everything drawn. Without this, widths are only
+  // comparable inside a row: a 15% function sitting alone on a short row rendered wider -- and so
+  // read as larger -- than an 18% function sharing a tall one. A weighted landscape whose weights
+  // invert the ranking is worse than an unweighted grid, because it answers confidently and wrong.
+  const drawableShare = packedShares.reduce((a, b) => a + b, 0);
+  const rows: TileRow[] = packed.map((items, i) => ({
+    items,
+    height: Math.max(
+      MIN_ROW_HEIGHT_PX,
+      Math.round(drawableShare > 0 ? (packedShares[i] / drawableShare) * CANVAS_HEIGHT_PX : MIN_ROW_HEIGHT_PX),
+    ),
+  }));
 
   const tail: TileTail | null =
     tailItems.length > 0
@@ -121,11 +148,4 @@ export function buildTileLayout(view: ArchitectureView): TileLayout {
       : null;
 
   return { rows, tail, totalSystems };
-}
-
-/** Row height carries the row's share too, so a row of large functions reads heavier than a row of
- * small ones. Clamped: past these bounds the tiles stop being comparable and start being scenery. */
-function rowHeight(sharePct: number): number {
-  const scaled = 96 + sharePct * 2.2;
-  return Math.round(Math.max(104, Math.min(190, scaled)));
 }

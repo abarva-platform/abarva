@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { splitChapterIntoBands } from "../../src/components/home/v4/chapter-bands";
+import { buildTileLayout } from "../../src/components/home/v4/architecture-tiles";
 import type { ChapterView, EnterpriseSignalPacket, GroundedClaim, HomeReviewBundle } from "../../src/lib/home/preview/types";
 
 /**
@@ -122,5 +123,87 @@ describe("v4 band routing against the real golden snapshots", () => {
     const withGaps = bundle.chapters.filter((c) => c.limitations.length > 0).length;
     expect(withGaps).toBeGreaterThan(0);
     expect(withGaps).toBeLessThan(bundle.chapters.length);
+  });
+});
+
+describe("v4 architecture tile weighting", () => {
+  function view(fns: Array<[string, number]>) {
+    return {
+      nodes: fns.map(([label, systems]) => ({
+        id: `cap-${label}`,
+        label,
+        semanticRole: "business_capability",
+        layer: "business_capability",
+        evidenceBasis: "ABARVA_DERIVED",
+        evidenceIds: [],
+        metrics: { systems },
+        aggregation: { groupByField: "business_function", groupByValue: label, memberNodeIds: [], memberCount: systems, basis: "CANONICAL_FIELD" },
+      })),
+      edges: [],
+      groups: [],
+      boundaries: [],
+      overlays: [],
+      limitations: [],
+    } as never;
+  }
+
+  it("makes tile AREA track share across the whole figure, not just within a row", () => {
+    // The failure this guards against shipped once: widths were row-relative and row heights came
+    // from a clamped curve, so a 15.3% function rendered a LARGER tile than an 18.6% one. A
+    // weighted landscape whose weights invert the ranking answers confidently and wrong.
+    const layout = buildTileLayout(
+      view([
+        ["Clinical Informatics", 99],
+        ["Acute Care", 56],
+        ["Nursing", 46],
+        ["Population Health", 15],
+        ["Ambulatory", 13],
+      ]),
+    );
+
+    const CANVAS_W = 1300;
+    const MIN_ROW_HEIGHT_PX = 104;
+    const measured = layout.rows.flatMap((row) => {
+      const rowFlex = row.items.reduce((s, t) => s + t.flex, 0);
+      return row.items.map((tile) => ({
+        label: tile.label,
+        sharePct: tile.sharePct,
+        areaPerShare: ((tile.flex / rowFlex) * CANVAS_W * row.height) / tile.sharePct,
+        floored: row.height === MIN_ROW_HEIGHT_PX,
+      }));
+    });
+
+    // Rows tall enough to size freely are exactly proportional to one another.
+    const free = measured.filter((m) => !m.floored);
+    expect(free.length).toBeGreaterThan(1);
+    for (const m of free) expect(m.areaPerShare / free[0].areaPerShare).toBeCloseTo(1, 1);
+
+    // A row pinned to the legibility floor is the one place area stops being exact. It may only
+    // ever OVERSTATE a small function -- never understate one, which would hide real weight.
+    for (const m of measured.filter((m) => m.floored)) {
+      expect(m.areaPerShare).toBeGreaterThanOrEqual(free[0].areaPerShare * 0.99);
+    }
+
+    // Whatever the row packing, the largest function must never render smaller than a smaller one.
+    const byShare = [...measured].sort((a, b) => b.sharePct - a.sharePct);
+    const areaOf = (m: (typeof measured)[number]) => m.areaPerShare * m.sharePct;
+    expect(areaOf(byShare[0])).toBeGreaterThan(areaOf(byShare[1]));
+    expect(areaOf(byShare[1])).toBeGreaterThan(areaOf(byShare[2]));
+  });
+
+  it("never renders a tile too small to hold its label -- it moves to the tail, still named and counted", () => {
+    const layout = buildTileLayout(
+      view([
+        ["Big", 200],
+        ["Tiny A", 3],
+        ["Tiny B", 2],
+      ]),
+    );
+    const drawn = layout.rows.flatMap((r) => r.items).map((t) => t.label);
+    expect(drawn).toContain("Big");
+    expect(drawn).not.toContain("Tiny A");
+    // Dropped from the tiles, but not dropped from the page.
+    expect(layout.tail?.items.map((t) => t.label)).toEqual(["Tiny A", "Tiny B"]);
+    expect(layout.tail?.systems).toBe(5);
   });
 });
