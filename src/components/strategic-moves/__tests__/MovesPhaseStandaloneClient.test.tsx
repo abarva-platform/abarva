@@ -155,6 +155,45 @@ const phaseTallies: PhaseTallyRow[] = [0, 1, 2, 3, 4, 5].map((phase) => ({
   state: phase < 3 ? "done" : phase === 3 ? "current" : "upcoming",
 }));
 
+const completeP3CaptureValues = {
+  solution_approach:
+    "Governed agent-assist layer on current systems, selected by the sponsor.",
+  operating_model:
+    "Operations owns workflow adoption; technology owns integration and controls.",
+  process_design:
+    "Redesigned exception path keeps human approval for high-risk cases.",
+  controls_governance:
+    "Risk, privacy, and compliance review controls before any production change.",
+  architecture_integration:
+    "Integrates through governed APIs and existing identity boundaries.",
+  evidence_confidence:
+    "Discovery evidence supports design with named caveats carried forward.",
+  recommendation:
+    "Proceed to build planning with explicit owner review and caveats.",
+};
+
+const completeP2CaptureValues = {
+  current_state_findings:
+    "CANARY - SkyHarbor Recovery Command IROPS Architecture current-state interviews found dispatch, crew, and customer recovery handoffs split across tools.",
+  baseline_metrics: JSON.stringify([
+    {
+      metric: "Cycle time",
+      value: "18.4 days",
+      source: "Intake work queue export",
+    },
+  ]),
+  gaps_root_causes:
+    "Evidence review found duplicated status updates and no single accountable exception path.",
+  process_handoffs:
+    "Operations, technology, and customer teams hand off recovery actions at named control points.",
+  data_quality_governance:
+    "Baseline exports require named owners and exception logging before phase advancement.",
+  evidence_confidence:
+    "Current-state evidence is directional with named caveats carried into solutioning.",
+  recommendation:
+    "Proceed to approach selection with the current-state caveats attached.",
+};
+
 function makeCurrentStateReadiness(): ReadinessReport {
   return {
     phase: 2,
@@ -1108,13 +1147,13 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       (screen.getByLabelText("Sponsor commitment") as HTMLTextAreaElement)
         .value,
-    ).toContain("Sponsor/title:");
+    ).toBe("");
     expect(
       (screen.getByLabelText("Scope boundary") as HTMLTextAreaElement).value,
-    ).not.toBe("");
+    ).toBe("");
     expect(
       (screen.getByLabelText("Success criteria") as HTMLTextAreaElement).value,
-    ).not.toBe("");
+    ).toBe("");
     expect(
       screen.getByText(/starting hypothesis for P2 discovery/i),
     ).toBeInTheDocument();
@@ -1291,7 +1330,7 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(uploadedEvidenceArtifacts).toHaveLength(0);
   });
 
-  it("shows the P1 charter capture fields at gate approval and blocks build until they are complete", () => {
+  it("shows empty P1 charter capture fields as missing until real values are captured", () => {
     render(
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
@@ -1310,9 +1349,13 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByRole("heading", { name: "Charter inputs" }),
     ).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Sponsor commitment"), {
-      target: { value: "" },
-    });
+    expect(
+      (screen.getByLabelText("Sponsor commitment") as HTMLTextAreaElement)
+        .value,
+    ).toBe("");
+    expect(
+      (screen.getByLabelText("Scope boundary") as HTMLTextAreaElement).value,
+    ).toBe("");
     fireEvent.click(contractStepButton(/Approve & Build/i));
 
     const buildButton = screen.getByRole("button", {
@@ -1320,7 +1363,7 @@ describe("MovesPhaseStandaloneClient", () => {
     });
     expect(buildButton).toBeDisabled();
     expect(
-      screen.getAllByText(/Complete 1 phase input before Approve & Build/i)
+      screen.getAllByText(/Complete 6 phase inputs before Approve & Build/i)
         .length,
     ).toBeGreaterThan(0);
   });
@@ -1481,6 +1524,7 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
+        initialPhaseCaptureValues={completeP3CaptureValues}
         move={makeMove()}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
@@ -1499,6 +1543,7 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
+        initialPhaseCaptureValues={completeP3CaptureValues}
         move={makeMove()}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
@@ -2168,6 +2213,7 @@ describe("MovesPhaseStandaloneClient", () => {
             evidenceTitles: [],
           },
         ]}
+        initialPhaseCaptureValues={completeP3CaptureValues}
         move={makeMove()}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
@@ -2251,6 +2297,7 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
+        initialPhaseCaptureValues={completeP3CaptureValues}
         move={makeMove()}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
@@ -2284,6 +2331,7 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
+        initialPhaseCaptureValues={completeP3CaptureValues}
         move={makeMove()}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
@@ -2423,6 +2471,7 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
+        initialPhaseCaptureValues={completeP3CaptureValues}
         move={makeMove()}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
@@ -2462,6 +2511,7 @@ describe("MovesPhaseStandaloneClient", () => {
         carriesForwardContent={[]}
         currentUser={{ email: "jane@apex-retail.com", role: "client_admin" }}
         evidenceNeedPackets={[]}
+        initialPhaseCaptureValues={completeP3CaptureValues}
         move={makeMove()}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
@@ -2687,6 +2737,7 @@ describe("MovesPhaseStandaloneClient", () => {
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={completeP2CaptureValues}
           move={move}
           phaseNum={2}
           phaseTallies={[...phaseTallies]}
@@ -2728,6 +2779,7 @@ describe("MovesPhaseStandaloneClient", () => {
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={completeP2CaptureValues}
           move={move}
           phaseNum={2}
           phaseTallies={[...phaseTallies]}
@@ -2848,11 +2900,13 @@ describe("MovesPhaseStandaloneClient", () => {
         within(menu).getByRole("button", { name: /Baseline metrics/i }),
       );
 
-      // The auto-populated default value is free text, not structured JSON,
-      // so parseDiagnosisFacts yields a single source-less fact — the
-      // citation toggle must not render for it. This is the explicit
-      // "absent, not fabricated" case.
-      expect(screen.getByText("Captured note")).toBeInTheDocument();
+      // No persisted value means the field stays empty. The citation toggle
+      // must not render for fabricated/default text because there is none.
+      expect(
+        (screen.getByLabelText("Baseline metrics") as HTMLTextAreaElement)
+          .value,
+      ).toBe("");
+      expect(screen.queryByText("Captured note")).not.toBeInTheDocument();
       expect(
         screen.queryByRole("button", { name: /Show source for/i }),
       ).not.toBeInTheDocument();

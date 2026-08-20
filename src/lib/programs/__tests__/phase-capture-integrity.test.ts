@@ -10,6 +10,7 @@
 // is proved here, because these are the functions the route's guards rely on.
 
 import {
+  CLIENT_SYNTHESIZED_PHASE_CAPTURE_MARKERS,
   computeCaptureRevision,
   diffCaptureValues,
   findPlaceholderValues,
@@ -71,6 +72,40 @@ describe("invariant 7 — defaults can never serialize as authoritative values",
         scope_out: "Out: wide-body.",
       }),
     ).toEqual([]);
+  });
+
+  it("rejects synthesized P1 charter snippets as non-authoritative capture", () => {
+    const rejected = findPlaceholderValues({
+      sponsor_commitment:
+        "Sponsor/title: SVP. Operating owners and technology/data co-sponsors must confirm cadence, authority, and phase-gate attendance.",
+      stakeholder_map:
+        "Core roles: executive sponsor, operating owner, technology/data owner, risk/privacy/compliance owner, finance value owner, and change/adoption owner.",
+      decision_rights:
+        "Sponsor approves scope and phase advancement; operating owner approves process fit; technology/data owner approves platform and integration assumptions; risk/privacy/compliance approve controls and PHI boundaries; finance validates value logic.",
+    });
+    expect(rejected.map((r) => r.key).sort()).toEqual([
+      "decision_rights",
+      "sponsor_commitment",
+      "stakeholder_map",
+    ]);
+  });
+
+  it("rejects synthesized P2-P5 phase templates as non-authoritative capture", () => {
+    const synthesized =
+      "Current-state findings: What works, what breaks, and what the loaded evidence says about the current process. " +
+      "Move: Predictive Turnaround. Phase: P2 Discover & Diagnose. " +
+      "Selected approach: Optimize the current workflow. " +
+      "Evidence basis: Uploaded phase files, completed templates, workshop outputs, and owner attestations in Files & Evidence. " +
+      "Approval note: accountable owner review and caveats must remain attached to the gate record.";
+    expect(isKnownPlaceholderValue(synthesized)).toBe(true);
+    expect(
+      findPlaceholderValues({ current_state_findings: synthesized }),
+    ).toEqual([{ key: "current_state_findings", value: synthesized }]);
+  });
+
+  it("normalizes synthesized phase-capture markers before matching", () => {
+    const marker = CLIENT_SYNTHESIZED_PHASE_CAPTURE_MARKERS.at(-1)!;
+    expect(isKnownPlaceholderValue(`  ${marker.toUpperCase()}\n`)).toBe(true);
   });
 });
 
