@@ -123,6 +123,18 @@ export interface QualityBar {
   /** true = crossing targetBodyWordsMax blocks export; false/undefined = warning only. */
   enforceMaxAsBlocker?: boolean;
   /**
+   * When true, the word band measures PROSE only — tables, exhibits, fenced
+   * blocks and appendix sections are excluded from the body count (see
+   * `shared/body-word-count.ts`). Undefined/false preserves the legacy
+   * whole-body count exactly.
+   *
+   * A word band is a discipline on ARGUMENT length. Counting exhibits pushes
+   * authors toward fewer tables and more paragraphs, which is the opposite of
+   * what every artifact contract asks for. Opt-in per artifact type, so bands
+   * calibrated against whole-body counts are never silently tightened.
+   */
+  excludeNonProseFromBody?: boolean;
+  /**
    * When set, a document between `targetBodyWordsMax` and this value is an
    * advisory (does not block export) even when `enforceMaxAsBlocker` is true —
    * only crossing THIS value blocks. Lets a concise artifact's ceiling stay a

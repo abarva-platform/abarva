@@ -283,6 +283,16 @@ export interface WordBandContract {
   /** false for substantial/analytical types (see CHARTER_CONTRACT.advisoryMaxWords rationale). */
   enforceMaxAsBlocker: boolean;
   maxOutputTokens: number;
+  /**
+   * When true, the word band measures PROSE only — tables, exhibits, fenced
+   * blocks and appendix sections are excluded (see `shared/body-word-count.ts`).
+   *
+   * Opt-in per type. Every band below except `business_case` was calibrated
+   * against a whole-body count, so flipping this on for a type without also
+   * re-setting its numbers would silently tighten it. Set it only alongside a
+   * band chosen for prose-only counting.
+   */
+  excludeNonProseFromBody?: boolean;
 }
 
 export const P3_P4_WORD_BAND_CONTRACTS: Readonly<
@@ -320,12 +330,31 @@ export const P3_P4_WORD_BAND_CONTRACTS: Readonly<
     enforceMaxAsBlocker: true,
     maxOutputTokens: 24_000,
   },
+  /**
+   * P4 Business Case. Re-set 2026-08-19 from 5,000-9,500 to 3,000-5,000.
+   *
+   * The old band was written when the business case had to carry its own
+   * financial reasoning in prose. It no longer does: the deterministic pricing
+   * and value model owns every authoritative number, and the document's job is
+   * to make the investment ARGUMENT and point at those numbers. A tighter,
+   * more visual document is the correct shape for that job — a 9,500-word
+   * board paper is a symptom of the model not existing, not a quality bar.
+   *
+   * Counting is prose-only (`excludeNonProseFromBody`), so exhibits, tables
+   * and appendices no longer consume the band. The two changes belong
+   * together: tightening the band while still counting tables would penalise
+   * exactly the visual density this artifact is supposed to have.
+   *
+   * Band: <3,000 blocks (too thin to be an argument); 3,000-5,000 passes;
+   * 5,001-5,800 advisory; >5,800 blocks.
+   */
   business_case: {
     deliverableType: "business_case",
-    minWords: 5_000,
-    targetWordsMax: 9_500,
-    advisoryMaxWords: 11_000,
+    minWords: 3_000,
+    targetWordsMax: 5_000,
+    advisoryMaxWords: 5_800,
     enforceMaxAsBlocker: true,
+    excludeNonProseFromBody: true,
     maxOutputTokens: 32_000,
   },
   /** golden-bar's DeliverableKey calls this `execution_roadmap`. */

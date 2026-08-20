@@ -12,6 +12,7 @@ import type {
   RenderableDeliverable,
 } from "./types";
 import { scanForInternalLeaks } from "./source-register";
+import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
 
 const DECISION_RE =
   /\b(decision|recommend|we recommend|the ask|approval sought|go\/no-go)\b/i;
@@ -96,7 +97,13 @@ export function validateDeliverableQuality(
   const body = doc.generatedSections
     .map((s) => `${s.title}\n${s.bodyMarkdown}`)
     .join("\n\n");
-  const bodyWordCount = wordCount(body);
+  // The word band measures argument length. When the artifact's contract opts
+  // in, exhibits/tables/appendices are excluded so a well-exhibited document is
+  // not penalised for its exhibits. `body` above stays whole on purpose — leak
+  // scanning and claim scanning must still see table content.
+  const bodyWordCount = countBodyWords(doc.generatedSections, {
+    excludeNonProse: qb.excludeNonProseFromBody === true,
+  });
   const sectionCount = doc.generatedSections.length;
   const tableCount = doc.tables.length;
   const leakedInternalTags = scanForInternalLeaks(body);

@@ -32,14 +32,42 @@ describe("resolveQualityBar", () => {
   });
 
   it("gives Business Case a narrative-spine requirement and a hard ceiling", () => {
+    // Band re-set 2026-08-19 from 5,000-9,500 to 3,000-5,000. The deterministic
+    // pricing and value model now owns every authoritative number, so the
+    // document's job is the investment ARGUMENT, not carrying the financial
+    // reasoning in prose. See P3_P4_WORD_BAND_CONTRACTS.business_case.
     const qb = resolveQualityBar("moves", "business_case");
     expect(qb.minSections).toBe(9);
-    expect(qb.minBodyWords).toBe(5_000);
-    expect(qb.targetBodyWordsMax).toBe(9_500);
+    expect(qb.minBodyWords).toBe(3_000);
+    expect(qb.targetBodyWordsMax).toBe(5_000);
+    expect(qb.advisoryBandMax).toBe(5_800);
     expect(qb.requiresCentralTension).toBe(true);
     expect(qb.requiresOptionsConsidered).toBe(true);
     expect(qb.requiresEvidenceGapsNoted).toBe(true);
     expect(qb.enforceMaxAsBlocker).toBe(true);
+  });
+
+  it("measures Business Case length as prose only, so exhibits do not consume the band", () => {
+    // The tighter band and prose-only counting are one change: tightening while
+    // still counting tables would penalise the visual density this artifact is
+    // supposed to have.
+    expect(
+      resolveQualityBar("moves", "business_case").excludeNonProseFromBody,
+    ).toBe(true);
+  });
+
+  it("leaves every other artifact on whole-body counting", () => {
+    for (const type of [
+      "charter",
+      "target_state_architecture",
+      "solution_design",
+      "roadmap",
+      "discovery_report",
+    ]) {
+      expect(
+        resolveQualityBar("moves", type).excludeNonProseFromBody,
+      ).toBeUndefined();
+    }
   });
 
   it("gives Root-Cause Worksheet a concise hard-blocking issue-tree band", () => {
