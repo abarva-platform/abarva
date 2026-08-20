@@ -327,6 +327,7 @@ describe("generated artifact repository", () => {
     });
 
     expect(record.metadata.renderedHtml).toContain("structured projection");
+    expect(record.metadata.deliverableTypeKey).toBe("discover-brief");
     expect(record.metadata.renderableDoc).toEqual(
       expect.objectContaining({ title: "Discover Brief" }),
     );
@@ -336,5 +337,52 @@ describe("generated artifact repository", () => {
         source: "moves_orchestrated_deliverables",
       }),
     );
+  });
+
+  it("links regenerated board-grade Move artifacts to the prior immutable version", async () => {
+    const first = await saveRenderedBoardGradeMoveArtifact({
+      clientId: "meridian",
+      moveId: "move-versioned",
+      artifactId: "business-case",
+      title: "Business Case",
+      html: "<html><body>first version</body></html>",
+      renderableDoc: {
+        title: "Business Case",
+        generatedSections: [{ key: "summary", title: "Summary v1" }],
+      },
+      renderedBy: "jest-user",
+      routePath: "/api/v1/moves/board-grade-business-case",
+      generatedOn: "2026-08-20",
+    });
+
+    const second = await saveRenderedBoardGradeMoveArtifact({
+      clientId: "meridian",
+      moveId: "move-versioned",
+      artifactId: "business-case",
+      title: "Business Case",
+      html: "<html><body>second version</body></html>",
+      renderableDoc: {
+        title: "Business Case",
+        generatedSections: [{ key: "summary", title: "Summary v2" }],
+      },
+      renderedBy: "jest-user",
+      routePath: "/api/v1/moves/board-grade-business-case",
+      generatedOn: "2026-08-20",
+    });
+
+    const firstAfter = await getGeneratedArtifactById(first.id, {
+      clientId: "meridian",
+    });
+    const secondAfter = await getGeneratedArtifactById(second.id, {
+      clientId: "meridian",
+    });
+
+    expect(firstAfter?.supersededBy).toBe(second.id);
+    expect(firstAfter?.metadata.renderedHtml).toContain("first version");
+    expect(firstAfter?.metadata.renderableDoc).toEqual(
+      expect.objectContaining({ title: "Business Case" }),
+    );
+    expect(secondAfter?.supersededBy).toBeNull();
+    expect(secondAfter?.metadata.renderedHtml).toContain("second version");
   });
 });

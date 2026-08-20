@@ -417,6 +417,7 @@ export async function saveRenderedBoardGradeMoveArtifact(input: {
         title: input.title,
         moveId: input.moveId,
         artifactId: input.artifactId,
+        deliverableTypeKey: input.artifactId,
         routePath: input.routePath,
         generatedOn: input.generatedOn,
         renderedHtml: input.html,
@@ -432,6 +433,22 @@ export async function saveRenderedBoardGradeMoveArtifact(input: {
   if (error)
     throw new Error(`generated_artifacts insert failed: ${error.message}`);
   const record = rowToRecord(data as Record<string, unknown>);
+  await supersedePriorDeliverableVersions({
+    clientId: input.clientId,
+    sourceArtifactRef,
+    deliverableTypeKey: input.artifactId,
+    supersededById: record.id,
+  }).catch((supersessionError) => {
+    console.warn("[generated-artifacts] board-grade supersession step failed", {
+      clientId: input.clientId,
+      artifactId: input.artifactId,
+      newArtifactId: record.id,
+      error:
+        supersessionError instanceof Error
+          ? supersessionError.message
+          : String(supersessionError),
+    });
+  });
   await recordContextRefreshEvent({
     clientId: input.clientId,
     triggeredBy: "move_artifact",
