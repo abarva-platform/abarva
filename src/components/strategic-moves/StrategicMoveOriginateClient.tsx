@@ -34,6 +34,7 @@ import styles from "./StrategicMoves.module.css";
 import { strategicMoveBriefToDiscoveryShape } from "./strategicMoveBriefToDiscoveryShape";
 import { resolveStrategicMoveOriginationRedirect } from "./resolveOriginationRedirect";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
+import { MOVE_TIER_OPTIONS } from "@/lib/programs/p0-extended-intake-fields";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -64,7 +65,8 @@ type ScaffoldFieldId =
   | "care-type"
   | "value-hypothesis-quant"
   | "value-hypothesis-qual"
-  | "stakeholders-list";
+  | "stakeholders-list"
+  | "complexity-tier";
 
 interface BriefState {
   programName: string;
@@ -88,6 +90,7 @@ const INITIAL_FIELDS: Record<ScaffoldFieldId, string> = {
   "value-hypothesis-quant": "",
   "value-hypothesis-qual": "",
   "stakeholders-list": "",
+  "complexity-tier": "",
 };
 const MOVE_NAME_MAX_WORDS = 6;
 const MOVE_NAME_MAX_CHARS = 48;
@@ -275,6 +278,16 @@ const EXTENDED_SCAFFOLD_DEFS: ScaffoldDef[] = [
     group: "Segment",
     help: "Who else needs to be involved — who'd use it, approve it, or push back — beyond the named sponsor?",
     placeholder: "Coding team lead; Actuarial; Compliance.",
+  },
+  {
+    id: "complexity-tier",
+    label: "Complexity tier",
+    step: 17,
+    group: "Segment",
+    help: "A named owner's classification, not an auto-derived score — Straightforward exits at Classify with a direct decision; Substantial and Complex proceed through Discover, Design, and Business Case.",
+    placeholder: "",
+    fieldType: "select",
+    options: MOVE_TIER_OPTIONS,
   },
 ];
 
@@ -1110,6 +1123,7 @@ export function StrategicMoveOriginateClient({
                   valueHypothesisQual:
                     brief.fields["value-hypothesis-qual"] || null,
                   stakeholders: brief.fields["stakeholders-list"] || null,
+                  tier: brief.fields["complexity-tier"] || null,
                 }
               : null,
             // Packet 22: bind Intelligence -> Move handoff into a Decision Dossier.

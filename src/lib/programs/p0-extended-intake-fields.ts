@@ -19,6 +19,21 @@
 
 const EXTENDED_INTAKE_KEY = "p0_extended_intake_fields_v1";
 
+/**
+ * Complexity tier — a named owner's explicit classification, not an
+ * auto-derived score (the signals to derive it faithfully — data-source
+ * count, new-PHI-path or not, output type — aren't captured yet). Set
+ * alongside Business Segment/Office Lens/Care Type since the source model
+ * describes tagging and tier-setting as one action, not two.
+ */
+export type MoveTier = "Straightforward" | "Substantial" | "Complex";
+
+export const MOVE_TIER_OPTIONS: readonly MoveTier[] = [
+  "Straightforward",
+  "Substantial",
+  "Complex",
+];
+
 export interface ExtendedIntakeFields {
   /** Grounded fact — the tenant's own business-segment taxonomy. */
   businessSegment?: string | null;
@@ -32,6 +47,8 @@ export interface ExtendedIntakeFields {
   valueHypothesisQual?: string | null;
   /** Who else needs to be involved, beyond the named sponsor. */
   stakeholders?: string | null;
+  /** Complexity tier — gates the P1→P5 fast lane when 'straightforward'. */
+  tier?: MoveTier | null;
 }
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
@@ -75,4 +92,20 @@ export function applyExtendedIntakeFieldsIfEnabled(
 ): Record<string, unknown> {
   if (!flagEnabled || !fields) return charter;
   return embedExtendedIntakeFieldsInCharter(charter, fields);
+}
+
+/**
+ * Read the Move's complexity tier straight off a charter, with no flag
+ * dependency — governance.ts calls this directly (it already has `program`,
+ * not raw submission input) and applies its OWN separate flag
+ * (`moves_classify_fast_lane_v1`) before acting on the result. Returns null
+ * for legacy/malformed charters or an unrecognized tier value.
+ */
+export function resolveMoveTier(
+  charter: Record<string, unknown> | null,
+): MoveTier | null {
+  const tier = readExtendedIntakeFieldsFromCharter(charter)?.tier;
+  return tier && (MOVE_TIER_OPTIONS as readonly string[]).includes(tier)
+    ? tier
+    : null;
 }

@@ -97,7 +97,8 @@ export type FeatureFlagKey =
   | "moves_pricing_engine"
   | "moves_governed_roadmap_downloads"
   | "home_knowledge_vnext"
-  | "moves_extended_intake_fields_v1";
+  | "moves_extended_intake_fields_v1"
+  | "moves_classify_fast_lane_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -268,7 +269,14 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_extended_intake_fields_v1",
     summary:
-      "P0 Originate: add Business Segment, Front/Middle/Back Office lens, Care Type, a quant/qual value-hypothesis split, and a Stakeholders field to the intake scaffold, mirroring a client's grounded-fact intake model (segment = the tenant's real org structure; office lens and care type are analytical, not org-chart facts). Persisted via the same charter-JSONB seam as discovery_intake_v2, not via P0_CAPTURE_SECTIONS, so it never touches gate evaluation or the P1+ phase workspace for tenants without the flag. Tenant opt-in; default off. Flag off = byte-identical P0 (same 10 fields, same step count).",
+      "P0 Originate: add Business Segment, Front/Middle/Back Office lens, Care Type, a quant/qual value-hypothesis split, a Complexity Tier tag, and a Stakeholders field to the intake scaffold, mirroring a client's grounded-fact intake model (segment = the tenant's real org structure; office lens, care type, and tier are analytical, not org-chart facts). Persisted via the same charter-JSONB seam as discovery_intake_v2, not via P0_CAPTURE_SECTIONS, so it never touches gate evaluation or the P1+ phase workspace for tenants without the flag. Tenant opt-in; default off. Flag off = byte-identical P0 (same 10 fields, same step count).",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_classify_fast_lane_v1",
+    summary:
+      "Governance: lets a Move tagged complexity tier 'straightforward' (captured via moves_extended_intake_fields_v1) advance directly from P1 Charter to P5 Mobilize & Handoff, skipping P2 Discover/P3 Design/P4 Business Case, via a single named-owner decision gate. Deliberately a SEPARATE flag from moves_extended_intake_fields_v1 — a tenant can capture the tier tag without the gate engine acting on it. Off by default; off = findGateRule(1,5) still returns null exactly as before, so every other transition and every other tenant is byte-identical. On only changes behavior for a Move that is BOTH tagged 'straightforward' AND whose tenant has this flag — every other (fromPhase,toPhase) pair is unaffected regardless.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },
