@@ -18,6 +18,28 @@ export const metadata = {
   title: "Originate Strategic Move · AbarVa",
 };
 
+// Business Segment is a GROUNDED FACT per tenant (the tenant's own business
+// units), not a universal enum — so it's data, not a shared constant that
+// belongs in a component or feature-flag definition. Meridian's values below
+// are the same segment names already governed in
+// datasets/tenant-inputs/active/meridian-health/current/01b_business_segments.csv,
+// duplicated here only until Moves reads tenant segment data from that
+// source directly instead of a hardcoded map.
+const BUSINESS_SEGMENT_OPTIONS_BY_TENANT: Record<string, string[]> = {
+  "meridian-health": [
+    "Health Plan Operations",
+    "Hospital & Acute Delivery",
+    "Ambulatory & Physician Network",
+    "Shared Enterprise Services",
+  ],
+  meridian: [
+    "Health Plan Operations",
+    "Hospital & Acute Delivery",
+    "Ambulatory & Physician Network",
+    "Shared Enterprise Services",
+  ],
+};
+
 interface PageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
@@ -100,6 +122,7 @@ export default async function StrategicMoveOriginatePage({
   // tenant (computed server-side; default off). Re-homed from /programs/new,
   // which the routing cutover supersedes.
   let discoveryIntakeEnabled = false;
+  let extendedIntakeFieldsEnabled = false;
   try {
     const ctx = await requireTenancy();
     firstMessage = await composeOriginateFirstMessage(
@@ -108,9 +131,15 @@ export default async function StrategicMoveOriginatePage({
       fromIntelligence,
     );
     discoveryIntakeEnabled = isFeatureEnabled(ctx, "discovery_intake_v2");
+    extendedIntakeFieldsEnabled = isFeatureEnabled(
+      ctx,
+      "moves_extended_intake_fields_v1",
+    );
   } catch {
     // Tenancy or draft read failure — fall through; client uses its default 2A message.
   }
+  const businessSegmentOptions =
+    BUSINESS_SEGMENT_OPTIONS_BY_TENANT[activeClient.key] ?? [];
 
   return (
     <AppShell surface="programs">
@@ -119,6 +148,8 @@ export default async function StrategicMoveOriginatePage({
         initialTurns={firstMessage ? [firstMessage] : undefined}
         originatingIntelligenceSessionId={fromIntelligence?.sessionId ?? null}
         discoveryIntakeEnabled={discoveryIntakeEnabled}
+        extendedIntakeFieldsEnabled={extendedIntakeFieldsEnabled}
+        businessSegmentOptions={businessSegmentOptions}
       />
     </AppShell>
   );

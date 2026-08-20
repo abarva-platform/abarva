@@ -34,6 +34,8 @@ import {
   applyDiscoveryShapeIfEnabled,
   embedDiscoveryPlanInCharter,
 } from "@/lib/programs/discovery/charter-transformers";
+import { applyExtendedIntakeFieldsIfEnabled } from "@/lib/programs/p0-extended-intake-fields";
+import type { ExtendedIntakeFields } from "@/lib/programs/p0-extended-intake-fields";
 import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture";
 import { planFromShape } from "@/lib/programs/discovery/discovery-intake";
 import type { DiscoveryShape } from "@/lib/programs/discovery/discovery-intake";
@@ -84,6 +86,10 @@ export interface SubmitOriginationBriefInput {
   // Discovery Intake (S2b): the captured P0 discovery shape. Persisted into the
   // charter JSONB only when the tenant has `discovery_intake_v2` enabled.
   discoveryShape?: DiscoveryShape | null;
+  // Extended intake fields (Business Segment, Office Lens, Care Type,
+  // Value Hypothesis quant/qual, Stakeholders). Persisted into the charter
+  // JSONB only when the tenant has `moves_extended_intake_fields_v1` enabled.
+  extendedIntake?: ExtendedIntakeFields | null;
 }
 
 export interface SubmitOriginationBriefResult {
@@ -164,7 +170,8 @@ function roleOnlyPlaceholderForOrigination(
   parsedLabel: ParsedPersonLabel,
 ): { name: string; role: string } | null {
   if (parsedLabel.placeholderName) return null;
-  const role = optionalText(parsedLabel.placeholderRole) ?? parsedLabel.lookupLabel;
+  const role =
+    optionalText(parsedLabel.placeholderRole) ?? parsedLabel.lookupLabel;
   const normalized = normalizeLabel(role);
   if (
     !/\b(ceo|cfo|coo|cio|cto|cmo|cco|cdo|cdao|ciso|chro|cro|caio|cmio|vp|svp|evp|director|chief|officer|sponsor|owner|lead)\b/.test(
@@ -864,6 +871,19 @@ export async function submitOriginationBrief(
       planFromShape(input.discoveryShape),
     );
   }
+
+  // Extended intake fields: same isolated charter-JSONB seam as Discovery
+  // Intake above. Default-off flag → no-op, so the charter written is
+  // byte-identical to today's behaviour for every tenant without the flag.
+  const extendedIntakeFlagEnabled = isFeatureEnabled(
+    { clientKey: activeClient.key },
+    "moves_extended_intake_fields_v1",
+  );
+  charterToWrite = applyExtendedIntakeFieldsIfEnabled(
+    charterToWrite,
+    input.extendedIntake,
+    extendedIntakeFlagEnabled,
+  );
 
   let legacySolutionSlot = input.programName;
   const engagementInsertPayload = {

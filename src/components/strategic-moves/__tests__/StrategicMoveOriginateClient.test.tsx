@@ -210,9 +210,7 @@ describe("StrategicMoveOriginateClient", () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getAllByText(/4 of 10 complete/i)[0],
-      ).toBeInTheDocument();
+      expect(screen.getAllByText(/4 of 10 complete/i)[0]).toBeInTheDocument();
     });
 
     expect(approveButton).toBeDisabled();
@@ -510,15 +508,12 @@ describe("StrategicMoveOriginateClient", () => {
     });
 
     selectP0Tab(1);
-    fireEvent.change(
-      screen.getByLabelText(/move title/i),
-      {
-        target: {
-          value:
-            "Members experience long calls and inconsistent answers because agents navigate too many systems",
-        },
+    fireEvent.change(screen.getByLabelText(/move title/i), {
+      target: {
+        value:
+          "Members experience long calls and inconsistent answers because agents navigate too many systems",
       },
-    );
+    });
 
     fireEvent.click(
       screen.getByRole("button", { name: /approve and build the charter/i }),
@@ -560,12 +555,8 @@ describe("StrategicMoveOriginateClient", () => {
       expect(screen.getByText("Approvals")).toBeInTheDocument();
       expect(screen.getAllByText("P0 Originate")[0]).toBeInTheDocument();
       expect(screen.getByText("P0 · aVa")).toBeInTheDocument();
-      expect(
-        screen.getByRole("tab", { name: /steps/i }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("tab", { name: /files/i }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /steps/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /files/i })).toBeInTheDocument();
       expect(
         screen.getByRole("tab", { name: /intelligence/i }),
       ).toBeInTheDocument();
@@ -601,9 +592,294 @@ describe("StrategicMoveOriginateClient", () => {
       );
 
       expect(approveButton).toBeDisabled();
+      expect(screen.getAllByText(/1 of 10 complete/i)[0]).toBeInTheDocument();
+    });
+  });
+
+  describe("extended intake fields (moves_extended_intake_fields_v1)", () => {
+    it("renders exactly the original 10 steps when the flag is off (default) — byte-identical to today", () => {
+      render(<StrategicMoveOriginateClient tenantName="Apex Retail" />);
+      expect(screen.getByText(/0 \/ 10/)).toBeInTheDocument();
       expect(
-        screen.getAllByText(/1 of 10 complete/i)[0],
-      ).toBeInTheDocument();
+        screen.queryByRole("button", { name: /business segment/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/front \/ middle \/ back office/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("adds a Segment group of 6 steps (16 total) when the flag is on, with Business Segment options from the tenant prop", () => {
+      render(
+        <StrategicMoveOriginateClient
+          tenantName="Meridian Health"
+          extendedIntakeFieldsEnabled
+          businessSegmentOptions={[
+            "Health Plan Operations",
+            "Hospital & Acute Delivery",
+            "Ambulatory & Physician Network",
+            "Shared Enterprise Services",
+          ]}
+        />,
+      );
+      expect(screen.getByText(/0 \/ 16/)).toBeInTheDocument();
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /business segment/i }),
+      );
+      const select = document.querySelector(
+        "#orig-canvas-brief-section-11-input",
+      ) as HTMLSelectElement | null;
+      expect(select).not.toBeNull();
+      expect(select!.tagName).toBe("SELECT");
+      const optionLabels = Array.from(select!.options).map((o) => o.value);
+      expect(optionLabels).toEqual([
+        "",
+        "Health Plan Operations",
+        "Hospital & Acute Delivery",
+        "Ambulatory & Physician Network",
+        "Shared Enterprise Services",
+      ]);
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /front \/ middle \/ back office/i }),
+      );
+      const officeSelect = document.querySelector(
+        "#orig-canvas-brief-section-12-input",
+      ) as HTMLSelectElement | null;
+      expect(Array.from(officeSelect!.options).map((o) => o.value)).toEqual([
+        "",
+        "Front Office",
+        "Middle Office",
+        "Back Office",
+        "Enterprise",
+      ]);
+
+      fireEvent.click(screen.getByRole("button", { name: /^care type$/i }));
+      const careSelect = document.querySelector(
+        "#orig-canvas-brief-section-13-input",
+      ) as HTMLSelectElement | null;
+      expect(Array.from(careSelect!.options).map((o) => o.value)).toEqual([
+        "",
+        "Clinical",
+        "Non-Clinical",
+      ]);
+    });
+
+    it("submits extendedIntake in the promote payload only when the flag is on, and null when it's off", async () => {
+      const fetchMock = jest.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/api/programs/origination-submit") {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              ok: true,
+              engagementId: "move-extended-p0",
+              redirectTo: "/programs/move-extended-p0",
+            }),
+          };
+        }
+        return { ok: true, status: 200, json: async () => ({ ok: true }) };
+      });
+      (global as { fetch: unknown }).fetch = fetchMock;
+
+      const { container } = render(
+        <StrategicMoveOriginateClient
+          tenantName="Meridian Health"
+          extendedIntakeFieldsEnabled
+          businessSegmentOptions={["Health Plan Operations"]}
+        />,
+      );
+
+      // Base steps use EXACT label anchors here (not the shared
+      // selectP0Tab/submitP0Section helpers) because with extended fields
+      // rendered, "Value hypothesis" is a substring of two of the new step
+      // labels ("Value hypothesis — quantified/qualitative") and would match
+      // ambiguously.
+      const baseSteps: Array<[RegExp, string]> = [
+        [
+          /^business problem or opportunity$/i,
+          "Coding gaps are found after submission, not before.",
+        ],
+        [
+          /^transformation pattern \(archetype\)$/i,
+          "AI-powered ops decision support.",
+        ],
+        [/^executive sponsor and decision authority$/i, "VP, Risk Adjustment."],
+        [/^in scope$/i, "Claims and Epic chart data."],
+        [/^out of scope$/i, "Clinical adjudication decisions."],
+        [
+          /^value hypothesis$/i,
+          "Revenue capture improves and chart chases go down.",
+        ],
+        [
+          /^intended outcomes and success criteria$/i,
+          "Coding accuracy rate improves; validated in P2.",
+        ],
+        [
+          /^discovery questions and hypotheses to test$/i,
+          "Which claim types drive the most gaps?",
+        ],
+        [/^evidence families to collect$/i, "Claims mart, Epic Clarity."],
+        [
+          /^foundation readiness, constraints, and dependencies$/i,
+          "Bronze-layer claims data availability.",
+        ],
+      ];
+      baseSteps.forEach(([label, value], index) => {
+        fireEvent.click(screen.getByRole("button", { name: label }));
+        const input = container.querySelector(
+          `#orig-canvas-brief-section-${index + 1}-input`,
+        ) as HTMLTextAreaElement;
+        fireEvent.change(input, { target: { value } });
+        fireEvent.click(
+          screen.getAllByRole("button", {
+            name: /submit section|update section|submit readiness|update readiness/i,
+          })[0],
+        );
+      });
+
+      // Extended steps: 11-13 are selects, 14-16 are free text.
+      fireEvent.click(
+        screen.getByRole("button", { name: /business segment/i }),
+      );
+      fireEvent.change(
+        document.querySelector("#orig-canvas-brief-section-11-input")!,
+        { target: { value: "Health Plan Operations" } },
+      );
+      fireEvent.click(
+        screen.getAllByRole("button", { name: /submit section/i })[0],
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /front \/ middle \/ back office/i }),
+      );
+      fireEvent.change(
+        document.querySelector("#orig-canvas-brief-section-12-input")!,
+        { target: { value: "Back Office" } },
+      );
+      fireEvent.click(
+        screen.getAllByRole("button", { name: /submit section/i })[0],
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /^care type$/i }));
+      fireEvent.change(
+        document.querySelector("#orig-canvas-brief-section-13-input")!,
+        { target: { value: "Non-Clinical" } },
+      );
+      fireEvent.click(
+        screen.getAllByRole("button", { name: /submit section/i })[0],
+      );
+
+      const extendedTextSteps: Array<[RegExp, number, string]> = [
+        [
+          /^value hypothesis — quantified$/i,
+          14,
+          "Est. $2-4M/yr in recoverable revenue.",
+        ],
+        [
+          /^value hypothesis — qualitative$/i,
+          15,
+          "Coding team trusts the data more.",
+        ],
+        [/^stakeholders$/i, 16, "Coding team lead; Actuarial; Compliance."],
+      ];
+      extendedTextSteps.forEach(([label, step, value]) => {
+        fireEvent.click(screen.getByRole("button", { name: label }));
+        const input = container.querySelector(
+          `#orig-canvas-brief-section-${step}-input`,
+        ) as HTMLTextAreaElement;
+        fireEvent.change(input, { target: { value } });
+        fireEvent.click(
+          screen.getAllByRole("button", { name: /submit section/i })[0],
+        );
+      });
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /approve and build the charter/i }),
+      );
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole("button", { name: /^approve and build$/i }),
+        );
+      });
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith(
+          "/strategic-moves/move-extended-p0/phase/0?focus=gate",
+        );
+      });
+
+      const submitCall = fetchMock.mock.calls.find(
+        ([url]) => url === "/api/programs/origination-submit",
+      );
+      expect(submitCall).toBeDefined();
+      const body = JSON.parse((submitCall![1] as { body: string }).body);
+      expect(body.extendedIntake).toEqual({
+        businessSegment: "Health Plan Operations",
+        officeLens: "Back Office",
+        careType: "Non-Clinical",
+        valueHypothesisQuant: "Est. $2-4M/yr in recoverable revenue.",
+        valueHypothesisQual: "Coding team trusts the data more.",
+        stakeholders: "Coding team lead; Actuarial; Compliance.",
+      });
+    });
+
+    it("sends extendedIntake: null when the flag is off, even though the base flow is unaffected", async () => {
+      const fetchMock = jest.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/api/programs/origination-submit") {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              ok: true,
+              engagementId: "move-no-extended-p0",
+              redirectTo: "/programs/move-no-extended-p0",
+            }),
+          };
+        }
+        return { ok: true, status: 200, json: async () => ({ ok: true }) };
+      });
+      (global as { fetch: unknown }).fetch = fetchMock;
+
+      const { container } = render(
+        <StrategicMoveOriginateClient tenantName="Apex Retail" />,
+      );
+      const values = [
+        "Members experience long calls and inconsistent answers.",
+        "Contact Center Agent Assist.",
+        "COO as executive sponsor.",
+        "Claims status and CRM history.",
+        "Clinical decisions.",
+        "Reduce avoidable handle time.",
+        "Lower handle time, validated.",
+        "Which intents drive repeat contact?",
+        "Call metrics, CRM history.",
+        "CRM and claims access needed.",
+      ];
+      values.forEach((value, index) => {
+        submitP0Section(container, index + 1, value);
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /approve and build the charter/i }),
+      );
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole("button", { name: /^approve and build$/i }),
+        );
+      });
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith(
+          "/strategic-moves/move-no-extended-p0/phase/0?focus=gate",
+        );
+      });
+      const submitCall = fetchMock.mock.calls.find(
+        ([url]) => url === "/api/programs/origination-submit",
+      );
+      const body = JSON.parse((submitCall![1] as { body: string }).body);
+      expect(body.extendedIntake).toBeNull();
     });
   });
 });

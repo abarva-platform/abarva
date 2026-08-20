@@ -54,7 +54,17 @@ type ScaffoldFieldId =
   | "outcomes-success"
   | "discovery-questions"
   | "evidence-family"
-  | "foundation-readiness";
+  | "foundation-readiness"
+  // Extended intake fields — rendered only when `extendedIntakeFieldsEnabled`
+  // (moves_extended_intake_fields_v1) is on for the tenant. Always present in
+  // ScaffoldFieldId/INITIAL_FIELDS so Record<ScaffoldFieldId, string> stays
+  // exhaustive; harmless empty entries for tenants that never render them.
+  | "business-segment"
+  | "office-lens"
+  | "care-type"
+  | "value-hypothesis-quant"
+  | "value-hypothesis-qual"
+  | "stakeholders-list";
 
 interface BriefState {
   programName: string;
@@ -72,23 +82,33 @@ const INITIAL_FIELDS: Record<ScaffoldFieldId, string> = {
   "discovery-questions": "",
   "evidence-family": "",
   "foundation-readiness": "",
+  "business-segment": "",
+  "office-lens": "",
+  "care-type": "",
+  "value-hypothesis-quant": "",
+  "value-hypothesis-qual": "",
+  "stakeholders-list": "",
 };
-
-const REQUIRED_FIELD_COUNT = Object.keys(INITIAL_FIELDS).length;
 const MOVE_NAME_MAX_WORDS = 6;
 const MOVE_NAME_MAX_CHARS = 48;
 
 type P0StepId = ScaffoldFieldId | "approve-build";
 type P0WorkspaceTab = "steps" | "files" | "intelligence";
 
-const SCAFFOLD_DEFS: Array<{
+interface ScaffoldDef {
   id: ScaffoldFieldId;
   label: string;
   step: number;
-  group: "Frame" | "Govern" | "Readiness";
+  group: "Frame" | "Govern" | "Readiness" | "Segment";
   help: string;
   placeholder: string;
-}> = [
+  /** Omitted = free-text textarea (default). "select" renders a dropdown
+   *  bound to `options`. */
+  fieldType?: "select";
+  options?: readonly string[];
+}
+
+const SCAFFOLD_DEFS: ScaffoldDef[] = [
   {
     id: "problem-statement",
     label: "Business problem or opportunity",
@@ -181,8 +201,85 @@ const SCAFFOLD_DEFS: Array<{
   },
 ];
 
+// Default office-lens/care-type options — analytical lenses, not tied to any
+// tenant's real org structure, so these are safe to ship as fixed choices.
+// Business Segment is different: it's a GROUNDED FACT (the tenant's own
+// business units), so its options come from `businessSegmentOptions` (a
+// server-supplied, tenant-specific prop) rather than being hardcoded here.
+const OFFICE_LENS_OPTIONS = [
+  "Front Office",
+  "Middle Office",
+  "Back Office",
+  "Enterprise",
+] as const;
+const CARE_TYPE_OPTIONS = ["Clinical", "Non-Clinical"] as const;
+
+// Extended intake fields — appended after the base 10 steps (steps 11-16) so
+// enabling the flag never renumbers or reorders anything a tenant already
+// sees. Business Segment's `options` gets its real value at render time from
+// the `businessSegmentOptions` prop; the placeholder list here is a fallback
+// only used if that prop is omitted.
+const EXTENDED_SCAFFOLD_DEFS: ScaffoldDef[] = [
+  {
+    id: "business-segment",
+    label: "Business segment",
+    step: 11,
+    group: "Segment",
+    help: "Which of the tenant's real business segments this Move belongs to — a grounded fact, not a classification judgment call.",
+    placeholder: "",
+    fieldType: "select",
+    options: [],
+  },
+  {
+    id: "office-lens",
+    label: "Front / Middle / Back Office",
+    step: 12,
+    group: "Segment",
+    help: "An analytical lens, not an org chart: is this patient/customer-facing, part of core operations/delivery, back-office support, or does it cut across all three?",
+    placeholder: "",
+    fieldType: "select",
+    options: OFFICE_LENS_OPTIONS,
+  },
+  {
+    id: "care-type",
+    label: "Care type",
+    step: 13,
+    group: "Segment",
+    help: "Is this fundamentally about care/service delivery, or the business/operations side?",
+    placeholder: "",
+    fieldType: "select",
+    options: CARE_TYPE_OPTIONS,
+  },
+  {
+    id: "value-hypothesis-quant",
+    label: "Value hypothesis — quantified",
+    step: 14,
+    group: "Segment",
+    help: "If this worked, what number would move, and by roughly how much?",
+    placeholder:
+      "Est. $2-4M/yr in recoverable revenue (rough, unvalidated) — a sponsor estimate, not yet Finance-checked.",
+  },
+  {
+    id: "value-hypothesis-qual",
+    label: "Value hypothesis — qualitative",
+    step: 15,
+    group: "Segment",
+    help: "What would feel different day-to-day, even if you can't put a number on it?",
+    placeholder:
+      "The team trusts the data more; fewer retrospective reviews and rework.",
+  },
+  {
+    id: "stakeholders-list",
+    label: "Stakeholders",
+    step: 16,
+    group: "Segment",
+    help: "Who else needs to be involved — who'd use it, approve it, or push back — beyond the named sponsor?",
+    placeholder: "Coding team lead; Actuarial; Compliance.",
+  },
+];
+
 const P0_STAGE_GROUPS: Array<{
-  label: "Frame" | "Govern" | "Readiness" | "Approve";
+  label: "Frame" | "Govern" | "Readiness" | "Segment" | "Approve";
   stepIds: P0StepId[];
 }> = [
   { label: "Frame", stepIds: ["problem-statement", "archetype"] },
@@ -202,6 +299,11 @@ const P0_STAGE_GROUPS: Array<{
   },
   { label: "Approve", stepIds: ["approve-build"] },
 ];
+
+const EXTENDED_STAGE_GROUP: { label: "Segment"; stepIds: P0StepId[] } = {
+  label: "Segment",
+  stepIds: EXTENDED_SCAFFOLD_DEFS.map((d) => d.id),
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -256,7 +358,12 @@ const INLINE_FIELD_LABELS: Array<{
   },
   {
     id: "foundation-readiness",
-    labels: ["foundation readiness", "readiness", "constraints", "dependencies"],
+    labels: [
+      "foundation readiness",
+      "readiness",
+      "constraints",
+      "dependencies",
+    ],
   },
 ];
 
@@ -476,6 +583,15 @@ interface Props {
   /** Discovery Intake: when on for the tenant (`discovery_intake_v2`), the
    *  canvas exposes a Brief | Discovery sub-tab. Default off. */
   discoveryIntakeEnabled?: boolean;
+  /** Extended Intake Fields: when on for the tenant
+   *  (`moves_extended_intake_fields_v1`), the scaffold gains a Segment group
+   *  (Business Segment, Office Lens, Care Type, Value Hypothesis quant/qual,
+   *  Stakeholders) after the base 10 steps. Default off — off = the scaffold
+   *  is byte-identical to today's 10-step flow. */
+  extendedIntakeFieldsEnabled?: boolean;
+  /** Tenant's real business-segment names (grounded fact — e.g. Meridian's
+   *  own segment taxonomy). Only used when `extendedIntakeFieldsEnabled`. */
+  businessSegmentOptions?: string[];
 }
 
 export function StrategicMoveOriginateClient({
@@ -483,8 +599,31 @@ export function StrategicMoveOriginateClient({
   initialTurns,
   originatingIntelligenceSessionId = null,
   discoveryIntakeEnabled = false,
+  extendedIntakeFieldsEnabled = false,
+  businessSegmentOptions = [],
 }: Props) {
   const router = useRouter();
+  // Tenant-conditional field set: off = these three are identical to the
+  // base module constants (same reference-equal-in-spirit arrays), so a
+  // tenant without the flag sees exactly today's 10-step P0, unchanged.
+  const activeScaffoldDefs: ScaffoldDef[] = extendedIntakeFieldsEnabled
+    ? [
+        ...SCAFFOLD_DEFS,
+        ...EXTENDED_SCAFFOLD_DEFS.map((def) =>
+          def.id === "business-segment"
+            ? { ...def, options: businessSegmentOptions }
+            : def,
+        ),
+      ]
+    : SCAFFOLD_DEFS;
+  const activeStageGroups = extendedIntakeFieldsEnabled
+    ? [
+        ...P0_STAGE_GROUPS.slice(0, -1),
+        EXTENDED_STAGE_GROUP,
+        P0_STAGE_GROUPS[P0_STAGE_GROUPS.length - 1],
+      ]
+    : P0_STAGE_GROUPS;
+  const activeRequiredFieldCount = activeScaffoldDefs.length;
   const [turns, setTurns] = useState<ChatTurn[]>(
     initialTurns ?? [
       {
@@ -677,7 +816,7 @@ export function StrategicMoveOriginateClient({
                 filledCount: Object.values(brief.fields).filter(
                   (v) => v.trim().length > 0,
                 ).length,
-                fieldsTotal: REQUIRED_FIELD_COUNT,
+                fieldsTotal: activeRequiredFieldCount,
               },
             },
           }),
@@ -822,6 +961,7 @@ export function StrategicMoveOriginateClient({
       tenantName,
       brief.programName,
       brief.fields,
+      activeRequiredFieldCount,
       updateTurns,
       handleArtifact,
     ],
@@ -830,21 +970,21 @@ export function StrategicMoveOriginateClient({
   const filledCount = Object.values(brief.fields).filter(
     (v) => v.trim().length > 0,
   ).length;
-  const requiredFilled = SCAFFOLD_DEFS.filter(
+  const requiredFilled = activeScaffoldDefs.filter(
     ({ id }) => brief.fields[id].trim().length > 0,
   ).length;
   const canPromote =
-    requiredFilled >= REQUIRED_FIELD_COUNT && !isPending && !streaming;
+    requiredFilled >= activeRequiredFieldCount && !isPending && !streaming;
   const suggestedName = suggestedStrategicMoveName(brief.fields);
   const completionPercent = Math.round(
-    (requiredFilled / REQUIRED_FIELD_COUNT) * 100,
+    (requiredFilled / activeRequiredFieldCount) * 100,
   );
   const originateTallies: PhaseTallyRow[] = [
     {
       phase: 0,
       label: "P0 Originate",
       met: requiredFilled,
-      total: REQUIRED_FIELD_COUNT,
+      total: activeRequiredFieldCount,
       state: "current",
     },
     { phase: 1, label: "P1 Charter", met: 0, total: 5, state: "upcoming" },
@@ -885,8 +1025,8 @@ export function StrategicMoveOriginateClient({
   const activeP0Def =
     activeP0Step === "approve-build"
       ? null
-      : SCAFFOLD_DEFS.find((def) => def.id === activeP0Step) ??
-        SCAFFOLD_DEFS[0];
+      : (activeScaffoldDefs.find((def) => def.id === activeP0Step) ??
+        activeScaffoldDefs[0]);
   const evidenceAndReadinessComplete =
     brief.fields["evidence-family"].trim().length > 0 &&
     brief.fields["foundation-readiness"].trim().length > 0;
@@ -957,6 +1097,21 @@ export function StrategicMoveOriginateClient({
             discoveryShape: discoveryIntakeEnabled
               ? strategicMoveBriefToDiscoveryShape(brief.fields)
               : null,
+            // Extended intake fields: same pattern as discoveryShape above.
+            // Server gates it by moves_extended_intake_fields_v1
+            // (applyExtendedIntakeFieldsIfEnabled); null when the flag is off.
+            extendedIntake: extendedIntakeFieldsEnabled
+              ? {
+                  businessSegment: brief.fields["business-segment"] || null,
+                  officeLens: brief.fields["office-lens"] || null,
+                  careType: brief.fields["care-type"] || null,
+                  valueHypothesisQuant:
+                    brief.fields["value-hypothesis-quant"] || null,
+                  valueHypothesisQual:
+                    brief.fields["value-hypothesis-qual"] || null,
+                  stakeholders: brief.fields["stakeholders-list"] || null,
+                }
+              : null,
             // Packet 22: bind Intelligence -> Move handoff into a Decision Dossier.
             originatingIntelligenceSessionId,
             decisionThreadTitle: finalName,
@@ -987,135 +1142,138 @@ export function StrategicMoveOriginateClient({
   }
 
   return (
-        <div id="orig-page" className={styles.page}>
-          <section id="orig-grid" className={styles.phaseBody}>
-            <P0OriginationRail
-              activeTab={canvasTab}
-              moveName={deriveStrategicMoveName(brief.programName, brief.fields)}
-              onBack={cancelFlow}
-              onApprovals={() => {
-                setCanvasTab("steps");
-                setActiveP0Step("approve-build");
-              }}
-              onTabChange={setCanvasTab}
-              tallies={originateTallies}
-              tenantName={tenantName}
-            />
-            <div className={styles.phaseBodyMain}>
-              <AgentDock
-                agent={{
-                  initials: "aVa",
-                  mark: "ava",
-                  name: "aVa",
-                  role: "Move advisor",
-                }}
-                surface="/strategic-moves/new"
-                defaultMode="collapsed"
-                collapsedRestoreMode="expand"
-                collapsedSummary={{ label: "aVa", detail: "P0 Originate" }}
-                isAgentBusy={streaming}
-                thread={dockThread}
-                suggestedActions={dockSuggestedActions}
-                onMessage={(text) => void send(text)}
-                surfaceContext={{
-                  phase: 0,
-                  tenantName,
-                  programName: brief.programName || null,
-                  brief: {
-                    fields: brief.fields,
-                    filledCount: requiredFilled,
-                    fieldsTotal: REQUIRED_FIELD_COUNT,
-                  },
-                }}
-                workspace={
-                  <P0OriginationContractCanvas
-                    activeP0Def={activeP0Def}
-                    activeP0Step={activeP0Step}
-                    brief={brief}
-                    canPromote={canPromote}
-                    canvasTab={canvasTab}
-                    completionPercent={completionPercent}
-                    draftFields={draftFields}
-                    requiredFilled={requiredFilled}
-                    setActiveP0Step={setActiveP0Step}
-                    setBrief={setBrief}
-                    setCanvasTab={setCanvasTab}
-                    setDraftFields={setDraftFields}
-                    submitError={submitError}
-                    suggestedName={suggestedName}
-                    tenantName={tenantName}
-                    visualStepComplete={visualStepComplete}
-                    clearBriefField={clearBriefField}
-                    promote={promote}
-                    saveDraftField={saveDraftField}
-                    cancelFlow={cancelFlow}
-                  />
-                }
+    <div id="orig-page" className={styles.page}>
+      <section id="orig-grid" className={styles.phaseBody}>
+        <P0OriginationRail
+          activeTab={canvasTab}
+          moveName={deriveStrategicMoveName(brief.programName, brief.fields)}
+          onBack={cancelFlow}
+          onApprovals={() => {
+            setCanvasTab("steps");
+            setActiveP0Step("approve-build");
+          }}
+          onTabChange={setCanvasTab}
+          tallies={originateTallies}
+          tenantName={tenantName}
+        />
+        <div className={styles.phaseBodyMain}>
+          <AgentDock
+            agent={{
+              initials: "aVa",
+              mark: "ava",
+              name: "aVa",
+              role: "Move advisor",
+            }}
+            surface="/strategic-moves/new"
+            defaultMode="collapsed"
+            collapsedRestoreMode="expand"
+            collapsedSummary={{ label: "aVa", detail: "P0 Originate" }}
+            isAgentBusy={streaming}
+            thread={dockThread}
+            suggestedActions={dockSuggestedActions}
+            onMessage={(text) => void send(text)}
+            surfaceContext={{
+              phase: 0,
+              tenantName,
+              programName: brief.programName || null,
+              brief: {
+                fields: brief.fields,
+                filledCount: requiredFilled,
+                fieldsTotal: activeRequiredFieldCount,
+              },
+            }}
+            workspace={
+              <P0OriginationContractCanvas
+                activeP0Def={activeP0Def}
+                activeP0Step={activeP0Step}
+                brief={brief}
+                canPromote={canPromote}
+                canvasTab={canvasTab}
+                completionPercent={completionPercent}
+                draftFields={draftFields}
+                requiredFilled={requiredFilled}
+                requiredFieldCount={activeRequiredFieldCount}
+                scaffoldDefs={activeScaffoldDefs}
+                stageGroups={activeStageGroups}
+                setActiveP0Step={setActiveP0Step}
+                setBrief={setBrief}
+                setCanvasTab={setCanvasTab}
+                setDraftFields={setDraftFields}
+                submitError={submitError}
+                suggestedName={suggestedName}
+                tenantName={tenantName}
+                visualStepComplete={visualStepComplete}
+                clearBriefField={clearBriefField}
+                promote={promote}
+                saveDraftField={saveDraftField}
+                cancelFlow={cancelFlow}
               />
-            </div>
-          </section>
-
-          {/* Discard confirmation */}
-          {showConfirm ? (
-            <div
-              className={`${styles.confirmOverlay} ${styles.confirmOverlayShow}`}
-              role="presentation"
-            >
-              <div
-                className={styles.confirmDialog}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="confirm-discard-title"
-              >
-                <h3
-                  id="confirm-discard-title"
-                  className={styles.confirmDialogTitle}
-                >
-                  Discard this move?
-                </h3>
-                <p className={styles.confirmDialogBody}>
-                  You&rsquo;ve captured {filledCount} of {REQUIRED_FIELD_COUNT}{" "}
-                  sections (
-                  {requiredFilled} of {REQUIRED_FIELD_COUNT} required). Save as
-                  a draft to come back, or discard and start fresh.
-                </p>
-                <div className={styles.confirmActions}>
-                  <button
-                    className={styles.confirmBtn}
-                    onClick={() => setShowConfirm(false)}
-                    type="button"
-                  >
-                    Continue working
-                  </button>
-                  <button
-                    className={`${styles.confirmBtn} ${styles.confirmBtnDanger}`}
-                    onClick={() => {
-                      setShowConfirm(false);
-                      setBrief({
-                        programName: "",
-                        fields: { ...INITIAL_FIELDS },
-                      });
-                      router.push("/strategic-moves");
-                    }}
-                    type="button"
-                  >
-                    Discard
-                  </button>
-                  <button
-                    className={`${styles.confirmBtn} ${styles.confirmBtnPrimary}`}
-                    onClick={() => {
-                      setShowConfirm(false);
-                      router.push("/strategic-moves");
-                    }}
-                    type="button"
-                  >
-                    Save as draft
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : null}
+            }
+          />
         </div>
+      </section>
+
+      {/* Discard confirmation */}
+      {showConfirm ? (
+        <div
+          className={`${styles.confirmOverlay} ${styles.confirmOverlayShow}`}
+          role="presentation"
+        >
+          <div
+            className={styles.confirmDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-discard-title"
+          >
+            <h3
+              id="confirm-discard-title"
+              className={styles.confirmDialogTitle}
+            >
+              Discard this move?
+            </h3>
+            <p className={styles.confirmDialogBody}>
+              You&rsquo;ve captured {filledCount} of {activeRequiredFieldCount}{" "}
+              sections ({requiredFilled} of {activeRequiredFieldCount}{" "}
+              required). Save as a draft to come back, or discard and start
+              fresh.
+            </p>
+            <div className={styles.confirmActions}>
+              <button
+                className={styles.confirmBtn}
+                onClick={() => setShowConfirm(false)}
+                type="button"
+              >
+                Continue working
+              </button>
+              <button
+                className={`${styles.confirmBtn} ${styles.confirmBtnDanger}`}
+                onClick={() => {
+                  setShowConfirm(false);
+                  setBrief({
+                    programName: "",
+                    fields: { ...INITIAL_FIELDS },
+                  });
+                  router.push("/strategic-moves");
+                }}
+                type="button"
+              >
+                Discard
+              </button>
+              <button
+                className={`${styles.confirmBtn} ${styles.confirmBtnPrimary}`}
+                onClick={() => {
+                  setShowConfirm(false);
+                  router.push("/strategic-moves");
+                }}
+                type="button"
+              >
+                Save as draft
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -1163,7 +1321,11 @@ function P0OriginationRail({
                 } ${isDone ? styles.p0RailPhaseRowDone : ""}`}
               >
                 <span className={styles.p0RailPhaseBadge} aria-hidden>
-                  {isDone ? "✓" : row.phase === 0 ? "P0" : String(row.phase).padStart(2, "0")}
+                  {isDone
+                    ? "✓"
+                    : row.phase === 0
+                      ? "P0"
+                      : String(row.phase).padStart(2, "0")}
                 </span>
                 <span className={styles.p0RailPhaseLabel}>{row.label}</span>
                 <span className={styles.p0RailPhaseTally}>
@@ -1183,7 +1345,9 @@ function P0OriginationRail({
         <div className={styles.p0RailWorkspaceRows}>
           <button
             type="button"
-            className={activeTab === "files" ? styles.p0RailWorkspaceActive : ""}
+            className={
+              activeTab === "files" ? styles.p0RailWorkspaceActive : ""
+            }
             onClick={() => onTabChange("files")}
           >
             <span aria-hidden>□</span>
@@ -1225,6 +1389,9 @@ function P0OriginationContractCanvas({
   completionPercent,
   draftFields,
   requiredFilled,
+  requiredFieldCount,
+  scaffoldDefs,
+  stageGroups,
   setActiveP0Step,
   setBrief,
   setCanvasTab,
@@ -1238,7 +1405,7 @@ function P0OriginationContractCanvas({
   saveDraftField,
   cancelFlow,
 }: {
-  activeP0Def: (typeof SCAFFOLD_DEFS)[number] | null;
+  activeP0Def: ScaffoldDef | null;
   activeP0Step: P0StepId;
   brief: BriefState;
   canPromote: boolean;
@@ -1246,6 +1413,9 @@ function P0OriginationContractCanvas({
   completionPercent: number;
   draftFields: Record<ScaffoldFieldId, string>;
   requiredFilled: number;
+  requiredFieldCount: number;
+  scaffoldDefs: ScaffoldDef[];
+  stageGroups: Array<{ label: string; stepIds: P0StepId[] }>;
   setActiveP0Step: Dispatch<SetStateAction<P0StepId>>;
   setBrief: Dispatch<SetStateAction<BriefState>>;
   setCanvasTab: Dispatch<SetStateAction<P0WorkspaceTab>>;
@@ -1267,14 +1437,20 @@ function P0OriginationContractCanvas({
     : canPromote;
   const readinessFilled =
     brief.fields["foundation-readiness"].trim().length > 0;
-  const activeStepNumber = isApproveStep ? REQUIRED_FIELD_COUNT : activeP0Def?.step ?? 1;
+  const activeStepNumber = isApproveStep
+    ? requiredFieldCount
+    : (activeP0Def?.step ?? 1);
   const moveName = deriveStrategicMoveName(brief.programName, brief.fields);
 
   return (
     <article id="orig-canvas" className={styles.p0Workspace}>
       <div className={styles.p0Header}>
         <div className={styles.detailBreadcrumb}>
-          <button className={styles.detailCrumb} onClick={cancelFlow} type="button">
+          <button
+            className={styles.detailCrumb}
+            onClick={cancelFlow}
+            type="button"
+          >
             Moves
           </button>
           <span aria-hidden>&rsaquo;</span>
@@ -1297,7 +1473,7 @@ function P0OriginationContractCanvas({
           >
             <div className={styles.p0ProgressPillHead}>
               <span>
-                {requiredFilled} / {REQUIRED_FIELD_COUNT}
+                {requiredFilled} / {requiredFieldCount}
               </span>
               <small>steps ready</small>
             </div>
@@ -1329,7 +1505,11 @@ function P0OriginationContractCanvas({
             }`}
             onClick={() => setCanvasTab(tab)}
           >
-            {tab === "steps" ? "Steps" : tab === "files" ? "Files" : "✦ Intelligence"}
+            {tab === "steps"
+              ? "Steps"
+              : tab === "files"
+                ? "Files"
+                : "✦ Intelligence"}
           </button>
         ))}
       </div>
@@ -1338,7 +1518,7 @@ function P0OriginationContractCanvas({
         {canvasTab === "steps" ? (
           <section className={styles.p0ContractCard} aria-label="P0 steps">
             <aside className={styles.p0ContractNav} aria-label="P0 step list">
-              {P0_STAGE_GROUPS.map((group) => (
+              {stageGroups.map((group) => (
                 <div key={group.label} className={styles.p0ContractGroup}>
                   <div className={styles.p0ContractGroupLabel}>
                     {group.label}
@@ -1349,11 +1529,11 @@ function P0OriginationContractCanvas({
                     const def =
                       id === "approve-build"
                         ? null
-                        : SCAFFOLD_DEFS.find((item) => item.id === id);
+                        : scaffoldDefs.find((item) => item.id === id);
                     const label =
                       id === "approve-build"
                         ? "Approve and Build the Charter"
-                        : def?.label ?? id;
+                        : (def?.label ?? id);
                     return (
                       <button
                         key={id}
@@ -1380,7 +1560,7 @@ function P0OriginationContractCanvas({
               <div className={styles.p0ContractNavFoot}>
                 {canPromote
                   ? "All steps complete · approve in Approvals"
-                  : `${requiredFilled} of ${REQUIRED_FIELD_COUNT} complete · finish required steps`}
+                  : `${requiredFilled} of ${requiredFieldCount} complete · finish required steps`}
               </div>
             </aside>
 
@@ -1395,7 +1575,7 @@ function P0OriginationContractCanvas({
                   {activeFilled ? "✓" : ""}
                 </span>
                 <span className={styles.p0ContractStepMeta}>
-                  Step {activeStepNumber} of {REQUIRED_FIELD_COUNT}
+                  Step {activeStepNumber} of {requiredFieldCount}
                 </span>
                 <h2>
                   {isApproveStep
@@ -1417,6 +1597,7 @@ function P0OriginationContractCanvas({
                   canPromote={canPromote}
                   promote={promote}
                   requiredFilled={requiredFilled}
+                  requiredFieldCount={requiredFieldCount}
                   submitError={submitError}
                 />
               ) : activeP0Def ? (
@@ -1458,19 +1639,40 @@ function P0OriginationContractCanvas({
                       <small>Suggested: {suggestedName}</small>
                     </div>
                   ) : null}
-                  <textarea
-                    id={`orig-canvas-brief-section-${activeP0Def.step}-input`}
-                    className={styles.p0AnswerInput}
-                    value={activeDraft}
-                    placeholder={activeP0Def.placeholder}
-                    rows={activeP0Def.id === "evidence-family" ? 5 : 6}
-                    onChange={(e) =>
-                      setDraftFields((prev) => ({
-                        ...prev,
-                        [activeP0Def.id]: e.target.value,
-                      }))
-                    }
-                  />
+                  {activeP0Def.fieldType === "select" ? (
+                    <select
+                      id={`orig-canvas-brief-section-${activeP0Def.step}-input`}
+                      className={styles.p0AnswerInput}
+                      value={activeDraft}
+                      onChange={(e) =>
+                        setDraftFields((prev) => ({
+                          ...prev,
+                          [activeP0Def.id]: e.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Select…</option>
+                      {(activeP0Def.options ?? []).map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <textarea
+                      id={`orig-canvas-brief-section-${activeP0Def.step}-input`}
+                      className={styles.p0AnswerInput}
+                      value={activeDraft}
+                      placeholder={activeP0Def.placeholder}
+                      rows={activeP0Def.id === "evidence-family" ? 5 : 6}
+                      onChange={(e) =>
+                        setDraftFields((prev) => ({
+                          ...prev,
+                          [activeP0Def.id]: e.target.value,
+                        }))
+                      }
+                    />
+                  )}
                   <div className={styles.scaffoldActions}>
                     <button
                       type="button"
@@ -1505,7 +1707,7 @@ function P0OriginationContractCanvas({
                         className={styles.p0AnswerInput}
                         value={draftFields["foundation-readiness"]}
                         placeholder={
-                          SCAFFOLD_DEFS.find(
+                          scaffoldDefs.find(
                             (def) => def.id === "foundation-readiness",
                           )?.placeholder
                         }
@@ -1589,11 +1791,13 @@ function P0ApproveDetail({
   canPromote,
   promote,
   requiredFilled,
+  requiredFieldCount,
   submitError,
 }: {
   canPromote: boolean;
   promote: () => Promise<void>;
   requiredFilled: number;
+  requiredFieldCount: number;
   submitError: string | null;
 }) {
   return (
@@ -1620,7 +1824,7 @@ function P0ApproveDetail({
         <span>
           {canPromote
             ? "All steps complete — runs Approve and Build."
-            : `${requiredFilled} of ${REQUIRED_FIELD_COUNT} complete — finish the remaining P0 answers.`}
+            : `${requiredFilled} of ${requiredFieldCount} complete — finish the remaining P0 answers.`}
         </span>
       </div>
       {submitError ? (
