@@ -20,6 +20,11 @@ import { renderEvidenceForPrompt } from "./source-register";
 import type { GovernedEvidenceItem } from "./types";
 import { resolvePassTokenBudget } from "@/lib/ai/document-generation-policy";
 import { roadmapStructuredOutputInstruction } from "@/lib/deliverables/roadmap-structured-output";
+import {
+  renderStorySpinePrompt,
+  storySpineFor,
+} from "@/lib/deliverables/shared/executive-story-contract";
+import type { MovesDeliverableKey } from "@/lib/deliverables/profiles/types";
 
 const USE_CASE_TITLE: Record<string, string> = {
   AMS_IT_OUTSOURCING: "application management services and IT outsourcing",
@@ -206,11 +211,55 @@ function buildContextBlock(
     `EXPECTED TABLES: ${brief.expectedTables.map((t) => t.title).join("; ") || "(use judgment)"}`,
     ``,
     `QUALITY BAR: ${brief.qualityCriteria.join(" ")} Output must read like a board-grade consulting artifact, not an LLM draft. Strengthen synthesis, implications, and the decision ask.`,
+    storySpineInstruction(req),
     narrativeSpineInstruction(req),
     sizeDisciplineInstruction(req),
+    deterministicNumbersInstruction(req),
     ``,
     `FORMATTING: ${brief.formattingInstructions} Body ≈ ${req.formattingProfile.bodyPointSize}pt. ${req.formattingProfile.wideDataToExcelCompanion ? "Move wide datasets into an Excel companion exhibit rather than tiny in-document tables." : ""} Output formats: ${req.outputFormats.join(", ")}.`,
   ].join("\n");
+}
+
+/**
+ * The shared executive story spine for this artifact's phase — the ORDER the
+ * reader's questions get answered in. Empty for artifacts that are instruments
+ * rather than arguments (a charter, a measurement contract), which have a job
+ * but no narrative arc.
+ *
+ * Deliberately separate from `narrativeSpineInstruction`: that one states the
+ * qualities the argument must have (tension, options, gaps); this one states
+ * what the argument IS. The deck contract will project the same beats onto
+ * slides, which is how a document and its deck stay the same story.
+ */
+function storySpineInstruction(req: DeliverableIntelligenceRequest): string {
+  if (req.module !== "moves") return "";
+  const spine = storySpineFor(req.deliverableType as MovesDeliverableKey);
+  return spine ? `\n${renderStorySpinePrompt(spine)}` : "";
+}
+
+/**
+ * Numbers come from the deterministic engine, never from the model.
+ *
+ * Stated in the prompt as well as enforced downstream because a model that
+ * believes it may compute a total will produce one that looks authoritative,
+ * and a reader cannot tell the difference by looking.
+ */
+function deterministicNumbersInstruction(
+  req: DeliverableIntelligenceRequest,
+): string {
+  if (req.module !== "moves") return "";
+  const spine = storySpineFor(req.deliverableType as MovesDeliverableKey);
+  if (spine !== "p4_investment_case") return "";
+  return (
+    "\nNUMBERS ARE NOT YOURS TO COMPUTE: every cost, effort, value, payback, " +
+    "TCO, ROI and sensitivity figure in this artifact comes from the " +
+    "deterministic pricing and value model and is supplied to you as evidence. " +
+    "Do not calculate, derive, extrapolate, total, or adjust any figure — not " +
+    "even arithmetic on supplied numbers. Cite the supplied value and explain " +
+    "what it means, why it is what it is, and what would change it. If a figure " +
+    "you need was not supplied, say so plainly and name it as an open input; " +
+    "do not estimate it to complete the narrative."
+  );
 }
 
 /** The narrative-spine requirement: this document must argue a case, not fill sections. */
@@ -241,10 +290,15 @@ function sizeDisciplineInstruction(
 ): string {
   const qb = req.qualityBar;
   if (!qb.targetBodyWordsMax) return "";
+  // When the band counts prose only, say so — otherwise the model budgets its
+  // tables against a ceiling they do not consume, and under-exhibits to fit.
+  const unit = qb.excludeNonProseFromBody
+    ? "body words of PROSE (tables, exhibits and appendices do not count toward this, so use them freely)"
+    : "body words";
   if (qb.enforceMaxAsBlocker) {
-    return `\nSIZE DISCIPLINE: Target ${qb.minBodyWords.toLocaleString()}–${qb.targetBodyWordsMax.toLocaleString()} body words for this artifact type. This ceiling is a HARD QUALITY GATE, not a suggestion. If you need to include many facts, compress them into compact tables; do not add explanatory prose, appendices, methodology sections, or later-phase analysis. The final document should feel like a crisp sponsor decision memo.`;
+    return `\nSIZE DISCIPLINE: Target ${qb.minBodyWords.toLocaleString()}–${qb.targetBodyWordsMax.toLocaleString()} ${unit} for this artifact type. This ceiling is a HARD QUALITY GATE, not a suggestion. If you need to include many facts, compress them into compact tables; do not add explanatory prose, appendices, methodology sections, or later-phase analysis. The final document should feel like a crisp sponsor decision memo.`;
   }
-  return `\nSIZE DISCIPLINE: Target ${qb.minBodyWords.toLocaleString()}–${qb.targetBodyWordsMax.toLocaleString()} body words for this artifact type. Do not optimize for minimum length OR maximum length — optimize for decision usefulness, professional completeness, visual clarity, evidence traceability, and human usability. Use this range as a discipline boundary, not permission to omit necessary analysis below it or pad with filler, generic methodology prose, or unsupported detail above it. Every section must advance the decision, evidence, design, or approval this artifact exists to drive.`;
+  return `\nSIZE DISCIPLINE: Target ${qb.minBodyWords.toLocaleString()}–${qb.targetBodyWordsMax.toLocaleString()} ${unit} for this artifact type. Do not optimize for minimum length OR maximum length — optimize for decision usefulness, professional completeness, visual clarity, evidence traceability, and human usability. Use this range as a discipline boundary, not permission to omit necessary analysis below it or pad with filler, generic methodology prose, or unsupported detail above it. Every section must advance the decision, evidence, design, or approval this artifact exists to drive.`;
 }
 
 function conciseInstrumentDraftInstruction(
