@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -144,13 +144,40 @@ fixing forward.
   captured in this session's transcript.
 - Defect diagnosis with file:line citations recorded in the session task record.
 
+## Live Proof (verified on the deployed build)
+
+Merged in PR #6541 (`cc1b93ea9`); deployed via `main` at `3f99ca31f`.
+ACA runtime invariant verified: Container App template image and the
+100%-traffic revision image are the same digest
+(`acrabarvalab001.azurecr.io/abarva/web@sha256:144f2233e665...`), revision
+`ca-abarva-web-lab-eastus--m3f99ca31` `Healthy`/`Running`, site HTTP 200.
+
+Signed-in walkthrough on Move `5dff496f-f5fc-40f1-8d22-e784893e4ceb`
+(`AIRLINE-PREDICTIVE-2026`, SkyHarbor Global), whose authoritative P0 data was
+intact and deliberately reserved as the regression vehicle.
+
+| #   | Invariant                                            | Result                                                                                                                                |
+| --- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Origination persists all required P0 fields          | **PASS** — all 11 sections present, `complete: true`, `missing: []`                                                                   |
+| 2   | P0 page displays exactly those persisted values      | **PASS** — all 11 inputs render filled, including the three that previously read "Needs input"                                        |
+| 3   | Reload changes nothing                               | **PASS** — revision stable across reloads                                                                                             |
+| 4   | Approve & Build with no edits changes no P0 value    | **PASS** — revision `73f6f0a5a7dea9ea` **identical before and after**; zero boilerplate strings present in any field                  |
+| 6   | A stale revision cannot overwrite newer data         | **PASS** — `expectedRevision: "deadbeef..."` → **409 `stale_revision`**, no mutation                                                  |
+| 7   | Defaults can never serialize as authoritative values | **PASS** — POSTing a legacy boilerplate string → **422 `placeholder_value_rejected`**, `rejected: ["problem_statement"]`, no mutation |
+| —   | P0 gate advances normally                            | **PASS** — Originate 3/3, Move advanced to P1 Charter                                                                                 |
+
+After all three write attempts (no-edit approve, stale revision, placeholder),
+the capture revision was still `73f6f0a5a7dea9ea` and `scope_out` still began
+with the authentic submitted text. **The destructive P0 path is closed.**
+
+Invariant 5 (an explicit edit changes only the intended field) is proven by unit
+test but was deliberately NOT exercised live, to keep this Move's captured data
+pristine as the downstream P1-P4 proof vehicle.
+
 ## Known Gaps
 
-- **Invariants 1 and 2 are not yet proven live.** The pure primitives are
-  tested; the full chain (origination submit → persisted → page render →
-  Approve & Build → unchanged) needs the signed-in walkthrough on Move
-  `5dff496f-f5fc-40f1-8d22-e784893e4ceb`, whose authoritative data is intact and
-  which is reserved as the regression vehicle.
+- **Invariant 5 is unit-tested but not live-exercised**, deliberately — making a
+  real edit would dirty the Move reserved for the downstream P1-P4 proof.
 - **Blast radius is not yet measured.** Any Move where someone already clicked
   P0 Approve & Build may carry boilerplate in `program_modules` and in
   `engagements.charter` top-level fields. `charter.scaffold` survives (it is not
