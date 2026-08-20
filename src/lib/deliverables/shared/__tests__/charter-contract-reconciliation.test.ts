@@ -41,7 +41,7 @@ describe("Charter contract reconciliation — real runtime output, both pipeline
 
   it("orchestrator's actual resolved quality bar states the canonical word numbers", () => {
     const qb = resolveQualityBar("moves", "charter");
-    expect(qb.minBodyWords).toBe(CHARTER_CONTRACT.wordBudget.minWords);
+    expect(qb.minBodyWords).toBe(CHARTER_CONTRACT.wordBudget.minProseWords);
     expect(qb.targetBodyWordsMax).toBe(
       CHARTER_CONTRACT.wordBudget.hardMaxWords,
     );

@@ -16,9 +16,9 @@ describe("resolveQualityBar", () => {
     // own first-class section) — see shared/artifact-contracts.ts.
     expect(qb.minSections).toBe(9);
     // Aligned to the shared contract (src/lib/deliverables/shared/
-    // artifact-contracts.ts) — reconciled 2026-07-25 to equal the target
-    // range's own minimum, not a looser historical value.
-    expect(qb.minBodyWords).toBe(900);
+    // artifact-contracts.ts): prose-only counting uses the Charter's explicit
+    // prose floor while required tables carry structured decision content.
+    expect(qb.minBodyWords).toBe(700);
     expect(qb.targetBodyWordsMax!).toBe(1_300);
   });
 

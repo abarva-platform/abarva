@@ -71,7 +71,9 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // golden-bar pipeline's copy again — see docs/architecture/
     // MOVES_DUAL_PIPELINE_AUDIT.md.
     minSections: CHARTER_CONTRACT.sections.length,
-    minBodyWords: CHARTER_CONTRACT.wordBudget.minWords,
+    minBodyWords:
+      CHARTER_CONTRACT.wordBudget.minProseWords ??
+      CHARTER_CONTRACT.wordBudget.minWords,
     targetBodyWordsMax: CHARTER_CONTRACT.wordBudget.hardMaxWords,
     // 2026-07-25: two independent live generations landed 170-200 words past
     // hardMaxWords with strong quality — block only past the true ceiling and
