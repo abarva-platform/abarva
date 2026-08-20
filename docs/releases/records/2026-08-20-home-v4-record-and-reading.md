@@ -337,3 +337,26 @@ Worth naming the general lesson. Canvas utilisation and line length pull in oppo
 filling the width improves one and destroys the other. Optimising the metric that was complained
 about, without measuring its opposite, is how a page ends up using all of its space and being
 harder to read than before.
+
+
+## Fifth addendum — the record browser was never rebuilt
+
+The v4 shell was wired to the previous `TechnologyEstateTable` and left there. The design has a
+record-browser page; its spec was read during the audit and then not implemented. Every other
+surface moved to v4 while the page holding 301, 72, 65 and 520 rows kept the old chrome.
+
+`RecordBrowser` implements it: a computed stat strip, seven columns on a fixed layout with mono
+uppercase headers, lifecycle as the one coloured column because it is the one recorded value that
+carries consequence, right-aligned tabular figures, and the two lowest-priority columns dropping at
+1320px with the cue beneath the table switching with them so it can never describe the wrong state.
+
+The part worth keeping is what the column does *not* show. `annualCostUsd` holds **3 distinct
+values across 301 records** -- a data defect identified earlier in this workstream and never
+surfaced anywhere a reader would see it. The cell reads `not usable`, with a sidebar note
+explaining that totals are fine and ranking systems by cost is not. The rule is computed from
+cardinality rather than hardcoded to that column, so a field that improves starts showing values on
+its own, and any other field that degrades gets caught the same way.
+
+Search is kept working rather than reproduced as the design's `NOT IN DRAFT` placeholder --
+removing functioning behaviour to match a mockup's stub would be following the design past the
+point where it is describing intent.
