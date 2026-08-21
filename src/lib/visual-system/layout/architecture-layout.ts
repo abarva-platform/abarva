@@ -172,7 +172,7 @@ export function layoutArchitectureView(
     const laneH = rows * nodeH + (rows - 1) * NODE_GAP_Y;
     laidOutLanes.push({
       layer: lane,
-      label: LAYER_LABELS[lane] ?? lane,
+      label: view.laneLabels?.[lane] ?? LAYER_LABELS[lane] ?? lane,
       y: laneTop,
       height: LANE_LABEL_H + laneH,
       nodeCount: inLane.length,

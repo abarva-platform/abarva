@@ -318,6 +318,15 @@ export interface ArchitectureView {
   boundaries: ArchitectureViewBoundary[];
   overlays: ArchitectureViewOverlay[];
   evidenceCoverage: EvidenceCoverage;
+  /**
+   * Per-view lane labels, overriding `LAYER_LABELS` for this view only.
+   *
+   * The global labels name architecture tiers, which is right for a landscape and wrong for a view
+   * whose lanes are zones. A zone lane holding SSIS and Informatica is "Data integration", not
+   * "Integration" -- and a view that cannot label its own lanes truthfully ends up asserting a
+   * taxonomy it does not have.
+   */
+  laneLabels?: Record<string, string>;
   limitations: string[];
 }
 
