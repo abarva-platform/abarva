@@ -434,12 +434,13 @@ async function main(): Promise<number> {
           where n.nspname = 'tower' and c.contype = 'c'
             and t.relname in ('tracked_subject','metric_observation','value_claim')`,
       );
-      const allowed = (column: string): Set<string> | null => {
-        const def = checks.rows.find((r) => r.def.includes(column))?.def;
+      const allowedFromChecks = (rows: { def: string }[], column: string): Set<string> | null => {
+        const def = rows.find((r) => r.def.includes(column))?.def;
         if (!def) return null;
         const values = [...def.matchAll(/'([^']+)'::text/g)].map((m) => m[1]);
         return values.length ? new Set(values) : null;
       };
+      const allowed = (column: string): Set<string> | null => allowedFromChecks(checks.rows, column);
       // Foreign keys too. A NOT NULL column that is also a reference cannot be satisfied by any
       // generated value, and finding that out at insert time costs another cycle.
       const foreignKeys = await client.query<{ table_name: string; def: string }>(
@@ -504,6 +505,16 @@ async function main(): Promise<number> {
             where table_schema = split_part($1,'.',1) and table_name = split_part($1,'.',2)`,
           [refTable.includes(".") ? refTable : `tower.${refTable}`],
         );
+        const metricChecks = await client.query<{ conname: string; def: string }>(
+          `select c.conname, pg_get_constraintdef(c.oid) as def
+             from pg_constraint c
+             join pg_class t on t.oid = c.conrelid
+             join pg_namespace n on n.oid = t.relnamespace
+            where n.nspname = split_part($1,'.',1)
+              and t.relname = split_part($1,'.',2)
+              and c.contype = 'c'`,
+          [refTable.includes(".") ? refTable : `tower.${refTable}`],
+        );
         const mandatory = cols.rows
           .filter((c) => c.is_nullable === "NO" && c.column_default === null)
           .map((c) => c.column_name);
@@ -522,18 +533,30 @@ async function main(): Promise<number> {
           columnInfo: { data_type: string; udt_name: string } | undefined,
         ): unknown => {
           const normalized = columnName.toLowerCase();
+          const constrained = allowedFromChecks(metricChecks.rows, columnName);
+          const checked = (preferred: string, alternatives: string[] = []): string => {
+            if (!constrained) return preferred;
+            for (const candidate of [preferred, ...alternatives]) {
+              if (constrained.has(candidate)) return candidate;
+            }
+            return [...constrained].sort()[0] ?? preferred;
+          };
+
           if (columnName === refColumn) return ref;
           if (normalized === "tenant_key") return TENANTS[0];
-          if (normalized === "domain") return "canonical_projection";
+          if (normalized === "domain") return checked("canonical_projection", ["outcome", "tower", "value"]);
           if (["label", "metric_name", "metric_label", "title", "name"].includes(normalized)) return ref;
           if (normalized === "description") return `Canonical projection metric ${ref}`;
-          if (["unit", "metric_unit"].includes(normalized)) return "count";
-          if (normalized === "direction") return "increase";
-          if (normalized === "owner_role") return "canonical-projection";
+          if (["unit", "metric_unit"].includes(normalized)) return checked("count", ["usd", "percent"]);
+          if (normalized === "direction") return checked("increase", ["decrease", "neutral"]);
+          if (normalized === "owner_role") return checked("canonical-projection", ["operator", "tower"]);
+          if (normalized === "aggregation_rule") {
+            return checked("non_additive", ["sum", "average", "weighted_average", "ratio", "ending_balance"]);
+          }
           if (
             ["category", "metric_category", "type", "value_type", "value_kind", "source_system",
               "evidence_basis", "status"].includes(normalized)
-          ) return "canonical_projection";
+          ) return checked("canonical_projection", ["number", "count", "active", "derived", "tower"]);
           if (["active", "enabled", "is_active"].includes(normalized)) return true;
 
           const dataType = columnInfo?.data_type.toLowerCase() ?? "";
@@ -547,7 +570,7 @@ async function main(): Promise<number> {
           if (dataType.includes("timestamp") || udtName.startsWith("timestamp")) return "1970-01-01T00:00:00.000Z";
           if (dataType === "json" || dataType === "jsonb" || udtName === "json" || udtName === "jsonb") return {};
           if (dataType === "array") return [];
-          return "canonical_projection";
+          return checked("canonical_projection");
         };
         if (insertCols.includes(refColumn)) {
           for (const [ref] of names) {

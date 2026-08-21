@@ -10,7 +10,7 @@ Candidate
 
 ## Plain-English Summary
 
-This release fixes two operator-refresh defects found during the lab refresh run. Proof summaries now embed the ACA operator commit/digest metadata even when the container image does not include `.git`, and the Tower evidence projector now supplies live-schema mandatory metric-definition fields when it seeds metric dimension rows.
+This release fixes operator-refresh defects found during the lab refresh run. Proof summaries now embed the ACA operator commit/digest metadata even when the container image does not include `.git`, and the Tower evidence projector now supplies live-schema mandatory metric-definition fields when it seeds metric dimension rows, including check-constrained enum values.
 
 ## Release Lane
 
@@ -38,11 +38,12 @@ Release lane: `client-data-lane`.
 - Runtime-layer, runtime-readback, Source L4, Home landscape, and Tower evidence summaries prefer `ABARVA_OPERATOR_BRANCH_COMMIT` when `.git` is absent.
 - Home and Tower summaries include `ABARVA_OPERATOR_IMAGE_DIGEST` when the ACA job wrapper supplies it.
 - Tower evidence refresh supplies all live-schema mandatory generated metric-definition fields with deterministic type-aware values, including the metric key, tenant key, domain, label/name/title, description, unit, direction, status/category-style fields, booleans, numerics, dates, timestamps, JSON and arrays.
+- Tower evidence refresh reads live check constraints from the referenced metric-definition table and picks permitted enum values, including `aggregation_rule`, instead of falling back to unconstrained placeholder strings.
 
 ## QA / Validation
 
 - pass: `npx eslint scripts/data-build/refresh-runtime-layers.ts scripts/data-build/verify-runtime-layer-refresh-readback.ts scripts/data-build/refresh-source-l4-cube.ts scripts/data-build/refresh-home-landscape.ts scripts/data-build/refresh-tower-value-evidence.ts`
-- pass: `ABARVA_OPERATOR_BRANCH_COMMIT=test-sha ABARVA_OPERATOR_IMAGE_DIGEST=sha256:test TOWER_EVIDENCE_BUILD_VERSION=tower-mandatory-patch-dry npx tsx scripts/data-build/refresh-tower-value-evidence.ts --out-dir /tmp/nexus-tower-evidence-mandatory-patch-dry`
+- pass: `ABARVA_OPERATOR_BRANCH_COMMIT=test-sha ABARVA_OPERATOR_IMAGE_DIGEST=sha256:test TOWER_EVIDENCE_BUILD_VERSION=tower-constraint-patch-dry npx tsx scripts/data-build/refresh-tower-value-evidence.ts --out-dir /tmp/nexus-tower-evidence-constraint-patch-dry`
 - pass: `HOME_LANDSCAPE_BUILD_VERSION=home-patch-dry HOME_LANDSCAPE_INPUT_SOURCE_VERSION=test-input npx tsx scripts/data-build/refresh-home-landscape.ts --out-dir /tmp/nexus-home-landscape-patch-dry`
 - pending: post-merge ACA deploy and governed Tower evidence operator rerun.
 
@@ -60,7 +61,7 @@ Revert this PR and redeploy through the repo-owned ACA main workflow. If Tower e
 
 ## Audit Evidence
 
-- Prior operator attempt failed before commit on a live metric-dimension mandatory-column requirement; the ACA runner restored to idle.
+- Prior operator attempts failed before commit on live metric-dimension mandatory-column and check-constraint requirements; the ACA runner restored to idle.
 - Local dry-run summaries confirm the metadata fields populate from operator environment variables.
 - Follow-up proof is expected from the post-deploy Tower evidence operator rerun.
 
