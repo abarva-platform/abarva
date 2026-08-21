@@ -88,20 +88,34 @@ export type DataMovementMechanism =
  */
 export type ArchitectureZone =
   | "source_systems"
-  | "middleware"
-  | "data_integration"
-  | "data_warehouse"
-  | "data_mart"
+  | "healthcare_interoperability"
+  | "api_ipaas_esb"
+  | "event_streaming"
+  | "b2b_edi"
+  | "file_transfer"
+  | "etl_tooling"
+  | "pipeline_artifacts"
+  | "operational_reporting_db"
+  | "enterprise_warehouse"
+  | "database_platform"
+  | "data_marts"
   | "analytics_bi"
   | "governance"
   | "unzoned";
 
 export const ZONE_LABEL: Readonly<Record<ArchitectureZone, string>> = {
   source_systems: "Source systems",
-  middleware: "Middleware",
-  data_integration: "Data integration",
-  data_warehouse: "Data warehouse",
-  data_mart: "Data marts",
+  healthcare_interoperability: "Healthcare interoperability",
+  api_ipaas_esb: "API / iPaaS / ESB",
+  event_streaming: "Event streaming",
+  b2b_edi: "B2B / EDI",
+  file_transfer: "Managed file transfer",
+  etl_tooling: "ETL / ELT tooling",
+  pipeline_artifacts: "Pipelines & jobs",
+  operational_reporting_db: "Operational reporting databases",
+  enterprise_warehouse: "Enterprise data warehouses",
+  database_platform: "Database platforms",
+  data_marts: "Data marts & products",
   analytics_bi: "Analytics & BI",
   governance: "Governance & quality",
   unzoned: "Unzoned — to validate",
@@ -109,14 +123,74 @@ export const ZONE_LABEL: Readonly<Record<ArchitectureZone, string>> = {
 
 export const ZONE_ORDER: ReadonlyArray<ArchitectureZone> = [
   "source_systems",
-  "middleware",
-  "data_integration",
-  "data_warehouse",
-  "data_mart",
+  "healthcare_interoperability",
+  "api_ipaas_esb",
+  "event_streaming",
+  "b2b_edi",
+  "file_transfer",
+  "etl_tooling",
+  "pipeline_artifacts",
+  "operational_reporting_db",
+  "enterprise_warehouse",
+  "database_platform",
+  "data_marts",
   "analytics_bi",
   "governance",
   "unzoned",
 ];
+
+/**
+ * Executive bands group zones for the landscape view. Zones stay granular underneath -- an
+ * executive sees five bands, an architect drills to the zone that actually distinguishes Rhapsody
+ * from Kafka. Same model, two altitudes; the band never becomes the classification.
+ */
+export type ExecutiveBand =
+  | "business_operational"
+  | "interoperability_movement"
+  | "data_platforms_stores"
+  | "data_products_marts"
+  | "analytics_consumption"
+  | "unzoned";
+
+export const BAND_LABEL: Readonly<Record<ExecutiveBand, string>> = {
+  business_operational: "Business & operational systems",
+  interoperability_movement: "Interoperability & data movement",
+  data_platforms_stores: "Data platforms & stores",
+  data_products_marts: "Data products & marts",
+  analytics_consumption: "Analytics & consumption",
+  unzoned: "Unclassified — to validate",
+};
+
+export const BAND_ORDER: ReadonlyArray<ExecutiveBand> = [
+  "business_operational",
+  "interoperability_movement",
+  "data_platforms_stores",
+  "data_products_marts",
+  "analytics_consumption",
+  "unzoned",
+];
+
+const BAND_FOR_ZONE: Readonly<Record<ArchitectureZone, ExecutiveBand>> = {
+  source_systems: "business_operational",
+  healthcare_interoperability: "interoperability_movement",
+  api_ipaas_esb: "interoperability_movement",
+  event_streaming: "interoperability_movement",
+  b2b_edi: "interoperability_movement",
+  file_transfer: "interoperability_movement",
+  etl_tooling: "interoperability_movement",
+  pipeline_artifacts: "interoperability_movement",
+  operational_reporting_db: "data_platforms_stores",
+  enterprise_warehouse: "data_platforms_stores",
+  database_platform: "data_platforms_stores",
+  data_marts: "data_products_marts",
+  analytics_bi: "analytics_consumption",
+  governance: "data_platforms_stores",
+  unzoned: "unzoned",
+};
+
+export function bandFor(zone: ArchitectureZone): ExecutiveBand {
+  return BAND_FOR_ZONE[zone] ?? "unzoned";
+}
 
 export type ClassificationSource =
   | "explicit_source_field"
@@ -325,8 +399,10 @@ const PRODUCT_ALIASES: ReadonlyArray<readonly [string, TechnologySemanticType]> 
   ["ibm netezza", "enterprise_data_warehouse"],
   ["ibm netezza enterprise data warehouse", "enterprise_data_warehouse"],
   ["ibm puredata system for analytics", "enterprise_data_warehouse"],
-  ["exadata", "enterprise_data_warehouse"],
-  ["oracle exadata", "enterprise_data_warehouse"],
+  // Exadata is a database platform/appliance. Warehouses are sometimes hosted on it; that does
+  // not make the appliance a warehouse. Product identity does not establish architectural role.
+  ["exadata", "database_platform"],
+  ["oracle exadata", "database_platform"],
   ["greenplum", "enterprise_data_warehouse"],
   ["vertica", "enterprise_data_warehouse"],
   ["amazon redshift", "enterprise_data_warehouse"],
@@ -692,25 +768,28 @@ const ZONE_FOR_TYPE: Readonly<Record<TechnologySemanticType, ArchitectureZone>> 
   core_transaction_system: "source_systems",
   consuming_application: "source_systems",
 
-  // Middleware moves messages and calls between systems.
-  api_esb_platform: "middleware",
-  event_streaming_platform: "middleware",
-  integration_engine: "middleware",
-  b2b_edi_gateway: "middleware",
+  // Each interoperability role keeps its own zone. An interface engine, an API gateway, an event
+  // backbone and an EDI gateway are not interchangeable, and a band that shows them as one type
+  // tells an architect nothing.
+  integration_engine: "healthcare_interoperability",
+  api_esb_platform: "api_ipaas_esb",
+  event_streaming_platform: "event_streaming",
+  b2b_edi_gateway: "b2b_edi",
+  file_transfer_platform: "file_transfer",
 
-  // Data integration moves and reshapes data sets. Informatica, SSIS, DataStage, stored
-  // procedures. Not the same discipline, not the same tools, not the same zone.
-  etl_elt_platform: "data_integration",
-  etl_pipeline_artifact: "data_integration",
-  file_transfer_platform: "data_integration",
+  etl_elt_platform: "etl_tooling",
+  etl_pipeline_artifact: "pipeline_artifacts",
 
-  enterprise_data_warehouse: "data_warehouse",
-  lakehouse: "data_warehouse",
-  data_lake: "data_warehouse",
+  enterprise_data_warehouse: "enterprise_warehouse",
+  lakehouse: "enterprise_warehouse",
+  data_lake: "enterprise_warehouse",
 
-  data_mart: "data_mart",
-  operational_reporting_database: "data_mart",
-  database_platform: "data_mart",
+  // Epic Clarity is Epic's OPERATIONAL REPORTING DATABASE. It is not a mart, and grouping it with
+  // marts was wrong: a mart is a downstream product, Clarity is the reporting store the products
+  // are built from.
+  operational_reporting_database: "operational_reporting_db",
+  database_platform: "database_platform",
+  data_mart: "data_marts",
 
   analytics_bi_platform: "analytics_bi",
   bi_extract: "analytics_bi",

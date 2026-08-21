@@ -114,7 +114,7 @@ describe("movement mechanisms stay separate from platforms", () => {
   });
 });
 
-import { classifyApplication, zoneFor } from "../../src/lib/visual-system/semantics/technology-semantic-taxonomy";
+import { classifyApplication, zoneFor, bandFor } from "../../src/lib/visual-system/semantics/technology-semantic-taxonomy";
 
 describe("zone assignment — the durable output", () => {
   /** The zone is what any surface consumes: a lane diagram, a table, an aVa answer. Get the zone
@@ -124,37 +124,65 @@ describe("zone assignment — the durable output", () => {
     ["SAP S/4HANA — Finance (FI)", "ERP Core", "source_systems"],
     ["PeopleSoft GL", "", "source_systems"],
     ["Epic Resolute Hospital Billing — Production", "", "source_systems"],
-    ["API Gateway / iPaaS (MuleSoft)", "", "middleware"],
-    ["Confluent Kafka Event Backbone", "", "middleware"],
-    ["Rhapsody Integration Engine", "", "middleware"],
-    ["Informatica PowerCenter ETL", "Data & Analytics Platform", "data_integration"],
-    ["IBM DataStage", "", "data_integration"],
-    ["SSIS package (on-prem)", "", "data_integration"],
-    ["IBM Netezza Enterprise Data Warehouse", "Enterprise data warehouse (MPP appliance)", "data_warehouse"],
-    ["Teradata Enterprise Warehouse — Crew & Ops Subject Area", "", "data_warehouse"],
-    ["Oracle Exadata", "", "data_warehouse"],
-    ["Epic Caboodle", "", "data_warehouse"],
-    ["Revenue Cycle Mart (SQL Server On-Prem)", "SQL Server database/mart", "data_mart"],
-    ["Epic Clarity (SQL Server)", "", "data_mart"],
+    // Each interoperability role keeps its own zone -- they are not interchangeable.
+    ["API Gateway / iPaaS (MuleSoft)", "", "api_ipaas_esb"],
+    ["Confluent Kafka Event Backbone", "", "event_streaming"],
+    ["Rhapsody Integration Engine", "", "healthcare_interoperability"],
+    ["EDI / B2B Trading Partner Gateway", "", "b2b_edi"],
+    ["Informatica PowerCenter ETL", "Data & Analytics Platform", "etl_tooling"],
+    ["IBM DataStage", "", "etl_tooling"],
+    ["SSIS package (on-prem)", "", "etl_tooling"],
+    ["Claims ETL (SQL Server On-Prem)", "SSIS ETL package", "pipeline_artifacts"],
+    ["IBM Netezza Enterprise Data Warehouse", "Enterprise data warehouse (MPP appliance)", "enterprise_warehouse"],
+    ["Teradata Enterprise Warehouse — Crew & Ops Subject Area", "", "enterprise_warehouse"],
+    ["Epic Caboodle", "", "enterprise_warehouse"],
+    // Exadata is a database platform. Warehouses are sometimes hosted on it; that does not make
+    // the appliance a warehouse.
+    ["Oracle Exadata", "", "database_platform"],
+    ["SQL Server (on-prem)", "", "database_platform"],
+    ["Revenue Cycle Mart (SQL Server On-Prem)", "SQL Server database/mart", "data_marts"],
+    // Epic Clarity is an operational reporting database, NOT a mart. A mart is a downstream
+    // product; Clarity is the reporting store products are built from.
+    ["Epic Clarity (SQL Server)", "", "operational_reporting_db"],
     ["HR/Workforce Cube (SQL Server On-Prem)", "SSAS OLAP cube", "analytics_bi"],
     ["Tableau Server", "", "analytics_bi"],
   ])("%s sits in %s", (name, category, zone) => {
     expect(zoneFor(classifyApplication({ systemName: name, systemCategory: category }).semanticType)).toBe(zone);
   });
 
-  it("keeps middleware and data integration in different zones", () => {
-    const mule = zoneFor(classifyApplication({ systemName: "API Gateway / iPaaS (MuleSoft)" }).semanticType);
-    const informatica = zoneFor(classifyApplication({ systemName: "Informatica PowerCenter ETL" }).semanticType);
-    expect(mule).toBe("middleware");
-    expect(informatica).toBe("data_integration");
-    expect(mule).not.toBe(informatica);
+  it("keeps the four interoperability roles in four different zones", () => {
+    const z = (n: string) => zoneFor(classifyApplication({ systemName: n }).semanticType);
+    const roles = [
+      z("Rhapsody Integration Engine"),
+      z("API Gateway / iPaaS (MuleSoft)"),
+      z("Confluent Kafka Event Backbone"),
+      z("EDI / B2B Trading Partner Gateway"),
+      z("Informatica PowerCenter ETL"),
+    ];
+    expect(new Set(roles).size).toBe(5);
   });
 
-  it("keeps warehouses and marts in different zones", () => {
-    const wh = zoneFor(classifyApplication({ systemName: "IBM Netezza Enterprise Data Warehouse" }).semanticType);
-    const mart = zoneFor(classifyApplication({ systemName: "Revenue Cycle Mart (SQL Server On-Prem)", systemCategory: "SQL Server database/mart" }).semanticType);
-    expect(wh).toBe("data_warehouse");
-    expect(mart).toBe("data_mart");
+  it("groups those distinct zones into one executive band without losing them", () => {
+    // An executive sees one movement band; an architect drills to the zone that distinguishes
+    // Rhapsody from Kafka. Same model, two altitudes.
+    const b = (n: string, c = "") => bandFor(zoneFor(classifyApplication({ systemName: n, systemCategory: c }).semanticType));
+    expect(b("Rhapsody Integration Engine")).toBe("interoperability_movement");
+    expect(b("Confluent Kafka Event Backbone")).toBe("interoperability_movement");
+    expect(b("SSIS package (on-prem)")).toBe("interoperability_movement");
+    expect(b("Epic Caboodle")).toBe("data_platforms_stores");
+    // Passed with its recorded category, as the real record carries it. Without a category the
+    // name alone does not classify it, and that is correct -- inferring "mart" from the string
+    // would be exactly the substring guessing this taxonomy forbids.
+    expect(b("Revenue Cycle Mart (SQL Server On-Prem)", "SQL Server database/mart")).toBe("data_products_marts");
+  });
+
+  it("keeps warehouses, reporting databases, database platforms and marts apart", () => {
+    const z = (n: string, c = "") => zoneFor(classifyApplication({ systemName: n, systemCategory: c }).semanticType);
+    expect(z("IBM Netezza Enterprise Data Warehouse")).toBe("enterprise_warehouse");
+    expect(z("Epic Clarity (SQL Server)")).toBe("operational_reporting_db");
+    expect(z("SQL Server (on-prem)")).toBe("database_platform");
+    expect(z("Revenue Cycle Mart (SQL Server On-Prem)", "SQL Server database/mart")).toBe("data_marts");
+    expect(new Set([z("IBM Netezza Enterprise Data Warehouse"), z("Epic Clarity (SQL Server)"), z("SQL Server (on-prem)"), z("Revenue Cycle Mart (SQL Server On-Prem)", "SQL Server database/mart")]).size).toBe(4);
   });
 
   it("does not let a prefix match cross a product boundary", () => {
@@ -232,7 +260,7 @@ describe("entity vs host — the two must not flatten into one", () => {
     // only ever as a host sent a reviewed product to unknown because of how the record phrased it.
     const r = resolveTechnologySemantics({ systemName: "API Gateway / iPaaS (MuleSoft)" });
     expect(r.entityType).toBe("api_esb_platform");
-    expect(zoneFor(r.entityType)).toBe("middleware");
+    expect(zoneFor(r.entityType)).toBe("api_ipaas_esb");
   });
 
   it("still treats the parenthetical as a HOST when the head is a known product", () => {
@@ -245,9 +273,9 @@ describe("entity vs host — the two must not flatten into one", () => {
 
   it("keeps both the tool and its jobs in the data integration zone", () => {
     // A job is not a platform, but it must not disappear from the picture either.
-    expect(zoneFor(resolveTechnologySemantics({ systemName: "SSIS package (on-prem)" }).entityType)).toBe("data_integration");
+    expect(zoneFor(resolveTechnologySemantics({ systemName: "SSIS package (on-prem)" }).entityType)).toBe("etl_tooling");
     expect(
       zoneFor(resolveTechnologySemantics({ systemName: "Claims ETL (SQL Server On-Prem)", systemCategory: "SSIS ETL package" }).entityType),
-    ).toBe("data_integration");
+    ).toBe("pipeline_artifacts");
   });
 });
