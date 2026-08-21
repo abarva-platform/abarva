@@ -20,6 +20,16 @@ export interface PhaseNavigationStatus {
   blockedRequest: PhaseNavigationBlocker | null;
 }
 
+export interface StageReadinessReviewGateStatus {
+  acceptedCount: number;
+  pendingCount: number;
+  needsValidationCount: number;
+  rejectedCount: number;
+  ready: number;
+  insufficientEvidence: number;
+  unknown: number;
+}
+
 export function parseRequestedPhase(value: unknown): number | null {
   const raw = Array.isArray(value) ? value[0] : value;
   if (typeof raw !== "string" || raw.trim() === "") return null;
@@ -31,14 +41,19 @@ export function buildPhaseNavigationStatus(input: {
   currentPhase: number;
   requestedPhase: number;
   blockedPhase?: number | null;
+  p1ToP2WorkbookReview?: StageReadinessReviewGateStatus | null;
 }): PhaseNavigationStatus {
   const currentPhase = clampPhase(input.currentPhase);
   const requestedPhase = clampPhase(input.requestedPhase);
+  const p1ToP2Open =
+    currentPhase === 1 &&
+    requestedPhase === 2 &&
+    workbookReviewOpensP2(input.p1ToP2WorkbookReview);
   const blockedPhase =
     input.blockedPhase === null || input.blockedPhase === undefined
       ? null
       : clampPhase(input.blockedPhase);
-  const canOpenRequestedPhase = requestedPhase <= currentPhase;
+  const canOpenRequestedPhase = requestedPhase <= currentPhase || p1ToP2Open;
   const blockedRequestPhase =
     !canOpenRequestedPhase && requestedPhase > currentPhase
       ? requestedPhase
@@ -53,8 +68,23 @@ export function buildPhaseNavigationStatus(input: {
     blockedRequest:
       blockedRequestPhase === null
         ? null
-        : buildBlocker(currentPhase, blockedRequestPhase),
+        : buildBlocker(
+            currentPhase,
+            blockedRequestPhase,
+            input.p1ToP2WorkbookReview ?? null,
+          ),
   };
+}
+
+function workbookReviewOpensP2(
+  review: StageReadinessReviewGateStatus | null | undefined,
+): boolean {
+  return Boolean(
+    review &&
+    review.acceptedCount > 0 &&
+    review.pendingCount === 0 &&
+    review.needsValidationCount === 0,
+  );
 }
 
 function clampPhase(value: number): number {
@@ -65,8 +95,21 @@ function clampPhase(value: number): number {
 function buildBlocker(
   currentPhase: number,
   requestedPhase: number,
+  p1ToP2WorkbookReview: StageReadinessReviewGateStatus | null,
 ): PhaseNavigationBlocker {
   if (requestedPhase === 2 && currentPhase === 1) {
+    const reviewed =
+      p1ToP2WorkbookReview &&
+      p1ToP2WorkbookReview.pendingCount === 0 &&
+      p1ToP2WorkbookReview.needsValidationCount === 0;
+    const accepted = p1ToP2WorkbookReview?.acceptedCount ?? 0;
+    const readinessParts = p1ToP2WorkbookReview
+      ? [
+          `${p1ToP2WorkbookReview.ready} ready`,
+          `${p1ToP2WorkbookReview.insufficientEvidence} insufficient evidence`,
+          `${p1ToP2WorkbookReview.unknown} unknown`,
+        ].join(" · ")
+      : "No accepted review artifact found";
     return {
       requestedPhase,
       currentPhase,
@@ -76,12 +119,15 @@ function buildBlocker(
       remaining: [
         {
           label: "Completed Discovery Workbook reviewed",
-          status: "Required before P2 opens",
+          status: reviewed ? "Reviewed" : "Required before P2 opens",
           required: true,
         },
         {
           label: "Accepted structured responses recorded",
-          status: "Required before P2 context",
+          status:
+            accepted > 0
+              ? `${accepted} accepted · ${readinessParts}`
+              : "Required before P2 context",
           required: true,
         },
         {

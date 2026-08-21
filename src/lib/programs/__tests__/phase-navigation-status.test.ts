@@ -45,6 +45,51 @@ describe("phase-navigation-status", () => {
     );
   });
 
+  it("opens P2 when the workbook review artifact has accepted responses and no pending decisions", () => {
+    const status = buildPhaseNavigationStatus({
+      currentPhase: 1,
+      requestedPhase: 2,
+      p1ToP2WorkbookReview: {
+        acceptedCount: 5,
+        pendingCount: 0,
+        rejectedCount: 0,
+        needsValidationCount: 0,
+        ready: 3,
+        insufficientEvidence: 1,
+        unknown: 1,
+      },
+    });
+
+    expect(status.canOpenRequestedPhase).toBe(true);
+    expect(status.blockedRequest).toBeNull();
+  });
+
+  it("keeps P2 blocked when accepted responses still need validation", () => {
+    const status = buildPhaseNavigationStatus({
+      currentPhase: 1,
+      requestedPhase: 2,
+      p1ToP2WorkbookReview: {
+        acceptedCount: 4,
+        pendingCount: 0,
+        rejectedCount: 0,
+        needsValidationCount: 1,
+        ready: 3,
+        insufficientEvidence: 1,
+        unknown: 0,
+      },
+    });
+
+    expect(status.canOpenRequestedPhase).toBe(false);
+    expect(status.blockedRequest?.remaining).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Accepted structured responses recorded",
+          status: "4 accepted · 3 ready · 1 insufficient evidence · 0 unknown",
+        }),
+      ]),
+    );
+  });
+
   it("reconstructs a redirected blocker from the current phase URL", () => {
     const status = buildPhaseNavigationStatus({
       currentPhase: 1,

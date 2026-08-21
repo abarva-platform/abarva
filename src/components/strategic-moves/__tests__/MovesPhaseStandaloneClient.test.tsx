@@ -382,11 +382,65 @@ describe("MovesPhaseStandaloneClient", () => {
                 errorCount: 0,
               },
               proposalSet: {
+                artifactId: "proposal-artifact-1",
+                artifactVersion: 2,
                 status: "review_required",
                 proposalCount: 2,
                 pendingCount: 2,
+                proposals: [
+                  {
+                    proposalId: "proposal-1",
+                    questionId: "q-1",
+                    dimensionId: "baseline_metrics",
+                    requirement: "required",
+                    question: "Provide baseline metrics.",
+                    response: "Unknown",
+                    answerState: "unknown",
+                    disposition: "pending",
+                  },
+                  {
+                    proposalId: "proposal-2",
+                    questionId: "q-2",
+                    dimensionId: "delay_volume",
+                    requirement: "required",
+                    question: "Provide addressable delay volume.",
+                    response: "Insufficient evidence",
+                    answerState: "insufficient_evidence",
+                    disposition: "pending",
+                  },
+                ],
                 message:
                   "Workbook responses were stored as pending proposals. They do not feed P2 until accepted.",
+              },
+            }),
+          } as Response;
+        }
+
+        if (
+          url.includes("/stage-readiness-workbook") &&
+          init?.method === "PATCH"
+        ) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              ok: true,
+              proposalReview: {
+                artifactId: "review-artifact-1",
+                status: "review_required",
+                acceptedCount: 2,
+                rejectedCount: 0,
+                needsValidationCount: 0,
+                pendingCount: 0,
+                acceptedResponses: 2,
+                readiness: {
+                  ready: 0,
+                  partial: 0,
+                  insufficientEvidence: 1,
+                  unknown: 1,
+                },
+                message:
+                  "Human review recorded. Only accepted workbook responses can feed the next phase context.",
               },
             }),
           } as Response;
@@ -633,6 +687,36 @@ describe("MovesPhaseStandaloneClient", () => {
         `/api/v1/programs/${move.id}/stage-readiness-workbook?phase=1`,
         expect.objectContaining({ method: "POST", credentials: "include" }),
       );
+      expect(
+        screen.getByText("Workbook responses awaiting review"),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/2\/2 selected/)).toBeInTheDocument();
+      expect(screen.getByText("Provide baseline metrics.")).toBeInTheDocument();
+      expect(
+        screen.getByText("Provide addressable delay volume."),
+      ).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Accept selected" }));
+      await waitFor(() => {
+        expect(screen.getByText(/Review saved/)).toBeInTheDocument();
+      });
+      const reviewCall = (global.fetch as jest.Mock).mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/stage-readiness-workbook") &&
+          init?.method === "PATCH",
+      );
+      expect(reviewCall).toBeTruthy();
+      expect(JSON.parse(String(reviewCall?.[1]?.body))).toMatchObject({
+        proposalSetArtifactId: "proposal-artifact-1",
+        proposalSetArtifactVersion: 2,
+        decisions: [
+          { proposalId: "proposal-1", disposition: "accepted" },
+          { proposalId: "proposal-2", disposition: "accepted" },
+        ],
+      });
+      expect(
+        screen.getByText(/readiness 0 ready \/ 1 insufficient \/ 1 unknown/),
+      ).toBeInTheDocument();
 
       const contractCard = screen.getByTestId("mxw-contract-card");
       expect(contractCard).toBeInTheDocument();

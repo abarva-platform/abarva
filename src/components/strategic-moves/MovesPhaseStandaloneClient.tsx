@@ -175,11 +175,45 @@ interface StageReadinessWorkbookParsePreview {
     errorCount?: number;
   };
   proposalSet?: {
+    artifactId?: string;
+    artifactVersion?: number;
     status?: string;
     proposalCount?: number;
     pendingCount?: number;
+    proposals?: Array<{
+      proposalId?: string;
+      questionId?: string;
+      dimensionId?: string;
+      requirement?: "required" | "recommended";
+      question?: string;
+      response?: string;
+      answerState?: string;
+      disposition?: string;
+    }>;
     message?: string;
   } | null;
+}
+
+interface StageReadinessWorkbookReviewResult {
+  ok?: boolean;
+  proposalReview?: {
+    artifactId?: string;
+    status?: string;
+    acceptedCount?: number;
+    rejectedCount?: number;
+    needsValidationCount?: number;
+    pendingCount?: number;
+    acceptedResponses?: number;
+    readiness?: {
+      ready?: number;
+      partial?: number;
+      insufficientEvidence?: number;
+      unknown?: number;
+    };
+    message?: string;
+  };
+  detail?: string;
+  error?: string;
 }
 
 function normalizePhaseCaptureValues(
@@ -4864,12 +4898,22 @@ function StageReadinessWorkbookPreviewControl({
   const [message, setMessage] = useState("");
   const [preview, setPreview] =
     useState<StageReadinessWorkbookParsePreview | null>(null);
+  const [selectedProposalIds, setSelectedProposalIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [reviewStatus, setReviewStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [reviewMessage, setReviewMessage] = useState("");
 
   async function parseWorkbook(file: File | null | undefined) {
     if (!file) return;
     setStatus("parsing");
     setMessage(`Parsing ${file.name}...`);
     setPreview(null);
+    setReviewStatus("idle");
+    setReviewMessage("");
+    setSelectedProposalIds(new Set());
     const form = new FormData();
     form.set("file", file);
     try {
@@ -4889,6 +4933,12 @@ function StageReadinessWorkbookPreviewControl({
         );
       }
       setPreview(payload);
+      const proposalIds =
+        payload.proposalSet?.proposals
+          ?.map((proposal) => proposal.proposalId)
+          .filter((proposalId): proposalId is string => Boolean(proposalId)) ??
+        [];
+      setSelectedProposalIds(new Set(proposalIds));
       const summary = payload.summary ?? {};
       const issueCount =
         (summary.errorCount ?? 0) + (summary.warningCount ?? 0);
@@ -4910,6 +4960,63 @@ function StageReadinessWorkbookPreviewControl({
       setMessage(err instanceof Error ? err.message : "Parse failed.");
     } finally {
       if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  async function reviewSelectedProposals(
+    disposition: "accepted" | "rejected" | "needs_validation",
+  ) {
+    const proposalSet = preview?.proposalSet;
+    const artifactId = proposalSet?.artifactId;
+    const selectedIds = Array.from(selectedProposalIds);
+    if (!artifactId || selectedIds.length === 0) return;
+    setReviewStatus("saving");
+    setReviewMessage(
+      disposition === "accepted"
+        ? "Accepting selected responses..."
+        : disposition === "needs_validation"
+          ? "Marking selected responses for validation..."
+          : "Rejecting selected responses...",
+    );
+    try {
+      const res = await fetch(apiPath, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          proposalSetArtifactId: artifactId,
+          proposalSetArtifactVersion: proposalSet.artifactVersion,
+          decisions: selectedIds.map((proposalId) => ({
+            proposalId,
+            disposition,
+          })),
+        }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as
+        | StageReadinessWorkbookReviewResult
+        | { detail?: string; error?: string };
+      if (!res.ok || !("proposalReview" in payload)) {
+        throw new Error(
+          "detail" in payload
+            ? (payload.detail ?? `Review failed (HTTP ${res.status})`)
+            : `Review failed (HTTP ${res.status})`,
+        );
+      }
+      const review = payload.proposalReview ?? {};
+      setReviewStatus("saved");
+      setReviewMessage(
+        `Review saved · ${review.acceptedCount ?? 0} accepted · ${review.needsValidationCount ?? 0} needs validation · ${review.rejectedCount ?? 0} rejected`,
+      );
+      if (review.readiness) {
+        setMessage(
+          `${message} · readiness ${review.readiness.ready ?? 0} ready / ${review.readiness.insufficientEvidence ?? 0} insufficient / ${review.readiness.unknown ?? 0} unknown`,
+        );
+      }
+    } catch (err) {
+      setReviewStatus("error");
+      setReviewMessage(
+        err instanceof Error ? err.message : "Review failed. Reload and retry.",
+      );
     }
   }
 
@@ -4947,6 +5054,84 @@ function StageReadinessWorkbookPreviewControl({
           {required ? <em>{required}</em> : null}
           {firstIssue ? <small>{firstIssue}</small> : null}
         </span>
+      ) : null}
+      {preview?.proposalSet?.artifactId &&
+      preview.proposalSet.proposals?.length ? (
+        <div className="mxw-workbook-review">
+          <div className="mxw-workbook-review-summary">
+            <strong>Workbook responses awaiting review</strong>
+            <span>
+              {selectedProposalIds.size}/{preview.proposalSet.proposals.length}{" "}
+              selected · upload is not acceptance
+            </span>
+          </div>
+          <div className="mxw-workbook-review-list">
+            {preview.proposalSet.proposals.slice(0, 6).map((proposal) => {
+              const proposalId = proposal.proposalId ?? "";
+              return (
+                <label key={proposalId || proposal.questionId}>
+                  <input
+                    checked={selectedProposalIds.has(proposalId)}
+                    disabled={!proposalId || reviewStatus === "saving"}
+                    onChange={(event) => {
+                      setSelectedProposalIds((current) => {
+                        const next = new Set(current);
+                        if (event.currentTarget.checked) {
+                          next.add(proposalId);
+                        } else {
+                          next.delete(proposalId);
+                        }
+                        return next;
+                      });
+                    }}
+                    type="checkbox"
+                  />
+                  <span>
+                    <b>{proposal.question ?? proposal.questionId}</b>
+                    <em>
+                      {proposal.requirement ?? "required"} ·{" "}
+                      {proposal.answerState ?? "answered"}
+                    </em>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+          <div className="mxw-workbook-review-actions">
+            <button
+              disabled={
+                selectedProposalIds.size === 0 || reviewStatus === "saving"
+              }
+              onClick={() => void reviewSelectedProposals("accepted")}
+              type="button"
+            >
+              Accept selected
+            </button>
+            <button
+              disabled={
+                selectedProposalIds.size === 0 || reviewStatus === "saving"
+              }
+              onClick={() => void reviewSelectedProposals("needs_validation")}
+              type="button"
+            >
+              Mark needs validation
+            </button>
+            <button
+              disabled={
+                selectedProposalIds.size === 0 || reviewStatus === "saving"
+              }
+              onClick={() => void reviewSelectedProposals("rejected")}
+              type="button"
+            >
+              Reject selected
+            </button>
+          </div>
+          {reviewMessage ? (
+            <span className={`mxw-workbook-review-status ${reviewStatus}`}>
+              {reviewMessage}
+            </span>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
@@ -5302,6 +5487,22 @@ function MovesStandaloneStyles() {
 .mxw-workbook-preview-status.error{color:#8a5a12}
 .mxw-workbook-preview-status em{font-style:normal;border-radius:999px;background:#e4ecf9;color:#2a5aa8;padding:3px 7px;font-size:11px}
 .mxw-workbook-preview-status small{width:100%;color:#8a5a12;font-size:11.5px;font-weight:650}
+.mxw-workbook-review{width:100%;border:1px solid rgba(35,54,92,.14);border-radius:8px;background:#fff;padding:10px 11px;display:grid;gap:9px}
+.mxw-workbook-review-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.mxw-workbook-review-summary strong{font-size:12.5px;color:var(--ink)}
+.mxw-workbook-review-summary span{font-size:11.5px;color:var(--muted);font-weight:700}
+.mxw-workbook-review-list{display:grid;gap:6px}
+.mxw-workbook-review-list label{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-2)}
+.mxw-workbook-review-list input{margin-top:3px}
+.mxw-workbook-review-list b{display:block;font-size:12px;color:var(--ink);font-weight:750}
+.mxw-workbook-review-list em{display:block;font-style:normal;font-size:11px;color:var(--muted);font-weight:700;text-transform:capitalize}
+.mxw-workbook-review-actions{display:flex;gap:7px;flex-wrap:wrap}
+.mxw-workbook-review-actions button{border:1px solid rgba(0,87,184,.2);background:#fff;color:var(--blue);border-radius:8px;padding:7px 10px;font-size:12px;font-weight:800;cursor:pointer}
+.mxw-workbook-review-actions button:first-child{background:var(--blue);color:#fff;border-color:var(--blue)}
+.mxw-workbook-review-actions button:disabled{opacity:.5;cursor:not-allowed}
+.mxw-workbook-review-status{font-size:11.5px;font-weight:800;color:var(--muted)}
+.mxw-workbook-review-status.saved{color:#147c5b}
+.mxw-workbook-review-status.error{color:#b3261e}
 .mxw-phase-blocker{grid-column:1;border:1px solid rgba(196,98,51,.28);border-radius:12px;background:#fff8f3;padding:16px 18px;margin-top:12px;display:grid;gap:10px;box-shadow:0 10px 24px rgba(96,55,26,.08)}
 .mxw-phase-blocker>span{display:inline-flex;width:max-content;border:1px solid rgba(196,98,51,.28);border-radius:999px;background:#fff;color:#a44d25;font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:900;padding:5px 8px}
 .mxw-phase-blocker h2{font-family:Fraunces, Georgia, serif;font-size:22px;line-height:1.1;margin:0;color:var(--ink);letter-spacing:0}

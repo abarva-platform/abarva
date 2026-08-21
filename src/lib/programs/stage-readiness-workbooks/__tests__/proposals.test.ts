@@ -1,6 +1,8 @@
 import type { TenancyCtx, ProgramCore } from "@/lib/programs/types.db";
 import {
+  buildStageReadinessProposalReview,
   buildStageReadinessProposalSet,
+  persistStageReadinessProposalReview,
   persistStageReadinessProposalSet,
 } from "../proposals";
 import type { StageReadinessWorkbookParseResult } from "../parser";
@@ -154,6 +156,136 @@ describe("stage readiness workbook proposals", () => {
         }),
       }),
     );
+  });
+
+  it("records human review decisions and emits only accepted structured responses", () => {
+    const proposalSet = buildStageReadinessProposalSet({
+      ctx,
+      program,
+      parsed,
+      uploadedWorkbookSha256: "a".repeat(64),
+      uploadedAt: "2026-08-20T13:00:00.000Z",
+    });
+
+    const review = buildStageReadinessProposalReview({
+      ctx,
+      program,
+      proposalSet,
+      sourceProposalSetArtifactId: "proposal-artifact-1",
+      sourceProposalSetArtifactVersion: 4,
+      decisions: [
+        {
+          proposalId: proposalSet.proposals[0].proposalId,
+          disposition: "accepted",
+        },
+        {
+          proposalId: proposalSet.proposals[1].proposalId,
+          disposition: "needs_validation",
+          note: "Finance must source annual volume before P4 value math.",
+        },
+      ],
+      reviewedAt: "2026-08-20T14:00:00.000Z",
+    });
+
+    expect(review.summary).toMatchObject({
+      proposalCount: 2,
+      pendingCount: 0,
+      acceptedCount: 1,
+      needsValidationCount: 1,
+      acceptedAnswerStates: {
+        answered: 0,
+        unknown: 1,
+        insufficient_evidence: 0,
+        blank: 0,
+      },
+      readiness: {
+        ready: 0,
+        partial: 0,
+        insufficientEvidence: 0,
+        unknown: 1,
+      },
+    });
+    expect(review.acceptedResponses).toHaveLength(1);
+    expect(review.acceptedResponses[0]).toMatchObject({
+      questionId: "q_baseline",
+      answerState: "unknown",
+      acceptedBy: "user-1",
+    });
+    expect(review.proposals).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          questionId: "q_volume",
+          disposition: "needs_validation",
+        }),
+      ]),
+    );
+  });
+
+  it("persists proposal reviews as approval artifacts that distinguish accepted from pending", async () => {
+    const proposalSet = buildStageReadinessProposalSet({
+      ctx,
+      program,
+      parsed,
+      uploadedWorkbookSha256: "a".repeat(64),
+    });
+    const saveArtifact = jest.fn().mockResolvedValue({
+      artifactId: "review-artifact-1",
+      version: 3,
+      blobStored: true,
+      blobPath: "moves/tenant/move/approvals/p1/v3/review.json",
+    });
+
+    const result = await persistStageReadinessProposalReview({
+      ctx,
+      program,
+      proposalSet,
+      sourceProposalSetArtifactId: "proposal-artifact-1",
+      sourceProposalSetArtifactVersion: 2,
+      decisions: [
+        {
+          proposalId: proposalSet.proposals[0].proposalId,
+          disposition: "accepted",
+        },
+      ],
+      saveArtifact,
+    });
+
+    expect(result.artifactId).toBe("review-artifact-1");
+    expect(saveArtifact).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({
+        artifactType: "stage_readiness_workbook_proposal_review",
+        artifactFamily: "approval_artifact",
+        status: "review_required",
+        sourceBasis: "human_reviewed_stage_readiness_workbook_proposals",
+        metadata: expect.objectContaining({
+          acceptedCount: 1,
+          pendingCount: 1,
+          governance:
+            "Accepted workbook responses may feed P2 context. Pending, rejected, and needs-validation proposals must not feed P2.",
+        }),
+      }),
+    );
+  });
+
+  it("rejects review decisions for unknown proposal ids", () => {
+    const proposalSet = buildStageReadinessProposalSet({
+      ctx,
+      program,
+      parsed,
+      uploadedWorkbookSha256: "a".repeat(64),
+    });
+
+    expect(() =>
+      buildStageReadinessProposalReview({
+        ctx,
+        program,
+        proposalSet,
+        sourceProposalSetArtifactId: "proposal-artifact-1",
+        sourceProposalSetArtifactVersion: 2,
+        decisions: [{ proposalId: "missing", disposition: "accepted" }],
+      }),
+    ).toThrow(/unknown stage readiness proposal id/i);
   });
 
   it("refuses to persist invalid parses", async () => {
