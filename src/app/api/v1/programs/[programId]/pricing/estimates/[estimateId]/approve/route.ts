@@ -9,9 +9,11 @@
 // `effort-engine/snapshot-service.ts#createEstimateSnapshot`.
 //
 // Three explicit outcomes (brief's ask): success (201), not ready — the
-// SAME `estimate_not_ready` shape `/run` returns (409), and a segregation-
-// of-duties violation — the approver is the same identity that last
-// confirmed this estimate's inputs (409 `self_approval_violation`).
+// SAME `estimate_not_ready` shape `/run` returns (409), and, when
+// GATE_APPROVAL_STRICT_MODE is enabled, a separation-of-duties violation
+// for same-preparer approval (409 `self_approval_violation`). In pilot mode
+// the same gate is retained but self-approval is stamped in the immutable
+// snapshot rationale.
 //
 // NOT wired anywhere near `board-grade-business-case/route.ts` — see
 // `snapshot-service.ts`'s file header and the PR6 release record for the
@@ -19,7 +21,10 @@
 // (PRICING_ENGINE_CURRENT_STATE.md §14).
 
 import { NextRequest } from "next/server";
-import { requireTenancy, tenancyErrorResponse } from "@/app/api/v1/programs/_auth";
+import {
+  requireTenancy,
+  tenancyErrorResponse,
+} from "@/app/api/v1/programs/_auth";
 import {
   EstimateNotFoundError,
   EstimateNotReadyError,
@@ -36,7 +41,12 @@ import {
   toScopeFingerprintInput,
 } from "@/lib/pricing/effort-engine/snapshot-service";
 import { getCurrentTaxonomyVersion } from "@/lib/pricing/reference-repository";
-import { requireOwnedEstimate, requireOwnedMove, snapshotToJson, tenantKeyFor } from "../../../_shared";
+import {
+  requireOwnedEstimate,
+  requireOwnedMove,
+  snapshotToJson,
+  tenantKeyFor,
+} from "../../../_shared";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,10 +71,17 @@ export async function POST(
     if (!move) return Response.json({ error: "not_found" }, { status: 404 });
 
     const owned = await requireOwnedEstimate(ctx, programId, estimateId);
-    if (!owned.ok) return Response.json({ error: owned.error, detail: owned.detail }, { status: owned.status });
+    if (!owned.ok)
+      return Response.json(
+        { error: owned.error, detail: owned.detail },
+        { status: owned.status },
+      );
 
     const body = (await req.json().catch(() => ({}))) as ApproveEstimateBody;
-    if (typeof body.approvalRationale !== "string" || body.approvalRationale.trim().length === 0) {
+    if (
+      typeof body.approvalRationale !== "string" ||
+      body.approvalRationale.trim().length === 0
+    ) {
       return badRequest("approvalRationale is required");
     }
 
@@ -80,11 +97,18 @@ export async function POST(
     } catch (err) {
       if (err instanceof EstimateNotReadyError) {
         return Response.json(
-          { error: "estimate_not_ready", detail: err.message, blockingReasons: err.blockingReasons },
+          {
+            error: "estimate_not_ready",
+            detail: err.message,
+            blockingReasons: err.blockingReasons,
+          },
           { status: 409 },
         );
       }
-      if (err instanceof EstimateNotFoundError || err instanceof EstimateTenantMismatchError) {
+      if (
+        err instanceof EstimateNotFoundError ||
+        err instanceof EstimateTenantMismatchError
+      ) {
         return Response.json({ error: "not_found" }, { status: 404 });
       }
       throw err;
@@ -124,7 +148,10 @@ export async function POST(
       // specifically for this PR to write.
       await updateEstimateHeader(estimateId, { status: "approved" });
 
-      return Response.json({ ok: true, snapshot: snapshotToJson(snapshot) }, { status: 201 });
+      return Response.json(
+        { ok: true, snapshot: snapshotToJson(snapshot) },
+        { status: 201 },
+      );
     } catch (err) {
       if (err instanceof SelfApprovalViolationError) {
         return Response.json(
@@ -153,7 +180,10 @@ export async function POST(
     } catch {
       /* not a tenancy error */
     }
-    console.error("[POST /api/v1/programs/:programId/pricing/estimates/:estimateId/approve]", err);
+    console.error(
+      "[POST /api/v1/programs/:programId/pricing/estimates/:estimateId/approve]",
+      err,
+    );
     return Response.json({ error: "internal_error" }, { status: 500 });
   }
 }
