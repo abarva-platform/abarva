@@ -21,11 +21,15 @@ export function ArchitecturePage({
   tenantKey,
   tenantDisplayName,
   applications,
+  integrations,
+  infrastructure,
   canonicalBuild,
 }: {
   tenantKey: string;
   tenantDisplayName: string;
   applications: TechRecordType;
+  integrations?: TechRecordType;
+  infrastructure?: TechRecordType;
   canonicalBuild?: string;
 }) {
   const [capability, setCapability] = useState<string | null>(null);
@@ -46,16 +50,22 @@ export function ArchitecturePage({
     return <ArchitectureRefusal refusal={result.refusal} />;
   }
   const view: ArchitectureView = result.view;
+  const architectureTitle = capability
+    ? view.title
+    : `Current-state architecture map for ${tenantDisplayName}`;
+  const architectureQuestion = capability
+    ? view.primaryQuestion
+    : "How do business capabilities, applications, data movement, and platforms fit together today?";
 
   return (
     <div style={{ paddingBottom: 60 }}>
       <header style={{ padding: `46px ${PAGE_X}px 0` }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap" }}>
           <span style={eyebrow(V4.blue)}>
-            {capability ? "Logical architecture · one capability" : "Executive landscape · whole estate"}
+            {capability ? "Logical architecture · one capability" : "Current-state architecture · whole estate"}
           </span>
           <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 15, color: V4.slate, letterSpacing: "-0.01em" }}>
-            {view.primaryQuestion}
+            {architectureQuestion}
           </span>
         </div>
         <h1
@@ -70,7 +80,7 @@ export function ArchitecturePage({
             textWrap: "balance",
           }}
         >
-          {view.title}
+          {architectureTitle}
         </h1>
         {view.contextLine ? (
           <p style={{ margin: "14px 0 0", fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", color: V4.slate }}>
@@ -104,7 +114,12 @@ export function ArchitecturePage({
       {capability ? (
         <L2Capability view={view} capability={capability} />
       ) : (
-        <L0Landscape applications={applications} onDrill={setCapability} />
+        <L0Landscape
+          applications={applications}
+          integrations={integrations}
+          infrastructure={infrastructure}
+          onDrill={setCapability}
+        />
       )}
 
       {view.limitations.length > 0 ? (
@@ -145,46 +160,68 @@ export function ArchitecturePage({
   );
 }
 
-/* ── L0 · weighted landscape ─────────────────────────────────────────────────────────────── */
+/* ── L0 · current-state architecture map ─────────────────────────────────────────────────── */
 
 type ApplicationRecord = Record<string, unknown>;
+type IntegrationRecord = Record<string, unknown>;
+type InfrastructureRecord = Record<string, unknown>;
 
-interface FunctionCluster {
+interface ArchitectureSlice {
   name: string;
-  rows: ApplicationRecord[];
+  applications: ApplicationRecord[];
+  integrations: IntegrationRecord[];
+  infrastructure: InfrastructureRecord[];
   count: number;
   share: number;
   tier1: number;
   watch: number;
   replace: number;
   aging: number;
-  vendorCount: number;
   spend: number;
-  topCategories: Array<[string, number]>;
+  regulatedFlows: number;
+  qualityWatch: number;
+  appCategories: Array<[string, number]>;
+  appPlatforms: Array<[string, number]>;
+  integrationTypes: Array<[string, number]>;
+  dataDomains: Array<[string, number]>;
+  dataPlatforms: Array<[string, number]>;
+  destinations: Array<[string, number]>;
+  hostingModels: Array<[string, number]>;
+  infrastructureTypes: Array<[string, number]>;
 }
 
 function L0Landscape({
   applications,
+  integrations,
+  infrastructure,
   onDrill,
 }: {
   applications: TechRecordType;
+  integrations?: TechRecordType;
+  infrastructure?: TechRecordType;
   onDrill: (capability: string) => void;
 }) {
   const rows = useMemo(() => (applications.rows ?? []) as ApplicationRecord[], [applications.rows]);
-  const clusters = useMemo(() => buildFunctionClusters(rows), [rows]);
-  const [selectedName, setSelectedName] = useState<string | null>(clusters[0]?.name ?? null);
-  const selected = clusters.find((cluster) => cluster.name === selectedName) ?? clusters[0];
-  const totalSpend = clusters.reduce((sum, cluster) => sum + cluster.spend, 0);
-  const tier1 = clusters.reduce((sum, cluster) => sum + cluster.tier1, 0);
-  const watch = clusters.reduce((sum, cluster) => sum + cluster.watch, 0);
-  const replacement = clusters.reduce((sum, cluster) => sum + cluster.replace, 0);
+  const integrationRows = useMemo(() => (integrations?.rows ?? []) as IntegrationRecord[], [integrations?.rows]);
+  const infrastructureRows = useMemo(() => (infrastructure?.rows ?? []) as InfrastructureRecord[], [infrastructure?.rows]);
+  const slices = useMemo(
+    () => buildArchitectureSlices(rows, integrationRows, infrastructureRows),
+    [rows, integrationRows, infrastructureRows],
+  );
+  const [selectedName, setSelectedName] = useState<string>("Whole estate");
+  const selected = slices.find((slice) => slice.name === selectedName) ?? slices[0];
+  const wholeEstate = slices[0];
 
   return (
     <div style={{ padding: `0 ${PAGE_X}px` }}>
       <style>{`
         @media (max-width: 1180px) {
-          [data-arch-workspace] { grid-template-columns: 1fr !important; }
+          [data-arch-layout] { grid-template-columns: 1fr !important; }
           [data-arch-side] { position: static !important; }
+        }
+        @media (max-width: 980px) {
+          [data-arch-map] { grid-template-columns: 1fr !important; }
+          [data-arch-arrow] { display: none !important; }
         }
         @media (max-width: 760px) {
           [data-arch-metrics] { grid-template-columns: 1fr !important; }
@@ -201,10 +238,10 @@ function L0Landscape({
           borderBottom: `1px solid ${V4.rule}`,
         }}
       >
-        <span style={eyebrow(V4.slate)}>Architecture workbench</span>
+        <span style={eyebrow(V4.slate)}>Current-state architecture map</span>
         <span style={{ flex: 1 }} />
         <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", color: V4.stone }}>
-          FUNCTION · SYSTEM MIX · APPLICATION ROSTER
+          BUSINESS · APPLICATIONS · INTEGRATION · DATA · PLATFORMS
         </span>
       </div>
 
@@ -219,204 +256,53 @@ function L0Landscape({
           background: V4.rule,
         }}
       >
-        <ArchitectureMetric value={rows.length.toLocaleString()} label="applications" />
-        <ArchitectureMetric value={clusters.length.toLocaleString()} label="business functions" />
-        <ArchitectureMetric value={tier1.toLocaleString()} label="tier-1 systems" />
-        <ArchitectureMetric value={watch.toLocaleString()} label="lifecycle watch" />
-        <ArchitectureMetric value={moneyShort(totalSpend)} label="annual cost" />
+        <ArchitectureMetric value={wholeEstate.count.toLocaleString()} label="applications" />
+        <ArchitectureMetric value={(slices.length - 1).toLocaleString()} label="business capabilities" />
+        <ArchitectureMetric value={wholeEstate.integrations.length.toLocaleString()} label="data movements" />
+        <ArchitectureMetric value={wholeEstate.infrastructure.length.toLocaleString()} label="platforms" />
+        <ArchitectureMetric value={moneyShort(wholeEstate.spend)} label="annual cost" />
       </div>
 
       <div
-        data-arch-workspace
+        data-arch-layout
         style={{
           display: "grid",
-          gridTemplateColumns: "290px minmax(0,1fr) 390px",
+          gridTemplateColumns: "300px minmax(0,1fr)",
           gap: "clamp(18px,2.5vw,34px)",
           alignItems: "start",
           marginTop: 22,
         }}
       >
         <section style={{ minWidth: 0 }}>
-          <span style={eyebrow(V4.slate)}>Functions</span>
+          <span style={eyebrow(V4.slate)}>Architecture scope</span>
           <div style={{ marginTop: 10, display: "grid", gap: 6 }}>
-            {clusters.map((cluster, index) => (
-              <FunctionButton
-                key={cluster.name}
-                cluster={cluster}
-                rank={index + 1}
-                active={selected?.name === cluster.name}
-                onClick={() => setSelectedName(cluster.name)}
+            {slices.map((slice, index) => (
+              <ScopeButton
+                key={slice.name}
+                slice={slice}
+                rank={index}
+                active={selected?.name === slice.name}
+                onClick={() => setSelectedName(slice.name)}
               />
             ))}
           </div>
         </section>
 
-        <section style={{ minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 18, marginBottom: 10 }}>
-            <span style={eyebrow(V4.slate)}>System mix</span>
-            <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}>
-              top categories by function
-            </span>
-          </div>
-          <div style={{ border: `1px solid ${V4.rule}`, background: V4.surface, borderRadius: 8, overflow: "hidden" }}>
-            {clusters.slice(0, 12).map((cluster) => (
-              <button
-                key={cluster.name}
-                type="button"
-                onClick={() => setSelectedName(cluster.name)}
-                style={{
-                  width: "100%",
-                  display: "grid",
-                  gridTemplateColumns: "minmax(170px,0.72fr) minmax(0,1fr) 74px",
-                  gap: 14,
-                  alignItems: "center",
-                  textAlign: "left",
-                  border: "none",
-                  borderBottom: `1px solid ${V4.rule}`,
-                  padding: "12px 14px",
-                  background: selected?.name === cluster.name ? "rgba(0,102,204,0.055)" : V4.surface,
-                  cursor: "pointer",
-                }}
-              >
-                <span style={{ minWidth: 0 }}>
-                  <strong style={{ display: "block", fontFamily: SANS, fontSize: 13.5, color: V4.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {cluster.name}
-                  </strong>
-                  <span style={{ display: "block", marginTop: 3, fontFamily: MONO, fontSize: 10.5, color: V4.slate }}>
-                    {cluster.count} systems · {cluster.share.toFixed(1)}%
-                  </span>
-                </span>
-                <span style={{ display: "grid", gap: 6, minWidth: 0 }}>
-                  {cluster.topCategories.slice(0, 3).map(([category, count]) => (
-                    <span key={category} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 34px", gap: 10, alignItems: "center" }}>
-                      <span style={{ display: "grid", gap: 3, minWidth: 0 }}>
-                        <span style={{ fontFamily: SANS, fontSize: 12, color: V4.inkSoft, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {category}
-                        </span>
-                        <span style={{ height: 4, borderRadius: 99, background: V4.cream, overflow: "hidden" }}>
-                          <span
-                            style={{
-                              display: "block",
-                              width: `${Math.max(6, (count / Math.max(1, cluster.count)) * 100)}%`,
-                              height: "100%",
-                              background: "rgba(0,102,204,0.42)",
-                            }}
-                          />
-                        </span>
-                      </span>
-                      <span style={{ fontFamily: MONO, fontSize: 11, color: V4.blue, textAlign: "right" }}>{count}</span>
-                    </span>
-                  ))}
-                </span>
-                <span style={{ textAlign: "right" }}>
-                  <span style={{ display: "block", fontFamily: SERIF, fontSize: 22, lineHeight: 1, color: cluster.watch ? V4.amber : V4.slate }}>
-                    {cluster.watch || 0}
-                  </span>
-                  <span style={{ display: "block", marginTop: 5, fontFamily: MONO, fontSize: 10, color: V4.slate, letterSpacing: "0.07em", textTransform: "uppercase" }}>
-                    watch
-                  </span>
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,180px),1fr))", gap: 10, marginTop: 14 }}>
-            <ExceptionMetric label="replacement candidates" value={replacement} />
-            <ExceptionMetric label="legacy/sunset/deprecated" value={watch} />
-            <ExceptionMetric
-              label="missing vendor"
-              value={rows.filter((row) => !text(row, "vendor")).length}
-            />
-          </div>
-        </section>
-
         {selected ? (
-          <aside
-            data-arch-side
-            style={{
-              position: "sticky",
-              top: 24,
-              borderLeft: `1px solid ${V4.rule}`,
-              paddingLeft: 22,
-              minWidth: 0,
-            }}
-          >
-            <span style={eyebrow(V4.blue)}>Selected function</span>
-            <h2
-              style={{
-                margin: "10px 0 0",
-                fontFamily: SERIF,
-                fontSize: 27,
-                fontWeight: 500,
-                letterSpacing: "-0.026em",
-                lineHeight: 1.12,
-                color: V4.ink,
-              }}
-            >
-              {selected.name}
-            </h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 1, marginTop: 18, border: `1px solid ${V4.rule}`, background: V4.rule }}>
-              <ArchitectureMetric value={selected.count.toLocaleString()} label="applications" />
-              <ArchitectureMetric value={`${selected.share.toFixed(1)}%`} label="of estate" />
-              <ArchitectureMetric value={selected.tier1.toLocaleString()} label="tier-1 systems" />
-              <ArchitectureMetric value={selected.watch.toLocaleString()} label="watch items" />
-            </div>
-            <div style={{ marginTop: 16 }}>
-              <span style={eyebrow(V4.slate)}>Application roster</span>
-              <div style={{ marginTop: 9, borderTop: `1px solid ${V4.rule}` }}>
-                {selected.rows.slice(0, 18).map((row) => (
-                  <div key={`${text(row, "systemName")}-${text(row, "originalRowId")}`} style={{ padding: "9px 0", borderBottom: `1px solid ${V4.rule}` }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" }}>
-                      <strong style={{ fontFamily: SANS, fontSize: 13, lineHeight: 1.25, color: V4.ink }}>{text(row, "systemName")}</strong>
-                      <span style={{ fontFamily: MONO, fontSize: 10.5, color: text(row, "criticality") === "tier1" ? V4.blue : V4.slate }}>
-                        {text(row, "criticality") || "—"}
-                      </span>
-                    </div>
-                    <p style={{ margin: "4px 0 0", fontFamily: SANS, fontSize: 12, lineHeight: 1.35, color: V4.slate }}>
-                      {text(row, "systemCategory") || "Unclassified"} · {text(row, "lifecycleState") || "no lifecycle"}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => onDrill(selected.name)}
-              style={{
-                marginTop: 18,
-                width: "100%",
-                border: `1px solid ${V4.blue}`,
-                borderRadius: 7,
-                background: V4.surface,
-                color: V4.blue,
-                padding: "10px 12px",
-                fontFamily: MONO,
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.09em",
-                textTransform: "uppercase",
-                cursor: "pointer",
-              }}
-            >
-              Open capability detail
-            </button>
-            <p style={{ margin: "16px 0 0", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.55, color: V4.slate }}>
-              This uses recorded application fields only. It is a working view of concentration, mix, and exceptions, not a formal capability taxonomy.
-            </p>
-          </aside>
+          <ArchitectureMap slice={selected} onDrill={onDrill} />
         ) : null}
       </div>
     </div>
   );
 }
 
-function FunctionButton({
-  cluster,
+function ScopeButton({
+  slice,
   rank,
   active,
   onClick,
 }: {
-  cluster: FunctionCluster;
+  slice: ArchitectureSlice;
   rank: number;
   active: boolean;
   onClick: () => void;
@@ -428,7 +314,7 @@ function FunctionButton({
       aria-pressed={active}
       style={{
         display: "grid",
-        gridTemplateColumns: "24px minmax(0,1fr) 42px",
+        gridTemplateColumns: "28px minmax(0,1fr) 48px",
         gap: 9,
         alignItems: "center",
         border: `1px solid ${active ? "rgba(0,102,204,0.45)" : V4.rule}`,
@@ -439,32 +325,259 @@ function FunctionButton({
         cursor: "pointer",
       }}
     >
-      <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}>{rank}</span>
+      <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}>{rank === 0 ? "ALL" : rank}</span>
       <span style={{ minWidth: 0 }}>
         <span style={{ display: "block", fontFamily: SANS, fontSize: 13, fontWeight: 650, color: V4.ink, lineHeight: 1.24, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {cluster.name}
+          {slice.name}
         </span>
-        <span style={{ display: "block", height: 4, background: V4.cream, borderRadius: 999, overflow: "hidden", marginTop: 7 }}>
-          <span style={{ display: "block", width: `${Math.max(2, cluster.share)}%`, height: "100%", background: active ? V4.blue : "rgba(12,26,58,0.58)" }} />
+        <span style={{ display: "block", marginTop: 4, fontFamily: MONO, fontSize: 10.5, color: V4.slate }}>
+          {rank === 0
+            ? `${slice.integrations.length} flows · ${slice.infrastructure.length} platforms`
+            : `${slice.integrations.length} flows · platform joins unproven`}
         </span>
       </span>
-      <span style={{ fontFamily: MONO, fontSize: 12, color: V4.ink, textAlign: "right" }}>{cluster.count}</span>
+      <span style={{ fontFamily: MONO, fontSize: 12, color: V4.ink, textAlign: "right" }}>{slice.count}</span>
     </button>
   );
 }
 
-function ExceptionMetric({ label, value }: { label: string; value: number }) {
+function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill: (capability: string) => void }) {
+  const isWholeEstate = slice.name === "Whole estate";
   return (
-    <div style={{ borderTop: `1px solid ${value ? "rgba(186,117,23,0.55)" : V4.rule}`, paddingTop: 10 }}>
-      <span style={{ display: "block", fontFamily: SERIF, fontSize: 24, lineHeight: 1, color: value ? V4.amber : V4.ink }}>
-        {value.toLocaleString()}
+    <section style={{ minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 18, marginBottom: 10 }}>
+        <span style={eyebrow(V4.blue)}>{slice.name}</span>
+        <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}>
+          {slice.count} applications · {slice.integrations.length} flows · {slice.infrastructure.length} platforms
+        </span>
+      </div>
+
+      <div
+        data-arch-map
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 34px 1fr 34px 1fr 34px 1fr",
+          gap: 0,
+          alignItems: "stretch",
+        }}
+      >
+        <ArchitectureLane
+          tone={V4.blue}
+          label="Business capability"
+          title={isWholeEstate ? "Enterprise capability portfolio" : slice.name}
+          meta={isWholeEstate ? `${Math.max(0, slice.appCategories.length)} dominant families` : `${slice.share.toFixed(1)}% of estate`}
+          items={isWholeEstate ? slice.appCategories.slice(0, 6) : [["application scope", slice.count], ["tier-1 systems", slice.tier1], ["watch items", slice.watch]]}
+        />
+        <MapArrow label="supports" />
+        <ArchitectureLane
+          tone={V4.navy}
+          label="Applications & core systems"
+          title={`${slice.count.toLocaleString()} recorded systems`}
+          meta={`${slice.tier1.toLocaleString()} tier-1 · ${slice.replace.toLocaleString()} replacement candidates`}
+          items={slice.appPlatforms.slice(0, 6)}
+        />
+        <MapArrow label="moves data" />
+        <ArchitectureLane
+          tone={V4.green}
+          label="Integration & data"
+          title={`${slice.integrations.length.toLocaleString()} recorded flows/assets`}
+          meta={`${slice.regulatedFlows.toLocaleString()} regulated · ${slice.qualityWatch.toLocaleString()} quality watch`}
+          items={slice.integrationTypes.length ? slice.integrationTypes.slice(0, 4) : slice.dataDomains.slice(0, 4)}
+        />
+        <MapArrow label="runs on" />
+        <ArchitectureLane
+          tone={V4.amber}
+          label="Platforms & hosting"
+          title={
+            slice.infrastructure.length
+              ? `${slice.infrastructure.length.toLocaleString()} infrastructure/platform records`
+              : "Platform joins are not recorded for this scope"
+          }
+          meta={slice.hostingModels.map(([name, count]) => `${name} ${count}`).slice(0, 2).join(" · ") || "hosting relationship missing"}
+          items={slice.infrastructureTypes.length ? slice.infrastructureTypes.slice(0, 4) : slice.hostingModels.slice(0, 4)}
+        />
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,260px),1fr))",
+          gap: 12,
+          marginTop: 16,
+        }}
+      >
+        <EvidencePanel
+          title="Data paths"
+          detail="Source-to-target movements from the integration record"
+          items={slice.destinations.slice(0, 5)}
+        />
+        <EvidencePanel
+          title="Data domains"
+          detail="Domains crossing this architecture scope"
+          items={slice.dataDomains.slice(0, 5)}
+        />
+        <EvidencePanel
+          title="Architecture constraints"
+          detail="What needs attention inside this scope"
+          items={[
+            ["lifecycle watch", slice.watch],
+            ["replacement candidates", slice.replace],
+            ["quality watch", slice.qualityWatch],
+            ["regulated flows", slice.regulatedFlows],
+          ]}
+        />
+      </div>
+
+      {!isWholeEstate ? (
+        <button
+          type="button"
+          onClick={() => onDrill(slice.name)}
+          style={{
+            marginTop: 16,
+            border: `1px solid ${V4.blue}`,
+            borderRadius: 7,
+            background: V4.surface,
+            color: V4.blue,
+            padding: "10px 12px",
+            fontFamily: MONO,
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.09em",
+            textTransform: "uppercase",
+            cursor: "pointer",
+          }}
+        >
+          Open capability dependency detail
+        </button>
+      ) : null}
+
+      <div
+        style={{
+          marginTop: 18,
+          border: `1px solid rgba(186,117,23,0.35)`,
+          borderLeft: `3px solid ${V4.amber}`,
+          borderRadius: 8,
+          background: "rgba(186,117,23,0.045)",
+          padding: "14px 16px",
+        }}
+      >
+        <span style={eyebrow(V4.amber)}>Architecture evidence boundary</span>
+        <p style={{ margin: "8px 0 0", fontFamily: SANS, fontSize: 13.5, lineHeight: 1.55, color: V4.inkSoft }}>
+          This map uses recorded application, integration, and infrastructure fields. It does not claim
+          confirmed runtime dependency direction, deployment topology, network zones, or system-to-platform
+          hosting joins where those relationships are not recorded.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function ArchitectureLane({
+  tone,
+  label,
+  title,
+  meta,
+  items,
+}: {
+  tone: string;
+  label: string;
+  title: string;
+  meta: string;
+  items: Array<[string, number]>;
+}) {
+  const max = Math.max(1, ...items.map(([, count]) => count));
+  return (
+    <article
+      style={{
+        minWidth: 0,
+        border: `1px solid ${V4.ruleStrong}`,
+        borderTop: `4px solid ${tone}`,
+        borderRadius: 8,
+        background: V4.surface,
+        padding: "15px 16px",
+      }}
+    >
+      <span style={eyebrow(tone)}>{label}</span>
+      <h2
+        style={{
+          margin: "10px 0 0",
+          fontFamily: SERIF,
+          fontSize: 22,
+          fontWeight: 500,
+          letterSpacing: "-0.025em",
+          lineHeight: 1.15,
+          color: V4.ink,
+        }}
+      >
+        {title}
+      </h2>
+      <p style={{ margin: "8px 0 0", fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.04em", color: V4.slate }}>
+        {meta}
+      </p>
+      <div style={{ display: "grid", gap: 8, marginTop: 16 }}>
+        {items.slice(0, 6).map(([name, count]) => (
+          <div key={name} style={{ minWidth: 0 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 34px", gap: 10, alignItems: "baseline" }}>
+              <span style={{ fontFamily: SANS, fontSize: 12.5, color: V4.inkSoft, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {name}
+              </span>
+              <span style={{ fontFamily: MONO, fontSize: 11, color: V4.ink, textAlign: "right" }}>{count}</span>
+            </div>
+            <span style={{ display: "block", height: 4, borderRadius: 99, background: V4.cream, overflow: "hidden", marginTop: 4 }}>
+              <span style={{ display: "block", width: `${Math.max(5, (count / max) * 100)}%`, height: "100%", background: tone }} />
+            </span>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function MapArrow({ label }: { label: string }) {
+  return (
+    <div
+      data-arch-arrow
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        color: V4.slate,
+      }}
+    >
+      <span style={{ width: 22, height: 1, background: V4.ruleStrong }} />
+      <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: "0.07em", textTransform: "uppercase", writingMode: "vertical-rl" }}>
+        {label}
       </span>
-      <span style={{ display: "block", marginTop: 6, fontFamily: SANS, fontSize: 12, color: V4.slate }}>{label}</span>
     </div>
   );
 }
 
-function buildFunctionClusters(rows: ApplicationRecord[]): FunctionCluster[] {
+function EvidencePanel({ title, detail, items }: { title: string; detail: string; items: Array<[string, number]> }) {
+  return (
+    <article style={{ border: `1px solid ${V4.rule}`, borderRadius: 8, background: V4.surface, padding: "14px 15px" }}>
+      <span style={eyebrow(V4.slate)}>{title}</span>
+      <p style={{ margin: "7px 0 12px", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.45, color: V4.slate }}>{detail}</p>
+      <div style={{ display: "grid", gap: 7 }}>
+        {items.filter(([, count]) => count > 0).slice(0, 5).map(([name, count]) => (
+          <div key={name} style={{ display: "flex", justifyContent: "space-between", gap: 12, borderTop: `1px solid ${V4.rule}`, paddingTop: 7 }}>
+            <span style={{ fontFamily: SANS, fontSize: 12.5, color: V4.inkSoft, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {name}
+            </span>
+            <span style={{ fontFamily: MONO, fontSize: 11, color: V4.ink }}>{count}</span>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function buildArchitectureSlices(
+  rows: ApplicationRecord[],
+  integrations: IntegrationRecord[],
+  infrastructure: InfrastructureRecord[],
+): ArchitectureSlice[] {
   const groups = new Map<string, ApplicationRecord[]>();
   for (const row of rows) {
     const key = text(row, "businessFunction") || "Unassigned";
@@ -472,28 +585,58 @@ function buildFunctionClusters(rows: ApplicationRecord[]): FunctionCluster[] {
     groups.get(key)!.push(row);
   }
   const total = Math.max(1, rows.length);
-  return [...groups.entries()]
-    .map(([name, groupRows]) => {
-      const aging = groupRows.filter((row) =>
-        ["legacy_stable", "sunset_planned", "deprecated"].includes(text(row, "lifecycleState")),
-      ).length;
-      const replace = groupRows.filter((row) => text(row, "replacementCandidate").toLowerCase() === "yes").length;
-      const vendors = new Set(groupRows.map((row) => text(row, "vendor")).filter(Boolean));
-      return {
-        name,
-        rows: groupRows,
-        count: groupRows.length,
-        share: (groupRows.length / total) * 100,
-        tier1: groupRows.filter((row) => text(row, "criticality").toLowerCase() === "tier1").length,
-        watch: aging + replace,
-        replace,
-        aging,
-        vendorCount: vendors.size,
-        spend: groupRows.reduce((sum, row) => sum + numeric(row.annualCostUsd), 0),
-        topCategories: topCounts(groupRows, "systemCategory").slice(0, 4),
-      };
-    })
+  const slices = [...groups.entries()]
+    .map(([name, groupRows]) => buildSlice(name, groupRows, integrationsForApps(integrations, groupRows), [], total))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  return [buildSlice("Whole estate", rows, integrations, infrastructure, total), ...slices];
+}
+
+function buildSlice(
+  name: string,
+  appRows: ApplicationRecord[],
+  integrations: IntegrationRecord[],
+  infrastructure: InfrastructureRecord[],
+  estateTotal: number,
+): ArchitectureSlice {
+  const aging = appRows.filter((row) =>
+    ["legacy_stable", "sunset_planned", "deprecated"].includes(text(row, "lifecycleState")),
+  ).length;
+  const replace = appRows.filter((row) => text(row, "replacementCandidate").toLowerCase() === "yes").length;
+  const qualityWatch = integrations.filter((row) =>
+    ["developing_governance", "needs_remediation", "unknown"].includes(text(row, "qualityStatus").toLowerCase()),
+  ).length;
+
+  return {
+    name,
+    applications: appRows,
+    integrations,
+    infrastructure,
+    count: appRows.length,
+    share: name === "Whole estate" ? 100 : (appRows.length / Math.max(1, estateTotal)) * 100,
+    tier1: appRows.filter((row) => text(row, "criticality").toLowerCase() === "tier1").length,
+    watch: aging + replace,
+    replace,
+    aging,
+    spend: appRows.reduce((sum, row) => sum + numeric(row.annualCostUsd), 0),
+    regulatedFlows: integrations.filter((row) => text(row, "regulatedDataFlag").toLowerCase() === "true").length,
+    qualityWatch,
+    appCategories: topCounts(appRows, "systemCategory").slice(0, 8),
+    appPlatforms: topCounts(appRows, "deploymentModel").slice(0, 8),
+    integrationTypes: topCounts(integrations, "integrationType").slice(0, 8),
+    dataDomains: topCounts(integrations, "dataDomain").slice(0, 8),
+    dataPlatforms: topCounts(integrations, "platformOrDatabase").slice(0, 8),
+    destinations: topCounts(integrations, "targetSystem").slice(0, 8),
+    hostingModels: topCounts(infrastructure, "hostingModel").slice(0, 8),
+    infrastructureTypes: topCounts(infrastructure, "platformType").slice(0, 8),
+  };
+}
+
+function integrationsForApps(integrations: IntegrationRecord[], appRows: ApplicationRecord[]): IntegrationRecord[] {
+  const systems = new Set(appRows.flatMap((row) => [text(row, "systemName")]).filter(Boolean));
+  if (!systems.size) {
+    return [];
+  }
+  return integrations.filter((row) => systems.has(text(row, "sourceSystem")) || systems.has(text(row, "targetSystem")));
 }
 
 function topCounts(rows: ApplicationRecord[], field: string): Array<[string, number]> {
