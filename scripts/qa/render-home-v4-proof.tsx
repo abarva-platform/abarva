@@ -29,7 +29,7 @@ for (const tenantKey of ["meridian-health", "skyharbor-air"] as HomePreviewTenan
   const file = path.join(OUT, `${tenantKey}.html`);
   fs.writeFileSync(file, html, "utf8");
 
-  const p = bundle.provenance as Record<string, unknown>;
+  const p = bundle.provenance as unknown as Record<string, unknown>;
   const estate = (bundle as any).technologyEstate?.recordTypes ?? [];
   console.log(`${tenantKey}`);
   console.log(`   canonical hash ${String(p.canonical_snapshot_hash).slice(0, 16)}  generated ${String(p.generated_at).slice(0, 10)}`);
