@@ -40,6 +40,7 @@ import {
   getPhaseCaptureSections,
   type PhaseCaptureSection,
 } from "@/lib/programs/phase-capture-contract";
+import type { AvaPhaseInputProposal } from "@/lib/programs/phase-input-draft-proposals";
 import { parseDiagnosisFacts } from "@/lib/programs/diagnosis-facts";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
@@ -161,6 +162,8 @@ interface PhaseEvidenceArtifact {
   downloadUrl: string;
 }
 type PhaseCaptureValues = Record<string, string>;
+type AvaDraftRequestStatus = "idle" | "loading" | "ready" | "error";
+type AvaDraftSaveStatus = "editing" | "saving" | "saved" | "error";
 
 interface StageReadinessWorkbookParsePreview {
   ok: boolean;
@@ -526,6 +529,19 @@ export function MovesPhaseStandaloneClient({
   const [avaThread, setAvaThread] = useState<AvaChatMessage[]>([]);
   const [avaInput, setAvaInput] = useState("");
   const [avaStreaming, setAvaStreaming] = useState(false);
+  const [avaDraftStatus, setAvaDraftStatus] =
+    useState<AvaDraftRequestStatus>("idle");
+  const [avaDraftError, setAvaDraftError] = useState<string | null>(null);
+  const [avaDraftProposals, setAvaDraftProposals] = useState<
+    AvaPhaseInputProposal[]
+  >([]);
+  const [avaDraftValues, setAvaDraftValues] = useState<PhaseCaptureValues>({});
+  const [avaDraftSaveStatus, setAvaDraftSaveStatus] = useState<
+    Record<string, AvaDraftSaveStatus>
+  >({});
+  const [avaDraftSaveErrors, setAvaDraftSaveErrors] = useState<
+    Record<string, string>
+  >({});
   const avaThreadRef = useRef<AvaChatMessage[]>([]);
   avaThreadRef.current = avaThread;
   // P3 recommendations may be highlighted, but no option is selected until the
@@ -681,6 +697,51 @@ export function MovesPhaseStandaloneClient({
     () => getPhaseCaptureSections(phase.phase),
     [phase.phase],
   );
+  const avaDraftProposalsByKey = useMemo(
+    () =>
+      new Map(
+        avaDraftProposals
+          .filter(
+            (proposal) =>
+              proposal.proposedValue.trim() && proposal.evidenceRefs.length > 0,
+          )
+          .map((proposal) => [proposal.fieldKey, proposal]),
+      ),
+    [avaDraftProposals],
+  );
+  const displayPhaseCaptureValues = useMemo(
+    () => ({ ...phaseCaptureValues, ...avaDraftValues }),
+    [avaDraftValues, phaseCaptureValues],
+  );
+  const displayPhaseCaptureSaveStatus = useMemo(() => {
+    const next: Record<string, PhaseCaptureSaveStatus> = {
+      ...phaseCaptureSaveStatus,
+    };
+    for (const key of Object.keys(avaDraftValues)) {
+      const status = avaDraftSaveStatus[key];
+      next[key] =
+        status === "saving"
+          ? "saving"
+          : status === "error"
+            ? "error"
+            : "editing";
+    }
+    return next;
+  }, [avaDraftSaveStatus, avaDraftValues, phaseCaptureSaveStatus]);
+  const displayPhaseCaptureSaveErrors = useMemo(
+    () => ({ ...phaseCaptureSaveErrors, ...avaDraftSaveErrors }),
+    [avaDraftSaveErrors, phaseCaptureSaveErrors],
+  );
+  const avaLocalDraftKeys = useMemo(
+    () =>
+      Object.keys(avaDraftValues).filter(
+        (key) =>
+          String(avaDraftValues[key] ?? "") !==
+          String(persistedPhaseCaptureValues[key] ?? ""),
+      ),
+    [avaDraftValues, persistedPhaseCaptureValues],
+  );
+  const avaLocalDraftCount = avaLocalDraftKeys.length;
   const selectP3Option = useCallback((optionId: string) => {
     setSelectedOption(optionId);
   }, []);
@@ -777,23 +838,27 @@ export function MovesPhaseStandaloneClient({
   const phaseCaptureBlocker =
     phase.phase === 3 && !selectedP3Option
       ? "Select the solution option that architecture should implement before Approve & Build."
-      : phase.phase >= 1 && phaseCaptureFailedCount > 0
-        ? `Resolve ${phaseCaptureFailedCount} unsaved phase input${
-            phaseCaptureFailedCount === 1 ? "" : "s"
+      : phase.phase >= 1 && avaLocalDraftCount > 0
+        ? `Save ${avaLocalDraftCount} aVa draft${
+            avaLocalDraftCount === 1 ? "" : "s"
           } before Approve & Build.`
-        : phase.phase >= 1 && phaseCaptureSavingCount > 0
-          ? `Wait for ${phaseCaptureSavingCount} phase input${
-              phaseCaptureSavingCount === 1 ? "" : "s"
-            } to save before Approve & Build.`
-          : phase.phase >= 1 && phaseCaptureDirtyCount > 0
-            ? `Save ${phaseCaptureDirtyCount} phase input${
-                phaseCaptureDirtyCount === 1 ? "" : "s"
-              } before Approve & Build.`
-            : phase.phase >= 1 && phaseCaptureMissingCount > 0
-              ? `Complete ${phaseCaptureMissingCount} phase input${
-                  phaseCaptureMissingCount === 1 ? "" : "s"
+        : phase.phase >= 1 && phaseCaptureFailedCount > 0
+          ? `Resolve ${phaseCaptureFailedCount} unsaved phase input${
+              phaseCaptureFailedCount === 1 ? "" : "s"
+            } before Approve & Build.`
+          : phase.phase >= 1 && phaseCaptureSavingCount > 0
+            ? `Wait for ${phaseCaptureSavingCount} phase input${
+                phaseCaptureSavingCount === 1 ? "" : "s"
+              } to save before Approve & Build.`
+            : phase.phase >= 1 && phaseCaptureDirtyCount > 0
+              ? `Save ${phaseCaptureDirtyCount} phase input${
+                  phaseCaptureDirtyCount === 1 ? "" : "s"
                 } before Approve & Build.`
-              : null;
+              : phase.phase >= 1 && phaseCaptureMissingCount > 0
+                ? `Complete ${phaseCaptureMissingCount} phase input${
+                    phaseCaptureMissingCount === 1 ? "" : "s"
+                  } before Approve & Build.`
+                : null;
   // MOVES-UI-001 Steps two-column "Coming up" card. Same real inputs and same
   // function (`buildNextPhaseReadinessPack`) the Approve substep already uses
   // for its "Next phase readiness" section below — computed once here so the
@@ -832,6 +897,209 @@ export function MovesPhaseStandaloneClient({
       return next;
     });
   }, []);
+  const setVisiblePhaseCaptureValue = useCallback(
+    (key: string, value: string) => {
+      if (key in avaDraftValues) {
+        setAvaDraftValues((prev) => ({ ...prev, [key]: value }));
+        setAvaDraftSaveStatus((prev) => ({ ...prev, [key]: "editing" }));
+        setAvaDraftSaveErrors((prev) => {
+          if (!(key in prev)) return prev;
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+        return;
+      }
+      setPhaseCaptureValue(key, value);
+    },
+    [avaDraftValues, setPhaseCaptureValue],
+  );
+  const requestAvaPhaseInputDrafts = useCallback(async () => {
+    if (phase.phase < 1 || avaDraftStatus === "loading") return;
+    setAvaOpen(true);
+    setAvaDraftStatus("loading");
+    setAvaDraftError(null);
+    try {
+      const res = await fetch(`/api/v1/programs/${move.id}/phase-input-draft`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phase: phase.phase }),
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        proposals?: AvaPhaseInputProposal[];
+        refusal?: string | null;
+        detail?: string;
+        error?: string;
+      };
+      if (!res.ok || !body.ok) {
+        throw new Error(
+          body.detail ||
+            body.error ||
+            `Draft request failed (HTTP ${res.status})`,
+        );
+      }
+      const citedProposals = (body.proposals ?? []).filter(
+        (proposal) =>
+          proposal.proposedValue.trim() && proposal.evidenceRefs.length > 0,
+      );
+      setAvaDraftProposals(citedProposals);
+      setAvaDraftStatus("ready");
+      setAvaDraftError(
+        citedProposals.length === 0
+          ? body.refusal ||
+              "No cited draft is available from approved upstream state."
+          : null,
+      );
+    } catch (err) {
+      setAvaDraftStatus("error");
+      setAvaDraftError(
+        err instanceof Error
+          ? err.message
+          : "aVa could not prepare cited drafts.",
+      );
+    }
+  }, [avaDraftStatus, move.id, phase.phase]);
+  const applyAvaDraftProposal = useCallback(
+    (proposal: AvaPhaseInputProposal) => {
+      if (
+        !proposal.proposedValue.trim() ||
+        proposal.evidenceRefs.length === 0
+      ) {
+        setAvaDraftError("aVa drafts require at least one cited source.");
+        return;
+      }
+      setFinderSelectedSectionKey(proposal.fieldKey);
+      setWorkspaceView("phase");
+      setAvaDraftValues((prev) => ({
+        ...prev,
+        [proposal.fieldKey]: proposal.proposedValue,
+      }));
+      setAvaDraftSaveStatus((prev) => ({
+        ...prev,
+        [proposal.fieldKey]: "editing",
+      }));
+      setAvaDraftSaveErrors((prev) => {
+        if (!(proposal.fieldKey in prev)) return prev;
+        const next = { ...prev };
+        delete next[proposal.fieldKey];
+        return next;
+      });
+    },
+    [],
+  );
+  const dismissAvaDraftProposal = useCallback((fieldKey: string) => {
+    setAvaDraftProposals((prev) =>
+      prev.filter((proposal) => proposal.fieldKey !== fieldKey),
+    );
+    setAvaDraftValues((prev) => {
+      if (!(fieldKey in prev)) return prev;
+      const next = { ...prev };
+      delete next[fieldKey];
+      return next;
+    });
+    setAvaDraftSaveStatus((prev) => {
+      if (!(fieldKey in prev)) return prev;
+      const next = { ...prev };
+      delete next[fieldKey];
+      return next;
+    });
+    setAvaDraftSaveErrors((prev) => {
+      if (!(fieldKey in prev)) return prev;
+      const next = { ...prev };
+      delete next[fieldKey];
+      return next;
+    });
+  }, []);
+  const saveAvaDraft = useCallback(
+    async (fieldKey: string) => {
+      const value = String(avaDraftValues[fieldKey] ?? "");
+      if (!value.trim()) {
+        setAvaDraftSaveStatus((prev) => ({ ...prev, [fieldKey]: "error" }));
+        setAvaDraftSaveErrors((prev) => ({
+          ...prev,
+          [fieldKey]: "This draft is empty. Edit it before saving.",
+        }));
+        return;
+      }
+      setAvaDraftSaveStatus((prev) => ({ ...prev, [fieldKey]: "saving" }));
+      setAvaDraftSaveErrors((prev) => {
+        if (!(fieldKey in prev)) return prev;
+        const next = { ...prev };
+        delete next[fieldKey];
+        return next;
+      });
+
+      try {
+        const res = await fetch(`/api/v1/programs/${move.id}/phase-capture`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phase: phase.phase,
+            sections: { [fieldKey]: value },
+            ...(phaseCaptureRevision
+              ? { expectedRevision: phaseCaptureRevision }
+              : {}),
+          }),
+        });
+        const body = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          values?: Record<string, string>;
+          revision?: string;
+          detail?: string;
+          error?: string;
+        };
+        if (
+          res.status === 409 &&
+          body.error === "stale_revision" &&
+          body.values &&
+          body.revision
+        ) {
+          setPersistedPhaseCaptureValues(
+            normalizePhaseCaptureValues(body.values),
+          );
+          setPhaseCaptureRevision(body.revision);
+          throw new Error(
+            body.detail ||
+              "This page was loaded before the capture state changed. Reload and re-apply the draft.",
+          );
+        }
+        if (!res.ok || !body.ok || !body.values) {
+          throw new Error(
+            body.detail ||
+              body.error ||
+              `Draft save failed (HTTP ${res.status})`,
+          );
+        }
+        const savedValues = normalizePhaseCaptureValues(body.values);
+        setPersistedPhaseCaptureValues(savedValues);
+        setPhaseCaptureValues((prev) => ({
+          ...prev,
+          [fieldKey]: savedValues[fieldKey] ?? "",
+        }));
+        if (body.revision) setPhaseCaptureRevision(body.revision);
+        setAvaDraftValues((prev) => {
+          const next = { ...prev };
+          delete next[fieldKey];
+          return next;
+        });
+        setAvaDraftSaveStatus((prev) => ({ ...prev, [fieldKey]: "saved" }));
+        setAvaDraftSaveErrors((prev) => {
+          const next = { ...prev };
+          delete next[fieldKey];
+          return next;
+        });
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Draft save failed.";
+        setAvaDraftSaveStatus((prev) => ({ ...prev, [fieldKey]: "error" }));
+        setAvaDraftSaveErrors((prev) => ({ ...prev, [fieldKey]: message }));
+      }
+    },
+    [avaDraftValues, move.id, phase.phase, phaseCaptureRevision],
+  );
   useEffect(() => {
     if (phase.phase === 0 || phaseCaptureDirtyKeys.length === 0) return;
 
@@ -985,6 +1253,7 @@ export function MovesPhaseStandaloneClient({
   ]);
   const phaseCaptureHasUnsavedWork =
     phaseCaptureDirtyCount > 0 ||
+    avaLocalDraftCount > 0 ||
     phaseCaptureSavingCount > 0 ||
     phaseCaptureFailedCount > 0;
   useEffect(() => {
@@ -1869,8 +2138,14 @@ export function MovesPhaseStandaloneClient({
 
                   {phase.phase >= 1 && phase.phase <= 5 ? (
                     <PhaseContractStepsCanvas
+                      avaDraftProposalsByKey={avaDraftProposalsByKey}
+                      avaDraftSaveStatus={avaDraftSaveStatus}
+                      avaDraftValues={avaDraftValues}
                       comingUpExpanded={finderComingUpExpanded}
-                      onPhaseCaptureValueChange={setPhaseCaptureValue}
+                      onApplyAvaDraftProposal={applyAvaDraftProposal}
+                      onDismissAvaDraftProposal={dismissAvaDraftProposal}
+                      onPhaseCaptureValueChange={setVisiblePhaseCaptureValue}
+                      onSaveAvaDraft={saveAvaDraft}
                       onSelectSection={setFinderSelectedSectionKey}
                       onSelectSubstep={setSubstepIndex}
                       onToggleComingUp={() =>
@@ -1880,10 +2155,10 @@ export function MovesPhaseStandaloneClient({
                       }
                       phase={phase}
                       phaseCaptureSections={phaseCaptureSections}
-                      phaseCaptureValues={phaseCaptureValues}
+                      phaseCaptureValues={displayPhaseCaptureValues}
                       persistedPhaseCaptureValues={persistedPhaseCaptureValues}
-                      phaseCaptureSaveErrors={phaseCaptureSaveErrors}
-                      phaseCaptureSaveStatus={phaseCaptureSaveStatus}
+                      phaseCaptureSaveErrors={displayPhaseCaptureSaveErrors}
+                      phaseCaptureSaveStatus={displayPhaseCaptureSaveStatus}
                       readinessPack={finderReadinessPack}
                       selectedSectionKey={finderSelectedSectionKey}
                       substepBody={
@@ -2036,14 +2311,12 @@ export function MovesPhaseStandaloneClient({
                   <span>aVa can draft. You review and save.</span>
                   <button
                     type="button"
-                    onClick={() =>
-                      void sendAvaMessage(
-                        `Draft proposed ${phase.code} inputs from approved upstream state and cite the source for each field. Do not invent missing evidence.`,
-                      )
-                    }
-                    disabled={avaStreaming}
+                    onClick={() => void requestAvaPhaseInputDrafts()}
+                    disabled={avaStreaming || avaDraftStatus === "loading"}
                   >
-                    Draft proposed inputs
+                    {avaDraftStatus === "loading"
+                      ? "Drafting..."
+                      : "Draft proposed inputs"}
                   </button>
                   <button
                     type="button"
@@ -2056,6 +2329,42 @@ export function MovesPhaseStandaloneClient({
                   >
                     Check blockers
                   </button>
+                </div>
+              ) : null}
+              {phase.phase >= 1 && avaDraftStatus !== "idle" ? (
+                <div className="mxw-ava-draft-list">
+                  {avaDraftError ? (
+                    <p role={avaDraftStatus === "error" ? "alert" : undefined}>
+                      {avaDraftError}
+                    </p>
+                  ) : null}
+                  {avaDraftStatus === "ready" &&
+                  avaDraftProposals.length > 0 ? (
+                    <>
+                      <span>
+                        {avaDraftProposals.length} cited draft
+                        {avaDraftProposals.length === 1 ? "" : "s"} ready.
+                      </span>
+                      {avaDraftProposals.slice(0, 4).map((proposal) => {
+                        const label =
+                          phaseCaptureSections.find(
+                            (section) => section.key === proposal.fieldKey,
+                          )?.label ?? proposal.fieldKey;
+                        return (
+                          <button
+                            key={proposal.fieldKey}
+                            type="button"
+                            onClick={() => {
+                              setFinderSelectedSectionKey(proposal.fieldKey);
+                              setWorkspaceView("phase");
+                            }}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </>
+                  ) : null}
                 </div>
               ) : null}
               {phase.avaQuestions.map((question) => (
@@ -2511,8 +2820,14 @@ function workflowIndexForSelectedSection(
 }
 
 function PhaseContractStepsCanvas({
+  avaDraftProposalsByKey,
+  avaDraftSaveStatus,
+  avaDraftValues,
   comingUpExpanded,
+  onApplyAvaDraftProposal,
+  onDismissAvaDraftProposal,
   onPhaseCaptureValueChange,
+  onSaveAvaDraft,
   onSelectSection,
   onSelectSubstep,
   onToggleComingUp,
@@ -2527,8 +2842,14 @@ function PhaseContractStepsCanvas({
   substepBody,
   substepIndex,
 }: {
+  avaDraftProposalsByKey: Map<string, AvaPhaseInputProposal>;
+  avaDraftSaveStatus: Record<string, AvaDraftSaveStatus>;
+  avaDraftValues: PhaseCaptureValues;
   comingUpExpanded: boolean;
+  onApplyAvaDraftProposal: (proposal: AvaPhaseInputProposal) => void;
+  onDismissAvaDraftProposal: (fieldKey: string) => void;
   onPhaseCaptureValueChange: (key: string, value: string) => void;
+  onSaveAvaDraft: (fieldKey: string) => void;
   onSelectSection: (key: string | null) => void;
   onSelectSubstep: (index: number) => void;
   onToggleComingUp: () => void;
@@ -2580,6 +2901,16 @@ function PhaseContractStepsCanvas({
         phaseCaptureSaveStatus,
       )
     : null;
+  const selectedAvaProposal = selectedSection
+    ? (avaDraftProposalsByKey.get(selectedSection.key) ?? null)
+    : null;
+  const selectedAvaDraftValue = selectedSection
+    ? (avaDraftValues[selectedSection.key] ?? null)
+    : null;
+  const selectedAvaDraftApplied = selectedAvaDraftValue !== null;
+  const selectedAvaDraftStatus = selectedSection
+    ? avaDraftSaveStatus[selectedSection.key]
+    : undefined;
   const detailTitle =
     selectedSection?.label ??
     phase.substeps[substepIndex]?.label ??
@@ -2694,6 +3025,53 @@ function PhaseContractStepsCanvas({
         {selectedSection ? (
           <div className="mxw-contract-form">
             <p>{selectedSection.description}</p>
+            {selectedAvaProposal ? (
+              <div className="mxw-ava-draft-card">
+                <div className="mxw-ava-draft-card-head">
+                  <span>aVa proposal</span>
+                  <b>
+                    {selectedAvaProposal.materiality === "governed_material"
+                      ? "Review required"
+                      : "Draft available"}
+                  </b>
+                </div>
+                <dl>
+                  <div>
+                    <dt>Current</dt>
+                    <dd>{selectedAvaProposal.currentValue || "Missing"}</dd>
+                  </div>
+                  <div>
+                    <dt>Basis</dt>
+                    <dd>{selectedAvaProposal.evidenceRefs.join(" · ")}</dd>
+                  </div>
+                </dl>
+                <p>{selectedAvaProposal.rationale}</p>
+                <blockquote>{selectedAvaProposal.proposedValue}</blockquote>
+                {selectedAvaProposal.unresolvedGaps.length > 0 ? (
+                  <ul>
+                    {selectedAvaProposal.unresolvedGaps.map((gap) => (
+                      <li key={gap}>{gap}</li>
+                    ))}
+                  </ul>
+                ) : null}
+                <div className="mxw-ava-draft-actions">
+                  <button
+                    type="button"
+                    onClick={() => onApplyAvaDraftProposal(selectedAvaProposal)}
+                  >
+                    Use draft
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onDismissAvaDraftProposal(selectedAvaProposal.fieldKey)
+                    }
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            ) : null}
             {selectedSection.structured === "facts" ? (
               <FinderFactsTable
                 rawValue={phaseCaptureValues[selectedSection.key] ?? ""}
@@ -2712,6 +3090,33 @@ function PhaseContractStepsCanvas({
               rows={selectedSection.structured === "facts" ? 4 : 6}
               value={phaseCaptureValues[selectedSection.key] ?? ""}
             />
+            {selectedAvaDraftApplied ? (
+              <div className="mxw-ava-local-draft">
+                <span>
+                  aVa draft is local. Save changes to persist this field.
+                </span>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => onSaveAvaDraft(selectedSection.key)}
+                    disabled={selectedAvaDraftStatus === "saving"}
+                  >
+                    {selectedAvaDraftStatus === "saving"
+                      ? "Saving..."
+                      : "Save changes"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onDismissAvaDraftProposal(selectedSection.key)
+                    }
+                    disabled={selectedAvaDraftStatus === "saving"}
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            ) : null}
             {detailStatus?.tone === "error" ? (
               <p className="mxw-capture-save-error" role="alert">
                 {phaseCaptureSaveErrors[selectedSection.key] ||
@@ -6030,6 +6435,9 @@ function MovesStandaloneStyles() {
 .mxw-ava-assist{display:grid;gap:7px;border:1px solid rgba(0,87,184,.14);background:var(--blue-tint);border-radius:11px;padding:10px;margin:0 0 10px}
 .mxw-ava-assist span{font-size:11.5px;color:var(--blue);font-weight:850}
 .mxw-ava-body .mxw-ava-assist button{background:#fff;border-color:rgba(0,87,184,.18);color:var(--blue);font-weight:850;margin-bottom:0}
+.mxw-ava-draft-list{display:grid;gap:7px;border:1px solid rgba(29,158,117,.18);background:#f0fbf7;border-radius:11px;padding:10px;margin:0 0 10px}
+.mxw-ava-draft-list span{font-size:11.5px;color:#147c5b;font-weight:850}
+.mxw-ava-body .mxw-ava-draft-list button{background:#fff;border-color:rgba(29,158,117,.2);color:#147c5b;font-weight:850;margin-bottom:0}
 .mxw-ava-body button{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:9px 12px;font-size:12.5px;color:var(--ink-2);cursor:pointer;margin-bottom:6px}
 .mxw-ava-body button:disabled{opacity:.5;cursor:default}
 .mxw-ava-thread{display:flex;flex-direction:column;gap:10px}
@@ -6167,6 +6575,21 @@ function MovesStandaloneStyles() {
 .mxw-contract-detail-top>span.done~b{background:rgba(29,158,117,.13);color:#147c5b}
 .mxw-contract-form{display:grid;gap:13px}
 .mxw-contract-form p{margin:0;color:#4d5d79;font-size:14px;line-height:1.5}
+.mxw-ava-draft-card{display:grid;gap:10px;border:1px solid rgba(29,158,117,.22);border-radius:11px;background:#f8fffc;padding:12px}
+.mxw-ava-draft-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mxw-ava-draft-card-head span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#147c5b;font-weight:900}
+.mxw-ava-draft-card-head b{border-radius:999px;background:#e1f5ec;color:#147c5b;font-size:11px;padding:4px 8px}
+.mxw-ava-draft-card dl{display:grid;gap:8px;margin:0}
+.mxw-ava-draft-card dt{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#708099;font-weight:850}
+.mxw-ava-draft-card dd{margin:2px 0 0;color:#23324c;font-size:12.5px;line-height:1.4}
+.mxw-ava-draft-card blockquote{margin:0;border-left:3px solid #1d9e75;padding:8px 10px;background:#fff;color:#0c1a3a;font-size:13px;line-height:1.45;white-space:pre-wrap}
+.mxw-ava-draft-card ul{margin:0;padding-left:18px;color:#5b6c8a;font-size:12px;line-height:1.4}
+.mxw-ava-draft-actions,.mxw-ava-local-draft{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.mxw-ava-draft-actions button,.mxw-ava-local-draft button{border:1px solid rgba(12,26,58,.16);border-radius:9px;background:#fff;color:#0c1a3a;font-size:12.5px;font-weight:800;padding:8px 10px;cursor:pointer}
+.mxw-ava-draft-actions button:first-child,.mxw-ava-local-draft button:first-child{background:#0c1a3a;border-color:#0c1a3a;color:#fff}
+.mxw-ava-local-draft{border:1px solid rgba(186,117,23,.22);border-radius:10px;background:#fffbf2;padding:10px}
+.mxw-ava-local-draft span{color:#7a560d;font-size:12.5px;font-weight:750}
+.mxw-ava-local-draft div{display:flex;gap:8px;flex-wrap:wrap}
 .mxw-contract-input{width:100%;resize:vertical;border:1px solid rgba(12,26,58,.16);border-radius:10px;background:#fff;color:#0c1a3a;font:inherit;font-size:13.5px;line-height:1.45;padding:12px}
 .mxw-contract-input:focus{outline:2px solid rgba(42,90,168,.18);border-color:rgba(42,90,168,.45)}
 .mxw-contract-legacy-body>.mxw-zone:first-child,.mxw-contract-legacy-body>.mxw-review:first-child,.mxw-contract-legacy-body>.mxw-action-panel:first-child{margin-top:0}
