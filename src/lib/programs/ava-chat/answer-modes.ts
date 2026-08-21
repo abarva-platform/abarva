@@ -156,6 +156,13 @@ export function classifyMovesAvaQuestion(
   return { mode: "phase_guidance", isOutOfScope: false };
 }
 
+export function shouldBuildMovesAvaPacketForMode(args: {
+  hardeningEnabled: boolean;
+  mode: MovesAvaAnswerMode;
+}): boolean {
+  return args.hardeningEnabled || args.mode === "phase_input_draft";
+}
+
 /**
  * Bounded redirect text for a broad ad hoc strategy question. Keeps the
  * boundary clean: acknowledge the question is broader than the Move, offer

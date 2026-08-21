@@ -138,6 +138,7 @@ import {
   buildMovesAvaChatPacket,
   classifyMovesAvaQuestion,
   formatMovesAvaChatPacketForPrompt,
+  shouldBuildMovesAvaPacketForMode,
 } from "@/lib/programs/ava-chat";
 import {
   buildDeterministicMovesAvaStatusAnswer,
@@ -813,8 +814,14 @@ export async function POST(request: Request) {
           },
           "moves_ava_chat_hardening",
         );
+        const movesAvaMode = message
+          ? classifyMovesAvaQuestion(message).mode
+          : null;
         if (
-          movesAvaChatHardeningEnabled &&
+          shouldBuildMovesAvaPacketForMode({
+            hardeningEnabled: movesAvaChatHardeningEnabled,
+            mode: movesAvaMode ?? "phase_guidance",
+          }) &&
           surface.startsWith("/strategic-moves/") &&
           message
         ) {
@@ -888,11 +895,10 @@ export async function POST(request: Request) {
               },
               message,
             );
-            const { mode } = classifyMovesAvaQuestion(message);
-            movesAvaHardeningBlock = formatMovesAvaChatPacketForPrompt(
-              packet,
-              mode,
-            );
+            const mode = movesAvaMode ?? "phase_guidance";
+            movesAvaHardeningBlock = movesAvaChatHardeningEnabled
+              ? formatMovesAvaChatPacketForPrompt(packet, mode)
+              : "";
             if (mode === "phase_input_draft" && promptPhase >= 1) {
               const valuesByPhase = await loadPhaseCaptureValuesByPhaseForAva(
                 tenancy,
@@ -912,8 +918,9 @@ export async function POST(request: Request) {
                     "No cited draft is available from approved upstream phase inputs. Add source context first or write the field manually.",
                 });
             }
-            movesAvaDeterministicAnswer =
-              buildDeterministicMovesAvaStatusAnswer(packet, mode);
+            movesAvaDeterministicAnswer = movesAvaChatHardeningEnabled
+              ? buildDeterministicMovesAvaStatusAnswer(packet, mode)
+              : null;
           } catch {
             // Never block the chat turn on the hardening layer — fall back
             // to the existing phase-pack-only prompt.
