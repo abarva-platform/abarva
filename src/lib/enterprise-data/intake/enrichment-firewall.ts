@@ -56,6 +56,14 @@ export interface DeclaredEnrichmentColumn {
    */
   targetAttribute: string;
   vocabulary?: string[];
+  /**
+   * Required when there is no vocabulary: the reason this column cannot be enumerated.
+   *
+   * An open field is sometimes correct -- a product name or a count cannot be listed ahead of
+   * time -- but it must be an argued exception rather than an omission, because an open field is
+   * also how a taxonomy gets widened one reasonable-looking row at a time.
+   */
+  unenumerable?: string;
   /** Recorded columns a proposal for this attribute may cite. Drives the dependency hash that
    * makes invalidation exact rather than blunt. */
   evidenceFields: string[];
@@ -65,6 +73,50 @@ export interface EnrichmentSchema {
   schemaVersion: string;
   templateFile: string;
   columns: DeclaredEnrichmentColumn[];
+}
+
+/**
+ * Checks a schema itself, before any data touches it.
+ *
+ * The three schemas shipped today are asserted directly in tests, but a schema added later would
+ * not be -- so the rules live here, where every schema meets them.
+ */
+export function validateEnrichmentSchema(schema: EnrichmentSchema): { ok: boolean; errors: string[] } {
+  const errors: string[] = [];
+  const seenColumns = new Set<string>();
+
+  for (const column of schema.columns) {
+    if (seenColumns.has(column.column)) {
+      errors.push(`Column "${column.column}" is declared twice in ${schema.templateFile}.`);
+    }
+    seenColumns.add(column.column);
+
+    if (basisForColumn(column.column) !== column.basis) {
+      errors.push(
+        `Column "${column.column}" declares basis "${column.basis}" but its prefix says "${basisForColumn(column.column)}". The prefix is what every loader reads, so the two cannot disagree.`,
+      );
+    }
+
+    if (!column.evidenceFields.length) {
+      errors.push(
+        `Column "${column.column}" cites no evidence fields. Its dependency hash would cover nothing and invalidation would silently stop working.`,
+      );
+    }
+
+    if (!column.vocabulary?.length && !column.unenumerable) {
+      errors.push(
+        `Column "${column.column}" has neither a closed vocabulary nor a stated reason it cannot be enumerated. An open field must be argued, not omitted.`,
+      );
+    }
+
+    if (column.vocabulary?.length && !column.vocabulary.includes("unknown")) {
+      errors.push(
+        `Column "${column.column}" has a closed vocabulary with no "unknown". A model with no way to decline will pick the nearest wrong answer.`,
+      );
+    }
+  }
+
+  return { ok: errors.length === 0, errors };
 }
 
 /* -- hashing ------------------------------------------------------------------------------- */
