@@ -5,10 +5,20 @@ import {
   tenancyErrorResponse,
 } from "@/app/api/v1/programs/_auth";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
+import {
+  downloadArtifactBytes,
+  getMoveArtifactForTenant,
+} from "@/lib/programs/deliverables/move-artifacts";
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getProgramById } from "@/lib/programs/queries";
 import { parseStageReadinessWorkbookXlsx } from "@/lib/programs/stage-readiness-workbooks/parser";
-import { persistStageReadinessProposalSet } from "@/lib/programs/stage-readiness-workbooks/proposals";
+import {
+  persistStageReadinessProposalReview,
+  persistStageReadinessProposalSet,
+  STAGE_READINESS_PROPOSAL_SET_ARTIFACT_TYPE,
+  type StageReadinessProposalDecision,
+  type StageReadinessWorkbookProposalSet,
+} from "@/lib/programs/stage-readiness-workbooks/proposals";
 import { buildStageReadinessWorkbookSpec } from "@/lib/programs/stage-readiness-workbooks/resolver";
 import { renderStageReadinessWorkbookXlsx } from "@/lib/programs/stage-readiness-workbooks/xlsx";
 
@@ -33,6 +43,87 @@ function safeFilenamePart(value: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return normalized || "move";
+}
+
+function isReviewDisposition(
+  value: unknown,
+): value is StageReadinessProposalDecision["disposition"] {
+  return (
+    value === "accepted" || value === "rejected" || value === "needs_validation"
+  );
+}
+
+async function readProposalSetArtifact(
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+  programId: string,
+  artifactId: string,
+  expectedVersion: number | null,
+): Promise<
+  | {
+      ok: true;
+      artifactVersion: number | null;
+      proposalSet: StageReadinessWorkbookProposalSet;
+    }
+  | { ok: false; status: number; detail: string }
+> {
+  const artifact = await getMoveArtifactForTenant(ctx, artifactId);
+  if (!artifact) {
+    return {
+      ok: false,
+      status: 404,
+      detail: "proposal set artifact not found",
+    };
+  }
+  if (artifact.move_id !== programId) {
+    return {
+      ok: false,
+      status: 404,
+      detail: "proposal set artifact not found",
+    };
+  }
+  if (artifact.artifact_type !== STAGE_READINESS_PROPOSAL_SET_ARTIFACT_TYPE) {
+    return {
+      ok: false,
+      status: 400,
+      detail: "artifact is not a stage readiness proposal set",
+    };
+  }
+  if (expectedVersion !== null && artifact.version !== expectedVersion) {
+    return {
+      ok: false,
+      status: 409,
+      detail: "proposal set version changed; reload before reviewing",
+    };
+  }
+
+  const downloaded = await downloadArtifactBytes(ctx, artifactId);
+  if (!downloaded) {
+    return {
+      ok: false,
+      status: 424,
+      detail: "proposal set bytes are not available for review",
+    };
+  }
+
+  try {
+    const proposalSet = JSON.parse(
+      downloaded.bytes.toString("utf-8"),
+    ) as StageReadinessWorkbookProposalSet;
+    if (proposalSet.moveId !== programId) {
+      return {
+        ok: false,
+        status: 400,
+        detail: "proposal set move id does not match this route",
+      };
+    }
+    return { ok: true, artifactVersion: artifact.version, proposalSet };
+  } catch {
+    return {
+      ok: false,
+      status: 422,
+      detail: "proposal set artifact is not valid JSON",
+    };
+  }
 }
 
 export async function GET(
@@ -184,6 +275,18 @@ export async function POST(
                 persistedProposalSet.proposalSet.summary.pendingCount,
               answerStates:
                 persistedProposalSet.proposalSet.summary.answerStates,
+              proposals: persistedProposalSet.proposalSet.proposals.map(
+                (proposal) => ({
+                  proposalId: proposal.proposalId,
+                  questionId: proposal.questionId,
+                  dimensionId: proposal.dimensionId,
+                  requirement: proposal.requirement,
+                  question: proposal.question,
+                  response: proposal.response,
+                  answerState: proposal.answerState,
+                  disposition: proposal.disposition,
+                }),
+              ),
               blobStored: persistedProposalSet.blobStored,
               message:
                 "Workbook responses were stored as pending proposals. They do not feed P2 until accepted.",
@@ -198,6 +301,143 @@ export async function POST(
     } catch {
       console.error(
         "[POST /api/v1/programs/:programId/stage-readiness-workbook]",
+        error,
+      );
+      return Response.json({ error: "internal_error" }, { status: 500 });
+    }
+  }
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ programId: string }> },
+) {
+  try {
+    const ctx = await requireTenancy();
+    const { programId } = await params;
+    const program = await getProgramById(ctx, programId);
+    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+    if (program.archivedAt || program.deletedAt) {
+      return Response.json({ error: "archived_or_deleted" }, { status: 410 });
+    }
+
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return Response.json(
+        { error: "bad_request", detail: "invalid JSON body" },
+        { status: 400 },
+      );
+    }
+
+    const payload = body as {
+      proposalSetArtifactId?: unknown;
+      proposalSetArtifactVersion?: unknown;
+      decisions?: unknown;
+    };
+    const proposalSetArtifactId =
+      typeof payload.proposalSetArtifactId === "string"
+        ? payload.proposalSetArtifactId.trim()
+        : "";
+    if (!proposalSetArtifactId) {
+      return Response.json(
+        { error: "bad_request", detail: "proposalSetArtifactId is required" },
+        { status: 400 },
+      );
+    }
+    const proposalSetArtifactVersion =
+      typeof payload.proposalSetArtifactVersion === "number" &&
+      Number.isInteger(payload.proposalSetArtifactVersion)
+        ? payload.proposalSetArtifactVersion
+        : null;
+    if (!Array.isArray(payload.decisions) || payload.decisions.length === 0) {
+      return Response.json(
+        { error: "bad_request", detail: "at least one decision is required" },
+        { status: 400 },
+      );
+    }
+    const decisions: StageReadinessProposalDecision[] = [];
+    for (const decision of payload.decisions) {
+      const item = decision as {
+        proposalId?: unknown;
+        disposition?: unknown;
+        note?: unknown;
+      };
+      const proposalId =
+        typeof item.proposalId === "string" ? item.proposalId.trim() : "";
+      if (!proposalId || !isReviewDisposition(item.disposition)) {
+        return Response.json(
+          {
+            error: "bad_request",
+            detail:
+              "each decision requires proposalId and disposition accepted/rejected/needs_validation",
+          },
+          { status: 400 },
+        );
+      }
+      decisions.push({
+        proposalId,
+        disposition: item.disposition,
+        note: typeof item.note === "string" ? item.note : undefined,
+      });
+    }
+
+    const loaded = await readProposalSetArtifact(
+      ctx,
+      programId,
+      proposalSetArtifactId,
+      proposalSetArtifactVersion,
+    );
+    if (!loaded.ok) {
+      return Response.json(
+        { error: "proposal_set_unavailable", detail: loaded.detail },
+        { status: loaded.status },
+      );
+    }
+
+    const persistedReview = await persistStageReadinessProposalReview({
+      ctx,
+      program,
+      proposalSet: loaded.proposalSet,
+      sourceProposalSetArtifactId: proposalSetArtifactId,
+      sourceProposalSetArtifactVersion: loaded.artifactVersion,
+      decisions,
+    });
+
+    return Response.json({
+      ok: true,
+      proposalReview: {
+        reviewId: persistedReview.proposalReview.reviewId,
+        artifactId: persistedReview.artifactId,
+        artifactVersion: persistedReview.artifactVersion,
+        status:
+          persistedReview.proposalReview.summary.pendingCount === 0 &&
+          persistedReview.proposalReview.summary.needsValidationCount === 0
+            ? "accepted"
+            : "review_required",
+        proposalSetId: persistedReview.proposalReview.proposalSetId,
+        acceptedCount: persistedReview.proposalReview.summary.acceptedCount,
+        rejectedCount: persistedReview.proposalReview.summary.rejectedCount,
+        needsValidationCount:
+          persistedReview.proposalReview.summary.needsValidationCount,
+        pendingCount: persistedReview.proposalReview.summary.pendingCount,
+        acceptedAnswerStates:
+          persistedReview.proposalReview.summary.acceptedAnswerStates,
+        readiness: persistedReview.proposalReview.summary.readiness,
+        acceptedResponses:
+          persistedReview.proposalReview.acceptedResponses.length,
+        blobStored: persistedReview.blobStored,
+        message:
+          "Human review recorded. Only accepted workbook responses can feed the next phase context.",
+      },
+    });
+  } catch (error) {
+    try {
+      return tenancyErrorResponse(error);
+    } catch {
+      console.error(
+        "[PATCH /api/v1/programs/:programId/stage-readiness-workbook]",
         error,
       );
       return Response.json({ error: "internal_error" }, { status: 500 });

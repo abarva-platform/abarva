@@ -15,7 +15,10 @@ import {
 import {
   buildPhaseNavigationStatus,
   parseRequestedPhase,
+  type StageReadinessReviewGateStatus,
 } from "@/lib/programs/phase-navigation-status";
+import { listMoveArtifacts } from "@/lib/programs/deliverables/move-artifacts";
+import { STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE } from "@/lib/programs/stage-readiness-workbooks/proposals";
 import { requireTenancy } from "@/app/api/v1/programs/_auth";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import {
@@ -47,6 +50,33 @@ interface Props {
     blockedPhase?: string | string[];
     phaseLocked?: string | string[];
   }>;
+}
+
+function numberFromMetadata(
+  metadata: Record<string, unknown> | null | undefined,
+  key: string,
+): number {
+  const value = metadata?.[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function p1ToP2ReviewStatusFromMetadata(
+  metadata: Record<string, unknown> | null | undefined,
+): StageReadinessReviewGateStatus | null {
+  if (!metadata) return null;
+  const readiness =
+    metadata.readiness && typeof metadata.readiness === "object"
+      ? (metadata.readiness as Record<string, unknown>)
+      : {};
+  return {
+    acceptedCount: numberFromMetadata(metadata, "acceptedCount"),
+    pendingCount: numberFromMetadata(metadata, "pendingCount"),
+    rejectedCount: numberFromMetadata(metadata, "rejectedCount"),
+    needsValidationCount: numberFromMetadata(metadata, "needsValidationCount"),
+    ready: numberFromMetadata(readiness, "ready"),
+    insufficientEvidence: numberFromMetadata(readiness, "insufficientEvidence"),
+    unknown: numberFromMetadata(readiness, "unknown"),
+  };
 }
 
 export default async function StrategicMovePhaseWorkspacePage({
@@ -92,6 +122,25 @@ export default async function StrategicMovePhaseWorkspacePage({
   // would contradict the Overview/Documents/File Cabinet. Redirect forward-
   // looking requests back to the true current phase.
   const currentPhase = move.currentPhase ?? 0;
+  let p1ToP2WorkbookReview: StageReadinessReviewGateStatus | null = null;
+  try {
+    const tctx = await requireTenancy();
+    const approvalArtifacts = await listMoveArtifacts(tctx, moveId, {
+      family: "approval_artifact",
+      currentOnly: true,
+    });
+    const currentReview = approvalArtifacts.find(
+      (artifact) =>
+        artifact.phase === 1 &&
+        artifact.artifact_type ===
+          STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE,
+    );
+    p1ToP2WorkbookReview = p1ToP2ReviewStatusFromMetadata(
+      currentReview?.metadata,
+    );
+  } catch {
+    p1ToP2WorkbookReview = null;
+  }
   const blockedPhaseFromQuery =
     parseRequestedPhase(resolvedSearchParams.blockedPhase) ??
     parseRequestedPhase(resolvedSearchParams.phaseLocked);
@@ -99,6 +148,7 @@ export default async function StrategicMovePhaseWorkspacePage({
     currentPhase,
     requestedPhase: parsedPhase,
     blockedPhase: blockedPhaseFromQuery,
+    p1ToP2WorkbookReview,
   });
   if (!phaseNavigationStatus.canOpenRequestedPhase) {
     // Carry the reason as a query param — a silent redirect here reads as a
