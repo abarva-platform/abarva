@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 
 import { AppShell } from "@/components/shell/AppShell";
 import { HomeEnterpriseLandscapeV2 } from "@/components/home/enterprise-landscape-v2/HomeEnterpriseLandscapeV2";
@@ -7,7 +6,6 @@ import {
   SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2,
   type HomeEnterpriseLandscapeV2Model,
 } from "@/components/home/enterprise-landscape-v2/homeEnterpriseLandscapeV2Model";
-import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import {
   listContract360,
@@ -24,10 +22,7 @@ import {
   type HomeLandscape,
 } from "@/lib/home/landscape-read-adapter";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
-import {
-  ACTIVE_CLIENT_COOKIE,
-  resolveTenant,
-} from "@/lib/tenant/resolveTenant";
+import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
 export const metadata: Metadata = {
   title: "Enterprise Landscape | AbarVa",
@@ -200,7 +195,8 @@ function withCanonicalEconomics(
       return {
         ...anchor,
         value: "Not established",
-        detail: "No observed prior-year figure — every canonical fact is declared",
+        detail:
+          "No observed prior-year figure — every canonical fact is declared",
       };
     }
     if (anchor.label === "Committed base" && vendors?.money) {
@@ -234,21 +230,26 @@ function withCanonicalEconomics(
       title: `${applications.distinctNameCount.toLocaleString()} distinct systems catalogued`,
       body: applications.sampleEntities.slice(0, 3).join(" · "),
       evidence: `${applications.evidenceCount.toLocaleString()} evidence references · canonical build ${landscape.buildVersion}`,
-      tone: applications.evidenceCount > 0 ? ("teal" as const) : ("amber" as const),
+      tone:
+        applications.evidenceCount > 0 ? ("teal" as const) : ("amber" as const),
     },
     infrastructure && {
       label: "INFRASTRUCTURE",
       title: `${infrastructure.distinctNameCount.toLocaleString()} platforms carrying the estate`,
       body: infrastructure.sampleEntities.slice(0, 3).join(" · "),
       evidence: `${infrastructure.evidenceCount.toLocaleString()} evidence references`,
-      tone: infrastructure.evidenceCount > 0 ? ("teal" as const) : ("amber" as const),
+      tone:
+        infrastructure.evidenceCount > 0
+          ? ("teal" as const)
+          : ("amber" as const),
     },
     dataAssets && {
       label: "DATA",
       title: `${dataAssets.distinctNameCount.toLocaleString()} data assets and integrations`,
       body: dataAssets.sampleEntities.slice(0, 3).join(" · "),
       evidence: `${dataAssets.evidenceCount.toLocaleString()} evidence references`,
-      tone: dataAssets.evidenceCount > 0 ? ("teal" as const) : ("amber" as const),
+      tone:
+        dataAssets.evidenceCount > 0 ? ("teal" as const) : ("amber" as const),
     },
   ].filter((d): d is NonNullable<typeof d> => Boolean(d));
 
@@ -266,12 +267,14 @@ function withCanonicalEconomics(
       tone: "teal" as const,
     },
     ...(notSupplied.length
-      ? [{
-          label: "Not supplied",
-          value: String(notSupplied.length),
-          detail: notSupplied.join(", "),
-          tone: "amber" as const,
-        }]
+      ? [
+          {
+            label: "Not supplied",
+            value: String(notSupplied.length),
+            detail: notSupplied.join(", "),
+            tone: "amber" as const,
+          },
+        ]
       : []),
   ];
 
@@ -335,12 +338,10 @@ function withSourceSummaryAnchors(
 function MeridianHome({
   tenantName,
   sourceSummary,
-  landscape,
   orientationPack,
 }: {
   tenantName: string;
   sourceSummary: HomeSourceRuntimeSummary | null;
-  landscape: HomeLandscape | null;
   orientationPack: OrientationPack | null;
 }) {
   if (orientationPack) {
@@ -423,7 +424,6 @@ function MeridianHome({
             ))}
           </div>
 
-
           <SourceRuntimeSummaryPanel summary={sourceSummary} />
 
           <section className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
@@ -458,19 +458,12 @@ function MeridianHome({
 }
 
 export default async function HomePage() {
-  const [client, tenant, cookieStore] = await Promise.all([
-    getActiveClientRow().catch(() => null),
-    resolveTenant().catch(() => null),
-    cookies().catch(() => null),
-  ]);
-  const activeClientCookie = cookieStore?.get(ACTIVE_CLIENT_COOKIE)?.value;
-  const cookieClientKey =
-    activeClientCookie === "skyharbor" ? "skyharbor" : null;
-  const clientKey = client?.key ?? tenant?.appClientKey ?? cookieClientKey;
+  const tenant = await resolveTenant().catch(() => null);
+  const clientKey = tenant?.appClientKey ?? null;
   const tenantName =
     canonicalClientDisplayName({
       key: clientKey,
-      name: client?.name ?? tenant?.displayName,
+      name: tenant?.displayName,
     }) ??
     tenant?.displayName ??
     "AbarVa Client";
@@ -521,7 +514,6 @@ export default async function HomePage() {
     <MeridianHome
       tenantName={tenantName}
       sourceSummary={sourceSummary}
-      landscape={landscape}
       orientationPack={orientationPack}
     />
   );

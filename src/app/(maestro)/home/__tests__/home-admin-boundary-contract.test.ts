@@ -24,7 +24,7 @@ describe("Home/Admin boundary contract", () => {
     );
   });
 
-  it("keeps context and architecture inside the approved eight-tab Home canvas", () => {
+  it("keeps context and architecture inside the approved Home canvas", () => {
     const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
     const modelSource = readRepoFile(
       "src/components/home/enterprise-landscape-v2/homeEnterpriseLandscapeV2Model.ts",
@@ -34,17 +34,16 @@ describe("Home/Admin boundary contract", () => {
     );
 
     expect(modelSource).not.toContain('{ id: "context", label: "Context" }');
-    expect(modelSource).not.toContain(
-      '{ id: "architecture", label: "Architecture" }',
-    );
     for (const label of [
-      "Summary",
-      "Patterns",
-      "Economics",
-      "Posture",
-      "Coherence",
-      "Trajectory",
-      "Watchlist",
+      "Who we are",
+      "Strategy",
+      "How we're measured",
+      "What we run",
+      "What people say",
+      "Where we stand",
+      "Explore the data",
+      "Architecture",
+      "Architecture Evidence",
       "Evidence",
     ]) {
       expect(modelSource).toContain(`label: "${label}"`);
@@ -53,15 +52,15 @@ describe("Home/Admin boundary contract", () => {
     expect(modelSource).toContain("architectureLayers");
     expect(modelSource).toContain("architectureDeployments");
     expect(modelSource).toContain("architectureArchetypes");
-    expect(modelSource).toContain("Data and AI flow");
+    expect(modelSource).toContain("Data and AI architecture");
     expect(modelSource).toContain("Global airline operating context");
     expect(modelSource).toContain("Applications, cloud, data, integration");
-    expect(modelSource).toContain("On-prem / private DC");
+    expect(modelSource).toContain("Private DC / mainframe");
     expect(modelSource).toContain("AI agents and copilots");
-    expect(componentSource).toContain('context: "patterns"');
-    expect(componentSource).toContain('architecture: "coherence"');
-    expect(componentSource).toContain("Why enterprise coherence is difficult");
+    expect(componentSource).toContain("AUTHORED_TAB_IDS");
     expect(componentSource).toContain("ArchitectureFlowMap model={model}");
+    expect(componentSource).toContain("GeneratedArchitectureEvidencePanel");
+    expect(componentSource).toContain("OrientationBlockPanel");
     expect(pageSource).toContain("<HomeEnterpriseLandscapeV2");
     expect(pageSource).not.toContain("HomeSurface");
     expect(pageSource).not.toContain("buildHomeRuntimeSummarySnapshot");
@@ -133,5 +132,20 @@ describe("Home/Admin boundary contract", () => {
     expect(proxySource).toContain(
       'NextResponse.redirect(new URL("/home", request.url), 302)',
     );
+  });
+
+  it("binds visible Home tenant identity to the canonical tenant resolver", () => {
+    const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
+    const queueSource = readRepoFile("src/app/(maestro)/home/queue/page.tsx");
+
+    expect(pageSource).toContain('from "@/lib/tenant/resolveTenant"');
+    expect(pageSource).toContain("const tenant = await resolveTenant()");
+    expect(pageSource).toContain(
+      "const clientKey = tenant?.appClientKey ?? null",
+    );
+    expect(pageSource).not.toContain('from "@/lib/active-client"');
+    expect(pageSource).not.toContain("ACTIVE_CLIENT_COOKIE");
+    expect(queueSource).toContain('redirect("/home")');
+    expect(queueSource).not.toContain("airline-demo-new");
   });
 });
