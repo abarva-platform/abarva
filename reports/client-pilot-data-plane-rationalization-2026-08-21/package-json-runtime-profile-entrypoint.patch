@@ -1,0 +1,12 @@
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@
+     "audit:home-ava-build-readiness": "npx tsx scripts/data-build/audit-home-ava-build-readiness.ts",
+     "build:candidate-version": "npx tsx scripts/data-build/build-candidate-version.ts",
+     "audit:candidate-version": "npx tsx scripts/data-build/audit-candidate-version.ts",
+     "audit:active-candidate-separation": "npx tsx scripts/data-build/audit-active-candidate-separation.ts",
++    "audit:client-pilot-runtime-profile": "node scripts/audit/client-pilot-runtime-profile.mjs",
+     "audit:moves-context-extract": "node scripts/audit/moves-context-extract.mjs",
+     "audit:moves-evidence-lifecycle": "node scripts/audit/moves-evidence-lifecycle.mjs",
+     "audit:moves-agent-assist-blueprint": "node scripts/audit/moves-agent-assist-blueprint.mjs",

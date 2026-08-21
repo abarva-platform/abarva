@@ -1,0 +1,2847 @@
+{
+  "generatedAt": "2026-08-21",
+  "mutation": "none",
+  "routeFileCount": 564,
+  "routeFiles": [
+    "src/app/(maestro)/admin/agent-readiness/page.tsx",
+    "src/app/(maestro)/admin/audit/page.tsx",
+    "src/app/(maestro)/admin/candidate-preview/page.tsx",
+    "src/app/(maestro)/admin/cfo-attestation/page.tsx",
+    "src/app/(maestro)/admin/compliance/page.tsx",
+    "src/app/(maestro)/admin/connectors/[connectorId]/page.tsx",
+    "src/app/(maestro)/admin/connectors/[connectorId]/reconnect/page.tsx",
+    "src/app/(maestro)/admin/connectors/page.tsx",
+    "src/app/(maestro)/admin/context-layer/approval-queue/page.tsx",
+    "src/app/(maestro)/admin/context-layer/evidence-map/page.tsx",
+    "src/app/(maestro)/admin/context-layer/page.tsx",
+    "src/app/(maestro)/admin/context-layer/syncs/page.tsx",
+    "src/app/(maestro)/admin/context-layer/templates/page.tsx",
+    "src/app/(maestro)/admin/context-layer/triage/page.tsx",
+    "src/app/(maestro)/admin/context-layer/uploads/page.tsx",
+    "src/app/(maestro)/admin/corpus/page.tsx",
+    "src/app/(maestro)/admin/cross-program-signals/page.tsx",
+    "src/app/(maestro)/admin/customer/page.tsx",
+    "src/app/(maestro)/admin/data-layer-explorer/page.tsx",
+    "src/app/(maestro)/admin/data-trust/page.tsx",
+    "src/app/(maestro)/admin/deploy-crawl/page.tsx",
+    "src/app/(maestro)/admin/depth-scorecard/api/route.ts",
+    "src/app/(maestro)/admin/depth-scorecard/page.tsx",
+    "src/app/(maestro)/admin/dossiers/page.tsx",
+    "src/app/(maestro)/admin/inbox/page.tsx",
+    "src/app/(maestro)/admin/instruments/page.tsx",
+    "src/app/(maestro)/admin/knowledge-preview/page.tsx",
+    "src/app/(maestro)/admin/onboarding/[session]/confirm/page.tsx",
+    "src/app/(maestro)/admin/ops/page.tsx",
+    "src/app/(maestro)/admin/outputs/page.tsx",
+    "src/app/(maestro)/admin/page.tsx",
+    "src/app/(maestro)/admin/patternops/page.tsx",
+    "src/app/(maestro)/admin/pilot-package/page.tsx",
+    "src/app/(maestro)/admin/policies/page.tsx",
+    "src/app/(maestro)/admin/production-readiness/page.tsx",
+    "src/app/(maestro)/admin/programs/approvals/[requestId]/page.tsx",
+    "src/app/(maestro)/admin/programs/approvals/page.tsx",
+    "src/app/(maestro)/admin/programs/page.tsx",
+    "src/app/(maestro)/admin/releases/page.tsx",
+    "src/app/(maestro)/admin/segments/[segmentId]/page.tsx",
+    "src/app/(maestro)/admin/segments/page.tsx",
+    "src/app/(maestro)/admin/setup/cxo-intel/cfo/page.tsx",
+    "src/app/(maestro)/admin/setup/cxo-intel/cio/page.tsx",
+    "src/app/(maestro)/admin/setup/cxo-intel/page.tsx",
+    "src/app/(maestro)/admin/setup/loader/page.tsx",
+    "src/app/(maestro)/admin/setup/page.tsx",
+    "src/app/(maestro)/admin/system-role-acknowledgment/page.tsx",
+    "src/app/(maestro)/admin/templates/page.tsx",
+    "src/app/(maestro)/admin/users-access/notifications/page.tsx",
+    "src/app/(maestro)/admin/users-access/page.tsx",
+    "src/app/(maestro)/admin/users-access/sso-configuration/page.tsx",
+    "src/app/(maestro)/admin/workshops/page.tsx",
+    "src/app/(maestro)/docs/page.tsx",
+    "src/app/(maestro)/docs/reasoning/about/page.tsx",
+    "src/app/(maestro)/docs/reasoning/api/page.tsx",
+    "src/app/(maestro)/docs/reasoning/changelog/page.tsx",
+    "src/app/(maestro)/docs/reasoning/demo/page.tsx",
+    "src/app/(maestro)/docs/reasoning/page.tsx",
+    "src/app/(maestro)/docs/reasoning/patterns/page.tsx",
+    "src/app/(maestro)/docs/reasoning/quickstart/page.tsx",
+    "src/app/(maestro)/dossier/[threadId]/page.tsx",
+    "src/app/(maestro)/engagements/[engagementId]/charter/page.tsx",
+    "src/app/(maestro)/engagements/[engagementId]/deliverables/[deliverableId]/page.tsx",
+    "src/app/(maestro)/engagements/[engagementId]/deliverables/page.tsx",
+    "src/app/(maestro)/engagements/[engagementId]/page.tsx",
+    "src/app/(maestro)/engagements/[engagementId]/topics/page.tsx",
+    "src/app/(maestro)/engagements/[engagementId]/turns/page.tsx",
+    "src/app/(maestro)/engagements/new/page.tsx",
+    "src/app/(maestro)/engagements/page.tsx",
+    "src/app/(maestro)/engineering/observability/page.tsx",
+    "src/app/(maestro)/engineering/traces/page.tsx",
+    "src/app/(maestro)/evidence-ledger/page.tsx",
+    "src/app/(maestro)/home/enterprise-landscape/page.tsx",
+    "src/app/(maestro)/home/learn/[section]/[slug]/page.tsx",
+    "src/app/(maestro)/home/learn/[section]/page.tsx",
+    "src/app/(maestro)/home/learn/page.tsx",
+    "src/app/(maestro)/home/page.tsx",
+    "src/app/(maestro)/home/queue/page.tsx",
+    "src/app/(maestro)/intelligence/enterprise-landscape/page.tsx",
+    "src/app/(maestro)/intelligence/page.tsx",
+    "src/app/(maestro)/learn/page.tsx",
+    "src/app/(maestro)/operations/portfolio/page.tsx",
+    "src/app/(maestro)/persons/[personId]/page.tsx",
+    "src/app/(maestro)/platform/admin/approvals/page.tsx",
+    "src/app/(maestro)/platform/admin/audit/page.tsx",
+    "src/app/(maestro)/platform/admin/build-progress/page.tsx",
+    "src/app/(maestro)/platform/admin/connectors/page.tsx",
+    "src/app/(maestro)/platform/admin/data-governance/page.tsx",
+    "src/app/(maestro)/platform/admin/data/page.tsx",
+    "src/app/(maestro)/platform/admin/experience-gallery/page.tsx",
+    "src/app/(maestro)/platform/admin/intelligence/page.tsx",
+    "src/app/(maestro)/platform/admin/new-client/page.tsx",
+    "src/app/(maestro)/platform/admin/page.tsx",
+    "src/app/(maestro)/platform/admin/pilot/[tenantKey]/page.tsx",
+    "src/app/(maestro)/platform/admin/production-readiness/page.tsx",
+    "src/app/(maestro)/platform/admin/quality/page.tsx",
+    "src/app/(maestro)/platform/admin/quarantine/page.tsx",
+    "src/app/(maestro)/platform/admin/releases/page.tsx",
+    "src/app/(maestro)/platform/admin/users/page.tsx",
+    "src/app/(maestro)/platform/data/new/page.tsx",
+    "src/app/(maestro)/platform/data/page.tsx",
+    "src/app/(maestro)/platform/page.tsx",
+    "src/app/(maestro)/platform/style-preview/page.tsx",
+    "src/app/(maestro)/platform/users/new/page.tsx",
+    "src/app/(maestro)/preview/deliverables/[deliverableCode]/page.tsx",
+    "src/app/(maestro)/preview/investor/page.tsx",
+    "src/app/(maestro)/preview/programs/[programSlug]/page.tsx",
+    "src/app/(maestro)/preview/programs/page.tsx",
+    "src/app/(maestro)/programs/[id]/assets/discovery-kit/page.tsx",
+    "src/app/(maestro)/programs/[id]/workshops/page.tsx",
+    "src/app/(maestro)/setup/files/page.tsx",
+    "src/app/(maestro)/source/approvals/page.tsx",
+    "src/app/(maestro)/source/capabilities/page.tsx",
+    "src/app/(maestro)/source/compare/page.tsx",
+    "src/app/(maestro)/source/events/[eventId]/approval/page.tsx",
+    "src/app/(maestro)/source/events/[eventId]/artifacts/[artifactId]/page.tsx",
+    "src/app/(maestro)/source/events/[eventId]/file-cabinet/page.tsx",
+    "src/app/(maestro)/source/events/[eventId]/gate/page.tsx",
+    "src/app/(maestro)/source/events/[eventId]/page.tsx",
+    "src/app/(maestro)/source/events/[eventId]/report/page.tsx",
+    "src/app/(maestro)/source/events/[eventId]/scorecard/page.tsx",
+    "src/app/(maestro)/source/events/[eventId]/value/page.tsx",
+    "src/app/(maestro)/source/events/[eventId]/vendors/[vendorId]/page.tsx",
+    "src/app/(maestro)/source/events/[eventId]/workspace/page.tsx",
+    "src/app/(maestro)/source/events/page.tsx",
+    "src/app/(maestro)/source/learn/[slug]/page.tsx",
+    "src/app/(maestro)/source/learn/page.tsx",
+    "src/app/(maestro)/source/new/page.tsx",
+    "src/app/(maestro)/source/page.tsx",
+    "src/app/(maestro)/source/patterns/[patternId]/page.tsx",
+    "src/app/(maestro)/source/patterns/page.tsx",
+    "src/app/(maestro)/source/portfolio/page.tsx",
+    "src/app/(maestro)/source/preview/workspace/page.tsx",
+    "src/app/(maestro)/source/queue/page.tsx",
+    "src/app/(maestro)/source/renewal/[contractId]/execution/page.tsx",
+    "src/app/(maestro)/source/renewal/[contractId]/page.tsx",
+    "src/app/(maestro)/source/setup/page.tsx",
+    "src/app/(maestro)/source/sourcing-opportunities/page.tsx",
+    "src/app/(maestro)/source/value/page.tsx",
+    "src/app/(maestro)/source/vendor-portfolio/[contractId]/page.tsx",
+    "src/app/(maestro)/source/vendor-portfolio/page.tsx",
+    "src/app/(maestro)/strategic-moves/[moveId]/evidence/page.tsx",
+    "src/app/(maestro)/strategic-moves/[moveId]/page.tsx",
+    "src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx",
+    "src/app/(maestro)/strategic-moves/[moveId]/trace/page.tsx",
+    "src/app/(maestro)/strategic-moves/[moveId]/workspace/page.tsx",
+    "src/app/(maestro)/strategic-moves/expert-kernel/dossier/page.tsx",
+    "src/app/(maestro)/strategic-moves/living/page.tsx",
+    "src/app/(maestro)/strategic-moves/manage/page.tsx",
+    "src/app/(maestro)/strategic-moves/new/page.tsx",
+    "src/app/(maestro)/strategic-moves/page.tsx",
+    "src/app/(maestro)/tenant/[tenantSlug]/page.tsx",
+    "src/app/(maestro)/tenant/[tenantSlug]/programs/[programSlug]/deliverables/[deliverableCode]/page.tsx",
+    "src/app/(maestro)/tenant/[tenantSlug]/programs/[programSlug]/page.tsx",
+    "src/app/(maestro)/tenant/[tenantSlug]/programs/[programSlug]/phase/[phaseNum]/page.tsx",
+    "src/app/(maestro)/tenant/[tenantSlug]/programs/page.tsx",
+    "src/app/(maestro)/tenant/[tenantSlug]/tower/[surface]/page.tsx",
+    "src/app/(maestro)/tenant/[tenantSlug]/tower/page.tsx",
+    "src/app/(maestro)/tower/command/page.tsx",
+    "src/app/(maestro)/tower/legacy/page.tsx",
+    "src/app/(maestro)/tower/page.tsx",
+    "src/app/(public)/architecture/agents/page.tsx",
+    "src/app/(public)/architecture/data-plane/page.tsx",
+    "src/app/(public)/architecture/governance/page.tsx",
+    "src/app/(public)/architecture/knowledge-fabric/page.tsx",
+    "src/app/(public)/architecture/page.tsx",
+    "src/app/(public)/architecture/synthesis/page.tsx",
+    "src/app/(public)/atlas/page.tsx",
+    "src/app/(public)/contact/page.tsx",
+    "src/app/(public)/contradictions/[id]/page.tsx",
+    "src/app/(public)/contradictions/page.tsx",
+    "src/app/(public)/digest/feed.atom/route.ts",
+    "src/app/(public)/digest/feed.json/route.ts",
+    "src/app/(public)/digest/feed.xml/route.ts",
+    "src/app/(public)/digest/page.tsx",
+    "src/app/(public)/editorial/[slug]/page.tsx",
+    "src/app/(public)/editorial/page.tsx",
+    "src/app/(public)/how-it-works/frameworks/ai-it-productivity/page.tsx",
+    "src/app/(public)/how-it-works/it-productivity-comparison/page.tsx",
+    "src/app/(public)/how-it-works/page.tsx",
+    "src/app/(public)/known-limitations/page.tsx",
+    "src/app/(public)/model-card/page.tsx",
+    "src/app/(public)/page.tsx",
+    "src/app/(public)/patterns/[slug]/page.tsx",
+    "src/app/(public)/patterns/page.tsx",
+    "src/app/(public)/responsible-ai/acknowledgment/page.tsx",
+    "src/app/(public)/responsible-ai/page.tsx",
+    "src/app/(public)/responsible-ai/training/page.tsx",
+    "src/app/(public)/robots.txt/route.ts",
+    "src/app/(public)/sitemap.xml/route.ts",
+    "src/app/(public)/solutions/page.tsx",
+    "src/app/(public)/status/page.tsx",
+    "src/app/(public)/subprocessors/page.tsx",
+    "src/app/access-denied/page.tsx",
+    "src/app/access/page.tsx",
+    "src/app/api/admin/connectors/[id]/test/route.ts",
+    "src/app/api/admin/context-layer/bulk-upload/review/route.ts",
+    "src/app/api/admin/context-layer/bulk-upload/route.ts",
+    "src/app/api/admin/context-layer/bulk-upload/status/route.ts",
+    "src/app/api/admin/context-layer/corpus-import/route.ts",
+    "src/app/api/admin/context-layer/csv-upload/route.ts",
+    "src/app/api/admin/context-layer/loader/commit/route.ts",
+    "src/app/api/admin/context-layer/loader/landing-zone/route.ts",
+    "src/app/api/admin/context-layer/loader/steward-chat/route.ts",
+    "src/app/api/admin/context-layer/loader/understand/route.ts",
+    "src/app/api/admin/context-layer/manifest-load/route.ts",
+    "src/app/api/admin/context-layer/triage/[id]/route.ts",
+    "src/app/api/admin/context-layer/triage/route.ts",
+    "src/app/api/admin/diagnostics/enterprise-context/route.ts",
+    "src/app/api/admin/evidence-quality-export/route.ts",
+    "src/app/api/admin/inbox/route.ts",
+    "src/app/api/admin/invite/route.ts",
+    "src/app/api/admin/parallel-run-invariants/route.ts",
+    "src/app/api/admin/pricing/client-profiles/[id]/approve/route.ts",
+    "src/app/api/admin/pricing/client-profiles/import/route.ts",
+    "src/app/api/admin/pricing/client-profiles/route.ts",
+    "src/app/api/admin/pricing/rate-cards/[id]/approve/route.ts",
+    "src/app/api/admin/pricing/rate-cards/import/route.ts",
+    "src/app/api/admin/pricing/rate-cards/route.ts",
+    "src/app/api/admin/production-readiness/deployment-status/route.ts",
+    "src/app/api/admin/production-readiness/route.ts",
+    "src/app/api/admin/programs/approvals/[requestId]/route.ts",
+    "src/app/api/admin/programs/approvals/export/route.ts",
+    "src/app/api/admin/programs/approvals/route.ts",
+    "src/app/api/admin/quarantine/[id]/hard-delete/route.ts",
+    "src/app/api/admin/quarantine/[id]/release/route.ts",
+    "src/app/api/admin/seed-clerk-metadata/route.ts",
+    "src/app/api/admin/setup-control/route.ts",
+    "src/app/api/admin/steward-stats/route.ts",
+    "src/app/api/admin/switch-tenant/route.ts",
+    "src/app/api/admin/upload-dataset/route.ts",
+    "src/app/api/admin/users/provision/route.ts",
+    "src/app/api/ai-liability/responsible-ai-acknowledgment/route.ts",
+    "src/app/api/ai-liability/responsible-ai-training/route.ts",
+    "src/app/api/ai-liability/system-role-acknowledgment/route.ts",
+    "src/app/api/auth/access-eligibility/route.ts",
+    "src/app/api/auth/demo-code-sign-in/route.ts",
+    "src/app/api/chat/agent/route.ts",
+    "src/app/api/chat/route.ts",
+    "src/app/api/chat/step/route.ts",
+    "src/app/api/contact/route.ts",
+    "src/app/api/context-ingestion/northstar/route.ts",
+    "src/app/api/context/demo/route.ts",
+    "src/app/api/corpus/[id]/approve/route.ts",
+    "src/app/api/corpus/[id]/publish/route.ts",
+    "src/app/api/corpus/[id]/retire/route.ts",
+    "src/app/api/corpus/[id]/review/route.ts",
+    "src/app/api/corpus/[id]/route.ts",
+    "src/app/api/corpus/[id]/submit/route.ts",
+    "src/app/api/corpus/route.ts",
+    "src/app/api/corpus/search/route.ts",
+    "src/app/api/cron/board-pack/route.ts",
+    "src/app/api/cron/notifications-tick/health/route.ts",
+    "src/app/api/cron/notifications-tick/route.ts",
+    "src/app/api/data/turn/route.ts",
+    "src/app/api/data/upload/route.ts",
+    "src/app/api/debug/tower-substrate/route.ts",
+    "src/app/api/debug/vip/route.ts",
+    "src/app/api/dependencies/[id]/route.ts",
+    "src/app/api/dependencies/route.ts",
+    "src/app/api/dependencies/siblings/accept/route.ts",
+    "src/app/api/dependencies/siblings/route.ts",
+    "src/app/api/engage/[engagementId]/turn/route.ts",
+    "src/app/api/engagements/create/turn/route.ts",
+    "src/app/api/evidence/url-meta/route.ts",
+    "src/app/api/health/azure-connectivity/route.ts",
+    "src/app/api/health/postgres-disruption/route.ts",
+    "src/app/api/health/route.ts",
+    "src/app/api/home/know/ask/route.ts",
+    "src/app/api/home/summary-snapshot/route.ts",
+    "src/app/api/identity/turn/route.ts",
+    "src/app/api/instruments/[id]/approve/route.ts",
+    "src/app/api/instruments/[id]/download/route.ts",
+    "src/app/api/instruments/[id]/publish/route.ts",
+    "src/app/api/instruments/[id]/retire/route.ts",
+    "src/app/api/instruments/[id]/review/route.ts",
+    "src/app/api/instruments/[id]/route.ts",
+    "src/app/api/instruments/[id]/submit/route.ts",
+    "src/app/api/instruments/discovery-kit/[moveId]/evidence/route.ts",
+    "src/app/api/instruments/discovery-kit/[moveId]/route.ts",
+    "src/app/api/instruments/route.ts",
+    "src/app/api/intelligence/ask/export/route.ts",
+    "src/app/api/intelligence/ask/route.ts",
+    "src/app/api/intelligence/context-summary/route.ts",
+    "src/app/api/intelligence/insights/evaluate/route.ts",
+    "src/app/api/intelligence/insights/route.ts",
+    "src/app/api/intelligence/pattern/[code]/route.ts",
+    "src/app/api/intelligence/qa/route.ts",
+    "src/app/api/intelligence/query/route.ts",
+    "src/app/api/intelligence/refresh-events/route.ts",
+    "src/app/api/knowledge/chunk/route.ts",
+    "src/app/api/notifications/dispatch/route.ts",
+    "src/app/api/notifications/route.ts",
+    "src/app/api/onboarding/[session]/commit/route.ts",
+    "src/app/api/onboarding/[session]/status/route.ts",
+    "src/app/api/onboarding/upload/route.ts",
+    "src/app/api/operator/candidate-preview/route.ts",
+    "src/app/api/org-search/route.ts",
+    "src/app/api/programs/[id]/attachments/[attachmentId]/route.ts",
+    "src/app/api/programs/[id]/attachments/route.ts",
+    "src/app/api/programs/[id]/attachments/upload/route.ts",
+    "src/app/api/programs/[id]/deliverables/[deliverableId]/content-export/route.ts",
+    "src/app/api/programs/[id]/deliverables/[deliverableId]/export/route.ts",
+    "src/app/api/programs/[id]/discovery/template/route.ts",
+    "src/app/api/programs/[id]/primer-html/route.ts",
+    "src/app/api/programs/approve/route.ts",
+    "src/app/api/programs/data-readiness/route.ts",
+    "src/app/api/programs/expert-kernel/export/route.ts",
+    "src/app/api/programs/origination-draft/route.ts",
+    "src/app/api/programs/origination-submit/route.ts",
+    "src/app/api/programs/phase-gate/route.ts",
+    "src/app/api/programs/sponsor-commitment/route.ts",
+    "src/app/api/programs/stakeholder-success/route.ts",
+    "src/app/api/programs/synthesis/route.ts",
+    "src/app/api/programs/workspace/[moveId]/approved-inputs-pack/route.ts",
+    "src/app/api/programs/workspace/[moveId]/artifact/route.ts",
+    "src/app/api/programs/workspace/[moveId]/assemble-pattern/route.ts",
+    "src/app/api/programs/workspace/[moveId]/charter-preflight/route.ts",
+    "src/app/api/programs/workspace/[moveId]/evidence-readiness/route.ts",
+    "src/app/api/programs/workspace/[moveId]/upload/route.ts",
+    "src/app/api/reasoning/alerts/route.ts",
+    "src/app/api/reasoning/alerts/state/route.ts",
+    "src/app/api/reasoning/ask/route.ts",
+    "src/app/api/reasoning/audit/route.ts",
+    "src/app/api/reasoning/cascades/route.ts",
+    "src/app/api/reasoning/contradiction-templates/override/route.ts",
+    "src/app/api/reasoning/contradictions/resolve/route.ts",
+    "src/app/api/reasoning/demo-reset/route.ts",
+    "src/app/api/reasoning/demo-scenarios/route.ts",
+    "src/app/api/reasoning/digest/weekly/route.ts",
+    "src/app/api/reasoning/evidence/ingest/route.ts",
+    "src/app/api/reasoning/explain/route.ts",
+    "src/app/api/reasoning/feedback/route.ts",
+    "src/app/api/reasoning/gate-approval/route.ts",
+    "src/app/api/reasoning/gate-history/[instanceId]/route.ts",
+    "src/app/api/reasoning/gate-waiver/route.ts",
+    "src/app/api/reasoning/health-snapshot/route.ts",
+    "src/app/api/reasoning/health/route.ts",
+    "src/app/api/reasoning/missions/state/route.ts",
+    "src/app/api/reasoning/patterns/[patternId]/override/route.ts",
+    "src/app/api/reasoning/playground/evaluate/route.ts",
+    "src/app/api/reasoning/stage-synthesis/route.ts",
+    "src/app/api/reasoning/synthesis-cache/info/route.ts",
+    "src/app/api/reasoning/synthesis-preview/route.ts",
+    "src/app/api/reasoning/synthesis/export/[instanceId]/route.ts",
+    "src/app/api/reasoning/telemetry/export/route.ts",
+    "src/app/api/reasoning/telemetry/route.ts",
+    "src/app/api/request-access/route.ts",
+    "src/app/api/setup/files/[scope]/[artifactId]/download/route.ts",
+    "src/app/api/setup/initiatives/route.ts",
+    "src/app/api/source/synthesis/route.ts",
+    "src/app/api/source/workspace/contract/[contractId]/route.ts",
+    "src/app/api/tasks/route.ts",
+    "src/app/api/templates/[id]/approve/route.ts",
+    "src/app/api/templates/[id]/clone/route.ts",
+    "src/app/api/templates/[id]/instantiate/route.ts",
+    "src/app/api/templates/[id]/publish/route.ts",
+    "src/app/api/templates/[id]/retire/route.ts",
+    "src/app/api/templates/[id]/review/route.ts",
+    "src/app/api/templates/[id]/route.ts",
+    "src/app/api/templates/[id]/submit/route.ts",
+    "src/app/api/templates/route.ts",
+    "src/app/api/tower/ask/route.ts",
+    "src/app/api/tower/cio-chat/route.ts",
+    "src/app/api/tower/decision/route.ts",
+    "src/app/api/tower/initiative-detail/route.ts",
+    "src/app/api/tower/seed-demo/route.ts",
+    "src/app/api/tower/synthesis/route.ts",
+    "src/app/api/tower/upload/route.ts",
+    "src/app/api/tower/value-states/[moveId]/attest/route.ts",
+    "src/app/api/tower/value-states/[moveId]/route.ts",
+    "src/app/api/tower/value-states/route.ts",
+    "src/app/api/turn/[turnId]/trace/route.ts",
+    "src/app/api/v1/agent/attachments/[id]/route.ts",
+    "src/app/api/v1/agent/attachments/route.ts",
+    "src/app/api/v1/artifacts/[artifactId]/promote/route.ts",
+    "src/app/api/v1/artifacts/[artifactId]/route.ts",
+    "src/app/api/v1/atlas/ask/route.ts",
+    "src/app/api/v1/atlas/chat/route.ts",
+    "src/app/api/v1/atlas/observations/route.ts",
+    "src/app/api/v1/atlas/signals/[signalId]/route.ts",
+    "src/app/api/v1/deliverables/[deliverableId]/patterns/route.ts",
+    "src/app/api/v1/deliverables/generate-phase/route.ts",
+    "src/app/api/v1/deliverables/generate/route.ts",
+    "src/app/api/v1/deliverables/runs/[runId]/route.ts",
+    "src/app/api/v1/emergent/cohort/route.ts",
+    "src/app/api/v1/intelligence/brief/render-docx/route.ts",
+    "src/app/api/v1/intelligence/brief/render-pdf/route.ts",
+    "src/app/api/v1/intelligence/foundation/browse/route.ts",
+    "src/app/api/v1/intelligence/foundation/route.ts",
+    "src/app/api/v1/intelligence/signals/route.ts",
+    "src/app/api/v1/moves/audit-pack/route.ts",
+    "src/app/api/v1/moves/board-grade-business-case/route.ts",
+    "src/app/api/v1/moves/board-grade-cfo-pack/route.ts",
+    "src/app/api/v1/moves/board-grade-charter-skeleton/route.ts",
+    "src/app/api/v1/moves/board-grade-discover-brief/route.ts",
+    "src/app/api/v1/moves/board-grade-estimate-model/route.ts",
+    "src/app/api/v1/moves/board-grade-master-dossier/route.ts",
+    "src/app/api/v1/moves/board-grade-mobilize-packet/route.ts",
+    "src/app/api/v1/moves/board-grade-solution-architecture/route.ts",
+    "src/app/api/v1/moves/phs-command-center/generate/route.ts",
+    "src/app/api/v1/nexus/counter/route.ts",
+    "src/app/api/v1/nexus/persona/route.ts",
+    "src/app/api/v1/nexus/query/route.ts",
+    "src/app/api/v1/nexus/upload/route.ts",
+    "src/app/api/v1/patterns/[patternSlug]/deliverables/route.ts",
+    "src/app/api/v1/programs/[programId]/advance/route.ts",
+    "src/app/api/v1/programs/[programId]/approvals/[approvalId]/decide/route.ts",
+    "src/app/api/v1/programs/[programId]/approvals/route.ts",
+    "src/app/api/v1/programs/[programId]/approve-brief/route.ts",
+    "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/route.ts",
+    "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/download/route.ts",
+    "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/review-decision/route.ts",
+    "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/review-regenerate/route.ts",
+    "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/trace/route.ts",
+    "src/app/api/v1/programs/[programId]/artifacts/backfill/route.ts",
+    "src/app/api/v1/programs/[programId]/artifacts/route.ts",
+    "src/app/api/v1/programs/[programId]/artifacts/upload/route.ts",
+    "src/app/api/v1/programs/[programId]/charter-capture/route.ts",
+    "src/app/api/v1/programs/[programId]/current-state/deliverable/board/route.ts",
+    "src/app/api/v1/programs/[programId]/current-state/deliverable/narrative/route.ts",
+    "src/app/api/v1/programs/[programId]/current-state/deliverable/orchestrate/route.ts",
+    "src/app/api/v1/programs/[programId]/current-state/deliverable/persist/route.ts",
+    "src/app/api/v1/programs/[programId]/current-state/deliverable/route.ts",
+    "src/app/api/v1/programs/[programId]/current-state/evidence/[evidenceId]/approve/route.ts",
+    "src/app/api/v1/programs/[programId]/current-state/grounded-answer/route.ts",
+    "src/app/api/v1/programs/[programId]/current-state/ingest-doc/route.ts",
+    "src/app/api/v1/programs/[programId]/current-state/ingest/route.ts",
+    "src/app/api/v1/programs/[programId]/current-state/plan/route.ts",
+    "src/app/api/v1/programs/[programId]/current-state/readiness/route.ts",
+    "src/app/api/v1/programs/[programId]/current-state/recommendation/route.ts",
+    "src/app/api/v1/programs/[programId]/decision-options/route.ts",
+    "src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/publish/route.ts",
+    "src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/role-approvals/route.ts",
+    "src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off/route.ts",
+    "src/app/api/v1/programs/[programId]/deliverables/complete/route.ts",
+    "src/app/api/v1/programs/[programId]/design/intake/route.ts",
+    "src/app/api/v1/programs/[programId]/diagnose/intake/route.ts",
+    "src/app/api/v1/programs/[programId]/execute/route.ts",
+    "src/app/api/v1/programs/[programId]/flags/[flagId]/resolve/route.ts",
+    "src/app/api/v1/programs/[programId]/flags/route.ts",
+    "src/app/api/v1/programs/[programId]/generate/route.ts",
+    "src/app/api/v1/programs/[programId]/milestones/[milestoneId]/route.ts",
+    "src/app/api/v1/programs/[programId]/milestones/route.ts",
+    "src/app/api/v1/programs/[programId]/module/[key]/route.ts",
+    "src/app/api/v1/programs/[programId]/module/[key]/status/route.ts",
+    "src/app/api/v1/programs/[programId]/nexus/ask/route.ts",
+    "src/app/api/v1/programs/[programId]/nexus/current-state-brief/route.ts",
+    "src/app/api/v1/programs/[programId]/nexus/cxo-takeover/route.ts",
+    "src/app/api/v1/programs/[programId]/nexus/draft/route.ts",
+    "src/app/api/v1/programs/[programId]/nexus/threads/route.ts",
+    "src/app/api/v1/programs/[programId]/p0-brief/route.ts",
+    "src/app/api/v1/programs/[programId]/phase-capture/route.ts",
+    "src/app/api/v1/programs/[programId]/phase-gate-approval/route.ts",
+    "src/app/api/v1/programs/[programId]/phase-intelligence/route.ts",
+    "src/app/api/v1/programs/[programId]/phase-success-package/route.ts",
+    "src/app/api/v1/programs/[programId]/phase/route.ts",
+    "src/app/api/v1/programs/[programId]/playbook/route.ts",
+    "src/app/api/v1/programs/[programId]/pricing/config/route.ts",
+    "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/approve/route.ts",
+    "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/inputs/route.ts",
+    "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/route.ts",
+    "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/run/route.ts",
+    "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/validate/route.ts",
+    "src/app/api/v1/programs/[programId]/pricing/estimates/route.ts",
+    "src/app/api/v1/programs/[programId]/risks/[riskId]/route.ts",
+    "src/app/api/v1/programs/[programId]/risks/route.ts",
+    "src/app/api/v1/programs/[programId]/route.ts",
+    "src/app/api/v1/programs/[programId]/solution-options/approve/route.ts",
+    "src/app/api/v1/programs/[programId]/work-items/[workItemId]/route.ts",
+    "src/app/api/v1/programs/[programId]/work-items/route.ts",
+    "src/app/api/v1/programs/archive/restore/route.ts",
+    "src/app/api/v1/programs/archive/route.ts",
+    "src/app/api/v1/programs/expert-kernel/export/route.ts",
+    "src/app/api/v1/programs/originate/extract-brief/route.ts",
+    "src/app/api/v1/programs/originate/from-thread/route.ts",
+    "src/app/api/v1/programs/originate/route.ts",
+    "src/app/api/v1/programs/patterns/route.ts",
+    "src/app/api/v1/programs/route.ts",
+    "src/app/api/v1/sentinel/query/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/accept/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/body/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/client-final/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/enqueue-worker/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-comparison-xlsx/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-docx/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-html/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-pdf/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-xlsx/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/safe-repair/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/status/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/vendor-submission/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/vendor-submissions/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/generate/route.ts",
+    "src/app/api/v1/source/[eventId]/artifacts/upload/route.ts",
+    "src/app/api/v1/source/[eventId]/communications/draft/route.ts",
+    "src/app/api/v1/source/[eventId]/contract-evidence/import/route.ts",
+    "src/app/api/v1/source/[eventId]/contract-optimization/brief/route.ts",
+    "src/app/api/v1/source/[eventId]/cxo-report/route.ts",
+    "src/app/api/v1/source/[eventId]/deal-pack/route.ts",
+    "src/app/api/v1/source/[eventId]/door1/diagnose/route.ts",
+    "src/app/api/v1/source/[eventId]/evidence-requests/route.ts",
+    "src/app/api/v1/source/[eventId]/evidence/[requirementId]/answer/route.ts",
+    "src/app/api/v1/source/[eventId]/evidence/[requirementId]/template/route.ts",
+    "src/app/api/v1/source/[eventId]/facts/ingest-file/route.ts",
+    "src/app/api/v1/source/[eventId]/facts/ingest/route.ts",
+    "src/app/api/v1/source/[eventId]/facts/parse/commit/route.ts",
+    "src/app/api/v1/source/[eventId]/facts/parse/route.ts",
+    "src/app/api/v1/source/[eventId]/gate-criteria/[criterionId]/state/route.ts",
+    "src/app/api/v1/source/[eventId]/nexus/ask/route.ts",
+    "src/app/api/v1/source/[eventId]/stage/route.ts",
+    "src/app/api/v1/source/[eventId]/test-reset/route.ts",
+    "src/app/api/v1/source/artifacts/[artifactId]/download/route.ts",
+    "src/app/api/v1/source/events/[eventId]/approve/route.ts",
+    "src/app/api/v1/source/events/[eventId]/artifacts/route.ts",
+    "src/app/api/v1/source/events/[eventId]/gate-decision/route.ts",
+    "src/app/api/v1/source/events/[eventId]/gate/route.ts",
+    "src/app/api/v1/source/events/[eventId]/request-approval/route.ts",
+    "src/app/api/v1/source/events/[eventId]/request-changes/route.ts",
+    "src/app/api/v1/source/events/[eventId]/route-to-co-approver/route.ts",
+    "src/app/api/v1/source/events/[eventId]/route.ts",
+    "src/app/api/v1/source/events/route.ts",
+    "src/app/api/v1/source/work-items/route.ts",
+    "src/app/api/v1/threads/[threadId]/attach/route.ts",
+    "src/app/api/v1/threads/[threadId]/route.ts",
+    "src/app/api/v1/threads/[threadId]/save/route.ts",
+    "src/app/api/v1/tower/outcome-report/route.ts",
+    "src/app/api/v1/users/me/preferences/route.ts",
+    "src/app/api/webhooks/clerk/route.ts",
+    "src/app/api/webhooks/resend/health/route.ts",
+    "src/app/api/webhooks/resend/route.ts",
+    "src/app/api/webhooks/stripe/route.ts",
+    "src/app/api/workshops/[id]/approve/route.ts",
+    "src/app/api/workshops/[id]/assets/route.ts",
+    "src/app/api/workshops/[id]/publish/route.ts",
+    "src/app/api/workshops/[id]/render/route.ts",
+    "src/app/api/workshops/[id]/retire/route.ts",
+    "src/app/api/workshops/[id]/review/route.ts",
+    "src/app/api/workshops/[id]/route.ts",
+    "src/app/api/workshops/[id]/submit/route.ts",
+    "src/app/api/workshops/instances/route.ts",
+    "src/app/api/workshops/route.ts",
+    "src/app/auth-redirect/page.tsx",
+    "src/app/demo/agent-markdown-fixture/page.tsx",
+    "src/app/demo/explore/page.tsx",
+    "src/app/demo/page.tsx",
+    "src/app/demo/programs/new/page.tsx",
+    "src/app/investors/page.tsx",
+    "src/app/invite/[slug]/page.tsx",
+    "src/app/page.tsx",
+    "src/app/programs/[id]/page.tsx",
+    "src/app/programs/[id]/report/page.tsx",
+    "src/app/programs/expert-kernel/expert-review/export/route.ts",
+    "src/app/programs/new/page.tsx",
+    "src/app/programs/page.tsx",
+    "src/app/session-expired/page.tsx",
+    "src/app/setup/page.tsx",
+    "src/app/sign-in/[[...sign-in]]/page.tsx",
+    "src/app/signed-out/page.tsx",
+    "src/app/sponsor/[engagementId]/page.tsx",
+    "src/app/sponsor/page.tsx",
+    "src/app/tenant/[tenantSlug]/programs/[programSlug]/evidence/[evidenceId]/page.tsx"
+  ],
+  "tenantInputFileCount": 559,
+  "tenantInputFiles": [
+    {
+      "path": "datasets/tenant-inputs/README.md",
+      "bytes": 1873
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/00_enterprise_profile.csv",
+      "bytes": 1611
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
+      "bytes": 10631
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/02_org_ownership.csv",
+      "bytes": 23940
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/03_workforce_roles.csv",
+      "bytes": 5810
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/04_applications_systems.csv",
+      "bytes": 60889
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/05_data_assets_integrations.csv",
+      "bytes": 113411
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/06_infrastructure_platforms.csv",
+      "bytes": 387
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/07_vendors_contracts.csv",
+      "bytes": 40586
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/08_spend_value.csv",
+      "bytes": 2648
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/09_programs_initiatives.csv",
+      "bytes": 43323
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/10_ai_automation_use_cases.csv",
+      "bytes": 27705
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/11_risks_controls.csv",
+      "bytes": 56617
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/12_relationships.csv",
+      "bytes": 1247656
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/13_evidence_sources.csv",
+      "bytes": 8587
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/14_metrics_outcomes.csv",
+      "bytes": 59289
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/15_industry_context_patterns.csv",
+      "bytes": 46153
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/16_expert_lenses.csv",
+      "bytes": 2249
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/17_service_scope_managed_services.csv",
+      "bytes": 368
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/18_operational_process_evidence.csv",
+      "bytes": 342
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+      "bytes": 7746
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/SA09_AI_Tool_Usage_Feed.csv",
+      "bytes": 5117
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/SA10_AI_Value_Interview_Evidence.csv",
+      "bytes": 6089
+    },
+    {
+      "path": "datasets/tenant-inputs/active/apex-retail/current/SA11_AI_KPI_Operational_Outcome_Feed.csv",
+      "bytes": 4810
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/00_enterprise_profile.csv",
+      "bytes": 1819
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
+      "bytes": 12377
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/02_org_ownership.csv",
+      "bytes": 35047
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/03_workforce_roles.csv",
+      "bytes": 7074
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/04_applications_systems.csv",
+      "bytes": 108728
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/05_data_assets_integrations.csv",
+      "bytes": 59615
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/06_infrastructure_platforms.csv",
+      "bytes": 387
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/07_vendors_contracts.csv",
+      "bytes": 51189
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/08_spend_value.csv",
+      "bytes": 3018
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/09_programs_initiatives.csv",
+      "bytes": 63128
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/10_ai_automation_use_cases.csv",
+      "bytes": 75797
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/11_risks_controls.csv",
+      "bytes": 97835
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/12_relationships.csv",
+      "bytes": 364718
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/13_evidence_sources.csv",
+      "bytes": 8718
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/14_metrics_outcomes.csv",
+      "bytes": 96279
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/15_industry_context_patterns.csv",
+      "bytes": 72613
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/16_expert_lenses.csv",
+      "bytes": 2489
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/17_service_scope_managed_services.csv",
+      "bytes": 368
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/18_operational_process_evidence.csv",
+      "bytes": 342
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+      "bytes": 7643
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/SA09_AI_Tool_Usage_Feed.csv",
+      "bytes": 5068
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/SA10_AI_Value_Interview_Evidence.csv",
+      "bytes": 5983
+    },
+    {
+      "path": "datasets/tenant-inputs/active/first-capital-financial/current/SA11_AI_KPI_Operational_Outcome_Feed.csv",
+      "bytes": 4765
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/00_enterprise_profile.csv",
+      "bytes": 2365
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
+      "bytes": 6188
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/02_org_ownership.csv",
+      "bytes": 5050
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/03_workforce_roles.csv",
+      "bytes": 4572
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/04_applications_systems.csv",
+      "bytes": 13776
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/05_data_assets_integrations.csv",
+      "bytes": 17207
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/06_infrastructure_platforms.csv",
+      "bytes": 387
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/07_vendors_contracts.csv",
+      "bytes": 8199
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/08_spend_value.csv",
+      "bytes": 37252
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/09_programs_initiatives.csv",
+      "bytes": 8587
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/10_ai_automation_use_cases.csv",
+      "bytes": 3933
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/11_risks_controls.csv",
+      "bytes": 4312
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/12_relationships.csv",
+      "bytes": 281259
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/13_evidence_sources.csv",
+      "bytes": 8569
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/14_metrics_outcomes.csv",
+      "bytes": 7172
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/15_industry_context_patterns.csv",
+      "bytes": 2017
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/16_expert_lenses.csv",
+      "bytes": 2010
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/17_service_scope_managed_services.csv",
+      "bytes": 368
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/18_operational_process_evidence.csv",
+      "bytes": 342
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+      "bytes": 7576
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/SA09_AI_Tool_Usage_Feed.csv",
+      "bytes": 4972
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/SA10_AI_Value_Interview_Evidence.csv",
+      "bytes": 5927
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/SA11_AI_KPI_Operational_Outcome_Feed.csv",
+      "bytes": 4735
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/00_enterprise_profile.csv",
+      "bytes": 11112
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
+      "bytes": 36483
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/02_org_ownership.csv",
+      "bytes": 65331
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/03_workforce_roles.csv",
+      "bytes": 13577
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/04_applications_systems.csv",
+      "bytes": 107556
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/05_data_assets_integrations.csv",
+      "bytes": 52969
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/06_infrastructure_platforms.csv",
+      "bytes": 76793
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/07_vendors_contracts.csv",
+      "bytes": 11136
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/08_spend_value.csv",
+      "bytes": 32317
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/09_programs_initiatives.csv",
+      "bytes": 34598
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/10_ai_automation_use_cases.csv",
+      "bytes": 19484
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/11_risks_controls.csv",
+      "bytes": 29713
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/12_relationships.csv",
+      "bytes": 239994
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/13_evidence_sources.csv",
+      "bytes": 9496
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/14_metrics_outcomes.csv",
+      "bytes": 139078
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/15_industry_context_patterns.csv",
+      "bytes": 14487
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/16_expert_lenses.csv",
+      "bytes": 10240
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/17_service_scope_managed_services.csv",
+      "bytes": 4553
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/18_operational_process_evidence.csv",
+      "bytes": 55984
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+      "bytes": 7577
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/SA09_AI_Tool_Usage_Feed.csv",
+      "bytes": 5002
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/SA10_AI_Value_Interview_Evidence.csv",
+      "bytes": 5985
+    },
+    {
+      "path": "datasets/tenant-inputs/active/lakeshore-industries/current/SA11_AI_KPI_Operational_Outcome_Feed.csv",
+      "bytes": 4764
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
+      "bytes": 2785
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+      "bytes": 228296
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+      "bytes": 226051
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv",
+      "bytes": 314241
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv",
+      "bytes": 236275
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/05_data_assets_integrations.csv",
+      "bytes": 276315
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/06_infrastructure_platforms.csv",
+      "bytes": 7710
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv",
+      "bytes": 232284
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/08_it_budget_spend_value.csv",
+      "bytes": 373636
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv",
+      "bytes": 357409
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/10_ai_automation_use_cases.csv",
+      "bytes": 355446
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/11_risks_controls.csv",
+      "bytes": 244371
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/12_relationships.csv",
+      "bytes": 940032
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/13_evidence_sources.csv",
+      "bytes": 402579
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/14_metrics_outcomes.csv",
+      "bytes": 299489
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/15_industry_context_patterns.csv",
+      "bytes": 4637
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/16_expert_lenses.csv",
+      "bytes": 4553
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/17_managed_services_scope.csv",
+      "bytes": 260020
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/18_operational_process_evidence.csv",
+      "bytes": 233124
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/SA02_IT_Finance_Budget_Spend_Extract.csv",
+      "bytes": 30769
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/SA04_Program_Portfolio_Extract.csv",
+      "bytes": 7362
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+      "bytes": 7859
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/SA09_AI_Tool_Usage_Feed.csv",
+      "bytes": 5201
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/SA10_AI_Value_Interview_Evidence.csv",
+      "bytes": 6211
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current/SA11_AI_KPI_Operational_Outcome_Feed.csv",
+      "bytes": 4976
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/PROMOTION_READINESS_MANIFEST.md",
+      "bytes": 12786
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/00_enterprise_profile.csv",
+      "bytes": 2852
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/01_business_functions.csv",
+      "bytes": 12043
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/02_org_ownership.csv",
+      "bytes": 93071
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/03_workforce_roles.csv",
+      "bytes": 11027
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/04_applications_systems.csv",
+      "bytes": 243124
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/05_data_assets_integrations.csv",
+      "bytes": 258647
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/06_infrastructure_platforms.csv",
+      "bytes": 289252
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/07_vendors_contracts.csv",
+      "bytes": 35207
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/08_spend_value.csv",
+      "bytes": 68247
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/09_programs_initiatives.csv",
+      "bytes": 30548
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/10_ai_automation_use_cases.csv",
+      "bytes": 16825
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/11_risks_controls.csv",
+      "bytes": 28916
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/12_relationships.csv",
+      "bytes": 348805
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/13_evidence_sources.csv",
+      "bytes": 12267
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/14_metrics_outcomes.csv",
+      "bytes": 48310
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/15_industry_context_patterns.csv",
+      "bytes": 12398
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/16_expert_lenses.csv",
+      "bytes": 12851
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/17_service_scope_managed_services.csv",
+      "bytes": 2886
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/18_operational_process_evidence.csv",
+      "bytes": 155454
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+      "bytes": 7666
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/SA09_AI_Tool_Usage_Feed.csv",
+      "bytes": 5133
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/SA10_AI_Value_Interview_Evidence.csv",
+      "bytes": 5979
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/_pre-enrichment-backup-20260731/SA11_AI_KPI_Operational_Outcome_Feed.csv",
+      "bytes": 4776
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/00_enterprise_profile.csv",
+      "bytes": 3278
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+      "bytes": 24758
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+      "bytes": 32184
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/03_workforce_roles.csv",
+      "bytes": 34048
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
+      "bytes": 981426
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.xlsx",
+      "bytes": 158419
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/05_data_assets_integrations.csv",
+      "bytes": 477868
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/05_data_assets_integrations.xlsx",
+      "bytes": 67976
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/06_infrastructure_platforms.csv",
+      "bytes": 62266
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/06_infrastructure_platforms.xlsx",
+      "bytes": 25701
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/07_vendors_contracts.csv",
+      "bytes": 59415
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/08_spend_value.csv",
+      "bytes": 19561
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/09_programs_initiatives.csv",
+      "bytes": 23184
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/09_programs_initiatives.xlsx",
+      "bytes": 21517
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/10_ai_automation_use_cases.csv",
+      "bytes": 14983
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/11_risks_controls.csv",
+      "bytes": 41771
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/12_relationships.csv",
+      "bytes": 3217431
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/13_evidence_sources.csv",
+      "bytes": 24431
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/14_metrics_outcomes.csv",
+      "bytes": 23251
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/15_industry_context_patterns.csv",
+      "bytes": 13389
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/16_expert_lenses.csv",
+      "bytes": 8183
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/17_service_scope_managed_services.csv",
+      "bytes": 11990
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/18_operational_process_evidence.csv",
+      "bytes": 36739
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/19_data_analytics_platform_maturity.csv",
+      "bytes": 16842
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/19_data_analytics_platform_maturity.xlsx",
+      "bytes": 9460
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+      "bytes": 7666
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/SA09_AI_Tool_Usage_Feed.csv",
+      "bytes": 5133
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/SA10_AI_Value_Interview_Evidence.csv",
+      "bytes": 5979
+    },
+    {
+      "path": "datasets/tenant-inputs/active/skyharbor-air/current/SA11_AI_KPI_Operational_Outcome_Feed.csv",
+      "bytes": 4776
+    },
+    {
+      "path": "datasets/tenant-inputs/apex-retail/approved-content/home/design-contract-pack.json",
+      "bytes": 1273347
+    },
+    {
+      "path": "datasets/tenant-inputs/apex-retail/derived/relationship-graph.json",
+      "bytes": 1374460
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/interviews/executive_interviews.csv",
+      "bytes": 216408
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+      "bytes": 57529
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/01_business_functions.csv",
+      "bytes": 357193
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/02_org_ownership.csv",
+      "bytes": 266929
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/03_workforce_roles.csv",
+      "bytes": 289124
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/04_applications_systems.csv",
+      "bytes": 396878
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/05_data_assets_integrations.csv",
+      "bytes": 415805
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/06_infrastructure_platforms.csv",
+      "bytes": 255892
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/07_vendors_contracts.csv",
+      "bytes": 313715
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/08_spend_value.csv",
+      "bytes": 70999
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/09_programs_initiatives.csv",
+      "bytes": 371994
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/10_ai_automation_use_cases.csv",
+      "bytes": 374118
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/11_risks_controls.csv",
+      "bytes": 351336
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/12_relationships.csv",
+      "bytes": 327763
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/13_evidence_sources.csv",
+      "bytes": 156537
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/14_metrics_outcomes.csv",
+      "bytes": 315460
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/15_industry_context_patterns.csv",
+      "bytes": 237803
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/16_expert_lenses.csv",
+      "bytes": 176153
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/17_service_scope_managed_services.csv",
+      "bytes": 263172
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/first-capital-financial/rich-synthetic-2026-07-v3/18_operational_process_evidence.csv",
+      "bytes": 346249
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/interviews/executive_interviews.csv",
+      "bytes": 214737
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+      "bytes": 57538
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+      "bytes": 347110
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/02_org_ownership.csv",
+      "bytes": 256013
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/03_workforce_roles.csv",
+      "bytes": 280491
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/04_applications_systems.csv",
+      "bytes": 384421
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/05_data_assets_integrations.csv",
+      "bytes": 401678
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/06_infrastructure_platforms.csv",
+      "bytes": 248330
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/07_vendors_contracts.csv",
+      "bytes": 302710
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/08_spend_value.csv",
+      "bytes": 68273
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/09_programs_initiatives.csv",
+      "bytes": 363374
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/10_ai_automation_use_cases.csv",
+      "bytes": 364225
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/11_risks_controls.csv",
+      "bytes": 342176
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/12_relationships.csv",
+      "bytes": 314890
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/13_evidence_sources.csv",
+      "bytes": 151206
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/14_metrics_outcomes.csv",
+      "bytes": 304822
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/15_industry_context_patterns.csv",
+      "bytes": 225982
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/16_expert_lenses.csv",
+      "bytes": 170485
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/17_service_scope_managed_services.csv",
+      "bytes": 256706
+    },
+    {
+      "path": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/18_operational_process_evidence.csv",
+      "bytes": 337401
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital-financial/interviews/executive_interviews.csv",
+      "bytes": 216408
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital-financial/interviews/interview_coverage_matrix.csv",
+      "bytes": 1304
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital-financial/interviews/interview_data_dictionary.json",
+      "bytes": 1543
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital-financial/interviews/interview_guidance.md",
+      "bytes": 728
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital-financial/interviews/interview_question_bank.csv",
+      "bytes": 52162
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/approved-content/home/design-contract-pack.json",
+      "bytes": 1339576
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/derived/relationship-graph.json",
+      "bytes": 1250767
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/interviews/executive_interviews.csv",
+      "bytes": 307195
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/00_enterprise_profile.csv",
+      "bytes": 885
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/01_business_functions.csv",
+      "bytes": 206545
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/02_org_ownership.csv",
+      "bytes": 204470
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/03_workforce_roles.csv",
+      "bytes": 204185
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/04_applications_systems.csv",
+      "bytes": 210419
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/05_data_assets_integrations.csv",
+      "bytes": 268953
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/06_infrastructure_platforms.csv",
+      "bytes": 6719
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/07_vendors_contracts.csv",
+      "bytes": 206667
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/08_it_budget_spend_value.csv",
+      "bytes": 208369
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/09_programs_initiatives.csv",
+      "bytes": 267237
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/10_ai_automation_use_cases.csv",
+      "bytes": 268524
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/11_risks_controls.csv",
+      "bytes": 223732
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/12_relationships.csv",
+      "bytes": 220908
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/13_evidence_sources.csv",
+      "bytes": 233309
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/14_metrics_outcomes.csv",
+      "bytes": 231948
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/15_industry_context_patterns.csv",
+      "bytes": 5192
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/16_expert_lenses.csv",
+      "bytes": 5108
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/17_managed_services_scope.csv",
+      "bytes": 208747
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/18_operational_process_evidence.csv",
+      "bytes": 211409
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+      "bytes": 7563
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/SA09_AI_Tool_Usage_Feed.csv",
+      "bytes": 4988
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/SA10_AI_Value_Interview_Evidence.csv",
+      "bytes": 5903
+    },
+    {
+      "path": "datasets/tenant-inputs/first-capital/standard-2026-07-v3/SA11_AI_KPI_Operational_Outcome_Feed.csv",
+      "bytes": 4685
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/context-template-standard-v3-depth-proof.html",
+      "bytes": 1396
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/context-template-standard-v3-depth-proof.md",
+      "bytes": 448
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/context-template-standard-v3-generation-manifest.json",
+      "bytes": 4069
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/context-template-v3-semantic-depth-fix1-report.html",
+      "bytes": 1394
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/context-template-v3-semantic-depth-fix1-report.json",
+      "bytes": 7720
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/context-template-v3-semantic-depth-fix1-report.md",
+      "bytes": 1831
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/approved-candidate-story-blocks.json",
+      "bytes": 25424
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/approved-candidate-visual-specs.json",
+      "bytes": 13562
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/canonical-facts.json",
+      "bytes": 5582657
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/canonical-records.json",
+      "bytes": 2852999
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/context-gaps.csv",
+      "bytes": 569458
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/context-gaps.json",
+      "bytes": 1083824
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/entity-profiles.json",
+      "bytes": 409461
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/evidence-registry.csv",
+      "bytes": 40049
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/evidence-registry.json",
+      "bytes": 67523
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/graph-edges.csv",
+      "bytes": 555780
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/graph-edges.json",
+      "bytes": 1132857
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/graph-nodes.csv",
+      "bytes": 208143
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/graph-nodes.json",
+      "bytes": 516841
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/home-context-view.json",
+      "bytes": 18223
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/moves-context-view.json",
+      "bytes": 4099
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/render-pack.json",
+      "bytes": 59583
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/retrieval-chunks.json",
+      "bytes": 2739495
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/sa08-benefits-value-posture.json",
+      "bytes": 5373
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/source-context-view.json",
+      "bytes": 4176
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/tenant-generation-manifest.json",
+      "bytes": 5125
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/first-capital-financial/rich-synthetic-2026-07-v3/tower-dashboard-view.json",
+      "bytes": 4838
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/00_enterprise_profile.xlsx",
+      "bytes": 17097
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/01_business_functions.xlsx",
+      "bytes": 19982
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/02_org_ownership.xlsx",
+      "bytes": 18296
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/03_workforce_roles.xlsx",
+      "bytes": 20085
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/04_applications_systems.xlsx",
+      "bytes": 34046
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/05_data_assets_integrations.xlsx",
+      "bytes": 26422
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/06_infrastructure_platforms.xlsx",
+      "bytes": 22908
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/07_vendors_contracts.xlsx",
+      "bytes": 20308
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/08_it_budget_spend_value.xlsx",
+      "bytes": 22293
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/09_programs_initiatives.xlsx",
+      "bytes": 20008
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/10_ai_automation_use_cases.xlsx",
+      "bytes": 19041
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/11_risks_controls.xlsx",
+      "bytes": 21493
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/12_relationships.xlsx",
+      "bytes": 47777
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/13_evidence_sources.xlsx",
+      "bytes": 20038
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/14_metrics_outcomes.xlsx",
+      "bytes": 20864
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/15_industry_context_patterns.xlsx",
+      "bytes": 17068
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/16_expert_lenses.xlsx",
+      "bytes": 16847
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/17_managed_services_scope.xlsx",
+      "bytes": 18171
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/core-dimensions/18_operational_process_evidence.xlsx",
+      "bytes": 19529
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/evidence-manifest/evidence_manifest.csv",
+      "bytes": 38936
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/evidence-manifest/evidence_manifest.json",
+      "bytes": 52835
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/evidence_summary.csv",
+      "bytes": 38936
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/qa-report/preview-applications-systems.png",
+      "bytes": 2604673
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/qa-report/semantic-depth-fix1-applications-preview.png",
+      "bytes": 2635935
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/qa-report/semantic-depth-fix1-fraud-analyst-copilot.md",
+      "bytes": 1748
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/qa-report/tenant_depth_qa_report.json",
+      "bytes": 11879
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/qa-report/tenant_depth_qa_report.md",
+      "bytes": 2295
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/questionnaire-responses/01_business_functions.csv",
+      "bytes": 23717
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/questionnaire-responses/04_applications_systems.csv",
+      "bytes": 24021
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/questionnaire-responses/05_data_assets_integrations.csv",
+      "bytes": 24572
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/questionnaire-responses/07_vendors_contracts.csv",
+      "bytes": 23676
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/questionnaire-responses/08_it_budget_spend_value.csv",
+      "bytes": 24261
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/questionnaire-responses/11_risks_controls.csv",
+      "bytes": 23359
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/questionnaire-responses/14_metrics_outcomes.csv",
+      "bytes": 23598
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/questionnaire-responses/questionnaire_responses.csv",
+      "bytes": 166064
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/questionnaire-responses/questionnaire_responses.json",
+      "bytes": 215773
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/relationship-graph/edges.csv",
+      "bytes": 246437
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/relationship-graph/edges.json",
+      "bytes": 339795
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/relationship-graph/nodes.csv",
+      "bytes": 19059
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/relationship-graph/nodes.json",
+      "bytes": 37142
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/relationship_summary.csv",
+      "bytes": 246437
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/source-adapters/SA01_ServiceNow_CMDB_Extract_Template.xlsx",
+      "bytes": 22232
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/source-adapters/SA02_IT_Finance_Budget_Spend_Extract_Template.xlsx",
+      "bytes": 20812
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/source-adapters/SA03_Vendor_Contracts_Extract_Template.xlsx",
+      "bytes": 18274
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/source-adapters/SA04_Program_Portfolio_Extract_Template.xlsx",
+      "bytes": 17192
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/source-adapters/SA05_Cloud_Inventory_Extract_Template.xlsx",
+      "bytes": 16449
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/source-adapters/SA06_Incident_Problem_Change_Extract_Template.xlsx",
+      "bytes": 18677
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/tenant_depth_qa_report.json",
+      "bytes": 11879
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/tenant_depth_qa_report.md",
+      "bytes": 2295
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/tenant_generation_manifest.json",
+      "bytes": 16230
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/00_enterprise_profile.xlsx",
+      "bytes": 17143
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/01_business_functions.xlsx",
+      "bytes": 19864
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/02_org_ownership.xlsx",
+      "bytes": 18235
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/03_workforce_roles.xlsx",
+      "bytes": 19920
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/04_applications_systems.xlsx",
+      "bytes": 34878
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/05_data_assets_integrations.xlsx",
+      "bytes": 26135
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/06_infrastructure_platforms.xlsx",
+      "bytes": 22595
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/07_vendors_contracts.xlsx",
+      "bytes": 20009
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/08_it_budget_spend_value.xlsx",
+      "bytes": 22109
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/09_programs_initiatives.xlsx",
+      "bytes": 19915
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/10_ai_automation_use_cases.xlsx",
+      "bytes": 18911
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/11_risks_controls.xlsx",
+      "bytes": 21382
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/12_relationships.xlsx",
+      "bytes": 46393
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/13_evidence_sources.xlsx",
+      "bytes": 19905
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/14_metrics_outcomes.xlsx",
+      "bytes": 20693
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/15_industry_context_patterns.xlsx",
+      "bytes": 16997
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/16_expert_lenses.xlsx",
+      "bytes": 16766
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/17_managed_services_scope.xlsx",
+      "bytes": 18016
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/core-dimensions/18_operational_process_evidence.xlsx",
+      "bytes": 19643
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/evidence-manifest/evidence_manifest.csv",
+      "bytes": 35678
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/evidence-manifest/evidence_manifest.json",
+      "bytes": 48289
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/evidence_summary.csv",
+      "bytes": 35678
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/qa-report/finance_analytics_depth_cluster.md",
+      "bytes": 3310
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/qa-report/preview-applications-systems.png",
+      "bytes": 2511355
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/qa-report/preview-relationships.png",
+      "bytes": 6290209
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/qa-report/semantic-depth-fix1-agent-assist-member-service.md",
+      "bytes": 1695
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/qa-report/semantic-depth-fix1-applications-preview.png",
+      "bytes": 2534786
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/qa-report/semantic-depth-fix1-finance-analytics.md",
+      "bytes": 1713
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/qa-report/tenant_depth_qa_report.json",
+      "bytes": 14203
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/qa-report/tenant_depth_qa_report.md",
+      "bytes": 2353
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/questionnaire-responses/01_business_functions.csv",
+      "bytes": 21624
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/questionnaire-responses/04_applications_systems.csv",
+      "bytes": 21875
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/questionnaire-responses/05_data_assets_integrations.csv",
+      "bytes": 22438
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/questionnaire-responses/07_vendors_contracts.csv",
+      "bytes": 21496
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/questionnaire-responses/08_it_budget_spend_value.csv",
+      "bytes": 22043
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/questionnaire-responses/11_risks_controls.csv",
+      "bytes": 21203
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/questionnaire-responses/14_metrics_outcomes.csv",
+      "bytes": 21458
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/questionnaire-responses/questionnaire_responses.csv",
+      "bytes": 150997
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/questionnaire-responses/questionnaire_responses.json",
+      "bytes": 196148
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/relationship-graph/edges.csv",
+      "bytes": 224203
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/relationship-graph/edges.json",
+      "bytes": 309017
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/relationship-graph/nodes.csv",
+      "bytes": 17094
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/relationship-graph/nodes.json",
+      "bytes": 33685
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/relationship_summary.csv",
+      "bytes": 224203
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/source-adapters/SA01_ServiceNow_CMDB_Extract_Template.xlsx",
+      "bytes": 21758
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/source-adapters/SA02_IT_Finance_Budget_Spend_Extract_Template.xlsx",
+      "bytes": 20565
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/source-adapters/SA03_Vendor_Contracts_Extract_Template.xlsx",
+      "bytes": 17920
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/source-adapters/SA04_Program_Portfolio_Extract_Template.xlsx",
+      "bytes": 17102
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/source-adapters/SA05_Cloud_Inventory_Extract_Template.xlsx",
+      "bytes": 16278
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/source-adapters/SA06_Incident_Problem_Change_Extract_Template.xlsx",
+      "bytes": 18334
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/tenant_depth_qa_report.json",
+      "bytes": 14203
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/tenant_depth_qa_report.md",
+      "bytes": 2353
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/tenant_generation_manifest.json",
+      "bytes": 16224
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/approved-candidate-story-blocks.json",
+      "bytes": 25620
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/approved-candidate-visual-specs.json",
+      "bytes": 13467
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/canonical-facts.json",
+      "bytes": 5390128
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/canonical-records.json",
+      "bytes": 2708870
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/context-gaps.csv",
+      "bytes": 557980
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/context-gaps.json",
+      "bytes": 1072346
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/entity-profiles.json",
+      "bytes": 398745
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/evidence-registry.csv",
+      "bytes": 37249
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/evidence-registry.json",
+      "bytes": 64723
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/graph-edges.csv",
+      "bytes": 529780
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/graph-edges.json",
+      "bytes": 1106857
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/graph-nodes.csv",
+      "bytes": 192548
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/graph-nodes.json",
+      "bytes": 501246
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/home-context-view.json",
+      "bytes": 18216
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/moves-context-view.json",
+      "bytes": 4020
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/render-pack.json",
+      "bytes": 59657
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/retrieval-chunks.json",
+      "bytes": 2717069
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/sa08-benefits-value-posture.json",
+      "bytes": 5256
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/source-context-view.json",
+      "bytes": 4056
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/tenant-generation-manifest.json",
+      "bytes": 4890
+    },
+    {
+      "path": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3/tower-dashboard-view.json",
+      "bytes": 4882
+    },
+    {
+      "path": "datasets/tenant-inputs/lakeshore-holdings/approved-content/home/design-contract-pack.json",
+      "bytes": 372975
+    },
+    {
+      "path": "datasets/tenant-inputs/lakeshore-holdings/derived/relationship-graph.json",
+      "bytes": 304641
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/approved-content/home/design-contract-pack.json",
+      "bytes": 3540988
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/approved-content/home/story-blocks.json",
+      "bytes": 134727
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/approved-content/home/visual-specs.json",
+      "bytes": 319163
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/approved-content/tower/story-blocks.json",
+      "bytes": 173497
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/approved-content/tower/visual-specs.json",
+      "bytes": 234721
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/derived/ai-use-case-business-unit-map.json",
+      "bytes": 169186
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/derived/canonical-facts.json",
+      "bytes": 17132956
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/derived/context-gaps.json",
+      "bytes": 2017999
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/derived/entity-profiles.json",
+      "bytes": 1030136
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/derived/evidence-registry.json",
+      "bytes": 14070447
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/derived/interview-insights.json",
+      "bytes": 626467
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/derived/module-context/home-context-view.json",
+      "bytes": 407825
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/derived/module-context/moves-context-view.json",
+      "bytes": 233146
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/derived/module-context/sa08-benefits-posture.json",
+      "bytes": 6748
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/derived/module-context/tower-dashboard-view.json",
+      "bytes": 282697
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/derived/relationship-graph.json",
+      "bytes": 4391557
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/interviews/executive_interviews.csv",
+      "bytes": 305565
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/00_enterprise_profile.csv",
+      "bytes": 2785
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/01_business_functions.csv",
+      "bytes": 228296
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/02_org_ownership.csv",
+      "bytes": 226051
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/03_workforce_roles.csv",
+      "bytes": 314241
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/04_applications_systems.csv",
+      "bytes": 236275
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/05_data_assets_integrations.csv",
+      "bytes": 276315
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/06_infrastructure_platforms.csv",
+      "bytes": 7710
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/07_vendors_contracts.csv",
+      "bytes": 232284
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/08_it_budget_spend_value.csv",
+      "bytes": 373636
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/09_programs_initiatives.csv",
+      "bytes": 357409
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/10_ai_automation_use_cases.csv",
+      "bytes": 355446
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/11_risks_controls.csv",
+      "bytes": 244371
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/12_relationships.csv",
+      "bytes": 278519
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/13_evidence_sources.csv",
+      "bytes": 402579
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/14_metrics_outcomes.csv",
+      "bytes": 299489
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/15_industry_context_patterns.csv",
+      "bytes": 4637
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/16_expert_lenses.csv",
+      "bytes": 4553
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/17_managed_services_scope.csv",
+      "bytes": 260020
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/18_operational_process_evidence.csv",
+      "bytes": 233124
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/SA02_IT_Finance_Budget_Spend_Extract.csv",
+      "bytes": 30769
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/SA04_Program_Portfolio_Extract.csv",
+      "bytes": 7362
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+      "bytes": 7859
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/SA09_AI_Tool_Usage_Feed.csv",
+      "bytes": 5201
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/SA10_AI_Value_Interview_Evidence.csv",
+      "bytes": 6211
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/SA11_AI_KPI_Operational_Outcome_Feed.csv",
+      "bytes": 4976
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/00_manifest/blocked_claims.csv",
+      "bytes": 9319
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/00_manifest/evidence_request_log.csv",
+      "bytes": 3104
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/00_manifest/package_manifest.json",
+      "bytes": 1346
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/00_manifest/sme_validation_matrix.csv",
+      "bytes": 2654
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/00_manifest/source_register.csv",
+      "bytes": 18824
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/derived/capability-profiles/capability_profile_facts.csv",
+      "bytes": 6401404
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/derived/capability-profiles/capability_profile_sme_review_matrix.csv",
+      "bytes": 19086
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/derived/capability-profiles/capability_profiles.csv",
+      "bytes": 49635
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/derived/capability-profiles/capability_profiles.detail.json",
+      "bytes": 12750335
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/derived/capability-profiles/package_manifest.json",
+      "bytes": 1443
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/interviews/executive_interviews_normalized.csv",
+      "bytes": 346190
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/interviews/interview_coverage_matrix.csv",
+      "bytes": 1699
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/interviews/interview_data_dictionary.json",
+      "bytes": 2569
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/interviews/interview_evidence_request_log.csv",
+      "bytes": 45202
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/interviews/interview_guidance.md",
+      "bytes": 1343
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/interviews/interview_question_bank.csv",
+      "bytes": 90406
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/interviews/package_manifest.json",
+      "bytes": 2089
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/v2026-08-governed-intake/mapping/workstream_coverage_matrix.csv",
+      "bytes": 6360
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/approved-content/home/design-contract-pack.json",
+      "bytes": 2323255
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/derived/relationship-graph.json",
+      "bytes": 2011726
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/interviews/executive_interviews.csv",
+      "bytes": 586611
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/interviews/interview_coverage_matrix.csv",
+      "bytes": 1214
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/interviews/interview_data_dictionary.json",
+      "bytes": 1538
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/interviews/interview_guidance.md",
+      "bytes": 2282
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/interviews/interview_question_bank.csv",
+      "bytes": 51082
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/00_enterprise_profile.csv",
+      "bytes": 826
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/01_business_functions.csv",
+      "bytes": 191006
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/02_org_ownership.csv",
+      "bytes": 189051
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/03_workforce_roles.csv",
+      "bytes": 188947
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/04_applications_systems.csv",
+      "bytes": 195728
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/05_data_assets_integrations.csv",
+      "bytes": 248442
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/06_infrastructure_platforms.csv",
+      "bytes": 7342
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/07_vendors_contracts.csv",
+      "bytes": 191314
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/08_it_budget_spend_value.csv",
+      "bytes": 192886
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/09_programs_initiatives.csv",
+      "bytes": 246822
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/10_ai_automation_use_cases.csv",
+      "bytes": 248037
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/11_risks_controls.csv",
+      "bytes": 207753
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/12_relationships.csv",
+      "bytes": 205733
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/13_evidence_sources.csv",
+      "bytes": 216616
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/14_metrics_outcomes.csv",
+      "bytes": 215489
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/15_industry_context_patterns.csv",
+      "bytes": 4908
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/16_expert_lenses.csv",
+      "bytes": 4824
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/17_managed_services_scope.csv",
+      "bytes": 193274
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/18_operational_process_evidence.csv",
+      "bytes": 195675
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+      "bytes": 7666
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/SA09_AI_Tool_Usage_Feed.csv",
+      "bytes": 5133
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/SA10_AI_Value_Interview_Evidence.csv",
+      "bytes": 5979
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3/SA11_AI_KPI_Operational_Outcome_Feed.csv",
+      "bytes": 4776
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/v2026-08-governed-intake/00_manifest/blocked_claims.csv",
+      "bytes": 9336
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/v2026-08-governed-intake/00_manifest/evidence_request_log.csv",
+      "bytes": 150
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/v2026-08-governed-intake/00_manifest/package_manifest.json",
+      "bytes": 1342
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/v2026-08-governed-intake/00_manifest/sme_validation_matrix.csv",
+      "bytes": 2631
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/v2026-08-governed-intake/00_manifest/source_register.csv",
+      "bytes": 27166
+    },
+    {
+      "path": "datasets/tenant-inputs/skyharbor-air/v2026-08-governed-intake/mapping/workstream_coverage_matrix.csv",
+      "bytes": 4706
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/standard-2026-07-v3-reload/AI_VALUE_REALIZATION_FIELD_INSTRUCTIONS.csv",
+      "bytes": 4502
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/standard-2026-07-v3-reload/FIELD_INSTRUCTIONS.csv",
+      "bytes": 4200
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/standard-2026-07-v3-reload/README.md",
+      "bytes": 3207
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/standard-2026-07-v3-reload/SA08_AI_Benefits_Realization_Usage_Ledger_TEMPLATE.csv",
+      "bytes": 804
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/standard-2026-07-v3-reload/SA09_AI_Tool_Usage_Feed_TEMPLATE.csv",
+      "bytes": 538
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/standard-2026-07-v3-reload/SA10_AI_Value_Interview_Evidence_TEMPLATE.csv",
+      "bytes": 281
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/standard-2026-07-v3-reload/SA11_AI_KPI_Operational_Outcome_Feed_TEMPLATE.csv",
+      "bytes": 367
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/standard-2026-07-v3-reload/blank-csv/08_it_budget_spend_value_TEMPLATE.csv",
+      "bytes": 1385
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/standard-2026-07-v3-reload/blank-csv/09_programs_initiatives_TEMPLATE.csv",
+      "bytes": 1410
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/standard-2026-07-v3-reload/blank-csv/10_ai_automation_use_cases_TEMPLATE.csv",
+      "bytes": 1455
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/standard-2026-07-v3-reload/blank-csv/14_metrics_outcomes_TEMPLATE.csv",
+      "bytes": 1064
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/standard-2026-07-v3-reload/blank-csv/SA02_IT_Finance_Budget_Spend_Extract_TEMPLATE.csv",
+      "bytes": 801
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/standard-2026-07-v3-reload/blank-csv/SA04_Program_Portfolio_Extract_TEMPLATE.csv",
+      "bytes": 705
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/standard-2026-07-v3-reload/blank-csv/SA07_Executive_Interview_Insights_TEMPLATE.csv",
+      "bytes": 1157
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/standard-2026-07-v3-reload/blank-csv/SA08_AI_Benefits_Realization_Usage_Ledger_TEMPLATE.csv",
+      "bytes": 725
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/00_enterprise_profile.csv",
+      "bytes": 273
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/00_enterprise_profile.xlsx",
+      "bytes": 19336
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/01_business_functions.csv",
+      "bytes": 223
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/01_business_functions.xlsx",
+      "bytes": 18524
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/02_org_ownership.csv",
+      "bytes": 193
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/02_org_ownership.xlsx",
+      "bytes": 17015
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/03_workforce_roles.csv",
+      "bytes": 188
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/03_workforce_roles.xlsx",
+      "bytes": 17130
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/04_applications_systems.csv",
+      "bytes": 289
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/04_applications_systems.xlsx",
+      "bytes": 28291
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/05_data_assets_integrations.csv",
+      "bytes": 274
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/05_data_assets_integrations.xlsx",
+      "bytes": 17750
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/06_infrastructure_platforms.csv",
+      "bytes": 233
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/06_infrastructure_platforms.xlsx",
+      "bytes": 20065
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/07_vendors_contracts.csv",
+      "bytes": 247
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/07_vendors_contracts.xlsx",
+      "bytes": 17470
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/08_it_budget_spend_value.xlsx",
+      "bytes": 19618
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/08_spend_value.csv",
+      "bytes": 214
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/09_programs_initiatives.csv",
+      "bytes": 198
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/09_programs_initiatives.xlsx",
+      "bytes": 18097
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/10_ai_automation_use_cases.csv",
+      "bytes": 212
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/10_ai_automation_use_cases.xlsx",
+      "bytes": 18067
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/11_risks_controls.csv",
+      "bytes": 208
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/11_risks_controls.xlsx",
+      "bytes": 17450
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/12_relationships.csv",
+      "bytes": 206
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/12_relationships.xlsx",
+      "bytes": 21002
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/13_evidence_sources.csv",
+      "bytes": 168
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/13_evidence_sources.xlsx",
+      "bytes": 18034
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/14_metrics_outcomes.csv",
+      "bytes": 192
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/14_metrics_outcomes.xlsx",
+      "bytes": 17611
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/15_industry_context_patterns.csv",
+      "bytes": 133
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/15_industry_context_patterns.xlsx",
+      "bytes": 17160
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/16_expert_lenses.csv",
+      "bytes": 140
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/16_expert_lenses.xlsx",
+      "bytes": 16918
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/17_managed_services_scope.xlsx",
+      "bytes": 17086
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/17_service_scope_managed_services.csv",
+      "bytes": 214
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/18_operational_process_evidence.csv",
+      "bytes": 188
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/18_operational_process_evidence.xlsx",
+      "bytes": 18027
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/AbarVa_Template_Pack_Index_v3.xlsx",
+      "bytes": 20512
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/README.md",
+      "bytes": 2431
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/SA01_ServiceNow_CMDB_Extract_Template.xlsx",
+      "bytes": 18991
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/SA02_IT_Finance_Budget_Spend_Extract_Template.xlsx",
+      "bytes": 18849
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/SA03_Vendor_Contracts_Extract_Template.xlsx",
+      "bytes": 15971
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/SA04_Program_Portfolio_Extract_Template.xlsx",
+      "bytes": 16072
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/SA05_Cloud_Inventory_Extract_Template.xlsx",
+      "bytes": 15846
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/SA06_Incident_Problem_Change_Extract_Template.xlsx",
+      "bytes": 15839
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/client-intake-workstreams.json",
+      "bytes": 9454
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/manifest.json",
+      "bytes": 1271
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/quality-depth-rules.json",
+      "bytes": 2217
+    },
+    {
+      "path": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/template-manifest.json",
+      "bytes": 10569
+    },
+    {
+      "path": "datasets/tenant-inputs/tenant-input-registry.json",
+      "bytes": 6120
+    }
+  ],
+  "reportFamilies": [
+    {
+      "path": "reports/enterprise-data-flow-map-2026-08-21",
+      "exists": true,
+      "fileCount": 6
+    },
+    {
+      "path": "reports/tenant-layer-refresh-2026-08-12",
+      "exists": true,
+      "fileCount": 19
+    },
+    {
+      "path": "reports/legacy-context-retirement",
+      "exists": true,
+      "fileCount": 10
+    },
+    {
+      "path": "reports/legacy-dataset-sunset",
+      "exists": true,
+      "fileCount": 7
+    },
+    {
+      "path": "reports/tower-data-reconciliation",
+      "exists": true,
+      "fileCount": 22
+    },
+    {
+      "path": "reports/module-readiness-proof",
+      "exists": true,
+      "fileCount": 14
+    },
+    {
+      "path": "reports/admin-data-layer-explorer/latest",
+      "exists": true,
+      "fileCount": 7
+    }
+  ]
+}

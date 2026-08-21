@@ -1,0 +1,153 @@
+{
+  "generatedAt": "2026-08-21",
+  "status": "target_contract_recommended_not_approved",
+  "principle": "Do not migrate tables. Migrate authoritative business objects, publication contracts, and consumer paths.",
+  "rows": [
+    {
+      "concept": "Tenant identity",
+      "currentStores": ["datasets/tenant-inputs/tenant-input-registry.json", "src/lib/tenant/aliases.ts", "src/lib/enterprise-context/schema.ts", "app-key mappers"],
+      "currentWriters": ["manual/code changes"],
+      "targetAuthority": "Control/config tenant registry",
+      "targetProjections": ["app-key aliases", "inventory substrate aliases", "runtime tenant context"],
+      "currentDisposition": "decision_required",
+      "evidence": [
+        "datasets/tenant-inputs/tenant-input-registry.json:30-130",
+        "src/lib/enterprise-context/schema.ts:1-17",
+        "src/lib/tenant/aliases.ts:20-107"
+      ]
+    },
+    {
+      "concept": "Application/System",
+      "currentStores": ["active input CSVs", "generated CMDB files", "Tower projections", "Home snapshots", "enterprise context records"],
+      "currentWriters": ["tenant file generation, projection builders, context loaders - runtime unconfirmed"],
+      "targetAuthority": "Canonical Application identity and reviewed facts",
+      "targetProjections": ["Tower CMDB/read model", "Home estate projection", "Intelligence context", "Moves solution context"],
+      "currentDisposition": "publish_link_canonical_after_identity_collision_resolution",
+      "evidence": [
+        "reports/tenant-layer-refresh-2026-08-12/summary.md:11-28",
+        "reports/enterprise-data-flow-map-2026-08-21/conflicts.json"
+      ]
+    },
+    {
+      "concept": "Data asset / integration",
+      "currentStores": ["tenant input files", "enterprise context chunks/records", "graph edges where present"],
+      "currentWriters": ["source adapters and context loaders - runtime unconfirmed"],
+      "targetAuthority": "Canonical data asset and integration identity",
+      "targetProjections": ["graph", "search", "Home/Intelligence context"],
+      "currentDisposition": "decision_required",
+      "evidence": ["reports/tenant-layer-refresh-2026-08-12/summary.md:56-65"]
+    },
+    {
+      "concept": "Vendor",
+      "currentStores": ["Source event data", "contracts", "spend/vendor files", "Source vendor 360 projections", "Tower metric/value tables"],
+      "currentWriters": ["Source workflow and projection jobs - runtime unconfirmed"],
+      "targetAuthority": "Canonical Vendor/Supplier",
+      "targetProjections": ["Source vendor portfolio", "Tower value/spend projections"],
+      "currentDisposition": "publish_link_canonical",
+      "evidence": ["src/lib/source/data-model/read-adapter.ts:37-257"]
+    },
+    {
+      "concept": "Contract",
+      "currentStores": ["Source contracts", "contract evidence manifests", "PDF extraction tables", "generated contract artifacts"],
+      "currentWriters": ["Source upload/extraction/artifact paths - runtime unconfirmed"],
+      "targetAuthority": "Canonical Contract with evidence links",
+      "targetProjections": ["Source contract 360", "renewal cockpit", "artifact renderers"],
+      "currentDisposition": "retain_operational_plus_publish_reviewed_facts",
+      "evidence": [
+        "src/lib/source/contract-evidence/read-model.ts:116-155",
+        "src/lib/source/data-model/read-adapter.ts:37-257"
+      ]
+    },
+    {
+      "concept": "Use case / program",
+      "currentStores": ["engagements", "program artifacts", "AI initiative files", "Source/Tower references"],
+      "currentWriters": ["Programs workflow APIs and loaders - runtime unconfirmed"],
+      "targetAuthority": "Domain workflow for operational state; canonical Program/Use Case for approved identity/facts",
+      "targetProjections": ["Moves portfolio", "Home priorities", "Tower program lanes"],
+      "currentDisposition": "retain_operational_and_publish_link_canonical",
+      "evidence": [
+        "src/lib/programs/queries.ts:166-197",
+        "src/lib/data-plane/read-adapters/programsReadAdapter.ts:120-241"
+      ]
+    },
+    {
+      "concept": "Metric definition",
+      "currentStores": ["templates", "Tower measures", "artifact text", "pricing/reference tables"],
+      "currentWriters": ["template/seed/migration paths - runtime unconfirmed"],
+      "targetAuthority": "Metric Definition Registry",
+      "targetProjections": ["Tower dashboards", "business cases", "artifact tables"],
+      "currentDisposition": "decision_required",
+      "evidence": ["docs/audits/TOWER-DATA-LAYER-RECONCILIATION-2026-06-27.md:39-52"]
+    },
+    {
+      "concept": "Metric observation",
+      "currentStores": ["Tower facts", "source extracts", "source.value_claim", "tower.metric_observation", "artifact text"],
+      "currentWriters": ["Tower/Source projection jobs - runtime unconfirmed"],
+      "targetAuthority": "Governed Metric Observation",
+      "targetProjections": ["dashboards", "value funnels", "client artifacts"],
+      "currentDisposition": "publish_link_canonical_after_duplication_resolution",
+      "evidence": ["src/lib/source/data-model/read-adapter.ts:37-257"]
+    },
+    {
+      "concept": "Evidence/document",
+      "currentStores": ["uploaded files", "context chunks", "evidence ledger", "Source artifacts", "PDF extraction tables"],
+      "currentWriters": ["upload/parsing paths - runtime unconfirmed"],
+      "targetAuthority": "Canonical Evidence Registry",
+      "targetProjections": ["retrieval index", "model context bundles", "artifact citations"],
+      "currentDisposition": "publish_link_canonical",
+      "evidence": [
+        "src/lib/context-ingestion/tenant-context-read-model.ts:334-418",
+        "src/lib/source/contract-evidence/read-model.ts:116-155"
+      ]
+    },
+    {
+      "concept": "Fact/claim",
+      "currentStores": ["source_event_facts", "enterprise_context_facts", "artifact text", "approved content"],
+      "currentWriters": ["Source fact ingest and context loaders - runtime unconfirmed"],
+      "targetAuthority": "Canonical reviewed fact/claim registry",
+      "targetProjections": ["retrieval bundles", "Home/Intelligence/Tower/Source views"],
+      "currentDisposition": "decision_required",
+      "evidence": [
+        "docs/audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md:97-136",
+        "src/lib/intelligence/context-read-model.ts:245-323"
+      ]
+    },
+    {
+      "concept": "Relationship",
+      "currentStores": ["tenant relationship CSVs", "generated relationship graphs", "intelligence_v6 graph tables"],
+      "currentWriters": ["relationship graph generation and V6 graph materialization - runtime unconfirmed"],
+      "targetAuthority": "Canonical relationship edge with normalized type dictionary and evidence",
+      "targetProjections": ["graph", "search/context packs", "module dependency views"],
+      "currentDisposition": "publish_link_canonical_after_quality_report",
+      "evidence": [
+        "reports/enterprise-data-flow-map-2026-08-21/conflicts.json",
+        "supabase/migrations/20260702190000_intelligence_v6_graph_physical.sql"
+      ]
+    },
+    {
+      "concept": "Decision/action",
+      "currentStores": ["Moves approvals/actions", "Source approvals/acceptances", "Tower action marts", "audit logs"],
+      "currentWriters": ["domain workflow routes - runtime unconfirmed"],
+      "targetAuthority": "Domain operational state, with approved decision facts published to canonical Knowledge",
+      "targetProjections": ["Home queues", "Tower CXO actions", "Source decision packets"],
+      "currentDisposition": "retain_operational_and_publish_link_canonical",
+      "evidence": [
+        "docs/audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md:37-42",
+        "src/lib/cio-tower/tower-mart-view-model.ts:287-352"
+      ]
+    },
+    {
+      "concept": "Generated artifact",
+      "currentStores": ["source_artifacts", "generated_artifacts", "approved content folders", "HTML/DOCX/PDF/PPTX/XLSX outputs"],
+      "currentWriters": ["domain artifact generation and export routes - runtime unconfirmed"],
+      "targetAuthority": "Versioned Artifact Store for artifacts; canonical Knowledge only for reviewed facts cited by artifacts",
+      "targetProjections": ["rendered formats", "download/export surfaces"],
+      "currentDisposition": "shared_projection_or_approved_artifact_not_canonical_truth",
+      "evidence": [
+        "docs/audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md:37-42",
+        "docs/audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md:85-93"
+      ]
+    }
+  ]
+}
+

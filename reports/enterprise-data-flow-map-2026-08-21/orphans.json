@@ -1,0 +1,95 @@
+{
+  "generatedAt": "2026-08-21",
+  "orphans": [
+    {
+      "id": "home-route-reader-unresolved",
+      "type": "no_tracked_reader_found",
+      "summary": "Home route imports readSkyHarborAiSuccessHome, but the sweep found no tracked implementation beyond the route import/call.",
+      "evidence": ["src/app/(maestro)/home/page.tsx:4-16"],
+      "risk": "The Home route root could not be traced to a live canonical reader from tracked source paths."
+    },
+    {
+      "id": "intelligence-route-static-landscape",
+      "type": "route_not_using_available_read_model",
+      "summary": "Intelligence route root uses getEnterpriseLandscapeViewModel instead of the enterprise-context read model directly.",
+      "evidence": [
+        "src/app/(maestro)/intelligence/page.tsx:28-66",
+        "src/lib/home/enterprise-landscape-view-model.ts:91-240",
+        "src/lib/enterprise-context/intelligence-read-model.ts:120-205"
+      ],
+      "risk": "Enterprise-context DB reads may not govern the first Intelligence route surface."
+    },
+    {
+      "id": "source-portfolio-event-list-not-fully-traced",
+      "type": "partial_trace",
+      "summary": "Source portfolio route was traced to listSourcingEvents, but that implementation chain was not fully mapped in this sweep.",
+      "evidence": ["src/app/(maestro)/source/portfolio/page.tsx:17-60"],
+      "risk": "Event portfolio source-of-truth status remains incomplete."
+    },
+    {
+      "id": "enterprise-context-arcturus-key",
+      "type": "non_registry_tenant_key",
+      "summary": "Enterprise context schema treats arcturus as canonical, but the registry does not list arcturus.",
+      "evidence": [
+        "src/lib/enterprise-context/schema.ts:1-17",
+        "datasets/tenant-inputs/tenant-input-registry.json:30-130"
+      ],
+      "risk": "App-style and registry-style identities can diverge before data reads are scoped."
+    },
+    {
+      "id": "knowledge-preview-harbortrust-bank",
+      "type": "non_registry_tenant_key",
+      "summary": "Knowledge live preview embeds harbortrust-bank in scenario/fallback data, but the registry does not list it.",
+      "evidence": [
+        "src/lib/enterprise-knowledge/live-preview/knowledge-layer-live-preview.ts:246-309",
+        "src/lib/enterprise-knowledge/live-preview/knowledge-layer-live-preview.ts:759-815",
+        "datasets/tenant-inputs/tenant-input-registry.json:30-130"
+      ],
+      "risk": "Preview data may present non-registry tenant identities as if they were part of the tenant substrate."
+    },
+    {
+      "id": "connector-health-seed-read-model",
+      "type": "deterministic_stub",
+      "summary": "Connector health read model declares deterministic seed data and no network/model calls.",
+      "evidence": [
+        "src/lib/admin/connector-health-read-model.ts:1-6",
+        "src/lib/admin/connector-health-read-model.ts:73-95"
+      ],
+      "risk": "The read-model name may imply live connector state where the implementation is seeded."
+    },
+    {
+      "id": "admin-data-lineage-stub",
+      "type": "deterministic_stub",
+      "summary": "Admin data lineage read model returns deterministic Apex-only graph data.",
+      "evidence": [
+        "src/lib/admin/data-lineage-read-model.ts:71-125",
+        "src/lib/admin/data-lineage-read-model.ts:184-192"
+      ],
+      "risk": "Graph/lineage UI may be mistaken for tenant-live lineage."
+    },
+    {
+      "id": "sentinel-pattern-graph-stub",
+      "type": "deterministic_stub",
+      "summary": "Sentinel pattern graph read model states that it uses deterministic stubs, not live signal data.",
+      "evidence": [
+        "src/lib/sentinel/pattern-graph-read-model.ts:134-137",
+        "src/lib/sentinel/pattern-graph-read-model.ts:197-208"
+      ],
+      "risk": "Pattern graph outputs are not live signal proof."
+    },
+    {
+      "id": "architecture-draft-seed-read-model",
+      "type": "deterministic_seed",
+      "summary": "Architecture draft read model is derived from deterministic seed and caller input.",
+      "evidence": ["src/lib/solutions/architecture-draft-read-model.ts:582-637"],
+      "risk": "Draft outputs should not be treated as canonical architecture data."
+    },
+    {
+      "id": "skyharbor-503-1-54b-not-found",
+      "type": "unverified_claim",
+      "summary": "Exact SkyHarbor 503-app / $1.54B value pair was not found in the current repo/local evidence sweep.",
+      "evidence": ["unverified"],
+      "risk": "Do not use this pair as a verified conflict without a source file and line."
+    }
+  ]
+}
