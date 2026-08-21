@@ -229,7 +229,9 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     );
     expect(sequentialCalls[0]?.opts).toEqual(
       expect.objectContaining({
-        idempotencyKey: "m-1:3:decision-hash-1:ctx-hash-1:extract-1",
+        idempotencyKey: expect.stringMatching(
+          /^m-1:3:decision-hash-1:ctx-hash-1:extract-1:[a-f0-9-]+$/,
+        ),
       }),
     );
     const extractInput = createMoveContextExtract.mock.calls[0]?.[0] as {
@@ -267,6 +269,39 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
         }),
       );
     }
+  });
+
+  it("separates legitimate P3 reruns with an explicit generation attempt id", async () => {
+    const first = await POST(
+      req({
+        moveId: "m-1",
+        phase: 3,
+        useCaseArchetype: "ams",
+        generationAttemptId: "attempt-one",
+      }),
+    );
+    const second = await POST(
+      req({
+        moveId: "m-1",
+        phase: 3,
+        useCaseArchetype: "ams",
+        generationAttemptId: "attempt-two",
+      }),
+    );
+
+    expect(first.status).toBe(202);
+    expect(second.status).toBe(202);
+    expect(sequentialCalls).toHaveLength(2);
+    expect(sequentialCalls.map((call) => call.opts.idempotencyKey)).toEqual([
+      "m-1:3:decision-hash-1:ctx-hash-1:extract-1:attempt-one",
+      "m-1:3:decision-hash-1:ctx-hash-1:extract-1:attempt-two",
+    ]);
+    await expect(first.json()).resolves.toEqual(
+      expect.objectContaining({ generationAttemptId: "attempt-one" }),
+    );
+    await expect(second.json()).resolves.toEqual(
+      expect.objectContaining({ generationAttemptId: "attempt-two" }),
+    );
   });
 
   it("blocks P3 before context extraction or enqueue when no option is approved", async () => {
