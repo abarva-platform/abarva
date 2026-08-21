@@ -20,7 +20,11 @@ import {
 } from "../deliverable-role-approvals";
 import { DELIVERABLE_REGISTRY } from "../deliverable-registry";
 
-const CTX = { clientId: "client-1", userId: "person-1", email: "approver@example.com" };
+const CTX = {
+  clientId: "client-1",
+  userId: "person-1",
+  email: "approver@example.com",
+};
 
 function selectApprovals(rows: unknown[]) {
   const result = Promise.resolve({ data: rows, error: null });
@@ -53,7 +57,10 @@ const deliverablePointer = (patch: Record<string, unknown> = {}) => ({
 
 describe("REQUIRED_APPROVAL_ROLES registry", () => {
   it("requires business+finance for a business case, technology+risk_security for a target state architecture", () => {
-    expect(requiredApprovalRolesFor("business_case")).toEqual(["business", "finance"]);
+    expect(requiredApprovalRolesFor("business_case")).toEqual([
+      "business",
+      "finance",
+    ]);
     expect(requiredApprovalRolesFor("target_state_architecture")).toEqual([
       "technology",
       "risk_security",
@@ -80,14 +87,19 @@ describe("REQUIRED_APPROVAL_ROLES registry", () => {
     // rows are actually written with — silently making that type never
     // require any role approval. Every key here must exist verbatim in
     // DELIVERABLE_REGISTRY.
-    const realKeys = new Set(DELIVERABLE_REGISTRY.map((spec) => spec.deliverableTypeKey));
+    const realKeys = new Set(
+      DELIVERABLE_REGISTRY.map((spec) => spec.deliverableTypeKey),
+    );
     for (const key of Object.keys(REQUIRED_APPROVAL_ROLES)) {
       expect(realKeys.has(key)).toBe(true);
     }
   });
 
   it("requires business+technology for the real operating-model-design registry key", () => {
-    expect(requiredApprovalRolesFor("operating_model_design")).toEqual(["business", "technology"]);
+    expect(requiredApprovalRolesFor("operating_model_design")).toEqual([
+      "business",
+      "technology",
+    ]);
     // The orchestrator-mapped name is NOT the key deliverables_v2 stores.
     expect(requiredApprovalRolesFor("operating_model")).toEqual([]);
   });
@@ -102,7 +114,8 @@ describe("getRoleApprovalSummary", () => {
 
   it("synthesizes 'pending' for required roles with no recorded decision yet", async () => {
     fromMock.mockImplementation((table: string) => {
-      if (table === "deliverables_v2") return selectDeliverableExists(deliverablePointer());
+      if (table === "deliverables_v2")
+        return selectDeliverableExists(deliverablePointer());
       if (table === "deliverable_role_approvals") return selectApprovals([]);
       throw new Error(`Unexpected table ${table}`);
     });
@@ -125,7 +138,8 @@ describe("getRoleApprovalSummary", () => {
 
   it("reports allRequiredApproved only when EVERY required role is approved", async () => {
     fromMock.mockImplementation((table: string) => {
-      if (table === "deliverables_v2") return selectDeliverableExists(deliverablePointer());
+      if (table === "deliverables_v2")
+        return selectDeliverableExists(deliverablePointer());
       if (table === "deliverable_role_approvals")
         return selectApprovals([
           {
@@ -150,11 +164,17 @@ describe("getRoleApprovalSummary", () => {
       throw new Error(`Unexpected table ${table}`);
     });
 
-    const partial = await getRoleApprovalSummary(CTX, "move-1", "deliverable-1", "business_case");
+    const partial = await getRoleApprovalSummary(
+      CTX,
+      "move-1",
+      "deliverable-1",
+      "business_case",
+    );
     expect(partial.allRequiredApproved).toBe(false);
 
     fromMock.mockImplementation((table: string) => {
-      if (table === "deliverables_v2") return selectDeliverableExists(deliverablePointer());
+      if (table === "deliverables_v2")
+        return selectDeliverableExists(deliverablePointer());
       if (table === "deliverable_role_approvals")
         return selectApprovals([
           {
@@ -178,7 +198,12 @@ describe("getRoleApprovalSummary", () => {
         ]);
       throw new Error(`Unexpected table ${table}`);
     });
-    const full = await getRoleApprovalSummary(CTX, "move-1", "deliverable-1", "business_case");
+    const full = await getRoleApprovalSummary(
+      CTX,
+      "move-1",
+      "deliverable-1",
+      "business_case",
+    );
     expect(full.allRequiredApproved).toBe(true);
   });
 
@@ -186,7 +211,9 @@ describe("getRoleApprovalSummary", () => {
     fromMock.mockImplementation((table: string) => {
       if (table === "deliverables_v2")
         return selectDeliverableExists(
-          deliverablePointer({ deliverable_type_key: "target_state_architecture" }),
+          deliverablePointer({
+            deliverable_type_key: "target_state_architecture",
+          }),
         );
       if (table === "deliverable_role_approvals")
         return selectApprovals([
@@ -215,18 +242,26 @@ describe("getRoleApprovalSummary", () => {
   it("returns an empty required set for an artifact type with no role requirement", async () => {
     fromMock.mockImplementation((table: string) => {
       if (table === "deliverables_v2")
-        return selectDeliverableExists(deliverablePointer({ deliverable_type_key: "charter" }));
+        return selectDeliverableExists(
+          deliverablePointer({ deliverable_type_key: "charter" }),
+        );
       if (table === "deliverable_role_approvals") return selectApprovals([]);
       throw new Error(`Unexpected table ${table}`);
     });
-    const summary = await getRoleApprovalSummary(CTX, "move-1", "deliverable-1", "charter");
+    const summary = await getRoleApprovalSummary(
+      CTX,
+      "move-1",
+      "deliverable-1",
+      "charter",
+    );
     expect(summary.requiredRoles).toEqual([]);
     expect(summary.allRequiredApproved).toBe(false); // vacuous requirement is never "satisfied", just moot
   });
 
   it("filters approvals to the current signed-off version", async () => {
     fromMock.mockImplementation((table: string) => {
-      if (table === "deliverables_v2") return selectDeliverableExists(deliverablePointer());
+      if (table === "deliverables_v2")
+        return selectDeliverableExists(deliverablePointer());
       if (table === "deliverable_role_approvals")
         return selectApprovals([
           {
@@ -241,12 +276,25 @@ describe("getRoleApprovalSummary", () => {
         ]);
       throw new Error(`Unexpected table ${table}`);
     });
-    const summary = await getRoleApprovalSummary(CTX, "move-1", "deliverable-1", "business_case");
-    expect(summary.records).toEqual(
-      expect.arrayContaining([expect.objectContaining({ role: "business", version: 2 })]),
+    const summary = await getRoleApprovalSummary(
+      CTX,
+      "move-1",
+      "deliverable-1",
+      "business_case",
     );
     expect(summary.records).toEqual(
-      expect.arrayContaining([expect.objectContaining({ role: "finance", version: 2, status: "pending" })]),
+      expect.arrayContaining([
+        expect.objectContaining({ role: "business", version: 2 }),
+      ]),
+    );
+    expect(summary.records).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          role: "finance",
+          version: 2,
+          status: "pending",
+        }),
+      ]),
     );
   });
 });
@@ -256,14 +304,18 @@ describe("recordRoleApprovalDecision", () => {
     fromMock.mockReset();
     getProgramByIdMock.mockReset();
     getProgramByIdMock.mockResolvedValue({ id: "move-1" });
+    delete process.env.GATE_APPROVAL_STRICT_MODE;
   });
 
   it("upserts a role decision keyed on (deliverable_id, role)", async () => {
     let upsertPayload: { decided_at: string | null } | null = null;
     fromMock.mockImplementation((table: string) => {
-      if (table === "deliverables_v2") return selectDeliverableExists(deliverablePointer());
+      if (table === "deliverables_v2")
+        return selectDeliverableExists(deliverablePointer());
       if (table === "deliverable_role_approvals") {
-        const approvalCalls = fromMock.mock.calls.filter(([t]) => t === "deliverable_role_approvals").length;
+        const approvalCalls = fromMock.mock.calls.filter(
+          ([t]) => t === "deliverable_role_approvals",
+        ).length;
         if (approvalCalls === 1) return selectApprovals([]);
         return {
           upsert: jest.fn((payload, opts) => {
@@ -290,14 +342,23 @@ describe("recordRoleApprovalDecision", () => {
       throw new Error(`Unexpected table ${table}`);
     });
 
-    const record = await recordRoleApprovalDecision(CTX, "move-1", "deliverable-1", {
-      role: "finance",
-      status: "approved",
-      approverName: "Jane Doe, CFO",
-    });
+    const record = await recordRoleApprovalDecision(
+      CTX,
+      "move-1",
+      "deliverable-1",
+      {
+        role: "finance",
+        status: "approved",
+        approverName: "Jane Doe, CFO",
+      },
+    );
 
     expect(record).toEqual(
-      expect.objectContaining({ role: "finance", status: "approved", approverName: "Jane Doe, CFO" }),
+      expect.objectContaining({
+        role: "finance",
+        status: "approved",
+        approverName: "Jane Doe, CFO",
+      }),
     );
     expect(upsertPayload).toEqual(
       expect.objectContaining({
@@ -316,7 +377,8 @@ describe("recordRoleApprovalDecision", () => {
   it("does not stamp decided_at for a 'reviewed' (non-terminal) decision", async () => {
     let upsertPayload: { decided_at: string | null } | null = null;
     fromMock.mockImplementation((table: string) => {
-      if (table === "deliverables_v2") return selectDeliverableExists(deliverablePointer());
+      if (table === "deliverables_v2")
+        return selectDeliverableExists(deliverablePointer());
       if (table === "deliverable_role_approvals") {
         return {
           upsert: jest.fn((payload) => {
@@ -324,7 +386,15 @@ describe("recordRoleApprovalDecision", () => {
             return {
               select: jest.fn().mockReturnThis(),
               single: jest.fn().mockResolvedValue({
-                data: { role: payload.role, status: payload.status, version: payload.version, approver_user_id: payload.approver_user_id, approver_name: payload.approver_name, outstanding_conditions: payload.outstanding_conditions, decided_at: payload.decided_at },
+                data: {
+                  role: payload.role,
+                  status: payload.status,
+                  version: payload.version,
+                  approver_user_id: payload.approver_user_id,
+                  approver_name: payload.approver_name,
+                  outstanding_conditions: payload.outstanding_conditions,
+                  decided_at: payload.decided_at,
+                },
                 error: null,
               }),
             };
@@ -343,7 +413,8 @@ describe("recordRoleApprovalDecision", () => {
 
   it("throws when the deliverable does not exist in this program (tenancy boundary)", async () => {
     fromMock.mockImplementation((table: string) => {
-      if (table === "deliverables_v2") return selectDeliverableExists({ data: null, error: null });
+      if (table === "deliverables_v2")
+        return selectDeliverableExists({ data: null, error: null });
       throw new Error(`Unexpected table ${table}`);
     });
     await expect(
@@ -355,9 +426,12 @@ describe("recordRoleApprovalDecision", () => {
   });
 
   it("rejects self-approval against the deliverable creator", async () => {
+    process.env.GATE_APPROVAL_STRICT_MODE = "true";
     fromMock.mockImplementation((table: string) => {
       if (table === "deliverables_v2")
-        return selectDeliverableExists(deliverablePointer({ created_by: CTX.userId }));
+        return selectDeliverableExists(
+          deliverablePointer({ created_by: CTX.userId }),
+        );
       throw new Error(`Unexpected table ${table}`);
     });
     await expect(
@@ -369,8 +443,10 @@ describe("recordRoleApprovalDecision", () => {
   });
 
   it("rejects the same reviewer approving two required roles on one version", async () => {
+    process.env.GATE_APPROVAL_STRICT_MODE = "true";
     fromMock.mockImplementation((table: string) => {
-      if (table === "deliverables_v2") return selectDeliverableExists(deliverablePointer());
+      if (table === "deliverables_v2")
+        return selectDeliverableExists(deliverablePointer());
       if (table === "deliverable_role_approvals") {
         return selectApprovals([
           {
@@ -395,6 +471,76 @@ describe("recordRoleApprovalDecision", () => {
     ).rejects.toThrow("separation_of_duties_violation");
   });
 
+  it("allows same-reviewer pilot approvals and records the policy basis in the audit note", async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === "deliverables_v2")
+        return selectDeliverableExists(
+          deliverablePointer({ created_by: CTX.userId }),
+        );
+      if (table === "deliverable_role_approvals") {
+        const approvalCalls = fromMock.mock.calls.filter(
+          ([t]) => t === "deliverable_role_approvals",
+        ).length;
+        if (approvalCalls === 1) {
+          return selectApprovals([
+            {
+              role: "business",
+              status: "approved",
+              version: 2,
+              approver_user_id: CTX.userId,
+              approver_name: "Proof reviewer",
+              outstanding_conditions: null,
+              decided_at: "2026-07-20T00:00:00Z",
+            },
+          ]);
+        }
+        return {
+          upsert: jest.fn((payload) => {
+            return {
+              select: jest.fn().mockReturnThis(),
+              single: jest.fn().mockResolvedValue({
+                data: {
+                  role: payload.role,
+                  status: payload.status,
+                  version: payload.version,
+                  approver_user_id: payload.approver_user_id,
+                  approver_name: payload.approver_name,
+                  outstanding_conditions: payload.outstanding_conditions,
+                  decided_at: payload.decided_at,
+                },
+                error: null,
+              }),
+            };
+          }),
+        };
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    const record = await recordRoleApprovalDecision(
+      CTX,
+      "move-1",
+      "deliverable-1",
+      {
+        role: "finance",
+        status: "approved",
+        approverName: "Proof finance reviewer",
+        outstandingConditions: "Pilot proof approval only.",
+      },
+    );
+
+    expect(record.status).toBe("approved");
+    const outstandingConditions = record.outstandingConditions ?? "";
+    expect(outstandingConditions).toContain("Pilot proof approval only.");
+    expect(outstandingConditions).toContain(
+      "the approver is also the deliverable creator",
+    );
+    expect(outstandingConditions).toContain(
+      "the same reviewer already approved Business approver",
+    );
+    expect(outstandingConditions).toContain("GATE_APPROVAL_STRICT_MODE is off");
+  });
+
   it("allows explicit sandbox proxy approval without treating the signed-in proxy as the role approver", async () => {
     const upsertPayloads: Array<{
       role: string;
@@ -403,7 +549,9 @@ describe("recordRoleApprovalDecision", () => {
     }> = [];
     fromMock.mockImplementation((table: string) => {
       if (table === "deliverables_v2")
-        return selectDeliverableExists(deliverablePointer({ created_by: CTX.userId }));
+        return selectDeliverableExists(
+          deliverablePointer({ created_by: CTX.userId }),
+        );
       if (table === "deliverable_role_approvals") {
         const approvalCalls = fromMock.mock.calls.filter(
           ([t]) => t === "deliverable_role_approvals",

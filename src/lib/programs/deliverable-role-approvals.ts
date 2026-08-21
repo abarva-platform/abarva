@@ -24,6 +24,7 @@ import {
 } from "@/lib/programs/deliverable-role-approval-policy";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import { getProgramById } from "@/lib/programs/queries";
+import { isGateApprovalStrictMode } from "@/lib/auth/gate-approval-strict-mode";
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -114,6 +115,14 @@ function resolveApprovalVersion(row: DeliverableApprovalPointer): number {
   return row.signed_off_version ?? row.current_version ?? 1;
 }
 
+function appendApprovalAuditNote(
+  existing: string | undefined,
+  note: string,
+): string {
+  const trimmed = existing?.trim();
+  return trimmed ? `${trimmed}\n${note}` : note;
+}
+
 async function readDeliverableApprovalPointer(
   sb: SupabaseClient,
   programId: string,
@@ -121,7 +130,9 @@ async function readDeliverableApprovalPointer(
 ): Promise<DeliverableApprovalPointer> {
   const { data: deliverable, error } = await sb
     .from("deliverables_v2")
-    .select("id, deliverable_type_key, created_by, current_version, signed_off_version")
+    .select(
+      "id, deliverable_type_key, created_by, current_version, signed_off_version",
+    )
     .eq("id", deliverableId)
     .eq("engagement_id", programId)
     .maybeSingle();
@@ -148,7 +159,11 @@ export async function getRoleApprovalSummary(
   await assertProgramTenancy(ctx, programId, { supabase: sb });
 
   const requiredRoles = requiredApprovalRolesFor(deliverableTypeKey);
-  const deliverable = await readDeliverableApprovalPointer(sb, programId, deliverableId);
+  const deliverable = await readDeliverableApprovalPointer(
+    sb,
+    programId,
+    deliverableId,
+  );
   const version = resolveApprovalVersion(deliverable);
 
   const { data, error } = await sb
@@ -212,18 +227,36 @@ export async function recordRoleApprovalDecision(
   const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
 
-  const deliverable = await readDeliverableApprovalPointer(sb, programId, deliverableId);
+  const deliverable = await readDeliverableApprovalPointer(
+    sb,
+    programId,
+    deliverableId,
+  );
   const version = resolveApprovalVersion(deliverable);
+  const strictMode = isGateApprovalStrictMode();
 
   if (
     decision.status === "approved" &&
     deliverable.created_by === ctx.userId &&
-    !opts.sandboxProxyApproval
+    !opts.sandboxProxyApproval &&
+    strictMode
   ) {
     throw new Error("self_approval_violation");
   }
 
-  const requiredRoles = requiredApprovalRolesFor(deliverable.deliverable_type_key);
+  const requiredRoles = requiredApprovalRolesFor(
+    deliverable.deliverable_type_key,
+  );
+  let pilotAuditNote: string | null = null;
+  if (
+    decision.status === "approved" &&
+    deliverable.created_by === ctx.userId &&
+    !opts.sandboxProxyApproval &&
+    !strictMode
+  ) {
+    pilotAuditNote =
+      "Pilot approval note: the approver is also the deliverable creator; permitted because GATE_APPROVAL_STRICT_MODE is off.";
+  }
   if (decision.status === "approved" && requiredRoles.length >= 2) {
     const { data: existingApprovals, error: existingApprovalsError } = await sb
       .from("deliverable_role_approvals")
@@ -238,14 +271,30 @@ export async function recordRoleApprovalDecision(
         approver_name: string | null;
         status: RoleApprovalStatus;
       }>
-    ).some(
+    ).filter(
       (row) =>
         row.status === "approved" &&
         row.role !== decision.role &&
         ((!opts.sandboxProxyApproval && row.approver_user_id === ctx.userId) ||
-          (decision.approverName && row.approver_name === decision.approverName)),
+          (decision.approverName &&
+            row.approver_name === decision.approverName)),
     );
-    if (sameReviewerOtherRole) throw new Error("separation_of_duties_violation");
+    if (sameReviewerOtherRole.length > 0 && strictMode) {
+      throw new Error("separation_of_duties_violation");
+    }
+    if (
+      sameReviewerOtherRole.length > 0 &&
+      !strictMode &&
+      !opts.sandboxProxyApproval
+    ) {
+      const roles = sameReviewerOtherRole
+        .map((row) => APPROVAL_ROLE_LABELS[row.role] ?? row.role)
+        .join(", ");
+      pilotAuditNote = appendApprovalAuditNote(
+        pilotAuditNote ?? undefined,
+        `Pilot approval note: the same reviewer already approved ${roles} on this deliverable version; permitted because GATE_APPROVAL_STRICT_MODE is off.`,
+      );
+    }
   }
 
   const decidedAt =
@@ -265,7 +314,12 @@ export async function recordRoleApprovalDecision(
           ? `sandbox-proxy:${decision.role}:${ctx.userId}`
           : ctx.userId,
         approver_name: decision.approverName ?? null,
-        outstanding_conditions: decision.outstandingConditions ?? null,
+        outstanding_conditions: pilotAuditNote
+          ? appendApprovalAuditNote(
+              decision.outstandingConditions,
+              pilotAuditNote,
+            )
+          : (decision.outstandingConditions ?? null),
         decided_at: decidedAt,
         updated_at: new Date().toISOString(),
       },
