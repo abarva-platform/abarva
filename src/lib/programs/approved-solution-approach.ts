@@ -72,6 +72,16 @@ function strings(value: unknown): string[] {
     : [];
 }
 
+function hashMatchesDecisionLineage(
+  lineage: Record<string, unknown> | null,
+  storedHash: string,
+): boolean {
+  if (!lineage) return false;
+  const lineageWithoutHash = { ...lineage };
+  delete lineageWithoutHash.decisionHash;
+  return computeValueHash(lineageWithoutHash) === storedHash;
+}
+
 export function parseArchitectureGenerationLineage(
   value: unknown,
 ): ArchitectureGenerationLineage | null {
@@ -230,7 +240,15 @@ export function parseApprovedSolutionApproach(
   const decisionHash = decisionHashFor(withoutHash);
   const storedHash =
     typeof lineage?.decisionHash === "string" ? lineage.decisionHash : null;
-  if (storedHash && storedHash !== decisionHash) return null;
+  if (storedHash) {
+    if (
+      storedHash !== decisionHash &&
+      !hashMatchesDecisionLineage(lineage, storedHash)
+    ) {
+      return null;
+    }
+    return { ...withoutHash, decisionHash: storedHash };
+  }
   return { ...withoutHash, decisionHash };
 }
 

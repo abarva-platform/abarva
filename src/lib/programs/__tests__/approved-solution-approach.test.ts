@@ -1,5 +1,6 @@
 import {
   ARCHITECTURE_MODEL_VERSION,
+  decisionHashFor,
   formatApprovedSolutionApproach,
   parseApprovedSolutionApproach,
   validateArchitectureGenerationLineage,
@@ -52,6 +53,36 @@ describe("approved solution approach", () => {
   });
 
   it("loads client-safe option approval decisions that store approver role instead of raw user id", () => {
+    const rawDecision = {
+      phase: 3,
+      decision:
+        "Approved solution option: Instrumentation-first reliability control loop",
+      rationale: "Best protects governed value claims.",
+      approvedBy: "user-internal-id",
+      approvedAt: "2026-08-20T00:00:00.000Z",
+    };
+    const rawLineage = {
+      decisionId: "decision-1",
+      decisionVersion: "2026-08-20T00:00:00.000Z",
+      selectedOptionId: "instrumented-control-loop",
+      selectedOptionVersion: "1",
+      options: [
+        {
+          id: "instrumented-control-loop",
+          name: "Instrumentation-first reliability control loop",
+          summary: "Design workflow and measurement before funding value.",
+        },
+      ],
+      chosenOption: "Instrumentation-first reliability control loop",
+      rejectedOptions: [],
+      tradeoffsAccepted: ["Value proof waits for internal volume evidence"],
+      scope: ["measurement"],
+      exclusions: ["annual savings commitment"],
+      assumptions: [],
+      constraints: ["No savings total without internal volume evidence"],
+      unresolvedDecisions: ["baseline source owner"],
+      decision: rawDecision,
+    };
     const approved = parseApprovedSolutionApproach({
       solutionContextDigest: {
         approach: "Instrumentation-first reliability control loop",
@@ -77,16 +108,8 @@ describe("approved solution approach", () => {
         ],
       },
       decisionLineage: {
-        decisionId: "decision-1",
-        decisionVersion: "2026-08-20T00:00:00.000Z",
-        selectedOptionId: "instrumented-control-loop",
-        selectedOptionVersion: "1",
-        rejectedOptions: [],
-        scope: ["measurement"],
-        exclusions: ["annual savings commitment"],
-        assumptions: [],
-        constraints: ["No savings total without internal volume evidence"],
-        unresolvedDecisions: ["baseline source owner"],
+        ...rawLineage,
+        decisionHash: decisionHashFor(rawLineage),
       },
     });
 
@@ -95,6 +118,7 @@ describe("approved solution approach", () => {
         chosenOption: "Instrumentation-first reliability control loop",
         selectedOptionId: "instrumented-control-loop",
         decision: expect.objectContaining({ approvedBy: "sponsor" }),
+        decisionHash: decisionHashFor(rawLineage),
       }),
     );
   });
