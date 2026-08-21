@@ -19,7 +19,9 @@ describe("product classification — the shipped defect", () => {
     ["SQL Server (on-prem)", "database_platform"],
     ["Tableau extract (.hyper, on-prem)", "bi_extract"],
     ["Rhapsody Integration Engine", "integration_engine"],
-    ["SSIS package (on-prem)", "etl_elt_platform"],
+    // Refined: an SSIS package is a pipeline artifact, not an ETL platform. The platform in that
+    // stack is SQL Server Integration Services; the package is a unit of work that runs on it.
+    ["SSIS package (on-prem)", "etl_pipeline_artifact"],
   ])("%s is %s", (raw, expected) => {
     expect(classifyTechnology(raw).semanticType).toBe(expected);
   });
@@ -164,5 +166,60 @@ describe("zone assignment — the durable output", () => {
 
   it("leaves an unreviewed product unzoned rather than guessing", () => {
     expect(zoneFor(classifyApplication({ systemName: "Contoso Mystery Box" }).semanticType)).toBe("unzoned");
+  });
+});
+
+import { resolveTechnologySemantics } from "../../src/lib/visual-system/semantics/technology-semantic-taxonomy";
+
+describe("entity vs host — the two must not flatten into one", () => {
+  it("keeps a SQL Server-hosted mart a MART, with SQL Server as its host", () => {
+    // Flatten to "SQL Server" and it stops being a mart. Flatten to "integration" because a
+    // linked-server pull touches it and it stops being a store at all. Both have happened.
+    const r = resolveTechnologySemantics({
+      systemName: "Radiology Utilization Mart (SQL Server On-Prem)",
+      systemCategory: "SQL Server database/mart",
+    });
+    expect(r.entityType).toBe("data_mart");
+    expect(r.hostingPlatform).toBe("SQL Server On-Prem");
+    expect(r.platformType).toBe("database_platform");
+    expect(r.classificationStatus).toBe("classified");
+  });
+
+  it("keeps Epic Clarity a reporting database even though SQL Server hosts it", () => {
+    const r = resolveTechnologySemantics({ systemName: "Epic Clarity (SQL Server)" });
+    expect(r.entityType).toBe("operational_reporting_database");
+    expect(r.hostingPlatform).toBe("SQL Server");
+    expect(r.platformType).toBe("database_platform");
+  });
+
+  it("lets a BROAD recorded category be refined by exact product identity", () => {
+    const r = resolveTechnologySemantics({ systemName: "Epic Caboodle", systemCategory: "Application" });
+    expect(r.entityType).toBe("enterprise_data_warehouse");
+    expect(r.classificationSources).toContain("governed_reference_taxonomy");
+  });
+
+  it("reports a CONFLICT when a precise category contradicts product identity", () => {
+    // The conflict is data-quality signal. Resolving it by precedence would hide the fact that the
+    // record disagrees with itself.
+    const r = resolveTechnologySemantics({
+      systemName: "Epic Caboodle",
+      systemCategory: "Integration engine",
+    });
+    expect(r.classificationStatus).toBe("conflict");
+    expect(r.conflictReason).toMatch(/Enterprise data warehouse/);
+    expect(r.conflictReason).toMatch(/Integration engine/);
+  });
+
+  it("marks an unreviewed product unknown, with its raw value kept", () => {
+    const r = resolveTechnologySemantics({ systemName: "Contoso Mystery Box" });
+    expect(r.classificationStatus).toBe("unknown");
+    expect(r.entityType).toBe("unknown");
+    expect(r.rawValue).toBe("Contoso Mystery Box");
+  });
+
+  it("separates an ETL pipeline artifact from an ETL platform", () => {
+    // An SSIS package is a pipeline, not a platform. The movement it performs belongs on the edge.
+    expect(resolveTechnologySemantics({ systemName: "SSIS package (on-prem)" }).entityType).toBe("etl_pipeline_artifact");
+    expect(resolveTechnologySemantics({ systemName: "Informatica PowerCenter" }).entityType).toBe("etl_elt_platform");
   });
 });

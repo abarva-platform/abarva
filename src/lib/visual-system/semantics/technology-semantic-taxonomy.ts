@@ -37,6 +37,7 @@ export type TechnologySemanticType =
   | "core_transaction_system"
   | "integration_engine"
   | "etl_elt_platform"
+  | "etl_pipeline_artifact"
   | "api_esb_platform"
   | "event_streaming_platform"
   | "b2b_edi_gateway"
@@ -124,6 +125,29 @@ export type ClassificationSource =
   | "recorded_destination_type"
   | "unclassified";
 
+/**
+ * A resolved technology object.
+ *
+ * An object has an identity AND a host, and flattening them loses whichever is inconvenient.
+ * "Radiology Utilization Mart (SQL Server On-Prem)" is a data mart hosted on SQL Server. Flatten it
+ * to "SQL Server" and it stops being a mart; flatten it to "integration" because a linked-server
+ * pull touches it and it stops being a store at all. Both have happened.
+ */
+export interface ResolvedTechnologySemantics {
+  /** What the business/architecture object IS. */
+  entityType: TechnologySemanticType;
+  /** What hosts or implements it, when the record names one. */
+  platformType?: TechnologySemanticType;
+  hostingPlatform?: string;
+  classificationStatus: "classified" | "unknown" | "conflict";
+  classificationSources: ClassificationSource[];
+  rawValue: string;
+  rawCategory?: string;
+  /** Set when the recorded category and the exact product identity disagree. A conflict is
+   * data-quality signal, not something to resolve by precedence and hide. */
+  conflictReason?: string;
+}
+
 export interface SemanticClassification<T> {
   /** Exactly what the record said. Never discarded. */
   rawValue: string;
@@ -137,6 +161,7 @@ export const SEMANTIC_TYPE_LABEL: Readonly<Record<TechnologySemanticType, string
   core_transaction_system: "Core transaction system",
   integration_engine: "Integration engine",
   etl_elt_platform: "ETL / ELT platform",
+  etl_pipeline_artifact: "ETL pipeline",
   api_esb_platform: "API / ESB platform",
   event_streaming_platform: "Event streaming platform",
   b2b_edi_gateway: "B2B / EDI gateway",
@@ -243,13 +268,13 @@ const PRODUCT_ALIASES: ReadonlyArray<readonly [string, TechnologySemanticType]> 
   ["epic bridges", "integration_engine"],
 
   // --- ETL / ELT ---
-  ["ssis package (on-prem)", "etl_elt_platform"],
-  ["ssis package", "etl_elt_platform"],
-  ["ssis etl package", "etl_elt_platform"],
+  ["ssis package (on-prem)", "etl_pipeline_artifact"],
+  ["ssis package", "etl_pipeline_artifact"],
+  ["ssis etl package", "etl_pipeline_artifact"],
+  ["stored procedure", "etl_pipeline_artifact"],
+  ["stored procedures", "etl_pipeline_artifact"],
   ["datastage", "etl_elt_platform"],
   ["ibm datastage", "etl_elt_platform"],
-  ["stored procedure", "etl_elt_platform"],
-  ["stored procedures", "etl_elt_platform"],
   ["sql server integration services", "etl_elt_platform"],
   ["informatica powercenter etl", "etl_elt_platform"],
   ["informatica powercenter", "etl_elt_platform"],
@@ -396,8 +421,6 @@ const CATEGORY_ALIASES: ReadonlyArray<readonly [string, TechnologySemanticType]>
   ["ssis etl package", "etl_elt_platform"],
   ["datastage", "etl_elt_platform"],
   ["ibm datastage", "etl_elt_platform"],
-  ["stored procedure", "etl_elt_platform"],
-  ["stored procedures", "etl_elt_platform"],
   ["ssas olap cube", "bi_extract"],
   ["ssrs report subscription set", "analytics_bi_platform"],
   // NOTE: "Data & Analytics Platform" is deliberately absent. It is a domain label covering
@@ -496,6 +519,97 @@ export function classifyMechanism(rawValue: string): SemanticClassification<Data
  * names a business domain rather than a technology) do we fall back to the reviewed product
  * aliases, and then to unknown.
  */
+/**
+ * Recorded categories that are BROAD -- they name a shape, not a technology. An exact product
+ * alias is allowed to refine these. A precise category is not refined; disagreement with it is a
+ * conflict.
+ */
+const BROAD_CATEGORIES: ReadonlySet<string> = new Set([
+  "application",
+  "applications",
+  "system",
+  "systems",
+  "platform",
+  "cots",
+  "custom",
+  "custom-built",
+  "saas",
+  "data & analytics platform",
+  "it service management platform",
+]);
+
+/** Parses a trailing "(host)" qualifier: "Revenue Cycle Mart (SQL Server On-Prem)". */
+function splitHost(value: string): { name: string; host?: string } {
+  const m = /^(.*?)\s*\(([^()]+)\)\s*$/.exec(value.trim());
+  if (!m) return { name: value.trim() };
+  return { name: m[1].trim(), host: m[2].trim() };
+}
+
+/**
+ * Resolves an object's identity and its host separately, and reports disagreement rather than
+ * resolving it by precedence.
+ *
+ * Order, per the governed contract:
+ *   precise recorded category  -> primary identity
+ *   broad recorded category    -> exact product alias may refine it
+ *   exact product alias        -> identity when no category, else subtype/host context
+ *   integrationType            -> never consulted here; it describes movement, not objects
+ *   substring inference        -> never
+ *   unrecognised               -> unknown
+ *   precise category vs product disagreement -> conflict
+ */
+export function resolveTechnologySemantics(input: {
+  systemName?: string;
+  systemCategory?: string;
+  systemType?: string;
+}): ResolvedTechnologySemantics {
+  const rawValue = String(input.systemName ?? "").trim();
+  const rawCategory = String(input.systemCategory ?? "").trim();
+  const sources: ClassificationSource[] = [];
+
+  const { name, host } = splitHost(rawValue);
+  const hostCls = host ? lookup(host, PRODUCT_ALIASES) ?? lookupPrefix(host, PRODUCT_ALIASES) : null;
+
+  const categoryPrecise = lookup(rawCategory, CATEGORY_ALIASES);
+  const categoryIsBroad = BROAD_CATEGORIES.has(normalise(rawCategory));
+
+  const productHit =
+    lookup(name, PRODUCT_ALIASES) ??
+    lookup(stripPartition(name), PRODUCT_ALIASES) ??
+    lookupPrefix(name, PRODUCT_ALIASES);
+
+  const base = {
+    rawValue,
+    ...(rawCategory ? { rawCategory } : {}),
+    ...(host ? { hostingPlatform: host } : {}),
+    ...(hostCls ? { platformType: hostCls } : {}),
+  };
+
+  // Precise category and product disagree -> conflict. Reported, not silently ranked.
+  if (categoryPrecise && productHit && categoryPrecise !== productHit) {
+    return {
+      ...base,
+      entityType: categoryPrecise,
+      classificationStatus: "conflict",
+      classificationSources: ["explicit_source_field", "governed_reference_taxonomy"],
+      conflictReason: `Recorded category resolves to ${SEMANTIC_TYPE_LABEL[categoryPrecise]} while the product identity resolves to ${SEMANTIC_TYPE_LABEL[productHit]}.`,
+    };
+  }
+
+  if (categoryPrecise) {
+    sources.push("explicit_source_field");
+    return { ...base, entityType: categoryPrecise, classificationStatus: "classified", classificationSources: sources };
+  }
+
+  if (productHit) {
+    sources.push("governed_reference_taxonomy");
+    if (categoryIsBroad) sources.push("explicit_source_field");
+    return { ...base, entityType: productHit, classificationStatus: "classified", classificationSources: sources };
+  }
+
+  return { ...base, entityType: "unknown", classificationStatus: "unknown", classificationSources: ["unclassified"] };
+}
+
 export function classifyApplication(input: {
   systemName?: string;
   systemCategory?: string;
@@ -564,6 +678,7 @@ const ZONE_FOR_TYPE: Readonly<Record<TechnologySemanticType, ArchitectureZone>> 
   // Data integration moves and reshapes data sets. Informatica, SSIS, DataStage, stored
   // procedures. Not the same discipline, not the same tools, not the same zone.
   etl_elt_platform: "data_integration",
+  etl_pipeline_artifact: "data_integration",
   file_transfer_platform: "data_integration",
 
   enterprise_data_warehouse: "data_warehouse",
