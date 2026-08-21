@@ -12,6 +12,7 @@
 // deliverable — a single deliverable that fails to enqueue is reported in its row
 // with an error, and does not abort the others.
 
+import { randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import {
@@ -49,6 +50,7 @@ interface GeneratePhaseBody {
   useCaseArchetype?: string;
   moveName?: string;
   clientDisplayName?: string;
+  generationAttemptId?: string;
   contextExtract?: {
     candidatePreview?: {
       enabled?: boolean;
@@ -92,6 +94,16 @@ function errorMessage(err: unknown, fallback = "unknown error"): string {
     }
   }
   return fallback;
+}
+
+function normalizeGenerationAttemptId(value: unknown): string {
+  if (typeof value !== "string") return randomUUID();
+  const normalized = value
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 96);
+  return normalized || randomUUID();
 }
 
 export async function POST(req: NextRequest) {
@@ -140,6 +152,9 @@ export async function POST(req: NextRequest) {
 
     const moveName = body.moveName?.trim() || "Strategic Move";
     const clientDisplayName = body.clientDisplayName?.trim() || "Client";
+    const generationAttemptId = normalizeGenerationAttemptId(
+      body.generationAttemptId,
+    );
 
     const tenantInvariant = await validateDeliverableTenantInvariant({
       module: "moves",
@@ -345,6 +360,7 @@ export async function POST(req: NextRequest) {
               decisionLineage.decisionHash,
               decisionLineage.contextSnapshotHash,
               contextExtract?.extractId ?? "context-extract-missing",
+              generationAttemptId,
             ].join(":"),
           },
         );
@@ -416,6 +432,7 @@ export async function POST(req: NextRequest) {
       {
         phase,
         phaseLabel,
+        generationAttemptId,
         contextExtract,
         queued,
         total: results.length,
