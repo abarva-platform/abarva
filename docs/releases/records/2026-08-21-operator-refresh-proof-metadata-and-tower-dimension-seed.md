@@ -10,7 +10,7 @@ Candidate
 
 ## Plain-English Summary
 
-This release fixes operator-refresh defects found during the lab refresh run. Proof summaries now embed the ACA operator commit/digest metadata even when the container image does not include `.git`, and the Tower evidence projector now supplies live-schema mandatory metric-definition fields when it seeds metric dimension rows, including check-constrained enum values and tenant-scoped metric provenance.
+This release fixes operator-refresh defects found during the lab refresh run. Proof summaries now embed the ACA operator commit/digest metadata even when the container image does not include `.git`, and the Tower evidence projector now supplies live-schema mandatory metric-definition fields when it seeds metric dimension rows, including check-constrained enum values and tenant-scoped metric provenance. Periodless metric values remain evidence gaps instead of receiving fabricated dates.
 
 ## Release Lane
 
@@ -40,11 +40,12 @@ Release lane: `client-data-lane`.
 - Tower evidence refresh supplies all live-schema mandatory generated metric-definition fields with deterministic type-aware values, including the metric key, tenant key, domain, label/name/title, description, unit, direction, status/category-style fields, booleans, numerics, dates, timestamps, JSON and arrays.
 - Tower evidence refresh reads live check constraints from the referenced metric-definition table and picks permitted enum values, including `aggregation_rule`, instead of falling back to unconstrained placeholder strings.
 - Tower evidence refresh now seeds tenant-scoped `tower.metric_provenance` rows before writing observations, so `metric_observation.provenance_id` foreign keys resolve to the build that produced them.
+- Tower evidence refresh skips observation rows when the canonical value has no measurement period, preserving the missing-period condition as a claim evidence gap.
 
 ## QA / Validation
 
 - pass: `npx eslint scripts/data-build/refresh-runtime-layers.ts scripts/data-build/verify-runtime-layer-refresh-readback.ts scripts/data-build/refresh-source-l4-cube.ts scripts/data-build/refresh-home-landscape.ts scripts/data-build/refresh-tower-value-evidence.ts`
-- pass: `ABARVA_OPERATOR_BRANCH_COMMIT=test-sha ABARVA_OPERATOR_IMAGE_DIGEST=sha256:test TOWER_EVIDENCE_BUILD_VERSION=tower-provenance-patch-dry npx tsx scripts/data-build/refresh-tower-value-evidence.ts --out-dir /tmp/nexus-tower-evidence-provenance-patch-dry`
+- pass: `ABARVA_OPERATOR_BRANCH_COMMIT=test-sha ABARVA_OPERATOR_IMAGE_DIGEST=sha256:test TOWER_EVIDENCE_BUILD_VERSION=tower-period-gate-patch-dry npx tsx scripts/data-build/refresh-tower-value-evidence.ts --out-dir /tmp/nexus-tower-evidence-period-gate-patch-dry`
 - pass: `HOME_LANDSCAPE_BUILD_VERSION=home-patch-dry HOME_LANDSCAPE_INPUT_SOURCE_VERSION=test-input npx tsx scripts/data-build/refresh-home-landscape.ts --out-dir /tmp/nexus-home-landscape-patch-dry`
 - pending: post-merge ACA deploy and governed Tower evidence operator rerun.
 
@@ -62,7 +63,7 @@ Revert this PR and redeploy through the repo-owned ACA main workflow. If Tower e
 
 ## Audit Evidence
 
-- Prior operator attempts failed before commit on live metric-dimension mandatory-column, check-constraint, and metric-provenance foreign-key requirements; the ACA runner restored to idle.
+- Prior operator attempts failed before commit on live metric-dimension mandatory-column, check-constraint, metric-provenance foreign-key, and metric-observation period requirements; the ACA runner restored to idle.
 - Local dry-run summaries confirm the metadata fields populate from operator environment variables.
 - Follow-up proof is expected from the post-deploy Tower evidence operator rerun.
 
