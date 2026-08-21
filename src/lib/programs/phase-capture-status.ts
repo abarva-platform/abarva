@@ -96,3 +96,39 @@ export function statusSatisfiesDurabilityInvariant(
     input.saveStatus !== "error"
   );
 }
+
+/**
+ * Reconcile the on-screen draft with what the server said it stored.
+ *
+ * The server normalises on write (`evaluatePhaseCapture` trims each value), so
+ * the acknowledged value is not always byte-identical to what was sent. If the
+ * draft keeps the un-normalised text, the section stays permanently dirty: the
+ * badge can never reach Done, every autosave pass re-sends the same value, and
+ * the control shows text a reload would not reproduce.
+ *
+ * A key is only reconciled when its draft is still exactly what was sent. If
+ * the user typed while the request was in flight, their newer text wins —
+ * overwriting it here would lose input.
+ *
+ * Returns the same object identity when nothing changed, so callers can use it
+ * directly in a React state updater without forcing a render.
+ */
+export function reconcileDraftWithAcknowledged(
+  draft: Record<string, string>,
+  sent: Record<string, string>,
+  acknowledged: Record<string, string>,
+  keys: readonly string[],
+): Record<string, string> {
+  let changed = false;
+  const next = { ...draft };
+  for (const key of keys) {
+    const serverValue = acknowledged[key];
+    if (serverValue === undefined) continue;
+    const stillAsSent = (draft[key] ?? "") === (sent[key] ?? "");
+    if (stillAsSent && draft[key] !== serverValue) {
+      next[key] = serverValue;
+      changed = true;
+    }
+  }
+  return changed ? next : draft;
+}
