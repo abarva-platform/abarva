@@ -1,4 +1,7 @@
-import { buildAvaPhaseInputProposals } from "../phase-input-draft-proposals";
+import {
+  buildAvaPhaseInputProposals,
+  describeAvaPhaseInputDraftRefusal,
+} from "../phase-input-draft-proposals";
 
 describe("phase-input-draft-proposals", () => {
   it("drafts P1 charter inputs from approved P0 capture with evidence refs", () => {
@@ -51,5 +54,41 @@ describe("phase-input-draft-proposals", () => {
     });
 
     expect(proposals).toEqual([]);
+  });
+
+  it("explains that a complete phase has nothing empty to draft", () => {
+    const currentValues = {
+      sponsor_commitment: "Sponsor commitment is already captured.",
+      scope_boundary: "Scope is already captured.",
+      success_criteria: "Success criteria are already captured.",
+      stakeholder_map: "Stakeholder map is already captured.",
+      decision_rights: "Decision rights are already captured.",
+      evidence_plan: "Evidence plan is already captured.",
+    };
+
+    expect(
+      buildAvaPhaseInputProposals({
+        phase: 1,
+        currentValues,
+        upstreamValuesByPhase: { 0: {} },
+      }),
+    ).toEqual([]);
+    expect(
+      describeAvaPhaseInputDraftRefusal({
+        phase: 1,
+        currentValues,
+        upstreamValuesByPhase: { 0: {} },
+      }),
+    ).toContain("already have current values");
+  });
+
+  it("keeps the cited-source refusal when fields are empty but upstream context is absent", () => {
+    expect(
+      describeAvaPhaseInputDraftRefusal({
+        phase: 1,
+        currentValues: {},
+        upstreamValuesByPhase: { 0: {} },
+      }),
+    ).toContain("No cited draft is available");
   });
 });

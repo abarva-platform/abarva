@@ -130,7 +130,10 @@ import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
-import { buildAvaPhaseInputProposals } from "@/lib/programs/phase-input-draft-proposals";
+import {
+  buildAvaPhaseInputProposals,
+  describeAvaPhaseInputDraftRefusal,
+} from "@/lib/programs/phase-input-draft-proposals";
 // Moves aVa chat hardening (flag-gated, default off) — deterministic
 // grounding packet + answer-mode classifier for /strategic-moves/* chat.
 // See src/lib/programs/ava-chat/.
@@ -914,8 +917,11 @@ export async function POST(request: Request) {
                   packet,
                   phase: promptPhase,
                   proposals,
-                  refusal:
-                    "No cited draft is available from approved upstream phase inputs. Add source context first or write the field manually.",
+                  refusal: describeAvaPhaseInputDraftRefusal({
+                    phase: promptPhase,
+                    currentValues: valuesByPhase[promptPhase] ?? {},
+                    upstreamValuesByPhase: valuesByPhase,
+                  }),
                 });
             }
             movesAvaDeterministicAnswer = movesAvaChatHardeningEnabled
