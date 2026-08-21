@@ -749,6 +749,31 @@ export function MovesPhaseStandaloneClient({
             topLevelHardGateTotal - topLevelHardGateMet === 1 ? "" : "s"
           } remain.`
         : "No required input blockers for the current step.";
+  const phaseProgressSignals = [
+    {
+      label: "Inputs",
+      value: `${phaseCaptureCompleteCount}/${phaseCaptureSections.length}`,
+      tone:
+        phaseCaptureMissingCount === 0 && phaseCaptureDirtyCount === 0
+          ? "ready"
+          : "open",
+    },
+    {
+      label: "Gate",
+      value: phaseReadinessLabel,
+      tone:
+        isHistoricalPhase ||
+        gateApproved ||
+        topLevelHardGateMet >= topLevelHardGateTotal
+          ? "ready"
+          : "blocked",
+    },
+    {
+      label: "Next",
+      value: phaseStoryNextAction,
+      tone: phaseCaptureMissingCount > 0 ? "open" : "neutral",
+    },
+  ];
   const phaseCaptureBlocker =
     phase.phase === 3 && !selectedP3Option
       ? "Select the solution option that architecture should implement before Approve & Build."
@@ -1816,45 +1841,24 @@ export function MovesPhaseStandaloneClient({
                       className="mxw-progress-card"
                       aria-label="Phase progress"
                     >
-                      <strong>
-                        {phase.code} · {phase.title}
-                      </strong>
+                      <strong>{phase.code}</strong>
                       <span className="mxw-track">
                         <span style={{ width: `${progressPct}%` }} />
                       </span>
                       <div className="mxw-progress-meta">
-                        <span>
-                          <b>Inputs</b>
-                          {phaseCaptureCompleteCount}/
-                          {phaseCaptureSections.length} complete
-                        </span>
-                        <span>
-                          <b>Workflow</b>
-                          {isHistoricalPhase || gateApproved
-                            ? "Complete"
-                            : `${progressPct}%`}
-                        </span>
-                        <span>
-                          <b>Gate</b>
-                          {phaseReadinessLabel}
-                        </span>
-                        <span>
-                          <b>Stage</b>
-                          {substep.label}
-                        </span>
-                        <span>
-                          <b>Remains</b>
-                          {phaseStoryRemaining}
-                        </span>
-                        <span>
-                          <b>Next</b>
-                          {phaseStoryNextAction}
-                        </span>
-                        <span>
-                          <b>Artifact</b>
-                          {phaseStoryArtifactStatus}
-                        </span>
+                        {phaseProgressSignals.map((item) => (
+                          <span
+                            className={`mxw-progress-signal ${item.tone}`}
+                            key={item.label}
+                          >
+                            <b>{item.label}</b>
+                            {item.value}
+                          </span>
+                        ))}
                       </div>
+                      <em>
+                        {phaseStoryRemaining} {phaseStoryArtifactStatus}
+                      </em>
                     </div>
                   </div>
 
@@ -2027,6 +2031,33 @@ export function MovesPhaseStandaloneClient({
                   ? "Ask about this workspace"
                   : "Ask about this phase"}
               </div>
+              {phase.phase >= 1 ? (
+                <div className="mxw-ava-assist">
+                  <span>aVa can draft. You review and save.</span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void sendAvaMessage(
+                        `Draft proposed ${phase.code} inputs from approved upstream state and cite the source for each field. Do not invent missing evidence.`,
+                      )
+                    }
+                    disabled={avaStreaming}
+                  >
+                    Draft proposed inputs
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void sendAvaMessage(
+                        `Check what is blocking ${phase.code} gate approval and separate hard blockers from optional caveats.`,
+                      )
+                    }
+                    disabled={avaStreaming}
+                  >
+                    Check blockers
+                  </button>
+                </div>
+              ) : null}
               {phase.avaQuestions.map((question) => (
                 <button
                   key={question}
@@ -3585,28 +3616,18 @@ function PhaseBody({
               {gateAttestationRows.length} complete
             </strong>
           </summary>
-          <table className="mxw-gate-table">
-            <thead>
-              <tr>
-                <th>Gate item</th>
-                <th>What it means</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {gateAttestationRows.map((item) => (
-                <tr key={item.item}>
-                  <td>{item.item}</td>
-                  <td>{item.meaning}</td>
-                  <td>
-                    <span className={item.met ? "met" : "pending"}>
-                      {item.met ? "Complete" : "Open"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ul className="mxw-gate-mini-list">
+            {gateAttestationRows.map((item) => (
+              <li className={item.met ? "met" : "pending"} key={item.item}>
+                <span aria-hidden>{item.met ? "✓" : "○"}</span>
+                <div>
+                  <strong>{item.item}</strong>
+                  <p>{item.meaning}</p>
+                </div>
+                <em>{item.met ? "Done" : "Open"}</em>
+              </li>
+            ))}
+          </ul>
         </details>
         <PhaseRoleApprovalsSummary
           moveId={move.id}
@@ -5562,9 +5583,13 @@ function MovesStandaloneStyles() {
 .mxw-primary-action:hover{background:#000}
 .mxw-progress-card{grid-column:2;grid-row:1 / span 4;align-self:center;width:230px;border:1px solid var(--line-2);border-radius:12px;background:#fff;padding:14px 16px;box-shadow:none}
 .mxw-progress-card strong{display:block;font-family:Fraunces, Georgia, serif;font-size:20px;font-weight:650;line-height:1.05;margin-bottom:9px;color:var(--ink)}
+.mxw-progress-card>em{display:block;margin-top:10px;border-top:1px solid var(--line);padding-top:9px;color:var(--muted);font-size:11.5px;font-style:normal;font-weight:650;line-height:1.35}
 .mxw-progress-meta{display:grid;gap:6px;margin-top:10px}
-.mxw-progress-meta span{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;align-items:start;color:var(--muted);font-size:11.5px;font-weight:700;line-height:1.25}
+.mxw-progress-meta span{display:grid;grid-template-columns:52px minmax(0,1fr);gap:8px;align-items:start;color:var(--muted);font-size:11.5px;font-weight:750;line-height:1.25}
 .mxw-progress-meta b{color:#8b95a8;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.mxw-progress-signal.ready{color:var(--green)}
+.mxw-progress-signal.blocked{color:var(--amber)}
+.mxw-progress-signal.open{color:#8a5a12}
 .mxw-surface-tabs{display:inline-flex;align-items:center;gap:2px;background:rgba(12,26,58,.05);border-radius:10px;padding:3px;margin:0 0 20px;overflow-x:auto}
 .mxw-surface-tabs button{position:relative;border:0;background:transparent;color:var(--muted);padding:7px 15px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
 .mxw-surface-tabs button:hover{color:var(--ink);background:rgba(255,255,255,.62)}
@@ -5832,6 +5857,15 @@ function MovesStandaloneStyles() {
 .mxw-gate-table .met,.mxw-gate-table .pending{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:900;white-space:nowrap}
 .mxw-gate-table .met{border:1px solid rgba(29,143,104,.35);background:var(--green-tint);color:var(--green)}
 .mxw-gate-table .pending{border:1px solid var(--line-2);background:var(--soft);color:var(--muted)}
+.mxw-gate-mini-list{list-style:none;margin:0;padding:10px 12px 12px;display:grid;gap:8px;background:#fff}
+.mxw-gate-mini-list li{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:9px;align-items:start;border:1px solid var(--line);border-radius:10px;background:var(--soft);padding:10px 11px}
+.mxw-gate-mini-list li>span{width:20px;height:20px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:#fff;color:var(--muted);font-size:11px;font-weight:900}
+.mxw-gate-mini-list li.met{border-color:rgba(29,143,104,.28);background:var(--green-tint)}
+.mxw-gate-mini-list li.met>span{background:var(--green);color:#fff}
+.mxw-gate-mini-list strong{display:block;color:var(--ink);font-size:12.5px;line-height:1.25}
+.mxw-gate-mini-list p{margin:3px 0 0;color:var(--muted);font-size:12px;line-height:1.35}
+.mxw-gate-mini-list em{font-style:normal;border:1px solid var(--line-2);border-radius:999px;background:#fff;color:var(--muted);font-size:10.5px;font-weight:900;padding:4px 8px;white-space:nowrap}
+.mxw-gate-mini-list li.met em{border-color:rgba(29,143,104,.28);color:var(--green)}
 .mxw-role-approvals-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px;background:#fff}
 .mxw-role-approvals-row{display:flex;flex-direction:column;gap:5px}
 .mxw-role-approvals-title{font-size:12px;font-weight:800;color:var(--ink)}
@@ -5993,6 +6027,9 @@ function MovesStandaloneStyles() {
 .mxw-ava-body{padding:15px 17px;max-height:320px;overflow-y:auto}
 .mxw-ava-body p{font-size:12.5px;color:var(--ink-2);line-height:1.5;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin:0}
 .mxw-suggested{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--faint);font-weight:600;margin:14px 0 8px}
+.mxw-ava-assist{display:grid;gap:7px;border:1px solid rgba(0,87,184,.14);background:var(--blue-tint);border-radius:11px;padding:10px;margin:0 0 10px}
+.mxw-ava-assist span{font-size:11.5px;color:var(--blue);font-weight:850}
+.mxw-ava-body .mxw-ava-assist button{background:#fff;border-color:rgba(0,87,184,.18);color:var(--blue);font-weight:850;margin-bottom:0}
 .mxw-ava-body button{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:9px 12px;font-size:12.5px;color:var(--ink-2);cursor:pointer;margin-bottom:6px}
 .mxw-ava-body button:disabled{opacity:.5;cursor:default}
 .mxw-ava-thread{display:flex;flex-direction:column;gap:10px}
