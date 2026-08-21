@@ -16,6 +16,7 @@ import {
   isMissingSourceValue,
   parseCsv,
 } from "../source-adapters/csv-source-adapter";
+import { isReservedColumn } from "../intake/enrichment-firewall";
 
 export const CANONICAL_DATA_BUILD_REPORT_DIR =
   "reports/canonical-data-build/latest";
@@ -1628,6 +1629,27 @@ function buildRecordFromRow(args: {
   const attributes: Record<string, CanonicalValue> = {};
 
   for (const [field, value] of Object.entries(row)) {
+    // The enrichment firewall, at the exact point it has to hold.
+    //
+    // Everything below this loop passes columns through generically, so a reserved enrichment
+    // column would become a canonical attribute indistinguishable from a recorded one. Enrichment
+    // reaches canonical state only as an approved overlay; its presence here means the file was
+    // never split at intake, which is an error about the pipeline rather than about the value.
+    if (isReservedColumn(field)) {
+      findings.push({
+        tenantKey: tenant.tenantKey,
+        severity: "error",
+        code: "enrichment_column_in_recorded_path",
+        message: `Reserved enrichment column "${field}" reached the recorded canonical build. Enrichment must arrive as an approved overlay, never as a recorded column; this file was not split at intake.`,
+        sourcePath: sourceFile.repoRelativePath,
+        rowNumber,
+        domain: sourceFile.domain ?? undefined,
+        field,
+        value,
+      });
+      continue;
+    }
+
     if (isMissingSourceValue(value) || isPlaceholder(value)) {
       if (value.trim()) {
         const finding = {
