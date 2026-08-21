@@ -1,0 +1,22 @@
+{
+  "generatedAt": "2026-08-21T12:23:12.905Z",
+  "roleDispositionStatus": "pass",
+  "activeFiles": 59,
+  "sourceRows": 16409,
+  "unclassifiedFiles": 0,
+  "blockedRows": 4979,
+  "blockedRowsByDisposition": {
+    "intentionally_excluded_support": 72,
+    "pending_mapping": 4907
+  },
+  "pilotScopeBlockedRows": 4907,
+  "roleCounts": {
+    "non_ingestible_guide": 4,
+    "canonical_entity": 28,
+    "canonical_relationship": 5,
+    "evidence_only": 4,
+    "metric_observation": 14,
+    "reference_configuration": 4
+  },
+  "pilotGateStatus": "blocked_pending_mapping"
+}

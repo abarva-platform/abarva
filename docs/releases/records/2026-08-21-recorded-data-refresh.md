@@ -121,6 +121,10 @@ tenants improved.
   fix is to classify into a declared vocabulary, not to rewrite what they said.
 - Canonical rebuild: 2 tenants, 11,825 source mentions, 7,891 distinct entities, 0
   quarantined, 0 skipped. Reference resolution 91.4% / 91.0%, unchanged by this run.
+- Intake file disposition: 59 active files classified, 0 unclassified. The 4,979 rows
+  not represented in the mapped canonical scope are now split explicitly: 72
+  intentionally excluded support/guide rows and 4,907 pilot-scope rows pending adapter
+  mapping. The pilot-gate variant blocks while those mappings remain pending.
 - Row reconciliation, exact: applications 503→503 and 306→306; data assets 632→632 and
   540→540.
 - Cost distributions after modelling: 458/503 and 280/306 distinct values; top decile
@@ -180,7 +184,11 @@ persistent layer was written, so there is no state to unwind.
 
 - `reports/data-refresh/refresh-20260821T020005Z/before-manifest.json` and `after/`
 - `reports/canonical-data-build/latest/` — full proof bundle
+- `reports/intake-file-disposition/latest/` — declared role for every active source file
 - `node scripts/qa/source-integrity-report.mjs` — reproducible, registry-driven
+- `npm run audit:intake-file-disposition` — all active files classified
+- `npm run audit:intake-file-disposition:pilot-gate` — intentionally blocks on pending
+  mapping rows
 - Each generator prints its full statistics and refuses rather than degrading
 
 ## Known Gaps
@@ -191,6 +199,11 @@ Stated plainly, because the refresh is not finished:
   records, graph edges, search indexes, and the Intelligence / Tower / Moves / Source read
   models still point at the previous canonical hash. They must be refreshed through the
   governed loader before any product surface reflects this data.
+- **Not every source row is currently mapped into canonical.** The canonical build has 0
+  quarantined records for the mapped scope, but the intake-disposition audit records 4,979
+  blocked rows: 72 support/guide rows that are intentionally excluded from canonical and
+  4,907 rows that require explicit adapter mappings before a client-pilot promotion gate
+  can pass.
 - **No signed-in live proof has been captured, and this is a hard stop rather than an
   omission.** The local dev server runs and serves the refreshed branch, but reaching the
   preview route requires completing a Clerk sign-in, which the agent running this release

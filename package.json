@@ -411,6 +411,8 @@
     "audit:tenant-manifest-completeness": "tsx scripts/audit/tenant-manifest-completeness.ts",
     "data:consolidate-tenant-inputs": "node scripts/data-build/consolidate-active-tenant-inputs.mjs",
     "audit:canonical-tenant-inputs": "npx tsx scripts/audit/canonical-tenant-inputs.ts",
+    "audit:intake-file-disposition": "npx tsx scripts/audit/intake-file-disposition.ts --strict",
+    "audit:intake-file-disposition:pilot-gate": "npx tsx scripts/audit/intake-file-disposition.ts --strict --pilot-gate",
     "audit:tenant-input-quality": "npx tsx scripts/audit/tenant-input-quality-depth.ts",
     "audit:meridian-data-state-reconciliation": "node scripts/audit/meridian-data-state-reconciliation.mjs",
     "audit:source-projection:all-tenants": "tsx scripts/audit/tenant-manifest-completeness.ts",
