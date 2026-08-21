@@ -22,16 +22,19 @@ export function DataFlowPage({
   tenantKey,
   tenantDisplayName,
   integrations,
+  applications,
   canonicalBuild,
 }: {
   tenantKey: string;
   tenantDisplayName: string;
   integrations: TechRecordType;
+  /** Required to resolve endpoints to named systems rather than raw recorded ids. */
+  applications?: TechRecordType;
   canonicalBuild?: string;
 }) {
   const view = useMemo(
-    () => buildCurrentStateFlowView({ tenantKey, tenantDisplayName, integrations, canonicalBuild }),
-    [tenantKey, tenantDisplayName, integrations, canonicalBuild],
+    () => buildCurrentStateFlowView({ tenantKey, tenantDisplayName, integrations, applications, canonicalBuild }),
+    [tenantKey, tenantDisplayName, integrations, applications, canonicalBuild],
   );
   const { svg } = useMemo(() => renderArchitectureViewSvg(view, { width: 1260 }), [view]);
 

@@ -5,19 +5,21 @@ import { validateArchitectureView } from "../../src/lib/visual-system/architectu
 import type { HomeReviewBundle } from "../../src/lib/home/preview/types";
 const DIR = path.join(process.cwd(), "src/lib/home/preview/golden-snapshots");
 for (const f of fs.readdirSync(DIR).filter((x) => x.endsWith(".json"))) {
-  const tenantKey = f.replace(/\.json$/, "");
+  const t = f.replace(/\.json$/, "");
   const b = JSON.parse(fs.readFileSync(path.join(DIR, f), "utf8")) as HomeReviewBundle;
   const ints = b.technologyEstate?.recordTypes.find((r) => r.objectType === "data_asset_or_integration");
-  if (!ints) { console.log(tenantKey, "no integrations"); continue; }
-  const v = buildCurrentStateFlowView({ tenantKey, tenantDisplayName: tenantKey, integrations: ints });
+  const apps = b.technologyEstate?.recordTypes.find((r) => r.objectType === "application_system");
+  if (!ints) continue;
+  const v = buildCurrentStateFlowView({ tenantKey: t, tenantDisplayName: t, integrations: ints, applications: apps });
   const issues = validateArchitectureView(v);
-  console.log(`\n== ${tenantKey}`);
-  console.log("  title:", v.title);
-  console.log("  context:", v.contextLine);
-  console.log("  nodes:", v.nodes.length, " edges:", v.edges.length, " issues:", issues.length);
-  issues.slice(0,5).forEach(i=>console.log("    ",i.level,i.message));
+  console.log(`\n${"=".repeat(72)}\n== ${t}   ${v.nodes.length} nodes · ${v.edges.length} edges · ${issues.filter(i=>i.level==="error").length} errors`);
+  console.log("   title:", v.title);
+  console.log("   ctx:  ", v.contextLine);
   const lanes = new Map<string, string[]>();
-  v.nodes.forEach(n => lanes.set(n.layer, [...(lanes.get(n.layer)||[]), n.label]));
-  for (const [l, ns] of lanes) console.log(`  [${l}] ${ns.join(" | ")}`);
-  console.log("  top edges:", v.edges.sort((a,b)=>(b.weight||0)-(a.weight||0)).slice(0,4).map(e=>`${e.weight}× ${e.label}`).join("  ·  "));
+  v.nodes.forEach((n) => lanes.set(n.layer, [...(lanes.get(n.layer) ?? []), `${n.label} (${n.note})`]));
+  for (const [l, ns] of lanes) {
+    console.log(`   [${v.laneLabels?.[l] ?? l}]`);
+    ns.forEach((n) => console.log(`       ${n}`));
+  }
+  issues.filter(i=>i.level==="error").slice(0,4).forEach(i=>console.log("   ERROR:", i.message));
 }

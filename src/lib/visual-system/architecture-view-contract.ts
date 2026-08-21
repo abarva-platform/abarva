@@ -40,7 +40,11 @@ export type SemanticRole =
 export type EvidenceBasis = "CANONICAL" | "ABARVA_DERIVED" | "CANDIDATE";
 
 /** Named lane vocabularies. The renderer reads the scheme; it does not hardcode lanes. */
-export type LayerScheme = "enterprise_estate_v1" | "solution_stack_v1" | "aws_physical_v1";
+export type LayerScheme =
+  | "enterprise_estate_v1"
+  | "solution_stack_v1"
+  | "aws_physical_v1"
+  | "current_state_zones_v1";
 
 /**
  * Lane order is BUSINESS FIRST (decided 2026-08-20): a capability decomposes downward into the
@@ -76,6 +80,22 @@ export const LAYER_SCHEMES: Readonly<Record<LayerScheme, ReadonlyArray<string>>>
     "infrastructure",
   ],
   aws_physical_v1: ["organization", "account", "region", "vpc", "az", "subnet", "service"],
+  /**
+   * Current-state zones. Separates middleware from data integration, and warehouses from marts,
+   * because those are the distinctions a reader actually uses -- an ESB is not an ETL tool and a
+   * Teradata warehouse is not a SQL Server mart. Collapsing either pair is what makes a diagram
+   * look plausible and read as amateur.
+   */
+  current_state_zones_v1: [
+    "source_systems",
+    "middleware",
+    "data_integration",
+    "data_warehouse",
+    "data_mart",
+    "analytics_bi",
+    "governance",
+    "unzoned",
+  ],
 };
 
 export const LAYER_LABELS: Readonly<Record<string, string>> = {
@@ -298,6 +318,15 @@ export interface ArchitectureView {
   boundaries: ArchitectureViewBoundary[];
   overlays: ArchitectureViewOverlay[];
   evidenceCoverage: EvidenceCoverage;
+  /**
+   * Per-view lane labels, overriding `LAYER_LABELS` for this view only.
+   *
+   * The global labels name architecture tiers, which is right for a landscape and wrong for a view
+   * whose lanes are zones. A zone lane holding SSIS and Informatica is "Data integration", not
+   * "Integration" -- and a view that cannot label its own lanes truthfully ends up asserting a
+   * taxonomy it does not have.
+   */
+  laneLabels?: Record<string, string>;
   limitations: string[];
 }
 
