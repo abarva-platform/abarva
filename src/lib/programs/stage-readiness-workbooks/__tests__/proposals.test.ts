@@ -268,6 +268,48 @@ describe("stage readiness workbook proposals", () => {
     );
   });
 
+  it("persists terminal proposal reviews with a database-valid approved artifact status", async () => {
+    const proposalSet = buildStageReadinessProposalSet({
+      ctx,
+      program,
+      parsed,
+      uploadedWorkbookSha256: "a".repeat(64),
+    });
+    const saveArtifact = jest.fn().mockResolvedValue({
+      artifactId: "review-artifact-1",
+      version: 3,
+      blobStored: true,
+      blobPath: "moves/tenant/move/approvals/p1/v3/review.json",
+    });
+
+    await persistStageReadinessProposalReview({
+      ctx,
+      program,
+      proposalSet,
+      sourceProposalSetArtifactId: "proposal-artifact-1",
+      sourceProposalSetArtifactVersion: 2,
+      decisions: proposalSet.proposals.map((proposal) => ({
+        proposalId: proposal.proposalId,
+        disposition: "accepted",
+      })),
+      saveArtifact,
+    });
+
+    expect(saveArtifact).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({
+        artifactType: "stage_readiness_workbook_proposal_review",
+        artifactFamily: "approval_artifact",
+        status: "approved",
+        metadata: expect.objectContaining({
+          acceptedCount: proposalSet.proposals.length,
+          pendingCount: 0,
+          needsValidationCount: 0,
+        }),
+      }),
+    );
+  });
+
   it("rejects review decisions for unknown proposal ids", () => {
     const proposalSet = buildStageReadinessProposalSet({
       ctx,
