@@ -65,6 +65,16 @@ describe("invented figures fail", () => {
     ).toBe(true);
   });
 
+  it("names the unsupported claim so the operator can repair it", () => {
+    expect(
+      blockersFor(
+        "The programme will deliver $4.7M in annual savings once adoption completes.",
+      ).join(" "),
+    ).toContain(
+      "The programme will deliver $4.7M in annual savings once adoption completes.",
+    );
+  });
+
   it("blocks an invented implementation cost", () => {
     expect(
       hasUnsupportedBlocker(
