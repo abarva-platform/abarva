@@ -75,6 +75,31 @@ function excerptSentence(sentence: string): string {
   return sentence.replace(/\s+/g, " ").trim().slice(0, 180);
 }
 
+function isSupportedExternalBenchmarkClaim(sentence: string): boolean {
+  if (
+    !/\b(external[_ -]?benchmark|external reference|reference pattern|sensitivity[- ]?(?:only|framing)|for sensitivity)\b/i.test(
+      sentence,
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    /\b(annual|total|savings?|benefits?|ROI|return|payback|NPV)\b/i.test(
+      sentence,
+    ) &&
+    !/\bnot\b.{0,120}\b(savings?|benefits?|ROI|return|client[- ]specific|internal|baseline|claim|fact)\b/i.test(
+      sentence,
+    )
+  ) {
+    return false;
+  }
+
+  return /\bnot\b.{0,120}\b(client[- ]specific|internal|baseline|savings?|benefits?|claim|fact)\b|sensitivity[- ]only|for sensitivity|per minute|\/min\b/i.test(
+    sentence,
+  );
+}
+
 /** Collect client-fact-looking claims that lack a [n] citation, assumption, or placeholder. */
 function collectUnsupportedClaims(body: string): string[] {
   // sentences asserting numbers/dollars/dates/percentages are client-fact candidates
@@ -85,7 +110,11 @@ function collectUnsupportedClaims(body: string): string[] {
     /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING|\(open input\s*[\u2013\u2014-]\s*see Open Inputs Required\)/i;
   const claims: string[] = [];
   for (const s of sentences) {
-    if (factLike.test(s) && !supported.test(s)) {
+    if (
+      factLike.test(s) &&
+      !supported.test(s) &&
+      !isSupportedExternalBenchmarkClaim(s)
+    ) {
       claims.push(excerptSentence(s));
     }
   }

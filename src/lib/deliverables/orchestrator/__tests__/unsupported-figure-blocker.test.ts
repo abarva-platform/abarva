@@ -135,6 +135,22 @@ describe("legitimate quantitative statements pass", () => {
     ).toBe(false);
   });
 
+  it("allows a labelled external benchmark used for sensitivity framing", () => {
+    expect(
+      hasUnsupportedBlocker(
+        "The analyst applies an external benchmark of $98.41 per minute of delay for sensitivity framing; it is not a client-specific savings claim.",
+      ),
+    ).toBe(false);
+  });
+
+  it("does not let an external benchmark label launder an annual savings claim", () => {
+    expect(
+      hasUnsupportedBlocker(
+        "Using an external benchmark, the programme will deliver $4.7M in annual savings once adoption completes.",
+      ),
+    ).toBe(true);
+  });
+
   it("allows prose with no quantitative claim at all", () => {
     expect(
       hasUnsupportedBlocker(
