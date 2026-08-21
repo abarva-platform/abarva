@@ -1,0 +1,70 @@
+# 2026-08-21 Operator Refresh Proof Metadata And Tower Dimension Seed
+
+## Release ID
+
+`2026-08-21-operator-refresh-proof-metadata-and-tower-dimension-seed`
+
+## Status
+
+Candidate
+
+## Plain-English Summary
+
+This release fixes two operator-refresh defects found during the lab refresh run. Proof summaries now embed the ACA operator commit/digest metadata even when the container image does not include `.git`, and the Tower evidence projector now supplies the required metric-definition domain when it seeds metric dimension rows.
+
+## Release Lane
+
+`client-data-lane`
+
+## Layer Impact
+
+Release lane: `client-data-lane`.
+
+- SOURCE ADAPTERS: no change.
+- CANONICAL MODEL: no canonical record or source-of-truth change.
+- PRODUCTS: Home, Tower, Source, and runtime refresh proof metadata changes; Tower receives a narrow dimension-seeding fix required for its evidence projection.
+- DATA PLANE: no migration; governed operator jobs only.
+
+## Client Applicability
+
+- All clients: no.
+- Specific clients: none by default.
+- Internal only: governed lab/operator refresh lane.
+- Public/demo only: no.
+- Feature flag: none.
+
+## Changes Included
+
+- Runtime-layer, runtime-readback, Source L4, Home landscape, and Tower evidence summaries prefer `ABARVA_OPERATOR_BRANCH_COMMIT` when `.git` is absent.
+- Home and Tower summaries include `ABARVA_OPERATOR_IMAGE_DIGEST` when the ACA job wrapper supplies it.
+- Tower evidence refresh supplies `domain=canonical_projection` for generated metric-definition rows when the live schema requires a domain.
+
+## QA / Validation
+
+- pass: `npx eslint scripts/data-build/refresh-runtime-layers.ts scripts/data-build/verify-runtime-layer-refresh-readback.ts scripts/data-build/refresh-source-l4-cube.ts scripts/data-build/refresh-home-landscape.ts scripts/data-build/refresh-tower-value-evidence.ts`
+- pass: `TOWER_EVIDENCE_BUILD_VERSION=tower-patch-dry npx tsx scripts/data-build/refresh-tower-value-evidence.ts --out-dir /tmp/nexus-tower-evidence-patch-dry`
+- pass: `HOME_LANDSCAPE_BUILD_VERSION=home-patch-dry HOME_LANDSCAPE_INPUT_SOURCE_VERSION=test-input npx tsx scripts/data-build/refresh-home-landscape.ts --out-dir /tmp/nexus-home-landscape-patch-dry`
+- pending: post-merge ACA deploy and governed Tower evidence operator rerun.
+
+## Rollout Plan
+
+Merge through PR. The repo-owned ACA main deploy workflow builds the digest-pinned runtime image. After deploy, rerun the governed Tower evidence refresh job through the private ACA operator runner.
+
+## Deployment Authority
+
+Only the repo-owned ACA main deploy workflow may update the shared lab web runtime. The Tower evidence refresh must run through the private ACA operator job with a digest-pinned image and database secret reference.
+
+## Rollback Plan
+
+Revert this PR and redeploy through the repo-owned ACA main workflow. If Tower evidence refresh has already run, rerun the prior approved Tower refresh or restore the prior Tower evidence rows through the governed operator lane.
+
+## Audit Evidence
+
+- Prior operator attempt failed before commit on a live metric-dimension mandatory-column requirement; the ACA runner restored to idle.
+- Local dry-run summaries confirm the metadata fields populate from operator environment variables.
+- Follow-up proof is expected from the post-deploy Tower evidence operator rerun.
+
+## Known Gaps
+
+- Home and Tower projectors still log proof JSON rather than emitting tar proof markers for automatic wrapper extraction.
+- This release does not add new migrations, product route browser proof, retrieval indexing proof, or migration/cutover authorization.

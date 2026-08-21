@@ -161,6 +161,8 @@ function databaseUrl(): string {
 }
 
 function gitSha(): string {
+  const operatorCommit = process.env.ABARVA_OPERATOR_BRANCH_COMMIT?.trim();
+  if (operatorCommit) return operatorCommit;
   const result = spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" });
   return result.status === 0 ? result.stdout.trim() : "unknown";
 }
