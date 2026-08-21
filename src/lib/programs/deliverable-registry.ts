@@ -395,7 +395,7 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     ],
     consultingAnalog: "McKinsey Financial Model / Investment Analysis Workbook",
     generationPromptHint:
-      "Generate ONLY structured markdown tables in the exact section format specified. Do NOT add narrative paragraphs between sections. Use realistic numbers grounded in the engagement context and baseline data from P2. Every benefit lever must reference its parent root cause.",
+      "Generate ONLY structured markdown tables in the exact section format specified. Do NOT add narrative paragraphs between sections. If finance-grade baseline, cost, benefit, and sensitivity inputs are absent, produce an input register with open inputs and formulas rather than a filled model. Every numeric value must be cited, explicitly labelled as an assumption, or left open.",
   },
 
   {
@@ -418,6 +418,8 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
       "Risk to Measurement (data quality risks, attribution challenges, mitigations)",
     ],
     consultingAnalog: "McKinsey Measurement Framework & KPI Design",
+    generationPromptHint:
+      "Produce a compact measurement plan, not a second business case. Use tables for metric definition, owner, source, baseline status, cadence, and acceptance rule. Do not assert realized value, annual savings, ROI, NPV, payback, or target value without cited evidence.",
   },
 
   // Backward-compat key for P4 monolithic doc
