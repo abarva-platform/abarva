@@ -268,11 +268,13 @@ const PRODUCT_ALIASES: ReadonlyArray<readonly [string, TechnologySemanticType]> 
   ["epic bridges", "integration_engine"],
 
   // --- ETL / ELT ---
-  ["ssis package (on-prem)", "etl_pipeline_artifact"],
-  ["ssis package", "etl_pipeline_artifact"],
-  ["ssis etl package", "etl_pipeline_artifact"],
-  ["stored procedure", "etl_pipeline_artifact"],
-  ["stored procedures", "etl_pipeline_artifact"],
+  // SSIS is Microsoft's ETL TOOL -- SQL Server Integration Services. It belongs with Informatica
+  // and DataStage as data-integration tooling. The recorded value "SSIS package (on-prem)" sits in
+  // the platform column and is naming that tool, loosely, as what carries the flow.
+  ["ssis", "etl_elt_platform"],
+  ["sql server integration services", "etl_elt_platform"],
+  ["ssis package (on-prem)", "etl_elt_platform"],
+  ["ssis package", "etl_elt_platform"],
   ["datastage", "etl_elt_platform"],
   ["ibm datastage", "etl_elt_platform"],
   ["sql server integration services", "etl_elt_platform"],
@@ -418,7 +420,11 @@ const MECHANISM_ALIASES: ReadonlyArray<readonly [string, DataMovementMechanism]>
  */
 const CATEGORY_ALIASES: ReadonlyArray<readonly [string, TechnologySemanticType]> = [
   ["sql server database/mart", "data_mart"],
-  ["ssis etl package", "etl_elt_platform"],
+  // A named job -- "Claims ETL", "Radiology Utilization ETL" -- IS an artifact: a unit of work
+  // that runs ON the tool. The tool is SSIS; the package is the job.
+  ["ssis etl package", "etl_pipeline_artifact"],
+  ["stored procedure", "etl_pipeline_artifact"],
+  ["stored procedures", "etl_pipeline_artifact"],
   ["datastage", "etl_elt_platform"],
   ["ibm datastage", "etl_elt_platform"],
   ["ssas olap cube", "bi_extract"],
@@ -607,6 +613,20 @@ export function resolveTechnologySemantics(input: {
     return { ...base, entityType: productHit, classificationStatus: "classified", classificationSources: sources };
   }
 
+  // The head did not resolve but the parenthetical did: "API Gateway / iPaaS (MuleSoft)" describes
+  // the product in the bracket, not a host. When the head is unrecognised, the bracket IS the
+  // product identity -- otherwise a reviewed product disappears into unknown because of how the
+  // record happened to phrase it.
+  if (hostCls) {
+    return {
+      rawValue,
+      ...(rawCategory ? { rawCategory } : {}),
+      entityType: hostCls,
+      classificationStatus: "classified",
+      classificationSources: ["governed_reference_taxonomy"],
+    };
+  }
+
   return { ...base, entityType: "unknown", classificationStatus: "unknown", classificationSources: ["unclassified"] };
 }
 
@@ -643,6 +663,9 @@ export function classifyApplication(input: {
 export const MOVEMENT_PLATFORM_TYPES: ReadonlySet<TechnologySemanticType> = new Set([
   "integration_engine",
   "etl_elt_platform",
+  // A named ETL job is not a platform, but it does carry data and belongs in the data-integration
+  // zone rather than disappearing from the picture.
+  "etl_pipeline_artifact",
   "api_esb_platform",
   "event_streaming_platform",
   "b2b_edi_gateway",

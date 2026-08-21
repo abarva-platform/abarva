@@ -19,9 +19,8 @@ describe("product classification — the shipped defect", () => {
     ["SQL Server (on-prem)", "database_platform"],
     ["Tableau extract (.hyper, on-prem)", "bi_extract"],
     ["Rhapsody Integration Engine", "integration_engine"],
-    // Refined: an SSIS package is a pipeline artifact, not an ETL platform. The platform in that
-    // stack is SQL Server Integration Services; the package is a unit of work that runs on it.
-    ["SSIS package (on-prem)", "etl_pipeline_artifact"],
+    // SSIS is Microsoft's ETL tool. The value recorded in the platform column names that tool.
+    ["SSIS package (on-prem)", "etl_elt_platform"],
   ])("%s is %s", (raw, expected) => {
     expect(classifyTechnology(raw).semanticType).toBe(expected);
   });
@@ -217,9 +216,38 @@ describe("entity vs host — the two must not flatten into one", () => {
     expect(r.rawValue).toBe("Contoso Mystery Box");
   });
 
-  it("separates an ETL pipeline artifact from an ETL platform", () => {
-    // An SSIS package is a pipeline, not a platform. The movement it performs belongs on the edge.
-    expect(resolveTechnologySemantics({ systemName: "SSIS package (on-prem)" }).entityType).toBe("etl_pipeline_artifact");
+  it("separates the ETL TOOL from a job that runs on it", () => {
+    // SSIS is Microsoft's ETL tool and belongs with Informatica and DataStage. A named job --
+    // recorded as the category "SSIS ETL package" -- is the artifact that runs on that tool.
+    expect(resolveTechnologySemantics({ systemName: "SSIS package (on-prem)" }).entityType).toBe("etl_elt_platform");
     expect(resolveTechnologySemantics({ systemName: "Informatica PowerCenter" }).entityType).toBe("etl_elt_platform");
+    expect(resolveTechnologySemantics({ systemName: "IBM DataStage" }).entityType).toBe("etl_elt_platform");
+    expect(
+      resolveTechnologySemantics({ systemName: "Claims ETL (SQL Server On-Prem)", systemCategory: "SSIS ETL package" }).entityType,
+    ).toBe("etl_pipeline_artifact");
+  });
+
+  it("reads the parenthetical as the product when the head is unrecognised", () => {
+    // "API Gateway / iPaaS (MuleSoft)" names the product in the bracket. Treating the bracket
+    // only ever as a host sent a reviewed product to unknown because of how the record phrased it.
+    const r = resolveTechnologySemantics({ systemName: "API Gateway / iPaaS (MuleSoft)" });
+    expect(r.entityType).toBe("api_esb_platform");
+    expect(zoneFor(r.entityType)).toBe("middleware");
+  });
+
+  it("still treats the parenthetical as a HOST when the head is a known product", () => {
+    // The two must not collapse: Epic Clarity hosted on SQL Server is a reporting database, and
+    // SQL Server is its host -- not its identity.
+    const r = resolveTechnologySemantics({ systemName: "Epic Clarity (SQL Server)" });
+    expect(r.entityType).toBe("operational_reporting_database");
+    expect(r.hostingPlatform).toBe("SQL Server");
+  });
+
+  it("keeps both the tool and its jobs in the data integration zone", () => {
+    // A job is not a platform, but it must not disappear from the picture either.
+    expect(zoneFor(resolveTechnologySemantics({ systemName: "SSIS package (on-prem)" }).entityType)).toBe("data_integration");
+    expect(
+      zoneFor(resolveTechnologySemantics({ systemName: "Claims ETL (SQL Server On-Prem)", systemCategory: "SSIS ETL package" }).entityType),
+    ).toBe("data_integration");
   });
 });
