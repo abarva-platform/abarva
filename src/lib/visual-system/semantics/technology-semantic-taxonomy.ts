@@ -50,6 +50,8 @@ export type TechnologySemanticType =
   | "bi_extract"
   | "analytics_bi_platform"
   | "consuming_application"
+  | "data_governance_catalog"
+  | "data_quality_tool"
   | "no_intermediary"
   | "unknown";
 
@@ -70,6 +72,50 @@ export type DataMovementMechanism =
   | "vendor_extract"
   | "write_back"
   | "unknown";
+
+/**
+ * Architecture zones — the durable output of this module.
+ *
+ * The zone, not the picture, is the asset. Once a system is in the right zone, any surface can
+ * render it: a lane diagram, a table, an aVa answer. Get the zone wrong and every one of those is
+ * wrong in the same way.
+ *
+ * Middleware and data integration are separate zones, and warehouses and marts are separate zones,
+ * because those are the distinctions a reader uses. An ESB is not an ETL tool; a Teradata warehouse
+ * is not a SQL Server mart. Collapsing either pair is what makes a diagram look plausible and read
+ * as amateur.
+ */
+export type ArchitectureZone =
+  | "source_systems"
+  | "middleware"
+  | "data_integration"
+  | "data_warehouse"
+  | "data_mart"
+  | "analytics_bi"
+  | "governance"
+  | "unzoned";
+
+export const ZONE_LABEL: Readonly<Record<ArchitectureZone, string>> = {
+  source_systems: "Source systems",
+  middleware: "Middleware",
+  data_integration: "Data integration",
+  data_warehouse: "Data warehouse",
+  data_mart: "Data marts",
+  analytics_bi: "Analytics & BI",
+  governance: "Governance & quality",
+  unzoned: "Unzoned — to validate",
+};
+
+export const ZONE_ORDER: ReadonlyArray<ArchitectureZone> = [
+  "source_systems",
+  "middleware",
+  "data_integration",
+  "data_warehouse",
+  "data_mart",
+  "analytics_bi",
+  "governance",
+  "unzoned",
+];
 
 export type ClassificationSource =
   | "explicit_source_field"
@@ -104,6 +150,8 @@ export const SEMANTIC_TYPE_LABEL: Readonly<Record<TechnologySemanticType, string
   bi_extract: "BI extract",
   analytics_bi_platform: "Analytics / BI platform",
   consuming_application: "Consuming application",
+  data_governance_catalog: "Data governance / catalog",
+  data_quality_tool: "Data quality tool",
   no_intermediary: "No intermediary recorded",
   unknown: "Unclassified — to validate",
 };
@@ -135,6 +183,57 @@ export const MECHANISM_LABEL: Readonly<Record<DataMovementMechanism, string>> = 
  * tenant that runs it.
  */
 const PRODUCT_ALIASES: ReadonlyArray<readonly [string, TechnologySemanticType]> = [
+  // --- source systems: ERP, HCM, finance, service, operational ---
+  // These are the systems data comes FROM. Getting them into the source zone is what makes the
+  // rest of the picture legible -- an unzoned ERP reads as an unknown.
+  ["workday", "core_transaction_system"],
+  ["workday core hr", "core_transaction_system"],
+  ["workday financials", "core_transaction_system"],
+  ["sap s/4hana", "core_transaction_system"],
+  ["sap ecc", "core_transaction_system"],
+  ["peoplesoft", "core_transaction_system"],
+  ["peoplesoft gl", "core_transaction_system"],
+  ["oracle e-business suite", "core_transaction_system"],
+  ["oracle fusion", "core_transaction_system"],
+  ["netsuite", "core_transaction_system"],
+  ["infor lawson", "core_transaction_system"],
+  ["infor lawson supply chain & finance erp", "core_transaction_system"],
+  ["jd edwards", "core_transaction_system"],
+  ["servicenow", "operational_source"],
+  ["servicenow itsm", "operational_source"],
+  ["salesforce", "operational_source"],
+  ["adobe experience manager", "operational_source"],
+  ["adobe analytics", "operational_source"],
+  ["rsa archer grc", "operational_source"],
+  ["kronos", "operational_source"],
+  ["ukg", "operational_source"],
+  ["concur", "operational_source"],
+  ["coupa", "operational_source"],
+
+  // Clinical / healthcare source systems
+  ["epic hyperspace", "core_transaction_system"],
+  ["epic chronicles", "core_transaction_system"],
+  ["epic resolute hospital billing", "core_transaction_system"],
+  ["epic resolute professional billing", "core_transaction_system"],
+  ["epic mychart", "operational_source"],
+  ["epic willow", "core_transaction_system"],
+  ["epic willow ambulatory", "core_transaction_system"],
+  ["epic willow inpatient", "core_transaction_system"],
+  ["epic stork", "core_transaction_system"],
+  ["epic beaker", "core_transaction_system"],
+  ["epic radiant", "core_transaction_system"],
+  ["epic cadence", "core_transaction_system"],
+  ["epic optime", "core_transaction_system"],
+  ["cerner millennium", "core_transaction_system"],
+  ["meditech expanse", "core_transaction_system"],
+
+  // Airline / transport operational systems
+  ["amadeus altéa inventory", "core_transaction_system"],
+  ["amadeus altéa reservations", "core_transaction_system"],
+  ["amadeus altéa departure control (dcs)", "core_transaction_system"],
+  ["sabre", "core_transaction_system"],
+  ["aims crew pairing & rostering", "core_transaction_system"],
+
   // --- integration engines / interoperability ---
   ["rhapsody integration engine", "integration_engine"],
   ["rhapsody", "integration_engine"],
@@ -147,10 +246,15 @@ const PRODUCT_ALIASES: ReadonlyArray<readonly [string, TechnologySemanticType]> 
   ["ssis package (on-prem)", "etl_elt_platform"],
   ["ssis package", "etl_elt_platform"],
   ["ssis etl package", "etl_elt_platform"],
+  ["datastage", "etl_elt_platform"],
+  ["ibm datastage", "etl_elt_platform"],
+  ["stored procedure", "etl_elt_platform"],
+  ["stored procedures", "etl_elt_platform"],
   ["sql server integration services", "etl_elt_platform"],
   ["informatica powercenter etl", "etl_elt_platform"],
   ["informatica powercenter", "etl_elt_platform"],
   ["informatica intelligent cloud services", "etl_elt_platform"],
+  ["informatica data quality", "data_quality_tool"],
   ["talend", "etl_elt_platform"],
   ["dbt", "etl_elt_platform"],
   ["azure data factory", "etl_elt_platform"],
@@ -187,7 +291,17 @@ const PRODUCT_ALIASES: ReadonlyArray<readonly [string, TechnologySemanticType]> 
   ["epic caboodle", "enterprise_data_warehouse"],
   ["caboodle", "enterprise_data_warehouse"],
   ["snowflake", "enterprise_data_warehouse"],
+
   ["teradata", "enterprise_data_warehouse"],
+  ["teradata enterprise warehouse", "enterprise_data_warehouse"],
+  ["netezza", "enterprise_data_warehouse"],
+  ["ibm netezza", "enterprise_data_warehouse"],
+  ["ibm netezza enterprise data warehouse", "enterprise_data_warehouse"],
+  ["ibm puredata system for analytics", "enterprise_data_warehouse"],
+  ["exadata", "enterprise_data_warehouse"],
+  ["oracle exadata", "enterprise_data_warehouse"],
+  ["greenplum", "enterprise_data_warehouse"],
+  ["vertica", "enterprise_data_warehouse"],
   ["amazon redshift", "enterprise_data_warehouse"],
   ["google bigquery", "enterprise_data_warehouse"],
   ["azure synapse analytics", "enterprise_data_warehouse"],
@@ -222,6 +336,12 @@ const PRODUCT_ALIASES: ReadonlyArray<readonly [string, TechnologySemanticType]> 
   ["microstrategy", "analytics_bi_platform"],
   ["qlik sense", "analytics_bi_platform"],
   ["looker", "analytics_bi_platform"],
+  ["tableau enterprise bi", "analytics_bi_platform"],
+
+  // --- governance / catalog: neither a store nor a mover ---
+  ["collibra data catalog", "data_governance_catalog"],
+  ["collibra", "data_governance_catalog"],
+  ["alation", "data_governance_catalog"],
 
   // --- the recorded absence of an intermediary ---
   // Not a platform. Rendering it as a node would invent a hop the record says does not exist.
@@ -262,6 +382,57 @@ const MECHANISM_ALIASES: ReadonlyArray<readonly [string, DataMovementMechanism]>
   ["write-back", "write_back"],
 ];
 
+/**
+ * Recorded `systemCategory` values that ARE a technology class rather than a business domain.
+ *
+ * The column mixes the two — "SSIS ETL package" and "Imaging / PACS" sit in the same field — so
+ * only the technology-class values are listed. A business-domain value simply does not match, and
+ * the record falls through to unknown rather than being forced into a class it never claimed.
+ *
+ * A hit here is stronger provenance than a product alias: the source record said it directly.
+ */
+const CATEGORY_ALIASES: ReadonlyArray<readonly [string, TechnologySemanticType]> = [
+  ["sql server database/mart", "data_mart"],
+  ["ssis etl package", "etl_elt_platform"],
+  ["datastage", "etl_elt_platform"],
+  ["ibm datastage", "etl_elt_platform"],
+  ["stored procedure", "etl_elt_platform"],
+  ["stored procedures", "etl_elt_platform"],
+  ["ssas olap cube", "bi_extract"],
+  ["ssrs report subscription set", "analytics_bi_platform"],
+  // NOTE: "Data & Analytics Platform" is deliberately absent. It is a domain label covering
+  // catalogs, warehouses, ETL tools and BI alike -- mapping it to one class would repeat the
+  // platformOrDatabase error one level down.
+  ["epic operational reporting database", "operational_reporting_database"],
+  ["epic enterprise data warehouse", "enterprise_data_warehouse"],
+  ["enterprise data warehouse (mpp appliance)", "enterprise_data_warehouse"],
+  ["epic clinical data repository", "operational_reporting_database"],
+  ["epic self-service analytics", "analytics_bi_platform"],
+  ["integration engine", "integration_engine"],
+  ["interface engine", "integration_engine"],
+  ["middleware", "api_esb_platform"],
+];
+
+/**
+ * Partition suffixes recorded on a product name -- subject areas, domains, regions.
+ *
+ * "Teradata Enterprise Warehouse — Finance Subject Area" and "— Crew & Ops Subject Area" are two
+ * partitions of one warehouse. Exact aliasing alone classified whichever partition happened to be
+ * listed and left its siblings to fall through, so the same product appeared as a warehouse in one
+ * row and something else in the next. Stripping the partition is safe because it removes a
+ * qualifier, never a product identity.
+ */
+const PARTITION_SUFFIX = /\s+[—-]\s+.+\s+(subject area|domain|region|instance|tenant)\s*$/i;
+
+/** Environment suffixes. A product is the same product in Test as in Production, so classification
+ * must strip these before matching -- otherwise every non-Production instance falls to unknown,
+ * which is what left an entire estate of named Epic modules sitting in the unzoned lane. */
+const ENV_SUFFIX = /\s+[—-]\s+(production|prod|test|training|dev|development|qa|stage|staging|uat|sandbox|dr)\s*$/i;
+
+function stripPartition(value: string): string {
+  return value.replace(PARTITION_SUFFIX, "").replace(ENV_SUFFIX, "").trim();
+}
+
 function normalise(value: string): string {
   return String(value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 }
@@ -279,6 +450,30 @@ function lookup<T>(value: string, aliases: ReadonlyArray<readonly [string, T]>):
   return exact ? exact[1] : null;
 }
 
+/**
+ * Matches a reviewed alias that the value STARTS WITH, at a separator boundary.
+ *
+ * "SAP S/4HANA — Finance (FI)" is the SAP S/4HANA product carrying a module qualifier, and the
+ * suffix rules cannot enumerate every module, region and instance naming convention a client uses.
+ * A prefix match at a separator is safe where a bare substring match is not: it requires the alias
+ * to be the head of the name and to end at a real boundary, so "SQL Server (on-prem)" still
+ * matches the database platform while "Epic Clarity (SQL Server)" does not -- its head is
+ * "Epic Clarity".
+ *
+ * Longest alias first, so a specific product beats its own shorter family name.
+ */
+function lookupPrefix<T>(value: string, aliases: ReadonlyArray<readonly [string, T]>): T | null {
+  const n = normalise(value);
+  if (!n) return null;
+  const ordered = [...aliases].sort((a, b) => b[0].length - a[0].length);
+  for (const [alias, out] of ordered) {
+    if (!n.startsWith(alias)) continue;
+    const next = n.charAt(alias.length);
+    if (next === "" || next === " " || next === "—" || next === "-" || next === ":" || next === "(") return out;
+  }
+  return null;
+}
+
 export function classifyTechnology(rawValue: string): SemanticClassification<TechnologySemanticType> {
   const hit = lookup(rawValue, PRODUCT_ALIASES);
   return hit
@@ -291,6 +486,41 @@ export function classifyMechanism(rawValue: string): SemanticClassification<Data
   return hit
     ? { rawValue, semanticType: hit, classificationSource: "governed_reference_taxonomy" }
     : { rawValue, semanticType: "unknown", classificationSource: "unclassified" };
+}
+
+/**
+ * Classifies an application record, preferring what the record states over what we recognise.
+ *
+ * Order matters and is the point: a recorded `systemCategory` that names a technology class is the
+ * source speaking directly, so it outranks our product list. Only when the record is silent (or
+ * names a business domain rather than a technology) do we fall back to the reviewed product
+ * aliases, and then to unknown.
+ */
+export function classifyApplication(input: {
+  systemName?: string;
+  systemCategory?: string;
+  systemType?: string;
+}): SemanticClassification<TechnologySemanticType> {
+  const rawValue = String(input.systemName ?? "").trim();
+
+  const byCategory = lookup(input.systemCategory ?? "", CATEGORY_ALIASES);
+  if (byCategory) {
+    return { rawValue, semanticType: byCategory, classificationSource: "explicit_source_field" };
+  }
+
+  const byProduct =
+    lookup(rawValue, PRODUCT_ALIASES) ??
+    lookup(stripPartition(rawValue), PRODUCT_ALIASES) ??
+    lookupPrefix(rawValue, PRODUCT_ALIASES);
+  if (byProduct) {
+    return { rawValue, semanticType: byProduct, classificationSource: "governed_reference_taxonomy" };
+  }
+
+  // `systemType` is deliberately NOT used as a fallback. Its values ("Data-Platform",
+  // "Middleware") are coarse enough that mapping them to a specific class is a guess: a
+  // data platform may be a warehouse, a lake or a BI tool, and "Middleware" covers ETL, ESB and
+  // streaming alike. Guessing here produced "Informatica Data Quality is an API/ESB platform".
+  return { rawValue, semanticType: "unknown", classificationSource: "unclassified" };
 }
 
 /** Semantic types that genuinely carry data between systems. Used to decide whether a middle lane
@@ -315,6 +545,48 @@ export const STORE_TYPES: ReadonlySet<TechnologySemanticType> = new Set([
   "lakehouse",
   "bi_extract",
 ]);
+
+/**
+ * Semantic type to zone. One mapping, applied everywhere -- so a system cannot sit in one zone on
+ * the diagram and another in a table.
+ */
+const ZONE_FOR_TYPE: Readonly<Record<TechnologySemanticType, ArchitectureZone>> = {
+  operational_source: "source_systems",
+  core_transaction_system: "source_systems",
+  consuming_application: "source_systems",
+
+  // Middleware moves messages and calls between systems.
+  api_esb_platform: "middleware",
+  event_streaming_platform: "middleware",
+  integration_engine: "middleware",
+  b2b_edi_gateway: "middleware",
+
+  // Data integration moves and reshapes data sets. Informatica, SSIS, DataStage, stored
+  // procedures. Not the same discipline, not the same tools, not the same zone.
+  etl_elt_platform: "data_integration",
+  file_transfer_platform: "data_integration",
+
+  enterprise_data_warehouse: "data_warehouse",
+  lakehouse: "data_warehouse",
+  data_lake: "data_warehouse",
+
+  data_mart: "data_mart",
+  operational_reporting_database: "data_mart",
+  database_platform: "data_mart",
+
+  analytics_bi_platform: "analytics_bi",
+  bi_extract: "analytics_bi",
+
+  data_governance_catalog: "governance",
+  data_quality_tool: "governance",
+
+  no_intermediary: "unzoned",
+  unknown: "unzoned",
+};
+
+export function zoneFor(type: TechnologySemanticType): ArchitectureZone {
+  return ZONE_FOR_TYPE[type] ?? "unzoned";
+}
 
 export function isMovementPlatform(t: TechnologySemanticType): boolean {
   return MOVEMENT_PLATFORM_TYPES.has(t);

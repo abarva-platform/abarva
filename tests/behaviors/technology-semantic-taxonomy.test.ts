@@ -112,3 +112,57 @@ describe("movement mechanisms stay separate from platforms", () => {
     expect(classifyMechanism("SQL Server (on-prem)").semanticType).toBe("unknown");
   });
 });
+
+import { classifyApplication, zoneFor } from "../../src/lib/visual-system/semantics/technology-semantic-taxonomy";
+
+describe("zone assignment — the durable output", () => {
+  /** The zone is what any surface consumes: a lane diagram, a table, an aVa answer. Get the zone
+   * wrong and all three are wrong the same way. */
+  it.each([
+    ["Workday Core HR", "HCM Platform", "source_systems"],
+    ["SAP S/4HANA — Finance (FI)", "ERP Core", "source_systems"],
+    ["PeopleSoft GL", "", "source_systems"],
+    ["Epic Resolute Hospital Billing — Production", "", "source_systems"],
+    ["API Gateway / iPaaS (MuleSoft)", "", "middleware"],
+    ["Confluent Kafka Event Backbone", "", "middleware"],
+    ["Rhapsody Integration Engine", "", "middleware"],
+    ["Informatica PowerCenter ETL", "Data & Analytics Platform", "data_integration"],
+    ["IBM DataStage", "", "data_integration"],
+    ["SSIS package (on-prem)", "", "data_integration"],
+    ["IBM Netezza Enterprise Data Warehouse", "Enterprise data warehouse (MPP appliance)", "data_warehouse"],
+    ["Teradata Enterprise Warehouse — Crew & Ops Subject Area", "", "data_warehouse"],
+    ["Oracle Exadata", "", "data_warehouse"],
+    ["Epic Caboodle", "", "data_warehouse"],
+    ["Revenue Cycle Mart (SQL Server On-Prem)", "SQL Server database/mart", "data_mart"],
+    ["Epic Clarity (SQL Server)", "", "data_mart"],
+    ["HR/Workforce Cube (SQL Server On-Prem)", "SSAS OLAP cube", "analytics_bi"],
+    ["Tableau Server", "", "analytics_bi"],
+  ])("%s sits in %s", (name, category, zone) => {
+    expect(zoneFor(classifyApplication({ systemName: name, systemCategory: category }).semanticType)).toBe(zone);
+  });
+
+  it("keeps middleware and data integration in different zones", () => {
+    const mule = zoneFor(classifyApplication({ systemName: "API Gateway / iPaaS (MuleSoft)" }).semanticType);
+    const informatica = zoneFor(classifyApplication({ systemName: "Informatica PowerCenter ETL" }).semanticType);
+    expect(mule).toBe("middleware");
+    expect(informatica).toBe("data_integration");
+    expect(mule).not.toBe(informatica);
+  });
+
+  it("keeps warehouses and marts in different zones", () => {
+    const wh = zoneFor(classifyApplication({ systemName: "IBM Netezza Enterprise Data Warehouse" }).semanticType);
+    const mart = zoneFor(classifyApplication({ systemName: "Revenue Cycle Mart (SQL Server On-Prem)", systemCategory: "SQL Server database/mart" }).semanticType);
+    expect(wh).toBe("data_warehouse");
+    expect(mart).toBe("data_mart");
+  });
+
+  it("does not let a prefix match cross a product boundary", () => {
+    // "Epic Clarity (SQL Server)" must not resolve via the "SQL Server" alias -- its head is
+    // Epic Clarity, and it is a reporting database, not a database platform.
+    expect(classifyApplication({ systemName: "Epic Clarity (SQL Server)" }).semanticType).toBe("operational_reporting_database");
+  });
+
+  it("leaves an unreviewed product unzoned rather than guessing", () => {
+    expect(zoneFor(classifyApplication({ systemName: "Contoso Mystery Box" }).semanticType)).toBe("unzoned");
+  });
+});

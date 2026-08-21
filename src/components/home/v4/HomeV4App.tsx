@@ -170,6 +170,7 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
               tenantKey={tenantKey}
               tenantDisplayName={TENANT_LABEL[tenantKey]}
               integrations={integrations}
+              applications={applications}
               canonicalBuild={bundle.provenance.canonical_snapshot_hash}
             />
           ) : null}

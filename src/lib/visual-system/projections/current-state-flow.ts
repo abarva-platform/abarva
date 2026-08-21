@@ -6,417 +6,487 @@ import {
   type ArchitectureViewNode,
   type AudienceLevel,
 } from "../architecture-view-contract";
+import {
+  ZONE_LABEL,
+  ZONE_ORDER,
+  zoneFor,
+  type ArchitectureZone,
+  classifyApplication,
+  classifyMechanism,
+  classifyTechnology,
+  isMovementPlatform,
+  MECHANISM_LABEL,
+  SEMANTIC_TYPE_LABEL,
+  type ClassificationSource,
+  type DataMovementMechanism,
+  type TechnologySemanticType,
+} from "../semantics/technology-semantic-taxonomy";
 import type { TechRecordType } from "@/lib/home/preview/types";
 
 /**
- * Current-state integration topology: what actually moves data to what, through what.
+ * Current-state data flow: what originates where, how it moves, where it lands.
  *
- * This is the projection the estate views were missing. The capability landscape and the
- * capability-to-technology view both read only the application register and roll up by
- * `business_function`, so they emit either no edges at all or a fan-out of identical `supports`
- * lines. Neither is an architecture: they answer where the estate is concentrated, not how it is
- * wired. The `sourceSystem -> targetSystem` rows were never read by anything, which is why no
- * renderer could have drawn a topology -- there was no graph going in.
+ * Every node, edge and count is a recorded value. Nothing is inferred about what *should* connect
+ * to what, and no classification is asserted that the record does not support.
  *
- * Every node, edge, verb and count below is a recorded value. Nothing is inferred about what
- * *should* connect to what.
+ * Three rules, each written because breaking it produced a diagram a domain reader could discredit
+ * on sight (see docs/architecture/CURRENT_STATE_FLOW_SEMANTIC_AUDIT.md):
  *
- * Lanes, in `enterprise_estate_v1` order so orientation validates as forward:
- *   applications_core_platforms   systems that originate data
- *   integration                   the recorded MECHANISM the flow uses
- *   data / analytics_ai           where it lands
+ *  1. **Endpoints are joined, never printed raw.** Both tenants resolve 100% to the application
+ *     register — one by `systemName`, one by `originalRowId` — so a reader sees "Workday Core HR",
+ *     not "APP-0093". Which key matched is recorded as classification provenance.
  *
- * The middle lane reads `integrationType`, not `platformOrDatabase`. That matters and was got
- * wrong first: `platformOrDatabase` mixes integration engines with data stores -- for one tenant
- * its six values are Rhapsody and SSIS (engines) alongside Epic Caboodle (an enterprise data
- * warehouse), Epic Clarity (an operational reporting database), SQL Server, and a Tableau extract
- * file. Placing all six in a lane labelled Integration asserts a classification the record does
- * not make, and states something a reader in that domain knows to be false. The field name says
- * "or database"; it has to be believed.
+ *  2. **`platformOrDatabase` never assigns a lane.** Its value is classified through the governed
+ *     taxonomy and placed by what it IS. A warehouse lands among stores; an interface engine lands
+ *     among movement platforms; `Direct point-to-point` is the recorded ABSENCE of an intermediary
+ *     and produces no node at all, only a direct connector.
  *
- * `integrationType` is unambiguous -- HL7v2 interface, FHIR API, EDI X12, SFTP, database
- * replication -- so it is what the integration lane holds. The platform each flow crosses is
- * carried on the connector instead, where it is a recorded fact and not a tier claim.
- *
- * Density: a real estate holds hundreds of systems, far past any audience ceiling. Rather than
- * truncate to a top-N and imply that is everything, the tail of each lane collapses into one
- * aggregate node that states its own member count -- and the view's limitations say so.
+ *  3. **Lanes adapt to the records.** A lane with no members is not drawn. If a tenant records no
+ *     movement tooling, source connects to destination directly with the mechanism on the edge,
+ *     rather than manufacturing a middle tier to fill the template.
  */
 
 function str(v: unknown): string {
-  return typeof v === "string" ? v.trim() : "";
-}
-
-/** Systems whose name says they are a reporting/analytics destination rather than a source of
- * record. Read from the recorded name only -- a naming convention, declared as such in the view's
- * limitations, never presented as a modelled classification. */
-const ANALYTICS_HINTS = ["tableau", "power bi", "qlik", "looker", "dashboard", "report", "scorecard"];
-
-/**
- * A destination's lane. Note this view is organised by ROLE IN THE FLOW -- originates, carries,
- * receives -- not by what kind of system something is. A destination that happens to be an
- * application still sits in a receiving lane, because the question the diagram answers is where
- * data goes, and putting a receiver back in the originating lane inverts the picture.
- */
-function landingLane(name: string): "analytics_ai" | "data" {
-  const n = name.toLowerCase();
-  if (ANALYTICS_HINTS.some((h) => n.includes(h))) return "analytics_ai";
-  return "data";
+  return typeof v === "string" ? v.trim() : v === null || v === undefined ? "" : String(v);
 }
 
 /**
- * Environment suffixes recorded on a system name. Three rows reading "Epic Clarity — Test",
- * "— Production" and "— Training" are three environments of one system, and counting them
- * separately splits a 59% concentration into three ~20% slices that hide it. The split is a naming
- * convention in the record, so the regrouping is declared derived and names its members.
+ * Zones are the lanes. The zone comes from the taxonomy, so a system sits in the same zone here,
+ * in a table, and in anything aVa renders -- one classification, one placement.
  */
-const ENVIRONMENT_SUFFIX = /\s+[—-]\s+(production|prod|test|training|dev|development|qa|stage|staging|uat|sandbox|dr)\s*$/i;
-
-function baseSystemName(name: string): string {
-  return name.replace(ENVIRONMENT_SUFFIX, "").trim();
+function laneFor(type: TechnologySemanticType): string {
+  return zoneFor(type);
 }
 
 export interface CurrentStateFlowOptions {
   tenantKey: string;
   tenantDisplayName: string;
   integrations: TechRecordType;
+  /** The application register, used to resolve endpoints to named systems. */
+  applications?: TechRecordType;
   audienceLevel?: AudienceLevel;
-  /** How many individually-named systems each lane may show before the rest becomes one
-   * aggregate. Chosen so the whole view stays inside its audience density ceiling. */
   perLaneLimit?: number;
   canonicalBuild?: string;
 }
 
-interface Counted {
-  name: string;
-  flows: number;
+interface Endpoint {
+  id: string;
+  label: string;
+  semanticType: TechnologySemanticType;
+  classificationSource: ClassificationSource;
+  rawValue: string;
 }
 
-function topAndTail(counts: Map<string, number>, limit: number): { top: Counted[]; tailNames: string[]; tailFlows: number } {
-  const ordered = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name, flows]) => ({ name, flows }));
-  const top = ordered.slice(0, limit);
-  const tail = ordered.slice(limit);
-  return { top, tailNames: tail.map((t) => t.name), tailFlows: tail.reduce((s, t) => s + t.flows, 0) };
+/** Builds the endpoint resolver. Tries `systemName`, then `originalRowId` -- the two keys the two
+ * tenants actually use. Neither is declared in the canonical contract; both are tried and the
+ * matching one is recorded, rather than assuming either. */
+function buildResolver(applications?: TechRecordType) {
+  const byName = new Map<string, Record<string, unknown>>();
+  const byRowId = new Map<string, Record<string, unknown>>();
+  for (const row of applications?.rows ?? []) {
+    const name = str(row.systemName);
+    const rowId = str(row.originalRowId);
+    if (name) byName.set(name.toLowerCase(), row);
+    if (rowId) byRowId.set(rowId.toLowerCase(), row);
+  }
+
+  return function resolve(raw: string): Endpoint {
+    const key = raw.trim().toLowerCase();
+    const app = byName.get(key) ?? byRowId.get(key);
+    if (!app) {
+      // Unresolved: keep the raw value visible and say so, rather than dropping the flow.
+      return {
+        id: canonicalNodeId("ep", raw),
+        label: raw,
+        semanticType: "unknown",
+        classificationSource: "unclassified",
+        rawValue: raw,
+      };
+    }
+    const label = str(app.systemName) || raw;
+    const cls = classifyApplication({
+      systemName: label,
+      systemCategory: str(app.systemCategory),
+      systemType: str(app.systemType),
+    });
+    return {
+      id: canonicalNodeId("ep", label),
+      label,
+      semanticType: cls.semanticType,
+      classificationSource: cls.classificationSource,
+      rawValue: raw,
+    };
+  };
+}
+
+/** Environment suffixes recorded on a system name. Three rows reading "— Test", "— Production" and
+ * "— Training" are three environments of one system; counted separately they split a concentration
+ * into slices that hide it. The grouping is declared derived and names its members. */
+const ENVIRONMENT_SUFFIX = /\s+[—-]\s+(production|prod|test|training|dev|development|qa|stage|staging|uat|sandbox|dr)\s*$/i;
+
+function baseName(name: string): string {
+  return name.replace(ENVIRONMENT_SUFFIX, "").trim();
+}
+
+interface Agg {
+  label: string;
+  semanticType: TechnologySemanticType;
+  classificationSource: ClassificationSource;
+  flows: number;
+  environments: Set<string>;
+  raws: Set<string>;
 }
 
 export function buildCurrentStateFlowView(options: CurrentStateFlowOptions): ArchitectureView {
-  const { tenantKey, tenantDisplayName, integrations } = options;
+  const { tenantKey, tenantDisplayName, integrations, applications } = options;
   const audienceLevel = options.audienceLevel ?? "L1_domain";
   const perLaneLimit = options.perLaneLimit ?? 6;
+  const resolve = buildResolver(applications);
 
-  // Only current state. A target-state row describes an intention, and drawing it beside a
-  // recorded flow would present a plan as a fact.
   const all = integrations.rows ?? [];
   const rows = all.filter((r) => {
-    const state = str(r.currentStateOrTargetState);
-    return state === "" || state === "current_state";
+    const s = str(r.currentStateOrTargetState);
+    return s === "" || s === "current_state";
   });
   const excludedTargetState = all.length - rows.length;
 
-  const sourceCounts = new Map<string, number>();
-  /** The integration MECHANISM -- what the record calls integrationType. */
-  const mechanismCounts = new Map<string, number>();
-  /** Kept for the connector note only. Never used to place a node in a lane. */
-  const platformsByMechanism = new Map<string, Map<string, number>>();
-  const targetCounts = new Map<string, number>();
-  const verbBySource = new Map<string, Map<string, number>>();
-  const verbByTarget = new Map<string, Map<string, number>>();
+  // --- pass 1: resolve, classify, count -------------------------------------------------------
+  const originators = new Map<string, Agg>();
+  const destinations = new Map<string, Agg>();
+  const platforms = new Map<string, Agg>();
+  const mechanisms = new Map<DataMovementMechanism, { label: string; flows: number; raws: Set<string> }>();
   let regulated = 0;
 
-  /** sourceSystem -> the environments recorded under its base name. */
-  const environmentsOf = new Map<string, Set<string>>();
+  interface Row {
+    from: Endpoint;
+    to: Endpoint;
+    fromKey: string;
+    toKey: string;
+    platformKey: string | null;
+    platformType: TechnologySemanticType;
+    mechanism: DataMovementMechanism;
+    mechanismRaw: string;
+    rowId: string;
+  }
+  const parsed: Row[] = [];
 
-  for (const row of rows) {
-    const rawSource = str(row.sourceSystem) || "(source not recorded)";
-    const source = baseSystemName(rawSource);
-    const envs = environmentsOf.get(source) ?? new Set<string>();
-    envs.add(rawSource);
-    environmentsOf.set(source, envs);
-    const target = str(row.targetSystem) || "(target not recorded)";
-    const platform = str(row.platformOrDatabase) || "(no platform recorded)";
-    const verb = str(row.integrationType) || "integration";
-    sourceCounts.set(source, (sourceCounts.get(source) ?? 0) + 1);
-    mechanismCounts.set(verb, (mechanismCounts.get(verb) ?? 0) + 1);
-    const pm = platformsByMechanism.get(verb) ?? new Map<string, number>();
-    pm.set(platform, (pm.get(platform) ?? 0) + 1);
-    platformsByMechanism.set(verb, pm);
-    targetCounts.set(target, (targetCounts.get(target) ?? 0) + 1);
+  rows.forEach((row, i) => {
+    const from = resolve(str(row.sourceSystem));
+    const to = resolve(str(row.targetSystem));
+
+    const platformRaw = str(row.platformOrDatabase);
+    const platformCls = classifyTechnology(platformRaw);
+    const mechRaw = str(row.integrationType);
+    const mechCls = classifyMechanism(mechRaw);
     if (str(row.regulatedDataFlag) === "true") regulated += 1;
 
-    const sv = verbBySource.get(source) ?? new Map<string, number>();
-    sv.set(verb, (sv.get(verb) ?? 0) + 1);
-    verbBySource.set(source, sv);
-    const tv = verbByTarget.get(target) ?? new Map<string, number>();
-    tv.set(verb, (tv.get(verb) ?? 0) + 1);
-    verbByTarget.set(target, tv);
+    const fromKey = baseName(from.label);
+    const toKey = baseName(to.label);
+
+    const bump = (map: Map<string, Agg>, key: string, ep: Endpoint) => {
+      const a = map.get(key) ?? {
+        label: key,
+        semanticType: ep.semanticType,
+        classificationSource: ep.classificationSource,
+        flows: 0,
+        environments: new Set<string>(),
+        raws: new Set<string>(),
+      };
+      a.flows += 1;
+      a.environments.add(ep.label);
+      a.raws.add(ep.rawValue);
+      map.set(key, a);
+    };
+    bump(originators, fromKey, from);
+    bump(destinations, toKey, to);
+
+    // A platform becomes a node only when it is real movement tooling. A store recorded here is
+    // context on the connector; `no_intermediary` is the recorded absence of a hop.
+    const platformIsNode = isMovementPlatform(platformCls.semanticType);
+    const platformKey = platformIsNode ? platformRaw : null;
+    if (platformKey) {
+      const a = platforms.get(platformKey) ?? {
+        label: platformRaw,
+        semanticType: platformCls.semanticType,
+        classificationSource: platformCls.classificationSource,
+        flows: 0,
+        environments: new Set<string>(),
+        raws: new Set<string>([platformRaw]),
+      };
+      a.flows += 1;
+      platforms.set(platformKey, a);
+    }
+
+    const m = mechanisms.get(mechCls.semanticType) ?? {
+      label: MECHANISM_LABEL[mechCls.semanticType],
+      flows: 0,
+      raws: new Set<string>(),
+    };
+    m.flows += 1;
+    m.raws.add(mechRaw);
+    mechanisms.set(mechCls.semanticType, m);
+
+    parsed.push({
+      from,
+      to,
+      fromKey,
+      toKey,
+      platformKey,
+      platformType: platformCls.semanticType,
+      mechanism: mechCls.semanticType,
+      mechanismRaw: mechRaw,
+      rowId: str(row.dataAssetName) || `${integrations.objectType}[${i}]`,
+    });
+  });
+
+  // --- pass 2: choose what to draw ------------------------------------------------------------
+  // Originators and destinations overlap (a system can both send and receive). A system that does
+  // both is drawn once, in the lane its classification dictates.
+  const drawn = new Map<string, Agg & { role: "origin" | "destination" | "both" }>();
+  for (const [k, a] of originators) drawn.set(k, { ...a, role: destinations.has(k) ? "both" : "origin" });
+  for (const [k, a] of destinations) {
+    const existing = drawn.get(k);
+    if (existing) existing.flows += a.flows;
+    else drawn.set(k, { ...a, role: "destination" });
   }
 
-  const sources = topAndTail(sourceCounts, perLaneLimit);
-  const mechanisms = topAndTail(mechanismCounts, perLaneLimit + 3);
-  const targets = topAndTail(targetCounts, perLaneLimit);
+  const rank = (m: Map<string, Agg>) => [...m.entries()].sort((x, y) => y[1].flows - x[1].flows);
+  const topSystems = [...drawn.entries()].sort((a, b) => b[1].flows - a[1].flows);
 
   const nodes: ArchitectureViewNode[] = [];
-  const edges: ArchitectureViewEdge[] = [];
+  const idOf = (label: string) => canonicalNodeId("sys", label);
+  const platIdOf = (label: string) => canonicalNodeId("plat", label);
 
-  const sourceId = (n: string) => canonicalNodeId("src", n);
-  const platformId = (n: string) => canonicalNodeId("plat", n);
-  const targetId = (n: string) => canonicalNodeId("tgt", n);
+  const laneBudget = new Map<string, number>();
+  const tails = new Map<string, { count: number; flows: number; members: string[] }>();
 
-  for (const s of sources.top) {
-    const envs = [...(environmentsOf.get(s.name) ?? new Set<string>([s.name]))];
-    const grouped = envs.length > 1;
+  for (const [key, agg] of topSystems) {
+    const lane = laneFor(agg.semanticType);
+    const used = laneBudget.get(lane) ?? 0;
+    if (used >= perLaneLimit) {
+      const t = tails.get(lane) ?? { count: 0, flows: 0, members: [] };
+      t.count += 1;
+      t.flows += agg.flows;
+      t.members.push(idOf(key));
+      tails.set(lane, t);
+      continue;
+    }
+    laneBudget.set(lane, used + 1);
+    const grouped = agg.environments.size > 1;
     nodes.push({
-      id: sourceId(s.name),
-      label: s.name,
-      semanticRole: "application",
-      layer: "applications_core_platforms",
-      // One environment is the record speaking directly; several rolled together is our grouping.
+      id: idOf(key),
+      label: key,
+      semanticRole:
+        lane === "middleware" || lane === "data_integration"
+          ? "integration"
+          : lane === "data_warehouse" || lane === "data_mart"
+            ? "data_store"
+            : lane === "analytics_bi"
+              ? "analytics"
+              : "application",
+      layer: lane,
       evidenceBasis: grouped ? "ABARVA_DERIVED" : "CANONICAL",
-      evidenceIds: envs.map((e) => `${integrations.objectType}.sourceSystem=${e}`),
+      evidenceIds: [...agg.raws].map((r) => `${integrations.objectType}.endpoint=${r}`),
       ...(grouped
         ? {
             aggregation: {
-              groupByField: "sourceSystem",
-              groupByValue: s.name,
-              memberNodeIds: envs.map((e) => canonicalNodeId("srcenv", e)),
-              memberCount: envs.length,
+              groupByField: "systemName",
+              groupByValue: key,
+              memberNodeIds: [...agg.environments].map((e) => canonicalNodeId("env", e)),
+              memberCount: agg.environments.size,
               basis: "CANONICAL_FIELD" as const,
             },
           }
         : {}),
-      metrics: { outboundFlows: s.flows, environments: envs.length },
-      note: grouped ? `${s.flows} recorded outbound · ${envs.length} environments` : `${s.flows} recorded outbound`,
-    });
-  }
-  if (sources.tailNames.length > 0) {
-    nodes.push({
-      id: "src-remaining",
-      label: `${sources.tailNames.length} other originating systems`,
-      semanticRole: "application",
-      layer: "applications_core_platforms",
-      evidenceBasis: "ABARVA_DERIVED",
-      evidenceIds: [`${integrations.objectType}.sourceSystem`],
-      aggregation: {
-        groupByField: "sourceSystem",
-        groupByValue: "(remaining)",
-        memberNodeIds: sources.tailNames.map(sourceId),
-        memberCount: sources.tailNames.length,
-        basis: "CANONICAL_FIELD",
-      },
-      metrics: { outboundFlows: sources.tailFlows },
-      note: `${sources.tailFlows} recorded outbound`,
+      roleBasisNote:
+        agg.classificationSource === "unclassified"
+          ? "Classification not established from the record."
+          : `Classified from ${agg.classificationSource.replace(/_/g, " ")}.`,
+      metrics: { flows: agg.flows, environments: agg.environments.size },
+      note: `${SEMANTIC_TYPE_LABEL[agg.semanticType]} · ${agg.flows} flows`,
     });
   }
 
-  for (const m of mechanisms.top) {
-    const platforms = [...(platformsByMechanism.get(m.name) ?? new Map<string, number>()).entries()].sort((a, b) => b[1] - a[1]);
+  const byIdSoFar = new Set(nodes.map((n) => n.id));
+  for (const [key, agg] of rank(platforms)) {
+    // A platform recorded in platformOrDatabase may also appear in the application register as an
+    // endpoint. Drawing it twice produces two nodes for one system with two classifications --
+    // which is how "Informatica is ETL" and "Informatica is Analytics/BI" appeared on one page.
+    if (byIdSoFar.has(idOf(baseName(agg.label)))) continue;
     nodes.push({
-      id: platformId(m.name),
-      label: m.name,
+      id: platIdOf(key),
+      label: agg.label,
       semanticRole: "integration",
-      layer: "integration",
+      layer: laneFor(agg.semanticType),
       evidenceBasis: "CANONICAL",
-      evidenceIds: [`${integrations.objectType}.integrationType=${m.name}`],
-      metrics: { flowsCarried: m.flows, platformsRecorded: platforms.length },
-      // The platform is stated as a recorded fact about where this mechanism runs -- not as a
-      // claim that the platform is itself an integration component.
-      note:
-        platforms.length === 0
-          ? `${m.flows} flows`
-          : platforms.length === 1
-            ? `${m.flows} flows · on ${platforms[0][0]}`
-            : `${m.flows} flows · across ${platforms.length} platforms`,
-    });
-  }
-  if (mechanisms.tailNames.length > 0) {
-    nodes.push({
-      id: "plat-remaining",
-      label: `${mechanisms.tailNames.length} other mechanisms`,
-      semanticRole: "integration",
-      layer: "integration",
-      evidenceBasis: "ABARVA_DERIVED",
-      evidenceIds: [`${integrations.objectType}.integrationType`],
-      aggregation: {
-        groupByField: "integrationType",
-        groupByValue: "(remaining)",
-        memberNodeIds: mechanisms.tailNames.map(platformId),
-        memberCount: mechanisms.tailNames.length,
-        basis: "CANONICAL_FIELD",
-      },
-      metrics: { flowsCarried: mechanisms.tailFlows },
-      note: `${mechanisms.tailFlows} flows`,
+      evidenceIds: [`${integrations.objectType}.platformOrDatabase=${key}`],
+      roleBasisNote: "Classified from governed reference taxonomy.",
+      metrics: { flows: agg.flows },
+      note: `${SEMANTIC_TYPE_LABEL[agg.semanticType]} · ${agg.flows} flows`,
     });
   }
 
-  for (const t of targets.top) {
+  for (const [lane, t] of tails) {
     nodes.push({
-      id: targetId(t.name),
-      label: t.name,
-      semanticRole: landingLane(t.name) === "analytics_ai" ? "analytics" : "data_store",
-      layer: landingLane(t.name),
-      evidenceBasis: "CANONICAL",
-      evidenceIds: [`${integrations.objectType}.targetSystem=${t.name}`],
-      roleBasisNote: "Lane assigned from the recorded system name, not from a stated architecture layer.",
-      metrics: { inboundFlows: t.flows },
-      note: `${t.flows} recorded inbound`,
-    });
-  }
-  if (targets.tailNames.length > 0) {
-    nodes.push({
-      id: "tgt-remaining",
-      label: `${targets.tailNames.length} other destinations`,
-      semanticRole: "data_store",
-      layer: "data",
+      id: `tail-${lane}`,
+      label: `${t.count} more`,
+      semanticRole:
+        lane === "data_warehouse" || lane === "data_mart"
+          ? "data_store"
+          : lane === "analytics_bi"
+            ? "analytics"
+            : "application",
+      layer: lane,
       evidenceBasis: "ABARVA_DERIVED",
-      evidenceIds: [`${integrations.objectType}.targetSystem`],
+      evidenceIds: [`${integrations.objectType}.endpoint`],
       aggregation: {
-        groupByField: "targetSystem",
-        groupByValue: "(remaining)",
-        memberNodeIds: targets.tailNames.map(targetId),
-        memberCount: targets.tailNames.length,
+        groupByField: "endpoint",
+        groupByValue: `(remaining in ${lane})`,
+        memberNodeIds: t.members,
+        memberCount: t.count,
         basis: "CANONICAL_FIELD",
       },
-      metrics: { inboundFlows: targets.tailFlows },
-      note: `${targets.tailFlows} recorded inbound`,
+      metrics: { flows: t.flows },
+      note: `${t.flows} flows`,
     });
   }
 
   const byId = new Map(nodes.map((n) => [n.id, n]));
-  const nodeIdForSource = (n: string) => (byId.has(sourceId(n)) ? sourceId(n) : "src-remaining");
-  const nodeIdForMechanism = (n: string) => (byId.has(platformId(n)) ? platformId(n) : "plat-remaining");
-  const nodeIdForTarget = (n: string) => (byId.has(targetId(n)) ? targetId(n) : "tgt-remaining");
+  const nodeFor = (key: string, lane: string) => (byId.has(idOf(key)) ? idOf(key) : `tail-${lane}`);
 
-  // Edges are collapsed by (from, to) pair. Each carries how many recorded flows it stands for and
-  // keeps their row identifiers, so nothing is lost by drawing one line instead of ninety.
-  const pairs = new Map<string, { from: string; to: string; count: number; verbs: Map<string, number>; ids: string[] }>();
-  function addPair(from: string, to: string, verb: string, rowId: string) {
+  // --- pass 3: edges --------------------------------------------------------------------------
+  const pairs = new Map<string, { from: string; to: string; count: number; mechs: Map<DataMovementMechanism, number>; platforms: Set<string>; ids: string[] }>();
+  const addPair = (from: string, to: string, mech: DataMovementMechanism, platform: string, rowId: string) => {
     if (!from || !to || from === to) return;
-    const key = `${from}->${to}`;
-    const existing = pairs.get(key) ?? { from, to, count: 0, verbs: new Map<string, number>(), ids: [] as string[] };
-    existing.count += 1;
-    existing.verbs.set(verb, (existing.verbs.get(verb) ?? 0) + 1);
-    if (existing.ids.length < 40) existing.ids.push(rowId);
-    pairs.set(key, existing);
+    const k = `${from}->${to}`;
+    const e = pairs.get(k) ?? { from, to, count: 0, mechs: new Map<DataMovementMechanism, number>(), platforms: new Set<string>(), ids: [] as string[] };
+    e.count += 1;
+    e.mechs.set(mech, (e.mechs.get(mech) ?? 0) + 1);
+    if (platform) e.platforms.add(platform);
+    if (e.ids.length < 40) e.ids.push(rowId);
+    pairs.set(k, e);
+  };
+
+  for (const p of parsed) {
+    const fromId = nodeFor(p.fromKey, laneFor(p.from.semanticType));
+    const toId = nodeFor(p.toKey, laneFor(p.to.semanticType));
+    if (p.platformKey && byId.has(platIdOf(p.platformKey))) {
+      addPair(fromId, platIdOf(p.platformKey), p.mechanism, p.platformKey, p.rowId);
+      addPair(platIdOf(p.platformKey), toId, p.mechanism, p.platformKey, p.rowId);
+    } else {
+      // No intermediary recorded: connect directly rather than inventing a hop.
+      addPair(fromId, toId, p.mechanism, "", p.rowId);
+    }
   }
 
-  rows.forEach((row, i) => {
-    const source = baseSystemName(str(row.sourceSystem) || "(source not recorded)");
-    const target = str(row.targetSystem) || "(target not recorded)";
-    const platform = str(row.platformOrDatabase) || "(no platform recorded)";
-    const verb = str(row.integrationType) || "integration";
-    const rowId = str(row.dataAssetName) || `${integrations.objectType}[${i}]`;
-    addPair(nodeIdForSource(source), nodeIdForMechanism(verb), platform, rowId);
-    addPair(nodeIdForMechanism(verb), nodeIdForTarget(target), platform, rowId);
-  });
-
-  // Labelling all 65 connectors produces a band of overlapping 9px text between every pair of
-  // lanes -- the exact failure the fan-in rule exists to prevent. Only the connectors heavy enough
-  // to be worth naming carry a label; the rest still render, still carry their weight, and are
-  // still inspectable. The threshold is stated in the view's limitations so nobody reads an
-  // unlabelled line as an unknown one.
   const flowTotal = rows.length;
-  const LABEL_MIN_SHARE = 0.03;
-  const labelMinWeight = Math.max(2, Math.ceil(flowTotal * LABEL_MIN_SHARE));
-  let unlabelled = 0;
-
+  const labelMinWeight = Math.max(2, Math.ceil(flowTotal * 0.03));
+  const edges: ArchitectureViewEdge[] = [];
   for (const [key, pair] of pairs) {
     const from = byId.get(pair.from);
     const to = byId.get(pair.to);
     if (!from || !to) continue;
-    const rankedVerbs = [...pair.verbs.entries()].sort((a, b) => b[1] - a[1]);
-    const dominantVerb = rankedVerbs[0]?.[0] ?? "integration";
-    const dominantShare = (rankedVerbs[0]?.[1] ?? 0) / Math.max(1, pair.count);
+    const ranked = [...pair.mechs.entries()].sort((a, b) => b[1] - a[1]);
+    const dominant = ranked[0]?.[0] ?? "unknown";
+    const share = (ranked[0]?.[1] ?? 0) / Math.max(1, pair.count);
     const collapsed = pair.count > 1;
     edges.push({
       id: `flow-${canonicalNodeId("e", key)}`,
       from: pair.from,
       to: pair.to,
-      // The verb is the recorded integration type when the pair speaks with one voice; when a pair
-      // carries several mechanisms, saying so is more honest than picking the most common and
-      // implying it is the only one.
-      // A label that reads "9 mechanisms" on every heavy edge tells a reader nothing. Name the verb
-      // when one clearly dominates the pair; otherwise say the flow is mixed and let the weight and
-      // the evidence ids carry the detail.
       ...(pair.count >= labelMinWeight
         ? {
             label:
-              pair.verbs.size === 1
-                ? dominantVerb
-                : dominantShare >= 0.6
-                  ? `mostly ${dominantVerb}`
-                  : `${pair.verbs.size} platforms`,
+              pair.mechs.size === 1
+                ? MECHANISM_LABEL[dominant]
+                : share >= 0.6
+                  ? `mostly ${MECHANISM_LABEL[dominant]}`
+                  : `${pair.mechs.size} mechanisms`,
           }
         : {}),
-      mechanism: dominantVerb,
+      mechanism: MECHANISM_LABEL[dominant],
       weight: pair.count,
       evidenceBasis: collapsed ? "ABARVA_DERIVED" : "CANONICAL",
       evidenceIds: pair.ids,
-      orientation: deriveOrientation(from.layer, to.layer, "enterprise_estate_v1") ?? undefined,
+      orientation: deriveOrientation(from.layer, to.layer, "current_state_zones_v1") ?? undefined,
       ...(collapsed ? { derivedFromEdgeIds: pair.ids } : {}),
     });
   }
 
-  unlabelled = edges.filter((e) => !e.label).length;
-  const totalFlows = rows.length;
-  const topSource = sources.top[0];
-  const topSourceShare = topSource ? Math.round((topSource.flows / totalFlows) * 100) : 0;
+  // --- narrative, computed per tenant ---------------------------------------------------------
+  const topOrigin = rank(originators)[0];
+  const originShare = topOrigin ? Math.round((topOrigin[1].flows / flowTotal) * 100) : 0;
+  const destFanIn = [...destinations.values()].map((d) => d.flows);
+  const maxFanIn = destFanIn.length ? Math.max(...destFanIn) : 0;
+  const converging = destFanIn.filter((f) => f > 1).length;
 
-  const groupedSources = sources.top.filter((s) => (environmentsOf.get(s.name)?.size ?? 1) > 1);
+  // A tenant with no convergence must not be given a convergence headline.
+  const title =
+    converging === 0
+      ? `${flowTotal} recorded flows reach ${destinations.size} distinct destinations — none receives more than one`
+      : topOrigin && originShare >= 20
+        ? `${originShare}% of ${tenantDisplayName}'s recorded data movement starts at ${topOrigin[0]}`
+        : `${flowTotal} recorded flows across ${drawn.size} systems`;
+
+  const unclassified = nodes.filter((n) => n.roleBasisNote?.startsWith("Classification not established")).length;
+
   const limitations: string[] = [
-    "Lanes are role in the flow -- originates, carries, receives -- not a stated architecture tier. The record does not declare which tier a system belongs to.",
-    "The middle lane is the recorded integration mechanism. The platform each flow crosses is named on the connector rather than drawn as a node, because the source field mixes integration engines with data warehouses and reporting databases and does not distinguish them.",
-    `Only systems that appear in a recorded integration are drawn. A system with no integration row is absent from this view whether or not it exists.`,
+    "Lanes follow each system's classification, not a stated architecture tier. The record does not declare which tier a system belongs to.",
+    "Only systems appearing in a recorded integration are drawn. A system with no integration row is absent whether or not it exists.",
   ];
-  if (sources.tailNames.length + targets.tailNames.length > 0) {
+  if (converging === 0 && destinations.size > 1) {
     limitations.push(
-      `${sources.tailNames.length} originating systems and ${targets.tailNames.length} destinations are folded into aggregates rather than drawn individually; their counts are stated on those nodes.`,
+      `No destination in this record receives more than one recorded flow, so this view shows distribution rather than convergence.`,
     );
   }
-  if (unlabelled > 0) {
-    limitations.push(
-      `${unlabelled} of ${edges.length} connectors carry fewer than ${labelMinWeight} flows and are drawn without a label so the heavier paths stay readable; every one keeps its recorded mechanism and row references.`,
-    );
+  if (unclassified > 0) {
+    limitations.push(`${unclassified} systems could not be classified from the record and are shown as unclassified rather than placed by assumption.`);
   }
-  if (groupedSources.length > 0) {
-    limitations.push(
-      `${groupedSources.map((s) => s.name).join(", ")} ${groupedSources.length === 1 ? "is" : "are"} shown with recorded environments combined; the record names them separately.`,
-    );
+  if (tails.size > 0) {
+    const total = [...tails.values()].reduce((s, t) => s + t.count, 0);
+    limitations.push(`${total} further systems are folded into per-lane aggregates that state their own counts.`);
   }
   if (excludedTargetState > 0) {
-    limitations.push(`${excludedTargetState} rows describe target state rather than current state and are excluded here.`);
+    limitations.push(`${excludedTargetState} rows describe target state rather than current state and are excluded.`);
+  }
+  if (!applications) {
+    limitations.push("The application register was not supplied, so endpoints are shown as recorded rather than resolved to named systems.");
   }
 
-  const canonicalNodes = nodes.filter((n) => n.evidenceBasis === "CANONICAL").length;
+  const canonical = nodes.filter((n) => n.evidenceBasis === "CANONICAL").length;
   const aggregated = nodes.filter((n) => n.aggregation).length;
-  const memberTotal = nodes.reduce((s, n) => s + (n.aggregation?.memberCount ?? 1), 0);
+
+  // Only label lanes that actually have members.
+  const present = new Set(nodes.map((n) => n.layer));
+  const laneLabels: Record<string, string> = {};
+  for (const zone of ZONE_ORDER) if (present.has(zone)) laneLabels[zone] = ZONE_LABEL[zone];
 
   return {
     viewType: "integration_topology",
     audienceLevel,
-    layerScheme: "enterprise_estate_v1",
+    layerScheme: "current_state_zones_v1",
     validationProfile: "enterprise_current_state",
     tenantKey,
-    title: topSource
-      ? `${topSourceShare}% of ${tenantDisplayName}'s recorded data movement starts at ${topSource.name}`
-      : `${tenantDisplayName}'s recorded data movement`,
+    title,
     primaryQuestion: "How does data actually move through this enterprise today?",
-    contextLine: `Current state · observed · ${totalFlows} recorded integrations · ${regulated} carrying regulated data`,
+    contextLine: `Current state · observed · ${flowTotal} recorded flows · ${regulated} carrying regulated data · max fan-in ${maxFanIn}`,
     nodes,
     edges,
+    laneLabels,
     groups: [],
     boundaries: [],
     overlays: [],
     evidenceCoverage: {
       nodesTotal: nodes.length,
-      nodesCanonical: canonicalNodes,
-      nodesDerived: nodes.length - canonicalNodes,
+      nodesCanonical: canonical,
+      nodesDerived: nodes.length - canonical,
       nodesCandidate: 0,
       edgesTotal: edges.length,
       edgesCanonical: edges.filter((e) => e.evidenceBasis === "CANONICAL").length,
       nodesAggregated: aggregated,
-      canonicalNodePct: Math.round((canonicalNodes / Math.max(1, nodes.length)) * 100),
+      canonicalNodePct: Math.round((canonical / Math.max(1, nodes.length)) * 100),
       memberTraceablePct: 100,
-      aggregationSummary: `${nodes.length} nodes · ${memberTotal} systems underneath · ${totalFlows} recorded flows · all traceable`,
+      aggregationSummary: `${nodes.length} nodes · ${flowTotal} recorded flows · ${unclassified} unclassified · all traceable`,
       ...(options.canonicalBuild ? { canonicalBuild: options.canonicalBuild } : {}),
     },
     limitations,
