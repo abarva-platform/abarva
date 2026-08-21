@@ -3,8 +3,9 @@
 import { useMemo } from "react";
 
 import { renderArchitectureViewSvg } from "@/lib/visual-system/architecture-svg-renderer";
-import { buildCurrentStateFlowView } from "@/lib/visual-system/projections/current-state-flow";
+import { resolveArchitectureView } from "@/lib/visual-system/resolveArchitectureView";
 import type { TechRecordType } from "@/lib/home/preview/types";
+import { ArchitectureRefusal } from "./ArchitectureRefusal";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
 /**
@@ -32,11 +33,28 @@ export function DataFlowPage({
   applications?: TechRecordType;
   canonicalBuild?: string;
 }) {
-  const view = useMemo(
-    () => buildCurrentStateFlowView({ tenantKey, tenantDisplayName, integrations, applications, canonicalBuild }),
+  const result = useMemo(
+    () =>
+      resolveArchitectureView({
+        format: "end_to_end_data_flow",
+        tenantKey,
+        tenantDisplayName,
+        integrations,
+        applications,
+        canonicalBuild,
+      }),
     [tenantKey, tenantDisplayName, integrations, applications, canonicalBuild],
   );
-  const { svg } = useMemo(() => renderArchitectureViewSvg(view, { width: 1260 }), [view]);
+  const view = result.status === "ready" ? result.view : null;
+  const svg = useMemo(
+    () => (view ? renderArchitectureViewSvg(view, { width: 1260 }).svg : ""),
+    [view],
+  );
+
+  if (result.status === "refused") {
+    return <ArchitectureRefusal refusal={result.refusal} />;
+  }
+  if (!view) return null;
 
   return (
     <div style={{ paddingBottom: 60 }}>

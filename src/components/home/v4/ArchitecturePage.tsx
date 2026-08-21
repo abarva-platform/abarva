@@ -2,35 +2,19 @@
 
 import { useMemo, useState } from "react";
 
-import { buildBusinessCapabilityLandscapeView } from "@/lib/visual-system/projections/capability-landscape";
-import { buildCapabilityToTechnologyView } from "@/lib/visual-system/projections/capability-to-technology";
 import type { ArchitectureView, ArchitectureViewNode } from "@/lib/visual-system/architecture-view-contract";
+import { resolveArchitectureView } from "@/lib/visual-system/resolveArchitectureView";
 import type { TechRecordType } from "@/lib/home/preview/types";
-import { buildTileLayout, type Tile } from "./architecture-tiles";
+import { ArchitectureRefusal } from "./ArchitectureRefusal";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
 /**
- * The estate as a picture, rendered to the approved Architecture Explorer design.
- *
- * Semantics come from the shared projections, which produce a validated `ArchitectureView`; this
- * file is a rendering profile over that model and decides nothing about what a node means, what is
- * related to what, or where evidence came from. The engineering SVG renderer is a correctness
- * baseline, not the visual target -- the design's own treatment is HTML tiles, and that is what
- * ships.
- *
- * Two design decisions that are load-bearing:
- *
- *  - **L0 is weighted, not a uniform grid.** Footprint is proportional to recorded system count,
- *    so concentration answers itself before a number is read. Grouping and counts are identical to
- *    the card treatment; only the speed of reading changes.
- *  - **L2 declares the relationship once.** A capability supported by thirty-three categories does
- *    not get thirty-three identical `supports` labels -- one pill states the verb at group level,
- *    and every underlying relationship stays in the model.
- *
- * The hatched fill means "this is a group, not a system" and is never decorative.
+ * The estate as a portfolio board, rendered from a validated ArchitectureView. Semantics come from
+ * the shared resolver; this file only chooses the reading profile. A rectangle treemap made the
+ * largest function truthful but visually useless, so the L0 view uses ranked rows plus a detail
+ * pane: the same concentration is visible without turning whitespace into the dominant artifact.
  */
 
-const HATCH = "repeating-linear-gradient(135deg,rgba(12,26,58,0.5) 0 6px,rgba(12,26,58,0.24) 6px 12px)";
 const HATCH_SOFT = "repeating-linear-gradient(135deg,rgba(12,26,58,0.09) 0 7px,rgba(12,26,58,0.03) 7px 14px)";
 
 export function ArchitecturePage({
@@ -46,19 +30,22 @@ export function ArchitecturePage({
 }) {
   const [capability, setCapability] = useState<string | null>(null);
 
-  const view: ArchitectureView = useMemo(
+  const result = useMemo(
     () =>
-      capability
-        ? buildCapabilityToTechnologyView({ tenantKey, tenantDisplayName, applications, capability, canonicalBuild })
-        : buildBusinessCapabilityLandscapeView({
-            tenantKey,
-            tenantDisplayName,
-            applications,
-            audienceLevel: "L1_domain",
-            canonicalBuild,
-          }),
+      resolveArchitectureView({
+        format: "executive_landscape",
+        tenantKey,
+        tenantDisplayName,
+        applications,
+        capability,
+        canonicalBuild,
+      }),
     [capability, tenantKey, tenantDisplayName, applications, canonicalBuild],
   );
+  if (result.status === "refused") {
+    return <ArchitectureRefusal refusal={result.refusal} />;
+  }
+  const view: ArchitectureView = result.view;
 
   return (
     <div style={{ paddingBottom: 60 }}>
@@ -117,7 +104,7 @@ export function ArchitecturePage({
       {capability ? (
         <L2Capability view={view} capability={capability} />
       ) : (
-        <L0Landscape view={view} onDrill={setCapability} />
+        <L0Landscape applications={applications} onDrill={setCapability} />
       )}
 
       {view.limitations.length > 0 ? (
@@ -160,11 +147,49 @@ export function ArchitecturePage({
 
 /* ── L0 · weighted landscape ─────────────────────────────────────────────────────────────── */
 
-function L0Landscape({ view, onDrill }: { view: ArchitectureView; onDrill: (capability: string) => void }) {
-  const layout = useMemo(() => buildTileLayout(view), [view]);
+type ApplicationRecord = Record<string, unknown>;
+
+interface FunctionCluster {
+  name: string;
+  rows: ApplicationRecord[];
+  count: number;
+  share: number;
+  tier1: number;
+  watch: number;
+  replace: number;
+  aging: number;
+  vendorCount: number;
+  spend: number;
+  topCategories: Array<[string, number]>;
+}
+
+function L0Landscape({
+  applications,
+  onDrill,
+}: {
+  applications: TechRecordType;
+  onDrill: (capability: string) => void;
+}) {
+  const rows = useMemo(() => (applications.rows ?? []) as ApplicationRecord[], [applications.rows]);
+  const clusters = useMemo(() => buildFunctionClusters(rows), [rows]);
+  const [selectedName, setSelectedName] = useState<string | null>(clusters[0]?.name ?? null);
+  const selected = clusters.find((cluster) => cluster.name === selectedName) ?? clusters[0];
+  const totalSpend = clusters.reduce((sum, cluster) => sum + cluster.spend, 0);
+  const tier1 = clusters.reduce((sum, cluster) => sum + cluster.tier1, 0);
+  const watch = clusters.reduce((sum, cluster) => sum + cluster.watch, 0);
+  const replacement = clusters.reduce((sum, cluster) => sum + cluster.replace, 0);
 
   return (
     <div style={{ padding: `0 ${PAGE_X}px` }}>
+      <style>{`
+        @media (max-width: 1180px) {
+          [data-arch-workspace] { grid-template-columns: 1fr !important; }
+          [data-arch-side] { position: static !important; }
+        }
+        @media (max-width: 760px) {
+          [data-arch-metrics] { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
       <div
         style={{
           display: "flex",
@@ -176,188 +201,363 @@ function L0Landscape({ view, onDrill }: { view: ArchitectureView; onDrill: (capa
           borderBottom: `1px solid ${V4.rule}`,
         }}
       >
-        <span style={eyebrow(V4.slate)}>Weighted by estate share</span>
+        <span style={eyebrow(V4.slate)}>Architecture workbench</span>
         <span style={{ flex: 1 }} />
         <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", color: V4.stone }}>
-          FOOTPRINT IS PROPORTIONAL TO RECORDED SYSTEM COUNT
+          FUNCTION · SYSTEM MIX · APPLICATION ROSTER
         </span>
       </div>
 
-      <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 10 }}>
-        {layout.rows.map((row, i) => (
-          <div key={i} style={{ display: "flex", gap: 10, height: row.height }}>
-            {row.items.map((tile) => (
-              <TileCard key={tile.id} tile={tile} onClick={() => onDrill(tile.label)} />
-            ))}
-          </div>
-        ))}
-
-        {layout.tail ? (
-          <div style={{ marginTop: 6 }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "baseline",
-                justifyContent: "space-between",
-                gap: 14,
-                flexWrap: "wrap",
-                marginBottom: 8,
-              }}
-            >
-              <span style={{ ...eyebrow(V4.slate), letterSpacing: "0.11em" }}>
-                {layout.tail.count} functions below the legible tile width
-              </span>
-              <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: V4.slate }}>
-                {layout.tail.systems} SYSTEMS · {layout.tail.sharePct.toFixed(1)}% OF ESTATE · ALL LISTED
-              </span>
-            </div>
-            <div style={{ height: 8, background: V4.cream, borderRadius: 2, overflow: "hidden", marginBottom: 10 }}>
-              <span style={{ display: "block", height: "100%", width: `${layout.tail.sharePct}%`, background: HATCH }} />
-            </div>
-            <p style={{ margin: "0 0 10px", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.55, color: V4.slate, maxWidth: "80ch" }}>
-              Too small to hold a legible tile, so share is carried by the bar above rather than by tile area. Every
-              function is listed with its own count.
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,190px),1fr))", gap: 8 }}>
-              {layout.tail.items.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => onDrill(t.label)}
-                  style={{
-                    textAlign: "left",
-                    border: `1px solid ${V4.rule}`,
-                    borderRadius: 7,
-                    background: V4.surface,
-                    padding: "11px 13px",
-                    cursor: "pointer",
-                  }}
-                >
-                  <span style={{ display: "block", fontFamily: SANS, fontSize: 13, fontWeight: 500, lineHeight: 1.3, color: V4.ink }}>
-                    {t.label}
-                  </span>
-                  <span
-                    style={{ display: "block", fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: V4.slate, marginTop: 4 }}
-                  >
-                    {t.systems} · {t.sharePct.toFixed(1)}%
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
+      <div
+        data-arch-metrics
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(5,minmax(0,1fr))",
+          gap: "1px",
+          marginTop: 18,
+          border: `1px solid ${V4.rule}`,
+          background: V4.rule,
+        }}
+      >
+        <ArchitectureMetric value={rows.length.toLocaleString()} label="applications" />
+        <ArchitectureMetric value={clusters.length.toLocaleString()} label="business functions" />
+        <ArchitectureMetric value={tier1.toLocaleString()} label="tier-1 systems" />
+        <ArchitectureMetric value={watch.toLocaleString()} label="lifecycle watch" />
+        <ArchitectureMetric value={moneyShort(totalSpend)} label="annual cost" />
       </div>
 
-      <p style={{ margin: "16px 0 0", fontFamily: SANS, fontSize: 13.5, lineHeight: 1.6, color: V4.slate, maxWidth: "80ch" }}>
-        Footprint is proportional to recorded system count. The concentration answers itself before a number is read —
-        and the hatch says every tile is a group, not a system.
-      </p>
+      <div
+        data-arch-workspace
+        style={{
+          display: "grid",
+          gridTemplateColumns: "290px minmax(0,1fr) 390px",
+          gap: "clamp(18px,2.5vw,34px)",
+          alignItems: "start",
+          marginTop: 22,
+        }}
+      >
+        <section style={{ minWidth: 0 }}>
+          <span style={eyebrow(V4.slate)}>Functions</span>
+          <div style={{ marginTop: 10, display: "grid", gap: 6 }}>
+            {clusters.map((cluster, index) => (
+              <FunctionButton
+                key={cluster.name}
+                cluster={cluster}
+                rank={index + 1}
+                active={selected?.name === cluster.name}
+                onClick={() => setSelectedName(cluster.name)}
+              />
+            ))}
+          </div>
+        </section>
 
-      <Legend />
+        <section style={{ minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 18, marginBottom: 10 }}>
+            <span style={eyebrow(V4.slate)}>System mix</span>
+            <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}>
+              top categories by function
+            </span>
+          </div>
+          <div style={{ border: `1px solid ${V4.rule}`, background: V4.surface, borderRadius: 8, overflow: "hidden" }}>
+            {clusters.slice(0, 12).map((cluster) => (
+              <button
+                key={cluster.name}
+                type="button"
+                onClick={() => setSelectedName(cluster.name)}
+                style={{
+                  width: "100%",
+                  display: "grid",
+                  gridTemplateColumns: "minmax(170px,0.72fr) minmax(0,1fr) 74px",
+                  gap: 14,
+                  alignItems: "center",
+                  textAlign: "left",
+                  border: "none",
+                  borderBottom: `1px solid ${V4.rule}`,
+                  padding: "12px 14px",
+                  background: selected?.name === cluster.name ? "rgba(0,102,204,0.055)" : V4.surface,
+                  cursor: "pointer",
+                }}
+              >
+                <span style={{ minWidth: 0 }}>
+                  <strong style={{ display: "block", fontFamily: SANS, fontSize: 13.5, color: V4.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {cluster.name}
+                  </strong>
+                  <span style={{ display: "block", marginTop: 3, fontFamily: MONO, fontSize: 10.5, color: V4.slate }}>
+                    {cluster.count} systems · {cluster.share.toFixed(1)}%
+                  </span>
+                </span>
+                <span style={{ display: "grid", gap: 6, minWidth: 0 }}>
+                  {cluster.topCategories.slice(0, 3).map(([category, count]) => (
+                    <span key={category} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 34px", gap: 10, alignItems: "center" }}>
+                      <span style={{ display: "grid", gap: 3, minWidth: 0 }}>
+                        <span style={{ fontFamily: SANS, fontSize: 12, color: V4.inkSoft, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {category}
+                        </span>
+                        <span style={{ height: 4, borderRadius: 99, background: V4.cream, overflow: "hidden" }}>
+                          <span
+                            style={{
+                              display: "block",
+                              width: `${Math.max(6, (count / Math.max(1, cluster.count)) * 100)}%`,
+                              height: "100%",
+                              background: "rgba(0,102,204,0.42)",
+                            }}
+                          />
+                        </span>
+                      </span>
+                      <span style={{ fontFamily: MONO, fontSize: 11, color: V4.blue, textAlign: "right" }}>{count}</span>
+                    </span>
+                  ))}
+                </span>
+                <span style={{ textAlign: "right" }}>
+                  <span style={{ display: "block", fontFamily: SERIF, fontSize: 22, lineHeight: 1, color: cluster.watch ? V4.amber : V4.slate }}>
+                    {cluster.watch || 0}
+                  </span>
+                  <span style={{ display: "block", marginTop: 5, fontFamily: MONO, fontSize: 10, color: V4.slate, letterSpacing: "0.07em", textTransform: "uppercase" }}>
+                    watch
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,180px),1fr))", gap: 10, marginTop: 14 }}>
+            <ExceptionMetric label="replacement candidates" value={replacement} />
+            <ExceptionMetric label="legacy/sunset/deprecated" value={watch} />
+            <ExceptionMetric
+              label="missing vendor"
+              value={rows.filter((row) => !text(row, "vendor")).length}
+            />
+          </div>
+        </section>
+
+        {selected ? (
+          <aside
+            data-arch-side
+            style={{
+              position: "sticky",
+              top: 24,
+              borderLeft: `1px solid ${V4.rule}`,
+              paddingLeft: 22,
+              minWidth: 0,
+            }}
+          >
+            <span style={eyebrow(V4.blue)}>Selected function</span>
+            <h2
+              style={{
+                margin: "10px 0 0",
+                fontFamily: SERIF,
+                fontSize: 27,
+                fontWeight: 500,
+                letterSpacing: "-0.026em",
+                lineHeight: 1.12,
+                color: V4.ink,
+              }}
+            >
+              {selected.name}
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 1, marginTop: 18, border: `1px solid ${V4.rule}`, background: V4.rule }}>
+              <ArchitectureMetric value={selected.count.toLocaleString()} label="applications" />
+              <ArchitectureMetric value={`${selected.share.toFixed(1)}%`} label="of estate" />
+              <ArchitectureMetric value={selected.tier1.toLocaleString()} label="tier-1 systems" />
+              <ArchitectureMetric value={selected.watch.toLocaleString()} label="watch items" />
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <span style={eyebrow(V4.slate)}>Application roster</span>
+              <div style={{ marginTop: 9, borderTop: `1px solid ${V4.rule}` }}>
+                {selected.rows.slice(0, 18).map((row) => (
+                  <div key={`${text(row, "systemName")}-${text(row, "originalRowId")}`} style={{ padding: "9px 0", borderBottom: `1px solid ${V4.rule}` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" }}>
+                      <strong style={{ fontFamily: SANS, fontSize: 13, lineHeight: 1.25, color: V4.ink }}>{text(row, "systemName")}</strong>
+                      <span style={{ fontFamily: MONO, fontSize: 10.5, color: text(row, "criticality") === "tier1" ? V4.blue : V4.slate }}>
+                        {text(row, "criticality") || "—"}
+                      </span>
+                    </div>
+                    <p style={{ margin: "4px 0 0", fontFamily: SANS, fontSize: 12, lineHeight: 1.35, color: V4.slate }}>
+                      {text(row, "systemCategory") || "Unclassified"} · {text(row, "lifecycleState") || "no lifecycle"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => onDrill(selected.name)}
+              style={{
+                marginTop: 18,
+                width: "100%",
+                border: `1px solid ${V4.blue}`,
+                borderRadius: 7,
+                background: V4.surface,
+                color: V4.blue,
+                padding: "10px 12px",
+                fontFamily: MONO,
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.09em",
+                textTransform: "uppercase",
+                cursor: "pointer",
+              }}
+            >
+              Open capability detail
+            </button>
+            <p style={{ margin: "16px 0 0", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.55, color: V4.slate }}>
+              This uses recorded application fields only. It is a working view of concentration, mix, and exceptions, not a formal capability taxonomy.
+            </p>
+          </aside>
+        ) : null}
+      </div>
     </div>
   );
 }
 
-function TileCard({ tile, onClick }: { tile: Tile; onClick: () => void }) {
+function FunctionButton({
+  cluster,
+  rank,
+  active,
+  onClick,
+}: {
+  cluster: FunctionCluster;
+  rank: number;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      title={`${tile.label} — ${tile.systems} systems`}
+      aria-pressed={active}
       style={{
-        flexGrow: 0,
-        flexShrink: 1,
-        flexBasis: `${tile.widthPct.toFixed(2)}%`,
-        minWidth: 0,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
+        display: "grid",
+        gridTemplateColumns: "24px minmax(0,1fr) 42px",
+        gap: 9,
+        alignItems: "center",
+        border: `1px solid ${active ? "rgba(0,102,204,0.45)" : V4.rule}`,
+        borderRadius: 7,
+        background: active ? "rgba(0,102,204,0.06)" : V4.surface,
+        padding: "9px 10px",
         textAlign: "left",
-        border: `1px solid ${V4.navy}`,
-        borderRadius: 8,
-        background: HATCH_SOFT,
-        padding: "14px 16px",
         cursor: "pointer",
-        overflow: "hidden",
       }}
     >
-      <span style={{ display: "block", minWidth: 0 }}>
-        <span
-          style={{
-            display: "block",
-            fontFamily: SERIF,
-            fontSize: "clamp(15px,1.25vw,20px)",
-            fontWeight: 500,
-            letterSpacing: "-0.02em",
-            lineHeight: 1.2,
-            color: V4.ink,
-            overflow: "hidden",
-          }}
-        >
-          {tile.label}
+      <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}>{rank}</span>
+      <span style={{ minWidth: 0 }}>
+        <span style={{ display: "block", fontFamily: SANS, fontSize: 13, fontWeight: 650, color: V4.ink, lineHeight: 1.24, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {cluster.name}
         </span>
-        <span
-          style={{
-            display: "block",
-            fontFamily: MONO,
-            fontSize: 11,
-            letterSpacing: "0.09em",
-            textTransform: "uppercase",
-            marginTop: 6,
-            color: V4.slate,
-          }}
-        >
-          Group of {tile.systems} · {tile.sharePct.toFixed(1)}%
+        <span style={{ display: "block", height: 4, background: V4.cream, borderRadius: 999, overflow: "hidden", marginTop: 7 }}>
+          <span style={{ display: "block", width: `${Math.max(2, cluster.share)}%`, height: "100%", background: active ? V4.blue : "rgba(12,26,58,0.58)" }} />
         </span>
       </span>
-      <span style={{ display: "block", minWidth: 0 }}>
-        {tile.note ? (
-          <span style={{ display: "block", fontFamily: MONO, fontSize: 11, lineHeight: 1.6, color: V4.slate, overflow: "hidden" }}>
-            {tile.note}
-          </span>
-        ) : null}
-        {tile.overlayMark ? (
-          <span style={{ display: "block", fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", color: V4.amber, marginTop: 4 }}>
-            {tile.overlayMark}
-          </span>
-        ) : null}
-        <span style={{ display: "block", marginTop: 6, fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: V4.blue }}>
-          OPEN →
-        </span>
-      </span>
+      <span style={{ fontFamily: MONO, fontSize: 12, color: V4.ink, textAlign: "right" }}>{cluster.count}</span>
     </button>
   );
 }
 
-function Legend() {
+function ExceptionMetric({ label, value }: { label: string; value: number }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "18px 34px",
-        alignItems: "center",
-        margin: "26px 0 0",
-        paddingTop: 18,
-        borderTop: `1px solid ${V4.rule}`,
-      }}
-    >
-      <LegendKey swatch={<span style={{ width: 34, height: 18, border: `1px solid ${V4.ruleStrong}`, background: HATCH, flexShrink: 0 }} />}>
-        Grouped from a field the record holds — never a single system
-      </LegendKey>
-      <LegendKey swatch={<span style={{ width: 34, height: 18, border: `1px solid ${V4.navy}`, background: V4.surface, flexShrink: 0 }} />}>
-        One canonical record
-      </LegendKey>
+    <div style={{ borderTop: `1px solid ${value ? "rgba(186,117,23,0.55)" : V4.rule}`, paddingTop: 10 }}>
+      <span style={{ display: "block", fontFamily: SERIF, fontSize: 24, lineHeight: 1, color: value ? V4.amber : V4.ink }}>
+        {value.toLocaleString()}
+      </span>
+      <span style={{ display: "block", marginTop: 6, fontFamily: SANS, fontSize: 12, color: V4.slate }}>{label}</span>
     </div>
   );
 }
 
-function LegendKey({ swatch, children }: { swatch: React.ReactNode; children: React.ReactNode }) {
+function buildFunctionClusters(rows: ApplicationRecord[]): FunctionCluster[] {
+  const groups = new Map<string, ApplicationRecord[]>();
+  for (const row of rows) {
+    const key = text(row, "businessFunction") || "Unassigned";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(row);
+  }
+  const total = Math.max(1, rows.length);
+  return [...groups.entries()]
+    .map(([name, groupRows]) => {
+      const aging = groupRows.filter((row) =>
+        ["legacy_stable", "sunset_planned", "deprecated"].includes(text(row, "lifecycleState")),
+      ).length;
+      const replace = groupRows.filter((row) => text(row, "replacementCandidate").toLowerCase() === "yes").length;
+      const vendors = new Set(groupRows.map((row) => text(row, "vendor")).filter(Boolean));
+      return {
+        name,
+        rows: groupRows,
+        count: groupRows.length,
+        share: (groupRows.length / total) * 100,
+        tier1: groupRows.filter((row) => text(row, "criticality").toLowerCase() === "tier1").length,
+        watch: aging + replace,
+        replace,
+        aging,
+        vendorCount: vendors.size,
+        spend: groupRows.reduce((sum, row) => sum + numeric(row.annualCostUsd), 0),
+        topCategories: topCounts(groupRows, "systemCategory").slice(0, 4),
+      };
+    })
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}
+
+function topCounts(rows: ApplicationRecord[], field: string): Array<[string, number]> {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const value = text(row, field) || "Not specified";
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+}
+
+function text(row: ApplicationRecord, field: string): string {
+  const value = row[field];
+  if (value === null || value === undefined) return "";
+  return String(value);
+}
+
+function numeric(value: unknown): number {
+  const next = Number(value);
+  return Number.isFinite(next) ? next : 0;
+}
+
+function moneyShort(value: number): string {
+  if (!value) return "—";
+  if (Math.abs(value) >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(2)}B`;
+  if (Math.abs(value) >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(value) >= 1_000) return `$${(value / 1_000).toFixed(0)}K`;
+  return `$${value.toLocaleString()}`;
+}
+
+function ArchitectureMetric({ value, label }: { value: string; label: string }) {
   return (
-    <span style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: SANS, fontSize: 13, color: V4.slate }}>
-      {swatch}
-      {children}
-    </span>
+    <div style={{ background: V4.surface, padding: "13px 15px", minWidth: 0 }}>
+      <span
+        style={{
+          display: "block",
+          fontFamily: SERIF,
+          fontSize: 24,
+          fontWeight: 500,
+          letterSpacing: "-0.03em",
+          lineHeight: 1,
+          color: V4.ink,
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        {value}
+      </span>
+      <span
+        style={{
+          display: "block",
+          marginTop: 7,
+          fontFamily: SANS,
+          fontSize: 12,
+          lineHeight: 1.35,
+          color: V4.slate,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+        title={label}
+      >
+        {label}
+      </span>
+    </div>
   );
 }
 

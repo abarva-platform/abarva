@@ -175,17 +175,9 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
             />
           ) : null}
 
-          {activeView === "current-state" ? (
-            <div style={{ padding: "54px 56px 0" }}>
-              <CurrentState signalPacket={signalPacket} />
-            </div>
-          ) : null}
+          {activeView === "current-state" ? <CurrentState signalPacket={signalPacket} /> : null}
 
-          {activeView === "browse-the-data" ? (
-            <div style={{ padding: "54px 56px 0" }}>
-              <BrowseTheData signalPacket={signalPacket} />
-            </div>
-          ) : null}
+          {activeView === "browse-the-data" ? <BrowseTheData signalPacket={signalPacket} /> : null}
 
           {activeTechRecordType ? (
             <RecordBrowser key={activeTechRecordType.objectType} recordType={activeTechRecordType} />
