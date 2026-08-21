@@ -236,9 +236,12 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
   },
   "moves::handoff_pack": {
     // P5 handoff must be a crisp execution-transfer package. Oversized handoff
-    // packs bury accountabilities and should not become board-ready.
+    // packs bury accountabilities and should not become board-ready. The lower
+    // bound has a small tolerance because the prompt deliberately removes
+    // predecessor-document repetition; a strong handoff should not be forced to
+    // add filler to cross an arbitrary round-number floor.
     minSections: 6,
-    minBodyWords: 5_000, // ~12 pages
+    minBodyWords: 4_800, // ~11-12 pages
     targetBodyWordsMax: 11_000, // ~25 pages
     enforceMaxAsBlocker: true,
     requiresEvidenceGapsNoted: true,
