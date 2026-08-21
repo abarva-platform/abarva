@@ -160,6 +160,9 @@ async function main(): Promise<number> {
       periodEnd: string | null,
     ): string | null => {
       if (value === null) return null;
+      // Tower's measurement table requires a period. Do not invent one: a value without its
+      // measurement window is not an auditable observation, so it remains a claim evidence gap.
+      if (!periodStart || !periodEnd) return null;
       const observationId = `OBS-${hash([tenantKey, subjectRef, metricRef, scenario])}`;
       observations.push({
         tenantKey,
