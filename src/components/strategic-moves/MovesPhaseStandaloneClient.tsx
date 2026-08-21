@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  reconcileDraftWithAcknowledged,
   resolvePhaseCaptureStatus,
   type PhaseCaptureSaveStatus,
   type PhaseCaptureStatusView,
@@ -828,6 +829,28 @@ export function MovesPhaseStandaloneClient({
         if (cancelled) return;
         const savedValues = normalizePhaseCaptureValues(body.values);
         setPersistedPhaseCaptureValues(savedValues);
+        // Adopt what the server actually stored, not what we sent it.
+        //
+        // The server normalises on write (evaluatePhaseCapture trims each
+        // value), so a value ending in a space comes back one character
+        // shorter than the draft that produced it. Leaving the draft alone
+        // meant the section stayed permanently dirty: the badge could not
+        // reach Done, every autosave pass re-sent the same value, and the
+        // control displayed text that a reload would not reproduce — a direct
+        // breach of the invariant this surface is supposed to guarantee.
+        //
+        // Only reconcile keys whose draft is still exactly what we sent. If
+        // the user typed while the request was in flight, their newer text
+        // wins; overwriting it here would lose input, which is the very class
+        // of defect this autosave path already had once.
+        setPhaseCaptureValues((prev) =>
+          reconcileDraftWithAcknowledged(
+            prev,
+            sectionsToSave,
+            savedValues,
+            keysToSave,
+          ),
+        );
         if (body.revision) setPhaseCaptureRevision(body.revision);
         setPhaseCaptureSaveStatus((prev) => {
           const next = { ...prev };

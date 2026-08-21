@@ -7,6 +7,7 @@
 // a unit test stops it regressing into a completeness decoration.
 
 import {
+  reconcileDraftWithAcknowledged,
   resolvePhaseCaptureStatus,
   statusSatisfiesDurabilityInvariant,
   type PhaseCaptureSaveStatus,
@@ -131,5 +132,86 @@ describe("degenerate input", () => {
     expect(view({ draft: `${SERVER} `, persisted: SERVER }).complete).toBe(
       false,
     );
+  });
+});
+
+describe("reconciling the draft with what the server stored", () => {
+  // Found by live proof, not by review: the server trims on write, so a value
+  // ending in a space came back one character shorter than the draft that
+  // produced it. The section then stayed dirty forever — the badge could not
+  // reach Done, autosave re-sent the same value on every pass, and the control
+  // displayed text a reload would not reproduce.
+  const KEY = "sponsor_commitment";
+
+  it("adopts the trimmed value the server actually stored", () => {
+    const draft = { [KEY]: `${SERVER} ` };
+    const next = reconcileDraftWithAcknowledged(
+      draft,
+      { [KEY]: `${SERVER} ` },
+      { [KEY]: SERVER },
+      [KEY],
+    );
+    expect(next[KEY]).toBe(SERVER);
+  });
+
+  it("closes the loop — after reconciling, the badge can reach Done", () => {
+    const draft = reconcileDraftWithAcknowledged(
+      { [KEY]: `${SERVER} ` },
+      { [KEY]: `${SERVER} ` },
+      { [KEY]: SERVER },
+      [KEY],
+    );
+    const v = resolvePhaseCaptureStatus({
+      draft: draft[KEY],
+      persisted: SERVER,
+      saveStatus: "saved",
+    });
+    expect(v.label).toBe("Done");
+    expect(v.complete).toBe(true);
+  });
+
+  it("never overwrites text the user typed while the save was in flight", () => {
+    // The draft has moved on from what was sent. Adopting the server's echo
+    // here would silently delete the user's newer keystrokes.
+    const newer = `${SERVER} and the COO is the escalation point.`;
+    const next = reconcileDraftWithAcknowledged(
+      { [KEY]: newer },
+      { [KEY]: `${SERVER} ` },
+      { [KEY]: SERVER },
+      [KEY],
+    );
+    expect(next[KEY]).toBe(newer);
+  });
+
+  it("leaves keys that were not part of this save alone", () => {
+    const draft = { [KEY]: `${SERVER} `, other: "untouched " };
+    const next = reconcileDraftWithAcknowledged(
+      draft,
+      { [KEY]: `${SERVER} ` },
+      { [KEY]: SERVER, other: "untouched" },
+      [KEY],
+    );
+    expect(next.other).toBe("untouched ");
+  });
+
+  it("returns the same object when nothing needs reconciling", () => {
+    // So a no-op save cannot trigger a render, which is what made the original
+    // autosave loop expensive in the first place.
+    const draft = { [KEY]: SERVER };
+    expect(
+      reconcileDraftWithAcknowledged(
+        draft,
+        { [KEY]: SERVER },
+        { [KEY]: SERVER },
+        [KEY],
+      ),
+    ).toBe(draft);
+  });
+
+  it("ignores keys the server did not acknowledge", () => {
+    const draft = { [KEY]: `${SERVER} ` };
+    expect(
+      reconcileDraftWithAcknowledged(draft, { [KEY]: `${SERVER} ` }, {}, [KEY]),
+    ).toBe(draft);
   });
 });
