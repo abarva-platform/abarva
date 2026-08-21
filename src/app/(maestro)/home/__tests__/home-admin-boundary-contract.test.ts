@@ -146,8 +146,13 @@ describe("Home/Admin boundary contract", () => {
     expect(pageSource).toContain("function withVisibleTenantIdentity(");
     expect(pageSource).toContain("tenantName,");
     expect(pageSource).toContain("Generated orientation pack");
+    expect(pageSource).toContain("Planning context · Contract base refreshed");
+    expect(pageSource).toContain("Contract and vendor base");
     expect(pageSource).toContain("<HomeEnterpriseLandscapeV2");
     expect(pageSource).toContain("model={model}");
+    expect(pageSource).not.toContain("Governed Source L4 / cube");
+    expect(pageSource).not.toContain("Source L4 / Cube");
+    expect(pageSource).not.toContain("orientationPack.buildVersion");
     expect(pageSource).not.toContain('from "@/lib/active-client"');
     expect(pageSource).not.toContain("ACTIVE_CLIENT_COOKIE");
     expect(queueSource).toContain('redirect("/home")');

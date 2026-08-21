@@ -97,39 +97,27 @@ function SourceRuntimeSummaryPanel({
 }) {
   if (!summary || summary.contractCount === 0) return null;
   const items = [
-    [
-      "Contracts",
-      summary.contractCount.toLocaleString(),
-      "source.contract_360",
-    ],
-    [
-      "Vendors",
-      summary.vendorCount.toLocaleString(),
-      "source.vendor_contract_portfolio",
-    ],
+    ["Contracts", summary.contractCount.toLocaleString(), "Contract register"],
+    ["Vendors", summary.vendorCount.toLocaleString(), "Vendor portfolio"],
     [
       "Application Scope",
       summary.applicationScopeRows.toLocaleString(),
-      "source.contract_application_scope",
+      "Application coverage",
     ],
-    [
-      "Annual Value",
-      money(summary.annualValue),
-      "consumption.sourcing_contract_v1",
-    ],
+    ["Annual Value", money(summary.annualValue), "Annual contract base"],
   ];
   return (
     <section className="rounded-md border border-[#d9ddd2] bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-2">
         <p className="text-xs font-semibold uppercase text-[#667085]">
-          Refreshed Source L4 / Cube
+          Refreshed contract view
         </p>
         <h2 className="text-xl font-semibold text-[#111827]">
           Vendor and contract projection
         </h2>
         <p className="text-sm leading-6 text-[#475467]">
-          Home is reading governed Source projections and cube coverage, with
-          canary data used only when governed rows are not yet present.
+          Home is reading the governed contract and vendor projections, with
+          fallback data used only when governed records are not yet present.
         </p>
       </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -295,30 +283,29 @@ function withSourceSummaryAnchors(
   return {
     ...model,
     tenantName,
-    status: "Planning-grade | Governed Source L4 / cube projection refreshed",
+    status: "Planning context · Contract base refreshed",
     anchors: model.anchors.map((anchor) => {
       if (anchor.label === "Committed base") {
         return {
           ...anchor,
           value: money(summary.annualValue),
-          detail: "Annual contract value from Source L4",
+          detail: "Annual contract value from the governed contract register",
         };
       }
       if (anchor.label === "Contract register") {
         return {
           ...anchor,
           value: summary.contractCount.toLocaleString(),
-          detail: "source.contract_360 rows",
+          detail: "Contract records",
         };
       }
       return anchor;
     }),
     evidence: [
       {
-        label: "Source L4 / Cube",
+        label: "Contract and vendor base",
         value: `${summary.contractCount.toLocaleString()} contracts · ${summary.vendorCount.toLocaleString()} vendors`,
-        detail:
-          "source.contract_360, source.vendor_contract_portfolio, consumption.sourcing_contract_v1",
+        detail: "Governed contract, vendor, and annual-value projections",
         tone: "teal",
       },
       ...model.evidence,
@@ -335,8 +322,11 @@ function withVisibleTenantIdentity(
   return {
     ...model,
     tenantName,
-    subtitle: `Generated orientation pack · ${orientationPack.tenantKey}`,
-    status: `${orientationPack.provenance.status} | ${orientationPack.provenance.validationStatus} | ${orientationPack.buildVersion}`,
+    subtitle: "Generated orientation pack",
+    status:
+      orientationPack.provenance.status === "approved"
+        ? "Reviewed orientation context"
+        : "Not yet reviewed",
   };
 }
 /**

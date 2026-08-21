@@ -341,10 +341,10 @@ export function OrientationExplorePanel({ pack }: { pack: OrientationPack }) {
 }
 
 /**
- * Where the content came from and whether anyone has signed it off.
+ * Whether a human has signed this orientation pack off.
  *
- * Rendered rather than hidden. `candidate` means generated and validated but not yet reviewed by a
- * person, and a reader is entitled to know that before quoting a figure to their board.
+ * Rendered rather than hidden. A reader is entitled to know when a generated pack is still awaiting
+ * review, but build IDs, model names, and pipeline counts are operator telemetry.
  */
 export function OrientationProvenanceBar({ pack }: { pack: OrientationPack }) {
   const { provenance } = pack;
@@ -353,12 +353,6 @@ export function OrientationProvenanceBar({ pack }: { pack: OrientationPack }) {
     <div className={styles.provenance}>
       <span className={reviewed ? styles.badgeApproved : styles.badgeCandidate}>
         {reviewed ? `Approved by ${provenance.approvedBy ?? "reviewer"}` : "Not yet reviewed"}
-      </span>
-      <span>Build {pack.buildVersion}</span>
-      <span>Validation {provenance.validationStatus}</span>
-      {provenance.claudeModel ? <span>Narrative {provenance.claudeModel}</span> : null}
-      <span>
-        {provenance.narrativesGenerated} narrated · {provenance.narrativesRejected} withheld
       </span>
     </div>
   );
