@@ -20,6 +20,7 @@ import {
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
+import { buildPhaseNavigationStatus } from "@/lib/programs/phase-navigation-status";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
 // jsdom's test environment doesn't provide these globally; the component
@@ -655,6 +656,53 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.getByText(/Approve & Build runs context extract/i),
       ).toBeInTheDocument();
+    });
+
+    it("keeps a blocked P2 request on P1 with the server-derived why, remains, and next action above the fold", () => {
+      const move = makeMove({
+        currentPhase: 1,
+        phaseLabel: "P1 Charter",
+      });
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={move}
+          phaseNavigationStatus={buildPhaseNavigationStatus({
+            currentPhase: 1,
+            requestedPhase: 1,
+            blockedPhase: 2,
+          })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const blocker = screen.getByLabelText("Blocked phase request");
+      expect(blocker).toHaveTextContent("Discovery cannot begin yet");
+      expect(blocker).toHaveTextContent(
+        "Review and accept the completed Discovery Workbook",
+      );
+      expect(blocker).toHaveTextContent("Required");
+      expect(blocker).toHaveTextContent(
+        "Completed Discovery Workbook reviewed",
+      );
+      expect(blocker).toHaveTextContent("Optional");
+      expect(blocker).toHaveTextContent(
+        "Optional supporting evidence attached",
+      );
+      expect(
+        within(blocker).getByRole("button", {
+          name: "Review workbook responses",
+        }),
+      ).toBeInTheDocument();
+
+      const progressCard = screen.getByLabelText("Phase progress");
+      expect(within(progressCard).getByText("Next")).toBeInTheDocument();
+      expect(progressCard).toHaveTextContent("Review workbook responses");
+      expect(progressCard).toHaveTextContent(
+        "Workbook uploaded/previewed is not acceptance",
+      );
     });
   });
 

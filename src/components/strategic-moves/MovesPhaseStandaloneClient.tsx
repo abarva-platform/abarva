@@ -35,6 +35,7 @@ import { CostEffortWizard } from "@/components/strategic-moves/cost-effort";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import type { PhaseNavigationStatus } from "@/lib/programs/phase-navigation-status";
 import {
   getPhaseCaptureSections,
   type PhaseCaptureSection,
@@ -120,6 +121,7 @@ interface MovesPhaseStandaloneClientProps {
   phaseTallies: PhaseTallyRow[];
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
   carriesForwardContent: DeliverableContentSignal[];
+  phaseNavigationStatus?: PhaseNavigationStatus;
   currentStateReadiness?: ReadinessReport | null;
   initialSubstepKey?: SubstepKey;
   /** `moves_pricing_engine` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Cost & Effort" rail entry point entirely; when false the button does not render at all. */
@@ -432,6 +434,7 @@ export function MovesPhaseStandaloneClient({
   phaseTallies,
   evidenceNeedPackets,
   carriesForwardContent,
+  phaseNavigationStatus,
   currentStateReadiness = null,
   initialSubstepKey,
   pricingEngineEnabled = false,
@@ -513,10 +516,6 @@ export function MovesPhaseStandaloneClient({
   const progressPct = Math.round(
     ((substepIndex + 1) / phase.substeps.length) * 100,
   );
-  const phaseProgressDone =
-    isHistoricalPhase || gateApproved
-      ? phase.substeps.length
-      : Math.min(substepIndex + 1, phase.substeps.length);
   const phaseReadinessLabel =
     isHistoricalPhase || gateApproved
       ? "Complete"
@@ -681,6 +680,35 @@ export function MovesPhaseStandaloneClient({
   ).length;
   const phaseCaptureMissingCount =
     phaseCaptureSections.length - phaseCaptureCompleteCount;
+  const blockedPhaseRequest = phaseNavigationStatus?.blockedRequest ?? null;
+  const phaseStoryNextAction =
+    blockedPhaseRequest?.nextActionLabel ??
+    (phaseCaptureMissingCount > 0
+      ? `Complete ${phaseCaptureMissingCount} required input${
+          phaseCaptureMissingCount === 1 ? "" : "s"
+        }`
+      : substep.key === "approve" && topLevelHardGateTotal > 0
+        ? topLevelHardGateMet >= topLevelHardGateTotal
+          ? "Run Approve & Build"
+          : "Resolve hard gate blockers"
+        : substep.label);
+  const phaseStoryArtifactStatus =
+    blockedPhaseRequest && phase.phase === 1
+      ? "Workbook uploaded/previewed is not acceptance"
+      : phase.phase < 5
+        ? "Workbook available · acceptance required before next phase"
+        : "Tower handoff artifacts";
+  const phaseStoryRemaining = blockedPhaseRequest
+    ? blockedPhaseRequest.reason
+    : phaseCaptureMissingCount > 0
+      ? `${phaseCaptureMissingCount} phase input${
+          phaseCaptureMissingCount === 1 ? "" : "s"
+        } still missing from persisted server state.`
+      : substep.key === "approve" && topLevelHardGateMet < topLevelHardGateTotal
+        ? `${topLevelHardGateTotal - topLevelHardGateMet} hard gate blocker${
+            topLevelHardGateTotal - topLevelHardGateMet === 1 ? "" : "s"
+          } remain.`
+        : "No required input blockers for the current step.";
   const phaseCaptureBlocker =
     phase.phase === 3 && !selectedP3Option
       ? "Select the solution option that architecture should implement before Approve & Build."
@@ -1697,6 +1725,39 @@ export function MovesPhaseStandaloneClient({
                     <h1>{phase.title}</h1>
                     <div className="mxw-question">{phase.question}</div>
                     <p>{phase.lede}</p>
+                    {blockedPhaseRequest ? (
+                      <div
+                        className="mxw-phase-blocker"
+                        aria-label="Blocked phase request"
+                      >
+                        <span>
+                          P{blockedPhaseRequest.requestedPhase} blocked
+                        </span>
+                        <h2>{blockedPhaseRequest.title}</h2>
+                        <p>{blockedPhaseRequest.reason}</p>
+                        <ul>
+                          {blockedPhaseRequest.remaining.map((item) => (
+                            <li key={`${item.label}-${item.status}`}>
+                              <b>{item.required ? "Required" : "Optional"}</b>
+                              <span>{item.label}</span>
+                              <em>{item.status}</em>
+                            </li>
+                          ))}
+                        </ul>
+                        <button
+                          className="mxw-primary-action"
+                          onClick={() => {
+                            setWorkspaceView("phase");
+                            setSubstepIndex(1);
+                            setFinderSelectedSectionKey(null);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          type="button"
+                        >
+                          {blockedPhaseRequest.nextActionLabel}
+                        </button>
+                      </div>
+                    ) : null}
                     {readinessWorkbookHref ? (
                       <div className="mxw-stage-actions">
                         <a
@@ -1716,12 +1777,17 @@ export function MovesPhaseStandaloneClient({
                       aria-label="Phase progress"
                     >
                       <strong>
-                        {phaseProgressDone} / {phase.substeps.length}
+                        {phase.code} · {phase.title}
                       </strong>
                       <span className="mxw-track">
                         <span style={{ width: `${progressPct}%` }} />
                       </span>
                       <div className="mxw-progress-meta">
+                        <span>
+                          <b>Inputs</b>
+                          {phaseCaptureCompleteCount}/
+                          {phaseCaptureSections.length} complete
+                        </span>
                         <span>
                           <b>Workflow</b>
                           {isHistoricalPhase || gateApproved
@@ -1735,6 +1801,18 @@ export function MovesPhaseStandaloneClient({
                         <span>
                           <b>Stage</b>
                           {substep.label}
+                        </span>
+                        <span>
+                          <b>Remains</b>
+                          {phaseStoryRemaining}
+                        </span>
+                        <span>
+                          <b>Next</b>
+                          {phaseStoryNextAction}
+                        </span>
+                        <span>
+                          <b>Artifact</b>
+                          {phaseStoryArtifactStatus}
                         </span>
                       </div>
                     </div>
@@ -5212,6 +5290,17 @@ function MovesStandaloneStyles() {
 .mxw-workbook-preview-status.error{color:#8a5a12}
 .mxw-workbook-preview-status em{font-style:normal;border-radius:999px;background:#e4ecf9;color:#2a5aa8;padding:3px 7px;font-size:11px}
 .mxw-workbook-preview-status small{width:100%;color:#8a5a12;font-size:11.5px;font-weight:650}
+.mxw-phase-blocker{grid-column:1;border:1px solid rgba(196,98,51,.28);border-radius:12px;background:#fff8f3;padding:16px 18px;margin-top:12px;display:grid;gap:10px;box-shadow:0 10px 24px rgba(96,55,26,.08)}
+.mxw-phase-blocker>span{display:inline-flex;width:max-content;border:1px solid rgba(196,98,51,.28);border-radius:999px;background:#fff;color:#a44d25;font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:900;padding:5px 8px}
+.mxw-phase-blocker h2{font-family:Fraunces, Georgia, serif;font-size:22px;line-height:1.1;margin:0;color:var(--ink);letter-spacing:0}
+.mxw-phase-blocker p{font-size:13px;line-height:1.45;margin:0;color:var(--ink-2);max-width:72ch}
+.mxw-phase-blocker ul{display:grid;gap:7px;list-style:none;margin:0;padding:0}
+.mxw-phase-blocker li{display:grid;grid-template-columns:82px minmax(0,1fr);gap:2px 10px;border:1px solid rgba(196,98,51,.16);border-radius:9px;background:#fff;padding:8px 10px}
+.mxw-phase-blocker li b{grid-row:1 / span 2;color:#a44d25;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.mxw-phase-blocker li span{color:var(--ink);font-size:13px;font-weight:750}
+.mxw-phase-blocker li em{grid-column:2;font-style:normal;color:var(--muted);font-size:11.5px;font-weight:650}
+.mxw-primary-action{width:max-content;border:0;border-radius:9px;background:var(--ink);color:#fff;font-size:13px;font-weight:850;padding:10px 14px;cursor:pointer}
+.mxw-primary-action:hover{background:#000}
 .mxw-progress-card{grid-column:2;grid-row:1 / span 4;align-self:center;width:230px;border:1px solid var(--line-2);border-radius:12px;background:#fff;padding:14px 16px;box-shadow:none}
 .mxw-progress-card strong{display:block;font-family:Fraunces, Georgia, serif;font-size:20px;font-weight:650;line-height:1.05;margin-bottom:9px;color:var(--ink)}
 .mxw-progress-meta{display:grid;gap:6px;margin-top:10px}
