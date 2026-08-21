@@ -24,27 +24,35 @@
 import type {
   DeliverableFormat,
   DeliverableKind,
-} from '@/lib/programs/exports/types';
+} from "@/lib/programs/exports/types";
 
 export type ArtifactType =
-  | 'brief-field' // {field: 'programName' | 'problemStatement' | …, value: string}
-  | 'pattern-match' // {patternId, name, summary, successRatePct?, deploymentCount?, typicalDurationMonths?}
-  | 'cross-program-dependency' // {programId, programName, currentPhase}
-  | 'classification' // {archetype, archetypeLabel, confidence?}
+  | "brief-field" // {field: 'programName' | 'problemStatement' | …, value: string}
+  // Moves phase capture · aVa proposes a value for one capture section.
+  // Deliberately NOT auto-applied, unlike brief-field: the phase client
+  // offers it as an "insert as draft" action, the human reviews and
+  // saves, and only a server acknowledgement marks the field done.
+  // Carries its own citations because a proposal a reader cannot trace
+  // is not usable on a governed surface — the parser rejects one with
+  // none rather than rendering an uncited draft.
+  | "capture-field" // {phase, key, value, citations: string[], confidence?}
+  | "pattern-match" // {patternId, name, summary, successRatePct?, deploymentCount?, typicalDurationMonths?}
+  | "cross-program-dependency" // {programId, programName, currentPhase}
+  | "classification" // {archetype, archetypeLabel, confidence?}
   // Surface 2 — program-detail artifacts. Nexus reasons live; the right
   // pane materializes that reasoning via these structured cards
   // alongside (and eventually instead of) the static dashboard.
-  | 'gate-evaluation' // {gate, status, detail?, reasoning?}
-  | 'evidence-highlight' // {evidenceId, label, reason}
-  | 'phase-recommendation' // {phase, recommendation, blockers?, nextActions?}
-  | 'program-focus' // {programId, name, currentPhase} — Nexus shifts focus to a program
+  | "gate-evaluation" // {gate, status, detail?, reasoning?}
+  | "evidence-highlight" // {evidenceId, label, reason}
+  | "phase-recommendation" // {phase, recommendation, blockers?, nextActions?}
+  | "program-focus" // {programId, name, currentPhase} — Nexus shifts focus to a program
   // Surface 2 PR-B — phase-pack visibility. Nexus emits these based on
   // its conversational read of the chat (not from DB queries) so the
   // user sees doctrine being applied in real time. Packs remain static
   // doctrine; the runtime evidence-evaluation layer is deferred to the
   // future knowledge-broker work.
-  | 'phase-progress' // {evidenceItemId, label, severity, status, detail?}
-  | 'anti-pattern-flag' // {antiPatternId, label, detectedSignal, whatToFlag, mitigation}
+  | "phase-progress" // {evidenceItemId, label, severity, status, detail?}
+  | "anti-pattern-flag" // {antiPatternId, label, detectedSignal, whatToFlag, mitigation}
   // Surface 2 PR-G' (Wave 2) · question-resolution tracking. Phase
   // packs declare rightQuestions sequenced open / converge / close.
   // When the conversation resolves a question, Nexus emits this
@@ -52,7 +60,7 @@ export type ArtifactType =
   // the conversation history shows the resolution so future turns
   // don't re-ask the same opener. Closes the "Nexus repeats itself"
   // observation from the surface-area doc §2 horizontal track.
-  | 'question-resolved' // {questionId, questionText, resolutionSummary?}
+  | "question-resolved" // {questionId, questionText, resolutionSummary?}
   // PR-Q (Wave 2 polish, founder feedback) · navigation tool.
   // When the user wants to be taken somewhere — to a phase module,
   // to /programs/new for origination, to a specific program —
@@ -62,49 +70,49 @@ export type ArtifactType =
   // router.refresh() (PR-L). Closes the founder feedback "Nexus
   // does not help me navigate to phase 1" by giving Nexus a real
   // navigation primitive instead of "I don't have a tool".
-  | 'navigate-to' // {target, rationale?, replace?}
+  | "navigate-to" // {target, rationale?, replace?}
   // Surface 2 PR-L · emitted by the advance_phase tool (via ctx.writer)
   // after a successful gate evaluation + DB mutation. The client uses
   // this to refresh server data in place via router.refresh() — the
   // React tree (chat history, reactive panel, AtlasPageState) survives
   // the phase transition, so the user keeps the conversation across
   // P3 → P4 instead of starting from a blank Nexus on a reloaded page.
-  | 'program-phase-changed' // {programId, fromPhase, toPhase, snapshotId?}
+  | "program-phase-changed" // {programId, fromPhase, toPhase, snapshotId?}
   // Surface 2 PR-INT-D · Sentinel-side knowledge artifacts. Sentinel
   // (the librarian agent) emits these on /intelligence to materialize
   // graph traversals + contradiction templates as cards in the
   // reactive knowledge pane.
-  | 'graph-neighborhood' // {rootId, rootLabel, nodeCount, edgeCount, topEdges[]}
-  | 'contradiction-flag' // {contradictionId, label, severity, partyA, partyB, detectionDescription, resolutionPath}
+  | "graph-neighborhood" // {rootId, rootLabel, nodeCount, edgeCount, topEdges[]}
+  | "contradiction-flag" // {contradictionId, label, severity, partyA, partyB, detectionDescription, resolutionPath}
   // PR-SRC-D · Sentinel-on-Sourcing artifacts. These mirror the
   // Programs/Intelligence reactive-workspace channel while using
   // procurement-specific cards for vendor, pricing, contract, BAFO,
   // walkaway, and stage-pack reasoning.
-  | 'vendor-card' // {vendorId, name, tier, positioning, riskFlags?, patternId?}
-  | 'pricing-benchmark' // {category, metric, median, p25?, p75?, source, sampleSize?, patternId?}
-  | 'contract-clause' // {clauseId, title, currentLanguage?, recommendedLanguage, leverage, patternId?}
-  | 'bafo-scoreboard' // {vendors[], dimensions[], scoresMatrix, notes?}
-  | 'walkaway-signal' // {credibility, reasoning, recommendation}
-  | 'source-event-created' // {eventId, eventCode, eventName, lifecycleState, approvalAuthority, approvalUrl?}
-  | 'sourcing-stage-progress' // {evidenceItemId, label, severity, status, detail?}
-  | 'sourcing-stage-changed' // {eventId, fromStage, toStage, snapshotId?}
+  | "vendor-card" // {vendorId, name, tier, positioning, riskFlags?, patternId?}
+  | "pricing-benchmark" // {category, metric, median, p25?, p75?, source, sampleSize?, patternId?}
+  | "contract-clause" // {clauseId, title, currentLanguage?, recommendedLanguage, leverage, patternId?}
+  | "bafo-scoreboard" // {vendors[], dimensions[], scoresMatrix, notes?}
+  | "walkaway-signal" // {credibility, reasoning, recommendation}
+  | "source-event-created" // {eventId, eventCode, eventName, lifecycleState, approvalAuthority, approvalUrl?}
+  | "sourcing-stage-progress" // {evidenceItemId, label, severity, status, detail?}
+  | "sourcing-stage-changed" // {eventId, fromStage, toStage, snapshotId?}
   // OV2-1a (founder feedback) · /programs/new right-pane content. Brief
   // fills in field-by-field; overlap alert fires when this new program
   // collides with an existing program in the tenant's portfolio.
-  | 'brief-progress' // {fieldsTotal, fieldsFilled, fields: Array<{id,label,status,value?}>}
-  | 'overlap-alert' // {overlappingProgramId, overlappingProgramName, overlappingProgramPhase?, overlapKind, overlapDetail}
+  | "brief-progress" // {fieldsTotal, fieldsFilled, fields: Array<{id,label,status,value?}>}
+  | "overlap-alert" // {overlappingProgramId, overlappingProgramName, overlappingProgramPhase?, overlapKind, overlapDetail}
   // OV2-FM-FLAG-ARTIFACT · top-level "I just flagged failure mode #N" card.
   // Anti-pattern flags are phase-local; this artifact ties a flag back to
   // the cross-cutting 10-failure-mode catalog so the platform's value-prop
   // (forced success-thinking against the 10) is visible per program AND
   // can be rolled up cross-program in telemetry per design doc Part E.5.
-  | 'failure-mode-flagged' // {failureModeId, failureModeName, phase, detectedSignal, consequence, redirect, severity}
+  | "failure-mode-flagged" // {failureModeId, failureModeName, phase, detectedSignal, consequence, redirect, severity}
   // CB-6 · server-side artifact emitted by /api/chat/agent at the START
   // of the response stream. Carries the full ContextBundle that grounded
   // the agent's answer (Azure Postgres facts + graph paths + corpus pattern
   // hits + provenance + warnings). Surfaces consume
   // this to render the "Context Assembled" panel beside the answer.
-  | 'context-bundle' // {bundle: ContextBundle}
+  | "context-bundle" // {bundle: ContextBundle}
   // EXPORT-4 · format-aware deliverable export. Emitted at the END of
   // a `compose_artifact` step once the agent has produced the spec.
   // The reactive panel renders a download chip; clicking it POSTs the
@@ -112,7 +120,7 @@ export type ArtifactType =
   // binary. The server-side compose helper stores the spec via
   // storeSpec() (lib/programs/exports/spec-cache.ts) and the agent
   // emits the returned id as the artifact's specId.
-  | 'deliverable-ready' // {kind, format, title, exportUrl, programId, specId?}
+  | "deliverable-ready" // {kind, format, title, exportUrl, programId, specId?}
   // TD-7 · cross-program signal as a first-class artifact. Surfaces the
   // multi-program dependency / conflict / shared-resource constraints the
   // tenant-data layer carries (cross_program_signals records, mapped via
@@ -121,25 +129,52 @@ export type ArtifactType =
   // dependency relevant to the user's question on /programs/<id>. Design
   // refs: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md Part B.4 + E.5;
   // TENANT_DATA_INTEGRATION_DESIGN.md §7.
-  | 'cross-program-signal'; // {signalId, title, programs[], severity, recommendation, sourceRecordId?}
+  | "cross-program-signal"; // {signalId, title, programs[], severity, recommendation, sourceRecordId?}
 
 // ── Strongly-typed artifact payloads ──────────────────────────────────────────
 
 export interface BriefFieldArtifact {
-  type: 'brief-field';
+  type: "brief-field";
   field:
-    | 'programName'
-    | 'problemStatement'
-    | 'targetOutcome'
-    | 'timeline'
-    | 'classification'
-    | 'sponsor'
-    | 'lead';
+    | "programName"
+    | "problemStatement"
+    | "targetOutcome"
+    | "timeline"
+    | "classification"
+    | "sponsor"
+    | "lead";
   value: string;
 }
 
+/**
+ * One proposed value for one Moves phase-capture section.
+ *
+ * The contract that makes this safe to render on a governed surface:
+ *
+ *   - `citations` is REQUIRED and must be non-empty. A proposal whose
+ *     evidence a reader cannot trace back to approved upstream state is
+ *     not a draft, it is a guess wearing a draft's clothes. The parser
+ *     drops one with no citations rather than rendering it.
+ *   - Nothing here is authoritative. The value becomes a local draft only
+ *     when a human clicks insert, and only a server acknowledgement can
+ *     make the field read Done — see lib/programs/phase-capture-status.ts.
+ */
+export interface CaptureFieldArtifact {
+  type: "capture-field";
+  /** Phase the proposal targets. Guards against applying a P1 draft to P2. */
+  phase: number;
+  /** Capture section key, e.g. `sponsor_commitment`. */
+  key: string;
+  /** The proposed text. */
+  value: string;
+  /** Where each part of the value came from. Never empty. */
+  citations: string[];
+  /** Self-reported, advisory only — it must never gate admission. */
+  confidence?: "high" | "medium" | "low";
+}
+
 export interface PatternMatchArtifact {
-  type: 'pattern-match';
+  type: "pattern-match";
   patternId: string;
   name: string;
   summary: string;
@@ -149,25 +184,25 @@ export interface PatternMatchArtifact {
 }
 
 export interface CrossProgramDependencyArtifact {
-  type: 'cross-program-dependency';
+  type: "cross-program-dependency";
   programId: string;
   programName: string;
   currentPhase: string;
 }
 
 export interface ClassificationArtifact {
-  type: 'classification';
+  type: "classification";
   archetype: string;
   archetypeLabel: string;
-  confidence?: 'high' | 'medium' | 'low';
+  confidence?: "high" | "medium" | "low";
 }
 
 export interface GateEvaluationArtifact {
-  type: 'gate-evaluation';
+  type: "gate-evaluation";
   /** Short label or criterion name, e.g. "Build gate · privacy architecture sign-off". */
   gate: string;
   /** Current evaluation outcome. */
-  status: 'met' | 'unmet' | 'pending' | 'blocked';
+  status: "met" | "unmet" | "pending" | "blocked";
   /** Optional one-liner detail (what's needed / what's verified). */
   detail?: string;
   /** Optional Nexus reasoning narrative. */
@@ -175,7 +210,7 @@ export interface GateEvaluationArtifact {
 }
 
 export interface EvidenceHighlightArtifact {
-  type: 'evidence-highlight';
+  type: "evidence-highlight";
   /** Stable id from the evidence map; the panel highlights the matching card. */
   evidenceId: string;
   /** Human label for when the id can't render (yet). */
@@ -185,7 +220,7 @@ export interface EvidenceHighlightArtifact {
 }
 
 export interface PhaseRecommendationArtifact {
-  type: 'phase-recommendation';
+  type: "phase-recommendation";
   /** Phase id the recommendation applies to (0..6). */
   phase: number;
   /** Nexus's recommended next move. */
@@ -197,7 +232,7 @@ export interface PhaseRecommendationArtifact {
 }
 
 export interface ProgramFocusArtifact {
-  type: 'program-focus';
+  type: "program-focus";
   programId: string;
   name: string;
   currentPhase: string;
@@ -212,15 +247,15 @@ export interface ProgramFocusArtifact {
  * layer will compute these against real evidence tables.
  */
 export interface PhaseProgressArtifact {
-  type: 'phase-progress';
+  type: "phase-progress";
   /** Stable id from the active pack's definitionOfDone. */
   evidenceItemId: string;
   /** Human label from the pack — denormalized so the panel can render without re-resolving. */
   label: string;
   /** Mirrors the pack item's severity. */
-  severity: 'hard' | 'soft';
+  severity: "hard" | "soft";
   /** Nexus's conversational read of where this evidence stands. */
-  status: 'met' | 'unmet' | 'unknown';
+  status: "met" | "unmet" | "unknown";
   /** Optional one-line elaboration on why Nexus reached this status. */
   detail?: string;
 }
@@ -232,7 +267,7 @@ export interface PhaseProgressArtifact {
  * card without Nexus paraphrasing each time.
  */
 export interface AntiPatternFlagArtifact {
-  type: 'anti-pattern-flag';
+  type: "anti-pattern-flag";
   /** Stable id from the active pack's antiPatterns. */
   antiPatternId: string;
   /** Human label from the pack — e.g. "The Phantom Sponsor". */
@@ -253,7 +288,7 @@ export interface AntiPatternFlagArtifact {
  * through P3 → P4 instead of being thrown away by a hard navigation.
  */
 export interface ProgramPhaseChangedArtifact {
-  type: 'program-phase-changed';
+  type: "program-phase-changed";
   programId: string;
   fromPhase: number;
   toPhase: number;
@@ -279,7 +314,7 @@ export interface ProgramPhaseChangedArtifact {
  * unique within the pack). Panel dedupes by id so re-emits upsert.
  */
 export interface QuestionResolvedArtifact {
-  type: 'question-resolved';
+  type: "question-resolved";
   /** Stable id from the pack's rightQuestions (open / converge / close). */
   questionId: string;
   /** Verbatim or paraphrased question text — denormalized so the panel renders without re-resolving. */
@@ -304,7 +339,7 @@ export interface QuestionResolvedArtifact {
  * the prior URL shouldn't survive a back-button press.
  */
 export interface NavigateToArtifact {
-  type: 'navigate-to';
+  type: "navigate-to";
   target: string;
   rationale?: string;
   replace?: boolean;
@@ -320,7 +355,7 @@ export interface NavigateToArtifact {
  * "(showing 8 of 23 neighbors)" without re-counting.
  */
 export interface GraphNeighborhoodArtifact {
-  type: 'graph-neighborhood';
+  type: "graph-neighborhood";
   rootId: string;
   rootLabel: string;
   nodeCount: number;
@@ -329,7 +364,7 @@ export interface GraphNeighborhoodArtifact {
   topEdges: Array<{
     targetId: string;
     targetLabel: string;
-    edgeType: 'co_applies_with' | 'contradicts' | 'depends_on' | 'precedes';
+    edgeType: "co_applies_with" | "contradicts" | "depends_on" | "precedes";
   }>;
 }
 
@@ -343,10 +378,10 @@ export interface GraphNeighborhoodArtifact {
  * mismatch in evidence.
  */
 export interface ContradictionFlagArtifact {
-  type: 'contradiction-flag';
+  type: "contradiction-flag";
   contradictionId: string;
   label: string;
-  severity: 'low' | 'medium' | 'high';
+  severity: "low" | "medium" | "high";
   partyA: string;
   partyB: string;
   detectionDescription: string;
@@ -354,17 +389,17 @@ export interface ContradictionFlagArtifact {
 }
 
 export interface VendorCardArtifact {
-  type: 'vendor-card';
+  type: "vendor-card";
   vendorId: string;
   name: string;
-  tier: 'enterprise' | 'mid-market' | 'specialist' | 'emerging' | 'incumbent';
+  tier: "enterprise" | "mid-market" | "specialist" | "emerging" | "incumbent";
   positioning: string;
   riskFlags?: string[];
   patternId?: string;
 }
 
 export interface PricingBenchmarkArtifact {
-  type: 'pricing-benchmark';
+  type: "pricing-benchmark";
   category: string;
   metric: string;
   median: number;
@@ -376,7 +411,7 @@ export interface PricingBenchmarkArtifact {
 }
 
 export interface ContractClauseArtifact {
-  type: 'contract-clause';
+  type: "contract-clause";
   clauseId: string;
   title: string;
   currentLanguage?: string;
@@ -386,7 +421,7 @@ export interface ContractClauseArtifact {
 }
 
 export interface BafoScoreboardArtifact {
-  type: 'bafo-scoreboard';
+  type: "bafo-scoreboard";
   vendors: Array<{ vendorId: string; name: string }>;
   dimensions: Array<{ label: string; weight: number }>;
   scoresMatrix: number[][];
@@ -394,33 +429,33 @@ export interface BafoScoreboardArtifact {
 }
 
 export interface WalkawaySignalArtifact {
-  type: 'walkaway-signal';
-  credibility: 'strong' | 'soft' | 'theatre';
+  type: "walkaway-signal";
+  credibility: "strong" | "soft" | "theatre";
   reasoning: string;
   recommendation: string;
 }
 
 export interface SourceEventCreatedArtifact {
-  type: 'source-event-created';
+  type: "source-event-created";
   eventId: string;
   eventCode: string;
   eventName: string;
-  lifecycleState: 'waiting_on_client' | 'active' | 'archived' | string;
+  lifecycleState: "waiting_on_client" | "active" | "archived" | string;
   approvalAuthority: string;
   approvalUrl?: string;
 }
 
 export interface SourcingStageProgressArtifact {
-  type: 'sourcing-stage-progress';
+  type: "sourcing-stage-progress";
   evidenceItemId: string;
   label: string;
-  severity: 'hard' | 'soft';
-  status: 'met' | 'unmet' | 'unknown';
+  severity: "hard" | "soft";
+  status: "met" | "unmet" | "unknown";
   detail?: string;
 }
 
 export interface SourcingStageChangedArtifact {
-  type: 'sourcing-stage-changed';
+  type: "sourcing-stage-changed";
   eventId: string;
   fromStage: number;
   toStage: number;
@@ -430,24 +465,24 @@ export interface SourcingStageChangedArtifact {
 // OV2-1a · /programs/new brief-builder progress card. Replaces the
 // pattern-match cards on this surface (founder feedback: wrong content).
 export interface BriefProgressArtifact {
-  type: 'brief-progress';
+  type: "brief-progress";
   fieldsTotal: number;
   fieldsFilled: number;
   fields: Array<{
     id: string;
     label: string;
-    status: 'empty' | 'partial' | 'filled';
+    status: "empty" | "partial" | "filled";
     value?: string;
   }>;
 }
 
 // OV2-1a · overlap with existing tenant program (archetype/sponsor/system).
 export interface OverlapAlertArtifact {
-  type: 'overlap-alert';
+  type: "overlap-alert";
   overlappingProgramId: string;
   overlappingProgramName: string;
   overlappingProgramPhase?: string;
-  overlapKind: 'archetype' | 'sponsor' | 'system' | 'multiple';
+  overlapKind: "archetype" | "sponsor" | "system" | "multiple";
   overlapDetail: string;
 }
 
@@ -456,17 +491,17 @@ export interface OverlapAlertArtifact {
 // broker module imports `'server-only'` and would error if pulled
 // into a client bundle, but type-only imports are erased at compile
 // time and never traverse webpack's import graph).
-import type { ContextBundle } from '@/lib/knowledge/context-broker';
+import type { ContextBundle } from "@/lib/knowledge/context-broker";
 
 export interface ContextBundleArtifact {
-  type: 'context-bundle';
+  type: "context-bundle";
   /** The full assembled ContextBundle that grounded the agent's answer. */
   bundle: ContextBundle;
 }
 
 // OV2-FM-FLAG-ARTIFACT · top-level failure-mode flag.
 export interface FailureModeFlaggedArtifact {
-  type: 'failure-mode-flagged';
+  type: "failure-mode-flagged";
   /** 1..10, references FAILURE_MODES.id */
   failureModeId: number;
   /** Failure mode short name (denormalized so the panel renders without resolving). */
@@ -480,7 +515,7 @@ export interface FailureModeFlaggedArtifact {
   /** Recommended next move to address (<= 1 sentence). */
   redirect: string;
   /** Severity — 'soft' = note, 'hard' = blocks advance until resolved. */
-  severity: 'soft' | 'hard';
+  severity: "soft" | "hard";
 }
 
 // EXPORT-4 · format-aware deliverable export · download-chip card.
@@ -496,7 +531,7 @@ export interface FailureModeFlaggedArtifact {
 // route" when no specId is present, leaving the user to click into
 // the agent for a re-compose.
 export interface DeliverableReadyArtifact {
-  type: 'deliverable-ready';
+  type: "deliverable-ready";
   /** Deliverable kind discriminator. Mirrors the export taxonomy. */
   kind: DeliverableKind;
   /** Format the deliverable was rendered as. Mirrors the export taxonomy. */
@@ -532,7 +567,7 @@ export interface DeliverableReadyArtifact {
  * (design doc Part E.5) can aggregate by signalId without re-resolution.
  */
 export interface CrossProgramSignalArtifact {
-  type: 'cross-program-signal';
+  type: "cross-program-signal";
   /** Stable signal id from data_inventory_records.record_id (e.g. `cross_program_signals:xprog:apex:001`). */
   signalId: string;
   /** Human-readable title — e.g. "Priya Iyer leads two critical-path programs simultaneously". */
@@ -540,7 +575,7 @@ export interface CrossProgramSignalArtifact {
   /** Programs implicated. Array of program ids/codes (e.g. ['apex-cdp-2026', 'apex-cc-ai-2026']). */
   programs: string[];
   /** Severity drives the panel's left-edge stripe color. */
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: "low" | "medium" | "high" | "critical";
   /** Concrete next move — what to do about the signal. */
   recommendation: string;
   /** Optional source-of-truth pointer back to the persisted layer (typically the same as signalId). */
@@ -549,6 +584,7 @@ export interface CrossProgramSignalArtifact {
 
 export type Artifact =
   | BriefFieldArtifact
+  | CaptureFieldArtifact
   | PatternMatchArtifact
   | CrossProgramDependencyArtifact
   | ClassificationArtifact
@@ -589,8 +625,8 @@ export type Artifact =
 // for the next chunk so a sentinel split across chunks resolves cleanly).
 
 const OPEN_SENTINEL = /\[\[artifact:([a-z-]+)\]\]/;
-const CLOSE_SENTINEL = '[[/artifact]]';
-const CLOSE_SENTINEL_ALIASES = [CLOSE_SENTINEL, '[[/]]', '[[/]'] as const;
+const CLOSE_SENTINEL = "[[/artifact]]";
+const CLOSE_SENTINEL_ALIASES = [CLOSE_SENTINEL, "[[/]]", "[[/]"] as const;
 
 export interface ExtractResult {
   /** Text with artifact tuples removed — what the chat should render. */
@@ -608,18 +644,18 @@ export interface ExtractResult {
 
 export function sanitizeArtifactDebugText(text: string): string {
   return text
-    .replace(/\[\[artifact:[a-z-]+ parse-failed\]\]/g, '')
-    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\[\[artifact:[a-z-]+ parse-failed\]\]/g, "")
+    .replace(/\n{3,}/g, "\n\n")
     .trimStart();
 }
 
 export function visibleArtifactPendingText(pending: string): string {
   if (
-    pending.includes('[[artifact:') ||
-    pending.includes('[[/artifact') ||
+    pending.includes("[[artifact:") ||
+    pending.includes("[[/artifact") ||
     isPartialOpenSentinel(pending)
   ) {
-    return '';
+    return "";
   }
   return sanitizeArtifactDebugText(pending);
 }
@@ -633,35 +669,36 @@ export function stripArtifactsForDisplay(text: string): string {
 
 export function isKnownArtifactType(type: string): type is ArtifactType {
   return (
-    type === 'brief-field' ||
-    type === 'pattern-match' ||
-    type === 'cross-program-dependency' ||
-    type === 'classification' ||
-    type === 'gate-evaluation' ||
-    type === 'evidence-highlight' ||
-    type === 'phase-recommendation' ||
-    type === 'program-focus' ||
-    type === 'phase-progress' ||
-    type === 'anti-pattern-flag' ||
-    type === 'program-phase-changed' ||
-    type === 'question-resolved' ||
-    type === 'navigate-to' ||
-    type === 'graph-neighborhood' ||
-    type === 'contradiction-flag' ||
-    type === 'vendor-card' ||
-    type === 'pricing-benchmark' ||
-    type === 'contract-clause' ||
-    type === 'bafo-scoreboard' ||
-    type === 'walkaway-signal' ||
-    type === 'source-event-created' ||
-    type === 'sourcing-stage-progress' ||
-    type === 'sourcing-stage-changed' ||
-    type === 'brief-progress' ||
-    type === 'overlap-alert' ||
-    type === 'failure-mode-flagged' ||
-    type === 'context-bundle' ||
-    type === 'deliverable-ready' ||
-    type === 'cross-program-signal'
+    type === "brief-field" ||
+    type === "capture-field" ||
+    type === "pattern-match" ||
+    type === "cross-program-dependency" ||
+    type === "classification" ||
+    type === "gate-evaluation" ||
+    type === "evidence-highlight" ||
+    type === "phase-recommendation" ||
+    type === "program-focus" ||
+    type === "phase-progress" ||
+    type === "anti-pattern-flag" ||
+    type === "program-phase-changed" ||
+    type === "question-resolved" ||
+    type === "navigate-to" ||
+    type === "graph-neighborhood" ||
+    type === "contradiction-flag" ||
+    type === "vendor-card" ||
+    type === "pricing-benchmark" ||
+    type === "contract-clause" ||
+    type === "bafo-scoreboard" ||
+    type === "walkaway-signal" ||
+    type === "source-event-created" ||
+    type === "sourcing-stage-progress" ||
+    type === "sourcing-stage-changed" ||
+    type === "brief-progress" ||
+    type === "overlap-alert" ||
+    type === "failure-mode-flagged" ||
+    type === "context-bundle" ||
+    type === "deliverable-ready" ||
+    type === "cross-program-signal"
   );
 }
 
@@ -679,7 +716,9 @@ function isPartialOpenSentinel(tail: string): boolean {
   //   `[`, `[[`, `[[a`, `[[ar`, …, `[[artifact`, `[[artifact:`,
   //   `[[artifact:f`, `[[artifact:foo`, `[[artifact:foo-`, etc.
   // Permissive regex that matches any of these prefixes anchored at end.
-  return /^\[(?:\[(?:a(?:r(?:t(?:i(?:f(?:a(?:c(?:t(?::[a-z-]*)?)?)?)?)?)?)?)?)?)?$/.test(tail);
+  return /^\[(?:\[(?:a(?:r(?:t(?:i(?:f(?:a(?:c(?:t(?::[a-z-]*)?)?)?)?)?)?)?)?)?)?$/.test(
+    tail,
+  );
 }
 
 /**
@@ -691,17 +730,24 @@ function isPartialOpenSentinel(tail: string): boolean {
  */
 
 function optionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value.length > 0 ? value : undefined;
+  return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
 function stringArray(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) return undefined;
-  const strings = value.filter((item) => typeof item === 'string' && item.length > 0) as string[];
+  const strings = value.filter(
+    (item) => typeof item === "string" && item.length > 0,
+  ) as string[];
   return strings.length > 0 ? strings : undefined;
 }
 
 function isSourceStage(value: unknown): value is number {
-  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 7;
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 0 &&
+    value <= 7
+  );
 }
 
 function tryParseArtifact(type: string, json: string): Artifact | null {
@@ -712,33 +758,76 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
   } catch {
     return null;
   }
-  if (!parsed || typeof parsed !== 'object') return null;
+  if (!parsed || typeof parsed !== "object") return null;
   // The agent may or may not include a `type` field in the payload; we
   // ignore it and stamp our own from the open sentinel so the typed
   // discriminated union holds.
   const obj = parsed as Record<string, unknown>;
   switch (type) {
-    case 'brief-field': {
+    case "brief-field": {
       const field = obj.field;
       const value = obj.value;
-      if (typeof field !== 'string' || typeof value !== 'string') return null;
-      const allowed: ReadonlySet<BriefFieldArtifact['field']> = new Set([
-        'programName',
-        'problemStatement',
-        'targetOutcome',
-        'timeline',
-        'classification',
-        'sponsor',
-        'lead',
+      if (typeof field !== "string" || typeof value !== "string") return null;
+      const allowed: ReadonlySet<BriefFieldArtifact["field"]> = new Set([
+        "programName",
+        "problemStatement",
+        "targetOutcome",
+        "timeline",
+        "classification",
+        "sponsor",
+        "lead",
       ]);
-      if (!allowed.has(field as BriefFieldArtifact['field'])) return null;
-      return { type, field: field as BriefFieldArtifact['field'], value };
+      if (!allowed.has(field as BriefFieldArtifact["field"])) return null;
+      return { type, field: field as BriefFieldArtifact["field"], value };
     }
-    case 'pattern-match': {
+    case "capture-field": {
+      const phase = obj.phase;
+      const key = obj.key;
+      const value = obj.value;
+      if (
+        typeof phase !== "number" ||
+        !Number.isInteger(phase) ||
+        phase < 0 ||
+        phase > 5
+      ) {
+        return null;
+      }
+      if (typeof key !== "string" || key.trim().length === 0) return null;
+      if (typeof value !== "string" || value.trim().length === 0) return null;
+      // Citations are load-bearing, not decorative. An uncited proposal is
+      // dropped outright: rendering it would put untraceable model text in
+      // front of a reviewer on a governed surface, which is the failure this
+      // artifact exists to prevent. Silence is the correct output when aVa
+      // has nothing it can source.
+      //
+      // Not `stringArray`: that helper accepts any string of non-zero
+      // length, so a citation of "  " would satisfy the requirement while
+      // citing nothing. Blank-but-present is the loophole that would let an
+      // uncited proposal through wearing a citation.
+      const citations = Array.isArray(obj.citations)
+        ? obj.citations.filter(
+            (item): item is string =>
+              typeof item === "string" && item.trim().length > 0,
+          )
+        : [];
+      if (citations.length === 0) return null;
+      const confidence =
+        obj.confidence === "high" ||
+        obj.confidence === "medium" ||
+        obj.confidence === "low"
+          ? obj.confidence
+          : undefined;
+      return { type, phase, key: key.trim(), value, citations, confidence };
+    }
+    case "pattern-match": {
       const patternId = obj.patternId;
       const name = obj.name;
       const summary = obj.summary;
-      if (typeof patternId !== 'string' || typeof name !== 'string' || typeof summary !== 'string') {
+      if (
+        typeof patternId !== "string" ||
+        typeof name !== "string" ||
+        typeof summary !== "string"
+      ) {
         return null;
       }
       return {
@@ -746,26 +835,34 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         patternId,
         name,
         summary,
-        successRatePct: typeof obj.successRatePct === 'number' ? obj.successRatePct : undefined,
-        deploymentCount: typeof obj.deploymentCount === 'number' ? obj.deploymentCount : undefined,
+        successRatePct:
+          typeof obj.successRatePct === "number"
+            ? obj.successRatePct
+            : undefined,
+        deploymentCount:
+          typeof obj.deploymentCount === "number"
+            ? obj.deploymentCount
+            : undefined,
         typicalDurationMonths:
-          typeof obj.typicalDurationMonths === 'number' ? obj.typicalDurationMonths : undefined,
+          typeof obj.typicalDurationMonths === "number"
+            ? obj.typicalDurationMonths
+            : undefined,
       };
     }
-    case 'cross-program-dependency': {
+    case "cross-program-dependency": {
       const programId = obj.programId;
       const programName = obj.programName;
       const currentPhase = obj.currentPhase;
       if (
-        typeof programId !== 'string' ||
-        typeof programName !== 'string' ||
-        typeof currentPhase !== 'string'
+        typeof programId !== "string" ||
+        typeof programName !== "string" ||
+        typeof currentPhase !== "string"
       ) {
         return null;
       }
       return { type, programId, programName, currentPhase };
     }
-    case 'classification': {
+    case "classification": {
       // Permissive: agents emit different field names depending on
       // how they read the instruction layer. Accept any of the common
       // shapes (`archetype` / `archetypeLabel` / `name` / `label` /
@@ -773,32 +870,46 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       const pickStr = (...keys: string[]): string | null => {
         for (const k of keys) {
           const v = obj[k];
-          if (typeof v === 'string' && v.trim().length > 0) return v;
+          if (typeof v === "string" && v.trim().length > 0) return v;
         }
         return null;
       };
       // Strict-source archetype: only accept it as-is when the agent
       // gave it under the canonical `archetype` key. Otherwise we
       // synthesize from the label (uppercase + underscore-collapse).
-      const strictArchetype = pickStr('archetype');
-      const archetypeLabel = pickStr('archetypeLabel', 'label', 'name', 'value', 'archetype');
+      const strictArchetype = pickStr("archetype");
+      const archetypeLabel = pickStr(
+        "archetypeLabel",
+        "label",
+        "name",
+        "value",
+        "archetype",
+      );
       if (!archetypeLabel && !strictArchetype) return null;
       const labelFinal = archetypeLabel ?? strictArchetype!;
-      const archetype = strictArchetype
-        ?? labelFinal.toUpperCase().replace(/\s+/g, '_');
+      const archetype =
+        strictArchetype ?? labelFinal.toUpperCase().replace(/\s+/g, "_");
       const confidence = obj.confidence;
       const validConfidence =
-        confidence === 'high' || confidence === 'medium' || confidence === 'low'
+        confidence === "high" || confidence === "medium" || confidence === "low"
           ? confidence
           : undefined;
-      return { type, archetype, archetypeLabel: labelFinal, confidence: validConfidence };
+      return {
+        type,
+        archetype,
+        archetypeLabel: labelFinal,
+        confidence: validConfidence,
+      };
     }
-    case 'gate-evaluation': {
+    case "gate-evaluation": {
       const gate = obj.gate;
       const status = obj.status;
-      if (typeof gate !== 'string' || gate.trim().length === 0) return null;
+      if (typeof gate !== "string" || gate.trim().length === 0) return null;
       const validStatus =
-        status === 'met' || status === 'unmet' || status === 'pending' || status === 'blocked'
+        status === "met" ||
+        status === "unmet" ||
+        status === "pending" ||
+        status === "blocked"
           ? status
           : null;
       if (!validStatus) return null;
@@ -806,139 +917,171 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         type,
         gate,
         status: validStatus,
-        detail: typeof obj.detail === 'string' ? obj.detail : undefined,
-        reasoning: typeof obj.reasoning === 'string' ? obj.reasoning : undefined,
+        detail: typeof obj.detail === "string" ? obj.detail : undefined,
+        reasoning:
+          typeof obj.reasoning === "string" ? obj.reasoning : undefined,
       };
     }
-    case 'evidence-highlight': {
+    case "evidence-highlight": {
       const evidenceId = obj.evidenceId;
       const reason = obj.reason;
-      if (typeof evidenceId !== 'string' || typeof reason !== 'string') return null;
+      if (typeof evidenceId !== "string" || typeof reason !== "string")
+        return null;
       return {
         type,
         evidenceId,
         reason,
-        label: typeof obj.label === 'string' ? obj.label : undefined,
+        label: typeof obj.label === "string" ? obj.label : undefined,
       };
     }
-    case 'phase-recommendation': {
+    case "phase-recommendation": {
       const phase = obj.phase;
       const recommendation = obj.recommendation;
-      if (typeof phase !== 'number' || phase < 0 || phase > 6) return null;
-      if (typeof recommendation !== 'string' || recommendation.trim().length === 0) return null;
+      if (typeof phase !== "number" || phase < 0 || phase > 6) return null;
+      if (
+        typeof recommendation !== "string" ||
+        recommendation.trim().length === 0
+      )
+        return null;
       const blockers = Array.isArray(obj.blockers)
-        ? (obj.blockers.filter((s) => typeof s === 'string') as string[])
+        ? (obj.blockers.filter((s) => typeof s === "string") as string[])
         : undefined;
       const nextActions = Array.isArray(obj.nextActions)
-        ? (obj.nextActions.filter((s) => typeof s === 'string') as string[])
+        ? (obj.nextActions.filter((s) => typeof s === "string") as string[])
         : undefined;
       return { type, phase, recommendation, blockers, nextActions };
     }
-    case 'program-focus': {
+    case "program-focus": {
       const programId = obj.programId;
       const name = obj.name;
       const currentPhase = obj.currentPhase;
       if (
-        typeof programId !== 'string' ||
-        typeof name !== 'string' ||
-        typeof currentPhase !== 'string'
+        typeof programId !== "string" ||
+        typeof name !== "string" ||
+        typeof currentPhase !== "string"
       ) {
         return null;
       }
       return { type, programId, name, currentPhase };
     }
-    case 'phase-progress': {
+    case "phase-progress": {
       const evidenceItemId = obj.evidenceItemId;
       const label = obj.label;
       const severity = obj.severity;
       const status = obj.status;
-      if (typeof evidenceItemId !== 'string' || evidenceItemId.length === 0) return null;
-      if (typeof label !== 'string' || label.length === 0) return null;
-      if (severity !== 'hard' && severity !== 'soft') return null;
-      if (status !== 'met' && status !== 'unmet' && status !== 'unknown') return null;
+      if (typeof evidenceItemId !== "string" || evidenceItemId.length === 0)
+        return null;
+      if (typeof label !== "string" || label.length === 0) return null;
+      if (severity !== "hard" && severity !== "soft") return null;
+      if (status !== "met" && status !== "unmet" && status !== "unknown")
+        return null;
       return {
         type,
         evidenceItemId,
         label,
         severity,
         status,
-        detail: typeof obj.detail === 'string' && obj.detail.length > 0 ? obj.detail : undefined,
+        detail:
+          typeof obj.detail === "string" && obj.detail.length > 0
+            ? obj.detail
+            : undefined,
       };
     }
-    case 'anti-pattern-flag': {
+    case "anti-pattern-flag": {
       const antiPatternId = obj.antiPatternId;
       const label = obj.label;
       const detectedSignal = obj.detectedSignal;
       const whatToFlag = obj.whatToFlag;
       const mitigation = obj.mitigation;
-      if (typeof antiPatternId !== 'string' || antiPatternId.length === 0) return null;
-      if (typeof label !== 'string' || label.length === 0) return null;
-      if (typeof detectedSignal !== 'string' || detectedSignal.length === 0) return null;
-      if (typeof whatToFlag !== 'string' || whatToFlag.length === 0) return null;
-      if (typeof mitigation !== 'string' || mitigation.length === 0) return null;
-      return { type, antiPatternId, label, detectedSignal, whatToFlag, mitigation };
+      if (typeof antiPatternId !== "string" || antiPatternId.length === 0)
+        return null;
+      if (typeof label !== "string" || label.length === 0) return null;
+      if (typeof detectedSignal !== "string" || detectedSignal.length === 0)
+        return null;
+      if (typeof whatToFlag !== "string" || whatToFlag.length === 0)
+        return null;
+      if (typeof mitigation !== "string" || mitigation.length === 0)
+        return null;
+      return {
+        type,
+        antiPatternId,
+        label,
+        detectedSignal,
+        whatToFlag,
+        mitigation,
+      };
     }
-    case 'program-phase-changed': {
+    case "program-phase-changed": {
       const programId = obj.programId;
       const fromPhase = obj.fromPhase;
       const toPhase = obj.toPhase;
-      if (typeof programId !== 'string' || programId.length === 0) return null;
-      if (typeof fromPhase !== 'number' || fromPhase < 0 || fromPhase > 6) return null;
-      if (typeof toPhase !== 'number' || toPhase < 0 || toPhase > 6) return null;
+      if (typeof programId !== "string" || programId.length === 0) return null;
+      if (typeof fromPhase !== "number" || fromPhase < 0 || fromPhase > 6)
+        return null;
+      if (typeof toPhase !== "number" || toPhase < 0 || toPhase > 6)
+        return null;
       const snapshotId =
-        typeof obj.snapshotId === 'string' && obj.snapshotId.length > 0 ? obj.snapshotId : undefined;
+        typeof obj.snapshotId === "string" && obj.snapshotId.length > 0
+          ? obj.snapshotId
+          : undefined;
       return { type, programId, fromPhase, toPhase, snapshotId };
     }
-    case 'question-resolved': {
+    case "question-resolved": {
       const questionId = obj.questionId;
       const questionText = obj.questionText;
-      if (typeof questionId !== 'string' || questionId.length === 0) return null;
-      if (typeof questionText !== 'string' || questionText.length === 0) return null;
+      if (typeof questionId !== "string" || questionId.length === 0)
+        return null;
+      if (typeof questionText !== "string" || questionText.length === 0)
+        return null;
       const resolutionSummary =
-        typeof obj.resolutionSummary === 'string' && obj.resolutionSummary.length > 0
+        typeof obj.resolutionSummary === "string" &&
+        obj.resolutionSummary.length > 0
           ? obj.resolutionSummary
           : undefined;
       return { type, questionId, questionText, resolutionSummary };
     }
-    case 'navigate-to': {
+    case "navigate-to": {
       const target = obj.target;
-      if (typeof target !== 'string' || target.length === 0) return null;
+      if (typeof target !== "string" || target.length === 0) return null;
       // Reject absolute URLs to prevent agents redirecting off-app.
       // Relative paths only — must start with '/'.
-      if (!target.startsWith('/')) return null;
+      if (!target.startsWith("/")) return null;
       // Reject anything that looks like protocol-relative or
       // off-host, even with a leading slash.
-      if (target.startsWith('//')) return null;
+      if (target.startsWith("//")) return null;
       const rationale =
-        typeof obj.rationale === 'string' && obj.rationale.length > 0 ? obj.rationale : undefined;
+        typeof obj.rationale === "string" && obj.rationale.length > 0
+          ? obj.rationale
+          : undefined;
       const replace = obj.replace === true;
       return { type, target, rationale, replace };
     }
-    case 'graph-neighborhood': {
+    case "graph-neighborhood": {
       const rootId = obj.rootId;
       const rootLabel = obj.rootLabel;
       const nodeCount = obj.nodeCount;
       const edgeCount = obj.edgeCount;
       const topEdgesRaw = obj.topEdges;
-      if (typeof rootId !== 'string' || rootId.length === 0) return null;
-      if (typeof rootLabel !== 'string' || rootLabel.length === 0) return null;
-      if (typeof nodeCount !== 'number' || nodeCount < 0) return null;
-      if (typeof edgeCount !== 'number' || edgeCount < 0) return null;
+      if (typeof rootId !== "string" || rootId.length === 0) return null;
+      if (typeof rootLabel !== "string" || rootLabel.length === 0) return null;
+      if (typeof nodeCount !== "number" || nodeCount < 0) return null;
+      if (typeof edgeCount !== "number" || edgeCount < 0) return null;
       if (!Array.isArray(topEdgesRaw)) return null;
-      const topEdges: GraphNeighborhoodArtifact['topEdges'] = [];
+      const topEdges: GraphNeighborhoodArtifact["topEdges"] = [];
       for (const raw of topEdgesRaw) {
-        if (!raw || typeof raw !== 'object') continue;
+        if (!raw || typeof raw !== "object") continue;
         const edge = raw as Record<string, unknown>;
         const targetId = edge.targetId;
         const targetLabel = edge.targetLabel;
         const edgeType = edge.edgeType;
-        if (typeof targetId !== 'string' || targetId.length === 0) continue;
-        if (typeof targetLabel !== 'string' || targetLabel.length === 0) continue;
+        if (typeof targetId !== "string" || targetId.length === 0) continue;
+        if (typeof targetLabel !== "string" || targetLabel.length === 0)
+          continue;
         if (
-          edgeType !== 'co_applies_with' &&
-          edgeType !== 'contradicts' &&
-          edgeType !== 'depends_on' &&
-          edgeType !== 'precedes'
+          edgeType !== "co_applies_with" &&
+          edgeType !== "contradicts" &&
+          edgeType !== "depends_on" &&
+          edgeType !== "precedes"
         ) {
           continue;
         }
@@ -946,7 +1089,7 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       }
       return { type, rootId, rootLabel, nodeCount, edgeCount, topEdges };
     }
-    case 'contradiction-flag': {
+    case "contradiction-flag": {
       const contradictionId = obj.contradictionId;
       const label = obj.label;
       const severity = obj.severity;
@@ -954,13 +1097,20 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       const partyB = obj.partyB;
       const detectionDescription = obj.detectionDescription;
       const resolutionPath = obj.resolutionPath;
-      if (typeof contradictionId !== 'string' || contradictionId.length === 0) return null;
-      if (typeof label !== 'string' || label.length === 0) return null;
-      if (severity !== 'low' && severity !== 'medium' && severity !== 'high') return null;
-      if (typeof partyA !== 'string' || partyA.length === 0) return null;
-      if (typeof partyB !== 'string' || partyB.length === 0) return null;
-      if (typeof detectionDescription !== 'string' || detectionDescription.length === 0) return null;
-      if (typeof resolutionPath !== 'string' || resolutionPath.length === 0) return null;
+      if (typeof contradictionId !== "string" || contradictionId.length === 0)
+        return null;
+      if (typeof label !== "string" || label.length === 0) return null;
+      if (severity !== "low" && severity !== "medium" && severity !== "high")
+        return null;
+      if (typeof partyA !== "string" || partyA.length === 0) return null;
+      if (typeof partyB !== "string" || partyB.length === 0) return null;
+      if (
+        typeof detectionDescription !== "string" ||
+        detectionDescription.length === 0
+      )
+        return null;
+      if (typeof resolutionPath !== "string" || resolutionPath.length === 0)
+        return null;
       return {
         type,
         contradictionId,
@@ -972,23 +1122,24 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         resolutionPath,
       };
     }
-    case 'vendor-card': {
+    case "vendor-card": {
       const vendorId = obj.vendorId;
       const name = obj.name;
       const tier = obj.tier;
       const positioning = obj.positioning;
-      if (typeof vendorId !== 'string' || vendorId.length === 0) return null;
-      if (typeof name !== 'string' || name.length === 0) return null;
+      if (typeof vendorId !== "string" || vendorId.length === 0) return null;
+      if (typeof name !== "string" || name.length === 0) return null;
       if (
-        tier !== 'enterprise' &&
-        tier !== 'mid-market' &&
-        tier !== 'specialist' &&
-        tier !== 'emerging' &&
-        tier !== 'incumbent'
+        tier !== "enterprise" &&
+        tier !== "mid-market" &&
+        tier !== "specialist" &&
+        tier !== "emerging" &&
+        tier !== "incumbent"
       ) {
         return null;
       }
-      if (typeof positioning !== 'string' || positioning.length === 0) return null;
+      if (typeof positioning !== "string" || positioning.length === 0)
+        return null;
       return {
         type,
         vendorId,
@@ -999,39 +1150,43 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         patternId: optionalString(obj.patternId),
       };
     }
-    case 'pricing-benchmark': {
+    case "pricing-benchmark": {
       const category = obj.category;
       const metric = obj.metric;
       const median = obj.median;
       const source = obj.source;
-      if (typeof category !== 'string' || category.length === 0) return null;
-      if (typeof metric !== 'string' || metric.length === 0) return null;
-      if (typeof median !== 'number') return null;
-      if (typeof source !== 'string' || source.length === 0) return null;
+      if (typeof category !== "string" || category.length === 0) return null;
+      if (typeof metric !== "string" || metric.length === 0) return null;
+      if (typeof median !== "number") return null;
+      if (typeof source !== "string" || source.length === 0) return null;
       return {
         type,
         category,
         metric,
         median,
-        p25: typeof obj.p25 === 'number' ? obj.p25 : undefined,
-        p75: typeof obj.p75 === 'number' ? obj.p75 : undefined,
+        p25: typeof obj.p25 === "number" ? obj.p25 : undefined,
+        p75: typeof obj.p75 === "number" ? obj.p75 : undefined,
         source,
         sampleSize:
-          typeof obj.sampleSize === 'number' && Number.isInteger(obj.sampleSize)
+          typeof obj.sampleSize === "number" && Number.isInteger(obj.sampleSize)
             ? obj.sampleSize
             : undefined,
         patternId: optionalString(obj.patternId),
       };
     }
-    case 'contract-clause': {
+    case "contract-clause": {
       const clauseId = obj.clauseId;
       const title = obj.title;
       const recommendedLanguage = obj.recommendedLanguage;
       const leverage = obj.leverage;
-      if (typeof clauseId !== 'string' || clauseId.length === 0) return null;
-      if (typeof title !== 'string' || title.length === 0) return null;
-      if (typeof recommendedLanguage !== 'string' || recommendedLanguage.length === 0) return null;
-      if (typeof leverage !== 'string' || leverage.length === 0) return null;
+      if (typeof clauseId !== "string" || clauseId.length === 0) return null;
+      if (typeof title !== "string" || title.length === 0) return null;
+      if (
+        typeof recommendedLanguage !== "string" ||
+        recommendedLanguage.length === 0
+      )
+        return null;
+      if (typeof leverage !== "string" || leverage.length === 0) return null;
       return {
         type,
         clauseId,
@@ -1042,34 +1197,41 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         patternId: optionalString(obj.patternId),
       };
     }
-    case 'bafo-scoreboard': {
+    case "bafo-scoreboard": {
       const vendorsRaw = obj.vendors;
       const dimensionsRaw = obj.dimensions;
       const scoresMatrixRaw = obj.scoresMatrix;
-      if (!Array.isArray(vendorsRaw) || !Array.isArray(dimensionsRaw) || !Array.isArray(scoresMatrixRaw)) {
+      if (
+        !Array.isArray(vendorsRaw) ||
+        !Array.isArray(dimensionsRaw) ||
+        !Array.isArray(scoresMatrixRaw)
+      ) {
         return null;
       }
-      const vendors: BafoScoreboardArtifact['vendors'] = [];
+      const vendors: BafoScoreboardArtifact["vendors"] = [];
       for (const raw of vendorsRaw) {
-        if (!raw || typeof raw !== 'object') continue;
+        if (!raw || typeof raw !== "object") continue;
         const vendor = raw as Record<string, unknown>;
-        if (typeof vendor.vendorId !== 'string' || vendor.vendorId.length === 0) continue;
-        if (typeof vendor.name !== 'string' || vendor.name.length === 0) continue;
+        if (typeof vendor.vendorId !== "string" || vendor.vendorId.length === 0)
+          continue;
+        if (typeof vendor.name !== "string" || vendor.name.length === 0)
+          continue;
         vendors.push({ vendorId: vendor.vendorId, name: vendor.name });
       }
-      const dimensions: BafoScoreboardArtifact['dimensions'] = [];
+      const dimensions: BafoScoreboardArtifact["dimensions"] = [];
       for (const raw of dimensionsRaw) {
-        if (!raw || typeof raw !== 'object') continue;
+        if (!raw || typeof raw !== "object") continue;
         const dimension = raw as Record<string, unknown>;
-        if (typeof dimension.label !== 'string' || dimension.label.length === 0) continue;
-        if (typeof dimension.weight !== 'number') continue;
+        if (typeof dimension.label !== "string" || dimension.label.length === 0)
+          continue;
+        if (typeof dimension.weight !== "number") continue;
         dimensions.push({ label: dimension.label, weight: dimension.weight });
       }
       const scoresMatrix = scoresMatrixRaw.filter(
         (row): row is number[] =>
           Array.isArray(row) &&
           row.length === dimensions.length &&
-          row.every((score) => typeof score === 'number'),
+          row.every((score) => typeof score === "number"),
       );
       if (vendors.length === 0 || dimensions.length === 0) return null;
       if (scoresMatrix.length !== vendors.length) return null;
@@ -1081,26 +1243,37 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         notes: optionalString(obj.notes),
       };
     }
-    case 'walkaway-signal': {
+    case "walkaway-signal": {
       const credibility = obj.credibility;
       const reasoning = obj.reasoning;
       const recommendation = obj.recommendation;
-      if (credibility !== 'strong' && credibility !== 'soft' && credibility !== 'theatre') return null;
-      if (typeof reasoning !== 'string' || reasoning.length === 0) return null;
-      if (typeof recommendation !== 'string' || recommendation.length === 0) return null;
+      if (
+        credibility !== "strong" &&
+        credibility !== "soft" &&
+        credibility !== "theatre"
+      )
+        return null;
+      if (typeof reasoning !== "string" || reasoning.length === 0) return null;
+      if (typeof recommendation !== "string" || recommendation.length === 0)
+        return null;
       return { type, credibility, reasoning, recommendation };
     }
-    case 'source-event-created': {
+    case "source-event-created": {
       const eventId = obj.eventId;
       const eventCode = obj.eventCode;
       const eventName = obj.eventName;
       const lifecycleState = obj.lifecycleState;
       const approvalAuthority = obj.approvalAuthority;
-      if (typeof eventId !== 'string' || eventId.length === 0) return null;
-      if (typeof eventCode !== 'string' || eventCode.length === 0) return null;
-      if (typeof eventName !== 'string' || eventName.length === 0) return null;
-      if (typeof lifecycleState !== 'string' || lifecycleState.length === 0) return null;
-      if (typeof approvalAuthority !== 'string' || approvalAuthority.length === 0) return null;
+      if (typeof eventId !== "string" || eventId.length === 0) return null;
+      if (typeof eventCode !== "string" || eventCode.length === 0) return null;
+      if (typeof eventName !== "string" || eventName.length === 0) return null;
+      if (typeof lifecycleState !== "string" || lifecycleState.length === 0)
+        return null;
+      if (
+        typeof approvalAuthority !== "string" ||
+        approvalAuthority.length === 0
+      )
+        return null;
       return {
         type,
         eventId,
@@ -1111,15 +1284,17 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         approvalUrl: optionalString(obj.approvalUrl),
       };
     }
-    case 'sourcing-stage-progress': {
+    case "sourcing-stage-progress": {
       const evidenceItemId = obj.evidenceItemId;
       const label = obj.label;
       const severity = obj.severity;
       const status = obj.status;
-      if (typeof evidenceItemId !== 'string' || evidenceItemId.length === 0) return null;
-      if (typeof label !== 'string' || label.length === 0) return null;
-      if (severity !== 'hard' && severity !== 'soft') return null;
-      if (status !== 'met' && status !== 'unmet' && status !== 'unknown') return null;
+      if (typeof evidenceItemId !== "string" || evidenceItemId.length === 0)
+        return null;
+      if (typeof label !== "string" || label.length === 0) return null;
+      if (severity !== "hard" && severity !== "soft") return null;
+      if (status !== "met" && status !== "unmet" && status !== "unknown")
+        return null;
       return {
         type,
         evidenceItemId,
@@ -1129,11 +1304,11 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         detail: optionalString(obj.detail),
       };
     }
-    case 'sourcing-stage-changed': {
+    case "sourcing-stage-changed": {
       const eventId = obj.eventId;
       const fromStage = obj.fromStage;
       const toStage = obj.toStage;
-      if (typeof eventId !== 'string' || eventId.length === 0) return null;
+      if (typeof eventId !== "string" || eventId.length === 0) return null;
       if (!isSourceStage(fromStage) || !isSourceStage(toStage)) return null;
       return {
         type,
@@ -1143,16 +1318,20 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         snapshotId: optionalString(obj.snapshotId),
       };
     }
-    case 'brief-progress': {
+    case "brief-progress": {
       // OV2-1a · brief-builder progress card.
       const fieldsTotal = obj.fieldsTotal;
       const fieldsFilled = obj.fieldsFilled;
       const fieldsRaw = obj.fields;
-      if (typeof fieldsTotal !== 'number' || !Number.isInteger(fieldsTotal) || fieldsTotal <= 0) {
+      if (
+        typeof fieldsTotal !== "number" ||
+        !Number.isInteger(fieldsTotal) ||
+        fieldsTotal <= 0
+      ) {
         return null;
       }
       if (
-        typeof fieldsFilled !== 'number' ||
+        typeof fieldsFilled !== "number" ||
         !Number.isInteger(fieldsFilled) ||
         fieldsFilled < 0 ||
         fieldsFilled > fieldsTotal
@@ -1160,41 +1339,52 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         return null;
       }
       if (!Array.isArray(fieldsRaw)) return null;
-      const fields: BriefProgressArtifact['fields'] = [];
+      const fields: BriefProgressArtifact["fields"] = [];
       for (const raw of fieldsRaw) {
-        if (!raw || typeof raw !== 'object') return null;
+        if (!raw || typeof raw !== "object") return null;
         const field = raw as Record<string, unknown>;
         const id = field.id;
         const label = field.label;
         const status = field.status;
-        if (typeof id !== 'string' || id.length === 0) return null;
-        if (typeof label !== 'string' || label.length === 0) return null;
-        if (status !== 'empty' && status !== 'partial' && status !== 'filled') return null;
+        if (typeof id !== "string" || id.length === 0) return null;
+        if (typeof label !== "string" || label.length === 0) return null;
+        if (status !== "empty" && status !== "partial" && status !== "filled")
+          return null;
         const value =
-          typeof field.value === 'string' && field.value.length > 0 ? field.value : undefined;
+          typeof field.value === "string" && field.value.length > 0
+            ? field.value
+            : undefined;
         fields.push({ id, label, status, value });
       }
       return { type, fieldsTotal, fieldsFilled, fields };
     }
-    case 'overlap-alert': {
+    case "overlap-alert": {
       // OV2-1a · alert when this brief overlaps an existing program.
       const overlappingProgramId = obj.overlappingProgramId;
       const overlappingProgramName = obj.overlappingProgramName;
       const overlapKind = obj.overlapKind;
       const overlapDetail = obj.overlapDetail;
-      if (typeof overlappingProgramId !== 'string' || overlappingProgramId.length === 0) return null;
-      if (typeof overlappingProgramName !== 'string' || overlappingProgramName.length === 0) {
-        return null;
-      }
       if (
-        overlapKind !== 'archetype' &&
-        overlapKind !== 'sponsor' &&
-        overlapKind !== 'system' &&
-        overlapKind !== 'multiple'
+        typeof overlappingProgramId !== "string" ||
+        overlappingProgramId.length === 0
+      )
+        return null;
+      if (
+        typeof overlappingProgramName !== "string" ||
+        overlappingProgramName.length === 0
       ) {
         return null;
       }
-      if (typeof overlapDetail !== 'string' || overlapDetail.length === 0) return null;
+      if (
+        overlapKind !== "archetype" &&
+        overlapKind !== "sponsor" &&
+        overlapKind !== "system" &&
+        overlapKind !== "multiple"
+      ) {
+        return null;
+      }
+      if (typeof overlapDetail !== "string" || overlapDetail.length === 0)
+        return null;
       return {
         type,
         overlappingProgramId,
@@ -1204,7 +1394,7 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         overlapDetail,
       };
     }
-    case 'failure-mode-flagged': {
+    case "failure-mode-flagged": {
       // OV2-FM-FLAG-ARTIFACT · top-level failure-mode flag against the 10
       // catalog. Parser guards the type only; it intentionally does NOT
       // import FAILURE_MODES to verify the id exists in the catalog
@@ -1218,21 +1408,29 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       const redirect = obj.redirect;
       const severity = obj.severity;
       if (
-        typeof failureModeId !== 'number' ||
+        typeof failureModeId !== "number" ||
         !Number.isInteger(failureModeId) ||
         failureModeId < 1 ||
         failureModeId > 10
       ) {
         return null;
       }
-      if (typeof failureModeName !== 'string' || failureModeName.length === 0) return null;
-      if (typeof phase !== 'number' || !Number.isInteger(phase) || phase < 0 || phase > 6) {
+      if (typeof failureModeName !== "string" || failureModeName.length === 0)
+        return null;
+      if (
+        typeof phase !== "number" ||
+        !Number.isInteger(phase) ||
+        phase < 0 ||
+        phase > 6
+      ) {
         return null;
       }
-      if (typeof detectedSignal !== 'string' || detectedSignal.length === 0) return null;
-      if (typeof consequence !== 'string' || consequence.length === 0) return null;
-      if (typeof redirect !== 'string' || redirect.length === 0) return null;
-      if (severity !== 'soft' && severity !== 'hard') return null;
+      if (typeof detectedSignal !== "string" || detectedSignal.length === 0)
+        return null;
+      if (typeof consequence !== "string" || consequence.length === 0)
+        return null;
+      if (typeof redirect !== "string" || redirect.length === 0) return null;
+      if (severity !== "soft" && severity !== "hard") return null;
       return {
         type,
         failureModeId,
@@ -1244,7 +1442,7 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         severity,
       };
     }
-    case 'context-bundle': {
+    case "context-bundle": {
       // CB-6 · context-bundle artifact. Validates the minimum-viable
       // shape of a ContextBundle so a malformed payload doesn't crash
       // the chat surface. We accept the JSON when it looks like a
@@ -1252,19 +1450,20 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       // re-validating every nested object — the broker is the source
       // of truth and the bundle was produced server-side.
       const bundle = obj.bundle;
-      if (!bundle || typeof bundle !== 'object' || Array.isArray(bundle)) return null;
+      if (!bundle || typeof bundle !== "object" || Array.isArray(bundle))
+        return null;
       const b = bundle as Record<string, unknown>;
-      if (typeof b.query !== 'string') return null;
+      if (typeof b.query !== "string") return null;
       if (
-        b.mode !== 'generic' &&
-        b.mode !== 'corpus' &&
-        b.mode !== 'tenant' &&
-        b.mode !== 'full'
+        b.mode !== "generic" &&
+        b.mode !== "corpus" &&
+        b.mode !== "tenant" &&
+        b.mode !== "full"
       ) {
         return null;
       }
       // tenantKey: string | null per ContextBundle.tenantKey
-      if (b.tenantKey !== null && typeof b.tenantKey !== 'string') return null;
+      if (b.tenantKey !== null && typeof b.tenantKey !== "string") return null;
       if (!Array.isArray(b.facts)) return null;
       if (!Array.isArray(b.graphPaths)) return null;
       if (!Array.isArray(b.semanticChunks)) return null;
@@ -1280,14 +1479,17 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       } else if (!Array.isArray(b.infoTags)) {
         return null;
       }
-      if (typeof b.assembledAt !== 'string') return null;
+      if (typeof b.assembledAt !== "string") return null;
       // Pass through the bundle verbatim. Type assertion is safe because
       // we've validated every load-bearing key the panel reads; cost
       // of a deep clone here would be wasteful (the bundle can carry
       // hundreds of records / chunks at full mode).
-      return { type, bundle: bundle as unknown as ContextBundleArtifact['bundle'] };
+      return {
+        type,
+        bundle: bundle as unknown as ContextBundleArtifact["bundle"],
+      };
     }
-    case 'deliverable-ready': {
+    case "deliverable-ready": {
       // EXPORT-4 · download-chip artifact. Parser validates kind +
       // format against the closed sets so a typo on either side
       // surfaces as a parse-failure card instead of a broken chip.
@@ -1296,14 +1498,16 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       const title = obj.title;
       const exportUrl = obj.exportUrl;
       const programId = obj.programId;
-      if (typeof kind !== 'string' || !DELIVERABLE_KIND_SET.has(kind)) return null;
-      if (typeof format !== 'string' || !DELIVERABLE_FORMAT_SET.has(format)) return null;
-      if (typeof title !== 'string' || title.length === 0) return null;
-      if (typeof exportUrl !== 'string' || exportUrl.length === 0) return null;
+      if (typeof kind !== "string" || !DELIVERABLE_KIND_SET.has(kind))
+        return null;
+      if (typeof format !== "string" || !DELIVERABLE_FORMAT_SET.has(format))
+        return null;
+      if (typeof title !== "string" || title.length === 0) return null;
+      if (typeof exportUrl !== "string" || exportUrl.length === 0) return null;
       // Reject absolute / off-host URLs the same way navigate-to does
       // — protects the user from agent-emitted cross-origin POSTs.
-      if (!exportUrl.startsWith('/') || exportUrl.startsWith('//')) return null;
-      if (typeof programId !== 'string' || programId.length === 0) return null;
+      if (!exportUrl.startsWith("/") || exportUrl.startsWith("//")) return null;
+      if (typeof programId !== "string" || programId.length === 0) return null;
       const specId = optionalString(obj.specId);
       return {
         type,
@@ -1315,7 +1519,7 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         specId,
       };
     }
-    case 'cross-program-signal': {
+    case "cross-program-signal": {
       // TD-7 · cross-program-signal. Strict validation on every field
       // because the artifact is meant to mirror the persisted record —
       // a malformed payload should surface as parse-failed, not silently
@@ -1328,20 +1532,21 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       const programsRaw = obj.programs;
       const severity = obj.severity;
       const recommendation = obj.recommendation;
-      if (typeof signalId !== 'string' || signalId.length === 0) return null;
-      if (typeof title !== 'string' || title.length === 0) return null;
+      if (typeof signalId !== "string" || signalId.length === 0) return null;
+      if (typeof title !== "string" || title.length === 0) return null;
       if (
-        severity !== 'low' &&
-        severity !== 'medium' &&
-        severity !== 'high' &&
-        severity !== 'critical'
+        severity !== "low" &&
+        severity !== "medium" &&
+        severity !== "high" &&
+        severity !== "critical"
       ) {
         return null;
       }
-      if (typeof recommendation !== 'string' || recommendation.length === 0) return null;
+      if (typeof recommendation !== "string" || recommendation.length === 0)
+        return null;
       if (!Array.isArray(programsRaw)) return null;
       const programs = programsRaw.filter(
-        (p): p is string => typeof p === 'string' && p.length > 0,
+        (p): p is string => typeof p === "string" && p.length > 0,
       );
       if (programs.length === 0) return null;
       return {
@@ -1363,28 +1568,28 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
  * into the agent bundle.
  */
 const DELIVERABLE_KIND_SET: ReadonlySet<string> = new Set<string>([
-  'program-charter',
-  'discovery-report',
-  'okr-baseline',
-  'stakeholder-map',
-  'synthesis-options-table',
-  'architecture-sketch',
-  'execution-plan',
-  'pilot-result-report',
-  'outcome-report',
-  'bafo-scoreboard',
-  'meeting-notes',
-  'decision-log',
-  'roadmap',
-  'financial-baseline',
-  'archetype-primer',
-  'workshop-facilitator-guide',
+  "program-charter",
+  "discovery-report",
+  "okr-baseline",
+  "stakeholder-map",
+  "synthesis-options-table",
+  "architecture-sketch",
+  "execution-plan",
+  "pilot-result-report",
+  "outcome-report",
+  "bafo-scoreboard",
+  "meeting-notes",
+  "decision-log",
+  "roadmap",
+  "financial-baseline",
+  "archetype-primer",
+  "workshop-facilitator-guide",
 ]);
 const DELIVERABLE_FORMAT_SET: ReadonlySet<string> = new Set<string>([
-  'html',
-  'xlsx',
-  'docx',
-  'pdf',
+  "html",
+  "xlsx",
+  "docx",
+  "pdf",
 ]);
 
 /**
@@ -1394,7 +1599,10 @@ const DELIVERABLE_FORMAT_SET: ReadonlySet<string> = new Set<string>([
  * `committed` is safe to render and `deferred` should be carried
  * forward via `remaining`.
  */
-function splitTrailingPartialOpen(text: string): { committed: string; deferred: string } {
+function splitTrailingPartialOpen(text: string): {
+  committed: string;
+  deferred: string;
+} {
   // Walk back from the end. Check every `[` in the bounded scan window
   // — the LEFTMOST `[` whose tail is a valid partial-open prefix wins,
   // because that maximizes the deferred suffix (safer to defer than
@@ -1407,18 +1615,18 @@ function splitTrailingPartialOpen(text: string): { committed: string; deferred: 
   const limit = Math.max(0, text.length - 64);
   let earliest = -1;
   for (let i = text.length - 1; i >= limit; i--) {
-    if (text[i] !== '[') continue;
+    if (text[i] !== "[") continue;
     if (isPartialOpenSentinel(text.slice(i))) {
       earliest = i;
     }
   }
-  if (earliest === -1) return { committed: text, deferred: '' };
+  if (earliest === -1) return { committed: text, deferred: "" };
   return { committed: text.slice(0, earliest), deferred: text.slice(earliest) };
 }
 
 export function extractArtifacts(input: string): ExtractResult {
   const artifacts: Artifact[] = [];
-  let visible = '';
+  let visible = "";
   let cursor = 0;
 
   while (cursor < input.length) {
@@ -1444,8 +1652,10 @@ export function extractArtifacts(input: string): ExtractResult {
     // `[[/artifact]]`, but live LLM streams occasionally abbreviate the close
     // marker as `[[/]]` or `[[/]`. Treat those as valid closes so JSON never
     // leaks into the CXO-visible chat when the model shortens the marker.
-    const closeMatch = CLOSE_SENTINEL_ALIASES
-      .map((sentinel) => ({ index: input.indexOf(sentinel, openEnd), sentinel }))
+    const closeMatch = CLOSE_SENTINEL_ALIASES.map((sentinel) => ({
+      index: input.indexOf(sentinel, openEnd),
+      sentinel,
+    }))
       .filter((match) => match.index !== -1)
       .sort((a, b) => a.index - b.index)[0];
     if (!closeMatch) {
@@ -1469,7 +1679,7 @@ export function extractArtifacts(input: string): ExtractResult {
     cursor = closeIndex + closeMatch.sentinel.length;
   }
 
-  return { visibleText: visible, artifacts, remaining: '' };
+  return { visibleText: visible, artifacts, remaining: "" };
 }
 
 // ── Instruction-layer text ────────────────────────────────────────────────────

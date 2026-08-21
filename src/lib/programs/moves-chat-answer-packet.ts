@@ -7,6 +7,7 @@ import type {
   AvaMetricRef,
   AvaNextStep,
 } from "@/lib/ava-answer/contract";
+import { isDeferralOnlyAnswer } from "@/lib/programs/deferral-only-answer";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import type { NextPhaseReadinessPack } from "@/lib/programs/phase-templates/next-phase-readiness-pack";
 import type { StrategicMove } from "@/lib/programs/types.ui";
@@ -151,6 +152,59 @@ export function buildMovesChatAvaAnswerPacket({
 }: BuildMovesChatAvaAnswerPacketInput) {
   const directAnswer = visibleText.trim();
   if (!directAnswer) return null;
+
+  // An answer that only promises work must not be dressed as work.
+  //
+  // Everything below — the readiness chart, the tally and preparation tables,
+  // the two citations, the metrics, the next steps — is context this builder
+  // attaches to every answer on this surface. That is fine on a real answer
+  // and actively misleading on a deferral: a reader sees dense, sourced-looking
+  // furniture and concludes the thing they asked for was done.
+  //
+  // Observed live: asked to draft the phase inputs with citations, aVa replied
+  // with one sentence promising to start, and it rendered as a full readiness
+  // scorecard with two citations attached. Nothing had been drafted.
+  //
+  // So say plainly that nothing was produced, and attach none of the evidence
+  // furniture to that claim.
+  if (isDeferralOnlyAnswer(directAnswer)) {
+    return composeAvaAnswer({
+      surface: "moves",
+      mode: "ANALYZE",
+      tenantKey: move.tenant.id || move.tenant.name,
+      question,
+      intent: "moves_phase_readiness_chat",
+      // "no_data" rather than "partial": a deferral produced nothing at all,
+      // and calling it partial would imply some of the work landed.
+      status: "no_data",
+      directAnswer,
+      interpretation:
+        "aVa described what it was about to do but did not return a result. Nothing here has been drafted or checked.",
+      businessImplication:
+        "Treat this as no answer. Do not read the absence of findings as an absence of problems.",
+      recommendation: "Ask again, or narrow the request to a single field.",
+      artifacts: [],
+      citations: [],
+      metricsUsed: [],
+      caveats: [
+        {
+          id: "moves-incomplete-answer",
+          label: "No result returned",
+          detail:
+            "The response stopped at an intention. Readiness context is withheld so it cannot be mistaken for the requested work.",
+        },
+      ],
+      nextSteps: [],
+      retrievalSummary: {
+        substrate: "module_read_model",
+        hasTenantFacts: false,
+        factCount: 0,
+        metricCount: 0,
+        relationshipCount: 0,
+        sourceCount: 0,
+      },
+    });
+  }
 
   const readinessRows = buildReadinessRows(phaseTallies);
   const currentRow = readinessRows.find(
