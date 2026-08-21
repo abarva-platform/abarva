@@ -59,7 +59,7 @@ Revert the PR. Strict-mode behavior remains available through the environment fl
 
 ## Audit Evidence
 
-- PR URL: To be added after PR creation.
+- PR URL: https://github.com/abarva-platform/abarva/pull/6592
 - Local validation: To be added before PR.
 - Runtime proof: To be captured after merge and repo-owned deploy.
 
