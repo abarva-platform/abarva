@@ -37,6 +37,7 @@ for (const tenantKey of tenantKeys) {
   const technologyRecords = bundle.technologyEstate?.recordTypes ?? [];
   const applications = technologyRecords.find((record) => record.objectType === "application_system");
   const integrations = technologyRecords.find((record) => record.objectType === "data_asset_or_integration");
+  const infrastructure = technologyRecords.find((record) => record.objectType === "infrastructure_platform");
   const tenantDisplayName = tenantNames[tenantKey];
   const canonicalBuild = bundle.provenance.canonical_snapshot_hash;
 
@@ -49,6 +50,8 @@ for (const tenantKey of tenantKeys) {
           tenantKey={tenantKey}
           tenantDisplayName={tenantDisplayName}
           applications={applications}
+          integrations={integrations}
+          infrastructure={infrastructure}
           canonicalBuild={canonicalBuild}
         />,
       ),

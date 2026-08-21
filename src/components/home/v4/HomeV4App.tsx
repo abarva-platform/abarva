@@ -71,6 +71,7 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
 
   const applications = techRecordTypes.find((r) => r.objectType === "application_system");
   const integrations = techRecordTypes.find((r) => r.objectType === "data_asset_or_integration");
+  const infrastructure = techRecordTypes.find((r) => r.objectType === "infrastructure_platform");
   const signalPacket = bundle.thesis.signalPacket;
   const visualDatasets = signalPacket.visualDatasets ?? {};
 
@@ -212,6 +213,8 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
               tenantKey={tenantKey}
               tenantDisplayName={TENANT_LABEL[tenantKey]}
               applications={applications}
+              integrations={integrations}
+              infrastructure={infrastructure}
               canonicalBuild={bundle.provenance.canonical_snapshot_hash}
             />
           ) : null}

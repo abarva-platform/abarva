@@ -11,15 +11,21 @@
 ## Plain-English Summary
 
 Replaces weak Home preview evidence screens with workbench-style views that can be crawled and
-visually checked before deployment. The architecture page now shows function concentration,
-system mix, and application roster together; the loaded-context and browse-record pages are denser
-fact exploration surfaces; and record browsers use object-specific columns, filters, metrics, and
-detail panes.
+visually checked before deployment. The architecture page now renders a current-state architecture
+map across business capability, applications/core systems, integration/data, and platforms/hosting
+instead of a function-ranking portfolio board; the loaded-context and browse-record pages are
+denser fact exploration surfaces; and record browsers use object-specific columns, filters,
+metrics, and detail panes.
 
 Follow-up patch: Home v4 now honors hash-routed evidence pages (`#architecture`, `#data-flow`,
 `#current-state`, `#browse-the-data`, and `#tech:*`) on load and on hash changes. This makes the
 preview pages directly crawlable and prevents browser QA from staying on the default executive
 brief while claiming evidence-page coverage.
+
+Architecture follow-up: the prior visual QA only proved the old striped tile page disappeared. It
+did not prove that the replacement answered an architecture question. This patch changes both the
+surface and the proof: architecture QA now checks for architecture lanes, full estate data-movement
+and platform inputs, explicit platform-join limits, and absence of the old workbench/roster labels.
 
 ## Layer Impact
 
@@ -38,7 +44,8 @@ changed.
 ## Changes Included
 
 - Home v4 architecture page now routes architecture admission through a shared resolver and renders
-  a workbench instead of the oversized weighted tile layout.
+  a current-state architecture map instead of the oversized weighted tile layout or the later
+  function/category roster.
 - Home v4 data-flow page uses the same resolver and renders a refusal state when the record cannot
   support an end-to-end flow diagram.
 - Current-state and browse-record preview pages were rebuilt as dense evidence exploration views.
@@ -48,6 +55,8 @@ changed.
 - Added `scripts/qa/render-home-v4-pages-proof.tsx` for page-level browser proof.
 - Home v4 rail selection and hash navigation now stay in sync so direct evidence-page URLs render
   the selected page rather than the default executive brief.
+- Architecture proof rendering now passes applications, integrations, and infrastructure into the
+  architecture page so the proof cannot pass with zero data movements or zero platforms.
 
 ## QA / Validation
 
@@ -61,6 +70,13 @@ changed.
 - Follow-up validation: `npx eslint src/components/home/v4/HomeV4App.tsx src/components/home/v4/Rail.tsx` passed.
 - Follow-up validation: `npm test -- --runTestsByPath src/components/home/v4/__tests__/architecture-boundary.test.ts tests/behaviors/architecture-view-formats.test.ts --runInBand` passed. Jest still reports existing duplicate manual mock warnings.
 - Follow-up validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false` passed.
+- Architecture follow-up validation: `npx eslint src/components/home/v4/ArchitecturePage.tsx src/components/home/v4/HomeV4App.tsx scripts/qa/render-home-v4-pages-proof.tsx` passed.
+- Architecture follow-up validation: `npx tsx scripts/qa/render-home-v4-pages-proof.tsx --out /tmp/home-v4-pages-proof-archmap-20260821-final` rendered 16 proof pages.
+- Architecture follow-up Chromium proof passed semantic assertions for current-state architecture
+  map, business/application/integration/platform lanes, 540 data movements, 66 platforms, explicit
+  platform-join limits, zero old workbench/roster labels, and zero horizontal overflow. Report:
+  `/tmp/home-v4-pages-proof-archmap-20260821-final/architecture-browser-report.json`. Screenshot:
+  `/tmp/home-v4-pages-proof-archmap-20260821-final/meridian-health-architecture-browser.png`.
 
 ## Rollout Plan
 
@@ -89,6 +105,7 @@ persistence.
 - Local clean worktree: `/tmp/nexus-home-preview-fix-141954`.
 - Page proof directory: `/tmp/home-v4-pages-proof-141954`.
 - Browser crawl report: `/tmp/home-v4-pages-proof-141954/browser-crawl-report.json`.
+- Architecture map proof directory: `/tmp/home-v4-pages-proof-archmap-20260821-final`.
 
 ## Known Gaps
 
