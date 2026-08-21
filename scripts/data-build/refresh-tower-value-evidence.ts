@@ -395,6 +395,12 @@ async function main(): Promise<number> {
           where table_schema = 'tower'
             and table_name in ('tracked_subject','metric_provenance','metric_observation','value_claim')`,
       );
+      const columnsByTable = new Map<string, Set<string>>();
+      for (const row of schema.rows) {
+        const columns = columnsByTable.get(row.table_name) ?? new Set<string>();
+        columns.add(row.column_name);
+        columnsByTable.set(row.table_name, columns);
+      }
 
       /**
        * Ask what the destination *requires*, not whether it has what we expect.
@@ -416,7 +422,7 @@ async function main(): Promise<number> {
         value_claim: new Set(["tenant_key", "claim_id", "subject_ref", "promised_value", "calculated_value", "claim_state", "baseline_observation_id", "target_observation_id", "actual_observation_id", "quality_guardrail_state", "next_gate_owner_role", "claim_rule_version", "outcome_metric_ref", "claim_input_hash"]),
       };
       const unmet: string[] = [];
-      const tablesSeen = new Set(schema.rows.map((r) => r.table_name));
+      const tablesSeen = new Set(columnsByTable.keys());
       for (const table of Object.keys(supplied)) {
         if (!tablesSeen.has(table)) { unmet.push(`tower.${table} does not exist`); continue; }
         for (const row of schema.rows.filter((r) => r.table_name === table)) {
@@ -429,6 +435,7 @@ async function main(): Promise<number> {
       if (unmet.length) {
         throw new Error(`schema preflight failed:\n  ${unmet.join("\n  ")}`);
       }
+      const valueClaimHasUpdatedAt = columnsByTable.get("value_claim")?.has("updated_at") ?? false;
 
       // Enumerated columns: read the permitted values rather than assuming them. The subject_kind
       // constraint is defined in no migration this repo carries, so the database is the only source.
@@ -662,34 +669,73 @@ async function main(): Promise<number> {
         summary.rowsWritten += 1;
       }
       for (const c of uniqueClaims) {
+        const claimInputHash = hash([
+          c.subjectRef,
+          c.promisedValue,
+          c.calculatedValue,
+          c.baselineObservationId,
+          c.targetObservationId,
+          c.actualObservationId,
+          c.claimState,
+        ]);
+        const claimColumns = [
+          "tenant_key",
+          "claim_id",
+          "subject_ref",
+          "promised_value",
+          "calculated_value",
+          "claim_state",
+          "baseline_observation_id",
+          "target_observation_id",
+          "actual_observation_id",
+          "quality_guardrail_state",
+          "next_gate_owner_role",
+          "claim_rule_version",
+          "outcome_metric_ref",
+          "claim_input_hash",
+        ];
+        const claimValues = [
+          c.tenantKey,
+          c.claimId,
+          c.subjectRef,
+          c.promisedValue,
+          c.calculatedValue,
+          c.claimState,
+          c.baselineObservationId,
+          c.targetObservationId,
+          c.actualObservationId,
+          c.qualityGuardrailState,
+          c.nextGateOwnerRole,
+          CLAIM_RULE_VERSION,
+          c.outcomeMetricRef,
+          claimInputHash,
+        ];
+        const placeholders = claimValues.map((_, i) => `$${i + 1}`);
+        const updateAssignments = [
+          "promised_value = excluded.promised_value",
+          "calculated_value = excluded.calculated_value",
+          "claim_state = excluded.claim_state",
+          "baseline_observation_id = excluded.baseline_observation_id",
+          "target_observation_id = excluded.target_observation_id",
+          "actual_observation_id = excluded.actual_observation_id",
+          "quality_guardrail_state = excluded.quality_guardrail_state",
+          "next_gate_owner_role = excluded.next_gate_owner_role",
+          "claim_rule_version = excluded.claim_rule_version",
+          "outcome_metric_ref = excluded.outcome_metric_ref",
+          "claim_input_hash = excluded.claim_input_hash",
+        ];
+        if (valueClaimHasUpdatedAt) {
+          claimColumns.push("updated_at");
+          placeholders.push("now()");
+          updateAssignments.push("updated_at = now()");
+        }
         await client.query(
           `insert into tower.value_claim
-             (tenant_key, claim_id, subject_ref, promised_value, calculated_value, claim_state,
-              baseline_observation_id, target_observation_id, actual_observation_id,
-              quality_guardrail_state, next_gate_owner_role, claim_rule_version,
-              outcome_metric_ref, claim_input_hash, updated_at)
-           values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14, now())
+             (${claimColumns.join(", ")})
+           values (${placeholders.join(", ")})
            on conflict (tenant_key, claim_id) do update
-             set promised_value = excluded.promised_value,
-                 calculated_value = excluded.calculated_value,
-                 claim_state = excluded.claim_state,
-                 baseline_observation_id = excluded.baseline_observation_id,
-                 target_observation_id = excluded.target_observation_id,
-                 actual_observation_id = excluded.actual_observation_id,
-                 quality_guardrail_state = excluded.quality_guardrail_state,
-                 next_gate_owner_role = excluded.next_gate_owner_role,
-                 claim_rule_version = excluded.claim_rule_version,
-                 outcome_metric_ref = excluded.outcome_metric_ref,
-                 claim_input_hash = excluded.claim_input_hash,
-                 updated_at = now()`,
-          [c.tenantKey, c.claimId, c.subjectRef, c.promisedValue, c.calculatedValue, c.claimState,
-           c.baselineObservationId, c.targetObservationId, c.actualObservationId,
-           c.qualityGuardrailState, c.nextGateOwnerRole, CLAIM_RULE_VERSION,
-           c.outcomeMetricRef,
-           // A hash of what the claim was computed from, so an unchanged claim is recognisable as
-           // unchanged across builds rather than looking rewritten every run.
-           hash([c.subjectRef, c.promisedValue, c.calculatedValue, c.baselineObservationId,
-                 c.targetObservationId, c.actualObservationId, c.claimState])],
+             set ${updateAssignments.join(",\n                 ")}`,
+          claimValues,
         );
         summary.rowsWritten += 1;
       }
