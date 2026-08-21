@@ -768,9 +768,10 @@ const clearButtonStyle: CSSProperties = {
 
 const primaryBandStyle: CSSProperties = {
   marginTop: 20,
-  padding: "17px 0 18px",
-  borderTop: `1px solid ${V4.rule}`,
-  borderBottom: `1px solid ${V4.rule}`,
+  padding: "16px 18px 18px",
+  border: `1px solid ${V4.rule}`,
+  borderRadius: 10,
+  background: "linear-gradient(90deg,rgba(255,255,255,0.86),rgba(0,102,204,0.045))",
 };
 
 const layoutStyle: CSSProperties = {
@@ -784,8 +785,9 @@ const layoutStyle: CSSProperties = {
 const tableShellStyle: CSSProperties = {
   overflowX: "auto",
   border: `1px solid ${V4.rule}`,
-  borderRadius: 8,
+  borderRadius: 10,
   background: V4.surface,
+  boxShadow: "0 14px 32px rgba(12,26,58,0.055)",
 };
 
 const tableStyle: CSSProperties = {
@@ -796,6 +798,9 @@ const tableStyle: CSSProperties = {
 };
 
 const headerCellStyle: CSSProperties = {
+  position: "sticky",
+  top: 0,
+  zIndex: 1,
   padding: "11px 12px",
   borderBottom: `1px solid ${V4.rule}`,
   background: V4.cream,
@@ -843,8 +848,12 @@ const detailPaneStyle: CSSProperties = {
 };
 
 const selectedStyle: CSSProperties = {
-  borderTop: `1px solid ${V4.ruleStrong}`,
-  paddingTop: 20,
+  border: `1px solid ${V4.rule}`,
+  borderTop: `4px solid ${V4.blue}`,
+  borderRadius: 10,
+  background: V4.surface,
+  padding: "16px 17px 18px",
+  boxShadow: "0 14px 32px rgba(12,26,58,0.055)",
 };
 
 const selectedTitleStyle: CSSProperties = {

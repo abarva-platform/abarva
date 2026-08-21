@@ -36,13 +36,16 @@ function itemStyle(active: boolean, drafted: boolean): CSSProperties {
     justifyContent: "space-between",
     alignItems: "baseline",
     gap: 8,
-    padding: "7px 10px",
+    padding: "8px 10px",
     fontFamily: SANS,
     fontSize: 13.5,
-    borderRadius: 5,
+    borderRadius: 7,
+    border: `1px solid ${active ? "rgba(0,102,204,0.3)" : "transparent"}`,
+    borderLeft: `3px solid ${active ? V4.green : "transparent"}`,
     textDecoration: "none",
     color: !drafted ? V4.stone : active ? V4.ink : V4.slate,
-    background: active ? "rgba(255,255,255,0.85)" : "transparent",
+    background: active ? V4.surface : "transparent",
+    boxShadow: active ? "0 8px 18px rgba(12,26,58,0.06)" : undefined,
     cursor: drafted ? "pointer" : "default",
   };
 }
@@ -65,7 +68,7 @@ export function Rail({
       style={{
         borderRight: `1px solid ${V4.rule}`,
         background: V4.cream,
-        padding: "26px 18px 20px",
+        padding: "22px 14px 20px",
         position: "sticky",
         top: 0,
         height: "100vh",
@@ -78,7 +81,7 @@ export function Rail({
     >
       <div>
         <div style={eyebrow(V4.slate)}>Composite reference tenant</div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 7 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "auto minmax(0,1fr)", alignItems: "baseline", gap: 8, marginTop: 7 }}>
           <span
             style={{
               fontFamily: MONO,
@@ -95,7 +98,7 @@ export function Rail({
           >
             DEMO
           </span>
-          <span style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 500, letterSpacing: "-0.022em", lineHeight: 1.14 }}>
+          <span style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 500, letterSpacing: "-0.022em", lineHeight: 1.14, minWidth: 0 }}>
             {clientLabel}
           </span>
         </div>
@@ -168,7 +171,7 @@ export function Rail({
                 style={itemStyle(item.id === activeId, true)}
                 aria-current={item.id === activeId ? "page" : undefined}
               >
-                <span>
+                <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {item.label}
                   {typeof item.count === "number" ? (
                     <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}> {item.count}</span>
@@ -177,7 +180,7 @@ export function Rail({
               </a>
             ) : (
               <span key={item.id} style={itemStyle(false, false)}>
-                <span>
+                <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {item.label}
                   {typeof item.count === "number" ? (
                     <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}> {item.count}</span>

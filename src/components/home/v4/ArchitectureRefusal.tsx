@@ -29,7 +29,7 @@ export function ArchitectureRefusal({ refusal }: { refusal: ArchitectureViewRefu
           marginTop: 24,
           border: `1px solid rgba(186,117,23,0.36)`,
           borderRadius: 10,
-          background: "#fff8eb",
+          background: "linear-gradient(90deg,#fff8eb,rgba(255,255,255,0.86))",
           padding: 22,
           maxWidth: 1060,
         }}
@@ -38,6 +38,22 @@ export function ArchitectureRefusal({ refusal }: { refusal: ArchitectureViewRefu
         <p style={{ margin: 0, fontFamily: SERIF, fontSize: 22, lineHeight: 1.34, color: V4.ink }}>
           {refusal.question}
         </p>
+      </section>
+
+      <section
+        style={{
+          marginTop: 18,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,180px),1fr))",
+          gap: 1,
+          maxWidth: 1060,
+          border: `1px solid ${V4.rule}`,
+          background: V4.rule,
+        }}
+      >
+        <GateMetric value={refusal.failedRules.length.toLocaleString()} label="failed rules" />
+        <GateMetric value={refusal.evidenceNeeded.length.toLocaleString()} label="evidence requests" />
+        <GateMetric value={refusal.supportedAlternatives.length.toLocaleString()} label="safe alternatives" />
       </section>
 
       <section style={{ marginTop: 34, display: "grid", gap: 14, maxWidth: 1120 }}>
@@ -97,6 +113,19 @@ export function ArchitectureRefusal({ refusal }: { refusal: ArchitectureViewRefu
           ))}
         </div>
       </section>
+    </div>
+  );
+}
+
+function GateMetric({ value, label }: { value: string; label: string }) {
+  return (
+    <div style={{ background: V4.surface, padding: "14px 16px" }}>
+      <span style={{ display: "block", fontFamily: SERIF, fontSize: 27, lineHeight: 1, color: V4.ink }}>
+        {value}
+      </span>
+      <span style={{ display: "block", marginTop: 7, fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.08em", textTransform: "uppercase", color: V4.slate }}>
+        {label}
+      </span>
     </div>
   );
 }
