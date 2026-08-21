@@ -422,6 +422,30 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
       "Produce a compact measurement plan, not a second business case. Use tables for metric definition, owner, source, baseline status, cadence, and acceptance rule. Do not assert realized value, annual savings, ROI, NPV, payback, or target value without cited evidence.",
   },
 
+  {
+    deliverableTypeKey: "readiness_and_change_plan",
+    documentTitle: "Readiness & Change Plan",
+    phase: 4,
+    phaseLabel: "P4 Roadmap & Business Case",
+    audiencePrimary: "Sponsor · Delivery lead · Change owner",
+    documentPurpose:
+      "Confirms the organization, governance cadence, adoption path, risks, and handoff conditions needed before mobilization.",
+    formatRecommendation: "html-word",
+    gateArtifact: true,
+    standAlone: true,
+    sections: [
+      "Executive Readiness Verdict (ready / ready with conditions / not ready, with the evidence basis)",
+      "Stakeholder and Decision-Rights Map (sponsor, business owner, technology owner, finance reviewer, delivery/change owner, unresolved seats)",
+      "Adoption and Change Workplan (communications, training, operating transition, pilot-readiness activities)",
+      "Governance and Cadence (steering forum, decision calendar, escalation path, evidence reviews)",
+      "Dependency and Risk Register (change, data, operational, vendor, control, and measurement dependencies)",
+      "Mobilization Conditions (what must be true before P5 mobilization and Tower handoff)",
+    ],
+    consultingAnalog: "McKinsey Change Readiness & Mobilization Readiness Plan",
+    generationPromptHint:
+      "Produce a compact readiness and change plan for the mobilization decision. Use tables for owners, cadence, risks, dependencies, and mobilization conditions. Do not assert funding approval, annual savings, ROI, NPV, payback, target value, or implementation authorization beyond the evidence-backed readiness recommendation.",
+  },
+
   // Backward-compat key for P4 monolithic doc
   {
     deliverableTypeKey: "roadmap",
@@ -546,6 +570,7 @@ export const PHASE_CANONICAL_KEYS: Record<number, string[]> = {
     "business_case",
     "financial_model",
     "tower_metrics_plan",
+    "readiness_and_change_plan",
   ],
   5: ["handoff_package", "value_measurement_contract"],
 };

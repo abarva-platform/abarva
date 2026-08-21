@@ -1247,6 +1247,88 @@ const MOVES_VALUE: DeliverableStructure = {
   ],
 };
 
+const MOVES_READINESS_AND_CHANGE_PLAN: DeliverableStructure = {
+  module: "moves",
+  deliverableType: "readiness_and_change_plan",
+  purpose:
+    "Confirm organizational readiness, adoption path, governance cadence, and mobilization conditions before the move advances into execution.",
+  decisionToSupport:
+    "Approve readiness to mobilize, approve with conditions, or hold until change/governance evidence is complete.",
+  sections: [
+    s(
+      "exec_readiness_verdict",
+      "Executive Readiness Verdict",
+      "State ready / ready with conditions / not ready, the evidence basis, and the decision implication.",
+      "mixed",
+      [],
+      "Keep under 300 words. Do not imply funding approval or full implementation authorization.",
+    ),
+    s(
+      "stakeholders_decision_rights",
+      "Stakeholders & Decision Rights",
+      "Sponsor, accountable owner, technology owner, finance reviewer, delivery/change owner, and unresolved seats.",
+      "mixed",
+      [],
+      "Keep under 450 words using a role-and-authority table.",
+    ),
+    s(
+      "adoption_workplan",
+      "Adoption & Change Workplan",
+      "Communications, training, operating transition, pilot-readiness activities, and owner/cadence for each.",
+      "mixed",
+      [],
+      "Keep under 600 words using a compact workplan table.",
+    ),
+    s(
+      "governance_cadence",
+      "Governance & Cadence",
+      "Steering forum, decision calendar, escalation route, evidence reviews, and phase-gate touchpoints.",
+      "mixed",
+      [],
+      "Keep under 450 words using a cadence table.",
+    ),
+    s(
+      "dependencies_risks",
+      "Dependencies, Risks & Controls",
+      "Change, data, operational, vendor, control, and measurement dependencies that could block mobilization.",
+      "mixed",
+      [],
+      "Keep under 650 words. Use one dependency/risk table with owner and mitigation.",
+    ),
+    s(
+      "mobilization_conditions",
+      "Mobilization Conditions",
+      "The conditions that must be true before mobilization and Tower handoff, including open evidence or governance actions.",
+      "mixed",
+      [],
+      "Keep under 350 words. Separate approved conditions from open inputs.",
+    ),
+    s(
+      "recommendation",
+      "Recommendation & Next Actions",
+      "Approve readiness, approve with conditions, or hold, plus the immediate owner-led actions.",
+      "mixed",
+      [],
+      "Keep under 120 words.",
+    ),
+  ],
+  requiredSectionKeys: [
+    "exec_readiness_verdict",
+    "stakeholders_decision_rights",
+    "adoption_workplan",
+    "governance_cadence",
+    "dependencies_risks",
+    "mobilization_conditions",
+    "recommendation",
+  ],
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not turn readiness approval into funding approval, full-scale rollout approval, or implementation authorization.",
+    "Do not include unsupported annual savings, ROI, NPV, payback, target value, or internal volume claims.",
+    "Do not repeat the execution roadmap, business case, financial model, or Tower metrics plan; reference their decisions and gaps only where needed for mobilization readiness.",
+  ],
+};
+
 const MOVES_MOBILIZATION: DeliverableStructure = {
   module: "moves",
   deliverableType: "mobilization_plan",
@@ -1599,6 +1681,7 @@ export const DELIVERABLE_STRUCTURES: DeliverableStructure[] = [
   MOVES_SOURCING_STRATEGY,
   MOVES_ESTIMATE,
   MOVES_VALUE,
+  MOVES_READINESS_AND_CHANGE_PLAN,
   MOVES_MOBILIZATION,
   MOVES_HANDOFF,
   MOVES_EXECUTIVE_PLAYBACK,

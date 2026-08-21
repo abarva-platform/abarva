@@ -187,17 +187,25 @@ describe("deliverable structures", () => {
     );
   });
 
-  it("keeps P4 estimate and value instruments fixed, compact, and evidence-gated", () => {
+  it("keeps P4 estimate, value, and readiness instruments fixed, compact, and evidence-gated", () => {
     const estimate = getDeliverableStructure("moves", "estimate_model")!;
     const value = getDeliverableStructure("moves", "value_model")!;
+    const readiness = getDeliverableStructure(
+      "moves",
+      "readiness_and_change_plan",
+    )!;
 
     expect(estimate.fixedStructure).toBe(true);
     expect(value.fixedStructure).toBe(true);
+    expect(readiness.fixedStructure).toBe(true);
     expect((estimate.prohibitedContent ?? []).join(" ")).toMatch(
       /Do not include invented implementation budgets, annual savings, ROI, NPV, IRR, or payback/,
     );
     expect((value.prohibitedContent ?? []).join(" ")).toMatch(
       /Do not include unsupported realized value, annual savings, ROI, NPV, payback, or target-value claims/,
+    );
+    expect((readiness.prohibitedContent ?? []).join(" ")).toMatch(
+      /Do not turn readiness approval into funding approval/,
     );
     expect(
       estimate.sections.map((section) => section.expertLatitude).join(" "),
@@ -207,6 +215,9 @@ describe("deliverable structures", () => {
     ).toMatch(
       /compact table for metrics, owner, source, baseline status, cadence, and acceptance rule/,
     );
+    expect(
+      readiness.sections.map((section) => section.expertLatitude).join(" "),
+    ).toMatch(/role-and-authority table/);
   });
 });
 

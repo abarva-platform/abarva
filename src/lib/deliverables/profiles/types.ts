@@ -44,6 +44,7 @@ export type MovesDeliverableKey =
   | "business_case" // P4
   | "financial_model" // P4 (workbook companion to business_case)
   | "tower_metrics_plan" // P4 (Tower value model)
+  | "readiness_and_change_plan" // P4 (readiness/adoption gate)
   | "handoff_package" // P5
   | "value_measurement_contract"; // P5
 
@@ -186,7 +187,11 @@ export type AppendixMode =
   | "evidence_binder" // the artifact IS a binder — machinery allowed
   | "audit_metadata";
 
-export type SourceTracePolicy = "appendix" | "audit_metadata" | "inline_binder" | "download";
+export type SourceTracePolicy =
+  | "appendix"
+  | "audit_metadata"
+  | "inline_binder"
+  | "download";
 
 /**
  * Depth the artifact's PURPOSE permits — the "reader energy" control, NOT a word
