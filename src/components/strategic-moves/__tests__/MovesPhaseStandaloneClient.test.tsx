@@ -173,6 +173,23 @@ const completeP3CaptureValues = {
     "Proceed to build planning with explicit owner review and caveats.",
 };
 
+const completeP5CaptureValues = {
+  mobilization_plan:
+    "Named mobilization owners are assigned for launch, support, change adoption, and executive steering.",
+  launch_readiness:
+    "Launch entry criteria, environment access, and go/no-go readiness have been reviewed by accountable owners.",
+  value_proof_rules:
+    "Tower measures realized value against approved baselines with unsupported claims excluded from reporting.",
+  first_90_days:
+    "The first 90 days sequence pilot launch, operating adoption, support stabilization, and value checkpoint reviews.",
+  governance_cadence:
+    "Weekly launch governance moves to monthly Tower value review after steady-state handoff.",
+  risks_open_items:
+    "Open risks and client-owned launch actions are documented with owners, due dates, and escalation paths.",
+  recommendation:
+    "Proceed with launch handoff because artifacts are signed off and value measurement rules are approved.",
+};
+
 const completeP2CaptureValues = {
   current_state_findings:
     "CANARY - SkyHarbor Recovery Command IROPS Architecture current-state interviews found dispatch, crew, and customer recovery handoffs split across tools.",
@@ -2923,6 +2940,77 @@ describe("MovesPhaseStandaloneClient", () => {
         ),
       ).toBe(true);
     });
+  });
+
+  it("submits an already-satisfied P5 gate without regenerating artifacts", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        currentUser={{ email: "move.runner@example.com", role: "client_admin" }}
+        evidenceNeedPackets={[]}
+        initialPhaseCaptureValues={completeP5CaptureValues}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 5,
+          phaseLabel: "P5 Prepare to Execute",
+          gateCriteria: [
+            {
+              id: "handoff_package_signed_off",
+              label: "Mobilization and Tower handoff package signed off",
+              completed: true,
+              severity: "hard",
+              verified: true,
+            },
+            {
+              id: "value_measurement_contract_signed_off",
+              label: "Value measurement contract signed off",
+              completed: true,
+              severity: "hard",
+              verified: true,
+            },
+          ],
+        })}
+        phaseNum={5}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Complete P5 and open Tower/i }),
+    );
+    const dialog = screen.getByRole("dialog");
+    expect(
+      within(dialog).getByText(/already-satisfied P5 gate/i),
+    ).toBeInTheDocument();
+    expect(
+      (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+        String(url).includes("/api/v1/deliverables/generate-phase"),
+      ),
+    ).toBe(false);
+
+    fireEvent.click(
+      within(dialog).getByRole("button", {
+        name: "Complete and hand off",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+          String(url).includes("/phase-gate-approval"),
+        ),
+      ).toBe(true);
+    });
+    expect(
+      (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+        String(url).includes("/api/v1/deliverables/generate-phase"),
+      ),
+    ).toBe(false);
+    expect(
+      (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+        String(url).includes("/phase-capture"),
+      ),
+    ).toBe(false);
   });
 
   it("wires the aVa suggested questions to a real chat send, with programId set correctly to avoid the 'no active Move session' regression", async () => {
