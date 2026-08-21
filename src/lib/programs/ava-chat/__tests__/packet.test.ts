@@ -1,6 +1,9 @@
 import { buildMovesAvaChatPacket } from "../packet";
 import { formatMovesAvaChatPacketForPrompt } from "../system-prompt";
-import { classifyMovesAvaQuestion } from "../answer-modes";
+import {
+  classifyMovesAvaQuestion,
+  shouldBuildMovesAvaPacketForMode,
+} from "../answer-modes";
 import {
   buildDeterministicMovesAvaStatusAnswer,
   buildDeterministicPhaseInputDraftAnswer,
@@ -141,6 +144,18 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
   it("classifies phase-input draft requests and instructs capture-field artifacts with citations", () => {
     const mode = classifyMovesAvaQuestion("Draft proposed inputs for P1").mode;
     expect(mode).toBe("phase_input_draft");
+    expect(
+      shouldBuildMovesAvaPacketForMode({
+        hardeningEnabled: false,
+        mode,
+      }),
+    ).toBe(true);
+    expect(
+      shouldBuildMovesAvaPacketForMode({
+        hardeningEnabled: false,
+        mode: "gate_blocker",
+      }),
+    ).toBe(false);
 
     const packet = buildMovesAvaChatPacket(
       {
