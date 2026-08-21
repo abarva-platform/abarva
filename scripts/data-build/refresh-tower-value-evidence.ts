@@ -37,6 +37,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { Client } from "pg";
 
 import { buildCanonicalTenantDataReport } from "../../src/lib/enterprise-data/canonical-build/canonical-tenant-data-build";
@@ -61,6 +62,13 @@ const WRITE =
   process.env.TOWER_EVIDENCE_WRITE_APPROVED === "true";
 
 const CLAIM_RULE_VERSION = "tower-value-evidence/v1";
+
+function gitSha(): string {
+  const operatorCommit = process.env.ABARVA_OPERATOR_BRANCH_COMMIT?.trim();
+  if (operatorCommit) return operatorCommit;
+  const result = spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" });
+  return result.status === 0 ? result.stdout.trim() : "unknown";
+}
 
 type Value = { value?: unknown } | undefined;
 const str = (v: Value): string | null => {
@@ -318,6 +326,8 @@ async function main(): Promise<number> {
   const summary = {
     generatedAt: new Date().toISOString(),
     mode: WRITE ? "write" : "dry-run",
+    gitSha: gitSha(),
+    imageDigest: process.env.ABARVA_OPERATOR_IMAGE_DIGEST ?? null,
     buildVersion: BUILD_VERSION,
     tenantScope: TENANTS,
     canonicalRecordsRead: report.canonicalRecords.length,
@@ -501,13 +511,14 @@ async function main(): Promise<number> {
         }
         // Only the mandatory columns are supplied, plus the key. Anything the dimension marks
         // optional stays empty rather than being invented to look complete.
-        const supplyable = ["tenant_key", refColumn, "metric_name", "metric_label", "title", "name", "unit", "metric_unit", "direction", "owner_role"];
+        const supplyable = ["tenant_key", refColumn, "domain", "metric_name", "metric_label", "title", "name", "unit", "metric_unit", "direction", "owner_role"];
         const insertCols = [...new Set([refColumn, ...mandatory])].filter((c) => supplyable.includes(c));
         if (insertCols.includes(refColumn)) {
           for (const [ref] of names) {
             const values = insertCols.map((c) =>
               c === refColumn ? ref
                 : c === "tenant_key" ? TENANTS[0]
+                  : c === "domain" ? "canonical_projection"
                   : /name|label|title/.test(c) ? ref
                     : /unit/.test(c) ? "count"
                       : /direction/.test(c) ? "increase"

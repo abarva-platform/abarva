@@ -27,6 +27,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { Client } from "pg";
 
 import { buildCanonicalTenantDataReport } from "../../src/lib/enterprise-data/canonical-build/canonical-tenant-data-build";
@@ -105,6 +106,13 @@ const WRITE =
   process.env.HOME_LANDSCAPE_WRITE === "true" &&
   process.env.HOME_LANDSCAPE_WRITE_APPROVED === "true";
 
+function gitSha(): string {
+  const operatorCommit = process.env.ABARVA_OPERATOR_BRANCH_COMMIT?.trim();
+  if (operatorCommit) return operatorCommit;
+  const result = spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" });
+  return result.status === 0 ? result.stdout.trim() : "unknown";
+}
+
 async function main(): Promise<number> {
   const report = await buildCanonicalTenantDataReport({
     repoRoot: process.cwd(),
@@ -153,6 +161,8 @@ async function main(): Promise<number> {
   const summary = {
     generatedAt: new Date().toISOString(),
     mode: WRITE ? "write" : "dry-run",
+    gitSha: gitSha(),
+    imageDigest: process.env.ABARVA_OPERATOR_IMAGE_DIGEST ?? null,
     buildVersion: BUILD_VERSION,
     inputSourceVersion: INPUT_SOURCE,
     tenantScope: TENANTS,
