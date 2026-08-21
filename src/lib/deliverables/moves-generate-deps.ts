@@ -27,6 +27,10 @@ import {
   formatProgramsBrokerBundleForPrompt,
 } from "@/lib/programs/programs-broker-adapter";
 import { hasPriorPhaseDraftApproval } from "@/lib/programs/deliverables/artifact-review-decisions";
+import {
+  formatAcceptedStageReadinessContextForPrompt,
+  loadAcceptedStageReadinessContext,
+} from "@/lib/programs/stage-readiness-workbooks/accepted-context";
 import type {
   PhaseDigest,
   SolutionDecision,
@@ -216,7 +220,15 @@ export function createMovesGenerateArtifactDeps(
               .then(formatProgramEvidenceForPrompt)
               .catch(() => "")
           : "";
-        return [promptBlock, evidenceBlock].filter(Boolean).join("\n\n");
+        const stageReadinessBlock =
+          moveId && typeof phase === "number"
+            ? await loadAcceptedStageReadinessContext(ctx, moveId, phase)
+                .then(formatAcceptedStageReadinessContextForPrompt)
+                .catch(() => "")
+            : "";
+        return [promptBlock, evidenceBlock, stageReadinessBlock]
+          .filter(Boolean)
+          .join("\n\n");
       },
       async loadPriorDigests(moveId) {
         // One row per deliverable type — the client-approved version
