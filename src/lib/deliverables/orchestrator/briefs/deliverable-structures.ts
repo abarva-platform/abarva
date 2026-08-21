@@ -1197,7 +1197,7 @@ const MOVES_VALUE: DeliverableStructure = {
       "Benefit pools, owners, and confidence.",
       "mixed",
       [],
-      "Keep under 450 words. Name value pools qualitatively unless cited evidence supports quantities.",
+      "Keep under 300 words. Use a compact table: value pool, owner, measure, source, baseline status. Do not repeat the business case.",
     ),
     s(
       "measurement_model",
@@ -1205,7 +1205,7 @@ const MOVES_VALUE: DeliverableStructure = {
       "The operational post-deployment measurement plan for each success metric: data source/instrumentation, accountable owner, cadence, attribution method, and the enablement required to capture it. Tie each metric back to its charter outcome and the business-process-change adoption signal that drives it. Where a metric is not yet measurable, the enablement to measure it is a named action, not an assumption.",
       "mixed",
       [],
-      "Keep under 650 words. Use one compact table for metrics, owner, source, baseline status, cadence, and acceptance rule.",
+      "Keep under 425 words. Use one compact table for metrics, owner, source, baseline status, cadence, and acceptance rule. No methodology essay.",
     ),
     s(
       "controls",
@@ -1213,7 +1213,7 @@ const MOVES_VALUE: DeliverableStructure = {
       "Approval and variance controls.",
       "mixed",
       [],
-      "Keep under 400 words. Focus on attestation gates and variance controls.",
+      "Keep under 275 words. Focus on attestation gates and variance controls in a table.",
     ),
     s(
       "risks",
@@ -1221,7 +1221,7 @@ const MOVES_VALUE: DeliverableStructure = {
       "What could erode value.",
       "mixed",
       [],
-      "Keep under 375 words. Consolidate risks and mitigations; do not repeat every dependency from prior artifacts.",
+      "Keep under 250 words. Consolidate risks and mitigations; do not repeat predecessor-document dependencies.",
     ),
     s(
       "recommendation",
@@ -1229,7 +1229,7 @@ const MOVES_VALUE: DeliverableStructure = {
       "Approve and lock the baseline.",
       "mixed",
       [],
-      "Keep under 220 words. Make the next action conditional on source-backed measurement readiness.",
+      "Keep under 140 words. Make the next action conditional on source-backed measurement readiness.",
     ),
   ],
   requiredSectionKeys: [
@@ -1244,6 +1244,7 @@ const MOVES_VALUE: DeliverableStructure = {
     "Do not add a second business case narrative.",
     "Do not include unsupported realized value, annual savings, ROI, NPV, payback, or target-value claims.",
     "Do not repeat the full solution design; this is a measurement plan.",
+    "Do not include a methodology overview, Move history recap, implementation plan, or duplicate risk narrative; use the measurement table as the artifact spine.",
   ],
 };
 

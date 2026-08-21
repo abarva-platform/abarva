@@ -125,6 +125,11 @@ describe("resolveQualityBar", () => {
     },
   );
 
+  it("treats the P5 value measurement contract as a table-led instrument", () => {
+    const qb = resolveQualityBar("moves", "value_measurement_contract");
+    expect(qb.excludeNonProseFromBody).toBe(true);
+  });
+
   it("falls back to the shared default for an artifact type with no override", () => {
     const qb = resolveQualityBar("moves", "some_future_artifact_type");
     expect(qb.minSections).toBe(6);

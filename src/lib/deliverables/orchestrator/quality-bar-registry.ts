@@ -246,11 +246,13 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
   "moves::value_measurement_contract": {
     // P5 value contract is a measurement instrument. It should name metrics,
     // baselines, owners, cadence, gaps, and Tower handoff without re-telling
-    // the entire Move history.
+    // the entire Move history. It is deliberately table-led, so the hard band
+    // measures prose argument length rather than table/exhibit cell text.
     minSections: 6,
     minBodyWords: 1_800,
     targetBodyWordsMax: 4_200,
     enforceMaxAsBlocker: true,
+    excludeNonProseFromBody: true,
     requiresEvidenceGapsNoted: true,
   },
 };
