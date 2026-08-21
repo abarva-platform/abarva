@@ -407,7 +407,7 @@ function reviewArtifactInput(
     fileName: `${proposalReview.reviewId}.json`,
     fileFormat: "json",
     body: JSON.stringify(proposalReview, null, 2),
-    status: terminalReview ? "accepted" : "review_required",
+    status: terminalReview ? "approved" : "review_required",
     generatedBy: "stage_readiness_workbook_review",
     sourceBasis: "human_reviewed_stage_readiness_workbook_proposals",
     confidence: "human_reviewed",
