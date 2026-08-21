@@ -3059,6 +3059,38 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(chatBody.surfaceContext.phase).toBe(3);
   });
 
+  it("frames aVa as a governed drafting helper for phase inputs", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove()}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Ask aVa/i }));
+    expect(
+      screen.getByText("aVa can draft. You review and save."),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Draft proposed inputs" }),
+    );
+
+    await waitFor(() => {
+      const chatCall = (global.fetch as jest.Mock).mock.calls.find(([url]) =>
+        String(url).includes("/api/chat/agent"),
+      );
+      expect(chatCall).toBeTruthy();
+      const chatBody = JSON.parse(String(chatCall?.[1]?.body ?? "{}"));
+      expect(chatBody.message).toContain(
+        "Draft proposed P2 inputs from approved upstream state",
+      );
+      expect(chatBody.message).toContain("Do not invent missing evidence");
+    });
+  });
+
   it("renders the rich aVa answer while the live stream is still open", async () => {
     const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
     const encoder = new TextEncoder();
@@ -3307,7 +3339,7 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toHaveClass("active");
     });
 
-    it("splits phase progress into workflow, gate, and stage rows instead of one run-on label", () => {
+    it("keeps phase progress to the critical inputs, gate, and next-action signals", () => {
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -3322,9 +3354,13 @@ describe("MovesPhaseStandaloneClient", () => {
       );
 
       const progressCard = screen.getByLabelText("Phase progress");
-      expect(within(progressCard).getByText("Workflow")).toBeInTheDocument();
+      expect(within(progressCard).getByText("Inputs")).toBeInTheDocument();
       expect(within(progressCard).getByText("Gate")).toBeInTheDocument();
-      expect(within(progressCard).getByText("Stage")).toBeInTheDocument();
+      expect(within(progressCard).getByText("Next")).toBeInTheDocument();
+      expect(
+        within(progressCard).queryByText("Workflow"),
+      ).not.toBeInTheDocument();
+      expect(within(progressCard).queryByText("Stage")).not.toBeInTheDocument();
       expect(
         within(progressCard).queryByText(/workflow · .*hard met ·/i),
       ).not.toBeInTheDocument();
