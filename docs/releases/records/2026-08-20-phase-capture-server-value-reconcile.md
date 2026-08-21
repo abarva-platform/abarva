@@ -6,7 +6,7 @@
 
 ## Status
 
-Merged — pending live proof.
+**live-proven** on the deployed lab runtime, 2026-08-20.
 
 ## Plain-English Summary
 
