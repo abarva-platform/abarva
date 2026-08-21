@@ -34,10 +34,17 @@
 // root cause; the fix is to delete the duplicate, not patch it again.
 
 import { NextRequest } from "next/server";
-import { requireTenancy, tenancyErrorResponse } from "@/app/api/v1/programs/_auth";
+import {
+  requireTenancy,
+  tenancyErrorResponse,
+} from "@/app/api/v1/programs/_auth";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
-import { getModuleState, getPhaseSnapshots, getProgramById } from "@/lib/programs/queries";
+import {
+  getModuleState,
+  getPhaseSnapshots,
+  getProgramById,
+} from "@/lib/programs/queries";
 import { evaluateGate } from "@/lib/programs/governance";
 import { advancePhase } from "@/lib/programs/mutations";
 import { closeP0OnApproval } from "@/lib/programs/origination-close";
@@ -63,6 +70,30 @@ function parsePhase(value: unknown): number | null {
   return parsed;
 }
 
+function appendGatePassed(gatesPassed: unknown, phase: number): unknown[] {
+  const existing = Array.isArray(gatesPassed) ? gatesPassed : [];
+  const alreadyPresent = existing.some((entry) => {
+    if (entry === phase || entry === String(phase) || entry === `P${phase}`) {
+      return true;
+    }
+    if (!entry || typeof entry !== "object") return false;
+    const record = entry as Record<string, unknown>;
+    return [
+      record.phase,
+      record.phaseNumber,
+      record.phase_number,
+      record.fromPhase,
+      record.from_phase,
+      record.completedPhase,
+      record.completed_phase,
+    ].some(
+      (value) =>
+        value === phase || value === String(phase) || value === `P${phase}`,
+    );
+  });
+  return alreadyPresent ? existing : [...existing, phase];
+}
+
 async function captureCompletion(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
   programId: string,
@@ -75,7 +106,10 @@ async function captureCompletion(
     const capturedModule = modules.find(
       (entry) => entry.moduleKey === phaseCaptureModuleKey(phase, section.key),
     );
-    if (!capturedModule || !["completed", "skipped"].includes(capturedModule.status)) {
+    if (
+      !capturedModule ||
+      !["completed", "skipped"].includes(capturedModule.status)
+    ) {
       missing.push(section.label);
     }
   }
@@ -104,15 +138,20 @@ async function isPhaseApproved(
   phase: number,
 ): Promise<boolean> {
   const program = await getProgramById(ctx, programId);
-  const gatesPassed = Array.isArray(program?.gatesPassed) ? program.gatesPassed : [];
+  const gatesPassed = Array.isArray(program?.gatesPassed)
+    ? program.gatesPassed
+    : [];
   if (
     gatesPassed.some(
-      (entry) => entry === phase || entry === String(phase) || entry === `P${phase}`,
+      (entry) =>
+        entry === phase || entry === String(phase) || entry === `P${phase}`,
     )
   ) {
     return true;
   }
-  const snapshots = await getPhaseSnapshots(ctx, programId, phase).catch(() => []);
+  const snapshots = await getPhaseSnapshots(ctx, programId, phase).catch(
+    () => [],
+  );
   return snapshots.some((snapshot) => snapshot.approvalStatus === "approved");
 }
 
@@ -138,7 +177,8 @@ async function ensureSponsorAuthorityForApprover(
     .limit(1);
   if (currentError) throw currentError;
 
-  const currentParticipant = ((currentRows as Array<{ id: string }> | null) ?? [])[0];
+  const currentParticipant = ((currentRows as Array<{ id: string }> | null) ??
+    [])[0];
   if (currentParticipant) {
     const { error } = await sb
       .from("engagement_participants")
@@ -167,6 +207,7 @@ async function completeTerminalTowerHandoff(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
   programId: string,
   rationale: string,
+  gatesPassed: unknown,
 ): Promise<{ snapshotId: string }> {
   const nowIso = new Date().toISOString();
   const snapshot = {
@@ -189,12 +230,14 @@ async function completeTerminalTowerHandoff(
     .single();
   if (snapError) throw snapError;
   const snapshotId = (snap as { id?: string } | null)?.id;
-  if (!snapshotId) throw new Error("P5 terminal handoff snapshot insert returned no id");
+  if (!snapshotId)
+    throw new Error("P5 terminal handoff snapshot insert returned no id");
 
   const { error: updateError } = await sb
     .from("engagements")
     .update({
       lifecycle_state: "completed",
+      gates_passed: appendGatePassed(gatesPassed, 5),
       phase_locked_at: nowIso,
       phase_locked_by_user_id: ctx.userId,
       updated_at: nowIso,
@@ -302,7 +345,7 @@ export async function POST(
     }
 
     const capture = await captureCompletion(ctx, programId, phase, program);
-    if (!capture.complete) {
+    if (phase === 0 && !capture.complete) {
       return Response.json(
         {
           error: "capture_incomplete",
@@ -383,8 +426,12 @@ export async function POST(
     if (phase === 1) {
       await ensureSponsorAuthorityForApprover(sb, programId, ctx);
     }
-    const gate = await evaluateGate(ctx, programId, phase, toPhase, { supabase: sb });
-    const hardFails = gate.failedChecks.filter((check) => check.severity === "hard");
+    const gate = await evaluateGate(ctx, programId, phase, toPhase, {
+      supabase: sb,
+    });
+    const hardFails = gate.failedChecks.filter(
+      (check) => check.severity === "hard",
+    );
     if (hardFails.length > 0) {
       return Response.json(
         {
@@ -401,13 +448,29 @@ export async function POST(
       );
     }
 
-    const carried = gate.failedChecks.filter((check) => check.severity === "soft");
+    const carried = gate.failedChecks.filter(
+      (check) => check.severity === "soft",
+    );
+    const captureGapsCarried =
+      phase > 0 && !capture.complete
+        ? capture.missing.map((label) => ({
+            check: "phase_capture_incomplete",
+            reason: `${label} was not separately captured before gate approval.`,
+            severity: "soft" as const,
+          }))
+        : [];
     const advanced =
       phase === 5
         ? {
             programId,
             newPhase: 6,
-            ...(await completeTerminalTowerHandoff(sb, ctx, programId, rationale)),
+            ...(await completeTerminalTowerHandoff(
+              sb,
+              ctx,
+              programId,
+              rationale,
+              program.gatesPassed,
+            )),
           }
         : await advancePhase(
             ctx,
@@ -432,13 +495,16 @@ export async function POST(
       approverName: ctx.email ?? ctx.userId,
       approverRole: ctx.role ?? "gate approver",
       rationale,
-      softGapsCarried: carried.length > 0,
+      softGapsCarried: carried.length + captureGapsCarried.length > 0,
       hardGateOverride: null,
-      carriedGaps: carried.map((check) => ({
-        check: check.check,
-        reason: check.reason ?? null,
-        severity: check.severity,
-      })),
+      carriedGaps: [
+        ...carried.map((check) => ({
+          check: check.check,
+          reason: check.reason ?? null,
+          severity: check.severity,
+        })),
+        ...captureGapsCarried,
+      ],
     }).catch(() => null);
     await writeProgramAuditLogBestEffort(ctx, {
       programId,
@@ -460,10 +526,16 @@ export async function POST(
         fromPhase: phase,
         toPhase: advanced.newPhase,
       },
-      nextAction: toPhase === 6 ? "open_tower_handoff" : `open_phase_${advanced.newPhase}`,
+      nextAction:
+        toPhase === 6
+          ? "open_tower_handoff"
+          : `open_phase_${advanced.newPhase}`,
       terminalHandoff: toPhase === 6,
       snapshotId: advanced.snapshotId,
-      carriedGaps: carried.map((check) => check.check),
+      carriedGaps: [
+        ...carried.map((check) => check.check),
+        ...captureGapsCarried.map((check) => check.check),
+      ],
     });
   } catch (err) {
     try {
@@ -471,7 +543,10 @@ export async function POST(
     } catch {
       /* not a tenancy error */
     }
-    console.error("[POST /api/v1/programs/:programId/phase-gate-approval]", err);
+    console.error(
+      "[POST /api/v1/programs/:programId/phase-gate-approval]",
+      err,
+    );
     return Response.json(
       { error: "internal_error", message: (err as Error).message },
       { status: 500 },

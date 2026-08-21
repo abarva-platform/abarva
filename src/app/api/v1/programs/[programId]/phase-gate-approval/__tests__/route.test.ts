@@ -78,14 +78,18 @@ jest.mock("@/lib/programs/deliverables/gate-override-artifact", () => ({
 }));
 
 jest.mock("@/lib/programs/phase-capture-contract", () => ({
-  getPhaseCaptureSections: (phase: number) => mockGetPhaseCaptureSections(phase),
+  getPhaseCaptureSections: (phase: number) =>
+    mockGetPhaseCaptureSections(phase),
   phaseCaptureModuleKey: (phase: number, sectionKey: string) =>
     `phase_${phase}_${sectionKey}`,
 }));
 
 jest.mock("@/lib/programs/p0-phase-capture", () => ({
-  persistP0PhaseCaptureFromSource: (ctx: unknown, programId: string, input: unknown) =>
-    mockPersistP0PhaseCaptureFromSource(ctx, programId, input),
+  persistP0PhaseCaptureFromSource: (
+    ctx: unknown,
+    programId: string,
+    input: unknown,
+  ) => mockPersistP0PhaseCaptureFromSource(ctx, programId, input),
 }));
 
 function req(body: unknown): Request {
@@ -117,12 +121,17 @@ beforeEach(() => {
     gatesPassed: [],
   });
   // Capture is complete by default so tests can focus on the gate check.
-  mockGetPhaseCaptureSections.mockReturnValue([{ key: "review", label: "Review" }]);
+  mockGetPhaseCaptureSections.mockReturnValue([
+    { key: "review", label: "Review" },
+  ]);
   mockGetModuleState.mockResolvedValue([
     { moduleKey: "phase_3_review", status: "completed" },
   ]);
   mockGetPhaseSnapshots.mockResolvedValue([]);
-  mockEvaluateGate.mockResolvedValue({ failedChecks: [], requiresApproval: false });
+  mockEvaluateGate.mockResolvedValue({
+    failedChecks: [],
+    requiresApproval: false,
+  });
   mockAdvancePhase.mockResolvedValue({
     programId: "prog-1",
     newPhase: 4,
@@ -133,7 +142,9 @@ beforeEach(() => {
   mockSbFrom.mockReturnValue({
     select: () => ({
       eq: () => ({
-        eq: () => ({ limit: async () => ({ data: [{ id: "participant-1" }], error: null }) }),
+        eq: () => ({
+          limit: async () => ({ data: [{ id: "participant-1" }], error: null }),
+        }),
       }),
     }),
   });
@@ -167,11 +178,17 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
   });
 
   it("advances the phase on a genuine gate pass with no deliverable fabrication", async () => {
-    mockEvaluateGate.mockResolvedValue({ failedChecks: [], requiresApproval: false });
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [],
+      requiresApproval: false,
+    });
 
     const { POST } = await import("../route");
     const res = await POST(
-      req({ phase: 3, rationale: "Architecture reviewed and approved." }) as never,
+      req({
+        phase: 3,
+        rationale: "Architecture reviewed and approved.",
+      }) as never,
       { params },
     );
 
@@ -179,19 +196,135 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     await expect(res.json()).resolves.toMatchObject({ ok: true, newPhase: 4 });
     expect(mockAdvancePhase).toHaveBeenCalledWith(
       ctx,
-      expect.objectContaining({ programId: "prog-1", fromPhase: 3, toPhase: 4 }),
+      expect.objectContaining({
+        programId: "prog-1",
+        fromPhase: 3,
+        toPhase: 4,
+      }),
       expect.anything(),
     );
     expect(mockSaveGateDecisionArtifact).toHaveBeenCalledWith(
       ctx,
-      expect.objectContaining({ softGapsCarried: false, hardGateOverride: null, carriedGaps: [] }),
+      expect.objectContaining({
+        softGapsCarried: false,
+        hardGateOverride: null,
+        carriedGaps: [],
+      }),
+    );
+  });
+
+  it("completes terminal P5 from signed deliverable gates and records gate 5 even when duplicate capture text is absent", async () => {
+    const writes: Array<{ table: string; payload: Record<string, unknown> }> =
+      [];
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      name: "MEMBER AI ASSIST",
+      currentPhase: 5,
+      gatesPassed: [],
+    });
+    mockGetPhaseCaptureSections.mockReturnValue([
+      { key: "launch_readiness", label: "Launch readiness" },
+    ]);
+    mockGetModuleState.mockResolvedValue([]);
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [],
+      requiresApproval: true,
+    });
+    mockSbFrom.mockImplementation((table: string) => {
+      if (table === "phase_snapshots") {
+        return {
+          insert: jest.fn((payload: Record<string, unknown>) => {
+            writes.push({ table, payload });
+            return {
+              select: jest.fn(() => ({
+                single: async () => ({
+                  data: { id: "p5-snap-1" },
+                  error: null,
+                }),
+              })),
+            };
+          }),
+        };
+      }
+      if (table === "engagements") {
+        return {
+          update: jest.fn((payload: Record<string, unknown>) => {
+            writes.push({ table, payload });
+            return {
+              eq: jest.fn(() => ({
+                eq: async () => ({ error: null }),
+              })),
+            };
+          }),
+        };
+      }
+      if (table === "module_state_log") {
+        return {
+          insert: jest.fn(async (payload: Record<string, unknown>) => {
+            writes.push({ table, payload });
+            return { error: null };
+          }),
+        };
+      }
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({ limit: async () => ({ data: [], error: null }) }),
+          }),
+        }),
+      };
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({ phase: 5, rationale: "Terminal handoff approved." }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      ok: true,
+      newPhase: 6,
+      terminalHandoff: true,
+      snapshotId: "p5-snap-1",
+      carriedGaps: ["phase_capture_incomplete"],
+    });
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+    expect(writes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          table: "phase_snapshots",
+          payload: expect.objectContaining({
+            phase_number: 5,
+            approval_status: "approved",
+          }),
+        }),
+        expect.objectContaining({
+          table: "engagements",
+          payload: expect.objectContaining({
+            lifecycle_state: "completed",
+            gates_passed: [5],
+          }),
+        }),
+        expect.objectContaining({
+          table: "module_state_log",
+          payload: expect.objectContaining({
+            module_key: "phase_5",
+            new_state: "completed",
+          }),
+        }),
+      ]),
     );
   });
 
   it("labels a soft-carry pass as softGapsCarried=true, never as an override", async () => {
     mockEvaluateGate.mockResolvedValue({
       failedChecks: [
-        { check: "optional_stakeholder_review", reason: "Not logged", severity: "soft" },
+        {
+          check: "optional_stakeholder_review",
+          reason: "Not logged",
+          severity: "soft",
+        },
       ],
       requiresApproval: false,
     });
@@ -210,22 +343,74 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
         softGapsCarried: true,
         hardGateOverride: null,
         carriedGaps: [
-          expect.objectContaining({ check: "optional_stakeholder_review", severity: "soft" }),
+          expect.objectContaining({
+            check: "optional_stakeholder_review",
+            severity: "soft",
+          }),
         ],
       }),
     );
   });
 
-  it("blocks approval when phase capture is incomplete", async () => {
+  it("blocks P0 approval when phase capture is incomplete", async () => {
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 0,
+      gatesPassed: [],
+    });
+    mockGetPhaseCaptureSections.mockReturnValue([
+      { key: "brief", label: "Brief" },
+    ]);
     mockGetModuleState.mockResolvedValue([]);
+
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 0 }) as never, { params });
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "capture_incomplete",
+    });
+    expect(mockEvaluateGate).not.toHaveBeenCalled();
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("carries P1-P5 capture gaps as audit context when the hard gate passes", async () => {
+    mockGetModuleState.mockResolvedValue([]);
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [],
+      requiresApproval: false,
+    });
 
     const { POST } = await import("../route");
     const res = await POST(req({ phase: 3 }) as never, { params });
 
-    expect(res.status).toBe(409);
-    await expect(res.json()).resolves.toMatchObject({ error: "capture_incomplete" });
-    expect(mockEvaluateGate).not.toHaveBeenCalled();
-    expect(mockAdvancePhase).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      ok: true,
+      carriedGaps: ["phase_capture_incomplete"],
+    });
+    expect(mockEvaluateGate).toHaveBeenCalled();
+    expect(mockAdvancePhase).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({
+        programId: "prog-1",
+        fromPhase: 3,
+        toPhase: 4,
+      }),
+      expect.anything(),
+    );
+    expect(mockSaveGateDecisionArtifact).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({
+        softGapsCarried: true,
+        carriedGaps: [
+          expect.objectContaining({
+            check: "phase_capture_incomplete",
+            severity: "soft",
+          }),
+        ],
+      }),
+    );
   });
 
   it("short-circuits when the phase is already approved", async () => {
@@ -247,16 +432,25 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
       currentPhase: 0,
       gatesPassed: [],
     });
-    mockGetPhaseCaptureSections.mockReturnValue([{ key: "brief", label: "Brief" }]);
+    mockGetPhaseCaptureSections.mockReturnValue([
+      { key: "brief", label: "Brief" },
+    ]);
     mockGetModuleState.mockResolvedValue([
       { moduleKey: "phase_0_brief", status: "completed" },
     ]);
-    mockCloseP0OnApproval.mockResolvedValue({ advanced: true, newPhase: 1, blockedBy: [] });
+    mockCloseP0OnApproval.mockResolvedValue({
+      advanced: true,
+      newPhase: 1,
+      blockedBy: [],
+    });
 
     const { POST } = await import("../route");
-    const res = await POST(req({ phase: 0, rationale: "Sponsor approved." }) as never, {
-      params,
-    });
+    const res = await POST(
+      req({ phase: 0, rationale: "Sponsor approved." }) as never,
+      {
+        params,
+      },
+    );
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({ ok: true, newPhase: 1 });
@@ -270,7 +464,9 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
       currentPhase: 0,
       gatesPassed: [],
     });
-    mockGetPhaseCaptureSections.mockReturnValue([{ key: "brief", label: "Brief" }]);
+    mockGetPhaseCaptureSections.mockReturnValue([
+      { key: "brief", label: "Brief" },
+    ]);
     mockGetModuleState.mockResolvedValue([
       { moduleKey: "phase_0_brief", status: "completed" },
     ]);
@@ -288,7 +484,9 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
   });
 
   it("rejects approval when the caller lacks gate-approval permission", async () => {
-    mockLoadUserProgramAccessPolicy.mockResolvedValue({ canApproveGates: false });
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      canApproveGates: false,
+    });
 
     const { POST } = await import("../route");
     const res = await POST(req({ phase: 3 }) as never, { params });
