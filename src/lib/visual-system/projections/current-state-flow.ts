@@ -11,7 +11,8 @@ import {
   ZONE_ORDER,
   zoneFor,
   type ArchitectureZone,
-  classifyApplication,
+  resolveTechnologySemantics,
+  type ResolvedTechnologySemantics,
   classifyMechanism,
   classifyTechnology,
   isMovementPlatform,
@@ -21,6 +22,7 @@ import {
   type DataMovementMechanism,
   type TechnologySemanticType,
 } from "../semantics/technology-semantic-taxonomy";
+import { assessTopologyFitness, type TopologyFitness } from "../semantics/topology-fitness";
 import type { TechRecordType } from "@/lib/home/preview/types";
 
 /**
@@ -75,6 +77,8 @@ interface Endpoint {
   semanticType: TechnologySemanticType;
   classificationSource: ClassificationSource;
   rawValue: string;
+  /** Kept whole so the node can state its host and any conflict rather than flattening them. */
+  resolved: ResolvedTechnologySemantics;
 }
 
 /** Builds the endpoint resolver. Tries `systemName`, then `originalRowId` -- the two keys the two
@@ -95,16 +99,18 @@ function buildResolver(applications?: TechRecordType) {
     const app = byName.get(key) ?? byRowId.get(key);
     if (!app) {
       // Unresolved: keep the raw value visible and say so, rather than dropping the flow.
+      const resolved = resolveTechnologySemantics({ systemName: raw });
       return {
         id: canonicalNodeId("ep", raw),
         label: raw,
-        semanticType: "unknown",
+        semanticType: resolved.entityType,
         classificationSource: "unclassified",
         rawValue: raw,
+        resolved,
       };
     }
     const label = str(app.systemName) || raw;
-    const cls = classifyApplication({
+    const resolved = resolveTechnologySemantics({
       systemName: label,
       systemCategory: str(app.systemCategory),
       systemType: str(app.systemType),
@@ -112,9 +118,10 @@ function buildResolver(applications?: TechRecordType) {
     return {
       id: canonicalNodeId("ep", label),
       label,
-      semanticType: cls.semanticType,
-      classificationSource: cls.classificationSource,
+      semanticType: resolved.entityType,
+      classificationSource: resolved.classificationSources[0] ?? "unclassified",
       rawValue: raw,
+      resolved,
     };
   };
 }
@@ -135,9 +142,25 @@ interface Agg {
   flows: number;
   environments: Set<string>;
   raws: Set<string>;
+  resolved?: ResolvedTechnologySemantics;
 }
 
+/** What the projection returns alongside the view: whether the record can support a flow diagram
+ * at all, and how many objects it could not classify. A caller that ignores `fitness` will render
+ * a picture the data does not justify, so it is returned beside the view rather than buried in it. */
+export interface CurrentStateFlowResult {
+  view: ArchitectureView;
+  fitness: TopologyFitness;
+  unclassifiedCount: number;
+  conflictCount: number;
+}
+
+/** Convenience for callers that have already checked fitness. */
 export function buildCurrentStateFlowView(options: CurrentStateFlowOptions): ArchitectureView {
+  return buildCurrentStateFlow(options).view;
+}
+
+export function buildCurrentStateFlow(options: CurrentStateFlowOptions): CurrentStateFlowResult {
   const { tenantKey, tenantDisplayName, integrations, applications } = options;
   const audienceLevel = options.audienceLevel ?? "L1_domain";
   const perLaneLimit = options.perLaneLimit ?? 6;
@@ -191,6 +214,7 @@ export function buildCurrentStateFlowView(options: CurrentStateFlowOptions): Arc
         flows: 0,
         environments: new Set<string>(),
         raws: new Set<string>(),
+        resolved: ep.resolved,
       };
       a.flows += 1;
       a.environments.add(ep.label);
@@ -299,11 +323,19 @@ export function buildCurrentStateFlowView(options: CurrentStateFlowOptions): Arc
           }
         : {}),
       roleBasisNote:
-        agg.classificationSource === "unclassified"
-          ? "Classification not established from the record."
-          : `Classified from ${agg.classificationSource.replace(/_/g, " ")}.`,
+        agg.resolved?.classificationStatus === "conflict"
+          ? agg.resolved.conflictReason
+          : agg.classificationSource === "unclassified"
+            ? "Classification not established from the record."
+            : `Classified from ${agg.classificationSource.replace(/_/g, " ")}.`,
       metrics: { flows: agg.flows, environments: agg.environments.size },
-      note: `${SEMANTIC_TYPE_LABEL[agg.semanticType]} · ${agg.flows} flows`,
+      // The host is stated alongside the identity rather than replacing it: a mart on SQL Server
+      // stays a mart.
+      note:
+        `${SEMANTIC_TYPE_LABEL[agg.semanticType]}` +
+        (agg.resolved?.hostingPlatform ? ` on ${agg.resolved.hostingPlatform}` : "") +
+        ` · ${agg.flows} flows` +
+        (agg.resolved?.classificationStatus === "conflict" ? " · classification conflict" : ""),
     });
   }
 
@@ -461,7 +493,23 @@ export function buildCurrentStateFlowView(options: CurrentStateFlowOptions): Arc
   const laneLabels: Record<string, string> = {};
   for (const zone of ZONE_ORDER) if (present.has(zone)) laneLabels[zone] = ZONE_LABEL[zone];
 
-  return {
+  const fitness = assessTopologyFitness(
+    rows.map((r) => ({ source: str(r.sourceSystem), target: str(r.targetSystem) })),
+  );
+  const conflictCount = nodes.filter((n) => n.roleBasisNote?.includes("resolves to")).length;
+
+  if (!fitness.fitForExecutiveFlow) {
+    limitations.unshift(
+      `This record does not support a defensible relationship view: ${fitness.findings.join(" ")}`,
+    );
+  }
+  if (conflictCount > 0) {
+    limitations.push(
+      `${conflictCount} objects carry a classification conflict between their recorded category and their product identity, and are shown with that conflict stated rather than resolved.`,
+    );
+  }
+
+  const view: ArchitectureView = {
     viewType: "integration_topology",
     audienceLevel,
     layerScheme: "current_state_zones_v1",
@@ -491,4 +539,6 @@ export function buildCurrentStateFlowView(options: CurrentStateFlowOptions): Arc
     },
     limitations,
   };
+
+  return { view, fitness, unclassifiedCount: unclassified, conflictCount };
 }
