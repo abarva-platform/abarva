@@ -73,17 +73,19 @@ data moved — none did.
   - cell-level proposals, authenticated review, exact invalidation
   - canonical overlay merge, provenance, consumer basis policy
   - first three enrichment schemas with deterministic columns computed server-side
+  - freshness and promotion gates
 - New: `src/lib/enterprise-data/intake/` — `enrichment-firewall.ts`,
   `enrichment-proposals.ts`, `canonical-overlay-merge.ts`, `enrichment-schemas.ts`,
-  `deterministic-recomputers.ts`
+  `deterministic-recomputers.ts`, `promotion-gate.ts`
 - Modified: `canonical-tenant-data-build.ts` (generic column passthrough now refuses
   reserved columns), `csv-source-adapter.ts` (reports the real problem instead of
   `source_field_unmapped`, and excludes reserved columns from mapping coverage)
-- Tests: five suites under `tests/behaviors/`, 57 assertions
+- Tests: six suites under `tests/behaviors/`, 79 assertions
 
 ## QA / Validation
 
-- `npx jest tests/behaviors/enrichment` — 57 passed, 5 suites
+- `npx jest tests/behaviors/enrichment tests/behaviors/promotion-gate
+  tests/behaviors/canonical-overlay` — 79 passed, 6 suites
 - `npx jest tests/behaviors src/lib/enterprise-data` — 299 passed, 34 failed; the same 34
   fail on the unmodified base commit. They belong to the in-flight tenant-inventory purge,
   not to this change. Verified by stashing only the two modified files and re-running.
@@ -142,8 +144,8 @@ Open, in the sequence they are planned:
   overlay can actually be approved by a person yet.
 - The consumer basis policy is defined and tested but not enforced at any render path.
   Until it is wired, a future overlay could reach a surface that has not consulted it.
-- No freshness or promotion gate. Nothing yet prevents promoting a snapshot whose
-  approvals were invalidated after the fact.
+- The promotion gate is a function with no caller. It must be wired into whatever performs
+  promotion before it protects anything.
 - No template declares an enrichment column, and the enrichment prompts have not been run
   against a real workbook.
 - One fixture tenant's source files carry topology and join-key problems that must be
