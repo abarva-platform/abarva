@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { BrowseTheData } from "@/components/home/preview/BrowseTheData";
 import { CurrentState } from "@/components/home/preview/CurrentState";
@@ -32,8 +32,34 @@ const TENANT_LABEL: Record<HomePreviewTenantKey, string> = {
 
 type ActiveView = ChapterId | "architecture" | "data-flow" | "current-state" | "browse-the-data" | `tech:${TechObjectType}`;
 
+function resolveHashView(hash: string, bundle: HomeReviewBundle): ActiveView | null {
+  const requested = decodeURIComponent(hash.replace(/^#/, "")).trim();
+  if (!requested) {
+    return null;
+  }
+
+  if (bundle.chapters.some((chapter) => chapter.chapterId === requested)) {
+    return requested as ChapterId;
+  }
+
+  if (requested === "architecture" || requested === "data-flow" || requested === "current-state" || requested === "browse-the-data") {
+    return requested;
+  }
+
+  if (
+    requested.startsWith("tech:") &&
+    bundle.technologyEstate?.recordTypes.some((recordType) => `tech:${recordType.objectType}` === requested)
+  ) {
+    return requested as `tech:${TechObjectType}`;
+  }
+
+  return null;
+}
+
 export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; tenantKey: HomePreviewTenantKey }) {
-  const [activeView, setActiveView] = useState<ActiveView>("executive_brief");
+  const [activeView, setActiveView] = useState<ActiveView>(() =>
+    typeof window === "undefined" ? "executive_brief" : (resolveHashView(window.location.hash, bundle) ?? "executive_brief"),
+  );
 
   const chapters = bundle.chapters;
   const activeChapter = chapters.find((c) => c.chapterId === activeView);
@@ -47,6 +73,31 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
   const integrations = techRecordTypes.find((r) => r.objectType === "data_asset_or_integration");
   const signalPacket = bundle.thesis.signalPacket;
   const visualDatasets = signalPacket.visualDatasets ?? {};
+
+  useEffect(() => {
+    const syncFromHash = () => {
+      const hashView = resolveHashView(window.location.hash, bundle);
+      if (hashView) {
+        setActiveView(hashView);
+      }
+    };
+
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, [bundle]);
+
+  const selectActiveView = (id: string) => {
+    const nextView = resolveHashView(`#${id}`, bundle);
+    if (!nextView) {
+      return;
+    }
+
+    setActiveView(nextView);
+    if (typeof window !== "undefined" && window.location.hash !== `#${id}`) {
+      window.history.replaceState(null, "", `#${id}`);
+    }
+  };
 
   /** Exhibit count lines, computed from the estate rather than asserted. An exhibit whose totals
    * cannot be derived shows no counts line at all -- an estimated total on a governed surface is
@@ -132,7 +183,7 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
           clientLabel={TENANT_LABEL[tenantKey]}
           groups={groups}
           activeId={activeView}
-          onSelect={(id) => setActiveView(id as ActiveView)}
+          onSelect={selectActiveView}
           compiledLine={compiledLine}
         />
 
