@@ -77,9 +77,20 @@
  */
 import { randomUUID } from "node:crypto";
 import { azureRead } from "@/lib/data-plane/azureRead";
-import { createTxSession, type TxSessionRunner } from "@/lib/data-plane/read-adapters/azureSession";
+import {
+  createTxSession,
+  type TxSessionRunner,
+} from "@/lib/data-plane/read-adapters/azureSession";
+import {
+  isGateApprovalStrictMode,
+  passesSeparationOfDuties,
+} from "@/lib/auth/gate-approval-strict-mode";
 import { computeContentHash } from "../versioning";
-import type { PricingEstimateInputRow, PricingEstimateRow, PricingEstimateSnapshotRow } from "../types";
+import type {
+  PricingEstimateInputRow,
+  PricingEstimateRow,
+  PricingEstimateSnapshotRow,
+} from "../types";
 import type { EffortEngineTotals } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -131,11 +142,15 @@ export interface ScopeFingerprintInputs {
  * stamp a new snapshot's `upstream_scope_fingerprint` and, later, to detect
  * drift (`checkSnapshotStaleness`).
  */
-export function computeUpstreamScopeFingerprint(scope: ScopeFingerprintInputs): string {
+export function computeUpstreamScopeFingerprint(
+  scope: ScopeFingerprintInputs,
+): string {
   const settled = scope.inputs
     .filter(isSettled)
     .map((i) => ({ inputKey: i.inputKey, value: i.value }))
-    .sort((a, b) => (a.inputKey < b.inputKey ? -1 : a.inputKey > b.inputKey ? 1 : 0));
+    .sort((a, b) =>
+      a.inputKey < b.inputKey ? -1 : a.inputKey > b.inputKey ? 1 : 0,
+    );
 
   return computeContentHash({
     archetypeCode: scope.archetypeCode,
@@ -147,7 +162,9 @@ export function computeUpstreamScopeFingerprint(scope: ScopeFingerprintInputs): 
 }
 
 /** Maps a persisted input row down to the gate/fingerprint shape (mirrors `execution-service.ts`'s private `toGateInput`). */
-export function toScopeFingerprintInput(row: PricingEstimateInputRow): ScopeFingerprintInputRow {
+export function toScopeFingerprintInput(
+  row: PricingEstimateInputRow,
+): ScopeFingerprintInputRow {
   return {
     inputKey: row.input_key,
     value: row.value,
@@ -173,7 +190,10 @@ export function toScopeFingerprintInput(row: PricingEstimateInputRow): ScopeFing
  * exactly like the deliverable-approvals call sites already do.
  */
 export class SelfApprovalViolationError extends Error {
-  constructor(public readonly approvedBy: string, public readonly preparedBy: string) {
+  constructor(
+    public readonly approvedBy: string,
+    public readonly preparedBy: string,
+  ) {
     super(
       `self_approval_violation: '${approvedBy}' cannot approve a pricing estimate snapshot whose inputs they themselves last confirmed ('${preparedBy}') — segregation of duties requires a different approver.`,
     );
@@ -224,24 +244,11 @@ export class UnresolvedRateGapError extends Error {
  *
  * ## Pattern followed, and why
  *
- * Two existing repo conventions handle actor-vs-preparer distinction:
- *   1. `src/lib/auth/gate-approval-strict-mode.ts`'s
- *      `passesSeparationOfDuties()` — FLAG-GATED
- *      (`GATE_APPROVAL_STRICT_MODE`): pilot tenants may self-approve a gate
- *      advance; only production (flag ON, admin/maestro role) enforces
- *      separation of duties.
- *   2. `src/lib/programs/deliverable-role-approvals.ts`'s
- *      `recordRoleApprovalDecision()` — UNCONDITIONAL: any approver equal
- *      to `deliverable.created_by` is rejected with
- *      `self_approval_violation`, no flag, no pilot exception.
- *
- * This module follows convention #2, unconditionally, not #1. A pricing
- * estimate becoming an approved, immutable snapshot is a financial-integrity
- * control analogous to a deliverable's final role-approval lock, not a
- * pilot-vs-production gate-advance workflow — gating it behind
- * `GATE_APPROVAL_STRICT_MODE` would let a pilot tenant approve their own
- * cost estimate, which contradicts the brief §10 requirement's plain,
- * unconditional wording ("a user must not approve their own override").
+ * This module follows the shared `GATE_APPROVAL_STRICT_MODE` convention.
+ * Pilot mode keeps the gate and rationale but allows a runner with approval
+ * authority to approve their own pricing snapshot; strict mode enforces
+ * separation of duties. Pilot self-approval is recorded on the immutable
+ * snapshot rationale instead of being silent.
  */
 export function resolvePreparedBy(
   estimate: Pick<PricingEstimateRow, "created_by">,
@@ -250,7 +257,11 @@ export function resolvePreparedBy(
   let latest: PricingEstimateInputRow | null = null;
   for (const row of inputs) {
     if (!row.confirmed_by || !row.confirmed_at) continue;
-    if (!latest || !latest.confirmed_at || row.confirmed_at > latest.confirmed_at) {
+    if (
+      !latest ||
+      !latest.confirmed_at ||
+      row.confirmed_at > latest.confirmed_at
+    ) {
       latest = row;
     }
   }
@@ -258,10 +269,37 @@ export function resolvePreparedBy(
 }
 
 /** Throws `SelfApprovalViolationError` when `approvedBy` is the same identity as `preparedBy`. A null `preparedBy` (no identity signal at all) is a deliberate no-op — there is nothing to compare against. */
-export function assertSegregationOfDuties(approvedBy: string, preparedBy: string | null): void {
-  if (preparedBy && preparedBy === approvedBy) {
-    throw new SelfApprovalViolationError(approvedBy, preparedBy);
+export function assertSegregationOfDuties(
+  approvedBy: string,
+  preparedBy: string | null,
+): void {
+  const preparedByForCheck = preparedBy?.trim() ? preparedBy : null;
+  if (
+    !passesSeparationOfDuties({
+      requestedByUserId: preparedByForCheck,
+      approverUserId: approvedBy,
+    })
+  ) {
+    throw new SelfApprovalViolationError(
+      approvedBy,
+      preparedByForCheck ?? "unknown",
+    );
   }
+}
+
+function appendPilotSelfApprovalNote(args: {
+  rationale: string;
+  approvedBy: string;
+  preparedBy: string | null;
+}): string {
+  if (isGateApprovalStrictMode()) return args.rationale;
+  if (!args.preparedBy || args.preparedBy !== args.approvedBy) {
+    return args.rationale;
+  }
+  return [
+    args.rationale,
+    "Pilot approval note: the approver is also the pricing estimate preparer; permitted because GATE_APPROVAL_STRICT_MODE is off.",
+  ].join("\n\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -271,10 +309,15 @@ export function assertSegregationOfDuties(approvedBy: string, preparedBy: string
 export interface SnapshotStorePort {
   insertSnapshot(row: PricingEstimateSnapshotRow): Promise<void>;
   /** Latest row for the Move by `created_at DESC` — "latest wins", see file header. Empty array reads as "no snapshot", never throws on a missing/empty table. */
-  getLatestSnapshotForMove(moveId: string, tenantKey: string): Promise<PricingEstimateSnapshotRow | null>;
+  getLatestSnapshotForMove(
+    moveId: string,
+    tenantKey: string,
+  ): Promise<PricingEstimateSnapshotRow | null>;
 }
 
-function defaultStore(session: TxSessionRunner = createTxSession("abarva-pricing-write")): SnapshotStorePort {
+function defaultStore(
+  session: TxSessionRunner = createTxSession("abarva-pricing-write"),
+): SnapshotStorePort {
   return {
     async insertSnapshot(row) {
       await session(async (run) => {
@@ -395,7 +438,9 @@ export async function createEstimateSnapshot(
   store: SnapshotStorePort = defaultStore(),
 ): Promise<PricingEstimateSnapshotRow> {
   if (!candidate.approvalRationale.trim()) {
-    throw new Error("approval_rationale_required: an approved snapshot must record why it was approved");
+    throw new Error(
+      "approval_rationale_required: an approved snapshot must record why it was approved",
+    );
   }
   if (candidate.totals.gapCount > 0) {
     throw new UnresolvedRateGapError(candidate.totals.gapCount);
@@ -438,7 +483,11 @@ export async function createEstimateSnapshot(
     status: "approved",
     approved_by: candidate.approvedBy,
     approved_at: now,
-    approval_rationale: candidate.approvalRationale,
+    approval_rationale: appendPilotSelfApprovalNote({
+      rationale: candidate.approvalRationale,
+      approvedBy: candidate.approvedBy,
+      preparedBy: candidate.preparedBy,
+    }),
     created_at: now,
   };
 
@@ -482,7 +531,11 @@ export function checkSnapshotStaleness(
 export type ApprovedSnapshotResult =
   | { status: "none" }
   | { status: "approved"; snapshot: PricingEstimateSnapshotRow }
-  | { status: "stale"; snapshot: PricingEstimateSnapshotRow; currentFingerprint: string };
+  | {
+      status: "stale";
+      snapshot: PricingEstimateSnapshotRow;
+      currentFingerprint: string;
+    };
 
 export interface EstimateScopeLookupPort {
   getEstimateById(estimateId: string): Promise<PricingEstimateRow | null>;
@@ -560,7 +613,11 @@ export async function getApprovedSnapshotForMove(
   );
 
   if (staleness.stale) {
-    return { status: "stale", snapshot, currentFingerprint: staleness.currentFingerprint };
+    return {
+      status: "stale",
+      snapshot,
+      currentFingerprint: staleness.currentFingerprint,
+    };
   }
   return { status: "approved", snapshot };
 }

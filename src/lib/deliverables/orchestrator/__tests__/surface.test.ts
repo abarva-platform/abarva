@@ -247,6 +247,120 @@ describe("assembleGovernedEvidence", () => {
     expect(out.evidence[1].evidenceFamily).toBe("enterprise_ai_portfolio");
   });
 
+  it("uses current generated Move artifacts as internal evidence for later phases", async () => {
+    const fakeQuery = (async () => []) as never;
+    const fakeDb = {
+      from(table: string) {
+        if (table === "program_modules") {
+          return {
+            select: () => ({
+              eq: () => ({
+                order: () => ({
+                  order: () => ({
+                    limit: async () => ({ data: [] }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "evidence_ledger") {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  order: () => ({
+                    limit: async () => ({ data: [] }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "program_evidence_reviews") {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  eq: () => ({
+                    limit: async () => ({ data: [] }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "generated_artifacts") {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  is: () => ({
+                    is: () => ({
+                      order: () => ({
+                        limit: async () => ({
+                          data: [
+                            {
+                              id: "artifact-business-case",
+                              quality_score: 0.92,
+                              rendered_at: "2026-08-21T12:00:00Z",
+                              metadata: {
+                                title: "Business Case",
+                                deliverableTypeKey: "business_case",
+                                generationMetrics: {
+                                  sectionCount: 7,
+                                  bodyWordCount: 2200,
+                                },
+                                renderableDoc: {
+                                  executiveSummary:
+                                    "Proceed only with readiness setup; do not claim savings until internal volume evidence is approved.",
+                                  generatedSections: [
+                                    {
+                                      title: "Value boundary",
+                                      bodyMarkdown:
+                                        "The $98.41/min benchmark is external and sensitivity-only. Internal volume is not approved for ROI, NPV, or payback claims.",
+                                    },
+                                  ],
+                                  sourceRegister: [
+                                    { label: "Approved P4 business case" },
+                                    { label: "Approved P4 financial model" },
+                                  ],
+                                },
+                              },
+                            },
+                          ],
+                        }),
+                      }),
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        throw new Error(`unexpected table ${table}`);
+      },
+    } as never;
+
+    const out = await assembleGovernedEvidence(
+      {
+        tenantClientKey: "skyharbor-air",
+        clientId: "client-1",
+        sourceArtifactRef: "move-1",
+        query: "P5 value measurement contract",
+      },
+      { queryTenantContext: fakeQuery, db: fakeDb },
+    );
+
+    expect(out.retrievedCount).toBe(1);
+    expect(out.evidence[0].evidenceFamily).toBe(
+      "generated_artifact:business_case",
+    );
+    expect(out.evidence[0].statement).toMatch(/sensitivity-only/);
+    expect(out.evidence[0].disclosureTier).toBe("internal_only");
+    expect(out.sourceRegister[0].label).toBe("Business Case");
+  });
+
   it("does not use unreviewed program evidence items as move citations", async () => {
     const fakeQuery = (async () => []) as never;
     const fakeDb = {
@@ -643,8 +757,11 @@ describe("runDeliverableForTenant", () => {
         ?.architectureModel,
     ).toBeDefined();
     expect(
-      (persistOpts?.structuredModels as { structuredArchitectureBrief?: unknown })
-        ?.structuredArchitectureBrief,
+      (
+        persistOpts?.structuredModels as {
+          structuredArchitectureBrief?: unknown;
+        }
+      )?.structuredArchitectureBrief,
     ).toEqual(plan);
   });
 

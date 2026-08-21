@@ -89,6 +89,48 @@ function compactText(
     .slice(0, max);
 }
 
+function stripHtml(value: string): string {
+  return value
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function renderableDocSignals(value: unknown): string[] {
+  const doc = sourceRefObject(value);
+  const out: string[] = [];
+  const summary = stringOrNull(doc.executiveSummary);
+  if (summary) out.push(`Executive summary: ${summary}`);
+  const sections = doc.generatedSections;
+  if (Array.isArray(sections)) {
+    for (const section of sections.slice(0, 5)) {
+      const sectionObj = sourceRefObject(section);
+      const title = stringOrNull(sectionObj.title);
+      const body =
+        stringOrNull(sectionObj.bodyMarkdown) ?? stringOrNull(sectionObj.body);
+      const text = compactText([title, body], 450);
+      if (text) out.push(text);
+    }
+  }
+  const sourceRegister = doc.sourceRegister;
+  if (Array.isArray(sourceRegister)) {
+    const labels = sourceRegister
+      .slice(0, 6)
+      .map((entry) => stringOrNull(sourceRefObject(entry).label))
+      .filter((label): label is string => Boolean(label));
+    if (labels.length > 0) out.push(`Source register: ${labels.join("; ")}`);
+  }
+  return out;
+}
+
 function structuredSignals(value: unknown): string[] {
   const structured = sourceRefObject(value);
   const out: string[] = [];
@@ -179,6 +221,58 @@ function evidenceItemToCandidate(
     provenanceRef:
       stringOrNull(row.id) ??
       `program_evidence:${family}:${statement.slice(0, 48)}`,
+  };
+}
+
+function generatedArtifactToCandidate(
+  row: Record<string, unknown>,
+): GovernedCandidateLike | null {
+  const metadata = sourceRefObject(row.metadata);
+  const title =
+    stringOrNull(metadata.title) ??
+    stringOrNull(row.title) ??
+    "Generated Move artifact";
+  const deliverableType =
+    stringOrNull(metadata.deliverableTypeKey) ??
+    stringOrNull(metadata.registryKey) ??
+    stringOrNull(metadata.deliverableType) ??
+    "generated_artifact";
+  const generationMetrics = sourceRefObject(metadata.generationMetrics);
+  const metricsText = compactText(
+    [
+      typeof generationMetrics.sectionCount === "number"
+        ? `Sections: ${generationMetrics.sectionCount}`
+        : null,
+      typeof generationMetrics.bodyWordCount === "number"
+        ? `Words: ${generationMetrics.bodyWordCount}`
+        : null,
+      typeof row.quality_score === "number"
+        ? `Quality score: ${row.quality_score}`
+        : null,
+    ],
+    240,
+  );
+  const statement = compactText(
+    [
+      title,
+      ...renderableDocSignals(metadata.renderableDoc),
+      stringOrNull(metadata.renderedHtml)
+        ? stripHtml(stringOrNull(metadata.renderedHtml) ?? "").slice(0, 900)
+        : null,
+      metricsText || null,
+    ],
+    1400,
+  );
+  if (!statement) return null;
+  return {
+    label: title,
+    statement,
+    evidenceFamily: `generated_artifact:${deliverableType}`,
+    confidence: confidenceFromScore(numberOrDefault(row.quality_score, 0.75)),
+    asOf: stringOrNull(row.rendered_at) ?? undefined,
+    disclosureTier: "internal_only",
+    provenanceRef:
+      stringOrNull(row.id) ?? `generated_artifact:${deliverableType}:${title}`,
   };
 }
 
@@ -324,6 +418,32 @@ async function loadMoveCurrentStateCandidates(
   // Do not fall back to raw program_evidence_items. Uploaded Move evidence must
   // clear the review lifecycle before generation can consume it; otherwise the
   // context extract, readiness, and generated deliverables can diverge.
+
+  // Prior generated artifacts are the reviewed working product of earlier Move
+  // phases. P5 handoff/value contracts must inherit that structured state
+  // instead of requiring an operator to upload it again as external evidence.
+  try {
+    const { data: artifacts } = await db
+      .from("generated_artifacts")
+      .select(
+        "id, quality_score, rendered_at, source_artifact_ref, superseded_by, quarantine_reason, metadata",
+      )
+      .eq("client_id", clientId)
+      .eq("source_artifact_ref", moveId)
+      .is("superseded_by", null)
+      .is("quarantine_reason", null)
+      .order("rendered_at", { ascending: false })
+      .limit(24);
+    if (Array.isArray(artifacts)) {
+      for (const row of artifacts as Array<Record<string, unknown>>) {
+        const candidate = generatedArtifactToCandidate(row);
+        if (candidate) candidates.push(candidate);
+      }
+    }
+  } catch {
+    // Generated-artifact inheritance augments Move context; older databases or
+    // transient reads should degrade rather than block generation.
+  }
 
   const seen = new Set<string>();
   return candidates
