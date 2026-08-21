@@ -16,6 +16,11 @@ system mix, and application roster together; the loaded-context and browse-recor
 fact exploration surfaces; and record browsers use object-specific columns, filters, metrics, and
 detail panes.
 
+Follow-up patch: Home v4 now honors hash-routed evidence pages (`#architecture`, `#data-flow`,
+`#current-state`, `#browse-the-data`, and `#tech:*`) on load and on hash changes. This makes the
+preview pages directly crawlable and prevents browser QA from staying on the default executive
+brief while claiming evidence-page coverage.
+
 ## Layer Impact
 
 Layer 4 Products only. Home preview presentation and QA proof scripts changed; canonical source
@@ -41,6 +46,8 @@ changed.
   selected-record detail pane.
 - Added a boundary test so Home v4 architecture pages cannot import projection builders directly.
 - Added `scripts/qa/render-home-v4-pages-proof.tsx` for page-level browser proof.
+- Home v4 rail selection and hash navigation now stay in sync so direct evidence-page URLs render
+  the selected page rather than the default executive brief.
 
 ## QA / Validation
 
@@ -51,6 +58,9 @@ changed.
 - Chromium crawl covered 12 page proofs across desktop and mobile viewports: 24 checks, zero old
   marker hits, and zero horizontal overflow. Report:
   `/tmp/home-v4-pages-proof-141954/browser-crawl-report.json`.
+- Follow-up validation: `npx eslint src/components/home/v4/HomeV4App.tsx src/components/home/v4/Rail.tsx` passed.
+- Follow-up validation: `npm test -- --runTestsByPath src/components/home/v4/__tests__/architecture-boundary.test.ts tests/behaviors/architecture-view-formats.test.ts --runInBand` passed. Jest still reports existing duplicate manual mock warnings.
+- Follow-up validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false` passed.
 
 ## Rollout Plan
 
