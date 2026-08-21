@@ -12,6 +12,10 @@ import {
   isStrategicMoveRouteId,
   parseStrategicMovePhaseNum,
 } from "@/lib/programs/strategic-move-route-params";
+import {
+  buildPhaseNavigationStatus,
+  parseRequestedPhase,
+} from "@/lib/programs/phase-navigation-status";
 import { requireTenancy } from "@/app/api/v1/programs/_auth";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import {
@@ -38,7 +42,11 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ moveId: string; phaseNum: string }>;
-  searchParams?: Promise<{ focus?: string | string[] }>;
+  searchParams?: Promise<{
+    focus?: string | string[];
+    blockedPhase?: string | string[];
+    phaseLocked?: string | string[];
+  }>;
 }
 
 export default async function StrategicMovePhaseWorkspacePage({
@@ -84,13 +92,21 @@ export default async function StrategicMovePhaseWorkspacePage({
   // would contradict the Overview/Documents/File Cabinet. Redirect forward-
   // looking requests back to the true current phase.
   const currentPhase = move.currentPhase ?? 0;
-  if (parsedPhase > currentPhase) {
+  const blockedPhaseFromQuery =
+    parseRequestedPhase(resolvedSearchParams.blockedPhase) ??
+    parseRequestedPhase(resolvedSearchParams.phaseLocked);
+  const phaseNavigationStatus = buildPhaseNavigationStatus({
+    currentPhase,
+    requestedPhase: parsedPhase,
+    blockedPhase: blockedPhaseFromQuery,
+  });
+  if (!phaseNavigationStatus.canOpenRequestedPhase) {
     // Carry the reason as a query param — a silent redirect here reads as a
     // broken link (bookmarked/shared URLs to a future phase would otherwise
     // land the user somewhere else with zero explanation). StrategicMove-
     // PhaseClient reads this to show a one-time dismissible banner.
     redirect(
-      `/strategic-moves/${moveId}/phase/${currentPhase}?phaseLocked=${parsedPhase}`,
+      `/strategic-moves/${moveId}/phase/${currentPhase}?blockedPhase=${parsedPhase}`,
     );
   }
 
@@ -198,6 +214,7 @@ export default async function StrategicMovePhaseWorkspacePage({
             : undefined
         }
         move={move}
+        phaseNavigationStatus={phaseNavigationStatus}
         phaseNum={parsedPhase}
         phaseTallies={getMovePhaseTallies(move)}
         pricingEngineEnabled={pricingEngineEnabled}
