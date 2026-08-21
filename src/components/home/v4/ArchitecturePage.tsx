@@ -504,6 +504,8 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
         />
       </div>
 
+      <ArchitectureRelationshipCrosswalk slice={slice} />
+
       <div
         style={{
           display: "grid",
@@ -575,6 +577,163 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
         </p>
       </div>
     </section>
+  );
+}
+
+function ArchitectureRelationshipCrosswalk({ slice }: { slice: ArchitectureSlice }) {
+  const isWholeEstate = slice.name === "Whole estate";
+  const cards = [
+    {
+      title: isWholeEstate ? "Functions → cloud / hosting posture" : "System families → cloud / hosting posture",
+      detail: "Applications mapped from business capability to deployment model.",
+      entries: relationshipMatrix(
+        slice.applications,
+        isWholeEstate ? "businessFunction" : "systemCategory",
+        "deploymentModel",
+      ).slice(0, 4),
+    },
+    {
+      title: isWholeEstate ? "Functions → vendor concentration" : "Vendors → criticality",
+      detail: isWholeEstate
+        ? "Supplier exposure by the business capabilities they support."
+        : "Critical-system exposure by supplier inside this capability.",
+      entries: relationshipMatrix(slice.applications, isWholeEstate ? "businessFunction" : "vendor", isWholeEstate ? "vendor" : "criticality").slice(0, 4),
+    },
+    {
+      title: "Ownership → lifecycle posture",
+      detail: "Where accountable owners intersect with current, legacy, and sunset posture.",
+      entries: relationshipMatrix(slice.applications, "businessOwner", "lifecycleState").slice(0, 4),
+    },
+    {
+      title: isWholeEstate ? "Data domains → integration patterns" : "Data domains → platforms",
+      detail: isWholeEstate
+        ? "How recorded domains move through the estate."
+        : "Where this scope's data movements land or run.",
+      entries: relationshipMatrix(slice.integrations, "dataDomain", isWholeEstate ? "integrationType" : "platformOrDatabase").slice(0, 4),
+    },
+  ].filter((card) => card.entries.length > 0);
+
+  if (!cards.length) return null;
+
+  return (
+    <section
+      data-arch-relationships
+      style={{
+        marginTop: 16,
+        border: `1px solid ${V4.ruleStrong}`,
+        borderRadius: 10,
+        background: V4.surface,
+        padding: "16px 16px 18px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+        <div>
+          <span style={eyebrow(V4.blue)}>Enterprise relationship crosswalk</span>
+          <h2
+            style={{
+              margin: "8px 0 0",
+              fontFamily: SERIF,
+              fontSize: "clamp(21px,1.65vw,28px)",
+              fontWeight: 500,
+              letterSpacing: "-0.025em",
+              color: V4.ink,
+            }}
+          >
+            Applications are mapped to owners, vendors, hosting posture, lifecycle, and data movement.
+          </h2>
+        </div>
+        <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.07em", color: V4.slate }}>
+          {slice.count.toLocaleString()} APPS · {slice.integrations.length.toLocaleString()} FLOWS
+        </span>
+      </div>
+      <div
+        data-arch-crosswalk-grid
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,230px),1fr))",
+          gap: 10,
+          marginTop: 14,
+        }}
+      >
+        {cards.map((card) => (
+          <article
+            key={card.title}
+            style={{
+              minWidth: 0,
+              border: `1px solid ${V4.rule}`,
+              borderRadius: 8,
+              background: V4.cream,
+              padding: "13px 14px",
+            }}
+          >
+            <span style={eyebrow(V4.slate)}>{card.title}</span>
+            <p style={{ margin: "7px 0 12px", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.45, color: V4.slate }}>
+              {card.detail}
+            </p>
+            <div style={{ display: "grid", gap: 9 }}>
+              {card.entries.map((entry) => (
+                <RelationshipMiniCard key={entry.leftValue} entry={entry} />
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RelationshipMiniCard({
+  entry,
+}: {
+  entry: { leftValue: string; count: number; rightCounts: Array<[string, number]> };
+}) {
+  const max = Math.max(1, ...entry.rightCounts.map(([, count]) => count));
+  return (
+    <div style={{ minWidth: 0, borderTop: `1px solid ${V4.rule}`, paddingTop: 9 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 8, alignItems: "baseline" }}>
+        <strong
+          title={entry.leftValue}
+          style={{
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            fontFamily: SANS,
+            fontSize: 13,
+            color: V4.ink,
+          }}
+        >
+          {entry.leftValue}
+        </strong>
+        <span style={{ fontFamily: MONO, fontSize: 11, color: V4.ink }}>{entry.count.toLocaleString()}</span>
+      </div>
+      <div style={{ display: "grid", gap: 5, marginTop: 7 }}>
+        {entry.rightCounts.slice(0, 3).map(([label, count]) => (
+          <div key={label} style={{ minWidth: 0 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 30px", gap: 8, alignItems: "baseline" }}>
+              <span
+                title={label}
+                style={{
+                  minWidth: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  fontFamily: SANS,
+                  fontSize: 12,
+                  color: V4.inkSoft,
+                }}
+              >
+                {label}
+              </span>
+              <span style={{ fontFamily: MONO, fontSize: 10.5, color: V4.slate, textAlign: "right" }}>{count}</span>
+            </div>
+            <span style={{ display: "block", height: 3, borderRadius: 99, background: "rgba(12,26,58,0.08)", overflow: "hidden", marginTop: 3 }}>
+              <span style={{ display: "block", width: `${Math.max(6, (count / max) * 100)}%`, height: "100%", background: V4.blue }} />
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -868,6 +1027,36 @@ function topCounts(rows: ApplicationRecord[], field: string): Array<[string, num
     counts.set(value, (counts.get(value) ?? 0) + 1);
   }
   return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+}
+
+function relationshipMatrix(rows: ApplicationRecord[], leftField: string, rightField: string) {
+  const byLeft = new Map<string, Map<string, number>>();
+  for (const row of rows) {
+    const leftValues = splitValues(row[leftField]);
+    const rightValues = splitValues(row[rightField]);
+    for (const left of leftValues) {
+      if (!byLeft.has(left)) byLeft.set(left, new Map());
+      const rights = byLeft.get(left)!;
+      for (const right of rightValues) {
+        rights.set(right, (rights.get(right) ?? 0) + 1);
+      }
+    }
+  }
+  return [...byLeft.entries()]
+    .map(([leftValue, rightCounts]) => ({
+      leftValue,
+      count: [...rightCounts.values()].reduce((sum, count) => sum + count, 0),
+      rightCounts: [...rightCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])),
+    }))
+    .sort((a, b) => b.count - a.count || a.leftValue.localeCompare(b.leftValue));
+}
+
+function splitValues(value: unknown): string[] {
+  const raw = value === null || value === undefined ? "" : String(value);
+  return raw
+    .split(/[;,|]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function text(row: ApplicationRecord, field: string): string {
