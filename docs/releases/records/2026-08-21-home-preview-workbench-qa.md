@@ -59,6 +59,9 @@ changed.
   architecture page so the proof cannot pass with zero data movements or zero platforms.
 - Visual polish follow-up shortened the platform-lane title so the current-state architecture map
   does not force long infrastructure copy into the narrow rightmost lane.
+- Reference-architecture follow-up replaces the simple lane map with a zone-and-arrow data
+  architecture canvas: source zone, ingestion zone, governed lakehouse, intelligence zone, and
+  consumption zone, plus governance/storage/consumer foundation bands.
 
 ## QA / Validation
 
@@ -80,6 +83,13 @@ changed.
   `/tmp/home-v4-pages-proof-archmap-20260821-final/architecture-browser-report.json`. Screenshot:
   `/tmp/home-v4-pages-proof-archmap-20260821-final/meridian-health-architecture-browser.png`.
 - Visual polish validation: `npx eslint src/components/home/v4/ArchitecturePage.tsx` passed.
+- Reference-architecture validation: `npx eslint src/components/home/v4/ArchitecturePage.tsx` passed.
+- Reference-architecture validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false` passed.
+- Reference-architecture validation: `npx tsx scripts/qa/render-home-v4-pages-proof.tsx --out /tmp/home-v4-pages-proof-reference-arch-20260821-final` rendered 16 proof pages.
+- Reference-architecture Chromium proof passed semantic assertions for source/ingestion/governed
+  lakehouse/intelligence/consumption zones, ingest/land/analyze/serve arrows, RAW/ODS/canonical/marts
+  layer terms, foundation bands, explicit architecture boundary, no old workbench label, and zero
+  horizontal overflow. Report: `/tmp/home-v4-pages-proof-reference-arch-20260821-final/reference-architecture-browser-report.json`.
 
 ## Rollout Plan
 
