@@ -62,6 +62,7 @@ const WRITE =
   process.env.TOWER_EVIDENCE_WRITE_APPROVED === "true";
 
 const CLAIM_RULE_VERSION = "tower-value-evidence/v1";
+const provenanceIdForTenant = (tenantKey: string) => `PROV-${tenantKey}-${CLAIM_RULE_VERSION}-${BUILD_VERSION}`;
 
 function gitSha(): string {
   const operatorCommit = process.env.ABARVA_OPERATOR_BRANCH_COMMIT?.trim();
@@ -363,6 +364,7 @@ async function main(): Promise<number> {
     schemaPreflight: null as unknown,
     metricDimension: null as unknown,
     metricDimensionRowsEnsured: 0,
+    metricProvenanceRowsEnsured: 0,
   };
 
   if (WRITE) {
@@ -388,7 +390,7 @@ async function main(): Promise<number> {
         `select table_name, column_name, is_nullable, column_default
            from information_schema.columns
           where table_schema = 'tower'
-            and table_name in ('tracked_subject','metric_observation','value_claim')`,
+            and table_name in ('tracked_subject','metric_provenance','metric_observation','value_claim')`,
       );
 
       /**
@@ -406,6 +408,7 @@ async function main(): Promise<number> {
        */
       const supplied: Record<string, Set<string>> = {
         tracked_subject: new Set(["tenant_key", "subject_ref", "subject_kind", "initiative_ref", "title"]),
+        metric_provenance: new Set(["tenant_key", "provenance_id", "source_system", "source_report", "source_schema", "source_table", "formula", "formula_version", "extraction_method", "last_refreshed", "known_limitations", "data_owner_role", "quality_score", "attestation_status"]),
         metric_observation: new Set(["tenant_key", "observation_id", "subject_ref", "metric_ref", "scenario", "value_num", "period_start", "period_end", "source_result_hash", "provenance_id"]),
         value_claim: new Set(["tenant_key", "claim_id", "subject_ref", "promised_value", "calculated_value", "claim_state", "baseline_observation_id", "target_observation_id", "actual_observation_id", "quality_guardrail_state", "next_gate_owner_role", "claim_rule_version", "outcome_metric_ref", "claim_input_hash"]),
       };
@@ -432,7 +435,7 @@ async function main(): Promise<number> {
            join pg_class t on t.oid = c.conrelid
            join pg_namespace n on n.oid = t.relnamespace
           where n.nspname = 'tower' and c.contype = 'c'
-            and t.relname in ('tracked_subject','metric_observation','value_claim')`,
+            and t.relname in ('tracked_subject','metric_provenance','metric_observation','value_claim')`,
       );
       const allowedFromChecks = (rows: { def: string }[], column: string): Set<string> | null => {
         const def = rows.find((r) => r.def.includes(column))?.def;
@@ -449,7 +452,7 @@ async function main(): Promise<number> {
            join pg_class t on t.oid = c.conrelid
            join pg_namespace n on n.oid = t.relnamespace
           where n.nspname = 'tower' and c.contype = 'f'
-            and t.relname in ('tracked_subject','metric_observation','value_claim')`,
+            and t.relname in ('tracked_subject','metric_provenance','metric_observation','value_claim')`,
       );
 
       const kinds = allowed("subject_kind");
@@ -585,6 +588,45 @@ async function main(): Promise<number> {
           summary.metricDimensionRowsEnsured = names.size;
         }
       }
+      const tenantsWithObservations = [...new Set(uniqueObservations.map((o) => o.tenantKey))];
+      for (const tenantKey of tenantsWithObservations) {
+        await client.query(
+          `insert into tower.metric_provenance
+             (tenant_key, provenance_id, source_system, source_report, source_schema, source_table,
+              formula, formula_version, extraction_method, last_refreshed, known_limitations,
+              data_owner_role, quality_score, attestation_status)
+           values ($1,$2,$3,$4,$5,$6,$7,$8,$9, now(), $10,$11,$12,$13)
+           on conflict (tenant_key, provenance_id) do update
+             set source_system = excluded.source_system,
+                 source_report = excluded.source_report,
+                 source_schema = excluded.source_schema,
+                 source_table = excluded.source_table,
+                 formula = excluded.formula,
+                 formula_version = excluded.formula_version,
+                 extraction_method = excluded.extraction_method,
+                 last_refreshed = excluded.last_refreshed,
+                 known_limitations = excluded.known_limitations,
+                 data_owner_role = excluded.data_owner_role,
+                 quality_score = excluded.quality_score,
+                 attestation_status = excluded.attestation_status`,
+          [
+            tenantKey,
+            provenanceIdForTenant(tenantKey),
+            "canonical_model",
+            "tower_value_evidence",
+            "intelligence_v6",
+            "business_records",
+            "Canonical outcome evidence projection from approved records.",
+            CLAIM_RULE_VERSION,
+            "canonical_projection",
+            "Generated from approved canonical records; source evidence remains in canonical provenance.",
+            "AbarVa operator",
+            0.9,
+            "not_attested",
+          ],
+        );
+        summary.metricProvenanceRowsEnsured += 1;
+      }
       for (const s of uniqueSubjects) {
         await client.query(
           `insert into tower.tracked_subject (tenant_key, subject_ref, subject_kind, initiative_ref, title)
@@ -612,7 +654,7 @@ async function main(): Promise<number> {
            o.periodStart, o.periodEnd, o.sourceResultHash,
            // Provenance identifies which build produced the observation, so a figure on screen can
            // be traced to the run that wrote it rather than only to the row it lives in.
-           `PROV-${CLAIM_RULE_VERSION}-${BUILD_VERSION}`],
+           provenanceIdForTenant(o.tenantKey)],
         );
         summary.rowsWritten += 1;
       }
