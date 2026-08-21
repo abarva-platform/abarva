@@ -497,32 +497,61 @@ async function main(): Promise<number> {
 
       if (referenced) {
         const [refTable, refColumn] = [referenced[1], referenced[2]];
-        const cols = await client.query<{ column_name: string; is_nullable: string; column_default: string | null }>(
-          `select column_name, is_nullable, column_default from information_schema.columns
+        const cols = await client.query<{
+          column_name: string; is_nullable: string; column_default: string | null; data_type: string; udt_name: string;
+        }>(
+          `select column_name, is_nullable, column_default, data_type, udt_name from information_schema.columns
             where table_schema = split_part($1,'.',1) and table_name = split_part($1,'.',2)`,
           [refTable.includes(".") ? refTable : `tower.${refTable}`],
         );
         const mandatory = cols.rows
           .filter((c) => c.is_nullable === "NO" && c.column_default === null)
           .map((c) => c.column_name);
+        const infoByName = new Map(cols.rows.map((c) => [c.column_name, c]));
         const names = new Map<string, string>();
         for (const o of uniqueObservations) {
           if (!names.has(o.metricRef)) names.set(o.metricRef, o.metricRef);
         }
-        // Only the mandatory columns are supplied, plus the key. Anything the dimension marks
-        // optional stays empty rather than being invented to look complete.
-        const supplyable = ["tenant_key", refColumn, "domain", "label", "metric_name", "metric_label", "title", "name", "unit", "metric_unit", "direction", "owner_role"];
-        const insertCols = [...new Set([refColumn, ...mandatory])].filter((c) => supplyable.includes(c));
+        // Only the mandatory columns are supplied, plus the key. Optional fields stay empty, while
+        // required live-schema fields get deterministic placeholders by name/type instead of one
+        // fragile allowlist that discovers the next NOT NULL column only after a failed ACA run.
+        const insertCols = [...new Set([refColumn, ...mandatory])];
+        const metricDefinitionValue = (
+          columnName: string,
+          ref: string,
+          columnInfo: { data_type: string; udt_name: string } | undefined,
+        ): unknown => {
+          const normalized = columnName.toLowerCase();
+          if (columnName === refColumn) return ref;
+          if (normalized === "tenant_key") return TENANTS[0];
+          if (normalized === "domain") return "canonical_projection";
+          if (["label", "metric_name", "metric_label", "title", "name"].includes(normalized)) return ref;
+          if (normalized === "description") return `Canonical projection metric ${ref}`;
+          if (["unit", "metric_unit"].includes(normalized)) return "count";
+          if (normalized === "direction") return "increase";
+          if (normalized === "owner_role") return "canonical-projection";
+          if (
+            ["category", "metric_category", "type", "value_type", "value_kind", "source_system",
+              "evidence_basis", "status"].includes(normalized)
+          ) return "canonical_projection";
+          if (["active", "enabled", "is_active"].includes(normalized)) return true;
+
+          const dataType = columnInfo?.data_type.toLowerCase() ?? "";
+          const udtName = columnInfo?.udt_name.toLowerCase() ?? "";
+          if (dataType === "boolean" || udtName === "bool") return true;
+          if (
+            ["smallint", "integer", "bigint", "numeric", "real", "double precision"].includes(dataType) ||
+            ["int2", "int4", "int8", "numeric", "float4", "float8"].includes(udtName)
+          ) return 0;
+          if (dataType === "date") return "1970-01-01";
+          if (dataType.includes("timestamp") || udtName.startsWith("timestamp")) return "1970-01-01T00:00:00.000Z";
+          if (dataType === "json" || dataType === "jsonb" || udtName === "json" || udtName === "jsonb") return {};
+          if (dataType === "array") return [];
+          return "canonical_projection";
+        };
         if (insertCols.includes(refColumn)) {
           for (const [ref] of names) {
-            const values = insertCols.map((c) =>
-              c === refColumn ? ref
-                : c === "tenant_key" ? TENANTS[0]
-                  : c === "domain" ? "canonical_projection"
-                  : /name|label|title/.test(c) ? ref
-                    : /unit/.test(c) ? "count"
-                      : /direction/.test(c) ? "increase"
-                        : "canonical-projection");
+            const values = insertCols.map((c) => metricDefinitionValue(c, ref, infoByName.get(c)));
             await client.query(
               `insert into ${refTable.includes(".") ? refTable : `tower.${refTable}`} (${insertCols.join(",")})
                values (${insertCols.map((_, i) => `$${i + 1}`).join(",")})
