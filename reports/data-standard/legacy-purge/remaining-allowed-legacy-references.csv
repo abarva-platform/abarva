@@ -109,6 +109,8 @@ archive-path-reference,docs/releases/records/2026-07-15-legacy-template-purge-pr
 synthetic-v-folder-reference,docs/releases/records/2026-07-15-legacy-template-purge-pr1.md,release record
 current-state-pack,docs/releases/records/2026-07-15-legacy-template-purge-pr1.md,release record
 v6-v7-current-state,docs/releases/records/2026-07-16-multi-tenant-v3-cxo-context.md,release record
+legacy-v-dimension-token,docs/releases/records/2026-08-19-v6-v7-dead-code-sweep.md,release record
+legacy-v-file-name,docs/releases/records/2026-08-19-v6-v7-dead-code-sweep.md,release record
 synthetic-v-folder-reference,docs/skyharbor/AZURE_PRIVATE_LOAD_RUNBOOK.md,non-loader historical reference
 synthetic-v-folder-reference,docs/source/SKYHARBOR_DATASET_AND_INGESTION_PLAN.md,non-loader historical reference
 synthetic-v-folder-reference,docs/source/SOURCE_CONTEXT_BUNDLE_TRACE_PROOF_2026-06.md,non-loader historical reference
@@ -511,6 +513,8 @@ synthetic-v-folder-reference,scripts/verify/northstar-context-layer-scaffold.mjs
 old-meridian-datacenter-workbook,src/app/(maestro)/platform/admin/data/page.tsx,non-loader historical reference
 legacy-v-dimension-token,src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/app/api/admin/context-layer/manifest-load/route.ts,non-loader historical reference
+legacy-v-dimension-token,src/app/api/intelligence/ask/route.ts,non-loader historical reference
+legacy-v-file-name,src/app/api/intelligence/ask/route.ts,non-loader historical reference
 synthetic-v-folder-reference,src/components/admin/context-layer/__tests__/CsvUploadConnector.test.tsx,non-loader historical reference
 synthetic-v-folder-reference,src/components/home/__tests__/HomeSurface.test.tsx,non-loader historical reference
 legacy-v-dimension-token,src/components/home/__tests__/HomeSurface.test.tsx,non-loader historical reference
@@ -540,36 +544,21 @@ current-state-pack,src/lib/enterprise-knowledge/narratives/knowledge-narrative-s
 synthetic-v-folder-reference,src/lib/home/__tests__/v6-context-browser.test.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/home/__tests__/v6-context-browser.test.ts,non-loader historical reference
 legacy-v-file-name,src/lib/home/__tests__/v6-context-browser.test.ts,non-loader historical reference
-legacy-v-dimension-token,src/lib/home/__tests__/v7-context-browser.test.ts,non-loader historical reference
-legacy-v-file-name,src/lib/home/__tests__/v7-context-browser.test.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/home/home-knowledge-v4-pack.ts,non-loader historical reference
-synthetic-v-folder-reference,src/lib/home/know/__tests__/v6-home-know-response.test.ts,non-loader historical reference
-legacy-v-dimension-token,src/lib/home/know/__tests__/v7-home-ask.test.ts,non-loader historical reference
-legacy-v-file-name,src/lib/home/know/__tests__/v7-home-ask.test.ts,non-loader historical reference
-v6-v7-current-state,src/lib/home/know/__tests__/v7-home-ask.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/home/know/dossier-source-loader.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/home/know/dossier-source-loader.ts,non-loader historical reference
 legacy-v-file-name,src/lib/home/know/dossier-source-loader.ts,non-loader historical reference
 v6-v7-current-state,src/lib/home/know/dossier-source-loader.ts,non-loader historical reference
-synthetic-v-folder-reference,src/lib/home/know/v6-home-ask.ts,non-loader historical reference
-legacy-v-pack-label,src/lib/home/know/v6-home-ask.ts,non-loader historical reference
-legacy-v-dimension-token,src/lib/home/know/v6-home-ask.ts,non-loader historical reference
-legacy-v-file-name,src/lib/home/know/v6-home-ask.ts,non-loader historical reference
-legacy-v-pack-label,src/lib/home/know/v7-home-ask.ts,non-loader historical reference
-legacy-v-dimension-token,src/lib/home/know/v7-home-ask.ts,non-loader historical reference
+legacy-v-dimension-token,src/lib/home/know/home-know-agent-answer.ts,non-loader historical reference
+legacy-v-file-name,src/lib/home/know/home-know-agent-answer.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/home/v6-context-browser.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/home/v6-context-browser.ts,non-loader historical reference
 legacy-v-file-name,src/lib/home/v6-context-browser.ts,non-loader historical reference
-legacy-v-pack-label,src/lib/home/v7-context-browser.ts,non-loader historical reference
-legacy-v-dimension-token,src/lib/home/v7-context-browser.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/intelligence/__tests__/industrial-cio-backoffice-readiness.test.ts,non-loader historical reference
 legacy-v-file-name,src/lib/intelligence/__tests__/industrial-cio-backoffice-readiness.test.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/intelligence/__tests__/skyharbor-cto-readiness.test.ts,non-loader historical reference
 legacy-v-file-name,src/lib/intelligence/__tests__/skyharbor-cto-readiness.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts,non-loader historical reference
-legacy-v-dimension-token,src/lib/intelligence/ask/retrievers/v7-dossier.test.ts,non-loader historical reference
-legacy-v-file-name,src/lib/intelligence/ask/retrievers/v7-dossier.test.ts,non-loader historical reference
-legacy-v-dimension-token,src/lib/intelligence/ask/retrievers/v7-dossier.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/intelligence/ask/tenant-safety-policy.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/intelligence/binding/all-tenants.json,non-loader historical reference
 synthetic-v-folder-reference,src/lib/intelligence/industrial-cio-backoffice-readiness.ts,non-loader historical reference
@@ -591,8 +580,6 @@ current-state-pack,src/lib/programs/__tests__/move-context-extract.test.ts,non-l
 synthetic-v-folder-reference,src/lib/semantic-dossiers/__tests__/universal-dimension-dossier.test.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/semantic-dossiers/build-universal-dimension-dossier.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/source/vendor-inference-economics.ts,non-loader historical reference
-legacy-v-dimension-token,src/lib/tower/__tests__/v7-tower-projection.test.ts,non-loader historical reference
-legacy-v-dimension-token,src/lib/tower/v7-tower-projection.ts,non-loader historical reference
 synthetic-v-folder-reference,src/scripts/lakeshore/load-cio-tower-facts.ts,non-loader historical reference
 synthetic-v-folder-reference,src/scripts/setup-data/load-apex-p18-data-pack.ts,non-loader historical reference
 synthetic-v-folder-reference,src/scripts/setup-data/verify-apex-p18-data-pack.ts,non-loader historical reference

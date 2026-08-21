@@ -218,6 +218,11 @@ export async function POST(
 
     const mergedValues = { ...currentValues, ...incoming };
     const evaluation = evaluatePhaseCapture(phase, mergedValues);
+    // The normalised values the write loop below actually persists. This is
+    // what the response must report — see the comment on the return.
+    const storedValues: Record<string, string> = Object.fromEntries(
+      evaluation.sections.map((section) => [section.key, section.value]),
+    );
     const markComplete = body.complete === true;
 
     if (markComplete && !evaluation.complete) {
@@ -390,8 +395,24 @@ export async function POST(
       phase,
       persisted: hasEdits || markComplete,
       changedFields: changedSections.map((c) => c.key),
-      revision: computeCaptureRevision(mergedValues),
-      values: mergedValues,
+      // Report what was STORED, not what was sent.
+      //
+      // evaluatePhaseCapture normalises every value (it trims), and it is the
+      // evaluation's values that the write loop above persists. Echoing the
+      // raw request back made this response lie in two ways:
+      //
+      //   1. A client that adopted `values` displayed text the database did
+      //      not hold, so a reload silently changed it while the section still
+      //      reported complete.
+      //   2. `revision` was hashed over the un-normalised values, so it did
+      //      not match the revision the next GET computes from stored state.
+      //      The client echoes this on its next write as `expectedRevision`,
+      //      so the following edit would 409 as a stale revision even though
+      //      nobody else had touched the row.
+      //
+      // Both disappear once the response is derived from the evaluation.
+      revision: computeCaptureRevision(storedValues),
+      values: storedValues,
       savedFields: evaluation.sections
         .filter((section) => section.complete)
         .map((section) => section.key),

@@ -23,6 +23,24 @@ converged:
   repeated writes for as long as the page stayed open;
 - and the control displayed text that a no-store reload would not reproduce.
 
+> **Correction, added after the live proof of this release.** The first two
+> bullets above are wrong, and the third is right for a different reason. The
+> save response echoed the _submitted_ values rather than the stored ones, so
+> the client's persisted copy matched its draft immediately: there was no
+> permanently-dirty section and no repeated-write loop. Measured on the
+> deployed build, a save that changed one value produced exactly one write and
+> zero further writes in the following six seconds.
+>
+> What was real is that the client believed a value the database did not hold.
+> This release's reconciliation is therefore correct but inert on its own —
+> it reconciles against a response that already equals what was sent. It only
+> becomes load-bearing once the response reports stored state, which is the
+> follow-up release `2026-08-20-phase-capture-response-echoes-stored`.
+>
+> The mechanism claimed here was inferred from reading the client, not measured.
+> That is the error: the reasoning was plausible, the code path was real, and it
+> still was not what the running system did.
+
 The fix: after a successful save, adopt the value the server says it stored
 rather than assuming it kept what was sent. A key is only reconciled when its
 draft is still exactly what was sent — if the user typed while the request was
