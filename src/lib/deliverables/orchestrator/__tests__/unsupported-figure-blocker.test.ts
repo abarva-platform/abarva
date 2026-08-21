@@ -143,6 +143,14 @@ describe("legitimate quantitative statements pass", () => {
     ).toBe(false);
   });
 
+  it("allows table-row cautions that keep a per-minute benchmark external", () => {
+    expect(
+      hasUnsupportedBlocker(
+        "| Ungoverned value figures could enter a market test or contract basis; external $98.41/min benchmark must stay external only.",
+      ),
+    ).toBe(false);
+  });
+
   it("does not let an external benchmark label launder an annual savings claim", () => {
     expect(
       hasUnsupportedBlocker(
