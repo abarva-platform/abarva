@@ -53,15 +53,17 @@ data moved — none did.
 - **Layer 3, canonical model** — adds `attributeMetadata` beside `attributes`, keyed by the
   same logical attribute, so every canonical value can state what kind of thing it is.
   Recorded values are unchanged and always outrank a proposal.
-- **Layer 4, products** — no product surface changed. The consumer basis policy is defined
-  and tested but not yet enforced at any render path; wiring it is a later change.
+- **Layer 4, products** — adds one internal route, `/admin/intake-review`, which reads
+  empty. The consumer basis policy is defined and tested but not yet enforced at any
+  render path; wiring it is a later change.
 
 ## Client Applicability
 
 - All clients: no. Nothing in this release alters an existing tenant's data or any rendered
   surface.
 - Specific clients: none. No tenant has been enriched or reprocessed.
-- Internal only: yes — contract, schemas and validators only.
+- Internal only: yes — contract, schemas, validators, and one operator route that has
+  nothing to show yet.
 - Public/demo only: no.
 - Feature flag: none required, because no runtime path yet produces or consumes an overlay.
 
@@ -74,13 +76,17 @@ data moved — none did.
   - canonical overlay merge, provenance, consumer basis policy
   - first three enrichment schemas with deterministic columns computed server-side
   - freshness and promotion gates
+  - review queue read-model and the Steward intake review page
 - New: `src/lib/enterprise-data/intake/` — `enrichment-firewall.ts`,
   `enrichment-proposals.ts`, `canonical-overlay-merge.ts`, `enrichment-schemas.ts`,
-  `deterministic-recomputers.ts`, `promotion-gate.ts`
+  `deterministic-recomputers.ts`, `promotion-gate.ts`, `review-read-model.ts`;
+  `src/components/admin/intake-review/`, `src/app/(maestro)/admin/intake-review/`
 - Modified: `canonical-tenant-data-build.ts` (generic column passthrough now refuses
   reserved columns), `csv-source-adapter.ts` (reports the real problem instead of
   `source_field_unmapped`, and excludes reserved columns from mapping coverage)
-- Tests: six suites under `tests/behaviors/`, 79 assertions
+- Tests: seven suites under `tests/behaviors/`, 89 assertions
+- `scripts/qa/render-intake-review-proof.tsx` — renders the review queue with a fixture
+  covering all four group shapes, so the layout is looked at rather than asserted
 
 ## QA / Validation
 
@@ -119,7 +125,9 @@ images, flags, environment variables, worker jobs, traffic, DNS, or environment 
 - ACA runtime invariant: unaffected
 - Worker image invariant: unaffected
 - Feature/env flag update path: none
-- Live signed-in proof required: no — no user-facing surface changed
+- Live signed-in proof required: not for this release. `/admin/intake-review` renders an
+  empty queue with inert controls and reads no tenant data. It is owed before the page
+  carries real proposals.
 
 ## Rollback Plan
 
@@ -140,8 +148,11 @@ a revert restores prior behaviour exactly. No data migration, no state to unwind
 
 Open, in the sequence they are planned:
 
-- No review interface exists. Approval is a function with no operator surface, so no
-  overlay can actually be approved by a person yet.
+- The review page reads empty and its approve/reject controls are disabled. There is no
+  persistence layer, so no proposal can actually be stored or decided yet. The controls
+  are deliberately inert rather than absent: a reviewer should be able to see the shape of
+  the decision before the mechanism behind it exists, and a control that appears to work
+  is one someone believes.
 - The consumer basis policy is defined and tested but not enforced at any render path.
   Until it is wired, a future overlay could reach a surface that has not consulted it.
 - The promotion gate is a function with no caller. It must be wired into whatever performs
