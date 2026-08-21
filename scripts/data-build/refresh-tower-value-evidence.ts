@@ -546,6 +546,9 @@ async function main(): Promise<number> {
         for (const o of uniqueObservations) {
           if (!names.has(o.metricRef)) names.set(o.metricRef, o.metricRef);
         }
+        for (const c of uniqueClaims) {
+          if (!names.has(c.outcomeMetricRef)) names.set(c.outcomeMetricRef, c.outcomeMetricRef);
+        }
         // Only the mandatory columns are supplied, plus the key. Optional fields stay empty, while
         // required live-schema fields get deterministic placeholders by name/type instead of one
         // fragile allowlist that discovers the next NOT NULL column only after a failed ACA run.
