@@ -17,7 +17,10 @@ import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
-import { buildAvaPhaseInputProposals } from "@/lib/programs/phase-input-draft-proposals";
+import {
+  buildAvaPhaseInputProposals,
+  describeAvaPhaseInputDraftRefusal,
+} from "@/lib/programs/phase-input-draft-proposals";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -96,7 +99,11 @@ export async function POST(
       savePath: `/api/v1/programs/${programId}/phase-capture`,
       refusal:
         proposals.length === 0
-          ? "No cited draft is available from approved upstream phase inputs. Add source context first or write the field manually."
+          ? describeAvaPhaseInputDraftRefusal({
+              phase,
+              currentValues,
+              upstreamValuesByPhase: valuesByPhase,
+            })
           : null,
     });
   } catch (err) {

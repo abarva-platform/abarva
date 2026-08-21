@@ -257,3 +257,18 @@ export function buildAvaPhaseInputProposals(
     input.upstreamValuesByPhase,
   );
 }
+
+export function describeAvaPhaseInputDraftRefusal(
+  input: PhaseInputDraftProposalInput,
+): string | null {
+  const currentValues = input.currentValues ?? {};
+  const missingSections = getPhaseCaptureSections(input.phase).filter(
+    (section) => !clean(currentValues[section.key]),
+  );
+
+  if (missingSections.length === 0) {
+    return `P${input.phase} inputs already have current values. There is nothing empty for aVa to draft; edit a field manually if you want an override.`;
+  }
+
+  return "No cited draft is available from approved upstream phase inputs. Add source context first or write the field manually.";
+}
