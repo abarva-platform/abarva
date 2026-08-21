@@ -5,6 +5,7 @@ const mockBuildMoveEvidenceNeedPackets = jest.fn();
 const mockBuildStageReadinessWorkbookSpec = jest.fn();
 const mockRenderStageReadinessWorkbookXlsx = jest.fn();
 const mockParseStageReadinessWorkbookXlsx = jest.fn();
+const mockPersistStageReadinessProposalSet = jest.fn();
 
 jest.mock("@/app/api/v1/programs/_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -44,6 +45,11 @@ jest.mock("@/lib/programs/stage-readiness-workbooks/xlsx", () => ({
 jest.mock("@/lib/programs/stage-readiness-workbooks/parser", () => ({
   parseStageReadinessWorkbookXlsx: (input: unknown, options: unknown) =>
     mockParseStageReadinessWorkbookXlsx(input, options),
+}));
+
+jest.mock("@/lib/programs/stage-readiness-workbooks/proposals", () => ({
+  persistStageReadinessProposalSet: (input: unknown) =>
+    mockPersistStageReadinessProposalSet(input),
 }));
 
 const params = Promise.resolve({ programId: "move-1" });
@@ -114,6 +120,24 @@ beforeEach(() => {
       errorCount: 0,
     },
   });
+  mockPersistStageReadinessProposalSet.mockResolvedValue({
+    artifactId: "proposal-artifact-1",
+    artifactVersion: 1,
+    blobStored: true,
+    proposalSet: {
+      proposalSetId: "proposal-set-1",
+      summary: {
+        proposalCount: 1,
+        pendingCount: 1,
+        answerStates: {
+          answered: 1,
+          unknown: 0,
+          insufficient_evidence: 0,
+          blank: 0,
+        },
+      },
+    },
+  });
 });
 
 describe("GET /api/v1/programs/[programId]/stage-readiness-workbook", () => {
@@ -180,7 +204,7 @@ describe("GET /api/v1/programs/[programId]/stage-readiness-workbook", () => {
 });
 
 describe("POST /api/v1/programs/[programId]/stage-readiness-workbook", () => {
-  it("parses an uploaded workbook without persisting the responses", async () => {
+  it("stores an uploaded workbook as a pending proposal set without accepting the responses", async () => {
     const { POST } = await import("../route");
     const res = await POST(uploadReq(), { params });
 
@@ -192,10 +216,26 @@ describe("POST /api/v1/programs/[programId]/stage-readiness-workbook", () => {
         moveId: "move-1",
       },
       summary: { totalQuestions: 1, answeredQuestions: 1 },
+      proposalSet: {
+        proposalSetId: "proposal-set-1",
+        artifactId: "proposal-artifact-1",
+        status: "review_required",
+        proposalCount: 1,
+        pendingCount: 1,
+        message:
+          "Workbook responses were stored as pending proposals. They do not feed P2 until accepted.",
+      },
     });
     expect(mockParseStageReadinessWorkbookXlsx).toHaveBeenCalledWith(
       expect.any(Buffer),
       { expectedMoveId: "move-1", expectedPhase: 1 },
+    );
+    expect(mockPersistStageReadinessProposalSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ctx,
+        parsed: expect.objectContaining({ ok: true }),
+        uploadedWorkbookSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      }),
     );
     expect(mockBuildStageReadinessWorkbookSpec).not.toHaveBeenCalled();
     expect(mockRenderStageReadinessWorkbookXlsx).not.toHaveBeenCalled();
@@ -236,7 +276,9 @@ describe("POST /api/v1/programs/[programId]/stage-readiness-workbook", () => {
     await expect(res.json()).resolves.toMatchObject({
       ok: false,
       issues: [expect.objectContaining({ code: "move_mismatch" })],
+      proposalSet: null,
     });
+    expect(mockPersistStageReadinessProposalSet).not.toHaveBeenCalled();
   });
 
   it("rejects requests without a workbook file", async () => {

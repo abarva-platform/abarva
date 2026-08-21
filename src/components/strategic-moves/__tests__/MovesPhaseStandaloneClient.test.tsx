@@ -381,6 +381,13 @@ describe("MovesPhaseStandaloneClient", () => {
                 warningCount: 0,
                 errorCount: 0,
               },
+              proposalSet: {
+                status: "review_required",
+                proposalCount: 2,
+                pendingCount: 2,
+                message:
+                  "Workbook responses were stored as pending proposals. They do not feed P2 until accepted.",
+              },
             }),
           } as Response;
         }
@@ -618,6 +625,9 @@ describe("MovesPhaseStandaloneClient", () => {
       await waitFor(() => {
         expect(screen.getByText(/Parsed 1\/2 responses/)).toBeInTheDocument();
       });
+      expect(
+        screen.getByText(/stored 2\/2 pending proposals/),
+      ).toBeInTheDocument();
       expect(screen.getByText("1/2 required")).toBeInTheDocument();
       expect(global.fetch).toHaveBeenCalledWith(
         `/api/v1/programs/${move.id}/stage-readiness-workbook?phase=1`,
