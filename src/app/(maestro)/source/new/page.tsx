@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getActiveClientRow } from "@/lib/active-client";
 import {
   canonicalClientDisplayName,
   getClientOption,
 } from "@/lib/client-config";
 import { SourceOriginatePage } from "@/components/source/SourceOriginatePage";
 import { buildSourceOptimizeContractHref } from "@/lib/source/optimize-routing";
+import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
 export const metadata: Metadata = { title: "New IT Sourcing Intake · AbarVa" };
 
@@ -19,16 +19,17 @@ export default async function Page({
     opportunityId?: string;
   }>;
 }) {
-  const activeClient = await getActiveClientRow().catch(() => null);
+  const tenant = await resolveTenant().catch(() => null);
   const params = await searchParams;
   if (params.intent === "contract-optimization") {
     redirect(buildSourceOptimizeContractHref(params));
   }
-  const clientOption = getClientOption(activeClient?.key);
+  const clientKey = tenant?.appClientKey ?? null;
+  const clientOption = getClientOption(clientKey);
   const activeClientDisplayName =
     canonicalClientDisplayName({
-      key: activeClient?.key,
-      name: activeClient?.name,
+      key: clientKey,
+      name: tenant?.displayName,
     }) ?? clientOption.name;
 
   return (

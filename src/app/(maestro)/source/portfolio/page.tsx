@@ -7,6 +7,7 @@ import { listSourcingEvents } from "@/lib/source/queries";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { loadSourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
+import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
 export const metadata = { title: "Source Portfolio · AbarVa" };
 export const dynamic = "force-dynamic";
@@ -20,25 +21,27 @@ export default async function SourcePortfolioRoute({
 }: {
   searchParams: Promise<{ stage?: string; status?: string; demo?: string }>;
 }) {
-  const [events, params, activeClient, tenancy] = await Promise.all([
+  const [events, params, activeClient, tenancy, tenant] = await Promise.all([
     listSourcingEvents(),
     searchParams,
     getActiveClientRow().catch(() => null),
     requireTenancy().catch(() => null),
+    resolveTenant().catch(() => null),
   ]);
-  const governedSnapshot = activeClient?.key
-    ? await loadSourceV4WorkspaceSnapshot(activeClient.key).catch(() => null)
+  const clientKey = tenant?.appClientKey ?? activeClient?.key ?? null;
+  const governedSnapshot = clientKey
+    ? await loadSourceV4WorkspaceSnapshot(clientKey).catch(() => null)
     : null;
   const sourceAccessPolicy =
-    activeClient && tenancy
+    clientKey && tenancy
       ? await loadUserSourceAccessPolicy(tenancy, {
-          activeClientKey: activeClient.key,
+          activeClientKey: clientKey,
         }).catch(() => null)
       : null;
   const activeClientDisplayName =
     canonicalClientDisplayName({
-      key: activeClient?.key,
-      name: activeClient?.name,
+      key: clientKey,
+      name: tenant?.displayName ?? activeClient?.name,
     }) ?? "AbarVa Client";
 
   // source_analytics · the redesigned "Your sourcing book" home. Platform
@@ -46,7 +49,7 @@ export default async function SourcePortfolioRoute({
   // fallback remains only as emergency rollback plumbing.
   const sourceAnalyticsEnabled = isFeatureEnabled(
     {
-      clientKey: activeClient?.key ?? null,
+      clientKey,
       clientId: activeClient?.id ?? null,
     },
     "source_analytics",
