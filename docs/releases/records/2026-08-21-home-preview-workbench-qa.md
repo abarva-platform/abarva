@@ -38,6 +38,12 @@ loaded context adds an object-family pulse; browse adds a domain signal map; rec
 stronger workbench/table/detail treatment; and data-flow now falls back to a movement profile when
 end-to-end lineage is not admitted.
 
+CXO relationship pass: the design pass now surfaces the relationships already present in the
+record. Architecture includes an enterprise relationship crosswalk across functions, hosting/cloud
+posture, vendors, owners, lifecycle, and data movement; record browsers behave like slice/dice
+workbenches with dimension selectors; and leadership interview evidence is visible in the briefing
+tabs instead of hidden inside flat signal rows.
+
 ## Layer Impact
 
 Layer 4 Products only. Home preview presentation and QA proof scripts changed; canonical source
@@ -82,6 +88,22 @@ changed.
   saying why an end-to-end data-flow diagram is not yet proven.
 - Page proof harness now renders every briefing chapter as well as evidence and record pages for
   both checked-in tenants, so QA covers 32 Home surfaces instead of only the evidence subset.
+- Briefing chapter tabs now add a CXO readout that summarizes the executive decision, evidence
+  signal, exposure to watch, and generated question without dropping the existing record/follows/
+  exposure/not-established bands.
+- Leadership evidence is now visible inside the chapter surface through a leadership voice strip:
+  interview testimony, consensus themes, and contradiction/conflict counts are pulled from cited
+  interview signals.
+- Architecture now adds an enterprise relationship crosswalk showing recorded mappings from
+  function to hosting/cloud posture, function to vendor exposure, owner to lifecycle posture, and
+  data domain to integration/platform posture. The architecture evidence boundary remains explicit
+  where platform hosting joins are not recorded.
+- Technology record browsers now use slice/dice dimension selectors, distribution strips, and a
+  relationship lens. Applications can be inspected by business function, deployment model, vendor,
+  owner, lifecycle, criticality, and data domain without losing the underlying row table/detail.
+- Mobile record tables collapse to the identity column while preserving full content in the
+  selected-record detail pane and cube controls, preventing spreadsheet-width overflow on phone
+  viewports.
 
 ## QA / Validation
 
@@ -117,6 +139,16 @@ changed.
 - Full Home design-pass validation: `npm test -- --runTestsByPath src/components/home/v4/__tests__/architecture-boundary.test.ts tests/behaviors/architecture-view-formats.test.ts --runInBand` passed. Jest still reports existing duplicate manual mock warnings.
 - Full Home design-pass validation: `npx tsx scripts/qa/render-home-v4-pages-proof.tsx --out /tmp/home-v4-pages-proof-full-design-pass-20260821` rendered 32 Home proof pages: 16 briefing chapters, 8 evidence pages, and 8 technology record pages across both checked-in tenants.
 - Full Home two-viewport Playwright crawl passed 64 checks across desktop and mobile: required page markers present, old architecture markers absent, zero horizontal overflow, and desktop architecture zones visible in-map. Report: `/tmp/home-v4-pages-proof-full-design-pass-20260821/full-home-playwright-viewport-report.json`.
+- CXO relationship-pass validation: `npx eslint src/components/home/v4/ArchitecturePage.tsx src/components/home/v4/ChapterPage.tsx src/components/home/v4/RecordBrowser.tsx` passed.
+- CXO relationship-pass validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false` passed.
+- CXO relationship-pass validation: `npm test -- --runTestsByPath src/components/home/v4/__tests__/architecture-boundary.test.ts tests/behaviors/architecture-view-formats.test.ts --runInBand` passed. Jest still reports existing duplicate manual mock warnings.
+- CXO relationship-pass validation: `npx tsx scripts/qa/render-home-v4-pages-proof.tsx --out /tmp/home-v4-pages-proof-cxo-left-rail-20260821-v4` rendered 32 Home proof pages.
+- CXO relationship-pass browser QA initially failed mobile record-table geometry, then passed after
+  the table collapsed to an identity-column mobile view. Final Playwright crawl passed 64 desktop
+  and mobile checks: chapter CXO readouts, leadership interview strip, architecture relationship
+  crosswalk, architecture zones, record slice/dice controls, record relationship lens, and zero
+  horizontal overflow. Report:
+  `/tmp/home-v4-pages-proof-cxo-left-rail-20260821-v4/full-viewport-crawl.json`.
 
 ## Rollout Plan
 
@@ -146,6 +178,10 @@ persistence.
 - Page proof directory: `/tmp/home-v4-pages-proof-141954`.
 - Browser crawl report: `/tmp/home-v4-pages-proof-141954/browser-crawl-report.json`.
 - Architecture map proof directory: `/tmp/home-v4-pages-proof-archmap-20260821-final`.
+- CXO relationship proof directory: `/tmp/home-v4-pages-proof-cxo-left-rail-20260821-v4`.
+- CXO relationship full crawl report:
+  `/tmp/home-v4-pages-proof-cxo-left-rail-20260821-v4/full-viewport-crawl.json`.
+- CXO relationship spot screenshots are in the proof directory alongside the crawl report.
 
 ## Known Gaps
 

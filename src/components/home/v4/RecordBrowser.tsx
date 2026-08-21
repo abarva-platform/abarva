@@ -22,6 +22,12 @@ interface Metric {
   tone?: string;
 }
 
+interface Dimension {
+  field: string;
+  title: string;
+  counts: Array<[string, number]>;
+}
+
 const COLUMN_PRESETS: Record<TechObjectType, Column[]> = {
   application_system: [
     { key: "systemName", label: "System", width: 250, priority: "core" },
@@ -160,8 +166,10 @@ const PILL_TONE: Record<string, { bg: string; fg: string }> = {
 
 export function RecordBrowser({ recordType }: { recordType: TechRecordType }) {
   const [query, setQuery] = useState("");
-  const [primaryFilter, setPrimaryFilter] = useState<string | null>(null);
-  const [facetFilters, setFacetFilters] = useState<Record<string, string>>({});
+  const [sliceField, setSliceField] = useState<string | null>(null);
+  const [sliceValue, setSliceValue] = useState("all");
+  const [diceField, setDiceField] = useState("none");
+  const [diceValue, setDiceValue] = useState("all");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   const rows = useMemo(() => (recordType.rows ?? []) as RecordRow[], [recordType.rows]);
@@ -172,32 +180,32 @@ export function RecordBrowser({ recordType }: { recordType: TechRecordType }) {
   const columns = useMemo(() => columnsFor(recordType), [recordType]);
   const primaryDimension = recordType.primaryDimension ?? undefined;
 
-  const clusteredPrimary = useMemo(
-    () => (recordType.dimensionCounts ?? []).filter((d) => d.count > 1).slice(0, 14),
-    [recordType.dimensionCounts],
-  );
-
-  const facets = useMemo(() => buildFacets(rows, recordType.objectType, primaryDimension), [
+  const dimensions = useMemo(() => buildDimensions(rows, recordType.objectType, primaryDimension), [
     rows,
     recordType.objectType,
     primaryDimension,
   ]);
+  const defaultSliceField = dimensions[0]?.field ?? primaryDimension ?? "";
+  const activeSliceField = dimensions.some((dimension) => dimension.field === sliceField) ? sliceField! : defaultSliceField;
+  const activeSlice = dimensions.find((dimension) => dimension.field === activeSliceField);
+  const diceDimensions = dimensions.filter((dimension) => dimension.field !== activeSliceField);
+  const activeDiceField = diceDimensions.some((dimension) => dimension.field === diceField) ? diceField : "none";
+  const activeDice = dimensions.find((dimension) => dimension.field === activeDiceField);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return indexedRows.filter(({ row }) => {
-      if (primaryFilter && primaryDimension && bucket(row[primaryDimension]) !== primaryFilter) return false;
-      for (const [field, value] of Object.entries(facetFilters)) {
-        if (bucket(row[field]) !== value) return false;
-      }
+      if (activeSlice && sliceValue !== "all" && bucket(row[activeSlice.field]) !== sliceValue) return false;
+      if (activeDice && diceValue !== "all" && bucket(row[activeDice.field]) !== diceValue) return false;
       if (!q) return true;
       return (recordType.columns ?? Object.keys(row)).some((field) =>
         String(row[field] ?? "").toLowerCase().includes(q),
       );
     });
-  }, [facetFilters, indexedRows, primaryDimension, primaryFilter, query, recordType.columns]);
+  }, [activeDice, activeSlice, diceValue, indexedRows, query, recordType.columns, sliceValue]);
 
   const shown = filtered.slice(0, 120);
+  const filteredRows = useMemo(() => filtered.map(({ row }) => row), [filtered]);
   const selected = filtered.find((r) => r.key === selectedKey) ?? filtered[0] ?? indexedRows[0];
   const metrics = useMemo(() => buildMetrics(rows, recordType.objectType, primaryDimension), [
     rows,
@@ -205,21 +213,12 @@ export function RecordBrowser({ recordType }: { recordType: TechRecordType }) {
     primaryDimension,
   ]);
   const fieldCount = recordType.columns?.length ?? Object.keys(rows[0] ?? {}).length;
-  const activeFilterCount = Number(Boolean(primaryFilter)) + Object.keys(facetFilters).length + Number(Boolean(query.trim()));
-
-  function toggleFacet(field: string, value: string) {
-    setFacetFilters((current) => {
-      const next = { ...current };
-      if (next[field] === value) delete next[field];
-      else next[field] = value;
-      return next;
-    });
-  }
+  const activeFilterCount = Number(sliceValue !== "all") + Number(diceValue !== "all") + Number(Boolean(query.trim()));
 
   function clearFilters() {
     setQuery("");
-    setPrimaryFilter(null);
-    setFacetFilters({});
+    setSliceValue("all");
+    setDiceValue("all");
   }
 
   return (
@@ -232,7 +231,12 @@ export function RecordBrowser({ recordType }: { recordType: TechRecordType }) {
         }
         @media (max-width: 760px) {
           [data-record-metrics] { grid-template-columns: 1fr !important; }
-          [data-record-controls] { grid-template-columns: 1fr !important; }
+          [data-record-controls], [data-cube-controls] { grid-template-columns: 1fr !important; }
+          [data-cube-frame] { grid-template-columns: 1fr !important; }
+          [data-relationship-header] { grid-template-columns: 1fr !important; }
+          table[data-records] { min-width: 0 !important; }
+          table[data-records] th:not([data-priority="core"]),
+          table[data-records] td:not([data-priority="core"]) { display: none; }
         }
       `}</style>
 
@@ -257,6 +261,65 @@ export function RecordBrowser({ recordType }: { recordType: TechRecordType }) {
         ))}
       </section>
 
+      <section data-cube-frame style={cubeFrameStyle}>
+        <div style={{ minWidth: 0 }}>
+          <span style={eyebrow(V4.green)}>Slice / dice viewer</span>
+          <h2 style={cubeTitleStyle}>Explore this record as a governed cube.</h2>
+          <p style={cubeTextStyle}>
+            Pick dimensions to narrow the estate without losing the underlying rows. The table below remains
+            the full source projection for the current slice.
+          </p>
+        </div>
+        <div data-cube-controls style={cubeControlsStyle}>
+          <DimensionSelect
+            label="Slice by"
+            value={activeSliceField}
+            options={dimensions}
+            onChange={(next) => {
+              setSliceField(next);
+              setSliceValue("all");
+              if (next === diceField) {
+                setDiceField("none");
+                setDiceValue("all");
+              }
+            }}
+          />
+          <ValueSelect
+            label="Slice value"
+            value={sliceValue}
+            counts={activeSlice?.counts ?? []}
+            onChange={setSliceValue}
+          />
+          <DimensionSelect
+            label="Dice by"
+            value={activeDiceField}
+            options={diceDimensions}
+            includeNone
+            onChange={(next) => {
+              setDiceField(next);
+              setDiceValue("all");
+            }}
+          />
+          <ValueSelect
+            label="Dice value"
+            value={diceValue}
+            counts={activeDice?.counts ?? []}
+            disabled={activeDiceField === "none"}
+            onChange={setDiceValue}
+          />
+        </div>
+        {activeSlice ? (
+          <DistributionStrip
+            title={activeSlice.title}
+            counts={activeSlice.counts}
+            activeValue={sliceValue}
+            onSelect={setSliceValue}
+          />
+        ) : null}
+      </section>
+
+      <RelationshipLens objectType={recordType.objectType} rows={filteredRows} />
+
       <div data-record-controls style={controlsStyle}>
         <input
           type="search"
@@ -276,29 +339,6 @@ export function RecordBrowser({ recordType }: { recordType: TechRecordType }) {
           ) : null}
         </div>
       </div>
-
-      {primaryDimension && clusteredPrimary.length > 0 ? (
-        <section style={primaryBandStyle}>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, marginBottom: 12 }}>
-            <span style={eyebrow(V4.slate)}>{labelFor(primaryDimension)}</span>
-            <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}>
-              {(recordType.dimensionCounts?.length ?? 0).toLocaleString()} values
-            </span>
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            <FilterChip label="All" count={rows.length} active={!primaryFilter} onClick={() => setPrimaryFilter(null)} />
-            {clusteredPrimary.map((item) => (
-              <FilterChip
-                key={item.value}
-                label={item.value}
-                count={item.count}
-                active={primaryFilter === item.value}
-                onClick={() => setPrimaryFilter(primaryFilter === item.value ? null : item.value)}
-              />
-            ))}
-          </div>
-        </section>
-      ) : null}
 
       <div data-record-layout style={layoutStyle}>
         <section style={{ minWidth: 0 }}>
@@ -361,18 +401,14 @@ export function RecordBrowser({ recordType }: { recordType: TechRecordType }) {
         </section>
 
         <aside data-detail-pane style={detailPaneStyle}>
-          <div style={{ display: "grid", gap: 22 }}>
-            {facets.map((facet) => (
-              <Facet
-                key={facet.field}
-                title={facet.title}
-                field={facet.field}
-                counts={facet.counts}
-                activeValue={facetFilters[facet.field] ?? null}
-                onToggle={toggleFacet}
-              />
-            ))}
-          </div>
+          <SliceSummary
+            shown={filtered.length}
+            total={rows.length}
+            slice={activeSlice}
+            sliceValue={sliceValue}
+            dice={activeDice}
+            diceValue={diceValue}
+          />
 
           {selected ? (
             <SelectedRecord
@@ -457,17 +493,17 @@ function buildMetrics(rows: RecordRow[], objectType: TechObjectType, primaryDime
   ];
 }
 
-function buildFacets(rows: RecordRow[], objectType: TechObjectType, primaryDimension?: string) {
+function buildDimensions(rows: RecordRow[], objectType: TechObjectType, primaryDimension?: string): Dimension[] {
   const preferred: Partial<Record<TechObjectType, string[]>> = {
     application_system: ["lifecycleState", "criticality", "deploymentModel", "vendor"],
     vendor_contract: ["riskRating", "commercialModel", "autoRenewFlag", "contractOwner"],
     infrastructure_platform: ["platformType", "hostingModel", "criticality", "lifecycleState"],
     data_asset_or_integration: ["integrationType", "refreshFrequency", "qualityStatus", "regulatedDataFlag"],
   };
-  return (preferred[objectType] ?? [])
-    .filter((field) => field !== primaryDimension)
-    .map((field) => ({ field, title: labelFor(field), counts: countsFor(rows, field).slice(0, 7) }))
-    .filter((facet) => facet.counts.length > 1);
+  const fields = unique([primaryDimension, ...(preferred[objectType] ?? [])].filter(Boolean) as string[]);
+  return fields
+    .map((field) => ({ field, title: labelFor(field), counts: countsFor(rows, field) }))
+    .filter((dimension) => dimension.counts.length > 1);
 }
 
 function countsFor(rows: RecordRow[], field: string): Array<[string, number]> {
@@ -480,87 +516,264 @@ function countsFor(rows: RecordRow[], field: string): Array<[string, number]> {
   return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 }
 
-function Facet({
+function unique(values: string[]): string[] {
+  return [...new Set(values)];
+}
+
+function DimensionSelect({
+  label,
+  value,
+  options,
+  includeNone,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: Dimension[];
+  includeNone?: boolean;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label style={selectLabelStyle}>
+      <span>{label}</span>
+      <select value={value} onChange={(event) => onChange(event.target.value)} style={cubeSelectStyle}>
+        {includeNone ? <option value="none">No second dimension</option> : null}
+        {options.map((option) => (
+          <option key={option.field} value={option.field}>
+            {option.title}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function ValueSelect({
+  label,
+  value,
+  counts,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  counts: Array<[string, number]>;
+  disabled?: boolean;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label style={selectLabelStyle}>
+      <span>{label}</span>
+      <select value={disabled ? "all" : value} disabled={disabled} onChange={(event) => onChange(event.target.value)} style={cubeSelectStyle}>
+        <option value="all">All values</option>
+        {counts.map(([option, count]) => (
+          <option key={option} value={option}>
+            {humanise(option)} ({count.toLocaleString()})
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function DistributionStrip({
   title,
-  field,
   counts,
   activeValue,
-  onToggle,
+  onSelect,
 }: {
   title: string;
-  field: string;
   counts: Array<[string, number]>;
-  activeValue: string | null;
-  onToggle: (field: string, value: string) => void;
+  activeValue: string;
+  onSelect: (value: string) => void;
 }) {
-  const max = Math.max(1, ...counts.map(([, count]) => count));
+  const shown = counts.slice(0, 8);
+  const max = Math.max(1, ...shown.map(([, count]) => count));
   return (
-    <section>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
-        <span style={eyebrow(V4.slate)}>{title}</span>
-        {activeValue ? <span style={{ fontFamily: MONO, fontSize: 11, color: V4.blue }}>filtered</span> : null}
+    <div style={distributionStyle}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+        <span style={eyebrow(V4.slate)}>{title} distribution</span>
+        <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}>{counts.length.toLocaleString()} values</span>
       </div>
-      <div style={{ display: "grid", gap: 5 }}>
-        {counts.map(([label, count]) => {
-          const active = activeValue === label;
-          return (
-            <button
-              key={label}
-              type="button"
-              onClick={() => onToggle(field, label)}
-              aria-pressed={active}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "minmax(0,1fr) 44px",
-                gap: 8,
-                alignItems: "center",
-                border: "none",
-                borderRadius: 5,
-                background: active ? "rgba(0,102,204,0.08)" : "transparent",
-                padding: "5px 6px",
-                textAlign: "left",
-                cursor: "pointer",
-              }}
-            >
-              <span style={{ minWidth: 0 }}>
-                <span style={facetLabelStyle} title={label}>{humanise(label)}</span>
-                <span style={facetBarTrackStyle}>
-                  <span style={{ ...facetBarStyle, width: `${(count / max) * 100}%` }} />
-                </span>
-              </span>
-              <span style={facetCountStyle}>{count.toLocaleString()}</span>
-            </button>
-          );
-        })}
+      <div style={distributionGridStyle}>
+        <button type="button" onClick={() => onSelect("all")} style={{ ...distributionButtonStyle, borderColor: activeValue === "all" ? V4.blue : V4.rule }}>
+          <span style={distributionLabelStyle}>All values</span>
+          <span style={distributionTrackStyle}><span style={{ ...distributionFillStyle, width: "100%" }} /></span>
+        </button>
+        {shown.map(([label, count]) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => onSelect(activeValue === label ? "all" : label)}
+            style={{ ...distributionButtonStyle, borderColor: activeValue === label ? V4.blue : V4.rule }}
+          >
+            <span style={distributionLabelStyle} title={label}>{humanise(label)}</span>
+            <span style={distributionTrackStyle}>
+              <span style={{ ...distributionFillStyle, width: `${Math.max(7, (count / max) * 100)}%` }} />
+            </span>
+            <span style={distributionCountStyle}>{count.toLocaleString()}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SliceSummary({
+  shown,
+  total,
+  slice,
+  sliceValue,
+  dice,
+  diceValue,
+}: {
+  shown: number;
+  total: number;
+  slice?: Dimension;
+  sliceValue: string;
+  dice?: Dimension;
+  diceValue: string;
+}) {
+  return (
+    <section style={sliceSummaryStyle}>
+      <span style={eyebrow(V4.green)}>Current slice</span>
+      <strong style={sliceSummaryValueStyle}>{shown.toLocaleString()}</strong>
+      <span style={sliceSummaryLabelStyle}>of {total.toLocaleString()} records shown</span>
+      <div style={sliceRuleStyle} />
+      <SummaryRow label={slice?.title ?? "Slice"} value={sliceValue === "all" ? "All values" : humanise(sliceValue)} />
+      <SummaryRow label={dice?.title ?? "Dice"} value={!dice || diceValue === "all" ? "All values" : humanise(diceValue)} />
+    </section>
+  );
+}
+
+function RelationshipLens({ objectType, rows }: { objectType: TechObjectType; rows: RecordRow[] }) {
+  const pairs = relationshipPairsFor(objectType, rows);
+  const [selectedPair, setSelectedPair] = useState(pairs[0]?.key ?? "");
+  const activePair = pairs.find((pair) => pair.key === selectedPair) ?? pairs[0];
+  if (!activePair) return null;
+  const matrix = buildRelationshipMatrix(rows, activePair.left, activePair.right).slice(0, 8);
+
+  return (
+    <section style={relationshipLensStyle}>
+      <div data-relationship-header style={relationshipHeaderStyle}>
+        <div>
+          <span style={eyebrow(V4.blue)}>Relationship lens</span>
+          <h2 style={relationshipTitleStyle}>{activePair.title}</h2>
+          <p style={relationshipTextStyle}>{activePair.caption}</p>
+        </div>
+        <label style={{ ...selectLabelStyle, minWidth: 240 }}>
+          <span>Relationship</span>
+          <select value={activePair.key} onChange={(event) => setSelectedPair(event.target.value)} style={cubeSelectStyle}>
+            {pairs.map((pair) => (
+              <option key={pair.key} value={pair.key}>
+                {pair.title}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div style={relationshipGridStyle}>
+        {matrix.map((entry) => (
+          <RelationshipCard key={entry.leftValue} entry={entry} />
+        ))}
       </div>
     </section>
   );
 }
 
-function FilterChip({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
+function RelationshipCard({
+  entry,
+}: {
+  entry: { leftValue: string; count: number; rightCounts: Array<[string, number]> };
+}) {
+  const max = Math.max(1, ...entry.rightCounts.map(([, count]) => count));
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      style={{
-        border: `1px solid ${active ? V4.navy : V4.rule}`,
-        borderRadius: 999,
-        background: active ? V4.navy : V4.surface,
-        color: active ? V4.paper : V4.inkSoft,
-        padding: "7px 11px",
-        display: "inline-flex",
-        gap: 8,
-        alignItems: "baseline",
-        fontFamily: SANS,
-        fontSize: 12.5,
-        cursor: "pointer",
-      }}
-    >
-      <span style={{ maxWidth: 240, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{humanise(label)}</span>
-      <span style={{ fontFamily: MONO, fontSize: 11, opacity: 0.74 }}>{count.toLocaleString()}</span>
-    </button>
+    <article style={relationshipCardStyle}>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 10, alignItems: "baseline" }}>
+        <strong style={relationshipCardTitleStyle} title={entry.leftValue}>{humanise(entry.leftValue)}</strong>
+        <span style={relationshipCardCountStyle}>{entry.count.toLocaleString()}</span>
+      </div>
+      <div style={{ display: "grid", gap: 7, marginTop: 12 }}>
+        {entry.rightCounts.slice(0, 4).map(([label, count]) => (
+          <div key={label}>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 34px", gap: 8, alignItems: "baseline" }}>
+              <span style={relationshipSubLabelStyle} title={label}>{humanise(label)}</span>
+              <span style={relationshipSubCountStyle}>{count.toLocaleString()}</span>
+            </div>
+            <span style={distributionTrackStyle}>
+              <span style={{ ...distributionFillStyle, width: `${Math.max(7, (count / max) * 100)}%` }} />
+            </span>
+          </div>
+        ))}
+      </div>
+    </article>
   );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={summaryRowStyle}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function relationshipPairsFor(objectType: TechObjectType, rows: RecordRow[]) {
+  const candidates: Record<TechObjectType, Array<{ key: string; title: string; caption: string; left: string; right: string }>> = {
+    application_system: [
+      { key: "function-vendor", title: "Functions mapped to vendors", caption: "Which third parties sit under each business capability.", left: "businessFunction", right: "vendor" },
+      { key: "function-hosting", title: "Functions mapped to hosting", caption: "Where capability support is deployed: SaaS, cloud, on-prem, or hybrid.", left: "businessFunction", right: "deploymentModel" },
+      { key: "owner-lifecycle", title: "Owners mapped to lifecycle", caption: "Where ownership intersects with legacy, current, and sunset posture.", left: "businessOwner", right: "lifecycleState" },
+      { key: "vendor-criticality", title: "Vendors mapped to criticality", caption: "Which vendors support the most critical systems in the selected slice.", left: "vendor", right: "criticality" },
+      { key: "domain-function", title: "Data domains mapped to functions", caption: "How data domains cluster around business capabilities.", left: "dataDomains", right: "businessFunction" },
+    ],
+    data_asset_or_integration: [
+      { key: "source-target", title: "Sources mapped to targets", caption: "The recorded system-to-system movement shape.", left: "sourceSystem", right: "targetSystem" },
+      { key: "domain-mechanism", title: "Domains mapped to mechanisms", caption: "Which integration patterns carry each data domain.", left: "dataDomain", right: "integrationType" },
+      { key: "owner-quality", title: "Data owners mapped to quality", caption: "Where stewardship intersects with quality posture.", left: "dataOwner", right: "qualityStatus" },
+    ],
+    infrastructure_platform: [
+      { key: "hosting-stack", title: "Hosting mapped to stack", caption: "How platforms distribute across hosting model and technology stack.", left: "hostingModel", right: "technologyStack" },
+      { key: "owner-criticality", title: "Owners mapped to criticality", caption: "Which operational owners carry the most critical platforms.", left: "operationalOwner", right: "criticality" },
+      { key: "type-lifecycle", title: "Platform types mapped to lifecycle", caption: "Where aging posture appears across infrastructure families.", left: "platformType", right: "lifecycleState" },
+    ],
+    vendor_contract: [
+      { key: "vendor-functions", title: "Vendors mapped to functions", caption: "Which functions are supported by each supplier relationship.", left: "vendorName", right: "supportedFunctions" },
+      { key: "owner-risk", title: "Contract owners mapped to risk", caption: "Where commercial ownership intersects with risk rating.", left: "contractOwner", right: "riskRating" },
+      { key: "service-commercial", title: "Services mapped to commercial model", caption: "How service families map to spend model and terms.", left: "serviceCategory", right: "commercialModel" },
+    ],
+  };
+  return candidates[objectType].filter((pair) => rows.some((row) => bucket(row[pair.left]) !== "(not specified)" && bucket(row[pair.right]) !== "(not specified)"));
+}
+
+function buildRelationshipMatrix(rows: RecordRow[], leftField: string, rightField: string) {
+  const byLeft = new Map<string, Map<string, number>>();
+  for (const row of rows) {
+    const leftValues = splitMultiValue(row[leftField]);
+    const rightValues = splitMultiValue(row[rightField]);
+    for (const left of leftValues) {
+      if (!byLeft.has(left)) byLeft.set(left, new Map());
+      const target = byLeft.get(left)!;
+      for (const right of rightValues) target.set(right, (target.get(right) ?? 0) + 1);
+    }
+  }
+  return [...byLeft.entries()]
+    .map(([leftValue, rightMap]) => ({
+      leftValue,
+      count: [...rightMap.values()].reduce((sum, count) => sum + count, 0),
+      rightCounts: [...rightMap.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])),
+    }))
+    .sort((a, b) => b.count - a.count || a.leftValue.localeCompare(b.leftValue));
+}
+
+function splitMultiValue(value: unknown): string[] {
+  const text = bucket(value);
+  if (text === "(not specified)") return [];
+  return text
+    .split(/[;,|]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function SelectedRecord({
@@ -766,12 +979,208 @@ const clearButtonStyle: CSSProperties = {
   cursor: "pointer",
 };
 
-const primaryBandStyle: CSSProperties = {
-  marginTop: 20,
-  padding: "16px 18px 18px",
+const cubeFrameStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(240px,0.42fr) minmax(0,0.58fr)",
+  gap: 18,
+  marginTop: 24,
+  border: `1px solid ${V4.rule}`,
+  borderTop: `5px solid ${V4.green}`,
+  borderRadius: 10,
+  background: "linear-gradient(120deg,rgba(255,255,255,0.95),rgba(245,241,235,0.72))",
+  padding: "18px 18px 16px",
+  boxShadow: "0 14px 32px rgba(12,26,58,0.045)",
+};
+
+const cubeTitleStyle: CSSProperties = {
+  margin: "8px 0 0",
+  fontFamily: SERIF,
+  fontSize: "clamp(21px,1.8vw,28px)",
+  lineHeight: 1.15,
+  letterSpacing: "-0.026em",
+  fontWeight: 500,
+  color: V4.ink,
+};
+
+const cubeTextStyle: CSSProperties = {
+  margin: "10px 0 0",
+  fontFamily: SANS,
+  fontSize: 13.8,
+  lineHeight: 1.55,
+  color: V4.slate,
+  maxWidth: "54ch",
+};
+
+const cubeControlsStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2,minmax(0,1fr))",
+  gap: 10,
+  minWidth: 0,
+};
+
+const selectLabelStyle: CSSProperties = {
+  display: "grid",
+  gap: 6,
+  minWidth: 0,
+  fontFamily: MONO,
+  fontSize: 10.5,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: V4.slate,
+};
+
+const cubeSelectStyle: CSSProperties = {
+  minWidth: 0,
+  width: "100%",
+  border: `1px solid ${V4.ruleStrong}`,
+  borderRadius: 7,
+  background: V4.surface,
+  color: V4.ink,
+  fontFamily: SANS,
+  fontSize: 13,
+  letterSpacing: 0,
+  textTransform: "none",
+  padding: "9px 10px",
+};
+
+const distributionStyle: CSSProperties = {
+  gridColumn: "1 / -1",
+  borderTop: `1px solid ${V4.rule}`,
+  paddingTop: 14,
+};
+
+const distributionGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,150px),1fr))",
+  gap: 8,
+  marginTop: 10,
+};
+
+const distributionButtonStyle: CSSProperties = {
+  minWidth: 0,
+  border: "1px solid",
+  borderRadius: 8,
+  background: V4.surface,
+  padding: "9px 10px",
+  textAlign: "left",
+  cursor: "pointer",
+};
+
+const distributionLabelStyle: CSSProperties = {
+  display: "block",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  fontFamily: SANS,
+  fontSize: 12.2,
+  color: V4.inkSoft,
+};
+
+const distributionTrackStyle: CSSProperties = {
+  display: "block",
+  height: 4,
+  background: V4.cream,
+  borderRadius: 99,
+  overflow: "hidden",
+  marginTop: 7,
+};
+
+const distributionFillStyle: CSSProperties = {
+  display: "block",
+  height: "100%",
+  borderRadius: 99,
+  background: V4.blue,
+};
+
+const distributionCountStyle: CSSProperties = {
+  display: "block",
+  marginTop: 6,
+  fontFamily: MONO,
+  fontSize: 11,
+  color: V4.slate,
+};
+
+const relationshipLensStyle: CSSProperties = {
+  marginTop: 18,
   border: `1px solid ${V4.rule}`,
   borderRadius: 10,
-  background: "linear-gradient(90deg,rgba(255,255,255,0.86),rgba(0,102,204,0.045))",
+  background: "rgba(255,255,255,0.78)",
+  padding: "18px 18px 20px",
+};
+
+const relationshipHeaderStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0,1fr) auto",
+  gap: 18,
+  alignItems: "start",
+};
+
+const relationshipTitleStyle: CSSProperties = {
+  margin: "8px 0 0",
+  fontFamily: SERIF,
+  fontSize: "clamp(21px,1.7vw,27px)",
+  fontWeight: 500,
+  lineHeight: 1.16,
+  letterSpacing: "-0.026em",
+  color: V4.ink,
+};
+
+const relationshipTextStyle: CSSProperties = {
+  margin: "8px 0 0",
+  fontFamily: SANS,
+  fontSize: 13.5,
+  lineHeight: 1.52,
+  color: V4.slate,
+};
+
+const relationshipGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,230px),1fr))",
+  gap: 10,
+  marginTop: 16,
+};
+
+const relationshipCardStyle: CSSProperties = {
+  minWidth: 0,
+  border: `1px solid ${V4.rule}`,
+  borderTop: `4px solid ${V4.blue}`,
+  borderRadius: 8,
+  background: V4.surface,
+  padding: "13px 14px 14px",
+  boxShadow: "0 10px 24px rgba(12,26,58,0.04)",
+};
+
+const relationshipCardTitleStyle: CSSProperties = {
+  minWidth: 0,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  fontFamily: SANS,
+  fontSize: 13.5,
+  lineHeight: 1.25,
+  color: V4.ink,
+};
+
+const relationshipCardCountStyle: CSSProperties = {
+  fontFamily: MONO,
+  fontSize: 12,
+  color: V4.blue,
+};
+
+const relationshipSubLabelStyle: CSSProperties = {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  fontFamily: SANS,
+  fontSize: 12,
+  color: V4.inkSoft,
+};
+
+const relationshipSubCountStyle: CSSProperties = {
+  fontFamily: MONO,
+  fontSize: 10.5,
+  color: V4.slate,
+  textAlign: "right",
 };
 
 const layoutStyle: CSSProperties = {
@@ -847,6 +1256,53 @@ const detailPaneStyle: CSSProperties = {
   gap: 26,
 };
 
+const sliceSummaryStyle: CSSProperties = {
+  border: `1px solid ${V4.rule}`,
+  borderTop: `4px solid ${V4.green}`,
+  borderRadius: 10,
+  background: V4.surface,
+  padding: "15px 17px 17px",
+  boxShadow: "0 14px 32px rgba(12,26,58,0.045)",
+};
+
+const sliceSummaryValueStyle: CSSProperties = {
+  display: "block",
+  marginTop: 10,
+  fontFamily: SERIF,
+  fontSize: 34,
+  lineHeight: 1,
+  letterSpacing: "-0.035em",
+  color: V4.ink,
+};
+
+const sliceSummaryLabelStyle: CSSProperties = {
+  display: "block",
+  marginTop: 5,
+  fontFamily: MONO,
+  fontSize: 10.5,
+  letterSpacing: "0.07em",
+  textTransform: "uppercase",
+  color: V4.slate,
+};
+
+const sliceRuleStyle: CSSProperties = {
+  height: 1,
+  background: V4.rule,
+  margin: "14px 0",
+};
+
+const summaryRowStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0,0.44fr) minmax(0,0.56fr)",
+  gap: 10,
+  padding: "7px 0",
+  borderBottom: `1px solid ${V4.ruleSoft}`,
+  fontFamily: SANS,
+  fontSize: 12.5,
+  lineHeight: 1.35,
+  color: V4.slate,
+};
+
 const selectedStyle: CSSProperties = {
   border: `1px solid ${V4.rule}`,
   borderTop: `4px solid ${V4.blue}`,
@@ -896,39 +1352,6 @@ const detailValueStyle: CSSProperties = {
   lineHeight: 1.45,
   color: V4.inkSoft,
   overflowWrap: "anywhere",
-};
-
-const facetLabelStyle: CSSProperties = {
-  display: "block",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-  fontFamily: SANS,
-  fontSize: 12.2,
-  color: V4.inkSoft,
-};
-
-const facetBarTrackStyle: CSSProperties = {
-  display: "block",
-  height: 3,
-  background: V4.cream,
-  borderRadius: 2,
-  overflow: "hidden",
-  marginTop: 4,
-};
-
-const facetBarStyle: CSSProperties = {
-  display: "block",
-  height: "100%",
-  background: "rgba(12,26,58,0.56)",
-};
-
-const facetCountStyle: CSSProperties = {
-  fontFamily: MONO,
-  fontSize: 11,
-  color: V4.slate,
-  textAlign: "right",
-  fontVariantNumeric: "tabular-nums",
 };
 
 const pillStyle: CSSProperties = {
