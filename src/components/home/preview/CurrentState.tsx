@@ -1,145 +1,255 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 
 import { DOMAIN_ORDER, domainLabel } from "./domain-labels";
-import { HOME_HEX } from "./visuals/home-chart-kit";
 import type { ContextItem, EnterpriseSignalPacket, Signal } from "@/lib/home/preview/types";
+import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "../v4/tokens";
 
 type Row = (Signal & { origin: "signal" }) | (ContextItem & { origin: "context"; kind?: undefined });
 
-/** Categories expanded by default -- the ones that actually answer "what does the current
- * technology/operating estate look like," since a reviewer asking for a current-state view is
- * usually starting from that question, not from AI-value interview evidence or evidence sources.
- * Everything else is one click away, not hidden. */
-const DEFAULT_EXPANDED = new Set([
+interface DomainProfile {
+  domain: string;
+  label: string;
+  rows: Row[];
+  signals: number;
+  governedFacts: number;
+  kinds: Array<[string, number]>;
+}
+
+const PRIORITY_DOMAINS = [
   "application_system",
+  "data_asset_or_integration",
   "infrastructure_platform",
   "vendor_contract",
-  "data_asset_or_integration",
-  "workforce_role",
-]);
+  "business_function",
+];
 
-/**
- * "What has been loaded" as a real current-state survey, not a flat searchable list (that's
- * BrowseTheData's job). Every signal and context item grouped under every domain it belongs to,
- * ordered enterprise-identity -> technology -> people -> risk/programs/AI, collapsed by default
- * except the categories a reviewer asking "what does the estate look like" would open first.
- */
 export function CurrentState({ signalPacket }: { signalPacket: EnterpriseSignalPacket }) {
   const rows: Row[] = useMemo(
     () => [
-      ...signalPacket.signals.map((s): Row => ({ ...s, origin: "signal" })),
-      ...signalPacket.contextItems.map((c): Row => ({ ...c, origin: "context" })),
+      ...signalPacket.signals.map((signal): Row => ({ ...signal, origin: "signal" })),
+      ...signalPacket.contextItems.map((context): Row => ({ ...context, origin: "context" })),
     ],
     [signalPacket],
   );
 
-  const byDomain = useMemo(() => {
-    const map = new Map<string, Row[]>();
-    for (const row of rows) {
-      for (const domain of row.domains) {
-        if (!map.has(domain)) map.set(domain, []);
-        map.get(domain)!.push(row);
-      }
-    }
-    return map;
-  }, [rows]);
-
-  const orderedDomains = [
-    ...DOMAIN_ORDER.filter((d) => byDomain.has(d)),
-    ...Array.from(byDomain.keys()).filter((d) => !DOMAIN_ORDER.includes(d)).sort(),
-  ];
-
-  const [expanded, setExpanded] = useState<Set<string>>(new Set(DEFAULT_EXPANDED));
-  function toggle(domain: string) {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(domain)) next.delete(domain);
-      else next.add(domain);
-      return next;
-    });
-  }
+  const profiles = useMemo(() => buildProfiles(rows), [rows]);
+  const [selectedDomain, setSelectedDomain] = useState(
+    profiles.find((profile) => PRIORITY_DOMAINS.includes(profile.domain))?.domain ?? profiles[0]?.domain ?? "",
+  );
+  const selected = profiles.find((profile) => profile.domain === selectedDomain) ?? profiles[0];
+  const priorityCoverage = profiles
+    .filter((profile) => PRIORITY_DOMAINS.includes(profile.domain))
+    .reduce((sum, profile) => sum + profile.rows.length, 0);
+  const totalMemberships = profiles.reduce((sum, profile) => sum + profile.rows.length, 0);
 
   return (
-    <div style={{ padding: "40px 56px 72px" }}>
-      <p style={{ margin: "0 0 8px", fontFamily: "var(--font-body-sans)", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: HOME_HEX.teal }}>
-        Current state
-      </p>
-      <h2 style={{ margin: "0 0 8px", fontFamily: "var(--font-body-serif)", fontSize: 26, color: HOME_HEX.textPrimary }}>
-        What has been loaded for this enterprise
-      </h2>
-      <p style={{ margin: "0 0 28px", fontFamily: "var(--font-body-sans)", fontSize: 14, color: HOME_HEX.textMuted, maxWidth: 760 }}>
-        Every domain the compiled context covers, with its real fact count -- the estate survey
-        underneath the narrative. Open a category to see the individual facts; a fact spanning
-        multiple domains (e.g. a vendor concentration that is also a risk) appears in each one it
-        genuinely belongs to.
-      </p>
+    <section style={{ padding: `46px ${PAGE_X}px 72px` }}>
+      <style>{`
+        @media (max-width: 1160px) {
+          [data-current-state-layout] { grid-template-columns: 1fr !important; }
+          [data-current-state-side] { position: static !important; }
+        }
+        @media (max-width: 760px) {
+          [data-current-state-metrics] { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+        }
+      `}</style>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 14 }}>
-        {orderedDomains.map((domain) => {
-          const domainRows = byDomain.get(domain) ?? [];
-          const isOpen = expanded.has(domain);
-          return (
-            <div key={domain} style={{ border: `1px solid ${HOME_HEX.border}`, borderRadius: 10, background: "#FFFFFF", alignSelf: "start" }}>
+      <header style={{ maxWidth: 980 }}>
+        <span style={eyebrow(V4.green)}>Current state</span>
+        <h1 style={titleStyle}>Loaded enterprise context, by object family</h1>
+        <p style={ledeStyle}>
+          The packet is grouped by what the record can actually substantiate: systems, flows,
+          platforms, contracts, functions, risks, programs, metrics and evidence. Facts that belong
+          to more than one family are counted in each family they support.
+        </p>
+      </header>
+
+      <section data-current-state-metrics style={metricGridStyle}>
+        <Metric value={rows.length.toLocaleString()} label="unique facts and signals" />
+        <Metric value={profiles.length.toLocaleString()} label="loaded object families" />
+        <Metric value={totalMemberships.toLocaleString()} label="domain memberships" />
+        <Metric value={priorityCoverage.toLocaleString()} label="core estate facts" />
+      </section>
+
+      <div data-current-state-layout style={layoutStyle}>
+        <section style={{ minWidth: 0 }}>
+          <div style={sectionHeaderStyle}>
+            <span style={eyebrow(V4.slate)}>Coverage ledger</span>
+            <span style={monoStyle}>{profiles.length} families</span>
+          </div>
+          <div style={ledgerStyle}>
+            {profiles.map((profile) => (
               <button
+                key={profile.domain}
                 type="button"
-                onClick={() => toggle(domain)}
-                aria-expanded={isOpen}
+                onClick={() => setSelectedDomain(profile.domain)}
                 style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "14px 16px",
-                  border: "none",
-                  background: "none",
-                  cursor: "pointer",
-                  textAlign: "left",
+                  ...ledgerRowStyle,
+                  background: selected?.domain === profile.domain ? "rgba(0,102,204,0.055)" : V4.surface,
+                  borderLeftColor: selected?.domain === profile.domain ? V4.blue : "transparent",
                 }}
               >
-                <span style={{ fontFamily: "var(--font-body-sans)", fontSize: 14.5, fontWeight: 600, color: HOME_HEX.textPrimary }}>
-                  {domainLabel(domain)}
-                </span>
-                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-body-mono)",
-                      fontSize: 11,
-                      color: HOME_HEX.textMuted,
-                      background: HOME_HEX.navyDim,
-                      borderRadius: 999,
-                      padding: "2px 8px",
-                    }}
-                  >
-                    {domainRows.length}
+                <span style={{ minWidth: 0 }}>
+                  <strong style={rowTitleStyle}>{profile.label}</strong>
+                  <span style={rowMetaStyle}>
+                    {profile.signals.toLocaleString()} signals · {profile.governedFacts.toLocaleString()} governed facts
                   </span>
-                  <span style={{ color: HOME_HEX.textDisabled, fontSize: 12 }}>{isOpen ? "−" : "+"}</span>
                 </span>
+                <span style={rowCountStyle}>{profile.rows.length.toLocaleString()}</span>
               </button>
-              {isOpen ? (
-                <div style={{ borderTop: `1px solid ${HOME_HEX.border}`, padding: "10px 16px 14px", display: "flex", flexDirection: "column", gap: 10, maxHeight: 420, overflowY: "auto" }}>
-                  {domainRows.map((row) => (
-                    <div key={row.id}>
-                      <div style={{ display: "flex", gap: 6, alignItems: "baseline" }}>
-                        <span style={{ fontFamily: "var(--font-body-mono)", fontSize: 10, color: HOME_HEX.textDisabled }}>{row.id}</span>
-                        {row.origin === "signal" ? (
-                          <span style={{ fontFamily: "var(--font-body-sans)", fontSize: 9.5, fontWeight: 600, color: HOME_HEX.navy }}>
-                            {row.kind.toUpperCase()}
-                          </span>
-                        ) : null}
-                      </div>
-                      <p style={{ margin: "2px 0 0", fontFamily: "var(--font-body-sans)", fontSize: 12.5, lineHeight: 1.5, color: HOME_HEX.textSecondary }}>
-                        {row.statement}
-                      </p>
+            ))}
+          </div>
+        </section>
+
+        <section style={{ minWidth: 0 }}>
+          {selected ? (
+            <>
+              <div style={sectionHeaderStyle}>
+                <span style={eyebrow(V4.blue)}>{selected.label}</span>
+                <span style={monoStyle}>{selected.rows.length.toLocaleString()} linked facts</span>
+              </div>
+              <div style={detailShellStyle}>
+                <div style={kindGridStyle}>
+                  {selected.kinds.slice(0, 4).map(([kind, count]) => (
+                    <div key={kind} style={kindStyle}>
+                      <span style={kindValueStyle}>{count.toLocaleString()}</span>
+                      <span style={kindLabelStyle}>{kind.replace(/_/g, " ")}</span>
                     </div>
                   ))}
                 </div>
-              ) : null}
-            </div>
-          );
-        })}
+
+                <div style={factListStyle}>
+                  {selected.rows.slice(0, 12).map((row) => (
+                    <article key={`${row.origin}-${row.id}`} style={factStyle}>
+                      <div style={factMetaStyle}>
+                        <span>{row.id}</span>
+                        <span>{row.origin === "signal" ? row.kind : "governed fact"}</span>
+                      </div>
+                      <p style={factTextStyle}>{row.statement}</p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : null}
+        </section>
+
+        <aside data-current-state-side style={sideStyle}>
+          <span style={eyebrow(V4.slate)}>Readiness cues</span>
+          <Cue label="Architecture" value={countFor(profiles, "application_system")} />
+          <Cue label="Data flow" value={countFor(profiles, "data_asset_or_integration")} />
+          <Cue label="Commercial context" value={countFor(profiles, "vendor_contract")} />
+          <Cue label="Infrastructure context" value={countFor(profiles, "infrastructure_platform")} />
+        </aside>
       </div>
+    </section>
+  );
+}
+
+function buildProfiles(rows: Row[]): DomainProfile[] {
+  const byDomain = new Map<string, Row[]>();
+  for (const row of rows) {
+    for (const domain of row.domains) {
+      if (!byDomain.has(domain)) byDomain.set(domain, []);
+      byDomain.get(domain)!.push(row);
+    }
+  }
+
+  const orderedDomains = [
+    ...DOMAIN_ORDER.filter((domain) => byDomain.has(domain)),
+    ...Array.from(byDomain.keys()).filter((domain) => !DOMAIN_ORDER.includes(domain)).sort(),
+  ];
+
+  return orderedDomains.map((domain) => {
+    const domainRows = byDomain.get(domain) ?? [];
+    const kindCounts = new Map<string, number>();
+    for (const row of domainRows) {
+      const kind = row.origin === "signal" ? row.kind : "governed_fact";
+      kindCounts.set(kind, (kindCounts.get(kind) ?? 0) + 1);
+    }
+    return {
+      domain,
+      label: domainLabel(domain),
+      rows: domainRows,
+      signals: domainRows.filter((row) => row.origin === "signal").length,
+      governedFacts: domainRows.filter((row) => row.origin === "context").length,
+      kinds: [...kindCounts.entries()].sort((a, b) => b[1] - a[1]),
+    };
+  });
+}
+
+function countFor(profiles: DomainProfile[], domain: string): number {
+  return profiles.find((profile) => profile.domain === domain)?.rows.length ?? 0;
+}
+
+function Metric({ value, label }: { value: string; label: string }) {
+  return (
+    <div style={metricStyle}>
+      <span style={metricValueStyle}>{value}</span>
+      <span style={metricLabelStyle}>{label}</span>
     </div>
   );
 }
+
+function Cue({ label, value }: { label: string; value: number }) {
+  return (
+    <div style={cueStyle}>
+      <span style={{ fontFamily: SANS, fontSize: 13, color: V4.inkSoft }}>{label}</span>
+      <strong style={{ fontFamily: MONO, fontSize: 13, color: V4.blue }}>{value.toLocaleString()}</strong>
+    </div>
+  );
+}
+
+const titleStyle = {
+  margin: "14px 0 0",
+  fontFamily: SERIF,
+  fontSize: "clamp(30px,2.8vw,44px)",
+  fontWeight: 500,
+  letterSpacing: "-0.03em",
+  lineHeight: 1.1,
+  color: V4.ink,
+  textWrap: "balance",
+} satisfies CSSProperties;
+
+const ledeStyle = {
+  margin: "18px 0 0",
+  maxWidth: "64ch",
+  fontFamily: SANS,
+  fontSize: 16,
+  lineHeight: 1.62,
+  color: V4.slate,
+} satisfies CSSProperties;
+
+const metricGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(4,minmax(0,1fr))",
+  gap: 1,
+  marginTop: 26,
+  border: `1px solid ${V4.rule}`,
+  background: V4.rule,
+} satisfies CSSProperties;
+
+const metricStyle = { padding: "15px 16px", background: V4.surface } satisfies CSSProperties;
+const metricValueStyle = { display: "block", fontFamily: SERIF, fontSize: 27, lineHeight: 1, color: V4.ink } satisfies CSSProperties;
+const metricLabelStyle = { display: "block", marginTop: 7, fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.08em", textTransform: "uppercase", color: V4.slate } satisfies CSSProperties;
+const layoutStyle = { display: "grid", gridTemplateColumns: "340px minmax(0,1fr) 260px", gap: 28, alignItems: "start", marginTop: 26 } satisfies CSSProperties;
+const sectionHeaderStyle = { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, marginBottom: 10 } satisfies CSSProperties;
+const monoStyle = { fontFamily: MONO, fontSize: 11, color: V4.slate } satisfies CSSProperties;
+const ledgerStyle = { border: `1px solid ${V4.rule}`, borderRadius: 8, overflow: "hidden", background: V4.surface } satisfies CSSProperties;
+const ledgerRowStyle = { width: "100%", display: "grid", gridTemplateColumns: "minmax(0,1fr) 54px", gap: 12, alignItems: "center", textAlign: "left", border: "none", borderLeft: "3px solid transparent", borderBottom: `1px solid ${V4.rule}`, padding: "11px 13px", cursor: "pointer" } satisfies CSSProperties;
+const rowTitleStyle = { display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: SANS, fontSize: 13.5, color: V4.ink } satisfies CSSProperties;
+const rowMetaStyle = { display: "block", marginTop: 3, fontFamily: MONO, fontSize: 10.5, color: V4.slate } satisfies CSSProperties;
+const rowCountStyle = { fontFamily: MONO, fontSize: 12, color: V4.blue, textAlign: "right" } satisfies CSSProperties;
+const detailShellStyle = { border: `1px solid ${V4.rule}`, borderRadius: 8, background: V4.surface, padding: 16 } satisfies CSSProperties;
+const kindGridStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,130px),1fr))", gap: 1, border: `1px solid ${V4.rule}`, background: V4.rule } satisfies CSSProperties;
+const kindStyle = { padding: "12px 13px", background: V4.cream } satisfies CSSProperties;
+const kindValueStyle = { display: "block", fontFamily: SERIF, fontSize: 23, color: V4.ink, lineHeight: 1 } satisfies CSSProperties;
+const kindLabelStyle = { display: "block", marginTop: 6, fontFamily: MONO, fontSize: 10, color: V4.slate, textTransform: "uppercase", letterSpacing: "0.07em" } satisfies CSSProperties;
+const factListStyle = { display: "grid", gap: 0, marginTop: 14, borderTop: `1px solid ${V4.rule}` } satisfies CSSProperties;
+const factStyle = { padding: "11px 0", borderBottom: `1px solid ${V4.rule}` } satisfies CSSProperties;
+const factMetaStyle = { display: "flex", gap: 10, flexWrap: "wrap", fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.06em", textTransform: "uppercase", color: V4.slate } satisfies CSSProperties;
+const factTextStyle = { margin: "4px 0 0", fontFamily: SANS, fontSize: 13.5, lineHeight: 1.5, color: V4.inkSoft } satisfies CSSProperties;
+const sideStyle = { position: "sticky", top: 24, display: "grid", gap: 8, borderLeft: `1px solid ${V4.rule}`, paddingLeft: 20 } satisfies CSSProperties;
+const cueStyle = { display: "flex", justifyContent: "space-between", gap: 16, padding: "9px 0", borderBottom: `1px solid ${V4.rule}` } satisfies CSSProperties;

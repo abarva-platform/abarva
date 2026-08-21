@@ -12,14 +12,17 @@ import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { HomeV4App } from "../../src/components/home/v4/HomeV4App";
-import { getHomeReviewBundle } from "../../src/lib/home/preview/golden-snapshot";
 import type { HomePreviewTenantKey } from "../../src/lib/home/preview/golden-snapshot";
+import type { HomeReviewBundle } from "../../src/lib/home/preview/types";
 
 const OUT = process.argv.includes("--out") ? process.argv[process.argv.indexOf("--out") + 1] : "/tmp/home-v4-proof";
 fs.mkdirSync(OUT, { recursive: true });
 
 for (const tenantKey of ["meridian-health", "skyharbor-air"] as HomePreviewTenantKey[]) {
-  const bundle = getHomeReviewBundle(tenantKey);
+  const snapshotFile = path.join(process.cwd(), "src/lib/home/preview/golden-snapshots", `${tenantKey}.json`);
+  const bundle = fs.existsSync(snapshotFile)
+    ? (JSON.parse(fs.readFileSync(snapshotFile, "utf8")) as HomeReviewBundle)
+    : null;
   if (!bundle) { console.error(`no snapshot for ${tenantKey}`); process.exit(1); }
 
   const body = renderToStaticMarkup(<HomeV4App bundle={bundle} tenantKey={tenantKey} />);
