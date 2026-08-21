@@ -1,0 +1,139 @@
+{
+  "generatedAt": "2026-08-21",
+  "scope": "all product module route roots",
+  "modules": [
+    {
+      "module": "Home",
+      "routeRoots": ["src/app/(maestro)/home/page.tsx"],
+      "chain": [
+        {
+          "step": "Home route imports and calls readSkyHarborAiSuccessHome",
+          "evidence": ["src/app/(maestro)/home/page.tsx:1-17"]
+        },
+        {
+          "step": "No tracked implementation found for readSkyHarborAiSuccessHome in src/lib or src/app",
+          "evidence": ["unverified_by_absence: rg -n readSkyHarborAiSuccessHome src/lib src/app returned only the route import/call"]
+        },
+        {
+          "step": "Related local CXO runtime reads approved Home JSON and dynamic tenant roots",
+          "evidence": [
+            "src/lib/home/local-cxo-runtime.ts:86-117",
+            "src/lib/home/local-cxo-runtime.ts:460-489",
+            "src/lib/home/local-cxo-runtime.ts:560-635"
+          ]
+        }
+      ],
+      "sourceOfTruthAssessment": "unresolved route reader plus file-backed local runtime; no live canonical route reader proven"
+    },
+    {
+      "module": "Tower",
+      "routeRoots": ["src/app/(maestro)/tower/page.tsx"],
+      "chain": [
+        {
+          "step": "Tower route resolves active/requested client and calls loadTowerMartCommandView",
+          "evidence": ["src/app/(maestro)/tower/page.tsx:54-72"]
+        },
+        {
+          "step": "Tower mart view model canonicalizes candidates and reads command center mart",
+          "evidence": ["src/lib/cio-tower/tower-mart-view-model.ts:260-284"]
+        },
+        {
+          "step": "Additional Tower marts feed value, portfolio, actions, lineage, and gap panels",
+          "evidence": ["src/lib/cio-tower/tower-mart-view-model.ts:287-352"]
+        }
+      ],
+      "sourceOfTruthAssessment": "live mart reader found; upstream mart lineage not re-proven in this route sweep"
+    },
+    {
+      "module": "Moves / Strategic Moves",
+      "routeRoots": ["src/app/(maestro)/strategic-moves/page.tsx"],
+      "chain": [
+        {
+          "step": "Strategic Moves route gates product access, resolves tenancy, and requests portfolio",
+          "evidence": ["src/app/(maestro)/strategic-moves/page.tsx:18-33"]
+        },
+        {
+          "step": "Programs query layer calls getProgramPortfolio through a data-plane read adapter",
+          "evidence": ["src/lib/programs/queries.ts:166-197"]
+        },
+        {
+          "step": "Programs read adapter reads engagements through Supabase-compatible or Azure adapters, scoped by client_id",
+          "evidence": ["src/lib/data-plane/read-adapters/programsReadAdapter.ts:120-241"]
+        }
+      ],
+      "sourceOfTruthAssessment": "live reader found; reads existing engagements read layer"
+    },
+    {
+      "module": "Source",
+      "routeRoots": [
+        "src/app/(maestro)/source/page.tsx",
+        "src/app/(maestro)/source/portfolio/page.tsx",
+        "src/app/(maestro)/source/vendor-portfolio/page.tsx"
+      ],
+      "chain": [
+        {
+          "step": "Source index route redirects to portfolio",
+          "evidence": ["src/app/(maestro)/source/page.tsx:1-14"]
+        },
+        {
+          "step": "Portfolio route resolves tenancy, policy, and listSourcingEvents",
+          "evidence": ["src/app/(maestro)/source/portfolio/page.tsx:17-60"]
+        },
+        {
+          "step": "Vendor portfolio route reads contract/vendor 360 data for tenant",
+          "evidence": ["src/app/(maestro)/source/vendor-portfolio/page.tsx:11-49"]
+        },
+        {
+          "step": "Source data-model adapter reads schema-qualified Azure Postgres Source, Tower, and doc tables",
+          "evidence": ["src/lib/source/data-model/read-adapter.ts:1-14", "src/lib/source/data-model/read-adapter.ts:37-257"]
+        }
+      ],
+      "sourceOfTruthAssessment": "vendor portfolio live reader found; event list implementation not fully traced in this sweep"
+    },
+    {
+      "module": "Intelligence",
+      "routeRoots": ["src/app/(maestro)/intelligence/page.tsx"],
+      "chain": [
+        {
+          "step": "Intelligence route maps app-style tenant keys locally and builds AdvisoryIntelligencePage from enterprise landscape view model",
+          "evidence": ["src/app/(maestro)/intelligence/page.tsx:28-66"]
+        },
+        {
+          "step": "Enterprise landscape view model contains static/authored content and hardcoded SkyHarbor snapshot metrics",
+          "evidence": ["src/lib/home/enterprise-landscape-view-model.ts:91-240"]
+        },
+        {
+          "step": "Separate enterprise-context and intelligence read models exist but were not found on this route-root chain",
+          "evidence": [
+            "src/lib/enterprise-context/intelligence-read-model.ts:120-205",
+            "src/lib/intelligence/context-read-model.ts:245-323"
+          ]
+        }
+      ],
+      "sourceOfTruthAssessment": "route root uses authored/static landscape model, not the enterprise-context read model directly"
+    },
+    {
+      "module": "Setup / Admin",
+      "routeRoots": ["src/app/(maestro)/admin/page.tsx", "src/app/(maestro)/setup/files/page.tsx"],
+      "chain": [
+        {
+          "step": "Admin route resolves admin tenant, active client, source files, inventory snapshot, and setup control model",
+          "evidence": ["src/app/(maestro)/admin/page.tsx:23-46"]
+        },
+        {
+          "step": "Setup files route resolves tenancy and reads tenant vault workspace items",
+          "evidence": ["src/app/(maestro)/setup/files/page.tsx:11-17"]
+        },
+        {
+          "step": "Tenant vault adapter combines Source artifacts, Move artifacts, and generated artifact directories",
+          "evidence": ["src/lib/workspace-explorer/tenant-vault-adapter.ts:49-69"]
+        },
+        {
+          "step": "Tenant context read model reads clients, context chunks, audit, source files, and evidence map",
+          "evidence": ["src/lib/context-ingestion/tenant-context-read-model.ts:207-418"]
+        }
+      ],
+      "sourceOfTruthAssessment": "mixed DB-backed setup/context reads and file-system artifact enumeration"
+    }
+  ]
+}

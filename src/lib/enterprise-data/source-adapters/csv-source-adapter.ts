@@ -16,6 +16,7 @@ import type {
   SourceAdapterResult,
 } from "../contracts/source-adapter";
 import { getBuiltInMappingProfile } from "./mapping-profiles";
+import { isReservedColumn } from "../intake/enrichment-firewall";
 
 const DERIVED_SOURCE_PATH_FIELD = "__source_path";
 
@@ -83,28 +84,45 @@ export class CsvSourceAdapter implements SourceAdapter {
     const mappedFields = new Set(
       mappingProfile.rules.flatMap(sourceFieldsForRule),
     );
-    const unmappedFields = parsed.headers.filter(
+    // Reserved enrichment columns are excluded from the coverage denominator: they are not
+    // supposed to have mapping rules, so counting them as gaps would push an operator toward
+    // adding one.
+    const mappableHeaders = parsed.headers.filter(
+      (header) => !isReservedColumn(header),
+    );
+    const unmappedFields = mappableHeaders.filter(
       (header) => !mappedFields.has(header),
     );
     const requiredFields = mappingProfile.rules.filter((rule) => rule.required);
     const mappingCoveragePercent =
-      parsed.headers.length === 0
+      mappableHeaders.length === 0
         ? 0
         : roundPercent(
-            ((parsed.headers.length - unmappedFields.length) /
-              parsed.headers.length) *
+            ((mappableHeaders.length - unmappedFields.length) /
+              mappableHeaders.length) *
               100,
           );
 
     for (const header of parsed.headers) {
-      if (!mappedFields.has(header)) {
+      if (mappedFields.has(header)) continue;
+      if (isReservedColumn(header)) {
+        // The other ingestion route hard-fails on this. Here the column is simply dropped, which
+        // is safe but silent -- and reporting it as "unmapped" would read as an instruction to add
+        // a mapping rule, which is the one repair that must never be made.
         findings.push({
-          severity: "warning",
-          code: "source_field_unmapped",
-          message: `Source field ${header} has no rule in ${input.mappingProfile}.`,
+          severity: "error",
+          code: "enrichment_column_in_recorded_path",
+          message: `Reserved enrichment column ${header} reached the recorded adapter. Do not map it: enrichment enters canonical state only as an approved overlay. This file was not split at intake.`,
           sourceField: header,
         });
+        continue;
       }
+      findings.push({
+        severity: "warning",
+        code: "source_field_unmapped",
+        message: `Source field ${header} has no rule in ${input.mappingProfile}.`,
+        sourceField: header,
+      });
     }
 
     const records = parsed.rows.map((row, index) => {

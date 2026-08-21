@@ -65,6 +65,16 @@ describe("invented figures fail", () => {
     ).toBe(true);
   });
 
+  it("names the unsupported claim so the operator can repair it", () => {
+    expect(
+      blockersFor(
+        "The programme will deliver $4.7M in annual savings once adoption completes.",
+      ).join(" "),
+    ).toContain(
+      "The programme will deliver $4.7M in annual savings once adoption completes.",
+    );
+  });
+
   it("blocks an invented implementation cost", () => {
     expect(
       hasUnsupportedBlocker(
@@ -123,6 +133,30 @@ describe("legitimate quantitative statements pass", () => {
         "Headcount baseline is $0 pending confirmation [CLIENT TO COMPLETE].",
       ),
     ).toBe(false);
+  });
+
+  it("allows a labelled external benchmark used for sensitivity framing", () => {
+    expect(
+      hasUnsupportedBlocker(
+        "The analyst applies an external benchmark of $98.41 per minute of delay for sensitivity framing; it is not a client-specific savings claim.",
+      ),
+    ).toBe(false);
+  });
+
+  it("allows table-row cautions that keep a per-minute benchmark external", () => {
+    expect(
+      hasUnsupportedBlocker(
+        "| Ungoverned value figures could enter a market test or contract basis; external $98.41/min benchmark must stay external only.",
+      ),
+    ).toBe(false);
+  });
+
+  it("does not let an external benchmark label launder an annual savings claim", () => {
+    expect(
+      hasUnsupportedBlocker(
+        "Using an external benchmark, the programme will deliver $4.7M in annual savings once adoption completes.",
+      ),
+    ).toBe(true);
   });
 
   it("allows prose with no quantitative claim at all", () => {

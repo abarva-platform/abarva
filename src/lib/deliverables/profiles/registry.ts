@@ -124,7 +124,10 @@ const GOVERNANCE_VISUAL_STANDARD = {
     "Escalation path",
     "Open issues dashboard",
   ],
-  requiredTables: ["Decision options and recommendation", "Open issues register"],
+  requiredTables: [
+    "Decision options and recommendation",
+    "Open issues register",
+  ],
   clientToCompleteChecklistRequired: true,
   readinessLabelRequired: true,
 } as const;
@@ -200,7 +203,8 @@ const charter: DeliverableProfile = {
     "proceed_hold_stop_gate",
     "open_inputs_required",
   ],
-  lengthGuidance: "Sponsor decision memo — as long as the judgment needs, not a binder.",
+  lengthGuidance:
+    "Sponsor decision memo — as long as the judgment needs, not a binder.",
   acceptanceChecks: [
     "first page states the decision requested",
     "no phase labels in the client narrative",
@@ -234,7 +238,8 @@ const discoveryReport: DeliverableProfile = {
     "process_pain_map",
     "capability_maturity",
   ],
-  lengthGuidance: "Executive readout 8–12 slides/pages; internal binder may be longer.",
+  lengthGuidance:
+    "Executive readout 8–12 slides/pages; internal binder may be longer.",
   acceptanceChecks: [
     "client executive readout and internal binder are separate artifacts",
     "findings lead; evidence supports, not dominates",
@@ -271,7 +276,8 @@ const rootCauseWorksheet: DeliverableProfile = {
   sourceRegisterPolicy: "appendix_only",
   missingInputPolicy: "single_open_inputs_table",
   requiredExhibits: ["root_cause_tree", "symptom_cause_table"],
-  lengthGuidance: "Issue-tree led; top root causes only — not a list of dozens.",
+  lengthGuidance:
+    "Issue-tree led; top root causes only — not a list of dozens.",
   acceptanceChecks: [
     "executive answer stated first",
     "uses a symptoms-vs-causes table and a root-cause tree",
@@ -313,7 +319,11 @@ const solutionApproachOptions: DeliverableProfile = {
     "states the recommended option and the tradeoffs accepted",
     "the choice traces to the use case, KPIs, current state and gaps",
   ],
-  failureModes: ["no_options", "no_recommendation", "architecture_before_approval"],
+  failureModes: [
+    "no_options",
+    "no_recommendation",
+    "architecture_before_approval",
+  ],
 };
 
 const targetStateArchitecture: DeliverableProfile = {
@@ -389,7 +399,8 @@ const targetStateArchitecture: DeliverableProfile = {
     "control_points",
     "implementation_waves",
   ],
-  lengthGuidance: "Visual-first HTML; executive captions, not architecture essays.",
+  lengthGuidance:
+    "Visual-first HTML; executive captions, not architecture essays.",
   acceptanceChecks: [
     "shows the current-to-target journey (as-is and to-be physical architecture)",
     "data flow is rendered distinct from the AI decision/control flow",
@@ -455,7 +466,8 @@ const operatingModelDesign: DeliverableProfile = {
     "operating_cadence",
     "escalation_path",
   ],
-  lengthGuidance: "6–10 pages; table/diagram rich; practical, not governance-legal tone.",
+  lengthGuidance:
+    "6–10 pages; table/diagram rich; practical, not governance-legal tone.",
   acceptanceChecks: [
     "uses RACI, decision-rights matrix, operating cadence, human/AI split, escalation",
     "plain language, not PMO/compliance jargon",
@@ -505,7 +517,8 @@ const executionRoadmap: DeliverableProfile = {
   sourceRegisterPolicy: "appendix_only",
   missingInputPolicy: "single_open_inputs_table",
   requiredExhibits: ["roadmap_lanes", "dependency_map", "decision_calendar"],
-  lengthGuidance: "Visual 30/60/90 + workstream roadmap; show decision gates clearly.",
+  lengthGuidance:
+    "Visual 30/60/90 + workstream roadmap; show decision gates clearly.",
   acceptanceChecks: [
     "uses 30/60/90, workstream roadmap, dependency map, decision calendar",
     "shows owners and gates; avoids vague timelines and long narrative",
@@ -588,6 +601,34 @@ const towerMetricsPlan: DeliverableProfile = {
   ],
 };
 
+const readinessAndChangePlan: DeliverableProfile = {
+  key: "readiness_and_change_plan",
+  renderer: "docx_narrative",
+  visualRendererRequired: true,
+  visualStandard: EXECUTIVE_READOUT_VISUAL_STANDARD,
+  title: "Readiness & Change Plan",
+  clientFacing: true,
+  audience: ["program_leadership", "steering_committee"],
+  decisionPurpose:
+    "Decide whether the organization is ready to mobilize, ready with conditions, or blocked by adoption/governance gaps.",
+  defaultFormat: "docx",
+  supportingFormats: ["html"],
+  tone: "delivery_lead",
+  visualDensity: "medium",
+  allowPhaseLabels: false,
+  evidenceMode: "appendix_only",
+  sourceRegisterPolicy: "appendix_only",
+  missingInputPolicy: "single_open_inputs_table",
+  requiredExhibits: ["raci", "operating_cadence", "risks_and_mitigations"],
+  lengthGuidance:
+    "Table-led readiness plan; owners, cadence, risks, dependencies, and mobilization conditions.",
+  acceptanceChecks: [
+    "states ready / ready with conditions / not ready",
+    "names owners, cadence, dependencies, and adoption actions",
+    "does not convert readiness into funding approval or unsupported value claims",
+  ],
+};
+
 const handoffPackage: DeliverableProfile = {
   key: "handoff_package",
   renderer: "pptx_storyline",
@@ -659,15 +700,14 @@ export const DELIVERABLE_PROFILES: Readonly<
   business_case: businessCase,
   financial_model: financialModel,
   tower_metrics_plan: towerMetricsPlan,
+  readiness_and_change_plan: readinessAndChangePlan,
   handoff_package: handoffPackage,
   value_measurement_contract: valueMeasurementContract,
   solution_approach_options: solutionApproachOptions,
   ...SOURCE_PROFILES,
 };
 
-export function getDeliverableProfile(
-  key: DeliverableKey,
-): DeliverableProfile {
+export function getDeliverableProfile(key: DeliverableKey): DeliverableProfile {
   return DELIVERABLE_PROFILES[key];
 }
 

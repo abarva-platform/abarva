@@ -12,35 +12,36 @@
 // deliverable — a single deliverable that fails to enqueue is reported in its row
 // with an error, and does not abort the others.
 
-import type { NextRequest } from 'next/server';
-import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
+import { randomUUID } from "node:crypto";
+import type { NextRequest } from "next/server";
+import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import {
   createDeliverableRun,
   createSequentialDeliverableRunBatch,
   type DeliverableRunJobPayload,
-} from '@/lib/deliverables/orchestrator/runs-repository';
+} from "@/lib/deliverables/orchestrator/runs-repository";
 import {
   tenantInvariantHttpStatus,
   validateDeliverableTenantInvariant,
-} from '@/lib/deliverables/orchestrator/tenant-invariant';
+} from "@/lib/deliverables/orchestrator/tenant-invariant";
 import {
   PHASE_CANONICAL_KEYS,
   DELIVERABLE_REGISTRY,
   type DeliverableSpec,
-} from '@/lib/programs/deliverable-registry';
-import { orchestratorDeliverableType } from '@/lib/programs/orchestrated-deliverable-map';
+} from "@/lib/programs/deliverable-registry";
+import { orchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
 import {
   createMoveContextExtract,
   type MoveContextExtractResult,
-} from '@/lib/programs/move-context-extract';
+} from "@/lib/programs/move-context-extract";
 import {
   formatApprovedSolutionApproach,
   loadApprovedSolutionApproach,
   ARCHITECTURE_MODEL_VERSION,
-} from '@/lib/programs/approved-solution-approach';
+} from "@/lib/programs/approved-solution-approach";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 interface GeneratePhaseBody {
@@ -49,6 +50,7 @@ interface GeneratePhaseBody {
   useCaseArchetype?: string;
   moveName?: string;
   clientDisplayName?: string;
+  generationAttemptId?: string;
   contextExtract?: {
     candidatePreview?: {
       enabled?: boolean;
@@ -64,14 +66,14 @@ interface EnqueuedDeliverable {
   deliverableType: string;
   gateArtifact: boolean;
   runId: string | null;
-  status: 'queued' | 'error';
+  status: "queued" | "error";
   error?: string;
 }
 
-function errorMessage(err: unknown, fallback = 'unknown error'): string {
+function errorMessage(err: unknown, fallback = "unknown error"): string {
   if (err instanceof Error && err.message) return err.message;
-  if (typeof err === 'string' && err.trim()) return err.trim();
-  if (err && typeof err === 'object') {
+  if (typeof err === "string" && err.trim()) return err.trim();
+  if (err && typeof err === "object") {
     const record = err as {
       message?: unknown;
       code?: unknown;
@@ -79,12 +81,12 @@ function errorMessage(err: unknown, fallback = 'unknown error'): string {
       hint?: unknown;
     };
     const parts = [
-      typeof record.message === 'string' ? record.message : null,
-      typeof record.code === 'string' ? `code=${record.code}` : null,
-      typeof record.details === 'string' ? record.details : null,
-      typeof record.hint === 'string' ? record.hint : null,
+      typeof record.message === "string" ? record.message : null,
+      typeof record.code === "string" ? `code=${record.code}` : null,
+      typeof record.details === "string" ? record.details : null,
+      typeof record.hint === "string" ? record.hint : null,
     ].filter(Boolean);
-    if (parts.length > 0) return parts.join(' | ').slice(0, 1000);
+    if (parts.length > 0) return parts.join(" | ").slice(0, 1000);
     try {
       return JSON.stringify(err).slice(0, 1000);
     } catch {
@@ -94,11 +96,27 @@ function errorMessage(err: unknown, fallback = 'unknown error'): string {
   return fallback;
 }
 
+function normalizeGenerationAttemptId(value: unknown): string {
+  if (typeof value !== "string") return randomUUID();
+  const normalized = value
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 96);
+  return normalized || randomUUID();
+}
+
 export async function POST(req: NextRequest) {
   try {
     const ctx = await requireTenancy();
     if (!ctx.clientKey) {
-      return Response.json({ error: 'no_tenant_key', detail: 'Active tenant has no resolvable tenant key.' }, { status: 409 });
+      return Response.json(
+        {
+          error: "no_tenant_key",
+          detail: "Active tenant has no resolvable tenant key.",
+        },
+        { status: 409 },
+      );
     }
     const clientKey = ctx.clientKey;
 
@@ -106,23 +124,40 @@ export async function POST(req: NextRequest) {
     try {
       body = (await req.json()) as GeneratePhaseBody;
     } catch {
-      return Response.json({ error: 'bad_request', detail: 'Body was not valid JSON.' }, { status: 400 });
+      return Response.json(
+        { error: "bad_request", detail: "Body was not valid JSON." },
+        { status: 400 },
+      );
     }
 
     const moveId = body.moveId?.trim();
     const phase = Number(body.phase);
     const useCaseArchetype = body.useCaseArchetype?.trim();
-    if (!moveId) return Response.json({ error: 'bad_request', detail: 'moveId is required.' }, { status: 400 });
+    if (!moveId)
+      return Response.json(
+        { error: "bad_request", detail: "moveId is required." },
+        { status: 400 },
+      );
     if (!Number.isInteger(phase) || phase < 1 || phase > 5) {
-      return Response.json({ error: 'bad_request', detail: 'phase must be an integer 1–5.' }, { status: 400 });
+      return Response.json(
+        { error: "bad_request", detail: "phase must be an integer 1–5." },
+        { status: 400 },
+      );
     }
-    if (!useCaseArchetype) return Response.json({ error: 'bad_request', detail: 'useCaseArchetype is required.' }, { status: 400 });
+    if (!useCaseArchetype)
+      return Response.json(
+        { error: "bad_request", detail: "useCaseArchetype is required." },
+        { status: 400 },
+      );
 
-    const moveName = body.moveName?.trim() || 'Strategic Move';
-    const clientDisplayName = body.clientDisplayName?.trim() || 'Client';
+    const moveName = body.moveName?.trim() || "Strategic Move";
+    const clientDisplayName = body.clientDisplayName?.trim() || "Client";
+    const generationAttemptId = normalizeGenerationAttemptId(
+      body.generationAttemptId,
+    );
 
     const tenantInvariant = await validateDeliverableTenantInvariant({
-      module: 'moves',
+      module: "moves",
       sourceArtifactRef: moveId,
       clientId: ctx.clientId,
       tenantKey: clientKey,
@@ -144,12 +179,17 @@ export async function POST(req: NextRequest) {
     // Resolve the phase's canonical deliverables from the registry. These are the
     // documents an "Approve & Build" for this phase produces.
     const specs = (PHASE_CANONICAL_KEYS[phase] ?? [])
-      .map((key) => DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key))
+      .map((key) =>
+        DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key),
+      )
       .filter(Boolean) as DeliverableSpec[];
 
     if (specs.length === 0) {
       return Response.json(
-        { error: 'no_deliverables', detail: `Phase ${phase} has no configured deliverables to build.` },
+        {
+          error: "no_deliverables",
+          detail: `Phase ${phase} has no configured deliverables to build.`,
+        },
         { status: 422 },
       );
     }
@@ -162,7 +202,8 @@ export async function POST(req: NextRequest) {
     // which the non_mechanical_writing gate then (correctly) blocks. Strip the leading
     // "P<n>" token for the client-safe decision framing; phaseLabel itself is kept
     // as-is for the route's own response (internal/ops-facing, not model input).
-    const clientSafePhaseLabel = phaseLabel.replace(/^P\d+\s*/i, '').trim() || 'this phase';
+    const clientSafePhaseLabel =
+      phaseLabel.replace(/^P\d+\s*/i, "").trim() || "this phase";
 
     // P3 is deliberately split into two governed decisions. The option set is
     // shaped first; target architecture and the companion design artifacts may
@@ -178,11 +219,11 @@ export async function POST(req: NextRequest) {
     if (phase === 3 && !approvedSolutionApproach) {
       return Response.json(
         {
-          error: 'solution_approach_approval_required',
+          error: "solution_approach_approval_required",
           detail:
-            'Select and approve a P3 solution option before building target architecture, solution design, operating model, or sourcing strategy.',
+            "Select and approve a P3 solution option before building target architecture, solution design, operating model, or sourcing strategy.",
           nextAction:
-            'Review the solution options, record the decision rationale and accepted tradeoffs, then run Approve & Build again.',
+            "Review the solution options, record the decision rationale and accepted tradeoffs, then run Approve & Build again.",
         },
         { status: 409 },
       );
@@ -202,10 +243,10 @@ export async function POST(req: NextRequest) {
         moveName,
         useCaseArchetype,
         phaseLabel,
-        phasePurpose: specs.map((spec) => spec.documentPurpose).join(' '),
+        phasePurpose: specs.map((spec) => spec.documentPurpose).join(" "),
         candidatePreview: {
           enabled:
-            req.headers.get('x-abarva-candidate-preview-mode') === 'enabled' &&
+            req.headers.get("x-abarva-candidate-preview-mode") === "enabled" &&
             body.contextExtract?.candidatePreview?.enabled === true,
           candidateVersionId:
             body.contextExtract?.candidatePreview?.candidateVersionId?.trim(),
@@ -216,13 +257,13 @@ export async function POST(req: NextRequest) {
       });
     } catch (err) {
       contextExtract = {
-        status: 'error',
+        status: "error",
         extractId: null,
         artifactId: null,
         evidenceId: null,
         moveId,
         tenantKey: clientKey,
-        sourceMode: 'active_home_context',
+        sourceMode: "active_home_context",
         phase,
         targetPhase: phase,
         activeTenantAccessVersionId: null,
@@ -233,25 +274,25 @@ export async function POST(req: NextRequest) {
         excludedContextItems: [],
         gapItems: [
           {
-            status: 'gap',
-            label: 'Move Context Extract',
-            summary: 'Context extract failed before generation enqueue.',
+            status: "gap",
+            label: "Move Context Extract",
+            summary: "Context extract failed before generation enqueue.",
             reason: errorMessage(err),
-            sourceMode: 'active_home_context',
+            sourceMode: "active_home_context",
           },
         ],
         freshness: {
           extractId: null,
           moveId,
           tenantKey: clientKey,
-          evidenceFingerprint: 'error',
+          evidenceFingerprint: "error",
           attachedEvidenceCount: 0,
           acceptedEvidenceCount: 0,
           latestEvidenceUpdatedAt: null,
-          blueprintId: 'unknown',
-          blueprintVersion: 'unknown',
+          blueprintId: "unknown",
+          blueprintVersion: "unknown",
           createdAt: new Date().toISOString(),
-          freshnessStatus: 'rebuild_required',
+          freshnessStatus: "rebuild_required",
         },
         generatedAt: new Date().toISOString(),
         message: errorMessage(err),
@@ -264,26 +305,34 @@ export async function POST(req: NextRequest) {
           decisionVersion: approvedSolutionApproach.decisionVersion,
           approvedOptionId: approvedSolutionApproach.selectedOptionId,
           approvedOptionVersion: approvedSolutionApproach.selectedOptionVersion,
-          contextSnapshotHash: contextExtract?.freshness.evidenceFingerprint ?? 'context-extract-error',
+          contextSnapshotHash:
+            contextExtract?.freshness.evidenceFingerprint ??
+            "context-extract-error",
           architectureModelVersion: ARCHITECTURE_MODEL_VERSION,
         }
       : null;
 
     const payloadFor = (spec: DeliverableSpec): DeliverableRunJobPayload => {
-      const deliverableType = orchestratorDeliverableType(spec.deliverableTypeKey);
+      const deliverableType = orchestratorDeliverableType(
+        spec.deliverableTypeKey,
+      );
       return {
-        module: 'moves',
+        module: "moves",
         useCaseArchetype,
         deliverableTypeKey: spec.deliverableTypeKey,
         deliverableType,
         decisionContext: [
           `${moveName} — ${clientSafePhaseLabel}: ${spec.documentPurpose}`,
           approvedApproachBlock,
-        ].filter(Boolean).join('\n\n'),
+        ]
+          .filter(Boolean)
+          .join("\n\n"),
         clientDisplayName,
         initiativeDisplayName: moveName,
         sourceArtifactRef: moveId,
-        ...(approvedApproachBlock ? { approvedSolutionApproach: approvedApproachBlock } : {}),
+        ...(approvedApproachBlock
+          ? { approvedSolutionApproach: approvedApproachBlock }
+          : {}),
         ...(decisionLineage ? { decisionLineage } : {}),
       };
     };
@@ -296,9 +345,11 @@ export async function POST(req: NextRequest) {
             clientId: ctx.clientId,
             tenantKey: clientKey,
             userId: ctx.userId,
-            module: 'moves',
+            module: "moves",
             archetype: useCaseArchetype,
-            deliverableType: orchestratorDeliverableType(spec.deliverableTypeKey),
+            deliverableType: orchestratorDeliverableType(
+              spec.deliverableTypeKey,
+            ),
             jobPayload: payloadFor(spec),
             sequenceNo,
           })),
@@ -308,7 +359,9 @@ export async function POST(req: NextRequest) {
               phase,
               decisionLineage.decisionHash,
               decisionLineage.contextSnapshotHash,
-            ].join(':'),
+              contextExtract?.extractId ?? "context-extract-missing",
+              generationAttemptId,
+            ].join(":"),
           },
         );
         specs.forEach((spec, index) => {
@@ -316,61 +369,75 @@ export async function POST(req: NextRequest) {
           results.push({
             deliverableTypeKey: spec.deliverableTypeKey,
             documentTitle: spec.documentTitle,
-            deliverableType: orchestratorDeliverableType(spec.deliverableTypeKey),
+            deliverableType: orchestratorDeliverableType(
+              spec.deliverableTypeKey,
+            ),
             gateArtifact: spec.gateArtifact,
             runId: run?.id ?? null,
-            status: run ? 'queued' : 'error',
-            ...(!run ? { error: 'atomic P3 assembly did not return a run' } : {}),
+            status: run ? "queued" : "error",
+            ...(!run
+              ? { error: "atomic P3 assembly did not return a run" }
+              : {}),
           });
         });
       } catch (err) {
         return Response.json(
           {
-            error: 'p3_assembly_enqueue_failed',
-            detail: errorMessage(err, 'atomic P3 assembly enqueue failed'),
+            error: "p3_assembly_enqueue_failed",
+            detail: errorMessage(err, "atomic P3 assembly enqueue failed"),
           },
           { status: 500 },
         );
       }
     } else {
-    for (const spec of specs) {
-      const deliverableType = orchestratorDeliverableType(spec.deliverableTypeKey);
-      try {
-        const run = await createDeliverableRun({
-          clientId: ctx.clientId,
-          tenantKey: clientKey,
-          userId: ctx.userId,
-          module: 'moves',
-          archetype: useCaseArchetype,
-          deliverableType,
-          jobPayload: payloadFor(spec),
-        });
-        results.push({
-          deliverableTypeKey: spec.deliverableTypeKey,
-          documentTitle: spec.documentTitle,
-          deliverableType,
-          gateArtifact: spec.gateArtifact,
-          runId: run.id,
-          status: 'queued',
-        });
-      } catch (err) {
-        results.push({
-          deliverableTypeKey: spec.deliverableTypeKey,
-          documentTitle: spec.documentTitle,
-          deliverableType,
-          gateArtifact: spec.gateArtifact,
-          runId: null,
-          status: 'error',
-          error: errorMessage(err, 'enqueue failed'),
-        });
+      for (const spec of specs) {
+        const deliverableType = orchestratorDeliverableType(
+          spec.deliverableTypeKey,
+        );
+        try {
+          const run = await createDeliverableRun({
+            clientId: ctx.clientId,
+            tenantKey: clientKey,
+            userId: ctx.userId,
+            module: "moves",
+            archetype: useCaseArchetype,
+            deliverableType,
+            jobPayload: payloadFor(spec),
+          });
+          results.push({
+            deliverableTypeKey: spec.deliverableTypeKey,
+            documentTitle: spec.documentTitle,
+            deliverableType,
+            gateArtifact: spec.gateArtifact,
+            runId: run.id,
+            status: "queued",
+          });
+        } catch (err) {
+          results.push({
+            deliverableTypeKey: spec.deliverableTypeKey,
+            documentTitle: spec.documentTitle,
+            deliverableType,
+            gateArtifact: spec.gateArtifact,
+            runId: null,
+            status: "error",
+            error: errorMessage(err, "enqueue failed"),
+          });
+        }
       }
     }
-    }
 
-    const queued = results.filter((r) => r.status === 'queued').length;
+    const queued = results.filter((r) => r.status === "queued").length;
     // 202 if anything queued; 500 only if every deliverable failed to enqueue.
     return Response.json(
-      { phase, phaseLabel, contextExtract, queued, total: results.length, deliverables: results },
+      {
+        phase,
+        phaseLabel,
+        generationAttemptId,
+        contextExtract,
+        queued,
+        total: results.length,
+        deliverables: results,
+      },
       { status: queued > 0 ? 202 : 500 },
     );
   } catch (err) {
@@ -380,7 +447,7 @@ export async function POST(req: NextRequest) {
       /* not a tenancy error */
     }
     const message = errorMessage(err);
-    console.error('[POST /api/v1/deliverables/generate-phase]', err);
-    return Response.json({ error: 'internal_error', message }, { status: 500 });
+    console.error("[POST /api/v1/deliverables/generate-phase]", err);
+    return Response.json({ error: "internal_error", message }, { status: 500 });
   }
 }

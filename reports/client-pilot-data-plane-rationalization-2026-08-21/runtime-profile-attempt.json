@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-08-21",
+  "mode": "read-only",
+  "attempted": true,
+  "applicationName": "codex-data-plane-rationalization-readonly",
+  "envPresence": {
+    "DATABASE_URL": false,
+    "ABARVA_AZURE_DATABASE_URL": true,
+    "AZURE_DATABASE_URL": false,
+    "AZURE_LAB_DATABASE_URL": true
+  },
+  "result": "blocked",
+  "error": "getaddrinfo ENOTFOUND pg-abarva-context-lab-001.postgres.database.azure.com",
+  "impact": "Live schemas, row counts, last update timestamps, active writers, and active readers were not verified from this environment.",
+  "nextRuntimeQueries": [
+    "Catalog object inventory from pg_class / pg_namespace",
+    "Exact or bounded row counts for high-value domain/canonical/projection tables",
+    "pg_stat_user_tables update and analyze timestamps",
+    "pg_stat_statements or query log reader/writer attribution if enabled",
+    "ACA job execution list and logs for data-build jobs",
+    "Signed-in browser crawl correlation to DB query telemetry"
+  ],
+  "mutation": "none"
+}
+

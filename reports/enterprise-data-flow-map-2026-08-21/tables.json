@@ -1,0 +1,279 @@
+{
+  "generatedAt": "2026-08-21",
+  "scope": "read-only route-root and read-model sweep",
+  "governingModel": {
+    "file": "docs/architecture/ENTERPRISE_INFORMATION_ARCHITECTURE.md",
+    "evidence": ["docs/architecture/ENTERPRISE_INFORMATION_ARCHITECTURE.md:15-36"],
+    "rule": "Products are Layer 4 projections; Layer 3 canonical enterprise model is the source of truth."
+  },
+  "tenantRegistry": {
+    "file": "datasets/tenant-inputs/tenant-input-registry.json",
+    "evidence": ["datasets/tenant-inputs/tenant-input-registry.json:30-130"],
+    "activeTenantKeys": [
+      "apex-retail",
+      "first-capital-financial",
+      "lakeshore-holdings",
+      "lakeshore-industries",
+      "meridian-health",
+      "skyharbor-air"
+    ],
+    "retiredTenantKeys": ["northstar-clinical"]
+  },
+  "databaseReads": [
+    {
+      "table": "clients",
+      "readers": ["src/lib/context-ingestion/tenant-context-read-model.ts:207-238"],
+      "tenantScope": "client/domain lookup"
+    },
+    {
+      "table": "context_chunks",
+      "readers": ["src/lib/context-ingestion/tenant-context-read-model.ts:241-265"],
+      "tenantScope": "client_id"
+    },
+    {
+      "table": "ai_egress_audit",
+      "readers": [
+        "src/lib/context-ingestion/tenant-context-read-model.ts:241-265",
+        "src/lib/admin/customer-admin-read-model.ts:617-662"
+      ],
+      "tenantScope": "client_id or tenant_id"
+    },
+    {
+      "table": "context_source_files",
+      "readers": ["src/lib/context-ingestion/tenant-context-read-model.ts:334-370"],
+      "tenantScope": "client_id"
+    },
+    {
+      "table": "context_evidence_map",
+      "readers": ["src/lib/context-ingestion/tenant-context-read-model.ts:391-418"],
+      "tenantScope": "client_id"
+    },
+    {
+      "table": "enterprise_context_chunks",
+      "readers": [
+        "src/lib/intelligence/context-read-model.ts:245-323",
+        "src/lib/context-ingestion/phs-stage-readiness-read-model.ts:48-79",
+        "src/lib/enterprise-context/intelligence-read-model.ts:537-548"
+      ],
+      "tenantScope": "tenant_key or client_id depending reader"
+    },
+    {
+      "table": "enterprise_context_sources",
+      "readers": ["src/lib/intelligence/context-read-model.ts:245-323"],
+      "tenantScope": "tenant_key"
+    },
+    {
+      "table": "enterprise_context_records",
+      "readers": [
+        "src/lib/intelligence/context-read-model.ts:245-323",
+        "src/lib/enterprise-context/intelligence-read-model.ts:745-793"
+      ],
+      "tenantScope": "tenant_key"
+    },
+    {
+      "table": "enterprise_context_facts",
+      "readers": ["src/lib/intelligence/context-read-model.ts:245-323"],
+      "tenantScope": "tenant_key"
+    },
+    {
+      "table": "enterprise_context_evidence",
+      "readers": ["src/lib/intelligence/context-read-model.ts:245-323"],
+      "tenantScope": "tenant_key"
+    },
+    {
+      "table": "context_insights",
+      "readers": ["src/lib/intelligence/context-read-model.ts:245-323"],
+      "tenantScope": "tenant_key"
+    },
+    {
+      "table": "evidence_ledger",
+      "readers": ["src/lib/context-ingestion/phs-stage-readiness-read-model.ts:48-79"],
+      "tenantScope": "client_id"
+    },
+    {
+      "table": "tower_read_model_initiatives",
+      "readers": ["src/lib/tower/tower-materialized-read-model.ts:190-250"],
+      "tenantScope": "tenant_key when present, otherwise client_id"
+    },
+    {
+      "table": "tower_read_model_vendors",
+      "readers": ["src/lib/tower/tower-materialized-read-model.ts:190-250"],
+      "tenantScope": "tenant_key when present, otherwise client_id"
+    },
+    {
+      "table": "cio_tower.mart_command_center",
+      "readers": ["src/lib/cio-tower/tower-mart-view-model.ts:260-284"],
+      "tenantScope": "tenant key candidates canonicalized by Tower mapper"
+    },
+    {
+      "table": "cio_tower.mart_value_funnel",
+      "readers": ["src/lib/cio-tower/tower-mart-view-model.ts:287-352"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "cio_tower.mart_program_decision_lanes",
+      "readers": ["src/lib/cio-tower/tower-mart-view-model.ts:287-352"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "cio_tower.mart_ai_portfolio",
+      "readers": ["src/lib/cio-tower/tower-mart-view-model.ts:287-352"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "cio_tower.mart_cxo_actions",
+      "readers": ["src/lib/cio-tower/tower-mart-view-model.ts:287-352"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "cio_tower.mart_evidence_lineage",
+      "readers": ["src/lib/cio-tower/tower-mart-view-model.ts:287-352"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "cio_tower.mart_required_field_gaps",
+      "readers": ["src/lib/cio-tower/tower-mart-view-model.ts:287-352"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "engagements",
+      "readers": [
+        "src/lib/programs/queries.ts:166-197",
+        "src/lib/data-plane/read-adapters/programsReadAdapter.ts:120-241"
+      ],
+      "tenantScope": "client_id"
+    },
+    {
+      "table": "source_contract_evidence_manifests",
+      "readers": ["src/lib/source/contract-evidence/read-model.ts:116-155"],
+      "tenantScope": "tenantKey and sourceEventId"
+    },
+    {
+      "table": "source_contract_evidence_rows",
+      "readers": ["src/lib/source/contract-evidence/read-model.ts:116-155"],
+      "tenantScope": "tenantKey and sourceEventId"
+    },
+    {
+      "table": "source_contract_evidence_metrics",
+      "readers": ["src/lib/source/contract-evidence/read-model.ts:116-155"],
+      "tenantScope": "tenantKey and sourceEventId"
+    },
+    {
+      "table": "source.contract_vendor_360",
+      "readers": ["src/lib/source/data-model/read-adapter.ts:37-257"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "source.contract_360",
+      "readers": ["src/lib/source/data-model/read-adapter.ts:37-257"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "source.vendor_contract_portfolio",
+      "readers": ["src/lib/source/data-model/read-adapter.ts:37-257"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "source.contract_application_scope",
+      "readers": ["src/lib/source/data-model/read-adapter.ts:37-257"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "source.contract_financial_exposure",
+      "readers": ["src/lib/source/data-model/read-adapter.ts:37-257"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "source.contract_operational_performance",
+      "readers": ["src/lib/source/data-model/read-adapter.ts:37-257"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "source.contract_initiative_dependency",
+      "readers": ["src/lib/source/data-model/read-adapter.ts:37-257"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "source.application_vendor_exposure",
+      "readers": ["src/lib/source/data-model/read-adapter.ts:37-257"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "tower.metric_observation",
+      "readers": ["src/lib/source/data-model/read-adapter.ts:37-257"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "tower.value_claim",
+      "readers": ["src/lib/source/data-model/read-adapter.ts:37-257"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "tower.metric_provenance",
+      "readers": ["src/lib/source/data-model/read-adapter.ts:37-257"],
+      "tenantScope": "tenant key"
+    },
+    {
+      "table": "doc.extraction",
+      "readers": ["src/lib/source/data-model/read-adapter.ts:37-257"],
+      "tenantScope": "tenant key"
+    }
+  ],
+  "fileReads": [
+    {
+      "path": "datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv",
+      "readers": [
+        "src/lib/enterprise-data/enterprise-profile/enterprise-profile-foundation.ts:20-25",
+        "src/lib/enterprise-data/enterprise-profile/enterprise-profile-foundation.ts:146-197"
+      ],
+      "sourceStatus": "file-backed foundation source"
+    },
+    {
+      "pathPattern": "datasets/tenant-inputs/generated/${tenant.tenant_key}/standard-2026-07-v3/evidence_summary.csv",
+      "readers": ["src/lib/enterprise-knowledge/live-preview/knowledge-layer-live-preview.ts:645-660"],
+      "sourceStatus": "runtime-built generated path"
+    },
+    {
+      "pathPattern": "datasets/tenant-inputs/generated/${tenant.tenant_key}/standard-2026-07-v3/relationship_summary.csv",
+      "readers": ["src/lib/enterprise-knowledge/live-preview/knowledge-layer-live-preview.ts:645-660"],
+      "sourceStatus": "runtime-built generated path"
+    },
+    {
+      "path": "datasets/tenant-inputs/active/meridian-health/current",
+      "readers": ["src/lib/home/local-cxo-runtime.ts:460-489"],
+      "sourceStatus": "candidate active tenant root"
+    },
+    {
+      "path": "datasets/tenant-inputs/meridian-health/approved-content/home",
+      "readers": ["src/lib/home/local-cxo-runtime.ts:111-112", "src/lib/home/local-cxo-runtime.ts:560-635"],
+      "sourceStatus": "canonical approved Home content directory according to local runtime"
+    },
+    {
+      "path": "/Users/anand/Downloads/SkyHarbor-E2E-Data/01-evidence-uploads/01_Application_Portfolio_InScope_412Apps.csv",
+      "readers": ["reports/data-remediation/skyharbor-applications/latest/source-selection.md:1-10"],
+      "sourceStatus": "supporting source selected out of runtime by remediation report"
+    }
+  ],
+  "views": [
+    {
+      "name": "v_context_application_inventory",
+      "readers": ["src/lib/intelligence/context-read-model.ts:245-323"]
+    },
+    {
+      "name": "v_context_dimension_coverage",
+      "readers": ["src/lib/intelligence/context-read-model.ts:245-323"]
+    }
+  ],
+  "negativeResults": [
+    {
+      "subject": "Home route reader implementation",
+      "finding": "No tracked implementation found for readSkyHarborAiSuccessHome beyond import/call.",
+      "evidence": ["src/app/(maestro)/home/page.tsx:4-16"]
+    },
+    {
+      "subject": "SkyHarbor 503-app / $1.54B pair",
+      "finding": "No repo or local SkyHarbor evidence hit reproduced this exact pair.",
+      "evidence": ["unverified"]
+    }
+  ]
+}

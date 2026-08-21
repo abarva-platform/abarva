@@ -2,7 +2,11 @@ import "server-only";
 
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { computeValueHash } from "@/lib/context-ingestion/fact-identity";
-import type { PhaseDigest, SolutionDecision, SolutionOption } from "@/lib/programs/solution-context";
+import type {
+  PhaseDigest,
+  SolutionDecision,
+  SolutionOption,
+} from "@/lib/programs/solution-context";
 
 export const ARCHITECTURE_MODEL_VERSION = "moves-architecture-model-v2";
 
@@ -60,7 +64,22 @@ function record(value: unknown): Record<string, unknown> | null {
 }
 
 function strings(value: unknown): string[] {
-  return Array.isArray(value) ? value.map(String).map((v) => v.trim()).filter(Boolean) : [];
+  return Array.isArray(value)
+    ? value
+        .map(String)
+        .map((v) => v.trim())
+        .filter(Boolean)
+    : [];
+}
+
+function hashMatchesDecisionLineage(
+  lineage: Record<string, unknown> | null,
+  storedHash: string,
+): boolean {
+  if (!lineage) return false;
+  const lineageWithoutHash = { ...lineage };
+  delete lineageWithoutHash.decisionHash;
+  return computeValueHash(lineageWithoutHash) === storedHash;
 }
 
 export function parseArchitectureGenerationLineage(
@@ -76,20 +95,31 @@ export function parseArchitectureGenerationLineage(
     "contextSnapshotHash",
     "architectureModelVersion",
   ] as const;
-  if (required.some((key) => typeof row[key] !== "string" || !String(row[key]).trim())) {
+  if (
+    required.some(
+      (key) => typeof row[key] !== "string" || !String(row[key]).trim(),
+    )
+  ) {
     return null;
   }
-  return Object.fromEntries(required.map((key) => [key, String(row[key])])) as unknown as ArchitectureGenerationLineage;
+  return Object.fromEntries(
+    required.map((key) => [key, String(row[key])]),
+  ) as unknown as ArchitectureGenerationLineage;
 }
 
 export function validateArchitectureGenerationLineage(args: {
   lineage: unknown;
   approved: ApprovedSolutionApproach;
   currentContextSnapshotHash: string;
-}): { ok: true; lineage: ArchitectureGenerationLineage } | { ok: false; detail: string } {
+}):
+  | { ok: true; lineage: ArchitectureGenerationLineage }
+  | { ok: false; detail: string } {
   const lineage = parseArchitectureGenerationLineage(args.lineage);
   if (!lineage) {
-    return { ok: false, detail: "Architecture generation lineage is missing or incomplete." };
+    return {
+      ok: false,
+      detail: "Architecture generation lineage is missing or incomplete.",
+    };
   }
   if (
     lineage.decisionHash !== args.approved.decisionHash ||
@@ -98,19 +128,22 @@ export function validateArchitectureGenerationLineage(args: {
   ) {
     return {
       ok: false,
-      detail: "The approved solution option changed after this architecture was generated. Regenerate the P3b chain from the current approved option.",
+      detail:
+        "The approved solution option changed after this architecture was generated. Regenerate the P3b chain from the current approved option.",
     };
   }
   if (lineage.contextSnapshotHash !== args.currentContextSnapshotHash) {
     return {
       ok: false,
-      detail: "The Move evidence/context snapshot changed after this architecture was generated. Refresh the context extract and regenerate the P3b chain.",
+      detail:
+        "The Move evidence/context snapshot changed after this architecture was generated. Refresh the context extract and regenerate the P3b chain.",
     };
   }
   if (lineage.architectureModelVersion !== ARCHITECTURE_MODEL_VERSION) {
     return {
       ok: false,
-      detail: "This architecture was generated with an obsolete architecture model. Regenerate it before approval.",
+      detail:
+        "This architecture was generated with an obsolete architecture model. Regenerate it before approval.",
     };
   }
   return { ok: true, lineage };
@@ -140,15 +173,31 @@ export function parseApprovedSolutionApproach(
   const decision = digest?.decisions?.find(
     (item) => item.phase === 3 && item.decision.includes(chosenOption),
   );
-  if (!decision?.approvedBy || !decision.approvedAt) return null;
+  if (!decision?.approvedAt) return null;
+  const decisionRecord = decision as SolutionDecision & {
+    approvedByRole?: unknown;
+  };
+  const approvedBy =
+    decision.approvedBy ||
+    (typeof decisionRecord.approvedByRole === "string"
+      ? decisionRecord.approvedByRole
+      : null);
+  if (!approvedBy?.trim()) return null;
+  const normalizedDecision: SolutionDecision = {
+    ...decision,
+    approvedBy: approvedBy.trim(),
+  };
   const options = digest?.options ?? [];
   const selected = options.find(
-    (option) => option.id === lineage?.selectedOptionId || option.name === chosenOption,
+    (option) =>
+      option.id === lineage?.selectedOptionId || option.name === chosenOption,
   );
   if (!selected?.id) return null;
   const decisionVersion = String(lineage?.decisionVersion ?? persistedVersion);
   const selectedOptionVersion = String(lineage?.selectedOptionVersion ?? "1");
-  const rejectedRaw = Array.isArray(lineage?.rejectedOptions) ? lineage.rejectedOptions : [];
+  const rejectedRaw = Array.isArray(lineage?.rejectedOptions)
+    ? lineage.rejectedOptions
+    : [];
   const rejectedOptions: RejectedSolutionOption[] = rejectedRaw.length
     ? rejectedRaw.map((item) => {
         const row = record(item) ?? {};
@@ -156,7 +205,9 @@ export function parseApprovedSolutionApproach(
           optionId: String(row.optionId ?? "unknown"),
           optionVersion: String(row.optionVersion ?? "1"),
           name: String(row.name ?? "Rejected option"),
-          reason: String(row.reason ?? "Not selected under the approved decision rationale"),
+          reason: String(
+            row.reason ?? "Not selected under the approved decision rationale",
+          ),
         };
       })
     : options
@@ -168,7 +219,9 @@ export function parseApprovedSolutionApproach(
           reason: "Not selected under the approved decision rationale",
         }));
   const withoutHash: Omit<ApprovedSolutionApproach, "decisionHash"> = {
-    decisionId: String(lineage?.decisionId ?? `${selected.id}:${decision.approvedAt}`),
+    decisionId: String(
+      lineage?.decisionId ?? `${selected.id}:${decision.approvedAt}`,
+    ),
     decisionVersion,
     selectedOptionId: selected.id,
     selectedOptionVersion,
@@ -182,11 +235,20 @@ export function parseApprovedSolutionApproach(
     assumptions: strings(lineage?.assumptions),
     constraints: strings(lineage?.constraints),
     unresolvedDecisions: strings(lineage?.unresolvedDecisions),
-    decision,
+    decision: normalizedDecision,
   };
   const decisionHash = decisionHashFor(withoutHash);
-  const storedHash = typeof lineage?.decisionHash === "string" ? lineage.decisionHash : null;
-  if (storedHash && storedHash !== decisionHash) return null;
+  const storedHash =
+    typeof lineage?.decisionHash === "string" ? lineage.decisionHash : null;
+  if (storedHash) {
+    if (
+      storedHash !== decisionHash &&
+      !hashMatchesDecisionLineage(lineage, storedHash)
+    ) {
+      return null;
+    }
+    return { ...withoutHash, decisionHash: storedHash };
+  }
   return { ...withoutHash, decisionHash };
 }
 
@@ -207,10 +269,15 @@ export async function loadApprovedSolutionApproach(args: {
     [args.moveId, args.clientId],
     { missingTable: "empty" },
   );
-  return parseApprovedSolutionApproach(rows[0]?.structured_data, rows[0]?.version);
+  return parseApprovedSolutionApproach(
+    rows[0]?.structured_data,
+    rows[0]?.version,
+  );
 }
 
-export function formatApprovedSolutionApproach(approved: ApprovedSolutionApproach): string {
+export function formatApprovedSolutionApproach(
+  approved: ApprovedSolutionApproach,
+): string {
   const list = (label: string, values: string[], empty: string) =>
     `${label}: ${values.length ? values.join("; ") : empty}`;
   return [
@@ -229,5 +296,7 @@ export function formatApprovedSolutionApproach(approved: ApprovedSolutionApproac
     `Rejected alternatives: ${approved.rejectedOptions.map((item) => `${item.name} — ${item.reason}`).join("; ") || "none"}`,
     `Approved by/at: ${approved.decision.approvedBy} / ${approved.decision.approvedAt}`,
     "Build only to this approved option. Do not reopen, blend, or silently replace it. Expose conflicting evidence as an unresolved decision and stop if it changes the approved basis.",
-  ].filter((line): line is string => Boolean(line)).join("\n");
+  ]
+    .filter((line): line is string => Boolean(line))
+    .join("\n");
 }

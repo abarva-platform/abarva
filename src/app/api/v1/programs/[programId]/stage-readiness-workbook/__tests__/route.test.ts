@@ -6,6 +6,9 @@ const mockBuildStageReadinessWorkbookSpec = jest.fn();
 const mockRenderStageReadinessWorkbookXlsx = jest.fn();
 const mockParseStageReadinessWorkbookXlsx = jest.fn();
 const mockPersistStageReadinessProposalSet = jest.fn();
+const mockPersistStageReadinessProposalReview = jest.fn();
+const mockGetMoveArtifactForTenant = jest.fn();
+const mockDownloadArtifactBytes = jest.fn();
 
 jest.mock("@/app/api/v1/programs/_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -48,8 +51,19 @@ jest.mock("@/lib/programs/stage-readiness-workbooks/parser", () => ({
 }));
 
 jest.mock("@/lib/programs/stage-readiness-workbooks/proposals", () => ({
+  STAGE_READINESS_PROPOSAL_SET_ARTIFACT_TYPE:
+    "stage_readiness_workbook_proposal_set",
   persistStageReadinessProposalSet: (input: unknown) =>
     mockPersistStageReadinessProposalSet(input),
+  persistStageReadinessProposalReview: (input: unknown) =>
+    mockPersistStageReadinessProposalReview(input),
+}));
+
+jest.mock("@/lib/programs/deliverables/move-artifacts", () => ({
+  getMoveArtifactForTenant: (ctx: unknown, artifactId: string) =>
+    mockGetMoveArtifactForTenant(ctx, artifactId),
+  downloadArtifactBytes: (ctx: unknown, artifactId: string) =>
+    mockDownloadArtifactBytes(ctx, artifactId),
 }));
 
 const params = Promise.resolve({ programId: "move-1" });
@@ -71,6 +85,30 @@ function uploadReq(
   const form = new FormData();
   form.set("file", new File([Buffer.from("xlsx")], "workbook.xlsx"));
   return new Request(url, { method: "POST", body: form });
+}
+
+function jsonUploadReq(
+  body: unknown = {
+    workbookBase64: Buffer.from("xlsx").toString("base64"),
+  },
+  url = "http://test/api/v1/programs/move-1/stage-readiness-workbook",
+) {
+  return new Request(url, {
+    method: "POST",
+    body: JSON.stringify(body),
+    headers: { "content-type": "application/json" },
+  });
+}
+
+function patchReq(body: unknown) {
+  return new Request(
+    "http://test/api/v1/programs/move-1/stage-readiness-workbook",
+    {
+      method: "PATCH",
+      body: JSON.stringify(body),
+      headers: { "content-type": "application/json" },
+    },
+  );
 }
 
 beforeEach(() => {
@@ -136,6 +174,101 @@ beforeEach(() => {
           blank: 0,
         },
       },
+      proposals: [
+        {
+          proposalId: "proposal-1",
+          questionId: "q-1",
+          dimensionId: "business_process",
+          requirement: "required",
+          question: "Confirm process.",
+          response: "Confirmed",
+          answerState: "answered",
+          disposition: "pending",
+        },
+      ],
+    },
+  });
+  mockGetMoveArtifactForTenant.mockResolvedValue({
+    artifact_id: "proposal-artifact-1",
+    move_id: "move-1",
+    artifact_type: "stage_readiness_workbook_proposal_set",
+    version: 2,
+  });
+  mockDownloadArtifactBytes.mockResolvedValue({
+    fileName: "proposal-set.json",
+    fileFormat: "json",
+    bytes: Buffer.from(
+      JSON.stringify({
+        proposalSetId: "proposal-set-1",
+        moveId: "move-1",
+        transition: { fromPhase: 1, toPhase: 2, stage: "P1 to P2" },
+        proposals: [
+          {
+            proposalId: "proposal-1",
+            questionId: "q-1",
+            dimensionId: "baseline_metrics",
+            requirement: "required",
+            sourceClass: "client_metric",
+            question: "Provide baseline.",
+            response: "Unknown",
+            context: "Current latency has not been measured.",
+            evidenceOrSource: "",
+            owner: "Operations",
+            workbookLocation: {
+              sheetName: "Performance & Value",
+              rowNumber: 2,
+            },
+            answerState: "unknown",
+            disposition: "pending",
+          },
+          {
+            proposalId: "proposal-2",
+            questionId: "q-2",
+            dimensionId: "delay_volume",
+            requirement: "required",
+            sourceClass: "evidence_gap",
+            question: "Provide volume.",
+            response: "Insufficient evidence",
+            context: "No client source establishes annual volume.",
+            evidenceOrSource: "",
+            owner: "Finance",
+            workbookLocation: {
+              sheetName: "Performance & Value",
+              rowNumber: 3,
+            },
+            answerState: "insufficient_evidence",
+            disposition: "pending",
+          },
+        ],
+      }),
+    ),
+  });
+  mockPersistStageReadinessProposalReview.mockResolvedValue({
+    artifactId: "review-artifact-1",
+    artifactVersion: 1,
+    blobStored: true,
+    proposalReview: {
+      reviewId: "review-1",
+      proposalSetId: "proposal-set-1",
+      summary: {
+        acceptedCount: 1,
+        rejectedCount: 0,
+        needsValidationCount: 1,
+        pendingCount: 0,
+        acceptedAnswerStates: {
+          answered: 0,
+          unknown: 1,
+          insufficient_evidence: 0,
+          blank: 0,
+        },
+        readiness: {
+          ready: 0,
+          partial: 0,
+          insufficientEvidence: 0,
+          unknown: 1,
+        },
+      },
+      acceptedResponses: [{ questionId: "q-1" }],
     },
   });
 });
@@ -241,6 +374,33 @@ describe("POST /api/v1/programs/[programId]/stage-readiness-workbook", () => {
     expect(mockRenderStageReadinessWorkbookXlsx).not.toHaveBeenCalled();
   });
 
+  it("stores a base64 JSON workbook upload through the same pending proposal path", async () => {
+    const { POST } = await import("../route");
+    const res = await POST(jsonUploadReq(), { params });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      ok: true,
+      proposalSet: {
+        proposalSetId: "proposal-set-1",
+        artifactId: "proposal-artifact-1",
+        status: "review_required",
+        pendingCount: 1,
+      },
+    });
+    expect(mockParseStageReadinessWorkbookXlsx).toHaveBeenCalledWith(
+      Buffer.from("xlsx"),
+      { expectedMoveId: "move-1", expectedPhase: 1 },
+    );
+    expect(mockPersistStageReadinessProposalSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ctx,
+        parsed: expect.objectContaining({ ok: true }),
+        uploadedWorkbookSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      }),
+    );
+  });
+
   it("returns 422 when workbook metadata does not match the route context", async () => {
     mockParseStageReadinessWorkbookXlsx.mockResolvedValueOnce({
       ok: false,
@@ -296,6 +456,111 @@ describe("POST /api/v1/programs/[programId]/stage-readiness-workbook", () => {
 
     expect(res.status).toBe(400);
     expect(mockParseStageReadinessWorkbookXlsx).not.toHaveBeenCalled();
+  });
+
+  it("rejects JSON workbook uploads without base64 bytes", async () => {
+    const { POST } = await import("../route");
+    const res = await POST(jsonUploadReq({ workbookBase64: "" }), { params });
+
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "bad_request",
+      detail: "workbookBase64 is required",
+    });
+    expect(mockParseStageReadinessWorkbookXlsx).not.toHaveBeenCalled();
+  });
+});
+
+describe("PATCH /api/v1/programs/[programId]/stage-readiness-workbook", () => {
+  it("records human review decisions for a proposal set without accepting unreviewed upload state", async () => {
+    const { PATCH } = await import("../route");
+    const res = await PATCH(
+      patchReq({
+        proposalSetArtifactId: "proposal-artifact-1",
+        proposalSetArtifactVersion: 2,
+        decisions: [
+          { proposalId: "proposal-1", disposition: "accepted" },
+          {
+            proposalId: "proposal-2",
+            disposition: "needs_validation",
+            note: "Finance must source annual volume before value math.",
+          },
+        ],
+      }),
+      { params },
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      ok: true,
+      proposalReview: {
+        reviewId: "review-1",
+        artifactId: "review-artifact-1",
+        status: "review_required",
+        acceptedCount: 1,
+        needsValidationCount: 1,
+        acceptedResponses: 1,
+        message:
+          "Human review recorded. Only accepted workbook responses can feed the next phase context.",
+      },
+    });
+    expect(mockGetMoveArtifactForTenant).toHaveBeenCalledWith(
+      ctx,
+      "proposal-artifact-1",
+    );
+    expect(mockDownloadArtifactBytes).toHaveBeenCalledWith(
+      ctx,
+      "proposal-artifact-1",
+    );
+    expect(mockPersistStageReadinessProposalReview).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ctx,
+        sourceProposalSetArtifactId: "proposal-artifact-1",
+        sourceProposalSetArtifactVersion: 2,
+        decisions: [
+          { proposalId: "proposal-1", disposition: "accepted" },
+          {
+            proposalId: "proposal-2",
+            disposition: "needs_validation",
+            note: "Finance must source annual volume before value math.",
+          },
+        ],
+      }),
+    );
+  });
+
+  it("rejects stale proposal-set reviews with an explicit reload conflict", async () => {
+    const { PATCH } = await import("../route");
+    const res = await PATCH(
+      patchReq({
+        proposalSetArtifactId: "proposal-artifact-1",
+        proposalSetArtifactVersion: 1,
+        decisions: [{ proposalId: "proposal-1", disposition: "accepted" }],
+      }),
+      { params },
+    );
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "proposal_set_unavailable",
+      detail: "proposal set version changed; reload before reviewing",
+    });
+    expect(mockPersistStageReadinessProposalReview).not.toHaveBeenCalled();
+  });
+
+  it("rejects pending as an explicit human decision", async () => {
+    const { PATCH } = await import("../route");
+    const res = await PATCH(
+      patchReq({
+        proposalSetArtifactId: "proposal-artifact-1",
+        decisions: [{ proposalId: "proposal-1", disposition: "pending" }],
+      }),
+      { params },
+    );
+
+    expect(res.status).toBe(400);
+    expect(mockDownloadArtifactBytes).not.toHaveBeenCalled();
+    expect(mockPersistStageReadinessProposalReview).not.toHaveBeenCalled();
   });
 });
 

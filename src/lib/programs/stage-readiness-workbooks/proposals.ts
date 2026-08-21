@@ -16,6 +16,8 @@ export const STAGE_READINESS_WORKBOOK_PARSER_VERSION =
   "stage-readiness-workbook-parser-v1";
 export const STAGE_READINESS_PROPOSAL_SET_ARTIFACT_TYPE =
   "stage_readiness_workbook_proposal_set";
+export const STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE =
+  "stage_readiness_workbook_proposal_review";
 
 export type StageReadinessProposalDisposition =
   | "pending"
@@ -85,6 +87,62 @@ export interface StageReadinessWorkbookProposalSet {
   proposals: StageReadinessWorkbookProposal[];
 }
 
+export interface StageReadinessProposalDecision {
+  proposalId: string;
+  disposition: Exclude<StageReadinessProposalDisposition, "pending">;
+  note?: string;
+}
+
+export interface StageReadinessAcceptedWorkbookResponse {
+  proposalId: string;
+  questionId: string;
+  dimensionId: string;
+  requirement: "required" | "recommended";
+  sourceClass: string;
+  question: string;
+  response: string;
+  context: string;
+  evidenceOrSource: string;
+  owner: string;
+  workbookLocation: StageReadinessWorkbookProposal["workbookLocation"];
+  answerState: StageReadinessProposalAnswerState;
+  acceptedAt: string;
+  acceptedBy: string | null;
+}
+
+export interface StageReadinessProposalReview {
+  reviewId: string;
+  proposalSetId: string;
+  moveId: string;
+  transition: StageReadinessWorkbookProposalSet["transition"];
+  sourceProposalSetArtifact: {
+    artifactId: string;
+    artifactVersion: number | null;
+  };
+  reviewer: {
+    userId: string | null;
+    email: string | null;
+  };
+  reviewedAt: string;
+  summary: {
+    proposalCount: number;
+    pendingCount: number;
+    acceptedCount: number;
+    rejectedCount: number;
+    needsValidationCount: number;
+    acceptedAnswerStates: Record<StageReadinessProposalAnswerState, number>;
+    readiness: {
+      ready: number;
+      partial: number;
+      insufficientEvidence: number;
+      unknown: number;
+    };
+  };
+  decisions: StageReadinessProposalDecision[];
+  acceptedResponses: StageReadinessAcceptedWorkbookResponse[];
+  proposals: StageReadinessWorkbookProposal[];
+}
+
 export interface PersistStageReadinessProposalSetInput {
   ctx: TenancyCtx;
   program: ProgramCore;
@@ -98,6 +156,24 @@ export interface PersistStageReadinessProposalSetResult {
   artifactId: string;
   artifactVersion: number;
   proposalSet: StageReadinessWorkbookProposalSet;
+  blobStored: boolean;
+}
+
+export interface PersistStageReadinessProposalReviewInput {
+  ctx: TenancyCtx;
+  program: ProgramCore;
+  proposalSet: StageReadinessWorkbookProposalSet;
+  sourceProposalSetArtifactId: string;
+  sourceProposalSetArtifactVersion: number | null;
+  decisions: StageReadinessProposalDecision[];
+  reviewedAt?: string;
+  saveArtifact?: typeof saveMoveArtifact;
+}
+
+export interface PersistStageReadinessProposalReviewResult {
+  artifactId: string;
+  artifactVersion: number;
+  proposalReview: StageReadinessProposalReview;
   blobStored: boolean;
 }
 
@@ -115,6 +191,23 @@ export async function persistStageReadinessProposalSet(
     artifactVersion: saved.version,
     blobStored: saved.blobStored,
     proposalSet,
+  };
+}
+
+export async function persistStageReadinessProposalReview(
+  input: PersistStageReadinessProposalReviewInput,
+): Promise<PersistStageReadinessProposalReviewResult> {
+  const proposalReview = buildStageReadinessProposalReview(input);
+  const saveArtifact = input.saveArtifact ?? saveMoveArtifact;
+  const saved = await saveArtifact(
+    input.ctx,
+    reviewArtifactInput(proposalReview),
+  );
+  return {
+    artifactId: saved.artifactId,
+    artifactVersion: saved.version,
+    blobStored: saved.blobStored,
+    proposalReview,
   };
 }
 
@@ -178,6 +271,90 @@ export function buildStageReadinessProposalSet(
   };
 }
 
+export function buildStageReadinessProposalReview(
+  input: Omit<PersistStageReadinessProposalReviewInput, "saveArtifact">,
+): StageReadinessProposalReview {
+  const reviewedAt = input.reviewedAt ?? new Date().toISOString();
+  const decisionByProposalId = new Map(
+    input.decisions.map((decision) => [decision.proposalId, decision]),
+  );
+  const unknownProposalIds = input.decisions
+    .map((decision) => decision.proposalId)
+    .filter(
+      (proposalId) =>
+        !input.proposalSet.proposals.some(
+          (proposal) => proposal.proposalId === proposalId,
+        ),
+    );
+  if (unknownProposalIds.length > 0) {
+    throw new Error(
+      `Unknown stage readiness proposal id(s): ${unknownProposalIds.join(", ")}`,
+    );
+  }
+
+  const proposals = input.proposalSet.proposals.map((proposal) => {
+    const decision = decisionByProposalId.get(proposal.proposalId);
+    return decision
+      ? { ...proposal, disposition: decision.disposition }
+      : proposal;
+  });
+  const acceptedResponses: StageReadinessAcceptedWorkbookResponse[] = proposals
+    .filter((proposal) => proposal.disposition === "accepted")
+    .map((proposal) => ({
+      proposalId: proposal.proposalId,
+      questionId: proposal.questionId,
+      dimensionId: proposal.dimensionId,
+      requirement: proposal.requirement,
+      sourceClass: proposal.sourceClass,
+      question: proposal.question,
+      response: proposal.response,
+      context: proposal.context,
+      evidenceOrSource: proposal.evidenceOrSource,
+      owner: proposal.owner,
+      workbookLocation: proposal.workbookLocation,
+      answerState: proposal.answerState,
+      acceptedAt: reviewedAt,
+      acceptedBy: input.ctx.userId ?? null,
+    }));
+  const summary = countProposalDispositions(proposals);
+  const acceptedAnswerStates = countAnswerStates(acceptedResponses);
+
+  return {
+    reviewId: stableId({
+      proposalSetId: input.proposalSet.proposalSetId,
+      sourceProposalSetArtifactId: input.sourceProposalSetArtifactId,
+      sourceProposalSetArtifactVersion: input.sourceProposalSetArtifactVersion,
+      decisions: input.decisions,
+      reviewedAt,
+    }),
+    proposalSetId: input.proposalSet.proposalSetId,
+    moveId: input.proposalSet.moveId,
+    transition: input.proposalSet.transition,
+    sourceProposalSetArtifact: {
+      artifactId: input.sourceProposalSetArtifactId,
+      artifactVersion: input.sourceProposalSetArtifactVersion,
+    },
+    reviewer: {
+      userId: input.ctx.userId ?? null,
+      email: input.ctx.email ?? null,
+    },
+    reviewedAt,
+    summary: {
+      ...summary,
+      acceptedAnswerStates,
+      readiness: {
+        ready: acceptedAnswerStates.answered,
+        partial: 0,
+        insufficientEvidence: acceptedAnswerStates.insufficient_evidence,
+        unknown: acceptedAnswerStates.unknown,
+      },
+    },
+    decisions: input.decisions,
+    acceptedResponses,
+    proposals,
+  };
+}
+
 function artifactInput(
   proposalSet: StageReadinessWorkbookProposalSet,
 ): SaveMoveArtifactInput {
@@ -209,6 +386,46 @@ function artifactInput(
       answerStates: proposalSet.summary.answerStates,
       governance:
         "Parsed workbook upload only. Pending proposals do not feed P2 until accepted.",
+    },
+  };
+}
+
+function reviewArtifactInput(
+  proposalReview: StageReadinessProposalReview,
+): SaveMoveArtifactInput {
+  const terminalReview =
+    proposalReview.summary.pendingCount === 0 &&
+    proposalReview.summary.needsValidationCount === 0;
+  return {
+    moveId: proposalReview.moveId,
+    phase: proposalReview.transition.fromPhase,
+    artifactType: STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE,
+    artifactFamily: "approval_artifact",
+    title: `Stage readiness proposal review P${proposalReview.transition.fromPhase} to P${proposalReview.transition.toPhase}`,
+    description:
+      "Human review of parsed workbook proposals. Only accepted responses can feed the next phase context.",
+    fileName: `${proposalReview.reviewId}.json`,
+    fileFormat: "json",
+    body: JSON.stringify(proposalReview, null, 2),
+    status: terminalReview ? "approved" : "review_required",
+    generatedBy: "stage_readiness_workbook_review",
+    sourceBasis: "human_reviewed_stage_readiness_workbook_proposals",
+    confidence: "human_reviewed",
+    citationReady: false,
+    metadata: {
+      reviewId: proposalReview.reviewId,
+      proposalSetId: proposalReview.proposalSetId,
+      transition: proposalReview.transition,
+      sourceProposalSetArtifact: proposalReview.sourceProposalSetArtifact,
+      proposalCount: proposalReview.summary.proposalCount,
+      acceptedCount: proposalReview.summary.acceptedCount,
+      rejectedCount: proposalReview.summary.rejectedCount,
+      needsValidationCount: proposalReview.summary.needsValidationCount,
+      pendingCount: proposalReview.summary.pendingCount,
+      acceptedAnswerStates: proposalReview.summary.acceptedAnswerStates,
+      readiness: proposalReview.summary.readiness,
+      governance:
+        "Accepted workbook responses may feed P2 context. Pending, rejected, and needs-validation proposals must not feed P2.",
     },
   };
 }
@@ -282,7 +499,9 @@ function classifyAnswerState(
 }
 
 function countAnswerStates(
-  proposals: StageReadinessWorkbookProposal[],
+  proposals: Array<{
+    answerState: StageReadinessProposalAnswerState;
+  }>,
 ): Record<StageReadinessProposalAnswerState, number> {
   return proposals.reduce(
     (acc, proposal) => {
@@ -290,6 +509,37 @@ function countAnswerStates(
       return acc;
     },
     { answered: 0, unknown: 0, insufficient_evidence: 0, blank: 0 },
+  );
+}
+
+function countProposalDispositions(
+  proposals: StageReadinessWorkbookProposal[],
+): Pick<
+  StageReadinessProposalReview["summary"],
+  | "proposalCount"
+  | "pendingCount"
+  | "acceptedCount"
+  | "rejectedCount"
+  | "needsValidationCount"
+> {
+  return proposals.reduce(
+    (acc, proposal) => {
+      acc.proposalCount += 1;
+      if (proposal.disposition === "pending") acc.pendingCount += 1;
+      if (proposal.disposition === "accepted") acc.acceptedCount += 1;
+      if (proposal.disposition === "rejected") acc.rejectedCount += 1;
+      if (proposal.disposition === "needs_validation") {
+        acc.needsValidationCount += 1;
+      }
+      return acc;
+    },
+    {
+      proposalCount: 0,
+      pendingCount: 0,
+      acceptedCount: 0,
+      rejectedCount: 0,
+      needsValidationCount: 0,
+    },
   );
 }
 

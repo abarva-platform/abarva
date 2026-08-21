@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-08-21",
+  "status": "static_findings_runtime_not_confirmed",
+  "items": [
+    {
+      "id": "prior-131-object-audit-source-not-found",
+      "severity": "medium",
+      "summary": "The request cites a July audit with 131 persisted objects split 72/38/16/5, but constrained searches did not locate that exact artifact or split in the current checkout.",
+      "evidence": ["unverified_request_supplied"],
+      "requiredAction": "Locate and attach/source the July object inventory before using its rows as migration seed authority."
+    },
+    {
+      "id": "static-ddl-exceeds-prior-seed-scale",
+      "severity": "high",
+      "summary": "Checked-in SQL contains 516 CREATE TABLE matches and 32 views, so any 131-object module audit is necessarily a filtered module subset, not the full physical object inventory.",
+      "evidence": ["physical-object-inventory.json"],
+      "requiredAction": "Keep module subset and full physical object inventory separate."
+    },
+    {
+      "id": "tenant-key-contract-split",
+      "severity": "high",
+      "summary": "Registry keys, app keys, shared aliases, and enterprise-context canonical keys diverge.",
+      "evidence": [
+        "datasets/tenant-inputs/tenant-input-registry.json:30-130",
+        "src/lib/enterprise-context/schema.ts:1-17",
+        "src/lib/tenant/aliases.ts:20-107",
+        "reports/enterprise-data-flow-map-2026-08-21/conflicts.json"
+      ],
+      "requiredAction": "Approve one control-plane tenant identity contract before pilot migration."
+    },
+    {
+      "id": "active-generated-derived-approved-parallel-roots",
+      "severity": "high",
+      "summary": "Tenant data exists in active roots, adjacent standard packs, governed intake drafts, candidate packs, generated adapter output, derived outputs, and approved content.",
+      "evidence": ["reports/tenant-layer-refresh-2026-08-12/summary.md:11-28"],
+      "requiredAction": "Assign each root a layer and disposition; generated and approved artifacts must not become source truth."
+    },
+    {
+      "id": "source-artifact-authority-waterfall",
+      "severity": "high",
+      "summary": "Source has real approval/acceptance states, but authoritative resolution can fall back to generated/current artifacts when no acceptance exists.",
+      "evidence": ["docs/audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md:37-42"],
+      "requiredAction": "Separate generated, approved, accepted-authoritative, and client-final contracts before artifact migration."
+    },
+    {
+      "id": "source-chat-save-bypass",
+      "severity": "high",
+      "summary": "A separate Source artifact save route can persist chat-authored markdown without the primary generation metadata and quality lineage.",
+      "evidence": ["docs/audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md:85-93"],
+      "requiredAction": "Instrument and classify this path as draft-only or route it through the same governance envelope."
+    },
+    {
+      "id": "tower-local-projection-vs-live-proof-gap",
+      "severity": "high",
+      "summary": "Tower reconciliation proved local source/projection contract but not live Azure row refresh, rebuild, deploy, or browser-visible state.",
+      "evidence": ["docs/audits/TOWER-DATA-LAYER-RECONCILIATION-2026-06-27.md:66-76"],
+      "requiredAction": "Capture live mart row counts, writer job evidence, browser proof, and rollback before using Tower marts as pilot proof."
+    },
+    {
+      "id": "home-reader-unresolved",
+      "severity": "medium",
+      "summary": "Home route imports readSkyHarborAiSuccessHome; static sweep found no tracked implementation beyond the import/call.",
+      "evidence": ["src/app/(maestro)/home/page.tsx:4-16"],
+      "requiredAction": "Resolve route implementation and target read contract before Home snapshot promotion."
+    },
+    {
+      "id": "intelligence-route-static-model",
+      "severity": "medium",
+      "summary": "Intelligence route root uses an authored enterprise landscape model rather than the enterprise-context DB read models.",
+      "evidence": [
+        "src/app/(maestro)/intelligence/page.tsx:28-66",
+        "src/lib/home/enterprise-landscape-view-model.ts:91-240"
+      ],
+      "requiredAction": "Decide whether this route remains authored demo projection or moves to governed context read contract."
+    }
+  ]
+}
+

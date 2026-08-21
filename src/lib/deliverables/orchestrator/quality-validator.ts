@@ -71,19 +71,55 @@ function looksLikeRawSlug(name: string): boolean {
   return n === n.toLowerCase() && /^[a-z0-9]+$/.test(n); // single lowercase token
 }
 
-/** Count client-fact-looking claims that lack a [n] citation, assumption, or placeholder. */
-function countUnsupportedClaims(body: string): number {
+function excerptSentence(sentence: string): string {
+  return sentence.replace(/\s+/g, " ").trim().slice(0, 180);
+}
+
+function isSupportedExternalBenchmarkClaim(sentence: string): boolean {
+  if (
+    !/\b(external[_ -]?benchmark|external reference|reference pattern|sensitivity[- ]?(?:only|framing)|for sensitivity)\b/i.test(
+      sentence,
+    ) &&
+    !/\bexternal\b[^\n|]{0,80}\bbenchmark\b/i.test(sentence)
+  ) {
+    return false;
+  }
+
+  if (
+    /\b(annual|total|savings?|benefits?|ROI|return|payback|NPV)\b/i.test(
+      sentence,
+    ) &&
+    !/\bnot\b.{0,120}\b(savings?|benefits?|ROI|return|client[- ]specific|internal|baseline|claim|fact)\b/i.test(
+      sentence,
+    )
+  ) {
+    return false;
+  }
+
+  return /\bnot\b.{0,120}\b(client[- ]specific|internal|baseline|savings?|benefits?|claim|fact)\b|sensitivity[- ]only|for sensitivity|per minute|\/min\b/i.test(
+    sentence,
+  );
+}
+
+/** Collect client-fact-looking claims that lack a [n] citation, assumption, or placeholder. */
+function collectUnsupportedClaims(body: string): string[] {
   // sentences asserting numbers/dollars/dates/percentages are client-fact candidates
   const sentences = body.split(/(?<=[.!?])\s+/);
   const factLike =
     /(\$\s?\d|\b\d{1,3}(?:,\d{3})+\b|\b\d+%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/;
   const supported =
     /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING|\(open input\s*[\u2013\u2014-]\s*see Open Inputs Required\)/i;
-  let n = 0;
+  const claims: string[] = [];
   for (const s of sentences) {
-    if (factLike.test(s) && !supported.test(s)) n++;
+    if (
+      factLike.test(s) &&
+      !supported.test(s) &&
+      !isSupportedExternalBenchmarkClaim(s)
+    ) {
+      claims.push(excerptSentence(s));
+    }
   }
-  return n;
+  return claims;
 }
 
 export function validateDeliverableQuality(
@@ -117,11 +153,12 @@ export function validateDeliverableQuality(
   // made this blocker structurally unreachable, and an invented figure passed
   // purely because it had been relabelled. An assumption the model DECLARED
   // still passes; one it was caught inventing now fails.
-  const unsupportedClaimCount = countUnsupportedClaims(
+  const unsupportedClaimExamples = collectUnsupportedClaims(
     doc.generatedSections
       .map((s) => s.rawBodyMarkdown ?? s.bodyMarkdown)
       .join("\n\n"),
   );
+  const unsupportedClaimCount = unsupportedClaimExamples.length;
 
   const hasSourceRegister = doc.sourceRegister.length > 0;
   const hasDecisionSection = doc.generatedSections.some((s) =>
@@ -148,7 +185,10 @@ export function validateDeliverableQuality(
     );
   if (unsupportedClaimCount > 0)
     blockers.push(
-      `${unsupportedClaimCount} unsupported client-fact claim(s) (number/date/$/% with no [n], assumption, or placeholder)`,
+      `${unsupportedClaimCount} unsupported client-fact claim(s) (number/date/$/% with no [n], assumption, or placeholder): ${unsupportedClaimExamples
+        .slice(0, 3)
+        .map((s) => `"${s}"`)
+        .join("; ")}`,
     );
   if (sectionCount < qb.minSections)
     blockers.push(`only ${sectionCount} sections; minimum ${qb.minSections}`);
