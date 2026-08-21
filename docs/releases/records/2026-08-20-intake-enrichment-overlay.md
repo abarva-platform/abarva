@@ -77,14 +77,16 @@ data moved — none did.
   - first three enrichment schemas with deterministic columns computed server-side
   - freshness and promotion gates
   - review queue read-model and the Steward intake review page
+  - source integrity checks (diagnosis only; no source file edited)
 - New: `src/lib/enterprise-data/intake/` — `enrichment-firewall.ts`,
   `enrichment-proposals.ts`, `canonical-overlay-merge.ts`, `enrichment-schemas.ts`,
   `deterministic-recomputers.ts`, `promotion-gate.ts`, `review-read-model.ts`;
-  `src/components/admin/intake-review/`, `src/app/(maestro)/admin/intake-review/`
+  `src/components/admin/intake-review/`, `src/app/(maestro)/admin/intake-review/`,
+  `source-integrity.ts`, `scripts/qa/source-integrity-report.mjs`
 - Modified: `canonical-tenant-data-build.ts` (generic column passthrough now refuses
   reserved columns), `csv-source-adapter.ts` (reports the real problem instead of
   `source_field_unmapped`, and excludes reserved columns from mapping coverage)
-- Tests: seven suites under `tests/behaviors/`, 89 assertions
+- Tests: eight suites under `tests/behaviors/`, 101 assertions
 - `scripts/qa/render-intake-review-proof.tsx` — renders the review queue with a fixture
   covering all four group shapes, so the layout is looked at rather than asserted
 
@@ -107,6 +109,38 @@ data moved — none did.
     the workbook's own submitted value as the only candidate
 - Not yet validated: no overlay has been produced from a real workbook, so the parser has
   not met model output. That is the proof step in a later release.
+
+## Source integrity findings — read before promoting anything
+
+`node scripts/qa/source-integrity-report.mjs` reports 14 errors and 7 warnings across the
+six active tenants. Nothing was repaired: these need a decision, and a validator that fixes
+what it finds hides the fact that the source is wrong.
+
+**Three tenants have integration files with no relationship data at all.** A template
+version identifier sits in the source column on every row, and the target and
+integration-type columns are blank throughout — 383 rows of genuine, distinct asset names
+with nothing connecting them. Any flow or topology view for those tenants is built from
+nothing and reports success. This looks like a column shift or a mis-mapped generator, and
+it needs the generator fixed, not the output patched.
+
+**One tenant references systems by an id held in a provenance column.** All 503 references
+resolve against it and none against the declared identity. Both files are individually
+valid; a consumer joining on the documented key gets an empty result. The repair is
+mechanical and exact (503 of 503 map unambiguously), but it is a rewrite of a recorded
+source file and should be an explicit decision rather than a side effect of this release.
+
+**Two tenants record per-system cost that is a criticality-tier constant** — three distinct
+values across 503 rows, four across 302. Each row is plausible and the estate total is
+plausible; only the distribution shows no per-row figure was ever recorded. Any
+concentration, Pareto or top-N analysis over those columns is currently returning a
+confident answer about a value that does not exist. This is the most consequential of the
+three, because unlike the other two it produces output rather than an empty result.
+
+Vocabulary drift across tenants is reported as a warning. Two clients may legitimately
+describe their estates differently, and forcing a shared vocabulary onto recorded data
+would put our schema ahead of what the client said. The fix is to classify into a declared
+vocabulary — which is what the derived enrichment columns in this release exist to do — not
+to rewrite the client's words.
 
 ## Rollout Plan
 
@@ -159,6 +193,6 @@ Open, in the sequence they are planned:
   promotion before it protects anything.
 - No template declares an enrichment column, and the enrichment prompts have not been run
   against a real workbook.
-- One fixture tenant's source files carry topology and join-key problems that must be
-  repaired before its snapshot is promoted; enrichment would otherwise be layered over
-  known-bad recorded data.
+- The source integrity findings above are diagnosed and unrepaired. No tenant should be
+  enriched or promoted until they are addressed, because enrichment layered over a file
+  with no relationship data produces confident classifications of nothing.
