@@ -43,6 +43,10 @@ export function CurrentState({ signalPacket }: { signalPacket: EnterpriseSignalP
     .filter((profile) => PRIORITY_DOMAINS.includes(profile.domain))
     .reduce((sum, profile) => sum + profile.rows.length, 0);
   const totalMemberships = profiles.reduce((sum, profile) => sum + profile.rows.length, 0);
+  const priorityProfiles = PRIORITY_DOMAINS.map((domain) => profiles.find((profile) => profile.domain === domain)).filter(
+    (profile): profile is DomainProfile => Boolean(profile),
+  );
+  const largestPriority = Math.max(1, ...priorityProfiles.map((profile) => profile.rows.length));
 
   return (
     <section style={{ padding: `46px ${PAGE_X}px 72px` }}>
@@ -71,6 +75,37 @@ export function CurrentState({ signalPacket }: { signalPacket: EnterpriseSignalP
         <Metric value={profiles.length.toLocaleString()} label="loaded object families" />
         <Metric value={totalMemberships.toLocaleString()} label="domain memberships" />
         <Metric value={priorityCoverage.toLocaleString()} label="core estate facts" />
+      </section>
+
+      <section style={pulseStyle}>
+        <div style={sectionHeaderStyle}>
+          <span style={eyebrow(V4.green)}>Object family pulse</span>
+          <span style={monoStyle}>core context used by Home</span>
+        </div>
+        <div style={pulseGridStyle}>
+          {priorityProfiles.map((profile, index) => (
+            <button
+              key={profile.domain}
+              type="button"
+              onClick={() => setSelectedDomain(profile.domain)}
+              style={{
+                ...pulseCardStyle,
+                borderColor: selected?.domain === profile.domain ? "rgba(29,158,117,0.58)" : V4.rule,
+                background: selected?.domain === profile.domain ? "rgba(29,158,117,0.06)" : V4.surface,
+              }}
+            >
+              <span style={pulseIndexStyle}>{String(index + 1).padStart(2, "0")}</span>
+              <strong style={pulseTitleStyle}>{profile.label}</strong>
+              <span style={pulseMetaStyle}>
+                {profile.signals.toLocaleString()} signals · {profile.governedFacts.toLocaleString()} governed facts
+              </span>
+              <span style={pulseTrackStyle}>
+                <span style={{ ...pulseFillStyle, width: `${Math.max(8, (profile.rows.length / largestPriority) * 100)}%` }} />
+              </span>
+              <span style={pulseCountStyle}>{profile.rows.length.toLocaleString()}</span>
+            </button>
+          ))}
+        </div>
       </section>
 
       <div data-current-state-layout style={layoutStyle}>
@@ -231,6 +266,15 @@ const metricGridStyle = {
   background: V4.rule,
 } satisfies CSSProperties;
 
+const pulseStyle = { marginTop: 24 } satisfies CSSProperties;
+const pulseGridStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,180px),1fr))", gap: 10 } satisfies CSSProperties;
+const pulseCardStyle = { minWidth: 0, border: "1px solid", borderRadius: 8, padding: "13px 14px", textAlign: "left", cursor: "pointer", boxShadow: "0 10px 24px rgba(12,26,58,0.045)" } satisfies CSSProperties;
+const pulseIndexStyle = { display: "block", fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.1em", color: V4.green } satisfies CSSProperties;
+const pulseTitleStyle = { display: "block", marginTop: 8, fontFamily: SANS, fontSize: 13.5, lineHeight: 1.25, color: V4.ink, minHeight: 34 } satisfies CSSProperties;
+const pulseMetaStyle = { display: "block", marginTop: 8, fontFamily: MONO, fontSize: 10, lineHeight: 1.45, color: V4.slate } satisfies CSSProperties;
+const pulseTrackStyle = { display: "block", height: 5, borderRadius: 999, background: V4.cream, overflow: "hidden", marginTop: 12 } satisfies CSSProperties;
+const pulseFillStyle = { display: "block", height: "100%", borderRadius: 999, background: V4.green } satisfies CSSProperties;
+const pulseCountStyle = { display: "block", marginTop: 8, fontFamily: SERIF, fontSize: 24, lineHeight: 1, color: V4.ink } satisfies CSSProperties;
 const metricStyle = { padding: "15px 16px", background: V4.surface } satisfies CSSProperties;
 const metricValueStyle = { display: "block", fontFamily: SERIF, fontSize: 27, lineHeight: 1, color: V4.ink } satisfies CSSProperties;
 const metricLabelStyle = { display: "block", marginTop: 7, fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.08em", textTransform: "uppercase", color: V4.slate } satisfies CSSProperties;

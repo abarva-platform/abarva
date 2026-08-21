@@ -27,6 +27,17 @@ did not prove that the replacement answered an architecture question. This patch
 surface and the proof: architecture QA now checks for architecture lanes, full estate data-movement
 and platform inputs, explicit platform-join limits, and absence of the old workbench/roster labels.
 
+Geometry follow-up: live visual proof showed that text assertions alone were still too weak. The
+architecture canvas now reduces rail and arrow width, compacts the governed-lakehouse layer grid,
+and exposes per-zone markers so browser QA can prove zones are visible instead of merely present in
+the DOM.
+
+Full Home design pass: all Home preview tabs now get a stronger shared treatment without changing
+the underlying evidence. Briefing chapters use a dossier-style header and framed evidence bands;
+loaded context adds an object-family pulse; browse adds a domain signal map; record tabs get a
+stronger workbench/table/detail treatment; and data-flow now falls back to a movement profile when
+end-to-end lineage is not admitted.
+
 ## Layer Impact
 
 Layer 4 Products only. Home preview presentation and QA proof scripts changed; canonical source
@@ -62,6 +73,15 @@ changed.
 - Reference-architecture follow-up replaces the simple lane map with a zone-and-arrow data
   architecture canvas: source zone, ingestion zone, governed lakehouse, intelligence zone, and
   consumption zone, plus governance/storage/consumer foundation bands.
+- Architecture geometry follow-up reduces the scope rail and map gutters, compacts the lakehouse
+  layer grid, and tags each architecture zone so browser proof can catch a clipped zone instead of
+  passing on text presence alone.
+- Full Home design pass improves the rail active state, briefing chapter headers and claim bands,
+  loaded-context overview, browse-record command surface, record-browser workbench, and data-flow
+  fallback. The fallback preserves the resolver boundary: it shows recorded movement evidence while
+  saying why an end-to-end data-flow diagram is not yet proven.
+- Page proof harness now renders every briefing chapter as well as evidence and record pages for
+  both checked-in tenants, so QA covers 32 Home surfaces instead of only the evidence subset.
 
 ## QA / Validation
 
@@ -90,6 +110,13 @@ changed.
   lakehouse/intelligence/consumption zones, ingest/land/analyze/serve arrows, RAW/ODS/canonical/marts
   layer terms, foundation bands, explicit architecture boundary, no old workbench label, and zero
   horizontal overflow. Report: `/tmp/home-v4-pages-proof-reference-arch-20260821-final/reference-architecture-browser-report.json`.
+- Geometry follow-up validation: `npx eslint src/components/home/v4/ArchitecturePage.tsx` passed.
+- Geometry follow-up validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false` passed.
+- Full Home design-pass validation: `npx eslint src/components/home/v4/ArchitectureRefusal.tsx src/components/home/v4/ArchitecturePage.tsx src/components/home/v4/DataFlowPage.tsx src/components/home/v4/Rail.tsx src/components/home/v4/bands.tsx src/components/home/v4/RecordBrowser.tsx src/components/home/preview/CurrentState.tsx src/components/home/preview/BrowseTheData.tsx scripts/qa/render-home-v4-pages-proof.tsx` passed.
+- Full Home design-pass validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false` passed.
+- Full Home design-pass validation: `npm test -- --runTestsByPath src/components/home/v4/__tests__/architecture-boundary.test.ts tests/behaviors/architecture-view-formats.test.ts --runInBand` passed. Jest still reports existing duplicate manual mock warnings.
+- Full Home design-pass validation: `npx tsx scripts/qa/render-home-v4-pages-proof.tsx --out /tmp/home-v4-pages-proof-full-design-pass-20260821` rendered 32 Home proof pages: 16 briefing chapters, 8 evidence pages, and 8 technology record pages across both checked-in tenants.
+- Full Home two-viewport Playwright crawl passed 64 checks across desktop and mobile: required page markers present, old architecture markers absent, zero horizontal overflow, and desktop architecture zones visible in-map. Report: `/tmp/home-v4-pages-proof-full-design-pass-20260821/full-home-playwright-viewport-report.json`.
 
 ## Rollout Plan
 

@@ -226,6 +226,7 @@ function L0Landscape({
         }
         @media (max-width: 760px) {
           [data-arch-metrics] { grid-template-columns: 1fr !important; }
+          [data-arch-axis-label] { width: 100% !important; white-space: normal !important; overflow-wrap: anywhere !important; }
         }
       `}</style>
       <div
@@ -241,7 +242,7 @@ function L0Landscape({
       >
         <span style={eyebrow(V4.slate)}>Current-state architecture map</span>
         <span style={{ flex: 1 }} />
-        <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", color: V4.stone }}>
+        <span data-arch-axis-label style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", color: V4.stone }}>
           BUSINESS · APPLICATIONS · INTEGRATION · DATA · PLATFORMS
         </span>
       </div>
@@ -268,7 +269,7 @@ function L0Landscape({
         data-arch-layout
         style={{
           display: "grid",
-          gridTemplateColumns: "300px minmax(0,1fr)",
+          gridTemplateColumns: "260px minmax(0,1fr)",
           gap: "clamp(18px,2.5vw,34px)",
           alignItems: "start",
           marginTop: 22,
@@ -363,14 +364,14 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
           data-arch-map
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(130px,0.9fr) 24px minmax(140px,0.95fr) 24px minmax(230px,1.55fr) 24px minmax(140px,0.95fr) 24px minmax(140px,0.95fr)",
-            gap: 8,
+            gridTemplateColumns: "minmax(112px,1fr) 14px minmax(112px,1fr) 14px minmax(188px,1.28fr) 14px minmax(112px,1fr) 14px minmax(112px,1fr)",
+            gap: 5,
             alignItems: "stretch",
             border: `2px solid rgba(29,158,117,0.34)`,
             borderTop: `7px solid ${V4.green}`,
             borderRadius: 10,
             background: "rgba(255,255,255,0.55)",
-            padding: 14,
+            padding: 10,
           }}
         >
         <ArchitectureStage
@@ -404,12 +405,13 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
         <FlowArrow label="land" />
 
         <section
+          data-arch-zone="governed lakehouse"
           style={{
             minWidth: 0,
             border: `1px solid ${V4.ruleStrong}`,
             borderRadius: 8,
             background: V4.surface,
-            padding: 12,
+            padding: 10,
             display: "grid",
             gridTemplateRows: "auto 1fr auto",
             gap: 10,
@@ -423,7 +425,7 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
             data-arch-core-nodes
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(4,minmax(0,1fr))",
+              gridTemplateColumns: "repeat(2,minmax(0,1fr))",
               gap: 8,
               alignItems: "stretch",
             }}
@@ -594,12 +596,13 @@ function ArchitectureStage({
   const max = Math.max(1, ...items.map(([, count]) => count));
   return (
     <article
+      data-arch-zone={zoneLabel}
       style={{
         minWidth: 0,
         border: `1px solid ${V4.ruleStrong}`,
         borderRadius: 8,
         background: V4.surface,
-        padding: 12,
+        padding: 10,
         position: "relative",
       }}
     >
@@ -629,7 +632,7 @@ function ArchitectureStage({
         style={{
           margin: "14px 0 0",
           fontFamily: SERIF,
-          fontSize: 21,
+          fontSize: 18,
           fontWeight: 500,
           letterSpacing: "-0.025em",
           lineHeight: 1.15,
@@ -677,6 +680,7 @@ function FlowArrow({ label }: { label: string }) {
         aria-hidden="true"
         style={{
           width: 24,
+          maxWidth: "100%",
           height: 1,
           background: V4.navy,
           position: "relative",
@@ -759,16 +763,16 @@ function FoundationBand({ title, detail, tone }: { title: string; detail: string
 
 function EvidencePanel({ title, detail, items }: { title: string; detail: string; items: Array<[string, number]> }) {
   return (
-    <article style={{ border: `1px solid ${V4.rule}`, borderRadius: 8, background: V4.surface, padding: "14px 15px" }}>
+    <article style={{ minWidth: 0, border: `1px solid ${V4.rule}`, borderRadius: 8, background: V4.surface, padding: "14px 15px" }}>
       <span style={eyebrow(V4.slate)}>{title}</span>
       <p style={{ margin: "7px 0 12px", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.45, color: V4.slate }}>{detail}</p>
       <div style={{ display: "grid", gap: 7 }}>
         {items.filter(([, count]) => count > 0).slice(0, 5).map(([name, count]) => (
-          <div key={name} style={{ display: "flex", justifyContent: "space-between", gap: 12, borderTop: `1px solid ${V4.rule}`, paddingTop: 7 }}>
-            <span style={{ fontFamily: SANS, fontSize: 12.5, color: V4.inkSoft, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <div key={name} style={{ minWidth: 0, display: "flex", justifyContent: "space-between", gap: 12, borderTop: `1px solid ${V4.rule}`, paddingTop: 7 }}>
+            <span style={{ flex: "1 1 auto", fontFamily: SANS, fontSize: 12.5, color: V4.inkSoft, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={name}>
               {name}
             </span>
-            <span style={{ fontFamily: MONO, fontSize: 11, color: V4.ink }}>{count}</span>
+            <span style={{ flexShrink: 0, fontFamily: MONO, fontSize: 11, color: V4.ink }}>{count}</span>
           </div>
         ))}
       </div>

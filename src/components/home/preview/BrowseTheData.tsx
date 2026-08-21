@@ -41,6 +41,8 @@ export function BrowseTheData({ signalPacket }: { signalPacket: EnterpriseSignal
   const selected = filtered.find((row) => row.key === selectedKey) ?? filtered[0] ?? rows[0];
   const signalCount = rows.filter((row) => row.origin === "signal").length;
   const contextCount = rows.length - signalCount;
+  const topDomains = domainCounts.slice(0, 6);
+  const maxDomainCount = Math.max(1, ...topDomains.map((domain) => domain.count));
 
   return (
     <section style={{ padding: `46px ${PAGE_X}px 72px` }}>
@@ -48,6 +50,7 @@ export function BrowseTheData({ signalPacket }: { signalPacket: EnterpriseSignal
         @media (max-width: 1160px) {
           [data-fact-layout] { grid-template-columns: 1fr !important; }
           [data-fact-detail] { position: static !important; }
+          [data-fact-command] { grid-template-columns: 1fr !important; }
         }
         @media (max-width: 760px) {
           [data-fact-metrics], [data-fact-controls] { grid-template-columns: 1fr !important; }
@@ -68,6 +71,35 @@ export function BrowseTheData({ signalPacket }: { signalPacket: EnterpriseSignal
         <Metric value={signalCount.toLocaleString()} label="deterministic signals" />
         <Metric value={contextCount.toLocaleString()} label="governed context facts" />
         <Metric value={domainCounts.length.toLocaleString()} label="domains represented" />
+      </section>
+
+      <section data-fact-command style={commandStripStyle}>
+        <div>
+          <span style={eyebrow(V4.green)}>Domain signal map</span>
+          <p style={{ margin: "8px 0 0", fontFamily: SANS, fontSize: 13.5, lineHeight: 1.5, color: V4.slate }}>
+            The largest evidence families stay visible while search and filters narrow the fact list.
+          </p>
+        </div>
+        <div style={domainSparkGridStyle}>
+          {topDomains.map(({ domain, count }) => (
+            <button
+              key={domain}
+              type="button"
+              onClick={() => setDomainFilter(domainFilter === domain ? "all" : domain)}
+              style={{
+                ...domainSparkStyle,
+                borderColor: domainFilter === domain ? "rgba(0,102,204,0.45)" : V4.rule,
+                background: domainFilter === domain ? "rgba(0,102,204,0.055)" : V4.surface,
+              }}
+            >
+              <span style={domainSparkLabelStyle}>{domainLabel(domain)}</span>
+              <span style={domainSparkTrackStyle}>
+                <span style={{ ...domainSparkFillStyle, width: `${Math.max(7, (count / maxDomainCount) * 100)}%` }} />
+              </span>
+              <span style={domainSparkCountStyle}>{count.toLocaleString()}</span>
+            </button>
+          ))}
+        </div>
       </section>
 
       <div data-fact-controls style={controlsStyle}>
@@ -221,6 +253,13 @@ const metricGridStyle = { display: "grid", gridTemplateColumns: "repeat(4,minmax
 const metricStyle = { padding: "15px 16px", background: V4.surface } satisfies CSSProperties;
 const metricValueStyle = { display: "block", fontFamily: SERIF, fontSize: 27, lineHeight: 1, color: V4.ink } satisfies CSSProperties;
 const metricLabelStyle = { display: "block", marginTop: 7, fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.08em", textTransform: "uppercase", color: V4.slate } satisfies CSSProperties;
+const commandStripStyle = { display: "grid", gridTemplateColumns: "minmax(220px,0.72fr) minmax(0,1fr)", gap: 18, alignItems: "start", marginTop: 24, padding: 16, border: `1px solid ${V4.rule}`, borderRadius: 10, background: "rgba(255,255,255,0.72)" } satisfies CSSProperties;
+const domainSparkGridStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,150px),1fr))", gap: 8 } satisfies CSSProperties;
+const domainSparkStyle = { minWidth: 0, border: "1px solid", borderRadius: 8, padding: "10px 11px", textAlign: "left", cursor: "pointer" } satisfies CSSProperties;
+const domainSparkLabelStyle = { display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: SANS, fontSize: 12.5, color: V4.ink } satisfies CSSProperties;
+const domainSparkTrackStyle = { display: "block", height: 5, borderRadius: 99, background: V4.cream, overflow: "hidden", marginTop: 8 } satisfies CSSProperties;
+const domainSparkFillStyle = { display: "block", height: "100%", borderRadius: 99, background: V4.blue } satisfies CSSProperties;
+const domainSparkCountStyle = { display: "block", marginTop: 7, fontFamily: MONO, fontSize: 11, color: V4.slate } satisfies CSSProperties;
 const controlsStyle = { display: "grid", gridTemplateColumns: "minmax(260px,1fr) 250px 190px", gap: 10, marginTop: 22 } satisfies CSSProperties;
 const searchStyle = { minWidth: 0, padding: "10px 12px", border: `1px solid ${V4.ruleStrong}`, borderRadius: 7, background: V4.surface, fontFamily: SANS, fontSize: 13.5, color: V4.ink } satisfies CSSProperties;
 const selectStyle = { padding: "10px 12px", border: `1px solid ${V4.ruleStrong}`, borderRadius: 7, background: V4.surface, fontFamily: SANS, fontSize: 13.5, color: V4.ink } satisfies CSSProperties;

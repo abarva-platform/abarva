@@ -13,6 +13,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { BrowseTheData } from "../../src/components/home/preview/BrowseTheData";
 import { CurrentState } from "../../src/components/home/preview/CurrentState";
 import { ArchitecturePage } from "../../src/components/home/v4/ArchitecturePage";
+import { ChapterPage } from "../../src/components/home/v4/ChapterPage";
 import { DataFlowPage } from "../../src/components/home/v4/DataFlowPage";
 import { RecordBrowser } from "../../src/components/home/v4/RecordBrowser";
 import type { HomeReviewBundle } from "../../src/lib/home/preview/types";
@@ -40,6 +41,25 @@ for (const tenantKey of tenantKeys) {
   const infrastructure = technologyRecords.find((record) => record.objectType === "infrastructure_platform");
   const tenantDisplayName = tenantNames[tenantKey];
   const canonicalBuild = bundle.provenance.canonical_snapshot_hash;
+  const signalPacket = bundle.thesis.signalPacket;
+  const visualDatasets = signalPacket.visualDatasets ?? {};
+  const exhibitMeta = buildExhibitMeta(bundle);
+
+  bundle.chapters.forEach((chapter, index) => {
+    writePage(
+      `${tenantKey}-chapter-${String(index + 1).padStart(2, "0")}-${chapter.chapterId}`,
+      chapter.title,
+      renderToStaticMarkup(
+        <ChapterPage
+          chapter={chapter}
+          chapterNumber={index + 1}
+          signalPacket={signalPacket}
+          visualDatasets={visualDatasets}
+          exhibitMeta={exhibitMeta}
+        />,
+      ),
+    );
+  });
 
   if (applications) {
     writePage(
@@ -77,12 +97,12 @@ for (const tenantKey of tenantKeys) {
   writePage(
     `${tenantKey}-loaded-context`,
     "Loaded Context",
-    renderToStaticMarkup(<CurrentState signalPacket={bundle.thesis.signalPacket} />),
+    renderToStaticMarkup(<CurrentState signalPacket={signalPacket} />),
   );
   writePage(
     `${tenantKey}-browse-record`,
     "Browse Record",
-    renderToStaticMarkup(<BrowseTheData signalPacket={bundle.thesis.signalPacket} />),
+    renderToStaticMarkup(<BrowseTheData signalPacket={signalPacket} />),
   );
 
   for (const record of technologyRecords) {
@@ -116,6 +136,18 @@ function shell(title: string, body: string) {
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
 <style>html,body{margin:0;padding:0;background:#faf7f1;}*{box-sizing:border-box;}button,input,select{font:inherit;}</style>
 </head><body>${body}</body></html>`;
+}
+
+function buildExhibitMeta(bundle: HomeReviewBundle): Record<string, string> {
+  const meta: Record<string, string> = {};
+  const contracts = bundle.technologyEstate?.recordTypes.find((record) => record.objectType === "vendor_contract");
+  if (contracts) {
+    const total = contracts.rows.reduce((sum, row) => sum + (Number(row.annualSpendUsd) || 0), 0);
+    if (total > 0) {
+      meta.vendor_spend_concentration = `${contracts.rows.length} contracts · $${(total / 1_000_000).toFixed(1)}M`;
+    }
+  }
+  return meta;
 }
 
 function escapeHtml(value: string) {

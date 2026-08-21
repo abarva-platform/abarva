@@ -35,7 +35,7 @@ function BandHeading({
         <h2 style={bandHeading(color)}>{title}</h2>
         <span style={{ flex: 1, height: 1, background: ruleColor }} />
       </div>
-      <p style={{ margin: "10px 0 0", fontFamily: SANS, fontSize: 14, lineHeight: 1.55, color: V4.slate, maxWidth: "48ch" }}>
+      <p style={{ margin: "10px 0 0", fontFamily: SANS, fontSize: 14, lineHeight: 1.55, color: V4.slate, maxWidth: "58ch" }}>
         {rubric}
       </p>
     </div>
@@ -62,15 +62,15 @@ function ClaimRow({
   const topRule = first ? undefined : `1px solid ${V4.ruleSoft}`;
   return (
     <>
-      <div style={{ padding: "26px 0 26px 22px", borderLeft: `2px solid ${spine}`, borderTop: topRule }}>
+      <div style={{ padding: "22px 0 22px 20px", borderLeft: `3px solid ${spine}`, borderTop: topRule }}>
         {severityLabel ? (
           <div style={{ ...eyebrow(spine), letterSpacing: "0.11em", marginBottom: 10 }}>{severityLabel}</div>
         ) : null}
-        <p style={{ margin: 0, fontFamily: SANS, fontSize: 18, lineHeight: 1.54, color: V4.ink, maxWidth: "46ch", textWrap: "pretty" }}>
+        <p style={{ margin: 0, fontFamily: SANS, fontSize: 17, lineHeight: 1.54, color: V4.ink, maxWidth: "52ch", textWrap: "pretty" }}>
           {claim.statement}
         </p>
       </div>
-      <aside style={{ padding: "26px 0", borderTop: topRule, maxWidth: 520 }}>
+      <aside style={{ padding: "22px 0", borderTop: topRule, maxWidth: 520 }}>
         <div style={{ ...eyebrow(V4.navy), letterSpacing: "0.11em" }}>{source.label}</div>
         <p style={{ margin: "5px 0 0", fontFamily: MONO, fontSize: 11, color: V4.slate, letterSpacing: "0.02em" }}>
           {source.ids}
@@ -98,7 +98,7 @@ export function RecordBand({ claims, signalPacket }: { claims: GroundedClaim[]; 
         rubric="Counted from this enterprise's own systems and interviews. Sources named alongside."
         style={{ margin: "58px 0 0" }}
       />
-      <div style={CLAIM_GRID}>
+      <div style={{ ...CLAIM_GRID, background: V4.surface, border: `1px solid ${V4.rule}`, borderRadius: 10, padding: "0 22px" }}>
         {claims.map((claim, i) => (
           <ClaimRow key={claim.statement} claim={claim} signalPacket={signalPacket} spine={V4.navy} first={i === 0} />
         ))}
@@ -135,7 +135,7 @@ export function FollowsBand({ claims, signalPacket }: { claims: GroundedClaim[];
         }}
       >
         {claims.map((claim) => (
-          <div key={claim.statement} style={{ padding: "26px 0", borderTop: `1px solid rgba(136,135,128,0.22)` }}>
+          <div key={claim.statement} style={{ padding: "22px 0", borderTop: `1px solid rgba(136,135,128,0.22)` }}>
             <p
               style={{
                 margin: 0,
@@ -175,7 +175,7 @@ export function ExposuresBand({ claims, signalPacket }: { claims: GroundedClaim[
         ruleColor="rgba(163,45,45,0.32)"
         style={{ margin: "52px 0 0" }}
       />
-      <div style={CLAIM_GRID}>
+      <div style={{ ...CLAIM_GRID, background: "rgba(163,45,45,0.035)", border: `1px solid rgba(163,45,45,0.22)`, borderRadius: 10, padding: "0 22px" }}>
         {claims.map((claim, i) => (
           <ClaimRow key={claim.statement} claim={claim} signalPacket={signalPacket} spine={V4.red} first={i === 0} />
         ))}
@@ -363,30 +363,31 @@ export function ChapterHeader({
   standfirst?: string;
 }) {
   return (
-    <header style={{ padding: `54px ${PAGE_X}px 0` }}>
+    <header style={{ padding: `46px ${PAGE_X}px 0` }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 18, flexWrap: "wrap" }}>
         <span style={eyebrow(V4.blue)}>{eyebrowText}</span>
         <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 16, color: V4.slate, letterSpacing: "-0.01em" }}>
           {guidingQuestion}
         </span>
       </div>
-      {/* Two columns, always. The design pairs the headline with the lede across the full canvas and
-          bottom-aligns them; collapsing to a single column leaves the right half of a wide screen
-          empty, which is exactly the dead canvas this layout exists to avoid. */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,max(30rem,46%)),1fr))",
-          gap: "clamp(20px,3vw,56px)",
-          alignItems: "end",
+          gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,320px),1fr))",
+          gap: "clamp(22px,3.4vw,64px)",
+          alignItems: "stretch",
           marginTop: 24,
+          padding: "26px clamp(20px,2.2vw,34px)",
+          borderTop: `1px solid ${V4.rule}`,
+          borderBottom: `1px solid ${V4.rule}`,
+          background: "linear-gradient(90deg,rgba(0,102,204,0.06),rgba(255,255,255,0.72) 42%,rgba(29,158,117,0.06))",
         }}
       >
         <h1
           style={{
             fontFamily: SERIF,
             fontWeight: 500,
-            fontSize: "clamp(27px,2.3vw,38px)",
+            fontSize: "clamp(29px,2.55vw,42px)",
             lineHeight: 1.16,
             letterSpacing: "-0.026em",
             margin: 0,
@@ -396,7 +397,7 @@ export function ChapterHeader({
           {headline}
         </h1>
         {standfirst ? (
-          <p style={{ margin: 0, fontFamily: SANS, fontSize: 17, lineHeight: 1.62, color: V4.slate, maxWidth: "52ch", textWrap: "pretty" }}>
+          <p style={{ margin: 0, fontFamily: SANS, fontSize: 16, lineHeight: 1.62, color: V4.inkSoft, maxWidth: "56ch", textWrap: "pretty", alignSelf: "end" }}>
             {standfirst}
           </p>
         ) : null}
