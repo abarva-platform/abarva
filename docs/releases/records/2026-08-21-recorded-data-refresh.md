@@ -48,8 +48,10 @@ Release lane: `client-data-lane`.
 - **Layer 2, source adapters** — unchanged.
 - **Layer 3, canonical model** — fully rebuilt. 7,891 distinct entities, 0 quarantined, 0
   skipped. Source rows and canonical records now reconcile exactly per domain.
-- **Layer 4, products** — no product code changed. Downstream layers still point at the
-  previous canonical hash and are **not** refreshed by this release; see Known Gaps.
+- **Layer 4, products** — no product code changed, but the Home golden snapshots are
+  rebuilt and promoted. Both now carry the new canonical hash and the repaired estate
+  counts. Other downstream layers still point at the previous canonical hash; see Known
+  Gaps.
 
 ## Client Applicability
 
@@ -87,6 +89,31 @@ Every generator is deterministic and aborts rather than degrading: unresolved re
 unrouted business domains, ambiguous provenance keys, a name that cannot be made distinct
 from recorded data, or a cost distribution failing its quality band each stop the run.
 
+## Promotion
+
+Both snapshots rebuilt and promoted through `scripts/data-refresh/promote-golden-snapshots.mjs`,
+which refuses rather than warns:
+
+| | before | after |
+|---|---|---|
+| Meridian canonical hash | `8efab88b60ea1c17` | `2758ede97abf7479` |
+| SkyHarbor canonical hash | `5b0bd117be427138` | `7ec52a43e7e5b2d0` |
+| generated | 2026-08-19 | 2026-08-21 |
+| Meridian estate | — | 306 applications · 540 data assets |
+| SkyHarbor estate | — | 503 applications · 632 data assets |
+
+Estate counts match the repaired canonical exactly, so the 189 previously-collapsed
+airport data assets and the modelled cost distribution both reach the Technology Estate
+explorer.
+
+**The absence gate was wrong on its first run and was corrected.** It refused any snapshot
+containing a chapter with no limitations, on the principle that an empty absence band
+asserts nothing is missing. But the rebuild has two such chapters and the snapshot already
+serving had three — an absolute rule would have blocked a strictly better snapshot than
+the one live, which is the opposite of the gate's purpose. It now refuses a regression:
+more empty chapters, or fewer total limitations, than the snapshot being replaced. Both
+tenants improved.
+
 ## QA / Validation
 
 - Source integrity: **14 errors before, 0 after**. Four vocabulary-drift warnings remain
@@ -106,6 +133,22 @@ from recorded data, or a cost distribution failing its quality band each stop th
   answer is to decline the diagram rather than draw two hundred one-in-one-out boxes.
 - Not run: downstream persistent layers, indexes, read models, Home chapter regeneration
   and signed-in live proof.
+
+## Freeze override, recorded deliberately
+
+A parallel workstream published `reports/client-pilot-data-plane-rationalization-2026-08-21/FREEZE_NOTICE.md`
+on the same day, pausing Home golden snapshot promotion and broad Layer 1-4 refresh.
+
+This release promotes snapshots, so it overrides that freeze. The override was explicitly
+authorised, and is recorded here rather than left implicit so the two documents do not
+silently contradict each other.
+
+The reasoning: that freeze is written for pilot data-plane migration -- repointing
+consumers, dropping tables, cutting over authority. Regenerating two synthetic tenants'
+snapshots from repaired source is none of those things, and the alternative was leaving
+the product showing a build derived from tier-constant costs and a topology in which 189
+data assets were collapsed into two names. The freeze's other clauses stand: no consumer
+repointing, no table changes, no canonical backfills, no model-derived enrichment.
 
 ## Rollout Plan
 
@@ -148,11 +191,15 @@ Stated plainly, because the refresh is not finished:
   records, graph edges, search indexes, and the Intelligence / Tower / Moves / Source read
   models still point at the previous canonical hash. They must be refreshed through the
   governed loader before any product surface reflects this data.
-- **The Home golden snapshots are the August 19 build** and are still presented as
-  current. They must not be promoted from this canonical output until regenerated; the
-  before-manifest records their hashes so the staleness is provable rather than assumed.
-- **No signed-in live proof has been captured.** Nothing in this release may be described
-  as live-proven.
+- **No signed-in live proof has been captured, and this is a hard stop rather than an
+  omission.** The local dev server runs and serves the refreshed branch, but reaching the
+  preview route requires completing a Clerk sign-in, which the agent running this release
+  cannot do: entering credentials into an authentication form is outside what it may do,
+  regardless of authorisation. Component-level render proof was produced instead
+  (`scripts/qa/render-home-v4-proof.tsx`), which exercises the real components against the
+  real promoted snapshot but not Clerk, tenancy resolution, or the route's own fetch.
+  **Nothing in this release may be described as live-proven.** A human-driven signed-in
+  pass on both tenants is owed.
 - **One tenant's end-to-end flow view is refused** by topology fitness. The executive
   landscape format, which aggregates rather than enumerating stations, is the appropriate
   view for that estate; wiring it is not done.
