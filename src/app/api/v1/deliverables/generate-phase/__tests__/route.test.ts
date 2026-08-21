@@ -200,8 +200,15 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       deliverables: Array<Record<string, unknown>>;
     };
     expect(json.phase).toBe(3);
-    expect(json.total).toBeGreaterThanOrEqual(2);
+    expect(json.total).toBeGreaterThanOrEqual(5);
     expect(json.queued).toBe(json.total);
+    expect(json.deliverables.map((d) => d.deliverableTypeKey)).toEqual([
+      "target_state_architecture",
+      "solution_design",
+      "operating_model_design",
+      "requirements_traceability",
+      "sourcing_strategy",
+    ]);
     expect(
       json.deliverables.every(
         (d) => d.status === "queued" && typeof d.runId === "string",
@@ -231,6 +238,13 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     expect(extractInput.candidatePreview.enabled).toBe(false);
     // every enqueue carried the caller's tenant + the move as the source ref
     expect(createCalls.length).toBe(json.total);
+    expect(createCalls.map((c) => c.deliverableType)).toEqual([
+      "target_state_architecture",
+      "solution_design",
+      "operating_model",
+      "requirements_traceability",
+      "sourcing_strategy",
+    ]);
     for (const c of createCalls) {
       expect(c.clientId).toBe("client-uuid");
       expect(c.tenantKey).toBe("skyharbor-air");
