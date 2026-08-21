@@ -87,6 +87,19 @@ function uploadReq(
   return new Request(url, { method: "POST", body: form });
 }
 
+function jsonUploadReq(
+  body: unknown = {
+    workbookBase64: Buffer.from("xlsx").toString("base64"),
+  },
+  url = "http://test/api/v1/programs/move-1/stage-readiness-workbook",
+) {
+  return new Request(url, {
+    method: "POST",
+    body: JSON.stringify(body),
+    headers: { "content-type": "application/json" },
+  });
+}
+
 function patchReq(body: unknown) {
   return new Request(
     "http://test/api/v1/programs/move-1/stage-readiness-workbook",
@@ -361,6 +374,33 @@ describe("POST /api/v1/programs/[programId]/stage-readiness-workbook", () => {
     expect(mockRenderStageReadinessWorkbookXlsx).not.toHaveBeenCalled();
   });
 
+  it("stores a base64 JSON workbook upload through the same pending proposal path", async () => {
+    const { POST } = await import("../route");
+    const res = await POST(jsonUploadReq(), { params });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      ok: true,
+      proposalSet: {
+        proposalSetId: "proposal-set-1",
+        artifactId: "proposal-artifact-1",
+        status: "review_required",
+        pendingCount: 1,
+      },
+    });
+    expect(mockParseStageReadinessWorkbookXlsx).toHaveBeenCalledWith(
+      Buffer.from("xlsx"),
+      { expectedMoveId: "move-1", expectedPhase: 1 },
+    );
+    expect(mockPersistStageReadinessProposalSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ctx,
+        parsed: expect.objectContaining({ ok: true }),
+        uploadedWorkbookSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      }),
+    );
+  });
+
   it("returns 422 when workbook metadata does not match the route context", async () => {
     mockParseStageReadinessWorkbookXlsx.mockResolvedValueOnce({
       ok: false,
@@ -415,6 +455,18 @@ describe("POST /api/v1/programs/[programId]/stage-readiness-workbook", () => {
     );
 
     expect(res.status).toBe(400);
+    expect(mockParseStageReadinessWorkbookXlsx).not.toHaveBeenCalled();
+  });
+
+  it("rejects JSON workbook uploads without base64 bytes", async () => {
+    const { POST } = await import("../route");
+    const res = await POST(jsonUploadReq({ workbookBase64: "" }), { params });
+
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "bad_request",
+      detail: "workbookBase64 is required",
+    });
     expect(mockParseStageReadinessWorkbookXlsx).not.toHaveBeenCalled();
   });
 });

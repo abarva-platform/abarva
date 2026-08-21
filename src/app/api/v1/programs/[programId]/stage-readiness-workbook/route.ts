@@ -53,6 +53,78 @@ function isReviewDisposition(
   );
 }
 
+function decodeWorkbookBase64(value: string): Buffer | null {
+  const normalized = value.trim().replace(/^data:[^,]+,/, "");
+  if (
+    normalized.length === 0 ||
+    !/^[a-z0-9+/]+={0,2}$/i.test(normalized) ||
+    normalized.length % 4 === 1
+  ) {
+    return null;
+  }
+  const decoded = Buffer.from(normalized, "base64");
+  if (decoded.length === 0) return null;
+  return decoded;
+}
+
+async function readUploadedWorkbook(
+  req: Request,
+): Promise<
+  { ok: true; bytes: Buffer } | { ok: false; status: number; detail: string }
+> {
+  const contentType = req.headers.get("content-type")?.toLowerCase() ?? "";
+  if (contentType.includes("application/json")) {
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return {
+        ok: false,
+        status: 400,
+        detail: "invalid JSON body",
+      };
+    }
+    const payload = body as { workbookBase64?: unknown; fileBase64?: unknown };
+    const raw =
+      typeof payload.workbookBase64 === "string"
+        ? payload.workbookBase64
+        : typeof payload.fileBase64 === "string"
+          ? payload.fileBase64
+          : "";
+    const decoded = decodeWorkbookBase64(raw);
+    if (!decoded) {
+      return {
+        ok: false,
+        status: 400,
+        detail: "workbookBase64 is required",
+      };
+    }
+    return { ok: true, bytes: decoded };
+  }
+
+  let formData: FormData;
+  try {
+    formData = await req.formData();
+  } catch {
+    return {
+      ok: false,
+      status: 400,
+      detail: "invalid multipart form data",
+    };
+  }
+
+  const file = formData.get("file");
+  if (!(file instanceof File)) {
+    return {
+      ok: false,
+      status: 400,
+      detail: "file is required",
+    };
+  }
+
+  return { ok: true, bytes: Buffer.from(await file.arrayBuffer()) };
+}
+
 async function readProposalSetArtifact(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
   programId: string,
@@ -221,25 +293,15 @@ export async function POST(
       );
     }
 
-    let formData: FormData;
-    try {
-      formData = await req.formData();
-    } catch {
+    const uploaded = await readUploadedWorkbook(req);
+    if (!uploaded.ok) {
       return Response.json(
-        { error: "bad_request", detail: "invalid multipart form data" },
-        { status: 400 },
+        { error: "bad_request", detail: uploaded.detail },
+        { status: uploaded.status },
       );
     }
 
-    const file = formData.get("file");
-    if (!(file instanceof File)) {
-      return Response.json(
-        { error: "bad_request", detail: "file is required" },
-        { status: 400 },
-      );
-    }
-
-    const uploadedWorkbook = Buffer.from(await file.arrayBuffer());
+    const uploadedWorkbook = uploaded.bytes;
     const uploadedWorkbookSha256 = createHash("sha256")
       .update(uploadedWorkbook)
       .digest("hex");
