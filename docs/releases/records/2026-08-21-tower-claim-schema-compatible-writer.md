@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This change makes the Tower evidence refresh writer adapt to the live claim table shape when optional audit columns differ between environments. Required claim fields remain unchanged; optional timestamp writes are used only when the destination table exposes the column.
+This change makes the Tower evidence refresh writer adapt to the live claim table shape when optional audit columns or constrained claim-state vocabularies differ between environments. Required claim fields remain unchanged; optional timestamp writes are used only when the destination table exposes the column, and non-claimable states are coerced to a permitted non-claimable value when the live check constraint uses a narrower vocabulary.
 
 ## Layer Impact
 
@@ -30,11 +30,12 @@ Layer 4 PRODUCTS: Tower evidence projection writer only. The change affects how 
 
 - PR: `#6603`
 - Script: `scripts/data-build/refresh-tower-value-evidence.ts`
-- Commit: `3a20d25be`
+- Commits: `f0a903543`, follow-up claim-state constraint compatibility commit in this branch
 
 ## QA / Validation
 
 - `npm run data-build:tower-evidence -- --out-dir /tmp/tower-evidence-schema-aware-claim-dry-run` passed in dry-run mode.
+- `npm run data-build:tower-evidence -- --out-dir /tmp/tower-evidence-claim-state-fallback-dry-run` passed after the claim-state constraint fallback update.
 - GitHub release-control, lint, typecheck, browser, and governance checks must pass before merge.
 - Database write proof remains an ACA operator-job action, not a local command.
 
