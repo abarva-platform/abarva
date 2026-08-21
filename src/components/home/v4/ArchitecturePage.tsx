@@ -221,7 +221,8 @@ function L0Landscape({
         }
         @media (max-width: 980px) {
           [data-arch-map] { grid-template-columns: 1fr !important; }
-          [data-arch-arrow] { display: none !important; }
+          [data-arch-flow] { display: none !important; }
+          [data-arch-core-nodes] { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
         }
         @media (max-width: 760px) {
           [data-arch-metrics] { grid-template-columns: 1fr !important; }
@@ -343,6 +344,12 @@ function ScopeButton({
 
 function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill: (capability: string) => void }) {
   const isWholeEstate = slice.name === "Whole estate";
+  const batchFlows = keywordCount(slice.integrations, "integrationType", ["batch", "file", "etl"]);
+  const apiFlows = keywordCount(slice.integrations, "integrationType", ["api", "hl7", "fhir", "edi"]);
+  const streamingFlows = keywordCount(slice.integrations, "integrationType", ["stream", "event", "real-time", "realtime"]);
+  const unstructuredFlows = keywordCount(slice.integrations, "dataDomain", ["document", "image", "note", "unstructured"]);
+  const servingCount = Math.max(1, slice.dataPlatforms.length + slice.destinations.length);
+
   return (
     <section style={{ minWidth: 0 }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 18, marginBottom: 10 }}>
@@ -353,48 +360,145 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
       </div>
 
       <div
-        data-arch-map
+          data-arch-map
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(130px,0.9fr) 24px minmax(140px,0.95fr) 24px minmax(230px,1.55fr) 24px minmax(140px,0.95fr) 24px minmax(140px,0.95fr)",
+            gap: 8,
+            alignItems: "stretch",
+            border: `2px solid rgba(29,158,117,0.34)`,
+            borderTop: `7px solid ${V4.green}`,
+            borderRadius: 10,
+            background: "rgba(255,255,255,0.55)",
+            padding: 14,
+          }}
+        >
+        <ArchitectureStage
+          index="1"
+          zoneLabel="source zone"
+          tone={V4.navy}
+          title="Data sources"
+          caption="Recorded operational estate"
+          items={[
+            ["apps / SaaS", slice.count],
+            ["interfaces", slice.integrations.length],
+            ["platforms", slice.infrastructure.length],
+            ["tier-1 systems", slice.tier1],
+          ]}
+        />
+        <FlowArrow label="ingest" />
+
+        <ArchitectureStage
+          index="2"
+          zoneLabel="ingestion zone"
+          tone={V4.blue}
+          title="Ingestion"
+          caption="Patterns declared on integration rows"
+          items={[
+            ["batch / file", batchFlows],
+            ["API / HL7 / FHIR", apiFlows],
+            ["streaming", streamingFlows],
+            ["unstructured", unstructuredFlows],
+          ]}
+        />
+        <FlowArrow label="land" />
+
+        <section
+          style={{
+            minWidth: 0,
+            border: `1px solid ${V4.ruleStrong}`,
+            borderRadius: 8,
+            background: V4.surface,
+            padding: 12,
+            display: "grid",
+            gridTemplateRows: "auto 1fr auto",
+            gap: 10,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+            <span style={eyebrow(V4.green)}>3 · governed lakehouse</span>
+            <span style={{ fontFamily: MONO, fontSize: 10, color: V4.slate }}>RAW · ODS · CANONICAL · MARTS</span>
+          </div>
+          <div
+            data-arch-core-nodes
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4,minmax(0,1fr))",
+              gap: 8,
+              alignItems: "stretch",
+            }}
+          >
+            <ArchitectureNode label="Raw" value={slice.integrations.length} detail="source movements" tone={V4.red} />
+            <ArchitectureNode label="ODS" value={slice.count + slice.integrations.length} detail="normalized records" tone={V4.stone} />
+            <ArchitectureNode label="Facts + dimensions" value={slice.appCategories.length + slice.dataDomains.length} detail="recorded groupings" tone={V4.amber} />
+            <ArchitectureNode label="Datamarts" value={Math.max(1, slice.destinations.length)} detail="serving slices" tone={V4.green} />
+          </div>
+          <div style={{ borderTop: `1px solid ${V4.rule}`, paddingTop: 9 }}>
+            <span style={eyebrow(V4.slate)}>Canonical context model</span>
+            <p style={{ margin: "6px 0 0", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.45, color: V4.inkSoft }}>
+              Business records, application systems, integration rows, and platform records are compiled into
+              governed Home read models. Platform hosting joins remain marked as unproven when absent.
+            </p>
+          </div>
+        </section>
+        <FlowArrow label="analyze" />
+
+        <ArchitectureStage
+          index="4"
+          zoneLabel="intelligence zone"
+          tone={V4.amber}
+          title="Intelligence"
+          caption="Analysis and retrieval surfaces"
+          items={[
+            ["engineering views", slice.dataDomains.length],
+            ["constraints", slice.watch],
+            ["quality watch", slice.qualityWatch],
+            ["regulated flags", slice.regulatedFlows],
+          ]}
+        />
+        <FlowArrow label="serve" />
+
+        <ArchitectureStage
+          index="5"
+          zoneLabel="consumption zone"
+          tone={V4.navy}
+          title="Serve & consume"
+          caption="Product and operator access"
+          items={[
+            ["query / browse", servingCount],
+            ["dashboard facts", slice.appCategories.length],
+            ["product surfaces", 4],
+            ["business context", isWholeEstate ? Math.max(1, slice.appCategories.length) : 1],
+          ]}
+        />
+      </div>
+
+      <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 34px 1fr 34px 1fr 34px 1fr",
-          gap: 0,
-          alignItems: "stretch",
+          gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,260px),1fr))",
+          gap: 12,
+          marginTop: 12,
         }}
       >
-        <ArchitectureLane
-          tone={V4.blue}
-          label="Business capability"
-          title={isWholeEstate ? "Enterprise capability portfolio" : slice.name}
-          meta={isWholeEstate ? `${Math.max(0, slice.appCategories.length)} dominant families` : `${slice.share.toFixed(1)}% of estate`}
-          items={isWholeEstate ? slice.appCategories.slice(0, 6) : [["application scope", slice.count], ["tier-1 systems", slice.tier1], ["watch items", slice.watch]]}
-        />
-        <MapArrow label="supports" />
-        <ArchitectureLane
-          tone={V4.navy}
-          label="Applications & core systems"
-          title={`${slice.count.toLocaleString()} recorded systems`}
-          meta={`${slice.tier1.toLocaleString()} tier-1 · ${slice.replace.toLocaleString()} replacement candidates`}
-          items={slice.appPlatforms.slice(0, 6)}
-        />
-        <MapArrow label="moves data" />
-        <ArchitectureLane
+        <FoundationBand
+          title="Governance"
+          detail={`${slice.regulatedFlows.toLocaleString()} regulated flows · ${slice.qualityWatch.toLocaleString()} quality-watch records`}
           tone={V4.green}
-          label="Integration & data"
-          title={`${slice.integrations.length.toLocaleString()} recorded flows/assets`}
-          meta={`${slice.regulatedFlows.toLocaleString()} regulated · ${slice.qualityWatch.toLocaleString()} quality watch`}
-          items={slice.integrationTypes.length ? slice.integrationTypes.slice(0, 4) : slice.dataDomains.slice(0, 4)}
         />
-        <MapArrow label="runs on" />
-        <ArchitectureLane
-          tone={V4.amber}
-          label="Platforms & hosting"
-          title={
+        <FoundationBand
+          title="Open storage / platforms"
+          detail={
             slice.infrastructure.length
-              ? `${slice.infrastructure.length.toLocaleString()} platform records`
-              : "Platform joins are not recorded for this scope"
+              ? `${slice.infrastructure.length.toLocaleString()} platform records · ${formatTopLabels(slice.hostingModels)}`
+              : "platform records not joined to this scope"
           }
-          meta={slice.hostingModels.map(([name, count]) => `${name} ${count}`).slice(0, 2).join(" · ") || "hosting relationship missing"}
-          items={slice.infrastructureTypes.length ? slice.infrastructureTypes.slice(0, 4) : slice.hostingModels.slice(0, 4)}
+          tone={V4.navy}
+        />
+        <FoundationBand
+          title="Consumers"
+          detail="Home, Source, Tower, Intelligence; Moves remains outside this Home evidence map"
+          tone={V4.blue}
         />
       </div>
 
@@ -472,17 +576,19 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
   );
 }
 
-function ArchitectureLane({
+function ArchitectureStage({
+  index,
+  zoneLabel,
   tone,
-  label,
   title,
-  meta,
+  caption,
   items,
 }: {
+  index: string;
+  zoneLabel: string;
   tone: string;
-  label: string;
   title: string;
-  meta: string;
+  caption: string;
   items: Array<[string, number]>;
 }) {
   const max = Math.max(1, ...items.map(([, count]) => count));
@@ -491,18 +597,39 @@ function ArchitectureLane({
       style={{
         minWidth: 0,
         border: `1px solid ${V4.ruleStrong}`,
-        borderTop: `4px solid ${tone}`,
         borderRadius: 8,
         background: V4.surface,
-        padding: "15px 16px",
+        padding: 12,
+        position: "relative",
       }}
     >
-      <span style={eyebrow(tone)}>{label}</span>
+      <span
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          top: -11,
+          left: 12,
+          width: 26,
+          height: 26,
+          borderRadius: 999,
+          display: "grid",
+          placeItems: "center",
+          background: "#77c8b5",
+          border: `2px solid ${V4.navy}`,
+          fontFamily: MONO,
+          fontSize: 12,
+          fontWeight: 700,
+          color: V4.navy,
+        }}
+      >
+        {index}
+      </span>
+      <span style={{ ...eyebrow(tone), display: "block", marginLeft: 34 }}>{index} · {zoneLabel}</span>
       <h2
         style={{
-          margin: "10px 0 0",
+          margin: "14px 0 0",
           fontFamily: SERIF,
-          fontSize: 22,
+          fontSize: 21,
           fontWeight: 500,
           letterSpacing: "-0.025em",
           lineHeight: 1.15,
@@ -512,10 +639,10 @@ function ArchitectureLane({
         {title}
       </h2>
       <p style={{ margin: "8px 0 0", fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.04em", color: V4.slate }}>
-        {meta}
+        {caption}
       </p>
       <div style={{ display: "grid", gap: 8, marginTop: 16 }}>
-        {items.slice(0, 6).map(([name, count]) => (
+        {items.filter(([, count]) => count > 0).slice(0, 6).map(([name, count]) => (
           <div key={name} style={{ minWidth: 0 }}>
             <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 34px", gap: 10, alignItems: "baseline" }}>
               <span style={{ fontFamily: SANS, fontSize: 12.5, color: V4.inkSoft, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -533,24 +660,100 @@ function ArchitectureLane({
   );
 }
 
-function MapArrow({ label }: { label: string }) {
+function FlowArrow({ label }: { label: string }) {
   return (
     <div
-      data-arch-arrow
+      data-arch-flow
       style={{
-        display: "flex",
-        flexDirection: "column",
+        display: "grid",
+        gridTemplateRows: "1fr auto 1fr",
         alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
-        color: V4.slate,
+        justifyItems: "center",
+        color: V4.navy,
       }}
     >
-      <span style={{ width: 22, height: 1, background: V4.ruleStrong }} />
-      <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: "0.07em", textTransform: "uppercase", writingMode: "vertical-rl" }}>
+      <span />
+      <span
+        aria-hidden="true"
+        style={{
+          width: 24,
+          height: 1,
+          background: V4.navy,
+          position: "relative",
+          display: "block",
+        }}
+      >
+        <span
+          style={{
+            position: "absolute",
+            right: -1,
+            top: -4,
+            width: 8,
+            height: 8,
+            borderTop: `1px solid ${V4.navy}`,
+            borderRight: `1px solid ${V4.navy}`,
+            transform: "rotate(45deg)",
+          }}
+        />
+      </span>
+      <span style={{ marginTop: 8, fontFamily: MONO, fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase", writingMode: "vertical-rl", color: V4.slate }}>
         {label}
       </span>
     </div>
+  );
+}
+
+function ArchitectureNode({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string;
+  value: number;
+  detail: string;
+  tone: string;
+}) {
+  return (
+    <div
+      style={{
+        minWidth: 0,
+        border: `1px dashed ${V4.ruleStrong}`,
+        borderRadius: 8,
+        background: V4.cream,
+        padding: "12px 10px",
+        textAlign: "center",
+      }}
+    >
+      <span style={{ display: "block", fontFamily: SERIF, fontSize: 23, lineHeight: 1, color: tone }}>
+        {value.toLocaleString()}
+      </span>
+      <span style={{ display: "block", marginTop: 7, fontFamily: SANS, fontSize: 12.5, fontWeight: 700, color: V4.ink, lineHeight: 1.2 }}>
+        {label}
+      </span>
+      <span style={{ display: "block", marginTop: 4, fontFamily: MONO, fontSize: 10, color: V4.slate, lineHeight: 1.3 }}>
+        {detail}
+      </span>
+    </div>
+  );
+}
+
+function FoundationBand({ title, detail, tone }: { title: string; detail: string; tone: string }) {
+  return (
+    <article
+      style={{
+        border: `1px solid ${V4.ruleStrong}`,
+        borderTop: `4px solid ${tone}`,
+        borderRadius: 8,
+        background: V4.surface,
+        padding: "12px 14px",
+      }}
+    >
+      <span style={eyebrow(tone)}>{title}</span>
+      <p style={{ margin: "7px 0 0", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.45, color: V4.inkSoft }}>
+        {detail}
+      </p>
+    </article>
   );
 }
 
@@ -637,6 +840,21 @@ function integrationsForApps(integrations: IntegrationRecord[], appRows: Applica
     return [];
   }
   return integrations.filter((row) => systems.has(text(row, "sourceSystem")) || systems.has(text(row, "targetSystem")));
+}
+
+function keywordCount(rows: Array<Record<string, unknown>>, field: string, keywords: string[]): number {
+  return rows.filter((row) => {
+    const value = text(row, field).toLowerCase();
+    return keywords.some((keyword) => value.includes(keyword));
+  }).length;
+}
+
+function formatTopLabels(items: Array<[string, number]>): string {
+  const labels = items
+    .filter(([, count]) => count > 0)
+    .slice(0, 2)
+    .map(([name, count]) => `${name} ${count}`);
+  return labels.length ? labels.join(" · ") : "hosting model not specified";
 }
 
 function topCounts(rows: ApplicationRecord[], field: string): Array<[string, number]> {
