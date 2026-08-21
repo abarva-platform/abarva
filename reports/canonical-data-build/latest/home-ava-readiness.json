@@ -1,147 +1,18 @@
 [
   {
-    "tenantKey": "apex-retail",
-    "ready": true,
-    "profileReady": true,
-    "evidenceReady": true,
-    "relationshipReady": true,
-    "canonicalRecordCount": 1046,
-    "evidenceAttachmentCount": 1046,
-    "relationshipCandidateCount": 1730,
-    "caveats": [
-      "workforce_roles below depth by 13 rows.",
-      "infrastructure_platforms below depth by 20 rows.",
-      "spend_value below depth by 4 rows.",
-      "relationships below depth by 87 rows.",
-      "evidence_sources below depth by 19 rows.",
-      "service_scope_managed_services below depth by 10 rows.",
-      "operational_process_evidence below depth by 10 rows."
-    ],
-    "canAnswer": [
-      "which active canonical input files were loaded",
-      "what source-backed records exist by domain",
-      "which fields, relationships, and evidence still need work",
-      "which tenant facts have source lineage"
-    ],
-    "mustNotClaim": [
-      "candidate data is active tenant truth",
-      "production data was written",
-      "candidate was promoted",
-      "modules read this build by default",
-      "unsupported realized value or ROI"
-    ]
-  },
-  {
-    "tenantKey": "first-capital-financial",
-    "ready": true,
-    "profileReady": true,
-    "evidenceReady": true,
-    "relationshipReady": true,
-    "canonicalRecordCount": 1327,
-    "evidenceAttachmentCount": 1327,
-    "relationshipCandidateCount": 1991,
-    "caveats": [
-      "workforce_roles below depth by 9 rows.",
-      "infrastructure_platforms below depth by 20 rows.",
-      "spend_value below depth by 4 rows.",
-      "relationships below depth by 89 rows.",
-      "evidence_sources below depth by 19 rows.",
-      "service_scope_managed_services below depth by 10 rows.",
-      "operational_process_evidence below depth by 10 rows."
-    ],
-    "canAnswer": [
-      "which active canonical input files were loaded",
-      "what source-backed records exist by domain",
-      "which fields, relationships, and evidence still need work",
-      "which tenant facts have source lineage"
-    ],
-    "mustNotClaim": [
-      "candidate data is active tenant truth",
-      "production data was written",
-      "candidate was promoted",
-      "modules read this build by default",
-      "unsupported realized value or ROI"
-    ]
-  },
-  {
-    "tenantKey": "lakeshore-holdings",
-    "ready": true,
-    "profileReady": true,
-    "evidenceReady": true,
-    "relationshipReady": true,
-    "canonicalRecordCount": 249,
-    "evidenceAttachmentCount": 249,
-    "relationshipCandidateCount": 373,
-    "caveats": [
-      "applications_systems below depth by 1 rows.",
-      "data_assets_integrations below depth by 6 rows.",
-      "infrastructure_platforms below depth by 8 rows.",
-      "risks_controls below depth by 10 rows.",
-      "relationships below depth by 30 rows.",
-      "evidence_sources below depth by 9 rows.",
-      "industry_context_patterns below depth by 1 rows.",
-      "service_scope_managed_services below depth by 5 rows."
-    ],
-    "canAnswer": [
-      "which active canonical input files were loaded",
-      "what source-backed records exist by domain",
-      "which fields, relationships, and evidence still need work",
-      "which tenant facts have source lineage"
-    ],
-    "mustNotClaim": [
-      "candidate data is active tenant truth",
-      "production data was written",
-      "candidate was promoted",
-      "modules read this build by default",
-      "unsupported realized value or ROI"
-    ]
-  },
-  {
-    "tenantKey": "lakeshore-industries",
-    "ready": true,
-    "profileReady": true,
-    "evidenceReady": true,
-    "relationshipReady": true,
-    "canonicalRecordCount": 839,
-    "evidenceAttachmentCount": 839,
-    "relationshipCandidateCount": 1580,
-    "caveats": [
-      "workforce_roles below depth by 3 rows.",
-      "data_assets_integrations below depth by 18 rows.",
-      "vendors_contracts below depth by 6 rows.",
-      "evidence_sources below depth by 18 rows.",
-      "service_scope_managed_services below depth by 2 rows.",
-      "operational_process_evidence below depth by 10 rows."
-    ],
-    "canAnswer": [
-      "which active canonical input files were loaded",
-      "what source-backed records exist by domain",
-      "which fields, relationships, and evidence still need work",
-      "which tenant facts have source lineage"
-    ],
-    "mustNotClaim": [
-      "candidate data is active tenant truth",
-      "production data was written",
-      "candidate was promoted",
-      "modules read this build by default",
-      "unsupported realized value or ROI"
-    ]
-  },
-  {
     "tenantKey": "meridian-health",
-    "ready": true,
+    "ready": false,
     "profileReady": true,
     "evidenceReady": true,
     "relationshipReady": true,
-    "canonicalRecordCount": 1066,
-    "evidenceAttachmentCount": 1066,
-    "relationshipCandidateCount": 1662,
+    "canonicalRecordCount": 3543,
+    "evidenceAttachmentCount": 5020,
+    "relationshipCandidateCount": 8282,
     "caveats": [
-      "infrastructure_platforms below depth by 16 rows.",
-      "relationships below depth by 15 rows.",
-      "evidence_sources below depth by 16 rows.",
-      "service_scope_managed_services below depth by 8 rows.",
-      "operational_process_evidence below depth by 10 rows."
+      "Active source file has rows but no canonical domain mapping.",
+      "Active source file has rows but no canonical domain mapping.",
+      "Active source file has rows but no canonical domain mapping.",
+      "Active source file has rows but no canonical domain mapping."
     ],
     "canAnswer": [
       "which active canonical input files were loaded",
@@ -159,21 +30,19 @@
   },
   {
     "tenantKey": "skyharbor-air",
-    "ready": true,
+    "ready": false,
     "profileReady": true,
     "evidenceReady": true,
     "relationshipReady": true,
-    "canonicalRecordCount": 2066,
-    "evidenceAttachmentCount": 2066,
-    "relationshipCandidateCount": 1994,
+    "canonicalRecordCount": 4348,
+    "evidenceAttachmentCount": 6805,
+    "relationshipCandidateCount": 10489,
     "caveats": [
-      "workforce_roles below depth by 13 rows.",
-      "risks_controls below depth by 12 rows.",
-      "relationships below depth by 23 rows.",
-      "evidence_sources below depth by 17 rows.",
-      "industry_context_patterns below depth by 1 rows.",
-      "service_scope_managed_services below depth by 7 rows.",
-      "operational_process_evidence below depth by 10 rows."
+      "Active source file has rows but no canonical domain mapping.",
+      "Active source file has rows but no canonical domain mapping.",
+      "Active source file has rows but no canonical domain mapping.",
+      "Active source file has rows but no canonical domain mapping.",
+      "Active source file has rows but no canonical domain mapping."
     ],
     "canAnswer": [
       "which active canonical input files were loaded",

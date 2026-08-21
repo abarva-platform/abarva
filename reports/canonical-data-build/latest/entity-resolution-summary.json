@@ -1,0 +1,1054 @@
+[
+  {
+    "tenantKey": "meridian-health",
+    "sourceMentions": 5020,
+    "distinctEntities": 3543,
+    "duplicateMentionsCollapsed": 1477,
+    "referenceMentions": 8282,
+    "referencesResolved": 7570,
+    "referencesUnresolved": 712,
+    "referenceResolutionRate": 0.914,
+    "byObjectType": [
+      {
+        "objectType": "ai_automation_use_case",
+        "sourceMentions": 18,
+        "distinctEntities": 18,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "ai_kpi_outcome_observation",
+        "sourceMentions": 18,
+        "distinctEntities": 18,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "ai_tool_usage_observation",
+        "sourceMentions": 18,
+        "distinctEntities": 18,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "ai_value_interview_evidence",
+        "sourceMentions": 996,
+        "distinctEntities": 996,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "ai_value_realization_signal",
+        "sourceMentions": 18,
+        "distinctEntities": 18,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "application_system",
+        "sourceMentions": 306,
+        "distinctEntities": 306,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "business_function",
+        "sourceMentions": 24,
+        "distinctEntities": 24,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "data_asset_or_integration",
+        "sourceMentions": 540,
+        "distinctEntities": 540,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "data_domain",
+        "sourceMentions": 89,
+        "distinctEntities": 89,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "evidence_source",
+        "sourceMentions": 27,
+        "distinctEntities": 27,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "expert_lens",
+        "sourceMentions": 9,
+        "distinctEntities": 9,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "industry_context_pattern",
+        "sourceMentions": 12,
+        "distinctEntities": 12,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "infrastructure_platform",
+        "sourceMentions": 66,
+        "distinctEntities": 66,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "managed_service_scope",
+        "sourceMentions": 15,
+        "distinctEntities": 15,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "metric_outcome",
+        "sourceMentions": 50,
+        "distinctEntities": 50,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "operational_process_evidence",
+        "sourceMentions": 25,
+        "distinctEntities": 25,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "org_owner",
+        "sourceMentions": 225,
+        "distinctEntities": 225,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "person_or_role",
+        "sourceMentions": 22,
+        "distinctEntities": 22,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "platform_maturity_assessment",
+        "sourceMentions": 17,
+        "distinctEntities": 17,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "program_initiative",
+        "sourceMentions": 38,
+        "distinctEntities": 38,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "relationship_source_row",
+        "sourceMentions": 2302,
+        "distinctEntities": 825,
+        "duplicateMentionsCollapsed": 1477
+      },
+      {
+        "objectType": "risk_or_control",
+        "sourceMentions": 40,
+        "distinctEntities": 40,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "spend_value_fact",
+        "sourceMentions": 27,
+        "distinctEntities": 27,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "tenant_profile",
+        "sourceMentions": 1,
+        "distinctEntities": 1,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "vendor_contract",
+        "sourceMentions": 72,
+        "distinctEntities": 72,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "workforce_role",
+        "sourceMentions": 45,
+        "distinctEntities": 45,
+        "duplicateMentionsCollapsed": 0
+      }
+    ],
+    "unresolvedSamples": [
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Office of the CEO",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Corporate Strategy",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 2,
+        "sourceObjectKey": "meridian-health:org_owner:office_of_the_ceo",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Emergency Department Operations — Meridian Regional Medical Center",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Emergency Department Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:93",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 93,
+        "sourceObjectKey": "meridian-health:org_owner:emergency_department_operations_meridian_regional_medical_center",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Pharmacy Operations — Meridian Regional Medical Center",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Pharmacy Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:94",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 94,
+        "sourceObjectKey": "meridian-health:org_owner:pharmacy_operations_meridian_regional_medical_center",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Quality & Patient Safety — Meridian Regional Medical Center",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Quality & Patient Safety",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:95",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 95,
+        "sourceObjectKey": "meridian-health:org_owner:quality_patient_safety_meridian_regional_medical_center",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Emergency Department Operations — St. Anselm Community Hospital",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Emergency Department Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:97",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 97,
+        "sourceObjectKey": "meridian-health:org_owner:emergency_department_operations_st_anselm_community_hospital",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Pharmacy Operations — St. Anselm Community Hospital",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Pharmacy Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:98",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 98,
+        "sourceObjectKey": "meridian-health:org_owner:pharmacy_operations_st_anselm_community_hospital",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Quality & Patient Safety — St. Anselm Community Hospital",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Quality & Patient Safety",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:99",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 99,
+        "sourceObjectKey": "meridian-health:org_owner:quality_patient_safety_st_anselm_community_hospital",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Emergency Department Operations — Meridian West Hospital",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Emergency Department Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:101",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 101,
+        "sourceObjectKey": "meridian-health:org_owner:emergency_department_operations_meridian_west_hospital",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Pharmacy Operations — Meridian West Hospital",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Pharmacy Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:102",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 102,
+        "sourceObjectKey": "meridian-health:org_owner:pharmacy_operations_meridian_west_hospital",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Quality & Patient Safety — Meridian West Hospital",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Quality & Patient Safety",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:103",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 103,
+        "sourceObjectKey": "meridian-health:org_owner:quality_patient_safety_meridian_west_hospital",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Emergency Department Operations — Cedar Bluff Specialty Hospital",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Emergency Department Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:105",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 105,
+        "sourceObjectKey": "meridian-health:org_owner:emergency_department_operations_cedar_bluff_specialty_hospital",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Pharmacy Operations — Cedar Bluff Specialty Hospital",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Pharmacy Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:106",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 106,
+        "sourceObjectKey": "meridian-health:org_owner:pharmacy_operations_cedar_bluff_specialty_hospital",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Quality & Patient Safety — Cedar Bluff Specialty Hospital",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Quality & Patient Safety",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:107",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 107,
+        "sourceObjectKey": "meridian-health:org_owner:quality_patient_safety_cedar_bluff_specialty_hospital",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Emergency Department Operations — Meridian Cancer Institute",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Emergency Department Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:109",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 109,
+        "sourceObjectKey": "meridian-health:org_owner:emergency_department_operations_meridian_cancer_institute",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Pharmacy Operations — Meridian Cancer Institute",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Pharmacy Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:110",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 110,
+        "sourceObjectKey": "meridian-health:org_owner:pharmacy_operations_meridian_cancer_institute",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Quality & Patient Safety — Meridian Cancer Institute",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Quality & Patient Safety",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:111",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 111,
+        "sourceObjectKey": "meridian-health:org_owner:quality_patient_safety_meridian_cancer_institute",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Emergency Department Operations — Meridian Children's Hospital",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Emergency Department Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:113",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 113,
+        "sourceObjectKey": "meridian-health:org_owner:emergency_department_operations_meridian_children_s_hospital",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Pharmacy Operations — Meridian Children's Hospital",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Pharmacy Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:114",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 114,
+        "sourceObjectKey": "meridian-health:org_owner:pharmacy_operations_meridian_children_s_hospital",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Quality & Patient Safety — Meridian Children's Hospital",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Quality & Patient Safety",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:115",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 115,
+        "sourceObjectKey": "meridian-health:org_owner:quality_patient_safety_meridian_children_s_hospital",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Emergency Department Operations — Meridian Memorial Hospital — Riverton",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Emergency Department Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:117",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 117,
+        "sourceObjectKey": "meridian-health:org_owner:emergency_department_operations_meridian_memorial_hospital_riverton",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Pharmacy Operations — Meridian Memorial Hospital — Riverton",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Pharmacy Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:118",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 118,
+        "sourceObjectKey": "meridian-health:org_owner:pharmacy_operations_meridian_memorial_hospital_riverton",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Quality & Patient Safety — Meridian Memorial Hospital — Riverton",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Quality & Patient Safety",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:119",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 119,
+        "sourceObjectKey": "meridian-health:org_owner:quality_patient_safety_meridian_memorial_hospital_riverton",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Emergency Department Operations — Meridian Memorial Hospital — Ashford",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Emergency Department Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:121",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 121,
+        "sourceObjectKey": "meridian-health:org_owner:emergency_department_operations_meridian_memorial_hospital_ashford",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Pharmacy Operations — Meridian Memorial Hospital — Ashford",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Pharmacy Operations",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:122",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 122,
+        "sourceObjectKey": "meridian-health:org_owner:pharmacy_operations_meridian_memorial_hospital_ashford",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Quality & Patient Safety — Meridian Memorial Hospital — Ashford",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Quality & Patient Safety",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:02_org_ownership.csv:123",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+        "rowNumber": 123,
+        "sourceObjectKey": "meridian-health:org_owner:quality_patient_safety_meridian_memorial_hospital_ashford",
+        "resolutionStatus": "unresolved"
+      }
+    ]
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "sourceMentions": 6805,
+    "distinctEntities": 4348,
+    "duplicateMentionsCollapsed": 2457,
+    "referenceMentions": 10489,
+    "referencesResolved": 9547,
+    "referencesUnresolved": 942,
+    "referenceResolutionRate": 0.9102,
+    "byObjectType": [
+      {
+        "objectType": "ai_automation_use_case",
+        "sourceMentions": 13,
+        "distinctEntities": 13,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "ai_kpi_outcome_observation",
+        "sourceMentions": 8,
+        "distinctEntities": 8,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "ai_tool_usage_observation",
+        "sourceMentions": 8,
+        "distinctEntities": 8,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "ai_value_interview_evidence",
+        "sourceMentions": 586,
+        "distinctEntities": 586,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "ai_value_realization_signal",
+        "sourceMentions": 8,
+        "distinctEntities": 8,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "application_system",
+        "sourceMentions": 503,
+        "distinctEntities": 503,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "business_function",
+        "sourceMentions": 22,
+        "distinctEntities": 22,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "data_asset_or_integration",
+        "sourceMentions": 632,
+        "distinctEntities": 632,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "data_domain",
+        "sourceMentions": 265,
+        "distinctEntities": 265,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "evidence_source",
+        "sourceMentions": 183,
+        "distinctEntities": 183,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "expert_lens",
+        "sourceMentions": 7,
+        "distinctEntities": 7,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "industry_context_pattern",
+        "sourceMentions": 10,
+        "distinctEntities": 10,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "infrastructure_platform",
+        "sourceMentions": 47,
+        "distinctEntities": 47,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "managed_service_scope",
+        "sourceMentions": 11,
+        "distinctEntities": 11,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "metric_outcome",
+        "sourceMentions": 26,
+        "distinctEntities": 26,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "operational_process_evidence",
+        "sourceMentions": 35,
+        "distinctEntities": 35,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "org_owner",
+        "sourceMentions": 153,
+        "distinctEntities": 153,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "person_or_role",
+        "sourceMentions": 13,
+        "distinctEntities": 13,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "platform_maturity_assessment",
+        "sourceMentions": 15,
+        "distinctEntities": 11,
+        "duplicateMentionsCollapsed": 4
+      },
+      {
+        "objectType": "program_initiative",
+        "sourceMentions": 38,
+        "distinctEntities": 38,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "relationship_source_row",
+        "sourceMentions": 3318,
+        "distinctEntities": 868,
+        "duplicateMentionsCollapsed": 2450
+      },
+      {
+        "objectType": "risk_or_control",
+        "sourceMentions": 44,
+        "distinctEntities": 44,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "semantic_crosswalk_evidence",
+        "sourceMentions": 230,
+        "distinctEntities": 227,
+        "duplicateMentionsCollapsed": 3
+      },
+      {
+        "objectType": "service_performance_observation",
+        "sourceMentions": 503,
+        "distinctEntities": 503,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "spend_value_fact",
+        "sourceMentions": 23,
+        "distinctEntities": 23,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "tenant_profile",
+        "sourceMentions": 1,
+        "distinctEntities": 1,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "vendor_contract",
+        "sourceMentions": 65,
+        "distinctEntities": 65,
+        "duplicateMentionsCollapsed": 0
+      },
+      {
+        "objectType": "workforce_role",
+        "sourceMentions": 38,
+        "distinctEntities": 38,
+        "duplicateMentionsCollapsed": 0
+      }
+    ],
+    "unresolvedSamples": [
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_function",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Chief Financial Officer",
+        "targetObjectType": "business_function",
+        "targetObjectName": "Fuel Management & Sustainability (fuel hedging)",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:4",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 4,
+        "sourceObjectKey": "skyharbor-air:org_owner:chief_financial_officer",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Director Network Operations",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Enterprise WAN/LAN fleet (Cisco Systems)",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:83",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 83,
+        "sourceObjectKey": "skyharbor-air:org_owner:director_network_operations",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Director Network Operations",
+        "targetObjectType": "application_system",
+        "targetObjectName": "station telecom circuits (Verizon Business)",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:83",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 83,
+        "sourceObjectKey": "skyharbor-air:org_owner:director_network_operations",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Senior Manager WAN/LAN Network Engineering",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Enterprise WAN/LAN fleet (Cisco Systems)",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:84",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 84,
+        "sourceObjectKey": "skyharbor-air:org_owner:senior_manager_wan_lan_network_engineering",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Senior Manager Station & Airport Network Connectivity",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Station network connectivity circuits (Verizon Business)",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:85",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 85,
+        "sourceObjectKey": "skyharbor-air:org_owner:senior_manager_station_airport_network_connectivity",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Director Data Center Operations",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Mainframe Flight Following (legacy) [primary data center hosting]",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:86",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 86,
+        "sourceObjectKey": "skyharbor-air:org_owner:director_data_center_operations",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Senior Manager Data Center Facilities & Power/Cooling",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Enterprise data center facilities (Chicago primary site)",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:87",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 87,
+        "sourceObjectKey": "skyharbor-air:org_owner:senior_manager_data_center_facilities_power_cooling",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Senior Manager Server & Storage Engineering",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Mainframe Flight Following (legacy) [server/storage hosting]",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:88",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 88,
+        "sourceObjectKey": "skyharbor-air:org_owner:senior_manager_server_storage_engineering",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Director Cloud Platform Engineering",
+        "targetObjectType": "application_system",
+        "targetObjectName": "AWS-hosted compute & platform workloads",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:89",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 89,
+        "sourceObjectKey": "skyharbor-air:org_owner:director_cloud_platform_engineering",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Director Cloud Platform Engineering",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Google Cloud workloads",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:89",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 89,
+        "sourceObjectKey": "skyharbor-air:org_owner:director_cloud_platform_engineering",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Senior Manager AWS Cloud Engineering",
+        "targetObjectType": "application_system",
+        "targetObjectName": "AWS-hosted compute & platform workloads",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:90",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 90,
+        "sourceObjectKey": "skyharbor-air:org_owner:senior_manager_aws_cloud_engineering",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Senior Manager End User Compute & Device Lifecycle",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Corporate end-user device fleet (laptops, kiosks, mobile)",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:93",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 93,
+        "sourceObjectKey": "skyharbor-air:org_owner:senior_manager_end_user_compute_device_lifecycle",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Director Telecommunications & Voice Engineering",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Enterprise voice/PBX infrastructure",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:95",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 95,
+        "sourceObjectKey": "skyharbor-air:org_owner:director_telecommunications_voice_engineering",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Director Telecommunications & Voice Engineering",
+        "targetObjectType": "application_system",
+        "targetObjectName": "station telecom circuits (Verizon Business)",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:95",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 95,
+        "sourceObjectKey": "skyharbor-air:org_owner:director_telecommunications_voice_engineering",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Senior Manager Enterprise Voice & Contact Center Telephony Circuits",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Enterprise voice/PBX infrastructure",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:96",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 96,
+        "sourceObjectKey": "skyharbor-air:org_owner:senior_manager_enterprise_voice_contact_center_telephony_circuits",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Senior Manager Enterprise Voice & Contact Center Telephony Circuits",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Genesys Cloud CX telephony circuits (Verizon Business)",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:96",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 96,
+        "sourceObjectKey": "skyharbor-air:org_owner:senior_manager_enterprise_voice_contact_center_telephony_circuits",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Senior Manager Airport Station Telecom & Wireless",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Station wireless & telecom circuits (Verizon Business)",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:97",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 97,
+        "sourceObjectKey": "skyharbor-air:org_owner:senior_manager_airport_station_telecom_wireless",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Senior Manager Backup & Data Protection Engineering",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Enterprise backup & data protection infrastructure (secondary site — Fort Worth, TX)",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:100",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 100,
+        "sourceObjectKey": "skyharbor-air:org_owner:senior_manager_backup_data_protection_engineering",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "handles_data_domain",
+        "sourceObjectType": "application_system",
+        "sourceObjectName": "Amadeus Altéa Inventory",
+        "targetObjectType": "data_domain",
+        "targetObjectName": "seat inventory",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:04_applications_systems.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
+        "rowNumber": 2,
+        "sourceObjectKey": "skyharbor-air:application_system:amadeus_alt_a_inventory",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "handles_data_domain",
+        "sourceObjectType": "application_system",
+        "sourceObjectName": "Amadeus Altéa Inventory",
+        "targetObjectType": "data_domain",
+        "targetObjectName": "fare class",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:04_applications_systems.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
+        "rowNumber": 2,
+        "sourceObjectKey": "skyharbor-air:application_system:amadeus_alt_a_inventory",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "handles_data_domain",
+        "sourceObjectType": "application_system",
+        "sourceObjectName": "Amadeus Altéa Inventory",
+        "targetObjectType": "data_domain",
+        "targetObjectName": "booking class control",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:04_applications_systems.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
+        "rowNumber": 2,
+        "sourceObjectKey": "skyharbor-air:application_system:amadeus_alt_a_inventory",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "hosted_on",
+        "sourceObjectType": "application_system",
+        "sourceObjectName": "Amadeus Altéa Inventory",
+        "targetObjectType": "infrastructure_platform",
+        "targetObjectName": "Amadeus data center (Erding, DE) — vendor-hosted",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:04_applications_systems.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
+        "rowNumber": 2,
+        "sourceObjectKey": "skyharbor-air:application_system:amadeus_alt_a_inventory",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "handles_data_domain",
+        "sourceObjectType": "application_system",
+        "sourceObjectName": "Amadeus Altéa Reservations",
+        "targetObjectType": "data_domain",
+        "targetObjectName": "passenger name records",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:04_applications_systems.csv:3",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
+        "rowNumber": 3,
+        "sourceObjectKey": "skyharbor-air:application_system:amadeus_alt_a_reservations",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "handles_data_domain",
+        "sourceObjectType": "application_system",
+        "sourceObjectName": "Amadeus Altéa Reservations",
+        "targetObjectType": "data_domain",
+        "targetObjectName": "booking",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:04_applications_systems.csv:3",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
+        "rowNumber": 3,
+        "sourceObjectKey": "skyharbor-air:application_system:amadeus_alt_a_reservations",
+        "resolutionStatus": "unresolved"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "handles_data_domain",
+        "sourceObjectType": "application_system",
+        "sourceObjectName": "Amadeus Altéa Reservations",
+        "targetObjectType": "data_domain",
+        "targetObjectName": "ancillary purchase",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:04_applications_systems.csv:3",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
+        "rowNumber": 3,
+        "sourceObjectKey": "skyharbor-air:application_system:amadeus_alt_a_reservations",
+        "resolutionStatus": "unresolved"
+      }
+    ]
+  }
+]

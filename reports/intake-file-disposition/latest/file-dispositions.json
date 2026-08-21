@@ -1,0 +1,592 @@
+[
+  {
+    "tenantKey": "meridian-health",
+    "file": "00_GUIDE_how_to_use.csv",
+    "role": "non_ingestible_guide",
+    "canonicalDisposition": "blocked_unmapped_source_file",
+    "rowCount": 10,
+    "blockedRowDisposition": "intentionally_excluded_support",
+    "productGateImpact": "none",
+    "rationale": "Operator/user guidance; it should not become canonical product context."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "00_GUIDE_sheet_index.csv",
+    "role": "non_ingestible_guide",
+    "canonicalDisposition": "blocked_unmapped_source_file",
+    "rowCount": 26,
+    "blockedRowDisposition": "intentionally_excluded_support",
+    "productGateImpact": "none",
+    "rationale": "Operator/user guidance; it should not become canonical product context."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "00_enterprise_profile.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 1,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "01_business_functions.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 24,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "01b_business_segments.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "blocked_unmapped_source_file",
+    "rowCount": 4,
+    "blockedRowDisposition": "pending_mapping",
+    "productGateImpact": "pilot_scope_gap",
+    "rationale": "Business segments are structural enterprise entities or crosswalk anchors."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "02_org_ownership.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 225,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "03_workforce_roles.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 45,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "04_applications_systems.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 306,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "05_data_assets_integrations.csv",
+    "role": "canonical_relationship",
+    "canonicalDisposition": "integrated",
+    "rowCount": 540,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Relationship-bearing source used to materialize topology and graph edges."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "06_infrastructure_platforms.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 61,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "07_vendors_contracts.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 72,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "08_spend_value.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 27,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "09_programs_initiatives.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 38,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "10_ai_automation_use_cases.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 18,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "11_risks_controls.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 40,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "12_relationships.csv",
+    "role": "canonical_relationship",
+    "canonicalDisposition": "integrated",
+    "rowCount": 2302,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Relationship-bearing source used to materialize topology and graph edges."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "13_evidence_sources.csv",
+    "role": "evidence_only",
+    "canonicalDisposition": "integrated",
+    "rowCount": 27,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Evidence registry; supports lineage and citations rather than product-owned facts."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "14_metrics_outcomes.csv",
+    "role": "metric_observation",
+    "canonicalDisposition": "integrated",
+    "rowCount": 50,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Observed metric, usage, maturity, or operational outcome feed."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "15_industry_context_patterns.csv",
+    "role": "reference_configuration",
+    "canonicalDisposition": "integrated",
+    "rowCount": 12,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Reference context/lens used to guide interpretation, not a client-recorded transaction."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "16_expert_lenses.csv",
+    "role": "reference_configuration",
+    "canonicalDisposition": "integrated",
+    "rowCount": 9,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Reference context/lens used to guide interpretation, not a client-recorded transaction."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "17_service_scope_managed_services.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 15,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "18_operational_process_evidence.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 25,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "19_data_analytics_platform_maturity.csv",
+    "role": "metric_observation",
+    "canonicalDisposition": "integrated",
+    "rowCount": 17,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Observed metric, usage, maturity, or operational outcome feed."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+    "role": "metric_observation",
+    "canonicalDisposition": "integrated",
+    "rowCount": 18,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Observed metric, usage, maturity, or operational outcome feed."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "SA09_AI_Tool_Usage_Feed.csv",
+    "role": "metric_observation",
+    "canonicalDisposition": "integrated",
+    "rowCount": 18,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Observed metric, usage, maturity, or operational outcome feed."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "SA10_AI_Value_Interview_Evidence.csv",
+    "role": "evidence_only",
+    "canonicalDisposition": "integrated",
+    "rowCount": 996,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Stakeholder interview evidence; downstream interpretation belongs in approved overlays."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "SA11_AI_KPI_Operational_Outcome_Feed.csv",
+    "role": "metric_observation",
+    "canonicalDisposition": "integrated",
+    "rowCount": 18,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Observed metric, usage, maturity, or operational outcome feed."
+  },
+  {
+    "tenantKey": "meridian-health",
+    "file": "extracts/ms365-copilot-usage-user-detail.csv",
+    "role": "metric_observation",
+    "canonicalDisposition": "blocked_unmapped_source_file",
+    "rowCount": 997,
+    "blockedRowDisposition": "pending_mapping",
+    "productGateImpact": "pilot_scope_gap",
+    "rationale": "Raw system extract; promote through an adapter into metric or operational observations."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "00_GUIDE_how_to_use.csv",
+    "role": "non_ingestible_guide",
+    "canonicalDisposition": "blocked_unmapped_source_file",
+    "rowCount": 10,
+    "blockedRowDisposition": "intentionally_excluded_support",
+    "productGateImpact": "none",
+    "rationale": "Operator/user guidance; it should not become canonical product context."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "00_GUIDE_sheet_index.csv",
+    "role": "non_ingestible_guide",
+    "canonicalDisposition": "blocked_unmapped_source_file",
+    "rowCount": 26,
+    "blockedRowDisposition": "intentionally_excluded_support",
+    "productGateImpact": "none",
+    "rationale": "Operator/user guidance; it should not become canonical product context."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "00_enterprise_profile.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 1,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "01_business_functions.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 22,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "01b_business_segments.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "blocked_unmapped_source_file",
+    "rowCount": 4,
+    "blockedRowDisposition": "pending_mapping",
+    "productGateImpact": "pilot_scope_gap",
+    "rationale": "Business segments are structural enterprise entities or crosswalk anchors."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "02_org_ownership.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 153,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "03_workforce_roles.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 38,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "04_applications_systems.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 503,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "05_data_assets_integrations.csv",
+    "role": "canonical_relationship",
+    "canonicalDisposition": "integrated",
+    "rowCount": 632,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Relationship-bearing source used to materialize topology and graph edges."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "06_infrastructure_platforms.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 46,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "07_vendors_contracts.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 65,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "08_spend_value.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 23,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "09_programs_initiatives.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 38,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "10_ai_automation_use_cases.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 13,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "11_risks_controls.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 44,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "12_relationships.csv",
+    "role": "canonical_relationship",
+    "canonicalDisposition": "integrated",
+    "rowCount": 3318,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Relationship-bearing source used to materialize topology and graph edges."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "12b_interview_initiative_metric_crosswalk.csv",
+    "role": "canonical_relationship",
+    "canonicalDisposition": "integrated",
+    "rowCount": 230,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Explicit interview-to-initiative/metric crosswalk."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "13_evidence_sources.csv",
+    "role": "evidence_only",
+    "canonicalDisposition": "integrated",
+    "rowCount": 183,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Evidence registry; supports lineage and citations rather than product-owned facts."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "14_metrics_outcomes.csv",
+    "role": "metric_observation",
+    "canonicalDisposition": "integrated",
+    "rowCount": 26,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Observed metric, usage, maturity, or operational outcome feed."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "15_industry_context_patterns.csv",
+    "role": "reference_configuration",
+    "canonicalDisposition": "integrated",
+    "rowCount": 10,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Reference context/lens used to guide interpretation, not a client-recorded transaction."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "16_expert_lenses.csv",
+    "role": "reference_configuration",
+    "canonicalDisposition": "integrated",
+    "rowCount": 7,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Reference context/lens used to guide interpretation, not a client-recorded transaction."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "17_service_scope_managed_services.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 11,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "18_operational_process_evidence.csv",
+    "role": "canonical_entity",
+    "canonicalDisposition": "integrated",
+    "rowCount": 35,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Declared source table for canonical enterprise entities or facts."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "19_data_analytics_platform_maturity.csv",
+    "role": "metric_observation",
+    "canonicalDisposition": "integrated",
+    "rowCount": 15,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Observed metric, usage, maturity, or operational outcome feed."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "20_itsm_ticket_sla_performance.csv",
+    "role": "metric_observation",
+    "canonicalDisposition": "integrated",
+    "rowCount": 503,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Observed metric, usage, maturity, or operational outcome feed."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+    "role": "metric_observation",
+    "canonicalDisposition": "integrated",
+    "rowCount": 8,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Observed metric, usage, maturity, or operational outcome feed."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "SA09_AI_Tool_Usage_Feed.csv",
+    "role": "metric_observation",
+    "canonicalDisposition": "integrated",
+    "rowCount": 8,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Observed metric, usage, maturity, or operational outcome feed."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "SA10_AI_Value_Interview_Evidence.csv",
+    "role": "evidence_only",
+    "canonicalDisposition": "integrated",
+    "rowCount": 586,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Stakeholder interview evidence; downstream interpretation belongs in approved overlays."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "SA11_AI_KPI_Operational_Outcome_Feed.csv",
+    "role": "metric_observation",
+    "canonicalDisposition": "integrated",
+    "rowCount": 8,
+    "blockedRowDisposition": "not_blocked",
+    "productGateImpact": "none",
+    "rationale": "Observed metric, usage, maturity, or operational outcome feed."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "extracts/ms365-copilot-usage-user-detail.csv",
+    "role": "metric_observation",
+    "canonicalDisposition": "blocked_unmapped_source_file",
+    "rowCount": 2702,
+    "blockedRowDisposition": "pending_mapping",
+    "productGateImpact": "pilot_scope_gap",
+    "rationale": "Raw system extract; promote through an adapter into metric or operational observations."
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "file": "extracts/servicenow-gen-ai-usage-log.csv",
+    "role": "metric_observation",
+    "canonicalDisposition": "blocked_unmapped_source_file",
+    "rowCount": 1200,
+    "blockedRowDisposition": "pending_mapping",
+    "productGateImpact": "pilot_scope_gap",
+    "rationale": "Raw system extract; promote through an adapter into metric or operational observations."
+  }
+]

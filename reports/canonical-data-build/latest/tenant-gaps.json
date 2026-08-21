@@ -1,1919 +1,189 @@
 {
-  "apex-retail": {
-    "total": 1969,
-    "byCode": {
-      "placeholder_value_omitted": 1956,
-      "primary_identity_missing_or_placeholder": 13
-    },
-    "bySeverity": {
-      "warning": 1969
-    },
-    "byDomain": {
-      "enterprise_profile": 1,
-      "business_functions": 52,
-      "org_ownership": 100,
-      "workforce_roles": 24,
-      "applications_systems": 184,
-      "data_assets_integrations": 360,
-      "vendors_contracts": 200,
-      "spend_value": 6,
-      "programs_initiatives": 141,
-      "ai_automation_use_cases": 98,
-      "risks_controls": 245,
-      "relationships": 13,
-      "evidence_sources": 2,
-      "metrics_outcomes": 208,
-      "industry_context_patterns": 320,
-      "expert_lenses": 15
-    },
-    "samples": [
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/00_enterprise_profile.csv",
-        "rowNumber": 2,
-        "domain": "enterprise_profile",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
-        "rowNumber": 2,
-        "domain": "business_functions",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
-        "rowNumber": 2,
-        "domain": "business_functions",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/02_org_ownership.csv",
-        "rowNumber": 2,
-        "domain": "org_ownership",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/02_org_ownership.csv",
-        "rowNumber": 2,
-        "domain": "org_ownership",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/03_workforce_roles.csv",
-        "rowNumber": 2,
-        "domain": "workforce_roles",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/03_workforce_roles.csv",
-        "rowNumber": 2,
-        "domain": "workforce_roles",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/04_applications_systems.csv",
-        "rowNumber": 2,
-        "domain": "applications_systems",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/04_applications_systems.csv",
-        "rowNumber": 62,
-        "domain": "applications_systems",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/05_data_assets_integrations.csv",
-        "rowNumber": 2,
-        "domain": "data_assets_integrations",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/05_data_assets_integrations.csv",
-        "rowNumber": 2,
-        "domain": "data_assets_integrations",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/07_vendors_contracts.csv",
-        "rowNumber": 2,
-        "domain": "vendors_contracts",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/07_vendors_contracts.csv",
-        "rowNumber": 2,
-        "domain": "vendors_contracts",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/08_spend_value.csv",
-        "rowNumber": 2,
-        "domain": "spend_value",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/09_programs_initiatives.csv",
-        "rowNumber": 2,
-        "domain": "programs_initiatives",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/09_programs_initiatives.csv",
-        "rowNumber": 16,
-        "domain": "programs_initiatives",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/10_ai_automation_use_cases.csv",
-        "rowNumber": 2,
-        "domain": "ai_automation_use_cases",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/10_ai_automation_use_cases.csv",
-        "rowNumber": 20,
-        "domain": "ai_automation_use_cases",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/11_risks_controls.csv",
-        "rowNumber": 2,
-        "domain": "risks_controls",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/11_risks_controls.csv",
-        "rowNumber": 27,
-        "domain": "risks_controls",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical relationship_source_row because relationship identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/12_relationships.csv",
-        "rowNumber": 2,
-        "domain": "relationships",
-        "field": "source_name|from_entity|source_object|relationship_id|edge_id",
-        "value": ""
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field quality_notes was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/13_evidence_sources.csv",
-        "rowNumber": 2,
-        "domain": "evidence_sources",
-        "field": "quality_notes",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/13_evidence_sources.csv",
-        "rowNumber": 2,
-        "domain": "evidence_sources",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/14_metrics_outcomes.csv",
-        "rowNumber": 2,
-        "domain": "metrics_outcomes",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/14_metrics_outcomes.csv",
-        "rowNumber": 2,
-        "domain": "metrics_outcomes",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field caveats was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/15_industry_context_patterns.csv",
-        "rowNumber": 2,
-        "domain": "industry_context_patterns",
-        "field": "caveats",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/15_industry_context_patterns.csv",
-        "rowNumber": 2,
-        "domain": "industry_context_patterns",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/15_industry_context_patterns.csv",
-        "rowNumber": 2,
-        "domain": "industry_context_patterns",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field limitations was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/16_expert_lenses.csv",
-        "rowNumber": 2,
-        "domain": "expert_lenses",
-        "field": "limitations",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/16_expert_lenses.csv",
-        "rowNumber": 2,
-        "domain": "expert_lenses",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/16_expert_lenses.csv",
-        "rowNumber": 2,
-        "domain": "expert_lenses",
-        "field": "conflict_status",
-        "value": "none"
-      }
-    ]
-  },
-  "first-capital-financial": {
-    "total": 2580,
-    "byCode": {
-      "placeholder_value_omitted": 2569,
-      "primary_identity_missing_or_placeholder": 11
-    },
-    "bySeverity": {
-      "warning": 2580
-    },
-    "byDomain": {
-      "enterprise_profile": 1,
-      "business_functions": 54,
-      "org_ownership": 130,
-      "workforce_roles": 32,
-      "applications_systems": 364,
-      "data_assets_integrations": 114,
-      "vendors_contracts": 240,
-      "spend_value": 6,
-      "programs_initiatives": 144,
-      "ai_automation_use_cases": 288,
-      "risks_controls": 414,
-      "relationships": 11,
-      "evidence_sources": 2,
-      "metrics_outcomes": 313,
-      "industry_context_patterns": 452,
-      "expert_lenses": 15
-    },
-    "samples": [
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/00_enterprise_profile.csv",
-        "rowNumber": 2,
-        "domain": "enterprise_profile",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
-        "rowNumber": 2,
-        "domain": "business_functions",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
-        "rowNumber": 2,
-        "domain": "business_functions",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/02_org_ownership.csv",
-        "rowNumber": 2,
-        "domain": "org_ownership",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/02_org_ownership.csv",
-        "rowNumber": 2,
-        "domain": "org_ownership",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/03_workforce_roles.csv",
-        "rowNumber": 2,
-        "domain": "workforce_roles",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/03_workforce_roles.csv",
-        "rowNumber": 2,
-        "domain": "workforce_roles",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/04_applications_systems.csv",
-        "rowNumber": 2,
-        "domain": "applications_systems",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/04_applications_systems.csv",
-        "rowNumber": 62,
-        "domain": "applications_systems",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/05_data_assets_integrations.csv",
-        "rowNumber": 2,
-        "domain": "data_assets_integrations",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/07_vendors_contracts.csv",
-        "rowNumber": 2,
-        "domain": "vendors_contracts",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/07_vendors_contracts.csv",
-        "rowNumber": 2,
-        "domain": "vendors_contracts",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/08_spend_value.csv",
-        "rowNumber": 2,
-        "domain": "spend_value",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/09_programs_initiatives.csv",
-        "rowNumber": 2,
-        "domain": "programs_initiatives",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/09_programs_initiatives.csv",
-        "rowNumber": 44,
-        "domain": "programs_initiatives",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/10_ai_automation_use_cases.csv",
-        "rowNumber": 2,
-        "domain": "ai_automation_use_cases",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/10_ai_automation_use_cases.csv",
-        "rowNumber": 2,
-        "domain": "ai_automation_use_cases",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/11_risks_controls.csv",
-        "rowNumber": 2,
-        "domain": "risks_controls",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/11_risks_controls.csv",
-        "rowNumber": 2,
-        "domain": "risks_controls",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical relationship_source_row because relationship identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/12_relationships.csv",
-        "rowNumber": 2,
-        "domain": "relationships",
-        "field": "source_name|from_entity|source_object|relationship_id|edge_id",
-        "value": ""
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field quality_notes was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/13_evidence_sources.csv",
-        "rowNumber": 2,
-        "domain": "evidence_sources",
-        "field": "quality_notes",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/13_evidence_sources.csv",
-        "rowNumber": 2,
-        "domain": "evidence_sources",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/14_metrics_outcomes.csv",
-        "rowNumber": 2,
-        "domain": "metrics_outcomes",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/14_metrics_outcomes.csv",
-        "rowNumber": 2,
-        "domain": "metrics_outcomes",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field caveats was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/15_industry_context_patterns.csv",
-        "rowNumber": 2,
-        "domain": "industry_context_patterns",
-        "field": "caveats",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/15_industry_context_patterns.csv",
-        "rowNumber": 2,
-        "domain": "industry_context_patterns",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/15_industry_context_patterns.csv",
-        "rowNumber": 2,
-        "domain": "industry_context_patterns",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field limitations was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/16_expert_lenses.csv",
-        "rowNumber": 2,
-        "domain": "expert_lenses",
-        "field": "limitations",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/16_expert_lenses.csv",
-        "rowNumber": 2,
-        "domain": "expert_lenses",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/16_expert_lenses.csv",
-        "rowNumber": 2,
-        "domain": "expert_lenses",
-        "field": "conflict_status",
-        "value": "none"
-      }
-    ]
-  },
-  "lakeshore-holdings": {
-    "total": 515,
-    "byCode": {
-      "placeholder_value_omitted": 505,
-      "primary_identity_missing_or_placeholder": 10
-    },
-    "bySeverity": {
-      "warning": 515
-    },
-    "byDomain": {
-      "enterprise_profile": 1,
-      "business_functions": 28,
-      "org_ownership": 16,
-      "workforce_roles": 20,
-      "applications_systems": 48,
-      "data_assets_integrations": 68,
-      "vendors_contracts": 38,
-      "spend_value": 170,
-      "programs_initiatives": 30,
-      "ai_automation_use_cases": 16,
-      "risks_controls": 20,
-      "relationships": 10,
-      "evidence_sources": 2,
-      "metrics_outcomes": 24,
-      "industry_context_patterns": 12,
-      "expert_lenses": 12
-    },
-    "samples": [
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/00_enterprise_profile.csv",
-        "rowNumber": 2,
-        "domain": "enterprise_profile",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
-        "rowNumber": 2,
-        "domain": "business_functions",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
-        "rowNumber": 2,
-        "domain": "business_functions",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/02_org_ownership.csv",
-        "rowNumber": 2,
-        "domain": "org_ownership",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/02_org_ownership.csv",
-        "rowNumber": 2,
-        "domain": "org_ownership",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/03_workforce_roles.csv",
-        "rowNumber": 2,
-        "domain": "workforce_roles",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/03_workforce_roles.csv",
-        "rowNumber": 2,
-        "domain": "workforce_roles",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/04_applications_systems.csv",
-        "rowNumber": 2,
-        "domain": "applications_systems",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/04_applications_systems.csv",
-        "rowNumber": 2,
-        "domain": "applications_systems",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/05_data_assets_integrations.csv",
-        "rowNumber": 2,
-        "domain": "data_assets_integrations",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/05_data_assets_integrations.csv",
-        "rowNumber": 2,
-        "domain": "data_assets_integrations",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/07_vendors_contracts.csv",
-        "rowNumber": 2,
-        "domain": "vendors_contracts",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/07_vendors_contracts.csv",
-        "rowNumber": 2,
-        "domain": "vendors_contracts",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/08_spend_value.csv",
-        "rowNumber": 2,
-        "domain": "spend_value",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/08_spend_value.csv",
-        "rowNumber": 2,
-        "domain": "spend_value",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/09_programs_initiatives.csv",
-        "rowNumber": 2,
-        "domain": "programs_initiatives",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/09_programs_initiatives.csv",
-        "rowNumber": 2,
-        "domain": "programs_initiatives",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/10_ai_automation_use_cases.csv",
-        "rowNumber": 2,
-        "domain": "ai_automation_use_cases",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/10_ai_automation_use_cases.csv",
-        "rowNumber": 2,
-        "domain": "ai_automation_use_cases",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/11_risks_controls.csv",
-        "rowNumber": 2,
-        "domain": "risks_controls",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/11_risks_controls.csv",
-        "rowNumber": 2,
-        "domain": "risks_controls",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical relationship_source_row because relationship identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/12_relationships.csv",
-        "rowNumber": 2,
-        "domain": "relationships",
-        "field": "source_name|from_entity|source_object|relationship_id|edge_id",
-        "value": ""
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field quality_notes was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/13_evidence_sources.csv",
-        "rowNumber": 2,
-        "domain": "evidence_sources",
-        "field": "quality_notes",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/13_evidence_sources.csv",
-        "rowNumber": 2,
-        "domain": "evidence_sources",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/14_metrics_outcomes.csv",
-        "rowNumber": 2,
-        "domain": "metrics_outcomes",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/14_metrics_outcomes.csv",
-        "rowNumber": 2,
-        "domain": "metrics_outcomes",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field caveats was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/15_industry_context_patterns.csv",
-        "rowNumber": 2,
-        "domain": "industry_context_patterns",
-        "field": "caveats",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/15_industry_context_patterns.csv",
-        "rowNumber": 2,
-        "domain": "industry_context_patterns",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/15_industry_context_patterns.csv",
-        "rowNumber": 2,
-        "domain": "industry_context_patterns",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field limitations was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/16_expert_lenses.csv",
-        "rowNumber": 2,
-        "domain": "expert_lenses",
-        "field": "limitations",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/16_expert_lenses.csv",
-        "rowNumber": 2,
-        "domain": "expert_lenses",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/16_expert_lenses.csv",
-        "rowNumber": 2,
-        "domain": "expert_lenses",
-        "field": "conflict_status",
-        "value": "none"
-      }
-    ]
-  },
-  "lakeshore-industries": {
-    "total": 1506,
-    "byCode": {
-      "placeholder_value_omitted": 763,
-      "primary_identity_missing_or_placeholder": 743
-    },
-    "bySeverity": {
-      "warning": 1506
-    },
-    "byDomain": {
-      "business_functions": 53,
-      "org_ownership": 116,
-      "workforce_roles": 12,
-      "applications_systems": 152,
-      "data_assets_integrations": 82,
-      "infrastructure_platforms": 128,
-      "vendors_contracts": 8,
-      "spend_value": 62,
-      "programs_initiatives": 36,
-      "ai_automation_use_cases": 36,
-      "risks_controls": 48,
-      "relationships": 519,
-      "metrics_outcomes": 212,
-      "industry_context_patterns": 24,
-      "expert_lenses": 18
-    },
-    "samples": [
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
-        "rowNumber": 2,
-        "domain": "business_functions",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/02_org_ownership.csv",
-        "rowNumber": 2,
-        "domain": "org_ownership",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/03_workforce_roles.csv",
-        "rowNumber": 2,
-        "domain": "workforce_roles",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/04_applications_systems.csv",
-        "rowNumber": 2,
-        "domain": "applications_systems",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/05_data_assets_integrations.csv",
-        "rowNumber": 2,
-        "domain": "data_assets_integrations",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical infrastructure_platform because platform identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/06_infrastructure_platforms.csv",
-        "rowNumber": 2,
-        "domain": "infrastructure_platforms",
-        "field": "platform_name|estate_item_name|asset_name|platform|data_center_or_region|technology_stack",
-        "value": ""
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/07_vendors_contracts.csv",
-        "rowNumber": 13,
-        "domain": "vendors_contracts",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/08_spend_value.csv",
-        "rowNumber": 2,
-        "domain": "spend_value",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical spend_value_fact because spend category identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/08_spend_value.csv",
-        "rowNumber": 17,
-        "domain": "spend_value",
-        "field": "spend_category|spend_id|cost_center_or_owner|value_driver|metric_name",
-        "value": ""
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/09_programs_initiatives.csv",
-        "rowNumber": 2,
-        "domain": "programs_initiatives",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/10_ai_automation_use_cases.csv",
-        "rowNumber": 2,
-        "domain": "ai_automation_use_cases",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/11_risks_controls.csv",
-        "rowNumber": 2,
-        "domain": "risks_controls",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical relationship_source_row because relationship identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/12_relationships.csv",
-        "rowNumber": 2,
-        "domain": "relationships",
-        "field": "source_name|from_entity|source_object|relationship_id|edge_id",
-        "value": ""
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/14_metrics_outcomes.csv",
-        "rowNumber": 2,
-        "domain": "metrics_outcomes",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical industry_context_pattern because pattern identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/15_industry_context_patterns.csv",
-        "rowNumber": 2,
-        "domain": "industry_context_patterns",
-        "field": "pattern_name|industry_pattern|theme|market_pattern_id",
-        "value": ""
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical expert_lens because expert lens identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/16_expert_lenses.csv",
-        "rowNumber": 2,
-        "domain": "expert_lenses",
-        "field": "lens_name|expert_lens_name|expert_lens|role",
-        "value": ""
-      }
-    ]
-  },
   "meridian-health": {
-    "total": 2010,
+    "total": 785,
     "byCode": {
-      "placeholder_value_omitted": 1910,
-      "primary_identity_missing_or_placeholder": 100
+      "placeholder_value_omitted": 69,
+      "canonical_reference_unresolved": 712,
+      "blocked_unmapped_source_file": 4
     },
     "bySeverity": {
-      "warning": 2010
+      "warning": 781,
+      "error": 4
     },
     "byDomain": {
-      "enterprise_profile": 4,
-      "business_functions": 48,
-      "org_ownership": 86,
-      "workforce_roles": 40,
-      "applications_systems": 150,
-      "data_assets_integrations": 239,
-      "infrastructure_platforms": 4,
-      "vendors_contracts": 225,
-      "spend_value": 23,
-      "programs_initiatives": 155,
-      "ai_automation_use_cases": 116,
-      "risks_controls": 282,
-      "relationships": 85,
-      "evidence_sources": 2,
-      "metrics_outcomes": 220,
-      "industry_context_patterns": 305,
-      "expert_lenses": 25,
-      "service_scope_managed_services": 1
+      "applications_systems": 43,
+      "vendors_contracts": 16,
+      "ai_tool_usage_feed": 10
     },
     "samples": [
       {
         "tenantKey": "meridian-health",
         "severity": "warning",
         "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field revenue_usd was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
+        "message": "Placeholder value in field compliance_scope was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv",
+        "rowNumber": 85,
+        "domain": "applications_systems",
+        "field": "compliance_scope",
+        "value": "none"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field benchmark_clause was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv",
         "rowNumber": 2,
-        "domain": "enterprise_profile",
-        "field": "revenue_usd",
-        "value": "not_provided"
+        "domain": "vendors_contracts",
+        "field": "benchmark_clause",
+        "value": "none"
       },
       {
         "tenantKey": "meridian-health",
         "severity": "warning",
         "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field employee_count was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
+        "message": "Placeholder value in field agent_creator_type was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/SA09_AI_Tool_Usage_Feed.csv",
         "rowNumber": 2,
-        "domain": "enterprise_profile",
-        "field": "employee_count",
-        "value": "not_provided"
+        "domain": "ai_tool_usage_feed",
+        "field": "agent_creator_type",
+        "value": "unknown"
       },
       {
         "tenantKey": "meridian-health",
         "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
-        "rowNumber": 3,
-        "domain": "enterprise_profile",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
-        "rowNumber": 3,
-        "domain": "enterprise_profile",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
-        "rowNumber": 4,
-        "domain": "business_functions",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
-        "rowNumber": 9,
-        "domain": "business_functions",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field owned_systems was omitted and recorded as a gap, not a fact.",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship owns_function could not resolve org_owner:Office of the CEO -> business_function:Corporate Strategy to canonical entity IDs.",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
-        "rowNumber": 5,
-        "domain": "org_ownership",
-        "field": "owned_systems",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
-        "rowNumber": 6,
-        "domain": "org_ownership",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
-        "rowNumber": 9,
-        "domain": "org_ownership",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv",
         "rowNumber": 2,
-        "domain": "workforce_roles",
-        "field": "conflict_status",
-        "value": "none"
+        "value": "Corporate Strategy"
       },
       {
         "tenantKey": "meridian-health",
         "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv",
-        "rowNumber": 14,
-        "domain": "workforce_roles",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship hosted_on could not resolve application_system:Epic Hyperspace — Production -> infrastructure_platform:Epic hosting — Verona, WI (vendor-hosted) with Lakeview DR failover to canonical entity IDs.",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv",
         "rowNumber": 2,
-        "domain": "applications_systems",
-        "field": "known_gaps",
-        "value": "none"
+        "value": "Epic hosting — Verona, WI (vendor-hosted) with Lakeview DR failover"
       },
       {
         "tenantKey": "meridian-health",
         "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv",
-        "rowNumber": 72,
-        "domain": "applications_systems",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/05_data_assets_integrations.csv",
-        "rowNumber": 2,
-        "domain": "data_assets_integrations",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field refresh_frequency was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/05_data_assets_integrations.csv",
-        "rowNumber": 38,
-        "domain": "data_assets_integrations",
-        "field": "refresh_frequency",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field data_steward was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/05_data_assets_integrations.csv",
-        "rowNumber": 38,
-        "domain": "data_assets_integrations",
-        "field": "data_steward",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/05_data_assets_integrations.csv",
-        "rowNumber": 74,
-        "domain": "data_assets_integrations",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical infrastructure_platform because platform identity is missing or placeholder.",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship operated_by could not resolve infrastructure_platform:CyberArk Privileged Access Management -> person_or_role:CISO to canonical entity IDs.",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/06_infrastructure_platforms.csv",
-        "rowNumber": 2,
-        "domain": "infrastructure_platforms",
-        "field": "platform_name|estate_item_name|asset_name|platform|data_center_or_region|technology_stack",
-        "value": ""
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field contract_name was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv",
-        "rowNumber": 2,
-        "domain": "vendors_contracts",
-        "field": "contract_name",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field annual_spend_usd was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv",
-        "rowNumber": 2,
-        "domain": "vendors_contracts",
-        "field": "annual_spend_usd",
-        "value": "not_provided"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field renewal_date was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv",
-        "rowNumber": 2,
-        "domain": "vendors_contracts",
-        "field": "renewal_date",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv",
-        "rowNumber": 2,
-        "domain": "vendors_contracts",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv",
-        "rowNumber": 16,
-        "domain": "vendors_contracts",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/08_spend_value.csv",
-        "rowNumber": 2,
-        "domain": "spend_value",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical spend_value_fact because spend category identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/08_spend_value.csv",
-        "rowNumber": 16,
-        "domain": "spend_value",
-        "field": "spend_category|spend_id|cost_center_or_owner|value_driver|metric_name",
-        "value": ""
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/08_spend_value.csv",
-        "rowNumber": 20,
-        "domain": "spend_value",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field budget_usd was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv",
-        "rowNumber": 2,
-        "domain": "programs_initiatives",
-        "field": "budget_usd",
-        "value": "not_provided"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field expected_value_usd was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv",
-        "rowNumber": 2,
-        "domain": "programs_initiatives",
-        "field": "expected_value_usd",
-        "value": "not_provided"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv",
-        "rowNumber": 9,
-        "domain": "programs_initiatives",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv",
-        "rowNumber": 21,
-        "domain": "programs_initiatives",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/10_ai_automation_use_cases.csv",
-        "rowNumber": 5,
-        "domain": "ai_automation_use_cases",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/10_ai_automation_use_cases.csv",
-        "rowNumber": 5,
-        "domain": "ai_automation_use_cases",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/11_risks_controls.csv",
-        "rowNumber": 30,
-        "domain": "risks_controls",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/11_risks_controls.csv",
-        "rowNumber": 30,
-        "domain": "risks_controls",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical relationship_source_row because relationship identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/12_relationships.csv",
-        "rowNumber": 2,
-        "domain": "relationships",
-        "field": "source_name|from_entity|source_object|relationship_id|edge_id",
-        "value": ""
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field quality_notes was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/13_evidence_sources.csv",
-        "rowNumber": 5,
-        "domain": "evidence_sources",
-        "field": "quality_notes",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/13_evidence_sources.csv",
-        "rowNumber": 5,
-        "domain": "evidence_sources",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field target_value was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/14_metrics_outcomes.csv",
-        "rowNumber": 2,
-        "domain": "metrics_outcomes",
-        "field": "target_value",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/14_metrics_outcomes.csv",
         "rowNumber": 13,
-        "domain": "metrics_outcomes",
-        "field": "known_gaps",
-        "value": "none"
+        "value": "CISO"
       },
       {
         "tenantKey": "meridian-health",
         "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/14_metrics_outcomes.csv",
-        "rowNumber": 13,
-        "domain": "metrics_outcomes",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/15_industry_context_patterns.csv",
-        "rowNumber": 2,
-        "domain": "industry_context_patterns",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical industry_context_pattern because pattern identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/15_industry_context_patterns.csv",
-        "rowNumber": 9,
-        "domain": "industry_context_patterns",
-        "field": "pattern_name|industry_pattern|theme|market_pattern_id",
-        "value": ""
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field caveats was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/15_industry_context_patterns.csv",
-        "rowNumber": 11,
-        "domain": "industry_context_patterns",
-        "field": "caveats",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/15_industry_context_patterns.csv",
-        "rowNumber": 11,
-        "domain": "industry_context_patterns",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/16_expert_lenses.csv",
-        "rowNumber": 2,
-        "domain": "expert_lenses",
-        "field": "conflict_status",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical expert_lens because expert lens identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/16_expert_lenses.csv",
-        "rowNumber": 7,
-        "domain": "expert_lenses",
-        "field": "lens_name|expert_lens_name|expert_lens|role",
-        "value": ""
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field limitations was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/16_expert_lenses.csv",
-        "rowNumber": 12,
-        "domain": "expert_lenses",
-        "field": "limitations",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/16_expert_lenses.csv",
-        "rowNumber": 12,
-        "domain": "expert_lenses",
-        "field": "known_gaps",
-        "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/17_service_scope_managed_services.csv",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship supports_system could not resolve vendor_contract:Microsoft Corporation -> application_system:(no 04_applications_systems row for Microsoft Corporation — services/advisory engagement only) to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv",
         "rowNumber": 3,
-        "domain": "service_scope_managed_services",
-        "field": "conflict_status",
-        "value": "none"
+        "value": "(no 04_applications_systems row for Microsoft Corporation — services/advisory engagement only)"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship drives_value could not resolve spend_value_fact:Epic EHR Platform & Clinical Applications -> value_driver:Hospitals & physician network technology enablement to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/08_spend_value.csv",
+        "rowNumber": 2,
+        "value": "Hospitals & physician network technology enablement"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship targets_metric could not resolve program_initiative:STARS 5.0 Improvement Program -> metric:STARS 5.0 Improvement Program (work order #18901) plans to bring the (ticket #39216) target process into full (review item #35542) audit-standard compliance by the (audit note #3231) next fiscal year kickoff. to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv",
+        "rowNumber": 2,
+        "value": "STARS 5.0 Improvement Program (work order #18901) plans to bring the (ticket #39216) target process into full (review item #35542) audit-standard compliance by the (audit note #3231) next fiscal year kickoff."
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship impacts could not resolve relationship_source_row:Standing privileged credentials outside PAM coverage -> system:CyberArk Privileged Access Management to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/12_relationships.csv",
+        "rowNumber": 1605,
+        "value": "CyberArk Privileged Access Management"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship uses_system could not resolve operational_process_evidence:HEDIS Chart Abstraction Process -> application_system:Epic Healthy Planet to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/18_operational_process_evidence.csv",
+        "rowNumber": 2,
+        "value": "Epic Healthy Planet"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "error",
+        "code": "blocked_unmapped_source_file",
+        "message": "Active source file has rows but no canonical domain mapping.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/00_GUIDE_how_to_use.csv"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "error",
+        "code": "blocked_unmapped_source_file",
+        "message": "Active source file has rows but no canonical domain mapping.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/00_GUIDE_sheet_index.csv"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "error",
+        "code": "blocked_unmapped_source_file",
+        "message": "Active source file has rows but no canonical domain mapping.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01b_business_segments.csv"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "error",
+        "code": "blocked_unmapped_source_file",
+        "message": "Active source file has rows but no canonical domain mapping.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/extracts/ms365-copilot-usage-user-detail.csv"
       }
     ]
   },
   "skyharbor-air": {
-    "total": 3355,
+    "total": 3106,
     "byCode": {
-      "placeholder_value_omitted": 2610,
-      "primary_identity_missing_or_placeholder": 745
+      "placeholder_value_omitted": 2159,
+      "canonical_reference_unresolved": 942,
+      "blocked_unmapped_source_file": 5
     },
     "bySeverity": {
-      "warning": 3355
+      "warning": 3101,
+      "error": 5
     },
     "byDomain": {
-      "enterprise_profile": 3,
-      "business_functions": 2,
-      "org_ownership": 273,
-      "workforce_roles": 12,
-      "applications_systems": 600,
-      "data_assets_integrations": 640,
-      "infrastructure_platforms": 1237,
-      "vendors_contracts": 66,
-      "spend_value": 185,
-      "programs_initiatives": 74,
-      "ai_automation_use_cases": 40,
-      "relationships": 77,
-      "metrics_outcomes": 124,
-      "industry_context_patterns": 9,
-      "expert_lenses": 10,
-      "service_scope_managed_services": 3
+      "enterprise_profile": 1,
+      "business_functions": 22,
+      "org_ownership": 153,
+      "workforce_roles": 38,
+      "applications_systems": 908,
+      "data_assets_integrations": 499,
+      "infrastructure_platforms": 46,
+      "vendors_contracts": 80,
+      "spend_value": 23,
+      "programs_initiatives": 38,
+      "ai_automation_use_cases": 13,
+      "risks_controls": 44,
+      "evidence_sources": 183,
+      "metrics_outcomes": 26,
+      "industry_context_patterns": 10,
+      "expert_lenses": 7,
+      "service_scope_managed_services": 11,
+      "operational_process_evidence": 35,
+      "data_analytics_platform_maturity": 15,
+      "ai_benefits_realization_usage_ledger": 2,
+      "ai_tool_usage_feed": 5
     },
     "samples": [
       {
@@ -1926,28 +196,6 @@
         "domain": "enterprise_profile",
         "field": "conflict_status",
         "value": "none"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field revenue_usd was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/00_enterprise_profile.csv",
-        "rowNumber": 3,
-        "domain": "enterprise_profile",
-        "field": "revenue_usd",
-        "value": "not_provided"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field employee_count was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/00_enterprise_profile.csv",
-        "rowNumber": 3,
-        "domain": "enterprise_profile",
-        "field": "employee_count",
-        "value": "not_provided"
       },
       {
         "tenantKey": "skyharbor-air",
@@ -1955,7 +203,7 @@
         "code": "placeholder_value_omitted",
         "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
-        "rowNumber": 6,
+        "rowNumber": 2,
         "domain": "business_functions",
         "field": "conflict_status",
         "value": "none"
@@ -1963,24 +211,13 @@
       {
         "tenantKey": "skyharbor-air",
         "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical org_owner because org owner identity is missing or placeholder.",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
         "rowNumber": 2,
         "domain": "org_ownership",
-        "field": "org_unit|org_unit_name|leader_name_or_role|leader_role|role_name|team_name",
-        "value": ""
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field owned_systems was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
-        "rowNumber": 278,
-        "domain": "org_ownership",
-        "field": "owned_systems",
-        "value": "not_loaded"
+        "field": "conflict_status",
+        "value": "none"
       },
       {
         "tenantKey": "skyharbor-air",
@@ -2008,34 +245,23 @@
         "tenantKey": "skyharbor-air",
         "severity": "warning",
         "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/05_data_assets_integrations.csv",
+        "message": "Placeholder value in field compliance_scope was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
         "rowNumber": 2,
-        "domain": "data_assets_integrations",
-        "field": "conflict_status",
+        "domain": "applications_systems",
+        "field": "compliance_scope",
         "value": "none"
       },
       {
         "tenantKey": "skyharbor-air",
         "severity": "warning",
         "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field refresh_frequency was omitted and recorded as a gap, not a fact.",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/05_data_assets_integrations.csv",
-        "rowNumber": 537,
+        "rowNumber": 2,
         "domain": "data_assets_integrations",
-        "field": "refresh_frequency",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field data_steward was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/05_data_assets_integrations.csv",
-        "rowNumber": 537,
-        "domain": "data_assets_integrations",
-        "field": "data_steward",
-        "value": "not_loaded"
+        "field": "conflict_status",
+        "value": "none"
       },
       {
         "tenantKey": "skyharbor-air",
@@ -2052,28 +278,6 @@
         "tenantKey": "skyharbor-air",
         "severity": "warning",
         "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field hosting_model was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/06_infrastructure_platforms.csv",
-        "rowNumber": 62,
-        "domain": "infrastructure_platforms",
-        "field": "hosting_model",
-        "value": "none"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical infrastructure_platform because platform identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/06_infrastructure_platforms.csv",
-        "rowNumber": 688,
-        "domain": "infrastructure_platforms",
-        "field": "platform_name|estate_item_name|asset_name|platform|data_center_or_region|technology_stack",
-        "value": ""
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
         "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/07_vendors_contracts.csv",
         "rowNumber": 2,
@@ -2085,45 +289,12 @@
         "tenantKey": "skyharbor-air",
         "severity": "warning",
         "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field contract_name was omitted and recorded as a gap, not a fact.",
+        "message": "Placeholder value in field benchmark_clause was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/07_vendors_contracts.csv",
-        "rowNumber": 56,
-        "domain": "vendors_contracts",
-        "field": "contract_name",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field annual_spend_usd was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/07_vendors_contracts.csv",
-        "rowNumber": 56,
-        "domain": "vendors_contracts",
-        "field": "annual_spend_usd",
-        "value": "not_provided"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field renewal_date was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/07_vendors_contracts.csv",
-        "rowNumber": 56,
-        "domain": "vendors_contracts",
-        "field": "renewal_date",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical spend_value_fact because spend category identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/08_spend_value.csv",
         "rowNumber": 2,
-        "domain": "spend_value",
-        "field": "spend_category|spend_id|cost_center_or_owner|value_driver|metric_name",
-        "value": ""
+        "domain": "vendors_contracts",
+        "field": "benchmark_clause",
+        "value": "none"
       },
       {
         "tenantKey": "skyharbor-air",
@@ -2131,7 +302,7 @@
         "code": "placeholder_value_omitted",
         "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/08_spend_value.csv",
-        "rowNumber": 170,
+        "rowNumber": 2,
         "domain": "spend_value",
         "field": "conflict_status",
         "value": "none"
@@ -2139,79 +310,57 @@
       {
         "tenantKey": "skyharbor-air",
         "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical program_initiative because program identity is missing or placeholder.",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/09_programs_initiatives.csv",
         "rowNumber": 2,
         "domain": "programs_initiatives",
-        "field": "program_name|program_id|initiative_name|priority_name",
-        "value": ""
+        "field": "conflict_status",
+        "value": "none"
       },
       {
         "tenantKey": "skyharbor-air",
         "severity": "warning",
         "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field budget_usd was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/09_programs_initiatives.csv",
-        "rowNumber": 62,
-        "domain": "programs_initiatives",
-        "field": "budget_usd",
-        "value": "not_provided"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field expected_value_usd was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/09_programs_initiatives.csv",
-        "rowNumber": 62,
-        "domain": "programs_initiatives",
-        "field": "expected_value_usd",
-        "value": "not_provided"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical ai_automation_use_case because AI use case identity is missing or placeholder.",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/10_ai_automation_use_cases.csv",
         "rowNumber": 2,
         "domain": "ai_automation_use_cases",
-        "field": "use_case_name|use_case|initiative_name|ai_initiative|tool_name",
-        "value": ""
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical relationship_source_row because relationship identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/12_relationships.csv",
-        "rowNumber": 2,
-        "domain": "relationships",
-        "field": "source_name|from_entity|source_object|relationship_id|edge_id",
-        "value": ""
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical metric_outcome because metric identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/14_metrics_outcomes.csv",
-        "rowNumber": 2,
-        "domain": "metrics_outcomes",
-        "field": "metric_name|kpi_name|outcome_name|team_id|sla_id|metric",
-        "value": ""
+        "field": "conflict_status",
+        "value": "none"
       },
       {
         "tenantKey": "skyharbor-air",
         "severity": "warning",
         "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field target_value was omitted and recorded as a gap, not a fact.",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/11_risks_controls.csv",
+        "rowNumber": 2,
+        "domain": "risks_controls",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/13_evidence_sources.csv",
+        "rowNumber": 2,
+        "domain": "evidence_sources",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/14_metrics_outcomes.csv",
-        "rowNumber": 114,
+        "rowNumber": 2,
         "domain": "metrics_outcomes",
-        "field": "target_value",
-        "value": "not_loaded"
+        "field": "conflict_status",
+        "value": "none"
       },
       {
         "tenantKey": "skyharbor-air",
@@ -2227,17 +376,6 @@
       {
         "tenantKey": "skyharbor-air",
         "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical industry_context_pattern because pattern identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/15_industry_context_patterns.csv",
-        "rowNumber": 9,
-        "domain": "industry_context_patterns",
-        "field": "pattern_name|industry_pattern|theme|market_pattern_id",
-        "value": ""
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
         "code": "placeholder_value_omitted",
         "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/16_expert_lenses.csv",
@@ -2245,17 +383,6 @@
         "domain": "expert_lenses",
         "field": "conflict_status",
         "value": "none"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "primary_identity_missing_or_placeholder",
-        "message": "Row cannot become a canonical expert_lens because expert lens identity is missing or placeholder.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/16_expert_lenses.csv",
-        "rowNumber": 7,
-        "domain": "expert_lenses",
-        "field": "lens_name|expert_lens_name|expert_lens|role",
-        "value": ""
       },
       {
         "tenantKey": "skyharbor-air",
@@ -2267,6 +394,184 @@
         "domain": "service_scope_managed_services",
         "field": "conflict_status",
         "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/18_operational_process_evidence.csv",
+        "rowNumber": 2,
+        "domain": "operational_process_evidence",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field conflict_status was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/19_data_analytics_platform_maturity.csv",
+        "rowNumber": 2,
+        "domain": "data_analytics_platform_maturity",
+        "field": "conflict_status",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field duplicate_risk was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+        "rowNumber": 8,
+        "domain": "ai_benefits_realization_usage_ledger",
+        "field": "duplicate_risk",
+        "value": "none"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field agent_creator_type was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/SA09_AI_Tool_Usage_Feed.csv",
+        "rowNumber": 5,
+        "domain": "ai_tool_usage_feed",
+        "field": "agent_creator_type",
+        "value": "unknown"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship owns_function could not resolve org_owner:Chief Financial Officer -> business_function:Fuel Management & Sustainability (fuel hedging) to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 4,
+        "value": "Fuel Management & Sustainability (fuel hedging)"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship handles_data_domain could not resolve application_system:Amadeus Altéa Inventory -> data_domain:seat inventory to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
+        "rowNumber": 2,
+        "value": "seat inventory"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship supports_system could not resolve vendor_contract:Amadeus IT Group -> application_system:Altéa Inventory to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/07_vendors_contracts.csv",
+        "rowNumber": 2,
+        "value": "Altéa Inventory"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship drives_value could not resolve spend_value_fact:Passenger Service System & Distribution -> value_driver:Airline operations technology enablement to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/08_spend_value.csv",
+        "rowNumber": 2,
+        "value": "Airline operations technology enablement"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship targets_metric could not resolve program_initiative:Meridian Regional Technology Integration Program -> metric:Single PSS/crew/finance platform across mainline and Meridian Regional by FY27 to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/09_programs_initiatives.csv",
+        "rowNumber": 2,
+        "value": "Single PSS/crew/finance platform across mainline and Meridian Regional by FY27"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship automates_function could not resolve ai_automation_use_case:Crew and Station Productivity Copilot -> business_function:Crew Operations to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/10_ai_automation_use_cases.csv",
+        "rowNumber": 5,
+        "value": "Crew Operations"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship discusses could not resolve relationship_source_row:SHA-INT-02-Q08 -> program:Crew and Station Productivity Copilot to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/12_relationships.csv",
+        "rowNumber": 3199,
+        "value": "Crew and Station Productivity Copilot"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship uses_system could not resolve operational_process_evidence:Corporate Badge Provisioning Process -> application_system:Platform B to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/18_operational_process_evidence.csv",
+        "rowNumber": 31,
+        "value": "Platform B"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship measures_program could not resolve ai_value_realization_signal:SA08-BEN-001 -> program_initiative:Crew and Station Productivity Copilot to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+        "rowNumber": 2,
+        "value": "Crew and Station Productivity Copilot"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship uses_vendor could not resolve ai_tool_usage_observation:SA09-USAGE-001 -> vendor:Microsoft to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/SA09_AI_Tool_Usage_Feed.csv",
+        "rowNumber": 2,
+        "value": "Microsoft"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "canonical_reference_unresolved",
+        "message": "Relationship measures_function could not resolve ai_kpi_outcome_observation:SA11-KPI-004 -> business_function:Customer Care to canonical entity IDs.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/SA11_AI_KPI_Operational_Outcome_Feed.csv",
+        "rowNumber": 5,
+        "value": "Customer Care"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "error",
+        "code": "blocked_unmapped_source_file",
+        "message": "Active source file has rows but no canonical domain mapping.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/00_GUIDE_how_to_use.csv"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "error",
+        "code": "blocked_unmapped_source_file",
+        "message": "Active source file has rows but no canonical domain mapping.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/00_GUIDE_sheet_index.csv"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "error",
+        "code": "blocked_unmapped_source_file",
+        "message": "Active source file has rows but no canonical domain mapping.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/01b_business_segments.csv"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "error",
+        "code": "blocked_unmapped_source_file",
+        "message": "Active source file has rows but no canonical domain mapping.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/extracts/ms365-copilot-usage-user-detail.csv"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "error",
+        "code": "blocked_unmapped_source_file",
+        "message": "Active source file has rows but no canonical domain mapping.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/extracts/servicenow-gen-ai-usage-log.csv"
       }
     ]
   }

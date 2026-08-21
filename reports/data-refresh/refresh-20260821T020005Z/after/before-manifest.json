@@ -1,0 +1,392 @@
+{
+  "runId": "refresh-20260821T020005Z",
+  "kind": "before",
+  "registrySha": "34542cfd1fefaa1fef573be61fd0c9a2bbfdd48f885882a640b699425c958e4f",
+  "activeTenants": [
+    {
+      "tenantKey": "meridian-health",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/meridian-health/current",
+      "fileCount": 28,
+      "packageSha": "62d913273153a53ec63ff7c24a8c4bcfaa3a1a847a91dcc2a238e00a894bdb11",
+      "files": [
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/00_GUIDE_how_to_use.csv",
+          "sha256": "5d3243d7ffec95788c0c6667a10ec2f0aa912a86303307db285a4f21744ba2cb",
+          "bytes": 4841,
+          "rows": 10
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/00_GUIDE_sheet_index.csv",
+          "sha256": "cfa848a16390c1e233eef2b1ab6a9c33668b6c8b0816794861659b6de37d78e6",
+          "bytes": 3170,
+          "rows": 26
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
+          "sha256": "67efa100bec8d2187479fb87f87e5ff25bfde0f92fbaa7a28b1f782551ab40e0",
+          "bytes": 3676,
+          "rows": 1
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+          "sha256": "daaf608c4a8395c59ceb9484ba82fa0be2ca693868d087d0ab7ed3f6dfce2de6",
+          "bytes": 30612,
+          "rows": 24
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/01b_business_segments.csv",
+          "sha256": "925fb7882de700ea14a1e4f57758bc495736d20aef4e4030670b0a3881fd1577",
+          "bytes": 1505,
+          "rows": 4
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+          "sha256": "422536ab9107fe7f3bfca73dc59ae96f5718fe6e01fc17a1a4c454a5f92f0358",
+          "bytes": 159500,
+          "rows": 225
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv",
+          "sha256": "af94551660016b12d284495536207f37f63b9dbbb4cfcd2582f1bdd608f38372",
+          "bytes": 34160,
+          "rows": 45
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv",
+          "sha256": "5ffb572ac2600403cf587ef2b2be383df0fa57e6e0af06543ac05f123808fb66",
+          "bytes": 787039,
+          "rows": 306
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/05_data_assets_integrations.csv",
+          "sha256": "0f4deca9915a41c83ada6cce8188ba6c4b055067c66e7c6511d2b539d2a735ad",
+          "bytes": 411320,
+          "rows": 540
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/06_infrastructure_platforms.csv",
+          "sha256": "970a322fb2166f89739bb43e6857b7aeae1ff9109ea16ea6db9709e64cf0a9d5",
+          "bytes": 128844,
+          "rows": 61
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv",
+          "sha256": "e0ab557aedfd918d0078081c8dfe8ef1fb5fd9223fe6f73cffacca760d999d3f",
+          "bytes": 121744,
+          "rows": 72
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/08_spend_value.csv",
+          "sha256": "cab96d8cea6abc295b1f2f8c5ef9e5b439ec47659938508519036258d784438b",
+          "bytes": 16028,
+          "rows": 27
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv",
+          "sha256": "df21f8fea4c5fdc0559b49d966e6a568496934812638f22aab166b41c894506b",
+          "bytes": 50659,
+          "rows": 38
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/10_ai_automation_use_cases.csv",
+          "sha256": "63f7e4f8382afe60d7497e1648ee3353055e88a695dac98b99f4023d7c97cb9a",
+          "bytes": 30680,
+          "rows": 18
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/11_risks_controls.csv",
+          "sha256": "20ed8512f1cbcd1c2694bc486cccd6e5f2fc108ca01b43aa9fbf051e4fc514c2",
+          "bytes": 34344,
+          "rows": 40
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/12_relationships.csv",
+          "sha256": "f38b69ef4e31c73c253e4181a80750dda793727bd938a47b24c51b7b31c81da5",
+          "bytes": 1303962,
+          "rows": 2302
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/13_evidence_sources.csv",
+          "sha256": "787d1c0a8688381019ea89ba08016ea48898a863d9bb2c10037a07bc64aaf553",
+          "bytes": 15811,
+          "rows": 27
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/14_metrics_outcomes.csv",
+          "sha256": "60695aca5db9e2221697dac291308176ffca44fec5fdd178cb167a8212248bd5",
+          "bytes": 63672,
+          "rows": 50
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/15_industry_context_patterns.csv",
+          "sha256": "37c5e0b2267249bd50e0463af07c8bfb44de51b3a5eb5d8a2abd5943bda26408",
+          "bytes": 13731,
+          "rows": 12
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/16_expert_lenses.csv",
+          "sha256": "0e21c46ac53eafd1650974c187d90c104cadac8b8a6606e27860e71ef8ef55d9",
+          "bytes": 8204,
+          "rows": 9
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/17_service_scope_managed_services.csv",
+          "sha256": "befa51d8d54050f30385faeb121e11322ac70443a70dc778fc8c08623fe0fb04",
+          "bytes": 13836,
+          "rows": 15
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/18_operational_process_evidence.csv",
+          "sha256": "174bf1c1ed4c7dc2f4b9748d32242412716b19260f374161c26b070185fd09f1",
+          "bytes": 21361,
+          "rows": 25
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/19_data_analytics_platform_maturity.csv",
+          "sha256": "7b28ff43fdd783c55a262539d3a36604f624aa66245e0dbac3770d22bee7dc52",
+          "bytes": 17142,
+          "rows": 17
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+          "sha256": "47613c28002fc50c1779008f7ea1ac5ac5e3aeddd293e32b47970b2753e055ac",
+          "bytes": 17238,
+          "rows": 18
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/SA09_AI_Tool_Usage_Feed.csv",
+          "sha256": "026d83d99e29aca9af5b46015c44823ef34d00594f5ef5ca246d905ac82f00f2",
+          "bytes": 15611,
+          "rows": 18
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/SA10_AI_Value_Interview_Evidence.csv",
+          "sha256": "83b8131235812863ee269a00267c55cdc594cf9fd5302f010d051ce751432044",
+          "bytes": 750243,
+          "rows": 996
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/SA11_AI_KPI_Operational_Outcome_Feed.csv",
+          "sha256": "6b0dd56631761be6b856a776bcd14661dfab3b6045462bafb8aec2d3734e35f1",
+          "bytes": 10934,
+          "rows": 18
+        },
+        {
+          "path": "datasets/tenant-inputs/active/meridian-health/current/extracts/ms365-copilot-usage-user-detail.csv",
+          "sha256": "076b5b80083f0e2144ff3b7095f6748483261858d1d8834b9f2cd9ad169e08da",
+          "bytes": 98394,
+          "rows": 997
+        }
+      ]
+    },
+    {
+      "tenantKey": "skyharbor-air",
+      "canonicalInputRoot": "datasets/tenant-inputs/active/skyharbor-air/current",
+      "fileCount": 31,
+      "packageSha": "7025d02829a6ea34dd07cde1411d18d058ae949a70dc193cd34b1a4351a071d4",
+      "files": [
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/00_GUIDE_how_to_use.csv",
+          "sha256": "5d3243d7ffec95788c0c6667a10ec2f0aa912a86303307db285a4f21744ba2cb",
+          "bytes": 4841,
+          "rows": 10
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/00_GUIDE_sheet_index.csv",
+          "sha256": "cfa848a16390c1e233eef2b1ab6a9c33668b6c8b0816794861659b6de37d78e6",
+          "bytes": 3170,
+          "rows": 26
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/00_enterprise_profile.csv",
+          "sha256": "6b6e2f1c322f5ca3c6aa10176991fdd51d76504ee9bd3e1649e62c3ac2ee4fcc",
+          "bytes": 3278,
+          "rows": 1
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+          "sha256": "f62ddba4b20423985953d03c1ea3819328d765ad19ce24ec941b2d97180cf128",
+          "bytes": 30020,
+          "rows": 22
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/01b_business_segments.csv",
+          "sha256": "3ccc31ca8fa481f58adaefa6aa8e9df243da3cf160deede8e8ed6019fd9ff7e0",
+          "bytes": 1320,
+          "rows": 4
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+          "sha256": "f2416072a62c1e3512e59308790f4ede9b2f2b0a1ce5461423e8464d8737d0d1",
+          "bytes": 159347,
+          "rows": 153
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/03_workforce_roles.csv",
+          "sha256": "0a17e8b0be9065086572382f7a718a4706837ea54674a7443b7c388938d636c5",
+          "bytes": 35302,
+          "rows": 38
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
+          "sha256": "c1740f322bece2ebe26c5ed0889df3db69d7a894ab8f3f75a0ac848a184a4474",
+          "bytes": 1252105,
+          "rows": 503
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/05_data_assets_integrations.csv",
+          "sha256": "d1615069800cfb8617af0f35608d28a2e102ca217d7d8bfb1ccbe730a4a4636b",
+          "bytes": 617864,
+          "rows": 632
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/06_infrastructure_platforms.csv",
+          "sha256": "c45fc7de4125c587a9eaac8a0337327c7dc5b60be1126bdc628976904d0f33c8",
+          "bytes": 89224,
+          "rows": 46
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/07_vendors_contracts.csv",
+          "sha256": "1dc34b93c24218b03ee222d8b6b60971506e431c00346a49145f684bd46e4432",
+          "bytes": 64801,
+          "rows": 65
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/08_spend_value.csv",
+          "sha256": "211de81ba01f2f664d1a4a7f48c141109e67cd61d8070872d96422839d5eb9dd",
+          "bytes": 18251,
+          "rows": 23
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/09_programs_initiatives.csv",
+          "sha256": "f7929b3c5e43292d415181f6ea54c64524e3fe7bf880e532cba894fd644cf241",
+          "bytes": 43937,
+          "rows": 38
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/10_ai_automation_use_cases.csv",
+          "sha256": "3117bbf88eff91fa0937eca0787b2a2193f4b80cfa3e749afe471ef58816b00d",
+          "bytes": 19069,
+          "rows": 13
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/11_risks_controls.csv",
+          "sha256": "6065639a3735d14da30b7f02c67a0f044fa822c99bd1d8015a5564da7b136d74",
+          "bytes": 45081,
+          "rows": 44
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/12_relationships.csv",
+          "sha256": "31520b7452364d02cc0c3c2fe23207efec8f9c2964e2da30b9b540c8f7a5d88d",
+          "bytes": 3460993,
+          "rows": 3318
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/12b_interview_initiative_metric_crosswalk.csv",
+          "sha256": "4ef5b7e5550cdea30975a4cabf3582aa926542b1d98daf4968d3d02844040cd9",
+          "bytes": 69800,
+          "rows": 230
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/13_evidence_sources.csv",
+          "sha256": "053fcb4ac4994aa13eefb9649d7e1231cd0aa99047a5e05d9c4d9f5a381ce77b",
+          "bytes": 176862,
+          "rows": 183
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/14_metrics_outcomes.csv",
+          "sha256": "20c74eea90e2bd006805a868ab492bf4f53cfbb51a2b810a4d63b6ea0ab13717",
+          "bytes": 32306,
+          "rows": 26
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/15_industry_context_patterns.csv",
+          "sha256": "7108d86370ad5811e7e8d30ee95d4df6ff74dfa3b9296ca141150aa1d8770f61",
+          "bytes": 13389,
+          "rows": 10
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/16_expert_lenses.csv",
+          "sha256": "6e4062a86d682efca96c59d9c9ef30fa09a82fd650d1df9cbe560e644d2168f6",
+          "bytes": 8183,
+          "rows": 7
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/17_service_scope_managed_services.csv",
+          "sha256": "1ae14740f42183b93db8ccc326cec0d118ce86daa5aee7eb58977328b44ba1c2",
+          "bytes": 11990,
+          "rows": 11
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/18_operational_process_evidence.csv",
+          "sha256": "6e7ccd492870c59725e70aa553b1a8b076bc518105b4fc5ed1f395846f08a3f8",
+          "bytes": 37616,
+          "rows": 35
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/19_data_analytics_platform_maturity.csv",
+          "sha256": "3ae14fade50a7fef8b9c3bb4a6f1a87c0f907f5633daedb7214521b70bd27c1b",
+          "bytes": 16842,
+          "rows": 15
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/20_itsm_ticket_sla_performance.csv",
+          "sha256": "998abc207af27a35013d6c20bea008d01fb479da9d605e66deb3ec9b41f96bd7",
+          "bytes": 247055,
+          "rows": 503
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+          "sha256": "ce5ff621f62083515550cc2c9bac706cc1466733bced5ec0e328e565f8318ecd",
+          "bytes": 7674,
+          "rows": 8
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/SA09_AI_Tool_Usage_Feed.csv",
+          "sha256": "1676f15ea91b720ced2fe9628d16012cba6b8bdbfcda18c332526aa63c30f4d8",
+          "bytes": 7540,
+          "rows": 8
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/SA10_AI_Value_Interview_Evidence.csv",
+          "sha256": "7ed2af55ff60d83c0a64832e6a75f47d07272fa8f7c52907a2d68c453f85d793",
+          "bytes": 424491,
+          "rows": 586
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/SA11_AI_KPI_Operational_Outcome_Feed.csv",
+          "sha256": "44409dd1a900c1e12c8073cdbb6772a2e5514b84f5158cbe7251270c4e4fc8e4",
+          "bytes": 4784,
+          "rows": 8
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/extracts/ms365-copilot-usage-user-detail.csv",
+          "sha256": "c332f59d5ceee53f4b60e3e66be62c9c3c60eef32cd592687410ea7ab2bd62c6",
+          "bytes": 266746,
+          "rows": 2702
+        },
+        {
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current/extracts/servicenow-gen-ai-usage-log.csv",
+          "sha256": "5f8109807ab43af763bcafc7e9a444d43df4a53bf1813951f8ddb92368427611",
+          "bytes": 172934,
+          "rows": 1200
+        }
+      ]
+    }
+  ],
+  "goldenSnapshots": {
+    "src/lib/home/preview/golden-snapshots": [
+      {
+        "path": "src/lib/home/preview/golden-snapshots/meridian-health.json",
+        "sha256": "9801f412d5d9ab74feda511acaee8a68f9c84adbc698cc4db7d8ad71153651d8",
+        "bytes": 1263802
+      },
+      {
+        "path": "src/lib/home/preview/golden-snapshots/skyharbor-air.json",
+        "sha256": "4184148b82e631cdf153dda227ab5077700d3feecf17567442b42c59bd715b0e",
+        "bytes": 1922520
+      }
+    ]
+  },
+  "note": "Recorded-data refresh. No model-derived enrichment enters canonical state in this run; drv__ and aug__ are excluded from the recorded path by contract."
+}
