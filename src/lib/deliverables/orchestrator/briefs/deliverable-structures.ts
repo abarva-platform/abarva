@@ -1173,7 +1173,7 @@ const MOVES_VALUE: DeliverableStructure = {
       "Value thesis in brief.",
       "mixed",
       [],
-      "Keep under 350 words. Summarize the measurement posture and evidence gates; do not repeat the business case.",
+      "Keep under 250 words. State the measurement posture, readiness verdict, and immediate owner action; do not repeat the business case.",
     ),
     s(
       "decision_required",
@@ -1181,7 +1181,7 @@ const MOVES_VALUE: DeliverableStructure = {
       "The value approval ask.",
       "mixed",
       [],
-      "Keep under 250 words. State the measurement approval decision and do not repeat the business case.",
+      "Keep under 180 words. State the measurement approval decision and do not repeat the business case.",
     ),
     s(
       "current_state",
@@ -1189,7 +1189,7 @@ const MOVES_VALUE: DeliverableStructure = {
       "Recorded baseline and evidence maturity.",
       "governed_facts",
       [],
-      "Keep under 450 words. Use one compact table for baseline status, owner, and evidence gap.",
+      "Keep under 325 words. Use one compact table for baseline status, owner, and evidence gap.",
     ),
     s(
       "value_pools",
@@ -1197,7 +1197,7 @@ const MOVES_VALUE: DeliverableStructure = {
       "Benefit pools, owners, and confidence.",
       "mixed",
       [],
-      "Keep under 650 words. Name value pools qualitatively unless cited evidence supports quantities.",
+      "Keep under 450 words. Name value pools qualitatively unless cited evidence supports quantities.",
     ),
     s(
       "measurement_model",
@@ -1205,7 +1205,7 @@ const MOVES_VALUE: DeliverableStructure = {
       "The operational post-deployment measurement plan for each success metric: data source/instrumentation, accountable owner, cadence, attribution method, and the enablement required to capture it. Tie each metric back to its charter outcome and the business-process-change adoption signal that drives it. Where a metric is not yet measurable, the enablement to measure it is a named action, not an assumption.",
       "mixed",
       [],
-      "Keep under 900 words. Use a compact table for metrics, owner, source, baseline status, cadence, and acceptance rule.",
+      "Keep under 650 words. Use one compact table for metrics, owner, source, baseline status, cadence, and acceptance rule.",
     ),
     s(
       "controls",
@@ -1213,7 +1213,7 @@ const MOVES_VALUE: DeliverableStructure = {
       "Approval and variance controls.",
       "mixed",
       [],
-      "Keep under 550 words. Focus on attestation gates and variance controls.",
+      "Keep under 400 words. Focus on attestation gates and variance controls.",
     ),
     s(
       "risks",
@@ -1221,7 +1221,7 @@ const MOVES_VALUE: DeliverableStructure = {
       "What could erode value.",
       "mixed",
       [],
-      "Keep under 550 words. Consolidate risks and mitigations; do not repeat every dependency from prior artifacts.",
+      "Keep under 375 words. Consolidate risks and mitigations; do not repeat every dependency from prior artifacts.",
     ),
     s(
       "recommendation",
@@ -1229,7 +1229,7 @@ const MOVES_VALUE: DeliverableStructure = {
       "Approve and lock the baseline.",
       "mixed",
       [],
-      "Keep under 350 words. Make the next action conditional on source-backed measurement readiness.",
+      "Keep under 220 words. Make the next action conditional on source-backed measurement readiness.",
     ),
   ],
   requiredSectionKeys: [
@@ -1402,42 +1402,61 @@ const MOVES_HANDOFF: DeliverableStructure = {
   decisionToSupport:
     "Accept execution handoff and confirm Tower/value tracking responsibilities.",
   sections: [
-    s("exec_summary", "Executive Summary", "Handoff state in brief.", "mixed"),
+    s(
+      "exec_summary",
+      "Executive Summary",
+      "Handoff state in brief.",
+      "mixed",
+      [],
+      "Keep under 550 words. Lead with the handoff decision, execution readiness, and what remains owner-led; do not use internal phase labels.",
+    ),
     s(
       "approved_decisions",
       "Approved Decisions",
       "What has been approved and by whom.",
       "mixed",
+      [],
+      "Keep under 800 words using a decision ledger table. Write human phase names such as charter, discovery, design, and roadmap/business-case planning; never write P0, P1, P2, P3, P4, or P5.",
     ),
     s(
       "current_state",
       "Evidence & Open Gaps",
       "Evidence used and remaining gaps.",
       "governed_facts",
+      [],
+      "Keep under 850 words using one evidence-and-gap table. Do not write Source Register or Evidence Register in the narrative body; save evidence detail for the appendix.",
     ),
     s(
       "execution_contract",
       "Execution Contract",
       "Scope, owners, milestones, and controls.",
       "mixed",
+      [],
+      "Keep under 1,100 words using compact owner, milestone, and control tables. Do not repeat predecessor-document narrative.",
     ),
     s(
       "tower_handoff",
       "Tower / Value Ledger Handoff",
       "Metrics, cadence, and ownership.",
       "mixed",
+      [],
+      "Keep under 950 words using a Tower handoff table: metric, owner, source, cadence, threshold, escalation.",
     ),
     s(
       "risks",
       "Risks, Issues & Dependencies",
       "Handoff risks and mitigations.",
       "mixed",
+      [],
+      "Keep under 950 words using a risk/issue/dependency table with owner, trigger, mitigation, and next review.",
     ),
     s(
       "recommendation",
       "Recommendation & Next Actions",
       "Accept handoff and start execution.",
       "mixed",
+      [],
+      "Keep under 400 words. Give the accept/hold recommendation and immediate actions only.",
     ),
   ],
   requiredSectionKeys: [
@@ -1446,6 +1465,12 @@ const MOVES_HANDOFF: DeliverableStructure = {
     "execution_contract",
     "tower_handoff",
     "recommendation",
+  ],
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not use internal phase labels P0, P1, P2, P3, P4, or P5 in the client narrative.",
+    "Do not write Source Register, Evidence Register, context rows, tower rows, substrate, or client-to-complete in the narrative body.",
+    "Do not become a second business case, value model, roadmap, or implementation manual.",
   ],
 };
 
