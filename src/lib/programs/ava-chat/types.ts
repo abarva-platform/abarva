@@ -7,6 +7,7 @@
 
 export type MovesAvaAnswerMode =
   | "phase_guidance"
+  | "phase_input_draft"
   | "evidence_gap"
   | "upload_mapping"
   | "draft_final_change"
@@ -83,6 +84,7 @@ export const MOVES_AVA_ALLOWED_ACTIONS: readonly string[] = [
   "Interpret an upload's template mapping",
   "Explain what changed between a draft and a final",
   "Recommend the next practical action",
+  "Draft phase-capture inputs only as cited capture-field artifacts that the user must insert and save",
   "Point to Source for vendor/commercial validation when relevant",
   "Point to Tower for the metric contract when relevant",
 ];
@@ -92,6 +94,7 @@ export const MOVES_AVA_DISALLOWED_ACTIONS: readonly string[] = [
   "Confirm a template mapping without the user's review",
   "Confirm a What Changed diff without the user's review",
   "Approve a phase or advance a gate through chat alone",
+  "Write phase-capture inputs directly from chat",
   "Imply enterprise-context promotion happened automatically",
   "Invent baselines, evidence, readiness, or approvals not present in the packet",
   "Recommend autonomous legal/clinical/financial approval beyond readiness guidance",

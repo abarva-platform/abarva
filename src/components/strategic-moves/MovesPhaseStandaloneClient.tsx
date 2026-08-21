@@ -19,7 +19,11 @@ import {
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
-import { extractArtifacts, type Artifact } from "@/lib/agent/artifacts";
+import {
+  extractArtifacts,
+  type Artifact,
+  type CaptureFieldArtifact,
+} from "@/lib/agent/artifacts";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import type { DeliverableContentSignal } from "@/lib/deliverables/deliverable-content-signals";
 import { CurrentStateReadinessPanel } from "@/components/strategic-moves/CurrentStateReadinessPanel";
@@ -164,6 +168,76 @@ interface PhaseEvidenceArtifact {
 type PhaseCaptureValues = Record<string, string>;
 type AvaDraftRequestStatus = "idle" | "loading" | "ready" | "error";
 type AvaDraftSaveStatus = "editing" | "saving" | "saved" | "error";
+
+function captureFieldMateriality(args: {
+  key: string;
+  label: string;
+}): "ordinary" | "governed_material" {
+  const text = `${args.key} ${args.label}`.toLowerCase();
+  return [
+    "money",
+    "percentage",
+    "date",
+    "deadline",
+    "scope",
+    "sponsor",
+    "owner",
+    "commitment",
+    "risk",
+    "decision",
+    "option",
+    "approval",
+    "funding",
+    "value",
+  ].some((term) => text.includes(term))
+    ? "governed_material"
+    : "ordinary";
+}
+
+function captureFieldArtifactToProposal(args: {
+  artifact: CaptureFieldArtifact;
+  currentValues: PhaseCaptureValues;
+  phase: number;
+  sections: readonly PhaseCaptureSection[];
+}): AvaPhaseInputProposal | null {
+  if (args.artifact.phase !== args.phase) return null;
+  const section = args.sections.find(
+    (candidate) => candidate.key === args.artifact.key,
+  );
+  if (!section) return null;
+  const value = args.artifact.value.trim();
+  const evidenceRefs = args.artifact.citations
+    .map((citation) => citation.trim())
+    .filter(Boolean);
+  if (!value || evidenceRefs.length === 0) return null;
+  return {
+    fieldKey: section.key,
+    currentValue: String(args.currentValues[section.key] ?? "").trim() || null,
+    proposedValue: value,
+    rationale:
+      "Drafted by aVa from cited upstream phase state. Review and edit before saving.",
+    evidenceRefs,
+    sourceClasses: ["approved_phase_input"],
+    confidence: args.artifact.confidence ?? "medium",
+    materiality: captureFieldMateriality({
+      key: section.key,
+      label: section.label,
+    }),
+    unresolvedGaps: [],
+  };
+}
+
+function mergeAvaDraftProposals(
+  existing: AvaPhaseInputProposal[],
+  incoming: AvaPhaseInputProposal[],
+): AvaPhaseInputProposal[] {
+  if (incoming.length === 0) return existing;
+  const byKey = new Map(
+    existing.map((proposal) => [proposal.fieldKey, proposal]),
+  );
+  for (const proposal of incoming) byKey.set(proposal.fieldKey, proposal);
+  return [...byKey.values()];
+}
 
 interface StageReadinessWorkbookParsePreview {
   ok: boolean;
@@ -1328,6 +1402,31 @@ export function MovesPhaseStandaloneClient({
         let pendingBuffer = "";
         let committedVisible = "";
         const streamArtifacts: Artifact[] = [];
+        const ingestCaptureFieldArtifacts = (artifacts: Artifact[]) => {
+          const proposals = artifacts
+            .filter(
+              (artifact): artifact is CaptureFieldArtifact =>
+                artifact.type === "capture-field",
+            )
+            .map((artifact) =>
+              captureFieldArtifactToProposal({
+                artifact,
+                currentValues: phaseCaptureValues,
+                phase: phase.phase,
+                sections: phaseCaptureSections,
+              }),
+            )
+            .filter(
+              (proposal): proposal is AvaPhaseInputProposal =>
+                proposal !== null,
+            );
+          if (proposals.length === 0) return;
+          setAvaDraftProposals((prev) =>
+            mergeAvaDraftProposals(prev, proposals),
+          );
+          setAvaDraftStatus("ready");
+          setAvaDraftError(null);
+        };
         const buildVisibleAnswer = (visibleText: string) =>
           buildMovesChatAvaAnswerPacket({
             move,
@@ -1346,6 +1445,7 @@ export function MovesPhaseStandaloneClient({
           const { visibleText, artifacts, remaining } =
             extractArtifacts(pendingBuffer);
           streamArtifacts.push(...artifacts);
+          ingestCaptureFieldArtifacts(artifacts);
           committedVisible += visibleText;
           pendingBuffer = remaining;
           const display = committedVisible.trimEnd();
@@ -1360,6 +1460,7 @@ export function MovesPhaseStandaloneClient({
         if (pendingBuffer.length > 0) {
           const final = extractArtifacts(pendingBuffer);
           streamArtifacts.push(...final.artifacts);
+          ingestCaptureFieldArtifacts(final.artifacts);
           committedVisible += final.visibleText;
         }
 
@@ -1383,7 +1484,16 @@ export function MovesPhaseStandaloneClient({
         setAvaStreaming(false);
       }
     },
-    [avaStreaming, move, phase, phaseTallies, phaseNum, finderReadinessPack],
+    [
+      avaStreaming,
+      move,
+      phase,
+      phaseCaptureSections,
+      phaseCaptureValues,
+      phaseTallies,
+      phaseNum,
+      finderReadinessPack,
+    ],
   );
 
   function openFilesWorkspace() {
@@ -2379,41 +2489,79 @@ export function MovesPhaseStandaloneClient({
               ))}
             </>
           ) : (
-            <div className="mxw-ava-thread">
-              {avaThread.map((turn) => (
-                <div
-                  key={turn.id}
-                  className={`mxw-ava-turn mxw-ava-turn-${turn.role}`}
-                >
-                  <span className="mxw-ava-turn-who">
-                    {turn.role === "user" ? "You" : "aVa"}
-                  </span>
-                  {turn.role === "assistant" ? (
-                    <>
-                      <div className="mxw-ava-turn-text">
-                        {turn.text ? (
-                          <AgentMarkdown text={turn.text} />
-                        ) : avaStreaming ? (
-                          "…"
-                        ) : null}
-                      </div>
-                      {turn.agentAnswer ? (
-                        <div className="mxw-ava-rich-answer">
-                          <AgentAnswerRenderer
-                            answer={turn.agentAnswer}
-                            showChrome={false}
-                            showExport={false}
-                            showProse={false}
-                          />
+            <>
+              <div className="mxw-ava-thread">
+                {avaThread.map((turn) => (
+                  <div
+                    key={turn.id}
+                    className={`mxw-ava-turn mxw-ava-turn-${turn.role}`}
+                  >
+                    <span className="mxw-ava-turn-who">
+                      {turn.role === "user" ? "You" : "aVa"}
+                    </span>
+                    {turn.role === "assistant" ? (
+                      <>
+                        <div className="mxw-ava-turn-text">
+                          {turn.text ? (
+                            <AgentMarkdown text={turn.text} />
+                          ) : avaStreaming ? (
+                            "…"
+                          ) : null}
                         </div>
-                      ) : null}
+                        {turn.agentAnswer ? (
+                          <div className="mxw-ava-rich-answer">
+                            <AgentAnswerRenderer
+                              answer={turn.agentAnswer}
+                              showChrome={false}
+                              showExport={false}
+                              showProse={false}
+                            />
+                          </div>
+                        ) : null}
+                      </>
+                    ) : (
+                      <p>{turn.text}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {phase.phase >= 1 && avaDraftStatus !== "idle" ? (
+                <div className="mxw-ava-draft-list">
+                  {avaDraftError ? (
+                    <p role={avaDraftStatus === "error" ? "alert" : undefined}>
+                      {avaDraftError}
+                    </p>
+                  ) : null}
+                  {avaDraftStatus === "ready" &&
+                  avaDraftProposals.length > 0 ? (
+                    <>
+                      <span>
+                        {avaDraftProposals.length} cited draft
+                        {avaDraftProposals.length === 1 ? "" : "s"} ready.
+                      </span>
+                      {avaDraftProposals.slice(0, 4).map((proposal) => {
+                        const label =
+                          phaseCaptureSections.find(
+                            (section) => section.key === proposal.fieldKey,
+                          )?.label ?? proposal.fieldKey;
+                        return (
+                          <button
+                            key={proposal.fieldKey}
+                            type="button"
+                            onClick={() => {
+                              setFinderSelectedSectionKey(proposal.fieldKey);
+                              setWorkspaceView("phase");
+                            }}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
                     </>
-                  ) : (
-                    <p>{turn.text}</p>
-                  )}
+                  ) : null}
                 </div>
-              ))}
-            </div>
+              ) : null}
+            </>
           )}
         </div>
         <form
@@ -3059,7 +3207,7 @@ function PhaseContractStepsCanvas({
                     type="button"
                     onClick={() => onApplyAvaDraftProposal(selectedAvaProposal)}
                   >
-                    Use draft
+                    Insert as draft
                   </button>
                   <button
                     type="button"

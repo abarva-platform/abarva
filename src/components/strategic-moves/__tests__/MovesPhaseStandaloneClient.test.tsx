@@ -3136,7 +3136,7 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByText("P0 · Stakeholder / owner view"),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Use draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Insert as draft" }));
     const sponsorInput = screen.getAllByLabelText(
       "Sponsor commitment",
     )[0] as HTMLTextAreaElement;
@@ -3172,6 +3172,84 @@ describe("MovesPhaseStandaloneClient", () => {
         },
       }),
     );
+  });
+
+  it("turns streamed capture-field artifacts into local drafts without saving", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    const encoder = new TextEncoder();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/api/chat/agent")) {
+          const body = new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(
+                encoder.encode(
+                  [
+                    "I found one cited draft proposal.",
+                    '[[artifact:capture-field]]{"phase":1,"key":"scope_boundary","value":"In scope: Airport turnaround operations","citations":["P0 · Affected function / process"],"confidence":"high"}[[/artifact]]',
+                  ].join("\n"),
+                ),
+              );
+              controller.close();
+            },
+          });
+          return { ok: true, status: 200, body } as unknown as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({
+          currentPhase: 1,
+          phaseLabel: "P1 Charter",
+        })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Ask aVa/i }));
+    const textarea = screen.getByPlaceholderText(/Ask aVa about/i);
+    fireEvent.change(textarea, {
+      target: { value: "Draft proposed inputs for P1" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/1 cited draft ready/i)).toBeInTheDocument();
+    });
+    const scopeButtons = screen.getAllByRole("button", {
+      name: "Scope boundary",
+    });
+    expect(scopeButtons.length).toBeGreaterThanOrEqual(2);
+    expect(
+      (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+        String(url).includes("/phase-capture"),
+      ),
+    ).toBe(false);
+
+    fireEvent.click(scopeButtons[scopeButtons.length - 1]!);
+    expect(
+      screen.getByText("P0 · Affected function / process"),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Insert as draft" }));
+
+    const scopeInput = screen.getAllByLabelText(
+      "Scope boundary",
+    )[0] as HTMLTextAreaElement;
+    expect(scopeInput.value).toBe("In scope: Airport turnaround operations");
+    expect(screen.getByText(/aVa draft is local/i)).toBeInTheDocument();
+    expect(
+      (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+        String(url).includes("/phase-capture"),
+      ),
+    ).toBe(false);
   });
 
   it("renders the rich aVa answer while the live stream is still open", async () => {

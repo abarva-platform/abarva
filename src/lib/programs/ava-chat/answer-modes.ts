@@ -22,16 +22,37 @@ interface ModeRule {
 // before the more generic "phase_guidance" catch-all).
 const MODE_RULES: readonly ModeRule[] = [
   {
+    mode: "phase_input_draft",
+    patterns: [
+      /draft.*(phase )?(input|capture|field|section)/i,
+      /(propose|prepare|fill).*p[1-5].*(input|capture|field|section)/i,
+      /draft proposed inputs/i,
+      /help.*fill.*(this )?(phase|step|field)/i,
+    ],
+  },
+  {
     mode: "draft_final_change",
-    patterns: [/what (changed|is different)\b/i, /draft (vs\.?|versus|and) final/i, /between draft and final/i],
+    patterns: [
+      /what (changed|is different)\b/i,
+      /draft (vs\.?|versus|and) final/i,
+      /between draft and final/i,
+    ],
   },
   {
     mode: "upload_mapping",
-    patterns: [/what did (this|that|the) upload mean/i, /what does this upload map to/i, /upload.*mean/i],
+    patterns: [
+      /what did (this|that|the) upload mean/i,
+      /what does this upload map to/i,
+      /upload.*mean/i,
+    ],
   },
   {
     mode: "evidence_gap",
-    patterns: [/evidence.*(missing|gap|still need)/i, /what('s| is) still missing/i, /what evidence/i],
+    patterns: [
+      /evidence.*(missing|gap|still need)/i,
+      /what('s| is) still missing/i,
+      /what evidence/i,
+    ],
   },
   {
     mode: "gate_blocker",
@@ -46,31 +67,62 @@ const MODE_RULES: readonly ModeRule[] = [
   },
   {
     mode: "next_phase_readiness",
-    patterns: [/can we (move|advance|go) to (the )?next phase/i, /ready (for|to advance to) (p\d|the next phase)/i, /next phase readiness/i],
+    patterns: [
+      /can we (move|advance|go) to (the )?next phase/i,
+      /ready (for|to advance to) (p\d|the next phase)/i,
+      /next phase readiness/i,
+    ],
   },
   {
     mode: "workshop_preparation",
-    patterns: [/workshop.*focus/i, /prepare.*(workshop|session)/i, /what should (the|this) (workshop|session) (cover|focus on)/i],
+    patterns: [
+      /workshop.*focus/i,
+      /prepare.*(workshop|session)/i,
+      /what should (the|this) (workshop|session) (cover|focus on)/i,
+    ],
   },
   {
     mode: "solution_lane_explanation",
-    patterns: [/(solution )?lanes? (are |is )?(affected|impacted)/i, /which (lanes|building blocks)/i, /building block/i],
+    patterns: [
+      /(solution )?lanes? (are |is )?(affected|impacted)/i,
+      /which (lanes|building blocks)/i,
+      /building block/i,
+    ],
   },
   {
     mode: "risk_control",
-    patterns: [/\brisks?\b/i, /automate.*(legal|clinical|financial|review)/i, /should we automate/i, /control(s)? (gap|risk)/i],
+    patterns: [
+      /\brisks?\b/i,
+      /automate.*(legal|clinical|financial|review)/i,
+      /should we automate/i,
+      /control(s)? (gap|risk)/i,
+    ],
   },
   {
     mode: "source_implication",
-    patterns: [/\bsource\b/i, /vendor|contract|renewal|rfp|sourcing|procurement|bafo|supplier/i],
+    patterns: [
+      /\bsource\b/i,
+      /vendor|contract|renewal|rfp|sourcing|procurement|bafo|supplier/i,
+    ],
   },
   {
     mode: "tower_measurement",
-    patterns: [/\btower\b/i, /what (should|will) tower measure/i, /metric contract/i, /\bkpi\b/i, /\broi\b/i],
+    patterns: [
+      /\btower\b/i,
+      /what (should|will) tower measure/i,
+      /metric contract/i,
+      /\bkpi\b/i,
+      /\broi\b/i,
+    ],
   },
   {
     mode: "phase_guidance",
-    patterns: [/what (should|do) i do next/i, /what('s| is) next/i, /how does this affect p[0-5]/i, /how does this become a roadmap/i],
+    patterns: [
+      /what (should|do) i do next/i,
+      /what('s| is) next/i,
+      /how does this affect p[0-5]/i,
+      /how does this become a roadmap/i,
+    ],
   },
 ];
 
@@ -90,7 +142,9 @@ export function classifyMovesAvaQuestion(
   questionText: string,
 ): MovesAvaAnswerModeClassification {
   const text = questionText.trim();
-  const isOutOfScope = OUT_OF_SCOPE_PATTERNS.some((pattern) => pattern.test(text));
+  const isOutOfScope = OUT_OF_SCOPE_PATTERNS.some((pattern) =>
+    pattern.test(text),
+  );
   if (isOutOfScope) {
     return { mode: "out_of_scope_redirect", isOutOfScope: true };
   }

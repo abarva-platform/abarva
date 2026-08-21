@@ -1730,7 +1730,18 @@ Available artifact types and their EXACT JSON shapes:
    Example:
    [[artifact:brief-field]]{"field":"sponsor","value":"Sarah Chen"}[[/artifact]]
 
-2. classification — the high-level archetype (e.g. AMS_CONSOLIDATION).
+2. capture-field — proposed value for one Moves phase-capture section
+   (/strategic-moves/<id>/phase/<n>). This is NEVER authoritative and
+   NEVER saved by chat. The UI may offer "Insert as draft"; the user
+   must review and save through phase capture.
+   Shape: {"phase": <0-5>, "key": <capture-section-key>, "value": <string>, "citations": [<source-ref>, ...], "confidence": "high"|"medium"|"low"}
+   citations is required and must contain at least one non-blank source
+   ref. If you cannot cite approved upstream state, do not emit this
+   artifact.
+   Example:
+   [[artifact:capture-field]]{"phase":1,"key":"scope_boundary","value":"In scope: Airport turnaround operations\n\nOut of scope: Crew scheduling policy changes","citations":["P0 · Affected function / process","P0 · Out of scope"],"confidence":"high"}[[/artifact]]
+
+3. classification — the high-level archetype (e.g. AMS_CONSOLIDATION).
    Often emit alongside a pattern-match.
    Shape: {"archetype": <UPPER_SNAKE_KEY>, "archetypeLabel": <Human Readable>, "confidence": "high"|"medium"|"low"}
    Example:

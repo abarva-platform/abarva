@@ -6,9 +6,10 @@
 
 ## Status
 
-Merged — pending live proof. Inert by design: nothing emits or renders a
-capture-field proposal yet. This lands the contract and the guard first so the
-prompt and UI work has something to be correct against.
+Ready for review — pending live proof. The contract and guard are now wired
+through deterministic Moves chat draft generation and the phase page can insert
+cited proposals as local drafts. Nothing is saved until the user explicitly
+saves through phase capture.
 
 ## Plain-English Summary
 
@@ -26,7 +27,7 @@ this surface. A one-sentence non-answer therefore rendered as a dense, sourced
 scorecard. A reader skimming it would reasonably conclude the drafting had
 happened.
 
-Two changes:
+Four changes:
 
 1. **A `capture-field` artifact contract** — the shape a real proposal must
    take: phase, section key, value, and citations. Modelled on the existing
@@ -35,6 +36,13 @@ Two changes:
 2. **A deferral guard** — an answer that only promises work no longer renders
    with evidence furniture attached. It reports plainly that nothing was
    produced.
+3. **A deterministic phase-input draft path for Moves chat** — draft-intent
+   turns load approved upstream phase capture, build cited proposals with the
+   same helper used by `/phase-input-draft`, and stream `capture-field`
+   artifacts. The route does not call the model to invent field values.
+4. **Insert-as-draft UI** — parsed `capture-field` artifacts become proposal
+   cards on the phase page. The user may insert one into local draft state, edit
+   it, and then save through the existing revision-fenced phase-capture path.
 
 ### Two decisions worth recording
 
@@ -62,17 +70,26 @@ protocol). No canonical model change, no schema change, no migration.
 
 All clients receive this change — it is not feature-flagged and no client is
 opted out. The deferral guard affects aVa answers on Moves phase pages. The
-artifact contract is inert until the prompt and UI increments land.
+draft path is constrained to Moves phase surfaces and active phase-capture
+fields.
 
 ## Changes Included
 
 - `src/lib/agent/artifacts.ts` — add `CaptureFieldArtifact`, its parser case,
-  union member and type-guard entry.
+  union member, type-guard entry, and artifact-channel instructions.
 - `src/lib/programs/deferral-only-answer.ts` (new) — detect an answer that
   promises work without doing any.
 - `src/lib/programs/moves-chat-answer-packet.ts` — withhold readiness context
   from a deferral and report `no_data`.
-- Two new test files, 46 tests.
+- `src/lib/programs/ava-chat/*` — classify phase-input draft requests and build
+  deterministic `capture-field` artifacts from cited proposals.
+- `src/app/api/chat/agent/route.ts` — load existing phase capture values
+  read-only and short-circuit draft-intent turns with deterministic artifacts.
+- `src/components/strategic-moves/MovesPhaseStandaloneClient.tsx` — ingest
+  streamed `capture-field` artifacts, surface cited proposals, and insert them
+  as local drafts only.
+- New and updated tests covering the parser, deferral guard, deterministic
+  draft answer, and client insert-as-draft flow.
 
 ## QA / Validation
 
@@ -81,7 +98,14 @@ artifact contract is inert until the prompt and UI increments land.
 - `jest .../capture-field-artifact.test.ts` — **pass**, 29/29.
 - `jest .../deferral-only-answer.test.ts` — **pass**, 17/17, including the
   verbatim text observed live.
-- `tsc --noEmit` — **pass**, clean. `eslint` — **pass**, clean.
+- Focused regression suite — **pass**, 5 suites / 128 tests:
+  `capture-field-artifact`, `phase-input-draft-proposals`,
+  `deferral-only-answer`, `ava-chat/packet`, and
+  `MovesPhaseStandaloneClient`.
+- Follow-up focused suite after UI/server edits — **pass**, 2 suites / 80
+  tests: `ava-chat/packet` and `MovesPhaseStandaloneClient`.
+- `tsc --noEmit` — **pass**, clean.
+- Targeted `eslint` — **pass**, clean.
 - `jest src/lib/agent src/lib/programs src/lib/ava-answer` — the failing-suite
   set is byte-identical to the pre-change baseline, verified by a stashed
   comparison.
@@ -118,9 +142,8 @@ panel has no write path — and the content-addressed revision remained
 
 ## Known Gaps
 
-- **Nothing emits a `capture-field` artifact yet**, so the button still does not
-  draft. That is the next increment (prompt), followed by the insert-as-draft
-  UI. Until then the guard makes the failure visible instead of disguised.
+- Live signed-in proof is still pending. Local and unit validation prove the
+  contract, deterministic draft generation, and client insert-as-draft flow.
 - The deferral detector is heuristic and English-only. It is tuned to
   false-negative-averse behaviour: a missed deferral restores the original
   invisible failure, whereas a false positive suppresses context on a real
