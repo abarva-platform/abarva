@@ -10,7 +10,10 @@ describe("approved solution approach", () => {
     solutionContextDigest: {
       approach: "Governed agent assist with human approval",
       chosenOption: "Option B",
-      tradeoffsAccepted: ["Phased integration", "Human review remains mandatory"],
+      tradeoffsAccepted: [
+        "Phased integration",
+        "Human review remains mandatory",
+      ],
       options: [
         { id: "A", name: "Option A", summary: "Workflow only" },
         { id: "B", name: "Option B", summary: "Governed agent assist" },
@@ -48,6 +51,54 @@ describe("approved solution approach", () => {
     expect(block).toContain("Do not reopen, blend, or silently replace it");
   });
 
+  it("loads client-safe option approval decisions that store approver role instead of raw user id", () => {
+    const approved = parseApprovedSolutionApproach({
+      solutionContextDigest: {
+        approach: "Instrumentation-first reliability control loop",
+        chosenOption: "Instrumentation-first reliability control loop",
+        tradeoffsAccepted: ["Value proof waits for internal volume evidence"],
+        options: [
+          {
+            id: "instrumented-control-loop",
+            name: "Instrumentation-first reliability control loop",
+            summary: "Design workflow and measurement before funding value.",
+          },
+        ],
+        decisions: [
+          {
+            phase: 3,
+            decision:
+              "Approved solution option: Instrumentation-first reliability control loop",
+            rationale: "Best protects governed value claims.",
+            approvedByRole: "sponsor",
+            auditReference: "decision-1",
+            approvedAt: "2026-08-20T00:00:00.000Z",
+          },
+        ],
+      },
+      decisionLineage: {
+        decisionId: "decision-1",
+        decisionVersion: "2026-08-20T00:00:00.000Z",
+        selectedOptionId: "instrumented-control-loop",
+        selectedOptionVersion: "1",
+        rejectedOptions: [],
+        scope: ["measurement"],
+        exclusions: ["annual savings commitment"],
+        assumptions: [],
+        constraints: ["No savings total without internal volume evidence"],
+        unresolvedDecisions: ["baseline source owner"],
+      },
+    });
+
+    expect(approved).toEqual(
+      expect.objectContaining({
+        chosenOption: "Instrumentation-first reliability control loop",
+        selectedOptionId: "instrumented-control-loop",
+        decision: expect.objectContaining({ approvedBy: "sponsor" }),
+      }),
+    );
+  });
+
   it("accepts only the current decision, context snapshot, and architecture model", () => {
     const approved = parseApprovedSolutionApproach(structuredData)!;
     const lineage = {
@@ -58,20 +109,26 @@ describe("approved solution approach", () => {
       contextSnapshotHash: "context-v3",
       architectureModelVersion: ARCHITECTURE_MODEL_VERSION,
     };
-    expect(validateArchitectureGenerationLineage({
-      lineage,
-      approved,
-      currentContextSnapshotHash: "context-v3",
-    })).toMatchObject({ ok: true });
-    expect(validateArchitectureGenerationLineage({
-      lineage: { ...lineage, decisionHash: "stale" },
-      approved,
-      currentContextSnapshotHash: "context-v3",
-    })).toMatchObject({ ok: false });
-    expect(validateArchitectureGenerationLineage({
-      lineage,
-      approved,
-      currentContextSnapshotHash: "context-v4",
-    })).toMatchObject({ ok: false });
+    expect(
+      validateArchitectureGenerationLineage({
+        lineage,
+        approved,
+        currentContextSnapshotHash: "context-v3",
+      }),
+    ).toMatchObject({ ok: true });
+    expect(
+      validateArchitectureGenerationLineage({
+        lineage: { ...lineage, decisionHash: "stale" },
+        approved,
+        currentContextSnapshotHash: "context-v3",
+      }),
+    ).toMatchObject({ ok: false });
+    expect(
+      validateArchitectureGenerationLineage({
+        lineage,
+        approved,
+        currentContextSnapshotHash: "context-v4",
+      }),
+    ).toMatchObject({ ok: false });
   });
 });
