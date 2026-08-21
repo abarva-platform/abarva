@@ -6,7 +6,7 @@
 
 ## Status
 
-Merged — pending live proof.
+**live-proven** on the deployed lab runtime, 2026-08-20.
 
 ## Plain-English Summary
 
@@ -111,3 +111,34 @@ revision returning to its pre-run value `d66cbb39f61461dd`.
   the integration harness.
 - The green completion tick still appears against sections the user has merely
   scrolled past. That is a distinct defect in the step list, untouched here.
+
+## Live Proof (captured 2026-08-20)
+
+Run against the deployed lab runtime, revision
+`ca-abarva-web-lab-eastus--mfee688ea`, Healthy, template image digest equal to
+the 100%-traffic revision digest (`sha256:f6d51ac1…`). Signed in, real browser,
+against the reserved regression Move. Every figure below is measured, not read
+off the UI.
+
+| Check                                                    | Result                                              |
+| -------------------------------------------------------- | --------------------------------------------------- |
+| 560 chars typed one keystroke at a time, 1,647 chars/sec | **0 lost**                                          |
+| 1,200-character paste                                    | **0 lost**                                          |
+| Rapid successive edits                                   | **0 lost**                                          |
+| React "Maximum update depth exceeded"                    | **0**                                               |
+| Uncaught window errors                                   | **0**                                               |
+| Displayed value equals stored value after save           | **yes**                                             |
+| Second consecutive edit rejected as stale revision       | **0 × 409**                                         |
+| Writes per edit (6-second quiet window after)            | **1, then 0**                                       |
+| **No-store reload reproduces the visible value**         | **yes — 2,281 chars in, 2,281 out, byte-identical** |
+
+The last row is the invariant. Before these three releases the same sequence
+returned 639 characters for 640 typed, with the section reporting complete
+throughout.
+
+### Fixture integrity
+
+Restored after the run and verified two ways: per-section SHA-256 against
+fingerprints captured before any typing, and the server's content-addressed
+revision returning to its pre-run value `d66cbb39f61461dd`. All six sections
+report `RESTORED`.

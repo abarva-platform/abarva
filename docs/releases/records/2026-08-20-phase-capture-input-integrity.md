@@ -6,8 +6,7 @@
 
 ## Status
 
-Merged — pending live proof. This record is upgraded to `live-proven` only after
-the signed-in browser proof below is captured.
+**live-proven** on the deployed lab runtime, 2026-08-20.
 
 ## Plain-English Summary
 
