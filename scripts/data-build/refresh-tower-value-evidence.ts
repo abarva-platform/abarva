@@ -471,7 +471,17 @@ async function main(): Promise<number> {
       // Fall back to a value the constraint certainly permits — the column default — rather than
       // failing the whole build because one enum drifted.
       const coerceKind = (k: string) => (!kinds || kinds.has(k) ? k : "initiative");
-      const coerceState = (v: string) => (!states || states.has(v) ? v : "evidence_gap");
+      const firstAllowedState = (...candidates: string[]): string => {
+        if (!states) return candidates[0];
+        for (const candidate of candidates) {
+          if (states.has(candidate)) return candidate;
+        }
+        return [...states][0] ?? candidates[0];
+      };
+      const coerceState = (v: string) =>
+        !states || states.has(v)
+          ? v
+          : firstAllowedState("idea", "funded_no_baseline", "baseline_captured", "stale", "disputed");
       for (const s of uniqueSubjects) s.subjectKind = coerceKind(s.subjectKind);
       for (const c of uniqueClaims) c.claimState = coerceState(c.claimState);
       if (scenarios) {
