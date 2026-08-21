@@ -1,0 +1,152 @@
+{
+  "generatedAt": "2026-08-21",
+  "status": "static_current_partial_runtime_blocked",
+  "rows": [
+    {
+      "object": "tenant-input registry",
+      "physicalObjects": ["datasets/tenant-inputs/tenant-input-registry.json"],
+      "writers": ["manual/governed registry updates - not traced in this sweep"],
+      "readers": ["tenant identity resolvers and audit tooling"],
+      "runtimeConfirmed": false,
+      "owner": "control/config",
+      "evidence": ["datasets/tenant-inputs/tenant-input-registry.json:30-130"]
+    },
+    {
+      "object": "active tenant input packages",
+      "physicalObjects": ["datasets/tenant-inputs/active/*/current"],
+      "writers": ["active root writes are hard-gated; no writer run in this sweep"],
+      "readers": ["file adapters, local Home/Tower/context projection code"],
+      "runtimeConfirmed": false,
+      "owner": "raw/evidence",
+      "evidence": ["reports/tenant-layer-refresh-2026-08-12/summary.md:11-28"]
+    },
+    {
+      "object": "generated tenant outputs",
+      "physicalObjects": ["datasets/tenant-inputs/generated/*"],
+      "writers": ["local generation/build scripts - not executed"],
+      "readers": ["knowledge live preview dynamic path reader"],
+      "runtimeConfirmed": false,
+      "owner": "shared consumption projection",
+      "evidence": [
+        "reports/tenant-layer-refresh-2026-08-12/summary.md:18-28",
+        "src/lib/enterprise-knowledge/live-preview/knowledge-layer-live-preview.ts:645-660"
+      ]
+    },
+    {
+      "object": "enterprise profile foundation",
+      "physicalObjects": ["datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv"],
+      "writers": ["foundation report/build process - not executed"],
+      "readers": ["enterprise profile read model"],
+      "runtimeConfirmed": false,
+      "owner": "canonical/profile candidate",
+      "evidence": [
+        "src/lib/enterprise-data/enterprise-profile/enterprise-profile-foundation.ts:20-25",
+        "src/lib/enterprise-data/enterprise-profile/enterprise-profile-foundation.ts:146-197",
+        "src/lib/enterprise-data/enterprise-profile/enterprise-profile-read-model.ts:91-100"
+      ]
+    },
+    {
+      "object": "Moves / Programs workflow state",
+      "physicalObjects": ["public.engagements"],
+      "writers": ["Programs APIs and workflow actions - static references exist, runtime not confirmed"],
+      "readers": ["Strategic Moves portfolio route through Programs read adapter"],
+      "runtimeConfirmed": false,
+      "owner": "domain operational state",
+      "evidence": [
+        "src/app/(maestro)/strategic-moves/page.tsx:18-33",
+        "src/lib/programs/queries.ts:166-197",
+        "src/lib/data-plane/read-adapters/programsReadAdapter.ts:120-241"
+      ]
+    },
+    {
+      "object": "Source event workflow state",
+      "physicalObjects": ["public.source_events", "public.source_event_artifact_states", "public.source_artifacts"],
+      "writers": ["Source event/artifact APIs - static only"],
+      "readers": ["Source portfolio, event, artifact, approval, and export routes"],
+      "runtimeConfirmed": false,
+      "owner": "domain operational state",
+      "evidence": [
+        "docs/audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md:26-42",
+        "src/app/(maestro)/source/portfolio/page.tsx:17-60"
+      ]
+    },
+    {
+      "object": "Source contract/vendor 360 projections",
+      "physicalObjects": [
+        "source.contract_vendor_360",
+        "source.contract_360",
+        "source.vendor_contract_portfolio",
+        "source.contract_application_scope",
+        "source.contract_financial_exposure",
+        "source.contract_operational_performance",
+        "source.contract_initiative_dependency",
+        "source.application_vendor_exposure"
+      ],
+      "writers": ["Source data-build or mart loaders - not runtime confirmed"],
+      "readers": ["Source vendor portfolio reader"],
+      "runtimeConfirmed": false,
+      "owner": "shared consumption projection",
+      "evidence": [
+        "src/app/(maestro)/source/vendor-portfolio/page.tsx:11-49",
+        "src/lib/source/data-model/read-adapter.ts:1-14",
+        "src/lib/source/data-model/read-adapter.ts:37-257"
+      ]
+    },
+    {
+      "object": "Tower command marts",
+      "physicalObjects": [
+        "cio_tower.mart_command_center",
+        "cio_tower.mart_value_funnel",
+        "cio_tower.mart_program_decision_lanes",
+        "cio_tower.mart_ai_portfolio",
+        "cio_tower.mart_cxo_actions",
+        "cio_tower.mart_evidence_lineage",
+        "cio_tower.mart_required_field_gaps"
+      ],
+      "writers": ["Tower projection/materialization jobs - not runtime confirmed"],
+      "readers": ["Tower route root through loadTowerMartCommandView"],
+      "runtimeConfirmed": false,
+      "owner": "shared consumption projection",
+      "evidence": [
+        "src/app/(maestro)/tower/page.tsx:54-72",
+        "src/lib/cio-tower/tower-mart-view-model.ts:260-352"
+      ]
+    },
+    {
+      "object": "Enterprise context/corpus",
+      "physicalObjects": [
+        "enterprise_context_chunks",
+        "enterprise_context_records",
+        "enterprise_context_facts",
+        "enterprise_context_evidence",
+        "enterprise_context_sources",
+        "context_insights"
+      ],
+      "writers": ["context ingestion/admin loaders - not runtime confirmed"],
+      "readers": ["enterprise-context and intelligence read models"],
+      "runtimeConfirmed": false,
+      "owner": "canonical enterprise knowledge / consumption depending object",
+      "evidence": [
+        "src/lib/enterprise-context/intelligence-read-model.ts:120-205",
+        "src/lib/enterprise-context/intelligence-read-model.ts:745-793",
+        "src/lib/intelligence/context-read-model.ts:245-323"
+      ]
+    },
+    {
+      "object": "Home approved content / snapshots",
+      "physicalObjects": [
+        "datasets/tenant-inputs/*/approved-content",
+        "Home golden snapshots - exact store not fully traced"
+      ],
+      "writers": ["Home content/snapshot generation - paused"],
+      "readers": ["Home local CXO runtime and Home route variants"],
+      "runtimeConfirmed": false,
+      "owner": "approved artifact / product projection",
+      "evidence": [
+        "src/lib/home/local-cxo-runtime.ts:560-635",
+        "reports/tenant-layer-refresh-2026-08-12/summary.md:20-28"
+      ]
+    }
+  ]
+}
+

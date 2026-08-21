@@ -1,0 +1,56 @@
+{
+  "generatedAt": "2026-08-21",
+  "rows": [
+    {
+      "legacyPath": "datasets/tenant-inputs/*/standard-2026-07-v3",
+      "currentRuntimeUse": "possible static/dynamic readers; runtime not confirmed",
+      "targetReplacement": "registry-declared active root for source intake; generated outputs only as rebuildable projections",
+      "parityCriteria": "active root count/hash and canonical object lineage match approved source package",
+      "readOnlyDate": null,
+      "archiveOwner": "data governance",
+      "rollbackCommand": "retain current path and feature flags until parity proof complete",
+      "evidence": ["reports/tenant-layer-refresh-2026-08-12/summary.md:11-28"]
+    },
+    {
+      "legacyPath": "datasets/tenant-inputs/generated/*",
+      "currentRuntimeUse": "knowledge preview dynamic reader uses generated summary paths",
+      "targetReplacement": "rebuildable consumption projection with source-hash metadata",
+      "parityCriteria": "projection rebuild deterministic from canonical inputs and source hashes",
+      "readOnlyDate": null,
+      "archiveOwner": "knowledge/data platform",
+      "rollbackCommand": "re-enable prior generated path reader only by explicit feature flag",
+      "evidence": ["src/lib/enterprise-knowledge/live-preview/knowledge-layer-live-preview.ts:645-660"]
+    },
+    {
+      "legacyPath": "Source chat artifact save path without artifactCode segment",
+      "currentRuntimeUse": "static audit says route can persist chat-authored markdown",
+      "targetReplacement": "draft-only route or governed artifact-generation envelope",
+      "parityCriteria": "metadata, quality gate, section conformance, and banned-term scans match primary path",
+      "readOnlyDate": null,
+      "archiveOwner": "Source",
+      "rollbackCommand": "keep primary artifact-code generate path as approved generation route",
+      "evidence": ["docs/audits/SOURCE-VS-MOVES-STANDARD-AUDIT-2026-07-23.md:85-93"]
+    },
+    {
+      "legacyPath": "Tower materialized read-model fallback paths",
+      "currentRuntimeUse": "local audit found fallback need when materialized rollups absent",
+      "targetReplacement": "canonical metric observations and rebuildable Tower marts with explicit lineage",
+      "parityCriteria": "live row refresh, mart rebuild, browser-visible Tower parity, and rollback tested",
+      "readOnlyDate": null,
+      "archiveOwner": "Tower",
+      "rollbackCommand": "retain existing Tower read path until NEW_READ_PRIMARY and telemetry pass",
+      "evidence": ["docs/audits/TOWER-DATA-LAYER-RECONCILIATION-2026-06-27.md:19-28", "docs/audits/TOWER-DATA-LAYER-RECONCILIATION-2026-06-27.md:66-76"]
+    },
+    {
+      "legacyPath": "Home golden snapshots and approved-content folders",
+      "currentRuntimeUse": "Home local runtime reads approved content; snapshot store not fully traced",
+      "targetReplacement": "approved artifact versions with source-hash/freshness metadata and canonical fact references",
+      "parityCriteria": "signed-in Home route shows same approved facts from new read contract, with source hashes",
+      "readOnlyDate": null,
+      "archiveOwner": "Home / Knowledge",
+      "rollbackCommand": "retain existing snapshot/approved-content path; no promotion during sweep",
+      "evidence": ["src/lib/home/local-cxo-runtime.ts:560-635"]
+    }
+  ]
+}
+

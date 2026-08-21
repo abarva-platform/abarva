@@ -1,0 +1,128 @@
+{
+  "generatedAt": "2026-08-21",
+  "migrationAuthorized": false,
+  "states": ["ACTIVE", "DUAL_RUN", "NEW_READ_PRIMARY", "LEGACY_READ_ONLY", "ARCHIVED", "DROPPED"],
+  "items": [
+    {
+      "wave": 0,
+      "title": "Freeze confirmation and baseline capture",
+      "owner": "data governance",
+      "dependency": "none",
+      "test": "Artifacts record main SHA, current branch, tenant registry, static SQL inventory, route baseline, and runtime blocker.",
+      "rollback": "No runtime mutation was made.",
+      "evidence": ["README.md", "FREEZE_NOTICE.md", "physical-object-inventory.json", "file-and-route-baseline.json"],
+      "status": "started"
+    },
+    {
+      "wave": 0,
+      "title": "Live database catalog and row profile",
+      "owner": "data platform",
+      "dependency": "network path to Azure Postgres private endpoint",
+      "test": "Read-only catalog, row counts, last update timestamps, and pg_stat evidence captured with application_name.",
+      "rollback": "Read-only transaction rollback.",
+      "evidence": ["runtime-profile-attempt.json"],
+      "status": "blocked_dns"
+    },
+    {
+      "wave": 0,
+      "title": "Runtime query writer/reader instrumentation plan",
+      "owner": "platform",
+      "dependency": "catalog profile and route inventory",
+      "test": "Each request/job emits tenant, route/job, correlation id, table/view, read/write, rows, timestamp, flag, and consumer.",
+      "rollback": "Disable instrumentation flag.",
+      "evidence": ["CURRENT_STATE_DATA_ARCHITECTURE.md"],
+      "status": "not_started"
+    },
+    {
+      "wave": 0,
+      "title": "Tenant identity contract approval",
+      "owner": "control/config",
+      "dependency": "tenant-key collision report",
+      "test": "Registry, app aliases, admin aliases, enterprise-context schema, and inventory substrate mappings reconcile to one approved contract.",
+      "rollback": "Keep existing alias mappers; no migration.",
+      "evidence": ["duplicate-collision-report.json", "reports/enterprise-data-flow-map-2026-08-21/conflicts.json"],
+      "status": "decision_required"
+    },
+    {
+      "wave": 1,
+      "title": "Application/system authority selection",
+      "owner": "canonical knowledge",
+      "dependency": "tenant identity contract and live row profile",
+      "test": "Application IDs reconcile across active inputs, generated files, Tower projections, Home snapshots, and enterprise context.",
+      "rollback": "Keep existing Tower/Home/Intelligence read paths.",
+      "evidence": ["truth-authority-matrix.json"],
+      "status": "not_started"
+    },
+    {
+      "wave": 1,
+      "title": "Data asset/integration authority selection",
+      "owner": "canonical knowledge",
+      "dependency": "adapter coverage review",
+      "test": "Business keys, source lineage, and tenant scoping are defined for each object.",
+      "rollback": "No consumer switch.",
+      "evidence": ["truth-authority-matrix.json"],
+      "status": "not_started"
+    },
+    {
+      "wave": 2,
+      "title": "Evidence/document canonical registry contract",
+      "owner": "knowledge/evidence",
+      "dependency": "Source and context ingestion lineage",
+      "test": "Uploaded file, parsed chunks, evidence ledger, extraction rows, and artifact citations share evidence IDs and hashes.",
+      "rollback": "Keep existing upload and retrieval paths.",
+      "evidence": ["writer-reader-lineage-matrix.json"],
+      "status": "not_started"
+    },
+    {
+      "wave": 2,
+      "title": "Relationship authority and graph quality report",
+      "owner": "knowledge/graph",
+      "dependency": "canonical identity map",
+      "test": "Relationship type dictionary, evidence-backed graph edges, and quality report exist before graph consumers switch.",
+      "rollback": "Keep graph in shadow/read-only mode.",
+      "evidence": ["truth-authority-matrix.json"],
+      "status": "not_started"
+    },
+    {
+      "wave": 3,
+      "title": "Metric definition and observation authority",
+      "owner": "Tower / canonical metrics",
+      "dependency": "Tower live profile and duplicate metric report",
+      "test": "Definitions are registry-owned; observations are governed, tenant-scoped, source-cited, and not calculated by graph consumers.",
+      "rollback": "Keep existing Tower mart and fallback reads.",
+      "evidence": ["docs/audits/TOWER-DATA-LAYER-RECONCILIATION-2026-06-27.md:66-76", "truth-authority-matrix.json"],
+      "status": "not_started"
+    },
+    {
+      "wave": 3,
+      "title": "Use case/program publication outbox",
+      "owner": "Moves",
+      "dependency": "Programs operational state retained",
+      "test": "Approved program identity/facts publish to canonical Knowledge without moving workflow state prematurely.",
+      "rollback": "Disable outbox consumer; keep engagements read path.",
+      "evidence": ["writer-reader-lineage-matrix.json"],
+      "status": "not_started"
+    },
+    {
+      "wave": 4,
+      "title": "Consumer dual-run for one pilot route",
+      "owner": "product/platform",
+      "dependency": "canonical object families and projections built in shadow",
+      "test": "Legacy and new reads compare equal-or-better under signed-in route proof and query telemetry.",
+      "rollback": "Feature flag back to legacy read path.",
+      "evidence": ["legacy-path-register.json"],
+      "status": "not_started"
+    },
+    {
+      "wave": 5,
+      "title": "Artifact authority separation",
+      "owner": "Source / Moves / Home",
+      "dependency": "evidence registry and approved fact publication",
+      "test": "Generated artifacts are immutable projections; accepted authoritative artifacts cite reviewed facts and source hashes.",
+      "rollback": "Keep generated/draft artifacts from becoming client-final.",
+      "evidence": ["duplicate-collision-report.json", "TARGET_CLIENT_PILOT_DATA_ARCHITECTURE.md"],
+      "status": "not_started"
+    }
+  ]
+}
+
