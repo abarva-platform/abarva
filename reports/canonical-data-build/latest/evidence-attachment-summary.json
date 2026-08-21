@@ -1,44 +1,16 @@
 [
   {
-    "tenantKey": "apex-retail",
-    "recordsWithEvidence": 1046,
-    "recordsWithoutEvidence": 0,
-    "evidenceAttachmentCount": 1046,
-    "sourceFileCount": 15
-  },
-  {
-    "tenantKey": "first-capital-financial",
-    "recordsWithEvidence": 1327,
-    "recordsWithoutEvidence": 0,
-    "evidenceAttachmentCount": 1327,
-    "sourceFileCount": 15
-  },
-  {
-    "tenantKey": "lakeshore-holdings",
-    "recordsWithEvidence": 249,
-    "recordsWithoutEvidence": 0,
-    "evidenceAttachmentCount": 249,
-    "sourceFileCount": 15
-  },
-  {
-    "tenantKey": "lakeshore-industries",
-    "recordsWithEvidence": 839,
-    "recordsWithoutEvidence": 0,
-    "evidenceAttachmentCount": 839,
-    "sourceFileCount": 14
-  },
-  {
     "tenantKey": "meridian-health",
-    "recordsWithEvidence": 1066,
+    "recordsWithEvidence": 3543,
     "recordsWithoutEvidence": 0,
-    "evidenceAttachmentCount": 1066,
-    "sourceFileCount": 16
+    "evidenceAttachmentCount": 5020,
+    "sourceFileCount": 24
   },
   {
     "tenantKey": "skyharbor-air",
-    "recordsWithEvidence": 2066,
+    "recordsWithEvidence": 4348,
     "recordsWithoutEvidence": 0,
-    "evidenceAttachmentCount": 2066,
-    "sourceFileCount": 17
+    "evidenceAttachmentCount": 6805,
+    "sourceFileCount": 26
   }
 ]

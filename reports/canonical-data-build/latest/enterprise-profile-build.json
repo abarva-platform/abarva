@@ -1,260 +1,5 @@
 [
   {
-    "tenantKey": "apex-retail",
-    "tenantDisplayName": "Apex Retail",
-    "sourceFiles": [
-      "datasets/tenant-inputs/active/apex-retail/current/00_enterprise_profile.csv"
-    ],
-    "status": "ready",
-    "facts": {
-      "industry": "Omnichannel Retail",
-      "subIndustry": "Retail operating model",
-      "headquarters": "Minneapolis, MN",
-      "revenueUsd": "50000000000",
-      "employeeCount": "200000",
-      "businessModel": "Omnichannel Retail operating model",
-      "mission": "Serve customers across stores and digital channels with reliable, affordable, and convenient retail experiences.",
-      "vision": "Modernize omnichannel retail operations through trusted data, resilient platforms, and measurable AI-enabled productivity.",
-      "source": "datasets/tenant-inputs/active/apex-retail/current/00_enterprise_profile.csv",
-      "asOf": "2026-06-18",
-      "locations": [
-        "United States",
-        "Canada",
-        "digital commerce markets"
-      ],
-      "leadership": [
-        "CEO",
-        "CFO",
-        "CIO",
-        "Chief Supply Chain Officer",
-        "Chief Digital Officer",
-        "Chief Merchandising Officer"
-      ],
-      "strategy": [
-        "technology_budget_usd:1800000000",
-        "ai_budget_usd:55000000"
-      ],
-      "segments": [
-        "store shoppers",
-        "digital commerce customers",
-        "loyalty members",
-        "marketplace sellers",
-        "retail media advertisers"
-      ]
-    },
-    "missingFields": [],
-    "sourceLineage": [
-      {
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/00_enterprise_profile.csv",
-        "rowNumber": 2,
-        "evidenceKey": "apex-retail:current-universal:00_enterprise_profile.csv:2"
-      }
-    ]
-  },
-  {
-    "tenantKey": "first-capital-financial",
-    "tenantDisplayName": "First Capital Financial",
-    "sourceFiles": [
-      "datasets/tenant-inputs/active/first-capital-financial/current/00_enterprise_profile.csv"
-    ],
-    "status": "ready",
-    "facts": {
-      "industry": "Financial services",
-      "subIndustry": "Money-center / large commercial bank with US Bancorp / PNC-scale consumer + commercial + cards + wealth complexity",
-      "headquarters": "Charlotte, NC",
-      "revenueUsd": "52000000000",
-      "employeeCount": "65000",
-      "businessModel": "enterprise operating model",
-      "mission": "Help households, businesses, and communities manage money, credit, payments, and financial growth responsibly.",
-      "vision": "Build a trusted, data-enabled financial services platform with resilient operations, controlled modernization, and measurable customer value.",
-      "source": "datasets/tenant-inputs/active/first-capital-financial/current/00_enterprise_profile.csv",
-      "asOf": "2026-06-18",
-      "locations": [
-        "United States regional banking markets",
-        "digital banking channels",
-        "commercial banking markets"
-      ],
-      "leadership": [
-        "CEO",
-        "CFO",
-        "CIO",
-        "Chief Risk Officer",
-        "Chief Digital Officer",
-        "Head of Commercial Banking",
-        "Head of Consumer Banking"
-      ],
-      "strategy": [
-        "technology_budget_usd:2400000000"
-      ],
-      "segments": [
-        "consumer banking households",
-        "small business clients",
-        "commercial banking clients",
-        "cardholders",
-        "wealth clients"
-      ]
-    },
-    "missingFields": [],
-    "sourceLineage": [
-      {
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/00_enterprise_profile.csv",
-        "rowNumber": 2,
-        "evidenceKey": "first-capital-financial:current-universal:00_enterprise_profile.csv:2"
-      }
-    ]
-  },
-  {
-    "tenantKey": "lakeshore-holdings",
-    "tenantDisplayName": "Lakeshore Holdings",
-    "sourceFiles": [
-      "datasets/tenant-inputs/active/lakeshore-holdings/current/00_enterprise_profile.csv"
-    ],
-    "status": "ready",
-    "facts": {
-      "industry": "Diversified private holding company",
-      "subIndustry": "portfolio-company operator with corporate shared services",
-      "headquarters": "Chicago, IL",
-      "revenueUsd": "0",
-      "employeeCount": "11800",
-      "businessModel": "Holding company with four named operating companies plus an operating-company revenue allocation bucket. Corporate IT carries its own budget and supports shared services and enterprise platforms; each operating company carries its own local IT and operating budget.",
-      "mission": "Improve portfolio-company performance through disciplined operations, shared services, and practical modernization.",
-      "vision": "Create a governed portfolio operating model where technology, sourcing, analytics, and AI investments compound across companies.",
-      "source": "datasets/tenant-inputs/active/lakeshore-holdings/current/00_enterprise_profile.csv",
-      "asOf": "2026-06-18",
-      "locations": [
-        "Midwest",
-        "Great Lakes",
-        "national distribution footprint",
-        "portfolio-company operating markets"
-      ],
-      "leadership": [
-        "Group CEO",
-        "Group CFO",
-        "Group CIO",
-        "VP Innovation",
-        "operating-company presidents",
-        "shared-services leaders"
-      ],
-      "strategy": [
-        "portfolio_company_revenue_rollup_usd:7120000000",
-        "named_operating_company_revenue_usd:3560000000",
-        "opco_revenue_to_allocate_usd:3560000000",
-        "direct_holdco_revenue_usd:0",
-        "total_employees:11800",
-        "direct_it_budget_usd:190600000",
-        "corporate_it_budget_usd:36500000",
-        "portfolio_company_local_it_budget_usd:154100000",
-        "innovation_it_subset_usd:11800000",
-        "do_not_add_allocated_shared_service_rows_to_enterprise_total"
-      ],
-      "segments": [
-        "portfolio company operators",
-        "corporate shared-services leaders",
-        "operating-company customers",
-        "distribution and industrial customers"
-      ]
-    },
-    "missingFields": [],
-    "sourceLineage": [
-      {
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/00_enterprise_profile.csv",
-        "rowNumber": 2,
-        "evidenceKey": "lakeshore-holdings:current-universal:00_enterprise_profile.csv:2"
-      }
-    ]
-  },
-  {
-    "tenantKey": "lakeshore-industries",
-    "tenantDisplayName": "Lakeshore Industries",
-    "sourceFiles": [
-      "datasets/tenant-inputs/active/lakeshore-industries/current/00_enterprise_profile.csv"
-    ],
-    "status": "ready",
-    "facts": {
-      "industry": "Industrial holding company",
-      "subIndustry": "Diversified industrial, supply chain, foodservice, packaging, field services",
-      "headquarters": "Chicago, IL",
-      "revenueUsd": "7120000000",
-      "employeeCount": "11800",
-      "businessModel": "Portfolio company rollup with corporate shared services and OpCo-led operations",
-      "mission": "Improve portfolio-company performance through disciplined operations, shared services, and practical modernization.",
-      "vision": "Create a governed portfolio operating model where technology, sourcing, analytics, and AI investments compound across companies.",
-      "source": "datasets/tenant-inputs/active/lakeshore-industries/current/00_enterprise_profile.csv",
-      "asOf": "2026-07-06",
-      "locations": [
-        "Midwest",
-        "Great Lakes",
-        "national distribution footprint",
-        "portfolio-company operating markets"
-      ],
-      "leadership": [
-        "Group CEO",
-        "Group CFO",
-        "Corporate CIO",
-        "VP Innovation",
-        "OpCo presidents",
-        "shared-services leaders"
-      ],
-      "strategy": [
-        "shared services modernization",
-        "finance automation",
-        "AI-enabled operating model",
-        "ERP rationalization",
-        "data foundation"
-      ],
-      "segments": [
-        "industrial customers",
-        "foodservice distribution customers",
-        "packaging customers",
-        "field services customers",
-        "portfolio company operators"
-      ]
-    },
-    "missingFields": [],
-    "sourceLineage": [
-      {
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/00_enterprise_profile.csv",
-        "rowNumber": 2,
-        "evidenceKey": "lakeshore-industries:current-universal:00_enterprise_profile.csv:2"
-      },
-      {
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/00_enterprise_profile.csv",
-        "rowNumber": 3,
-        "evidenceKey": "lakeshore-industries:current-universal:00_enterprise_profile.csv:3"
-      },
-      {
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/00_enterprise_profile.csv",
-        "rowNumber": 4,
-        "evidenceKey": "lakeshore-industries:current-universal:00_enterprise_profile.csv:4"
-      },
-      {
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/00_enterprise_profile.csv",
-        "rowNumber": 5,
-        "evidenceKey": "lakeshore-industries:current-universal:00_enterprise_profile.csv:5"
-      },
-      {
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/00_enterprise_profile.csv",
-        "rowNumber": 6,
-        "evidenceKey": "lakeshore-industries:current-universal:00_enterprise_profile.csv:6"
-      },
-      {
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/00_enterprise_profile.csv",
-        "rowNumber": 7,
-        "evidenceKey": "lakeshore-industries:current-universal:00_enterprise_profile.csv:7"
-      },
-      {
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/00_enterprise_profile.csv",
-        "rowNumber": 8,
-        "evidenceKey": "lakeshore-industries:current-universal:00_enterprise_profile.csv:8"
-      },
-      {
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/00_enterprise_profile.csv",
-        "rowNumber": 9,
-        "evidenceKey": "lakeshore-industries:current-universal:00_enterprise_profile.csv:9"
-      }
-    ]
-  },
-  {
     "tenantKey": "meridian-health",
     "tenantDisplayName": "Meridian Health",
     "sourceFiles": [
@@ -263,45 +8,48 @@
     "status": "ready",
     "facts": {
       "industry": "Healthcare",
-      "subIndustry": "Integrated delivery network and health plan",
-      "headquarters": "Sacramento, CA",
-      "revenueUsd": "39600000000",
-      "employeeCount": "88000",
-      "businessModel": "Medium-to-large health organization with clinical delivery, health-plan operations, finance, and analytics modernization needs.",
-      "mission": "Improve access, quality, affordability, and member experience across integrated care and health-plan operations.",
-      "vision": "Build a governed clinical, claims, pharmacy, and financial data foundation that enables reliable automation and measurable care/cost outcomes.",
+      "subIndustry": "Integrated Delivery Network & Medicare Advantage Health Plan",
+      "headquarters": "Lakeview, IL",
+      "revenueUsd": "25000000000",
+      "employeeCount": "68000",
+      "businessModel": "Vertically integrated delivery system (34 owned hospitals, 214 ambulatory clinic sites, employed and affiliated physician network) paired with an owned health plan. Revenue splits 60% provider / 40% health plan; plan revenue splits 70% Medicare Advantage and Medicare FFS / 30% commercial and Medicaid managed care.",
+      "mission": "Deliver connected, measurably better health outcomes for the communities Meridian serves by unifying clinical care and health plan operations under one accountable system.",
+      "vision": "Be the region's most trusted integrated health system, closing care gaps proactively through data rather than reactively through claims review.",
       "source": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
-      "asOf": "2026-07-09",
+      "asOf": "2026-07-31",
       "locations": [
-        "Sacramento, CA",
-        "Northern California service area",
-        "Central California service area",
-        "Nevada service area"
+        "34-hospital regional footprint across Illinois, Indiana and Wisconsin",
+        "Meridian Medical Group affiliated practices across the same multi-state service area"
       ],
       "leadership": [
-        "CDAO",
+        "President & CEO",
+        "COO",
         "CFO",
-        "Health Plan COO",
-        "Chief Experience Officer",
-        "VP Quality",
-        "CDIO"
+        "CIO",
+        "CMIO",
+        "CNO",
+        "CMO",
+        "CDAO",
+        "CISO",
+        "CHRO",
+        "CLO",
+        "CQO",
+        "President, Meridian Health Plan",
+        "President, Meridian Medical Group"
       ],
       "strategy": [
-        "Unified clinical + claims lakehouse",
-        "Governed data foundation for AI / LLM automation",
-        "Call center optimization",
-        "Provider quality and performance",
-        "End-to-end cost transparency",
-        "Payment integrity and leakage reduction",
-        "Automated close and reporting"
+        "1) Improve Medicare Advantage overall Star Rating from 3.5 to 4.5+ stars by measurement year 2028",
+        "2) Begin modernizing the on-premises SQL Server datamart sprawl by evaluating Databricks as a future lakehouse target — evaluation-stage only, nothing implemented yet",
+        "3) Expand Epic Community Connect to affiliated practices to reduce interface sprawl",
+        "4) Reduce claims denial write-offs and RAF evidence gaps",
+        "5) Govern AI use cases with human-in-the-loop review as they move from concept to pilot"
       ],
       "segments": [
-        "patients",
-        "members",
-        "providers",
-        "employer groups",
-        "clinical operations leaders",
-        "health-plan operations teams"
+        "Medicare Advantage members",
+        "Medicare fee-for-service beneficiaries",
+        "commercial health plan members",
+        "Medicaid managed-care members",
+        "self-pay and commercially insured patients across acute, ambulatory and behavioral health service lines"
       ]
     },
     "missingFields": [],
@@ -309,67 +57,63 @@
       {
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
         "rowNumber": 2,
-        "evidenceKey": "meridian-health:current-universal:00_enterprise_profile.csv:2"
-      },
-      {
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
-        "rowNumber": 3,
-        "evidenceKey": "meridian-health:current-universal:00_enterprise_profile.csv:3"
+        "evidenceKey": "meridian-health:current-universal-integrated-healthcare:00_enterprise_profile.csv:2"
       }
     ]
   },
   {
     "tenantKey": "skyharbor-air",
-    "tenantDisplayName": "SkyHarbor Air",
+    "tenantDisplayName": "Airline Demo",
     "sourceFiles": [
       "datasets/tenant-inputs/active/skyharbor-air/current/00_enterprise_profile.csv"
     ],
     "status": "ready",
     "facts": {
-      "industry": "Airline",
-      "subIndustry": "Global passenger airline operations",
+      "industry": "Airlines & Air Transportation",
+      "subIndustry": "Full-Service Network Passenger and Cargo Carrier",
       "headquarters": "Chicago, IL",
       "revenueUsd": "81400000000",
       "employeeCount": "92000",
-      "businessModel": "Medium-to-large airline with operations control, flight operations, crew operations, customer operations, mainframe/core operations, and AI modernization pressure.",
-      "mission": "Connect customers and communities through safe, reliable, resilient airline operations and customer recovery experiences.",
-      "vision": "Build a resilient airline operating model where operations control, crew, customer, data, and AI systems improve recovery speed and customer trust.",
-      "source": "datasets/tenant-inputs/active/skyharbor-air/current/00_enterprise_profile.csv",
-      "asOf": "2026-07-10",
-      "segments": [
-        "passengers",
-        "loyalty members",
-        "corporate travel buyers",
-        "cargo customers",
-        "airport station operations",
-        "crew and operations teams"
-      ],
+      "businessModel": "Full-service network passenger and cargo airline operating hub-and-spoke mainline service plus an acquired regional carrier, with a co-brand credit card loyalty program, cargo division, and MRO capability",
+      "mission": "Connect people and commerce safely and reliably across a global network, operated with operational excellence and a growing digital and AI-enabled capability.",
+      "vision": "Be the most reliable and technologically capable network carrier in our markets, with a fully integrated fleet, workforce, and technology platform following the Meridian Regional acquisition.",
+      "source": "/Users/anand/Projects/nexus/datasets/tenant-inputs/active/skyharbor-air/current/00_enterprise_profile.csv",
+      "asOf": "2026-07-31",
       "locations": [
-        "64 countries",
-        "North America",
-        "transatlantic network",
-        "transpacific network",
-        "Latin America",
-        "global hub operations"
+        "North America (mainline hub network)",
+        "Latin America and Caribbean",
+        "Europe",
+        "select transpacific gateways",
+        "Meridian Regional Airways regional network (acquired 2023, integration in progress)"
       ],
       "leadership": [
         "CEO",
-        "CFO",
-        "CIO",
         "COO",
-        "CTO",
-        "Chief Customer Officer",
-        "SVP Network Operations",
-        "VP Crew Operations"
+        "CFO",
+        "CHRO",
+        "CIO/CTO",
+        "Chief Commercial Officer",
+        "General Counsel & Chief Legal Officer",
+        "Chief Safety & Security Officer",
+        "Chief Data & Analytics Officer",
+        "Chief Strategy Officer",
+        "CISO"
       ],
       "strategy": [
-        "IROPS AI recovery cockpit",
-        "Crew recovery decision support",
-        "Customer reaccommodation and notification assist",
-        "Mainframe and MQ modernization sequencing",
-        "Tower value tracking for IROPS outcomes",
-        "Operations data foundation for airline AI",
-        "Vendor and AMS economics transparency"
+        "Complete the Meridian Regional Airways technology and operational integration",
+        "scale NDC/direct distribution",
+        "modernize the data and AI platform (Teradata-to-Snowflake migration, governed GenAI expansion)",
+        "improve on-time performance and disruption recovery via AI-assisted IROPS",
+        "close the cybersecurity PAM coverage gap",
+        "advance sustainable aviation fuel adoption"
+      ],
+      "segments": [
+        "Passengers (leisure, business, corporate)",
+        "SkyHarbor Rewards loyalty members",
+        "corporate travel buyers and travel agencies",
+        "cargo shippers and freight forwarders",
+        "airport station and ground handling partners",
+        "codeshare and interline partner carriers"
       ]
     },
     "missingFields": [],
@@ -378,11 +122,6 @@
         "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/00_enterprise_profile.csv",
         "rowNumber": 2,
         "evidenceKey": "skyharbor-air:current-universal:00_enterprise_profile.csv:2"
-      },
-      {
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/00_enterprise_profile.csv",
-        "rowNumber": 3,
-        "evidenceKey": "skyharbor-air:current-universal:00_enterprise_profile.csv:3"
       }
     ]
   }
