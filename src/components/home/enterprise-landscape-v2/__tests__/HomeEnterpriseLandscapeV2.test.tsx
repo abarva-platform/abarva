@@ -95,7 +95,9 @@ describe("Home enterprise landscape shell", () => {
 
   it("shows authored tabs for the tenant they belong to", () => {
     render(<HomeEnterpriseLandscapeV2 pack={pack} showAuthoredTabs />);
-    expect(screen.getByRole("tab", { name: "Architecture" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", { name: "Architecture" }),
+    ).toBeInTheDocument();
   });
 
   it("renders facts even when the narrative was withheld", () => {
@@ -118,5 +120,19 @@ describe("Home enterprise landscape shell", () => {
   it("surfaces that generated content has not been reviewed by a person", () => {
     render(<HomeEnterpriseLandscapeV2 pack={pack} />);
     expect(screen.getAllByText("Not yet reviewed").length).toBeGreaterThan(0);
+  });
+
+  it("keeps orientation build telemetry out of the client-facing provenance strip", () => {
+    render(<HomeEnterpriseLandscapeV2 pack={pack} />);
+
+    expect(screen.getAllByText("Not yet reviewed").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Build test-build")).not.toBeInTheDocument();
+    expect(screen.queryByText("Validation pass")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Narrative claude-sonnet-5"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("1 narrated · 1 withheld"),
+    ).not.toBeInTheDocument();
   });
 });

@@ -188,7 +188,7 @@ export const SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2: HomeEnterpriseLandscapeV2Mo
   {
     tenantName: "SkyHarbor Global",
     subtitle: "Synthetic current-state package | Aug 2, 2026",
-    status: "Planning-grade | Directional confidence | As of Aug 2, 2026",
+    status: "Planning context | Directional confidence | As of Aug 2, 2026",
     executiveRead:
       "SkyHarbor is a large, operations-intensive airline with substantial modernization activity across its operating, commercial, technology, and data estate. The current landscape points to execution alignment across critical platforms, measures, portfolio dependencies, and commercial commitments as the central management challenge.",
     economicsRead:
