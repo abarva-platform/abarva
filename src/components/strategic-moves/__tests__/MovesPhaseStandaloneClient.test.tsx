@@ -481,6 +481,40 @@ describe("MovesPhaseStandaloneClient", () => {
 
         if (
           url.includes("/api/v1/programs/") &&
+          url.includes("/phase-input-draft") &&
+          init?.method === "POST"
+        ) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              ok: true,
+              writes: false,
+              currentRevision: "test-phase-capture-revision",
+              proposals: [
+                {
+                  fieldKey: "sponsor_commitment",
+                  currentValue: null,
+                  proposedValue:
+                    "Sponsor confirms weekly charter review cadence.",
+                  rationale:
+                    "Drafted from the approved origination stakeholder view.",
+                  evidenceRefs: ["P0 · Stakeholder / owner view"],
+                  sourceClasses: ["approved_phase_input"],
+                  confidence: "high",
+                  materiality: "governed_material",
+                  unresolvedGaps: [
+                    "Confirm cadence and named approval authority.",
+                  ],
+                },
+              ],
+              refusal: null,
+            }),
+          } as Response;
+        }
+
+        if (
+          url.includes("/api/v1/programs/") &&
           url.includes("/phase-capture") &&
           init?.method === "POST"
         ) {
@@ -3059,13 +3093,16 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(chatBody.surfaceContext.phase).toBe(3);
   });
 
-  it("frames aVa as a governed drafting helper for phase inputs", async () => {
+  it("gets cited aVa drafts without writing, then persists only after Save changes", async () => {
     render(
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
-        move={makeMove()}
-        phaseNum={2}
+        move={makeMove({
+          currentPhase: 1,
+          phaseLabel: "P1 Charter",
+        })}
+        phaseNum={1}
         phaseTallies={[...phaseTallies]}
       />,
     );
@@ -3079,16 +3116,62 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     await waitFor(() => {
-      const chatCall = (global.fetch as jest.Mock).mock.calls.find(([url]) =>
-        String(url).includes("/api/chat/agent"),
-      );
-      expect(chatCall).toBeTruthy();
-      const chatBody = JSON.parse(String(chatCall?.[1]?.body ?? "{}"));
-      expect(chatBody.message).toContain(
-        "Draft proposed P2 inputs from approved upstream state",
-      );
-      expect(chatBody.message).toContain("Do not invent missing evidence");
+      expect(screen.getByText(/1 cited draft ready/i)).toBeInTheDocument();
     });
+    const draftCall = (global.fetch as jest.Mock).mock.calls.find(([url]) =>
+      String(url).includes("/phase-input-draft"),
+    );
+    expect(draftCall).toBeTruthy();
+    expect(
+      (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+        String(url).includes("/phase-capture"),
+      ),
+    ).toBe(false);
+    expect(
+      (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+        String(url).includes("/phase-gate-approval"),
+      ),
+    ).toBe(false);
+
+    expect(
+      screen.getByText("P0 · Stakeholder / owner view"),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Use draft" }));
+    const sponsorInput = screen.getAllByLabelText(
+      "Sponsor commitment",
+    )[0] as HTMLTextAreaElement;
+    expect(sponsorInput.value).toBe(
+      "Sponsor confirms weekly charter review cadence.",
+    );
+    expect(screen.getByText(/aVa draft is local/i)).toBeInTheDocument();
+    expect(
+      (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+        String(url).includes("/phase-capture"),
+      ),
+    ).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => {
+      expect(
+        (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+          String(url).includes("/phase-capture"),
+        ),
+      ).toBe(true);
+    });
+    const phaseCaptureCall = (global.fetch as jest.Mock).mock.calls.find(
+      ([url]) => String(url).includes("/phase-capture"),
+    );
+    const phaseCaptureBody = JSON.parse(
+      String(phaseCaptureCall?.[1]?.body ?? "{}"),
+    );
+    expect(phaseCaptureBody).toEqual(
+      expect.objectContaining({
+        phase: 1,
+        sections: {
+          sponsor_commitment: "Sponsor confirms weekly charter review cadence.",
+        },
+      }),
+    );
   });
 
   it("renders the rich aVa answer while the live stream is still open", async () => {
