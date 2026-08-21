@@ -3442,6 +3442,19 @@ function PhaseBody({
       met: isHistoricalPhase || gateApproved,
     },
   ];
+  const canSubmitSatisfiedGate =
+    !isHistoricalPhase &&
+    phase.phase >= 1 &&
+    openHardCriteria.length === 0 &&
+    !phaseCaptureBlocker;
+  const gateOnlyConfirmTitle =
+    phase.phase >= 5
+      ? "Complete P5 and hand off to Tower?"
+      : `Approve the ${phase.code} gate?`;
+  const gateOnlyConfirmSummary =
+    phase.phase >= 5
+      ? "This submits the already-satisfied P5 gate, records the terminal Tower handoff, and marks the Move complete. It does not regenerate artifacts."
+      : `This submits the already-satisfied ${phase.code} gate and opens ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title}. It does not regenerate artifacts.`;
 
   return (
     <>
@@ -3628,6 +3641,39 @@ function PhaseBody({
                 ? "Open Tower →"
                 : `Continue to ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title} →`}
             </button>
+          ) : phase.phase >= 1 && canSubmitSatisfiedGate ? (
+            <>
+              <button
+                className="mxw-gate-button"
+                disabled={gateApprovalStatus === "approving"}
+                onClick={() => setP0ConfirmOpen(true)}
+                type="button"
+              >
+                {gateApprovalStatus === "approving"
+                  ? "Approving..."
+                  : phase.phase >= 5
+                    ? "Complete P5 and open Tower →"
+                    : `Approve ${phase.code} gate →`}
+              </button>
+              <GateApprovalConfirmDialog
+                open={p0ConfirmOpen}
+                title={gateOnlyConfirmTitle}
+                summary={gateOnlyConfirmSummary}
+                approverLabel={approverLabel}
+                confirmLabel={
+                  phase.phase >= 5 ? "Complete and hand off" : "Approve gate"
+                }
+                onCancel={() => setP0ConfirmOpen(false)}
+                onConfirm={() => {
+                  setP0ConfirmOpen(false);
+                  void onApproveAfterBuild({
+                    succeededKeys: ["prebuilt_gate_outputs"],
+                    failedKeys: [],
+                    total: 1,
+                  });
+                }}
+              />
+            </>
           ) : phase.phase >= 1 ? (
             <PhaseApproveAndBuild
               archetype={move.archetype}
