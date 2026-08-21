@@ -79,7 +79,8 @@ function isSupportedExternalBenchmarkClaim(sentence: string): boolean {
   if (
     !/\b(external[_ -]?benchmark|external reference|reference pattern|sensitivity[- ]?(?:only|framing)|for sensitivity)\b/i.test(
       sentence,
-    )
+    ) &&
+    !/\bexternal\b[^\n|]{0,80}\bbenchmark\b/i.test(sentence)
   ) {
     return false;
   }
