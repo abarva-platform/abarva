@@ -125,7 +125,12 @@ import {
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { buildGateCriteria } from "@/lib/programs/transformers";
-import { getStrategicMoveById } from "@/lib/programs/queries";
+import { getModuleState, getStrategicMoveById } from "@/lib/programs/queries";
+import {
+  getPhaseCaptureSections,
+  phaseCaptureModuleKey,
+} from "@/lib/programs/phase-capture-contract";
+import { buildAvaPhaseInputProposals } from "@/lib/programs/phase-input-draft-proposals";
 // Moves aVa chat hardening (flag-gated, default off) — deterministic
 // grounding packet + answer-mode classifier for /strategic-moves/* chat.
 // See src/lib/programs/ava-chat/.
@@ -134,7 +139,10 @@ import {
   classifyMovesAvaQuestion,
   formatMovesAvaChatPacketForPrompt,
 } from "@/lib/programs/ava-chat";
-import { buildDeterministicMovesAvaStatusAnswer } from "@/lib/programs/ava-chat/deterministic-answer";
+import {
+  buildDeterministicMovesAvaStatusAnswer,
+  buildDeterministicPhaseInputDraftAnswer,
+} from "@/lib/programs/ava-chat/deterministic-answer";
 import {
   getStagePack,
   formatStagePackForPrompt,
@@ -368,7 +376,9 @@ const PROGRAM_MULTI_DELIVERABLE_RE =
   /\b(separate\s+signed\s+deliverables|type\s+keys|business_case|funding_approval|sponsor_alignment|readiness_and_change_plan|tower_handoff_plan)\b/i;
 const L9_PROVIDER_OVERLOAD_DRILL_HEADER = "x-abarva-l9-provider-drill-token";
 
-function looksLikeUnsupportedVendorResponseClaimQuestion(prompt: string): boolean {
+function looksLikeUnsupportedVendorResponseClaimQuestion(
+  prompt: string,
+): boolean {
   const q = prompt.toLowerCase();
   const hasVendorOrResponse =
     /\b(vendor|vendors|supplier|suppliers|bidder|bidders|response|responses|proposal|proposals)\b/.test(
@@ -382,7 +392,9 @@ function looksLikeUnsupportedVendorResponseClaimQuestion(prompt: string): boolea
   return hasVendorOrResponse && hasClaimLanguage && hasUnsupportedLanguage;
 }
 
-function looksLikeVisibleVendorResponseProfileQuestion(prompt: string): boolean {
+function looksLikeVisibleVendorResponseProfileQuestion(
+  prompt: string,
+): boolean {
   const q = prompt.toLowerCase();
   const hasVendorOrResponse =
     /\b(vendor|vendors|supplier|suppliers|bidder|bidders|response|responses|proposal|proposals)\b/.test(
@@ -680,6 +692,7 @@ export async function POST(request: Request) {
   // replaces the existing phase pack block. See src/lib/programs/ava-chat/.
   let movesAvaHardeningBlock = "";
   let movesAvaDeterministicAnswer: string | null = null;
+  let movesAvaPhaseInputDraftAnswer: string | null = null;
 
   // Reuse the earlier active-client lookup (resolved before voice doctrine
   // wiring so tenantName is authoritative). Aliased for downstream readers.
@@ -880,6 +893,25 @@ export async function POST(request: Request) {
               packet,
               mode,
             );
+            if (mode === "phase_input_draft" && promptPhase >= 1) {
+              const valuesByPhase = await loadPhaseCaptureValuesByPhaseForAva(
+                tenancy,
+                programId,
+              );
+              const proposals = buildAvaPhaseInputProposals({
+                phase: promptPhase,
+                currentValues: valuesByPhase[promptPhase] ?? {},
+                upstreamValuesByPhase: valuesByPhase,
+              });
+              movesAvaPhaseInputDraftAnswer =
+                buildDeterministicPhaseInputDraftAnswer({
+                  packet,
+                  phase: promptPhase,
+                  proposals,
+                  refusal:
+                    "No cited draft is available from approved upstream phase inputs. Add source context first or write the field manually.",
+                });
+            }
             movesAvaDeterministicAnswer =
               buildDeterministicMovesAvaStatusAnswer(packet, mode);
           } catch {
@@ -887,6 +919,7 @@ export async function POST(request: Request) {
             // to the existing phase-pack-only prompt.
             movesAvaHardeningBlock = "";
             movesAvaDeterministicAnswer = null;
+            movesAvaPhaseInputDraftAnswer = null;
           }
         }
       }
@@ -1402,8 +1435,9 @@ export async function POST(request: Request) {
   if (isSourceSurface(surface) && sourcePortfolioTenantKeys.length > 0) {
     for (const sourcePortfolioTenantKey of sourcePortfolioTenantKeys) {
       try {
-        const portfolioGrounding =
-          await buildAvaSourcePortfolioGrounding(sourcePortfolioTenantKey);
+        const portfolioGrounding = await buildAvaSourcePortfolioGrounding(
+          sourcePortfolioTenantKey,
+        );
         if (portfolioGrounding.block) {
           sourcePortfolioGroundingBlock = portfolioGrounding.block;
           hasSourcePortfolioGrounding = true;
@@ -1496,7 +1530,9 @@ export async function POST(request: Request) {
     !sourceEventIdFromContext &&
     looksLikeSourcePortfolioChartOrConcentrationRequest(message);
   const sourceTenantContextBlockForPrompt =
-    shouldUseSourcePortfolioGroundingExclusively ? "" : sourceTenantContextBlock;
+    shouldUseSourcePortfolioGroundingExclusively
+      ? ""
+      : sourceTenantContextBlock;
   const sourceAnalyticsGroundingEnabled = isFeatureEnabled(
     { clientKey: activeClientKey ?? null, clientId: activeClient?.id ?? null },
     "source_analytics",
@@ -1577,7 +1613,8 @@ export async function POST(request: Request) {
           (visibleResponseProfileSet?.profiles.length ?? 0) > 0;
         const shouldReadVendorComparisonSignals =
           ((isPhaseB && modeClassification.mode === "vendor_comparison") ||
-            (isPhaseC && modeClassification.mode === "decision_recommendation")) &&
+            (isPhaseC &&
+              modeClassification.mode === "decision_recommendation")) &&
           !hasVisibleResponseProfiles;
         const shouldReadVendorBidSignals =
           (isPhaseB && modeClassification.mode === "should_cost") ||
@@ -1793,10 +1830,7 @@ export async function POST(request: Request) {
                 .map((row) => row.stageKey)
             : undefined,
         });
-        if (
-          modeGrounding.block &&
-          !contractGroundingIsAuthoritativeForMode
-        ) {
+        if (modeGrounding.block && !contractGroundingIsAuthoritativeForMode) {
           sourceAvaGroundingBlock = sourceAvaGroundingBlock
             ? `${sourceAvaGroundingBlock}\n\n${modeGrounding.block}`
             : modeGrounding.block;
@@ -2299,14 +2333,14 @@ export async function POST(request: Request) {
           '- SOURCE VISUAL OUTPUT CONTRACT: if the user asks for a chart, graph, visual, trend, waterfall, matrix, heatmap, or Recharts-style output, answer with one short interpretation sentence and then emit exactly one compact ```abarva-chart fenced JSON block using only grounded values already present in the Source context. The chart JSON shape is {"type":"bar"|"line"|"waterfall"|"matrix","title":"...","data":[{"label":"...","value":123}]}; labels must be business-readable and values must be numbers, not formatted strings. If the necessary grounded values are missing, do not invent them; say the visual is blocked by missing evidence and name the source family needed.',
           "- SOURCE TABLE OUTPUT CONTRACT: if the user asks for a table, matrix, scorecard, ranking, comparison, or heatmap-ready output, include a compact markdown table in the visible answer. Keep it to the smallest useful set of columns, state the counting basis in prose, and keep unknowns as 'missing' or 'not established' rather than zero.",
           "- SOURCE VIEWED-STAGE DISCIPLINE: when a Source event turn includes a viewed stage, answer operational questions (approval gate, files, templates, collection plan, workshops, guidebook, next step) for that viewed stage even if the event's persisted current stage is later. Mention the persisted current stage only when the user asks where the event is overall.",
-          "- SOURCE EVENT ANSWER SHAPE: event-stage asks about required files/templates, workshops, data to collect, vendor unsupported claims, or gate readiness are operational decisions. Use a compact markdown table with columns such as Item | Owner | Evidence needed | Next action, then add one sentence on the decision. Include the exact words template, collect, next, approval, blocking, workshop, attend, and data when those concepts are present in the user's ask. For questions like \"What files or templates should I collect before the next stage?\", explicitly say to collect the template before the next stage, include a markdown table, and include the words collect, template, and next. For questions like \"Which approval gate is blocking...\", explicitly use both \"approval gate\" and \"blocking\" in the answer. For questions like \"What workshop should the team run next, who attends, and what data is collected?\", answer for the viewed stage, include a markdown table, and use the words workshop, attend, and data. Do not answer those asks as prose-only paragraphs.",
+          '- SOURCE EVENT ANSWER SHAPE: event-stage asks about required files/templates, workshops, data to collect, vendor unsupported claims, or gate readiness are operational decisions. Use a compact markdown table with columns such as Item | Owner | Evidence needed | Next action, then add one sentence on the decision. Include the exact words template, collect, next, approval, blocking, workshop, attend, and data when those concepts are present in the user\'s ask. For questions like "What files or templates should I collect before the next stage?", explicitly say to collect the template before the next stage, include a markdown table, and include the words collect, template, and next. For questions like "Which approval gate is blocking...", explicitly use both "approval gate" and "blocking" in the answer. For questions like "What workshop should the team run next, who attends, and what data is collected?", answer for the viewed stage, include a markdown table, and use the words workshop, attend, and data. Do not answer those asks as prose-only paragraphs.',
           "- SOURCE EVENT PROVENANCE WORDING: when the user asks what was learned from Foundation, Vendor 360, Contract 360, or other upstream Source context, name the contributing source explicitly. For Foundation/Vendor 360 asks, include the exact words Foundation, Vendor 360, and fact, then explain how those facts changed scope, value, evidence, scoring, or approval posture. Do not collapse this into a generic value-bridge answer.",
-          "- SOURCE STAGE STATUS DISCIPLINE: when describing where a sourcing event is in the workflow, distinguish stage/task completion from approved value. Say complete only for the gate/checklist state the page proves. Do not imply guaranteed, booked, approved, realized, realized value, or realized savings unless the grounding explicitly says Finance/Tower approval is complete. If a value is pending, say it is not finance-confirmed. While approval is pending, never write the exact phrase \"realized value is\" and never write the exact phrase \"realized savings\" anywhere, even in a warning or negation. Use this replacement wording: \"pending value remains pending Finance/Tower approval; approved/booked value remains $0.\"",
-          "- SOURCE CALCULATION-RUN DISCIPLINE: if the user asks how to answer when a value line has no calculation run, say literally that the amount is missing a calculation run and do not quote it. Include the exact phrase \"do not quote\" and name the missing evidence family or source needed before the deterministic engine can size it. If the user asks what data source to ask for next, explicitly use the words source, ask, and next in the same answer.",
+          '- SOURCE STAGE STATUS DISCIPLINE: when describing where a sourcing event is in the workflow, distinguish stage/task completion from approved value. Say complete only for the gate/checklist state the page proves. Do not imply guaranteed, booked, approved, realized, realized value, or realized savings unless the grounding explicitly says Finance/Tower approval is complete. If a value is pending, say it is not finance-confirmed. While approval is pending, never write the exact phrase "realized value is" and never write the exact phrase "realized savings" anywhere, even in a warning or negation. Use this replacement wording: "pending value remains pending Finance/Tower approval; approved/booked value remains $0."',
+          '- SOURCE CALCULATION-RUN DISCIPLINE: if the user asks how to answer when a value line has no calculation run, say literally that the amount is missing a calculation run and do not quote it. Include the exact phrase "do not quote" and name the missing evidence family or source needed before the deterministic engine can size it. If the user asks what data source to ask for next, explicitly use the words source, ask, and next in the same answer.',
           "- SOURCE PORTFOLIO CHART DISCIPLINE: if the user asks for portfolio concentration, vendor/category spend, or a portfolio chart while no single contract is selected, use AUTHORITATIVE SOURCE PORTFOLIO GROUNDING only. If that block is absent, say the governed Source portfolio grounding is unavailable for this turn and name the Source portfolio read model needed; do not use generic tenant-context vendor names, legacy workbook figures, or old intake-corpus totals for Source portfolio charts.",
           "- SOURCE PORTFOLIO CHART DATASET DISCIPLINE: for portfolio-wide Source chart JSON, copy labels and numeric values only from the Top vendors, Top supplier categories, Annual contract value, Context coverage, Spend/consumption, or Performance credits lines in AUTHORITATIVE SOURCE PORTFOLIO GROUNDING. Do not add a vendor, supplier, category, spend total, or percentage that is absent from that block. If the block does not contain the values needed for the requested visual, say the chart is blocked by missing governed Source portfolio grounding instead of substituting ambient tenant context.",
           "- SOURCE TENANT BOUNDARY WORDING: if the user asks for another tenant's records, say literally: \"I can't access another tenant from the current tenant session.\" Then stop or redirect to the active tenant. Do not soften this into a generic access-policy answer.",
-          "- SOURCE QUOTE BOUNDARY WORDING: if the user asks what should not be quoted, say literally: \"Do not quote missing, conflicting, unproven, or non-governed Source figures.\" Name the owning read model or evidence family needed before the figure can be quoted.",
+          '- SOURCE QUOTE BOUNDARY WORDING: if the user asks what should not be quoted, say literally: "Do not quote missing, conflicting, unproven, or non-governed Source figures." Name the owning read model or evidence family needed before the figure can be quoted.',
           "- SOURCE LINEAGE DISCIPLINE: source systems, extracts, fields, grain, history, update frequency, and Contract 360 data lineage are in-scope Source questions. If AUTHORITATIVE SOURCE CONTRACT GROUNDING includes a source-system evidence map, answer from it in a compact table; do not deflect as platform architecture.",
           "- Ask at most ONE question in the chat reply. If several fields are missing, pick the single highest-leverage blocker and let the right pane/artifact cards carry the rest.",
           "- Keep most Source replies under 75 words unless the user explicitly asks for a deep dive, draft, comparison, or executive brief.",
@@ -2374,6 +2408,11 @@ export async function POST(request: Request) {
       { error: "no_client", detail: "No active client for AI egress policy." },
       { status: 403 },
     );
+  }
+  if (movesAvaPhaseInputDraftAnswer) {
+    return new Response(demoSafeClientText(movesAvaPhaseInputDraftAnswer), {
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
   }
   if (movesAvaDeterministicAnswer) {
     return new Response(demoSafeClientText(movesAvaDeterministicAnswer), {
@@ -2756,6 +2795,35 @@ function readPromptPhaseFromSurfaceContext(
     if (match) return Number(match[1]);
   }
   return null;
+}
+
+function readPhaseCaptureModuleValue(
+  moduleState: Record<string, unknown> | null | undefined,
+): string {
+  const value = moduleState?.value;
+  return typeof value === "string" ? value : "";
+}
+
+async function loadPhaseCaptureValuesByPhaseForAva(
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+  programId: string,
+): Promise<Record<number, Record<string, string>>> {
+  const modules = await getModuleState(ctx, programId);
+  const byPhase: Record<number, Record<string, string>> = {};
+
+  for (let phase = 0; phase <= 5; phase += 1) {
+    const values: Record<string, string> = {};
+    for (const section of getPhaseCaptureSections(phase)) {
+      const capturedModule = modules.find(
+        (entry) =>
+          entry.moduleKey === phaseCaptureModuleKey(phase, section.key),
+      );
+      values[section.key] = readPhaseCaptureModuleValue(capturedModule?.state);
+    }
+    byPhase[phase] = values;
+  }
+
+  return byPhase;
 }
 
 function formatMoveEvidenceNeedForAva(

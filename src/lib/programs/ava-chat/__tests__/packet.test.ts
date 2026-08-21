@@ -1,7 +1,10 @@
 import { buildMovesAvaChatPacket } from "../packet";
 import { formatMovesAvaChatPacketForPrompt } from "../system-prompt";
 import { classifyMovesAvaQuestion } from "../answer-modes";
-import { buildDeterministicMovesAvaStatusAnswer } from "../deterministic-answer";
+import {
+  buildDeterministicMovesAvaStatusAnswer,
+  buildDeterministicPhaseInputDraftAnswer,
+} from "../deterministic-answer";
 
 const BASE_INPUT = {
   tenant: "lakeshore",
@@ -13,7 +16,10 @@ const BASE_INPUT = {
 
 describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
   it("records every unloaded optional field in missingInputs with a matching caveat", () => {
-    const packet = buildMovesAvaChatPacket(BASE_INPUT, "What should I do next?");
+    const packet = buildMovesAvaChatPacket(
+      BASE_INPUT,
+      "What should I do next?",
+    );
     expect(packet.missingInputs.length).toBeGreaterThan(0);
     expect(packet.caveats.length).toBe(packet.missingInputs.length);
     expect(packet.caveats[0]).toMatch(/needs confirmation, do not guess/);
@@ -31,7 +37,9 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
           canAdvance: false,
           nextPhaseLabel: "P3 Design Future State",
         },
-        gateCriteria: [{ label: "Baseline confirmed", met: false, severity: "hard" }],
+        gateCriteria: [
+          { label: "Baseline confirmed", met: false, severity: "hard" },
+        ],
       },
       "What should I do next?",
     );
@@ -44,22 +52,33 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
     const packet = buildMovesAvaChatPacket(BASE_INPUT, "Can we advance?");
     expect(packet.allowedActions.length).toBeGreaterThan(0);
     expect(packet.disallowedActions).toEqual(
-      expect.arrayContaining([expect.stringMatching(/approve a phase or advance a gate/i)]),
+      expect.arrayContaining([
+        expect.stringMatching(/approve a phase or advance a gate/i),
+      ]),
     );
   });
 
   it("detects Source implication from the question text and attaches it to the packet", () => {
-    const packet = buildMovesAvaChatPacket(BASE_INPUT, "How does this affect Source given the vendor renewal?");
+    const packet = buildMovesAvaChatPacket(
+      BASE_INPUT,
+      "How does this affect Source given the vendor renewal?",
+    );
     expect(packet.sourceImplication.relevant).toBe(true);
   });
 
   it("detects Tower implication from the question text and attaches it to the packet", () => {
-    const packet = buildMovesAvaChatPacket(BASE_INPUT, "What should Tower measure for adoption?");
+    const packet = buildMovesAvaChatPacket(
+      BASE_INPUT,
+      "What should Tower measure for adoption?",
+    );
     expect(packet.towerMeasurement.relevant).toBe(true);
   });
 
   it("leaves both awareness flags false when the question is unrelated to either", () => {
-    const packet = buildMovesAvaChatPacket(BASE_INPUT, "What should I do next in this phase?");
+    const packet = buildMovesAvaChatPacket(
+      BASE_INPUT,
+      "What should I do next in this phase?",
+    );
     expect(packet.sourceImplication.relevant).toBe(false);
     expect(packet.towerMeasurement.relevant).toBe(false);
   });
@@ -109,12 +128,72 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
   });
 
   it("classifies current gate status as a gate blocker so it can bypass generic phase-pack guidance", () => {
-    expect(classifyMovesAvaQuestion("What is the current gate status?").mode).toBe(
-      "gate_blocker",
-    );
     expect(
-      classifyMovesAvaQuestion("Quote the exact live gate tally and checklist status.").mode,
+      classifyMovesAvaQuestion("What is the current gate status?").mode,
     ).toBe("gate_blocker");
+    expect(
+      classifyMovesAvaQuestion(
+        "Quote the exact live gate tally and checklist status.",
+      ).mode,
+    ).toBe("gate_blocker");
+  });
+
+  it("classifies phase-input draft requests and instructs capture-field artifacts with citations", () => {
+    const mode = classifyMovesAvaQuestion("Draft proposed inputs for P1").mode;
+    expect(mode).toBe("phase_input_draft");
+
+    const packet = buildMovesAvaChatPacket(
+      {
+        ...BASE_INPUT,
+        currentPhase: 1,
+        currentPhaseClientLabel: "P1 Charter",
+      },
+      "Draft proposed inputs for P1",
+    );
+    const prompt = formatMovesAvaChatPacketForPrompt(packet, mode);
+
+    expect(prompt).toContain("Phase-input drafting mode");
+    expect(prompt).toContain("[[artifact:capture-field]]");
+    expect(prompt).toContain("citations");
+    expect(prompt).toContain("Do not render uncited field drafts");
+    expect(prompt).toContain("the user must insert the draft and save");
+  });
+
+  it("builds deterministic capture-field artifacts for cited phase-input proposals", () => {
+    const packet = buildMovesAvaChatPacket(
+      {
+        ...BASE_INPUT,
+        currentPhase: 1,
+        currentPhaseClientLabel: "P1 Charter",
+      },
+      "Draft proposed inputs for P1",
+    );
+
+    const answer = buildDeterministicPhaseInputDraftAnswer({
+      packet,
+      phase: 1,
+      proposals: [
+        {
+          fieldKey: "scope_boundary",
+          currentValue: null,
+          proposedValue: "In scope: Airport turnaround operations",
+          rationale: "Drafted from approved P0 scope.",
+          evidenceRefs: ["P0 · Affected function / process"],
+          sourceClasses: ["approved_phase_input"],
+          confidence: "high",
+          materiality: "governed_material",
+          unresolvedGaps: [],
+        },
+      ],
+    });
+
+    expect(answer).toContain("They are not saved");
+    expect(answer).toContain("[[artifact:capture-field]]");
+    expect(answer).toContain('"phase":1');
+    expect(answer).toContain('"key":"scope_boundary"');
+    expect(answer).toContain(
+      '"citations":["P0 · Affected function / process"]',
+    );
   });
 
   it("builds a deterministic live-status answer without substituting old phase-pack gate counts", () => {
@@ -137,15 +216,26 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
         ],
         gateCriteria: [
           { label: "GC-P1-1 Sponsor engaged", met: false, severity: "hard" },
-          { label: "GC-P1-2 Primary success metric", met: false, severity: "hard" },
+          {
+            label: "GC-P1-2 Primary success metric",
+            met: false,
+            severity: "hard",
+          },
           { label: "GC-P1-3 Value range locked", met: false, severity: "hard" },
-          { label: "GC-P1-4 Scope boundary confirmed", met: false, severity: "hard" },
+          {
+            label: "GC-P1-4 Scope boundary confirmed",
+            met: false,
+            severity: "hard",
+          },
         ],
       },
       "What is the current gate status?",
     );
 
-    const answer = buildDeterministicMovesAvaStatusAnswer(packet, "gate_blocker");
+    const answer = buildDeterministicMovesAvaStatusAnswer(
+      packet,
+      "gate_blocker",
+    );
 
     expect(answer).toContain(
       "0 evidence items visible; 1 hard gate open; can advance: no",

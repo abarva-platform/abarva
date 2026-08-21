@@ -60,6 +60,12 @@ export function formatMovesAvaChatPacketForPrompt(
     lines.push("An approved Inputs Pack exists for the next phase.");
   }
 
+  if (mode === "phase_input_draft") {
+    lines.push(
+      'Phase-input drafting mode: if and only if you can cite approved upstream phase state, emit one [[artifact:capture-field]] artifact per proposed field. Each artifact must use Shape {"phase": <0-5>, "key": <capture-section-key>, "value": <draft text>, "citations": [<source refs>], "confidence": "high"|"medium"|"low"}. Do not render uncited field drafts. Do not say the field is saved, done, approved, or captured; the user must insert the draft and save through phase capture.',
+    );
+  }
+
   if (packet.sourceImplication.relevant) {
     lines.push(
       `Source implication detected (${packet.sourceImplication.matchedKeywords.join(", ")}): ${packet.sourceImplication.suggestion}`,
@@ -73,7 +79,9 @@ export function formatMovesAvaChatPacketForPrompt(
   }
 
   if (packet.caveats.length > 0) {
-    lines.push(`Caveats — state these, do not guess: ${packet.caveats.join("; ")}`);
+    lines.push(
+      `Caveats — state these, do not guess: ${packet.caveats.join("; ")}`,
+    );
   }
 
   lines.push(`Allowed: ${packet.allowedActions.join("; ")}`);
