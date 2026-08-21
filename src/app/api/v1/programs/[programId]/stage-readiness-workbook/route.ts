@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import {
   requireTenancy,
   tenancyErrorResponse,
@@ -6,6 +8,7 @@ import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidenc
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getProgramById } from "@/lib/programs/queries";
 import { parseStageReadinessWorkbookXlsx } from "@/lib/programs/stage-readiness-workbooks/parser";
+import { persistStageReadinessProposalSet } from "@/lib/programs/stage-readiness-workbooks/proposals";
 import { buildStageReadinessWorkbookSpec } from "@/lib/programs/stage-readiness-workbooks/resolver";
 import { renderStageReadinessWorkbookXlsx } from "@/lib/programs/stage-readiness-workbooks/xlsx";
 
@@ -145,13 +148,22 @@ export async function POST(
       );
     }
 
-    const parsed = await parseStageReadinessWorkbookXlsx(
-      Buffer.from(await file.arrayBuffer()),
-      {
-        expectedMoveId: programId,
-        expectedPhase: phase,
-      },
-    );
+    const uploadedWorkbook = Buffer.from(await file.arrayBuffer());
+    const uploadedWorkbookSha256 = createHash("sha256")
+      .update(uploadedWorkbook)
+      .digest("hex");
+    const parsed = await parseStageReadinessWorkbookXlsx(uploadedWorkbook, {
+      expectedMoveId: programId,
+      expectedPhase: phase,
+    });
+    const persistedProposalSet = parsed.ok
+      ? await persistStageReadinessProposalSet({
+          ctx,
+          program,
+          parsed,
+          uploadedWorkbookSha256,
+        })
+      : null;
 
     return Response.json(
       {
@@ -160,6 +172,23 @@ export async function POST(
         responses: parsed.responses,
         issues: parsed.issues,
         summary: parsed.summary,
+        proposalSet: persistedProposalSet
+          ? {
+              proposalSetId: persistedProposalSet.proposalSet.proposalSetId,
+              artifactId: persistedProposalSet.artifactId,
+              artifactVersion: persistedProposalSet.artifactVersion,
+              status: "review_required",
+              proposalCount:
+                persistedProposalSet.proposalSet.summary.proposalCount,
+              pendingCount:
+                persistedProposalSet.proposalSet.summary.pendingCount,
+              answerStates:
+                persistedProposalSet.proposalSet.summary.answerStates,
+              blobStored: persistedProposalSet.blobStored,
+              message:
+                "Workbook responses were stored as pending proposals. They do not feed P2 until accepted.",
+            }
+          : null,
       },
       { status: parsed.ok ? 200 : 422 },
     );

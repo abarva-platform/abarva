@@ -174,6 +174,12 @@ interface StageReadinessWorkbookParsePreview {
     warningCount?: number;
     errorCount?: number;
   };
+  proposalSet?: {
+    status?: string;
+    proposalCount?: number;
+    pendingCount?: number;
+    message?: string;
+  } | null;
 }
 
 function normalizePhaseCaptureValues(
@@ -4887,8 +4893,14 @@ function StageReadinessWorkbookPreviewControl({
       const issueCount =
         (summary.errorCount ?? 0) + (summary.warningCount ?? 0);
       setStatus(payload.ok ? "parsed" : "error");
+      const proposalSet = payload.proposalSet;
+      const proposalText =
+        proposalSet && typeof proposalSet.pendingCount === "number"
+          ? ` · stored ${proposalSet.pendingCount}/${proposalSet.proposalCount ?? proposalSet.pendingCount} pending proposals`
+          : "";
       setMessage(
         `Parsed ${summary.answeredQuestions ?? 0}/${summary.totalQuestions ?? 0} responses` +
+          proposalText +
           (issueCount > 0
             ? ` · ${issueCount} issue${issueCount === 1 ? "" : "s"}`
             : ""),
