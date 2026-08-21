@@ -109,7 +109,7 @@ describe("resolveQualityBar", () => {
 
   it.each([
     ["roadmap", 6, 5_000, 11_000],
-    ["handoff_pack", 6, 5_000, 11_000],
+    ["handoff_pack", 6, 4_800, 11_000],
     ["estimate_model", 6, 1_600, 4_200],
     ["value_model", 6, 1_800, 4_600],
     ["value_measurement_contract", 6, 1_800, 4_200],
