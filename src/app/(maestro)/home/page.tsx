@@ -325,6 +325,20 @@ function withSourceSummaryAnchors(
     ],
   };
 }
+
+function withVisibleTenantIdentity(
+  model: HomeEnterpriseLandscapeV2Model,
+  tenantName: string,
+  orientationPack: OrientationPack | null,
+): HomeEnterpriseLandscapeV2Model {
+  if (!orientationPack) return { ...model, tenantName };
+  return {
+    ...model,
+    tenantName,
+    subtitle: `Generated orientation pack · ${orientationPack.tenantKey}`,
+    status: `${orientationPack.provenance.status} | ${orientationPack.provenance.validationStatus} | ${orientationPack.buildVersion}`,
+  };
+}
 /**
  * Home for tenants other than the one the landscape content was authored for.
  *
@@ -345,6 +359,11 @@ function MeridianHome({
   orientationPack: OrientationPack | null;
 }) {
   if (orientationPack) {
+    const model = withVisibleTenantIdentity(
+      SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2,
+      tenantName,
+      orientationPack,
+    );
     return (
       <AppShell
         surface="home"
@@ -357,6 +376,7 @@ function MeridianHome({
         hasTenantKey
       >
         <HomeEnterpriseLandscapeV2
+          model={model}
           pack={orientationPack}
           showAuthoredTabs={false}
         />

@@ -143,6 +143,11 @@ describe("Home/Admin boundary contract", () => {
     expect(pageSource).toContain(
       "const clientKey = tenant?.appClientKey ?? null",
     );
+    expect(pageSource).toContain("function withVisibleTenantIdentity(");
+    expect(pageSource).toContain("tenantName,");
+    expect(pageSource).toContain("Generated orientation pack");
+    expect(pageSource).toContain("<HomeEnterpriseLandscapeV2");
+    expect(pageSource).toContain("model={model}");
     expect(pageSource).not.toContain('from "@/lib/active-client"');
     expect(pageSource).not.toContain("ACTIVE_CLIENT_COOKIE");
     expect(queueSource).toContain('redirect("/home")');
