@@ -1,397 +1,68 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 
 import { AppShell } from "@/components/shell/AppShell";
-import { HomeEnterpriseLandscapeV2 } from "@/components/home/enterprise-landscape-v2/HomeEnterpriseLandscapeV2";
-import {
-  SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2,
-  type HomeEnterpriseLandscapeV2Model,
-} from "@/components/home/enterprise-landscape-v2/homeEnterpriseLandscapeV2Model";
+import { HomePreviewAppRoot } from "@/components/home/preview/HomePreviewAppRoot";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import {
-  listContract360,
-  listContractApplicationScope,
-  listVendorContractPortfolio,
-} from "@/lib/source/data-model/read-adapter";
-import { loadSourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
-import {
-  loadOrientationPack,
-  type OrientationPack,
-} from "@/lib/home/orientation-pack-read-adapter";
-import {
-  loadHomeLandscape,
-  type HomeLandscape,
-} from "@/lib/home/landscape-read-adapter";
+  getHomeReviewBundle,
+  HOME_PREVIEW_TENANT_KEYS,
+  isHomePreviewTenantKey,
+  type HomePreviewTenantKey,
+} from "@/lib/home/preview/golden-snapshot";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
 export const metadata: Metadata = {
-  title: "Enterprise Landscape | AbarVa",
+  title: "Home | AbarVa",
   description:
-    "AbarVa Home enterprise landscape with evidence-bound executive read, economics, posture, coherence, trajectory, watchlist, and provenance.",
+    "AbarVa Home executive readout, evidence explorer, architecture workbench, and technology-estate browser.",
 };
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-interface HomeSourceRuntimeSummary {
-  readonly contractCount: number;
-  readonly vendorCount: number;
-  readonly applicationScopeRows: number;
-  readonly annualValue: number;
-  readonly totalCommittedValue: number;
-  readonly cubeContracts: number;
-  readonly cubeVendors: number;
-  readonly activeLoadRunId: string | null;
+function toHomeTenantKey(
+  value: string | null | undefined,
+): HomePreviewTenantKey | null {
+  if (!value) return null;
+  const tenantKey = canonicalTenantKey(value);
+  return isHomePreviewTenantKey(tenantKey) ? tenantKey : null;
 }
 
-function money(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(value);
-}
-
-async function loadHomeSourceRuntimeSummary(
-  tenantKey: string | null | undefined,
-): Promise<HomeSourceRuntimeSummary | null> {
-  if (!tenantKey) return null;
-  try {
-    const [contracts, vendors, scope, cube] = await Promise.all([
-      listContract360(tenantKey).catch(() => []),
-      listVendorContractPortfolio(tenantKey).catch(() => []),
-      listContractApplicationScope(tenantKey).catch(() => []),
-      loadSourceV4WorkspaceSnapshot(tenantKey).catch(() => null),
-    ]);
-    const vendorRefs = new Set(
-      contracts.map((contract) => contract.vendor_ref),
-    );
-    return {
-      contractCount: contracts.length,
-      vendorCount: vendors.length || vendorRefs.size,
-      applicationScopeRows: scope.length,
-      annualValue: contracts.reduce(
-        (sum, contract) => sum + Number(contract.annual_value ?? 0),
-        0,
-      ),
-      totalCommittedValue: contracts.reduce(
-        (sum, contract) =>
-          sum +
-          Number(contract.total_committed_value ?? contract.annual_value ?? 0),
-        0,
-      ),
-      cubeContracts: cube?.executivePortfolio.contractCount ?? 0,
-      cubeVendors: cube?.contextCoverage.vendors ?? 0,
-      activeLoadRunId: cube?.activeLoadRunId ?? null,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function SourceRuntimeSummaryPanel({
-  summary,
+export default async function HomePage({
+  searchParams,
 }: {
-  summary: HomeSourceRuntimeSummary | null;
+  searchParams: Promise<{ tenant?: string }>;
 }) {
-  if (!summary || summary.contractCount === 0) return null;
-  const items = [
-    ["Contracts", summary.contractCount.toLocaleString(), "Contract register"],
-    ["Vendors", summary.vendorCount.toLocaleString(), "Vendor portfolio"],
-    [
-      "Application Scope",
-      summary.applicationScopeRows.toLocaleString(),
-      "Application coverage",
-    ],
-    ["Annual Value", money(summary.annualValue), "Annual contract base"],
-  ];
-  return (
-    <section className="rounded-md border border-[#d9ddd2] bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-2">
-        <p className="text-xs font-semibold uppercase text-[#667085]">
-          Refreshed contract view
-        </p>
-        <h2 className="text-xl font-semibold text-[#111827]">
-          Vendor and contract projection
-        </h2>
-        <p className="text-sm leading-6 text-[#475467]">
-          Home is reading the governed contract and vendor projections, with
-          fallback data used only when governed records are not yet present.
-        </p>
-      </div>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {items.map(([label, value, source]) => (
-          <div key={label} className="rounded-md border border-[#e5e7eb] p-4">
-            <div className="text-xs font-semibold uppercase text-[#667085]">
-              {label}
-            </div>
-            <div className="mt-2 text-2xl font-semibold text-[#111827]">
-              {value}
-            </div>
-            <div className="mt-2 text-xs text-[#667085]">{source}</div>
-          </div>
-        ))}
-      </div>
-      <p className="mt-4 text-xs text-[#667085]">
-        Cube coverage: {summary.cubeContracts.toLocaleString()} contracts /{" "}
-        {summary.cubeVendors.toLocaleString()} vendors
-        {summary.activeLoadRunId ? ` · ${summary.activeLoadRunId}` : ""}
-      </p>
-    </section>
-  );
-}
+  await connection();
 
-/**
- * Feed the headline anchors from canonical.
- *
- * These four tiles were string literals — a technology budget of $2.35B and a prior-year actual of
- * $2.18B with no data path behind either. The first attempt to fix that quoted a sum of
- * `spend_value_fact` and was wrong for a different reason: the two tenants' spend sheets did not
- * share a grain. One listed technology spend by category; the other listed *enterprise* spend by
- * business function — facilities, HR, behavioural health — so its total was operating cost, not a
- * technology budget, and quoting it would have overstated by more than fiftyfold.
- *
- * Both sheets are now genuinely technology-scoped, generated from a segment model and checked by
- * `validate:spend-plausibility` against published industry rates. So the grain objection is gone and
- * the figures are quotable — with the basis stated on the tile, because a number a reader cannot
- * attribute is only marginally better than one that was typed.
- *
- * Prior-year actual stays absent. Nothing canonical carries an observed prior-year figure: every fact
- * in the model is `declared`, and inventing continuity across a year we never measured would be the
- * same defect this function exists to remove.
- */
-function withCanonicalEconomics(
-  model: HomeEnterpriseLandscapeV2Model,
-  landscape: HomeLandscape | null,
-): HomeEnterpriseLandscapeV2Model {
-  if (!landscape) return model;
-  const spend = landscape.byKey("spend");
-  const vendors = landscape.byKey("vendors");
-  const applications = landscape.byKey("applications");
-  const infrastructure = landscape.byKey("infrastructure");
-  const dataAssets = landscape.byKey("data_assets");
-  const anchors = model.anchors.map((anchor) => {
-    if (anchor.label === "Technology budget" && spend?.money) {
-      return {
-        ...anchor,
-        value: money(spend.money.total),
-        detail: `Declared across ${spend.money.contributing} technology categories · build ${landscape.buildVersion}`,
-      };
-    }
-    if (anchor.label === "Prior-year actual") {
-      return {
-        ...anchor,
-        value: "Not established",
-        detail:
-          "No observed prior-year figure — every canonical fact is declared",
-      };
-    }
-    if (anchor.label === "Committed base" && vendors?.money) {
-      return {
-        ...anchor,
-        value: money(vendors.money.total),
-        detail: `Annual contract value across ${vendors.money.contributing} contracts`,
-      };
-    }
-    if (anchor.label === "Contract register" && vendors) {
-      return {
-        ...anchor,
-        value: vendors.distinctNameCount.toLocaleString(),
-        detail: `Distinct suppliers · ${vendors.recordCount.toLocaleString()} contract records`,
-      };
-    }
-    return anchor;
-  });
+  const [tenant, params] = await Promise.all([
+    resolveTenant().catch(() => null),
+    searchParams,
+  ]);
+  const activeTenantKey =
+    toHomeTenantKey(tenant?.appClientKey) ??
+    toHomeTenantKey(tenant?.displayName);
+  const requestedTenantKey = toHomeTenantKey(params.tenant);
+  const tenantKey =
+    requestedTenantKey ?? activeTenantKey ?? HOME_PREVIEW_TENANT_KEYS[0];
+  const bundle = getHomeReviewBundle(tenantKey);
 
-  /**
-   * Canonical belongs inside the tabs this page already has.
-   *
-   * The first attempt added an "Enterprise landscape" section of its own above them. That was a
-   * layout change nobody asked for, and it read as a second page stapled to the top of the first:
-   * Context and Evidence already answer these questions, and putting the same facts outside them
-   * tells a reader there are two landscapes rather than one.
-   */
-  const canonicalDomains = [
-    applications && {
-      label: "APPLICATIONS",
-      title: `${applications.distinctNameCount.toLocaleString()} distinct systems catalogued`,
-      body: applications.sampleEntities.slice(0, 3).join(" · "),
-      evidence: `${applications.evidenceCount.toLocaleString()} evidence references · canonical build ${landscape.buildVersion}`,
-      tone:
-        applications.evidenceCount > 0 ? ("teal" as const) : ("amber" as const),
-    },
-    infrastructure && {
-      label: "INFRASTRUCTURE",
-      title: `${infrastructure.distinctNameCount.toLocaleString()} platforms carrying the estate`,
-      body: infrastructure.sampleEntities.slice(0, 3).join(" · "),
-      evidence: `${infrastructure.evidenceCount.toLocaleString()} evidence references`,
-      tone:
-        infrastructure.evidenceCount > 0
-          ? ("teal" as const)
-          : ("amber" as const),
-    },
-    dataAssets && {
-      label: "DATA",
-      title: `${dataAssets.distinctNameCount.toLocaleString()} data assets and integrations`,
-      body: dataAssets.sampleEntities.slice(0, 3).join(" · "),
-      evidence: `${dataAssets.evidenceCount.toLocaleString()} evidence references`,
-      tone:
-        dataAssets.evidenceCount > 0 ? ("teal" as const) : ("amber" as const),
-    },
-  ].filter((d): d is NonNullable<typeof d> => Boolean(d));
-
-  // Dimensions the client supplied nothing for are named rather than dropped, so the Evidence tab's
-  // "missing sources" question has a real answer instead of an implied clean bill.
-  const notSupplied = landscape.dimensions
-    .filter((d) => d.recordCount === 0)
-    .map((d) => d.displayName);
-
-  const canonicalEvidence = [
-    {
-      label: "Canonical model",
-      value: `${landscape.totalEntities.toLocaleString()} records`,
-      detail: `${landscape.dimensions.length} dimensions · build ${landscape.buildVersion}`,
-      tone: "teal" as const,
-    },
-    ...(notSupplied.length
-      ? [
-          {
-            label: "Not supplied",
-            value: String(notSupplied.length),
-            detail: notSupplied.join(", "),
-            tone: "amber" as const,
-          },
-        ]
-      : []),
-  ];
-
-  return {
-    ...model,
-    anchors,
-    contextDomains: [...canonicalDomains, ...model.contextDomains],
-    evidence: [...canonicalEvidence, ...model.evidence],
-  };
-}
-
-function withSourceSummaryAnchors(
-  model: HomeEnterpriseLandscapeV2Model,
-  summary: HomeSourceRuntimeSummary | null,
-  tenantName: string,
-): HomeEnterpriseLandscapeV2Model {
-  if (!summary || summary.contractCount === 0) return { ...model, tenantName };
-  return {
-    ...model,
-    tenantName,
-    status: "Planning context · Contract base refreshed",
-    anchors: model.anchors.map((anchor) => {
-      if (anchor.label === "Committed base") {
-        return {
-          ...anchor,
-          value: money(summary.annualValue),
-          detail: "Annual contract value from the governed contract register",
-        };
-      }
-      if (anchor.label === "Contract register") {
-        return {
-          ...anchor,
-          value: summary.contractCount.toLocaleString(),
-          detail: "Contract records",
-        };
-      }
-      return anchor;
-    }),
-    evidence: [
-      {
-        label: "Contract and vendor base",
-        value: `${summary.contractCount.toLocaleString()} contracts · ${summary.vendorCount.toLocaleString()} vendors`,
-        detail: "Governed contract, vendor, and annual-value projections",
-        tone: "teal",
-      },
-      ...model.evidence,
-    ],
-  };
-}
-
-function withVisibleTenantIdentity(
-  model: HomeEnterpriseLandscapeV2Model,
-  tenantName: string,
-  orientationPack: OrientationPack | null,
-): HomeEnterpriseLandscapeV2Model {
-  if (!orientationPack) return { ...model, tenantName };
-  return {
-    ...model,
-    tenantName,
-    subtitle: "Generated orientation pack",
-    status:
-      orientationPack.provenance.status === "approved"
-        ? "Reviewed orientation context"
-        : "Not yet reviewed",
-  };
-}
-/**
- * Home for tenants other than the one the landscape content was authored for.
- *
- * When an orientation pack exists this renders the same generated shell every tenant gets, with the
- * authored architecture and evidence tabs withheld — that content was written for one client and
- * showing it to another would be a cross-tenant leak, not a gap.
- *
- * The authored page below is the fallback for tenants with no pack yet. It is tenant-labelled and
- * hand-written, which is exactly why it is a fallback rather than the destination.
- */
-function MeridianHome({
-  tenantName,
-  sourceSummary,
-  orientationPack,
-}: {
-  tenantName: string;
-  sourceSummary: HomeSourceRuntimeSummary | null;
-  orientationPack: OrientationPack | null;
-}) {
-  if (orientationPack) {
-    const model = withVisibleTenantIdentity(
-      SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2,
-      tenantName,
-      orientationPack,
-    );
-    return (
-      <AppShell
-        surface="home"
-        topBarProps={{
-          tenantName,
-          preserveTenantName: true,
-          showLocked: true,
-          context: "Enterprise Landscape",
-        }}
-        hasTenantKey
-      >
-        <HomeEnterpriseLandscapeV2
-          model={model}
-          pack={orientationPack}
-          showAuthoredTabs={false}
-        />
-      </AppShell>
+  if (!bundle) {
+    throw new Error(
+      `Home: missing accepted golden snapshot for ${tenantKey}. Expected a file under src/lib/home/preview/golden-snapshots/.`,
     );
   }
 
-  const priorities = [
-    [
-      "Vendor 360",
-      "Review managed-services exposure, contract families, renewal windows, and vendor responsibility overlap.",
-    ],
-    [
-      "Service Performance",
-      "Trace contract scope through services, applications, SLA posture, and service-credit evidence.",
-    ],
-    [
-      "Moves Handoff",
-      "Prepare BPO, rebadge, transition, retained-organization, and automation recommendations for governed decisioning.",
-    ],
-    [
-      "Roadmap Linkage",
-      "Connect AWS, Databricks, Epic, Workday, ServiceNow, and legacy-platform modernization to enterprise outcomes.",
-    ],
-  ];
+  const tenantName =
+    canonicalClientDisplayName({
+      key: tenant?.appClientKey ?? tenantKey,
+      name: tenant?.displayName,
+    }) ??
+    canonicalClientDisplayName({ key: tenantKey }) ??
+    tenant?.displayName ??
+    "AbarVa Client";
 
   return (
     <AppShell
@@ -400,131 +71,11 @@ function MeridianHome({
         tenantName,
         preserveTenantName: true,
         showLocked: true,
-        context: "Healthcare command center",
+        context: "Home",
       }}
       hasTenantKey
     >
-      <main className="min-h-screen bg-[#f7f7f2] text-[#171717]">
-        <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-8 py-10">
-          <div className="flex flex-col gap-3">
-            <p className="text-xs font-semibold uppercase text-[#667085]">
-              Healthcare Demo · Synthetic demonstration tenant
-            </p>
-            <h1 className="max-w-4xl text-4xl font-semibold tracking-normal text-[#111827]">
-              {tenantName} executive command center
-            </h1>
-            <p className="max-w-3xl text-base leading-7 text-[#475467]">
-              Governed healthcare projections are bound for vendor portfolio,
-              contracts, services, applications, SLA performance, workforce
-              economics, sourcing events, and decision handoff.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {priorities.map(([title, body]) => (
-              <article
-                key={title}
-                className="rounded-md border border-[#d9ddd2] bg-white p-5 shadow-sm"
-              >
-                <h2 className="text-base font-semibold text-[#111827]">
-                  {title}
-                </h2>
-                <p className="mt-3 text-sm leading-6 text-[#475467]">{body}</p>
-              </article>
-            ))}
-          </div>
-
-          <SourceRuntimeSummaryPanel summary={sourceSummary} />
-
-          <section className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-md border border-[#d9ddd2] bg-white p-6">
-              <h2 className="text-xl font-semibold text-[#111827]">
-                Browser Gate Focus
-              </h2>
-              <div className="mt-5 grid gap-3 text-sm text-[#344054] sm:grid-cols-2">
-                <span>Vendor 360 and contract family traversal</span>
-                <span>Analytics and Epic managed-services contracts</span>
-                <span>BPO opportunity and supplier comparison</span>
-                <span>Rebadge, transition, and retained-organization risk</span>
-                <span>Contractual versus aspirational automation</span>
-                <span>Moves decision handoff and roadmap linkage</span>
-              </div>
-            </div>
-            <div className="rounded-md border border-[#d9ddd2] bg-white p-6">
-              <h2 className="text-xl font-semibold text-[#111827]">
-                Tenant Boundary
-              </h2>
-              <p className="mt-4 text-sm leading-6 text-[#475467]">
-                This signed-in surface is pinned to Meridian Health.
-                Browser-supplied tenant keys must not override server-side
-                authorization.
-              </p>
-            </div>
-          </section>
-        </section>
-      </main>
+      <HomePreviewAppRoot bundle={bundle} tenantKey={tenantKey} />
     </AppShell>
-  );
-}
-
-export default async function HomePage() {
-  const tenant = await resolveTenant().catch(() => null);
-  const clientKey = tenant?.appClientKey ?? null;
-  const tenantName =
-    canonicalClientDisplayName({
-      key: clientKey,
-      name: tenant?.displayName,
-    }) ??
-    tenant?.displayName ??
-    "AbarVa Client";
-  // The landscape is keyed by canonical tenant key ("skyharbor-air"), while the rest of this page
-  // works in app client keys ("skyharbor"). Passing the app key here looks up a tenant that does
-  // not exist and renders "not available" over data that is present — the failure is silent
-  // because a missing pack is a legitimate state.
-  // The orientation pack is what the tabs render. It is keyed on the same canonical tenant key as
-  // the landscape, and is null until a build has run — a legitimate state that the panels report
-  // as "not yet generated" rather than as an empty estate.
-  const [sourceSummary, landscape, orientationPack] = await Promise.all([
-    loadHomeSourceRuntimeSummary(clientKey),
-    loadHomeLandscape(canonicalTenantKey(clientKey)),
-    loadOrientationPack(canonicalTenantKey(clientKey)),
-  ]);
-
-  if (clientKey === "skyharbor") {
-    // Source first, then canonical. Canonical wins where both have a figure: Source projects the
-    // contract register, canonical carries what the client declared about their whole estate.
-    // Source overlay first, canonical second. Source projects the contract register from its own
-    // L4; canonical carries what the client declared about the whole estate, and where both have a
-    // figure the declared one is the tenant's own assertion rather than a product's projection of it.
-    const model = withCanonicalEconomics(
-      withSourceSummaryAnchors(
-        SKYHARBOR_HOME_ENTERPRISE_LANDSCAPE_V2,
-        sourceSummary,
-        tenantName,
-      ),
-      landscape,
-    );
-    return (
-      <AppShell
-        surface="home"
-        topBarProps={{
-          tenantName,
-          preserveTenantName: true,
-          showLocked: true,
-          context: "Enterprise Landscape",
-        }}
-        hasTenantKey
-      >
-        <HomeEnterpriseLandscapeV2 model={model} pack={orientationPack} />
-      </AppShell>
-    );
-  }
-
-  return (
-    <MeridianHome
-      tenantName={tenantName}
-      sourceSummary={sourceSummary}
-      orientationPack={orientationPack}
-    />
   );
 }

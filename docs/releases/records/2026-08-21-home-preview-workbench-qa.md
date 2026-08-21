@@ -44,11 +44,15 @@ posture, vendors, owners, lifecycle, and data movement; record browsers behave l
 workbenches with dimension selectors; and leadership interview evidence is visible in the briefing
 tabs instead of hidden inside flat signal rows.
 
+Route replacement follow-up: `/home` now mounts the same v4 Home executive readout as the reviewed
+preview surface. The retired horizontal-tab enterprise-landscape reader remains on disk for history
+and tests, but it is no longer the default Home route.
+
 ## Layer Impact
 
-Layer 4 Products only. Home preview presentation and QA proof scripts changed; canonical source
-data, adapters, database tables, loaders, migrations, and product data-plane refresh paths are not
-changed.
+Layer 4 Products only. Home presentation, route wiring, and QA proof scripts changed; canonical
+source data, adapters, database tables, loaders, migrations, and product data-plane refresh paths
+are not changed.
 
 ## Client Applicability
 
@@ -104,6 +108,11 @@ changed.
 - Mobile record tables collapse to the identity column while preserving full content in the
   selected-record detail pane and cube controls, preventing spreadsheet-width overflow on phone
   viewports.
+- The default `/home` route now resolves the signed-in tenant through the canonical tenant resolver,
+  selects an accepted Home v4 golden snapshot when one exists, and renders `HomePreviewAppRoot`
+  directly instead of the retired `HomeEnterpriseLandscapeV2` reader.
+- Home boundary tests now assert that `/home` mounts v4 and rejects the old enterprise-landscape
+  route entrypoint.
 
 ## QA / Validation
 
@@ -149,6 +158,10 @@ changed.
   crosswalk, architecture zones, record slice/dice controls, record relationship lens, and zero
   horizontal overflow. Report:
   `/tmp/home-v4-pages-proof-cxo-left-rail-20260821-v4/full-viewport-crawl.json`.
+- Route replacement validation: `npx eslint 'src/app/(maestro)/home/page.tsx' 'src/app/(maestro)/home/layout.tsx' 'src/app/(maestro)/home/__tests__/home-admin-boundary-contract.test.ts' 'src/app/(maestro)/home/__tests__/home-layer-boundary-contract.test.ts'` passed.
+- Route replacement validation: `npm test -- --runTestsByPath 'src/app/(maestro)/home/__tests__/home-admin-boundary-contract.test.ts' 'src/app/(maestro)/home/__tests__/home-layer-boundary-contract.test.ts' --runInBand` passed. Jest still reports existing duplicate manual mock warnings.
+- Route replacement validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false` passed.
+- Route replacement validation: `npm run release:check` passed.
 
 ## Rollout Plan
 
@@ -164,7 +177,7 @@ before calling the change live.
 - ACA runtime invariant: Must be proven after deployment before live claim.
 - Worker image invariant: Not applicable.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Yes, Home preview route.
+- Live signed-in proof required: Yes, default Home route and Home preview route.
 
 ## Rollback Plan
 

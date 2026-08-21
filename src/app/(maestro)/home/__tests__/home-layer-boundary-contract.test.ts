@@ -11,8 +11,11 @@ describe("Home Layer 4 boundary contract", () => {
   it("keeps the mounted Home runtime out of Layer 1 and derived filesystem artifacts", () => {
     const homeRuntimeFiles = [
       "src/app/(maestro)/home/page.tsx",
-      "src/components/home/enterprise-landscape-v2/HomeEnterpriseLandscapeV2.tsx",
-      "src/components/home/enterprise-landscape-v2/homeEnterpriseLandscapeV2Model.ts",
+      "src/components/home/preview/HomePreviewAppRoot.tsx",
+      "src/components/home/v4/HomeV4App.tsx",
+      "src/components/home/v4/ArchitecturePage.tsx",
+      "src/components/home/v4/DataFlowPage.tsx",
+      "src/components/home/v4/RecordBrowser.tsx",
     ];
 
     for (const file of homeRuntimeFiles) {

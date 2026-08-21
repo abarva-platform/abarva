@@ -8,11 +8,14 @@ function readRepoFile(relativePath: string): string {
 }
 
 describe("Home/Admin boundary contract", () => {
-  it("keeps /home on the integrated enterprise landscape canvas", () => {
+  it("keeps /home on the v4 executive readout canvas", () => {
     const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
 
-    expect(pageSource).toContain("import { HomeEnterpriseLandscapeV2 }");
-    expect(pageSource).toContain("<HomeEnterpriseLandscapeV2");
+    expect(pageSource).toContain("import { HomePreviewAppRoot }");
+    expect(pageSource).toContain("<HomePreviewAppRoot");
+    expect(pageSource).toContain("getHomeReviewBundle");
+    expect(pageSource).toContain("HOME_PREVIEW_TENANT_KEYS");
+    expect(pageSource).not.toContain("HomeEnterpriseLandscapeV2");
     expect(pageSource).not.toContain("import { AiSuccessCommandCenter }");
     expect(pageSource).not.toContain("readSkyHarborAiSuccessHome");
     expect(pageSource).not.toContain("homeView=explorer");
@@ -24,44 +27,30 @@ describe("Home/Admin boundary contract", () => {
     );
   });
 
-  it("keeps context and architecture inside the approved Home canvas", () => {
+  it("keeps context and architecture inside the approved v4 Home canvas", () => {
     const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
-    const modelSource = readRepoFile(
-      "src/components/home/enterprise-landscape-v2/homeEnterpriseLandscapeV2Model.ts",
+    const shellSource = readRepoFile("src/components/home/v4/HomeV4App.tsx");
+    const chapterSource = readRepoFile(
+      "src/components/home/v4/ChapterPage.tsx",
     );
-    const componentSource = readRepoFile(
-      "src/components/home/enterprise-landscape-v2/HomeEnterpriseLandscapeV2.tsx",
+    const architectureSource = readRepoFile(
+      "src/components/home/v4/ArchitecturePage.tsx",
+    );
+    const browserSource = readRepoFile(
+      "src/components/home/v4/RecordBrowser.tsx",
     );
 
-    expect(modelSource).not.toContain('{ id: "context", label: "Context" }');
-    for (const label of [
-      "Who we are",
-      "Strategy",
-      "How we're measured",
-      "What we run",
-      "What people say",
-      "Where we stand",
-      "Explore the data",
-      "Architecture",
-      "Architecture Evidence",
-      "Evidence",
-    ]) {
-      expect(modelSource).toContain(`label: "${label}"`);
-    }
-    expect(modelSource).toContain("contextSignals");
-    expect(modelSource).toContain("architectureLayers");
-    expect(modelSource).toContain("architectureDeployments");
-    expect(modelSource).toContain("architectureArchetypes");
-    expect(modelSource).toContain("Data and AI architecture");
-    expect(modelSource).toContain("Global airline operating context");
-    expect(modelSource).toContain("Applications, cloud, data, integration");
-    expect(modelSource).toContain("Private DC / mainframe");
-    expect(modelSource).toContain("AI agents and copilots");
-    expect(componentSource).toContain("AUTHORED_TAB_IDS");
-    expect(componentSource).toContain("ArchitectureFlowMap model={model}");
-    expect(componentSource).toContain("GeneratedArchitectureEvidencePanel");
-    expect(componentSource).toContain("OrientationBlockPanel");
-    expect(pageSource).toContain("<HomeEnterpriseLandscapeV2");
+    expect(shellSource).toContain('"The briefing"');
+    expect(shellSource).toContain('"The evidence"');
+    expect(shellSource).toContain("Current-state architecture");
+    expect(shellSource).toContain("Browse the record");
+    expect(chapterSource).toContain("CXO readout");
+    expect(chapterSource).toContain("Leadership voice");
+    expect(architectureSource).toContain("Current-state architecture map");
+    expect(architectureSource).toContain("Enterprise relationship crosswalk");
+    expect(browserSource).toContain("Slice / dice viewer");
+    expect(browserSource).toContain("Relationship lens");
+    expect(pageSource).toContain("<HomePreviewAppRoot");
     expect(pageSource).not.toContain("HomeSurface");
     expect(pageSource).not.toContain("buildHomeRuntimeSummarySnapshot");
   });
@@ -139,17 +128,15 @@ describe("Home/Admin boundary contract", () => {
     const queueSource = readRepoFile("src/app/(maestro)/home/queue/page.tsx");
 
     expect(pageSource).toContain('from "@/lib/tenant/resolveTenant"');
-    expect(pageSource).toContain("const tenant = await resolveTenant()");
-    expect(pageSource).toContain(
-      "const clientKey = tenant?.appClientKey ?? null",
-    );
-    expect(pageSource).toContain("function withVisibleTenantIdentity(");
+    expect(pageSource).toContain("resolveTenant().catch");
+    expect(pageSource).toContain("function toHomeTenantKey(");
+    expect(pageSource).toContain("canonicalTenantKey");
+    expect(pageSource).toContain("isHomePreviewTenantKey");
+    expect(pageSource).toContain("const activeTenantKey");
+    expect(pageSource).toContain("const requestedTenantKey");
     expect(pageSource).toContain("tenantName,");
-    expect(pageSource).toContain("Generated orientation pack");
-    expect(pageSource).toContain("Planning context · Contract base refreshed");
-    expect(pageSource).toContain("Contract and vendor base");
-    expect(pageSource).toContain("<HomeEnterpriseLandscapeV2");
-    expect(pageSource).toContain("model={model}");
+    expect(pageSource).toContain("<HomePreviewAppRoot");
+    expect(pageSource).toContain("bundle={bundle}");
     expect(pageSource).not.toContain("Governed Source L4 / cube");
     expect(pageSource).not.toContain("Source L4 / Cube");
     expect(pageSource).not.toContain("orientationPack.buildVersion");
