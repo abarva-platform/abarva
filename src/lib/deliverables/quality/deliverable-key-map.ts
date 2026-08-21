@@ -4,7 +4,10 @@
 // the persistence path.
 
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
-import type { DeliverableKey, ExhibitId } from "@/lib/deliverables/profiles/types";
+import type {
+  DeliverableKey,
+  ExhibitId,
+} from "@/lib/deliverables/profiles/types";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import type { ContractInput } from "./deliverable-quality-contract";
 import type { OutputFormat } from "@/lib/deliverables/orchestrator/types";
@@ -28,6 +31,7 @@ const ORCH_TYPE_TO_KEY: Readonly<Record<string, DeliverableKey>> = {
   financial_model: "financial_model",
   value_model: "tower_metrics_plan",
   tower_metrics_plan: "tower_metrics_plan",
+  readiness_and_change_plan: "readiness_and_change_plan",
   value_measurement_contract: "value_measurement_contract",
   handoff_pack: "handoff_package",
   handoff_package: "handoff_package",
@@ -58,18 +62,18 @@ const VALID_EXHIBITS = new Set<string>(
  * ExhibitId count. (When the structured generation passes land, this becomes
  * exact — until then the contract correctly reports missing required exhibits.)
  */
-function renderedExhibitsFromDoc(
-  doc: RenderableDeliverable,
-): ExhibitId[] {
+function renderedExhibitsFromDoc(doc: RenderableDeliverable): ExhibitId[] {
   const ids: ExhibitId[] = [];
   for (const ex of doc.exhibits ?? []) {
-    const id = (ex as { id?: string; key?: string }).id ?? (ex as { key?: string }).key;
+    const id =
+      (ex as { id?: string; key?: string }).id ?? (ex as { key?: string }).key;
     if (id && VALID_EXHIBITS.has(id)) ids.push(id as ExhibitId);
   }
   return ids;
 }
 
-const PLACEHOLDER_RE = /\[CLIENT TO COMPLETE[^\]]*\]|\bTBC\b|\bto be confirmed\b/gi;
+const PLACEHOLDER_RE =
+  /\[CLIENT TO COMPLETE[^\]]*\]|\bTBC\b|\bto be confirmed\b/gi;
 
 /** Build the quality-contract input from a generated deliverable. */
 export function buildContractInput(args: {
@@ -112,6 +116,8 @@ export function buildContractInput(args: {
     scatteredPlaceholderCount: scattered,
     citationCount,
     ...(args.tenantTerms ? { tenantTerms: args.tenantTerms } : {}),
-    ...(args.governanceOk !== undefined ? { governanceOk: args.governanceOk } : {}),
+    ...(args.governanceOk !== undefined
+      ? { governanceOk: args.governanceOk }
+      : {}),
   };
 }

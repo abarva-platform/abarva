@@ -215,6 +215,25 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     ...wordBandFrom("value_model"),
     requiresEvidenceGapsNoted: true,
   },
+  "moves::requirements_traceability": {
+    // P3 traceability is a compact control matrix, not a generic board memo.
+    // It exists to prove requirements, evidence, design choices, and open
+    // decisions stay linked before the P3 gate closes.
+    minSections: 5,
+    minBodyWords: 1_200,
+    targetBodyWordsMax: 3_200,
+    advisoryBandMax: 3_800,
+    enforceMaxAsBlocker: true,
+    requiresEvidenceGapsNoted: true,
+  },
+  "moves::readiness_and_change_plan": {
+    // P4 readiness and change plan is a mobilization decision instrument. It
+    // should prove adoption/governance readiness without becoming a second
+    // roadmap, business case, or value model.
+    minSections: 6,
+    ...wordBandFrom("readiness_and_change_plan"),
+    requiresEvidenceGapsNoted: true,
+  },
   "moves::handoff_pack": {
     // P5 handoff must be a crisp execution-transfer package. Oversized handoff
     // packs bury accountabilities and should not become board-ready.

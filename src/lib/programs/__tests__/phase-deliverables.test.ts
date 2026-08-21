@@ -26,7 +26,9 @@ describe("deliverableBelongsToPhase", () => {
     expect(deliverableBelongsToPhase("charter", 2, "discovery_report")).toBe(
       false,
     );
-    expect(deliverableBelongsToPhase("business_case", 1, "charter")).toBe(false);
+    expect(deliverableBelongsToPhase("business_case", 1, "charter")).toBe(
+      false,
+    );
   });
 
   it("handles empty typeKey safely", () => {
@@ -40,10 +42,14 @@ describe("deliverableBelongsToPhase", () => {
       "business_case",
       "financial_model",
       "tower_metrics_plan",
+      "readiness_and_change_plan",
     ];
     expect(deliverableBelongsToPhase("execution_roadmap", 4, p4)).toBe(true);
     expect(deliverableBelongsToPhase("financial_model", 4, p4)).toBe(true);
     expect(deliverableBelongsToPhase("business_case", 4, p4)).toBe(true);
+    expect(deliverableBelongsToPhase("readiness_and_change_plan", 4, p4)).toBe(
+      true,
+    );
     // a P5 deliverable does not count toward P4
     expect(deliverableBelongsToPhase("handoff_package", 4, p4)).toBe(false);
   });

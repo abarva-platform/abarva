@@ -172,6 +172,7 @@ const DEPTH_BY_ARTIFACT: Partial<
   // golden-bar's DeliverableKey name for the orchestrator's `value_model`
   // type. Added 2026-07-25 for the same reason as financial_model above.
   tower_metrics_plan: depthFromWordBand("value_model"),
+  readiness_and_change_plan: depthFromWordBand("readiness_and_change_plan"),
 };
 
 export function depthStandardForArtifact(

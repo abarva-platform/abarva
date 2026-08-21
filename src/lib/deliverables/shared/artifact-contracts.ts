@@ -391,4 +391,12 @@ export const P3_P4_WORD_BAND_CONTRACTS: Readonly<
     enforceMaxAsBlocker: true,
     maxOutputTokens: 30_000,
   },
+  readiness_and_change_plan: {
+    deliverableType: "readiness_and_change_plan",
+    minWords: 1_800,
+    targetWordsMax: 4_200,
+    advisoryMaxWords: 4_800,
+    enforceMaxAsBlocker: true,
+    maxOutputTokens: 28_000,
+  },
 };
