@@ -1129,26 +1129,30 @@ export async function evaluateGate(
         break;
       case "launch_readiness_attested":
         pass =
-          fromPhase === 5 &&
-          /\b(launch readiness|go\/no-go|go-no-go|entry criteria|environment|access|ready)\b/.test(
-            phaseCaptureText,
-          ) &&
-          phaseModulesCompleted(fromPhase);
+          isSignedOff(handoffPackageRow) ||
+          (fromPhase === 5 &&
+            /\b(launch readiness|go\/no-go|go-no-go|entry criteria|environment|access|ready)\b/.test(
+              phaseCaptureText,
+            ) &&
+            phaseModulesCompleted(fromPhase));
         break;
       case "tower_cadence_defined":
         pass =
-          fromPhase === 5 &&
-          /\b(tower|cadence|governance|measurement|reporting|review)\b/.test(
-            phaseCaptureText,
-          ) &&
-          phaseModulesCompleted(fromPhase);
+          isSignedOff(valueMeasurementContractRow) ||
+          isSignedOff(handoffPackageRow) ||
+          (fromPhase === 5 &&
+            /\b(tower|cadence|governance|measurement|reporting|review)\b/.test(
+              phaseCaptureText,
+            ) &&
+            phaseModulesCompleted(fromPhase));
         break;
       case "p5_open_risks_recorded":
         pass =
-          fromPhase === 5 &&
-          /\b(risk|open item|client-to-complete|caveat|mitigation)\b/.test(
-            phaseCaptureText,
-          );
+          isSignedOff(handoffPackageRow) ||
+          (fromPhase === 5 &&
+            /\b(risk|open item|client-to-complete|caveat|mitigation)\b/.test(
+              phaseCaptureText,
+            ));
         break;
       case "discovery_funding_envelope":
         pass =

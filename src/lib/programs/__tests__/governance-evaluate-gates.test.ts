@@ -594,9 +594,9 @@ describe("evaluateGate", () => {
     );
   });
 
-  it("regression: launch_readiness_attested and tower_cadence_defined (P5->P6) no longer pass on free text alone with no completed phase_5 module", async () => {
-    // These two hard checks had NO real-signal alternative at all — purely
-    // regex-matched free text. Confirm they now require a completed module.
+  it("regression: P5 launch/cadence checks do not pass on free text alone without signed deliverables or completed modules", async () => {
+    // These hard checks must be backed by signed P5 deliverables or completed
+    // phase modules, never by draft free text alone.
     getProgramByIdMock.mockResolvedValue({
       id: "program-1",
       currentPhase: 5,
@@ -606,12 +606,12 @@ describe("evaluateGate", () => {
       {
         id: "handoff",
         deliverable_type_key: "handoff_package",
-        status: "signed_off",
+        status: "draft",
       },
       {
         id: "value-contract",
         deliverable_type_key: "value_measurement_contract",
-        status: "signed_off",
+        status: "draft",
       },
     ];
     modulesFixture = [
@@ -1223,6 +1223,38 @@ describe("evaluateGate", () => {
         },
       },
     ];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      5,
+      6,
+    );
+
+    expect(result.pass).toBe(true);
+    expect(result.failedChecks).toEqual([]);
+    expect(result.requiresApproval).toBe(true);
+  });
+
+  it("passes the P5 to Tower handoff from signed P5 deliverables even when separate phase text was not captured", async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 5,
+      archetype: "agent_assist",
+    });
+    deliverablesFixture = [
+      {
+        id: "handoff",
+        deliverable_type_key: "handoff_package",
+        status: "signed_off",
+      },
+      {
+        id: "value-contract",
+        deliverable_type_key: "value_measurement_contract",
+        status: "signed_off",
+      },
+    ];
+    modulesFixture = [];
 
     const result = await evaluateGate(
       { clientId: "client-1", userId: "person-1" },
