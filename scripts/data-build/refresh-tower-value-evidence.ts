@@ -511,7 +511,7 @@ async function main(): Promise<number> {
         }
         // Only the mandatory columns are supplied, plus the key. Anything the dimension marks
         // optional stays empty rather than being invented to look complete.
-        const supplyable = ["tenant_key", refColumn, "domain", "metric_name", "metric_label", "title", "name", "unit", "metric_unit", "direction", "owner_role"];
+        const supplyable = ["tenant_key", refColumn, "domain", "label", "metric_name", "metric_label", "title", "name", "unit", "metric_unit", "direction", "owner_role"];
         const insertCols = [...new Set([refColumn, ...mandatory])].filter((c) => supplyable.includes(c));
         if (insertCols.includes(refColumn)) {
           for (const [ref] of names) {

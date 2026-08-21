@@ -10,7 +10,7 @@ Candidate
 
 ## Plain-English Summary
 
-This release fixes two operator-refresh defects found during the lab refresh run. Proof summaries now embed the ACA operator commit/digest metadata even when the container image does not include `.git`, and the Tower evidence projector now supplies the required metric-definition domain when it seeds metric dimension rows.
+This release fixes two operator-refresh defects found during the lab refresh run. Proof summaries now embed the ACA operator commit/digest metadata even when the container image does not include `.git`, and the Tower evidence projector now supplies the required metric-definition fields when it seeds metric dimension rows.
 
 ## Release Lane
 
@@ -37,7 +37,7 @@ Release lane: `client-data-lane`.
 
 - Runtime-layer, runtime-readback, Source L4, Home landscape, and Tower evidence summaries prefer `ABARVA_OPERATOR_BRANCH_COMMIT` when `.git` is absent.
 - Home and Tower summaries include `ABARVA_OPERATOR_IMAGE_DIGEST` when the ACA job wrapper supplies it.
-- Tower evidence refresh supplies `domain=canonical_projection` for generated metric-definition rows when the live schema requires a domain.
+- Tower evidence refresh supplies `domain=canonical_projection` and a deterministic label for generated metric-definition rows when the live schema requires them.
 
 ## QA / Validation
 
