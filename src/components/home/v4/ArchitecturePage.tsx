@@ -390,7 +390,7 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
           label="Platforms & hosting"
           title={
             slice.infrastructure.length
-              ? `${slice.infrastructure.length.toLocaleString()} infrastructure/platform records`
+              ? `${slice.infrastructure.length.toLocaleString()} platform records`
               : "Platform joins are not recorded for this scope"
           }
           meta={slice.hostingModels.map(([name, count]) => `${name} ${count}`).slice(0, 2).join(" · ") || "hosting relationship missing"}

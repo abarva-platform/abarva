@@ -57,6 +57,8 @@ changed.
   the selected page rather than the default executive brief.
 - Architecture proof rendering now passes applications, integrations, and infrastructure into the
   architecture page so the proof cannot pass with zero data movements or zero platforms.
+- Visual polish follow-up shortened the platform-lane title so the current-state architecture map
+  does not force long infrastructure copy into the narrow rightmost lane.
 
 ## QA / Validation
 
@@ -77,6 +79,7 @@ changed.
   platform-join limits, zero old workbench/roster labels, and zero horizontal overflow. Report:
   `/tmp/home-v4-pages-proof-archmap-20260821-final/architecture-browser-report.json`. Screenshot:
   `/tmp/home-v4-pages-proof-archmap-20260821-final/meridian-health-architecture-browser.png`.
+- Visual polish validation: `npx eslint src/components/home/v4/ArchitecturePage.tsx` passed.
 
 ## Rollout Plan
 
