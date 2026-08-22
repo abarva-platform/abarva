@@ -113,6 +113,7 @@ describe("deliverable structures", () => {
       ["experience_flow", "component_interaction", "exception_control_flow"],
     ],
     ["operating_model", 8, ["human_ai_work_split", "decision_rights"]],
+    ["requirements_traceability", 5, []],
     ["sourcing_strategy", 7, ["sourcing_options_matrix"]],
   ] as const)(
     "%s has a fixed, purpose-specific structure instead of the generic Moves binder",
@@ -170,6 +171,28 @@ describe("deliverable structures", () => {
         "Keep under 120 words.",
       ],
     );
+  });
+
+  it("keeps requirements-traceability as a compact control matrix below its hard ceiling", () => {
+    const structure = getDeliverableStructure(
+      "moves",
+      "requirements_traceability",
+    )!;
+    expect(structure.fixedStructure).toBe(true);
+    expect(structure.sections.map((section) => section.expertLatitude)).toEqual(
+      [
+        "Keep under 180 words. State the verdict, material conditions, and what decision this enables.",
+        "Keep under 450 words using a compact requirements table; do not narrate every row.",
+        "Keep under 650 words using one traceability matrix; tables carry the detail, prose only explains exceptions.",
+        "Keep under 450 words using a single exception/control table.",
+        "Keep under 120 words.",
+      ],
+    );
+    const authoredBudget = structure.sections.reduce((sum, section) => {
+      const n = section.expertLatitude.match(/under (\d+) words/i)?.[1];
+      return sum + (n ? Number(n) : 0);
+    }, 0);
+    expect(authoredBudget).toBeLessThan(3_200);
   });
 
   it("keeps sourcing-strategy authoring budgets below the hard export ceiling", () => {
