@@ -108,6 +108,16 @@ describe("deliverable structures", () => {
 
   it.each([
     [
+      "target_state_architecture",
+      14,
+      [
+        "conceptual_architecture",
+        "logical_architecture",
+        "physical_architecture",
+        "agent_orchestration",
+      ],
+    ],
+    [
       "solution_design",
       8,
       ["experience_flow", "component_interaction", "exception_control_flow"],
@@ -140,6 +150,54 @@ describe("deliverable structures", () => {
       );
     },
   );
+
+  it("keeps target architecture fixed, decision-focused, and below the hard export ceiling", () => {
+    const structure = getDeliverableStructure(
+      "moves",
+      "target_state_architecture",
+    )!;
+    expect(structure.fixedStructure).toBe(true);
+    expect(structure.sections.map((section) => section.key)).toEqual([
+      "exec_summary",
+      "decision_required",
+      "options_considered",
+      "current_state",
+      "target_state",
+      "conceptual_architecture",
+      "logical_architecture",
+      "physical_architecture",
+      "agent_orchestration",
+      "data_integration",
+      "security_controls",
+      "implementation_path",
+      "risks",
+      "recommendation",
+    ]);
+    expect(structure.sections.map((section) => section.expertLatitude)).toEqual(
+      [
+        "Keep under 450 words. Lead with the architecture decision, why now, and material open inputs.",
+        "Keep under 350 words using a compact decision box.",
+        "Keep under 700 words using an options matrix. Compare at least maintain-status-quo, point-solution automation, and governed intelligence-layer options.",
+        "Keep under 650 words. State only the baseline facts that change the architecture decision.",
+        "Keep under 800 words. Summarize the architecture thesis; do not repeat the exhibits.",
+        "Keep under 900 words plus the conceptual architecture exhibit.",
+        "Keep under 950 words plus the logical architecture exhibit.",
+        "Keep under 1,000 words plus the physical architecture exhibit. Mark unknown provider/service choices as open inputs, not defaults.",
+        "Keep under 900 words plus one orchestration flow exhibit.",
+        "Keep under 750 words using an integration-contract table.",
+        "Keep under 700 words using a controls table.",
+        "Keep under 650 words. Sequence architecture decisions only; do not become a project plan.",
+        "Keep under 650 words using a risk/dependency table.",
+        "Keep under 250 words. End with approve / revise / hold and named next actions.",
+      ],
+    );
+    const authoredBudget = structure.sections.reduce((sum, section) => {
+      const n = section.expertLatitude.match(/under ([\d,]+) words/i)?.[1];
+      return sum + (n ? Number(n.replace(/,/g, "")) : 0);
+    }, 0);
+    expect(authoredBudget).toBeLessThan(16_000);
+    expect(structure.requiredSectionKeys).toContain("options_considered");
+  });
 
   it("keeps solution-design authoring budgets below the hard export ceiling", () => {
     const structure = getDeliverableStructure("moves", "solution_design")!;
@@ -373,8 +431,7 @@ describe("target_state_architecture key resolution (regression)", () => {
         "agent_orchestration",
       ]),
     );
-    // deliverable-type exhibits are additive to the archetype pack's own exhibits
-    expect(brief.expectedExhibits.length).toBeGreaterThan(4);
+    expect(brief.expectedExhibits).toHaveLength(4);
     const physical = brief.expectedExhibits.find(
       (e) => e.kind === "physical_architecture",
     )!;
