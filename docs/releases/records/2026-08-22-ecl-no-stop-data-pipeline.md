@@ -40,7 +40,7 @@ Adds a governed no-stop CI lane for the Enterprise Context Ledger build work. Th
 - Pass: Commercial proof acceptance is `accepted=true` with zero issues.
 - Pass: Legacy retirement map reports 895 repo-visible `CREATE TABLE` statements, 734 unique table names, and required execution columns.
 - Pass: ZIP proof packages were generated locally for the commercial proof and retirement-map slices.
-- Not run: GitHub Actions workflow execution, because this change is not yet pushed to the remote PR lane.
+- Pending: GitHub Actions workflow execution on the remote PR lane.
 
 ## Rollout Plan
 
