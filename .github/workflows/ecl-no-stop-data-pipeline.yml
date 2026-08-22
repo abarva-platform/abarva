@@ -1,0 +1,252 @@
+name: ECL no-stop data pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/ecl-no-stop-data-pipeline.yml"
+      - "docs/architecture/ECL_*.md"
+      - "docs/architecture/sql-drafts/ecl_*.sql"
+      - "docs/releases/records/**"
+      - "scripts/ecl/**"
+  push:
+    branches-ignore:
+      - main
+    paths:
+      - ".github/workflows/ecl-no-stop-data-pipeline.yml"
+      - "docs/architecture/ECL_*.md"
+      - "docs/architecture/sql-drafts/ecl_*.sql"
+      - "docs/releases/records/**"
+      - "scripts/ecl/**"
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "proof_only runs QA and uploads artifacts. auto_merge_pr merges a PR only after proof passes and confirm_merge=MERGE."
+        required: true
+        type: choice
+        options:
+          - proof_only
+          - auto_merge_pr
+        default: proof_only
+      pr_number:
+        description: "Required only for action=auto_merge_pr."
+        required: false
+        type: string
+        default: ""
+      confirm_merge:
+        description: "Required for action=auto_merge_pr: type MERGE exactly."
+        required: false
+        type: string
+        default: ""
+      run_release_check:
+        description: "Run npm release:check before auto-merge."
+        required: true
+        type: boolean
+        default: true
+
+concurrency:
+  group: ecl-no-stop-data-pipeline-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  proof:
+    name: Local ECL proof and QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install disposable Postgres tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y postgresql postgresql-client
+          pg_bin="$(find /usr/lib/postgresql -path '*/bin/initdb' -print | sort -V | tail -1)"
+          if [[ -z "$pg_bin" ]]; then
+            echo "initdb not found after installing Postgres." >&2
+            exit 1
+          fi
+          pg_bin="$(dirname "$pg_bin")"
+          echo "$pg_bin" >> "$GITHUB_PATH"
+          "$pg_bin/initdb" --version
+          "$pg_bin/pg_ctl" --version
+          "$pg_bin/psql" --version
+
+      - name: Compile ECL proof scripts
+        run: |
+          python3 -m py_compile \
+            scripts/ecl/run_commercial_contract_proof.py \
+            scripts/ecl/validate_commercial_proof_acceptance.py \
+            scripts/ecl/write_legacy_table_retirement_map.py
+
+      - name: Run no-stop ECL proof command
+        env:
+          LANG: C.UTF-8
+          LC_ALL: C.UTF-8
+        run: |
+          python3 scripts/ecl/run_commercial_contract_proof.py
+          python3 scripts/ecl/write_legacy_table_retirement_map.py
+
+      - name: Assert proof acceptance and retirement-map counts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import csv
+          import json
+          import sys
+          from pathlib import Path
+
+          proof_dir = Path("outputs/ecl-commercial-contract-supply-correction-2026-08-22")
+          acceptance = json.loads((proof_dir / "commercial_proof_acceptance_summary.json").read_text())
+          manifest = json.loads((proof_dir / "proof_bundle_manifest.json").read_text())
+
+          report_dir = Path("reports/ecl-legacy-table-retirement-map-2026-08-22")
+          summary = json.loads((report_dir / "legacy_table_retirement_summary.json").read_text())
+          rows = list(csv.DictReader((report_dir / "legacy_table_retirement_map.csv").open()))
+
+          failures = []
+          if not acceptance.get("accepted"):
+            failures.append(f"commercial proof not accepted: {acceptance}")
+          if acceptance.get("issue_count") != 0:
+            failures.append(f"commercial proof issue_count={acceptance.get('issue_count')}")
+          if len(manifest.get("artifact_hashes", [])) != 26:
+            failures.append(f"artifact hash count={len(manifest.get('artifact_hashes', []))}, expected 26")
+          if len(manifest.get("source_room_hashes", [])) != 67:
+            failures.append(f"source-room hash count={len(manifest.get('source_room_hashes', []))}, expected 67")
+          if summary.get("create_table_statements") != 895:
+            failures.append(f"CREATE TABLE count={summary.get('create_table_statements')}, expected 895")
+          if summary.get("unique_table_names") != 734:
+            failures.append(f"unique table count={summary.get('unique_table_names')}, expected 734")
+          required_columns = {
+              "owner_to_confirm",
+              "live_readback_required",
+              "parity_target",
+              "deletion_authorization_required",
+          }
+          if rows and not required_columns.issubset(rows[0].keys()):
+            failures.append("retirement map is missing execution columns")
+
+          if failures:
+            print("\n".join(failures), file=sys.stderr)
+            sys.exit(1)
+
+          print(json.dumps({
+              "accepted": acceptance.get("accepted"),
+              "artifact_hashes": len(manifest.get("artifact_hashes", [])),
+              "source_room_hashes": len(manifest.get("source_room_hashes", [])),
+              "create_table_statements": summary.get("create_table_statements"),
+              "unique_table_names": summary.get("unique_table_names"),
+          }, indent=2, sort_keys=True))
+          PY
+
+      - name: Package proof artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-artifacts/ecl-no-stop-data-pipeline
+          tar -czf audit-artifacts/ecl-no-stop-data-pipeline/ecl-no-stop-proof.tgz \
+            outputs/ecl-commercial-contract-supply-correction-2026-08-22 \
+            reports/ecl-legacy-table-retirement-map-2026-08-22 \
+            docs/architecture/ECL_NO_STOP_EXECUTION_QUEUE_2026_08_22.md \
+            docs/architecture/ECL_LAYER_CUBE_EXECUTION_TRACKER_2026_08_22.md
+          shasum -a 256 audit-artifacts/ecl-no-stop-data-pipeline/ecl-no-stop-proof.tgz \
+            | tee audit-artifacts/ecl-no-stop-data-pipeline/ecl-no-stop-proof.sha256
+
+      - name: Upload proof artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ecl-no-stop-proof-${{ github.run_id }}
+          path: audit-artifacts/ecl-no-stop-data-pipeline/
+          if-no-files-found: error
+
+  release-check:
+    name: Release check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: proof
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'auto_merge_pr' && inputs.run_release_check }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Run release control gate
+        run: npm run release:check -- --base origin/main --head HEAD
+
+  auto-merge:
+    name: Explicitly confirmed PR merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs:
+      - proof
+      - release-check
+    if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.action == 'auto_merge_pr' }}
+
+    steps:
+      - name: Enforce merge gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ needs.proof.result }}" != "success" ]]; then
+            echo "Proof job did not pass: ${{ needs.proof.result }}" >&2
+            exit 1
+          fi
+          if [[ "${{ needs['release-check'].result }}" != "success" && "${{ needs['release-check'].result }}" != "skipped" ]]; then
+            echo "Release check did not pass: ${{ needs['release-check'].result }}" >&2
+            exit 1
+          fi
+          if [[ -z "${{ inputs.pr_number }}" ]]; then
+            echo "pr_number is required for action=auto_merge_pr." >&2
+            exit 1
+          fi
+          if [[ "${{ inputs.confirm_merge }}" != "MERGE" ]]; then
+            echo "confirm_merge must be exactly MERGE." >&2
+            exit 1
+          fi
+
+      - name: Merge PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh pr merge "${{ inputs.pr_number }}" \
+            --repo abarva-platform/abarva \
+            --squash \
+            --delete-branch
+
+      - name: Deploy handoff
+        shell: bash
+        run: |
+          cat <<'EOF'
+          PR merge completed. Shared ACA deployment is intentionally not performed here.
+          A push to main triggers .github/workflows/aca-main-deploy.yml, which owns image build,
+          digest pinning, revision health, traffic shift, and deploy evidence.
+          EOF
