@@ -433,10 +433,20 @@ function missingInputsActionBlock(ctx: SolutionContext): string {
     .join("\n");
 }
 
+function stripInternalProofPrefix(value: string): string {
+  return value
+    .replace(
+      /^\s*(?:qa|codex|agent|proof|test)[-_ ]*(?:synthetic|fixture|sandbox|proof)?\s*[-:—]\s*/i,
+      "",
+    )
+    .replace(/^\s*(?:qa|codex|agent|proof|test)[-_ ]+\s*/i, "")
+    .trim();
+}
+
 function clientMoveReference(ctx: SolutionContext): string {
-  return (
-    ctx.useCase ?? ctx.useCaseCandidate ?? ctx.problemSeed ?? "client move"
-  );
+  const reference =
+    ctx.useCase ?? ctx.useCaseCandidate ?? ctx.problemSeed ?? "client move";
+  return stripInternalProofPrefix(reference) || "client move";
 }
 
 function p1Assignment(): string {

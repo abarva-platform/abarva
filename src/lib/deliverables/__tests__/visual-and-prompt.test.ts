@@ -194,24 +194,47 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(p.user).not.toContain("vendor master");
   });
 
+  it("strips internal proof prefixes from the client-facing move reference", () => {
+    const ctx = applyPhaseDigest(emptySolutionContext("m1", "skyharbor"), {
+      useCase: "QA-SYNTHETIC - Baggage Disruption Recovery",
+      currentState:
+        "Baggage recovery teams reconcile exceptions across station, customer-care, and vendor-escalation handoffs.",
+      chosenOption: "Option B — governed baggage-recovery intelligence layer",
+    });
+    const p = buildArtifactPrompt({
+      artifact: "target_state_architecture",
+      phase: 3,
+      context: ctx,
+      generationMode: "draft",
+    });
+
+    expect(p.user).toContain(
+      "Client-facing move reference: Baggage Disruption Recovery",
+    );
+    expect(p.user).toContain(
+      "This artifact is for Baggage Disruption Recovery.",
+    );
+    expect(p.user).not.toContain("Client-facing move reference: QA-SYNTHETIC");
+  });
+
   it.each([
     [
       "solution_design",
       "SOLUTION DESIGN SPECIFICATION",
       "Experience Flow",
-      "Target 3,500-6,000 words",
+      "Target 3,200-4,800 body words",
     ],
     [
       "operating_model_design",
       "OPERATING MODEL DESIGN",
       "Decision Rights Matrix",
-      "Stop at 3,000 words",
+      "Stop before 4,600 rendered words",
     ],
     [
       "sourcing_strategy",
       "SOURCING STRATEGY BRIEF",
       "Options Matrix",
-      "Stop at 3,000 words",
+      "Stop before 3,600 rendered words",
     ],
   ] as const)(
     "uses an artifact-specific P3 brief for %s",
