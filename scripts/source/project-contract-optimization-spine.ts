@@ -217,9 +217,22 @@ async function readContractEvidence(
       "source_page, concept_ref",
     ),
   ]);
+  const scopeRows = overviewRows[0]
+    ? await queryRows(
+        client,
+        "golden_contract_application_scope",
+        args,
+        contractId,
+      )
+    : [];
 
   return {
-    contract: contractResult.rows[0] ?? null,
+    contract:
+      contractResult.rows[0] ??
+      contractFromGoldenOverview(overviewRows[0] ?? null, {
+        scopeRows,
+        slaRows,
+      }),
     overview: overviewRows[0] ?? null,
     pricingRows,
     invoiceRows,
@@ -231,6 +244,99 @@ async function readContractEvidence(
     financeRow: financeRows[0] ?? null,
     pdfClauseRows,
   };
+}
+
+function contractFromGoldenOverview(
+  overview: Row | null,
+  evidence: {
+    readonly scopeRows: readonly Row[];
+    readonly slaRows: readonly Row[];
+  },
+): SourceContract360Row | null {
+  if (!overview) return null;
+  const contractId = stringValue(overview.contract_id);
+  const vendorId = stringValue(overview.vendor_id);
+  const vendorName = stringValue(overview.vendor_name);
+  const contractName = stringValue(overview.contract_name);
+  if (!contractId || !vendorId || !vendorName || !contractName) return null;
+
+  const scopedApplicationCount = evidence.scopeRows.length;
+  const criticalApplicationCount = evidence.scopeRows.filter((row) => {
+    const criticality = stringValue(row.criticality)?.toLowerCase() ?? "";
+    return ["critical", "tier 1", "tier1", "high"].includes(criticality);
+  }).length;
+  const sev1Sev2Incidents = evidence.slaRows.reduce(
+    (sum, row) =>
+      sum +
+      (numberValue(row.sev1_incident_count) ?? 0) +
+      (numberValue(row.sev2_incident_count) ?? 0),
+    0,
+  );
+  const linkedBudgetAmount = evidence.scopeRows.reduce(
+    (sum, row) => sum + (numberValue(row.annual_run_cost_usd) ?? 0),
+    0,
+  );
+
+  return {
+    tenant_key: stringValue(overview.tenant_key) ?? "",
+    contract_id: contractId,
+    vendor_ref: vendorId,
+    vendor_name: vendorName,
+    vendor_category: stringValue(overview.contract_archetype),
+    contract_name: contractName,
+    scope_summary: stringValue(overview.contract_english_overview),
+    annual_value: numberValue(overview.annual_value_usd),
+    total_committed_value: numberValue(overview.total_committed_value_usd),
+    committed_annual_spend: numberValue(overview.annual_value_usd),
+    actual_annual_spend: numberValue(overview.actual_annual_spend_usd),
+    end_date: dateOrNull(stringValue(overview.end_date)),
+    notice_period_days: numberValue(overview.notice_period_days),
+    auto_renew: booleanValue(overview.auto_renew),
+    renewal_decision_state: stringValue(overview.notice_deadline)
+      ? `notice_deadline_${stringValue(overview.notice_deadline)}`
+      : null,
+    renewal_owner_ref: stringValue(overview.decision_owner_role_ref),
+    benchmarking_clause: "Documented in golden contract evidence package.",
+    exit_rights_summary:
+      "See executed agreement, order form, renewal, and termination clauses.",
+    alternatives_available:
+      "Evaluate with sourcing strategy and supplier alternative evidence.",
+    concentration_note: stringValue(overview.business_functions_supported),
+    source_confidence: 0.86,
+    resolved_annual_value: numberValue(overview.annual_value_usd),
+    resolved_total_committed_value: numberValue(
+      overview.total_committed_value_usd,
+    ),
+    annual_value_conflict_flag: false,
+    total_committed_value_conflict_flag: false,
+    scoped_application_count: scopedApplicationCount,
+    critical_application_count: criticalApplicationCount,
+    linked_budget_amount: linkedBudgetAmount || null,
+    linked_actual_amount: numberValue(overview.actual_annual_spend_usd),
+    linked_budget_lines: null,
+    cloud_sev1_sev2_incidents: sev1Sev2Incidents,
+    operational_evidence_gap: false,
+    initiative_dependency_count: 0,
+  };
+}
+
+function stringValue(value: unknown): string | null {
+  if (typeof value !== "string") return value == null ? null : String(value);
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function numberValue(value: unknown): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  const text = stringValue(value);
+  if (!text) return null;
+  const parsed = Number(text);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function booleanValue(value: unknown): boolean {
+  const text = stringValue(value)?.toLowerCase();
+  return text === "true" || text === "yes" || text === "1";
 }
 
 function buildProjection(
