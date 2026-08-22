@@ -53,8 +53,46 @@ describe("architecture generation pass (governed, tenant-agnostic)", () => {
     ).rejects.toThrow(/failed validation/i);
   });
 
+  it("declares missing generated agent bindings as target agent nodes before validation", async () => {
+    const generated = {
+      ...FIRST_CAPITAL_ARCHITECTURE,
+      agentic: [
+        ...(FIRST_CAPITAL_ARCHITECTURE.agentic ?? []),
+        {
+          agentId: "agt-consolidator",
+          role: "Consolidates disrupted-event context for human review",
+          callsTools: ["t_vec"],
+          grounding: ["t_lake"],
+          guardrails: ["t_mrisk"],
+          humanInLoop: "Operations lead approves every recommendation",
+        },
+      ],
+    };
+    const call: GovernedToolCall = async () => ({
+      toolInput: generated,
+      modelId: "m",
+    });
+
+    const out = await generateArchitectureModel(
+      { engagement: "X", client: "Y", contextText: "c" },
+      call,
+    );
+
+    expect(
+      out.model.target.nodes.find((node) => node.id === "agt-consolidator"),
+    ).toMatchObject({
+      kind: "agent",
+      layer: "agentic",
+      status: "new",
+    });
+    expect(out.issues.some((issue) => issue.level === "error")).toBe(false);
+  });
+
   it("throws when the model returns no structured output", async () => {
-    const call: GovernedToolCall = async () => ({ toolInput: null, modelId: "m" });
+    const call: GovernedToolCall = async () => ({
+      toolInput: null,
+      modelId: "m",
+    });
     await expect(
       generateArchitectureModel(
         { engagement: "X", client: "Y", contextText: "c" },
@@ -78,7 +116,9 @@ describe("architecture generation pass (governed, tenant-agnostic)", () => {
         { engagement: "IROPS", client: "SkyHarbor Air", contextText: "c" },
         call,
       ),
-    ).rejects.toThrow(/Current architecture state has no nodes|Missing target architecture state/i);
+    ).rejects.toThrow(
+      /Current architecture state has no nodes|Missing target architecture state/i,
+    );
   });
 
   it("passes the tool + system contract to the governed call (forced output)", async () => {
@@ -117,7 +157,9 @@ describe("architecture generation pass (governed, tenant-agnostic)", () => {
         },
         call,
       ),
-    ).rejects.toThrow(/truncated.*32,?000-token output limit.*8000 output tokens/i);
+    ).rejects.toThrow(
+      /truncated.*32,?000-token output limit.*8000 output tokens/i,
+    );
   });
 
   it("builds a grounded user message", () => {
@@ -202,8 +244,12 @@ describe("architecture generation pass (governed, tenant-agnostic)", () => {
     });
     const html = renderArchitectureHtml(model).toLowerCase();
 
-    expect(validateArchitectureModel(model).some((i) => i.level === "error")).toBe(false);
-    expect(html).not.toMatch(/flight|crew|passenger|airport|disruption recovery/);
+    expect(
+      validateArchitectureModel(model).some((i) => i.level === "error"),
+    ).toBe(false);
+    expect(html).not.toMatch(
+      /flight|crew|passenger|airport|disruption recovery/,
+    );
     expect(html).toContain("system of engagement");
     expect(html).toContain("transaction system of record");
     expect(html).toContain("policy and knowledge");
