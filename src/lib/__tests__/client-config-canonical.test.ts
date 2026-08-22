@@ -21,26 +21,34 @@ describe("canonicalClientDisplayName", () => {
     );
   });
 
-  it("renders Meridian aliases as Healthcare Demo", () => {
-    expect(getClientOption("meridian").name).toBe("Healthcare Demo");
+  it("renders Meridian aliases as Meridian Health", () => {
+    expect(getClientOption("meridian").name).toBe("Meridian Health");
     expect(canonicalClientDisplayName({ key: "meridian" })).toBe(
-      "Healthcare Demo",
+      "Meridian Health",
     );
     expect(canonicalClientDisplayName({ key: "meridian-health" })).toBe(
-      "Healthcare Demo",
+      "Meridian Health",
     );
     expect(
       canonicalClientDisplayName({
         key: "meridian",
         name: "Meridian Health",
       }),
-    ).toBe("Healthcare Demo");
+    ).toBe("Meridian Health");
     expect(canonicalClientDisplayName({ name: "Meridian Health" })).toBe(
-      "Healthcare Demo",
+      "Meridian Health",
     );
   });
 
   it("scrubs tenant names embedded in visible move titles and codes", () => {
+    expect(
+      demoSafeClientText(
+        "QA-SYNTHETIC - Baggage Disruption Recovery Control Tower",
+      ),
+    ).toBe("Baggage Disruption Recovery Control Tower");
+    expect(demoSafeClientText("proof: Baggage Disruption Recovery")).toBe(
+      "Baggage Disruption Recovery",
+    );
     expect(
       demoSafeClientText(
         "CANARY - SkyHarbor Recovery Command IROPS Architecture - skyharbor-canary-20260622161738",

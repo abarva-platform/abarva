@@ -128,6 +128,28 @@ function phaseFromGeneratedArtifactMetadata(
   return null;
 }
 
+function filterCurrentGeneratedArtifacts(
+  recs: Awaited<ReturnType<typeof listGeneratedArtifactsForMoveAllRefs>>,
+) {
+  const active = recs.filter((rec) => !rec.supersededBy);
+  const newestByPhase = new Map<number, (typeof active)[number]>();
+  for (const rec of active) {
+    const phase = phaseFromGeneratedArtifactMetadata(rec.metadata);
+    if (phase === null) continue;
+    const current = newestByPhase.get(phase);
+    if (!current || rec.renderedAt > current.renderedAt) {
+      newestByPhase.set(phase, rec);
+    }
+  }
+  return active.filter((rec) => {
+    const phase = phaseFromGeneratedArtifactMetadata(rec.metadata);
+    if (phase === null) return true;
+    const newest = newestByPhase.get(phase);
+    if (!newest?.quarantineReason) return true;
+    return rec.id === newest.id;
+  });
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ programId: string }> },
@@ -215,8 +237,7 @@ export async function GET(
           moveId: programId,
         });
         const seen = new Set(moveArtifacts.map((a) => a.artifactId));
-        generated = recs
-          .filter((rec) => !currentOnly || !rec.supersededBy)
+        generated = (currentOnly ? filterCurrentGeneratedArtifacts(recs) : recs)
           .filter((rec) => !seen.has(rec.id))
           .map((rec) => {
             const meta = rec.metadata as {
