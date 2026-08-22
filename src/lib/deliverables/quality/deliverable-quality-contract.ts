@@ -82,7 +82,7 @@ function isBinder(p: DeliverableProfile): boolean {
 }
 
 const DECISION_VERBS =
-  /\b(recommend|approve|approval|decision|decide|proceed|hold|stop|fund|invest|select|award|endorse|do not approve)\b/i;
+  /\b(recommend|approve|approval|decision|decide|proceed|hold|stop|fund|invest|select|award|endorse|choose|do not approve)\b/i;
 
 /** format-fit — the rendered format must match the profile's allowed formats. */
 function checkFormatFit(input: ContractInput): QualityFinding[] {
@@ -273,11 +273,16 @@ export function resolveResultState(
   const has = (d: string) => blocking.some((f) => f.dimension === d);
   if (has("story_spine")) return "blocked_storyline";
   if (has("current_state_reasoning")) return "blocked_missing_current_state";
-  if (has("architecture_completeness")) return "blocked_missing_architecture_level";
+  if (has("architecture_completeness"))
+    return "blocked_missing_architecture_level";
   if (has("visual_exhibit_quality")) return "blocked_missing_visuals";
-  if (has("exhibit_enforcement") || blocking.some((f) => f.gate === "visual_complete"))
+  if (
+    has("exhibit_enforcement") ||
+    blocking.some((f) => f.gate === "visual_complete")
+  )
     return "blocked_missing_exhibits";
-  if (blocking.some((f) => f.gate === "open_inputs")) return "blocked_missing_inputs";
+  if (blocking.some((f) => f.gate === "open_inputs"))
+    return "blocked_missing_inputs";
   return "blocked_quality";
 }
 
@@ -295,26 +300,57 @@ export function evaluateDeliverableQuality(
 
   // Core gates (machinery / filler / open-inputs / evidence-placement / exhibits).
   if (rubric.has("non_mechanical_writing"))
-    findings.push(...scanMachinery(input).map((f) => ({ ...f, dimension: "non_mechanical_writing" as const })));
+    findings.push(
+      ...scanMachinery(input).map((f) => ({
+        ...f,
+        dimension: "non_mechanical_writing" as const,
+      })),
+    );
   if (rubric.has("human_consultant_voice"))
-    findings.push(...detectFiller(input).map((f) => ({ ...f, dimension: "human_consultant_voice" as const })));
+    findings.push(
+      ...detectFiller(input).map((f) => ({
+        ...f,
+        dimension: "human_consultant_voice" as const,
+      })),
+    );
   if (rubric.has("missing_input_handling"))
-    findings.push(...checkOpenInputs(input).map((f) => ({ ...f, dimension: "missing_input_handling" as const })));
+    findings.push(
+      ...checkOpenInputs(input).map((f) => ({
+        ...f,
+        dimension: "missing_input_handling" as const,
+      })),
+    );
   if (rubric.has("evidence_placement"))
-    findings.push(...checkEvidencePlacement(input).map((f) => ({ ...f, dimension: "evidence_placement" as const })));
+    findings.push(
+      ...checkEvidencePlacement(input).map((f) => ({
+        ...f,
+        dimension: "evidence_placement" as const,
+      })),
+    );
   if (rubric.has("exhibit_enforcement"))
-    findings.push(...checkVisualCompleteness(input).map((f) => ({ ...f, dimension: "exhibit_enforcement" as const })));
+    findings.push(
+      ...checkVisualCompleteness(input).map((f) => ({
+        ...f,
+        dimension: "exhibit_enforcement" as const,
+      })),
+    );
 
   // Contract dimensions.
   if (rubric.has("format_fit")) findings.push(...checkFormatFit(input));
-  if (rubric.has("decision_clarity")) findings.push(...checkDecisionClarity(input));
-  if (rubric.has("client_specificity")) findings.push(...checkClientSpecificity(input));
+  if (rubric.has("decision_clarity"))
+    findings.push(...checkDecisionClarity(input));
+  if (rubric.has("client_specificity"))
+    findings.push(...checkClientSpecificity(input));
   if (rubric.has("so_what_quality")) findings.push(...checkSoWhat(input));
-  if (rubric.has("evidence_discipline")) findings.push(...checkEvidenceDiscipline(input));
+  if (rubric.has("evidence_discipline"))
+    findings.push(...checkEvidenceDiscipline(input));
 
   const bc = checkBusinessMode(input);
   findings.push(
-    ...bc.findings.map((f) => ({ ...f, dimension: "artifact_intent" as const })),
+    ...bc.findings.map((f) => ({
+      ...f,
+      dimension: "artifact_intent" as const,
+    })),
   );
 
   // Story-Led / Exhibit-Led checks — self-gate on profile flags (v2 redo).
