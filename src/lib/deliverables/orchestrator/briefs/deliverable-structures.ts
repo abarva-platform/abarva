@@ -972,6 +972,70 @@ const MOVES_OPERATING_MODEL: DeliverableStructure = {
   ],
 };
 
+const MOVES_REQUIREMENTS_TRACEABILITY: DeliverableStructure = {
+  module: "moves",
+  deliverableType: "requirements_traceability",
+  purpose:
+    "Prove that approved requirements, evidence, design choices, controls, and open decisions remain traceable before the design gate closes.",
+  decisionToSupport:
+    "Approve the traceability baseline for roadmap and business-case planning, or hold for unresolved evidence/design gaps.",
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not repeat the full target architecture, solution design, operating model, discovery report, or implementation roadmap.",
+    "Do not add broad methodology, vendor landscape, funding narrative, or future-state design sections.",
+    "Do not invent requirements, owners, metrics, systems, dates, or commercial values to fill the matrix.",
+  ],
+  sections: [
+    s(
+      "traceability_verdict",
+      "Traceability Verdict",
+      "The gate-ready answer: traceable / traceable with conditions / hold, and why.",
+      "mixed",
+      [],
+      "Keep under 180 words. State the verdict, material conditions, and what decision this enables.",
+    ),
+    s(
+      "requirements_baseline",
+      "Requirements Baseline",
+      "The confirmed and open requirement set, grouped by business capability, process, data, technology, controls, and adoption.",
+      "mixed",
+      [],
+      "Keep under 450 words using a compact requirements table; do not narrate every row.",
+    ),
+    s(
+      "evidence_design_trace",
+      "Evidence-to-Design Trace Matrix",
+      "Map requirements to evidence, design component, control, owner, and status.",
+      "mixed",
+      [],
+      "Keep under 650 words using one traceability matrix; tables carry the detail, prose only explains exceptions.",
+    ),
+    s(
+      "gaps_controls",
+      "Open Gaps, Controls & Acceptance Rules",
+      "Unresolved evidence, assumptions to validate, design controls, and acceptance rules required before the next phase.",
+      "mixed",
+      [],
+      "Keep under 450 words using a single exception/control table.",
+    ),
+    s(
+      "recommendation",
+      "Recommendation & Next Actions",
+      "Approve, approve with conditions, or hold the traceability baseline with named owner actions.",
+      "mixed",
+      [],
+      "Keep under 120 words.",
+    ),
+  ],
+  requiredSectionKeys: [
+    "traceability_verdict",
+    "requirements_baseline",
+    "evidence_design_trace",
+    "gaps_controls",
+    "recommendation",
+  ],
+};
+
 const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
   module: "moves",
   deliverableType: "sourcing_strategy",
@@ -1704,6 +1768,7 @@ export const DELIVERABLE_STRUCTURES: DeliverableStructure[] = [
   MOVES_TARGET_ARCHITECTURE,
   MOVES_SOLUTION_DESIGN,
   MOVES_OPERATING_MODEL,
+  MOVES_REQUIREMENTS_TRACEABILITY,
   MOVES_SOURCING_STRATEGY,
   MOVES_ESTIMATE,
   MOVES_VALUE,
