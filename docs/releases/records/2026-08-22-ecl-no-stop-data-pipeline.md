@@ -38,7 +38,7 @@ Adds a governed no-stop CI lane for the Enterprise Context Ledger build work. Th
 - Pass: `python3 -m py_compile scripts/ecl/write_legacy_table_retirement_map.py scripts/ecl/run_commercial_contract_proof.py`
 - Pass: `python3 scripts/ecl/run_commercial_contract_proof.py && python3 scripts/ecl/write_legacy_table_retirement_map.py`
 - Pass: Commercial proof acceptance is `accepted=true` with zero issues.
-- Pass: Legacy retirement map reports 562 repo-visible `CREATE TABLE` statements, 483 unique table names, and required execution columns.
+- Pass: Legacy retirement map reports 895 repo-visible `CREATE TABLE` statements, 734 unique table names, and required execution columns.
 - Pass: ZIP proof packages were generated locally for the commercial proof and retirement-map slices.
 - Not run: GitHub Actions workflow execution, because this change is not yet pushed to the remote PR lane.
 

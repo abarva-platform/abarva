@@ -25,6 +25,15 @@ DEFAULT_INPUT_ROOT = Path("reports/meridian-source-5-contract-layer-cube-proof-2
 DEFAULT_OUT_DIR = Path("outputs/ecl-commercial-contract-supply-correction-2026-08-22")
 SOURCE_HASH_LABEL = "commercial-contract-supply-correction"
 CENT = Decimal("0.01")
+LEGACY_REFERENCE_APPLICATION_NAMES = {
+    "General ledger and close reporting",
+    "Microsoft 365 Copilot",
+    "On-prem SQL Server reporting marts",
+    "Power BI reporting estate",
+    "Provider contract repository",
+    "ServiceNow AI / Now Assist",
+    "Tableau reporting estate",
+}
 
 CONTRACT_VALUE_OVERRIDES = {
     "MER-CTR-RCM-001": {
@@ -227,6 +236,45 @@ def stable_uuid(*parts: object) -> str:
 def read_csv(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as handle:
         return list(csv.DictReader(handle))
+
+
+def write_scope_active_application_reconciliation(out_dir: Path, scope_links: list[dict[str, object]]) -> None:
+    """Write a stable reference-only comparison for dense-build scope gaps."""
+
+    fieldnames = [
+        "tenant_key",
+        "source_system",
+        "source_object",
+        "source_record_id",
+        "extract_job_id",
+        "extract_timestamp",
+        "as_of_date",
+        "contract_id",
+        "scope_type",
+        "application_name",
+        "business_domain",
+        "allocation_percent",
+        "mapping_basis",
+        "review_state",
+        "active_application_exact_match",
+        "active_application_near_match",
+    ]
+    rows: list[dict[str, object]] = []
+    for row in scope_links:
+        name = str(row["application_name"])
+        exact_match = name in LEGACY_REFERENCE_APPLICATION_NAMES
+        rows.append(
+            {
+                **row,
+                "active_application_exact_match": "yes" if exact_match else "no",
+                "active_application_near_match": name if exact_match else "",
+            }
+        )
+
+    with (out_dir / "scope_active_application_reconciliation.csv").open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def write_csv(path: Path, rows: list[dict[str, object]], fieldnames: list[str] | None = None) -> None:
@@ -1060,6 +1108,7 @@ def build_source_room(input_root: Path, out_dir: Path) -> dict[str, list[dict[st
                     "review_state": "not_reviewed",
                 }
             )
+    write_scope_active_application_reconciliation(out_dir, scope_links)
 
     protection_rows = build_protection_assessment_rows(contract_rows, invoice_rows, market_benchmark_rows)
     clause_rows.extend(build_protection_clause_rows(contract_rows, protection_rows))

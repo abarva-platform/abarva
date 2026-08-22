@@ -129,10 +129,10 @@ jobs:
             failures.append(f"artifact hash count={len(manifest.get('artifact_hashes', []))}, expected 26")
           if len(manifest.get("source_room_hashes", [])) != 67:
             failures.append(f"source-room hash count={len(manifest.get('source_room_hashes', []))}, expected 67")
-          if summary.get("create_table_statements") != 562:
-            failures.append(f"CREATE TABLE count={summary.get('create_table_statements')}, expected 562")
-          if summary.get("unique_table_names") != 483:
-            failures.append(f"unique table count={summary.get('unique_table_names')}, expected 483")
+          if summary.get("create_table_statements") != 895:
+            failures.append(f"CREATE TABLE count={summary.get('create_table_statements')}, expected 895")
+          if summary.get("unique_table_names") != 734:
+            failures.append(f"unique table count={summary.get('unique_table_names')}, expected 734")
           required_columns = {
               "owner_to_confirm",
               "live_readback_required",

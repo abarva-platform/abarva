@@ -4,24 +4,24 @@ Static repo-visible SQL inventory only. This does not connect to Azure/Postgres,
 
 ## Summary
 
-| Metric                             | Count |
-| ---------------------------------- | ----: |
-| CREATE TABLE statements            |   562 |
-| Unique table names                 |   483 |
-| Duplicate table names across files |    75 |
+| Metric | Count |
+| --- | ---: |
+| CREATE TABLE statements | 895 |
+| Unique table names | 734 |
+| Duplicate table names across files | 133 |
 
 ## Status Counts
 
-| Status                               | Count |
-| ------------------------------------ | ----: |
-| `ARCHIVE_ONLY`                       |    25 |
-| `HOLD_PLATFORM_CONTROL`              |    30 |
-| `HOLD_UNTIL_ECL_CONTEXT_PARITY`      |    60 |
-| `HOLD_UNTIL_LIVE_READBACK`           |   226 |
-| `NEW_ECL_TARGET`                     |    26 |
-| `REPLACE_OR_BRIDGE`                  |     1 |
-| `REPLACE_WITH_ECL_PROJECTION`        |   161 |
-| `REVIEW_FOR_MOVES_OR_CONTEXT_BRIDGE` |    33 |
+| Status | Count |
+| --- | ---: |
+| `ARCHIVE_ONLY` | 25 |
+| `HOLD_PLATFORM_CONTROL` | 46 |
+| `HOLD_UNTIL_ECL_CONTEXT_PARITY` | 153 |
+| `HOLD_UNTIL_LIVE_READBACK` | 394 |
+| `NEW_ECL_TARGET` | 26 |
+| `REPLACE_OR_BRIDGE` | 1 |
+| `REPLACE_WITH_ECL_PROJECTION` | 215 |
+| `REVIEW_FOR_MOVES_OR_CONTEXT_BRIDGE` | 35 |
 
 ## Boundary
 
