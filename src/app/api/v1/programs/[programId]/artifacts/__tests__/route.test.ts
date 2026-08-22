@@ -399,6 +399,25 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
           },
         },
       },
+      {
+        id: "gen-new-target-editable",
+        artifactType: "move_board_pack",
+        sourceArtifactRef: "move-x",
+        outputFormat: "docx",
+        blobUrl: "b",
+        qualityScore: 0.88,
+        renderedAt: "2026-08-22T19:59:19.327Z",
+        renderedBy: "u",
+        quarantineReason: null,
+        supersededBy: null,
+        metadata: {
+          deliverableTypeKey: "target_state_architecture",
+          renderableDoc: {
+            title: "Target-State Architecture — Editable Deliverable",
+            deliverableTypeKey: "target_state_architecture",
+          },
+        },
+      },
     ];
 
     const res = await GET(
@@ -410,6 +429,7 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
     };
     expect(res.status).toBe(200);
     expect(json.artifacts.map((artifact) => artifact.artifactId)).toEqual([
+      "gen-new-target-editable",
       "gen-new-target",
       "gen-p2",
     ]);
@@ -457,6 +477,25 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
           },
         },
       },
+      {
+        id: "gen-new-target-editable",
+        artifactType: "move_board_pack",
+        sourceArtifactRef: "move-x",
+        outputFormat: "docx",
+        blobUrl: "b",
+        qualityScore: 0.88,
+        renderedAt: "2026-08-22T19:59:19.327Z",
+        renderedBy: "u",
+        quarantineReason: null,
+        supersededBy: null,
+        metadata: {
+          deliverableTypeKey: "target_state_architecture",
+          renderableDoc: {
+            title: "Target-State Architecture — Editable Deliverable",
+            deliverableTypeKey: "target_state_architecture",
+          },
+        },
+      },
     ];
 
     const res = await GET(
@@ -468,6 +507,7 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
     };
     expect(res.status).toBe(200);
     expect(json.artifacts.map((artifact) => artifact.artifactId)).toEqual([
+      "gen-new-target-editable",
       "gen-new-target",
     ]);
   });
