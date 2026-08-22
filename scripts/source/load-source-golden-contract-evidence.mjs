@@ -189,6 +189,82 @@ function nonEmpty(value) {
   return text ? text : null;
 }
 
+function validatePackageCsvSemantics() {
+  const inventory = readCsv("synthetic/contract_pdf_document_inventory.csv");
+  const pages = readCsv("synthetic/contract_pdf_page_text.csv");
+  const inventoryByFile = new Map(
+    inventory.map((row) => [row.source_file_id, row]),
+  );
+  const pageCounts = new Map();
+  const failures = [];
+
+  for (const [index, row] of pages.entries()) {
+    const line = index + 2;
+    const file = inventoryByFile.get(row.source_file_id);
+    if (!file) {
+      failures.push(
+        `contract_pdf_page_text.csv:${line}: source_file_id ${row.source_file_id} is not in contract_pdf_document_inventory.csv`,
+      );
+      continue;
+    }
+    if (row.vendor_name !== file.vendor_name) {
+      failures.push(
+        `contract_pdf_page_text.csv:${line}: vendor_name ${JSON.stringify(
+          row.vendor_name,
+        )} does not match inventory ${JSON.stringify(file.vendor_name)}`,
+      );
+    }
+    if (row.mapping_status !== file.mapping_status) {
+      failures.push(
+        `contract_pdf_page_text.csv:${line}: mapping_status ${JSON.stringify(
+          row.mapping_status,
+        )} does not match inventory ${JSON.stringify(file.mapping_status)}`,
+      );
+    }
+    const pageNumber = intValue(row.source_page);
+    if (pageNumber == null || String(pageNumber) !== row.source_page.trim()) {
+      failures.push(
+        `contract_pdf_page_text.csv:${line}: source_page must be an integer; got ${JSON.stringify(
+          row.source_page,
+        )}`,
+      );
+    } else if (pageNumber < 1 || pageNumber > intValue(file.page_count)) {
+      failures.push(
+        `contract_pdf_page_text.csv:${line}: source_page ${pageNumber} is outside inventory page_count ${file.page_count}`,
+      );
+    }
+    if (!row.page_text) {
+      failures.push(`contract_pdf_page_text.csv:${line}: page_text is required`);
+    }
+    const actualHash = sha256(row.page_text || "");
+    if (row.page_text_sha256 !== actualHash) {
+      failures.push(
+        `contract_pdf_page_text.csv:${line}: page_text_sha256 does not match page_text`,
+      );
+    }
+    pageCounts.set(
+      row.source_file_id,
+      (pageCounts.get(row.source_file_id) || 0) + 1,
+    );
+  }
+
+  for (const file of inventory) {
+    const expected = intValue(file.page_count);
+    const actual = pageCounts.get(file.source_file_id) || 0;
+    if (actual !== expected) {
+      failures.push(
+        `${file.source_file_id}: expected ${expected} page text rows, got ${actual}`,
+      );
+    }
+  }
+
+  if (failures.length > 0) {
+    throw new Error(
+      `Golden evidence package semantic validation failed:\n${failures.join("\n")}`,
+    );
+  }
+}
+
 function relPackagePath(relativePath) {
   const repoRelativePackageDir = path.relative(REPO_ROOT, activePackageDir);
   if (!repoRelativePackageDir.startsWith("..") && !path.isAbsolute(repoRelativePackageDir)) {
@@ -959,6 +1035,7 @@ async function reconcile(client, args) {
 async function main() {
   const args = parseArgs();
   activePackageDir = args.packageDir;
+  validatePackageCsvSemantics();
   const manifest = readJson("manifest.json");
   const qualityReport = readJson("documents/pdf_extraction_quality_report.json");
   const plan = {
