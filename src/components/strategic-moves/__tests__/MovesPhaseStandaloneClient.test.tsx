@@ -212,6 +212,21 @@ const completeP2CaptureValues = {
     "Proceed to approach selection with the current-state caveats attached.",
 };
 
+const completeP1CaptureValues = {
+  sponsor_commitment:
+    "Sponsor confirms weekly charter review cadence and decision authority.",
+  scope_boundary:
+    "In scope: Airport turnaround operations.\n\nOut of scope: Crew scheduling policy changes.",
+  success_criteria:
+    "Discovery succeeds when the team validates the delay baseline and controllable handoff classes.",
+  stakeholder_map:
+    "Sponsor, operations control, station leaders, maintenance, technology, and finance are named for Discovery.",
+  decision_rights:
+    "The sponsor and governance committee approve scope, funding, and phase advancement.",
+  evidence_plan:
+    "Collect schedules, delay codes, aircraft assignment, crew handoff, maintenance, and recovery evidence.",
+};
+
 function makeCurrentStateReadiness(): ReadinessReport {
   return {
     phase: 2,
@@ -3172,6 +3187,34 @@ describe("MovesPhaseStandaloneClient", () => {
         },
       }),
     );
+  });
+
+  it("does not offer aVa draft action when phase inputs are already complete", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialPhaseCaptureValues={completeP1CaptureValues}
+        move={makeMove({
+          currentPhase: 1,
+          phaseLabel: "P1 Charter",
+        })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Ask aVa/i }));
+
+    expect(
+      screen.getByText("Inputs complete. Ask aVa to refine or check blockers."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Draft proposed inputs" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Check blockers" }),
+    ).toBeInTheDocument();
   });
 
   it("turns streamed capture-field artifacts into local drafts without saving", async () => {

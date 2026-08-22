@@ -2418,16 +2418,24 @@ export function MovesPhaseStandaloneClient({
               </div>
               {phase.phase >= 1 ? (
                 <div className="mxw-ava-assist">
-                  <span>aVa can draft. You review and save.</span>
-                  <button
-                    type="button"
-                    onClick={() => void requestAvaPhaseInputDrafts()}
-                    disabled={avaStreaming || avaDraftStatus === "loading"}
-                  >
-                    {avaDraftStatus === "loading"
-                      ? "Drafting..."
-                      : "Draft proposed inputs"}
-                  </button>
+                  {phaseCaptureMissingCount > 0 ? (
+                    <>
+                      <span>aVa can draft. You review and save.</span>
+                      <button
+                        type="button"
+                        onClick={() => void requestAvaPhaseInputDrafts()}
+                        disabled={avaStreaming || avaDraftStatus === "loading"}
+                      >
+                        {avaDraftStatus === "loading"
+                          ? "Drafting..."
+                          : "Draft proposed inputs"}
+                      </button>
+                    </>
+                  ) : (
+                    <span>
+                      Inputs complete. Ask aVa to refine or check blockers.
+                    </span>
+                  )}
                   <button
                     type="button"
                     onClick={() =>
