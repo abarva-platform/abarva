@@ -1,4 +1,7 @@
-import { sanitizeClientFacingArtifactHtml } from "../client-facing-artifact-sanitize";
+import {
+  sanitizeClientFacingArtifactHtml,
+  sanitizeClientFacingArtifactMarkdown,
+} from "../client-facing-artifact-sanitize";
 
 describe("sanitizeClientFacingArtifactHtml", () => {
   it("rewrites priority shorthand without removing the evidence appendix", () => {
@@ -82,6 +85,21 @@ describe("sanitizeClientFacingArtifactHtml", () => {
     // …while the element id and the download URL (both UUIDs) are untouched.
     expect(html).toContain('id="d15d16a8-e5ad-4a0a-a1cf-93e06a3936d0"');
     expect(html).toContain(
+      "/api/v1/artifacts/48dc0b3f-0531-4a83-82a6-1ead302753df",
+    );
+  });
+
+  it("redacts bare UUIDs in generated markdown body text without corrupting markdown URLs", () => {
+    const markdown = sanitizeClientFacingArtifactMarkdown(`
+      The architecture context referenced 2c5b4757-2bc5-4efc-8fdd-02b9b2f38a12 in prose.
+      Keep the durable artifact link /api/v1/artifacts/48dc0b3f-0531-4a83-82a6-1ead302753df intact.
+    `);
+
+    expect(markdown).toContain("(internal reference on file) in prose");
+    expect(markdown).not.toMatch(
+      /referenced\s+2c5b4757-2bc5-4efc-8fdd-02b9b2f38a12/i,
+    );
+    expect(markdown).toContain(
       "/api/v1/artifacts/48dc0b3f-0531-4a83-82a6-1ead302753df",
     );
   });

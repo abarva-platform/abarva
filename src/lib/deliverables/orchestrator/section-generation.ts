@@ -21,6 +21,7 @@ import type {
   RenderableTable,
   SourceRegisterEntry,
 } from "./types";
+import { sanitizeClientFacingArtifactMarkdown } from "@/lib/deliverables/client-facing-artifact-sanitize";
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 
@@ -492,7 +493,9 @@ export function assembleDeliverable(
   // itself one of the gate's own "supported" markers.
   const finalSections = cleanedSections.map((section) => ({
     ...section,
-    bodyMarkdown: repairUncitedFigures(section.bodyMarkdown),
+    bodyMarkdown: sanitizeClientFacingArtifactMarkdown(
+      repairUncitedFigures(section.bodyMarkdown),
+    ),
     rawBodyMarkdown: section.rawBodyMarkdown ?? section.bodyMarkdown,
   }));
   const combinedClaims: UnsupportedFigureClaim[] = [
