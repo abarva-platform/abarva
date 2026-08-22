@@ -15,6 +15,9 @@ describe("Source workspace requested-client routing", () => {
     expect(pageSource).toContain("requestedClient,");
     expect(pageSource).toContain("allowFallback: !requestedClient");
     expect(pageSource).toContain("getActiveClientRow(tenant.appClientKey)");
+    expect(pageSource).toContain(
+      "sourceClientKey={tenant?.appClientKey ?? activeClient?.key ?? tenantKey}",
+    );
   });
 
   it("does not fall back to the session tenant when an explicit client cannot resolve", () => {

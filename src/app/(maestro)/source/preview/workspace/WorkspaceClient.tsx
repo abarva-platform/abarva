@@ -34,6 +34,28 @@ const SOURCE_WORKSPACE_AGENT = {
 };
 const SOURCE_WORKSPACE_AGENT_API_URL = "/api/intelligence/ask";
 
+function buildContractApiUrl(
+  contractId: string,
+  sourceClientKey: string | null | undefined,
+  suffix = "",
+  extraParams: Record<string, string | null | undefined> = {},
+): string {
+  const params = new URLSearchParams();
+  const client = sourceClientKey?.trim();
+  if (client) params.set("client", client);
+  for (const [key, value] of Object.entries(extraParams)) {
+    const trimmed = value?.trim();
+    if (trimmed) params.set(key, trimmed);
+  }
+  const query = params.toString();
+  return (
+    "/api/source/workspace/contract/" +
+    encodeURIComponent(contractId) +
+    suffix +
+    (query ? `?${query}` : "")
+  );
+}
+
 function eventText(event: Record<string, unknown>): string {
   if (typeof event.text === "string") return event.text;
   if (typeof event.delta === "string") return event.delta;
@@ -93,11 +115,13 @@ function resolveSourceAssistantAnswerText(
 export function WorkspaceClient({
   portfolio,
   tenantName,
+  sourceClientKey,
   initialContractId,
   initialContractTab,
 }: {
   portfolio: SourceWorkspacePortfolioData;
   tenantName: string;
+  sourceClientKey?: string | null;
   initialContractId?: string | null;
   initialContractTab?: string | null;
 }) {
@@ -124,33 +148,36 @@ export function WorkspaceClient({
     [],
   );
 
-  const fetchContractDetail = useCallback((contractId: string) => {
-    setStateRaw((prev) => {
-      if (prev.contractDetail[contractId]) return prev; // already loaded/loading
-      return {
-        ...prev,
-        contractDetail: { ...prev.contractDetail, [contractId]: "loading" },
-      };
-    });
-    fetch("/api/source/workspace/contract/" + encodeURIComponent(contractId))
-      .then((r) =>
-        r.ok
-          ? (r.json() as Promise<Contract360Response>)
-          : Promise.reject(new Error(String(r.status))),
-      )
-      .then((view) =>
-        setStateRaw((prev) => ({
+  const fetchContractDetail = useCallback(
+    (contractId: string) => {
+      setStateRaw((prev) => {
+        if (prev.contractDetail[contractId]) return prev; // already loaded/loading
+        return {
           ...prev,
-          contractDetail: { ...prev.contractDetail, [contractId]: view },
-        })),
-      )
-      .catch(() =>
-        setStateRaw((prev) => ({
-          ...prev,
-          contractDetail: { ...prev.contractDetail, [contractId]: "error" },
-        })),
-      );
-  }, []);
+          contractDetail: { ...prev.contractDetail, [contractId]: "loading" },
+        };
+      });
+      fetch(buildContractApiUrl(contractId, sourceClientKey))
+        .then((r) =>
+          r.ok
+            ? (r.json() as Promise<Contract360Response>)
+            : Promise.reject(new Error(String(r.status))),
+        )
+        .then((view) =>
+          setStateRaw((prev) => ({
+            ...prev,
+            contractDetail: { ...prev.contractDetail, [contractId]: view },
+          })),
+        )
+        .catch(() =>
+          setStateRaw((prev) => ({
+            ...prev,
+            contractDetail: { ...prev.contractDetail, [contractId]: "error" },
+          })),
+        );
+    },
+    [sourceClientKey],
+  );
 
   const startContractOptimization = useCallback(
     (contractId: string, opportunityId?: string | null) => {
@@ -161,14 +188,10 @@ export function WorkspaceClient({
           [contractId]: { status: "loading" },
         },
       }));
-      const opportunityQuery = opportunityId
-        ? `?opportunityId=${encodeURIComponent(opportunityId)}`
-        : "";
       fetch(
-        "/api/source/workspace/contract/" +
-          encodeURIComponent(contractId) +
-          "/optimization" +
-          opportunityQuery,
+        buildContractApiUrl(contractId, sourceClientKey, "/optimization", {
+          opportunityId,
+        }),
         {
           method: "POST",
           headers: opportunityId
@@ -224,7 +247,7 @@ export function WorkspaceClient({
           }));
         });
     },
-    [],
+    [sourceClientKey],
   );
 
   useEffect(() => {

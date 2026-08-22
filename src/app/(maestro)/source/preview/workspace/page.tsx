@@ -156,6 +156,7 @@ export default async function SourceWorkspacePreviewPage({
       <WorkspaceClient
         portfolio={portfolio}
         tenantName={tenantName}
+        sourceClientKey={tenant?.appClientKey ?? activeClient?.key ?? tenantKey}
         initialContractId={requestedContractId}
         initialContractTab={requestedContractTab}
       />
