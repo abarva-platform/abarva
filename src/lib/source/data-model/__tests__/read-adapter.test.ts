@@ -4,6 +4,7 @@ import {
   getContractEvidenceOverview,
   getContractEvidencePerformanceSummary,
   getContractOptimizationEvidencePack,
+  listContract360,
   listContractEvidencePricing,
   listContractEvidenceScope,
   listContractVendor360,
@@ -175,6 +176,86 @@ describe("listContractVendor360 tenant-key resolution", () => {
       expect.stringContaining("source.contract_360"),
       [["meridian-health"], "MER-CTR-RCM-001"],
     ]);
+  });
+
+  it("keeps Meridian golden evidence contracts discoverable when base Contract 360 rows already exist", async () => {
+    run.mockImplementation(async (sql: string) => {
+      if (sql.startsWith("SELECT set_config")) return [];
+      if (
+        sql.includes("source.contract_360") &&
+        sql.includes("AND contract_id = $2")
+      ) {
+        return [];
+      }
+      if (sql.includes("source.contract_360")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            contract_id: "CTR-9C1F237BBC",
+            vendor_ref: "VND-EPIC",
+            vendor_name: "Epic Systems Corporation",
+            vendor_category: "EHR",
+            contract_name: "Epic Systems Corporation Rate Card Agreement",
+            annual_value: "86200000",
+            total_committed_value: "258600000",
+            actual_annual_spend: "86200000",
+            auto_renew: false,
+            annual_value_conflict_flag: false,
+            total_committed_value_conflict_flag: false,
+            scoped_application_count: "12",
+            critical_application_count: "8",
+            operational_evidence_gap: false,
+            initiative_dependency_count: "0",
+          },
+        ];
+      }
+      if (sql.includes("source.golden_contract_overview")) {
+        return [
+          {
+            tenant_key: "meridian_health_global",
+            contract_id: "CF-001",
+            vendor_ref: "VND-001",
+            vendor_name: "Crestline Analytics Services LLC",
+            vendor_category: "data analytics managed services",
+            contract_name: "Data and Analytics Managed Services",
+            scope_summary:
+              "Crestline operates Meridian's enterprise analytics managed-services tower.",
+            annual_value: "35000000",
+            total_committed_value: "140000000",
+            committed_annual_spend: "35000000",
+            actual_annual_spend: "31820000",
+            end_date: "2028-07-31",
+            notice_period_days: "92",
+            auto_renew: false,
+            renewal_owner_ref: "LDR-MER-SOURCE-011",
+            source_confidence: "0.86",
+            resolved_annual_value: "35000000",
+            resolved_total_committed_value: "140000000",
+            annual_value_conflict_flag: false,
+            total_committed_value_conflict_flag: false,
+            scoped_application_count: "9",
+            critical_application_count: "4",
+            linked_budget_amount: "35000000",
+            linked_actual_amount: "31820000",
+            linked_budget_lines: null,
+            cloud_sev1_sev2_incidents: "120",
+            operational_evidence_gap: false,
+            initiative_dependency_count: "0",
+          },
+        ];
+      }
+      return [];
+    });
+
+    const rows = await listContract360("meridian");
+    const contract = await getContract360("meridian", "CF-001");
+
+    expect(rows.map((row) => row.contract_id)).toEqual([
+      "CTR-9C1F237BBC",
+      "CF-001",
+    ]);
+    expect(contract?.contract_id).toBe("CF-001");
+    expect(contract?.vendor_name).toBe("Crestline Analytics Services LLC");
   });
 
   it("quantifies unapproved rate-card variance inside recoverable leakage evidence", async () => {

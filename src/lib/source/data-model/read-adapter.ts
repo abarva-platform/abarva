@@ -186,15 +186,24 @@ export async function listContractVendor360(
       tenantKey,
       "SELECT * FROM source.contract_vendor_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
     );
-  if (governedRows.length > 0) return governedRows;
+  const governedWithGolden = await mergeGoldenContract360Overlay(
+    tenantKey,
+    governedRows,
+  );
+  if (governedWithGolden.length > 0) return governedWithGolden;
   if (isMeridianTenantKey(tenantKey)) {
     const candidate = await listMeridianVendor360CandidateContracts();
-    if (candidate.length > 0) return candidate;
+    const candidateWithGolden = await mergeGoldenContract360Overlay(
+      tenantKey,
+      candidate,
+    );
+    if (candidateWithGolden.length > 0) return candidateWithGolden;
   }
-  return queryForTenant<SourceContractVendor360Row>(
+  const rows = await queryForTenant<SourceContractVendor360Row>(
     tenantKey,
     "SELECT * FROM source.contract_vendor_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
   );
+  return mergeGoldenContract360Overlay(tenantKey, rows);
 }
 
 export async function listContract360(
@@ -205,12 +214,20 @@ export async function listContract360(
       tenantKey,
       "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
     );
-  if (governedRows.length > 0) return governedRows;
+  const governedWithGolden = await mergeGoldenContract360Overlay(
+    tenantKey,
+    governedRows,
+  );
+  if (governedWithGolden.length > 0) return governedWithGolden;
   if (isMeridianTenantKey(tenantKey)) {
     const candidate = await listMeridianVendor360CandidateContracts();
-    if (candidate.length > 0) return candidate;
+    const candidateWithGolden = await mergeGoldenContract360Overlay(
+      tenantKey,
+      candidate,
+    );
+    if (candidateWithGolden.length > 0) return candidateWithGolden;
   }
-  return withMeridianFallback(
+  const rows = await withMeridianFallback(
     tenantKey,
     () =>
       queryForTenant<SourceContract360Row>(
@@ -294,6 +311,110 @@ export async function listContract360(
          where cf.tenant_key = $1
          order by annual_value desc nulls last`,
       ),
+  );
+  return mergeGoldenContract360Overlay(tenantKey, rows);
+}
+
+async function mergeGoldenContract360Overlay<
+  R extends SourceContractVendor360Row,
+>(tenantKey: string, rows: readonly R[]): Promise<R[]> {
+  const goldenRows = await listGoldenContract360Overlay(tenantKey);
+  if (goldenRows.length === 0) return [...rows];
+
+  const byContractId = new Map<string, R>();
+  for (const row of rows) byContractId.set(row.contract_id, row);
+  for (const golden of goldenRows) {
+    byContractId.set(golden.contract_id, golden as unknown as R);
+  }
+  return [...byContractId.values()].sort(
+    (left, right) =>
+      (numberValue(right.resolved_annual_value) ??
+        numberValue(right.annual_value) ??
+        -1) -
+      (numberValue(left.resolved_annual_value) ??
+        numberValue(left.annual_value) ??
+        -1),
+  );
+}
+
+function listGoldenContract360Overlay(
+  tenantKey: string,
+): Promise<SourceContract360Row[]> {
+  return safeQueryForTenant<SourceContract360Row>(
+    tenantKey,
+    `WITH latest_overview AS (
+       SELECT DISTINCT ON (contract_id)
+         *
+        FROM source.golden_contract_overview
+       WHERE _tenant_key = ANY($1::text[])
+       ORDER BY contract_id, _loaded_at DESC NULLS LAST, _source_row_number DESC NULLS LAST
+     ), scope AS (
+       SELECT
+         contract_id,
+         COUNT(*)::int AS scoped_application_count,
+         COUNT(*) FILTER (
+           WHERE lower(coalesce(criticality::text, '')) IN ('critical', 'tier 1', 'tier1', 'high')
+         )::int AS critical_application_count,
+         COALESCE(SUM(NULLIF(annual_run_cost_usd::text, '')::numeric), 0)::numeric AS linked_budget_amount
+        FROM source.golden_contract_application_scope
+       WHERE _tenant_key = ANY($1::text[])
+       GROUP BY contract_id
+     ), performance AS (
+       SELECT
+         contract_id,
+         COALESCE(SUM(NULLIF(sev1_incident_count::text, '')::numeric), 0)::int
+           + COALESCE(SUM(NULLIF(sev2_incident_count::text, '')::numeric), 0)::int
+           AS cloud_sev1_sev2_incidents,
+         COALESCE(SUM(NULLIF(service_credits_earned_usd::text, '')::numeric), 0)::numeric
+           AS service_credits_earned_usd,
+         COALESCE(SUM(NULLIF(service_credits_claimed_usd::text, '')::numeric), 0)::numeric
+           AS service_credits_claimed_usd
+        FROM source.golden_contract_sla_incident_service_credit_monthly
+       WHERE _tenant_key = ANY($1::text[])
+       GROUP BY contract_id
+     )
+     SELECT
+       overview._tenant_key AS tenant_key,
+       overview.contract_id,
+       overview.vendor_id AS vendor_ref,
+       overview.vendor_name,
+       overview.contract_archetype AS vendor_category,
+       overview.contract_name,
+       overview.contract_english_overview AS scope_summary,
+       NULLIF(overview.annual_value_usd::text, '')::numeric AS annual_value,
+       NULLIF(overview.total_committed_value_usd::text, '')::numeric AS total_committed_value,
+       NULLIF(overview.annual_value_usd::text, '')::numeric AS committed_annual_spend,
+       NULLIF(overview.actual_annual_spend_usd::text, '')::numeric AS actual_annual_spend,
+       NULLIF(overview.end_date::text, '')::date AS end_date,
+       NULLIF(overview.notice_period_days::text, '')::int AS notice_period_days,
+       lower(coalesce(overview.auto_renew::text, '')) IN ('yes', 'true', '1') AS auto_renew,
+       CASE
+         WHEN NULLIF(overview.notice_deadline::text, '') IS NOT NULL
+         THEN 'notice_deadline_' || overview.notice_deadline::text
+         ELSE NULL
+       END AS renewal_decision_state,
+       overview.decision_owner_role_ref AS renewal_owner_ref,
+       'Documented in golden contract evidence package.' AS benchmarking_clause,
+       'See executed agreement, order form, renewal, and termination clauses.' AS exit_rights_summary,
+       'Evaluate with sourcing strategy and supplier alternative evidence.' AS alternatives_available,
+       overview.business_functions_supported AS concentration_note,
+       0.86::numeric AS source_confidence,
+       NULLIF(overview.annual_value_usd::text, '')::numeric AS resolved_annual_value,
+       NULLIF(overview.total_committed_value_usd::text, '')::numeric AS resolved_total_committed_value,
+       false AS annual_value_conflict_flag,
+       false AS total_committed_value_conflict_flag,
+       COALESCE(scope.scoped_application_count, 0) AS scoped_application_count,
+       COALESCE(scope.critical_application_count, 0) AS critical_application_count,
+       scope.linked_budget_amount,
+       NULLIF(overview.actual_annual_spend_usd::text, '')::numeric AS linked_actual_amount,
+       NULL::int AS linked_budget_lines,
+       COALESCE(performance.cloud_sev1_sev2_incidents, 0) AS cloud_sev1_sev2_incidents,
+       false AS operational_evidence_gap,
+       0 AS initiative_dependency_count
+      FROM latest_overview overview
+      LEFT JOIN scope USING (contract_id)
+      LEFT JOIN performance USING (contract_id)
+     ORDER BY annual_value DESC NULLS LAST`,
   );
 }
 
