@@ -3133,6 +3133,9 @@ describe("MovesPhaseStandaloneClient", () => {
     await waitFor(() => {
       expect(screen.getByText(/1 cited draft ready/i)).toBeInTheDocument();
     });
+    expect(
+      screen.getByText(/Review a field; inserting does not save/i),
+    ).toBeInTheDocument();
     const draftCall = (global.fetch as jest.Mock).mock.calls.find(([url]) =>
       String(url).includes("/phase-input-draft"),
     );
@@ -3215,6 +3218,17 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByRole("button", { name: "Check blockers" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "What is in and out of scope?" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Which success metric is weakest?" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: "What assumption should be challenged first?",
+      }),
+    ).not.toBeInTheDocument();
   });
 
   it("turns streamed capture-field artifacts into local drafts without saving", async () => {
@@ -3267,6 +3281,9 @@ describe("MovesPhaseStandaloneClient", () => {
     await waitFor(() => {
       expect(screen.getByText(/1 cited draft ready/i)).toBeInTheDocument();
     });
+    expect(
+      screen.getByText(/Review a field; inserting does not save/i),
+    ).toBeInTheDocument();
     const scopeButtons = screen.getAllByRole("button", {
       name: "Scope boundary",
     });

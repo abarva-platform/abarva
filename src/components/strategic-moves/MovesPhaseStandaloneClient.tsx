@@ -1174,6 +1174,8 @@ export function MovesPhaseStandaloneClient({
     },
     [avaDraftValues, move.id, phase.phase, phaseCaptureRevision],
   );
+  const visibleAvaQuestions =
+    phase.phase === 1 ? phase.avaQuestions.slice(0, 2) : phase.avaQuestions;
   useEffect(() => {
     if (phase.phase === 0 || phaseCaptureDirtyKeys.length === 0) return;
 
@@ -2449,43 +2451,18 @@ export function MovesPhaseStandaloneClient({
                   </button>
                 </div>
               ) : null}
-              {phase.phase >= 1 && avaDraftStatus !== "idle" ? (
-                <div className="mxw-ava-draft-list">
-                  {avaDraftError ? (
-                    <p role={avaDraftStatus === "error" ? "alert" : undefined}>
-                      {avaDraftError}
-                    </p>
-                  ) : null}
-                  {avaDraftStatus === "ready" &&
-                  avaDraftProposals.length > 0 ? (
-                    <>
-                      <span>
-                        {avaDraftProposals.length} cited draft
-                        {avaDraftProposals.length === 1 ? "" : "s"} ready.
-                      </span>
-                      {avaDraftProposals.slice(0, 4).map((proposal) => {
-                        const label =
-                          phaseCaptureSections.find(
-                            (section) => section.key === proposal.fieldKey,
-                          )?.label ?? proposal.fieldKey;
-                        return (
-                          <button
-                            key={proposal.fieldKey}
-                            type="button"
-                            onClick={() => {
-                              setFinderSelectedSectionKey(proposal.fieldKey);
-                              setWorkspaceView("phase");
-                            }}
-                          >
-                            {label}
-                          </button>
-                        );
-                      })}
-                    </>
-                  ) : null}
-                </div>
-              ) : null}
-              {phase.avaQuestions.map((question) => (
+              <AvaDraftSummary
+                draftError={avaDraftError}
+                draftProposals={avaDraftProposals}
+                draftStatus={avaDraftStatus}
+                phaseCaptureSections={phaseCaptureSections}
+                phaseNum={phase.phase}
+                onSelectField={(fieldKey) => {
+                  setFinderSelectedSectionKey(fieldKey);
+                  setWorkspaceView("phase");
+                }}
+              />
+              {visibleAvaQuestions.map((question) => (
                 <button
                   key={question}
                   type="button"
@@ -2533,42 +2510,17 @@ export function MovesPhaseStandaloneClient({
                   </div>
                 ))}
               </div>
-              {phase.phase >= 1 && avaDraftStatus !== "idle" ? (
-                <div className="mxw-ava-draft-list">
-                  {avaDraftError ? (
-                    <p role={avaDraftStatus === "error" ? "alert" : undefined}>
-                      {avaDraftError}
-                    </p>
-                  ) : null}
-                  {avaDraftStatus === "ready" &&
-                  avaDraftProposals.length > 0 ? (
-                    <>
-                      <span>
-                        {avaDraftProposals.length} cited draft
-                        {avaDraftProposals.length === 1 ? "" : "s"} ready.
-                      </span>
-                      {avaDraftProposals.slice(0, 4).map((proposal) => {
-                        const label =
-                          phaseCaptureSections.find(
-                            (section) => section.key === proposal.fieldKey,
-                          )?.label ?? proposal.fieldKey;
-                        return (
-                          <button
-                            key={proposal.fieldKey}
-                            type="button"
-                            onClick={() => {
-                              setFinderSelectedSectionKey(proposal.fieldKey);
-                              setWorkspaceView("phase");
-                            }}
-                          >
-                            {label}
-                          </button>
-                        );
-                      })}
-                    </>
-                  ) : null}
-                </div>
-              ) : null}
+              <AvaDraftSummary
+                draftError={avaDraftError}
+                draftProposals={avaDraftProposals}
+                draftStatus={avaDraftStatus}
+                phaseCaptureSections={phaseCaptureSections}
+                phaseNum={phase.phase}
+                onSelectField={(fieldKey) => {
+                  setFinderSelectedSectionKey(fieldKey);
+                  setWorkspaceView("phase");
+                }}
+              />
             </>
           )}
         </div>
@@ -2598,6 +2550,56 @@ export function MovesPhaseStandaloneClient({
         </form>
       </aside>
     </main>
+  );
+}
+
+function AvaDraftSummary({
+  draftError,
+  draftProposals,
+  draftStatus,
+  onSelectField,
+  phaseCaptureSections,
+  phaseNum,
+}: {
+  draftError: string | null;
+  draftProposals: AvaPhaseInputProposal[];
+  draftStatus: AvaDraftRequestStatus;
+  onSelectField: (fieldKey: string) => void;
+  phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
+  phaseNum: number;
+}) {
+  if (phaseNum < 1 || draftStatus === "idle") return null;
+
+  return (
+    <div className="mxw-ava-draft-list">
+      {draftError ? (
+        <p role={draftStatus === "error" ? "alert" : undefined}>{draftError}</p>
+      ) : null}
+      {draftStatus === "ready" && draftProposals.length > 0 ? (
+        <>
+          <span>
+            {draftProposals.length} cited draft
+            {draftProposals.length === 1 ? "" : "s"} ready. Review a field;
+            inserting does not save.
+          </span>
+          {draftProposals.slice(0, 4).map((proposal) => {
+            const label =
+              phaseCaptureSections.find(
+                (section) => section.key === proposal.fieldKey,
+              )?.label ?? proposal.fieldKey;
+            return (
+              <button
+                key={proposal.fieldKey}
+                type="button"
+                onClick={() => onSelectField(proposal.fieldKey)}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </>
+      ) : null}
+    </div>
   );
 }
 
