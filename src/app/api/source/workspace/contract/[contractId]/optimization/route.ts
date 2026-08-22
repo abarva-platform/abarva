@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy, TenancyError } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
+import { resolveTenant } from "@/lib/tenant/resolveTenant";
 import { selectSourceEventsReadAdapter } from "@/lib/data-plane/read-adapters/sourceEventsReadAdapter";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
@@ -73,12 +74,22 @@ export async function POST(request: Request, { params }: RouteContext) {
     );
   }
 
-  const [{ contractId: rawContractId }, activeClient] = await Promise.all([
-    params,
-    getActiveClientRow().catch(() => null),
-  ]);
+  const { contractId: rawContractId } = await params;
   const contractId = decodeURIComponent(rawContractId);
-  const clientKey = activeClient?.key ?? tenancy.clientKey ?? "";
+  const requestedClient =
+    new URL(request.url).searchParams.get("client")?.trim() || null;
+  const tenant = await resolveTenant({
+    requestedClient,
+    allowFallback: !requestedClient,
+  }).catch(() => null);
+  const activeClient = tenant
+    ? await getActiveClientRow(tenant.appClientKey).catch(() => null)
+    : await getActiveClientRow().catch(() => null);
+  const clientKey =
+    activeClient?.key ??
+    tenant?.appClientKey ??
+    (!requestedClient ? tenancy.clientKey : "") ??
+    "";
   if (!clientKey) {
     return NextResponse.json(
       { ok: false, error: "no_client" },

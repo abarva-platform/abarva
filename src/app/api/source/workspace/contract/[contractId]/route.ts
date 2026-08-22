@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getActiveClientRow } from '@/lib/active-client';
 import { requireTenancy, TenancyError } from '@/lib/auth/tenancy';
+import { resolveTenant } from '@/lib/tenant/resolveTenant';
 import { buildContract360View, collectContractSubjectRefs } from '@/lib/source/data-model/contract-360-view';
 import {
   getContract360,
@@ -30,7 +31,7 @@ import type {
 // on selection instead of pre-loading all 119 contracts' financial/operational/
 // evidence rows on initial page load.
 export async function GET(
-  _req: Request,
+  request: Request,
   { params }: { params: Promise<{ contractId: string }> },
 ) {
   let tenancy;
@@ -45,8 +46,20 @@ export async function GET(
 
   const { contractId: rawContractId } = await params;
   const contractId = decodeURIComponent(rawContractId);
-  const activeClient = await getActiveClientRow().catch(() => null);
-  const tenantKey = activeClient?.key ?? tenancy.clientKey ?? '';
+  const requestedClient =
+    new URL(request.url).searchParams.get('client')?.trim() || null;
+  const tenant = await resolveTenant({
+    requestedClient,
+    allowFallback: !requestedClient,
+  }).catch(() => null);
+  const activeClient = tenant
+    ? await getActiveClientRow(tenant.appClientKey).catch(() => null)
+    : await getActiveClientRow().catch(() => null);
+  const tenantKey =
+    activeClient?.key ??
+    tenant?.appClientKey ??
+    (!requestedClient ? tenancy.clientKey : '') ??
+    '';
   if (!tenantKey) {
     return NextResponse.json({ error: 'no_tenant' }, { status: 404 });
   }
