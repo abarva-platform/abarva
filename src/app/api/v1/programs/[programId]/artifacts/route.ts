@@ -160,6 +160,25 @@ function artifactTime(value: string | null | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function renderableDocMetadataTitle(
+  meta: Record<string, unknown> | null | undefined,
+): string | null {
+  const renderableDoc = meta?.renderableDoc;
+  if (
+    !renderableDoc ||
+    typeof renderableDoc !== "object" ||
+    Array.isArray(renderableDoc)
+  ) {
+    return null;
+  }
+  const title = (renderableDoc as Record<string, unknown>).title;
+  return typeof title === "string" && title.trim() ? title : null;
+}
+
+function isEditableDeliverableTitle(title: string): boolean {
+  return /editable deliverable/i.test(title);
+}
+
 function filterCurrentGeneratedArtifacts(
   recs: Awaited<ReturnType<typeof listGeneratedArtifactsForMoveAllRefs>>,
 ) {
@@ -170,6 +189,7 @@ function filterCurrentGeneratedArtifacts(
   for (const rec of active) {
     const phase = phaseFromGeneratedArtifactMetadata(rec.metadata);
     const key = deliverableKeyFromGeneratedArtifactMetadata(rec.metadata);
+    const title = renderableDocMetadataTitle(rec.metadata);
     if (phase !== null) {
       const current = newestByPhase.get(phase);
       if (
@@ -178,7 +198,10 @@ function filterCurrentGeneratedArtifacts(
       ) {
         newestByPhase.set(phase, rec);
       }
-      if (key === "target_state_architecture") {
+      if (
+        key === "target_state_architecture" &&
+        !isEditableDeliverableTitle(title ?? "")
+      ) {
         const currentAnchor = newestAnchorByPhase.get(phase);
         if (
           !currentAnchor ||
@@ -189,7 +212,9 @@ function filterCurrentGeneratedArtifacts(
       }
     }
     if (phase !== null && key) {
-      const phaseKey = `${phase}:${key}`;
+      const phaseKey = `${phase}:${key}:${normalizedArtifactTitle(
+        title ?? key,
+      )}`;
       const currentForKey = newestByPhaseAndKey.get(phaseKey);
       if (
         !currentForKey ||
@@ -203,8 +228,11 @@ function filterCurrentGeneratedArtifacts(
     const phase = phaseFromGeneratedArtifactMetadata(rec.metadata);
     if (phase === null) return true;
     const key = deliverableKeyFromGeneratedArtifactMetadata(rec.metadata);
+    const title = renderableDocMetadataTitle(rec.metadata);
     if (key) {
-      const newestForKey = newestByPhaseAndKey.get(`${phase}:${key}`);
+      const newestForKey = newestByPhaseAndKey.get(
+        `${phase}:${key}:${normalizedArtifactTitle(title ?? key)}`,
+      );
       if (newestForKey && rec.id !== newestForKey.id) return false;
     }
     const anchor = newestAnchorByPhase.get(phase);
@@ -212,6 +240,7 @@ function filterCurrentGeneratedArtifacts(
       phase === 3 &&
       anchor &&
       rec.id !== anchor.id &&
+      !isEditableDeliverableTitle(title ?? "") &&
       artifactTime(rec.renderedAt) < artifactTime(anchor.renderedAt)
     ) {
       return false;
@@ -223,12 +252,7 @@ function filterCurrentGeneratedArtifacts(
 }
 
 function normalizedArtifactTitle(value: string): string {
-  return value
-    .replace(/\s+\u2014\s+Editable Deliverable$/i, "")
-    .replace(/\s+--\s+Editable Deliverable$/i, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase();
+  return value.replace(/\s+/g, " ").trim().toLowerCase();
 }
 
 function filterCurrentCabinetArtifacts(
@@ -250,7 +274,7 @@ function filterCurrentCabinetArtifacts(
     if (
       artifact.phase === 3 &&
       /target-state architecture/i.test(artifact.title) &&
-      !/editable deliverable/i.test(artifact.title) &&
+      !isEditableDeliverableTitle(artifact.title) &&
       (!newestP3ArchitectureAnchor ||
         artifactTime(artifact.createdAt) >
           artifactTime(newestP3ArchitectureAnchor.createdAt))
@@ -272,6 +296,7 @@ function filterCurrentCabinetArtifacts(
       artifact.phase === 3 &&
       newestP3ArchitectureAnchor &&
       artifact.artifactId !== newestP3ArchitectureAnchor.artifactId &&
+      !isEditableDeliverableTitle(artifact.title) &&
       artifactTime(artifact.createdAt) <
         artifactTime(newestP3ArchitectureAnchor.createdAt)
     ) {
