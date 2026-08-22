@@ -105,14 +105,18 @@ describe("assembleDeliverable", () => {
         },
       ],
     };
-    const doc = assembleDeliverable(
-      req,
-      sections,
-      synth,
-      req.governedEvidenceBundle,
+    const evidence = req.governedEvidenceBundle.map((item, index) =>
+      index === 0
+        ? { ...item, evidenceFamily: "generated_artifact:solution_design" }
+        : item,
     );
+    const doc = assembleDeliverable(req, sections, synth, evidence);
     expect(doc.generatedSections).toHaveLength(1);
     expect(doc.sourceRegister.map((r) => r.citationNumber)).toEqual([1]);
+    expect(doc.sourceRegister[0]!.evidenceFamily).toBe("Solution Design");
+    expect(JSON.stringify(doc.sourceRegister)).not.toMatch(
+      /generated_artifact:/,
+    );
     expect(doc.tables[0]!.title).toBe("Risk");
     expect(doc.clientDisplayName).toBe(req.clientDisplayName);
   });

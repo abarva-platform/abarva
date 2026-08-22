@@ -50,7 +50,7 @@ const SOURCE_LABEL_MAP: Readonly<Record<string, string>> = {
 };
 
 const INTERNAL_PREFIX_RE =
-  /^(?:document_extract:|tower_|enterprise_context_(?:records|facts|sources)_?|source_segment_|chunk[:_]|fact_)/i;
+  /^(?:document_extract:|tower_|enterprise_context_(?:records|facts|sources)_?|source_segment_|chunk[:_]|fact_|generated_artifact:|phase_capture:|program_evidence:)/i;
 const TRAILING_ID_RE =
   /[\s_-]*(?:[0-9a-f]{8}-[0-9a-f-]{20,}|\d{3,}|[0-9a-f]{12,})$/i;
 
@@ -92,6 +92,23 @@ export function humanizeSourceLabel(raw: string | null | undefined): string {
   return titleCase(stripped);
 }
 
+/** Map an internal/raw source family to a clean, client-safe source family. */
+export function humanizeSourceFamily(raw: string | null | undefined): string {
+  const value = (raw ?? "").trim();
+  if (!value) return "Evidence";
+  const exact =
+    SOURCE_LABEL_MAP[value] ?? SOURCE_LABEL_MAP[value.toLowerCase()];
+  if (exact) return exact;
+  const stripped = value
+    .replace(INTERNAL_PREFIX_RE, "")
+    .replace(TRAILING_ID_RE, "")
+    .replace(/[:_]+/g, " ")
+    .trim();
+  if (!stripped || /^\d+$/.test(stripped) || stripped.length < 2)
+    return "Evidence";
+  return titleCase(stripped);
+}
+
 export function buildSourceRegister(
   candidates: GovernedCandidateLike[],
   opts: { audienceIsVendorFacing?: boolean } = {},
@@ -106,7 +123,7 @@ export function buildSourceRegister(
     citationNumber: i + 1,
     label: humanizeSourceLabel(c.label),
     statement: c.statement,
-    evidenceFamily: c.evidenceFamily,
+    evidenceFamily: humanizeSourceFamily(c.evidenceFamily),
     confidence: c.confidence,
     asOf: c.asOf,
     disclosureTier: c.disclosureTier ?? "vendor_facing",
@@ -154,6 +171,7 @@ const INTERNAL_LEAK_PATTERNS: { name: string; re: RegExp }[] = [
   { name: "table_ref", re: /\benterprise_context_(?:records|facts|sources)\b/ },
   { name: "document_extract", re: /\bdocument_extract:/i },
   { name: "tower_ref", re: /\btower_[a-z][a-z0-9_]+\b/i },
+  { name: "generated_artifact", re: /\bgenerated_artifact:/i },
   { name: "provenance_ref", re: /\bprov(?:enance)?[-_]?ref\b/i },
   { name: "orchestration_tag", re: /<<[A-Z_]+>>|\{\{[a-z_]+\}\}/ },
   {
