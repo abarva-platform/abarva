@@ -239,6 +239,28 @@ function mergeAvaDraftProposals(
   return [...byKey.values()];
 }
 
+function inferP3SelectedOptionIdFromRecommendation(
+  recommendation: unknown,
+  options: P3OptionSet["options"],
+): string {
+  const normalized = String(recommendation ?? "").toLowerCase();
+  if (!normalized.trim()) return "";
+  const direct = options.find((option) => {
+    const id = option.id.toLowerCase();
+    const label = option.label.toLowerCase();
+    return (
+      normalized.includes(`option ${id}`) ||
+      normalized.includes(`${id}:`) ||
+      normalized.includes(label)
+    );
+  });
+  if (direct) return direct.id;
+  const recommended = options.find((option) => option.recommended);
+  return recommended && normalized.includes("recommended")
+    ? recommended.id
+    : "";
+}
+
 interface StageReadinessWorkbookParsePreview {
   ok: boolean;
   issues?: Array<{ severity?: string; code?: string; message?: string }>;
@@ -746,10 +768,6 @@ export function MovesPhaseStandaloneClient({
       p3DesignInputsPack,
     ],
   );
-  const selectedP3Option = useMemo(
-    () => p3OptionSet.options.find((option) => option.id === selectedOption),
-    [p3OptionSet.options, selectedOption],
-  );
   const [persistedPhaseCaptureValues, setPersistedPhaseCaptureValues] =
     useState<PhaseCaptureValues>(() =>
       normalizePhaseCaptureValues(initialPhaseCaptureValues),
@@ -770,6 +788,28 @@ export function MovesPhaseStandaloneClient({
   const phaseCaptureSections = useMemo(
     () => getPhaseCaptureSections(phase.phase),
     [phase.phase],
+  );
+  const inferredSelectedOption = useMemo(
+    () =>
+      phase.phase === 3
+        ? inferP3SelectedOptionIdFromRecommendation(
+            persistedPhaseCaptureValues.recommendation,
+            p3OptionSet.options,
+          )
+        : "",
+    [
+      phase.phase,
+      persistedPhaseCaptureValues.recommendation,
+      p3OptionSet.options,
+    ],
+  );
+  const effectiveSelectedOption = selectedOption || inferredSelectedOption;
+  const selectedP3Option = useMemo(
+    () =>
+      p3OptionSet.options.find(
+        (option) => option.id === effectiveSelectedOption,
+      ),
+    [effectiveSelectedOption, p3OptionSet.options],
   );
   const avaDraftProposalsByKey = useMemo(
     () =>
@@ -2306,7 +2346,7 @@ export function MovesPhaseStandaloneClient({
                           phaseCaptureSaveStatus={phaseCaptureSaveStatus}
                           phaseCaptureSections={phaseCaptureSections}
                           phaseCaptureValues={phaseCaptureValues}
-                          selectedOption={selectedOption}
+                          selectedOption={effectiveSelectedOption}
                           substep={substep.key}
                           terminalComplete={terminalComplete}
                         />
@@ -2365,7 +2405,7 @@ export function MovesPhaseStandaloneClient({
                           phaseCaptureSaveStatus={phaseCaptureSaveStatus}
                           phaseCaptureSections={phaseCaptureSections}
                           phaseCaptureValues={phaseCaptureValues}
-                          selectedOption={selectedOption}
+                          selectedOption={effectiveSelectedOption}
                           substep={substep.key}
                           terminalComplete={terminalComplete}
                         />
@@ -4265,7 +4305,7 @@ function PhaseBody({
               clientDisplayName={move.tenant.name}
               disabledReason={phaseCaptureBlocker}
               evidenceNeedPackets={evidenceNeedPackets}
-              inputCount={evidenceCount}
+              inputCount={phaseCaptureCompleteCount}
               moveId={move.id}
               moveName={move.name}
               onBeforeBuild={onFinalizePhaseCapture}
@@ -5079,6 +5119,45 @@ function inferCurrentStateFamilies(
   instruments: CurrentStateInstrument[],
 ): CurrentStateInstrument[] {
   const normalized = normalizeUploadName(fileName);
+  const semanticMatches = instruments.filter((instrument) => {
+    const family = normalizeUploadName(
+      `${instrument.key} ${instrument.label} ${instrument.documentFamily ?? ""}`,
+    );
+    if (
+      /\bsla\b|\bservice level\b/.test(family) &&
+      /\bsla\b|\bservice level\b|\bbaseline\b|\btarget\b|\bvendor handler\b/.test(
+        normalized,
+      )
+    ) {
+      return true;
+    }
+    if (
+      /\bvendor\b.*\bspend\b|\bspend\b.*\bvendor\b|\bcost\b/.test(family) &&
+      /\bvendor\b|\bspend\b|\bcost\b|\bexpense\b|\bcompensation\b|\bexpedite\b/.test(
+        normalized,
+      )
+    ) {
+      return true;
+    }
+    if (
+      /\bincumbent\b|\bperformance\b/.test(family) &&
+      /\bincumbent\b|\bperformance\b|\bcase\b|\bscan\b|\bevent\b|\bcontact\b|\bqueue\b|\bmetric\b/.test(
+        normalized,
+      )
+    ) {
+      return true;
+    }
+    const familyTokens = family
+      .split(/\s+/)
+      .filter(
+        (token) =>
+          token.length >= 4 &&
+          !/^(current|state|evidence|family|baseline)$/.test(token),
+      );
+    return familyTokens.some((token) => normalized.includes(token));
+  });
+  if (semanticMatches.length > 0) return semanticMatches;
+
   const candidateKeys = new Set<string>();
 
   if (

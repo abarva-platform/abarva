@@ -132,6 +132,58 @@ describe('P3 dynamic option assembler', () => {
     );
   });
 
+  it('keeps airline disruption recovery options operational when vendor and SLA evidence are present', () => {
+    const optionSet = assembleP3SolutionOptions({
+      moveId: 'move-airline',
+      moveName: 'Baggage Disruption Recovery Control Tower',
+      archetype: 'Airline Disruption Recovery',
+      industryCode: 'airline',
+      designInputs: meridianAgentAssistPack({
+        businessOutcome:
+          'Reduce baggage disruption recovery time while improving customer communication and station accountability.',
+        currentProcessFindings: [
+          'Baggage service, airport stations, customer care, and vendor handlers coordinate recovery through fragmented queues.',
+        ],
+        currentSystems: [
+          'Bag scan events, baggage case system, customer contact logs, vendor handler SLA files, and station operations reports.',
+        ],
+        controlRequirements: [
+          'Human approval remains required for customer compensation, vendor escalation, and operational recovery commitments.',
+        ],
+        selectedSolutionBuildingBlocks: [
+          'data_readiness',
+          'workflow_automation',
+          'human_in_loop_agent',
+          'analytics_intelligence_layer',
+          'controls_governance_risk',
+        ],
+      }),
+      evidenceNeedPackets: [
+        {
+          evidenceSlot: 'vendor handler SLA baseline',
+          status: 'covered',
+          priority: 'required',
+        },
+        {
+          evidenceSlot: 'vendor contract spend extract',
+          status: 'covered',
+          priority: 'required',
+        },
+      ],
+    });
+
+    expect(optionSet.useCasePattern).toBe('operations_resilience');
+    expect(optionSet.options.map((option) => option.label)).toEqual([
+      'Operational playbook and metric discipline',
+      'Governed operational intelligence layer',
+      'Workflow orchestration across operations',
+      'Enterprise operating platform first',
+    ]);
+    expect(optionSet.options.map((option) => option.label)).not.toContain(
+      'CLM-embedded assisted triage and obligation extraction',
+    );
+  });
+
   it('lets missing data foundation and a 90-day target favor a governed minimum-foundation path', () => {
     const optionSet = assembleP3SolutionOptions({
       moveId: 'move-meridian',
