@@ -222,6 +222,65 @@ function filterCurrentGeneratedArtifacts(
   });
 }
 
+function normalizedArtifactTitle(value: string): string {
+  return value
+    .replace(/\s+\u2014\s+Editable Deliverable$/i, "")
+    .replace(/\s+--\s+Editable Deliverable$/i, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function filterCurrentCabinetArtifacts(
+  artifacts: readonly CabinetArtifact[],
+): CabinetArtifact[] {
+  const newestByPhaseAndTitle = new Map<string, CabinetArtifact>();
+  let newestP3ArchitectureAnchor: CabinetArtifact | null = null;
+  for (const artifact of artifacts) {
+    if (artifact.phase === null) continue;
+    const title = normalizedArtifactTitle(artifact.title);
+    const phaseTitle = `${artifact.phase}:${title}`;
+    const currentForTitle = newestByPhaseAndTitle.get(phaseTitle);
+    if (
+      !currentForTitle ||
+      artifactTime(artifact.createdAt) > artifactTime(currentForTitle.createdAt)
+    ) {
+      newestByPhaseAndTitle.set(phaseTitle, artifact);
+    }
+    if (
+      artifact.phase === 3 &&
+      /target-state architecture/i.test(artifact.title) &&
+      !/editable deliverable/i.test(artifact.title) &&
+      (!newestP3ArchitectureAnchor ||
+        artifactTime(artifact.createdAt) >
+          artifactTime(newestP3ArchitectureAnchor.createdAt))
+    ) {
+      newestP3ArchitectureAnchor = artifact;
+    }
+  }
+
+  return artifacts.filter((artifact) => {
+    if (artifact.phase === null) return true;
+    const title = normalizedArtifactTitle(artifact.title);
+    const newestForTitle = newestByPhaseAndTitle.get(
+      `${artifact.phase}:${title}`,
+    );
+    if (newestForTitle && artifact.artifactId !== newestForTitle.artifactId) {
+      return false;
+    }
+    if (
+      artifact.phase === 3 &&
+      newestP3ArchitectureAnchor &&
+      artifact.artifactId !== newestP3ArchitectureAnchor.artifactId &&
+      artifactTime(artifact.createdAt) <
+        artifactTime(newestP3ArchitectureAnchor.createdAt)
+    ) {
+      return false;
+    }
+    return true;
+  });
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ programId: string }> },
@@ -367,9 +426,12 @@ export async function GET(
       }
     }
 
-    const artifacts = [...generated, ...moveArtifacts].sort(
-      (a, b) => artifactTime(b.createdAt) - artifactTime(a.createdAt),
-    );
+    const mergedArtifacts = [...generated, ...moveArtifacts];
+    const artifacts = (
+      currentOnly
+        ? filterCurrentCabinetArtifacts(mergedArtifacts)
+        : mergedArtifacts
+    ).sort((a, b) => artifactTime(b.createdAt) - artifactTime(a.createdAt));
 
     return Response.json({ ok: true, count: artifacts.length, artifacts });
   } catch (err) {

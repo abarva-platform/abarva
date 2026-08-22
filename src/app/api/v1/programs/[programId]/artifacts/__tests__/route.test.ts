@@ -415,6 +415,63 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
     ]);
   });
 
+  it("filters stale P3 vault rows after a newer successful architecture rebuild", async () => {
+    moveRows = [
+      {
+        artifact_id: "vault-old-quarantine",
+        artifact_type: "move_board_pack",
+        artifact_family: "generated_deliverable",
+        title: "Target-State Architecture",
+        phase: 3,
+        file_format: "html",
+        file_name: null,
+        version: 1,
+        status: "quarantined",
+        lifecycle_state: "current",
+        quality_score: 80,
+        unsupported_claims_count: 0,
+        generated_by: "u",
+        created_at:
+          "Sat Aug 22 2026 19:11:06 GMT+0000 (Coordinated Universal Time)",
+        file_size: 10,
+        metadata: {},
+      },
+    ];
+    generatedRecs = [
+      {
+        id: "gen-new-target",
+        artifactType: "move_board_pack",
+        sourceArtifactRef: "move-x",
+        outputFormat: "docx",
+        blobUrl: "b",
+        qualityScore: 0.88,
+        renderedAt: "2026-08-22T19:59:19.075Z",
+        renderedBy: "u",
+        quarantineReason: null,
+        supersededBy: null,
+        metadata: {
+          deliverableTypeKey: "target_state_architecture",
+          renderableDoc: {
+            title: "Target-State Architecture",
+            deliverableTypeKey: "target_state_architecture",
+          },
+        },
+      },
+    ];
+
+    const res = await GET(
+      req("family=generated_deliverable&currentOnly=1"),
+      params("move-x"),
+    );
+    const json = (await res.json()) as {
+      artifacts: Array<Record<string, unknown>>;
+    };
+    expect(res.status).toBe(200);
+    expect(json.artifacts.map((artifact) => artifact.artifactId)).toEqual([
+      "gen-new-target",
+    ]);
+  });
+
   it("still renders the vault when the generated_artifacts read throws", async () => {
     const repo = jest.requireMock("@/lib/artifacts/repository") as {
       listGeneratedArtifactsForMoveAllRefs: jest.Mock;
