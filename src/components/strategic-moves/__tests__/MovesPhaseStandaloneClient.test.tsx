@@ -4,6 +4,7 @@
 
 import "@testing-library/jest-dom";
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -642,6 +643,7 @@ describe("MovesPhaseStandaloneClient", () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     jest.restoreAllMocks();
   });
 
@@ -3111,6 +3113,77 @@ describe("MovesPhaseStandaloneClient", () => {
         ),
       ).toBe(true);
     });
+  });
+
+  it("times out P3 option approval instead of leaving Approve & Build spinning", async () => {
+    jest.useFakeTimers();
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/solution-options/approve")) {
+          return new Promise<Response>(() => {});
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        currentUser={{ email: "jane@apex-retail.com", role: "client_admin" }}
+        evidenceNeedPackets={[]}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(contractStepButton(/Record Decision/i));
+    fireEvent.click(screen.getByRole("button", { name: /\(recommended\)/i }));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Choose the Approach/i,
+      }),
+    );
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /^Approve & Build$/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          /Recording the approved solution option before architecture assembly/i,
+        ),
+      ).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      jest.advanceTimersByTime(45_000);
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(/Solution option approval did not finish/i).length,
+      ).toBeGreaterThan(0);
+    });
+    expect(
+      (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+        String(url).includes("/api/v1/deliverables/generate-phase"),
+      ),
+    ).toBe(false);
+    expect(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Choose the Approach/i,
+      }),
+    ).not.toBeDisabled();
+
+    jest.useRealTimers();
   });
 
   it("submits an already-satisfied P5 gate without regenerating artifacts", async () => {
