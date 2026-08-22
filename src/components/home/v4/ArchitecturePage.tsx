@@ -17,6 +17,15 @@ import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
 const HATCH_SOFT = "repeating-linear-gradient(135deg,rgba(12,26,58,0.09) 0 7px,rgba(12,26,58,0.03) 7px 14px)";
 
+const grainNoticeStyle = {
+  border: `1px solid rgba(186,117,23,0.34)`,
+  borderLeft: `3px solid ${V4.amber}`,
+  borderRadius: 8,
+  background: "rgba(186,117,23,0.045)",
+  padding: "12px 14px",
+  marginBottom: 12,
+} as const;
+
 export function ArchitecturePage({
   tenantKey,
   tenantDisplayName,
@@ -345,19 +354,34 @@ function ScopeButton({
 
 function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill: (capability: string) => void }) {
   const isWholeEstate = slice.name === "Whole estate";
+  const isDataPlatformScope = isDataAndAiScope(slice);
   const batchFlows = keywordCount(slice.integrations, "integrationType", ["batch", "file", "etl"]);
   const apiFlows = keywordCount(slice.integrations, "integrationType", ["api", "hl7", "fhir", "edi"]);
   const streamingFlows = keywordCount(slice.integrations, "integrationType", ["stream", "event", "real-time", "realtime"]);
   const unstructuredFlows = keywordCount(slice.integrations, "dataDomain", ["document", "image", "note", "unstructured"]);
-  const servingCount = Math.max(1, slice.dataPlatforms.length + slice.destinations.length);
+  const servingCount = slice.destinations.length;
+  const platformSignals = platformSignalCounts(slice, isWholeEstate);
+  const platformAttribution = isWholeEstate
+    ? `${slice.infrastructure.length.toLocaleString()} platform records · ${formatTopLabels(slice.hostingModels)}`
+    : `Direct platform joins not recorded · app deployment ${formatTopLabels(slice.appPlatforms)} · integration platforms ${formatTopLabels(slice.dataPlatforms)}`;
 
   return (
     <section style={{ minWidth: 0 }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 18, marginBottom: 10 }}>
         <span style={eyebrow(V4.blue)}>{slice.name}</span>
         <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}>
-          {slice.count} applications · {slice.integrations.length} flows · {slice.infrastructure.length} platforms
+          {slice.count} applications · {slice.integrations.length} flows ·{" "}
+          {isWholeEstate ? `${slice.infrastructure.length} platforms` : "platform attribution unproven"}
         </span>
+      </div>
+
+      <div style={grainNoticeStyle}>
+        <span style={eyebrow(V4.amber)}>Counting basis</span>
+        <p style={{ margin: "7px 0 0", fontFamily: SANS, fontSize: 13, lineHeight: 1.52, color: V4.inkSoft }}>
+          Counts here are recorded systems, movements, platform records, and product-facing evidence slices.
+          They are not report/dashboard volumes, user query volumes, batch-job counts, or confirmed hosting
+          dependencies unless those objects are present in the record.
+        </p>
       </div>
 
       <div
@@ -378,12 +402,12 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
           index="1"
           zoneLabel="source zone"
           tone={V4.navy}
-          title="Data sources"
-          caption="Recorded operational estate"
+          title={isDataPlatformScope ? "Data platforms" : "Operational systems"}
+          caption={isDataPlatformScope ? "Recorded data and AI estate" : "Business applications in this scope"}
           items={[
-            ["apps / SaaS", slice.count],
+            [isDataPlatformScope ? "data / AI systems" : "application systems", slice.count],
             ["interfaces", slice.integrations.length],
-            ["platforms", slice.infrastructure.length],
+            [isWholeEstate ? "platform records" : "direct platform joins", slice.infrastructure.length],
             ["tier-1 systems", slice.tier1],
           ]}
         />
@@ -418,8 +442,12 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
           }}
         >
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
-            <span style={eyebrow(V4.green)}>3 · governed lakehouse</span>
-            <span style={{ fontFamily: MONO, fontSize: 10, color: V4.slate }}>RAW · ODS · CANONICAL · MARTS</span>
+            <span style={eyebrow(V4.green)}>
+              {isWholeEstate || isDataPlatformScope ? "3 · governed lakehouse" : "3 · data / reporting layer"}
+            </span>
+            <span style={{ fontFamily: MONO, fontSize: 10, color: V4.slate }}>
+              RECORDED FLOWS · CANONICAL · SERVING TARGETS
+            </span>
           </div>
           <div
             data-arch-core-nodes
@@ -430,10 +458,10 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
               alignItems: "stretch",
             }}
           >
-            <ArchitectureNode label="Raw" value={slice.integrations.length} detail="source movements" tone={V4.red} />
-            <ArchitectureNode label="ODS" value={slice.count + slice.integrations.length} detail="normalized records" tone={V4.stone} />
+            <ArchitectureNode label="Recorded flows" value={slice.integrations.length} detail="source movements" tone={V4.red} />
+            <ArchitectureNode label="Compiled records" value={slice.count + slice.integrations.length} detail="apps + movements" tone={V4.stone} />
             <ArchitectureNode label="Facts + dimensions" value={slice.appCategories.length + slice.dataDomains.length} detail="recorded groupings" tone={V4.amber} />
-            <ArchitectureNode label="Datamarts" value={Math.max(1, slice.destinations.length)} detail="serving slices" tone={V4.green} />
+            <ArchitectureNode label="Serving targets" value={slice.destinations.length} detail="not report count" tone={V4.green} />
           </div>
           <div style={{ borderTop: `1px solid ${V4.rule}`, paddingTop: 9 }}>
             <span style={eyebrow(V4.slate)}>Canonical context model</span>
@@ -467,8 +495,8 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
           title="Serve & consume"
           caption="Product and operator access"
           items={[
-            ["query / browse", servingCount],
-            ["dashboard facts", slice.appCategories.length],
+            ["recorded targets", servingCount],
+            ["recorded fact groups", slice.appCategories.length],
             ["product surfaces", 4],
             ["business context", isWholeEstate ? Math.max(1, slice.appCategories.length) : 1],
           ]}
@@ -489,12 +517,8 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
           tone={V4.green}
         />
         <FoundationBand
-          title="Open storage / platforms"
-          detail={
-            slice.infrastructure.length
-              ? `${slice.infrastructure.length.toLocaleString()} platform records · ${formatTopLabels(slice.hostingModels)}`
-              : "platform records not joined to this scope"
-          }
+          title={isWholeEstate ? "Platform inventory" : "Platform attribution"}
+          detail={platformAttribution}
           tone={V4.navy}
         />
         <FoundationBand
@@ -523,6 +547,21 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
           title="Data domains"
           detail="Domains crossing this architecture scope"
           items={slice.dataDomains.slice(0, 5)}
+        />
+        <EvidencePanel
+          title={isWholeEstate ? "Platform estate" : "Platform signals"}
+          detail={isWholeEstate ? "Recorded platform object types" : "Hosting and integration-platform mentions, not confirmed hosting joins"}
+          items={platformSignals.slice(0, 5)}
+        />
+        <SourceGapPanel
+          title="Missing source needed"
+          detail="Not collected in this packet; do not infer from app or flow counts"
+          items={[
+            "Report/catalog inventory by function",
+            "BI platform, mart, and semantic-model usage by report",
+            "Active users, query volume, and refresh/job telemetry",
+            "Confirmed app-to-platform hosting and cluster lineage",
+          ]}
         />
         <EvidencePanel
           title="Architecture constraints"
@@ -573,7 +612,9 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
         <p style={{ margin: "8px 0 0", fontFamily: SANS, fontSize: 13.5, lineHeight: 1.55, color: V4.inkSoft }}>
           This map uses recorded application, integration, and infrastructure fields. It does not claim
           confirmed runtime dependency direction, deployment topology, network zones, or system-to-platform
-          hosting joins where those relationships are not recorded.
+          hosting joins where those relationships are not recorded. It also does not count report inventory:
+          if Finance owns hundreds of Power BI, Tableau, Excel, or regulatory reports, those belong in a
+          separate report/catalog extract and are not implied by the serving-target counts shown here.
         </p>
       </div>
     </section>
@@ -939,6 +980,31 @@ function EvidencePanel({ title, detail, items }: { title: string; detail: string
   );
 }
 
+function SourceGapPanel({ title, detail, items }: { title: string; detail: string; items: string[] }) {
+  return (
+    <article
+      style={{
+        minWidth: 0,
+        border: `1px solid rgba(186,117,23,0.34)`,
+        borderRadius: 8,
+        background: "rgba(186,117,23,0.045)",
+        padding: "14px 15px",
+      }}
+    >
+      <span style={eyebrow(V4.amber)}>{title}</span>
+      <p style={{ margin: "7px 0 12px", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.45, color: V4.slate }}>{detail}</p>
+      <div style={{ display: "grid", gap: 7 }}>
+        {items.map((item) => (
+          <div key={item} style={{ display: "grid", gridTemplateColumns: "10px minmax(0,1fr)", gap: 8, alignItems: "baseline", borderTop: `1px solid rgba(186,117,23,0.18)`, paddingTop: 7 }}>
+            <span style={{ width: 5, height: 5, borderRadius: 999, background: V4.amber }} />
+            <span style={{ fontFamily: SANS, fontSize: 12.5, color: V4.inkSoft, lineHeight: 1.35 }}>{item}</span>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
 function buildArchitectureSlices(
   rows: ApplicationRecord[],
   integrations: IntegrationRecord[],
@@ -1027,6 +1093,62 @@ function topCounts(rows: ApplicationRecord[], field: string): Array<[string, num
     counts.set(value, (counts.get(value) ?? 0) + 1);
   }
   return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+}
+
+function mergeCounts(...groups: Array<Array<[string, number]>>): Array<[string, number]> {
+  const counts = new Map<string, number>();
+  for (const group of groups) {
+    for (const [label, count] of group) {
+      counts.set(label, (counts.get(label) ?? 0) + count);
+    }
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+}
+
+function platformSignalCounts(slice: ArchitectureSlice, isWholeEstate: boolean): Array<[string, number]> {
+  if (isWholeEstate) {
+    const anchors = strategicPlatformAnchors(slice.infrastructure);
+    return anchors.length ? anchors : mergeCounts(slice.infrastructureTypes, slice.hostingModels);
+  }
+  return mergeCounts(priorityFlowTargets(slice.integrations), slice.appPlatforms, slice.dataPlatforms, slice.hostingModels);
+}
+
+function isDataAndAiScope(slice: ArchitectureSlice): boolean {
+  if (/data|analytics|ai/i.test(slice.name)) return true;
+  const dataLikeSystems = slice.applications.filter((row) =>
+    /data|analytics|warehouse|lake|snowflake|teradata|databricks|bi|report/i.test(
+      `${text(row, "systemCategory")} ${text(row, "systemName")} ${text(row, "hostingLocation")}`,
+    ),
+  ).length;
+  return dataLikeSystems > 0 && dataLikeSystems / Math.max(1, slice.applications.length) >= 0.55;
+}
+
+function strategicPlatformAnchors(rows: InfrastructureRecord[]): Array<[string, number]> {
+  const priorityPattern = /mainframe|teradata|warehouse|snowflake|databricks|data lake|analytics/i;
+  return rows
+    .filter((row) =>
+      priorityPattern.test(`${text(row, "platformName")} ${text(row, "platformType")} ${text(row, "technologyStack")}`),
+    )
+    .map((row) => [text(row, "platformName") || text(row, "platformType") || "Platform record", 1] as [string, number])
+    .sort((a, b) => platformPriority(a[0]) - platformPriority(b[0]) || a[0].localeCompare(b[0]));
+}
+
+function priorityFlowTargets(rows: IntegrationRecord[]): Array<[string, number]> {
+  const priorityPattern = /mainframe|teradata|warehouse|snowflake|databricks|data lake|mart|report|power bi|tableau/i;
+  return topCounts(
+    rows.filter((row) =>
+      priorityPattern.test(`${text(row, "targetSystem")} ${text(row, "platformOrDatabase")} ${text(row, "dataAssetName")}`),
+    ),
+    "targetSystem",
+  ).slice(0, 8);
+}
+
+function platformPriority(label: string): number {
+  if (/mainframe/i.test(label)) return 0;
+  if (/teradata/i.test(label)) return 1;
+  if (/snowflake|databricks|data lake|analytics/i.test(label)) return 2;
+  if (/warehouse/i.test(label)) return 3;
+  return 4;
 }
 
 function relationshipMatrix(rows: ApplicationRecord[], leftField: string, rightField: string) {

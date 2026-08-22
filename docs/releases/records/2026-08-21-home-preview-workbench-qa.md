@@ -48,6 +48,12 @@ Route replacement follow-up: `/home` now mounts the same v4 Home executive reado
 preview surface. The retired horizontal-tab enterprise-landscape reader remains on disk for history
 and tests, but it is no longer the default Home route.
 
+Architecture grain follow-up: scoped architecture now states the counting basis instead of implying
+that application/interface counts are report volumes or platform dependency proof. Function slices
+show platform attribution as unproven when direct joins are absent, surface named mainframe and data
+platform signals from recorded application/infrastructure/integration rows, and list the missing
+source extracts needed for report catalog, BI/mart usage, query volume, and app-to-cluster lineage.
+
 ## Layer Impact
 
 Layer 4 Products only. Home presentation, route wiring, and QA proof scripts changed; canonical
@@ -113,6 +119,17 @@ are not changed.
   directly instead of the retired `HomeEnterpriseLandscapeV2` reader.
 - Home boundary tests now assert that `/home` mounts v4 and rejects the old enterprise-landscape
   route entrypoint.
+- Architecture grain now separates recorded application/interface counts from report/catalog
+  volumetrics. Finance-like slices no longer show `0 platforms`, `Datamarts`, or dashboard/report
+  counts inferred from target systems; they show platform attribution as unproven and list the
+  missing source needed for report inventory, BI platform/mart usage, active-user/query telemetry,
+  and confirmed app-to-platform/cluster lineage.
+- Platform evidence now prioritizes named strategic anchors already present in the record, including
+  mainframe, Teradata, Snowflake, Databricks, and data/analytics platform records, instead of hiding
+  them behind generic hosting-model buckets.
+- Added a checked-in snapshot regression test for the architecture grain issue: whole estate must expose
+  mainframe/Teradata anchors, while the Finance slice must disclose missing report/catalog source
+  and avoid the old `0 platforms`/Datamarts/report-count implication.
 
 ## QA / Validation
 
@@ -162,6 +179,17 @@ are not changed.
 - Route replacement validation: `npm test -- --runTestsByPath 'src/app/(maestro)/home/__tests__/home-admin-boundary-contract.test.ts' 'src/app/(maestro)/home/__tests__/home-layer-boundary-contract.test.ts' --runInBand` passed. Jest still reports existing duplicate manual mock warnings.
 - Route replacement validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false` passed.
 - Route replacement validation: `npm run release:check` passed.
+- Architecture grain validation: source-header audit found `user_count`, `volumetric_narrative`,
+  `analytics_usage`, and AI-usage ledger fields, but no function-level report count, dashboard
+  count, BI object inventory, mart-to-report mapping, query volume, or report-user population field
+  in the active checked-in source packets.
+- Architecture grain validation: checked-in airline snapshot readback confirmed 18 Finance application
+  records, 60 Finance-linked integration rows, and named platform anchors including `IBM z16
+  Mainframe LPAR — PROD1`, `IBM z16 Mainframe LPAR — DR1`, `Teradata Enterprise Warehouse
+  Appliance`, `Snowflake Account — Production`, and `Databricks Workspace Fleet (AWS)`.
+- Architecture grain validation: `npx eslint src/components/home/v4/ArchitecturePage.tsx src/components/home/v4/__tests__/ArchitecturePage.grain.test.tsx` passed.
+- Architecture grain validation: `npm test -- --runTestsByPath src/components/home/v4/__tests__/ArchitecturePage.grain.test.tsx src/components/home/v4/__tests__/architecture-boundary.test.ts tests/behaviors/architecture-view-formats.test.ts 'src/app/(maestro)/home/__tests__/home-admin-boundary-contract.test.ts' --runInBand` passed. Jest still reports existing duplicate manual mock warnings.
+- Architecture grain validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false` passed.
 
 ## Rollout Plan
 
