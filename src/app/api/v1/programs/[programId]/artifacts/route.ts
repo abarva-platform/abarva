@@ -128,22 +128,94 @@ function phaseFromGeneratedArtifactMetadata(
   return null;
 }
 
+function deliverableKeyFromGeneratedArtifactMetadata(
+  meta: Record<string, unknown> | null | undefined,
+): string | null {
+  const candidates = [
+    meta?.deliverableTypeKey,
+    meta?.registryKey,
+    meta?.deliverableType,
+    meta?.renderableDoc &&
+    typeof meta.renderableDoc === "object" &&
+    !Array.isArray(meta.renderableDoc)
+      ? (meta.renderableDoc as Record<string, unknown>).deliverableTypeKey
+      : null,
+    meta?.renderableDoc &&
+    typeof meta.renderableDoc === "object" &&
+    !Array.isArray(meta.renderableDoc)
+      ? (meta.renderableDoc as Record<string, unknown>).deliverableType
+      : null,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+  return null;
+}
+
+function artifactTime(value: string | null | undefined): number {
+  if (!value) return 0;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function filterCurrentGeneratedArtifacts(
   recs: Awaited<ReturnType<typeof listGeneratedArtifactsForMoveAllRefs>>,
 ) {
   const active = recs.filter((rec) => !rec.supersededBy);
   const newestByPhase = new Map<number, (typeof active)[number]>();
+  const newestByPhaseAndKey = new Map<string, (typeof active)[number]>();
+  const newestAnchorByPhase = new Map<number, (typeof active)[number]>();
   for (const rec of active) {
     const phase = phaseFromGeneratedArtifactMetadata(rec.metadata);
-    if (phase === null) continue;
-    const current = newestByPhase.get(phase);
-    if (!current || rec.renderedAt > current.renderedAt) {
-      newestByPhase.set(phase, rec);
+    const key = deliverableKeyFromGeneratedArtifactMetadata(rec.metadata);
+    if (phase !== null) {
+      const current = newestByPhase.get(phase);
+      if (
+        !current ||
+        artifactTime(rec.renderedAt) > artifactTime(current.renderedAt)
+      ) {
+        newestByPhase.set(phase, rec);
+      }
+      if (key === "target_state_architecture") {
+        const currentAnchor = newestAnchorByPhase.get(phase);
+        if (
+          !currentAnchor ||
+          artifactTime(rec.renderedAt) > artifactTime(currentAnchor.renderedAt)
+        ) {
+          newestAnchorByPhase.set(phase, rec);
+        }
+      }
+    }
+    if (phase !== null && key) {
+      const phaseKey = `${phase}:${key}`;
+      const currentForKey = newestByPhaseAndKey.get(phaseKey);
+      if (
+        !currentForKey ||
+        artifactTime(rec.renderedAt) > artifactTime(currentForKey.renderedAt)
+      ) {
+        newestByPhaseAndKey.set(phaseKey, rec);
+      }
     }
   }
   return active.filter((rec) => {
     const phase = phaseFromGeneratedArtifactMetadata(rec.metadata);
     if (phase === null) return true;
+    const key = deliverableKeyFromGeneratedArtifactMetadata(rec.metadata);
+    if (key) {
+      const newestForKey = newestByPhaseAndKey.get(`${phase}:${key}`);
+      if (newestForKey && rec.id !== newestForKey.id) return false;
+    }
+    const anchor = newestAnchorByPhase.get(phase);
+    if (
+      phase === 3 &&
+      anchor &&
+      rec.id !== anchor.id &&
+      artifactTime(rec.renderedAt) < artifactTime(anchor.renderedAt)
+    ) {
+      return false;
+    }
     const newest = newestByPhase.get(phase);
     if (!newest?.quarantineReason) return true;
     return rec.id === newest.id;
@@ -295,8 +367,8 @@ export async function GET(
       }
     }
 
-    const artifacts = [...generated, ...moveArtifacts].sort((a, b) =>
-      a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0,
+    const artifacts = [...generated, ...moveArtifacts].sort(
+      (a, b) => artifactTime(b.createdAt) - artifactTime(a.createdAt),
     );
 
     return Response.json({ ok: true, count: artifacts.length, artifacts });
