@@ -82,6 +82,16 @@ const PHASE_LABELS: Record<string, string> = {
   P5: "handoff",
 };
 
+const BARE_UUID_RE =
+  /(^|[^A-Za-z0-9_/-])([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?![A-Za-z0-9_/-])/gi;
+
+function applyClientArtifactReplacements(value: string): string {
+  return CLIENT_ARTIFACT_REPLACEMENTS.reduce(
+    (cleaned, [pattern, replacement]) => cleaned.replace(pattern, replacement),
+    value,
+  );
+}
+
 export function sanitizeClientFacingArtifactHtml(html: string): string {
   const protectedHeadings: string[] = [];
   const withProtectedHeadings = html.replace(
@@ -92,10 +102,7 @@ export function sanitizeClientFacingArtifactHtml(html: string): string {
       return token;
     },
   );
-  const cleaned = CLIENT_ARTIFACT_REPLACEMENTS.reduce(
-    (cleaned, [pattern, replacement]) => cleaned.replace(pattern, replacement),
-    withProtectedHeadings,
-  );
+  const cleaned = applyClientArtifactReplacements(withProtectedHeadings);
   const phaseCleaned = cleaned.replace(
     /(?<![A-Za-z0-9_-])P([0-5])(?![A-Za-z0-9_])/g,
     (phase) => PHASE_LABELS[phase] ?? phase,
@@ -104,5 +111,17 @@ export function sanitizeClientFacingArtifactHtml(html: string): string {
     (restored, heading, index) =>
       restored.replace(`__ABARVA_SOURCE_REGISTER_HEADING_${index}__`, heading),
     phaseCleaned,
+  );
+}
+
+export function sanitizeClientFacingArtifactMarkdown(markdown: string): string {
+  const cleaned = applyClientArtifactReplacements(markdown);
+  const phaseCleaned = cleaned.replace(
+    /(?<![A-Za-z0-9_-])P([0-5])(?![A-Za-z0-9_])/g,
+    (phase) => PHASE_LABELS[phase] ?? phase,
+  );
+  return phaseCleaned.replace(
+    BARE_UUID_RE,
+    (_match, prefix: string) => `${prefix}(internal reference on file)`,
   );
 }

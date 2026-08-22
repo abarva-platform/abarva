@@ -142,7 +142,7 @@ describe("assembleDeliverable", () => {
       req.governedEvidenceBundle,
     );
 
-    expect(doc.recommendation).toMatch(/approve P2 Discovery/i);
+    expect(doc.recommendation).toMatch(/approve discovery/i);
     expect(doc.recommendation.split(/\s+/).length).toBeGreaterThanOrEqual(12);
     expect(
       doc.tables.find((t) => /risk|issue|dependenc/i.test(t.title)),
@@ -188,6 +188,43 @@ describe("assembleDeliverable", () => {
 
     expect(doc.recommendation).toMatch(
       /^We recommend choosing Option B: governed recommendation workflow\./,
+    );
+  });
+
+  it("scrubs bare internal UUIDs from generated body text while preserving raw model text for gates", () => {
+    const req = amsRfpRequest({
+      module: "moves",
+      deliverableType: "target_state_architecture",
+    });
+    const sections: RenderableSection[] = [
+      {
+        key: "logical_architecture",
+        title: "Logical Architecture",
+        bodyMarkdown:
+          "The generated prose referenced move 2c5b4757-2bc5-4efc-8fdd-02b9b2f38a12 before describing the design.",
+        groundingMode: "mixed",
+        citationsUsed: [],
+      },
+    ];
+
+    const doc = assembleDeliverable(
+      req,
+      sections,
+      {
+        recommendation:
+          "We recommend choosing the governed design path because it preserves review controls and keeps operational decisions visible.",
+      },
+      req.governedEvidenceBundle,
+    );
+
+    expect(doc.generatedSections[0]!.bodyMarkdown).toContain(
+      "(internal reference on file)",
+    );
+    expect(doc.generatedSections[0]!.bodyMarkdown).not.toMatch(
+      /2c5b4757-2bc5-4efc-8fdd-02b9b2f38a12/,
+    );
+    expect(doc.generatedSections[0]!.rawBodyMarkdown).toMatch(
+      /2c5b4757-2bc5-4efc-8fdd-02b9b2f38a12/,
     );
   });
 
