@@ -8,6 +8,7 @@ import type { SolutionOption } from "@/lib/programs/solution-context";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
 import {
   decisionHashFor,
+  loadApprovedSolutionApproach,
   P3_ARCHITECTURE_DELIVERABLE_KEYS,
   type ApprovedSolutionApproach,
 } from "@/lib/programs/approved-solution-approach";
@@ -28,6 +29,54 @@ interface ApproveOptionBody {
   assumptions?: string[];
   constraints?: string[];
   unresolvedDecisions?: string[];
+}
+
+function normalizeString(value: string | undefined): string {
+  return (value ?? "").trim();
+}
+
+function stringArraysEqual(left: string[], right: string[]): boolean {
+  if (left.length !== right.length) return false;
+  return left.every((value, index) => value === right[index]);
+}
+
+function optionsSemanticallyEqual(
+  left: SolutionOption[],
+  right: SolutionOption[],
+): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function isSameApprovedDecision(args: {
+  current: ApprovedSolutionApproach;
+  selectedOptionId: string;
+  selectedOptionVersion: string;
+  chosenOption: string;
+  rationale: string;
+  approach?: string;
+  options: SolutionOption[];
+  tradeoffsAccepted: string[];
+  scope: string[];
+  exclusions: string[];
+  assumptions: string[];
+  constraints: string[];
+  unresolvedDecisions: string[];
+}): boolean {
+  const { current } = args;
+  return (
+    current.selectedOptionId === args.selectedOptionId &&
+    current.selectedOptionVersion === args.selectedOptionVersion &&
+    current.chosenOption === args.chosenOption &&
+    normalizeString(current.approach) === normalizeString(args.approach) &&
+    current.decision.rationale === args.rationale &&
+    optionsSemanticallyEqual(current.options, args.options) &&
+    stringArraysEqual(current.tradeoffsAccepted, args.tradeoffsAccepted) &&
+    stringArraysEqual(current.scope, args.scope) &&
+    stringArraysEqual(current.exclusions, args.exclusions) &&
+    stringArraysEqual(current.assumptions, args.assumptions) &&
+    stringArraysEqual(current.constraints, args.constraints) &&
+    stringArraysEqual(current.unresolvedDecisions, args.unresolvedDecisions)
+  );
 }
 
 export async function POST(
@@ -84,6 +133,50 @@ export async function POST(
   const rationale =
     body.rationale?.trim() ||
     "Human reviewer approved the option that will drive target architecture.";
+  const selectedOptionVersion = body.selectedOptionVersion?.trim() || "1";
+  const approach = body.approach?.trim();
+  const tradeoffsAccepted = body.tradeoffsAccepted ?? [];
+  const scope = body.scope ?? [];
+  const exclusions = body.exclusions ?? [];
+  const assumptions = body.assumptions ?? [];
+  const constraints = body.constraints ?? [];
+  const unresolvedDecisions = body.unresolvedDecisions ?? [];
+
+  const existingApproval = await loadApprovedSolutionApproach({
+    moveId: programId,
+    clientId: ctx.clientId,
+  });
+  if (
+    existingApproval &&
+    isSameApprovedDecision({
+      current: existingApproval,
+      selectedOptionId: selected.id,
+      selectedOptionVersion,
+      chosenOption,
+      rationale,
+      approach,
+      options,
+      tradeoffsAccepted,
+      scope,
+      exclusions,
+      assumptions,
+      constraints,
+      unresolvedDecisions,
+    })
+  ) {
+    return Response.json({
+      ok: true,
+      deliverableId: existingApproval.decisionId,
+      versionId: existingApproval.decisionVersion,
+      chosenOption,
+      decisionId: existingApproval.decisionId,
+      decisionVersion: existingApproval.decisionVersion,
+      decisionHash: existingApproval.decisionHash,
+      architectureMayProceed: true,
+      reusedExistingApproval: true,
+    });
+  }
+
   const decisionId = randomUUID();
   const decisionVersion = now;
   // Audit record: keeps the raw actor id for lineage/hash integrity. This is
@@ -124,17 +217,17 @@ export async function POST(
     decisionId,
     decisionVersion,
     selectedOptionId: selected.id,
-    selectedOptionVersion: body.selectedOptionVersion?.trim() || "1",
-    ...(body.approach?.trim() ? { approach: body.approach.trim() } : {}),
+    selectedOptionVersion,
+    ...(approach ? { approach } : {}),
     options,
     chosenOption,
     rejectedOptions,
-    tradeoffsAccepted: body.tradeoffsAccepted ?? [],
-    scope: body.scope ?? [],
-    exclusions: body.exclusions ?? [],
-    assumptions: body.assumptions ?? [],
-    constraints: body.constraints ?? [],
-    unresolvedDecisions: body.unresolvedDecisions ?? [],
+    tradeoffsAccepted,
+    scope,
+    exclusions,
+    assumptions,
+    constraints,
+    unresolvedDecisions,
     decision,
   };
   const decisionHash = decisionHashFor(decisionPacketWithoutHash);
@@ -143,10 +236,10 @@ export async function POST(
     decisionHash,
   };
   const solutionContextDigest = {
-    approach: body.approach,
+    approach,
     options,
     chosenOption,
-    tradeoffsAccepted: body.tradeoffsAccepted,
+    tradeoffsAccepted,
     // Feed the CLIENT-SAFE decision (role, not user id) into the context that
     // binds to generated artifacts. The audit `decision` with the raw actor id
     // stays in `decisionLineage` only.

@@ -18,6 +18,19 @@ jest.mock("@/lib/programs/mutations", () => ({
   completeDeliverable: (...args: unknown[]) => completeDeliverableMock(...args),
 }));
 
+const loadApprovedSolutionApproachMock = jest.fn();
+jest.mock("@/lib/programs/approved-solution-approach", () => {
+  const actual = jest.requireActual(
+    "@/lib/programs/approved-solution-approach",
+  );
+  return {
+    __esModule: true,
+    ...actual,
+    loadApprovedSolutionApproach: (...args: unknown[]) =>
+      loadApprovedSolutionApproachMock(...args),
+  };
+});
+
 const neqMock = jest.fn();
 const inMock = jest.fn();
 const eqMock = jest.fn();
@@ -48,6 +61,7 @@ beforeEach(() => {
   requireTenancyMock.mockReset();
   getProgramByIdMock.mockReset();
   completeDeliverableMock.mockReset();
+  loadApprovedSolutionApproachMock.mockReset();
   neqMock.mockReset();
   inMock.mockReset();
   eqMock.mockReset();
@@ -63,6 +77,7 @@ beforeEach(() => {
     versionId: "version-1",
     status: "signed_off",
   });
+  loadApprovedSolutionApproachMock.mockResolvedValue(null);
   neqMock.mockResolvedValue({ error: null });
   inMock.mockImplementation(() => ({ neq: neqMock }));
   eqMock.mockImplementation(() => ({ in: inMock }));
@@ -128,6 +143,71 @@ describe("POST /api/v1/programs/:programId/solution-options/approve", () => {
         "sourcing_strategy",
       ]),
     );
+  });
+
+  it("reuses an identical existing approval without superseding P3 outputs", async () => {
+    loadApprovedSolutionApproachMock.mockResolvedValue({
+      decisionId: "decision-existing",
+      decisionVersion: "2026-08-22T18:00:00.000Z",
+      decisionHash: "hash-existing",
+      selectedOptionId: "option-2",
+      selectedOptionVersion: "1",
+      approach: "3/6/9/12 incremental lakehouse build.",
+      options: [
+        {
+          id: "option-2",
+          name: "Governed Databricks Lakehouse",
+          summary: "Recommended.",
+          recommended: true,
+        },
+      ],
+      chosenOption: "Option 2 - Governed Databricks Lakehouse",
+      rejectedOptions: [],
+      tradeoffsAccepted: ["Parallel BI migration"],
+      scope: [],
+      exclusions: [],
+      assumptions: [],
+      constraints: [],
+      unresolvedDecisions: [],
+      decision: {
+        phase: 3,
+        decision:
+          "Approved solution option: Option 2 - Governed Databricks Lakehouse",
+        rationale: "Best fit for governed clinical + claims use cases.",
+        approvedBy: "user-1",
+        approvedAt: "2026-08-22T18:00:00.000Z",
+      },
+    });
+
+    const res = await POST(
+      makeRequest({
+        chosenOption: "Option 2 - Governed Databricks Lakehouse",
+        rationale: "Best fit for governed clinical + claims use cases.",
+        approach: "3/6/9/12 incremental lakehouse build.",
+        tradeoffsAccepted: ["Parallel BI migration"],
+        options: [
+          {
+            id: "option-2",
+            name: "Governed Databricks Lakehouse",
+            summary: "Recommended.",
+            recommended: true,
+          },
+        ],
+      }) as never,
+      { params: Promise.resolve({ programId: PROGRAM_ID }) },
+    );
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      ok: true,
+      decisionId: "decision-existing",
+      decisionVersion: "2026-08-22T18:00:00.000Z",
+      decisionHash: "hash-existing",
+      reusedExistingApproval: true,
+      architectureMayProceed: true,
+    });
+    expect(completeDeliverableMock).not.toHaveBeenCalled();
+    expect(updateMock).not.toHaveBeenCalled();
   });
 
   it("requires a chosen option", async () => {
