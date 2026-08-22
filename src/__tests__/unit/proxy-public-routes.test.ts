@@ -1,6 +1,10 @@
 import { createRouteMatcher } from '@clerk/nextjs/server';
 import { NextRequest } from 'next/server';
-import { AUTH_REQUIRED_ROUTE_PATTERNS, PUBLIC_ROUTE_PATTERNS } from '@/proxy';
+import {
+  AUTH_REQUIRED_ROUTE_PATTERNS,
+  PUBLIC_ROUTE_PATTERNS,
+  shouldBlanketStripClientParamFromProtectedTree,
+} from '@/proxy';
 
 describe('proxy public route patterns', () => {
   const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
@@ -113,5 +117,38 @@ describe('proxy public route patterns', () => {
       expect(isPublicRoute(request)).toBe(false);
       expect(isAuthRequiredRoute(request)).toBe(true);
     }
+  });
+
+  it('does not blanket-strip Source client context after the tenant guard has run', () => {
+    expect(
+      shouldBlanketStripClientParamFromProtectedTree({
+        pathname: '/source/preview/workspace',
+        role: 'client',
+      }),
+    ).toBe(false);
+    expect(
+      shouldBlanketStripClientParamFromProtectedTree({
+        pathname: '/source/events/evt-123',
+        role: 'maestro',
+      }),
+    ).toBe(false);
+  });
+
+  it('keeps blanket stripping client params on non-Source protected trees for non-admins', () => {
+    for (const pathname of ['/home', '/tower/command', '/admin/users-access']) {
+      expect(
+        shouldBlanketStripClientParamFromProtectedTree({
+          pathname,
+          role: 'client',
+        }),
+      ).toBe(true);
+    }
+
+    expect(
+      shouldBlanketStripClientParamFromProtectedTree({
+        pathname: '/tower/command',
+        role: 'admin',
+      }),
+    ).toBe(false);
   });
 });

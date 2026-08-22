@@ -50,6 +50,21 @@ export const ACTIVE_ADMIN_SUBROUTES = new Set<string>([
   "/admin/knowledge-preview",
 ] as const);
 
+export function shouldBlanketStripClientParamFromProtectedTree(args: {
+  pathname: string;
+  role: string | null | undefined;
+}): boolean {
+  if (args.role === "admin") return false;
+  return (
+    args.pathname === "/tower" ||
+    args.pathname.startsWith("/tower/") ||
+    args.pathname === "/home" ||
+    args.pathname.startsWith("/home/") ||
+    args.pathname === "/admin" ||
+    args.pathname.startsWith("/admin/")
+  );
+}
+
 export const PUBLIC_ROUTE_PATTERNS = [
   "/sign-in(.*)",
   "/signed-out(.*)",
@@ -729,21 +744,13 @@ const clerkProtectedProxy = clerkMiddleware(
     // For every non-admin role on these route trees, an inbound ?client=
     // param is treated as injection (the canonical tenant binding lives in
     // Clerk metadata + the ACTIVE_CLIENT_COOKIE, not the query string).
-    // Include /source as defense-in-depth. The access-routing predicate should
-    // already catch unauthorized Source client params, but route-tree stripping
-    // keeps browser history, referrers, and logs free of foreign tenant hints.
+    // Source is intentionally not included here: the access-routing predicate
+    // above strips foreign Source client params for locked sessions while
+    // allowing same-tenant Source deep links and per-tenant proof sessions to
+    // keep their explicit route context.
     if (requestedClientId && role !== "admin") {
       const pathname = request.nextUrl.pathname;
-      const isProtectedTree =
-        pathname === "/source" ||
-        pathname.startsWith("/source/") ||
-        pathname === "/tower" ||
-        pathname.startsWith("/tower/") ||
-        pathname === "/home" ||
-        pathname.startsWith("/home/") ||
-        pathname === "/admin" ||
-        pathname.startsWith("/admin/");
-      if (isProtectedTree) {
+      if (shouldBlanketStripClientParamFromProtectedTree({ pathname, role })) {
         console.warn(
           `[proxy] stripping foreign ?client= injection on ${pathname} (role=${role ?? "anon"}, requested=${requestedClientId})`,
         );
