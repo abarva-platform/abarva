@@ -59,6 +59,7 @@ import {
   type NextPhaseReadinessPack,
 } from "@/lib/programs/phase-templates/next-phase-readiness-pack";
 import { buildMovesChatAvaAnswerPacket } from "@/lib/programs/moves-chat-answer-packet";
+import { demoSafeClientText } from "@/lib/client-config";
 import { PHASE_CANONICAL_KEYS } from "@/lib/programs/deliverable-registry";
 import {
   APPROVAL_ROLE_LABELS,
@@ -748,6 +749,10 @@ export function MovesPhaseStandaloneClient({
     () => moneyRange(move.valueAtStake),
     [move.valueAtStake],
   );
+  const displayMoveName = useMemo(
+    () => demoSafeClientText(move.name),
+    [move.name],
+  );
   const p3DesignInputsPack = useMemo(
     () =>
       buildP3DesignInputsPackFromSignals({
@@ -758,7 +763,7 @@ export function MovesPhaseStandaloneClient({
         gateCriteria: move.gateCriteria,
         linkedEvidence: move.linkedEvidence,
         moveId: move.id,
-        moveName: move.name,
+        moveName: displayMoveName,
         readiness: currentStateReadiness,
       }),
     [
@@ -770,7 +775,7 @@ export function MovesPhaseStandaloneClient({
       move.gateCriteria,
       move.id,
       move.linkedEvidence,
-      move.name,
+      displayMoveName,
     ],
   );
   const p3OptionSet = useMemo(
@@ -781,7 +786,7 @@ export function MovesPhaseStandaloneClient({
         evidenceNeedPackets,
         industryCode: move.tenant.industryCode,
         moveId: move.id,
-        moveName: move.name,
+        moveName: displayMoveName,
         readiness: currentStateReadiness,
         tenantName: move.tenant.name,
         valueAtStake: moveValueRange,
@@ -791,7 +796,7 @@ export function MovesPhaseStandaloneClient({
       evidenceNeedPackets,
       move.archetype,
       move.id,
-      move.name,
+      displayMoveName,
       move.tenant.industryCode,
       move.tenant.name,
       moveValueRange,
@@ -1459,7 +1464,7 @@ export function MovesPhaseStandaloneClient({
               moveId: move.id,
               phase: phaseNum,
               moveDisplayCode: move.displayCode,
-              moveName: move.name,
+              moveName: displayMoveName,
               phaseLabel: phase.title,
             },
           }),
@@ -1558,6 +1563,7 @@ export function MovesPhaseStandaloneClient({
     },
     [
       avaStreaming,
+      displayMoveName,
       move,
       phase,
       phaseCaptureSections,
@@ -1830,7 +1836,9 @@ export function MovesPhaseStandaloneClient({
       <div className="mxw-contextbar" aria-label="Move context">
         <div>
           <span>MOVES</span>
-          <strong>{move.displayCode || move.name}</strong>
+          <strong>
+            {demoSafeClientText(move.displayCode || displayMoveName)}
+          </strong>
           <em>{supportLine}</em>
         </div>
         <div>
@@ -1874,7 +1882,7 @@ export function MovesPhaseStandaloneClient({
                   <Link className="mxw-back" href="/strategic-moves">
                     ← All Moves
                   </Link>
-                  <h2>{move.name}</h2>
+                  <h2>{displayMoveName}</h2>
                   <p>{supportLine}</p>
                 </div>
               )}
@@ -2062,7 +2070,7 @@ export function MovesPhaseStandaloneClient({
                       onClick={() => setWorkspaceView("phase")}
                       type="button"
                     >
-                      {move.name}
+                      {displayMoveName}
                     </button>
                     <span>/</span>
                     Files & Evidence
@@ -2092,7 +2100,7 @@ export function MovesPhaseStandaloneClient({
                       onClick={() => setWorkspaceView("phase")}
                       type="button"
                     >
-                      {move.name}
+                      {displayMoveName}
                     </button>
                     <span>/</span>
                     Phase Intelligence
@@ -2124,7 +2132,7 @@ export function MovesPhaseStandaloneClient({
                       onClick={() => setWorkspaceView("phase")}
                       type="button"
                     >
-                      {move.name}
+                      {displayMoveName}
                     </button>
                     <span>/</span>
                     Cost & Effort
@@ -2155,7 +2163,7 @@ export function MovesPhaseStandaloneClient({
                       onClick={() => setWorkspaceView("phase")}
                       type="button"
                     >
-                      {move.name}
+                      {displayMoveName}
                     </button>
                     <span>/</span>
                     Risk Assessment
@@ -2181,7 +2189,7 @@ export function MovesPhaseStandaloneClient({
                       onClick={() => setWorkspaceView("phase")}
                       type="button"
                     >
-                      {move.name}
+                      {displayMoveName}
                     </button>
                     <span>/</span>
                     Solutioning
@@ -2206,7 +2214,7 @@ export function MovesPhaseStandaloneClient({
                       onClick={() => setWorkspaceView("phase")}
                       type="button"
                     >
-                      {move.name}
+                      {displayMoveName}
                     </button>
                     <span>/</span>
                     Approvals overview
@@ -2242,7 +2250,7 @@ export function MovesPhaseStandaloneClient({
                     <Link
                       href={`/strategic-moves/${move.id}/phase/${move.currentPhase ?? 0}`}
                     >
-                      {move.name}
+                      {displayMoveName}
                     </Link>
                     <span>/</span>
                     {phase.code} · {phase.title}
@@ -2370,6 +2378,7 @@ export function MovesPhaseStandaloneClient({
                           gateApprovalStatus={gateApprovalStatus}
                           isHistoricalPhase={isHistoricalPhase}
                           move={move}
+                          displayMoveName={displayMoveName}
                           onApproveAfterBuild={approvePhaseGateAfterBuild}
                           onContinueCurrentPhase={continueToCurrentPhase}
                           onApproveP0Gate={approveP0Gate}
@@ -2429,6 +2438,7 @@ export function MovesPhaseStandaloneClient({
                           gateApprovalStatus={gateApprovalStatus}
                           isHistoricalPhase={isHistoricalPhase}
                           move={move}
+                          displayMoveName={displayMoveName}
                           onApproveAfterBuild={approvePhaseGateAfterBuild}
                           onContinueCurrentPhase={continueToCurrentPhase}
                           onApproveP0Gate={approveP0Gate}
@@ -3652,6 +3662,7 @@ function FinderFactsTable({ rawValue }: { rawValue: string }) {
 function PhaseBody({
   carriesForwardContent,
   currentStateReadiness,
+  displayMoveName,
   evidenceCount,
   findingsEvidenceLabel,
   evidenceNeedPackets,
@@ -3685,6 +3696,7 @@ function PhaseBody({
 }: {
   carriesForwardContent: DeliverableContentSignal[];
   currentStateReadiness: ReadinessReport | null;
+  displayMoveName: string;
   evidenceCount: number;
   findingsEvidenceLabel: string;
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
@@ -4252,7 +4264,7 @@ function PhaseBody({
         {!isHistoricalPhase && phase.phase >= 3 ? (
           <DecisionOptionsActionPanel
             moveId={move.id}
-            moveName={move.name}
+            moveName={displayMoveName}
             phase={phase.phase}
           />
         ) : null}
@@ -4352,7 +4364,7 @@ function PhaseBody({
               evidenceNeedPackets={evidenceNeedPackets}
               inputCount={phaseCaptureCompleteCount}
               moveId={move.id}
-              moveName={move.name}
+              moveName={displayMoveName}
               onBeforeBuild={onFinalizePhaseCapture}
               onBuildSettled={onApproveAfterBuild}
               phaseLabel={`${phase.code} ${phase.title}`}
@@ -4660,6 +4672,7 @@ function charterText(
 }
 
 function P0CapturedBriefReview({ move }: { move: StrategicMove }) {
+  const displayMoveName = demoSafeClientText(move.name);
   const rows = [
     {
       label: "Business problem / opportunity",
@@ -4710,7 +4723,7 @@ function P0CapturedBriefReview({ move }: { move: StrategicMove }) {
       </header>
       <div className="mxw-p0-brief-name">
         <span>Move name</span>
-        <strong>{move.name}</strong>
+        <strong>{displayMoveName}</strong>
       </div>
       <div className="mxw-p0-brief-grid">
         {rows.map((row, index) => (
@@ -4731,6 +4744,7 @@ function P0CapturedBriefReview({ move }: { move: StrategicMove }) {
 }
 
 function P0OriginationHandoff({ move }: { move: StrategicMove }) {
+  const displayMoveName = demoSafeClientText(move.name);
   return (
     <section className="mxw-zone mxw-p0-handoff">
       <div className="mxw-p0-handoff-kicker">P0 origination captured</div>
@@ -4742,7 +4756,7 @@ function P0OriginationHandoff({ move }: { move: StrategicMove }) {
       </p>
       <div className="mxw-p0-handoff-card">
         <span>Move</span>
-        <strong>{move.name}</strong>
+        <strong>{displayMoveName}</strong>
         <em>
           Use the step navigation above to continue to Gate approval when the
           brief, sponsor role, scope, value hypothesis, evidence families, and

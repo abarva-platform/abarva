@@ -245,6 +245,81 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
     expect(json.artifacts[0]!.artifactId).toBe("gen-current");
   });
 
+  it("does not mix older current phase docs with a newer quarantined phase rebuild", async () => {
+    generatedRecs = [
+      {
+        id: "gen-quarantine",
+        artifactType: "move_board_pack",
+        sourceArtifactRef: "move-x",
+        outputFormat: "html",
+        blobUrl: "b",
+        qualityScore: 0.75,
+        renderedAt: "2026-08-22T19:11:06Z",
+        renderedBy: "u",
+        quarantineReason: "blocked_quality: decision_clarity",
+        supersededBy: null,
+        metadata: {
+          deliverableTypeKey: "target_state_architecture",
+          renderableDoc: {
+            title: "Target-State Architecture",
+            deliverableTypeKey: "target_state_architecture",
+          },
+        },
+      },
+      {
+        id: "gen-old-solution",
+        artifactType: "move_board_pack",
+        sourceArtifactRef: "move-x",
+        outputFormat: "docx",
+        blobUrl: "b",
+        qualityScore: 0.9,
+        renderedAt: "2026-08-22T18:51:01Z",
+        renderedBy: "u",
+        quarantineReason: null,
+        supersededBy: null,
+        metadata: {
+          deliverableTypeKey: "solution_design",
+          renderableDoc: {
+            title: "Solution Design",
+            deliverableTypeKey: "solution_design",
+          },
+        },
+      },
+      {
+        id: "gen-p2",
+        artifactType: "move_board_pack",
+        sourceArtifactRef: "move-x",
+        outputFormat: "docx",
+        blobUrl: "b",
+        qualityScore: 1,
+        renderedAt: "2026-08-22T15:57:59Z",
+        renderedBy: "u",
+        quarantineReason: null,
+        supersededBy: null,
+        metadata: {
+          deliverableTypeKey: "root_cause_worksheet",
+          renderableDoc: {
+            title: "Root-Cause Worksheet",
+            deliverableTypeKey: "root_cause_worksheet",
+          },
+        },
+      },
+    ];
+
+    const res = await GET(
+      req("family=generated_deliverable&currentOnly=1"),
+      params("move-x"),
+    );
+    const json = (await res.json()) as {
+      artifacts: Array<Record<string, unknown>>;
+    };
+    expect(res.status).toBe(200);
+    expect(json.artifacts.map((artifact) => artifact.artifactId)).toEqual([
+      "gen-quarantine",
+      "gen-p2",
+    ]);
+  });
+
   it("still renders the vault when the generated_artifacts read throws", async () => {
     const repo = jest.requireMock("@/lib/artifacts/repository") as {
       listGeneratedArtifactsForMoveAllRefs: jest.Mock;
