@@ -169,6 +169,36 @@ type PhaseCaptureValues = Record<string, string>;
 type AvaDraftRequestStatus = "idle" | "loading" | "ready" | "error";
 type AvaDraftSaveStatus = "editing" | "saving" | "saved" | "error";
 
+const P3_OPTION_APPROVAL_TIMEOUT_MS = 45_000;
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs: number,
+  timeoutMessage: string,
+): Promise<Response> {
+  const controller = new AbortController();
+  let timeoutId: number | null = null;
+  try {
+    return await Promise.race([
+      fetch(input, { ...init, signal: controller.signal }),
+      new Promise<Response>((_, reject) => {
+        timeoutId = window.setTimeout(() => {
+          controller.abort();
+          reject(new Error(timeoutMessage));
+        }, timeoutMs);
+      }),
+    ]);
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error(timeoutMessage);
+    }
+    throw err;
+  } finally {
+    if (timeoutId !== null) window.clearTimeout(timeoutId);
+  }
+}
+
 function captureFieldMateriality(args: {
   key: string;
   label: string;
@@ -1607,35 +1637,50 @@ export function MovesPhaseStandaloneClient({
       setGateApprovalMessage(
         "Recording the approved solution option before architecture assembly...",
       );
-      const optionApprovalRes = await fetch(
-        `/api/v1/programs/${move.id}/solution-options/approve`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chosenOption: selectedP3Option.label,
-            approach: `${selectedP3Option.label}. ${selectedP3Option.summary}`,
-            rationale:
-              String(persistedPhaseCaptureValues.recommendation ?? "").trim() ||
-              `${selectedP3Option.recommendationLabel}. ${selectedP3Option.evidenceBasis.join(" ")}`,
-            tradeoffsAccepted: [
-              `Effort: ${selectedP3Option.effort}`,
-              `Time to value: ${selectedP3Option.timeToValue}`,
-              ...selectedP3Option.risks.map(
-                (risk) => `Risk accepted for design: ${risk}`,
-              ),
-            ],
-            options: p3OptionSet.options.map((option) => ({
-              id: option.id,
-              name: option.label,
-              summary: option.summary,
-              scores: option.scores,
-              recommended: option.recommended,
-            })),
-          }),
-        },
-      );
+      let optionApprovalRes: Response;
+      try {
+        optionApprovalRes = await fetchWithTimeout(
+          `/api/v1/programs/${move.id}/solution-options/approve`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chosenOption: selectedP3Option.label,
+              approach: `${selectedP3Option.label}. ${selectedP3Option.summary}`,
+              rationale:
+                String(
+                  persistedPhaseCaptureValues.recommendation ?? "",
+                ).trim() ||
+                `${selectedP3Option.recommendationLabel}. ${selectedP3Option.evidenceBasis.join(" ")}`,
+              tradeoffsAccepted: [
+                `Effort: ${selectedP3Option.effort}`,
+                `Time to value: ${selectedP3Option.timeToValue}`,
+                ...selectedP3Option.risks.map(
+                  (risk) => `Risk accepted for design: ${risk}`,
+                ),
+              ],
+              options: p3OptionSet.options.map((option) => ({
+                id: option.id,
+                name: option.label,
+                summary: option.summary,
+                scores: option.scores,
+                recommended: option.recommended,
+              })),
+            }),
+          },
+          P3_OPTION_APPROVAL_TIMEOUT_MS,
+          "Solution option approval did not finish within 45 seconds. The build was not enqueued; refresh the phase and retry once the approval service is responsive.",
+        );
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Solution option approval failed before the build could start.";
+        setGateApprovalStatus("blocked");
+        setGateApprovalMessage(message);
+        throw new Error(message);
+      }
       const optionApproval = (await optionApprovalRes
         .json()
         .catch(() => ({}))) as {
