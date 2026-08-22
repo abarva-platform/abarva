@@ -37,9 +37,7 @@ describe("repairUncitedFigures", () => {
       extractUnsupportedFigureClaims("Revenue grew 25% last year."),
     ).toEqual(["Revenue grew 25% last year."]);
     const repaired = repairUncitedFigures("Revenue grew 25% last year.");
-    expect(repaired).toContain(
-      "[ASSUMPTION TO VALIDATE:",
-    );
+    expect(repaired).toContain("[ASSUMPTION TO VALIDATE:");
     expect(extractUnsupportedFigureClaims(repaired)).toEqual([]);
     expect(
       repairUncitedFigures("Revenue grew 25% last year [3]."),
@@ -154,6 +152,45 @@ describe("assembleDeliverable", () => {
     });
   });
 
+  it("uses the explicit P3 decision section when synthesis is long but non-decisive", () => {
+    const req = amsRfpRequest({
+      module: "moves",
+      deliverableType: "target_state_architecture",
+    });
+    const sections: RenderableSection[] = [
+      {
+        key: "exec_summary",
+        title: "Executive Summary",
+        bodyMarkdown:
+          "The future-state architecture frames the recovery control tower and its evidence-backed operating implications.",
+        groundingMode: "mixed",
+        citationsUsed: [],
+      },
+      {
+        key: "recommendation",
+        title: "Recommendation & Next Actions",
+        bodyMarkdown:
+          "Choose Option B: governed recommendation workflow. It improves recovery prioritization and handoff visibility without over-building a command center or allowing autonomous customer-impacting actions.",
+        groundingMode: "mixed",
+        citationsUsed: [],
+      },
+    ];
+
+    const doc = assembleDeliverable(
+      req,
+      sections,
+      {
+        recommendation:
+          "The artifact should be reviewed by the sponsor before the next governed phase so the team can align on architecture implications.",
+      },
+      req.governedEvidenceBundle,
+    );
+
+    expect(doc.recommendation).toMatch(
+      /^We recommend choosing Option B: governed recommendation workflow\./,
+    );
+  });
+
   it("downgrades a business case title and consolidates unsupported figure claims into open inputs", () => {
     const req = amsRfpRequest({
       module: "moves",
@@ -197,7 +234,10 @@ describe("assembleDeliverable", () => {
       ]),
     );
     expect(
-      doc.tables.find((t) => t.key === "open_inputs_required")?.rows.flat().join(" "),
+      doc.tables
+        .find((t) => t.key === "open_inputs_required")
+        ?.rows.flat()
+        .join(" "),
     ).toContain("[ASSUMPTION TO VALIDATE:");
   });
 
@@ -268,7 +308,8 @@ describe("assembleDeliverable", () => {
       {
         key: "current_state",
         title: "Current State",
-        bodyMarkdown: "The current state is fragmented but evidence-backed [1].",
+        bodyMarkdown:
+          "The current state is fragmented but evidence-backed [1].",
         groundingMode: "mixed",
         citationsUsed: [1],
       },
@@ -285,7 +326,12 @@ describe("assembleDeliverable", () => {
             key: "risk_register",
             title: "Risk",
             columns: ["Risk", "Implication"],
-            rows: [["Unproven benefit", "The value case assumes 12% productivity uplift."]],
+            rows: [
+              [
+                "Unproven benefit",
+                "The value case assumes 12% productivity uplift.",
+              ],
+            ],
             targetFormat: "docx",
           },
         ],
@@ -327,7 +373,8 @@ describe("assembleDeliverable", () => {
         {
           key: "target",
           title: "Target",
-          bodyMarkdown: "Confirm the FY2026 target. [CLIENT TO COMPLETE: target owner]",
+          bodyMarkdown:
+            "Confirm the FY2026 target. [CLIENT TO COMPLETE: target owner]",
           groundingMode: "mixed",
           citationsUsed: [],
         },
@@ -336,7 +383,9 @@ describe("assembleDeliverable", () => {
       req.governedEvidenceBundle,
     );
 
-    expect(extractUnsupportedFigureClaims(doc.generatedSections[0]!.bodyMarkdown)).toEqual([]);
+    expect(
+      extractUnsupportedFigureClaims(doc.generatedSections[0]!.bodyMarkdown),
+    ).toEqual([]);
     expect(doc.generatedSections[0]!.bodyMarkdown).toContain("open input");
   });
 });

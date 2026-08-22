@@ -63,9 +63,21 @@ describe("assessClientDeliverable — the blocking quality gate", () => {
       renderedExhibits: [...CHARTER_EXHIBITS],
     });
     expect(a.state).toBe("blocked_quality");
-    expect(a.quality.findings.some((f) => f.dimension === "decision_clarity")).toBe(
-      true,
-    );
+    expect(
+      a.quality.findings.some((f) => f.dimension === "decision_clarity"),
+    ).toBe(true);
+  });
+
+  it("treats an explicit choice as a clear first-screen decision", () => {
+    const a = assessClientDeliverable({
+      deliverableKey: "charter",
+      narrativeText:
+        "Choose Option B: governed recommendation workflow for the next phase. This keeps human approval on customer-impacting actions.",
+      renderedExhibits: [...CHARTER_EXHIBITS],
+    });
+    expect(
+      a.quality.findings.some((f) => f.dimension === "decision_clarity"),
+    ).toBe(false);
   });
 
   it("blocks_quality for generic prose with no tenant specificity", () => {
@@ -77,9 +89,9 @@ describe("assessClientDeliverable — the blocking quality gate", () => {
       tenantTerms: ["First Capital", "Letter of Credit", "FIS"],
     });
     expect(a.state).toBe("blocked_quality");
-    expect(a.quality.findings.some((f) => f.dimension === "client_specificity")).toBe(
-      true,
-    );
+    expect(
+      a.quality.findings.some((f) => f.dimension === "client_specificity"),
+    ).toBe(true);
   });
 
   it("blocks_governance when egress/data governance failed", () => {

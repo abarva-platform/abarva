@@ -49,6 +49,8 @@ const FACT_LIKE =
   /(\$\s?\d|\b\d{1,3}(?:,\d{3})+\b|\b\d+%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/;
 const SUPPORTED =
   /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING|\(open input\s*[\u2013\u2014-]\s*see Open Inputs Required\)/i;
+const DECISIVE_RECOMMENDATION =
+  /\b(recommend|approve|approval|decision|decide|proceed|hold|stop|fund|invest|select|award|endorse|choose|do not approve)\b/i;
 
 export interface UnsupportedFigureClaim {
   sectionKey: string;
@@ -341,7 +343,13 @@ function fallbackRecommendation(
   synth: SynthesisResult,
 ): string {
   const supplied = synth.recommendation?.trim();
-  if (supplied && supplied.split(/\s+/).length >= 12) return supplied;
+  if (
+    supplied &&
+    supplied.split(/\s+/).length >= 12 &&
+    DECISIVE_RECOMMENDATION.test(supplied.slice(0, 260))
+  ) {
+    return supplied;
+  }
 
   // Matches "Authorization & Immediate Next Steps" (the Charter's redesigned
   // 2026-07-25 closing section) as well as the older "recommendation"/
@@ -354,16 +362,27 @@ function fallbackRecommendation(
       `${s.key} ${s.title}`,
     ),
   );
-  const firstSentence = recommendationSection?.bodyMarkdown
-    .replace(/[#*_`>|-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .split(/(?<=[.!?])\s+/)
-    .find((sentence) =>
-      /\brecommend|approve|hold|proceed|p2\b/i.test(sentence),
-    );
+  const recommendationSentences =
+    recommendationSection?.bodyMarkdown
+      .replace(/[#*_`>|-]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .split(/(?<=[.!?])\s+/)
+      .filter(Boolean) ?? [];
+  const decisiveIndex = recommendationSentences.findIndex((sentence) =>
+    DECISIVE_RECOMMENDATION.test(sentence),
+  );
+  const firstSentence =
+    decisiveIndex >= 0
+      ? [
+          recommendationSentences[decisiveIndex],
+          recommendationSentences[decisiveIndex + 1],
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : undefined;
   if (firstSentence && firstSentence.split(/\s+/).length >= 12) {
-    return firstSentence;
+    return firstSentence.replace(/^choose\b/i, "We recommend choosing");
   }
 
   if (req.module === "moves" && req.deliverableType === "charter") {
