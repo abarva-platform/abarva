@@ -77,7 +77,9 @@ interface CabinetContextExtract {
   gapItems?: CabinetContextExtractItem[];
 }
 
-function contextExtractFromMetadata(value: unknown): CabinetContextExtract | null {
+function contextExtractFromMetadata(
+  value: unknown,
+): CabinetContextExtract | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const extract = value as CabinetContextExtract;
   const hasContextExtractShape =
@@ -89,9 +91,12 @@ function contextExtractFromMetadata(value: unknown): CabinetContextExtract | nul
   return hasContextExtractShape ? extract : null;
 }
 
-function phaseFromGeneratedArtifactMetadata(meta: Record<string, unknown> | null | undefined): number | null {
+function phaseFromGeneratedArtifactMetadata(
+  meta: Record<string, unknown> | null | undefined,
+): number | null {
   const directPhase = meta?.phase;
-  if (typeof directPhase === "number" && Number.isInteger(directPhase)) return directPhase;
+  if (typeof directPhase === "number" && Number.isInteger(directPhase))
+    return directPhase;
   if (typeof directPhase === "string" && directPhase.trim()) {
     const parsed = Number(directPhase);
     if (Number.isInteger(parsed)) return parsed;
@@ -101,10 +106,14 @@ function phaseFromGeneratedArtifactMetadata(meta: Record<string, unknown> | null
     meta?.deliverableTypeKey,
     meta?.registryKey,
     meta?.deliverableType,
-    meta?.renderableDoc && typeof meta.renderableDoc === "object" && !Array.isArray(meta.renderableDoc)
+    meta?.renderableDoc &&
+    typeof meta.renderableDoc === "object" &&
+    !Array.isArray(meta.renderableDoc)
       ? (meta.renderableDoc as Record<string, unknown>).deliverableTypeKey
       : null,
-    meta?.renderableDoc && typeof meta.renderableDoc === "object" && !Array.isArray(meta.renderableDoc)
+    meta?.renderableDoc &&
+    typeof meta.renderableDoc === "object" &&
+    !Array.isArray(meta.renderableDoc)
       ? (meta.renderableDoc as Record<string, unknown>).deliverableType
       : null,
   ];
@@ -207,6 +216,7 @@ export async function GET(
         });
         const seen = new Set(moveArtifacts.map((a) => a.artifactId));
         generated = recs
+          .filter((rec) => !currentOnly || !rec.supersededBy)
           .filter((rec) => !seen.has(rec.id))
           .map((rec) => {
             const meta = rec.metadata as {
