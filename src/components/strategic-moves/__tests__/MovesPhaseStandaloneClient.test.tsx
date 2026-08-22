@@ -1757,6 +1757,87 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(uploadedEvidenceArtifacts).toHaveLength(0);
   });
 
+  it("routes airline P2 uploads by active readiness family labels", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        currentStateReadiness={{
+          ...makeCurrentStateReadiness(),
+          archetypeId: "AIRLINE_DISRUPTION_RECOVERY",
+          archetypeName: "Airline Disruption Recovery",
+          hardGaps: ["incumbent_performance", "sla_baseline", "vendor_spend"],
+          instruments: [
+            {
+              ...makeCurrentStateReadiness().instruments[0],
+              key: "incumbent_performance",
+              label: "Incumbent performance",
+              documentFamily: true,
+            },
+            {
+              ...makeCurrentStateReadiness().instruments[0],
+              key: "sla_baseline",
+              label: "SLA baseline",
+              documentFamily: true,
+            },
+            {
+              ...makeCurrentStateReadiness().instruments[0],
+              key: "vendor_spend",
+              label: "Vendor spend",
+              documentFamily: true,
+            },
+          ],
+        }}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="current"
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Understand Current State",
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByLabelText("Upload P2 current-state evidence files"),
+      {
+        target: {
+          files: [
+            new File(["cases"], "incumbent_performance_cases.csv", {
+              type: "text/csv",
+            }),
+            new File(["sla"], "sla_baseline_targets.csv", {
+              type: "text/csv",
+            }),
+            new File(["spend"], "vendor_spend_extract.csv", {
+              type: "text/csv",
+            }),
+          ],
+        },
+      },
+    );
+
+    await waitFor(() => {
+      expect(currentStateFamilyIngests).toEqual([
+        {
+          family: "incumbent_performance",
+          fileName: "incumbent_performance_cases.csv",
+          phase: 2,
+        },
+        {
+          family: "sla_baseline",
+          fileName: "sla_baseline_targets.csv",
+          phase: 2,
+        },
+        {
+          family: "vendor_spend",
+          fileName: "vendor_spend_extract.csv",
+          phase: 2,
+        },
+      ]);
+    });
+  });
+
   it("shows empty P1 charter capture fields as missing until real values are captured", () => {
     render(
       <MovesPhaseStandaloneClient
@@ -1849,6 +1930,47 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.queryByRole("heading", { name: "Initial transformation posture" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("recovers the selected P3 option from persisted recommendation text after reload", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialPhaseCaptureValues={{
+          solution_approach:
+            "Compare dashboard-only, governed workflow, and command-center options.",
+          operating_model:
+            "Station operations, baggage service, customer care, vendor management, finance, and product/data co-own the pilot.",
+          process_design:
+            "Use one exception queue, classify cases, recommend actions, require human approval, and reconcile outcomes.",
+          controls_governance:
+            "Synthetic values stay planning-grade; customer-impacting decisions require human approval.",
+          architecture_integration:
+            "Read-only integration over bag scan events, cases, contacts, SLA updates, and spend extracts.",
+          evidence_confidence:
+            "Operational confidence is medium-high; financial confidence remains medium until accounting reconciliation.",
+          recommendation:
+            "Choose Option B: governed recommendation workflow for P4 planning.",
+        }}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 3,
+          phaseLabel: "P3 Choose the Approach",
+        })}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+
+    expect(screen.getByText("7 inputs available")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Choose the Approach/i,
+      }),
+    ).toBeEnabled();
   });
 
   it("surfaces a Next-Phase Readiness Pack with real evidence gaps at gate approval", () => {

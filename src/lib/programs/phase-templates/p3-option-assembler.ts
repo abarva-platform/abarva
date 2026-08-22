@@ -722,6 +722,9 @@ function adjust(scoresRecord: Record<P3OptionScoreDimension, number>, key: P3Opt
 }
 
 function inferUseCasePattern(text: string): P3UseCasePattern {
+  if (/airline|airport|baggage|bag|disruption|irops|station|recovery|handler|sla/.test(text)) {
+    return 'operations_resilience';
+  }
   if (/member|call center|contact center|agent assist|agent-assist|claims|benefits|eligibility|prior auth|authorization|crm|pharmacy|emr|ehr|phi/.test(text)) {
     return 'member_service_agent_assist';
   }
