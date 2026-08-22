@@ -238,6 +238,25 @@ def read_csv(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
+def sql_literal_to_csv_value(value: object) -> str:
+    text = str(value)
+    if text == "null":
+        return ""
+    if text.endswith("::jsonb"):
+        text = text[: -len("::jsonb")]
+    if len(text) >= 2 and text[0] == "'" and text[-1] == "'":
+        return text[1:-1].replace("''", "'")
+    return text
+
+
+def write_projection_csv(path: Path, columns: list[str], rows: list[dict[str, str]]) -> None:
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=columns)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({column: sql_literal_to_csv_value(row[column]) for column in columns})
+
+
 def write_scope_active_application_reconciliation(out_dir: Path, scope_links: list[dict[str, object]]) -> None:
     """Write a stable reference-only comparison for dense-build scope gaps."""
 
@@ -2150,6 +2169,10 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
         ("ecl_projection.cube_slice_metric", cube_metric_rows),
         ("ecl_projection.cube_slice_measure", cube_measure_rows),
     ]
+
+    write_projection_csv(out_dir / "source_contract_360_projection.csv", columns["ecl_projection.source_contract_360"], source_contract_rows)
+    write_projection_csv(out_dir / "source_vendor_360_projection.csv", columns["ecl_projection.source_vendor_360"], source_vendor_rows)
+    write_projection_csv(out_dir / "tower_command_center_projection.csv", columns["ecl_projection.tower_command_center"], tower_rows)
 
     sql_parts = [
         "-- Commercial contract supply correction ECL load.\n",
