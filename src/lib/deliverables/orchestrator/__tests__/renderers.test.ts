@@ -115,7 +115,7 @@ describe("HTML preview", () => {
 
   it("is self-contained and includes title, recommendation, and source register", () => {
     expect(html).toMatch(/<!doctype html>/i);
-    expect(html).toMatch(/SkyHarbor Air/);
+    expect(html).toMatch(/Airline Demo/);
     expect(html).toMatch(/Recommendation/);
     expect(html).toMatch(/Source Register/);
     expect(html).toMatch(/F8F7F4/); // AbarVa cream background

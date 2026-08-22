@@ -24,6 +24,7 @@ import type {
 import { sanitizeClientFacingArtifactMarkdown } from "@/lib/deliverables/client-facing-artifact-sanitize";
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
+import { humanizeSourceFamily } from "./source-register";
 
 /** Bounded-concurrency map that preserves input order. */
 export async function mapWithConcurrency<T, R>(
@@ -222,7 +223,7 @@ export function buildSourceRegister(
     .map((e) => ({
       citationNumber: e.citationNumber,
       label: e.label,
-      evidenceFamily: e.evidenceFamily,
+      evidenceFamily: humanizeSourceFamily(e.evidenceFamily),
       confidence: e.confidence,
       asOf: e.asOf,
     }));
