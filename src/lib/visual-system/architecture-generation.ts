@@ -366,6 +366,8 @@ Rules:
   human_approval flows where they belong.
 - Provide an agentic overlay: which agents call which tools, what grounds them, what guards them,
   where a human approves.
+- Every agentic overlay item must use an agentId that is also declared in target.nodes as a node
+  with kind="agent" and layer="agentic". Do not create an agent binding without the target node.
 - Flows must reference node ids that exist. Keep ids short and stable.
 - Do not fabricate volumes or financials; put unknown operating facts in openInputs.
 Call emit_architecture_model exactly once with the complete structured model.`;
@@ -419,6 +421,57 @@ export function buildArchitectureUserMessage(
   );
 }
 
+function labelFromAgentBinding(agentId: string, role: string): string {
+  const candidate = role.replace(/\s+/g, " ").replace(/\.$/, "").trim();
+  if (candidate) {
+    return candidate.length > 72
+      ? `${candidate.slice(0, 69).trim()}...`
+      : candidate;
+  }
+  return agentId
+    .replace(/^agt[-_]/i, "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (m) => m.toUpperCase());
+}
+
+function normalizeGeneratedArchitectureModel(
+  model: ArchitectureModel,
+): ArchitectureModel {
+  const targetNodes = Array.isArray(model.target?.nodes)
+    ? [...model.target.nodes]
+    : [];
+  const targetIds = new Set(targetNodes.map((n) => n.id));
+  let added = false;
+
+  for (const binding of model.agentic ?? []) {
+    if (!binding?.agentId || targetIds.has(binding.agentId)) {
+      continue;
+    }
+    targetNodes.push({
+      id: binding.agentId,
+      label: labelFromAgentBinding(binding.agentId, binding.role),
+      kind: "agent",
+      layer: "agentic",
+      status: "new",
+      note: binding.role,
+    });
+    targetIds.add(binding.agentId);
+    added = true;
+  }
+
+  if (!added) {
+    return model;
+  }
+
+  return {
+    ...model,
+    target: {
+      ...model.target,
+      nodes: targetNodes,
+    },
+  };
+}
+
 /**
  * Generate a validated ArchitectureModel through the injected governed call.
  * Pure orchestration — identical for every tenant and use case.
@@ -445,7 +498,9 @@ export async function generateArchitectureModel(
   if (!toolInput || typeof toolInput !== "object") {
     throw new Error("Architecture generation returned no structured model.");
   }
-  const archModel = toolInput as ArchitectureModel;
+  const archModel = normalizeGeneratedArchitectureModel(
+    toolInput as ArchitectureModel,
+  );
   const issues = validateArchitectureModel(archModel);
   if (issues.some((i) => i.level === "error")) {
     throw new Error(
