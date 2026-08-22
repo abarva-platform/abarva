@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "queue_id": "ecl-no-stop-execution-queue",
+  "updated_on": "2026-08-22",
+  "purpose": "Drive ordered local ECL proof execution without reopening approval for every non-mutating slice.",
+  "authority": {
+    "auto_proceed_scope": "Local proof, static report generation, validator output, PR creation, PR merge after explicit workflow input, and ACA-main-deploy handoff after merge.",
+    "not_authorized_here": [
+      "Azure data-plane writes",
+      "database migrations against shared environments",
+      "active tenant input replacement",
+      "snapshot promotion",
+      "product route repointing",
+      "traffic mutation outside aca-main-deploy",
+      "legacy deletion or retirement"
+    ]
+  },
+  "hard_stop_gates": [
+    {
+      "gate_id": "azure_data_plane_write",
+      "description": "Any load, update, delete, or mutation in shared Azure data stores requires a separate approval and proof bundle."
+    },
+    {
+      "gate_id": "database_migration",
+      "description": "Migration creation is allowed as a candidate artifact; execution against shared environments is gated."
+    },
+    {
+      "gate_id": "active_tenant_replacement",
+      "description": "Replacing active tenant inputs or promoting snapshots is gated."
+    },
+    {
+      "gate_id": "product_route_repointing",
+      "description": "Switching Home, Source, Tower, Intelligence, or Moves routes to ECL projections is gated until parity and browser proof exist."
+    },
+    {
+      "gate_id": "browser_live_claim",
+      "description": "Live product proof requires a signed-in browser crawl; CI and HTTP health are not browser proof."
+    },
+    {
+      "gate_id": "legacy_retirement",
+      "description": "Deleting, retiring, or disabling old tables, files, loaders, or jobs requires explicit sunset authorization."
+    }
+  ],
+  "slices": [
+    {
+      "order": 1,
+      "slice_id": "commercial_contract_source_room_proof",
+      "status": "done",
+      "percent_complete": 65,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/run_commercial_contract_proof.py",
+      "evidence_paths": [
+        "scripts/ecl/run_commercial_contract_proof.py",
+        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/commercial_proof_acceptance_summary.json",
+        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/proof_bundle_manifest.json"
+      ],
+      "next_auto_action": "Generalize proof-runner patterns across the next ECL builder slice.",
+      "stop_gate": "Azure load, migration, product repointing, or browser-live claim."
+    },
+    {
+      "order": 2,
+      "slice_id": "legacy_table_retirement_pressure_map",
+      "status": "done",
+      "percent_complete": 45,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/write_legacy_table_retirement_map.py",
+      "evidence_paths": [
+        "scripts/ecl/write_legacy_table_retirement_map.py",
+        "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_summary.json",
+        "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_map.csv"
+      ],
+      "next_auto_action": "Add owner/readback/parity detail as evidence becomes available.",
+      "stop_gate": "Live Azure DB readback or retirement authorization."
+    },
+    {
+      "order": 3,
+      "slice_id": "machine_readable_execution_queue",
+      "status": "in_progress",
+      "percent_complete": 60,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/validate_no_stop_execution_queue.py",
+      "evidence_paths": [
+        "docs/architecture/ecl-no-stop-execution-queue.json",
+        "scripts/ecl/validate_no_stop_execution_queue.py"
+      ],
+      "next_auto_action": "Use the queue manifest to drive next proof slices and CI artifact packaging.",
+      "stop_gate": "None while validation remains local and report-only."
+    },
+    {
+      "order": 4,
+      "slice_id": "client_extraction_mapping_extension",
+      "status": "queued",
+      "percent_complete": 25,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/write_commercial_client_extraction_mapping.py",
+      "evidence_paths": [
+        "scripts/ecl/write_commercial_client_extraction_mapping.py",
+        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/commercial_client_extraction_mapping.csv"
+      ],
+      "next_auto_action": "Extend extraction-map shape to CMDB, budget/spend, data and analytics volumetrics, AI usage, interviews, infrastructure/cloud, and program portfolio.",
+      "stop_gate": "Replacing client-facing template packages in Azure."
+    },
+    {
+      "order": 5,
+      "slice_id": "dense_meridian_requirements",
+      "status": "queued",
+      "percent_complete": 20,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/write_commercial_scope_dense_requirements.py",
+      "evidence_paths": [
+        "scripts/ecl/write_commercial_scope_dense_requirements.py",
+        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/commercial_scope_dense_meridian_required_additions.csv"
+      ],
+      "next_auto_action": "Generate dense source-room requirements from product deterministic needs and commercial scope gaps.",
+      "stop_gate": "Active tenant source replacement."
+    },
+    {
+      "order": 6,
+      "slice_id": "builder_quality_gate_generalization",
+      "status": "queued",
+      "percent_complete": 20,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/validate_commercial_proof_acceptance.py",
+      "evidence_paths": [
+        "scripts/ecl/validate_commercial_proof_acceptance.py",
+        "scripts/ecl/validate_commercial_source_room.py",
+        "scripts/ecl/validate_commercial_document_quality.py"
+      ],
+      "next_auto_action": "Factor reusable acceptance, lineage, bad-row, source-room, and document-quality gates for additional builders.",
+      "stop_gate": "Migration or ACA data-build execution."
+    },
+    {
+      "order": 7,
+      "slice_id": "product_consumption_fact_contracts",
+      "status": "queued",
+      "percent_complete": 30,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/write_commercial_product_consumption_mapping.py",
+      "evidence_paths": [
+        "scripts/ecl/write_commercial_product_consumption_mapping.py",
+        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/commercial_product_consumption_mapping.csv"
+      ],
+      "next_auto_action": "Produce page-by-page deterministic fact contracts for first Source and Tower consumer surfaces.",
+      "stop_gate": "Product route repointing or deployed browser-live claim."
+    },
+    {
+      "order": 8,
+      "slice_id": "browser_and_product_repointing_proof",
+      "status": "blocked_by_hard_gate",
+      "percent_complete": 0,
+      "auto_proceed_allowed": false,
+      "proof_command": "",
+      "evidence_paths": [],
+      "next_auto_action": "None. Requires explicit product-route and signed-in browser QA lane.",
+      "stop_gate": "product_route_repointing"
+    }
+  ]
+}

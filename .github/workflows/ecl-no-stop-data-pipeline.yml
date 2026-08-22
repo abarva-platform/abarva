@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/ecl-no-stop-data-pipeline.yml"
       - "docs/architecture/ECL_*.md"
+      - "docs/architecture/ecl-no-stop-execution-queue.json"
       - "docs/architecture/sql-drafts/ecl_*.sql"
       - "docs/releases/records/**"
       - "scripts/ecl/**"
@@ -16,6 +17,7 @@ on:
     paths:
       - ".github/workflows/ecl-no-stop-data-pipeline.yml"
       - "docs/architecture/ECL_*.md"
+      - "docs/architecture/ecl-no-stop-execution-queue.json"
       - "docs/architecture/sql-drafts/ecl_*.sql"
       - "docs/releases/records/**"
       - "scripts/ecl/**"
@@ -91,6 +93,7 @@ jobs:
         run: |
           python3 -m py_compile \
             scripts/ecl/run_commercial_contract_proof.py \
+            scripts/ecl/validate_no_stop_execution_queue.py \
             scripts/ecl/validate_commercial_proof_acceptance.py \
             scripts/ecl/write_legacy_table_retirement_map.py
 
@@ -101,6 +104,7 @@ jobs:
         run: |
           python3 scripts/ecl/run_commercial_contract_proof.py
           python3 scripts/ecl/write_legacy_table_retirement_map.py
+          python3 scripts/ecl/validate_no_stop_execution_queue.py
 
       - name: Assert proof acceptance and retirement-map counts
         shell: bash
@@ -119,6 +123,7 @@ jobs:
           report_dir = Path("reports/ecl-legacy-table-retirement-map-2026-08-22")
           summary = json.loads((report_dir / "legacy_table_retirement_summary.json").read_text())
           rows = list(csv.DictReader((report_dir / "legacy_table_retirement_map.csv").open()))
+          queue = json.loads(Path("outputs/ecl-no-stop-queue-validation/validation-summary.json").read_text())
 
           failures = []
           if not acceptance.get("accepted"):
@@ -141,6 +146,12 @@ jobs:
           }
           if rows and not required_columns.issubset(rows[0].keys()):
             failures.append("retirement map is missing execution columns")
+          if not queue.get("accepted"):
+            failures.append(f"queue validation failed: {queue}")
+          if queue.get("auto_proceed_slice_count", 0) < 1:
+            failures.append("queue validation found no auto-proceed slices")
+          if queue.get("blocked_slice_count", 0) < 1:
+            failures.append("queue validation found no hard-gate blocked slices")
 
           if failures:
             print("\n".join(failures), file=sys.stderr)
@@ -151,6 +162,7 @@ jobs:
               "artifact_hashes": len(manifest.get("artifact_hashes", [])),
               "source_room_hashes": len(manifest.get("source_room_hashes", [])),
               "create_table_statements": summary.get("create_table_statements"),
+              "queue_slices": queue.get("slice_count"),
               "unique_table_names": summary.get("unique_table_names"),
           }, indent=2, sort_keys=True))
           PY
@@ -162,8 +174,10 @@ jobs:
           mkdir -p audit-artifacts/ecl-no-stop-data-pipeline
           tar -czf audit-artifacts/ecl-no-stop-data-pipeline/ecl-no-stop-proof.tgz \
             outputs/ecl-commercial-contract-supply-correction-2026-08-22 \
+            outputs/ecl-no-stop-queue-validation \
             reports/ecl-legacy-table-retirement-map-2026-08-22 \
             docs/architecture/ECL_NO_STOP_EXECUTION_QUEUE_2026_08_22.md \
+            docs/architecture/ecl-no-stop-execution-queue.json \
             docs/architecture/ECL_LAYER_CUBE_EXECUTION_TRACKER_2026_08_22.md
           shasum -a 256 audit-artifacts/ecl-no-stop-data-pipeline/ecl-no-stop-proof.tgz \
             | tee audit-artifacts/ecl-no-stop-data-pipeline/ecl-no-stop-proof.sha256
