@@ -1,0 +1,36 @@
+{
+  "boundary": {
+    "azure_read": false,
+    "azure_write": false,
+    "deletion_authorization": false,
+    "migration_authorization": false,
+    "product_repointing": false
+  },
+  "create_table_statements": 562,
+  "csv": "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_map.csv",
+  "duplicate_table_names": 75,
+  "generated_at": "2026-08-22T22:18:05.530797+00:00",
+  "schema_counts_top": {
+    "cio_tower": 19,
+    "ecl_commercial": 5,
+    "ecl_context": 6,
+    "ecl_projection": 10,
+    "ecl_review": 1,
+    "ecl_source": 4,
+    "intelligence_v6": 4,
+    "intelligence_v7": 5,
+    "public": 508
+  },
+  "scope": "static repo-visible SQL CREATE TABLE inventory",
+  "status_counts": {
+    "ARCHIVE_ONLY": 25,
+    "HOLD_PLATFORM_CONTROL": 30,
+    "HOLD_UNTIL_ECL_CONTEXT_PARITY": 60,
+    "HOLD_UNTIL_LIVE_READBACK": 226,
+    "NEW_ECL_TARGET": 26,
+    "REPLACE_OR_BRIDGE": 1,
+    "REPLACE_WITH_ECL_PROJECTION": 161,
+    "REVIEW_FOR_MOVES_OR_CONTEXT_BRIDGE": 33
+  },
+  "unique_table_names": 483
+}
