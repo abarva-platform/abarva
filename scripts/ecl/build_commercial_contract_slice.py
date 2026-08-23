@@ -1779,7 +1779,7 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
             "rebuild_command": sql_text("python3 scripts/ecl/build_commercial_contract_slice.py"),
             "source_hash": sql_text(SOURCE_HASH_LABEL),
             "projection_hash": sql_text(stable_uuid("projection-hash", SOURCE_HASH_LABEL)),
-            "row_count": sql_num(15),
+            "row_count": sql_num(20),
             "quality_state": sql_text("warning"),
             "admission_status": sql_text("not_applicable"),
             "admission_gate_results_json": sql_json([]),
@@ -1790,6 +1790,7 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
 
     source_contract_rows = []
     source_vendor_rows = []
+    source_value_rows = []
     tower_rows = []
     for contract_id, contract in contract_by_id.items():
         vendor_id = object_ids[("vendor", contract["vendor_parent_id"])]
@@ -1824,6 +1825,37 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
             protection_flags.append(protection["primary_weakness"])
         else:
             protection_flags.append("market_benchmark_extract_missing")
+        shortfall_exposure = money(protection["modeled_shortfall_exposure_usd"])
+        if shortfall_exposure > 0:
+            lever_type = "shortfall_recovery"
+            opportunity_type = "recover"
+            estimated_value_low = money(shortfall_exposure * Decimal("0.25"))
+            estimated_value_high = shortfall_exposure
+            opportunity_title = f"Recover shortfall exposure before extending {contract['contract_name']}"
+        elif protection["primary_weakness"] in {"uncapped_exit_cost", "auto_renewal_long_notice_and_shortfall_penalty"}:
+            lever_type = "exit_economics" if protection["primary_weakness"] == "uncapped_exit_cost" else "renewal_leverage"
+            opportunity_type = "protect"
+            estimated_value_low = money(Decimal(contract["annual_value_usd"]) * Decimal("0.03"))
+            estimated_value_high = money(Decimal(contract["annual_value_usd"]) * Decimal("0.08"))
+            opportunity_title = f"Preserve exit leverage for {contract['contract_name']}"
+        elif protection["primary_weakness"] == "no_benchmarking_right":
+            lever_type = "renewal_leverage"
+            opportunity_type = "renegotiate"
+            estimated_value_low = money(max(Decimal("0.00"), benchmark_variance) * Decimal("0.25"))
+            estimated_value_high = money(max(Decimal("0.00"), benchmark_variance) * Decimal("0.60"))
+            opportunity_title = f"Add benchmark right before repricing {contract['contract_name']}"
+        elif benchmark_variance > 0:
+            lever_type = "rate_variance"
+            opportunity_type = "renegotiate"
+            estimated_value_low = money(benchmark_variance * Decimal("0.25"))
+            estimated_value_high = money(benchmark_variance * Decimal("0.60"))
+            opportunity_title = f"Benchmark-rate challenge for {contract['contract_name']}"
+        else:
+            lever_type = "evidence_request"
+            opportunity_type = "evidence_request"
+            estimated_value_low = Decimal("0.00")
+            estimated_value_high = Decimal("0.00")
+            opportunity_title = f"Complete value evidence for {contract['contract_name']}"
         source_contract_rows.append(
             {
                 "id": sql_text(stable_uuid("projection", "source-contract-360", contract_id)),
@@ -1943,6 +1975,82 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
                         "market_benchmark": benchmark_summary,
                     }
                 ),
+                "source_hash": sql_text(SOURCE_HASH_LABEL),
+            }
+        )
+        source_value_rows.append(
+            {
+                "id": sql_text(stable_uuid("projection", "source-value-levers", contract_id)),
+                "tenant_key": sql_text(TENANT_KEY),
+                "assessment_id": sql_text(ASSESSMENT_ID),
+                "snapshot_id": sql_text(snapshot_id),
+                "projection_manifest_id": sql_text(projection_manifest_id),
+                "projection_version": sql_num(1),
+                "row_key": sql_text(contract_id),
+                "lever_type": sql_text(lever_type),
+                "opportunity_type": sql_text(opportunity_type),
+                "opportunity_title": sql_text(opportunity_title),
+                "contract_id": sql_text(contract_ids[contract_id]),
+                "contract_object_id": sql_text(contract_object_id),
+                "vendor_object_id": sql_text(vendor_id),
+                "primary_metric_key": sql_text("blocked_value_usd"),
+                "baseline_spend_usd": sql_num(contract["annual_value_usd"]),
+                "addressable_spend_usd": sql_num(contract["annual_value_usd"]),
+                "estimated_value_low_usd": sql_num(money_str(estimated_value_low)),
+                "estimated_value_high_usd": sql_num(money_str(estimated_value_high)),
+                "claimable_value_usd": sql_num(0),
+                "blocked_value_usd": sql_num(contract["annual_value_usd"]),
+                "value_gate_status": sql_text("gated"),
+                "value_gate_reason_code": sql_text("requires_client_finance_and_owner_review"),
+                "value_gate_reason_detail": sql_text("Value opportunity is locally modeled from source-room evidence, but no client finance attestation or business-owner approval exists."),
+                "evidence_state": sql_text("mixed"),
+                "confidence": sql_num("0.62" if estimated_value_high > 0 else "0.50"),
+                "affected_scope_json": sql_json(
+                    [
+                        {
+                            "application_name": s["application_name"],
+                            "business_domain": s["business_domain"],
+                            "allocation_percent": s["allocation_percent"],
+                        }
+                        for s in scope_items
+                    ]
+                ),
+                "benchmark_context_json": sql_json(benchmark_summary),
+                "protection_context_json": sql_json(
+                    {
+                        "commercial_protection_score": int(protection["protection_score"]),
+                        "commercial_protection_band": protection["protection_band"],
+                        "primary_weakness": protection["primary_weakness"],
+                        "notice_window_days": int(protection["notice_window_days"]),
+                        "termination_for_convenience_state": protection["termination_for_convenience_state"],
+                        "minimum_commitment_usd": float(protection["minimum_commitment_usd"]),
+                        "modeled_shortfall_exposure_usd": float(protection["modeled_shortfall_exposure_usd"]),
+                    }
+                ),
+                "next_action_json": sql_json(
+                    {
+                        "action": "request_evidence",
+                        "owner_role": contract["business_owner_role"],
+                        "required_evidence": [
+                            "finance attestation",
+                            "business-owner approval",
+                            "client confirmation of benchmark/protection basis",
+                        ],
+                    }
+                ),
+                "metric_keys_json": sql_json(
+                    [
+                        "annualized_contract_value_usd",
+                        "blocked_value_usd",
+                        "claimable_value_usd",
+                        "market_benchmark_variance_usd",
+                        "market_benchmark_variance_percent",
+                        "commercial_protection_score",
+                        "modeled_shortfall_exposure_usd",
+                    ]
+                ),
+                "source_refs_json": sql_json([contract["source_record_id"], protection["source_record_id"], *[b["source_record_id"] for b in benchmark_items[:2]]]),
+                "gap_flags_json": sql_json(["no_client_attestation", "no_owner_approval", *gap_flags, *protection_flags]),
                 "source_hash": sql_text(SOURCE_HASH_LABEL),
             }
         )
@@ -2139,6 +2247,7 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
         "ecl_projection.projection_manifest": ["id", "tenant_key", "assessment_id", "projection_key", "projection_version", "snapshot_id", "rebuild_command", "source_hash", "projection_hash", "row_count", "quality_state", "admission_status", "admission_gate_results_json", "gated_claim_count", "proof_uri"],
         "ecl_projection.source_contract_360": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_version", "row_key", "contract_id", "contract_object_id", "vendor_object_id", "contract_name", "vendor_name", "renewal_notice_date", "end_date", "annualized_value_usd", "total_contract_value_usd", "value_state", "quality_state", "service_lines_json", "scope_json", "spend_summary_json", "sla_summary_json", "document_proof_json", "gap_flags_json", "source_refs_json", "source_hash"],
         "ecl_projection.source_vendor_360": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_version", "row_key", "vendor_object_id", "vendor_name", "contract_count", "covered_object_count", "annualized_spend_usd", "renewal_exposure_usd", "value_state", "quality_state", "contract_ids_json", "covered_objects_json", "spend_summary_json", "sla_summary_json", "risk_control_json", "gap_flags_json", "source_refs_json", "source_hash"],
+        "ecl_projection.source_value_levers": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_version", "row_key", "lever_type", "opportunity_type", "opportunity_title", "contract_id", "contract_object_id", "vendor_object_id", "primary_metric_key", "baseline_spend_usd", "addressable_spend_usd", "estimated_value_low_usd", "estimated_value_high_usd", "claimable_value_usd", "blocked_value_usd", "value_gate_status", "value_gate_reason_code", "value_gate_reason_detail", "evidence_state", "confidence", "affected_scope_json", "benchmark_context_json", "protection_context_json", "next_action_json", "metric_keys_json", "source_refs_json", "gap_flags_json", "source_hash"],
         "ecl_projection.tower_command_center": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_version", "row_key", "page_key", "row_type", "primary_object_id", "claim_id", "claim_gate_status", "claim_gate_reason_code", "claim_gate_reason_detail", "next_gate", "evidence_needed_json", "funded_amount_usd", "promised_value_usd", "usage_supported_value_usd", "finance_validated_value_usd", "claimable_value_usd", "blocked_value_usd", "proof_maturity_score", "risk_pressure_score", "usage_strength_score", "owner_role", "handoff_module", "value_state", "quality_state", "metric_keys_json", "source_refs_json", "gap_flags_json", "display_payload_json", "source_hash"],
         "ecl_projection.cube_manifest": ["id", "tenant_key", "assessment_id", "snapshot_id", "cube_key", "cube_version", "rebuild_command", "source_hash", "cube_hash", "slice_count", "quality_state", "admission_status", "admission_gate_results_json", "proof_uri"],
         "ecl_projection.cube_slice": ["id", "tenant_key", "assessment_id", "snapshot_id", "cube_manifest_id", "cube_key", "cube_version", "slice_key", "grain_key", "primary_object_id", "dimensions_json", "measures_json", "primary_metric_key", "metric_keys_json", "source_refs_json", "basis_summary", "value_state", "quality_state", "gap_flags_json", "source_hash"],
@@ -2163,6 +2272,7 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
         ("ecl_projection.projection_manifest", projection_manifest_sql),
         ("ecl_projection.source_contract_360", source_contract_rows),
         ("ecl_projection.source_vendor_360", source_vendor_rows),
+        ("ecl_projection.source_value_levers", source_value_rows),
         ("ecl_projection.tower_command_center", tower_rows),
         ("ecl_projection.cube_manifest", cube_manifest_rows),
         ("ecl_projection.cube_slice", cube_slice_rows),
@@ -2172,6 +2282,7 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
 
     write_projection_csv(out_dir / "source_contract_360_projection.csv", columns["ecl_projection.source_contract_360"], source_contract_rows)
     write_projection_csv(out_dir / "source_vendor_360_projection.csv", columns["ecl_projection.source_vendor_360"], source_vendor_rows)
+    write_projection_csv(out_dir / "source_value_levers_projection.csv", columns["ecl_projection.source_value_levers"], source_value_rows)
     write_projection_csv(out_dir / "tower_command_center_projection.csv", columns["ecl_projection.tower_command_center"], tower_rows)
 
     sql_parts = [
@@ -2199,6 +2310,17 @@ select 'invoice_lines', count(*) from ecl_commercial.invoice_line;
 select 'sla_observations', count(*) from ecl_commercial.sla_observation;
 select 'source_contract_360', count(*) from ecl_projection.source_contract_360;
 select 'source_vendor_360', count(*) from ecl_projection.source_vendor_360;
+select 'source_value_levers', count(*) from ecl_projection.source_value_levers;
+select 'source_value_levers_gated', count(*) from ecl_projection.source_value_levers where value_gate_status = 'gated';
+select 'source_value_levers_claimable_sum', coalesce(sum(claimable_value_usd), 0)::int from ecl_projection.source_value_levers;
+select 'source_value_levers_primary_metric_drift', count(*)
+from ecl_projection.source_value_levers svl
+left join ecl_context.metric_definition md
+  on md.tenant_key = svl.tenant_key and md.metric_key = svl.primary_metric_key
+where md.metric_key is null;
+select 'source_value_levers_model_inferred_benchmark_rows', count(*)
+from ecl_projection.source_value_levers
+where benchmark_context_json ->> 'basis' = 'synthetic_directional_market_benchmark';
 select 'tower_command_center', count(*) from ecl_projection.tower_command_center;
 select 'cube_slices', count(*) from ecl_projection.cube_slice;
 select 'cube_slice_metrics', count(*) from ecl_projection.cube_slice_metric;
@@ -2457,6 +2579,7 @@ order by vendor_name;
         "sla_observations": len(sla_sql),
         "source_contract_360_rows": len(source_contract_rows),
         "source_vendor_360_rows": len(source_vendor_rows),
+        "source_value_levers_rows": len(source_value_rows),
         "tower_rows": len(tower_rows),
         "cube_manifests": len(cube_manifest_rows),
         "cube_slices": len(cube_slice_rows),
@@ -2523,6 +2646,7 @@ def write_readme(out_dir: Path, summary: dict[str, object]) -> None:
         "sla_observations",
         "source_contract_360_rows",
         "source_vendor_360_rows",
+        "source_value_levers_rows",
         "tower_rows",
         "cube_manifests",
         "cube_slices",
@@ -2563,7 +2687,7 @@ def write_readme(out_dir: Path, summary: dict[str, object]) -> None:
             "python3 scripts/ecl/write_commercial_proof_bundle_manifest.py",
             "```",
             "",
-            "Observed proof is captured in `commercial_contract_supply_db_proof.txt`. The machine-readable proof manifest is `proof_bundle_manifest.json`; it embeds the git SHA, dirty-state hash, tenant list, environment metadata, 26 proof/report artifact hashes, retained planted-failure artifacts, dense Meridian scope-addition reports, client extraction mapping, product-consumption mapping, document-quality reports, the one-command run summary, acceptance summary, and 67 source-room file hashes.",
+            "Observed proof is captured in `commercial_contract_supply_db_proof.txt`. The machine-readable proof manifest is `proof_bundle_manifest.json`; it embeds the git SHA, dirty-state hash, tenant list, environment metadata, 30 proof/report artifact hashes, retained planted-failure artifacts, dense Meridian scope-addition reports, client extraction mapping, product-consumption mapping, Source 360 page fact contract, document-quality reports, the one-command run summary, acceptance summary, and 67 source-room file hashes.",
             "Source-room validation writes `commercial_contract_supply_bad_rows.csv` and `commercial_contract_supply_validation_summary.json` before the SQL load. Planted validator failures are retained as `validator_planted_*` artifacts. Field lineage is captured in `commercial_contract_supply_field_lineage.csv`. Dense Meridian scope additions are captured in `commercial_scope_dense_meridian_required_additions.*`. Client/operator extraction guidance is captured in `commercial_client_extraction_mapping.*`. Product deterministic consumption is captured in `commercial_product_consumption_mapping.*`. Client-visible document quality is checked by `commercial_document_quality_*` reports.",
             "",
             "Additional proof checks:",
@@ -2580,13 +2704,13 @@ def write_readme(out_dir: Path, summary: dict[str, object]) -> None:
             "| One-command proof runner | passed |",
             "| Acceptance summary | accepted |",
             "| Client extraction maps documented | 12 |",
-            "| Product consumption mappings documented | 6 |",
+            "| Product consumption mappings documented | 7 |",
             "| Document quality issues | 0 |",
             "| Visible extraction-anchor labels | 0 |",
             "| Snake-case prose leaks | 0 |",
             "| Validator planted unknown-supplier failure | 1 issue, exit status 1 |",
             "| Validator planted benchmark-service failure | 1 issue, exit status 1 |",
-            "| Field-level lineage rows | 383 |",
+            "| Field-level lineage rows | 394 |",
             "| Market benchmark source rows | 20 |",
             "| Market benchmark measure rows | 10 |",
             "| Distinct market benchmark variance values | 5 |",
@@ -2594,6 +2718,10 @@ def write_readme(out_dir: Path, summary: dict[str, object]) -> None:
             "| Market benchmark model-inferred basis rows | 10 |",
             "| Market benchmark source-recorded basis rows | 0 |",
             "| Source Contract 360 market benchmark payloads | 5 |",
+            "| Source Value Levers projection rows | 5 |",
+            "| Source Value Levers gated rows | 5 |",
+            "| Source Value Levers claimable value sum | 0 |",
+            "| Source Value Levers primary metric drift | 0 |",
             "| Tower market benchmark metric payloads | 5 |",
             "| Pricing rate-card reconciliation failures | 0 |",
             "| Invoice arithmetic failures | 0 |",
