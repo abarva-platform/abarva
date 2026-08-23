@@ -746,6 +746,7 @@
     "ecl:source-room-commercial-layer:load": "python3 scripts/ecl/load_dense_source_room_commercial_layer.py",
     "ecl:source-room-review-layer:load": "python3 scripts/ecl/load_dense_source_room_review_layer.py",
     "ecl:source-room-source-projection:load": "python3 scripts/ecl/load_dense_source_room_source_projection_layer.py",
+    "ecl:source-room-cube-layer:load": "python3 scripts/ecl/load_dense_source_room_cube_layer.py",
     "ops:aca-job": "node scripts/ops/submit-aca-operator-job.mjs",
     "ops:skyharbor-client-registry:repair": "node scripts/ops/repair-skyharbor-client-registry.mjs",
     "ops:skyharbor-client-registry:repair:apply": "node scripts/ops/repair-skyharbor-client-registry.mjs --apply",
