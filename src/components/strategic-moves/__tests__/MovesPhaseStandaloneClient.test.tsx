@@ -3026,7 +3026,7 @@ describe("MovesPhaseStandaloneClient", () => {
       ".mxw-ava-pop{position:fixed;right:24px;bottom:calc(78px + env(safe-area-inset-bottom))",
     );
     expect(styleText).toContain(
-      ".mxw-ava-fab{width:52px;height:52px;padding:12px;gap:0;font-size:0;justify-content:center}",
+      ".mxw .mxw-ava-fab{width:52px;height:52px;padding:12px;gap:0;font-size:0;line-height:0;color:transparent;justify-content:center}",
     );
     expect(screen.getByRole("button", { name: "Ask aVa" })).toHaveClass(
       "mxw-ava-fab",

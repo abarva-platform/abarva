@@ -6828,7 +6828,7 @@ function MovesStandaloneStyles() {
 .mxw-ava-composer button{flex:none;border:0;background:var(--ink);color:#fff;border-radius:9px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer}
 .mxw-ava-composer button:disabled{opacity:.5;cursor:default}
 @media (max-width:1280px){
-  .mxw-ava-fab{width:52px;height:52px;padding:12px;gap:0;font-size:0;justify-content:center}
+  .mxw .mxw-ava-fab{width:52px;height:52px;padding:12px;gap:0;font-size:0;line-height:0;color:transparent;justify-content:center}
 }
 @media (max-width:980px){.mxw-lanes,.mxw-value-grid,.mxw-exec-readout,.mxw-decision-surface,.mxw-decision-detail-grid,.mxw-intel-grid{grid-template-columns:1fr}.mxw-decision-details summary{grid-template-columns:1fr}}
 @media (max-width:900px){
