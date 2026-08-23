@@ -832,7 +832,8 @@
     "ecl:dense-aca-job:dry-run": "python3 scripts/ecl/run_ecl_dense_aca_job_dry_run.py",
     "ecl:dense-aca-job:validate": "python3 scripts/ecl/validate_ecl_dense_aca_job_dry_run.py",
     "ecl:dense-azure-gate:package": "python3 scripts/ecl/write_ecl_dense_azure_load_gate_package.py",
-    "ecl:dense-azure-gate:validate": "python3 scripts/ecl/validate_ecl_dense_azure_load_gate_package.py"
+    "ecl:dense-azure-gate:validate": "python3 scripts/ecl/validate_ecl_dense_azure_load_gate_package.py",
+    "ecl:dense-azure-gate:execute-preflight": "python3 scripts/ecl/validate_ecl_dense_azure_execute_gate.py"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
