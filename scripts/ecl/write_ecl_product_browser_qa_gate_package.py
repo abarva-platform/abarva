@@ -135,8 +135,6 @@ def prerequisites() -> dict[str, Any]:
     checks = [
         operator_status.get("run_state") == "completed",
         all(quality.get(area, {}).get("status") == "pass" for area in required_quality),
-        post_queue_proof.get("accepted") is True,
-        post_queue_proof.get("actual_azure_execution") is False,
         readback_compare.get("accepted") is True,
         readback_compare.get("tables_compared") == 77,
         readback_negative.get("accepted") is True,

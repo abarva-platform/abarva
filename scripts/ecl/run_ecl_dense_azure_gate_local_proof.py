@@ -60,6 +60,8 @@ def main() -> int:
         ),
         ("readback_positive_sample", ["npm", "run", "ecl:dense-azure-readback:sample"]),
         ("readback_negative_sample", ["npm", "run", "ecl:dense-azure-readback:negative"]),
+        ("product_browser_qa_gate_package", ["npm", "run", "ecl:product-browser-qa-gate:package"]),
+        ("product_browser_qa_gate_validate", ["npm", "run", "ecl:product-browser-qa-gate:validate"]),
     ]
     results = [run_step(name, command) for name, command in steps]
     accepted = all(row["exit_code"] == 0 for row in results)

@@ -327,6 +327,7 @@ def build_quality_denominators() -> list[dict[str, Any]]:
     azure_gate_dir = ROOT / "reports/ecl-dense-azure-load-gate-package-2026-08-23"
     azure_readback_compare_dir = ROOT / "reports/ecl-dense-azure-readback-compare-2026-08-23"
     azure_readback_negative_dir = ROOT / "reports/ecl-dense-azure-readback-compare-negative-2026-08-23"
+    product_browser_dir = ROOT / "reports/ecl-product-browser-qa-gate-package-2026-08-23"
 
     raw_summary = read_json_if_exists(raw_dir / "source_excel_raw_landing_summary.json")
     dense_summary = read_json_if_exists(dense_dir / "dense_source_room_summary.json")
@@ -343,6 +344,8 @@ def build_quality_denominators() -> list[dict[str, Any]]:
     azure_execute_preflight = read_json_if_exists(azure_gate_dir / "ecl_dense_azure_execute_preflight_summary.json")
     azure_readback_compare = read_json_if_exists(azure_readback_compare_dir / "readback_compare_summary.json")
     azure_readback_negative = read_json_if_exists(azure_readback_negative_dir / "readback_compare_expected_failure_summary.json")
+    product_browser_summary = read_json_if_exists(product_browser_dir / "ecl_product_browser_qa_gate_summary.json")
+    product_browser_status = read_json_if_exists(product_browser_dir / "ecl_product_browser_qa_gate_status.json")
 
     def readback(summary: dict[str, Any]) -> dict[str, Any]:
         value = summary.get("readback")
@@ -392,6 +395,16 @@ def build_quality_denominators() -> list[dict[str, Any]]:
         azure_readback_negative.get("expected_failed") is True,
     ]
     azure_readback_passed = sum(1 for value in azure_readback_checks if value)
+    product_browser_checks = [
+        product_browser_summary.get("accepted") is True,
+        product_browser_summary.get("actual_browser_execution") is False,
+        product_browser_summary.get("actual_route_repointing") is False,
+        product_browser_summary.get("product_count") == 4,
+        int(product_browser_summary.get("required_assertion_count", 0) or 0) >= 27,
+        product_browser_status.get("actual_browser_execution") is False,
+        product_browser_status.get("actual_route_repointing") is False,
+    ]
+    product_browser_passed = sum(1 for value in product_browser_checks if value)
 
     return [
         {
@@ -487,6 +500,20 @@ def build_quality_denominators() -> list[dict[str, Any]]:
                 "negative_sample_refused": azure_readback_negative.get("expected_failed"),
                 "comparison_issues": azure_readback_negative.get("comparison_issues", []),
                 "actual_azure_execution": azure_readback_compare.get("actual_azure_execution"),
+            },
+        },
+        {
+            "area": "product_browser_qa_gate",
+            "status": "pass" if product_browser_passed == len(product_browser_checks) else "pending",
+            "passed": product_browser_passed,
+            "total": len(product_browser_checks),
+            "evidence_path": "reports/ecl-product-browser-qa-gate-package-2026-08-23/ecl_product_browser_qa_gate_summary.json",
+            "notes": {
+                "product_count": product_browser_summary.get("product_count"),
+                "required_assertion_count": product_browser_summary.get("required_assertion_count"),
+                "actual_browser_execution": product_browser_summary.get("actual_browser_execution"),
+                "actual_route_repointing": product_browser_summary.get("actual_route_repointing"),
+                "status": product_browser_summary.get("status"),
             },
         },
         {

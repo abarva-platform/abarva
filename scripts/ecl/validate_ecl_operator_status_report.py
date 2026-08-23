@@ -45,6 +45,7 @@ REQUIRED_QUALITY_AREAS = {
     "local_layer_readback_chain",
     "azure_load_gate_package",
     "azure_readback_comparator",
+    "product_browser_qa_gate",
     "runtime_and_browser_hard_gates",
 }
 
