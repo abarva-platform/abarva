@@ -739,6 +739,7 @@
     "ecl:source-excel-raw:validate": "python3 scripts/ecl/validate_source_excel_raw_landing.py",
     "ecl:source-room-dense:generate": "python3 scripts/ecl/generate_dense_source_room_extracts.py",
     "ecl:source-room-dense:validate": "python3 scripts/ecl/validate_dense_source_room_extracts.py",
+    "ecl:source-room-producers:report": "python3 scripts/ecl/write_dense_source_room_ecl_producer_coverage.py",
     "ops:aca-job": "node scripts/ops/submit-aca-operator-job.mjs",
     "ops:skyharbor-client-registry:repair": "node scripts/ops/repair-skyharbor-client-registry.mjs",
     "ops:skyharbor-client-registry:repair:apply": "node scripts/ops/repair-skyharbor-client-registry.mjs --apply",
