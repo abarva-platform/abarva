@@ -10,13 +10,13 @@
 
 ## Plain-English Summary
 
-This release strengthens the Source aVa hard-question audit so the 50-question pack is itself validated before it is used to judge answer quality. The audit now proves that required Source focus areas, table outputs, chart outputs, missing-evidence handling, value proof discipline, vendor-response claims, and contract context are represented in the question bank.
+This release strengthens the Source aVa hard-question audit so the 50-question pack is itself validated before it is used to judge answer quality. The audit now proves that required Source focus areas, table outputs, chart outputs, missing-evidence handling, value proof discipline, vendor-response claims, and contract context are represented in the question bank. It also flags answers that quote Source numbers without a data-plane or counting-basis note, so live QA evidence can distinguish live Source/read-model/cube-grounded answers from polished but ungrounded statements.
 
 ## Layer Impact
 
 - `global-control-lane`: Source aVa QA tooling and test coverage only. No product route, shared runtime setting, data-plane write, or browser UI behavior is changed.
 - Layer 4 Products: Adds audit coverage metadata for Source aVa question validation. No product runtime behavior changes.
-- Controls / QA: Adds a reusable focused test for the Source aVa hard-QA script and keeps existing route-grounding assertions aligned with current formatting.
+- Controls / QA: Adds reusable focused tests for the Source aVa hard-QA script, including the data-plane/counting-basis requirement for quoted Source numbers, and keeps existing route-grounding assertions aligned with current formatting.
 
 ## Client Applicability
 
@@ -63,4 +63,4 @@ Revert the PR to restore the previous hard-QA script and test assertions.
 
 ## Known Gaps
 
-This release validates the hard-QA question bank and scoring mechanics. It does not complete live signed-in execution of all 50 questions or mutate production data.
+This release validates the hard-QA question bank and scoring mechanics. It does not complete live signed-in execution of all 50 questions, prove deployed aVa answer quality, or mutate production data.

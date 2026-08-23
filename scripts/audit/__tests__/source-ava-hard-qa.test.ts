@@ -115,4 +115,108 @@ describe("source-ava-hard-qa audit harness", () => {
       "Configured non-participating vendor terms present: Amadeus",
     ]);
   });
+
+  it("flags Source numbers when the answer omits the data plane or counting basis", () => {
+    const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "source-ava-hard-qa-"));
+    const capturedFile = path.join(outDir, "captured.json");
+    fs.writeFileSync(
+      capturedFile,
+      JSON.stringify(
+        [
+          {
+            id: "OPT-002",
+            answer:
+              "| Opportunity | Amount | Calculation |\n| --- | ---: | --- |\n| Recoverable leakage | $755K | run-1 |",
+          },
+        ],
+        null,
+        2,
+      ),
+    );
+
+    execFileSync(
+      "node",
+      [SCRIPT, "--out-dir", outDir, "--response-file", capturedFile],
+      {
+        cwd: REPO_ROOT,
+        stdio: "pipe",
+      },
+    );
+
+    const report = JSON.parse(
+      fs.readFileSync(path.join(outDir, "source-ava-hard-qa.json"), "utf8"),
+    ) as {
+      results: Array<{
+        id: string;
+        status: string;
+        issues: string[];
+        dataPlaneEvidence: {
+          quotesSourceNumber: boolean;
+          hasPlaneOrCountingBasis: boolean;
+          quotedSourceNumbers: string[];
+        };
+      }>;
+    };
+    const result = report.results.find((row) => row.id === "OPT-002");
+
+    expect(result?.status).toBe("FAIL");
+    expect(result?.issues).toContain(
+      "Source number quoted without data-plane or counting-basis note.",
+    );
+    expect(result?.dataPlaneEvidence).toMatchObject({
+      quotesSourceNumber: true,
+      hasPlaneOrCountingBasis: false,
+    });
+    expect(result?.dataPlaneEvidence.quotedSourceNumbers).toContain("$755K");
+  });
+
+  it("accepts Source numbers when the answer states the live plane or counting basis", () => {
+    const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "source-ava-hard-qa-"));
+    const capturedFile = path.join(outDir, "captured.json");
+    fs.writeFileSync(
+      capturedFile,
+      JSON.stringify(
+        [
+          {
+            id: "OPT-002",
+            answer:
+              "Counting basis: live source.contract_360 and the current Source optimization read model rows for this contract.\n\n| Opportunity | Amount | Calculation |\n| --- | ---: | --- |\n| Recoverable leakage | $755K | run-1 |",
+          },
+        ],
+        null,
+        2,
+      ),
+    );
+
+    execFileSync(
+      "node",
+      [SCRIPT, "--out-dir", outDir, "--response-file", capturedFile],
+      {
+        cwd: REPO_ROOT,
+        stdio: "pipe",
+      },
+    );
+
+    const report = JSON.parse(
+      fs.readFileSync(path.join(outDir, "source-ava-hard-qa.json"), "utf8"),
+    ) as {
+      results: Array<{
+        id: string;
+        status: string;
+        issues: string[];
+        dataPlaneEvidence: {
+          quotesSourceNumber: boolean;
+          hasPlaneOrCountingBasis: boolean;
+        };
+      }>;
+    };
+    const result = report.results.find((row) => row.id === "OPT-002");
+
+    expect(result?.status).toBe("PASS");
+    expect(result?.issues).toEqual([]);
+    expect(result?.dataPlaneEvidence).toMatchObject({
+      quotesSourceNumber: true,
+      hasPlaneOrCountingBasis: true,
+    });
+  });
 });
