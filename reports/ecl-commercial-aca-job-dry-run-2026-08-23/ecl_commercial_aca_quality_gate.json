@@ -1,0 +1,21 @@
+{
+  "accepted": true,
+  "actual_azure_execution": false,
+  "blocking_for_execute": [
+    "AZURE_STORAGE_CONNECTION_STRING",
+    "DATABASE_URL",
+    "ECL_COMMERCIAL_IMAGE",
+    "ECL_COMMERCIAL_TARGET_DATA_PLANE"
+  ],
+  "dry_run_gate_status": "pass",
+  "execute_gate_status": "blocked_pending_explicit_future_execute_lane",
+  "family": "vendor_contract_commercial",
+  "generated_at": "2026-08-23T12:38:08+00:00",
+  "hard_gates_preserved": {
+    "azure_mutation": "not_run",
+    "data_mutation": "not_run",
+    "deploy_or_traffic_shift": "not_run",
+    "product_route_repoint": "not_run",
+    "tenant_active_source_promotion": "not_run"
+  }
+}

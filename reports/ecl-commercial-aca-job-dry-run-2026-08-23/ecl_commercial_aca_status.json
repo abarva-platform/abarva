@@ -1,0 +1,29 @@
+{
+  "actual_azure_execution": false,
+  "ended_at": "2026-08-23T12:38:08+00:00",
+  "events": [
+    {
+      "at": "2026-08-23T12:38:08+00:00",
+      "name": "dry_run_started"
+    },
+    {
+      "at": "2026-08-23T12:38:08+00:00",
+      "name": "proof_bundle_packaged",
+      "path": "reports/ecl-commercial-aca-job-dry-run-2026-08-23/commercial_proof_bundle.tgz"
+    },
+    {
+      "at": "2026-08-23T12:38:08+00:00",
+      "name": "env_bindings_validated_plan_only"
+    },
+    {
+      "at": "2026-08-23T12:38:08+00:00",
+      "name": "azure_execution_refused_by_design"
+    }
+  ],
+  "family": "vendor_contract_commercial",
+  "idempotency_key": "ecl-commercial:9cc44c9f665f042f451c09fe5dfcb4f7",
+  "job_name": "aca-job-ecl-source-commercial-load-lab-preprod",
+  "mode": "dry_run_report_only",
+  "run_id": "ecl-commercial-20260823-9cc44c9f665f",
+  "status": "dry_run_succeeded"
+}

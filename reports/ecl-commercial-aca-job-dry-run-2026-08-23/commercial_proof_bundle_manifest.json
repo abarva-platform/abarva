@@ -1,0 +1,55 @@
+{
+  "accepted": true,
+  "bundle": {
+    "bytes": 7362,
+    "path": "reports/ecl-commercial-aca-job-dry-run-2026-08-23/commercial_proof_bundle.tgz",
+    "sha256": "72d4b4cc9c5a2c73d3298b545a202374b11ecaf172d157f74de13ace2778090b"
+  },
+  "family": "vendor_contract_commercial",
+  "generated_at": "2026-08-23T12:38:08+00:00",
+  "input_source_version": "934d9081a1bc1984be0023441bbe79f3446417427277e080190cb7cb3ecb071e",
+  "manifest_path": "reports/ecl-commercial-aca-job-dry-run-2026-08-23/commercial_proof_bundle_manifest.json",
+  "source_artifacts": [
+    {
+      "bytes": 1423,
+      "path": "reports/ecl-aca-commercial-load-readback-plan-2026-08-23/aca_data_build_job_contract.json",
+      "sha256": "e9f61701695018dcc7f37db6c1a718b4462911fdfe3a6711a27669000d7e2f70"
+    },
+    {
+      "bytes": 1608,
+      "path": "reports/ecl-aca-commercial-load-readback-plan-2026-08-23/commercial_family_lab_preprod_load_plan.json",
+      "sha256": "35697e518215b6463dbbba003a66d7e25932e154a3e7624cd629980e425de10a"
+    },
+    {
+      "bytes": 1591,
+      "path": "reports/ecl-aca-commercial-load-readback-plan-2026-08-23/commercial_row_for_row_readback_plan.json",
+      "sha256": "53114d79a343654c1ba973d4bab30175e293fde0777a62d79aac38062a915cf6"
+    },
+    {
+      "bytes": 3146,
+      "path": "reports/ecl-aca-commercial-load-readback-plan-2026-08-23/ecl_ordered_execution_progress.json",
+      "sha256": "241fc5f04afeacd43986197177c04dfd9400fa627ac2a8bdddf3d1e8fe085ca5"
+    },
+    {
+      "bytes": 2551,
+      "path": "reports/ecl-aca-commercial-load-readback-plan-2026-08-23/execution_order_queue.json",
+      "sha256": "6da7cdb7d343986664e9860a21cec0faffc913fe3edadfb9513a30a338f47e70"
+    },
+    {
+      "bytes": 2598,
+      "path": "reports/ecl-source-layer-completion-2026-08-23/source_layer_completion_summary.json",
+      "sha256": "8dce89a6f85b8546be9978fa3ab4f82f5a2b51137c56bb0ca4c957862968cb3f"
+    },
+    {
+      "bytes": 7828,
+      "path": "reports/ecl-source-layer-completion-2026-08-23/source_layer_completion_matrix.csv",
+      "sha256": "02e08b4e163730b0f219daae4a01016e3051db2642853f6f7df82286760c706b"
+    },
+    {
+      "bytes": 4104,
+      "path": "reports/ecl-source-layer-completion-2026-08-23/source_backlog_20_status.csv",
+      "sha256": "201d36040d43aa43528b9865323c489d2eb763b1a77d4d8d3fc6b6b6ee2ea92c"
+    }
+  ],
+  "source_basis": "compact_tracked_reports_from_merged_ordered_plan"
+}
