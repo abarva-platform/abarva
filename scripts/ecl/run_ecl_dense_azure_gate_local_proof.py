@@ -58,6 +58,8 @@ def main() -> int:
             "execute_preflight_template_rejection",
             ["npm", "run", "ecl:dense-azure-gate:execute-preflight", "--", "--expect-template-rejection"],
         ),
+        ("readback_positive_sample", ["npm", "run", "ecl:dense-azure-readback:sample"]),
+        ("readback_negative_sample", ["npm", "run", "ecl:dense-azure-readback:negative"]),
     ]
     results = [run_step(name, command) for name, command in steps]
     accepted = all(row["exit_code"] == 0 for row in results)
