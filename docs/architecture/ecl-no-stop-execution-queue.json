@@ -176,20 +176,80 @@
     },
     {
       "order": 10,
+      "slice_id": "ecl_cross_family_client_extraction_mapping",
+      "status": "queued",
+      "percent_complete": 25,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/write_ecl_client_extraction_mapping.py",
+      "evidence_paths": [
+        "scripts/ecl/write_ecl_client_extraction_mapping.py",
+        "outputs/ecl-next-slice-planning-2026-08-23/ecl_client_extraction_mapping.csv",
+        "outputs/ecl-next-slice-planning-2026-08-23/ecl_client_extraction_mapping_summary.json"
+      ],
+      "next_auto_action": "Use the owner/source/grain/join/gate map to design practical client workbook folders without asking for exhaustive inventories.",
+      "stop_gate": "Replacing client-facing workbook packages in Azure."
+    },
+    {
+      "order": 11,
+      "slice_id": "ecl_dense_source_room_requirements",
+      "status": "queued",
+      "percent_complete": 25,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/write_ecl_dense_source_room_requirements.py",
+      "evidence_paths": [
+        "scripts/ecl/write_ecl_dense_source_room_requirements.py",
+        "outputs/ecl-next-slice-planning-2026-08-23/ecl_dense_source_room_requirements.csv",
+        "outputs/ecl-next-slice-planning-2026-08-23/ecl_dense_source_room_requirements_summary.json"
+      ],
+      "next_auto_action": "Use the dense requirements to drive synthetic generation and source-room gap tracking without mutating active tenant inputs.",
+      "stop_gate": "Active tenant source replacement or dense synthetic package promotion."
+    },
+    {
+      "order": 12,
+      "slice_id": "ecl_product_deterministic_fact_contracts",
+      "status": "queued",
+      "percent_complete": 25,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/write_ecl_product_fact_contracts.py",
+      "evidence_paths": [
+        "scripts/ecl/write_ecl_product_fact_contracts.py",
+        "outputs/ecl-next-slice-planning-2026-08-23/ecl_product_deterministic_fact_contracts.csv",
+        "outputs/ecl-next-slice-planning-2026-08-23/ecl_product_deterministic_fact_contracts_summary.json"
+      ],
+      "next_auto_action": "Use product fact contracts as the page-by-page basis before building workbook fields, adapters, cubes, or projections.",
+      "stop_gate": "Product route repointing or deployed browser-live claim."
+    },
+    {
+      "order": 13,
+      "slice_id": "ecl_next_slice_acceptance_gate",
+      "status": "queued",
+      "percent_complete": 25,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/validate_ecl_next_slice_acceptance.py",
+      "evidence_paths": [
+        "scripts/ecl/validate_ecl_next_slice_acceptance.py",
+        "outputs/ecl-next-slice-planning-2026-08-23/ecl_next_slice_acceptance_summary.json",
+        "outputs/ecl-next-slice-planning-2026-08-23/ecl_next_slice_acceptance_issues.csv"
+      ],
+      "next_auto_action": "Keep the next source-room/workbook design falsifiable: all families and products mapped, partial behavior explicit, overcollection language rejected.",
+      "stop_gate": "None while validation remains local and report-only."
+    },
+    {
+      "order": 14,
       "slice_id": "machine_readable_execution_queue",
       "status": "in_progress",
-      "percent_complete": 60,
+      "percent_complete": 75,
       "auto_proceed_allowed": true,
       "proof_command": "python3 scripts/ecl/validate_no_stop_execution_queue.py",
       "evidence_paths": [
         "docs/architecture/ecl-no-stop-execution-queue.json",
         "scripts/ecl/validate_no_stop_execution_queue.py"
       ],
-      "next_auto_action": "Use the queue manifest to drive next proof slices and CI artifact packaging.",
+      "next_auto_action": "Use the queue manifest to drive proof slices and CI artifact packaging after output-producing slices run.",
       "stop_gate": "None while validation remains local and report-only."
     },
     {
-      "order": 11,
+      "order": 15,
       "slice_id": "browser_and_product_repointing_proof",
       "status": "blocked_by_hard_gate",
       "percent_complete": 0,
