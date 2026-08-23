@@ -323,6 +323,85 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     expect(createCalls).toHaveLength(0);
   });
 
+  it("does not enqueue not-applicable or merged P3 artifacts for a straightforward dashboard use case", async () => {
+    loadApprovedSolutionApproach.mockResolvedValueOnce({
+      decisionId: "decision-dashboard",
+      decisionVersion: "1",
+      decisionHash: "decision-hash-dashboard",
+      selectedOptionId: "reuse",
+      selectedOptionVersion: "1",
+      chosenOption: "Reuse the approved dashboard pattern",
+      approach: "Reusable dashboard pattern",
+      options: [
+        {
+          id: "reuse",
+          name: "Reusable dashboard pattern",
+          summary: "Use existing governed reporting pattern.",
+        },
+      ],
+      tradeoffsAccepted: ["No new platform or vendor selection"],
+      rejectedOptions: [],
+      scope: [],
+      exclusions: [],
+      assumptions: [],
+      constraints: [],
+      unresolvedDecisions: [],
+      decision: {
+        phase: 3,
+        decision: "Approved solution option: reusable dashboard pattern",
+        rationale: "One credible approved pattern exists.",
+        approvedBy: "u1",
+        approvedAt: "2026-07-23T00:00:00.000Z",
+      },
+    });
+    const res = await POST(
+      req({
+        moveId: "m-dashboard",
+        phase: 3,
+        useCaseArchetype: "straightforward_dashboard",
+        moveName: "Executive KPI Dashboard",
+        clientDisplayName: "Client",
+      }),
+    );
+
+    expect(res.status).toBe(202);
+    const json = (await res.json()) as {
+      adaptiveDepth: { complexityTier: string };
+      omittedDeliverables: Array<{
+        deliverableTypeKey: string;
+        applicability: string;
+        mergeInto?: string;
+      }>;
+      deliverables: Array<{ deliverableTypeKey: string }>;
+    };
+    expect(json.adaptiveDepth.complexityTier).toBe("straightforward");
+    expect(json.deliverables.map((d) => d.deliverableTypeKey)).toEqual([
+      "target_state_architecture",
+      "solution_design",
+      "requirements_traceability",
+    ]);
+    expect(json.omittedDeliverables).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          deliverableTypeKey: "operating_model_design",
+          applicability: "merge_into_parent",
+          mergeInto: "solution_design",
+        }),
+        expect.objectContaining({
+          deliverableTypeKey: "sourcing_strategy",
+          applicability: "not_applicable",
+        }),
+      ]),
+    );
+    expect(
+      createCalls.map(
+        (c) =>
+          (c.jobPayload as { adaptiveDepth: { complexityTier: string } })
+            .adaptiveDepth.complexityTier,
+      ),
+    ).toEqual(["straightforward", "straightforward", "straightforward"]);
+  });
+
   it("queues P2 root-cause with its own type and canonical registry key", async () => {
     // P2 discovery and root-cause are sibling artifacts, not two copies of the
     // same discovery binder. The queue payload must preserve the registry key

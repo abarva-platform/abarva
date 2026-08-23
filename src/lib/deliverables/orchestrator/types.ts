@@ -17,6 +17,8 @@
 // Every client-specific claim must be cited [n], marked [ASSUMPTION TO VALIDATE],
 // or shown as [CLIENT TO COMPLETE] / [EVIDENCE MISSING].
 
+import type { AdaptiveDepthDecision } from "@/lib/deliverables/adaptive-depth";
+
 export type DeliverableModule = "moves" | "source" | "tower" | "intelligence";
 
 export type OutputFormat = "docx" | "pptx" | "xlsx" | "html" | "pdf";
@@ -203,6 +205,8 @@ export interface DeliverableIntelligenceRequest {
   outputFormats: OutputFormat[];
   formattingProfile: FormattingProfile;
   qualityBar: QualityBar;
+  /** Deterministic depth/applicability resolution; Claude may consume but never decide this. */
+  adaptiveDepth?: AdaptiveDepthDecision;
   /** display-safe client/initiative name (cover name — never the real identity). */
   clientDisplayName: string;
   initiativeDisplayName: string;

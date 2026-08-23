@@ -28,6 +28,7 @@ import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/de
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import type { GenerationProgress } from "./progress";
 import type { OutputFormat } from "./types";
+import type { AdaptiveDepthDecision } from "@/lib/deliverables/adaptive-depth";
 
 export interface GenerateDeliverableServiceInput extends Omit<
   BuildRequestParams,
@@ -53,6 +54,7 @@ export interface GenerateDeliverableServiceInput extends Omit<
     architectureModelVersion: string;
   };
   outputFormats?: OutputFormat[];
+  adaptiveDepth?: AdaptiveDepthDecision;
   model?: string;
   /** invoked after each orchestrator pass with a {pct,label} for the live progress band. */
   onProgress?: (p: GenerationProgress) => void;
@@ -122,6 +124,7 @@ export async function runDeliverableForTenant(
       clientDisplayName: input.clientDisplayName,
       initiativeDisplayName: input.initiativeDisplayName,
       outputFormats: input.outputFormats,
+      adaptiveDepth: input.adaptiveDepth,
     },
     evidence,
     sourceRegister,
@@ -183,7 +186,9 @@ export async function runDeliverableForTenant(
         return {
           ok: false,
           qualityPass: false,
-          blockers: ["Structured Architecture Brief could not be assembled and validated."],
+          blockers: [
+            "Structured Architecture Brief could not be assembled and validated.",
+          ],
           blockedReason: `architecture_brief_incomplete: ${err instanceof Error ? err.message : String(err)}`,
           retrievedEvidence: retrievedCount,
         };
@@ -207,13 +212,18 @@ export async function runDeliverableForTenant(
       input.approvedSolutionApproach,
       planContext,
       ...evidence.map(
-        (e) => `[${e.citationNumber}] ${e.label} (${e.evidenceFamily}, ${e.confidence}): ${e.statement}`,
+        (e) =>
+          `[${e.citationNumber}] ${e.label} (${e.evidenceFamily}, ${e.confidence}): ${e.statement}`,
       ),
-    ].filter(Boolean).join("\n").slice(0, 32000);
+    ]
+      .filter(Boolean)
+      .join("\n")
+      .slice(0, 32000);
     try {
       const genArch =
         deps.generateArchitecture ??
-        ((request) => generateArchitectureModel(request, governedArchitectureToolCall));
+        ((request) =>
+          generateArchitectureModel(request, governedArchitectureToolCall));
       const generated = await genArch({
         engagement: input.initiativeDisplayName,
         client: input.clientDisplayName,
@@ -228,12 +238,17 @@ export async function runDeliverableForTenant(
         req.decisionContext,
         planContext,
         `VALIDATED ARCHITECTURE MODEL - NARRATE WITHOUT CHANGING ITS DECISIONS:\n${JSON.stringify(generated.model)}`,
-      ].filter(Boolean).join("\n\n").slice(0, 48000);
+      ]
+        .filter(Boolean)
+        .join("\n\n")
+        .slice(0, 48000);
     } catch (err) {
       return {
         ok: false,
         qualityPass: false,
-        blockers: ["Target Architecture assembly failed structured-model validation."],
+        blockers: [
+          "Target Architecture assembly failed structured-model validation.",
+        ],
         blockedReason: `architecture_assembly_failed: ${err instanceof Error ? err.message : String(err)}`,
         retrievedEvidence: retrievedCount,
       };
@@ -292,7 +307,11 @@ export async function runDeliverableForTenant(
       const gen = await genArch({
         engagement: result.document.initiativeDisplayName,
         client: result.document.clientDisplayName,
-        contextText: `${input.approvedSolutionApproach ?? ""}\n\n${planContext}${contextText}`.slice(0, 32000),
+        contextText:
+          `${input.approvedSolutionApproach ?? ""}\n\n${planContext}${contextText}`.slice(
+            0,
+            32000,
+          ),
         ...(input.model ? { model: input.model } : {}),
       });
       structuredModels = { architectureModel: gen.model };
@@ -305,7 +324,11 @@ export async function runDeliverableForTenant(
         architectureModel: buildGroundedArchitectureFallback({
           engagement: result.document.initiativeDisplayName,
           client: result.document.clientDisplayName,
-          contextText: `${input.approvedSolutionApproach ?? ""}\n\n${planContext}${contextText}`.slice(0, 32000),
+          contextText:
+            `${input.approvedSolutionApproach ?? ""}\n\n${planContext}${contextText}`.slice(
+              0,
+              32000,
+            ),
           ...(deliverablePlan ? { plan: deliverablePlan } : {}),
           failureReason: err instanceof Error ? err.message : String(err),
         }),
@@ -347,7 +370,9 @@ export async function runDeliverableForTenant(
     // Stage 4-7: hand the structured exhibit models to persistence so the profile's
     // renderer draws them and they count toward exhibit enforcement.
     ...(structuredModels ? { structuredModels, renderViaProfile: true } : {}),
-    ...(input.decisionLineage ? { generationLineage: input.decisionLineage } : {}),
+    ...(input.decisionLineage
+      ? { generationLineage: input.decisionLineage }
+      : {}),
     enforceQualityContract,
     governanceOk: true, // the multi-pass generation already cleared audited egress
     tenantTerms: [

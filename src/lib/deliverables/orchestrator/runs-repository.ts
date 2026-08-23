@@ -4,15 +4,24 @@
 // run's status across replicas. The DB client is injectable so the mapping is unit-
 // tested without the data plane.
 
-import 'server-only';
-import { randomUUID } from 'node:crypto';
+import "server-only";
+import { randomUUID } from "node:crypto";
 
-import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
-import { createTxSession, type SqlRunner } from '@/lib/data-plane/read-adapters/azureSession';
-import type { DeliverableKey } from '@/lib/deliverables/profiles/types';
-import type { GenerationMode } from '@/lib/programs/assert-phase-ready';
+import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import {
+  createTxSession,
+  type SqlRunner,
+} from "@/lib/data-plane/read-adapters/azureSession";
+import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
+import type { GenerationMode } from "@/lib/programs/assert-phase-ready";
+import type { AdaptiveDepthDecision } from "@/lib/deliverables/adaptive-depth";
 
-export type DeliverableRunStatus = 'queued' | 'running' | 'succeeded' | 'blocked' | 'failed';
+export type DeliverableRunStatus =
+  | "queued"
+  | "running"
+  | "succeeded"
+  | "blocked"
+  | "failed";
 
 /**
  * The full job payload persisted on the run row so the worker can reconstruct the
@@ -21,7 +30,7 @@ export type DeliverableRunStatus = 'queued' | 'running' | 'succeeded' | 'blocked
  * userId live in dedicated columns.
  */
 export interface OrchestratorDeliverableRunJobPayload {
-  kind?: 'orchestrator_deliverable';
+  kind?: "orchestrator_deliverable";
   module: string;
   useCaseArchetype: string;
   /** Canonical deliverables_v2 registry key when it differs from the orchestrator type. */
@@ -45,12 +54,13 @@ export interface OrchestratorDeliverableRunJobPayload {
   sourceArtifactRef: string;
   evidenceQuery?: string;
   outputFormats?: string[];
+  adaptiveDepth?: AdaptiveDepthDecision;
   model?: string;
 }
 
 export interface MovesPremiumArtifactRunJobPayload {
-  kind: 'moves_premium_artifact';
-  module: 'moves';
+  kind: "moves_premium_artifact";
+  module: "moves";
   useCaseArchetype: string;
   deliverableType: string;
   decisionContext: string;
@@ -112,7 +122,7 @@ export interface CreateRunInput {
 }
 
 export interface CompleteRunInput {
-  status: 'succeeded' | 'blocked' | 'failed';
+  status: "succeeded" | "blocked" | "failed";
   artifactId?: string | null;
   sectionCount?: number | null;
   retrievedEvidence?: number | null;
@@ -133,18 +143,20 @@ export type RawSqlRunner = <R = Record<string, unknown>>(
   fn: (run: SqlRunner) => Promise<R>,
 ) => Promise<R>;
 
-const defaultRawSql: RawSqlRunner = createTxSession('abarva-deliverable-runs-claim');
+const defaultRawSql: RawSqlRunner = createTxSession(
+  "abarva-deliverable-runs-claim",
+);
 
 function parsePayload(value: unknown): DeliverableRunJobPayload | null {
   if (value === null || value === undefined) return null;
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     try {
       return JSON.parse(value) as DeliverableRunJobPayload;
     } catch {
       return null;
     }
   }
-  if (typeof value === 'object') return value as DeliverableRunJobPayload;
+  if (typeof value === "object") return value as DeliverableRunJobPayload;
   return null;
 }
 
@@ -160,19 +172,34 @@ function rowToRecord(row: Record<string, unknown>): DeliverableRunRecord {
     deliverableType: String(row.deliverable_type),
     status: row.status as DeliverableRunStatus,
     artifactId: row.artifact_id ? String(row.artifact_id) : null,
-    sectionCount: row.section_count === null || row.section_count === undefined ? null : Number(row.section_count),
-    retrievedEvidence: row.retrieved_evidence === null || row.retrieved_evidence === undefined ? null : Number(row.retrieved_evidence),
+    sectionCount:
+      row.section_count === null || row.section_count === undefined
+        ? null
+        : Number(row.section_count),
+    retrievedEvidence:
+      row.retrieved_evidence === null || row.retrieved_evidence === undefined
+        ? null
+        : Number(row.retrieved_evidence),
     blockers: arr(row.blockers),
     warnings: arr(row.warnings),
-    error: typeof row.error === 'string' ? row.error : null,
-    progressPct: row.progress_pct === null || row.progress_pct === undefined ? null : Number(row.progress_pct),
-    progressLabel: typeof row.progress_label === 'string' ? row.progress_label : null,
+    error: typeof row.error === "string" ? row.error : null,
+    progressPct:
+      row.progress_pct === null || row.progress_pct === undefined
+        ? null
+        : Number(row.progress_pct),
+    progressLabel:
+      typeof row.progress_label === "string" ? row.progress_label : null,
     claimedAt: row.claimed_at ? String(row.claimed_at) : null,
-    workerId: typeof row.worker_id === 'string' ? row.worker_id : null,
+    workerId: typeof row.worker_id === "string" ? row.worker_id : null,
     jobPayload: parsePayload(row.job_payload),
     batchId: row.batch_id ? String(row.batch_id) : null,
-    sequenceNo: row.sequence_no === null || row.sequence_no === undefined ? null : Number(row.sequence_no),
-    dependsOnRunId: row.depends_on_run_id ? String(row.depends_on_run_id) : null,
+    sequenceNo:
+      row.sequence_no === null || row.sequence_no === undefined
+        ? null
+        : Number(row.sequence_no),
+    dependsOnRunId: row.depends_on_run_id
+      ? String(row.depends_on_run_id)
+      : null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   };
@@ -185,7 +212,7 @@ export interface SequentialRunInput extends CreateRunInput {
 /** Insert a complete ordered generation batch in one statement; Postgres commits all rows or none. */
 export async function createSequentialDeliverableRunBatch(
   inputs: SequentialRunInput[],
-  opts: { idempotencyKey: string; db?: DbClient } ,
+  opts: { idempotencyKey: string; db?: DbClient },
 ): Promise<DeliverableRunRecord[]> {
   if (!inputs.length) return [];
   const db = opts.db ?? getAzureWriteFluentClient();
@@ -199,22 +226,25 @@ export async function createSequentialDeliverableRunBatch(
     module: input.module,
     archetype: input.archetype,
     deliverable_type: input.deliverableType,
-    status: 'queued',
+    status: "queued",
     job_payload: input.jobPayload,
     batch_id: batchId,
     sequence_no: input.sequenceNo,
     depends_on_run_id: index > 0 ? ids[index - 1] : null,
     idempotency_key: opts.idempotencyKey,
   }));
-  const { data, error } = await db.from('deliverable_runs').insert(rows).select('*');
+  const { data, error } = await db
+    .from("deliverable_runs")
+    .insert(rows)
+    .select("*");
   if (error) {
-    if ((error as { code?: string }).code === '23505') {
+    if ((error as { code?: string }).code === "23505") {
       const { data: existing, error: readError } = await db
-        .from('deliverable_runs')
-        .select('*')
-        .eq('client_id', inputs[0].clientId)
-        .eq('idempotency_key', opts.idempotencyKey)
-        .order('sequence_no', { ascending: true });
+        .from("deliverable_runs")
+        .select("*")
+        .eq("client_id", inputs[0].clientId)
+        .eq("idempotency_key", opts.idempotencyKey)
+        .order("sequence_no", { ascending: true });
       if (!readError && existing?.length === inputs.length) {
         return (existing as Array<Record<string, unknown>>).map(rowToRecord);
       }
@@ -231,7 +261,7 @@ export async function createDeliverableRun(
   db: DbClient = getAzureWriteFluentClient(),
 ): Promise<DeliverableRunRecord> {
   const { data, error } = await db
-    .from('deliverable_runs')
+    .from("deliverable_runs")
     .insert({
       client_id: input.clientId,
       tenant_key: input.tenantKey,
@@ -241,12 +271,13 @@ export async function createDeliverableRun(
       deliverable_type: input.deliverableType,
       // Enqueue only — the durable worker (process-deliverable-queue) claims and runs it.
       // No model work happens in the request, so a recycled web replica cannot orphan it.
-      status: 'queued',
+      status: "queued",
       job_payload: input.jobPayload,
     })
-    .select('*')
+    .select("*")
     .single();
-  if (error) throw new Error(`deliverable_runs insert failed: ${error.message}`);
+  if (error)
+    throw new Error(`deliverable_runs insert failed: ${error.message}`);
   return rowToRecord(data as Record<string, unknown>);
 }
 
@@ -292,7 +323,9 @@ export async function claimNextDeliverableRun(
         LIMIT 1
      )
     RETURNING *`;
-  const rows = await rawSql((run) => run<Record<string, unknown>>(sql, [workerId, String(leaseMinutes)]));
+  const rows = await rawSql((run) =>
+    run<Record<string, unknown>>(sql, [workerId, String(leaseMinutes)]),
+  );
   const row = Array.isArray(rows) ? rows[0] : undefined;
   return row ? rowToRecord(row) : null;
 }
@@ -308,11 +341,15 @@ export async function heartbeatDeliverableRun(
   db: DbClient = getAzureWriteFluentClient(),
 ): Promise<void> {
   const { error } = await db
-    .from('deliverable_runs')
-    .update({ claimed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('worker_id', workerId);
-  if (error) throw new Error(`deliverable_runs heartbeat failed: ${error.message}`);
+    .from("deliverable_runs")
+    .update({
+      claimed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("worker_id", workerId);
+  if (error)
+    throw new Error(`deliverable_runs heartbeat failed: ${error.message}`);
 }
 
 /**
@@ -345,7 +382,10 @@ export async function sweepStaleDeliverableRuns(
         OR (status = 'queued' AND depends_on_run_id IS NULL AND updated_at < now() - ($2 || ' minutes')::interval)
     RETURNING id`;
   const rows = await rawSql((run) =>
-    run<{ id: string }>(sql, [String(deadlineMinutes), String(queuedDeadlineMinutes)]),
+    run<{ id: string }>(sql, [
+      String(deadlineMinutes),
+      String(queuedDeadlineMinutes),
+    ]),
   );
   return (Array.isArray(rows) ? rows : []).map((r) => String(r.id));
 }
@@ -389,7 +429,7 @@ export async function completeDeliverableRun(
   db: DbClient = getAzureWriteFluentClient(),
 ): Promise<void> {
   const { error } = await db
-    .from('deliverable_runs')
+    .from("deliverable_runs")
     .update({
       status: input.status,
       artifact_id: input.artifactId ?? null,
@@ -405,8 +445,9 @@ export async function completeDeliverableRun(
       error: input.error ?? null,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', id);
-  if (error) throw new Error(`deliverable_runs update failed: ${error.message}`);
+    .eq("id", id);
+  if (error)
+    throw new Error(`deliverable_runs update failed: ${error.message}`);
 }
 
 /**
@@ -416,7 +457,12 @@ export async function completeDeliverableRun(
  */
 export async function updateDeliverableRunProgress(
   id: string,
-  progress: { pct: number; label: string; pass?: string | null; workerId?: string | null },
+  progress: {
+    pct: number;
+    label: string;
+    pass?: string | null;
+    workerId?: string | null;
+  },
   db: DbClient = getAzureWriteFluentClient(),
 ): Promise<void> {
   const pct = Math.min(Math.max(Math.round(progress.pct), 0), 100);
@@ -431,10 +477,13 @@ export async function updateDeliverableRunProgress(
   // long-but-alive generation does not trip the claim lease and get reclaimed.
   if (progress.workerId) update.claimed_at = nowIso;
   const { error } = await db
-    .from('deliverable_runs')
+    .from("deliverable_runs")
     .update(update)
-    .eq('id', id);
-  if (error) throw new Error(`deliverable_runs progress update failed: ${error.message}`);
+    .eq("id", id);
+  if (error)
+    throw new Error(
+      `deliverable_runs progress update failed: ${error.message}`,
+    );
 }
 
 /** Read a run, scoped to the owning client (tenant-isolation defense-in-depth). */
@@ -444,10 +493,10 @@ export async function getDeliverableRun(
   db: DbClient = getAzureWriteFluentClient(),
 ): Promise<DeliverableRunRecord | null> {
   const { data, error } = await db
-    .from('deliverable_runs')
-    .select('*')
-    .eq('id', id)
-    .eq('client_id', clientId)
+    .from("deliverable_runs")
+    .select("*")
+    .eq("id", id)
+    .eq("client_id", clientId)
     .maybeSingle();
   if (error) throw new Error(`deliverable_runs read failed: ${error.message}`);
   return data ? rowToRecord(data as Record<string, unknown>) : null;
@@ -469,19 +518,23 @@ export async function listSucceededRunsForMove(
   limit = 300,
 ): Promise<DeliverableRunRecord[]> {
   const { data, error } = await db
-    .from('deliverable_runs')
-    .select('*')
-    .eq('client_id', clientId)
-    .eq('status', 'succeeded')
-    .order('updated_at', { ascending: false })
+    .from("deliverable_runs")
+    .select("*")
+    .eq("client_id", clientId)
+    .eq("status", "succeeded")
+    .order("updated_at", { ascending: false })
     .limit(limit);
-  if (error) throw new Error(`deliverable_runs move list failed: ${error.message}`);
-  const rows = ((data as Record<string, unknown>[] | null) ?? []).map(rowToRecord);
+  if (error)
+    throw new Error(`deliverable_runs move list failed: ${error.message}`);
+  const rows = ((data as Record<string, unknown>[] | null) ?? []).map(
+    rowToRecord,
+  );
   const latestByType = new Map<string, DeliverableRunRecord>();
   for (const r of rows) {
     if (r.jobPayload?.sourceArtifactRef !== moveId) continue;
     if (!r.artifactId) continue;
-    if (!latestByType.has(r.deliverableType)) latestByType.set(r.deliverableType, r);
+    if (!latestByType.has(r.deliverableType))
+      latestByType.set(r.deliverableType, r);
   }
   return [...latestByType.values()];
 }

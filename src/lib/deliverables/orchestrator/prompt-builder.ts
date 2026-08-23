@@ -24,6 +24,7 @@ import {
   renderStorySpinePrompt,
   storySpineFor,
 } from "@/lib/deliverables/shared/executive-story-contract";
+import { renderAdaptiveDepthPrompt } from "@/lib/deliverables/adaptive-depth";
 import type { MovesDeliverableKey } from "@/lib/deliverables/profiles/types";
 
 const USE_CASE_TITLE: Record<string, string> = {
@@ -212,12 +213,21 @@ function buildContextBlock(
     ``,
     `QUALITY BAR: ${brief.qualityCriteria.join(" ")} Output must read like a board-grade consulting artifact, not an LLM draft. Strengthen synthesis, implications, and the decision ask.`,
     storySpineInstruction(req),
+    adaptiveDepthInstruction(req),
     narrativeSpineInstruction(req),
     sizeDisciplineInstruction(req),
     deterministicNumbersInstruction(req),
     ``,
     `FORMATTING: ${brief.formattingInstructions} Body ≈ ${req.formattingProfile.bodyPointSize}pt. ${req.formattingProfile.wideDataToExcelCompanion ? "Move wide datasets into an Excel companion exhibit rather than tiny in-document tables." : ""} Output formats: ${req.outputFormats.join(", ")}.`,
   ].join("\n");
+}
+
+function adaptiveDepthInstruction(req: DeliverableIntelligenceRequest): string {
+  if (req.module !== "moves") return "";
+  return `\n${renderAdaptiveDepthPrompt(
+    req.adaptiveDepth,
+    req.deliverableType,
+  )}`;
 }
 
 /**

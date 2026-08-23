@@ -20,6 +20,7 @@ import type {
   RenderableSection,
 } from "./types";
 import { getArtifactBrief } from "./artifact-brief-registry";
+import { adaptArtifactBriefForDepth } from "@/lib/deliverables/adaptive-depth";
 import { buildGenerationProgress, type GenerationProgress } from "./progress";
 import { buildPassPrompt } from "./prompt-builder";
 import {
@@ -173,7 +174,7 @@ export async function runDeliverableOrchestration(
   const enforcePlanGate = opts.enforcePlanGate ?? true;
   const enforceQualityGate = opts.enforceQualityGate ?? true;
 
-  const brief = getArtifactBrief(req);
+  const brief = adaptArtifactBriefForDepth(req, getArtifactBrief(req));
   const evidence = req.governedEvidenceBundle;
   const trace: PassTraceEntry[] = [];
 
