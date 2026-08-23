@@ -44,6 +44,11 @@ REALISM_GATES = {
     "data_flow_singleton_target_max": 0.60,
     "data_flow_max_inbound_min": 60,
     "deployment_environment_min": 3,
+    "application_cost_total_usd": 436_500_000,
+    "application_cost_total_tolerance": 0.005,
+    "application_cost_top_decile_min": 0.30,
+    "application_cost_top_decile_max": 0.75,
+    "application_environment_count_distinct_min": 4,
 }
 
 
@@ -68,6 +73,19 @@ def validate_family_realism(family: str, rows: list[dict[str, str]], issues: lis
             issues.append(f"{family} tier_1 ratio {tier_1_ratio:.1%} outside 10%-15% realism gate")
         if any(row.get("environment", "").strip() for row in rows):
             issues.append(f"{family} contains environment values; deployments must live in SP14")
+        costs = sorted((float(row.get("annual_cost_usd", "0") or 0) for row in rows), reverse=True)
+        cost_total = sum(costs)
+        expected_total = REALISM_GATES["application_cost_total_usd"]
+        tolerance = REALISM_GATES["application_cost_total_tolerance"]
+        if abs(cost_total - expected_total) / expected_total > tolerance:
+            issues.append(f"{family} annual_cost_usd total ${cost_total:,.2f} outside governed baseline ${expected_total:,.2f} ±{tolerance:.1%}")
+        top_decile_count = max(1, len(costs) // 10)
+        top_decile_share = sum(costs[:top_decile_count]) / max(cost_total, 1)
+        if not (REALISM_GATES["application_cost_top_decile_min"] <= top_decile_share <= REALISM_GATES["application_cost_top_decile_max"]):
+            issues.append(f"{family} top-decile annual_cost_usd share {top_decile_share:.1%} outside 30%-75% realism gate")
+        environment_counts = {row.get("environment_count", "").strip() for row in rows if row.get("environment_count", "").strip()}
+        if len(environment_counts) < REALISM_GATES["application_environment_count_distinct_min"]:
+            issues.append(f"{family} environment_count expected at least {REALISM_GATES['application_environment_count_distinct_min']} distinct values, got {len(environment_counts)}")
 
     if family == "SP08_Vendor_Contract":
         require_distinct(rows, "supplier_name", REALISM_GATES["vendor_distinct_min"], family, issues)

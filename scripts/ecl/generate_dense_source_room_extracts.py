@@ -283,6 +283,7 @@ AI_USE_CASES = [
 ]
 RISK_TYPES = ["access_control", "data_quality", "sox", "hipaa", "vendor_resilience", "model_risk", "disaster_recovery", "shadow_it", "change_control"]
 KPI_NAMES = ["claims auto-adjudication rate", "denial overturn rate", "days in AR", "operating margin", "supply fill rate", "nursing vacancy rate", "member NPS", "appointment access days", "cloud cost variance", "report freshness SLA"]
+APPLICATION_COST_TOTAL_USD = 436_500_000
 
 
 def write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) -> str:
@@ -328,9 +329,32 @@ def review_state(index: int) -> str:
 
 def applications(rng: Random, count: int) -> list[dict[str, Any]]:
     rows = []
+    weights: list[float] = []
+    for i in range(1, count + 1):
+        product, _vendor, domain, subdomain = APP_PRODUCTS[(i - 1) % len(APP_PRODUCTS)]
+        function = FUNCTIONS[(i * 5) % len(FUNCTIONS)]
+        base = 1.0
+        if "Epic" in product:
+            base *= 7.5
+        if product in {"Facets", "HealthRules Payor", "QNXT", "Netezza Warehouse", "Snowflake Enterprise", "Informatica PowerCenter"}:
+            base *= 4.5
+        if domain in {"clinical", "health_plan"}:
+            base *= 2.2
+        if function in {"Data and Analytics", "Information Technology", "Revenue Cycle"}:
+            base *= 1.6
+        if subdomain in {"ehr", "core_admin", "claims", "warehouse", "etl"}:
+            base *= 1.7
+        base *= 0.55 + ((i * 37) % 100) / 100
+        base *= 1 + (i / (count * 19))
+        base += (i % 97) / 1000
+        weights.append(base)
+    weight_total = sum(weights)
+
     for i in range(1, count + 1):
         product, vendor, domain, subdomain = APP_PRODUCTS[(i - 1) % len(APP_PRODUCTS)]
         function = FUNCTIONS[(i * 5) % len(FUNCTIONS)]
+        environment_count = [1, 1, 1, 2, 2, 3, 3, 4, 5][i % 9]
+        annual_cost = round((weights[i - 1] / weight_total) * APPLICATION_COST_TOTAL_USD, 2)
         rows.append(
             {
                 "source_system": "ServiceNow CMDB synthetic export",
@@ -347,10 +371,10 @@ def applications(rng: Random, count: int) -> list[dict[str, Any]]:
                 "criticality_tier": "tier_1" if i % 9 == 0 else ("tier_2" if i % 3 == 0 else "tier_3"),
                 "lifecycle_state": "replace_candidate" if i % 13 == 0 else ("watch" if i % 5 == 0 else "current"),
                 "hosting_model": ["saas", "on_prem", "aws_hosted", "azure_hosted", "private_cloud"][i % 5],
-                "environment_count": 3 if i % 4 == 0 else 1,
+                "environment_count": environment_count,
                 "interface_count": 2 + (i % 9),
                 "user_count_estimate": 50 + (i * 17) % 9000,
-                "annual_cost_usd": 25000 + (i * 7319) % 3500000,
+                "annual_cost_usd": annual_cost,
                 "source_basis": row_basis(i),
                 "review_state": review_state(i),
             }
