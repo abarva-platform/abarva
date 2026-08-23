@@ -298,6 +298,21 @@
     },
     {
       "order": 18,
+      "slice_id": "tower_command_center_static_preview",
+      "status": "queued",
+      "percent_complete": 25,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/render_tower_command_center_preview.py --require-weak-contract",
+      "evidence_paths": [
+        "scripts/ecl/render_tower_command_center_preview.py",
+        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/tower_command_center_static_preview/tower-command-center-preview.html",
+        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/tower_command_center_static_preview/tower-command-center-preview-qa.json"
+      ],
+      "next_auto_action": "Use the static Tower preview to validate commercial value-gate language and weak-contract visibility before any Tower route adoption.",
+      "stop_gate": "product_route_repointing"
+    },
+    {
+      "order": 19,
       "slice_id": "machine_readable_execution_queue",
       "status": "in_progress",
       "percent_complete": 75,
@@ -311,7 +326,7 @@
       "stop_gate": "None while validation remains local and report-only."
     },
     {
-      "order": 19,
+      "order": 20,
       "slice_id": "browser_and_product_repointing_proof",
       "status": "blocked_by_hard_gate",
       "percent_complete": 0,
