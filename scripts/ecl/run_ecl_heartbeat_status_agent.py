@@ -31,6 +31,14 @@ POST_QUEUE_SUMMARY_PATH = (
     / "reports/ecl-dense-azure-load-gate-package-2026-08-23/ecl_dense_azure_gate_local_proof_summary.json"
 )
 OPERATOR_VALIDATION_PATH = NO_STOP_OUT_DIR / "operator-status-validation-summary.json"
+APPROVAL_REQUEST_SUMMARY_PATH = (
+    ROOT
+    / "reports/ecl-azure-load-approval-request-2026-08-23/ecl_azure_load_approval_request_summary.json"
+)
+APPROVAL_REQUEST_VALIDATION_PATH = (
+    ROOT
+    / "reports/ecl-azure-load-approval-request-2026-08-23/ecl_azure_load_approval_request_validation_summary.json"
+)
 
 PROHIBITED_EXECUTABLES = {"az", "docker", "kubectl", "psql", "supabase"}
 
@@ -120,6 +128,18 @@ def operator_validation_accepted() -> bool:
     return bool(summary.get("accepted")) and summary.get("blocked_gate") == "azure_data_plane_write"
 
 
+def approval_request_accepted() -> bool:
+    summary = read_json(APPROVAL_REQUEST_SUMMARY_PATH)
+    validation = read_json(APPROVAL_REQUEST_VALIDATION_PATH)
+    return (
+        bool(summary.get("accepted"))
+        and summary.get("actual_azure_execution") is False
+        and summary.get("approval_state") == "requested_not_approved"
+        and bool(validation.get("accepted"))
+        and validation.get("actual_azure_execution") is False
+    )
+
+
 def refresh_operator_status() -> dict[str, Any]:
     """Rebuild operator status so post-queue artifacts are reflected."""
 
@@ -159,6 +179,19 @@ def next_actions() -> list[tuple[str, list[str]]]:
                 ["python3", "scripts/ecl/validate_ecl_operator_status_report.py", "--allow-in-progress"],
             )
         )
+    if post_queue_summary_accepted() and operator_validation_accepted() and not approval_request_accepted():
+        actions.extend(
+            [
+                (
+                    "azure_load_approval_request_package",
+                    ["python3", "scripts/ecl/write_ecl_azure_load_approval_request.py"],
+                ),
+                (
+                    "azure_load_approval_request_validate",
+                    ["python3", "scripts/ecl/validate_ecl_azure_load_approval_request.py"],
+                ),
+            ]
+        )
     return actions
 
 
@@ -167,6 +200,8 @@ def build_heartbeat_summary(*, out_dir: Path, steps: list[dict[str, Any]]) -> di
     validation = read_json(OPERATOR_VALIDATION_PATH)
     post_queue = read_json(POST_QUEUE_SUMMARY_PATH)
     queue_summary = read_json(QUEUE_SUMMARY_PATH)
+    approval_request = read_json(APPROVAL_REQUEST_SUMMARY_PATH)
+    approval_validation = read_json(APPROVAL_REQUEST_VALIDATION_PATH)
     progress = status.get("progress", {}) if isinstance(status.get("progress"), dict) else {}
     next_item = status.get("next", {}) if isinstance(status.get("next"), dict) else {}
     quality_rows = status.get("quality_denominators", [])
@@ -178,9 +213,9 @@ def build_heartbeat_summary(*, out_dir: Path, steps: list[dict[str, Any]]) -> di
     if failed_steps:
         decision = "failed"
         instruction = "Stop auto-advance and inspect the heartbeat agent logs."
-    elif queue_summary_accepted() and post_queue_summary_accepted() and operator_validation_accepted():
+    elif queue_summary_accepted() and post_queue_summary_accepted() and operator_validation_accepted() and approval_request_accepted():
         decision = "hard_gated"
-        instruction = "Local auto-proceed work is current; explicit hard-gate approval is required before Azure data-plane load or route/browser execution."
+        instruction = "Local auto-proceed work and the Azure approval request packet are current; explicit hard-gate approval is required before Azure data-plane load or route/browser execution."
     else:
         decision = "continue"
         instruction = "Run the heartbeat agent again to advance the next local-safe slice."
@@ -214,13 +249,19 @@ def build_heartbeat_summary(*, out_dir: Path, steps: list[dict[str, Any]]) -> di
                 "blocked_gate": validation.get("blocked_gate"),
                 "quality_denominator_count": validation.get("quality_denominator_count"),
             },
+            "azure_load_approval_request": {
+                "accepted": approval_request.get("accepted"),
+                "approval_state": approval_request.get("approval_state"),
+                "validation_accepted": approval_validation.get("accepted"),
+                "actual_azure_execution": approval_request.get("actual_azure_execution"),
+            },
         },
         "next": {
             "blocked_gate": hard_gate,
             "blocked_slice_id": next_item.get("blocked_slice_id"),
             "auto_slice_id": next_item.get("auto_slice_id"),
             "backlog_item": (
-                "explicit_azure_lab_load_gate_manifest"
+                "await_explicit_azure_lab_load_gate_decision"
                 if decision == "hard_gated"
                 else "continue_local_auto_proceed_queue"
             ),
@@ -241,6 +282,8 @@ def build_heartbeat_summary(*, out_dir: Path, steps: list[dict[str, Any]]) -> di
             "operator_validation": OPERATOR_VALIDATION_PATH.relative_to(ROOT).as_posix(),
             "queue_summary": QUEUE_SUMMARY_PATH.relative_to(ROOT).as_posix(),
             "post_queue_gate_local_proof": POST_QUEUE_SUMMARY_PATH.relative_to(ROOT).as_posix(),
+            "azure_load_approval_request": APPROVAL_REQUEST_SUMMARY_PATH.relative_to(ROOT).as_posix(),
+            "azure_load_approval_request_validation": APPROVAL_REQUEST_VALIDATION_PATH.relative_to(ROOT).as_posix(),
         },
     }
 
