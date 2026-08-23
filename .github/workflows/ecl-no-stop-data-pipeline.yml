@@ -95,6 +95,7 @@ jobs:
             scripts/ecl/run_no_stop_execution_queue.py \
             scripts/ecl/run_commercial_contract_proof.py \
             scripts/ecl/validate_no_stop_execution_queue.py \
+            scripts/ecl/validate_ecl_operator_status_report.py \
             scripts/ecl/validate_commercial_proof_acceptance.py \
             scripts/ecl/write_legacy_table_retirement_map.py \
             scripts/ecl/build_ecl_client_workbook_execution_package.py \
@@ -106,6 +107,10 @@ jobs:
           LC_ALL: C.UTF-8
         run: |
           python3 scripts/ecl/run_no_stop_execution_queue.py
+
+      - name: Validate final operator status report
+        run: |
+          python3 scripts/ecl/validate_ecl_operator_status_report.py
 
       - name: Assert queue execution, proof acceptance, and retirement-map counts
         shell: bash
@@ -127,6 +132,7 @@ jobs:
           queue = json.loads(Path("outputs/ecl-no-stop-queue-validation/validation-summary.json").read_text())
           execution = json.loads(Path("outputs/ecl-no-stop-execution-run/execution-summary.json").read_text())
           workbook = json.loads(Path("outputs/ecl-client-workbook-execution-2026-08-23/workbook_execution_package_validation_summary.json").read_text())
+          operator = json.loads(Path("outputs/ecl-no-stop-execution-run/operator-status-validation-summary.json").read_text())
 
           failures = []
           if not execution.get("accepted"):
@@ -171,6 +177,12 @@ jobs:
             failures.append(f"workbook example rows={workbook.get('example_rows')}, expected 9")
           if workbook.get("source_extract_recipes") != 9:
             failures.append(f"workbook source extract recipes={workbook.get('source_extract_recipes')}, expected 9")
+          if not operator.get("accepted"):
+            failures.append(f"operator status report failed validation: {operator}")
+          if operator.get("completion_percent") != 100:
+            failures.append(f"operator completion percent={operator.get('completion_percent')}, expected 100")
+          if operator.get("blocked_gate") != "product_route_repointing":
+            failures.append(f"operator blocked gate={operator.get('blocked_gate')}, expected product_route_repointing")
 
           if failures:
             print("\n".join(failures), file=sys.stderr)
@@ -184,6 +196,7 @@ jobs:
               "queue_executable_slices": execution.get("executable_slice_count"),
               "queue_passed_slices": execution.get("passed_executable_slice_count"),
               "queue_slices": queue.get("slice_count"),
+              "operator_completion_percent": operator.get("completion_percent"),
               "workbook_folders": workbook.get("workbook_folder_count"),
               "workbook_field_guide_rows": workbook.get("field_guide_rows"),
               "unique_table_names": summary.get("unique_table_names"),
