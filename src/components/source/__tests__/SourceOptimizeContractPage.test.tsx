@@ -86,6 +86,7 @@ function makeCandidate(overrides = {}) {
         sourceRef: "source.contract_360",
         tone: "strong",
         points: 25,
+        role: "supporting_context",
       },
     ],
     ...overrides,

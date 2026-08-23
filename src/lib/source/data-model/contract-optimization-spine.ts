@@ -27,6 +27,7 @@ export interface ContractOptimizationFitReason {
   readonly detail: string;
   readonly sourceRef: string;
   readonly tone: "strong" | "warning" | "missing" | "neutral";
+  readonly role: "action_trigger" | "supporting_context" | "evidence_gate";
   readonly points: number;
 }
 
@@ -350,6 +351,7 @@ function scoreContract(input: {
       sourceRef:
         "source.contract_360.annual_value + computeVendorConcentration(source.contract_360)",
       tone: "strong",
+      role: "supporting_context",
       points: annualValue >= 25_000_000 ? 22 : 14,
     });
   }
@@ -361,6 +363,7 @@ function scoreContract(input: {
       detail: weakSignalDetail(leverage),
       sourceRef: "computeContractLeverageSignals(source.contract_360)",
       tone: leverage.weakSignalCount >= 2 ? "warning" : "neutral",
+      role: "action_trigger",
       points: Math.min(30, leverage.weakSignalCount * 9),
     });
   }
@@ -379,6 +382,7 @@ function scoreContract(input: {
         : "The contract is inside the 180-day renewal window and should not wait for ad hoc analysis.",
       sourceRef: "computeRenewalExposure(source.contract_360, as_of_date)",
       tone: input.noticePassed.has(contract.contract_id) ? "warning" : "strong",
+      role: "action_trigger",
       points: input.noticePassed.has(contract.contract_id) ? 20 : 14,
     });
   }
@@ -394,6 +398,7 @@ function scoreContract(input: {
       sourceRef:
         "source.contract_360.annual_value + source.contract_360.actual_annual_spend",
       tone: "neutral",
+      role: "evidence_gate",
       points: 10,
     });
   }
@@ -406,6 +411,7 @@ function scoreContract(input: {
       detail: `${Math.round(incidents).toLocaleString("en-US")} Sev1/Sev2 incident observations are linked to the contract context.`,
       sourceRef: "source.contract_360.cloud_sev1_sev2_incidents",
       tone: "warning",
+      role: "evidence_gate",
       points: incidents >= 100 ? 10 : 6,
     });
   }
@@ -422,6 +428,7 @@ function scoreContract(input: {
       sourceRef:
         "source.contract_application_scope + source.contract_initiative_dependency",
       tone: "strong",
+      role: "supporting_context",
       points: 8,
     });
   }
@@ -476,13 +483,20 @@ function storyFor(
   selected: ContractOptimizationCandidate,
   ledger: ContractOptimizationLedgerSummary | null,
 ): readonly string[] {
-  const primary = selected.reasons.slice(0, 4).map((reason) => reason.detail);
+  const triggerDetails = selected.reasons
+    .filter((reason) => reason.role === "action_trigger")
+    .map((reason) => reason.detail);
+  const supportDetails = selected.reasons
+    .filter((reason) => reason.role !== "action_trigger")
+    .slice(0, 3)
+    .map((reason) => reason.detail);
   const ledgerLine = ledger
     ? ledger.headline
     : "Four-ledger value remains unavailable until contract, invoice, usage, SLA, and finance evidence are mapped.";
   return [
-    `${selected.vendorName} ranks #${selected.rank} because it combines ${formatUsd(selected.annualValue)} annual exposure with ${selected.reasons.length} governed decision signal(s).`,
-    ...primary,
+    `${selected.vendorName} ranks #${selected.rank} because it combines ${formatUsd(selected.annualValue)} annual exposure with ${triggerDetails.length} action trigger(s) and ${supportDetails.length} supporting context signal(s).`,
+    ...triggerDetails,
+    ...supportDetails,
     ledgerLine,
   ];
 }

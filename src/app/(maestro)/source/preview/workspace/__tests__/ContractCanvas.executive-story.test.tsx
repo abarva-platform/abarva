@@ -35,6 +35,25 @@ function executiveStoryVm() {
         band: "Prime optimization candidate",
         score: 86,
         annualValue: "$50.0M",
+        reasons: [
+          {
+            kind: "weak_leverage",
+            label: "2 weak leverage signals",
+            detail: "Benchmark rights are limited and supplier alternatives need market scan.",
+            role: "action_trigger",
+            tone: "#ba7517",
+            points: "18",
+          },
+          {
+            kind: "commercial_variance",
+            label: "Contracted-to-actual variance is visible",
+            detail:
+              "$2.0M variance is visible, but it is an evidence gate, not savings.",
+            role: "evidence_gate",
+            tone: "#5f5e5a",
+            points: "10",
+          },
+        ],
       },
     },
     opportunityView: {
@@ -120,10 +139,18 @@ describe("ContractCanvas executive story", () => {
     expect(screen.getByText("Annual contract value")).toBeTruthy();
     expect(screen.getByText("Actual annual spend")).toBeTruthy();
     expect(screen.getByText("Pricing schedule baseline")).toBeTruthy();
+    expect(screen.getByText("Why this contract first")).toBeTruthy();
+    expect(screen.getByText("Action trigger")).toBeTruthy();
+    expect(
+      screen.getByText(/Benchmark rights are limited/),
+    ).toBeTruthy();
     expect(
       screen.getByText(
-        "Three opportunities identified. None still require evidence review, business approval, or negotiation action. Missing evidence remains explicit.",
+        "$2.0M variance is visible, but it is an evidence gate, not savings.",
       ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/Three opportunities identified/),
     ).toBeTruthy();
     expect(screen.getAllByText("Recover money").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Avoid future spend").length).toBeGreaterThan(0);

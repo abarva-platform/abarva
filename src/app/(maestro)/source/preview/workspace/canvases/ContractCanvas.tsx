@@ -2207,6 +2207,7 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
   const view = vm.opportunityView;
   if (!view) return null;
   const c = vm.c;
+  const selectedSpine = vm.optSpine?.selected ?? null;
   const conflict = view.baseline.status === "conflict";
   const visibleOpportunities = view.opportunities.slice(0, 5);
   const blockedCount = view.opportunities.filter(
@@ -2216,6 +2217,16 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
       Boolean(opportunity.blockingGap),
   ).length;
   const hasSizedPotential = view.potential.total !== "Not sized";
+  const scoreReasons = selectedSpine?.reasons ?? [];
+  const actionTriggers = scoreReasons.filter(
+    (reason) => reason.role === "action_trigger",
+  );
+  const supportSignals = scoreReasons.filter(
+    (reason) => reason.role === "supporting_context",
+  );
+  const evidenceGates = scoreReasons.filter(
+    (reason) => reason.role === "evidence_gate",
+  );
   const baselineHeadline =
     !conflict && c ? "Contract economics loaded" : view.baseline.headline;
   const baselineDetail =
@@ -2253,9 +2264,24 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
     : `${c?.vendor ?? view.contractId} has material annual exposure${c?.acv ? ` (${c.acv})` : ""} and ${view.opportunities.length} identified ${pluralOpportunity(view.opportunities.length)}. Potential value remains separate from the ${view.financeConfirmed} finance-confirmed outcome.`;
   const timingRead = conflict
     ? "The timing trigger is the baseline conflict, not renewal urgency."
-    : c?.notice && c?.expiry
+    : actionTriggers.length > 0
+      ? actionTriggers.map((reason) => reason.detail).join(" ")
+      : c?.notice && c?.expiry
       ? `Notice ${c.notice}; expiry ${c.expiry}. Timing informs the workflow, but the case is driven by evidence and materiality.`
       : "Timing is governed by the loaded contract terms when available.";
+  const rankRead = selectedSpine
+    ? `${selectedSpine.rank} of the current optimization queue with fit ${selectedSpine.score}/100. ${
+        supportSignals.length > 0
+          ? supportSignals.map((reason) => reason.detail).join(" ")
+          : "Materiality is the supporting context; it is not a value claim."
+      }`
+    : c
+      ? `${c.vendor} contract ${view.contractId}; ${c.acv} annual value and ${c.spend} actual spend.`
+      : `Contract ${view.contractId}.`;
+  const evidenceGateRead =
+    evidenceGates.length > 0
+      ? evidenceGates.map((reason) => reason.detail).join(" ")
+      : "No ranking evidence gate is suppressing the next decision; use the opportunity rows for remaining workflow state.";
   const categoryLabel = (valueType: string) => {
     if (valueType === "Recoverable Leakage") return "Recover money";
     if (valueType === "Avoided Cost") return "Avoid future spend";
@@ -2329,14 +2355,10 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
           >
             <StoryTile
               index="01"
-              title="What this is"
-              body={
-                c
-                  ? `${c.vendor} contract ${view.contractId}; ${c.acv} annual value and ${c.spend} actual spend.`
-                  : `Contract ${view.contractId}.`
-              }
+              title="Why this contract first"
+              body={rankRead}
             />
-            <StoryTile index="02" title="Why now" body={timingRead} />
+            <StoryTile index="02" title="Action trigger" body={timingRead} />
             <StoryTile
               index="03"
               title="Where value sits"
@@ -2344,10 +2366,10 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
             />
             <StoryTile
               index="04"
-              title="What evidence says"
-              body={conflict ? view.baseline.headline : evidenceRead}
+              title="Proof standard"
+              body={conflict ? view.baseline.headline : evidenceGateRead}
             />
-            <StoryTile index="05" title="Next decision" body={nextAction} />
+            <StoryTile index="05" title="Next decision" body={`${evidenceRead} ${nextAction}`} />
           </div>
         </div>
         <div>
