@@ -63,6 +63,10 @@ test-results/
 # src/lib/admin/setup-data-load-center.ts (apexretail/meridian/arcturus). Those
 # must be in the build context or `next build` fails type-check (added #2727).
 docs/*
+!docs/architecture/
+docs/architecture/*
+!docs/architecture/sql-drafts/
+!docs/architecture/sql-drafts/**
 !docs/source/
 docs/source/*
 !docs/source/skyharbor-v4/
