@@ -1,0 +1,34 @@
+{
+  "accepted": true,
+  "checks": [
+    {
+      "name": "gate_contract_present",
+      "status": "pass"
+    },
+    {
+      "name": "tenant_family_match",
+      "status": "pass"
+    },
+    {
+      "name": "local_proof_hashes_match",
+      "status": "pass"
+    },
+    {
+      "name": "idempotency_key_present",
+      "status": "pass"
+    },
+    {
+      "name": "readback_contract_present",
+      "status": "pass"
+    },
+    {
+      "name": "target_classification_allowed",
+      "status": "pass"
+    },
+    {
+      "name": "gaps_preserved_as_null",
+      "status": "pass"
+    }
+  ],
+  "status": "local_load_runner_validated"
+}
