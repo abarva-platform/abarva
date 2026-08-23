@@ -7,7 +7,87 @@ import type { SourceWorkspaceVM } from "../buildViewModel";
 
 export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
   const c = vm.c;
-  if (!c) return null;
+  if (!c) {
+    return (
+      <div
+        style={{
+          background: "#fff",
+          border: "1px solid rgba(163,45,45,.22)",
+          borderRadius: 8,
+          padding: "20px 24px",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 14.5,
+            fontWeight: 800,
+            color: "#0a0a0b",
+            marginBottom: 8,
+          }}
+        >
+          Contract view withheld
+        </div>
+        <div
+          style={{
+            fontSize: 13,
+            lineHeight: 1.55,
+            color: "#5f5e5a",
+            maxWidth: "88ch",
+          }}
+        >
+          {vm.thesis}
+        </div>
+        {vm.valueStrip.length ? (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))",
+              gap: 10,
+              marginTop: 16,
+            }}
+          >
+            {vm.valueStrip.map((item) => (
+              <div
+                key={item.label}
+                style={{
+                  border: "1px solid rgba(10,10,11,.1)",
+                  borderRadius: 6,
+                  padding: "11px 13px",
+                  background: "#fbfaf7",
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 9.5,
+                    letterSpacing: ".08em",
+                    textTransform: "uppercase",
+                    color: "#888780",
+                    marginBottom: 5,
+                  }}
+                >
+                  {item.label}
+                </div>
+                <div
+                  style={{
+                    fontSize: item.size,
+                    fontWeight: 800,
+                    color: item.color,
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {item.value}
+                </div>
+                <div style={{ fontSize: 11.5, color: "#5f5e5a", marginTop: 5 }}>
+                  {item.sub}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
   return (
     <>
       {vm.cOverview ? (
