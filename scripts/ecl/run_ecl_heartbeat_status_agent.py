@@ -39,8 +39,20 @@ APPROVAL_REQUEST_VALIDATION_PATH = (
     ROOT
     / "reports/ecl-azure-load-approval-request-2026-08-23/ecl_azure_load_approval_request_validation_summary.json"
 )
+PRODUCT_BROWSER_QA_SUMMARY_PATH = (
+    ROOT / "reports/ecl-product-browser-qa-gate-package-2026-08-23/ecl_product_browser_qa_gate_summary.json"
+)
 
 PROHIBITED_EXECUTABLES = {"az", "docker", "kubectl", "psql", "supabase"}
+MIN_ACTUAL_READBACK_TABLES = 24
+ACTUAL_READBACK_COMPARE_ENV = "ECL_ACA_READBACK_COMPARE_PATH"
+ACTUAL_READBACK_EXPORT_SUMMARY_ENV = "ECL_ACA_READBACK_EXPORT_SUMMARY_PATH"
+QUALITY_ZERO_CHECKS = (
+    "relationship_endpoint_drift",
+    "cube_metric_drift",
+    "cube_measure_drift",
+    "source_value_claimable_rows",
+)
 
 
 def now_iso() -> str:
@@ -56,6 +68,38 @@ def read_json(path: Path) -> dict[str, Any]:
 def write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def repo_or_absolute(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        return path.resolve().as_posix()
+
+
+def newest_existing(paths: list[Path]) -> Path | None:
+    existing = [path for path in paths if path.exists()]
+    if not existing:
+        return None
+    return max(existing, key=lambda path: (path.stat().st_mtime_ns, path.as_posix()))
+
+
+def discover_json_path(*, env_var: str, patterns: tuple[str, ...]) -> Path | None:
+    env_value = os.environ.get(env_var)
+    if env_value:
+        env_path = Path(env_value).expanduser()
+        if env_path.exists():
+            return env_path
+
+    search_roots = [
+        ROOT,
+        ROOT.parent / "ecl-aca-execute",
+    ]
+    candidates: list[Path] = []
+    for search_root in search_roots:
+        for pattern in patterns:
+            candidates.extend(search_root.glob(pattern))
+    return newest_existing(candidates)
 
 
 def command_name(command: list[str]) -> str:
@@ -140,6 +184,66 @@ def approval_request_accepted() -> bool:
     )
 
 
+def actual_readback_proof() -> dict[str, Any]:
+    compare_path = discover_json_path(
+        env_var=ACTUAL_READBACK_COMPARE_ENV,
+        patterns=("reports/ecl-dense-aca-readback-direct-compare-*/readback_direct_compare_summary.json",),
+    )
+    export_summary_path = discover_json_path(
+        env_var=ACTUAL_READBACK_EXPORT_SUMMARY_ENV,
+        patterns=(
+            "reports/ecl-dense-aca-job-readback-*/proof/ecl-dense-all-layer-readback/ecl_dense_all_layer_readback_export_summary.json",
+        ),
+    )
+    compare = read_json(compare_path) if compare_path else {}
+    export_summary = read_json(export_summary_path) if export_summary_path else {}
+    quality_zero = compare.get("quality_zero_checks", {})
+    issues: list[str] = []
+
+    if not compare_path:
+        issues.append("missing actual ACA direct readback compare summary")
+    if not export_summary_path:
+        issues.append("missing actual ACA readback export summary")
+    if compare.get("accepted") is not True:
+        issues.append("direct readback compare is not accepted")
+    if compare.get("issues") not in ([], None):
+        issues.append("direct readback compare has issues")
+    if int(compare.get("tables_compared", 0) or 0) < MIN_ACTUAL_READBACK_TABLES:
+        issues.append("direct readback compare table count is below the ECL minimum")
+    for check in QUALITY_ZERO_CHECKS:
+        if quality_zero.get(check) != 0:
+            issues.append(f"{check} is not zero in direct readback compare")
+    if export_summary.get("accepted") is not True:
+        issues.append("readback export summary is not accepted")
+    if export_summary.get("status") != "pass":
+        issues.append("readback export summary status is not pass")
+    if export_summary.get("issues") not in ([], None):
+        issues.append("readback export summary has issues")
+    if export_summary.get("actual_target_database_mutation") is not False:
+        issues.append("readback proof must be read-only")
+
+    return {
+        "accepted": not issues,
+        "issues": issues,
+        "compare_path": repo_or_absolute(compare_path) if compare_path else None,
+        "export_summary_path": repo_or_absolute(export_summary_path) if export_summary_path else None,
+        "run_id": export_summary.get("run_id"),
+        "tables_compared": compare.get("tables_compared"),
+        "quality_zero_checks": quality_zero,
+        "target_classification": export_summary.get("target_classification"),
+        "tenant_key": export_summary.get("tenant_key"),
+    }
+
+
+def actual_readback_accepted() -> bool:
+    return bool(actual_readback_proof().get("accepted"))
+
+
+def product_browser_qa_gate_accepted() -> bool:
+    summary = read_json(PRODUCT_BROWSER_QA_SUMMARY_PATH)
+    return bool(summary.get("accepted")) and summary.get("status") == "ready_for_future_browser_gate_review"
+
+
 def refresh_operator_status() -> dict[str, Any]:
     """Rebuild operator status so post-queue artifacts are reflected."""
 
@@ -169,6 +273,15 @@ def next_actions() -> list[tuple[str, list[str]]]:
     actions: list[tuple[str, list[str]]] = []
     if not queue_summary_accepted():
         actions.append(("local_no_stop_queue", ["python3", "scripts/ecl/run_no_stop_execution_queue.py"]))
+        return actions
+    if actual_readback_accepted():
+        if not product_browser_qa_gate_accepted():
+            actions.extend(
+                [
+                    ("product_browser_qa_gate_package", ["npm", "run", "ecl:product-browser-qa-gate:package"]),
+                    ("product_browser_qa_gate_validate", ["npm", "run", "ecl:product-browser-qa-gate:validate"]),
+                ]
+            )
         return actions
     if not post_queue_summary_accepted():
         actions.append(("post_queue_gate_local_proof", ["python3", "scripts/ecl/run_ecl_dense_azure_gate_local_proof.py"]))
@@ -202,6 +315,8 @@ def build_heartbeat_summary(*, out_dir: Path, steps: list[dict[str, Any]]) -> di
     queue_summary = read_json(QUEUE_SUMMARY_PATH)
     approval_request = read_json(APPROVAL_REQUEST_SUMMARY_PATH)
     approval_validation = read_json(APPROVAL_REQUEST_VALIDATION_PATH)
+    actual_readback = actual_readback_proof()
+    product_browser_summary = read_json(PRODUCT_BROWSER_QA_SUMMARY_PATH)
     progress = status.get("progress", {}) if isinstance(status.get("progress"), dict) else {}
     next_item = status.get("next", {}) if isinstance(status.get("next"), dict) else {}
     quality_rows = status.get("quality_denominators", [])
@@ -213,11 +328,23 @@ def build_heartbeat_summary(*, out_dir: Path, steps: list[dict[str, Any]]) -> di
     if failed_steps:
         decision = "failed"
         instruction = "Stop auto-advance and inspect the heartbeat agent logs."
+    elif actual_readback.get("accepted") and product_browser_qa_gate_accepted():
+        decision = "hard_gated"
+        hard_gate = "product_route_browser_qa"
+        blocked_slice_id = "product_route_browser_qa"
+        instruction = "Actual ACA load/readback proof is accepted and the product browser QA gate package is ready; the next slice is route/browser execution with proof captured before any live claim."
+    elif actual_readback.get("accepted"):
+        decision = "continue"
+        hard_gate = "product_browser_qa_gate_packaging"
+        blocked_slice_id = None
+        instruction = "Actual ACA load/readback proof is accepted; run the heartbeat agent again to finish product browser QA gate packaging."
     elif queue_summary_accepted() and post_queue_summary_accepted() and operator_validation_accepted() and approval_request_accepted():
         decision = "hard_gated"
-        instruction = "Local auto-proceed work and the Azure approval request packet are current; explicit hard-gate approval is required before Azure data-plane load or route/browser execution."
+        blocked_slice_id = next_item.get("blocked_slice_id")
+        instruction = "Local auto-proceed work and the Azure approval request packet are current; run governed ACA execution only when the operating lane has been approved and proof capture is configured."
     else:
         decision = "continue"
+        blocked_slice_id = next_item.get("blocked_slice_id")
         instruction = "Run the heartbeat agent again to advance the next local-safe slice."
 
     return {
@@ -255,23 +382,34 @@ def build_heartbeat_summary(*, out_dir: Path, steps: list[dict[str, Any]]) -> di
                 "validation_accepted": approval_validation.get("accepted"),
                 "actual_azure_execution": approval_request.get("actual_azure_execution"),
             },
+            "actual_aca_readback": actual_readback,
+            "product_browser_qa_gate": {
+                "accepted": product_browser_summary.get("accepted"),
+                "status": product_browser_summary.get("status"),
+                "summary": PRODUCT_BROWSER_QA_SUMMARY_PATH.relative_to(ROOT).as_posix(),
+            },
         },
         "next": {
             "blocked_gate": hard_gate,
-            "blocked_slice_id": next_item.get("blocked_slice_id"),
+            "blocked_slice_id": blocked_slice_id,
             "auto_slice_id": next_item.get("auto_slice_id"),
             "backlog_item": (
+                "await_product_route_browser_qa_gate"
+                if actual_readback.get("accepted") and product_browser_qa_gate_accepted()
+                else "finish_product_browser_qa_gate_packaging"
+                if actual_readback.get("accepted")
+                else
                 "await_explicit_azure_lab_load_gate_decision"
                 if decision == "hard_gated"
                 else "continue_local_auto_proceed_queue"
             ),
-            "not_authorized_without_explicit_gate": [
-                "Azure data-plane writes",
+            "proof_required_before_claim_or_mutation": [
                 "database migrations against shared environments",
                 "active tenant input replacement",
                 "snapshot promotion",
                 "product route repointing",
                 "traffic mutation",
+                "browser-live proof claims",
                 "legacy deletion or retirement",
             ],
         },
@@ -284,6 +422,9 @@ def build_heartbeat_summary(*, out_dir: Path, steps: list[dict[str, Any]]) -> di
             "post_queue_gate_local_proof": POST_QUEUE_SUMMARY_PATH.relative_to(ROOT).as_posix(),
             "azure_load_approval_request": APPROVAL_REQUEST_SUMMARY_PATH.relative_to(ROOT).as_posix(),
             "azure_load_approval_request_validation": APPROVAL_REQUEST_VALIDATION_PATH.relative_to(ROOT).as_posix(),
+            "actual_aca_readback_compare": actual_readback.get("compare_path"),
+            "actual_aca_readback_export_summary": actual_readback.get("export_summary_path"),
+            "product_browser_qa_gate": PRODUCT_BROWSER_QA_SUMMARY_PATH.relative_to(ROOT).as_posix(),
         },
     }
 
@@ -300,6 +441,8 @@ def render_markdown(summary: dict[str, Any], path: Path) -> None:
         f"- Advanced steps this run: `{summary['advanced_step_count']}`",
         f"- Local executable slices: `{progress['local_executable_slices']['passed']} / {progress['local_executable_slices']['total']}`",
         f"- Quality denominators: `{progress['quality_denominators']['passed']} / {progress['quality_denominators']['total']}` pass, `{progress['quality_denominators']['hard_gated']}` hard-gated",
+        f"- Actual ACA readback: `{str(progress['actual_aca_readback']['accepted']).lower()}`",
+        f"- Product browser QA gate: `{progress['product_browser_qa_gate']['status']}`",
         f"- Next blocked gate: `{next_item['blocked_gate']}`",
         f"- Next backlog item: `{next_item['backlog_item']}`",
         "",

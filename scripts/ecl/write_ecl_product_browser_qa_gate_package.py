@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,15 @@ OPERATOR_STATUS = ROOT / "outputs/ecl-no-stop-execution-run/operator-status.json
 POST_QUEUE_PROOF = ROOT / "reports/ecl-dense-azure-load-gate-package-2026-08-23/ecl_dense_azure_gate_local_proof_summary.json"
 READBACK_COMPARE = ROOT / "reports/ecl-dense-azure-readback-compare-2026-08-23/readback_compare_summary.json"
 READBACK_NEGATIVE = ROOT / "reports/ecl-dense-azure-readback-compare-negative-2026-08-23/readback_compare_expected_failure_summary.json"
+MIN_ACTUAL_READBACK_TABLES = 24
+ACTUAL_READBACK_COMPARE_ENV = "ECL_ACA_READBACK_COMPARE_PATH"
+ACTUAL_READBACK_EXPORT_SUMMARY_ENV = "ECL_ACA_READBACK_EXPORT_SUMMARY_PATH"
+QUALITY_ZERO_CHECKS = (
+    "relationship_endpoint_drift",
+    "cube_metric_drift",
+    "cube_measure_drift",
+    "source_value_claimable_rows",
+)
 
 
 PRODUCT_SURFACES = [
@@ -112,7 +122,83 @@ def repo_relative(path: Path) -> str:
     try:
         return path.resolve().relative_to(ROOT).as_posix()
     except ValueError:
-        return path.as_posix()
+        return path.resolve().as_posix()
+
+
+def newest_existing(paths: list[Path]) -> Path | None:
+    existing = [path for path in paths if path.exists()]
+    if not existing:
+        return None
+    return max(existing, key=lambda path: (path.stat().st_mtime_ns, path.as_posix()))
+
+
+def discover_json_path(*, env_var: str, patterns: tuple[str, ...]) -> Path | None:
+    env_value = os.environ.get(env_var)
+    if env_value:
+        env_path = Path(env_value).expanduser()
+        if env_path.exists():
+            return env_path
+
+    search_roots = [
+        ROOT,
+        ROOT.parent / "ecl-aca-execute",
+    ]
+    candidates: list[Path] = []
+    for search_root in search_roots:
+        for pattern in patterns:
+            candidates.extend(search_root.glob(pattern))
+    return newest_existing(candidates)
+
+
+def actual_readback_proof() -> dict[str, Any]:
+    compare_path = discover_json_path(
+        env_var=ACTUAL_READBACK_COMPARE_ENV,
+        patterns=("reports/ecl-dense-aca-readback-direct-compare-*/readback_direct_compare_summary.json",),
+    )
+    export_summary_path = discover_json_path(
+        env_var=ACTUAL_READBACK_EXPORT_SUMMARY_ENV,
+        patterns=(
+            "reports/ecl-dense-aca-job-readback-*/proof/ecl-dense-all-layer-readback/ecl_dense_all_layer_readback_export_summary.json",
+        ),
+    )
+    compare = read_json_if_exists(compare_path) if compare_path else {}
+    export_summary = read_json_if_exists(export_summary_path) if export_summary_path else {}
+    quality_zero = compare.get("quality_zero_checks", {})
+    issues: list[str] = []
+
+    if not compare_path:
+        issues.append("missing actual ACA direct readback compare summary")
+    if not export_summary_path:
+        issues.append("missing actual ACA readback export summary")
+    if compare.get("accepted") is not True:
+        issues.append("direct readback compare is not accepted")
+    if compare.get("issues") not in ([], None):
+        issues.append("direct readback compare has issues")
+    if int(compare.get("tables_compared", 0) or 0) < MIN_ACTUAL_READBACK_TABLES:
+        issues.append("direct readback compare table count is below the ECL minimum")
+    for check in QUALITY_ZERO_CHECKS:
+        if quality_zero.get(check) != 0:
+            issues.append(f"{check} is not zero in direct readback compare")
+    if export_summary.get("accepted") is not True:
+        issues.append("readback export summary is not accepted")
+    if export_summary.get("status") != "pass":
+        issues.append("readback export summary status is not pass")
+    if export_summary.get("issues") not in ([], None):
+        issues.append("readback export summary has issues")
+    if export_summary.get("actual_target_database_mutation") is not False:
+        issues.append("readback proof must be read-only")
+
+    return {
+        "accepted": not issues,
+        "issues": issues,
+        "compare": repo_relative(compare_path) if compare_path else None,
+        "export_summary": repo_relative(export_summary_path) if export_summary_path else None,
+        "run_id": export_summary.get("run_id"),
+        "tables_compared": compare.get("tables_compared"),
+        "quality_zero_checks": quality_zero,
+        "tenant_key": export_summary.get("tenant_key"),
+        "target_classification": export_summary.get("target_classification"),
+    }
 
 
 def prerequisites() -> dict[str, Any]:
@@ -120,6 +206,7 @@ def prerequisites() -> dict[str, Any]:
     post_queue_proof = read_json_if_exists(POST_QUEUE_PROOF)
     readback_compare = read_json_if_exists(READBACK_COMPARE)
     readback_negative = read_json_if_exists(READBACK_NEGATIVE)
+    actual_readback = actual_readback_proof()
     quality = {
         row.get("area"): row
         for row in operator_status.get("quality_denominators", [])
@@ -135,10 +222,7 @@ def prerequisites() -> dict[str, Any]:
     checks = [
         operator_status.get("run_state") == "completed",
         all(quality.get(area, {}).get("status") == "pass" for area in required_quality),
-        readback_compare.get("accepted") is True,
-        readback_compare.get("tables_compared") == 77,
-        readback_negative.get("accepted") is True,
-        readback_negative.get("expected_failed") is True,
+        actual_readback.get("accepted") is True,
     ]
     return {
         "passed": sum(1 for value in checks if value),
@@ -149,6 +233,15 @@ def prerequisites() -> dict[str, Any]:
         "post_queue_proof": repo_relative(POST_QUEUE_PROOF),
         "readback_compare": repo_relative(READBACK_COMPARE),
         "readback_negative": repo_relative(READBACK_NEGATIVE),
+        "legacy_readback_compare": {
+            "accepted": readback_compare.get("accepted"),
+            "tables_compared": readback_compare.get("tables_compared"),
+        },
+        "legacy_readback_negative": {
+            "accepted": readback_negative.get("accepted"),
+            "expected_failed": readback_negative.get("expected_failed"),
+        },
+        "actual_aca_readback": actual_readback,
     }
 
 
