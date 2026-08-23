@@ -1,0 +1,48 @@
+{
+  "accepted": true,
+  "build_version": "git_sha_plus_source_room_manifest_sha",
+  "forbidden_without_explicit_approval": [
+    "Azure data-plane writes",
+    "database migrations against shared environments",
+    "active tenant source promotion",
+    "product route repointing",
+    "deploy or traffic shift"
+  ],
+  "generated_at": "2026-08-23T12:25:24.539486+00:00",
+  "idempotency_key": "ecl-commercial-load-{tenant_scope}-{input_source_version}",
+  "input_source_version": "local_commercial_proof_manifest_sha",
+  "job_name": "aca-job-ecl-source-commercial-load-lab-preprod",
+  "mode": "contract_built_no_data",
+  "not_executed_in_this_pr": true,
+  "required_image": "digest_pinned_acr_image",
+  "required_inputs": [
+    "job_name",
+    "run_id",
+    "tenant_scope",
+    "build_version",
+    "input_source_version",
+    "idempotency_key",
+    "operator_identity_or_automation_identity",
+    "git_sha",
+    "image_digest"
+  ],
+  "required_outputs": [
+    "started_finished_timestamps",
+    "progress_status_json",
+    "blob_proof_bundle_location",
+    "validation_output_location",
+    "quality_gate_output_location",
+    "release_record_link",
+    "idle_restore_evidence"
+  ],
+  "runner": "scripts/ops/submit-aca-operator-job.mjs",
+  "status_model": [
+    "queued",
+    "running",
+    "succeeded",
+    "failed",
+    "cancelled"
+  ],
+  "tenant_scope": "explicit_operator_supplied",
+  "wrapper": "npm run ops:aca-job"
+}

@@ -1,0 +1,22 @@
+{
+  "accepted": true,
+  "expected_order": [
+    "build_aca_data_build_job_to_contract_no_data",
+    "commercial_family_load_to_lab_preprod",
+    "independent_commercial_row_for_row_readback",
+    "dense_source_rooms_for_remaining_8_families",
+    "full_local_validation_across_all_9_families",
+    "reload_and_readback_all_9_families",
+    "route_browser_qa_source_first"
+  ],
+  "hard_boundaries_preserved": true,
+  "issue_count": 0,
+  "issues": [],
+  "validated_artifacts": [
+    "contract",
+    "load",
+    "progress",
+    "queue",
+    "readback"
+  ]
+}
