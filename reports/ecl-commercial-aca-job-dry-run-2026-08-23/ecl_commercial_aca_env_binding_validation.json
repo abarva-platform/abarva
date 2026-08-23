@@ -1,0 +1,83 @@
+{
+  "accepted_for_dry_run": true,
+  "bindings": [
+    {
+      "name": "ECL_COMMERCIAL_TENANT_SCOPE",
+      "required_for_execute": false,
+      "source": "env_or_plan_default",
+      "status": "provided",
+      "value": "explicit_operator_supplied_later"
+    },
+    {
+      "name": "ECL_COMMERCIAL_BUILD_VERSION",
+      "required_for_execute": false,
+      "source": "env_or_git",
+      "status": "provided",
+      "value": "afbe672736748dac405bc56e0442e90e56ba2273"
+    },
+    {
+      "name": "ECL_COMMERCIAL_INPUT_SOURCE_VERSION",
+      "required_for_execute": false,
+      "source": "env_or_source_artifact_hash",
+      "status": "provided",
+      "value": "934d9081a1bc1984be0023441bbe79f3446417427277e080190cb7cb3ecb071e"
+    },
+    {
+      "name": "ECL_COMMERCIAL_IDEMPOTENCY_KEY",
+      "required_for_execute": false,
+      "source": "env_or_deterministic_hash",
+      "status": "provided",
+      "value": "<redacted>"
+    },
+    {
+      "name": "ECL_COMMERCIAL_IMAGE",
+      "required_for_execute": true,
+      "source": "env",
+      "status": "missing_for_execution",
+      "value": null
+    },
+    {
+      "name": "ECL_COMMERCIAL_TARGET_DATA_PLANE",
+      "required_for_execute": true,
+      "source": "env",
+      "status": "missing_for_execution",
+      "value": null
+    },
+    {
+      "name": "ECL_COMMERCIAL_OPERATOR_IDENTITY",
+      "required_for_execute": false,
+      "source": "env_or_local_user",
+      "status": "provided",
+      "value": "anand"
+    },
+    {
+      "name": "DATABASE_URL",
+      "required_for_execute": true,
+      "source": "secret_env",
+      "status": "missing_for_execution",
+      "value": "<redacted>"
+    },
+    {
+      "name": "AZURE_STORAGE_CONNECTION_STRING",
+      "required_for_execute": true,
+      "source": "secret_env",
+      "status": "missing_for_execution",
+      "value": "<redacted>"
+    }
+  ],
+  "dry_run_only": true,
+  "execution_eligible": false,
+  "generated_at": "2026-08-23T12:38:08+00:00",
+  "image_digest_pinned": false,
+  "missing_for_execution": [
+    "AZURE_STORAGE_CONNECTION_STRING",
+    "DATABASE_URL",
+    "ECL_COMMERCIAL_IMAGE",
+    "ECL_COMMERCIAL_TARGET_DATA_PLANE"
+  ],
+  "mode": "plan_only_binding_validation",
+  "notes": [
+    "Dry-run accepts missing execution bindings and records them as blockers.",
+    "A later execute lane must provide digest-pinned image, private data-plane target, database secret, and blob proof-bundle binding."
+  ]
+}
