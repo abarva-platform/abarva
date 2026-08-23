@@ -200,7 +200,7 @@ def main() -> int:
         event_path.unlink()
 
     queue = read_json(queue_path)
-    preflight = validate_queue(queue)
+    preflight = validate_queue(queue, check_evidence_paths=False)
     slices = sorted(queue.get("slices", []), key=lambda item: item["order"])
     executable = [
         item

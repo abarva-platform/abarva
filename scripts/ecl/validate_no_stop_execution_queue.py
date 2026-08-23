@@ -44,7 +44,7 @@ def load_queue() -> dict[str, Any]:
     return json.loads(QUEUE_PATH.read_text())
 
 
-def validate_queue(queue: dict[str, Any]) -> dict[str, Any]:
+def validate_queue(queue: dict[str, Any], *, check_evidence_paths: bool = True) -> dict[str, Any]:
     issues: list[str] = []
 
     hard_gates = queue.get("hard_stop_gates")
@@ -131,7 +131,7 @@ def validate_queue(queue: dict[str, Any]) -> dict[str, Any]:
         for raw_path in evidence_paths:
             path = ROOT / str(raw_path)
             evidence_checked += 1
-            if not path.exists():
+            if check_evidence_paths and not path.exists():
                 issues.append(f"{slice_id}: missing evidence path {raw_path}")
 
     expected_orders = list(range(1, len(slices) + 1))
@@ -154,6 +154,7 @@ def validate_queue(queue: dict[str, Any]) -> dict[str, Any]:
         "blocked_slice_count": blocked,
         "queued_for_proof_command_count": queued_for_proof,
         "evidence_path_count": evidence_checked,
+        "evidence_paths_checked": check_evidence_paths,
     }
 
 

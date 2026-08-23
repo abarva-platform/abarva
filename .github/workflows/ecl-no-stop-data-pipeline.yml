@@ -96,7 +96,9 @@ jobs:
             scripts/ecl/run_commercial_contract_proof.py \
             scripts/ecl/validate_no_stop_execution_queue.py \
             scripts/ecl/validate_commercial_proof_acceptance.py \
-            scripts/ecl/write_legacy_table_retirement_map.py
+            scripts/ecl/write_legacy_table_retirement_map.py \
+            scripts/ecl/build_ecl_client_workbook_execution_package.py \
+            scripts/ecl/validate_ecl_client_workbook_execution_package.py
 
       - name: Run no-stop ECL execution queue
         env:
@@ -124,6 +126,7 @@ jobs:
           rows = list(csv.DictReader((report_dir / "legacy_table_retirement_map.csv").open()))
           queue = json.loads(Path("outputs/ecl-no-stop-queue-validation/validation-summary.json").read_text())
           execution = json.loads(Path("outputs/ecl-no-stop-execution-run/execution-summary.json").read_text())
+          workbook = json.loads(Path("outputs/ecl-client-workbook-execution-2026-08-23/workbook_execution_package_validation_summary.json").read_text())
 
           failures = []
           if not execution.get("accepted"):
@@ -158,6 +161,16 @@ jobs:
             failures.append("queue validation found no auto-proceed slices")
           if queue.get("blocked_slice_count", 0) < 1:
             failures.append("queue validation found no hard-gate blocked slices")
+          if not workbook.get("accepted"):
+            failures.append(f"workbook execution package failed validation: {workbook}")
+          if workbook.get("workbook_folder_count") != 8:
+            failures.append(f"workbook folder count={workbook.get('workbook_folder_count')}, expected 8")
+          if workbook.get("field_guide_rows", 0) < 75:
+            failures.append(f"workbook field-guide rows={workbook.get('field_guide_rows')}, expected at least 75")
+          if workbook.get("example_rows") != 9:
+            failures.append(f"workbook example rows={workbook.get('example_rows')}, expected 9")
+          if workbook.get("source_extract_recipes") != 9:
+            failures.append(f"workbook source extract recipes={workbook.get('source_extract_recipes')}, expected 9")
 
           if failures:
             print("\n".join(failures), file=sys.stderr)
@@ -171,6 +184,8 @@ jobs:
               "queue_executable_slices": execution.get("executable_slice_count"),
               "queue_passed_slices": execution.get("passed_executable_slice_count"),
               "queue_slices": queue.get("slice_count"),
+              "workbook_folders": workbook.get("workbook_folder_count"),
+              "workbook_field_guide_rows": workbook.get("field_guide_rows"),
               "unique_table_names": summary.get("unique_table_names"),
           }, indent=2, sort_keys=True))
           PY
@@ -182,6 +197,7 @@ jobs:
           mkdir -p audit-artifacts/ecl-no-stop-data-pipeline
           tar -czf audit-artifacts/ecl-no-stop-data-pipeline/ecl-no-stop-proof.tgz \
             outputs/ecl-commercial-contract-supply-correction-2026-08-22 \
+            outputs/ecl-client-workbook-execution-2026-08-23 \
             outputs/ecl-no-stop-execution-run \
             outputs/ecl-no-stop-queue-validation \
             reports/ecl-legacy-table-retirement-map-2026-08-22 \
