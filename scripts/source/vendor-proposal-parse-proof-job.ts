@@ -360,6 +360,7 @@ async function upsertArtifact(args: {
     "assumptions",
     JSON.stringify(["Controlled proof artifact; candidate facts require human review before acceptance."]),
   );
+  includeColumn(args.columns, row, "cited_source_artifact_ids", "{}");
   includeColumn(args.columns, row, "created_by", `aca-job:${args.runId}`);
   includeColumn(args.columns, row, "lifecycle_state", "current");
 

@@ -51,6 +51,11 @@ test("vendor proposal proof job populates file cabinet JSON metadata", () => {
   assert.match(source, /includeColumn\(\s*args\.columns,\s*row,\s*"assumptions",/);
 });
 
+test("vendor proposal proof job populates workspace citation lineage array", () => {
+  const source = read(SCRIPT_PATH);
+  assert.match(source, /includeColumn\(args\.columns, row, "cited_source_artifact_ids", "\{\}"\)/);
+});
+
 test("vendor proposal proof job carries rich proposal dimensions", () => {
   const source = read(SCRIPT_PATH);
   for (const label of [
