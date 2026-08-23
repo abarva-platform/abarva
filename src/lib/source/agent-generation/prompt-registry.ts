@@ -16,6 +16,7 @@ import type {
 import { buildAppInventoryPromptBlock } from "./app-inventory";
 import { formatRequiredSectionsForPrompt } from "./section-conformance";
 import { buildLanguagePolicyBlock } from "@/lib/source/documentation-standards/source-documentation-standards";
+import { SOURCE_ARTIFACT_SPECS } from "@/lib/source/canonical-specs";
 
 // Environment-tiered model selection. Each environment (dev / preprod / prod,
 // and per-client preprod / prod) sets these via env so the highest-quality
@@ -34,6 +35,196 @@ const BOARD_GRADE_MODEL =
 // truncation. Increase these rather than accept a truncated draft.
 const DEFAULT_MAX_TOKENS = 24_000;
 const BOARD_GRADE_MAX_TOKENS = 48_000;
+
+export type SourceArtifactStoryPackageId = "A" | "B" | "C" | "D" | "E" | "F";
+export type SourceArtifactStoryRole = "narrative_leader" | "companion";
+
+export interface SourceArtifactStoryContract {
+  artifactCode: string;
+  packageId: SourceArtifactStoryPackageId;
+  role: SourceArtifactStoryRole;
+  decisionSupported: string;
+  executiveQuestion: string;
+}
+
+export interface SourceArtifactStoryPackageContract {
+  packageId: SourceArtifactStoryPackageId;
+  title: string;
+  decisionSupported: string;
+  executiveQuestion: string;
+  whyNowFraming: string;
+}
+
+export interface SourceNarrativeLeaderExecutiveEditorPass {
+  appliesToRoles: readonly ["narrative_leader"];
+  appliesToArtifactCodes: readonly string[];
+  instruction: string;
+  constraints: readonly string[];
+}
+
+export const SOURCE_ARTIFACT_STORY_PACKAGES: Record<
+  SourceArtifactStoryPackageId,
+  SourceArtifactStoryPackageContract
+> = {
+  A: {
+    packageId: "A",
+    title: "Strategy & Scope",
+    decisionSupported:
+      "Approve the sourcing strategy and scope boundaries, then release the RFP path.",
+    executiveQuestion:
+      "Are we solving the right problem, with the right scope, value thesis, and decision owner?",
+    whyNowFraming:
+      "Tell the executive why this event should exist now and what strategy/scope decision is being requested.",
+  },
+  B: {
+    packageId: "B",
+    title: "RFP & Responses",
+    decisionSupported:
+      "Confirm that vendor instructions and responses are complete, comparable, and ready for evaluation.",
+    executiveQuestion:
+      "Did we ask vendors for decision-grade responses, and did they give us comparable answers?",
+    whyNowFraming:
+      "Tell the executive whether the market response is decision-ready or still blocked by response gaps.",
+  },
+  C: {
+    packageId: "C",
+    title: "Evaluation & Pricing",
+    decisionSupported:
+      "Approve the ranked evaluation and normalized pricing baseline before BAFO.",
+    executiveQuestion:
+      "Which vendors are leading on evidence, economics, risk, and price-normalized value?",
+    whyNowFraming:
+      "Tell the executive what the evaluation and pricing facts imply before negotiation begins.",
+  },
+  D: {
+    packageId: "D",
+    title: "BAFO & Executive Decision",
+    decisionSupported:
+      "Approve the award recommendation and the conditions that must survive contracting.",
+    executiveQuestion:
+      "Which finalist should win, under what conditions, and what residual risk are we accepting?",
+    whyNowFraming:
+      "Tell the executive what changed through BAFO and what decision is now needed.",
+  },
+  E: {
+    packageId: "E",
+    title: "Selection & Transition",
+    decisionSupported:
+      "Confirm contract execution and authorize the transition plan with accountable checkpoints.",
+    executiveQuestion:
+      "Has the commercial decision become an executable contract and transition plan?",
+    whyNowFraming:
+      "Tell the executive how the signed decision becomes an accountable transition.",
+  },
+  F: {
+    packageId: "F",
+    title: "Value",
+    decisionSupported:
+      "Confirm realized value only when Finance/Tower evidence supports it.",
+    executiveQuestion:
+      "What value has moved from target to committed, measured, and finance-confirmed realized value?",
+    whyNowFraming:
+      "Tell the executive what value is proven, what is still measuring, and what requires re-baselining.",
+  },
+} as const;
+
+const STORY_CONTRACT_ENTRIES: readonly SourceArtifactStoryContract[] = [
+  story("d01_strategy_memo", "A", "companion"),
+  story("d02_value_target", "A", "companion"),
+  story("d03_archetype_decision", "A", "companion"),
+  story("d04_app_inv", "A", "companion"),
+  story("d05_scope_memo", "A", "narrative_leader"),
+  story("d06_excl_log", "A", "companion"),
+  story("d07_ticket_synth", "A", "companion"),
+  story("d08_premortem", "A", "companion"),
+  story("d09_rfp_pack", "B", "companion"),
+  story("d10_rfi_summary", "B", "companion"),
+  story("d11_response_checklist", "B", "companion"),
+  story("d12_vendor_shortlist", "B", "companion"),
+  story("d13_vendor_responses", "B", "companion"),
+  story("d14_qa_log", "B", "companion"),
+  story("d15_response_completeness", "B", "narrative_leader"),
+  story("d16_scorecard", "C", "narrative_leader"),
+  story("d17_weight_log", "C", "companion"),
+  story("d18_disqualification_log", "C", "companion"),
+  story("d19_pricing_workbook", "C", "companion"),
+  story("d20_trap_log", "C", "companion"),
+  story("d21_assumption_set", "C", "companion"),
+  story("d22_bafo_question_pack", "D", "companion"),
+  story("d23_bafo_round_log", "D", "companion"),
+  story("d24_decision_brief", "D", "narrative_leader"),
+  story("d25_risk_attestation", "D", "companion"),
+  story("d26_steward_signoff", "D", "companion"),
+  story("d27_selection_memo", "E", "narrative_leader"),
+  story("d28_contract_record", "E", "companion"),
+  story("d29_transition_plan", "E", "narrative_leader"),
+  story("d30_checkpoint_log", "E", "companion"),
+  story("d31_kt_evidence", "E", "companion"),
+  story("d32_value_ledger", "F", "narrative_leader"),
+  story("d33_governance_review", "F", "companion"),
+] as const;
+
+export const SOURCE_ARTIFACT_STORY_CONTRACTS: Record<
+  string,
+  SourceArtifactStoryContract
+> = Object.freeze(
+  Object.fromEntries(
+    STORY_CONTRACT_ENTRIES.map((contract) => [contract.artifactCode, contract]),
+  ),
+);
+
+export const SOURCE_NARRATIVE_LEADER_EXECUTIVE_EDITOR_PASS = Object.freeze({
+  appliesToRoles: ["narrative_leader"],
+  appliesToArtifactCodes: STORY_CONTRACT_ENTRIES.filter(
+    (contract) => contract.role === "narrative_leader",
+  ).map((contract) => contract.artifactCode),
+  instruction:
+    "Run a final executive-editor pass only on narrative-leader artifacts so the package reads as one decision story across its companion evidence.",
+  constraints: [
+    "Resolve contradictions by naming the conflicting evidence and preserving the unresolved state.",
+    "Strengthen transitions and decision framing without introducing new facts, money, dates, vendors, owners, scores, or readiness states.",
+    "Do not rewrite companion artifacts; they remain evidence support, not package-level narrative.",
+    "If evidence is missing, keep it missing and make the client action explicit.",
+  ],
+} satisfies SourceNarrativeLeaderExecutiveEditorPass);
+
+function story(
+  artifactCode: string,
+  packageId: SourceArtifactStoryPackageId,
+  role: SourceArtifactStoryRole,
+): SourceArtifactStoryContract {
+  const pack = SOURCE_ARTIFACT_STORY_PACKAGES[packageId];
+  return {
+    artifactCode,
+    packageId,
+    role,
+    decisionSupported: pack.decisionSupported,
+    executiveQuestion: pack.executiveQuestion,
+  };
+}
+
+function normalizeArtifactStoryCode(artifactCode: string): string {
+  return artifactCode.endsWith("_legacy")
+    ? artifactCode.slice(0, -"_legacy".length)
+    : artifactCode;
+}
+
+export function getSourceArtifactStoryContract(
+  artifactCode: string,
+): SourceArtifactStoryContract | null {
+  return SOURCE_ARTIFACT_STORY_CONTRACTS[normalizeArtifactStoryCode(artifactCode)] ?? null;
+}
+
+export function assertSourceArtifactStoryContractCoverage(): void {
+  const missing = SOURCE_ARTIFACT_SPECS.filter(
+    (spec) => !SOURCE_ARTIFACT_STORY_CONTRACTS[spec.code],
+  ).map((spec) => spec.code);
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing Source artifact story contract for: ${missing.join(", ")}`,
+    );
+  }
+}
 
 const AVA_SOURCE_ADVISOR_VOICE = `You are aVa, AbarVa's senior sourcing and vendor-strategy advisor writing for a CIO and their leadership team. You have personally run dozens of large-enterprise sourcing events. You write with the judgment, structure, and candor of a top-tier consulting partner — never like a template engine or a compliance checklist.
 
