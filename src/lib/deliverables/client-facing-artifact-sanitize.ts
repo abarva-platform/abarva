@@ -3,6 +3,8 @@
 // never be what causes a sponsor-facing artifact to fail once the evidence and
 // exhibits are otherwise correct.
 
+import type { RenderableDeliverable } from "./orchestrator/types";
+
 const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\[CLIENT TO COMPLETE:\s*([^\]]+)\]/gi, "Client input required: $1"],
   [/\bCLIENT TO COMPLETE:\s*/gi, "Client input required: "],
@@ -130,4 +132,39 @@ export function sanitizeClientFacingArtifactMarkdown(markdown: string): string {
     BARE_UUID_RE,
     (_match, prefix: string) => `${prefix}(internal reference on file)`,
   );
+}
+
+const RENDERABLE_DOC_TECHNICAL_KEYS = new Set([
+  "key",
+  "deliverableType",
+  "deliverableTypeKey",
+  "registryKey",
+  "groundingMode",
+  "evidenceFamily",
+  "confidence",
+  "targetFormat",
+]);
+
+function sanitizeRenderableDocValue(value: unknown, key = ""): unknown {
+  if (typeof value === "string") {
+    return RENDERABLE_DOC_TECHNICAL_KEYS.has(key)
+      ? value
+      : sanitizeClientFacingArtifactMarkdown(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeRenderableDocValue(item));
+  }
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([entryKey, entryValue]) => [
+      entryKey,
+      sanitizeRenderableDocValue(entryValue, entryKey),
+    ]),
+  );
+}
+
+export function sanitizeClientFacingRenderableDeliverable(
+  doc: RenderableDeliverable,
+): RenderableDeliverable {
+  return sanitizeRenderableDocValue(doc) as RenderableDeliverable;
 }

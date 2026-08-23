@@ -1,7 +1,9 @@
 import {
   sanitizeClientFacingArtifactHtml,
   sanitizeClientFacingArtifactMarkdown,
+  sanitizeClientFacingRenderableDeliverable,
 } from "../client-facing-artifact-sanitize";
+import type { RenderableDeliverable } from "../orchestrator/types";
 
 describe("sanitizeClientFacingArtifactHtml", () => {
   it("rewrites priority shorthand without removing the evidence appendix", () => {
@@ -133,5 +135,64 @@ describe("sanitizeClientFacingArtifactHtml", () => {
     );
     expect(html).not.toMatch(/quality score/i);
     expect(html).not.toMatch(/data plane/i);
+  });
+
+  it("sanitizes renderable deliverable text while preserving governance keys", () => {
+    const doc: RenderableDeliverable & {
+      deliverableTypeKey: string;
+    } = {
+      title: "Architecture decision",
+      clientDisplayName: "Cover Client",
+      initiativeDisplayName: "Move",
+      generatedSections: [
+        {
+          key: "exec_summary",
+          title: "Executive summary",
+          bodyMarkdown:
+            "The quality score improved after data plane evidence was reviewed.",
+          rawBodyMarkdown:
+            "The quality score improved after data plane evidence was reviewed.",
+          groundingMode: "governed_facts",
+          citationsUsed: [1],
+        },
+      ],
+      tables: [
+        {
+          key: "readiness_table",
+          title: "Readiness table",
+          columns: ["Signal", "Finding"],
+          rows: [["quality score", "data plane evidence present"]],
+          targetFormat: "docx",
+        },
+      ],
+      exhibits: [],
+      sourceRegister: [
+        {
+          citationNumber: 1,
+          label: "Evidence packet",
+          evidenceFamily: "generated_artifact:target_state_architecture",
+          confidence: "high",
+        },
+      ],
+      assumptions: [],
+      clientCompleteChecklist: [],
+      recommendation: "Proceed once data plane evidence is accepted.",
+      nextActions: ["Review the quality score trend."],
+      deliverableTypeKey: "target_state_architecture",
+    };
+
+    const clean = sanitizeClientFacingRenderableDeliverable(doc) as typeof doc;
+
+    expect(clean.generatedSections[0]?.key).toBe("exec_summary");
+    expect(clean.deliverableTypeKey).toBe("target_state_architecture");
+    expect(clean.sourceRegister[0]?.evidenceFamily).toBe(
+      "generated_artifact:target_state_architecture",
+    );
+    expect(JSON.stringify(clean)).not.toMatch(/quality score/i);
+    expect(JSON.stringify(clean)).not.toMatch(/data plane/i);
+    expect(clean.generatedSections[0]?.bodyMarkdown).toContain(
+      "evidence readiness rating",
+    );
+    expect(clean.recommendation).toContain("client evidence environment");
   });
 });

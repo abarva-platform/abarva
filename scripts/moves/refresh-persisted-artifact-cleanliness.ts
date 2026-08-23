@@ -1,5 +1,6 @@
 import "dotenv/config";
 
+import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { Packer } from "docx";
@@ -8,11 +9,21 @@ import { config as loadEnv } from "dotenv";
 import {
   listGeneratedArtifactsForMoveAllRefs,
   renderableDocFromGeneratedArtifact,
+  saveGeneratedArtifact,
   type GeneratedArtifactRecord,
 } from "@/lib/artifacts/repository";
+import type {
+  BoardPackRenderInput,
+  BoardPackRenderResult,
+} from "@/lib/artifacts/types";
 import { azureRead } from "@/lib/data-plane/azureRead";
 import {
+  sanitizeClientFacingArtifactHtml,
+  sanitizeClientFacingRenderableDeliverable,
+} from "@/lib/deliverables/client-facing-artifact-sanitize";
+import {
   renderDeliverableDocx,
+  renderDeliverableHtml,
   renderDeliverablePptx,
 } from "@/lib/deliverables/orchestrator/renderers";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
@@ -86,6 +97,7 @@ function usage(): never {
 Notes:
   - Dry-run is the default and performs read-only DB/Blob scans.
   - Apply writes only new current move_artifacts versions for artifacts that can be regenerated from structured source.
+  - Apply writes new superseding generated_artifacts rows only when current structured renderableDoc content can be sanitized and re-rendered cleanly.
   - The script never edits Blob bytes in place and never mutates source/canonical tenant data.`);
   process.exit(3);
 }
@@ -218,6 +230,10 @@ function summarizeFindingResult(text: string): Pick<
     clean: result.clean,
     findings: result.findings,
   };
+}
+
+function uniqueCount(values: string[]): number {
+  return new Set(values).size;
 }
 
 async function resolveMoveScope(args: CliArgs): Promise<MoveScope> {
@@ -455,11 +471,38 @@ async function renderGeneratedArtifact(
   );
 }
 
-async function scanGeneratedArtifact(
+interface GeneratedRenderBundle {
+  doc: RenderableDeliverable;
+  html: string;
+  docx: Buffer;
+  pptx: Buffer;
+}
+
+async function renderGeneratedArtifactBundle(
+  artifact: GeneratedArtifactRecord,
+  sanitize: boolean,
+): Promise<GeneratedRenderBundle | null> {
+  const rawDoc = renderableDocFromGeneratedArtifact(artifact);
+  if (!rawDoc) return null;
+  const doc = sanitize
+    ? sanitizeClientFacingRenderableDeliverable(
+        rawDoc as unknown as RenderableDeliverable,
+      )
+    : (rawDoc as unknown as RenderableDeliverable);
+  const html = sanitizeClientFacingArtifactHtml(renderDeliverableHtml(doc));
+  return {
+    doc,
+    html,
+    docx: Buffer.from(await Packer.toBuffer(renderDeliverableDocx(doc))),
+    pptx: Buffer.from(await renderDeliverablePptx(doc)),
+  };
+}
+
+async function scanGeneratedArtifactBytes(
   artifact: GeneratedArtifactRecord,
   format: OfficeFormat,
+  bytes: Buffer | null,
 ): Promise<ArtifactScanSummary> {
-  const bytes = await renderGeneratedArtifact(artifact, format);
   if (!bytes) {
     return {
       source: "generated_artifacts",
@@ -508,6 +551,147 @@ async function scanGeneratedArtifact(
   };
 }
 
+async function scanGeneratedArtifact(
+  artifact: GeneratedArtifactRecord,
+  format: OfficeFormat,
+): Promise<ArtifactScanSummary> {
+  const bytes = await renderGeneratedArtifact(artifact, format);
+  return scanGeneratedArtifactBytes(artifact, format, bytes);
+}
+
+async function saveSanitizedGeneratedArtifact(
+  ctx: TenancyCtx,
+  artifact: GeneratedArtifactRecord,
+  bundle: GeneratedRenderBundle,
+  before: { blockers: number; reviewItems: number },
+  after: { blockers: number; reviewItems: number },
+): Promise<GeneratedArtifactRecord> {
+  const sections: BoardPackRenderInput["sections"] =
+    bundle.doc.generatedSections.map((section) => ({
+      id: section.key,
+      title: section.title,
+      claims: [section.bodyMarkdown.slice(0, 500)],
+    }));
+  const facts: BoardPackRenderInput["facts"] = bundle.doc.sourceRegister.map(
+    (entry) => ({
+      id: `cite-${entry.citationNumber}`,
+      label: entry.label,
+      value: `${entry.evidenceFamily} (${entry.confidence}${entry.asOf ? `, ${entry.asOf}` : ""})`,
+      evidenceLedgerId: String(entry.citationNumber),
+    }),
+  );
+  const input: BoardPackRenderInput = {
+    clientId: artifact.clientId,
+    sourceArtifactRef: artifact.sourceArtifactRef,
+    artifactType: artifact.artifactType,
+    outputFormat: artifact.outputFormat,
+    renderEngine: "internal",
+    renderedBy: ctx.email ?? ctx.userId ?? "moves-artifact-cleanliness-refresh",
+    title: bundle.doc.title,
+    sections,
+    facts,
+    tenantPolicy: {} as BoardPackRenderInput["tenantPolicy"],
+  };
+  const rendered: BoardPackRenderResult = {
+    artifactType: artifact.artifactType,
+    sourceArtifactRef: artifact.sourceArtifactRef,
+    renderEngine: "internal",
+    outputFormat: artifact.outputFormat,
+    html: bundle.html,
+    blobUrl: "",
+    blobSha256: createHash("sha256").update(bundle.html).digest("hex"),
+    qualityScore: artifact.qualityScore ?? 0,
+    evidenceLedgerIds: artifact.evidenceLedgerIds,
+    generationEgressAudit: artifact.generationEgressAudit,
+    quarantined: artifact.quarantineReason !== null,
+    quarantineReason: artifact.quarantineReason,
+  };
+  const metadata = asRecord(artifact.metadata);
+  const deliverableTypeKey =
+    str(metadata.deliverableTypeKey) ??
+    str(metadata.registryKey) ??
+    str(metadata.artifactId) ??
+    artifact.artifactType;
+  return saveGeneratedArtifact(input, rendered, {
+    ...metadata,
+    title: str(metadata.title) ?? bundle.doc.title,
+    deliverableTypeKey,
+    renderableDoc: {
+      ...bundle.doc,
+      deliverableTypeKey,
+      ...(str(metadata.deliverableType)
+        ? { deliverableType: str(metadata.deliverableType) }
+        : {}),
+    },
+    renderedHtml: bundle.html,
+    originalBlobUrl: artifact.blobUrl,
+    refreshedFromGeneratedArtifactId: artifact.id,
+    refreshReason: "client_readiness_structured_doc_cleanup",
+    refreshScannerBlockersBefore: before.blockers,
+    refreshScannerReviewItemsBefore: before.reviewItems,
+    refreshScannerBlockersAfter: after.blockers,
+    refreshScannerReviewItemsAfter: after.reviewItems,
+    refreshedAt: new Date().toISOString(),
+  });
+}
+
+async function maybeRefreshGeneratedArtifact(
+  ctx: TenancyCtx,
+  artifact: GeneratedArtifactRecord,
+  scans: ArtifactScanSummary[],
+  apply: boolean,
+): Promise<ArtifactScanSummary[]> {
+  const before = {
+    blockers: scans.reduce((sum, item) => sum + item.blockers, 0),
+    reviewItems: scans.reduce((sum, item) => sum + item.reviewItems, 0),
+  };
+  if (before.blockers === 0 && before.reviewItems === 0) return scans;
+  const bundle = await renderGeneratedArtifactBundle(artifact, true);
+  if (!bundle) {
+    return scans.map((scan) => ({
+      ...scan,
+      action: "skip",
+      detail: "no persisted renderableDoc to sanitize and re-render",
+    }));
+  }
+  const nextScans = await Promise.all([
+    scanGeneratedArtifactBytes(artifact, "docx", bundle.docx),
+    scanGeneratedArtifactBytes(artifact, "pptx", bundle.pptx),
+  ]);
+  const after = {
+    blockers: nextScans.reduce((sum, item) => sum + item.blockers, 0),
+    reviewItems: nextScans.reduce((sum, item) => sum + item.reviewItems, 0),
+  };
+  if (after.blockers > 0 || after.reviewItems > 0) {
+    return nextScans.map((scan) => ({
+      ...scan,
+      action: "skip",
+      detail: `sanitized generated_artifacts render still has ${after.blockers} blocker(s) and ${after.reviewItems} review item(s)`,
+    }));
+  }
+  if (!apply) {
+    return nextScans.map((scan) => ({
+      ...scan,
+      action: "refresh",
+      detail:
+        "dry-run: sanitized generated_artifacts row scans clean; apply not requested",
+    }));
+  }
+  const saved = await saveSanitizedGeneratedArtifact(
+    ctx,
+    artifact,
+    bundle,
+    before,
+    after,
+  );
+  return nextScans.map((scan) => ({
+    ...scan,
+    action: "refresh",
+    refreshedArtifactId: saved.id,
+    detail: "applied: saved new superseding generated_artifacts row",
+  }));
+}
+
 async function main(): Promise<number> {
   loadEnv({ path: DEFAULT_ENV_PATH, override: false, quiet: true });
   const args = parseArgs(process.argv.slice(2));
@@ -542,8 +726,13 @@ async function main(): Promise<number> {
   ).filter((artifact) => !artifact.supersededBy);
   const generatedResults: ArtifactScanSummary[] = [];
   for (const artifact of generatedArtifacts) {
-    generatedResults.push(await scanGeneratedArtifact(artifact, "docx"));
-    generatedResults.push(await scanGeneratedArtifact(artifact, "pptx"));
+    const scans = await Promise.all([
+      scanGeneratedArtifact(artifact, "docx"),
+      scanGeneratedArtifact(artifact, "pptx"),
+    ]);
+    generatedResults.push(
+      ...(await maybeRefreshGeneratedArtifact(ctx, artifact, scans, args.apply)),
+    );
   }
 
   const results = [...moveResults, ...generatedResults];
@@ -557,12 +746,20 @@ async function main(): Promise<number> {
       clean: results.filter((item) => item.clean).length,
       blockers: results.reduce((sum, item) => sum + item.blockers, 0),
       reviewItems: results.reduce((sum, item) => sum + item.reviewItems, 0),
-      refreshable: results.filter(
-        (item) =>
-          item.action === "refresh" &&
-          item.detail?.includes("apply not requested"),
-      ).length,
-      refreshed: results.filter((item) => item.refreshedArtifactId).length,
+      refreshable: uniqueCount(
+        results
+          .filter(
+            (item) =>
+              item.action === "refresh" &&
+              item.detail?.includes("apply not requested"),
+          )
+          .map((item) => `${item.source}:${item.artifactId}`),
+      ),
+      refreshed: uniqueCount(
+        results
+          .map((item) => item.refreshedArtifactId)
+          .filter((id): id is string => typeof id === "string" && id.length > 0),
+      ),
       notRefreshable: results.filter(
         (item) => item.action === "skip" && item.blockers > 0,
       ).length,
