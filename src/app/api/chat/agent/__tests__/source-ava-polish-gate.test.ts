@@ -128,8 +128,8 @@ describe("agent route · Source aVa contract optimization authority", () => {
     expect(source).toContain(
       "for (const sourcePortfolioTenantKey of sourcePortfolioTenantKeys)",
     );
-    expect(source).toContain(
-      "await buildAvaSourcePortfolioGrounding(sourcePortfolioTenantKey)",
+    expect(source).toMatch(
+      /await\s+buildAvaSourcePortfolioGrounding\(\s*sourcePortfolioTenantKey\s*,?\s*\)/,
     );
   });
 
@@ -254,7 +254,9 @@ describe("agent route · Source aVa visual and table output discipline", () => {
     expect(source).toContain("!sourceEventIdFromContext");
     expect(source).toContain("looksLikeSourcePortfolioChartOrConcentrationRequest(message)");
     expect(source).toContain("const sourceTenantContextBlockForPrompt =");
-    expect(source).toContain("shouldUseSourcePortfolioGroundingExclusively ? \"\" : sourceTenantContextBlock");
+    expect(source).toMatch(
+      /shouldUseSourcePortfolioGroundingExclusively\s*\?\s*""\s*:\s*sourceTenantContextBlock/,
+    );
     expect(source).toContain("sourceTenantContextBlockForPrompt,");
   });
 });

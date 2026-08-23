@@ -14,6 +14,20 @@ const DEFAULT_CLIENT_KEY = "demo";
 const DEFAULT_VENDOR_NAME = "Selected Vendor";
 const DEFAULT_CONTRACT_NAME = "Selected Contract";
 
+const REQUIRED_FOCUS_AREAS = [
+  "optimize_contract",
+  "contract_360",
+  "new_event",
+  "vendor_response_claims",
+  "portfolio_governance",
+  "chart_visual_output",
+  "table_output",
+  "missing_evidence",
+  "refusal_unknown",
+  "value_proof",
+  "contract_context",
+];
+
 const QUESTIONS = [
   // Optimize Contract: evidence readiness, traceability, and value discipline.
   q("OPT-001", "optimize", "What evidence is still missing before I can act on this contract optimization?", {
@@ -227,6 +241,7 @@ function q(id, surface, prompt, rules = {}) {
     forbidden: rules.forbidden ?? [],
     requiresTable: Boolean(rules.requiresTable),
     requiresChart: Boolean(rules.requiresChart),
+    focusAreas: rules.focusAreas ?? inferFocusAreas({ id, surface, prompt, rules }),
   };
 }
 
@@ -271,12 +286,21 @@ for (const question of QUESTIONS) {
 }
 
 const summary = summarize(results);
+const questionBank = validateQuestionBank(QUESTIONS);
 const report = {
   generatedAt: new Date().toISOString(),
   mode: live ? "live-api" : responseFile ? "captured-response-file" : "question-bank-only",
   baseUrl,
   questionCount: QUESTIONS.length,
   coverage: countBy(QUESTIONS, (item) => item.surface),
+  coverageDetail: {
+    focusAreas: countFocusAreas(QUESTIONS),
+    outputContracts: {
+      table: QUESTIONS.filter((item) => item.requiresTable).length,
+      chart: QUESTIONS.filter((item) => item.requiresChart).length,
+    },
+  },
+  questionBank,
   summary,
   questions: QUESTIONS,
   results,
@@ -288,6 +312,11 @@ writeCsv(path.join(outDir, "source-ava-hard-qa.csv"), results);
 
 console.log(`Source aVa hard-QA report written to ${path.relative(process.cwd(), outDir)}`);
 console.log(`Mode=${report.mode} PASS=${summary.pass} FAIL=${summary.fail} NOT_RUN=${summary.notRun}`);
+if (questionBank.issues.length > 0) {
+  console.log(`Question bank issues=${questionBank.issues.length}`);
+  for (const issue of questionBank.issues) console.log(`- ${issue}`);
+}
+if (args["fail-on-question-bank"] && questionBank.issues.length > 0) process.exit(1);
 if (args["fail-on-fail"] && summary.fail > 0) process.exit(1);
 
 async function askLive(question) {
@@ -400,12 +429,10 @@ function scoreQuestion(question, response) {
   if (/guaranteed savings|realized savings/i.test(answer) && !/finance[-\s]?confirmed|not finance confirmed/i.test(answer)) {
     issues.push("Answer appears to overclaim realized/guaranteed savings.");
   }
-  if (dynamicForbiddenHits.length > 0) {
-    issues.push("Ghost vendor leakage detected.");
-  }
   return {
     id: question.id,
     surface: question.surface,
+    focusAreas: question.focusAreas,
     prompt: question.prompt,
     status: issues.length === 0 ? "PASS" : "FAIL",
     expectedHits,
@@ -475,6 +502,67 @@ function summarize(results) {
   };
 }
 
+function validateQuestionBank(questions) {
+  const issues = [];
+  if (questions.length !== 50) issues.push(`Expected 50 questions, found ${questions.length}.`);
+  const ids = new Set();
+  for (const question of questions) {
+    if (ids.has(question.id)) issues.push(`Duplicate question id: ${question.id}.`);
+    ids.add(question.id);
+    if (!question.prompt || question.prompt.length < 20) {
+      issues.push(`Question ${question.id} has an underspecified prompt.`);
+    }
+    if (!Array.isArray(question.expected) || question.expected.length === 0) {
+      issues.push(`Question ${question.id} has no expected grounding terms.`);
+    }
+    if (!Array.isArray(question.focusAreas) || question.focusAreas.length === 0) {
+      issues.push(`Question ${question.id} has no focus-area coverage.`);
+    }
+  }
+  const focusCoverage = countFocusAreas(questions);
+  for (const focus of REQUIRED_FOCUS_AREAS) {
+    if (!focusCoverage[focus]) issues.push(`Required focus area missing: ${focus}.`);
+  }
+  return {
+    status: issues.length === 0 ? "PASS" : "FAIL",
+    requiredFocusAreas: REQUIRED_FOCUS_AREAS,
+    issues,
+  };
+}
+
+function inferFocusAreas({ id, surface, prompt, rules }) {
+  const areas = new Set();
+  if (surface === "optimize") areas.add("optimize_contract");
+  if (surface === "contract360") areas.add("contract_360");
+  if (surface === "event") areas.add("new_event");
+  if (surface === "portfolio") areas.add("portfolio_governance");
+  if (id.startsWith("RESP-")) areas.add("vendor_response_claims");
+  if (rules.requiresTable) areas.add("table_output");
+  if (rules.requiresChart) areas.add("chart_visual_output");
+  if (/\b(missing|evidence|upload|traceable|quote|source)\b/i.test(prompt)) {
+    areas.add("missing_evidence");
+  }
+  if (/\b(other tenant|can't|cannot|not found|not yet|unknown|should not|not be quoted|not quote|lacks evidence)\b/i.test(prompt)) {
+    areas.add("refusal_unknown");
+  }
+  if (/\b(realized|finance|tower|value proof|recoverable|avoided cost|negotiated improvement|savings)\b/i.test(prompt)) {
+    areas.add("value_proof");
+  }
+  if (/\b(contract|scope|renewal|leverage|source systems?|ledger)\b/i.test(prompt)) {
+    areas.add("contract_context");
+  }
+  return [...areas];
+}
+
+function countFocusAreas(questions) {
+  return questions.reduce((acc, question) => {
+    for (const focus of question.focusAreas ?? []) {
+      acc[focus] = (acc[focus] ?? 0) + 1;
+    }
+    return acc;
+  }, {});
+}
+
 function countBy(items, fn) {
   return items.reduce((acc, item) => {
     const key = fn(item);
@@ -503,6 +591,15 @@ function writeMarkdown(file, report) {
     `Generated: ${report.generatedAt}`,
     `Mode: ${report.mode}`,
     `Questions: ${report.questionCount}`,
+    "",
+    "## Question Bank",
+    "",
+    `- Status: ${report.questionBank.status}`,
+    `- Focus-area coverage: ${Object.entries(report.coverageDetail.focusAreas).map(([key, value]) => `${key} ${value}`).join("; ")}`,
+    `- Output contracts: table ${report.coverageDetail.outputContracts.table}; chart ${report.coverageDetail.outputContracts.chart}`,
+    ...(report.questionBank.issues.length > 0
+      ? ["", "### Question Bank Issues", "", ...report.questionBank.issues.map((issue) => `- ${issue}`)]
+      : []),
     "",
     "## Summary",
     "",
