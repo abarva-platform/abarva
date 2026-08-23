@@ -194,6 +194,98 @@ create table if not exists ecl_projection.source_vendor_360 (
   )
 );
 
+create table if not exists ecl_projection.source_value_levers (
+  id uuid primary key default gen_random_uuid(),
+  tenant_key text not null,
+  assessment_id text not null,
+  snapshot_id uuid not null,
+  projection_manifest_id uuid not null,
+  projection_version integer not null,
+  row_key text not null,
+  lever_type text not null,
+  opportunity_type text not null,
+  opportunity_title text not null,
+  contract_id uuid not null,
+  contract_object_id uuid not null,
+  vendor_object_id uuid not null,
+  primary_metric_key text not null,
+  baseline_spend_usd numeric,
+  addressable_spend_usd numeric,
+  estimated_value_low_usd numeric,
+  estimated_value_high_usd numeric,
+  claimable_value_usd numeric not null default 0,
+  blocked_value_usd numeric,
+  value_gate_status text not null,
+  value_gate_reason_code text not null,
+  value_gate_reason_detail text not null,
+  evidence_state text not null,
+  confidence numeric,
+  affected_scope_json jsonb not null default '[]'::jsonb,
+  benchmark_context_json jsonb not null default '{}'::jsonb,
+  protection_context_json jsonb not null default '{}'::jsonb,
+  next_action_json jsonb not null default '{}'::jsonb,
+  metric_keys_json jsonb not null default '[]'::jsonb,
+  source_refs_json jsonb not null default '[]'::jsonb,
+  gap_flags_json jsonb not null default '[]'::jsonb,
+  source_hash text not null,
+  created_at timestamptz not null default now(),
+  constraint source_value_levers_snapshot_fk foreign key (tenant_key, assessment_id, snapshot_id)
+    references ecl_context.snapshot (tenant_key, assessment_id, id),
+  constraint source_value_levers_manifest_fk foreign key (projection_manifest_id)
+    references ecl_projection.projection_manifest (id),
+  constraint source_value_levers_contract_fk foreign key (tenant_key, assessment_id, contract_id)
+    references ecl_commercial.contract (tenant_key, assessment_id, id),
+  constraint source_value_levers_contract_object_fk foreign key (tenant_key, assessment_id, contract_object_id)
+    references ecl_context.object (tenant_key, assessment_id, id),
+  constraint source_value_levers_vendor_object_fk foreign key (tenant_key, assessment_id, vendor_object_id)
+    references ecl_context.object (tenant_key, assessment_id, id),
+  constraint source_value_levers_primary_metric_fk foreign key (tenant_key, primary_metric_key)
+    references ecl_context.metric_definition (tenant_key, metric_key),
+  constraint source_value_levers_version_check check (projection_version > 0),
+  constraint source_value_levers_type_check check (
+    lever_type in (
+      'renewal_leverage',
+      'rate_variance',
+      'exit_economics',
+      'shortfall_recovery',
+      'sla_recovery',
+      'scope_rationalization',
+      'evidence_request'
+    )
+  ),
+  constraint source_value_levers_opportunity_check check (
+    opportunity_type in ('renegotiate', 'recover', 'compete', 'protect', 'evidence_request')
+  ),
+  constraint source_value_levers_gate_status_check check (
+    value_gate_status in ('claimable', 'gated', 'blocked')
+  ),
+  constraint source_value_levers_evidence_state_check check (
+    evidence_state in ('source_recorded', 'model_inferred', 'mixed', 'missing_review', 'not_available')
+  ),
+  constraint source_value_levers_confidence_check check (
+    confidence is null or confidence between 0 and 1
+  ),
+  constraint source_value_levers_money_nonnegative_check check (
+    coalesce(baseline_spend_usd, 0) >= 0
+    and coalesce(addressable_spend_usd, 0) >= 0
+    and coalesce(estimated_value_low_usd, 0) >= 0
+    and coalesce(estimated_value_high_usd, 0) >= 0
+    and coalesce(claimable_value_usd, 0) >= 0
+    and coalesce(blocked_value_usd, 0) >= 0
+    and coalesce(estimated_value_high_usd, 0) >= coalesce(estimated_value_low_usd, 0)
+  ),
+  constraint source_value_levers_claimable_gate_check check (
+    (value_gate_status = 'claimable' and claimable_value_usd > 0)
+    or (value_gate_status in ('gated', 'blocked') and claimable_value_usd = 0 and value_gate_reason_code is not null)
+  ),
+  constraint source_value_levers_unique unique (
+    tenant_key,
+    assessment_id,
+    projection_version,
+    row_key
+  )
+);
+
 create table if not exists ecl_projection.tower_command_center (
   id uuid primary key default gen_random_uuid(),
   tenant_key text not null,
@@ -345,6 +437,12 @@ create index if not exists idx_source_contract_360_vendor
   on ecl_projection.source_contract_360 (tenant_key, assessment_id, vendor_object_id);
 create index if not exists idx_source_vendor_360_vendor
   on ecl_projection.source_vendor_360 (tenant_key, assessment_id, vendor_object_id);
+create index if not exists idx_source_value_levers_contract
+  on ecl_projection.source_value_levers (tenant_key, assessment_id, contract_id);
+create index if not exists idx_source_value_levers_gate
+  on ecl_projection.source_value_levers (tenant_key, assessment_id, value_gate_status, value_gate_reason_code);
+create index if not exists idx_source_value_levers_metric
+  on ecl_projection.source_value_levers (tenant_key, primary_metric_key);
 create index if not exists idx_tower_command_center_page
   on ecl_projection.tower_command_center (tenant_key, assessment_id, projection_version, page_key);
 create index if not exists idx_tower_command_center_gate
@@ -357,5 +455,6 @@ create index if not exists idx_intelligence_context_pack_retrieval
 alter table ecl_projection.home_enterprise_landscape enable row level security;
 alter table ecl_projection.source_contract_360 enable row level security;
 alter table ecl_projection.source_vendor_360 enable row level security;
+alter table ecl_projection.source_value_levers enable row level security;
 alter table ecl_projection.tower_command_center enable row level security;
 alter table ecl_projection.intelligence_context_pack enable row level security;

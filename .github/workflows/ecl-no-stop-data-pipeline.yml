@@ -93,11 +93,16 @@ jobs:
         run: |
           python3 -m py_compile \
             scripts/ecl/run_no_stop_execution_queue.py \
+            scripts/ecl/build_commercial_contract_slice.py \
             scripts/ecl/run_commercial_contract_proof.py \
             scripts/ecl/validate_no_stop_execution_queue.py \
             scripts/ecl/validate_ecl_operator_status_report.py \
             scripts/ecl/validate_source_360_route_readiness.py \
             scripts/ecl/validate_commercial_proof_acceptance.py \
+            scripts/ecl/write_commercial_field_lineage.py \
+            scripts/ecl/write_commercial_product_consumption_mapping.py \
+            scripts/ecl/write_commercial_proof_bundle_manifest.py \
+            scripts/ecl/write_source_360_page_fact_contract.py \
             scripts/ecl/write_legacy_table_retirement_map.py \
             scripts/ecl/build_ecl_client_workbook_execution_package.py \
             scripts/ecl/validate_ecl_client_workbook_execution_package.py
@@ -148,22 +153,22 @@ jobs:
             failures.append(f"commercial proof not accepted: {acceptance}")
           if acceptance.get("issue_count") != 0:
             failures.append(f"commercial proof issue_count={acceptance.get('issue_count')}")
-          if len(manifest.get("artifact_hashes", [])) != 29:
-            failures.append(f"artifact hash count={len(manifest.get('artifact_hashes', []))}, expected 29")
+          if len(manifest.get("artifact_hashes", [])) != 30:
+            failures.append(f"artifact hash count={len(manifest.get('artifact_hashes', []))}, expected 30")
           if len(manifest.get("source_room_hashes", [])) != 67:
             failures.append(f"source-room hash count={len(manifest.get('source_room_hashes', []))}, expected 67")
           if not source_page_contract.get("accepted"):
             failures.append(f"Source 360 page fact contract failed: {source_page_contract}")
           if source_page_contract.get("rows") != 14:
             failures.append(f"Source 360 page fact rows={source_page_contract.get('rows')}, expected 14")
-          if source_page_contract.get("supplied_rows") != 9:
-            failures.append(f"Source 360 supplied page facts={source_page_contract.get('supplied_rows')}, expected 9")
-          if source_page_contract.get("missing_projection_rows") != 5:
-            failures.append(f"Source 360 missing-projection page facts={source_page_contract.get('missing_projection_rows')}, expected 5")
-          if summary.get("create_table_statements") != 895:
-            failures.append(f"CREATE TABLE count={summary.get('create_table_statements')}, expected 895")
-          if summary.get("unique_table_names") != 734:
-            failures.append(f"unique table count={summary.get('unique_table_names')}, expected 734")
+          if source_page_contract.get("supplied_rows") != 11:
+            failures.append(f"Source 360 supplied page facts={source_page_contract.get('supplied_rows')}, expected 11")
+          if source_page_contract.get("missing_projection_rows") != 3:
+            failures.append(f"Source 360 missing-projection page facts={source_page_contract.get('missing_projection_rows')}, expected 3")
+          if summary.get("create_table_statements") != 896:
+            failures.append(f"CREATE TABLE count={summary.get('create_table_statements')}, expected 896")
+          if summary.get("unique_table_names") != 735:
+            failures.append(f"unique table count={summary.get('unique_table_names')}, expected 735")
           required_columns = {
               "owner_to_confirm",
               "live_readback_required",
@@ -206,6 +211,8 @@ jobs:
             failures.append("Source 360 contract projection row count did not equal 5")
           if source_route.get("checks", {}).get("source_vendor_projection_rows") != 5:
             failures.append("Source 360 vendor projection row count did not equal 5")
+          if source_route.get("checks", {}).get("source_value_levers_projection_rows") != 5:
+            failures.append("Source 360 value levers projection row count did not equal 5")
           if source_route.get("checks", {}).get("product_consumption_browser_proof_status") != "not_started":
             failures.append("Source 360 browser proof status must remain not_started in local readiness lane")
 

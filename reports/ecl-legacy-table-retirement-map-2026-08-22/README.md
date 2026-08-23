@@ -6,8 +6,8 @@ Static repo-visible SQL inventory only. This does not connect to Azure/Postgres,
 
 | Metric | Count |
 | --- | ---: |
-| CREATE TABLE statements | 895 |
-| Unique table names | 734 |
+| CREATE TABLE statements | 896 |
+| Unique table names | 735 |
 | Duplicate table names across files | 133 |
 
 ## Status Counts
@@ -18,7 +18,7 @@ Static repo-visible SQL inventory only. This does not connect to Azure/Postgres,
 | `HOLD_PLATFORM_CONTROL` | 46 |
 | `HOLD_UNTIL_ECL_CONTEXT_PARITY` | 153 |
 | `HOLD_UNTIL_LIVE_READBACK` | 394 |
-| `NEW_ECL_TARGET` | 26 |
+| `NEW_ECL_TARGET` | 27 |
 | `REPLACE_OR_BRIDGE` | 1 |
 | `REPLACE_WITH_ECL_PROJECTION` | 215 |
 | `REVIEW_FOR_MOVES_OR_CONTEXT_BRIDGE` | 35 |

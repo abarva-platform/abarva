@@ -40,6 +40,18 @@ ROWS = [
         "browser_proof_status": "not_started",
     },
     {
+        "product_module": "Source 360",
+        "page_or_cube": "Value and Sourcing Opportunities",
+        "user_question": "Which commercial opportunities are visible, what value is blocked, and what evidence is required before action?",
+        "deterministic_facts": "lever type, opportunity type, modeled value range, claimable value, blocked value, gate status, gate reason, affected scope, benchmark context, protection context, next evidence request",
+        "source_extracts": "contract_register.csv; source_ap_po_invoice_lines.csv; source_sla_kpi_events.csv; source_market_benchmark_rates.csv; contract_commercial_protection_assessment.csv",
+        "ecl_tables": "ecl_context.measure; ecl_commercial.contract; ecl_commercial.invoice_line; ecl_commercial.sla_observation",
+        "projection_or_cube_tables": "ecl_projection.source_value_levers",
+        "gate_or_refusal": "Rows are visible as gated opportunities. Claimable value remains zero until finance attestation and owner approval exist.",
+        "basis_rule": "Opportunity ranges may use model_inferred benchmark/protection context; achieved or claimable value requires source_recorded finance confirmation plus review approval.",
+        "browser_proof_status": "not_started",
+    },
+    {
         "product_module": "Tower",
         "page_or_cube": "Commercial action queue",
         "user_question": "Which contract actions are blocked, claimable, or require evidence before value can be counted?",

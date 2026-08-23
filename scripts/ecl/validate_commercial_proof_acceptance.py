@@ -28,6 +28,7 @@ EXPECTED_COUNTS = {
     "sla_observations": 90,
     "source_contract_360_rows": 5,
     "source_vendor_360_rows": 5,
+    "source_value_levers_rows": 5,
     "tower_rows": 5,
     "cube_manifests": 4,
     "cube_slices": 20,
@@ -45,6 +46,11 @@ DB_PROOF_EXPECTATIONS = {
     "market_benchmark_source_distinct_variance_values": "20",
     "market_benchmark_model_inferred_basis_rows": "10",
     "market_benchmark_source_recorded_basis_rows": "0",
+    "source_value_levers": "5",
+    "source_value_levers_gated": "5",
+    "source_value_levers_claimable_sum": "0",
+    "source_value_levers_primary_metric_drift": "0",
+    "source_value_levers_model_inferred_benchmark_rows": "5",
     "cube_metric_unit_failures": "0",
     "owner_confirmed_or_claimable_money_from_unverified_extraction": "0",
     "contract_money_document_extracted_basis": "0",
@@ -110,8 +116,8 @@ def main() -> None:
 
     if extraction.get("extracts_documented") != 12:
         issues.append({"rule_id": "client_extraction_mapping_failed", "subject": "extracts_documented", "expected": "12", "actual": str(extraction.get("extracts_documented"))})
-    if product.get("mappings") != 6:
-        issues.append({"rule_id": "product_consumption_mapping_failed", "subject": "mappings", "expected": "6", "actual": str(product.get("mappings"))})
+    if product.get("mappings") != 7:
+        issues.append({"rule_id": "product_consumption_mapping_failed", "subject": "mappings", "expected": "7", "actual": str(product.get("mappings"))})
     if source_page_contract.get("accepted") is not True:
         issues.append(
             {
@@ -123,12 +129,12 @@ def main() -> None:
         )
     if source_page_contract.get("rows") != 14:
         issues.append({"rule_id": "source_360_page_contract_rows_failed", "subject": "rows", "expected": "14", "actual": str(source_page_contract.get("rows"))})
-    if source_page_contract.get("supplied_rows") != 9 or source_page_contract.get("missing_projection_rows") != 5:
+    if source_page_contract.get("supplied_rows") != 11 or source_page_contract.get("missing_projection_rows") != 3:
         issues.append(
             {
                 "rule_id": "source_360_page_contract_mix_failed",
                 "subject": "supplied/missing_projection",
-                "expected": "9/5",
+                "expected": "11/3",
                 "actual": f"{source_page_contract.get('supplied_rows')}/{source_page_contract.get('missing_projection_rows')}",
             }
         )

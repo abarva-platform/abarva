@@ -59,6 +59,7 @@ ROUTE_REPOINT_MARKERS = [
     "ecl_projection.source_contract_360",
     "source_contract_360_projection.csv",
     "source_vendor_360_projection.csv",
+    "source_value_levers_projection.csv",
 ]
 
 
@@ -79,6 +80,13 @@ def write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) -> 
         writer.writerows(rows)
 
 
+def display_path(path: Path) -> str:
+    try:
+        return path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
 def route_status_rows() -> tuple[list[dict[str, Any]], list[str], bool]:
     rows: list[dict[str, Any]] = []
     issues: list[str] = []
@@ -87,7 +95,7 @@ def route_status_rows() -> tuple[list[dict[str, Any]], list[str], bool]:
     for route in ROUTE_FILES:
         path = route["path"]
         if not path.exists():
-            issues.append(f"Missing route file: {path.relative_to(ROOT)}")
+            issues.append(f"Missing route file: {display_path(path)}")
             text = ""
         else:
             text = path.read_text(encoding="utf-8")
@@ -103,7 +111,7 @@ def route_status_rows() -> tuple[list[dict[str, Any]], list[str], bool]:
         rows.append(
             {
                 "route": route["route"],
-                "file": path.relative_to(ROOT).as_posix(),
+                "file": display_path(path),
                 "current_read_path": route["current_read_path"],
                 "expected_marker_count": len(route["expected_markers"]),
                 "missing_expected_markers": "; ".join(missing),
@@ -146,6 +154,7 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
     )
     contract_projection_path = ecl_out_dir / "source_contract_360_projection.csv"
     vendor_projection_path = ecl_out_dir / "source_vendor_360_projection.csv"
+    value_projection_path = ecl_out_dir / "source_value_levers_projection.csv"
 
     required_paths = [
         acceptance_path,
@@ -154,10 +163,11 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         weak_preview_path,
         contract_projection_path,
         vendor_projection_path,
+        value_projection_path,
     ]
     for path in required_paths:
         if not path.exists():
-            issues.append(f"Missing ECL proof artifact: {path.relative_to(ROOT)}")
+            issues.append(f"Missing ECL proof artifact: {display_path(path)}")
 
     acceptance = read_json(acceptance_path) if acceptance_path.exists() else {}
     mapping = read_json(mapping_path) if mapping_path.exists() else {}
@@ -165,6 +175,7 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
     weak_preview = read_json(weak_preview_path) if weak_preview_path.exists() else {}
     contract_rows = read_csv(contract_projection_path) if contract_projection_path.exists() else []
     vendor_rows = read_csv(vendor_projection_path) if vendor_projection_path.exists() else []
+    value_rows = read_csv(value_projection_path) if value_projection_path.exists() else []
 
     route_rows, route_issues, route_file_repointed = route_status_rows()
     issues.extend(route_issues)
@@ -181,6 +192,7 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         "commercial_proof_accepted": bool(acceptance.get("accepted")),
         "source_contract_projection_rows": len(contract_rows),
         "source_vendor_projection_rows": len(vendor_rows),
+        "source_value_levers_projection_rows": len(value_rows),
         "healthy_static_preview_accepted": bool(healthy_preview.get("accepted")),
         "weak_static_preview_accepted": bool(weak_preview.get("accepted")),
         "weak_contract_selected": bool(weak_checks.get("weak_contract_selected")),
@@ -202,6 +214,10 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
     if route_ready_checks["source_vendor_projection_rows"] != 5:
         issues.append(
             f"Expected 5 Source vendor projection rows; got {route_ready_checks['source_vendor_projection_rows']}"
+        )
+    if route_ready_checks["source_value_levers_projection_rows"] != 5:
+        issues.append(
+            f"Expected 5 Source value levers projection rows; got {route_ready_checks['source_value_levers_projection_rows']}"
         )
     for key in [
         "commercial_proof_accepted",
