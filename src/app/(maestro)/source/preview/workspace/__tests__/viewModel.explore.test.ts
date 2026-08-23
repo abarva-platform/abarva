@@ -199,7 +199,8 @@ describe("WorkspaceViewModel.explore — associative selection", () => {
     expect(view.title).toBe("Contract not found in governed Source rows");
     expect(view.thesis).toContain("CTR-DOES-NOT-EXIST");
     expect(view.thesis).toContain("withholding the contract view");
-    expect(view.isContract).toBe(false);
+    expect(view.isContract).toBe(true);
+    expect(view.c).toBeNull();
     expect(view.statusSel).toBe("CTR-DOES-NOT-EXIST › Not found");
     expect(view.valueStrip.map((item) => item.value)).toContain(
       "CTR-DOES-NOT-EXIST",

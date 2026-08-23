@@ -120,6 +120,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         ? (byId.get(sel.id) ?? null)
         : null
       : (rows[0] ?? null);
+  const isContractMode =
+    kind === "contract" && (Boolean(contract) || selectedContractMissing);
   const vendorRef =
     sel.kind === "vendor" ? sel.id : (contract?.row.vendor_ref ?? null);
   const vendorContracts = vendorRef
@@ -3481,7 +3483,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     vendorOpps,
     vendorHasOpps: vendorOpps.length > 0,
 
-    isContract: kind === "contract" && !!contract,
+    isContract: isContractMode,
     cTab: S.tabs.contract,
     c: cVm,
     cOverview: activeTab === "Story",
