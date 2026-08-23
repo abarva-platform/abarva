@@ -282,6 +282,22 @@
     },
     {
       "order": 17,
+      "slice_id": "source_360_route_readiness_bridge",
+      "status": "queued",
+      "percent_complete": 25,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/validate_source_360_route_readiness.py",
+      "evidence_paths": [
+        "scripts/ecl/validate_source_360_route_readiness.py",
+        "outputs/ecl-source-route-readiness-2026-08-23/source_360_route_readiness_summary.json",
+        "outputs/ecl-source-route-readiness-2026-08-23/source_360_route_readiness.csv",
+        "outputs/ecl-source-route-readiness-2026-08-23/source_360_route_readiness.md"
+      ],
+      "next_auto_action": "Use the route-readiness proof to design the Source workspace ECL adapter and parity checks without silently repointing the live product route.",
+      "stop_gate": "product_route_repointing"
+    },
+    {
+      "order": 18,
       "slice_id": "machine_readable_execution_queue",
       "status": "in_progress",
       "percent_complete": 75,
@@ -295,7 +311,7 @@
       "stop_gate": "None while validation remains local and report-only."
     },
     {
-      "order": 18,
+      "order": 19,
       "slice_id": "browser_and_product_repointing_proof",
       "status": "blocked_by_hard_gate",
       "percent_complete": 0,
