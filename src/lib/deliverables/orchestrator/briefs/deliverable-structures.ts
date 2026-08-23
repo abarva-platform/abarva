@@ -583,7 +583,7 @@ const MOVES_TARGET_ARCHITECTURE: DeliverableStructure = {
         "monitoring",
         "CI/CD",
         "private endpoints",
-        "client data plane",
+        "client evidence environment",
         "resilience and recovery",
       ],
       legendRequired: true,
@@ -671,7 +671,7 @@ const MOVES_TARGET_ARCHITECTURE: DeliverableStructure = {
     s(
       "physical_architecture",
       "Physical Architecture",
-      "The deployable-services view: cloud subscription/account boundaries, regions, networks, runtime services, model endpoints, data platforms, vector/search services, queues/events, databases, secrets, monitoring, CI/CD, private endpoints, client data plane, resilience and recovery. This is the PHYSICAL_ARCHITECTURE exhibit rendered with its narrative — mark each service illustrative, selected, or client-confirmed.",
+      "The deployable-services view: cloud subscription/account boundaries, regions, networks, runtime services, model endpoints, data platforms, vector/search services, queues/events, databases, secrets, monitoring, CI/CD, private endpoints, client evidence environment, resilience and recovery. This is the PHYSICAL_ARCHITECTURE exhibit rendered with its narrative — mark each service illustrative, selected, or client-confirmed.",
       "mixed",
       [],
       "Keep under 1,000 words plus the physical architecture exhibit. Mark unknown provider/service choices as open inputs, not defaults.",
