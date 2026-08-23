@@ -290,6 +290,15 @@ test("source substrate lineage report emits an ACA structured proof event", () =
   );
 });
 
+test("package audit script enables stdout structured-event extraction", () => {
+  const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+
+  assert.match(
+    pkg.scripts["audit:source-substrate-lineage"],
+    /SOURCE_SUBSTRATE_LINEAGE_EMIT_STRUCTURED_EVENT=1/,
+  );
+});
+
 test("source rows with zero source row count are absent, not zero", () => {
   const source = {
     id: "source.empty",
