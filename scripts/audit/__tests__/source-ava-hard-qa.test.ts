@@ -2,8 +2,11 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 
-const REPO_ROOT = path.resolve(__dirname, "../../..");
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const SCRIPT = path.join(REPO_ROOT, "scripts/audit/source-ava-hard-qa.mjs");
 
 describe("source-ava-hard-qa audit harness", () => {
@@ -40,32 +43,34 @@ describe("source-ava-hard-qa audit harness", () => {
       summary: { notRun: number };
     };
 
-    expect(report.questionCount).toBe(50);
-    expect(report.questionBank.status).toBe("PASS");
-    expect(report.questionBank.issues).toEqual([]);
-    expect(report.summary.notRun).toBe(50);
-    expect(report.coverage).toMatchObject({
+    assert.equal(report.questionCount, 50);
+    assert.equal(report.questionBank.status, "PASS");
+    assert.deepEqual(report.questionBank.issues, []);
+    assert.equal(report.summary.notRun, 50);
+    assert.deepEqual(report.coverage, {
       optimize: 16,
       contract360: 12,
       event: 16,
       portfolio: 6,
     });
-    expect(report.coverageDetail.outputContracts).toEqual({
+    assert.deepEqual(report.coverageDetail.outputContracts, {
       table: 15,
       chart: 8,
     });
     for (const focus of report.questionBank.requiredFocusAreas) {
-      expect(report.coverageDetail.focusAreas[focus]).toBeGreaterThan(0);
+      assert.ok(
+        report.coverageDetail.focusAreas[focus] > 0,
+        `expected focus area ${focus} to be covered`,
+      );
     }
-    expect(new Set(report.questions.map((question) => question.id)).size).toBe(50);
-    expect(report.questions.every((question) => question.expected.length > 0)).toBe(
-      true,
-    );
-    expect(
+    assert.equal(new Set(report.questions.map((question) => question.id)).size, 50);
+    assert.equal(report.questions.every((question) => question.expected.length > 0), true);
+    assert.equal(
       report.questions.filter((question) =>
         question.focusAreas.includes("vendor_response_claims"),
-      ),
-    ).toHaveLength(5);
+      ).length,
+      5,
+    );
   });
 
   it("scores ghost vendor leakage once per answer instead of inflating the issue count", () => {
@@ -110,8 +115,8 @@ describe("source-ava-hard-qa audit harness", () => {
     };
     const result = report.results.find((row) => row.id === "RESP-001");
 
-    expect(result?.status).toBe("FAIL");
-    expect(result?.issues).toEqual([
+    assert.equal(result?.status, "FAIL");
+    assert.deepEqual(result?.issues, [
       "Configured non-participating vendor terms present: Amadeus",
     ]);
   });
