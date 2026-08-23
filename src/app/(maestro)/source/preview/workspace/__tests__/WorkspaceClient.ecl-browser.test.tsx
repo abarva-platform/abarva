@@ -10,6 +10,12 @@ jest.mock("@/components/agent/AgentDock", () => ({
   ),
 }));
 
+jest.mock("@/lib/data-plane/azureRead", () => ({
+  azureRead: {
+    withSession: jest.fn(),
+  },
+}));
+
 jest.mock("@/lib/source/data-model/source-v4-workspace-snapshot", () => ({
   createEmptySourceV4WorkspaceSnapshot: (
     asOfDateIso: string,

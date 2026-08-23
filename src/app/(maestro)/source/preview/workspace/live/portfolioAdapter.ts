@@ -15,6 +15,7 @@ import {
   tierApplicationScopeByConfidence,
   type ContractLeverageEntry,
 } from "@/lib/source/data-model/vendor-contract-portfolio";
+import { azureRead } from "@/lib/data-plane/azureRead";
 import { computeSourcingOpportunities } from "@/lib/source/data-model/sourcing-opportunities";
 import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
 import {
@@ -49,9 +50,10 @@ import type {
 
 type SourceWorkspaceExploreProvider =
   | "LegacySourceContract360Provider"
-  | "EclProjectionCsvProvider";
+  | "EclProjectionCsvProvider"
+  | "EclProjectionDbProvider";
 
-type EclProjectionCsvRow = Record<string, string>;
+type EclProjectionRow = Record<string, unknown>;
 
 export interface SourceWorkspacePortfolioData {
   readonly tenantKey: string;
@@ -190,7 +192,7 @@ export async function loadSourceWorkspacePortfolio(
   tenantKey: string,
   asOfDateIso: string,
 ): Promise<SourceWorkspacePortfolioData> {
-  if (sourceWorkspaceProvider() === "ecl_projection") {
+  if (sourceWorkspaceProvider() !== "legacy") {
     return loadEclProjectionWorkspacePortfolio(tenantKey, asOfDateIso);
   }
 
@@ -278,7 +280,10 @@ export async function loadSourceWorkspacePortfolio(
   };
 }
 
-function sourceWorkspaceProvider(): "legacy" | "ecl_projection" {
+function sourceWorkspaceProvider(): "legacy" | "ecl_projection" | "ecl_projection_db" {
+  if (process.env.SOURCE_WORKSPACE_PROVIDER === "ecl_projection_db") {
+    return "ecl_projection_db";
+  }
   return process.env.SOURCE_WORKSPACE_PROVIDER === "ecl_projection"
     ? "ecl_projection"
     : "legacy";
@@ -288,23 +293,42 @@ async function loadEclProjectionWorkspacePortfolio(
   tenantKey: string,
   asOfDateIso: string,
 ): Promise<SourceWorkspacePortfolioData> {
+  const provider = sourceWorkspaceProvider();
   const projectionDir = process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR?.trim();
-  if (!projectionDir) {
+  if (provider === "ecl_projection" && !projectionDir) {
     throw new Error(
       "SOURCE_WORKSPACE_PROVIDER=ecl_projection requires SOURCE_WORKSPACE_ECL_PROJECTION_DIR.",
     );
   }
 
   const [contractRows, vendorRows, eventRows] = await Promise.all([
-    readProjectionCsv(path.join(projectionDir, "source_contract_360_projection.csv")),
-    readProjectionCsv(path.join(projectionDir, "source_vendor_360_projection.csv")),
-    readProjectionCsv(path.join(projectionDir, "source_event_workspace_projection.csv")),
+    provider === "ecl_projection_db"
+      ? readProjectionTable(tenantKey, "source_contract_360")
+      : readProjectionCsv(
+          path.join(
+            projectionDir ?? "",
+            "source_contract_360_projection.csv",
+          ),
+        ),
+    provider === "ecl_projection_db"
+      ? readProjectionTable(tenantKey, "source_vendor_360")
+      : readProjectionCsv(
+          path.join(projectionDir ?? "", "source_vendor_360_projection.csv"),
+        ),
+    provider === "ecl_projection_db"
+      ? readProjectionTable(tenantKey, "source_event_workspace")
+      : readProjectionCsv(
+          path.join(
+            projectionDir ?? "",
+            "source_event_workspace_projection.csv",
+          ),
+        ),
   ]);
   const acceptedTenantKeys = new Set(
     [tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim()),
   );
-  const tenantMatches = (row: EclProjectionCsvRow) =>
-    acceptedTenantKeys.has(row.tenant_key?.trim());
+  const tenantMatches = (row: EclProjectionRow) =>
+    acceptedTenantKeys.has(textValue(row.tenant_key).trim());
 
   const contracts = contractRows
     .filter(tenantMatches)
@@ -325,22 +349,28 @@ async function loadEclProjectionWorkspacePortfolio(
     datasetLabel: v4Snapshot.datasetLabel,
     datasetId: v4Snapshot.datasetId,
     datasetVersion: v4Snapshot.datasetVersion,
-    analyticsProvider: "EclProjectionCsvProvider",
+    analyticsProvider:
+      provider === "ecl_projection_db"
+        ? "EclProjectionDbProvider"
+        : "EclProjectionCsvProvider",
     activeLoadRunId: v4Snapshot.activeLoadRunId,
     asOfDateIso: v4Snapshot.asOfDateIso,
     v4ContractCount: contracts.length,
     v4VendorCount: legacyVendorCount,
     legacyContractCount: contracts.length,
     legacyVendorCount,
-    exploreProvider: "EclProjectionCsvProvider" as const,
+    exploreProvider:
+      provider === "ecl_projection_db"
+        ? ("EclProjectionDbProvider" as const)
+        : ("EclProjectionCsvProvider" as const),
     exploreMatchesV4: true,
     mismatchWarning: null,
-    eclProjectionDir: projectionDir,
+    eclProjectionDir: provider === "ecl_projection_db" ? null : projectionDir,
     eclCompareResponseCount: eventRows.filter(
       (row) =>
         tenantMatches(row) &&
-        row.workspace_tab === "compare" &&
-        row.row_type === "vendor_response_compare",
+        textValue(row.workspace_tab) === "compare" &&
+        textValue(row.row_type) === "vendor_response_compare",
     ).length,
   };
   const reads = {
@@ -379,9 +409,9 @@ async function loadEclProjectionWorkspacePortfolio(
 
 async function readProjectionCsv(
   filePath: string,
-): Promise<EclProjectionCsvRow[]> {
+): Promise<EclProjectionRow[]> {
   const source = await readFile(filePath, "utf-8");
-  const parsed = Papa.parse<EclProjectionCsvRow>(source, {
+  const parsed = Papa.parse<Record<string, string>>(source, {
     header: true,
     skipEmptyLines: true,
   });
@@ -395,19 +425,37 @@ async function readProjectionCsv(
   return parsed.data;
 }
 
+async function readProjectionTable(
+  tenantKey: string,
+  tableName: "source_contract_360" | "source_vendor_360" | "source_event_workspace",
+): Promise<EclProjectionRow[]> {
+  const acceptedTenantKeys = Array.from(
+    new Set([tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim())),
+  );
+  return azureRead.withSession(async (run) => {
+    await run("SELECT set_config('app.tenant_key', $1, false)", [
+      acceptedTenantKeys[0] ?? tenantKey,
+    ]);
+    return run(
+      `SELECT * FROM ecl_projection.${tableName} WHERE tenant_key = ANY($1::text[]) ORDER BY row_key`,
+      [acceptedTenantKeys],
+    );
+  });
+}
+
 function contractFromEclProjectionRow(
-  row: EclProjectionCsvRow,
+  row: EclProjectionRow,
 ): SourceContract360Row {
   const scope = parseJsonArray(row.scope_json);
   const spendSummary = parseJsonObject(row.spend_summary_json);
   const gapFlags = parseJsonArray(row.gap_flags_json);
   return {
-    tenant_key: row.tenant_key,
-    contract_id: row.row_key || row.contract_id,
-    vendor_ref: row.vendor_object_id || row.vendor_name,
-    vendor_name: row.vendor_name,
+    tenant_key: textValue(row.tenant_key),
+    contract_id: textValue(row.row_key || row.contract_id),
+    vendor_ref: textValue(row.vendor_object_id || row.vendor_name),
+    vendor_name: textValue(row.vendor_name),
     vendor_category: null,
-    contract_name: row.contract_name,
+    contract_name: textValue(row.contract_name),
     scope_summary:
       scope.length > 0
         ? `${scope.length} scoped systems from ECL projection`
@@ -444,12 +492,12 @@ function contractFromEclProjectionRow(
 }
 
 function vendorFromEclProjectionRow(
-  row: EclProjectionCsvRow,
+  row: EclProjectionRow,
 ): SourceVendorContractPortfolioRow {
   return {
-    tenant_key: row.tenant_key,
-    vendor_ref: row.vendor_object_id || row.row_key,
-    vendor_name: row.vendor_name,
+    tenant_key: textValue(row.tenant_key),
+    vendor_ref: textValue(row.vendor_object_id || row.row_key),
+    vendor_name: textValue(row.vendor_name),
     vendor_category: null,
     contract_count: integerFromCsv(row.contract_count) ?? 0,
     annual_value: numberFromCsv(row.annualized_spend_usd),
@@ -463,17 +511,17 @@ function vendorFromEclProjectionRow(
 }
 
 function scopeFromEclProjectionRow(
-  row: EclProjectionCsvRow,
+  row: EclProjectionRow,
 ): SourceContractApplicationScopeRow[] {
-  const contractId = row.row_key || row.contract_id;
+  const contractId = textValue(row.row_key || row.contract_id);
   return parseJsonArray(row.scope_json).map((scopeItem, index) => {
     const scope = parseJsonObject(scopeItem);
     const applicationName = String(scope.name ?? `Scoped application ${index + 1}`);
     return {
-      tenant_key: row.tenant_key,
+      tenant_key: textValue(row.tenant_key),
       contract_id: contractId,
-      vendor_ref: row.vendor_object_id || row.vendor_name,
-      vendor_name: row.vendor_name,
+      vendor_ref: textValue(row.vendor_object_id || row.vendor_name),
+      vendor_name: textValue(row.vendor_name),
       application_ref: applicationName,
       application_name: applicationName,
       business_function: stringOrNull(scope.domain),
@@ -512,13 +560,16 @@ function parseJsonValue(value: unknown): unknown {
   }
 }
 
-function numberFromCsv(value: string | undefined): number | null {
-  if (value == null || value.trim() === "") return null;
+function numberFromCsv(value: unknown): number | null {
+  if (value == null) return null;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value !== "string") return null;
+  if (value.trim() === "") return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function integerFromCsv(value: string | undefined): number | null {
+function integerFromCsv(value: unknown): number | null {
   const parsed = numberFromCsv(value);
   return parsed == null ? null : Math.trunc(parsed);
 }
@@ -535,13 +586,21 @@ function stringOrNull(value: unknown): string | null {
   return trimmed ? trimmed : null;
 }
 
+function textValue(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value == null) return "";
+  return String(value);
+}
+
 function noticePeriodDays(
-  noticeDateIso: string | undefined,
-  endDateIso: string | undefined,
+  noticeDateIso: unknown,
+  endDateIso: unknown,
 ): number | null {
-  if (!noticeDateIso || !endDateIso) return null;
-  const noticeDate = validDate(noticeDateIso);
-  const endDate = validDate(endDateIso);
+  const noticeDateValue = stringOrNull(noticeDateIso);
+  const endDateValue = stringOrNull(endDateIso);
+  if (!noticeDateValue || !endDateValue) return null;
+  const noticeDate = validDate(noticeDateValue);
+  const endDate = validDate(endDateValue);
   const days = daysBetween(noticeDate, endDate);
   return days > 0 ? days : null;
 }
