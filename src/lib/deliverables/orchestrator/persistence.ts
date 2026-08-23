@@ -21,6 +21,7 @@ import {
 } from "@/lib/artifacts/repository";
 import { prescribedFormatForDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
 import { renderDeliverableHtml } from "./renderers";
+import { humanizeSourceFamily } from "./source-register";
 import { buildDeckHtmlFromDocument } from "@/lib/deliverables/deck-from-result";
 import type { OrchestrationResult } from "./orchestrator";
 import { assessClientDeliverable } from "@/lib/deliverables/quality/assess-deliverable";
@@ -354,7 +355,7 @@ export async function persistDeliverable(
   const facts: BoardPackRenderInput["facts"] = doc.sourceRegister.map((r) => ({
     id: `cite-${r.citationNumber}`,
     label: r.label,
-    value: `${r.evidenceFamily} (${r.confidence}${r.asOf ? `, ${r.asOf}` : ""})`,
+    value: `${humanizeSourceFamily(r.evidenceFamily)} (${r.confidence}${r.asOf ? `, ${r.asOf}` : ""})`,
     evidenceLedgerId: String(r.citationNumber),
   }));
   const sections: BoardPackRenderInput["sections"] = doc.generatedSections.map(

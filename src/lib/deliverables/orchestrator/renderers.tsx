@@ -62,6 +62,7 @@ import type {
   RenderableTable,
 } from "./types";
 import { clientCompleteReasonLabel } from "./client-complete-labels";
+import { humanizeSourceFamily } from "./source-register";
 
 // ── AI-generated disclosure — the single source of truth for this exact
 // text, per the Moves Continuous Execution Directive's requirement that
@@ -346,7 +347,7 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
         doc.sourceRegister.map((r) => [
           String(r.citationNumber),
           r.label,
-          r.evidenceFamily,
+          humanizeSourceFamily(r.evidenceFamily),
           `${r.confidence}${r.asOf ? ` · ${r.asOf}` : ""}`,
         ]),
       ),
@@ -954,7 +955,7 @@ export function renderDeliverableHtml(doc: RenderableDeliverable): string {
   const register = doc.sourceRegister
     .map(
       (r) =>
-        `<tr><td class="num">[${r.citationNumber}]</td><td>${esc(r.label)}</td><td>${esc(r.evidenceFamily)}</td><td>${confidencePill(r.confidence)}</td><td class="muted">${r.asOf ? esc(r.asOf) : "—"}</td></tr>`,
+        `<tr><td class="num">[${r.citationNumber}]</td><td>${esc(r.label)}</td><td>${esc(humanizeSourceFamily(r.evidenceFamily))}</td><td>${confidencePill(r.confidence)}</td><td class="muted">${r.asOf ? esc(r.asOf) : "—"}</td></tr>`,
     )
     .join("");
   const checklist = doc.clientCompleteChecklist
@@ -1293,7 +1294,7 @@ export function renderDeliverablePdf(
               doc.sourceRegister.map((r) => [
                 String(r.citationNumber),
                 r.label,
-                r.evidenceFamily,
+                humanizeSourceFamily(r.evidenceFamily),
                 `${r.confidence}${r.asOf ? ` · ${r.asOf}` : ""}`,
               ]),
             )}
