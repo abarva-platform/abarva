@@ -11,6 +11,8 @@ The runner reads `docs/architecture/ecl-no-stop-execution-queue.json`, executes 
 - `outputs/ecl-no-stop-execution-run/execution-summary.json`
 - `outputs/ecl-no-stop-execution-run/execution-status.md`
 - `outputs/ecl-no-stop-execution-run/execution-events.jsonl`
+- `outputs/ecl-no-stop-execution-run/operator-status.json`
+- `outputs/ecl-no-stop-execution-run/operator-status.md`
 - `outputs/ecl-no-stop-execution-run/logs/*.log`
 
 ## Auto-Proceed Lane
@@ -32,11 +34,12 @@ The runner reads `docs/architecture/ecl-no-stop-execution-queue.json`, executes 
 |    13 | Next-slice acceptance gate               | `validate_ecl_next_slice_acceptance.py` validates product coverage, source-family coverage, explicit partial behavior, and anti-overcollection rules. | Keep the next source-room/workbook design falsifiable before any dense package or workbook package is promoted.                         | None while validation remains local and report-only.           |
 |    14 | Client workbook execution package        | `build_ecl_client_workbook_execution_package.py` creates one folder per business-facing workbook with field guides, examples, extract recipes, product mapping, and HTML how-to guidance. | Use the folders as the practical client-execution design before any workbook package replacement.                                      | Replacing client-facing workbook packages in Azure.            |
 |    15 | Client workbook package validation       | `validate_ecl_client_workbook_execution_package.py` rejects missing folders/files, thin examples, missing partial behavior, missing products, and overcollection language. | Keep fillability, examples, extract recipes, partial behavior, and product coverage falsifiable before package generation scales.       | Replacing client-facing workbook packages in Azure.            |
-|    16 | Queue validation                         | `validate_no_stop_execution_queue.py` verifies queue shape and generated evidence paths after all output-producing slices produce their artifacts. | Keep queue/checkpoint artifacts in the proof bundle for every PR.                                                                      | None while validation remains local and report-only.           |
+|    16 | Operator status reporting gate           | `validate_ecl_operator_status_report.py --allow-in-progress` verifies the live operator snapshot has percent complete, checkpoint events, evidence paths, next action, and blocked gate. | Keep progress visible during long runs and make the final proof bundle answer "where are we?" without manual reconstruction.           | None while validation remains local and report-only.           |
+|    17 | Queue validation                         | `validate_no_stop_execution_queue.py` verifies queue shape and generated evidence paths after all output-producing slices produce their artifacts. | Keep queue/checkpoint artifacts in the proof bundle for every PR.                                                                      | None while validation remains local and report-only.           |
 
 ## No Remaining Queued Local Slices
 
-All local-proof slices currently named in the queue have proof commands. The only remaining blocked row after slice 16 is the product-route/browser proof gate, which intentionally requires explicit runtime authorization.
+All local-proof slices currently named in the queue have proof commands. The only remaining blocked row after slice 17 is the product-route/browser proof gate, which intentionally requires explicit runtime authorization.
 
 ## Hard Stop Gates
 
@@ -50,4 +53,4 @@ All local-proof slices currently named in the queue have proof commands. The onl
 
 ## Execution Rule
 
-When a slice stays in the auto-proceed lane, keep going: implement, run the proof command, write the evidence artifact, update the tracker, and package output when useful. The runner publishes checkpoints every 15 percent. It stops hard-gated slices behind explicit approval.
+When a slice stays in the auto-proceed lane, keep going: implement, run the proof command, write the evidence artifact, update the tracker, and package output when useful. The runner publishes checkpoints every 15 percent and writes an operator status report with current percent complete, next local action, blocked gate, and evidence paths. It stops hard-gated slices behind explicit approval.

@@ -55,6 +55,16 @@ def append_event(path: Path, event: dict[str, Any]) -> None:
         handle.write(json.dumps(event, sort_keys=True) + "\n")
 
 
+def read_events(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    events: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            events.append(json.loads(line))
+    return events
+
+
 def notice(message: str) -> None:
     if os.environ.get("GITHUB_ACTIONS") == "true":
         print(f"::notice title=ECL no-stop queue::{message}")
@@ -185,6 +195,167 @@ def render_status_markdown(summary: dict[str, Any], path: Path) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def build_operator_status(
+    *,
+    summary: dict[str, Any],
+    queue_slices: list[dict[str, Any]],
+    event_path: Path,
+) -> dict[str, Any]:
+    completed_rows = {
+        row["slice_id"]: row
+        for row in summary.get("slices", [])
+        if row.get("result_state") in {"passed", "planned", "hard_gated", "queued_for_proof_command"}
+    }
+    executable_total = int(summary.get("executable_slice_count", 0))
+    passed = int(summary.get("passed_executable_slice_count", 0))
+    if not passed:
+        passed = sum(
+            1
+            for row in summary.get("slices", [])
+            if row.get("result_state") in {"passed", "planned"}
+        )
+    completion_percent = 100 if executable_total == 0 else int((passed / executable_total) * 100)
+
+    remaining_auto: list[dict[str, Any]] = []
+    blocked: list[dict[str, Any]] = []
+    for item in queue_slices:
+        slice_id = item["slice_id"]
+        if item.get("status") == "blocked_by_hard_gate":
+            blocked.append(item)
+            continue
+        if (
+            item.get("auto_proceed_allowed")
+            and item.get("proof_command")
+            and slice_id not in completed_rows
+        ):
+            remaining_auto.append(item)
+
+    checkpoints = [
+        event
+        for event in read_events(event_path)
+        if event.get("event") == "checkpoint"
+    ]
+    last_checkpoint = checkpoints[-1]["checkpoint_percent"] if checkpoints else 0
+    next_auto = remaining_auto[0] if remaining_auto else None
+    next_blocked = blocked[0] if blocked else None
+    evidence = {
+        "execution_summary": (event_path.parent / "execution-summary.json").relative_to(ROOT).as_posix(),
+        "execution_status": (event_path.parent / "execution-status.md").relative_to(ROOT).as_posix(),
+        "event_log": event_path.relative_to(ROOT).as_posix(),
+        "operator_status_json": (event_path.parent / "operator-status.json").relative_to(ROOT).as_posix(),
+        "operator_status_markdown": (event_path.parent / "operator-status.md").relative_to(ROOT).as_posix(),
+    }
+
+    return {
+        "run_id": summary.get("run_id"),
+        "generated_at": utc_now(),
+        "queue_path": summary.get("queue_path"),
+        "accepted": bool(summary.get("accepted", False)),
+        "run_state": "completed" if summary.get("completed_at") else "running",
+        "started_at": summary.get("started_at"),
+        "completed_at": summary.get("completed_at"),
+        "progress": {
+            "completion_percent": completion_percent,
+            "last_checkpoint_percent": last_checkpoint,
+            "passed_executable_slices": passed,
+            "total_executable_slices": executable_total,
+            "total_slices": len(queue_slices),
+            "hard_gated_slices": int(summary.get("hard_gated_slice_count", len(blocked))),
+            "queued_for_proof_command_slices": int(
+                summary.get("queued_for_proof_command_count", 0)
+            ),
+        },
+        "next": {
+            "auto_slice_id": next_auto.get("slice_id") if next_auto else None,
+            "auto_action": next_auto.get("next_auto_action") if next_auto else None,
+            "blocked_slice_id": next_blocked.get("slice_id") if next_blocked else None,
+            "blocked_gate": next_blocked.get("stop_gate") if next_blocked else None,
+            "operator_instruction": (
+                "Continue local auto-proceed queue."
+                if next_auto
+                else "No remaining local auto-proceed slices; stop at hard gate before runtime or route changes."
+            ),
+        },
+        "checkpoints": checkpoints,
+        "evidence": evidence,
+        "slices": [
+            {
+                "order": item["order"],
+                "slice_id": item["slice_id"],
+                "configured_status": item.get("status"),
+                "result_state": completed_rows.get(item["slice_id"], {}).get(
+                    "result_state", "pending"
+                ),
+                "percent_complete": item.get("percent_complete"),
+                "auto_proceed_allowed": item.get("auto_proceed_allowed"),
+                "proof_command": item.get("proof_command"),
+                "evidence_paths": item.get("evidence_paths", []),
+                "next_auto_action": item.get("next_auto_action"),
+                "stop_gate": item.get("stop_gate"),
+            }
+            for item in queue_slices
+        ],
+    }
+
+
+def render_operator_status_markdown(status: dict[str, Any], path: Path) -> None:
+    progress = status["progress"]
+    next_item = status["next"]
+    lines = [
+        "# ECL Operator Status",
+        "",
+        f"- Run ID: `{status['run_id']}`",
+        f"- Run state: `{status['run_state']}`",
+        f"- Accepted: `{str(status['accepted']).lower()}`",
+        f"- Progress: `{progress['passed_executable_slices']} / {progress['total_executable_slices']}` executable slices (`{progress['completion_percent']}%`)",
+        f"- Last checkpoint emitted: `{progress['last_checkpoint_percent']}%`",
+        f"- Hard-gated slices: `{progress['hard_gated_slices']}`",
+        f"- Next auto slice: `{next_item['auto_slice_id'] or 'none'}`",
+        f"- Next blocked gate: `{next_item['blocked_gate'] or 'none'}`",
+        "",
+        "## Operator Instruction",
+        "",
+        next_item["operator_instruction"],
+        "",
+        "## Slice Detail",
+        "",
+        "| Order | Slice | Result | Auto | Stop gate | Evidence paths |",
+        "|---:|---|---|---|---|---:|",
+    ]
+    for item in status["slices"]:
+        lines.append(
+            "| {order} | `{slice_id}` | {result_state} | {auto_proceed_allowed} | {stop_gate} | {evidence_count} |".format(
+                order=item["order"],
+                slice_id=item["slice_id"],
+                result_state=item["result_state"],
+                auto_proceed_allowed=str(item["auto_proceed_allowed"]).lower(),
+                stop_gate=item["stop_gate"] or "",
+                evidence_count=len(item["evidence_paths"]),
+            )
+        )
+    lines.extend(
+        [
+            "",
+            "## Boundary",
+            "",
+            "This status is evidence of local proof execution only. Runtime, route, data-plane, migration, active-tenant replacement, browser-live, and legacy-retirement actions remain behind their declared gates.",
+        ]
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def write_operator_status(
+    *,
+    summary: dict[str, Any],
+    queue_slices: list[dict[str, Any]],
+    event_path: Path,
+) -> None:
+    status = build_operator_status(summary=summary, queue_slices=queue_slices, event_path=event_path)
+    write_json(event_path.parent / "operator-status.json", status)
+    render_operator_status_markdown(status, event_path.parent / "operator-status.md")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--queue", type=Path, default=DEFAULT_QUEUE_PATH)
@@ -238,6 +409,7 @@ def main() -> int:
         current_slice="start",
         event_path=event_path,
     )
+    write_operator_status(summary=summary, queue_slices=slices, event_path=event_path)
 
     passed = 0
     failed = False
@@ -259,6 +431,7 @@ def main() -> int:
             }
             summary["slices"].append(row)
             append_event(event_path, {"event": "slice_skipped", "created_at": utc_now(), **row})
+            write_operator_status(summary=summary, queue_slices=slices, event_path=event_path)
             continue
 
         notice(f"Starting slice {item['order']}: {slice_id}")
@@ -293,6 +466,8 @@ def main() -> int:
             current_slice=slice_id,
             event_path=event_path,
         )
+        summary["passed_executable_slice_count"] = passed
+        write_operator_status(summary=summary, queue_slices=slices, event_path=event_path)
         if failed:
             break
 
@@ -320,6 +495,7 @@ def main() -> int:
             "executable_slice_count": len(executable),
         },
     )
+    write_operator_status(summary=summary, queue_slices=slices, event_path=event_path)
     print(json.dumps(summary, indent=2, sort_keys=True))
     return 0 if summary["accepted"] else 1
 

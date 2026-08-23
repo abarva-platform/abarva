@@ -1,7 +1,7 @@
 {
   "version": 1,
   "queue_id": "ecl-no-stop-execution-queue",
-  "updated_on": "2026-08-22",
+  "updated_on": "2026-08-23",
   "purpose": "Drive ordered local ECL proof execution without reopening approval for every non-mutating slice.",
   "authority": {
     "auto_proceed_scope": "Local proof, static report generation, validator output, PR creation, PR merge after explicit workflow input, and ACA-main-deploy handoff after merge.",
@@ -266,6 +266,22 @@
     },
     {
       "order": 16,
+      "slice_id": "operator_status_reporting_gate",
+      "status": "queued",
+      "percent_complete": 25,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/validate_ecl_operator_status_report.py --allow-in-progress",
+      "evidence_paths": [
+        "scripts/ecl/validate_ecl_operator_status_report.py",
+        "outputs/ecl-no-stop-execution-run/operator-status.json",
+        "outputs/ecl-no-stop-execution-run/operator-status.md",
+        "outputs/ecl-no-stop-execution-run/operator-status-validation-summary.json"
+      ],
+      "next_auto_action": "Publish machine-readable and readable operator progress so long-running proof batches expose percent complete, next auto action, blocked gate, and evidence paths.",
+      "stop_gate": "None while validation remains local and report-only."
+    },
+    {
+      "order": 17,
       "slice_id": "machine_readable_execution_queue",
       "status": "in_progress",
       "percent_complete": 75,
@@ -279,7 +295,7 @@
       "stop_gate": "None while validation remains local and report-only."
     },
     {
-      "order": 17,
+      "order": 18,
       "slice_id": "browser_and_product_repointing_proof",
       "status": "blocked_by_hard_gate",
       "percent_complete": 0,

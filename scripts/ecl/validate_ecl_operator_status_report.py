@@ -1,0 +1,145 @@
+#!/usr/bin/env python3
+"""Validate the no-stop runner's operator status artifact."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+
+ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_STATUS_PATH = ROOT / "outputs/ecl-no-stop-execution-run/operator-status.json"
+DEFAULT_OUT_DIR = ROOT / "outputs/ecl-no-stop-execution-run"
+SUMMARY_PATH = DEFAULT_OUT_DIR / "operator-status-validation-summary.json"
+ISSUES_PATH = DEFAULT_OUT_DIR / "operator-status-validation-issues.csv"
+
+
+REQUIRED_EVIDENCE_KEYS = {
+    "execution_summary",
+    "execution_status",
+    "event_log",
+    "operator_status_json",
+    "operator_status_markdown",
+}
+
+
+def read_json(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def write_issues(path: Path, issues: list[str]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lines = ["issue"]
+    lines.extend(f'"{issue.replace(chr(34), chr(34) + chr(34))}"' for issue in issues)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def validate_status(status: dict[str, Any], *, allow_in_progress: bool) -> dict[str, Any]:
+    issues: list[str] = []
+    progress = status.get("progress")
+    next_item = status.get("next")
+    evidence = status.get("evidence")
+    slices = status.get("slices")
+    checkpoints = status.get("checkpoints")
+
+    if status.get("run_state") not in {"running", "completed"}:
+        issues.append("run_state must be running or completed")
+    if status.get("run_state") == "running" and not allow_in_progress:
+        issues.append("operator status is still running; final validation requires completed")
+
+    if not isinstance(progress, dict):
+        issues.append("progress must be an object")
+        progress = {}
+    total_executable = progress.get("total_executable_slices")
+    passed_executable = progress.get("passed_executable_slices")
+    completion_percent = progress.get("completion_percent")
+    if not isinstance(total_executable, int) or total_executable < 1:
+        issues.append("progress.total_executable_slices must be a positive integer")
+    if not isinstance(passed_executable, int) or passed_executable < 0:
+        issues.append("progress.passed_executable_slices must be a non-negative integer")
+    if not isinstance(completion_percent, int) or completion_percent < 0 or completion_percent > 100:
+        issues.append("progress.completion_percent must be 0..100")
+    elif status.get("run_state") == "completed" and completion_percent != 100:
+        issues.append("completed operator status must report 100 percent")
+    elif status.get("run_state") == "running" and completion_percent < 75:
+        issues.append("in-progress operator status validation should run after at least 75 percent")
+
+    if not isinstance(checkpoints, list) or not checkpoints:
+        issues.append("checkpoints must be a non-empty list")
+        checkpoint_values: set[int] = set()
+    else:
+        checkpoint_values = {
+            int(item.get("checkpoint_percent"))
+            for item in checkpoints
+            if isinstance(item, dict) and isinstance(item.get("checkpoint_percent"), int)
+        }
+        required = {0, 15, 30, 45, 60, 75}
+        if status.get("run_state") == "completed":
+            required.update({90, 100})
+        missing = sorted(required - checkpoint_values)
+        if missing:
+            issues.append(f"missing checkpoint events: {', '.join(map(str, missing))}")
+
+    if not isinstance(next_item, dict):
+        issues.append("next must be an object")
+        next_item = {}
+    if not next_item.get("operator_instruction"):
+        issues.append("next.operator_instruction is required")
+    if not next_item.get("blocked_gate"):
+        issues.append("next.blocked_gate is required so the operator sees the hard stop")
+    if next_item.get("blocked_gate") != "product_route_repointing":
+        issues.append("next.blocked_gate must remain product_route_repointing for this queue")
+
+    if not isinstance(evidence, dict):
+        issues.append("evidence must be an object")
+        evidence = {}
+    missing_evidence = sorted(REQUIRED_EVIDENCE_KEYS - set(evidence))
+    if missing_evidence:
+        issues.append(f"missing evidence keys: {', '.join(missing_evidence)}")
+
+    if not isinstance(slices, list) or not slices:
+        issues.append("slices must be a non-empty list")
+        slices = []
+    blocked_slices = [item for item in slices if item.get("result_state") == "hard_gated"]
+    if not blocked_slices and status.get("run_state") == "completed":
+        issues.append("completed status must include at least one hard_gated slice")
+    if not any(item.get("evidence_paths") for item in slices):
+        issues.append("slice rows must carry evidence_paths")
+
+    return {
+        "accepted": not issues,
+        "issue_count": len(issues),
+        "issues": issues,
+        "allow_in_progress": allow_in_progress,
+        "run_state": status.get("run_state"),
+        "completion_percent": completion_percent,
+        "checkpoint_count": len(checkpoints) if isinstance(checkpoints, list) else 0,
+        "slice_count": len(slices),
+        "blocked_gate": next_item.get("blocked_gate"),
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--status", type=Path, default=DEFAULT_STATUS_PATH)
+    parser.add_argument("--allow-in-progress", action="store_true")
+    args = parser.parse_args()
+
+    status_path = args.status.resolve()
+    if not status_path.exists():
+        print(f"Missing operator status report: {status_path}", file=sys.stderr)
+        return 1
+
+    summary = validate_status(read_json(status_path), allow_in_progress=args.allow_in_progress)
+    DEFAULT_OUT_DIR.mkdir(parents=True, exist_ok=True)
+    SUMMARY_PATH.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    write_issues(ISSUES_PATH, summary["issues"])
+    print(json.dumps(summary, indent=2, sort_keys=True))
+    return 0 if summary["accepted"] else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
