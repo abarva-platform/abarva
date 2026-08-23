@@ -840,7 +840,8 @@
     "ecl:product-browser-qa-gate:package": "python3 scripts/ecl/write_ecl_product_browser_qa_gate_package.py",
     "ecl:product-browser-qa-gate:validate": "python3 scripts/ecl/validate_ecl_product_browser_qa_gate_package.py",
     "ecl:heartbeat-agent:advance": "python3 scripts/ecl/run_ecl_heartbeat_status_agent.py",
-    "ecl:heartbeat-agent:plan": "python3 scripts/ecl/run_ecl_heartbeat_status_agent.py --dry-run"
+    "ecl:heartbeat-agent:plan": "python3 scripts/ecl/run_ecl_heartbeat_status_agent.py --dry-run",
+    "ecl:dense-all-layer:execute": "python3 scripts/ecl/execute_dense_all_layer_load.py"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

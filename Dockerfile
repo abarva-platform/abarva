@@ -96,7 +96,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/home/node/.cache/ms-playwright
 # If a stricter uid:gid is required by the orchestrator, override via
 # `--user 1001:1001` at `docker run` time.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates \
+ && apt-get install -y --no-install-recommends ca-certificates python3 postgresql-client \
  && rm -rf /var/lib/apt/lists/*
 
 # Copy public assets and the standalone server bundle. If `output: 'standalone'`
@@ -121,6 +121,7 @@ COPY --from=build --chown=node:node /app/src/scripts ./src/scripts
 COPY --from=build --chown=node:node /app/intelligence ./intelligence
 COPY --from=build --chown=node:node /app/scripts ./scripts
 COPY --from=build --chown=node:node /app/cube ./cube
+COPY --from=build --chown=node:node /app/docs/architecture/sql-drafts ./docs/architecture/sql-drafts
 COPY --from=build --chown=node:node /app/docs/source/skyharbor-v4 ./docs/source/skyharbor-v4
 COPY --from=build --chown=node:node /app/runtime-tenant-boundaries ./runtime-tenant-boundaries
 COPY --from=build --chown=node:node /app/datasets ./datasets
@@ -134,6 +135,8 @@ COPY --from=build --chown=node:node /app/tower-standardized-v1 ./tower-standardi
 COPY --from=build --chown=node:node /app/supabase/migrations ./supabase/migrations
 
 RUN npx playwright install-deps chromium \
+ && mkdir -p /app/outputs /app/reports /app/job-output \
+ && chown -R node:node /app/outputs /app/reports /app/job-output \
  && mkdir -p /home/node/.cache/ms-playwright \
  && chown -R node:node /home/node/.cache
 
