@@ -186,7 +186,12 @@ const RULES: readonly Rule[] = [
   {
     kind: "unresolved_placeholder",
     severity: "blocker",
+    // The repo's DOM integrity linter scans source for these same tokens, so
+    // the one place that must contain them — the rule defining them — trips
+    // it. Suppressed on this line only, using that linter's own escape hatch,
+    // rather than narrowing either check: both are doing their job.
     pattern:
+      // dom-integrity-ignore-line
       /\{\{[^}\n]{1,60}\}\}|\[(?:TBD|TODO|PLACEHOLDER|INSERT[^\]\n]{0,40})\]|\bLorem ipsum\b/gi,
     why: "An unfilled placeholder in a client-facing document is the most visible possible defect.",
     exempt: (match) =>
