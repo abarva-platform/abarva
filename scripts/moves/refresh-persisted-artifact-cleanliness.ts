@@ -720,6 +720,7 @@ async function main(): Promise<number> {
   const generatedArtifacts = (
     await listGeneratedArtifactsForMoveAllRefs({
       clientId: scope.clientId,
+      clientIds: [scope.tenantKey],
       moveId: scope.moveId,
       limit: args.limit,
     })
@@ -761,7 +762,9 @@ async function main(): Promise<number> {
           .filter((id): id is string => typeof id === "string" && id.length > 0),
       ),
       notRefreshable: results.filter(
-        (item) => item.action === "skip" && item.blockers > 0,
+        (item) =>
+          item.action === "skip" &&
+          (item.blockers > 0 || item.reviewItems > 0),
       ).length,
     },
     results,
@@ -771,7 +774,11 @@ async function main(): Promise<number> {
   await writeFile(jsonPath, JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report.summary, null, 2));
   console.log(`report: ${jsonPath}`);
-  return report.summary.blockers > 0 || report.summary.notRefreshable > 0 ? 1 : 0;
+  return report.summary.blockers > 0 ||
+    report.summary.reviewItems > 0 ||
+    report.summary.notRefreshable > 0
+    ? 1
+    : 0;
 }
 
 main().then(

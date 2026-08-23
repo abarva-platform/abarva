@@ -390,6 +390,9 @@ export async function GET(
       try {
         const recs = await listGeneratedArtifactsForMoveAllRefs({
           clientId: ctx.clientId,
+          clientIds: [ctx.clientKey].filter(
+            (clientId): clientId is string => typeof clientId === "string",
+          ),
           moveId: programId,
         });
         const seen = new Set(moveArtifacts.map((a) => a.artifactId));

@@ -50,6 +50,7 @@ const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\bsubstrate\b/gi, "enterprise data foundation"],
   [/\bcontext rows\b/gi, "evidence records"],
   [/\btower rows\b/gi, "measurement records"],
+  [/\bclient_judgment\b/gi, "client decision"],
   [/\bquality score\b/gi, "evidence readiness rating"],
   [
     /\bdata plane evidence\b/gi,
