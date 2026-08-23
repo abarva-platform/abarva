@@ -1,10 +1,7 @@
 // Every rule gets a positive AND a negative case.
 //
-// The negatives matter more. An earlier ad-hoc version of this scan reported
-// internal hashes in 8 of 15 live documents and every one was a false positive
-// — the fetch had returned DOCX binaries which were parsed as HTML, and the
-// byte noise matched a hex pattern. A scanner people stop trusting is worse
-// than no scanner, because it launders real findings into ignorable noise.
+// The negatives matter more. A scanner people stop trusting is worse than no
+// scanner, because it launders real findings into ignorable noise.
 
 import { scanClientReadiness } from "../client-readiness-scan";
 
@@ -154,6 +151,32 @@ describe("placeholders", () => {
     expect(
       kinds("Annual delay cost is [EVIDENCE MISSING — no approved extract]."),
     ).not.toContain("unresolved_placeholder");
+  });
+
+  it.each([
+    "[ASSUMPTION TO VALIDATE: named sponsoring executive]",
+    "[CLIENT TO COMPLETE: confirm final evaluation weights]",
+  ])("does not flag governed uncertainty marker %j", (marker) => {
+    expect(kinds(`Open item: ${marker}.`)).not.toContain(
+      "unresolved_placeholder",
+    );
+  });
+});
+
+describe("client-facing implementation vocabulary", () => {
+  it("flags client_judgment as implementation vocabulary for review", () => {
+    const result = scanClientReadiness(
+      "Client input required: accountable owner (client_judgment).",
+    );
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "pipeline_vocabulary",
+          match: "client_judgment",
+        }),
+      ]),
+    );
+    expect(result.blockers).toBe(0);
   });
 });
 

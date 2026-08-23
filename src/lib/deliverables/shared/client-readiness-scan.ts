@@ -94,6 +94,7 @@ const PIPELINE_VOCABULARY = [
   "context bundle",
   "agent_ready",
   "not_reviewed",
+  "client_judgment",
 ];
 
 /**
@@ -192,9 +193,12 @@ const RULES: readonly Rule[] = [
     ),
     why: "An unfilled placeholder in a client-facing document is the most visible possible defect.",
     exempt: (match) =>
-      // Our own evidence-gap marker is deliberate and reader-facing: it says
-      // plainly that a fact is missing rather than inventing one.
-      /^\[EVIDENCE MISSING/i.test(match),
+      // Governed uncertainty markers are deliberate and reader-facing: they
+      // say plainly that a fact needs evidence, validation, or client input
+      // rather than inventing one.
+      /^\[(?:EVIDENCE MISSING|ASSUMPTION TO VALIDATE|CLIENT TO COMPLETE)/i.test(
+        match,
+      ),
   },
   {
     kind: "filler_language",

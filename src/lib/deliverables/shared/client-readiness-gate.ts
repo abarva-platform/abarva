@@ -17,11 +17,9 @@
 //
 // WHY AN OVERRIDE EXISTS AT ALL
 //
-// Because the scanner is heuristic and I have already watched it be wrong. An
-// earlier ad-hoc version of these rules reported internal hashes in eight
-// documents that contained none. A gate with no way past it converts every
-// future false positive into a hard stop on real work, and the predictable
-// response is that someone disables the gate entirely.
+// Because the scanner is heuristic. A gate with no way past a future false
+// positive converts a review aid into a hard stop on real work, and the
+// predictable response is that someone disables the gate entirely.
 //
 // So the override is deliberate rather than absent — and it is not a bypass.
 // The reviewer must acknowledge the specific findings, and what they accepted
