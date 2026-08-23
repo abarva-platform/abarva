@@ -863,7 +863,7 @@ def render_enriched_document(
         f"Scenario as-of: {doc_row['as_of_date']}",
         f"Review state: {prose(doc_row['review_state'])}",
         "",
-        "This generated document is intentionally dense enough to test contract evidence extraction, Source 360 drill-through, Tower value gating, and cube lineage. It is not a substitute for client contract review.",
+        "This synthetic contract record is intentionally dense enough to test clause extraction, application scope, commercial review, and value gating. It is not a substitute for client contract review.",
         "",
     ]
 
@@ -932,7 +932,7 @@ def render_enriched_document(
                     f"- {row['application_name']} ({row['business_domain']}): {row['allocation_percent']}% allocation. Mapping basis: {prose(row['mapping_basis'])}. Review state: {prose(row['review_state'])}."
                     for row in selected_apps
                 ],
-                "Scope links that do not match the prior active application file are carried as a fixture gap for dense Meridian generation. They should become CMDB/application inventory rows before this slice is promoted beyond local proof.",
+                "Scope links that do not match the current application inventory are tracked as application-inventory gaps. They require CMDB or application-owner confirmation before approval.",
                 *clause_excerpts(4),
             ],
         )
@@ -948,7 +948,7 @@ def render_enriched_document(
                     f"- {row['pricing_line_id']}: {prose(row['line_item_description'])}; quantity {row['quantity_or_commitment']} {prose(row['unit_of_measure'])}; unit price {dollars(row['unit_price_usd'])}; annual value {dollars(row['annual_value_usd'])}; operative state {prose(row['operative_state'])}; uplift cap {row['uplift_cap_pct']}%."
                     for row in selected_prices[:8]
                 ],
-                f"Current source-room annualized contract value is {dollars(contract['annual_value_usd'])}. The generated rate-card lines reconcile to {dollars(rate_card_total)}. That value is register-backed in this proof; document clauses remain unverified until reviewed.",
+                f"Current contract-register annualized value is {dollars(contract['annual_value_usd'])}. The rate-card lines reconcile to {dollars(rate_card_total)}. That value is register-backed in this proof; document clauses remain unverified until reviewed.",
             ],
         )
     )
@@ -1069,7 +1069,7 @@ def render_enriched_document(
             [
                 role_specific.get(role, f"{role_label} review should confirm the operative terms, source extract alignment, owner approval, and whether the document changes any commercial or operational fact."),
                 "Minimum review checklist: confirm supplier identity, contract number, effective dates, renewal notice, service scope, covered applications, pricing lines, SLA terms, AP invoice linkage, finance realization, security controls, and open exceptions.",
-                "Known gap for this local proof: the synthetic documents are internally consistent, but human verification remains unverified and application-scope links must be reconciled into the dense Meridian CMDB/application inventory before approval.",
+                "Known gap for this synthetic review pack: the documents are internally consistent, but human verification remains unverified and application-scope links that are not yet matched to the application inventory require CMDB or application-owner confirmation before approval.",
             ],
         )
     )

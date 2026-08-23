@@ -23,17 +23,14 @@ The runner reads `docs/architecture/ecl-no-stop-execution-queue.json`, executes 
 |     4 | Dense Meridian source-room requirements | `commercial_scope_dense_meridian_required_additions.*` lists 29 application/platform additions required by contract scope. | Generate dense application/data/infra source-room requirements from product deterministic needs.                                       | Active tenant source replacement.                              |
 |     5 | Product consumption parity              | `commercial_product_consumption_mapping.*` maps Source 360, Tower, Home, Intelligence, and cubes.                          | Produce page-by-page deterministic fact contracts for the first Source/Tower consumer surfaces.                                        | Product route repointing or deployed/browser-live claim.       |
 |     6 | ECL builder quality gates               | Commercial validator, planted failures, lineage, document-quality gate, acceptance summary.                                | Create common runner/acceptance helper so each builder has the same reproducibility bar.                                               | Migration or ACA job execution.                                |
-|     7 | Queue validation                         | `validate_no_stop_execution_queue.py` verifies queue shape and generated evidence paths.                                  | Keep queue/checkpoint artifacts in the proof bundle for every PR.                                                                      | None while validation remains local and report-only.           |
+|     7 | Source 360 client language cleanup      | `render_source_360_contract_preview.py --contract-id MER-CTR-RCM-001` renders the healthy contract and rejects client-visible builder vocabulary. | Keep static render proof ahead of any product-route repointing.                                                                         | Product route repointing or deployed/browser-live claim.       |
+|     8 | Source 360 weak-contract preview        | `render_source_360_contract_preview.py --contract-id MER-CTR-SSO-BPO-001 --require-weak-contract` proves the weak contract exposes leverage loss. | Use the weak preview as the Source 360 demo target before route adoption.                                                               | Product route repointing or deployed/browser-live claim.       |
+|     9 | Commercial document grammar gate        | `validate_commercial_document_quality.py` rejects snake_case and internal process vocabulary in generated contract documents. | Keep the gate in the dense document generation path before scaling more contracts.                                                       | Active tenant source replacement or dense document promotion.  |
+|    10 | Queue validation                         | `validate_no_stop_execution_queue.py` verifies queue shape and generated evidence paths after the render/doc slices produce their artifacts. | Keep queue/checkpoint artifacts in the proof bundle for every PR.                                                                      | None while validation remains local and report-only.           |
 
-## Queued Until Proof Command Exists
+## No Remaining Queued Local Slices
 
-These are named in the queue so they do not disappear, but the runner will not mark them passed until a proof command exists.
-
-| Order | Slice | Why next |
-| ----: | ----- | -------- |
-| 8 | Source 360 client language cleanup | Remove builder/process vocabulary from rendered client-facing Source 360 copy. |
-| 9 | Source 360 weak-contract preview | Render the deliberately weak contract, not only the healthy contract, so Source proves it finds leverage loss. |
-| 10 | Commercial document grammar gate | Catch known repeated grammar defects before dense document generation scales them. |
+All local-proof slices currently named in the queue have proof commands. The only remaining blocked row is the product-route/browser proof gate, which intentionally requires explicit runtime authorization.
 
 ## Hard Stop Gates
 
@@ -47,4 +44,4 @@ These are named in the queue so they do not disappear, but the runner will not m
 
 ## Execution Rule
 
-When a slice stays in the auto-proceed lane, keep going: implement, run the proof command, write the evidence artifact, update the tracker, and package output when useful. The runner publishes checkpoints every 15 percent. It does not execute queued slices that lack a proof command, and it stops hard-gated slices behind explicit approval.
+When a slice stays in the auto-proceed lane, keep going: implement, run the proof command, write the evidence artifact, update the tracker, and package output when useful. The runner publishes checkpoints every 15 percent. It stops hard-gated slices behind explicit approval.

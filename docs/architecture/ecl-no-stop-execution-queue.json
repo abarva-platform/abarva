@@ -131,6 +131,51 @@
     },
     {
       "order": 7,
+      "slice_id": "source_360_client_language_cleanup",
+      "status": "queued",
+      "percent_complete": 35,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/render_source_360_contract_preview.py --contract-id MER-CTR-RCM-001",
+      "evidence_paths": [
+        "scripts/ecl/render_source_360_contract_preview.py",
+        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/source_360_static_preview/mer-ctr-rcm-001-source-360-preview.html",
+        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/source_360_static_preview/mer-ctr-rcm-001-source-360-preview-qa.json"
+      ],
+      "next_auto_action": "Replace builder/process vocabulary in rendered Source 360 preview with client-facing commercial language.",
+      "stop_gate": "Product route repointing or deployed browser-live claim."
+    },
+    {
+      "order": 8,
+      "slice_id": "source_360_weak_contract_preview",
+      "status": "queued",
+      "percent_complete": 35,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/render_source_360_contract_preview.py --contract-id MER-CTR-SSO-BPO-001 --require-weak-contract",
+      "evidence_paths": [
+        "scripts/ecl/render_source_360_contract_preview.py",
+        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/source_360_static_preview/mer-ctr-sso-bpo-001-source-360-preview.html",
+        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/source_360_static_preview/mer-ctr-sso-bpo-001-source-360-preview-qa.json"
+      ],
+      "next_auto_action": "Render the deliberately weak contract preview so Source 360 proves it finds leverage loss, not only a healthy contract.",
+      "stop_gate": "Product route repointing or deployed browser-live claim."
+    },
+    {
+      "order": 9,
+      "slice_id": "commercial_document_grammar_gate",
+      "status": "queued",
+      "percent_complete": 35,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/validate_commercial_document_quality.py",
+      "evidence_paths": [
+        "scripts/ecl/validate_commercial_document_quality.py",
+        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/commercial_document_quality_summary.json",
+        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/commercial_document_quality_issues.csv"
+      ],
+      "next_auto_action": "Add document prose grammar/lookup checks for the known repeated grammar defects before dense generation scales them.",
+      "stop_gate": "Active tenant source replacement or dense document promotion."
+    },
+    {
+      "order": 10,
       "slice_id": "machine_readable_execution_queue",
       "status": "in_progress",
       "percent_complete": 60,
@@ -142,39 +187,6 @@
       ],
       "next_auto_action": "Use the queue manifest to drive next proof slices and CI artifact packaging.",
       "stop_gate": "None while validation remains local and report-only."
-    },
-    {
-      "order": 8,
-      "slice_id": "source_360_client_language_cleanup",
-      "status": "queued",
-      "percent_complete": 10,
-      "auto_proceed_allowed": false,
-      "proof_command": "",
-      "evidence_paths": [],
-      "next_auto_action": "Replace builder/process vocabulary in rendered Source 360 preview with client-facing commercial language.",
-      "stop_gate": "Needs proof command before auto execution."
-    },
-    {
-      "order": 9,
-      "slice_id": "source_360_weak_contract_preview",
-      "status": "queued",
-      "percent_complete": 10,
-      "auto_proceed_allowed": false,
-      "proof_command": "",
-      "evidence_paths": [],
-      "next_auto_action": "Render the deliberately weak contract preview so Source 360 proves it finds leverage loss, not only a healthy contract.",
-      "stop_gate": "Needs proof command before auto execution."
-    },
-    {
-      "order": 10,
-      "slice_id": "commercial_document_grammar_gate",
-      "status": "queued",
-      "percent_complete": 10,
-      "auto_proceed_allowed": false,
-      "proof_command": "",
-      "evidence_paths": [],
-      "next_auto_action": "Add document prose grammar/lookup checks for the known repeated grammar defects before dense generation scales them.",
-      "stop_gate": "Needs proof command before auto execution."
     },
     {
       "order": 11,
