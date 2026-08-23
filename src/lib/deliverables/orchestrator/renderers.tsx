@@ -250,6 +250,28 @@ function sectionBodyFromJson(value: unknown): string | null {
   return typeof body === "string" && body.trim().length > 0 ? body : null;
 }
 
+function sectionBodyFromJsonText(text: string): string | null {
+  try {
+    return sectionBodyFromJson(JSON.parse(text));
+  } catch {
+    // Fall through to a conservative loose extractor. Older persisted artifacts
+    // can contain section-object shaped text inside malformed Markdown fences,
+    // so strict JSON parsing is not always available at render time.
+  }
+  const match = text.match(
+    /"bodyMarkdown"\s*:\s*"([\s\S]*?)"\s*,\s*"(?:rawBodyMarkdown|groundingMode|citationsUsed)"/,
+  );
+  if (!match?.[1]) return null;
+  try {
+    return JSON.parse(`"${match[1]}"`) as string;
+  } catch {
+    return match[1]
+      .replace(/\\n/g, "\n")
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, "\\");
+  }
+}
+
 function findJsonObjectEnd(text: string, start: number): number | null {
   let depth = 0;
   let inString = false;
@@ -276,11 +298,7 @@ function replaceSectionJsonObjects(markdown: string): string {
   const withoutJsonFences = markdown.replace(
     /```json\s*\n([\s\S]*?)\n```/gi,
     (match, inner) => {
-      try {
-        return sectionBodyFromJson(JSON.parse(inner)) ?? match;
-      } catch {
-        return match;
-      }
+      return sectionBodyFromJsonText(inner) ?? match;
     },
   );
   let out = "";
@@ -297,12 +315,7 @@ function replaceSectionJsonObjects(markdown: string): string {
       break;
     }
     const candidate = withoutJsonFences.slice(start, end);
-    let replacement: string | null = null;
-    try {
-      replacement = sectionBodyFromJson(JSON.parse(candidate));
-    } catch {
-      replacement = null;
-    }
+    const replacement = sectionBodyFromJsonText(candidate);
     out += withoutJsonFences.slice(cursor, start);
     out += replacement ?? candidate;
     cursor = end;

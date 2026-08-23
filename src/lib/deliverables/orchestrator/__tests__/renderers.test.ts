@@ -133,8 +133,10 @@ describe("renderers — malformed section-object body recovery", () => {
       {
         key: "dependencies_risks",
         title: "Dependencies, Risks & Controls",
-        bodyMarkdown:
-          "```json\n" +
+        bodyMarkdown: [
+          "This risk-control narrative is carried into the appendix.",
+          "```json",
+          "```json",
           JSON.stringify({
             key: "dependencies_risks",
             title: "Dependencies, Risks & Controls",
@@ -142,8 +144,10 @@ describe("renderers — malformed section-object body recovery", () => {
               "## Dependencies, Risks & Controls\n\nMitigation owners are named before mobilization.",
             groundingMode: "mixed",
             citationsUsed: [1],
-          }) +
-          "\n```",
+          }),
+          "```",
+          "```",
+        ].join("\n"),
         groundingMode: "mixed",
         citationsUsed: [1],
       },
@@ -155,6 +159,7 @@ describe("renderers — malformed section-object body recovery", () => {
     const html = renderDeliverableHtml(docWithSectionObjectBody());
 
     expect(html).toMatch(/Mitigation owners are named before mobilization/);
+    expect(html).toMatch(/risk-control narrative is carried/);
     expect(html).not.toMatch(/dependencies_risks/);
     expect(html).not.toMatch(/bodyMarkdown/);
     expect(html).not.toMatch(/```json/);
@@ -184,6 +189,7 @@ describe("renderers — malformed section-object body recovery", () => {
     ).join("\n");
 
     expect(slideXml).toMatch(/Mitigation owners are named before mobilization/);
+    expect(slideXml).toMatch(/risk-control narrative is carried/);
     expect(slideXml).not.toMatch(/dependencies_risks/);
     expect(slideXml).not.toMatch(/bodyMarkdown/);
   });
