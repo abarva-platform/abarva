@@ -225,6 +225,69 @@ SCOPE_APPLICATIONS = {
     ],
 }
 
+COMPARE_RESPONSE_VENDORS = [
+    {
+        "response_id": "SRC-RSP-SSO-001",
+        "contract_id": "MER-CTR-SSO-BPO-001",
+        "response_vendor_id": "MER-VEN-OMNIOPS-SERVICES",
+        "response_vendor_name": "OmniOps Services LLC",
+        "response_role": "incumbent",
+        "response_status": "submitted",
+        "annual_price_usd": "11900000",
+        "savings_vs_baseline_usd": "0",
+        "exception_count": "6",
+        "commercial_score": "58",
+        "delivery_score": "72",
+        "risk_score": "49",
+        "overall_score": "61",
+        "rank": "3",
+        "primary_exception": "365-day notice and shortfall penalty remain unresolved",
+        "recommended_position": "do_not_award_without_revised_terms",
+    },
+    {
+        "response_id": "SRC-RSP-SSO-002",
+        "contract_id": "MER-CTR-SSO-BPO-001",
+        "response_vendor_id": "MER-VEN-ACCENTURE-OPS",
+        "response_vendor_name": "Accenture Operations",
+        "response_role": "challenger",
+        "response_status": "submitted",
+        "annual_price_usd": "10850000",
+        "savings_vs_baseline_usd": "1050000",
+        "exception_count": "3",
+        "commercial_score": "76",
+        "delivery_score": "78",
+        "risk_score": "66",
+        "overall_score": "74",
+        "rank": "1",
+        "primary_exception": "transition fee waiver requires finance confirmation",
+        "recommended_position": "shortlist_pending_finance_review",
+    },
+    {
+        "response_id": "SRC-RSP-SSO-003",
+        "contract_id": "MER-CTR-SSO-BPO-001",
+        "response_vendor_id": "MER-VEN-COGNIZANT-BPS",
+        "response_vendor_name": "Cognizant Business Process Services",
+        "response_role": "challenger",
+        "response_status": "submitted",
+        "annual_price_usd": "11200000",
+        "savings_vs_baseline_usd": "700000",
+        "exception_count": "4",
+        "commercial_score": "69",
+        "delivery_score": "75",
+        "risk_score": "61",
+        "overall_score": "68",
+        "rank": "2",
+        "primary_exception": "delivery location mix needs PHI/security review",
+        "recommended_position": "hold_for_security_review",
+    },
+]
+
+COMPARE_SERVICE_TOWERS = [
+    ("SSO-FIN-OPS", "Finance operations and close support", Decimal("0.42")),
+    ("SSO-HR-OPS", "HR service desk and workforce operations", Decimal("0.34")),
+    ("SSO-IT-OPS", "Shared IT service desk and access support", Decimal("0.24")),
+]
+
 
 def stable_uuid(*parts: object) -> str:
     digest = bytearray(hashlib.sha256("|".join(str(p) for p in parts).encode("utf-8")).digest()[:16])
@@ -562,6 +625,112 @@ def build_review_queue_rows(contract_rows: list[dict[str, str]], protection_rows
             json.dumps({k: v for k, v in row.items() if k != "row_hash"}, sort_keys=True).encode("utf-8")
         ).hexdigest()
     return rows
+
+
+def build_compare_response_extracts(contract_rows: list[dict[str, str]]) -> dict[str, list[dict[str, str]]]:
+    contract_by_id = {row["contract_id"]: row for row in contract_rows}
+    tracker_rows: list[dict[str, str]] = []
+    pricing_rows: list[dict[str, str]] = []
+    scorecard_rows: list[dict[str, str]] = []
+
+    for index, response in enumerate(COMPARE_RESPONSE_VENDORS, start=1):
+        contract = contract_by_id[response["contract_id"]]
+        baseline = Decimal(contract["annual_value_usd"])
+        annual_price = Decimal(response["annual_price_usd"])
+        event_key = f"SRC-CMP-{response['contract_id']}"
+        response_vendor_id = contract["vendor_parent_id"] if response["response_role"] == "incumbent" else response["response_vendor_id"]
+        response_vendor_name = contract["supplier_legal_name"] if response["response_role"] == "incumbent" else response["response_vendor_name"]
+        tracker_rows.append(
+            {
+                "tenant_key": TENANT_KEY,
+                "source_system": "Sourcing event response tracker",
+                "source_object": "vendor_response",
+                "source_record_id": f"RSP-{response['response_id']}",
+                "extract_job_id": "extract-meridian-source-response-tracker-001",
+                "extract_timestamp": "2026-08-23T00:00:00Z",
+                "as_of_date": "2027-06-30",
+                "sourcing_event_key": event_key,
+                "contract_id": response["contract_id"],
+                "incumbent_vendor_id": contract["vendor_parent_id"],
+                "response_id": response["response_id"],
+                "response_vendor_id": response_vendor_id,
+                "response_vendor_name": response_vendor_name,
+                "response_role": response["response_role"],
+                "response_status": response["response_status"],
+                "annual_price_usd": money_str(annual_price),
+                "baseline_annual_price_usd": money_str(baseline),
+                "savings_vs_baseline_usd": response["savings_vs_baseline_usd"],
+                "exception_count": response["exception_count"],
+                "rank": response["rank"],
+                "primary_exception": response["primary_exception"],
+                "recommended_position": response["recommended_position"],
+                "response_basis": "submitted_response_extract",
+                "review_state": "not_reviewed",
+                "row_hash": "",
+            }
+        )
+        for tower_index, (tower_id, tower_name, share) in enumerate(COMPARE_SERVICE_TOWERS, start=1):
+            line_price = money(annual_price * share)
+            baseline_price = money(baseline * share)
+            pricing_rows.append(
+                {
+                    "tenant_key": TENANT_KEY,
+                    "source_system": "Sourcing event pricing response",
+                    "source_object": "pricing_response_line",
+                    "source_record_id": f"RSPPRICE-{response['response_id']}-{tower_index:02d}",
+                    "extract_job_id": "extract-meridian-source-pricing-response-001",
+                    "extract_timestamp": "2026-08-23T00:00:00Z",
+                    "as_of_date": "2027-06-30",
+                    "sourcing_event_key": event_key,
+                    "response_id": response["response_id"],
+                    "contract_id": response["contract_id"],
+                    "response_vendor_id": response_vendor_id,
+                    "service_tower_id": tower_id,
+                    "service_tower_name": tower_name,
+                    "annual_price_usd": money_str(line_price),
+                    "baseline_annual_price_usd": money_str(baseline_price),
+                    "delta_vs_baseline_usd": money_str(line_price - baseline_price),
+                    "unit_of_measure": "annual service tower",
+                    "pricing_basis": "submitted_response_extract",
+                    "review_state": "not_reviewed",
+                    "row_hash": "",
+                }
+            )
+        scorecard_rows.append(
+            {
+                "tenant_key": TENANT_KEY,
+                "source_system": "Sourcing evaluation scorecard",
+                "source_object": "vendor_response_score",
+                "source_record_id": f"SCORE-{response['response_id']}",
+                "extract_job_id": "extract-meridian-source-evaluation-scorecard-001",
+                "extract_timestamp": "2026-08-23T00:00:00Z",
+                "as_of_date": "2027-06-30",
+                "sourcing_event_key": event_key,
+                "response_id": response["response_id"],
+                "contract_id": response["contract_id"],
+                "response_vendor_id": response_vendor_id,
+                "commercial_score": response["commercial_score"],
+                "delivery_score": response["delivery_score"],
+                "risk_score": response["risk_score"],
+                "overall_score": response["overall_score"],
+                "rank": response["rank"],
+                "scorecard_basis": "sourcing_team_scorecard_extract",
+                "review_state": "not_reviewed",
+                "row_hash": "",
+            }
+        )
+
+    for rows in [tracker_rows, pricing_rows, scorecard_rows]:
+        for row in rows:
+            row["row_hash"] = hashlib.sha256(
+                json.dumps({k: v for k, v in row.items() if k != "row_hash"}, sort_keys=True).encode("utf-8")
+            ).hexdigest()
+
+    return {
+        "source_vendor_response_tracker": tracker_rows,
+        "source_pricing_response_lines": pricing_rows,
+        "source_evaluation_scorecard": scorecard_rows,
+    }
 
 
 def build_market_benchmark_rows(price_rows: list[dict[str, str]]) -> list[dict[str, str]]:
@@ -1210,6 +1379,7 @@ def build_source_room(input_root: Path, out_dir: Path) -> dict[str, list[dict[st
 
     protection_rows = build_protection_assessment_rows(contract_rows, invoice_rows, market_benchmark_rows)
     review_queue_rows = build_review_queue_rows(contract_rows, protection_rows)
+    compare_extracts = build_compare_response_extracts(contract_rows)
     clause_rows.extend(build_protection_clause_rows(contract_rows, protection_rows))
     contract_by_id = {row["contract_id"]: row for row in contract_rows}
     supplier_by_vendor = {row["vendor_parent_id"]: row for row in supplier_rows}
@@ -1281,6 +1451,7 @@ def build_source_room(input_root: Path, out_dir: Path) -> dict[str, list[dict[st
         "source_finance_realization": finance_rows,
         "contract_commercial_protection_assessment": protection_rows,
         "source_review_queue": review_queue_rows,
+        **compare_extracts,
     }
 
     for name, rows in extract_sets.items():
@@ -1321,7 +1492,17 @@ def source_record_row(record_id: str, source_file_id: str, native_id: str, recor
     }
 
 
-def object_row(object_id: str, key: str, object_type: str, display_name: str, domain: str, source_record_id: str | None, basis: str, attrs: dict[str, object]) -> dict[str, str]:
+def object_row(
+    object_id: str,
+    key: str,
+    object_type: str,
+    display_name: str,
+    domain: str,
+    source_record_id: str | None,
+    basis: str,
+    attrs: dict[str, object],
+    lifecycle_state: str = "current",
+) -> dict[str, str]:
     return {
         "id": sql_text(object_id),
         "tenant_key": sql_text(TENANT_KEY),
@@ -1330,7 +1511,7 @@ def object_row(object_id: str, key: str, object_type: str, display_name: str, do
         "object_type": sql_text(object_type),
         "display_name": sql_text(display_name),
         "business_domain": sql_text(domain),
-        "lifecycle_state": sql_text("current"),
+        "lifecycle_state": sql_text(lifecycle_state),
         "source_record_id": sql_text(source_record_id),
         "basis": sql_text(basis),
         "value_state": sql_text("known"),
@@ -1517,6 +1698,32 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
         measures.append(measure_row(stable_uuid("measure", contract_id, "annualized"), contract_object_id, "annualized_contract_value_usd", contract["annual_value_usd"], "USD", contract_record_id))
         measures.append(measure_row(stable_uuid("measure", contract_id, "total"), contract_object_id, "total_contract_value_usd", contract["committed_value_usd"], "USD", contract_record_id))
 
+    for response in extracts["source_vendor_response_tracker"]:
+        response_vendor_key = response["response_vendor_id"]
+        if ("vendor", response_vendor_key) in object_ids:
+            continue
+        response_vendor_id = stable_uuid("object", "vendor", response_vendor_key)
+        object_ids[("vendor", response_vendor_key)] = response_vendor_id
+        response_record_id = record_ids[response["source_record_id"]]
+        objects.append(
+            object_row(
+                response_vendor_id,
+                response_vendor_key,
+                "vendor",
+                response["response_vendor_name"],
+                "Sourcing Response",
+                response_record_id,
+                "source_recorded",
+                {
+                    "supplier_category": "sourcing_candidate",
+                    "response_role": response["response_role"],
+                    "sourcing_event_key": response["sourcing_event_key"],
+                    "candidate_for_contract_id": response["contract_id"],
+                },
+                lifecycle_state="candidate",
+            )
+        )
+
     for row in extracts["contract_scope_application_links"]:
         object_key = "APP-SCOPE-" + hashlib.sha1(row["application_name"].encode("utf-8")).hexdigest()[:12].upper()
         scoped_id = stable_uuid("object", row["scope_type"], row["application_name"])
@@ -1639,6 +1846,47 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
                 "source_document_id": sql_text(None),
                 "source_record_id": sql_text(record_ids[row["source_record_id"]]),
                 "notes": sql_text(row["gate_reason_detail"]),
+            }
+        )
+    for row in extracts["source_vendor_response_tracker"]:
+        review_event_key = f"SRC-CMP-{row['response_id']}"
+        review_event_id = stable_uuid("review-event", review_event_key)
+        review_event_ids[review_event_key] = review_event_id
+        review_event_sql.append(
+            {
+                "id": sql_text(review_event_id),
+                "tenant_key": sql_text(TENANT_KEY),
+                "assessment_id": sql_text(ASSESSMENT_ID),
+                "subject_kind": sql_text("contract"),
+                "subject_object_id": sql_text(None),
+                "subject_relationship_id": sql_text(None),
+                "subject_measure_id": sql_text(None),
+                "subject_contract_id": sql_text(contract_ids[row["contract_id"]]),
+                "subject_service_line_id": sql_text(None),
+                "subject_scope_id": sql_text(None),
+                "subject_invoice_line_id": sql_text(None),
+                "subject_sla_observation_id": sql_text(None),
+                "subject_document_extraction_id": sql_text(None),
+                "subject_context_pack_id": sql_text(None),
+                "review_event_type": sql_text("confirm"),
+                "previous_value_json": sql_json({}),
+                "new_value_json": sql_json(
+                    {
+                        "workspace_tab": "compare",
+                        "event_stage": "sourcing_decision",
+                        "event_status": "ready_for_review",
+                        "gate_status": "open",
+                        "response_id": row["response_id"],
+                        "response_vendor_id": row["response_vendor_id"],
+                        "response_basis": row["response_basis"],
+                        "rank": int(row["rank"]),
+                    }
+                ),
+                "decision_basis": sql_text("source_recorded"),
+                "reviewer_role": sql_text("Strategic Sourcing Lead"),
+                "source_document_id": sql_text(None),
+                "source_record_id": sql_text(record_ids[row["source_record_id"]]),
+                "notes": sql_text(f"Submitted response is loaded for Compare; award approval remains separate from response ranking for {row['response_vendor_name']}."),
             }
         )
 
@@ -1859,6 +2107,16 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
                 document_extraction_id=protection_doc_extractions["minimum_commitment_usd"],
             )
         )
+
+    response_rows_by_contract: dict[str, list[dict[str, str]]] = defaultdict(list)
+    pricing_rows_by_response: dict[str, list[dict[str, str]]] = defaultdict(list)
+    scorecard_by_response: dict[str, dict[str, str]] = {}
+    for row in extracts["source_vendor_response_tracker"]:
+        response_rows_by_contract[row["contract_id"]].append(row)
+    for row in extracts["source_pricing_response_lines"]:
+        pricing_rows_by_response[row["response_id"]].append(row)
+    for row in extracts["source_evaluation_scorecard"]:
+        scorecard_by_response[row["response_id"]] = row
 
     snapshot_id = stable_uuid("snapshot", ASSESSMENT_ID)
     context_pack_id = stable_uuid("context-pack", ASSESSMENT_ID)
@@ -2234,6 +2492,72 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
                     "source_hash": sql_text(SOURCE_HASH_LABEL),
                 }
             )
+        for response in sorted(response_rows_by_contract.get(contract_id, []), key=lambda item: int(item["rank"])):
+            scorecard = scorecard_by_response[response["response_id"]]
+            pricing_refs = [row["source_record_id"] for row in pricing_rows_by_response[response["response_id"]]]
+            review_event_key = f"SRC-CMP-{response['response_id']}"
+            annual_price = Decimal(response["annual_price_usd"])
+            baseline_price = Decimal(response["baseline_annual_price_usd"])
+            savings = Decimal(response["savings_vs_baseline_usd"])
+            source_event_rows.append(
+                {
+                    "id": sql_text(stable_uuid("projection", "source-event-workspace", contract_id, "compare", response["response_id"])),
+                    "tenant_key": sql_text(TENANT_KEY),
+                    "assessment_id": sql_text(ASSESSMENT_ID),
+                    "snapshot_id": sql_text(snapshot_id),
+                    "projection_manifest_id": sql_text(projection_manifest_id),
+                    "projection_version": sql_num(1),
+                    "row_key": sql_text(f"{contract_id}:compare:{response['response_id']}"),
+                    "workspace_tab": sql_text("compare"),
+                    "row_type": sql_text("vendor_response_compare"),
+                    "event_key": sql_text(response["sourcing_event_key"]),
+                    "event_title": sql_text(f"Compare submitted response from {response['response_vendor_name']}"),
+                    "contract_id": sql_text(contract_ids[contract_id]),
+                    "contract_object_id": sql_text(contract_object_id),
+                    "vendor_object_id": sql_text(object_ids[("vendor", response["response_vendor_id"])]),
+                    "review_event_id": sql_text(review_event_ids[review_event_key]),
+                    "event_stage": sql_text("sourcing_decision"),
+                    "event_status": sql_text("ready_for_review"),
+                    "gate_status": sql_text("open"),
+                    "gate_reason_code": sql_text(None),
+                    "gate_reason_detail": sql_text(None),
+                    "owner_role": sql_text("Strategic Sourcing Lead"),
+                    "due_date": sql_text(contract["notice_deadline"]),
+                    "evidence_needed_json": sql_json([]),
+                    "decision_context_json": sql_json(
+                        {
+                            "response_id": response["response_id"],
+                            "response_vendor_name": response["response_vendor_name"],
+                            "response_role": response["response_role"],
+                            "response_status": response["response_status"],
+                            "annual_price_usd": float(annual_price),
+                            "baseline_annual_price_usd": float(baseline_price),
+                            "savings_vs_baseline_usd": float(savings),
+                            "commercial_score": int(scorecard["commercial_score"]),
+                            "delivery_score": int(scorecard["delivery_score"]),
+                            "risk_score": int(scorecard["risk_score"]),
+                            "overall_score": int(scorecard["overall_score"]),
+                            "rank": int(scorecard["rank"]),
+                            "exception_count": int(response["exception_count"]),
+                            "primary_exception": response["primary_exception"],
+                            "recommended_position": response["recommended_position"],
+                            "review_state": response["review_state"],
+                            "decision_boundary": "Ranking is sourced from submitted response and scorecard extracts; award approval remains gated outside Compare.",
+                        }
+                    ),
+                    "next_action_json": sql_json(
+                        {
+                            "action": "review_response",
+                            "owner_role": "Strategic Sourcing Lead",
+                            "due_date": contract["notice_deadline"],
+                            "required_evidence": ["scorecard review", "finance review", "security review for exceptions"],
+                        }
+                    ),
+                    "source_refs_json": sql_json([response["source_record_id"], scorecard["source_record_id"], *pricing_refs]),
+                    "gap_flags_json": sql_json(["response_not_awarded", "requires_sourcing_review", response["recommended_position"]]),
+                    "source_hash": sql_text(SOURCE_HASH_LABEL),
+                }
+            )
         measures.append(measure_row(stable_uuid("measure", contract_id, "blocked"), contract_object_id, "blocked_value_usd", contract["annual_value_usd"], "USD", None, basis="calculated", quality="estimated"))
         measures.append(measure_row(stable_uuid("measure", contract_id, "claimable"), contract_object_id, "claimable_value_usd", 0, "USD", None, basis="calculated", quality="estimated"))
 
@@ -2510,12 +2834,29 @@ where benchmark_context_json ->> 'basis' = 'synthetic_directional_market_benchma
 select 'source_event_workspace', count(*) from ecl_projection.source_event_workspace;
 select 'source_event_workspace_events', count(*) from ecl_projection.source_event_workspace where workspace_tab = 'events';
 select 'source_event_workspace_approvals', count(*) from ecl_projection.source_event_workspace where workspace_tab = 'approvals';
+select 'source_event_workspace_compare', count(*) from ecl_projection.source_event_workspace where workspace_tab = 'compare';
 select 'source_event_workspace_gated', count(*) from ecl_projection.source_event_workspace where gate_status = 'gated';
+select 'source_event_workspace_open', count(*) from ecl_projection.source_event_workspace where gate_status = 'open';
 select 'source_event_workspace_review_event_drift', count(*)
 from ecl_projection.source_event_workspace sew
 left join ecl_review.review_event re
   on re.tenant_key = sew.tenant_key and re.assessment_id = sew.assessment_id and re.id = sew.review_event_id
 where re.id is null;
+select 'compare_response_source_rows', count(*)
+from ecl_source.source_record
+where record_type = 'source_vendor_response_tracker';
+select 'compare_pricing_response_lines', count(*)
+from ecl_source.source_record
+where record_type = 'source_pricing_response_lines';
+select 'compare_evaluation_scorecard_rows', count(*)
+from ecl_source.source_record
+where record_type = 'source_evaluation_scorecard';
+select 'source_event_workspace_compare_candidate_vendor_drift', count(*)
+from ecl_projection.source_event_workspace sew
+left join ecl_context.object o
+  on o.tenant_key = sew.tenant_key and o.assessment_id = sew.assessment_id and o.id = sew.vendor_object_id
+where sew.workspace_tab = 'compare'
+  and o.id is null;
 select 'tower_command_center', count(*) from ecl_projection.tower_command_center;
 select 'cube_slices', count(*) from ecl_projection.cube_slice;
 select 'cube_slice_metrics', count(*) from ecl_projection.cube_slice_metric;
@@ -2886,7 +3227,7 @@ def write_readme(out_dir: Path, summary: dict[str, object]) -> None:
             "python3 scripts/ecl/write_commercial_proof_bundle_manifest.py",
             "```",
             "",
-            "Observed proof is captured in `commercial_contract_supply_db_proof.txt`. The machine-readable proof manifest is `proof_bundle_manifest.json`; it embeds the git SHA, dirty-state hash, tenant list, environment metadata, 31 proof/report artifact hashes, retained planted-failure artifacts, dense Meridian scope-addition reports, client extraction mapping, product-consumption mapping, Source 360 page fact contract, Source event-workspace projection, document-quality reports, the one-command run summary, acceptance summary, and 68 source-room file hashes.",
+            "Observed proof is captured in `commercial_contract_supply_db_proof.txt`. The machine-readable proof manifest is `proof_bundle_manifest.json`; it embeds the git SHA, dirty-state hash, tenant list, environment metadata, 31 proof/report artifact hashes, retained planted-failure artifacts, dense Meridian scope-addition reports, client extraction mapping, product-consumption mapping, Source 360 page fact contract, Source event-workspace projection, document-quality reports, the one-command run summary, acceptance summary, and 71 source-room file hashes.",
             "Source-room validation writes `commercial_contract_supply_bad_rows.csv` and `commercial_contract_supply_validation_summary.json` before the SQL load. Planted validator failures are retained as `validator_planted_*` artifacts. Field lineage is captured in `commercial_contract_supply_field_lineage.csv`. Dense Meridian scope additions are captured in `commercial_scope_dense_meridian_required_additions.*`. Client/operator extraction guidance is captured in `commercial_client_extraction_mapping.*`. Product deterministic consumption is captured in `commercial_product_consumption_mapping.*`. Client-visible document quality is checked by `commercial_document_quality_*` reports.",
             "",
             "Additional proof checks:",

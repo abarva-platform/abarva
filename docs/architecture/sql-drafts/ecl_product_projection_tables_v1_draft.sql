@@ -330,10 +330,10 @@ create table if not exists ecl_projection.source_event_workspace (
     references ecl_review.review_event (tenant_key, assessment_id, id),
   constraint source_event_workspace_version_check check (projection_version > 0),
   constraint source_event_workspace_tab_check check (
-    workspace_tab in ('events', 'approvals')
+    workspace_tab in ('events', 'approvals', 'compare')
   ),
   constraint source_event_workspace_row_type_check check (
-    row_type in ('sourcing_event', 'approval_gate')
+    row_type in ('sourcing_event', 'approval_gate', 'vendor_response_compare')
   ),
   constraint source_event_workspace_stage_check check (
     event_stage in ('intake', 'evidence_collection', 'owner_review', 'finance_review', 'legal_review', 'sourcing_decision')
