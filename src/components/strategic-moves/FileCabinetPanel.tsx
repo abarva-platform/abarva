@@ -185,12 +185,22 @@ export function supportsSponsorReviewDecisionArtifact(
 }
 
 export function supportsGeneratedClientApproval(
-  artifact: Pick<Artifact, "downloadUrl" | "family" | "lifecycleState" | "status">,
+  artifact: Pick<
+    Artifact,
+    | "downloadUrl"
+    | "family"
+    | "fileFormat"
+    | "lifecycleState"
+    | "outputRole"
+    | "status"
+  >,
 ): boolean {
   return (
     artifact.family === "generated_deliverable" &&
     artifact.lifecycleState === "current" &&
     artifact.downloadUrl.startsWith("/api/v1/artifacts/") &&
+    artifact.fileFormat !== "html" &&
+    artifact.outputRole !== "html_visual_review_companion" &&
     artifact.status !== "approved"
   );
 }
@@ -221,7 +231,11 @@ function StatusChip({ status }: { status: string }) {
   const label = artifactStatusLabel(status);
   return (
     <span
-      title={status === "quarantined" ? "Held for review before client-ready use." : undefined}
+      title={
+        status === "quarantined"
+          ? "Held for review before client-ready use."
+          : undefined
+      }
       style={{
         display: "inline-block",
         padding: "1px 8px",
@@ -253,8 +267,8 @@ export function isContextExtractArtifact(a: {
 }): boolean {
   return Boolean(
     a.contextExtract &&
-      typeof a.artifactType === "string" &&
-      a.artifactType.startsWith("move_context_extract_p"),
+    typeof a.artifactType === "string" &&
+    a.artifactType.startsWith("move_context_extract_p"),
   );
 }
 
@@ -309,19 +323,20 @@ export function artifactOutputRoleLabel(a: {
   outputRole?: string | null;
   fileFormat?: string | null;
 }): string {
-  if (a.outputRole === "docx_editable_phase_record")
-    return "Editable deliverable";
+  if (a.outputRole === "docx_editable_phase_record") return "Editable final";
   if (a.outputRole === "html_visual_review_companion") {
-    return "Visual review companion";
+    return "Preview only";
   }
   if (a.fileFormat === "docx") return "Word-equivalent";
-  if (a.fileFormat === "html") return "Review view";
+  if (a.fileFormat === "pptx") return "Presentation";
+  if (a.fileFormat === "html") return "Preview only";
   return "";
 }
 
 export function artifactFormatLabel(format: string | null | undefined): string {
   if (format === "docx") return "Word-equivalent";
-  if (format === "html") return "HTML review view";
+  if (format === "pptx") return "PPTX final";
+  if (format === "html") return "HTML preview";
   if (format === "xlsx") return "Excel model";
   if (format === "pdf") return "PDF snapshot";
   return format ? format.toUpperCase() : "File";
@@ -364,18 +379,38 @@ function ContextExtractMiniList({
         {title} · {items.length}
       </div>
       {items.length === 0 ? (
-        <p style={{ margin: 0, fontSize: 12, lineHeight: 1.45, color: "#64748B" }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 12,
+            lineHeight: 1.45,
+            color: "#64748B",
+          }}
+        >
           {empty}
         </p>
       ) : (
-        <ul style={{ margin: 0, paddingLeft: 16, color: "#334155", fontSize: 12, lineHeight: 1.45 }}>
+        <ul
+          style={{
+            margin: 0,
+            paddingLeft: 16,
+            color: "#334155",
+            fontSize: 12,
+            lineHeight: 1.45,
+          }}
+        >
           {items.slice(0, 3).map((item, index) => (
             <li key={`${title}-${item.evidenceId ?? item.label ?? index}`}>
               <strong>{item.label ?? "Context item"}</strong>
-              {item.evidenceFamily ? ` · ${metaLabel(item.evidenceFamily)}` : ""}
+              {item.evidenceFamily
+                ? ` · ${metaLabel(item.evidenceFamily)}`
+                : ""}
               <br />
               <span style={{ color: "#64748B" }}>
-                {(item.whyAttached || item.reason || item.summary || "").slice(0, 180)}
+                {(item.whyAttached || item.reason || item.summary || "").slice(
+                  0,
+                  180,
+                )}
               </span>
             </li>
           ))}
@@ -390,7 +425,11 @@ function ContextExtractMiniList({
   );
 }
 
-function ContextExtractReviewPanel({ model }: { model: ContextExtractReviewModel }) {
+function ContextExtractReviewPanel({
+  model,
+}: {
+  model: ContextExtractReviewModel;
+}) {
   return (
     <section
       style={{
@@ -570,12 +609,19 @@ function ArtifactRow({
   const roleLabel = artifactOutputRoleLabel(a);
   const canLoadSponsorReview = supportsSponsorReviewDecisionArtifact(a, moveId);
   const canApproveGeneratedDraft = supportsGeneratedClientApproval(a);
+  const previewOnly =
+    a.fileFormat === "html" || a.outputRole === "html_visual_review_companion";
+  const isGeneratedArtifactRoute =
+    a.downloadUrl.startsWith("/api/v1/artifacts/");
 
   const openArtifact = useCallback(async () => {
     setBusy("open");
     setActionErr(null);
     try {
-      const inlineUrl = `${a.downloadUrl}${a.downloadUrl.includes("?") ? "&" : "?"}inline=1`;
+      const openParams = isGeneratedArtifactRoute
+        ? "format=html&inline=1"
+        : "inline=1";
+      const inlineUrl = `${a.downloadUrl}${a.downloadUrl.includes("?") ? "&" : "?"}${openParams}`;
       const win = window.open(
         inlineUrl,
         `moves-artifact-${a.artifactId}`,
@@ -589,7 +635,7 @@ function ArtifactRow({
     } finally {
       setBusy(null);
     }
-  }, [a.artifactId, a.downloadUrl]);
+  }, [a.artifactId, a.downloadUrl, isGeneratedArtifactRoute]);
 
   const downloadArtifact = useCallback(async () => {
     setBusy("download");
@@ -835,9 +881,7 @@ function ArtifactRow({
         setReviewOpen(false);
         await onChanged();
       } catch (e) {
-        setActionErr(
-          e instanceof Error ? e.message : "approved upload failed",
-        );
+        setActionErr(e instanceof Error ? e.message : "approved upload failed");
       } finally {
         setClientApprovalBusy(false);
         if (approvedFileInputRef.current) {
@@ -951,6 +995,22 @@ function ArtifactRow({
               </span>
             )}
             <StatusChip status={a.status} />
+            {previewOnly && (
+              <span
+                title="HTML is a browser preview only. Client-final artifacts must be DOCX or PPTX."
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: "#7C2D12",
+                  background: "#FEF3C7",
+                  padding: "1px 6px",
+                  borderRadius: 4,
+                  textTransform: "uppercase",
+                }}
+              >
+                Not final
+              </span>
+            )}
           </div>
           <div
             style={{
@@ -1142,8 +1202,9 @@ function ArtifactRow({
                 >
                   <strong>{a.title}</strong>
                   <br />
-                  Phase {a.phase ?? "not set"} · {artifactFormatLabel(a.fileFormat)} ·{" "}
-                  {metaLabel(a.family)} · {metaLabel(a.status)}
+                  Phase {a.phase ?? "not set"} ·{" "}
+                  {artifactFormatLabel(a.fileFormat)} · {metaLabel(a.family)} ·{" "}
+                  {metaLabel(a.status)}
                 </p>
                 {sponsorReview ? (
                   <p
@@ -1154,9 +1215,9 @@ function ArtifactRow({
                       color: "#334155",
                     }}
                   >
-                    This artifact also has a sponsor-review packet. You can approve
-                    it for draft shaping, request revisions, or hold for missing
-                    evidence without bypassing final phase gates.
+                    This artifact also has a sponsor-review packet. You can
+                    approve it for draft shaping, request revisions, or hold for
+                    missing evidence without bypassing final phase gates.
                   </p>
                 ) : null}
               </div>
@@ -1665,7 +1726,8 @@ export function FileCabinetPanel({
             Downloads
           </h2>
           <p style={{ fontSize: 12, color: "#9AA3B2", margin: "3px 0 0" }}>
-            Client-ready files and review versions. {totalCurrent} current.
+            Client-final DOCX/PPTX files and HTML previews for review.{" "}
+            {totalCurrent} current.
           </p>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>

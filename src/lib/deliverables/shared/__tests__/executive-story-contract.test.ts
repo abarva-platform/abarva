@@ -212,6 +212,17 @@ describe("renderStorySpinePrompt", () => {
     }
   });
 
+  it("includes framework anchors without inviting generic framework exposition", () => {
+    const p3Prompt = renderStorySpinePrompt("p3_solution_decision");
+    expect(p3Prompt).toContain("FRAMEWORK ANCHORS");
+    expect(p3Prompt).toContain("decision matrix across credible options");
+    expect(p3Prompt).toContain("human/AI decision-rights and control matrix");
+    expect(p3Prompt).toMatch(
+      /use the appropriate consulting \/ architecture frameworks as lenses/i,
+    );
+    expect(p3Prompt).toMatch(/Do not explain the framework generically/i);
+  });
+
   it("permits combining beats but forbids reordering them", () => {
     expect(prompt).toMatch(/combined into one section/i);
     expect(prompt).toMatch(/NOT reorder/);

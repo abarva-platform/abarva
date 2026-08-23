@@ -63,12 +63,18 @@ describe("deliverable profile registry (W0)", () => {
     expect(ta.requiredExhibits).toContain("ai_decision_flow");
   });
 
-  it("routes board-decision artifacts to PPTX and architecture to HTML", () => {
+  it("routes board-decision and architecture artifacts to PPTX finals", () => {
     expect(getDeliverableProfile("handoff_package").defaultFormat).toBe("pptx");
-    expect(getDeliverableProfile("discovery_report").defaultFormat).toBe("pptx");
-    expect(getDeliverableProfile("target_state_architecture").defaultFormat).toBe(
-      "html",
+    expect(getDeliverableProfile("discovery_report").defaultFormat).toBe(
+      "pptx",
     );
+    expect(
+      getDeliverableProfile("target_state_architecture").defaultFormat,
+    ).toBe("pptx");
+    expect(
+      getDeliverableProfile("solution_approach_options").defaultFormat,
+    ).toBe("pptx");
+    expect(getDeliverableProfile("solution_design").defaultFormat).toBe("pptx");
   });
 
   it("marks the business case for mode-downgrade and consolidates missing inputs", () => {
@@ -82,7 +88,10 @@ describe("deliverable profile registry (W0)", () => {
   });
 
   it("codifies the executive visual standards for major Moves artifacts", () => {
-    expect(getDeliverableProfile("target_state_architecture").visualStandard?.requiredVisuals).toEqual(
+    expect(
+      getDeliverableProfile("target_state_architecture").visualStandard
+        ?.requiredVisuals,
+    ).toEqual(
       expect.arrayContaining([
         "Conceptual architecture diagram",
         "Logical architecture diagram",
@@ -92,7 +101,9 @@ describe("deliverable profile registry (W0)", () => {
         "Security/trust boundary diagram",
       ]),
     );
-    expect(getDeliverableProfile("business_case").visualStandard?.requiredVisuals).toEqual(
+    expect(
+      getDeliverableProfile("business_case").visualStandard?.requiredVisuals,
+    ).toEqual(
       expect.arrayContaining([
         "Value waterfall",
         "Cost baseline bridge",
@@ -100,7 +111,10 @@ describe("deliverable profile registry (W0)", () => {
         "Scenario comparison",
       ]),
     );
-    expect(getDeliverableProfile("execution_roadmap").visualStandard?.requiredVisuals).toEqual(
+    expect(
+      getDeliverableProfile("execution_roadmap").visualStandard
+        ?.requiredVisuals,
+    ).toEqual(
       expect.arrayContaining([
         "30/60/90-day action plan",
         "Multi-wave roadmap",
@@ -108,7 +122,9 @@ describe("deliverable profile registry (W0)", () => {
         "Stage-gate model",
       ]),
     );
-    expect(getDeliverableProfile("handoff_package").visualStandard?.requiredVisuals).toEqual(
+    expect(
+      getDeliverableProfile("handoff_package").visualStandard?.requiredVisuals,
+    ).toEqual(
       expect.arrayContaining([
         "One-page executive storyline",
         "Target-state architecture",
@@ -120,24 +136,34 @@ describe("deliverable profile registry (W0)", () => {
   });
 
   it("requires aVa/Source decision and scorecard artifacts to render executive visuals", () => {
-    expect(getDeliverableProfile("source_atlas_decision_brief").visualRendererRequired).toBe(true);
-    expect(getDeliverableProfile("source_atlas_decision_brief").visualStandard?.requiredVisuals).toEqual(
+    expect(
+      getDeliverableProfile("source_atlas_decision_brief")
+        .visualRendererRequired,
+    ).toBe(true);
+    expect(
+      getDeliverableProfile("source_atlas_decision_brief").visualStandard
+        ?.requiredVisuals,
+    ).toEqual(
       expect.arrayContaining([
         "One-page executive storyline",
         "Decision tree",
         "Recommendation scorecard",
       ]),
     );
-    expect(getDeliverableProfile("source_evaluation_scorecard").visualStandard?.requiredVisuals).toEqual(
+    expect(
+      getDeliverableProfile("source_evaluation_scorecard").visualStandard
+        ?.requiredVisuals,
+    ).toEqual(
       expect.arrayContaining([
         "Evaluation heatmap",
         "Weighted scorecard",
         "Vendor comparison chart",
       ]),
     );
-    expect(getDeliverableProfile("source_transition_plan").visualStandard?.requiredVisuals).toContain(
-      "Multi-wave roadmap",
-    );
+    expect(
+      getDeliverableProfile("source_transition_plan").visualStandard
+        ?.requiredVisuals,
+    ).toContain("Multi-wave roadmap");
   });
 
   it("keeps a non-empty client-narrative banned lexicon incl. phase labels", () => {

@@ -74,7 +74,14 @@ export function orchestratorDeliverableType(registryKey: string): string {
 }
 
 /** Prescribed render/download format the orchestrator should persist a deliverable in. */
-export type PrescribedDeliverableFormat = "docx" | "xlsx";
+export type PrescribedDeliverableFormat = "docx" | "pptx" | "xlsx";
+
+const PPTX_FINAL_DELIVERABLES = new Set([
+  "solution_approach_options",
+  "target_architecture",
+  "target_state_architecture",
+  "solution_design",
+]);
 
 /** registry `formatRecommendation` → the concrete primary file format. */
 function registryFormatToFile(
@@ -114,6 +121,7 @@ export function prescribedFormatForDeliverableType(
   deliverableType: string,
 ): PrescribedDeliverableFormat {
   const normalized = normalizeDeliverableKey(deliverableType);
+  if (PPTX_FINAL_DELIVERABLES.has(normalized)) return "pptx";
 
   // 1 · direct registry-key hit (e.g. 'financial_model', 'charter')
   const directSpec = getDeliverableSpec(normalized);
@@ -122,6 +130,9 @@ export function prescribedFormatForDeliverableType(
   // 2 · the value is an orchestrator type — trace back to its registry key(s).
   //     If ANY mapped registry spec prescribes Excel, the artifact is a workbook.
   const registryKeys = ORCHESTRATOR_TO_REGISTRY_KEYS[normalized] ?? [];
+  if (registryKeys.some((key) => PPTX_FINAL_DELIVERABLES.has(key))) {
+    return "pptx";
+  }
   for (const key of registryKeys) {
     const spec = DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key);
     if (spec && spec.formatRecommendation === "excel") return "xlsx";

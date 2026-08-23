@@ -229,7 +229,11 @@ function exhibitSection(
   </section>`;
 }
 
-function wrapSvgText(text: string | undefined, maxChars: number, maxLines: number): string[] {
+function wrapSvgText(
+  text: string | undefined,
+  maxChars: number,
+  maxLines: number,
+): string[] {
   if (!text) return [];
   const words = text.trim().split(/\s+/).filter(Boolean);
   const lines: string[] = [];
@@ -242,7 +246,8 @@ function wrapSvgText(text: string | undefined, maxChars: number, maxLines: numbe
       continue;
     }
     if (current) lines.push(current);
-    current = word.length > maxChars ? word.slice(0, maxChars - 3) + "..." : word;
+    current =
+      word.length > maxChars ? word.slice(0, maxChars - 3) + "..." : word;
     if (lines.length === maxLines - 1) break;
   }
   if (current && lines.length < maxLines) lines.push(current);
@@ -251,7 +256,9 @@ function wrapSvgText(text: string | undefined, maxChars: number, maxLines: numbe
   if (words.join(" ").length > consumed.length && lines.length) {
     const last = lines[lines.length - 1];
     lines[lines.length - 1] =
-      last.length > maxChars - 3 ? last.slice(0, maxChars - 3) + "..." : `${last}...`;
+      last.length > maxChars - 3
+        ? last.slice(0, maxChars - 3) + "..."
+        : `${last}...`;
   }
   return lines;
 }
@@ -288,7 +295,10 @@ function svgTimeline(
 ): string {
   const leftGutter = 132;
   const step = 220;
-  const width = Math.max(760, leftGutter * 2 + Math.max(0, items.length - 1) * step);
+  const width = Math.max(
+    760,
+    leftGutter * 2 + Math.max(0, items.length - 1) * step,
+  );
   const height = 214;
   const nodes = items
     .map((item, i) => {
@@ -490,6 +500,22 @@ function storySpine(model: ArchitectureModel): string {
     .join("")}</div>`;
 }
 
+function clientProvenanceNote(note: string | undefined): string {
+  if (!note?.trim()) return "";
+  return note
+    .replace(
+      /\bDecision\s+[0-9a-f]{8}-[0-9a-f-]{27,36}\b/gi,
+      "approved solution decision",
+    )
+    .replace(
+      /\bhash\s+[0-9a-f]{6,}(?:…[0-9a-f]+)?\b/gi,
+      "validated decision record",
+    )
+    .replace(/\bversion\s+[0-9a-f]{6,}(?:…[0-9a-f]+)?\b/gi, "approved version")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /** Render the full premium architecture HTML document. */
 export function renderArchitectureHtml(model: ArchitectureModel): string {
   const labels = nodeLabelMap(model);
@@ -533,6 +559,7 @@ export function renderArchitectureHtml(model: ArchitectureModel): string {
           .join("")}</ul></div>`
       : ""
   }`;
+  const provenanceNote = clientProvenanceNote(model.provenanceNote);
 
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"/>
@@ -544,6 +571,9 @@ export function renderArchitectureHtml(model: ArchitectureModel): string {
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",-apple-system,system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
   h1,h2,h3,.svc{font-family:Georgia,"Times New Roman",serif;font-weight:400}
+  .review-banner{background:#111827;color:#fff;padding:12px 48px;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,.18)}
+  .review-banner strong{font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  .review-banner span{font-size:13px;color:#D1D5DB}
   .header{padding:64px 48px 28px;border-bottom:1px solid var(--line)}
   .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
   h1{font-size:34px;line-height:1.15;margin:10px 0 14px;max-width:900px}
@@ -613,14 +643,18 @@ export function renderArchitectureHtml(model: ArchitectureModel): string {
   .story-spine{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
   .story-beat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
   .story-beat span{font-size:12px;color:var(--muted)} .story-beat strong{font-size:14px} .story-beat em{font-size:12px;color:var(--control);font-style:normal}
-  @media(max-width:720px){.header,.nav,.wrap{padding-left:20px;padding-right:20px}.band{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
+  @media(max-width:720px){.review-banner,.header,.nav,.wrap{padding-left:20px;padding-right:20px}.band{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
 </style></head>
 <body>
+  <div class="review-banner">
+    <strong>HTML preview only</strong>
+    <span>Generated from structured state for review. Client-final export is DOCX or PPTX after approval.</span>
+  </div>
   <div class="header">
     <div class="kicker">${esc(model.client)} · Target Architecture</div>
     <h1>${esc(model.engagement)}</h1>
     <div class="decision">${esc(model.decisionHeadline)}</div>
-    ${model.provenanceNote ? `<div class="prov-note">${esc(model.provenanceNote)}</div>` : ""}
+    ${provenanceNote ? `<div class="prov-note">${esc(provenanceNote)}</div>` : ""}
   </div>
   <nav class="nav">${nav}</nav>
   <div class="wrap">

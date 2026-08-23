@@ -20,6 +20,20 @@ describe("architecture model + HTML renderer (W2)", () => {
     expect(html).toContain("<style>");
   });
 
+  it("marks HTML as preview-only and removes internal decision identifiers", () => {
+    const html = renderArchitectureHtml({
+      ...FIRST_CAPITAL_ARCHITECTURE,
+      provenanceNote:
+        "Reflects Option A, Decision 097447bd-1755-4f58-bdd0-d3db17990d7e, hash 9fab255…4d58e4ab.",
+    });
+    expect(html).toContain("HTML preview only");
+    expect(html).toContain("Client-final export is DOCX or PPTX");
+    expect(html).toContain("approved solution decision");
+    expect(html).toContain("validated decision record");
+    expect(html).not.toContain("097447bd-1755-4f58-bdd0-d3db17990d7e");
+    expect(html).not.toContain("9fab255");
+  });
+
   it("renders the current-to-target journey (as-is AND to-be)", () => {
     const html = renderArchitectureHtml(FIRST_CAPITAL_ARCHITECTURE);
     expect(html).toContain("Current state (as-is)");

@@ -42,6 +42,37 @@ export type StorySpineId =
   | "p4_investment_case"
   | "p4_roadmap_commitment";
 
+const STORY_FRAMEWORK_ANCHORS: Record<StorySpineId, readonly string[]> = {
+  p2_discovery: [
+    "current-state journey / value-stream map",
+    "SWOT or strengths-gaps-risks-opportunities only when it sharpens the current-state story",
+    "MECE issue tree and root-cause tree",
+    "evidence-confidence matrix",
+    "proceed / hold / stop decision frame",
+  ],
+  p3_solution_decision: [
+    "current-state journey to target-state bridge",
+    "decision matrix across credible options",
+    "capability map and architecture layers",
+    "human/AI decision-rights and control matrix",
+    "risk-control and implementation-wave map",
+  ],
+  p4_investment_case: [
+    "value tree from operational levers to benefits",
+    "investment / benefit / risk bridge",
+    "sensitivity and scenario frame",
+    "decision log with conditions",
+    "benefit-realization control plan",
+  ],
+  p4_roadmap_commitment: [
+    "workstream roadmap by lane",
+    "dependency and critical-path map",
+    "RACI / decision-rights matrix",
+    "risk, issue, dependency and assumption log",
+    "stage-gate readiness checklist",
+  ],
+};
+
 /**
  * The canonical delivery lanes a data/AI roadmap splits into. A roadmap is not
  * one sequence — it is parallel tracks that each carry their own milestones and
@@ -445,12 +476,19 @@ export function renderStorySpinePrompt(spineId: StorySpineId): string {
   const lines = beats.map(
     (b, i) => `${i + 1}. ${b.label} — ${b.question} (${b.decisionRole})`,
   );
+  const frameworks = STORY_FRAMEWORK_ANCHORS[spineId].map(
+    (framework) => `- ${framework}`,
+  );
   return [
     "EXECUTIVE STORY SPINE: this artifact answers the reader's questions in this order.",
     ...lines,
     "",
+    "FRAMEWORK ANCHORS: use the appropriate consulting / architecture frameworks as lenses, not as filler headings.",
+    ...frameworks,
+    "",
     "Two beats may be combined into one section where that reads better, and a",
     "beat with nothing evidenced to say should say so rather than be padded. Do",
     "NOT reorder them: the sequence is the argument.",
+    "Do not explain the framework generically; use it to make the client's decision clearer.",
   ].join("\n");
 }
