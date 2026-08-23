@@ -324,6 +324,7 @@ def build_quality_denominators() -> list[dict[str, Any]]:
     review_dir = ROOT / "reports/ecl-dense-review-layer-local-load-2026-08-23"
     projection_dir = ROOT / "reports/ecl-dense-source-projection-local-load-2026-08-23"
     cube_dir = ROOT / "reports/ecl-dense-cube-layer-local-load-2026-08-23"
+    azure_gate_dir = ROOT / "reports/ecl-dense-azure-load-gate-package-2026-08-23"
 
     raw_summary = read_json_if_exists(raw_dir / "source_excel_raw_landing_summary.json")
     dense_summary = read_json_if_exists(dense_dir / "dense_source_room_summary.json")
@@ -335,6 +336,9 @@ def build_quality_denominators() -> list[dict[str, Any]]:
     review_summary = read_json_if_exists(review_dir / "dense_source_room_ecl_review_load_summary.json")
     projection_summary = read_json_if_exists(projection_dir / "dense_source_room_ecl_source_projection_load_summary.json")
     cube_summary = read_json_if_exists(cube_dir / "dense_source_room_ecl_cube_load_summary.json")
+    azure_gate_summary = read_json_if_exists(azure_gate_dir / "ecl_dense_azure_load_gate_package_summary.json")
+    azure_gate_status = read_json_if_exists(azure_gate_dir / "ecl_dense_azure_load_gate_status.json")
+    azure_execute_preflight = read_json_if_exists(azure_gate_dir / "ecl_dense_azure_execute_preflight_summary.json")
 
     def readback(summary: dict[str, Any]) -> dict[str, Any]:
         value = summary.get("readback")
@@ -362,6 +366,17 @@ def build_quality_denominators() -> list[dict[str, Any]]:
     local_layer_summaries = [source_summary, context_summary, commercial_summary, review_summary, projection_summary, cube_summary]
     local_layer_passed = sum(1 for summary in local_layer_summaries if summary and not summary.get("issues"))
     producer_missing_core = int(producer_summary.get("missing_core_producer_count", 1))
+    azure_gate_checks = [
+        azure_gate_summary.get("status") == "gate_package_ready_not_executed",
+        azure_gate_summary.get("actual_azure_execution") is False,
+        azure_gate_status.get("status") == "ready_for_explicit_future_gate_review",
+        azure_gate_status.get("actual_azure_execution") is False,
+        azure_execute_preflight.get("accepted") is True,
+        azure_execute_preflight.get("expected_rejected") is True,
+        azure_execute_preflight.get("actual_azure_execution") is False,
+        azure_execute_preflight.get("command_was_executed") is False,
+    ]
+    azure_gate_passed = sum(1 for value in azure_gate_checks if value)
 
     return [
         {
@@ -428,6 +443,21 @@ def build_quality_denominators() -> list[dict[str, Any]]:
                 "cube_slices": cube_readback.get("cube_slice"),
                 "cube_metric_drift": cube_readback.get("cube_metric_drift"),
                 "cube_measure_drift": cube_readback.get("cube_measure_drift"),
+            },
+        },
+        {
+            "area": "azure_load_gate_package",
+            "status": "pass" if azure_gate_passed == len(azure_gate_checks) else "pending",
+            "passed": azure_gate_passed,
+            "total": len(azure_gate_checks),
+            "evidence_path": "reports/ecl-dense-azure-load-gate-package-2026-08-23/ecl_dense_azure_load_gate_package_summary.json",
+            "notes": {
+                "gate_package_status": azure_gate_summary.get("status"),
+                "gate_status": azure_gate_status.get("status"),
+                "template_rejection_proven": azure_execute_preflight.get("expected_rejected"),
+                "actual_azure_execution": azure_gate_summary.get("actual_azure_execution"),
+                "command_was_executed": azure_execute_preflight.get("command_was_executed"),
+                "readback_contract": azure_gate_summary.get("readback_contract"),
             },
         },
         {
