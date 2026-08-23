@@ -1,0 +1,21 @@
+order,slice_id,result_state,checkpoint_percent,lane_decision,stop_gate,evidence
+1,commercial_contract_source_room_proof,passed,5,pre_authorized_auto_proceed,"Azure load, migration, product repointing, or browser-live claim.",outputs/ecl-no-stop-execution-run/logs/commercial_contract_source_room_proof.log
+2,legacy_table_retirement_pressure_map,passed,10,pre_authorized_auto_proceed,Live Azure DB readback or retirement authorization.,outputs/ecl-no-stop-execution-run/logs/legacy_table_retirement_pressure_map.log
+3,client_extraction_mapping_extension,passed,15,pre_authorized_auto_proceed,Replacing client-facing template packages in Azure.,outputs/ecl-no-stop-execution-run/logs/client_extraction_mapping_extension.log
+4,dense_meridian_requirements,passed,21,pre_authorized_auto_proceed,Active tenant source replacement.,outputs/ecl-no-stop-execution-run/logs/dense_meridian_requirements.log
+5,product_consumption_fact_contracts,passed,26,pre_authorized_auto_proceed,Product route repointing or deployed browser-live claim.,outputs/ecl-no-stop-execution-run/logs/product_consumption_fact_contracts.log
+6,builder_quality_gate_generalization,passed,31,pre_authorized_auto_proceed,Migration or ACA data-build execution.,outputs/ecl-no-stop-execution-run/logs/builder_quality_gate_generalization.log
+7,source_360_client_language_cleanup,passed,36,pre_authorized_auto_proceed,Product route repointing or deployed browser-live claim.,outputs/ecl-no-stop-execution-run/logs/source_360_client_language_cleanup.log
+8,source_360_weak_contract_preview,passed,42,pre_authorized_auto_proceed,Product route repointing or deployed browser-live claim.,outputs/ecl-no-stop-execution-run/logs/source_360_weak_contract_preview.log
+9,commercial_document_grammar_gate,passed,47,pre_authorized_auto_proceed,Active tenant source replacement or dense document promotion.,outputs/ecl-no-stop-execution-run/logs/commercial_document_grammar_gate.log
+10,ecl_cross_family_client_extraction_mapping,passed,52,pre_authorized_auto_proceed,Replacing client-facing workbook packages in Azure.,outputs/ecl-no-stop-execution-run/logs/ecl_cross_family_client_extraction_mapping.log
+11,ecl_dense_source_room_requirements,passed,57,pre_authorized_auto_proceed,Active tenant source replacement or dense synthetic package promotion.,outputs/ecl-no-stop-execution-run/logs/ecl_dense_source_room_requirements.log
+12,ecl_product_deterministic_fact_contracts,passed,63,pre_authorized_auto_proceed,Product route repointing or deployed browser-live claim.,outputs/ecl-no-stop-execution-run/logs/ecl_product_deterministic_fact_contracts.log
+13,ecl_next_slice_acceptance_gate,passed,68,pre_authorized_auto_proceed,None while validation remains local and report-only.,outputs/ecl-no-stop-execution-run/logs/ecl_next_slice_acceptance_gate.log
+14,ecl_client_workbook_execution_package,passed,73,pre_authorized_auto_proceed,Replacing client-facing workbook packages in Azure.,outputs/ecl-no-stop-execution-run/logs/ecl_client_workbook_execution_package.log
+15,ecl_client_workbook_execution_validation,passed,78,pre_authorized_auto_proceed,Replacing client-facing workbook packages in Azure.,outputs/ecl-no-stop-execution-run/logs/ecl_client_workbook_execution_validation.log
+16,operator_status_reporting_gate,passed,84,pre_authorized_auto_proceed,None while validation remains local and report-only.,outputs/ecl-no-stop-execution-run/logs/operator_status_reporting_gate.log
+17,source_360_route_readiness_bridge,passed,89,pre_authorized_auto_proceed,product_route_repointing,outputs/ecl-no-stop-execution-run/logs/source_360_route_readiness_bridge.log
+18,tower_command_center_static_preview,passed,94,pre_authorized_auto_proceed,product_route_repointing,outputs/ecl-no-stop-execution-run/logs/tower_command_center_static_preview.log
+19,machine_readable_execution_queue,passed,100,pre_authorized_auto_proceed,None while validation remains local and report-only.,outputs/ecl-no-stop-execution-run/logs/machine_readable_execution_queue.log
+20,browser_and_product_repointing_proof,hard_gated,100,hard_gate_requires_explicit_approval,product_route_repointing,

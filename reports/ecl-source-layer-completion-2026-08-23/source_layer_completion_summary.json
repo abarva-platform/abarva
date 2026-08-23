@@ -1,0 +1,68 @@
+{
+  "accepted": true,
+  "commercial_counts": {
+    "assessment_id": "assessment-commercial-contract-supply",
+    "bpo_vendor_gap_fill_count": 4,
+    "contract_scope": 44,
+    "contract_values": {
+      "MER-CTR-FIN-BPO-001": 5400000.0,
+      "MER-CTR-HR-BPO-001": 4800000.0,
+      "MER-CTR-RCM-001": 6600000.0,
+      "MER-CTR-SC-BPO-001": 6200000.0,
+      "MER-CTR-SSO-BPO-001": 11900000.0
+    },
+    "contracts": 5,
+    "cube_manifests": 4,
+    "cube_slice_measures": 160,
+    "cube_slice_metrics": 160,
+    "cube_slices": 20,
+    "document_confidence_distinct": 28,
+    "document_extractions": 235,
+    "document_line_count_avg": 195.69,
+    "document_line_count_max": 203,
+    "document_line_count_min": 189,
+    "document_page_count_avg": 13.0,
+    "document_page_count_max": 13,
+    "document_page_count_min": 13,
+    "document_span_distinct": 235,
+    "document_span_fallback_count": 0,
+    "documents": 55,
+    "invoice_lines": 40,
+    "measures": 75,
+    "objects": 48,
+    "r1_revendored": true,
+    "relationships": 49,
+    "review_events": 13,
+    "service_lines": 20,
+    "sla_observations": 90,
+    "source_contract_360_rows": 5,
+    "source_event_workspace_rows": 13,
+    "source_files": 71,
+    "source_records": 589,
+    "source_value_levers_rows": 5,
+    "source_vendor_360_rows": 5,
+    "tenant_key": "meridian-health",
+    "tower_rows": 5
+  },
+  "commercial_source_vertical_loaded_locally_across_layers": true,
+  "evidence": {
+    "backlog_csv": "reports/ecl-source-layer-completion-2026-08-23/source_backlog_20_status.csv",
+    "json_summary": "reports/ecl-source-layer-completion-2026-08-23/source_layer_completion_summary.json",
+    "layer_matrix_csv": "reports/ecl-source-layer-completion-2026-08-23/source_layer_completion_matrix.csv",
+    "markdown_report": "reports/ecl-source-layer-completion-2026-08-23/SOURCE_LAYER_COMPLETION_REPORT.md"
+  },
+  "full_source_fully_loaded_and_comprehensive_across_all_layers": false,
+  "generated_at": "2026-08-23T08:45:01.894162+00:00",
+  "local_queue": {
+    "executable_slices": 19,
+    "hard_gated_slices": 1,
+    "passed_executable_slices": 19,
+    "total_slices": 20
+  },
+  "why_not_full_source_complete": [
+    "Dense source rooms for all nine families are requirements/planning artifacts, not fully populated source-room data.",
+    "Azure/client-preprod load and independent readback were not performed in this local lane.",
+    "Current product routes were not repointed to ECL and signed-in browser QA was not claimed.",
+    "Home, Intelligence, Moves, and cross-family cube consumers are not all built against ECL yet."
+  ]
+}
