@@ -39,6 +39,7 @@ test("vendor proposal proof job populates required source artifact version", () 
 test("vendor proposal proof job populates source artifact timestamps when present", () => {
   const source = read(SCRIPT_PATH);
   assert.match(source, /const now = new Date\(\)\.toISOString\(\)/);
+  assert.match(source, /includeColumn\(args\.columns, row, "generated_at", now\)/);
   assert.match(source, /includeColumn\(args\.columns, row, "created_at", now\)/);
   assert.match(source, /includeColumn\(args\.columns, row, "updated_at", now\)/);
 });

@@ -321,6 +321,7 @@ async function upsertArtifact(args: {
   includeColumn(args.columns, row, "title", `${args.vendorKey} proposal parse proof`);
   includeColumn(args.columns, row, "version", 1);
   const now = new Date().toISOString();
+  includeColumn(args.columns, row, "generated_at", now);
   includeColumn(args.columns, row, "created_at", now);
   includeColumn(args.columns, row, "updated_at", now);
   includeColumn(
