@@ -24,6 +24,7 @@ import type {
 import { sanitizeClientFacingArtifactMarkdown } from "@/lib/deliverables/client-facing-artifact-sanitize";
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
+import { clientCompleteReasonLabel } from "./client-complete-labels";
 import { humanizeSourceFamily } from "./source-register";
 
 /** Bounded-concurrency map that preserves input order. */
@@ -415,7 +416,7 @@ function fallbackRiskTable(
     rows.push([
       c.label,
       "Open decision",
-      c.reason,
+      clientCompleteReasonLabel(c.reason),
       c.owner,
       "Confirm during sponsor review before phase advancement.",
     ]);

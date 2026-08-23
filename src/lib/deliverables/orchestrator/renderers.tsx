@@ -61,6 +61,7 @@ import type {
   RenderableExhibit,
   RenderableTable,
 } from "./types";
+import { clientCompleteReasonLabel } from "./client-complete-labels";
 
 // ── AI-generated disclosure — the single source of truth for this exact
 // text, per the Moves Continuous Execution Directive's requirement that
@@ -314,7 +315,9 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
       children.push(
         bodyParagraph([
           boldRun(`☐ ${c.label} `),
-          bodyRun(`— owner: ${c.owner} (${c.reason})`),
+          bodyRun(
+            `— owner: ${c.owner} (${clientCompleteReasonLabel(c.reason)})`,
+          ),
         ]),
       );
     }
@@ -957,7 +960,7 @@ export function renderDeliverableHtml(doc: RenderableDeliverable): string {
   const checklist = doc.clientCompleteChecklist
     .map(
       (c) =>
-        `<li>☐ <strong>${esc(c.label)}</strong> — owner: ${esc(String(c.owner))} (${esc(c.reason)})</li>`,
+        `<li>☐ <strong>${esc(c.label)}</strong> — owner: ${esc(String(c.owner))} (${esc(clientCompleteReasonLabel(c.reason))})</li>`,
     )
     .join("");
   const nextActions = doc.nextActions.map((a) => `<li>${esc(a)}</li>`).join("");
@@ -1263,7 +1266,8 @@ export function renderDeliverablePdf(
             </PdfText>
             {doc.clientCompleteChecklist.map((c) => (
               <PdfText key={c.key} style={PDF_STYLES.body}>
-                ☐ {c.label} — owner: {c.owner} ({c.reason})
+                ☐ {c.label} — owner: {c.owner} (
+                {clientCompleteReasonLabel(c.reason)})
               </PdfText>
             ))}
           </PdfView>

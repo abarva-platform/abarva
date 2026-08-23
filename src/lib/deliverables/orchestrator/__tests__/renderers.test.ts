@@ -23,6 +23,16 @@ describe("DOCX renderer", () => {
     // .docx is a zip — starts with PK
     expect(buf.subarray(0, 2).toString("latin1")).toBe("PK");
   });
+
+  it("renders client-to-complete reason labels, not internal reason codes", async () => {
+    const buf = await Packer.toBuffer(renderDeliverableDocx(goodDocument()));
+    const zip = await JSZip.loadAsync(buf);
+    const documentXml = await zip.file("word/document.xml")!.async("string");
+
+    expect(documentXml).toContain("Procurement approval required");
+    expect(documentXml).not.toContain("procurement_signoff");
+    expect(documentXml).not.toContain("client_judgment");
+  });
 });
 
 describe("DOCX/HTML/PDF renderers — duplicate section-heading suppression", () => {
@@ -172,6 +182,11 @@ describe("HTML preview", () => {
     expect(html).toMatch(
       /must not be treated as an approved client deliverable/i,
     );
+  });
+
+  it("renders client-to-complete reason labels, not internal reason codes", () => {
+    expect(html).toMatch(/Procurement approval required/);
+    expect(html).not.toMatch(/procurement_signoff|client_judgment/);
   });
 });
 
