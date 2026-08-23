@@ -361,6 +361,9 @@ async function upsertArtifact(args: {
     JSON.stringify(["Controlled proof artifact; candidate facts require human review before acceptance."]),
   );
   includeColumn(args.columns, row, "cited_source_artifact_ids", "{}");
+  includeColumn(args.columns, row, "is_client_final", false);
+  includeColumn(args.columns, row, "is_current_authoritative", false);
+  includeColumn(args.columns, row, "client_final_change_summary", JSON.stringify({}));
   includeColumn(args.columns, row, "created_by", `aca-job:${args.runId}`);
   includeColumn(args.columns, row, "lifecycle_state", "current");
 

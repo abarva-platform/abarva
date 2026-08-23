@@ -56,6 +56,13 @@ test("vendor proposal proof job populates workspace citation lineage array", () 
   assert.match(source, /includeColumn\(args\.columns, row, "cited_source_artifact_ids", "\{\}"\)/);
 });
 
+test("vendor proposal proof job marks proof uploads as non-authoritative drafts", () => {
+  const source = read(SCRIPT_PATH);
+  assert.match(source, /includeColumn\(args\.columns, row, "is_client_final", false\)/);
+  assert.match(source, /includeColumn\(args\.columns, row, "is_current_authoritative", false\)/);
+  assert.match(source, /includeColumn\(args\.columns, row, "client_final_change_summary", JSON\.stringify\(\{\}\)\)/);
+});
+
 test("vendor proposal proof job carries rich proposal dimensions", () => {
   const source = read(SCRIPT_PATH);
   for (const label of [

@@ -22,6 +22,8 @@ Fourth update: the next live ACA retry found that `source_artifacts.missing_inpu
 
 Fifth update: the next live ACA retry found that `source_artifacts.cited_source_artifact_ids` is also required in the deployed table. The proof job now writes an empty UUID array for the uploaded proof artifact because it is the source artifact itself, not a generated artifact citing prior source artifacts.
 
+Sixth update: the next live ACA retry found that the client-final artifact governance columns are also required in the deployed table. The proof job now writes `is_client_final = false`, `is_current_authoritative = false`, and an empty `client_final_change_summary` because the controlled proof upload is candidate evidence, not a client-approved authoritative deliverable.
+
 ## Layer Impact
 
 - Release lane: `client-data-lane`.
@@ -47,6 +49,7 @@ Fifth update: the next live ACA retry found that `source_artifacts.cited_source_
 - Explicit `source_artifacts.generated_at`, `source_artifacts.created_at`, and `source_artifacts.updated_at` population for timestamped proof rows when those columns exist.
 - Explicit File Cabinet JSON metadata population for `source_artifacts.missing_inputs`, `source_artifacts.client_complete_items`, and `source_artifacts.assumptions` when those columns exist.
 - Explicit Workspace Explorer citation-lineage array population for `source_artifacts.cited_source_artifact_ids` when that column exists.
+- Explicit client-final governance metadata for `source_artifacts.is_client_final`, `source_artifacts.is_current_authoritative`, and `source_artifacts.client_final_change_summary` when those columns exist.
 
 ## QA / Validation
 
@@ -58,6 +61,7 @@ Fifth update: the next live ACA retry found that `source_artifacts.cited_source_
 - FAIL THEN FIXED: third ACA apply attempt failed before mutation because the live artifact registry required `generated_at`; this release candidate now populates that artifact timestamp and pins it in the focused test.
 - FAIL THEN FIXED: fourth ACA apply attempt failed before mutation because the live artifact registry required `missing_inputs`; this release candidate now populates the File Cabinet JSON metadata trio and pins it in the focused test.
 - FAIL THEN FIXED: fifth ACA apply attempt failed before mutation because the live artifact registry required `cited_source_artifact_ids`; this release candidate now populates an empty UUID array for the uploaded source artifact and pins it in the focused test.
+- FAIL THEN FIXED: sixth ACA apply attempt failed before mutation because the live artifact registry required `is_client_final`; this release candidate now populates the client-final governance trio as non-authoritative proof metadata and pins it in the focused test.
 - NOT RUN: live ACA proof is required before calling the mutation path live-proven.
 
 ## Rollout Plan
