@@ -176,8 +176,8 @@ const STATUS_LABEL: Record<RunStatus | "idle", string> = {
   idle: "Not built",
   queued: "Queued",
   running: "Building",
-  succeeded: "Gate-ready",
-  blocked: "Not gate-ready",
+  succeeded: "Built",
+  blocked: "Needs evidence",
   failed: "Failed",
   error: "Could not start",
 };
@@ -465,7 +465,7 @@ export function PhaseApproveAndBuild({
         : blockedCount > 0
           ? `${blockedCount} output${blockedCount === 1 ? "" : "s"} need evidence or quality fixes before the phase can advance.`
           : builtCount === specs.length
-            ? `${phaseLabel} is gate-ready. Review the generated documents before relying on them.`
+            ? `${phaseLabel} documents are built. Review them before relying on them.`
             : "Capture is separate from gate readiness. Build once the record is ready for review.";
 
   return (
@@ -527,7 +527,7 @@ export function PhaseApproveAndBuild({
             }}
           >
             <StatusPill tone={builtCount === specs.length ? "good" : "neutral"}>
-              {builtCount}/{specs.length} gate-ready
+              {builtCount}/{specs.length} built
             </StatusPill>
             <StatusPill tone="neutral">
               {gateCount} gate artifact{gateCount === 1 ? "" : "s"}
@@ -711,7 +711,7 @@ export function PhaseApproveAndBuild({
                 }}
                 target="_blank"
               >
-                Open document →
+                Download final →
               </Link>
             )}
             {r.status === "blocked" && r.packageReadiness && (
@@ -725,7 +725,7 @@ export function PhaseApproveAndBuild({
                 }}
               >
                 <summary style={{ cursor: "pointer", fontWeight: 700 }}>
-                  Why this is not gate-ready
+                  Why this still needs evidence
                 </summary>
                 <div
                   style={{

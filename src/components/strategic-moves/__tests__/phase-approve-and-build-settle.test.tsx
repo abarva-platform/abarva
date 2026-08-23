@@ -126,6 +126,8 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
     const result = onBuildSettled.mock.calls[0][0];
     expect(result.succeededKeys).toEqual(["charter"]);
     expect(result.failedKeys).toEqual([]);
+    expect(screen.getByText("Download final \u2192")).toBeInTheDocument();
+    expect(screen.queryByText("Open document \u2192")).not.toBeInTheDocument();
   });
 
   it("reports a failed deliverable in failedKeys instead of silently succeeding", async () => {
@@ -158,6 +160,38 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
     const result = onBuildSettled.mock.calls[0][0];
     expect(result.succeededKeys).toEqual([]);
     expect(result.failedKeys).toEqual(["charter"]);
+  });
+
+  it("labels a below-gate deliverable as needing evidence instead of implying the step failed", async () => {
+    mockFetchSequence({
+      runId: "run_blocked",
+      intermediateStatus: "running",
+      finalStatus: "blocked",
+    });
+    const onBuildSettled = jest.fn<Promise<void>, [BuildSettledResult]>(
+      async () => {},
+    );
+
+    render(
+      <PhaseApproveAndBuild
+        moveId="move-1"
+        phaseNum={1}
+        phaseLabel="P1 Charter"
+        archetype="ai_enabled_sdlc"
+        moveName="Contact Center AI"
+        clientDisplayName="Client"
+        onBuildSettled={onBuildSettled}
+      />,
+    );
+
+    await clickApproveAndBuild(/Approve & Build P1 Charter/i);
+
+    await waitFor(() => expect(screen.getByText("Needs evidence")).toBeInTheDocument(), {
+      timeout: 8000,
+    });
+    expect(screen.queryByText("Not gate-ready")).not.toBeInTheDocument();
+    expect(onBuildSettled).toHaveBeenCalledTimes(1);
+    expect(onBuildSettled.mock.calls[0][0].failedKeys).toEqual(["charter"]);
   });
 
   it("reports an enqueue-time error deliverable in failedKeys with no runId and no poll", async () => {

@@ -4201,8 +4201,8 @@ function PhaseBody({
           )
         ) : (
           <p>
-            One record advances. Inputs can be captured while outputs still
-            remain blocked until evidence and gate checks pass.
+            Left-side checks mean the step inputs are captured. This gate
+            advances only after required evidence, outputs, and approvals pass.
           </p>
         )}
         <div
@@ -4230,14 +4230,14 @@ function PhaseBody({
           </article>
           <details className="mxw-decision-details">
             <summary>
-              <span>Gate details</span>
+              <span>Why</span>
               <strong>
                 {gateSummaryLine} {nextPhaseSummaryLine}
               </strong>
             </summary>
             <div className="mxw-decision-detail-grid">
               <article>
-                <span className="mxw-exec-label">Evidence</span>
+                <span className="mxw-exec-label">Evidence state</span>
                 <button
                   type="button"
                   className="mxw-evidence-count-link mxw-evidence-count-link-strong"
@@ -4253,7 +4253,7 @@ function PhaseBody({
                 </p>
               </article>
               <article>
-                <span className="mxw-exec-label">Blockers</span>
+                <span className="mxw-exec-label">What is blocking</span>
                 {isGateBlocked || openSoftCriteria.length > 0 ? (
                   <ul>
                     {openHardCriteria.slice(0, 3).map((criterion) => (
@@ -4278,7 +4278,7 @@ function PhaseBody({
                 )}
               </article>
               <article>
-                <span className="mxw-exec-label">Next phase</span>
+                <span className="mxw-exec-label">After approval</span>
                 <strong>{readinessPack.nextPhaseLabel}</strong>
                 <p>{nextPhaseSummaryLine}</p>
               </article>

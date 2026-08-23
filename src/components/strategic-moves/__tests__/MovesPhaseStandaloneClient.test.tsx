@@ -2632,6 +2632,8 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByTestId("mxw-decision-surface")).toHaveTextContent(
       "P2 cannot advance yet",
     );
+    expect(screen.getByText(/Left-side checks mean the step inputs are captured/i)).toBeInTheDocument();
+    expect(screen.getByText(/gate advances only after required evidence, outputs, and approvals pass/i)).toBeInTheDocument();
     expect(screen.getByTestId("mxw-decision-surface")).toHaveTextContent(
       "Resolve 1 hard gate blocker before advancing",
     );
@@ -2937,7 +2939,7 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(screen.getAllByText(/Gate approved/i).length).toBeGreaterThan(0);
     });
     await waitFor(() => {
-      expect(screen.getAllByText(/^Gate-ready$/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/^Built$/i).length).toBeGreaterThan(0);
     });
     expect(global.fetch).toHaveBeenCalledWith(
       "/api/v1/deliverables/generate-phase",

@@ -482,10 +482,10 @@ function DocumentRow({
             {!isExcel && (
               <>
                 <a href={`${base}?format=html`} style={linkStyle("ghost")}>
-                  ↓ HTML
+                  HTML preview
                 </a>
                 <a href={`${base}?format=docx`} style={linkStyle("primary")}>
-                  ↓ Word
+                  Download Word
                 </a>
               </>
             )}
@@ -510,10 +510,10 @@ function DocumentRow({
           // governed artifacts route.
           <>
             <a href={`${artBase}?format=html`} style={linkStyle("ghost")}>
-              ↓ HTML
+              HTML preview
             </a>
             <a href={`${artBase}?format=docx`} style={linkStyle("primary")}>
-              ↓ Word
+              Download Word
             </a>
             <span style={{ fontSize: 10, color: "#b4b4b8" }}>
               {formatDate(runArtifact.updatedAt)}
@@ -1017,13 +1017,13 @@ export async function PhaseDocumentsPanel({
                       href={`/api/programs/${moveId}/deliverables/${row.id}/content-export?format=html`}
                       style={linkStyle("ghost")}
                     >
-                      ↓ HTML
+                      HTML preview
                     </a>
                     <a
                       href={`/api/programs/${moveId}/deliverables/${row.id}/content-export?format=docx`}
                       style={linkStyle("primary")}
                     >
-                      ↓ Word
+                      Download Word
                     </a>
                   </div>
                 )}
