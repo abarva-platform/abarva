@@ -43,6 +43,7 @@ REQUIRED_QUALITY_AREAS = {
     "application_realism_gates",
     "ecl_table_producer_coverage",
     "local_layer_readback_chain",
+    "azure_load_gate_package",
     "runtime_and_browser_hard_gates",
 }
 

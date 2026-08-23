@@ -238,7 +238,7 @@
       "auto_proceed_allowed": false,
       "proof_command": "",
       "evidence_paths": [],
-      "next_auto_action": "None. Requires explicit authorization before wiring a mutating ACA data-build execution path.",
+      "next_auto_action": "None inside the no-stop queue. Run the post-queue Azure gate local proof only after the local queue has completed successfully.",
       "stop_gate": "azure_data_plane_write"
     },
     {
