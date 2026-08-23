@@ -92,21 +92,20 @@ jobs:
       - name: Compile ECL proof scripts
         run: |
           python3 -m py_compile \
+            scripts/ecl/run_no_stop_execution_queue.py \
             scripts/ecl/run_commercial_contract_proof.py \
             scripts/ecl/validate_no_stop_execution_queue.py \
             scripts/ecl/validate_commercial_proof_acceptance.py \
             scripts/ecl/write_legacy_table_retirement_map.py
 
-      - name: Run no-stop ECL proof command
+      - name: Run no-stop ECL execution queue
         env:
           LANG: C.UTF-8
           LC_ALL: C.UTF-8
         run: |
-          python3 scripts/ecl/run_commercial_contract_proof.py
-          python3 scripts/ecl/write_legacy_table_retirement_map.py
-          python3 scripts/ecl/validate_no_stop_execution_queue.py
+          python3 scripts/ecl/run_no_stop_execution_queue.py
 
-      - name: Assert proof acceptance and retirement-map counts
+      - name: Assert queue execution, proof acceptance, and retirement-map counts
         shell: bash
         run: |
           set -euo pipefail
@@ -124,8 +123,15 @@ jobs:
           summary = json.loads((report_dir / "legacy_table_retirement_summary.json").read_text())
           rows = list(csv.DictReader((report_dir / "legacy_table_retirement_map.csv").open()))
           queue = json.loads(Path("outputs/ecl-no-stop-queue-validation/validation-summary.json").read_text())
+          execution = json.loads(Path("outputs/ecl-no-stop-execution-run/execution-summary.json").read_text())
 
           failures = []
+          if not execution.get("accepted"):
+            failures.append(f"queue execution failed: {execution}")
+          if execution.get("passed_executable_slice_count") != execution.get("executable_slice_count"):
+            failures.append(
+              f"queue executed {execution.get('passed_executable_slice_count')} of {execution.get('executable_slice_count')} executable slices"
+            )
           if not acceptance.get("accepted"):
             failures.append(f"commercial proof not accepted: {acceptance}")
           if acceptance.get("issue_count") != 0:
@@ -162,6 +168,8 @@ jobs:
               "artifact_hashes": len(manifest.get("artifact_hashes", [])),
               "source_room_hashes": len(manifest.get("source_room_hashes", [])),
               "create_table_statements": summary.get("create_table_statements"),
+              "queue_executable_slices": execution.get("executable_slice_count"),
+              "queue_passed_slices": execution.get("passed_executable_slice_count"),
               "queue_slices": queue.get("slice_count"),
               "unique_table_names": summary.get("unique_table_names"),
           }, indent=2, sort_keys=True))
@@ -174,6 +182,7 @@ jobs:
           mkdir -p audit-artifacts/ecl-no-stop-data-pipeline
           tar -czf audit-artifacts/ecl-no-stop-data-pipeline/ecl-no-stop-proof.tgz \
             outputs/ecl-commercial-contract-supply-correction-2026-08-22 \
+            outputs/ecl-no-stop-execution-run \
             outputs/ecl-no-stop-queue-validation \
             reports/ecl-legacy-table-retirement-map-2026-08-22 \
             docs/architecture/ECL_NO_STOP_EXECUTION_QUEUE_2026_08_22.md \
