@@ -41,11 +41,12 @@ export const SOURCE_DEFINITIONS = [
     },
     sql: `
       SELECT
+        COUNT(*)::numeric AS __source_row_count,
         COUNT(*)::numeric AS contract_count,
         COUNT(DISTINCT vendor_ref)::numeric AS vendor_count,
-        COALESCE(SUM(annual_value), 0)::numeric AS portfolio_annual_value_usd,
-        COALESCE(SUM(total_committed_value), 0)::numeric AS total_committed_value_usd,
-        COALESCE(SUM(CASE WHEN auto_renew THEN 1 ELSE 0 END), 0)::numeric AS auto_renew_contract_count
+        SUM(annual_value)::numeric AS portfolio_annual_value_usd,
+        SUM(total_committed_value)::numeric AS total_committed_value_usd,
+        SUM(CASE WHEN auto_renew THEN 1 ELSE 0 END)::numeric AS auto_renew_contract_count
       FROM source.contract_360
       WHERE tenant_key = ANY($1::text[])
         AND NOT (vendor_ref = ANY($2::text[]))
@@ -64,11 +65,12 @@ export const SOURCE_DEFINITIONS = [
     },
     sql: `
       SELECT
-        COALESCE(SUM(contract_count), 0)::numeric AS contract_count,
+        COUNT(*)::numeric AS __source_row_count,
+        SUM(contract_count)::numeric AS contract_count,
         COUNT(DISTINCT vendor_ref)::numeric AS vendor_count,
-        COALESCE(SUM(annual_value), 0)::numeric AS portfolio_annual_value_usd,
-        COALESCE(SUM(total_committed_value), 0)::numeric AS total_committed_value_usd,
-        COALESCE(SUM(auto_renew_contracts), 0)::numeric AS auto_renew_contract_count
+        SUM(annual_value)::numeric AS portfolio_annual_value_usd,
+        SUM(total_committed_value)::numeric AS total_committed_value_usd,
+        SUM(auto_renew_contracts)::numeric AS auto_renew_contract_count
       FROM source.vendor_contract_portfolio
       WHERE tenant_key = ANY($1::text[])
     `,
@@ -85,10 +87,11 @@ export const SOURCE_DEFINITIONS = [
     },
     sql: `
       SELECT
+        COUNT(*)::numeric AS __source_row_count,
         COUNT(*)::numeric AS contract_count,
-        COALESCE(SUM(annual_value), 0)::numeric AS portfolio_annual_value_usd,
-        COALESCE(SUM(total_committed_value), 0)::numeric AS total_committed_value_usd,
-        COALESCE(SUM(CASE WHEN auto_renew THEN 1 ELSE 0 END), 0)::numeric AS auto_renew_contract_count
+        SUM(annual_value)::numeric AS portfolio_annual_value_usd,
+        SUM(total_committed_value)::numeric AS total_committed_value_usd,
+        SUM(CASE WHEN auto_renew THEN 1 ELSE 0 END)::numeric AS auto_renew_contract_count
       FROM consumption.sourcing_contract_v1
       WHERE tenant_key = ANY($1::text[])
     `,
@@ -106,11 +109,12 @@ export const SOURCE_DEFINITIONS = [
     },
     sql: `
       SELECT
-        COALESCE(SUM(contract_count), 0)::numeric AS contract_count,
+        COUNT(*)::numeric AS __source_row_count,
+        SUM(contract_count)::numeric AS contract_count,
         COUNT(DISTINCT vendor_ref)::numeric AS vendor_count,
-        COALESCE(SUM(annual_value), 0)::numeric AS portfolio_annual_value_usd,
-        COALESCE(SUM(total_committed_value), 0)::numeric AS total_committed_value_usd,
-        COALESCE(SUM(auto_renew_contracts), 0)::numeric AS auto_renew_contract_count
+        SUM(annual_value)::numeric AS portfolio_annual_value_usd,
+        SUM(total_committed_value)::numeric AS total_committed_value_usd,
+        SUM(auto_renew_contracts)::numeric AS auto_renew_contract_count
       FROM consumption.sourcing_vendor_v1
       WHERE tenant_key = ANY($1::text[])
     `,
@@ -127,9 +131,10 @@ export const SOURCE_DEFINITIONS = [
     },
     sql: `
       SELECT
-        COALESCE(SUM(contracts), 0)::numeric AS contract_count,
-        COALESCE(SUM(vendors), 0)::numeric AS vendor_count,
-        COALESCE(SUM(annual_value), 0)::numeric AS portfolio_annual_value_usd
+        COUNT(*)::numeric AS __source_row_count,
+        SUM(contracts)::numeric AS contract_count,
+        SUM(vendors)::numeric AS vendor_count,
+        SUM(annual_value)::numeric AS portfolio_annual_value_usd
       FROM consumption_v4_canary.sourcing_context_coverage_v1
       WHERE tenant_key = ANY($1::text[])
     `,
@@ -147,10 +152,11 @@ export const SOURCE_DEFINITIONS = [
     },
     sql: `
       SELECT
+        COUNT(*)::numeric AS __source_row_count,
         COUNT(*)::numeric AS contract_count,
-        COALESCE(SUM(annual_value), 0)::numeric AS portfolio_annual_value_usd,
-        COALESCE(SUM(total_committed_value), 0)::numeric AS total_committed_value_usd,
-        COALESCE(SUM(CASE WHEN auto_renew THEN 1 ELSE 0 END), 0)::numeric AS auto_renew_contract_count
+        SUM(annual_value)::numeric AS portfolio_annual_value_usd,
+        SUM(total_committed_value)::numeric AS total_committed_value_usd,
+        SUM(CASE WHEN auto_renew THEN 1 ELSE 0 END)::numeric AS auto_renew_contract_count
       FROM consumption_v4_canary.sourcing_contract_v1
       WHERE tenant_key = ANY($1::text[])
     `,
@@ -167,9 +173,10 @@ export const SOURCE_DEFINITIONS = [
     },
     sql: `
       SELECT
-        COALESCE(SUM(contract_count), 0)::numeric AS contract_count,
+        COUNT(*)::numeric AS __source_row_count,
+        SUM(contract_count)::numeric AS contract_count,
         COUNT(*)::numeric AS vendor_count,
-        COALESCE(SUM(annual_value), 0)::numeric AS portfolio_annual_value_usd
+        SUM(annual_value)::numeric AS portfolio_annual_value_usd
       FROM consumption_v4_canary.sourcing_vendor_v1
       WHERE tenant_key = ANY($1::text[])
     `,
@@ -186,8 +193,9 @@ export const SOURCE_DEFINITIONS = [
     },
     sql: `
       SELECT
+        COUNT(*)::numeric AS __source_row_count,
         COUNT(*)::numeric AS contract_count,
-        COALESCE(SUM(synthetic_midpoint_total_contract_value), 0)::numeric AS total_committed_value_usd
+        SUM(synthetic_midpoint_total_contract_value)::numeric AS total_committed_value_usd
       FROM foundation_v2_meridian_health_cube_canary.meridian_health_contract_family_v1
       WHERE tenant_key = ANY($1::text[])
     `,
@@ -205,16 +213,118 @@ export const SOURCE_DEFINITIONS = [
     },
     sql: `
       SELECT
-        COALESCE(SUM(contract_family_count), 0)::numeric AS contract_count,
+        COUNT(*)::numeric AS __source_row_count,
+        SUM(contract_family_count)::numeric AS contract_count,
         COUNT(*)::numeric AS vendor_count,
-        COALESCE(SUM(invoice_line_amount), 0)::numeric AS portfolio_annual_value_usd
+        SUM(invoice_line_amount)::numeric AS portfolio_annual_value_usd
       FROM foundation_v2_meridian_health_cube_canary.meridian_health_vendor_portfolio_v1
+      WHERE tenant_key = ANY($1::text[])
+    `,
+  },
+  {
+    id: "source.optimization_opportunity",
+    label: "Optimization opportunity spine",
+    table: "source.optimization_opportunity",
+    basisByMetric: {
+      opportunity_count: "opportunity_row",
+      opportunity_amount_usd: "opportunity_row_amount_total",
+    },
+    sql: `
+      SELECT
+        COUNT(*)::numeric AS __source_row_count,
+        COUNT(*)::numeric AS opportunity_count,
+        SUM(amount_usd) FILTER (
+          WHERE amount_state <> 'not_sized'
+            AND amount_usd IS NOT NULL
+        )::numeric AS opportunity_amount_usd
+      FROM source.optimization_opportunity
+      WHERE tenant_key = ANY($1::text[])
+    `,
+  },
+  {
+    id: "source.opportunity_valuation",
+    label: "Opportunity valuation ledger",
+    table: "source.opportunity_valuation",
+    basisByMetric: {
+      opportunity_amount_usd: "opportunity_potential_valuation_total",
+      finance_confirmed_value_usd:
+        "opportunity_finance_confirmed_valuation_total",
+    },
+    sql: `
+      SELECT
+        COUNT(*)::numeric AS __source_row_count,
+        SUM(amount_usd) FILTER (
+          WHERE valuation_type = 'potential'
+            AND amount_usd IS NOT NULL
+        )::numeric AS opportunity_amount_usd,
+        SUM(amount_usd) FILTER (
+          WHERE valuation_type = 'finance_confirmed'
+            AND amount_usd IS NOT NULL
+        )::numeric AS finance_confirmed_value_usd
+      FROM source.opportunity_valuation
+      WHERE tenant_key = ANY($1::text[])
+    `,
+  },
+  {
+    id: "source.finance_realization",
+    label: "Finance realization proof",
+    table: "source.finance_realization",
+    basisByMetric: {
+      finance_confirmed_value_usd: "finance_realization_total",
+    },
+    sql: `
+      SELECT
+        COUNT(*)::numeric AS __source_row_count,
+        SUM(amount_usd)::numeric AS finance_confirmed_value_usd
+      FROM source.finance_realization
+      WHERE tenant_key = ANY($1::text[])
+    `,
+  },
+  {
+    id: "source.opportunity_requirement_status",
+    label: "Opportunity evidence readiness status",
+    table: "source.opportunity_requirement_status",
+    basisByMetric: {
+      evidence_requirement_count: "requirement_status_required_row",
+      evidence_ready_count: "requirement_status_met_row",
+      evidence_gap_count: "requirement_status_gap_row",
+    },
+    sql: `
+      SELECT
+        COUNT(*)::numeric AS __source_row_count,
+        COUNT(*) FILTER (
+          WHERE status <> 'not_applicable'
+        )::numeric AS evidence_requirement_count,
+        COUNT(*) FILTER (
+          WHERE status = 'met'
+        )::numeric AS evidence_ready_count,
+        COUNT(*) FILTER (
+          WHERE status IN ('missing', 'workflow_required', 'conflicted')
+        )::numeric AS evidence_gap_count
+      FROM source.opportunity_requirement_status
+      WHERE tenant_key = ANY($1::text[])
+    `,
+  },
+  {
+    id: "source.opportunity_evidence",
+    label: "Opportunity evidence objects",
+    table: "source.opportunity_evidence",
+    basisByMetric: {
+      evidence_available_count: "opportunity_evidence_available_row",
+    },
+    sql: `
+      SELECT
+        COUNT(*)::numeric AS __source_row_count,
+        COUNT(*) FILTER (
+          WHERE evidence_status = 'EVIDENCE_AVAILABLE'
+        )::numeric AS evidence_available_count
+      FROM source.opportunity_evidence
       WHERE tenant_key = ANY($1::text[])
     `,
   },
 ];
 
-const METRICS = [
+export const METRICS = [
   {
     key: "portfolio_annual_value_usd",
     label: "Portfolio annual value",
@@ -238,6 +348,41 @@ const METRICS = [
   {
     key: "auto_renew_contract_count",
     label: "Auto-renew contract count",
+    format: "count",
+  },
+  {
+    key: "opportunity_count",
+    label: "Optimization opportunity count",
+    format: "count",
+  },
+  {
+    key: "opportunity_amount_usd",
+    label: "Optimization opportunity amount",
+    format: "money",
+  },
+  {
+    key: "finance_confirmed_value_usd",
+    label: "Finance-confirmed value",
+    format: "money",
+  },
+  {
+    key: "evidence_requirement_count",
+    label: "Evidence requirement count",
+    format: "count",
+  },
+  {
+    key: "evidence_ready_count",
+    label: "Evidence ready count",
+    format: "count",
+  },
+  {
+    key: "evidence_gap_count",
+    label: "Evidence gap count",
+    format: "count",
+  },
+  {
+    key: "evidence_available_count",
+    label: "Evidence available row count",
     format: "count",
   },
 ];
@@ -328,8 +473,14 @@ function numeric(value) {
 
 function assertedValue(value) {
   const n = numeric(value);
-  if (n == null || n === 0) return null;
+  if (n == null) return null;
   return n;
+}
+
+function sourceRowCount(row, rows) {
+  const explicitCount = numeric(row?.__source_row_count);
+  if (explicitCount != null) return explicitCount;
+  return rows.length;
 }
 
 async function querySource(client, tenant, source, supplementalVendorRefs) {
@@ -365,8 +516,9 @@ export function queryParameterValuesForSource(
   return values;
 }
 
-function assertionsFromSource(tenantKey, source, rows) {
+export function assertionsFromSource(tenantKey, source, rows) {
   const row = rows[0] ?? {};
+  if (sourceRowCount(row, rows) <= 0) return [];
   return Object.entries(source.basisByMetric)
     .map(([metric, basis]) => {
       const value = assertedValue(row[metric]);

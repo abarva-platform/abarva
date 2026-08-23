@@ -30,9 +30,11 @@ Two rules that have cost the most when broken:
 - **For product/read-model figures outside that script's coverage, use the owning projection's
   lineage and readback proof.** Run `node scripts/source/source-substrate-lineage-report.mjs` before
   quoting Source figures such as portfolio annual value, contract count, vendor count, Contract 360
-  totals, Cube/consumption metrics, or Source read-model values. State the counting basis. If a
-  Source figure is `ONE_SOURCE`, say so when you quote it. If it is `CONFLICT`, do not quote it at
-  all. Do not present the Tower lineage report as proof for Source projection numbers.
+  totals, optimization opportunity amount, evidence-readiness counts, finance-confirmed value,
+  Cube/consumption metrics, or Source read-model values. State the counting basis. If a Source figure
+  is `ONE_SOURCE`, say so when you quote it. If it is `CONFLICT`, do not quote it at all. If it is
+  `ABSENT`, treat it as unknown rather than zero. Do not present the Tower lineage report as proof
+  for Source projection numbers.
 
 # This is NOT the Next.js you know
 

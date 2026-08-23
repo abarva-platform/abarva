@@ -2,18 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  assertionsFromSource,
   evaluateAssertions,
+  METRICS as metrics,
   queryParameterValuesForSource,
   SOURCE_DEFINITIONS,
 } from "../source-substrate-lineage-report.mjs";
-
-const metrics = [
-  { key: "portfolio_annual_value_usd", label: "Portfolio annual value" },
-  { key: "total_committed_value_usd", label: "Total committed value" },
-  { key: "contract_count", label: "Contract count" },
-  { key: "vendor_count", label: "Vendor count" },
-  { key: "auto_renew_contract_count", label: "Auto-renew contract count" },
-];
 const metricByKey = Object.fromEntries(
   metrics.map((metric) => [metric.key, metric]),
 );
@@ -39,6 +33,22 @@ const declaredBasisDifferences = [
     bases: ["contract_row", "contract_family"],
     explanation: "Declared row-vs-family auto-renew count difference.",
   },
+  {
+    metric: "opportunity_amount_usd",
+    bases: [
+      "opportunity_row_amount_total",
+      "opportunity_potential_valuation_total",
+    ],
+    explanation: "Declared opportunity spine-vs-valuation difference.",
+  },
+  {
+    metric: "finance_confirmed_value_usd",
+    bases: [
+      "opportunity_finance_confirmed_valuation_total",
+      "finance_realization_total",
+    ],
+    explanation: "Declared finance valuation-vs-realization difference.",
+  },
 ];
 
 function assertion(overrides) {
@@ -60,7 +70,7 @@ test("same metric and same basis agree within tolerance", () => {
       assertion({ value: 100 }),
       assertion({ value: 101, sourceId: "source.b" }),
     ],
-    expectedMetrics: metrics.slice(0, 1),
+    expectedMetrics: [metricByKey.portfolio_annual_value_usd],
     expectedTenants: ["skyharbor_global"],
   });
 
@@ -74,7 +84,7 @@ test("same metric and same basis conflict outside tolerance", () => {
       assertion({ value: 100 }),
       assertion({ value: 130, sourceId: "source.b" }),
     ],
-    expectedMetrics: metrics.slice(0, 1),
+    expectedMetrics: [metricByKey.portfolio_annual_value_usd],
     expectedTenants: ["skyharbor_global"],
   });
 
@@ -84,7 +94,7 @@ test("same metric and same basis conflict outside tolerance", () => {
 test("one source is uncorroborated", () => {
   const result = evaluateAssertions({
     assertions: [assertion({ value: 100 })],
-    expectedMetrics: metrics.slice(0, 1),
+    expectedMetrics: [metricByKey.portfolio_annual_value_usd],
     expectedTenants: ["skyharbor_global"],
   });
 
@@ -94,7 +104,7 @@ test("one source is uncorroborated", () => {
 test("missing metric for expected tenant is absent", () => {
   const result = evaluateAssertions({
     assertions: [],
-    expectedMetrics: metrics.slice(0, 1),
+    expectedMetrics: [metricByKey.portfolio_annual_value_usd],
     expectedTenants: ["skyharbor_global"],
   });
 
@@ -254,5 +264,145 @@ test("total committed and auto-renew row-vs-family differences are declared, not
   assert.equal(
     result.basisDifferences.every((diff) => diff.declared),
     true,
+  );
+});
+
+test("source definitions include optimization opportunity and evidence readiness substrates", () => {
+  const ids = SOURCE_DEFINITIONS.map((definition) => definition.id);
+
+  assert.ok(ids.includes("source.optimization_opportunity"));
+  assert.ok(ids.includes("source.opportunity_valuation"));
+  assert.ok(ids.includes("source.finance_realization"));
+  assert.ok(ids.includes("source.opportunity_requirement_status"));
+  assert.ok(ids.includes("source.opportunity_evidence"));
+});
+
+test("source rows with zero source row count are absent, not zero", () => {
+  const source = {
+    id: "source.empty",
+    label: "Empty source",
+    table: "source.empty",
+    basisByMetric: { contract_count: "contract_row" },
+  };
+
+  assert.deepEqual(
+    assertionsFromSource("skyharbor_global", source, [
+      { __source_row_count: "0", contract_count: "0" },
+    ]),
+    [],
+  );
+});
+
+test("row-backed zero is a quoteable assertion", () => {
+  const source = {
+    id: "source.zero",
+    label: "Zero source",
+    table: "source.zero",
+    basisByMetric: { evidence_gap_count: "requirement_status_gap_row" },
+  };
+
+  assert.deepEqual(
+    assertionsFromSource("skyharbor_global", source, [
+      { __source_row_count: "7", evidence_gap_count: "0" },
+    ]),
+    [
+      {
+        tenant: "skyharbor_global",
+        metric: "evidence_gap_count",
+        basis: "requirement_status_gap_row",
+        value: 0,
+        sourceId: "source.zero",
+        sourceLabel: "Zero source",
+        table: "source.zero",
+      },
+    ],
+  );
+});
+
+test("opportunity amount same-basis disagreement is a conflict", () => {
+  const result = evaluateAssertions({
+    assertions: [
+      assertion({
+        metric: "opportunity_amount_usd",
+        basis: "opportunity_row_amount_total",
+        value: 6_800_000,
+        sourceId: "source.optimization_opportunity",
+      }),
+      assertion({
+        metric: "opportunity_amount_usd",
+        basis: "opportunity_row_amount_total",
+        value: 5_900_000,
+        sourceId: "source.contract_360_projection",
+      }),
+    ],
+    expectedMetrics: [metricByKey.opportunity_amount_usd],
+    expectedTenants: ["skyharbor_global"],
+  });
+
+  assert.equal(result.groups[0].status, "CONFLICT");
+});
+
+test("opportunity amount spine-vs-valuation difference is declared", () => {
+  const result = evaluateAssertions({
+    assertions: [
+      assertion({
+        metric: "opportunity_amount_usd",
+        basis: "opportunity_row_amount_total",
+        value: 6_800_000,
+        sourceId: "source.optimization_opportunity",
+      }),
+      assertion({
+        metric: "opportunity_amount_usd",
+        basis: "opportunity_potential_valuation_total",
+        value: 6_800_000,
+        sourceId: "source.opportunity_valuation",
+      }),
+    ],
+    expectedMetrics: [metricByKey.opportunity_amount_usd],
+    expectedTenants: ["skyharbor_global"],
+    declaredBasisDifferences,
+  });
+
+  assert.equal(
+    result.groups.some((group) => group.status === "CONFLICT"),
+    false,
+  );
+  assert.equal(result.basisDifferences.length, 1);
+  assert.equal(result.basisDifferences[0].declared, true);
+});
+
+test("evidence readiness counts can be proven independently", () => {
+  const result = evaluateAssertions({
+    assertions: [
+      assertion({
+        metric: "evidence_requirement_count",
+        basis: "requirement_status_required_row",
+        value: 7,
+        sourceId: "source.opportunity_requirement_status",
+      }),
+      assertion({
+        metric: "evidence_ready_count",
+        basis: "requirement_status_met_row",
+        value: 7,
+        sourceId: "source.opportunity_requirement_status",
+      }),
+      assertion({
+        metric: "evidence_gap_count",
+        basis: "requirement_status_gap_row",
+        value: 0,
+        sourceId: "source.opportunity_requirement_status",
+      }),
+    ],
+    expectedMetrics: [
+      metricByKey.evidence_requirement_count,
+      metricByKey.evidence_ready_count,
+      metricByKey.evidence_gap_count,
+    ],
+    expectedTenants: ["skyharbor_global"],
+  });
+
+  assert.deepEqual(
+    result.groups.map((group) => group.status),
+    ["ONE_SOURCE", "ONE_SOURCE", "ONE_SOURCE"],
   );
 });

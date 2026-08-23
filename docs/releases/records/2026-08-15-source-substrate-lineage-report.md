@@ -25,6 +25,12 @@ was being compared against a contract-family Cube projection for committed value
 counts. This follow-up makes the vendor count query match its declared basis and records the
 row-versus-family splits as explicit basis differences.
 
+This update extends the report to the Source optimization substrate: opportunity counts, opportunity
+amounts, finance-confirmed value, evidence requirement counts, evidence-ready counts, evidence-gap
+counts, and evidence-object counts. It also makes missing-vs-zero explicit: aggregate queries expose
+their source-row count, `ABSENT` remains unknown, and a zero is quoteable only when backed by
+governed source rows.
+
 ## Layer Impact
 
 - Release lane: `global-control-lane`.
@@ -59,6 +65,9 @@ row-versus-family splits as explicit basis differences.
 - PASS: Regression coverage confirms vendor portfolio counts use distinct vendor references and
   contract-row versus contract-family committed-value or auto-renew differences are declared basis
   differences, not false conflicts.
+- PASS: Regression coverage confirms Source opportunity/evidence substrates are included.
+- PASS: Regression coverage confirms no source rows produce `ABSENT` rather than a false zero.
+- PASS: Regression coverage confirms row-backed zero evidence-gap counts remain quoteable.
 - PENDING: Run `npm run audit:source-substrate-lineage -- --tenant skyharbor_global` from the
   deployed ACA runtime after merge, because the configured Azure/Postgres hostname does not resolve
   from the local shell.
@@ -92,5 +101,6 @@ Revert the PR. No data migration, runtime image, or feature flag rollback is req
 
 ## Known Gaps
 
-The first version covers Source portfolio, Contract 360, and Cube/canary headline metrics. It does
-not yet cover every contract-level evidence family or document parsing output.
+This report covers Source portfolio, Contract 360, Cube/canary headline metrics, optimization
+opportunity amounts, finance-confirmed value, and evidence-readiness counts. It does not yet prove
+every document-parsing output or clause-level extraction value.
