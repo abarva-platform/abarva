@@ -7,6 +7,7 @@ import {
   buildSourceVendor360Cockpit,
   type SourceWorkspacePortfolioData,
 } from "../live/portfolioAdapter";
+import { buildViewModel } from "../buildViewModel";
 import type {
   SourceContract360Row,
   SourceVendorContractPortfolioRow,
@@ -178,6 +179,32 @@ describe("WorkspaceViewModel.explore — associative selection", () => {
 
     expect(state.sel).toEqual({ kind: "contract", id: "CTR-090" });
     expect(state.tabs.contract).toBe(INITIAL_STATE.tabs.contract);
+  });
+
+  it("does not substitute the first contract when a deep link points to a missing contract", () => {
+    const state = buildInitialWorkspaceState({
+      contractId: "CTR-DOES-NOT-EXIST",
+      contractTab: "Story",
+    });
+    const vm = new WorkspaceViewModel(
+      state,
+      () => undefined,
+      PORTFOLIO,
+      "Airline Demo",
+      () => undefined,
+    );
+
+    const view = buildViewModel(vm);
+
+    expect(view.title).toBe("Contract not found in governed Source rows");
+    expect(view.thesis).toContain("CTR-DOES-NOT-EXIST");
+    expect(view.thesis).toContain("withholding the contract view");
+    expect(view.isContract).toBe(false);
+    expect(view.statusSel).toBe("CTR-DOES-NOT-EXIST › Not found");
+    expect(view.valueStrip.map((item) => item.value)).toContain(
+      "CTR-DOES-NOT-EXIST",
+    );
+    expect(view.title).not.toContain(CONTRACTS[0]!.vendor_name);
   });
 
   it("with no filters, every vendor bucket is live", () => {

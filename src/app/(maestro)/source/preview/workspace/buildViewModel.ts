@@ -112,8 +112,14 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     kind = sel.kind;
 
   const byId = new Map(rows.map((r) => [r.row.contract_id, r]));
+  const selectedContractMissing =
+    sel.kind === "contract" && Boolean(sel.id) && !byId.has(String(sel.id));
   const contract =
-    (sel.kind === "contract" && sel.id && byId.get(sel.id)) || rows[0] || null;
+    sel.kind === "contract"
+      ? sel.id
+        ? (byId.get(sel.id) ?? null)
+        : null
+      : (rows[0] ?? null);
   const vendorRef =
     sel.kind === "vendor" ? sel.id : (contract?.row.vendor_ref ?? null);
   const vendorContracts = vendorRef
@@ -532,6 +538,13 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         fmtDate(contract.row.end_date) +
         ".";
     crumbLabels = ["Source", "Contracts", contract.row.contract_id, activeTab];
+  } else if (kind === "contract" && selectedContractMissing) {
+    title = "Contract not found in governed Source rows";
+    thesis =
+      "The requested contract " +
+      (sel.id ?? "unknown") +
+      " was not returned by the active Source provider for this tenant. The workspace is withholding the contract view rather than substituting another contract.";
+    crumbLabels = ["Source", "Contracts", sel.id ?? "Requested contract", "Not found"];
   } else if (kind === "opportunity" && opp) {
     title = REASON_LABEL[opp.reasons[0]] + " · " + opp.vendorName;
     thesis = opp.rationale.join(" ");
@@ -583,7 +596,13 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     size: "24px",
   });
   let valueStrip: ReturnType<typeof vsItem>[] = [];
-  if (kind === "contract" && contract) {
+  if (kind === "contract" && selectedContractMissing) {
+    valueStrip = [
+      vsItem("Requested contract", sel.id ?? null, "Query parameter contractId"),
+      vsItem("Governed contract rows", String(rows.length), "Rows returned by the active Source provider"),
+      vsItem("Evidence state", "Withheld", "No matching contract row; no substitute row rendered", COL.red),
+    ];
+  } else if (kind === "contract" && contract) {
     const c = contract.row;
     valueStrip = [
       vsItem(
