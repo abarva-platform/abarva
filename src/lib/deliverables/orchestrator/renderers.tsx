@@ -243,6 +243,80 @@ function withoutDuplicateSectionHeading(
   return lines.join("\n").replace(/^\s+/, "");
 }
 
+function sectionBodyFromJson(value: unknown): string | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  const body = record.bodyMarkdown;
+  return typeof body === "string" && body.trim().length > 0 ? body : null;
+}
+
+function findJsonObjectEnd(text: string, start: number): number | null {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i += 1) {
+    const char = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') inString = true;
+    else if (char === "{") depth += 1;
+    else if (char === "}") {
+      depth -= 1;
+      if (depth === 0) return i + 1;
+    }
+  }
+  return null;
+}
+
+function replaceSectionJsonObjects(markdown: string): string {
+  const withoutJsonFences = markdown.replace(
+    /```json\s*\n([\s\S]*?)\n```/gi,
+    (match, inner) => {
+      try {
+        return sectionBodyFromJson(JSON.parse(inner)) ?? match;
+      } catch {
+        return match;
+      }
+    },
+  );
+  let out = "";
+  let cursor = 0;
+  while (cursor < withoutJsonFences.length) {
+    const start = withoutJsonFences.indexOf("{", cursor);
+    if (start < 0) {
+      out += withoutJsonFences.slice(cursor);
+      break;
+    }
+    const end = findJsonObjectEnd(withoutJsonFences, start);
+    if (end === null) {
+      out += withoutJsonFences.slice(cursor);
+      break;
+    }
+    const candidate = withoutJsonFences.slice(start, end);
+    let replacement: string | null = null;
+    try {
+      replacement = sectionBodyFromJson(JSON.parse(candidate));
+    } catch {
+      replacement = null;
+    }
+    out += withoutJsonFences.slice(cursor, start);
+    out += replacement ?? candidate;
+    cursor = end;
+  }
+  return out;
+}
+
+function normalizeSectionMarkdown(markdown: string, title: string): string {
+  return withoutDuplicateSectionHeading(
+    replaceSectionJsonObjects(markdown),
+    title,
+  );
+}
+
 // ── DOCX ──
 
 export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
@@ -272,7 +346,7 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
     children.push(heading1(section.title));
     children.push(
       ...markdownToDocxBlocks(
-        withoutDuplicateSectionHeading(section.bodyMarkdown, section.title),
+        normalizeSectionMarkdown(section.bodyMarkdown, section.title),
       ),
     );
   }
@@ -944,7 +1018,7 @@ export function renderDeliverableHtml(doc: RenderableDeliverable): string {
   const sections = doc.generatedSections
     .map(
       (s) =>
-        `<section><h2>${esc(s.title)}</h2>${markdownToHtml(withoutDuplicateSectionHeading(s.bodyMarkdown, s.title))}</section>`,
+        `<section><h2>${esc(s.title)}</h2>${markdownToHtml(normalizeSectionMarkdown(s.bodyMarkdown, s.title))}</section>`,
     )
     .join("");
   const exhibits = doc.exhibits.map(exhibitHtml).join("");
@@ -1220,10 +1294,7 @@ export function renderDeliverablePdf(
           <PdfView key={section.key} style={{ marginTop: 10 }}>
             <PdfText style={PDF_STYLES.h1}>{section.title}</PdfText>
             {markdownToPdfNodes(
-              withoutDuplicateSectionHeading(
-                section.bodyMarkdown,
-                section.title,
-              ),
+              normalizeSectionMarkdown(section.bodyMarkdown, section.title),
             )}
           </PdfView>
         ))}
@@ -1679,7 +1750,11 @@ export async function renderDeliverablePptx(
     const slide = pptx.addSlide();
     slide.background = { color: PPTX_COLOR.cream };
     addPptxChrome(slide, doc, slideNumber, totalSlides);
-    const governing = firstMarkdownLine(section.bodyMarkdown) ?? section.title;
+    const sectionMarkdown = normalizeSectionMarkdown(
+      section.bodyMarkdown,
+      section.title,
+    );
+    const governing = firstMarkdownLine(sectionMarkdown) ?? section.title;
     slide.addText(safePptxText(section.title), {
       x: 0.72,
       y: 0.85,
@@ -1702,7 +1777,7 @@ export async function renderDeliverablePptx(
       fit: "shrink",
     });
     const bullets = condensedBulletsFromMarkdown(
-      section.bodyMarkdown,
+      sectionMarkdown,
       MAX_BULLETS_PER_SLIDE,
     );
     if (bullets.length > 0) {
