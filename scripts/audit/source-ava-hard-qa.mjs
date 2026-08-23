@@ -426,6 +426,10 @@ function scoreQuestion(question, response) {
   if (question.requiresChart && !hasChartSignal(answer, response.artifacts)) {
     issues.push("Required chart/visual output was not detected.");
   }
+  const dataPlaneEvidence = inspectDataPlaneEvidence(answer);
+  if (dataPlaneEvidence.quotesSourceNumber && !dataPlaneEvidence.hasPlaneOrCountingBasis) {
+    issues.push("Source number quoted without data-plane or counting-basis note.");
+  }
   if (/guaranteed savings|realized savings/i.test(answer) && !/finance[-\s]?confirmed|not finance confirmed/i.test(answer)) {
     issues.push("Answer appears to overclaim realized/guaranteed savings.");
   }
@@ -437,10 +441,36 @@ function scoreQuestion(question, response) {
     status: issues.length === 0 ? "PASS" : "FAIL",
     expectedHits,
     issues,
+    dataPlaneEvidence,
     answerChars: answer.length,
     latencyMs: response.latencyMs ?? null,
     httpStatus: response.status ?? null,
     answerExcerpt: answer.replace(/\s+/g, " ").slice(0, 500),
+  };
+}
+
+function inspectDataPlaneEvidence(answer) {
+  const text = String(answer);
+  const sourceNumberMatches = [
+    ...text.matchAll(/\$\s?\d[\d,]*(?:\.\d+)?\s?(?:k|m|b|million|billion)?/gi),
+    ...text.matchAll(/\b\d[\d,]*(?:\.\d+)?\s?%\b/g),
+    ...text.matchAll(
+      /\b\d[\d,]*(?:\.\d+)?\s+(?:contracts?|vendors?|rows?|records?|line items?|applications?|apps?|opportunities|opportunity|claims?|evidence families|families)\b/gi,
+    ),
+  ].map((match) => match[0]);
+  const planeSignals = {
+    liveSource: /\blive\s+source\b|source\.[a-z0-9_]+/i.test(text),
+    cubeOrReadModel: /\bcubes?\b|\bread[-\s]?models?\b|\bcurrent\s+view\b|\bprojection\b/i.test(text),
+    currentAppRoute: /\bcurrent\s+app\s+route\b|\/source\//i.test(text),
+    countingBasis: /\bcounting[-\s]?basis\b|\bbasis\s*[:\-]|\bbasis\s+(?:is|=)\b/i.test(text),
+    routeOrSurface: /\bcurrent\s+source\s+(?:session|surface|workspace)\b/i.test(text),
+  };
+  const hasPlaneOrCountingBasis = Object.values(planeSignals).some(Boolean);
+  return {
+    quotesSourceNumber: sourceNumberMatches.length > 0,
+    quotedSourceNumbers: [...new Set(sourceNumberMatches)].slice(0, 10),
+    hasPlaneOrCountingBasis,
+    planeSignals,
   };
 }
 
@@ -576,10 +606,27 @@ function writeJson(file, value) {
 }
 
 function writeCsv(file, rows) {
-  const header = ["id", "surface", "status", "answerChars", "latencyMs", "httpStatus", "issues"];
+  const header = [
+    "id",
+    "surface",
+    "status",
+    "answerChars",
+    "latencyMs",
+    "httpStatus",
+    "quotesSourceNumber",
+    "hasPlaneOrCountingBasis",
+    "quotedSourceNumbers",
+    "issues",
+  ];
   const lines = [header.join(",")];
   for (const row of rows) {
-    lines.push(header.map((key) => csv(row[key] ?? "")).join(","));
+    const csvRow = {
+      ...row,
+      quotesSourceNumber: row.dataPlaneEvidence?.quotesSourceNumber ?? "",
+      hasPlaneOrCountingBasis: row.dataPlaneEvidence?.hasPlaneOrCountingBasis ?? "",
+      quotedSourceNumbers: row.dataPlaneEvidence?.quotedSourceNumbers ?? [],
+    };
+    lines.push(header.map((key) => csv(csvRow[key] ?? "")).join(","));
   }
   fs.writeFileSync(file, `${lines.join("\n")}\n`);
 }
@@ -609,9 +656,14 @@ function writeMarkdown(file, report) {
     "",
     "## Results",
     "",
-    "| ID | Surface | Status | Issues |",
-    "| --- | --- | --- | --- |",
-    ...report.results.map((row) => `| ${row.id} | ${row.surface} | ${row.status} | ${escapePipes((row.issues ?? []).join("; ") || "None")} |`),
+    "| ID | Surface | Status | Data Plane | Issues |",
+    "| --- | --- | --- | --- | --- |",
+    ...report.results.map((row) => {
+      const dataPlane = row.dataPlaneEvidence
+        ? `quotes=${row.dataPlaneEvidence.quotesSourceNumber ? "yes" : "no"}; basis=${row.dataPlaneEvidence.hasPlaneOrCountingBasis ? "yes" : "no"}`
+        : "n/a";
+      return `| ${row.id} | ${row.surface} | ${row.status} | ${escapePipes(dataPlane)} | ${escapePipes((row.issues ?? []).join("; ") || "None")} |`;
+    }),
   ];
   fs.writeFileSync(file, `${lines.join("\n")}\n`);
 }
