@@ -156,8 +156,8 @@ const STATUS_LABEL: Record<RunStatus | "idle", string> = {
   idle: "Not built",
   queued: "Queued",
   running: "Building",
-  succeeded: "Built",
-  blocked: "Below gate",
+  succeeded: "Gate-ready",
+  blocked: "Not gate-ready",
   failed: "Failed",
   error: "Could not start",
 };
@@ -278,7 +278,9 @@ export function PhaseApproveAndBuild({
   // generation had actually finished (or failed).
   useEffect(() => {
     if (!runInFlight.current) return;
-    const relevant = rows.filter((r) => r.runId !== null || r.status === "error");
+    const relevant = rows.filter(
+      (r) => r.runId !== null || r.status === "error",
+    );
     if (relevant.length === 0) return;
     const stillPending = relevant.some(
       (r) => r.status === "queued" || r.status === "running",
@@ -291,7 +293,12 @@ export function PhaseApproveAndBuild({
       .filter((r) => r.status === "succeeded")
       .map((r) => r.deliverableTypeKey);
     const failedKeys = relevant
-      .filter((r) => r.status === "blocked" || r.status === "failed" || r.status === "error")
+      .filter(
+        (r) =>
+          r.status === "blocked" ||
+          r.status === "failed" ||
+          r.status === "error",
+      )
       .map((r) => r.deliverableTypeKey);
     void onBuildSettled?.({
       succeededKeys,
@@ -400,9 +407,9 @@ export function PhaseApproveAndBuild({
     ? "Final build blocked by required evidence"
     : hasParentBlocker
       ? "Complete phase inputs before build"
-    : builtCount > 0
-      ? `Re-run & Build ${phaseLabel} →`
-      : `Approve & Build ${phaseLabel} →`;
+      : builtCount > 0
+        ? `Re-run & Build ${phaseLabel} →`
+        : `Approve & Build ${phaseLabel} →`;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -447,7 +454,7 @@ export function PhaseApproveAndBuild({
             </span>
           )}
           <span>
-            {builtCount}/{specs.length} built
+            {builtCount}/{specs.length} gate-ready
           </span>
           {hasEvidenceGuidanceGaps && (
             <span style={{ color: ATTENTION }}>
@@ -462,14 +469,12 @@ export function PhaseApproveAndBuild({
         {hasEvidenceGuidanceGaps && (
           <div style={{ marginTop: 6, color: ATTENTION }}>
             These items are carried forward as next-phase preparation. They do
-            not block this phase&apos;s governed build unless the phase explicitly
-            marks them as current-phase blockers.
+            not block this phase&apos;s governed build unless the phase
+            explicitly marks them as current-phase blockers.
           </div>
         )}
         {hasParentBlocker && (
-          <div style={{ marginTop: 6, color: ATTENTION }}>
-            {disabledReason}
-          </div>
+          <div style={{ marginTop: 6, color: ATTENTION }}>{disabledReason}</div>
         )}
       </div>
 
@@ -610,31 +615,26 @@ export function PhaseApproveAndBuild({
                 }}
               >
                 <div style={{ fontWeight: 700, color: ATTENTION }}>
-                  {r.packageReadiness.label}
+                  Output is not gate-ready
                 </div>
                 <div>{r.packageReadiness.headline}</div>
                 <div
                   style={{
                     marginTop: 8,
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-                    gap: 8,
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 6,
                   }}
                 >
                   <ReadinessMetric
-                    label="Evidence coverage"
-                    value={`${r.packageReadiness.evidenceCoveragePct}%`}
-                    detail={`${r.packageReadiness.retrievedEvidence}/${r.packageReadiness.minimumEvidenceItems} evidence items`}
+                    label="Evidence"
+                    value={`${r.packageReadiness.retrievedEvidence}/${r.packageReadiness.minimumEvidenceItems}`}
+                    detail={`${r.packageReadiness.evidenceCoveragePct}% covered`}
                   />
                   <ReadinessMetric
-                    label="Package confidence"
-                    value={r.packageReadiness.confidenceLabel}
-                    detail={`${r.packageReadiness.executiveReadinessPct}% executive readiness`}
-                  />
-                  <ReadinessMetric
-                    label="Next action"
-                    value="Collect evidence"
-                    detail={r.packageReadiness.recommendedNextStep}
+                    label="Readiness"
+                    value={`${r.packageReadiness.executiveReadinessPct}%`}
+                    detail={r.packageReadiness.confidenceLabel}
                   />
                 </div>
                 {r.packageReadiness.missing.length > 0 && (
@@ -643,6 +643,10 @@ export function PhaseApproveAndBuild({
                     {r.packageReadiness.missing.join("; ")}
                   </div>
                 )}
+                <div style={{ marginTop: 6 }}>
+                  <span style={{ fontWeight: 700 }}>Next: </span>
+                  {r.packageReadiness.recommendedNextStep}
+                </div>
               </div>
             )}
           </div>
@@ -670,10 +674,13 @@ function ReadinessMetric({
     <div
       style={{
         minWidth: 0,
-        padding: "7px 8px",
-        borderRadius: 5,
+        padding: "4px 8px",
+        borderRadius: 999,
         background: "rgba(255,255,255,0.72)",
-        border: "1px solid rgba(181,133,42,0.16)",
+        border: "1px solid rgba(181,133,42,0.18)",
+        display: "inline-flex",
+        alignItems: "baseline",
+        gap: 5,
       }}
     >
       <div
@@ -689,8 +696,7 @@ function ReadinessMetric({
       </div>
       <div
         style={{
-          marginTop: 2,
-          fontSize: 12,
+          fontSize: 11.5,
           fontWeight: 700,
           color: INK,
           overflowWrap: "anywhere",
@@ -698,9 +704,7 @@ function ReadinessMetric({
       >
         {value}
       </div>
-      <div style={{ marginTop: 2, color: "#6F6047", overflowWrap: "anywhere" }}>
-        {detail}
-      </div>
+      <div style={{ color: "#6F6047", overflowWrap: "anywhere" }}>{detail}</div>
     </div>
   );
 }

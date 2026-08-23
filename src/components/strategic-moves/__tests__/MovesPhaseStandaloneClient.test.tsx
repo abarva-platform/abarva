@@ -2937,7 +2937,7 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(screen.getAllByText(/Gate approved/i).length).toBeGreaterThan(0);
     });
     await waitFor(() => {
-      expect(screen.getAllByText(/^Built$/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/^Gate-ready$/i).length).toBeGreaterThan(0);
     });
     expect(global.fetch).toHaveBeenCalledWith(
       "/api/v1/deliverables/generate-phase",
