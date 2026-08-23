@@ -21,7 +21,6 @@ export type StoryBeatApplicability =
 export interface AdaptiveDepthSignals {
   businessProcessCount: number;
   dataSourceCount: number;
-  matureDataSourceCount: number;
   identityResolutionNeeded: boolean;
   platformNovelty: boolean;
   workflowChange: boolean;
@@ -65,7 +64,6 @@ export interface AdaptiveDepthDecision {
 const DEFAULT_SIGNALS: AdaptiveDepthSignals = {
   businessProcessCount: 1,
   dataSourceCount: 1,
-  matureDataSourceCount: 1,
   identityResolutionNeeded: false,
   platformNovelty: false,
   workflowChange: false,
@@ -125,13 +123,6 @@ export function signalsFromMoveText(
       /lakehouse/,
     ])
       ? 3
-      : 1,
-    matureDataSourceCount: hasAny(lower, [
-      /mature source/,
-      /system of record/,
-      /certified data/,
-    ])
-      ? 2
       : 1,
     identityResolutionNeeded: hasPositiveSignal(
       lower,
