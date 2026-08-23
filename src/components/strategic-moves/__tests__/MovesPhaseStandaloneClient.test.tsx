@@ -2967,6 +2967,14 @@ describe("MovesPhaseStandaloneClient", () => {
       "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/phase-gate-approval",
       expect.objectContaining({ credentials: "include", method: "POST" }),
     );
+    const phaseGateCall = (global.fetch as jest.Mock).mock.calls.find(([url]) =>
+      String(url).includes("/phase-gate-approval"),
+    );
+    const phaseGateBody = JSON.parse(String(phaseGateCall?.[1]?.body ?? "{}"));
+    expect(phaseGateBody.rationale).toContain(
+      "required phase outputs reached terminal build status",
+    );
+    expect(phaseGateBody.rationale).not.toContain("outputs started");
     const phaseCaptureCall = (global.fetch as jest.Mock).mock.calls.find(
       ([url]) => String(url).includes("/phase-capture"),
     );
