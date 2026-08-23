@@ -74,20 +74,6 @@
     },
     {
       "order": 3,
-      "slice_id": "machine_readable_execution_queue",
-      "status": "in_progress",
-      "percent_complete": 60,
-      "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/validate_no_stop_execution_queue.py",
-      "evidence_paths": [
-        "docs/architecture/ecl-no-stop-execution-queue.json",
-        "scripts/ecl/validate_no_stop_execution_queue.py"
-      ],
-      "next_auto_action": "Use the queue manifest to drive next proof slices and CI artifact packaging.",
-      "stop_gate": "None while validation remains local and report-only."
-    },
-    {
-      "order": 4,
       "slice_id": "client_extraction_mapping_extension",
       "status": "queued",
       "percent_complete": 25,
@@ -101,7 +87,7 @@
       "stop_gate": "Replacing client-facing template packages in Azure."
     },
     {
-      "order": 5,
+      "order": 4,
       "slice_id": "dense_meridian_requirements",
       "status": "queued",
       "percent_complete": 20,
@@ -113,6 +99,20 @@
       ],
       "next_auto_action": "Generate dense source-room requirements from product deterministic needs and commercial scope gaps.",
       "stop_gate": "Active tenant source replacement."
+    },
+    {
+      "order": 5,
+      "slice_id": "product_consumption_fact_contracts",
+      "status": "queued",
+      "percent_complete": 30,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/write_commercial_product_consumption_mapping.py",
+      "evidence_paths": [
+        "scripts/ecl/write_commercial_product_consumption_mapping.py",
+        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/commercial_product_consumption_mapping.csv"
+      ],
+      "next_auto_action": "Produce page-by-page deterministic fact contracts for first Source and Tower consumer surfaces.",
+      "stop_gate": "Product route repointing or deployed browser-live claim."
     },
     {
       "order": 6,
@@ -131,20 +131,53 @@
     },
     {
       "order": 7,
-      "slice_id": "product_consumption_fact_contracts",
-      "status": "queued",
-      "percent_complete": 30,
+      "slice_id": "machine_readable_execution_queue",
+      "status": "in_progress",
+      "percent_complete": 60,
       "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/write_commercial_product_consumption_mapping.py",
+      "proof_command": "python3 scripts/ecl/validate_no_stop_execution_queue.py",
       "evidence_paths": [
-        "scripts/ecl/write_commercial_product_consumption_mapping.py",
-        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/commercial_product_consumption_mapping.csv"
+        "docs/architecture/ecl-no-stop-execution-queue.json",
+        "scripts/ecl/validate_no_stop_execution_queue.py"
       ],
-      "next_auto_action": "Produce page-by-page deterministic fact contracts for first Source and Tower consumer surfaces.",
-      "stop_gate": "Product route repointing or deployed browser-live claim."
+      "next_auto_action": "Use the queue manifest to drive next proof slices and CI artifact packaging.",
+      "stop_gate": "None while validation remains local and report-only."
     },
     {
       "order": 8,
+      "slice_id": "source_360_client_language_cleanup",
+      "status": "queued",
+      "percent_complete": 10,
+      "auto_proceed_allowed": false,
+      "proof_command": "",
+      "evidence_paths": [],
+      "next_auto_action": "Replace builder/process vocabulary in rendered Source 360 preview with client-facing commercial language.",
+      "stop_gate": "Needs proof command before auto execution."
+    },
+    {
+      "order": 9,
+      "slice_id": "source_360_weak_contract_preview",
+      "status": "queued",
+      "percent_complete": 10,
+      "auto_proceed_allowed": false,
+      "proof_command": "",
+      "evidence_paths": [],
+      "next_auto_action": "Render the deliberately weak contract preview so Source 360 proves it finds leverage loss, not only a healthy contract.",
+      "stop_gate": "Needs proof command before auto execution."
+    },
+    {
+      "order": 10,
+      "slice_id": "commercial_document_grammar_gate",
+      "status": "queued",
+      "percent_complete": 10,
+      "auto_proceed_allowed": false,
+      "proof_command": "",
+      "evidence_paths": [],
+      "next_auto_action": "Add document prose grammar/lookup checks for the known repeated grammar defects before dense generation scales them.",
+      "stop_gate": "Needs proof command before auto execution."
+    },
+    {
+      "order": 11,
       "slice_id": "browser_and_product_repointing_proof",
       "status": "blocked_by_hard_gate",
       "percent_complete": 0,

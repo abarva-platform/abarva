@@ -70,6 +70,7 @@ def validate_queue(queue: dict[str, Any]) -> dict[str, Any]:
     seen_ids: set[str] = set()
     auto_allowed = 0
     blocked = 0
+    queued_for_proof = 0
     evidence_checked = 0
 
     for index, item in enumerate(slices, start=1):
@@ -118,7 +119,9 @@ def validate_queue(queue: dict[str, Any]) -> dict[str, Any]:
         else:
             if auto_proceed:
                 auto_allowed += 1
-            if not proof_command:
+            else:
+                queued_for_proof += 1
+            if auto_proceed and not proof_command:
                 issues.append(f"{slice_id}: non-blocked slice requires a proof_command")
 
         if not isinstance(evidence_paths, list):
@@ -149,6 +152,7 @@ def validate_queue(queue: dict[str, Any]) -> dict[str, Any]:
         "slice_count": len(slices),
         "auto_proceed_slice_count": auto_allowed,
         "blocked_slice_count": blocked,
+        "queued_for_proof_command_count": queued_for_proof,
         "evidence_path_count": evidence_checked,
     }
 
