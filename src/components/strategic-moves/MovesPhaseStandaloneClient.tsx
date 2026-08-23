@@ -3462,7 +3462,7 @@ function FinderStepsColumns({
                 <li key={section.key}>
                   <button
                     aria-current={selected ? "true" : undefined}
-                    className={`mxw-finder-step-row${selected ? " selected" : ""}${blocked ? " blocked" : ""}${status.complete ? " complete" : ""}`}
+                    className={`mxw-finder-step-row input-row${selected ? " selected" : ""}${blocked ? " blocked" : ""}${status.complete ? " captured" : ""}`}
                     onClick={() => onSelectSection(section.key)}
                     type="button"
                   >
@@ -3474,6 +3474,8 @@ function FinderStepsColumns({
                       <span className="mxw-finder-step-subtitle">
                         {status.label === "Open" ? "Needs input" : status.label}
                       </span>
+                    ) : status.complete ? (
+                      <span className="mxw-finder-step-state">Captured</span>
                     ) : null}
                   </button>
                 </li>
@@ -3492,7 +3494,7 @@ function FinderStepsColumns({
                 <li key={item.key}>
                   <button
                     aria-current={selected ? "true" : undefined}
-                    className={`mxw-finder-step-row${selected ? " selected" : ""}${done ? " complete" : ""}`}
+                    className={`mxw-finder-step-row workflow-row${selected ? " selected" : ""}${done ? " visited" : ""}`}
                     onClick={() => {
                       onSelectSubstep(index);
                       onSelectSection(null);
@@ -3503,6 +3505,8 @@ function FinderStepsColumns({
                     <span className="mxw-finder-step-title">{item.label}</span>
                     {isCurrent ? (
                       <span className="mxw-finder-step-now">now</span>
+                    ) : done ? (
+                      <span className="mxw-finder-step-state">Viewed</span>
                     ) : null}
                   </button>
                 </li>
@@ -4146,6 +4150,22 @@ function PhaseBody({
     phase.phase >= 5
       ? "This submits the already-satisfied P5 gate, records the terminal Tower handoff, and marks the Move complete. It does not regenerate artifacts."
       : `This submits the already-satisfied ${phase.code} gate and opens ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title}. It does not regenerate artifacts.`;
+  const primaryHardBlocker = openHardCriteria[0]?.label ?? null;
+  const primarySoftCaveat = openSoftCriteria[0]?.label ?? null;
+  const gateSummaryLine = isGateBlocked
+    ? primaryHardBlocker
+      ? `Blocked by: ${primaryHardBlocker}.`
+      : "Blocked by an open hard gate."
+    : openSoftCriteria.length > 0
+      ? primarySoftCaveat
+        ? `Ready with caveat: ${primarySoftCaveat}.`
+        : "Ready with caveats."
+      : "No hard blockers are open.";
+  const nextPhaseSummaryLine = readinessPack.isFullyReady
+    ? `${readinessPack.nextPhaseLabel} can start from the approved record.`
+    : `${readinessPack.openNeeds.length} prep item${
+        readinessPack.openNeeds.length === 1 ? "" : "s"
+      } will carry into ${readinessPack.nextPhaseLabel}.`;
 
   return (
     <>
@@ -4181,8 +4201,8 @@ function PhaseBody({
           )
         ) : (
           <p>
-            Approve only after the record is reviewed and decision evidence is
-            on file. The approved version is what carries forward.
+            One record advances. Inputs can be captured while outputs still
+            remain blocked until evidence and gate checks pass.
           </p>
         )}
         <div
@@ -4208,58 +4228,62 @@ function PhaseBody({
               <span>{nextActionLabel}</span>
             </div>
           </article>
-          <article>
-            <span className="mxw-exec-label">Evidence</span>
-            <button
-              type="button"
-              className="mxw-evidence-count-link mxw-evidence-count-link-strong"
-              onClick={onOpenFiles}
-              aria-label={`${evidenceCount} approved or agent-ready items — open Files & Evidence`}
-            >
-              {evidenceCount} approved or agent-ready item
-              {evidenceCount === 1 ? "" : "s"}
-            </button>
-            <p>
-              Uploaded files only influence the gate after review. Gaps and
-              caveats remain visible so aVa and generation do not silently fill
-              them in.
-            </p>
-          </article>
-          <article>
-            <span className="mxw-exec-label">Open blockers</span>
-            {isGateBlocked || openSoftCriteria.length > 0 ? (
-              <ul>
-                {openHardCriteria.slice(0, 3).map((criterion) => (
-                  <li key={criterion.id}>
-                    <strong>Hard:</strong> {criterion.label}
-                  </li>
-                ))}
-                {openHardCriteria.length > 3 ? (
-                  <li>
-                    <strong>Hard:</strong> {openHardCriteria.length - 3} more
-                  </li>
-                ) : null}
-                {openSoftCriteria.slice(0, 2).map((criterion) => (
-                  <li key={criterion.id}>
-                    <strong>Caveat:</strong> {criterion.label}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No open gate criteria are blocking this phase.</p>
-            )}
-          </article>
-          <article>
-            <span className="mxw-exec-label">Next phase readiness</span>
-            <strong>{readinessPack.nextPhaseLabel}</strong>
-            <p>
-              {readinessPack.isFullyReady
-                ? "No required evidence gaps are open; the next phase can start from the approved record."
-                : `${readinessPack.openNeeds.length} prep item${
-                    readinessPack.openNeeds.length === 1 ? "" : "s"
-                  } should be carried into the next phase plan.`}
-            </p>
-          </article>
+          <details className="mxw-decision-details">
+            <summary>
+              <span>Gate details</span>
+              <strong>
+                {gateSummaryLine} {nextPhaseSummaryLine}
+              </strong>
+            </summary>
+            <div className="mxw-decision-detail-grid">
+              <article>
+                <span className="mxw-exec-label">Evidence</span>
+                <button
+                  type="button"
+                  className="mxw-evidence-count-link mxw-evidence-count-link-strong"
+                  onClick={onOpenFiles}
+                  aria-label={`${evidenceCount} approved or agent-ready items — open Files & Evidence`}
+                >
+                  {evidenceCount} approved or agent-ready item
+                  {evidenceCount === 1 ? "" : "s"}
+                </button>
+                <p>
+                  Uploaded files only influence the gate after review. Gaps stay
+                  visible.
+                </p>
+              </article>
+              <article>
+                <span className="mxw-exec-label">Blockers</span>
+                {isGateBlocked || openSoftCriteria.length > 0 ? (
+                  <ul>
+                    {openHardCriteria.slice(0, 3).map((criterion) => (
+                      <li key={criterion.id}>
+                        <strong>Hard:</strong> {criterion.label}
+                      </li>
+                    ))}
+                    {openHardCriteria.length > 3 ? (
+                      <li>
+                        <strong>Hard:</strong> {openHardCriteria.length - 3}{" "}
+                        more
+                      </li>
+                    ) : null}
+                    {openSoftCriteria.slice(0, 2).map((criterion) => (
+                      <li key={criterion.id}>
+                        <strong>Caveat:</strong> {criterion.label}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No open gate criteria are blocking this phase.</p>
+                )}
+              </article>
+              <article>
+                <span className="mxw-exec-label">Next phase</span>
+                <strong>{readinessPack.nextPhaseLabel}</strong>
+                <p>{nextPhaseSummaryLine}</p>
+              </article>
+            </div>
+          </details>
         </div>
         {!isHistoricalPhase && phase.phase >= 3 ? (
           <DecisionOptionsActionPanel
@@ -4289,11 +4313,17 @@ function PhaseBody({
             ))}
           </ul>
         </details>
-        <PhaseRoleApprovalsSummary
-          moveId={move.id}
-          phase={phase.phase}
-          deliverables={move.deliverables}
-        />
+        <details className="mxw-gate-detail">
+          <summary>
+            <span>Role approvals</span>
+            <strong>Open review record</strong>
+          </summary>
+          <PhaseRoleApprovalsSummary
+            moveId={move.id}
+            phase={phase.phase}
+            deliverables={move.deliverables}
+          />
+        </details>
         {gateApprovalMessage ? (
           <div className={`mxw-gate-message ${gateApprovalStatus}`}>
             {gateApprovalMessage}
@@ -6526,7 +6556,7 @@ function MovesStandaloneStyles() {
 .mxw-exec-readout ul{margin:0;padding-left:16px;display:grid;gap:5px}
 .mxw-exec-readout li{font-size:12.8px;line-height:1.4;color:var(--ink-2)}
 .mxw-exec-label{display:block;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--faint);font-weight:800;margin-bottom:8px}
-.mxw-decision-surface{display:grid;grid-template-columns:minmax(0,1.25fr) repeat(3,minmax(0,1fr));gap:12px;margin:16px 0 14px;align-items:stretch}
+.mxw-decision-surface{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:16px 0 14px;align-items:stretch}
 .mxw-decision-surface article{border:1px solid var(--line);border-radius:12px;background:var(--soft);padding:14px 16px;min-width:0}
 .mxw-decision-surface.blocked{border-left:3px solid var(--amber);padding-left:12px}
 .mxw-decision-surface.ready{border-left:3px solid var(--green);padding-left:12px}
@@ -6542,6 +6572,14 @@ function MovesStandaloneStyles() {
 .mxw-decision-chips span{border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:10.5px;font-weight:900;padding:5px 8px;white-space:nowrap}
 .mxw-decision-surface.blocked .mxw-decision-chips span:first-child{border-color:rgba(176,115,15,.32);background:var(--amber-tint);color:var(--amber)}
 .mxw-decision-surface.ready .mxw-decision-chips span:first-child,.mxw-decision-surface.complete .mxw-decision-chips span:first-child{border-color:rgba(29,143,104,.32);background:var(--green-tint);color:var(--green)}
+.mxw-decision-details{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
+.mxw-decision-details summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;align-items:center;padding:11px 14px}
+.mxw-decision-details summary::-webkit-details-marker{display:none}
+.mxw-decision-details summary span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;color:var(--blue)}
+.mxw-decision-details summary strong{font-size:12.5px;line-height:1.35;color:var(--ink-2);font-weight:750}
+.mxw-decision-details[open] summary{border-bottom:1px solid var(--line);background:var(--soft)}
+.mxw-decision-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:12px}
+.mxw-decision-detail-grid article{background:#fff}
 .mxw-gate-detail{border:1px solid var(--line);border-radius:12px;background:var(--soft);margin:14px 0;overflow:hidden}
 .mxw-gate-detail summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px}
 .mxw-gate-detail summary::-webkit-details-marker{display:none}
@@ -6752,7 +6790,7 @@ function MovesStandaloneStyles() {
 .mxw-ava-composer textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;font-size:12.5px;color:var(--ink);background:#fff}
 .mxw-ava-composer button{flex:none;border:0;background:var(--ink);color:#fff;border-radius:9px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer}
 .mxw-ava-composer button:disabled{opacity:.5;cursor:default}
-@media (max-width:980px){.mxw-lanes,.mxw-value-grid,.mxw-exec-readout,.mxw-decision-surface,.mxw-intel-grid{grid-template-columns:1fr}}
+@media (max-width:980px){.mxw-lanes,.mxw-value-grid,.mxw-exec-readout,.mxw-decision-surface,.mxw-decision-detail-grid,.mxw-intel-grid{grid-template-columns:1fr}.mxw-decision-details summary{grid-template-columns:1fr}}
 @media (max-width:900px){
   .mxw-mobile-rail{position:sticky;top:44px;z-index:55;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(12,26,58,.10);background:#fff;padding:10px 14px;box-shadow:0 6px 14px rgba(12,26,58,.06)}
   .mxw-surface{grid-template-columns:1fr}
@@ -6822,10 +6860,13 @@ function MovesStandaloneStyles() {
 .mxw-finder-step-row:hover{background:#f1f3f8}
 .mxw-finder-step-row.selected{background:#e4ecf9;color:#0c1a3a}
 .mxw-finder-step-dot{width:7px;height:7px;border-radius:999px;background:#8b95a8;flex:0 0 auto}
-.mxw-finder-step-row.complete .mxw-finder-step-dot{background:#1d9e75}
+.mxw-finder-step-row.captured .mxw-finder-step-dot{background:#2a5aa8}
+.mxw-finder-step-row.visited .mxw-finder-step-dot{background:#8b95a8}
 .mxw-finder-step-row.blocked .mxw-finder-step-dot{background:#ba7517}
 .mxw-finder-step-title{flex:1;font-weight:600;color:#0c1a3a}
 .mxw-finder-step-subtitle{width:100%;padding-left:15px;font-size:11px;color:#8a5a12}
+.mxw-finder-step-state{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:#2a5aa8;background:#e4ecf9;border:1px solid rgba(42,90,168,.16);border-radius:999px;padding:2px 7px}
+.mxw-finder-step-row.visited .mxw-finder-step-state{color:#5b6c8a;background:#f1f3f8;border-color:rgba(12,26,58,.1)}
 .mxw-finder-step-now{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.4px;color:#2a5aa8;background:#e4ecf9;border-radius:999px;padding:2px 7px}
 .mxw-finder-comingup{border-top:1px solid rgba(12,26,58,.10);padding-top:12px}
 .mxw-finder-comingup-toggle{width:100%;text-align:left;background:none;border:none;padding:0;font-size:12px;font-weight:700;color:#0c1a3a;cursor:pointer}
