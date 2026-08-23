@@ -10,6 +10,7 @@ retire legacy assets.
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import os
 import shlex
@@ -42,6 +43,19 @@ def utc_now() -> str:
 
 def read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def read_json_if_exists(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    return read_json(path)
+
+
+def read_csv_if_exists(path: Path) -> list[dict[str, str]]:
+    if not path.exists():
+        return []
+    with path.open(newline="", encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
 
 
 def write_json(path: Path, data: Any) -> None:
@@ -245,6 +259,7 @@ def build_operator_status(
         "operator_status_json": (event_path.parent / "operator-status.json").relative_to(ROOT).as_posix(),
         "operator_status_markdown": (event_path.parent / "operator-status.md").relative_to(ROOT).as_posix(),
     }
+    quality_denominators = build_quality_denominators()
 
     return {
         "run_id": summary.get("run_id"),
@@ -277,6 +292,7 @@ def build_operator_status(
             ),
         },
         "checkpoints": checkpoints,
+        "quality_denominators": quality_denominators,
         "evidence": evidence,
         "slices": [
             {
@@ -295,6 +311,185 @@ def build_operator_status(
             }
             for item in queue_slices
         ],
+    }
+
+
+def build_quality_denominators() -> list[dict[str, Any]]:
+    raw_dir = ROOT / "reports/source-excel-raw-landing-2026-08-23"
+    dense_dir = ROOT / "outputs/source-room-depth-catchup-2026-08-23"
+    producer_dir = ROOT / "reports/ecl-source-room-producer-coverage-2026-08-23"
+    source_dir = ROOT / "reports/ecl-dense-source-layer-local-load-2026-08-23"
+    context_dir = ROOT / "reports/ecl-dense-context-layer-local-load-2026-08-23"
+    commercial_dir = ROOT / "reports/ecl-dense-commercial-layer-local-load-2026-08-23"
+    review_dir = ROOT / "reports/ecl-dense-review-layer-local-load-2026-08-23"
+    projection_dir = ROOT / "reports/ecl-dense-source-projection-local-load-2026-08-23"
+    cube_dir = ROOT / "reports/ecl-dense-cube-layer-local-load-2026-08-23"
+
+    raw_summary = read_json_if_exists(raw_dir / "source_excel_raw_landing_summary.json")
+    dense_summary = read_json_if_exists(dense_dir / "dense_source_room_summary.json")
+    dense_manifest = read_csv_if_exists(dense_dir / "dense_source_room_manifest.csv")
+    producer_summary = read_json_if_exists(producer_dir / "ecl_source_room_producer_coverage_summary.json")
+    source_summary = read_json_if_exists(source_dir / "dense_source_room_ecl_source_load_summary.json")
+    context_summary = read_json_if_exists(context_dir / "dense_source_room_ecl_context_load_summary.json")
+    commercial_summary = read_json_if_exists(commercial_dir / "dense_source_room_ecl_commercial_load_summary.json")
+    review_summary = read_json_if_exists(review_dir / "dense_source_room_ecl_review_load_summary.json")
+    projection_summary = read_json_if_exists(projection_dir / "dense_source_room_ecl_source_projection_load_summary.json")
+    cube_summary = read_json_if_exists(cube_dir / "dense_source_room_ecl_cube_load_summary.json")
+
+    def readback(summary: dict[str, Any]) -> dict[str, Any]:
+        value = summary.get("readback")
+        return value if isinstance(value, dict) else {}
+
+    family_rows = {
+        row["source_room_family"]: int(row["row_count"])
+        for row in dense_manifest
+        if row.get("source_room_family") and row.get("row_count")
+    }
+    family_files = {
+        row["source_room_family"]: dense_dir / row["file_path"]
+        for row in dense_manifest
+        if row.get("source_room_family") and row.get("file_path")
+    }
+    application_rows = read_csv_if_exists(family_files.get("SP03_CMDB", dense_dir / "__missing__.csv"))
+    source_readback = readback(source_summary)
+    context_readback = readback(context_summary)
+    commercial_readback = readback(commercial_summary)
+    review_readback = readback(review_summary)
+    projection_readback = readback(projection_summary)
+    cube_readback = readback(cube_summary)
+    application_realism = application_realism_notes(application_rows, dense_summary)
+    application_realism_passed = sum(1 for value in application_realism["gate_results"].values() if value)
+    local_layer_summaries = [source_summary, context_summary, commercial_summary, review_summary, projection_summary, cube_summary]
+    local_layer_passed = sum(1 for summary in local_layer_summaries if summary and not summary.get("issues"))
+    producer_missing_core = int(producer_summary.get("missing_core_producer_count", 1))
+
+    return [
+        {
+            "area": "raw_14_workbook_coverage",
+            "status": "pass" if raw_summary.get("landed_workbooks") == 14 and raw_summary.get("blocking_gaps") == 0 else "pending",
+            "passed": int(raw_summary.get("landed_workbooks", 0) or 0),
+            "total": 14,
+            "evidence_path": "reports/source-excel-raw-landing-2026-08-23/source_excel_raw_landing_summary.json",
+            "notes": {
+                "source_room_extracts": raw_summary.get("source_room_extracts"),
+                "traceability_rows": raw_summary.get("traceability_rows"),
+                "blocking_gaps": raw_summary.get("blocking_gaps"),
+            },
+        },
+        {
+            "area": "dense_realistic_source_room_families",
+            "status": "pass" if len(family_rows) == 14 and int(dense_summary.get("row_count", 0) or 0) >= 7000 else "pending",
+            "passed": len(family_rows),
+            "total": 14,
+            "evidence_path": "outputs/source-room-depth-catchup-2026-08-23/dense_source_room_summary.json",
+            "notes": {
+                "source_rows": dense_summary.get("row_count"),
+                "applications": family_rows.get("SP03_CMDB"),
+                "deployments": family_rows.get("SP14_Deployments_Hosting"),
+                "data_flows": family_rows.get("SP13_Data_Flows_Integrations"),
+                "contracts": family_rows.get("SP08_Vendor_Contract"),
+                "budget_spend": family_rows.get("SP06_Finance_ERP"),
+                "evidence_documents": family_rows.get("SP12_Evidence_Room"),
+            },
+        },
+        {
+            "area": "application_realism_gates",
+            "status": "pass" if application_realism_passed == 5 else "pending",
+            "passed": application_realism_passed,
+            "total": 5,
+            "evidence_path": "outputs/source-room-depth-catchup-2026-08-23/dense_source_room_summary.json",
+            "notes": application_realism,
+        },
+        {
+            "area": "ecl_table_producer_coverage",
+            "status": "pass" if int(producer_summary.get("table_count", 0) or 0) >= 26 and producer_missing_core == 0 else "pending",
+            "passed": int(producer_summary.get("source_supplied_tables", 0) or 0) + int(producer_summary.get("partial_source_supplied_tables", 0) or 0) + int(producer_summary.get("downstream_builder_required_tables", 0) or 0),
+            "total": int(producer_summary.get("table_count", 0) or 0),
+            "evidence_path": "reports/ecl-source-room-producer-coverage-2026-08-23/ecl_source_room_producer_coverage_summary.json",
+            "notes": {
+                "source_supplied_tables": producer_summary.get("source_supplied_tables"),
+                "partial_source_supplied_tables": producer_summary.get("partial_source_supplied_tables"),
+                "downstream_builder_required_tables": producer_summary.get("downstream_builder_required_tables"),
+                "missing_core_producer_count": producer_summary.get("missing_core_producer_count"),
+            },
+        },
+        {
+            "area": "local_layer_readback_chain",
+            "status": "pass" if local_layer_passed == 6 else "pending",
+            "passed": local_layer_passed,
+            "total": 6,
+            "evidence_path": "outputs/ecl-no-stop-execution-run/execution-summary.json",
+            "notes": {
+                "source_records": source_readback.get("source_record"),
+                "context_objects": context_readback.get("object"),
+                "commercial_contracts": commercial_readback.get("contract"),
+                "review_events": review_readback.get("review_event"),
+                "source_contract_360_rows": projection_readback.get("source_contract_360"),
+                "cube_slices": cube_readback.get("cube_slice"),
+                "cube_metric_drift": cube_readback.get("cube_metric_drift"),
+                "cube_measure_drift": cube_readback.get("cube_measure_drift"),
+            },
+        },
+        {
+            "area": "runtime_and_browser_hard_gates",
+            "status": "hard_gated",
+            "passed": 0,
+            "total": 3,
+            "evidence_path": "outputs/ecl-no-stop-execution-run/operator-status.json",
+            "notes": {
+                "azure_readback": "not_started_hard_gated",
+                "product_route_browser_qa": "not_started_hard_gated",
+                "legacy_retirement": "not_started_hard_gated",
+            },
+        },
+    ]
+
+
+def application_realism_notes(rows: list[dict[str, str]], summary: dict[str, Any]) -> dict[str, Any]:
+    if not rows:
+        return {
+            "annual_cost_total_usd": summary.get("application_annual_cost_total_usd"),
+            "top_decile_cost_share": summary.get("application_top_decile_cost_share"),
+            "distinct_application_costs": summary.get("distinct_application_annual_costs"),
+            "environment_count_values": summary.get("application_environment_count_values"),
+            "tier_1_ratio": summary.get("application_tier_1_ratio"),
+            "gate_results": {
+                "governed_cost_total": False,
+                "long_tail_top_decile": False,
+                "distinct_costs": False,
+                "environment_count_diversity": False,
+                "tier_1_ratio": False,
+            },
+        }
+    costs = sorted((float(row.get("annual_cost_usd", "0") or 0) for row in rows), reverse=True)
+    cost_total = round(sum(costs), 2)
+    top_decile_count = max(1, len(costs) // 10)
+    top_decile_share = round(sum(costs[:top_decile_count]) / max(sum(costs), 1), 4)
+    distinct_costs = len(set(costs))
+    environment_values = sorted(
+        {
+            int(float(row.get("environment_count", "0") or 0))
+            for row in rows
+            if row.get("environment_count", "").strip()
+        }
+    )
+    tier_1_ratio = round(sum(1 for row in rows if row.get("criticality_tier") == "tier_1") / len(rows), 4)
+    expected_total = 436_500_000
+    gate_results = {
+        "governed_cost_total": abs(cost_total - expected_total) / expected_total <= 0.005,
+        "long_tail_top_decile": 0.30 <= top_decile_share <= 0.75,
+        "distinct_costs": distinct_costs == len(rows),
+        "environment_count_diversity": len(environment_values) >= 4,
+        "tier_1_ratio": 0.10 <= tier_1_ratio <= 0.15,
+    }
+    return {
+        "annual_cost_total_usd": cost_total,
+        "top_decile_cost_share": top_decile_share,
+        "distinct_application_costs": distinct_costs,
+        "application_rows": len(rows),
+        "environment_count_values": environment_values,
+        "tier_1_ratio": tier_1_ratio,
+        "gate_results": gate_results,
     }
 
 
@@ -317,11 +512,24 @@ def render_operator_status_markdown(status: dict[str, Any], path: Path) -> None:
         "",
         next_item["operator_instruction"],
         "",
-        "## Slice Detail",
+        "## Quality Denominators",
         "",
-        "| Order | Slice | Result | Auto | Stop gate | Evidence paths |",
-        "|---:|---|---|---|---|---:|",
+        "| Area | Status | Passed | Total | Evidence |",
+        "|---|---|---:|---:|---|",
     ]
+    for item in status.get("quality_denominators", []):
+        lines.append(
+            f"| `{item['area']}` | `{item['status']}` | {item['passed']} | {item['total']} | `{item['evidence_path']}` |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Slice Detail",
+            "",
+            "| Order | Slice | Result | Auto | Stop gate | Evidence paths |",
+            "|---:|---|---|---|---|---:|",
+        ]
+    )
     for item in status["slices"]:
         lines.append(
             "| {order} | `{slice_id}` | {result_state} | {auto_proceed_allowed} | {stop_gate} | {evidence_count} |".format(

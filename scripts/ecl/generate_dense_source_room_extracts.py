@@ -739,6 +739,10 @@ def build_report(summary: dict[str, Any], inventory: list[dict[str, Any]]) -> st
         "",
         f"- Generated extracts: {summary['extract_count']}",
         f"- Generated rows: {summary['row_count']}",
+        f"- Application annual cost total: `${summary['application_annual_cost_total_usd']:,.2f}`",
+        f"- Application top-decile cost share: `{summary['application_top_decile_cost_share']:.2%}`",
+        f"- Application distinct annual costs: `{summary['distinct_application_annual_costs']}`",
+        f"- Application environment counts: `{', '.join(map(str, summary['application_environment_count_values']))}`",
         f"- Output directory: `{summary['out_dir']}`",
         f"- Manifest: `{summary['manifest_path']}`",
         "",
@@ -763,6 +767,34 @@ def build_report(summary: dict[str, Any], inventory: list[dict[str, Any]]) -> st
     return "\n".join(lines)
 
 
+def application_realism_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    costs = sorted((float(row["annual_cost_usd"]) for row in rows), reverse=True)
+    cost_total = round(sum(costs), 2)
+    top_decile_count = max(1, len(costs) // 10)
+    top_decile_share = round(sum(costs[:top_decile_count]) / max(sum(costs), 1), 4)
+    tier_1_ratio = round(sum(1 for row in rows if row["criticality_tier"] == "tier_1") / len(rows), 4)
+    environment_values = sorted({int(row["environment_count"]) for row in rows})
+    failures = 0
+    if abs(cost_total - APPLICATION_COST_TOTAL_USD) / APPLICATION_COST_TOTAL_USD > 0.005:
+        failures += 1
+    if not 0.30 <= top_decile_share <= 0.75:
+        failures += 1
+    if len({row["annual_cost_usd"] for row in rows}) != len(rows):
+        failures += 1
+    if len(environment_values) < 4:
+        failures += 1
+    if not 0.10 <= tier_1_ratio <= 0.15:
+        failures += 1
+    return {
+        "application_annual_cost_total_usd": cost_total,
+        "application_top_decile_cost_share": top_decile_share,
+        "distinct_application_annual_costs": len({row["annual_cost_usd"] for row in rows}),
+        "application_environment_count_values": environment_values,
+        "application_tier_1_ratio": tier_1_ratio,
+        "application_realism_gate_failures": failures,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
@@ -772,9 +804,12 @@ def main() -> int:
     inventory: list[dict[str, Any]] = []
     dictionary_rows: list[dict[str, Any]] = []
     total_rows = 0
+    application_rows: list[dict[str, Any]] = []
 
     for family, (filename, target_count, grain) in TARGETS.items():
         rows = BUILDERS[family](target_count)
+        if family == "SP03_CMDB":
+            application_rows = rows
         for row in rows:
             row["synthetic_dataset_id"] = "SOURCE_ROOM_DENSE_CATCHUP_2026_08_23"
             row["synthetic_generation_basis"] = "deterministic_depth_simulation"
@@ -822,6 +857,7 @@ def main() -> int:
         "synthetic_dataset_id": "SOURCE_ROOM_DENSE_CATCHUP_2026_08_23",
         "client_attestation_state": "not_client_attested",
         "seed": SEED,
+        **application_realism_summary(application_rows),
     }
     (out_dir / "dense_source_room_summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     (out_dir / "DENSE_SOURCE_ROOM_CATCHUP_REPORT.md").write_text(build_report(summary, inventory), encoding="utf-8")
