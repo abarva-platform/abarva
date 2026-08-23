@@ -245,6 +245,42 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
     expect(json.artifacts[0]!.artifactId).toBe("gen-current");
   });
 
+  it("does not label superseded generated artifacts as board ready", async () => {
+    generatedRecs = [
+      {
+        id: "gen-old",
+        artifactType: "move_board_pack",
+        sourceArtifactRef: "move-x",
+        outputFormat: "docx",
+        blobUrl: "b",
+        qualityScore: 0.9,
+        renderedAt: "2026-06-17T00:00:00Z",
+        renderedBy: "u",
+        quarantineReason: null,
+        supersededBy: "gen-current",
+        metadata: { renderableDoc: { title: "Superseded Deliverable" } },
+      },
+    ];
+
+    const res = await GET(
+      req("family=generated_deliverable"),
+      params("move-x"),
+    );
+    const json = (await res.json()) as {
+      count: number;
+      artifacts: Array<Record<string, unknown>>;
+    };
+    expect(res.status).toBe(200);
+    expect(json.count).toBe(1);
+    expect(json.artifacts[0]).toEqual(
+      expect.objectContaining({
+        artifactId: "gen-old",
+        lifecycleState: "superseded",
+        status: "superseded",
+      }),
+    );
+  });
+
   it("does not mix older current phase docs with a newer quarantined phase rebuild", async () => {
     generatedRecs = [
       {

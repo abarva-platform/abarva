@@ -717,14 +717,15 @@ async function main(): Promise<number> {
     moveResults.push(refreshed);
   }
 
-  const generatedArtifacts = (
-    await listGeneratedArtifactsForMoveAllRefs({
-      clientId: scope.clientId,
-      clientIds: [scope.tenantKey],
-      moveId: scope.moveId,
-      limit: args.limit,
-    })
-  ).filter((artifact) => !artifact.supersededBy);
+  const allGeneratedArtifacts = await listGeneratedArtifactsForMoveAllRefs({
+    clientId: scope.clientId,
+    clientIds: [scope.tenantKey],
+    moveId: scope.moveId,
+    limit: args.limit,
+  });
+  const generatedArtifacts = allGeneratedArtifacts.filter(
+    (artifact) => !artifact.supersededBy,
+  );
   const generatedResults: ArtifactScanSummary[] = [];
   for (const artifact of generatedArtifacts) {
     const scans = await Promise.all([
@@ -743,6 +744,9 @@ async function main(): Promise<number> {
     scope,
     summary: {
       scanned: results.length,
+      currentMoveArtifacts: moveArtifacts.length,
+      currentGeneratedArtifacts: generatedArtifacts.length,
+      supersededGeneratedArtifacts: allGeneratedArtifacts.length - generatedArtifacts.length,
       readable: results.filter((item) => item.readable).length,
       clean: results.filter((item) => item.clean).length,
       blockers: results.reduce((sum, item) => sum + item.blockers, 0),

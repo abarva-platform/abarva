@@ -420,7 +420,11 @@ export async function GET(
               fileFormat: rec.outputFormat,
               fileName: null,
               version: 1,
-              status: rec.quarantineReason ? "quarantined" : "board_ready",
+              status: rec.supersededBy
+                ? "superseded"
+                : rec.quarantineReason
+                  ? "quarantined"
+                  : "board_ready",
               // Generated deliverables are current unless a newer version
               // supersedes them. Without this the Cabinet's lifecycle filter
               // (lifecycleState === 'current') hid every generated artifact by
