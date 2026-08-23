@@ -3498,6 +3498,19 @@ function FinderStepsColumns({
                     onClick={() => {
                       onSelectSubstep(index);
                       onSelectSection(null);
+                      const scrollDetailIntoView = () => {
+                        document
+                          .querySelector(".mxw-finder-detail")
+                          ?.scrollIntoView({
+                            block: "start",
+                            behavior: "smooth",
+                          });
+                      };
+                      if (typeof requestAnimationFrame === "function") {
+                        requestAnimationFrame(scrollDetailIntoView);
+                      } else {
+                        window.setTimeout(scrollDetailIntoView, 0);
+                      }
                     }}
                     type="button"
                   >
@@ -6874,7 +6887,7 @@ function MovesStandaloneStyles() {
 .mxw-finder-chip{font-size:11px;border-radius:999px;padding:4px 10px;background:#e4ecf9;color:#2a5aa8}
 .mxw-finder-chip.req{background:#fbf1df;color:#ba7517}
 .mxw-finder-comingup-empty{margin-top:10px;font-size:12px;color:#5b6c8a}
-.mxw-finder-detail{flex:1;min-width:0}
+.mxw-finder-detail{flex:1;min-width:0;scroll-margin-top:96px}
 .mxw-finder-detail-panel header h2{margin:0 0 4px;font-family:Fraunces,Georgia,serif;color:#0c1a3a}
 .mxw-finder-detail-panel header p{margin:0 0 14px;color:#5b6c8a;font-size:13px}
 .mxw-finder-detail-input{width:100%;border:1px solid rgba(12,26,58,.16);border-radius:10px;padding:12px;font-size:13.5px;color:#28364f;font-family:inherit}
