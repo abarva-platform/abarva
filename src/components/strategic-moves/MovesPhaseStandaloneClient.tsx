@@ -2476,6 +2476,7 @@ export function MovesPhaseStandaloneClient({
       })()}
 
       <button
+        aria-label="Ask aVa"
         aria-expanded={avaOpen}
         className="mxw-ava-fab"
         onClick={() => setAvaOpen((open) => !open)}
@@ -6826,6 +6827,9 @@ function MovesStandaloneStyles() {
 .mxw-ava-composer textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;font-size:12.5px;color:var(--ink);background:#fff}
 .mxw-ava-composer button{flex:none;border:0;background:var(--ink);color:#fff;border-radius:9px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer}
 .mxw-ava-composer button:disabled{opacity:.5;cursor:default}
+@media (max-width:1280px){
+  .mxw-ava-fab{width:52px;height:52px;padding:12px;gap:0;font-size:0;justify-content:center}
+}
 @media (max-width:980px){.mxw-lanes,.mxw-value-grid,.mxw-exec-readout,.mxw-decision-surface,.mxw-decision-detail-grid,.mxw-intel-grid{grid-template-columns:1fr}.mxw-decision-details summary{grid-template-columns:1fr}}
 @media (max-width:900px){
   .mxw-mobile-rail{position:sticky;top:44px;z-index:55;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(12,26,58,.10);background:#fff;padding:10px 14px;box-shadow:0 6px 14px rgba(12,26,58,.06)}
