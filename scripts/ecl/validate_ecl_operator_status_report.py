@@ -37,6 +37,15 @@ REQUIRED_COMPLETED_BLOCKED_GATES = {
     "legacy_retirement",
 }
 
+REQUIRED_QUALITY_AREAS = {
+    "raw_14_workbook_coverage",
+    "dense_realistic_source_room_families",
+    "application_realism_gates",
+    "ecl_table_producer_coverage",
+    "local_layer_readback_chain",
+    "runtime_and_browser_hard_gates",
+}
+
 
 def read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -56,6 +65,7 @@ def validate_status(status: dict[str, Any], *, allow_in_progress: bool) -> dict[
     evidence = status.get("evidence")
     slices = status.get("slices")
     checkpoints = status.get("checkpoints")
+    quality_denominators = status.get("quality_denominators")
 
     if status.get("run_state") not in {"running", "completed"}:
         issues.append("run_state must be running or completed")
@@ -129,6 +139,43 @@ def validate_status(status: dict[str, Any], *, allow_in_progress: bool) -> dict[
     if not any(item.get("evidence_paths") for item in slices):
         issues.append("slice rows must carry evidence_paths")
 
+    if not isinstance(quality_denominators, list) or not quality_denominators:
+        issues.append("quality_denominators must be a non-empty list")
+        quality_denominators = []
+    quality_by_area = {
+        item.get("area"): item
+        for item in quality_denominators
+        if isinstance(item, dict)
+    }
+    missing_quality = sorted(REQUIRED_QUALITY_AREAS - set(quality_by_area))
+    if missing_quality:
+        issues.append(f"missing quality denominator areas: {', '.join(missing_quality)}")
+    for area, item in quality_by_area.items():
+        if item.get("status") not in {"pass", "pending", "hard_gated"}:
+            issues.append(f"{area}: quality status must be pass, pending, or hard_gated")
+        if not isinstance(item.get("passed"), int) or not isinstance(item.get("total"), int):
+            issues.append(f"{area}: passed and total must be integers")
+        elif item["passed"] < 0 or item["total"] < 0 or item["passed"] > item["total"]:
+            issues.append(f"{area}: passed/total values are invalid")
+        if not item.get("evidence_path"):
+            issues.append(f"{area}: evidence_path is required")
+
+    app_realism = quality_by_area.get("application_realism_gates", {})
+    if app_realism and app_realism.get("status") != "pass":
+        issues.append("application_realism_gates must pass before operator status is accepted")
+    app_notes = app_realism.get("notes") if isinstance(app_realism, dict) else {}
+    gate_results = app_notes.get("gate_results") if isinstance(app_notes, dict) else {}
+    if isinstance(gate_results, dict):
+        failed_gates = sorted(key for key, value in gate_results.items() if not value)
+        if failed_gates:
+            issues.append(f"application realism failed gates: {', '.join(failed_gates)}")
+    else:
+        issues.append("application_realism_gates.notes.gate_results is required")
+
+    local_chain = quality_by_area.get("local_layer_readback_chain", {})
+    if status.get("run_state") == "completed" and local_chain.get("status") != "pass":
+        issues.append("completed operator status requires local_layer_readback_chain pass")
+
     return {
         "accepted": not issues,
         "issue_count": len(issues),
@@ -138,6 +185,7 @@ def validate_status(status: dict[str, Any], *, allow_in_progress: bool) -> dict[
         "completion_percent": completion_percent,
         "checkpoint_count": len(checkpoints) if isinstance(checkpoints, list) else 0,
         "slice_count": len(slices),
+        "quality_denominator_count": len(quality_denominators),
         "blocked_gate": next_item.get("blocked_gate"),
     }
 
