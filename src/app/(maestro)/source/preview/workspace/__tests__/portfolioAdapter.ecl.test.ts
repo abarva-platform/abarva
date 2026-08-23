@@ -138,7 +138,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
   });
 
   it("loads Source 360 portfolio data from flagged Azure ECL projection tables", async () => {
-    process.env.SOURCE_WORKSPACE_PROVIDER = "ecl_projection_db";
+    process.env.SOURCE_WORKSPACE_PROVIDER = "legacy";
     delete process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR;
     mockWithSession.mockImplementation(async (fn) => {
       const run = async <R,>(sql: string): Promise<R[]> => {
@@ -205,6 +205,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     const portfolio = await loadSourceWorkspacePortfolio(
       "meridian",
       "2027-06-30T00:00:00Z",
+      "ecl_projection_db",
     );
 
     expect(portfolio.workspaceDiagnostics.exploreProvider).toBe(

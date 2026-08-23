@@ -54,6 +54,10 @@ type SourceWorkspaceExploreProvider =
   | "EclProjectionDbProvider";
 
 type EclProjectionRow = Record<string, unknown>;
+export type SourceWorkspaceProviderMode =
+  | "legacy"
+  | "ecl_projection"
+  | "ecl_projection_db";
 
 export interface SourceWorkspacePortfolioData {
   readonly tenantKey: string;
@@ -191,9 +195,11 @@ interface CockpitSourceMappingRow {
 export async function loadSourceWorkspacePortfolio(
   tenantKey: string,
   asOfDateIso: string,
+  providerOverride?: SourceWorkspaceProviderMode | null,
 ): Promise<SourceWorkspacePortfolioData> {
-  if (sourceWorkspaceProvider() !== "legacy") {
-    return loadEclProjectionWorkspacePortfolio(tenantKey, asOfDateIso);
+  const provider = sourceWorkspaceProvider(providerOverride);
+  if (provider !== "legacy") {
+    return loadEclProjectionWorkspacePortfolio(tenantKey, asOfDateIso, provider);
   }
 
   const [
@@ -280,7 +286,12 @@ export async function loadSourceWorkspacePortfolio(
   };
 }
 
-function sourceWorkspaceProvider(): "legacy" | "ecl_projection" | "ecl_projection_db" {
+export function sourceWorkspaceProvider(
+  providerOverride?: SourceWorkspaceProviderMode | null,
+): SourceWorkspaceProviderMode {
+  if (providerOverride) {
+    return providerOverride;
+  }
   if (process.env.SOURCE_WORKSPACE_PROVIDER === "ecl_projection_db") {
     return "ecl_projection_db";
   }
@@ -292,8 +303,8 @@ function sourceWorkspaceProvider(): "legacy" | "ecl_projection" | "ecl_projectio
 async function loadEclProjectionWorkspacePortfolio(
   tenantKey: string,
   asOfDateIso: string,
+  provider: SourceWorkspaceProviderMode,
 ): Promise<SourceWorkspacePortfolioData> {
-  const provider = sourceWorkspaceProvider();
   const projectionDir = process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR?.trim();
   if (provider === "ecl_projection" && !projectionDir) {
     throw new Error(

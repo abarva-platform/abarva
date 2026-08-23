@@ -11,6 +11,7 @@ import { resolveTenant } from "@/lib/tenant/resolveTenant";
 import {
   buildSourceVendor360Cockpit,
   loadSourceWorkspacePortfolio,
+  type SourceWorkspaceProviderMode,
 } from "./live/portfolioAdapter";
 
 export const metadata: Metadata = {
@@ -43,6 +44,7 @@ export default async function SourceWorkspacePreviewPage({
     client?: string;
     contractId?: string;
     contractTab?: string;
+    sourceProvider?: string;
     tab?: string;
   }>;
 }) {
@@ -61,6 +63,9 @@ export default async function SourceWorkspacePreviewPage({
   const requestedContractId = params.contractId?.trim() || null;
   const requestedContractTab =
     params.contractTab?.trim() || params.tab?.trim() || null;
+  const requestedSourceProvider = sourceProviderOverrideFromRequest(
+    params.sourceProvider,
+  );
   const tenant = await resolveTenant({
     requestedClient,
     allowFallback: !requestedClient,
@@ -110,7 +115,11 @@ export default async function SourceWorkspacePreviewPage({
   };
 
   const portfolio = tenantKey
-    ? await loadSourceWorkspacePortfolio(tenantKey, asOfDateIso)
+    ? await loadSourceWorkspacePortfolio(
+        tenantKey,
+        asOfDateIso,
+        requestedSourceProvider,
+      )
     : {
         tenantKey: "",
         asOfDateIso,
@@ -162,4 +171,21 @@ export default async function SourceWorkspacePreviewPage({
       />
     </div>
   );
+}
+
+function sourceProviderOverrideFromRequest(
+  value?: string,
+): SourceWorkspaceProviderMode | null {
+  if (process.env.SOURCE_WORKSPACE_ALLOW_PROVIDER_QUERY_OVERRIDE !== "true") {
+    return null;
+  }
+  const normalized = value?.trim();
+  if (
+    normalized === "legacy" ||
+    normalized === "ecl_projection" ||
+    normalized === "ecl_projection_db"
+  ) {
+    return normalized;
+  }
+  return null;
 }

@@ -32,4 +32,13 @@ describe("Source workspace requested-client routing", () => {
     expect(pageSource).toContain("initialContractId={requestedContractId}");
     expect(pageSource).toContain("initialContractTab={requestedContractTab}");
   });
+
+  it("guards the ECL provider query override behind an explicit environment flag", () => {
+    expect(pageSource).toContain("sourceProvider?: string");
+    expect(pageSource).toContain(
+      'SOURCE_WORKSPACE_ALLOW_PROVIDER_QUERY_OVERRIDE !== "true"',
+    );
+    expect(pageSource).toContain('normalized === "ecl_projection_db"');
+    expect(pageSource).toContain("requestedSourceProvider");
+  });
 });
