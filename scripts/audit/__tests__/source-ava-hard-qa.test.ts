@@ -30,7 +30,12 @@ describe("source-ava-hard-qa audit harness", () => {
       coverage: Record<string, number>;
       coverageDetail: {
         focusAreas: Record<string, number>;
-        outputContracts: { table: number; chart: number };
+        outputContracts: {
+          table: number;
+          chart: number;
+          selectedTable: number;
+          selectedChart: number;
+        };
       };
       questions: Array<{
         id: string;
