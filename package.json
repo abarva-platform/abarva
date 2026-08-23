@@ -216,6 +216,7 @@
     "audit:moves-candidate-consumption": "node scripts/audit/candidate-consumption-proof.mjs --mode moves",
     "audit:source-candidate-consumption": "node scripts/audit/candidate-consumption-proof.mjs --mode source",
     "audit:source-substrate-lineage": "node scripts/source/source-substrate-lineage-report.mjs",
+    "source:vendor-proposal-parse:proof-job": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/source/vendor-proposal-parse-proof-job.ts",
     "audit:source-ava-hard-qa": "node scripts/audit/source-ava-hard-qa.mjs",
     "audit:default-runtime-invisibility": "node scripts/audit/default-runtime-invisibility.mjs",
     "demo:skyharbor:capture": "node scripts/demo/skyharbor-demo-capture.mjs",
