@@ -119,17 +119,24 @@ def main() -> None:
 
     commands: list[dict[str, object]] = []
     started = datetime.now(timezone.utc)
-    for script in [
-        "build_commercial_contract_slice.py",
-        "validate_commercial_source_room.py",
-        "write_commercial_validator_planted_failures.py",
-        "write_commercial_field_lineage.py",
-        "write_commercial_scope_dense_requirements.py",
-        "write_commercial_client_extraction_mapping.py",
-        "write_commercial_product_consumption_mapping.py",
-        "validate_commercial_document_quality.py",
+    source_room = out_dir / "source_room/SP08_Vendor_Contract"
+    for script, needs_source_room in [
+        ("build_commercial_contract_slice.py", False),
+        ("validate_commercial_source_room.py", True),
+        ("write_commercial_validator_planted_failures.py", True),
+        ("write_commercial_field_lineage.py", True),
+        ("write_commercial_scope_dense_requirements.py", False),
+        ("write_commercial_client_extraction_mapping.py", False),
+        ("write_commercial_product_consumption_mapping.py", False),
+        ("write_source_360_page_fact_contract.py", False),
+        ("validate_commercial_document_quality.py", False),
     ]:
-        commands.append(run([sys.executable, f"scripts/ecl/{script}", "--out-dir", out_dir.as_posix()], cwd=repo))
+        command = [sys.executable, f"scripts/ecl/{script}", "--out-dir", out_dir.as_posix()]
+        if needs_source_room:
+            command.extend(["--source-room", source_room.as_posix()])
+        if script == "validate_commercial_document_quality.py":
+            command.extend(["--document-dir", (source_room / "documents").as_posix()])
+        commands.append(run(command, cwd=repo))
 
     pg_tmp = Path(tempfile.mkdtemp(prefix="ecl-commercial-pg."))
     port = free_port()

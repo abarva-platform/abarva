@@ -135,6 +135,7 @@ jobs:
           workbook = json.loads(Path("outputs/ecl-client-workbook-execution-2026-08-23/workbook_execution_package_validation_summary.json").read_text())
           operator = json.loads(Path("outputs/ecl-no-stop-execution-run/operator-status-validation-summary.json").read_text())
           source_route = json.loads(Path("outputs/ecl-source-route-readiness-2026-08-23/source_360_route_readiness_summary.json").read_text())
+          source_page_contract = json.loads((proof_dir / "source_360_page_fact_contract_summary.json").read_text())
 
           failures = []
           if not execution.get("accepted"):
@@ -147,10 +148,18 @@ jobs:
             failures.append(f"commercial proof not accepted: {acceptance}")
           if acceptance.get("issue_count") != 0:
             failures.append(f"commercial proof issue_count={acceptance.get('issue_count')}")
-          if len(manifest.get("artifact_hashes", [])) != 26:
-            failures.append(f"artifact hash count={len(manifest.get('artifact_hashes', []))}, expected 26")
+          if len(manifest.get("artifact_hashes", [])) != 29:
+            failures.append(f"artifact hash count={len(manifest.get('artifact_hashes', []))}, expected 29")
           if len(manifest.get("source_room_hashes", [])) != 67:
             failures.append(f"source-room hash count={len(manifest.get('source_room_hashes', []))}, expected 67")
+          if not source_page_contract.get("accepted"):
+            failures.append(f"Source 360 page fact contract failed: {source_page_contract}")
+          if source_page_contract.get("rows") != 14:
+            failures.append(f"Source 360 page fact rows={source_page_contract.get('rows')}, expected 14")
+          if source_page_contract.get("supplied_rows") != 9:
+            failures.append(f"Source 360 supplied page facts={source_page_contract.get('supplied_rows')}, expected 9")
+          if source_page_contract.get("missing_projection_rows") != 5:
+            failures.append(f"Source 360 missing-projection page facts={source_page_contract.get('missing_projection_rows')}, expected 5")
           if summary.get("create_table_statements") != 895:
             failures.append(f"CREATE TABLE count={summary.get('create_table_statements')}, expected 895")
           if summary.get("unique_table_names") != 734:
@@ -214,6 +223,9 @@ jobs:
               "queue_slices": queue.get("slice_count"),
               "operator_completion_percent": operator.get("completion_percent"),
               "source_route_readiness": source_route.get("readiness_decision"),
+              "source_360_page_fact_rows": source_page_contract.get("rows"),
+              "source_360_page_fact_supplied_rows": source_page_contract.get("supplied_rows"),
+              "source_360_page_fact_missing_projection_rows": source_page_contract.get("missing_projection_rows"),
               "workbook_folders": workbook.get("workbook_folder_count"),
               "workbook_field_guide_rows": workbook.get("field_guide_rows"),
               "unique_table_names": summary.get("unique_table_names"),
