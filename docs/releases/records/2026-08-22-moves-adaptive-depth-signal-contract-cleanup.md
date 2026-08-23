@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Removes an unused adaptive-depth signal from the Moves artifact-depth resolver contract. The signal was declared and inferred, but it did not affect scoring, applicability, story-beat decisions, prompts, or generation behavior. Removing it keeps the contract honest until source maturity is deliberately modeled as an operative signal.
+Removes an unused adaptive-depth signal from the Moves artifact-depth resolver contract and adds explicit resolution-confidence metadata. The removed signal was declared and inferred, but it did not affect scoring, applicability, story-beat decisions, prompts, or generation behavior. The confidence metadata makes it visible whether a tier came from structured signals, prose inference, mixed evidence, or defaults.
 
 ## Layer Impact
 
@@ -28,7 +28,9 @@ Removes an unused adaptive-depth signal from the Moves artifact-depth resolver c
 ## Changes Included
 
 - Removes the unused adaptive-depth source-maturity signal from the TypeScript contract, defaults, and prose-derived signal extraction.
-- Leaves current scoring, artifact applicability, story-beat applicability, prompt handoff, and generation behavior unchanged.
+- Adds `signalBasis`, `resolutionConfidence`, and confidence reasons to the adaptive-depth decision.
+- Carries the confidence metadata into the prompt so prose-inferred tiering does not look identical to structured tiering.
+- Leaves current scoring, artifact applicability, story-beat applicability, and generated artifact selection unchanged.
 
 ## QA / Validation
 
@@ -63,3 +65,4 @@ Revert the PR. No data rollback is required.
 ## Known Gaps
 
 - Source maturity should be reintroduced only when it has explicit scoring semantics and tests that prove its effect.
+- The confidence metadata is diagnostic only in this release; it does not yet block low-confidence generation.

@@ -57,6 +57,45 @@ describe("Moves adaptive depth", () => {
     );
   });
 
+  it("reports prose-inferred confidence when no structured signals are supplied", () => {
+    const decision = resolveAdaptiveDepth({
+      text: [
+        "Straightforward reusable dashboard and scorecard pattern.",
+        "One mature certified data source, one business process, no vendor decision.",
+      ].join(" "),
+      artifactKeys: ["solution_design"],
+    });
+
+    expect(decision.signalBasis).toBe("prose_inferred");
+    expect(decision.resolutionConfidence).toBe("medium");
+    expect(decision.resolutionConfidenceReasons).toEqual(
+      expect.arrayContaining(["tier inferred from Move/context prose"]),
+    );
+    expect(renderAdaptiveDepthPrompt(decision)).toContain(
+      "Signal basis: prose_inferred",
+    );
+  });
+
+  it("reports high confidence when enough structured signals are supplied", () => {
+    const decision = resolveAdaptiveDepth({
+      signals: {
+        declaredStraightforward: true,
+        businessProcessCount: 1,
+        dataSourceCount: 1,
+        vendorSourcingDecision: false,
+        modelAiComplexity: false,
+        realTimeRequirement: false,
+      },
+      artifactKeys: ["solution_design"],
+    });
+
+    expect(decision.signalBasis).toBe("structured");
+    expect(decision.resolutionConfidence).toBe("high");
+    expect(decision.resolutionConfidenceReasons).toEqual(
+      expect.arrayContaining(["6 structured signal override(s)"]),
+    );
+  });
+
   it("omits Sourcing Strategy when no vendor/build-buy decision exists", () => {
     const decision = resolveAdaptiveDepth({
       text: "Straightforward dashboard using an approved reusable internal pattern.",
