@@ -225,7 +225,7 @@ Architecture that is not checked is architecture that is not followed. These exi
 | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `datasets/tenant-inputs/tenant-input-registry.json` | Declares the canonical input root per tenant. Legacy roots may not become active truth.                                                                         |
 | `scripts/tower/fact-lineage-report.mjs`             | Per Tower/tenant-intake metric per tenant, every in-scope file asserting a value and whether they agree — `AGREE` / `CONFLICT` / `ONE_SOURCE` / `ABSENT`. Run default `quote` mode before quoting Tower or tenant-intake headline metrics; use `--mode migration-audit` for legacy drift analysis. |
-| `scripts/source/source-substrate-lineage-report.mjs` | Per Source metric per tenant, every owning Source read model, Contract 360 projection, Cube, or canary source asserting a value, with counting basis attached. Run before quoting Source portfolio value, contract/vendor counts, Contract 360 totals, or Cube/consumption metrics. |
+| `scripts/source/source-substrate-lineage-report.mjs` | Per Source metric per tenant, every owning Source read model, Contract 360 projection, Cube, opportunity/evidence read model, or canary source asserting a value, with counting basis attached. Run before quoting Source portfolio value, contract/vendor counts, Contract 360 totals, optimization opportunity amounts, evidence-readiness counts, finance-confirmed value, or Cube/consumption metrics. |
 | `scripts/tower/build-template-field-guide.mjs`      | Per-field ownership, source system, extraction guidance — and grades whether our own pack demonstrates it.                                                      |
 | `npm run validate:context-corpus`                   | Governance policy on every context/corpus object.                                                                                                               |
 | `src/lib/governance/context-corpus-policy.ts`       | Runtime contract; objects that evaluate to `block` never reach a model.                                                                                         |
@@ -290,7 +290,10 @@ quote it until someone decides which source is authoritative and why.
 
 For Source product/read-model numbers, run `node scripts/source/source-substrate-lineage-report.mjs`
 and state the counting basis. Source portfolio value, contract count, vendor count, Contract 360
-totals, Cube/consumption metrics, and other Source read-model values must be proved from the Source
-read model, cube, or query with an explicit counting basis; the Tower lineage report is not evidence
-for those Source projection figures. If a Source figure is `ONE_SOURCE`, say so when you quote it.
-If it is `CONFLICT`, do not quote it until the owning read model or calculation run is reconciled.
+totals, optimization opportunity amount, evidence-readiness counts, finance-confirmed value,
+Cube/consumption metrics, and other Source read-model values must be proved from the Source read
+model, cube, opportunity spine, valuation ledger, or query with an explicit counting basis; the
+Tower lineage report is not evidence for those Source projection figures. If a Source figure is
+`ONE_SOURCE`, say so when you quote it. If it is `CONFLICT`, do not quote it until the owning read
+model or calculation run is reconciled. If it is `ABSENT`, treat the number as unknown; missing is
+not zero.

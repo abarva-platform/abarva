@@ -9,7 +9,12 @@
         "source.contract_360",
         "source.vendor_contract_portfolio",
         "consumption.sourcing_contract_v1",
-        "consumption.sourcing_vendor_v1"
+        "consumption.sourcing_vendor_v1",
+        "source.optimization_opportunity",
+        "source.opportunity_valuation",
+        "source.finance_realization",
+        "source.opportunity_requirement_status",
+        "source.opportunity_evidence"
       ]
     }
   },
@@ -46,6 +51,22 @@
       "metric": "auto_renew_contract_count",
       "bases": ["contract_row", "contract_family"],
       "explanation": "Contract 360 read models count auto-renewing contract rows. Source V4/Cube can count auto-renewing contract families. State the basis before quoting auto-renew counts."
+    },
+    {
+      "metric": "opportunity_amount_usd",
+      "bases": [
+        "opportunity_row_amount_total",
+        "opportunity_potential_valuation_total"
+      ],
+      "explanation": "source.optimization_opportunity carries the opportunity spine amount. source.opportunity_valuation carries valuation ledger amounts. They are related but not the same counting basis; state which layer and basis is being quoted."
+    },
+    {
+      "metric": "finance_confirmed_value_usd",
+      "bases": [
+        "opportunity_finance_confirmed_valuation_total",
+        "finance_realization_total"
+      ],
+      "explanation": "source.opportunity_valuation records finance-confirmed valuation entries while source.finance_realization records realized value proof rows. State whether the figure is a valuation ledger amount or a realized proof amount."
     }
   ],
   "supplementalVendorRefs": []
