@@ -18,10 +18,17 @@ export type StoryBeatApplicability =
   | "triggered"
   | "not_applicable";
 
+export type AdaptiveDepthSignalBasis =
+  | "structured"
+  | "mixed"
+  | "prose_inferred"
+  | "default_only";
+
+export type AdaptiveDepthResolutionConfidence = "high" | "medium" | "low";
+
 export interface AdaptiveDepthSignals {
   businessProcessCount: number;
   dataSourceCount: number;
-  matureDataSourceCount: number;
   identityResolutionNeeded: boolean;
   platformNovelty: boolean;
   workflowChange: boolean;
@@ -57,6 +64,9 @@ export interface AdaptiveDepthDecision {
   score: number;
   reasons: string[];
   signals: AdaptiveDepthSignals;
+  signalBasis: AdaptiveDepthSignalBasis;
+  resolutionConfidence: AdaptiveDepthResolutionConfidence;
+  resolutionConfidenceReasons: string[];
   artifactApplicability: Record<string, ArtifactApplicabilityDecision>;
   storyBeatApplicability: Record<string, StoryBeatDecision>;
   guidance: string[];
@@ -65,7 +75,6 @@ export interface AdaptiveDepthDecision {
 const DEFAULT_SIGNALS: AdaptiveDepthSignals = {
   businessProcessCount: 1,
   dataSourceCount: 1,
-  matureDataSourceCount: 1,
   identityResolutionNeeded: false,
   platformNovelty: false,
   workflowChange: false,
@@ -125,13 +134,6 @@ export function signalsFromMoveText(
       /lakehouse/,
     ])
       ? 3
-      : 1,
-    matureDataSourceCount: hasAny(lower, [
-      /mature source/,
-      /system of record/,
-      /certified data/,
-    ])
-      ? 2
       : 1,
     identityResolutionNeeded: hasPositiveSignal(
       lower,
@@ -414,6 +416,68 @@ function reasonList(signals: AdaptiveDepthSignals, score: number): string[] {
   return reasons;
 }
 
+function signalBasisFor(args: {
+  text?: string;
+  explicitSignalCount: number;
+}): AdaptiveDepthSignalBasis {
+  const hasText = (args.text ?? "").trim().length > 0;
+  if (args.explicitSignalCount > 0 && hasText) return "mixed";
+  if (args.explicitSignalCount > 0) return "structured";
+  if (hasText) return "prose_inferred";
+  return "default_only";
+}
+
+function confidenceFor(args: {
+  basis: AdaptiveDepthSignalBasis;
+  explicitSignalCount: number;
+  score: number;
+  signals: AdaptiveDepthSignals;
+}): {
+  confidence: AdaptiveDepthResolutionConfidence;
+  reasons: string[];
+} {
+  const reasons: string[] = [];
+  if (args.explicitSignalCount > 0) {
+    reasons.push(`${args.explicitSignalCount} structured signal override(s)`);
+  }
+  if (args.basis === "prose_inferred") {
+    reasons.push("tier inferred from Move/context prose");
+  }
+  if (args.basis === "default_only") {
+    reasons.push("no structured signals or descriptive context supplied");
+  }
+  if (
+    args.signals.clinicalRegulatorySensitivity &&
+    args.signals.modelAiComplexity
+  ) {
+    reasons.push("complex regulated AI override from deterministic signals");
+  }
+  if (args.score >= 8) reasons.push("high complexity score");
+  if (args.signals.declaredStraightforward && args.score < 3) {
+    reasons.push("straightforward signal with low complexity score");
+  }
+
+  if (args.basis === "structured" && args.explicitSignalCount >= 5) {
+    return { confidence: "high", reasons };
+  }
+  if (args.basis === "mixed" && args.explicitSignalCount >= 3) {
+    return { confidence: "high", reasons };
+  }
+  if (args.basis === "default_only") {
+    return { confidence: "low", reasons };
+  }
+  if (args.basis === "prose_inferred" && args.score < 3) {
+    return {
+      confidence: "medium",
+      reasons: [
+        ...reasons,
+        "low score; keep lightweight decisions conservative",
+      ],
+    };
+  }
+  return { confidence: "medium", reasons };
+}
+
 function requiredDimensionMissing(
   signals: AdaptiveDepthSignals,
   key: string,
@@ -554,6 +618,17 @@ export function resolveAdaptiveDepth(args: {
   artifactKeys?: readonly string[];
 }): AdaptiveDepthDecision {
   const signals = signalsFromMoveText(args.text ?? "", args.signals);
+  const explicitSignalCount = Object.keys(args.signals ?? {}).length;
+  const signalBasis = signalBasisFor({
+    text: args.text,
+    explicitSignalCount,
+  });
+  const confidence = confidenceFor({
+    basis: signalBasis,
+    explicitSignalCount,
+    score: complexityScore(signals),
+    signals,
+  });
   const score = complexityScore(signals);
   const complexityTier = tierFor(score, signals);
   const artifactKeys = args.artifactKeys?.length
@@ -576,6 +651,9 @@ export function resolveAdaptiveDepth(args: {
     score,
     reasons: reasonList(signals, score),
     signals,
+    signalBasis,
+    resolutionConfidence: confidence.confidence,
+    resolutionConfidenceReasons: confidence.reasons,
     artifactApplicability,
     storyBeatApplicability: storyBeatDecisions(signals),
     guidance:
@@ -707,6 +785,7 @@ export function renderAdaptiveDepthPrompt(
   return [
     "ADAPTIVE DEPTH - DETERMINISTIC RESOLUTION:",
     `Resolved complexity tier: ${decision.complexityTier}. Claude must use this tier and must not assign or change it.`,
+    `Resolution confidence: ${decision.resolutionConfidence}. Signal basis: ${decision.signalBasis}. ${decision.resolutionConfidenceReasons.join("; ") || "No additional confidence notes."}`,
     `Resolution basis: ${decision.reasons.join("; ")}.`,
     artifactLine,
     "Story-beat applicability:",
