@@ -205,10 +205,13 @@ select jsonb_pretty(jsonb_build_object(
   'sla_observation', (select count(*) from ecl_commercial.sla_observation where tenant_key = {tenant} and assessment_id = {assessment}),
   'review_event', (select count(*) from ecl_review.review_event where tenant_key = {tenant} and assessment_id = {assessment}),
   'projection_manifest', (select count(*) from ecl_projection.projection_manifest where tenant_key = {tenant} and assessment_id = {assessment}),
+  'home_enterprise_landscape', (select count(*) from ecl_projection.home_enterprise_landscape where tenant_key = {tenant} and assessment_id = {assessment}),
   'source_contract_360', (select count(*) from ecl_projection.source_contract_360 where tenant_key = {tenant} and assessment_id = {assessment}),
   'source_vendor_360', (select count(*) from ecl_projection.source_vendor_360 where tenant_key = {tenant} and assessment_id = {assessment}),
   'source_value_levers', (select count(*) from ecl_projection.source_value_levers where tenant_key = {tenant} and assessment_id = {assessment}),
   'source_event_workspace', (select count(*) from ecl_projection.source_event_workspace where tenant_key = {tenant} and assessment_id = {assessment}),
+  'tower_command_center', (select count(*) from ecl_projection.tower_command_center where tenant_key = {tenant} and assessment_id = {assessment}),
+  'intelligence_context_pack', (select count(*) from ecl_projection.intelligence_context_pack where tenant_key = {tenant} and assessment_id = {assessment}),
   'cube_manifest', (select count(*) from ecl_projection.cube_manifest where tenant_key = {tenant} and assessment_id = {assessment}),
   'cube_slice', (select count(*) from ecl_projection.cube_slice where tenant_key = {tenant} and assessment_id = {assessment}),
   'cube_slice_metric', (select count(*) from ecl_projection.cube_slice_metric where tenant_key = {tenant} and assessment_id = {assessment}),
@@ -232,6 +235,37 @@ select jsonb_pretty(jsonb_build_object(
   'source_value_claimable_rows', (
     select count(*) from ecl_projection.source_value_levers
     where tenant_key = {tenant} and assessment_id = {assessment} and claimable_value_usd > 0
+  ),
+  'home_primary_object_drift', (
+    select count(*) from ecl_projection.home_enterprise_landscape p
+    left join ecl_context.object o on o.tenant_key = p.tenant_key and o.assessment_id = p.assessment_id and o.id = p.primary_object_id
+    where p.tenant_key = {tenant} and p.assessment_id = {assessment} and p.primary_object_id is not null and o.id is null
+  ),
+  'home_refusal_without_payload', (
+    select count(*) from ecl_projection.home_enterprise_landscape
+    where tenant_key = {tenant} and assessment_id = {assessment}
+      and admission_status = 'refused'
+      and (admission_gate_key is null or admission_result_json = '{{}}'::jsonb)
+  ),
+  'tower_primary_object_drift', (
+    select count(*) from ecl_projection.tower_command_center p
+    left join ecl_context.object o on o.tenant_key = p.tenant_key and o.assessment_id = p.assessment_id and o.id = p.primary_object_id
+    where p.tenant_key = {tenant} and p.assessment_id = {assessment} and p.primary_object_id is not null and o.id is null
+  ),
+  'tower_gated_without_reason', (
+    select count(*) from ecl_projection.tower_command_center
+    where tenant_key = {tenant} and assessment_id = {assessment}
+      and claim_gate_status in ('gated','blocked') and claim_gate_reason_code is null
+  ),
+  'intelligence_context_pack_drift', (
+    select count(*) from ecl_projection.intelligence_context_pack p
+    left join ecl_context.context_pack cp on cp.tenant_key = p.tenant_key and cp.assessment_id = p.assessment_id and cp.id = p.context_pack_id
+    where p.tenant_key = {tenant} and p.assessment_id = {assessment} and cp.id is null
+  ),
+  'intelligence_primary_object_drift', (
+    select count(*) from ecl_projection.intelligence_context_pack p
+    left join ecl_context.object o on o.tenant_key = p.tenant_key and o.assessment_id = p.assessment_id and o.id = p.primary_object_id
+    where p.tenant_key = {tenant} and p.assessment_id = {assessment} and p.primary_object_id is not null and o.id is null
   )
 ));
 """
@@ -257,7 +291,17 @@ def validate_readback(readback: dict[str, Any], expected: dict[str, int], plante
     for key, value in expected.items():
         if int(readback.get(key, -1)) != int(value):
             issues.append(f"{key}_count_expected_{value}_got_{readback.get(key)}")
-    for drift_key in ["relationship_endpoint_drift", "cube_metric_drift", "cube_measure_drift"]:
+    for drift_key in [
+        "relationship_endpoint_drift",
+        "cube_metric_drift",
+        "cube_measure_drift",
+        "home_primary_object_drift",
+        "home_refusal_without_payload",
+        "tower_primary_object_drift",
+        "tower_gated_without_reason",
+        "intelligence_context_pack_drift",
+        "intelligence_primary_object_drift",
+    ]:
         if int(readback.get(drift_key, 1)) != 0:
             issues.append(drift_key)
     if int(readback.get("source_value_claimable_rows", 1)) != 0:
