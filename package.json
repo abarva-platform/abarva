@@ -839,6 +839,8 @@
     "ecl:dense-azure-readback:negative": "python3 scripts/ecl/compare_ecl_dense_azure_readback_export.py --export-dir reports/ecl-dense-azure-readback-export-negative-2026-08-23 --out-dir reports/ecl-dense-azure-readback-compare-negative-2026-08-23 --write-negative-sample-export --expect-failure",
     "ecl:product-browser-qa-gate:package": "python3 scripts/ecl/write_ecl_product_browser_qa_gate_package.py",
     "ecl:product-browser-qa-gate:validate": "python3 scripts/ecl/validate_ecl_product_browser_qa_gate_package.py",
+    "ecl:azure-load-approval-request:package": "python3 scripts/ecl/write_ecl_azure_load_approval_request.py",
+    "ecl:azure-load-approval-request:validate": "python3 scripts/ecl/validate_ecl_azure_load_approval_request.py",
     "ecl:heartbeat-agent:advance": "python3 scripts/ecl/run_ecl_heartbeat_status_agent.py",
     "ecl:heartbeat-agent:plan": "python3 scripts/ecl/run_ecl_heartbeat_status_agent.py --dry-run"
   },
