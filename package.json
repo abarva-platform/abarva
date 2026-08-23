@@ -15,6 +15,7 @@
     "start": "next start",
     "lint": "eslint",
     "moves:scan-artifacts": "npx tsx scripts/moves/scan-artifacts.ts",
+    "moves:refresh-artifact-cleanliness": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/moves/refresh-persisted-artifact-cleanliness.ts",
     "lint:depth": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/lint/depth-lint.ts",
     "audit:architecture-boundaries": "depcruise -c .dependency-cruiser.cjs --ignore-known .dependency-cruiser-known-violations.json src/app src/components",
     "secrets:scan": "gitleaks git --redact --no-banner",
