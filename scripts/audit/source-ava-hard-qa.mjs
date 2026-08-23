@@ -245,6 +245,60 @@ function q(id, surface, prompt, rules = {}) {
   };
 }
 
+function selectQuestions(questions, parsedArgs) {
+  let selected = [...questions];
+  const selection = {
+    ids: splitList(parsedArgs.ids ?? ""),
+    surfaces: splitList(parsedArgs.surface ?? parsedArgs.surfaces ?? ""),
+    focusAreas: splitList(parsedArgs.focus ?? parsedArgs["focus-area"] ?? parsedArgs["focus-areas"] ?? ""),
+    offset: Number(parsedArgs.offset ?? 0),
+    limit: parsedArgs.limit === undefined ? null : Number(parsedArgs.limit),
+  };
+
+  if (selection.ids.length > 0) {
+    const wanted = new Set(selection.ids.map((id) => id.toLowerCase()));
+    selected = selected.filter((question) => wanted.has(question.id.toLowerCase()));
+  }
+  if (selection.surfaces.length > 0) {
+    const wanted = new Set(selection.surfaces.map((surface) => surface.toLowerCase()));
+    selected = selected.filter((question) => wanted.has(question.surface.toLowerCase()));
+  }
+  if (selection.focusAreas.length > 0) {
+    const wanted = new Set(selection.focusAreas.map((focus) => focus.toLowerCase()));
+    selected = selected.filter((question) =>
+      (question.focusAreas ?? []).some((focus) => wanted.has(focus.toLowerCase())),
+    );
+  }
+
+  const offset = Number.isFinite(selection.offset) && selection.offset > 0 ? selection.offset : 0;
+  const limit = Number.isFinite(selection.limit) && selection.limit >= 0 ? selection.limit : null;
+  if (offset > 0 || limit !== null) {
+    selected = selected.slice(offset, limit === null ? undefined : offset + limit);
+  }
+
+  if (selected.length === 0) {
+    const filters = [
+      selection.ids.length ? `ids=${selection.ids.join(",")}` : null,
+      selection.surfaces.length ? `surface=${selection.surfaces.join(",")}` : null,
+      selection.focusAreas.length ? `focus=${selection.focusAreas.join(",")}` : null,
+      offset ? `offset=${offset}` : null,
+      limit !== null ? `limit=${limit}` : null,
+    ].filter(Boolean);
+    throw new Error(`No Source aVa hard-QA questions matched selection: ${filters.join(" ") || "none"}`);
+  }
+
+  return {
+    questions: selected,
+    selection: {
+      ids: selection.ids,
+      surfaces: selection.surfaces,
+      focusAreas: selection.focusAreas,
+      offset,
+      limit,
+    },
+  };
+}
+
 const args = parseArgs(process.argv.slice(2));
 const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 const outDir = path.resolve(args["out-dir"] ?? path.join(REPO_ROOT, "reports/source-ava-hard-qa", timestamp));
@@ -272,12 +326,13 @@ const runtimeConfig = {
     args["forbidden-vendors"] ?? process.env.SOURCE_AVA_FORBIDDEN_VENDORS ?? "",
   ),
 };
+const questionSelection = selectQuestions(QUESTIONS, args);
 
 fs.mkdirSync(outDir, { recursive: true });
 
 const captured = responseFile ? loadCapturedResponses(responseFile) : new Map();
 const results = [];
-for (const question of QUESTIONS) {
+for (const question of questionSelection.questions) {
   let response = captured.get(question.id) ?? null;
   if (!response && live) {
     response = await askLive(question);
@@ -292,17 +347,24 @@ const report = {
   mode: live ? "live-api" : responseFile ? "captured-response-file" : "question-bank-only",
   baseUrl,
   questionCount: QUESTIONS.length,
+  selectedQuestionCount: questionSelection.questions.length,
+  selection: questionSelection.selection,
   coverage: countBy(QUESTIONS, (item) => item.surface),
+  selectedCoverage: countBy(questionSelection.questions, (item) => item.surface),
   coverageDetail: {
     focusAreas: countFocusAreas(QUESTIONS),
+    selectedFocusAreas: countFocusAreas(questionSelection.questions),
     outputContracts: {
       table: QUESTIONS.filter((item) => item.requiresTable).length,
       chart: QUESTIONS.filter((item) => item.requiresChart).length,
+      selectedTable: questionSelection.questions.filter((item) => item.requiresTable).length,
+      selectedChart: questionSelection.questions.filter((item) => item.requiresChart).length,
     },
   },
   questionBank,
   summary,
   questions: QUESTIONS,
+  selectedQuestions: questionSelection.questions.map((question) => question.id),
   results,
 };
 
@@ -311,7 +373,9 @@ writeMarkdown(path.join(outDir, "source-ava-hard-qa.md"), report);
 writeCsv(path.join(outDir, "source-ava-hard-qa.csv"), results);
 
 console.log(`Source aVa hard-QA report written to ${path.relative(process.cwd(), outDir)}`);
-console.log(`Mode=${report.mode} PASS=${summary.pass} FAIL=${summary.fail} NOT_RUN=${summary.notRun}`);
+console.log(
+  `Mode=${report.mode} SELECTED=${report.selectedQuestionCount}/${report.questionCount} PASS=${summary.pass} FAIL=${summary.fail} NOT_RUN=${summary.notRun}`,
+);
 if (questionBank.issues.length > 0) {
   console.log(`Question bank issues=${questionBank.issues.length}`);
   for (const issue of questionBank.issues) console.log(`- ${issue}`);

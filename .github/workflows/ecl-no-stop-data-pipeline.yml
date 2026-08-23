@@ -117,6 +117,10 @@ jobs:
         run: |
           python3 scripts/ecl/run_no_stop_execution_queue.py
 
+      - name: Validate no-stop ECL execution queue
+        run: |
+          python3 scripts/ecl/validate_no_stop_execution_queue.py
+
       - name: Validate final operator status report
         run: |
           python3 scripts/ecl/validate_ecl_operator_status_report.py
