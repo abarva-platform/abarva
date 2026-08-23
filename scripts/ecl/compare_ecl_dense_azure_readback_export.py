@@ -139,7 +139,10 @@ def compare(contract_path: Path, export_dir: Path, out_dir: Path) -> dict[str, A
         if isinstance(tables, dict)
     })
 
-    keys = sorted(set(expected) | set(actual))
+    # Compare the contract's declared proof keys. The readback export may carry
+    # extra diagnostic layers, such as schema-qualified ecl_* counts, and those
+    # should not turn a passing logical contract into a mismatch.
+    keys = sorted(expected)
     parity_rows: list[dict[str, Any]] = []
     for layer, table in keys:
         expected_count = expected.get((layer, table), 0)
