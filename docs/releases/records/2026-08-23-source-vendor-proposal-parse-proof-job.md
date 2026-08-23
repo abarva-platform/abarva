@@ -14,6 +14,8 @@ Adds a governed operator proof job for the Source vendor-proposal ingestion path
 
 Update: the proof job now explicitly writes the artifact registry `version` column. The first live ACA attempt found that `source_artifacts.version` is required in the deployed table; this patch keeps the operator harness aligned with the live artifact registry contract.
 
+Second update: the live ACA retry found that `source_artifacts.created_at` is also required in the deployed table. The proof job now writes `created_at` and `updated_at` when those columns are present while keeping the required-column guard strict.
+
 ## Layer Impact
 
 - Release lane: `client-data-lane`.
@@ -36,6 +38,7 @@ Update: the proof job now explicitly writes the artifact registry `version` colu
 - `scripts/source/__tests__/vendor-proposal-parse-proof-job.test.mjs`
 - `package.json` script `source:vendor-proposal-parse:proof-job`
 - Explicit `source_artifacts.version = 1` population for the controlled proof artifact.
+- Explicit `source_artifacts.created_at` and `source_artifacts.updated_at` population for timestamped proof rows when those columns exist.
 
 ## QA / Validation
 
@@ -43,6 +46,7 @@ Update: the proof job now explicitly writes the artifact registry `version` colu
 - PASS: `node --test scripts/source/__tests__/vendor-proposal-parse-proof-job.test.mjs`
 - PASS: `node --test scripts/source/__tests__/source-substrate-lineage-report.test.mjs`
 - FAIL THEN FIXED: first ACA apply attempt failed before mutation because the live artifact registry required `version`; this release candidate now populates that field and pins it in the focused test.
+- FAIL THEN FIXED: second ACA apply attempt failed before mutation because the live artifact registry required `created_at`; this release candidate now populates source artifact timestamps and pins them in the focused test.
 - NOT RUN: live ACA proof is required before calling the mutation path live-proven.
 
 ## Rollout Plan
