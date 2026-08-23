@@ -177,6 +177,36 @@ export default async function StrategicMovePhaseWorkspacePage({
     evidenceNeedPackets = [];
   }
 
+  let phaseBuildArtifacts: Array<{
+    artifactId: string;
+    deliverableTypeKey: string;
+    documentTitle: string;
+    phase: number | null;
+    status: string;
+    version: number;
+    downloadUrl: string;
+  }> = [];
+  try {
+    const tctx = await requireTenancy();
+    const generatedArtifacts = await listMoveArtifacts(tctx, moveId, {
+      family: "generated_deliverable",
+      currentOnly: true,
+    });
+    phaseBuildArtifacts = generatedArtifacts
+      .filter((artifact) => artifact.phase === parsedPhase)
+      .map((artifact) => ({
+        artifactId: artifact.artifact_id,
+        deliverableTypeKey: artifact.artifact_type,
+        documentTitle: artifact.title,
+        phase: artifact.phase,
+        status: artifact.status,
+        version: artifact.version,
+        downloadUrl: `/api/v1/programs/${moveId}/artifacts/${artifact.artifact_id}/download`,
+      }));
+  } catch {
+    phaseBuildArtifacts = [];
+  }
+
   // Real "carries forward" content — extracted from the current phase's own
   // already-generated gate deliverable(s), not fabricated. A phase whose gate
   // artifact hasn't been generated yet (or whose content has no matching
@@ -258,6 +288,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         evidenceNeedPackets={evidenceNeedPackets}
         initialPhaseCaptureRevision={initialPhaseCaptureRevision}
         initialPhaseCaptureValues={initialPhaseCaptureValues}
+        phaseBuildArtifacts={phaseBuildArtifacts}
         initialSubstepKey={
           parsedPhase === 0 && resolvedSearchParams.focus === "gate"
             ? "approve"

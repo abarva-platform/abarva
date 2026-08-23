@@ -148,6 +148,8 @@ interface Props {
    *  shown in the pre-commit confirmation dialog. Purely a display of who the
    *  server already resolves the session to — never sent to the mutation itself. */
   approverLabel?: string | null;
+  /** Current generated deliverables from the artifact registry, preloaded server-side. */
+  initialArtifacts?: PhaseBuildArtifact[];
 }
 
 export interface BuildSettledResult {
@@ -157,6 +159,16 @@ export interface BuildSettledResult {
   failedKeys: string[];
   /** Total deliverables in this batch (succeeded + failed + anything else terminal). */
   total: number;
+}
+
+export interface PhaseBuildArtifact {
+  artifactId: string;
+  deliverableTypeKey: string;
+  documentTitle: string;
+  phase: number | null;
+  status: string;
+  version: number;
+  downloadUrl: string;
 }
 
 const POLL_MS = 4000;
@@ -182,6 +194,35 @@ const STATUS_LABEL: Record<RunStatus | "idle", string> = {
   error: "Could not start",
 };
 
+function buildInitialRows(
+  specs: DeliverableSpec[],
+  initialArtifacts: readonly PhaseBuildArtifact[],
+): DeliverableRow[] {
+  const artifactByKey = new Map<string, PhaseBuildArtifact>();
+  for (const artifact of initialArtifacts) {
+    if (!artifact.deliverableTypeKey) continue;
+    if (!artifactByKey.has(artifact.deliverableTypeKey)) {
+      artifactByKey.set(artifact.deliverableTypeKey, artifact);
+    }
+  }
+
+  return specs.map((s) => {
+    const artifact = artifactByKey.get(s.deliverableTypeKey);
+    return {
+      deliverableTypeKey: s.deliverableTypeKey,
+      documentTitle: artifact?.documentTitle ?? s.documentTitle,
+      gateArtifact: s.gateArtifact,
+      runId: null,
+      status: artifact ? "succeeded" : "idle",
+      progressPct: artifact ? 100 : 0,
+      progressLabel: null,
+      artifactId: artifact?.artifactId ?? null,
+      blobUrl: artifact?.downloadUrl ?? null,
+      packageReadiness: null,
+    };
+  });
+}
+
 export function PhaseApproveAndBuild({
   moveId,
   phaseNum,
@@ -196,6 +237,7 @@ export function PhaseApproveAndBuild({
   onBuildSettled,
   disabledReason = null,
   approverLabel = null,
+  initialArtifacts = [],
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const specs = (PHASE_CANONICAL_KEYS[phaseNum] ?? [])
@@ -205,18 +247,7 @@ export function PhaseApproveAndBuild({
     .filter(Boolean) as DeliverableSpec[];
 
   const [rows, setRows] = useState<DeliverableRow[]>(() =>
-    specs.map((s) => ({
-      deliverableTypeKey: s.deliverableTypeKey,
-      documentTitle: s.documentTitle,
-      gateArtifact: s.gateArtifact,
-      runId: null,
-      status: "idle",
-      progressPct: 0,
-      progressLabel: null,
-      artifactId: null,
-      blobUrl: null,
-      packageReadiness: null,
-    })),
+    buildInitialRows(specs, initialArtifacts),
   );
   const [building, setBuilding] = useState(false);
   const [error, setError] = useState<string | null>(null);

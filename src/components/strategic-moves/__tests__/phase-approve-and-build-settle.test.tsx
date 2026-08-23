@@ -90,6 +90,48 @@ function mockFetchSequence(opts: {
 }
 
 describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
+  it("seeds built rows from persisted Move artifacts on a fresh page load", () => {
+    global.fetch = jest.fn() as unknown as typeof fetch;
+
+    render(
+      <PhaseApproveAndBuild
+        moveId="move-1"
+        phaseNum={1}
+        phaseLabel="P1 Charter"
+        archetype="ai_enabled_sdlc"
+        moveName="Contact Center AI"
+        clientDisplayName="Client"
+        initialArtifacts={[
+          {
+            artifactId: "artifact-charter-current",
+            deliverableTypeKey: "charter",
+            documentTitle: "Program Charter",
+            phase: 1,
+            status: "draft",
+            version: 3,
+            downloadUrl:
+              "/api/v1/programs/move-1/artifacts/artifact-charter-current/download",
+          },
+        ]}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "P1 Charter documents are built. Review them before relying on them.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("1/1 built")).toBeInTheDocument();
+    expect(screen.getByText("Built")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Download final \u2192" }),
+    ).toHaveAttribute(
+      "href",
+      "/api/v1/programs/move-1/artifacts/artifact-charter-current/download",
+    );
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
   it("does not call onBuildSettled while the run is still queued/running", async () => {
     mockFetchSequence({
       runId: "run_pending",
@@ -186,9 +228,12 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
 
     await clickApproveAndBuild(/Approve & Build P1 Charter/i);
 
-    await waitFor(() => expect(screen.getByText("Needs evidence")).toBeInTheDocument(), {
-      timeout: 8000,
-    });
+    await waitFor(
+      () => expect(screen.getByText("Needs evidence")).toBeInTheDocument(),
+      {
+        timeout: 8000,
+      },
+    );
     expect(screen.queryByText("Not gate-ready")).not.toBeInTheDocument();
     expect(onBuildSettled).toHaveBeenCalledTimes(1);
     expect(onBuildSettled.mock.calls[0][0].failedKeys).toEqual(["charter"]);
