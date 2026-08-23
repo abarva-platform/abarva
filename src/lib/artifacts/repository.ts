@@ -7,7 +7,8 @@ import { recordContextRefreshEvent } from "@/lib/intelligence/refresh-events";
 import type { BoardPackRenderInput, BoardPackRenderResult } from "./types";
 import { renderBoardPack } from "./render-engine";
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** evidence_ledger_ids / cited_input_ids are UUID[] columns; only genuine UUIDs may be written. */
 function isUuid(s: string): boolean {
   return UUID_RE.test(s);
@@ -220,10 +221,9 @@ async function supersedePriorDeliverableVersions(args: {
   const client = getAzureWriteFluentClient();
   const { data: priorRows, error: lookupError } = await client
     .from("generated_artifacts")
-    .select("id")
+    .select("id, metadata")
     .eq("client_id", args.clientId)
     .eq("source_artifact_ref", args.sourceArtifactRef)
-    .contains("metadata", { deliverableTypeKey: args.deliverableTypeKey })
     .is("superseded_by", null);
   if (lookupError)
     throw new Error(
@@ -231,6 +231,19 @@ async function supersedePriorDeliverableVersions(args: {
     );
 
   const priorIds = ((priorRows as Record<string, unknown>[] | null) ?? [])
+    .filter((row) => {
+      const metadata =
+        row.metadata &&
+        typeof row.metadata === "object" &&
+        !Array.isArray(row.metadata)
+          ? (row.metadata as Record<string, unknown>)
+          : {};
+      return [
+        metadata.deliverableTypeKey,
+        metadata.registryKey,
+        metadata.artifactId,
+      ].some((value) => value === args.deliverableTypeKey);
+    })
     .map((row) => String(row.id))
     .filter((id) => id !== args.supersededById);
   if (priorIds.length === 0) return;
@@ -324,38 +337,45 @@ export async function listGeneratedArtifactsForMove(args: {
  */
 export async function listGeneratedArtifactsForMoveAllRefs(args: {
   clientId: string;
+  clientIds?: string[];
   moveId: string;
   limit?: number;
 }): Promise<GeneratedArtifactRecord[]> {
   const client = getAzureWriteFluentClient();
   const limit = args.limit ?? 50;
-  const [exact, prefixed] = await Promise.all([
-    client
-      .from("generated_artifacts")
-      .select("*")
-      .eq("client_id", args.clientId)
-      .eq("source_artifact_ref", args.moveId)
-      .order("rendered_at", { ascending: false })
-      .limit(limit),
-    client
-      .from("generated_artifacts")
-      .select("*")
-      .eq("client_id", args.clientId)
-      .like("source_artifact_ref", `move:${args.moveId}:%`)
-      .order("rendered_at", { ascending: false })
-      .limit(limit),
-  ]);
-  if (exact.error)
-    throw new Error(`generated_artifacts move(exact) lookup failed: ${exact.error.message}`);
-  if (prefixed.error)
-    throw new Error(`generated_artifacts move(prefix) lookup failed: ${prefixed.error.message}`);
+  const clientIds = Array.from(
+    new Set([args.clientId, ...(args.clientIds ?? [])].filter(Boolean)),
+  );
+  const lookups = await Promise.all(
+    clientIds.flatMap((clientId) => [
+      client
+        .from("generated_artifacts")
+        .select("*")
+        .eq("client_id", clientId)
+        .eq("source_artifact_ref", args.moveId)
+        .order("rendered_at", { ascending: false })
+        .limit(limit),
+      client
+        .from("generated_artifacts")
+        .select("*")
+        .eq("client_id", clientId)
+        .like("source_artifact_ref", `move:${args.moveId}:%`)
+        .order("rendered_at", { ascending: false })
+        .limit(limit),
+    ]),
+  );
+  for (const lookup of lookups) {
+    if (lookup.error)
+      throw new Error(
+        `generated_artifacts move lookup failed: ${lookup.error.message}`,
+      );
+  }
   const byId = new Map<string, GeneratedArtifactRecord>();
-  for (const row of [
-    ...((exact.data as Record<string, unknown>[] | null) ?? []),
-    ...((prefixed.data as Record<string, unknown>[] | null) ?? []),
-  ]) {
-    const rec = rowToRecord(row);
-    byId.set(rec.id, rec);
+  for (const lookup of lookups) {
+    for (const row of (lookup.data as Record<string, unknown>[] | null) ?? []) {
+      const rec = rowToRecord(row);
+      byId.set(rec.id, rec);
+    }
   }
   return [...byId.values()].sort((a, b) =>
     a.renderedAt < b.renderedAt ? 1 : a.renderedAt > b.renderedAt ? -1 : 0,

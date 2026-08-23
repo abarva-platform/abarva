@@ -12,6 +12,7 @@ interface MockBuilder {
   in: jest.Mock;
   is: jest.Mock;
   contains: jest.Mock;
+  like: jest.Mock;
   order: jest.Mock;
   limit: jest.Mock;
   single: jest.Mock;
@@ -25,7 +26,7 @@ function makeBuilder(table: string): MockBuilder {
   let inserted: Row | null = null;
   let updatePayload: Row | null = null;
   const filters: Array<{
-    kind: "eq" | "in" | "is" | "contains";
+    kind: "eq" | "in" | "is" | "contains" | "like";
     column: string;
     value: unknown;
   }> = [];
@@ -35,7 +36,8 @@ function makeBuilder(table: string): MockBuilder {
   function matchesRow(row: Row): boolean {
     return filters.every((filter) => {
       if (filter.kind === "eq") return row[filter.column] === filter.value;
-      if (filter.kind === "is") return (row[filter.column] ?? null) === filter.value;
+      if (filter.kind === "is")
+        return (row[filter.column] ?? null) === filter.value;
       if (filter.kind === "in")
         return (filter.value as unknown[]).includes(row[filter.column]);
       if (filter.kind === "contains") {
@@ -48,6 +50,12 @@ function makeBuilder(table: string): MockBuilder {
             ([k, v]) => (rowValue as Record<string, unknown>)[k] === v,
           )
         );
+      }
+      if (filter.kind === "like") {
+        const pattern = String(filter.value)
+          .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+          .replace(/%/g, ".*");
+        return new RegExp(`^${pattern}$`).test(String(row[filter.column]));
       }
       return true;
     });
@@ -82,6 +90,10 @@ function makeBuilder(table: string): MockBuilder {
     }),
     contains: jest.fn((column: string, value: unknown) => {
       filters.push({ kind: "contains", column, value });
+      return builder;
+    }),
+    like: jest.fn((column: string, value: unknown) => {
+      filters.push({ kind: "like", column, value });
       return builder;
     }),
     order: jest.fn((_column: string, options?: { ascending?: boolean }) => {
@@ -138,6 +150,7 @@ import {
   generateAndSaveBoardPack,
   getGeneratedArtifactById,
   getLatestGeneratedArtifact,
+  listGeneratedArtifactsForMoveAllRefs,
   renderedHtmlFromGeneratedArtifact,
   saveRenderedBoardGradeMoveArtifact,
   saveGeneratedArtifact,
@@ -261,7 +274,11 @@ describe("generated artifact repository", () => {
 
     const second = await saveGeneratedArtifact(
       { ...input, title: "Target Architecture — a completely different title" },
-      { ...rendered, blobSha256: "sha-second", html: "<html>second run</html>" },
+      {
+        ...rendered,
+        blobSha256: "sha-second",
+        html: "<html>second run</html>",
+      },
       { deliverableTypeKey: "target_architecture" },
     );
 
@@ -303,6 +320,49 @@ describe("generated artifact repository", () => {
       clientId: "codex-fs-e2e",
     });
     expect(secondStillCurrent?.supersededBy).toBeNull();
+  });
+
+  it("supersedes legacy generated artifacts keyed by metadata artifactId", async () => {
+    const input: BoardPackRenderInput = {
+      clientId: "codex-fs-e2e",
+      sourceArtifactRef: "move:move-legacy:target_architecture",
+      artifactType: "move_board_pack",
+      renderEngine: "internal",
+      outputFormat: "html",
+      renderedBy: "jest-user",
+      title: "Target Architecture",
+      tenantPolicy,
+      facts: [],
+      sections: [],
+    };
+    const rendered: BoardPackRenderResult = {
+      artifactType: "move_board_pack",
+      sourceArtifactRef: input.sourceArtifactRef,
+      renderEngine: "internal",
+      outputFormat: "html",
+      html: "<html>legacy</html>",
+      blobUrl: "",
+      blobSha256: "sha-legacy",
+      qualityScore: 90,
+      evidenceLedgerIds: [],
+      generationEgressAudit: null,
+      quarantined: false,
+      quarantineReason: null,
+    };
+
+    const legacy = await saveGeneratedArtifact(input, rendered, {
+      artifactId: "target_architecture",
+    });
+    const current = await saveGeneratedArtifact(
+      input,
+      { ...rendered, html: "<html>clean</html>", blobSha256: "sha-clean" },
+      { deliverableTypeKey: "target_architecture" },
+    );
+
+    const legacyAfter = await getGeneratedArtifactById(legacy.id, {
+      clientId: "codex-fs-e2e",
+    });
+    expect(legacyAfter?.supersededBy).toBe(current.id);
   });
 
   it("persists structured renderable metadata for board-grade Move artifacts", async () => {
@@ -384,5 +444,58 @@ describe("generated artifact repository", () => {
     );
     expect(secondAfter?.supersededBy).toBeNull();
     expect(secondAfter?.metadata.renderedHtml).toContain("second version");
+  });
+
+  it("lists generated Move artifacts across client UUID and tenant-key storage conventions", async () => {
+    const rendered: BoardPackRenderResult = {
+      artifactType: "move_board_pack",
+      sourceArtifactRef: "move-1",
+      renderEngine: "internal",
+      outputFormat: "html",
+      html: "<html>exact</html>",
+      blobUrl: "",
+      blobSha256: "sha-exact",
+      qualityScore: 90,
+      evidenceLedgerIds: [],
+      generationEgressAudit: null,
+      quarantined: false,
+      quarantineReason: null,
+    };
+    const uuidStored = await saveGeneratedArtifact(
+      {
+        clientId: "client-uuid",
+        sourceArtifactRef: "move-1",
+        artifactType: "move_board_pack",
+        renderEngine: "internal",
+        outputFormat: "html",
+        renderedBy: "jest-user",
+        title: "Exact",
+        tenantPolicy,
+        facts: [],
+        sections: [],
+      },
+      rendered,
+      { deliverableTypeKey: "business_case" },
+    );
+    const keyStored = await saveRenderedBoardGradeMoveArtifact({
+      clientId: "tenant-key",
+      moveId: "move-1",
+      artifactId: "target_architecture",
+      title: "Prefixed",
+      html: "<html>prefixed</html>",
+      renderedBy: "jest-user",
+      routePath: "/api/v1/moves/board-grade-target-architecture",
+      generatedOn: "2026-08-23",
+    });
+
+    const rows = await listGeneratedArtifactsForMoveAllRefs({
+      clientId: "client-uuid",
+      clientIds: ["tenant-key"],
+      moveId: "move-1",
+    });
+
+    expect(rows.map((row) => row.id)).toEqual(
+      expect.arrayContaining([uuidStored.id, keyStored.id]),
+    );
   });
 });

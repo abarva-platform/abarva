@@ -127,14 +127,17 @@ describe("sanitizeClientFacingArtifactHtml", () => {
     const html = sanitizeClientFacingArtifactHtml(`
       <p>The quality score was 80 because the data plane evidence was complete.</p>
       <p>Quality Score should not appear in the executive artifact.</p>
+      <p>The open owner is tagged as client_judgment.</p>
     `);
 
     expect(html).toContain("evidence readiness rating was 80");
     expect(html).toContain(
       "evidence from the client evidence environment was complete",
     );
+    expect(html).toContain("tagged as client decision");
     expect(html).not.toMatch(/quality score/i);
     expect(html).not.toMatch(/data plane/i);
+    expect(html).not.toMatch(/client_judgment/i);
   });
 
   it("sanitizes renderable deliverable text while preserving governance keys", () => {

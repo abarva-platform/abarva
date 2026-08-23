@@ -1,6 +1,6 @@
 import "server-only";
 
-import { listGeneratedArtifactsForMove } from "@/lib/artifacts/repository";
+import { listGeneratedArtifactsForMoveAllRefs } from "@/lib/artifacts/repository";
 import { boardArtifactsForMove } from "@/lib/programs/board-artifacts/board-artifacts-registry";
 import { listMoveArtifacts } from "@/lib/programs/deliverables/move-artifacts";
 import type { TenancyCtx } from "@/lib/programs/types.db";
@@ -23,25 +23,16 @@ export async function listMovesWorkspaceItems(
       );
       return [];
     }),
-    Promise.all(
-      generatedArtifactClientIds.map((clientId) =>
-        listGeneratedArtifactsForMove({
-          clientId,
-          moveId,
-        }).catch((error) => {
-          console.error(
-            "[MovesWorkspaceAdapter] generated_artifacts read failed",
-            {
-              clientId,
-              message: error instanceof Error ? error.message : String(error),
-            },
-          );
-          return [];
-        }),
-      ),
-    ).then((lists) => {
-      const byId = new Map(lists.flat().map((record) => [record.id, record]));
-      return Array.from(byId.values());
+    listGeneratedArtifactsForMoveAllRefs({
+      clientId: generatedArtifactClientIds[0] ?? ctx.clientId,
+      clientIds: generatedArtifactClientIds,
+      moveId,
+    }).catch((error) => {
+      console.error(
+        "[MovesWorkspaceAdapter] generated_artifacts read failed",
+        error instanceof Error ? error.message : String(error),
+      );
+      return [];
     }),
   ]);
 
