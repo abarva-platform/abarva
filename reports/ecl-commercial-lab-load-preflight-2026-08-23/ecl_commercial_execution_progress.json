@@ -1,0 +1,101 @@
+{
+  "accepted": true,
+  "generated_at": "2026-08-23T12:51:59+00:00",
+  "overall_percent_complete": 29,
+  "source": "ecl_commercial_lab_load_preflight",
+  "steps": [
+    {
+      "blockers": [
+        "explicit future execute approval",
+        "digest-pinned image",
+        "private data-plane target and secrets"
+      ],
+      "evidence": [
+        "reports/ecl-commercial-aca-job-dry-run-2026-08-23/ecl_commercial_aca_job_spec.json",
+        "reports/ecl-commercial-lab-load-preflight-2026-08-23/ecl_commercial_lab_load_run_contract.json"
+      ],
+      "gate": "no_data_plane_mutation_in_this_pr",
+      "name": "build_aca_data_build_job_to_contract_no_data",
+      "percent_complete": 90,
+      "status": "job_contract_plus_load_preflight_surface_ready",
+      "step": 1
+    },
+    {
+      "blockers": [
+        "explicit gate manifest",
+        "digest-pinned image",
+        "target private data-plane confirmation",
+        "Azure execution approval"
+      ],
+      "evidence": [
+        "reports/ecl-commercial-lab-load-preflight-2026-08-23/ecl_commercial_lab_load_run_contract.json",
+        "reports/ecl-commercial-lab-load-preflight-2026-08-23/ecl_commercial_lab_load_command_plan.json",
+        "reports/ecl-commercial-lab-load-preflight-2026-08-23/ecl_commercial_lab_load_gate_manifest.template.json"
+      ],
+      "gate": "azure_data_plane_write",
+      "name": "commercial_family_load_to_lab_preprod",
+      "percent_complete": 45,
+      "status": "preflight_contract_ready_execute_gated_not_run",
+      "step": 2
+    },
+    {
+      "blockers": [
+        "commercial load execution must complete first"
+      ],
+      "evidence": [
+        "reports/ecl-commercial-lab-load-preflight-2026-08-23/ecl_commercial_lab_load_readback_contract.json"
+      ],
+      "gate": "readback_after_approved_load",
+      "name": "independent_commercial_row_for_row_readback",
+      "percent_complete": 35,
+      "status": "readback_contract_ready_not_executed",
+      "step": 3
+    },
+    {
+      "blockers": [
+        "complete step 3 first"
+      ],
+      "evidence": [],
+      "gate": "commercial_readback_parity",
+      "name": "dense_source_rooms_for_remaining_8_families",
+      "percent_complete": 0,
+      "status": "deferred_after_commercial_readback",
+      "step": 4
+    },
+    {
+      "blockers": [
+        "complete step 4 first"
+      ],
+      "evidence": [],
+      "gate": "all_9_local_artifacts_exist",
+      "name": "full_local_validation_across_all_9_families",
+      "percent_complete": 0,
+      "status": "deferred_after_remaining_8_dense_rooms",
+      "step": 5
+    },
+    {
+      "blockers": [
+        "complete step 5 and obtain explicit load approval"
+      ],
+      "evidence": [],
+      "gate": "azure_data_plane_write_and_readback",
+      "name": "reload_and_readback_all_9_families",
+      "percent_complete": 0,
+      "status": "deferred_hard_gated",
+      "step": 6
+    },
+    {
+      "blockers": [
+        "complete step 6",
+        "deploy through approved workflow",
+        "signed-in Source browser QA"
+      ],
+      "evidence": [],
+      "gate": "product_route_repointing_and_browser_live_claim",
+      "name": "route_browser_qa_source_first",
+      "percent_complete": 0,
+      "status": "deferred_hard_gated",
+      "step": 7
+    }
+  ]
+}
