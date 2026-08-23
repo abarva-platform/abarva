@@ -16,6 +16,8 @@ Update: the proof job now explicitly writes the artifact registry `version` colu
 
 Second update: the live ACA retry found that `source_artifacts.created_at` is also required in the deployed table. The proof job now writes `created_at` and `updated_at` when those columns are present while keeping the required-column guard strict.
 
+Third update: the next live ACA retry found that `source_artifacts.generated_at` is also required in the deployed table. The proof job now writes `generated_at` from the same operator timestamp used for `created_at` and `updated_at`, preserving the strict required-column guard.
+
 ## Layer Impact
 
 - Release lane: `client-data-lane`.
@@ -38,7 +40,7 @@ Second update: the live ACA retry found that `source_artifacts.created_at` is al
 - `scripts/source/__tests__/vendor-proposal-parse-proof-job.test.mjs`
 - `package.json` script `source:vendor-proposal-parse:proof-job`
 - Explicit `source_artifacts.version = 1` population for the controlled proof artifact.
-- Explicit `source_artifacts.created_at` and `source_artifacts.updated_at` population for timestamped proof rows when those columns exist.
+- Explicit `source_artifacts.generated_at`, `source_artifacts.created_at`, and `source_artifacts.updated_at` population for timestamped proof rows when those columns exist.
 
 ## QA / Validation
 
@@ -47,6 +49,7 @@ Second update: the live ACA retry found that `source_artifacts.created_at` is al
 - PASS: `node --test scripts/source/__tests__/source-substrate-lineage-report.test.mjs`
 - FAIL THEN FIXED: first ACA apply attempt failed before mutation because the live artifact registry required `version`; this release candidate now populates that field and pins it in the focused test.
 - FAIL THEN FIXED: second ACA apply attempt failed before mutation because the live artifact registry required `created_at`; this release candidate now populates source artifact timestamps and pins them in the focused test.
+- FAIL THEN FIXED: third ACA apply attempt failed before mutation because the live artifact registry required `generated_at`; this release candidate now populates that artifact timestamp and pins it in the focused test.
 - NOT RUN: live ACA proof is required before calling the mutation path live-proven.
 
 ## Rollout Plan
