@@ -2238,6 +2238,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
                 label: reason.label,
                 detail: reason.detail,
                 sourceRef: reason.sourceRef,
+                role: reason.role,
                 tone:
                   reason.tone === "strong"
                     ? COL.teal
@@ -2923,7 +2924,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     ...(optSpineView?.selected
       ? [
           `Optimization rank: ${optSpineView.selected.rank} with fit ${optSpineView.selected.score}/100 and action "${optSpineView.selected.action}".`,
-          `Ranking reasons: ${optSpineView.selected.reasons.map((reason) => `${reason.label} (${reason.points} points): ${reason.detail}`).join(" | ")}.`,
+          `Ranking reasons: ${optSpineView.selected.reasons.map((reason) => `${reason.label} (${reason.role.replace(/_/g, " ")}, ${reason.points} points): ${reason.detail}`).join(" | ")}.`,
           `Top optimization queue: ${optSpineView.topCandidates.map((candidate) => `${candidate.rank} ${candidate.label} ${candidate.value} fit ${candidate.score}`).join(" | ")}.`,
         ]
       : []),

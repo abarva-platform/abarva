@@ -160,6 +160,59 @@ describe('buildContractOptimizationSpine', () => {
     expect(spine.selected?.reasons.map((reason) => reason.kind)).toEqual(
       expect.arrayContaining(['material_exposure', 'weak_leverage', 'commercial_variance', 'operational_pressure', 'enterprise_dependency']),
     );
+    expect(
+      spine.selected?.reasons
+        .filter((reason) => reason.role === 'action_trigger')
+        .map((reason) => reason.kind),
+    ).toEqual(['weak_leverage']);
+    expect(
+      spine.selected?.reasons
+        .filter((reason) => reason.role === 'evidence_gate')
+        .map((reason) => reason.kind),
+    ).toEqual(expect.arrayContaining(['commercial_variance', 'operational_pressure']));
+  });
+
+  it('does not treat a distant renewal date or spend variance as the action trigger', () => {
+    const contract = row({
+      contract_id: 'CTR-LONG-RUNWAY',
+      vendor_ref: 'vendor-long',
+      vendor_name: 'Long Runway Vendor',
+      contract_name: 'Long Runway Agreement',
+      annual_value: 43_500_000,
+      actual_annual_spend: 37_400_000,
+      end_date: '2031-06-28',
+      notice_period_days: 120,
+      cloud_sev1_sev2_incidents: 4590,
+    });
+    const spine = buildContractOptimizationSpine({
+      contract,
+      contracts: [contract],
+      leverageEntries: [
+        leverage({
+          contractId: contract.contract_id,
+          vendorRef: contract.vendor_ref,
+          annualValue: contract.annual_value ?? 0,
+          weakSignals: { benchmarking: true, alternatives: false, skill_dependency: false, regional_dependency: true },
+          weakSignalCount: 2,
+          isHighPriority: true,
+        }),
+      ],
+      ledger: null,
+      asOfDateIso,
+    });
+
+    const actionTriggerKinds = spine.selected?.reasons
+      .filter((reason) => reason.role === 'action_trigger')
+      .map((reason) => reason.kind);
+    const evidenceGateKinds = spine.selected?.reasons
+      .filter((reason) => reason.role === 'evidence_gate')
+      .map((reason) => reason.kind);
+
+    expect(actionTriggerKinds).toEqual(['weak_leverage']);
+    expect(actionTriggerKinds).not.toContain('decision_timing');
+    expect(actionTriggerKinds).not.toContain('commercial_variance');
+    expect(evidenceGateKinds).toEqual(expect.arrayContaining(['commercial_variance', 'operational_pressure']));
+    expect(spine.selected?.action).toMatch(/optimization/i);
   });
 
   it('keeps missing evidence explicit instead of inventing recoverable or realized value', () => {
