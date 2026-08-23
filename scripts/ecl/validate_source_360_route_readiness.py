@@ -200,6 +200,7 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         "source_event_workspace_projection_rows": len(event_rows),
         "source_event_workspace_event_rows": sum(1 for row in event_rows if row.get("workspace_tab") == "events"),
         "source_event_workspace_approval_rows": sum(1 for row in event_rows if row.get("workspace_tab") == "approvals"),
+        "source_event_workspace_compare_rows": sum(1 for row in event_rows if row.get("workspace_tab") == "compare"),
         "healthy_static_preview_accepted": bool(healthy_preview.get("accepted")),
         "weak_static_preview_accepted": bool(weak_preview.get("accepted")),
         "weak_contract_selected": bool(weak_checks.get("weak_contract_selected")),
@@ -226,9 +227,9 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         issues.append(
             f"Expected 5 Source value levers projection rows; got {route_ready_checks['source_value_levers_projection_rows']}"
         )
-    if route_ready_checks["source_event_workspace_projection_rows"] != 10:
+    if route_ready_checks["source_event_workspace_projection_rows"] != 13:
         issues.append(
-            f"Expected 10 Source event workspace projection rows; got {route_ready_checks['source_event_workspace_projection_rows']}"
+            f"Expected 13 Source event workspace projection rows; got {route_ready_checks['source_event_workspace_projection_rows']}"
         )
     if route_ready_checks["source_event_workspace_event_rows"] != 5:
         issues.append(
@@ -237,6 +238,10 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
     if route_ready_checks["source_event_workspace_approval_rows"] != 5:
         issues.append(
             f"Expected 5 Source event workspace approval rows; got {route_ready_checks['source_event_workspace_approval_rows']}"
+        )
+    if route_ready_checks["source_event_workspace_compare_rows"] != 3:
+        issues.append(
+            f"Expected 3 Source event workspace compare rows; got {route_ready_checks['source_event_workspace_compare_rows']}"
         )
     for key in [
         "commercial_proof_accepted",

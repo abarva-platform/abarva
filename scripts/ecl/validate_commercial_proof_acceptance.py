@@ -14,11 +14,11 @@ from pathlib import Path
 
 DEFAULT_OUT_DIR = Path("outputs/ecl-commercial-contract-supply-correction-2026-08-22")
 EXPECTED_COUNTS = {
-    "source_files": 68,
-    "source_records": 574,
+    "source_files": 71,
+    "source_records": 589,
     "documents": 55,
     "document_extractions": 235,
-    "objects": 46,
+    "objects": 48,
     "relationships": 49,
     "measures": 75,
     "contracts": 5,
@@ -26,11 +26,11 @@ EXPECTED_COUNTS = {
     "contract_scope": 44,
     "invoice_lines": 40,
     "sla_observations": 90,
-    "review_events": 10,
+    "review_events": 13,
     "source_contract_360_rows": 5,
     "source_vendor_360_rows": 5,
     "source_value_levers_rows": 5,
-    "source_event_workspace_rows": 10,
+    "source_event_workspace_rows": 13,
     "tower_rows": 5,
     "cube_manifests": 4,
     "cube_slices": 20,
@@ -53,11 +53,17 @@ DB_PROOF_EXPECTATIONS = {
     "source_value_levers_claimable_sum": "0",
     "source_value_levers_primary_metric_drift": "0",
     "source_value_levers_model_inferred_benchmark_rows": "5",
-    "source_event_workspace": "10",
+    "source_event_workspace": "13",
     "source_event_workspace_events": "5",
     "source_event_workspace_approvals": "5",
+    "source_event_workspace_compare": "3",
     "source_event_workspace_gated": "10",
+    "source_event_workspace_open": "3",
     "source_event_workspace_review_event_drift": "0",
+    "compare_response_source_rows": "3",
+    "compare_pricing_response_lines": "9",
+    "compare_evaluation_scorecard_rows": "3",
+    "source_event_workspace_compare_candidate_vendor_drift": "0",
     "cube_metric_unit_failures": "0",
     "owner_confirmed_or_claimable_money_from_unverified_extraction": "0",
     "contract_money_document_extracted_basis": "0",
@@ -121,10 +127,10 @@ def main() -> None:
             }
         )
 
-    if extraction.get("extracts_documented") != 13:
-        issues.append({"rule_id": "client_extraction_mapping_failed", "subject": "extracts_documented", "expected": "13", "actual": str(extraction.get("extracts_documented"))})
-    if product.get("mappings") != 8:
-        issues.append({"rule_id": "product_consumption_mapping_failed", "subject": "mappings", "expected": "8", "actual": str(product.get("mappings"))})
+    if extraction.get("extracts_documented") != 16:
+        issues.append({"rule_id": "client_extraction_mapping_failed", "subject": "extracts_documented", "expected": "16", "actual": str(extraction.get("extracts_documented"))})
+    if product.get("mappings") != 9:
+        issues.append({"rule_id": "product_consumption_mapping_failed", "subject": "mappings", "expected": "9", "actual": str(product.get("mappings"))})
     if source_page_contract.get("accepted") is not True:
         issues.append(
             {
@@ -136,12 +142,12 @@ def main() -> None:
         )
     if source_page_contract.get("rows") != 14:
         issues.append({"rule_id": "source_360_page_contract_rows_failed", "subject": "rows", "expected": "14", "actual": str(source_page_contract.get("rows"))})
-    if source_page_contract.get("supplied_rows") != 13 or source_page_contract.get("missing_projection_rows") != 1:
+    if source_page_contract.get("supplied_rows") != 14 or source_page_contract.get("missing_projection_rows") != 0:
         issues.append(
             {
                 "rule_id": "source_360_page_contract_mix_failed",
                 "subject": "supplied/missing_projection",
-                "expected": "13/1",
+                "expected": "14/0",
                 "actual": f"{source_page_contract.get('supplied_rows')}/{source_page_contract.get('missing_projection_rows')}",
             }
         )
@@ -172,8 +178,8 @@ def main() -> None:
         source_room_hash_count = len(proof_manifest.get("source_room_hashes", []))
         if artifact_hash_count < 25:
             issues.append({"rule_id": "artifact_hash_count_low", "subject": "artifact_hashes", "expected": ">=25", "actual": str(artifact_hash_count)})
-        if source_room_hash_count != 68:
-            issues.append({"rule_id": "source_room_hash_count_mismatch", "subject": "source_room_hashes", "expected": "68", "actual": str(source_room_hash_count)})
+        if source_room_hash_count != 71:
+            issues.append({"rule_id": "source_room_hash_count_mismatch", "subject": "source_room_hashes", "expected": "71", "actual": str(source_room_hash_count)})
 
     summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(),

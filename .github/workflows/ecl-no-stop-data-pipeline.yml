@@ -156,16 +156,16 @@ jobs:
             failures.append(f"commercial proof issue_count={acceptance.get('issue_count')}")
           if len(manifest.get("artifact_hashes", [])) != 31:
             failures.append(f"artifact hash count={len(manifest.get('artifact_hashes', []))}, expected 31")
-          if len(manifest.get("source_room_hashes", [])) != 68:
-            failures.append(f"source-room hash count={len(manifest.get('source_room_hashes', []))}, expected 68")
+          if len(manifest.get("source_room_hashes", [])) != 71:
+            failures.append(f"source-room hash count={len(manifest.get('source_room_hashes', []))}, expected 71")
           if not source_page_contract.get("accepted"):
             failures.append(f"Source 360 page fact contract failed: {source_page_contract}")
           if source_page_contract.get("rows") != 14:
             failures.append(f"Source 360 page fact rows={source_page_contract.get('rows')}, expected 14")
-          if source_page_contract.get("supplied_rows") != 13:
-            failures.append(f"Source 360 supplied page facts={source_page_contract.get('supplied_rows')}, expected 13")
-          if source_page_contract.get("missing_projection_rows") != 1:
-            failures.append(f"Source 360 missing-projection page facts={source_page_contract.get('missing_projection_rows')}, expected 1")
+          if source_page_contract.get("supplied_rows") != 14:
+            failures.append(f"Source 360 supplied page facts={source_page_contract.get('supplied_rows')}, expected 14")
+          if source_page_contract.get("missing_projection_rows") != 0:
+            failures.append(f"Source 360 missing-projection page facts={source_page_contract.get('missing_projection_rows')}, expected 0")
           if summary.get("create_table_statements") != 897:
             failures.append(f"CREATE TABLE count={summary.get('create_table_statements')}, expected 897")
           if summary.get("unique_table_names") != 736:
@@ -214,12 +214,14 @@ jobs:
             failures.append("Source 360 vendor projection row count did not equal 5")
           if source_route.get("checks", {}).get("source_value_levers_projection_rows") != 5:
             failures.append("Source 360 value levers projection row count did not equal 5")
-          if source_route.get("checks", {}).get("source_event_workspace_projection_rows") != 10:
-            failures.append("Source 360 event workspace projection row count did not equal 10")
+          if source_route.get("checks", {}).get("source_event_workspace_projection_rows") != 13:
+            failures.append("Source 360 event workspace projection row count did not equal 13")
           if source_route.get("checks", {}).get("source_event_workspace_event_rows") != 5:
             failures.append("Source 360 event workspace event row count did not equal 5")
           if source_route.get("checks", {}).get("source_event_workspace_approval_rows") != 5:
             failures.append("Source 360 event workspace approval row count did not equal 5")
+          if source_route.get("checks", {}).get("source_event_workspace_compare_rows") != 3:
+            failures.append("Source 360 event workspace compare row count did not equal 3")
           if source_route.get("checks", {}).get("product_consumption_browser_proof_status") != "not_started":
             failures.append("Source 360 browser proof status must remain not_started in local readiness lane")
 
