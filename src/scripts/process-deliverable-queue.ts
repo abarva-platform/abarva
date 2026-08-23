@@ -59,10 +59,16 @@ function resolveWorkerId(): string {
   const fromEnv = process.env.ABARVA_DELIVERABLE_WORKER_ID?.trim();
   if (fromEnv) return fromEnv;
   const fromArg = process.argv.find((a) => a.startsWith("--worker-id="));
-  if (fromArg) return fromArg.slice("--worker-id=".length).trim() || `worker:${process.pid}`;
+  if (fromArg)
+    return (
+      fromArg.slice("--worker-id=".length).trim() || `worker:${process.pid}`
+    );
   const host = process.env.HOSTNAME?.trim() || "host";
   const pid = process.pid;
-  const tick = typeof process.hrtime === "function" ? process.hrtime.bigint().toString() : String(pid);
+  const tick =
+    typeof process.hrtime === "function"
+      ? process.hrtime.bigint().toString()
+      : String(pid);
   return `deliverable-worker:${host}:${pid}:${tick}`;
 }
 
@@ -204,12 +210,16 @@ async function runMovesPremiumArtifact(
 }
 
 /** Run one claimed row to terminal state. Errors are caught and recorded as 'failed'. */
-async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<void> {
+async function runClaimed(
+  run: DeliverableRunRecord,
+  workerId: string,
+): Promise<void> {
   const payload = run.jobPayload;
   if (!payload) {
     await completeDeliverableRun(run.id, {
       status: "failed",
-      error: "job_payload missing on claimed run — cannot reconstruct generation input",
+      error:
+        "job_payload missing on claimed run — cannot reconstruct generation input",
     }).catch(() => {});
     return;
   }
@@ -239,14 +249,17 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
     }
 
     if (orchestratorPayload.decisionLineage) {
-      const { loadApprovedSolutionApproach } = await import(
-        "@/lib/programs/approved-solution-approach"
-      );
+      const { loadApprovedSolutionApproach } =
+        await import("@/lib/programs/approved-solution-approach");
       const current = await loadApprovedSolutionApproach({
         moveId: orchestratorPayload.sourceArtifactRef,
         clientId: run.clientId,
       });
-      if (!current || current.decisionHash !== orchestratorPayload.decisionLineage.decisionHash) {
+      if (
+        !current ||
+        current.decisionHash !==
+          orchestratorPayload.decisionLineage.decisionHash
+      ) {
         await completeDeliverableRun(run.id, {
           status: "blocked",
           error: "stale_decision_basis",
@@ -256,9 +269,8 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
         }).catch(() => {});
         return;
       }
-      const { loadCurrentMoveContextExtractFreshness } = await import(
-        "@/lib/programs/move-context-extract-freshness"
-      );
+      const { loadCurrentMoveContextExtractFreshness } =
+        await import("@/lib/programs/move-context-extract-freshness");
       const freshness = await loadCurrentMoveContextExtractFreshness({
         tenantKey: run.tenantKey,
         moveId: orchestratorPayload.sourceArtifactRef,
@@ -282,12 +294,17 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
 
     let upstreamArtifactContext = "";
     if (run.dependsOnRunId) {
-      const predecessor = await getDeliverableRun(run.dependsOnRunId, run.clientId);
+      const predecessor = await getDeliverableRun(
+        run.dependsOnRunId,
+        run.clientId,
+      );
       if (!predecessor?.artifactId || predecessor.status !== "succeeded") {
         await completeDeliverableRun(run.id, {
           status: "blocked",
           error: "dependency_not_satisfied",
-          blockers: ["The required upstream P3 artifact is not successfully persisted."],
+          blockers: [
+            "The required upstream P3 artifact is not successfully persisted.",
+          ],
         }).catch(() => {});
         return;
       }
@@ -298,14 +315,18 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
         await completeDeliverableRun(run.id, {
           status: "blocked",
           error: "dependency_artifact_missing",
-          blockers: ["The upstream run succeeded but its persisted artifact could not be loaded."],
+          blockers: [
+            "The upstream run succeeded but its persisted artifact could not be loaded.",
+          ],
         }).catch(() => {});
         return;
       }
       const renderable = artifact.metadata.renderableDoc;
       upstreamArtifactContext = [
         "APPROVED P3 ASSEMBLY PREDECESSOR - PRESERVE ITS DECISIONS",
-        JSON.stringify(renderable ?? artifact.metadata.renderedHtml ?? artifact.metadata).slice(0, 18000),
+        JSON.stringify(
+          renderable ?? artifact.metadata.renderedHtml ?? artifact.metadata,
+        ).slice(0, 18000),
       ].join("\n");
     }
 
@@ -317,18 +338,27 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
         : {}),
       deliverableType: orchestratorPayload.deliverableType,
       audience: orchestratorPayload.audience as AudienceRole[] | undefined,
-      decisionContext: [orchestratorPayload.decisionContext, upstreamArtifactContext]
+      decisionContext: [
+        orchestratorPayload.decisionContext,
+        upstreamArtifactContext,
+      ]
         .filter(Boolean)
         .join("\n\n"),
-      approvedSolutionApproach:
-        orchestratorPayload.approvedSolutionApproach,
+      approvedSolutionApproach: orchestratorPayload.approvedSolutionApproach,
       decisionLineage: orchestratorPayload.decisionLineage,
       clientDisplayName: orchestratorPayload.clientDisplayName || "Client",
-      initiativeDisplayName: orchestratorPayload.initiativeDisplayName || orchestratorPayload.useCaseArchetype,
+      initiativeDisplayName:
+        orchestratorPayload.initiativeDisplayName ||
+        orchestratorPayload.useCaseArchetype,
       sourceArtifactRef: orchestratorPayload.sourceArtifactRef,
       evidenceQuery: orchestratorPayload.evidenceQuery,
-      outputFormats: orchestratorPayload.outputFormats as OutputFormat[] | undefined,
-      ...(orchestratorPayload.model ? { model: orchestratorPayload.model } : {}),
+      outputFormats: orchestratorPayload.outputFormats as
+        | OutputFormat[]
+        | undefined,
+      adaptiveDepth: orchestratorPayload.adaptiveDepth,
+      ...(orchestratorPayload.model
+        ? { model: orchestratorPayload.model }
+        : {}),
       tenantClientKey: run.tenantKey,
       clientId: run.clientId,
       userId: run.userId,
@@ -349,7 +379,9 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
       await completeDeliverableRun(run.id, {
         status: "failed",
         error: "generation_succeeded_without_persisted_artifact",
-        blockers: ["Generation returned success without an artifact id; downstream assembly cannot continue."],
+        blockers: [
+          "Generation returned success without an artifact id; downstream assembly cannot continue.",
+        ],
       });
       return;
     }
@@ -376,7 +408,7 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
   } catch (err) {
     console.error(
       `[process-deliverable-queue] run ${run.id} failed`,
-      err instanceof Error ? err.stack ?? err.message : err,
+      err instanceof Error ? (err.stack ?? err.message) : err,
     );
     await completeDeliverableRun(run.id, {
       status: "failed",
@@ -397,7 +429,9 @@ export async function processDeliverableQueue(
     return [] as string[];
   });
   if (reclaimed.length > 0) {
-    console.warn(`[process-deliverable-queue] reclaimed ${reclaimed.length} stale run(s): ${reclaimed.join(", ")}`);
+    console.warn(
+      `[process-deliverable-queue] reclaimed ${reclaimed.length} stale run(s): ${reclaimed.join(", ")}`,
+    );
   }
   await blockRunsWithFailedDependencies().catch((err) => {
     console.error("[process-deliverable-queue] dependency sweep failed", err);
@@ -408,10 +442,15 @@ export async function processDeliverableQueue(
   for (let i = 0; i < batchSize; i++) {
     const run = await claimNextDeliverableRun(workerId);
     if (!run) break; // queue empty — let the cron re-fire later.
-    console.log(`[process-deliverable-queue] claimed run ${run.id} (tenant=${run.tenantKey}, module=${run.module})`);
+    console.log(
+      `[process-deliverable-queue] claimed run ${run.id} (tenant=${run.tenantKey}, module=${run.module})`,
+    );
     await runClaimed(run, workerId);
     await blockRunsWithFailedDependencies().catch((err) => {
-      console.error("[process-deliverable-queue] dependency cascade failed", err);
+      console.error(
+        "[process-deliverable-queue] dependency cascade failed",
+        err,
+      );
     });
     processed.push(run.id);
   }

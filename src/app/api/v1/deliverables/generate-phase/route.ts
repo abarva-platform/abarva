@@ -39,6 +39,11 @@ import {
   loadApprovedSolutionApproach,
   ARCHITECTURE_MODEL_VERSION,
 } from "@/lib/programs/approved-solution-approach";
+import {
+  resolveAdaptiveDepth,
+  shouldGenerateArtifact,
+  type AdaptiveDepthDecision,
+} from "@/lib/deliverables/adaptive-depth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -68,6 +73,14 @@ interface EnqueuedDeliverable {
   runId: string | null;
   status: "queued" | "error";
   error?: string;
+}
+
+interface OmittedDeliverable {
+  deliverableTypeKey: string;
+  documentTitle: string;
+  applicability: string;
+  reason: string;
+  mergeInto?: string;
 }
 
 function errorMessage(err: unknown, fallback = "unknown error"): string {
@@ -178,7 +191,7 @@ export async function POST(req: NextRequest) {
 
     // Resolve the phase's canonical deliverables from the registry. These are the
     // documents an "Approve & Build" for this phase produces.
-    const specs = (PHASE_CANONICAL_KEYS[phase] ?? [])
+    let specs = (PHASE_CANONICAL_KEYS[phase] ?? [])
       .map((key) =>
         DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key),
       )
@@ -312,6 +325,61 @@ export async function POST(req: NextRequest) {
         }
       : null;
 
+    const adaptiveDepth: AdaptiveDepthDecision = resolveAdaptiveDepth({
+      text: [
+        useCaseArchetype,
+        moveName,
+        phaseLabel,
+        approvedApproachBlock,
+        contextExtract
+          ? JSON.stringify({
+              attachedEvidenceItems: contextExtract.attachedEvidenceItems,
+              suggestedContextItems: contextExtract.suggestedContextItems,
+              gapItems: contextExtract.gapItems,
+            })
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
+      artifactKeys: [
+        ...specs.map((spec) => spec.deliverableTypeKey),
+        ...specs.map((spec) =>
+          orchestratorDeliverableType(spec.deliverableTypeKey),
+        ),
+      ],
+    });
+    const omittedDeliverables: OmittedDeliverable[] = specs
+      .filter(
+        (spec) =>
+          !shouldGenerateArtifact(adaptiveDepth, spec.deliverableTypeKey),
+      )
+      .map((spec) => {
+        const decision =
+          adaptiveDepth.artifactApplicability[spec.deliverableTypeKey];
+        return {
+          deliverableTypeKey: spec.deliverableTypeKey,
+          documentTitle: spec.documentTitle,
+          applicability: decision?.applicability ?? "not_applicable",
+          reason: decision?.reason ?? "Not applicable to this Move.",
+          ...(decision?.mergeInto ? { mergeInto: decision.mergeInto } : {}),
+        };
+      });
+    specs = specs.filter((spec) =>
+      shouldGenerateArtifact(adaptiveDepth, spec.deliverableTypeKey),
+    );
+
+    if (specs.length === 0) {
+      return Response.json(
+        {
+          error: "no_applicable_deliverables",
+          detail: `Phase ${phase} has no applicable deliverables after adaptive-depth resolution.`,
+          adaptiveDepth,
+          omittedDeliverables,
+        },
+        { status: 422 },
+      );
+    }
+
     const payloadFor = (spec: DeliverableSpec): DeliverableRunJobPayload => {
       const deliverableType = orchestratorDeliverableType(
         spec.deliverableTypeKey,
@@ -330,6 +398,7 @@ export async function POST(req: NextRequest) {
         clientDisplayName,
         initiativeDisplayName: moveName,
         sourceArtifactRef: moveId,
+        adaptiveDepth,
         ...(approvedApproachBlock
           ? { approvedSolutionApproach: approvedApproachBlock }
           : {}),
@@ -434,6 +503,8 @@ export async function POST(req: NextRequest) {
         phaseLabel,
         generationAttemptId,
         contextExtract,
+        adaptiveDepth,
+        omittedDeliverables,
         queued,
         total: results.length,
         deliverables: results,

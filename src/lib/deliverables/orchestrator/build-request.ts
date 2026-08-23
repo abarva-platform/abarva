@@ -12,8 +12,9 @@ import type {
   GovernedEvidenceItem,
   OutputFormat,
   SourceRegisterEntry,
-} from './types';
-import { resolveQualityBar } from './quality-bar-registry';
+} from "./types";
+import type { AdaptiveDepthDecision } from "@/lib/deliverables/adaptive-depth";
+import { resolveQualityBar } from "./quality-bar-registry";
 
 export interface BuildRequestParams {
   module: DeliverableModule;
@@ -24,13 +25,14 @@ export interface BuildRequestParams {
   clientDisplayName: string;
   initiativeDisplayName: string;
   outputFormats?: OutputFormat[];
+  adaptiveDepth?: AdaptiveDepthDecision;
 }
 
 const DEFAULT_AUDIENCE: Record<DeliverableModule, AudienceRole[]> = {
-  source: ['cio', 'cpo', 'procurement', 'steering_committee'],
-  moves: ['ceo', 'cio', 'cfo', 'steering_committee'],
-  tower: ['cio', 'cto', 'steering_committee'],
-  intelligence: ['cio', 'steering_committee'],
+  source: ["cio", "cpo", "procurement", "steering_committee"],
+  moves: ["ceo", "cio", "cfo", "steering_committee"],
+  tower: ["cio", "cto", "steering_committee"],
+  intelligence: ["cio", "steering_committee"],
 };
 
 export function buildDeliverableRequest(
@@ -41,21 +43,25 @@ export function buildDeliverableRequest(
   return {
     module: params.module,
     useCaseArchetype: params.useCaseArchetype,
-    phaseOrStage: 'build',
+    phaseOrStage: "build",
     deliverableType: params.deliverableType,
-    audience: params.audience?.length ? params.audience : DEFAULT_AUDIENCE[params.module],
+    audience: params.audience?.length
+      ? params.audience
+      : DEFAULT_AUDIENCE[params.module],
     decisionContext: params.decisionContext,
     governedEvidenceBundle: evidence,
     sourceRegister,
     missingEvidence: [],
     clientCompleteItems: [],
     approvedAssumptions: [],
-    artifactStandard: 'ABARVA_BOARD_GRADE_DELIVERABLE_STANDARD',
-    outputFormats: params.outputFormats?.length ? params.outputFormats : ['docx', 'xlsx'],
+    artifactStandard: "ABARVA_BOARD_GRADE_DELIVERABLE_STANDARD",
+    outputFormats: params.outputFormats?.length
+      ? params.outputFormats
+      : ["docx", "xlsx"],
     formattingProfile: {
       bodyPointSize: 11,
-      headingStyle: 'numbered',
-      tableStyle: 'banded',
+      headingStyle: "numbered",
+      tableStyle: "banded",
       wideDataToExcelCompanion: true,
       includeCoverPage: true,
       includeTableOfContents: true,
@@ -73,6 +79,7 @@ export function buildDeliverableRequest(
       // evidence) are unchanged and must still cite what they were built on.
       requiresSourceRegister: evidence.length > 0,
     },
+    adaptiveDepth: params.adaptiveDepth,
     clientDisplayName: params.clientDisplayName,
     initiativeDisplayName: params.initiativeDisplayName,
   };
