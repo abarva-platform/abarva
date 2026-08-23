@@ -1,0 +1,88 @@
+{
+  "accepted": true,
+  "current_focus": "ACA job contract plus commercial-family load/readback plan",
+  "generated_at": "2026-08-23T12:25:24.539486+00:00",
+  "hard_boundaries": {
+    "active_tenant_promotion": false,
+    "azure_mutation": false,
+    "browser_live_claim": false,
+    "deploy_or_traffic_shift": false,
+    "migration_apply": false,
+    "product_route_repointing": false
+  },
+  "queue_id": "ecl-source-ordered-aca-commercial-first",
+  "steps": [
+    {
+      "blockers": [],
+      "gate": "no_data_plane_mutation_in_this_pr",
+      "name": "build_aca_data_build_job_to_contract_no_data",
+      "percent_complete": 65,
+      "status": "contract_built_no_data",
+      "step": 1
+    },
+    {
+      "blockers": [
+        "explicit operator approval",
+        "digest-pinned image",
+        "target private data-plane confirmation"
+      ],
+      "gate": "azure_data_plane_write",
+      "name": "commercial_family_load_to_lab_preprod",
+      "percent_complete": 25,
+      "status": "plan_ready_gated_not_executed",
+      "step": 2
+    },
+    {
+      "blockers": [
+        "commercial load execution must complete first"
+      ],
+      "gate": "readback_after_approved_load",
+      "name": "independent_commercial_row_for_row_readback",
+      "percent_complete": 25,
+      "status": "plan_ready_gated_not_executed",
+      "step": 3
+    },
+    {
+      "blockers": [
+        "complete step 3 first"
+      ],
+      "gate": "commercial_readback_parity",
+      "name": "dense_source_rooms_for_remaining_8_families",
+      "percent_complete": 0,
+      "status": "deferred_after_commercial_readback",
+      "step": 4
+    },
+    {
+      "blockers": [
+        "complete step 4 first"
+      ],
+      "gate": "all_9_local_artifacts_exist",
+      "name": "full_local_validation_across_all_9_families",
+      "percent_complete": 0,
+      "status": "deferred_after_remaining_8_dense_rooms",
+      "step": 5
+    },
+    {
+      "blockers": [
+        "complete step 5 and obtain explicit load approval"
+      ],
+      "gate": "azure_data_plane_write_and_readback",
+      "name": "reload_and_readback_all_9_families",
+      "percent_complete": 0,
+      "status": "deferred_hard_gated",
+      "step": 6
+    },
+    {
+      "blockers": [
+        "complete step 6",
+        "deploy through approved workflow",
+        "signed-in Source browser QA"
+      ],
+      "gate": "product_route_repointing_and_browser_live_claim",
+      "name": "route_browser_qa_source_first",
+      "percent_complete": 0,
+      "status": "deferred_hard_gated",
+      "step": 7
+    }
+  ]
+}

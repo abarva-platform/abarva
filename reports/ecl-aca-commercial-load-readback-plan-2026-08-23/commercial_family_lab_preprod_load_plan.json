@@ -1,0 +1,49 @@
+{
+  "accepted": true,
+  "execution_order_step": 2,
+  "expected_manifest": {
+    "basis": "reports/ecl-source-layer-completion-2026-08-23/source_layer_completion_summary.json",
+    "local_commercial_proof_expected_counts": {
+      "contract_scope": 44,
+      "contracts": 5,
+      "document_extractions": 235,
+      "documents": 55,
+      "invoice_lines": 40,
+      "service_lines": 20,
+      "sla_observations": 90,
+      "source_contract_360_rows": 5,
+      "source_event_workspace_rows": 13,
+      "source_files": 71,
+      "source_records": 589,
+      "source_value_levers_rows": 5,
+      "source_vendor_360_rows": 5
+    },
+    "row_for_row_compare_keys": [
+      "tenant_key",
+      "assessment_id",
+      "source_file_id",
+      "source_record_id",
+      "document_id",
+      "contract_id",
+      "commercial_instrument_id",
+      "review_event_id",
+      "projection_row_id",
+      "cube_slice_id"
+    ]
+  },
+  "family": "vendor_contract_commercial",
+  "first_gated_data_plane_action": true,
+  "generated_at": "2026-08-23T12:25:24.539486+00:00",
+  "mode": "plan_ready_gated_not_executed",
+  "proof_bundle_required_before_any_product_route_adoption": true,
+  "required_preflight": [
+    "confirm target private data plane",
+    "confirm tenant scope from registry or operator input",
+    "confirm digest-pinned image",
+    "dry-run job request summary",
+    "capture explicit approval before write"
+  ],
+  "source_basis": "reports/ecl-source-layer-completion-2026-08-23/source_layer_completion_summary.json",
+  "target": "lab_or_client_preprod_private_data_plane",
+  "write_allowed_in_this_pr": false
+}

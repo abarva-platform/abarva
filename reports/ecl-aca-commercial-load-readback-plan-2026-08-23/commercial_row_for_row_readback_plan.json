@@ -1,0 +1,53 @@
+{
+  "accepted": true,
+  "compare_against": "reports/ecl-source-layer-completion-2026-08-23/source_layer_completion_summary.json",
+  "comparison_type": "row_for_row_against_local_commercial_proof",
+  "execution_order_step": 3,
+  "expected_manifest": {
+    "basis": "reports/ecl-source-layer-completion-2026-08-23/source_layer_completion_summary.json",
+    "local_commercial_proof_expected_counts": {
+      "contract_scope": 44,
+      "contracts": 5,
+      "document_extractions": 235,
+      "documents": 55,
+      "invoice_lines": 40,
+      "service_lines": 20,
+      "sla_observations": 90,
+      "source_contract_360_rows": 5,
+      "source_event_workspace_rows": 13,
+      "source_files": 71,
+      "source_records": 589,
+      "source_value_levers_rows": 5,
+      "source_vendor_360_rows": 5
+    },
+    "row_for_row_compare_keys": [
+      "tenant_key",
+      "assessment_id",
+      "source_file_id",
+      "source_record_id",
+      "document_id",
+      "contract_id",
+      "commercial_instrument_id",
+      "review_event_id",
+      "projection_row_id",
+      "cube_slice_id"
+    ]
+  },
+  "generated_at": "2026-08-23T12:25:24.539486+00:00",
+  "mode": "plan_ready_gated_not_executed",
+  "not_valid_as_proof": [
+    "service-role-only readback",
+    "HTTP 200",
+    "deploy log",
+    "CI pass without data-plane readback"
+  ],
+  "reader": "independent_read_only_identity",
+  "required_outputs": [
+    "row_count_parity_by_table",
+    "missing_row_report",
+    "extra_row_report",
+    "field_hash_mismatch_report",
+    "tenant_scope_confirmation",
+    "readback_identity_confirmation"
+  ]
+}
