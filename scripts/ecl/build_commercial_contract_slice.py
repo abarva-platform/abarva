@@ -485,6 +485,85 @@ def build_protection_assessment_rows(
     return rows
 
 
+def build_review_queue_rows(contract_rows: list[dict[str, str]], protection_rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    protection_by_contract = {row["contract_id"]: row for row in protection_rows}
+    rows: list[dict[str, str]] = []
+    for contract in contract_rows:
+        contract_id = contract["contract_id"]
+        protection = protection_by_contract[contract_id]
+        weak = protection["primary_weakness"]
+        event_due = contract["notice_deadline"]
+        event_evidence = [
+            "event charter",
+            "incumbent baseline",
+            "scope confirmation",
+            "procurement owner approval",
+        ]
+        approval_evidence = [
+            "finance attestation",
+            "business-owner approval",
+            "legal review",
+            "contract-owner evidence confirmation",
+        ]
+        rows.append(
+            {
+                "tenant_key": TENANT_KEY,
+                "source_system": "Source review queue export",
+                "source_object": "sourcing_event_gate",
+                "source_record_id": f"REVIEW-{contract_id}-EVENT",
+                "extract_job_id": "extract-meridian-source-review-queue-001",
+                "extract_timestamp": "2026-08-23T00:00:00Z",
+                "as_of_date": "2027-06-30",
+                "review_event_key": f"SRC-EVT-{contract_id}",
+                "contract_id": contract_id,
+                "workspace_tab": "events",
+                "event_stage": "evidence_collection",
+                "event_status": "blocked" if weak in {"uncapped_exit_cost", "auto_renewal_long_notice_and_shortfall_penalty"} else "in_progress",
+                "gate_status": "gated",
+                "gate_reason_code": "requires_sourcing_event_evidence",
+                "gate_reason_detail": "Sourcing event context is known from the review queue, but event charter, incumbent baseline, and owner evidence are not approved.",
+                "owner_role": contract["procurement_owner_role"],
+                "due_date": event_due,
+                "evidence_needed": " | ".join(event_evidence),
+                "review_event_type": "block",
+                "decision_basis": "source_recorded",
+                "review_state": "not_reviewed",
+                "row_hash": "",
+            }
+        )
+        rows.append(
+            {
+                "tenant_key": TENANT_KEY,
+                "source_system": "Source review queue export",
+                "source_object": "approval_gate",
+                "source_record_id": f"REVIEW-{contract_id}-APPROVAL",
+                "extract_job_id": "extract-meridian-source-review-queue-001",
+                "extract_timestamp": "2026-08-23T00:00:00Z",
+                "as_of_date": "2027-06-30",
+                "review_event_key": f"SRC-APR-{contract_id}",
+                "contract_id": contract_id,
+                "workspace_tab": "approvals",
+                "event_stage": "owner_review",
+                "event_status": "blocked",
+                "gate_status": "gated",
+                "gate_reason_code": "requires_owner_finance_legal_review",
+                "gate_reason_detail": "Approval cannot be inferred from complete source data; finance, business owner, legal, and contract owner must record review decisions.",
+                "owner_role": contract["business_owner_role"],
+                "due_date": event_due,
+                "evidence_needed": " | ".join(approval_evidence),
+                "review_event_type": "block",
+                "decision_basis": "source_recorded",
+                "review_state": "not_reviewed",
+                "row_hash": "",
+            }
+        )
+    for row in rows:
+        row["row_hash"] = hashlib.sha256(
+            json.dumps({k: v for k, v in row.items() if k != "row_hash"}, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+    return rows
+
+
 def build_market_benchmark_rows(price_rows: list[dict[str, str]]) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     price_by_contract_service: dict[tuple[str, str], list[dict[str, str]]] = defaultdict(list)
@@ -1130,6 +1209,7 @@ def build_source_room(input_root: Path, out_dir: Path) -> dict[str, list[dict[st
     write_scope_active_application_reconciliation(out_dir, scope_links)
 
     protection_rows = build_protection_assessment_rows(contract_rows, invoice_rows, market_benchmark_rows)
+    review_queue_rows = build_review_queue_rows(contract_rows, protection_rows)
     clause_rows.extend(build_protection_clause_rows(contract_rows, protection_rows))
     contract_by_id = {row["contract_id"]: row for row in contract_rows}
     supplier_by_vendor = {row["vendor_parent_id"]: row for row in supplier_rows}
@@ -1200,6 +1280,7 @@ def build_source_room(input_root: Path, out_dir: Path) -> dict[str, list[dict[st
         "source_market_benchmark_rates": market_benchmark_rows,
         "source_finance_realization": finance_rows,
         "contract_commercial_protection_assessment": protection_rows,
+        "source_review_queue": review_queue_rows,
     }
 
     for name, rows in extract_sets.items():
@@ -1518,6 +1599,49 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
             }
         )
 
+    review_event_sql: list[dict[str, str]] = []
+    review_event_ids: dict[str, str] = {}
+    review_rows_by_contract_tab: dict[tuple[str, str], dict[str, str]] = {}
+    for row in extracts["source_review_queue"]:
+        review_event_id = stable_uuid("review-event", row["review_event_key"])
+        review_event_ids[row["review_event_key"]] = review_event_id
+        review_rows_by_contract_tab[(row["contract_id"], row["workspace_tab"])] = row
+        review_event_sql.append(
+            {
+                "id": sql_text(review_event_id),
+                "tenant_key": sql_text(TENANT_KEY),
+                "assessment_id": sql_text(ASSESSMENT_ID),
+                "subject_kind": sql_text("contract"),
+                "subject_object_id": sql_text(None),
+                "subject_relationship_id": sql_text(None),
+                "subject_measure_id": sql_text(None),
+                "subject_contract_id": sql_text(contract_ids[row["contract_id"]]),
+                "subject_service_line_id": sql_text(None),
+                "subject_scope_id": sql_text(None),
+                "subject_invoice_line_id": sql_text(None),
+                "subject_sla_observation_id": sql_text(None),
+                "subject_document_extraction_id": sql_text(None),
+                "subject_context_pack_id": sql_text(None),
+                "review_event_type": sql_text(row["review_event_type"]),
+                "previous_value_json": sql_json({}),
+                "new_value_json": sql_json(
+                    {
+                        "workspace_tab": row["workspace_tab"],
+                        "event_stage": row["event_stage"],
+                        "event_status": row["event_status"],
+                        "gate_status": row["gate_status"],
+                        "gate_reason_code": row["gate_reason_code"],
+                        "due_date": row["due_date"],
+                    }
+                ),
+                "decision_basis": sql_text(row["decision_basis"]),
+                "reviewer_role": sql_text(row["owner_role"]),
+                "source_document_id": sql_text(None),
+                "source_record_id": sql_text(record_ids[row["source_record_id"]]),
+                "notes": sql_text(row["gate_reason_detail"]),
+            }
+        )
+
     service_line_sql: list[dict[str, str]] = []
     service_line_ids: dict[tuple[str, str], str] = {}
     annual_by_contract = {k: float(v["annual_value_usd"]) for k, v in contract_by_id.items()}
@@ -1779,11 +1903,11 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
             "rebuild_command": sql_text("python3 scripts/ecl/build_commercial_contract_slice.py"),
             "source_hash": sql_text(SOURCE_HASH_LABEL),
             "projection_hash": sql_text(stable_uuid("projection-hash", SOURCE_HASH_LABEL)),
-            "row_count": sql_num(20),
+            "row_count": sql_num(30),
             "quality_state": sql_text("warning"),
             "admission_status": sql_text("not_applicable"),
             "admission_gate_results_json": sql_json([]),
-            "gated_claim_count": sql_num(5),
+            "gated_claim_count": sql_num(15),
             "proof_uri": sql_text(f"local-proof://{out_dir.as_posix()}"),
         }
     ]
@@ -1791,6 +1915,7 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
     source_contract_rows = []
     source_vendor_rows = []
     source_value_rows = []
+    source_event_rows = []
     tower_rows = []
     for contract_id, contract in contract_by_id.items():
         vendor_id = object_ids[("vendor", contract["vendor_parent_id"])]
@@ -2054,6 +2179,61 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
                 "source_hash": sql_text(SOURCE_HASH_LABEL),
             }
         )
+        for workspace_tab, row_type in [("events", "sourcing_event"), ("approvals", "approval_gate")]:
+            review_row = review_rows_by_contract_tab[(contract_id, workspace_tab)]
+            evidence_needed = [item.strip() for item in review_row["evidence_needed"].split("|") if item.strip()]
+            event_title = (
+                f"Source event gate for {contract['contract_name']}"
+                if workspace_tab == "events"
+                else f"Approval gate for {contract['contract_name']}"
+            )
+            source_event_rows.append(
+                {
+                    "id": sql_text(stable_uuid("projection", "source-event-workspace", contract_id, workspace_tab)),
+                    "tenant_key": sql_text(TENANT_KEY),
+                    "assessment_id": sql_text(ASSESSMENT_ID),
+                    "snapshot_id": sql_text(snapshot_id),
+                    "projection_manifest_id": sql_text(projection_manifest_id),
+                    "projection_version": sql_num(1),
+                    "row_key": sql_text(f"{contract_id}:{workspace_tab}"),
+                    "workspace_tab": sql_text(workspace_tab),
+                    "row_type": sql_text(row_type),
+                    "event_key": sql_text(review_row["review_event_key"]),
+                    "event_title": sql_text(event_title),
+                    "contract_id": sql_text(contract_ids[contract_id]),
+                    "contract_object_id": sql_text(contract_object_id),
+                    "vendor_object_id": sql_text(vendor_id),
+                    "review_event_id": sql_text(review_event_ids[review_row["review_event_key"]]),
+                    "event_stage": sql_text(review_row["event_stage"]),
+                    "event_status": sql_text(review_row["event_status"]),
+                    "gate_status": sql_text(review_row["gate_status"]),
+                    "gate_reason_code": sql_text(review_row["gate_reason_code"]),
+                    "gate_reason_detail": sql_text(review_row["gate_reason_detail"]),
+                    "owner_role": sql_text(review_row["owner_role"]),
+                    "due_date": sql_text(review_row["due_date"]),
+                    "evidence_needed_json": sql_json(evidence_needed),
+                    "decision_context_json": sql_json(
+                        {
+                            "review_event_type": review_row["review_event_type"],
+                            "decision_basis": review_row["decision_basis"],
+                            "review_state": review_row["review_state"],
+                            "contract_name": contract["contract_name"],
+                            "supplier": contract["supplier_legal_name"],
+                        }
+                    ),
+                    "next_action_json": sql_json(
+                        {
+                            "action": "collect_review_evidence",
+                            "owner_role": review_row["owner_role"],
+                            "due_date": review_row["due_date"],
+                            "required_evidence": evidence_needed,
+                        }
+                    ),
+                    "source_refs_json": sql_json([review_row["source_record_id"], contract["source_record_id"], protection["source_record_id"]]),
+                    "gap_flags_json": sql_json(["review_not_completed", review_row["gate_reason_code"], *gap_flags, *protection_flags]),
+                    "source_hash": sql_text(SOURCE_HASH_LABEL),
+                }
+            )
         measures.append(measure_row(stable_uuid("measure", contract_id, "blocked"), contract_object_id, "blocked_value_usd", contract["annual_value_usd"], "USD", None, basis="calculated", quality="estimated"))
         measures.append(measure_row(stable_uuid("measure", contract_id, "claimable"), contract_object_id, "claimable_value_usd", 0, "USD", None, basis="calculated", quality="estimated"))
 
@@ -2244,10 +2424,12 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
         "ecl_commercial.contract_scope": ["id", "tenant_key", "assessment_id", "contract_id", "scoped_object_id", "scope_type", "allocation_percent", "allocation_amount_usd", "basis", "value_state", "source_record_id", "review_state"],
         "ecl_commercial.invoice_line": ["id", "tenant_key", "assessment_id", "invoice_line_key", "vendor_object_id", "contract_id", "cost_center_object_id", "period_start", "period_end", "amount_usd", "gl_account", "spend_category", "source_record_id", "basis", "value_state", "review_state", "zero_amount_reason"],
         "ecl_commercial.sla_observation": ["id", "tenant_key", "assessment_id", "contract_id", "service_line_id", "scoped_object_id", "metric_key", "target_value_number", "actual_value_number", "unit", "period_start", "period_end", "source_record_id", "document_extraction_id", "basis", "value_state", "quality_state", "review_state"],
+        "ecl_review.review_event": ["id", "tenant_key", "assessment_id", "subject_kind", "subject_object_id", "subject_relationship_id", "subject_measure_id", "subject_contract_id", "subject_service_line_id", "subject_scope_id", "subject_invoice_line_id", "subject_sla_observation_id", "subject_document_extraction_id", "subject_context_pack_id", "review_event_type", "previous_value_json", "new_value_json", "decision_basis", "reviewer_role", "source_document_id", "source_record_id", "notes"],
         "ecl_projection.projection_manifest": ["id", "tenant_key", "assessment_id", "projection_key", "projection_version", "snapshot_id", "rebuild_command", "source_hash", "projection_hash", "row_count", "quality_state", "admission_status", "admission_gate_results_json", "gated_claim_count", "proof_uri"],
         "ecl_projection.source_contract_360": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_version", "row_key", "contract_id", "contract_object_id", "vendor_object_id", "contract_name", "vendor_name", "renewal_notice_date", "end_date", "annualized_value_usd", "total_contract_value_usd", "value_state", "quality_state", "service_lines_json", "scope_json", "spend_summary_json", "sla_summary_json", "document_proof_json", "gap_flags_json", "source_refs_json", "source_hash"],
         "ecl_projection.source_vendor_360": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_version", "row_key", "vendor_object_id", "vendor_name", "contract_count", "covered_object_count", "annualized_spend_usd", "renewal_exposure_usd", "value_state", "quality_state", "contract_ids_json", "covered_objects_json", "spend_summary_json", "sla_summary_json", "risk_control_json", "gap_flags_json", "source_refs_json", "source_hash"],
         "ecl_projection.source_value_levers": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_version", "row_key", "lever_type", "opportunity_type", "opportunity_title", "contract_id", "contract_object_id", "vendor_object_id", "primary_metric_key", "baseline_spend_usd", "addressable_spend_usd", "estimated_value_low_usd", "estimated_value_high_usd", "claimable_value_usd", "blocked_value_usd", "value_gate_status", "value_gate_reason_code", "value_gate_reason_detail", "evidence_state", "confidence", "affected_scope_json", "benchmark_context_json", "protection_context_json", "next_action_json", "metric_keys_json", "source_refs_json", "gap_flags_json", "source_hash"],
+        "ecl_projection.source_event_workspace": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_version", "row_key", "workspace_tab", "row_type", "event_key", "event_title", "contract_id", "contract_object_id", "vendor_object_id", "review_event_id", "event_stage", "event_status", "gate_status", "gate_reason_code", "gate_reason_detail", "owner_role", "due_date", "evidence_needed_json", "decision_context_json", "next_action_json", "source_refs_json", "gap_flags_json", "source_hash"],
         "ecl_projection.tower_command_center": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_version", "row_key", "page_key", "row_type", "primary_object_id", "claim_id", "claim_gate_status", "claim_gate_reason_code", "claim_gate_reason_detail", "next_gate", "evidence_needed_json", "funded_amount_usd", "promised_value_usd", "usage_supported_value_usd", "finance_validated_value_usd", "claimable_value_usd", "blocked_value_usd", "proof_maturity_score", "risk_pressure_score", "usage_strength_score", "owner_role", "handoff_module", "value_state", "quality_state", "metric_keys_json", "source_refs_json", "gap_flags_json", "display_payload_json", "source_hash"],
         "ecl_projection.cube_manifest": ["id", "tenant_key", "assessment_id", "snapshot_id", "cube_key", "cube_version", "rebuild_command", "source_hash", "cube_hash", "slice_count", "quality_state", "admission_status", "admission_gate_results_json", "proof_uri"],
         "ecl_projection.cube_slice": ["id", "tenant_key", "assessment_id", "snapshot_id", "cube_manifest_id", "cube_key", "cube_version", "slice_key", "grain_key", "primary_object_id", "dimensions_json", "measures_json", "primary_metric_key", "metric_keys_json", "source_refs_json", "basis_summary", "value_state", "quality_state", "gap_flags_json", "source_hash"],
@@ -2269,10 +2451,12 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
         ("ecl_commercial.contract_scope", scope_sql),
         ("ecl_commercial.invoice_line", invoice_sql),
         ("ecl_commercial.sla_observation", sla_sql),
+        ("ecl_review.review_event", review_event_sql),
         ("ecl_projection.projection_manifest", projection_manifest_sql),
         ("ecl_projection.source_contract_360", source_contract_rows),
         ("ecl_projection.source_vendor_360", source_vendor_rows),
         ("ecl_projection.source_value_levers", source_value_rows),
+        ("ecl_projection.source_event_workspace", source_event_rows),
         ("ecl_projection.tower_command_center", tower_rows),
         ("ecl_projection.cube_manifest", cube_manifest_rows),
         ("ecl_projection.cube_slice", cube_slice_rows),
@@ -2283,6 +2467,7 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
     write_projection_csv(out_dir / "source_contract_360_projection.csv", columns["ecl_projection.source_contract_360"], source_contract_rows)
     write_projection_csv(out_dir / "source_vendor_360_projection.csv", columns["ecl_projection.source_vendor_360"], source_vendor_rows)
     write_projection_csv(out_dir / "source_value_levers_projection.csv", columns["ecl_projection.source_value_levers"], source_value_rows)
+    write_projection_csv(out_dir / "source_event_workspace_projection.csv", columns["ecl_projection.source_event_workspace"], source_event_rows)
     write_projection_csv(out_dir / "tower_command_center_projection.csv", columns["ecl_projection.tower_command_center"], tower_rows)
 
     sql_parts = [
@@ -2308,6 +2493,7 @@ select 'service_lines', count(*) from ecl_commercial.contract_service_line;
 select 'contract_scope', count(*) from ecl_commercial.contract_scope;
 select 'invoice_lines', count(*) from ecl_commercial.invoice_line;
 select 'sla_observations', count(*) from ecl_commercial.sla_observation;
+select 'review_events', count(*) from ecl_review.review_event;
 select 'source_contract_360', count(*) from ecl_projection.source_contract_360;
 select 'source_vendor_360', count(*) from ecl_projection.source_vendor_360;
 select 'source_value_levers', count(*) from ecl_projection.source_value_levers;
@@ -2321,6 +2507,15 @@ where md.metric_key is null;
 select 'source_value_levers_model_inferred_benchmark_rows', count(*)
 from ecl_projection.source_value_levers
 where benchmark_context_json ->> 'basis' = 'synthetic_directional_market_benchmark';
+select 'source_event_workspace', count(*) from ecl_projection.source_event_workspace;
+select 'source_event_workspace_events', count(*) from ecl_projection.source_event_workspace where workspace_tab = 'events';
+select 'source_event_workspace_approvals', count(*) from ecl_projection.source_event_workspace where workspace_tab = 'approvals';
+select 'source_event_workspace_gated', count(*) from ecl_projection.source_event_workspace where gate_status = 'gated';
+select 'source_event_workspace_review_event_drift', count(*)
+from ecl_projection.source_event_workspace sew
+left join ecl_review.review_event re
+  on re.tenant_key = sew.tenant_key and re.assessment_id = sew.assessment_id and re.id = sew.review_event_id
+where re.id is null;
 select 'tower_command_center', count(*) from ecl_projection.tower_command_center;
 select 'cube_slices', count(*) from ecl_projection.cube_slice;
 select 'cube_slice_metrics', count(*) from ecl_projection.cube_slice_metric;
@@ -2577,9 +2772,11 @@ order by vendor_name;
         "contract_scope": len(scope_sql),
         "invoice_lines": len(invoice_sql),
         "sla_observations": len(sla_sql),
+        "review_events": len(review_event_sql),
         "source_contract_360_rows": len(source_contract_rows),
         "source_vendor_360_rows": len(source_vendor_rows),
         "source_value_levers_rows": len(source_value_rows),
+        "source_event_workspace_rows": len(source_event_rows),
         "tower_rows": len(tower_rows),
         "cube_manifests": len(cube_manifest_rows),
         "cube_slices": len(cube_slice_rows),
@@ -2644,9 +2841,11 @@ def write_readme(out_dir: Path, summary: dict[str, object]) -> None:
         "contract_scope",
         "invoice_lines",
         "sla_observations",
+        "review_events",
         "source_contract_360_rows",
         "source_vendor_360_rows",
         "source_value_levers_rows",
+        "source_event_workspace_rows",
         "tower_rows",
         "cube_manifests",
         "cube_slices",
@@ -2687,7 +2886,7 @@ def write_readme(out_dir: Path, summary: dict[str, object]) -> None:
             "python3 scripts/ecl/write_commercial_proof_bundle_manifest.py",
             "```",
             "",
-            "Observed proof is captured in `commercial_contract_supply_db_proof.txt`. The machine-readable proof manifest is `proof_bundle_manifest.json`; it embeds the git SHA, dirty-state hash, tenant list, environment metadata, 30 proof/report artifact hashes, retained planted-failure artifacts, dense Meridian scope-addition reports, client extraction mapping, product-consumption mapping, Source 360 page fact contract, document-quality reports, the one-command run summary, acceptance summary, and 67 source-room file hashes.",
+            "Observed proof is captured in `commercial_contract_supply_db_proof.txt`. The machine-readable proof manifest is `proof_bundle_manifest.json`; it embeds the git SHA, dirty-state hash, tenant list, environment metadata, 31 proof/report artifact hashes, retained planted-failure artifacts, dense Meridian scope-addition reports, client extraction mapping, product-consumption mapping, Source 360 page fact contract, Source event-workspace projection, document-quality reports, the one-command run summary, acceptance summary, and 68 source-room file hashes.",
             "Source-room validation writes `commercial_contract_supply_bad_rows.csv` and `commercial_contract_supply_validation_summary.json` before the SQL load. Planted validator failures are retained as `validator_planted_*` artifacts. Field lineage is captured in `commercial_contract_supply_field_lineage.csv`. Dense Meridian scope additions are captured in `commercial_scope_dense_meridian_required_additions.*`. Client/operator extraction guidance is captured in `commercial_client_extraction_mapping.*`. Product deterministic consumption is captured in `commercial_product_consumption_mapping.*`. Client-visible document quality is checked by `commercial_document_quality_*` reports.",
             "",
             "Additional proof checks:",

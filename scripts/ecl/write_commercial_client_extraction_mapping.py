@@ -160,6 +160,18 @@ EXTRACT_GUIDE: dict[str, dict[str, str]] = {
         "quality_gate": "Score is computed; clause-derived facts cite document spans, while benchmark variance stays estimated unless externally sourced.",
         "example_export": "Derived assessment output with component states, modeled exposures, guidance, legal boundary, and review state.",
     },
+    "source_review_queue.csv": {
+        "source_owner": "Sourcing operations, procurement PMO, or Source workflow owner",
+        "system_to_pull_from": "Source workflow tracker, CLM task queue, ServiceNow request queue, or controlled review log",
+        "one_row_represents": "One sourcing event or approval gate for a contract",
+        "why_needed": "Prevents Source Events and Approvals pages from inferring workflow state from contract age or data completeness.",
+        "product_consumers": "Source Events; Source Approvals; Tower action queue; Intelligence workflow context",
+        "required_join_keys": "review_event_key, contract_id, workspace_tab, source_record_id",
+        "do_not_collect": "Do not collect privileged legal advice, individual performance commentary, or informal email discussion.",
+        "acceptable_blanks": "Due date may be blank for intake backlog items; gate reason and evidence needed cannot be blank when gate_status is gated or blocked.",
+        "quality_gate": "Every projection row must resolve to ecl_review.review_event and a contract; gated rows must carry evidence_needed.",
+        "example_export": "Workflow queue export with event stage, event status, owner role, due date, gate reason, evidence needed, and review decision basis.",
+    },
 }
 
 

@@ -286,6 +286,86 @@ create table if not exists ecl_projection.source_value_levers (
   )
 );
 
+create table if not exists ecl_projection.source_event_workspace (
+  id uuid primary key default gen_random_uuid(),
+  tenant_key text not null,
+  assessment_id text not null,
+  snapshot_id uuid not null,
+  projection_manifest_id uuid not null,
+  projection_version integer not null,
+  row_key text not null,
+  workspace_tab text not null,
+  row_type text not null,
+  event_key text not null,
+  event_title text not null,
+  contract_id uuid not null,
+  contract_object_id uuid not null,
+  vendor_object_id uuid not null,
+  review_event_id uuid not null,
+  event_stage text not null,
+  event_status text not null,
+  gate_status text not null,
+  gate_reason_code text,
+  gate_reason_detail text,
+  owner_role text not null,
+  due_date date,
+  evidence_needed_json jsonb not null default '[]'::jsonb,
+  decision_context_json jsonb not null default '{}'::jsonb,
+  next_action_json jsonb not null default '{}'::jsonb,
+  source_refs_json jsonb not null default '[]'::jsonb,
+  gap_flags_json jsonb not null default '[]'::jsonb,
+  source_hash text not null,
+  created_at timestamptz not null default now(),
+  constraint source_event_workspace_snapshot_fk foreign key (tenant_key, assessment_id, snapshot_id)
+    references ecl_context.snapshot (tenant_key, assessment_id, id),
+  constraint source_event_workspace_manifest_fk foreign key (projection_manifest_id)
+    references ecl_projection.projection_manifest (id),
+  constraint source_event_workspace_contract_fk foreign key (tenant_key, assessment_id, contract_id)
+    references ecl_commercial.contract (tenant_key, assessment_id, id),
+  constraint source_event_workspace_contract_object_fk foreign key (tenant_key, assessment_id, contract_object_id)
+    references ecl_context.object (tenant_key, assessment_id, id),
+  constraint source_event_workspace_vendor_object_fk foreign key (tenant_key, assessment_id, vendor_object_id)
+    references ecl_context.object (tenant_key, assessment_id, id),
+  constraint source_event_workspace_review_event_fk foreign key (tenant_key, assessment_id, review_event_id)
+    references ecl_review.review_event (tenant_key, assessment_id, id),
+  constraint source_event_workspace_version_check check (projection_version > 0),
+  constraint source_event_workspace_tab_check check (
+    workspace_tab in ('events', 'approvals')
+  ),
+  constraint source_event_workspace_row_type_check check (
+    row_type in ('sourcing_event', 'approval_gate')
+  ),
+  constraint source_event_workspace_stage_check check (
+    event_stage in ('intake', 'evidence_collection', 'owner_review', 'finance_review', 'legal_review', 'sourcing_decision')
+  ),
+  constraint source_event_workspace_status_check check (
+    event_status in ('not_started', 'in_progress', 'blocked', 'ready_for_review', 'approved', 'rejected')
+  ),
+  constraint source_event_workspace_gate_status_check check (
+    gate_status in ('open', 'gated', 'blocked')
+  ),
+  constraint source_event_workspace_gate_payload_check check (
+    (
+      gate_status = 'open'
+      and gate_reason_code is null
+      and coalesce(jsonb_array_length(evidence_needed_json), 0) = 0
+    )
+    or (
+      gate_status in ('gated', 'blocked')
+      and gate_reason_code is not null
+      and gate_reason_detail is not null
+      and coalesce(jsonb_array_length(evidence_needed_json), 0) > 0
+    )
+  ),
+  constraint source_event_workspace_unique unique (
+    tenant_key,
+    assessment_id,
+    projection_version,
+    workspace_tab,
+    row_key
+  )
+);
+
 create table if not exists ecl_projection.tower_command_center (
   id uuid primary key default gen_random_uuid(),
   tenant_key text not null,
@@ -443,6 +523,12 @@ create index if not exists idx_source_value_levers_gate
   on ecl_projection.source_value_levers (tenant_key, assessment_id, value_gate_status, value_gate_reason_code);
 create index if not exists idx_source_value_levers_metric
   on ecl_projection.source_value_levers (tenant_key, primary_metric_key);
+create index if not exists idx_source_event_workspace_tab
+  on ecl_projection.source_event_workspace (tenant_key, assessment_id, projection_version, workspace_tab);
+create index if not exists idx_source_event_workspace_contract
+  on ecl_projection.source_event_workspace (tenant_key, assessment_id, contract_id);
+create index if not exists idx_source_event_workspace_gate
+  on ecl_projection.source_event_workspace (tenant_key, assessment_id, gate_status, gate_reason_code);
 create index if not exists idx_tower_command_center_page
   on ecl_projection.tower_command_center (tenant_key, assessment_id, projection_version, page_key);
 create index if not exists idx_tower_command_center_gate
@@ -456,5 +542,6 @@ alter table ecl_projection.home_enterprise_landscape enable row level security;
 alter table ecl_projection.source_contract_360 enable row level security;
 alter table ecl_projection.source_vendor_360 enable row level security;
 alter table ecl_projection.source_value_levers enable row level security;
+alter table ecl_projection.source_event_workspace enable row level security;
 alter table ecl_projection.tower_command_center enable row level security;
 alter table ecl_projection.intelligence_context_pack enable row level security;

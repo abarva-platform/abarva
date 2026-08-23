@@ -134,6 +134,22 @@ PROMOTED_FIELDS = {
         "primary_weakness": [("ecl_projection.source_contract_360", "risk_control_json.primary_weakness"), ("ecl_projection.tower_command_center", "gate_reason_json"), ("ecl_projection.source_value_levers", "lever_type and opportunity_type derivation")],
         "review_state": [("ecl_context.measure", "review_state")],
     },
+    "source_review_queue.csv": {
+        "review_event_key": [("ecl_review.review_event", "native review key"), ("ecl_projection.source_event_workspace", "event_key")],
+        "contract_id": [("ecl_review.review_event", "subject_contract_id FK"), ("ecl_projection.source_event_workspace", "contract_id FK")],
+        "workspace_tab": [("ecl_projection.source_event_workspace", "workspace_tab")],
+        "event_stage": [("ecl_projection.source_event_workspace", "event_stage")],
+        "event_status": [("ecl_projection.source_event_workspace", "event_status")],
+        "gate_status": [("ecl_projection.source_event_workspace", "gate_status")],
+        "gate_reason_code": [("ecl_projection.source_event_workspace", "gate_reason_code")],
+        "gate_reason_detail": [("ecl_review.review_event", "notes"), ("ecl_projection.source_event_workspace", "gate_reason_detail")],
+        "owner_role": [("ecl_review.review_event", "reviewer_role"), ("ecl_projection.source_event_workspace", "owner_role")],
+        "due_date": [("ecl_projection.source_event_workspace", "due_date")],
+        "evidence_needed": [("ecl_projection.source_event_workspace", "evidence_needed_json")],
+        "review_event_type": [("ecl_review.review_event", "review_event_type")],
+        "decision_basis": [("ecl_review.review_event", "decision_basis"), ("ecl_projection.source_event_workspace", "decision_context_json.decision_basis")],
+        "review_state": [("ecl_projection.source_event_workspace", "decision_context_json.review_state")],
+    },
 }
 
 
