@@ -11,10 +11,12 @@ idempotency key, and a lab/preprod/disposable target classification all agree.
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import subprocess
 import sys
+import tarfile
 import tempfile
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -36,6 +38,9 @@ ACK_KEYS = [
     "no_product_route_change",
     "human_review_after_readback_required",
 ]
+TRUTHY = {"1", "true", "yes", "on"}
+PROOF_BEGIN = "__SEMANTIC2_PROOF_TGZ_BEGIN__"
+PROOF_END = "__SEMANTIC2_PROOF_TGZ_END__"
 
 
 class Refusal(RuntimeError):
@@ -55,6 +60,13 @@ def write_json(path: Path, value: Any) -> None:
 
 def read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def parse_json_text(raw: str, label: str) -> Any:
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise Refusal([f"{label}_invalid_json:{exc.msg}"]) from exc
 
 
 def sha256_bytes(value: bytes) -> str:
@@ -141,17 +153,34 @@ def validate_gate(repo: Path, run_contract: dict[str, Any], gate: dict[str, Any]
     return issues
 
 
+def load_gate_manifest(gate_manifest_path: Path | None) -> dict[str, Any]:
+    if gate_manifest_path:
+        if not gate_manifest_path.exists():
+            raise Refusal([f"gate_contract_missing:{gate_manifest_path.as_posix()}"])
+        return read_json(gate_manifest_path)
+
+    gate_json = os.environ.get("ECL_COMMERCIAL_GATE_MANIFEST_JSON")
+    gate_b64 = os.environ.get("ECL_COMMERCIAL_GATE_MANIFEST_B64")
+    if gate_json and gate_b64:
+        raise Refusal(["gate_contract_ambiguous_json_and_b64"])
+    if gate_json:
+        return parse_json_text(gate_json, "gate_contract_env_json")
+    if gate_b64:
+        try:
+            decoded = base64.b64decode(gate_b64, validate=True).decode("utf-8")
+        except Exception as exc:
+            raise Refusal(["gate_contract_env_b64_invalid"]) from exc
+        return parse_json_text(decoded, "gate_contract_env_b64")
+    raise Refusal(["gate_contract_missing"])
+
+
 def load_contracts(repo: Path, run_contract_path: Path, gate_manifest_path: Path | None) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     issues: list[str] = []
     if not (repo / run_contract_path).exists():
         raise Refusal([f"run_contract_missing:{run_contract_path.as_posix()}"])
     run_contract = read_json(repo / run_contract_path)
 
-    if not gate_manifest_path:
-        raise Refusal(["gate_contract_missing"])
-    if not gate_manifest_path.exists():
-        raise Refusal([f"gate_contract_missing:{gate_manifest_path.as_posix()}"])
-    gate = read_json(gate_manifest_path)
+    gate = load_gate_manifest(gate_manifest_path)
 
     if run_contract.get("family") != FAMILY:
         issues.append("run_contract_family_not_commercial")
@@ -380,6 +409,26 @@ def choose_adapter(adapter: str, target_db_url: str) -> str:
     raise Refusal([f"unsupported_target_database_scheme:{parsed.scheme or 'missing'}"])
 
 
+def should_emit_proof_bundle(args: argparse.Namespace) -> bool:
+    return args.emit_proof_bundle or os.environ.get("ECL_COMMERCIAL_EMIT_PROOF_BUNDLE", "").lower() in TRUTHY
+
+
+def emit_proof_bundle(out_dir: Path) -> None:
+    with tempfile.NamedTemporaryFile(suffix=".tgz", delete=False) as handle:
+        tar_path = Path(handle.name)
+    try:
+        with tarfile.open(tar_path, "w:gz") as archive:
+            for file_path in sorted(path for path in out_dir.rglob("*") if path.is_file()):
+                archive.add(file_path, arcname=file_path.relative_to(out_dir.parent))
+        encoded = base64.b64encode(tar_path.read_bytes()).decode("ascii")
+        print(PROOF_BEGIN)
+        for index in range(0, len(encoded), 76):
+            print(encoded[index : index + 76])
+        print(PROOF_END)
+    finally:
+        tar_path.unlink(missing_ok=True)
+
+
 def write_refusal(out_dir: Path, issues: list[str]) -> None:
     write_json(
         out_dir / "ecl_commercial_local_load_refusal.json",
@@ -493,6 +542,8 @@ def run_load(repo: Path, args: argparse.Namespace) -> dict[str, Any]:
         ),
         encoding="utf-8",
     )
+    if should_emit_proof_bundle(args):
+        emit_proof_bundle(out_dir)
     return result
 
 
@@ -503,6 +554,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--target-db-url")
     parser.add_argument("--target-db-classification")
     parser.add_argument("--db-adapter", choices=["auto", "json", "postgres"], default="auto")
+    parser.add_argument("--emit-proof-bundle", action="store_true")
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
     return parser.parse_args(argv)
 

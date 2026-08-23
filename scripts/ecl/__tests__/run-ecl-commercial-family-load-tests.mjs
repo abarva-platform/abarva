@@ -19,7 +19,7 @@ const gateTemplatePath = path.join(
   'reports/ecl-commercial-lab-load-preflight-2026-08-23/ecl_commercial_lab_load_gate_manifest.template.json',
 )
 
-function runPython(args) {
+function runPython(args, extraEnv = {}) {
   return spawnSync('python3', args, {
     cwd: repo,
     encoding: 'utf8',
@@ -27,6 +27,10 @@ function runPython(args) {
       ...process.env,
       ECL_COMMERCIAL_TARGET_DATABASE_URL: '',
       ECL_COMMERCIAL_TARGET_DB_CLASSIFICATION: '',
+      ECL_COMMERCIAL_GATE_MANIFEST_B64: '',
+      ECL_COMMERCIAL_GATE_MANIFEST_JSON: '',
+      ECL_COMMERCIAL_EMIT_PROOF_BUNDLE: '',
+      ...extraEnv,
     },
   })
 }
@@ -67,8 +71,11 @@ function expectRefusal(name, args, expectedPattern) {
 const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ecl-commercial-family-load-test-'))
 try {
   const mockDb = path.join(tmpRoot, 'commercial-load-db.json')
+  const mockDbFromEnvGate = path.join(tmpRoot, 'commercial-load-db-env-gate.json')
   const goodGatePath = path.join(tmpRoot, 'good-gate.json')
-  writeJson(goodGatePath, approvedGate())
+  const goodGate = approvedGate()
+  writeJson(goodGatePath, goodGate)
+  const goodGateB64 = Buffer.from(JSON.stringify(goodGate), 'utf8').toString('base64')
 
   expectRefusal(
     'missing-gate',
@@ -213,6 +220,43 @@ try {
 
   const validate = runPython([validator, '--out-dir', successOutDir])
   assert.equal(validate.status, 0, validate.stderr || validate.stdout)
+
+  const envGateOutDir = path.join(tmpRoot, 'success-env-gate')
+  const envGate = runPython(
+    [
+      runner,
+      '--target-db-url',
+      `json://${mockDbFromEnvGate}`,
+      '--target-db-classification',
+      'local_disposable',
+      '--emit-proof-bundle',
+      '--out-dir',
+      envGateOutDir,
+    ],
+    { ECL_COMMERCIAL_GATE_MANIFEST_B64: goodGateB64 },
+  )
+  assert.equal(envGate.status, 0, envGate.stderr || envGate.stdout)
+  assert(envGate.stdout.includes('__SEMANTIC2_PROOF_TGZ_BEGIN__'))
+  assert(envGate.stdout.includes('__SEMANTIC2_PROOF_TGZ_END__'))
+  const envGateStatus = readJson(path.join(envGateOutDir, 'ecl_commercial_local_load_status.json'))
+  assert.equal(envGateStatus.accepted, true)
+  assert.equal(envGateStatus.actual_azure_execution, false)
+  assert.equal(envGateStatus.actual_shared_data_plane_mutation, false)
+
+  const badGateEnv = runPython(
+    [
+      runner,
+      '--target-db-url',
+      `json://${mockDbFromEnvGate}`,
+      '--target-db-classification',
+      'local_disposable',
+      '--out-dir',
+      path.join(tmpRoot, 'bad-env-gate'),
+    ],
+    { ECL_COMMERCIAL_GATE_MANIFEST_B64: 'not-base64' },
+  )
+  assert.notEqual(badGateEnv.status, 0)
+  assert.match(badGateEnv.stderr, /gate_contract_env_b64_invalid/)
 } finally {
   fs.rmSync(tmpRoot, { recursive: true, force: true })
 }
