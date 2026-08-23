@@ -88,6 +88,14 @@ function hasAny(text: string, patterns: readonly RegExp[]): boolean {
   return patterns.some((pattern) => pattern.test(text));
 }
 
+function hasPositiveSignal(
+  text: string,
+  patterns: readonly RegExp[],
+  negatedPatterns: readonly RegExp[] = [],
+): boolean {
+  return hasAny(text, patterns) && !hasAny(text, negatedPatterns);
+}
+
 function countMatches(text: string, patterns: readonly RegExp[]): number {
   return patterns.reduce(
     (total, pattern) => total + (pattern.test(text) ? 1 : 0),
@@ -125,27 +133,39 @@ export function signalsFromMoveText(
     ])
       ? 2
       : 1,
-    identityResolutionNeeded: hasAny(lower, [
-      /identity resolution/,
-      /entity resolution/,
-      /matching/,
-      /duplicate/,
-      /master data/,
-    ]),
-    platformNovelty: hasAny(lower, [
-      /new platform/,
-      /platform modernization/,
-      /new cloud/,
-      /data platform/,
-      /lakehouse/,
-    ]),
-    workflowChange: hasAny(lower, [
-      /workflow change/,
-      /process redesign/,
-      /operating procedure/,
-      /human workflow/,
-      /handoff/,
-    ]),
+    identityResolutionNeeded: hasPositiveSignal(
+      lower,
+      [
+        /identity resolution/,
+        /entity resolution/,
+        /matching/,
+        /duplicate/,
+        /master data/,
+      ],
+      [/no identity resolution/, /without identity resolution/],
+    ),
+    platformNovelty: hasPositiveSignal(
+      lower,
+      [
+        /new platform/,
+        /platform modernization/,
+        /new cloud/,
+        /data platform/,
+        /lakehouse/,
+      ],
+      [/no new platform/, /without a new platform/, /no platform change/],
+    ),
+    workflowChange: hasPositiveSignal(
+      lower,
+      [
+        /workflow change/,
+        /process redesign/,
+        /operating procedure/,
+        /human workflow/,
+        /handoff/,
+      ],
+      [/no workflow change/, /without workflow change/, /no process redesign/],
+    ),
     clinicalRegulatorySensitivity: hasAny(lower, [
       /clinical/,
       /patient/,
@@ -155,39 +175,77 @@ export function signalsFromMoveText(
       /fda/,
       /safety/,
     ]),
-    modelAiComplexity: hasAny(lower, [
-      /llm/,
-      /model risk/,
-      /machine learning/,
-      /predictive model/,
-      /clinical ai/,
-      /regulated ai/,
-    ]),
-    aiAgentComponent: hasAny(lower, [
-      /\bai\b/,
-      /agentic/,
-      /\bagent\b/,
-      /copilot/,
-      /llm/,
-    ]),
-    realTimeRequirement: hasAny(lower, [
-      /real[- ]time/,
-      /sub[- ]second/,
-      /latency/,
-      /streaming/,
-      /event[- ]driven/,
-    ]),
-    vendorSourcingDecision: hasAny(lower, [
-      /vendor/,
-      /sourcing/,
-      /rfp/,
-      /partner/,
-      /build\/buy/,
-      /build buy/,
-      /procurement/,
-      /outsourcing/,
-      /\bams\b/,
-    ]),
+    modelAiComplexity: hasPositiveSignal(
+      lower,
+      [
+        /llm/,
+        /model risk/,
+        /machine learning/,
+        /predictive model/,
+        /clinical ai/,
+        /regulated ai/,
+      ],
+      [
+        /no model risk/,
+        /no ai/,
+        /without ai/,
+        /without model risk/,
+        /not an ai/,
+      ],
+    ),
+    aiAgentComponent: hasPositiveSignal(
+      lower,
+      [/\bai\b/, /agentic/, /\bagent\b/, /copilot/, /llm/],
+      [
+        /no ai/,
+        /without ai/,
+        /no agent/,
+        /no ai agent/,
+        /without an agent/,
+        /not an ai/,
+      ],
+    ),
+    realTimeRequirement: hasPositiveSignal(
+      lower,
+      [
+        /real[- ]time/,
+        /sub[- ]second/,
+        /latency/,
+        /streaming/,
+        /event[- ]driven/,
+      ],
+      [
+        /no real[- ]time/,
+        /without real[- ]time/,
+        /no latency requirement/,
+        /no streaming/,
+        /not real[- ]time/,
+      ],
+    ),
+    vendorSourcingDecision: hasPositiveSignal(
+      lower,
+      [
+        /vendor/,
+        /sourcing/,
+        /rfp/,
+        /partner/,
+        /build\/buy/,
+        /build buy/,
+        /procurement/,
+        /outsourcing/,
+        /\bams\b/,
+      ],
+      [
+        /no vendor/,
+        /without vendor/,
+        /no sourcing/,
+        /without sourcing/,
+        /no build\/buy/,
+        /no build buy/,
+        /no procurement/,
+        /no partner/,
+      ],
+    ),
     integrationPointCount: hasAny(lower, [
       /integration/,
       /interface/,
@@ -206,21 +264,39 @@ export function signalsFromMoveText(
           ]),
         )
       : 0,
-    operatingModelImpact: hasAny(lower, [
-      /operating model/,
-      /raci/,
-      /decision rights/,
-      /new role/,
-      /service management/,
-      /run cadence/,
-    ]),
-    humanDecisionImpact: hasAny(lower, [
-      /human approval/,
-      /human[- ]in[- ]the[- ]loop/,
-      /manual approval/,
-      /regulated action/,
-      /decision rights/,
-    ]),
+    operatingModelImpact: hasPositiveSignal(
+      lower,
+      [
+        /operating model/,
+        /raci/,
+        /decision rights/,
+        /new role/,
+        /service management/,
+        /run cadence/,
+      ],
+      [
+        /no operating model/,
+        /without operating model/,
+        /no decision rights change/,
+        /no new role/,
+      ],
+    ),
+    humanDecisionImpact: hasPositiveSignal(
+      lower,
+      [
+        /human approval/,
+        /human[- ]in[- ]the[- ]loop/,
+        /manual approval/,
+        /regulated action/,
+        /decision rights/,
+      ],
+      [
+        /no human approval/,
+        /without human approval/,
+        /no human[- ]in[- ]the[- ]loop/,
+        /no regulated action/,
+      ],
+    ),
     uncertaintyEvidenceGapCount: hasAny(lower, [
       /missing evidence/,
       /evidence gap/,
@@ -230,21 +306,38 @@ export function signalsFromMoveText(
     ])
       ? 1
       : 0,
-    deploymentTopologyMature: hasAny(lower, [
-      /deployment topology/,
-      /private endpoint/,
-      /region/,
-      /subscription/,
-      /vnet/,
-      /network boundary/,
-    ]),
-    securityBoundariesKnown: hasAny(lower, [
-      /security boundary/,
-      /trust boundary/,
-      /private endpoint/,
-      /identity provider/,
-      /rbac/,
-    ]),
+    deploymentTopologyMature: hasPositiveSignal(
+      lower,
+      [
+        /deployment topology/,
+        /private endpoint/,
+        /region/,
+        /subscription/,
+        /vnet/,
+        /network boundary/,
+      ],
+      [
+        /deployment topology (?:is )?not/,
+        /no deployment topology/,
+        /deployment topology .*not yet/,
+        /topology .*not established/,
+      ],
+    ),
+    securityBoundariesKnown: hasPositiveSignal(
+      lower,
+      [
+        /security boundary/,
+        /trust boundary/,
+        /private endpoint/,
+        /identity provider/,
+        /rbac/,
+      ],
+      [
+        /security boundar(?:y|ies) (?:is |are )?not/,
+        /no security boundar(?:y|ies)/,
+        /security boundar(?:y|ies) .*not yet/,
+      ],
+    ),
     missingRequiredDimensions: [],
     declaredStraightforward: hasAny(lower, [
       /straightforward/,

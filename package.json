@@ -440,6 +440,7 @@
     "audit:moves-agent-assist-blueprint": "node scripts/audit/moves-agent-assist-blueprint.mjs",
     "audit:moves-gate-consistency": "node scripts/audit/moves-gate-consistency.mjs",
     "audit:tenant-isolation:moves": "node scripts/audit/moves-context-extract.mjs --tenant-isolation",
+    "audit:moves-adaptive-depth-proof": "npx tsx scripts/audit/build-moves-adaptive-depth-proof.ts",
     "audit:module-context-serving": "jest src/lib/enterprise-data/module-context-serving/__tests__/module-context-serving.test.ts --runInBand",
     "audit:enterprise-knowledge-layer": "npx tsx scripts/audit/build-enterprise-knowledge-layer-proof.ts",
     "audit:enterprise-knowledge-assembler": "npx tsx scripts/audit/build-enterprise-knowledge-assembler-proof.ts",
@@ -454,7 +455,6 @@
     "data-build:enterprise-thesis:plan": "npx tsx scripts/data-build/build-enterprise-thesis.ts --out-dir /tmp/enterprise-thesis",
     "data-build:enterprise-thesis:apply": "THESIS_WRITE=true THESIS_WRITE_APPROVED=true npx tsx scripts/data-build/build-enterprise-thesis.ts --out-dir /tmp/enterprise-thesis",
     "data-build:home-chapters:plan": "npx tsx scripts/data-build/build-home-chapters.ts --out-dir /tmp/home-chapters",
-
     "home:knowledge-pack-v2:write": "node scripts/knowledge/build-home-knowledge-pack-v2.mjs --tenant=all --use-claude --write-db --approve",
     "home:knowledge-v4:replay": "node scripts/knowledge/build-home-knowledge-v4-review-pack.mjs --validate-candidate",
     "home:knowledge-v4:cost-ledger": "node scripts/knowledge/build-home-knowledge-v4-review-pack.mjs --cost-ledger",
