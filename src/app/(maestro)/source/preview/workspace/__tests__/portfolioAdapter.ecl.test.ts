@@ -1,0 +1,128 @@
+jest.mock("server-only", () => ({}));
+
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
+import { loadSourceWorkspacePortfolio } from "../live/portfolioAdapter";
+
+const ORIGINAL_PROVIDER = process.env.SOURCE_WORKSPACE_PROVIDER;
+const ORIGINAL_PROJECTION_DIR = process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR;
+
+function csv(rows: readonly Record<string, string>[]): string {
+  const headers = Object.keys(rows[0] ?? {});
+  const lines = [
+    headers.join(","),
+    ...rows.map((row) =>
+      headers
+        .map((header) => `"${String(row[header] ?? "").replace(/"/g, '""')}"`)
+        .join(","),
+    ),
+  ];
+  return `${lines.join("\n")}\n`;
+}
+
+describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
+  let dir: string;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(path.join(tmpdir(), "source-ecl-adapter-"));
+    process.env.SOURCE_WORKSPACE_PROVIDER = "ecl_projection";
+    process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR = dir;
+  });
+
+  afterEach(async () => {
+    process.env.SOURCE_WORKSPACE_PROVIDER = ORIGINAL_PROVIDER;
+    process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR = ORIGINAL_PROJECTION_DIR;
+    await rm(dir, { force: true, recursive: true });
+  });
+
+  it("loads Source 360 portfolio data from flagged local ECL projection CSVs", async () => {
+    await writeFile(
+      path.join(dir, "source_contract_360_projection.csv"),
+      csv([
+        {
+          tenant_key: "meridian-health",
+          row_key: "MER-CTR-SSO-BPO-001",
+          contract_id: "contract-object-1",
+          vendor_object_id: "vendor-object-1",
+          vendor_name: "LedgerWorks Shared Services LLC",
+          contract_name: "Finance Shared Services BPO",
+          renewal_notice_date: "2027-06-30",
+          end_date: "2027-12-31",
+          annualized_value_usd: "7200000",
+          total_contract_value_usd: "21600000",
+          value_state: "known",
+          scope_json: JSON.stringify([
+            { domain: "Finance", name: "Workday Finance" },
+            { domain: "Finance", name: "BlackLine Account Reconciliations" },
+          ]),
+          spend_summary_json: JSON.stringify({
+            ap_actual_total_usd: 5100000,
+            market_benchmark: {
+              basis: "synthetic_directional_market_benchmark",
+            },
+          }),
+          gap_flags_json: JSON.stringify(["requires_owner_finance_legal_review"]),
+        },
+      ]),
+      "utf-8",
+    );
+    await writeFile(
+      path.join(dir, "source_vendor_360_projection.csv"),
+      csv([
+        {
+          tenant_key: "meridian-health",
+          row_key: "MER-VEN-LEDGERWORKS",
+          vendor_object_id: "vendor-object-1",
+          vendor_name: "LedgerWorks Shared Services LLC",
+          contract_count: "1",
+          annualized_spend_usd: "7200000",
+          contract_ids_json: JSON.stringify(["MER-CTR-SSO-BPO-001"]),
+        },
+      ]),
+      "utf-8",
+    );
+    await writeFile(
+      path.join(dir, "source_event_workspace_projection.csv"),
+      csv([
+        {
+          tenant_key: "meridian-health",
+          row_key: "MER-CTR-SSO-BPO-001:compare:bidder-a",
+          workspace_tab: "compare",
+          row_type: "vendor_response_compare",
+        },
+      ]),
+      "utf-8",
+    );
+
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+
+    expect(portfolio.workspaceDiagnostics.exploreProvider).toBe(
+      "EclProjectionCsvProvider",
+    );
+    expect(portfolio.workspaceDiagnostics.eclCompareResponseCount).toBe(1);
+    expect(portfolio.contracts).toHaveLength(1);
+    expect(portfolio.vendors).toHaveLength(1);
+    expect(portfolio.applicationScope.map((row) => row.application_name)).toEqual(
+      ["Workday Finance", "BlackLine Account Reconciliations"],
+    );
+    expect(portfolio.contracts[0]).toMatchObject({
+      contract_id: "MER-CTR-SSO-BPO-001",
+      vendor_ref: "vendor-object-1",
+      annual_value: 7200000,
+      actual_annual_spend: 5100000,
+      operational_evidence_gap: true,
+      scoped_application_count: 2,
+    });
+    expect(portfolio.reads).toMatchObject({
+      contracts: "available",
+      vendors: "available",
+      applicationScope: "available",
+      initiativeDependencies: "missing",
+    });
+  });
+});

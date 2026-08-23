@@ -1,5 +1,10 @@
 import "server-only";
 
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
+import Papa from "papaparse";
+
 import {
   computeContractLeverageSignals,
   computeRenewalExposure,
@@ -13,9 +18,11 @@ import {
 import { computeSourcingOpportunities } from "@/lib/source/data-model/sourcing-opportunities";
 import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
 import {
+  createEmptySourceV4WorkspaceSnapshot,
   loadSourceV4WorkspaceSnapshot,
   type SourceV4WorkspaceSnapshot,
 } from "@/lib/source/data-model/source-v4-workspace-snapshot";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import {
   evaluateContractCategoryQuality,
   type SourceContractCategoryQualitySummary,
@@ -40,6 +47,12 @@ import type {
 // it — nothing is computed a second time in the client.
 // ─────────────────────────────────────────────────────────────────────────
 
+type SourceWorkspaceExploreProvider =
+  | "LegacySourceContract360Provider"
+  | "EclProjectionCsvProvider";
+
+type EclProjectionCsvRow = Record<string, string>;
+
 export interface SourceWorkspacePortfolioData {
   readonly tenantKey: string;
   readonly asOfDateIso: string;
@@ -57,9 +70,11 @@ export interface SourceWorkspacePortfolioData {
     readonly v4VendorCount: number;
     readonly legacyContractCount: number;
     readonly legacyVendorCount: number;
-    readonly exploreProvider: "LegacySourceContract360Provider";
+    readonly exploreProvider: SourceWorkspaceExploreProvider;
     readonly exploreMatchesV4: boolean;
     readonly mismatchWarning: string | null;
+    readonly eclProjectionDir?: string | null;
+    readonly eclCompareResponseCount?: number;
   };
   readonly cockpit: SourceVendor360CockpitData;
   readonly contracts: readonly SourceContract360Row[];
@@ -175,6 +190,10 @@ export async function loadSourceWorkspacePortfolio(
   tenantKey: string,
   asOfDateIso: string,
 ): Promise<SourceWorkspacePortfolioData> {
+  if (sourceWorkspaceProvider() === "ecl_projection") {
+    return loadEclProjectionWorkspacePortfolio(tenantKey, asOfDateIso);
+  }
+
   const [
     contractsRaw,
     vendors,
@@ -257,6 +276,274 @@ export async function loadSourceWorkspacePortfolio(
     isEmpty: contracts.length === 0,
     reads,
   };
+}
+
+function sourceWorkspaceProvider(): "legacy" | "ecl_projection" {
+  return process.env.SOURCE_WORKSPACE_PROVIDER === "ecl_projection"
+    ? "ecl_projection"
+    : "legacy";
+}
+
+async function loadEclProjectionWorkspacePortfolio(
+  tenantKey: string,
+  asOfDateIso: string,
+): Promise<SourceWorkspacePortfolioData> {
+  const projectionDir = process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR?.trim();
+  if (!projectionDir) {
+    throw new Error(
+      "SOURCE_WORKSPACE_PROVIDER=ecl_projection requires SOURCE_WORKSPACE_ECL_PROJECTION_DIR.",
+    );
+  }
+
+  const [contractRows, vendorRows, eventRows] = await Promise.all([
+    readProjectionCsv(path.join(projectionDir, "source_contract_360_projection.csv")),
+    readProjectionCsv(path.join(projectionDir, "source_vendor_360_projection.csv")),
+    readProjectionCsv(path.join(projectionDir, "source_event_workspace_projection.csv")),
+  ]);
+  const acceptedTenantKeys = new Set(
+    [tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim()),
+  );
+  const tenantMatches = (row: EclProjectionCsvRow) =>
+    acceptedTenantKeys.has(row.tenant_key?.trim());
+
+  const contracts = contractRows
+    .filter(tenantMatches)
+    .map(contractFromEclProjectionRow);
+  const vendors = vendorRows.filter(tenantMatches).map(vendorFromEclProjectionRow);
+  const applicationScope = contractRows
+    .filter(tenantMatches)
+    .flatMap(scopeFromEclProjectionRow);
+  const initiativeDependencies: SourceContractInitiativeDependencyRow[] = [];
+  const v4Snapshot = createEmptySourceV4WorkspaceSnapshot(asOfDateIso, {
+    datasetId: "ecl-source-360-local-projection",
+    datasetLabel: "ECL Source 360 local projection",
+  });
+  const categoryQuality = evaluateContractCategoryQuality(contracts);
+  const legacyVendorCount = new Set(contracts.map((contract) => contract.vendor_ref))
+    .size;
+  const workspaceDiagnostics = {
+    datasetLabel: v4Snapshot.datasetLabel,
+    datasetId: v4Snapshot.datasetId,
+    datasetVersion: v4Snapshot.datasetVersion,
+    analyticsProvider: "EclProjectionCsvProvider",
+    activeLoadRunId: v4Snapshot.activeLoadRunId,
+    asOfDateIso: v4Snapshot.asOfDateIso,
+    v4ContractCount: contracts.length,
+    v4VendorCount: legacyVendorCount,
+    legacyContractCount: contracts.length,
+    legacyVendorCount,
+    exploreProvider: "EclProjectionCsvProvider" as const,
+    exploreMatchesV4: true,
+    mismatchWarning: null,
+    eclProjectionDir: projectionDir,
+    eclCompareResponseCount: eventRows.filter(
+      (row) =>
+        tenantMatches(row) &&
+        row.workspace_tab === "compare" &&
+        row.row_type === "vendor_response_compare",
+    ).length,
+  };
+  const reads = {
+    contracts: contracts.length > 0 ? ("available" as const) : ("missing" as const),
+    vendors: vendors.length > 0 ? ("available" as const) : ("missing" as const),
+    applicationScope:
+      applicationScope.length > 0 ? ("available" as const) : ("missing" as const),
+    initiativeDependencies: "missing" as const,
+  };
+
+  return {
+    tenantKey,
+    asOfDateIso,
+    semanticLayer: sourceV4CubeUiCatalogForAgent(),
+    v4Snapshot,
+    categoryQuality,
+    workspaceDiagnostics,
+    cockpit: buildSourceVendor360Cockpit({
+      contracts,
+      vendors,
+      applicationScope,
+      initiativeDependencies,
+      v4Snapshot,
+      workspaceDiagnostics,
+      reads,
+      asOfDateIso,
+    }),
+    contracts,
+    vendors,
+    applicationScope,
+    initiativeDependencies,
+    isEmpty: contracts.length === 0,
+    reads,
+  };
+}
+
+async function readProjectionCsv(
+  filePath: string,
+): Promise<EclProjectionCsvRow[]> {
+  const source = await readFile(filePath, "utf-8");
+  const parsed = Papa.parse<EclProjectionCsvRow>(source, {
+    header: true,
+    skipEmptyLines: true,
+  });
+  if (parsed.errors.length > 0) {
+    throw new Error(
+      `Failed to parse ECL projection CSV ${filePath}: ${parsed.errors
+        .map((error) => error.message)
+        .join("; ")}`,
+    );
+  }
+  return parsed.data;
+}
+
+function contractFromEclProjectionRow(
+  row: EclProjectionCsvRow,
+): SourceContract360Row {
+  const scope = parseJsonArray(row.scope_json);
+  const spendSummary = parseJsonObject(row.spend_summary_json);
+  const gapFlags = parseJsonArray(row.gap_flags_json);
+  return {
+    tenant_key: row.tenant_key,
+    contract_id: row.row_key || row.contract_id,
+    vendor_ref: row.vendor_object_id || row.vendor_name,
+    vendor_name: row.vendor_name,
+    vendor_category: null,
+    contract_name: row.contract_name,
+    scope_summary:
+      scope.length > 0
+        ? `${scope.length} scoped systems from ECL projection`
+        : null,
+    annual_value: numberFromCsv(row.annualized_value_usd),
+    total_committed_value: numberFromCsv(row.total_contract_value_usd),
+    committed_annual_spend: numberFromCsv(row.annualized_value_usd),
+    actual_annual_spend: numberFromValue(spendSummary.ap_actual_total_usd),
+    end_date: stringOrNull(row.end_date),
+    notice_period_days: noticePeriodDays(row.renewal_notice_date, row.end_date),
+    auto_renew: false,
+    renewal_decision_state: "review_required",
+    renewal_owner_ref: null,
+    benchmarking_clause: stringOrNull(
+      parseJsonObject(spendSummary.market_benchmark).basis,
+    ),
+    exit_rights_summary: null,
+    alternatives_available: null,
+    concentration_note: null,
+    source_confidence: row.value_state === "known" ? 0.86 : null,
+    resolved_annual_value: numberFromCsv(row.annualized_value_usd),
+    resolved_total_committed_value: numberFromCsv(row.total_contract_value_usd),
+    annual_value_conflict_flag: false,
+    total_committed_value_conflict_flag: false,
+    scoped_application_count: scope.length,
+    critical_application_count: null,
+    linked_budget_amount: null,
+    linked_actual_amount: numberFromValue(spendSummary.ap_actual_total_usd),
+    linked_budget_lines: null,
+    cloud_sev1_sev2_incidents: null,
+    operational_evidence_gap: gapFlags.length > 0,
+    initiative_dependency_count: null,
+  };
+}
+
+function vendorFromEclProjectionRow(
+  row: EclProjectionCsvRow,
+): SourceVendorContractPortfolioRow {
+  return {
+    tenant_key: row.tenant_key,
+    vendor_ref: row.vendor_object_id || row.row_key,
+    vendor_name: row.vendor_name,
+    vendor_category: null,
+    contract_count: integerFromCsv(row.contract_count) ?? 0,
+    annual_value: numberFromCsv(row.annualized_spend_usd),
+    total_committed_value: null,
+    auto_renew_contracts: 0,
+    next_end_date: null,
+    contract_refs: parseJsonArray(row.contract_ids_json)
+      .map((value) => String(value))
+      .filter(Boolean),
+  };
+}
+
+function scopeFromEclProjectionRow(
+  row: EclProjectionCsvRow,
+): SourceContractApplicationScopeRow[] {
+  const contractId = row.row_key || row.contract_id;
+  return parseJsonArray(row.scope_json).map((scopeItem, index) => {
+    const scope = parseJsonObject(scopeItem);
+    const applicationName = String(scope.name ?? `Scoped application ${index + 1}`);
+    return {
+      tenant_key: row.tenant_key,
+      contract_id: contractId,
+      vendor_ref: row.vendor_object_id || row.vendor_name,
+      vendor_name: row.vendor_name,
+      application_ref: applicationName,
+      application_name: applicationName,
+      business_function: stringOrNull(scope.domain),
+      function_ref: stringOrNull(scope.domain),
+      criticality: null,
+      lifecycle_state: null,
+      hosting_model: null,
+      annual_run_cost: null,
+      modernization_plan: null,
+      sla_tier: null,
+      known_pain_risk: null,
+      it_portfolio_ref: null,
+    };
+  });
+}
+
+function parseJsonArray(value: unknown): unknown[] {
+  const parsed = parseJsonValue(value);
+  return Array.isArray(parsed) ? parsed : [];
+}
+
+function parseJsonObject(value: unknown): Record<string, unknown> {
+  const parsed = parseJsonValue(value);
+  return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+    ? (parsed as Record<string, unknown>)
+    : {};
+}
+
+function parseJsonValue(value: unknown): unknown {
+  if (value == null || value === "") return null;
+  if (typeof value !== "string") return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function numberFromCsv(value: string | undefined): number | null {
+  if (value == null || value.trim() === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function integerFromCsv(value: string | undefined): number | null {
+  const parsed = numberFromCsv(value);
+  return parsed == null ? null : Math.trunc(parsed);
+}
+
+function numberFromValue(value: unknown): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value === "string") return numberFromCsv(value);
+  return null;
+}
+
+function stringOrNull(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function noticePeriodDays(
+  noticeDateIso: string | undefined,
+  endDateIso: string | undefined,
+): number | null {
+  if (!noticeDateIso || !endDateIso) return null;
+  const noticeDate = validDate(noticeDateIso);
+  const endDate = validDate(endDateIso);
+  const days = daysBetween(noticeDate, endDate);
+  return days > 0 ? days : null;
 }
 
 export function buildSourceVendor360Cockpit(input: {

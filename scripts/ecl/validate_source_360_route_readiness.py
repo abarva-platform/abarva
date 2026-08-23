@@ -49,10 +49,19 @@ ROUTE_FILES = [
             "listVendorContractPortfolio",
             "listContractApplicationScope",
             "loadSourceV4WorkspaceSnapshot",
+            "SOURCE_WORKSPACE_PROVIDER",
+            "SOURCE_WORKSPACE_ECL_PROJECTION_DIR",
+            "EclProjectionCsvProvider",
         ],
-        "current_read_path": "legacy_source_contract_360_provider",
-        "required_next": "Build the ECL adapter with parity checks against these current read-adapter outputs.",
+        "current_read_path": "legacy_default_with_flagged_ecl_projection_adapter",
+        "required_next": "Run signed-in browser QA with SOURCE_WORKSPACE_PROVIDER=ecl_projection before any production default switch.",
     },
+]
+
+ECL_ADAPTER_GUARD_MARKERS = [
+    "SOURCE_WORKSPACE_PROVIDER",
+    "SOURCE_WORKSPACE_ECL_PROJECTION_DIR",
+    "EclProjectionCsvProvider",
 ]
 
 ROUTE_REPOINT_MARKERS = [
@@ -91,7 +100,7 @@ def display_path(path: Path) -> str:
 def route_status_rows() -> tuple[list[dict[str, Any]], list[str], bool]:
     rows: list[dict[str, Any]] = []
     issues: list[str] = []
-    ecl_repointed = False
+    unguarded_ecl_repointed = False
 
     for route in ROUTE_FILES:
         path = route["path"]
@@ -103,7 +112,12 @@ def route_status_rows() -> tuple[list[dict[str, Any]], list[str], bool]:
 
         missing = [marker for marker in route["expected_markers"] if marker not in text]
         repoint_hits = [marker for marker in ROUTE_REPOINT_MARKERS if marker in text]
-        ecl_repointed = ecl_repointed or bool(repoint_hits)
+        guarded_adapter = bool(repoint_hits) and all(
+            marker in text for marker in ECL_ADAPTER_GUARD_MARKERS
+        )
+        unguarded_ecl_repointed = unguarded_ecl_repointed or (
+            bool(repoint_hits) and not guarded_adapter
+        )
         if missing:
             issues.append(
                 f"{route['route']}: missing expected markers: {', '.join(missing)}"
@@ -117,15 +131,19 @@ def route_status_rows() -> tuple[list[dict[str, Any]], list[str], bool]:
                 "expected_marker_count": len(route["expected_markers"]),
                 "missing_expected_markers": "; ".join(missing),
                 "ecl_repoint_marker_hits": "; ".join(repoint_hits),
-                "route_repointed_to_ecl": "yes" if repoint_hits else "no",
+                "route_repointed_to_ecl": "guarded_adapter"
+                if guarded_adapter
+                else "yes"
+                if repoint_hits
+                else "no",
                 "required_next": route["required_next"],
             }
         )
 
-    return rows, issues, ecl_repointed
+    return rows, issues, unguarded_ecl_repointed
 
 
-def assert_no_ecl_route_repointing() -> tuple[bool, list[str]]:
+def assert_no_unguarded_ecl_route_repointing() -> tuple[bool, list[str]]:
     source_route_root = ROOT / "src/app/(maestro)/source"
     source_component_root = ROOT / "src/components/source"
     hits: list[str] = []
@@ -136,6 +154,8 @@ def assert_no_ecl_route_repointing() -> tuple[bool, list[str]]:
             text = path.read_text(encoding="utf-8")
             for marker in ROUTE_REPOINT_MARKERS:
                 if marker in text:
+                    if all(guard in text for guard in ECL_ADAPTER_GUARD_MARKERS):
+                        continue
                     hits.append(f"{path.relative_to(ROOT).as_posix()}::{marker}")
     return (len(hits) == 0), hits
 
@@ -183,10 +203,10 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
 
     route_rows, route_issues, route_file_repointed = route_status_rows()
     issues.extend(route_issues)
-    global_no_repointing, global_repoint_hits = assert_no_ecl_route_repointing()
+    global_no_repointing, global_repoint_hits = assert_no_unguarded_ecl_route_repointing()
     if not global_no_repointing:
         issues.append(
-            "Source route/component tree already references local ECL projection artifacts: "
+            "Source route/component tree references ECL projection artifacts without the explicit adapter flag guard: "
             + "; ".join(global_repoint_hits)
         )
 
@@ -201,6 +221,11 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         "source_event_workspace_event_rows": sum(1 for row in event_rows if row.get("workspace_tab") == "events"),
         "source_event_workspace_approval_rows": sum(1 for row in event_rows if row.get("workspace_tab") == "approvals"),
         "source_event_workspace_compare_rows": sum(1 for row in event_rows if row.get("workspace_tab") == "compare"),
+        "ecl_adapter_flag_markers_present": any(
+            row.get("route") == "/source/preview/workspace/live/portfolioAdapter"
+            and row.get("missing_expected_markers") == ""
+            for row in route_rows
+        ),
         "healthy_static_preview_accepted": bool(healthy_preview.get("accepted")),
         "weak_static_preview_accepted": bool(weak_preview.get("accepted")),
         "weak_contract_selected": bool(weak_checks.get("weak_contract_selected")),
@@ -211,6 +236,9 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         ),
         "product_consumption_browser_proof_status": browser_status,
         "current_routes_not_repointed_to_ecl": not route_file_repointed and global_no_repointing,
+        "current_routes_not_unguarded_repointed_to_ecl": (
+            not route_file_repointed and global_no_repointing
+        ),
         "hard_gate_browser_live_claim": "blocked",
         "hard_gate_product_route_repointing": "blocked",
     }
@@ -249,7 +277,8 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         "weak_static_preview_accepted",
         "weak_contract_selected",
         "weak_contract_leverage_visible",
-        "current_routes_not_repointed_to_ecl",
+        "ecl_adapter_flag_markers_present",
+        "current_routes_not_unguarded_repointed_to_ecl",
     ]:
         if not route_ready_checks[key]:
             issues.append(f"Readiness check failed: {key}")
