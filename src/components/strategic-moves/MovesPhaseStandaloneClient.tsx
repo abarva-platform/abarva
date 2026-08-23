@@ -3168,6 +3168,21 @@ function PhaseContractStepsCanvas({
     selectedSection?.label ??
     phase.substeps[substepIndex]?.label ??
     phase.title;
+  const scrollContractDetailIntoView = () => {
+    const scrollDetail = () => {
+      document
+        .querySelector(".mxw-contract-detail, .mxw-finder-detail")
+        ?.scrollIntoView({
+          block: "start",
+          behavior: "smooth",
+        });
+    };
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(scrollDetail);
+    } else {
+      window.setTimeout(scrollDetail, 0);
+    }
+  };
 
   return (
     <section
@@ -3190,7 +3205,10 @@ function PhaseContractStepsCanvas({
               <button
                 className={`mxw-contract-step ${selected ? "active" : ""}`}
                 key={section.key}
-                onClick={() => onSelectSection(section.key)}
+                onClick={() => {
+                  onSelectSection(section.key);
+                  scrollContractDetailIntoView();
+                }}
                 type="button"
               >
                 <span className={status.complete ? "done" : ""} aria-hidden>
@@ -3215,6 +3233,7 @@ function PhaseContractStepsCanvas({
                 onClick={() => {
                   onSelectSubstep(index);
                   onSelectSection(null);
+                  scrollContractDetailIntoView();
                 }}
                 type="button"
               >
