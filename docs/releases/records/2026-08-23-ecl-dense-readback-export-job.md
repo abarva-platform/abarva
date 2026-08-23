@@ -12,6 +12,8 @@
 
 Adds a read-only ACA operator job entrypoint that independently reads back the dense ECL lab/preprod load from inside the VNet, compares it against the dense source-room contract, writes comparator-ready export files, and emits a small proof bundle.
 
+Update: the readback proof bundle is compacted to include only the comparator-ready readback files and summary, so the proof markers remain within the ACA job log capture window.
+
 ## Layer Impact
 
 Release lane: `client-data-lane`.
@@ -30,11 +32,13 @@ Layer 1 through Layer 4: Read-only validation only. No source records, context o
 
 - `scripts/ecl/export_dense_all_layer_readback.py`
 - `package.json` script `ecl:dense-all-layer:readback`
+- Compact proof emission for the read-only exporter.
 
 ## QA / Validation
 
 - PASS: `python3 -m py_compile scripts/ecl/export_dense_all_layer_readback.py`
 - PASS: `ECL_DENSE_TARGET_DATA_PLANE=lab_preprod npm run ecl:dense-all-layer:readback` refuses with `DATABASE_URL_missing` when no database binding is supplied.
+- PASS: compact proof bundle sanity check emits 11 lines, below the ACA job log 300-line capture limit.
 - NOT-RUN: read-only ACA operator job against lab/preprod waits for merge and digest-pinned image deployment.
 
 ## Rollout Plan
