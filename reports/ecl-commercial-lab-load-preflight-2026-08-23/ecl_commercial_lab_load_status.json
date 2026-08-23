@@ -1,0 +1,28 @@
+{
+  "actual_azure_execution": false,
+  "events": [
+    {
+      "at": "2026-08-23T12:51:59+00:00",
+      "name": "preflight_started"
+    },
+    {
+      "at": "2026-08-23T12:51:59+00:00",
+      "count": 11,
+      "name": "local_proof_hashes_verified"
+    },
+    {
+      "at": "2026-08-23T12:51:59+00:00",
+      "name": "readback_contract_generated",
+      "path": "reports/ecl-commercial-lab-load-preflight-2026-08-23/ecl_commercial_lab_load_readback_contract.json"
+    },
+    {
+      "at": "2026-08-23T12:51:59+00:00",
+      "name": "command_plan_emitted_not_executed",
+      "path": "reports/ecl-commercial-lab-load-preflight-2026-08-23/ecl_commercial_lab_load_command_plan.json"
+    }
+  ],
+  "family": "vendor_contract_commercial",
+  "mode": "dry_run_plan_only",
+  "run_id": "ecl-commercial-lab-20260823-4fe996354d01",
+  "status": "planned_not_executed"
+}

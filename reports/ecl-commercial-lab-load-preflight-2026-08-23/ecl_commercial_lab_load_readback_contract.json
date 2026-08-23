@@ -1,0 +1,73 @@
+{
+  "accepted": true,
+  "actual_readback_execution": false,
+  "comparison_type": "row_for_row_against_local_commercial_proof",
+  "expected_counts": {
+    "contract_scope": 44,
+    "contracts": 5,
+    "document_extractions": 235,
+    "documents": 55,
+    "invoice_lines": 40,
+    "service_lines": 20,
+    "sla_observations": 90,
+    "source_contract_360_rows": 5,
+    "source_event_workspace_rows": 13,
+    "source_files": 71,
+    "source_records": 589,
+    "source_value_levers_rows": 5,
+    "source_vendor_360_rows": 5
+  },
+  "family": "vendor_contract_commercial",
+  "generated_at": "2026-08-23T12:51:59+00:00",
+  "independent_reader": "future_independent_read_only_identity",
+  "local_proof_bundle": {
+    "path": "reports/ecl-commercial-aca-job-dry-run-2026-08-23/commercial_proof_bundle.tgz",
+    "sha256": "72d4b4cc9c5a2c73d3298b545a202374b11ecaf172d157f74de13ace2778090b"
+  },
+  "local_proof_hashes": {
+    "reports/ecl-aca-commercial-load-readback-plan-2026-08-23/aca_data_build_job_contract.json": "e9f61701695018dcc7f37db6c1a718b4462911fdfe3a6711a27669000d7e2f70",
+    "reports/ecl-aca-commercial-load-readback-plan-2026-08-23/commercial_family_lab_preprod_load_plan.json": "35697e518215b6463dbbba003a66d7e25932e154a3e7624cd629980e425de10a",
+    "reports/ecl-aca-commercial-load-readback-plan-2026-08-23/commercial_row_for_row_readback_plan.json": "53114d79a343654c1ba973d4bab30175e293fde0777a62d79aac38062a915cf6",
+    "reports/ecl-aca-commercial-load-readback-plan-2026-08-23/ecl_ordered_execution_progress.json": "241fc5f04afeacd43986197177c04dfd9400fa627ac2a8bdddf3d1e8fe085ca5",
+    "reports/ecl-aca-commercial-load-readback-plan-2026-08-23/execution_order_queue.json": "6da7cdb7d343986664e9860a21cec0faffc913fe3edadfb9513a30a338f47e70",
+    "reports/ecl-commercial-aca-job-dry-run-2026-08-23/commercial_proof_bundle.tgz": "72d4b4cc9c5a2c73d3298b545a202374b11ecaf172d157f74de13ace2778090b",
+    "reports/ecl-commercial-aca-job-dry-run-2026-08-23/commercial_proof_bundle_manifest.json": "ba29c062fb4e74de2e41c15d5738b1eb82febcd29fa895bd1423bbf05e5650b0",
+    "reports/ecl-commercial-aca-job-dry-run-2026-08-23/ecl_commercial_aca_run_manifest.json": "739bb50257d1f70bf4e9d955dd320f73277d1b309f5a066e00aefc18bc128d6f",
+    "reports/ecl-source-layer-completion-2026-08-23/source_backlog_20_status.csv": "201d36040d43aa43528b9865323c489d2eb763b1a77d4d8d3fc6b6b6ee2ea92c",
+    "reports/ecl-source-layer-completion-2026-08-23/source_layer_completion_matrix.csv": "02e08b4e163730b0f219daae4a01016e3051db2642853f6f7df82286760c706b",
+    "reports/ecl-source-layer-completion-2026-08-23/source_layer_completion_summary.json": "8dce89a6f85b8546be9978fa3ab4f82f5a2b51137c56bb0ca4c957862968cb3f"
+  },
+  "output_paths": {
+    "extra_row_report": "reports/ecl-commercial-lab-load-preflight-2026-08-23/future_readback_extra_rows.csv",
+    "field_hash_mismatch_report": "reports/ecl-commercial-lab-load-preflight-2026-08-23/future_readback_field_hash_mismatch_report.csv",
+    "missing_row_report": "reports/ecl-commercial-lab-load-preflight-2026-08-23/future_readback_missing_rows.csv",
+    "row_count_parity": "reports/ecl-commercial-lab-load-preflight-2026-08-23/future_readback_row_count_parity.json"
+  },
+  "readback_plan_source": {
+    "path": "reports/ecl-aca-commercial-load-readback-plan-2026-08-23/commercial_row_for_row_readback_plan.json",
+    "sha256": "53114d79a343654c1ba973d4bab30175e293fde0777a62d79aac38062a915cf6"
+  },
+  "required_compare_keys": [
+    "tenant_key",
+    "assessment_id",
+    "source_file_id",
+    "source_record_id",
+    "document_id",
+    "contract_id",
+    "commercial_instrument_id",
+    "review_event_id",
+    "projection_row_id",
+    "cube_slice_id"
+  ],
+  "required_outputs": [
+    "row_count_parity_by_table",
+    "missing_row_report",
+    "extra_row_report",
+    "field_hash_mismatch_report",
+    "tenant_scope_confirmation",
+    "readback_identity_confirmation"
+  ],
+  "run_id": "ecl-commercial-lab-20260823-4fe996354d01",
+  "status": "contract_ready_not_executed",
+  "tenant_scope": "meridian-health"
+}

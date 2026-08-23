@@ -1,0 +1,12 @@
+{
+  "accepted": true,
+  "actual_azure_execution": false,
+  "dry_run_allowed": true,
+  "gate_manifest": null,
+  "gate_manifest_present": false,
+  "issues": [
+    "gate_not_required_for_dry_run"
+  ],
+  "mode": "dry-run",
+  "status": "not_required_for_dry_run"
+}
