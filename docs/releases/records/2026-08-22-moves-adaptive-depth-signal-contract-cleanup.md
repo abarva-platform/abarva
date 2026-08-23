@@ -57,7 +57,7 @@ Revert the PR. No data rollback is required.
 
 ## Audit Evidence
 
-- PR URL: to be added after PR creation.
+- PR URL: https://github.com/abarva-platform/abarva/pull/6663
 - Local validation commands listed above.
 
 ## Known Gaps
