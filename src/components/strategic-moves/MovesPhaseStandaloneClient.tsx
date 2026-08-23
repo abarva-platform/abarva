@@ -31,7 +31,10 @@ import {
   artifactStatusLabel,
   FileCabinetPanel,
 } from "@/components/strategic-moves/FileCabinetPanel";
-import { PhaseApproveAndBuild } from "@/components/strategic-moves/PhaseApproveAndBuild";
+import {
+  PhaseApproveAndBuild,
+  type PhaseBuildArtifact,
+} from "@/components/strategic-moves/PhaseApproveAndBuild";
 import { PhaseRoleApprovalsSummary } from "@/components/strategic-moves/PhaseRoleApprovalsSummary";
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
@@ -127,6 +130,7 @@ interface MovesPhaseStandaloneClientProps {
   phaseTallies: PhaseTallyRow[];
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
   carriesForwardContent: DeliverableContentSignal[];
+  phaseBuildArtifacts?: PhaseBuildArtifact[];
   phaseNavigationStatus?: PhaseNavigationStatus;
   currentStateReadiness?: ReadinessReport | null;
   initialSubstepKey?: SubstepKey;
@@ -604,6 +608,7 @@ export function MovesPhaseStandaloneClient({
   phaseTallies,
   evidenceNeedPackets,
   carriesForwardContent,
+  phaseBuildArtifacts = [],
   phaseNavigationStatus,
   currentStateReadiness = null,
   initialSubstepKey,
@@ -2391,6 +2396,7 @@ export function MovesPhaseStandaloneClient({
                           nextOpenPhaseContract={nextOpenPhaseContract}
                           p3OptionSet={p3OptionSet}
                           phase={phase}
+                          phaseBuildArtifacts={phaseBuildArtifacts}
                           phaseCaptureBlocker={phaseCaptureBlocker}
                           phaseCaptureCompleteCount={phaseCaptureCompleteCount}
                           persistedPhaseCaptureValues={
@@ -2451,6 +2457,7 @@ export function MovesPhaseStandaloneClient({
                           nextOpenPhaseContract={nextOpenPhaseContract}
                           p3OptionSet={p3OptionSet}
                           phase={phase}
+                          phaseBuildArtifacts={phaseBuildArtifacts}
                           phaseCaptureBlocker={phaseCaptureBlocker}
                           phaseCaptureCompleteCount={phaseCaptureCompleteCount}
                           persistedPhaseCaptureValues={
@@ -3724,6 +3731,7 @@ function PhaseBody({
   nextOpenPhaseContract,
   p3OptionSet,
   phase,
+  phaseBuildArtifacts,
   phaseCaptureBlocker,
   phaseCaptureCompleteCount,
   phaseCaptureSections,
@@ -3762,6 +3770,7 @@ function PhaseBody({
   nextOpenPhaseContract: PhaseContract;
   p3OptionSet: P3OptionSet;
   phase: PhaseContract;
+  phaseBuildArtifacts: PhaseBuildArtifact[];
   phaseCaptureBlocker: string | null;
   phaseCaptureCompleteCount: number;
   phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
@@ -4203,6 +4212,17 @@ function PhaseBody({
     : `${readinessPack.openNeeds.length} prep item${
         readinessPack.openNeeds.length === 1 ? "" : "s"
       } will carry into ${readinessPack.nextPhaseLabel}.`;
+  const gateWhyLabel = isGateBlocked
+    ? "Why blocked"
+    : gateApproved || isHistoricalPhase
+      ? "What changed"
+      : "Why ready";
+  const gateWhyPrimary = gateSummaryLine;
+  const gateWhyNext = isGateBlocked
+    ? nextActionLabel
+    : gateApproved || isHistoricalPhase
+      ? nextPhaseSummaryLine
+      : nextActionLabel;
 
   return (
     <>
@@ -4265,62 +4285,46 @@ function PhaseBody({
               <span>{nextActionLabel}</span>
             </div>
           </article>
-          <details className="mxw-decision-details">
-            <summary>
-              <span>Why</span>
-              <strong>
-                {gateSummaryLine} {nextPhaseSummaryLine}
-              </strong>
-            </summary>
-            <div className="mxw-decision-detail-grid">
-              <article>
-                <span className="mxw-exec-label">Evidence state</span>
-                <button
-                  type="button"
-                  className="mxw-evidence-count-link mxw-evidence-count-link-strong"
-                  onClick={onOpenFiles}
-                  aria-label={`${evidenceCount} approved or agent-ready items — open Files & Evidence`}
-                >
-                  {evidenceCount} approved or agent-ready item
-                  {evidenceCount === 1 ? "" : "s"}
-                </button>
-                <p>
-                  Uploaded files only influence the gate after review. Gaps stay
-                  visible.
-                </p>
-              </article>
-              <article>
-                <span className="mxw-exec-label">What is blocking</span>
-                {isGateBlocked || openSoftCriteria.length > 0 ? (
-                  <ul>
-                    {openHardCriteria.slice(0, 3).map((criterion) => (
-                      <li key={criterion.id}>
-                        <strong>Hard:</strong> {criterion.label}
-                      </li>
-                    ))}
-                    {openHardCriteria.length > 3 ? (
-                      <li>
-                        <strong>Hard:</strong> {openHardCriteria.length - 3}{" "}
-                        more
-                      </li>
-                    ) : null}
-                    {openSoftCriteria.slice(0, 2).map((criterion) => (
-                      <li key={criterion.id}>
-                        <strong>Caveat:</strong> {criterion.label}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No open gate criteria are blocking this phase.</p>
-                )}
-              </article>
-              <article>
-                <span className="mxw-exec-label">After approval</span>
-                <strong>{readinessPack.nextPhaseLabel}</strong>
-                <p>{nextPhaseSummaryLine}</p>
-              </article>
+          <div
+            className="mxw-gate-why-panel"
+            aria-label="Gate blocker explanation"
+          >
+            <div className="mxw-gate-why-copy">
+              <span className="mxw-exec-label">{gateWhyLabel}</span>
+              <strong>{gateWhyPrimary}</strong>
+              <p>{gateWhyNext}</p>
             </div>
-          </details>
+            <div className="mxw-gate-why-proof">
+              <button
+                type="button"
+                className="mxw-evidence-count-link mxw-evidence-count-link-strong"
+                onClick={onOpenFiles}
+                aria-label={`${evidenceCount} approved or agent-ready items — open Files & Evidence`}
+              >
+                {evidenceCount} evidence item{evidenceCount === 1 ? "" : "s"}
+              </button>
+              <span>{readinessPack.nextPhaseLabel}</span>
+            </div>
+            {isGateBlocked || openSoftCriteria.length > 0 ? (
+              <ul className="mxw-gate-blocker-list">
+                {openHardCriteria.slice(0, 3).map((criterion) => (
+                  <li key={criterion.id}>
+                    <strong>Hard:</strong> {criterion.label}
+                  </li>
+                ))}
+                {openHardCriteria.length > 3 ? (
+                  <li>
+                    <strong>Hard:</strong> {openHardCriteria.length - 3} more
+                  </li>
+                ) : null}
+                {openSoftCriteria.slice(0, 2).map((criterion) => (
+                  <li key={criterion.id}>
+                    <strong>Caveat:</strong> {criterion.label}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
         </div>
         {!isHistoricalPhase && phase.phase >= 3 ? (
           <DecisionOptionsActionPanel
@@ -4430,6 +4434,7 @@ function PhaseBody({
               disabledReason={phaseCaptureBlocker}
               evidenceNeedPackets={evidenceNeedPackets}
               inputCount={phaseCaptureCompleteCount}
+              initialArtifacts={phaseBuildArtifacts}
               moveId={move.id}
               moveName={displayMoveName}
               onBeforeBuild={onFinalizePhaseCapture}
@@ -6593,12 +6598,14 @@ function MovesStandaloneStyles() {
 .mxw-exec-readout ul{margin:0;padding-left:16px;display:grid;gap:5px}
 .mxw-exec-readout li{font-size:12.8px;line-height:1.4;color:var(--ink-2)}
 .mxw-exec-label{display:block;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--faint);font-weight:800;margin-bottom:8px}
-.mxw-decision-surface{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:16px 0 14px;align-items:stretch}
-.mxw-decision-surface article{border:1px solid var(--line);border-radius:12px;background:var(--soft);padding:14px 16px;min-width:0}
-.mxw-decision-surface.blocked{border-left:3px solid var(--amber);padding-left:12px}
-.mxw-decision-surface.ready{border-left:3px solid var(--green);padding-left:12px}
-.mxw-decision-surface.complete{border-left:3px solid var(--blue);padding-left:12px}
-.mxw-decision-primary{background:linear-gradient(180deg,#fff,var(--soft) 90%)!important}
+.mxw-review{border:0;background:transparent;box-shadow:none;padding:0;margin-top:0}
+.mxw-review>p{max-width:760px}
+.mxw-decision-surface{display:grid;grid-template-columns:minmax(0,1fr);gap:0;margin:14px 0;align-items:stretch;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 12px 34px rgba(15,23,42,.06);overflow:hidden}
+.mxw-decision-surface article{border:0;border-radius:0;background:#fff;padding:16px 18px;min-width:0}
+.mxw-decision-surface.blocked{border-left:4px solid var(--amber)}
+.mxw-decision-surface.ready{border-left:4px solid var(--green)}
+.mxw-decision-surface.complete{border-left:4px solid var(--blue)}
+.mxw-decision-primary{background:#fff!important}
 .mxw-decision-primary h3{font-family:Fraunces, Georgia, serif;font-size:22px;line-height:1.1;letter-spacing:-.45px;margin:0;color:var(--ink)}
 .mxw-decision-surface strong{display:block;font-size:14px;line-height:1.3;color:var(--ink);margin-bottom:6px}
 .mxw-decision-surface p{font-size:12.8px;line-height:1.45;color:var(--ink-2);margin:7px 0 0}
@@ -6609,6 +6616,13 @@ function MovesStandaloneStyles() {
 .mxw-decision-chips span{border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:10.5px;font-weight:900;padding:5px 8px;white-space:nowrap}
 .mxw-decision-surface.blocked .mxw-decision-chips span:first-child{border-color:rgba(176,115,15,.32);background:var(--amber-tint);color:var(--amber)}
 .mxw-decision-surface.ready .mxw-decision-chips span:first-child,.mxw-decision-surface.complete .mxw-decision-chips span:first-child{border-color:rgba(29,143,104,.32);background:var(--green-tint);color:var(--green)}
+.mxw-gate-why-panel{border-top:1px solid var(--line);background:var(--soft);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:14px 18px;align-items:start}
+.mxw-gate-why-copy strong{font-size:14px;line-height:1.35;margin:0;color:var(--ink)}
+.mxw-gate-why-copy p{font-size:12.8px;line-height:1.45;margin:5px 0 0;color:var(--ink-2)}
+.mxw-gate-why-proof{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap;max-width:330px}
+.mxw-gate-why-proof span{border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:10.5px;font-weight:900;padding:5px 8px;white-space:nowrap}
+.mxw-gate-blocker-list{grid-column:1/-1;border-top:1px solid var(--line);padding-top:10px!important}
+.mxw-gate-blocker-list li{display:block;color:var(--ink-2)}
 .mxw-decision-details{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
 .mxw-decision-details summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;align-items:center;padding:11px 14px}
 .mxw-decision-details summary::-webkit-details-marker{display:none}
@@ -6830,7 +6844,7 @@ function MovesStandaloneStyles() {
 @media (max-width:1280px){
   .mxw .mxw-ava-fab{width:52px;height:52px;padding:12px;gap:0;font-size:0;line-height:0;color:transparent;justify-content:center}
 }
-@media (max-width:980px){.mxw-lanes,.mxw-value-grid,.mxw-exec-readout,.mxw-decision-surface,.mxw-decision-detail-grid,.mxw-intel-grid{grid-template-columns:1fr}.mxw-decision-details summary{grid-template-columns:1fr}}
+@media (max-width:980px){.mxw-lanes,.mxw-value-grid,.mxw-exec-readout,.mxw-decision-surface,.mxw-decision-detail-grid,.mxw-gate-why-panel,.mxw-intel-grid{grid-template-columns:1fr}.mxw-decision-details summary{grid-template-columns:1fr}.mxw-gate-why-proof{justify-content:flex-start;max-width:none}}
 @media (max-width:900px){
   .mxw-mobile-rail{position:sticky;top:44px;z-index:55;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(12,26,58,.10);background:#fff;padding:10px 14px;box-shadow:0 6px 14px rgba(12,26,58,.06)}
   .mxw-surface{grid-template-columns:1fr}
