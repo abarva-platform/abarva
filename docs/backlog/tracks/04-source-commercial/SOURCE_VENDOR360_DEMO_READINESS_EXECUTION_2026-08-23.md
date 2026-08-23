@@ -2,8 +2,11 @@
 
 **Status:** active execution contract  
 **Scope:** Source, Vendor 360, Contract 360, Optimize Contract, New Event, and Source aVa  
-**Primary demo tenant:** Meridian/PHS readiness, with SkyHarbor remaining the richer canary where useful  
+**Primary demo tenant:** primary synthetic healthcare tenant readiness, with the secondary synthetic
+airline canary used only where a richer comparison is explicitly needed
 **Operating rule:** prove from the owning layer before claiming demo readiness
+**Upstream gate:** downstream of the ECL commercial-family load/readback lane; this tracker does not
+authorize work ahead of the approved load, independent readback, and proof review.
 
 This execution map exists so the Source push does not become another pile of good local fixes
 without a single proof spine. Each lane below can ship independently, but none is complete until its
@@ -23,17 +26,18 @@ proof is captured from the correct layer.
 Missing evidence must remain missing. A blank or absent value must never be rendered as zero, and a
 model may explain but must not calculate money, spend, value, ROI, or risk.
 
-## Lane 1 — Meridian/PHS Demo-Readiness Audit
+## Lane 1 — Primary Synthetic Healthcare Tenant Demo-Readiness Audit
 
-**Goal:** decide whether Meridian can support the PHS demo story across Source, Vendor 360,
-Contract 360, Optimize Contract, New Event, and aVa.
+**Goal:** decide whether the primary synthetic healthcare tenant can support the demo story across
+Source, Vendor 360, Contract 360, Optimize Contract, New Event, and aVa after the upstream ECL
+load/readback proof gate clears.
 
 | Requirement | Acceptance evidence |
 | --- | --- |
 | Page-by-page audit of the demo path | Report with route/surface, what the CXO sees, what is supported, what is missing. |
 | Data depth audit | Counts and coverage for vendors, contracts, line-level evidence, source files, opportunities, and value proof. |
 | Workflow audit | New Event and Optimize Contract gate behavior, forward path, approval states, and artifact generation. |
-| Intelligence audit | aVa answers grounded in Meridian data, with tables/charts/refusals where appropriate. |
+| Intelligence audit | aVa answers grounded in the approved tenant data, with tables/charts/refusals where appropriate. |
 | Recommendation | Demo-safe, demo-with-caveats, or not-demo-safe, with exact fixes required. |
 
 **Done when:** a report is merged or attached with evidence-backed go/no-go and a prioritized fix
@@ -102,17 +106,19 @@ changed surface retains missing-evidence and approval-gate honesty.
 
 ## Current Priority Order
 
-1. Meridian/PHS demo-readiness audit.
+0. Upstream ECL commercial-family load/readback lane: approved load, independent row-for-row
+   readback, and proof review. This tracker waits behind that gate.
+1. Primary synthetic healthcare tenant demo-readiness audit.
 2. Source-substrate number proof.
 3. aVa hard-question QA.
-4. Controlled ingest readback proof.
+4. Controlled ingest readback proof for any additional upload path not covered by the ECL lane.
 5. UX simplification patches driven by the audit and QA findings.
 
-This order is intentional: first prove whether the demo story is supported, then make numbers
-quotable, then test the assistant, then prove ingest, then polish the surfaces around the truth.
+This order is intentional: first clear the ECL load/readback proof gate, then prove whether the demo
+story is supported, then make numbers quotable, then test the assistant, then prove any additional
+ingest path, then polish the surfaces around the truth.
 
 ## Deployment Rule
 
 Code changes move through PRs and the repo-owned ACA main deploy workflow. No branch preview,
 Vercel URL, local dev screenshot, or ad hoc Container App update proves the shared product runtime.
-
