@@ -3500,7 +3500,9 @@ function FinderStepsColumns({
                       onSelectSection(null);
                       const scrollDetailIntoView = () => {
                         document
-                          .querySelector(".mxw-finder-detail")
+                          .querySelector(
+                            ".mxw-contract-detail, .mxw-finder-detail",
+                          )
                           ?.scrollIntoView({
                             block: "start",
                             behavior: "smooth",
@@ -6914,7 +6916,7 @@ function MovesStandaloneStyles() {
 .mxw-contract-comingup span.req{border-color:rgba(186,117,23,.18);background:#fbf1df;color:#8a5a12}
 .mxw-contract-comingup p{color:#8b95a8;font-size:11.5px;line-height:1.35;margin:10px 0 0}
 .mxw-contract-nav-foot{margin-top:4px;border-top:1px solid rgba(12,26,58,.14);padding:14px 8px 0;color:#8b95a8;font-size:11.5px;line-height:1.35}
-.mxw-contract-detail{padding:28px 30px 24px;min-width:0}
+.mxw-contract-detail{padding:28px 30px 24px;min-width:0;scroll-margin-top:96px}
 .mxw-contract-detail-top{display:grid;grid-template-columns:22px auto minmax(0,auto) auto;align-items:center;gap:10px;margin-bottom:18px}
 .mxw-contract-detail-top>span{width:18px;height:18px;border-radius:999px;border:1px solid rgba(12,26,58,.18);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900}
 .mxw-contract-detail-top>span.done{border-color:#1d9e75;background:#1d9e75}
