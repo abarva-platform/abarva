@@ -12,14 +12,10 @@
 // the approval record, and moves-generate-deps.ts / deliverable-content-signals.ts
 // prefer this version when feeding content forward to the next phase.
 //
-// PHASE CAPTURE EVIDENCE INTEGRITY (added here): this route used to accept
-// ANY in_review/draft deliverable from ANY authorized approver, with no
-// check on the deliverable's type key or on how its content was produced.
-// That let a stale, free-text-fabricated `deliverables_v2` row (created by
-// `phase-capture/route.ts`'s now-removed auto-creation — see that file's
-// own incident comment) be signed off as if it were reviewed, generated
-// evidence, satisfying a hard gate check on nothing but raw capture text.
-// Two independent checks now run before any sign-off:
+// PHASE CAPTURE EVIDENCE INTEGRITY: this route accepts only deliberately
+// registered deliverable types, and raw phase-capture text cannot be signed off
+// as a gate artifact through the JSON approval path. Two independent checks run
+// before any sign-off:
 //   1. RECOGNIZED_DELIVERABLE_TYPE_KEYS — the deliverable's type key must be
 //      one of the deliberately registered types the codebase actually
 //      produces (orchestrator DELIVERABLE_REGISTRY, or the agent-authored
@@ -36,11 +32,20 @@
 import { signOffDeliverable } from "@/lib/programs/mutations";
 import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
 import { evaluateClientReadinessForSignOff } from "@/lib/deliverables/shared/client-readiness-gate";
+import {
+  extractOfficeText,
+  type OfficeFormat,
+} from "@/lib/deliverables/shared/office-text-extract";
 import { hasAuthority } from "@/lib/programs/governance";
 import { requireTenancy, tenancyErrorResponse } from "../../../../_auth";
 import { getProgramById } from "@/lib/programs/queries";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
-import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
+import {
+  downloadArtifactBytes,
+  listMoveArtifacts,
+  saveMoveArtifact,
+  type MoveArtifactRow,
+} from "@/lib/programs/deliverables/move-artifacts";
 import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
 import { ALLOWED_PROGRAM_DELIVERABLE_TYPES } from "@/lib/agent/tools/program/completeDeliverable";
 import {
@@ -55,6 +60,7 @@ import {
   validateArchitectureGenerationLineage,
 } from "@/lib/programs/approved-solution-approach";
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract";
+import type { TenancyCtx } from "@/lib/programs/types.db";
 
 // Union of every deliberately registered/agent-authorable deliverable type
 // key this codebase actually produces. A small handful of legacy alias keys
@@ -69,6 +75,132 @@ const RECOGNIZED_DELIVERABLE_TYPE_KEYS = new Set<string>([
   ...DELIVERABLE_REGISTRY.map((spec) => spec.deliverableTypeKey),
   ...ALLOWED_PROGRAM_DELIVERABLE_TYPES,
 ]);
+
+type GeneratedOfficeScanArtifact = {
+  artifactId: string;
+  fileName: string;
+  fileFormat: OfficeFormat;
+  partCount: number;
+};
+
+type GeneratedOfficeReadinessContent =
+  | {
+      ok: true;
+      content: string | null;
+      scannedArtifacts: GeneratedOfficeScanArtifact[];
+    }
+  | {
+      ok: false;
+      artifactId: string;
+      fileName: string;
+      fileFormat: string;
+      detail: string;
+    };
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function isOfficeFormat(format: string): format is OfficeFormat {
+  return format === "docx" || format === "pptx";
+}
+
+function isCurrentGeneratedOfficeCompanion(
+  artifact: MoveArtifactRow,
+  deliverableId: string,
+  versionId: string,
+): boolean {
+  if (artifact.artifact_family !== "generated_deliverable") return false;
+  if (artifact.lifecycle_state !== "current") return false;
+  if (!isOfficeFormat(String(artifact.file_format).toLowerCase())) return false;
+  const metadata = asRecord(artifact.metadata);
+  return (
+    metadata.deliverableId === deliverableId && metadata.versionId === versionId
+  );
+}
+
+async function buildClientReadinessScanContent(
+  ctx: TenancyCtx,
+  input: {
+    programId: string;
+    deliverableId: string;
+    versionId: string;
+    htmlContent?: string | null;
+  },
+): Promise<GeneratedOfficeReadinessContent> {
+  const scanParts: string[] = [];
+  const htmlContent = input.htmlContent?.trim();
+  if (htmlContent) {
+    scanParts.push(`[Generated HTML companion]\n${htmlContent}`);
+  }
+
+  const scannedArtifacts: GeneratedOfficeScanArtifact[] = [];
+  const artifacts = await listMoveArtifacts(ctx, input.programId, {
+    family: "generated_deliverable",
+    currentOnly: true,
+  });
+  const officeCompanions = artifacts.filter((artifact) =>
+    isCurrentGeneratedOfficeCompanion(
+      artifact,
+      input.deliverableId,
+      input.versionId,
+    ),
+  );
+
+  for (const artifact of officeCompanions) {
+    const downloaded = await downloadArtifactBytes(ctx, artifact.artifact_id);
+    if (!downloaded) {
+      return {
+        ok: false,
+        artifactId: artifact.artifact_id,
+        fileName: artifact.file_name,
+        fileFormat: artifact.file_format,
+        detail:
+          "Generated Office companion could not be downloaded for client-readiness scanning.",
+      };
+    }
+
+    const format = downloaded.fileFormat.toLowerCase();
+    if (!isOfficeFormat(format)) {
+      return {
+        ok: false,
+        artifactId: artifact.artifact_id,
+        fileName: downloaded.fileName,
+        fileFormat: downloaded.fileFormat,
+        detail: `Generated companion format "${downloaded.fileFormat}" is not supported by the readiness scanner.`,
+      };
+    }
+
+    const extracted = await extractOfficeText(downloaded.bytes, format);
+    if (!extracted.ok) {
+      return {
+        ok: false,
+        artifactId: artifact.artifact_id,
+        fileName: downloaded.fileName,
+        fileFormat: downloaded.fileFormat,
+        detail: extracted.detail,
+      };
+    }
+
+    scanParts.push(
+      `[Generated ${format.toUpperCase()} companion: ${downloaded.fileName}]\n${extracted.text}`,
+    );
+    scannedArtifacts.push({
+      artifactId: artifact.artifact_id,
+      fileName: downloaded.fileName,
+      fileFormat: format,
+      partCount: extracted.partCount,
+    });
+  }
+
+  return {
+    ok: true,
+    content: scanParts.join("\n\n").trim() || null,
+    scannedArtifacts,
+  };
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -142,11 +274,12 @@ export async function POST(
     let readinessOutcome: ReturnType<
       typeof evaluateClientReadinessForSignOff
     > | null = null;
+    let readinessScannedArtifacts: GeneratedOfficeScanArtifact[] = [];
 
     if (!isFileUploadApproval && currentVersion) {
       const { data: versionRow, error: versionError } = await supabase
         .from("deliverable_versions")
-        .select("structured_data, content")
+        .select("id, structured_data, content")
         .eq("deliverable_id", deliverableId)
         .eq("version", currentVersion)
         .maybeSingle();
@@ -180,8 +313,45 @@ export async function POST(
       // accepted are written into the approval record — because "signed off
       // with three known leaks" and "was clean" are different facts and a
       // later reader must be able to tell them apart.
+      const currentVersionRow = versionRow as {
+        id?: string | null;
+        structured_data?: Record<string, unknown> | null;
+        content?: string | null;
+      } | null;
+      const versionId = currentVersionRow?.id;
+      const scanContent = versionId
+        ? await buildClientReadinessScanContent(ctx, {
+            programId,
+            deliverableId,
+            versionId,
+            htmlContent: currentVersionRow?.content,
+          })
+        : {
+            ok: true as const,
+            content: currentVersionRow?.content?.trim() || null,
+            scannedArtifacts: [],
+          };
+      if (!scanContent.ok) {
+        return Response.json(
+          {
+            error: "generated_artifact_not_scannable",
+            detail:
+              "A generated Office companion must be readable before this deliverable can be signed off.",
+            artifact: {
+              artifactId: scanContent.artifactId,
+              fileName: scanContent.fileName,
+              fileFormat: scanContent.fileFormat,
+            },
+            scannerDetail: scanContent.detail,
+            remedy:
+              "Regenerate the deliverable or repair the stored generated Office artifact, then retry sign-off.",
+          },
+          { status: 422 },
+        );
+      }
+
       const readiness = evaluateClientReadinessForSignOff({
-        content: (versionRow as { content?: string | null } | null)?.content,
+        content: scanContent.content,
         acknowledgeBlockers: acknowledgeReadinessBlockers,
       });
       if (!readiness.allowed) {
@@ -202,6 +372,7 @@ export async function POST(
         );
       }
       readinessOutcome = readiness;
+      readinessScannedArtifacts = scanContent.scannedArtifacts;
 
       if (P3_ARCHITECTURE_DELIVERABLE_KEYS.has(deliverableTypeKey)) {
         if (!ctx.clientKey) {
@@ -382,6 +553,7 @@ export async function POST(
             summary: readinessOutcome.summary,
             reviewItems: readinessOutcome.reviewItems.length,
             acknowledgedFindings: readinessOutcome.acknowledgedFindings,
+            scannedArtifacts: readinessScannedArtifacts,
           }
         : null,
     });

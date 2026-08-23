@@ -1,14 +1,8 @@
 // Extracting readable text from DOCX and PPTX.
 //
-// This exists because of a specific mistake. A scan of fifteen live artifacts
-// fetched each one and parsed it as HTML. Ten were DOCX. The ZIP byte stream
-// parsed as markup produced garbage text, that garbage matched a hex pattern,
-// and the scan reported internal hashes in eight documents. All eight were
-// false. The real content had never been read.
-//
-// So the contract here is: either return real text, or say plainly that the
-// document could not be read. Never return something scannable-looking that
-// is actually noise. `ok: false` is a useful answer; garbage is not.
+// The contract here is: either return real visible Office text, or say plainly
+// that the document could not be read. Never return ZIP/XML noise that merely
+// looks scannable. `ok: false` is useful; garbage is not.
 
 import JSZip from "jszip";
 
@@ -30,9 +24,8 @@ const ZIP_SIGNATURE = [0x50, 0x4b, 0x03, 0x04];
 /**
  * True when the buffer really is a ZIP container.
  *
- * Checked before handing anything to the unzipper so an HTML error page
- * returned by an API — the exact thing that caused the false-positive scan —
- * fails loudly here rather than being decoded into nonsense.
+ * Checked before handing anything to the unzipper so an HTML error page or
+ * truncated download fails loudly rather than being decoded into nonsense.
  */
 export function looksLikeOfficeFile(bytes: Uint8Array): boolean {
   if (bytes.length < ZIP_SIGNATURE.length) return false;
