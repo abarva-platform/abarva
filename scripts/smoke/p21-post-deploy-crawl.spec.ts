@@ -88,11 +88,18 @@ const personaSwitcher = fs.readFileSync(
 assert.match(postDeployWorkflow, /CLERK_SECRET_KEY:/);
 assert.match(postDeployWorkflow, /AZURE_LAB_CLERK_SECRET_KEY/);
 assert.match(postDeployWorkflow, /CLERK_TESTING_TOKEN_SECRET_KEY:/);
+assert.match(postDeployWorkflow, /CRAWL_TOTAL_TIMEOUT_MS:/);
+assert.match(postDeployWorkflow, /CRAWL_SURFACE_TIMEOUT_MS:/);
+assert.match(postDeployWorkflow, /timeout-minutes: 50/);
 assert.doesNotMatch(postDeployWorkflow, /Run candidate preview focused crawl/);
 assert.doesNotMatch(postDeployWorkflow, /candidate-preview-crawl/);
 assert.match(postDeployHarness, /runCandidatePreviewProof/);
 assert.match(postDeployHarness, /candidatePreview/);
 assert.match(postDeployHarness, /includeCandidatePreview/);
+assert.match(postDeployHarness, /crawl_deadline:totalMs=/);
+assert.match(postDeployHarness, /crawl_progress:\$\{nextBucket\}%/);
+assert.match(postDeployHarness, /crawl_surface_timeout:/);
+assert.match(postDeployHarness, /crawl_total_timeout_exceeded/);
 assert.match(postDeployHarness, /isAuthAutomationBlockMessage/);
 assert.match(postDeployHarness, /candidate-preview-auth-bootstrap/);
 assert.match(atlasGauntletHarness, /agentLoginForClientKey/);

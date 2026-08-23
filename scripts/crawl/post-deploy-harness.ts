@@ -32,6 +32,8 @@ interface Args {
   noAuth: boolean;
   rollbackOnP0: boolean;
   includeCandidatePreview: boolean;
+  totalTimeoutMs: number;
+  surfaceTimeoutMs: number;
 }
 
 async function main() {
@@ -51,8 +53,14 @@ async function main() {
   const surfaces = resolveCrawlSurfaces(args.surface);
   const questions = resolveCrawlQuestions(args.questionSet);
   const plannedObservationCount = personas.length * surfaces.length;
+  const startedAt = Date.now();
+  const deadlineAt = startedAt + args.totalTimeoutMs;
+  const logProgress = createProgressLogger(plannedObservationCount);
   console.log(
     `crawl_plan:${personas.map((persona) => persona.key).join(",")}:${surfaces.map((surface) => surface.id).join(",")}:questions=${questions.length}`,
+  );
+  console.log(
+    `crawl_deadline:totalMs=${args.totalTimeoutMs}:surfaceMs=${args.surfaceTimeoutMs}`,
   );
   const baseline = args.baseline ? await readBaseline(args.baseline) : null;
   const persistProgress = async (complete: boolean) => {
@@ -124,13 +132,35 @@ async function main() {
           observations.push(
             buildAuthBootstrapObservation(persona, args.baseUrl, message),
           );
+          logProgress(observations.length);
           await persistProgress(false);
           continue;
         }
         personaContext = activeContext;
         for (const surface of surfaces) {
           console.log(`crawl_surface_start:${persona.key}:${surface.id}:${surface.path}`);
-          observations.push(await crawlSurface(activeContext.page, persona, surface, args.baseUrl, out, questions));
+          const remainingMs = deadlineAt - Date.now();
+          if (remainingMs <= 0) {
+            throw new Error(
+              `crawl_total_timeout_exceeded:captured=${observations.length}/${plannedObservationCount}:totalMs=${args.totalTimeoutMs}`,
+            );
+          }
+          const surfaceTimeoutMs = Math.min(args.surfaceTimeoutMs, remainingMs);
+          observations.push(
+            await withTimeout(
+              crawlSurface(
+                activeContext.page,
+                persona,
+                surface,
+                args.baseUrl,
+                out,
+                questions,
+              ),
+              surfaceTimeoutMs,
+              `crawl_surface_timeout:${persona.key}:${surface.id}:timeoutMs=${surfaceTimeoutMs}:captured=${observations.length}/${plannedObservationCount}`,
+            ),
+          );
+          logProgress(observations.length);
           await persistProgress(false);
           console.log(`crawl_surface_complete:${persona.key}:${surface.id}:captured=${observations.length}/${plannedObservationCount}`);
         }
@@ -257,6 +287,42 @@ function buildCrawlComparison(
     });
   }
   return recountComparison(comparison);
+}
+
+function createProgressLogger(plannedObservationCount: number) {
+  let nextBucket = 15;
+  return (capturedObservationCount: number) => {
+    if (plannedObservationCount <= 0) return;
+    const percent = Math.floor(
+      (capturedObservationCount / plannedObservationCount) * 100,
+    );
+    while (percent >= nextBucket && nextBucket <= 90) {
+      console.log(
+        `crawl_progress:${nextBucket}%:captured=${capturedObservationCount}/${plannedObservationCount}`,
+      );
+      nextBucket += 15;
+    }
+    if (capturedObservationCount >= plannedObservationCount && nextBucket <= 100) {
+      console.log(
+        `crawl_progress:100%:captured=${capturedObservationCount}/${plannedObservationCount}`,
+      );
+      nextBucket = 105;
+    }
+  };
+}
+
+function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  message: string,
+): Promise<T> {
+  let timeout: NodeJS.Timeout | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeout = setTimeout(() => reject(new Error(message)), timeoutMs);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timeout) clearTimeout(timeout);
+  });
 }
 
 function mergeCandidatePreviewComparison(
@@ -860,6 +926,8 @@ function parseArgs(argv: string[]): Args {
     rollbackOnP0: false,
     includeCandidatePreview:
       process.env.CRAWL_INCLUDE_ADMIN_CANDIDATE_PREVIEW === "true",
+    totalTimeoutMs: positiveIntegerFromEnv("CRAWL_TOTAL_TIMEOUT_MS", 2_700_000),
+    surfaceTimeoutMs: positiveIntegerFromEnv("CRAWL_SURFACE_TIMEOUT_MS", 900_000),
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -875,6 +943,13 @@ function parseArgs(argv: string[]): Args {
     if (arg === '--candidate-preview') args.includeCandidatePreview = true;
   }
   return args;
+}
+
+function positiveIntegerFromEnv(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 void main().catch((error) => {

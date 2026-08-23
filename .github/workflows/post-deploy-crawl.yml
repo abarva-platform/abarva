@@ -31,6 +31,8 @@ jobs:
     timeout-minutes: 60
     env:
       CRAWL_BASE_URL: ${{ inputs.base_url || vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
+      CRAWL_TOTAL_TIMEOUT_MS: ${{ vars.CRAWL_TOTAL_TIMEOUT_MS || '2700000' }}
+      CRAWL_SURFACE_TIMEOUT_MS: ${{ vars.CRAWL_SURFACE_TIMEOUT_MS || '900000' }}
       CRAWL_DEMO_PASSWORD: ${{ secrets.CRAWL_DEMO_PASSWORD }}
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY || secrets.AZURE_LAB_CLERK_SECRET_KEY }}
       CLERK_TESTING_TOKEN_SECRET_KEY: ${{ secrets.CLERK_TESTING_TOKEN_SECRET_KEY || secrets.CLERK_SECRET_KEY || secrets.AZURE_LAB_CLERK_SECRET_KEY }}
@@ -51,6 +53,7 @@ jobs:
       - name: Wait briefly for production alias
         run: sleep 60
       - name: Run authenticated crawl
+        timeout-minutes: 50
         run: |
           args=(--base-url "$CRAWL_BASE_URL" --output-dir audit-artifacts/post-deploy-crawl)
           if [ -n "$CRAWL_PERSONA" ]; then args+=(--persona "$CRAWL_PERSONA"); fi
