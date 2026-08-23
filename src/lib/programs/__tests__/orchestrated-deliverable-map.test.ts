@@ -15,7 +15,7 @@ describe("orchestrated deliverable map", () => {
     expect(deliverableKeyForOrchestratorType(orchestratorType)).toBe(
       "target_state_architecture",
     );
-    expect(prescribedFormatForDeliverableType(orchestratorType)).toBe("docx");
+    expect(prescribedFormatForDeliverableType(orchestratorType)).toBe("pptx");
   });
 
   it("routes the P2 root-cause worksheet to its own orchestrator and quality profile", () => {
@@ -57,7 +57,13 @@ describe("orchestrated deliverable map", () => {
     expect(deliverableKeyForOrchestratorType(orchestratorType)).toBe(
       "solution_design",
     );
-    expect(prescribedFormatForDeliverableType(orchestratorType)).toBe("docx");
+    expect(prescribedFormatForDeliverableType(orchestratorType)).toBe("pptx");
+  });
+
+  it("persists solution approach options as a PPTX final when generated directly", () => {
+    expect(
+      prescribedFormatForDeliverableType("solution_approach_options"),
+    ).toBe("pptx");
   });
 
   it("routes P3 Operating Model Design to the canonical fixed operating-model brief", () => {

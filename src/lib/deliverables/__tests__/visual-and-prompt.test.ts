@@ -87,7 +87,7 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
       phase: 3,
       context: richContext(),
     });
-    expect(p.outputFormat).toBe("html");
+    expect(p.outputFormat).toBe("pptx");
     expect(p.user).toContain("unify clinical + claims");
     expect(p.user).toContain("Epic Clarity/Caboodle on SQL Server");
     expect(p.user).toContain("30-day readmissions");

@@ -15,18 +15,19 @@ describe("FileCabinetPanel artifact labels", () => {
         outputRole: "docx_editable_phase_record",
         fileFormat: "docx",
       }),
-    ).toBe("Editable deliverable");
+    ).toBe("Editable final");
     expect(
       artifactOutputRoleLabel({
         outputRole: "html_visual_review_companion",
         fileFormat: "html",
       }),
-    ).toBe("Visual review companion");
+    ).toBe("Preview only");
   });
 
   it("uses client-facing format language", () => {
     expect(artifactFormatLabel("docx")).toBe("Word-equivalent");
-    expect(artifactFormatLabel("html")).toBe("HTML review view");
+    expect(artifactFormatLabel("pptx")).toBe("PPTX final");
+    expect(artifactFormatLabel("html")).toBe("HTML preview");
     expect(artifactFormatLabel("xlsx")).toBe("Excel model");
   });
 
@@ -54,11 +55,23 @@ describe("FileCabinetPanel artifact labels", () => {
     expect(
       supportsGeneratedClientApproval({
         family: "generated_deliverable",
+        fileFormat: "docx",
         lifecycleState: "current",
+        outputRole: null,
         status: "board_ready",
         downloadUrl: "/api/v1/artifacts/generated-charter-1",
       }),
     ).toBe(true);
+    expect(
+      supportsGeneratedClientApproval({
+        family: "generated_deliverable",
+        fileFormat: "html",
+        lifecycleState: "current",
+        outputRole: "html_visual_review_companion",
+        status: "board_ready",
+        downloadUrl: "/api/v1/artifacts/generated-charter-preview",
+      }),
+    ).toBe(false);
     expect(
       supportsSponsorReviewDecisionArtifact(
         {
@@ -133,8 +146,12 @@ describe("FileCabinetPanel artifact labels", () => {
     expect(model?.suggested).toHaveLength(1);
     expect(model?.excluded).toHaveLength(1);
     expect(model?.gaps).toHaveLength(0);
-    expect(model?.gatheredMessage).toContain("Candidate preview data stayed out");
-    expect(model?.nextPhaseMessage).toContain("P1 has usable attached evidence");
+    expect(model?.gatheredMessage).toContain(
+      "Candidate preview data stayed out",
+    );
+    expect(model?.nextPhaseMessage).toContain(
+      "P1 has usable attached evidence",
+    );
     expect(model?.nextPhaseMessage).toContain(
       "phase advancement still requires the governed Approve & Build gate",
     );
@@ -172,7 +189,10 @@ describe("FileCabinetPanel artifact labels", () => {
         suggestedContextItems: [],
         excludedContextItems: [],
         gapItems: [
-          { label: "Agent-ready tenant context", reason: "No attached evidence." },
+          {
+            label: "Agent-ready tenant context",
+            reason: "No attached evidence.",
+          },
         ],
       },
     });

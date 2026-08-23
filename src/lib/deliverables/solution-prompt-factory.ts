@@ -25,7 +25,11 @@ tables, charts, and decision exhibits. You write like a partner who understood t
 and made a clear judgment — never a generic, mechanical, section-pack memo. You decide the right
 exhibit mix, but you are visual-first by default.`;
 
-function field(label: string, value: string | undefined, fallback: string): string {
+function field(
+  label: string,
+  value: string | undefined,
+  fallback: string,
+): string {
   return `${label}:\n${value && value.trim() ? value : `[MISSING — ${fallback}]`}`;
 }
 
@@ -34,7 +38,10 @@ function kpiBlock(ctx: SolutionContext): string {
   return (
     "KPIS:\n" +
     ctx.kpis
-      .map((k) => `- ${k.name} (${k.domain})${k.baseline ? ` ${k.baseline}→${k.target ?? "?"}` : ""}`)
+      .map(
+        (k) =>
+          `- ${k.name} (${k.domain})${k.baseline ? ` ${k.baseline}→${k.target ?? "?"}` : ""}`,
+      )
       .join("\n")
   );
 }
@@ -43,7 +50,9 @@ function decisionsBlock(ctx: SolutionContext): string {
   if (!ctx.decisions.length) return "APPROVED DECISIONS:\n[none yet]";
   return (
     "APPROVED DECISIONS:\n" +
-    ctx.decisions.map((d) => `- P${d.phase}: ${d.decision} — ${d.rationale}`).join("\n")
+    ctx.decisions
+      .map((d) => `- P${d.phase}: ${d.decision} — ${d.rationale}`)
+      .join("\n")
   );
 }
 
@@ -54,7 +63,8 @@ function p3FutureStateBoundaryBlock(args: {
   context: SolutionContext;
   draftCaveat?: string;
 }): string {
-  if (args.artifact !== "target_state_architecture" || args.phase !== 3) return "";
+  if (args.artifact !== "target_state_architecture" || args.phase !== 3)
+    return "";
   const draftStatus =
     args.generationMode === "draft"
       ? `- This is "P3 Draft — based on approved P2 diagnostic for design shaping".
@@ -93,15 +103,26 @@ export function buildArtifactPrompt(args: {
   const contract = visualContractFor(artifact);
 
   const contextBlock = [
-    field("USE CASE", ctx.useCase ?? ctx.useCaseCandidate, "no use case — blocking input"),
+    field(
+      "USE CASE",
+      ctx.useCase ?? ctx.useCaseCandidate,
+      "no use case — blocking input",
+    ),
     kpiBlock(ctx),
-    field("CURRENT STATE", ctx.currentState, "current state not captured — blocking input"),
+    field(
+      "CURRENT STATE",
+      ctx.currentState,
+      "current state not captured — blocking input",
+    ),
     "GAPS / ROOT CAUSES:\n" +
-      ((ctx.gaps?.length ? ctx.gaps : ctx.rootCauses ?? []).map((g) => `- ${g}`).join("\n") ||
-        "[MISSING — diagnosis not captured]"),
+      ((ctx.gaps?.length ? ctx.gaps : (ctx.rootCauses ?? []))
+        .map((g) => `- ${g}`)
+        .join("\n") || "[MISSING — diagnosis not captured]"),
     decisionsBlock(ctx),
     "HUMAN REVIEW NOTES:\n" +
-      (ctx.humanApprovalNotes.length ? ctx.humanApprovalNotes.map((n) => `- ${n}`).join("\n") : "[none]"),
+      (ctx.humanApprovalNotes.length
+        ? ctx.humanApprovalNotes.map((n) => `- ${n}`).join("\n")
+        : "[none]"),
   ].join("\n\n");
 
   const visualBlock = contract
@@ -116,7 +137,8 @@ export function buildArtifactPrompt(args: {
   });
 
   const archRule =
-    profile.renderer === "html_architecture" && artifact !== "solution_approach_options"
+    profile.renderer === "html_architecture" &&
+    artifact !== "solution_approach_options"
       ? `\nARCHITECTURE RULE:\n- Do NOT choose the solution approach here — use the already-approved chosenOption: ${ctx.chosenOption ? `"${ctx.chosenOption}"` : "[MISSING — STOP and request P3a approval]"}.\n- The architecture must be built to that decision.\n- Do not reopen, blend, or silently replace rejected alternatives. If new evidence conflicts with the decision, expose the conflict in the Open Decision Log.`
       : "";
 
@@ -159,5 +181,5 @@ RULES:
 - For P1/P2, include every required structure named in the Strategic Moves Premium Artifact Brief.
 - Return the complete artifact, not an outline, summary, short patch, or placeholder.${archRule}`;
 
-  return { system: SYSTEM_PROMPT, user, outputFormat: "html" };
+  return { system: SYSTEM_PROMPT, user, outputFormat: "pptx" };
 }

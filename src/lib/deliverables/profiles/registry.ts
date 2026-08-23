@@ -294,8 +294,8 @@ const solutionApproachOptions: DeliverableProfile = {
   audience: ["steering_committee", "cio", "cto"],
   decisionPurpose:
     "Choose the solution approach (and option) that will drive the architecture — before any architecture is designed.",
-  defaultFormat: "html",
-  supportingFormats: ["pptx", "docx"],
+  defaultFormat: "pptx",
+  supportingFormats: ["docx"],
   tone: "board_grade",
   visualDensity: "high",
   allowPhaseLabels: false,
@@ -324,6 +324,8 @@ const solutionApproachOptions: DeliverableProfile = {
     "no_recommendation",
     "architecture_before_approval",
   ],
+  lengthGuidance:
+    "Story-led PPTX: frame the current decision trap, show credible options, make the tradeoff explicit, then state what architecture is authorized.",
 };
 
 const targetStateArchitecture: DeliverableProfile = {
@@ -381,8 +383,8 @@ const targetStateArchitecture: DeliverableProfile = {
   audience: ["cio", "cto"],
   decisionPurpose:
     "Align on future-state design, data flow, AI pattern, controls, and integration choices.",
-  defaultFormat: "html",
-  supportingFormats: ["pptx", "docx"], // exhibits export to deck; appendix to docx
+  defaultFormat: "pptx",
+  supportingFormats: ["docx"], // HTML is a preview surface, not a final format.
   tone: "architecture_lead",
   visualDensity: "high",
   allowPhaseLabels: false,
@@ -400,13 +402,15 @@ const targetStateArchitecture: DeliverableProfile = {
     "implementation_waves",
   ],
   lengthGuidance:
-    "Visual-first HTML; executive captions, not architecture essays.",
+    "Story-led PPTX with SVG-based architecture exhibits. The deck must read as current pain → design choice → target operating change → controls → implementation decision, with a DOCX appendix only when needed.",
   acceptanceChecks: [
+    "tells a coherent current pain → target decision system → controlled rollout story",
     "shows the current-to-target journey (as-is and to-be physical architecture)",
     "data flow is rendered distinct from the AI decision/control flow",
     "names the engagement-solutioned services (cloud NOT predetermined)",
     "shows the agentic overlay — how services come alive",
     "describes human-in-the-loop control points",
+    "every diagram has a so-what and decision implication, not just labels",
     "at least five exhibits render without horizontal overflow",
   ],
 };
@@ -420,7 +424,7 @@ const solutionDesign: DeliverableProfile = {
   clientFacing: true,
   audience: ["cto", "program_leadership", "ciso"],
   decisionPurpose: "Explain how the solution actually works.",
-  defaultFormat: "html",
+  defaultFormat: "pptx",
   supportingFormats: ["docx"],
   tone: "architecture_lead",
   visualDensity: "high",
@@ -435,8 +439,10 @@ const solutionDesign: DeliverableProfile = {
     "control_points",
     "data_flow",
   ],
-  lengthGuidance: "8–12 pages; medium/high visual density.",
+  lengthGuidance:
+    "Story-led PPTX; show the workflow and control story before component detail. Use DOCX only for editable narrative appendix.",
   acceptanceChecks: [
+    "tells the user/workflow story before component detail",
     "clarifies what the user does, what the AI does, what systems are touched",
     "shows where humans approve and what gets measured",
     "uses swimlanes / workflow diagrams, not generic solution prose",

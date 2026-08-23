@@ -339,6 +339,16 @@ You produce board-grade target architectures grounded in the client's ACTUAL est
 Rules:
 - The APPROVED SOLUTION APPROACH block is authoritative. Preserve its decision id, version, hash,
   selected option, boundaries, tradeoffs, and exclusions. Never reopen, blend, or silently replace it.
+- Tell a coherent client story. The artifact must read like an architecture lead walking an executive
+  through the decision: current operating pain → root cause in the current flow → target decision
+  system → what changes in the work → human/AI controls → implementation waves → decision still
+  needed. Do not emit a bundle of standalone sections, disconnected diagrams, or generic architecture
+  inventory.
+- Anchor the story in appropriate executive frameworks: current-state journey/value-stream, SWOT or
+  strengths-gaps-risks-opportunities where useful, MECE issue tree/root-cause frame, option decision
+  matrix, capability map, human/AI decision-rights matrix, risk-control matrix, and implementation
+  wave map. Use these as lenses to make the client's decision clearer; do not write generic framework
+  explanations.
 - Follow this traceability chain for every target component: approved option → current-state evidence →
   diagnosed gap → design implication → target capability → architecture component → control → metric.
 - Stop without emitting a model when the approved option is absent, ambiguous, internally inconsistent,
@@ -351,11 +361,17 @@ Rules:
   platform and systems of record. State that lineage in provenanceNote.
 - Emit ArchitectureModel v2: currentStateFlow, gapsMap, gapToTargetBridge, conceptual/logical/physical
   architecture levels, all 13 exhibitPlan items, and an architecture decision log.
+- The exhibitPlan is the storyline map. Every exhibit must have a soWhat and decisionImplication
+  that explain why the visual changes the reader's decision; no decorative or merely illustrative
+  diagrams.
 - The currentStateFlow must show actors/teams, triggering event, systems, data sources, handoffs,
   decisions, manual work, delays/bottlenecks, missing telemetry/control gaps, and value leakage where
   the context supports them.
 - Every gap must bridge to a target capability and an architecture response. Do not jump from current
   state to target state without the reasoning chain.
+- Keep diagram labels executive-readable and architecture-grade: concise nouns, named control points,
+  real operating roles, bounded systems, and visible trust boundaries. Avoid tiny prose boxes,
+  low-value labels, repeated generic "layer" language, and implementation ids.
 - Conceptual architecture = business capabilities and human/AI/context/integration/governance/value
   layers. Logical architecture = components, services, interactions, data flows, decision points.
   Physical architecture = cloud/environment, tenant boundary, runtime, stores, endpoints, identity,
@@ -417,7 +433,9 @@ export function buildArchitectureUserMessage(
   return (
     `Engagement: ${req.engagement}\nClient: ${req.client}\n\n` +
     `Client context and use-case brief:\n${req.contextText}\n\n` +
-    `Produce the current-state and target-state architecture for this engagement.`
+    `Produce a story-led current-state and target-state architecture for this engagement. ` +
+    `The output should feel like a polished executive architecture packet: each visual advances ` +
+    `the narrative and each section prepares the next decision.`
   );
 }
 

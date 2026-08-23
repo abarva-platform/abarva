@@ -184,7 +184,7 @@ export async function persistDeliverable(
     result.brief.deliverableType,
   );
   let html = renderDeliverableHtml(doc);
-  let outputFormat: GeneratedArtifactFormat =
+  const outputFormat: GeneratedArtifactFormat =
     opts.outputFormat ?? prescribedFormat;
   const deliverableKey = deliverableKeyForOrchestratorType(
     result.brief.deliverableType,
@@ -194,15 +194,10 @@ export async function persistDeliverable(
   const resolvedDeliverableTypeKey =
     opts.deliverableTypeKey ?? deliverableKey ?? result.brief.deliverableType;
   let profileRenderedHtml = false;
-  // True whenever a profile/deck renderer deliberately overrides outputFormat to
-  // "html" as an alternate presentation of the SAME governed document — not a
-  // format mismatch. format_fit exists to catch accidental mismatches (e.g. a
-  // narrative profile that should be docx rendering as something else by
-  // mistake); it must not fire against an intentional deck/exhibit render, or
-  // every docx/xlsx-profiled deliverable (business_case, financial models, etc.)
-  // is guaranteed to block the moment moves_decision_storytelling / a structured
-  // renderer is enabled for a tenant, regardless of the prose content quality.
-  let deckRendered = false;
+  // True whenever a profile/deck renderer creates an HTML preview of the SAME
+  // governed document. The persisted outputFormat remains the prescribed final
+  // format (DOCX/PPTX/XLSX); HTML is only the browser review surface.
+  let htmlPreviewRendered = false;
 
   // ── Stage 6: renderer selection by profile (flag-gated rollout) ──
   // When the generation passes produced structured models, render the profile's
@@ -216,14 +211,13 @@ export async function persistDeliverable(
       models?.architectureModel
     ) {
       html = renderArchitectureHtml(models.architectureModel);
-      outputFormat = "html";
       profileRenderedHtml = true;
-      deckRendered = true;
+      htmlPreviewRendered = true;
     } else if (profile.renderer === "pptx_storyline" && models?.storylineDeck) {
-      // HTML storyline deck now; native PPTX export is the same model later.
+      // HTML storyline deck is the browser preview; native PPTX remains the
+      // governed final download format.
       html = renderDeckHtml(models.storylineDeck);
-      outputFormat = "html";
-      deckRendered = true;
+      htmlPreviewRendered = true;
     }
   }
 
@@ -245,8 +239,7 @@ export async function persistDeliverable(
       });
       if (deck) {
         html = deck;
-        outputFormat = "html";
-        deckRendered = true;
+        htmlPreviewRendered = true;
       }
     } catch (err) {
       console.error(
@@ -289,11 +282,7 @@ export async function persistDeliverable(
     const contractInput = buildContractInput({
       doc,
       deliverableKey: contractDeliverableKey,
-      // Omit outputFormat entirely when the render was a deliberate profile/deck
-      // override — format_fit treats a missing outputFormat as "nothing to check"
-      // (see checkFormatFit), which is correct here: the html IS the deliverable
-      // by design, not a mismatch against the profile's docx/pptx/xlsx contract.
-      ...(deckRendered ? {} : { outputFormat: outputFormat as OutputFormat }),
+      outputFormat: outputFormat as OutputFormat,
       additionalExhibits,
       // Evaluate the same sanitized visible text that will be persisted and
       // shown to reviewers. The structured doc can contain draft-era mechanical
@@ -432,6 +421,7 @@ export async function persistDeliverable(
     deliverableType: result.brief.deliverableType,
     registryKey: resolvedDeliverableTypeKey,
     renderableDoc: renderableDocWithType,
+    ...(htmlPreviewRendered ? { htmlPreviewFormat: "html" } : {}),
     ...(generationMetrics ? { generationMetrics } : {}),
     ...(opts.generationLineage
       ? { generationLineage: opts.generationLineage }

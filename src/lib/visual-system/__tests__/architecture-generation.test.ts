@@ -1,6 +1,7 @@
 import {
   generateArchitectureModel,
   buildArchitectureUserMessage,
+  ARCHITECTURE_SYSTEM_PROMPT,
   ARCHITECTURE_TOOL,
   type GovernedToolCall,
 } from "../architecture-generation";
@@ -170,6 +171,25 @@ describe("architecture generation pass (governed, tenant-agnostic)", () => {
     });
     expect(msg).toContain("SkyHarbor Air");
     expect(msg).toContain("fleet of 240 aircraft");
+    expect(msg).toContain(
+      "story-led current-state and target-state architecture",
+    );
+    expect(msg).toContain("each visual advances the narrative");
+  });
+
+  it("instructs the model to anchor the architecture story in executive frameworks", () => {
+    expect(ARCHITECTURE_SYSTEM_PROMPT).toContain(
+      "current-state journey/value-stream",
+    );
+    expect(ARCHITECTURE_SYSTEM_PROMPT).toContain(
+      "MECE issue tree/root-cause frame",
+    );
+    expect(ARCHITECTURE_SYSTEM_PROMPT).toContain(
+      "human/AI decision-rights matrix",
+    );
+    expect(ARCHITECTURE_SYSTEM_PROMPT).toContain(
+      "do not write generic framework",
+    );
   });
 
   it("builds a client-marked visual fallback that satisfies the architecture contract", () => {
