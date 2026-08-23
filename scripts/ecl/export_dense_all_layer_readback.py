@@ -12,10 +12,13 @@ small proof bundle for the ACA operator wrapper.
 from __future__ import annotations
 
 import argparse
+import base64
 import csv
 import json
 import os
 import sys
+import tarfile
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -92,6 +95,38 @@ def write_empty_csv(path: Path) -> None:
         writer.writerow(["layer", "table", "row_id", "field", "expected", "actual"])
 
 
+def emit_compact_proof_bundle(out_dir: Path) -> None:
+    """Emit only the readback artifacts needed by the ACA wrapper.
+
+    The ACA logs command can return at most 300 lines. The full job output
+    includes generated SQL and intermediate files that can push the proof
+    marker outside that window, so the read-only exporter keeps its proof
+    payload intentionally small.
+    """
+    file_names = [
+        "ecl_dense_all_layer_readback_export_summary.json",
+        "readback_export/readback_counts.json",
+        "readback_export/field_hash_mismatch_report.csv",
+        "readback_export/missing_rows.csv",
+        "readback_export/extra_rows.csv",
+    ]
+    with tempfile.NamedTemporaryFile(suffix=".tgz", delete=False) as handle:
+        tar_path = Path(handle.name)
+    try:
+        with tarfile.open(tar_path, "w:gz") as archive:
+            for file_name in file_names:
+                file_path = out_dir / file_name
+                if file_path.exists():
+                    archive.add(file_path, arcname=file_path.relative_to(out_dir.parent))
+        encoded = base64.b64encode(tar_path.read_bytes()).decode("ascii")
+        print(execute_load.PROOF_BEGIN)
+        for index in range(0, len(encoded), 76):
+            print(encoded[index : index + 76])
+        print(execute_load.PROOF_END)
+    finally:
+        tar_path.unlink(missing_ok=True)
+
+
 def validate_args(args: argparse.Namespace) -> list[str]:
     issues: list[str] = []
     target_db_url = args.target_db_url or os.environ.get("DATABASE_URL", "")
@@ -152,7 +187,7 @@ def export_readback(args: argparse.Namespace) -> dict[str, Any]:
         "tenant_key": execute_load.TENANT_KEY,
     }
     write_json(out_dir / "ecl_dense_all_layer_readback_export_summary.json", summary)
-    execute_load.emit_proof_bundle(out_dir)
+    emit_compact_proof_bundle(out_dir)
     print(json.dumps(summary, indent=2, sort_keys=True))
     if validation_issues:
         raise Refusal(validation_issues)
