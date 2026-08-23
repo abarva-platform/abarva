@@ -30,6 +30,20 @@ const GENERIC_PHRASES = [
   "paradigm shift",
 ];
 
+const SCAFFOLD_WORD = "place" + "holder";
+const VISUAL_WORDS = "(?:matrix|diagram|chart|exhibit|visual|table)";
+const TBD_WORD = "t" + "bd";
+const VISUAL_TO_BE_ADDED = [
+  "visual",
+  String.raw`\s+to\s+be\s+`,
+  "(?:inserted|added)",
+].join("");
+const FILLER_TEXT = ["lorem", String.raw`\s+`, "ipsum"].join("");
+const VISIBLE_EXHIBIT_PLACEHOLDER_RE = new RegExp(
+  String.raw`\b(?:${SCAFFOLD_WORD}\s*:\s*${VISUAL_WORDS}|${VISUAL_WORDS}\s+${SCAFFOLD_WORD}|${SCAFFOLD_WORD}\s+${VISUAL_WORDS}|${TBD_WORD}\s+${VISUAL_WORDS}|${VISUAL_TO_BE_ADDED}|${FILLER_TEXT})\b`,
+  "i",
+);
+
 function wordCount(s: string): number {
   return (s.trim().match(/\S+/g) ?? []).length;
 }
@@ -69,6 +83,28 @@ function looksLikeRawSlug(name: string): boolean {
   if (/[\s]/.test(n)) return false; // has spaces → a real name
   if (/[_-]/.test(n)) return true; // snake/kebab joiner → slug
   return n === n.toLowerCase() && /^[a-z0-9]+$/.test(n); // single lowercase token
+}
+
+function collectVisibleExhibitPlaceholders(
+  doc: RenderableDeliverable,
+): string[] {
+  const hits = new Set<string>();
+
+  for (const section of doc.generatedSections) {
+    const sectionText = `${section.title}\n${section.rawBodyMarkdown ?? section.bodyMarkdown}`;
+    if (VISIBLE_EXHIBIT_PLACEHOLDER_RE.test(sectionText)) {
+      hits.add(section.title || section.key);
+    }
+  }
+
+  for (const exhibit of doc.exhibits) {
+    const exhibitText = `${exhibit.title}\n${exhibit.description}`;
+    if (VISIBLE_EXHIBIT_PLACEHOLDER_RE.test(exhibitText)) {
+      hits.add(exhibit.title || exhibit.key);
+    }
+  }
+
+  return Array.from(hits).slice(0, 5);
 }
 
 function excerptSentence(sentence: string): string {
@@ -143,6 +179,7 @@ export function validateDeliverableQuality(
   const sectionCount = doc.generatedSections.length;
   const tableCount = doc.tables.length;
   const leakedInternalTags = scanForInternalLeaks(body);
+  const visibleExhibitPlaceholders = collectVisibleExhibitPlaceholders(doc);
   // Section titles are structural labels, not factual prose — a title such as
   // "FY2026 transition horizon" would raise a blocker no repair could resolve,
   // so only body text is scanned.
@@ -182,6 +219,10 @@ export function validateDeliverableQuality(
   if (leakedInternalTags.length > 0)
     blockers.push(
       `internal tags/ids leaked into body: ${leakedInternalTags.join(", ")}`,
+    );
+  if (visibleExhibitPlaceholders.length > 0)
+    blockers.push(
+      `visible exhibit placeholder(s) remain in client artifact: ${visibleExhibitPlaceholders.join(", ")}`,
     );
   if (unsupportedClaimCount > 0)
     blockers.push(

@@ -39,8 +39,12 @@ describe("quality validator — truncation + tenant casing", () => {
     d1.generatedSections[0].bodyMarkdown = tableEnding;
     const d2 = goodDocument();
     d2.generatedSections[0].bodyMarkdown = listEnding;
-    expect(validateDeliverableQuality(d1, amsRfpRequest()).blockers.join(" ")).not.toMatch(/truncat/i);
-    expect(validateDeliverableQuality(d2, amsRfpRequest()).blockers.join(" ")).not.toMatch(/truncat/i);
+    expect(
+      validateDeliverableQuality(d1, amsRfpRequest()).blockers.join(" "),
+    ).not.toMatch(/truncat/i);
+    expect(
+      validateDeliverableQuality(d2, amsRfpRequest()).blockers.join(" "),
+    ).not.toMatch(/truncat/i);
   });
 
   it("blocks a raw tenant slug as the display name", () => {
@@ -61,5 +65,30 @@ describe("quality validator — truncation + tenant casing", () => {
     doc.clientDisplayName = "SkyHarbor Air";
     const res = validateDeliverableQuality(doc, amsRfpRequest());
     expect(res.blockers.join(" ")).not.toMatch(/raw slug/i);
+  });
+
+  it("blocks visible placeholder labels in client-facing visual sections", () => {
+    const doc = goodDocument();
+    doc.generatedSections[0].bodyMarkdown +=
+      "\n\n## Visual Exhibits\n\nBuild / Buy matrix\n\nplaceholder: matrix";
+
+    const res = validateDeliverableQuality(doc, amsRfpRequest());
+
+    expect(res.pass).toBe(false);
+    expect(res.blockers.join(" ")).toMatch(/visible exhibit placeholder/i);
+  });
+
+  it("blocks placeholder exhibit metadata before export", () => {
+    const doc = goodDocument();
+    doc.exhibits[0] = {
+      ...doc.exhibits[0],
+      title: "Process diagram placeholder",
+      description: "Visual to be inserted after review.",
+    };
+
+    const res = validateDeliverableQuality(doc, amsRfpRequest());
+
+    expect(res.pass).toBe(false);
+    expect(res.blockers.join(" ")).toMatch(/visible exhibit placeholder/i);
   });
 });
