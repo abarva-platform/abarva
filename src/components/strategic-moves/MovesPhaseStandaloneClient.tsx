@@ -3170,12 +3170,14 @@ function PhaseContractStepsCanvas({
     phase.title;
   const scrollContractDetailIntoView = () => {
     const scrollDetail = () => {
-      document
-        .querySelector(".mxw-contract-detail, .mxw-finder-detail")
-        ?.scrollIntoView({
-          block: "start",
-          behavior: "smooth",
-        });
+      const detail = document.querySelector(
+        ".mxw-contract-detail, .mxw-finder-detail",
+      );
+      if (typeof detail?.scrollIntoView !== "function") return;
+      detail.scrollIntoView({
+        block: "start",
+        behavior: "smooth",
+      });
     };
     if (typeof requestAnimationFrame === "function") {
       requestAnimationFrame(scrollDetail);
@@ -6298,7 +6300,7 @@ function MovesStandaloneStyles() {
 .mxw-lib-link span{width:22px;height:22px;border-radius:6px;background:var(--card);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
 .mxw-foot{margin-top:auto;padding:14px 8px 0;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint);line-height:1.6}
 .mxw-foot b{color:var(--muted);font-weight:600}
-.mxw-shell{width:100%;max-width:none;margin:0;padding:24px clamp(24px,2.6vw,44px) 60px}
+.mxw-shell{width:100%;max-width:none;margin:0;padding:24px clamp(24px,2.6vw,44px) max(128px,calc(96px + env(safe-area-inset-bottom)))}
 .mxw-crumb{font-size:12px;color:var(--muted);margin-bottom:14px}
 .mxw-crumb a,.mxw-crumb button{color:var(--muted);background:none;border:0;font:inherit;cursor:pointer}
 .mxw-crumb a:hover,.mxw-crumb button:hover{color:var(--ink)}
@@ -6790,8 +6792,8 @@ function MovesStandaloneStyles() {
 .mxw-intel-link{margin-top:auto;align-self:flex-start;border:1px solid var(--line-2);border-radius:999px;background:var(--card);color:var(--blue);font-size:12px;font-weight:850;padding:6px 10px}
 .mxw-intel-empty{display:grid;gap:6px;border:1px solid var(--line);border-radius:12px;background:var(--soft);padding:16px;color:var(--muted);font-size:13px}
 .mxw-intel-empty strong{color:var(--ink)}
-.mxw-ava-fab{position:fixed;right:24px;bottom:24px;z-index:70;display:flex;align-items:center;gap:9px;background:var(--ink);color:#fff;border:0;border-radius:999px;padding:11px 16px 11px 12px;box-shadow:0 6px 20px rgba(20,20,19,.22);cursor:pointer}
-.mxw-ava-pop{position:fixed;right:24px;bottom:78px;z-index:71;width:348px;max-width:calc(100vw - 48px);background:var(--card);border:1px solid var(--line-2);border-radius:16px;box-shadow:0 16px 44px rgba(20,20,19,.2);overflow:hidden;display:none}
+.mxw-ava-fab{position:fixed;right:24px;bottom:calc(24px + env(safe-area-inset-bottom));z-index:70;display:flex;align-items:center;gap:9px;background:var(--ink);color:#fff;border:0;border-radius:999px;padding:11px 16px 11px 12px;box-shadow:0 6px 20px rgba(20,20,19,.22);cursor:pointer}
+.mxw-ava-pop{position:fixed;right:24px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:71;width:348px;max-width:calc(100vw - 48px);background:var(--card);border:1px solid var(--line-2);border-radius:16px;box-shadow:0 16px 44px rgba(20,20,19,.2);overflow:hidden;display:none}
 .mxw-ava-pop.open{display:block}
 .mxw-ava-head{display:flex;align-items:center;gap:10px;padding:15px 17px;border-bottom:1px solid var(--line)}
 .mxw-ava-head strong{display:block;font-size:14.5px}
@@ -6830,7 +6832,7 @@ function MovesStandaloneStyles() {
   .mxw-surface{grid-template-columns:1fr}
   .mxw-side{display:none}
   .mxw-shell{width:100%;max-width:none}
-  .mxw-shell{padding:30px 18px 80px}
+  .mxw-shell{padding:30px 18px max(128px,calc(96px + env(safe-area-inset-bottom)))}
   .mxw-guide-head{align-items:flex-start;flex-direction:column}
   .mxw-guide-head em{margin-left:0}
   .mxw-guide-table{grid-template-columns:1fr}

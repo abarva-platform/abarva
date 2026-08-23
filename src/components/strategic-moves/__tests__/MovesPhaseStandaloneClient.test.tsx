@@ -3000,6 +3000,33 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByText(/Ask about this phase/i)).toBeInTheDocument();
   });
 
+  it("reserves bottom safe area so the fixed aVa launcher does not cover gate content", () => {
+    const { container } = render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    const styleText = Array.from(container.querySelectorAll("style"))
+      .map((style) => style.textContent ?? "")
+      .join("\n");
+
+    expect(styleText).toContain(
+      ".mxw-shell{width:100%;max-width:none;margin:0;padding:24px clamp(24px,2.6vw,44px) max(128px,calc(96px + env(safe-area-inset-bottom)))}",
+    );
+    expect(styleText).toContain(
+      ".mxw-ava-fab{position:fixed;right:24px;bottom:calc(24px + env(safe-area-inset-bottom))",
+    );
+    expect(styleText).toContain(
+      ".mxw-ava-pop{position:fixed;right:24px;bottom:calc(78px + env(safe-area-inset-bottom))",
+    );
+  });
+
   it("surfaces the hard gate blocker after generation succeeds but approval returns 409", async () => {
     const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
     (global.fetch as jest.Mock).mockImplementation(
