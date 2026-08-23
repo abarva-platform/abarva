@@ -53,6 +53,15 @@ REQUIRED_MISSING_BINDINGS = {
     "AZURE_STORAGE_CONNECTION_STRING",
 }
 
+REQUIRED_QUALITY_AREAS = {
+    "raw_workbook_coverage": "pass",
+    "dense_source_room_coverage": "pass",
+    "application_realism_gates": "pass",
+    "ecl_table_producer_coverage": "pass",
+    "local_layer_readback_chain": "pass",
+    "runtime_and_browser_hard_gates": "hard_gated",
+}
+
 
 def read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -61,6 +70,23 @@ def read_json(path: Path) -> Any:
 def expect(condition: bool, message: str, issues: list[str]) -> None:
     if not condition:
         issues.append(message)
+
+
+def expect_quality_denominators(payload: dict[str, Any], label: str, issues: list[str]) -> None:
+    quality = payload.get("local_quality_denominators")
+    expect(isinstance(quality, dict), f"{label} missing local_quality_denominators", issues)
+    if not isinstance(quality, dict):
+        return
+    for key, expected_status in REQUIRED_QUALITY_AREAS.items():
+        row = quality.get(key)
+        expect(isinstance(row, dict), f"{label} missing quality denominator {key}", issues)
+        if not isinstance(row, dict):
+            continue
+        expect(row.get("status") == expected_status, f"{label} {key} status must be {expected_status}", issues)
+        expect(isinstance(row.get("passed"), int), f"{label} {key} passed must be integer", issues)
+        expect(isinstance(row.get("total"), int), f"{label} {key} total must be integer", issues)
+        if isinstance(row.get("passed"), int) and isinstance(row.get("total"), int):
+            expect(0 <= row["passed"] <= row["total"], f"{label} {key} passed/total invalid", issues)
 
 
 def validate(out_dir: Path) -> list[str]:
@@ -90,16 +116,20 @@ def validate(out_dir: Path) -> list[str]:
     expect(isinstance(command, list) and command[:3] == ["npm", "run", "ops:aca-job"], "candidate command must use ops:aca-job", issues)
     expect("--plan-only" in command, "candidate command must stay plan-only", issues)
     expect("az" not in command, "candidate command must not call az directly", issues)
+    expect_quality_denominators(job_spec, "job_spec", issues)
 
     for field in REQUIRED_CONTRACT_FIELDS:
         expect(field in run_manifest, f"run manifest missing contract field: {field}", issues)
     expect(run_manifest.get("actual_azure_execution") is False, "run manifest must be dry-run/no Azure", issues)
     expect(str(run_manifest.get("blob_proof_bundle_location", "")).startswith("local-only:"), "proof bundle location must be local-only", issues)
     expect(run_manifest.get("status") == "dry_run_succeeded", "run manifest status must be dry_run_succeeded", issues)
+    expect_quality_denominators(run_manifest, "run_manifest", issues)
 
     expect(status.get("actual_azure_execution") is False, "status must be dry-run/no Azure", issues)
     expect(status.get("status") == "dry_run_succeeded", "status must be dry_run_succeeded", issues)
     expect(any(event.get("name") == "azure_execution_refused_by_design" for event in status.get("events", [])), "status missing Azure refusal event", issues)
+    expect(any(event.get("name") == "quality_denominators_verified" for event in status.get("events", [])), "status missing quality denominator event", issues)
+    expect_quality_denominators(status, "status", issues)
 
     missing = set(env_validation.get("missing_for_execution", []))
     expect(env_validation.get("accepted_for_dry_run") is True, "env validation must accept dry-run", issues)
@@ -108,19 +138,23 @@ def validate(out_dir: Path) -> list[str]:
 
     expect(validation.get("accepted") is True, "validation summary must be accepted", issues)
     expect(validation.get("actual_azure_execution") is False, "validation must be dry-run/no Azure", issues)
+    expect_quality_denominators(validation, "validation", issues)
     expect(quality.get("dry_run_gate_status") == "pass", "quality dry-run gate must pass", issues)
     expect(quality.get("execute_gate_status") == "blocked_pending_explicit_future_execute_lane", "execute gate must remain blocked", issues)
     for gate in ["azure_mutation", "data_mutation", "product_route_repoint", "browser_live_claim", "legacy_retirement"]:
         expect(quality.get("hard_gates_preserved", {}).get(gate) == "not_run", f"{gate} gate must be not_run", issues)
+    expect_quality_denominators(quality, "quality_gate", issues)
 
     steps = {row.get("step"): row for row in progress.get("steps", [])}
     expect(progress.get("overall_percent_complete") == 50, "overall progress must be 50", issues)
+    expect_quality_denominators(progress, "progress", issues)
     for step in [1, 2, 3]:
         expect(steps.get(step, {}).get("percent_complete") == 100, f"step {step} must be 100", issues)
     for step in [4, 5, 6]:
         expect(steps.get(step, {}).get("percent_complete") == 0, f"step {step} must be 0", issues)
 
     expect(proof_manifest.get("family") == "dense_all_layer_ecl", "proof manifest family mismatch", issues)
+    expect_quality_denominators(proof_manifest, "proof_manifest", issues)
     bundle = proof_manifest.get("bundle", {})
     expect(bundle.get("path") == proof_bundle_path.as_posix(), "proof bundle path mismatch", issues)
     expect(bundle.get("bytes", 0) > 0, "proof bundle must be non-empty", issues)
@@ -128,6 +162,7 @@ def validate(out_dir: Path) -> list[str]:
 
     expect(summary.get("accepted") is True, "dry-run summary must be accepted", issues)
     expect(summary.get("actual_azure_execution") is False, "dry-run summary must be no Azure", issues)
+    expect_quality_denominators(summary, "summary", issues)
     return issues
 
 
