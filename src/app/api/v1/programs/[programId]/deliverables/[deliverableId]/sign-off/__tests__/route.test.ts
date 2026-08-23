@@ -4,8 +4,11 @@ const mockGetProgramById = jest.fn();
 const mockHasAuthority = jest.fn();
 const mockSignOffDeliverable = jest.fn();
 const mockSaveMoveArtifact = jest.fn();
+const mockListMoveArtifacts = jest.fn();
+const mockDownloadArtifactBytes = jest.fn();
 const mockExtractProgramEvidenceFromUploadBuffer = jest.fn();
 const mockWriteAuditLog = jest.fn();
+const mockExtractOfficeText = jest.fn();
 
 jest.mock("../../../../../_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -26,6 +29,13 @@ jest.mock("@/lib/programs/mutations", () => ({
 
 jest.mock("@/lib/programs/deliverables/move-artifacts", () => ({
   saveMoveArtifact: (...args: unknown[]) => mockSaveMoveArtifact(...args),
+  listMoveArtifacts: (...args: unknown[]) => mockListMoveArtifacts(...args),
+  downloadArtifactBytes: (...args: unknown[]) =>
+    mockDownloadArtifactBytes(...args),
+}));
+
+jest.mock("@/lib/deliverables/shared/office-text-extract", () => ({
+  extractOfficeText: (...args: unknown[]) => mockExtractOfficeText(...args),
 }));
 
 jest.mock("@/lib/programs/audit-log", () => ({
@@ -44,6 +54,7 @@ let deliverableRow: {
   current_version: number | null;
 } | null;
 let versionRow: {
+  id?: string | null;
   structured_data: Record<string, unknown> | null;
   content?: string | null;
 } | null;
@@ -126,16 +137,25 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       current_version: 1,
     };
     versionRow = {
+      id: "version-1",
       structured_data: { source: "generated_by_orchestrator" },
       content:
         "<p>SkyHarbor Global should instrument turnaround delay before committing to a predictive model.</p>",
     };
+    mockListMoveArtifacts.mockResolvedValue([]);
+    mockDownloadArtifactBytes.mockResolvedValue(null);
+    mockExtractOfficeText.mockResolvedValue({
+      ok: true,
+      format: "docx",
+      text: "clean generated office companion",
+      partCount: 1,
+    });
   });
 
   it("PHASE CAPTURE EVIDENCE INTEGRITY: rejects sign-off for an unrecognized/stale deliverable type key", async () => {
-    // Regression for the phase-capture incident: a deliverable created
-    // under a type key the codebase does not actually recognize must never
-    // be signable, since it can never satisfy a real gate check either.
+    // A deliverable created under a type key the codebase does not actually
+    // recognize must never be signable, since it can never satisfy a real gate
+    // check either.
     deliverableRow = {
       deliverable_type_key: "totally_made_up_type",
       title: "Mystery Artifact",
@@ -153,17 +173,15 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
   });
 
   it("PHASE CAPTURE EVIDENCE INTEGRITY: rejects sign-off of raw phase-capture-derived content as-is", async () => {
-    // The exact exploit path: phase-capture used to create a real,
-    // registered-type deliverable (e.g. design_spec) whose only content was
-    // concatenated capture-field text. Even though the type key is
-    // legitimate, capture-derived content must not become signable gate
-    // evidence via the plain JSON-body approval path.
+    // Even when the type key is legitimate, capture-derived content must not
+    // become signable gate evidence via the plain JSON-body approval path.
     deliverableRow = {
       deliverable_type_key: "design_spec",
       title: "Solution Design Specification",
       current_version: 1,
     };
     versionRow = {
+      id: "version-1",
       structured_data: {
         source: "phase_capture",
         generated_by: "phase_capture_route",
@@ -223,6 +241,7 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
 
     it("refuses sign-off when the document contains something a client must not see", async () => {
       versionRow = {
+        id: "version-1",
         structured_data: { source: "generated_by_orchestrator" },
         content: LEAKY,
       };
@@ -241,6 +260,7 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
 
     it("names the escape hatch in the refusal, so the reviewer is not stuck", async () => {
       versionRow = {
+        id: "version-1",
         structured_data: { source: "generated_by_orchestrator" },
         content: LEAKY,
       };
@@ -253,6 +273,7 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
 
     it("proceeds when the reviewer explicitly acknowledges the findings", async () => {
       versionRow = {
+        id: "version-1",
         structured_data: { source: "generated_by_orchestrator" },
         content: LEAKY,
       };
@@ -271,6 +292,7 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
 
     it("writes the accepted findings to the audit log, so the override is not silent", async () => {
       versionRow = {
+        id: "version-1",
         structured_data: { source: "generated_by_orchestrator" },
         content: LEAKY,
       };
@@ -303,6 +325,7 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
 
     it("does not block on review-only findings", async () => {
       versionRow = {
+        id: "version-1",
         structured_data: { source: "generated_by_orchestrator" },
         content: "<p>The quality score was 80 for this operating model.</p>",
       };
@@ -318,6 +341,7 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
 
     it("reports not_scanned rather than clear when there is no content", async () => {
       versionRow = {
+        id: "version-1",
         structured_data: { source: "generated_by_orchestrator" },
         content: null,
       };
@@ -328,6 +352,164 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       expect(res.status).toBe(200);
       await expect(res.json()).resolves.toMatchObject({
         clientReadiness: { verdict: "not_scanned" },
+      });
+    });
+
+    function generatedDocxArtifact(overrides: Record<string, unknown> = {}) {
+      return {
+        artifact_id: "artifact-docx-1",
+        move_id: "prog-1",
+        phase: 4,
+        artifact_type: "business_case_editable_docx",
+        artifact_family: "generated_deliverable",
+        title: "Business Case Editable",
+        file_name: "business-case.docx",
+        file_format: "docx",
+        blob_container: "context-drops",
+        blob_path: "moves/test/business-case.docx",
+        file_size: 1024,
+        version: 1,
+        status: "draft",
+        generated_by: "generator@example.com",
+        generated_at: "2026-08-23T00:00:00.000Z",
+        quality_score: null,
+        unsupported_claims_count: 0,
+        lifecycle_state: "current",
+        created_at: "2026-08-23T00:00:00.000Z",
+        metadata: {
+          deliverableId: "deliverable-1",
+          versionId: "version-1",
+          outputFormat: "docx",
+          outputRole: "docx_editable_phase_record",
+        },
+        ...overrides,
+      };
+    }
+
+    it("scans current generated Office companions before sign-off", async () => {
+      mockListMoveArtifacts.mockResolvedValue([generatedDocxArtifact()]);
+      mockDownloadArtifactBytes.mockResolvedValue({
+        bytes: Buffer.from("fake-docx"),
+        fileName: "business-case.docx",
+        fileFormat: "docx",
+      });
+      mockExtractOfficeText.mockResolvedValue({
+        ok: true,
+        format: "docx",
+        text: "Generated with claude-sonnet-5 for the business case.",
+        partCount: 3,
+      });
+
+      const { POST } = await import("../route");
+      const res = await POST(req(), { params });
+
+      expect(res.status).toBe(422);
+      const body = await res.json();
+      expect(body.error).toBe("client_readiness_blockers");
+      expect(body.blockers).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ kind: "model_name" }),
+        ]),
+      );
+      expect(mockExtractOfficeText).toHaveBeenCalledWith(
+        Buffer.from("fake-docx"),
+        "docx",
+      );
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+
+    it("blocks sign-off when a current generated Office companion cannot be read", async () => {
+      mockListMoveArtifacts.mockResolvedValue([generatedDocxArtifact()]);
+      mockDownloadArtifactBytes.mockResolvedValue({
+        bytes: Buffer.from("not-office"),
+        fileName: "business-case.docx",
+        fileFormat: "docx",
+      });
+      mockExtractOfficeText.mockResolvedValue({
+        ok: false,
+        reason: "not_a_zip",
+        detail: "Not a ZIP container. The document was NOT scanned.",
+      });
+
+      const { POST } = await import("../route");
+      const res = await POST(req(), { params });
+
+      expect(res.status).toBe(422);
+      await expect(res.json()).resolves.toMatchObject({
+        error: "generated_artifact_not_scannable",
+        artifact: {
+          artifactId: "artifact-docx-1",
+          fileName: "business-case.docx",
+          fileFormat: "docx",
+        },
+      });
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+
+    it("ignores generated Office artifacts from another deliverable version", async () => {
+      mockListMoveArtifacts.mockResolvedValue([
+        generatedDocxArtifact({
+          artifact_id: "stale-docx",
+          metadata: {
+            deliverableId: "deliverable-1",
+            versionId: "older-version",
+          },
+        }),
+      ]);
+
+      const { POST } = await import("../route");
+      const res = await POST(req(), { params });
+
+      expect(res.status).toBe(200);
+      expect(mockDownloadArtifactBytes).not.toHaveBeenCalled();
+      expect(mockExtractOfficeText).not.toHaveBeenCalled();
+      await expect(res.json()).resolves.toMatchObject({
+        clientReadiness: {
+          verdict: "clear",
+          scannedArtifacts: [],
+        },
+      });
+    });
+
+    it("records acknowledgement when the accepted blocker came from an Office companion", async () => {
+      mockListMoveArtifacts.mockResolvedValue([generatedDocxArtifact()]);
+      mockDownloadArtifactBytes.mockResolvedValue({
+        bytes: Buffer.from("fake-docx"),
+        fileName: "business-case.docx",
+        fileFormat: "docx",
+      });
+      mockExtractOfficeText.mockResolvedValue({
+        ok: true,
+        format: "docx",
+        text: "Generated with claude-sonnet-5 for the business case.",
+        partCount: 3,
+      });
+
+      const { POST } = await import("../route");
+      const res = await POST(req({ acknowledgeReadinessBlockers: true }), {
+        params,
+      });
+
+      expect(res.status).toBe(200);
+      expect(mockWriteAuditLog).toHaveBeenCalledWith(
+        ctx,
+        expect.objectContaining({
+          action: "deliverable_signed_off_with_readiness_blockers",
+          evidenceRefs: expect.arrayContaining(["model_name: claude-sonnet-5"]),
+        }),
+      );
+      await expect(res.json()).resolves.toMatchObject({
+        clientReadiness: {
+          verdict: "acknowledged",
+          scannedArtifacts: [
+            {
+              artifactId: "artifact-docx-1",
+              fileName: "business-case.docx",
+              fileFormat: "docx",
+              partCount: 3,
+            },
+          ],
+        },
       });
     });
   });
