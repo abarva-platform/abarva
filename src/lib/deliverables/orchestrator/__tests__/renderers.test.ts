@@ -126,6 +126,69 @@ describe("DOCX/HTML/PDF renderers — duplicate section-heading suppression", ()
   });
 });
 
+describe("renderers — malformed section-object body recovery", () => {
+  function docWithSectionObjectBody() {
+    const doc = goodDocument();
+    doc.generatedSections = [
+      {
+        key: "dependencies_risks",
+        title: "Dependencies, Risks & Controls",
+        bodyMarkdown:
+          "```json\n" +
+          JSON.stringify({
+            key: "dependencies_risks",
+            title: "Dependencies, Risks & Controls",
+            bodyMarkdown:
+              "## Dependencies, Risks & Controls\n\nMitigation owners are named before mobilization.",
+            groundingMode: "mixed",
+            citationsUsed: [1],
+          }) +
+          "\n```",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+      },
+    ];
+    return doc;
+  }
+
+  it("HTML renders nested prose, not raw section object keys", () => {
+    const html = renderDeliverableHtml(docWithSectionObjectBody());
+
+    expect(html).toMatch(/Mitigation owners are named before mobilization/);
+    expect(html).not.toMatch(/dependencies_risks/);
+    expect(html).not.toMatch(/bodyMarkdown/);
+    expect(html).not.toMatch(/```json/);
+  });
+
+  it("DOCX renders nested prose, not raw section object keys", async () => {
+    const buf = await Packer.toBuffer(
+      renderDeliverableDocx(docWithSectionObjectBody()),
+    );
+    const zip = await JSZip.loadAsync(buf);
+    const documentXml = await zip.file("word/document.xml")!.async("string");
+
+    expect(documentXml).not.toMatch(/dependencies_risks/);
+    expect(documentXml).not.toMatch(/bodyMarkdown/);
+    expect(documentXml).not.toMatch(/```json/);
+  });
+
+  it("PPTX renders nested prose, not raw section object keys", async () => {
+    const buf = await renderDeliverablePptx(docWithSectionObjectBody());
+    const zip = await JSZip.loadAsync(buf);
+    const slideXml = (
+      await Promise.all(
+        Object.keys(zip.files)
+          .filter((file) => /^ppt\/slides\/slide\d+\.xml$/.test(file))
+          .map((file) => zip.file(file)!.async("string")),
+      )
+    ).join("\n");
+
+    expect(slideXml).toMatch(/Mitigation owners are named before mobilization/);
+    expect(slideXml).not.toMatch(/dependencies_risks/);
+    expect(slideXml).not.toMatch(/bodyMarkdown/);
+  });
+});
+
 describe("Excel companion", () => {
   it("builds a workbook with one sheet per xlsx-flagged table", async () => {
     const wb = renderDeliverableExcelCompanion(goodDocument());
