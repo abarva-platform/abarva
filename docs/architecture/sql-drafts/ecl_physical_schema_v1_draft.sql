@@ -615,7 +615,8 @@ create table if not exists ecl_review.review_event (
   ),
   constraint review_event_decision_basis_check check (
     decision_basis in ('source_recorded', 'document_extracted', 'interview_derived', 'calculated', 'model_inferred', 'owner_confirmed', 'unknown')
-  )
+  ),
+  constraint review_event_tenant_assessment_id_unique unique (tenant_key, assessment_id, id)
 );
 
 create table if not exists ecl_projection.projection_manifest (

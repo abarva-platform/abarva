@@ -438,6 +438,138 @@ exception
     raise notice 'Expected FK rejection: Source contract projection requires contract FK';
 end $$;
 
+insert into ecl_review.review_event (
+  id,
+  tenant_key,
+  assessment_id,
+  subject_kind,
+  subject_contract_id,
+  review_event_type,
+  previous_value_json,
+  new_value_json,
+  decision_basis,
+  reviewer_role,
+  source_record_id,
+  notes
+) values (
+  '20000000-0000-0000-0000-000000000011',
+  'meridian-health',
+  'assessment-projection-smoke',
+  'contract',
+  '20000000-0000-0000-0000-000000000010',
+  'block',
+  '{}'::jsonb,
+  '{"gate_status":"gated"}'::jsonb,
+  'source_recorded',
+  'Procurement owner',
+  '20000000-0000-0000-0000-000000000002',
+  'Synthetic review gate smoke row.'
+);
+
+do $$
+begin
+  insert into ecl_projection.source_event_workspace (
+    tenant_key,
+    assessment_id,
+    snapshot_id,
+    projection_manifest_id,
+    projection_version,
+    row_key,
+    workspace_tab,
+    row_type,
+    event_key,
+    event_title,
+    contract_id,
+    contract_object_id,
+    vendor_object_id,
+    review_event_id,
+    event_stage,
+    event_status,
+    gate_status,
+    gate_reason_code,
+    gate_reason_detail,
+    owner_role,
+    source_hash
+  ) values (
+    'meridian-health',
+    'assessment-projection-smoke',
+    '20000000-0000-0000-0000-000000000007',
+    '20000000-0000-0000-0000-000000000009',
+    1,
+    'bad-empty-event-gate',
+    'events',
+    'sourcing_event',
+    'SRC-EVT-BAD',
+    'Bad gated event',
+    '20000000-0000-0000-0000-000000000010',
+    '20000000-0000-0000-0000-000000000005',
+    '20000000-0000-0000-0000-000000000004',
+    '20000000-0000-0000-0000-000000000011',
+    'evidence_collection',
+    'blocked',
+    'gated',
+    'requires_evidence',
+    'Missing evidence payload should fail.',
+    'Procurement owner',
+    'source-hash-smoke'
+  );
+
+  raise exception 'Check probe failed: gated Source event without evidence payload was accepted';
+exception
+  when check_violation then
+    raise notice 'Expected check rejection: gated Source event requires evidence payload';
+end $$;
+
+do $$
+begin
+  insert into ecl_projection.source_event_workspace (
+    tenant_key,
+    assessment_id,
+    snapshot_id,
+    projection_manifest_id,
+    projection_version,
+    row_key,
+    workspace_tab,
+    row_type,
+    event_key,
+    event_title,
+    contract_id,
+    contract_object_id,
+    vendor_object_id,
+    review_event_id,
+    event_stage,
+    event_status,
+    gate_status,
+    owner_role,
+    source_hash
+  ) values (
+    'meridian-health',
+    'assessment-projection-smoke',
+    '20000000-0000-0000-0000-000000000007',
+    '20000000-0000-0000-0000-000000000009',
+    1,
+    'bad-missing-review-event',
+    'events',
+    'sourcing_event',
+    'SRC-EVT-MISSING',
+    'Missing review event',
+    '20000000-0000-0000-0000-000000000010',
+    '20000000-0000-0000-0000-000000000005',
+    '20000000-0000-0000-0000-000000000004',
+    '99999999-9999-9999-9999-999999999997',
+    'evidence_collection',
+    'in_progress',
+    'open',
+    'Procurement owner',
+    'source-hash-smoke'
+  );
+
+  raise exception 'FK probe failed: Source event projection without review-event FK was accepted';
+exception
+  when foreign_key_violation then
+    raise notice 'Expected FK rejection: Source event projection requires review-event FK';
+end $$;
+
 do $$
 begin
   insert into ecl_projection.intelligence_context_pack (

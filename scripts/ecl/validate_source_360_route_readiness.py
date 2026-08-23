@@ -60,6 +60,7 @@ ROUTE_REPOINT_MARKERS = [
     "source_contract_360_projection.csv",
     "source_vendor_360_projection.csv",
     "source_value_levers_projection.csv",
+    "source_event_workspace_projection.csv",
 ]
 
 
@@ -155,6 +156,7 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
     contract_projection_path = ecl_out_dir / "source_contract_360_projection.csv"
     vendor_projection_path = ecl_out_dir / "source_vendor_360_projection.csv"
     value_projection_path = ecl_out_dir / "source_value_levers_projection.csv"
+    event_projection_path = ecl_out_dir / "source_event_workspace_projection.csv"
 
     required_paths = [
         acceptance_path,
@@ -164,6 +166,7 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         contract_projection_path,
         vendor_projection_path,
         value_projection_path,
+        event_projection_path,
     ]
     for path in required_paths:
         if not path.exists():
@@ -176,6 +179,7 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
     contract_rows = read_csv(contract_projection_path) if contract_projection_path.exists() else []
     vendor_rows = read_csv(vendor_projection_path) if vendor_projection_path.exists() else []
     value_rows = read_csv(value_projection_path) if value_projection_path.exists() else []
+    event_rows = read_csv(event_projection_path) if event_projection_path.exists() else []
 
     route_rows, route_issues, route_file_repointed = route_status_rows()
     issues.extend(route_issues)
@@ -193,6 +197,9 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         "source_contract_projection_rows": len(contract_rows),
         "source_vendor_projection_rows": len(vendor_rows),
         "source_value_levers_projection_rows": len(value_rows),
+        "source_event_workspace_projection_rows": len(event_rows),
+        "source_event_workspace_event_rows": sum(1 for row in event_rows if row.get("workspace_tab") == "events"),
+        "source_event_workspace_approval_rows": sum(1 for row in event_rows if row.get("workspace_tab") == "approvals"),
         "healthy_static_preview_accepted": bool(healthy_preview.get("accepted")),
         "weak_static_preview_accepted": bool(weak_preview.get("accepted")),
         "weak_contract_selected": bool(weak_checks.get("weak_contract_selected")),
@@ -218,6 +225,18 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
     if route_ready_checks["source_value_levers_projection_rows"] != 5:
         issues.append(
             f"Expected 5 Source value levers projection rows; got {route_ready_checks['source_value_levers_projection_rows']}"
+        )
+    if route_ready_checks["source_event_workspace_projection_rows"] != 10:
+        issues.append(
+            f"Expected 10 Source event workspace projection rows; got {route_ready_checks['source_event_workspace_projection_rows']}"
+        )
+    if route_ready_checks["source_event_workspace_event_rows"] != 5:
+        issues.append(
+            f"Expected 5 Source event workspace event rows; got {route_ready_checks['source_event_workspace_event_rows']}"
+        )
+    if route_ready_checks["source_event_workspace_approval_rows"] != 5:
+        issues.append(
+            f"Expected 5 Source event workspace approval rows; got {route_ready_checks['source_event_workspace_approval_rows']}"
         )
     for key in [
         "commercial_proof_accepted",
@@ -250,8 +269,8 @@ def build_summary(ecl_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         "checks": route_ready_checks,
         "routes_checked": len(route_rows),
         "source_route_repoint_hits": global_repoint_hits,
-        "route_readiness_csv": (out_dir / "source_360_route_readiness.csv").relative_to(ROOT).as_posix(),
-        "route_readiness_markdown": (out_dir / "source_360_route_readiness.md").relative_to(ROOT).as_posix(),
+        "route_readiness_csv": display_path(out_dir / "source_360_route_readiness.csv"),
+        "route_readiness_markdown": display_path(out_dir / "source_360_route_readiness.md"),
     }
 
     write_csv(

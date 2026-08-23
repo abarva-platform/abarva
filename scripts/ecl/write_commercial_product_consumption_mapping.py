@@ -52,6 +52,18 @@ ROWS = [
         "browser_proof_status": "not_started",
     },
     {
+        "product_module": "Source 360",
+        "page_or_cube": "Events and Approvals",
+        "user_question": "Which sourcing event and approval gates are open, who owns them, and what evidence is needed?",
+        "deterministic_facts": "event stage, event status, gate status, gate reason, owner role, due date, required evidence, review event linkage",
+        "source_extracts": "source_review_queue.csv",
+        "ecl_tables": "ecl_source.source_record; ecl_review.review_event; ecl_commercial.contract",
+        "projection_or_cube_tables": "ecl_projection.source_event_workspace",
+        "gate_or_refusal": "Rows are visible as gated workflow/review items. No approval or award state may be inferred from complete data.",
+        "basis_rule": "Every row must resolve to an ecl_review.review_event and a contract FK; Compare remains gated until bid-response facts exist.",
+        "browser_proof_status": "not_started",
+    },
+    {
         "product_module": "Tower",
         "page_or_cube": "Commercial action queue",
         "user_question": "Which contract actions are blocked, claimable, or require evidence before value can be counted?",
