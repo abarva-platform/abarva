@@ -29,6 +29,34 @@ describe("Moves adaptive depth", () => {
     );
   });
 
+  it("honors natural-language negation for absent complexity signals", () => {
+    const decision = resolveAdaptiveDepth({
+      text: [
+        "Straightforward reusable dashboard and scorecard pattern.",
+        "One mature certified data source, one business process, no vendor decision.",
+        "No AI agent, no model risk, no real-time mechanism, and deployment topology is not yet established.",
+      ].join(" "),
+      artifactKeys: [
+        "target_state_architecture",
+        "solution_design",
+        "operating_model_design",
+        "requirements_traceability",
+        "sourcing_strategy",
+      ],
+    });
+
+    expect(decision.complexityTier).toBe("straightforward");
+    expect(decision.signals.aiAgentComponent).toBe(false);
+    expect(decision.signals.modelAiComplexity).toBe(false);
+    expect(decision.signals.vendorSourcingDecision).toBe(false);
+    expect(decision.signals.realTimeRequirement).toBe(false);
+    expect(decision.signals.deploymentTopologyMature).toBe(false);
+    expect(shouldGenerateArtifact(decision, "sourcing_strategy")).toBe(false);
+    expect(shouldGenerateArtifact(decision, "operating_model_design")).toBe(
+      false,
+    );
+  });
+
   it("omits Sourcing Strategy when no vendor/build-buy decision exists", () => {
     const decision = resolveAdaptiveDepth({
       text: "Straightforward dashboard using an approved reusable internal pattern.",
