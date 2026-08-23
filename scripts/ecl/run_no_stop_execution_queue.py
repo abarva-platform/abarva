@@ -325,6 +325,8 @@ def build_quality_denominators() -> list[dict[str, Any]]:
     projection_dir = ROOT / "reports/ecl-dense-source-projection-local-load-2026-08-23"
     cube_dir = ROOT / "reports/ecl-dense-cube-layer-local-load-2026-08-23"
     azure_gate_dir = ROOT / "reports/ecl-dense-azure-load-gate-package-2026-08-23"
+    azure_readback_compare_dir = ROOT / "reports/ecl-dense-azure-readback-compare-2026-08-23"
+    azure_readback_negative_dir = ROOT / "reports/ecl-dense-azure-readback-compare-negative-2026-08-23"
 
     raw_summary = read_json_if_exists(raw_dir / "source_excel_raw_landing_summary.json")
     dense_summary = read_json_if_exists(dense_dir / "dense_source_room_summary.json")
@@ -339,6 +341,8 @@ def build_quality_denominators() -> list[dict[str, Any]]:
     azure_gate_summary = read_json_if_exists(azure_gate_dir / "ecl_dense_azure_load_gate_package_summary.json")
     azure_gate_status = read_json_if_exists(azure_gate_dir / "ecl_dense_azure_load_gate_status.json")
     azure_execute_preflight = read_json_if_exists(azure_gate_dir / "ecl_dense_azure_execute_preflight_summary.json")
+    azure_readback_compare = read_json_if_exists(azure_readback_compare_dir / "readback_compare_summary.json")
+    azure_readback_negative = read_json_if_exists(azure_readback_negative_dir / "readback_compare_expected_failure_summary.json")
 
     def readback(summary: dict[str, Any]) -> dict[str, Any]:
         value = summary.get("readback")
@@ -377,6 +381,17 @@ def build_quality_denominators() -> list[dict[str, Any]]:
         azure_execute_preflight.get("command_was_executed") is False,
     ]
     azure_gate_passed = sum(1 for value in azure_gate_checks if value)
+    azure_readback_checks = [
+        azure_readback_compare.get("accepted") is True,
+        azure_readback_compare.get("actual_azure_execution") is False,
+        azure_readback_compare.get("tables_compared") == 77,
+        azure_readback_compare.get("missing_row_report_rows") == 0,
+        azure_readback_compare.get("extra_row_report_rows") == 0,
+        azure_readback_compare.get("field_hash_mismatch_rows") == 0,
+        azure_readback_negative.get("accepted") is True,
+        azure_readback_negative.get("expected_failed") is True,
+    ]
+    azure_readback_passed = sum(1 for value in azure_readback_checks if value)
 
     return [
         {
@@ -458,6 +473,20 @@ def build_quality_denominators() -> list[dict[str, Any]]:
                 "actual_azure_execution": azure_gate_summary.get("actual_azure_execution"),
                 "command_was_executed": azure_execute_preflight.get("command_was_executed"),
                 "readback_contract": azure_gate_summary.get("readback_contract"),
+            },
+        },
+        {
+            "area": "azure_readback_comparator",
+            "status": "pass" if azure_readback_passed == len(azure_readback_checks) else "pending",
+            "passed": azure_readback_passed,
+            "total": len(azure_readback_checks),
+            "evidence_path": "reports/ecl-dense-azure-readback-compare-2026-08-23/readback_compare_summary.json",
+            "notes": {
+                "tables_compared": azure_readback_compare.get("tables_compared"),
+                "positive_sample_accepted": azure_readback_compare.get("accepted"),
+                "negative_sample_refused": azure_readback_negative.get("expected_failed"),
+                "comparison_issues": azure_readback_negative.get("comparison_issues", []),
+                "actual_azure_execution": azure_readback_compare.get("actual_azure_execution"),
             },
         },
         {
