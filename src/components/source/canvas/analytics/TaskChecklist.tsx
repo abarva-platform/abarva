@@ -547,7 +547,17 @@ function EvidenceRequestPanel({
             fontWeight: 800,
           }}
         >
-          Upload status
+          Upload / parse status
+        </span>
+        <span
+          style={{
+            color: ANALYTICS.MUTED,
+            fontSize: 11.5,
+            lineHeight: 1.35,
+          }}
+        >
+          Store the file first; mapped templates also write typed facts back to
+          Source.
         </span>
         {children}
       </div>

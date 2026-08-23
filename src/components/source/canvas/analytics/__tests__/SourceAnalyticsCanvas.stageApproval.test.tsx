@@ -181,16 +181,16 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
 
     expect(
       screen.getByTestId("source-shell-evidence-ask-table"),
-    ).toHaveTextContent("Evidence item");
+    ).toHaveTextContent("Evidence needed");
     expect(
       screen.getByTestId("source-shell-evidence-ask-table"),
-    ).toHaveTextContent("Source / owner");
+    ).toHaveTextContent("Where to get it");
     expect(
       screen.getByTestId("source-shell-evidence-ask-table"),
-    ).toHaveTextContent("Template");
+    ).toHaveTextContent("Template / grain");
     expect(
       screen.getByTestId("source-shell-evidence-ask-table"),
-    ).toHaveTextContent("Done");
+    ).toHaveTextContent("Next action");
     expect(
       screen.getByTestId("source-scope-operating-status"),
     ).toHaveTextContent("Scope gate readiness");
