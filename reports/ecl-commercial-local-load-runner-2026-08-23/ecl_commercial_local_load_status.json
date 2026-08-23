@@ -1,0 +1,21 @@
+{
+  "accepted": true,
+  "actual_azure_execution": false,
+  "actual_shared_data_plane_mutation": false,
+  "adapter": "json",
+  "family": "vendor_contract_commercial",
+  "generated_at": "2026-08-23T13:13:20+00:00",
+  "idempotency_key": "ecl-commercial-lab-load:4fe996354d01ad01855111fecf447191",
+  "rerun_count": 1,
+  "row_counts": {
+    "commercial_metric_rows": 36,
+    "gap_metric_rows": 0,
+    "gap_record_rows": 5,
+    "numeric_metric_rows": 32,
+    "text_metric_rows": 4
+  },
+  "run_id": "ecl-commercial-lab-20260823-4fe996354d01",
+  "status": "local_load_succeeded",
+  "target_classification": "local_disposable",
+  "tenant_scope": "meridian-health"
+}
