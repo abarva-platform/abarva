@@ -143,7 +143,7 @@ New proof/backlog items from that result:
 
 ---
 
-## SRC49 — Source artifact decision-package story contract
+## SRC71 — Source artifact decision-package story contract
 
 **Priority:** P0
 **Status:** done
@@ -188,7 +188,7 @@ deliverables tell one executive decision story instead of 33 isolated documents.
 ### Codex-ready slice prompt
 
 ```text
-Implement SRC49 — Source artifact decision-package story contract.
+Implement SRC71 — Source artifact decision-package story contract.
 
 Scope:
 Add a typed story contract to the Source prompt registry that maps each canonical artifact to one
