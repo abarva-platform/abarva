@@ -120,4 +120,18 @@ describe("sanitizeClientFacingArtifactHtml", () => {
     expect(html).toContain("Appendix A — Source Register");
     expect(html.match(/Source Register/g)).toHaveLength(1);
   });
+
+  it("rewrites pipeline readiness terms into client-facing language", () => {
+    const html = sanitizeClientFacingArtifactHtml(`
+      <p>The quality score was 80 because the data plane evidence was complete.</p>
+      <p>Quality Score should not appear in the executive artifact.</p>
+    `);
+
+    expect(html).toContain("evidence readiness rating was 80");
+    expect(html).toContain(
+      "evidence from the client evidence environment was complete",
+    );
+    expect(html).not.toMatch(/quality score/i);
+    expect(html).not.toMatch(/data plane/i);
+  });
 });

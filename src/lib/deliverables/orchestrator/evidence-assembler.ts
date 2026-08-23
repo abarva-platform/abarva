@@ -247,7 +247,7 @@ function generatedArtifactToCandidate(
         ? `Words: ${generationMetrics.bodyWordCount}`
         : null,
       typeof row.quality_score === "number"
-        ? `Quality score: ${row.quality_score}`
+        ? `Evidence readiness rating: ${row.quality_score}`
         : null,
     ],
     240,

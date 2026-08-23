@@ -48,6 +48,12 @@ const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\bsubstrate\b/gi, "enterprise data foundation"],
   [/\bcontext rows\b/gi, "evidence records"],
   [/\btower rows\b/gi, "measurement records"],
+  [/\bquality score\b/gi, "evidence readiness rating"],
+  [
+    /\bdata plane evidence\b/gi,
+    "evidence from the client evidence environment",
+  ],
+  [/\bdata plane\b/gi, "client evidence environment"],
   [/\bprompt[-\s]+injection\b/gi, "adversarial input attack"],
   [
     /\bprompt(?:s|ed|ing|[-\s]+(?:engineering|policy|policies|template|templates|instruction|instructions))?\b/gi,
