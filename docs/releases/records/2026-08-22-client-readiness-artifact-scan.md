@@ -27,22 +27,17 @@ npm run moves:scan-artifacts -- <path or directory>
 Exit codes: `0` clean · `1` blockers found · `2` unreadable documents · `3`
 usage error.
 
-### Why this exists, and why extraction is separate from scanning
+### Why extraction is separate from scanning
 
-An earlier ad-hoc version of this check fetched fifteen live artifacts and
-parsed each as HTML. Ten of them were DOCX. The ZIP byte stream parsed as
-markup produced garbage, the garbage matched a hex pattern, and the scan
-reported internal hashes in eight documents. Every one was false. The real
-content had never been read at all.
-
-Two properties are built in as a result:
+Two properties are built into the scanner:
 
 1. **Extraction is a separate, typed step.** A document that cannot be read
    returns `ok: false` with a reason, and there is no `text` field for a caller
    to scan. The failure mode is unrepresentable rather than merely unlikely.
 2. **Unreadable is never clean.** The CLI prints `UNREADABLE … NOT scanned —
 do not treat as clean`, counts it separately, and exits `2`. Silence about a
-   file we failed to open is exactly how the false positives happened.
+   file we failed to open is how unreadable artifacts get mistaken for
+   reviewed artifacts.
 
 ### Why every rule has a negative test
 
@@ -97,8 +92,7 @@ change; nothing is rendered differently and no generation path is altered.
 - All four exit codes verified individually (0, 1, 2, 3).
 
 One rule defect was found and fixed by its own test: the model-name pattern
-stopped at the first hyphen, so `claude-sonnet-5` — the exact string found
-leaking on a live page — did not match.
+stopped at the first hyphen, so multi-segment model names did not match.
 
 ## Rollout Plan
 
@@ -133,6 +127,6 @@ artifact was downloaded, copied, or mutated to produce this record.
 - Vendor and procurement realism is not checked at all. That needs domain
   rules, not pattern matching.
 - PDF is not supported.
-- The ten DOCX artifacts on the reserved Move that prompted this work have
-  **not** yet been scanned — that requires downloading them, which is a
+- Existing generated artifacts have **not** yet been scanned by this PR — that
+  requires downloading or pointing the CLI at an artifact bundle, which is a
   separate operator step.

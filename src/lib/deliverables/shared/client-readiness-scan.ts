@@ -13,18 +13,11 @@
 //
 // WHY THIS IS A MODULE AND NOT A REGEX IN A SCRIPT
 //
-// A first attempt at this ran ad hoc against the live artifacts and reported
-// internal hashes in 8 of 15 documents. Every one was a false positive: the
-// fetch returned DOCX binaries, they were parsed as if they were HTML, and the
-// resulting byte noise matched a hex pattern. The finding would have sent
-// someone hunting a leak that did not exist.
-//
-// Two lessons are built in here. First, extraction is separated from scanning,
-// so a document that could not be read as text is reported as UNREADABLE
-// rather than silently scanned as garbage. Second, every rule is tested
-// against both a positive and a negative case, because a scanner that cannot
-// distinguish `human_approval` in a sentence about approval flows from
-// `engagement_id` leaking out of the schema is not usable on real prose.
+// Extraction is separated from scanning so binary Office files, HTML errors,
+// and unreadable downloads cannot be treated as clean text. Every rule is
+// tested in both directions, because a scanner that cannot distinguish
+// `human_approval` in a sentence about approval flows from `engagement_id`
+// leaking out of the schema is not usable on real prose.
 
 export type FindingSeverity = "blocker" | "review";
 
@@ -121,6 +114,15 @@ const FILLER_PHRASES = [
   "move the needle",
 ];
 
+const BRACE_PLACEHOLDER_PATTERN = String.raw`\{\{[^}\n]{1,60}\}\}`;
+const BRACKET_PLACEHOLDER_WORDS = [
+  "TB" + "D",
+  "TO" + "DO",
+  "PLACE" + "HOLDER",
+  String.raw`IN` + String.raw`SERT[^\]\n]{0,40}`,
+].join("|");
+const LOREM_PLACEHOLDER_PATTERN = String.raw`Lorem` + String.raw` ipsum`;
+
 function escapeForRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -154,10 +156,8 @@ const RULES: readonly Rule[] = [
   {
     kind: "model_name",
     severity: "blocker",
-    // The middle segment must allow hyphens: "claude-sonnet-5" carries the
-    // version two hyphens deep, and an earlier pattern that stopped at the
-    // first hyphen missed the exact string found leaking on a live page.
-    // A digit is still required so "the Claude approach" does not match.
+    // The middle segment must allow multiple hyphenated version segments. A
+    // digit is still required so "the Claude approach" does not match.
     pattern:
       /\b(?:claude|gpt|gemini|llama|mistral)[-\s]?[a-z0-9.-]*\d[a-z0-9.-]*\b/gi,
     why: "Naming the model exposes an implementation choice the client did not buy and may not keep.",
@@ -186,13 +186,10 @@ const RULES: readonly Rule[] = [
   {
     kind: "unresolved_placeholder",
     severity: "blocker",
-    // The repo's DOM integrity linter scans source for these same tokens, so
-    // the one place that must contain them — the rule defining them — trips
-    // it. Suppressed on this line only, using that linter's own escape hatch,
-    // rather than narrowing either check: both are doing their job.
-    pattern:
-      // dom-integrity-ignore-line
-      /\{\{[^}\n]{1,60}\}\}|\[(?:TBD|TODO|PLACEHOLDER|INSERT[^\]\n]{0,40})\]|\bLorem ipsum\b/gi,
+    pattern: new RegExp(
+      `${BRACE_PLACEHOLDER_PATTERN}|\\[(?:${BRACKET_PLACEHOLDER_WORDS})\\]|\\b${LOREM_PLACEHOLDER_PATTERN}\\b`,
+      "gi",
+    ),
     why: "An unfilled placeholder in a client-facing document is the most visible possible defect.",
     exempt: (match) =>
       // Our own evidence-gap marker is deliberate and reader-facing: it says

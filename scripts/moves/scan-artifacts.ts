@@ -11,11 +11,9 @@
 // mutates tenant data, or touches the data plane.
 //
 // The one behaviour worth knowing up front: a document that cannot be read is
-// reported as UNREADABLE and counted separately — never as clean. An earlier
-// ad-hoc version of this check parsed DOCX binaries as if they were HTML and
-// reported internal hashes in eight documents that contained none. Staying
-// quiet about a file we failed to open is how that happens, so it is made
-// loud here.
+// reported as UNREADABLE and counted separately — never as clean. Staying
+// quiet about a file we failed to open is how unreadable artifacts get
+// mistaken for reviewed artifacts, so it is made loud here.
 //
 // Exit codes: 0 clean · 1 blockers found · 2 unreadable documents · 3 usage.
 
