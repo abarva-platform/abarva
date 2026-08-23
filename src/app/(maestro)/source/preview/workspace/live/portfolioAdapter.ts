@@ -622,7 +622,9 @@ export function buildSourceVendor360Cockpit(input: {
       headline,
       decidingAxis:
         verdictRows.length > 0
-          ? `${verdictRows.length} active contract${verdictRows.length === 1 ? "" : "s"} sit inside the governed decision set; treat the date first, then the leverage flag.`
+          ? `${verdictRows.length} active contract${
+              verdictRows.length === 1 ? "" : "s"
+            } ${verdictRows.length === 1 ? "sits" : "sit"} inside the governed decision set; treat the date first, then the leverage flag.`
           : "No qualifying row is rendered as exposure; missing timing stays not established.",
       bindingChip:
         exposureRows.length > 0
