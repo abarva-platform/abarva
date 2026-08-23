@@ -150,15 +150,24 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
         "source-shell-evidence-ask-table",
       );
       expect(evidenceTables.length).toBeGreaterThan(0);
+      const evidenceTableText = evidenceTables
+        .map((table) => table.textContent)
+        .join(" ");
       expect(
-        evidenceTables.map((table) => table.textContent).join(" "),
-      ).toEqual(expect.stringContaining("Evidence item"));
+        evidenceTableText,
+      ).toEqual(expect.stringContaining("Evidence needed"));
       expect(
-        evidenceTables.map((table) => table.textContent).join(" "),
+        evidenceTableText,
+      ).toEqual(expect.stringContaining("Where to get it"));
+      expect(
+        evidenceTableText,
+      ).toEqual(expect.stringContaining("Template / grain"));
+      expect(
+        evidenceTableText,
       ).toEqual(expect.stringContaining("Required"));
       expect(
-        evidenceTables.map((table) => table.textContent).join(" "),
-      ).toEqual(expect.stringContaining("Next"));
+        evidenceTableText,
+      ).toEqual(expect.stringContaining("Next action"));
 
       expect(
         screen.getByTestId("source-shell-active-step-needs"),
