@@ -213,7 +213,12 @@ def candidate_command(out_dir: Path) -> list[str]:
     ]
 
 
-def package_proof_bundle(out_dir: Path, entries: list[dict[str, Any]], input_source_version: str) -> dict[str, Any]:
+def package_proof_bundle(
+    out_dir: Path,
+    entries: list[dict[str, Any]],
+    input_source_version: str,
+    local_quality_denominators: dict[str, Any],
+) -> dict[str, Any]:
     manifest_path = out_dir / "dense_proof_bundle_manifest.json"
     bundle_path = out_dir / "dense_proof_bundle.tgz"
     manifest = {
@@ -221,6 +226,7 @@ def package_proof_bundle(out_dir: Path, entries: list[dict[str, Any]], input_sou
         "family": FAMILY,
         "generated_at": now_iso(),
         "input_source_version": input_source_version,
+        "local_quality_denominators": local_quality_denominators,
         "source_artifacts": entries,
         "source_basis": "dense_local_no_stop_proof_outputs",
     }
@@ -239,6 +245,20 @@ def package_proof_bundle(out_dir: Path, entries: list[dict[str, Any]], input_sou
     return manifest
 
 
+def quality_summary(operator_status: dict[str, Any]) -> dict[str, Any]:
+    rows = operator_status.get("quality_denominators", [])
+    by_area = {row.get("area"): row for row in rows if isinstance(row, dict)}
+    return {
+        "areas": rows,
+        "raw_workbook_coverage": by_area.get("raw_14_workbook_coverage", {}),
+        "dense_source_room_coverage": by_area.get("dense_realistic_source_room_families", {}),
+        "application_realism_gates": by_area.get("application_realism_gates", {}),
+        "ecl_table_producer_coverage": by_area.get("ecl_table_producer_coverage", {}),
+        "local_layer_readback_chain": by_area.get("local_layer_readback_chain", {}),
+        "runtime_and_browser_hard_gates": by_area.get("runtime_and_browser_hard_gates", {}),
+    }
+
+
 def write_outputs(out_dir: Path, *, skip_proof_run: bool) -> dict[str, Any]:
     if not skip_proof_run:
         run_local_proof()
@@ -249,6 +269,7 @@ def write_outputs(out_dir: Path, *, skip_proof_run: bool) -> dict[str, Any]:
         raise SystemExit("Dense local proof queue is not accepted; refusing ACA dry-run scaffold.")
     if operator.get("run_state") != "completed":
         raise SystemExit("Operator status is not completed; refusing ACA dry-run scaffold.")
+    operator_quality = quality_summary(operator)
 
     out_dir.mkdir(parents=True, exist_ok=True)
     generated_at = now_iso()
@@ -263,7 +284,7 @@ def write_outputs(out_dir: Path, *, skip_proof_run: bool) -> dict[str, Any]:
     run_id = f"ecl-dense-{generated_at[:10].replace('-', '')}-{idempotency_key.rsplit(':', 1)[-1][:12]}"
 
     env_validation = build_env_validation(git_commit, input_source_version, idempotency_key)
-    proof_bundle = package_proof_bundle(out_dir, entries, input_source_version)
+    proof_bundle = package_proof_bundle(out_dir, entries, input_source_version, operator_quality)
 
     job_spec_path = out_dir / "ecl_dense_aca_job_spec.json"
     run_manifest_path = out_dir / "ecl_dense_aca_run_manifest.json"
@@ -300,6 +321,7 @@ def write_outputs(out_dir: Path, *, skip_proof_run: bool) -> dict[str, Any]:
         "runner": "scripts/ops/submit-aca-operator-job.mjs",
         "tenant_scope": tenant_scope,
         "wrapper": "npm run ops:aca-job",
+        "local_quality_denominators": operator_quality,
     }
     write_json(job_spec_path, job_spec)
     write_json(env_path, env_validation)
@@ -308,9 +330,29 @@ def write_outputs(out_dir: Path, *, skip_proof_run: bool) -> dict[str, Any]:
         "actual_azure_execution": False,
         "generated_at": generated_at,
         "overall_percent_complete": 50,
+        "local_quality_denominators": operator_quality,
         "steps": [
-            {"step": 1, "name": "raw_14_workbooks_and_dense_source_rooms", "percent_complete": 100, "state": "local_proven"},
-            {"step": 2, "name": "local_all_layer_validation", "percent_complete": 100, "state": "local_proven"},
+            {
+                "step": 1,
+                "name": "raw_14_workbooks_and_dense_source_rooms",
+                "percent_complete": 100,
+                "state": "local_proven",
+                "denominators": [
+                    operator_quality["raw_workbook_coverage"],
+                    operator_quality["dense_source_room_coverage"],
+                    operator_quality["application_realism_gates"],
+                ],
+            },
+            {
+                "step": 2,
+                "name": "local_all_layer_validation",
+                "percent_complete": 100,
+                "state": "local_proven",
+                "denominators": [
+                    operator_quality["ecl_table_producer_coverage"],
+                    operator_quality["local_layer_readback_chain"],
+                ],
+            },
             {"step": 3, "name": "aca_data_build_job_contract", "percent_complete": 100, "state": "dry_run_scaffolded"},
             {"step": 4, "name": "azure_lab_load", "percent_complete": 0, "state": "blocked_by_hard_gate"},
             {"step": 5, "name": "independent_azure_readback", "percent_complete": 0, "state": "blocked_by_hard_gate"},
@@ -340,6 +382,7 @@ def write_outputs(out_dir: Path, *, skip_proof_run: bool) -> dict[str, Any]:
         "tenant_scope": tenant_scope,
         "timeout_seconds": 7200,
         "validation_output": repo_relative(validation_path),
+        "local_quality_denominators": operator_quality,
     }
     write_json(run_manifest_path, run_manifest)
 
@@ -356,6 +399,7 @@ def write_outputs(out_dir: Path, *, skip_proof_run: bool) -> dict[str, Any]:
             {"name": "legacy_retirement_unchanged", "status": "pass"},
         ],
         "mode": "dense_dry_run_validation",
+        "local_quality_denominators": operator_quality,
     }
     write_json(validation_path, validation)
 
@@ -372,6 +416,7 @@ def write_outputs(out_dir: Path, *, skip_proof_run: bool) -> dict[str, Any]:
             "browser_live_claim": "not_run",
             "legacy_retirement": "not_run",
         },
+        "local_quality_denominators": operator_quality,
     }
     write_json(quality_path, quality)
 
@@ -381,6 +426,7 @@ def write_outputs(out_dir: Path, *, skip_proof_run: bool) -> dict[str, Any]:
         "events": [
             {"at": generated_at, "name": "dry_run_started"},
             {"at": generated_at, "name": "dense_local_queue_verified", "executable_slices": execution.get("executable_slice_count")},
+            {"at": generated_at, "name": "quality_denominators_verified", "areas": len(operator_quality["areas"])},
             {"at": generated_at, "name": "proof_bundle_packaged", "path": proof_bundle["bundle"]["path"]},
             {"at": generated_at, "name": "env_bindings_validated_plan_only"},
             {"at": generated_at, "name": "azure_execution_refused_by_design"},
@@ -391,6 +437,7 @@ def write_outputs(out_dir: Path, *, skip_proof_run: bool) -> dict[str, Any]:
         "mode": "dry_run_report_only",
         "run_id": run_id,
         "status": "dry_run_succeeded",
+        "local_quality_denominators": operator_quality,
     }
     write_json(status_path, status)
 
@@ -403,6 +450,12 @@ def write_outputs(out_dir: Path, *, skip_proof_run: bool) -> dict[str, Any]:
         f"- Local queue accepted: `{str(execution.get('accepted')).lower()}`",
         f"- Proof bundle: `{proof_bundle['bundle']['path']}`",
         f"- Execute gate: `{quality['execute_gate_status']}`",
+        f"- Raw workbook coverage: `{operator_quality['raw_workbook_coverage'].get('passed')} / {operator_quality['raw_workbook_coverage'].get('total')}`",
+        f"- Dense source-room family coverage: `{operator_quality['dense_source_room_coverage'].get('passed')} / {operator_quality['dense_source_room_coverage'].get('total')}`",
+        f"- Application realism gates: `{operator_quality['application_realism_gates'].get('passed')} / {operator_quality['application_realism_gates'].get('total')}`",
+        f"- ECL table producer coverage: `{operator_quality['ecl_table_producer_coverage'].get('passed')} / {operator_quality['ecl_table_producer_coverage'].get('total')}`",
+        f"- Local layer readback chain: `{operator_quality['local_layer_readback_chain'].get('passed')} / {operator_quality['local_layer_readback_chain'].get('total')}`",
+        f"- Runtime/browser/legacy hard gates: `{operator_quality['runtime_and_browser_hard_gates'].get('passed')} / {operator_quality['runtime_and_browser_hard_gates'].get('total')}`",
         "",
         "This artifact prepares the ACA Job contract only. It does not load Azure, write a shared database, repoint product routes, claim browser proof, or retire legacy assets.",
     ]
@@ -421,6 +474,7 @@ def write_outputs(out_dir: Path, *, skip_proof_run: bool) -> dict[str, Any]:
         "quality_gate_output": repo_relative(quality_path),
         "progress_output": repo_relative(progress_path),
         "missing_for_execution": env_validation["missing_for_execution"],
+        "local_quality_denominators": operator_quality,
     }
     write_json(out_dir / "ecl_dense_aca_dry_run_summary.json", summary)
     return summary
