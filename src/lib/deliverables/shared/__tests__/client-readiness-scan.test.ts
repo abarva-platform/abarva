@@ -95,6 +95,53 @@ describe("implementation detail", () => {
       "tagged external_benchmark until the client confirms it.";
     expect(kinds(text)).not.toContain("schema_identifier");
   });
+
+  it("blocks generated-artifact enum pairs in client-facing source registers", () => {
+    const result = scanClientReadiness(
+      "Source Register: Delivery Handoff Pack generated_artifact:handoff_package high.",
+    );
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "internal_enum_pair",
+          match: "generated_artifact:handoff_package",
+          severity: "blocker",
+        }),
+      ]),
+    );
+    expect(result.blockers).toBeGreaterThan(0);
+  });
+
+  it.each(["exec_summary", "dependencies_risks", "tower_metrics_plan"])(
+    "blocks the internal artifact or section type key %s",
+    (key) => {
+      const result = scanClientReadiness(
+        `The package section ${key} is ready.`,
+      );
+      expect(result.findings).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            kind: "internal_type_key",
+            match: key,
+            severity: "blocker",
+          }),
+        ]),
+      );
+      expect(result.blockers).toBeGreaterThan(0);
+    },
+  );
+
+  it("does not treat ordinary colon labels as enum pairs", () => {
+    expect(
+      kinds("Owner: Finance. Next action: approve the baseline."),
+    ).not.toContain("internal_enum_pair");
+  });
+
+  it("does not treat URLs as enum pairs", () => {
+    expect(
+      kinds("Reference site: https://example.com/source-register."),
+    ).not.toContain("internal_enum_pair");
+  });
 });
 
 describe("internal reference codes", () => {

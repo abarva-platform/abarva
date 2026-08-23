@@ -33,6 +33,33 @@ describe("DOCX renderer", () => {
     expect(documentXml).not.toContain("procurement_signoff");
     expect(documentXml).not.toContain("client_judgment");
   });
+
+  it("renders Source Register family labels instead of raw generated-artifact keys", async () => {
+    const sourceDoc = goodDocument();
+    sourceDoc.sourceRegister = [
+      {
+        citationNumber: 1,
+        label: "Delivery Handoff Pack",
+        evidenceFamily: "generated_artifact:handoff_package",
+        confidence: "high",
+      },
+      {
+        citationNumber: 2,
+        label: "Value Measurement Model",
+        evidenceFamily: "generated_artifact:tower_metrics_plan",
+        confidence: "high",
+      },
+    ];
+
+    const buf = await Packer.toBuffer(renderDeliverableDocx(sourceDoc));
+    const zip = await JSZip.loadAsync(buf);
+    const documentXml = await zip.file("word/document.xml")!.async("string");
+
+    expect(documentXml).toContain("Handoff Package");
+    expect(documentXml).toContain("Tower Metrics Plan");
+    expect(documentXml).not.toContain("generated_artifact:");
+    expect(documentXml).not.toContain("tower_metrics_plan");
+  });
 });
 
 describe("DOCX/HTML/PDF renderers — duplicate section-heading suppression", () => {
@@ -187,6 +214,31 @@ describe("HTML preview", () => {
   it("renders client-to-complete reason labels, not internal reason codes", () => {
     expect(html).toMatch(/Procurement approval required/);
     expect(html).not.toMatch(/procurement_signoff|client_judgment/);
+  });
+
+  it("renders Source Register family labels instead of raw generated-artifact keys", () => {
+    const sourceDoc = goodDocument();
+    sourceDoc.sourceRegister = [
+      {
+        citationNumber: 1,
+        label: "Delivery Handoff Pack",
+        evidenceFamily: "generated_artifact:handoff_package",
+        confidence: "high",
+      },
+      {
+        citationNumber: 2,
+        label: "Financial Model Input Register",
+        evidenceFamily: "generated_artifact:financial_model",
+        confidence: "high",
+      },
+    ];
+
+    const sourceHtml = renderDeliverableHtml(sourceDoc);
+
+    expect(sourceHtml).toMatch(/Handoff Package/);
+    expect(sourceHtml).toMatch(/Financial Model/);
+    expect(sourceHtml).not.toMatch(/generated_artifact:/);
+    expect(sourceHtml).not.toMatch(/financial_model/);
   });
 });
 

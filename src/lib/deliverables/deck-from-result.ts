@@ -12,12 +12,16 @@
 // a rich exhibit isn't available. It is a structural live proof; richness arrives as those land.
 
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
-import type { MoveDecisionModel, DecisionClaim } from "@/lib/deliverables/decision-model/types";
+import type {
+  MoveDecisionModel,
+  DecisionClaim,
+} from "@/lib/deliverables/decision-model/types";
 import { assembleMoveDecisionModel } from "@/lib/deliverables/decision-model/build-decision-model";
 import { archetypeForOrchestratorType } from "@/lib/deliverables/story/archetype-blueprints";
 import { buildStory } from "@/lib/deliverables/story/story-director";
 import { renderStoryExhibits } from "@/lib/deliverables/visual-director";
 import { renderExecutiveDeck } from "@/lib/deliverables/deck-renderer";
+import { humanizeSourceFamily } from "@/lib/deliverables/orchestrator/source-register";
 
 const SUMMARY_TITLE_RE = /^(executive summary|recommendation|decision)/i;
 
@@ -33,7 +37,7 @@ export function decisionModelFromRenderable(args: {
     citationNumber: r.citationNumber,
     label: r.label,
     statement: r.label,
-    evidenceFamily: r.evidenceFamily,
+    evidenceFamily: humanizeSourceFamily(r.evidenceFamily),
     confidence: r.confidence,
     ...(r.asOf ? { asOf: r.asOf } : {}),
     disclosureTier: "internal_only" as const,
@@ -71,7 +75,14 @@ export function decisionModelFromRenderable(args: {
         {
           id: "d1",
           decision: doc.title,
-          options: [{ id: "proceed", label: "Proceed as recommended", pros: [], cons: [] }],
+          options: [
+            {
+              id: "proceed",
+              label: "Proceed as recommended",
+              pros: [],
+              cons: [],
+            },
+          ],
           recommendedOptionId: "proceed",
           rationale: doc.recommendation,
         },

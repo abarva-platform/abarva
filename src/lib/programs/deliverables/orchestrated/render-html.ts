@@ -8,6 +8,7 @@
 // model output can never inject markup. Anything we don't recognise renders as
 // escaped text — never as raw HTML.
 
+import { humanizeSourceFamily } from "@/lib/deliverables/orchestrator/source-register";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 
 function esc(s: string): string {
@@ -236,7 +237,7 @@ ${markdownToHtml(s.bodyMarkdown)}
     ? `<section id="source-register"><h2>Source Register</h2><table class="md"><thead><tr><th>[n]</th><th>Source</th><th>Family</th><th>Confidence</th><th>As of</th></tr></thead><tbody>${doc.sourceRegister
         .map(
           (e) =>
-            `<tr><td>[${e.citationNumber}]</td><td>${esc(e.label)}</td><td>${esc(e.evidenceFamily)}</td><td>${esc(e.confidence)}</td><td>${esc(e.asOf ?? "—")}</td></tr>`,
+            `<tr><td>[${e.citationNumber}]</td><td>${esc(e.label)}</td><td>${esc(humanizeSourceFamily(e.evidenceFamily))}</td><td>${esc(e.confidence)}</td><td>${esc(e.asOf ?? "—")}</td></tr>`,
         )
         .join("")}</tbody></table></section>`
     : "";

@@ -26,6 +26,8 @@ export type FindingKind =
   | "content_hash"
   | "model_name"
   | "schema_identifier"
+  | "internal_enum_pair"
+  | "internal_type_key"
   | "pipeline_vocabulary"
   | "internal_reference_code"
   | "unresolved_placeholder"
@@ -76,6 +78,28 @@ const SCHEMA_IDENTIFIERS = [
   "state_jsonb",
   "program_modules",
   "deliverables_v2",
+];
+
+/**
+ * Registry/deliverable enum keys that describe our artifact model. These must
+ * be mapped to display labels before reaching client-visible prose or tables.
+ */
+const INTERNAL_TYPE_KEYS = [
+  "business_case",
+  "current_state_assessment",
+  "dependencies_risks",
+  "exec_summary",
+  "execution_roadmap",
+  "financial_model",
+  "handoff_package",
+  "operating_model_design",
+  "readiness_and_change_plan",
+  "requirements_traceability",
+  "solution_design_specification",
+  "sourcing_strategy",
+  "target_state_architecture",
+  "tower_metrics_plan",
+  "value_measurement_contract",
 ];
 
 /**
@@ -168,6 +192,24 @@ const RULES: readonly Rule[] = [
     severity: "blocker",
     pattern: new RegExp(`\\b(?:${alternation(SCHEMA_IDENTIFIERS)})\\b`, "gi"),
     why: "A table or column name is internal structure leaking into a client document.",
+  },
+  {
+    kind: "internal_enum_pair",
+    severity: "blocker",
+    // e.g. generated_artifact:financial_model. Requires lower snake-ish
+    // identifiers on both sides, so ordinary prose labels ("Owner: Finance")
+    // and URLs (`https://...`) do not match.
+    pattern: /\b[a-z][a-z0-9_]{2,}:[a-z][a-z0-9_]{2,}\b/g,
+    why: "A colon-separated enum key exposes our internal object model instead of a reader-facing label.",
+  },
+  {
+    kind: "internal_type_key",
+    severity: "blocker",
+    pattern: new RegExp(
+      `(?<!:)\\b(?:${alternation(INTERNAL_TYPE_KEYS)})\\b`,
+      "gi",
+    ),
+    why: "An artifact or section key must be rendered as a plain-English label before a client reads it.",
   },
   {
     kind: "internal_reference_code",
