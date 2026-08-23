@@ -25,6 +25,18 @@ REQUIRED_EVIDENCE_KEYS = {
     "operator_status_markdown",
 }
 
+ALLOWED_NEXT_BLOCKED_GATES = {
+    "azure_data_plane_write",
+    "product_route_repointing",
+    "legacy_retirement",
+}
+
+REQUIRED_COMPLETED_BLOCKED_GATES = {
+    "azure_data_plane_write",
+    "product_route_repointing",
+    "legacy_retirement",
+}
+
 
 def read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -90,8 +102,11 @@ def validate_status(status: dict[str, Any], *, allow_in_progress: bool) -> dict[
         issues.append("next.operator_instruction is required")
     if not next_item.get("blocked_gate"):
         issues.append("next.blocked_gate is required so the operator sees the hard stop")
-    if next_item.get("blocked_gate") != "product_route_repointing":
-        issues.append("next.blocked_gate must remain product_route_repointing for this queue")
+    elif next_item.get("blocked_gate") not in ALLOWED_NEXT_BLOCKED_GATES:
+        issues.append(
+            "next.blocked_gate must be one of: "
+            + ", ".join(sorted(ALLOWED_NEXT_BLOCKED_GATES))
+        )
 
     if not isinstance(evidence, dict):
         issues.append("evidence must be an object")
@@ -106,6 +121,11 @@ def validate_status(status: dict[str, Any], *, allow_in_progress: bool) -> dict[
     blocked_slices = [item for item in slices if item.get("result_state") == "hard_gated"]
     if not blocked_slices and status.get("run_state") == "completed":
         issues.append("completed status must include at least one hard_gated slice")
+    if status.get("run_state") == "completed":
+        blocked_gates = {str(item.get("stop_gate")) for item in blocked_slices}
+        missing_gates = sorted(REQUIRED_COMPLETED_BLOCKED_GATES - blocked_gates)
+        if missing_gates:
+            issues.append(f"completed status missing hard-gated stop gates: {', '.join(missing_gates)}")
     if not any(item.get("evidence_paths") for item in slices):
         issues.append("slice rows must carry evidence_paths")
 
