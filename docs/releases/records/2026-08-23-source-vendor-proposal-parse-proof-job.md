@@ -12,6 +12,8 @@
 
 Adds a governed operator proof job for the Source vendor-proposal ingestion path. The job extracts structured facts from a controlled proposal text, writes artifact metadata and candidate proposal facts through the existing tenant-scoped proposal-fact repository, then reads those rows back with source quote and locator evidence. It exists to prove the upload/parse/persist/readback seam without changing the user-facing Source workflow.
 
+Update: the proof job now explicitly writes the artifact registry `version` column. The first live ACA attempt found that `source_artifacts.version` is required in the deployed table; this patch keeps the operator harness aligned with the live artifact registry contract.
+
 ## Layer Impact
 
 - Release lane: `client-data-lane`.
@@ -33,11 +35,14 @@ Adds a governed operator proof job for the Source vendor-proposal ingestion path
 - `scripts/source/vendor-proposal-parse-proof-job.ts`
 - `scripts/source/__tests__/vendor-proposal-parse-proof-job.test.mjs`
 - `package.json` script `source:vendor-proposal-parse:proof-job`
+- Explicit `source_artifacts.version = 1` population for the controlled proof artifact.
 
 ## QA / Validation
 
 - PASS: focused syntax/operator launch check with an intentionally unreachable local database endpoint; result proved the script compiles past `server-only` imports and fails only on database connectivity.
 - PASS: `node --test scripts/source/__tests__/vendor-proposal-parse-proof-job.test.mjs`
+- PASS: `node --test scripts/source/__tests__/source-substrate-lineage-report.test.mjs`
+- FAIL THEN FIXED: first ACA apply attempt failed before mutation because the live artifact registry required `version`; this release candidate now populates that field and pins it in the focused test.
 - NOT RUN: live ACA proof is required before calling the mutation path live-proven.
 
 ## Rollout Plan
