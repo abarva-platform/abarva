@@ -53,10 +53,10 @@ describe("source-ava-hard-qa audit harness", () => {
       event: 16,
       portfolio: 6,
     });
-    assert.deepEqual(report.coverageDetail.outputContracts, {
-      table: 15,
-      chart: 8,
-    });
+    assert.equal(report.coverageDetail.outputContracts.table, 15);
+    assert.equal(report.coverageDetail.outputContracts.chart, 8);
+    assert.equal(report.coverageDetail.outputContracts.selectedTable, 15);
+    assert.equal(report.coverageDetail.outputContracts.selectedChart, 8);
     for (const focus of report.questionBank.requiredFocusAreas) {
       assert.ok(
         report.coverageDetail.focusAreas[focus] > 0,
@@ -71,6 +71,47 @@ describe("source-ava-hard-qa audit harness", () => {
       ).length,
       5,
     );
+  });
+
+  it("can execute a selected hard-QA slice while still validating the full bank", () => {
+    const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "source-ava-hard-qa-"));
+
+    execFileSync(
+      "node",
+      [
+        SCRIPT,
+        "--out-dir",
+        outDir,
+        "--ids",
+        "OPT-001,OPT-004",
+        "--fail-on-question-bank",
+      ],
+      {
+        cwd: REPO_ROOT,
+        stdio: "pipe",
+      },
+    );
+
+    const report = JSON.parse(
+      fs.readFileSync(path.join(outDir, "source-ava-hard-qa.json"), "utf8"),
+    ) as {
+      questionCount: number;
+      selectedQuestionCount: number;
+      selectedQuestions: string[];
+      questionBank: { status: string };
+      summary: { notRun: number };
+      coverageDetail: {
+        outputContracts: { selectedTable: number; selectedChart: number };
+      };
+    };
+
+    assert.equal(report.questionCount, 50);
+    assert.equal(report.selectedQuestionCount, 2);
+    assert.deepEqual(report.selectedQuestions, ["OPT-001", "OPT-004"]);
+    assert.equal(report.questionBank.status, "PASS");
+    assert.equal(report.summary.notRun, 2);
+    assert.equal(report.coverageDetail.outputContracts.selectedTable, 0);
+    assert.equal(report.coverageDetail.outputContracts.selectedChart, 1);
   });
 
   it("scores ghost vendor leakage once per answer instead of inflating the issue count", () => {
@@ -164,15 +205,13 @@ describe("source-ava-hard-qa audit harness", () => {
     };
     const result = report.results.find((row) => row.id === "OPT-002");
 
-    expect(result?.status).toBe("FAIL");
-    expect(result?.issues).toContain(
+    assert.equal(result?.status, "FAIL");
+    assert.ok(result?.issues.includes(
       "Source number quoted without data-plane or counting-basis note.",
-    );
-    expect(result?.dataPlaneEvidence).toMatchObject({
-      quotesSourceNumber: true,
-      hasPlaneOrCountingBasis: false,
-    });
-    expect(result?.dataPlaneEvidence.quotedSourceNumbers).toContain("$755K");
+    ));
+    assert.equal(result?.dataPlaneEvidence.quotesSourceNumber, true);
+    assert.equal(result?.dataPlaneEvidence.hasPlaneOrCountingBasis, false);
+    assert.ok(result?.dataPlaneEvidence.quotedSourceNumbers.includes("$755K"));
   });
 
   it("accepts Source numbers when the answer states the live plane or counting basis", () => {
@@ -217,11 +256,9 @@ describe("source-ava-hard-qa audit harness", () => {
     };
     const result = report.results.find((row) => row.id === "OPT-002");
 
-    expect(result?.status).toBe("PASS");
-    expect(result?.issues).toEqual([]);
-    expect(result?.dataPlaneEvidence).toMatchObject({
-      quotesSourceNumber: true,
-      hasPlaneOrCountingBasis: true,
-    });
+    assert.equal(result?.status, "PASS");
+    assert.deepEqual(result?.issues, []);
+    assert.equal(result?.dataPlaneEvidence.quotesSourceNumber, true);
+    assert.equal(result?.dataPlaneEvidence.hasPlaneOrCountingBasis, true);
   });
 });
