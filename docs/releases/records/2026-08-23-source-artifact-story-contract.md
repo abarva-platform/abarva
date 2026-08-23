@@ -4,6 +4,10 @@
 
 `2026-08-23-source-artifact-story-contract`
 
+## Backlog ID
+
+`SRC71`
+
 ## Status
 
 `candidate`
@@ -14,6 +18,8 @@ This release adds a typed story contract for Source New Event artifacts. The con
 33 canonical artifacts into six executive decision packages and marks which artifacts carry the
 package narrative versus which artifacts support it as companion evidence. It is a design and prompt
 governance change only; it does not regenerate artifacts, load tenant data, or change live routes.
+The backlog ID is `SRC71`; `SRC49` remains reserved for live evidence intake and parser substrate
+work in the canonical Source New Event execution backlog.
 
 ## Layer Impact
 
