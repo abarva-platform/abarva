@@ -11,7 +11,13 @@
 // There is no isolated regenerate here: if an input changes, you re-run the phase
 // (re-click Approve & Build) and re-approve — consistent with the staleness model.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import {
   PHASE_CANONICAL_KEYS,
@@ -396,6 +402,10 @@ export function PhaseApproveAndBuild({
     (r) => r.status === "queued" || r.status === "running",
   );
   const builtCount = rows.filter((r) => r.status === "succeeded").length;
+  const blockedCount = rows.filter(
+    (r) =>
+      r.status === "blocked" || r.status === "failed" || r.status === "error",
+  ).length;
   const gateCount = specs.filter((s) => s.gateArtifact).length;
   const requiredGaps = evidenceNeedPackets.filter(
     (packet) => packet.priority === "required" && packet.status !== "covered",
@@ -410,71 +420,100 @@ export function PhaseApproveAndBuild({
       : builtCount > 0
         ? `Re-run & Build ${phaseLabel} →`
         : `Approve & Build ${phaseLabel} →`;
+  const phaseStatusLine = anyRunning
+    ? `Building ${phaseLabel}. Keep this page open while the governed batch finishes.`
+    : hasParentBlocker
+      ? String(disabledReason)
+      : hasRequiredGaps
+        ? `${requiredGaps.length} required evidence item${requiredGaps.length === 1 ? "" : "s"} must be covered before final build.`
+        : blockedCount > 0
+          ? `${blockedCount} output${blockedCount === 1 ? "" : "s"} need evidence or quality fixes before the phase can advance.`
+          : builtCount === specs.length
+            ? `${phaseLabel} is gate-ready. Review the generated documents before relying on them.`
+            : "Capture is separate from gate readiness. Build once the record is ready for review.";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {/* Governance + readiness header */}
+      {/* One clear phase action panel. Detailed evidence stays available below. */}
       <div
         style={{
-          padding: "10px 12px",
+          padding: "14px 16px",
           backgroundColor: "rgba(27,43,92,0.04)",
           border: "1px solid rgba(27,43,92,0.14)",
-          borderRadius: 6,
+          borderRadius: 8,
           color: NAVY,
-          fontSize: 11,
-          lineHeight: 1.45,
+          fontSize: 12,
+          lineHeight: 1.5,
         }}
       >
-        <strong>{AI_DECISION_SUPPORT_WATERMARK}</strong>
-        <div>{MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT}</div>
-        <div style={{ marginTop: 4, color: "#525866" }}>
-          Approve &amp; Build generates every {phaseLabel} deliverable in one
-          governed batch — planning the structure, writing each document section
-          by section, then assembling and quality-checking it. Documents below
-          the board-grade bar are held back, not shipped. There is no
-          per-document regenerate: if an input changes, re-run the phase and
-          re-approve.
-        </div>
         <div
           style={{
-            marginTop: 6,
             display: "flex",
-            gap: 14,
+            gap: 12,
             flexWrap: "wrap",
-            fontSize: 11,
-            color: "#525866",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
           }}
         >
-          <span>
-            {specs.length} deliverables ({gateCount} gate)
-          </span>
-          {typeof inputCount === "number" && (
-            <span>
-              {inputCount} input{inputCount === 1 ? "" : "s"} available
-            </span>
-          )}
-          <span>
-            {builtCount}/{specs.length} gate-ready
-          </span>
-          {hasEvidenceGuidanceGaps && (
-            <span style={{ color: ATTENTION }}>
-              {requiredGaps.length} required next-phase prep item
-              {requiredGaps.length === 1 ? "" : "s"}
-            </span>
-          )}
-          {hasParentBlocker && (
-            <span style={{ color: ATTENTION }}>{disabledReason}</span>
-          )}
+          <div style={{ minWidth: 220, flex: "1 1 320px" }}>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "#61708D",
+              }}
+            >
+              Phase build
+            </div>
+            <div
+              style={{
+                marginTop: 3,
+                fontSize: 15,
+                fontWeight: 700,
+                color: INK,
+              }}
+            >
+              {phaseStatusLine}
+            </div>
+            <div style={{ marginTop: 6, color: "#525866" }}>
+              {AI_DECISION_SUPPORT_WATERMARK}.{" "}
+              {MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT}
+            </div>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              flexWrap: "wrap",
+              justifyContent: "flex-end",
+            }}
+          >
+            <StatusPill tone={builtCount === specs.length ? "good" : "neutral"}>
+              {builtCount}/{specs.length} gate-ready
+            </StatusPill>
+            <StatusPill tone="neutral">
+              {gateCount} gate artifact{gateCount === 1 ? "" : "s"}
+            </StatusPill>
+            {typeof inputCount === "number" && (
+              <StatusPill tone="neutral">
+                {inputCount} input{inputCount === 1 ? "" : "s"}
+              </StatusPill>
+            )}
+          </div>
         </div>
         {hasEvidenceGuidanceGaps && (
-          <div style={{ marginTop: 6, color: ATTENTION }}>
-            These items are carried forward as next-phase preparation. They do
-            not block this phase&apos;s governed build unless the phase
-            explicitly marks them as current-phase blockers.
-          </div>
-        )}
-        {hasParentBlocker && (
-          <div style={{ marginTop: 6, color: ATTENTION }}>{disabledReason}</div>
+          <details style={{ marginTop: 10, color: "#5C4320" }}>
+            <summary style={{ cursor: "pointer", fontWeight: 700 }}>
+              {requiredGaps.length} prep item
+              {requiredGaps.length === 1 ? "" : "s"} carrying forward
+            </summary>
+            <div style={{ marginTop: 6 }}>
+              These items inform the next phase. They do not block this build
+              unless the phase marks them as current-phase blockers.
+            </div>
+          </details>
         )}
       </div>
 
@@ -527,7 +566,7 @@ export function PhaseApproveAndBuild({
             key={r.deliverableTypeKey}
             style={{
               display: "grid",
-              gridTemplateColumns: "8px minmax(0, 1fr) auto auto",
+              gridTemplateColumns: "8px minmax(0, 1fr) auto",
               alignItems: "center",
               gap: 10,
               padding: "9px 12px",
@@ -594,60 +633,62 @@ export function PhaseApproveAndBuild({
             {r.status === "succeeded" && r.blobUrl && (
               <Link
                 href={r.blobUrl}
-                style={{ fontSize: 11, color: NAVY, fontWeight: 600 }}
+                style={{
+                  gridColumn: "2 / -1",
+                  justifySelf: "start",
+                  fontSize: 11,
+                  color: NAVY,
+                  fontWeight: 600,
+                }}
                 target="_blank"
               >
-                Open →
+                Open document →
               </Link>
             )}
             {r.status === "blocked" && r.packageReadiness && (
-              <div
+              <details
                 style={{
                   gridColumn: "2 / -1",
                   marginTop: 2,
-                  padding: "10px 12px",
-                  borderRadius: 6,
-                  border: "1px solid rgba(181,133,42,0.28)",
-                  background: "rgba(181,133,42,0.07)",
                   color: "#5C4320",
                   fontSize: 11.5,
                   lineHeight: 1.45,
                 }}
               >
-                <div style={{ fontWeight: 700, color: ATTENTION }}>
-                  Output is not gate-ready
-                </div>
-                <div>{r.packageReadiness.headline}</div>
+                <summary style={{ cursor: "pointer", fontWeight: 700 }}>
+                  Why this is not gate-ready
+                </summary>
                 <div
                   style={{
                     marginTop: 8,
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 6,
+                    padding: "10px 12px",
+                    borderRadius: 6,
+                    border: "1px solid rgba(181,133,42,0.24)",
+                    background: "rgba(181,133,42,0.06)",
                   }}
                 >
-                  <ReadinessMetric
-                    label="Evidence"
-                    value={`${r.packageReadiness.retrievedEvidence}/${r.packageReadiness.minimumEvidenceItems}`}
-                    detail={`${r.packageReadiness.evidenceCoveragePct}% covered`}
-                  />
-                  <ReadinessMetric
-                    label="Readiness"
-                    value={`${r.packageReadiness.executiveReadinessPct}%`}
-                    detail={r.packageReadiness.confidenceLabel}
-                  />
-                </div>
-                {r.packageReadiness.missing.length > 0 && (
-                  <div style={{ marginTop: 8 }}>
-                    <span style={{ fontWeight: 700 }}>Missing: </span>
-                    {r.packageReadiness.missing.join("; ")}
+                  <div style={{ color: ATTENTION, fontWeight: 700 }}>
+                    {r.packageReadiness.headline}
                   </div>
-                )}
-                <div style={{ marginTop: 6 }}>
-                  <span style={{ fontWeight: 700 }}>Next: </span>
-                  {r.packageReadiness.recommendedNextStep}
+                  <div style={{ marginTop: 6 }}>
+                    Evidence: {r.packageReadiness.retrievedEvidence}/
+                    {r.packageReadiness.minimumEvidenceItems} · Readiness:{" "}
+                    {r.packageReadiness.executiveReadinessPct}% (
+                    {r.packageReadiness.confidenceLabel})
+                  </div>
+                  {r.packageReadiness.missing.length > 0 && (
+                    <div style={{ marginTop: 6 }}>
+                      <span style={{ fontWeight: 700 }}>Missing: </span>
+                      {r.packageReadiness.missing.slice(0, 3).join("; ")}
+                      {r.packageReadiness.missing.length > 3 ? "…" : ""}
+                    </div>
+                  )}
+                  <div style={{ marginTop: 6 }}>
+                    <span style={{ fontWeight: 700 }}>Next: </span>
+                    {r.packageReadiness.recommendedNextStep}
+                  </div>
                 </div>
-              </div>
+              </details>
             )}
           </div>
         ))}
@@ -661,50 +702,31 @@ export function PhaseApproveAndBuild({
   );
 }
 
-function ReadinessMetric({
-  label,
-  value,
-  detail,
+function StatusPill({
+  children,
+  tone,
 }: {
-  label: string;
-  value: string;
-  detail: string;
+  children: ReactNode;
+  tone: "good" | "neutral";
 }) {
   return (
-    <div
+    <span
       style={{
-        minWidth: 0,
-        padding: "4px 8px",
         borderRadius: 999,
-        background: "rgba(255,255,255,0.72)",
-        border: "1px solid rgba(181,133,42,0.18)",
-        display: "inline-flex",
-        alignItems: "baseline",
-        gap: 5,
+        border:
+          tone === "good"
+            ? "1px solid rgba(63,122,91,0.24)"
+            : "1px solid rgba(27,43,92,0.14)",
+        background:
+          tone === "good" ? "rgba(63,122,91,0.08)" : "rgba(255,255,255,0.78)",
+        color: tone === "good" ? FRESH : NAVY,
+        fontSize: 11,
+        fontWeight: 700,
+        padding: "5px 8px",
+        whiteSpace: "nowrap",
       }}
     >
-      <div
-        style={{
-          fontSize: 9,
-          fontWeight: 700,
-          letterSpacing: "0.07em",
-          textTransform: "uppercase",
-          color: "#8A6728",
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontSize: 11.5,
-          fontWeight: 700,
-          color: INK,
-          overflowWrap: "anywhere",
-        }}
-      >
-        {value}
-      </div>
-      <div style={{ color: "#6F6047", overflowWrap: "anywhere" }}>{detail}</div>
-    </div>
+      {children}
+    </span>
   );
 }
