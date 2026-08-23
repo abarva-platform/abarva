@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import test from "node:test";
 
 import {
@@ -10,6 +11,11 @@ import {
 } from "../source-substrate-lineage-report.mjs";
 const metricByKey = Object.fromEntries(
   metrics.map((metric) => [metric.key, metric]),
+);
+
+const REPORT_SOURCE = fs.readFileSync(
+  "scripts/source/source-substrate-lineage-report.mjs",
+  "utf8",
 );
 
 const declaredBasisDifferences = [
@@ -275,6 +281,13 @@ test("source definitions include optimization opportunity and evidence readiness
   assert.ok(ids.includes("source.finance_realization"));
   assert.ok(ids.includes("source.opportunity_requirement_status"));
   assert.ok(ids.includes("source.opportunity_evidence"));
+});
+
+test("source substrate lineage report emits an ACA structured proof event", () => {
+  assert.match(
+    REPORT_SOURCE,
+    /structured_event:\s*"source_substrate_lineage_report"/,
+  );
 });
 
 test("source rows with zero source row count are absent, not zero", () => {

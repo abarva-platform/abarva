@@ -25,6 +25,11 @@ test("vendor proposal proof job uses the governed proposal fact repository", () 
   assert.match(source, /rlsSessionUsed:\s*true/);
 });
 
+test("vendor proposal proof job emits an ACA structured proof event", () => {
+  const source = read(SCRIPT_PATH);
+  assert.match(source, /structured_event:\s*"source_vendor_proposal_parse_proof"/);
+});
+
 test("vendor proposal proof job has explicit mutation acknowledgement", () => {
   const source = read(SCRIPT_PATH);
   assert.match(source, /APPLY_SOURCE_VENDOR_PROPOSAL_PARSE_PROOF/);

@@ -806,6 +806,7 @@ async function main() {
       declaredBasisDifferences: scope.declaredBasisDifferences ?? [],
     });
     const json = {
+      structured_event: "source_substrate_lineage_report",
       generated_at: new Date().toISOString(),
       mode: scope.defaultMode ?? "quote",
       tenants,
