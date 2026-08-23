@@ -85,7 +85,7 @@ describe("SourceAnalyticsCanvas — stage header lead-agent label", () => {
       />,
     );
     expect(screen.getByRole("heading", { level: 1, name: "Strategy" })).toHaveStyle({
-      fontSize: "26px",
+      fontSize: "24px",
       lineHeight: "1.12",
       letterSpacing: "0",
     });

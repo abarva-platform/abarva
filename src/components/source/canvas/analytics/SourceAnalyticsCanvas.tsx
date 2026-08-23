@@ -1197,7 +1197,7 @@ function StageHeader({ view }: { view: SourceEventShellView }) {
           <h1
             style={{
               fontFamily: ANALYTICS.SERIF,
-              fontSize: 26,
+              fontSize: 24,
               lineHeight: 1.12,
               margin: 0,
               letterSpacing: 0,
@@ -2203,21 +2203,17 @@ function EvidenceAskTable({
           fontSize: 9,
           fontWeight: 800,
           gridTemplateColumns:
-            "minmax(170px, 1.15fr) 82px minmax(145px, 0.9fr) minmax(92px, 0.55fr) minmax(105px, 0.7fr) 82px 82px 52px minmax(125px, 0.85fr)",
+            "minmax(220px, 1.2fr) minmax(170px, 0.85fr) minmax(200px, 1fr) minmax(118px, 0.52fr) minmax(170px, 0.82fr)",
           letterSpacing: "0.06em",
           padding: "9px 12px",
           textTransform: "uppercase",
         }}
       >
-        <span>Evidence item</span>
-        <span>Need</span>
-        <span>Source / owner</span>
-        <span>Formats</span>
-        <span>Template</span>
-        <span>Upload</span>
-        <span>Parse</span>
-        <span>Done</span>
-        <span>Next</span>
+        <span>Evidence needed</span>
+        <span>Where to get it</span>
+        <span>Template / grain</span>
+        <span>Status</span>
+        <span>Next action</span>
       </div>
       {group.steps.map((step, index) => {
         const active = step.id === activeStepId;
@@ -2232,7 +2228,7 @@ function EvidenceAskTable({
             style={{
               display: "grid",
               gridTemplateColumns:
-                "minmax(170px, 1.15fr) 82px minmax(145px, 0.9fr) minmax(92px, 0.55fr) minmax(105px, 0.7fr) 82px 82px 52px minmax(125px, 0.85fr)",
+                "minmax(220px, 1.2fr) minmax(170px, 0.85fr) minmax(200px, 1fr) minmax(118px, 0.52fr) minmax(170px, 0.82fr)",
               gap: 12,
               padding: "11px 12px",
               borderTop:
@@ -2250,16 +2246,10 @@ function EvidenceAskTable({
           >
             <EvidenceAskCell
               label={step.title}
-              detail={`${need.item} · ${need.requirement}`}
+              detail={`${need.item} · ${need.requirement} · ${need.formats}`}
               active={active}
               captured={captured}
             />
-            <span style={{ alignSelf: "start" }}>
-              <ReadinessChip
-                label={need.requiredness}
-                tone={need.requiredness === "Required" ? "warn" : "neutral"}
-              />
-            </span>
             <EvidenceAskCell
               label={need.sourceSystem}
               detail={`Owner: ${need.owner}`}
@@ -2267,26 +2257,21 @@ function EvidenceAskTable({
               captured={captured}
             />
             <EvidenceAskCell
-              label={need.formats}
-              detail={need.grainHistory}
-              active={active}
-              captured={captured}
-            />
-            <EvidenceAskCell
               label={need.template}
-              detail={step.factTemplateCode ?? "artifact only"}
+              detail={`${step.factTemplateCode ?? "artifact only"} · ${need.grainHistory}`}
               active={active}
               captured={captured}
             />
-            <EvidenceAskMicroStatus
-              label={uploaded || captured ? "Uploaded" : "Upload"}
-              done={uploaded || captured}
-            />
-            <EvidenceAskMicroStatus
-              label={captured ? "Parsed" : need.status}
-              done={captured}
-            />
-            <EvidenceAskMicroStatus label="" done={captured} iconOnly />
+            <span style={{ display: "grid", gap: 6, alignSelf: "start" }}>
+              <ReadinessChip
+                label={need.requiredness}
+                tone={need.requiredness === "Required" ? "warn" : "neutral"}
+              />
+              <EvidenceAskMicroStatus
+                label={captured ? "Parsed" : uploaded ? "Uploaded" : need.status}
+                done={captured}
+              />
+            </span>
             <EvidenceAskCell
               label={
                 captured

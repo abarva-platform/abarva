@@ -84,7 +84,10 @@ describe("TaskChecklist provide-task upload", () => {
     expect(request).toHaveTextContent("CSV or XLSX");
     expect(request).toHaveTextContent("Parse/writeback");
     expect(request).toHaveTextContent("Parse with VOLUMETRICS_V1");
-    expect(request).toHaveTextContent("Upload status");
+    expect(request).toHaveTextContent("Upload / parse status");
+    expect(request).toHaveTextContent(
+      "mapped templates also write typed facts back to Source",
+    );
     expect(request).toHaveTextContent("Upload file");
   });
 
