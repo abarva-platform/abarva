@@ -408,16 +408,22 @@ function collectJsonObjects(logText) {
 }
 
 function extractStructuredEvents(logText, outDir) {
-  const events = collectJsonObjects(logText).filter((event) => typeof event.event === "string");
+  const events = collectJsonObjects(logText).filter(
+    (event) =>
+      typeof event.event === "string" ||
+      typeof event.structured_event === "string",
+  );
   if (!events.length) return null;
   const eventPath = path.join(outDir, "05-structured-events.json");
   writeJson(eventPath, events);
   return {
-    extracted: false,
+    extracted: true,
+    extractionKind: "structured_events",
+    proofBundleExtracted: false,
     structuredEventsExtracted: true,
     eventPath,
     eventCount: events.length,
-    eventNames: events.map((event) => event.event),
+    eventNames: events.map((event) => event.event ?? event.structured_event),
     events,
   };
 }
@@ -787,14 +793,14 @@ function selfTest() {
   const eventDir = fs.mkdtempSync(path.join(os.tmpdir(), "aca-operator-json-event-self-test-"));
   const eventLogText = [
     '2026-01-01 stdout F {',
-    '2026-01-01 stdout F   "event": "skyharbor_v3_current_state_loaded",',
+    '2026-01-01 stdout F   "structured_event": "skyharbor_v3_current_state_loaded",',
     '2026-01-01 stdout F   "reconciliation": {',
     '2026-01-01 stdout F     "passed": true',
     '2026-01-01 stdout F   }',
     '2026-01-01 stdout F }',
   ].join("\n");
   const eventResult = extractProofBundle(eventLogText, eventDir);
-  if (!eventResult.structuredEventsExtracted || eventResult.eventCount !== 1) {
+  if (!eventResult.extracted || !eventResult.structuredEventsExtracted || eventResult.eventCount !== 1) {
     throw new Error(`structured event extraction self-test failed: ${JSON.stringify(eventResult)}`);
   }
   assertDigestPinned("repo.azurecr.io/app@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");

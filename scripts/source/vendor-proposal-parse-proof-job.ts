@@ -548,6 +548,7 @@ async function main() {
       (!apply || secondPassNewRows === 0);
 
     const proof = {
+      structured_event: "source_vendor_proposal_parse_proof",
       ok,
       mode: args.mode,
       productionMutation: apply,
