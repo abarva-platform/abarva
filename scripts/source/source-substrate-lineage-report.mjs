@@ -856,6 +856,7 @@ async function main() {
     console.log(`Written to ${path.relative(ROOT, mdPath)}`);
     if (process.env.SOURCE_SUBSTRATE_LINEAGE_EMIT_STRUCTURED_EVENT === "1") {
       console.log(JSON.stringify(json, null, 2));
+      console.log(JSON.stringify(json));
     }
     if (
       sourceErrors.length ||

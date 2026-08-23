@@ -299,6 +299,13 @@ test("package audit script enables stdout structured-event extraction", () => {
   );
 });
 
+test("stdout structured event also emits compact JSON for ACA tail extraction", () => {
+  assert.match(
+    REPORT_SOURCE,
+    /console\.log\(JSON\.stringify\(json\)\)/,
+  );
+});
+
 test("source rows with zero source row count are absent, not zero", () => {
   const source = {
     id: "source.empty",
