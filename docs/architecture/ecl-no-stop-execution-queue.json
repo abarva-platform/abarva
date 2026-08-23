@@ -236,6 +236,36 @@
     },
     {
       "order": 14,
+      "slice_id": "ecl_client_workbook_execution_package",
+      "status": "queued",
+      "percent_complete": 25,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/build_ecl_client_workbook_execution_package.py",
+      "evidence_paths": [
+        "scripts/ecl/build_ecl_client_workbook_execution_package.py",
+        "outputs/ecl-client-workbook-execution-2026-08-23/workbook_folder_manifest.csv",
+        "outputs/ecl-client-workbook-execution-2026-08-23/workbook_execution_package_summary.json"
+      ],
+      "next_auto_action": "Use the generated workbook folders as the practical client-execution design before any client-facing workbook package replacement.",
+      "stop_gate": "Replacing client-facing workbook packages in Azure."
+    },
+    {
+      "order": 15,
+      "slice_id": "ecl_client_workbook_execution_validation",
+      "status": "queued",
+      "percent_complete": 25,
+      "auto_proceed_allowed": true,
+      "proof_command": "python3 scripts/ecl/validate_ecl_client_workbook_execution_package.py",
+      "evidence_paths": [
+        "scripts/ecl/validate_ecl_client_workbook_execution_package.py",
+        "outputs/ecl-client-workbook-execution-2026-08-23/workbook_execution_package_validation_summary.json",
+        "outputs/ecl-client-workbook-execution-2026-08-23/workbook_execution_package_validation_issues.csv"
+      ],
+      "next_auto_action": "Keep workbook-folder fillability, examples, extract recipes, partial behavior, and product coverage falsifiable before package generation scales.",
+      "stop_gate": "Replacing client-facing workbook packages in Azure."
+    },
+    {
+      "order": 16,
       "slice_id": "machine_readable_execution_queue",
       "status": "in_progress",
       "percent_complete": 75,
@@ -249,7 +279,7 @@
       "stop_gate": "None while validation remains local and report-only."
     },
     {
-      "order": 15,
+      "order": 17,
       "slice_id": "browser_and_product_repointing_proof",
       "status": "blocked_by_hard_gate",
       "percent_complete": 0,
