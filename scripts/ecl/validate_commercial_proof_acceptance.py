@@ -81,6 +81,7 @@ def main() -> None:
     quality_path = out_dir / "commercial_document_quality_summary.json"
     extraction_path = out_dir / "commercial_client_extraction_mapping_summary.json"
     product_path = out_dir / "commercial_product_consumption_mapping_summary.json"
+    source_page_contract_path = out_dir / "source_360_page_fact_contract_summary.json"
     db_proof_path = out_dir / "commercial_contract_supply_db_proof.txt"
     run_summary_path = out_dir / "commercial_proof_run_summary.json"
 
@@ -88,6 +89,7 @@ def main() -> None:
     quality = load_json(quality_path)
     extraction = load_json(extraction_path)
     product = load_json(product_path)
+    source_page_contract = load_json(source_page_contract_path)
     run_summary = load_json(run_summary_path) if run_summary_path.exists() else {}
     db_proof = db_proof_path.read_text(encoding="utf-8") if db_proof_path.exists() else ""
 
@@ -110,6 +112,26 @@ def main() -> None:
         issues.append({"rule_id": "client_extraction_mapping_failed", "subject": "extracts_documented", "expected": "12", "actual": str(extraction.get("extracts_documented"))})
     if product.get("mappings") != 6:
         issues.append({"rule_id": "product_consumption_mapping_failed", "subject": "mappings", "expected": "6", "actual": str(product.get("mappings"))})
+    if source_page_contract.get("accepted") is not True:
+        issues.append(
+            {
+                "rule_id": "source_360_page_contract_failed",
+                "subject": "accepted",
+                "expected": "true",
+                "actual": str(source_page_contract.get("accepted")),
+            }
+        )
+    if source_page_contract.get("rows") != 14:
+        issues.append({"rule_id": "source_360_page_contract_rows_failed", "subject": "rows", "expected": "14", "actual": str(source_page_contract.get("rows"))})
+    if source_page_contract.get("supplied_rows") != 9 or source_page_contract.get("missing_projection_rows") != 5:
+        issues.append(
+            {
+                "rule_id": "source_360_page_contract_mix_failed",
+                "subject": "supplied/missing_projection",
+                "expected": "9/5",
+                "actual": f"{source_page_contract.get('supplied_rows')}/{source_page_contract.get('missing_projection_rows')}",
+            }
+        )
 
     visible_snake_case_hits = 0
     docs_dir = out_dir / "source_room/SP08_Vendor_Contract/documents"
@@ -152,6 +174,9 @@ def main() -> None:
             "document_quality_issues": quality.get("issue_count"),
             "extracts_documented": extraction.get("extracts_documented"),
             "product_mappings": product.get("mappings"),
+            "source_360_page_contract_rows": source_page_contract.get("rows"),
+            "source_360_page_contract_supplied_rows": source_page_contract.get("supplied_rows"),
+            "source_360_page_contract_missing_projection_rows": source_page_contract.get("missing_projection_rows"),
             "visible_snake_case_hits": visible_snake_case_hits,
             "artifact_hash_count": artifact_hash_count,
             "source_room_hash_count": source_room_hash_count,
