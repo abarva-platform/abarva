@@ -31,6 +31,11 @@ test("vendor proposal proof job has explicit mutation acknowledgement", () => {
   assert.match(source, /Refusing production mutation/);
 });
 
+test("vendor proposal proof job populates required source artifact version", () => {
+  const source = read(SCRIPT_PATH);
+  assert.match(source, /includeColumn\(args\.columns, row, "version", 1\)/);
+});
+
 test("vendor proposal proof job carries rich proposal dimensions", () => {
   const source = read(SCRIPT_PATH);
   for (const label of [

@@ -319,6 +319,7 @@ async function upsertArtifact(args: {
   includeColumn(args.columns, row, "original_name", args.fileName);
   includeColumn(args.columns, row, "file_name", args.fileName);
   includeColumn(args.columns, row, "title", `${args.vendorKey} proposal parse proof`);
+  includeColumn(args.columns, row, "version", 1);
   includeColumn(
     args.columns,
     row,
