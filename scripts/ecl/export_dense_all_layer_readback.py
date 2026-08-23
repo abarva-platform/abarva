@@ -70,10 +70,13 @@ def layer_counts(flat: dict[str, int]) -> dict[str, dict[str, int]]:
         },
         "ecl_projection": {
             "projection_manifest": flat.get("projection_manifest", 0),
+            "home_enterprise_landscape": flat.get("home_enterprise_landscape", 0),
             "source_contract_360": flat.get("source_contract_360", 0),
             "source_vendor_360": flat.get("source_vendor_360", 0),
             "source_value_levers": flat.get("source_value_levers", 0),
             "source_event_workspace": flat.get("source_event_workspace", 0),
+            "tower_command_center": flat.get("tower_command_center", 0),
+            "intelligence_context_pack": flat.get("intelligence_context_pack", 0),
             "cube_manifest": flat.get("cube_manifest", 0),
             "cube_slice": flat.get("cube_slice", 0),
             "cube_slice_metric": flat.get("cube_slice_metric", 0),
@@ -84,6 +87,12 @@ def layer_counts(flat: dict[str, int]) -> dict[str, dict[str, int]]:
             "cube_metric_drift": flat.get("cube_metric_drift", 0),
             "cube_measure_drift": flat.get("cube_measure_drift", 0),
             "source_value_claimable_rows": flat.get("source_value_claimable_rows", 0),
+            "home_primary_object_drift": flat.get("home_primary_object_drift", 0),
+            "home_refusal_without_payload": flat.get("home_refusal_without_payload", 0),
+            "tower_primary_object_drift": flat.get("tower_primary_object_drift", 0),
+            "tower_gated_without_reason": flat.get("tower_gated_without_reason", 0),
+            "intelligence_context_pack_drift": flat.get("intelligence_context_pack_drift", 0),
+            "intelligence_primary_object_drift": flat.get("intelligence_primary_object_drift", 0),
         },
     }
 
