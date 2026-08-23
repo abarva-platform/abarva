@@ -18,11 +18,36 @@ DEFAULT_OUT_DIR = Path("outputs/ecl-commercial-contract-supply-correction-2026-0
 PREVIEW_DIR_NAME = "source_360_static_preview"
 SNAKE_CASE_RE = re.compile(r"\b[a-z]+_[a-z0-9_]+\b")
 LABEL_OVERRIDES = {
-    "source_sla_kpi_events_missing": "SLA/KPI event extract missing",
-    "partial_intake_accepted_with_gap_register": "Partial intake accepted with gap register",
-    "market_benchmark_extract_missing": "Market benchmark evidence missing",
-    "revendored_to_existing_r1_fixture_vendor": "Supplier identity aligned to R1 fixture vendor",
+    "source_sla_kpi_events_missing": "SLA/KPI source file was not received; the gap is tracked",
+    "partial_intake_accepted_with_gap_register": "Partial intake is usable; missing source files remain tracked",
+    "market_benchmark_extract_missing": "External market benchmark evidence is required",
+    "revendored_to_existing_r1_fixture_vendor": "Supplier matched to the active vendor master",
+    "fixture_bpo_vendor_gap_filled": "Managed-services supplier added to the review pack",
+    "weak_commercial_protection": "Weak commercial protection",
+    "auto_renewal_long_notice_and_shortfall_penalty": "Automatic renewal, long notice window, and shortfall exposure",
+    "not_started": "Not started",
 }
+PROSE_LABELS = {
+    "above_internal_median_11pct": "11% above the internal portfolio median",
+    "above_internal_median_18pct": "18% above the internal portfolio median",
+    "applies_to_underconsumed_volumes": "applies to underconsumed committed volumes",
+    "buyer_consent_required_except_affiliates": "buyer consent is required except for affiliate transfers",
+    "capped_flat": "capped at a flat percentage of annualized fees",
+    "contractual_right_delayed_market_extract_missing": "benchmarking right exists but is delayed; external evidence is still required",
+    "multi_location_with_subprocessor_dependency": "multi-location delivery with subprocessor dependency",
+    "present_but_delayed": "present but delayed",
+    "present_synthetic_directional": "present as directional synthetic evidence",
+    "weak": "weak",
+}
+BANNED_VISIBLE_PHRASES = [
+    "Supplier identity aligned to R1 fixture vendor",
+    "Partial intake accepted with gap register",
+    "fixture vendor",
+    "fixture gap",
+    "source-room",
+    "dense Meridian",
+    "snake_case",
+]
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -45,6 +70,8 @@ def pct(value: str | int | float | None) -> str:
 def label(value: str) -> str:
     if value in LABEL_OVERRIDES:
         return LABEL_OVERRIDES[value]
+    if value in PROSE_LABELS:
+        return PROSE_LABELS[value]
     return value.replace("_", " ").strip().capitalize()
 
 
@@ -79,6 +106,15 @@ def load_projection(out_dir: Path, contract_id: str) -> dict[str, Any]:
                 parsed[field] = json.loads(row[field] or "[]")
             return parsed
     raise AssertionError(f"contract_id not found in projection: {contract_id}")
+
+
+def load_protection(out_dir: Path, contract_id: str) -> dict[str, str]:
+    path = out_dir / "source_room" / "SP08_Vendor_Contract" / "extracts" / "contract_commercial_protection_assessment.csv"
+    rows = read_csv(path)
+    for row in rows:
+        if row.get("contract_id") == contract_id:
+            return row
+    raise AssertionError(f"contract_id not found in protection assessment: {contract_id}")
 
 
 def compute_denominators(out_dir: Path, contract_id: str) -> dict[str, Any]:
@@ -120,7 +156,7 @@ def compute_denominators(out_dir: Path, contract_id: str) -> dict[str, Any]:
     }
 
 
-def render_html(contract: dict[str, Any], denominators: dict[str, Any]) -> str:
+def render_html(contract: dict[str, Any], protection: dict[str, str], denominators: dict[str, Any]) -> str:
     services = contract["service_lines_json"]
     scope = contract["scope_json"]
     spend = contract["spend_summary_json"]
@@ -130,6 +166,9 @@ def render_html(contract: dict[str, Any], denominators: dict[str, Any]) -> str:
     benchmark = spend.get("market_benchmark", {})
     protection_score = spend.get("commercial_protection_score")
     benchmark_variance = benchmark.get("variance_percent", benchmark.get("market_benchmark_variance_percent", "n/a"))
+    auto_renew_text = "Yes - automatic renewal is active" if protection.get("auto_renew") == "true" else "No"
+    shortfall = money(protection.get("modeled_shortfall_exposure_usd"))
+    tfc_cost = money(protection.get("estimated_tfc_cost_usd"))
 
     service_rows = "\n".join(
         f"<tr><td>{html.escape(first_value(row, 'service_category', 'service_line_key'))}</td><td>{money(row.get('annualized_value_usd'))}</td><td>{html.escape(first_value(row, 'description', 'service_line_key'))}</td></tr>"
@@ -272,7 +311,8 @@ def render_html(contract: dict[str, Any], denominators: dict[str, Any]) -> str:
   <div class="eyebrow">Source 360 / Local ECL Preview / Not Live Routed</div>
   <h1>{html.escape(contract['contract_name'])}</h1>
   <p class="subtitle">
-    {html.escape(contract['vendor_name'])} contract view generated from local ECL proof outputs.
+    {html.escape(contract['vendor_name'])} contract view assembled from the commercial register, scoped services,
+    invoice evidence, clause evidence, and document inventory in the local review pack.
     This page is a static render check, not a deployed product route or signed-in browser proof.
   </p>
 
@@ -320,13 +360,29 @@ def render_html(contract: dict[str, Any], denominators: dict[str, Any]) -> str:
   </section>
 
   <section>
+    <h2>Commercial Leverage</h2>
+    <table>
+      <tbody>
+        <tr><th>Protection band</th><td>{html.escape(label(protection.get('protection_band', '')))} ({html.escape(protection.get('protection_score', 'n/a'))} / 100)</td></tr>
+        <tr><th>Primary weakness</th><td>{html.escape(label(protection.get('primary_weakness', '')))}</td></tr>
+        <tr><th>Renewal notice</th><td>{html.escape(protection.get('notice_window_days', 'n/a'))} days</td></tr>
+        <tr><th>Auto renewal</th><td>{html.escape(auto_renew_text)}</td></tr>
+        <tr><th>Exit economics</th><td>{html.escape(label(protection.get('termination_for_convenience_state', '')))}; estimated termination cost {tfc_cost}</td></tr>
+        <tr><th>Minimum commitment</th><td>{money(protection.get('minimum_commitment_usd'))}; modeled shortfall exposure {shortfall}</td></tr>
+        <tr><th>Benchmarking right</th><td>{html.escape(label(protection.get('benchmarking_right_state', '')))}</td></tr>
+        <tr><th>Commercial guidance</th><td>{html.escape(protection.get('commercial_guidance', ''))}</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
     <h2>Measured Completion</h2>
     <div class="proof">
       <div><strong>{denominators['contracts_projected']} / 5</strong>contracts projected</div>
       <div><strong>{denominators['vendors_projected']} / 5</strong>vendors projected</div>
       <div><strong>{denominators['documents_passing_quality']} / {denominators['documents_total']}</strong>documents pass quality</div>
       <div><strong>{denominators['scope_links_resolved']} / {denominators['scope_links_total']}</strong>scope links resolved to reference apps</div>
-      <div><strong>{denominators['dense_required_additions']}</strong>dense Meridian additions required</div>
+      <div><strong>{denominators['dense_required_additions']}</strong>application inventory additions required</div>
       <div><strong>{label(str(denominators['browser_proof']))}</strong>browser proof state</div>
     </div>
   </section>
@@ -336,9 +392,16 @@ def render_html(contract: dict[str, Any], denominators: dict[str, Any]) -> str:
 """
 
 
-def validate_preview(html_text: str, denominators: dict[str, Any], contract: dict[str, Any]) -> dict[str, Any]:
+def validate_preview(
+    html_text: str,
+    denominators: dict[str, Any],
+    contract: dict[str, Any],
+    protection: dict[str, str],
+    require_weak_contract: bool,
+) -> dict[str, Any]:
     visible_text = re.sub(r"<[^>]+>", " ", html_text)
     snake_hits = sorted(set(SNAKE_CASE_RE.findall(visible_text)))
+    banned_hits = sorted({phrase for phrase in BANNED_VISIBLE_PHRASES if phrase in visible_text})
     checks = {
         "contract_name_visible": contract["contract_name"] in visible_text,
         "vendor_name_visible": contract["vendor_name"] in visible_text,
@@ -348,17 +411,30 @@ def validate_preview(html_text: str, denominators: dict[str, Any], contract: dic
         "document_proof_nonempty": len(contract["document_proof_json"]) > 0,
         "gate_language_visible": "non-claimable" in visible_text,
         "snake_case_visible_count": len(snake_hits),
+        "banned_visible_phrase_count": len(banned_hits),
         "scope_resolution_percent": round(denominators["scope_links_resolved"] / denominators["scope_links_total"] * 100, 2),
     }
+    if require_weak_contract:
+        checks.update(
+            {
+                "weak_contract_selected": contract["row_key"] == "MER-CTR-SSO-BPO-001",
+                "weak_score_visible": protection.get("protection_score") == "34" and "34 / 100" in visible_text,
+                "long_notice_visible": "365 days" in visible_text,
+                "auto_renew_visible": "automatic renewal is active" in visible_text,
+                "shortfall_visible": "$1,071,000" in visible_text,
+                "guidance_visible": "notice-window reduction" in visible_text,
+            }
+        )
     accepted = all(
         value is True
         for key, value in checks.items()
-        if key not in {"snake_case_visible_count", "scope_resolution_percent"}
-    ) and checks["snake_case_visible_count"] == 0
+        if key not in {"snake_case_visible_count", "banned_visible_phrase_count", "scope_resolution_percent"}
+    ) and checks["snake_case_visible_count"] == 0 and checks["banned_visible_phrase_count"] == 0
     return {
         "accepted": accepted,
         "checks": checks,
         "visible_snake_case_hits": snake_hits,
+        "banned_visible_phrase_hits": banned_hits,
         "denominators": denominators,
     }
 
@@ -367,14 +443,16 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
     parser.add_argument("--contract-id", default="MER-CTR-RCM-001")
+    parser.add_argument("--require-weak-contract", action="store_true")
     args = parser.parse_args()
 
     preview_dir = args.out_dir / PREVIEW_DIR_NAME
     preview_dir.mkdir(parents=True, exist_ok=True)
     contract = load_projection(args.out_dir, args.contract_id)
+    protection = load_protection(args.out_dir, args.contract_id)
     denominators = compute_denominators(args.out_dir, args.contract_id)
-    html_text = render_html(contract, denominators)
-    summary = validate_preview(html_text, denominators, contract)
+    html_text = render_html(contract, protection, denominators)
+    summary = validate_preview(html_text, denominators, contract, protection, args.require_weak_contract)
 
     html_path = preview_dir / f"{args.contract_id.lower()}-source-360-preview.html"
     summary_path = preview_dir / f"{args.contract_id.lower()}-source-360-preview-qa.json"

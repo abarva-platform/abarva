@@ -21,6 +21,13 @@ DEFAULT_OUT_DIR = Path("outputs/ecl-commercial-contract-supply-correction-2026-0
 FORBIDDEN_PHRASES = [
     "Extraction anchor",
     "Extraction method",
+    "generated document",
+    "source-room",
+    "fixture gap",
+    "dense Meridian",
+    "prior active application file",
+    "generated rate-card",
+    "internal process vocabulary",
     "termination_for_convenience_state",
     "shortfall_penalty_state",
     "market_benchmark_extract_missing",
