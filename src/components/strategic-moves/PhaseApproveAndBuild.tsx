@@ -68,6 +68,12 @@ interface EnqueueResponse {
   phaseLabel: string;
   queued: number;
   total: number;
+  adaptiveDepth?: {
+    complexityTier?: string;
+    signalBasis?: string;
+    resolutionConfidence?: string;
+  };
+  omittedDeliverables?: OmittedDeliverable[];
   deliverables: Array<{
     deliverableTypeKey: string;
     documentTitle: string;
@@ -76,6 +82,14 @@ interface EnqueueResponse {
     status: "queued" | "error";
     error?: string;
   }>;
+}
+
+interface OmittedDeliverable {
+  deliverableTypeKey: string;
+  documentTitle: string;
+  applicability: string;
+  reason: string;
+  mergeInto?: string;
 }
 
 interface RunStatusResponse {
@@ -206,6 +220,14 @@ export function PhaseApproveAndBuild({
   );
   const [building, setBuilding] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [omittedDeliverables, setOmittedDeliverables] = useState<
+    OmittedDeliverable[]
+  >([]);
+  const [adaptiveSummary, setAdaptiveSummary] = useState<{
+    complexityTier?: string;
+    signalBasis?: string;
+    resolutionConfidence?: string;
+  } | null>(null);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const startedAt = useRef<number>(0);
   // Set true only while a real batch is in flight, so the settle-detection
@@ -321,6 +343,8 @@ export function PhaseApproveAndBuild({
     runInFlight.current = true;
     startedAt.current = Date.now();
     // reset rows to queued-pending
+    setOmittedDeliverables([]);
+    setAdaptiveSummary(null);
     setRows((prev) =>
       prev.map((r) => ({
         ...r,
@@ -356,13 +380,24 @@ export function PhaseApproveAndBuild({
       if (!res.ok || !Array.isArray(data.deliverables)) {
         throw new Error(data.detail ?? data.error ?? `HTTP ${res.status}`);
       }
-      for (const d of data.deliverables) {
-        patchRow(d.deliverableTypeKey, {
+      setAdaptiveSummary(data.adaptiveDepth ?? null);
+      setOmittedDeliverables(data.omittedDeliverables ?? []);
+      setRows(
+        data.deliverables.map((d) => ({
+          deliverableTypeKey: d.deliverableTypeKey,
+          documentTitle: d.documentTitle,
+          gateArtifact: d.gateArtifact,
           runId: d.runId,
           status: d.status === "error" ? "error" : "queued",
-          error: d.error,
+          progressPct: 0,
+          progressLabel: null,
+          artifactId: null,
+          blobUrl: null,
           packageReadiness: null,
-        });
+          error: d.error,
+        })),
+      );
+      for (const d of data.deliverables) {
         if (d.runId && d.status === "queued") {
           // Poll immediately for first status, then the poll loop self-schedules.
           void poll(d.deliverableTypeKey, d.runId);
@@ -371,6 +406,8 @@ export function PhaseApproveAndBuild({
     } catch (err) {
       setError(err instanceof Error ? err.message : "Approve & Build failed");
       setRows((prev) => prev.map((r) => ({ ...r, status: "idle" })));
+      setOmittedDeliverables([]);
+      setAdaptiveSummary(null);
       runInFlight.current = false;
       setBuilding(false);
       return;
@@ -386,7 +423,6 @@ export function PhaseApproveAndBuild({
     moveName,
     clientDisplayName,
     onBeforeBuild,
-    patchRow,
     poll,
   ]);
 
@@ -512,6 +548,39 @@ export function PhaseApproveAndBuild({
             <div style={{ marginTop: 6 }}>
               These items inform the next phase. They do not block this build
               unless the phase marks them as current-phase blockers.
+            </div>
+          </details>
+        )}
+        {omittedDeliverables.length > 0 && (
+          <details style={{ marginTop: 10, color: "#3D4A60" }}>
+            <summary style={{ cursor: "pointer", fontWeight: 700 }}>
+              Package adjusted: {omittedDeliverables.length} artifact
+              {omittedDeliverables.length === 1 ? "" : "s"} merged or omitted
+            </summary>
+            <div style={{ marginTop: 6 }}>
+              {adaptiveSummary?.complexityTier && (
+                <div style={{ marginBottom: 6 }}>
+                  Depth: {adaptiveSummary.complexityTier}
+                  {adaptiveSummary.resolutionConfidence
+                    ? ` · ${adaptiveSummary.resolutionConfidence} confidence`
+                    : ""}
+                  {adaptiveSummary.signalBasis
+                    ? ` · ${adaptiveSummary.signalBasis.replace(/_/g, " ")}`
+                    : ""}
+                </div>
+              )}
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                {omittedDeliverables.map((item) => (
+                  <li key={item.deliverableTypeKey}>
+                    <strong>{item.documentTitle}</strong>:{" "}
+                    {item.applicability === "merge_into_parent" &&
+                    item.mergeInto
+                      ? `merged into ${item.mergeInto.replace(/_/g, " ")}`
+                      : item.applicability.replace(/_/g, " ")}
+                    . {item.reason}
+                  </li>
+                ))}
+              </ul>
             </div>
           </details>
         )}

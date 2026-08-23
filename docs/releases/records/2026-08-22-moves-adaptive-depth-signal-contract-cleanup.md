@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Removes an unused adaptive-depth signal from the Moves artifact-depth resolver contract and adds explicit resolution-confidence metadata. The removed signal was declared and inferred, but it did not affect scoring, applicability, story-beat decisions, prompts, or generation behavior. The confidence metadata makes it visible whether a tier came from structured signals, prose inference, mixed evidence, or defaults.
+Removes an unused adaptive-depth signal from the Moves artifact-depth resolver contract and adds explicit resolution-confidence metadata. The removed signal was declared and inferred, but it did not affect scoring, applicability, story-beat decisions, prompts, or generation behavior. The confidence metadata makes it visible whether a tier came from structured signals, prose inference, mixed evidence, or defaults. The phase build panel now also displays adaptive package adjustments so omitted or parent-merged artifacts do not look like stuck queued work.
 
 ## Layer Impact
 
@@ -30,6 +30,8 @@ Removes an unused adaptive-depth signal from the Moves artifact-depth resolver c
 - Removes the unused adaptive-depth source-maturity signal from the TypeScript contract, defaults, and prose-derived signal extraction.
 - Adds `signalBasis`, `resolutionConfidence`, and confidence reasons to the adaptive-depth decision.
 - Carries the confidence metadata into the prompt so prose-inferred tiering does not look identical to structured tiering.
+- Shows adaptive package adjustments in the phase build panel when artifacts are omitted or merged.
+- Replaces optimistic all-registry rows with the actual enqueue response rows after batch creation, so omitted artifacts are not displayed as queued generated work.
 - Leaves current scoring, artifact applicability, story-beat applicability, and generated artifact selection unchanged.
 
 ## QA / Validation
@@ -37,6 +39,7 @@ Removes an unused adaptive-depth signal from the Moves artifact-depth resolver c
 Status: `passed`.
 
 - `npx jest src/lib/deliverables/__tests__/adaptive-depth.test.ts src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts --runInBand` — passed.
+- `npx jest src/components/strategic-moves/__tests__/phase-approve-and-build-settle.test.tsx --runInBand` — passed.
 - `npx eslint src/lib/deliverables/adaptive-depth.ts src/lib/deliverables/__tests__/adaptive-depth.test.ts src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts` — passed.
 - `npx tsc --noEmit --pretty false` — passed.
 
