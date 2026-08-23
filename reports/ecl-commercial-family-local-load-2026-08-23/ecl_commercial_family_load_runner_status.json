@@ -1,0 +1,28 @@
+{
+  "accepted": true,
+  "actual_azure_execution": false,
+  "actual_database_write": false,
+  "family": "vendor_contract_commercial",
+  "generated_at": "2026-08-23T13:21:17+00:00",
+  "idempotency_key": "ecl-commercial-lab-load:4fe996354d01ad01855111fecf447191",
+  "mode": "dry-run",
+  "readback_contract": "reports/ecl-commercial-lab-load-preflight-2026-08-23/ecl_commercial_lab_load_readback_contract.json",
+  "readback_expected_counts": {
+    "contract_scope": 44,
+    "contracts": 5,
+    "document_extractions": 235,
+    "documents": 55,
+    "invoice_lines": 40,
+    "service_lines": 20,
+    "sla_observations": 90,
+    "source_contract_360_rows": 5,
+    "source_event_workspace_rows": 13,
+    "source_files": 71,
+    "source_records": 589,
+    "source_value_levers_rows": 5,
+    "source_vendor_360_rows": 5
+  },
+  "run_contract": "reports/ecl-commercial-lab-load-preflight-2026-08-23/ecl_commercial_lab_load_run_contract.json",
+  "status": "runner_ready_execute_requires_gate_and_safe_target",
+  "tenant_key": "meridian-health"
+}

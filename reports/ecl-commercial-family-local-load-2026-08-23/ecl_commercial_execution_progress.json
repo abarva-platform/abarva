@@ -1,0 +1,73 @@
+{
+  "accepted": true,
+  "actual_azure_execution": false,
+  "actual_database_write": false,
+  "generated_at": "2026-08-23T13:21:17+00:00",
+  "overall_percent_complete": 34,
+  "source": "ecl_commercial_family_local_load_runner",
+  "steps": [
+    {
+      "evidence": [
+        "reports/ecl-commercial-lab-load-preflight-2026-08-23/ecl_commercial_lab_load_run_contract.json",
+        "reports/ecl-commercial-lab-load-preflight-2026-08-23/ecl_commercial_lab_load_readback_contract.json"
+      ],
+      "gate": "no_database_write_in_dry_run",
+      "name": "build_aca_data_build_job_to_contract_no_data",
+      "percent_complete": 95,
+      "status": "runner_contract_validated_locally",
+      "step": 1
+    },
+    {
+      "evidence": [
+        "reports/ecl-commercial-family-local-load-2026-08-23/ecl_commercial_family_load_runner_status.json"
+      ],
+      "gate": "database_target_must_be_local_disposable_or_lab_preprod",
+      "name": "commercial_family_load_to_lab_preprod",
+      "percent_complete": 60,
+      "status": "local_disposable_loader_ready_not_azure_executed",
+      "step": 2
+    },
+    {
+      "evidence": [
+        "reports/ecl-commercial-lab-load-preflight-2026-08-23/ecl_commercial_lab_load_readback_contract.json"
+      ],
+      "gate": "load_execution_required_before_row_for_row_readback",
+      "name": "independent_commercial_row_for_row_readback",
+      "percent_complete": 40,
+      "status": "readback_contract_validated_runner_not_executed",
+      "step": 3
+    },
+    {
+      "evidence": [],
+      "gate": "commercial_readback_parity",
+      "name": "dense_source_rooms_for_remaining_8_families",
+      "percent_complete": 0,
+      "status": "deferred_after_commercial_readback",
+      "step": 4
+    },
+    {
+      "evidence": [],
+      "gate": "all_9_local_artifacts_exist",
+      "name": "full_local_validation_across_all_9_families",
+      "percent_complete": 0,
+      "status": "deferred_after_remaining_8_dense_rooms",
+      "step": 5
+    },
+    {
+      "evidence": [],
+      "gate": "azure_data_plane_write_and_readback",
+      "name": "reload_and_readback_all_9_families",
+      "percent_complete": 0,
+      "status": "deferred_hard_gated",
+      "step": 6
+    },
+    {
+      "evidence": [],
+      "gate": "product_route_repointing_and_browser_live_claim",
+      "name": "route_browser_qa_source_first",
+      "percent_complete": 0,
+      "status": "deferred_hard_gated",
+      "step": 7
+    }
+  ]
+}
