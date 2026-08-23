@@ -96,6 +96,7 @@ jobs:
             scripts/ecl/run_commercial_contract_proof.py \
             scripts/ecl/validate_no_stop_execution_queue.py \
             scripts/ecl/validate_ecl_operator_status_report.py \
+            scripts/ecl/validate_source_360_route_readiness.py \
             scripts/ecl/validate_commercial_proof_acceptance.py \
             scripts/ecl/write_legacy_table_retirement_map.py \
             scripts/ecl/build_ecl_client_workbook_execution_package.py \
@@ -133,6 +134,7 @@ jobs:
           execution = json.loads(Path("outputs/ecl-no-stop-execution-run/execution-summary.json").read_text())
           workbook = json.loads(Path("outputs/ecl-client-workbook-execution-2026-08-23/workbook_execution_package_validation_summary.json").read_text())
           operator = json.loads(Path("outputs/ecl-no-stop-execution-run/operator-status-validation-summary.json").read_text())
+          source_route = json.loads(Path("outputs/ecl-source-route-readiness-2026-08-23/source_360_route_readiness_summary.json").read_text())
 
           failures = []
           if not execution.get("accepted"):
@@ -183,6 +185,20 @@ jobs:
             failures.append(f"operator completion percent={operator.get('completion_percent')}, expected 100")
           if operator.get("blocked_gate") != "product_route_repointing":
             failures.append(f"operator blocked gate={operator.get('blocked_gate')}, expected product_route_repointing")
+          if not source_route.get("accepted"):
+            failures.append(f"Source 360 route readiness failed: {source_route}")
+          if source_route.get("route_repointing_performed") is not False:
+            failures.append("Source 360 readiness gate must not perform route repointing")
+          if source_route.get("live_browser_proof_claimed") is not False:
+            failures.append("Source 360 readiness gate must not claim browser-live proof")
+          if source_route.get("next_gate") != "product_route_repointing":
+            failures.append(f"Source 360 next gate={source_route.get('next_gate')}, expected product_route_repointing")
+          if source_route.get("checks", {}).get("source_contract_projection_rows") != 5:
+            failures.append("Source 360 contract projection row count did not equal 5")
+          if source_route.get("checks", {}).get("source_vendor_projection_rows") != 5:
+            failures.append("Source 360 vendor projection row count did not equal 5")
+          if source_route.get("checks", {}).get("product_consumption_browser_proof_status") != "not_started":
+            failures.append("Source 360 browser proof status must remain not_started in local readiness lane")
 
           if failures:
             print("\n".join(failures), file=sys.stderr)
@@ -197,6 +213,7 @@ jobs:
               "queue_passed_slices": execution.get("passed_executable_slice_count"),
               "queue_slices": queue.get("slice_count"),
               "operator_completion_percent": operator.get("completion_percent"),
+              "source_route_readiness": source_route.get("readiness_decision"),
               "workbook_folders": workbook.get("workbook_folder_count"),
               "workbook_field_guide_rows": workbook.get("field_guide_rows"),
               "unique_table_names": summary.get("unique_table_names"),
@@ -211,6 +228,7 @@ jobs:
           tar -czf audit-artifacts/ecl-no-stop-data-pipeline/ecl-no-stop-proof.tgz \
             outputs/ecl-commercial-contract-supply-correction-2026-08-22 \
             outputs/ecl-client-workbook-execution-2026-08-23 \
+            outputs/ecl-source-route-readiness-2026-08-23 \
             outputs/ecl-no-stop-execution-run \
             outputs/ecl-no-stop-queue-validation \
             reports/ecl-legacy-table-retirement-map-2026-08-22 \
