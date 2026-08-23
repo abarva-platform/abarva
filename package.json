@@ -651,6 +651,7 @@
     "source:contract-optimization:spine:plan": "npx tsx scripts/source/project-contract-optimization-spine.ts",
     "source:contract-optimization:spine:apply": "npx tsx scripts/source/project-contract-optimization-spine.ts --apply",
     "source:contract-optimization:spine:readback": "npx tsx scripts/source/readback-contract-optimization-spine.ts",
+    "source:controlled-upload-parse-readback:proof": "npx tsx scripts/source/controlled-upload-parse-readback-proof.ts",
     "source:contract-optimization:finance-handoff:plan": "npx tsx scripts/source/request-contract-optimization-finance-handoff.ts",
     "source:contract-optimization:finance-handoff:apply": "npx tsx scripts/source/request-contract-optimization-finance-handoff.ts --apply",
     "source:contract-evidence:meridian:build": "node scripts/source/build-meridian-contract-evidence-package.mjs",
