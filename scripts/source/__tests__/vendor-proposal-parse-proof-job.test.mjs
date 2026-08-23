@@ -44,6 +44,13 @@ test("vendor proposal proof job populates source artifact timestamps when presen
   assert.match(source, /includeColumn\(args\.columns, row, "updated_at", now\)/);
 });
 
+test("vendor proposal proof job populates file cabinet JSON metadata", () => {
+  const source = read(SCRIPT_PATH);
+  assert.match(source, /includeColumn\(args\.columns, row, "missing_inputs", JSON\.stringify\(\[\]\)\)/);
+  assert.match(source, /includeColumn\(args\.columns, row, "client_complete_items", JSON\.stringify\(\[\]\)\)/);
+  assert.match(source, /includeColumn\(\s*args\.columns,\s*row,\s*"assumptions",/);
+});
+
 test("vendor proposal proof job carries rich proposal dimensions", () => {
   const source = read(SCRIPT_PATH);
   for (const label of [

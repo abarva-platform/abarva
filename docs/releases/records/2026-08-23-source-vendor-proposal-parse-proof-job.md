@@ -18,6 +18,8 @@ Second update: the live ACA retry found that `source_artifacts.created_at` is al
 
 Third update: the next live ACA retry found that `source_artifacts.generated_at` is also required in the deployed table. The proof job now writes `generated_at` from the same operator timestamp used for `created_at` and `updated_at`, preserving the strict required-column guard.
 
+Fourth update: the next live ACA retry found that `source_artifacts.missing_inputs` is also required in the deployed table. The proof job now writes the File Cabinet JSON metadata trio (`missing_inputs`, `client_complete_items`, and `assumptions`) when those columns are present, using explicit JSON values rather than relying on deployed defaults.
+
 ## Layer Impact
 
 - Release lane: `client-data-lane`.
@@ -41,6 +43,7 @@ Third update: the next live ACA retry found that `source_artifacts.generated_at`
 - `package.json` script `source:vendor-proposal-parse:proof-job`
 - Explicit `source_artifacts.version = 1` population for the controlled proof artifact.
 - Explicit `source_artifacts.generated_at`, `source_artifacts.created_at`, and `source_artifacts.updated_at` population for timestamped proof rows when those columns exist.
+- Explicit File Cabinet JSON metadata population for `source_artifacts.missing_inputs`, `source_artifacts.client_complete_items`, and `source_artifacts.assumptions` when those columns exist.
 
 ## QA / Validation
 
@@ -50,6 +53,7 @@ Third update: the next live ACA retry found that `source_artifacts.generated_at`
 - FAIL THEN FIXED: first ACA apply attempt failed before mutation because the live artifact registry required `version`; this release candidate now populates that field and pins it in the focused test.
 - FAIL THEN FIXED: second ACA apply attempt failed before mutation because the live artifact registry required `created_at`; this release candidate now populates source artifact timestamps and pins them in the focused test.
 - FAIL THEN FIXED: third ACA apply attempt failed before mutation because the live artifact registry required `generated_at`; this release candidate now populates that artifact timestamp and pins it in the focused test.
+- FAIL THEN FIXED: fourth ACA apply attempt failed before mutation because the live artifact registry required `missing_inputs`; this release candidate now populates the File Cabinet JSON metadata trio and pins it in the focused test.
 - NOT RUN: live ACA proof is required before calling the mutation path live-proven.
 
 ## Rollout Plan

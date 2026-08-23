@@ -352,6 +352,14 @@ async function upsertArtifact(args: {
   includeColumn(args.columns, row, "confidence", "high");
   includeColumn(args.columns, row, "citation_ready", true);
   includeColumn(args.columns, row, "evidence_families_used", JSON.stringify(["proposal"]));
+  includeColumn(args.columns, row, "missing_inputs", JSON.stringify([]));
+  includeColumn(args.columns, row, "client_complete_items", JSON.stringify([]));
+  includeColumn(
+    args.columns,
+    row,
+    "assumptions",
+    JSON.stringify(["Controlled proof artifact; candidate facts require human review before acceptance."]),
+  );
   includeColumn(args.columns, row, "created_by", `aca-job:${args.runId}`);
   includeColumn(args.columns, row, "lifecycle_state", "current");
 
