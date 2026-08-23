@@ -1,13 +1,109 @@
 import {
   findMissingUpstreamCodes,
   getPromptTemplate,
+  getSourceArtifactStoryContract,
+  assertSourceArtifactStoryContractCoverage,
   listSupportedGenerationCodes,
+  SOURCE_ARTIFACT_STORY_PACKAGES,
+  SOURCE_NARRATIVE_LEADER_EXECUTIVE_EDITOR_PASS,
   SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE,
 } from "../prompt-registry";
 import type { SourceGenerationContext } from "../types";
+import { SOURCE_ARTIFACT_SPECS } from "@/lib/source/canonical-specs";
 import type { SourceEventArtifactState } from "@/lib/source/canvas-substrate/types";
 
 describe("Source artifact prompt registry provider config", () => {
+  it("maps every canonical artifact into a Source decision-package story contract", () => {
+    expect(() => assertSourceArtifactStoryContractCoverage()).not.toThrow();
+
+    for (const spec of SOURCE_ARTIFACT_SPECS) {
+      const contract = getSourceArtifactStoryContract(spec.code);
+
+      expect(contract).not.toBeNull();
+      expect(contract?.artifactCode).toBe(spec.code);
+      expect(["A", "B", "C", "D", "E", "F"]).toContain(contract?.packageId);
+      expect(["narrative_leader", "companion"]).toContain(contract?.role);
+    }
+  });
+
+  it("keeps every generated artifact prompt reachable from the story contract", () => {
+    for (const code of listSupportedGenerationCodes()) {
+      const contract = getSourceArtifactStoryContract(code);
+
+      expect(contract).not.toBeNull();
+      expect(contract?.packageId).toBeTruthy();
+      expect(contract?.role).toBeTruthy();
+    }
+  });
+
+  it("lets legacy suffixed prompt keys resolve without changing the legacy prompt keys", () => {
+    expect(getSourceArtifactStoryContract("d02_value_target_legacy")).toMatchObject({
+      artifactCode: "d02_value_target",
+      packageId: "A",
+      role: "companion",
+    });
+    expect(getSourceArtifactStoryContract("d24_decision_brief_legacy")).toMatchObject({
+      artifactCode: "d24_decision_brief",
+      packageId: "D",
+      role: "narrative_leader",
+    });
+  });
+
+  it("requires narrative leaders to carry non-empty decision framing", () => {
+    const leaderContracts = SOURCE_ARTIFACT_SPECS.map((spec) =>
+      getSourceArtifactStoryContract(spec.code),
+    ).filter((contract) => contract?.role === "narrative_leader");
+
+    expect(leaderContracts.map((contract) => contract?.artifactCode)).toEqual(
+      expect.arrayContaining([
+        "d05_scope_memo",
+        "d15_response_completeness",
+        "d16_scorecard",
+        "d24_decision_brief",
+        "d27_selection_memo",
+        "d29_transition_plan",
+        "d32_value_ledger",
+      ]),
+    );
+
+    for (const contract of leaderContracts) {
+      expect(contract?.decisionSupported.trim()).toBeTruthy();
+      expect(contract?.executiveQuestion.trim()).toBeTruthy();
+    }
+  });
+
+  it("limits the executive editor pass to narrative leaders", () => {
+    const leaders = SOURCE_ARTIFACT_SPECS.map((spec) =>
+      getSourceArtifactStoryContract(spec.code),
+    )
+      .filter((contract) => contract?.role === "narrative_leader")
+      .map((contract) => contract?.artifactCode)
+      .sort();
+
+    expect(SOURCE_NARRATIVE_LEADER_EXECUTIVE_EDITOR_PASS.appliesToArtifactCodes).toEqual(
+      leaders,
+    );
+    expect(SOURCE_NARRATIVE_LEADER_EXECUTIVE_EDITOR_PASS.constraints.join(" ")).toContain(
+      "Do not rewrite companion artifacts",
+    );
+    expect(SOURCE_NARRATIVE_LEADER_EXECUTIVE_EDITOR_PASS.constraints.join(" ")).toContain(
+      "without introducing new facts",
+    );
+  });
+
+  it("keeps companion prompts from carrying package-level why-now framing verbatim", () => {
+    for (const code of listSupportedGenerationCodes()) {
+      const contract = getSourceArtifactStoryContract(code);
+      if (contract?.role !== "companion") continue;
+
+      const template = getPromptTemplate(code);
+      const packageFraming =
+        SOURCE_ARTIFACT_STORY_PACKAGES[contract.packageId].whyNowFraming;
+
+      expect(template?.systemPrompt).not.toContain(packageFraming);
+    }
+  });
+
   it("uses Anthropic Claude model ids for every generatable Source artifact", () => {
     const codes = listSupportedGenerationCodes();
 

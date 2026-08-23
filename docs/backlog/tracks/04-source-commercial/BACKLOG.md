@@ -143,6 +143,67 @@ New proof/backlog items from that result:
 
 ---
 
+## SRC49 — Source artifact decision-package story contract
+
+**Priority:** P0
+**Status:** done
+**Type:** design contract / prompt governance
+**Primary surface:** Source New Event artifacts
+**Primary agent:** Atlas
+**Dependencies:** Source artifact catalog, Source prompt registry, artifact upstream graph
+
+### Purpose
+
+Define the decision-package story contract for the 33 Source New Event artifacts so generated
+deliverables tell one executive decision story instead of 33 isolated documents.
+
+### Workflow and data requirements
+
+- Preserve the canonical artifact catalog and upstream graph.
+- Group artifacts into six decision packages:
+  - Strategy & Scope
+  - RFP & Responses
+  - Evaluation & Pricing
+  - BAFO & Executive Decision
+  - Selection & Transition
+  - Value
+- Mark only package story artifacts as `narrative_leader`; companion artifacts support evidence
+  and should not repeat full package-level narrative framing.
+- Selection and Transition remain one package with two narrative beats: selection decision and
+  transition authorization.
+- Add an executive-editor pass contract for narrative leaders only. It may improve executive
+  flow and resolve contradictions by naming evidence, but it must not invent facts or rewrite
+  companion artifacts.
+
+### Acceptance criteria
+
+- Every canonical artifact code resolves to a package and role.
+- Every narrative leader has non-empty decision framing.
+- Legacy suffixed prompt keys resolve through the same base contract without changing legacy keys.
+- Companion prompts do not carry package-level why-now framing verbatim.
+- Tests guard the contract against catalog and prompt drift.
+- No tenant data, production artifacts, runtime routes, migrations, or live generation behavior are
+  changed by this slice.
+
+### Codex-ready slice prompt
+
+```text
+Implement SRC49 — Source artifact decision-package story contract.
+
+Scope:
+Add a typed story contract to the Source prompt registry that maps each canonical artifact to one
+of six decision packages and either narrative_leader or companion. Add an executive-editor pass
+contract for narrative leaders only. Preserve the existing upstream graph, evidence binding,
+legacy prompt keys, and runtime generation behavior.
+
+Validation:
+Add prompt-reachability tests that prove every canonical artifact resolves to a package/role,
+narrative leaders carry decision framing, legacy prompt keys resolve to their base contract, and
+companions do not repeat package-level why-now framing verbatim.
+```
+
+---
+
 ## SRC47 — Source event archive and stale fact cleanup
 
 **Priority:** P0
