@@ -26,7 +26,8 @@ from typing import Any
 from openpyxl import load_workbook
 
 
-DEFAULT_PACKAGE_ZIP = Path("/Users/anand/Downloads/meridian-v2-2-2b-semantic-mapping-pilot-20260822-092150.zip")
+ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_PACKAGE_ZIP = ROOT / "fixtures/ecl/source-workbooks/meridian-v2-2-2b-semantic-mapping-pilot-20260822-092150.zip"
 DEFAULT_OUT_DIR = Path("reports/source-excel-raw-landing-2026-08-23")
 
 EXPECTED_WORKBOOKS: dict[str, dict[str, str]] = {

@@ -72,6 +72,9 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Install Python workbook dependency
+        run: python3 -m pip install openpyxl
+
       - name: Install disposable Postgres tooling
         shell: bash
         run: |
@@ -93,20 +96,19 @@ jobs:
         run: |
           python3 -m py_compile \
             scripts/ecl/run_no_stop_execution_queue.py \
-            scripts/ecl/build_commercial_contract_slice.py \
-            scripts/ecl/run_commercial_contract_proof.py \
             scripts/ecl/validate_no_stop_execution_queue.py \
             scripts/ecl/validate_ecl_operator_status_report.py \
-            scripts/ecl/validate_source_360_route_readiness.py \
-            scripts/ecl/validate_commercial_proof_acceptance.py \
-            scripts/ecl/write_commercial_client_extraction_mapping.py \
-            scripts/ecl/write_commercial_field_lineage.py \
-            scripts/ecl/write_commercial_product_consumption_mapping.py \
-            scripts/ecl/write_commercial_proof_bundle_manifest.py \
-            scripts/ecl/write_source_360_page_fact_contract.py \
-            scripts/ecl/write_legacy_table_retirement_map.py \
-            scripts/ecl/build_ecl_client_workbook_execution_package.py \
-            scripts/ecl/validate_ecl_client_workbook_execution_package.py
+            scripts/ecl/land_source_excel_workbooks.py \
+            scripts/ecl/validate_source_excel_raw_landing.py \
+            scripts/ecl/generate_dense_source_room_extracts.py \
+            scripts/ecl/validate_dense_source_room_extracts.py \
+            scripts/ecl/write_dense_source_room_ecl_producer_coverage.py \
+            scripts/ecl/load_dense_source_room_source_layer.py \
+            scripts/ecl/load_dense_source_room_context_layer.py \
+            scripts/ecl/load_dense_source_room_commercial_layer.py \
+            scripts/ecl/load_dense_source_room_review_layer.py \
+            scripts/ecl/load_dense_source_room_source_projection_layer.py \
+            scripts/ecl/load_dense_source_room_cube_layer.py
 
       - name: Run no-stop ECL execution queue
         env:
@@ -119,133 +121,203 @@ jobs:
         run: |
           python3 scripts/ecl/validate_ecl_operator_status_report.py
 
-      - name: Assert queue execution, proof acceptance, and retirement-map counts
+      - name: Assert dense all-layer local proof counts
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import csv
           import json
           import sys
           from pathlib import Path
 
-          proof_dir = Path("outputs/ecl-commercial-contract-supply-correction-2026-08-22")
-          acceptance = json.loads((proof_dir / "commercial_proof_acceptance_summary.json").read_text())
-          manifest = json.loads((proof_dir / "proof_bundle_manifest.json").read_text())
+          def read(path):
+              return json.loads(Path(path).read_text())
 
-          report_dir = Path("reports/ecl-legacy-table-retirement-map-2026-08-22")
-          summary = json.loads((report_dir / "legacy_table_retirement_summary.json").read_text())
-          rows = list(csv.DictReader((report_dir / "legacy_table_retirement_map.csv").open()))
-          queue = json.loads(Path("outputs/ecl-no-stop-queue-validation/validation-summary.json").read_text())
-          execution = json.loads(Path("outputs/ecl-no-stop-execution-run/execution-summary.json").read_text())
-          workbook = json.loads(Path("outputs/ecl-client-workbook-execution-2026-08-23/workbook_execution_package_validation_summary.json").read_text())
-          operator = json.loads(Path("outputs/ecl-no-stop-execution-run/operator-status-validation-summary.json").read_text())
-          source_route = json.loads(Path("outputs/ecl-source-route-readiness-2026-08-23/source_360_route_readiness_summary.json").read_text())
-          source_page_contract = json.loads((proof_dir / "source_360_page_fact_contract_summary.json").read_text())
+          queue = read('outputs/ecl-no-stop-queue-validation/validation-summary.json')
+          execution = read('outputs/ecl-no-stop-execution-run/execution-summary.json')
+          operator = read('outputs/ecl-no-stop-execution-run/operator-status-validation-summary.json')
+          raw = read('reports/source-excel-raw-landing-2026-08-23/source_excel_raw_landing_summary.json')
+          dense = read('outputs/source-room-depth-catchup-2026-08-23/dense_source_room_summary.json')
+          producers = read('reports/ecl-source-room-producer-coverage-2026-08-23/ecl_source_room_producer_coverage_summary.json')
+          source = read('reports/ecl-dense-source-layer-local-load-2026-08-23/dense_source_room_ecl_source_load_summary.json')
+          context = read('reports/ecl-dense-context-layer-local-load-2026-08-23/dense_source_room_ecl_context_load_summary.json')
+          commercial = read('reports/ecl-dense-commercial-layer-local-load-2026-08-23/dense_source_room_ecl_commercial_load_summary.json')
+          review = read('reports/ecl-dense-review-layer-local-load-2026-08-23/dense_source_room_ecl_review_load_summary.json')
+          projection = read('reports/ecl-dense-source-projection-local-load-2026-08-23/dense_source_room_ecl_source_projection_load_summary.json')
+          cube = read('reports/ecl-dense-cube-layer-local-load-2026-08-23/dense_source_room_ecl_cube_load_summary.json')
 
           failures = []
-          if not execution.get("accepted"):
-            failures.append(f"queue execution failed: {execution}")
-          if execution.get("passed_executable_slice_count") != execution.get("executable_slice_count"):
-            failures.append(
-              f"queue executed {execution.get('passed_executable_slice_count')} of {execution.get('executable_slice_count')} executable slices"
-            )
-          if not acceptance.get("accepted"):
-            failures.append(f"commercial proof not accepted: {acceptance}")
-          if acceptance.get("issue_count") != 0:
-            failures.append(f"commercial proof issue_count={acceptance.get('issue_count')}")
-          if len(manifest.get("artifact_hashes", [])) != 31:
-            failures.append(f"artifact hash count={len(manifest.get('artifact_hashes', []))}, expected 31")
-          if len(manifest.get("source_room_hashes", [])) != 71:
-            failures.append(f"source-room hash count={len(manifest.get('source_room_hashes', []))}, expected 71")
-          if not source_page_contract.get("accepted"):
-            failures.append(f"Source 360 page fact contract failed: {source_page_contract}")
-          if source_page_contract.get("rows") != 14:
-            failures.append(f"Source 360 page fact rows={source_page_contract.get('rows')}, expected 14")
-          if source_page_contract.get("supplied_rows") != 14:
-            failures.append(f"Source 360 supplied page facts={source_page_contract.get('supplied_rows')}, expected 14")
-          if source_page_contract.get("missing_projection_rows") != 0:
-            failures.append(f"Source 360 missing-projection page facts={source_page_contract.get('missing_projection_rows')}, expected 0")
-          if summary.get("create_table_statements") != 897:
-            failures.append(f"CREATE TABLE count={summary.get('create_table_statements')}, expected 897")
-          if summary.get("unique_table_names") != 736:
-            failures.append(f"unique table count={summary.get('unique_table_names')}, expected 736")
-          required_columns = {
-              "owner_to_confirm",
-              "live_readback_required",
-              "parity_target",
-              "deletion_authorization_required",
+          if not queue.get('accepted'):
+              failures.append(f'queue validation failed: {queue}')
+          if queue.get('slice_count') != 16:
+              failures.append(f'queue slice count={queue.get("slice_count")}, expected 16')
+          if queue.get('auto_proceed_slice_count') != 12:
+              failures.append(f'auto-proceed slices={queue.get("auto_proceed_slice_count")}, expected 12')
+          if queue.get('blocked_slice_count') != 4:
+              failures.append(f'hard-gated slices={queue.get("blocked_slice_count")}, expected 4')
+          if not execution.get('accepted'):
+              failures.append(f'queue execution failed: {execution}')
+          if execution.get('passed_executable_slice_count') != 12 or execution.get('executable_slice_count') != 12:
+              failures.append(f'executable slices={execution.get("passed_executable_slice_count")}/{execution.get("executable_slice_count")}, expected 12/12')
+          if not operator.get('accepted'):
+              failures.append(f'operator status failed: {operator}')
+          if operator.get('completion_percent') != 100:
+              failures.append(f'operator completion={operator.get("completion_percent")}, expected 100')
+
+          raw_expected = {
+              'expected_workbooks': 14,
+              'landed_workbooks': 14,
+              'source_room_extracts': 12,
+              'traceability_rows': 2749,
+              'blocking_gaps': 0,
           }
-          if rows and not required_columns.issubset(rows[0].keys()):
-            failures.append("retirement map is missing execution columns")
-          if not queue.get("accepted"):
-            failures.append(f"queue validation failed: {queue}")
-          if queue.get("auto_proceed_slice_count", 0) < 1:
-            failures.append("queue validation found no auto-proceed slices")
-          if queue.get("blocked_slice_count", 0) < 1:
-            failures.append("queue validation found no hard-gate blocked slices")
-          if not workbook.get("accepted"):
-            failures.append(f"workbook execution package failed validation: {workbook}")
-          if workbook.get("workbook_folder_count") != 8:
-            failures.append(f"workbook folder count={workbook.get('workbook_folder_count')}, expected 8")
-          if workbook.get("field_guide_rows", 0) < 75:
-            failures.append(f"workbook field-guide rows={workbook.get('field_guide_rows')}, expected at least 75")
-          if workbook.get("example_rows") != 9:
-            failures.append(f"workbook example rows={workbook.get('example_rows')}, expected 9")
-          if workbook.get("source_extract_recipes") != 9:
-            failures.append(f"workbook source extract recipes={workbook.get('source_extract_recipes')}, expected 9")
-          if not operator.get("accepted"):
-            failures.append(f"operator status report failed validation: {operator}")
-          if operator.get("completion_percent") != 100:
-            failures.append(f"operator completion percent={operator.get('completion_percent')}, expected 100")
-          if operator.get("blocked_gate") != "product_route_repointing":
-            failures.append(f"operator blocked gate={operator.get('blocked_gate')}, expected product_route_repointing")
-          if not source_route.get("accepted"):
-            failures.append(f"Source 360 route readiness failed: {source_route}")
-          if source_route.get("route_repointing_performed") is not False:
-            failures.append("Source 360 readiness gate must not perform route repointing")
-          if source_route.get("live_browser_proof_claimed") is not False:
-            failures.append("Source 360 readiness gate must not claim browser-live proof")
-          if source_route.get("next_gate") != "product_route_repointing":
-            failures.append(f"Source 360 next gate={source_route.get('next_gate')}, expected product_route_repointing")
-          if source_route.get("checks", {}).get("source_contract_projection_rows") != 5:
-            failures.append("Source 360 contract projection row count did not equal 5")
-          if source_route.get("checks", {}).get("source_vendor_projection_rows") != 5:
-            failures.append("Source 360 vendor projection row count did not equal 5")
-          if source_route.get("checks", {}).get("source_value_levers_projection_rows") != 5:
-            failures.append("Source 360 value levers projection row count did not equal 5")
-          if source_route.get("checks", {}).get("source_event_workspace_projection_rows") != 13:
-            failures.append("Source 360 event workspace projection row count did not equal 13")
-          if source_route.get("checks", {}).get("source_event_workspace_event_rows") != 5:
-            failures.append("Source 360 event workspace event row count did not equal 5")
-          if source_route.get("checks", {}).get("source_event_workspace_approval_rows") != 5:
-            failures.append("Source 360 event workspace approval row count did not equal 5")
-          if source_route.get("checks", {}).get("source_event_workspace_compare_rows") != 3:
-            failures.append("Source 360 event workspace compare row count did not equal 3")
-          if source_route.get("checks", {}).get("product_consumption_browser_proof_status") != "not_started":
-            failures.append("Source 360 browser proof status must remain not_started in local readiness lane")
+          for key, expected in raw_expected.items():
+              if raw.get(key) != expected:
+                  failures.append(f'raw {key}={raw.get(key)}, expected {expected}')
+
+          dense_expected = {
+              'extract_count': 14,
+              'row_count': 7080,
+              'field_dictionary_rows': 231,
+          }
+          for key, expected in dense_expected.items():
+              if dense.get(key) != expected:
+                  failures.append(f'dense {key}={dense.get(key)}, expected {expected}')
+          if dense.get('client_attestation_state') != 'not_client_attested':
+              failures.append('dense source room must remain not_client_attested')
+
+          producer_expected = {
+              'table_count': 28,
+              'source_family_count': 14,
+              'dense_source_rows': 7080,
+              'source_supplied_tables': 11,
+              'partial_source_supplied_tables': 3,
+              'downstream_builder_required_tables': 14,
+              'missing_core_producer_count': 0,
+          }
+          for key, expected in producer_expected.items():
+              if producers.get(key) != expected:
+                  failures.append(f'producer {key}={producers.get(key)}, expected {expected}')
+
+          source_readback = source.get('readback', {})
+          source_expected = {
+              'source_file': 14,
+              'source_record': 7080,
+              'document': 720,
+              'document_extraction': 250,
+              'extraction_distinct_spans': 250,
+              'client_attested_rows': 0,
+          }
+          for key, expected in source_expected.items():
+              if source_readback.get(key) != expected:
+                  failures.append(f'source readback {key}={source_readback.get(key)}, expected {expected}')
+
+          context_readback = context.get('readback', {})
+          context_expected = {
+              'object': 3602,
+              'application': 750,
+              'application_deployment': 1650,
+              'vendor': 215,
+              'data_platform': 104,
+              'infrastructure': 220,
+              'relationship': 8297,
+              'deployment_of': 1650,
+              'hosted_on': 1650,
+              'integrates_with': 672,
+              'metric_definition': 127,
+              'measure': 13190,
+              'relationship_endpoint_drift': 0,
+              'measure_metric_drift': 0,
+          }
+          for key, expected in context_expected.items():
+              if context_readback.get(key) != expected:
+                  failures.append(f'context readback {key}={context_readback.get(key)}, expected {expected}')
+
+          commercial_readback = commercial.get('readback', {})
+          commercial_expected = {
+              'contract': 230,
+              'contract_service_line': 230,
+              'contract_scope': 690,
+              'invoice_line': 480,
+              'sla_observation': 260,
+              'contract_vendor_drift': 0,
+              'contract_scope_object_drift': 0,
+              'sla_metric_drift': 0,
+          }
+          for key, expected in commercial_expected.items():
+              if commercial_readback.get(key) != expected:
+                  failures.append(f'commercial readback {key}={commercial_readback.get(key)}, expected {expected}')
+
+          review_readback = review.get('readback', {})
+          review_expected = {
+              'review_event': 658,
+              'review_contract_subjects': 277,
+              'review_invoice_subjects': 120,
+              'review_sla_subjects': 260,
+              'review_context_pack_subjects': 1,
+              'review_source_record_drift': 0,
+              'review_contract_drift': 0,
+              'review_invoice_drift': 0,
+              'review_sla_drift': 0,
+          }
+          for key, expected in review_expected.items():
+              if review_readback.get(key) != expected:
+                  failures.append(f'review readback {key}={review_readback.get(key)}, expected {expected}')
+
+          projection_readback = projection.get('readback', {})
+          projection_expected = {
+              'projection_manifest': 4,
+              'source_contract_360': 230,
+              'source_vendor_360': 214,
+              'source_value_levers': 230,
+              'source_event_workspace': 173,
+              'source_value_claimable_rows': 0,
+              'source_value_gated_rows': 230,
+              'contract_projection_contract_drift': 0,
+              'vendor_projection_vendor_drift': 0,
+              'value_lever_metric_drift': 0,
+              'event_review_drift': 0,
+              'event_rows_without_evidence_payload': 0,
+          }
+          for key, expected in projection_expected.items():
+              if projection_readback.get(key) != expected:
+                  failures.append(f'projection readback {key}={projection_readback.get(key)}, expected {expected}')
+
+          cube_readback = cube.get('readback', {})
+          cube_expected = {
+              'cube_manifest': 9,
+              'cube_slice': 29,
+              'cube_slice_metric': 103,
+              'cube_slice_measure': 4320,
+              'cube_key_count': 9,
+              'cube_metric_drift': 0,
+              'cube_measure_drift': 0,
+              'json_metric_without_fk': 0,
+              'blocked_without_gap': 0,
+          }
+          for key, expected in cube_expected.items():
+              if cube_readback.get(key) != expected:
+                  failures.append(f'cube readback {key}={cube_readback.get(key)}, expected {expected}')
+
+          for label, summary in [('context', context), ('commercial', commercial), ('review', review), ('projection', projection), ('cube', cube)]:
+              if any(not row.get('rejected') for row in summary.get('planted_failures', [])):
+                  failures.append(f'{label} planted failure did not reject')
 
           if failures:
-            print("\n".join(failures), file=sys.stderr)
-            sys.exit(1)
+              print('\n'.join(failures), file=sys.stderr)
+              sys.exit(1)
 
           print(json.dumps({
-              "accepted": acceptance.get("accepted"),
-              "artifact_hashes": len(manifest.get("artifact_hashes", [])),
-              "source_room_hashes": len(manifest.get("source_room_hashes", [])),
-              "create_table_statements": summary.get("create_table_statements"),
-              "queue_executable_slices": execution.get("executable_slice_count"),
-              "queue_passed_slices": execution.get("passed_executable_slice_count"),
-              "queue_slices": queue.get("slice_count"),
-              "operator_completion_percent": operator.get("completion_percent"),
-              "source_route_readiness": source_route.get("readiness_decision"),
-              "source_360_page_fact_rows": source_page_contract.get("rows"),
-              "source_360_page_fact_supplied_rows": source_page_contract.get("supplied_rows"),
-              "source_360_page_fact_missing_projection_rows": source_page_contract.get("missing_projection_rows"),
-              "source_event_workspace_projection_rows": source_route.get("checks", {}).get("source_event_workspace_projection_rows"),
-              "workbook_folders": workbook.get("workbook_folder_count"),
-              "workbook_field_guide_rows": workbook.get("field_guide_rows"),
-              "unique_table_names": summary.get("unique_table_names"),
+              'queue_slices': queue.get('slice_count'),
+              'queue_passed': execution.get('passed_executable_slice_count'),
+              'raw_workbooks': raw.get('landed_workbooks'),
+              'dense_source_rows': dense.get('row_count'),
+              'context_objects': context_readback.get('object'),
+              'relationships': context_readback.get('relationship'),
+              'contracts': commercial_readback.get('contract'),
+              'source_contract_360': projection_readback.get('source_contract_360'),
+              'cube_keys': cube_readback.get('cube_key_count'),
+              'hard_gates': queue.get('blocked_slice_count'),
           }, indent=2, sort_keys=True))
           PY
 
@@ -255,15 +327,18 @@ jobs:
           set -euo pipefail
           mkdir -p audit-artifacts/ecl-no-stop-data-pipeline
           tar -czf audit-artifacts/ecl-no-stop-data-pipeline/ecl-no-stop-proof.tgz \
-            outputs/ecl-commercial-contract-supply-correction-2026-08-22 \
-            outputs/ecl-client-workbook-execution-2026-08-23 \
-            outputs/ecl-source-route-readiness-2026-08-23 \
+            reports/source-excel-raw-landing-2026-08-23 \
+            outputs/source-room-depth-catchup-2026-08-23 \
+            reports/ecl-source-room-producer-coverage-2026-08-23 \
+            reports/ecl-dense-source-layer-local-load-2026-08-23 \
+            reports/ecl-dense-context-layer-local-load-2026-08-23 \
+            reports/ecl-dense-commercial-layer-local-load-2026-08-23 \
+            reports/ecl-dense-review-layer-local-load-2026-08-23 \
+            reports/ecl-dense-source-projection-local-load-2026-08-23 \
+            reports/ecl-dense-cube-layer-local-load-2026-08-23 \
             outputs/ecl-no-stop-execution-run \
             outputs/ecl-no-stop-queue-validation \
-            reports/ecl-legacy-table-retirement-map-2026-08-22 \
-            docs/architecture/ECL_NO_STOP_EXECUTION_QUEUE_2026_08_22.md \
-            docs/architecture/ecl-no-stop-execution-queue.json \
-            docs/architecture/ECL_LAYER_CUBE_EXECUTION_TRACKER_2026_08_22.md
+            docs/architecture/ecl-no-stop-execution-queue.json
           shasum -a 256 audit-artifacts/ecl-no-stop-data-pipeline/ecl-no-stop-proof.tgz \
             | tee audit-artifacts/ecl-no-stop-data-pipeline/ecl-no-stop-proof.sha256
 

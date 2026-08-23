@@ -1,10 +1,10 @@
 {
-  "version": 1,
+  "version": 2,
   "queue_id": "ecl-no-stop-execution-queue",
   "updated_on": "2026-08-23",
-  "purpose": "Drive ordered local ECL proof execution without reopening approval for every non-mutating slice.",
+  "purpose": "Drive ordered local ECL proof execution for the dense 14-workbook / 9-source-family chain without reopening approval for every non-mutating slice.",
   "authority": {
-    "auto_proceed_scope": "Local proof, static report generation, validator output, PR creation, PR merge after explicit workflow input, and ACA-main-deploy handoff after merge.",
+    "auto_proceed_scope": "Local source-room generation, static report generation, disposable-Postgres validation, PR creation/merge in the repo lane, and status reporting. Runtime/data-plane/product-route actions remain hard-gated.",
     "not_authorized_here": [
       "Azure data-plane writes",
       "database migrations against shared environments",
@@ -44,231 +44,181 @@
   "slices": [
     {
       "order": 1,
-      "slice_id": "commercial_contract_source_room_proof",
+      "slice_id": "source_excel_raw_landing",
       "status": "done",
-      "percent_complete": 65,
+      "percent_complete": 100,
       "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/run_commercial_contract_proof.py",
+      "proof_command": "npm run ecl:source-excel-raw:land",
       "evidence_paths": [
-        "scripts/ecl/run_commercial_contract_proof.py",
-        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/commercial_proof_acceptance_summary.json",
-        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/proof_bundle_manifest.json"
+        "scripts/ecl/land_source_excel_workbooks.py",
+        "fixtures/ecl/source-workbooks/meridian-v2-2-2b-semantic-mapping-pilot-20260822-092150.zip",
+        "reports/source-excel-raw-landing-2026-08-23/source_excel_raw_landing_summary.json",
+        "reports/source-excel-raw-landing-2026-08-23/source_excel_workbook_inventory.csv",
+        "reports/source-excel-raw-landing-2026-08-23/source_excel_gap_register.csv",
+        "reports/source-excel-raw-landing-2026-08-23/SOURCE_EXCEL_RAW_LANDING_REPORT.md"
       ],
-      "next_auto_action": "Generalize proof-runner patterns across the next ECL builder slice.",
-      "stop_gate": "Azure load, migration, product repointing, or browser-live claim."
+      "next_auto_action": "Validate the landed v2.2.2b package as raw Layer 1 evidence, not product truth.",
+      "stop_gate": "Replacing client-facing workbook packages in Azure."
     },
     {
       "order": 2,
-      "slice_id": "legacy_table_retirement_pressure_map",
+      "slice_id": "source_excel_raw_validation",
       "status": "done",
-      "percent_complete": 45,
+      "percent_complete": 100,
       "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/write_legacy_table_retirement_map.py",
+      "proof_command": "npm run ecl:source-excel-raw:validate",
       "evidence_paths": [
-        "scripts/ecl/write_legacy_table_retirement_map.py",
-        "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_summary.json",
-        "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_map.csv"
+        "scripts/ecl/validate_source_excel_raw_landing.py",
+        "reports/source-excel-raw-landing-2026-08-23/source_excel_raw_landing_summary.json",
+        "reports/source-excel-raw-landing-2026-08-23/source_excel_gap_register.csv"
       ],
-      "next_auto_action": "Add owner/readback/parity detail as evidence becomes available.",
-      "stop_gate": "Live Azure DB readback or retirement authorization."
-    },
-    {
-      "order": 3,
-      "slice_id": "client_extraction_mapping_extension",
-      "status": "queued",
-      "percent_complete": 25,
-      "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/write_commercial_client_extraction_mapping.py",
-      "evidence_paths": [
-        "scripts/ecl/write_commercial_client_extraction_mapping.py",
-        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/commercial_client_extraction_mapping.csv"
-      ],
-      "next_auto_action": "Extend extraction-map shape to CMDB, budget/spend, data and analytics volumetrics, AI usage, interviews, infrastructure/cloud, and program portfolio.",
-      "stop_gate": "Replacing client-facing template packages in Azure."
-    },
-    {
-      "order": 4,
-      "slice_id": "dense_meridian_requirements",
-      "status": "queued",
-      "percent_complete": 20,
-      "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/write_commercial_scope_dense_requirements.py",
-      "evidence_paths": [
-        "scripts/ecl/write_commercial_scope_dense_requirements.py",
-        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/commercial_scope_dense_meridian_required_additions.csv"
-      ],
-      "next_auto_action": "Generate dense source-room requirements from product deterministic needs and commercial scope gaps.",
-      "stop_gate": "Active tenant source replacement."
-    },
-    {
-      "order": 5,
-      "slice_id": "product_consumption_fact_contracts",
-      "status": "queued",
-      "percent_complete": 30,
-      "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/write_commercial_product_consumption_mapping.py",
-      "evidence_paths": [
-        "scripts/ecl/write_commercial_product_consumption_mapping.py",
-        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/commercial_product_consumption_mapping.csv"
-      ],
-      "next_auto_action": "Produce page-by-page deterministic fact contracts for first Source and Tower consumer surfaces.",
-      "stop_gate": "Product route repointing or deployed browser-live claim."
-    },
-    {
-      "order": 6,
-      "slice_id": "builder_quality_gate_generalization",
-      "status": "queued",
-      "percent_complete": 20,
-      "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/validate_commercial_proof_acceptance.py",
-      "evidence_paths": [
-        "scripts/ecl/validate_commercial_proof_acceptance.py",
-        "scripts/ecl/validate_commercial_source_room.py",
-        "scripts/ecl/validate_commercial_document_quality.py"
-      ],
-      "next_auto_action": "Factor reusable acceptance, lineage, bad-row, source-room, and document-quality gates for additional builders.",
-      "stop_gate": "Migration or ACA data-build execution."
-    },
-    {
-      "order": 7,
-      "slice_id": "source_360_client_language_cleanup",
-      "status": "queued",
-      "percent_complete": 35,
-      "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/render_source_360_contract_preview.py --contract-id MER-CTR-RCM-001",
-      "evidence_paths": [
-        "scripts/ecl/render_source_360_contract_preview.py",
-        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/source_360_static_preview/mer-ctr-rcm-001-source-360-preview.html",
-        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/source_360_static_preview/mer-ctr-rcm-001-source-360-preview-qa.json"
-      ],
-      "next_auto_action": "Replace builder/process vocabulary in rendered Source 360 preview with client-facing commercial language.",
-      "stop_gate": "Product route repointing or deployed browser-live claim."
-    },
-    {
-      "order": 8,
-      "slice_id": "source_360_weak_contract_preview",
-      "status": "queued",
-      "percent_complete": 35,
-      "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/render_source_360_contract_preview.py --contract-id MER-CTR-SSO-BPO-001 --require-weak-contract",
-      "evidence_paths": [
-        "scripts/ecl/render_source_360_contract_preview.py",
-        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/source_360_static_preview/mer-ctr-sso-bpo-001-source-360-preview.html",
-        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/source_360_static_preview/mer-ctr-sso-bpo-001-source-360-preview-qa.json"
-      ],
-      "next_auto_action": "Render the deliberately weak contract preview so Source 360 proves it finds leverage loss, not only a healthy contract.",
-      "stop_gate": "Product route repointing or deployed browser-live claim."
-    },
-    {
-      "order": 9,
-      "slice_id": "commercial_document_grammar_gate",
-      "status": "queued",
-      "percent_complete": 35,
-      "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/validate_commercial_document_quality.py",
-      "evidence_paths": [
-        "scripts/ecl/validate_commercial_document_quality.py",
-        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/commercial_document_quality_summary.json",
-        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/commercial_document_quality_issues.csv"
-      ],
-      "next_auto_action": "Add document prose grammar/lookup checks for the known repeated grammar defects before dense generation scales them.",
-      "stop_gate": "Active tenant source replacement or dense document promotion."
-    },
-    {
-      "order": 10,
-      "slice_id": "ecl_cross_family_client_extraction_mapping",
-      "status": "queued",
-      "percent_complete": 25,
-      "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/write_ecl_client_extraction_mapping.py",
-      "evidence_paths": [
-        "scripts/ecl/write_ecl_client_extraction_mapping.py",
-        "outputs/ecl-next-slice-planning-2026-08-23/ecl_client_extraction_mapping.csv",
-        "outputs/ecl-next-slice-planning-2026-08-23/ecl_client_extraction_mapping_summary.json"
-      ],
-      "next_auto_action": "Use the owner/source/grain/join/gate map to design practical client workbook folders without asking for exhaustive inventories.",
-      "stop_gate": "Replacing client-facing workbook packages in Azure."
-    },
-    {
-      "order": 11,
-      "slice_id": "ecl_dense_source_room_requirements",
-      "status": "queued",
-      "percent_complete": 25,
-      "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/write_ecl_dense_source_room_requirements.py",
-      "evidence_paths": [
-        "scripts/ecl/write_ecl_dense_source_room_requirements.py",
-        "outputs/ecl-next-slice-planning-2026-08-23/ecl_dense_source_room_requirements.csv",
-        "outputs/ecl-next-slice-planning-2026-08-23/ecl_dense_source_room_requirements_summary.json"
-      ],
-      "next_auto_action": "Use the dense requirements to drive synthetic generation and source-room gap tracking without mutating active tenant inputs.",
-      "stop_gate": "Active tenant source replacement or dense synthetic package promotion."
-    },
-    {
-      "order": 12,
-      "slice_id": "ecl_product_deterministic_fact_contracts",
-      "status": "queued",
-      "percent_complete": 25,
-      "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/write_ecl_product_fact_contracts.py",
-      "evidence_paths": [
-        "scripts/ecl/write_ecl_product_fact_contracts.py",
-        "outputs/ecl-next-slice-planning-2026-08-23/ecl_product_deterministic_fact_contracts.csv",
-        "outputs/ecl-next-slice-planning-2026-08-23/ecl_product_deterministic_fact_contracts_summary.json"
-      ],
-      "next_auto_action": "Use product fact contracts as the page-by-page basis before building workbook fields, adapters, cubes, or projections.",
-      "stop_gate": "Product route repointing or deployed browser-live claim."
-    },
-    {
-      "order": 13,
-      "slice_id": "ecl_next_slice_acceptance_gate",
-      "status": "queued",
-      "percent_complete": 25,
-      "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/validate_ecl_next_slice_acceptance.py",
-      "evidence_paths": [
-        "scripts/ecl/validate_ecl_next_slice_acceptance.py",
-        "outputs/ecl-next-slice-planning-2026-08-23/ecl_next_slice_acceptance_summary.json",
-        "outputs/ecl-next-slice-planning-2026-08-23/ecl_next_slice_acceptance_issues.csv"
-      ],
-      "next_auto_action": "Keep the next source-room/workbook design falsifiable: all families and products mapped, partial behavior explicit, overcollection language rejected.",
+      "next_auto_action": "Generate dense realistic source-room extracts because the raw workbook package is mapping-depth, not estate-depth.",
       "stop_gate": "None while validation remains local and report-only."
     },
     {
-      "order": 14,
-      "slice_id": "ecl_client_workbook_execution_package",
-      "status": "queued",
-      "percent_complete": 25,
+      "order": 3,
+      "slice_id": "dense_source_room_generation",
+      "status": "done",
+      "percent_complete": 100,
       "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/build_ecl_client_workbook_execution_package.py",
+      "proof_command": "npm run ecl:source-room-dense:generate",
       "evidence_paths": [
-        "scripts/ecl/build_ecl_client_workbook_execution_package.py",
-        "outputs/ecl-client-workbook-execution-2026-08-23/workbook_folder_manifest.csv",
-        "outputs/ecl-client-workbook-execution-2026-08-23/workbook_execution_package_summary.json"
+        "scripts/ecl/generate_dense_source_room_extracts.py",
+        "outputs/source-room-depth-catchup-2026-08-23/dense_source_room_summary.json",
+        "outputs/source-room-depth-catchup-2026-08-23/dense_source_room_manifest.csv",
+        "outputs/source-room-depth-catchup-2026-08-23/dense_source_room_field_dictionary.csv",
+        "outputs/source-room-depth-catchup-2026-08-23/DENSE_SOURCE_ROOM_CATCHUP_REPORT.md"
       ],
-      "next_auto_action": "Use the generated workbook folders as the practical client-execution design before any client-facing workbook package replacement.",
-      "stop_gate": "Replacing client-facing workbook packages in Azure."
+      "next_auto_action": "Validate family floors, realism gates, topology convergence, and no fake client attestation.",
+      "stop_gate": "Active tenant source replacement."
     },
     {
-      "order": 15,
-      "slice_id": "ecl_client_workbook_execution_validation",
-      "status": "queued",
-      "percent_complete": 25,
+      "order": 4,
+      "slice_id": "dense_source_room_validation",
+      "status": "done",
+      "percent_complete": 100,
       "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/validate_ecl_client_workbook_execution_package.py",
+      "proof_command": "npm run ecl:source-room-dense:validate",
       "evidence_paths": [
-        "scripts/ecl/validate_ecl_client_workbook_execution_package.py",
-        "outputs/ecl-client-workbook-execution-2026-08-23/workbook_execution_package_validation_summary.json",
-        "outputs/ecl-client-workbook-execution-2026-08-23/workbook_execution_package_validation_issues.csv"
+        "scripts/ecl/validate_dense_source_room_extracts.py",
+        "outputs/source-room-depth-catchup-2026-08-23/dense_source_room_summary.json",
+        "outputs/source-room-depth-catchup-2026-08-23/dense_source_room_manifest.csv",
+        "outputs/source-room-depth-catchup-2026-08-23/dense_source_room_field_dictionary.csv"
       ],
-      "next_auto_action": "Keep workbook-folder fillability, examples, extract recipes, partial behavior, and product coverage falsifiable before package generation scales.",
-      "stop_gate": "Replacing client-facing workbook packages in Azure."
+      "next_auto_action": "Map dense source families to ECL table producers before loading local layers.",
+      "stop_gate": "None while validation remains local and report-only."
     },
     {
-      "order": 16,
+      "order": 5,
+      "slice_id": "dense_source_room_producer_coverage",
+      "status": "done",
+      "percent_complete": 100,
+      "auto_proceed_allowed": true,
+      "proof_command": "npm run ecl:source-room-producers:report",
+      "evidence_paths": [
+        "scripts/ecl/write_dense_source_room_ecl_producer_coverage.py",
+        "reports/ecl-source-room-producer-coverage-2026-08-23/ecl_source_room_producer_coverage_summary.json",
+        "reports/ecl-source-room-producer-coverage-2026-08-23/ecl_source_room_producer_coverage.csv",
+        "reports/ecl-source-room-producer-coverage-2026-08-23/ECL_SOURCE_ROOM_PRODUCER_COVERAGE.md"
+      ],
+      "next_auto_action": "Load dense source room into the disposable source layer.",
+      "stop_gate": "None while validation remains local and report-only."
+    },
+    {
+      "order": 6,
+      "slice_id": "dense_ecl_source_layer_local_load",
+      "status": "done",
+      "percent_complete": 100,
+      "auto_proceed_allowed": true,
+      "proof_command": "npm run ecl:source-room-source-layer:load",
+      "evidence_paths": [
+        "scripts/ecl/load_dense_source_room_source_layer.py",
+        "reports/ecl-dense-source-layer-local-load-2026-08-23/dense_source_room_ecl_source_load_summary.json",
+        "reports/ecl-dense-source-layer-local-load-2026-08-23/dense_source_room_ecl_source_readback.json"
+      ],
+      "next_auto_action": "Promote source-layer rows into disposable context objects, relationships, metrics, and measures.",
+      "stop_gate": "Azure data-plane writes."
+    },
+    {
+      "order": 7,
+      "slice_id": "dense_ecl_context_layer_local_load",
+      "status": "done",
+      "percent_complete": 100,
+      "auto_proceed_allowed": true,
+      "proof_command": "npm run ecl:source-room-context-layer:load",
+      "evidence_paths": [
+        "scripts/ecl/load_dense_source_room_context_layer.py",
+        "reports/ecl-dense-context-layer-local-load-2026-08-23/dense_source_room_ecl_context_load_summary.json",
+        "reports/ecl-dense-context-layer-local-load-2026-08-23/dense_source_room_ecl_context_readback.json"
+      ],
+      "next_auto_action": "Load commercial tables from the dense contracts, invoices, SLA, and scope rows.",
+      "stop_gate": "Azure data-plane writes."
+    },
+    {
+      "order": 8,
+      "slice_id": "dense_ecl_commercial_layer_local_load",
+      "status": "done",
+      "percent_complete": 100,
+      "auto_proceed_allowed": true,
+      "proof_command": "npm run ecl:source-room-commercial-layer:load",
+      "evidence_paths": [
+        "scripts/ecl/load_dense_source_room_commercial_layer.py",
+        "reports/ecl-dense-commercial-layer-local-load-2026-08-23/dense_source_room_ecl_commercial_load_summary.json",
+        "reports/ecl-dense-commercial-layer-local-load-2026-08-23/dense_source_room_ecl_commercial_readback.json"
+      ],
+      "next_auto_action": "Load review events against contracts, invoices, SLA observations, and context packs.",
+      "stop_gate": "Azure data-plane writes."
+    },
+    {
+      "order": 9,
+      "slice_id": "dense_ecl_review_layer_local_load",
+      "status": "done",
+      "percent_complete": 100,
+      "auto_proceed_allowed": true,
+      "proof_command": "npm run ecl:source-room-review-layer:load",
+      "evidence_paths": [
+        "scripts/ecl/load_dense_source_room_review_layer.py",
+        "reports/ecl-dense-review-layer-local-load-2026-08-23/dense_source_room_ecl_review_load_summary.json",
+        "reports/ecl-dense-review-layer-local-load-2026-08-23/dense_source_room_ecl_review_readback.json"
+      ],
+      "next_auto_action": "Build Source 360 projections from the dense governed local layers.",
+      "stop_gate": "Azure data-plane writes."
+    },
+    {
+      "order": 10,
+      "slice_id": "dense_source_360_projection_local_load",
+      "status": "done",
+      "percent_complete": 100,
+      "auto_proceed_allowed": true,
+      "proof_command": "npm run ecl:source-room-source-projection:load",
+      "evidence_paths": [
+        "scripts/ecl/load_dense_source_room_source_projection_layer.py",
+        "reports/ecl-dense-source-projection-local-load-2026-08-23/dense_source_room_ecl_source_projection_load_summary.json",
+        "reports/ecl-dense-source-projection-local-load-2026-08-23/dense_source_room_ecl_source_projection_readback.json"
+      ],
+      "next_auto_action": "Build cube read models with FK-backed metric and measure rows.",
+      "stop_gate": "product_route_repointing"
+    },
+    {
+      "order": 11,
+      "slice_id": "dense_cube_layer_local_load",
+      "status": "done",
+      "percent_complete": 100,
+      "auto_proceed_allowed": true,
+      "proof_command": "npm run ecl:source-room-cube-layer:load",
+      "evidence_paths": [
+        "scripts/ecl/load_dense_source_room_cube_layer.py",
+        "reports/ecl-dense-cube-layer-local-load-2026-08-23/dense_source_room_ecl_cube_load_summary.json",
+        "reports/ecl-dense-cube-layer-local-load-2026-08-23/dense_source_room_ecl_cube_readback.json"
+      ],
+      "next_auto_action": "Stop before runtime/data-plane and route adoption; prepare ACA job/readback gate package next.",
+      "stop_gate": "product_route_repointing"
+    },
+    {
+      "order": 12,
       "slice_id": "operator_status_reporting_gate",
       "status": "queued",
-      "percent_complete": 25,
+      "percent_complete": 100,
       "auto_proceed_allowed": true,
       "proof_command": "python3 scripts/ecl/validate_ecl_operator_status_report.py --allow-in-progress",
       "evidence_paths": [
@@ -277,64 +227,52 @@
         "outputs/ecl-no-stop-execution-run/operator-status.md",
         "outputs/ecl-no-stop-execution-run/operator-status-validation-summary.json"
       ],
-      "next_auto_action": "Publish machine-readable and readable operator progress so long-running proof batches expose percent complete, next auto action, blocked gate, and evidence paths.",
+      "next_auto_action": "Publish readable and machine-readable progress for the heartbeat and operators.",
       "stop_gate": "None while validation remains local and report-only."
     },
     {
-      "order": 17,
-      "slice_id": "source_360_route_readiness_bridge",
-      "status": "queued",
-      "percent_complete": 25,
-      "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/validate_source_360_route_readiness.py",
-      "evidence_paths": [
-        "scripts/ecl/validate_source_360_route_readiness.py",
-        "outputs/ecl-source-route-readiness-2026-08-23/source_360_route_readiness_summary.json",
-        "outputs/ecl-source-route-readiness-2026-08-23/source_360_route_readiness.csv",
-        "outputs/ecl-source-route-readiness-2026-08-23/source_360_route_readiness.md"
-      ],
-      "next_auto_action": "Use the route-readiness proof to design the Source workspace ECL adapter and parity checks without silently repointing the live product route.",
-      "stop_gate": "product_route_repointing"
-    },
-    {
-      "order": 18,
-      "slice_id": "tower_command_center_static_preview",
-      "status": "queued",
-      "percent_complete": 25,
-      "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/render_tower_command_center_preview.py --require-weak-contract",
-      "evidence_paths": [
-        "scripts/ecl/render_tower_command_center_preview.py",
-        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/tower_command_center_static_preview/tower-command-center-preview.html",
-        "outputs/ecl-commercial-contract-supply-correction-2026-08-22/tower_command_center_static_preview/tower-command-center-preview-qa.json"
-      ],
-      "next_auto_action": "Use the static Tower preview to validate commercial value-gate language and weak-contract visibility before any Tower route adoption.",
-      "stop_gate": "product_route_repointing"
-    },
-    {
-      "order": 19,
-      "slice_id": "machine_readable_execution_queue",
-      "status": "in_progress",
-      "percent_complete": 75,
-      "auto_proceed_allowed": true,
-      "proof_command": "python3 scripts/ecl/validate_no_stop_execution_queue.py",
-      "evidence_paths": [
-        "docs/architecture/ecl-no-stop-execution-queue.json",
-        "scripts/ecl/validate_no_stop_execution_queue.py"
-      ],
-      "next_auto_action": "Use the queue manifest to drive proof slices and CI artifact packaging after output-producing slices run.",
-      "stop_gate": "None while validation remains local and report-only."
-    },
-    {
-      "order": 20,
-      "slice_id": "browser_and_product_repointing_proof",
+      "order": 13,
+      "slice_id": "governed_aca_data_build_job_wiring",
       "status": "blocked_by_hard_gate",
       "percent_complete": 0,
       "auto_proceed_allowed": false,
       "proof_command": "",
       "evidence_paths": [],
-      "next_auto_action": "None. Requires explicit product-route and signed-in browser QA lane.",
+      "next_auto_action": "None. Requires explicit authorization before wiring a mutating ACA data-build execution path.",
+      "stop_gate": "azure_data_plane_write"
+    },
+    {
+      "order": 14,
+      "slice_id": "azure_lab_load_and_independent_readback",
+      "status": "blocked_by_hard_gate",
+      "percent_complete": 0,
+      "auto_proceed_allowed": false,
+      "proof_command": "",
+      "evidence_paths": [],
+      "next_auto_action": "None. Requires explicit Azure data-plane mutation gate, run id, idempotency key, proof bundle, and independent readback.",
+      "stop_gate": "azure_data_plane_write"
+    },
+    {
+      "order": 15,
+      "slice_id": "product_route_browser_qa",
+      "status": "blocked_by_hard_gate",
+      "percent_complete": 0,
+      "auto_proceed_allowed": false,
+      "proof_command": "",
+      "evidence_paths": [],
+      "next_auto_action": "None. Requires route adoption decision, parity proof, signed-in browser crawl, and refusal rendering checks.",
       "stop_gate": "product_route_repointing"
+    },
+    {
+      "order": 16,
+      "slice_id": "legacy_sunset_and_retirement",
+      "status": "blocked_by_hard_gate",
+      "percent_complete": 0,
+      "auto_proceed_allowed": false,
+      "proof_command": "",
+      "evidence_paths": [],
+      "next_auto_action": "None. Requires explicit sunset authorization after Azure parity, product readback, and rollback paths are proven.",
+      "stop_gate": "legacy_retirement"
     }
   ]
 }
