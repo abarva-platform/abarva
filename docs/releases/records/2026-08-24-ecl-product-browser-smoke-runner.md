@@ -22,6 +22,8 @@ Fourth follow-up: after deployment, the next five-step smoke accepted Home, Sour
 
 Fifth follow-up: the next smoke run accepted all four routes, but the Source route excerpt still showed legacy Source v1 counts because the page honored `sourceProvider` while the cross-product smoke used `provider`. Source now accepts the shared `provider=ecl_projection_db` query key, and the smoke requires the dense ECL Source count signature so legacy Source cannot pass as ECL.
 
+Sixth follow-up: adds a local pre-deploy gate for the same defect class before another ACA deploy loop. The gate checks that the smoke route signatures require dense ECL counts and projection-panel text, that product routes honor the shared `provider=ecl_projection_db` query path, and that the serving-route fence plus Source provider-alias unit test pass locally.
+
 ## Layer Impact
 
 - `global-control-lane`: adds proof tooling for shared product QA.
@@ -39,6 +41,7 @@ Fifth follow-up: the next smoke run accepted all four routes, but the Source rou
 ## Changes Included
 
 - `scripts/ecl/run_product_ecl_browser_smoke.mjs`
+- `scripts/ecl/run_product_ecl_predeploy_gate.mjs`
 - `src/app/(maestro)/source/preview/workspace/page.tsx`
 - `src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts`
 - `src/app/(maestro)/home/preview/page.tsx`
@@ -50,6 +53,7 @@ Fifth follow-up: the next smoke run accepted all four routes, but the Source rou
 - `infra/azure/parameters/private-operator.lab.bicepparam`
 - `scripts/azure/verify-env-secret-injection-proof.mjs`
 - `package.json` script `ecl:product-browser:smoke`
+- `package.json` script `ecl:product-browser:predeploy-gate`
 - Release record `docs/releases/records/2026-08-24-ecl-product-browser-smoke-runner.md`
 
 ## QA / Validation
@@ -60,6 +64,8 @@ Fifth follow-up: the next smoke run accepted all four routes, but the Source rou
 - `npx eslint src/app/(maestro)/source/preview/workspace/page.tsx scripts/ecl/run_product_ecl_browser_smoke.mjs` — pass.
 - `npx jest --runTestsByPath src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts --runInBand` — pass.
 - `node --check scripts/ecl/run_product_ecl_browser_smoke.mjs` — pass.
+- `node --check scripts/ecl/run_product_ecl_predeploy_gate.mjs` — pass.
+- `npm run ecl:product-browser:predeploy-gate` — pass.
 - `git diff --check` — pass.
 - `npm run release:check` — pass.
 - Signed-in ACA browser proof — first run reached the browser-auth step and was blocked by the Clerk browser ticket path; the runner now prefers the private proof-cookie path before falling back to Clerk tickets.
