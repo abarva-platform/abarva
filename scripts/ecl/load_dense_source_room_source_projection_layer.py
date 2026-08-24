@@ -982,6 +982,21 @@ select jsonb_pretty(jsonb_build_object(
     select count(*) from ecl_projection.home_enterprise_landscape
     where admission_status = 'refused' and (admission_gate_key is null or admission_result_json = '{}'::jsonb)
   ),
+  'home_application_count_basis_drift', (
+    select abs(
+      (select count(*) from ecl_projection.home_enterprise_landscape where page_key = 'applications_systems')
+      - (select count(*) from ecl_context.application_v)
+    )
+  ),
+  'home_application_page_deployment_rows', (
+    select count(*)
+    from ecl_projection.home_enterprise_landscape p
+    join ecl_context.application_deployment_v d
+      on d.tenant_key = p.tenant_key
+      and d.assessment_id = p.assessment_id
+      and d.id = p.primary_object_id
+    where p.page_key = 'applications_systems'
+  ),
   'contract_projection_contract_drift', (
     select count(*) from ecl_projection.source_contract_360 p
     left join ecl_commercial.contract c on c.tenant_key = p.tenant_key and c.assessment_id = p.assessment_id and c.id = p.contract_id
@@ -1123,6 +1138,8 @@ def main() -> int:
     for drift_key in [
         "home_primary_object_drift",
         "home_refusal_without_payload",
+        "home_application_count_basis_drift",
+        "home_application_page_deployment_rows",
         "contract_projection_contract_drift",
         "vendor_projection_vendor_drift",
         "value_lever_metric_drift",

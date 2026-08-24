@@ -195,12 +195,13 @@ select jsonb_pretty(jsonb_build_object(
   'source_record_partial', (select count(*) from ecl_source.source_record where tenant_key = {tenant} and assessment_id = {assessment} and parse_state = 'partial'),
   'extraction_distinct_spans', (select count(distinct span_reference) from ecl_source.document_extraction where tenant_key = {tenant} and assessment_id = {assessment}),
   'client_attested_rows', (select count(*) from ecl_source.source_record where tenant_key = {tenant} and assessment_id = {assessment} and payload_json ->> 'client_attestation_state' <> 'not_client_attested'),
+  'object_type_catalog', (select count(*) from ecl_context.object_type_catalog),
   'object', (select count(*) from ecl_context.object where tenant_key = {tenant} and assessment_id = {assessment}),
-  'application', (select count(*) from ecl_context.object where tenant_key = {tenant} and assessment_id = {assessment} and object_type = 'application'),
-  'application_deployment', (select count(*) from ecl_context.object where tenant_key = {tenant} and assessment_id = {assessment} and object_type = 'application_deployment'),
+  'application', (select count(*) from ecl_context.application_v where tenant_key = {tenant} and assessment_id = {assessment}),
+  'application_deployment', (select count(*) from ecl_context.application_deployment_v where tenant_key = {tenant} and assessment_id = {assessment}),
   'vendor', (select count(*) from ecl_context.object where tenant_key = {tenant} and assessment_id = {assessment} and object_type = 'vendor'),
-  'data_platform', (select count(*) from ecl_context.object where tenant_key = {tenant} and assessment_id = {assessment} and object_type = 'data_platform'),
-  'infrastructure', (select count(*) from ecl_context.object where tenant_key = {tenant} and assessment_id = {assessment} and object_type = 'infrastructure'),
+  'data_platform', (select count(*) from ecl_context.technical_component_v where tenant_key = {tenant} and assessment_id = {assessment} and object_type = 'data_platform'),
+  'infrastructure', (select count(*) from ecl_context.technical_component_v where tenant_key = {tenant} and assessment_id = {assessment} and object_type = 'infrastructure'),
   'relationship', (select count(*) from ecl_context.relationship where tenant_key = {tenant} and assessment_id = {assessment}),
   'deployment_of', (select count(*) from ecl_context.relationship where tenant_key = {tenant} and assessment_id = {assessment} and relationship_type = 'DEPLOYMENT_OF'),
   'hosted_on', (select count(*) from ecl_context.relationship where tenant_key = {tenant} and assessment_id = {assessment} and relationship_type = 'HOSTED_ON'),
@@ -319,6 +320,34 @@ select jsonb_pretty(jsonb_build_object(
       and admission_status = 'refused'
       and (admission_gate_key is null or admission_result_json = '{{}}'::jsonb)
   ),
+  'home_application_count_basis_drift', (
+    select abs(
+      (
+        select count(*)
+        from ecl_projection.home_enterprise_landscape
+        where tenant_key = {tenant}
+          and assessment_id = {assessment}
+          and page_key = 'applications_systems'
+      )
+      - (
+        select count(*)
+        from ecl_context.application_v
+        where tenant_key = {tenant}
+          and assessment_id = {assessment}
+      )
+    )
+  ),
+  'home_application_page_deployment_rows', (
+    select count(*)
+    from ecl_projection.home_enterprise_landscape p
+    join ecl_context.application_deployment_v d
+      on d.tenant_key = p.tenant_key
+      and d.assessment_id = p.assessment_id
+      and d.id = p.primary_object_id
+    where p.tenant_key = {tenant}
+      and p.assessment_id = {assessment}
+      and p.page_key = 'applications_systems'
+  ),
   'contract_projection_contract_drift', (
     select count(*) from ecl_projection.source_contract_360 p
     left join ecl_commercial.contract c on c.tenant_key = p.tenant_key and c.assessment_id = p.assessment_id and c.id = p.contract_id
@@ -409,6 +438,8 @@ def validate_readback(readback: dict[str, Any], expected: dict[str, int], plante
         "cube_measure_drift",
         "home_primary_object_drift",
         "home_refusal_without_payload",
+        "home_application_count_basis_drift",
+        "home_application_page_deployment_rows",
         "tower_primary_object_drift",
         "tower_gated_without_reason",
         "intelligence_context_pack_drift",
