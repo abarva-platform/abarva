@@ -244,6 +244,38 @@ function emitProofBundle() {
   console.log(`__SEMANTIC2_PROOF_ROOT__${rootName}`);
 }
 
+function emitStructuredSummary(summary) {
+  console.log(JSON.stringify({
+    structured_event: "ecl_product_browser_smoke_summary",
+    accepted: summary.accepted,
+    actual_browser_execution: summary.actual_browser_execution,
+    actual_route_repointing: summary.actual_route_repointing,
+    auth_method: summary.auth_method,
+    base_url: summary.base_url,
+    checked_at: summary.checked_at,
+    email: summary.email,
+    expected_tenant_name: summary.expected_tenant_name,
+    issue_count: summary.issue_count,
+    issues: summary.issues,
+    provider: summary.provider,
+    route_count: summary.route_count,
+    routes: summary.routes.map((route) => ({
+      key: route.key,
+      url: route.url,
+      final_url: route.final_url,
+      status: route.status,
+      title: route.title,
+      text_length: route.text_length,
+      screenshot_sha256: route.screenshot_sha256,
+      text_sha256: route.text_sha256,
+      issue_count: route.issues.length,
+      issues: route.issues,
+      accepted: route.accepted,
+    })),
+    tenant_key: summary.tenant_key,
+  }));
+}
+
 async function main() {
   fs.rmSync(OUT_DIR, { recursive: true, force: true });
   fs.mkdirSync(OUT_DIR, { recursive: true });
@@ -284,6 +316,7 @@ async function main() {
   writeJson(path.join(OUT_DIR, "ecl_product_browser_smoke_summary.json"), summary);
   console.log(JSON.stringify(summary, null, 2));
   if (EMIT_PROOF) emitProofBundle();
+  emitStructuredSummary(summary);
   if (!summary.accepted) process.exitCode = 1;
 }
 
