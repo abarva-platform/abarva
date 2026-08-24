@@ -9,8 +9,8 @@
 //   - Against staging:   BASE_URL=https://staging.abarva.ai npx playwright test tests/e2e/primary-surfaces-smoke.spec.ts
 //   - Against prod:      BASE_URL=https://app.abarva.ai npx playwright test tests/e2e/primary-surfaces-smoke.spec.ts
 //
-// Requires a valid Clerk demo account to be available in the target environment.
-// Sign-in is via the DemoCodeSignIn flow (email + Demo2026! + 424242 access code).
+// Requires a valid Clerk session token or server-side Clerk secret for ticket sign-in.
+// The legacy DemoCodeSignIn flow is still available behind E2E_USE_LEGACY_DEMO_CODE_FLOW=true.
 //
 // This is a smoke test: it asserts page rendering and headline copy, not
 // agent answer quality. Agent-answer regression lives elsewhere (Atlas eval
@@ -19,17 +19,26 @@
 // for every other test that follows.
 
 import { test, expect, type Page } from '@playwright/test';
-
-const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000';
+import { BASE_URL, missingAuthPrereqs, withClerkAuth } from './_helpers/auth';
 
 // Default demo persona: Carlos Rivera, Apex Retail CIO.
 // Override via env if you want to smoke a different tenant.
 const DEMO_EMAIL = process.env.E2E_DEMO_EMAIL ?? 'cio@apex-retail.example.com';
 const DEMO_PASSWORD = process.env.E2E_DEMO_PASSWORD ?? 'Demo2026!';
 const DEMO_ACCESS_CODE = process.env.E2E_DEMO_ACCESS_CODE ?? '424242';
+const ACTIVE_CLIENT = process.env.E2E_ACTIVE_CLIENT ?? null;
 const EXPECTED_TENANT_NAME = process.env.E2E_EXPECTED_TENANT_NAME ?? 'Apex Retail Group';
+const USE_LEGACY_DEMO_CODE_FLOW = process.env.E2E_USE_LEGACY_DEMO_CODE_FLOW === 'true';
 
 async function signIn(page: Page): Promise<void> {
+  if (!USE_LEGACY_DEMO_CODE_FLOW) {
+    await withClerkAuth(page, {
+      activeClient: ACTIVE_CLIENT,
+      email: DEMO_EMAIL,
+    });
+    return;
+  }
+
   await page.goto(`${BASE_URL}/sign-in`);
   await page.getByPlaceholder(/name@company.com/i).fill(DEMO_EMAIL);
   await page.getByPlaceholder(/Password from invite/i).fill(DEMO_PASSWORD);
@@ -40,6 +49,11 @@ async function signIn(page: Page): Promise<void> {
 }
 
 test.describe('A1 · Primary-surface smoke (logged-in CXO)', () => {
+  test.skip(
+    !USE_LEGACY_DEMO_CODE_FLOW && missingAuthPrereqs.length > 0,
+    `Missing required env: ${missingAuthPrereqs.join(', ')}`,
+  );
+
   test.beforeEach(async ({ page }) => {
     // Capture any console errors that surface during navigation so the
     // smoke test fails on render-time crashes, not just missing UI.
