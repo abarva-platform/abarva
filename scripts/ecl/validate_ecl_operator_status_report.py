@@ -81,16 +81,26 @@ def validate_status(status: dict[str, Any], *, allow_in_progress: bool) -> dict[
     total_executable = progress.get("total_executable_slices")
     passed_executable = progress.get("passed_executable_slices")
     completion_percent = progress.get("completion_percent")
+    local_completion_percent = progress.get("local_executable_completion_percent")
+    governed_completion_percent = progress.get("overall_governed_completion_percent")
     if not isinstance(total_executable, int) or total_executable < 1:
         issues.append("progress.total_executable_slices must be a positive integer")
     if not isinstance(passed_executable, int) or passed_executable < 0:
         issues.append("progress.passed_executable_slices must be a non-negative integer")
     if not isinstance(completion_percent, int) or completion_percent < 0 or completion_percent > 100:
         issues.append("progress.completion_percent must be 0..100")
-    elif status.get("run_state") == "completed" and completion_percent != 100:
-        issues.append("completed operator status must report 100 percent")
     elif status.get("run_state") == "running" and completion_percent < 75:
         issues.append("in-progress operator status validation should run after at least 75 percent")
+    if not isinstance(local_completion_percent, int) or local_completion_percent < 0 or local_completion_percent > 100:
+        issues.append("progress.local_executable_completion_percent must be 0..100")
+    elif status.get("run_state") == "completed" and local_completion_percent != 100:
+        issues.append("completed operator status must report 100 percent local executable completion")
+    if not isinstance(governed_completion_percent, int) or governed_completion_percent < 0 or governed_completion_percent > 100:
+        issues.append("progress.overall_governed_completion_percent must be 0..100")
+    elif governed_completion_percent != completion_percent:
+        issues.append("progress.completion_percent must equal progress.overall_governed_completion_percent")
+    if isinstance(local_completion_percent, int) and isinstance(completion_percent, int) and completion_percent > local_completion_percent:
+        issues.append("overall governed completion cannot exceed local executable completion")
 
     if not isinstance(checkpoints, list) or not checkpoints:
         issues.append("checkpoints must be a non-empty list")
@@ -163,6 +173,10 @@ def validate_status(status: dict[str, Any], *, allow_in_progress: bool) -> dict[
         if not item.get("evidence_path"):
             issues.append(f"{area}: evidence_path is required")
 
+    if status.get("run_state") == "completed" and blocked_slices:
+        if isinstance(completion_percent, int) and completion_percent >= 100:
+            issues.append("completed status with hard-gated slices must report less than 100 percent overall governed completion")
+
     app_realism = quality_by_area.get("application_realism_gates", {})
     if app_realism and app_realism.get("status") != "pass":
         issues.append("application_realism_gates must pass before operator status is accepted")
@@ -186,6 +200,8 @@ def validate_status(status: dict[str, Any], *, allow_in_progress: bool) -> dict[
         "allow_in_progress": allow_in_progress,
         "run_state": status.get("run_state"),
         "completion_percent": completion_percent,
+        "local_executable_completion_percent": local_completion_percent,
+        "overall_governed_completion_percent": governed_completion_percent,
         "checkpoint_count": len(checkpoints) if isinstance(checkpoints, list) else 0,
         "slice_count": len(slices),
         "quality_denominator_count": len(quality_denominators),

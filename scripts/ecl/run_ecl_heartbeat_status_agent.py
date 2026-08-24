@@ -359,7 +359,10 @@ def build_heartbeat_summary(*, out_dir: Path, steps: list[dict[str, Any]]) -> di
             "local_executable_slices": {
                 "passed": progress.get("passed_executable_slices", queue_summary.get("passed_executable_slice_count")),
                 "total": progress.get("total_executable_slices", queue_summary.get("executable_slice_count")),
-                "percent": progress.get("completion_percent"),
+                "percent": progress.get("local_executable_completion_percent", progress.get("completion_percent")),
+            },
+            "overall_governed_completion": {
+                "percent": progress.get("overall_governed_completion_percent", progress.get("completion_percent")),
             },
             "quality_denominators": {
                 "passed": len(pass_rows),

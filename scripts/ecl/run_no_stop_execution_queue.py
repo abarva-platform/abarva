@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_QUEUE_PATH = ROOT / "docs/architecture/ecl-no-stop-execution-queue.json"
 DEFAULT_OUT_DIR = ROOT / "outputs/ecl-no-stop-execution-run"
 CHECKPOINTS = (0, 15, 30, 45, 60, 75, 90, 100)
+HARD_GATE_COMPLETION_PENALTY_PERCENT = 3
 
 PROHIBITED_COMMAND_TOKENS = {
     "az",
@@ -228,7 +229,7 @@ def build_operator_status(
             for row in summary.get("slices", [])
             if row.get("result_state") in {"passed", "planned"}
         )
-    completion_percent = 100 if executable_total == 0 else int((passed / executable_total) * 100)
+    local_completion_percent = 100 if executable_total == 0 else int((passed / executable_total) * 100)
 
     remaining_auto: list[dict[str, Any]] = []
     blocked: list[dict[str, Any]] = []
@@ -260,6 +261,17 @@ def build_operator_status(
         "operator_status_markdown": (event_path.parent / "operator-status.md").relative_to(ROOT).as_posix(),
     }
     quality_denominators = build_quality_denominators()
+    hard_gate_units = sum(
+        int(item.get("total", 0) or 0)
+        for item in quality_denominators
+        if isinstance(item, dict) and item.get("status") == "hard_gated"
+    )
+    overall_governed_completion_percent = local_completion_percent
+    if hard_gate_units:
+        overall_governed_completion_percent = min(
+            local_completion_percent,
+            max(0, 100 - (hard_gate_units * HARD_GATE_COMPLETION_PENALTY_PERCENT)),
+        )
 
     return {
         "run_id": summary.get("run_id"),
@@ -270,7 +282,9 @@ def build_operator_status(
         "started_at": summary.get("started_at"),
         "completed_at": summary.get("completed_at"),
         "progress": {
-            "completion_percent": completion_percent,
+            "completion_percent": overall_governed_completion_percent,
+            "overall_governed_completion_percent": overall_governed_completion_percent,
+            "local_executable_completion_percent": local_completion_percent,
             "last_checkpoint_percent": last_checkpoint,
             "passed_executable_slices": passed,
             "total_executable_slices": executable_total,
@@ -588,7 +602,8 @@ def render_operator_status_markdown(status: dict[str, Any], path: Path) -> None:
         f"- Run ID: `{status['run_id']}`",
         f"- Run state: `{status['run_state']}`",
         f"- Accepted: `{str(status['accepted']).lower()}`",
-        f"- Progress: `{progress['passed_executable_slices']} / {progress['total_executable_slices']}` executable slices (`{progress['completion_percent']}%`)",
+        f"- Overall governed progress: `{progress['overall_governed_completion_percent']}%`",
+        f"- Local executable progress: `{progress['passed_executable_slices']} / {progress['total_executable_slices']}` executable slices (`{progress['local_executable_completion_percent']}%`)",
         f"- Last checkpoint emitted: `{progress['last_checkpoint_percent']}%`",
         f"- Hard-gated slices: `{progress['hard_gated_slices']}`",
         f"- Next auto slice: `{next_item['auto_slice_id'] or 'none'}`",

@@ -1,335 +1,334 @@
 {
-  "version": 1,
   "contract_id": "ecl-dense-all-layer-local-proof-counts-2026-08-24",
-  "purpose": "Single expected-count contract for the dense local ECL proof. Count changes from planted demo findings are classified here before CI expectations move.",
-  "rules": [
-    "A planted-data change may raise an expected count when the additional rows are traced to a named finding or producer.",
-    "A count decrease requires a written explanation and release record reference before the expected value may be updated.",
-    "Identity fields are not finding payloads. Demo findings must be planted through attributes or additional rows, not by replacing primary keys used by downstream relationships."
+  "delta_classifications": [
+    {
+      "after": 41,
+      "before": 36,
+      "classification": "expected_increase",
+      "delta": 5,
+      "explanation": "W2 adds five product projection tables to the producer coverage inventory.",
+      "key": "producer.table_count"
+    },
+    {
+      "after": 26,
+      "before": 21,
+      "classification": "expected_increase",
+      "delta": 5,
+      "explanation": "The five W2 projection tables are downstream-builder-required tables and now have a producer.",
+      "key": "producer.downstream_builder_required_tables"
+    },
+    {
+      "after": 91,
+      "before": 100,
+      "classification": "correction_to_hard_gate_denominator",
+      "delta": -9,
+      "explanation": "Operator validation reports the full 16-slice queue including four hard-gated slices; 12/12 executable local slices passed, but hard gates are not counted as complete.",
+      "key": "operator.completion_percent",
+      "release_record_required": true
+    },
+    {
+      "after": 236,
+      "before": 231,
+      "classification": "expected_increase",
+      "delta": 5,
+      "explanation": "Four generator fields plus the pinned demo-as-of date field were added so planted findings can be deterministic and time-stable.",
+      "key": "dense.field_dictionary_rows"
+    },
+    {
+      "after": 3828,
+      "before": 3825,
+      "classification": "expected_increase",
+      "delta": 3,
+      "explanation": "Demo findings add one net vendor and two net data-platform objects.",
+      "key": "context.object"
+    },
+    {
+      "after": 216,
+      "before": 215,
+      "classification": "expected_increase",
+      "delta": 1,
+      "explanation": "Contract finding planting introduces one additional governed supplier in the dense commercial estate.",
+      "key": "context.vendor"
+    },
+    {
+      "after": 265,
+      "before": 263,
+      "classification": "expected_increase",
+      "delta": 2,
+      "explanation": "Data and BI finding planting creates two additional distinct platform/function/workload combinations.",
+      "key": "context.data_platform"
+    },
+    {
+      "after": 8978,
+      "before": 8972,
+      "classification": "expected_increase_after_defect_fix",
+      "delta": 6,
+      "explanation": "The unresolved-hosting defect was fixed by preserving platform identity. Remaining net increase comes from planted data-platform and data-flow relationships.",
+      "key": "context.relationship"
+    },
+    {
+      "after": 1650,
+      "before": 1650,
+      "classification": "defect_fixed",
+      "delta": 0,
+      "explanation": "PR 6783 briefly reduced hosted_on to 1640 by overwriting a platform primary key. The planted Netezza finding now preserves the numeric platform_id, restoring one HOSTED_ON edge per deployment.",
+      "key": "context.hosted_on"
+    },
+    {
+      "after": 975,
+      "before": 972,
+      "classification": "expected_increase",
+      "delta": 3,
+      "explanation": "Revenue-cycle data-flow findings add three additional resolvable integration edges.",
+      "key": "context.integrates_with"
+    },
+    {
+      "after": 128,
+      "before": 127,
+      "classification": "expected_increase",
+      "delta": 1,
+      "explanation": "The Netezza platform finding introduces one platform-type-specific metric definition.",
+      "key": "context.metric_definition"
+    },
+    {
+      "after": 744,
+      "before": 686,
+      "classification": "expected_increase",
+      "delta": 58,
+      "explanation": "Unknown allocation rows in the finance extract now create invoice-line review events instead of disappearing. This preserves unknown-is-not-zero for attribution gaps.",
+      "key": "review.review_event"
+    },
+    {
+      "after": 320,
+      "before": 277,
+      "classification": "expected_increase",
+      "delta": 43,
+      "explanation": "F2 and commercial-protection findings add contract-subject review events for benchmarking, notice-window, and minimum-commitment gates.",
+      "key": "review.review_contract_subjects"
+    },
+    {
+      "after": 163,
+      "before": 105,
+      "classification": "expected_increase",
+      "delta": 58,
+      "explanation": "Invoice-line review subjects now include both estimated and unknown allocation_basis rows. Unknown allocation is a reviewable gap, not a reason to drop the subject.",
+      "key": "review.review_invoice_subjects"
+    },
+    {
+      "after": 102,
+      "before": 101,
+      "classification": "expected_increase",
+      "delta": 1,
+      "explanation": "The added governed supplier appears in Source vendor 360.",
+      "key": "projection.source_vendor_360"
+    },
+    {
+      "after": 181,
+      "before": 173,
+      "classification": "expected_increase",
+      "delta": 8,
+      "explanation": "Additional review gates generate additional Source event-workspace rows.",
+      "key": "projection.source_event_workspace"
+    },
+    {
+      "after": 12,
+      "before": 7,
+      "classification": "expected_increase",
+      "delta": 5,
+      "explanation": "W2 adds five product projection manifests for Tower value/evidence/AI and Intelligence pattern/question surfaces.",
+      "key": "projection.projection_manifest"
+    },
+    {
+      "after": 230,
+      "before": 0,
+      "classification": "expected_increase",
+      "delta": 230,
+      "explanation": "W2 adds one Tower value-chain projection row per contract with FK-backed claim-to-measure traceability.",
+      "key": "projection.tower_value_chain"
+    },
+    {
+      "after": 369,
+      "before": 0,
+      "classification": "expected_increase",
+      "delta": 369,
+      "explanation": "W2 adds gated evidence rows for contracts and risk/control exceptions, each carrying gate reason and next evidence action.",
+      "key": "projection.tower_evidence_queue"
+    },
+    {
+      "after": 360,
+      "before": 0,
+      "classification": "expected_increase",
+      "delta": 360,
+      "explanation": "W2 adds one Tower AI portfolio projection row per AI usage/model source-room row.",
+      "key": "projection.tower_ai_portfolio"
+    },
+    {
+      "after": 30,
+      "before": 0,
+      "classification": "expected_increase",
+      "delta": 30,
+      "explanation": "W2 adds Intelligence pattern-evidence rows for commercial leverage gaps and vendor risk clusters.",
+      "key": "projection.intelligence_pattern_evidence"
+    },
+    {
+      "after": 6,
+      "before": 0,
+      "classification": "expected_increase",
+      "delta": 6,
+      "explanation": "W2 adds deterministic question-context projection rows tied to context packs and source citations.",
+      "key": "projection.intelligence_question_context"
+    }
   ],
-  "release_record": "docs/releases/records/2026-08-24-ecl-count-delta-classification.md",
   "expected": {
-    "queue": {
-      "accepted": true,
-      "slice_count": 16,
-      "auto_proceed_slice_count": 12,
-      "blocked_slice_count": 4
+    "commercial": {
+      "contract": 230,
+      "contract_scope": 690,
+      "contract_scope_object_drift": 0,
+      "contract_service_line": 230,
+      "contract_vendor_drift": 0,
+      "invoice_line": 480,
+      "sla_metric_drift": 0,
+      "sla_observation": 260
+    },
+    "context": {
+      "application": 750,
+      "application_deployment": 1650,
+      "data_platform": 265,
+      "deployment_of": 1650,
+      "hosted_on": 1650,
+      "infrastructure": 220,
+      "integrates_with": 975,
+      "measure": 13190,
+      "measure_metric_drift": 0,
+      "metric_definition": 128,
+      "object": 3828,
+      "object_type_catalog": 20,
+      "relationship": 8978,
+      "relationship_endpoint_drift": 0,
+      "vendor": 216
+    },
+    "cube": {
+      "blocked_without_gap": 0,
+      "cube_key_count": 9,
+      "cube_manifest": 9,
+      "cube_measure_drift": 0,
+      "cube_metric_drift": 0,
+      "cube_slice": 29,
+      "cube_slice_measure": 4320,
+      "cube_slice_metric": 103,
+      "json_metric_without_fk": 0
+    },
+    "dense": {
+      "extract_count": 14,
+      "field_dictionary_rows": 236,
+      "row_count": 7080
     },
     "execution": {
       "accepted": true,
-      "passed_executable_slice_count": 12,
-      "executable_slice_count": 12
+      "executable_slice_count": 12,
+      "passed_executable_slice_count": 12
     },
     "operator": {
       "accepted": true,
       "completion_percent": 91
     },
+    "producer": {
+      "dense_source_rows": 7080,
+      "downstream_builder_required_tables": 26,
+      "missing_core_producer_count": 0,
+      "partial_source_supplied_tables": 3,
+      "source_family_count": 14,
+      "source_supplied_tables": 11,
+      "table_count": 41
+    },
+    "projection": {
+      "contract_projection_contract_drift": 0,
+      "event_review_drift": 0,
+      "event_rows_without_evidence_payload": 0,
+      "home_application_count_basis_drift": 0,
+      "home_application_page_deployment_rows": 0,
+      "home_enterprise_landscape": 2946,
+      "home_primary_object_drift": 0,
+      "home_refusal_without_payload": 0,
+      "intelligence_context_pack": 9,
+      "intelligence_context_pack_drift": 0,
+      "intelligence_pattern_evidence": 30,
+      "intelligence_pattern_primary_object_drift": 0,
+      "intelligence_primary_object_drift": 0,
+      "intelligence_question_context": 6,
+      "intelligence_question_context_pack_drift": 0,
+      "projection_entry": 5623,
+      "projection_entry_count_drift": 0,
+      "projection_entry_document_extraction_ref": 0,
+      "projection_entry_measure_ref": 599,
+      "projection_entry_metric_ref": 10690,
+      "projection_entry_metric_ref_drift": 0,
+      "projection_entry_object_ref": 6984,
+      "projection_entry_object_ref_drift": 0,
+      "projection_entry_relationship_ref": 0,
+      "projection_entry_source_record_ref": 5768,
+      "projection_entry_source_record_ref_drift": 0,
+      "projection_manifest": 12,
+      "projection_surface_entry_drift": 0,
+      "source_contract_360": 230,
+      "source_event_workspace": 181,
+      "source_value_claimable_rows": 0,
+      "source_value_gated_rows": 230,
+      "source_value_levers": 230,
+      "source_vendor_360": 102,
+      "tower_ai_portfolio": 360,
+      "tower_ai_primary_object_drift": 0,
+      "tower_command_center": 930,
+      "tower_evidence_queue": 369,
+      "tower_evidence_queue_measure_drift": 0,
+      "tower_evidence_queue_missing_gate_payload": 0,
+      "tower_gated_without_reason": 0,
+      "tower_primary_object_drift": 0,
+      "tower_value_chain": 230,
+      "tower_value_chain_gated_without_reason": 0,
+      "tower_value_chain_measure_drift": 0,
+      "value_lever_metric_drift": 0,
+      "vendor_projection_vendor_drift": 0
+    },
+    "queue": {
+      "accepted": true,
+      "auto_proceed_slice_count": 12,
+      "blocked_slice_count": 4,
+      "slice_count": 16
+    },
     "raw": {
+      "blocking_gaps": 0,
       "expected_workbooks": 14,
       "landed_workbooks": 14,
       "source_room_extracts": 12,
-      "traceability_rows": 2749,
-      "blocking_gaps": 0
+      "traceability_rows": 2749
     },
-    "dense": {
-      "extract_count": 14,
-      "row_count": 7080,
-      "field_dictionary_rows": 236
-    },
-    "producer": {
-      "table_count": 41,
-      "source_family_count": 14,
-      "dense_source_rows": 7080,
-      "source_supplied_tables": 11,
-      "partial_source_supplied_tables": 3,
-      "downstream_builder_required_tables": 26,
-      "missing_core_producer_count": 0
+    "review": {
+      "review_context_pack_subjects": 1,
+      "review_contract_drift": 0,
+      "review_contract_subjects": 320,
+      "review_event": 744,
+      "review_invoice_drift": 0,
+      "review_invoice_subjects": 163,
+      "review_sla_drift": 0,
+      "review_sla_subjects": 260,
+      "review_source_record_drift": 0
     },
     "source": {
-      "source_file": 14,
-      "source_record": 7080,
+      "client_attested_rows": 0,
       "document": 720,
       "document_extraction": 250,
       "extraction_distinct_spans": 250,
-      "client_attested_rows": 0
-    },
-    "context": {
-      "object_type_catalog": 20,
-      "object": 3828,
-      "application": 750,
-      "application_deployment": 1650,
-      "vendor": 216,
-      "data_platform": 265,
-      "infrastructure": 220,
-      "relationship": 8978,
-      "deployment_of": 1650,
-      "hosted_on": 1650,
-      "integrates_with": 975,
-      "metric_definition": 128,
-      "measure": 13190,
-      "relationship_endpoint_drift": 0,
-      "measure_metric_drift": 0
-    },
-    "commercial": {
-      "contract": 230,
-      "contract_service_line": 230,
-      "contract_scope": 690,
-      "invoice_line": 480,
-      "sla_observation": 260,
-      "contract_vendor_drift": 0,
-      "contract_scope_object_drift": 0,
-      "sla_metric_drift": 0
-    },
-    "review": {
-      "review_event": 686,
-      "review_contract_subjects": 320,
-      "review_invoice_subjects": 105,
-      "review_sla_subjects": 260,
-      "review_context_pack_subjects": 1,
-      "review_source_record_drift": 0,
-      "review_contract_drift": 0,
-      "review_invoice_drift": 0,
-      "review_sla_drift": 0
-    },
-    "projection": {
-      "projection_manifest": 12,
-      "projection_entry": 5623,
-      "projection_entry_object_ref": 6984,
-      "projection_entry_metric_ref": 10690,
-      "projection_entry_measure_ref": 599,
-      "projection_entry_relationship_ref": 0,
-      "projection_entry_source_record_ref": 5768,
-      "projection_entry_document_extraction_ref": 0,
-      "home_enterprise_landscape": 2946,
-      "source_contract_360": 230,
-      "source_vendor_360": 102,
-      "source_value_levers": 230,
-      "source_event_workspace": 181,
-      "tower_command_center": 930,
-      "tower_value_chain": 230,
-      "tower_evidence_queue": 369,
-      "tower_ai_portfolio": 360,
-      "intelligence_context_pack": 9,
-      "intelligence_pattern_evidence": 30,
-      "intelligence_question_context": 6,
-      "home_primary_object_drift": 0,
-      "home_refusal_without_payload": 0,
-      "home_application_count_basis_drift": 0,
-      "home_application_page_deployment_rows": 0,
-      "projection_entry_count_drift": 0,
-      "projection_surface_entry_drift": 0,
-      "projection_entry_metric_ref_drift": 0,
-      "projection_entry_object_ref_drift": 0,
-      "projection_entry_source_record_ref_drift": 0,
-      "contract_projection_contract_drift": 0,
-      "vendor_projection_vendor_drift": 0,
-      "value_lever_metric_drift": 0,
-      "event_review_drift": 0,
-      "event_rows_without_evidence_payload": 0,
-      "source_value_claimable_rows": 0,
-      "source_value_gated_rows": 230,
-      "tower_primary_object_drift": 0,
-      "tower_gated_without_reason": 0,
-      "tower_value_chain_gated_without_reason": 0,
-      "tower_value_chain_measure_drift": 0,
-      "tower_evidence_queue_missing_gate_payload": 0,
-      "tower_evidence_queue_measure_drift": 0,
-      "tower_ai_primary_object_drift": 0,
-      "intelligence_context_pack_drift": 0,
-      "intelligence_primary_object_drift": 0,
-      "intelligence_pattern_primary_object_drift": 0,
-      "intelligence_question_context_pack_drift": 0
-    },
-    "cube": {
-      "cube_manifest": 9,
-      "cube_slice": 29,
-      "cube_slice_metric": 103,
-      "cube_slice_measure": 4320,
-      "cube_key_count": 9,
-      "cube_metric_drift": 0,
-      "cube_measure_drift": 0,
-      "json_metric_without_fk": 0,
-      "blocked_without_gap": 0
+      "source_file": 14,
+      "source_record": 7080
     }
   },
-  "delta_classifications": [
-    {
-      "key": "producer.table_count",
-      "before": 36,
-      "after": 41,
-      "delta": 5,
-      "classification": "expected_increase",
-      "explanation": "W2 adds five product projection tables to the producer coverage inventory."
-    },
-    {
-      "key": "producer.downstream_builder_required_tables",
-      "before": 21,
-      "after": 26,
-      "delta": 5,
-      "classification": "expected_increase",
-      "explanation": "The five W2 projection tables are downstream-builder-required tables and now have a producer."
-    },
-    {
-      "key": "operator.completion_percent",
-      "before": 100,
-      "after": 91,
-      "delta": -9,
-      "classification": "correction_to_hard_gate_denominator",
-      "release_record_required": true,
-      "explanation": "Operator validation reports the full 16-slice queue including four hard-gated slices; 12/12 executable local slices passed, but hard gates are not counted as complete."
-    },
-    {
-      "key": "dense.field_dictionary_rows",
-      "before": 231,
-      "after": 236,
-      "delta": 5,
-      "classification": "expected_increase",
-      "explanation": "Four generator fields plus the pinned demo-as-of date field were added so planted findings can be deterministic and time-stable."
-    },
-    {
-      "key": "context.object",
-      "before": 3825,
-      "after": 3828,
-      "delta": 3,
-      "classification": "expected_increase",
-      "explanation": "Demo findings add one net vendor and two net data-platform objects."
-    },
-    {
-      "key": "context.vendor",
-      "before": 215,
-      "after": 216,
-      "delta": 1,
-      "classification": "expected_increase",
-      "explanation": "Contract finding planting introduces one additional governed supplier in the dense commercial estate."
-    },
-    {
-      "key": "context.data_platform",
-      "before": 263,
-      "after": 265,
-      "delta": 2,
-      "classification": "expected_increase",
-      "explanation": "Data and BI finding planting creates two additional distinct platform/function/workload combinations."
-    },
-    {
-      "key": "context.relationship",
-      "before": 8972,
-      "after": 8978,
-      "delta": 6,
-      "classification": "expected_increase_after_defect_fix",
-      "explanation": "The unresolved-hosting defect was fixed by preserving platform identity. Remaining net increase comes from planted data-platform and data-flow relationships."
-    },
-    {
-      "key": "context.hosted_on",
-      "before": 1650,
-      "after": 1650,
-      "delta": 0,
-      "classification": "defect_fixed",
-      "explanation": "PR 6783 briefly reduced hosted_on to 1640 by overwriting a platform primary key. The planted Netezza finding now preserves the numeric platform_id, restoring one HOSTED_ON edge per deployment."
-    },
-    {
-      "key": "context.integrates_with",
-      "before": 972,
-      "after": 975,
-      "delta": 3,
-      "classification": "expected_increase",
-      "explanation": "Revenue-cycle data-flow findings add three additional resolvable integration edges."
-    },
-    {
-      "key": "context.metric_definition",
-      "before": 127,
-      "after": 128,
-      "delta": 1,
-      "classification": "expected_increase",
-      "explanation": "The Netezza platform finding introduces one platform-type-specific metric definition."
-    },
-    {
-      "key": "review.review_event",
-      "before": 658,
-      "after": 686,
-      "delta": 28,
-      "classification": "expected_increase",
-      "explanation": "Contract findings add commercial review gates while finance attribution findings reduce invoice allocation review rows."
-    },
-    {
-      "key": "review.review_contract_subjects",
-      "before": 277,
-      "after": 320,
-      "delta": 43,
-      "classification": "expected_increase",
-      "explanation": "F2 and commercial-protection findings add contract-subject review events for benchmarking, notice-window, and minimum-commitment gates."
-    },
-    {
-      "key": "review.review_invoice_subjects",
-      "before": 120,
-      "after": 105,
-      "delta": -15,
-      "classification": "intentional_decrease",
-      "release_record_required": true,
-      "explanation": "F7 reclassifies the first 58 finance rows as unattributed unknown allocations. Fifteen of those rows were previously estimated invoice allocation review rows, so they no longer qualify as invoice-subject review events."
-    },
-    {
-      "key": "projection.source_vendor_360",
-      "before": 101,
-      "after": 102,
-      "delta": 1,
-      "classification": "expected_increase",
-      "explanation": "The added governed supplier appears in Source vendor 360."
-    },
-    {
-      "key": "projection.source_event_workspace",
-      "before": 173,
-      "after": 181,
-      "delta": 8,
-      "classification": "expected_increase",
-      "explanation": "Additional review gates generate additional Source event-workspace rows."
-    },
-    {
-      "key": "projection.projection_manifest",
-      "before": 7,
-      "after": 12,
-      "delta": 5,
-      "classification": "expected_increase",
-      "explanation": "W2 adds five product projection manifests for Tower value/evidence/AI and Intelligence pattern/question surfaces."
-    },
-    {
-      "key": "projection.tower_value_chain",
-      "before": 0,
-      "after": 230,
-      "delta": 230,
-      "classification": "expected_increase",
-      "explanation": "W2 adds one Tower value-chain projection row per contract with FK-backed claim-to-measure traceability."
-    },
-    {
-      "key": "projection.tower_evidence_queue",
-      "before": 0,
-      "after": 369,
-      "delta": 369,
-      "classification": "expected_increase",
-      "explanation": "W2 adds gated evidence rows for contracts and risk/control exceptions, each carrying gate reason and next evidence action."
-    },
-    {
-      "key": "projection.tower_ai_portfolio",
-      "before": 0,
-      "after": 360,
-      "delta": 360,
-      "classification": "expected_increase",
-      "explanation": "W2 adds one Tower AI portfolio projection row per AI usage/model source-room row."
-    },
-    {
-      "key": "projection.intelligence_pattern_evidence",
-      "before": 0,
-      "after": 30,
-      "delta": 30,
-      "classification": "expected_increase",
-      "explanation": "W2 adds Intelligence pattern-evidence rows for commercial leverage gaps and vendor risk clusters."
-    },
-    {
-      "key": "projection.intelligence_question_context",
-      "before": 0,
-      "after": 6,
-      "delta": 6,
-      "classification": "expected_increase",
-      "explanation": "W2 adds deterministic question-context projection rows tied to context packs and source citations."
-    }
-  ]
+  "purpose": "Single expected-count contract for the dense local ECL proof. Count changes from planted demo findings are classified here before CI expectations move.",
+  "release_record": "docs/releases/records/2026-08-24-ecl-count-delta-classification.md",
+  "rules": [
+    "A planted-data change may raise an expected count when the additional rows are traced to a named finding or producer.",
+    "A count decrease requires a written explanation and release record reference before the expected value may be updated.",
+    "Identity fields are not finding payloads. Demo findings must be planted through attributes or additional rows, not by replacing primary keys used by downstream relationships."
+  ],
+  "version": 1
 }

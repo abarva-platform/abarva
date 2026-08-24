@@ -191,13 +191,19 @@ def build_review_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
             )
 
     for index, row in enumerate(finance_source, start=1):
-        if row.get("allocation_basis") != "estimated":
+        allocation_basis = row.get("allocation_basis") or "unknown"
+        if allocation_basis not in {"estimated", "unknown"}:
             continue
         sid = source_record_id("SP06_Finance_ERP", row, index)
         invoice_id = source_layer.stable_uuid("commercial_invoice", row["source_row_id"])
+        evidence_needed = (
+            "Provide cost-center or contract allocation proof before treating this spend as directly attributable."
+            if allocation_basis == "estimated"
+            else "Provide allocation basis and owner confirmation before treating this spend as attributable."
+        )
         review_events.append(
             review_event_row(
-                key=f"invoice-estimated-allocation-{row['source_row_id']}",
+                key=f"invoice-{allocation_basis}-allocation-{row['source_row_id']}",
                 subject_kind="invoice_line",
                 subject_column="subject_invoice_line_id",
                 subject_id=invoice_id,
@@ -205,9 +211,9 @@ def build_review_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
                 decision_basis="source_recorded",
                 reviewer_role="it_finance",
                 source_record_id_value=sid,
-                previous_value={"allocation_basis": "estimated", "actual_usd": row.get("actual_usd")},
-                new_value={"evidence_needed": "Provide cost-center or contract allocation proof before treating this spend as directly attributable."},
-                notes="Invoice line uses estimated allocation; keep the amount but mark attribution as needing finance review.",
+                previous_value={"allocation_basis": allocation_basis, "actual_usd": row.get("actual_usd")},
+                new_value={"evidence_needed": evidence_needed},
+                notes=f"Invoice line uses {allocation_basis} allocation; keep the amount but mark attribution as needing finance review.",
             )
         )
 

@@ -14,9 +14,13 @@ This release turns the dense ECL local proof count expectations into a classifie
 
 It also fixes an identity regression in the synthetic finding planter: a platform finding changed the platform primary key, which caused deployment hosting edges to drop. The finding now changes descriptive attributes while preserving the `PLAT-####` identity used by deployment references.
 
-The operator completion expectation is corrected from 100% to 91% because the operator validation
-denominator includes four hard-gated slices. The executable local queue still passes 12 of 12
-slices; the hard gates are intentionally not counted as complete.
+The operator status now separates overall governed completion from local executable completion.
+The local queue can pass 12 of 12 executable slices while the overall governed status remains 91%
+because runtime, browser, and retirement gates are still open.
+
+Invoice allocation gaps are also preserved as reviewable subjects. Unknown invoice allocation is
+not treated as a reason to drop the review row; it remains attached to the invoice line with the
+next evidence needed.
 
 ## Layer Impact
 
@@ -40,12 +44,14 @@ slices; the hard gates are intentionally not counted as complete.
 - Updates the Azure gate validator test to read the shared count contract.
 - Classifies the five W2 projection-table producer-count increases.
 - Classifies the operator completion-percent correction caused by hard-gated slices remaining open.
+- Splits the operator status into overall governed completion and local executable completion.
+- Keeps unknown finance allocation rows as invoice-line review events instead of dropping them from review.
 - Adds a source-contract regression assertion that demo infrastructure findings must not replace platform primary keys.
 - Preserves platform identity in `scripts/ecl/generate_dense_source_room_extracts.py` while keeping the Netezza finding attributes.
 
 ## QA / Validation
 
-- PASS: `python3 -m py_compile scripts/ecl/generate_dense_source_room_extracts.py scripts/ecl/validate_dense_all_layer_local_proof_counts.py scripts/ecl/load_dense_source_room_context_layer.py scripts/ecl/load_dense_source_room_review_layer.py scripts/ecl/load_dense_source_room_source_projection_layer.py scripts/ecl/load_dense_source_room_cube_layer.py`
+- PASS: `python3 -m py_compile scripts/ecl/generate_dense_source_room_extracts.py scripts/ecl/validate_dense_all_layer_local_proof_counts.py scripts/ecl/load_dense_source_room_context_layer.py scripts/ecl/load_dense_source_room_review_layer.py scripts/ecl/load_dense_source_room_source_projection_layer.py scripts/ecl/load_dense_source_room_cube_layer.py scripts/ecl/run_no_stop_execution_queue.py scripts/ecl/validate_ecl_operator_status_report.py scripts/ecl/run_ecl_heartbeat_status_agent.py`
 - PASS: `python3 scripts/ecl/run_no_stop_execution_queue.py`
 - PASS: `python3 scripts/ecl/validate_no_stop_execution_queue.py`
 - PASS: `python3 scripts/ecl/validate_ecl_operator_status_report.py`
