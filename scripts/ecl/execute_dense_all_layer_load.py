@@ -475,8 +475,8 @@ select jsonb_pretty(jsonb_build_object(
   ),
   'tower_value_chain_measure_drift', (
     select count(*) from ecl_projection.tower_value_chain p
-    left join ecl_context.measure m on m.tenant_key = p.tenant_key and m.assessment_id = p.assessment_id and m.id = p.related_measure_id
-    where p.tenant_key = {tenant} and p.assessment_id = {assessment} and p.related_measure_id is not null and m.id is null
+    left join ecl_context.measure m on m.tenant_key = p.tenant_key and m.assessment_id = p.assessment_id and m.id = p.measure_id
+    where p.tenant_key = {tenant} and p.assessment_id = {assessment} and p.measure_id is not null and m.id is null
   ),
   'tower_evidence_queue_missing_gate_payload', (
     select count(*) from ecl_projection.tower_evidence_queue
