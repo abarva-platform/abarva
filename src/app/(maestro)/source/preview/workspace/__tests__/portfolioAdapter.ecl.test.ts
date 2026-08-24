@@ -250,6 +250,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         (row) => row.name === "executive_portfolio",
       ),
     ).toMatchObject({
+      note: "Returned by governed ECL projection read.",
       rowCount: 1,
       state: "available",
     });

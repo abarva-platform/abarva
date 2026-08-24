@@ -975,7 +975,7 @@ export function buildSourceVendor360Cockpit(input: {
           state: item.state,
           note:
             item.state === "available"
-              ? "Returned by governed V4 snapshot."
+              ? "Returned by governed ECL projection read."
               : "No rows returned for this slice.",
         })),
       ],
