@@ -10,6 +10,11 @@ in this codebase have been layer confusion, not bugs — an agent reading a proj
 canonical, or treating an adapter's output as a source of truth. Those mistakes are invisible to
 tests, survive reconciliation, and reach board slides.
 
+**Current ECL execution plan.** For the active clean-break build, use
+[ECL_CLEAN_BREAK_INTEGRATED_EXECUTION_PLAN_2026_08_24.md](./ECL_CLEAN_BREAK_INTEGRATED_EXECUTION_PLAN_2026_08_24.md)
+as the cross-agent execution checklist. It defines the ECL layers, tables, population pipeline,
+testing gates, product cutover plan, rollback plan, and denominator-based percent-complete reporting.
+
 ---
 
 ## 1. The four layers
