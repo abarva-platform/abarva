@@ -4,16 +4,22 @@ import { connection } from "next/server";
 
 import { AppShell } from "@/components/shell/AppShell";
 import { HomePreviewAppRoot } from "@/components/home/preview/HomePreviewAppRoot";
+import { cookies } from "next/headers";
 import {
   isFoundationPreviewOperatorSession,
 } from "@/lib/auth/foundation-preview-session";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
+import {
+  PRIVATE_BROWSER_PROOF_SESSION_COOKIE,
+  readPrivateBrowserProofSessionValue,
+} from "@/lib/auth/private-browser-proof-session";
 import {
   getHomeReviewBundle,
   isHomePreviewTenantKey,
   HOME_PREVIEW_TENANT_KEYS,
 } from "@/lib/home/preview/golden-snapshot";
 import { getHomeEclProjectionBundle } from "@/lib/home/preview/ecl-projection-bundle";
+import { canonicalTenantKey } from "@/lib/tenant/aliases";
 
 /**
  * Production-faithful preview of the new eight-chapter Home experience -- not a static prototype.
@@ -32,6 +38,27 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+async function hasHomeEclPrivateProofSession(
+  tenantKey: string,
+): Promise<boolean> {
+  try {
+    const store = await cookies();
+    const proofSession = await readPrivateBrowserProofSessionValue(
+      store.get(PRIVATE_BROWSER_PROOF_SESSION_COOKIE)?.value,
+    );
+    if (!proofSession) return false;
+    return (
+      canonicalTenantKey(proofSession.clientId) === tenantKey ||
+      canonicalTenantKey(proofSession.tenantKey) === tenantKey ||
+      proofSession.allowedClientKeys.some(
+        (clientKey) => canonicalTenantKey(clientKey) === tenantKey,
+      )
+    );
+  } catch {
+    return false;
+  }
+}
+
 export default async function HomePreviewPage({
   searchParams,
 }: {
@@ -39,18 +66,22 @@ export default async function HomePreviewPage({
 }) {
   await connection();
 
+  const { tenant, provider } = await searchParams;
+  const tenantKey = tenant && isHomePreviewTenantKey(tenant) ? tenant : HOME_PREVIEW_TENANT_KEYS[0];
+
   const hasPlatformAdmin = await isPlatformAdminSession();
   const hasFoundationOperator = await isFoundationPreviewOperatorSession();
-  if (!hasPlatformAdmin && !hasFoundationOperator) {
+  const hasPrivateProof =
+    provider === "ecl_projection_db"
+      ? await hasHomeEclPrivateProofSession(tenantKey)
+      : false;
+  if (!hasPlatformAdmin && !hasFoundationOperator && !hasPrivateProof) {
     notFound();
   }
 
   // One tenant per render. Reviewers pick with ?tenant=<key>; the page never loads a second
   // tenant's bundle, so no other client's data reaches the response and the UI carries no
   // cross-client control. A client-facing surface must look tenant-isolated because it is.
-  const { tenant, provider } = await searchParams;
-  const tenantKey = tenant && isHomePreviewTenantKey(tenant) ? tenant : HOME_PREVIEW_TENANT_KEYS[0];
-
   const bundle = provider === "ecl_projection_db"
     ? await getHomeEclProjectionBundle(tenantKey)
     : getHomeReviewBundle(tenantKey);

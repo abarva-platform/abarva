@@ -26,7 +26,7 @@ const PRIVATE_PROOF_TOKEN = process.env.ABARVA_PRIVATE_BROWSER_PROOF_TOKEN?.trim
 const ROUTES = [
   {
     key: "home_preview_ecl",
-    path: "/home/preview?provider=ecl_projection_db",
+    path: `/home/preview?tenant=${encodeURIComponent(TENANT_KEY)}&provider=ecl_projection_db`,
     requiredText: [/Meridian Health/i, /750|applications/i],
   },
   {
@@ -76,6 +76,13 @@ function routeHost() {
 
 function logStage(step, total, label) {
   console.log(`[ecl-browser-smoke] step ${step} of ${total}: ${label}`);
+}
+
+function textExcerpt(value, limit = 700) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, limit);
 }
 
 async function createTicket(clerk) {
@@ -227,6 +234,7 @@ async function smokeRoute(page, route) {
     screenshot_sha256: sha256(screenshotPath),
     text_snapshot: path.relative(OUT_DIR, textPath),
     text_sha256: sha256(textPath),
+    text_excerpt: textExcerpt(bodyText),
     issues,
     accepted: issues.length === 0,
   };
@@ -268,6 +276,7 @@ function emitStructuredSummary(summary) {
       text_length: route.text_length,
       screenshot_sha256: route.screenshot_sha256,
       text_sha256: route.text_sha256,
+      text_excerpt: route.text_excerpt,
       issue_count: route.issues.length,
       issues: route.issues,
       accepted: route.accepted,
