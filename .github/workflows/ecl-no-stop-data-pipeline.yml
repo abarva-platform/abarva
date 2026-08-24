@@ -191,12 +191,12 @@ jobs:
               failures.append('dense source room must remain not_client_attested')
 
           producer_expected = {
-              'table_count': 28,
+              'table_count': 36,
               'source_family_count': 14,
               'dense_source_rows': 7080,
               'source_supplied_tables': 11,
               'partial_source_supplied_tables': 3,
-              'downstream_builder_required_tables': 14,
+              'downstream_builder_required_tables': 21,
               'missing_core_producer_count': 0,
           }
           for key, expected in producer_expected.items():
