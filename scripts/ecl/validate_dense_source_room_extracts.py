@@ -49,6 +49,13 @@ REALISM_GATES = {
     "application_cost_top_decile_min": 0.30,
     "application_cost_top_decile_max": 0.75,
     "application_environment_count_distinct_min": 4,
+    "contract_distinct_supplier_min": 90,
+    "contract_distinct_supplier_max": 143,
+    "contracts_per_supplier_min": 1.60,
+    "contract_top_supplier_contract_count_min": 5,
+    "contract_value_top_decile_min": 0.30,
+    "contract_value_top_decile_max": 0.75,
+    "contract_max_single_value_share_max": 0.06,
 }
 
 
@@ -88,7 +95,26 @@ def validate_family_realism(family: str, rows: list[dict[str, str]], issues: lis
             issues.append(f"{family} environment_count expected at least {REALISM_GATES['application_environment_count_distinct_min']} distinct values, got {len(environment_counts)}")
 
     if family == "SP08_Vendor_Contract":
-        require_distinct(rows, "supplier_name", REALISM_GATES["vendor_distinct_min"], family, issues)
+        supplier_counts = Counter(row.get("supplier_name", "").strip() for row in rows if row.get("supplier_name", "").strip())
+        distinct_suppliers = len(supplier_counts)
+        contracts_per_supplier = len(rows) / max(distinct_suppliers, 1)
+        if distinct_suppliers < REALISM_GATES["contract_distinct_supplier_min"]:
+            issues.append(f"{family} expected at least {REALISM_GATES['contract_distinct_supplier_min']} distinct suppliers for a genuine long tail, got {distinct_suppliers}")
+        if distinct_suppliers > REALISM_GATES["contract_distinct_supplier_max"]:
+            issues.append(f"{family} expected at most {REALISM_GATES['contract_distinct_supplier_max']} distinct suppliers so concentration is visible, got {distinct_suppliers}")
+        if contracts_per_supplier < REALISM_GATES["contracts_per_supplier_min"]:
+            issues.append(f"{family} contracts per supplier {contracts_per_supplier:.2f} below {REALISM_GATES['contracts_per_supplier_min']:.2f}")
+        if max(supplier_counts.values(), default=0) < REALISM_GATES["contract_top_supplier_contract_count_min"]:
+            issues.append(f"{family} top supplier holds {max(supplier_counts.values(), default=0)} contracts, below {REALISM_GATES['contract_top_supplier_contract_count_min']}")
+        values = sorted((float(row.get("annualized_value_usd", "0") or 0) for row in rows), reverse=True)
+        value_total = sum(values)
+        top_decile_count = max(1, len(values) // 10)
+        top_decile_share = sum(values[:top_decile_count]) / max(value_total, 1)
+        max_contract_share = max(values, default=0) / max(value_total, 1)
+        if not (REALISM_GATES["contract_value_top_decile_min"] <= top_decile_share <= REALISM_GATES["contract_value_top_decile_max"]):
+            issues.append(f"{family} top-decile annualized value share {top_decile_share:.1%} outside 30%-75% realism gate")
+        if max_contract_share > REALISM_GATES["contract_max_single_value_share_max"]:
+            issues.append(f"{family} largest contract share {max_contract_share:.1%} exceeds 6% guardrail")
         notice_values = {row.get("notice_window_days", "") for row in rows}
         if len(notice_values) < 4:
             issues.append(f"{family} lacks renewal/notice-window spread")
