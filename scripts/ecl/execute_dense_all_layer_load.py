@@ -40,6 +40,7 @@ DDL_FILES = [
     ROOT / "docs/architecture/sql-drafts/ecl_physical_schema_v1_draft.sql",
     ROOT / "docs/architecture/sql-drafts/ecl_product_projection_tables_v1_draft.sql",
     ROOT / "docs/architecture/sql-drafts/ecl_cube_read_models_v1_draft.sql",
+    ROOT / "docs/architecture/sql-drafts/ecl_serving_views_v1_draft.sql",
 ]
 TRUTHY = {"1", "true", "yes", "on"}
 PROOF_BEGIN = "__SEMANTIC2_PROOF_TGZ_BEGIN__"
