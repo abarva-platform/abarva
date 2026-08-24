@@ -12,19 +12,28 @@ function parseArgs(argv) {
     cases: CASES_PATH,
     findingsSpec: FINDINGS_SPEC_PATH,
     answers: null,
+    captureLive: false,
+    baseUrl: process.env.BASE_URL || process.env.ECL_AVA_EVAL_BASE_URL || "https://app.abarva.ai",
+    tenantKey: process.env.E2E_ACTIVE_CLIENT || "meridian-health",
     out: "reports/ecl-ava-consultant-eval/summary.json",
+    answersOut: "reports/ecl-ava-consultant-eval/live-answers.jsonl",
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--cases") args.cases = argv[++i];
     else if (arg === "--findings-spec") args.findingsSpec = argv[++i];
     else if (arg === "--answers") args.answers = argv[++i];
+    else if (arg === "--capture-live") args.captureLive = true;
+    else if (arg === "--base-url") args.baseUrl = argv[++i];
+    else if (arg === "--tenant-key") args.tenantKey = argv[++i];
     else if (arg === "--out") args.out = argv[++i];
+    else if (arg === "--answers-out") args.answersOut = argv[++i];
     else if (arg === "--help") {
-      console.log(`Usage: node scripts/ecl/run_ecl_ava_consultant_eval.mjs [--answers answers.jsonl] [--out summary.json]
+      console.log(`Usage: node scripts/ecl/run_ecl_ava_consultant_eval.mjs [--answers answers.jsonl] [--capture-live] [--out summary.json]
 
 Without --answers, validates the ECL consultant-eval case bank and shared deterministic
-validator contract. With --answers, evaluates supplied aVa answer JSONL rows keyed by case id.`);
+validator contract. With --answers, evaluates supplied aVa answer JSONL rows keyed by case id.
+With --capture-live, signs into BASE_URL and captures live /api/intelligence/ask answers first.`);
       process.exit(0);
     } else {
       throw new Error(`Unknown argument: ${arg}`);
@@ -171,12 +180,211 @@ function evaluateAnswers(cases, answers) {
   return results;
 }
 
+function requiredEnv(name) {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`${name} missing`);
+  return value;
+}
+
+function routeHost(baseUrl) {
+  return new URL(baseUrl).hostname;
+}
+
+function candidateEmails() {
+  return [
+    process.env.E2E_PRIVATE_PROOF_EMAIL,
+    process.env.E2E_DEMO_EMAIL,
+    "admin@abarva.ai",
+    "agent@meridian-health.example.com",
+    "cdio@meridian-health.example.com",
+  ].filter(Boolean);
+}
+
+async function requestPrivateProofSession(baseUrl, email) {
+  const token = requiredEnv("ABARVA_PRIVATE_BROWSER_PROOF_TOKEN");
+  const response = await fetch(new URL("/api/auth/private-browser-proof", baseUrl), {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ email, proofCookieOnly: true }),
+  });
+  const body = await response.json().catch(() => ({}));
+  return { response, body };
+}
+
+async function signInWithPrivateProof(page, baseUrl, tenantKey) {
+  const attempts = [];
+  for (const email of candidateEmails()) {
+    const { response, body } = await requestPrivateProofSession(baseUrl, email);
+    attempts.push({ email, status: response.status, error: body?.error ?? null });
+    if (!response.ok || !body?.proofSessionCookie || !body?.proofSessionCookieName) continue;
+    await page.context().addCookies([
+      {
+        name: body.proofSessionCookieName,
+        value: body.proofSessionCookie,
+        domain: routeHost(baseUrl),
+        path: "/",
+        httpOnly: true,
+        sameSite: "Lax",
+        secure: baseUrl.startsWith("https://"),
+      },
+      {
+        name: "abarva_active_client",
+        value: body.clientKey || tenantKey,
+        domain: routeHost(baseUrl),
+        path: "/",
+        sameSite: "Lax",
+        secure: baseUrl.startsWith("https://"),
+      },
+    ]);
+    return { method: "private_browser_proof_cookie", email, attempts };
+  }
+  throw new Error(`Private browser proof auth failed: ${JSON.stringify(attempts)}`);
+}
+
+async function signInWithClerkTicket(page, baseUrl, tenantKey) {
+  const { createClerkClient } = await import("@clerk/backend");
+  const clerk = createClerkClient({ secretKey: requiredEnv("CLERK_SECRET_KEY") });
+  const tried = [];
+  for (const email of candidateEmails()) {
+    tried.push(email);
+    const users = await clerk.users.getUserList({ emailAddress: [email], limit: 1 });
+    const user = users.data[0];
+    if (!user) continue;
+    const token = await clerk.signInTokens.createSignInToken({
+      userId: user.id,
+      expiresInSeconds: 300,
+    });
+    await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+    await page.waitForFunction(() => window.Clerk?.loaded === true, null, { timeout: 30_000 });
+    await page.evaluate(async (ticket) => {
+      const result = await window.Clerk.client.signIn.create({ strategy: "ticket", ticket });
+      if (result.status !== "complete" || !result.createdSessionId) {
+        throw new Error(`Ticket sign-in failed with status ${result.status}`);
+      }
+      await window.Clerk.setActive({ session: result.createdSessionId });
+    }, token.token);
+    await page.waitForFunction(() => Boolean(window.Clerk?.user), null, { timeout: 15_000 });
+    await page.context().addCookies([
+      {
+        name: "abarva_active_client",
+        value: tenantKey,
+        domain: routeHost(baseUrl),
+        path: "/",
+        sameSite: "Lax",
+        secure: baseUrl.startsWith("https://"),
+      },
+    ]);
+    return { method: "clerk_sign_in_ticket", email, attempts: tried.map((item) => ({ email: item })) };
+  }
+  throw new Error(`No Clerk user found for ${tried.join(", ")}`);
+}
+
+async function authenticate(page, baseUrl, tenantKey) {
+  if (process.env.ABARVA_PRIVATE_BROWSER_PROOF_TOKEN?.trim()) {
+    return signInWithPrivateProof(page, baseUrl, tenantKey);
+  }
+  return signInWithClerkTicket(page, baseUrl, tenantKey);
+}
+
+function parseNdjson(text) {
+  return text
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0)
+    .map((line) => {
+      try {
+        return JSON.parse(line);
+      } catch {
+        return { type: "parse-error", raw: line };
+      }
+    });
+}
+
+function textFromEvents(events) {
+  const directAnswers = events
+    .filter((event) => event?.type === "agent-answer" && event?.answer)
+    .map((event) => event.answer.directAnswer ?? event.answer.prose ?? "")
+    .filter(Boolean);
+  if (directAnswers.length > 0) return directAnswers.join("\n\n");
+  return events
+    .filter((event) => event?.type === "delta" && typeof event.text === "string")
+    .map((event) => event.text)
+    .join("");
+}
+
+async function captureLiveAnswers(cases, args) {
+  const { chromium } = await import("playwright");
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  try {
+    const auth = await authenticate(page, args.baseUrl, args.tenantKey);
+    await page.goto(new URL(`/intelligence?provider=ecl_projection_db`, args.baseUrl).toString(), {
+      waitUntil: "networkidle",
+      timeout: 45_000,
+    });
+    const rows = [];
+    for (const row of cases) {
+      const result = await page.evaluate(
+        async ({ baseUrl, query, tenantKey }) => {
+          const response = await fetch(new URL("/api/intelligence/ask", baseUrl).toString(), {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              query,
+              client: tenantKey,
+              richText: false,
+              traceEnabled: true,
+              answerOnlyStreaming: false,
+              surfaceContext: {
+                module: "intelligence",
+                clientKey: tenantKey,
+                activeClient: tenantKey,
+                activeTab: "ecl-consultant-eval",
+                substrate: "ecl_projection_db",
+                facts: ["ECL consultant eval live-answer capture"],
+              },
+            }),
+          });
+          return {
+            status: response.status,
+            contentType: response.headers.get("content-type"),
+            text: await response.text(),
+          };
+        },
+        { baseUrl: args.baseUrl, query: row.question, tenantKey: args.tenantKey },
+      );
+      const events = parseNdjson(result.text);
+      rows.push({
+        id: row.id,
+        case_id: row.id,
+        status: result.status,
+        content_type: result.contentType,
+        answerText: textFromEvents(events),
+        event_types: [...new Set(events.map((event) => event.type ?? "unknown"))],
+        event_count: events.length,
+        auth_method: auth.method,
+      });
+    }
+    mkdirSync(path.dirname(args.answersOut), { recursive: true });
+    writeFileSync(args.answersOut, rows.map((row) => JSON.stringify(row)).join("\n") + "\n");
+    return rows;
+  } finally {
+    await browser.close();
+  }
+}
+
 const args = parseArgs(process.argv.slice(2));
 const cases = readJsonl(args.cases);
 const findingsSpec = readJson(args.findingsSpec);
 validateCases(cases, findingsSpec);
 
-const answerRows = args.answers ? readJsonl(args.answers) : null;
+const answerRows = args.captureLive
+  ? await captureLiveAnswers(cases, args)
+  : args.answers
+    ? readJsonl(args.answers)
+    : null;
 const answerResults = answerRows ? evaluateAnswers(cases, answerRows) : [];
 const acceptedAnswerCount = answerResults.filter((row) => row.accepted).length;
 const summary = {
