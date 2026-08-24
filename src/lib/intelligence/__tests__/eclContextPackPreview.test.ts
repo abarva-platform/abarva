@@ -17,37 +17,41 @@ describe("readIntelligenceEclContextPackPreview", () => {
   it("summarizes the ECL context pack projection without mutating the default Intelligence surface", async () => {
     mockAzureRead.query.mockResolvedValue([
       {
-        row_key: "pack-001",
-        surface_key: "strategy",
-        retrieval_state: "cited",
-        value_state: "known",
-        quality_state: "passed",
-        access_class: "client_confidential",
-        prompt_context_json: {
-          title: "AI strategy pressure",
-          summary: "Cited facts are ready for Intelligence grounding.",
+        payload_json: {
+          row_key: "pack-001",
+          surface_key: "strategy",
+          retrieval_state: "cited",
+          value_state: "known",
+          quality_state: "passed",
+          access_class: "client_confidential",
+          prompt_context_json: {
+            title: "AI strategy pressure",
+            summary: "Cited facts are ready for Intelligence grounding.",
+          },
+          permitted_facts_json: [{ id: "fact-1" }, { id: "fact-2" }],
+          blocked_facts_json: [{ id: "blocked-1" }],
+          citation_refs_json: [{ id: "cite-1" }],
+          gap_flags_json: [],
+          source_hash: "hash-1",
         },
-        permitted_facts_json: [{ id: "fact-1" }, { id: "fact-2" }],
-        blocked_facts_json: [{ id: "blocked-1" }],
-        citation_refs_json: [{ id: "cite-1" }],
-        gap_flags_json: [],
-        source_hash: "hash-1",
       },
       {
-        row_key: "pack-002",
-        surface_key: "source",
-        retrieval_state: "indexed",
-        value_state: "known",
-        quality_state: "warning",
-        access_class: "internal",
-        prompt_context_json: {
-          heading: "Commercial leverage",
+        payload_json: {
+          row_key: "pack-002",
+          surface_key: "source",
+          retrieval_state: "indexed",
+          value_state: "known",
+          quality_state: "warning",
+          access_class: "internal",
+          prompt_context_json: {
+            heading: "Commercial leverage",
+          },
+          permitted_facts_json: [{ id: "fact-3" }],
+          blocked_facts_json: [],
+          citation_refs_json: [],
+          gap_flags_json: [{ code: "missing_review" }],
+          source_hash: "hash-2",
         },
-        permitted_facts_json: [{ id: "fact-3" }],
-        blocked_facts_json: [],
-        citation_refs_json: [],
-        gap_flags_json: [{ code: "missing_review" }],
-        source_hash: "hash-2",
       },
     ]);
 
@@ -57,7 +61,7 @@ describe("readIntelligenceEclContextPackPreview", () => {
 
     expect(mockAzureRead.query).toHaveBeenCalledWith(
       expect.stringContaining(
-        "from ecl_projection.intelligence_context_pack",
+        "from serving.intelligence_advisory",
       ),
       ["meridian-health", "assessment-dense-source-room-20260823"],
       { missingTable: "empty" },
@@ -97,7 +101,7 @@ describe("readIntelligenceEclContextPackPreview", () => {
     await expect(
       readIntelligenceEclContextPackPreview("meridian-health"),
     ).rejects.toThrow(
-      "Intelligence ECL preview: no ecl_projection.intelligence_context_pack rows",
+      "Intelligence ECL preview: no serving Intelligence context rows",
     );
   });
 });

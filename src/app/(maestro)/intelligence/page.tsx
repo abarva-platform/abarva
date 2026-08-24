@@ -138,7 +138,7 @@ function IntelligenceEclProjectionPanel({
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700">
               This non-default preview reads{" "}
-              <code>ecl_projection.intelligence_context_pack</code> for the
+              <code>serving.intelligence_advisory</code> and sibling serving views for the
               dense assessment. It proves the context pack has governed rows,
               retrieval states, access classes, citations and gaps; it does not
               repoint the default Intelligence advisory surface.

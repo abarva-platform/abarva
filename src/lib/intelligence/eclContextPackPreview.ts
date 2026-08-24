@@ -17,6 +17,10 @@ interface IntelligenceEclContextPackRow {
   source_hash: string;
 }
 
+interface IntelligenceServingRow {
+  readonly payload_json: IntelligenceEclContextPackRow;
+}
+
 export interface IntelligenceEclContextPackPreview {
   provider: "ecl_projection_db";
   tenantKey: string;
@@ -110,34 +114,30 @@ export async function readIntelligenceEclContextPackPreview(
 ): Promise<IntelligenceEclContextPackPreview | null> {
   if (!tenantKey) return null;
 
-  const rows = await azureRead.query<IntelligenceEclContextPackRow>(
-    `select
-       row_key,
-       surface_key,
-       retrieval_state,
-       value_state,
-       quality_state,
-       access_class,
-       prompt_context_json,
-       permitted_facts_json,
-       blocked_facts_json,
-       citation_refs_json,
-       gap_flags_json,
-       source_hash
-     from ecl_projection.intelligence_context_pack
-     where tenant_key = $1
-       and assessment_id = $2
-     order by
-       surface_key,
-       row_key
+  const servingRows = await azureRead.query<IntelligenceServingRow>(
+    `select payload_json
+       from serving.intelligence_advisory
+      where tenant_key = $1 and assessment_id = $2
+      union all
+     select payload_json
+       from serving.intelligence_enterprise_landscape
+      where tenant_key = $1 and assessment_id = $2
+      union all
+     select payload_json
+       from serving.intelligence_context_summary
+      where tenant_key = $1 and assessment_id = $2
+      order by
+       (payload_json->>'surface_key'),
+       (payload_json->>'row_key')
      limit 200`,
     [tenantKey, DENSE_ASSESSMENT_ID],
     { missingTable: "empty" },
   );
+  const rows = servingRows.map((row) => row.payload_json);
 
   if (rows.length === 0) {
     throw new Error(
-      `Intelligence ECL preview: no ecl_projection.intelligence_context_pack rows for ${tenantKey}/${DENSE_ASSESSMENT_ID}.`,
+      `Intelligence ECL preview: no serving Intelligence context rows for ${tenantKey}/${DENSE_ASSESSMENT_ID}.`,
     );
   }
 

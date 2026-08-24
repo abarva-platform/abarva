@@ -32,18 +32,19 @@ is green.
 | W1 Azure dense all-layer load/readback | **85%** | ACA execute + separate readback + formal compare | Execute and separate readback succeeded on digest-pinned image; formal compare is pending current local contract regeneration. |
 | W2 Product projections | **100% local** | 12 projection backings | All five W2 projection backings now have DDL, loader rows, FK-backed refs, local readback, and zero-drift checks. Azure reload/readback still belongs to W1. |
 | W3 Serving schema and views | **100% local** | 40 views + serving contract | Serving DDL now creates `serving.serving_contract` and 40 first-class serving views. Azure reload/readback still belongs to W1; product route proof belongs to W4/W5. |
-| W4 Product route repoint and permission fence | **0%** | Home, Source, Tower, Intelligence routes | Existing direct ECL consumers exist, but clean-break serving-only route contract is not complete. |
+| W4 Product route repoint and permission fence | **50% local** | Home, Source, Tower, Intelligence routes + guard | Non-default ECL preview providers are being moved to `serving.*`; local route-fence and focused adapter tests are green. Default-provider cutover and browser proof remain W5 gates. |
 | W5 Refusal and browser proof | **0%** | 4 product modules + gated views | No complete clean-break browser proof yet. |
 | W6 Legacy data-plane retirement | **0%** | 851 pre-ECL data-plane tables | Inventory known; no retirement run. |
 | W7 Real Layer 2 adapter path | **30%** | first real intake adapter + gap report + clean-break policy | First application adapter exists; it is not yet the primary clean-break load path. |
 
-**Overall clean-break completion:** **32%**.
+**Overall clean-break completion:** **36%**.
 
 Additional product-readiness denominators:
 
 | Metric | Current | Denominator | Evidence state |
 |---|---:|---|---|
 | Surfaces served from ECL | **40 local** | 40 serving surfaces | W3 serving views are built in DDL and wired into the data-build DDL list. Azure serving readback and route/browser proof are not claimed. |
+| Product ECL preview providers reading serving views | **4 local** | 4 product modules | Home, Source, Tower, and Intelligence non-default ECL preview providers are locally wired to `serving.*`; default provider and browser proof are not claimed. |
 | Findings demonstrable on a real surface | **0** | 10 demo findings | Findings spec is committed; W2/W3 data and surface assertions are not green yet. |
 
 The serving denominator is **40 surfaces** for this clean-break plan: Home 16, Tower 9, Source 9,

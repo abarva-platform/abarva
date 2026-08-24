@@ -137,63 +137,69 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     });
   });
 
-  it("loads Source 360 portfolio data from flagged Azure ECL projection tables", async () => {
+  it("loads Source 360 portfolio data from flagged Azure ECL serving views", async () => {
     process.env.SOURCE_WORKSPACE_PROVIDER = "legacy";
     delete process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR;
     mockWithSession.mockImplementation(async (fn) => {
       const run = async <R,>(sql: string): Promise<R[]> => {
         if (sql.includes("set_config")) return [] as R[];
-        if (sql.includes("ecl_projection.source_contract_360")) {
+        if (sql.includes("serving.source_contract_360")) {
           return [
             {
-              tenant_key: "meridian-health",
-              row_key: "MER-CTR-SSO-BPO-001",
-              contract_id: "contract-object-1",
-              vendor_object_id: "vendor-object-1",
-              vendor_name: "LedgerWorks Shared Services LLC",
-              contract_name: "Finance Shared Services BPO",
-              renewal_notice_date: "2027-06-30",
-              end_date: "2027-12-31",
-              annualized_value_usd: 7200000,
-              total_contract_value_usd: 21600000,
-              value_state: "known",
-              scope_json: [
-                { domain: "Finance", name: "Workday Finance" },
-                {
-                  domain: "Finance",
-                  name: "BlackLine Account Reconciliations",
+              payload_json: {
+                tenant_key: "meridian-health",
+                row_key: "MER-CTR-SSO-BPO-001",
+                contract_id: "contract-object-1",
+                vendor_object_id: "vendor-object-1",
+                vendor_name: "LedgerWorks Shared Services LLC",
+                contract_name: "Finance Shared Services BPO",
+                renewal_notice_date: "2027-06-30",
+                end_date: "2027-12-31",
+                annualized_value_usd: 7200000,
+                total_contract_value_usd: 21600000,
+                value_state: "known",
+                scope_json: [
+                  { domain: "Finance", name: "Workday Finance" },
+                  {
+                    domain: "Finance",
+                    name: "BlackLine Account Reconciliations",
+                  },
+                ],
+                spend_summary_json: {
+                  ap_actual_total_usd: 5100000,
+                  market_benchmark: {
+                    basis: "model_inferred",
+                  },
                 },
-              ],
-              spend_summary_json: {
-                ap_actual_total_usd: 5100000,
-                market_benchmark: {
-                  basis: "model_inferred",
-                },
+                gap_flags_json: ["requires_owner_finance_legal_review"],
               },
-              gap_flags_json: ["requires_owner_finance_legal_review"],
             },
           ] as R[];
         }
-        if (sql.includes("ecl_projection.source_vendor_360")) {
+        if (sql.includes("serving.source_vendor_360")) {
           return [
             {
-              tenant_key: "meridian-health",
-              row_key: "MER-VEN-LEDGERWORKS",
-              vendor_object_id: "vendor-object-1",
-              vendor_name: "LedgerWorks Shared Services LLC",
-              contract_count: 1,
-              annualized_spend_usd: 7200000,
-              contract_ids_json: ["MER-CTR-SSO-BPO-001"],
+              payload_json: {
+                tenant_key: "meridian-health",
+                row_key: "MER-VEN-LEDGERWORKS",
+                vendor_object_id: "vendor-object-1",
+                vendor_name: "LedgerWorks Shared Services LLC",
+                contract_count: 1,
+                annualized_spend_usd: 7200000,
+                contract_ids_json: ["MER-CTR-SSO-BPO-001"],
+              },
             },
           ] as R[];
         }
-        if (sql.includes("ecl_projection.source_event_workspace")) {
+        if (sql.includes("serving.source_events")) {
           return [
             {
-              tenant_key: "meridian-health",
-              row_key: "MER-CTR-SSO-BPO-001:compare:bidder-a",
-              workspace_tab: "compare",
-              row_type: "vendor_response_compare",
+              payload_json: {
+                tenant_key: "meridian-health",
+                row_key: "MER-CTR-SSO-BPO-001:compare:bidder-a",
+                workspace_tab: "compare",
+                row_type: "vendor_response_compare",
+              },
             },
           ] as R[];
         }
