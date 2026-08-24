@@ -32,7 +32,7 @@ const ROUTES = [
   {
     key: "source_workspace_ecl",
     path: "/source/preview/workspace?provider=ecl_projection_db",
-    requiredText: [/Meridian Health|Source/i, /contract|vendor|event/i],
+    requiredText: [/Meridian Health|Source/i, /230\s+contracts/i, /102\s+vendors/i],
   },
   {
     key: "tower_ecl",

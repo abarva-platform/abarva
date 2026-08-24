@@ -34,11 +34,13 @@ describe("Source workspace requested-client routing", () => {
   });
 
   it("guards the ECL provider query override behind an explicit environment flag", () => {
+    expect(pageSource).toContain("provider?: string");
     expect(pageSource).toContain("sourceProvider?: string");
     expect(pageSource).toContain(
       'SOURCE_WORKSPACE_ALLOW_PROVIDER_QUERY_OVERRIDE !== "true"',
     );
     expect(pageSource).toContain('normalized === "ecl_projection_db"');
+    expect(pageSource).toContain("params.sourceProvider ?? params.provider");
     expect(pageSource).toContain("requestedSourceProvider");
   });
 });

@@ -44,6 +44,7 @@ export default async function SourceWorkspacePreviewPage({
     client?: string;
     contractId?: string;
     contractTab?: string;
+    provider?: string;
     sourceProvider?: string;
     tab?: string;
   }>;
@@ -64,7 +65,7 @@ export default async function SourceWorkspacePreviewPage({
   const requestedContractTab =
     params.contractTab?.trim() || params.tab?.trim() || null;
   const requestedSourceProvider = sourceProviderOverrideFromRequest(
-    params.sourceProvider,
+    params.sourceProvider ?? params.provider,
   );
   const tenant = await resolveTenant({
     requestedClient,

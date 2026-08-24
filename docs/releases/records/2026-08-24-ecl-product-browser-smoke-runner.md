@@ -20,6 +20,8 @@ Third follow-up: the first structured route run reached all four product routes.
 
 Fourth follow-up: after deployment, the next five-step smoke accepted Home, Source, and Tower and isolated Intelligence to a route-level unhandled error. The Intelligence ECL reader now wraps its union in a subquery and orders by projected columns, avoiding a PostgreSQL set-operation ordering failure while preserving the serving-view boundary.
 
+Fifth follow-up: the next smoke run accepted all four routes, but the Source route excerpt still showed legacy Source v1 counts because the page honored `sourceProvider` while the cross-product smoke used `provider`. Source now accepts the shared `provider=ecl_projection_db` query key, and the smoke requires the dense ECL Source count signature so legacy Source cannot pass as ECL.
+
 ## Layer Impact
 
 - `global-control-lane`: adds proof tooling for shared product QA.
@@ -37,6 +39,8 @@ Fourth follow-up: after deployment, the next five-step smoke accepted Home, Sour
 ## Changes Included
 
 - `scripts/ecl/run_product_ecl_browser_smoke.mjs`
+- `src/app/(maestro)/source/preview/workspace/page.tsx`
+- `src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts`
 - `src/app/(maestro)/home/preview/page.tsx`
 - `src/app/(maestro)/tower/page.tsx`
 - `src/app/(maestro)/intelligence/page.tsx`
@@ -53,12 +57,16 @@ Fourth follow-up: after deployment, the next five-step smoke accepted Home, Sour
 - `node --check scripts/ecl/run_product_ecl_browser_smoke.mjs` — pass.
 - `npx eslint src/app/(maestro)/home/preview/page.tsx src/app/(maestro)/tower/page.tsx src/app/(maestro)/intelligence/page.tsx` — pass.
 - `npx eslint src/lib/intelligence/eclContextPackPreview.ts` — pass.
+- `npx eslint src/app/(maestro)/source/preview/workspace/page.tsx scripts/ecl/run_product_ecl_browser_smoke.mjs` — pass.
+- `npx jest --runTestsByPath src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts --runInBand` — pass.
+- `node --check scripts/ecl/run_product_ecl_browser_smoke.mjs` — pass.
 - `git diff --check` — pass.
 - `npm run release:check` — pass.
 - Signed-in ACA browser proof — first run reached the browser-auth step and was blocked by the Clerk browser ticket path; the runner now prefers the private proof-cookie path before falling back to Clerk tickets.
 - Second ACA run reached the deployed browser-smoke image with the private proof-token injected, but the proof archive begin marker was outside the supported log tail after screenshot output. The runner now emits a compact structured status after the archive so the next run can classify the five route steps even if archive extraction is unavailable.
 - Third ACA run reached all five steps. Source accepted; Home, Tower, and Intelligence produced route-level findings. These findings are treated as product QA defects, not proof-runner success.
 - Fourth ACA run reached all five steps. Home, Source, and Tower accepted. Intelligence rendered the route error boundary; the next run must prove this correction before browser proof can be claimed.
+- Fifth ACA run reached all five steps and accepted all four routes, but the Source text excerpt revealed the route still used legacy counts. The Source route and smoke count-signature check are corrected before claiming Source ECL product proof.
 - Static env/secret injection proof: `npm run verify:env-secret-injection` verifies the app runtime and private operator include the private proof-token Key Vault secretRef.
 
 ## Rollout Plan
