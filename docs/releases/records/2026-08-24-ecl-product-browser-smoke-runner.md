@@ -12,7 +12,9 @@
 
 Adds a narrow signed-in browser smoke runner for the ECL preview provider. It authenticates with the private browser proof cookie when the proof token is available, falls back to Clerk sign-in tickets for local/dev use, pins the active client, opens the Home, Source, Tower, and Intelligence ECL preview routes, captures screenshot and text evidence, and fails on sign-in redirects, empty pages, browser errors, missing expected text, or client-visible builder vocabulary.
 
-Follow-up: the approved ACA main deploy lane now wires the private browser proof route into the web runtime with `ABARVA_PRIVATE_BROWSER_PROOF_ENABLED=1` and `ABARVA_PRIVATE_BROWSER_PROOF_TOKEN=secretref:parallel-run-token`. This is required because the first ACA smoke run failed before product routes on Clerk browser ticket exchange.
+Follow-up: the approved ACA main deploy lane now wires the private browser proof route into the web runtime with `ABARVA_PRIVATE_BROWSER_PROOF_ENABLED=1` and `ABARVA_PRIVATE_BROWSER_PROOF_TOKEN=secretref:parallel-run-token`. The private operator job now declares the same proof-token secretRef so the governed ACA proof job can request the proof cookie without printing the token. This is required because the first ACA smoke run failed before product routes on Clerk browser ticket exchange.
+
+Second follow-up: the browser runner emits a compact structured result after its archive output. This keeps the five-step status recoverable from ACA log tails even when screenshot evidence makes the archive too large for the supported log window.
 
 ## Layer Impact
 
@@ -33,6 +35,7 @@ Follow-up: the approved ACA main deploy lane now wires the private browser proof
 - `scripts/ecl/run_product_ecl_browser_smoke.mjs`
 - `.github/workflows/aca-main-deploy.yml`
 - `infra/azure/parameters/app-runtime.lab.bicepparam`
+- `infra/azure/parameters/private-operator.lab.bicepparam`
 - `scripts/azure/verify-env-secret-injection-proof.mjs`
 - `package.json` script `ecl:product-browser:smoke`
 - Release record `docs/releases/records/2026-08-24-ecl-product-browser-smoke-runner.md`
@@ -42,7 +45,8 @@ Follow-up: the approved ACA main deploy lane now wires the private browser proof
 - `node --check scripts/ecl/run_product_ecl_browser_smoke.mjs` — pass.
 - `npm run release:check` — pending rerun after this release record correction.
 - Signed-in ACA browser proof — first run reached the browser-auth step and was blocked by the Clerk browser ticket path; the runner now prefers the private proof-cookie path before falling back to Clerk tickets.
-- Static env/secret injection proof: `npm run verify:env-secret-injection` verifies the app runtime includes the private proof-token Key Vault secretRef.
+- Second ACA run reached the deployed browser-smoke image with the private proof-token injected, but the proof archive begin marker was outside the supported log tail after screenshot output. The runner now emits a compact structured status after the archive so the next run can classify the five route steps even if archive extraction is unavailable.
+- Static env/secret injection proof: `npm run verify:env-secret-injection` verifies the app runtime and private operator include the private proof-token Key Vault secretRef.
 
 ## Rollout Plan
 

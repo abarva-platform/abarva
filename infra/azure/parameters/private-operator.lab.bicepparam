@@ -18,7 +18,7 @@ param containerAppsEnvironmentName = 'cae-abarva-scale-lab-eastus'
 param scaleRuntimeManagedIdentityName = 'id-abarva-scale-runtime-lab-eastus'
 
 param migrationJobName = 'job-abarva-private-operator-eus'
-param imageName = 'acrabarvalab001.azurecr.io/abarva/web:cutover-main-20260522-88ecab1b1-git1'
+param imageName = 'acrabarvalab001.azurecr.io/abarva/web@sha256:918b6cbf298ebd5bd20782b15f7d1817111d94e438436d64f2ea64db543db8a9'
 param registryServer = 'acrabarvalab001.azurecr.io'
 
 param keyVaultSecretRefs = [
@@ -26,6 +26,11 @@ param keyVaultSecretRefs = [
     envName: 'DATABASE_URL'
     containerAppSecretName: 'azure-postgres-control-database-url'
     keyVaultSecretUri: 'https://kv-abarva-lab-001.vault.azure.net/secrets/azure-postgres-control-database-url'
+  }
+  {
+    envName: 'ABARVA_PRIVATE_BROWSER_PROOF_TOKEN'
+    containerAppSecretName: 'parallel-run-token'
+    keyVaultSecretUri: 'https://kv-abarva-lab-001.vault.azure.net/secrets/parallel-run-invariant-token'
   }
 ]
 
