@@ -29,6 +29,8 @@ QUALITY_ZERO_CHECKS = (
     "relationship_endpoint_drift",
     "cube_metric_drift",
     "cube_measure_drift",
+    "home_application_count_basis_drift",
+    "home_application_page_deployment_rows",
     "source_value_claimable_rows",
 )
 

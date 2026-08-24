@@ -73,6 +73,12 @@ PRODUCER_MAP: dict[str, dict[str, Any]] = {
         "producer": "document extraction adapter",
         "basis": "page/span-backed evidence rows where available",
     },
+    "ecl_context.object_type_catalog": {
+        "status": "schema_contract_supplied",
+        "families": [],
+        "producer": "ECL physical schema bootstrap",
+        "basis": "global object-type vocabulary with grain and counting class; not client intake and not product-owned",
+    },
     "ecl_context.object": {
         "status": "source_supplied",
         "families": ["SP02_HRIS", "SP03_CMDB", "SP04_Data_BI_ETL", "SP05_Infrastructure", "SP07_PPM", "SP08_Vendor_Contract", "SP09_GRC", "SP10_KPI_Operations", "SP11_AI_Usage_Models"],

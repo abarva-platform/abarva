@@ -117,6 +117,68 @@ create table if not exists ecl_source.document_extraction (
   constraint document_extraction_tenant_assessment_id_unique unique (tenant_key, assessment_id, id)
 );
 
+create table if not exists ecl_context.object_type_catalog (
+  object_type text primary key,
+  display_label text not null,
+  grain text not null,
+  counting_class text not null,
+  description text not null,
+  constraint object_type_catalog_grain_check check (
+    grain in (
+      'enterprise', 'business_segment', 'business_function', 'organization',
+      'process', 'application', 'application_deployment', 'data_platform', 'data_product',
+      'infrastructure', 'vendor', 'contract', 'program', 'metric',
+      'risk', 'control', 'ai_program', 'ai_use_case', 'ai_tool', 'persona'
+    )
+  ),
+  constraint object_type_catalog_counting_class_check check (
+    counting_class in (
+      'enterprise_scope',
+      'business_entity',
+      'deployment_instance',
+      'technical_component',
+      'commercial_entity',
+      'initiative',
+      'risk_control',
+      'metric_definition',
+      'persona'
+    )
+  )
+);
+
+insert into ecl_context.object_type_catalog (
+  object_type,
+  display_label,
+  grain,
+  counting_class,
+  description
+) values
+('enterprise', 'Enterprise', 'enterprise', 'enterprise_scope', 'Whole-enterprise assessment subject.'),
+('business_segment', 'Business Segment', 'business_segment', 'business_entity', 'Business segment or operating model slice.'),
+('business_function', 'Business Function', 'business_function', 'business_entity', 'Business function used for ownership and portfolio slicing.'),
+('organization', 'Organization', 'organization', 'business_entity', 'Organization, team, or accountable owner group.'),
+('process', 'Process', 'process', 'business_entity', 'Business or operating process.'),
+('application', 'Application', 'application', 'business_entity', 'Logical business application counted in estate totals.'),
+('application_deployment', 'Application Deployment', 'application_deployment', 'deployment_instance', 'Environment-specific deployment instance; never counted as an application.'),
+('data_platform', 'Data Platform', 'data_platform', 'technical_component', 'Data, analytics, reporting, or integration platform.'),
+('data_product', 'Data Product', 'data_product', 'business_entity', 'Business-facing governed data product.'),
+('infrastructure', 'Infrastructure', 'infrastructure', 'technical_component', 'Infrastructure, hosting, cloud, network, or datacenter component.'),
+('vendor', 'Vendor', 'vendor', 'commercial_entity', 'Supplier or contracting entity.'),
+('contract', 'Contract', 'contract', 'commercial_entity', 'Contract or agreement object.'),
+('program', 'Program', 'program', 'initiative', 'Funded program or initiative container.'),
+('metric', 'Metric', 'metric', 'metric_definition', 'Metric object when represented as context.'),
+('risk', 'Risk', 'risk', 'risk_control', 'Risk object.'),
+('control', 'Control', 'control', 'risk_control', 'Control object.'),
+('ai_program', 'AI Program', 'ai_program', 'initiative', 'AI program or portfolio container.'),
+('ai_use_case', 'AI Use Case', 'ai_use_case', 'business_entity', 'AI use case or workflow target.'),
+('ai_tool', 'AI Tool', 'ai_tool', 'technical_component', 'AI tool, model, or platform capability.'),
+('persona', 'Persona', 'persona', 'persona', 'Role or user persona.')
+on conflict (object_type) do update set
+  display_label = excluded.display_label,
+  grain = excluded.grain,
+  counting_class = excluded.counting_class,
+  description = excluded.description;
+
 create table if not exists ecl_context.object (
   id uuid primary key default gen_random_uuid(),
   tenant_key text not null,
@@ -136,14 +198,8 @@ create table if not exists ecl_context.object (
   updated_at timestamptz not null default now(),
   constraint object_source_record_fk foreign key (tenant_key, assessment_id, source_record_id)
     references ecl_source.source_record (tenant_key, assessment_id, id),
-  constraint object_type_check check (
-    object_type in (
-      'enterprise', 'business_segment', 'business_function', 'organization',
-      'process', 'application', 'application_deployment', 'data_platform', 'data_product',
-      'infrastructure', 'vendor', 'contract', 'program', 'metric',
-      'risk', 'control', 'ai_program', 'ai_use_case', 'ai_tool', 'persona'
-    )
-  ),
+  constraint object_type_catalog_fk foreign key (object_type)
+    references ecl_context.object_type_catalog (object_type),
   constraint object_lifecycle_state_check check (
     lifecycle_state in ('current', 'target', 'planned', 'actual', 'baseline', 'forecast', 'benchmark', 'retired', 'candidate')
   ),
@@ -671,6 +727,8 @@ create index if not exists idx_document_tenant_type_review
 create index if not exists idx_document_extraction_field
   on ecl_source.document_extraction (tenant_key, assessment_id, document_id, field_key);
 
+create index if not exists idx_object_type_catalog_counting
+  on ecl_context.object_type_catalog (counting_class, grain);
 create index if not exists idx_object_type_domain
   on ecl_context.object (tenant_key, assessment_id, object_type, business_domain);
 create index if not exists idx_object_display_name
@@ -707,6 +765,52 @@ create index if not exists idx_review_event_subject
   on ecl_review.review_event (tenant_key, assessment_id, subject_kind, created_at desc);
 create index if not exists idx_projection_manifest_key_version
   on ecl_projection.projection_manifest (tenant_key, assessment_id, projection_key, projection_version desc);
+
+create or replace view ecl_context.application_v as
+select
+  o.*,
+  otc.grain,
+  otc.counting_class
+from ecl_context.object o
+join ecl_context.object_type_catalog otc on otc.object_type = o.object_type
+where otc.grain = 'application'
+  and otc.counting_class = 'business_entity';
+
+create or replace view ecl_context.application_deployment_v as
+select
+  o.*,
+  otc.grain,
+  otc.counting_class
+from ecl_context.object o
+join ecl_context.object_type_catalog otc on otc.object_type = o.object_type
+where otc.grain = 'application_deployment'
+  and otc.counting_class = 'deployment_instance';
+
+create or replace view ecl_context.business_object_v as
+select
+  o.*,
+  otc.grain,
+  otc.counting_class
+from ecl_context.object o
+join ecl_context.object_type_catalog otc on otc.object_type = o.object_type
+where otc.counting_class in (
+  'enterprise_scope',
+  'business_entity',
+  'commercial_entity',
+  'initiative',
+  'risk_control',
+  'metric_definition',
+  'persona'
+);
+
+create or replace view ecl_context.technical_component_v as
+select
+  o.*,
+  otc.grain,
+  otc.counting_class
+from ecl_context.object o
+join ecl_context.object_type_catalog otc on otc.object_type = o.object_type
+where otc.counting_class in ('technical_component', 'deployment_instance');
 
 alter table ecl_source.source_file enable row level security;
 alter table ecl_source.source_record enable row level security;
