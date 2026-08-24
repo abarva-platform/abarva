@@ -192,18 +192,78 @@ select jsonb_pretty(jsonb_build_object(
   'source_record', (select count(*) from ecl_source.source_record where tenant_key = {tenant} and assessment_id = {assessment}),
   'document', (select count(*) from ecl_source.document where tenant_key = {tenant} and assessment_id = {assessment}),
   'document_extraction', (select count(*) from ecl_source.document_extraction where tenant_key = {tenant} and assessment_id = {assessment}),
+  'source_record_partial', (select count(*) from ecl_source.source_record where tenant_key = {tenant} and assessment_id = {assessment} and parse_state = 'partial'),
+  'extraction_distinct_spans', (select count(distinct span_reference) from ecl_source.document_extraction where tenant_key = {tenant} and assessment_id = {assessment}),
+  'client_attested_rows', (select count(*) from ecl_source.source_record where tenant_key = {tenant} and assessment_id = {assessment} and payload_json ->> 'client_attestation_state' <> 'not_client_attested'),
   'object', (select count(*) from ecl_context.object where tenant_key = {tenant} and assessment_id = {assessment}),
+  'application', (select count(*) from ecl_context.object where tenant_key = {tenant} and assessment_id = {assessment} and object_type = 'application'),
+  'application_deployment', (select count(*) from ecl_context.object where tenant_key = {tenant} and assessment_id = {assessment} and object_type = 'application_deployment'),
+  'vendor', (select count(*) from ecl_context.object where tenant_key = {tenant} and assessment_id = {assessment} and object_type = 'vendor'),
+  'data_platform', (select count(*) from ecl_context.object where tenant_key = {tenant} and assessment_id = {assessment} and object_type = 'data_platform'),
+  'infrastructure', (select count(*) from ecl_context.object where tenant_key = {tenant} and assessment_id = {assessment} and object_type = 'infrastructure'),
   'relationship', (select count(*) from ecl_context.relationship where tenant_key = {tenant} and assessment_id = {assessment}),
+  'deployment_of', (select count(*) from ecl_context.relationship where tenant_key = {tenant} and assessment_id = {assessment} and relationship_type = 'DEPLOYMENT_OF'),
+  'hosted_on', (select count(*) from ecl_context.relationship where tenant_key = {tenant} and assessment_id = {assessment} and relationship_type = 'HOSTED_ON'),
+  'integrates_with', (select count(*) from ecl_context.relationship where tenant_key = {tenant} and assessment_id = {assessment} and relationship_type = 'INTEGRATES_WITH'),
   'metric_definition', (select count(*) from ecl_context.metric_definition where tenant_key = {tenant}),
   'measure', (select count(*) from ecl_context.measure where tenant_key = {tenant} and assessment_id = {assessment}),
+  'measure_metric_drift', (
+    select count(*) from ecl_context.measure m
+    left join ecl_context.metric_definition md on md.tenant_key = m.tenant_key and md.metric_key = m.metric_key
+    where m.tenant_key = {tenant} and m.assessment_id = {assessment} and md.metric_key is null
+  ),
   'snapshot', (select count(*) from ecl_context.snapshot where tenant_key = {tenant} and assessment_id = {assessment}),
   'context_pack', (select count(*) from ecl_context.context_pack where tenant_key = {tenant} and assessment_id = {assessment}),
   'contract', (select count(*) from ecl_commercial.contract where tenant_key = {tenant} and assessment_id = {assessment}),
   'contract_service_line', (select count(*) from ecl_commercial.contract_service_line where tenant_key = {tenant} and assessment_id = {assessment}),
   'contract_scope', (select count(*) from ecl_commercial.contract_scope where tenant_key = {tenant} and assessment_id = {assessment}),
   'invoice_line', (select count(*) from ecl_commercial.invoice_line where tenant_key = {tenant} and assessment_id = {assessment}),
+  'invoice_lines_with_contract', (select count(*) from ecl_commercial.invoice_line where tenant_key = {tenant} and assessment_id = {assessment} and contract_id is not null),
   'sla_observation', (select count(*) from ecl_commercial.sla_observation where tenant_key = {tenant} and assessment_id = {assessment}),
+  'contract_vendor_drift', (
+    select count(*) from ecl_commercial.contract c
+    left join ecl_context.object v on v.tenant_key = c.tenant_key and v.assessment_id = c.assessment_id and v.id = c.vendor_object_id
+    where c.tenant_key = {tenant} and c.assessment_id = {assessment} and v.id is null
+  ),
+  'contract_scope_object_drift', (
+    select count(*) from ecl_commercial.contract_scope cs
+    left join ecl_context.object o on o.tenant_key = cs.tenant_key and o.assessment_id = cs.assessment_id and o.id = cs.scoped_object_id
+    where cs.tenant_key = {tenant} and cs.assessment_id = {assessment} and o.id is null
+  ),
+  'sla_metric_drift', (
+    select count(*) from ecl_commercial.sla_observation s
+    left join ecl_context.metric_definition md on md.tenant_key = s.tenant_key and md.metric_key = s.metric_key
+    where s.tenant_key = {tenant} and s.assessment_id = {assessment} and md.metric_key is null
+  ),
   'review_event', (select count(*) from ecl_review.review_event where tenant_key = {tenant} and assessment_id = {assessment}),
+  'review_contract_subjects', (select count(*) from ecl_review.review_event where tenant_key = {tenant} and assessment_id = {assessment} and subject_kind = 'contract'),
+  'review_invoice_subjects', (select count(*) from ecl_review.review_event where tenant_key = {tenant} and assessment_id = {assessment} and subject_kind = 'invoice_line'),
+  'review_sla_subjects', (select count(*) from ecl_review.review_event where tenant_key = {tenant} and assessment_id = {assessment} and subject_kind = 'sla_observation'),
+  'review_context_pack_subjects', (select count(*) from ecl_review.review_event where tenant_key = {tenant} and assessment_id = {assessment} and subject_kind = 'context_pack'),
+  'review_source_record_drift', (
+    select count(*) from ecl_review.review_event re
+    left join ecl_source.source_record sr
+      on sr.tenant_key = re.tenant_key and sr.assessment_id = re.assessment_id and sr.id = re.source_record_id
+    where re.tenant_key = {tenant} and re.assessment_id = {assessment} and re.source_record_id is not null and sr.id is null
+  ),
+  'review_contract_drift', (
+    select count(*) from ecl_review.review_event re
+    left join ecl_commercial.contract c
+      on c.tenant_key = re.tenant_key and c.assessment_id = re.assessment_id and c.id = re.subject_contract_id
+    where re.tenant_key = {tenant} and re.assessment_id = {assessment} and re.subject_kind = 'contract' and c.id is null
+  ),
+  'review_invoice_drift', (
+    select count(*) from ecl_review.review_event re
+    left join ecl_commercial.invoice_line i
+      on i.tenant_key = re.tenant_key and i.assessment_id = re.assessment_id and i.id = re.subject_invoice_line_id
+    where re.tenant_key = {tenant} and re.assessment_id = {assessment} and re.subject_kind = 'invoice_line' and i.id is null
+  ),
+  'review_sla_drift', (
+    select count(*) from ecl_review.review_event re
+    left join ecl_commercial.sla_observation s
+      on s.tenant_key = re.tenant_key and s.assessment_id = re.assessment_id and s.id = re.subject_sla_observation_id
+    where re.tenant_key = {tenant} and re.assessment_id = {assessment} and re.subject_kind = 'sla_observation' and s.id is null
+  ),
   'projection_manifest', (select count(*) from ecl_projection.projection_manifest where tenant_key = {tenant} and assessment_id = {assessment}),
   'home_enterprise_landscape', (select count(*) from ecl_projection.home_enterprise_landscape where tenant_key = {tenant} and assessment_id = {assessment}),
   'source_contract_360', (select count(*) from ecl_projection.source_contract_360 where tenant_key = {tenant} and assessment_id = {assessment}),
@@ -216,6 +276,7 @@ select jsonb_pretty(jsonb_build_object(
   'cube_slice', (select count(*) from ecl_projection.cube_slice where tenant_key = {tenant} and assessment_id = {assessment}),
   'cube_slice_metric', (select count(*) from ecl_projection.cube_slice_metric where tenant_key = {tenant} and assessment_id = {assessment}),
   'cube_slice_measure', (select count(*) from ecl_projection.cube_slice_measure where tenant_key = {tenant} and assessment_id = {assessment}),
+  'cube_key_count', (select count(distinct cube_key) from ecl_projection.cube_manifest where tenant_key = {tenant} and assessment_id = {assessment}),
   'relationship_endpoint_drift', (
     select count(*) from ecl_context.relationship r
     left join ecl_context.object f on f.tenant_key = r.tenant_key and f.assessment_id = r.assessment_id and f.id = r.from_object_id
@@ -236,6 +297,16 @@ select jsonb_pretty(jsonb_build_object(
     select count(*) from ecl_projection.source_value_levers
     where tenant_key = {tenant} and assessment_id = {assessment} and claimable_value_usd > 0
   ),
+  'source_value_gated_rows', (
+    select count(*) from ecl_projection.source_value_levers
+    where tenant_key = {tenant} and assessment_id = {assessment} and value_gate_status in ('gated','blocked')
+  ),
+  'event_rows_without_evidence_payload', (
+    select count(*) from ecl_projection.source_event_workspace
+    where tenant_key = {tenant} and assessment_id = {assessment}
+      and gate_status in ('gated','blocked')
+      and jsonb_array_length(evidence_needed_json) = 0
+  ),
   'home_primary_object_drift', (
     select count(*) from ecl_projection.home_enterprise_landscape p
     left join ecl_context.object o on o.tenant_key = p.tenant_key and o.assessment_id = p.assessment_id and o.id = p.primary_object_id
@@ -246,6 +317,26 @@ select jsonb_pretty(jsonb_build_object(
     where tenant_key = {tenant} and assessment_id = {assessment}
       and admission_status = 'refused'
       and (admission_gate_key is null or admission_result_json = '{{}}'::jsonb)
+  ),
+  'contract_projection_contract_drift', (
+    select count(*) from ecl_projection.source_contract_360 p
+    left join ecl_commercial.contract c on c.tenant_key = p.tenant_key and c.assessment_id = p.assessment_id and c.id = p.contract_id
+    where p.tenant_key = {tenant} and p.assessment_id = {assessment} and c.id is null
+  ),
+  'vendor_projection_vendor_drift', (
+    select count(*) from ecl_projection.source_vendor_360 p
+    left join ecl_context.object o on o.tenant_key = p.tenant_key and o.assessment_id = p.assessment_id and o.id = p.vendor_object_id
+    where p.tenant_key = {tenant} and p.assessment_id = {assessment} and o.id is null
+  ),
+  'value_lever_metric_drift', (
+    select count(*) from ecl_projection.source_value_levers p
+    left join ecl_context.metric_definition md on md.tenant_key = p.tenant_key and md.metric_key = p.primary_metric_key
+    where p.tenant_key = {tenant} and p.assessment_id = {assessment} and md.metric_key is null
+  ),
+  'event_review_drift', (
+    select count(*) from ecl_projection.source_event_workspace p
+    left join ecl_review.review_event re on re.tenant_key = p.tenant_key and re.assessment_id = p.assessment_id and re.id = p.review_event_id
+    where p.tenant_key = {tenant} and p.assessment_id = {assessment} and re.id is null
   ),
   'tower_primary_object_drift', (
     select count(*) from ecl_projection.tower_command_center p
@@ -266,6 +357,26 @@ select jsonb_pretty(jsonb_build_object(
     select count(*) from ecl_projection.intelligence_context_pack p
     left join ecl_context.object o on o.tenant_key = p.tenant_key and o.assessment_id = p.assessment_id and o.id = p.primary_object_id
     where p.tenant_key = {tenant} and p.assessment_id = {assessment} and p.primary_object_id is not null and o.id is null
+  ),
+  'json_metric_without_fk', (
+    select count(*) from ecl_projection.cube_slice cs
+    where cs.tenant_key = {tenant} and cs.assessment_id = {assessment}
+      and exists (
+        select 1
+        from jsonb_array_elements_text(cs.metric_keys_json) as metric_key
+        left join ecl_projection.cube_slice_metric csm
+          on csm.tenant_key = cs.tenant_key
+          and csm.assessment_id = cs.assessment_id
+          and csm.cube_slice_id = cs.id
+          and csm.metric_key = metric_key
+        where csm.metric_key is null
+      )
+  ),
+  'blocked_without_gap', (
+    select count(*) from ecl_projection.cube_slice
+    where tenant_key = {tenant} and assessment_id = {assessment}
+      and quality_state = 'blocked'
+      and gap_flags_json = '[]'::jsonb
   )
 ));
 """
