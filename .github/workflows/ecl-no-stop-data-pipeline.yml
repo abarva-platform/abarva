@@ -110,6 +110,10 @@ jobs:
             scripts/ecl/load_dense_source_room_source_projection_layer.py \
             scripts/ecl/load_dense_source_room_cube_layer.py
 
+      - name: Reconcile ECL projection schema at named ref
+        run: |
+          npm run test:ecl-projection-schema-reconciliation
+
       - name: Run no-stop ECL execution queue
         env:
           LANG: C.UTF-8
