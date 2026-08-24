@@ -18,6 +18,8 @@ interface IntelligenceEclContextPackRow {
 }
 
 interface IntelligenceServingRow {
+  readonly surface_key: string;
+  readonly row_key: string;
   readonly payload_json: IntelligenceEclContextPackRow;
 }
 
@@ -116,20 +118,21 @@ export async function readIntelligenceEclContextPackPreview(
 
   const servingRows = await azureRead.query<IntelligenceServingRow>(
     `select payload_json
-       from serving.intelligence_advisory
-      where tenant_key = $1 and assessment_id = $2
-      union all
-     select payload_json
-       from serving.intelligence_enterprise_landscape
-      where tenant_key = $1 and assessment_id = $2
-      union all
-     select payload_json
-       from serving.intelligence_context_summary
-      where tenant_key = $1 and assessment_id = $2
-      order by
-       (payload_json->>'surface_key'),
-       (payload_json->>'row_key')
-     limit 200`,
+       from (
+         select surface_key, row_key, payload_json
+           from serving.intelligence_advisory
+          where tenant_key = $1 and assessment_id = $2
+          union all
+         select surface_key, row_key, payload_json
+           from serving.intelligence_enterprise_landscape
+          where tenant_key = $1 and assessment_id = $2
+          union all
+         select surface_key, row_key, payload_json
+           from serving.intelligence_context_summary
+          where tenant_key = $1 and assessment_id = $2
+       ) intelligence_rows
+      order by surface_key, row_key
+      limit 200`,
     [tenantKey, DENSE_ASSESSMENT_ID],
     { missingTable: "empty" },
   );
