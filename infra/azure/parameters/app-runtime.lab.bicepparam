@@ -64,6 +64,10 @@ param plainRuntimeEnv = [
     name: 'NEXUS_COMPOSER_MODEL'
     value: readEnvironmentVariable('NEXUS_COMPOSER_MODEL', 'claude-opus-4-7')
   }
+  {
+    name: 'ABARVA_PRIVATE_BROWSER_PROOF_ENABLED'
+    value: '1'
+  }
 ]
 
 param keyVaultSecretRefs = [
@@ -91,5 +95,10 @@ param keyVaultSecretRefs = [
     envName: 'DEMO_LOGIN_PASSWORD'
     containerAppSecretName: 'demo-login-password'
     keyVaultSecretUri: 'https://kv-abarva-lab-001.vault.azure.net/secrets/demo-login-password'
+  }
+  {
+    envName: 'ABARVA_PRIVATE_BROWSER_PROOF_TOKEN'
+    containerAppSecretName: 'parallel-run-token'
+    keyVaultSecretUri: 'https://kv-abarva-lab-001.vault.azure.net/secrets/parallel-run-invariant-token'
   }
 ]
