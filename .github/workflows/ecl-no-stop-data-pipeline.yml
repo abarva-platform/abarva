@@ -119,6 +119,10 @@ jobs:
         run: |
           npm run test:ecl-client-intake-application-adapter
 
+      - name: Prove ECL source file origin upgrade
+        run: |
+          npm run test:ecl-source-file-origin-upgrade
+
       - name: Prove dense source-room plausibility gates
         run: |
           npm run test:ecl-dense-source-room-stride-gate
