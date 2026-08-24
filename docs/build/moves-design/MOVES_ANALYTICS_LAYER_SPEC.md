@@ -2,6 +2,8 @@
 
 Companion to `MOVES_REDESIGN_CLAUDE_DESIGN_BRIEF.md`. The brief is the *look*; this is the *substance*. The redesigned phase page renders live, evidence-cited, archetype-benchmarked intelligence — that requires a typed analytics layer Moves does not have yet. Build it as a direct mirror of Source's `src/lib/source/analytics/*` + `src/lib/source/archetypes/*`.
 
+> **Where Claude fits (see `MOVES_DYNAMIC_PATTERN_ASSEMBLY.md`):** this layer does the two *governed* halves — it **builds the Pattern Assembly Packet** (context, evidence, blocks, readiness, constraints, benchmarks, required outputs) that Claude synthesizes against, and it **runs the post-response validator** (evidence-backed / assumption / needs-confirmation / not-allowed / draft / promote). Deterministic **facts** (`MoveFinding` baselines/metrics) come from this layer; the **solution pattern** (options, architecture, roadmap narrative) is assembled by Claude *between* those two governed steps and then labeled. Claude assembles; AbarVa governs and validates.
+
 ## 1. Goal & the "un-trap" principle
 
 Today Moves generates findings straight into HTML/Word (`src/lib/programs/board-artifacts/*`, `deliverables/board-deliverable.ts`, `deliverable-narrative.ts`). The root cause, the value bridge, the baselines — all trapped in prose. This layer makes each finding a **first-class typed object** that:
@@ -86,8 +88,8 @@ export interface MoveFinding {
 export interface MovePhaseAnalytics {
   moveId: string;
   phase: MovePhase;
-  archetype: ArchetypeProfile;
-  findings: MoveFinding[];
+  bundle: RecommendedBundle;        // the selected building blocks (§5) — not a single archetype
+  findings: MoveFinding[];          // each finding.block ties it to a building block
   charts: RechartsViewModel[];      // phase-level charts (may aggregate several findings)
   gate: Array<{ id: string; label: string; attestation: string; met: boolean }>;
   missingInputs: string[];          // honesty model: what's not in yet
@@ -109,21 +111,19 @@ Each extractor reads the move's **canonical phase-capture keys** (the same contr
 
 ## 5. Archetype — dynamic resolution, NOT an enumerated corpus
 
-**Design principle (this is the important one).** Moves *use cases* are effectively infinite — industry × function × problem × how-work-changes. You must never enumerate them. What IS bounded and governed is the **solution *shape*** a move takes. The specificity of a real move comes from **composition + a learning case library**, not a bigger list.
+**Canonical model: `MOVES_SOLUTION_BUILDING_BLOCKS.md`.** A Move is **not** classified into one archetype — it **selects a bundle of 3–6 building blocks** from a governed set of **10** (process redesign · data readiness · retrieval copilot · AI-assisted decision support · workflow automation · human-in-the-loop agent · analytics layer · platform implementation · controls/governance · value tracking). Each block carries a 14-field **playbook** (evidence, controls, traps, metrics, questions, phase relevance…). The purpose is an **advisory playbook, not a label**. Use cases stay unbounded; the block set stays bounded (< 10–12; add subtypes, never top-level). Specificity comes from **composition + a learning case library**, not a bigger list.
 
-### 5.1 The archetype is a bounded shape — already built, reuse it
-The 8 shapes, their readiness gates, and their anti-patterns already exist:
-- `src/lib/programs/taxonomy/solution-archetype-taxonomy.ts` — `SOLUTION_ARCHETYPES` (`automation`, `assistant`, `retrieval_copilot`, `human_in_loop_agent`, `full_agentic_workflow`, `data_remediation`, `vendor_led_implementation`, `process_redesign`), each with `readinessGates` on 3 dimensions (`data` / `control` / `eval`) and `antiPatterns` with reason codes.
-- **Do not redefine these in the analytics layer. Import them.**
+### 5.1 Reuse what exists; promote the enabling blocks
+- **Reuse** `src/lib/programs/taxonomy/solution-archetype-taxonomy.ts` — its 8 shapes are the *AI-shape subset* of the 10 blocks; keep its `readinessGates` (data/control/eval) and `antiPatterns` as each block's *readiness requirements* and *common traps*.
+- **Promote 3 enabling blocks to first-class** (not in today's taxonomy): analytics/intelligence layer, controls/governance/risk, value-tracking/operating-cadence.
+- Encode the block registry + playbooks as governed data from `MOVES_SOLUTION_BUILDING_BLOCKS.md`. **Do not re-enumerate use cases.**
 
-### 5.2 Resolution is dynamic — reuse the existing classifier
-`archetype/resolve.ts` is a thin adapter over the **already-shipped** classifier:
-- `src/lib/programs/suitability/agentic-suitability.ts` → `SuitabilityAssessment { recommendedArchetype, recommendedName, intendedArchetype, readinessScore (0–100), gaps: SuitabilityGap[] }`.
-- It classifies *any* move (from P0 capture: business_trigger, problem_statement, affected_function_process, initial_value_hypothesis) into one of the 8 shapes, scores readiness on data/control/eval, detects **over-reach** (intended more ambitious than readiness supports → recommends a less ambitious shape + names the gaps to close). This is how infinite use cases map to bounded shapes.
+### 5.2 Resolution is a BUNDLE recommender — reuse the classifier, return a set
+`archetype/resolve.ts` adapts the **already-shipped** classifier `src/lib/programs/suitability/agentic-suitability.ts` to return a **`RecommendedBundle { blocks: BuildingBlockKey[]; notYet: Array<{ block; reason }>; readinessScore; gaps: SuitabilityGap[] }`** — the multi-select recommendation plus the "not recommended yet" (the `ambition ≤ readiness` guardrail; e.g. fully-autonomous review held back on low control readiness). Reads the P0 capture (business_trigger, problem_statement, affected_function_process, initial_value_hypothesis). This is how any use case maps to a governed bundle without enumeration.
 
 ### 5.3 Specificity comes from COMPOSITION, not enumeration
-`archetype/compose-benchmark.ts` builds each finding's `archetypeBenchmark` by composing three governed sources for the resolved `(shape × industry × function)` — never a per-use-case lookup:
-- **Shape** → value-mechanism, classic anti-patterns/traps, cost shape, human-gate posture (from the taxonomy).
+`archetype/compose-benchmark.ts` builds each finding's benchmark by composing three governed sources for `(block × industry × function)` — never a per-use-case lookup:
+- **Block** → value-mechanism, classic traps, controls, metrics (from the block's playbook / the taxonomy anti-patterns).
 - **Industry corpus** → baselines/benchmarks (`V6_15_industry_corpus_patterns` / `intelligence_v7` industry-market dimension).
 - **Function** → the KPIs that matter for that operating area.
 A never-before-seen use case still gets archetype-grade intelligence because all three inputs are bounded and governed.
