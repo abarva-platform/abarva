@@ -163,7 +163,12 @@ delete from ecl_projection.source_value_levers where tenant_key = {tenant} and a
 delete from ecl_projection.source_vendor_360 where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_projection.source_contract_360 where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_projection.home_enterprise_landscape where tenant_key = {tenant} and assessment_id = {assessment};
+delete from ecl_projection.tower_ai_portfolio where tenant_key = {tenant} and assessment_id = {assessment};
+delete from ecl_projection.tower_evidence_queue where tenant_key = {tenant} and assessment_id = {assessment};
+delete from ecl_projection.tower_value_chain where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_projection.tower_command_center where tenant_key = {tenant} and assessment_id = {assessment};
+delete from ecl_projection.intelligence_question_context where tenant_key = {tenant} and assessment_id = {assessment};
+delete from ecl_projection.intelligence_pattern_evidence where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_projection.intelligence_context_pack where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_projection.projection_entry where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_projection.projection_manifest where tenant_key = {tenant} and assessment_id = {assessment};
@@ -287,12 +292,18 @@ select jsonb_pretty(jsonb_build_object(
   'source_value_levers', (select count(*) from ecl_projection.source_value_levers where tenant_key = {tenant} and assessment_id = {assessment}),
   'source_event_workspace', (select count(*) from ecl_projection.source_event_workspace where tenant_key = {tenant} and assessment_id = {assessment}),
   'tower_command_center', (select count(*) from ecl_projection.tower_command_center where tenant_key = {tenant} and assessment_id = {assessment}),
+  'tower_value_chain', (select count(*) from ecl_projection.tower_value_chain where tenant_key = {tenant} and assessment_id = {assessment}),
+  'tower_evidence_queue', (select count(*) from ecl_projection.tower_evidence_queue where tenant_key = {tenant} and assessment_id = {assessment}),
+  'tower_ai_portfolio', (select count(*) from ecl_projection.tower_ai_portfolio where tenant_key = {tenant} and assessment_id = {assessment}),
   'intelligence_context_pack', (select count(*) from ecl_projection.intelligence_context_pack where tenant_key = {tenant} and assessment_id = {assessment}),
+  'intelligence_pattern_evidence', (select count(*) from ecl_projection.intelligence_pattern_evidence where tenant_key = {tenant} and assessment_id = {assessment}),
+  'intelligence_question_context', (select count(*) from ecl_projection.intelligence_question_context where tenant_key = {tenant} and assessment_id = {assessment}),
   'cube_manifest', (select count(*) from ecl_projection.cube_manifest where tenant_key = {tenant} and assessment_id = {assessment}),
   'cube_slice', (select count(*) from ecl_projection.cube_slice where tenant_key = {tenant} and assessment_id = {assessment}),
   'cube_slice_metric', (select count(*) from ecl_projection.cube_slice_metric where tenant_key = {tenant} and assessment_id = {assessment}),
   'cube_slice_measure', (select count(*) from ecl_projection.cube_slice_measure where tenant_key = {tenant} and assessment_id = {assessment}),
-  'cube_key_count', (select count(distinct cube_key) from ecl_projection.cube_manifest where tenant_key = {tenant} and assessment_id = {assessment}),
+  'cube_key_count', (select count(distinct cube_key) from ecl_projection.cube_manifest where tenant_key = {tenant} and assessment_id = {assessment})
+) || jsonb_build_object(
   'relationship_endpoint_drift', (
     select count(*) from ecl_context.relationship r
     left join ecl_context.object f on f.tenant_key = r.tenant_key and f.assessment_id = r.assessment_id and f.id = r.from_object_id
@@ -333,7 +344,12 @@ select jsonb_pretty(jsonb_build_object(
         + (select count(*) from ecl_projection.source_value_levers where tenant_key = {tenant} and assessment_id = {assessment})
         + (select count(*) from ecl_projection.source_event_workspace where tenant_key = {tenant} and assessment_id = {assessment})
         + (select count(*) from ecl_projection.tower_command_center where tenant_key = {tenant} and assessment_id = {assessment})
+        + (select count(*) from ecl_projection.tower_value_chain where tenant_key = {tenant} and assessment_id = {assessment})
+        + (select count(*) from ecl_projection.tower_evidence_queue where tenant_key = {tenant} and assessment_id = {assessment})
+        + (select count(*) from ecl_projection.tower_ai_portfolio where tenant_key = {tenant} and assessment_id = {assessment})
         + (select count(*) from ecl_projection.intelligence_context_pack where tenant_key = {tenant} and assessment_id = {assessment})
+        + (select count(*) from ecl_projection.intelligence_pattern_evidence where tenant_key = {tenant} and assessment_id = {assessment})
+        + (select count(*) from ecl_projection.intelligence_question_context where tenant_key = {tenant} and assessment_id = {assessment})
       )
     )
   ),
@@ -345,7 +361,12 @@ select jsonb_pretty(jsonb_build_object(
       union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.source_value_levers where tenant_key = {tenant} and assessment_id = {assessment}
       union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.source_event_workspace where tenant_key = {tenant} and assessment_id = {assessment}
       union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.tower_command_center where tenant_key = {tenant} and assessment_id = {assessment}
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.tower_value_chain where tenant_key = {tenant} and assessment_id = {assessment}
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.tower_evidence_queue where tenant_key = {tenant} and assessment_id = {assessment}
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.tower_ai_portfolio where tenant_key = {tenant} and assessment_id = {assessment}
       union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.intelligence_context_pack where tenant_key = {tenant} and assessment_id = {assessment}
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.intelligence_pattern_evidence where tenant_key = {tenant} and assessment_id = {assessment}
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.intelligence_question_context where tenant_key = {tenant} and assessment_id = {assessment}
     ) p
     left join ecl_projection.projection_entry pe
       on pe.tenant_key = p.tenant_key
@@ -445,6 +466,32 @@ select jsonb_pretty(jsonb_build_object(
     where tenant_key = {tenant} and assessment_id = {assessment}
       and claim_gate_status in ('gated','blocked') and claim_gate_reason_code is null
   ),
+  'tower_value_chain_gated_without_reason', (
+    select count(*) from ecl_projection.tower_value_chain
+    where tenant_key = {tenant} and assessment_id = {assessment}
+      and claim_gate_status in ('gated','blocked')
+      and (claim_gate_reason_code is null or claim_gate_reason_detail is null or next_gate is null)
+  ),
+  'tower_value_chain_measure_drift', (
+    select count(*) from ecl_projection.tower_value_chain p
+    left join ecl_context.measure m on m.tenant_key = p.tenant_key and m.assessment_id = p.assessment_id and m.id = p.related_measure_id
+    where p.tenant_key = {tenant} and p.assessment_id = {assessment} and p.related_measure_id is not null and m.id is null
+  ),
+  'tower_evidence_queue_missing_gate_payload', (
+    select count(*) from ecl_projection.tower_evidence_queue
+    where tenant_key = {tenant} and assessment_id = {assessment}
+      and (claim_gate_reason_code is null or claim_gate_reason_detail is null or next_gate is null or jsonb_array_length(evidence_needed_json) = 0)
+  ),
+  'tower_evidence_queue_measure_drift', (
+    select count(*) from ecl_projection.tower_evidence_queue p
+    left join ecl_context.measure m on m.tenant_key = p.tenant_key and m.assessment_id = p.assessment_id and m.id = p.related_measure_id
+    where p.tenant_key = {tenant} and p.assessment_id = {assessment} and p.related_measure_id is not null and m.id is null
+  ),
+  'tower_ai_primary_object_drift', (
+    select count(*) from ecl_projection.tower_ai_portfolio p
+    left join ecl_context.object o on o.tenant_key = p.tenant_key and o.assessment_id = p.assessment_id and o.id = p.use_case_object_id
+    where p.tenant_key = {tenant} and p.assessment_id = {assessment} and o.id is null
+  ),
   'intelligence_context_pack_drift', (
     select count(*) from ecl_projection.intelligence_context_pack p
     left join ecl_context.context_pack cp on cp.tenant_key = p.tenant_key and cp.assessment_id = p.assessment_id and cp.id = p.context_pack_id
@@ -454,6 +501,16 @@ select jsonb_pretty(jsonb_build_object(
     select count(*) from ecl_projection.intelligence_context_pack p
     left join ecl_context.object o on o.tenant_key = p.tenant_key and o.assessment_id = p.assessment_id and o.id = p.primary_object_id
     where p.tenant_key = {tenant} and p.assessment_id = {assessment} and p.primary_object_id is not null and o.id is null
+  ),
+  'intelligence_pattern_primary_object_drift', (
+    select count(*) from ecl_projection.intelligence_pattern_evidence p
+    left join ecl_context.object o on o.tenant_key = p.tenant_key and o.assessment_id = p.assessment_id and o.id = p.primary_object_id
+    where p.tenant_key = {tenant} and p.assessment_id = {assessment} and o.id is null
+  ),
+  'intelligence_question_context_pack_drift', (
+    select count(*) from ecl_projection.intelligence_question_context p
+    left join ecl_context.context_pack cp on cp.tenant_key = p.tenant_key and cp.assessment_id = p.assessment_id and cp.id = p.context_pack_id
+    where p.tenant_key = {tenant} and p.assessment_id = {assessment} and cp.id is null
   ),
   'json_metric_without_fk', (
     select count(*) from ecl_projection.cube_slice cs
@@ -514,8 +571,15 @@ def validate_readback(readback: dict[str, Any], expected: dict[str, int], plante
         "projection_entry_source_record_ref_drift",
         "tower_primary_object_drift",
         "tower_gated_without_reason",
+        "tower_value_chain_gated_without_reason",
+        "tower_value_chain_measure_drift",
+        "tower_evidence_queue_missing_gate_payload",
+        "tower_evidence_queue_measure_drift",
+        "tower_ai_primary_object_drift",
         "intelligence_context_pack_drift",
         "intelligence_primary_object_drift",
+        "intelligence_pattern_primary_object_drift",
+        "intelligence_question_context_pack_drift",
     ]:
         if int(readback.get(drift_key, 1)) != 0:
             issues.append(drift_key)

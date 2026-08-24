@@ -22,7 +22,7 @@
     },
     "operator": {
       "accepted": true,
-      "completion_percent": 100
+      "completion_percent": 91
     },
     "raw": {
       "expected_workbooks": 14,
@@ -37,12 +37,12 @@
       "field_dictionary_rows": 236
     },
     "producer": {
-      "table_count": 36,
+      "table_count": 41,
       "source_family_count": 14,
       "dense_source_rows": 7080,
       "source_supplied_tables": 11,
       "partial_source_supplied_tables": 3,
-      "downstream_builder_required_tables": 21,
+      "downstream_builder_required_tables": 26,
       "missing_core_producer_count": 0
     },
     "source": {
@@ -92,18 +92,35 @@
       "review_sla_drift": 0
     },
     "projection": {
-      "projection_manifest": 7,
+      "projection_manifest": 12,
+      "projection_entry": 5623,
+      "projection_entry_object_ref": 6984,
+      "projection_entry_metric_ref": 10690,
+      "projection_entry_measure_ref": 599,
+      "projection_entry_relationship_ref": 0,
+      "projection_entry_source_record_ref": 5768,
+      "projection_entry_document_extraction_ref": 0,
       "home_enterprise_landscape": 2946,
       "source_contract_360": 230,
       "source_vendor_360": 102,
       "source_value_levers": 230,
       "source_event_workspace": 181,
       "tower_command_center": 930,
+      "tower_value_chain": 230,
+      "tower_evidence_queue": 369,
+      "tower_ai_portfolio": 360,
       "intelligence_context_pack": 9,
+      "intelligence_pattern_evidence": 30,
+      "intelligence_question_context": 6,
       "home_primary_object_drift": 0,
       "home_refusal_without_payload": 0,
       "home_application_count_basis_drift": 0,
       "home_application_page_deployment_rows": 0,
+      "projection_entry_count_drift": 0,
+      "projection_surface_entry_drift": 0,
+      "projection_entry_metric_ref_drift": 0,
+      "projection_entry_object_ref_drift": 0,
+      "projection_entry_source_record_ref_drift": 0,
       "contract_projection_contract_drift": 0,
       "vendor_projection_vendor_drift": 0,
       "value_lever_metric_drift": 0,
@@ -113,8 +130,15 @@
       "source_value_gated_rows": 230,
       "tower_primary_object_drift": 0,
       "tower_gated_without_reason": 0,
+      "tower_value_chain_gated_without_reason": 0,
+      "tower_value_chain_measure_drift": 0,
+      "tower_evidence_queue_missing_gate_payload": 0,
+      "tower_evidence_queue_measure_drift": 0,
+      "tower_ai_primary_object_drift": 0,
       "intelligence_context_pack_drift": 0,
-      "intelligence_primary_object_drift": 0
+      "intelligence_primary_object_drift": 0,
+      "intelligence_pattern_primary_object_drift": 0,
+      "intelligence_question_context_pack_drift": 0
     },
     "cube": {
       "cube_manifest": 9,
@@ -129,6 +153,31 @@
     }
   },
   "delta_classifications": [
+    {
+      "key": "producer.table_count",
+      "before": 36,
+      "after": 41,
+      "delta": 5,
+      "classification": "expected_increase",
+      "explanation": "W2 adds five product projection tables to the producer coverage inventory."
+    },
+    {
+      "key": "producer.downstream_builder_required_tables",
+      "before": 21,
+      "after": 26,
+      "delta": 5,
+      "classification": "expected_increase",
+      "explanation": "The five W2 projection tables are downstream-builder-required tables and now have a producer."
+    },
+    {
+      "key": "operator.completion_percent",
+      "before": 100,
+      "after": 91,
+      "delta": -9,
+      "classification": "correction_to_hard_gate_denominator",
+      "release_record_required": true,
+      "explanation": "Operator validation reports the full 16-slice queue including four hard-gated slices; 12/12 executable local slices passed, but hard gates are not counted as complete."
+    },
     {
       "key": "dense.field_dictionary_rows",
       "before": 231,
@@ -233,6 +282,54 @@
       "delta": 8,
       "classification": "expected_increase",
       "explanation": "Additional review gates generate additional Source event-workspace rows."
+    },
+    {
+      "key": "projection.projection_manifest",
+      "before": 7,
+      "after": 12,
+      "delta": 5,
+      "classification": "expected_increase",
+      "explanation": "W2 adds five product projection manifests for Tower value/evidence/AI and Intelligence pattern/question surfaces."
+    },
+    {
+      "key": "projection.tower_value_chain",
+      "before": 0,
+      "after": 230,
+      "delta": 230,
+      "classification": "expected_increase",
+      "explanation": "W2 adds one Tower value-chain projection row per contract with FK-backed claim-to-measure traceability."
+    },
+    {
+      "key": "projection.tower_evidence_queue",
+      "before": 0,
+      "after": 369,
+      "delta": 369,
+      "classification": "expected_increase",
+      "explanation": "W2 adds gated evidence rows for contracts and risk/control exceptions, each carrying gate reason and next evidence action."
+    },
+    {
+      "key": "projection.tower_ai_portfolio",
+      "before": 0,
+      "after": 360,
+      "delta": 360,
+      "classification": "expected_increase",
+      "explanation": "W2 adds one Tower AI portfolio projection row per AI usage/model source-room row."
+    },
+    {
+      "key": "projection.intelligence_pattern_evidence",
+      "before": 0,
+      "after": 30,
+      "delta": 30,
+      "classification": "expected_increase",
+      "explanation": "W2 adds Intelligence pattern-evidence rows for commercial leverage gaps and vendor risk clusters."
+    },
+    {
+      "key": "projection.intelligence_question_context",
+      "before": 0,
+      "after": 6,
+      "delta": 6,
+      "classification": "expected_increase",
+      "explanation": "W2 adds deterministic question-context projection rows tied to context packs and source citations."
     }
   ]
 }

@@ -149,7 +149,12 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
     event_rows: list[dict[str, str]] = []
     home_rows: list[dict[str, str]] = []
     tower_rows: list[dict[str, str]] = []
+    tower_value_chain_rows: list[dict[str, str]] = []
+    tower_evidence_queue_rows: list[dict[str, str]] = []
+    tower_ai_portfolio_rows: list[dict[str, str]] = []
     intelligence_rows: list[dict[str, str]] = []
+    intelligence_pattern_rows: list[dict[str, str]] = []
+    intelligence_question_rows: list[dict[str, str]] = []
     projection_entries: list[dict[str, str]] = []
     projection_object_refs: list[dict[str, str]] = []
     projection_metric_refs: list[dict[str, str]] = []
@@ -166,7 +171,12 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         "source_value_levers",
         "source_event_workspace",
         "tower_command_center",
+        "tower_value_chain",
+        "tower_evidence_queue",
+        "tower_ai_portfolio",
         "intelligence_context_pack",
+        "intelligence_pattern_evidence",
+        "intelligence_question_context",
     ]
 
     manifests: list[dict[str, str]] = []
@@ -455,6 +465,217 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
             }
         )
 
+    def review_event_id_for_contract(row: dict[str, str]) -> str | None:
+        notice_days = as_num(row.get("notice_window_days"))
+        minimum_commitment = as_num(row.get("minimum_commitment_usd"))
+        benchmarking_right = row.get("benchmarking_right")
+        if benchmarking_right in {"absent", "limited"}:
+            return source_layer.stable_uuid("review_event", f"contract-benchmarking-{row['contract_id']}")
+        if notice_days >= 180:
+            return source_layer.stable_uuid("review_event", f"contract-notice-window-{row['contract_id']}")
+        if minimum_commitment > 0:
+            return source_layer.stable_uuid("review_event", f"contract-minimum-commitment-{row['contract_id']}")
+        return None
+
+    def add_tower_value_chain_row(
+        *,
+        row_key: str,
+        page_key: str,
+        row_type: str,
+        primary_object_id: str,
+        claim_id: str,
+        observation_key: str,
+        metric_key: str,
+        measure_id_value: str | None,
+        source_record_id_value: str | None,
+        review_event_id_value: str | None,
+        evidence_state: str,
+        gate_status: str,
+        gate_reason_code: str | None,
+        gate_reason_detail: str | None,
+        next_gate: str | None,
+        evidence_needed: list[str],
+        baseline: float | None,
+        current: float | None,
+        target: float | None,
+        claimable: float,
+        blocked: float,
+        value_state: str,
+        quality_state: str,
+        source_refs: list[dict[str, Any]],
+        gap_flags: list[dict[str, Any]],
+        display_payload: dict[str, Any],
+    ) -> None:
+        payload = {"row_key": row_key, "claim_id": claim_id, "metric_key": metric_key, "display": display_payload}
+        row_hash = source_hash(payload)
+        entry_id = add_projection_entry(
+            surface_key="tower_value_chain",
+            row_key=f"{page_key}::{row_key}",
+            row_type=row_type,
+            row_hash=row_hash,
+            object_refs=[("primary_object", primary_object_id)],
+            metric_keys=[metric_key],
+            measure_refs=[measure_id_value] if measure_id_value else [],
+            source_refs=source_refs,
+            display_cache={"page_key": page_key, "claim_id": claim_id, "title": display_payload.get("title")},
+        )
+        tower_value_chain_rows.append(
+            {
+                "id": source_layer.sql_text(source_layer.stable_uuid("tower_value_chain", page_key, row_key)),
+                "tenant_key": source_layer.sql_text(TENANT_KEY),
+                "assessment_id": source_layer.sql_text(ASSESSMENT_ID),
+                "snapshot_id": source_layer.sql_text(snap_id),
+                "projection_manifest_id": source_layer.sql_text(projection_manifest_id("tower_value_chain")),
+                "projection_entry_id": source_layer.sql_text(entry_id),
+                "projection_version": str(PROJECTION_VERSION),
+                "row_key": source_layer.sql_text(row_key),
+                "page_key": source_layer.sql_text(page_key),
+                "row_type": source_layer.sql_text(row_type),
+                "primary_object_id": source_layer.sql_text(primary_object_id),
+                "claim_id": source_layer.sql_text(claim_id),
+                "observation_key": source_layer.sql_text(observation_key),
+                "metric_key": source_layer.sql_text(metric_key),
+                "measure_id": source_layer.sql_text(measure_id_value),
+                "source_record_id": source_layer.sql_text(source_record_id_value),
+                "review_event_id": source_layer.sql_text(review_event_id_value),
+                "evidence_state": source_layer.sql_text(evidence_state),
+                "claim_gate_status": source_layer.sql_text(gate_status),
+                "claim_gate_reason_code": source_layer.sql_text(gate_reason_code),
+                "claim_gate_reason_detail": source_layer.sql_text(gate_reason_detail),
+                "next_gate": source_layer.sql_text(next_gate),
+                "evidence_needed_json": source_layer.sql_json(evidence_needed),
+                "baseline_value": source_layer.sql_num(baseline),
+                "current_value": source_layer.sql_num(current),
+                "target_value": source_layer.sql_num(target),
+                "claimable_value_usd": source_layer.sql_num(claimable),
+                "blocked_value_usd": source_layer.sql_num(blocked),
+                "value_state": source_layer.sql_text(value_state),
+                "quality_state": source_layer.sql_text(quality_state),
+                "source_refs_json": source_layer.sql_json(source_refs),
+                "display_payload_json": source_layer.sql_json(display_payload),
+                "gap_flags_json": source_layer.sql_json(gap_flags),
+                "source_hash": source_layer.sql_text(row_hash),
+            }
+        )
+
+    def add_tower_evidence_queue_row(
+        *,
+        row_key: str,
+        page_key: str,
+        row_type: str,
+        primary_object_id: str,
+        claim_id: str,
+        gate_status: str,
+        gate_reason_code: str,
+        gate_reason_detail: str,
+        evidence_needed: list[str],
+        next_gate: str,
+        owner_role: str,
+        due_date: str | None,
+        related_measure_id: str | None,
+        source_record_id_value: str | None,
+        review_event_id_value: str | None,
+        evidence_state: str,
+        priority_score: int,
+        source_refs: list[dict[str, Any]],
+        gap_flags: list[dict[str, Any]],
+        display_payload: dict[str, Any],
+    ) -> None:
+        payload = {"row_key": row_key, "claim_id": claim_id, "gate": gate_reason_code, "display": display_payload}
+        row_hash = source_hash(payload)
+        entry_id = add_projection_entry(
+            surface_key="tower_evidence_queue",
+            row_key=f"{page_key}::{row_key}",
+            row_type=row_type,
+            row_hash=row_hash,
+            object_refs=[("primary_object", primary_object_id)],
+            measure_refs=[related_measure_id] if related_measure_id else [],
+            source_refs=source_refs,
+            display_cache={"page_key": page_key, "claim_id": claim_id, "title": display_payload.get("title")},
+        )
+        tower_evidence_queue_rows.append(
+            {
+                "id": source_layer.sql_text(source_layer.stable_uuid("tower_evidence_queue", page_key, row_key)),
+                "tenant_key": source_layer.sql_text(TENANT_KEY),
+                "assessment_id": source_layer.sql_text(ASSESSMENT_ID),
+                "snapshot_id": source_layer.sql_text(snap_id),
+                "projection_manifest_id": source_layer.sql_text(projection_manifest_id("tower_evidence_queue")),
+                "projection_entry_id": source_layer.sql_text(entry_id),
+                "projection_version": str(PROJECTION_VERSION),
+                "row_key": source_layer.sql_text(row_key),
+                "page_key": source_layer.sql_text(page_key),
+                "row_type": source_layer.sql_text(row_type),
+                "primary_object_id": source_layer.sql_text(primary_object_id),
+                "claim_id": source_layer.sql_text(claim_id),
+                "claim_gate_status": source_layer.sql_text(gate_status),
+                "claim_gate_reason_code": source_layer.sql_text(gate_reason_code),
+                "claim_gate_reason_detail": source_layer.sql_text(gate_reason_detail),
+                "evidence_needed_json": source_layer.sql_json(evidence_needed),
+                "next_gate": source_layer.sql_text(next_gate),
+                "owner_role": source_layer.sql_text(owner_role),
+                "due_date": source_layer.sql_text(due_date),
+                "related_measure_id": source_layer.sql_text(related_measure_id),
+                "source_record_id": source_layer.sql_text(source_record_id_value),
+                "review_event_id": source_layer.sql_text(review_event_id_value),
+                "evidence_state": source_layer.sql_text(evidence_state),
+                "priority_score": str(priority_score),
+                "source_refs_json": source_layer.sql_json(source_refs),
+                "gap_flags_json": source_layer.sql_json(gap_flags),
+                "display_payload_json": source_layer.sql_json(display_payload),
+                "source_hash": source_layer.sql_text(row_hash),
+            }
+        )
+
+    def add_tower_ai_portfolio_row(
+        *, row: dict[str, str], index: int, usage_score: int | None
+    ) -> None:
+        use_case_object_id = object_id("ai_use_case", row["use_case_name"])
+        tool_object_id = object_id("ai_tool", row["tool_name"])
+        function_object_id = object_id("business_function", row["business_function"])
+        refs = source_ref_for_family("SP11_AI_Usage_Models", row, index)
+        row_hash = source_hash({"ai_portfolio": row})
+        entry_id = add_projection_entry(
+            surface_key="tower_ai_portfolio",
+            row_key=row["source_row_id"],
+            row_type="ai_usage_observation",
+            row_hash=row_hash,
+            object_refs=[("use_case", use_case_object_id), ("tool", tool_object_id), ("business_function", function_object_id)],
+            metric_keys=["licensed_users", "ai_active_users", "usage_events", "monthly_cost_usd"],
+            source_refs=refs,
+            display_cache={"use_case_name": row["use_case_name"], "tool_name": row["tool_name"]},
+        )
+        tower_ai_portfolio_rows.append(
+            {
+                "id": source_layer.sql_text(source_layer.stable_uuid("tower_ai_portfolio", row["source_row_id"])),
+                "tenant_key": source_layer.sql_text(TENANT_KEY),
+                "assessment_id": source_layer.sql_text(ASSESSMENT_ID),
+                "snapshot_id": source_layer.sql_text(snap_id),
+                "projection_manifest_id": source_layer.sql_text(projection_manifest_id("tower_ai_portfolio")),
+                "projection_entry_id": source_layer.sql_text(entry_id),
+                "projection_version": str(PROJECTION_VERSION),
+                "row_key": source_layer.sql_text(row["source_row_id"]),
+                "use_case_object_id": source_layer.sql_text(use_case_object_id),
+                "tool_object_id": source_layer.sql_text(tool_object_id),
+                "function_object_id": source_layer.sql_text(function_object_id),
+                "use_case_name": source_layer.sql_text(row["use_case_name"]),
+                "tool_name": source_layer.sql_text(row["tool_name"]),
+                "business_function": source_layer.sql_text(row["business_function"]),
+                "licensed_users": source_layer.sql_num(as_num(row.get("licensed_users"))),
+                "active_users": source_layer.sql_num(as_num(row.get("active_users"))),
+                "usage_events": source_layer.sql_num(as_num(row.get("usage_events"))),
+                "monthly_cost_usd": source_layer.sql_num(as_num(row.get("monthly_cost_usd"))),
+                "adoption_rate_percent": source_layer.sql_num(usage_score),
+                "value_state": source_layer.sql_text("known"),
+                "quality_state": source_layer.sql_text("warning"),
+                "review_state": source_layer.sql_text("not_reviewed"),
+                "metric_keys_json": source_layer.sql_json(["licensed_users", "ai_active_users", "usage_events", "monthly_cost_usd"]),
+                "source_refs_json": source_layer.sql_json(refs),
+                "gap_flags_json": source_layer.sql_json([{"gap": "value_outcome_not_finance_validated"}]),
+                "display_payload_json": source_layer.sql_json(row),
+                "source_hash": source_layer.sql_text(row_hash),
+            }
+        )
+
     def add_intelligence_row(
         *,
         surface_key: str,
@@ -494,6 +715,109 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
                 "surface_key": source_layer.sql_text(surface_key),
                 "primary_object_id": source_layer.sql_text(primary_object_id),
                 "prompt_context_json": source_layer.sql_json({"instruction": "Use permitted facts only; cite source refs; keep gaps explicit."}),
+                "permitted_facts_json": source_layer.sql_json(permitted_facts),
+                "blocked_facts_json": source_layer.sql_json(blocked_facts),
+                "citation_refs_json": source_layer.sql_json(citations),
+                "retrieval_state": source_layer.sql_text("not_indexed"),
+                "value_state": source_layer.sql_text("known"),
+                "quality_state": source_layer.sql_text("warning"),
+                "access_class": source_layer.sql_text("public_demo"),
+                "gap_flags_json": source_layer.sql_json(gap_flags),
+                "source_hash": source_layer.sql_text(row_hash),
+            }
+        )
+
+    def add_intelligence_pattern_row(
+        *,
+        surface_key: str,
+        row_key: str,
+        pattern_key: str,
+        pattern_claim: str,
+        primary_object_id: str | None,
+        evidence_strength: int,
+        conflict_state: str,
+        citations: list[dict[str, Any]],
+        source_refs: list[dict[str, Any]],
+        affected_objects: list[dict[str, Any]],
+        next_evidence: list[str],
+        value_state: str,
+        quality_state: str,
+        access_class: str = "public_demo",
+    ) -> None:
+        payload = {"surface_key": surface_key, "pattern_key": pattern_key, "claim": pattern_claim, "citations": citations}
+        row_hash = source_hash(payload)
+        entry_id = add_projection_entry(
+            surface_key="intelligence_pattern_evidence",
+            row_key=f"{surface_key}::{row_key}",
+            row_type="pattern_evidence",
+            row_hash=row_hash,
+            object_refs=[("primary_object", primary_object_id)] if primary_object_id else [],
+            source_refs=source_refs,
+            display_cache={"surface_key": surface_key, "pattern_key": pattern_key, "claim": pattern_claim},
+        )
+        intelligence_pattern_rows.append(
+            {
+                "id": source_layer.sql_text(source_layer.stable_uuid("intelligence_pattern_evidence", surface_key, row_key)),
+                "tenant_key": source_layer.sql_text(TENANT_KEY),
+                "assessment_id": source_layer.sql_text(ASSESSMENT_ID),
+                "snapshot_id": source_layer.sql_text(snap_id),
+                "projection_manifest_id": source_layer.sql_text(projection_manifest_id("intelligence_pattern_evidence")),
+                "projection_entry_id": source_layer.sql_text(entry_id),
+                "projection_version": str(PROJECTION_VERSION),
+                "surface_key": source_layer.sql_text(surface_key),
+                "row_key": source_layer.sql_text(row_key),
+                "pattern_key": source_layer.sql_text(pattern_key),
+                "pattern_claim": source_layer.sql_text(pattern_claim),
+                "primary_object_id": source_layer.sql_text(primary_object_id),
+                "evidence_strength_score": str(evidence_strength),
+                "conflict_state": source_layer.sql_text(conflict_state),
+                "citation_refs_json": source_layer.sql_json(citations),
+                "source_refs_json": source_layer.sql_json(source_refs),
+                "affected_objects_json": source_layer.sql_json(affected_objects),
+                "recommended_next_evidence_json": source_layer.sql_json(next_evidence),
+                "value_state": source_layer.sql_text(value_state),
+                "quality_state": source_layer.sql_text(quality_state),
+                "access_class": source_layer.sql_text(access_class),
+                "source_hash": source_layer.sql_text(row_hash),
+            }
+        )
+
+    def add_intelligence_question_row(
+        *,
+        row_key: str,
+        question_key: str,
+        question_text: str,
+        primary_object_id: str | None,
+        permitted_facts: list[dict[str, Any]],
+        blocked_facts: list[dict[str, Any]],
+        citations: list[dict[str, Any]],
+        gap_flags: list[dict[str, Any]],
+    ) -> None:
+        payload = {"question_key": question_key, "question_text": question_text, "permitted": permitted_facts, "blocked": blocked_facts}
+        row_hash = source_hash(payload)
+        entry_id = add_projection_entry(
+            surface_key="intelligence_question_context",
+            row_key=f"ask_query_api::{row_key}",
+            row_type="question_context",
+            row_hash=row_hash,
+            object_refs=[("primary_object", primary_object_id)] if primary_object_id else [],
+            display_cache={"surface_key": "ask_query_api", "question_key": question_key},
+        )
+        intelligence_question_rows.append(
+            {
+                "id": source_layer.sql_text(source_layer.stable_uuid("intelligence_question_context", row_key)),
+                "tenant_key": source_layer.sql_text(TENANT_KEY),
+                "assessment_id": source_layer.sql_text(ASSESSMENT_ID),
+                "snapshot_id": source_layer.sql_text(snap_id),
+                "context_pack_id": source_layer.sql_text(context_pack_id()),
+                "projection_manifest_id": source_layer.sql_text(projection_manifest_id("intelligence_question_context")),
+                "projection_entry_id": source_layer.sql_text(entry_id),
+                "projection_version": str(PROJECTION_VERSION),
+                "surface_key": source_layer.sql_text("ask_query_api"),
+                "row_key": source_layer.sql_text(row_key),
+                "question_key": source_layer.sql_text(question_key),
+                "question_text": source_layer.sql_text(question_text),
+                "primary_object_id": source_layer.sql_text(primary_object_id),
                 "permitted_facts_json": source_layer.sql_json(permitted_facts),
                 "blocked_facts_json": source_layer.sql_json(blocked_facts),
                 "citation_refs_json": source_layer.sql_json(citations),
@@ -667,6 +991,69 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
                 "title": f"Review {row['service_tower']} leverage for {row['supplier_name']}",
                 "lever_type": lever_type,
                 "opportunity_type": "protect" if lever_type == "renewal_leverage" else "evidence_request",
+            },
+        )
+        contract_measure_id = context_layer.measure_id(contract_obj, "contract_annualized_value_usd", contract_source_ref["source_record_id"])
+        review_event_id = review_event_id_for_contract(row)
+        evidence_needed = ["owner_review", "finance_validation", "document_clause_confirmation"]
+        add_tower_value_chain_row(
+            row_key=f"contract-value::{row['contract_id']}",
+            page_key="cost_lens",
+            row_type="contract_value_observation",
+            primary_object_id=contract_obj,
+            claim_id=f"contract-value-{row['contract_id']}",
+            observation_key=f"contract_annualized_value_usd::{row['contract_id']}",
+            metric_key="contract_annualized_value_usd",
+            measure_id_value=contract_measure_id,
+            source_record_id_value=contract_source_ref["source_record_id"],
+            review_event_id_value=review_event_id,
+            evidence_state="source_recorded",
+            gate_status=gate_status,
+            gate_reason_code="commercial_terms_need_review",
+            gate_reason_detail="Contract value is source-recorded, but optimization claimability waits for owner, finance, and clause confirmation.",
+            next_gate="owner_review",
+            evidence_needed=evidence_needed,
+            baseline=annual_value,
+            current=invoice_total if spend_rows else None,
+            target=annual_value,
+            claimable=0,
+            blocked=round(annual_value * 0.08, 2) if gate_status == "blocked" else round(annual_value * 0.03, 2),
+            value_state="known",
+            quality_state="warning",
+            source_refs=[contract_source_ref],
+            gap_flags=gap_flags + [{"gap": "claimability_requires_review"}],
+            display_payload={
+                "title": f"{row['supplier_name']} {row['service_tower']} value chain",
+                "supplier_name": row["supplier_name"],
+                "service_tower": row.get("service_tower"),
+                "annualized_value_usd": annual_value,
+                "invoice_line_count": len(spend_rows),
+            },
+        )
+        add_tower_evidence_queue_row(
+            row_key=f"contract-evidence::{row['contract_id']}",
+            page_key="evidence",
+            row_type="gated_value_claim",
+            primary_object_id=contract_obj,
+            claim_id=f"contract-value-{row['contract_id']}",
+            gate_status=gate_status,
+            gate_reason_code="commercial_terms_need_review",
+            gate_reason_detail="The row names the next evidence needed before Source/Tower can treat value as claimable.",
+            evidence_needed=evidence_needed,
+            next_gate="owner_review",
+            owner_role="sourcing_lead",
+            due_date="2026-09-30",
+            related_measure_id=contract_measure_id,
+            source_record_id_value=contract_source_ref["source_record_id"],
+            review_event_id_value=review_event_id,
+            evidence_state="source_recorded_review_gated",
+            priority_score=80 if gate_status == "blocked" else 62,
+            source_refs=[contract_source_ref],
+            gap_flags=gap_flags + [{"gap": "claim_gate_open"}],
+            display_payload={
+                "title": f"Clear evidence gate for {row['supplier_name']} {row['service_tower']}",
+                "next_gate": "owner_review",
+                "evidence_needed": evidence_needed,
             },
         )
 
@@ -1065,15 +1452,20 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
             gap_flags=[{"gap": "value_outcome_not_finance_validated"}],
             display_payload=row,
         )
+        add_tower_ai_portfolio_row(row=row, index=index, usage_score=usage_score)
 
     for index, row in enumerate(grc_rows, start=1):
         severity_score = {"critical": 90, "high": 75, "medium": 50, "low": 25}.get(row.get("severity", "").lower(), 50)
         open_exceptions = as_num(row.get("open_exception_count"))
+        grc_object_id = object_id("control" if row.get("risk_type") == "control" else "risk", row["risk_or_control_id"])
+        source_object_ref = row.get("object_ref")
+        affected_app = app_by_id.get(source_object_ref or "")
+        affected_vendor = affected_app.get("vendor_name") if affected_app else None
         add_tower_row(
             row_key=f"risk::{row['risk_or_control_id']}",
             page_key="risk_lens",
             row_type="risk_control_observation",
-            primary_object_id=object_id("control" if row.get("risk_type") == "control" else "risk", row["risk_or_control_id"]),
+            primary_object_id=grc_object_id,
             claim_id=None,
             gate_status="not_applicable",
             gate_reason_code=None,
@@ -1089,6 +1481,36 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
             gap_flags=[{"gap": "open_control_exception", "count": open_exceptions}] if open_exceptions else [],
             display_payload=row,
         )
+        if open_exceptions and affected_vendor:
+            evidence_needed = ["control_owner_attestation", "exception_remediation_plan", "application_vendor_scope_confirmation"]
+            add_tower_evidence_queue_row(
+                row_key=f"risk-evidence::{row['risk_or_control_id']}",
+                page_key="risk_lens",
+                row_type="open_control_exception",
+                primary_object_id=grc_object_id,
+                claim_id=f"risk-exception-{row['risk_or_control_id']}",
+                gate_status="blocked" if row.get("severity") in {"critical", "high"} else "gated",
+                gate_reason_code="open_control_exception",
+                gate_reason_detail=f"{open_exceptions:g} open exceptions resolve to {source_object_ref} and vendor {affected_vendor}; remediation evidence is required before closure.",
+                evidence_needed=evidence_needed,
+                next_gate="risk_owner_review",
+                owner_role="risk_owner",
+                due_date="2026-09-30",
+                related_measure_id=context_layer.measure_id(grc_object_id, "open_exception_count", source_record_id("SP09_GRC", row, index)),
+                source_record_id_value=source_record_id("SP09_GRC", row, index),
+                review_event_id_value=None,
+                evidence_state="source_recorded_review_gated",
+                priority_score=severity_score,
+                source_refs=source_ref_for_family("SP09_GRC", row, index),
+                gap_flags=[{"gap": "open_control_exception", "vendor_name": affected_vendor, "application_ref": source_object_ref}],
+                display_payload={
+                    "title": f"{affected_vendor} estate control exception",
+                    "vendor_name": affected_vendor,
+                    "application_ref": source_object_ref,
+                    "open_exception_count": open_exceptions,
+                    "severity": row.get("severity"),
+                },
+            )
 
     intelligence_surfaces = [
         ("advisory_page", [{"fact": "loaded_sources", "value": len(paths)}, {"fact": "objects_and_relationships_available", "value": True}]),
@@ -1112,6 +1534,140 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
             gap_flags=[{"gap": "retrieval_index_not_built"}, {"gap": "citation_render_proof_pending"}],
         )
 
+    risky_contracts = [
+        (index, row)
+        for index, row in enumerate(contracts, start=1)
+        if row.get("benchmarking_right") in {"absent", "limited"} or as_num(row.get("notice_window_days")) >= 180
+    ][:20]
+    for index, row in risky_contracts:
+        contract_obj = object_id("contract", row["contract_id"])
+        vendor_obj = object_id("vendor", row["supplier_name"])
+        refs = source_ref_for_family("SP08_Vendor_Contract", row, index)
+        add_intelligence_pattern_row(
+            surface_key="insights_evaluate",
+            row_key=f"commercial-pattern::{row['contract_id']}",
+            pattern_key="commercial_leverage_gap",
+            pattern_claim=f"{row['supplier_name']} {row['service_tower']} has commercial terms that require leverage review.",
+            primary_object_id=contract_obj,
+            evidence_strength=68 if row.get("benchmarking_right") == "limited" else 82,
+            conflict_state="none",
+            citations=[{"source_family": "SP08_Vendor_Contract", "source_row_id": row.get("source_row_id"), "field": "benchmarking_right"}],
+            source_refs=refs,
+            affected_objects=[
+                {"ref_role": "contract", "object_id": contract_obj, "contract_id": row["contract_id"]},
+                {"ref_role": "vendor", "object_id": vendor_obj, "supplier_name": row["supplier_name"]},
+            ],
+            next_evidence=["contract_owner_review", "clause_confirmation", "finance_basis_review"],
+            value_state="known",
+            quality_state="warning",
+        )
+
+    grc_vendor_counts: dict[str, dict[str, Any]] = defaultdict(lambda: {"count": 0, "refs": [], "applications": set(), "risk_object": None})
+    for index, row in enumerate(grc_rows, start=1):
+        affected_app = app_by_id.get(row.get("object_ref") or "")
+        if not affected_app:
+            continue
+        vendor_name = affected_app.get("vendor_name")
+        open_exceptions = as_num(row.get("open_exception_count"))
+        if not vendor_name or not open_exceptions:
+            continue
+        bucket = grc_vendor_counts[vendor_name]
+        bucket["count"] += int(open_exceptions)
+        bucket["refs"].append(source_ref("SP09_GRC", row, index))
+        bucket["applications"].add(row.get("object_ref"))
+        bucket["risk_object"] = object_id("control" if row.get("risk_type") == "control" else "risk", row["risk_or_control_id"])
+    for vendor_name, bucket in sorted(grc_vendor_counts.items(), key=lambda item: item[1]["count"], reverse=True)[:10]:
+        add_intelligence_pattern_row(
+            surface_key="pattern_detail",
+            row_key=f"vendor-risk::{slug(vendor_name)}",
+            pattern_key="vendor_control_exception_cluster",
+            pattern_claim=f"Open control exceptions cluster on {vendor_name}'s application estate.",
+            primary_object_id=bucket["risk_object"],
+            evidence_strength=min(95, 50 + bucket["count"]),
+            conflict_state="none",
+            citations=[{"source_family": ref["source_family"], "source_row_id": ref["source_row_id"]} for ref in bucket["refs"][:8]],
+            source_refs=bucket["refs"][:8],
+            affected_objects=[
+                {"application_ref": app_ref, "application_object_id": object_id("application", app_ref)}
+                for app_ref in sorted(bucket["applications"])
+            ],
+            next_evidence=["risk_owner_attestation", "vendor_scope_confirmation", "remediation_plan"],
+            value_state="known",
+            quality_state="warning",
+        )
+
+    question_specs = [
+        (
+            "commercial_leverage",
+            "Which contracts have lost or weak commercial leverage?",
+            [
+                {"fact": "contract_count", "value": len(contracts), "basis": "source_recorded"},
+                {"fact": "risky_contract_count", "value": len(risky_contracts), "basis": "source_recorded"},
+            ],
+            risky_contracts[:5],
+        ),
+        (
+            "tower_gated_value",
+            "Why is material value gated?",
+            [
+                {"fact": "gated_value_rows", "value": len(tower_evidence_queue_rows), "basis": "projection"},
+                {"fact": "distinct_gate_reason_count", "value": len({row["claim_gate_reason_code"] for row in tower_evidence_queue_rows}), "basis": "projection"},
+            ],
+            risky_contracts[:5],
+        ),
+        (
+            "risk_vendor_cluster",
+            "Which vendor estate has the highest control-exception pressure?",
+            [
+                {"fact": "vendor_risk_cluster_count", "value": len(grc_vendor_counts), "basis": "source_recorded"},
+                {"fact": "top_vendor", "value": next(iter(sorted(grc_vendor_counts.items(), key=lambda item: item[1]["count"], reverse=True)), ["none"])[0], "basis": "source_recorded"},
+            ],
+            [],
+        ),
+        (
+            "data_flow_refusal",
+            "Why is one data-flow view refused instead of shown as zero?",
+            [
+                {"fact": "data_flow_admitted", "value": data_flow_admitted, "basis": "admission_gate"},
+                {"fact": "singleton_destination_ratio", "value": round(singleton_ratio, 4), "basis": "admission_gate"},
+            ],
+            [],
+        ),
+        (
+            "ai_usage_value",
+            "Where is AI adoption visible but value not finance-validated?",
+            [
+                {"fact": "ai_usage_rows", "value": len(ai_rows), "basis": "source_recorded"},
+                {"fact": "ai_portfolio_rows", "value": len(tower_ai_portfolio_rows), "basis": "projection"},
+            ],
+            [],
+        ),
+        (
+            "current_state_depth",
+            "What is loaded into ECL today, and what remains unproven?",
+            [
+                {"fact": "application_count", "value": len(apps), "basis": "source_recorded"},
+                {"fact": "serving_views_built", "value": 0, "basis": "known_gap"},
+            ],
+            [],
+        ),
+    ]
+    for question_key, question_text, permitted_facts, citation_rows in question_specs:
+        citations = [
+            {"source_family": "SP08_Vendor_Contract", "source_row_id": row.get("source_row_id"), "contract_id": row.get("contract_id")}
+            for _index, row in citation_rows
+        ]
+        add_intelligence_question_row(
+            row_key=question_key,
+            question_key=question_key,
+            question_text=question_text,
+            primary_object_id=enterprise_id,
+            permitted_facts=permitted_facts,
+            blocked_facts=[{"reason": "retrieval_index_not_built", "state": "not_indexed"}],
+            citations=citations or [{"context_pack_id": context_pack_id(), "basis": "ecl_context.context_pack"}],
+            gap_flags=[{"gap": "retrieval_index_not_built"}, {"gap": "browser_citation_proof_pending"}],
+        )
+
     row_counts.update(
         {
             "projection_entry": len(projection_entries),
@@ -1127,7 +1683,12 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
             "source_value_levers": len(value_levers),
             "source_event_workspace": len(event_rows),
             "tower_command_center": len(tower_rows),
+            "tower_value_chain": len(tower_value_chain_rows),
+            "tower_evidence_queue": len(tower_evidence_queue_rows),
+            "tower_ai_portfolio": len(tower_ai_portfolio_rows),
             "intelligence_context_pack": len(intelligence_rows),
+            "intelligence_pattern_evidence": len(intelligence_pattern_rows),
+            "intelligence_question_context": len(intelligence_question_rows),
         }
     )
     for projection_key in projection_keys:
@@ -1171,7 +1732,12 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         "ecl_projection.source_value_levers": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_entry_id", "projection_version", "row_key", "lever_type", "opportunity_type", "opportunity_title", "contract_id", "contract_object_id", "vendor_object_id", "primary_metric_key", "baseline_spend_usd", "addressable_spend_usd", "estimated_value_low_usd", "estimated_value_high_usd", "claimable_value_usd", "blocked_value_usd", "value_gate_status", "value_gate_reason_code", "value_gate_reason_detail", "evidence_state", "confidence", "affected_scope_json", "benchmark_context_json", "protection_context_json", "next_action_json", "metric_keys_json", "source_refs_json", "gap_flags_json", "source_hash"],
         "ecl_projection.source_event_workspace": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_entry_id", "projection_version", "row_key", "workspace_tab", "row_type", "event_key", "event_title", "contract_id", "contract_object_id", "vendor_object_id", "review_event_id", "event_stage", "event_status", "gate_status", "gate_reason_code", "gate_reason_detail", "owner_role", "due_date", "evidence_needed_json", "decision_context_json", "next_action_json", "source_refs_json", "gap_flags_json", "source_hash"],
         "ecl_projection.tower_command_center": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_entry_id", "projection_version", "row_key", "page_key", "row_type", "primary_object_id", "claim_id", "claim_gate_status", "claim_gate_reason_code", "claim_gate_reason_detail", "next_gate", "evidence_needed_json", "funded_amount_usd", "promised_value_usd", "usage_supported_value_usd", "finance_validated_value_usd", "claimable_value_usd", "blocked_value_usd", "proof_maturity_score", "risk_pressure_score", "usage_strength_score", "owner_role", "handoff_module", "value_state", "quality_state", "metric_keys_json", "source_refs_json", "gap_flags_json", "display_payload_json", "source_hash"],
+        "ecl_projection.tower_value_chain": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_entry_id", "projection_version", "row_key", "page_key", "row_type", "primary_object_id", "claim_id", "observation_key", "metric_key", "measure_id", "source_record_id", "review_event_id", "evidence_state", "claim_gate_status", "claim_gate_reason_code", "claim_gate_reason_detail", "next_gate", "evidence_needed_json", "baseline_value", "current_value", "target_value", "claimable_value_usd", "blocked_value_usd", "value_state", "quality_state", "source_refs_json", "display_payload_json", "gap_flags_json", "source_hash"],
+        "ecl_projection.tower_evidence_queue": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_entry_id", "projection_version", "row_key", "page_key", "row_type", "primary_object_id", "claim_id", "claim_gate_status", "claim_gate_reason_code", "claim_gate_reason_detail", "evidence_needed_json", "next_gate", "owner_role", "due_date", "related_measure_id", "source_record_id", "review_event_id", "evidence_state", "priority_score", "source_refs_json", "gap_flags_json", "display_payload_json", "source_hash"],
+        "ecl_projection.tower_ai_portfolio": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_entry_id", "projection_version", "row_key", "use_case_object_id", "tool_object_id", "function_object_id", "use_case_name", "tool_name", "business_function", "licensed_users", "active_users", "usage_events", "monthly_cost_usd", "adoption_rate_percent", "value_state", "quality_state", "review_state", "metric_keys_json", "source_refs_json", "gap_flags_json", "display_payload_json", "source_hash"],
         "ecl_projection.intelligence_context_pack": ["id", "tenant_key", "assessment_id", "snapshot_id", "context_pack_id", "projection_manifest_id", "projection_entry_id", "projection_version", "row_key", "surface_key", "primary_object_id", "prompt_context_json", "permitted_facts_json", "blocked_facts_json", "citation_refs_json", "retrieval_state", "value_state", "quality_state", "access_class", "gap_flags_json", "source_hash"],
+        "ecl_projection.intelligence_pattern_evidence": ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_entry_id", "projection_version", "surface_key", "row_key", "pattern_key", "pattern_claim", "primary_object_id", "evidence_strength_score", "conflict_state", "citation_refs_json", "source_refs_json", "affected_objects_json", "recommended_next_evidence_json", "value_state", "quality_state", "access_class", "source_hash"],
+        "ecl_projection.intelligence_question_context": ["id", "tenant_key", "assessment_id", "snapshot_id", "context_pack_id", "projection_manifest_id", "projection_entry_id", "projection_version", "surface_key", "row_key", "question_key", "question_text", "primary_object_id", "permitted_facts_json", "blocked_facts_json", "citation_refs_json", "retrieval_state", "value_state", "quality_state", "access_class", "gap_flags_json", "source_hash"],
     }
     sql_path = out_dir / "dense_source_room_ecl_source_projection_load.sql"
     sql_parts = ["begin;"]
@@ -1183,7 +1749,12 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
     sql_parts.append(insert_sql("ecl_projection.source_value_levers", columns["ecl_projection.source_value_levers"], value_levers))
     sql_parts.append(insert_sql("ecl_projection.source_event_workspace", columns["ecl_projection.source_event_workspace"], event_rows))
     sql_parts.append(insert_sql("ecl_projection.tower_command_center", columns["ecl_projection.tower_command_center"], tower_rows))
+    sql_parts.append(insert_sql("ecl_projection.tower_value_chain", columns["ecl_projection.tower_value_chain"], tower_value_chain_rows))
+    sql_parts.append(insert_sql("ecl_projection.tower_evidence_queue", columns["ecl_projection.tower_evidence_queue"], tower_evidence_queue_rows))
+    sql_parts.append(insert_sql("ecl_projection.tower_ai_portfolio", columns["ecl_projection.tower_ai_portfolio"], tower_ai_portfolio_rows))
     sql_parts.append(insert_sql("ecl_projection.intelligence_context_pack", columns["ecl_projection.intelligence_context_pack"], intelligence_rows))
+    sql_parts.append(insert_sql("ecl_projection.intelligence_pattern_evidence", columns["ecl_projection.intelligence_pattern_evidence"], intelligence_pattern_rows))
+    sql_parts.append(insert_sql("ecl_projection.intelligence_question_context", columns["ecl_projection.intelligence_question_context"], intelligence_question_rows))
     sql_parts.append(insert_sql("ecl_projection.projection_entry_object_ref", columns["ecl_projection.projection_entry_object_ref"], projection_object_refs))
     sql_parts.append(insert_sql("ecl_projection.projection_entry_metric_ref", columns["ecl_projection.projection_entry_metric_ref"], projection_metric_refs))
     sql_parts.append(insert_sql("ecl_projection.projection_entry_measure_ref", columns["ecl_projection.projection_entry_measure_ref"], projection_measure_refs))
@@ -1213,10 +1784,42 @@ select jsonb_pretty(jsonb_build_object(
   'source_value_levers', (select count(*) from ecl_projection.source_value_levers),
   'source_event_workspace', (select count(*) from ecl_projection.source_event_workspace),
   'tower_command_center', (select count(*) from ecl_projection.tower_command_center),
+  'tower_value_chain', (select count(*) from ecl_projection.tower_value_chain),
+  'tower_evidence_queue', (select count(*) from ecl_projection.tower_evidence_queue),
+  'tower_ai_portfolio', (select count(*) from ecl_projection.tower_ai_portfolio),
   'intelligence_context_pack', (select count(*) from ecl_projection.intelligence_context_pack),
+  'intelligence_pattern_evidence', (select count(*) from ecl_projection.intelligence_pattern_evidence),
+  'intelligence_question_context', (select count(*) from ecl_projection.intelligence_question_context),
   'source_value_claimable_rows', (select count(*) from ecl_projection.source_value_levers where claimable_value_usd > 0),
   'source_value_gated_rows', (select count(*) from ecl_projection.source_value_levers where value_gate_status in ('gated','blocked')),
   'event_rows_without_evidence_payload', (select count(*) from ecl_projection.source_event_workspace where gate_status in ('gated','blocked') and jsonb_array_length(evidence_needed_json) = 0),
+  'tower_value_chain_gated_without_reason', (select count(*) from ecl_projection.tower_value_chain where claim_gate_status in ('gated','blocked') and (claim_gate_reason_code is null or claim_gate_reason_detail is null or next_gate is null or jsonb_array_length(evidence_needed_json) = 0)),
+  'tower_evidence_queue_missing_gate_payload', (select count(*) from ecl_projection.tower_evidence_queue where claim_gate_reason_code is null or claim_gate_reason_detail is null or next_gate is null or jsonb_array_length(evidence_needed_json) = 0),
+  'tower_value_chain_measure_drift', (
+    select count(*) from ecl_projection.tower_value_chain p
+    left join ecl_context.measure m on m.tenant_key = p.tenant_key and m.assessment_id = p.assessment_id and m.id = p.measure_id
+    where p.measure_id is not null and m.id is null
+  ),
+  'tower_evidence_queue_measure_drift', (
+    select count(*) from ecl_projection.tower_evidence_queue p
+    left join ecl_context.measure m on m.tenant_key = p.tenant_key and m.assessment_id = p.assessment_id and m.id = p.related_measure_id
+    where p.related_measure_id is not null and m.id is null
+  ),
+  'tower_ai_primary_object_drift', (
+    select count(*) from ecl_projection.tower_ai_portfolio p
+    left join ecl_context.object o on o.tenant_key = p.tenant_key and o.assessment_id = p.assessment_id and o.id = p.use_case_object_id
+    where o.id is null
+  ),
+  'intelligence_pattern_primary_object_drift', (
+    select count(*) from ecl_projection.intelligence_pattern_evidence p
+    left join ecl_context.object o on o.tenant_key = p.tenant_key and o.assessment_id = p.assessment_id and o.id = p.primary_object_id
+    where p.primary_object_id is not null and o.id is null
+  ),
+  'intelligence_question_context_pack_drift', (
+    select count(*) from ecl_projection.intelligence_question_context p
+    left join ecl_context.context_pack cp on cp.tenant_key = p.tenant_key and cp.assessment_id = p.assessment_id and cp.id = p.context_pack_id
+    where cp.id is null
+  ),
   'projection_entry_count_drift', (
     select abs(
       (select count(*) from ecl_projection.projection_entry)
@@ -1227,7 +1830,12 @@ select jsonb_pretty(jsonb_build_object(
         + (select count(*) from ecl_projection.source_value_levers)
         + (select count(*) from ecl_projection.source_event_workspace)
         + (select count(*) from ecl_projection.tower_command_center)
+        + (select count(*) from ecl_projection.tower_value_chain)
+        + (select count(*) from ecl_projection.tower_evidence_queue)
+        + (select count(*) from ecl_projection.tower_ai_portfolio)
         + (select count(*) from ecl_projection.intelligence_context_pack)
+        + (select count(*) from ecl_projection.intelligence_pattern_evidence)
+        + (select count(*) from ecl_projection.intelligence_question_context)
       )
     )
   ),
@@ -1239,7 +1847,12 @@ select jsonb_pretty(jsonb_build_object(
       union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.source_value_levers
       union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.source_event_workspace
       union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.tower_command_center
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.tower_value_chain
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.tower_evidence_queue
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.tower_ai_portfolio
       union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.intelligence_context_pack
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.intelligence_pattern_evidence
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.intelligence_question_context
     ) p
     left join ecl_projection.projection_entry pe
       on pe.tenant_key = p.tenant_key
@@ -1444,6 +2057,11 @@ def main() -> int:
         "value_lever_metric_drift",
         "event_review_drift",
         "event_rows_without_evidence_payload",
+        "tower_value_chain_gated_without_reason",
+        "tower_evidence_queue_missing_gate_payload",
+        "tower_value_chain_measure_drift",
+        "tower_evidence_queue_measure_drift",
+        "tower_ai_primary_object_drift",
         "projection_entry_count_drift",
         "projection_surface_entry_drift",
         "projection_entry_metric_ref_drift",
@@ -1453,6 +2071,8 @@ def main() -> int:
         "tower_gated_without_reason",
         "intelligence_context_pack_drift",
         "intelligence_primary_object_drift",
+        "intelligence_pattern_primary_object_drift",
+        "intelligence_question_context_pack_drift",
     ]:
         if int(readback.get(drift_key, 1)) != 0:
             issues.append(drift_key)

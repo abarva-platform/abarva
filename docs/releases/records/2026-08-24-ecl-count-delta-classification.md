@@ -14,6 +14,10 @@ This release turns the dense ECL local proof count expectations into a classifie
 
 It also fixes an identity regression in the synthetic finding planter: a platform finding changed the platform primary key, which caused deployment hosting edges to drop. The finding now changes descriptive attributes while preserving the `PLAT-####` identity used by deployment references.
 
+The operator completion expectation is corrected from 100% to 91% because the operator validation
+denominator includes four hard-gated slices. The executable local queue still passes 12 of 12
+slices; the hard gates are intentionally not counted as complete.
+
 ## Layer Impact
 
 - `client-data-lane`, Layer 1 synthetic source room: preserves primary-key identity while planting infrastructure findings.
@@ -34,6 +38,8 @@ It also fixes an identity regression in the synthetic finding planter: a platfor
 - Adds `scripts/ecl/validate_dense_all_layer_local_proof_counts.py`.
 - Updates the no-stop data pipeline workflow to call the count-contract validator instead of hardcoded inline expectations.
 - Updates the Azure gate validator test to read the shared count contract.
+- Classifies the five W2 projection-table producer-count increases.
+- Classifies the operator completion-percent correction caused by hard-gated slices remaining open.
 - Adds a source-contract regression assertion that demo infrastructure findings must not replace platform primary keys.
 - Preserves platform identity in `scripts/ecl/generate_dense_source_room_extracts.py` while keeping the Netezza finding attributes.
 
