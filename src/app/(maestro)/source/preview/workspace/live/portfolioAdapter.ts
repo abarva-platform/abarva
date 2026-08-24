@@ -21,6 +21,7 @@ import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4
 import {
   createEmptySourceV4WorkspaceSnapshot,
   loadSourceV4WorkspaceSnapshot,
+  type SourceV4SliceAvailability,
   type SourceV4WorkspaceSnapshot,
 } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
@@ -54,6 +55,12 @@ type SourceWorkspaceExploreProvider =
   | "EclProjectionDbProvider";
 
 type EclProjectionRow = Record<string, unknown>;
+type EclCubeSliceRow = {
+  readonly cube_key: string;
+  readonly slice_key: string;
+  readonly primary_metric_key: string;
+  readonly quality_state: string;
+};
 export type SourceWorkspaceProviderMode =
   | "legacy"
   | "ecl_projection"
@@ -312,7 +319,7 @@ async function loadEclProjectionWorkspacePortfolio(
     );
   }
 
-  const [contractRows, vendorRows, eventRows] = await Promise.all([
+  const [contractRows, vendorRows, eventRows, cubeSliceRows] = await Promise.all([
     provider === "ecl_projection_db"
       ? readProjectionTable(tenantKey, "source_contract_360")
       : readProjectionCsv(
@@ -334,6 +341,9 @@ async function loadEclProjectionWorkspacePortfolio(
             "source_event_workspace_projection.csv",
           ),
         ),
+    provider === "ecl_projection_db"
+      ? readEclCubeSlices(tenantKey)
+      : Promise.resolve([]),
   ]);
   const acceptedTenantKeys = new Set(
     [tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim()),
@@ -349,9 +359,12 @@ async function loadEclProjectionWorkspacePortfolio(
     .filter(tenantMatches)
     .flatMap(scopeFromEclProjectionRow);
   const initiativeDependencies: SourceContractInitiativeDependencyRow[] = [];
-  const v4Snapshot = createEmptySourceV4WorkspaceSnapshot(asOfDateIso, {
-    datasetId: "ecl-source-360-local-projection",
-    datasetLabel: "ECL Source 360 local projection",
+  const v4Snapshot = eclSourceWorkspaceSnapshot({
+    asOfDateIso,
+    contracts,
+    vendors,
+    applicationScope,
+    cubeSliceRows,
   });
   const categoryQuality = evaluateContractCategoryQuality(contracts);
   const legacyVendorCount = new Set(contracts.map((contract) => contract.vendor_ref))
@@ -452,6 +465,134 @@ async function readProjectionTable(
       [acceptedTenantKeys],
     );
   });
+}
+
+async function readEclCubeSlices(tenantKey: string): Promise<EclCubeSliceRow[]> {
+  const acceptedTenantKeys = Array.from(
+    new Set([tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim())),
+  );
+  return azureRead.withSession(async (run) => {
+    await run("SELECT set_config('app.tenant_key', $1, false)", [
+      acceptedTenantKeys[0] ?? tenantKey,
+    ]);
+    return run(
+      `SELECT cube_key, slice_key, primary_metric_key, quality_state
+         FROM ecl_projection.cube_slice
+        WHERE tenant_key = ANY($1::text[])
+          AND cube_key = ANY($2::text[])
+        ORDER BY cube_key, slice_key`,
+      [acceptedTenantKeys, ["source_contract_cube", "source_vendor_cube"]],
+    );
+  });
+}
+
+function eclSourceWorkspaceSnapshot(input: {
+  readonly asOfDateIso: string;
+  readonly contracts: readonly SourceContract360Row[];
+  readonly vendors: readonly SourceVendorContractPortfolioRow[];
+  readonly applicationScope: readonly SourceContractApplicationScopeRow[];
+  readonly cubeSliceRows: readonly EclCubeSliceRow[];
+}): SourceV4WorkspaceSnapshot {
+  const { asOfDateIso, contracts, vendors, applicationScope, cubeSliceRows } =
+    input;
+  const base = createEmptySourceV4WorkspaceSnapshot(asOfDateIso, {
+    datasetId: "ecl-source-360-local-projection",
+    datasetLabel: "ECL Source 360 local projection",
+  });
+  const annualValue = sumAnnual(contracts);
+  const totalCommittedValue = contracts.reduce(
+    (sum, contract) => sum + valueOf(contract.total_committed_value),
+    0,
+  );
+  const sourceContractCubeSlices = cubeSliceRows.filter(
+    (row) => row.cube_key === "source_contract_cube",
+  ).length;
+  const sourceVendorCubeSlices = cubeSliceRows.filter(
+    (row) => row.cube_key === "source_vendor_cube",
+  ).length;
+  const cubeSliceCount = cubeSliceRows.length;
+  const topVendors = vendors
+    .slice()
+    .sort((a, b) => valueOf(b.annual_value) - valueOf(a.annual_value))
+    .slice(0, 5)
+    .map((vendor) => ({
+      vendorId: vendor.vendor_ref,
+      legalName: vendor.vendor_name,
+      supplierCategory: vendor.vendor_category,
+      strategicStatus: null,
+      riskTier: null,
+      annualValue: valueOf(vendor.annual_value),
+      contractCount: vendor.contract_count,
+    }));
+
+  return {
+    ...base,
+    activeLoadRunId: "ecl-dense-source-room-projection",
+    availability: [
+      eclAvailability(
+        "executive_portfolio",
+        sourceContractCubeSlices > 0 ? "available" : "missing",
+        sourceContractCubeSlices,
+      ),
+      eclAvailability(
+        "vendor_concentration",
+        sourceVendorCubeSlices > 0 ? "available" : "missing",
+        sourceVendorCubeSlices,
+      ),
+      eclAvailability(
+        "renewal_exposure",
+        sourceContractCubeSlices > 0 ? "available" : "missing",
+        sourceContractCubeSlices,
+      ),
+      eclAvailability(
+        "scope_confidence",
+        applicationScope.length > 0 ? "available" : "missing",
+        applicationScope.length,
+      ),
+      eclAvailability("spend_consumption", "missing", 0),
+      eclAvailability("performance_credits", "missing", 0),
+      eclAvailability("ai_usage_value_proof", "missing", 0),
+      eclAvailability("cloud_optimization", "missing", 0),
+      eclAvailability("workforce_rate_card", "missing", 0),
+      eclAvailability("sourcing_event_bafo", "missing", 0),
+      eclAvailability(
+        "context_coverage",
+        cubeSliceCount > 0 ? "available" : "missing",
+        cubeSliceCount,
+      ),
+    ],
+    contextCoverage: {
+      vendors: vendors.length,
+      contracts: contracts.length,
+      annualValue,
+      scopeRows: applicationScope.length,
+      invoiceLines: 0,
+      saasUsageRows: 0,
+      cloudRows: 0,
+      performanceRows: 0,
+    },
+    executivePortfolio: {
+      contractCount: contracts.length,
+      annualValue,
+      totalCommittedValue,
+      autoRenewCount: contracts.filter((contract) => contract.auto_renew).length,
+      notice90DayCount: 0,
+    },
+    scopeConfidence: {
+      rowCount: applicationScope.length,
+      explicitScopeCount: applicationScope.length,
+      inferredScopeCount: 0,
+    },
+    topVendors,
+  };
+}
+
+function eclAvailability(
+  lensId: SourceV4SliceAvailability["lensId"],
+  state: SourceV4SliceAvailability["state"],
+  rowCount: number,
+): SourceV4SliceAvailability {
+  return { lensId, state, rowCount };
 }
 
 function contractFromEclProjectionRow(

@@ -197,6 +197,22 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
+        if (sql.includes("ecl_projection.cube_slice")) {
+          return [
+            {
+              cube_key: "source_contract_cube",
+              slice_key: "source_contract_cube:contract_annualized_value_usd",
+              primary_metric_key: "contract_annualized_value_usd",
+              quality_state: "passed",
+            },
+            {
+              cube_key: "source_vendor_cube",
+              slice_key: "source_vendor_cube:contract_annualized_value_usd",
+              primary_metric_key: "contract_annualized_value_usd",
+              quality_state: "passed",
+            },
+          ] as R[];
+        }
         return [] as R[];
       };
       return fn(run);
@@ -221,6 +237,21 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       actual_annual_spend: 5100000,
       operational_evidence_gap: true,
       scoped_application_count: 2,
+    });
+    expect(portfolio.v4Snapshot.availability).toEqual(
+      expect.arrayContaining([
+        { lensId: "executive_portfolio", state: "available", rowCount: 1 },
+        { lensId: "vendor_concentration", state: "available", rowCount: 1 },
+        { lensId: "context_coverage", state: "available", rowCount: 2 },
+      ]),
+    );
+    expect(
+      portfolio.cockpit.proofLayers.sourceSystems.find(
+        (row) => row.name === "executive_portfolio",
+      ),
+    ).toMatchObject({
+      rowCount: 1,
+      state: "available",
     });
     expect(portfolio.applicationScope.map((row) => row.application_name)).toEqual(
       ["Workday Finance", "BlackLine Account Reconciliations"],
