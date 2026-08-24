@@ -13,6 +13,7 @@ import {
   isHomePreviewTenantKey,
   HOME_PREVIEW_TENANT_KEYS,
 } from "@/lib/home/preview/golden-snapshot";
+import { getHomeEclProjectionBundle } from "@/lib/home/preview/ecl-projection-bundle";
 
 /**
  * Production-faithful preview of the new eight-chapter Home experience -- not a static prototype.
@@ -34,7 +35,7 @@ export const revalidate = 0;
 export default async function HomePreviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tenant?: string }>;
+  searchParams: Promise<{ tenant?: string; provider?: string }>;
 }) {
   await connection();
 
@@ -47,10 +48,12 @@ export default async function HomePreviewPage({
   // One tenant per render. Reviewers pick with ?tenant=<key>; the page never loads a second
   // tenant's bundle, so no other client's data reaches the response and the UI carries no
   // cross-client control. A client-facing surface must look tenant-isolated because it is.
-  const { tenant } = await searchParams;
+  const { tenant, provider } = await searchParams;
   const tenantKey = tenant && isHomePreviewTenantKey(tenant) ? tenant : HOME_PREVIEW_TENANT_KEYS[0];
 
-  const bundle = getHomeReviewBundle(tenantKey);
+  const bundle = provider === "ecl_projection_db"
+    ? await getHomeEclProjectionBundle(tenantKey)
+    : getHomeReviewBundle(tenantKey);
   if (!bundle) {
     // Fail loudly and specifically rather than rendering a blank page -- a missing golden
     // snapshot file is a real setup defect, not something to paper over with an empty state.
