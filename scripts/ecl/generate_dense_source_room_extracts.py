@@ -23,6 +23,7 @@ from typing import Any
 
 DEFAULT_OUT_DIR = Path("outputs/source-room-depth-catchup-2026-08-23")
 SEED = 20260823
+DEMO_AS_OF_DATE = date(2026, 9, 15)
 
 TARGETS = {
     "SP01_Documents_Interviews": ("Leadership_Interview_Notes_SYNTHETIC.csv", 220, "one row per interview answer or thematic excerpt"),
@@ -509,7 +510,39 @@ def applications(rng: Random, count: int) -> list[dict[str, Any]]:
                 "review_state": review_state(i),
             }
         )
+    plant_demo_application_findings(rows)
     return rows
+
+
+def plant_demo_application_findings(rows: list[dict[str, Any]]) -> None:
+    f4_vendors = [
+        "Epic Systems Corporation",
+        "Oracle Corporation",
+        "Microsoft Corporation",
+        "HealthEdge Software",
+        "Cognizant Technology Solutions",
+    ]
+    for offset, row in enumerate(rows[:5]):
+        row.update(
+            {
+                "application_domain": "health_plan",
+                "application_subdomain": "claims",
+                "business_function": "Health Plan Operations",
+                "vendor_name": f4_vendors[offset],
+                "lifecycle_state": "current",
+            }
+        )
+
+    for row in rows[5:10]:
+        row.update(
+            {
+                "application_domain": "clinical",
+                "application_subdomain": "ehr",
+                "business_function": "Clinical Operations",
+                "vendor_name": "Epic Systems Corporation",
+                "lifecycle_state": "current",
+            }
+        )
 
 
 def interviews(count: int) -> list[dict[str, Any]]:
@@ -584,13 +617,38 @@ def data_bi(count: int) -> list[dict[str, Any]]:
                 "review_state": review_state(i),
             }
         )
+    plant_demo_data_bi_findings(rows)
     return rows
+
+
+def plant_demo_data_bi_findings(rows: list[dict[str, Any]]) -> None:
+    technologies = ["Power BI", "Tableau", "SSRS", "SAS"]
+    governance_states = ["governed", "partially_governed", "governed", "ungoverned"]
+    for offset, row in enumerate(rows[:4]):
+        row.update(
+            {
+                "function": "Finance",
+                "platform_name": f"{technologies[offset]} finance-close reporting estate",
+                "technology_name": technologies[offset],
+                "workload_type": "reports",
+                "workload_count": 220 + (offset * 47),
+                "active_user_count": 650 + (offset * 140),
+                "governance_state": governance_states[offset],
+            }
+        )
 
 
 def infrastructure(count: int) -> list[dict[str, Any]]:
     rows = []
     for i in range(1, count + 1):
         infra_type = weighted_choice("infrastructure-type", i, INFRA_TYPE_WEIGHTS)
+        support_end_date = ""
+        if "mainframe" in infra_type:
+            support_end_date = f"202{7 + (i % 3)}-06-30"
+        elif infra_type == "netezza_appliance":
+            support_end_date = "2027-12-31" if i % 5 == 0 else "2026-06-30"
+        elif "sql_server" in infra_type:
+            support_end_date = f"202{6 + (i % 4)}-10-14"
         rows.append(
             {
                 "source_system": "hosting platform synthetic export",
@@ -604,11 +662,33 @@ def infrastructure(count: int) -> list[dict[str, Any]]:
                 "capacity_value": 100 + (i * 47) % 28000,
                 "utilization_percent": 25 + (i * 7) % 74,
                 "dr_tier": ["tier_1_active_active", "tier_2_warm", "tier_3_backup_only", "unknown"][i % 4],
+                "support_end_date": support_end_date,
+                "demo_as_of_date": DEMO_AS_OF_DATE.isoformat(),
                 "source_basis": row_basis(i),
                 "review_state": review_state(i),
             }
         )
+    plant_demo_infrastructure_findings(rows)
     return rows
+
+
+def plant_demo_infrastructure_findings(rows: list[dict[str, Any]]) -> None:
+    if not rows:
+        return
+    rows[0].update(
+        {
+            "platform_id": "PLAT-CLIN-NETEZZA-001",
+            "platform_name": "Clinical Quality Netezza Appliance",
+            "platform_type": "netezza_appliance",
+            "hosting_location": "primary_dc",
+            "business_function": "Clinical Operations",
+            "capacity_unit": "tb",
+            "capacity_value": 480,
+            "utilization_percent": 91,
+            "dr_tier": "tier_3_backup_only",
+            "support_end_date": "2027-12-31",
+        }
+    )
 
 
 def finance(count: int) -> list[dict[str, Any]]:
@@ -632,7 +712,23 @@ def finance(count: int) -> list[dict[str, Any]]:
                 "review_state": review_state(i),
             }
         )
+    plant_demo_finance_findings(rows)
     return rows
+
+
+def plant_demo_finance_findings(rows: list[dict[str, Any]]) -> None:
+    unattributed_count = round(len(rows) * 0.12)
+    for index, row in enumerate(rows):
+        if index < unattributed_count:
+            row.update(
+                {
+                    "business_function": "Finance",
+                    "application_or_platform_ref": "",
+                    "allocation_basis": "unknown",
+                }
+            )
+        elif row["allocation_basis"] == "unknown":
+            row["allocation_basis"] = "allocated"
 
 
 def ppm(count: int) -> list[dict[str, Any]]:
@@ -704,12 +800,49 @@ def contracts(count: int) -> list[dict[str, Any]]:
                 "notice_window_days": [90, 120, 180, 365][i % 4],
                 "benchmarking_right": ["present", "absent", "limited", "unknown"][i % 4],
                 "minimum_commitment_usd": 0 if i % 5 else 250000 + (i * 31111) % 9000000,
+                "termination_for_convenience": "true",
+                "auto_renew": "false",
+                "demo_as_of_date": DEMO_AS_OF_DATE.isoformat(),
                 "scoped_applications": ";".join(distinct_app_refs("contract-scope", i, 3)),
                 "source_basis": row_basis(i),
                 "review_state": review_state(i),
             }
         )
+    plant_demo_contract_findings(rows)
     return rows
+
+
+def plant_demo_contract_findings(rows: list[dict[str, Any]]) -> None:
+    for offset, row in enumerate(rows[:3]):
+        row.update(
+            {
+                "supplier_name": ["R1 RCM Inc.", "Optum Rx", "HealthEdge Software"][offset],
+                "service_tower": "claims_admin",
+                "annualized_value_usd": round(7_500_000 + (offset * 1_100_000), 2),
+                "scoped_applications": "APP-0001;APP-0002;APP-0003",
+            }
+        )
+
+    for row in rows[:34]:
+        row.update(
+            {
+                "benchmarking_right": "absent",
+                "minimum_commitment_usd": max(float(row["annualized_value_usd"]) * 0.8, 500_000),
+                "notice_window_days": max(int(row["notice_window_days"]), 90),
+                "termination_for_convenience": "false",
+            }
+        )
+
+    if len(rows) >= 2:
+        rows[1].update(
+            {
+                "end_date": "2026-10-15",
+                "notice_window_days": 90,
+                "benchmarking_right": "absent",
+                "minimum_commitment_usd": 1_250_000,
+                "auto_renew": "true",
+            }
+        )
 
 
 def grc(count: int) -> list[dict[str, Any]]:
@@ -731,7 +864,23 @@ def grc(count: int) -> list[dict[str, Any]]:
                 "review_state": review_state(i),
             }
         )
+    plant_demo_grc_findings(rows)
     return rows
+
+
+def plant_demo_grc_findings(rows: list[dict[str, Any]]) -> None:
+    for offset, row in enumerate(rows[:5], start=6):
+        row.update(
+            {
+                "risk_type": "security",
+                "business_function": "Clinical Operations",
+                "object_ref": f"APP-{offset:04d}",
+                "severity": "high",
+                "control_state": "missing",
+                "open_exception_count": 3 + offset,
+                "evidence_ref": f"EVID-{offset:04d}",
+            }
+        )
 
 
 def kpis(count: int) -> list[dict[str, Any]]:
@@ -842,7 +991,22 @@ def data_flows(count: int) -> list[dict[str, Any]]:
                 "review_state": review_state(i),
             }
         )
+    plant_demo_data_flow_findings(rows)
     return rows
+
+
+def plant_demo_data_flow_findings(rows: list[dict[str, Any]]) -> None:
+    for offset, row in enumerate(rows[:18]):
+        row.update(
+            {
+                "source_function": "Revenue Cycle",
+                "target_function": "Revenue Cycle",
+                "source_object_ref": f"APP-{100 + offset:04d}",
+                "target_object_ref": f"APP-{300 + offset:04d}",
+                "landing_layer": "unknown",
+                "consumption_layer": "unknown",
+            }
+        )
 
 
 def deployments(count: int) -> list[dict[str, Any]]:

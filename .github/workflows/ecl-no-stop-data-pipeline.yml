@@ -8,6 +8,7 @@ on:
       - ".github/workflows/ecl-no-stop-data-pipeline.yml"
       - "docs/architecture/ECL_*.md"
       - "docs/architecture/ecl-no-stop-execution-queue.json"
+      - "docs/architecture/meridian-demo-findings-*.json"
       - "docs/architecture/sql-drafts/ecl_*.sql"
       - "docs/releases/records/**"
       - "scripts/ecl/**"
@@ -18,6 +19,7 @@ on:
       - ".github/workflows/ecl-no-stop-data-pipeline.yml"
       - "docs/architecture/ECL_*.md"
       - "docs/architecture/ecl-no-stop-execution-queue.json"
+      - "docs/architecture/meridian-demo-findings-*.json"
       - "docs/architecture/sql-drafts/ecl_*.sql"
       - "docs/releases/records/**"
       - "scripts/ecl/**"
@@ -112,8 +114,14 @@ jobs:
             scripts/ecl/load_dense_source_room_cube_layer.py
 
       - name: Reconcile ECL projection schema at named ref
+        env:
+          ECL_RECONCILE_REF: ${{ github.sha }}
         run: |
           npm run test:ecl-projection-schema-reconciliation
+
+      - name: Prove demo findings source contract
+        run: |
+          npm run test:ecl-demo-findings-source-contract
 
       - name: Prove client intake application adapter
         run: |
