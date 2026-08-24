@@ -128,6 +128,26 @@ function upgradeConstraintCount(sql, table) {
   return re.test(sql) ? 1 : 0;
 }
 
+function projectionEntrySurfaceConstraintBody(sql) {
+  const match = sql.match(/constraint\s+projection_entry_surface_check\s+check\s*\(\s*surface_key\s+in\s*\(([\s\S]*?)\)\s*\)/i);
+  assert(match, "projection_entry must declare projection_entry_surface_check in fresh DDL");
+  return match[1];
+}
+
+function projectionEntrySurfaceUpgradeBody(sql) {
+  const dropMatch = sql.match(
+    /alter\s+table\s+ecl_projection\.projection_entry\s+drop\s+constraint\s+if\s+exists\s+projection_entry_surface_check/i,
+  );
+  assert(dropMatch, "existing databases must drop stale projection_entry_surface_check before replacing it");
+  const upgradeSql = sql.slice(dropMatch.index);
+  assert.match(
+    upgradeSql,
+    /add\s+constraint\s+projection_entry_surface_check\s+check\s*\(/i,
+    "existing databases must re-add projection_entry_surface_check after dropping the stale copy",
+  );
+  return upgradeSql;
+}
+
 const productDdl = gitShow(PRODUCT_DDL);
 const cubeDdl = gitShow(CUBE_DDL);
 const needsDoc = gitShow(NEEDS_DOC);
@@ -136,6 +156,8 @@ const sourceProjectionLoader = gitShow(SOURCE_PROJECTION_LOADER);
 const productTables = eclProjectionCreateTables(productDdl);
 const cubeTables = eclProjectionCreateTables(cubeDdl);
 const specifiedProductProjections = projectionNamesFromNeeds(needsDoc);
+const freshSurfaceConstraintBody = projectionEntrySurfaceConstraintBody(productDdl);
+const upgradeSurfaceConstraintBody = projectionEntrySurfaceUpgradeBody(productDdl);
 const surfaceEnumeration = extractMarkdownTable(planDoc, "### Serving Surface Enumeration");
 const notBuiltDeclarations = extractMarkdownTable(planDoc, "### Planned `serving.serving_contract` Not-Built Declarations");
 const notBuiltByBacking = new Map(
@@ -196,6 +218,16 @@ assert.deepEqual(
 for (const surface of specifiedProductProjections) {
   const isBuilt = productTables.includes(surface);
   const declaration = notBuiltByBacking.get(surface);
+  assert.match(
+    freshSurfaceConstraintBody,
+    new RegExp(`'${surface}'`, "i"),
+    `${surface} must be allowed by fresh projection_entry_surface_check`,
+  );
+  assert.match(
+    upgradeSurfaceConstraintBody,
+    new RegExp(`'${surface}'`, "i"),
+    `${surface} must be allowed by the existing-database projection_entry_surface_check upgrade`,
+  );
   if (!isBuilt) {
     assert.equal(declaration?.build_state, "not_built", `${surface} must be declared not_built when absent from DDL`);
     assert.match(declaration.owner_person ?? "", /\S/, `${surface} not_built declaration must include owner_person`);

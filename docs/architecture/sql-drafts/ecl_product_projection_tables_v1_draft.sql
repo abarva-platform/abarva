@@ -1040,6 +1040,29 @@ alter table if exists ecl_projection.intelligence_question_context
 
 do $$
 begin
+  if to_regclass('ecl_projection.projection_entry') is not null then
+    alter table ecl_projection.projection_entry
+      drop constraint if exists projection_entry_surface_check;
+
+    alter table ecl_projection.projection_entry
+      add constraint projection_entry_surface_check check (
+        surface_key in (
+          'home_enterprise_landscape',
+          'source_contract_360',
+          'source_vendor_360',
+          'source_value_levers',
+          'source_event_workspace',
+          'tower_command_center',
+          'tower_value_chain',
+          'tower_evidence_queue',
+          'tower_ai_portfolio',
+          'intelligence_pattern_evidence',
+          'intelligence_question_context',
+          'intelligence_context_pack'
+        )
+      );
+  end if;
+
   if not exists (
     select 1 from pg_constraint
     where conrelid = 'ecl_projection.home_enterprise_landscape'::regclass
