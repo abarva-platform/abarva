@@ -42,7 +42,7 @@ jobs:
       CRAWL_QUESTION_SET: ${{ inputs.question_set || '' }}
       PLAYWRIGHT_CHROMIUM_CHANNEL: chrome
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: 24

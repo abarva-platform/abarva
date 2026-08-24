@@ -25,7 +25,7 @@ jobs:
       DATABASE_URL: ${{ secrets.TARGET_DATABASE_URL || secrets.AZURE_LAB_DATABASE_URL }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node
         uses: actions/setup-node@v6
