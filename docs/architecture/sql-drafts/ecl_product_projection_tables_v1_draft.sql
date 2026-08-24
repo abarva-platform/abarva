@@ -4,12 +4,150 @@
 --
 -- Requires ecl_physical_schema_v1_draft.sql.
 
+create table if not exists ecl_projection.projection_entry (
+  id uuid primary key default gen_random_uuid(),
+  tenant_key text not null,
+  assessment_id text not null,
+  snapshot_id uuid not null,
+  projection_manifest_id uuid not null,
+  projection_version integer not null,
+  surface_key text not null,
+  row_key text not null,
+  row_type text not null,
+  source_hash text not null,
+  refs_content_hash text not null,
+  refs_cache_json jsonb not null default '{}'::jsonb,
+  display_cache_json jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  constraint projection_entry_snapshot_fk foreign key (tenant_key, assessment_id, snapshot_id)
+    references ecl_context.snapshot (tenant_key, assessment_id, id),
+  constraint projection_entry_manifest_fk foreign key (projection_manifest_id)
+    references ecl_projection.projection_manifest (id),
+  constraint projection_entry_version_check check (projection_version > 0),
+  constraint projection_entry_surface_check check (
+    surface_key in (
+      'home_enterprise_landscape',
+      'source_contract_360',
+      'source_vendor_360',
+      'source_value_levers',
+      'source_event_workspace',
+      'tower_command_center',
+      'intelligence_context_pack'
+    )
+  ),
+  constraint projection_entry_unique unique (
+    tenant_key,
+    assessment_id,
+    projection_version,
+    surface_key,
+    row_key
+  ),
+  constraint projection_entry_tenant_assessment_id_unique unique (tenant_key, assessment_id, id)
+);
+
+create table if not exists ecl_projection.projection_entry_object_ref (
+  tenant_key text not null,
+  assessment_id text not null,
+  projection_entry_id uuid not null,
+  object_id uuid not null,
+  ref_role text not null,
+  sort_order integer not null default 1,
+  source_hash text not null,
+  constraint projection_entry_object_ref_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
+  constraint projection_entry_object_ref_object_fk foreign key (tenant_key, assessment_id, object_id)
+    references ecl_context.object (tenant_key, assessment_id, id),
+  constraint projection_entry_object_ref_sort_check check (sort_order > 0),
+  constraint projection_entry_object_ref_unique unique (tenant_key, assessment_id, projection_entry_id, object_id, ref_role)
+);
+
+create table if not exists ecl_projection.projection_entry_metric_ref (
+  tenant_key text not null,
+  assessment_id text not null,
+  projection_entry_id uuid not null,
+  metric_key text not null,
+  ref_role text not null,
+  sort_order integer not null default 1,
+  source_hash text not null,
+  constraint projection_entry_metric_ref_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
+  constraint projection_entry_metric_ref_metric_fk foreign key (tenant_key, metric_key)
+    references ecl_context.metric_definition (tenant_key, metric_key),
+  constraint projection_entry_metric_ref_sort_check check (sort_order > 0),
+  constraint projection_entry_metric_ref_unique unique (tenant_key, assessment_id, projection_entry_id, metric_key, ref_role)
+);
+
+create table if not exists ecl_projection.projection_entry_measure_ref (
+  tenant_key text not null,
+  assessment_id text not null,
+  projection_entry_id uuid not null,
+  measure_id uuid not null,
+  ref_role text not null,
+  sort_order integer not null default 1,
+  source_hash text not null,
+  constraint projection_entry_measure_ref_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
+  constraint projection_entry_measure_ref_measure_fk foreign key (tenant_key, assessment_id, measure_id)
+    references ecl_context.measure (tenant_key, assessment_id, id),
+  constraint projection_entry_measure_ref_sort_check check (sort_order > 0),
+  constraint projection_entry_measure_ref_unique unique (tenant_key, assessment_id, projection_entry_id, measure_id, ref_role)
+);
+
+create table if not exists ecl_projection.projection_entry_relationship_ref (
+  tenant_key text not null,
+  assessment_id text not null,
+  projection_entry_id uuid not null,
+  relationship_id uuid not null,
+  ref_role text not null,
+  sort_order integer not null default 1,
+  source_hash text not null,
+  constraint projection_entry_relationship_ref_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
+  constraint projection_entry_relationship_ref_relationship_fk foreign key (tenant_key, assessment_id, relationship_id)
+    references ecl_context.relationship (tenant_key, assessment_id, id),
+  constraint projection_entry_relationship_ref_sort_check check (sort_order > 0),
+  constraint projection_entry_relationship_ref_unique unique (tenant_key, assessment_id, projection_entry_id, relationship_id, ref_role)
+);
+
+create table if not exists ecl_projection.projection_entry_source_record_ref (
+  tenant_key text not null,
+  assessment_id text not null,
+  projection_entry_id uuid not null,
+  source_record_id uuid not null,
+  ref_role text not null,
+  sort_order integer not null default 1,
+  source_hash text not null,
+  constraint projection_entry_source_record_ref_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
+  constraint projection_entry_source_record_ref_source_record_fk foreign key (tenant_key, assessment_id, source_record_id)
+    references ecl_source.source_record (tenant_key, assessment_id, id),
+  constraint projection_entry_source_record_ref_sort_check check (sort_order > 0),
+  constraint projection_entry_source_record_ref_unique unique (tenant_key, assessment_id, projection_entry_id, source_record_id, ref_role)
+);
+
+create table if not exists ecl_projection.projection_entry_document_extraction_ref (
+  tenant_key text not null,
+  assessment_id text not null,
+  projection_entry_id uuid not null,
+  document_extraction_id uuid not null,
+  ref_role text not null,
+  sort_order integer not null default 1,
+  source_hash text not null,
+  constraint projection_entry_document_extraction_ref_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
+  constraint projection_entry_document_extraction_ref_document_extraction_fk foreign key (tenant_key, assessment_id, document_extraction_id)
+    references ecl_source.document_extraction (tenant_key, assessment_id, id),
+  constraint projection_entry_document_extraction_ref_sort_check check (sort_order > 0),
+  constraint projection_entry_document_extraction_ref_unique unique (tenant_key, assessment_id, projection_entry_id, document_extraction_id, ref_role)
+);
+
 create table if not exists ecl_projection.home_enterprise_landscape (
   id uuid primary key default gen_random_uuid(),
   tenant_key text not null,
   assessment_id text not null,
   snapshot_id uuid not null,
   projection_manifest_id uuid not null,
+  projection_entry_id uuid not null,
   projection_version integer not null,
   page_key text not null,
   row_key text not null,
@@ -35,6 +173,8 @@ create table if not exists ecl_projection.home_enterprise_landscape (
     references ecl_context.snapshot (tenant_key, assessment_id, id),
   constraint home_enterprise_landscape_manifest_fk foreign key (projection_manifest_id)
     references ecl_projection.projection_manifest (id),
+  constraint home_enterprise_landscape_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
   constraint home_enterprise_landscape_primary_object_fk foreign key (tenant_key, assessment_id, primary_object_id)
     references ecl_context.object (tenant_key, assessment_id, id),
   constraint home_enterprise_landscape_version_check check (projection_version > 0),
@@ -94,6 +234,7 @@ create table if not exists ecl_projection.source_contract_360 (
   assessment_id text not null,
   snapshot_id uuid not null,
   projection_manifest_id uuid not null,
+  projection_entry_id uuid not null,
   projection_version integer not null,
   row_key text not null,
   contract_id uuid not null,
@@ -120,6 +261,8 @@ create table if not exists ecl_projection.source_contract_360 (
     references ecl_context.snapshot (tenant_key, assessment_id, id),
   constraint source_contract_360_manifest_fk foreign key (projection_manifest_id)
     references ecl_projection.projection_manifest (id),
+  constraint source_contract_360_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
   constraint source_contract_360_contract_fk foreign key (tenant_key, assessment_id, contract_id)
     references ecl_commercial.contract (tenant_key, assessment_id, id),
   constraint source_contract_360_contract_object_fk foreign key (tenant_key, assessment_id, contract_object_id)
@@ -151,6 +294,7 @@ create table if not exists ecl_projection.source_vendor_360 (
   assessment_id text not null,
   snapshot_id uuid not null,
   projection_manifest_id uuid not null,
+  projection_entry_id uuid not null,
   projection_version integer not null,
   row_key text not null,
   vendor_object_id uuid not null,
@@ -174,6 +318,8 @@ create table if not exists ecl_projection.source_vendor_360 (
     references ecl_context.snapshot (tenant_key, assessment_id, id),
   constraint source_vendor_360_manifest_fk foreign key (projection_manifest_id)
     references ecl_projection.projection_manifest (id),
+  constraint source_vendor_360_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
   constraint source_vendor_360_vendor_object_fk foreign key (tenant_key, assessment_id, vendor_object_id)
     references ecl_context.object (tenant_key, assessment_id, id),
   constraint source_vendor_360_version_check check (projection_version > 0),
@@ -200,6 +346,7 @@ create table if not exists ecl_projection.source_value_levers (
   assessment_id text not null,
   snapshot_id uuid not null,
   projection_manifest_id uuid not null,
+  projection_entry_id uuid not null,
   projection_version integer not null,
   row_key text not null,
   lever_type text not null,
@@ -233,6 +380,8 @@ create table if not exists ecl_projection.source_value_levers (
     references ecl_context.snapshot (tenant_key, assessment_id, id),
   constraint source_value_levers_manifest_fk foreign key (projection_manifest_id)
     references ecl_projection.projection_manifest (id),
+  constraint source_value_levers_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
   constraint source_value_levers_contract_fk foreign key (tenant_key, assessment_id, contract_id)
     references ecl_commercial.contract (tenant_key, assessment_id, id),
   constraint source_value_levers_contract_object_fk foreign key (tenant_key, assessment_id, contract_object_id)
@@ -292,6 +441,7 @@ create table if not exists ecl_projection.source_event_workspace (
   assessment_id text not null,
   snapshot_id uuid not null,
   projection_manifest_id uuid not null,
+  projection_entry_id uuid not null,
   projection_version integer not null,
   row_key text not null,
   workspace_tab text not null,
@@ -320,6 +470,8 @@ create table if not exists ecl_projection.source_event_workspace (
     references ecl_context.snapshot (tenant_key, assessment_id, id),
   constraint source_event_workspace_manifest_fk foreign key (projection_manifest_id)
     references ecl_projection.projection_manifest (id),
+  constraint source_event_workspace_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
   constraint source_event_workspace_contract_fk foreign key (tenant_key, assessment_id, contract_id)
     references ecl_commercial.contract (tenant_key, assessment_id, id),
   constraint source_event_workspace_contract_object_fk foreign key (tenant_key, assessment_id, contract_object_id)
@@ -372,6 +524,7 @@ create table if not exists ecl_projection.tower_command_center (
   assessment_id text not null,
   snapshot_id uuid not null,
   projection_manifest_id uuid not null,
+  projection_entry_id uuid not null,
   projection_version integer not null,
   row_key text not null,
   page_key text not null,
@@ -406,6 +559,8 @@ create table if not exists ecl_projection.tower_command_center (
     references ecl_context.snapshot (tenant_key, assessment_id, id),
   constraint tower_command_center_manifest_fk foreign key (projection_manifest_id)
     references ecl_projection.projection_manifest (id),
+  constraint tower_command_center_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
   constraint tower_command_center_primary_object_fk foreign key (tenant_key, assessment_id, primary_object_id)
     references ecl_context.object (tenant_key, assessment_id, id),
   constraint tower_command_center_page_key_check check (
@@ -463,6 +618,7 @@ create table if not exists ecl_projection.intelligence_context_pack (
   snapshot_id uuid not null,
   context_pack_id uuid not null,
   projection_manifest_id uuid not null,
+  projection_entry_id uuid not null,
   projection_version integer not null,
   row_key text not null,
   surface_key text not null,
@@ -484,6 +640,8 @@ create table if not exists ecl_projection.intelligence_context_pack (
     references ecl_context.context_pack (tenant_key, assessment_id, id),
   constraint intelligence_context_pack_manifest_fk foreign key (projection_manifest_id)
     references ecl_projection.projection_manifest (id),
+  constraint intelligence_context_pack_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
   constraint intelligence_context_pack_primary_object_fk foreign key (tenant_key, assessment_id, primary_object_id)
     references ecl_context.object (tenant_key, assessment_id, id),
   constraint intelligence_context_pack_retrieval_state_check check (
@@ -509,6 +667,20 @@ create table if not exists ecl_projection.intelligence_context_pack (
 
 create index if not exists idx_home_enterprise_landscape_page
   on ecl_projection.home_enterprise_landscape (tenant_key, assessment_id, projection_version, page_key);
+create index if not exists idx_projection_entry_surface
+  on ecl_projection.projection_entry (tenant_key, assessment_id, projection_version, surface_key);
+create index if not exists idx_projection_entry_object_ref_object
+  on ecl_projection.projection_entry_object_ref (tenant_key, assessment_id, object_id);
+create index if not exists idx_projection_entry_metric_ref_metric
+  on ecl_projection.projection_entry_metric_ref (tenant_key, metric_key);
+create index if not exists idx_projection_entry_measure_ref_measure
+  on ecl_projection.projection_entry_measure_ref (tenant_key, assessment_id, measure_id);
+create index if not exists idx_projection_entry_relationship_ref_relationship
+  on ecl_projection.projection_entry_relationship_ref (tenant_key, assessment_id, relationship_id);
+create index if not exists idx_projection_entry_source_record_ref_source_record
+  on ecl_projection.projection_entry_source_record_ref (tenant_key, assessment_id, source_record_id);
+create index if not exists idx_projection_entry_document_extraction_ref_document_extraction
+  on ecl_projection.projection_entry_document_extraction_ref (tenant_key, assessment_id, document_extraction_id);
 create index if not exists idx_home_enterprise_landscape_admission
   on ecl_projection.home_enterprise_landscape (tenant_key, assessment_id, admission_status, admission_gate_key);
 create index if not exists idx_source_contract_360_contract
@@ -539,6 +711,13 @@ create index if not exists idx_intelligence_context_pack_retrieval
   on ecl_projection.intelligence_context_pack (tenant_key, assessment_id, retrieval_state);
 
 alter table ecl_projection.home_enterprise_landscape enable row level security;
+alter table ecl_projection.projection_entry enable row level security;
+alter table ecl_projection.projection_entry_object_ref enable row level security;
+alter table ecl_projection.projection_entry_metric_ref enable row level security;
+alter table ecl_projection.projection_entry_measure_ref enable row level security;
+alter table ecl_projection.projection_entry_relationship_ref enable row level security;
+alter table ecl_projection.projection_entry_source_record_ref enable row level security;
+alter table ecl_projection.projection_entry_document_extraction_ref enable row level security;
 alter table ecl_projection.source_contract_360 enable row level security;
 alter table ecl_projection.source_vendor_360 enable row level security;
 alter table ecl_projection.source_value_levers enable row level security;
