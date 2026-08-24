@@ -30,14 +30,14 @@ is green.
 | Workstream | Current | Denominator | Evidence state |
 |---|---:|---|---|
 | W1 Azure dense all-layer load/readback | **85%** | ACA execute + separate readback + formal compare | Execute and separate readback succeeded on digest-pinned image; formal compare is pending current local contract regeneration. |
-| W2 Missing product projections | **0%** | 5 missing projection surfaces | Not built: `tower_value_chain`, `tower_evidence_queue`, `tower_ai_portfolio`, `intelligence_pattern_evidence`, `intelligence_question_context`. |
+| W2 Product projections | **100% local** | 12 projection backings | All five W2 projection backings now have DDL, loader rows, FK-backed refs, local readback, and zero-drift checks. Azure reload/readback still belongs to W1. |
 | W3 Serving schema and views | **0%** | 40 views + serving contract | Not built. |
 | W4 Product route repoint and permission fence | **0%** | Home, Source, Tower, Intelligence routes | Existing direct ECL consumers exist, but clean-break serving-only route contract is not complete. |
 | W5 Refusal and browser proof | **0%** | 4 product modules + gated views | No complete clean-break browser proof yet. |
 | W6 Legacy data-plane retirement | **0%** | 851 pre-ECL data-plane tables | Inventory known; no retirement run. |
 | W7 Real Layer 2 adapter path | **30%** | first real intake adapter + gap report + clean-break policy | First application adapter exists; it is not yet the primary clean-break load path. |
 
-**Overall clean-break completion:** **18%**.
+**Overall clean-break completion:** **24%**.
 
 Additional product-readiness denominators:
 
@@ -45,6 +45,10 @@ Additional product-readiness denominators:
 |---|---:|---|---|
 | Surfaces served from ECL | **0** | 40 serving surfaces | Serving surface enumeration is published; W3 serving views are not built. |
 | Findings demonstrable on a real surface | **0** | 10 demo findings | Findings spec is committed; W2/W3 data and surface assertions are not green yet. |
+
+The serving denominator is **40 surfaces** for this clean-break plan: Home 16, Tower 9, Source 9,
+Intelligence 6. The older/broader 44-surface mapping artifact is not the operative W3 denominator
+until this plan is amended with those additional four surfaces and their serving owners/dates.
 
 That number is intentionally conservative. Azure has rows, but the clean-break is not complete until
 serving views, product repointing, browser proof, and legacy retirement gates pass.
@@ -185,8 +189,13 @@ Built product projections:
 | `source_value_levers` | Built and populated in Azure readback |
 | `source_event_workspace` | Built and populated in Azure readback |
 | `intelligence_context_pack` | Built and populated in Azure readback |
+| `tower_value_chain` | Built locally; Azure reload/readback pending |
+| `tower_evidence_queue` | Built locally; Azure reload/readback pending |
+| `tower_ai_portfolio` | Built locally; Azure reload/readback pending |
+| `intelligence_pattern_evidence` | Built locally; Azure reload/readback pending |
+| `intelligence_question_context` | Built locally; Azure reload/readback pending |
 
-Missing projection surfaces to build next:
+W2 projection surfaces built locally:
 
 | Surface | Why it matters |
 |---|---|
@@ -258,14 +267,14 @@ current ECL backing state, not visual/browser proof.
 | `home_infrastructure_platforms` | Home | `serving.home_infrastructure_platforms` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
 | `home_data_assets_integrations` | Home | `serving.home_data_assets_integrations` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
 | `tower_command_center` | Tower | `serving.tower_command_center` | `ecl_projection.tower_command_center` | `backing_built` |
-| `tower_value_proof` | Tower | `serving.tower_value_proof` | `ecl_projection.tower_value_chain` | `not_built` |
-| `tower_decision_lanes` | Tower | `serving.tower_decision_lanes` | `ecl_projection.tower_value_chain` | `not_built` |
-| `tower_evidence` | Tower | `serving.tower_evidence` | `ecl_projection.tower_evidence_queue` | `not_built` |
-| `tower_recommended_actions` | Tower | `serving.tower_recommended_actions` | `ecl_projection.tower_evidence_queue` | `not_built` |
-| `tower_ai_portfolio` | Tower | `serving.tower_ai_portfolio` | `ecl_projection.tower_ai_portfolio` | `not_built` |
-| `tower_cost_lens` | Tower | `serving.tower_cost_lens` | `ecl_projection.tower_value_chain` | `not_built` |
-| `tower_risk_lens` | Tower | `serving.tower_risk_lens` | `ecl_projection.tower_evidence_queue` | `not_built` |
-| `tower_adoption_lens` | Tower | `serving.tower_adoption_lens` | `ecl_projection.tower_ai_portfolio` | `not_built` |
+| `tower_value_proof` | Tower | `serving.tower_value_proof` | `ecl_projection.tower_value_chain` | `backing_built` |
+| `tower_decision_lanes` | Tower | `serving.tower_decision_lanes` | `ecl_projection.tower_value_chain` | `backing_built` |
+| `tower_evidence` | Tower | `serving.tower_evidence` | `ecl_projection.tower_evidence_queue` | `backing_built` |
+| `tower_recommended_actions` | Tower | `serving.tower_recommended_actions` | `ecl_projection.tower_evidence_queue` | `backing_built` |
+| `tower_ai_portfolio` | Tower | `serving.tower_ai_portfolio` | `ecl_projection.tower_ai_portfolio` | `backing_built` |
+| `tower_cost_lens` | Tower | `serving.tower_cost_lens` | `ecl_projection.tower_value_chain` | `backing_built` |
+| `tower_risk_lens` | Tower | `serving.tower_risk_lens` | `ecl_projection.tower_evidence_queue` | `backing_built` |
+| `tower_adoption_lens` | Tower | `serving.tower_adoption_lens` | `ecl_projection.tower_ai_portfolio` | `backing_built` |
 | `source_vendor_portfolio` | Source | `serving.source_vendor_portfolio` | `ecl_projection.source_vendor_360` | `backing_built` |
 | `source_vendor_360` | Source | `serving.source_vendor_360` | `ecl_projection.source_vendor_360` | `backing_built` |
 | `source_contract_360` | Source | `serving.source_contract_360` | `ecl_projection.source_contract_360` | `backing_built` |
@@ -277,24 +286,19 @@ current ECL backing state, not visual/browser proof.
 | `source_sourcing_opportunities` | Source | `serving.source_sourcing_opportunities` | `ecl_projection.source_value_levers` | `backing_built` |
 | `intelligence_advisory` | Intelligence | `serving.intelligence_advisory` | `ecl_projection.intelligence_context_pack` | `backing_built` |
 | `intelligence_enterprise_landscape` | Intelligence | `serving.intelligence_enterprise_landscape` | `ecl_projection.intelligence_context_pack` | `backing_built` |
-| `intelligence_ask_query` | Intelligence | `serving.intelligence_ask_query` | `ecl_projection.intelligence_question_context` | `not_built` |
-| `intelligence_insights_evaluate` | Intelligence | `serving.intelligence_insights_evaluate` | `ecl_projection.intelligence_pattern_evidence` | `not_built` |
-| `intelligence_pattern_detail` | Intelligence | `serving.intelligence_pattern_detail` | `ecl_projection.intelligence_pattern_evidence` | `not_built` |
+| `intelligence_ask_query` | Intelligence | `serving.intelligence_ask_query` | `ecl_projection.intelligence_question_context` | `backing_built` |
+| `intelligence_insights_evaluate` | Intelligence | `serving.intelligence_insights_evaluate` | `ecl_projection.intelligence_pattern_evidence` | `backing_built` |
+| `intelligence_pattern_detail` | Intelligence | `serving.intelligence_pattern_detail` | `ecl_projection.intelligence_pattern_evidence` | `backing_built` |
 | `intelligence_context_summary` | Intelligence | `serving.intelligence_context_summary` | `ecl_projection.intelligence_context_pack` | `backing_built` |
 
 ### Planned `serving.serving_contract` Not-Built Declarations
 
 Until W3 creates the physical `serving.serving_contract` table, this table is the named owner/date
-contract for specified projection backings that are intentionally not built yet. When W3 lands, these
-rows must move into `serving.serving_contract`.
+contract for specified projection backings that are intentionally not built yet. W2 has no remaining
+not-built projection backings.
 
 | ecl backing | build_state | owner_person | due_date |
 |---|---|---|---|
-| `ecl_projection.tower_value_chain` | `not_built` | `internal-ecl-serving-owner` | `2026-08-25` |
-| `ecl_projection.tower_evidence_queue` | `not_built` | `internal-ecl-serving-owner` | `2026-08-25` |
-| `ecl_projection.tower_ai_portfolio` | `not_built` | `internal-ecl-serving-owner` | `2026-08-25` |
-| `ecl_projection.intelligence_pattern_evidence` | `not_built` | `internal-ecl-serving-owner` | `2026-08-25` |
-| `ecl_projection.intelligence_question_context` | `not_built` | `internal-ecl-serving-owner` | `2026-08-25` |
 
 Every serving view must include these provenance columns:
 
@@ -438,7 +442,7 @@ Checks:
 
 ### Phase C2 - Build remaining projections
 
-- Build the five missing projection surfaces.
+- Build the five W2 projection surfaces.
 - Wire each through `projection_entry` and typed FK refs.
 - Add planted failure tests.
 - Absorb the ten demo findings before projection build. `tower_evidence_queue` must carry
@@ -454,7 +458,7 @@ Checks:
   distribution and hope a finding emerges.
 - Add one data assertion per finding against `ecl_context` / `ecl_commercial`, and one surface
   assertion per finding once W3 serving views land.
-- Merge and deploy.
+- Merge the W2 projection build. Azure reload/readback is a separate W1 governed data-build run.
 
 ### Phase C3 - Build serving schema
 

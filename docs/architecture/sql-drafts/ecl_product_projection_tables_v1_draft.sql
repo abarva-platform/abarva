@@ -32,6 +32,11 @@ create table if not exists ecl_projection.projection_entry (
       'source_value_levers',
       'source_event_workspace',
       'tower_command_center',
+      'tower_value_chain',
+      'tower_evidence_queue',
+      'tower_ai_portfolio',
+      'intelligence_pattern_evidence',
+      'intelligence_question_context',
       'intelligence_context_pack'
     )
   ),
@@ -665,6 +670,344 @@ create table if not exists ecl_projection.intelligence_context_pack (
   )
 );
 
+create table if not exists ecl_projection.tower_value_chain (
+  id uuid primary key default gen_random_uuid(),
+  tenant_key text not null,
+  assessment_id text not null,
+  snapshot_id uuid not null,
+  projection_manifest_id uuid not null,
+  projection_entry_id uuid not null,
+  projection_version integer not null,
+  row_key text not null,
+  page_key text not null,
+  row_type text not null,
+  primary_object_id uuid,
+  claim_id text not null,
+  observation_key text not null,
+  metric_key text not null,
+  measure_id uuid,
+  source_record_id uuid,
+  review_event_id uuid,
+  evidence_state text not null,
+  claim_gate_status text not null,
+  claim_gate_reason_code text,
+  claim_gate_reason_detail text,
+  next_gate text,
+  evidence_needed_json jsonb not null default '[]'::jsonb,
+  baseline_value numeric,
+  current_value numeric,
+  target_value numeric,
+  claimable_value_usd numeric not null default 0,
+  blocked_value_usd numeric not null default 0,
+  value_state text not null,
+  quality_state text not null,
+  source_refs_json jsonb not null default '[]'::jsonb,
+  display_payload_json jsonb not null default '{}'::jsonb,
+  gap_flags_json jsonb not null default '[]'::jsonb,
+  source_hash text not null,
+  created_at timestamptz not null default now(),
+  constraint tower_value_chain_snapshot_fk foreign key (tenant_key, assessment_id, snapshot_id)
+    references ecl_context.snapshot (tenant_key, assessment_id, id),
+  constraint tower_value_chain_manifest_fk foreign key (projection_manifest_id)
+    references ecl_projection.projection_manifest (id),
+  constraint tower_value_chain_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
+  constraint tower_value_chain_primary_object_fk foreign key (tenant_key, assessment_id, primary_object_id)
+    references ecl_context.object (tenant_key, assessment_id, id),
+  constraint tower_value_chain_metric_fk foreign key (tenant_key, metric_key)
+    references ecl_context.metric_definition (tenant_key, metric_key),
+  constraint tower_value_chain_measure_fk foreign key (tenant_key, assessment_id, measure_id)
+    references ecl_context.measure (tenant_key, assessment_id, id),
+  constraint tower_value_chain_source_record_fk foreign key (tenant_key, assessment_id, source_record_id)
+    references ecl_source.source_record (tenant_key, assessment_id, id),
+  constraint tower_value_chain_review_event_fk foreign key (tenant_key, assessment_id, review_event_id)
+    references ecl_review.review_event (tenant_key, assessment_id, id),
+  constraint tower_value_chain_page_check check (
+    page_key in ('value_proof', 'decision_lanes', 'cost_lens')
+  ),
+  constraint tower_value_chain_gate_status_check check (
+    claim_gate_status in ('claimable', 'gated', 'blocked', 'not_applicable')
+  ),
+  constraint tower_value_chain_gate_payload_check check (
+    (
+      claim_gate_status in ('gated', 'blocked')
+      and claim_gate_reason_code is not null
+      and claim_gate_reason_detail is not null
+      and next_gate is not null
+      and coalesce(jsonb_array_length(evidence_needed_json), 0) > 0
+    )
+    or (
+      claim_gate_status in ('claimable', 'not_applicable')
+      and claim_gate_reason_code is null
+      and claim_gate_reason_detail is null
+      and next_gate is null
+      and coalesce(jsonb_array_length(evidence_needed_json), 0) = 0
+    )
+  ),
+  constraint tower_value_chain_value_state_check check (
+    value_state in ('known', 'estimated', 'unknown', 'not_applicable', 'conflicting')
+  ),
+  constraint tower_value_chain_quality_state_check check (
+    quality_state in ('passed', 'warning', 'blocked')
+  ),
+  constraint tower_value_chain_money_nonnegative_check check (
+    claimable_value_usd >= 0 and blocked_value_usd >= 0
+  ),
+  constraint tower_value_chain_unique unique (
+    tenant_key,
+    assessment_id,
+    projection_version,
+    page_key,
+    row_key
+  )
+);
+
+create table if not exists ecl_projection.tower_evidence_queue (
+  id uuid primary key default gen_random_uuid(),
+  tenant_key text not null,
+  assessment_id text not null,
+  snapshot_id uuid not null,
+  projection_manifest_id uuid not null,
+  projection_entry_id uuid not null,
+  projection_version integer not null,
+  row_key text not null,
+  page_key text not null,
+  row_type text not null,
+  primary_object_id uuid,
+  claim_id text not null,
+  claim_gate_status text not null,
+  claim_gate_reason_code text not null,
+  claim_gate_reason_detail text not null,
+  evidence_needed_json jsonb not null default '[]'::jsonb,
+  next_gate text not null,
+  owner_role text not null,
+  due_date date,
+  related_measure_id uuid,
+  source_record_id uuid,
+  review_event_id uuid,
+  evidence_state text not null,
+  priority_score integer not null default 50,
+  source_refs_json jsonb not null default '[]'::jsonb,
+  gap_flags_json jsonb not null default '[]'::jsonb,
+  display_payload_json jsonb not null default '{}'::jsonb,
+  source_hash text not null,
+  created_at timestamptz not null default now(),
+  constraint tower_evidence_queue_snapshot_fk foreign key (tenant_key, assessment_id, snapshot_id)
+    references ecl_context.snapshot (tenant_key, assessment_id, id),
+  constraint tower_evidence_queue_manifest_fk foreign key (projection_manifest_id)
+    references ecl_projection.projection_manifest (id),
+  constraint tower_evidence_queue_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
+  constraint tower_evidence_queue_primary_object_fk foreign key (tenant_key, assessment_id, primary_object_id)
+    references ecl_context.object (tenant_key, assessment_id, id),
+  constraint tower_evidence_queue_measure_fk foreign key (tenant_key, assessment_id, related_measure_id)
+    references ecl_context.measure (tenant_key, assessment_id, id),
+  constraint tower_evidence_queue_source_record_fk foreign key (tenant_key, assessment_id, source_record_id)
+    references ecl_source.source_record (tenant_key, assessment_id, id),
+  constraint tower_evidence_queue_review_event_fk foreign key (tenant_key, assessment_id, review_event_id)
+    references ecl_review.review_event (tenant_key, assessment_id, id),
+  constraint tower_evidence_queue_page_check check (
+    page_key in ('evidence', 'recommended_actions', 'risk_lens')
+  ),
+  constraint tower_evidence_queue_gate_status_check check (
+    claim_gate_status in ('gated', 'blocked')
+  ),
+  constraint tower_evidence_queue_payload_check check (
+    coalesce(jsonb_array_length(evidence_needed_json), 0) > 0
+    and claim_gate_reason_code <> ''
+    and claim_gate_reason_detail <> ''
+    and next_gate <> ''
+  ),
+  constraint tower_evidence_queue_priority_check check (priority_score between 0 and 100),
+  constraint tower_evidence_queue_unique unique (
+    tenant_key,
+    assessment_id,
+    projection_version,
+    page_key,
+    row_key
+  )
+);
+
+create table if not exists ecl_projection.tower_ai_portfolio (
+  id uuid primary key default gen_random_uuid(),
+  tenant_key text not null,
+  assessment_id text not null,
+  snapshot_id uuid not null,
+  projection_manifest_id uuid not null,
+  projection_entry_id uuid not null,
+  projection_version integer not null,
+  row_key text not null,
+  use_case_object_id uuid not null,
+  tool_object_id uuid,
+  function_object_id uuid,
+  use_case_name text not null,
+  tool_name text not null,
+  business_function text,
+  licensed_users integer,
+  active_users integer,
+  usage_events integer,
+  monthly_cost_usd numeric,
+  adoption_rate_percent numeric,
+  value_state text not null,
+  quality_state text not null,
+  review_state text not null,
+  metric_keys_json jsonb not null default '[]'::jsonb,
+  source_refs_json jsonb not null default '[]'::jsonb,
+  gap_flags_json jsonb not null default '[]'::jsonb,
+  display_payload_json jsonb not null default '{}'::jsonb,
+  source_hash text not null,
+  created_at timestamptz not null default now(),
+  constraint tower_ai_portfolio_snapshot_fk foreign key (tenant_key, assessment_id, snapshot_id)
+    references ecl_context.snapshot (tenant_key, assessment_id, id),
+  constraint tower_ai_portfolio_manifest_fk foreign key (projection_manifest_id)
+    references ecl_projection.projection_manifest (id),
+  constraint tower_ai_portfolio_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
+  constraint tower_ai_portfolio_use_case_fk foreign key (tenant_key, assessment_id, use_case_object_id)
+    references ecl_context.object (tenant_key, assessment_id, id),
+  constraint tower_ai_portfolio_tool_fk foreign key (tenant_key, assessment_id, tool_object_id)
+    references ecl_context.object (tenant_key, assessment_id, id),
+  constraint tower_ai_portfolio_function_fk foreign key (tenant_key, assessment_id, function_object_id)
+    references ecl_context.object (tenant_key, assessment_id, id),
+  constraint tower_ai_portfolio_value_state_check check (
+    value_state in ('known', 'estimated', 'unknown', 'not_applicable', 'conflicting')
+  ),
+  constraint tower_ai_portfolio_quality_state_check check (
+    quality_state in ('passed', 'warning', 'blocked')
+  ),
+  constraint tower_ai_portfolio_review_state_check check (
+    review_state in ('not_reviewed', 'reviewed', 'approved', 'rejected')
+  ),
+  constraint tower_ai_portfolio_count_check check (
+    coalesce(licensed_users, 0) >= 0
+    and coalesce(active_users, 0) >= 0
+    and coalesce(usage_events, 0) >= 0
+    and coalesce(monthly_cost_usd, 0) >= 0
+    and (adoption_rate_percent is null or adoption_rate_percent between 0 and 100)
+  ),
+  constraint tower_ai_portfolio_unique unique (
+    tenant_key,
+    assessment_id,
+    projection_version,
+    row_key
+  )
+);
+
+create table if not exists ecl_projection.intelligence_pattern_evidence (
+  id uuid primary key default gen_random_uuid(),
+  tenant_key text not null,
+  assessment_id text not null,
+  snapshot_id uuid not null,
+  projection_manifest_id uuid not null,
+  projection_entry_id uuid not null,
+  projection_version integer not null,
+  surface_key text not null,
+  row_key text not null,
+  pattern_key text not null,
+  pattern_claim text not null,
+  primary_object_id uuid,
+  evidence_strength_score integer not null,
+  conflict_state text not null,
+  citation_refs_json jsonb not null default '[]'::jsonb,
+  source_refs_json jsonb not null default '[]'::jsonb,
+  affected_objects_json jsonb not null default '[]'::jsonb,
+  recommended_next_evidence_json jsonb not null default '[]'::jsonb,
+  value_state text not null,
+  quality_state text not null,
+  access_class text not null,
+  source_hash text not null,
+  created_at timestamptz not null default now(),
+  constraint intelligence_pattern_evidence_snapshot_fk foreign key (tenant_key, assessment_id, snapshot_id)
+    references ecl_context.snapshot (tenant_key, assessment_id, id),
+  constraint intelligence_pattern_evidence_manifest_fk foreign key (projection_manifest_id)
+    references ecl_projection.projection_manifest (id),
+  constraint intelligence_pattern_evidence_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
+  constraint intelligence_pattern_evidence_primary_object_fk foreign key (tenant_key, assessment_id, primary_object_id)
+    references ecl_context.object (tenant_key, assessment_id, id),
+  constraint intelligence_pattern_evidence_surface_check check (
+    surface_key in ('insights_evaluate', 'pattern_detail')
+  ),
+  constraint intelligence_pattern_evidence_strength_check check (evidence_strength_score between 0 and 100),
+  constraint intelligence_pattern_evidence_conflict_check check (
+    conflict_state in ('none', 'conflicting', 'insufficient')
+  ),
+  constraint intelligence_pattern_evidence_value_state_check check (
+    value_state in ('known', 'estimated', 'unknown', 'not_applicable', 'conflicting')
+  ),
+  constraint intelligence_pattern_evidence_quality_state_check check (
+    quality_state in ('passed', 'warning', 'blocked')
+  ),
+  constraint intelligence_pattern_evidence_access_class_check check (
+    access_class in ('public_demo', 'internal', 'client_confidential', 'restricted')
+  ),
+  constraint intelligence_pattern_evidence_unique unique (
+    tenant_key,
+    assessment_id,
+    projection_version,
+    surface_key,
+    row_key
+  )
+);
+
+create table if not exists ecl_projection.intelligence_question_context (
+  id uuid primary key default gen_random_uuid(),
+  tenant_key text not null,
+  assessment_id text not null,
+  snapshot_id uuid not null,
+  context_pack_id uuid not null,
+  projection_manifest_id uuid not null,
+  projection_entry_id uuid not null,
+  projection_version integer not null,
+  surface_key text not null,
+  row_key text not null,
+  question_key text not null,
+  question_text text not null,
+  primary_object_id uuid,
+  permitted_facts_json jsonb not null default '[]'::jsonb,
+  blocked_facts_json jsonb not null default '[]'::jsonb,
+  citation_refs_json jsonb not null default '[]'::jsonb,
+  retrieval_state text not null,
+  value_state text not null,
+  quality_state text not null,
+  access_class text not null,
+  gap_flags_json jsonb not null default '[]'::jsonb,
+  source_hash text not null,
+  created_at timestamptz not null default now(),
+  constraint intelligence_question_context_snapshot_fk foreign key (tenant_key, assessment_id, snapshot_id)
+    references ecl_context.snapshot (tenant_key, assessment_id, id),
+  constraint intelligence_question_context_context_pack_fk foreign key (tenant_key, assessment_id, context_pack_id)
+    references ecl_context.context_pack (tenant_key, assessment_id, id),
+  constraint intelligence_question_context_manifest_fk foreign key (projection_manifest_id)
+    references ecl_projection.projection_manifest (id),
+  constraint intelligence_question_context_entry_fk foreign key (tenant_key, assessment_id, projection_entry_id)
+    references ecl_projection.projection_entry (tenant_key, assessment_id, id),
+  constraint intelligence_question_context_primary_object_fk foreign key (tenant_key, assessment_id, primary_object_id)
+    references ecl_context.object (tenant_key, assessment_id, id),
+  constraint intelligence_question_context_surface_check check (
+    surface_key in ('ask_query_api')
+  ),
+  constraint intelligence_question_context_retrieval_state_check check (
+    retrieval_state in ('not_indexed', 'indexed', 'retrieved', 'cited', 'blocked')
+  ),
+  constraint intelligence_question_context_value_state_check check (
+    value_state in ('known', 'estimated', 'unknown', 'not_applicable', 'conflicting')
+  ),
+  constraint intelligence_question_context_quality_state_check check (
+    quality_state in ('passed', 'warning', 'blocked')
+  ),
+  constraint intelligence_question_context_access_class_check check (
+    access_class in ('public_demo', 'internal', 'client_confidential', 'restricted')
+  ),
+  constraint intelligence_question_context_unique unique (
+    tenant_key,
+    assessment_id,
+    projection_version,
+    surface_key,
+    row_key
+  )
+);
+
 -- Compatibility upgrade for databases where the product surface tables already
 -- existed before the projection-entry spine was introduced. Fresh installs get
 -- NOT NULL projection_entry_id from the CREATE TABLE statements above. Existing
@@ -682,7 +1025,17 @@ alter table if exists ecl_projection.source_event_workspace
   add column if not exists projection_entry_id uuid;
 alter table if exists ecl_projection.tower_command_center
   add column if not exists projection_entry_id uuid;
+alter table if exists ecl_projection.tower_value_chain
+  add column if not exists projection_entry_id uuid;
+alter table if exists ecl_projection.tower_evidence_queue
+  add column if not exists projection_entry_id uuid;
+alter table if exists ecl_projection.tower_ai_portfolio
+  add column if not exists projection_entry_id uuid;
 alter table if exists ecl_projection.intelligence_context_pack
+  add column if not exists projection_entry_id uuid;
+alter table if exists ecl_projection.intelligence_pattern_evidence
+  add column if not exists projection_entry_id uuid;
+alter table if exists ecl_projection.intelligence_question_context
   add column if not exists projection_entry_id uuid;
 
 do $$
@@ -770,6 +1123,66 @@ begin
       references ecl_projection.projection_entry (tenant_key, assessment_id, id)
       not valid;
   end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'ecl_projection.tower_value_chain'::regclass
+      and conname = 'tower_value_chain_entry_fk'
+  ) then
+    alter table ecl_projection.tower_value_chain
+      add constraint tower_value_chain_entry_fk
+      foreign key (tenant_key, assessment_id, projection_entry_id)
+      references ecl_projection.projection_entry (tenant_key, assessment_id, id)
+      not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'ecl_projection.tower_evidence_queue'::regclass
+      and conname = 'tower_evidence_queue_entry_fk'
+  ) then
+    alter table ecl_projection.tower_evidence_queue
+      add constraint tower_evidence_queue_entry_fk
+      foreign key (tenant_key, assessment_id, projection_entry_id)
+      references ecl_projection.projection_entry (tenant_key, assessment_id, id)
+      not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'ecl_projection.tower_ai_portfolio'::regclass
+      and conname = 'tower_ai_portfolio_entry_fk'
+  ) then
+    alter table ecl_projection.tower_ai_portfolio
+      add constraint tower_ai_portfolio_entry_fk
+      foreign key (tenant_key, assessment_id, projection_entry_id)
+      references ecl_projection.projection_entry (tenant_key, assessment_id, id)
+      not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'ecl_projection.intelligence_pattern_evidence'::regclass
+      and conname = 'intelligence_pattern_evidence_entry_fk'
+  ) then
+    alter table ecl_projection.intelligence_pattern_evidence
+      add constraint intelligence_pattern_evidence_entry_fk
+      foreign key (tenant_key, assessment_id, projection_entry_id)
+      references ecl_projection.projection_entry (tenant_key, assessment_id, id)
+      not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'ecl_projection.intelligence_question_context'::regclass
+      and conname = 'intelligence_question_context_entry_fk'
+  ) then
+    alter table ecl_projection.intelligence_question_context
+      add constraint intelligence_question_context_entry_fk
+      foreign key (tenant_key, assessment_id, projection_entry_id)
+      references ecl_projection.projection_entry (tenant_key, assessment_id, id)
+      not valid;
+  end if;
 end $$;
 
 create index if not exists idx_home_enterprise_landscape_page
@@ -812,10 +1225,24 @@ create index if not exists idx_tower_command_center_page
   on ecl_projection.tower_command_center (tenant_key, assessment_id, projection_version, page_key);
 create index if not exists idx_tower_command_center_gate
   on ecl_projection.tower_command_center (tenant_key, assessment_id, claim_gate_status, claim_gate_reason_code);
+create index if not exists idx_tower_value_chain_page
+  on ecl_projection.tower_value_chain (tenant_key, assessment_id, projection_version, page_key);
+create index if not exists idx_tower_value_chain_metric
+  on ecl_projection.tower_value_chain (tenant_key, metric_key);
+create index if not exists idx_tower_evidence_queue_page
+  on ecl_projection.tower_evidence_queue (tenant_key, assessment_id, projection_version, page_key);
+create index if not exists idx_tower_evidence_queue_gate
+  on ecl_projection.tower_evidence_queue (tenant_key, assessment_id, claim_gate_status, claim_gate_reason_code);
+create index if not exists idx_tower_ai_portfolio_use_case
+  on ecl_projection.tower_ai_portfolio (tenant_key, assessment_id, use_case_object_id);
 create index if not exists idx_intelligence_context_pack_surface
   on ecl_projection.intelligence_context_pack (tenant_key, assessment_id, projection_version, surface_key);
 create index if not exists idx_intelligence_context_pack_retrieval
   on ecl_projection.intelligence_context_pack (tenant_key, assessment_id, retrieval_state);
+create index if not exists idx_intelligence_pattern_evidence_surface
+  on ecl_projection.intelligence_pattern_evidence (tenant_key, assessment_id, projection_version, surface_key);
+create index if not exists idx_intelligence_question_context_surface
+  on ecl_projection.intelligence_question_context (tenant_key, assessment_id, projection_version, surface_key);
 
 alter table ecl_projection.home_enterprise_landscape enable row level security;
 alter table ecl_projection.projection_entry enable row level security;
@@ -830,4 +1257,9 @@ alter table ecl_projection.source_vendor_360 enable row level security;
 alter table ecl_projection.source_value_levers enable row level security;
 alter table ecl_projection.source_event_workspace enable row level security;
 alter table ecl_projection.tower_command_center enable row level security;
+alter table ecl_projection.tower_value_chain enable row level security;
+alter table ecl_projection.tower_evidence_queue enable row level security;
+alter table ecl_projection.tower_ai_portfolio enable row level security;
 alter table ecl_projection.intelligence_context_pack enable row level security;
+alter table ecl_projection.intelligence_pattern_evidence enable row level security;
+alter table ecl_projection.intelligence_question_context enable row level security;
