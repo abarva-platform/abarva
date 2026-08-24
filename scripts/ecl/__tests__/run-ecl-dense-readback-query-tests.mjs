@@ -107,6 +107,37 @@ assert.ok(uniqueKeys.has("tower_command_center"), "readback must include Tower p
 assert.ok(uniqueKeys.has("intelligence_context_pack"), "readback must include Intelligence projection rows");
 assert.equal(uniqueKeys.size, keys.length, "readback keys must be unique");
 
+const extractKeyBlock = (key, nextKey) => {
+  const match = sql.match(new RegExp(`'${key}'\\s*,\\s*\\(([\\s\\S]*?)\\n\\s*\\),\\n\\s*'${nextKey}'`, "i"));
+  assert(match, `readback SQL must contain ${key} before ${nextKey}`);
+  return match[1];
+};
+
+const towerValueChainMeasureDriftBlock = extractKeyBlock(
+  "tower_value_chain_measure_drift",
+  "tower_evidence_queue_missing_gate_payload",
+);
+const towerEvidenceQueueMeasureDriftBlock = extractKeyBlock(
+  "tower_evidence_queue_measure_drift",
+  "tower_ai_primary_object_drift",
+);
+
+assert.match(
+  towerValueChainMeasureDriftBlock,
+  /from\s+ecl_projection\.tower_value_chain\s+p[\s\S]+m\.id\s*=\s*p\.measure_id[\s\S]+p\.measure_id\s+is\s+not\s+null/i,
+  "tower_value_chain_measure_drift must join through tower_value_chain.measure_id",
+);
+assert.doesNotMatch(
+  towerValueChainMeasureDriftBlock,
+  /p\.related_measure_id/i,
+  "tower_value_chain does not have related_measure_id; that column belongs to tower_evidence_queue",
+);
+assert.match(
+  towerEvidenceQueueMeasureDriftBlock,
+  /from\s+ecl_projection\.tower_evidence_queue\s+p[\s\S]+m\.id\s*=\s*p\.related_measure_id[\s\S]+p\.related_measure_id\s+is\s+not\s+null/i,
+  "tower_evidence_queue_measure_drift must join through tower_evidence_queue.related_measure_id",
+);
+
 console.log(
   JSON.stringify(
     {
