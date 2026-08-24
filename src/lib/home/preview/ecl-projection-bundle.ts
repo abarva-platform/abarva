@@ -298,6 +298,13 @@ function sumNumeric(rows: Array<Record<string, string | number | boolean | null>
   return rows.reduce((sum, row) => sum + (typeof row[field] === "number" ? row[field] : Number(row[field]) || 0), 0);
 }
 
+function formatUsd(value: number | null): string | null {
+  if (value === null || value <= 0) return null;
+  if (value >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(2)}B`;
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  return `$${Math.round(value).toLocaleString()}`;
+}
+
 function topShareRows(
   rows: Array<Record<string, string | number | boolean | null>>,
   labelField: string,
@@ -351,6 +358,87 @@ function visual(
   };
 }
 
+function contextIdForRow(row: HomeProjectionRow): string {
+  return `ctx_ecl_${row.page_key}_${row.row_type}_${row.row_key}`.replace(/[^a-zA-Z0-9_]/g, "_");
+}
+
+function rowDomains(row: HomeProjectionRow): string[] {
+  switch (row.page_key) {
+    case "applications_systems":
+      return ["application_system"];
+    case "vendor_contracts":
+      return ["vendor_contract"];
+    case "infrastructure_platforms":
+      return ["infrastructure_platform"];
+    case "current_state_data_flow":
+      return ["data_asset_or_integration", "application_system"];
+    default:
+      return ["evidence_sources"];
+  }
+}
+
+function rowContextStatement(row: HomeProjectionRow): string {
+  switch (row.page_key) {
+    case "applications_systems": {
+      const app = applicationRow(row);
+      const parts = [
+        `${text(app.systemName) ?? row.title} is loaded as an application`,
+        text(app.businessFunction) ? `for ${text(app.businessFunction)}` : null,
+        text(app.vendor) ? `supplied by ${text(app.vendor)}` : null,
+        text(app.criticality) ? `with ${text(app.criticality)} criticality` : null,
+        formatUsd(numberValue(app.annualCostUsd)) ? `and ${formatUsd(numberValue(app.annualCostUsd))} annual cost` : null,
+      ].filter(Boolean);
+      return `${parts.join(" ")}.`;
+    }
+    case "vendor_contracts": {
+      const contract = contractRow(row);
+      const parts = [
+        `${text(contract.contractName) ?? row.title} is loaded as a contract`,
+        text(contract.vendorName) ? `with ${text(contract.vendorName)}` : null,
+        text(contract.serviceCategory) ? `for ${text(contract.serviceCategory)}` : null,
+        formatUsd(numberValue(contract.annualSpendUsd)) ? `with ${formatUsd(numberValue(contract.annualSpendUsd))} annualized value` : null,
+        numberValue(contract.noticePeriodDays) !== null ? `and ${numberValue(contract.noticePeriodDays)} days notice` : null,
+      ].filter(Boolean);
+      return `${parts.join(" ")}.`;
+    }
+    case "infrastructure_platforms": {
+      const platform = infrastructureRow(row);
+      const parts = [
+        `${text(platform.platformName) ?? row.title} is loaded as an infrastructure or platform record`,
+        text(platform.platformType) ? `of type ${text(platform.platformType)}` : null,
+        text(platform.hostingModel) ? `on ${text(platform.hostingModel)}` : null,
+        text(platform.criticality) ? `with ${text(platform.criticality)} criticality` : null,
+        numberValue(platform.capacityHeadroomPct) !== null ? `and ${numberValue(platform.capacityHeadroomPct)}% capacity headroom` : null,
+      ].filter(Boolean);
+      return `${parts.join(" ")}.`;
+    }
+    case "current_state_data_flow": {
+      const flow = dataFlowRow(row);
+      const source = text(flow.sourceSystem) ?? "an unspecified source";
+      const target = text(flow.targetSystem) ?? "an unspecified target";
+      const parts = [
+        `${text(flow.dataAssetName) ?? row.title} is loaded as a data movement from ${source} to ${target}`,
+        text(flow.integrationType) ? `using ${text(flow.integrationType)}` : null,
+        text(flow.landingLayer) ? `landing in ${text(flow.landingLayer)}` : null,
+        text(flow.consumptionLayer) ? `and serving ${text(flow.consumptionLayer)}` : null,
+      ].filter(Boolean);
+      return `${parts.join(" ")}.`;
+    }
+    default:
+      return row.summary ?? row.title;
+  }
+}
+
+function projectionContextItems(rows: HomeProjectionRow[]): ContextItem[] {
+  return rows
+    .filter((row) => row.row_type !== "summary")
+    .map((row) => ({
+      id: contextIdForRow(row),
+      statement: rowContextStatement(row),
+      domains: rowDomains(row),
+    }));
+}
+
 function buildEclSignalPacket(rows: HomeProjectionRow[], estate: TechnologyEstateBundle): EnterpriseSignalPacket {
   const applications = rowsForType(estate, "application_system");
   const contracts = rowsForType(estate, "vendor_contract");
@@ -388,7 +476,7 @@ function buildEclSignalPacket(rows: HomeProjectionRow[], estate: TechnologyEstat
     {
       id: "sig_ecl_gap_004",
       kind: "gap",
-      statement: "The ECL Home provider is database-backed, but browser proof, retrieval indexing, and default-provider cutover are still separate gates.",
+      statement: "This Home preview is a governed ECL projection read, but retrieval indexing and default-provider cutover remain separate gates.",
       domains: ["evidence_sources"],
       evidenceRefs: ["ecl_projection.home_enterprise_landscape:executive_brief_summary"],
     },
@@ -400,6 +488,7 @@ function buildEclSignalPacket(rows: HomeProjectionRow[], estate: TechnologyEstat
       statement: `This Home preview is based on ECL assessment ${DENSE_ASSESSMENT_ID}; it is synthetic, not client-attested.`,
       domains: ["enterprise_profile", "evidence_sources"],
     },
+    ...projectionContextItems(rows),
   ];
 
   return {
@@ -417,12 +506,12 @@ function buildEclThesis(signalPacket: EnterpriseSignalPacket): EnterpriseThesis 
   const estateClaim = claim(signalPacket.signals[0]?.statement ?? "The ECL estate projection is loaded.", ["sig_ecl_estate_001"]);
   const vendorClaim = claim(signalPacket.signals[1]?.statement ?? "The ECL vendor projection is loaded.", ["sig_ecl_vendor_002"], "OBSERVATION");
   const flowClaim = claim(signalPacket.signals[2]?.statement ?? "The ECL data-flow projection is loaded.", ["sig_ecl_data_flow_003"], "OBSERVATION");
-  const gapClaim = claim(signalPacket.signals[3]?.statement ?? "Browser and retrieval proof remain pending.", ["sig_ecl_gap_004"], "OBSERVATION", "medium");
+  const gapClaim = claim(signalPacket.signals[3]?.statement ?? "Retrieval indexing and default-provider cutover remain pending.", ["sig_ecl_gap_004"], "OBSERVATION", "medium");
   return {
-    enterprise_story: `${estateClaim.statement} ${gapClaim.statement}`,
+    enterprise_story: `${estateClaim.statement} The dense record is ready for current-state exploration; executive narrative generation and cutover remain governed follow-on decisions.`,
     enterprise_story_claims: [estateClaim, gapClaim],
     value_creation_model: {
-      summary: "ECL Home currently establishes estate shape and commercial/integration evidence; value interpretation remains gated by product proof.",
+      summary: "ECL Home establishes estate shape, commercial concentration and data-movement context from governed projection rows; interpretation should stay tied to the cited projection facts.",
       primary_value_drivers: [vendorClaim],
       economic_dependencies: [vendorClaim],
     },
@@ -436,10 +525,10 @@ function buildEclThesis(signalPacket: EnterpriseSignalPacket): EnterpriseThesis 
     material_risks: [gapClaim],
     value_realization_tensions: [vendorClaim, gapClaim],
     what_needs_attention: [gapClaim],
-    evidence_gaps: ["Signed-in browser proof, retrieval indexing, and default-provider cutover are not yet established for the ECL Home provider."],
+    evidence_gaps: ["Retrieval indexing and default-provider cutover are not established by the Home ECL projection itself."],
     things_a_new_cxo_should_know: [estateClaim, vendorClaim, flowClaim, gapClaim],
     questions_for_management: [
-      claim("Which Home chapter claims are ready to regenerate from the dense ECL record, and which remain blocked by missing browser or retrieval proof?", ["sig_ecl_gap_004"], "ADVISORY_INFERENCE", "medium"),
+      claim("Which Home chapter claims should be promoted from deterministic ECL exploration into a regenerated executive narrative?", ["sig_ecl_gap_004"], "ADVISORY_INFERENCE", "medium"),
     ],
     visual_opportunities: [
       visual("application_landscape_by_function", "Applications grouped by business function", "The loaded ECL estate is function-segmented, not a 306-row legacy snapshot.", ["sig_ecl_estate_001"]),

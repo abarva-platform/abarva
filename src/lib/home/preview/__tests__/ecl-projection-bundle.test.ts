@@ -187,6 +187,20 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       base?.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.headline,
     );
     expect(bundle.thesis.signalPacket.signals[0]?.statement).toContain("1 applications");
+    expect(bundle.thesis.signalPacket.contextItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "ctx_ecl_applications_systems_application_APP_001",
+          statement: expect.stringContaining("Epic Tapestry is loaded as an application"),
+          domains: ["application_system"],
+        }),
+        expect.objectContaining({
+          id: "ctx_ecl_current_state_data_flow_data_flow_FLOW_001",
+          statement: expect.stringContaining("is loaded as a data movement from Epic Tapestry to Claims Data Mart"),
+          domains: ["data_asset_or_integration", "application_system"],
+        }),
+      ]),
+    );
     expect(bundle.technologyEstate?.recordTypes.find((recordType) => recordType.objectType === "application_system")?.rows).toHaveLength(1);
   });
 });
