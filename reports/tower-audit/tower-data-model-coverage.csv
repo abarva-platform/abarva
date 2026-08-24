@@ -1,0 +1,24 @@
+concept,exists,source_layer,tower_representation,active_candidate_status,evidence_coverage,owner_or_steward,confidence,gap,module_source
+Strategic priority,Partial,V7 programs/priorities + AI initiatives,program_name/priority fields mapped,Active,Some source row lineage,not consistently explicit,Medium,No formal Tower strategic-priority profile,Tower/CIO Tower read model
+Initiative/Move,Partial,"cio_tower facts, V7 programs, materialized read model",initiative_budget/value views and AIInitiative,Active,source_fact_keys where cio_tower exists,not consistently explicit,Medium,Move ID is not consistently first-class in Tower page,Tower/CIO Tower read model
+Program,Partial,V7 programs and cio_tower facts,programLabel/source_label cleanup,Active,Partial,not consistently explicit,Medium,Program names can be derived from attributes/source_label,Tower/CIO Tower read model
+Business function,Partial,"V7 payload fields, AIInitiative fields",business_function/service_tower fields,Active,Partial,not consistently explicit,Medium,Needs canonical function profile join,Tower/CIO Tower read model
+Metric,Exists,cio_tower.measures and measure_results,"measure_key,label,description",Active,source_fact_keys,not consistently explicit,High,Good metric registry seam,Tower/CIO Tower read model
+Baseline,Partial,cio_tower facts/measure_results,period/basis fields,Active,Partial,not consistently explicit,Medium,No universal baseline_status field in Tower landing view,Tower/CIO Tower read model
+Target,Partial,KPI snapshots and facts,target_value fields exist in supporting rows,Active,Partial,not consistently explicit,Medium,Not uniformly present in CXO cards,Tower/CIO Tower read model
+Forecast,Exists,cio_tower facts and V7 projection,basis=forecast/promised values,Active,Partial,not consistently explicit,Medium,Needs clearer visible distinction from realized,Tower/CIO Tower read model
+Promised value,Exists,cio_tower measure_results,promised_value_fy26,Active,source facts,not consistently explicit,High,Safe if labeled promised/directional,Tower/CIO Tower read model
+Measured value,Exists,cio_tower measure_results,measured_value_ytd,Active,source facts,not consistently explicit,High,Good but must not be renamed realized without evidence,Tower/CIO Tower read model
+Realized value,Partial,outcome ledger + measured value,realizedAmount / measured_value_ytd,Active,evidenceBacked flag in outcome ledger,not consistently explicit,Medium,"Realized value discipline exists in ledger, not fully integrated as TowerValueRecord",Tower/CIO Tower read model
+Budget,Exists,cio_tower facts and budget rollups,total_it_budget_fy26/run/change,Active,source facts,not consistently explicit,High,Strongest current Tower data path,Tower/CIO Tower read model
+Spend,Partial,actual_spend_ytd and V7 spend_value,actual_spend_ytd,Active,Partial,not consistently explicit,Medium,Actual spend can be a gap,Tower/CIO Tower read model
+Owner,Partial,attributes and AIInitiative owner fields,owner_role/owner_name/business_sponsor,Active,Partial,not consistently explicit,Medium,Owner often fallback-derived,Tower/CIO Tower read model
+Evidence,Exists,cio_tower source facts/registry,"source_key, source_row, source_file",Active,High where cio_tower populated,not consistently explicit,High,Good lineage in CXO view,Tower/CIO Tower read model
+Risk,Partial,pressure/status flags and V7 risks,"statusFlag, risk_status, blocker",Active,Partial,not consistently explicit,Medium,No unified risk-to-value record yet,Tower/CIO Tower read model
+Control,Missing,Not first-class in Tower data model,n/a,n/a,n/a,not consistently explicit,Low,Needed for CDAO/CFO confidence,Tower/CIO Tower read model
+Gap,Exists,derived gap functions,businessGapForMeasure/deriveGaps,Active,Derived,not consistently explicit,Medium,Derived gaps are useful but not yet persisted context_gap IDs,Tower/CIO Tower read model
+Source/vendor dependency,Exists,vendor facts + Source awareness,"vendor_contract view, source-tower-awareness",Active,Partial,not consistently explicit,Medium,Commercial handoff needs formal Source ID,Tower/CIO Tower read model
+Measurement cadence,Missing,Not first-class in current Tower path,n/a,n/a,n/a,not consistently explicit,Low,Needed for operating Tower,Tower/CIO Tower read model
+Calculation method,Exists,cio_tower formula_version and measure metadata,formula_version,Active,High,not consistently explicit,High,Useful for audit trail,Tower/CIO Tower read model
+Confidence,Exists,facts confidence and initiative confidence,confidence fields,Active,Partial,not consistently explicit,Medium,Visible confidence should stay business-friendly,Tower/CIO Tower read model
+Caveat,Partial,gaps/status/inspection reason,gap and inspectionReason,Active,Partial,not consistently explicit,Medium,Need explicit caveat per value claim,Tower/CIO Tower read model

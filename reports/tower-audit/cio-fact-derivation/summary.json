@@ -1,0 +1,35 @@
+{
+  "audit_id": "CIO-TOWER-FACT-DERIVATION-AUDIT",
+  "generated_at": "2026-07-15T19:28:22.145Z",
+  "branch": "codex/tower-context-layer-value-audit",
+  "verdict": "Tower is lineage-aware and source-backed through the cio_tower read model, but this audit does not prove it is fully standard-2026-07-v3-native.",
+  "current_state": {
+    "cio_tower_schema_exists": true,
+    "primary_loader_exists": true,
+    "standardized_source_package_exists": true,
+    "tenant_count_in_package": 5,
+    "standardized_source_file_count": 245,
+    "v7_projection_bridge_exists": true,
+    "tower_context_pack_contract_exists": true,
+    "tower_page_uses_cio_tower_view": true,
+    "tower_ask_persists_prompt_trace": true
+  },
+  "pass_criteria": {
+    "trace_to_v3_source_backed_context": "Partial/Fail: source-backed to Tower standardized files, not proven to v3 source row IDs.",
+    "label_bridge_read_model_facts": "Pass: audit explicitly labels bridge/read-model dependencies.",
+    "mark_unsafe_unreconciled": "Pass: unreconciled fact/entity/relationship/measure-result classes are listed."
+  },
+  "required_outputs": [
+    "summary.md",
+    "summary.json",
+    "source-to-cio-tower-lineage.csv",
+    "cio-tower-to-v3-reconciliation.csv",
+    "legacy-bridge-dependencies.csv",
+    "tower-consumer-map.csv",
+    "unreconciled-facts.csv",
+    "cio-fact-derivation-proof.html"
+  ],
+  "risk_rating": "Medium",
+  "next_decision": "Keep cio_tower as a governed Tower read model, then reconcile it to the new data runway by adding evidence_registry_id, canonical_fact_id, entity_profile_id, relationship_edge_id, source_standard, and active/candidate version state.",
+  "source_hash": "4a4a20bbd2acd94d"
+}

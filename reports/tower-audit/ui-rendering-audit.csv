@@ -1,0 +1,11 @@
+area,status,evidence,recommendation,pass_fail
+Executive value story,Partial,Tower landing has a command-center surface and CXO headline,Needs clearer promised vs measured vs realized hierarchy,Partial
+Baseline / target / promised / measured / realized distinction,Partial,Data model distinguishes promised and measured,Visual contract should make these states explicit,Partial
+"Evidence, confidence, caveats",Partial,Metric cards carry source facts and gaps,"Evidence should be visible per value claim, not buried",Partial
+Unsupported ROI blocked,Partial,Outcome ledger flags unevidenced verified claims,No universal visible ROI blocker in Tower page,Partial
+Initiatives-to-metrics,Partial,Portfolio value rows group facts by program,Needs formal initiative metric map,Partial
+Metrics-to-owners/evidence,Partial,Owner and source fields are extracted when present,Owner fallback needs explicit gap state,Partial
+Value-to-risk/control,Partial,Pressure cards and blockers exist,Control dimension is not first-class,Partial
+Handoff to Moves/Source/Intelligence,Partial,Some helpers and context packs exist,Needs productized handoff panels,Partial
+Polished charts/tables,Partial,Recharts components exist,Do not chart unevidenced or non-numeric claims,Partial
+Hide debug/raw,Partial,"Visible answer contract scrubs internal terms, but headers reference V6",Remove old V-labeled headers from visible/public contracts,Partial
