@@ -9,6 +9,10 @@ import {
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { getEnterpriseLandscapeViewModel } from "@/lib/home/enterprise-landscape-view-model";
 import { buildCanonicalLandscapeSections } from "@/lib/intelligence/canonical-landscape-sections";
+import {
+  readIntelligenceEclContextPackPreview,
+  type IntelligenceEclContextPackPreview,
+} from "@/lib/intelligence/eclContextPackPreview";
 import { resolveIntelligenceViewModelClientKey } from "@/lib/intelligence/intelligence-view-model-client-key";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
@@ -45,7 +49,9 @@ function enterpriseContextTenantKey(
 export default async function IntelligencePage({
   searchParams,
 }: IntelligencePageProps = {}) {
-  const rawRequestedClient = firstSearchValue((await searchParams)?.client);
+  const resolvedSearchParams = await searchParams;
+  const rawRequestedClient = firstSearchValue(resolvedSearchParams?.client);
+  const requestedProvider = firstSearchValue(resolvedSearchParams?.provider);
   const requestedClient = (await hasLockedTenantSession())
     ? rawRequestedClient
     : null;
@@ -89,6 +95,12 @@ export default async function IntelligencePage({
   const viewModel = canonical
     ? { ...authored, sections: canonical.sections }
     : authored;
+  const intelligenceEclPreview =
+    requestedProvider === "ecl_projection_db"
+      ? await readIntelligenceEclContextPackPreview(
+          canonicalTenantKey(contextTenantKey),
+        )
+      : null;
 
   return (
     <AppShell
@@ -100,7 +112,177 @@ export default async function IntelligencePage({
       }}
       hasTenantKey={Boolean(effectiveClientKey)}
     >
+      {intelligenceEclPreview ? (
+        <IntelligenceEclProjectionPanel preview={intelligenceEclPreview} />
+      ) : null}
       <AdvisoryIntelligencePage viewModel={viewModel} />
     </AppShell>
+  );
+}
+
+function IntelligenceEclProjectionPanel({
+  preview,
+}: {
+  preview: IntelligenceEclContextPackPreview;
+}) {
+  return (
+    <section className="border-b border-emerald-900/10 bg-emerald-50/45 px-6 py-6 text-slate-950">
+      <div className="mx-auto max-w-7xl">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700">
+              ECL projection read
+            </p>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+              Intelligence context pack projection is loaded
+            </h1>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700">
+              This non-default preview reads{" "}
+              <code>ecl_projection.intelligence_context_pack</code> for the
+              dense assessment. It proves the context pack has governed rows,
+              retrieval states, access classes, citations and gaps; it does not
+              repoint the default Intelligence advisory surface.
+            </p>
+          </div>
+          <div className="border border-slate-200 bg-white px-6 py-4 text-right shadow-sm">
+            <div className="text-3xl font-semibold tabular-nums">
+              {preview.rowCount}
+            </div>
+            <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.16em] text-slate-500">
+              context rows
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-4">
+          <IntelligenceEclStat
+            label="Permitted facts"
+            value={preview.totals.permittedFacts}
+          />
+          <IntelligenceEclStat
+            label="Blocked facts"
+            value={preview.totals.blockedFacts}
+          />
+          <IntelligenceEclStat
+            label="Citation refs"
+            value={preview.totals.citations}
+          />
+          <IntelligenceEclStat label="Gap flags" value={preview.totals.gaps} />
+        </div>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-[0.8fr_1.4fr]">
+          <div className="space-y-5">
+            <IntelligenceEclCountList
+              title="Retrieval state"
+              rows={preview.retrievalCounts.map((row) => ({
+                label: row.retrievalState,
+                count: row.count,
+              }))}
+            />
+            <IntelligenceEclCountList
+              title="Access class"
+              rows={preview.accessCounts.map((row) => ({
+                label: row.accessClass,
+                count: row.count,
+              }))}
+            />
+            <IntelligenceEclCountList
+              title="Quality state"
+              rows={preview.qualityCounts.map((row) => ({
+                label: row.qualityState,
+                count: row.count,
+              }))}
+            />
+          </div>
+
+          <div className="overflow-hidden border border-slate-200 bg-white shadow-sm">
+            <div className="grid grid-cols-[1.1fr_0.7fr_0.7fr_0.6fr] gap-4 border-b border-slate-100 bg-white/70 px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              <span>Context row</span>
+              <span>Retrieval</span>
+              <span>Access</span>
+              <span>Refs</span>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {preview.contextRows.map((row) => (
+                <div
+                  key={`${row.surfaceKey}:${row.rowKey}`}
+                  className="grid grid-cols-[1.1fr_0.7fr_0.7fr_0.6fr] gap-4 px-4 py-3 text-sm"
+                >
+                  <div>
+                    <div className="font-semibold text-slate-950">
+                      {row.title}
+                    </div>
+                    <div className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">
+                      {row.summary}
+                    </div>
+                    <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-400">
+                      {row.rowKey}
+                    </div>
+                  </div>
+                  <div className="capitalize text-slate-700">
+                    {row.retrievalState.replaceAll("_", " ")}
+                  </div>
+                  <div className="capitalize text-slate-700">
+                    {row.accessClass.replaceAll("_", " ")}
+                  </div>
+                  <div className="font-mono text-xs text-slate-700">
+                    {row.permittedFactCount} facts · {row.citationCount} cites
+                    · {row.gapCount} gaps
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function IntelligenceEclStat({
+  label,
+  value,
+}: {
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="border border-slate-200 bg-white px-4 py-3 shadow-sm">
+      <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-slate-500">
+        {label}
+      </div>
+      <div className="mt-2 text-2xl font-semibold tabular-nums">{value}</div>
+    </div>
+  );
+}
+
+function IntelligenceEclCountList({
+  title,
+  rows,
+}: {
+  title: string;
+  rows: Array<{ label: string; count: number }>;
+}) {
+  return (
+    <div>
+      <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+        {title}
+      </h2>
+      <div className="mt-2 divide-y divide-slate-100 border border-slate-200 bg-white shadow-sm">
+        {rows.map((row) => (
+          <div
+            key={row.label}
+            className="flex items-center justify-between px-4 py-2 text-sm"
+          >
+            <span className="capitalize text-slate-700">
+              {row.label.replaceAll("_", " ")}
+            </span>
+            <span className="font-mono text-slate-950 tabular-nums">
+              {row.count}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
