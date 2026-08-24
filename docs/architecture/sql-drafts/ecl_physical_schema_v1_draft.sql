@@ -15,6 +15,7 @@ create table if not exists ecl_source.source_file (
   tenant_key text not null,
   assessment_id text not null,
   source_type text not null,
+  origin text not null default 'synthetic_generator',
   source_owner text,
   file_name text not null,
   blob_uri text not null,
@@ -29,6 +30,9 @@ create table if not exists ecl_source.source_file (
       'cmdb', 'erp', 'ppm', 'clm', 'grc', 'bi', 'etl', 'ai_telemetry',
       'document', 'interview', 'manual_workbook', 'synthetic_source_room'
     )
+  ),
+  constraint source_file_origin_check check (
+    origin in ('client_intake', 'synthetic_generator')
   ),
   constraint source_file_access_class_check check (
     access_class in ('public_demo', 'internal', 'client_confidential', 'restricted')
@@ -718,6 +722,8 @@ create table if not exists ecl_projection.projection_manifest (
 
 create index if not exists idx_source_file_tenant_type
   on ecl_source.source_file (tenant_key, assessment_id, source_type);
+create index if not exists idx_source_file_tenant_origin
+  on ecl_source.source_file (tenant_key, assessment_id, origin);
 create index if not exists idx_source_record_tenant_type
   on ecl_source.source_record (tenant_key, assessment_id, record_type);
 create index if not exists idx_source_record_payload_gin
