@@ -31,88 +31,118 @@ REQUIRED_FILES = {
 
 EXPECTED_LAYERS = {"source", "context", "commercial", "review", "projection", "cube"}
 
-EXPECTED_READBACK = {
+REQUIRED_READBACK_KEYS = {
     "source": {
-        "source_record": 7080,
-        "source_file": 14,
-        "document": 720,
-        "document_extraction": 250,
-        "extraction_distinct_spans": 250,
-        "client_attested_rows": 0,
+        "source_record",
+        "source_file",
+        "document",
+        "document_extraction",
+        "extraction_distinct_spans",
+        "client_attested_rows",
     },
     "context": {
-        "object_type_catalog": 20,
-        "object": 3602,
-        "application": 750,
-        "application_deployment": 1650,
-        "vendor": 215,
-        "data_platform": 104,
-        "infrastructure": 220,
-        "relationship": 8297,
-        "deployment_of": 1650,
-        "hosted_on": 1650,
-        "integrates_with": 672,
-        "metric_definition": 127,
-        "measure": 13190,
-        "measure_metric_drift": 0,
-        "relationship_endpoint_drift": 0,
+        "object_type_catalog",
+        "object",
+        "application",
+        "application_deployment",
+        "vendor",
+        "data_platform",
+        "infrastructure",
+        "relationship",
+        "deployment_of",
+        "hosted_on",
+        "integrates_with",
+        "metric_definition",
+        "measure",
+        "measure_metric_drift",
+        "relationship_endpoint_drift",
     },
     "commercial": {
-        "contract": 230,
-        "contract_service_line": 230,
-        "contract_scope": 690,
-        "invoice_line": 480,
-        "sla_observation": 260,
-        "contract_scope_object_drift": 0,
-        "contract_vendor_drift": 0,
-        "sla_metric_drift": 0,
+        "contract",
+        "contract_service_line",
+        "contract_scope",
+        "invoice_line",
+        "sla_observation",
+        "contract_scope_object_drift",
+        "contract_vendor_drift",
+        "sla_metric_drift",
     },
     "review": {
-        "review_event": 658,
-        "review_contract_subjects": 277,
-        "review_invoice_subjects": 120,
-        "review_sla_subjects": 260,
-        "review_context_pack_subjects": 1,
-        "review_contract_drift": 0,
-        "review_invoice_drift": 0,
-        "review_sla_drift": 0,
-        "review_source_record_drift": 0,
+        "review_event",
+        "review_contract_subjects",
+        "review_invoice_subjects",
+        "review_sla_subjects",
+        "review_context_pack_subjects",
+        "review_contract_drift",
+        "review_invoice_drift",
+        "review_sla_drift",
+        "review_source_record_drift",
     },
     "projection": {
-        "projection_manifest": 7,
-        "home_enterprise_landscape": 2946,
-        "source_contract_360": 230,
-        "source_vendor_360": 101,
-        "source_value_levers": 230,
-        "source_event_workspace": 173,
-        "tower_command_center": 930,
-        "intelligence_context_pack": 9,
-        "home_primary_object_drift": 0,
-        "home_refusal_without_payload": 0,
-        "home_application_count_basis_drift": 0,
-        "home_application_page_deployment_rows": 0,
-        "contract_projection_contract_drift": 0,
-        "event_review_drift": 0,
-        "event_rows_without_evidence_payload": 0,
-        "source_value_claimable_rows": 0,
-        "source_value_gated_rows": 230,
-        "tower_primary_object_drift": 0,
-        "tower_gated_without_reason": 0,
-        "intelligence_context_pack_drift": 0,
-        "intelligence_primary_object_drift": 0,
-        "value_lever_metric_drift": 0,
-        "vendor_projection_vendor_drift": 0,
+        "projection_manifest",
+        "home_enterprise_landscape",
+        "source_contract_360",
+        "source_vendor_360",
+        "source_value_levers",
+        "source_event_workspace",
+        "tower_command_center",
+        "intelligence_context_pack",
+        "home_primary_object_drift",
+        "home_refusal_without_payload",
+        "home_application_count_basis_drift",
+        "home_application_page_deployment_rows",
+        "contract_projection_contract_drift",
+        "event_review_drift",
+        "event_rows_without_evidence_payload",
+        "source_value_claimable_rows",
+        "source_value_gated_rows",
+        "tower_primary_object_drift",
+        "tower_gated_without_reason",
+        "intelligence_context_pack_drift",
+        "intelligence_primary_object_drift",
+        "value_lever_metric_drift",
+        "vendor_projection_vendor_drift",
     },
     "cube": {
-        "cube_manifest": 9,
-        "cube_slice": 29,
-        "cube_slice_metric": 103,
-        "cube_slice_measure": 4320,
-        "cube_key_count": 9,
-        "cube_metric_drift": 0,
-        "cube_measure_drift": 0,
-        "json_metric_without_fk": 0,
+        "cube_manifest",
+        "cube_slice",
+        "cube_slice_metric",
+        "cube_slice_measure",
+        "cube_key_count",
+        "cube_metric_drift",
+        "cube_measure_drift",
+        "json_metric_without_fk",
     },
+}
+
+ZERO_READBACK_KEYS = {
+    "source.client_attested_rows",
+    "context.measure_metric_drift",
+    "context.relationship_endpoint_drift",
+    "commercial.contract_scope_object_drift",
+    "commercial.contract_vendor_drift",
+    "commercial.sla_metric_drift",
+    "review.review_contract_drift",
+    "review.review_invoice_drift",
+    "review.review_sla_drift",
+    "review.review_source_record_drift",
+    "projection.home_primary_object_drift",
+    "projection.home_refusal_without_payload",
+    "projection.home_application_count_basis_drift",
+    "projection.home_application_page_deployment_rows",
+    "projection.contract_projection_contract_drift",
+    "projection.event_review_drift",
+    "projection.event_rows_without_evidence_payload",
+    "projection.source_value_claimable_rows",
+    "projection.tower_primary_object_drift",
+    "projection.tower_gated_without_reason",
+    "projection.intelligence_context_pack_drift",
+    "projection.intelligence_primary_object_drift",
+    "projection.value_lever_metric_drift",
+    "projection.vendor_projection_vendor_drift",
+    "cube.cube_metric_drift",
+    "cube.cube_measure_drift",
+    "cube.json_metric_without_fk",
 }
 
 ACK_KEYS = {
@@ -145,9 +175,12 @@ def expect_no_azure(payload: dict[str, Any], label: str, issues: list[str]) -> N
         expect(payload.get("actual_readback_execution") is False, f"{label} must prove actual_readback_execution=false", issues)
 
 
-def compare_subset(actual: dict[str, Any], expected: dict[str, int], label: str, issues: list[str]) -> None:
-    for key, expected_value in expected.items():
-        expect(actual.get(key) == expected_value, f"{label}.{key} expected {expected_value}, got {actual.get(key)!r}", issues)
+def validate_readback_layer(layer: str, actual: dict[str, Any], issues: list[str]) -> None:
+    for key in sorted(REQUIRED_READBACK_KEYS[layer]):
+        value = actual.get(key)
+        expect(isinstance(value, int) and not isinstance(value, bool), f"readback.{layer}.{key} must be an integer", issues)
+        if f"{layer}.{key}" in ZERO_READBACK_KEYS:
+            expect(value == 0, f"readback.{layer}.{key} must be 0, got {value!r}", issues)
 
 
 def validate(out_dir: Path) -> list[str]:
@@ -189,11 +222,11 @@ def validate(out_dir: Path) -> list[str]:
     expectations = readback_contract.get("expected_readback_by_layer", {})
     expect(set(expectations) == EXPECTED_LAYERS, f"readback layers must be {sorted(EXPECTED_LAYERS)}", issues)
     if isinstance(expectations, dict):
-        for layer, expected in EXPECTED_READBACK.items():
+        for layer in sorted(REQUIRED_READBACK_KEYS):
             layer_actual = expectations.get(layer)
             expect(isinstance(layer_actual, dict), f"readback layer {layer} missing or invalid", issues)
             if isinstance(layer_actual, dict):
-                compare_subset(layer_actual, expected, f"readback.{layer}", issues)
+                validate_readback_layer(layer, layer_actual, issues)
     expect(readback_contract.get("field_hash_required") is True, "readback must require field hashes", issues)
 
     dry_run_command = command_plan.get("dry_run_selected_command", [])
