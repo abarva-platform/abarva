@@ -89,6 +89,26 @@ const CHECKS = [
       "provider: \"ecl_projection_db\"",
     ],
   },
+  {
+    key: "smoke_asserts_demo_findings_on_surfaces",
+    file: "scripts/ecl/run_product_ecl_browser_smoke.mjs",
+    mustContain: [
+      "DEMO_FINDING_ASSERTIONS",
+      "findings demonstrable on a real surface",
+      "findings_demonstrable_on_real_surface",
+      "--validate-demo-findings-contract",
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5",
+      "F6",
+      "F7",
+      "F8",
+      "F9",
+      "F10",
+    ],
+  },
 ];
 
 const COMMAND_CHECKS = [
@@ -104,6 +124,14 @@ const COMMAND_CHECKS = [
       "--runTestsByPath",
       "src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts",
       "--runInBand",
+    ],
+  },
+  {
+    key: "demo_findings_browser_contract",
+    command: [
+      "node",
+      "scripts/ecl/run_product_ecl_browser_smoke.mjs",
+      "--validate-demo-findings-contract",
     ],
   },
 ];

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 
 import { AppShell } from "@/components/shell/AppShell";
+import { EclDemoFindingsPanel } from "@/components/ecl/EclDemoFindingsPanel";
 import { HomePreviewAppRoot } from "@/components/home/preview/HomePreviewAppRoot";
 import { cookies } from "next/headers";
 import {
@@ -93,6 +94,7 @@ export default async function HomePreviewPage({
 
   return (
     <AppShell surface="home" topBarProps={{ context: "Home preview — candidate, not yet reviewed" }}>
+      {provider === "ecl_projection_db" ? <EclDemoFindingsPanel product="home" /> : null}
       <HomePreviewAppRoot bundle={bundle} tenantKey={tenantKey} />
     </AppShell>
   );
