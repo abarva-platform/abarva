@@ -16,6 +16,8 @@ Follow-up: the approved ACA main deploy lane now wires the private browser proof
 
 Second follow-up: the browser runner emits a compact structured result after its archive output. This keeps the five-step status recoverable from ACA log tails even when screenshot evidence makes the archive too large for the supported log window.
 
+Third follow-up: the first structured route run reached all four product routes. Source passed. Home failed on the preview auth boundary, Tower exposed an internal serving-view name, and Intelligence needed the same client-facing wording cleanup plus better text excerpts for diagnosis. This release keeps the proof route non-default, accepts the private proof cookie only for matching-tenant Home ECL preview, removes raw serving-view names from Tower and Intelligence text, and includes a short text excerpt in the compact proof event.
+
 ## Layer Impact
 
 - `global-control-lane`: adds proof tooling for shared product QA.
@@ -33,6 +35,9 @@ Second follow-up: the browser runner emits a compact structured result after its
 ## Changes Included
 
 - `scripts/ecl/run_product_ecl_browser_smoke.mjs`
+- `src/app/(maestro)/home/preview/page.tsx`
+- `src/app/(maestro)/tower/page.tsx`
+- `src/app/(maestro)/intelligence/page.tsx`
 - `.github/workflows/aca-main-deploy.yml`
 - `infra/azure/parameters/app-runtime.lab.bicepparam`
 - `infra/azure/parameters/private-operator.lab.bicepparam`
@@ -43,9 +48,12 @@ Second follow-up: the browser runner emits a compact structured result after its
 ## QA / Validation
 
 - `node --check scripts/ecl/run_product_ecl_browser_smoke.mjs` — pass.
+- `npx eslint src/app/(maestro)/home/preview/page.tsx src/app/(maestro)/tower/page.tsx src/app/(maestro)/intelligence/page.tsx` — pass.
+- `git diff --check` — pass.
 - `npm run release:check` — pending rerun after this release record correction.
 - Signed-in ACA browser proof — first run reached the browser-auth step and was blocked by the Clerk browser ticket path; the runner now prefers the private proof-cookie path before falling back to Clerk tickets.
 - Second ACA run reached the deployed browser-smoke image with the private proof-token injected, but the proof archive begin marker was outside the supported log tail after screenshot output. The runner now emits a compact structured status after the archive so the next run can classify the five route steps even if archive extraction is unavailable.
+- Third ACA run reached all five steps. Source accepted; Home, Tower, and Intelligence produced route-level findings. These findings are treated as product QA defects, not proof-runner success.
 - Static env/secret injection proof: `npm run verify:env-secret-injection` verifies the app runtime and private operator include the private proof-token Key Vault secretRef.
 
 ## Rollout Plan
