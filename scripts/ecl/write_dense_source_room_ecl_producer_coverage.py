@@ -154,6 +154,48 @@ PRODUCER_MAP: dict[str, dict[str, Any]] = {
         "basis": "interview follow-ups, owner attestations, and evidence verification states",
         "gap": "human workflow approvals remain unexecuted",
     },
+    "ecl_projection.projection_entry": {
+        "status": "downstream_builder_required",
+        "families": SOURCE_FAMILIES,
+        "producer": "Source projection builder",
+        "basis": "one projection-entry spine row per product projection row across the seven committed surfaces",
+    },
+    "ecl_projection.projection_entry_object_ref": {
+        "status": "downstream_builder_required",
+        "families": SOURCE_FAMILIES,
+        "producer": "Source projection builder",
+        "basis": "typed object references extracted from product projection rows",
+    },
+    "ecl_projection.projection_entry_metric_ref": {
+        "status": "downstream_builder_required",
+        "families": SOURCE_FAMILIES,
+        "producer": "Source projection builder",
+        "basis": "typed metric references extracted from product projection rows",
+    },
+    "ecl_projection.projection_entry_measure_ref": {
+        "status": "downstream_builder_required",
+        "families": SOURCE_FAMILIES,
+        "producer": "Source projection builder",
+        "basis": "typed measure references extracted from product projection rows when a surface cites specific measures",
+    },
+    "ecl_projection.projection_entry_relationship_ref": {
+        "status": "downstream_builder_required",
+        "families": SOURCE_FAMILIES,
+        "producer": "Source projection builder",
+        "basis": "typed relationship references extracted from product projection rows when a surface cites specific relationships",
+    },
+    "ecl_projection.projection_entry_source_record_ref": {
+        "status": "downstream_builder_required",
+        "families": SOURCE_FAMILIES,
+        "producer": "Source projection builder",
+        "basis": "typed source-record references extracted from product projection rows",
+    },
+    "ecl_projection.projection_entry_document_extraction_ref": {
+        "status": "downstream_builder_required",
+        "families": SOURCE_FAMILIES,
+        "producer": "Source projection builder",
+        "basis": "typed document-extraction references extracted from product projection rows when a surface cites page/span evidence",
+    },
 }
 
 PROJECTION_STATUS = {

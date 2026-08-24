@@ -152,6 +152,12 @@ delete from ecl_projection.cube_slice_measure where tenant_key = {tenant} and as
 delete from ecl_projection.cube_slice_metric where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_projection.cube_slice where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_projection.cube_manifest where tenant_key = {tenant} and assessment_id = {assessment};
+delete from ecl_projection.projection_entry_document_extraction_ref where tenant_key = {tenant} and assessment_id = {assessment};
+delete from ecl_projection.projection_entry_source_record_ref where tenant_key = {tenant} and assessment_id = {assessment};
+delete from ecl_projection.projection_entry_relationship_ref where tenant_key = {tenant} and assessment_id = {assessment};
+delete from ecl_projection.projection_entry_measure_ref where tenant_key = {tenant} and assessment_id = {assessment};
+delete from ecl_projection.projection_entry_metric_ref where tenant_key = {tenant} and assessment_id = {assessment};
+delete from ecl_projection.projection_entry_object_ref where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_projection.source_event_workspace where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_projection.source_value_levers where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_projection.source_vendor_360 where tenant_key = {tenant} and assessment_id = {assessment};
@@ -159,6 +165,7 @@ delete from ecl_projection.source_contract_360 where tenant_key = {tenant} and a
 delete from ecl_projection.home_enterprise_landscape where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_projection.tower_command_center where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_projection.intelligence_context_pack where tenant_key = {tenant} and assessment_id = {assessment};
+delete from ecl_projection.projection_entry where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_projection.projection_manifest where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_review.review_event where tenant_key = {tenant} and assessment_id = {assessment};
 delete from ecl_commercial.sla_observation where tenant_key = {tenant} and assessment_id = {assessment};
@@ -267,6 +274,13 @@ select jsonb_pretty(jsonb_build_object(
   )
 ) || jsonb_build_object(
   'projection_manifest', (select count(*) from ecl_projection.projection_manifest where tenant_key = {tenant} and assessment_id = {assessment}),
+  'projection_entry', (select count(*) from ecl_projection.projection_entry where tenant_key = {tenant} and assessment_id = {assessment}),
+  'projection_entry_object_ref', (select count(*) from ecl_projection.projection_entry_object_ref where tenant_key = {tenant} and assessment_id = {assessment}),
+  'projection_entry_metric_ref', (select count(*) from ecl_projection.projection_entry_metric_ref where tenant_key = {tenant} and assessment_id = {assessment}),
+  'projection_entry_measure_ref', (select count(*) from ecl_projection.projection_entry_measure_ref where tenant_key = {tenant} and assessment_id = {assessment}),
+  'projection_entry_relationship_ref', (select count(*) from ecl_projection.projection_entry_relationship_ref where tenant_key = {tenant} and assessment_id = {assessment}),
+  'projection_entry_source_record_ref', (select count(*) from ecl_projection.projection_entry_source_record_ref where tenant_key = {tenant} and assessment_id = {assessment}),
+  'projection_entry_document_extraction_ref', (select count(*) from ecl_projection.projection_entry_document_extraction_ref where tenant_key = {tenant} and assessment_id = {assessment}),
   'home_enterprise_landscape', (select count(*) from ecl_projection.home_enterprise_landscape where tenant_key = {tenant} and assessment_id = {assessment}),
   'source_contract_360', (select count(*) from ecl_projection.source_contract_360 where tenant_key = {tenant} and assessment_id = {assessment}),
   'source_vendor_360', (select count(*) from ecl_projection.source_vendor_360 where tenant_key = {tenant} and assessment_id = {assessment}),
@@ -308,6 +322,59 @@ select jsonb_pretty(jsonb_build_object(
     where tenant_key = {tenant} and assessment_id = {assessment}
       and gate_status in ('gated','blocked')
       and jsonb_array_length(evidence_needed_json) = 0
+  ),
+  'projection_entry_count_drift', (
+    select abs(
+      (select count(*) from ecl_projection.projection_entry where tenant_key = {tenant} and assessment_id = {assessment})
+      - (
+        (select count(*) from ecl_projection.home_enterprise_landscape where tenant_key = {tenant} and assessment_id = {assessment})
+        + (select count(*) from ecl_projection.source_contract_360 where tenant_key = {tenant} and assessment_id = {assessment})
+        + (select count(*) from ecl_projection.source_vendor_360 where tenant_key = {tenant} and assessment_id = {assessment})
+        + (select count(*) from ecl_projection.source_value_levers where tenant_key = {tenant} and assessment_id = {assessment})
+        + (select count(*) from ecl_projection.source_event_workspace where tenant_key = {tenant} and assessment_id = {assessment})
+        + (select count(*) from ecl_projection.tower_command_center where tenant_key = {tenant} and assessment_id = {assessment})
+        + (select count(*) from ecl_projection.intelligence_context_pack where tenant_key = {tenant} and assessment_id = {assessment})
+      )
+    )
+  ),
+  'projection_surface_entry_drift', (
+    select count(*) from (
+      select tenant_key, assessment_id, projection_entry_id from ecl_projection.home_enterprise_landscape where tenant_key = {tenant} and assessment_id = {assessment}
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.source_contract_360 where tenant_key = {tenant} and assessment_id = {assessment}
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.source_vendor_360 where tenant_key = {tenant} and assessment_id = {assessment}
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.source_value_levers where tenant_key = {tenant} and assessment_id = {assessment}
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.source_event_workspace where tenant_key = {tenant} and assessment_id = {assessment}
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.tower_command_center where tenant_key = {tenant} and assessment_id = {assessment}
+      union all select tenant_key, assessment_id, projection_entry_id from ecl_projection.intelligence_context_pack where tenant_key = {tenant} and assessment_id = {assessment}
+    ) p
+    left join ecl_projection.projection_entry pe
+      on pe.tenant_key = p.tenant_key
+      and pe.assessment_id = p.assessment_id
+      and pe.id = p.projection_entry_id
+    where pe.id is null
+  ),
+  'projection_entry_metric_ref_drift', (
+    select count(*) from ecl_projection.projection_entry_metric_ref pemr
+    left join ecl_context.metric_definition md
+      on md.tenant_key = pemr.tenant_key
+      and md.metric_key = pemr.metric_key
+    where pemr.tenant_key = {tenant} and pemr.assessment_id = {assessment} and md.metric_key is null
+  ),
+  'projection_entry_object_ref_drift', (
+    select count(*) from ecl_projection.projection_entry_object_ref peor
+    left join ecl_context.object o
+      on o.tenant_key = peor.tenant_key
+      and o.assessment_id = peor.assessment_id
+      and o.id = peor.object_id
+    where peor.tenant_key = {tenant} and peor.assessment_id = {assessment} and o.id is null
+  ),
+  'projection_entry_source_record_ref_drift', (
+    select count(*) from ecl_projection.projection_entry_source_record_ref pesr
+    left join ecl_source.source_record sr
+      on sr.tenant_key = pesr.tenant_key
+      and sr.assessment_id = pesr.assessment_id
+      and sr.id = pesr.source_record_id
+    where pesr.tenant_key = {tenant} and pesr.assessment_id = {assessment} and sr.id is null
   ),
   'home_primary_object_drift', (
     select count(*) from ecl_projection.home_enterprise_landscape p
@@ -440,6 +507,11 @@ def validate_readback(readback: dict[str, Any], expected: dict[str, int], plante
         "home_refusal_without_payload",
         "home_application_count_basis_drift",
         "home_application_page_deployment_rows",
+        "projection_entry_count_drift",
+        "projection_surface_entry_drift",
+        "projection_entry_metric_ref_drift",
+        "projection_entry_object_ref_drift",
+        "projection_entry_source_record_ref_drift",
         "tower_primary_object_drift",
         "tower_gated_without_reason",
         "intelligence_context_pack_drift",
