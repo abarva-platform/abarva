@@ -30,6 +30,7 @@ Extends the ECL consultant evaluation runner so it can capture signed-in aVa ans
 
 - Extends `scripts/ecl/run_ecl_ava_consultant_eval.mjs` with `--capture-live`.
 - The live mode signs in through private browser proof or Clerk ticket, captures `/api/intelligence/ask` NDJSON, writes answer JSONL, and evaluates the rows with the same deterministic case checks.
+- Adds `npm run ecl:ava-consultant-eval:capture-live` so the governed ACA operator wrapper can execute live capture without needing argument passthrough.
 
 ## QA / Validation
 
@@ -41,11 +42,11 @@ Extends the ECL consultant evaluation runner so it can capture signed-in aVa ans
 
 ## Rollout Plan
 
-Merge to `main`. This is an evaluation-tooling change only. It does not require Azure Container Apps deployment, data-plane mutation, provider cutover, or traffic movement. A governed private operator run can execute the live capture after merge.
+Merge to `main`. This is an evaluation-tooling change only. It does not require data-plane mutation, provider cutover, or traffic movement. A governed private operator run can execute the live capture from a digest-pinned image containing this script alias after merge.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: not required.
+- Repo-owned deploy workflow: required only to produce a digest-pinned image containing the operator script alias before the private operator job executes.
 - Shared runtime mutators: none.
 - Approved image digest: not applicable.
 - ACA runtime invariant: not applicable.
