@@ -8,6 +8,7 @@ import path from "node:path";
 
 const repoRoot = path.resolve(new URL("../../..", import.meta.url).pathname);
 const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ecl-azure-gate-validator-"));
+const readbackLayers = ["source", "context", "commercial", "review", "projection", "cube"];
 
 const ackKeys = [
   "approved_for_future_aca_job_submission",
@@ -22,89 +23,10 @@ const ackKeys = [
   "human_review_after_readback_required",
 ];
 
-const expectedReadback = {
-  source: {
-    source_record: 7080,
-    source_file: 14,
-    document: 720,
-    document_extraction: 250,
-    extraction_distinct_spans: 250,
-    client_attested_rows: 0,
-  },
-  context: {
-    object_type_catalog: 20,
-    object: 3825,
-    application: 750,
-    application_deployment: 1650,
-    vendor: 215,
-    data_platform: 263,
-    infrastructure: 220,
-    relationship: 8972,
-    deployment_of: 1650,
-    hosted_on: 1650,
-    integrates_with: 972,
-    metric_definition: 127,
-    measure: 13190,
-    measure_metric_drift: 0,
-    relationship_endpoint_drift: 0,
-  },
-  commercial: {
-    contract: 230,
-    contract_service_line: 230,
-    contract_scope: 690,
-    invoice_line: 480,
-    sla_observation: 260,
-    contract_scope_object_drift: 0,
-    contract_vendor_drift: 0,
-    sla_metric_drift: 0,
-  },
-  review: {
-    review_event: 658,
-    review_contract_subjects: 277,
-    review_invoice_subjects: 120,
-    review_sla_subjects: 260,
-    review_context_pack_subjects: 1,
-    review_contract_drift: 0,
-    review_invoice_drift: 0,
-    review_sla_drift: 0,
-    review_source_record_drift: 0,
-  },
-  projection: {
-    projection_manifest: 7,
-    home_enterprise_landscape: 2946,
-    source_contract_360: 230,
-    source_vendor_360: 101,
-    source_value_levers: 230,
-    source_event_workspace: 173,
-    tower_command_center: 930,
-    intelligence_context_pack: 9,
-    home_primary_object_drift: 0,
-    home_refusal_without_payload: 0,
-    home_application_count_basis_drift: 0,
-    home_application_page_deployment_rows: 0,
-    contract_projection_contract_drift: 0,
-    event_review_drift: 0,
-    event_rows_without_evidence_payload: 0,
-    source_value_claimable_rows: 0,
-    source_value_gated_rows: 230,
-    tower_primary_object_drift: 0,
-    tower_gated_without_reason: 0,
-    intelligence_context_pack_drift: 0,
-    intelligence_primary_object_drift: 0,
-    value_lever_metric_drift: 0,
-    vendor_projection_vendor_drift: 0,
-  },
-  cube: {
-    cube_manifest: 9,
-    cube_slice: 29,
-    cube_slice_metric: 103,
-    cube_slice_measure: 4320,
-    cube_key_count: 9,
-    cube_metric_drift: 0,
-    cube_measure_drift: 0,
-    json_metric_without_fk: 0,
-  },
-};
+const countContract = JSON.parse(
+  fs.readFileSync(path.join(repoRoot, "docs/architecture/ecl-dense-all-layer-count-contract.json"), "utf8"),
+);
+const expectedReadback = Object.fromEntries(readbackLayers.map((layer) => [layer, countContract.expected[layer]]));
 
 function writeJson(file, value) {
   fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);

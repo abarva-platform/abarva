@@ -1,0 +1,238 @@
+{
+  "version": 1,
+  "contract_id": "ecl-dense-all-layer-local-proof-counts-2026-08-24",
+  "purpose": "Single expected-count contract for the dense local ECL proof. Count changes from planted demo findings are classified here before CI expectations move.",
+  "rules": [
+    "A planted-data change may raise an expected count when the additional rows are traced to a named finding or producer.",
+    "A count decrease requires a written explanation and release record reference before the expected value may be updated.",
+    "Identity fields are not finding payloads. Demo findings must be planted through attributes or additional rows, not by replacing primary keys used by downstream relationships."
+  ],
+  "release_record": "docs/releases/records/2026-08-24-ecl-count-delta-classification.md",
+  "expected": {
+    "queue": {
+      "accepted": true,
+      "slice_count": 16,
+      "auto_proceed_slice_count": 12,
+      "blocked_slice_count": 4
+    },
+    "execution": {
+      "accepted": true,
+      "passed_executable_slice_count": 12,
+      "executable_slice_count": 12
+    },
+    "operator": {
+      "accepted": true,
+      "completion_percent": 100
+    },
+    "raw": {
+      "expected_workbooks": 14,
+      "landed_workbooks": 14,
+      "source_room_extracts": 12,
+      "traceability_rows": 2749,
+      "blocking_gaps": 0
+    },
+    "dense": {
+      "extract_count": 14,
+      "row_count": 7080,
+      "field_dictionary_rows": 236
+    },
+    "producer": {
+      "table_count": 36,
+      "source_family_count": 14,
+      "dense_source_rows": 7080,
+      "source_supplied_tables": 11,
+      "partial_source_supplied_tables": 3,
+      "downstream_builder_required_tables": 21,
+      "missing_core_producer_count": 0
+    },
+    "source": {
+      "source_file": 14,
+      "source_record": 7080,
+      "document": 720,
+      "document_extraction": 250,
+      "extraction_distinct_spans": 250,
+      "client_attested_rows": 0
+    },
+    "context": {
+      "object_type_catalog": 20,
+      "object": 3828,
+      "application": 750,
+      "application_deployment": 1650,
+      "vendor": 216,
+      "data_platform": 265,
+      "infrastructure": 220,
+      "relationship": 8978,
+      "deployment_of": 1650,
+      "hosted_on": 1650,
+      "integrates_with": 975,
+      "metric_definition": 128,
+      "measure": 13190,
+      "relationship_endpoint_drift": 0,
+      "measure_metric_drift": 0
+    },
+    "commercial": {
+      "contract": 230,
+      "contract_service_line": 230,
+      "contract_scope": 690,
+      "invoice_line": 480,
+      "sla_observation": 260,
+      "contract_vendor_drift": 0,
+      "contract_scope_object_drift": 0,
+      "sla_metric_drift": 0
+    },
+    "review": {
+      "review_event": 686,
+      "review_contract_subjects": 320,
+      "review_invoice_subjects": 105,
+      "review_sla_subjects": 260,
+      "review_context_pack_subjects": 1,
+      "review_source_record_drift": 0,
+      "review_contract_drift": 0,
+      "review_invoice_drift": 0,
+      "review_sla_drift": 0
+    },
+    "projection": {
+      "projection_manifest": 7,
+      "home_enterprise_landscape": 2946,
+      "source_contract_360": 230,
+      "source_vendor_360": 102,
+      "source_value_levers": 230,
+      "source_event_workspace": 181,
+      "tower_command_center": 930,
+      "intelligence_context_pack": 9,
+      "home_primary_object_drift": 0,
+      "home_refusal_without_payload": 0,
+      "home_application_count_basis_drift": 0,
+      "home_application_page_deployment_rows": 0,
+      "contract_projection_contract_drift": 0,
+      "vendor_projection_vendor_drift": 0,
+      "value_lever_metric_drift": 0,
+      "event_review_drift": 0,
+      "event_rows_without_evidence_payload": 0,
+      "source_value_claimable_rows": 0,
+      "source_value_gated_rows": 230,
+      "tower_primary_object_drift": 0,
+      "tower_gated_without_reason": 0,
+      "intelligence_context_pack_drift": 0,
+      "intelligence_primary_object_drift": 0
+    },
+    "cube": {
+      "cube_manifest": 9,
+      "cube_slice": 29,
+      "cube_slice_metric": 103,
+      "cube_slice_measure": 4320,
+      "cube_key_count": 9,
+      "cube_metric_drift": 0,
+      "cube_measure_drift": 0,
+      "json_metric_without_fk": 0,
+      "blocked_without_gap": 0
+    }
+  },
+  "delta_classifications": [
+    {
+      "key": "dense.field_dictionary_rows",
+      "before": 231,
+      "after": 236,
+      "delta": 5,
+      "classification": "expected_increase",
+      "explanation": "Four generator fields plus the pinned demo-as-of date field were added so planted findings can be deterministic and time-stable."
+    },
+    {
+      "key": "context.object",
+      "before": 3825,
+      "after": 3828,
+      "delta": 3,
+      "classification": "expected_increase",
+      "explanation": "Demo findings add one net vendor and two net data-platform objects."
+    },
+    {
+      "key": "context.vendor",
+      "before": 215,
+      "after": 216,
+      "delta": 1,
+      "classification": "expected_increase",
+      "explanation": "Contract finding planting introduces one additional governed supplier in the dense commercial estate."
+    },
+    {
+      "key": "context.data_platform",
+      "before": 263,
+      "after": 265,
+      "delta": 2,
+      "classification": "expected_increase",
+      "explanation": "Data and BI finding planting creates two additional distinct platform/function/workload combinations."
+    },
+    {
+      "key": "context.relationship",
+      "before": 8972,
+      "after": 8978,
+      "delta": 6,
+      "classification": "expected_increase_after_defect_fix",
+      "explanation": "The unresolved-hosting defect was fixed by preserving platform identity. Remaining net increase comes from planted data-platform and data-flow relationships."
+    },
+    {
+      "key": "context.hosted_on",
+      "before": 1650,
+      "after": 1650,
+      "delta": 0,
+      "classification": "defect_fixed",
+      "explanation": "PR 6783 briefly reduced hosted_on to 1640 by overwriting a platform primary key. The planted Netezza finding now preserves the numeric platform_id, restoring one HOSTED_ON edge per deployment."
+    },
+    {
+      "key": "context.integrates_with",
+      "before": 972,
+      "after": 975,
+      "delta": 3,
+      "classification": "expected_increase",
+      "explanation": "Revenue-cycle data-flow findings add three additional resolvable integration edges."
+    },
+    {
+      "key": "context.metric_definition",
+      "before": 127,
+      "after": 128,
+      "delta": 1,
+      "classification": "expected_increase",
+      "explanation": "The Netezza platform finding introduces one platform-type-specific metric definition."
+    },
+    {
+      "key": "review.review_event",
+      "before": 658,
+      "after": 686,
+      "delta": 28,
+      "classification": "expected_increase",
+      "explanation": "Contract findings add commercial review gates while finance attribution findings reduce invoice allocation review rows."
+    },
+    {
+      "key": "review.review_contract_subjects",
+      "before": 277,
+      "after": 320,
+      "delta": 43,
+      "classification": "expected_increase",
+      "explanation": "F2 and commercial-protection findings add contract-subject review events for benchmarking, notice-window, and minimum-commitment gates."
+    },
+    {
+      "key": "review.review_invoice_subjects",
+      "before": 120,
+      "after": 105,
+      "delta": -15,
+      "classification": "intentional_decrease",
+      "release_record_required": true,
+      "explanation": "F7 reclassifies the first 58 finance rows as unattributed unknown allocations. Fifteen of those rows were previously estimated invoice allocation review rows, so they no longer qualify as invoice-subject review events."
+    },
+    {
+      "key": "projection.source_vendor_360",
+      "before": 101,
+      "after": 102,
+      "delta": 1,
+      "classification": "expected_increase",
+      "explanation": "The added governed supplier appears in Source vendor 360."
+    },
+    {
+      "key": "projection.source_event_workspace",
+      "before": 173,
+      "after": 181,
+      "delta": 8,
+      "classification": "expected_increase",
+      "explanation": "Additional review gates generate additional Source event-workspace rows."
+    }
+  ]
+}

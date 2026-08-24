@@ -848,6 +848,7 @@
     "test:ecl-projection-schema-reconciliation": "node scripts/ecl/__tests__/run-ecl-projection-schema-reconciliation-tests.mjs",
     "test:ecl-dense-readback-query": "node scripts/ecl/__tests__/run-ecl-dense-readback-query-tests.mjs",
     "test:ecl-dense-azure-gate-validator": "node scripts/ecl/__tests__/run-ecl-dense-azure-gate-validator-tests.mjs",
+    "ecl:dense-all-layer:validate-counts": "python3 scripts/ecl/validate_dense_all_layer_local_proof_counts.py",
     "ecl:product-browser-qa-gate:package": "python3 scripts/ecl/write_ecl_product_browser_qa_gate_package.py",
     "ecl:product-browser-qa-gate:validate": "python3 scripts/ecl/validate_ecl_product_browser_qa_gate_package.py",
     "ecl:azure-load-approval-request:package": "python3 scripts/ecl/write_ecl_azure_load_approval_request.py",
