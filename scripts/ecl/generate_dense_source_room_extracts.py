@@ -41,6 +41,45 @@ TARGETS = {
     "SP14_Deployments_Hosting": ("Application_Deployments_Hosting_SYNTHETIC.csv", 1650, "one row per application deployment/environment hosted on a platform"),
 }
 
+
+def stable_index(*parts: object, modulo: int) -> int:
+    digest = hashlib.sha256("|".join(str(part) for part in parts).encode("utf-8")).hexdigest()
+    return int(digest[:12], 16) % modulo
+
+
+def app_ref(*parts: object) -> str:
+    return f"APP-{stable_index('app-ref', *parts, modulo=750) + 1:04d}"
+
+
+def platform_ref(*parts: object) -> str:
+    return f"PLAT-{stable_index('platform-ref', *parts, modulo=220) + 1:04d}"
+
+
+def distinct_app_refs(label: str, row_index: int, count: int) -> list[str]:
+    refs: list[str] = []
+    salt = 0
+    while len(refs) < count:
+        ref = app_ref(label, row_index, salt)
+        if ref not in refs:
+            refs.append(ref)
+        salt += 1
+    return refs
+
+
+def weighted_choice(label: str, row_index: int, weighted_values: list[tuple[str, int]], salt: object = "") -> str:
+    total = sum(weight for _value, weight in weighted_values)
+    pick = stable_index(label, row_index, salt, modulo=total)
+    cursor = 0
+    for value, weight in weighted_values:
+        cursor += weight
+        if pick < cursor:
+            return value
+    return weighted_values[-1][0]
+
+
+def weighted_function(label: str, row_index: int, salt: object = "") -> str:
+    return weighted_choice(label, row_index, FUNCTION_WEIGHTS, salt)
+
 SOURCE_METADATA = {
     "SP01_Documents_Interviews": {
         "owner": "Executive sponsors, function leaders, and engagement interview lead",
@@ -143,6 +182,21 @@ FUNCTIONS = [
     "Pharmacy",
 ]
 
+FUNCTION_WEIGHTS = [
+    ("Clinical Operations", 22),
+    ("Health Plan Operations", 18),
+    ("Data and Analytics", 13),
+    ("Information Technology", 11),
+    ("Revenue Cycle", 10),
+    ("Member Services", 8),
+    ("Provider Network", 7),
+    ("Finance", 7),
+    ("Pharmacy", 6),
+    ("Supply Chain", 5),
+    ("Human Resources", 4),
+    ("Risk and Compliance", 3),
+]
+
 APP_PRODUCTS = [
     ("Epic Tapestry", "Epic Systems Corporation", "health_plan", "claims"),
     ("Facets", "TriZetto Corporation", "health_plan", "core_admin"),
@@ -186,6 +240,52 @@ VENDORS.extend(
 DATA_TECH = ["Power BI", "Tableau", "SSRS", "Business Objects", "Cognos", "Qlik", "SAS", "Informatica", "SSIS", "DataStage", "SQL Agent", "Python", "Alteryx"]
 WORKLOADS = ["reports", "dashboards", "etl_jobs", "stored_procedures", "scripts", "data_marts", "semantic_models", "notebooks"]
 INFRA_TYPES = ["mainframe", "teradata_appliance", "netezza_appliance", "sql_server_cluster", "epic_aws", "vmware_cluster", "azure_subscription", "aws_account", "storage_platform", "citrix_farm", "network_segment", "security_platform"]
+DATA_TECH_WEIGHTS = [
+    ("Power BI", 18),
+    ("Tableau", 14),
+    ("SSRS", 10),
+    ("Business Objects", 7),
+    ("Cognos", 6),
+    ("Qlik", 5),
+    ("SAS", 8),
+    ("Informatica", 9),
+    ("SSIS", 10),
+    ("DataStage", 5),
+    ("SQL Agent", 12),
+    ("Python", 9),
+    ("Alteryx", 4),
+]
+WORKLOAD_WEIGHTS = [
+    ("reports", 26),
+    ("dashboards", 20),
+    ("etl_jobs", 18),
+    ("stored_procedures", 13),
+    ("scripts", 11),
+    ("data_marts", 7),
+    ("semantic_models", 4),
+    ("notebooks", 3),
+]
+INFRA_TYPE_WEIGHTS = [
+    ("mainframe", 3),
+    ("teradata_appliance", 2),
+    ("netezza_appliance", 2),
+    ("sql_server_cluster", 18),
+    ("epic_aws", 5),
+    ("vmware_cluster", 18),
+    ("azure_subscription", 12),
+    ("aws_account", 14),
+    ("storage_platform", 12),
+    ("citrix_farm", 5),
+    ("network_segment", 11),
+    ("security_platform", 9),
+]
+HOSTING_LOCATION_WEIGHTS = [
+    ("primary_dc", 22),
+    ("secondary_dc", 12),
+    ("aws", 24),
+    ("azure", 17),
+    ("saas_vendor", 25),
+]
 AI_TOOLS = [
     "Microsoft 365 Copilot",
     "GitHub Copilot",
@@ -362,7 +462,7 @@ def applications(rng: Random, count: int) -> list[dict[str, Any]]:
     weights: list[float] = []
     for i in range(1, count + 1):
         product, _vendor, domain, subdomain = APP_PRODUCTS[(i - 1) % len(APP_PRODUCTS)]
-        function = FUNCTIONS[(i * 5) % len(FUNCTIONS)]
+        function = weighted_function("applications", i)
         base = 1.0
         if "Epic" in product:
             base *= 7.5
@@ -382,7 +482,7 @@ def applications(rng: Random, count: int) -> list[dict[str, Any]]:
 
     for i in range(1, count + 1):
         product, vendor, domain, subdomain = APP_PRODUCTS[(i - 1) % len(APP_PRODUCTS)]
-        function = FUNCTIONS[(i * 5) % len(FUNCTIONS)]
+        function = weighted_function("applications", i)
         environment_count = [1, 1, 1, 2, 2, 3, 3, 4, 5][i % 9]
         annual_cost = round((weights[i - 1] / weight_total) * APPLICATION_COST_TOTAL_USD, 2)
         rows.append(
@@ -417,7 +517,7 @@ def interviews(count: int) -> list[dict[str, Any]]:
     themes = ["strategy", "operating model", "data quality", "governance", "application debt", "AI readiness", "vendor leverage", "budget pressure"]
     rows = []
     for i in range(1, count + 1):
-        function = FUNCTIONS[i % len(FUNCTIONS)]
+        function = weighted_function("interviews", i)
         theme = themes[i % len(themes)]
         rows.append(
             {
@@ -447,7 +547,7 @@ def hris(count: int) -> list[dict[str, Any]]:
             {
                 "source_system": "HRIS role summary synthetic export",
                 "source_row_id": f"HR-{i:04d}",
-                "function": FUNCTIONS[i % len(FUNCTIONS)],
+                "function": weighted_function("hris", i),
                 "role_family": roles[i % len(roles)],
                 "location_segment": ["corporate", "hospital", "remote", "shared_services"][i % 4],
                 "employee_count": 8 + (i * 13) % 740,
@@ -464,9 +564,9 @@ def hris(count: int) -> list[dict[str, Any]]:
 def data_bi(count: int) -> list[dict[str, Any]]:
     rows = []
     for i in range(1, count + 1):
-        workload = WORKLOADS[i % len(WORKLOADS)]
-        tech = DATA_TECH[i % len(DATA_TECH)]
-        function = FUNCTIONS[(i * 3) % len(FUNCTIONS)]
+        workload = weighted_choice("data-bi-workload", i, WORKLOAD_WEIGHTS)
+        tech = weighted_choice("data-bi-tech", i, DATA_TECH_WEIGHTS)
+        function = weighted_function("data-bi", i)
         rows.append(
             {
                 "source_system": "BI ETL analytics volume synthetic export",
@@ -490,7 +590,7 @@ def data_bi(count: int) -> list[dict[str, Any]]:
 def infrastructure(count: int) -> list[dict[str, Any]]:
     rows = []
     for i in range(1, count + 1):
-        infra_type = INFRA_TYPES[i % len(INFRA_TYPES)]
+        infra_type = weighted_choice("infrastructure-type", i, INFRA_TYPE_WEIGHTS)
         rows.append(
             {
                 "source_system": "hosting platform synthetic export",
@@ -498,8 +598,8 @@ def infrastructure(count: int) -> list[dict[str, Any]]:
                 "platform_id": f"PLAT-{i:04d}",
                 "platform_name": f"{infra_type.replace('_', ' ').title()} {i:03d}",
                 "platform_type": infra_type,
-                "hosting_location": ["primary_dc", "secondary_dc", "aws", "azure", "saas_vendor"][i % 5],
-                "business_function": FUNCTIONS[(i * 2) % len(FUNCTIONS)],
+                "hosting_location": weighted_choice("infrastructure-hosting-location", i, HOSTING_LOCATION_WEIGHTS),
+                "business_function": weighted_function("infrastructure", i),
                 "capacity_unit": "mips" if "mainframe" in infra_type else ("tb" if "storage" in infra_type or "appliance" in infra_type else "vcore"),
                 "capacity_value": 100 + (i * 47) % 28000,
                 "utilization_percent": 25 + (i * 7) % 74,
@@ -519,12 +619,12 @@ def finance(count: int) -> list[dict[str, Any]]:
             {
                 "source_system": "ERP GL budget actuals synthetic export",
                 "source_row_id": f"FIN-{i:04d}",
-                "fiscal_period": f"2026-{(i % 12) + 1:02d}",
-                "cost_center": f"CC-{1000 + i % 240:04d}",
-                "business_function": FUNCTIONS[i % len(FUNCTIONS)],
+                "fiscal_period": f"{2025 + ((i - 1) // 240)}-{((i - 1) % 12) + 1:02d}",
+                "cost_center": f"CC-{1000 + stable_index('finance-cost-center', i, modulo=180):04d}",
+                "business_function": weighted_function("finance", i),
                 "account_category": accounts[i % len(accounts)],
                 "supplier_name": VENDORS[i % len(VENDORS)],
-                "application_or_platform_ref": f"APP-{(i % 750) + 1:04d}" if i % 3 else f"PLAT-{(i % 220) + 1:04d}",
+                "application_or_platform_ref": app_ref("finance", i) if i % 3 else platform_ref("finance", i),
                 "budget_usd": 20000 + (i * 9137) % 2500000,
                 "actual_usd": 18000 + (i * 10007) % 2700000,
                 "allocation_basis": ["direct", "allocated", "estimated", "unknown"][i % 4],
@@ -544,13 +644,13 @@ def ppm(count: int) -> list[dict[str, Any]]:
                 "source_row_id": f"PPM-{i:04d}",
                 "program_id": f"PROG-{i:04d}",
                 "initiative_id": f"INIT-{i:04d}",
-                "program_name": f"{FUNCTIONS[i % len(FUNCTIONS)]} modernization wave {i % 17 + 1}",
-                "sponsor_function": FUNCTIONS[i % len(FUNCTIONS)],
+                "program_name": f"{weighted_function('ppm', i)} modernization wave {i % 17 + 1}",
+                "sponsor_function": weighted_function("ppm", i),
                 "status": ["proposed", "approved", "in_flight", "at_risk", "closed"][i % 5],
                 "approved_budget_usd": 250000 + (i * 28391) % 25000000,
                 "forecast_usd": 260000 + (i * 30103) % 28000000,
                 "target_value_usd": 500000 + (i * 42137) % 45000000,
-                "dependent_applications": f"APP-{(i % 750) + 1:04d};APP-{((i + 39) % 750) + 1:04d}",
+                "dependent_applications": ";".join(distinct_app_refs("ppm-dependent", i, 2)),
                 "source_basis": row_basis(i),
                 "review_state": review_state(i),
             }
@@ -604,7 +704,7 @@ def contracts(count: int) -> list[dict[str, Any]]:
                 "notice_window_days": [90, 120, 180, 365][i % 4],
                 "benchmarking_right": ["present", "absent", "limited", "unknown"][i % 4],
                 "minimum_commitment_usd": 0 if i % 5 else 250000 + (i * 31111) % 9000000,
-                "scoped_applications": f"APP-{(i % 750) + 1:04d};APP-{((i + 71) % 750) + 1:04d};APP-{((i + 113) % 750) + 1:04d}",
+                "scoped_applications": ";".join(distinct_app_refs("contract-scope", i, 3)),
                 "source_basis": row_basis(i),
                 "review_state": review_state(i),
             }
@@ -621,8 +721,8 @@ def grc(count: int) -> list[dict[str, Any]]:
                 "source_row_id": f"GRC-{i:04d}",
                 "risk_or_control_id": f"RISK-{i:04d}" if i % 2 else f"CTRL-{i:04d}",
                 "risk_type": RISK_TYPES[i % len(RISK_TYPES)],
-                "business_function": FUNCTIONS[i % len(FUNCTIONS)],
-                "object_ref": f"APP-{(i % 750) + 1:04d}" if i % 4 else f"PLAT-{(i % 220) + 1:04d}",
+                "business_function": weighted_function("grc", i),
+                "object_ref": app_ref("grc", i) if i % 4 else platform_ref("grc", i),
                 "severity": ["critical", "high", "medium", "low"][i % 4],
                 "control_state": ["effective", "partially_effective", "missing", "unknown"][i % 4],
                 "open_exception_count": i % 13,
@@ -642,12 +742,12 @@ def kpis(count: int) -> list[dict[str, Any]]:
                 "source_system": "operations KPI synthetic export",
                 "source_row_id": f"KPI-{i:04d}",
                 "period": f"2026-Q{(i % 4) + 1}",
-                "business_function": FUNCTIONS[i % len(FUNCTIONS)],
+                "business_function": weighted_function("kpi", i),
                 "kpi_name": KPI_NAMES[i % len(KPI_NAMES)],
                 "kpi_value": round(20 + (i * 1.7) % 95, 2),
                 "kpi_unit": ["percent", "days", "usd", "count"][i % 4],
                 "target_value": round(25 + (i * 1.3) % 90, 2),
-                "source_application_ref": f"APP-{(i % 750) + 1:04d}",
+                "source_application_ref": app_ref("kpi", i),
                 "source_basis": row_basis(i),
                 "review_state": review_state(i),
             }
@@ -668,7 +768,7 @@ def ai_usage(count: int) -> list[dict[str, Any]]:
                 "model_name": AI_MODELS[i % len(AI_MODELS)],
                 "use_case_name": AI_USE_CASES[i % len(AI_USE_CASES)],
                 "vendor_name": "Microsoft Corporation" if "Copilot" in tool_name else ("ServiceNow Inc." if "ServiceNow" in tool_name else "AbarVa synthetic vendor mapping"),
-                "business_function": FUNCTIONS[i % len(FUNCTIONS)],
+                "business_function": weighted_function("ai-usage", i),
                 "user_segment": ["executive", "director", "manager", "analyst", "engineer", "clinical_user"][i % 6],
                 "licensed_users": 25 + (i * 19) % 6000,
                 "active_users": 5 + (i * 17) % 4500,
@@ -687,14 +787,14 @@ def evidence(count: int) -> list[dict[str, Any]]:
     non_contract_types = ["interview_note", "cmdb_export", "finance_extract", "sla_report", "dashboard_export", "policy_document", "attestation"]
     for i in range(1, count + 1):
         artifact_type = "contract_pdf" if i <= 420 else non_contract_types[i % len(non_contract_types)]
-        supported_ref = f"CTR-{(i % 230) + 1:04d}" if artifact_type == "contract_pdf" else (f"APP-{(i % 750) + 1:04d}" if i % 3 else f"CTR-{(i % 230) + 1:04d}")
+        supported_ref = f"CTR-{(i % 230) + 1:04d}" if artifact_type == "contract_pdf" else (app_ref("evidence", i) if i % 3 else f"CTR-{(i % 230) + 1:04d}")
         rows.append(
             {
                 "source_system": "evidence room synthetic register",
                 "source_row_id": f"EVID-{i:04d}",
                 "evidence_id": f"EVID-{i:04d}",
                 "artifact_type": artifact_type,
-                "owning_function": FUNCTIONS[i % len(FUNCTIONS)],
+                "owning_function": weighted_function("evidence", i),
                 "supports_object_ref": supported_ref,
                 "document_date": f"2026-{(i % 12) + 1:02d}-{(i % 27) + 1:02d}",
                 "verification_state": ["unverified", "owner_attested", "system_exported", "needs_follow_up"][i % 4],
@@ -712,7 +812,7 @@ def data_flows(count: int) -> list[dict[str, Any]]:
     patterns = ["batch_file", "api", "hl7", "edi", "streaming", "database_replication", "etl", "message_queue"]
     landing_layers = ["raw", "ods", "canonical", "mart", "reporting", "api_consumer"]
     for i in range(1, count + 1):
-        source = f"APP-{(i % 750) + 1:04d}"
+        source = app_ref("flow-source", i)
         if i % 7 == 0:
             target = "PLAT-DATA-HUB-001"
         elif i % 11 == 0:
@@ -720,7 +820,9 @@ def data_flows(count: int) -> list[dict[str, Any]]:
         elif i % 13 == 0:
             target = "PLAT-FIN-MART-001"
         else:
-            target = f"APP-{((i * 3) % 750) + 1:04d}"
+            target = app_ref("flow-target", i)
+            if target == source:
+                target = app_ref("flow-target-alt", i)
         rows.append(
             {
                 "source_system": "integration and data-flow synthetic export",
@@ -728,14 +830,14 @@ def data_flows(count: int) -> list[dict[str, Any]]:
                 "flow_id": f"FLOW-{i:04d}",
                 "source_object_ref": source,
                 "target_object_ref": target,
-                "source_function": FUNCTIONS[i % len(FUNCTIONS)],
-                "target_function": FUNCTIONS[(i * 2) % len(FUNCTIONS)],
+                "source_function": weighted_function("data-flow-source", i),
+                "target_function": weighted_function("data-flow-target", i),
                 "integration_pattern": patterns[i % len(patterns)],
                 "landing_layer": landing_layers[i % len(landing_layers)],
                 "consumption_layer": landing_layers[(i + 3) % len(landing_layers)],
                 "cadence": ["real_time", "hourly", "daily", "weekly", "monthly"][i % 5],
                 "regulated_data_flag": "yes" if i % 4 == 0 else "no",
-                "interface_owner": f"{FUNCTIONS[(i * 5) % len(FUNCTIONS)]} Integration Owner",
+                "interface_owner": f"{weighted_function('data-flow-owner', i)} Integration Owner",
                 "source_basis": row_basis(i),
                 "review_state": review_state(i),
             }
@@ -747,22 +849,20 @@ def deployments(count: int) -> list[dict[str, Any]]:
     rows = []
     envs = ["Production", "Test", "Training", "DR"]
     for i in range(1, count + 1):
-        app_index = (i % 750) + 1
-        platform_index = (i % 220) + 1
         env = envs[i % len(envs)]
         rows.append(
             {
                 "source_system": "deployment hosting synthetic export",
                 "source_row_id": f"DEP-{i:04d}",
                 "deployment_id": f"DEP-{i:04d}",
-                "application_id": f"APP-{app_index:04d}",
+                "application_id": app_ref("deployment", i),
                 "environment": env,
-                "hosting_platform_ref": f"PLAT-{platform_index:04d}",
+                "hosting_platform_ref": platform_ref("deployment", i),
                 "hosting_model": ["saas", "on_prem", "aws_hosted", "azure_hosted", "private_cloud"][i % 5],
                 "region_or_location": ["primary_dc", "secondary_dc", "us-east-1", "us-east-2", "central-us"][i % 5],
                 "runtime_state": "retired" if i % 37 == 0 else ("planned" if i % 23 == 0 else "active"),
                 "dr_tier": ["tier_1_active_active", "tier_2_warm", "tier_3_backup_only", "unknown"][i % 4],
-                "deployment_owner": f"{FUNCTIONS[(i * 4) % len(FUNCTIONS)]} Platform Owner",
+                "deployment_owner": f"{weighted_function('deployment-owner', i)} Platform Owner",
                 "source_basis": row_basis(i),
                 "review_state": review_state(i),
             }

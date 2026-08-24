@@ -178,6 +178,7 @@ def build_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
                 "tenant_key": sql_text(TENANT_KEY),
                 "assessment_id": sql_text(ASSESSMENT_ID),
                 "source_type": sql_text("synthetic_source_room"),
+                "origin": sql_text("synthetic_generator"),
                 "source_owner": sql_text(family),
                 "file_name": sql_text(file_path.name),
                 "blob_uri": sql_text(file_path.as_posix()),
@@ -272,7 +273,7 @@ def build_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
             "begin;",
             insert_sql(
                 "ecl_source.source_file",
-                ["id", "tenant_key", "assessment_id", "source_type", "source_owner", "file_name", "blob_uri", "file_hash", "source_date", "access_class", "quality_state", "metadata_json"],
+                ["id", "tenant_key", "assessment_id", "source_type", "origin", "source_owner", "file_name", "blob_uri", "file_hash", "source_date", "access_class", "quality_state", "metadata_json"],
                 source_file_rows,
             ),
             insert_sql(

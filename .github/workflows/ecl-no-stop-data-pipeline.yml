@@ -102,6 +102,7 @@ jobs:
             scripts/ecl/validate_source_excel_raw_landing.py \
             scripts/ecl/generate_dense_source_room_extracts.py \
             scripts/ecl/validate_dense_source_room_extracts.py \
+            scripts/ecl/load_client_intake_applications_layer.py \
             scripts/ecl/write_dense_source_room_ecl_producer_coverage.py \
             scripts/ecl/load_dense_source_room_source_layer.py \
             scripts/ecl/load_dense_source_room_context_layer.py \
@@ -113,6 +114,14 @@ jobs:
       - name: Reconcile ECL projection schema at named ref
         run: |
           npm run test:ecl-projection-schema-reconciliation
+
+      - name: Prove client intake application adapter
+        run: |
+          npm run test:ecl-client-intake-application-adapter
+
+      - name: Prove dense source-room plausibility gates
+        run: |
+          npm run test:ecl-dense-source-room-stride-gate
 
       - name: Run no-stop ECL execution queue
         env:
@@ -222,16 +231,16 @@ jobs:
 
           context_readback = context.get('readback', {})
           context_expected = {
-              'object': 3602,
+              'object': 3825,
               'application': 750,
               'application_deployment': 1650,
               'vendor': 215,
-              'data_platform': 104,
+              'data_platform': 263,
               'infrastructure': 220,
-              'relationship': 8297,
+              'relationship': 8972,
               'deployment_of': 1650,
               'hosted_on': 1650,
-              'integrates_with': 672,
+              'integrates_with': 972,
               'metric_definition': 127,
               'measure': 13190,
               'relationship_endpoint_drift': 0,

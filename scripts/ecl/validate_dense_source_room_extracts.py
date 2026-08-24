@@ -10,11 +10,13 @@ import json
 import sys
 from collections import Counter
 from pathlib import Path
+import re
 
 
 DEFAULT_OUT_DIR = Path("outputs/source-room-depth-catchup-2026-08-23")
 EXPECTED_EXTRACTS = 14
 EXPECTED_MIN_ROWS = 7000
+APP_REF_RE = re.compile(r"APP-(\d{4})")
 
 MIN_ROWS_BY_FAMILY = {
     "SP01_Documents_Interviews": 220,
@@ -56,7 +58,72 @@ REALISM_GATES = {
     "contract_value_top_decile_min": 0.30,
     "contract_value_top_decile_max": 0.75,
     "contract_max_single_value_share_max": 0.06,
+    "graph_stride_dominant_share_max": 0.30,
+    "graph_stride_min_observations": 50,
+    "function_distribution_min_distinct": 12,
+    "categorical_uniform_min_distinct": 4,
+    "categorical_uniform_max_min_ratio": 1.15,
+    "finance_min_fiscal_years": 2,
 }
+
+
+def app_ref_indices(value: str) -> list[int]:
+    return [int(match.group(1)) for match in APP_REF_RE.finditer(value or "")]
+
+
+def stride_distribution(rows: list[dict[str, str]], field_names: list[str]) -> Counter[int]:
+    strides: Counter[int] = Counter()
+    for row in rows:
+        for field_name in field_names:
+            refs = app_ref_indices(row.get(field_name, ""))
+            for left, right in zip(refs, refs[1:]):
+                if left != right:
+                    strides[(right - left) % 750] += 1
+    return strides
+
+
+def paired_stride_distribution(rows: list[dict[str, str]], left_field: str, right_field: str) -> Counter[int]:
+    strides: Counter[int] = Counter()
+    for row in rows:
+        left_refs = app_ref_indices(row.get(left_field, ""))
+        right_refs = app_ref_indices(row.get(right_field, ""))
+        if len(left_refs) == 1 and len(right_refs) == 1 and left_refs[0] != right_refs[0]:
+            strides[(right_refs[0] - left_refs[0]) % 750] += 1
+    return strides
+
+
+def validate_stride_gate(label: str, strides: Counter[int], issues: list[str]) -> None:
+    total = sum(strides.values())
+    if total < REALISM_GATES["graph_stride_min_observations"]:
+        return
+    dominant_stride, dominant_count = strides.most_common(1)[0]
+    dominant_share = dominant_count / total
+    if dominant_share > REALISM_GATES["graph_stride_dominant_share_max"]:
+        issues.append(
+            f"{label} dominant APP stride {dominant_stride} appears on {dominant_share:.1%} of {total} references; "
+            "synthetic graph appears rotational rather than modeled"
+        )
+
+
+def validate_categorical_shape(label: str, values: list[str], issues: list[str], *, min_distinct: int | None = None) -> None:
+    clean = [value for value in values if value]
+    counts = Counter(clean)
+    if not counts:
+        issues.append(f"{label} has no populated values")
+        return
+    required_distinct = min_distinct or REALISM_GATES["categorical_uniform_min_distinct"]
+    if len(counts) < required_distinct:
+        issues.append(f"{label} reaches {len(counts)} distinct values, below required {required_distinct}")
+        return
+    min_count = min(counts.values())
+    max_count = max(counts.values())
+    if min_count and max_count / min_count <= REALISM_GATES["categorical_uniform_max_min_ratio"]:
+        issues.append(f"{label} distribution is too uniform: min={min_count}, max={max_count}, distinct={len(counts)}")
+
+
+def owner_function(value: str) -> str:
+    suffix = " Platform Owner"
+    return value[: -len(suffix)] if value.endswith(suffix) else value
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -74,6 +141,12 @@ def require_distinct(rows: list[dict[str, str]], column: str, minimum: int, labe
 
 def validate_family_realism(family: str, rows: list[dict[str, str]], issues: list[str]) -> None:
     if family == "SP03_CMDB":
+        validate_categorical_shape(
+            f"{family}.business_function",
+            [row.get("business_function", "").strip() for row in rows],
+            issues,
+            min_distinct=REALISM_GATES["function_distribution_min_distinct"],
+        )
         tier_1_count = sum(1 for row in rows if row.get("criticality_tier") == "tier_1")
         tier_1_ratio = tier_1_count / len(rows)
         if not (REALISM_GATES["application_tier_1_min"] <= tier_1_ratio <= REALISM_GATES["application_tier_1_max"]):
@@ -93,6 +166,53 @@ def validate_family_realism(family: str, rows: list[dict[str, str]], issues: lis
         environment_counts = {row.get("environment_count", "").strip() for row in rows if row.get("environment_count", "").strip()}
         if len(environment_counts) < REALISM_GATES["application_environment_count_distinct_min"]:
             issues.append(f"{family} environment_count expected at least {REALISM_GATES['application_environment_count_distinct_min']} distinct values, got {len(environment_counts)}")
+
+    if family == "SP04_Data_BI_ETL":
+        validate_categorical_shape(
+            f"{family}.function",
+            [row.get("function", "").strip() for row in rows],
+            issues,
+            min_distinct=REALISM_GATES["function_distribution_min_distinct"],
+        )
+        validate_categorical_shape(f"{family}.technology_name", [row.get("technology_name", "").strip() for row in rows], issues)
+        validate_categorical_shape(f"{family}.workload_type", [row.get("workload_type", "").strip() for row in rows], issues)
+
+    if family == "SP05_Infrastructure":
+        validate_categorical_shape(
+            f"{family}.business_function",
+            [row.get("business_function", "").strip() for row in rows],
+            issues,
+            min_distinct=REALISM_GATES["function_distribution_min_distinct"],
+        )
+        validate_categorical_shape(f"{family}.platform_type", [row.get("platform_type", "").strip() for row in rows], issues)
+        validate_categorical_shape(f"{family}.hosting_location", [row.get("hosting_location", "").strip() for row in rows], issues)
+
+    if family == "SP06_Finance_ERP":
+        validate_categorical_shape(
+            f"{family}.business_function",
+            [row.get("business_function", "").strip() for row in rows],
+            issues,
+            min_distinct=REALISM_GATES["function_distribution_min_distinct"],
+        )
+        fiscal_years = {row.get("fiscal_period", "").split("-", 1)[0] for row in rows if row.get("fiscal_period", "").strip()}
+        if len(fiscal_years) < REALISM_GATES["finance_min_fiscal_years"]:
+            issues.append(f"{family} fiscal_period covers {len(fiscal_years)} fiscal years, below required {REALISM_GATES['finance_min_fiscal_years']}")
+        cost_center_counts = Counter(row.get("cost_center", "").strip() for row in rows if row.get("cost_center", "").strip())
+        if cost_center_counts and len(set(cost_center_counts.values())) < 2:
+            issues.append(f"{family} cost_center row counts are identical across all populated cost centers")
+
+    if family == "SP07_PPM":
+        validate_categorical_shape(
+            f"{family}.sponsor_function",
+            [row.get("sponsor_function", "").strip() for row in rows],
+            issues,
+            min_distinct=REALISM_GATES["function_distribution_min_distinct"],
+        )
+        validate_stride_gate(
+            f"{family}.dependent_applications",
+            stride_distribution(rows, ["dependent_applications"]),
+            issues,
+        )
 
     if family == "SP08_Vendor_Contract":
         supplier_counts = Counter(row.get("supplier_name", "").strip() for row in rows if row.get("supplier_name", "").strip())
@@ -121,13 +241,46 @@ def validate_family_realism(family: str, rows: list[dict[str, str]], issues: lis
         commitment_positive = sum(1 for row in rows if float(row.get("minimum_commitment_usd", "0") or 0) > 0)
         if commitment_positive < 20:
             issues.append(f"{family} has too few minimum-commitment records: {commitment_positive}")
+        validate_stride_gate(
+            f"{family}.scoped_applications",
+            stride_distribution(rows, ["scoped_applications"]),
+            issues,
+        )
+
+    if family == "SP09_GRC":
+        validate_categorical_shape(
+            f"{family}.business_function",
+            [row.get("business_function", "").strip() for row in rows],
+            issues,
+            min_distinct=REALISM_GATES["function_distribution_min_distinct"],
+        )
+
+    if family == "SP10_KPI_Operations":
+        validate_categorical_shape(
+            f"{family}.business_function",
+            [row.get("business_function", "").strip() for row in rows],
+            issues,
+            min_distinct=REALISM_GATES["function_distribution_min_distinct"],
+        )
 
     if family == "SP11_AI_Usage_Models":
+        validate_categorical_shape(
+            f"{family}.business_function",
+            [row.get("business_function", "").strip() for row in rows],
+            issues,
+            min_distinct=REALISM_GATES["function_distribution_min_distinct"],
+        )
         require_distinct(rows, "tool_name", REALISM_GATES["ai_tool_min"], family, issues)
         require_distinct(rows, "model_name", REALISM_GATES["ai_model_min"], family, issues)
         require_distinct(rows, "use_case_name", REALISM_GATES["ai_use_case_min"], family, issues)
 
     if family == "SP12_Evidence_Room":
+        validate_categorical_shape(
+            f"{family}.owning_function",
+            [row.get("owning_function", "").strip() for row in rows],
+            issues,
+            min_distinct=REALISM_GATES["function_distribution_min_distinct"],
+        )
         contract_docs = sum(1 for row in rows if row.get("artifact_type") == "contract_pdf")
         if contract_docs < REALISM_GATES["contract_document_min"]:
             issues.append(f"{family} contract documents expected at least {REALISM_GATES['contract_document_min']}, got {contract_docs}")
@@ -136,6 +289,18 @@ def validate_family_realism(family: str, rows: list[dict[str, str]], issues: lis
             issues.append(f"{family} page/span extraction pointers expected at least 200, got {span_rows}")
 
     if family == "SP13_Data_Flows_Integrations":
+        validate_categorical_shape(
+            f"{family}.source_function",
+            [row.get("source_function", "").strip() for row in rows],
+            issues,
+            min_distinct=REALISM_GATES["function_distribution_min_distinct"],
+        )
+        validate_categorical_shape(
+            f"{family}.target_function",
+            [row.get("target_function", "").strip() for row in rows],
+            issues,
+            min_distinct=REALISM_GATES["function_distribution_min_distinct"],
+        )
         target_counts = Counter(row.get("target_object_ref", "") for row in rows)
         singleton_ratio = sum(1 for count in target_counts.values() if count == 1) / max(len(target_counts), 1)
         max_inbound = max(target_counts.values(), default=0)
@@ -147,9 +312,20 @@ def validate_family_realism(family: str, rows: list[dict[str, str]], issues: lis
             issues.append(f"{family} has no raw landing layer")
         if not any(row.get("consumption_layer") in {"reporting", "api_consumer"} for row in rows):
             issues.append(f"{family} has no consumption layer")
+        validate_stride_gate(
+            f"{family}.source_to_target",
+            paired_stride_distribution(rows, "source_object_ref", "target_object_ref"),
+            issues,
+        )
 
     if family == "SP14_Deployments_Hosting":
         require_distinct(rows, "environment", REALISM_GATES["deployment_environment_min"], family, issues)
+        validate_categorical_shape(
+            f"{family}.deployment_owner",
+            [owner_function(row.get("deployment_owner", "").strip()) for row in rows],
+            issues,
+            min_distinct=REALISM_GATES["function_distribution_min_distinct"],
+        )
         if any(row.get("application_name", "").strip() for row in rows):
             issues.append(f"{family} should reference application_id, not restate application_name")
 

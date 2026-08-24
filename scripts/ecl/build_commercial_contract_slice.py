@@ -1466,6 +1466,7 @@ def source_file_row(file_id: str, path: Path, source_type: str, source_owner: st
         "tenant_key": sql_text(TENANT_KEY),
         "assessment_id": sql_text(ASSESSMENT_ID),
         "source_type": sql_text(source_type),
+        "origin": sql_text("synthetic_generator"),
         "source_owner": sql_text(source_owner),
         "file_name": sql_text(path.name),
         "blob_uri": sql_text(f"local-proof://{path.as_posix()}"),
@@ -2734,7 +2735,7 @@ def build_sql(out_dir: Path, extracts: dict[str, list[dict[str, str]]]) -> dict[
     measures = list({m["id"]: m for m in measures}.values())
 
     columns = {
-        "ecl_source.source_file": ["id", "tenant_key", "assessment_id", "source_type", "source_owner", "file_name", "blob_uri", "file_hash", "source_date", "access_class", "quality_state", "metadata_json"],
+        "ecl_source.source_file": ["id", "tenant_key", "assessment_id", "source_type", "origin", "source_owner", "file_name", "blob_uri", "file_hash", "source_date", "access_class", "quality_state", "metadata_json"],
         "ecl_source.source_record": ["id", "tenant_key", "assessment_id", "source_file_id", "native_id", "record_type", "row_number", "payload_json", "parse_state", "parse_notes"],
         "ecl_source.document": ["id", "tenant_key", "assessment_id", "source_file_id", "document_key", "document_type", "title", "file_hash", "page_count", "effective_date", "access_class", "review_state"],
         "ecl_source.document_extraction": ["id", "tenant_key", "assessment_id", "document_id", "field_key", "extracted_value", "normalized_value_json", "page_number", "span_reference", "basis", "confidence", "human_verification_state"],
