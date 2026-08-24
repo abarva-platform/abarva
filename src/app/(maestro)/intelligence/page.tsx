@@ -1,6 +1,7 @@
 // /intelligence · Advisory board surface.
 
 import { AppShell } from "@/components/shell/AppShell";
+import { EclDemoFindingsPanel } from "@/components/ecl/EclDemoFindingsPanel";
 import { AdvisoryIntelligencePage } from "@/components/intelligence-advisory/AdvisoryIntelligencePage";
 import {
   getActiveClientRow,
@@ -113,7 +114,10 @@ export default async function IntelligencePage({
       hasTenantKey={Boolean(effectiveClientKey)}
     >
       {intelligenceEclPreview ? (
-        <IntelligenceEclProjectionPanel preview={intelligenceEclPreview} />
+        <>
+          <IntelligenceEclProjectionPanel preview={intelligenceEclPreview} />
+          <EclDemoFindingsPanel product="intelligence" />
+        </>
       ) : null}
       <AdvisoryIntelligencePage viewModel={viewModel} />
     </AppShell>

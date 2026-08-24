@@ -22,6 +22,7 @@ const EMAILS = [
 const OUT_DIR = path.resolve(process.env.ECL_PRODUCT_BROWSER_PROOF_DIR || "job-output/ecl-product-browser-smoke");
 const EMIT_PROOF = process.env.EMIT_ACA_PROOF_BUNDLE !== "false";
 const PRIVATE_PROOF_TOKEN = process.env.ABARVA_PRIVATE_BROWSER_PROOF_TOKEN?.trim() || null;
+const FINDINGS_SPEC_PATH = path.resolve("docs/architecture/meridian-demo-findings-20260824.json");
 
 const ROUTES = [
   {
@@ -64,6 +65,160 @@ const BUILDER_VOCABULARY = [
   /\bserving\.[a-z0-9_]+\b/i,
   /\bbuilder vocabulary\b/i,
 ];
+
+const DEMO_FINDING_ASSERTIONS = [
+  {
+    id: "F1",
+    routeChecks: [
+      { routeKey: "source_workspace_ecl", requiredText: [/F1\b/i, /Three suppliers deliver the same capability/i] },
+      { routeKey: "tower_ecl", requiredText: [/F1\b/i, /Three suppliers deliver the same capability/i] },
+    ],
+  },
+  {
+    id: "F2",
+    routeChecks: [
+      { routeKey: "source_workspace_ecl", requiredText: [/F2\b/i, /auto-renews inside the window/i, /no way to stop it/i] },
+    ],
+  },
+  {
+    id: "F3",
+    routeChecks: [
+      { routeKey: "source_workspace_ecl", requiredText: [/F3\b/i, /protects the vendor, not the client/i] },
+      { routeKey: "tower_ecl", requiredText: [/F3\b/i, /protects the vendor, not the client/i] },
+    ],
+  },
+  {
+    id: "F4",
+    routeChecks: [
+      { routeKey: "home_preview_ecl", requiredText: [/F4\b/i, /five or more applications/i, /three or more vendors/i] },
+      { routeKey: "tower_ecl", requiredText: [/F4\b/i, /five or more applications/i, /three or more vendors/i] },
+    ],
+  },
+  {
+    id: "F5",
+    routeChecks: [
+      { routeKey: "home_preview_ecl", requiredText: [/F5\b/i, /four or more BI technologies/i, /ungoverned row/i] },
+      { routeKey: "intelligence_ecl", requiredText: [/F5\b/i, /four or more BI technologies/i, /ungoverned row/i] },
+    ],
+  },
+  {
+    id: "F6",
+    routeChecks: [
+      { routeKey: "home_preview_ecl", requiredText: [/F6\b/i, /appliance losing vendor support/i] },
+      { routeKey: "tower_ecl", requiredText: [/F6\b/i, /appliance losing vendor support/i] },
+    ],
+  },
+  {
+    id: "F7",
+    routeChecks: [
+      { routeKey: "home_preview_ecl", requiredText: [/F7\b/i, /Unattributed spend/i, /named gap/i, /never as zero/i] },
+      { routeKey: "tower_ecl", requiredText: [/F7\b/i, /Unattributed spend/i, /named gap/i, /never as zero/i] },
+    ],
+  },
+  {
+    id: "F8",
+    routeChecks: [
+      { routeKey: "tower_ecl", requiredText: [/F8\b/i, /Material value is gated/i, /every gated claim says why/i] },
+    ],
+  },
+  {
+    id: "F9",
+    routeChecks: [
+      { routeKey: "source_workspace_ecl", requiredText: [/F9\b/i, /Open control exceptions cluster/i] },
+      { routeKey: "tower_ecl", requiredText: [/F9\b/i, /Open control exceptions cluster/i] },
+    ],
+  },
+  {
+    id: "F10",
+    routeChecks: [
+      { routeKey: "home_preview_ecl", requiredText: [/F10\b/i, /data flow is correctly refused/i, /cannot answer the question/i] },
+    ],
+  },
+];
+
+function validateDemoFindingContract() {
+  const issues = [];
+  const spec = JSON.parse(fs.readFileSync(FINDINGS_SPEC_PATH, "utf8"));
+  const specIds = new Set((spec.findings ?? []).map((finding) => finding.id));
+  const assertionIds = new Set(DEMO_FINDING_ASSERTIONS.map((finding) => finding.id));
+  const routeKeys = new Set(ROUTES.map((route) => route.key));
+
+  if (spec.denominator?.denominator !== 10) {
+    issues.push("findings spec denominator must remain 10");
+  }
+  for (const id of specIds) {
+    if (!assertionIds.has(id)) issues.push(`missing_demo_finding_assertion_${id}`);
+  }
+  for (const assertion of DEMO_FINDING_ASSERTIONS) {
+    if (!specIds.has(assertion.id)) issues.push(`assertion_id_not_in_spec_${assertion.id}`);
+    if (!assertion.routeChecks?.length) issues.push(`finding_has_no_route_checks_${assertion.id}`);
+    for (const routeCheck of assertion.routeChecks ?? []) {
+      if (!routeKeys.has(routeCheck.routeKey)) {
+        issues.push(`finding_${assertion.id}_unknown_route_${routeCheck.routeKey}`);
+      }
+      if (!routeCheck.requiredText?.length) {
+        issues.push(`finding_${assertion.id}_${routeCheck.routeKey}_has_no_required_text`);
+      }
+    }
+  }
+  if (assertionIds.size !== 10) {
+    issues.push(`finding_assertion_count_${assertionIds.size}_expected_10`);
+  }
+  return {
+    accepted: issues.length === 0,
+    denominator: 10,
+    finding_ids: [...assertionIds].sort(),
+    issues,
+  };
+}
+
+function routeDemoFindingChecks(routeKey, bodyText) {
+  return DEMO_FINDING_ASSERTIONS.flatMap((finding) =>
+    finding.routeChecks
+      .filter((routeCheck) => routeCheck.routeKey === routeKey)
+      .map((routeCheck) => {
+        const missing = routeCheck.requiredText
+          .filter((pattern) => !pattern.test(bodyText))
+          .map((pattern) => String(pattern));
+        return {
+          id: finding.id,
+          route_key: routeKey,
+          accepted: missing.length === 0,
+          missing,
+        };
+      }),
+  );
+}
+
+function summarizeDemoFindings(routes) {
+  const routeChecks = routes.flatMap((route) => route.demo_finding_checks ?? []);
+  const checksByFinding = new Map();
+  for (const check of routeChecks) {
+    if (!checksByFinding.has(check.id)) checksByFinding.set(check.id, []);
+    checksByFinding.get(check.id).push(check);
+  }
+  const findings = DEMO_FINDING_ASSERTIONS.map((finding) => {
+    const checks = checksByFinding.get(finding.id) ?? [];
+    const accepted = checks.length === finding.routeChecks.length && checks.every((check) => check.accepted);
+    return {
+      id: finding.id,
+      accepted,
+      checked_surface_count: checks.length,
+      expected_surface_count: finding.routeChecks.length,
+      issues: checks.flatMap((check) =>
+        check.missing.map((missing) => `${check.route_key}: missing ${missing}`),
+      ),
+    };
+  });
+  const demonstrable = findings.filter((finding) => finding.accepted).length;
+  return {
+    metric: "findings demonstrable on a real surface",
+    numerator: demonstrable,
+    denominator: 10,
+    accepted: demonstrable === 10,
+    findings,
+  };
+}
 
 function requiredEnv(name) {
   const value = process.env[name]?.trim();
@@ -228,6 +383,12 @@ async function smokeRoute(page, route) {
   for (const expected of route.requiredText) {
     if (!expected.test(bodyText)) issues.push(`missing_required_text_${expected}`);
   }
+  const demoFindingChecks = routeDemoFindingChecks(route.key, bodyText);
+  for (const check of demoFindingChecks) {
+    for (const missing of check.missing) {
+      issues.push(`missing_demo_finding_${check.id}_${missing}`);
+    }
+  }
   for (const pattern of BUILDER_VOCABULARY) {
     if (pattern.test(bodyText)) issues.push(`client_visible_builder_vocabulary_${pattern}`);
   }
@@ -245,6 +406,7 @@ async function smokeRoute(page, route) {
     text_snapshot: path.relative(OUT_DIR, textPath),
     text_sha256: sha256(textPath),
     text_excerpt: textExcerpt(bodyText),
+    demo_finding_checks: demoFindingChecks,
     issues,
     accepted: issues.length === 0,
   };
@@ -277,6 +439,7 @@ function emitStructuredSummary(summary) {
     issues: summary.issues,
     provider: summary.provider,
     route_count: summary.route_count,
+    findings_demonstrable_on_real_surface: summary.findings_demonstrable_on_real_surface,
     routes: summary.routes.map((route) => ({
       key: route.key,
       url: route.url,
@@ -296,6 +459,20 @@ function emitStructuredSummary(summary) {
 }
 
 async function main() {
+  const contractValidation = validateDemoFindingContract();
+  if (process.argv.includes("--validate-demo-findings-contract")) {
+    console.log(JSON.stringify({
+      accepted: contractValidation.accepted,
+      checked_at: new Date().toISOString(),
+      demo_finding_contract: contractValidation,
+    }, null, 2));
+    if (!contractValidation.accepted) process.exitCode = 1;
+    return;
+  }
+  if (!contractValidation.accepted) {
+    throw new Error(`Demo finding assertion contract failed: ${contractValidation.issues.join("; ")}`);
+  }
+
   fs.rmSync(OUT_DIR, { recursive: true, force: true });
   fs.mkdirSync(OUT_DIR, { recursive: true });
 
@@ -332,6 +509,10 @@ async function main() {
     routes: results,
     tenant_key: TENANT_KEY,
   };
+  summary.demo_finding_contract = contractValidation;
+  summary.findings_demonstrable_on_real_surface = summarizeDemoFindings(results);
+  summary.accepted = summary.accepted && summary.findings_demonstrable_on_real_surface.accepted;
+  summary.issue_count = summary.issues.length;
   writeJson(path.join(OUT_DIR, "ecl_product_browser_smoke_summary.json"), summary);
   console.log(JSON.stringify(summary, null, 2));
   if (EMIT_PROOF) emitProofBundle();

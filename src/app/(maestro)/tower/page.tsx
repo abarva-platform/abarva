@@ -7,6 +7,7 @@
 import { Suspense } from "react";
 
 import { AppShell } from "@/components/shell/AppShell";
+import { EclDemoFindingsPanel } from "@/components/ecl/EclDemoFindingsPanel";
 import { TowerCommandCenterAvaShell } from "@/components/tower/command-center/TowerCommandCenterAvaShell";
 import {
   getActiveClientRow,
@@ -375,6 +376,7 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
     >
       <Suspense fallback={null}>
         <TowerEclProjectionPanel preview={towerEclPreview} />
+        {towerEclPreview ? <EclDemoFindingsPanel product="tower" /> : null}
         <TowerCanonicalPanel canonical={canonical} />
         <TowerCommandCenterAvaShell
           view={commandCenterView}
