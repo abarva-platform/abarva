@@ -27,7 +27,13 @@ const ROUTES = [
   {
     key: "home_preview_ecl",
     path: `/home/preview?tenant=${encodeURIComponent(TENANT_KEY)}&provider=ecl_projection_db`,
-    requiredText: [/Meridian Health/i, /750|applications/i],
+    requiredText: [
+      /Meridian Health/i,
+      /750\s+applications/i,
+      /1350\s+data\s+flows/i,
+      /230\s+contracts/i,
+      /220\s+(?:infra|infrastructure)/i,
+    ],
   },
   {
     key: "source_workspace_ecl",
@@ -37,12 +43,16 @@ const ROUTES = [
   {
     key: "tower_ecl",
     path: "/tower?provider=ecl_projection_db",
-    requiredText: [/Tower|Portfolio|Command/i],
+    requiredText: [/Tower command center projection is loaded/i, /Gate state/i],
   },
   {
     key: "intelligence_ecl",
     path: "/intelligence?provider=ecl_projection_db",
-    requiredText: [/Intelligence|context|advisory/i],
+    requiredText: [
+      /Intelligence context pack projection is loaded/i,
+      /Permitted facts/i,
+      /Blocked facts/i,
+    ],
   },
 ];
 
