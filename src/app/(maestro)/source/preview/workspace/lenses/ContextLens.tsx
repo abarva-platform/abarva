@@ -312,7 +312,8 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
         </div>
         {cockpit.actionQueue.length === 0 ? (
           <div style={{ padding: 22, color: "#5f5e5a", fontSize: 13 }}>
-            No Source rows returned / nothing below is estimated in its place.
+            No renewal or notice action rows returned for this cut; nothing is
+            estimated in their place.
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
