@@ -1,0 +1,119 @@
+Healthcare Demo
+Home
+Intelligence
+Moves
+Source
+Tower
+Learn
+AS
+Anand Sundaram · Healthcare Demo
+Sign out
+Strategic Moves
+
+Track active work, decisions, value, and approvals
+
+Manage Moves
++ New Move
+8
+Active
+0
+Need Attention
+6
+On Track
+$36M
+At Stake
+All
+8
+Needs attention
+0
+Awaiting decision
+2
+On track
+6
+Archived
+16
+⌕
+View
+View: List
+View: Cards
+View: Kanban
+View: Map
+Open portfolio map ↗
+MOVE
+PHASE
+STATUS
+SPONSOR
+VALUE
+LAST ACTIVITY
+Healthcare Demo Unified Clinical + Claims KPI Foundation - Actor Tenancy Proof 202606230538
+HEALTHCARE_PROVIDER-Healthcare Demo-2026
+P5 Mobilize & Handoff
+100%
+ON TRACK
+Dr
+$12M projected
+2 wk ago
+Open
+Healthcare Demo Unified Clinical + Claims KPI Foundation - Postfix Proof 202606230510
+HEALTHCARE_PROVIDER-Healthcare Demo-2026
+P0 Originate
+0%
+ON TRACK
+Dr
+$12M projected
+3 wk ago
+Open
+Healthcare Demo Unified Clinical + Claims KPI Foundation - Live Proof 202606230427
+HEALTHCARE_PROVIDER-Healthcare Demo-2026
+P1 Charter
+20%
+ON TRACK
+Dr
+$12M projected
+3 wk ago
+Open
+CTX Smoke Member Assist 2026-07-14T11-56
+HEALTHCARE_PROVIDER-CTX-2026
+P1 Charter
+20%
+ON TRACK
+COO
+$— projected
+Today
+Open
+CTX Smoke Member Assist 2026-07-14T11-53
+HEALTHCARE_PROVIDER-CTX-2026
+P1 Charter
+20%
+ON TRACK
+COO
+$— projected
+Today
+Open
+CTX Smoke Member Assist 2026-07-14T11-50
+HEALTHCARE_PROVIDER-CTX-2026
+P1 Charter
+20%
+ON TRACK
+COO
+$— projected
+Today
+Open
+Healthcare Demo Member Experience AI Assist
+HEALTHCARE_PROVIDER-Healthcare Demo-2026
+P2 Discover & Diagnose
+40%
+AWAITING DECISION
+Dr
+$— projected
+Today
+Open
+TENANT BINDING PROOF - Healthcare Demo Agent P0 - 20260623171344
+HEALTHCARE_PROVIDER-TENANT-2026
+P0 Originate
+0%
+AWAITING DECISION
+Healthcare Demo Programs Operator
+$— projected
+2 wk ago
+Open

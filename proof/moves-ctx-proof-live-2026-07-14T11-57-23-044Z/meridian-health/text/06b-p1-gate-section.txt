@@ -1,0 +1,87 @@
+Healthcare Demo
+Home
+Intelligence
+Moves
+Source
+Tower
+Learn
+AS
+Anand Sundaram · Healthcare Demo
+Sign out
+← All Moves
+CTX Smoke Member Assist 2026-07-14T11-57-23-7c646661
+
+Healthcare Composite Demo Tenant · AI PRODUCT ENABLEMENT · HEALTHCARE_PROVIDER
+
+PHASES
+✓
+Originate
+Complete
+P1
+Charter
+In progress
+P2
+Understand Current State
+Upcoming
+P3
+Choose the Approach
+Upcoming
+P4
+Build the Plan
+Upcoming
+P5
+Prepare to Execute
+Upcoming
+WORKSPACE
+▣
+Files & Evidence
+
+aVa assembles each phase from your evidence · you review & attest · the approved final carries forward
+
+CTX Smoke Member Assist 2026-07-14T11-57-23-7c646661/P1 · Charter
+AVA · MOVES
+Charter
+What exactly are we committing to investigate?
+
+Turn the idea into a bounded charter: scope, owner, success measures, assumptions, and the gate that protects the next phase.
+
+Step 3 of 3 · Gate approval
+Review governed build →
+✓
+Prepare
+✓
+Scope
+3
+Gate approval
+Gate approval
+
+Approve only after the record is reviewed and decision evidence is on file. The approved version is what carries forward.
+
+✓ Record reviewed with the accountable owner.
+✓ Evidence and caveats are attached.
+○ Approved output becomes the next phase source of truth.
+AI-assisted decision support - human review and client approval required.
+Edit before commit - human review required before approval, export, or phase advance.
+Approve & Build generates every P1 Charter deliverable in one governed batch — planning the structure, writing each document section by section, then assembling and quality-checking it. Documents below the board-grade bar are held back, not shipped. There is no per-document regenerate: if an input changes, re-run the phase and re-approve.
+1 deliverables (1 gate)
+5 inputs uploaded
+0/1 built
+Approve & Build P1 Charter →
+Program Charter
+GATE
+Not built
+AI Draft — review and edit every document before it informs a decision.
+Gate criteria
+○ Charter signed off by sponsor
+✓ Sponsor committed and decision rights named
+○ Initial value range and success metrics ratified
+Next: P2 Understand Current State readiness
+
+No required evidence gaps are open for the next phase. It can start with what's already on file.
+
+Suggested working sessions for P2 Understand Current State
+Current-state walkthrough
+KPI and baseline review
+Systems and handoff review
+Root-cause review
+Ask aVa

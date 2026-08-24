@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "status": 200,
+  "url": "https://app.abarva.ai/api/v1/programs/44f6f4d4-ab88-4fdf-88e8-45c26f27838c/p0-brief",
+  "headers": {
+    "content-type": "application/json",
+    "date": "Tue, 14 Jul 2026 11:57:29 GMT",
+    "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "x-middleware-rewrite": "/api/v1/programs/44f6f4d4-ab88-4fdf-88e8-45c26f27838c/p0-brief"
+  },
+  "body": {
+    "ok": true,
+    "deliverableId": "305cd82b-cff7-48d2-ac76-8cb67b236c6b",
+    "status": "in_review",
+    "detail": "Origination brief created from real Move data; sign it off via the governed sign-off route to satisfy the P0 gate."
+  }
+}

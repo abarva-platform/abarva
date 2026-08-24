@@ -1,0 +1,7 @@
+{
+  "status": 200,
+  "contentType": "text/markdown; charset=utf-8",
+  "length": 1037,
+  "sha256": "7426bf4bedf2cde8991e1e150e0f2fea019630cf8d4f9216b69b680ba9a93669",
+  "textStart": "# P1 Context Extract\n\nMove Context Extract\n\nAbarVa gathered governed enterprise context relevant to this Move and phase. Source-backed, agent-ready items can be attached as Move evidence. Relevant but incomplete items are shown separately for review and are not used by generation until approved.\n\n- Move: CTX Smoke Member Assist 2026-07-14T11-57-23-7c646661\n- Phase: P1 Charter\n- Source mode: active_home_context\n- Generated at: 2026-07-14T11:57:42.516Z\n- Candidate version: not used\n- Active Tenant Access version: not wired\n\n## Attached Evidence\nNone.\n\n## Suggested Context - Needs Review\nNone.\n\n## Excluded / Not Used\n- Candidate preview data: Candidate context was not read because this was a default active-mode Approve & Build request.\n  - Reason: Never read candidate data by default.\n\n## Gaps to Complete\n- Agent-ready tenant context: No active agent-ready context matched this Move and phase. Upload, review, or promote source-backed evidence before relying on enterprise context.\n  - Reason: No attached evidence was created.\n"
+}
