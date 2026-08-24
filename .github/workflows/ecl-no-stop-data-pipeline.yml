@@ -120,6 +120,12 @@ jobs:
         run: |
           npm run test:ecl-projection-schema-reconciliation
 
+      - name: Reconcile npm script targets at named ref
+        env:
+          ECL_RECONCILE_REF: ${{ github.sha }}
+        run: |
+          npm run test:npm-script-targets
+
       - name: Prove demo findings source contract
         run: |
           npm run test:ecl-demo-findings-source-contract

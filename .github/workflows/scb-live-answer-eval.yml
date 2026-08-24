@@ -1,4 +1,4 @@
-name: SCB live answer eval
+name: SCB live answer eval (retired)
 
 on:
   workflow_dispatch:
@@ -22,34 +22,25 @@ on:
 
 jobs:
   live-answer-eval:
-    name: Live Ava answer eval
+    name: Retired live Ava answer eval
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    env:
-      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY || secrets.AZURE_LAB_CLERK_SECRET_KEY }}
-      CRAWL_DEMO_PASSWORD: ${{ secrets.CRAWL_DEMO_PASSWORD }}
-      PLAYWRIGHT_CHROMIUM_CHANNEL: chrome
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - name: Verify system Chrome
-        run: google-chrome --version
-      - name: Run live-answer eval
+      - name: Emit retired eval report
         run: |
-          args=(
-            --base-url="${{ inputs.base_url }}"
-            --persona="${{ inputs.persona }}"
-            --limit="${{ inputs.limit }}"
-            --out=reports/scb/w5-1-live-answer-eval.json
-          )
-          if [ "${{ inputs.require_model_judge }}" = "true" ]; then
-            args+=(--require-model-judge)
-          fi
-          npm run scb:live-answer-eval -- "${args[@]}"
+          mkdir -p reports/scb
+          cat > reports/scb/w5-1-live-answer-eval.json <<'JSON'
+          {
+            "accepted": false,
+            "status": "retired",
+            "reason": "The historical SCB live-answer runner is not implemented in this repository.",
+            "replacement": "npm run ecl:ava-consultant-eval",
+            "actual_live_answer_eval": false
+          }
+          JSON
+          echo "SCB live-answer eval is retired. Use npm run ecl:ava-consultant-eval."
+          exit 1
       - name: Upload live-answer report
         if: always()
         uses: actions/upload-artifact@v7
