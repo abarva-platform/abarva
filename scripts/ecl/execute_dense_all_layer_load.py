@@ -46,6 +46,48 @@ TRUTHY = {"1", "true", "yes", "on"}
 PROOF_BEGIN = "__SEMANTIC2_PROOF_TGZ_BEGIN__"
 PROOF_END = "__SEMANTIC2_PROOF_TGZ_END__"
 ALLOWED_TARGETS = {"lab", "preprod", "lab_preprod", "client_preprod", "local_disposable"}
+SERVING_VIEW_NAMES = (
+    "home_executive_brief",
+    "home_our_business",
+    "home_strategy_value_creation",
+    "home_how_we_operate",
+    "home_technology_data",
+    "home_performance_value",
+    "home_leadership_perspective",
+    "home_needs_attention",
+    "home_current_state_architecture",
+    "home_current_state_data_flow",
+    "home_loaded_record",
+    "home_browse_record",
+    "home_applications_systems",
+    "home_vendor_contracts",
+    "home_infrastructure_platforms",
+    "home_data_assets_integrations",
+    "tower_command_center",
+    "tower_value_proof",
+    "tower_decision_lanes",
+    "tower_evidence",
+    "tower_recommended_actions",
+    "tower_ai_portfolio",
+    "tower_cost_lens",
+    "tower_risk_lens",
+    "tower_adoption_lens",
+    "source_vendor_portfolio",
+    "source_vendor_360",
+    "source_contract_360",
+    "source_renewal",
+    "source_events",
+    "source_compare",
+    "source_value",
+    "source_approvals",
+    "source_sourcing_opportunities",
+    "intelligence_advisory",
+    "intelligence_enterprise_landscape",
+    "intelligence_ask_query",
+    "intelligence_insights_evaluate",
+    "intelligence_pattern_detail",
+    "intelligence_context_summary",
+)
 
 
 class Refusal(RuntimeError):
@@ -75,6 +117,33 @@ def command_env() -> dict[str, str]:
     env = source_layer.command_env()
     env.setdefault("PGCONNECT_TIMEOUT", "30")
     return env
+
+
+def serving_view_count_union_sql() -> str:
+    lines: list[str] = []
+    for index, view_name in enumerate(SERVING_VIEW_NAMES):
+        prefix = "      select" if index == 0 else "      union all select"
+        lines.append(f"{prefix} '{view_name}' as view_key, count(*) as row_count from serving.{view_name}")
+    return "\n".join(lines)
+
+
+def serving_readback_sql() -> str:
+    serving_counts = serving_view_count_union_sql()
+    declared_count = len(SERVING_VIEW_NAMES)
+    return f"""  'serving_contract_rows', (select count(*) from serving.serving_contract),
+  'serving_views_declared', {declared_count},
+  'serving_views_populated', (
+    select count(*) from (
+{serving_counts}
+    ) serving_counts
+    where row_count > 0
+  ),
+  'serving_views_empty', (
+    select count(*) from (
+{serving_counts}
+    ) serving_counts
+    where row_count = 0
+  )"""
 
 
 def run(command: list[str], *, out_dir: Path, label: str, sensitive: bool = False) -> dict[str, Any]:
@@ -303,7 +372,8 @@ select jsonb_pretty(jsonb_build_object(
   'cube_slice', (select count(*) from ecl_projection.cube_slice where tenant_key = {tenant} and assessment_id = {assessment}),
   'cube_slice_metric', (select count(*) from ecl_projection.cube_slice_metric where tenant_key = {tenant} and assessment_id = {assessment}),
   'cube_slice_measure', (select count(*) from ecl_projection.cube_slice_measure where tenant_key = {tenant} and assessment_id = {assessment}),
-  'cube_key_count', (select count(distinct cube_key) from ecl_projection.cube_manifest where tenant_key = {tenant} and assessment_id = {assessment})
+  'cube_key_count', (select count(distinct cube_key) from ecl_projection.cube_manifest where tenant_key = {tenant} and assessment_id = {assessment}),
+{serving_readback_sql()}
 ) || jsonb_build_object(
   'relationship_endpoint_drift', (
     select count(*) from ecl_context.relationship r
@@ -581,9 +651,17 @@ def validate_readback(readback: dict[str, Any], expected: dict[str, int], plante
         "intelligence_primary_object_drift",
         "intelligence_pattern_primary_object_drift",
         "intelligence_question_context_pack_drift",
+        "serving_views_empty",
     ]:
         if int(readback.get(drift_key, 1)) != 0:
             issues.append(drift_key)
+    expected_serving_views = len(SERVING_VIEW_NAMES)
+    if int(readback.get("serving_contract_rows", -1)) != expected_serving_views:
+        issues.append(f"serving_contract_rows_expected_{expected_serving_views}")
+    if int(readback.get("serving_views_declared", -1)) != expected_serving_views:
+        issues.append(f"serving_views_declared_expected_{expected_serving_views}")
+    if int(readback.get("serving_views_populated", -1)) != expected_serving_views:
+        issues.append(f"serving_views_populated_expected_{expected_serving_views}")
     if int(readback.get("source_value_claimable_rows", 1)) != 0:
         issues.append("source_value_claimable_rows_should_be_zero_before_review")
     if any(not item.get("rejected") for item in planted):

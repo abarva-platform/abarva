@@ -105,7 +105,26 @@ assert.ok(uniqueKeys.size >= 12, `expected 12+ readback count keys, found ${uniq
 assert.ok(uniqueKeys.has("home_enterprise_landscape"), "readback must include Home projection rows");
 assert.ok(uniqueKeys.has("tower_command_center"), "readback must include Tower projection rows");
 assert.ok(uniqueKeys.has("intelligence_context_pack"), "readback must include Intelligence projection rows");
+assert.ok(uniqueKeys.has("serving_contract_rows"), "readback must include serving contract rows");
+assert.ok(uniqueKeys.has("serving_views_declared"), "readback must include declared serving view count");
+assert.ok(uniqueKeys.has("serving_views_populated"), "readback must include populated serving view count");
+assert.ok(uniqueKeys.has("serving_views_empty"), "readback must include empty serving view count");
 assert.equal(uniqueKeys.size, keys.length, "readback keys must be unique");
+
+const servingViewCountQueries = Array.from(sql.matchAll(/count\(\*\)\s+as\s+row_count\s+from\s+serving\.([a-z0-9_]+)/gi)).map(
+  (match) => match[1],
+);
+const declaredServingViews = new Set(servingViewCountQueries);
+assert.equal(
+  declaredServingViews.size,
+  40,
+  `readback must count all 40 serving views, found ${declaredServingViews.size}`,
+);
+assert.equal(
+  servingViewCountQueries.length,
+  80,
+  "readback should count the 40 serving views once for populated and once for empty",
+);
 
 const extractKeyBlock = (key, nextKey) => {
   const match = sql.match(new RegExp(`'${key}'\\s*,\\s*\\(([\\s\\S]*?)\\n\\s*\\),\\n\\s*'${nextKey}'`, "i"));
