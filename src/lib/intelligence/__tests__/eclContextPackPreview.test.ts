@@ -42,7 +42,6 @@ describe("readIntelligenceEclContextPackPreview", () => {
         access_class: "internal",
         prompt_context_json: {
           heading: "Commercial leverage",
-          description: "Indexed Source facts need review before citation.",
         },
         permitted_facts_json: [{ id: "fact-3" }],
         blocked_facts_json: [],
@@ -80,6 +79,14 @@ describe("readIntelligenceEclContextPackPreview", () => {
         rowKey: "pack-001",
         title: "AI strategy pressure",
         citationCount: 1,
+      }),
+    );
+    expect(preview?.contextRows[1]).toEqual(
+      expect.objectContaining({
+        rowKey: "pack-002",
+        title: "Commercial leverage",
+        summary:
+          "1 permitted facts, 0 citation references, 0 blocked facts and 1 explicit gaps. Retrieval is indexed; access is internal.",
       }),
     );
   });

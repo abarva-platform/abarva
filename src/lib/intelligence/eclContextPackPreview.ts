@@ -63,6 +63,14 @@ function textValue(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function countArray(value: unknown): number {
+  return Array.isArray(value) ? value.length : 0;
+}
+
+function displayLabel(value: string): string {
+  return value.replaceAll("_", " ");
+}
+
 function displayTitle(row: IntelligenceEclContextPackRow): string {
   const payload = row.prompt_context_json ?? {};
   return (
@@ -76,12 +84,24 @@ function displayTitle(row: IntelligenceEclContextPackRow): string {
 
 function displaySummary(row: IntelligenceEclContextPackRow): string {
   const payload = row.prompt_context_json ?? {};
-  return (
+  const summary =
     textValue(payload.summary) ??
     textValue(payload.executive_summary) ??
     textValue(payload.context) ??
-    textValue(payload.description) ??
-    "No display summary recorded in the ECL context-pack payload."
+    textValue(payload.description);
+
+  if (summary) return summary;
+
+  const permittedFacts = countArray(row.permitted_facts_json);
+  const citationRefs = countArray(row.citation_refs_json);
+  const blockedFacts = countArray(row.blocked_facts_json);
+  const gaps = countArray(row.gap_flags_json);
+
+  return (
+    `${permittedFacts} permitted facts, ${citationRefs} citation references, ` +
+    `${blockedFacts} blocked facts and ${gaps} explicit gaps. ` +
+    `Retrieval is ${displayLabel(row.retrieval_state)}; ` +
+    `access is ${displayLabel(row.access_class)}.`
   );
 }
 
