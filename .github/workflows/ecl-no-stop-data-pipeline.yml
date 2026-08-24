@@ -270,7 +270,7 @@ jobs:
 
           projection_readback = projection.get('readback', {})
           projection_expected = {
-              'projection_manifest': 4,
+              'projection_manifest': 7,
               'source_contract_360': 230,
               'source_vendor_360': 214,
               'source_value_levers': 230,
