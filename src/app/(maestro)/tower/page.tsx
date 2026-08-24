@@ -16,6 +16,10 @@ import { canonicalClientDisplayName } from "@/lib/client-config";
 import { readTowerCommandCenter } from "@/lib/tower/readTowerCommandCenter";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
 import { buildTowerCanonicalReconciliation } from "@/lib/tower/canonical-reconciliation";
+import {
+  readTowerEclProjectionPreview,
+  type TowerEclProjectionPreview,
+} from "@/lib/tower/eclProjectionPreview";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
@@ -61,6 +65,172 @@ function money(value: number): string {
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(value);
+}
+
+function shortNumber(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+function label(value: string | null | undefined): string {
+  if (!value) return "not established";
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (match) => match.toUpperCase());
+}
+
+function TowerEclProjectionPanel({
+  preview,
+}: {
+  preview: TowerEclProjectionPreview | null;
+}) {
+  if (!preview) return null;
+  return (
+    <section className="mb-5 rounded-md border border-[#b7d7c8] bg-[#f8fffb] p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-[#057a55]">
+            ECL projection read
+          </p>
+          <h2 className="mt-1 text-xl font-semibold text-[#111827]">
+            Tower command center projection is loaded
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#475467]">
+            This non-default preview reads `ecl_projection.tower_command_center`
+            directly for the dense assessment. It proves the projection exists
+            and carries gate reasons; it does not repoint the default Tower mart.
+          </p>
+        </div>
+        <div className="rounded border border-[#d6eadf] bg-white px-4 py-3 text-right">
+          <p className="font-mono text-2xl text-[#111827]">
+            {preview.rowCount.toLocaleString()}
+          </p>
+          <p className="text-xs uppercase tracking-wide text-[#667085]">
+            projection rows
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-4">
+        <div className="border border-[#d6eadf] bg-white p-3">
+          <p className="text-xs uppercase tracking-wide text-[#667085]">
+            Funded
+          </p>
+          <p className="mt-1 font-mono text-lg text-[#111827]">
+            {money(preview.totals.fundedUsd)}
+          </p>
+        </div>
+        <div className="border border-[#d6eadf] bg-white p-3">
+          <p className="text-xs uppercase tracking-wide text-[#667085]">
+            Promised
+          </p>
+          <p className="mt-1 font-mono text-lg text-[#111827]">
+            {money(preview.totals.promisedUsd)}
+          </p>
+        </div>
+        <div className="border border-[#d6eadf] bg-white p-3">
+          <p className="text-xs uppercase tracking-wide text-[#667085]">
+            Claimable
+          </p>
+          <p className="mt-1 font-mono text-lg text-[#111827]">
+            {money(preview.totals.claimableUsd)}
+          </p>
+        </div>
+        <div className="border border-[#d6eadf] bg-white p-3">
+          <p className="text-xs uppercase tracking-wide text-[#667085]">
+            Blocked
+          </p>
+          <p className="mt-1 font-mono text-lg text-[#111827]">
+            {money(preview.totals.blockedUsd)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-[0.75fr_1.25fr]">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-sm font-semibold text-[#111827]">
+              Rows by page
+            </h3>
+            <div className="mt-2 space-y-2">
+              {preview.pageCounts.map((row) => (
+                <div
+                  key={row.pageKey}
+                  className="flex items-center justify-between border-b border-[#e7efe9] pb-1 text-sm"
+                >
+                  <span className="text-[#344054]">{label(row.pageKey)}</span>
+                  <span className="font-mono text-[#111827]">{row.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-[#111827]">
+              Gate state
+            </h3>
+            <div className="mt-2 space-y-2">
+              {preview.gateCounts.map((row) => (
+                <div
+                  key={row.gateStatus}
+                  className="flex items-center justify-between border-b border-[#e7efe9] pb-1 text-sm"
+                >
+                  <span className="text-[#344054]">
+                    {label(row.gateStatus)}
+                  </span>
+                  <span className="font-mono text-[#111827]">{row.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold text-[#111827]">
+            Highest blocked rows
+          </h3>
+          <div className="mt-2 overflow-x-auto border border-[#d6eadf] bg-white">
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-[#f2faf5] text-xs uppercase tracking-wide text-[#667085]">
+                <tr>
+                  <th className="px-3 py-2">Row</th>
+                  <th className="px-3 py-2">Gate</th>
+                  <th className="px-3 py-2">Blocked</th>
+                  <th className="px-3 py-2">Proof</th>
+                  <th className="px-3 py-2">Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {preview.priorityRows.map((row) => (
+                  <tr key={row.rowKey} className="border-t border-[#eef2ef]">
+                    <td className="px-3 py-2">
+                      <p className="font-medium text-[#111827]">{row.title}</p>
+                      <p className="text-xs text-[#667085]">
+                        {label(row.pageKey)} · {label(row.rowType)}
+                      </p>
+                    </td>
+                    <td className="px-3 py-2 text-[#344054]">
+                      {label(row.gateStatus)}
+                    </td>
+                    <td className="px-3 py-2 font-mono text-[#111827]">
+                      {shortNumber(row.blockedUsd)}
+                    </td>
+                    <td className="px-3 py-2 font-mono text-[#111827]">
+                      {row.proofMaturityScore ?? "n/a"}
+                    </td>
+                    <td className="px-3 py-2 text-[#475467]">
+                      {row.gateReason}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 /**
@@ -134,6 +304,7 @@ function TowerCanonicalPanel({
 export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
   const resolved = await searchParams;
   const rawRequestedClient = firstSearchValue(resolved?.client);
+  const requestedProvider = firstSearchValue(resolved?.provider);
   const requestedClient = (await hasLockedTenantSession())
     ? rawRequestedClient
     : null;
@@ -187,6 +358,10 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
   ).catch(() => null);
   const towerChatClientId =
     client?.id ?? effectiveClientKey ?? requestedClient ?? null;
+  const towerEclPreview =
+    requestedProvider === "ecl_projection_db"
+      ? await readTowerEclProjectionPreview(canonicalTenantKey(effectiveClientKey))
+      : null;
 
   return (
     <AppShell
@@ -199,6 +374,7 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
       }}
     >
       <Suspense fallback={null}>
+        <TowerEclProjectionPanel preview={towerEclPreview} />
         <TowerCanonicalPanel canonical={canonical} />
         <TowerCommandCenterAvaShell
           view={commandCenterView}
