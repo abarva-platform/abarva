@@ -618,7 +618,6 @@
     "validate:context-corpus:manifests": "npx tsx src/scripts/governance/validate-context-corpus.ts manifests",
     "governance:tenant-coverage-report": "npx tsx src/scripts/governance/tenant-coverage-report.ts",
     "scb:golden-eval": "npx tsx src/scripts/intelligence/scb-golden-eval-runner.ts",
-    "scb:live-answer-eval": "npx tsx src/scripts/intelligence/scb-live-answer-eval-runner.ts",
     "semantic2:l3-dossiers:self-test": "node scripts/semantic2/build-enriched-l3-dossiers.mjs --self-test",
     "semantic2:l3-dossiers:build": "node scripts/semantic2/build-enriched-l3-dossiers.mjs",
     "semantic2:l3-dossiers:eligibility": "npx tsx scripts/semantic2-dossier-eligibility-report.ts",
@@ -846,6 +845,7 @@
     "test:ecl-dense-source-room-stride-gate": "node scripts/ecl/__tests__/run-ecl-dense-source-room-stride-gate-tests.mjs",
     "test:ecl-demo-findings-source-contract": "node scripts/ecl/__tests__/run-ecl-demo-findings-source-contract-tests.mjs",
     "test:ecl-projection-schema-reconciliation": "node scripts/ecl/__tests__/run-ecl-projection-schema-reconciliation-tests.mjs",
+    "test:npm-script-targets": "node scripts/ecl/__tests__/run-npm-script-target-reconciliation-tests.mjs",
     "test:ecl-product-serving-route-fence": "node scripts/ecl/__tests__/run-ecl-product-serving-route-fence-tests.mjs",
     "test:ecl-dense-readback-query": "node scripts/ecl/__tests__/run-ecl-dense-readback-query-tests.mjs",
     "test:ecl-dense-azure-gate-validator": "node scripts/ecl/__tests__/run-ecl-dense-azure-gate-validator-tests.mjs",
@@ -859,7 +859,8 @@
     "ecl:dense-all-layer:execute": "python3 scripts/ecl/execute_dense_all_layer_load.py",
     "ecl:dense-all-layer:readback": "python3 scripts/ecl/export_dense_all_layer_readback.py",
     "ecl:product-browser:predeploy-gate": "node scripts/ecl/run_product_ecl_predeploy_gate.mjs",
-    "ecl:product-browser:smoke": "node scripts/ecl/run_product_ecl_browser_smoke.mjs"
+    "ecl:product-browser:smoke": "node scripts/ecl/run_product_ecl_browser_smoke.mjs",
+    "ecl:ava-consultant-eval": "node scripts/ecl/run_ecl_ava_consultant_eval.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

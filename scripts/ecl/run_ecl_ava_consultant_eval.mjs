@@ -1,0 +1,205 @@
+#!/usr/bin/env node
+
+import assert from "node:assert/strict";
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import path from "node:path";
+
+const CASES_PATH = "datasets/evals/meridian-healthcare/ecl-consultant-eval-cases.jsonl";
+const FINDINGS_SPEC_PATH = "docs/architecture/meridian-demo-findings-20260824.json";
+
+function parseArgs(argv) {
+  const args = {
+    cases: CASES_PATH,
+    findingsSpec: FINDINGS_SPEC_PATH,
+    answers: null,
+    out: "reports/ecl-ava-consultant-eval/summary.json",
+  };
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === "--cases") args.cases = argv[++i];
+    else if (arg === "--findings-spec") args.findingsSpec = argv[++i];
+    else if (arg === "--answers") args.answers = argv[++i];
+    else if (arg === "--out") args.out = argv[++i];
+    else if (arg === "--help") {
+      console.log(`Usage: node scripts/ecl/run_ecl_ava_consultant_eval.mjs [--answers answers.jsonl] [--out summary.json]
+
+Without --answers, validates the ECL consultant-eval case bank and shared deterministic
+validator contract. With --answers, evaluates supplied aVa answer JSONL rows keyed by case id.`);
+      process.exit(0);
+    } else {
+      throw new Error(`Unknown argument: ${arg}`);
+    }
+  }
+  return args;
+}
+
+function readJson(pathname) {
+  return JSON.parse(readFileSync(pathname, "utf8"));
+}
+
+function readJsonl(pathname) {
+  return readFileSync(pathname, "utf8")
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0)
+    .map((line, index) => {
+      try {
+        return JSON.parse(line);
+      } catch (error) {
+        throw new Error(`${pathname}:${index + 1} is not valid JSON: ${error.message}`);
+      }
+    });
+}
+
+function normalizeText(value) {
+  if (typeof value !== "string") return "";
+  return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function answerText(row) {
+  if (!row || typeof row !== "object") return "";
+  return (
+    row.answerText ??
+    row.answer_text ??
+    row.answer ??
+    row.directAnswer ??
+    row.direct_answer ??
+    row.output ??
+    ""
+  ).toString();
+}
+
+function answerId(row) {
+  return row.caseId ?? row.case_id ?? row.id ?? null;
+}
+
+function includesAll(text, phrases) {
+  const normalized = normalizeText(text);
+  return phrases.every((phrase) => normalized.includes(normalizeText(phrase)));
+}
+
+function includesAny(text, phrases) {
+  const normalized = normalizeText(text);
+  return phrases.some((phrase) => normalized.includes(normalizeText(phrase)));
+}
+
+function validateCases(cases, findingsSpec) {
+  assert.equal(findingsSpec.tenant_key, "meridian-health", "findings spec must be tenant-scoped to meridian-health");
+  const findings = new Map((findingsSpec.findings ?? []).map((finding) => [finding.id, finding]));
+  assert.equal(findings.size, 10, "findings spec must define F1-F10");
+
+  const ids = cases.map((row) => row.id);
+  assert.equal(new Set(ids).size, ids.length, "ECL consultant eval case ids must be unique");
+
+  const findingCases = cases.filter((row) => row.caseType === "demo_finding");
+  const unanswerableCases = cases.filter((row) => row.caseType === "planted_unanswerable");
+  assert.equal(findingCases.length, 10, "ECL consultant eval must contain exactly ten demo-finding cases");
+  assert(unanswerableCases.length >= 2, "ECL consultant eval must contain at least two planted-unanswerable cases");
+  assert(unanswerableCases.length <= 3, "ECL consultant eval should start with no more than three planted-unanswerable cases");
+
+  const findingIds = findingCases.map((row) => row.findingId).sort();
+  assert.deepEqual(
+    findingIds,
+    ["F1", "F10", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9"].sort(),
+    "demo-finding cases must cover F1-F10 exactly once",
+  );
+
+  for (const row of cases) {
+    assert.equal(row.tenantKey, "meridian-health", `${row.id} must use canonical tenant key meridian-health`);
+    assert.equal(row.module, "intelligence", `${row.id} must start with the Intelligence module`);
+    assert.equal(row.agent, "sentinel", `${row.id} must start with the Sentinel agent`);
+    assert.equal(row.sourceSubstrate, "ecl", `${row.id} must declare sourceSubstrate=ecl`);
+    assert.equal(row.provider, "ecl_projection_db", `${row.id} must declare provider=ecl_projection_db`);
+    assert.match(row.question ?? "", /\S/, `${row.id} must have a question`);
+    assert(Array.isArray(row.requiredAnswerElements), `${row.id} must declare requiredAnswerElements`);
+    assert(Array.isArray(row.forbiddenAnswerElements), `${row.id} must declare forbiddenAnswerElements`);
+    assert(Array.isArray(row.deterministicChecks), `${row.id} must declare deterministicChecks`);
+    assert(row.deterministicChecks.includes("no_builder_vocabulary"), `${row.id} must check builder vocabulary leakage`);
+    assert(row.deterministicChecks.includes("explicit_evidence_basis"), `${row.id} must check evidence basis`);
+    if (row.caseType === "demo_finding") {
+      const finding = findings.get(row.findingId);
+      assert(finding, `${row.id} references unknown finding ${row.findingId}`);
+      assert(
+        row.evidenceSurfaces.some((surface) => finding.surfaces.includes(surface)),
+        `${row.id} must cite at least one named surface from ${row.findingId}`,
+      );
+      assert(row.requiredAnswerElements.length >= 3, `${row.id} must require consultant-grade specifics`);
+    } else if (row.caseType === "planted_unanswerable") {
+      assert.equal(row.expectedOutcome, "refuse_or_gap", `${row.id} must expect refusal/gap handling`);
+      assert(row.requiredAnswerElements.some((element) => /cannot|not loaded|insufficient|gap/i.test(element)), `${row.id} must require explicit missing-context language`);
+    } else {
+      throw new Error(`${row.id} has unsupported caseType ${row.caseType}`);
+    }
+  }
+}
+
+function evaluateAnswers(cases, answers) {
+  const byId = new Map(answers.map((row) => [answerId(row), row]));
+  const results = [];
+  for (const row of cases) {
+    const answer = byId.get(row.id);
+    if (!answer) {
+      results.push({
+        id: row.id,
+        accepted: false,
+        issue: "missing_answer",
+      });
+      continue;
+    }
+    const text = answerText(answer);
+    const missingRequired = row.requiredAnswerElements.filter((phrase) => !includesAll(text, [phrase]));
+    const forbiddenPresent = row.forbiddenAnswerElements.filter((phrase) => includesAny(text, [phrase]));
+    const builderVocabularyPresent = includesAny(text, [
+      "source_mapped_pre_review",
+      "synthetic_source_backed",
+      "commercial_contract_scope_catchup_overlay",
+      "projection_entry",
+      "builder vocabulary",
+    ]);
+    const accepted =
+      missingRequired.length === 0 &&
+      forbiddenPresent.length === 0 &&
+      !builderVocabularyPresent;
+    results.push({
+      id: row.id,
+      accepted,
+      finding_id: row.findingId ?? null,
+      missing_required: missingRequired,
+      forbidden_present: forbiddenPresent,
+      builder_vocabulary_present: builderVocabularyPresent,
+    });
+  }
+  return results;
+}
+
+const args = parseArgs(process.argv.slice(2));
+const cases = readJsonl(args.cases);
+const findingsSpec = readJson(args.findingsSpec);
+validateCases(cases, findingsSpec);
+
+const answerRows = args.answers ? readJsonl(args.answers) : null;
+const answerResults = answerRows ? evaluateAnswers(cases, answerRows) : [];
+const acceptedAnswerCount = answerResults.filter((row) => row.accepted).length;
+const summary = {
+  accepted: answerRows ? acceptedAnswerCount === cases.length : true,
+  mode: answerRows ? "answer_eval" : "case_contract",
+  actual_ava_answer_eval: Boolean(answerRows),
+  tenant_key: "meridian-health",
+  module: "intelligence",
+  agent: "sentinel",
+  provider: "ecl_projection_db",
+  case_count: cases.length,
+  demo_findings_cases: cases.filter((row) => row.caseType === "demo_finding").length,
+  planted_unanswerable_cases: cases.filter((row) => row.caseType === "planted_unanswerable").length,
+  findings_covered: [...new Set(cases.map((row) => row.findingId).filter(Boolean))].sort(),
+  answers_evaluated: answerRows ? answerRows.length : 0,
+  answers_accepted: acceptedAnswerCount,
+  answer_results: answerResults,
+};
+
+mkdirSync(path.dirname(args.out), { recursive: true });
+writeFileSync(args.out, `${JSON.stringify(summary, null, 2)}\n`);
+console.log(JSON.stringify(summary, null, 2));
+
+if (!summary.accepted) {
+  process.exitCode = 1;
+}
