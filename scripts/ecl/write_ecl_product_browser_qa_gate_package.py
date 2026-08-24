@@ -163,7 +163,14 @@ def actual_readback_proof() -> dict[str, Any]:
     )
     compare = read_json_if_exists(compare_path) if compare_path else {}
     export_summary = read_json_if_exists(export_summary_path) if export_summary_path else {}
+    readback_counts = export_summary.get("readback", {})
     quality_zero = compare.get("quality_zero_checks", {})
+    if not isinstance(quality_zero, dict) or not quality_zero:
+        quality_zero = {
+            check: readback_counts.get(check)
+            for check in QUALITY_ZERO_CHECKS
+            if check in readback_counts
+        }
     issues: list[str] = []
 
     if not compare_path:
