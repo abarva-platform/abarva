@@ -1,0 +1,125 @@
+{
+  "demo_as_of_date": "2026-09-15",
+  "denominator": {
+    "denominator": 10,
+    "metric": "findings demonstrable on a real surface",
+    "numerator": 0
+  },
+  "findings": [
+    {
+      "assert": "group by (service_tower,business_function) yields >=3 distinct supplier_name above threshold",
+      "claim": "Three suppliers deliver the same service tower to one business function",
+      "id": "F1",
+      "requires": "3+ contracts sharing service_tower whose scoped_applications resolve to apps sharing business_function and application_subdomain; combined annualized_value_usd above p90",
+      "surfaces": [
+        "source.vendor_portfolio",
+        "source.opportunities",
+        "tower.cost_lens"
+      ]
+    },
+    {
+      "assert": ">=1 contract meets all five simultaneously",
+      "claim": "A contract auto-renews inside the window with no way to stop it",
+      "id": "F2",
+      "new_fields": [
+        "contracts.auto_renew"
+      ],
+      "requires": "end_date within 90d of demo_as_of_date; notice_window_days >= days remaining; benchmarking_right=false; minimum_commitment_usd>0; auto_renew=true",
+      "surfaces": [
+        "source.renewal",
+        "source.contract_360"
+      ]
+    },
+    {
+      "assert": "count == 34 exactly",
+      "claim": "A declared cohort of contracts protects the vendor, not the client",
+      "id": "F3",
+      "new_fields": [
+        "contracts.termination_for_convenience"
+      ],
+      "requires": "exactly 34 of 230 with benchmarking_right=false AND minimum_commitment_usd>0 AND notice_window_days>=90 AND termination_for_convenience=false",
+      "surfaces": [
+        "source.contract_360",
+        "source.value",
+        "tower.cost_lens"
+      ]
+    },
+    {
+      "assert": "group exists and every member counts via application_v, not deployments",
+      "claim": "One function runs 5+ applications in the same subdomain from 3+ vendors",
+      "id": "F4",
+      "requires": "5+ apps sharing (business_function,application_subdomain), 3+ distinct vendor_name, lifecycle_state=active, combined annual_cost_usd above threshold",
+      "surfaces": [
+        "home.applications",
+        "home.technology_data",
+        "tower.cost_lens"
+      ]
+    },
+    {
+      "assert": "distinct technology count >=4 and the ungoverned row is present",
+      "claim": "The same workload runs on four or more BI technologies, one ungoverned",
+      "id": "F5",
+      "requires": "one function spanning 4+ distinct technology_name at same workload_type; >=1 governance_state ungoverned; material workload_count and active_user_count",
+      "surfaces": [
+        "home.data_assets",
+        "intel.landscape"
+      ]
+    },
+    {
+      "assert": "platform exists with all attributes and relationship traversal returns >=4 apps via FK endpoints",
+      "claim": "A clinical function depends on an appliance losing vendor support",
+      "id": "F6",
+      "new_fields": [
+        "infrastructure.support_end_date"
+      ],
+      "requires": "platform_type=netezza_appliance, clinical business_function, dr_tier in (tier_3_backup_only,unknown), high utilization_percent, support_end_date within 18m; 4+ related applications",
+      "surfaces": [
+        "home.infrastructure",
+        "home.architecture",
+        "tower.risk_lens"
+      ]
+    },
+    {
+      "assert": "unattributed sum equals declared amount and renders as a named gap with a denominator, never 0",
+      "claim": "A declared share of GL actuals attributes to nothing",
+      "id": "F7",
+      "requires": "12% of finance rows with allocation_basis='unknown' AND null application_or_platform_ref",
+      "surfaces": [
+        "tower.cost_lens",
+        "home.performance_value"
+      ]
+    },
+    {
+      "assert": "headline count equals number of rows that each explain themselves",
+      "claim": "Material value is gated, and every gated claim says why",
+      "id": "F8",
+      "requires": "value claims whose evidence carries verification_state='unverified'; 3+ distinct gate reason codes; each row carries claim_gate_status, claim_gate_reason_code, claim_gate_reason_detail, evidence_needed_json, next_gate",
+      "surfaces": [
+        "tower.value_proof",
+        "tower.evidence",
+        "tower.actions"
+      ]
+    },
+    {
+      "assert": "grouping by resolved vendor yields a clear leader and every exception traces to an evidence row that exists",
+      "claim": "Open control exceptions cluster on one vendor's estate",
+      "id": "F9",
+      "requires": "5+ grc rows whose object_ref resolves to apps sharing one vendor_name; open_exception_count>0; severity high; control_state failing; resolvable evidence_ref",
+      "surfaces": [
+        "tower.risk_lens",
+        "source.vendor_360"
+      ]
+    },
+    {
+      "assert": "admission_status='refused' with populated refusal_json; not an empty state, not a zero",
+      "claim": "End-to-end data flow for one domain is correctly refused",
+      "id": "F10",
+      "requires": "a domain where the topology fitness gate genuinely fails - planted by omission, not by a flag",
+      "surfaces": [
+        "home.data_flow"
+      ]
+    }
+  ],
+  "spec_id": "meridian_demo_findings_v1",
+  "tenant_key": "meridian-health"
+}
