@@ -665,6 +665,113 @@ create table if not exists ecl_projection.intelligence_context_pack (
   )
 );
 
+-- Compatibility upgrade for databases where the product surface tables already
+-- existed before the projection-entry spine was introduced. Fresh installs get
+-- NOT NULL projection_entry_id from the CREATE TABLE statements above. Existing
+-- installs get a nullable column plus enforced FK for new rows; tenant slice
+-- loaders replace the target rows with populated projection_entry_id values.
+alter table if exists ecl_projection.home_enterprise_landscape
+  add column if not exists projection_entry_id uuid;
+alter table if exists ecl_projection.source_contract_360
+  add column if not exists projection_entry_id uuid;
+alter table if exists ecl_projection.source_vendor_360
+  add column if not exists projection_entry_id uuid;
+alter table if exists ecl_projection.source_value_levers
+  add column if not exists projection_entry_id uuid;
+alter table if exists ecl_projection.source_event_workspace
+  add column if not exists projection_entry_id uuid;
+alter table if exists ecl_projection.tower_command_center
+  add column if not exists projection_entry_id uuid;
+alter table if exists ecl_projection.intelligence_context_pack
+  add column if not exists projection_entry_id uuid;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'ecl_projection.home_enterprise_landscape'::regclass
+      and conname = 'home_enterprise_landscape_entry_fk'
+  ) then
+    alter table ecl_projection.home_enterprise_landscape
+      add constraint home_enterprise_landscape_entry_fk
+      foreign key (tenant_key, assessment_id, projection_entry_id)
+      references ecl_projection.projection_entry (tenant_key, assessment_id, id)
+      not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'ecl_projection.source_contract_360'::regclass
+      and conname = 'source_contract_360_entry_fk'
+  ) then
+    alter table ecl_projection.source_contract_360
+      add constraint source_contract_360_entry_fk
+      foreign key (tenant_key, assessment_id, projection_entry_id)
+      references ecl_projection.projection_entry (tenant_key, assessment_id, id)
+      not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'ecl_projection.source_vendor_360'::regclass
+      and conname = 'source_vendor_360_entry_fk'
+  ) then
+    alter table ecl_projection.source_vendor_360
+      add constraint source_vendor_360_entry_fk
+      foreign key (tenant_key, assessment_id, projection_entry_id)
+      references ecl_projection.projection_entry (tenant_key, assessment_id, id)
+      not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'ecl_projection.source_value_levers'::regclass
+      and conname = 'source_value_levers_entry_fk'
+  ) then
+    alter table ecl_projection.source_value_levers
+      add constraint source_value_levers_entry_fk
+      foreign key (tenant_key, assessment_id, projection_entry_id)
+      references ecl_projection.projection_entry (tenant_key, assessment_id, id)
+      not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'ecl_projection.source_event_workspace'::regclass
+      and conname = 'source_event_workspace_entry_fk'
+  ) then
+    alter table ecl_projection.source_event_workspace
+      add constraint source_event_workspace_entry_fk
+      foreign key (tenant_key, assessment_id, projection_entry_id)
+      references ecl_projection.projection_entry (tenant_key, assessment_id, id)
+      not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'ecl_projection.tower_command_center'::regclass
+      and conname = 'tower_command_center_entry_fk'
+  ) then
+    alter table ecl_projection.tower_command_center
+      add constraint tower_command_center_entry_fk
+      foreign key (tenant_key, assessment_id, projection_entry_id)
+      references ecl_projection.projection_entry (tenant_key, assessment_id, id)
+      not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'ecl_projection.intelligence_context_pack'::regclass
+      and conname = 'intelligence_context_pack_entry_fk'
+  ) then
+    alter table ecl_projection.intelligence_context_pack
+      add constraint intelligence_context_pack_entry_fk
+      foreign key (tenant_key, assessment_id, projection_entry_id)
+      references ecl_projection.projection_entry (tenant_key, assessment_id, id)
+      not valid;
+  end if;
+end $$;
+
 create index if not exists idx_home_enterprise_landscape_page
   on ecl_projection.home_enterprise_landscape (tenant_key, assessment_id, projection_version, page_key);
 create index if not exists idx_projection_entry_surface

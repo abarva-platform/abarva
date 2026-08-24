@@ -41,6 +41,25 @@ function incomingFkCount(sql, table) {
   return [...sql.matchAll(re)].length;
 }
 
+function upgradeColumnCount(sql, table) {
+  const re = new RegExp(
+    `alter\\s+table\\s+if\\s+exists\\s+ecl_projection\\.${table}[\\s\\S]+?add\\s+column\\s+if\\s+not\\s+exists\\s+projection_entry_id\\s+uuid`,
+    "gi",
+  );
+  return [...sql.matchAll(re)].length;
+}
+
+function upgradeConstraintCount(sql, table) {
+  const constraintName = table === "home_enterprise_landscape"
+    ? "home_enterprise_landscape_entry_fk"
+    : `${table}_entry_fk`;
+  const re = new RegExp(
+    `conrelid\\s*=\\s*'ecl_projection\\.${table}'::regclass[\\s\\S]+?conname\\s*=\\s*'${constraintName}'[\\s\\S]+?alter\\s+table\\s+ecl_projection\\.${table}[\\s\\S]+?add\\s+constraint\\s+${constraintName}[\\s\\S]+?foreign\\s+key\\s*\\(tenant_key,\\s*assessment_id,\\s*projection_entry_id\\)[\\s\\S]+?references\\s+ecl_projection\\.projection_entry`,
+    "i",
+  );
+  return re.test(sql) ? 1 : 0;
+}
+
 const productDdl = gitShow(PRODUCT_DDL);
 const cubeDdl = gitShow(CUBE_DDL);
 const sourceProjectionLoader = gitShow(SOURCE_PROJECTION_LOADER);
@@ -70,6 +89,16 @@ for (const surface of PRODUCT_SURFACES) {
     0,
     `${surface} should remain a terminal product read model in ${REF}; child refs must point to projection_entry, not the surface table`,
   );
+  assert.equal(
+    upgradeColumnCount(productDdl, surface),
+    1,
+    `${surface} must include an additive projection_entry_id upgrade clause for existing databases in ${REF}`,
+  );
+  assert.equal(
+    upgradeConstraintCount(productDdl, surface),
+    1,
+    `${surface} must include an additive projection_entry FK upgrade block for existing databases in ${REF}`,
+  );
 }
 
 assert.doesNotMatch(
@@ -89,6 +118,12 @@ console.log(
       cubeTableCountAtRef: cubeTables.length,
       incomingFkToProductSurfacesAtRef: Object.fromEntries(
         PRODUCT_SURFACES.map((surface) => [surface, incomingFkCount(productDdl, surface)]),
+      ),
+      productSurfaceUpgradeColumnClausesAtRef: Object.fromEntries(
+        PRODUCT_SURFACES.map((surface) => [surface, upgradeColumnCount(productDdl, surface)]),
+      ),
+      productSurfaceUpgradeConstraintBlocksAtRef: Object.fromEntries(
+        PRODUCT_SURFACES.map((surface) => [surface, upgradeConstraintCount(productDdl, surface)]),
       ),
     },
     null,
