@@ -44,6 +44,31 @@ create table if not exists ecl_source.source_file (
   constraint source_file_tenant_assessment_id_unique unique (tenant_key, assessment_id, id)
 );
 
+alter table ecl_source.source_file
+  add column if not exists origin text;
+
+update ecl_source.source_file
+  set origin = 'synthetic_generator'
+  where origin is null;
+
+alter table ecl_source.source_file
+  alter column origin set default 'synthetic_generator',
+  alter column origin set not null;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'ecl_source.source_file'::regclass
+      and conname = 'source_file_origin_check'
+  ) then
+    alter table ecl_source.source_file
+      add constraint source_file_origin_check
+      check (origin in ('client_intake', 'synthetic_generator'));
+  end if;
+end $$;
+
 create table if not exists ecl_source.source_record (
   id uuid primary key default gen_random_uuid(),
   tenant_key text not null,
