@@ -98,7 +98,7 @@ function TowerEclProjectionPanel({
             Tower command center projection is loaded
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#475467]">
-            This non-default preview reads `ecl_projection.tower_command_center`
+            This non-default preview reads `serving.tower_command_center`
             directly for the dense assessment. It proves the projection exists
             and carries gate reasons; it does not repoint the default Tower mart.
           </p>

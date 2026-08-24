@@ -26,6 +26,10 @@ interface TowerEclProjectionRow {
   source_refs_json: unknown[];
 }
 
+interface TowerServingRow {
+  readonly payload_json: TowerEclProjectionRow;
+}
+
 export interface TowerEclProjectionPreview {
   provider: "ecl_projection_db";
   tenantKey: string;
@@ -96,42 +100,24 @@ export async function readTowerEclProjectionPreview(
 ): Promise<TowerEclProjectionPreview | null> {
   if (!tenantKey) return null;
 
-  const rows = await azureRead.query<TowerEclProjectionRow>(
-    `select
-       row_key,
-       page_key,
-       row_type,
-       claim_gate_status,
-       claim_gate_reason_code,
-       claim_gate_reason_detail,
-       next_gate,
-       funded_amount_usd,
-       promised_value_usd,
-       claimable_value_usd,
-       blocked_value_usd,
-       proof_maturity_score,
-       risk_pressure_score,
-       usage_strength_score,
-       owner_role,
-       handoff_module,
-       display_payload_json,
-       gap_flags_json,
-       source_refs_json
-     from ecl_projection.tower_command_center
+  const servingRows = await azureRead.query<TowerServingRow>(
+    `select payload_json
+     from serving.tower_command_center
      where tenant_key = $1
        and assessment_id = $2
      order by
-       blocked_value_usd desc nulls last,
-       risk_pressure_score desc nulls last,
+       (payload_json->>'blocked_value_usd')::numeric desc nulls last,
+       (payload_json->>'risk_pressure_score')::numeric desc nulls last,
        row_key
      limit 2000`,
     [tenantKey, DENSE_ASSESSMENT_ID],
     { missingTable: "empty" },
   );
+  const rows = servingRows.map((row) => row.payload_json);
 
   if (rows.length === 0) {
     throw new Error(
-      `Tower ECL preview: no ecl_projection.tower_command_center rows for ${tenantKey}/${DENSE_ASSESSMENT_ID}.`,
+      `Tower ECL preview: no serving.tower_command_center rows for ${tenantKey}/${DENSE_ASSESSMENT_ID}.`,
     );
   }
 

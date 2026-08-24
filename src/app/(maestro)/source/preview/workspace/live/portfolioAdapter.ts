@@ -55,6 +55,10 @@ type SourceWorkspaceExploreProvider =
   | "EclProjectionDbProvider";
 
 type EclProjectionRow = Record<string, unknown>;
+type SourceServingViewName =
+  | "source_contract_360"
+  | "source_vendor_360"
+  | "source_events";
 type EclCubeSliceRow = {
   readonly cube_key: string;
   readonly slice_key: string;
@@ -453,6 +457,12 @@ async function readProjectionTable(
   tenantKey: string,
   tableName: "source_contract_360" | "source_vendor_360" | "source_event_workspace",
 ): Promise<EclProjectionRow[]> {
+  const servingViewByTable: Record<typeof tableName, SourceServingViewName> = {
+    source_contract_360: "source_contract_360",
+    source_vendor_360: "source_vendor_360",
+    source_event_workspace: "source_events",
+  };
+  const servingView = servingViewByTable[tableName];
   const acceptedTenantKeys = Array.from(
     new Set([tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim())),
   );
@@ -460,10 +470,11 @@ async function readProjectionTable(
     await run("SELECT set_config('app.tenant_key', $1, false)", [
       acceptedTenantKeys[0] ?? tenantKey,
     ]);
-    return run(
-      `SELECT * FROM ecl_projection.${tableName} WHERE tenant_key = ANY($1::text[]) ORDER BY row_key`,
+    const rows = await run<{ payload_json: EclProjectionRow }>(
+      `SELECT payload_json FROM serving.${servingView} WHERE tenant_key = ANY($1::text[]) ORDER BY row_key`,
       [acceptedTenantKeys],
     );
+    return rows.map((row) => row.payload_json);
   });
 }
 

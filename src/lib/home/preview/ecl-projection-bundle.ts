@@ -455,7 +455,7 @@ function buildEclSignalPacket(rows: HomeProjectionRow[], estate: TechnologyEstat
       kind: "portfolio",
       statement: `The ECL projection contains ${applications.length.toLocaleString()} applications, ${contracts.length.toLocaleString()} contracts, ${infrastructure.length.toLocaleString()} infrastructure/platform records, and ${dataFlows.length.toLocaleString()} data-flow rows.`,
       domains: ["application_system", "vendor_contract", "infrastructure_platform", "data_asset_or_integration"],
-      evidenceRefs: ["ecl_projection.home_enterprise_landscape"],
+      evidenceRefs: ["serving.home_executive_brief"],
     },
     {
       id: "sig_ecl_vendor_002",
@@ -464,21 +464,21 @@ function buildEclSignalPacket(rows: HomeProjectionRow[], estate: TechnologyEstat
         ? `The ECL contract view shows ${contracts.length.toLocaleString()} contracts with $${(contractSpend / 1_000_000).toFixed(1)}M annualized value; ${String(topVendor.label)} is the largest visible supplier group at ${Number(topVendor.sharePct).toFixed(1)}% of the loaded contract value.`
         : "The ECL contract view has no supplier spend rows loaded.",
       domains: ["vendor_contract"],
-      evidenceRefs: ["ecl_projection.home_enterprise_landscape:vendor_contracts"],
+      evidenceRefs: ["serving.home_vendor_contracts"],
     },
     {
       id: "sig_ecl_data_flow_003",
       kind: "complexity",
       statement: `The ECL data-flow view carries ${dataFlows.length.toLocaleString()} source-target movement rows, so architecture and data-flow pages should render from topology evidence instead of from static snapshot counts.`,
       domains: ["data_asset_or_integration", "application_system"],
-      evidenceRefs: ["ecl_projection.home_enterprise_landscape:current_state_data_flow"],
+      evidenceRefs: ["serving.home_current_state_data_flow"],
     },
     {
       id: "sig_ecl_gap_004",
       kind: "gap",
       statement: "This Home preview is a governed ECL projection read, but retrieval indexing and default-provider cutover remain separate gates.",
       domains: ["evidence_sources"],
-      evidenceRefs: ["ecl_projection.home_enterprise_landscape:executive_brief_summary"],
+      evidenceRefs: ["serving.home_executive_brief"],
     },
   ];
 
@@ -606,11 +606,70 @@ async function readHomeProjectionRows(tenantKey: string): Promise<HomeProjection
         row_type,
         title,
         summary,
-        display_payload_json
-      from ecl_projection.home_enterprise_landscape
-      where tenant_key = $1
-        and assessment_id = $2
-      order by page_key, section_key, row_key
+        payload_json as display_payload_json
+      from serving.home_executive_brief
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_our_business
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_strategy_value_creation
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_how_we_operate
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_technology_data
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_performance_value
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_leadership_perspective
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_needs_attention
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_current_state_architecture
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_current_state_data_flow
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_loaded_record
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_browse_record
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_applications_systems
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_vendor_contracts
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_infrastructure_platforms
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_data_assets_integrations
+      where tenant_key = $1 and assessment_id = $2
+      order by page_key, row_key
     `,
     [tenantKey, DENSE_ASSESSMENT_ID],
     { missingTable: "empty" },
@@ -625,7 +684,7 @@ export async function getHomeEclProjectionBundle(tenantKey: HomePreviewTenantKey
 
   const rows = await readHomeProjectionRows(tenantKey);
   if (rows.length === 0) {
-    throw new Error(`Home ECL preview: no ecl_projection.home_enterprise_landscape rows for ${tenantKey}/${DENSE_ASSESSMENT_ID}.`);
+    throw new Error(`Home ECL preview: no serving Home rows for ${tenantKey}/${DENSE_ASSESSMENT_ID}.`);
   }
 
   return {
