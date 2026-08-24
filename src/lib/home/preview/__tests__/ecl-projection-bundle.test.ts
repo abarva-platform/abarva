@@ -1,7 +1,9 @@
 import {
+  buildHomeReviewBundleFromEclProjectionRows,
   buildTechnologyEstateFromHomeProjectionRows,
   type HomeProjectionRow,
 } from "../ecl-projection-bundle";
+import { getHomeReviewBundle } from "../golden-snapshot";
 
 function row(input: Partial<HomeProjectionRow> & Pick<HomeProjectionRow, "page_key" | "row_key" | "row_type" | "title">): HomeProjectionRow {
   return {
@@ -106,5 +108,85 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       consumptionLayer: "mart",
       regulatedDataFlag: true,
     });
+  });
+
+  it("builds an ECL-native Home bundle instead of wrapping dense estate rows in golden-snapshot prose", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    expect(base).toBeTruthy();
+
+    const bundle = buildHomeReviewBundleFromEclProjectionRows(base!, [
+      row({
+        page_key: "executive_brief",
+        row_key: "executive_brief_summary",
+        row_type: "summary",
+        title: "Dense ECL estate loaded",
+        summary: "750 applications and 230 contracts are available from the ECL projection.",
+        display_payload_json: {
+          applications: 750,
+          contracts: 230,
+          vendors: 101,
+          data_flows: 1350,
+        },
+      }),
+      row({
+        page_key: "technology_data",
+        row_key: "technology_data_summary",
+        row_type: "summary",
+        title: "Technology and data estate represented",
+        summary: "750 applications, 220 infrastructure rows, and 1350 data flows are loaded.",
+      }),
+      row({
+        page_key: "applications_systems",
+        row_key: "APP-001",
+        row_type: "application",
+        title: "Epic Tapestry",
+        display_payload_json: {
+          application_id: "APP-001",
+          application_name: "Epic Tapestry",
+          business_function: "Health Plan & Payer Operations",
+          vendor_name: "Epic Systems Corporation",
+          annual_cost_usd: "2400000",
+        },
+      }),
+      row({
+        page_key: "vendor_contracts",
+        row_key: "CTR-001",
+        row_type: "contract",
+        title: "Epic Systems Corporation · Core platform",
+        display_payload_json: {
+          contract_id: "CTR-001",
+          supplier_name: "Epic Systems Corporation",
+          contract_name: "Core platform agreement",
+          annualized_value_usd: "9600000",
+        },
+      }),
+      row({
+        page_key: "infrastructure_platforms",
+        row_key: "INF-001",
+        row_type: "infrastructure",
+        title: "AWS Epic Hosting Estate",
+        display_payload_json: { platform_id: "INF-001", platform_name: "AWS Epic Hosting Estate" },
+      }),
+      row({
+        page_key: "current_state_data_flow",
+        row_key: "FLOW-001",
+        row_type: "data_flow",
+        title: "APP-001 to PLATFORM-001",
+        display_payload_json: {
+          flow_id: "FLOW-001",
+          source_system: "Epic Tapestry",
+          target_system: "Claims Data Mart",
+        },
+      }),
+    ]);
+
+    expect(bundle.provenance.canonical_snapshot_hash).toBe("ecl:assessment-dense-source-room-20260823:home_enterprise_landscape:6");
+    expect(bundle.provenance.model).toBe("deterministic-ecl-projection");
+    expect(bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.headline).toBe("Dense ECL estate loaded");
+    expect(bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.headline).not.toBe(
+      base?.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.headline,
+    );
+    expect(bundle.thesis.signalPacket.signals[0]?.statement).toContain("1 applications");
+    expect(bundle.technologyEstate?.recordTypes.find((recordType) => recordType.objectType === "application_system")?.rows).toHaveLength(1);
   });
 });
