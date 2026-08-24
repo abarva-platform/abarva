@@ -677,7 +677,6 @@ def plant_demo_infrastructure_findings(rows: list[dict[str, Any]]) -> None:
         return
     rows[0].update(
         {
-            "platform_id": "PLAT-CLIN-NETEZZA-001",
             "platform_name": "Clinical Quality Netezza Appliance",
             "platform_type": "netezza_appliance",
             "hosting_location": "primary_dc",

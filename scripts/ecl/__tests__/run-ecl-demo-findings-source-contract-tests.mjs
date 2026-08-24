@@ -188,6 +188,10 @@ const clinicalUnsupportedAppliance = infrastructure.filter((row) => {
   );
 });
 assert(clinicalUnsupportedAppliance.length >= 1, "F6 must have a clinical Netezza appliance within 18 months of support end");
+assert(
+  clinicalUnsupportedAppliance.every((row) => /^PLAT-\d{4}$/.test(row.platform_id)),
+  "F6 must plant the Netezza finding without replacing the platform primary key",
+);
 
 const unattributedFinance = finance.filter((row) => row.allocation_basis === "unknown" && row.application_or_platform_ref === "");
 assert.equal(unattributedFinance.length, Math.round(finance.length * 0.12), "F7 must plant 12% unattributed finance rows");
