@@ -263,7 +263,8 @@ select jsonb_pretty(jsonb_build_object(
     left join ecl_commercial.sla_observation s
       on s.tenant_key = re.tenant_key and s.assessment_id = re.assessment_id and s.id = re.subject_sla_observation_id
     where re.tenant_key = {tenant} and re.assessment_id = {assessment} and re.subject_kind = 'sla_observation' and s.id is null
-  ),
+  )
+) || jsonb_build_object(
   'projection_manifest', (select count(*) from ecl_projection.projection_manifest where tenant_key = {tenant} and assessment_id = {assessment}),
   'home_enterprise_landscape', (select count(*) from ecl_projection.home_enterprise_landscape where tenant_key = {tenant} and assessment_id = {assessment}),
   'source_contract_360', (select count(*) from ecl_projection.source_contract_360 where tenant_key = {tenant} and assessment_id = {assessment}),
