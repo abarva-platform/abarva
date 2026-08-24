@@ -14,6 +14,7 @@ import argparse
 import csv
 import hashlib
 import json
+from collections import Counter
 from datetime import date, datetime, timezone
 from pathlib import Path
 from random import Random
@@ -284,6 +285,35 @@ AI_USE_CASES = [
 RISK_TYPES = ["access_control", "data_quality", "sox", "hipaa", "vendor_resilience", "model_risk", "disaster_recovery", "shadow_it", "change_control"]
 KPI_NAMES = ["claims auto-adjudication rate", "denial overturn rate", "days in AR", "operating margin", "supply fill rate", "nursing vacancy rate", "member NPS", "appointment access days", "cloud cost variance", "report freshness SLA"]
 APPLICATION_COST_TOTAL_USD = 436_500_000
+CONTRACT_VALUE_TOTAL_USD = 496_400_000
+
+STRATEGIC_CONTRACT_VENDOR_COUNTS = [
+    ("Epic Systems Corporation", 8),
+    ("Microsoft Corporation", 7),
+    ("Amazon Web Services Inc.", 7),
+    ("Oracle Corporation", 6),
+    ("IBM Corporation", 6),
+    ("Workday Inc.", 6),
+    ("Infor Inc.", 5),
+    ("Salesforce Inc.", 5),
+    ("ServiceNow Inc.", 5),
+    ("TriZetto Corporation", 5),
+    ("HealthEdge Software", 5),
+]
+
+STRATEGIC_CONTRACT_VENDOR_WEIGHTS = {
+    "Epic Systems Corporation": 18.0,
+    "Microsoft Corporation": 14.0,
+    "Amazon Web Services Inc.": 14.0,
+    "Oracle Corporation": 12.0,
+    "IBM Corporation": 12.0,
+    "Workday Inc.": 10.0,
+    "Infor Inc.": 9.0,
+    "Salesforce Inc.": 8.0,
+    "ServiceNow Inc.": 8.0,
+    "TriZetto Corporation": 7.0,
+    "HealthEdge Software": 7.0,
+}
 
 
 def write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) -> str:
@@ -528,18 +558,47 @@ def ppm(count: int) -> list[dict[str, Any]]:
     return rows
 
 
+def contract_vendor_sequence(count: int) -> list[str]:
+    vendors: list[str] = []
+    for vendor, vendor_count in STRATEGIC_CONTRACT_VENDOR_COUNTS:
+        vendors.extend([vendor] * vendor_count)
+
+    tail_vendors = [vendor for vendor in VENDORS if vendor not in {name for name, _count in STRATEGIC_CONTRACT_VENDOR_COUNTS}]
+    tail_index = 0
+    while len(vendors) < count:
+        vendor = tail_vendors[tail_index % len(tail_vendors)]
+        repeat_count = 2 if tail_index < 75 else 1
+        vendors.extend([vendor] * min(repeat_count, count - len(vendors)))
+        tail_index += 1
+    return vendors[:count]
+
+
 def contracts(count: int) -> list[dict[str, Any]]:
     rows = []
     towers = ["clinical_apps", "claims_admin", "hr_bpo", "finance_bpo", "supply_chain_bpo", "data_platform", "managed_infra", "ai_platform"]
+    suppliers = contract_vendor_sequence(count)
+    weights: list[float] = []
+    for i, supplier_name in enumerate(suppliers, start=1):
+        tower = towers[i % len(towers)]
+        base = STRATEGIC_CONTRACT_VENDOR_WEIGHTS.get(supplier_name, 1.0)
+        if tower in {"clinical_apps", "claims_admin", "data_platform", "managed_infra"}:
+            base *= 1.25
+        if i % 17 == 0:
+            base *= 1.4
+        base *= 0.82 + ((i * 29) % 35) / 100
+        weights.append(base)
+    weight_total = sum(weights)
     for i in range(1, count + 1):
+        supplier_name = suppliers[i - 1]
+        annualized_value = round((weights[i - 1] / weight_total) * CONTRACT_VALUE_TOTAL_USD, 2)
         rows.append(
             {
                 "source_system": "CLM contract register synthetic export",
                 "source_row_id": f"CTR-{i:04d}",
                 "contract_id": f"CTR-{i:04d}",
-                "supplier_name": VENDORS[i % len(VENDORS)],
+                "supplier_name": supplier_name,
                 "service_tower": towers[i % len(towers)],
-                "annualized_value_usd": 100000 + (i * 117731) % 18000000,
+                "annualized_value_usd": annualized_value,
                 "start_date": f"202{1 + i % 5}-01-01",
                 "end_date": f"202{6 + i % 5}-12-31",
                 "notice_window_days": [90, 120, 180, 365][i % 4],
@@ -743,6 +802,10 @@ def build_report(summary: dict[str, Any], inventory: list[dict[str, Any]]) -> st
         f"- Application top-decile cost share: `{summary['application_top_decile_cost_share']:.2%}`",
         f"- Application distinct annual costs: `{summary['distinct_application_annual_costs']}`",
         f"- Application environment counts: `{', '.join(map(str, summary['application_environment_count_values']))}`",
+        f"- Contract annualized value total: `${summary['contract_annualized_value_total_usd']:,.2f}`",
+        f"- Contract top-decile value share: `{summary['contract_top_decile_value_share']:.2%}`",
+        f"- Contracts per supplier: `{summary['contracts_per_supplier']:.2f}`",
+        f"- Top supplier contract count: `{summary['contract_top_supplier_contract_count']}`",
         f"- Output directory: `{summary['out_dir']}`",
         f"- Manifest: `{summary['manifest_path']}`",
         "",
@@ -795,6 +858,36 @@ def application_realism_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def contract_realism_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    values = sorted((float(row["annualized_value_usd"]) for row in rows), reverse=True)
+    value_total = round(sum(values), 2)
+    top_decile_count = max(1, len(values) // 10)
+    top_decile_share = round(sum(values[:top_decile_count]) / max(sum(values), 1), 4)
+    max_contract_share = round(max(values, default=0) / max(sum(values), 1), 4)
+    supplier_counts = Counter(row["supplier_name"] for row in rows)
+    contracts_per_supplier = round(len(rows) / max(len(supplier_counts), 1), 4)
+    failures = 0
+    if contracts_per_supplier < 1.6:
+        failures += 1
+    if max(supplier_counts.values(), default=0) < 5:
+        failures += 1
+    if not 0.30 <= top_decile_share <= 0.75:
+        failures += 1
+    if max_contract_share > 0.06:
+        failures += 1
+    return {
+        "contract_annualized_value_total_usd": value_total,
+        "contract_top_decile_value_share": top_decile_share,
+        "contract_max_single_value_share": max_contract_share,
+        "contract_distinct_suppliers": len(supplier_counts),
+        "contracts_per_supplier": contracts_per_supplier,
+        "contract_top_supplier_contract_count": max(supplier_counts.values(), default=0),
+        "contract_value_vs_application_cost_delta_usd": round(value_total - APPLICATION_COST_TOTAL_USD, 2),
+        "contract_value_reconciliation_note": "Contract annualized value includes vendor-managed services and BPO scope outside application run cost; application annual cost remains the governed IT application baseline.",
+        "contract_realism_gate_failures": failures,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
@@ -805,11 +898,14 @@ def main() -> int:
     dictionary_rows: list[dict[str, Any]] = []
     total_rows = 0
     application_rows: list[dict[str, Any]] = []
+    contract_rows: list[dict[str, Any]] = []
 
     for family, (filename, target_count, grain) in TARGETS.items():
         rows = BUILDERS[family](target_count)
         if family == "SP03_CMDB":
             application_rows = rows
+        if family == "SP08_Vendor_Contract":
+            contract_rows = rows
         for row in rows:
             row["synthetic_dataset_id"] = "SOURCE_ROOM_DENSE_CATCHUP_2026_08_23"
             row["synthetic_generation_basis"] = "deterministic_depth_simulation"
@@ -858,6 +954,7 @@ def main() -> int:
         "client_attestation_state": "not_client_attested",
         "seed": SEED,
         **application_realism_summary(application_rows),
+        **contract_realism_summary(contract_rows),
     }
     (out_dir / "dense_source_room_summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     (out_dir / "DENSE_SOURCE_ROOM_CATCHUP_REPORT.md").write_text(build_report(summary, inventory), encoding="utf-8")
