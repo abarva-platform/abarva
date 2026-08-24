@@ -12,12 +12,16 @@ const BASE_URL = process.env.BASE_URL || process.env.ECL_PRODUCT_BROWSER_BASE_UR
 const TENANT_KEY = process.env.E2E_ACTIVE_CLIENT || "meridian-health";
 const EXPECTED_TENANT_NAME = process.env.E2E_EXPECTED_TENANT_NAME || "Meridian Health";
 const EMAILS = [
+  process.env.E2E_PRIVATE_PROOF_EMAIL,
   process.env.E2E_DEMO_EMAIL,
+  "agent@meridian-health.example.com",
+  "admin@abarva.ai",
   "cdio@meridian-health.example.com",
   "demo-meridian+clerk_test@abarva.com",
 ].filter(Boolean);
 const OUT_DIR = path.resolve(process.env.ECL_PRODUCT_BROWSER_PROOF_DIR || "job-output/ecl-product-browser-smoke");
 const EMIT_PROOF = process.env.EMIT_ACA_PROOF_BUNDLE !== "false";
+const PRIVATE_PROOF_TOKEN = process.env.ABARVA_PRIVATE_BROWSER_PROOF_TOKEN?.trim() || null;
 
 const ROUTES = [
   {
@@ -66,6 +70,14 @@ function sha256(file) {
   return crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 }
 
+function routeHost() {
+  return new URL(BASE_URL).hostname;
+}
+
+function logStage(step, total, label) {
+  console.log(`[ecl-browser-smoke] step ${step} of ${total}: ${label}`);
+}
+
 async function createTicket(clerk) {
   const tried = [];
   for (const email of EMAILS) {
@@ -82,7 +94,7 @@ async function createTicket(clerk) {
   throw new Error(`No Clerk user found for any ECL browser smoke email: ${tried.join(", ")}`);
 }
 
-async function signIn(page, ticket) {
+async function signInWithTicket(page, ticket) {
   await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => window.Clerk?.loaded === true, null, { timeout: 30_000 });
   await page.evaluate(async (value) => {
@@ -94,17 +106,83 @@ async function signIn(page, ticket) {
   }, ticket);
   await page.waitForFunction(() => Boolean(window.Clerk?.user), null, { timeout: 15_000 });
 
-  const host = new URL(BASE_URL).hostname;
   await page.context().addCookies([
     {
       name: "abarva_active_client",
       value: TENANT_KEY,
-      domain: host,
+      domain: routeHost(),
       path: "/",
       sameSite: "Lax",
       secure: BASE_URL.startsWith("https://"),
     },
   ]);
+}
+
+async function requestPrivateProofSession(email) {
+  const response = await fetch(new URL("/api/auth/private-browser-proof", BASE_URL), {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${PRIVATE_PROOF_TOKEN}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      proofCookieOnly: true,
+    }),
+  });
+  const body = await response.json().catch(() => ({}));
+  return { response, body };
+}
+
+async function signInWithPrivateProof(page) {
+  const attempts = [];
+  for (const email of EMAILS) {
+    const { response, body } = await requestPrivateProofSession(email);
+    attempts.push({ email, status: response.status, error: body?.error ?? null });
+    if (!response.ok || !body?.proofSessionCookie || !body?.proofSessionCookieName) continue;
+
+    await page.context().addCookies([
+      {
+        name: body.proofSessionCookieName,
+        value: body.proofSessionCookie,
+        domain: routeHost(),
+        path: "/",
+        httpOnly: true,
+        sameSite: "Lax",
+        secure: BASE_URL.startsWith("https://"),
+      },
+      {
+        name: "abarva_active_client",
+        value: body.clientKey || TENANT_KEY,
+        domain: routeHost(),
+        path: "/",
+        sameSite: "Lax",
+        secure: BASE_URL.startsWith("https://"),
+      },
+    ]);
+    return {
+      authMethod: "private_browser_proof_cookie",
+      email,
+      clientKey: body.clientKey ?? null,
+      attempts,
+    };
+  }
+  throw new Error(`Private browser proof auth failed for all candidates: ${JSON.stringify(attempts)}`);
+}
+
+async function authenticate(page) {
+  if (PRIVATE_PROOF_TOKEN) {
+    return signInWithPrivateProof(page);
+  }
+  const clerk = createClerkClient({ secretKey: requiredEnv("CLERK_SECRET_KEY") });
+  const ticket = await createTicket(clerk);
+  await signInWithTicket(page, ticket.token);
+  return {
+    authMethod: "clerk_sign_in_ticket",
+    email: ticket.email,
+    clientKey: TENANT_KEY,
+    attempts: [],
+  };
 }
 
 async function smokeRoute(page, route) {
@@ -170,15 +248,16 @@ async function main() {
   fs.rmSync(OUT_DIR, { recursive: true, force: true });
   fs.mkdirSync(OUT_DIR, { recursive: true });
 
-  const clerk = createClerkClient({ secretKey: requiredEnv("CLERK_SECRET_KEY") });
-  const ticket = await createTicket(clerk);
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
 
   const results = [];
+  let authProof = null;
   try {
-    await signIn(page, ticket.token);
-    for (const route of ROUTES) {
+    logStage(1, 5, "authenticate browser session");
+    authProof = await authenticate(page);
+    for (const [index, route] of ROUTES.entries()) {
+      logStage(index + 2, 5, `check ${route.key}`);
       results.push(await smokeRoute(page, route));
     }
   } finally {
@@ -189,9 +268,11 @@ async function main() {
     accepted: results.every((result) => result.accepted),
     actual_browser_execution: true,
     actual_route_repointing: false,
+    auth_attempts: authProof?.attempts ?? [],
+    auth_method: authProof?.authMethod ?? null,
     base_url: BASE_URL,
     checked_at: new Date().toISOString(),
-    email: ticket.email,
+    email: authProof?.email ?? null,
     expected_tenant_name: EXPECTED_TENANT_NAME,
     issue_count: results.reduce((sum, result) => sum + result.issues.length, 0),
     issues: results.flatMap((result) => result.issues.map((issue) => `${result.key}: ${issue}`)),

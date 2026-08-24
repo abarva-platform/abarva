@@ -329,6 +329,9 @@ jobs:
               --resource-group "$RESOURCE_GROUP" \
               --image "$IMAGE" \
               --revision-suffix "$revision_suffix" \
+              --set-env-vars \
+                "ABARVA_PRIVATE_BROWSER_PROOF_ENABLED=1" \
+                "ABARVA_PRIVATE_BROWSER_PROOF_TOKEN=secretref:parallel-run-token" \
               --output json | tee audit-artifacts/aca-main-deploy/containerapp-update.json; then
               actual_latest="$(jq -r '.properties.latestRevisionName // ""' audit-artifacts/aca-main-deploy/containerapp-update.json)"
               if [[ -z "$actual_latest" || "$actual_latest" == "null" ]]; then
