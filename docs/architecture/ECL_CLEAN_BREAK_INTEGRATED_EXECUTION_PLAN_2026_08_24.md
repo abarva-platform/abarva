@@ -31,19 +31,19 @@ is green.
 |---|---:|---|---|
 | W1 Azure dense all-layer load/readback | **85%** | ACA execute + separate readback + formal compare | Execute and separate readback succeeded on digest-pinned image; formal compare is pending current local contract regeneration. |
 | W2 Product projections | **100% local** | 12 projection backings | All five W2 projection backings now have DDL, loader rows, FK-backed refs, local readback, and zero-drift checks. Azure reload/readback still belongs to W1. |
-| W3 Serving schema and views | **0%** | 40 views + serving contract | Not built. |
+| W3 Serving schema and views | **100% local** | 40 views + serving contract | Serving DDL now creates `serving.serving_contract` and 40 first-class serving views. Azure reload/readback still belongs to W1; product route proof belongs to W4/W5. |
 | W4 Product route repoint and permission fence | **0%** | Home, Source, Tower, Intelligence routes | Existing direct ECL consumers exist, but clean-break serving-only route contract is not complete. |
 | W5 Refusal and browser proof | **0%** | 4 product modules + gated views | No complete clean-break browser proof yet. |
 | W6 Legacy data-plane retirement | **0%** | 851 pre-ECL data-plane tables | Inventory known; no retirement run. |
 | W7 Real Layer 2 adapter path | **30%** | first real intake adapter + gap report + clean-break policy | First application adapter exists; it is not yet the primary clean-break load path. |
 
-**Overall clean-break completion:** **24%**.
+**Overall clean-break completion:** **32%**.
 
 Additional product-readiness denominators:
 
 | Metric | Current | Denominator | Evidence state |
 |---|---:|---|---|
-| Surfaces served from ECL | **0** | 40 serving surfaces | Serving surface enumeration is published; W3 serving views are not built. |
+| Surfaces served from ECL | **40 local** | 40 serving surfaces | W3 serving views are built in DDL and wired into the data-build DDL list. Azure serving readback and route/browser proof are not claimed. |
 | Findings demonstrable on a real surface | **0** | 10 demo findings | Findings spec is committed; W2/W3 data and surface assertions are not green yet. |
 
 The serving denominator is **40 surfaces** for this clean-break plan: Home 16, Tower 9, Source 9,
@@ -246,56 +246,56 @@ Required serving artifacts:
 ### Serving Surface Enumeration
 
 This is the product-surface contract the serving layer must satisfy. `build_state` describes the
-current ECL backing state, not visual/browser proof.
+current serving schema state, not visual/browser proof.
 
 | surface_key | product | serving view | ecl backing | build_state |
 |---|---|---|---|---|
-| `home_executive_brief` | Home | `serving.home_executive_brief` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `home_our_business` | Home | `serving.home_our_business` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `home_strategy_value_creation` | Home | `serving.home_strategy_value_creation` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `home_how_we_operate` | Home | `serving.home_how_we_operate` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `home_technology_data` | Home | `serving.home_technology_data` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `home_performance_value` | Home | `serving.home_performance_value` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `home_leadership_perspective` | Home | `serving.home_leadership_perspective` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `home_needs_attention` | Home | `serving.home_needs_attention` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `home_current_state_architecture` | Home | `serving.home_current_state_architecture` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `home_current_state_data_flow` | Home | `serving.home_current_state_data_flow` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `home_loaded_record` | Home | `serving.home_loaded_record` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `home_browse_record` | Home | `serving.home_browse_record` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `home_applications_systems` | Home | `serving.home_applications_systems` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `home_vendor_contracts` | Home | `serving.home_vendor_contracts` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `home_infrastructure_platforms` | Home | `serving.home_infrastructure_platforms` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `home_data_assets_integrations` | Home | `serving.home_data_assets_integrations` | `ecl_projection.home_enterprise_landscape` | `backing_built` |
-| `tower_command_center` | Tower | `serving.tower_command_center` | `ecl_projection.tower_command_center` | `backing_built` |
-| `tower_value_proof` | Tower | `serving.tower_value_proof` | `ecl_projection.tower_value_chain` | `backing_built` |
-| `tower_decision_lanes` | Tower | `serving.tower_decision_lanes` | `ecl_projection.tower_value_chain` | `backing_built` |
-| `tower_evidence` | Tower | `serving.tower_evidence` | `ecl_projection.tower_evidence_queue` | `backing_built` |
-| `tower_recommended_actions` | Tower | `serving.tower_recommended_actions` | `ecl_projection.tower_evidence_queue` | `backing_built` |
-| `tower_ai_portfolio` | Tower | `serving.tower_ai_portfolio` | `ecl_projection.tower_ai_portfolio` | `backing_built` |
-| `tower_cost_lens` | Tower | `serving.tower_cost_lens` | `ecl_projection.tower_value_chain` | `backing_built` |
-| `tower_risk_lens` | Tower | `serving.tower_risk_lens` | `ecl_projection.tower_evidence_queue` | `backing_built` |
-| `tower_adoption_lens` | Tower | `serving.tower_adoption_lens` | `ecl_projection.tower_ai_portfolio` | `backing_built` |
-| `source_vendor_portfolio` | Source | `serving.source_vendor_portfolio` | `ecl_projection.source_vendor_360` | `backing_built` |
-| `source_vendor_360` | Source | `serving.source_vendor_360` | `ecl_projection.source_vendor_360` | `backing_built` |
-| `source_contract_360` | Source | `serving.source_contract_360` | `ecl_projection.source_contract_360` | `backing_built` |
-| `source_renewal` | Source | `serving.source_renewal` | `ecl_projection.source_contract_360` | `backing_built` |
-| `source_events` | Source | `serving.source_events` | `ecl_projection.source_event_workspace` | `backing_built` |
-| `source_compare` | Source | `serving.source_compare` | `ecl_projection.source_event_workspace` | `backing_built` |
-| `source_value` | Source | `serving.source_value` | `ecl_projection.source_value_levers` | `backing_built` |
-| `source_approvals` | Source | `serving.source_approvals` | `ecl_projection.source_event_workspace` | `backing_built` |
-| `source_sourcing_opportunities` | Source | `serving.source_sourcing_opportunities` | `ecl_projection.source_value_levers` | `backing_built` |
-| `intelligence_advisory` | Intelligence | `serving.intelligence_advisory` | `ecl_projection.intelligence_context_pack` | `backing_built` |
-| `intelligence_enterprise_landscape` | Intelligence | `serving.intelligence_enterprise_landscape` | `ecl_projection.intelligence_context_pack` | `backing_built` |
-| `intelligence_ask_query` | Intelligence | `serving.intelligence_ask_query` | `ecl_projection.intelligence_question_context` | `backing_built` |
-| `intelligence_insights_evaluate` | Intelligence | `serving.intelligence_insights_evaluate` | `ecl_projection.intelligence_pattern_evidence` | `backing_built` |
-| `intelligence_pattern_detail` | Intelligence | `serving.intelligence_pattern_detail` | `ecl_projection.intelligence_pattern_evidence` | `backing_built` |
-| `intelligence_context_summary` | Intelligence | `serving.intelligence_context_summary` | `ecl_projection.intelligence_context_pack` | `backing_built` |
+| `home_executive_brief` | Home | `serving.home_executive_brief` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `home_our_business` | Home | `serving.home_our_business` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `home_strategy_value_creation` | Home | `serving.home_strategy_value_creation` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `home_how_we_operate` | Home | `serving.home_how_we_operate` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `home_technology_data` | Home | `serving.home_technology_data` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `home_performance_value` | Home | `serving.home_performance_value` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `home_leadership_perspective` | Home | `serving.home_leadership_perspective` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `home_needs_attention` | Home | `serving.home_needs_attention` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `home_current_state_architecture` | Home | `serving.home_current_state_architecture` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `home_current_state_data_flow` | Home | `serving.home_current_state_data_flow` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `home_loaded_record` | Home | `serving.home_loaded_record` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `home_browse_record` | Home | `serving.home_browse_record` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `home_applications_systems` | Home | `serving.home_applications_systems` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `home_vendor_contracts` | Home | `serving.home_vendor_contracts` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `home_infrastructure_platforms` | Home | `serving.home_infrastructure_platforms` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `home_data_assets_integrations` | Home | `serving.home_data_assets_integrations` | `ecl_projection.home_enterprise_landscape` | `serving_built` |
+| `tower_command_center` | Tower | `serving.tower_command_center` | `ecl_projection.tower_command_center` | `serving_built` |
+| `tower_value_proof` | Tower | `serving.tower_value_proof` | `ecl_projection.tower_value_chain` | `serving_built` |
+| `tower_decision_lanes` | Tower | `serving.tower_decision_lanes` | `ecl_projection.tower_value_chain` | `serving_built` |
+| `tower_evidence` | Tower | `serving.tower_evidence` | `ecl_projection.tower_evidence_queue` | `serving_built` |
+| `tower_recommended_actions` | Tower | `serving.tower_recommended_actions` | `ecl_projection.tower_evidence_queue` | `serving_built` |
+| `tower_ai_portfolio` | Tower | `serving.tower_ai_portfolio` | `ecl_projection.tower_ai_portfolio` | `serving_built` |
+| `tower_cost_lens` | Tower | `serving.tower_cost_lens` | `ecl_projection.tower_value_chain` | `serving_built` |
+| `tower_risk_lens` | Tower | `serving.tower_risk_lens` | `ecl_projection.tower_evidence_queue` | `serving_built` |
+| `tower_adoption_lens` | Tower | `serving.tower_adoption_lens` | `ecl_projection.tower_ai_portfolio` | `serving_built` |
+| `source_vendor_portfolio` | Source | `serving.source_vendor_portfolio` | `ecl_projection.source_vendor_360` | `serving_built` |
+| `source_vendor_360` | Source | `serving.source_vendor_360` | `ecl_projection.source_vendor_360` | `serving_built` |
+| `source_contract_360` | Source | `serving.source_contract_360` | `ecl_projection.source_contract_360` | `serving_built` |
+| `source_renewal` | Source | `serving.source_renewal` | `ecl_projection.source_contract_360` | `serving_built` |
+| `source_events` | Source | `serving.source_events` | `ecl_projection.source_event_workspace` | `serving_built` |
+| `source_compare` | Source | `serving.source_compare` | `ecl_projection.source_event_workspace` | `serving_built` |
+| `source_value` | Source | `serving.source_value` | `ecl_projection.source_value_levers` | `serving_built` |
+| `source_approvals` | Source | `serving.source_approvals` | `ecl_projection.source_event_workspace` | `serving_built` |
+| `source_sourcing_opportunities` | Source | `serving.source_sourcing_opportunities` | `ecl_projection.source_value_levers` | `serving_built` |
+| `intelligence_advisory` | Intelligence | `serving.intelligence_advisory` | `ecl_projection.intelligence_context_pack` | `serving_built` |
+| `intelligence_enterprise_landscape` | Intelligence | `serving.intelligence_enterprise_landscape` | `ecl_projection.intelligence_context_pack` | `serving_built` |
+| `intelligence_ask_query` | Intelligence | `serving.intelligence_ask_query` | `ecl_projection.intelligence_question_context` | `serving_built` |
+| `intelligence_insights_evaluate` | Intelligence | `serving.intelligence_insights_evaluate` | `ecl_projection.intelligence_pattern_evidence` | `serving_built` |
+| `intelligence_pattern_detail` | Intelligence | `serving.intelligence_pattern_detail` | `ecl_projection.intelligence_pattern_evidence` | `serving_built` |
+| `intelligence_context_summary` | Intelligence | `serving.intelligence_context_summary` | `ecl_projection.intelligence_context_pack` | `serving_built` |
 
 ### Planned `serving.serving_contract` Not-Built Declarations
 
-Until W3 creates the physical `serving.serving_contract` table, this table is the named owner/date
-contract for specified projection backings that are intentionally not built yet. W2 has no remaining
-not-built projection backings.
+W3 creates the physical `serving.serving_contract` table. This table remains the named owner/date
+contract for any specified projection backing that is intentionally not built in a future slice. W3
+has no remaining not-built projection backings.
 
 | ecl backing | build_state | owner_person | due_date |
 |---|---|---|---|

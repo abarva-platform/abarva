@@ -95,6 +95,15 @@ function servingViewsFromSql(sql) {
   );
 }
 
+function servingViewDefinition(sql, servingView) {
+  const viewName = servingView.replace(/^serving\./, "");
+  const escaped = viewName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`create\\s+(?:or\\s+replace\\s+)?view\\s+serving\\.${escaped}\\s+as\\s+([\\s\\S]*?);`, "i");
+  const match = sql.match(re);
+  assert(match, `${servingView} must have a CREATE VIEW body in serving DDL`);
+  return match[1];
+}
+
 function incomingFkCount(sql, table) {
   const re = new RegExp(`references\\s+ecl_projection\\.${table}\\b`, "gi");
   return [...sql.matchAll(re)].length;
@@ -235,11 +244,39 @@ const servingSql = sqlDraftFiles
   .join("\n\n");
 const committedServingViews = servingViewsFromSql(servingSql);
 if (committedServingViews.length > 0) {
+  assert.match(
+    servingSql,
+    /create table if not exists\s+serving\.serving_contract\b/i,
+    "serving DDL must create serving.serving_contract once W3 has serving views",
+  );
+  assert.doesNotMatch(
+    servingSql,
+    /\bwhere\s+false\b/i,
+    "serving DDL must not create empty shell views with WHERE false",
+  );
   for (const view of servingViews) {
     assert.equal(
       committedServingViews.filter((candidate) => candidate === view).length,
       1,
       `${view} must be created exactly once in serving DDL once W3 has serving views`,
+    );
+  }
+  for (const row of surfaceEnumeration) {
+    const definition = servingViewDefinition(servingSql, row["serving view"]);
+    assert.match(
+      servingSql,
+      new RegExp(`\\('${row.surface_key}',\\s*'${row.product}',\\s*'${row["serving view"].replace(".", "\\.")}',\\s*'${row["ecl backing"].replace(".", "\\.")}',\\s*'serving_built'`, "i"),
+      `${row.surface_key} must be inserted into serving.serving_contract with serving_built state`,
+    );
+    assert.match(
+      definition,
+      new RegExp(`'${row.surface_key}'`, "i"),
+      `${row["serving view"]} must carry its own literal surface_key`,
+    );
+    assert.doesNotMatch(
+      definition,
+      /from\s+serving\.(?![a-z0-9_]+_rows\b)[a-z0-9_]+/i,
+      `${row["serving view"]} must not alias another product serving view`,
     );
   }
 }

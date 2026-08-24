@@ -34,6 +34,7 @@ PROJECTION_VERSION = 1
 DDL_FILES = [
     ROOT / "docs/architecture/sql-drafts/ecl_physical_schema_v1_draft.sql",
     ROOT / "docs/architecture/sql-drafts/ecl_product_projection_tables_v1_draft.sql",
+    ROOT / "docs/architecture/sql-drafts/ecl_serving_views_v1_draft.sql",
 ]
 
 
@@ -1819,7 +1820,8 @@ select jsonb_pretty(jsonb_build_object(
     select count(*) from ecl_projection.intelligence_question_context p
     left join ecl_context.context_pack cp on cp.tenant_key = p.tenant_key and cp.assessment_id = p.assessment_id and cp.id = p.context_pack_id
     where cp.id is null
-  ),
+  )
+) || jsonb_build_object(
   'projection_entry_count_drift', (
     select abs(
       (select count(*) from ecl_projection.projection_entry)
@@ -1945,6 +1947,98 @@ select jsonb_pretty(jsonb_build_object(
     select count(*) from ecl_projection.intelligence_context_pack p
     left join ecl_context.object o on o.tenant_key = p.tenant_key and o.assessment_id = p.assessment_id and o.id = p.primary_object_id
     where p.primary_object_id is not null and o.id is null
+  ),
+  'serving_contract_rows', (select count(*) from serving.serving_contract),
+  'serving_views_declared', 40,
+  'serving_views_populated', (
+    select count(*) from (
+      select 'home_executive_brief' as view_key, count(*) as row_count from serving.home_executive_brief
+      union all select 'home_our_business', count(*) from serving.home_our_business
+      union all select 'home_strategy_value_creation', count(*) from serving.home_strategy_value_creation
+      union all select 'home_how_we_operate', count(*) from serving.home_how_we_operate
+      union all select 'home_technology_data', count(*) from serving.home_technology_data
+      union all select 'home_performance_value', count(*) from serving.home_performance_value
+      union all select 'home_leadership_perspective', count(*) from serving.home_leadership_perspective
+      union all select 'home_needs_attention', count(*) from serving.home_needs_attention
+      union all select 'home_current_state_architecture', count(*) from serving.home_current_state_architecture
+      union all select 'home_current_state_data_flow', count(*) from serving.home_current_state_data_flow
+      union all select 'home_loaded_record', count(*) from serving.home_loaded_record
+      union all select 'home_browse_record', count(*) from serving.home_browse_record
+      union all select 'home_applications_systems', count(*) from serving.home_applications_systems
+      union all select 'home_vendor_contracts', count(*) from serving.home_vendor_contracts
+      union all select 'home_infrastructure_platforms', count(*) from serving.home_infrastructure_platforms
+      union all select 'home_data_assets_integrations', count(*) from serving.home_data_assets_integrations
+      union all select 'tower_command_center', count(*) from serving.tower_command_center
+      union all select 'tower_value_proof', count(*) from serving.tower_value_proof
+      union all select 'tower_decision_lanes', count(*) from serving.tower_decision_lanes
+      union all select 'tower_evidence', count(*) from serving.tower_evidence
+      union all select 'tower_recommended_actions', count(*) from serving.tower_recommended_actions
+      union all select 'tower_ai_portfolio', count(*) from serving.tower_ai_portfolio
+      union all select 'tower_cost_lens', count(*) from serving.tower_cost_lens
+      union all select 'tower_risk_lens', count(*) from serving.tower_risk_lens
+      union all select 'tower_adoption_lens', count(*) from serving.tower_adoption_lens
+      union all select 'source_vendor_portfolio', count(*) from serving.source_vendor_portfolio
+      union all select 'source_vendor_360', count(*) from serving.source_vendor_360
+      union all select 'source_contract_360', count(*) from serving.source_contract_360
+      union all select 'source_renewal', count(*) from serving.source_renewal
+      union all select 'source_events', count(*) from serving.source_events
+      union all select 'source_compare', count(*) from serving.source_compare
+      union all select 'source_value', count(*) from serving.source_value
+      union all select 'source_approvals', count(*) from serving.source_approvals
+      union all select 'source_sourcing_opportunities', count(*) from serving.source_sourcing_opportunities
+      union all select 'intelligence_advisory', count(*) from serving.intelligence_advisory
+      union all select 'intelligence_enterprise_landscape', count(*) from serving.intelligence_enterprise_landscape
+      union all select 'intelligence_ask_query', count(*) from serving.intelligence_ask_query
+      union all select 'intelligence_insights_evaluate', count(*) from serving.intelligence_insights_evaluate
+      union all select 'intelligence_pattern_detail', count(*) from serving.intelligence_pattern_detail
+      union all select 'intelligence_context_summary', count(*) from serving.intelligence_context_summary
+    ) serving_counts
+    where row_count > 0
+  ),
+  'serving_views_empty', (
+    select count(*) from (
+      select 'home_executive_brief' as view_key, count(*) as row_count from serving.home_executive_brief
+      union all select 'home_our_business', count(*) from serving.home_our_business
+      union all select 'home_strategy_value_creation', count(*) from serving.home_strategy_value_creation
+      union all select 'home_how_we_operate', count(*) from serving.home_how_we_operate
+      union all select 'home_technology_data', count(*) from serving.home_technology_data
+      union all select 'home_performance_value', count(*) from serving.home_performance_value
+      union all select 'home_leadership_perspective', count(*) from serving.home_leadership_perspective
+      union all select 'home_needs_attention', count(*) from serving.home_needs_attention
+      union all select 'home_current_state_architecture', count(*) from serving.home_current_state_architecture
+      union all select 'home_current_state_data_flow', count(*) from serving.home_current_state_data_flow
+      union all select 'home_loaded_record', count(*) from serving.home_loaded_record
+      union all select 'home_browse_record', count(*) from serving.home_browse_record
+      union all select 'home_applications_systems', count(*) from serving.home_applications_systems
+      union all select 'home_vendor_contracts', count(*) from serving.home_vendor_contracts
+      union all select 'home_infrastructure_platforms', count(*) from serving.home_infrastructure_platforms
+      union all select 'home_data_assets_integrations', count(*) from serving.home_data_assets_integrations
+      union all select 'tower_command_center', count(*) from serving.tower_command_center
+      union all select 'tower_value_proof', count(*) from serving.tower_value_proof
+      union all select 'tower_decision_lanes', count(*) from serving.tower_decision_lanes
+      union all select 'tower_evidence', count(*) from serving.tower_evidence
+      union all select 'tower_recommended_actions', count(*) from serving.tower_recommended_actions
+      union all select 'tower_ai_portfolio', count(*) from serving.tower_ai_portfolio
+      union all select 'tower_cost_lens', count(*) from serving.tower_cost_lens
+      union all select 'tower_risk_lens', count(*) from serving.tower_risk_lens
+      union all select 'tower_adoption_lens', count(*) from serving.tower_adoption_lens
+      union all select 'source_vendor_portfolio', count(*) from serving.source_vendor_portfolio
+      union all select 'source_vendor_360', count(*) from serving.source_vendor_360
+      union all select 'source_contract_360', count(*) from serving.source_contract_360
+      union all select 'source_renewal', count(*) from serving.source_renewal
+      union all select 'source_events', count(*) from serving.source_events
+      union all select 'source_compare', count(*) from serving.source_compare
+      union all select 'source_value', count(*) from serving.source_value
+      union all select 'source_approvals', count(*) from serving.source_approvals
+      union all select 'source_sourcing_opportunities', count(*) from serving.source_sourcing_opportunities
+      union all select 'intelligence_advisory', count(*) from serving.intelligence_advisory
+      union all select 'intelligence_enterprise_landscape', count(*) from serving.intelligence_enterprise_landscape
+      union all select 'intelligence_ask_query', count(*) from serving.intelligence_ask_query
+      union all select 'intelligence_insights_evaluate', count(*) from serving.intelligence_insights_evaluate
+      union all select 'intelligence_pattern_detail', count(*) from serving.intelligence_pattern_detail
+      union all select 'intelligence_context_summary', count(*) from serving.intelligence_context_summary
+    ) serving_counts
+    where row_count = 0
   )
 ));
 """.strip()
@@ -2073,9 +2167,14 @@ def main() -> int:
         "intelligence_primary_object_drift",
         "intelligence_pattern_primary_object_drift",
         "intelligence_question_context_pack_drift",
+        "serving_views_empty",
     ]:
         if int(readback.get(drift_key, 1)) != 0:
             issues.append(drift_key)
+    if int(readback.get("serving_contract_rows", -1)) != 40:
+        issues.append("serving_contract_rows_expected_40")
+    if int(readback.get("serving_views_populated", -1)) != 40:
+        issues.append("serving_views_populated_expected_40")
     if int(readback.get("source_value_claimable_rows", 1)) != 0:
         issues.append("source_value_claimable_rows_should_be_zero_before_review")
     if any(not failure["rejected"] for failure in pg_summary["planted_failures"]):
