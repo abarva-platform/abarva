@@ -843,6 +843,7 @@
     "test:ecl-client-intake-application-adapter": "node scripts/ecl/__tests__/run-ecl-client-intake-application-adapter-tests.mjs",
     "test:ecl-source-file-origin-upgrade": "node scripts/ecl/__tests__/run-ecl-source-file-origin-upgrade-tests.mjs",
     "test:ecl-dense-source-room-stride-gate": "node scripts/ecl/__tests__/run-ecl-dense-source-room-stride-gate-tests.mjs",
+    "test:ecl-optional-scope-counts": "node scripts/ecl/__tests__/run-ecl-optional-scope-count-tests.mjs",
     "test:ecl-demo-findings-source-contract": "node scripts/ecl/__tests__/run-ecl-demo-findings-source-contract-tests.mjs",
     "test:ecl-projection-schema-reconciliation": "node scripts/ecl/__tests__/run-ecl-projection-schema-reconciliation-tests.mjs",
     "test:npm-script-targets": "node scripts/ecl/__tests__/run-npm-script-target-reconciliation-tests.mjs",
