@@ -93,7 +93,7 @@ const PROOF_PLANS: readonly ProofPlan[] = [
     ],
     requiredSourceIds: ["home_data_assets_integrations", "intelligence_enterprise_landscape"],
     answer:
-      "The data and analytics record shows one workload running across four BI technologies, with at least one ungoverned row and active users attached. That is tool sprawl with a governance caveat, not proof of license savings. The consultant read is to separate technology count from usage value: first verify active users, report ownership, governed metric definitions, and whether those tools serve distinct audiences or competing versions of the same management view.",
+      "The data and analytics record shows one workload running across four BI technologies, with at least one ungoverned reporting slice and active users attached. That is tool sprawl with a governance caveat, not proof of license savings. The consultant read is to separate technology count from usage value: first verify active users, report ownership, governed metric definitions, and whether those tools serve distinct audiences or competing versions of the same management view.",
   },
   {
     id: "F6",
@@ -134,7 +134,7 @@ const PROOF_PLANS: readonly ProofPlan[] = [
     ],
     requiredSourceIds: ["tower_value_proof", "tower_evidence", "tower_recommended_actions"],
     answer:
-      "The value claims are gated, and that is the correct control posture. Each gated row has to name its gate reason, the evidence needed, and the next gate before leadership treats the value as claimable. The answer is not that the value failed; it is that the proof chain is incomplete. Tower should show the blocked value, the reason code, the specific evidence request, and the decision gate that would convert it from candidate value to approved value.",
+      "The value claims are gated, and that is the correct control posture. Each gated claim has to name its gate reason, the evidence needed, and the next gate before leadership treats the value as claimable. The answer is not that the value failed; it is that the proof chain is incomplete. Tower should show the blocked value, the reason code, the specific evidence request, and the decision gate that would convert it from candidate value to approved value.",
   },
   {
     id: "F9",
@@ -147,7 +147,7 @@ const PROOF_PLANS: readonly ProofPlan[] = [
     ],
     requiredSourceIds: ["tower_risk_lens", "source_vendor_360"],
     answer:
-      "Yes. The control-exception lens should group the open exceptions by resolved vendor, and the risk leader is the vendor estate with the high severity cluster. The evidence path matters: exceptions must resolve through application and vendor relationships and then cite an evidence row, not just count unresolved object references. The next step is vendor-accountable remediation planning, with Source carrying the commercial dependency and Tower carrying the risk proof.",
+      "Yes. The control-exception lens should group the open exceptions by resolved vendor, and the risk leader is the vendor estate with the high severity cluster. The evidence path matters: exceptions must resolve through application and vendor relationships and then cite a specific evidence item, not just count unresolved object references. The next step is vendor-accountable remediation planning, with Source carrying the commercial dependency and Tower carrying the risk proof.",
   },
   {
     id: "F10",
