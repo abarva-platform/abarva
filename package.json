@@ -859,6 +859,8 @@
     "ecl:dense-all-layer:execute": "python3 scripts/ecl/execute_dense_all_layer_load.py",
     "ecl:dense-all-layer:readback": "python3 scripts/ecl/export_dense_all_layer_readback.py",
     "ecl:product-browser:predeploy-gate": "node scripts/ecl/run_product_ecl_predeploy_gate.mjs",
+    "ecl:deterministic-content:sweep": "node scripts/ecl/run_ecl_deterministic_content_sweep.mjs",
+    "ecl:deterministic-content:sweep:browser-default": "node scripts/ecl/run_ecl_deterministic_content_sweep.mjs --browser-default-routes",
     "ecl:product-browser:smoke": "node scripts/ecl/run_product_ecl_browser_smoke.mjs",
     "ecl:ava-consultant-eval": "node scripts/ecl/run_ecl_ava_consultant_eval.mjs",
     "ecl:ava-consultant-eval:capture-live": "node scripts/ecl/run_ecl_ava_consultant_eval.mjs --capture-live",

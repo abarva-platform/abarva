@@ -21,6 +21,10 @@ import {
 } from "@/lib/home/preview/golden-snapshot";
 import { getHomeEclProjectionBundle } from "@/lib/home/preview/ecl-projection-bundle";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
+import {
+  isEclProductProvider,
+  resolveEclProductProvider,
+} from "@/lib/ecl/product-provider";
 
 /**
  * Production-faithful preview of the new eight-chapter Home experience -- not a static prototype.
@@ -69,11 +73,13 @@ export default async function HomePreviewPage({
 
   const { tenant, provider } = await searchParams;
   const tenantKey = tenant && isHomePreviewTenantKey(tenant) ? tenant : HOME_PREVIEW_TENANT_KEYS[0];
+  const productProvider = resolveEclProductProvider(provider);
+  const isEclProvider = isEclProductProvider(productProvider);
 
   const hasPlatformAdmin = await isPlatformAdminSession();
   const hasFoundationOperator = await isFoundationPreviewOperatorSession();
   const hasPrivateProof =
-    provider === "ecl_projection_db"
+    isEclProvider
       ? await hasHomeEclPrivateProofSession(tenantKey)
       : false;
   if (!hasPlatformAdmin && !hasFoundationOperator && !hasPrivateProof) {
@@ -83,7 +89,7 @@ export default async function HomePreviewPage({
   // One tenant per render. Reviewers pick with ?tenant=<key>; the page never loads a second
   // tenant's bundle, so no other client's data reaches the response and the UI carries no
   // cross-client control. A client-facing surface must look tenant-isolated because it is.
-  const bundle = provider === "ecl_projection_db"
+  const bundle = isEclProvider
     ? await getHomeEclProjectionBundle(tenantKey)
     : getHomeReviewBundle(tenantKey);
   if (!bundle) {
@@ -94,7 +100,7 @@ export default async function HomePreviewPage({
 
   return (
     <AppShell surface="home" topBarProps={{ context: "Home preview — candidate, not yet reviewed" }}>
-      {provider === "ecl_projection_db" ? <EclDemoFindingsPanel product="home" /> : null}
+      {isEclProvider ? <EclDemoFindingsPanel product="home" /> : null}
       <HomePreviewAppRoot bundle={bundle} tenantKey={tenantKey} />
     </AppShell>
   );

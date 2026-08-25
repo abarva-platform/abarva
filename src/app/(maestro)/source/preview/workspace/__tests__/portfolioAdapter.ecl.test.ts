@@ -11,10 +11,15 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { azureRead } from "@/lib/data-plane/azureRead";
-import { loadSourceWorkspacePortfolio } from "../live/portfolioAdapter";
+import {
+  loadSourceWorkspacePortfolio,
+  sourceWorkspaceProvider,
+} from "../live/portfolioAdapter";
 
 const ORIGINAL_PROVIDER = process.env.SOURCE_WORKSPACE_PROVIDER;
 const ORIGINAL_PROJECTION_DIR = process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR;
+const ORIGINAL_ECL_PRODUCT_DEFAULT =
+  process.env.ECL_PRODUCT_DEFAULT_PROVIDER;
 const mockWithSession = azureRead.withSession as jest.MockedFunction<
   typeof azureRead.withSession
 >;
@@ -44,8 +49,22 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
   afterEach(async () => {
     process.env.SOURCE_WORKSPACE_PROVIDER = ORIGINAL_PROVIDER;
     process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR = ORIGINAL_PROJECTION_DIR;
+    process.env.ECL_PRODUCT_DEFAULT_PROVIDER = ORIGINAL_ECL_PRODUCT_DEFAULT;
     mockWithSession.mockReset();
     await rm(dir, { force: true, recursive: true });
+  });
+
+  it("uses Azure ECL serving views as the default Source workspace provider", () => {
+    delete process.env.SOURCE_WORKSPACE_PROVIDER;
+    delete process.env.ECL_PRODUCT_DEFAULT_PROVIDER;
+
+    expect(sourceWorkspaceProvider()).toBe("ecl_projection_db");
+  });
+
+  it("preserves explicit Source provider rollback to legacy", () => {
+    process.env.SOURCE_WORKSPACE_PROVIDER = "legacy";
+
+    expect(sourceWorkspaceProvider()).toBe("legacy");
   });
 
   it("loads Source 360 portfolio data from flagged local ECL projection CSVs", async () => {
