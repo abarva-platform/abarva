@@ -94,6 +94,9 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
       "doesn't include",
       "not a field present",
       "not present",
+      "current evidence",
+      "precise percentile right now is fabricating it",
+      "external percentile question is blocked",
     ],
   ],
   [
@@ -117,6 +120,8 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
       "needs evidence",
       "would need",
       "must be validated",
+      "cannot answer that question from the current evidence",
+      "external percentile question is blocked",
     ],
   ],
   [
@@ -155,6 +160,7 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
       "data-integrity gate",
       "source-to-destination system identity cannot be confirmed",
       "source and target system identities are unresolved",
+      "source and target system identities on a flow record are unknown",
       "source and destination system labels are unknown",
       "endpoint identity is unresolved",
     ],
@@ -168,6 +174,8 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
       "source system nor the destination system is identified",
       "endpoint identity is unresolved",
       "not identified in the integration record",
+      "source and target system identities on a flow record are unknown",
+      "without named endpoints",
     ],
   ],
   [

@@ -36,7 +36,7 @@ This release makes the Intelligence ECL live-answer proof safer to operate. Each
 - `npx eslint scripts/ecl/run_ecl_ava_consultant_eval.mjs src/lib/intelligence/ask/retrievers/ecl-serving-context.ts` — pass.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false` — pass.
 - `npm run release:check` — blocked on first run by release-record wording; rerun required after this record states explicit statuses.
-- Post-deploy signed-in live ECL aVa consultant eval with `ECL_AVA_EVAL_CASE_TIMEOUT_MS=60000` — run after the first two candidate deployments; both bounded runs completed with per-case diagnostics and restored the private operator to idle. The second run narrowed failures to truthful refusal/gap wording for F10 and U1. This follow-up accepts those wording variants and requires another post-deploy run.
+- Post-deploy signed-in live ECL aVa consultant eval with `ECL_AVA_EVAL_CASE_TIMEOUT_MS=60000` — run after the first three candidate deployments; all bounded runs completed with per-case diagnostics and restored the private operator to idle. The third run narrowed failures to truthful refusal/gap wording for F10 and U1: F10 said the page should refuse when source/target identities are unknown, and U1 said an exact external percentile would be fabricated from current evidence. This follow-up accepts those wording variants and requires another post-deploy run.
 
 ## Rollout Plan
 
