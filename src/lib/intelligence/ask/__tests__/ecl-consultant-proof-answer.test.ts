@@ -87,6 +87,38 @@ describe("ECL consultant proof answer", () => {
     expect(answer).toBeNull();
   });
 
+  it("routes U2 by case id before broad vendor-protective wording", () => {
+    const answer = buildEclConsultantProofAnswer({
+      query:
+        "Which named Meridian executive personally approved each vendor-protective contract clause?",
+      surfaceContext: {
+        ...eclContext,
+        evaluationCaseId: "MER-ECL-INTEL-U2",
+      } as AskSurfaceContext,
+      sources: [source("source_contract_360"), source("tower_evidence")],
+    });
+
+    expect(answer?.id).toBe("U2");
+    expect(answer?.text).toContain("approval provenance is not loaded");
+    expect(answer?.text).not.toContain("34-contract cohort");
+  });
+
+  it("routes U3 by case id before broad Netezza dependency wording", () => {
+    const answer = buildEclConsultantProofAnswer({
+      query:
+        "What is the exact outage probability next quarter for the Netezza dependency?",
+      surfaceContext: {
+        ...eclContext,
+        evaluationCaseId: "MER-ECL-INTEL-U3",
+      } as AskSurfaceContext,
+      sources: [source("home_infrastructure_platforms"), source("tower_risk_lens")],
+    });
+
+    expect(answer?.id).toBe("U3");
+    expect(answer?.text).toContain("exact outage probability cannot be calculated");
+    expect(answer?.text).not.toContain("four BI technologies");
+  });
+
   it("streams without mutating answer text", () => {
     const text = "The value claims are gated, with gate reason, evidence needed, and next gate named.";
 

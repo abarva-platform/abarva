@@ -557,9 +557,12 @@ async function captureLiveAnswers(cases, args, captureMode = "evidence_present")
       waitUntil: "networkidle",
       timeout: 45_000,
     });
-    const surfaceContext = surfaceContextForCapture(args, captureMode);
     const rows = [];
     for (const row of cases) {
+      const surfaceContext = {
+        ...surfaceContextForCapture(args, captureMode),
+        evaluationCaseId: row.id,
+      };
       const caseStartedAt = Date.now();
       console.log(
         JSON.stringify({
@@ -758,7 +761,7 @@ const summary = {
 mkdirSync(path.dirname(args.out), { recursive: true });
 writeFileSync(args.out, `${JSON.stringify(summary, null, 2)}\n`);
 console.log(JSON.stringify(summary, null, 2));
-console.log(JSON.stringify({ event: "ecl_ava_consultant_eval_summary", summary }, null, 2));
+console.log(JSON.stringify({ event: "ecl_ava_consultant_eval_summary", summary }));
 console.log(
   JSON.stringify({
     event: "ecl_ava_consultant_eval_compact_summary",
