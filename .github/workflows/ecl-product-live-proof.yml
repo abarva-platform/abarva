@@ -19,21 +19,27 @@ concurrency:
   group: ecl-product-live-proof
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   proof:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    environment: production
     env:
+      CONTAINER_APP_NAME: ${{ vars.AZURE_WEB_CONTAINER_APP_NAME || 'ca-abarva-web-lab-eastus' }}
+      RESOURCE_GROUP: ${{ vars.AZURE_WEB_RESOURCE_GROUP || 'rg-abarva-controlplane-lab-eastus' }}
+      AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
+      AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
+      AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID || '701a8554-a166-46e9-bf13-743bc50e3b20' }}
       BASE_URL: ${{ inputs.base_url || vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
       ECL_PRODUCT_BROWSER_BASE_URL: ${{ inputs.base_url || vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
       ECL_AVA_EVAL_BASE_URL: ${{ inputs.base_url || vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
       E2E_ACTIVE_CLIENT: ${{ inputs.tenant_key || 'meridian-health' }}
       E2E_EXPECTED_TENANT_NAME: Meridian Health
-      E2E_PRIVATE_PROOF_EMAIL: ${{ secrets.E2E_PRIVATE_PROOF_EMAIL }}
-      E2E_DEMO_EMAIL: ${{ secrets.E2E_DEMO_EMAIL }}
-      ABARVA_PRIVATE_BROWSER_PROOF_TOKEN: ${{ secrets.ABARVA_PRIVATE_BROWSER_PROOF_TOKEN }}
-      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY || secrets.AZURE_LAB_CLERK_SECRET_KEY }}
       EMIT_ACA_PROOF_BUNDLE: "false"
     steps:
       - uses: actions/checkout@v6
@@ -46,64 +52,69 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browser
-        run: npx playwright install chromium
-
       - name: Validate proof contracts
         run: |
           npm run ecl:product-browser:predeploy-gate
 
-      - name: Run default-route product browser proof
-        env:
-          ECL_PRODUCT_BROWSER_PROOF_DIR: audit-artifacts/ecl-product-live-proof/browser
-        run: |
-          npm run ecl:product-browser:smoke:default
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_DEPLOY_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_DEPLOY_SUBSCRIPTION_ID }}
 
-      - name: Run default-path aVa live ablation eval
+      - name: Resolve deployed digest image
+        id: image
+        shell: bash
         run: |
-          npm run ecl:ava-consultant-eval:capture-live-ablation -- \
-            --out audit-artifacts/ecl-product-live-proof/eval/summary.json \
-            --answers-out audit-artifacts/ecl-product-live-proof/eval/live-answers.jsonl \
-            --ablation-answers-out audit-artifacts/ecl-product-live-proof/eval/live-answers-ablation.jsonl
+          set -euo pipefail
+          image="$(az containerapp show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query "properties.template.containers[0].image" \
+            --output tsv)"
+          if [[ "$image" != *@sha256:* ]]; then
+            echo "Resolved web image is not digest-pinned: $image" >&2
+            exit 1
+          fi
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Run default-route product browser proof in private operator
+        run: |
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script ecl:product-browser:smoke:default \
+            --secret-env ABARVA_PRIVATE_BROWSER_PROOF_TOKEN=parallel-run-token \
+            --env BASE_URL="$BASE_URL" \
+            --env ECL_PRODUCT_BROWSER_BASE_URL="$ECL_PRODUCT_BROWSER_BASE_URL" \
+            --env E2E_ACTIVE_CLIENT="$E2E_ACTIVE_CLIENT" \
+            --env E2E_EXPECTED_TENANT_NAME="$E2E_EXPECTED_TENANT_NAME" \
+            --env ECL_PRODUCT_BROWSER_PROOF_DIR=/tmp/ecl-product-live-proof/browser \
+            --env EMIT_ACA_PROOF_BUNDLE="$EMIT_ACA_PROOF_BUNDLE" \
+            --out-dir audit-artifacts/ecl-product-live-proof/browser-operator \
+            --poll-seconds 15
+
+      - name: Run default-path aVa live ablation eval in private operator
+        run: |
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script ecl:ava-consultant-eval:capture-live-ablation \
+            --secret-env ABARVA_PRIVATE_BROWSER_PROOF_TOKEN=parallel-run-token \
+            --env BASE_URL="$BASE_URL" \
+            --env ECL_AVA_EVAL_BASE_URL="$ECL_AVA_EVAL_BASE_URL" \
+            --env E2E_ACTIVE_CLIENT="$E2E_ACTIVE_CLIENT" \
+            --out-dir audit-artifacts/ecl-product-live-proof/eval-operator \
+            --poll-seconds 15
 
       - name: Write compact proof summary
         if: always()
         run: |
-          node <<'NODE'
-          const fs = require("fs");
-          const browserPath = "audit-artifacts/ecl-product-live-proof/browser/ecl_product_browser_smoke_summary.json";
-          const evalPath = "audit-artifacts/ecl-product-live-proof/eval/summary.json";
-          const read = (file) => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : null;
-          const browser = read(browserPath);
-          const evaluation = read(evalPath);
-          const compact = {
-            accepted: Boolean(browser?.accepted && evaluation?.accepted),
-            checked_at: new Date().toISOString(),
-            base_url: process.env.BASE_URL,
-            tenant_key: process.env.E2E_ACTIVE_CLIENT,
-            default_entry_routes: browser ? {
-              numerator: (browser.routes || []).filter((route) => route.accepted).length,
-              denominator: browser.route_count,
-              accepted: browser.accepted,
-            } : null,
-            named_surfaces_browser_proven: browser?.named_surfaces_browser_proven ?? null,
-            findings_demonstrable_on_real_surface: browser?.findings_demonstrable_on_real_surface ?? null,
-            ava_eval: evaluation ? {
-              accepted: evaluation.accepted,
-              answers_accepted: evaluation.answers_accepted,
-              answers_evaluated: evaluation.answers_evaluated,
-              ablation_answers_accepted: evaluation.ablation?.answers_accepted ?? null,
-              ablation_answers_evaluated: evaluation.ablation?.answers_evaluated ?? null,
-            } : null,
-          };
-          fs.mkdirSync("audit-artifacts/ecl-product-live-proof", { recursive: true });
-          fs.writeFileSync(
-            "audit-artifacts/ecl-product-live-proof/compact-summary.json",
-            JSON.stringify(compact, null, 2) + "\n",
-            "utf8",
-          );
-          console.log(JSON.stringify(compact, null, 2));
-          NODE
+          node scripts/ecl/write_ecl_product_live_proof_compact_summary.mjs \
+            --browser-events audit-artifacts/ecl-product-live-proof/browser-operator/05-structured-events.json \
+            --eval-events audit-artifacts/ecl-product-live-proof/eval-operator/05-structured-events.json \
+            --out audit-artifacts/ecl-product-live-proof/compact-summary.json \
+            --base-url "$BASE_URL" \
+            --tenant-key "$E2E_ACTIVE_CLIENT"
 
       - name: Upload ECL product live proof
         if: always()
