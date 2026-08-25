@@ -10,6 +10,10 @@ import { buildClientGroundingPacketSource } from "./client-grounding-packet";
 import { generateFollowups, normalizeGeneratedFollowup } from "./followups";
 import { retrieveWorldview } from "./retrievers/worldview";
 import { retrieveSurfaceContextSources } from "./retrievers/surface-context";
+import {
+  isEclProjectionProvider,
+  retrieveEclServingContextSources,
+} from "./retrievers/ecl-serving-context";
 import { retrieveRetailOverlaySources } from "./retrievers/retail-overlay";
 import { retrieveCuratedDossierSources } from "./retrievers/curated-dossier";
 import {
@@ -281,6 +285,31 @@ export async function* askIntelligence(
       };
       return;
     }
+    const eclServingStartedAt = Date.now();
+    const eclServingContext = await retrieveEclServingContextSources(
+      opts.surfaceContext,
+      trimmed,
+    );
+    emitTiming(
+      trace.finish("retrieval.ecl_serving_context.done", eclServingStartedAt, {
+        sourceCount: eclServingContext.length,
+        enabled: isEclProjectionProvider(opts.surfaceContext),
+      }),
+    );
+    const eclServingRetiredFacts = scanRetiredFacts({
+      tenantKey: tenantKeyForRetiredFactGate,
+      tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+      surfaceContext: opts.surfaceContext,
+      sources: eclServingContext,
+    });
+    if (eclServingRetiredFacts.length > 0) {
+      yield {
+        type: "error",
+        error: clientSafeRetiredFactMessage(),
+        retiredFactFindings: eclServingRetiredFacts,
+      };
+      return;
+    }
     emitTiming(
       trace.mark("retrieval.context_dossier.disabled", {
         sourceCount: 0,
@@ -414,7 +443,13 @@ export async function* askIntelligence(
       ],
     );
     const conciseAsk = isExplicitConciseAsk(trimmed);
-    const sourceLimit = conciseAsk ? 9 : 18;
+    const sourceLimit = isEclProjectionProvider(opts.surfaceContext)
+      ? conciseAsk
+        ? 14
+        : 30
+      : conciseAsk
+        ? 9
+        : 18;
     // Canonical as a floor. When every other retriever comes back empty -- which is how aVa ended up
     // telling a client their estate was not loaded while thousands of their records sat in the
     // projection -- this still grounds the answer.
@@ -447,6 +482,7 @@ export async function* askIntelligence(
     const rawSources: AskSource[] = [
       ...(skyHarborCtoSource ? [skyHarborCtoSource] : []),
       ...surfaceContext,
+      ...eclServingContext,
       ...(clientGroundingPacket ? [clientGroundingPacket] : []),
       ...retailOverlay,
       ...currentTenantSources,
