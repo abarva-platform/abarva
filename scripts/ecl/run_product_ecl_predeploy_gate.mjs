@@ -121,6 +121,21 @@ const CHECKS = [
       "F10",
     ],
   },
+  {
+    key: "smoke_asserts_named_surface_denominator",
+    file: "scripts/ecl/run_product_ecl_browser_smoke.mjs",
+    mustContain: [
+      "SURFACE_BROWSER_ASSERTIONS",
+      "named surfaces browser-proven",
+      "named_surfaces_browser_proven",
+      "surface_assertion_count_",
+      "home_executive_brief",
+      "tower_value_proof",
+      "source_contract_360",
+      "intelligence_context_summary",
+      "denominator: 40",
+    ],
+  },
 ];
 
 const COMMAND_CHECKS = [
