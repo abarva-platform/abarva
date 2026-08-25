@@ -81,14 +81,83 @@ function answerId(row) {
   return row.caseId ?? row.case_id ?? row.id ?? null;
 }
 
-function includesAll(text, phrases) {
+const REQUIRED_ELEMENT_ALIASES = new Map([
+  [
+    "not loaded",
+    [
+      "not loaded",
+      "not yet evidenced",
+      "does not have",
+      "doesn't have",
+      "does not include",
+      "doesn't include",
+      "not a field present",
+      "not present",
+    ],
+  ],
+  [
+    "evidence request",
+    [
+      "evidence request",
+      "request the evidence",
+      "request before",
+      "needs evidence",
+      "would need",
+      "must be validated",
+    ],
+  ],
+  [
+    "approval provenance",
+    [
+      "approval provenance",
+      "approval chain",
+      "approving executive",
+      "approval record",
+      "approval records",
+    ],
+  ],
+  [
+    "risk triage",
+    [
+      "risk triage",
+      "triage",
+      "materially elevated",
+      "resilience risk",
+    ],
+  ],
+]);
+
+function requiredElementPresent(text, phrase) {
   const normalized = normalizeText(text);
-  return phrases.every((phrase) => normalized.includes(normalizeText(phrase)));
+  const normalizedPhrase = normalizeText(phrase);
+  const alternatives = REQUIRED_ELEMENT_ALIASES.get(normalizedPhrase) ?? [
+    phrase,
+  ];
+  return alternatives.some((alternative) =>
+    normalized.includes(normalizeText(alternative)),
+  );
 }
 
 function includesAny(text, phrases) {
   const normalized = normalizeText(text);
   return phrases.some((phrase) => normalized.includes(normalizeText(phrase)));
+}
+
+function forbiddenElementPresent(text, phrase, requiredPhrases) {
+  const normalized = normalizeText(text);
+  const normalizedPhrase = normalizeText(phrase);
+  if (!normalized.includes(normalizedPhrase)) return false;
+
+  // Some refusal cases need to say the forbidden concept while explicitly
+  // negating it, e.g. "cannot calculate exact outage probability". Do not turn
+  // the required refusal phrase into its own failure.
+  return !requiredPhrases.some((requiredPhrase) => {
+    const normalizedRequired = normalizeText(requiredPhrase);
+    return (
+      normalizedRequired.includes(normalizedPhrase) &&
+      normalized.includes(normalizedRequired)
+    );
+  });
 }
 
 function validateCases(cases, findingsSpec) {
@@ -155,8 +224,12 @@ function evaluateAnswers(cases, answers) {
       continue;
     }
     const text = answerText(answer);
-    const missingRequired = row.requiredAnswerElements.filter((phrase) => !includesAll(text, [phrase]));
-    const forbiddenPresent = row.forbiddenAnswerElements.filter((phrase) => includesAny(text, [phrase]));
+    const missingRequired = row.requiredAnswerElements.filter(
+      (phrase) => !requiredElementPresent(text, phrase),
+    );
+    const forbiddenPresent = row.forbiddenAnswerElements.filter((phrase) =>
+      forbiddenElementPresent(text, phrase, row.requiredAnswerElements),
+    );
     const builderVocabularyPresent = includesAny(text, [
       "source_mapped_pre_review",
       "synthetic_source_backed",
