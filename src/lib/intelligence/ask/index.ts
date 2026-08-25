@@ -516,6 +516,7 @@ export async function* askIntelligence(
         ? sources.reduce((s, x) => s + (x.confidence ?? 0), 0) / sources.length
         : 0;
     const coverageReport = assertCoverage(questionCategory, sources);
+    const coverageReportBlock = formatCoverageReportForPrompt(coverageReport);
     const preModelRetiredFacts = scanRetiredFacts({
       tenantKey: tenantKeyForRetiredFactGate,
       tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
@@ -525,7 +526,7 @@ export async function* askIntelligence(
         { location: "factAvailabilityBlock", text: factAvailabilityBlock },
         {
           location: "coverageReportBlock",
-          text: formatCoverageReportForPrompt(coverageReport),
+          text: coverageReportBlock,
         },
       ],
     });
@@ -538,6 +539,51 @@ export async function* askIntelligence(
       return;
     }
     yield { type: "sources", sources, coverageReport };
+    const eclConsultantProofAnswer = buildEclConsultantProofAnswer({
+      query: trimmed,
+      sources,
+      surfaceContext: opts.surfaceContext,
+    });
+    if (eclConsultantProofAnswer) {
+      const answerMode = classifyAbarvaAnswerMode(trimmed);
+      const rawAnswer = applyCxoAnswerModeFallbacks(
+        eclConsultantProofAnswer.text,
+        answerMode,
+      );
+      const guardedAnswer = applyProductTruthRuntimeGuard(rawAnswer, {
+        ...productTruthContext,
+        groundingText: productTruthGroundingText([
+          opts.surfaceContext,
+          sources,
+          factAvailabilityBlock,
+          coverageReportBlock,
+        ]),
+      });
+      answer = applyCxoAnswerModeFallbacks(guardedAnswer.text, answerMode);
+      const proofAnswerRetiredFacts = scanRetiredFacts({
+        tenantKey: tenantKeyForRetiredFactGate,
+        tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+        textBlocks: [
+          {
+            location: `eclConsultantProofAnswer:${eclConsultantProofAnswer.id}`,
+            text: answer,
+          },
+        ],
+      });
+      if (proofAnswerRetiredFacts.length > 0) {
+        yield {
+          type: "error",
+          error: clientSafeRetiredFactMessage(),
+          retiredFactFindings: proofAnswerRetiredFacts,
+        };
+        return;
+      }
+      for (const delta of chunkEclConsultantProofAnswer(answer)) {
+        yield { type: "delta", text: delta };
+      }
+      yield { type: "done" };
+      return;
+    }
     const demoSafeTenantName =
       canonicalClientDisplayName({
         key: opts.tenantClientKey ?? opts.tenantInventoryKey ?? undefined,
@@ -605,53 +651,6 @@ export async function* askIntelligence(
 
     const handoff = atlasStakeholderConflictHandoff(trimmed);
     const currentStateAsk = isBroadCurrentStateQuestion(trimmed);
-    const eclConsultantProofAnswer = buildEclConsultantProofAnswer({
-      query: trimmed,
-      sources,
-      surfaceContext: opts.surfaceContext,
-    });
-    if (eclConsultantProofAnswer) {
-      const answerMode = classifyAbarvaAnswerMode(trimmed);
-      const rawAnswer = applyCxoAnswerModeFallbacks(
-        eclConsultantProofAnswer.text,
-        answerMode,
-      );
-      const guardedAnswer = applyProductTruthRuntimeGuard(rawAnswer, {
-        ...productTruthContext,
-        groundingText: productTruthGroundingText([
-          opts.surfaceContext,
-          sources,
-          factAvailabilityBlock,
-          coverageReportBlock,
-          intelligenceDossier,
-          advisoryPacketForEvent,
-        ]),
-      });
-      answer = applyCxoAnswerModeFallbacks(guardedAnswer.text, answerMode);
-      const proofAnswerRetiredFacts = scanRetiredFacts({
-        tenantKey: tenantKeyForRetiredFactGate,
-        tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
-        textBlocks: [
-          {
-            location: `eclConsultantProofAnswer:${eclConsultantProofAnswer.id}`,
-            text: answer,
-          },
-        ],
-      });
-      if (proofAnswerRetiredFacts.length > 0) {
-        yield {
-          type: "error",
-          error: clientSafeRetiredFactMessage(),
-          retiredFactFindings: proofAnswerRetiredFacts,
-        };
-        return;
-      }
-      for (const delta of chunkEclConsultantProofAnswer(answer)) {
-        yield { type: "delta", text: delta };
-      }
-      yield { type: "done" };
-      return;
-    }
 
     // INT-VOICE.STRAT-2026-05-10b — Streaming whitespace bug fix.
     //
@@ -666,7 +665,6 @@ export async function* askIntelligence(
     // cap are already applied at the synthesizer entry. Pass chunks
     // through unchanged.
     const companionCanvasEnabled = opts.companionCanvasEnabled === true;
-    const coverageReportBlock = formatCoverageReportForPrompt(coverageReport);
     let answer = "";
     const pendingDeltas: string[] = [];
     for await (const delta of synthesizeStream({
