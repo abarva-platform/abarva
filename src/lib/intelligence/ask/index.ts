@@ -39,6 +39,10 @@ import {
 import { formatCoverageReportForPrompt } from "@/lib/knowledge/coverageReport";
 import { buildCanonicalLandscapeSource } from "./canonical-landscape-source";
 import {
+  buildEclConsultantProofAnswer,
+  chunkEclConsultantProofAnswer,
+} from "./ecl-consultant-proof-answer";
+import {
   classifyAbarvaAnswerMode,
   isBroadCurrentStateQuestion,
 } from "./response-policy";
@@ -601,6 +605,53 @@ export async function* askIntelligence(
 
     const handoff = atlasStakeholderConflictHandoff(trimmed);
     const currentStateAsk = isBroadCurrentStateQuestion(trimmed);
+    const eclConsultantProofAnswer = buildEclConsultantProofAnswer({
+      query: trimmed,
+      sources,
+      surfaceContext: opts.surfaceContext,
+    });
+    if (eclConsultantProofAnswer) {
+      const answerMode = classifyAbarvaAnswerMode(trimmed);
+      const rawAnswer = applyCxoAnswerModeFallbacks(
+        eclConsultantProofAnswer.text,
+        answerMode,
+      );
+      const guardedAnswer = applyProductTruthRuntimeGuard(rawAnswer, {
+        ...productTruthContext,
+        groundingText: productTruthGroundingText([
+          opts.surfaceContext,
+          sources,
+          factAvailabilityBlock,
+          coverageReportBlock,
+          intelligenceDossier,
+          advisoryPacketForEvent,
+        ]),
+      });
+      answer = applyCxoAnswerModeFallbacks(guardedAnswer.text, answerMode);
+      const proofAnswerRetiredFacts = scanRetiredFacts({
+        tenantKey: tenantKeyForRetiredFactGate,
+        tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+        textBlocks: [
+          {
+            location: `eclConsultantProofAnswer:${eclConsultantProofAnswer.id}`,
+            text: answer,
+          },
+        ],
+      });
+      if (proofAnswerRetiredFacts.length > 0) {
+        yield {
+          type: "error",
+          error: clientSafeRetiredFactMessage(),
+          retiredFactFindings: proofAnswerRetiredFacts,
+        };
+        return;
+      }
+      for (const delta of chunkEclConsultantProofAnswer(answer)) {
+        yield { type: "delta", text: delta };
+      }
+      yield { type: "done" };
+      return;
+    }
 
     // INT-VOICE.STRAT-2026-05-10b — Streaming whitespace bug fix.
     //
