@@ -545,6 +545,7 @@ async function captureLiveAnswers(cases, args, captureMode = "evidence_present")
       waitUntil: "networkidle",
       timeout: 45_000,
     });
+    const surfaceContext = surfaceContextForCapture(args, captureMode);
     const rows = [];
     for (const row of cases) {
       const caseStartedAt = Date.now();
@@ -559,7 +560,7 @@ async function captureLiveAnswers(cases, args, captureMode = "evidence_present")
       let result;
       try {
         result = await page.evaluate(
-          async ({ baseUrl, query, tenantKey, timeoutMs }) => {
+          async ({ baseUrl, query, tenantKey, timeoutMs, surfaceContext }) => {
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), timeoutMs);
             try {
@@ -573,7 +574,7 @@ async function captureLiveAnswers(cases, args, captureMode = "evidence_present")
                   richText: false,
                   traceEnabled: true,
                   answerOnlyStreaming: false,
-                  surfaceContext: surfaceContextForCapture({ tenantKey }, captureMode),
+                  surfaceContext,
                 }),
               });
               return {
@@ -602,6 +603,7 @@ async function captureLiveAnswers(cases, args, captureMode = "evidence_present")
             query: row.question,
             tenantKey: args.tenantKey,
             timeoutMs: caseTimeoutMs,
+            surfaceContext,
           },
         );
       } catch (error) {
@@ -744,6 +746,19 @@ mkdirSync(path.dirname(args.out), { recursive: true });
 writeFileSync(args.out, `${JSON.stringify(summary, null, 2)}\n`);
 console.log(JSON.stringify(summary, null, 2));
 console.log(JSON.stringify({ event: "ecl_ava_consultant_eval_summary", summary }, null, 2));
+console.log(
+  JSON.stringify({
+    event: "ecl_ava_consultant_eval_compact_summary",
+    accepted: summary.accepted,
+    answers_evaluated: summary.answers_evaluated,
+    answers_accepted: summary.answers_accepted,
+    demo_findings_cases: summary.demo_findings_cases,
+    ablation_answers_evaluated: summary.ablation?.answers_evaluated ?? 0,
+    ablation_answers_accepted: summary.ablation?.answers_accepted ?? 0,
+    ablation_demo_findings_accepted: summary.ablation?.demo_findings_accepted ?? null,
+    ablation_accepted: summary.ablation?.accepted ?? null,
+  }),
+);
 
 if (!summary.accepted) {
   process.exitCode = 1;
