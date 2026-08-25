@@ -103,6 +103,7 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
       "request before",
       "request approval records",
       "benchmark evidence request",
+      "evidence needed",
       "needs evidence",
       "would need",
       "must be validated",
@@ -130,6 +131,7 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
     "cannot calculate exact outage probability",
     [
       "cannot calculate exact outage probability",
+      "exact outage probability cannot be calculated",
       "exact outage probability can't be calculated",
       "outage probability can't be calculated",
       "cannot be calculated",
@@ -140,8 +142,20 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
     [
       "failed rule",
       "failed gate",
+      "data-integrity gate",
       "source-to-destination system identity cannot be confirmed",
       "source and destination system labels are unknown",
+      "endpoint identity is unresolved",
+    ],
+  ],
+  [
+    "evidence needed",
+    [
+      "evidence needed",
+      "without resolved endpoints",
+      "source system nor the destination system is identified",
+      "endpoint identity is unresolved",
+      "not identified in the integration record",
     ],
   ],
   [
