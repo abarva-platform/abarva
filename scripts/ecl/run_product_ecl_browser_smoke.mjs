@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-import { createClerkClient } from "@clerk/backend";
-import { chromium } from "playwright";
 import { execFileSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -147,6 +145,49 @@ const DEMO_FINDING_ASSERTIONS = [
   },
 ];
 
+const SURFACE_BROWSER_ASSERTIONS = [
+  { surfaceKey: "home_executive_brief", product: "Home", routeKey: "home_preview_ecl", requiredText: [/Executive Brief/i] },
+  { surfaceKey: "home_our_business", product: "Home", routeKey: "home_preview_ecl", requiredText: [/Our Business/i] },
+  { surfaceKey: "home_strategy_value_creation", product: "Home", routeKey: "home_preview_ecl", requiredText: [/Strategy & Value Creation/i] },
+  { surfaceKey: "home_how_we_operate", product: "Home", routeKey: "home_preview_ecl", requiredText: [/How We Operate/i] },
+  { surfaceKey: "home_technology_data", product: "Home", routeKey: "home_preview_ecl", requiredText: [/Technology & Data/i] },
+  { surfaceKey: "home_performance_value", product: "Home", routeKey: "home_preview_ecl", requiredText: [/Performance & Value/i] },
+  { surfaceKey: "home_leadership_perspective", product: "Home", routeKey: "home_preview_ecl", requiredText: [/Leadership Perspective/i] },
+  { surfaceKey: "home_needs_attention", product: "Home", routeKey: "home_preview_ecl", requiredText: [/What Needs Attention/i] },
+  { surfaceKey: "home_current_state_architecture", product: "Home", routeKey: "home_preview_ecl", requiredText: [/Current-state architecture/i] },
+  { surfaceKey: "home_current_state_data_flow", product: "Home", routeKey: "home_preview_ecl", requiredText: [/Current-state data flow/i] },
+  { surfaceKey: "home_loaded_record", product: "Home", routeKey: "home_preview_ecl", requiredText: [/What has been loaded/i] },
+  { surfaceKey: "home_browse_record", product: "Home", routeKey: "home_preview_ecl", requiredText: [/Browse the record/i] },
+  { surfaceKey: "home_applications_systems", product: "Home", routeKey: "home_preview_ecl", requiredText: [/Applications & Systems/i] },
+  { surfaceKey: "home_vendor_contracts", product: "Home", routeKey: "home_preview_ecl", requiredText: [/Vendor Contracts/i] },
+  { surfaceKey: "home_infrastructure_platforms", product: "Home", routeKey: "home_preview_ecl", requiredText: [/Infrastructure & Platforms/i] },
+  { surfaceKey: "home_data_assets_integrations", product: "Home", routeKey: "home_preview_ecl", requiredText: [/Data Assets & Integrations/i] },
+  { surfaceKey: "tower_command_center", product: "Tower", routeKey: "tower_ecl", requiredText: [/Tower command center/i] },
+  { surfaceKey: "tower_value_proof", product: "Tower", routeKey: "tower_ecl", requiredText: [/Value Proof/i] },
+  { surfaceKey: "tower_decision_lanes", product: "Tower", routeKey: "tower_ecl", requiredText: [/Decision Lanes/i] },
+  { surfaceKey: "tower_evidence", product: "Tower", routeKey: "tower_ecl", requiredText: [/Evidence/i] },
+  { surfaceKey: "tower_recommended_actions", product: "Tower", routeKey: "tower_ecl", requiredText: [/Recommended Actions/i] },
+  { surfaceKey: "tower_ai_portfolio", product: "Tower", routeKey: "tower_ecl", requiredText: [/AI Portfolio/i] },
+  { surfaceKey: "tower_cost_lens", product: "Tower", routeKey: "tower_ecl", requiredText: [/Cost Lens|cost lens/i] },
+  { surfaceKey: "tower_risk_lens", product: "Tower", routeKey: "tower_ecl", requiredText: [/Risk Lens|risk lens/i] },
+  { surfaceKey: "tower_adoption_lens", product: "Tower", routeKey: "tower_ecl", requiredText: [/Adoption Lens|adoption lens/i] },
+  { surfaceKey: "source_vendor_portfolio", product: "Source", routeKey: "source_workspace_ecl", requiredText: [/Portfolio|Vendor portfolio/i] },
+  { surfaceKey: "source_vendor_360", product: "Source", routeKey: "source_workspace_ecl", requiredText: [/Vendor 360/i] },
+  { surfaceKey: "source_contract_360", product: "Source", routeKey: "source_workspace_ecl", requiredText: [/Contract 360/i] },
+  { surfaceKey: "source_renewal", product: "Source", routeKey: "source_workspace_ecl", requiredText: [/Renewal/i] },
+  { surfaceKey: "source_events", product: "Source", routeKey: "source_workspace_ecl", requiredText: [/Events|event workspace/i] },
+  { surfaceKey: "source_compare", product: "Source", routeKey: "source_workspace_ecl", requiredText: [/Compare/i] },
+  { surfaceKey: "source_value", product: "Source", routeKey: "source_workspace_ecl", requiredText: [/Value|Value Levers/i] },
+  { surfaceKey: "source_approvals", product: "Source", routeKey: "source_workspace_ecl", requiredText: [/Approvals/i] },
+  { surfaceKey: "source_sourcing_opportunities", product: "Source", routeKey: "source_workspace_ecl", requiredText: [/Sourcing Opportunities|opportunities/i] },
+  { surfaceKey: "intelligence_advisory", product: "Intelligence", routeKey: "intelligence_ecl", requiredText: [/Advisory/i] },
+  { surfaceKey: "intelligence_enterprise_landscape", product: "Intelligence", routeKey: "intelligence_ecl", requiredText: [/Enterprise Landscape|landscape/i] },
+  { surfaceKey: "intelligence_ask_query", product: "Intelligence", routeKey: "intelligence_ecl", requiredText: [/Ask|query/i] },
+  { surfaceKey: "intelligence_insights_evaluate", product: "Intelligence", routeKey: "intelligence_ecl", requiredText: [/Insights|Evaluate/i] },
+  { surfaceKey: "intelligence_pattern_detail", product: "Intelligence", routeKey: "intelligence_ecl", requiredText: [/Pattern|pattern detail/i] },
+  { surfaceKey: "intelligence_context_summary", product: "Intelligence", routeKey: "intelligence_ecl", requiredText: [/Context Summary|context pack/i] },
+];
+
 function loadDemoFindingsSpec() {
   if (fs.existsSync(FINDINGS_SPEC_PATH)) {
     return {
@@ -200,6 +241,43 @@ function validateDemoFindingContract() {
   };
 }
 
+function validateSurfaceAssertionContract() {
+  const issues = [];
+  const routeKeys = new Set(ROUTES.map((route) => route.key));
+  const surfaceKeys = SURFACE_BROWSER_ASSERTIONS.map((surface) => surface.surfaceKey);
+  const products = SURFACE_BROWSER_ASSERTIONS.reduce((counts, surface) => {
+    counts[surface.product] = (counts[surface.product] ?? 0) + 1;
+    return counts;
+  }, {});
+
+  if (SURFACE_BROWSER_ASSERTIONS.length !== 40) {
+    issues.push(`surface_assertion_count_${SURFACE_BROWSER_ASSERTIONS.length}_expected_40`);
+  }
+  if (new Set(surfaceKeys).size !== surfaceKeys.length) {
+    issues.push("surface_assertion_keys_must_be_unique");
+  }
+  for (const [product, expected] of Object.entries({ Home: 16, Tower: 9, Source: 9, Intelligence: 6 })) {
+    if ((products[product] ?? 0) !== expected) {
+      issues.push(`${product.toLowerCase()}_surface_count_${products[product] ?? 0}_expected_${expected}`);
+    }
+  }
+  for (const surface of SURFACE_BROWSER_ASSERTIONS) {
+    if (!routeKeys.has(surface.routeKey)) {
+      issues.push(`surface_${surface.surfaceKey}_unknown_route_${surface.routeKey}`);
+    }
+    if (!surface.requiredText?.length) {
+      issues.push(`surface_${surface.surfaceKey}_has_no_required_text`);
+    }
+  }
+
+  return {
+    accepted: issues.length === 0,
+    denominator: 40,
+    product_counts: products,
+    issues,
+  };
+}
+
 function routeDemoFindingChecks(routeKey, bodyText) {
   return DEMO_FINDING_ASSERTIONS.flatMap((finding) =>
     finding.routeChecks
@@ -216,6 +294,21 @@ function routeDemoFindingChecks(routeKey, bodyText) {
         };
       }),
   );
+}
+
+function routeSurfaceChecks(routeKey, bodyText) {
+  return SURFACE_BROWSER_ASSERTIONS.filter((surface) => surface.routeKey === routeKey).map((surface) => {
+    const missing = surface.requiredText
+      .filter((pattern) => !pattern.test(bodyText))
+      .map((pattern) => String(pattern));
+    return {
+      surface_key: surface.surfaceKey,
+      product: surface.product,
+      route_key: routeKey,
+      accepted: missing.length === 0,
+      missing,
+    };
+  });
 }
 
 function summarizeDemoFindings(routes) {
@@ -245,6 +338,29 @@ function summarizeDemoFindings(routes) {
     denominator: 10,
     accepted: demonstrable === 10,
     findings,
+  };
+}
+
+function summarizeNamedSurfaces(routes) {
+  const checks = routes.flatMap((route) => route.surface_checks ?? []);
+  const proven = checks.filter((check) => check.accepted).length;
+  const productCounts = checks.reduce((counts, check) => {
+    const current = counts[check.product] ?? { numerator: 0, denominator: 0 };
+    current.denominator += 1;
+    if (check.accepted) current.numerator += 1;
+    counts[check.product] = current;
+    return counts;
+  }, {});
+  return {
+    metric: "named surfaces browser-proven",
+    numerator: proven,
+    denominator: 40,
+    accepted: proven === 40,
+    product_counts: productCounts,
+    surfaces: checks,
+    issues: checks.flatMap((check) =>
+      check.missing.map((missing) => `${check.surface_key}: missing ${missing}`),
+    ),
   };
 }
 
@@ -374,6 +490,7 @@ async function authenticate(page) {
   if (PRIVATE_PROOF_TOKEN) {
     return signInWithPrivateProof(page);
   }
+  const { createClerkClient } = await import("@clerk/backend");
   const clerk = createClerkClient({ secretKey: requiredEnv("CLERK_SECRET_KEY") });
   const ticket = await createTicket(clerk);
   await signInWithTicket(page, ticket.token);
@@ -412,9 +529,15 @@ async function smokeRoute(page, route) {
     if (!expected.test(bodyText)) issues.push(`missing_required_text_${expected}`);
   }
   const demoFindingChecks = routeDemoFindingChecks(route.key, bodyText);
+  const surfaceChecks = routeSurfaceChecks(route.key, bodyText);
   for (const check of demoFindingChecks) {
     for (const missing of check.missing) {
       issues.push(`missing_demo_finding_${check.id}_${missing}`);
+    }
+  }
+  for (const check of surfaceChecks) {
+    for (const missing of check.missing) {
+      issues.push(`missing_named_surface_${check.surface_key}_${missing}`);
     }
   }
   for (const pattern of BUILDER_VOCABULARY) {
@@ -435,6 +558,7 @@ async function smokeRoute(page, route) {
     text_sha256: sha256(textPath),
     text_excerpt: textExcerpt(bodyText),
     demo_finding_checks: demoFindingChecks,
+    surface_checks: surfaceChecks,
     issues,
     accepted: issues.length === 0,
   };
@@ -469,6 +593,7 @@ function emitStructuredSummary(summary) {
     route_mode: summary.route_mode,
     route_count: summary.route_count,
     findings_demonstrable_on_real_surface: summary.findings_demonstrable_on_real_surface,
+    named_surfaces_browser_proven: summary.named_surfaces_browser_proven,
     routes: summary.routes.map((route) => ({
       key: route.key,
       url: route.url,
@@ -489,22 +614,28 @@ function emitStructuredSummary(summary) {
 
 async function main() {
   const contractValidation = validateDemoFindingContract();
+  const surfaceContractValidation = validateSurfaceAssertionContract();
   if (process.argv.includes("--validate-demo-findings-contract")) {
     console.log(JSON.stringify({
-      accepted: contractValidation.accepted,
+      accepted: contractValidation.accepted && surfaceContractValidation.accepted,
       checked_at: new Date().toISOString(),
       demo_finding_contract: contractValidation,
+      named_surface_contract: surfaceContractValidation,
     }, null, 2));
-    if (!contractValidation.accepted) process.exitCode = 1;
+    if (!contractValidation.accepted || !surfaceContractValidation.accepted) process.exitCode = 1;
     return;
   }
   if (!contractValidation.accepted) {
     throw new Error(`Demo finding assertion contract failed: ${contractValidation.issues.join("; ")}`);
   }
+  if (!surfaceContractValidation.accepted) {
+    throw new Error(`Named surface assertion contract failed: ${surfaceContractValidation.issues.join("; ")}`);
+  }
 
   fs.rmSync(OUT_DIR, { recursive: true, force: true });
   fs.mkdirSync(OUT_DIR, { recursive: true });
 
+  const { chromium } = await import("playwright");
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
 
@@ -540,8 +671,12 @@ async function main() {
     tenant_key: TENANT_KEY,
   };
   summary.demo_finding_contract = contractValidation;
+  summary.named_surface_contract = surfaceContractValidation;
   summary.findings_demonstrable_on_real_surface = summarizeDemoFindings(results);
-  summary.accepted = summary.accepted && summary.findings_demonstrable_on_real_surface.accepted;
+  summary.named_surfaces_browser_proven = summarizeNamedSurfaces(results);
+  summary.accepted = summary.accepted
+    && summary.findings_demonstrable_on_real_surface.accepted
+    && summary.named_surfaces_browser_proven.accepted;
   summary.issue_count = summary.issues.length;
   writeJson(path.join(OUT_DIR, "ecl_product_browser_smoke_summary.json"), summary);
   console.log(JSON.stringify(summary, null, 2));
