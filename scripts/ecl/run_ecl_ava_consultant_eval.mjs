@@ -87,12 +87,22 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
     [
       "not loaded",
       "not yet evidenced",
+      "no benchmark provider data is loaded",
       "does not have",
       "doesn't have",
       "does not include",
       "doesn't include",
       "not a field present",
       "not present",
+    ],
+  ],
+  [
+    "refused",
+    [
+      "refused",
+      "refuse",
+      "should refuse",
+      "refusal is the correct",
     ],
   ],
   [
@@ -144,6 +154,7 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
       "failed gate",
       "data-integrity gate",
       "source-to-destination system identity cannot be confirmed",
+      "source and target system identities are unresolved",
       "source and destination system labels are unknown",
       "endpoint identity is unresolved",
     ],
@@ -153,6 +164,7 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
     [
       "evidence needed",
       "without resolved endpoints",
+      "without resolved source and target system identities",
       "source system nor the destination system is identified",
       "endpoint identity is unresolved",
       "not identified in the integration record",
