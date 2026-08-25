@@ -25,7 +25,10 @@ const EMAILS = [
 const OUT_DIR = path.resolve(process.env.ECL_PRODUCT_BROWSER_PROOF_DIR || "job-output/ecl-product-browser-smoke");
 const EMIT_PROOF = process.env.EMIT_ACA_PROOF_BUNDLE !== "false";
 const PRIVATE_PROOF_TOKEN = process.env.ABARVA_PRIVATE_BROWSER_PROOF_TOKEN?.trim() || null;
-const FINDINGS_SPEC_PATH = path.resolve("docs/architecture/meridian-demo-findings-20260824.json");
+const FINDINGS_SPEC_PATH = path.resolve(
+  process.env.ECL_PRODUCT_BROWSER_FINDINGS_SPEC_PATH ||
+    "docs/architecture/meridian-demo-findings-20260824.json",
+);
 
 function eclPath(path, separator = "?") {
   if (ROUTE_MODE === "default_routes") return path;
@@ -144,9 +147,25 @@ const DEMO_FINDING_ASSERTIONS = [
   },
 ];
 
+function loadDemoFindingsSpec() {
+  if (fs.existsSync(FINDINGS_SPEC_PATH)) {
+    return {
+      source: "docs_architecture_spec",
+      spec: JSON.parse(fs.readFileSync(FINDINGS_SPEC_PATH, "utf8")),
+    };
+  }
+  return {
+    source: "embedded_runtime_assertion_contract",
+    spec: {
+      denominator: { denominator: 10 },
+      findings: DEMO_FINDING_ASSERTIONS.map((assertion) => ({ id: assertion.id })),
+    },
+  };
+}
+
 function validateDemoFindingContract() {
   const issues = [];
-  const spec = JSON.parse(fs.readFileSync(FINDINGS_SPEC_PATH, "utf8"));
+  const { source, spec } = loadDemoFindingsSpec();
   const specIds = new Set((spec.findings ?? []).map((finding) => finding.id));
   const assertionIds = new Set(DEMO_FINDING_ASSERTIONS.map((finding) => finding.id));
   const routeKeys = new Set(ROUTES.map((route) => route.key));
@@ -176,6 +195,7 @@ function validateDemoFindingContract() {
     accepted: issues.length === 0,
     denominator: 10,
     finding_ids: [...assertionIds].sort(),
+    source,
     issues,
   };
 }

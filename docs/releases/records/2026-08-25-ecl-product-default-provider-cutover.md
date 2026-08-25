@@ -39,6 +39,8 @@ compatible, and an environment rollback can restore the pre-ECL provider without
 - Extends the ECL product browser smoke to distinguish opt-in proof routes from bare default routes.
 - Adds `scripts/ecl/run_ecl_deterministic_content_sweep.mjs` and npm scripts for Gate 1
   deterministic content verification.
+- Adds a runtime-safe default-route browser smoke script for ACA operator proof runs, where
+  repository documentation files are not packaged into the runtime image.
 
 ## QA / Validation
 
@@ -48,6 +50,10 @@ compatible, and an environment rollback can restore the pre-ECL provider without
   - Default-route browser proof remains pending until deployment.
 - `npx jest --runTestsByPath src/lib/ecl/__tests__/product-provider.test.ts src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts --runInBand` — passed locally.
 - The deterministic sweep runs `npm run ecl:product-browser:predeploy-gate`, which passed locally.
+- First ACA operator proof attempt used the deterministic sweep script and failed before browser
+  launch because the runtime image does not include the plan document under `docs/architecture/`.
+  Follow-up validation uses `ecl:product-browser:smoke:default`, which is the browser-only default
+  route proof runner intended for the runtime image.
 
 ## Rollout Plan
 
