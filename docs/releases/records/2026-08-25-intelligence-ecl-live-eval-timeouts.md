@@ -36,7 +36,7 @@ This release makes the Intelligence ECL live-answer proof safer to operate. Each
 - `npx eslint scripts/ecl/run_ecl_ava_consultant_eval.mjs src/lib/intelligence/ask/retrievers/ecl-serving-context.ts` — pass.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false` — pass.
 - `npm run release:check` — blocked on first run by release-record wording; rerun required after this record states explicit statuses.
-- Post-deploy signed-in live ECL aVa consultant eval with `ECL_AVA_EVAL_CASE_TIMEOUT_MS=60000` — failed after the latest candidate deployment with all 13 answer calls returning HTTP 200 and the private operator restored to idle. U1/U2/U3 accepted. The only remaining failure is F10 wording: the answer correctly says the view should refuse because source and destination system identities are unknown and originating/receiving systems are unresolved, but the validator did not yet accept those truthful variants for the failed-rule/evidence-needed requirement. This follow-up accepts those exact variants and requires another post-deploy run.
+- Post-deploy signed-in live ECL aVa consultant eval with `ECL_AVA_EVAL_CASE_TIMEOUT_MS=60000` — failed after the latest candidate deployment with all 13 answer calls returning HTTP 200 and the private operator restored to idle. U1/U2/U3 accepted. The only remaining failure is F10 wording: the answer correctly says the view should refuse because source-to-target endpoint labels are unresolved, but the validator did not yet accept that truthful variant for the evidence-needed requirement. This follow-up accepts that exact variant and requires another post-deploy run.
 
 ## Rollout Plan
 

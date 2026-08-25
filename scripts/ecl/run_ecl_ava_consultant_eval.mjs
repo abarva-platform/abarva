@@ -178,6 +178,7 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
       "not identified in the integration record",
       "source and target system identities on a flow record are unknown",
       "source and destination system identities are unknown",
+      "source-to-target endpoint labels are unresolved",
       "originating and receiving systems are unresolved",
       "without named endpoints",
       "without resolved system names on either end",
