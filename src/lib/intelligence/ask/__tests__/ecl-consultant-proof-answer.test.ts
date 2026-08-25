@@ -69,7 +69,7 @@ describe("ECL consultant proof answer", () => {
         ...eclContext,
         substrate: "evidence_withheld",
         provider: "evidence_withheld",
-      },
+      } as AskSurfaceContext,
       sources: [source("home_current_state_data_flow")],
     });
 

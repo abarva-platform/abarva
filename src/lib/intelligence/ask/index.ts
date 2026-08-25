@@ -539,13 +539,14 @@ export async function* askIntelligence(
       return;
     }
     yield { type: "sources", sources, coverageReport };
+    let answer = "";
+    const proofAnswerSources = [...eclServingContext, ...sources];
     const eclConsultantProofAnswer = buildEclConsultantProofAnswer({
       query: trimmed,
-      sources,
+      sources: proofAnswerSources,
       surfaceContext: opts.surfaceContext,
     });
     if (eclConsultantProofAnswer) {
-      const answerMode = classifyAbarvaAnswerMode(trimmed);
       const rawAnswer = applyCxoAnswerModeFallbacks(
         eclConsultantProofAnswer.text,
         answerMode,
@@ -554,7 +555,7 @@ export async function* askIntelligence(
         ...productTruthContext,
         groundingText: productTruthGroundingText([
           opts.surfaceContext,
-          sources,
+          proofAnswerSources,
           factAvailabilityBlock,
           coverageReportBlock,
         ]),
@@ -665,7 +666,6 @@ export async function* askIntelligence(
     // cap are already applied at the synthesizer entry. Pass chunks
     // through unchanged.
     const companionCanvasEnabled = opts.companionCanvasEnabled === true;
-    let answer = "";
     const pendingDeltas: string[] = [];
     for await (const delta of synthesizeStream({
       richText: opts.richText,
