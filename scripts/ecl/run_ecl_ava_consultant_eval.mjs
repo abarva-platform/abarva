@@ -176,6 +176,7 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
       "not identified in the integration record",
       "source and target system identities on a flow record are unknown",
       "without named endpoints",
+      "without resolved system names on either end",
     ],
   ],
   [
