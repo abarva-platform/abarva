@@ -31,12 +31,13 @@ Extends the ECL consultant evaluation runner so it can capture signed-in aVa ans
 - Extends `scripts/ecl/run_ecl_ava_consultant_eval.mjs` with `--capture-live`.
 - The live mode signs in through private browser proof or Clerk ticket, captures `/api/intelligence/ask` NDJSON, writes answer JSONL, and evaluates the rows with the same deterministic case checks.
 - Adds `npm run ecl:ava-consultant-eval:capture-live` so the governed ACA operator wrapper can execute live capture without needing argument passthrough.
+- Emits per-case live-answer diagnostics and a structured summary event so failed governed runs explain whether answers were empty, generic, or semantically incomplete before anyone changes the scoring bar.
 
 ## QA / Validation
 
 - `node --check scripts/ecl/run_ecl_ava_consultant_eval.mjs` - passed.
 - `npm run ecl:ava-consultant-eval` - passed in case-contract mode; 13 cases, F1-F10 covered, 3 planted-unanswerable cases.
-- `npm run test:npm-script-targets` - passed; 851 scripts checked, 57 inherited missing targets baselined, 0 unbaselined missing targets.
+- `npm run test:npm-script-targets` - passed; 852 scripts checked, 57 inherited missing targets baselined, 0 unbaselined missing targets.
 - `git diff --check` - passed.
 - `npm run release:check` - pending final gate before merge.
 

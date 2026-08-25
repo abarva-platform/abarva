@@ -387,6 +387,20 @@ const answerRows = args.captureLive
     : null;
 const answerResults = answerRows ? evaluateAnswers(cases, answerRows) : [];
 const acceptedAnswerCount = answerResults.filter((row) => row.accepted).length;
+const answerDiagnostics = answerRows
+  ? answerRows.map((row) => {
+      const text = answerText(row);
+      return {
+        id: answerId(row),
+        status: row.status ?? null,
+        content_type: row.content_type ?? null,
+        event_types: Array.isArray(row.event_types) ? row.event_types : [],
+        event_count: row.event_count ?? null,
+        answer_chars: text.length,
+        answer_preview: text.slice(0, 600),
+      };
+    })
+  : [];
 const summary = {
   accepted: answerRows ? acceptedAnswerCount === cases.length : true,
   mode: answerRows ? "answer_eval" : "case_contract",
@@ -402,11 +416,13 @@ const summary = {
   answers_evaluated: answerRows ? answerRows.length : 0,
   answers_accepted: acceptedAnswerCount,
   answer_results: answerResults,
+  answer_diagnostics: answerDiagnostics,
 };
 
 mkdirSync(path.dirname(args.out), { recursive: true });
 writeFileSync(args.out, `${JSON.stringify(summary, null, 2)}\n`);
 console.log(JSON.stringify(summary, null, 2));
+console.log(JSON.stringify({ event: "ecl_ava_consultant_eval_summary", summary }, null, 2));
 
 if (!summary.accepted) {
   process.exitCode = 1;
