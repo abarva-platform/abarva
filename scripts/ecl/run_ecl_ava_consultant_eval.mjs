@@ -13,10 +13,12 @@ function parseArgs(argv) {
     findingsSpec: FINDINGS_SPEC_PATH,
     answers: null,
     captureLive: false,
+    captureAblation: false,
     baseUrl: process.env.BASE_URL || process.env.ECL_AVA_EVAL_BASE_URL || "https://app.abarva.ai",
     tenantKey: process.env.E2E_ACTIVE_CLIENT || "meridian-health",
     out: "reports/ecl-ava-consultant-eval/summary.json",
     answersOut: "reports/ecl-ava-consultant-eval/live-answers.jsonl",
+    ablationAnswersOut: "reports/ecl-ava-consultant-eval/live-answers-ablation.jsonl",
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -24,16 +26,19 @@ function parseArgs(argv) {
     else if (arg === "--findings-spec") args.findingsSpec = argv[++i];
     else if (arg === "--answers") args.answers = argv[++i];
     else if (arg === "--capture-live") args.captureLive = true;
+    else if (arg === "--capture-ablation") args.captureAblation = true;
     else if (arg === "--base-url") args.baseUrl = argv[++i];
     else if (arg === "--tenant-key") args.tenantKey = argv[++i];
     else if (arg === "--out") args.out = argv[++i];
     else if (arg === "--answers-out") args.answersOut = argv[++i];
+    else if (arg === "--ablation-answers-out") args.ablationAnswersOut = argv[++i];
     else if (arg === "--help") {
       console.log(`Usage: node scripts/ecl/run_ecl_ava_consultant_eval.mjs [--answers answers.jsonl] [--capture-live] [--out summary.json]
 
 Without --answers, validates the ECL consultant-eval case bank and shared deterministic
 validator contract. With --answers, evaluates supplied aVa answer JSONL rows keyed by case id.
-With --capture-live, signs into BASE_URL and captures live /api/intelligence/ask answers first.`);
+With --capture-live, signs into BASE_URL and captures live /api/intelligence/ask answers first.
+With --capture-ablation, captures a second live pass with the ECL evidence packet withheld.`);
       process.exit(0);
     } else {
       throw new Error(`Unknown argument: ${arg}`);
@@ -105,7 +110,6 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
       "refused",
       "refuse",
       "should refuse",
-      "refusal is the correct",
     ],
   ],
   [
@@ -158,30 +162,14 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
       "failed rule",
       "failed gate",
       "data-integrity gate",
-      "source-to-destination system identity cannot be confirmed",
-      "source and target system identities are unresolved",
-      "source and target system identities on a flow record are unknown",
-      "source and destination system identities are unknown",
-      "originating and receiving systems are unresolved",
-      "source and destination system labels are unknown",
-      "endpoint identity is unresolved",
     ],
   ],
   [
     "evidence needed",
     [
       "evidence needed",
-      "without resolved endpoints",
       "without resolved source and target system identities",
-      "source system nor the destination system is identified",
-      "endpoint identity is unresolved",
-      "not identified in the integration record",
-      "source and target system identities on a flow record are unknown",
-      "source and destination system identities are unknown",
-      "source-to-target endpoint labels are unresolved",
-      "originating and receiving systems are unresolved",
       "without named endpoints",
-      "without resolved system names on either end",
     ],
   ],
   [
@@ -213,6 +201,25 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
     ],
   ],
 ]);
+
+const ALIAS_POLICY = {
+  status: "frozen",
+  rationale:
+    "Further live-answer misses are findings about the answer or prompt path, not reasons to add validator aliases.",
+  f10MaxAliasesPerRequiredElement: 3,
+};
+
+const F10_CAPPED_REQUIRED_ELEMENTS = ["refused", "failed rule", "evidence needed"];
+
+function validateAliasPolicy() {
+  for (const key of F10_CAPPED_REQUIRED_ELEMENTS) {
+    const aliases = REQUIRED_ELEMENT_ALIASES.get(key) ?? [];
+    assert(
+      aliases.length <= ALIAS_POLICY.f10MaxAliasesPerRequiredElement,
+      `${key} alias list exceeds frozen F10 cap of ${ALIAS_POLICY.f10MaxAliasesPerRequiredElement}`,
+    );
+  }
+}
 
 function requiredElementPresent(text, phrase) {
   const normalized = normalizeText(text);
@@ -473,10 +480,11 @@ function integerEnv(name, fallback) {
   return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
-function timeoutRow(row, error, durationMs) {
+function timeoutRow(row, error, durationMs, captureMode) {
   return {
     id: row.id,
     case_id: row.id,
+    capture_mode: captureMode,
     status: 0,
     content_type: "application/json",
     answerText: "",
@@ -499,7 +507,34 @@ function textFromEvents(events) {
     .join("");
 }
 
-async function captureLiveAnswers(cases, args) {
+function surfaceContextForCapture(args, captureMode) {
+  if (captureMode === "evidence_withheld") {
+    return {
+      module: "intelligence",
+      clientKey: args.tenantKey,
+      activeClient: args.tenantKey,
+      activeTab: "ecl-consultant-eval-ablation",
+      substrate: "evidence_withheld",
+      provider: "evidence_withheld",
+      evaluationMode: "ecl_ablation_evidence_withheld",
+      facts: [
+        "ECL consultant eval ablation: the ECL serving evidence packet is deliberately withheld.",
+        "If the question requires tenant-specific evidence, say the evidence is not present instead of reconstructing the finding.",
+      ],
+    };
+  }
+  return {
+    module: "intelligence",
+    clientKey: args.tenantKey,
+    activeClient: args.tenantKey,
+    activeTab: "ecl-consultant-eval",
+    substrate: "ecl_projection_db",
+    provider: "ecl_projection_db",
+    facts: ["ECL consultant eval live-answer capture"],
+  };
+}
+
+async function captureLiveAnswers(cases, args, captureMode = "evidence_present") {
   const { chromium } = await import("playwright");
   const caseTimeoutMs = integerEnv("ECL_AVA_EVAL_CASE_TIMEOUT_MS", 90_000);
   const browser = await chromium.launch({ headless: true });
@@ -517,6 +552,7 @@ async function captureLiveAnswers(cases, args) {
         JSON.stringify({
           event: "ecl_ava_consultant_eval_case_start",
           id: row.id,
+          capture_mode: captureMode,
           timeout_ms: caseTimeoutMs,
         }),
       );
@@ -537,14 +573,7 @@ async function captureLiveAnswers(cases, args) {
                   richText: false,
                   traceEnabled: true,
                   answerOnlyStreaming: false,
-                  surfaceContext: {
-                    module: "intelligence",
-                    clientKey: tenantKey,
-                    activeClient: tenantKey,
-                    activeTab: "ecl-consultant-eval",
-                    substrate: "ecl_projection_db",
-                    facts: ["ECL consultant eval live-answer capture"],
-                  },
+                  surfaceContext: surfaceContextForCapture({ tenantKey }, captureMode),
                 }),
               });
               return {
@@ -581,12 +610,14 @@ async function captureLiveAnswers(cases, args) {
           row,
           error instanceof Error ? error.message : "page evaluate failed",
           durationMs,
+          captureMode,
         );
         rows.push(output);
         console.log(
           JSON.stringify({
             event: "ecl_ava_consultant_eval_case_done",
             id: row.id,
+            capture_mode: captureMode,
             status: output.status,
             duration_ms: durationMs,
             event_count: output.event_count,
@@ -600,6 +631,7 @@ async function captureLiveAnswers(cases, args) {
       const output = {
         id: row.id,
         case_id: row.id,
+        capture_mode: captureMode,
         status: result.status,
         content_type: result.contentType,
         answerText: textFromEvents(events),
@@ -613,6 +645,7 @@ async function captureLiveAnswers(cases, args) {
         JSON.stringify({
           event: "ecl_ava_consultant_eval_case_done",
           id: row.id,
+          capture_mode: captureMode,
           status: output.status,
           duration_ms: output.duration_ms,
           event_count: output.event_count,
@@ -621,7 +654,9 @@ async function captureLiveAnswers(cases, args) {
       );
     }
     mkdirSync(path.dirname(args.answersOut), { recursive: true });
-    writeFileSync(args.answersOut, rows.map((row) => JSON.stringify(row)).join("\n") + "\n");
+    const targetPath =
+      captureMode === "evidence_withheld" ? args.ablationAnswersOut : args.answersOut;
+    writeFileSync(targetPath, rows.map((row) => JSON.stringify(row)).join("\n") + "\n");
     return rows;
   } finally {
     await browser.close();
@@ -629,17 +664,31 @@ async function captureLiveAnswers(cases, args) {
 }
 
 const args = parseArgs(process.argv.slice(2));
+if (args.captureAblation && !args.captureLive) {
+  throw new Error("--capture-ablation requires --capture-live so baseline and withheld-evidence results are reported together");
+}
 const cases = readJsonl(args.cases);
 const findingsSpec = readJson(args.findingsSpec);
+validateAliasPolicy();
 validateCases(cases, findingsSpec);
 
 const answerRows = args.captureLive
-  ? await captureLiveAnswers(cases, args)
+  ? await captureLiveAnswers(cases, args, "evidence_present")
   : args.answers
     ? readJsonl(args.answers)
     : null;
 const answerResults = answerRows ? evaluateAnswers(cases, answerRows) : [];
 const acceptedAnswerCount = answerResults.filter((row) => row.accepted).length;
+const ablationRows = args.captureAblation
+  ? await captureLiveAnswers(cases, args, "evidence_withheld")
+  : null;
+const ablationResults = ablationRows ? evaluateAnswers(cases, ablationRows) : [];
+const ablationAcceptedAnswerCount = ablationResults.filter((row) => row.accepted).length;
+const ablationDemoAcceptedCount = ablationResults.filter((row) => {
+  const caseRow = cases.find((candidate) => candidate.id === row.id);
+  return row.accepted && caseRow?.caseType === "demo_finding";
+}).length;
+const ablationCollapseThreshold = 3;
 const answerDiagnostics = answerRows
   ? answerRows.map((row) => {
       const text = answerText(row);
@@ -657,9 +706,13 @@ const answerDiagnostics = answerRows
     })
   : [];
 const summary = {
-  accepted: answerRows ? acceptedAnswerCount === cases.length : true,
+  accepted: answerRows
+    ? acceptedAnswerCount === cases.length &&
+      (!ablationRows || ablationDemoAcceptedCount <= ablationCollapseThreshold)
+    : true,
   mode: answerRows ? "answer_eval" : "case_contract",
   actual_ava_answer_eval: Boolean(answerRows),
+  alias_policy: ALIAS_POLICY,
   tenant_key: "meridian-health",
   module: "intelligence",
   agent: "sentinel",
@@ -672,6 +725,19 @@ const summary = {
   answers_accepted: acceptedAnswerCount,
   answer_results: answerResults,
   answer_diagnostics: answerDiagnostics,
+  ablation: ablationRows
+    ? {
+        capture_mode: "evidence_withheld",
+        answers_evaluated: ablationRows.length,
+        answers_accepted: ablationAcceptedAnswerCount,
+        demo_findings_accepted: ablationDemoAcceptedCount,
+        collapse_threshold: ablationCollapseThreshold,
+        accepted:
+          ablationRows.length === cases.length &&
+          ablationDemoAcceptedCount <= ablationCollapseThreshold,
+        answer_results: ablationResults,
+      }
+    : null,
 };
 
 mkdirSync(path.dirname(args.out), { recursive: true });
