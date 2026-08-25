@@ -53,7 +53,7 @@ const PROOF_PLANS: readonly ProofPlan[] = [
     ],
     requiredSourceIds: ["source_renewal", "source_contract_360"],
     answer:
-      "The contract at highest renewal risk is the one where the auto-renew clock has overtaken the operating window. The evidence basis is commercial: the notice window is binding, a minimum commitment remains in the economics, and there is no benchmarking right to reopen price before renewal. Treat this as a leverage-loss finding, not legal advice. The next gate is to confirm notice mechanics, contract owner actionability, and whether any commercial exception or governance escalation is still available.",
+      "The contract at highest renewal risk is the one where the auto-renew clock has overtaken the operating window. The evidence basis is commercial: the notice window is binding, a minimum commitment remains in the economics, and there is no benchmarking right to reopen price before renewal. Treat this as a commercial leverage-loss finding; counsel should handle legal interpretation. The next gate is to confirm notice mechanics, contract owner actionability, and whether any commercial exception or governance escalation is still available.",
   },
   {
     id: "F3",
@@ -66,7 +66,7 @@ const PROOF_PLANS: readonly ProofPlan[] = [
     ],
     requiredSourceIds: ["source_contract_360", "source_value", "tower_cost_lens"],
     answer:
-      "Yes. Meridian has a 34-contract cohort whose economics protect the vendor more than the client. The pattern is consistent: no benchmarking right, a minimum commitment, and no termination for convenience. Source should turn that into a sourcing agenda by sequencing the cohort by renewal timing, spend materiality, and operational dependency, then opening evidence requests before any value is called claimable. The current answer is commercial leverage, not realized savings.",
+      "Yes. Meridian has a 34-contract cohort whose economics protect the vendor more than the client. The pattern is consistent: no benchmarking right, a minimum commitment, and no termination for convenience. Source should turn that into a sourcing agenda by sequencing the cohort by renewal timing, spend materiality, and operational dependency, then opening evidence requests before any value is called claimable. The current answer is commercial leverage, not booked value.",
   },
   {
     id: "F4",
@@ -79,7 +79,7 @@ const PROOF_PLANS: readonly ProofPlan[] = [
     ],
     requiredSourceIds: ["home_applications_systems", "home_technology_data", "tower_cost_lens"],
     answer:
-      "The application-rationalization signal is a 5+ applications cluster in the same subdomain, spread across 3+ vendors. Read it as candidate duplication at application grain, not deployments. The leadership implication is not to decommission now; it is to confirm owners, workflow overlap, contractual constraints, and operational risk before calling it consolidation. The estate view is useful because it keeps deployments out of the application count and separates rationalization candidates from hosting variants.",
+      "The application-rationalization signal is a 5+ applications cluster in the same subdomain, spread across 3+ vendors. Read it as candidate duplication at application grain, not deployments. Leadership should not move straight to shutdown; first confirm owners, workflow overlap, contractual constraints, and operational risk before calling it consolidation. The estate view is useful because it keeps deployments out of the application count and separates rationalization candidates from hosting variants.",
   },
   {
     id: "F5",

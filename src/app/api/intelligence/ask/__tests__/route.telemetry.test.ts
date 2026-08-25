@@ -140,6 +140,37 @@ describe("POST /api/intelligence/ask telemetry", () => {
     );
   });
 
+  it("preserves ECL eval case context through the live ask route", async () => {
+    (askIntelligence as jest.Mock).mockClear();
+
+    const response = await POST(makeRequest({
+      q: "Which named Meridian executive personally approved each vendor-protective contract clause?",
+      client: "meridian-health",
+      surfaceContext: {
+        activeTab: "ecl-consultant-eval",
+        clientKey: "meridian-health",
+        module: "intelligence",
+        substrate: "ecl_projection_db",
+        provider: "ecl_projection_db",
+        sourceProvider: "ecl_projection_db",
+        evaluationCaseId: "MER-ECL-INTEL-U2",
+      },
+    }) as never);
+    await readResponseText(response);
+
+    expect(askIntelligence).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        surfaceContext: expect.objectContaining({
+          substrate: "ecl_projection_db",
+          provider: "ecl_projection_db",
+          sourceProvider: "ecl_projection_db",
+          evaluationCaseId: "MER-ECL-INTEL-U2",
+        }),
+      }),
+    );
+  });
+
   it("preserves Source V4 context and emits deterministic contract visuals before generic synthesis", async () => {
     (askIntelligence as jest.Mock).mockClear();
 
@@ -218,8 +249,8 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(text).toContain("source_contract_visual");
     expect(text).toContain("CTR-090");
     expect(text).toContain("CTR-090 Salesforce");
-    expect(text).toContain("Four-ledger Contract Evidence");
-    expect(text).toContain("Optimization Ledgers With Quantified Evidence");
+    expect(text).toContain("Contract Commercial Opportunities");
+    expect(text).toContain("Commercial Opportunities With Quantified Evidence");
     expect(text).toContain("Contract Evidence Relationship");
   });
 

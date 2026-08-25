@@ -92,6 +92,11 @@ export interface AskSurfaceContext {
   activeClient?: string | null;
   clientKey?: string | null;
   module?: string | null;
+  provider?: string | null;
+  sourceProvider?: string | null;
+  evaluationCaseId?: string | null;
+  evalCaseId?: string | null;
+  caseId?: string | null;
   sourceV4?: unknown;
   substrate?: unknown;
   pageFacts?: string[];
