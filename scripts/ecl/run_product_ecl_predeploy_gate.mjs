@@ -134,6 +134,10 @@ const COMMAND_CHECKS = [
       "--validate-demo-findings-contract",
     ],
   },
+  {
+    key: "intelligence_ava_eval_contract",
+    command: ["npm", "run", "ecl:ava-consultant-eval"],
+  },
 ];
 
 function expectFileContains({ key, file, mustContain }) {
