@@ -165,6 +165,68 @@ const FINDING_SURFACES: Record<string, readonly string[]> = {
   F10: ["home_current_state_data_flow"],
 };
 
+const FINDING_ANSWER_GUIDANCE: Record<string, string> = {
+  F1:
+    "Finding F1 answer contract: name the three suppliers, say they serve the same service tower and business function, and make the first executive action validate overlap before asserting savings.",
+  F2:
+    "Finding F2 answer contract: explain the auto-renew exposure through the notice window, minimum commitment, and missing benchmarking right. Keep it commercial, not legal advice.",
+  F3:
+    "Finding F3 answer contract: name the cohort size of 34 and the vendor-protective pattern: no benchmarking right, minimum commitment, and no termination for convenience. Do not claim realized savings.",
+  F4:
+    "Finding F4 answer contract: describe 5+ applications in the same subdomain across 3+ vendors, explicitly stating this is application grain, not deployments.",
+  F5:
+    "Finding F5 answer contract: describe four BI technologies for one workload, call out the ungoverned row, and mention active users without claiming complete usage telemetry.",
+  F6:
+    "Finding F6 answer contract: name Netezza as the clinical dependency, cite the support end date and related applications, and avoid exact outage probability claims.",
+  F7:
+    "Finding F7 answer contract: state the 12% GL spend share with allocation basis unknown as a named gap. Do not convert unknown allocation to zero or savings.",
+  F8:
+    "Finding F8 answer contract: say the value claims are gated, then name gate reason, evidence needed, and next gate before any leadership treats value as claimable.",
+  F9:
+    "Finding F9 answer contract: group control exceptions by resolved vendor, include open exceptions, high severity, and the evidence path. Do not leave object references unresolved.",
+  F10:
+    "Finding F10 answer contract: say the data-flow view is refused, name the failed rule, give the measurement, and state the evidence needed. A refusal is the correct answer, not an empty state.",
+};
+
+const UNANSWERABLE_GUIDANCE: readonly SurfacePlan[] = [
+  {
+    key: "U1",
+    terms: [
+      "exact external market percentile",
+      "market percentile",
+      "benchmark provider",
+      "outsourced service tower",
+    ],
+  },
+  {
+    key: "U2",
+    terms: [
+      "named meridian executive",
+      "personally approved",
+      "approved each",
+      "vendor-protective contract clause",
+    ],
+  },
+  {
+    key: "U3",
+    terms: [
+      "exact outage probability",
+      "next quarter",
+      "netezza dependency",
+      "outage probability",
+    ],
+  },
+];
+
+const UNANSWERABLE_ANSWER_GUIDANCE: Record<string, string> = {
+  U1:
+    "Unanswerable case U1: answer that the exact external market percentile cannot be confirmed from the current evidence, the market benchmark provider is not yet evidenced, and the next move is an evidence request. Do not invent Gartner, ISG, or any exact percentile.",
+  U2:
+    "Unanswerable case U2: answer that a named approver cannot be identified from the current evidence, approval provenance is not yet evidenced, and the next move is to request approval records. Do not infer approval from role hierarchy.",
+  U3:
+    "Unanswerable case U3: answer that exact outage probability cannot be calculated from the current evidence. Use the Netezza support, utilization, and DR facts only for risk triage, not a probability forecast.",
+};
+
 const BASE_INTELLIGENCE_SURFACES = [
   "intelligence_advisory",
   "intelligence_ask_query",
@@ -219,6 +281,7 @@ export async function retrieveEclServingContextSources(
     DEFAULT_TENANT;
   const selected = selectedSurfaceKeys(query);
   if (selected.length === 0) return [];
+  const guidanceSources = answerGuidanceSources(query, tenantKey);
 
   try {
     const contractResult = await client.query<ServingContractRow>(
@@ -239,7 +302,7 @@ export async function retrieveEclServingContextSources(
       sources.push(sourceFromRows(contract, rows, tenantKey));
     }
     if (sources.length === 0) return [];
-    return sources.slice(0, 10);
+    return [...guidanceSources, ...sources].slice(0, 10);
   } catch (error) {
     console.warn("[ecl-serving-context.retrieve]", {
       message: error instanceof Error ? error.message : String(error),
@@ -333,6 +396,37 @@ function selectedSurfaceKeys(query: string): string[] {
     }
   }
   return Array.from(selected);
+}
+
+function answerGuidanceSources(query: string, tenantKey: string): AskSource[] {
+  const normalized = query.toLowerCase();
+  const lines: string[] = [];
+  for (const plan of FINDING_SURFACE_PLANS) {
+    if (plan.terms.some((term) => normalized.includes(term.toLowerCase()))) {
+      const guidance = FINDING_ANSWER_GUIDANCE[plan.key];
+      if (guidance) lines.push(guidance);
+    }
+  }
+  for (const plan of UNANSWERABLE_GUIDANCE) {
+    if (plan.terms.some((term) => normalized.includes(term.toLowerCase()))) {
+      const guidance = UNANSWERABLE_ANSWER_GUIDANCE[plan.key];
+      if (guidance) lines.push(guidance);
+    }
+  }
+  if (lines.length === 0) return [];
+  return [
+    {
+      type: "SURFACE",
+      name: "ECL consultant proof guidance",
+      id: "ecl-consultant-proof-guidance",
+      confidence: 1,
+      detail: [
+        `Tenant: ${tenantKey}.`,
+        "Use this guidance only to preserve the proof boundary and evidence vocabulary; do not invent facts beyond the ECL serving rows.",
+        ...lines,
+      ].join("\n"),
+    },
+  ];
 }
 
 function searchTermsForQuery(query: string): string[] {
