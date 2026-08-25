@@ -36,8 +36,10 @@ is green.
 | W5 Refusal and browser proof | **0%** | 4 product modules + gated views | No complete clean-break browser proof yet. |
 | W6 Legacy data-plane retirement | **0%** | 851 pre-ECL data-plane tables | Inventory known; no retirement run. |
 | W7 Real Layer 2 adapter path | **30%** | first real intake adapter + gap report + clean-break policy | First application adapter exists; it is not yet the primary clean-break load path. |
+| W8 AI initiative spine | **0% queued** | 6 build steps + 2 serving surfaces | Backlog accepted. It must be implemented as a separate ECL lane after the current live-eval proof, without adding a second object-type catalog or a parallel product data model. |
 
-**Overall clean-break completion:** **36%**.
+**Overall clean-break completion:** **36%** for W1-W7. W8 is tracked as a queued extension and
+does not change the clean-break percent until the lane is activated.
 
 Additional product-readiness denominators:
 
@@ -46,6 +48,7 @@ Additional product-readiness denominators:
 | Surfaces served from ECL | **40 local** | 40 serving surfaces | W3 serving views are built in DDL and wired into the data-build DDL list. Azure serving readback and route/browser proof are not claimed. |
 | Product ECL preview providers reading serving views | **4 local** | 4 product modules | Home, Source, Tower, and Intelligence non-default ECL preview providers are locally wired to `serving.*`; default provider and browser proof are not claimed. |
 | Findings demonstrable on a real surface | **0** | 10 demo findings | Findings spec is committed; W2/W3 data and surface assertions are not green yet. |
+| AI initiative spine steps complete | **0** | 6 build steps | Accepted into backlog. Success requires DDL, adapter, relationship vocabulary, planted failures, serving views, and product proof. |
 
 The serving denominator is **40 surfaces** for this clean-break plan: Home 16, Tower 9, Source 9,
 Intelligence 6. The older/broader 44-surface mapping artifact is not the operative W3 denominator
@@ -124,6 +127,14 @@ Required proof:
 | `ecl_context.snapshot` | Build snapshot identity | Context builder |
 | `ecl_context.context_pack` | Compiled context pack | Context/review builder |
 
+Planned AI initiative spine extension:
+
+| Artifact | Purpose | Completion rule |
+|---|---|---|
+| `ai_use_case` objects | Canonical initiative/use-case objects using the existing `object_type_catalog` | Use the existing object catalog; do not create a second catalog. |
+| `ai_initiative_v` | Typed view over initiative-grain objects | `application_v` must exclude `ai_use_case`; deployments and use cases cannot enter application counts. |
+| `ecl_context.ai_initiative_profile` | One-to-one profile table for the 23 capture-template fields | Tenant-composite FK to `ecl_context.object`; no gate fields hidden only in JSON. |
+
 Typed views are required for safe consumption:
 
 - `application_v`
@@ -136,6 +147,15 @@ Counting rule:
 - Application deployments cannot enter application counts.
 - Report, ETL, script, user, and workload volumetrics are measures unless the underlying thing is a
   declared canonical object.
+
+AI initiative relationship vocabulary:
+
+- Reuse existing relationship verbs for platform, data, supplier, contract, usage, and funding
+  links: `DEPENDS_ON`, `HOSTED_ON`, `CONSUMES`, `SUPPLIED_BY`, `COVERED_BY`, `USED_BY`, and
+  `FUNDED_BY`.
+- Add exactly two verbs when the spine is built: `BASELINE_OF` and `TARGET_OF`.
+- Do not add `GATED_BY`; gate state belongs on the profile/review evidence path, not in the
+  relationship dictionary.
 
 ### Layer 3B - `ecl_commercial`
 
@@ -424,6 +444,29 @@ Checks:
 - No obviously synthetic repetition, flatness, or impossible volumes.
 - CXO read: the page says what matters, why it matters, what changed, and what is missing.
 
+### AI Initiative Spine Gates
+
+The AI initiative spine is W8. It is queued, not part of the active live-eval slice. It becomes
+complete only when all six steps below are green:
+
+| Step | Required outcome | Success proof |
+|---|---|---|
+| S1 typed initiative grain | Existing `object_type_catalog` governs `ai_program`, `ai_use_case`, and `ai_tool`; `ai_initiative_v` exists | Typed-view regression proves `application_v` excludes AI use cases. |
+| S2 profile table | `ecl_context.ai_initiative_profile` stores the 23 capture-template fields with a tenant-composite FK to `ecl_context.object` | Disposable Postgres load plus planted FK failure rejected. |
+| S3 fit gates | Stage and evidence constraints are enforced for the five fit patterns | One planted failure per constraint is rejected. |
+| S4 relationship vocabulary | Only `BASELINE_OF` and `TARGET_OF` are added; existing verbs are reused for all other links | Relationship dictionary diff shows exactly two new verbs and no `GATED_BY`. |
+| S5 intake adapter | Capture Template workbook rows become `ai_use_case` objects and profile rows with `origin='client_intake'`; unclassifiable rows enter review | Adapter test covers partial intake, unknowns, and review-queue routing. |
+| S6 serving and proof | `serving.tower_ai_portfolio` gains initiative grain and a new AI portfolio serving surface reads the spine | Surface enumeration and reconciliation include both views; browser proof is captured before default cutover. |
+
+Tracked W8 outcome counters:
+
+| Counter | Current | Target |
+|---|---:|---:|
+| AI spine build steps complete | 0 | 6 |
+| AI spine planted failures rejected | 0 | 4+ |
+| AI initiative serving surfaces proven | 0 | 2 |
+| AI initiative workbook adapter tests passing | 0 | 1 adapter suite |
+
 ---
 
 ## 5. Cutover Plan
@@ -502,6 +545,15 @@ Checks:
 - Start with CMDB applications.
 - Run partial-data and catch-up tests.
 - Preserve synthetic generator as fixture/test data, not source of truth.
+
+### Phase C9 - AI initiative spine extension
+
+- Build W8 after the current Intelligence live-eval proof is complete or in a separate branch that
+  does not alter active clean-break routes.
+- Use the existing ECL object catalog and relationship dictionary as the spine; do not introduce a
+  parallel initiative model.
+- Implement S1-S6 from the AI Initiative Spine Gates section.
+- Publish status using the W8 counters beside the existing ECL clean-break denominators.
 
 ---
 
