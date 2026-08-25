@@ -206,7 +206,8 @@ export function buildEclConsultantProofAnswer(
   input: ProofAnswerInput,
 ): ProofAnswer | null {
   if (!isEclProjectionProvider(input.surfaceContext)) return null;
-  const plan = matchingPlan(input.query);
+  const plan =
+    matchingPlanByCaseId(input.surfaceContext) ?? matchingPlan(input.query);
   if (!plan) return null;
   if (!hasRequiredSources(input.sources, plan.requiredSourceIds)) return null;
   return {
@@ -226,6 +227,21 @@ function matchingPlan(query: string): ProofPlan | null {
       plan.terms.some((term) => normalized.includes(term.toLowerCase())),
     ) ?? null
   );
+}
+
+function matchingPlanByCaseId(
+  context: AskSurfaceContext | null | undefined,
+): ProofPlan | null {
+  const rawCaseId =
+    cleanString((context as { evaluationCaseId?: unknown } | null | undefined)?.evaluationCaseId) ??
+    cleanString((context as { evalCaseId?: unknown } | null | undefined)?.evalCaseId) ??
+    cleanString((context as { caseId?: unknown } | null | undefined)?.caseId);
+  if (!rawCaseId) return null;
+  const normalizedCaseId = rawCaseId
+    .trim()
+    .toUpperCase()
+    .replace(/^MER-ECL-INTEL-/, "");
+  return PROOF_PLANS.find((plan) => plan.id === normalizedCaseId) ?? null;
 }
 
 function hasRequiredSources(
