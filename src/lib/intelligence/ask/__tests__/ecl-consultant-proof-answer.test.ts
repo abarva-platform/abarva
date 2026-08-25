@@ -124,4 +124,37 @@ describe("ECL consultant proof answer", () => {
 
     expect(chunkEclConsultantProofAnswer(text).join("")).toBe(text);
   });
+
+  it("keeps proof answers outside frozen forbidden phrase gates", () => {
+    const cases = [
+      {
+        query:
+          "Which Meridian contract is most at risk of renewing before the team can intervene, and what evidence makes it unstoppable?",
+        sources: [source("source_renewal"), source("source_contract_360")],
+        forbidden: /\blegal advice\b/i,
+      },
+      {
+        query:
+          "Which contracts are vendor-protective, and what does that mean for sourcing leverage?",
+        sources: [source("source_contract_360"), source("source_value"), source("tower_cost_lens")],
+        forbidden: /\brealized savings\b/i,
+      },
+      {
+        query:
+          "Where are duplicate applications clustered by subdomain and vendor spread?",
+        sources: [source("home_applications_systems"), source("home_technology_data"), source("tower_cost_lens")],
+        forbidden: /\bdecommission now\b/i,
+      },
+    ];
+
+    for (const item of cases) {
+      const answer = buildEclConsultantProofAnswer({
+        query: item.query,
+        surfaceContext: eclContext,
+        sources: item.sources,
+      });
+
+      expect(answer?.text).not.toMatch(item.forbidden);
+    }
+  });
 });
