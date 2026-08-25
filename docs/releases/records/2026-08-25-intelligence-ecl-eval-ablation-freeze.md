@@ -12,6 +12,8 @@
 
 This release stops the Intelligence ECL live-eval alias loop. It freezes the validator alias policy, caps the F10 refusal aliases, adds a live ablation mode that withholds the ECL evidence packet, and wires the eval contract into the local ECL pre-deploy gate.
 
+Follow-up correction: live capture now passes the precomputed surface context into the browser execution context instead of calling a Node-only helper from `page.evaluate`, and emits a compact summary line so ACA's bounded log tail preserves the baseline/ablation counts.
+
 ## Layer Impact
 
 - `global-control-lane` / QA and proof: eval quality is measured with baseline and evidence-withheld runs.
@@ -31,6 +33,10 @@ This release stops the Intelligence ECL live-eval alias loop. It freezes the val
 - `scripts/ecl/run_product_ecl_predeploy_gate.mjs`
 - `package.json`
 
+Follow-up correction:
+
+- `scripts/ecl/run_ecl_ava_consultant_eval.mjs`
+
 ## QA / Validation
 
 - `node --check scripts/ecl/run_ecl_ava_consultant_eval.mjs` — pass.
@@ -39,6 +45,13 @@ This release stops the Intelligence ECL live-eval alias loop. It freezes the val
 - `npx eslint scripts/ecl/run_ecl_ava_consultant_eval.mjs scripts/ecl/run_product_ecl_predeploy_gate.mjs` — pass.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false` — pass.
 - `npm run release:check` — pass.
+
+Follow-up correction:
+
+- `node --check scripts/ecl/run_ecl_ava_consultant_eval.mjs` — pass.
+- `npm run ecl:ava-consultant-eval` — pass.
+- `npm run ecl:product-browser:predeploy-gate` — pass.
+- `npx eslint scripts/ecl/run_ecl_ava_consultant_eval.mjs` — pass.
 
 ## Rollout Plan
 
@@ -68,3 +81,5 @@ Revert the PR and redeploy the previous digest through the repo-owned deployment
 ## Known Gaps
 
 Run-10 remains the current live result: 12 of 13 accepted, F10 failed on the evidence-needed requirement, and the private operator restored idle. This release does not reclassify run-10 as a pass.
+
+Run-11 initial attempts identified a capture harness defect: the browser-context fetch returned error events with empty answers because `page.evaluate` referenced a Node-only helper. Those runs are harness failures, not aVa reasoning results. Idle restoration was verified.
