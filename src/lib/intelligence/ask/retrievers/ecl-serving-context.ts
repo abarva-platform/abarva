@@ -183,9 +183,9 @@ const FINDING_ANSWER_GUIDANCE: Record<string, string> = {
   F8:
     "Finding F8 answer contract: say the value claims are gated, then name gate reason, evidence needed, and next gate before any leadership treats value as claimable.",
   F9:
-    "Finding F9 answer contract: group control exceptions by resolved vendor, include open exceptions, high severity, and the evidence path. Do not leave object references unresolved.",
+    "Finding F9 answer contract: group control exceptions by resolved vendor, explicitly say high severity open exceptions, and name the evidence path. Do not leave object references unresolved.",
   F10:
-    "Finding F10 answer contract: say the data-flow view is refused, name the failed rule, give the measurement, and state the evidence needed. A refusal is the correct answer, not an empty state.",
+    "Finding F10 answer contract: say the data-flow view is refused, name the failed rule, give the measurement, and state the evidence needed. A refusal is the correct answer, not an empty state or a partial view.",
 };
 
 const UNANSWERABLE_GUIDANCE: readonly SurfacePlan[] = [
@@ -220,11 +220,11 @@ const UNANSWERABLE_GUIDANCE: readonly SurfacePlan[] = [
 
 const UNANSWERABLE_ANSWER_GUIDANCE: Record<string, string> = {
   U1:
-    "Unanswerable case U1: answer that the exact external market percentile cannot be confirmed from the current evidence, the market benchmark provider is not yet evidenced, and the next move is an evidence request. Do not invent Gartner, ISG, or any exact percentile.",
+    "Unanswerable case U1: use the phrase exact external market percentile cannot be confirmed from the current evidence, say the benchmark provider is not loaded, and name the next move as an evidence request. Do not invent Gartner, ISG, or any exact percentile.",
   U2:
-    "Unanswerable case U2: answer that a named approver cannot be identified from the current evidence, approval provenance is not yet evidenced, and the next move is to request approval records. Do not infer approval from role hierarchy.",
+    "Unanswerable case U2: use the phrase named approver cannot be identified from the current evidence, say approval provenance is not loaded, and request approval records. Do not infer approval from role hierarchy.",
   U3:
-    "Unanswerable case U3: answer that exact outage probability cannot be calculated from the current evidence. Use the Netezza support, utilization, and DR facts only for risk triage, not a probability forecast.",
+    "Unanswerable case U3: use the phrase exact outage probability cannot be calculated from the current evidence and state that there is insufficient evidence for a probability forecast. Use the Netezza support, utilization, and DR facts only for risk triage, not a failure probability.",
 };
 
 const BASE_INTELLIGENCE_SURFACES = [
