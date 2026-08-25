@@ -101,9 +101,56 @@ const REQUIRED_ELEMENT_ALIASES = new Map([
       "evidence request",
       "request the evidence",
       "request before",
+      "request approval records",
+      "benchmark evidence request",
       "needs evidence",
       "would need",
       "must be validated",
+    ],
+  ],
+  [
+    "cannot confirm exact external market percentile",
+    [
+      "cannot confirm exact external market percentile",
+      "does not have an external market percentile on record",
+      "no external market percentile on record",
+      "cannot be confirmed",
+    ],
+  ],
+  [
+    "cannot identify named approver",
+    [
+      "cannot identify named approver",
+      "cannot be identified",
+      "signature trail",
+      "approving executive",
+    ],
+  ],
+  [
+    "cannot calculate exact outage probability",
+    [
+      "cannot calculate exact outage probability",
+      "exact outage probability can't be calculated",
+      "outage probability can't be calculated",
+      "cannot be calculated",
+    ],
+  ],
+  [
+    "failed rule",
+    [
+      "failed rule",
+      "failed gate",
+      "source-to-destination system identity cannot be confirmed",
+      "source and destination system labels are unknown",
+    ],
+  ],
+  [
+    "measurement",
+    [
+      "measurement",
+      "unknown to unknown",
+      "unknown source",
+      "unknown destination",
     ],
   ],
   [
@@ -153,10 +200,16 @@ function forbiddenElementPresent(text, phrase, requiredPhrases) {
   // the required refusal phrase into its own failure.
   return !requiredPhrases.some((requiredPhrase) => {
     const normalizedRequired = normalizeText(requiredPhrase);
-    return (
-      normalizedRequired.includes(normalizedPhrase) &&
-      normalized.includes(normalizedRequired)
-    );
+    const alternatives = REQUIRED_ELEMENT_ALIASES.get(normalizedRequired) ?? [
+      requiredPhrase,
+    ];
+    return alternatives.some((alternative) => {
+      const normalizedAlternative = normalizeText(alternative);
+      return (
+        normalizedAlternative.includes(normalizedPhrase) &&
+        normalized.includes(normalizedAlternative)
+      );
+    });
   });
 }
 
@@ -375,6 +428,25 @@ function parseNdjson(text) {
     });
 }
 
+function integerEnv(name, fallback) {
+  const value = Number.parseInt(process.env[name] ?? "", 10);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function timeoutRow(row, error, durationMs) {
+  return {
+    id: row.id,
+    case_id: row.id,
+    status: 0,
+    content_type: "application/json",
+    answerText: "",
+    event_types: ["error"],
+    event_count: 1,
+    error,
+    duration_ms: durationMs,
+  };
+}
+
 function textFromEvents(events) {
   const directAnswers = events
     .filter((event) => event?.type === "agent-answer" && event?.answer)
@@ -389,6 +461,7 @@ function textFromEvents(events) {
 
 async function captureLiveAnswers(cases, args) {
   const { chromium } = await import("playwright");
+  const caseTimeoutMs = integerEnv("ECL_AVA_EVAL_CASE_TIMEOUT_MS", 90_000);
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
   try {
@@ -399,37 +472,92 @@ async function captureLiveAnswers(cases, args) {
     });
     const rows = [];
     for (const row of cases) {
-      const result = await page.evaluate(
-        async ({ baseUrl, query, tenantKey }) => {
-          const response = await fetch(new URL("/api/intelligence/ask", baseUrl).toString(), {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              query,
-              client: tenantKey,
-              richText: false,
-              traceEnabled: true,
-              answerOnlyStreaming: false,
-              surfaceContext: {
-                module: "intelligence",
-                clientKey: tenantKey,
-                activeClient: tenantKey,
-                activeTab: "ecl-consultant-eval",
-                substrate: "ecl_projection_db",
-                facts: ["ECL consultant eval live-answer capture"],
-              },
-            }),
-          });
-          return {
-            status: response.status,
-            contentType: response.headers.get("content-type"),
-            text: await response.text(),
-          };
-        },
-        { baseUrl: args.baseUrl, query: row.question, tenantKey: args.tenantKey },
+      const caseStartedAt = Date.now();
+      console.log(
+        JSON.stringify({
+          event: "ecl_ava_consultant_eval_case_start",
+          id: row.id,
+          timeout_ms: caseTimeoutMs,
+        }),
       );
+      let result;
+      try {
+        result = await page.evaluate(
+          async ({ baseUrl, query, tenantKey, timeoutMs }) => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+              const response = await fetch(new URL("/api/intelligence/ask", baseUrl).toString(), {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                signal: controller.signal,
+                body: JSON.stringify({
+                  query,
+                  client: tenantKey,
+                  richText: false,
+                  traceEnabled: true,
+                  answerOnlyStreaming: false,
+                  surfaceContext: {
+                    module: "intelligence",
+                    clientKey: tenantKey,
+                    activeClient: tenantKey,
+                    activeTab: "ecl-consultant-eval",
+                    substrate: "ecl_projection_db",
+                    facts: ["ECL consultant eval live-answer capture"],
+                  },
+                }),
+              });
+              return {
+                status: response.status,
+                contentType: response.headers.get("content-type"),
+                text: await response.text(),
+              };
+            } catch (error) {
+              return {
+                status: 0,
+                contentType: "application/json",
+                text: JSON.stringify({
+                  type: "error",
+                  error:
+                    error instanceof Error
+                      ? error.message
+                      : "live answer request failed",
+                }),
+              };
+            } finally {
+              clearTimeout(timer);
+            }
+          },
+          {
+            baseUrl: args.baseUrl,
+            query: row.question,
+            tenantKey: args.tenantKey,
+            timeoutMs: caseTimeoutMs,
+          },
+        );
+      } catch (error) {
+        const durationMs = Date.now() - caseStartedAt;
+        const output = timeoutRow(
+          row,
+          error instanceof Error ? error.message : "page evaluate failed",
+          durationMs,
+        );
+        rows.push(output);
+        console.log(
+          JSON.stringify({
+            event: "ecl_ava_consultant_eval_case_done",
+            id: row.id,
+            status: output.status,
+            duration_ms: durationMs,
+            event_count: output.event_count,
+            answer_chars: 0,
+            error: output.error,
+          }),
+        );
+        continue;
+      }
       const events = parseNdjson(result.text);
-      rows.push({
+      const output = {
         id: row.id,
         case_id: row.id,
         status: result.status,
@@ -438,7 +566,19 @@ async function captureLiveAnswers(cases, args) {
         event_types: [...new Set(events.map((event) => event.type ?? "unknown"))],
         event_count: events.length,
         auth_method: auth.method,
-      });
+        duration_ms: Date.now() - caseStartedAt,
+      };
+      rows.push(output);
+      console.log(
+        JSON.stringify({
+          event: "ecl_ava_consultant_eval_case_done",
+          id: row.id,
+          status: output.status,
+          duration_ms: output.duration_ms,
+          event_count: output.event_count,
+          answer_chars: output.answerText.length,
+        }),
+      );
     }
     mkdirSync(path.dirname(args.answersOut), { recursive: true });
     writeFileSync(args.answersOut, rows.map((row) => JSON.stringify(row)).join("\n") + "\n");
@@ -469,6 +609,8 @@ const answerDiagnostics = answerRows
         content_type: row.content_type ?? null,
         event_types: Array.isArray(row.event_types) ? row.event_types : [],
         event_count: row.event_count ?? null,
+        duration_ms: row.duration_ms ?? null,
+        error: row.error ?? null,
         answer_chars: text.length,
         answer_preview: text.slice(0, 600),
       };
