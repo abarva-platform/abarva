@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The ECL product browser smoke now reports whether all 40 named serving surfaces are visible in signed-in browser proof, not only whether the four entry routes load. This turns the prior 4-route caveat into a measured denominator: named surfaces browser-proven out of 40.
+The ECL product browser smoke now reports whether all 40 named serving surfaces are visible in signed-in browser proof, not only whether the four entry routes load. This turns the prior 4-route caveat into a measured denominator: named surfaces browser-proven out of 40. A dedicated proof workflow now runs the default-route browser smoke and aVa live ablation eval after the ACA main deploy or on manual dispatch.
 
 ## Layer Impact
 
@@ -30,6 +30,7 @@ The ECL product browser smoke now reports whether all 40 named serving surfaces 
 
 - `scripts/ecl/run_product_ecl_browser_smoke.mjs`
 - `scripts/ecl/run_product_ecl_predeploy_gate.mjs`
+- `.github/workflows/ecl-product-live-proof.yml`
 
 ## QA / Validation
 
@@ -40,6 +41,8 @@ The ECL product browser smoke now reports whether all 40 named serving surfaces 
 ## Rollout Plan
 
 Merge to `main`. The next repo-owned Azure Container Apps deployment will include the updated proof harness. No data load, route repointing, migration, or traffic change is introduced by this release.
+
+After the ACA main deploy completes, `.github/workflows/ecl-product-live-proof.yml` runs the signed-in default-route proof and live aVa ablation eval. It uploads `compact-summary.json` with the entry-route, named-surface, finding, and eval denominators.
 
 ## Deployment Authority
 
@@ -60,6 +63,7 @@ Revert the proof-harness commit. Because this release does not alter schema, dat
 - Local pre-deploy gate output.
 - Local deterministic content sweep output.
 - Future ACA browser smoke bundle containing `named_surfaces_browser_proven`.
+- Future `ecl-product-live-proof` workflow artifact containing `compact-summary.json`.
 
 ## Known Gaps
 
