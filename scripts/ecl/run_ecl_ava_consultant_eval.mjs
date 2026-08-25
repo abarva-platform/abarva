@@ -507,6 +507,18 @@ function textFromEvents(events) {
     .join("");
 }
 
+function errorTextFromEvents(events) {
+  return events
+    .filter((event) => event?.type === "error")
+    .map((event) =>
+      typeof event.error === "string"
+        ? event.error
+        : JSON.stringify(event.error ?? event),
+    )
+    .filter(Boolean)
+    .join("\n");
+}
+
 function surfaceContextForCapture(args, captureMode) {
   if (captureMode === "evidence_withheld") {
     return {
@@ -639,6 +651,7 @@ async function captureLiveAnswers(cases, args, captureMode = "evidence_present")
         answerText: textFromEvents(events),
         event_types: [...new Set(events.map((event) => event.type ?? "unknown"))],
         event_count: events.length,
+        error: errorTextFromEvents(events) || null,
         auth_method: auth.method,
         duration_ms: Date.now() - caseStartedAt,
       };
