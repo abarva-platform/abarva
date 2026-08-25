@@ -79,6 +79,10 @@ def as_num(value: str | None) -> float:
     return float(str(value).replace(",", ""))
 
 
+def split_semicolon_refs(value: str | None) -> list[str]:
+    return [part.strip() for part in (value or "").split(";") if part.strip()]
+
+
 def source_hash(payload: object) -> str:
     return hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=True).encode("utf-8")).hexdigest()
 
@@ -836,7 +840,7 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         cid = contract_id(row["contract_id"])
         contract_obj = object_id("contract", row["contract_id"])
         vendor_obj = object_id("vendor", row["supplier_name"])
-        scoped_apps = [value for value in row.get("scoped_applications", "").split(";") if value]
+        scoped_apps = split_semicolon_refs(row.get("scoped_applications"))
         service_line = {
             "service_tower": row.get("service_tower"),
             "annualized_value_usd": as_num(row.get("annualized_value_usd")),
@@ -1112,7 +1116,7 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
     vendor_projection: list[dict[str, str]] = []
     for vendor_name, rows in vendor_contracts.items():
         contract_ids = [contract_id(row["contract_id"]) for row in rows]
-        covered = sorted({app for row in rows for app in row.get("scoped_applications", "").split(";") if app})
+        covered = sorted({app for row in rows for app in split_semicolon_refs(row.get("scoped_applications"))})
         spend = sum(as_num(row.get("annualized_value_usd")) for row in rows)
         renewal_exposure = sum(as_num(row.get("annualized_value_usd")) for row in rows if as_num(row.get("notice_window_days")) >= 180)
         gap_flags = []
@@ -1214,7 +1218,7 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         "ai_usage_rows": len(ai_rows),
         "evidence_rows": len(evidence_rows),
         "interview_rows": len(interviews),
-        "relationships": len(flows) + len(deployments) + sum(len(row.get("scoped_applications", "").split(";")) for row in contracts),
+        "relationships": len(flows) + len(deployments) + sum(len(split_semicolon_refs(row.get("scoped_applications"))) for row in contracts),
     }
     add_home_row(
         page_key="executive_brief",
@@ -1518,7 +1522,7 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         ("enterprise_landscape", [{"fact": "application_count", "value": len(apps)}, {"fact": "function_count", "value": len(function_names)}]),
         ("ask_query_api", [{"fact": "context_pack_id", "value": context_pack_id()}, {"fact": "retrieval_state", "value": "not_indexed"}]),
         ("insights_evaluate", [{"fact": "risk_rows", "value": len(grc_rows)}, {"fact": "program_rows", "value": len(programs)}]),
-        ("pattern_detail", [{"fact": "flow_rows", "value": len(flows)}, {"fact": "contract_scope_rows", "value": sum(len(row.get("scoped_applications", "").split(";")) for row in contracts)}]),
+        ("pattern_detail", [{"fact": "flow_rows", "value": len(flows)}, {"fact": "contract_scope_rows", "value": sum(len(split_semicolon_refs(row.get("scoped_applications"))) for row in contracts)}]),
         ("context_summary", [{"fact": "source_hash_basis", "value": "dense_source_room"}, {"fact": "source_record_count", "value": sum(len(read_csv(path)) for path in paths.values())}]),
         ("source_context", [{"fact": "contract_count", "value": len(contracts)}, {"fact": "vendor_count", "value": len(vendor_contracts)}]),
         ("tower_context", [{"fact": "tower_rows", "value": len(tower_rows)}, {"fact": "claimable_value_rows", "value": 0}]),
