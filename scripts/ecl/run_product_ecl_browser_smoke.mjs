@@ -11,6 +11,9 @@ import path from "node:path";
 const BASE_URL = process.env.BASE_URL || process.env.ECL_PRODUCT_BROWSER_BASE_URL || "https://app.abarva.ai";
 const TENANT_KEY = process.env.E2E_ACTIVE_CLIENT || "meridian-health";
 const EXPECTED_TENANT_NAME = process.env.E2E_EXPECTED_TENANT_NAME || "Meridian Health";
+const ROUTE_MODE = process.argv.includes("--default-routes")
+  ? "default_routes"
+  : "provider_opt_in";
 const EMAILS = [
   process.env.E2E_PRIVATE_PROOF_EMAIL,
   process.env.E2E_DEMO_EMAIL,
@@ -24,10 +27,15 @@ const EMIT_PROOF = process.env.EMIT_ACA_PROOF_BUNDLE !== "false";
 const PRIVATE_PROOF_TOKEN = process.env.ABARVA_PRIVATE_BROWSER_PROOF_TOKEN?.trim() || null;
 const FINDINGS_SPEC_PATH = path.resolve("docs/architecture/meridian-demo-findings-20260824.json");
 
+function eclPath(path, separator = "?") {
+  if (ROUTE_MODE === "default_routes") return path;
+  return `${path}${separator}provider=ecl_projection_db`;
+}
+
 const ROUTES = [
   {
     key: "home_preview_ecl",
-    path: `/home/preview?tenant=${encodeURIComponent(TENANT_KEY)}&provider=ecl_projection_db`,
+    path: eclPath(`/home/preview?tenant=${encodeURIComponent(TENANT_KEY)}`, "&"),
     requiredText: [
       /Meridian Health/i,
       /750\s+applications/i,
@@ -38,17 +46,17 @@ const ROUTES = [
   },
   {
     key: "source_workspace_ecl",
-    path: "/source/preview/workspace?provider=ecl_projection_db",
+    path: eclPath("/source/preview/workspace"),
     requiredText: [/Meridian Health|Source/i, /230\s+contracts/i, /102\s+vendors/i],
   },
   {
     key: "tower_ecl",
-    path: "/tower?provider=ecl_projection_db",
+    path: eclPath("/tower"),
     requiredText: [/Tower command center projection is loaded/i, /Gate state/i],
   },
   {
     key: "intelligence_ecl",
-    path: "/intelligence?provider=ecl_projection_db",
+    path: eclPath("/intelligence"),
     requiredText: [
       /Intelligence context pack projection is loaded/i,
       /Permitted facts/i,
@@ -438,6 +446,7 @@ function emitStructuredSummary(summary) {
     issue_count: summary.issue_count,
     issues: summary.issues,
     provider: summary.provider,
+    route_mode: summary.route_mode,
     route_count: summary.route_count,
     findings_demonstrable_on_real_surface: summary.findings_demonstrable_on_real_surface,
     routes: summary.routes.map((route) => ({
@@ -495,7 +504,7 @@ async function main() {
   const summary = {
     accepted: results.every((result) => result.accepted),
     actual_browser_execution: true,
-    actual_route_repointing: false,
+    actual_route_repointing: ROUTE_MODE === "default_routes",
     auth_attempts: authProof?.attempts ?? [],
     auth_method: authProof?.authMethod ?? null,
     base_url: BASE_URL,
@@ -505,6 +514,7 @@ async function main() {
     issue_count: results.reduce((sum, result) => sum + result.issues.length, 0),
     issues: results.flatMap((result) => result.issues.map((issue) => `${result.key}: ${issue}`)),
     provider: "ecl_projection_db",
+    route_mode: ROUTE_MODE,
     route_count: results.length,
     routes: results,
     tenant_key: TENANT_KEY,

@@ -16,6 +16,7 @@ import {
   type ContractLeverageEntry,
 } from "@/lib/source/data-model/vendor-contract-portfolio";
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { resolveEclProductProvider } from "@/lib/ecl/product-provider";
 import { computeSourcingOpportunities } from "@/lib/source/data-model/sourcing-opportunities";
 import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
 import {
@@ -303,12 +304,19 @@ export function sourceWorkspaceProvider(
   if (providerOverride) {
     return providerOverride;
   }
-  if (process.env.SOURCE_WORKSPACE_PROVIDER === "ecl_projection_db") {
+  if (process.env.SOURCE_WORKSPACE_PROVIDER === "legacy") {
+    return "legacy";
+  }
+  if (process.env.SOURCE_WORKSPACE_PROVIDER === "ecl_projection") {
+    return "ecl_projection";
+  }
+  if (
+    process.env.SOURCE_WORKSPACE_PROVIDER === "ecl_projection_db" ||
+    resolveEclProductProvider() === "ecl_projection_db"
+  ) {
     return "ecl_projection_db";
   }
-  return process.env.SOURCE_WORKSPACE_PROVIDER === "ecl_projection"
-    ? "ecl_projection"
-    : "legacy";
+  return "legacy";
 }
 
 async function loadEclProjectionWorkspacePortfolio(

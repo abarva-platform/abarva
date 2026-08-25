@@ -23,6 +23,10 @@ import {
 } from "@/lib/tower/eclProjectionPreview";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
+import {
+  isEclProductProvider,
+  resolveEclProductProvider,
+} from "@/lib/ecl/product-provider";
 
 export const metadata = { title: "Tower · AbarVa" };
 export const dynamic = "force-dynamic";
@@ -306,6 +310,7 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
   const resolved = await searchParams;
   const rawRequestedClient = firstSearchValue(resolved?.client);
   const requestedProvider = firstSearchValue(resolved?.provider);
+  const productProvider = resolveEclProductProvider(requestedProvider);
   const requestedClient = (await hasLockedTenantSession())
     ? rawRequestedClient
     : null;
@@ -360,7 +365,7 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
   const towerChatClientId =
     client?.id ?? effectiveClientKey ?? requestedClient ?? null;
   const towerEclPreview =
-    requestedProvider === "ecl_projection_db"
+    isEclProductProvider(productProvider)
       ? await readTowerEclProjectionPreview(canonicalTenantKey(effectiveClientKey))
       : null;
 

@@ -21,7 +21,7 @@ const CHECKS = [
     key: "smoke_source_requires_dense_ecl_counts",
     file: "scripts/ecl/run_product_ecl_browser_smoke.mjs",
     mustContain: [
-      "/source/preview/workspace?provider=ecl_projection_db",
+      "eclPath(\"/source/preview/workspace\")",
       "/230\\s+contracts/i",
       "/102\\s+vendors/i",
     ],
@@ -30,7 +30,7 @@ const CHECKS = [
     key: "smoke_tower_requires_projection_panel",
     file: "scripts/ecl/run_product_ecl_browser_smoke.mjs",
     mustContain: [
-      "/tower?provider=ecl_projection_db",
+      "eclPath(\"/tower\")",
       "/Tower command center projection is loaded/i",
       "/Gate state/i",
     ],
@@ -39,7 +39,7 @@ const CHECKS = [
     key: "smoke_intelligence_requires_projection_panel",
     file: "scripts/ecl/run_product_ecl_browser_smoke.mjs",
     mustContain: [
-      "/intelligence?provider=ecl_projection_db",
+      "eclPath(\"/intelligence\")",
       "/Intelligence context pack projection is loaded/i",
       "/Permitted facts/i",
       "/Blocked facts/i",
@@ -59,7 +59,7 @@ const CHECKS = [
     file: "src/app/(maestro)/home/preview/page.tsx",
     mustContain: [
       "searchParams: Promise<{ tenant?: string; provider?: string }>",
-      "provider === \"ecl_projection_db\"",
+      "resolveEclProductProvider(provider)",
       "getHomeEclProjectionBundle(tenantKey)",
     ],
   },
@@ -68,7 +68,7 @@ const CHECKS = [
     file: "src/app/(maestro)/tower/page.tsx",
     mustContain: [
       "const requestedProvider = firstSearchValue(resolved?.provider)",
-      "requestedProvider === \"ecl_projection_db\"",
+      "resolveEclProductProvider(requestedProvider)",
       "readTowerEclProjectionPreview(canonicalTenantKey(effectiveClientKey))",
     ],
   },
@@ -77,16 +77,28 @@ const CHECKS = [
     file: "src/app/(maestro)/intelligence/page.tsx",
     mustContain: [
       "const requestedProvider = firstSearchValue(resolvedSearchParams?.provider)",
-      "requestedProvider === \"ecl_projection_db\"",
+      "resolveEclProductProvider(requestedProvider)",
       "readIntelligenceEclContextPackPreview(",
     ],
   },
   {
-    key: "smoke_keeps_non_default_cutover_boundary",
+    key: "smoke_supports_default_route_cutover_proof",
     file: "scripts/ecl/run_product_ecl_browser_smoke.mjs",
     mustContain: [
-      "actual_route_repointing: false",
+      "--default-routes",
+      "actual_route_repointing: ROUTE_MODE === \"default_routes\"",
       "provider: \"ecl_projection_db\"",
+      "route_mode: ROUTE_MODE",
+    ],
+  },
+  {
+    key: "shared_provider_resolver_defaults_to_ecl",
+    file: "src/lib/ecl/product-provider.ts",
+    mustContain: [
+      "return configuredDefaultProvider()",
+      ": \"ecl_projection_db\"",
+      "ECL_PRODUCT_DEFAULT_PROVIDER",
+      "ECL_PRODUCT_ALLOW_LEGACY_QUERY_OVERRIDE",
     ],
   },
   {
@@ -123,6 +135,8 @@ const COMMAND_CHECKS = [
       "jest",
       "--runTestsByPath",
       "src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts",
+      "src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts",
+      "src/lib/ecl/__tests__/product-provider.test.ts",
       "--runInBand",
     ],
   },
