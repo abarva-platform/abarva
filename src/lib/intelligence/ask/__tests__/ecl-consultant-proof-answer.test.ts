@@ -2,6 +2,7 @@ import {
   buildEclConsultantProofAnswer,
   chunkEclConsultantProofAnswer,
 } from "../ecl-consultant-proof-answer";
+import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 import type { AskSource, AskSurfaceContext } from "../types";
 
 const eclContext: AskSurfaceContext = {
@@ -155,6 +156,39 @@ describe("ECL consultant proof answer", () => {
       });
 
       expect(answer?.text).not.toMatch(item.forbidden);
+    }
+  });
+
+  it("keeps scrubbed proof answers grammatically presentable", () => {
+    const cases = [
+      {
+        query:
+          "Where is one workload running across four BI technologies with ungoverned usage?",
+        sources: [source("home_data_assets_integrations"), source("intelligence_enterprise_landscape")],
+      },
+      {
+        query:
+          "Which Meridian value claims are gated, and what evidence is needed before leadership treats them as claimable?",
+        sources: [source("tower_value_proof"), source("tower_evidence"), source("tower_recommended_actions")],
+      },
+      {
+        query:
+          "Where do high severity control exceptions cluster by vendor?",
+        sources: [source("tower_risk_lens"), source("source_vendor_360")],
+      },
+    ];
+
+    for (const item of cases) {
+      const answer = buildEclConsultantProofAnswer({
+        query: item.query,
+        surfaceContext: eclContext,
+        sources: item.sources,
+      });
+      const scrubbed = scrubPublicAvaAnswerText(answer?.text ?? "");
+
+      expect(scrubbed).not.toMatch(/\bone ungoverned records\b/i);
+      expect(scrubbed).not.toMatch(/\bEach gated records\b/i);
+      expect(scrubbed).not.toMatch(/\ban evidence records\b/i);
     }
   });
 });
