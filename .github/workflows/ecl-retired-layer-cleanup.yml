@@ -1,0 +1,168 @@
+name: ECL retired-layer cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry_run inspects the live database. apply drops only when confirm_apply is exact."
+        required: true
+        type: choice
+        options:
+          - dry_run
+          - apply
+        default: dry_run
+      schemas:
+        description: "Comma-separated schemas to inspect or retire."
+        required: true
+        type: string
+        default: source_registry
+      confirm_apply:
+        description: "Required for apply: type APPLY_SOURCE_REGISTRY exactly."
+        required: false
+        type: string
+        default: ""
+      base_url:
+        description: "Product URL used only for image/runtime lookup context."
+        required: true
+        type: string
+        default: https://app.abarva.ai
+
+concurrency:
+  group: ecl-retired-layer-cleanup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  cleanup:
+    name: Retired-layer cleanup preflight and operator run
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      CONTAINER_APP_NAME: ${{ vars.AZURE_WEB_CONTAINER_APP_NAME || 'ca-abarva-web-lab-eastus' }}
+      RESOURCE_GROUP: ${{ vars.AZURE_WEB_RESOURCE_GROUP || 'rg-abarva-controlplane-lab-eastus' }}
+      AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
+      AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
+      AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID || '701a8554-a166-46e9-bf13-743bc50e3b20' }}
+      BASE_URL: ${{ inputs.base_url }}
+      RETIRED_LAYER_PURGE_SCHEMAS: ${{ inputs.schemas }}
+      RETIRED_LAYER_PURGE_COMPACT_STDOUT: "1"
+      RETIRED_LAYER_PURGE_OUT_DIR: /tmp/ecl-retired-layer-cleanup-proof
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refuse unsafe apply request
+        if: inputs.mode == 'apply' && inputs.confirm_apply != 'APPLY_SOURCE_REGISTRY'
+        run: |
+          echo "Apply requires confirm_apply=APPLY_SOURCE_REGISTRY." >&2
+          exit 1
+
+      - name: Refuse broad apply in this workflow
+        if: inputs.mode == 'apply' && inputs.schemas != 'source_registry'
+        run: |
+          echo "This cleanup workflow only permits apply for source_registry. Use dry_run for other schemas." >&2
+          exit 1
+
+      - name: Static preflight
+        run: |
+          npm run ops:purge-retired-data-layers -- \
+            --static-preflight-only \
+            --schemas "$RETIRED_LAYER_PURGE_SCHEMAS" \
+            --out-dir audit-artifacts/ecl-retired-layer-cleanup/static-preflight \
+            --run-id "ecl-retired-layer-static-preflight-${{ github.run_id }}" \
+            --compact-stdout \
+            | tee audit-artifacts/ecl-retired-layer-cleanup-static-preflight.log
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_DEPLOY_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_DEPLOY_SUBSCRIPTION_ID }}
+
+      - name: Resolve deployed digest image
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-artifacts/ecl-retired-layer-cleanup
+          image="$(az containerapp show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query "properties.template.containers[0].image" \
+            --output tsv)"
+          if [[ "$image" != *@sha256:* ]]; then
+            echo "Resolved web image is not digest-pinned: $image" >&2
+            exit 1
+          fi
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "$image" > audit-artifacts/ecl-retired-layer-cleanup/image.txt
+
+      - name: Live dry-run through private operator
+        if: inputs.mode == 'dry_run'
+        run: |
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script ops:purge-retired-data-layers \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --env RETIRED_LAYER_PURGE_SCHEMAS="$RETIRED_LAYER_PURGE_SCHEMAS" \
+            --env RETIRED_LAYER_PURGE_COMPACT_STDOUT=1 \
+            --env RETIRED_LAYER_PURGE_OUT_DIR=/tmp/ecl-retired-layer-cleanup-proof \
+            --out-dir audit-artifacts/ecl-retired-layer-cleanup/live-dry-run \
+            --poll-seconds 15
+
+      - name: Live apply through private operator
+        if: inputs.mode == 'apply'
+        run: |
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script ops:purge-retired-data-layers:apply \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --env RETIRED_LAYER_PURGE_SCHEMAS="$RETIRED_LAYER_PURGE_SCHEMAS" \
+            --env RETIRED_LAYER_PURGE_COMPACT_STDOUT=1 \
+            --env RETIRED_LAYER_PURGE_OUT_DIR=/tmp/ecl-retired-layer-cleanup-proof \
+            --out-dir audit-artifacts/ecl-retired-layer-cleanup/live-apply \
+            --poll-seconds 15
+
+      - name: Write cleanup summary
+        if: always()
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const root = 'audit-artifacts/ecl-retired-layer-cleanup';
+          fs.mkdirSync(root, { recursive: true });
+          const summary = {
+            lane: 'L-CLEANUP',
+            slice: 'retired_layer_cleanup',
+            status: process.env.GITHUB_JOB_STATUS || 'completed_with_artifacts',
+            schemas: process.env.RETIRED_LAYER_PURGE_SCHEMAS,
+            mode: '${{ inputs.mode }}',
+            run_id: process.env.GITHUB_RUN_ID,
+            digest: fs.existsSync(path.join(root, 'image.txt')) ? fs.readFileSync(path.join(root, 'image.txt'), 'utf8').trim() : null,
+            timestamp: new Date().toISOString(),
+            proof_note: 'Inspect static-preflight plus live dry-run/apply operator artifacts before updating the retirement denominator.'
+          };
+          fs.writeFileSync(path.join(root, 'cleanup-summary.json'), JSON.stringify(summary, null, 2) + '\n');
+          NODE
+
+      - name: Upload cleanup proof
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ecl-retired-layer-cleanup
+          path: audit-artifacts/ecl-retired-layer-cleanup*
+          if-no-files-found: error
