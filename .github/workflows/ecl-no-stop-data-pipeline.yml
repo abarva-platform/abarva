@@ -148,6 +148,10 @@ jobs:
         run: |
           npm run test:ecl-client-intake-application-adapter
 
+      - name: Prove client intake data-BI-ETL adapter
+        run: |
+          npm run test:ecl-client-intake-data-bi-etl-adapter
+
       - name: Prove client intake vendor-contract adapter
         run: |
           npm run test:ecl-client-intake-vendor-contract-adapter

@@ -227,6 +227,17 @@ function implementedAdapterFamilies(ref) {
       status: "proven_local",
     });
   }
+  if (
+    files.has("scripts/ecl/load_client_intake_data_bi_etl_layer.py") &&
+    files.has("scripts/ecl/__tests__/run-ecl-client-intake-data-bi-etl-adapter-tests.mjs")
+  ) {
+    families.push({
+      family: "SP04 Data/BI/ETL",
+      adapter: "scripts/ecl/load_client_intake_data_bi_etl_layer.py",
+      test: "scripts/ecl/__tests__/run-ecl-client-intake-data-bi-etl-adapter-tests.mjs",
+      status: "proven_local",
+    });
+  }
   return families;
 }
 
