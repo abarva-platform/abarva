@@ -25,6 +25,8 @@ reports/*
 !reports/active-tenant-access/**
 !reports/candidate-invisibility-guard/
 !reports/candidate-invisibility-guard/**
+!reports/ecl-legacy-table-retirement-map-2026-08-22/
+!reports/ecl-legacy-table-retirement-map-2026-08-22/**
 
 # Local env / secrets — never ship these into an image
 .env
