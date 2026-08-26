@@ -116,6 +116,18 @@ jobs:
             --base-url "$BASE_URL" \
             --tenant-key "$E2E_ACTIVE_CLIENT"
 
+      - name: Write four-lane completion status
+        if: always()
+        env:
+          ECL_STATUS_REF: ${{ github.sha }}
+          ECL_LIVE_PROOF_COMPACT_SUMMARY: audit-artifacts/ecl-product-live-proof/compact-summary.json
+          ECL_BROWSER_OPERATOR_SUMMARY: audit-artifacts/ecl-product-live-proof/browser-operator/summary.json
+          ECL_EVAL_OPERATOR_SUMMARY: audit-artifacts/ecl-product-live-proof/eval-operator/summary.json
+          ECL_STATUS_IMAGE_DIGEST: ${{ steps.image.outputs.image }}
+        run: |
+          node scripts/ecl/write_ecl_four_lane_completion_status.mjs \
+            --out audit-artifacts/ecl-product-live-proof/ecl-four-lane-completion-status.json
+
       - name: Upload ECL product live proof
         if: always()
         uses: actions/upload-artifact@v7

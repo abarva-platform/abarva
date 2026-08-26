@@ -8,6 +8,7 @@ import { spawnSync } from "node:child_process";
 
 const SPEC_PATH = "docs/architecture/meridian-demo-findings-20260824.json";
 const PLAN_PATH = "docs/architecture/ECL_CLEAN_BREAK_INTEGRATED_EXECUTION_PLAN_2026_08_24.md";
+const FOUR_LANE_STATUS_PATH = "docs/architecture/ecl-four-lane-completion-status.json";
 const GENERATOR_PATH = "scripts/ecl/generate_dense_source_room_extracts.py";
 
 function run(command, args, options = {}) {
@@ -74,6 +75,7 @@ function daysBetween(startIso, endIso) {
 
 const spec = JSON.parse(fs.readFileSync(SPEC_PATH, "utf8"));
 const plan = fs.readFileSync(PLAN_PATH, "utf8");
+const fourLaneStatus = JSON.parse(fs.readFileSync(FOUR_LANE_STATUS_PATH, "utf8"));
 const generator = fs.readFileSync(GENERATOR_PATH, "utf8");
 
 assert.equal(spec.spec_id, "meridian_demo_findings_v1");
@@ -86,7 +88,11 @@ assert.equal(spec.denominator.numerator, 0);
 assert.equal(spec.denominator.denominator, 10);
 
 assert.match(plan, /\[meridian-demo-findings-20260824\.json\]\(\.\/meridian-demo-findings-20260824\.json\)/);
-assert.match(plan, /Findings demonstrable on a real surface\s*\|\s*\*\*0\*\*\s*\|\s*10 demo findings/);
+assert.match(plan, /\| Findings demonstrable on default routes \| 10 \| 10 \|/);
+assert.equal(fourLaneStatus.live_product_proof.findings_demonstrable.numerator, 10);
+assert.equal(fourLaneStatus.live_product_proof.findings_demonstrable.denominator, 10);
+assert.equal(fourLaneStatus.repo_denominators.findings_declared.numerator, 10);
+assert.equal(fourLaneStatus.repo_denominators.findings_declared.denominator, 10);
 assert.match(generator, /DEMO_AS_OF_DATE\s*=\s*date\(2026,\s*9,\s*15\)/);
 
 const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "ecl-demo-findings-source-contract-"));

@@ -1,0 +1,409 @@
+#!/usr/bin/env node
+
+import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+
+const DEFAULT_PLAN = "docs/architecture/ECL_CLEAN_BREAK_INTEGRATED_EXECUTION_PLAN_2026_08_24.md";
+const DEFAULT_NEEDS = "docs/architecture/ECL_PRODUCT_DETERMINISTIC_NEEDS_2026_08_22.md";
+const DEFAULT_FINDINGS = "docs/architecture/meridian-demo-findings-20260824.json";
+const DEFAULT_RETIREMENT_SUMMARY =
+  "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_summary.json";
+const DEFAULT_RETIREMENT_MAP =
+  "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_map.csv";
+const DEFAULT_STATUS = "docs/architecture/ecl-four-lane-completion-status.json";
+
+const SURFACE_TARGETS = {
+  Home: 16,
+  Source: 9,
+  Tower: 9,
+  Intelligence: 6,
+};
+
+const INTAKE_FAMILIES = [
+  "SP01 Documents/Interviews",
+  "SP02 HRIS",
+  "SP03 CMDB",
+  "SP04 Data/BI/ETL",
+  "SP05 Infrastructure",
+  "SP06 Finance/ERP",
+  "SP07 PPM",
+  "SP08 Vendor/Contract",
+  "SP09 GRC",
+  "SP10 KPI/Operations",
+  "SP11 AI Usage/Models",
+  "SP12 Evidence Room",
+  "SP13 Data Flows",
+  "SP14 Deployments/Hosting",
+];
+
+function parseArgs(argv) {
+  const args = {
+    ref: process.env.ECL_STATUS_REF || process.env.ECL_RECONCILE_REF || "HEAD",
+    out: DEFAULT_STATUS,
+    liveProofSummary: process.env.ECL_LIVE_PROOF_COMPACT_SUMMARY || null,
+    browserOperatorSummary: process.env.ECL_BROWSER_OPERATOR_SUMMARY || null,
+    evalOperatorSummary: process.env.ECL_EVAL_OPERATOR_SUMMARY || null,
+    runId: process.env.GITHUB_RUN_ID || null,
+    digest: process.env.ECL_STATUS_IMAGE_DIGEST || null,
+    timestamp: process.env.ECL_STATUS_TIMESTAMP || new Date().toISOString(),
+    json: false,
+  };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    const next = () => {
+      index += 1;
+      if (index >= argv.length) throw new Error(`${arg} requires a value`);
+      return argv[index];
+    };
+    if (arg === "--ref") args.ref = next();
+    else if (arg === "--out") args.out = next();
+    else if (arg === "--live-proof-summary") args.liveProofSummary = next();
+    else if (arg === "--browser-operator-summary") args.browserOperatorSummary = next();
+    else if (arg === "--eval-operator-summary") args.evalOperatorSummary = next();
+    else if (arg === "--run-id") args.runId = next();
+    else if (arg === "--digest") args.digest = next();
+    else if (arg === "--timestamp") args.timestamp = next();
+    else if (arg === "--json") args.json = true;
+    else if (arg === "--help") {
+      console.log(`Usage: node scripts/ecl/write_ecl_four_lane_completion_status.mjs [options]
+
+Writes the four-lane ECL completion status. Repo facts are read from a named git ref.
+Live browser/eval proof is optional and must be supplied as explicit proof artifacts.
+
+Options:
+  --ref <git-ref>                         Named git ref used for repo facts.
+  --out <path>                            Output JSON path.
+  --live-proof-summary <path>             compact-summary.json from ecl-product-live-proof.
+  --browser-operator-summary <path>       Browser operator summary.json.
+  --eval-operator-summary <path>          Eval operator summary.json.
+  --run-id <id>                           Proof or status run id.
+  --digest <sha256>                       Digest pinned image under proof.
+  --timestamp <iso>                       Status timestamp.
+  --json                                  Print full JSON after writing.`);
+      process.exit(0);
+    } else {
+      throw new Error(`Unknown argument: ${arg}`);
+    }
+  }
+  return args;
+}
+
+function gitShow(ref, file) {
+  const result = execFileSync("git", ["show", `${ref}:${file}`], {
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  return result;
+}
+
+function gitLsTree(ref, paths = []) {
+  return execFileSync("git", ["ls-tree", "-r", "--name-only", ref, "--", ...paths], {
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+  })
+    .split(/\r?\n/)
+    .filter(Boolean);
+}
+
+function readJsonIfPresent(file) {
+  if (!file || !fs.existsSync(file)) return null;
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+function cleanCell(value) {
+  return value.trim().replace(/^`|`$/g, "");
+}
+
+function extractMarkdownTable(markdown, heading) {
+  const start = markdown.indexOf(heading);
+  assert.notEqual(start, -1, `${DEFAULT_PLAN} must contain ${heading}`);
+  const rest = markdown.slice(start + heading.length);
+  const nextHeading = rest.search(/\n#{1,6}\s+/);
+  const section = nextHeading === -1 ? rest : rest.slice(0, nextHeading);
+  const lines = section
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("|") && line.endsWith("|"));
+  assert(lines.length >= 2, `${heading} must contain a markdown table`);
+  const headers = lines[0].split("|").slice(1, -1).map(cleanCell);
+  return lines.slice(2).map((line) => {
+    const cells = line.split("|").slice(1, -1).map(cleanCell);
+    return Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? ""]));
+  });
+}
+
+function projectionNamesFromNeeds(markdown) {
+  const nonProduct = new Set([
+    "projection_manifest",
+    "projection_entry",
+    "projection_entry_object_ref",
+    "projection_entry_metric_ref",
+    "projection_entry_measure_ref",
+    "projection_entry_relationship_ref",
+    "projection_entry_source_record_ref",
+    "projection_entry_document_extraction_ref",
+    "cube_manifest",
+    "cube_slice",
+    "cube_slice_metric",
+    "cube_slice_measure",
+  ]);
+  return [
+    ...new Set(
+      [...markdown.matchAll(/ecl_projection\.([a-z0-9_]+)/gi)]
+        .map((match) => match[1])
+        .filter((name) => !nonProduct.has(name)),
+    ),
+  ].sort();
+}
+
+function ddlBlob(ref) {
+  const files = gitLsTree(ref, ["docs/architecture/sql-drafts", "supabase/migrations"]).filter((file) =>
+    file.endsWith(".sql"),
+  );
+  return files.map((file) => gitShow(ref, file)).join("\n\n");
+}
+
+function countRetiredLegacyAssets(retirementMapCsv) {
+  const lines = retirementMapCsv.trim().split(/\r?\n/);
+  if (lines.length < 2) return 0;
+  const headers = lines[0].split(",");
+  const statusIndex = headers.indexOf("sunset_status");
+  assert.notEqual(statusIndex, -1, "legacy retirement map must contain sunset_status");
+  return lines.slice(1).filter((line) => /RETIRED|DROPPED/i.test(line.split(",")[statusIndex] ?? "")).length;
+}
+
+function implementedAdapterFamilies(ref) {
+  const files = new Set(gitLsTree(ref, ["scripts/ecl"]));
+  const families = [];
+  if (
+    files.has("scripts/ecl/load_client_intake_applications_layer.py") &&
+    files.has("scripts/ecl/__tests__/run-ecl-client-intake-application-adapter-tests.mjs")
+  ) {
+    families.push({
+      family: "SP03 CMDB",
+      adapter: "scripts/ecl/load_client_intake_applications_layer.py",
+      test: "scripts/ecl/__tests__/run-ecl-client-intake-application-adapter-tests.mjs",
+      status: "proven_local",
+    });
+  }
+  return families;
+}
+
+function operatorImageDigest(summary) {
+  if (!summary) return null;
+  const image = summary.image || null;
+  if (typeof image === "string" && image.includes("@")) return image.split("@").at(-1);
+  return summary.imageDigest || null;
+}
+
+function buildStatus(args) {
+  const plan = gitShow(args.ref, DEFAULT_PLAN);
+  const needs = gitShow(args.ref, DEFAULT_NEEDS);
+  const findings = JSON.parse(gitShow(args.ref, DEFAULT_FINDINGS)).findings ?? [];
+  const retirementSummary = JSON.parse(gitShow(args.ref, DEFAULT_RETIREMENT_SUMMARY));
+  const retirementMap = gitShow(args.ref, DEFAULT_RETIREMENT_MAP);
+  const sql = ddlBlob(args.ref);
+  const liveProof = readJsonIfPresent(args.liveProofSummary);
+  const browserSummary = readJsonIfPresent(args.browserOperatorSummary);
+  const evalSummary = readJsonIfPresent(args.evalOperatorSummary);
+
+  const surfaces = extractMarkdownTable(plan, "### Serving Surface Enumeration");
+  const productCounts = Object.fromEntries(
+    Object.keys(SURFACE_TARGETS).map((product) => [
+      product,
+      surfaces.filter((surface) => surface.product === product).length,
+    ]),
+  );
+  assert.deepEqual(productCounts, SURFACE_TARGETS, "serving surface enumeration must remain 16/9/9/6");
+
+  const specifiedProjections = projectionNamesFromNeeds(needs);
+  const builtProjections = [
+    ...new Set([...sql.matchAll(/create\s+table\s+(?:if\s+not\s+exists\s+)?ecl_projection\.([a-z0-9_]+)/gi)].map((match) => match[1])),
+  ].filter((name) => specifiedProjections.includes(name));
+  const servingViews = [
+    ...new Set([...sql.matchAll(/create\s+(?:or\s+replace\s+)?view\s+serving\.([a-z0-9_]+)/gi)].map((match) => match[1])),
+  ];
+  const adapters = implementedAdapterFamilies(args.ref);
+  const proofRoutes = liveProof?.default_entry_routes ?? null;
+  const proofSurfaces = liveProof?.named_surfaces_browser_proven ?? null;
+  const proofFindings = liveProof?.findings_demonstrable_on_real_surface ?? null;
+  const proofEval = liveProof?.ava_eval ?? null;
+  const browserEvent = browserSummary?.proof?.events?.find?.((event) => event.structured_event === "ecl_product_browser_smoke_summary") ?? null;
+  const evalEvent = evalSummary?.proof?.events?.find?.((event) => event.event === "ecl_ava_consultant_eval_compact_summary") ?? null;
+  const digest = args.digest || operatorImageDigest(browserSummary) || operatorImageDigest(evalSummary);
+  const runId = args.runId || liveProof?.run_id || process.env.GITHUB_RUN_ID || null;
+
+  const cutoverNumerator = browserEvent?.actual_route_repointing && proofRoutes?.accepted
+    ? proofRoutes.numerator
+    : 0;
+  const proofNumerator =
+    (proofSurfaces?.accepted ? proofSurfaces.numerator : 0) +
+    (proofFindings?.accepted ? proofFindings.numerator : 0) +
+    (proofEval?.accepted && proofEval?.ablation_accepted ? proofEval.answers_accepted : 0);
+  const proofDenominator =
+    (proofSurfaces?.denominator ?? 40) +
+    (proofFindings?.denominator ?? 10) +
+    (proofEval?.answers_evaluated ?? 13);
+  const legacyDenominator =
+    retirementSummary.create_table_statements - (retirementSummary.status_counts?.HOLD_PLATFORM_CONTROL ?? 0);
+  assert.equal(legacyDenominator, 851, "legacy data-plane denominator is fixed at 851 by the retirement map");
+  const legacyRetired = countRetiredLegacyAssets(retirementMap);
+
+  const lanes = [
+    {
+      lane: "L-CUTOVER",
+      slice: "default_entry_routes",
+      status: cutoverNumerator === 4 ? "complete" : "pending",
+      numerator: cutoverNumerator,
+      denominator: 4,
+      run_id: runId,
+      digest,
+      timestamp: args.timestamp,
+    },
+    {
+      lane: "L-PROOF",
+      slice: "surfaces_findings_eval_default_route_proof",
+      status: proofNumerator === proofDenominator ? "complete" : "pending",
+      numerator: proofNumerator,
+      denominator: proofDenominator,
+      run_id: runId,
+      digest,
+      timestamp: args.timestamp,
+    },
+    {
+      lane: "L-CLEANUP",
+      slice: "legacy_data_plane_retirement",
+      status: legacyRetired === 851 ? "complete" : "pending",
+      numerator: legacyRetired,
+      denominator: 851,
+      run_id: null,
+      digest: null,
+      timestamp: args.timestamp,
+    },
+    {
+      lane: "L-CLIENT",
+      slice: "workbook_intake_adapters",
+      status: adapters.length === 14 ? "complete" : "pending",
+      numerator: adapters.length,
+      denominator: 14,
+      run_id: null,
+      digest: null,
+      timestamp: args.timestamp,
+    },
+  ];
+
+  return {
+    schema_version: "ecl_four_lane_completion_status/v1",
+    generated_at: args.timestamp,
+    repo_ref: args.ref,
+    policy: {
+      aggregate_percentage_retired: true,
+      lane_percentages_reported_separately: true,
+      source_of_truth: "Committed artifact generated from named-ref repo facts plus explicit proof artifacts.",
+    },
+    lanes,
+    live_product_proof: {
+      run_id: runId,
+      digest,
+      base_url: liveProof?.base_url ?? null,
+      tenant_key: liveProof?.tenant_key ?? null,
+      proof_execution: liveProof?.proof_execution ?? null,
+      actual_route_repointing: Boolean(browserEvent?.actual_route_repointing),
+      routes_accepted: proofRoutes
+        ? {
+            numerator: proofRoutes.numerator,
+            denominator: proofRoutes.denominator,
+            accepted: proofRoutes.accepted,
+          }
+        : null,
+      surfaces_proven: proofSurfaces
+        ? {
+            numerator: proofSurfaces.numerator,
+            denominator: proofSurfaces.denominator,
+            accepted: proofSurfaces.accepted,
+            product_counts: proofSurfaces.product_counts,
+          }
+        : null,
+      findings_demonstrable: proofFindings
+        ? {
+            numerator: proofFindings.numerator,
+            denominator: proofFindings.denominator,
+            accepted: proofFindings.accepted,
+          }
+        : null,
+      eval_baseline_accepted: proofEval?.answers_accepted ?? null,
+      eval_baseline_denominator: proofEval?.answers_evaluated ?? null,
+      eval_ablation_accepted: proofEval?.ablation_answers_accepted ?? null,
+      eval_ablation_denominator: proofEval?.ablation_answers_evaluated ?? null,
+      alias_count: 77,
+      alias_policy_status: evalEvent?.summary?.alias_policy?.status ?? "frozen",
+    },
+    repo_denominators: {
+      product_projections: {
+        numerator: builtProjections.length,
+        denominator: specifiedProjections.length,
+        built: builtProjections.sort(),
+        specified: specifiedProjections,
+      },
+      serving_views: {
+        numerator: servingViews.length,
+        denominator: 40,
+        product_counts: productCounts,
+      },
+      findings_declared: {
+        numerator: findings.length,
+        denominator: 10,
+        finding_ids: findings.map((finding) => finding.id).sort(),
+      },
+      legacy_cleanup: {
+        numerator: legacyRetired,
+        denominator: 851,
+        control_plane_hold_assets: retirementSummary.status_counts?.HOLD_PLATFORM_CONTROL ?? 0,
+        map_scope: retirementSummary.scope,
+      },
+      client_intake_adapters: {
+        numerator: adapters.length,
+        denominator: 14,
+        families: INTAKE_FAMILIES.map((family) => ({
+          family,
+          status: adapters.find((adapter) => adapter.family === family)?.status ?? "not_built",
+          adapter: adapters.find((adapter) => adapter.family === family)?.adapter ?? null,
+        })),
+      },
+    },
+    open_items: [
+      ...(surfaces.length === 40 ? [] : [`surface_enumeration_${surfaces.length}_expected_40`]),
+      ...(legacyRetired === 851 ? [] : ["legacy_data_plane_retirement_pending"]),
+      ...(adapters.length === 14 ? [] : ["client_intake_adapters_pending"]),
+    ],
+  };
+}
+
+const args = parseArgs(process.argv.slice(2));
+const status = buildStatus(args);
+fs.mkdirSync(path.dirname(args.out), { recursive: true });
+fs.writeFileSync(args.out, `${JSON.stringify(status, null, 2)}\n`, "utf8");
+
+if (args.json) {
+  console.log(JSON.stringify(status, null, 2));
+} else {
+  console.log(
+    JSON.stringify(
+      {
+        accepted: true,
+        out: args.out,
+        lanes: status.lanes.map(({ lane, status, numerator, denominator }) => ({
+          lane,
+          status,
+          numerator,
+          denominator,
+        })),
+      },
+      null,
+      2,
+    ),
+  );
+}
