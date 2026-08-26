@@ -1,0 +1,84 @@
+{
+  "schema_version": "ecl_retired_code_reference_manifest/v1",
+  "purpose": "Classify code references to retired pre-ECL data-plane objects that remain only in historical operator, QA, or proof scripts. Active product/runtime references still block data-plane retirement.",
+  "entries": [
+    {
+      "file": "scripts/qa/skyharbor-phase-a-candidate-readback.mjs",
+      "retired_schemas": ["source_registry"],
+      "disposition": "historical_qa_script",
+      "replacement": "ECL source/readback proof uses ecl_source.source_file and ecl_source.source_record."
+    },
+    {
+      "file": "scripts/qa/airline-e2e-live-reconciliation-readback.mjs",
+      "retired_schemas": ["source_registry"],
+      "disposition": "historical_qa_script",
+      "replacement": "ECL all-layer readback compares ecl_source, ecl_context, ecl_commercial, ecl_review, ecl_projection, cube, and serving outputs."
+    },
+    {
+      "file": "scripts/knowledge/build-review-decision-ledger.mjs",
+      "retired_schemas": ["source_registry"],
+      "disposition": "pre_ecl_operator_script",
+      "replacement": "ECL review provenance is represented by ecl_review.review_event and source refs through ecl_source."
+    },
+    {
+      "file": "scripts/knowledge/processing/executor-framework.mjs",
+      "retired_schemas": ["source_registry"],
+      "disposition": "pre_ecl_operator_framework",
+      "replacement": "ECL clean-break source provenance is ecl_source.source_file/source_record."
+    },
+    {
+      "file": "scripts/knowledge/processing/process-handlers.mjs",
+      "retired_schemas": ["source_registry"],
+      "disposition": "pre_ecl_operator_framework",
+      "replacement": "ECL clean-break source provenance is ecl_source.source_file/source_record."
+    },
+    {
+      "file": "scripts/foundation-v2/__tests__/run-golden-slice-db-executor-tests.mjs",
+      "retired_schemas": ["source_registry"],
+      "disposition": "historical_foundation_v2_test",
+      "replacement": "ECL schema and readback tests cover source-file provenance in the new substrate."
+    },
+    {
+      "file": "scripts/knowledge/backfill-exploration-evidence.mjs",
+      "retired_schemas": ["source_registry"],
+      "disposition": "pre_ecl_operator_script",
+      "replacement": "ECL evidence references are ecl_source.document, ecl_source.document_extraction, and FK-backed projection refs."
+    },
+    {
+      "file": "scripts/knowledge/build-foundation-v3-day-one-breach-report.mjs",
+      "retired_schemas": ["source_registry"],
+      "disposition": "historical_report_script",
+      "replacement": "ECL source coverage and findings proofs use the clean-break status/readback reports."
+    },
+    {
+      "file": "scripts/knowledge/land-airline-source-corpus.mjs",
+      "retired_schemas": ["source_registry"],
+      "disposition": "pre_ecl_operator_script",
+      "replacement": "ECL source landing uses ecl_source.source_file/source_record."
+    },
+    {
+      "file": "scripts/knowledge/verify-tenant-knowledge-schema.mjs",
+      "retired_schemas": ["source_registry"],
+      "disposition": "pre_ecl_schema_verifier",
+      "replacement": "ECL schema reconciliation and readback gates verify the new substrate."
+    },
+    {
+      "file": "scripts/foundation-v2/execute-golden-slice-db.mjs",
+      "retired_schemas": ["source_registry"],
+      "disposition": "historical_foundation_v2_operator",
+      "replacement": "ECL ACA data-build jobs own current source/context/projection execution."
+    },
+    {
+      "file": "scripts/foundation-v2/verify-golden-slice-db.mjs",
+      "retired_schemas": ["source_registry"],
+      "disposition": "historical_foundation_v2_verifier",
+      "replacement": "ECL separate readback job owns current verification."
+    },
+    {
+      "file": "scripts/qa/skyharbor-day-one-breach-readback.mjs",
+      "retired_schemas": ["source_registry"],
+      "disposition": "historical_qa_script",
+      "replacement": "ECL browser/findings/readback proof supersedes this pre-ECL source registry check."
+    }
+  ]
+}
