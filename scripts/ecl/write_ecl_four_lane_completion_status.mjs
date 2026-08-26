@@ -238,6 +238,17 @@ function implementedAdapterFamilies(ref) {
       status: "proven_local",
     });
   }
+  if (
+    files.has("scripts/ecl/load_client_intake_infrastructure_layer.py") &&
+    files.has("scripts/ecl/__tests__/run-ecl-client-intake-infrastructure-adapter-tests.mjs")
+  ) {
+    families.push({
+      family: "SP05 Infrastructure",
+      adapter: "scripts/ecl/load_client_intake_infrastructure_layer.py",
+      test: "scripts/ecl/__tests__/run-ecl-client-intake-infrastructure-adapter-tests.mjs",
+      status: "proven_local",
+    });
+  }
   return families;
 }
 

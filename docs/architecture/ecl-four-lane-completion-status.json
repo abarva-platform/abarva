@@ -42,7 +42,7 @@
       "lane": "L-CLIENT",
       "slice": "workbook_intake_adapters",
       "status": "pending",
-      "numerator": 3,
+      "numerator": 4,
       "denominator": 14,
       "run_id": null,
       "digest": null,
@@ -162,7 +162,7 @@
       "map_scope": "static repo-visible SQL CREATE TABLE inventory"
     },
     "client_intake_adapters": {
-      "numerator": 3,
+      "numerator": 4,
       "denominator": 14,
       "families": [
         {
@@ -187,8 +187,8 @@
         },
         {
           "family": "SP05 Infrastructure",
-          "status": "not_built",
-          "adapter": null
+          "status": "proven_local",
+          "adapter": "scripts/ecl/load_client_intake_infrastructure_layer.py"
         },
         {
           "family": "SP06 Finance/ERP",
