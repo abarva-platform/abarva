@@ -1,6 +1,6 @@
 {
   "schema_version": "ecl_four_lane_completion_status/v1",
-  "generated_at": "2026-08-26T20:55:00.000Z",
+  "generated_at": "2026-08-26T21:25:00.000Z",
   "repo_ref": "HEAD",
   "policy": {
     "aggregate_percentage_retired": true,
@@ -16,7 +16,7 @@
       "denominator": 4,
       "run_id": "32995332853",
       "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
-      "timestamp": "2026-08-26T20:55:00.000Z"
+      "timestamp": "2026-08-26T21:25:00.000Z"
     },
     {
       "lane": "L-PROOF",
@@ -26,7 +26,7 @@
       "denominator": 63,
       "run_id": "32995332853",
       "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
-      "timestamp": "2026-08-26T20:55:00.000Z"
+      "timestamp": "2026-08-26T21:25:00.000Z"
     },
     {
       "lane": "L-CLEANUP",
@@ -36,17 +36,17 @@
       "denominator": 851,
       "run_id": null,
       "digest": null,
-      "timestamp": "2026-08-26T20:55:00.000Z"
+      "timestamp": "2026-08-26T21:25:00.000Z"
     },
     {
       "lane": "L-CLIENT",
       "slice": "workbook_intake_adapters",
       "status": "pending",
-      "numerator": 11,
+      "numerator": 12,
       "denominator": 14,
       "run_id": null,
       "digest": null,
-      "timestamp": "2026-08-26T20:55:00.000Z"
+      "timestamp": "2026-08-26T21:25:00.000Z"
     }
   ],
   "live_product_proof": {
@@ -162,7 +162,7 @@
       "map_scope": "static repo-visible SQL CREATE TABLE inventory"
     },
     "client_intake_adapters": {
-      "numerator": 11,
+      "numerator": 12,
       "denominator": 14,
       "families": [
         {
@@ -172,8 +172,8 @@
         },
         {
           "family": "SP02 HRIS",
-          "status": "not_built",
-          "adapter": null
+          "status": "proven_local",
+          "adapter": "scripts/ecl/load_client_intake_hris_layer.py"
         },
         {
           "family": "SP03 CMDB",
