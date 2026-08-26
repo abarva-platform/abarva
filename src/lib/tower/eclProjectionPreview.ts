@@ -115,10 +115,12 @@ export async function readTowerEclProjectionPreview(
   );
   const rows = servingRows.map((row) => row.payload_json);
 
+  // No projected rows for this tenant/assessment is a legitimate state, not a fault: the ECL
+  // projection may simply not have been built for this tenant yet. Return null so the optional
+  // preview panel hides itself and the base Command Center still renders. Throwing here took the
+  // whole /tower route down for every tenant without a dense-source projection.
   if (rows.length === 0) {
-    throw new Error(
-      `Tower ECL preview: no serving.tower_command_center rows for ${tenantKey}/${DENSE_ASSESSMENT_ID}.`,
-    );
+    return null;
   }
 
   const pageCounts = countBy(rows, (row) => row.page_key).map(
