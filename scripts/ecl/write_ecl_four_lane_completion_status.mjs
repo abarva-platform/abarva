@@ -206,6 +206,17 @@ function implementedAdapterFamilies(ref) {
   const files = new Set(gitLsTree(ref, ["scripts/ecl"]));
   const families = [];
   if (
+    files.has("scripts/ecl/load_client_intake_documents_interviews_layer.py") &&
+    files.has("scripts/ecl/__tests__/run-ecl-client-intake-documents-interviews-adapter-tests.mjs")
+  ) {
+    families.push({
+      family: "SP01 Documents/Interviews",
+      adapter: "scripts/ecl/load_client_intake_documents_interviews_layer.py",
+      test: "scripts/ecl/__tests__/run-ecl-client-intake-documents-interviews-adapter-tests.mjs",
+      status: "proven_local",
+    });
+  }
+  if (
     files.has("scripts/ecl/load_client_intake_applications_layer.py") &&
     files.has("scripts/ecl/__tests__/run-ecl-client-intake-application-adapter-tests.mjs")
   ) {

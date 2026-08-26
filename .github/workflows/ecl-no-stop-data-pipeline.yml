@@ -106,6 +106,7 @@ jobs:
             scripts/ecl/validate_source_excel_raw_landing.py \
             scripts/ecl/generate_dense_source_room_extracts.py \
             scripts/ecl/validate_dense_source_room_extracts.py \
+            scripts/ecl/load_client_intake_documents_interviews_layer.py \
             scripts/ecl/load_client_intake_applications_layer.py \
             scripts/ecl/load_client_intake_hris_layer.py \
             scripts/ecl/load_client_intake_data_bi_etl_layer.py \
@@ -154,6 +155,10 @@ jobs:
       - name: Prove demo findings source contract
         run: |
           npm run test:ecl-demo-findings-source-contract
+
+      - name: Prove client intake documents/interviews adapter
+        run: |
+          npm run test:ecl-client-intake-documents-interviews-adapter
 
       - name: Prove client intake application adapter
         run: |
