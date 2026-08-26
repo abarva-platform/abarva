@@ -109,6 +109,7 @@ jobs:
             scripts/ecl/load_client_intake_applications_layer.py \
             scripts/ecl/load_client_intake_data_bi_etl_layer.py \
             scripts/ecl/load_client_intake_finance_erp_layer.py \
+            scripts/ecl/load_client_intake_grc_layer.py \
             scripts/ecl/load_client_intake_infrastructure_layer.py \
             scripts/ecl/load_client_intake_ppm_layer.py \
             scripts/ecl/write_dense_source_room_ecl_producer_coverage.py \
@@ -159,6 +160,10 @@ jobs:
       - name: Prove client intake finance-ERP adapter
         run: |
           npm run test:ecl-client-intake-finance-erp-adapter
+
+      - name: Prove client intake GRC adapter
+        run: |
+          npm run test:ecl-client-intake-grc-adapter
 
       - name: Prove client intake infrastructure adapter
         run: |
