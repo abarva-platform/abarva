@@ -1,7 +1,7 @@
 {
   "schema_version": "ecl_four_lane_completion_status/v1",
-  "generated_at": "2026-08-26T17:48:19.000Z",
-  "repo_ref": "origin/main",
+  "generated_at": "2026-08-26T18:43:33.250Z",
+  "repo_ref": "HEAD",
   "policy": {
     "aggregate_percentage_retired": true,
     "lane_percentages_reported_separately": true,
@@ -16,7 +16,7 @@
       "denominator": 4,
       "run_id": "32995332853",
       "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
-      "timestamp": "2026-08-26T17:48:19.000Z"
+      "timestamp": "2026-08-26T18:43:33.250Z"
     },
     {
       "lane": "L-PROOF",
@@ -26,17 +26,17 @@
       "denominator": 63,
       "run_id": "32995332853",
       "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
-      "timestamp": "2026-08-26T17:48:19.000Z"
+      "timestamp": "2026-08-26T18:43:33.250Z"
     },
     {
       "lane": "L-CLEANUP",
       "slice": "legacy_data_plane_retirement",
       "status": "pending",
-      "numerator": 0,
+      "numerator": 25,
       "denominator": 851,
       "run_id": null,
       "digest": null,
-      "timestamp": "2026-08-26T17:48:19.000Z"
+      "timestamp": "2026-08-26T18:43:33.250Z"
     },
     {
       "lane": "L-CLIENT",
@@ -46,7 +46,7 @@
       "denominator": 14,
       "run_id": null,
       "digest": null,
-      "timestamp": "2026-08-26T17:48:19.000Z"
+      "timestamp": "2026-08-26T18:43:33.250Z"
     }
   ],
   "live_product_proof": {
@@ -156,7 +156,7 @@
       ]
     },
     "legacy_cleanup": {
-      "numerator": 0,
+      "numerator": 25,
       "denominator": 851,
       "control_plane_hold_assets": 46,
       "map_scope": "static repo-visible SQL CREATE TABLE inventory"
@@ -234,6 +234,83 @@
           "family": "SP14 Deployments/Hosting",
           "status": "not_built",
           "adapter": null
+        }
+      ]
+    },
+    "client_intake_source_family_landing": {
+      "numerator": 14,
+      "denominator": 14,
+      "scope": "ecl_source.source_file/source_record landing only; does not count as canonical adapter completion",
+      "families": [
+        {
+          "family": "SP01_Documents_Interviews",
+          "status": "proven_source_landing_only",
+          "adapter": "scripts/ecl/load_client_intake_source_family_layer.py"
+        },
+        {
+          "family": "SP02_HRIS",
+          "status": "proven_source_landing_only",
+          "adapter": "scripts/ecl/load_client_intake_source_family_layer.py"
+        },
+        {
+          "family": "SP03_CMDB",
+          "status": "proven_source_landing_only",
+          "adapter": "scripts/ecl/load_client_intake_source_family_layer.py"
+        },
+        {
+          "family": "SP04_Data_BI_ETL",
+          "status": "proven_source_landing_only",
+          "adapter": "scripts/ecl/load_client_intake_source_family_layer.py"
+        },
+        {
+          "family": "SP05_Infrastructure",
+          "status": "proven_source_landing_only",
+          "adapter": "scripts/ecl/load_client_intake_source_family_layer.py"
+        },
+        {
+          "family": "SP06_Finance_ERP",
+          "status": "proven_source_landing_only",
+          "adapter": "scripts/ecl/load_client_intake_source_family_layer.py"
+        },
+        {
+          "family": "SP07_PPM",
+          "status": "proven_source_landing_only",
+          "adapter": "scripts/ecl/load_client_intake_source_family_layer.py"
+        },
+        {
+          "family": "SP08_Vendor_Contract",
+          "status": "proven_source_landing_only",
+          "adapter": "scripts/ecl/load_client_intake_source_family_layer.py"
+        },
+        {
+          "family": "SP09_GRC",
+          "status": "proven_source_landing_only",
+          "adapter": "scripts/ecl/load_client_intake_source_family_layer.py"
+        },
+        {
+          "family": "SP10_KPI_Operations",
+          "status": "proven_source_landing_only",
+          "adapter": "scripts/ecl/load_client_intake_source_family_layer.py"
+        },
+        {
+          "family": "SP11_AI_Usage_Models",
+          "status": "proven_source_landing_only",
+          "adapter": "scripts/ecl/load_client_intake_source_family_layer.py"
+        },
+        {
+          "family": "SP12_Evidence_Room",
+          "status": "proven_source_landing_only",
+          "adapter": "scripts/ecl/load_client_intake_source_family_layer.py"
+        },
+        {
+          "family": "SP13_Data_Flows_Integrations",
+          "status": "proven_source_landing_only",
+          "adapter": "scripts/ecl/load_client_intake_source_family_layer.py"
+        },
+        {
+          "family": "SP14_Deployments_Hosting",
+          "status": "proven_source_landing_only",
+          "adapter": "scripts/ecl/load_client_intake_source_family_layer.py"
         }
       ]
     }

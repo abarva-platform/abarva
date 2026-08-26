@@ -58,7 +58,7 @@ Current committed status, measured from the post-cutover proof artifact:
 |---|---|---:|---|
 | `L-CUTOVER` | Home, Source, Tower and Intelligence default entry routes serve ECL | **4/4** | complete |
 | `L-PROOF` | 40 named surfaces, F1-F10 and aVa baseline/ablation proof | **63/63** | complete |
-| `L-CLEANUP` | Legacy data-plane assets classified and retired or retained | **0/851** | pending |
+| `L-CLEANUP` | Legacy data-plane assets classified and retired or retained | **25/851** | pending |
 | `L-CLIENT` | Real workbook/source-family adapters proven end to end | **1/14** | pending |
 
 The product proof denominator is intentionally not the same as route count:
@@ -74,6 +74,16 @@ The product proof denominator is intentionally not the same as route count:
 The serving denominator remains **40 surfaces** for this clean-break plan: Home 16, Tower 9, Source
 9, Intelligence 6. Any broader surface mapping must amend this table and provide
 `serving.serving_contract` owner/date rows before it changes the denominator.
+
+Client-intake progress is split on purpose:
+
+| Client-Readiness Metric | Current | Denominator | Meaning |
+|---|---:|---:|---|
+| Source-family landing into `ecl_source` | 14 | 14 | All workbook/source-room families can land as governed `source_file` and `source_record` rows. |
+| Canonical/context adapters | 1 | 14 | One family has a proven adapter into canonical ECL objects/measures/relationships. |
+
+Source-family landing does not count as canonical adapter completion. It proves intake can be
+received and hashed without forcing partially mapped rows into product semantics.
 
 ---
 
@@ -121,8 +131,8 @@ Layer 1 accepts partial data. Completeness is not required. Truthfulness is requ
 
 | Table | Purpose | Populated by |
 |---|---|---|
-| `ecl_source.source_file` | One row per intake/source-room file with origin and hash | Dense source-room generator now; real workbook landing adapters next |
-| `ecl_source.source_record` | One row per raw source row with basis, value state, and source hash | Source-room/source-file adapter |
+| `ecl_source.source_file` | One row per intake/source-room file with origin and hash | Dense source-room generator now; all-family client-shaped landing adapter |
+| `ecl_source.source_record` | One row per raw source row with basis, value state, and source hash | Source-room/source-file adapter and all-family client-shaped landing adapter |
 | `ecl_source.document` | Evidence and contract documents | Document/evidence source-room adapter |
 | `ecl_source.document_extraction` | Page/span facts extracted from documents | Document extraction adapter |
 

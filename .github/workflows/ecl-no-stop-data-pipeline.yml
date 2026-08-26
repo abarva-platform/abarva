@@ -134,6 +134,12 @@ jobs:
         run: |
           npm run test:ecl-four-lane-status
 
+      - name: Prove legacy retirement status contract
+        env:
+          ECL_RECONCILE_REF: ${{ github.sha }}
+        run: |
+          npm run test:ecl-legacy-retirement-status
+
       - name: Prove demo findings source contract
         run: |
           npm run test:ecl-demo-findings-source-contract
@@ -141,6 +147,10 @@ jobs:
       - name: Prove client intake application adapter
         run: |
           npm run test:ecl-client-intake-application-adapter
+
+      - name: Prove client intake source-family landing adapter
+        run: |
+          npm run test:ecl-client-intake-source-family-adapter
 
       - name: Prove ECL source file origin upgrade
         run: |

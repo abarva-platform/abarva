@@ -165,7 +165,7 @@ try {
     {
       cutover: "4/4",
       proof: "63/63",
-      cleanup: "0/851",
+      cleanup: "25/851",
       client: "1/14",
     },
   );
@@ -178,6 +178,12 @@ try {
   assert.equal(status.live_product_proof.alias_count, 77);
   assert.equal(status.repo_denominators.serving_views.denominator, 40);
   assert.equal(status.repo_denominators.client_intake_adapters.denominator, 14);
+  assert.equal(status.repo_denominators.client_intake_source_family_landing.numerator, 14);
+  assert.equal(status.repo_denominators.client_intake_source_family_landing.denominator, 14);
+  assert.equal(
+    status.repo_denominators.client_intake_source_family_landing.scope,
+    "ecl_source.source_file/source_record landing only; does not count as canonical adapter completion",
+  );
 
   console.log(JSON.stringify({ accepted: true, out }, null, 2));
 } finally {

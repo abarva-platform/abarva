@@ -39,13 +39,13 @@
   },
   "scope": "static repo-visible SQL CREATE TABLE inventory",
   "status_counts": {
-    "ARCHIVE_ONLY": 25,
     "HOLD_PLATFORM_CONTROL": 46,
     "HOLD_UNTIL_ECL_CONTEXT_PARITY": 153,
     "HOLD_UNTIL_LIVE_READBACK": 394,
     "NEW_ECL_TARGET": 28,
     "REPLACE_OR_BRIDGE": 1,
     "REPLACE_WITH_ECL_PROJECTION": 215,
+    "RETIRED_ARCHIVE_ONLY": 25,
     "REVIEW_FOR_MOVES_OR_CONTEXT_BRIDGE": 35
   },
   "unique_table_names": 736
