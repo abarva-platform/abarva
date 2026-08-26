@@ -260,6 +260,17 @@ function implementedAdapterFamilies(ref) {
       status: "proven_local",
     });
   }
+  if (
+    files.has("scripts/ecl/load_client_intake_ppm_layer.py") &&
+    files.has("scripts/ecl/__tests__/run-ecl-client-intake-ppm-adapter-tests.mjs")
+  ) {
+    families.push({
+      family: "SP07 PPM",
+      adapter: "scripts/ecl/load_client_intake_ppm_layer.py",
+      test: "scripts/ecl/__tests__/run-ecl-client-intake-ppm-adapter-tests.mjs",
+      status: "proven_local",
+    });
+  }
   return families;
 }
 
