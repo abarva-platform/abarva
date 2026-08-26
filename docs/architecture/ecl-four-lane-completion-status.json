@@ -1,0 +1,245 @@
+{
+  "schema_version": "ecl_four_lane_completion_status/v1",
+  "generated_at": "2026-08-26T17:48:19.000Z",
+  "repo_ref": "origin/main",
+  "policy": {
+    "aggregate_percentage_retired": true,
+    "lane_percentages_reported_separately": true,
+    "source_of_truth": "Committed artifact generated from named-ref repo facts plus explicit proof artifacts."
+  },
+  "lanes": [
+    {
+      "lane": "L-CUTOVER",
+      "slice": "default_entry_routes",
+      "status": "complete",
+      "numerator": 4,
+      "denominator": 4,
+      "run_id": "32995332853",
+      "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
+      "timestamp": "2026-08-26T17:48:19.000Z"
+    },
+    {
+      "lane": "L-PROOF",
+      "slice": "surfaces_findings_eval_default_route_proof",
+      "status": "complete",
+      "numerator": 63,
+      "denominator": 63,
+      "run_id": "32995332853",
+      "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
+      "timestamp": "2026-08-26T17:48:19.000Z"
+    },
+    {
+      "lane": "L-CLEANUP",
+      "slice": "legacy_data_plane_retirement",
+      "status": "pending",
+      "numerator": 0,
+      "denominator": 851,
+      "run_id": null,
+      "digest": null,
+      "timestamp": "2026-08-26T17:48:19.000Z"
+    },
+    {
+      "lane": "L-CLIENT",
+      "slice": "workbook_intake_adapters",
+      "status": "pending",
+      "numerator": 1,
+      "denominator": 14,
+      "run_id": null,
+      "digest": null,
+      "timestamp": "2026-08-26T17:48:19.000Z"
+    }
+  ],
+  "live_product_proof": {
+    "run_id": "32995332853",
+    "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
+    "base_url": "https://app.abarva.ai",
+    "tenant_key": "meridian-health",
+    "proof_execution": "aca_private_operator",
+    "actual_route_repointing": true,
+    "routes_accepted": {
+      "numerator": 4,
+      "denominator": 4,
+      "accepted": true
+    },
+    "surfaces_proven": {
+      "numerator": 40,
+      "denominator": 40,
+      "accepted": true,
+      "product_counts": {
+        "Home": {
+          "numerator": 16,
+          "denominator": 16
+        },
+        "Source": {
+          "numerator": 9,
+          "denominator": 9
+        },
+        "Tower": {
+          "numerator": 9,
+          "denominator": 9
+        },
+        "Intelligence": {
+          "numerator": 6,
+          "denominator": 6
+        }
+      }
+    },
+    "findings_demonstrable": {
+      "numerator": 10,
+      "denominator": 10,
+      "accepted": true
+    },
+    "eval_baseline_accepted": 13,
+    "eval_baseline_denominator": 13,
+    "eval_ablation_accepted": 0,
+    "eval_ablation_denominator": 13,
+    "alias_count": 77,
+    "alias_policy_status": "frozen"
+  },
+  "repo_denominators": {
+    "product_projections": {
+      "numerator": 12,
+      "denominator": 12,
+      "built": [
+        "home_enterprise_landscape",
+        "intelligence_context_pack",
+        "intelligence_pattern_evidence",
+        "intelligence_question_context",
+        "source_contract_360",
+        "source_event_workspace",
+        "source_value_levers",
+        "source_vendor_360",
+        "tower_ai_portfolio",
+        "tower_command_center",
+        "tower_evidence_queue",
+        "tower_value_chain"
+      ],
+      "specified": [
+        "home_enterprise_landscape",
+        "intelligence_context_pack",
+        "intelligence_pattern_evidence",
+        "intelligence_question_context",
+        "source_contract_360",
+        "source_event_workspace",
+        "source_value_levers",
+        "source_vendor_360",
+        "tower_ai_portfolio",
+        "tower_command_center",
+        "tower_evidence_queue",
+        "tower_value_chain"
+      ]
+    },
+    "serving_views": {
+      "numerator": 40,
+      "denominator": 40,
+      "product_counts": {
+        "Home": 16,
+        "Source": 9,
+        "Tower": 9,
+        "Intelligence": 6
+      }
+    },
+    "findings_declared": {
+      "numerator": 10,
+      "denominator": 10,
+      "finding_ids": [
+        "F1",
+        "F10",
+        "F2",
+        "F3",
+        "F4",
+        "F5",
+        "F6",
+        "F7",
+        "F8",
+        "F9"
+      ]
+    },
+    "legacy_cleanup": {
+      "numerator": 0,
+      "denominator": 851,
+      "control_plane_hold_assets": 46,
+      "map_scope": "static repo-visible SQL CREATE TABLE inventory"
+    },
+    "client_intake_adapters": {
+      "numerator": 1,
+      "denominator": 14,
+      "families": [
+        {
+          "family": "SP01 Documents/Interviews",
+          "status": "not_built",
+          "adapter": null
+        },
+        {
+          "family": "SP02 HRIS",
+          "status": "not_built",
+          "adapter": null
+        },
+        {
+          "family": "SP03 CMDB",
+          "status": "proven_local",
+          "adapter": "scripts/ecl/load_client_intake_applications_layer.py"
+        },
+        {
+          "family": "SP04 Data/BI/ETL",
+          "status": "not_built",
+          "adapter": null
+        },
+        {
+          "family": "SP05 Infrastructure",
+          "status": "not_built",
+          "adapter": null
+        },
+        {
+          "family": "SP06 Finance/ERP",
+          "status": "not_built",
+          "adapter": null
+        },
+        {
+          "family": "SP07 PPM",
+          "status": "not_built",
+          "adapter": null
+        },
+        {
+          "family": "SP08 Vendor/Contract",
+          "status": "not_built",
+          "adapter": null
+        },
+        {
+          "family": "SP09 GRC",
+          "status": "not_built",
+          "adapter": null
+        },
+        {
+          "family": "SP10 KPI/Operations",
+          "status": "not_built",
+          "adapter": null
+        },
+        {
+          "family": "SP11 AI Usage/Models",
+          "status": "not_built",
+          "adapter": null
+        },
+        {
+          "family": "SP12 Evidence Room",
+          "status": "not_built",
+          "adapter": null
+        },
+        {
+          "family": "SP13 Data Flows",
+          "status": "not_built",
+          "adapter": null
+        },
+        {
+          "family": "SP14 Deployments/Hosting",
+          "status": "not_built",
+          "adapter": null
+        }
+      ]
+    }
+  },
+  "open_items": [
+    "legacy_data_plane_retirement_pending",
+    "client_intake_adapters_pending"
+  ]
+}

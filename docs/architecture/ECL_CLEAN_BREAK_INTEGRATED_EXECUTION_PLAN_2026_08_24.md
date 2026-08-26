@@ -22,40 +22,58 @@ The decision is simple:
 
 ---
 
-## 1. Current Percent Complete
+## 1. Four-Lane Completion Status
 
-Percentages are denominator-based, not sentiment-based. A stage is not complete until its proof gate
-is green.
+Do not report a single aggregate percentage for ECL completion. The program has four different
+finish lines, and blending them is what made completion unclear.
 
-| Workstream | Current | Denominator | Evidence state |
-|---|---:|---|---|
-| W1 Azure dense all-layer load/readback | **85%** | ACA execute + separate readback + formal compare | Execute and separate readback succeeded on digest-pinned image; formal compare is pending current local contract regeneration. |
-| W2 Product projections | **100% local** | 12 projection backings | All five W2 projection backings now have DDL, loader rows, FK-backed refs, local readback, and zero-drift checks. Azure reload/readback still belongs to W1. |
-| W3 Serving schema and views | **100% local** | 40 views + serving contract | Serving DDL now creates `serving.serving_contract` and 40 first-class serving views. Azure reload/readback still belongs to W1; product route proof belongs to W4/W5. |
-| W4 Product route repoint and permission fence | **50% local** | Home, Source, Tower, Intelligence routes + guard | Non-default ECL preview providers are being moved to `serving.*`; local route-fence and focused adapter tests are green. Default-provider cutover and browser proof remain W5 gates. |
-| W5 Refusal and browser proof | **0%** | 4 product modules + gated views | No complete clean-break browser proof yet. |
-| W6 Legacy data-plane retirement | **0%** | 851 pre-ECL data-plane tables | Inventory known; no retirement run. |
-| W7 Real Layer 2 adapter path | **30%** | first real intake adapter + gap report + clean-break policy | First application adapter exists; it is not yet the primary clean-break load path. |
-| W8 AI initiative spine | **0% queued** | 6 build steps + 2 serving surfaces | Backlog accepted. It must be implemented as a separate ECL lane after the current live-eval proof, without adding a second object-type catalog or a parallel product data model. |
+The committed machine-readable status lives at
+[`ecl-four-lane-completion-status.json`](./ecl-four-lane-completion-status.json). Regenerate it with:
 
-**Overall clean-break completion:** **36%** for W1-W7. W8 is tracked as a queued extension and
-does not change the clean-break percent until the lane is activated.
+```bash
+npm run ecl:completion-status:write -- --ref <named-ref>
+```
 
-Additional product-readiness denominators:
+When a live product proof exists, pass its explicit artifacts:
 
-| Metric | Current | Denominator | Evidence state |
-|---|---:|---|---|
-| Surfaces served from ECL | **40 local** | 40 serving surfaces | W3 serving views are built in DDL and wired into the data-build DDL list. Azure serving readback and route/browser proof are not claimed. |
-| Product ECL preview providers reading serving views | **4 local** | 4 product modules | Home, Source, Tower, and Intelligence non-default ECL preview providers are locally wired to `serving.*`; default provider and browser proof are not claimed. |
-| Findings demonstrable on a real surface | **0** | 10 demo findings | Findings spec is committed; W2/W3 data and surface assertions are not green yet. |
-| AI initiative spine steps complete | **0** | 6 build steps | Accepted into backlog. Success requires DDL, adapter, relationship vocabulary, planted failures, serving views, and product proof. |
+```bash
+npm run ecl:completion-status:write -- \
+  --ref <named-ref> \
+  --live-proof-summary <compact-summary.json> \
+  --browser-operator-summary <browser-operator/summary.json> \
+  --eval-operator-summary <eval-operator/summary.json> \
+  --run-id <github-run-id> \
+  --digest <sha256-or-image>
+```
 
-The serving denominator is **40 surfaces** for this clean-break plan: Home 16, Tower 9, Source 9,
-Intelligence 6. The older/broader 44-surface mapping artifact is not the operative W3 denominator
-until this plan is amended with those additional four surfaces and their serving owners/dates.
+Required lane status shape:
 
-That number is intentionally conservative. Azure has rows, but the clean-break is not complete until
-serving views, product repointing, browser proof, and legacy retirement gates pass.
+```json
+{ "lane": "L-PROOF", "slice": "surfaces_findings_eval_default_route_proof", "status": "complete", "numerator": 63, "denominator": 63, "run_id": "32995332853", "digest": "sha256:...", "timestamp": "2026-08-26T17:48:19.000Z" }
+```
+
+Current committed status, measured from the post-cutover proof artifact:
+
+| Lane | What It Means | Current | Status |
+|---|---|---:|---|
+| `L-CUTOVER` | Home, Source, Tower and Intelligence default entry routes serve ECL | **4/4** | complete |
+| `L-PROOF` | 40 named surfaces, F1-F10 and aVa baseline/ablation proof | **63/63** | complete |
+| `L-CLEANUP` | Legacy data-plane assets classified and retired or retained | **0/851** | pending |
+| `L-CLIENT` | Real workbook/source-family adapters proven end to end | **1/14** | pending |
+
+The product proof denominator is intentionally not the same as route count:
+
+| Product-Proof Metric | Current | Denominator |
+|---|---:|---:|
+| Default entry routes accepted | 4 | 4 |
+| Named surfaces browser-proven | 40 | 40 |
+| Findings demonstrable on default routes | 10 | 10 |
+| aVa baseline accepted | 13 | 13 |
+| aVa ablation accepted | 0 | 13 |
+
+The serving denominator remains **40 surfaces** for this clean-break plan: Home 16, Tower 9, Source
+9, Intelligence 6. Any broader surface mapping must amend this table and provide
+`serving.serving_contract` owner/date rows before it changes the denominator.
 
 ---
 
