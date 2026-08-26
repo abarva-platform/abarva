@@ -22,7 +22,7 @@ import type {
   TowerMartProgramLane,
   TowerMartRequiredFieldGap,
   TowerMartValueTrajectoryPoint,
-} from "@/lib/cio-tower/tower-mart-view-model";
+} from "@/lib/tower/current-layer-view-model";
 
 import { deriveProgramValues } from "./derive";
 import { formatCount, formatPct, formatUsdM } from "./format";

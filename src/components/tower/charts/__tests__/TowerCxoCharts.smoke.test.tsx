@@ -15,7 +15,7 @@ import {
 import type {
   CioTowerPortfolioValueRow,
   CioTowerCxoBenchmarkRow,
-} from "@/lib/cio-tower/cxo-view-model";
+} from "@/lib/tower/cxo-view-model-contract";
 import type { TowerBudgetRollup } from "@/lib/tower/tower-budget-rollups";
 
 const portfolioRow: CioTowerPortfolioValueRow = {

@@ -7,8 +7,8 @@ import {
   type AtlasMessage,
 } from "@/components/atlas/AtlasChatPanel";
 import type { AttachmentRef } from "@/components/agent/AgentDock";
-import { buildTowerChatAvaAnswerPacket } from "@/lib/cio-tower/tower-chat-artifacts";
-import type { TowerChatVisibleAnswer } from "@/lib/cio-tower/tower-chat-artifacts";
+import { buildTowerChatAvaAnswerPacket } from "@/lib/tower/tower-chat-artifacts";
+import type { TowerChatVisibleAnswer } from "@/lib/tower/tower-chat-artifacts";
 import type { AtlasSuggestion } from "@/lib/atlas/types";
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
 

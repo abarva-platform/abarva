@@ -1,8 +1,8 @@
 import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
-import type { CioTowerVisibleContextCriteria } from "@/lib/cio-tower/answer";
-import { canonicalCioTowerTenantKey } from "@/lib/cio-tower/metric-packet";
-import { towerProgressEventsForQuestion } from "@/lib/cio-tower/visual-contract";
+import type { CioTowerVisibleContextCriteria } from "@/lib/tower/current-layer-answer-contract";
+import { canonicalCioTowerTenantKey } from "@/lib/tower/metric-packet";
+import { towerProgressEventsForQuestion } from "@/lib/tower/visual-contract";
 import { answerCurrentTowerQuestion } from "@/lib/tower/current-layer-answer";
 
 export const runtime = "nodejs";

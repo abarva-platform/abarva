@@ -6,8 +6,8 @@
 // the tables remain the source of full per-row detail and evidence links.
 //
 // Data contracts: CioTowerPortfolioValueRow / CioTowerCxoBenchmarkRow come
-// from src/lib/cio-tower/cxo-view-model.ts (loadCioTowerCxoView, deterministic
-// SQL over cio_tower.facts/measure_results). TowerBudgetRollup comes from
+// from src/lib/tower/cxo-view-model-contract.ts
+// (type-only chart contract; rows are supplied by governed Tower read models). TowerBudgetRollup comes from
 // src/lib/tower/tower-budget-rollups.ts (listTowerBudgetRollupsForClient,
 // same substrate, grouped by entity). No chart here computes a number —
 // every value is read directly off these already-computed rows.
@@ -40,7 +40,7 @@ import {
 import type {
   CioTowerCxoBenchmarkRow,
   CioTowerPortfolioValueRow,
-} from "@/lib/cio-tower/cxo-view-model";
+} from "@/lib/tower/cxo-view-model-contract";
 import type { TowerBudgetRollup } from "@/lib/tower/tower-budget-rollups";
 
 // Local copy of the locked AbarVa/Tower design tokens, duplicated here rather
