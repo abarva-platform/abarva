@@ -1,6 +1,6 @@
 {
   "schema_version": "ecl_four_lane_completion_status/v1",
-  "generated_at": "2026-08-26T21:58:00.000Z",
+  "generated_at": "2026-08-26T22:48:00.000Z",
   "repo_ref": "HEAD",
   "policy": {
     "aggregate_percentage_retired": true,
@@ -16,7 +16,7 @@
       "denominator": 4,
       "run_id": "32995332853",
       "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
-      "timestamp": "2026-08-26T21:58:00.000Z"
+      "timestamp": "2026-08-26T22:48:00.000Z"
     },
     {
       "lane": "L-PROOF",
@@ -26,17 +26,17 @@
       "denominator": 63,
       "run_id": "32995332853",
       "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
-      "timestamp": "2026-08-26T21:58:00.000Z"
+      "timestamp": "2026-08-26T22:48:00.000Z"
     },
     {
       "lane": "L-CLEANUP",
       "slice": "legacy_data_plane_retirement",
       "status": "pending",
-      "numerator": 25,
+      "numerator": 34,
       "denominator": 851,
-      "run_id": null,
+      "run_id": "33020651518",
       "digest": null,
-      "timestamp": "2026-08-26T21:58:00.000Z"
+      "timestamp": "2026-08-26T22:48:00.000Z"
     },
     {
       "lane": "L-CLIENT",
@@ -46,7 +46,7 @@
       "denominator": 14,
       "run_id": null,
       "digest": null,
-      "timestamp": "2026-08-26T21:58:00.000Z"
+      "timestamp": "2026-08-26T22:48:00.000Z"
     }
   ],
   "live_product_proof": {
@@ -156,10 +156,18 @@
       ]
     },
     "legacy_cleanup": {
-      "numerator": 25,
+      "numerator": 34,
       "denominator": 851,
       "control_plane_hold_assets": 46,
-      "map_scope": "static repo-visible SQL CREATE TABLE inventory"
+      "map_scope": "static repo-visible SQL CREATE TABLE inventory",
+      "live_absent_schema_credit": {
+        "numerator": 9,
+        "schemas": [
+          "source_registry"
+        ],
+        "proof_run_id": "33020651518",
+        "proof_workflow_url": "https://github.com/abarva-platform/abarva/actions/runs/33020651518"
+      }
     },
     "client_intake_adapters": {
       "numerator": 14,
