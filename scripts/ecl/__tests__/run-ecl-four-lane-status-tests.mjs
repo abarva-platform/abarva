@@ -32,6 +32,10 @@ function run(command, args) {
   return result;
 }
 
+function gitShow(file) {
+  return run("git", ["show", `${ref}:${file}`]).stdout;
+}
+
 try {
   writeFileSync(
     compactSummary,
@@ -144,12 +148,14 @@ try {
   ]);
 
   const status = JSON.parse(readFileSync(out, "utf8"));
+  const committedStatus = JSON.parse(gitShow("docs/architecture/ecl-four-lane-completion-status.json"));
   assert.equal(status.schema_version, "ecl_four_lane_completion_status/v1");
   assert.equal(status.policy.aggregate_percentage_retired, true);
   assert.equal(status.policy.lane_percentages_reported_separately, true);
   assert(!Object.hasOwn(status, "overall_percentage"), "four-lane status must not report one blended percentage");
 
   const lanes = Object.fromEntries(status.lanes.map((lane) => [lane.lane, lane]));
+  const committedLanes = Object.fromEntries(committedStatus.lanes.map((lane) => [lane.lane, lane]));
   assert.deepEqual(
     Object.keys(lanes).sort(),
     ["L-CLEANUP", "L-CLIENT", "L-CUTOVER", "L-PROOF"],
@@ -169,6 +175,21 @@ try {
       client: "14/14",
     },
   );
+  assert.deepEqual(
+    {
+      cutover: `${committedLanes["L-CUTOVER"].numerator}/${committedLanes["L-CUTOVER"].denominator}`,
+      proof: `${committedLanes["L-PROOF"].numerator}/${committedLanes["L-PROOF"].denominator}`,
+      cleanup: `${committedLanes["L-CLEANUP"].numerator}/${committedLanes["L-CLEANUP"].denominator}`,
+      client: `${committedLanes["L-CLIENT"].numerator}/${committedLanes["L-CLIENT"].denominator}`,
+    },
+    {
+      cutover: `${lanes["L-CUTOVER"].numerator}/${lanes["L-CUTOVER"].denominator}`,
+      proof: `${lanes["L-PROOF"].numerator}/${lanes["L-PROOF"].denominator}`,
+      cleanup: `${lanes["L-CLEANUP"].numerator}/${lanes["L-CLEANUP"].denominator}`,
+      client: `${lanes["L-CLIENT"].numerator}/${lanes["L-CLIENT"].denominator}`,
+    },
+    "committed four-lane status artifact must match the computed status lane counts",
+  );
   assert.equal(status.live_product_proof.actual_route_repointing, true);
   assert.equal(status.live_product_proof.routes_accepted.numerator, 4);
   assert.equal(status.live_product_proof.surfaces_proven.numerator, 40);
@@ -179,6 +200,8 @@ try {
   assert.equal(status.repo_denominators.serving_views.denominator, 40);
   assert.equal(status.repo_denominators.client_intake_adapters.denominator, 14);
   assert.equal(status.repo_denominators.client_intake_adapters.numerator, 14);
+  assert.equal(committedStatus.repo_denominators.client_intake_adapters.denominator, 14);
+  assert.equal(committedStatus.repo_denominators.client_intake_adapters.numerator, 14);
   assert.equal(status.repo_denominators.client_intake_source_family_landing.numerator, 14);
   assert.equal(status.repo_denominators.client_intake_source_family_landing.denominator, 14);
   assert.equal(
