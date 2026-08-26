@@ -7,6 +7,7 @@ import { Client } from "pg";
 
 const DEFAULT_SCHEMAS = ["intelligence_v6", "intelligence_v7", "cio_tower"];
 const DEFAULT_STATUS_MAP = "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_map.csv";
+const DEFAULT_CODE_REFERENCE_MANIFEST = "docs/architecture/ecl-retired-code-reference-manifest.json";
 const APPLY_SAFE_STATUSES = new Set(["REPLACE_WITH_ECL_PROJECTION", "ARCHIVE_ONLY"]);
 const DEFAULT_CODE_REFERENCE_ROOTS = ["src", "scripts"];
 const CODE_REFERENCE_EXCLUDE_PATHS = new Set([
@@ -151,6 +152,92 @@ function readStatusMap(statusMapPath) {
   };
 }
 
+function readCodeReferenceManifest(manifestPath) {
+  const resolvedPath = path.resolve(process.cwd(), manifestPath);
+  if (!fs.existsSync(resolvedPath)) {
+    return {
+      path: manifestPath,
+      resolved_path: resolvedPath,
+      available: false,
+      entries: [],
+      entries_by_file: new Map(),
+    };
+  }
+
+  const parsed = JSON.parse(fs.readFileSync(resolvedPath, "utf8"));
+  if (parsed?.schema_version !== "ecl_retired_code_reference_manifest/v1") {
+    throw new Error(`Unsupported retired code-reference manifest schema_version: ${manifestPath}`);
+  }
+  if (!Array.isArray(parsed.entries)) {
+    throw new Error(`Retired code-reference manifest must contain entries[]: ${manifestPath}`);
+  }
+
+  const entriesByFile = new Map();
+  const entries = parsed.entries.map((entry, index) => {
+    const file = String(entry?.file ?? "").trim();
+    const retiredSchemas = Array.isArray(entry?.retired_schemas)
+      ? entry.retired_schemas.map((schema) => String(schema).trim()).filter(Boolean)
+      : [];
+    const disposition = String(entry?.disposition ?? "").trim();
+    const replacement = String(entry?.replacement ?? "").trim();
+    if (!file || path.isAbsolute(file) || file.split(path.sep).includes("..")) {
+      throw new Error(`Retired code-reference manifest entry ${index} has an invalid file path.`);
+    }
+    if (!file.startsWith("src/") && !file.startsWith("scripts/")) {
+      throw new Error(`Retired code-reference manifest entry ${file} must live under src/ or scripts/.`);
+    }
+    if (retiredSchemas.length === 0) {
+      throw new Error(`Retired code-reference manifest entry ${file} must name retired_schemas.`);
+    }
+    if (!disposition || !replacement) {
+      throw new Error(`Retired code-reference manifest entry ${file} must include disposition and replacement.`);
+    }
+    const resolvedFile = path.resolve(process.cwd(), file);
+    if (!fs.existsSync(resolvedFile)) {
+      throw new Error(`Retired code-reference manifest entry points at a missing file: ${file}`);
+    }
+    const normalized = {
+      file,
+      retired_schemas: new Set(retiredSchemas),
+      disposition,
+      replacement,
+    };
+    entriesByFile.set(file, normalized);
+    return {
+      file,
+      retired_schemas: retiredSchemas,
+      disposition,
+      replacement,
+    };
+  });
+
+  return {
+    path: manifestPath,
+    resolved_path: resolvedPath,
+    available: true,
+    entries,
+    entries_by_file: entriesByFile,
+  };
+}
+
+function classifyCodeReference(reference, manifest) {
+  const entry = manifest.entries_by_file.get(reference.file);
+  if (!entry || !entry.retired_schemas.has(reference.schema)) {
+    return {
+      ...reference,
+      reference_state: "active",
+      retirement_disposition: null,
+      replacement: null,
+    };
+  }
+  return {
+    ...reference,
+    reference_state: "declared_retired",
+    retirement_disposition: entry.disposition,
+    replacement: entry.replacement,
+  };
+}
+
 function statusGateForSchemas(schemas, statusMap) {
   const schemaSummaries = schemas.map((schema) => {
     const entry = statusMap.rows_by_schema.get(schema);
@@ -232,7 +319,7 @@ function buildCodeReferencePatterns(schemas, statusMap) {
   });
 }
 
-function scanCodeReferences(schemas, statusMap = null, roots = DEFAULT_CODE_REFERENCE_ROOTS) {
+function scanCodeReferences(schemas, statusMap = null, roots = DEFAULT_CODE_REFERENCE_ROOTS, manifest = readCodeReferenceManifest(DEFAULT_CODE_REFERENCE_MANIFEST)) {
   const patterns = buildCodeReferencePatterns(schemas, statusMap);
   const references = [];
 
@@ -247,13 +334,13 @@ function scanCodeReferences(schemas, statusMap = null, roots = DEFAULT_CODE_REFE
         for (const pattern of patterns) {
           if (!pattern.regex.test(line)) continue;
           pattern.regex.lastIndex = 0;
-          references.push({
+          references.push(classifyCodeReference({
             schema: pattern.schema,
             object: pattern.object,
             file: relativePath,
             line: index + 1,
             text: line.trim().slice(0, 220),
-          });
+          }, manifest));
         }
       });
     }
@@ -315,13 +402,43 @@ function selfTest() {
     path.join(codeRefRoot, "scripts/ops/purge-retired-data-layers.mjs"),
     "const ignored = 'legacy_schema.self';\n",
   );
+  fs.mkdirSync(path.join(codeRefRoot, "docs/architecture"), { recursive: true });
+  fs.writeFileSync(path.join(codeRefRoot, "src/retired.ts"), "const table = 'legacy_schema.table';\n");
+  fs.writeFileSync(
+    path.join(codeRefRoot, DEFAULT_CODE_REFERENCE_MANIFEST),
+    JSON.stringify(
+      {
+        schema_version: "ecl_retired_code_reference_manifest/v1",
+        entries: [
+          {
+            file: "src/retired.ts",
+            retired_schemas: ["legacy_schema"],
+            disposition: "historical_test_fixture",
+            replacement: "new_schema.table",
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
   fs.writeFileSync(path.join(codeRefRoot, "map.csv"), "schema,table,sunset_status\nlegacy_schema,table,ARCHIVE_ONLY\n");
   const priorCwd = process.cwd();
   process.chdir(codeRefRoot);
   try {
-    const references = scanCodeReferences(["legacy_schema"], readStatusMap("map.csv"));
-    if (references.length !== 1 || references[0].file !== "src/example.ts") {
+    const references = scanCodeReferences(
+      ["legacy_schema"],
+      readStatusMap("map.csv"),
+      DEFAULT_CODE_REFERENCE_ROOTS,
+      readCodeReferenceManifest(DEFAULT_CODE_REFERENCE_MANIFEST),
+    );
+    const activeReferences = references.filter((reference) => reference.reference_state === "active");
+    const retiredReferences = references.filter((reference) => reference.reference_state === "declared_retired");
+    if (activeReferences.length !== 1 || activeReferences[0].file !== "src/example.ts") {
       throw new Error("Code-reference gate must detect mapped object references and ignore method-shaped false positives.");
+    }
+    if (retiredReferences.length !== 1 || retiredReferences[0].file !== "src/retired.ts") {
+      throw new Error("Code-reference gate must classify manifest-declared retired references separately.");
     }
   } finally {
     process.chdir(priorCwd);
@@ -407,6 +524,12 @@ async function main() {
   const statusMapPath = String(
     argValue("--status-map", process.env.RETIRED_LAYER_PURGE_STATUS_MAP ?? DEFAULT_STATUS_MAP),
   );
+  const codeReferenceManifestPath = String(
+    argValue(
+      "--code-reference-manifest",
+      process.env.RETIRED_LAYER_PURGE_CODE_REFERENCE_MANIFEST ?? DEFAULT_CODE_REFERENCE_MANIFEST,
+    ),
+  );
   const outDir =
     argValue("--out-dir", process.env.RETIRED_LAYER_PURGE_OUT_DIR) ??
     path.join(os.tmpdir(), "retired-layer-purge");
@@ -434,6 +557,7 @@ async function main() {
     const schemaInventory = [];
     const statusMap = readStatusMap(statusMapPath);
     const statusGate = statusGateForSchemas(schemas, statusMap);
+    const codeReferenceManifest = readCodeReferenceManifest(codeReferenceManifestPath);
 
     for (const schemaName of schemas) {
       const exists = await client.query(
@@ -494,7 +618,18 @@ async function main() {
 
     const dependencies = await client.query(buildOutsideDependencyQuery(), [schemas]);
     const dependencyInventory = dependencies.rows;
-    const codeReferenceInventory = scanCodeReferences(schemas, statusMap);
+    const codeReferenceInventory = scanCodeReferences(
+      schemas,
+      statusMap,
+      DEFAULT_CODE_REFERENCE_ROOTS,
+      codeReferenceManifest,
+    );
+    const activeCodeReferenceInventory = codeReferenceInventory.filter(
+      (reference) => reference.reference_state === "active",
+    );
+    const declaredRetiredCodeReferenceInventory = codeReferenceInventory.filter(
+      (reference) => reference.reference_state === "declared_retired",
+    );
     const proof = {
       run_id: runId,
       generated_at: new Date().toISOString(),
@@ -502,12 +637,22 @@ async function main() {
       schemas,
       dependencies_outside_retired_schemas: dependencyInventory,
       code_references: codeReferenceInventory,
+      active_code_references: activeCodeReferenceInventory,
+      declared_retired_code_references: declaredRetiredCodeReferenceInventory,
+      retired_code_reference_manifest: {
+        path: codeReferenceManifest.path,
+        resolved_path: codeReferenceManifest.resolved_path,
+        available: codeReferenceManifest.available,
+        entry_count: codeReferenceManifest.entries.length,
+      },
       retirement_status_gate: statusGate,
       schema_inventory: schemaInventory,
       gates: {
         schemas_discovered: schemaInventory.filter((row) => row.exists).length,
         outside_dependencies: dependencyInventory.length,
         code_references: codeReferenceInventory.length,
+        active_code_references: activeCodeReferenceInventory.length,
+        declared_retired_code_references: declaredRetiredCodeReferenceInventory.length,
         code_reference_gate_bypassed: allowCodeReferences,
         status_unsafe_or_unknown_schemas:
           statusGate.unsafe_schemas.length + statusGate.unknown_schemas.length,
@@ -542,6 +687,11 @@ async function main() {
       dependencies_outside_retired_schemas: dependencyInventory,
       code_references_count: codeReferenceInventory.length,
       code_references: codeReferenceInventory,
+      active_code_references_count: activeCodeReferenceInventory.length,
+      active_code_references: activeCodeReferenceInventory,
+      declared_retired_code_references_count: declaredRetiredCodeReferenceInventory.length,
+      declared_retired_code_references: declaredRetiredCodeReferenceInventory,
+      retired_code_reference_manifest: proof.retired_code_reference_manifest,
       retirement_status_gate: {
         status_map: statusGate.status_map,
         unknown_schemas: statusGate.unknown_schemas,
@@ -559,9 +709,9 @@ async function main() {
         `Refusing to apply: ${dependencyInventory.length} outside-schema dependencies found. Review ${proofPath}.`,
       );
     }
-    if (shouldApply && codeReferenceInventory.length > 0 && !allowCodeReferences) {
+    if (shouldApply && activeCodeReferenceInventory.length > 0 && !allowCodeReferences) {
       throw new Error(
-        `Refusing to apply: ${codeReferenceInventory.length} code references found. Review ${proofPath}.`,
+        `Refusing to apply: ${activeCodeReferenceInventory.length} active code references found. Review ${proofPath}.`,
       );
     }
     if (shouldApply && !statusGate.apply_allowed && !allowStatusMix) {
