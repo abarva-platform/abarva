@@ -166,7 +166,7 @@ try {
       cutover: "4/4",
       proof: "63/63",
       cleanup: "25/851",
-      client: "11/14",
+      client: "12/14",
     },
   );
   assert.equal(status.live_product_proof.actual_route_repointing, true);
@@ -178,7 +178,7 @@ try {
   assert.equal(status.live_product_proof.alias_count, 77);
   assert.equal(status.repo_denominators.serving_views.denominator, 40);
   assert.equal(status.repo_denominators.client_intake_adapters.denominator, 14);
-  assert.equal(status.repo_denominators.client_intake_adapters.numerator, 11);
+  assert.equal(status.repo_denominators.client_intake_adapters.numerator, 12);
   assert.equal(status.repo_denominators.client_intake_source_family_landing.numerator, 14);
   assert.equal(status.repo_denominators.client_intake_source_family_landing.denominator, 14);
   assert.equal(

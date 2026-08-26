@@ -217,6 +217,17 @@ function implementedAdapterFamilies(ref) {
     });
   }
   if (
+    files.has("scripts/ecl/load_client_intake_hris_layer.py") &&
+    files.has("scripts/ecl/__tests__/run-ecl-client-intake-hris-adapter-tests.mjs")
+  ) {
+    families.push({
+      family: "SP02 HRIS",
+      adapter: "scripts/ecl/load_client_intake_hris_layer.py",
+      test: "scripts/ecl/__tests__/run-ecl-client-intake-hris-adapter-tests.mjs",
+      status: "proven_local",
+    });
+  }
+  if (
     files.has("scripts/ecl/load_client_intake_vendor_contract_layer.py") &&
     files.has("scripts/ecl/__tests__/run-ecl-client-intake-vendor-contract-adapter-tests.mjs")
   ) {
