@@ -16,6 +16,7 @@ import {
   type ChatMessage,
 } from "@/components/agent/AgentDock";
 import { EclDemoFindingsPanel } from "@/components/ecl/EclDemoFindingsPanel";
+import { EclServingSurfaceCoverage } from "@/components/ecl/EclServingSurfaceCoverage";
 import { stripArtifactsForDisplay } from "@/lib/agent/artifacts";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { stripGovernedArtifactPayloadsFromText } from "@/lib/intelligence/answer/structured-fence-stream-filter";
@@ -595,7 +596,12 @@ export function WorkspaceClient({
       >
         {portfolio.workspaceDiagnostics.exploreProvider ===
         "EclProjectionDbProvider" ? (
-          <EclDemoFindingsPanel product="source" />
+          <>
+            <EclDemoFindingsPanel product="source" />
+            <div style={{ padding: "0 20px 12px" }}>
+              <EclServingSurfaceCoverage product="source" />
+            </div>
+          </>
         ) : null}
         {/* ── Canvas, wrapped in the shared aVa dock (same component/pattern as Moves' Move advisor) ── */}
         <AgentDock

@@ -2,6 +2,7 @@
 
 import { AppShell } from "@/components/shell/AppShell";
 import { EclDemoFindingsPanel } from "@/components/ecl/EclDemoFindingsPanel";
+import { EclServingSurfaceCoverage } from "@/components/ecl/EclServingSurfaceCoverage";
 import { AdvisoryIntelligencePage } from "@/components/intelligence-advisory/AdvisoryIntelligencePage";
 import {
   getActiveClientRow,
@@ -146,11 +147,10 @@ function IntelligenceEclProjectionPanel({
               Intelligence context pack projection is loaded
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700">
-              This non-default preview reads the governed ECL Intelligence
-              serving views for the dense assessment. It proves the context
-              pack has governed rows, retrieval states, access classes,
-              citations and gaps; it does not repoint the default Intelligence
-              advisory surface.
+              This route reads the governed ECL Intelligence serving views for
+              the dense assessment. It proves the context pack has governed
+              rows, retrieval states, access classes, citations and gaps on the
+              default Intelligence path.
             </p>
           </div>
           <div className="border border-slate-200 bg-white px-6 py-4 text-right shadow-sm">
@@ -177,6 +177,10 @@ function IntelligenceEclProjectionPanel({
             value={preview.totals.citations}
           />
           <IntelligenceEclStat label="Gap flags" value={preview.totals.gaps} />
+        </div>
+
+        <div className="mt-6">
+          <EclServingSurfaceCoverage product="intelligence" />
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[0.8fr_1.4fr]">
