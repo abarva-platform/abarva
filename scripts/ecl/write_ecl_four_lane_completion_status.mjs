@@ -337,6 +337,17 @@ function implementedAdapterFamilies(ref) {
       status: "proven_local",
     });
   }
+  if (
+    files.has("scripts/ecl/load_client_intake_evidence_room_layer.py") &&
+    files.has("scripts/ecl/__tests__/run-ecl-client-intake-evidence-room-adapter-tests.mjs")
+  ) {
+    families.push({
+      family: "SP12 Evidence Room",
+      adapter: "scripts/ecl/load_client_intake_evidence_room_layer.py",
+      test: "scripts/ecl/__tests__/run-ecl-client-intake-evidence-room-adapter-tests.mjs",
+      status: "proven_local",
+    });
+  }
   return families;
 }
 
