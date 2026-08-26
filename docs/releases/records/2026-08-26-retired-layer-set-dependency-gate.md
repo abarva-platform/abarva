@@ -27,7 +27,7 @@ Data-plane operations: hardens the dry-run and apply gate for retired schema inv
 ## Changes Included
 
 - `scripts/ops/purge-retired-data-layers.mjs`: dependency detection now treats the requested schemas as one retirement set.
-- `scripts/ops/purge-retired-data-layers.mjs`: adds compact stdout support with a structured summary event.
+- `scripts/ops/purge-retired-data-layers.mjs`: adds compact stdout support with a structured summary event, including per-schema table, view, routine, and row-count summaries.
 - `scripts/ops/purge-retired-data-layers.mjs`: adds a self-test for the set-scoped dependency query.
 
 ## QA / Validation
