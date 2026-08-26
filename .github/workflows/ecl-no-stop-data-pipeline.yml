@@ -115,6 +115,7 @@ jobs:
             scripts/ecl/load_client_intake_infrastructure_layer.py \
             scripts/ecl/load_client_intake_kpi_operations_layer.py \
             scripts/ecl/load_client_intake_ppm_layer.py \
+            scripts/ecl/load_client_intake_deployments_hosting_layer.py \
             scripts/ecl/write_dense_source_room_ecl_producer_coverage.py \
             scripts/ecl/load_dense_source_room_source_layer.py \
             scripts/ecl/load_dense_source_room_context_layer.py \
@@ -187,6 +188,10 @@ jobs:
       - name: Prove client intake PPM adapter
         run: |
           npm run test:ecl-client-intake-ppm-adapter
+
+      - name: Prove client intake deployments-hosting adapter
+        run: |
+          npm run test:ecl-client-intake-deployments-hosting-adapter
 
       - name: Prove client intake vendor-contract adapter
         run: |

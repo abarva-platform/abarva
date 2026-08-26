@@ -315,6 +315,17 @@ function implementedAdapterFamilies(ref) {
       status: "proven_local",
     });
   }
+  if (
+    files.has("scripts/ecl/load_client_intake_deployments_hosting_layer.py") &&
+    files.has("scripts/ecl/__tests__/run-ecl-client-intake-deployments-hosting-adapter-tests.mjs")
+  ) {
+    families.push({
+      family: "SP14 Deployments/Hosting",
+      adapter: "scripts/ecl/load_client_intake_deployments_hosting_layer.py",
+      test: "scripts/ecl/__tests__/run-ecl-client-intake-deployments-hosting-adapter-tests.mjs",
+      status: "proven_local",
+    });
+  }
   return families;
 }
 
