@@ -136,6 +136,42 @@ const CHECKS = [
       "denominator: 40",
     ],
   },
+  {
+    key: "ecl_surface_coverage_labels_rendered_by_product_panels",
+    file: "src/components/ecl/EclServingSurfaceCoverage.tsx",
+    mustContain: [
+      "Compare",
+      "Approvals",
+      "Adoption Lens",
+      "Insights & Evaluate",
+      "Pattern Detail",
+      "Serving surfaces",
+    ],
+  },
+  {
+    key: "source_tower_intelligence_import_surface_coverage",
+    file: "src/app/(maestro)/source/preview/workspace/WorkspaceClient.tsx",
+    mustContain: [
+      "EclServingSurfaceCoverage",
+      "product=\"source\"",
+    ],
+  },
+  {
+    key: "tower_imports_surface_coverage",
+    file: "src/app/(maestro)/tower/page.tsx",
+    mustContain: [
+      "EclServingSurfaceCoverage",
+      "product=\"tower\"",
+    ],
+  },
+  {
+    key: "intelligence_imports_surface_coverage",
+    file: "src/app/(maestro)/intelligence/page.tsx",
+    mustContain: [
+      "EclServingSurfaceCoverage",
+      "product=\"intelligence\"",
+    ],
+  },
 ];
 
 const COMMAND_CHECKS = [

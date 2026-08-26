@@ -8,6 +8,7 @@ import { Suspense } from "react";
 
 import { AppShell } from "@/components/shell/AppShell";
 import { EclDemoFindingsPanel } from "@/components/ecl/EclDemoFindingsPanel";
+import { EclServingSurfaceCoverage } from "@/components/ecl/EclServingSurfaceCoverage";
 import { TowerCommandCenterAvaShell } from "@/components/tower/command-center/TowerCommandCenterAvaShell";
 import {
   getActiveClientRow,
@@ -103,9 +104,9 @@ function TowerEclProjectionPanel({
             Tower command center projection is loaded
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#475467]">
-            This non-default preview reads the governed ECL Tower serving view
-            for the dense assessment. It proves the projection exists and
-            carries gate reasons; it does not repoint the default Tower mart.
+            This route reads the governed ECL Tower serving view for the dense
+            assessment. It proves the projection exists and carries gate
+            reasons on the default Tower path.
           </p>
         </div>
         <div className="rounded border border-[#d6eadf] bg-white px-4 py-3 text-right">
@@ -116,6 +117,10 @@ function TowerEclProjectionPanel({
             projection rows
           </p>
         </div>
+      </div>
+
+      <div className="mt-5">
+        <EclServingSurfaceCoverage product="tower" />
       </div>
 
       <div className="mt-5 grid gap-3 md:grid-cols-4">
