@@ -283,6 +283,17 @@ function implementedAdapterFamilies(ref) {
     });
   }
   if (
+    files.has("scripts/ecl/load_client_intake_ai_usage_models_layer.py") &&
+    files.has("scripts/ecl/__tests__/run-ecl-client-intake-ai-usage-models-adapter-tests.mjs")
+  ) {
+    families.push({
+      family: "SP11 AI Usage/Models",
+      adapter: "scripts/ecl/load_client_intake_ai_usage_models_layer.py",
+      test: "scripts/ecl/__tests__/run-ecl-client-intake-ai-usage-models-adapter-tests.mjs",
+      status: "proven_local",
+    });
+  }
+  if (
     files.has("scripts/ecl/load_client_intake_kpi_operations_layer.py") &&
     files.has("scripts/ecl/__tests__/run-ecl-client-intake-kpi-operations-adapter-tests.mjs")
   ) {
