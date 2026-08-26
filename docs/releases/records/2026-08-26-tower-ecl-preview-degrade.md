@@ -88,7 +88,7 @@ old behavior.
 
 ## Audit Evidence
 
-- The three-file diff.
+- The four-file diff.
 - Jest output for the new suite, and the before/after suite counts above.
 - After deploy: the ACA runtime invariant proof and a signed-in `/tower` capture.
 
