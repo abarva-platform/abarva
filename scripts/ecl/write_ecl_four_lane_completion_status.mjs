@@ -38,6 +38,33 @@ const INTAKE_FAMILIES = [
   "SP14 Deployments/Hosting",
 ];
 
+const SOURCE_LANDING_FAMILY_KEYS = [
+  "SP01_Documents_Interviews",
+  "SP02_HRIS",
+  "SP03_CMDB",
+  "SP04_Data_BI_ETL",
+  "SP05_Infrastructure",
+  "SP06_Finance_ERP",
+  "SP07_PPM",
+  "SP08_Vendor_Contract",
+  "SP09_GRC",
+  "SP10_KPI_Operations",
+  "SP11_AI_Usage_Models",
+  "SP12_Evidence_Room",
+  "SP13_Data_Flows_Integrations",
+  "SP14_Deployments_Hosting",
+];
+
+const TERMINAL_LEGACY_STATUSES = new Set([
+  "RETIRED_ARCHIVE_ONLY",
+  "RETIRED_REPLACED_BY_ECL_PROJECTION",
+  "RETIRED_REPLACED_BY_ECL_CONTEXT",
+  "DROPPED_AFTER_APPROVED_CHECKPOINT",
+  "RETAINED_ECL_TARGET",
+  "RETAINED_TRANSACTIONAL_NON_ECL",
+  "RETAINED_COMPATIBILITY_BRIDGE",
+]);
+
 function parseArgs(argv) {
   const args = {
     ref: process.env.ECL_STATUS_REF || process.env.ECL_RECONCILE_REF || "HEAD",
@@ -172,7 +199,7 @@ function countRetiredLegacyAssets(retirementMapCsv) {
   const headers = lines[0].split(",");
   const statusIndex = headers.indexOf("sunset_status");
   assert.notEqual(statusIndex, -1, "legacy retirement map must contain sunset_status");
-  return lines.slice(1).filter((line) => /RETIRED|DROPPED/i.test(line.split(",")[statusIndex] ?? "")).length;
+  return lines.slice(1).filter((line) => TERMINAL_LEGACY_STATUSES.has(line.split(",")[statusIndex] ?? "")).length;
 }
 
 function implementedAdapterFamilies(ref) {
@@ -190,6 +217,22 @@ function implementedAdapterFamilies(ref) {
     });
   }
   return families;
+}
+
+function implementedSourceLandingFamilies(ref) {
+  const files = new Set(gitLsTree(ref, ["scripts/ecl"]));
+  if (
+    !files.has("scripts/ecl/load_client_intake_source_family_layer.py") ||
+    !files.has("scripts/ecl/__tests__/run-ecl-client-intake-source-family-adapter-tests.mjs")
+  ) {
+    return [];
+  }
+  return SOURCE_LANDING_FAMILY_KEYS.map((family) => ({
+    family,
+    adapter: "scripts/ecl/load_client_intake_source_family_layer.py",
+    test: "scripts/ecl/__tests__/run-ecl-client-intake-source-family-adapter-tests.mjs",
+    status: "proven_source_landing_only",
+  }));
 }
 
 function operatorImageDigest(summary) {
@@ -227,6 +270,7 @@ function buildStatus(args) {
     ...new Set([...sql.matchAll(/create\s+(?:or\s+replace\s+)?view\s+serving\.([a-z0-9_]+)/gi)].map((match) => match[1])),
   ];
   const adapters = implementedAdapterFamilies(args.ref);
+  const sourceLandingFamilies = implementedSourceLandingFamilies(args.ref);
   const proofRoutes = liveProof?.default_entry_routes ?? null;
   const proofSurfaces = liveProof?.named_surfaces_browser_proven ?? null;
   const proofFindings = liveProof?.findings_demonstrable_on_real_surface ?? null;
@@ -373,10 +417,21 @@ function buildStatus(args) {
           adapter: adapters.find((adapter) => adapter.family === family)?.adapter ?? null,
         })),
       },
+      client_intake_source_family_landing: {
+        numerator: sourceLandingFamilies.length,
+        denominator: 14,
+        scope: "ecl_source.source_file/source_record landing only; does not count as canonical adapter completion",
+        families: SOURCE_LANDING_FAMILY_KEYS.map((family) => ({
+          family,
+          status: sourceLandingFamilies.find((entry) => entry.family === family)?.status ?? "not_built",
+          adapter: sourceLandingFamilies.find((entry) => entry.family === family)?.adapter ?? null,
+        })),
+      },
     },
     open_items: [
       ...(surfaces.length === 40 ? [] : [`surface_enumeration_${surfaces.length}_expected_40`]),
       ...(legacyRetired === 851 ? [] : ["legacy_data_plane_retirement_pending"]),
+      ...(sourceLandingFamilies.length === 14 ? [] : ["client_intake_source_family_landing_pending"]),
       ...(adapters.length === 14 ? [] : ["client_intake_adapters_pending"]),
     ],
   };
