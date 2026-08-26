@@ -116,6 +116,23 @@ describe('submit-aca-operator-job.mjs --plan-only', () => {
     expect(restore).toEqual(expect.arrayContaining(['--memory', '1Gi']))
   })
 
+  test('records the bounded idle verification wait in plan-only output', () => {
+    const result = runPlanOnly(
+      [
+        '--image', FAKE_DIGEST_IMAGE,
+        '--script', 'db:migrate:dry',
+        '--container', 'db-migrate',
+        '--poll-seconds', '5',
+        '--idle-verify-wait-seconds', '300',
+      ],
+      outDir,
+    )
+    expect(result.status).toBe(0)
+    const plan = readPlan(outDir)
+    expect(plan.pollSeconds).toBe(5)
+    expect(plan.idleVerifyWaitSeconds).toBe(300)
+  })
+
   test('refuses a mutable (non digest-pinned) image even in plan-only mode', () => {
     // assertDigestPinned() only checks for an "@sha256:" substring — it doesn't
     // care about registry — so a non-AbarVa registry string exercises the same
@@ -136,6 +153,19 @@ describe('submit-aca-operator-job.mjs --plan-only', () => {
     )
     expect(result.status).not.toBe(0)
     expect(result.stderr).toMatch(/suspicious npm script/)
+  })
+
+  test('refuses a negative idle verification wait even in plan-only mode', () => {
+    const result = runPlanOnly(
+      [
+        '--image', FAKE_DIGEST_IMAGE,
+        '--script', 'db:migrate:dry',
+        '--idle-verify-wait-seconds', '-1',
+      ],
+      outDir,
+    )
+    expect(result.status).not.toBe(0)
+    expect(result.stderr).toMatch(/idle-verify-wait-seconds/)
   })
 })
 
