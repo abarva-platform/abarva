@@ -8,6 +8,32 @@ import { Client } from "pg";
 const DEFAULT_SCHEMAS = ["intelligence_v6", "intelligence_v7", "cio_tower"];
 const DEFAULT_STATUS_MAP = "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_map.csv";
 const APPLY_SAFE_STATUSES = new Set(["REPLACE_WITH_ECL_PROJECTION", "ARCHIVE_ONLY"]);
+const DEFAULT_CODE_REFERENCE_ROOTS = ["src", "scripts"];
+const CODE_REFERENCE_EXCLUDE_PATHS = new Set([
+  "scripts/ops/purge-retired-data-layers.mjs",
+  "scripts/ecl/write_legacy_table_retirement_map.py",
+]);
+const CODE_REFERENCE_EXCLUDE_DIRS = new Set([
+  ".git",
+  ".next",
+  "coverage",
+  "node_modules",
+  "playwright-report",
+  "reports",
+  "test-results",
+]);
+const CODE_REFERENCE_EXTENSIONS = new Set([
+  ".cjs",
+  ".cts",
+  ".js",
+  ".jsx",
+  ".mjs",
+  ".mts",
+  ".py",
+  ".sql",
+  ".ts",
+  ".tsx",
+]);
 
 function argValue(name, fallback = null) {
   const prefix = `${name}=`;
@@ -48,6 +74,10 @@ function buildOutsideDependencyQuery() {
             join pg_namespace source_ns on source_ns.oid = source_class.relnamespace
            where not (source_ns.nspname = any($1::text[]))
            order by referencing_schema, referencing_object, retired.schema_name, retired.object_name`;
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function quoteIdent(value) {
@@ -156,6 +186,61 @@ function statusGateForSchemas(schemas, statusMap) {
   };
 }
 
+function listFilesRecursive(rootPath) {
+  if (!fs.existsSync(rootPath)) return [];
+  const stat = fs.statSync(rootPath);
+  if (!stat.isDirectory()) return [];
+
+  const files = [];
+  const stack = [rootPath];
+  while (stack.length > 0) {
+    const current = stack.pop();
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const fullPath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        if (!CODE_REFERENCE_EXCLUDE_DIRS.has(entry.name)) {
+          stack.push(fullPath);
+        }
+      } else if (entry.isFile() && CODE_REFERENCE_EXTENSIONS.has(path.extname(entry.name))) {
+        files.push(fullPath);
+      }
+    }
+  }
+  return files.sort();
+}
+
+function scanCodeReferences(schemas, roots = DEFAULT_CODE_REFERENCE_ROOTS) {
+  const patterns = schemas.map((schema) => ({
+    schema,
+    regex: new RegExp(`\\b${escapeRegExp(schema)}\\.`, "g"),
+  }));
+  const references = [];
+
+  for (const root of roots) {
+    const rootPath = path.resolve(process.cwd(), root);
+    for (const filePath of listFilesRecursive(rootPath)) {
+      const relativePath = path.relative(process.cwd(), filePath);
+      if (CODE_REFERENCE_EXCLUDE_PATHS.has(relativePath)) continue;
+      const content = fs.readFileSync(filePath, "utf8");
+      const lines = content.split(/\r?\n/);
+      lines.forEach((line, index) => {
+        for (const pattern of patterns) {
+          if (!pattern.regex.test(line)) continue;
+          pattern.regex.lastIndex = 0;
+          references.push({
+            schema: pattern.schema,
+            file: relativePath,
+            line: index + 1,
+            text: line.trim().slice(0, 220),
+          });
+        }
+      });
+    }
+  }
+
+  return references;
+}
+
 async function countRows(client, schemaName, tableName) {
   const sql = `select count(*)::bigint as row_count from ${quoteIdent(schemaName)}.${quoteIdent(tableName)}`;
   const result = await client.query(sql);
@@ -200,6 +285,24 @@ function selfTest() {
   if (formatStructuredOutput({ event: "test", proof: { ok: true } }, true).includes("\n")) {
     throw new Error("Compact structured output must be emitted as one log line.");
   }
+  const codeRefRoot = fs.mkdtempSync(path.join(os.tmpdir(), "retired-layer-code-ref-"));
+  fs.mkdirSync(path.join(codeRefRoot, "src"), { recursive: true });
+  fs.mkdirSync(path.join(codeRefRoot, "scripts/ops"), { recursive: true });
+  fs.writeFileSync(path.join(codeRefRoot, "src/example.ts"), "const table = 'legacy_schema.table';\n");
+  fs.writeFileSync(
+    path.join(codeRefRoot, "scripts/ops/purge-retired-data-layers.mjs"),
+    "const ignored = 'legacy_schema.self';\n",
+  );
+  const priorCwd = process.cwd();
+  process.chdir(codeRefRoot);
+  try {
+    const references = scanCodeReferences(["legacy_schema"]);
+    if (references.length !== 1 || references[0].file !== "src/example.ts") {
+      throw new Error("Code-reference gate must detect runtime references and ignore this operator.");
+    }
+  } finally {
+    process.chdir(priorCwd);
+  }
   console.log(
     JSON.stringify({
       ok: true,
@@ -207,6 +310,7 @@ function selfTest() {
       dependency_scope: "retirement_set",
       compact_stdout_supported: true,
       status_map_apply_gate: "mixed_or_unknown_schemas_refused",
+      code_reference_apply_gate: "schema_references_refused",
     }),
   );
 }
@@ -273,6 +377,8 @@ async function main() {
     hasFlag("--allow-dependencies") || process.env.RETIRED_LAYER_PURGE_ALLOW_DEPENDENCIES === "1";
   const allowStatusMix =
     hasFlag("--allow-status-mix") || process.env.RETIRED_LAYER_PURGE_ALLOW_STATUS_MIX === "1";
+  const allowCodeReferences =
+    hasFlag("--allow-code-references") || process.env.RETIRED_LAYER_PURGE_ALLOW_CODE_REFERENCES === "1";
   const compactStdout =
     hasFlag("--compact-stdout") || process.env.RETIRED_LAYER_PURGE_COMPACT_STDOUT === "1";
   const statusMapPath = String(
@@ -364,23 +470,28 @@ async function main() {
 
     const dependencies = await client.query(buildOutsideDependencyQuery(), [schemas]);
     const dependencyInventory = dependencies.rows;
+    const codeReferenceInventory = scanCodeReferences(schemas);
     const proof = {
       run_id: runId,
       generated_at: new Date().toISOString(),
       mode: shouldApply ? "apply" : "dry_run",
       schemas,
       dependencies_outside_retired_schemas: dependencyInventory,
+      code_references: codeReferenceInventory,
       retirement_status_gate: statusGate,
       schema_inventory: schemaInventory,
       gates: {
         schemas_discovered: schemaInventory.filter((row) => row.exists).length,
         outside_dependencies: dependencyInventory.length,
+        code_references: codeReferenceInventory.length,
+        code_reference_gate_bypassed: allowCodeReferences,
         status_unsafe_or_unknown_schemas:
           statusGate.unsafe_schemas.length + statusGate.unknown_schemas.length,
         status_gate_bypassed: allowStatusMix,
         apply_allowed:
           shouldApply &&
           (allowDependencies || dependencyInventory.length === 0) &&
+          (allowCodeReferences || codeReferenceInventory.length === 0) &&
           (allowStatusMix || statusGate.apply_allowed),
       },
     };
@@ -405,6 +516,8 @@ async function main() {
       total_row_count: schemaInventory.reduce((sum, row) => sum + row.row_count, 0),
       dependencies_outside_retired_schemas_count: dependencyInventory.length,
       dependencies_outside_retired_schemas: dependencyInventory,
+      code_references_count: codeReferenceInventory.length,
+      code_references: codeReferenceInventory,
       retirement_status_gate: {
         status_map: statusGate.status_map,
         unknown_schemas: statusGate.unknown_schemas,
@@ -420,6 +533,11 @@ async function main() {
     if (shouldApply && dependencyInventory.length > 0 && !allowDependencies) {
       throw new Error(
         `Refusing to apply: ${dependencyInventory.length} outside-schema dependencies found. Review ${proofPath}.`,
+      );
+    }
+    if (shouldApply && codeReferenceInventory.length > 0 && !allowCodeReferences) {
+      throw new Error(
+        `Refusing to apply: ${codeReferenceInventory.length} code references found. Review ${proofPath}.`,
       );
     }
     if (shouldApply && !statusGate.apply_allowed && !allowStatusMix) {
