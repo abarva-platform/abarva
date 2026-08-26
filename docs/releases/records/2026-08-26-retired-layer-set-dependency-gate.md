@@ -16,6 +16,8 @@ Follow-on hardening adds a status-aware apply gate. The operator reads the commi
 
 This update also packages the committed retirement map into the ACA runtime image and makes validate-only mode prove that the real map is readable. Without that packaging, ACA dry-runs could still fail closed, but they reported every schema as unknown instead of classifying mixed and safe schemas from the approved inventory.
 
+The compact proof event is now emitted as a single JSON line. That keeps the structured event inside the ACA log tail and allows the operator wrapper to extract it without relying on manual log reconstruction.
+
 ## Layer Impact
 
 Data-plane operations: hardens the dry-run and apply gate for retired schema inventory. It does not change product runtime reads or application behavior.
@@ -35,6 +37,7 @@ Data-plane operations: hardens the dry-run and apply gate for retired schema inv
 - `scripts/ops/purge-retired-data-layers.mjs`: adds a self-test for the set-scoped dependency query.
 - `scripts/ops/purge-retired-data-layers.mjs`: adds a committed-retirement-map status gate so mixed HOLD/platform-control schemas cannot be dropped by a broad apply command.
 - `scripts/ops/purge-retired-data-layers.mjs`: validate-only mode now verifies the real default status map is available and has schema rows.
+- `scripts/ops/purge-retired-data-layers.mjs`: compact stdout now emits one-line JSON so ACA proof extraction remains parseable.
 - `Dockerfile` and `.dockerignore`: package the narrow retirement-map report directory required by ACA operator dry-runs.
 
 ## QA / Validation
