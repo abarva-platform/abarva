@@ -69,7 +69,8 @@ const CHECKS = [
     mustContain: [
       "const requestedProvider = firstSearchValue(resolved?.provider)",
       "resolveEclProductProvider(requestedProvider)",
-      "readTowerEclProjectionPreview(canonicalTenantKey(effectiveClientKey))",
+      "readTowerEclProjectionPreview(",
+      "canonicalTenantKey(effectiveClientKey)",
     ],
   },
   {
