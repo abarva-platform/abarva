@@ -282,6 +282,17 @@ function implementedAdapterFamilies(ref) {
       status: "proven_local",
     });
   }
+  if (
+    files.has("scripts/ecl/load_client_intake_kpi_operations_layer.py") &&
+    files.has("scripts/ecl/__tests__/run-ecl-client-intake-kpi-operations-adapter-tests.mjs")
+  ) {
+    families.push({
+      family: "SP10 KPI/Operations",
+      adapter: "scripts/ecl/load_client_intake_kpi_operations_layer.py",
+      test: "scripts/ecl/__tests__/run-ecl-client-intake-kpi-operations-adapter-tests.mjs",
+      status: "proven_local",
+    });
+  }
   return families;
 }
 
