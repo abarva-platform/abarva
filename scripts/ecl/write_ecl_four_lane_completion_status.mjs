@@ -239,6 +239,17 @@ function implementedAdapterFamilies(ref) {
     });
   }
   if (
+    files.has("scripts/ecl/load_client_intake_finance_erp_layer.py") &&
+    files.has("scripts/ecl/__tests__/run-ecl-client-intake-finance-erp-adapter-tests.mjs")
+  ) {
+    families.push({
+      family: "SP06 Finance/ERP",
+      adapter: "scripts/ecl/load_client_intake_finance_erp_layer.py",
+      test: "scripts/ecl/__tests__/run-ecl-client-intake-finance-erp-adapter-tests.mjs",
+      status: "proven_local",
+    });
+  }
+  if (
     files.has("scripts/ecl/load_client_intake_infrastructure_layer.py") &&
     files.has("scripts/ecl/__tests__/run-ecl-client-intake-infrastructure-adapter-tests.mjs")
   ) {

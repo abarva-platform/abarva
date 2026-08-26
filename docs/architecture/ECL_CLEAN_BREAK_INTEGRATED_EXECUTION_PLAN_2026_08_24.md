@@ -59,7 +59,7 @@ Current committed status, measured from the post-cutover proof artifact:
 | `L-CUTOVER` | Home, Source, Tower and Intelligence default entry routes serve ECL | **4/4** | complete |
 | `L-PROOF` | 40 named surfaces, F1-F10 and aVa baseline/ablation proof | **63/63** | complete |
 | `L-CLEANUP` | Legacy data-plane assets classified and retired or retained | **25/851** | pending |
-| `L-CLIENT` | Real workbook/source-family adapters proven end to end | **4/14** | pending |
+| `L-CLIENT` | Real workbook/source-family adapters proven end to end | **5/14** | pending |
 
 The product proof denominator is intentionally not the same as route count:
 
