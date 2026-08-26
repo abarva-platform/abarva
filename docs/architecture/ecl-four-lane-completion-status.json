@@ -42,7 +42,7 @@
       "lane": "L-CLIENT",
       "slice": "workbook_intake_adapters",
       "status": "pending",
-      "numerator": 9,
+      "numerator": 10,
       "denominator": 14,
       "run_id": null,
       "digest": null,
@@ -227,8 +227,8 @@
         },
         {
           "family": "SP13 Data Flows",
-          "status": "not_built",
-          "adapter": null
+          "status": "proven_local",
+          "adapter": "scripts/ecl/load_client_intake_data_flows_layer.py"
         },
         {
           "family": "SP14 Deployments/Hosting",

@@ -108,6 +108,7 @@ jobs:
             scripts/ecl/validate_dense_source_room_extracts.py \
             scripts/ecl/load_client_intake_applications_layer.py \
             scripts/ecl/load_client_intake_data_bi_etl_layer.py \
+            scripts/ecl/load_client_intake_data_flows_layer.py \
             scripts/ecl/load_client_intake_finance_erp_layer.py \
             scripts/ecl/load_client_intake_grc_layer.py \
             scripts/ecl/load_client_intake_ai_usage_models_layer.py \
@@ -158,6 +159,10 @@ jobs:
       - name: Prove client intake data-BI-ETL adapter
         run: |
           npm run test:ecl-client-intake-data-bi-etl-adapter
+
+      - name: Prove client intake data-flows adapter
+        run: |
+          npm run test:ecl-client-intake-data-flows-adapter
 
       - name: Prove client intake finance-ERP adapter
         run: |
