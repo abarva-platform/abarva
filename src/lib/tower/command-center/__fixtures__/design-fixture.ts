@@ -23,7 +23,7 @@ import type {
   TowerMartProgramLane,
   TowerMartRequiredFieldGap,
   TowerMartValueTrajectoryPoint,
-} from "@/lib/cio-tower/tower-mart-view-model";
+} from "@/lib/tower/current-layer-view-model";
 
 const M = 1_000_000;
 

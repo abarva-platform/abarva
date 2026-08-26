@@ -1,13 +1,13 @@
 import crypto from "node:crypto";
 
-import { formatCioTowerMoney } from "@/lib/cio-tower/metric-packet";
+import { formatCioTowerMoney } from "@/lib/tower/metric-packet";
 import { VISIBLE_ANSWER_CONTRACT_VERSION } from "@/lib/agent/visible-answer-contract";
 import type {
   CioTowerAnswerResult,
   CioTowerVisibleAnswerContract,
   CioTowerVisibleContextCriteria,
   CioTowerVisibleTable,
-} from "@/lib/cio-tower/answer";
+} from "@/lib/tower/current-layer-answer-contract";
 import { readTowerCommandCenter } from "@/lib/tower/readTowerCommandCenter";
 
 export interface CurrentTowerAnswerArgs {

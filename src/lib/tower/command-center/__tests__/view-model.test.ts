@@ -11,7 +11,7 @@ import type {
   TowerMartCommandViewModel,
   TowerMartProgramLane,
   TowerMartValueTrajectoryPoint,
-} from "@/lib/cio-tower/tower-mart-view-model";
+} from "@/lib/tower/current-layer-view-model";
 
 import {
   aiDisplayBucketFor,

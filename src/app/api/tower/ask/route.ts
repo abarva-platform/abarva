@@ -9,7 +9,7 @@
 
 import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
-import { canonicalCioTowerTenantKey, canonicalCioTowerTenantDisplayName } from "@/lib/cio-tower/metric-packet";
+import { canonicalCioTowerTenantKey, canonicalCioTowerTenantDisplayName } from "@/lib/tower/metric-packet";
 import { answerCurrentTowerQuestion } from "@/lib/tower/current-layer-answer";
 import { demoSafeClientText } from "@/lib/client-config";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";

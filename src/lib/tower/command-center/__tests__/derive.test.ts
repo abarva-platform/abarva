@@ -3,7 +3,7 @@
 // These are the only place in the Command Center where a money figure is
 // computed rather than read, so the arithmetic is pinned here.
 
-import type { TowerMartProgramLane } from "@/lib/cio-tower/tower-mart-view-model";
+import type { TowerMartProgramLane } from "@/lib/tower/current-layer-view-model";
 import {
   adoptionFraction,
   blockedUsd,

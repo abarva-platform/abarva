@@ -15,7 +15,7 @@
 // change. If a derivation later needs to be persisted, that is its own
 // release-recorded slice with its own lineage rows.
 
-import type { TowerMartProgramLane } from "@/lib/cio-tower/tower-mart-view-model";
+import type { TowerMartProgramLane } from "@/lib/tower/current-layer-view-model";
 import type {
   TowerFinanceStatus,
   TowerLaneKey,

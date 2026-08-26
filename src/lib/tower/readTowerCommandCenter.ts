@@ -2,7 +2,7 @@ import { azureRead } from "@/lib/data-plane/azureRead";
 import {
   canonicalCioTowerTenantKey,
   formatCioTowerMoney,
-} from "@/lib/cio-tower/metric-packet";
+} from "@/lib/tower/metric-packet";
 import type {
   TowerMartAiPortfolioItem,
   TowerMartCommandCenter,
@@ -13,7 +13,7 @@ import type {
   TowerMartRequiredFieldGap,
   TowerMartValueFunnelStage,
   TowerMartValueTrajectoryPoint,
-} from "@/lib/cio-tower/tower-mart-view-model";
+} from "@/lib/tower/current-layer-view-model";
 
 type Numeric = string | number | null | undefined;
 type TowerDecisionLane = TowerMartProgramLane["decisionLane"];

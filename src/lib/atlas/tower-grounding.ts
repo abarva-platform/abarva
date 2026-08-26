@@ -35,7 +35,7 @@ import {
   canonicalTenantKey,
   tenantIndustryCode,
 } from "@/lib/tenant/aliases";
-import { canonicalCioTowerTenantDisplayName } from "@/lib/cio-tower/metric-packet";
+import { canonicalCioTowerTenantDisplayName } from "@/lib/tower/metric-packet";
 
 type IndustryCode = "HEALTHCARE_IDN" | "FINSERV" | "RETAIL" | "GENERAL";
 

@@ -38,8 +38,8 @@ import { resolveTowerToday } from "@/lib/tower/today-resolution";
 import { selectAtlasPatterns } from "@/lib/tower/atlas-pattern-selectors";
 import {
   canonicalCioTowerTenantKey,
-} from "@/lib/cio-tower/metric-packet";
-import { canonicalCioTowerTenantDisplayName } from "@/lib/cio-tower/metric-packet";
+} from "@/lib/tower/metric-packet";
+import { canonicalCioTowerTenantDisplayName } from "@/lib/tower/metric-packet";
 import { answerCurrentTowerQuestion } from "@/lib/tower/current-layer-answer";
 import type {
   AtlasChatResponse,
