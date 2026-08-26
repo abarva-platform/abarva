@@ -42,6 +42,10 @@ Options:
   --secret-env KEY=NAME    Secret reference override for this execution. Repeatable.
   --out-dir <path>         Local proof/log output folder.
   --poll-seconds <n>       Poll interval. Default: 15
+  --idle-verify-wait-seconds <n>
+                           If restore verification only fails because another
+                           execution on this shared job is still running, wait
+                           up to this many seconds before failing. Default: 0.
   --no-wait                Start and return without polling.
   --no-restore-idle        Do not restore the job command/image after submission.
   --idle-image <image>     Idle image used when restoring. Env: ACA_OPERATOR_IDLE_IMAGE.
@@ -69,6 +73,7 @@ function parseArgs(argv) {
     memory: process.env.ACA_OPERATOR_MEMORY || "4Gi",
     timeout: process.env.ACA_OPERATOR_TIMEOUT || "7200",
     pollSeconds: Number(process.env.ACA_OPERATOR_POLL_SECONDS || 15),
+    idleVerifyWaitSeconds: Number(process.env.ACA_OPERATOR_IDLE_VERIFY_WAIT_SECONDS || 0),
     outDir: "",
     wait: true,
     restoreIdle: process.env.ACA_OPERATOR_RESTORE_IDLE !== "false",
@@ -106,6 +111,7 @@ function parseArgs(argv) {
       parsed.secretEnv.push(`${key}=secretref:${secret}`);
     } else if (arg === "--out-dir") parsed.outDir = next();
     else if (arg === "--poll-seconds") parsed.pollSeconds = Number(next());
+    else if (arg === "--idle-verify-wait-seconds") parsed.idleVerifyWaitSeconds = Number(next());
     else throw new Error(`Unknown argument: ${arg}`);
   }
 
@@ -664,6 +670,50 @@ function verifyIdle(options, outDir, baseline, ownExecutionName) {
   return result;
 }
 
+function verifyIdleWithRetry(options, outDir, baseline, ownExecutionName) {
+  const waitSeconds = Number(options.idleVerifyWaitSeconds || 0);
+  const pollSeconds = Math.max(1, Number(options.pollSeconds || 15));
+  const deadline = Date.now() + waitSeconds * 1000;
+  const attempts = [];
+
+  while (true) {
+    try {
+      const result = verifyIdle(options, outDir, baseline, ownExecutionName);
+      attempts.push({
+        at: new Date().toISOString(),
+        idleVerified: true,
+        problems: [],
+      });
+      writeJson(path.join(outDir, "99e-idle-verification-wait-log.json"), attempts);
+      return result;
+    } catch (error) {
+      let verification = null;
+      try {
+        verification = JSON.parse(fs.readFileSync(path.join(outDir, "99c-idle-verification.json"), "utf8"));
+      } catch {
+        verification = { idleVerified: false, problems: [error.message] };
+      }
+      const problems = verification.problems ?? [error.message];
+      attempts.push({
+        at: new Date().toISOString(),
+        idleVerified: false,
+        problems,
+      });
+      writeJson(path.join(outDir, "99e-idle-verification-wait-log.json"), attempts);
+
+      const onlyOtherExecutionsPending =
+        problems.length > 0 &&
+        problems.every((problem) => String(problem).startsWith("non-terminal execution(s) left running or queued:"));
+      if (!onlyOtherExecutionsPending || waitSeconds <= 0 || Date.now() >= deadline) {
+        throw error;
+      }
+
+      const remainingMs = Math.max(0, deadline - Date.now());
+      sleep(Math.min(pollSeconds * 1000, remainingMs));
+    }
+  }
+}
+
 function buildTimeoutUpdateArgs(options) {
   return [
     "containerapp",
@@ -723,6 +773,8 @@ function planOnly(options) {
     container: options.container,
     image: options.image,
     script: options.script,
+    pollSeconds: options.pollSeconds,
+    idleVerifyWaitSeconds: options.idleVerifyWaitSeconds,
     env: sanitizedEnv(effectiveEnv),
     commands: {
       timeoutUpdate: redactArgs(buildTimeoutUpdateArgs(options)),
@@ -825,6 +877,9 @@ async function main() {
   if (!Number.isFinite(options.pollSeconds) || options.pollSeconds <= 0) {
     throw new Error("--poll-seconds must be a positive number");
   }
+  if (!Number.isFinite(options.idleVerifyWaitSeconds) || options.idleVerifyWaitSeconds < 0) {
+    throw new Error("--idle-verify-wait-seconds must be a non-negative number");
+  }
 
   if (options.planOnly) {
     planOnly(options);
@@ -850,6 +905,7 @@ async function main() {
     wait: options.wait,
     restoreIdle: options.restoreIdle,
     idleImage: options.idleImage,
+    idleVerifyWaitSeconds: options.idleVerifyWaitSeconds,
     env: sanitizedEnv(effectiveEnv),
     startedAt: new Date().toISOString(),
   };
@@ -930,7 +986,7 @@ async function main() {
     if (options.restoreIdle) {
       try {
         restored = restoreIdle(options, options.outDir);
-        restored.idleVerification = verifyIdle(options, options.outDir, baseline, executionName);
+        restored.idleVerification = verifyIdleWithRetry(options, options.outDir, baseline, executionName);
       } catch (error) {
         restored = { restored: restored.restored, error: error.message };
         if (!failed) failed = error;

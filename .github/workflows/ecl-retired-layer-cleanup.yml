@@ -121,7 +121,8 @@ jobs:
             --env RETIRED_LAYER_PURGE_COMPACT_STDOUT=1 \
             --env RETIRED_LAYER_PURGE_OUT_DIR=/tmp/ecl-retired-layer-cleanup-proof \
             --out-dir audit-artifacts/ecl-retired-layer-cleanup/live-dry-run \
-            --poll-seconds 15
+            --poll-seconds 15 \
+            --idle-verify-wait-seconds 300
 
       - name: Live apply through private operator
         if: inputs.mode == 'apply'
@@ -135,7 +136,8 @@ jobs:
             --env RETIRED_LAYER_PURGE_COMPACT_STDOUT=1 \
             --env RETIRED_LAYER_PURGE_OUT_DIR=/tmp/ecl-retired-layer-cleanup-proof \
             --out-dir audit-artifacts/ecl-retired-layer-cleanup/live-apply \
-            --poll-seconds 15
+            --poll-seconds 15 \
+            --idle-verify-wait-seconds 300
 
       - name: Write cleanup summary
         if: always()
