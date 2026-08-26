@@ -216,6 +216,17 @@ function implementedAdapterFamilies(ref) {
       status: "proven_local",
     });
   }
+  if (
+    files.has("scripts/ecl/load_client_intake_vendor_contract_layer.py") &&
+    files.has("scripts/ecl/__tests__/run-ecl-client-intake-vendor-contract-adapter-tests.mjs")
+  ) {
+    families.push({
+      family: "SP08 Vendor/Contract",
+      adapter: "scripts/ecl/load_client_intake_vendor_contract_layer.py",
+      test: "scripts/ecl/__tests__/run-ecl-client-intake-vendor-contract-adapter-tests.mjs",
+      status: "proven_local",
+    });
+  }
   return families;
 }
 
