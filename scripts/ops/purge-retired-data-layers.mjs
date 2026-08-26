@@ -3,7 +3,6 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
-import { Client } from "pg";
 
 const DEFAULT_SCHEMAS = ["intelligence_v6", "intelligence_v7", "cio_tower"];
 const DEFAULT_STATUS_MAP = "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_map.csv";
@@ -35,6 +34,11 @@ const CODE_REFERENCE_EXTENSIONS = new Set([
   ".ts",
   ".tsx",
 ]);
+
+async function loadPgClient() {
+  const pg = await import("pg");
+  return pg.Client ?? pg.default?.Client;
+}
 
 function argValue(name, fallback = null) {
   const prefix = `${name}=`;
@@ -530,16 +534,6 @@ async function main() {
     return;
   }
 
-  const databaseUrl =
-    process.env.DATABASE_URL ??
-    process.env.ABARVA_AZURE_DATABASE_URL ??
-    process.env.AZURE_DATABASE_URL;
-  if (!databaseUrl) {
-    throw new Error(
-      "DATABASE_URL, ABARVA_AZURE_DATABASE_URL, or AZURE_DATABASE_URL is required",
-    );
-  }
-
   const apply = hasFlag("--apply");
   const envApply = process.env.RETIRED_LAYER_PURGE_APPLY === "1";
   const allowDependencies =
@@ -574,6 +568,74 @@ async function main() {
   const shouldApply = apply || envApply;
 
   fs.mkdirSync(outDir, { recursive: true });
+
+  if (hasFlag("--static-preflight-only")) {
+    const statusMap = readStatusMap(statusMapPath);
+    const statusGate = statusGateForSchemas(schemas, statusMap);
+    const codeReferenceManifest = readCodeReferenceManifest(codeReferenceManifestPath);
+    const codeReferenceInventory = scanCodeReferences(
+      schemas,
+      statusMap,
+      DEFAULT_CODE_REFERENCE_ROOTS,
+      codeReferenceManifest,
+    );
+    const activeCodeReferenceInventory = codeReferenceInventory.filter(
+      (reference) => reference.reference_state === "active",
+    );
+    const declaredRetiredCodeReferenceInventory = codeReferenceInventory.filter(
+      (reference) => reference.reference_state === "declared_retired",
+    );
+    const payload = {
+      run_id: runId,
+      generated_at: new Date().toISOString(),
+      mode: "static_preflight_only",
+      schemas,
+      code_references_count: codeReferenceInventory.length,
+      active_code_references_count: activeCodeReferenceInventory.length,
+      declared_retired_code_references_count: declaredRetiredCodeReferenceInventory.length,
+      active_code_references: activeCodeReferenceInventory,
+      declared_retired_code_references: declaredRetiredCodeReferenceInventory,
+      retired_code_reference_manifest: {
+        path: codeReferenceManifest.path,
+        resolved_path: codeReferenceManifest.resolved_path,
+        available: codeReferenceManifest.available,
+        entry_count: codeReferenceManifest.entries.length,
+      },
+      retirement_status_gate: {
+        status_map: statusGate.status_map,
+        unknown_schemas: statusGate.unknown_schemas,
+        unsafe_schemas: statusGate.unsafe_schemas,
+        apply_allowed: statusGate.apply_allowed,
+      },
+      gates: {
+        active_code_references: activeCodeReferenceInventory.length,
+        declared_retired_code_references: declaredRetiredCodeReferenceInventory.length,
+        status_unsafe_or_unknown_schemas:
+          statusGate.unsafe_schemas.length + statusGate.unknown_schemas.length,
+        static_preflight_passed:
+          activeCodeReferenceInventory.length === 0 && statusGate.apply_allowed,
+      },
+    };
+    const proofPath = path.join(outDir, `${runId}.json`);
+    fs.writeFileSync(proofPath, `${JSON.stringify(payload, null, 2)}\n`);
+    console.log(formatStructuredOutput({ ...payload, proof_path: proofPath }, compactStdout));
+    return;
+  }
+
+  const databaseUrl =
+    process.env.DATABASE_URL ??
+    process.env.ABARVA_AZURE_DATABASE_URL ??
+    process.env.AZURE_DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error(
+      "DATABASE_URL, ABARVA_AZURE_DATABASE_URL, or AZURE_DATABASE_URL is required",
+    );
+  }
+
+  const Client = await loadPgClient();
+  if (!Client) {
+    throw new Error("Could not load pg Client from the pg package.");
+  }
 
   const client = new Client({
     connectionString: databaseUrl,
