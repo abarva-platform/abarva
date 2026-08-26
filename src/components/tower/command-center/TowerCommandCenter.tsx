@@ -88,7 +88,6 @@ export function TowerCommandCenter({
   /** `null` when the tenant has no governed Tower read-model rows. */
   view: TowerCommandCenterView | null;
   tenantName: string;
-  /** ISO date the Tower read model was read. */
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();

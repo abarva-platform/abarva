@@ -101,8 +101,9 @@ differentiating; it also advertises internal disagreement to a buyer. This is a 
 - **Route IA** (`/tower`, `/tower/command`, `/tower/legacy`, tenant subsurfaces). Note the earlier
   diagnosis was wrong in a way that matters: `/tenant/<slug>/tower/value` 404s *correctly* —
   `value` is not a subsurface slug. Subsurfaces are `shadow-ai`, `vendors`, `regulatory`; the six
-  tabs are `?view=` params. So the work is not "wire up a missing route", it is merging two URL
-  namespaces that currently look identical. Larger job, separate spec.
+  tabs are `?tab=` params, while subsurface redirects still use their own URL vocabulary. So the
+  work is not "wire up a missing route", it is reconciling URL namespaces that currently look
+  identical to a reviewer. Larger job, separate spec.
 - **aVa as a right-side advisory rail.** Depends on the verdict headline existing first.
 - **Responsive/mobile proof.** Needs a working viewport override; the in-app browser override did
   not take effect during review, so no responsive validation is claimed.
