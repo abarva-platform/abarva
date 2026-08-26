@@ -68,6 +68,7 @@ docs/*
 !docs/architecture/
 docs/architecture/*
 !docs/architecture/meridian-demo-findings-20260824.json
+!docs/architecture/ecl-retired-code-reference-manifest.json
 !docs/architecture/sql-drafts/
 !docs/architecture/sql-drafts/**
 !docs/source/
