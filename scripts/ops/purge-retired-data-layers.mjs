@@ -124,6 +124,7 @@ function readStatusMap(statusMapPath) {
   const headers = parseCsvLine(headerLine);
   const schemaIndex = headers.indexOf("schema");
   const statusIndex = headers.indexOf("sunset_status");
+  const tableIndex = headers.indexOf("table");
   if (schemaIndex < 0 || statusIndex < 0) {
     throw new Error(`Retirement status map must include schema and sunset_status columns: ${statusMapPath}`);
   }
@@ -134,9 +135,11 @@ function readStatusMap(statusMapPath) {
     const schema = String(cells[schemaIndex] ?? "").trim();
     const status = String(cells[statusIndex] ?? "").trim();
     if (!schema || !status) continue;
-    const entry = rowsBySchema.get(schema) ?? { row_count: 0, statuses: new Map() };
+    const table = tableIndex >= 0 ? String(cells[tableIndex] ?? "").trim() : "";
+    const entry = rowsBySchema.get(schema) ?? { row_count: 0, statuses: new Map(), objects: new Set() };
     entry.row_count += 1;
     entry.statuses.set(status, (entry.statuses.get(status) ?? 0) + 1);
+    if (table) entry.objects.add(table);
     rowsBySchema.set(schema, entry);
   }
 
@@ -209,11 +212,28 @@ function listFilesRecursive(rootPath) {
   return files.sort();
 }
 
-function scanCodeReferences(schemas, roots = DEFAULT_CODE_REFERENCE_ROOTS) {
-  const patterns = schemas.map((schema) => ({
-    schema,
-    regex: new RegExp(`\\b${escapeRegExp(schema)}\\.`, "g"),
-  }));
+function buildCodeReferencePatterns(schemas, statusMap) {
+  return schemas.flatMap((schema) => {
+    const objectNames = Array.from(statusMap?.rows_by_schema.get(schema)?.objects ?? []);
+    if (objectNames.length === 0) {
+      return [
+        {
+          schema,
+          object: null,
+          regex: new RegExp(`\\b${escapeRegExp(schema)}\\.[A-Za-z_][A-Za-z0-9_$]*\\b`, "g"),
+        },
+      ];
+    }
+    return objectNames.map((objectName) => ({
+      schema,
+      object: objectName,
+      regex: new RegExp(`\\b${escapeRegExp(schema)}\\.${escapeRegExp(objectName)}\\b`, "g"),
+    }));
+  });
+}
+
+function scanCodeReferences(schemas, statusMap = null, roots = DEFAULT_CODE_REFERENCE_ROOTS) {
+  const patterns = buildCodeReferencePatterns(schemas, statusMap);
   const references = [];
 
   for (const root of roots) {
@@ -229,6 +249,7 @@ function scanCodeReferences(schemas, roots = DEFAULT_CODE_REFERENCE_ROOTS) {
           pattern.regex.lastIndex = 0;
           references.push({
             schema: pattern.schema,
+            object: pattern.object,
             file: relativePath,
             line: index + 1,
             text: line.trim().slice(0, 220),
@@ -289,16 +310,18 @@ function selfTest() {
   fs.mkdirSync(path.join(codeRefRoot, "src"), { recursive: true });
   fs.mkdirSync(path.join(codeRefRoot, "scripts/ops"), { recursive: true });
   fs.writeFileSync(path.join(codeRefRoot, "src/example.ts"), "const table = 'legacy_schema.table';\n");
+  fs.writeFileSync(path.join(codeRefRoot, "src/method.ts"), "const value = legacy_schema.match(value);\n");
   fs.writeFileSync(
     path.join(codeRefRoot, "scripts/ops/purge-retired-data-layers.mjs"),
     "const ignored = 'legacy_schema.self';\n",
   );
+  fs.writeFileSync(path.join(codeRefRoot, "map.csv"), "schema,table,sunset_status\nlegacy_schema,table,ARCHIVE_ONLY\n");
   const priorCwd = process.cwd();
   process.chdir(codeRefRoot);
   try {
-    const references = scanCodeReferences(["legacy_schema"]);
+    const references = scanCodeReferences(["legacy_schema"], readStatusMap("map.csv"));
     if (references.length !== 1 || references[0].file !== "src/example.ts") {
-      throw new Error("Code-reference gate must detect runtime references and ignore this operator.");
+      throw new Error("Code-reference gate must detect mapped object references and ignore method-shaped false positives.");
     }
   } finally {
     process.chdir(priorCwd);
@@ -409,7 +432,8 @@ async function main() {
   try {
     await client.query("begin");
     const schemaInventory = [];
-    const statusGate = statusGateForSchemas(schemas, readStatusMap(statusMapPath));
+    const statusMap = readStatusMap(statusMapPath);
+    const statusGate = statusGateForSchemas(schemas, statusMap);
 
     for (const schemaName of schemas) {
       const exists = await client.query(
@@ -470,7 +494,7 @@ async function main() {
 
     const dependencies = await client.query(buildOutsideDependencyQuery(), [schemas]);
     const dependencyInventory = dependencies.rows;
-    const codeReferenceInventory = scanCodeReferences(schemas);
+    const codeReferenceInventory = scanCodeReferences(schemas, statusMap);
     const proof = {
       run_id: runId,
       generated_at: new Date().toISOString(),

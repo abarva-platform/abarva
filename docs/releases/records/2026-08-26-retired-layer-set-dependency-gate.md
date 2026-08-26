@@ -18,9 +18,9 @@ This update also packages the committed retirement map into the ACA runtime imag
 
 The compact proof event is now emitted as a single JSON line. That keeps the structured event inside the ACA log tail and allows the operator wrapper to extract it without relying on manual log reconstruction.
 
-Apply mode is also gated by static code references. A schema can have zero rows and no database
-dependencies but still be used by retained scripts or runtime code; the purge proof now records
-those references and refuses apply unless a deliberate bypass is supplied.
+Apply mode is also gated by static code references to known retired objects. A schema can have zero
+rows and no database dependencies but still be used by retained scripts or runtime code; the purge
+proof now records those references and refuses apply unless a deliberate bypass is supplied.
 
 ## Layer Impact
 
@@ -42,7 +42,7 @@ Data-plane operations: hardens the dry-run and apply gate for retired schema inv
 - `scripts/ops/purge-retired-data-layers.mjs`: adds a committed-retirement-map status gate so mixed HOLD/platform-control schemas cannot be dropped by a broad apply command.
 - `scripts/ops/purge-retired-data-layers.mjs`: validate-only mode now verifies the real default status map is available and has schema rows.
 - `scripts/ops/purge-retired-data-layers.mjs`: compact stdout now emits one-line JSON so ACA proof extraction remains parseable.
-- `scripts/ops/purge-retired-data-layers.mjs`: adds a static code-reference gate for requested schemas and reports file/line evidence in the proof bundle.
+- `scripts/ops/purge-retired-data-layers.mjs`: adds a static code-reference gate for requested schemas, matched against known objects in the retirement map, and reports file/line evidence in the proof bundle.
 - `Dockerfile` and `.dockerignore`: package the narrow retirement-map report directory required by ACA operator dry-runs.
 
 ## QA / Validation
@@ -52,7 +52,7 @@ Data-plane operations: hardens the dry-run and apply gate for retired schema inv
 - PASS: `npx eslint scripts/ops/purge-retired-data-layers.mjs`
 - PASS: `git diff --check`
 - PASS: status-gate self-test covers safe, mixed, and unknown schemas.
-- PASS: code-reference self-test covers detected schema references while ignoring the operator itself.
+- PASS: code-reference self-test covers detected object references while ignoring method-shaped false positives and the operator itself.
 - PASS: validate-only reports the committed default status map as available with 25 schema groups.
 
 ## Rollout Plan
