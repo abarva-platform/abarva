@@ -390,15 +390,20 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
       }}
     >
       <Suspense fallback={null}>
-        <TowerEclProjectionPanel preview={towerEclPreview} />
-        {towerEclPreview ? <EclDemoFindingsPanel product="tower" /> : null}
-        <TowerCanonicalPanel canonical={canonical} />
+        {/*
+          The Command Center owns the first viewport. Reconciliation and projection diagnostics are
+          supporting evidence for the posture above them, not a preamble to it: rendering them first
+          pushed the actual Tower below the fold and made an audit worksheet the opening statement.
+          They stay on the page, in full, immediately beneath.
+        */}
         <TowerCommandCenterAvaShell
           view={commandCenterView}
           tenantName={tenantName}
           clientId={towerChatClientId}
-          refreshedOn={new Date().toISOString().slice(0, 10)}
         />
+        <TowerCanonicalPanel canonical={canonical} />
+        <TowerEclProjectionPanel preview={towerEclPreview} />
+        {towerEclPreview ? <EclDemoFindingsPanel product="tower" /> : null}
       </Suspense>
     </AppShell>
   );

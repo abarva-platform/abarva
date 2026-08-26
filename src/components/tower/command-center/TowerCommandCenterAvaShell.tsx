@@ -125,12 +125,10 @@ export function TowerCommandCenterAvaShell({
   view,
   tenantName,
   clientId,
-  refreshedOn,
 }: {
   view: TowerCommandCenterView | null;
   tenantName: string;
   clientId: string | null;
-  refreshedOn: string;
 }) {
   const initialOpener = useMemo<AtlasMessage>(
     () => ({
@@ -284,7 +282,6 @@ export function TowerCommandCenterAvaShell({
     <TowerCommandCenter
       view={view}
       tenantName={tenantName}
-      refreshedOn={refreshedOn}
     />
   );
 

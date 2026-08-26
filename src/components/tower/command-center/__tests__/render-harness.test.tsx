@@ -108,7 +108,6 @@ describe("Command Center render harness", () => {
       <TowerCommandCenter
         view={view}
         tenantName="Fixture Tenant"
-        refreshedOn="2026-07-23"
       />,
     );
   });
