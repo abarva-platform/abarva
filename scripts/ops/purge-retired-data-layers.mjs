@@ -197,6 +197,9 @@ function selfTest() {
   if (!statusGate.unknown_schemas.includes("unknown_schema")) {
     throw new Error("Status gate must identify schemas absent from the status map.");
   }
+  if (formatStructuredOutput({ event: "test", proof: { ok: true } }, true).includes("\n")) {
+    throw new Error("Compact structured output must be emitted as one log line.");
+  }
   console.log(
     JSON.stringify({
       ok: true,
@@ -220,6 +223,10 @@ function validateStatusMap(statusMapPath = DEFAULT_STATUS_MAP) {
     throw new Error(`Retirement status map has no schema rows: ${statusMap.resolved_path}`);
   }
   return statusMap;
+}
+
+function formatStructuredOutput(payload, compact) {
+  return JSON.stringify(payload, null, compact ? 0 : 2);
 }
 
 async function main() {
@@ -432,19 +439,14 @@ async function main() {
       await client.query("rollback");
     }
 
-    console.log(
-      JSON.stringify(
-        {
-          event: "retired_data_layer_purge_proof",
-          structured_event: "retired_data_layer_purge_proof",
-          ok: true,
-          proof_path: proofPath,
-          proof: compactStdout ? proofSummary : proof,
-        },
-        null,
-        2,
-      ),
-    );
+    const stdoutPayload = {
+      event: "retired_data_layer_purge_proof",
+      structured_event: "retired_data_layer_purge_proof",
+      ok: true,
+      proof_path: proofPath,
+      proof: compactStdout ? proofSummary : proof,
+    };
+    console.log(formatStructuredOutput(stdoutPayload, compactStdout));
   } catch (error) {
     await client.query("rollback").catch(() => undefined);
     throw error;
