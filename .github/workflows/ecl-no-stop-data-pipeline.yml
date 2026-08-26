@@ -110,6 +110,7 @@ jobs:
             scripts/ecl/load_client_intake_data_bi_etl_layer.py \
             scripts/ecl/load_client_intake_finance_erp_layer.py \
             scripts/ecl/load_client_intake_grc_layer.py \
+            scripts/ecl/load_client_intake_ai_usage_models_layer.py \
             scripts/ecl/load_client_intake_infrastructure_layer.py \
             scripts/ecl/load_client_intake_kpi_operations_layer.py \
             scripts/ecl/load_client_intake_ppm_layer.py \
@@ -165,6 +166,10 @@ jobs:
       - name: Prove client intake GRC adapter
         run: |
           npm run test:ecl-client-intake-grc-adapter
+
+      - name: Prove client intake AI usage/models adapter
+        run: |
+          npm run test:ecl-client-intake-ai-usage-models-adapter
 
       - name: Prove client intake KPI/operations adapter
         run: |

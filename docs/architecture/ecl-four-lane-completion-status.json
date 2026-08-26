@@ -42,7 +42,7 @@
       "lane": "L-CLIENT",
       "slice": "workbook_intake_adapters",
       "status": "pending",
-      "numerator": 8,
+      "numerator": 9,
       "denominator": 14,
       "run_id": null,
       "digest": null,
@@ -162,7 +162,7 @@
       "map_scope": "static repo-visible SQL CREATE TABLE inventory"
     },
     "client_intake_adapters": {
-      "numerator": 8,
+      "numerator": 9,
       "denominator": 14,
       "families": [
         {
@@ -217,8 +217,8 @@
         },
         {
           "family": "SP11 AI Usage/Models",
-          "status": "not_built",
-          "adapter": null
+          "status": "proven_local",
+          "adapter": "scripts/ecl/load_client_intake_ai_usage_models_layer.py"
         },
         {
           "family": "SP12 Evidence Room",
