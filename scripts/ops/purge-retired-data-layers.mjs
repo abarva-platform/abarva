@@ -20,6 +20,34 @@ function hasFlag(name) {
   return process.argv.includes(name);
 }
 
+function buildOutsideDependencyQuery() {
+  return `with retired_namespace as (
+            select oid, nspname
+              from pg_namespace
+             where nspname = any($1::text[])
+          ),
+          retired_objects as (
+            select c.oid, n.nspname as schema_name, c.relname as object_name, c.relkind
+              from pg_class c
+              join pg_namespace n on n.oid = c.relnamespace
+             where n.oid in (select oid from retired_namespace)
+          )
+          select distinct
+                 source_ns.nspname as referencing_schema,
+                 source_class.relname as referencing_object,
+                 source_class.relkind as referencing_kind,
+                 retired.schema_name as retired_schema,
+                 retired.object_name as retired_object,
+                 retired.relkind as retired_kind
+            from pg_depend dep
+            join retired_objects retired on retired.oid = dep.refobjid
+            join pg_rewrite rewrite on rewrite.oid = dep.objid
+            join pg_class source_class on source_class.oid = rewrite.ev_class
+            join pg_namespace source_ns on source_ns.oid = source_class.relnamespace
+           where not (source_ns.nspname = any($1::text[]))
+           order by referencing_schema, referencing_object, retired.schema_name, retired.object_name`;
+}
+
 function quoteIdent(value) {
   return `"${String(value).replaceAll('"', '""')}"`;
 }
@@ -30,7 +58,33 @@ async function countRows(client, schemaName, tableName) {
   return Number(result.rows[0]?.row_count ?? 0);
 }
 
+function selfTest() {
+  const query = buildOutsideDependencyQuery();
+  if (!query.includes("nspname = any($1::text[])")) {
+    throw new Error("Dependency query must select the full retired schema set.");
+  }
+  if (!query.includes("not (source_ns.nspname = any($1::text[]))")) {
+    throw new Error("Dependency query must exclude dependencies inside the retired schema set.");
+  }
+  if (query.includes("source_ns.nspname <> $1")) {
+    throw new Error("Dependency query must not use one-schema dependency filtering.");
+  }
+  console.log(
+    JSON.stringify({
+      ok: true,
+      mode: "self_test",
+      dependency_scope: "retirement_set",
+      compact_stdout_supported: true,
+    }),
+  );
+}
+
 async function main() {
+  if (hasFlag("--self-test")) {
+    selfTest();
+    return;
+  }
+
   const validateOnly = hasFlag("--validate-only");
   if (validateOnly) {
     console.log(
@@ -38,6 +92,7 @@ async function main() {
         ok: true,
         mode: "validate_only",
         default_schemas: DEFAULT_SCHEMAS,
+        dependency_scope: "retirement_set",
       }),
     );
     return;
@@ -57,6 +112,8 @@ async function main() {
   const envApply = process.env.RETIRED_LAYER_PURGE_APPLY === "1";
   const allowDependencies =
     hasFlag("--allow-dependencies") || process.env.RETIRED_LAYER_PURGE_ALLOW_DEPENDENCIES === "1";
+  const compactStdout =
+    hasFlag("--compact-stdout") || process.env.RETIRED_LAYER_PURGE_COMPACT_STDOUT === "1";
   const outDir =
     argValue("--out-dir", process.env.RETIRED_LAYER_PURGE_OUT_DIR) ??
     path.join(os.tmpdir(), "retired-layer-purge");
@@ -82,7 +139,6 @@ async function main() {
   try {
     await client.query("begin");
     const schemaInventory = [];
-    const dependencyInventory = [];
 
     for (const schemaName of schemas) {
       const exists = await client.query(
@@ -139,37 +195,10 @@ async function main() {
         row_count: schemaRowCount,
       });
 
-      const dependencies = await client.query(
-        `with retired_namespace as (
-            select oid
-              from pg_namespace
-             where nspname = $1
-          ),
-          retired_objects as (
-            select c.oid, n.nspname as schema_name, c.relname as object_name, c.relkind
-              from pg_class c
-              join pg_namespace n on n.oid = c.relnamespace
-             where n.oid in (select oid from retired_namespace)
-          )
-          select distinct
-                 source_ns.nspname as referencing_schema,
-                 source_class.relname as referencing_object,
-                 source_class.relkind as referencing_kind,
-                 retired.schema_name as retired_schema,
-                 retired.object_name as retired_object,
-                 retired.relkind as retired_kind
-            from pg_depend dep
-            join retired_objects retired on retired.oid = dep.refobjid
-            join pg_rewrite rewrite on rewrite.oid = dep.objid
-            join pg_class source_class on source_class.oid = rewrite.ev_class
-            join pg_namespace source_ns on source_ns.oid = source_class.relnamespace
-           where source_ns.nspname <> $1
-           order by referencing_schema, referencing_object, retired_object`,
-        [schemaName],
-      );
-      dependencyInventory.push(...dependencies.rows);
     }
 
+    const dependencies = await client.query(buildOutsideDependencyQuery(), [schemas]);
+    const dependencyInventory = dependencies.rows;
     const proof = {
       run_id: runId,
       generated_at: new Date().toISOString(),
@@ -182,6 +211,21 @@ async function main() {
         outside_dependencies: dependencyInventory.length,
         apply_allowed: shouldApply && (allowDependencies || dependencyInventory.length === 0),
       },
+    };
+    const proofSummary = {
+      run_id: proof.run_id,
+      generated_at: proof.generated_at,
+      mode: proof.mode,
+      schemas,
+      schema_count: schemaInventory.length,
+      schemas_discovered: proof.gates.schemas_discovered,
+      table_count: schemaInventory.reduce((sum, row) => sum + row.tables.length, 0),
+      view_count: schemaInventory.reduce((sum, row) => sum + row.views.length, 0),
+      routine_count: schemaInventory.reduce((sum, row) => sum + row.routines.length, 0),
+      total_row_count: schemaInventory.reduce((sum, row) => sum + row.row_count, 0),
+      dependencies_outside_retired_schemas_count: dependencyInventory.length,
+      dependencies_outside_retired_schemas: dependencyInventory,
+      gates: proof.gates,
     };
 
     const proofPath = path.join(outDir, `${runId}.json`);
@@ -204,7 +248,19 @@ async function main() {
       await client.query("rollback");
     }
 
-    console.log(JSON.stringify({ event: "retired_data_layer_purge_proof", ok: true, proof_path: proofPath, proof }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          event: "retired_data_layer_purge_proof",
+          structured_event: "retired_data_layer_purge_proof",
+          ok: true,
+          proof_path: proofPath,
+          proof: compactStdout ? proofSummary : proof,
+        },
+        null,
+        2,
+      ),
+    );
   } catch (error) {
     await client.query("rollback").catch(() => undefined);
     throw error;
