@@ -11,6 +11,7 @@ const tmp = mkdtempSync(path.join(os.tmpdir(), "ecl-four-lane-status-"));
 const compactSummary = path.join(tmp, "compact-summary.json");
 const browserSummary = path.join(tmp, "browser-summary.json");
 const evalSummary = path.join(tmp, "eval-summary.json");
+const cleanupSummary = path.join(tmp, "cleanup-summary.json");
 const out = path.join(tmp, "status.json");
 const ref = process.env.ECL_RECONCILE_REF || "origin/main";
 
@@ -129,6 +130,38 @@ try {
     "utf8",
   );
 
+  writeFileSync(
+    cleanupSummary,
+    `${JSON.stringify(
+      {
+        schema_version: "ecl_retired_layer_cleanup_proof/v1",
+        accepted: true,
+        run_id: "cleanup-proof-fixture",
+        workflow_url: "https://github.com/abarva-platform/abarva/actions/runs/cleanup-proof-fixture",
+        timestamp: "2026-08-26T22:48:00.000Z",
+        mode: "dry_run",
+        schema_summaries: [
+          {
+            schema: "source_registry",
+            exists: false,
+            table_count: 0,
+            view_count: 0,
+            routine_count: 0,
+            row_count: 0,
+          },
+        ],
+        dependencies_outside_retired_schemas_count: 0,
+        active_code_references_count: 0,
+        retirement_status_gate: {
+          apply_allowed: true,
+        },
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+
   run("node", [
     "scripts/ecl/write_ecl_four_lane_completion_status.mjs",
     "--ref",
@@ -141,6 +174,8 @@ try {
     browserSummary,
     "--eval-operator-summary",
     evalSummary,
+    "--cleanup-proof-summary",
+    cleanupSummary,
     "--run-id",
     "proof-run-fixture",
     "--timestamp",
@@ -171,7 +206,7 @@ try {
     {
       cutover: "4/4",
       proof: "63/63",
-      cleanup: "25/851",
+      cleanup: "34/851",
       client: "14/14",
     },
   );
@@ -200,6 +235,8 @@ try {
   assert.equal(status.repo_denominators.serving_views.denominator, 40);
   assert.equal(status.repo_denominators.client_intake_adapters.denominator, 14);
   assert.equal(status.repo_denominators.client_intake_adapters.numerator, 14);
+  assert.equal(status.repo_denominators.legacy_cleanup.live_absent_schema_credit.numerator, 9);
+  assert.deepEqual(status.repo_denominators.legacy_cleanup.live_absent_schema_credit.schemas, ["source_registry"]);
   assert.equal(committedStatus.repo_denominators.client_intake_adapters.denominator, 14);
   assert.equal(committedStatus.repo_denominators.client_intake_adapters.numerator, 14);
   assert.equal(status.repo_denominators.client_intake_source_family_landing.numerator, 14);

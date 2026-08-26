@@ -13,6 +13,7 @@ const DEFAULT_RETIREMENT_SUMMARY =
 const DEFAULT_RETIREMENT_MAP =
   "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_map.csv";
 const DEFAULT_STATUS = "docs/architecture/ecl-four-lane-completion-status.json";
+const DEFAULT_CLEANUP_PROOF = "docs/architecture/ecl-source-registry-retirement-proof-2026-08-26.json";
 
 const SURFACE_TARGETS = {
   Home: 16,
@@ -72,6 +73,7 @@ function parseArgs(argv) {
     liveProofSummary: process.env.ECL_LIVE_PROOF_COMPACT_SUMMARY || null,
     browserOperatorSummary: process.env.ECL_BROWSER_OPERATOR_SUMMARY || null,
     evalOperatorSummary: process.env.ECL_EVAL_OPERATOR_SUMMARY || null,
+    cleanupProofSummary: process.env.ECL_CLEANUP_PROOF_SUMMARY || null,
     runId: process.env.GITHUB_RUN_ID || null,
     digest: process.env.ECL_STATUS_IMAGE_DIGEST || null,
     timestamp: process.env.ECL_STATUS_TIMESTAMP || new Date().toISOString(),
@@ -90,6 +92,7 @@ function parseArgs(argv) {
     else if (arg === "--live-proof-summary") args.liveProofSummary = next();
     else if (arg === "--browser-operator-summary") args.browserOperatorSummary = next();
     else if (arg === "--eval-operator-summary") args.evalOperatorSummary = next();
+    else if (arg === "--cleanup-proof-summary") args.cleanupProofSummary = next();
     else if (arg === "--run-id") args.runId = next();
     else if (arg === "--digest") args.digest = next();
     else if (arg === "--timestamp") args.timestamp = next();
@@ -106,6 +109,7 @@ Options:
   --live-proof-summary <path>             compact-summary.json from ecl-product-live-proof.
   --browser-operator-summary <path>       Browser operator summary.json.
   --eval-operator-summary <path>          Eval operator summary.json.
+  --cleanup-proof-summary <path>          Compact retired-layer cleanup proof JSON.
   --run-id <id>                           Proof or status run id.
   --digest <sha256>                       Digest pinned image under proof.
   --timestamp <iso>                       Status timestamp.
@@ -200,6 +204,66 @@ function countRetiredLegacyAssets(retirementMapCsv) {
   const statusIndex = headers.indexOf("sunset_status");
   assert.notEqual(statusIndex, -1, "legacy retirement map must contain sunset_status");
   return lines.slice(1).filter((line) => TERMINAL_LEGACY_STATUSES.has(line.split(",")[statusIndex] ?? "")).length;
+}
+
+function countRetiredLegacyAssetsForSchemas(retirementMapCsv, schemas) {
+  if (!schemas.length) return 0;
+  const schemaSet = new Set(schemas);
+  const lines = retirementMapCsv.trim().split(/\r?\n/);
+  if (lines.length < 2) return 0;
+  const headers = lines[0].split(",");
+  const schemaIndex = headers.indexOf("schema");
+  const statusIndex = headers.indexOf("sunset_status");
+  assert.notEqual(schemaIndex, -1, "legacy retirement map must contain schema");
+  assert.notEqual(statusIndex, -1, "legacy retirement map must contain sunset_status");
+  return lines
+    .slice(1)
+    .filter((line) => {
+      const columns = line.split(",");
+      return schemaSet.has(columns[schemaIndex]) && !TERMINAL_LEGACY_STATUSES.has(columns[statusIndex] ?? "");
+    })
+    .length;
+}
+
+function gitFileExists(ref, file) {
+  try {
+    execFileSync("git", ["cat-file", "-e", `${ref}:${file}`], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function cleanupProofFromArgs(args) {
+  if (args.cleanupProofSummary) {
+    const proof = readJsonIfPresent(args.cleanupProofSummary);
+    assert(proof, `cleanup proof summary not found: ${args.cleanupProofSummary}`);
+    return proof;
+  }
+  if (!gitFileExists(args.ref, DEFAULT_CLEANUP_PROOF)) return null;
+  return JSON.parse(gitShow(args.ref, DEFAULT_CLEANUP_PROOF));
+}
+
+function acceptedCleanupAbsentSchemas(cleanupProof) {
+  if (!cleanupProof?.accepted) return [];
+  if (cleanupProof.mode !== "dry_run") return [];
+  if (cleanupProof.dependencies_outside_retired_schemas_count !== 0) return [];
+  if (cleanupProof.active_code_references_count !== 0) return [];
+  if (cleanupProof.retirement_status_gate?.apply_allowed !== true) return [];
+
+  const summaries = cleanupProof.schema_summaries ?? [];
+  if (!Array.isArray(summaries) || summaries.length === 0) return [];
+  return summaries
+    .filter(
+      (summary) =>
+        summary.exists === false &&
+        Number(summary.table_count ?? 0) === 0 &&
+        Number(summary.view_count ?? 0) === 0 &&
+        Number(summary.routine_count ?? 0) === 0 &&
+        Number(summary.row_count ?? 0) === 0,
+    )
+    .map((summary) => summary.schema)
+    .filter(Boolean);
 }
 
 function implementedAdapterFamilies(ref) {
@@ -437,7 +501,10 @@ function buildStatus(args) {
   const legacyDenominator =
     retirementSummary.create_table_statements - (retirementSummary.status_counts?.HOLD_PLATFORM_CONTROL ?? 0);
   assert.equal(legacyDenominator, 851, "legacy data-plane denominator is fixed at 851 by the retirement map");
-  const legacyRetired = countRetiredLegacyAssets(retirementMap);
+  const cleanupProof = cleanupProofFromArgs(args);
+  const cleanupAbsentSchemas = acceptedCleanupAbsentSchemas(cleanupProof);
+  const cleanupAbsentRetired = countRetiredLegacyAssetsForSchemas(retirementMap, cleanupAbsentSchemas);
+  const legacyRetired = countRetiredLegacyAssets(retirementMap) + cleanupAbsentRetired;
 
   const lanes = [
     {
@@ -466,9 +533,9 @@ function buildStatus(args) {
       status: legacyRetired === 851 ? "complete" : "pending",
       numerator: legacyRetired,
       denominator: 851,
-      run_id: null,
-      digest: null,
-      timestamp: args.timestamp,
+      run_id: cleanupProof?.run_id ?? null,
+      digest: cleanupProof?.digest ?? null,
+      timestamp: cleanupProof?.timestamp ?? args.timestamp,
     },
     {
       lane: "L-CLIENT",
@@ -550,6 +617,12 @@ function buildStatus(args) {
         denominator: 851,
         control_plane_hold_assets: retirementSummary.status_counts?.HOLD_PLATFORM_CONTROL ?? 0,
         map_scope: retirementSummary.scope,
+        live_absent_schema_credit: {
+          numerator: cleanupAbsentRetired,
+          schemas: cleanupAbsentSchemas,
+          proof_run_id: cleanupProof?.run_id ?? null,
+          proof_workflow_url: cleanupProof?.workflow_url ?? null,
+        },
       },
       client_intake_adapters: {
         numerator: adapters.length,
