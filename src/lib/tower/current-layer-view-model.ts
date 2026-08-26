@@ -11,6 +11,10 @@ export interface TowerMartCommandCenter {
   martVersion: string;
   sourceStandard: string;
   formulaVersion: string;
+  /** Reporting period the posture row covers. Absent or null when the source did not record one. */
+  asOfPeriod?: string | null;
+  /** When the posture row was last built. Absent or null when the source did not record one. */
+  refreshTimestamp?: string | null;
   totalItBudgetFy26: number | null;
   runBudgetFy26: number | null;
   changeBudgetFy26: number | null;

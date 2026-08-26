@@ -46,7 +46,6 @@ describe("TowerCommandCenterAvaShell", () => {
         view={view}
         tenantName="Meridian"
         clientId="meridian"
-        refreshedOn="2026-07-23"
       />,
     );
 

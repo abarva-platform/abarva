@@ -52,7 +52,6 @@ function renderPage() {
     <TowerCommandCenter
       view={view}
       tenantName="Fixture Tenant"
-      refreshedOn="2026-07-23"
     />,
   );
 }
@@ -77,7 +76,6 @@ function renderDenseAiPage() {
     <TowerCommandCenter
       view={{ ...view!, ai: denseAi }}
       tenantName="Fixture Tenant"
-      refreshedOn="2026-07-23"
     />,
   );
 }
@@ -293,7 +291,6 @@ describe("TowerCommandCenter", () => {
           },
         }}
         tenantName="Fixture Tenant"
-        refreshedOn="2026-07-23"
       />,
     );
     fireEvent.click(tab(/AI Portfolio/));
@@ -359,7 +356,6 @@ describe("TowerCommandCenter", () => {
           ],
         }}
         tenantName="Fixture Tenant"
-        refreshedOn="2026-07-23"
       />,
     );
 
@@ -432,7 +428,6 @@ describe("TowerCommandCenter", () => {
       <TowerCommandCenter
         view={{ ...view!, actions: denseActions }}
         tenantName="Fixture Tenant"
-        refreshedOn="2026-07-23"
       />,
     );
     fireEvent.click(tab(/Recommended Actions/));
@@ -623,7 +618,6 @@ describe("TowerCommandCenter — empty tenant", () => {
       <TowerCommandCenter
         view={null}
         tenantName="Empty Tenant"
-        refreshedOn="2026-07-23"
       />,
     );
     expect(

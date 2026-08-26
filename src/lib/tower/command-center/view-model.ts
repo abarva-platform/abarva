@@ -1462,6 +1462,8 @@ export function buildTowerCommandCenterView(
     formulaVersion: command.formulaVersion,
     sourceStandard: command.sourceStandard,
     sourceFiles: command.sourceFiles ?? [],
+    asOfPeriod: command.asOfPeriod ?? null,
+    refreshTimestamp: command.refreshTimestamp ?? null,
 
     budgetUsd: command.totalItBudgetFy26,
     runUsd: command.runBudgetFy26,

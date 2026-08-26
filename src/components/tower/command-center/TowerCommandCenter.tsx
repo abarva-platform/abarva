@@ -57,7 +57,22 @@ const TABS: ReadonlyArray<{ id: TowerTab; label: string }> = [
 ];
 
 const TAB_IDS = new Set<string>(TABS.map((t) => t.id));
-const BOARDROOM_UPDATED_LABEL = "Updated Aug 9, 2026";
+/**
+ * Freshness is reported from the posture row, never from render time and never from a literal.
+ * A frozen string and a `new Date()` at render both claim currency the data has not earned, which
+ * is the one thing an evidence-governed surface cannot do. When the source records no period or
+ * build time, say so plainly rather than substituting a plausible date.
+ */
+function freshnessLabel(
+  asOfPeriod: string | null,
+  refreshTimestamp: string | null,
+): string {
+  const built = refreshTimestamp ? refreshTimestamp.slice(0, 10) : null;
+  if (asOfPeriod && built) return `As of ${asOfPeriod} · built ${built}`;
+  if (asOfPeriod) return `As of ${asOfPeriod} · build date not recorded`;
+  if (built) return `Built ${built} · reporting period not recorded`;
+  return "As-of date not recorded";
+}
 
 type DrawerState =
   | { kind: "program"; id: string }
@@ -69,13 +84,10 @@ type DrawerState =
 export function TowerCommandCenter({
   view,
   tenantName,
-  refreshedOn,
 }: {
   /** `null` when the tenant has no governed Tower read-model rows. */
   view: TowerCommandCenterView | null;
   tenantName: string;
-  /** ISO date the Tower read model was read. */
-  refreshedOn: string;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -171,7 +183,9 @@ export function TowerCommandCenter({
     funnel: blockedValue > 0,
     evidence: (view?.gaps.length ?? 0) > 0,
   };
-  const headerScope = view ? BOARDROOM_UPDATED_LABEL : "no governed rows";
+  const headerScope = view
+    ? freshnessLabel(view.summary.asOfPeriod, view.summary.refreshTimestamp)
+    : "no governed rows";
   const boardroomRail = view
     ? [
         {
@@ -308,8 +322,6 @@ export function TowerCommandCenter({
             </div>
             <div className={styles.dashRight}>
               <div className={styles.when}>
-                Refreshed {refreshedOn}
-                <br />
                 {headerScope}
               </div>
               {view && commandCenterAttention(view) ? (

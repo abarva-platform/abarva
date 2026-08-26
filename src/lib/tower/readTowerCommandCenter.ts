@@ -375,6 +375,10 @@ function mapCommand(row: BoardPostureRow): TowerMartCommandCenter {
     martVersion: row.mart_version,
     sourceStandard: row.source_standard,
     formulaVersion: row.formula_version,
+    // Real freshness, carried from the posture row. The query already selects and orders by
+    // refresh_timestamp; dropping it here is what forced the surface to invent a date instead.
+    asOfPeriod: nullableText(row.as_of_period),
+    refreshTimestamp: nullableText(row.refresh_timestamp),
     totalItBudgetFy26: nullableNum(row.total_it_budget_fy26),
     runBudgetFy26: nullableNum(row.run_budget_fy26),
     changeBudgetFy26: nullableNum(row.change_budget_fy26),

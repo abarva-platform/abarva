@@ -74,6 +74,10 @@ export interface TowerCommandSummary {
   formulaVersion: string;
   sourceStandard: string;
   sourceFiles: readonly string[];
+  /** Reporting period the numbers cover. Null means the source did not record one. */
+  asOfPeriod: string | null;
+  /** When the underlying posture row was built. Null means the source did not record one. */
+  refreshTimestamp: string | null;
 
   budgetUsd: number | null;
   runUsd: number | null;
