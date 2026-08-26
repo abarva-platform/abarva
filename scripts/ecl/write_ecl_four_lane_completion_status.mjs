@@ -271,6 +271,17 @@ function implementedAdapterFamilies(ref) {
       status: "proven_local",
     });
   }
+  if (
+    files.has("scripts/ecl/load_client_intake_grc_layer.py") &&
+    files.has("scripts/ecl/__tests__/run-ecl-client-intake-grc-adapter-tests.mjs")
+  ) {
+    families.push({
+      family: "SP09 GRC",
+      adapter: "scripts/ecl/load_client_intake_grc_layer.py",
+      test: "scripts/ecl/__tests__/run-ecl-client-intake-grc-adapter-tests.mjs",
+      status: "proven_local",
+    });
+  }
   return families;
 }
 
