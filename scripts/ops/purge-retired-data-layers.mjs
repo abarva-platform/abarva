@@ -208,6 +208,20 @@ function selfTest() {
   );
 }
 
+function validateStatusMap(statusMapPath = DEFAULT_STATUS_MAP) {
+  const statusMap = readStatusMap(statusMapPath);
+  if (!statusMap.available) {
+    throw new Error(
+      `Retirement status map is not available at ${statusMap.resolved_path}. ` +
+        "The ACA job image must package the committed retirement inventory.",
+    );
+  }
+  if (statusMap.rows_by_schema.size === 0) {
+    throw new Error(`Retirement status map has no schema rows: ${statusMap.resolved_path}`);
+  }
+  return statusMap;
+}
+
 async function main() {
   if (hasFlag("--self-test")) {
     selfTest();
@@ -216,12 +230,21 @@ async function main() {
 
   const validateOnly = hasFlag("--validate-only");
   if (validateOnly) {
+    const statusMap = validateStatusMap(
+      String(argValue("--status-map", process.env.RETIRED_LAYER_PURGE_STATUS_MAP ?? DEFAULT_STATUS_MAP)),
+    );
     console.log(
       JSON.stringify({
         ok: true,
         mode: "validate_only",
         default_schemas: DEFAULT_SCHEMAS,
         dependency_scope: "retirement_set",
+        status_map: {
+          path: statusMap.path,
+          resolved_path: statusMap.resolved_path,
+          available: statusMap.available,
+          schema_count: statusMap.rows_by_schema.size,
+        },
       }),
     );
     return;

@@ -132,6 +132,7 @@ COPY --from=build --chown=node:node /app/fixtures/foundation-v2/golden-slice ./f
 COPY --from=build --chown=node:node /app/fixtures/foundation-v2/healthcare-golden-slice ./fixtures/foundation-v2/healthcare-golden-slice
 COPY --from=build --chown=node:node /app/reports/active-tenant-access ./reports/active-tenant-access
 COPY --from=build --chown=node:node /app/reports/candidate-invisibility-guard ./reports/candidate-invisibility-guard
+COPY --from=build --chown=node:node /app/reports/ecl-legacy-table-retirement-map-2026-08-22 ./reports/ecl-legacy-table-retirement-map-2026-08-22
 COPY --from=build --chown=node:node /app/tower-standardized-v1 ./tower-standardized-v1
 COPY --from=build --chown=node:node /app/supabase/migrations ./supabase/migrations
 

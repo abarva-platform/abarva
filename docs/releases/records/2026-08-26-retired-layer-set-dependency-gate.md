@@ -14,6 +14,8 @@ The retired-layer purge dry run now evaluates dependencies against the complete 
 
 Follow-on hardening adds a status-aware apply gate. The operator reads the committed retirement map and refuses apply when a requested schema contains hold/review/control statuses or is absent from the map. Broad dry-runs can still inventory mixed schemas, but destructive apply is limited to schemas whose mapped objects are explicitly replace/archive safe unless a separate bypass is deliberately set.
 
+This update also packages the committed retirement map into the ACA runtime image and makes validate-only mode prove that the real map is readable. Without that packaging, ACA dry-runs could still fail closed, but they reported every schema as unknown instead of classifying mixed and safe schemas from the approved inventory.
+
 ## Layer Impact
 
 Data-plane operations: hardens the dry-run and apply gate for retired schema inventory. It does not change product runtime reads or application behavior.
@@ -32,13 +34,17 @@ Data-plane operations: hardens the dry-run and apply gate for retired schema inv
 - `scripts/ops/purge-retired-data-layers.mjs`: adds compact stdout support with a structured summary event, including per-schema table, view, routine, and row-count summaries.
 - `scripts/ops/purge-retired-data-layers.mjs`: adds a self-test for the set-scoped dependency query.
 - `scripts/ops/purge-retired-data-layers.mjs`: adds a committed-retirement-map status gate so mixed HOLD/platform-control schemas cannot be dropped by a broad apply command.
+- `scripts/ops/purge-retired-data-layers.mjs`: validate-only mode now verifies the real default status map is available and has schema rows.
+- `Dockerfile` and `.dockerignore`: package the narrow retirement-map report directory required by ACA operator dry-runs.
 
 ## QA / Validation
 
 - PASS: `node scripts/ops/purge-retired-data-layers.mjs --self-test`
 - PASS: `node scripts/ops/purge-retired-data-layers.mjs --validate-only`
 - PASS: `npx eslint scripts/ops/purge-retired-data-layers.mjs`
+- PASS: `git diff --check`
 - PASS: status-gate self-test covers safe, mixed, and unknown schemas.
+- PASS: validate-only reports the committed default status map as available with 25 schema groups.
 
 ## Rollout Plan
 
