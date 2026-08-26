@@ -369,9 +369,14 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
   ).catch(() => null);
   const towerChatClientId =
     client?.id ?? effectiveClientKey ?? requestedClient ?? null;
+  // The ECL projection preview is an additive diagnostic panel, never a precondition for the
+  // Command Center. Degrade it to null on any read failure for the same reason the canonical
+  // reconciliation above does: a sparse tenant or a slow read must not take the whole route down.
   const towerEclPreview =
     isEclProductProvider(productProvider)
-      ? await readTowerEclProjectionPreview(canonicalTenantKey(effectiveClientKey))
+      ? await readTowerEclProjectionPreview(
+          canonicalTenantKey(effectiveClientKey),
+        ).catch(() => null)
       : null;
 
   return (
