@@ -276,6 +276,23 @@ function statusGateForSchemas(schemas, statusMap) {
   };
 }
 
+function isApplyAllowed({
+  shouldApply,
+  allowDependencies,
+  dependencyInventory,
+  allowCodeReferences,
+  activeCodeReferenceInventory,
+  allowStatusMix,
+  statusGate,
+}) {
+  return (
+    shouldApply &&
+    (allowDependencies || dependencyInventory.length === 0) &&
+    (allowCodeReferences || activeCodeReferenceInventory.length === 0) &&
+    (allowStatusMix || statusGate.apply_allowed)
+  );
+}
+
 function listFilesRecursive(rootPath) {
   if (!fs.existsSync(rootPath)) return [];
   const stat = fs.statSync(rootPath);
@@ -439,6 +456,18 @@ function selfTest() {
     }
     if (retiredReferences.length !== 1 || retiredReferences[0].file !== "src/retired.ts") {
       throw new Error("Code-reference gate must classify manifest-declared retired references separately.");
+    }
+    const safeStatusGate = statusGateForSchemas(["legacy_schema"], readStatusMap("map.csv"));
+    if (!isApplyAllowed({
+      shouldApply: true,
+      allowDependencies: false,
+      dependencyInventory: [],
+      allowCodeReferences: false,
+      activeCodeReferenceInventory: [],
+      allowStatusMix: false,
+      statusGate: safeStatusGate,
+    })) {
+      throw new Error("Declared-retired code references must not block the apply summary gate.");
     }
   } finally {
     process.chdir(priorCwd);
@@ -657,11 +686,15 @@ async function main() {
         status_unsafe_or_unknown_schemas:
           statusGate.unsafe_schemas.length + statusGate.unknown_schemas.length,
         status_gate_bypassed: allowStatusMix,
-        apply_allowed:
-          shouldApply &&
-          (allowDependencies || dependencyInventory.length === 0) &&
-          (allowCodeReferences || codeReferenceInventory.length === 0) &&
-          (allowStatusMix || statusGate.apply_allowed),
+        apply_allowed: isApplyAllowed({
+          shouldApply,
+          allowDependencies,
+          dependencyInventory,
+          allowCodeReferences,
+          activeCodeReferenceInventory,
+          allowStatusMix,
+          statusGate,
+        }),
       },
     };
     const proofSummary = {
