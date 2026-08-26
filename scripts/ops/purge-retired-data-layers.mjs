@@ -6,6 +6,8 @@ import process from "node:process";
 import { Client } from "pg";
 
 const DEFAULT_SCHEMAS = ["intelligence_v6", "intelligence_v7", "cio_tower"];
+const DEFAULT_STATUS_MAP = "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_map.csv";
+const APPLY_SAFE_STATUSES = new Set(["REPLACE_WITH_ECL_PROJECTION", "ARCHIVE_ONLY"]);
 
 function argValue(name, fallback = null) {
   const prefix = `${name}=`;
@@ -52,6 +54,108 @@ function quoteIdent(value) {
   return `"${String(value).replaceAll('"', '""')}"`;
 }
 
+function parseCsvLine(line) {
+  const cells = [];
+  let value = "";
+  let quoted = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    if (char === '"' && quoted && line[index + 1] === '"') {
+      value += '"';
+      index += 1;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (char === "," && !quoted) {
+      cells.push(value);
+      value = "";
+    } else {
+      value += char;
+    }
+  }
+  cells.push(value);
+  return cells;
+}
+
+function readStatusMap(statusMapPath) {
+  const resolvedPath = path.resolve(process.cwd(), statusMapPath);
+  if (!fs.existsSync(resolvedPath)) {
+    return {
+      path: statusMapPath,
+      resolved_path: resolvedPath,
+      available: false,
+      rows_by_schema: new Map(),
+    };
+  }
+
+  const [headerLine, ...lines] = fs
+    .readFileSync(resolvedPath, "utf8")
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0);
+  const headers = parseCsvLine(headerLine);
+  const schemaIndex = headers.indexOf("schema");
+  const statusIndex = headers.indexOf("sunset_status");
+  if (schemaIndex < 0 || statusIndex < 0) {
+    throw new Error(`Retirement status map must include schema and sunset_status columns: ${statusMapPath}`);
+  }
+
+  const rowsBySchema = new Map();
+  for (const line of lines) {
+    const cells = parseCsvLine(line);
+    const schema = String(cells[schemaIndex] ?? "").trim();
+    const status = String(cells[statusIndex] ?? "").trim();
+    if (!schema || !status) continue;
+    const entry = rowsBySchema.get(schema) ?? { row_count: 0, statuses: new Map() };
+    entry.row_count += 1;
+    entry.statuses.set(status, (entry.statuses.get(status) ?? 0) + 1);
+    rowsBySchema.set(schema, entry);
+  }
+
+  return {
+    path: statusMapPath,
+    resolved_path: resolvedPath,
+    available: true,
+    rows_by_schema: rowsBySchema,
+  };
+}
+
+function statusGateForSchemas(schemas, statusMap) {
+  const schemaSummaries = schemas.map((schema) => {
+    const entry = statusMap.rows_by_schema.get(schema);
+    const statuses = Object.fromEntries(entry?.statuses ?? []);
+    const unsafeStatuses = Object.keys(statuses).filter((status) => !APPLY_SAFE_STATUSES.has(status));
+    return {
+      schema,
+      status_map_rows: entry?.row_count ?? 0,
+      statuses,
+      status_map_known: Boolean(entry),
+      apply_status_safe: Boolean(entry) && unsafeStatuses.length === 0,
+      unsafe_statuses: unsafeStatuses,
+    };
+  });
+  const unknownSchemas = schemaSummaries
+    .filter((row) => !row.status_map_known)
+    .map((row) => row.schema);
+  const unsafeSchemas = schemaSummaries
+    .filter((row) => row.status_map_known && !row.apply_status_safe)
+    .map((row) => ({
+      schema: row.schema,
+      unsafe_statuses: row.unsafe_statuses,
+      statuses: row.statuses,
+    }));
+  return {
+    status_map: {
+      path: statusMap.path,
+      resolved_path: statusMap.resolved_path,
+      available: statusMap.available,
+      allowed_apply_statuses: Array.from(APPLY_SAFE_STATUSES).sort(),
+    },
+    schema_status_summaries: schemaSummaries,
+    unknown_schemas: unknownSchemas,
+    unsafe_schemas: unsafeSchemas,
+    apply_allowed: statusMap.available && unknownSchemas.length === 0 && unsafeSchemas.length === 0,
+  };
+}
+
 async function countRows(client, schemaName, tableName) {
   const sql = `select count(*)::bigint as row_count from ${quoteIdent(schemaName)}.${quoteIdent(tableName)}`;
   const result = await client.query(sql);
@@ -69,12 +173,37 @@ function selfTest() {
   if (query.includes("source_ns.nspname <> $1")) {
     throw new Error("Dependency query must not use one-schema dependency filtering.");
   }
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "retired-layer-status-map-"));
+  const statusMapPath = path.join(tempDir, "map.csv");
+  fs.writeFileSync(
+    statusMapPath,
+    [
+      "schema,table,sunset_status",
+      "safe_schema,a,REPLACE_WITH_ECL_PROJECTION",
+      "safe_schema,b,ARCHIVE_ONLY",
+      "mixed_schema,c,HOLD_UNTIL_LIVE_READBACK",
+    ].join("\n"),
+  );
+  const statusGate = statusGateForSchemas(
+    ["safe_schema", "mixed_schema", "unknown_schema"],
+    readStatusMap(statusMapPath),
+  );
+  if (statusGate.apply_allowed) {
+    throw new Error("Status gate must refuse mixed and unknown schemas.");
+  }
+  if (!statusGate.unsafe_schemas.some((row) => row.schema === "mixed_schema")) {
+    throw new Error("Status gate must identify mixed-status schemas.");
+  }
+  if (!statusGate.unknown_schemas.includes("unknown_schema")) {
+    throw new Error("Status gate must identify schemas absent from the status map.");
+  }
   console.log(
     JSON.stringify({
       ok: true,
       mode: "self_test",
       dependency_scope: "retirement_set",
       compact_stdout_supported: true,
+      status_map_apply_gate: "mixed_or_unknown_schemas_refused",
     }),
   );
 }
@@ -112,8 +241,13 @@ async function main() {
   const envApply = process.env.RETIRED_LAYER_PURGE_APPLY === "1";
   const allowDependencies =
     hasFlag("--allow-dependencies") || process.env.RETIRED_LAYER_PURGE_ALLOW_DEPENDENCIES === "1";
+  const allowStatusMix =
+    hasFlag("--allow-status-mix") || process.env.RETIRED_LAYER_PURGE_ALLOW_STATUS_MIX === "1";
   const compactStdout =
     hasFlag("--compact-stdout") || process.env.RETIRED_LAYER_PURGE_COMPACT_STDOUT === "1";
+  const statusMapPath = String(
+    argValue("--status-map", process.env.RETIRED_LAYER_PURGE_STATUS_MAP ?? DEFAULT_STATUS_MAP),
+  );
   const outDir =
     argValue("--out-dir", process.env.RETIRED_LAYER_PURGE_OUT_DIR) ??
     path.join(os.tmpdir(), "retired-layer-purge");
@@ -139,6 +273,7 @@ async function main() {
   try {
     await client.query("begin");
     const schemaInventory = [];
+    const statusGate = statusGateForSchemas(schemas, readStatusMap(statusMapPath));
 
     for (const schemaName of schemas) {
       const exists = await client.query(
@@ -205,11 +340,18 @@ async function main() {
       mode: shouldApply ? "apply" : "dry_run",
       schemas,
       dependencies_outside_retired_schemas: dependencyInventory,
+      retirement_status_gate: statusGate,
       schema_inventory: schemaInventory,
       gates: {
         schemas_discovered: schemaInventory.filter((row) => row.exists).length,
         outside_dependencies: dependencyInventory.length,
-        apply_allowed: shouldApply && (allowDependencies || dependencyInventory.length === 0),
+        status_unsafe_or_unknown_schemas:
+          statusGate.unsafe_schemas.length + statusGate.unknown_schemas.length,
+        status_gate_bypassed: allowStatusMix,
+        apply_allowed:
+          shouldApply &&
+          (allowDependencies || dependencyInventory.length === 0) &&
+          (allowStatusMix || statusGate.apply_allowed),
       },
     };
     const proofSummary = {
@@ -233,6 +375,12 @@ async function main() {
       total_row_count: schemaInventory.reduce((sum, row) => sum + row.row_count, 0),
       dependencies_outside_retired_schemas_count: dependencyInventory.length,
       dependencies_outside_retired_schemas: dependencyInventory,
+      retirement_status_gate: {
+        status_map: statusGate.status_map,
+        unknown_schemas: statusGate.unknown_schemas,
+        unsafe_schemas: statusGate.unsafe_schemas,
+        apply_allowed: statusGate.apply_allowed,
+      },
       gates: proof.gates,
     };
 
@@ -242,6 +390,11 @@ async function main() {
     if (shouldApply && dependencyInventory.length > 0 && !allowDependencies) {
       throw new Error(
         `Refusing to apply: ${dependencyInventory.length} outside-schema dependencies found. Review ${proofPath}.`,
+      );
+    }
+    if (shouldApply && !statusGate.apply_allowed && !allowStatusMix) {
+      throw new Error(
+        `Refusing to apply: ${statusGate.unsafe_schemas.length} mixed-status schemas and ${statusGate.unknown_schemas.length} unknown schemas found. Review ${proofPath}.`,
       );
     }
 

@@ -12,6 +12,8 @@
 
 The retired-layer purge dry run now evaluates dependencies against the complete set of schemas being considered together. A dependency from one retiring schema to another retiring schema no longer appears as an outside blocker. The operator also supports compact structured output for broad dry runs, so dependency and row-count proof remains readable in ACA logs.
 
+Follow-on hardening adds a status-aware apply gate. The operator reads the committed retirement map and refuses apply when a requested schema contains hold/review/control statuses or is absent from the map. Broad dry-runs can still inventory mixed schemas, but destructive apply is limited to schemas whose mapped objects are explicitly replace/archive safe unless a separate bypass is deliberately set.
+
 ## Layer Impact
 
 Data-plane operations: hardens the dry-run and apply gate for retired schema inventory. It does not change product runtime reads or application behavior.
@@ -29,16 +31,18 @@ Data-plane operations: hardens the dry-run and apply gate for retired schema inv
 - `scripts/ops/purge-retired-data-layers.mjs`: dependency detection now treats the requested schemas as one retirement set.
 - `scripts/ops/purge-retired-data-layers.mjs`: adds compact stdout support with a structured summary event, including per-schema table, view, routine, and row-count summaries.
 - `scripts/ops/purge-retired-data-layers.mjs`: adds a self-test for the set-scoped dependency query.
+- `scripts/ops/purge-retired-data-layers.mjs`: adds a committed-retirement-map status gate so mixed HOLD/platform-control schemas cannot be dropped by a broad apply command.
 
 ## QA / Validation
 
 - PASS: `node scripts/ops/purge-retired-data-layers.mjs --self-test`
 - PASS: `node scripts/ops/purge-retired-data-layers.mjs --validate-only`
 - PASS: `npx eslint scripts/ops/purge-retired-data-layers.mjs`
+- PASS: status-gate self-test covers safe, mixed, and unknown schemas.
 
 ## Rollout Plan
 
-Merge through a pull request. The repo-owned ACA deploy workflow will build and deploy the updated operator image. Broad retirement inventory should be rerun in dry-run mode before any apply action.
+Merge through a pull request. The repo-owned ACA deploy workflow will build and deploy the updated operator image. Broad retirement inventory should be rerun in dry-run mode before any apply action. Apply mode must use the same digest-pinned operator path and will fail closed unless the status gate and dependency gate are both green.
 
 ## Deployment Authority
 
@@ -62,4 +66,4 @@ Revert the PR and redeploy the previous digest if the operator change misbehaves
 
 ## Known Gaps
 
-This release does not authorize or perform schema retirement. Apply remains gated by dry-run evidence, outside-dependency review, rollback planning, and explicit operation execution.
+This release does not authorize or perform schema retirement. Apply remains gated by dry-run evidence, outside-dependency review, status-map safety, rollback planning, and explicit operation execution.
