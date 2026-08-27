@@ -57,6 +57,12 @@ const TOWER_SERVING_VIEWS = [
   "tower_adoption_lens",
 ] as const;
 
+type TowerServingViewName = (typeof TOWER_SERVING_VIEWS)[number];
+
+function isTowerServingViewName(value: string): value is TowerServingViewName {
+  return (TOWER_SERVING_VIEWS as readonly string[]).includes(value);
+}
+
 function num(value: Numeric): number {
   const parsed = Number(value ?? 0);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -266,9 +272,12 @@ async function withTowerTenantRead<T>(
 
 async function readServingView(
   query: TowerSqlQuery,
-  viewName: (typeof TOWER_SERVING_VIEWS)[number],
+  viewName: TowerServingViewName,
   tenantKey: string,
 ): Promise<TowerServingRow[]> {
+  if (!isTowerServingViewName(viewName)) {
+    throw new Error(`tower_unknown_serving_view: ${viewName}`);
+  }
   const rows = await query<TowerServingRow>(
     `select *
        from serving.${viewName}
