@@ -1,0 +1,248 @@
+{
+  "schema_version": "ecl_retired_layer_cleanup_proof/v1",
+  "accepted": true,
+  "lane": "L-CLEANUP",
+  "slice": "source_evidence_consumption_object_batch_live_absence_after_apply",
+  "run_id": "33049800417",
+  "workflow_url": "https://github.com/abarva-platform/abarva/actions/runs/33049800417",
+  "timestamp": "2026-08-27T07:30:31.157Z",
+  "mode": "dry_run",
+  "schemas": [
+    "cio_tower",
+    "consumption",
+    "evidence",
+    "public"
+  ],
+  "apply_run": {
+    "run_id": "33049569842",
+    "workflow_url": "https://github.com/abarva-platform/abarva/actions/runs/33049569842",
+    "execution_name": "job-abarva-private-operator-eus-r4vnc1y",
+    "status": "Succeeded",
+    "operator_ok": true,
+    "idle_restored": true,
+    "idle_verified": true
+  },
+  "object_targets": [
+    "consumption.source_event_summary_v1",
+    "consumption.source_vendor_comparison_v1",
+    "consumption.source_pricing_comparison_v1",
+    "consumption.source_evaluation_v1",
+    "consumption.source_transition_risk_v1",
+    "public.source_artifact_chunks",
+    "public.source_artifact_facts",
+    "public.source_vendor_commitments",
+    "public.source_meeting_outcomes",
+    "public.source_context_receipts",
+    "public.source_event_artifact_states",
+    "public.source_value_states",
+    "public.source_value_chain",
+    "public.tower_vendor_spend",
+    "public.tower_program_financials",
+    "public.move_artifact_review_decisions",
+    "cio_tower.validation_runs",
+    "public.source_contract_evidence_rows",
+    "public.source_contract_evidence_metrics",
+    "public.source_value_levers",
+    "public.source_vendor_proposal_facts",
+    "public.source_vendor_proposal_fact_reviews",
+    "evidence.source_row_v1",
+    "evidence.source_field_v1",
+    "evidence.source_chunk_v1",
+    "evidence.source_disposition_ledger_v1",
+    "consumption.source_evidence_exploration_v1",
+    "public.your_table_name"
+  ],
+  "object_count": 28,
+  "objects_discovered": 0,
+  "object_summaries": [
+    {
+      "object": "consumption.source_event_summary_v1",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "consumption.source_vendor_comparison_v1",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "consumption.source_pricing_comparison_v1",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "consumption.source_evaluation_v1",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "consumption.source_transition_risk_v1",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_artifact_chunks",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_artifact_facts",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_vendor_commitments",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_meeting_outcomes",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_context_receipts",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_event_artifact_states",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_value_states",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_value_chain",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.tower_vendor_spend",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.tower_program_financials",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.move_artifact_review_decisions",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "cio_tower.validation_runs",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_contract_evidence_rows",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_contract_evidence_metrics",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_value_levers",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_vendor_proposal_facts",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_vendor_proposal_fact_reviews",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "evidence.source_row_v1",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "evidence.source_field_v1",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "evidence.source_chunk_v1",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "evidence.source_disposition_ledger_v1",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "consumption.source_evidence_exploration_v1",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.your_table_name",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    }
+  ],
+  "dependencies_outside_retired_schemas_count": 0,
+  "active_code_references_count": 0,
+  "code_references_count": 91,
+  "declared_retired_code_references_count": 91,
+  "retirement_status_gate": {
+    "apply_allowed": true,
+    "allowed_apply_statuses": [
+      "ARCHIVE_ONLY",
+      "REPLACE_WITH_ECL_PROJECTION",
+      "RETIRED_ARCHIVE_ONLY"
+    ],
+    "unknown_schemas": [],
+    "unsafe_schemas": [],
+    "unknown_objects": [],
+    "unsafe_objects": []
+  },
+  "digest": "acrabarvalab001.azurecr.io/abarva/web@sha256:346aee41d8489a45c79f5a1da50710edb3f302de913eb3115b5093b86117ab38",
+  "notes": [
+    "Post-apply dry-run discovered zero of 28 targeted retired objects.",
+    "The apply run used the governed ACA private operator and restored idle before the readback proof."
+  ]
+}

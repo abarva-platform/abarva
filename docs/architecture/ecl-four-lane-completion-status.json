@@ -1,7 +1,7 @@
 {
   "schema_version": "ecl_four_lane_completion_status/v1",
-  "generated_at": "2026-08-27T05:10:34.683Z",
-  "repo_ref": "HEAD",
+  "generated_at": "2026-08-27T07:20:00.000Z",
+  "repo_ref": "origin/main",
   "policy": {
     "aggregate_percentage_retired": true,
     "lane_percentages_reported_separately": true,
@@ -16,7 +16,7 @@
       "denominator": 4,
       "run_id": "32995332853",
       "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
-      "timestamp": "2026-08-27T05:10:34.683Z"
+      "timestamp": "2026-08-27T07:20:00.000Z"
     },
     {
       "lane": "L-PROOF",
@@ -26,17 +26,17 @@
       "denominator": 63,
       "run_id": "32995332853",
       "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
-      "timestamp": "2026-08-27T05:10:34.683Z"
+      "timestamp": "2026-08-27T07:20:00.000Z"
     },
     {
       "lane": "L-CLEANUP",
       "slice": "legacy_data_plane_retirement",
       "status": "pending",
-      "numerator": 156,
+      "numerator": 188,
       "denominator": 851,
-      "run_id": "33036683151",
-      "digest": null,
-      "timestamp": "2026-08-27T03:35:56.000Z"
+      "run_id": "33049800417",
+      "digest": "acrabarvalab001.azurecr.io/abarva/web@sha256:346aee41d8489a45c79f5a1da50710edb3f302de913eb3115b5093b86117ab38",
+      "timestamp": "2026-08-27T07:30:31.157Z"
     },
     {
       "lane": "L-CLIENT",
@@ -46,7 +46,7 @@
       "denominator": 14,
       "run_id": null,
       "digest": null,
-      "timestamp": "2026-08-27T05:10:34.683Z"
+      "timestamp": "2026-08-27T07:20:00.000Z"
     }
   ],
   "live_product_proof": {
@@ -156,7 +156,7 @@
       ]
     },
     "legacy_cleanup": {
-      "numerator": 156,
+      "numerator": 188,
       "denominator": 851,
       "control_plane_hold_assets": 46,
       "legacy_data_plane_denominator": 851,
@@ -177,7 +177,7 @@
         ]
       },
       "live_absent_object_credit": {
-        "numerator": 80,
+        "numerator": 112,
         "objects": [
           "knowledge.entity_source_identity",
           "public.tower_user_preferences",
@@ -254,17 +254,47 @@
           "foundation_v2_meridian_health_demo.source_files",
           "foundation_v2_meridian_health_demo.source_file_context",
           "foundation_v2_meridian_health_demo.source_records",
-          "foundation_v2_meridian_health_demo.source_field_values"
+          "foundation_v2_meridian_health_demo.source_field_values",
+          "consumption.source_event_summary_v1",
+          "consumption.source_vendor_comparison_v1",
+          "consumption.source_pricing_comparison_v1",
+          "consumption.source_evaluation_v1",
+          "consumption.source_transition_risk_v1",
+          "public.source_artifact_chunks",
+          "public.source_artifact_facts",
+          "public.source_vendor_commitments",
+          "public.source_meeting_outcomes",
+          "public.source_context_receipts",
+          "public.source_event_artifact_states",
+          "public.source_value_states",
+          "public.source_value_chain",
+          "public.tower_vendor_spend",
+          "public.tower_program_financials",
+          "public.move_artifact_review_decisions",
+          "cio_tower.validation_runs",
+          "public.source_contract_evidence_rows",
+          "public.source_contract_evidence_metrics",
+          "public.source_value_levers",
+          "public.source_vendor_proposal_facts",
+          "public.source_vendor_proposal_fact_reviews",
+          "evidence.source_row_v1",
+          "evidence.source_field_v1",
+          "evidence.source_chunk_v1",
+          "evidence.source_disposition_ledger_v1",
+          "consumption.source_evidence_exploration_v1",
+          "public.your_table_name"
         ],
         "proof_run_ids": [
           "33028715643",
           "33033065787",
-          "33036683151"
+          "33036683151",
+          "33049800417"
         ],
         "proof_workflow_urls": [
           "https://github.com/abarva-platform/abarva/actions/runs/33028715643",
           "https://github.com/abarva-platform/abarva/actions/runs/33033065787",
-          "https://github.com/abarva-platform/abarva/actions/runs/33036683151"
+          "https://github.com/abarva-platform/abarva/actions/runs/33036683151",
+          "https://github.com/abarva-platform/abarva/actions/runs/33049800417"
         ]
       }
     },

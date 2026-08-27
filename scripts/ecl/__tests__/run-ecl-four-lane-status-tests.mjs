@@ -93,6 +93,36 @@ const PUBLIC_FOUNDATION_OBJECT_BATCH = [
   "foundation_v2_meridian_health_demo.source_records",
   "foundation_v2_meridian_health_demo.source_field_values",
 ];
+const SOURCE_EVIDENCE_CONSUMPTION_OBJECT_BATCH = [
+  "consumption.source_event_summary_v1",
+  "consumption.source_vendor_comparison_v1",
+  "consumption.source_pricing_comparison_v1",
+  "consumption.source_evaluation_v1",
+  "consumption.source_transition_risk_v1",
+  "public.source_artifact_chunks",
+  "public.source_artifact_facts",
+  "public.source_vendor_commitments",
+  "public.source_meeting_outcomes",
+  "public.source_context_receipts",
+  "public.source_event_artifact_states",
+  "public.source_value_states",
+  "public.source_value_chain",
+  "public.tower_vendor_spend",
+  "public.tower_program_financials",
+  "public.move_artifact_review_decisions",
+  "cio_tower.validation_runs",
+  "public.source_contract_evidence_rows",
+  "public.source_contract_evidence_metrics",
+  "public.source_value_levers",
+  "public.source_vendor_proposal_facts",
+  "public.source_vendor_proposal_fact_reviews",
+  "evidence.source_row_v1",
+  "evidence.source_field_v1",
+  "evidence.source_chunk_v1",
+  "evidence.source_disposition_ledger_v1",
+  "consumption.source_evidence_exploration_v1",
+  "public.your_table_name",
+];
 
 function run(command, args) {
   const result = spawnSync(command, args, {
@@ -248,6 +278,12 @@ try {
             relkind: null,
             row_count: 0,
           })),
+          ...SOURCE_EVIDENCE_CONSUMPTION_OBJECT_BATCH.map((object) => ({
+            object,
+            exists: false,
+            relkind: null,
+            row_count: 0,
+          })),
         ],
         dependencies_outside_retired_schemas_count: 0,
         active_code_references_count: 0,
@@ -305,7 +341,7 @@ try {
     {
       cutover: "4/4",
       proof: "63/63",
-      cleanup: "156/851",
+      cleanup: "188/851",
       client: "14/14",
     },
   );
@@ -336,7 +372,7 @@ try {
   assert.equal(status.repo_denominators.client_intake_adapters.numerator, 14);
   assert.equal(status.repo_denominators.legacy_cleanup.live_absent_schema_credit.numerator, 9);
   assert.deepEqual(status.repo_denominators.legacy_cleanup.live_absent_schema_credit.schemas, ["source_registry"]);
-  assert.equal(status.repo_denominators.legacy_cleanup.live_absent_object_credit.numerator, 80);
+  assert.equal(status.repo_denominators.legacy_cleanup.live_absent_object_credit.numerator, 112);
   assert.equal(status.repo_denominators.legacy_cleanup.static_create_table_statements, 911);
   assert.equal(status.repo_denominators.legacy_cleanup.static_non_control_objects, 865);
   assert.equal(status.repo_denominators.legacy_cleanup.retained_ecl_target_credit, 42);
@@ -344,6 +380,7 @@ try {
     "knowledge.entity_source_identity",
     ...PUBLIC_OBJECT_BATCH,
     ...PUBLIC_FOUNDATION_OBJECT_BATCH,
+    ...SOURCE_EVIDENCE_CONSUMPTION_OBJECT_BATCH,
   ]);
   assert.equal(committedStatus.repo_denominators.client_intake_adapters.denominator, 14);
   assert.equal(committedStatus.repo_denominators.client_intake_adapters.numerator, 14);
