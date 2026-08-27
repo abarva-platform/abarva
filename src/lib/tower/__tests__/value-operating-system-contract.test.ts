@@ -35,6 +35,16 @@ describe("Tower value operating system contract", () => {
       "consumption.tower_source_trust_v1",
     ]) {
       expect(migration).toContain(viewName);
+      expect(reader).not.toContain(viewName);
+    }
+
+    expect(reader).toContain("from serving.${viewName}");
+    for (const viewName of [
+      '"tower_command_center"',
+      '"tower_value_proof"',
+      '"tower_evidence"',
+      '"tower_ai_portfolio"',
+    ]) {
       expect(reader).toContain(viewName);
     }
   });

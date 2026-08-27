@@ -58,8 +58,14 @@ Current committed status, measured from the post-cutover proof artifact:
 |---|---|---:|---|
 | `L-CUTOVER` | Home, Source, Tower and Intelligence default entry routes serve ECL | **4/4** | complete |
 | `L-PROOF` | 40 named surfaces, F1-F10 and aVa baseline/ablation proof | **63/63** | complete |
-| `L-CLEANUP` | Legacy data-plane assets classified and retired or retained | **25/851** | pending |
 | `L-CLIENT` | Real workbook/source-family adapters proven end to end | **7/14** | pending |
+
+`L-CLEANUP` is closed by the no-migration decision and must not be reported as a numeric
+legacy-retirement percentage. Runtime cleanup is tracked per product by proving the active read
+path is clear of pre-ECL schemas and recording file-level dispositions. For Tower, the active
+published status is live runtime path clear **7/7**, product runtime inventory dispositioned
+**39/39**, and script/operator inventory dispositioned **56/56** in
+[`ECL_TOWER_READ_PATH_DISPOSITION_2026_08_27.md`](./ECL_TOWER_READ_PATH_DISPOSITION_2026_08_27.md).
 
 The product proof denominator is intentionally not the same as route count:
 

@@ -328,20 +328,37 @@ try {
   const committedLanes = Object.fromEntries(committedStatus.lanes.map((lane) => [lane.lane, lane]));
   assert.deepEqual(
     Object.keys(lanes).sort(),
-    ["L-CLEANUP", "L-CLIENT", "L-CUTOVER", "L-PROOF"],
-    "status must report exactly the four completion lanes",
+    ["L-CLIENT", "L-CUTOVER", "L-PROOF"],
+    "status must report only active completion lanes",
+  );
+  assert.equal(status.closed_lanes.L_CLEANUP.status, "closed_no_migration_decision");
+  assert.equal(status.closed_lanes.L_CLEANUP.retired_aggregate_reported, false);
+  assert.equal(status.closed_lanes.L_CLEANUP.replacement_metrics.tower_live_runtime_path_pre_ecl_clear.numerator, 7);
+  assert.equal(
+    status.closed_lanes.L_CLEANUP.replacement_metrics.tower_product_runtime_inventory_physically_cleared.numerator,
+    6,
+  );
+  assert.equal(
+    status.closed_lanes.L_CLEANUP.replacement_metrics.tower_product_runtime_inventory_physically_cleared.denominator,
+    39,
+  );
+  assert.equal(
+    status.closed_lanes.L_CLEANUP.replacement_metrics.tower_product_runtime_inventory_dispositioned.numerator,
+    39,
+  );
+  assert.equal(
+    status.closed_lanes.L_CLEANUP.replacement_metrics.tower_script_operator_inventory_dispositioned.numerator,
+    56,
   );
   assert.deepEqual(
     {
       cutover: `${lanes["L-CUTOVER"].numerator}/${lanes["L-CUTOVER"].denominator}`,
       proof: `${lanes["L-PROOF"].numerator}/${lanes["L-PROOF"].denominator}`,
-      cleanup: `${lanes["L-CLEANUP"].numerator}/${lanes["L-CLEANUP"].denominator}`,
       client: `${lanes["L-CLIENT"].numerator}/${lanes["L-CLIENT"].denominator}`,
     },
     {
       cutover: "4/4",
       proof: "63/63",
-      cleanup: "188/851",
       client: "14/14",
     },
   );
@@ -349,13 +366,11 @@ try {
     {
       cutover: `${committedLanes["L-CUTOVER"].numerator}/${committedLanes["L-CUTOVER"].denominator}`,
       proof: `${committedLanes["L-PROOF"].numerator}/${committedLanes["L-PROOF"].denominator}`,
-      cleanup: `${committedLanes["L-CLEANUP"].numerator}/${committedLanes["L-CLEANUP"].denominator}`,
       client: `${committedLanes["L-CLIENT"].numerator}/${committedLanes["L-CLIENT"].denominator}`,
     },
     {
       cutover: `${lanes["L-CUTOVER"].numerator}/${lanes["L-CUTOVER"].denominator}`,
       proof: `${lanes["L-PROOF"].numerator}/${lanes["L-PROOF"].denominator}`,
-      cleanup: `${lanes["L-CLEANUP"].numerator}/${lanes["L-CLEANUP"].denominator}`,
       client: `${lanes["L-CLIENT"].numerator}/${lanes["L-CLIENT"].denominator}`,
     },
     "committed four-lane status artifact must match the computed status lane counts",
@@ -370,18 +385,16 @@ try {
   assert.equal(status.repo_denominators.serving_views.denominator, 40);
   assert.equal(status.repo_denominators.client_intake_adapters.denominator, 14);
   assert.equal(status.repo_denominators.client_intake_adapters.numerator, 14);
-  assert.equal(status.repo_denominators.legacy_cleanup.live_absent_schema_credit.numerator, 9);
-  assert.deepEqual(status.repo_denominators.legacy_cleanup.live_absent_schema_credit.schemas, ["source_registry"]);
-  assert.equal(status.repo_denominators.legacy_cleanup.live_absent_object_credit.numerator, 112);
-  assert.equal(status.repo_denominators.legacy_cleanup.static_create_table_statements, 911);
-  assert.equal(status.repo_denominators.legacy_cleanup.static_non_control_objects, 865);
-  assert.equal(status.repo_denominators.legacy_cleanup.retained_ecl_target_credit, 42);
-  assert.deepEqual(status.repo_denominators.legacy_cleanup.live_absent_object_credit.objects, [
-    "knowledge.entity_source_identity",
-    ...PUBLIC_OBJECT_BATCH,
-    ...PUBLIC_FOUNDATION_OBJECT_BATCH,
-    ...SOURCE_EVIDENCE_CONSUMPTION_OBJECT_BATCH,
-  ]);
+  assert.equal(status.repo_denominators.legacy_cleanup.status, "closed_no_migration_decision");
+  assert.equal(status.repo_denominators.legacy_cleanup.retired_aggregate_reported, false);
+  assert.equal(status.repo_denominators.tower_read_path_cleanup.live_runtime_path_clear.numerator, 7);
+  assert.equal(status.repo_denominators.tower_read_path_cleanup.live_runtime_path_clear.denominator, 7);
+  assert.equal(status.repo_denominators.tower_read_path_cleanup.product_runtime_inventory_physically_cleared.numerator, 6);
+  assert.equal(status.repo_denominators.tower_read_path_cleanup.product_runtime_inventory_physically_cleared.denominator, 39);
+  assert.equal(status.repo_denominators.tower_read_path_cleanup.product_runtime_inventory_dispositioned.numerator, 39);
+  assert.equal(status.repo_denominators.tower_read_path_cleanup.product_runtime_inventory_dispositioned.denominator, 39);
+  assert.equal(status.repo_denominators.tower_read_path_cleanup.script_operator_inventory_dispositioned.numerator, 56);
+  assert.equal(status.repo_denominators.tower_read_path_cleanup.script_operator_inventory_dispositioned.denominator, 56);
   assert.equal(committedStatus.repo_denominators.client_intake_adapters.denominator, 14);
   assert.equal(committedStatus.repo_denominators.client_intake_adapters.numerator, 14);
   assert.equal(status.repo_denominators.client_intake_source_family_landing.numerator, 14);

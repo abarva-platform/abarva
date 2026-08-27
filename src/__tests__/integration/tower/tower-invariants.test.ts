@@ -14,9 +14,16 @@ describe("Tower invariants", () => {
     expect(pageSource).not.toContain("getAiControlTowerReadModel");
   });
 
-  it("sources its data from the governed Tower consumption substrate", () => {
+  it("sources its data from the governed ECL Tower serving substrate", () => {
     expect(pageSource).toContain("readTowerCommandCenter");
     expect(pageSource).toContain("buildTowerCommandCenterView");
+    const reader = readFileSync("src/lib/tower/readTowerCommandCenter.ts", "utf8");
+    expect(reader).toContain("from serving.${viewName}");
+    expect(reader).toContain('"tower_command_center"');
+    expect(reader).toContain('"tower_value_proof"');
+    expect(reader).toContain('"tower_evidence"');
+    expect(reader).not.toContain("consumption.tower_board_posture_v1");
+    expect(reader).not.toContain("tower.value_case");
   });
 
   it("removes legacy Tower route files that can show retired views", () => {

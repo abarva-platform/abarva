@@ -19,6 +19,7 @@ describe("Tower DB-only surface guard", () => {
     expect(towerPage).not.toContain("findTenantByRouteSlug('apexretail')");
     expect(towerPage).toContain("readTowerCommandCenter");
     expect(towerPage).toContain("buildTowerCommandCenterView");
+    expect(towerPage).not.toContain("buildTowerCanonicalReconciliation");
   });
 
   it("does not render legacy Apex demo values when DB substrate is empty", () => {

@@ -86,10 +86,10 @@ function answerFromIntent(
   if (!view) {
     return {
       answer:
-        "Tower does not have a current governed Tower read-model loaded for this tenant. I am not falling back to retired V6, V7, or CIO Tower layers.",
+        "Tower does not have a governed ECL serving read model loaded for this tenant. I am not falling back to retired V6, V7, CIO Tower, or pre-ECL Tower layers.",
       tables: [],
       metricCards: [],
-      gaps: ["Current tower.* read model not loaded for the active tenant."],
+      gaps: ["ECL serving Tower rows are not loaded for the active tenant."],
     };
   }
 
@@ -216,7 +216,7 @@ export async function answerCurrentTowerQuestion(
   const current = answerFromIntent(args, intent, view);
   const promptHash = stableHash(
     JSON.stringify({
-      version: "tower_current_layer_answer_v1",
+      version: "tower_current_layer_answer_v2",
       tenantKey: args.tenantKey,
       question: args.question,
       intent,
@@ -249,7 +249,7 @@ export async function answerCurrentTowerQuestion(
     ]),
     traceKey: trace,
     promptHash,
-    model: "tower-current-layer-deterministic-v1",
+    model: "tower-current-layer-deterministic-v2",
     validationStatus: "passed",
     validationErrors: [],
     latencyMs: Date.now() - startedAt,

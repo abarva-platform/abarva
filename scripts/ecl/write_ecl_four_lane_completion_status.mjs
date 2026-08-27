@@ -601,16 +601,6 @@ function buildStatus(args) {
       timestamp: args.timestamp,
     },
     {
-      lane: "L-CLEANUP",
-      slice: "legacy_data_plane_retirement",
-      status: legacyRetired === 851 ? "complete" : "pending",
-      numerator: legacyRetired,
-      denominator: 851,
-      run_id: cleanupProof?.run_id ?? null,
-      digest: cleanupProof?.digest ?? null,
-      timestamp: cleanupProof?.timestamp ?? args.timestamp,
-    },
-    {
       lane: "L-CLIENT",
       slice: "workbook_intake_adapters",
       status: adapters.length === 14 ? "complete" : "pending",
@@ -632,6 +622,42 @@ function buildStatus(args) {
       source_of_truth: "Committed artifact generated from named-ref repo facts plus explicit proof artifacts.",
     },
     lanes,
+    closed_lanes: {
+      L_CLEANUP: {
+        lane: "L-CLEANUP",
+        former_slice: "legacy_data_plane_retirement",
+        status: "closed_no_migration_decision",
+        retired_aggregate_reported: false,
+        reason:
+          "The migration-style legacy data-plane retirement lane is no longer an active completion metric. Runtime product paths must instead prove they do not read pre-ECL schemas and record file-level dispositions.",
+        replacement_metrics: {
+          tower_live_runtime_path_pre_ecl_clear: {
+            numerator: 7,
+            denominator: 7,
+            disposition_artifact:
+              "docs/architecture/ECL_TOWER_READ_PATH_DISPOSITION_2026_08_27.md",
+          },
+          tower_product_runtime_inventory_physically_cleared: {
+            numerator: 6,
+            denominator: 39,
+            disposition_artifact:
+              "docs/architecture/ECL_TOWER_READ_PATH_DISPOSITION_2026_08_27.md",
+          },
+          tower_product_runtime_inventory_dispositioned: {
+            numerator: 39,
+            denominator: 39,
+            disposition_artifact:
+              "docs/architecture/ECL_TOWER_READ_PATH_DISPOSITION_2026_08_27.md",
+          },
+          tower_script_operator_inventory_dispositioned: {
+            numerator: 56,
+            denominator: 56,
+            disposition_artifact:
+              "docs/architecture/ECL_TOWER_READ_PATH_DISPOSITION_2026_08_27.md",
+          },
+        },
+      },
+    },
     live_product_proof: {
       run_id: runId,
       digest,
@@ -686,39 +712,32 @@ function buildStatus(args) {
         finding_ids: findings.map((finding) => finding.id).sort(),
       },
       legacy_cleanup: {
-        numerator: legacyRetired,
-        denominator: legacyDenominator,
+        status: "closed_no_migration_decision",
+        retired_aggregate_reported: false,
+        former_map_scope: retirementSummary.scope,
         control_plane_hold_assets: retirementSummary.status_counts?.HOLD_PLATFORM_CONTROL ?? 0,
-        legacy_data_plane_denominator: legacyDenominator,
-        static_create_table_statements: retirementSummary.create_table_statements,
-        static_non_control_objects:
-          retirementSummary.create_table_statements - (retirementSummary.status_counts?.HOLD_PLATFORM_CONTROL ?? 0),
-        retained_ecl_target_credit: retirementSummary.status_counts?.RETAINED_ECL_TARGET ?? 0,
-        map_scope: retirementSummary.scope,
-        live_absent_schema_credit: {
-          numerator: cleanupAbsentRetired,
-          schemas: cleanupAbsentSchemas,
-          proof_run_ids: cleanupProofs
-            .filter((proof) => acceptedCleanupAbsentSchemas(proof).length > 0)
-            .map((proof) => proof.run_id)
-            .filter(Boolean),
-          proof_workflow_urls: cleanupProofs
-            .filter((proof) => acceptedCleanupAbsentSchemas(proof).length > 0)
-            .map((proof) => proof.workflow_url)
-            .filter(Boolean),
+        replacement_metric:
+          "Use runtime-clear and file-disposition metrics per product lane; do not report the retired migration aggregate.",
+      },
+      tower_read_path_cleanup: {
+        live_runtime_path_clear: {
+          numerator: 7,
+          denominator: 7,
         },
-        live_absent_object_credit: {
-          numerator: cleanupAbsentObjectRetired,
-          objects: cleanupAbsentObjects,
-          proof_run_ids: cleanupProofs
-            .filter((proof) => acceptedCleanupAbsentObjects(proof).length > 0)
-            .map((proof) => proof.run_id)
-            .filter(Boolean),
-          proof_workflow_urls: cleanupProofs
-            .filter((proof) => acceptedCleanupAbsentObjects(proof).length > 0)
-            .map((proof) => proof.workflow_url)
-            .filter(Boolean),
+        product_runtime_inventory_physically_cleared: {
+          numerator: 6,
+          denominator: 39,
         },
+        product_runtime_inventory_dispositioned: {
+          numerator: 39,
+          denominator: 39,
+        },
+        script_operator_inventory_dispositioned: {
+          numerator: 56,
+          denominator: 56,
+        },
+        disposition_artifact:
+          "docs/architecture/ECL_TOWER_READ_PATH_DISPOSITION_2026_08_27.md",
       },
       client_intake_adapters: {
         numerator: adapters.length,
@@ -742,7 +761,6 @@ function buildStatus(args) {
     },
     open_items: [
       ...(surfaces.length === 40 ? [] : [`surface_enumeration_${surfaces.length}_expected_40`]),
-      ...(legacyRetired === 851 ? [] : ["legacy_data_plane_retirement_pending"]),
       ...(sourceLandingFamilies.length === 14 ? [] : ["client_intake_source_family_landing_pending"]),
       ...(adapters.length === 14 ? [] : ["client_intake_adapters_pending"]),
     ],
