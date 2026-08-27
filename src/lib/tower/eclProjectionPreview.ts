@@ -1,6 +1,5 @@
 import { azureRead } from "@/lib/data-plane/azureRead";
-
-const DENSE_ASSESSMENT_ID = "assessment-dense-source-room-20260823";
+import { denseAssessmentIdForTenant } from "@/lib/ecl/denseAssessment";
 
 type Numeric = string | number | null;
 
@@ -99,6 +98,7 @@ export async function readTowerEclProjectionPreview(
   tenantKey: string | null,
 ): Promise<TowerEclProjectionPreview | null> {
   if (!tenantKey) return null;
+  const assessmentId = denseAssessmentIdForTenant(tenantKey);
 
   const servingRows = await azureRead.query<TowerServingRow>(
     `select payload_json
@@ -110,7 +110,7 @@ export async function readTowerEclProjectionPreview(
        (payload_json->>'risk_pressure_score')::numeric desc nulls last,
        row_key
      limit 2000`,
-    [tenantKey, DENSE_ASSESSMENT_ID],
+    [tenantKey, assessmentId],
     { missingTable: "empty" },
   );
   const rows = servingRows.map((row) => row.payload_json);
@@ -136,7 +136,7 @@ export async function readTowerEclProjectionPreview(
   return {
     provider: "ecl_projection_db",
     tenantKey,
-    assessmentId: DENSE_ASSESSMENT_ID,
+    assessmentId,
     rowCount: rows.length,
     pageCounts,
     typeCounts,

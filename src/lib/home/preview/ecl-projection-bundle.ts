@@ -1,6 +1,7 @@
 import "server-only";
 
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { denseAssessmentIdForTenant } from "@/lib/ecl/denseAssessment";
 
 import { getHomeReviewBundle, type HomePreviewTenantKey } from "./golden-snapshot";
 import type {
@@ -17,8 +18,6 @@ import type {
   TechRecordType,
   VisualOpportunity,
 } from "./types";
-
-const DENSE_ASSESSMENT_ID = "assessment-dense-source-room-20260823";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -439,7 +438,11 @@ function projectionContextItems(rows: HomeProjectionRow[]): ContextItem[] {
     }));
 }
 
-function buildEclSignalPacket(rows: HomeProjectionRow[], estate: TechnologyEstateBundle): EnterpriseSignalPacket {
+function buildEclSignalPacket(
+  rows: HomeProjectionRow[],
+  estate: TechnologyEstateBundle,
+  assessmentId: string,
+): EnterpriseSignalPacket {
   const applications = rowsForType(estate, "application_system");
   const contracts = rowsForType(estate, "vendor_contract");
   const infrastructure = rowsForType(estate, "infrastructure_platform");
@@ -485,7 +488,7 @@ function buildEclSignalPacket(rows: HomeProjectionRow[], estate: TechnologyEstat
   const contextItems: ContextItem[] = [
     {
       id: "ctx_ecl_assessment_001",
-      statement: `This Home preview is based on ECL assessment ${DENSE_ASSESSMENT_ID}; it is synthetic, not client-attested.`,
+      statement: `This Home preview is based on ECL assessment ${assessmentId}; it is synthetic, not client-attested.`,
       domains: ["enterprise_profile", "evidence_sources"],
     },
     ...projectionContextItems(rows),
@@ -573,9 +576,13 @@ function buildEclChapters(rows: HomeProjectionRow[], thesis: EnterpriseThesis): 
   });
 }
 
-export function buildHomeReviewBundleFromEclProjectionRows(base: HomeReviewBundle, rows: HomeProjectionRow[]): HomeReviewBundle {
+export function buildHomeReviewBundleFromEclProjectionRows(
+  base: HomeReviewBundle,
+  rows: HomeProjectionRow[],
+  assessmentId = denseAssessmentIdForTenant(base.tenantKey),
+): HomeReviewBundle {
   const technologyEstate = buildTechnologyEstateFromHomeProjectionRows(rows);
-  const signalPacket = buildEclSignalPacket(rows, technologyEstate);
+  const signalPacket = buildEclSignalPacket(rows, technologyEstate, assessmentId);
   const thesis = buildEclThesis(signalPacket);
   const chapters = buildEclChapters(rows, thesis);
   return {
@@ -584,7 +591,7 @@ export function buildHomeReviewBundleFromEclProjectionRows(base: HomeReviewBundl
       ...base.provenance,
       home_synthesis_contract_version: `${base.provenance.home_synthesis_contract_version}+ecl-projection-v1`,
       model: "deterministic-ecl-projection",
-      canonical_snapshot_hash: `ecl:${DENSE_ASSESSMENT_ID}:home_enterprise_landscape:${rows.length}`,
+      canonical_snapshot_hash: `ecl:${assessmentId}:home_enterprise_landscape:${rows.length}`,
     },
     chapters,
     thesis: {
@@ -597,7 +604,10 @@ export function buildHomeReviewBundleFromEclProjectionRows(base: HomeReviewBundl
   };
 }
 
-async function readHomeProjectionRows(tenantKey: string): Promise<HomeProjectionRow[]> {
+async function readHomeProjectionRows(
+  tenantKey: string,
+  assessmentId: string,
+): Promise<HomeProjectionRow[]> {
   return azureRead.query<HomeProjectionRow>(
     `
       select
@@ -671,7 +681,7 @@ async function readHomeProjectionRows(tenantKey: string): Promise<HomeProjection
       where tenant_key = $1 and assessment_id = $2
       order by page_key, row_key
     `,
-    [tenantKey, DENSE_ASSESSMENT_ID],
+    [tenantKey, assessmentId],
     { missingTable: "empty" },
   );
 }
@@ -682,12 +692,13 @@ export async function getHomeEclProjectionBundle(tenantKey: HomePreviewTenantKey
     throw new Error(`Home ECL preview: missing base deterministic bundle for ${tenantKey}.`);
   }
 
-  const rows = await readHomeProjectionRows(tenantKey);
+  const assessmentId = denseAssessmentIdForTenant(tenantKey);
+  const rows = await readHomeProjectionRows(tenantKey, assessmentId);
   if (rows.length === 0) {
-    throw new Error(`Home ECL preview: no serving Home rows for ${tenantKey}/${DENSE_ASSESSMENT_ID}.`);
+    throw new Error(`Home ECL preview: no serving Home rows for ${tenantKey}/${assessmentId}.`);
   }
 
   return {
-    ...buildHomeReviewBundleFromEclProjectionRows(base, rows),
+    ...buildHomeReviewBundleFromEclProjectionRows(base, rows, assessmentId),
   };
 }

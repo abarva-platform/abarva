@@ -203,4 +203,26 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     );
     expect(bundle.technologyEstate?.recordTypes.find((recordType) => recordType.objectType === "application_system")?.rows).toHaveLength(1);
   });
+
+  it("uses the SkyHarbor dense assessment id for SkyHarbor ECL bundles", () => {
+    const base = getHomeReviewBundle("skyharbor-air");
+    expect(base).toBeTruthy();
+
+    const bundle = buildHomeReviewBundleFromEclProjectionRows(base!, [
+      row({
+        page_key: "executive_brief",
+        row_key: "executive_brief_summary",
+        row_type: "summary",
+        title: "SkyHarbor ECL estate loaded",
+        summary: "750 applications and 230 contracts are available from the SkyHarbor ECL projection.",
+      }),
+    ]);
+
+    expect(bundle.provenance.canonical_snapshot_hash).toBe(
+      "ecl:assessment-dense-skyharbor-20260827:home_enterprise_landscape:1",
+    );
+    expect(bundle.thesis.signalPacket.contextItems[0]?.statement).toContain(
+      "assessment-dense-skyharbor-20260827",
+    );
+  });
 });

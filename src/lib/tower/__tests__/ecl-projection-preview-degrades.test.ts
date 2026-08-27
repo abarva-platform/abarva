@@ -69,6 +69,12 @@ describe("readTowerEclProjectionPreview — degrades instead of throwing", () =>
     const preview = await readTowerEclProjectionPreview("skyharbor-air");
     expect(preview).not.toBeNull();
     expect(preview?.rowCount).toBe(1);
+    expect(preview?.assessmentId).toBe("assessment-dense-skyharbor-20260827");
+    expect(mockQuery).toHaveBeenCalledWith(
+      expect.any(String),
+      ["skyharbor-air", "assessment-dense-skyharbor-20260827"],
+      { missingTable: "empty" },
+    );
   });
 });
 
