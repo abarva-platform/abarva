@@ -1,0 +1,203 @@
+{
+  "schema_version": "ecl_retired_layer_cleanup_proof/v1",
+  "accepted": true,
+  "lane": "L-CLEANUP",
+  "slice": "public_object_batch_live_absence_after_apply",
+  "run_id": "33033065787",
+  "workflow_url": "https://github.com/abarva-platform/abarva/actions/runs/33033065787",
+  "timestamp": "2026-08-27T02:25:17.000Z",
+  "mode": "dry_run",
+  "schemas": [
+    "source_registry"
+  ],
+  "apply_run": {
+    "run_id": "33032484335",
+    "workflow_url": "https://github.com/abarva-platform/abarva/actions/runs/33032484335",
+    "execution_name": "job-abarva-private-operator-eus-mvtgh74",
+    "status": "Succeeded",
+    "operator_ok": true,
+    "idle_restored": true,
+    "idle_verified": true
+  },
+  "object_targets": [
+    "public.tower_user_preferences",
+    "public.program_export_log",
+    "public.data_segment_program_inventory",
+    "public.data_segment_program_deliverables",
+    "public.data_segment_cross_program_signals",
+    "public.program_notifications",
+    "public.source_event_approvals",
+    "public.source_pricing_components",
+    "public.source_commercial_exceptions",
+    "public.source_requirements",
+    "public.source_graph_edges",
+    "public.source_event_gate_criterion_states",
+    "public.source_event_evidence_states",
+    "public.source_event_pricing_submissions",
+    "public.expert_reviews",
+    "public.source_event_code_backfill_audit",
+    "public.tower_workforce",
+    "public.tower_claude_code_usage",
+    "public.program_evidence_reviews",
+    "public.source_artifact_generation_jobs",
+    "public.source_reasoning_envelopes",
+    "public.tower_materialization_runs"
+  ],
+  "object_count": 22,
+  "objects_discovered": 0,
+  "object_summaries": [
+    {
+      "object": "public.tower_user_preferences",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.program_export_log",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.data_segment_program_inventory",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.data_segment_program_deliverables",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.data_segment_cross_program_signals",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.program_notifications",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_event_approvals",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_pricing_components",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_commercial_exceptions",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_requirements",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_graph_edges",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_event_gate_criterion_states",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_event_evidence_states",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_event_pricing_submissions",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.expert_reviews",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_event_code_backfill_audit",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.tower_workforce",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.tower_claude_code_usage",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.program_evidence_reviews",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_artifact_generation_jobs",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.source_reasoning_envelopes",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    },
+    {
+      "object": "public.tower_materialization_runs",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    }
+  ],
+  "dependencies_outside_retired_schemas_count": 0,
+  "active_code_references_count": 0,
+  "declared_retired_code_references_count": 0,
+  "retirement_status_gate": {
+    "apply_allowed": true,
+    "allowed_apply_statuses": [
+      "ARCHIVE_ONLY",
+      "REPLACE_WITH_ECL_PROJECTION"
+    ],
+    "unknown_schemas": [],
+    "unsafe_schemas": [],
+    "unknown_objects": [],
+    "unsafe_objects": []
+  },
+  "idle_restore": {
+    "status": "Succeeded",
+    "restored": true,
+    "idle_verified": true,
+    "idle_verify_wait_seconds": 300,
+    "wait_attempts": 1
+  }
+}
