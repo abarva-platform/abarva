@@ -1,12 +1,26 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
 const REF = process.env.ECL_SERVING_ROUTE_FENCE_REF || "HEAD";
 const PLAN_DOC = "docs/architecture/ECL_CLEAN_BREAK_INTEGRATED_EXECUTION_PLAN_2026_08_24.md";
 const SCAN_ROOTS = ["src/app", "src/lib"];
+const TOWER_RUNTIME_SCAN_FILES = [
+  "src/app/(maestro)/tower/page.tsx",
+  "src/app/api/tower/ask/route.ts",
+  "src/app/api/tower/chat/route.ts",
+  "src/lib/atlas/orchestrator.ts",
+  "src/lib/tower/command-center/view-model.ts",
+  "src/lib/tower/current-layer-answer.ts",
+  "src/lib/tower/readTowerCommandCenter.ts",
+];
+const PRE_ECL_TOWER_READ_PATTERNS = [
+  /cio_tower\.[a-z0-9_]+/g,
+  /consumption\.tower_[a-z0-9_]+/g,
+  /tower\.(value_case|value_case_period|subject_link|economic_conversion|attestation_event|proof_action|value_case_claim_link|ai_identity_crosswalk|value_claim|metric_definition|metric_observation|metric_provenance)\b/g,
+];
 
 function gitShow(path) {
   const result = spawnSync("git", ["show", `${REF}:${path}`], {
@@ -72,7 +86,8 @@ const files = gitLsTree(SCAN_ROOTS).filter((path) =>
   /\.(ts|tsx|js|jsx)$/.test(path) &&
   !path.includes("/__tests__/") &&
   !/(\.|-)test\.[tj]sx?$/.test(path) &&
-  !/\.spec\.[tj]sx?$/.test(path),
+  !/\.spec\.[tj]sx?$/.test(path) &&
+  (REF !== "HEAD" || existsSync(path)),
 );
 
 const violations = [];
@@ -99,15 +114,43 @@ assert.deepEqual(
   "product runtime code must read ECL product surfaces through serving.* views, not direct ecl_projection tables",
 );
 
+const preEclTowerViolations = [];
+for (const path of TOWER_RUNTIME_SCAN_FILES) {
+  const content = REF === "HEAD" ? readFileSync(path, "utf8") : gitShow(path);
+  const lines = content.split(/\r?\n/);
+  for (const [index, line] of lines.entries()) {
+    for (const pattern of PRE_ECL_TOWER_READ_PATTERNS) {
+      pattern.lastIndex = 0;
+      const matches = [...line.matchAll(pattern)];
+      for (const match of matches) {
+        preEclTowerViolations.push({
+          path,
+          line: index + 1,
+          reference: match[0],
+          text: line.trim(),
+        });
+      }
+    }
+  }
+}
+
+assert.deepEqual(
+  preEclTowerViolations,
+  [],
+  "Tower runtime path must not read pre-ECL cio_tower.*, tower.*, or consumption.tower_* schemas",
+);
+
 console.log(
   JSON.stringify(
     {
       accepted: true,
       ref: REF,
       scannedFiles: files.length,
+      towerRuntimeFilesScanned: TOWER_RUNTIME_SCAN_FILES.length,
       enumeratedSurfaces: surfaceRows.length,
       fencedProjectionTables: productProjectionTables.length,
       violations: 0,
+      preEclTowerViolations: 0,
     },
     null,
     2,

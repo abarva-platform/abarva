@@ -854,7 +854,7 @@ function buildConversionBridge(
       valueUsd: summary.approvedInvestmentUsd,
       count: summary.boardScopeProgramCount,
       note: "approved capital only",
-      source: "consumption.tower_board_posture_v1",
+      source: "serving.tower_command_center",
       tone: summary.approvedInvestmentUsd === null ? "gray" : "teal",
     },
     {
@@ -863,7 +863,7 @@ function buildConversionBridge(
       valueUsd: usageValue,
       count: summary.usageSupportedClaimCount,
       note: "usage is evidence, not savings",
-      source: "consumption.tower_value_trajectory_v1",
+      source: "serving.tower_value_proof",
       tone: summary.usageSupportedClaimCount > 0 ? "amber" : "gray",
     },
     {
@@ -872,7 +872,7 @@ function buildConversionBridge(
       valueUsd: null,
       count: summary.actualLinkedClaimCount,
       note: "baseline, target, actual linked",
-      source: "consumption.tower_board_posture_v1",
+      source: "serving.tower_value_proof",
       tone: summary.actualLinkedClaimCount > 0 ? "amber" : "gray",
     },
     {
@@ -881,7 +881,7 @@ function buildConversionBridge(
       valueUsd: outcomeForecastUsd,
       count: summary.outcomeMeasuredClaimCount,
       note: "business KPI outcome evidence",
-      source: "consumption.tower_value_trajectory_v1",
+      source: "serving.tower_value_proof",
       tone:
         outcomeForecastUsd === null
           ? summary.outcomeMeasuredClaimCount > 0
@@ -895,7 +895,7 @@ function buildConversionBridge(
       valueUsd: conversionUsd,
       count: summary.knownValueClaimCount,
       note: "classified value-case economics",
-      source: "consumption.tower_value_trajectory_v1",
+      source: "serving.tower_value_proof",
       tone:
         conversionUsd === null ? "gray" : conversionUsd > 0 ? "teal" : "red",
     },
@@ -905,7 +905,7 @@ function buildConversionBridge(
       valueUsd: summary.financeValidatedUsd,
       count: summary.financeAttestedClaimCount,
       note: "validated but may remain blocked",
-      source: "consumption.tower_board_posture_v1",
+      source: "serving.tower_value_proof",
       tone: summary.financeValidatedUsd > 0 ? "amber" : "gray",
     },
     {
@@ -914,7 +914,7 @@ function buildConversionBridge(
       valueUsd: realizedCashOrPnlUsd ?? summary.claimableUsd,
       count: summary.claimableClaimCount,
       note: "board-bookable value",
-      source: "consumption.tower_board_posture_v1",
+      source: "serving.tower_value_proof",
       tone: summary.claimableUsd > 0 ? "teal" : "red",
     },
   ];
@@ -1096,7 +1096,7 @@ function buildEvidenceMaturityView(
       missingBaseline,
       "Business process owner",
       "Declare pre-change comparison cohorts.",
-      "tower.value_claim baseline linkage",
+      "serving.tower_value_proof baseline linkage",
     ),
     ledger(
       "missing_target",
@@ -1104,7 +1104,7 @@ function buildEvidenceMaturityView(
       missingTarget,
       "Portfolio owner",
       "Record expected movement and decision threshold.",
-      "tower.value_claim target linkage",
+      "serving.tower_value_proof target linkage",
     ),
     ledger(
       "missing_actual",
@@ -1112,7 +1112,7 @@ function buildEvidenceMaturityView(
       missingActual,
       "Metric owner",
       "Load actual outcome observations.",
-      "tower.value_claim actual linkage",
+      "serving.tower_value_proof actual linkage",
     ),
     ledger(
       "missing_outcome_metric",
@@ -1120,7 +1120,7 @@ function buildEvidenceMaturityView(
       missingOutcomeMetric,
       "Business metric owner",
       "Bind each claim to a governed outcome definition.",
-      "tower.metric_definition / tower.value_claim",
+      "ECL metric definition / serving.tower_value_proof",
     ),
     ledger(
       "missing_attribution",

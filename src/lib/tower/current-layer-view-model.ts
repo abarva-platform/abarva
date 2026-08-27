@@ -251,7 +251,7 @@ export interface TowerMartAiPortfolioCounts {
 }
 
 export interface TowerMartCommandViewModel {
-  generatedFrom: "cio_tower_mart" | "tower_schema";
+  generatedFrom: "cio_tower_mart" | "tower_schema" | "ecl_serving";
   headline: string;
   command: TowerMartCommandCenter;
   valueFunnel: TowerMartValueFunnelStage[];

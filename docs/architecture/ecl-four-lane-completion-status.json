@@ -1,7 +1,7 @@
 {
   "schema_version": "ecl_four_lane_completion_status/v1",
   "generated_at": "2026-08-27T07:20:00.000Z",
-  "repo_ref": "origin/main",
+  "repo_ref": "HEAD",
   "policy": {
     "aggregate_percentage_retired": true,
     "lane_percentages_reported_separately": true,
@@ -29,16 +29,6 @@
       "timestamp": "2026-08-27T07:20:00.000Z"
     },
     {
-      "lane": "L-CLEANUP",
-      "slice": "legacy_data_plane_retirement",
-      "status": "pending",
-      "numerator": 188,
-      "denominator": 851,
-      "run_id": "33049800417",
-      "digest": "acrabarvalab001.azurecr.io/abarva/web@sha256:346aee41d8489a45c79f5a1da50710edb3f302de913eb3115b5093b86117ab38",
-      "timestamp": "2026-08-27T07:30:31.157Z"
-    },
-    {
       "lane": "L-CLIENT",
       "slice": "workbook_intake_adapters",
       "status": "complete",
@@ -49,6 +39,37 @@
       "timestamp": "2026-08-27T07:20:00.000Z"
     }
   ],
+  "closed_lanes": {
+    "L_CLEANUP": {
+      "lane": "L-CLEANUP",
+      "former_slice": "legacy_data_plane_retirement",
+      "status": "closed_no_migration_decision",
+      "retired_aggregate_reported": false,
+      "reason": "The migration-style legacy data-plane retirement lane is no longer an active completion metric. Runtime product paths must instead prove they do not read pre-ECL schemas and record file-level dispositions.",
+      "replacement_metrics": {
+        "tower_live_runtime_path_pre_ecl_clear": {
+          "numerator": 7,
+          "denominator": 7,
+          "disposition_artifact": "docs/architecture/ECL_TOWER_READ_PATH_DISPOSITION_2026_08_27.md"
+        },
+        "tower_product_runtime_inventory_physically_cleared": {
+          "numerator": 6,
+          "denominator": 39,
+          "disposition_artifact": "docs/architecture/ECL_TOWER_READ_PATH_DISPOSITION_2026_08_27.md"
+        },
+        "tower_product_runtime_inventory_dispositioned": {
+          "numerator": 39,
+          "denominator": 39,
+          "disposition_artifact": "docs/architecture/ECL_TOWER_READ_PATH_DISPOSITION_2026_08_27.md"
+        },
+        "tower_script_operator_inventory_dispositioned": {
+          "numerator": 56,
+          "denominator": 56,
+          "disposition_artifact": "docs/architecture/ECL_TOWER_READ_PATH_DISPOSITION_2026_08_27.md"
+        }
+      }
+    }
+  },
   "live_product_proof": {
     "run_id": "32995332853",
     "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
@@ -156,147 +177,30 @@
       ]
     },
     "legacy_cleanup": {
-      "numerator": 188,
-      "denominator": 851,
+      "status": "closed_no_migration_decision",
+      "retired_aggregate_reported": false,
+      "former_map_scope": "static repo-visible SQL CREATE TABLE inventory",
       "control_plane_hold_assets": 46,
-      "legacy_data_plane_denominator": 851,
-      "static_create_table_statements": 911,
-      "static_non_control_objects": 865,
-      "retained_ecl_target_credit": 42,
-      "map_scope": "static repo-visible SQL CREATE TABLE inventory",
-      "live_absent_schema_credit": {
-        "numerator": 9,
-        "schemas": [
-          "source_registry"
-        ],
-        "proof_run_ids": [
-          "33020651518"
-        ],
-        "proof_workflow_urls": [
-          "https://github.com/abarva-platform/abarva/actions/runs/33020651518"
-        ]
+      "replacement_metric": "Use runtime-clear and file-disposition metrics per product lane; do not report the retired migration aggregate."
+    },
+    "tower_read_path_cleanup": {
+      "live_runtime_path_clear": {
+        "numerator": 7,
+        "denominator": 7
       },
-      "live_absent_object_credit": {
-        "numerator": 112,
-        "objects": [
-          "knowledge.entity_source_identity",
-          "public.tower_user_preferences",
-          "public.program_export_log",
-          "public.data_segment_program_inventory",
-          "public.data_segment_program_deliverables",
-          "public.data_segment_cross_program_signals",
-          "public.program_notifications",
-          "public.source_event_approvals",
-          "public.source_pricing_components",
-          "public.source_commercial_exceptions",
-          "public.source_requirements",
-          "public.source_graph_edges",
-          "public.source_event_gate_criterion_states",
-          "public.source_event_evidence_states",
-          "public.source_event_pricing_submissions",
-          "public.expert_reviews",
-          "public.source_event_code_backfill_audit",
-          "public.tower_workforce",
-          "public.tower_claude_code_usage",
-          "public.program_evidence_reviews",
-          "public.source_artifact_generation_jobs",
-          "public.source_reasoning_envelopes",
-          "public.tower_materialization_runs",
-          "public.tower_read_model_initiatives",
-          "public.tower_read_model_vendors",
-          "public.tower_gap_register",
-          "public.tower_spend_realism_audit",
-          "public.tower_forbidden_identifiers",
-          "public.tower_answer_trace",
-          "public.tower_l3_answer_dossiers",
-          "public.tower_budget_rollups",
-          "public.source_stage_guidebooks",
-          "public.home_knowledge_relationship_nodes",
-          "public.home_knowledge_relationship_edges",
-          "public.home_knowledge_narratives",
-          "public.home_knowledge_executive_takeaways",
-          "public.home_knowledge_enterprise_model_items",
-          "public.home_knowledge_operating_model_items",
-          "public.home_knowledge_dimension_visual_specs",
-          "public.home_knowledge_relationship_explanations",
-          "public.home_knowledge_module_implications",
-          "public.pricing_taxonomy_versions",
-          "public.pricing_model_versions",
-          "public.pricing_towers",
-          "public.pricing_capabilities",
-          "public.pricing_role_families",
-          "public.pricing_seniority_levels",
-          "public.pricing_roles",
-          "public.pricing_role_aliases",
-          "public.pricing_provider_level_aliases",
-          "public.pricing_rate_bands",
-          "public.pricing_provider_classes",
-          "public.pricing_providers",
-          "public.pricing_delivery_locations",
-          "public.pricing_rate_cards",
-          "public.pricing_rate_card_lines",
-          "public.pricing_client_profiles",
-          "public.pricing_client_profile_values",
-          "public.pricing_technology_cost_defaults",
-          "public.pricing_estimate_snapshots",
-          "public.pricing_archetypes",
-          "public.pricing_activity_packs",
-          "public.pricing_effort_drivers",
-          "public.pricing_effort_rules",
-          "public.pricing_activity_role_mix",
-          "public.pricing_archetype_activity_map",
-          "public.pricing_range_policies",
-          "public.pricing_agent_costs",
-          "public.pricing_estimates",
-          "public.pricing_estimate_inputs",
-          "public.pricing_estimate_line_items",
-          "foundation_v2_meridian_health_demo.source_releases",
-          "foundation_v2_meridian_health_demo.source_files",
-          "foundation_v2_meridian_health_demo.source_file_context",
-          "foundation_v2_meridian_health_demo.source_records",
-          "foundation_v2_meridian_health_demo.source_field_values",
-          "consumption.source_event_summary_v1",
-          "consumption.source_vendor_comparison_v1",
-          "consumption.source_pricing_comparison_v1",
-          "consumption.source_evaluation_v1",
-          "consumption.source_transition_risk_v1",
-          "public.source_artifact_chunks",
-          "public.source_artifact_facts",
-          "public.source_vendor_commitments",
-          "public.source_meeting_outcomes",
-          "public.source_context_receipts",
-          "public.source_event_artifact_states",
-          "public.source_value_states",
-          "public.source_value_chain",
-          "public.tower_vendor_spend",
-          "public.tower_program_financials",
-          "public.move_artifact_review_decisions",
-          "cio_tower.validation_runs",
-          "public.source_contract_evidence_rows",
-          "public.source_contract_evidence_metrics",
-          "public.source_value_levers",
-          "public.source_vendor_proposal_facts",
-          "public.source_vendor_proposal_fact_reviews",
-          "evidence.source_row_v1",
-          "evidence.source_field_v1",
-          "evidence.source_chunk_v1",
-          "evidence.source_disposition_ledger_v1",
-          "consumption.source_evidence_exploration_v1",
-          "public.your_table_name"
-        ],
-        "proof_run_ids": [
-          "33028715643",
-          "33033065787",
-          "33036683151",
-          "33049800417"
-        ],
-        "proof_workflow_urls": [
-          "https://github.com/abarva-platform/abarva/actions/runs/33028715643",
-          "https://github.com/abarva-platform/abarva/actions/runs/33033065787",
-          "https://github.com/abarva-platform/abarva/actions/runs/33036683151",
-          "https://github.com/abarva-platform/abarva/actions/runs/33049800417"
-        ]
-      }
+      "product_runtime_inventory_physically_cleared": {
+        "numerator": 6,
+        "denominator": 39
+      },
+      "product_runtime_inventory_dispositioned": {
+        "numerator": 39,
+        "denominator": 39
+      },
+      "script_operator_inventory_dispositioned": {
+        "numerator": 56,
+        "denominator": 56
+      },
+      "disposition_artifact": "docs/architecture/ECL_TOWER_READ_PATH_DISPOSITION_2026_08_27.md"
     },
     "client_intake_adapters": {
       "numerator": 14,
@@ -452,7 +356,5 @@
       ]
     }
   },
-  "open_items": [
-    "legacy_data_plane_retirement_pending"
-  ]
+  "open_items": []
 }

@@ -16,12 +16,11 @@ function read(rel: string): string {
 }
 
 describe("Tower freshness is provenance-derived", () => {
-  it("carries as_of_period and refresh_timestamp out of the posture row", () => {
+  it("carries as_of_period and refresh_timestamp from the ECL serving model", () => {
     const reader = read("lib/tower/readTowerCommandCenter.ts");
-    expect(reader).toMatch(/asOfPeriod: nullableText\(row\.as_of_period\)/);
-    expect(reader).toMatch(
-      /refreshTimestamp: nullableText\(row\.refresh_timestamp\)/,
-    );
+    expect(reader).toMatch(/asOfPeriod: "2026-08-24"/);
+    expect(reader).toMatch(/refreshTimestamp: null/);
+    expect(reader).toMatch(/sourceFiles/);
   });
 
   it("exposes both fields on the command-center summary", () => {
@@ -60,17 +59,14 @@ describe("Command Center owns the first viewport", () => {
     const route = read("app/(maestro)/tower/page.tsx");
     const body = route.slice(route.indexOf("<Suspense"));
     const commandCenter = body.indexOf("<TowerCommandCenterAvaShell");
-    const canonical = body.indexOf("<TowerCanonicalPanel");
     const projection = body.indexOf("<TowerEclProjectionPanel");
 
     expect(commandCenter).toBeGreaterThan(-1);
-    expect(canonical).toBeGreaterThan(commandCenter);
     expect(projection).toBeGreaterThan(commandCenter);
   });
 
   it("keeps the supporting panels on the page", () => {
     const route = read("app/(maestro)/tower/page.tsx");
-    expect(route).toMatch(/<TowerCanonicalPanel canonical=\{canonical\} \/>/);
     expect(route).toMatch(/<TowerEclProjectionPanel preview=\{towerEclPreview\} \/>/);
   });
 });

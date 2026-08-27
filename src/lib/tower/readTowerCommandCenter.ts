@@ -1,21 +1,21 @@
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { canonicalClientDisplayName } from "@/lib/client-config";
 import {
   canonicalCioTowerTenantKey,
   formatCioTowerMoney,
 } from "@/lib/tower/metric-packet";
 import type {
   TowerMartAiPortfolioItem,
-  TowerMartCommandCenter,
   TowerMartCommandViewModel,
   TowerMartCxoAction,
   TowerMartEvidenceLineage,
   TowerMartProgramLane,
   TowerMartRequiredFieldGap,
   TowerMartValueFunnelStage,
-  TowerMartValueTrajectoryPoint,
 } from "@/lib/tower/current-layer-view-model";
 
 type Numeric = string | number | null | undefined;
+type JsonRecord = Record<string, unknown>;
 type TowerDecisionLane = TowerMartProgramLane["decisionLane"];
 type TowerSqlQuery = <R = Record<string, unknown>>(
   sql: string,
@@ -23,234 +23,38 @@ type TowerSqlQuery = <R = Record<string, unknown>>(
   opts?: { missingTable?: "empty" | "throw" },
 ) => Promise<R[]>;
 
-interface BoardPostureRow {
-  command_center_key: string;
+interface TowerServingRow {
   tenant_key: string;
-  tenant_name: string | null;
-  mart_version: string;
-  source_standard: string;
-  formula_version: string;
-  source_contract_version: string;
-  dataset_version: string | null;
-  source_run_id: string | null;
-  as_of_period: string | null;
-  refresh_timestamp: string | null;
-  total_it_budget_fy26: Numeric;
-  run_budget_fy26: Numeric;
-  change_budget_fy26: Numeric;
-  approved_program_budget_fy26: Numeric;
-  ai_tagged_spend_fy26_non_additive: Numeric;
-  promised_value_fy26: Numeric;
-  partial_finance_validated_value_ytd: Numeric;
-  realized_value_ytd_allowed: Numeric;
-  value_claim_count: number | null;
-  known_value_claim_count: number | null;
-  unknown_value_claim_count: number | null;
-  known_zero_value_claim_count: number | null;
-  known_value_amount_usd: Numeric;
-  finance_attested_claim_count: number | null;
-  business_attested_claim_count: number | null;
-  claimable_claim_count: number | null;
-  usage_supported_claim_count: number | null;
-  funded_no_baseline_claim_count: number | null;
-  stale_claim_count: number | null;
-  disputed_claim_count: number | null;
-  baseline_linked_claim_count: number | null;
-  target_linked_claim_count: number | null;
-  actual_linked_claim_count: number | null;
-  outcome_measured_claim_count: number | null;
-  claimable_program_count: number | null;
-  blocked_program_count: number | null;
-  conflicted_program_count: number | null;
-  unmeasured_program_count: number | null;
-  program_count: number | null;
-  ai_initiative_count: number | null;
-  candidate_ai_opportunities: number | null;
-  watch_pressure_signals: number | null;
-  finance_validated_blocked_value: Numeric;
-  promised_value_exposure: Numeric;
-  run_ratio: Numeric;
-  change_ratio: Numeric;
-  finance_validation_ratio: Numeric;
-  decision_question: string;
-  executive_summary: string;
-  promised_value_board_status: string | null;
-  promised_value_trust_state: string | null;
-  source_files: string[] | null;
-  total_program_subject_count?: number | null;
-  active_program_subject_count?: number | null;
-  material_program_count?: number | null;
-  board_scope_program_count?: number | null;
-  economic_review_queue_count?: number | null;
+  assessment_id: string;
+  projection_version: number;
+  source_hash: string;
+  basis: string | null;
+  value_state: string | null;
+  review_state: string | null;
+  origin: string | null;
+  gap_flags_json: unknown;
+  projection_row_id: string;
+  page_key: string;
+  row_key: string;
+  row_type: string;
+  title: string | null;
+  summary: string | null;
+  primary_object_id: string | null;
+  source_refs_json: unknown;
+  payload_json: unknown;
 }
 
-interface ValueFunnelRow {
-  funnel_key: string;
-  sequence: number | null;
-  stage_key: string;
-  stage_label: string;
-  value_numeric: Numeric;
-  claim_count: number | null;
-  known_value_claim_count: number | null;
-  unknown_value_claim_count: number | null;
-  known_value_amount: Numeric;
-  blocked_claim_count: number | null;
-  blocked_known_value_amount: Numeric;
-  primary_blocker: string | null;
-  primary_owner_role: string | null;
-  denominator_stage_key: string | null;
-  conversion_ratio: Numeric;
-  claim_status: string;
-  caveat: string | null;
-  source_file: string | null;
-  source_row: string | null;
-}
-
-interface ValueTrajectoryRow {
-  tenant_key: string;
-  value_case_id: string;
-  program_id: string | null;
-  initiative_id: string | null;
-  value_case_name: string;
-  value_archetype: string | null;
-  period_start: unknown;
-  period_end: unknown;
-  fiscal_quarter: string;
-  scenario: string;
-  planned_investment_usd: Numeric;
-  actual_spend_usd: Numeric;
-  remaining_commitment_usd: Numeric;
-  business_case_value_usd: Numeric;
-  business_case_benefit_usd: Numeric;
-  risk_adjusted_forecast_usd: Numeric;
-  finance_validated_run_rate_usd: Numeric;
-  realized_p_and_l_usd: Numeric;
-  realized_cash_usd: Numeric;
-  forecast_at_completion_usd: Numeric;
-  financial_conversion_usd: Numeric;
-  usage_evidence_state: string | null;
-  operational_outcome_evidence_state: string | null;
-  finance_attestation_state: string | null;
-  source_trust_state: string | null;
-  claim_state: string | null;
-  dataset_version: string | null;
-  source_run_id: string | null;
-  source_refs: Array<Record<string, unknown>> | null;
-  economic_classification: string | null;
-  board_scope_state: string | null;
-  material_scope_state: string | null;
-  source_count: number | null;
-}
-
-interface PortfolioDecisionRow {
-  decision_ref: string;
-  value_case_id: string;
-  program_id: string | null;
-  initiative_id: string | null;
-  program_name: string;
-  owner_role: string | null;
-  finance_owner_role: string | null;
-  decision_lane: string | null;
-  decision_rationale: string | null;
-  approved_funding_usd: Numeric;
-  funded_amount: Numeric;
-  ai_tagged_spend_usd: Numeric;
-  promised_value_usd: Numeric;
-  finance_validated_value_usd: Numeric;
-  known_supported_value: Numeric;
-  proof_maturity_score: Numeric;
-  risk_pressure_score: Numeric;
-  usage_strength_score: Numeric;
-  lineage_trust_state: string | null;
-  decision_reason_code: string | null;
-  amount_blocked: Numeric;
-  next_gate: string | null;
-  usage_metric: string | null;
-  usage_actual: Numeric;
-  adoption_rate_pct: Numeric;
-  value_claim_status: string | null;
-  tower_claim_allowed: string | null;
-  required_gates: Array<Record<string, unknown>> | null;
-  caveat: string | null;
-  source_file: string | null;
-  source_row: string | null;
-}
-
-interface AiPortfolioRow {
-  ai_portfolio_key: string;
-  item_name: string;
-  item_kind: string | null;
-  vendor_name: string | null;
-  system_name: string | null;
-  ai_spend_type: string | null;
-  ai_spend_category: string | null;
-  funding_status: string | null;
-  decision_lane: string | null;
-  approved_funding_usd: Numeric;
-  ai_tagged_spend_usd: Numeric;
-  promised_value_usd: Numeric;
-  finance_validated_value_usd: Numeric;
-  usage_metric: string | null;
-  usage_actual: Numeric;
-  adoption_rate_pct: Numeric;
-  value_score: Numeric;
-  readiness_score: Numeric;
-  risk_score: Numeric;
-  duplicate_risk: string | null;
-  value_claim_status: string | null;
-  tower_claim_allowed: string | null;
-  caveat: string | null;
-  source_file: string | null;
-  source_row: string | null;
-}
-
-interface ActionQueueRow {
-  action_key: string;
-  sequence: number | null;
-  action_lane: string | null;
-  title: string;
-  action_body: string;
-  owner_hint: string | null;
-  module_handoff: string | null;
-  program_id: string | null;
-  claim_id: string | null;
-  proof_stage: string | null;
-  blocked_decision: string | null;
-  amount_exposed: Numeric;
-  evidence_requirement: string | null;
-  expected_source_system: string | null;
-  evidence_package_id: string | null;
-  owner_role: string | null;
-  secondary_owner_role: string | null;
-  due_window: string | null;
-  due_date: unknown;
-  handoff_module: string | null;
-  handoff_entity_id: string | null;
-  handoff_readiness: string | null;
-  action_state: string | null;
-  priority: string | null;
-}
-
-interface SourceTrustRow {
-  lineage_key: string;
-  surface_section: string;
-  displayed_fact: string;
-  displayed_value_text: string | null;
-  displayed_value_numeric: Numeric;
-  metric_or_fact_key: string | null;
-  board_visible_label: string | null;
-  lineage_state: string | null;
-  source_count: number | null;
-  source_refs: Array<Record<string, unknown>> | null;
-  conflicting_values: Array<Record<string, unknown>> | null;
-  authoritative_value: string | null;
-  resolution_owner_role: string | null;
-  resolution_state: string | null;
-  source_file: string | null;
-  source_row: string | null;
-  source_system: string | null;
-  caveat: string | null;
-}
+const TOWER_SERVING_VIEWS = [
+  "tower_command_center",
+  "tower_value_proof",
+  "tower_decision_lanes",
+  "tower_evidence",
+  "tower_recommended_actions",
+  "tower_ai_portfolio",
+  "tower_cost_lens",
+  "tower_risk_lens",
+  "tower_adoption_lens",
+] as const;
 
 function num(value: Numeric): number {
   const parsed = Number(value ?? 0);
@@ -258,13 +62,9 @@ function num(value: Numeric): number {
 }
 
 function nullableNum(value: Numeric): number | null {
-  if (value === null || value === undefined) return null;
+  if (value === null || value === undefined || value === "") return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
-}
-
-function count(value: number | null | undefined): number {
-  return Number(value ?? 0);
 }
 
 function nullableText(value: unknown): string | null {
@@ -273,48 +73,8 @@ function nullableText(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-function dateText(value: unknown): string {
-  if (value instanceof Date && Number.isFinite(value.getTime())) {
-    return value.toISOString().slice(0, 10);
-  }
-  if (typeof value === "string") {
-    return value.slice(0, 10);
-  }
-  if (value === null || value === undefined) {
-    return "";
-  }
-  return String(value).slice(0, 10);
-}
-
-function nullableDateText(value: unknown): string | null {
-  const text = dateText(value);
-  return text.length > 0 ? text : null;
-}
-
-function tenantCandidates(values: readonly (string | null | undefined)[]) {
-  const out = new Set<string>();
-  for (const value of values) {
-    if (!value?.trim()) continue;
-    const canonical = canonicalCioTowerTenantKey(value);
-    out.add(canonical);
-    if (canonical === "skyharbor_global" || value === "skyharbor-air") {
-      out.add("skyharbor_global");
-    }
-    if (
-      canonical === "meridian-health" ||
-      value === "meridian" ||
-      value === "meridian_health_global"
-    ) {
-      out.add("meridian_health_global");
-    }
-  }
-  return [...out];
-}
-
 function decisionLane(value: string | null | undefined): TowerDecisionLane {
-  const normalized = String(value ?? "")
-    .trim()
-    .toLowerCase();
+  const normalized = String(value ?? "").trim().toLowerCase();
   if (
     normalized === "fund" ||
     normalized === "fix" ||
@@ -326,8 +86,123 @@ function decisionLane(value: string | null | undefined): TowerDecisionLane {
   return "fix";
 }
 
-function sourceFile(row: { source_file: string | null }): string | null {
-  return nullableText(row.source_file);
+function asRecord(value: unknown): JsonRecord {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as JsonRecord;
+}
+
+function jsonArray(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function payload(row: TowerServingRow): JsonRecord {
+  return asRecord(row.payload_json);
+}
+
+function displayPayload(row: TowerServingRow): JsonRecord {
+  return asRecord(payload(row).display_payload_json);
+}
+
+function sourceRefs(row: TowerServingRow): Array<Record<string, unknown>> {
+  return jsonArray(row.source_refs_json).filter(
+    (entry): entry is Record<string, unknown> =>
+      Boolean(entry) && typeof entry === "object" && !Array.isArray(entry),
+  );
+}
+
+function payloadText(
+  row: TowerServingRow,
+  key: string,
+  fallback?: unknown,
+): string | null {
+  return (
+    nullableText(payload(row)[key]) ??
+    nullableText(displayPayload(row)[key]) ??
+    nullableText(fallback)
+  );
+}
+
+function payloadNumber(row: TowerServingRow, key: string): number {
+  return num(payload(row)[key] as Numeric);
+}
+
+function payloadNullableNumber(row: TowerServingRow, key: string): number | null {
+  return nullableNum(payload(row)[key] as Numeric);
+}
+
+function firstSourceLabel(refs: readonly Record<string, unknown>[]): string | null {
+  const ref = refs[0];
+  if (!ref) return null;
+  return (
+    nullableText(ref.source_family) ??
+    nullableText(ref.file_path) ??
+    nullableText(ref.source_file) ??
+    nullableText(ref.source_record_id)
+  );
+}
+
+function uniqueSourceFiles(rows: readonly TowerServingRow[]): string[] {
+  const out = new Set<string>();
+  for (const row of rows) {
+    for (const ref of sourceRefs(row)) {
+      const label = firstSourceLabel([ref]);
+      if (label) out.add(label);
+    }
+  }
+  return [...out].sort();
+}
+
+function uniqueRows(rows: readonly TowerServingRow[]): TowerServingRow[] {
+  const out = new Map<string, TowerServingRow>();
+  for (const row of rows) {
+    out.set(row.projection_row_id ?? `${row.page_key}/${row.row_key}`, row);
+  }
+  return [...out.values()];
+}
+
+function requireSourceTruth(
+  viewName: string,
+  rows: readonly TowerServingRow[],
+): void {
+  const missing = rows
+    .filter((row) => sourceRefs(row).length === 0)
+    .map((row) => `${row.page_key}/${row.row_key}`)
+    .slice(0, 8);
+  if (missing.length > 0) {
+    throw new Error(
+      `tower_ecl_serving_source_refs_missing: ${viewName} ${missing.join(", ")}`,
+    );
+  }
+}
+
+function tenantCandidates(values: readonly (string | null | undefined)[]) {
+  const out = new Set<string>();
+  for (const value of values) {
+    if (!value?.trim()) continue;
+    const canonical = canonicalCioTowerTenantKey(value);
+    out.add(canonical);
+    out.add(value.trim());
+    if (
+      canonical === "meridian-health" ||
+      value === "meridian" ||
+      value === "meridian_health_global"
+    ) {
+      out.add("meridian-health");
+    }
+    if (canonical === "skyharbor_global" || value === "skyharbor-air") {
+      out.add("skyharbor_global");
+    }
+  }
+  return [...out];
 }
 
 function isMissingTableError(error: unknown): boolean {
@@ -361,545 +236,489 @@ async function withTowerTenantRead<T>(
   });
 }
 
-function mapCommand(row: BoardPostureRow): TowerMartCommandCenter {
-  const totalBudget = num(row.total_it_budget_fy26);
-  const runBudget = num(row.run_budget_fy26);
-  const changeBudget = num(row.change_budget_fy26);
-  const valueClaimCount = count(row.value_claim_count);
-  const financeAttestedClaimCount = count(row.finance_attested_claim_count);
-
-  return {
-    commandCenterKey: row.command_center_key,
-    tenantKey: row.tenant_key,
-    tenantName: nullableText(row.tenant_name) ?? row.tenant_key,
-    martVersion: row.mart_version,
-    sourceStandard: row.source_standard,
-    formulaVersion: row.formula_version,
-    // Real freshness, carried from the posture row. The query already selects and orders by
-    // refresh_timestamp; dropping it here is what forced the surface to invent a date instead.
-    asOfPeriod: nullableText(row.as_of_period),
-    refreshTimestamp: nullableText(row.refresh_timestamp),
-    totalItBudgetFy26: nullableNum(row.total_it_budget_fy26),
-    runBudgetFy26: nullableNum(row.run_budget_fy26),
-    changeBudgetFy26: nullableNum(row.change_budget_fy26),
-    approvedProgramBudgetFy26: nullableNum(row.approved_program_budget_fy26),
-    aiTaggedSpendFy26NonAdditive: nullableNum(
-      row.ai_tagged_spend_fy26_non_additive,
-    ),
-    promisedValueFy26: nullableNum(row.promised_value_fy26),
-    partialFinanceValidatedValueYtd: num(
-      row.partial_finance_validated_value_ytd,
-    ),
-    realizedValueYtdAllowed: num(row.realized_value_ytd_allowed),
-    claimableValue: num(row.realized_value_ytd_allowed),
-    financeValidatedBlockedValue: num(row.finance_validated_blocked_value),
-    promisedValueExposure: nullableNum(row.promised_value_exposure),
-    totalProgramSubjectCount:
-      row.total_program_subject_count == null
-        ? undefined
-        : count(row.total_program_subject_count),
-    activeProgramSubjectCount:
-      row.active_program_subject_count == null
-        ? undefined
-        : count(row.active_program_subject_count),
-    materialProgramCount:
-      row.material_program_count == null
-        ? undefined
-        : count(row.material_program_count),
-    boardScopeProgramCount:
-      row.board_scope_program_count == null
-        ? undefined
-        : count(row.board_scope_program_count),
-    economicReviewQueueCount:
-      row.economic_review_queue_count == null
-        ? undefined
-        : count(row.economic_review_queue_count),
-    valueClaimCount,
-    knownValueClaimCount: count(row.known_value_claim_count),
-    unknownValueClaimCount: count(row.unknown_value_claim_count),
-    knownZeroValueClaimCount: count(row.known_zero_value_claim_count),
-    knownValueAmountUsd: num(row.known_value_amount_usd),
-    financeAttestedClaimCount,
-    businessAttestedClaimCount: count(row.business_attested_claim_count),
-    claimableClaimCount: count(row.claimable_claim_count),
-    usageSupportedClaimCount: count(row.usage_supported_claim_count),
-    fundedNoBaselineClaimCount: count(row.funded_no_baseline_claim_count),
-    staleClaimCount: count(row.stale_claim_count),
-    disputedClaimCount: count(row.disputed_claim_count),
-    baselineLinkedClaimCount: count(row.baseline_linked_claim_count),
-    targetLinkedClaimCount: count(row.target_linked_claim_count),
-    actualLinkedClaimCount: count(row.actual_linked_claim_count),
-    outcomeMeasuredClaimCount: count(row.outcome_measured_claim_count),
-    claimableProgramCount: count(row.claimable_program_count),
-    blockedProgramCount: count(row.blocked_program_count),
-    conflictedProgramCount: count(row.conflicted_program_count),
-    unmeasuredProgramCount: count(row.unmeasured_program_count),
-    aiInitiativeCount: count(row.ai_initiative_count),
-    candidateAiOpportunities: count(row.candidate_ai_opportunities),
-    watchPressureSignals: count(row.watch_pressure_signals),
-    runRatio:
-      nullableNum(row.run_ratio) ??
-      (totalBudget > 0 ? runBudget / totalBudget : null),
-    changeRatio:
-      nullableNum(row.change_ratio) ??
-      (totalBudget > 0 ? changeBudget / totalBudget : null),
-    financeValidationRatio:
-      nullableNum(row.finance_validation_ratio) ??
-      (valueClaimCount > 0
-        ? financeAttestedClaimCount / valueClaimCount
-        : null),
-    decisionQuestion: row.decision_question,
-    executiveSummary: row.executive_summary,
-    sourceFiles: row.source_files ?? [
-      "tower.value_case",
-      "tower.value_case_period",
-      "tower.subject_link",
-      "tower.economic_conversion",
-      "tower.attestation_event",
-      "tower.proof_action",
-      "consumption.tower_*_v1",
-    ],
-  };
+async function readServingView(
+  query: TowerSqlQuery,
+  viewName: (typeof TOWER_SERVING_VIEWS)[number],
+  tenantKey: string,
+): Promise<TowerServingRow[]> {
+  const rows = await query<TowerServingRow>(
+    `select *
+       from serving.${viewName}
+      where tenant_key = $1
+      order by page_key, row_key`,
+    [tenantKey],
+    { missingTable: "empty" },
+  );
+  requireSourceTruth(`serving.${viewName}`, rows);
+  return rows;
 }
 
-function mapValueFunnel(row: ValueFunnelRow): TowerMartValueFunnelStage {
-  return {
-    funnelKey: row.funnel_key,
-    sequence: Number(row.sequence ?? 0),
-    stageKey: row.stage_key,
-    stageLabel: row.stage_label,
-    valueNumeric: num(row.value_numeric),
-    claimCount: count(row.claim_count),
-    knownValueClaimCount: count(row.known_value_claim_count),
-    unknownValueClaimCount: count(row.unknown_value_claim_count),
-    knownValueAmount: num(row.known_value_amount),
-    blockedClaimCount: count(row.blocked_claim_count),
-    blockedKnownValueAmount: num(row.blocked_known_value_amount),
-    primaryBlocker: nullableText(row.primary_blocker),
-    primaryOwnerRole: nullableText(row.primary_owner_role),
-    denominatorStageKey: nullableText(row.denominator_stage_key),
-    conversionRatio: nullableNum(row.conversion_ratio),
-    claimStatus: row.claim_status,
-    caveat: nullableText(row.caveat) ?? "",
-    sourceFile: sourceFile(row),
-    sourceRow: nullableText(row.source_row),
-  };
+function sumRows(rows: readonly TowerServingRow[], key: string): number {
+  return rows.reduce((sum, row) => sum + payloadNumber(row, key), 0);
 }
 
-function mapValueTrajectory(
-  row: ValueTrajectoryRow,
-): TowerMartValueTrajectoryPoint {
-  return {
-    tenantKey: row.tenant_key,
-    valueCaseId: row.value_case_id,
-    programId: nullableText(row.program_id),
-    initiativeId: nullableText(row.initiative_id),
-    valueCaseName: row.value_case_name,
-    valueArchetype: nullableText(row.value_archetype),
-    periodStart: dateText(row.period_start),
-    periodEnd: dateText(row.period_end),
-    fiscalQuarter: row.fiscal_quarter,
-    scenario: row.scenario,
-    plannedInvestmentUsd: nullableNum(row.planned_investment_usd),
-    actualSpendUsd: nullableNum(row.actual_spend_usd),
-    remainingCommitmentUsd: nullableNum(row.remaining_commitment_usd),
-    businessCaseValueUsd: nullableNum(row.business_case_value_usd),
-    businessCaseBenefitUsd: nullableNum(row.business_case_benefit_usd),
-    riskAdjustedForecastUsd: nullableNum(row.risk_adjusted_forecast_usd),
-    financeValidatedRunRateUsd: nullableNum(row.finance_validated_run_rate_usd),
-    realizedPAndLUsd: nullableNum(row.realized_p_and_l_usd),
-    realizedCashUsd: nullableNum(row.realized_cash_usd),
-    forecastAtCompletionUsd: nullableNum(row.forecast_at_completion_usd),
-    financialConversionUsd: nullableNum(row.financial_conversion_usd),
-    usageEvidenceState: nullableText(row.usage_evidence_state),
-    operationalOutcomeEvidenceState: nullableText(
-      row.operational_outcome_evidence_state,
+function countByGate(rows: readonly TowerServingRow[], status: string): number {
+  return rows.filter((row) => payloadText(row, "claim_gate_status") === status)
+    .length;
+}
+
+function buildFunnel(
+  rows: readonly TowerServingRow[],
+): TowerMartValueFunnelStage[] {
+  const promised =
+    sumRows(rows, "promised_value_usd") + sumRows(rows, "baseline_value");
+  const usageSupported = sumRows(rows, "usage_supported_value_usd");
+  const financeValidated = sumRows(rows, "finance_validated_value_usd");
+  const claimable = sumRows(rows, "claimable_value_usd");
+  const blocked = sumRows(rows, "blocked_value_usd");
+  const claimCount = rows.filter((row) => payloadText(row, "claim_id")).length;
+  const gatedCount = countByGate(rows, "gated") + countByGate(rows, "blocked");
+  const sources = uniqueSourceFiles(rows).join("; ");
+
+  const stage = (
+    sequence: number,
+    stageKey: string,
+    stageLabel: string,
+    valueNumeric: number,
+    caveat: string,
+  ): TowerMartValueFunnelStage => ({
+    funnelKey: `tower:ecl:funnel:${stageKey}`,
+    sequence,
+    stageKey,
+    stageLabel,
+    valueNumeric,
+    claimCount,
+    knownValueClaimCount: claimCount - gatedCount,
+    unknownValueClaimCount: gatedCount,
+    knownValueAmount: valueNumeric,
+    blockedClaimCount: gatedCount,
+    blockedKnownValueAmount: blocked,
+    primaryBlocker: gatedCount > 0 ? "Evidence gates remain open" : null,
+    primaryOwnerRole: gatedCount > 0 ? "Tower evidence owner" : null,
+    denominatorStageKey: sequence === 1 ? null : "promised",
+    conversionRatio: promised > 0 ? valueNumeric / promised : null,
+    claimStatus: gatedCount > 0 ? "gated" : "claimable",
+    caveat,
+    sourceFile: sources,
+    sourceRow: null,
+  });
+
+  return [
+    stage(
+      1,
+      "promised",
+      "Source-backed value",
+      promised,
+      "Aggregated from ECL serving rows with source-record references.",
     ),
-    financeAttestationState: nullableText(row.finance_attestation_state),
-    sourceTrustState: nullableText(row.source_trust_state),
-    claimState: nullableText(row.claim_state),
-    datasetVersion: nullableText(row.dataset_version),
-    sourceRunId: nullableText(row.source_run_id),
-    sourceRefs: Array.isArray(row.source_refs) ? row.source_refs : [],
-    economicClassification: nullableText(row.economic_classification),
-    boardScopeState: nullableText(row.board_scope_state),
-    materialScopeState: nullableText(row.material_scope_state),
-    sourceCount: count(row.source_count),
-  };
+    stage(
+      2,
+      "usage_supported",
+      "Usage supported",
+      usageSupported,
+      "Usage support is shown only where the ECL row carries a recorded value.",
+    ),
+    stage(
+      3,
+      "finance_validated",
+      "Finance validated",
+      financeValidated,
+      "Finance validation remains separate from adoption and planning values.",
+    ),
+    stage(
+      4,
+      "claimable",
+      "Claimable",
+      claimable,
+      "Claimable value requires the Tower evidence gate to clear.",
+    ),
+  ];
 }
 
-function mapProgramLane(row: PortfolioDecisionRow): TowerMartProgramLane {
+function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
+  const display = displayPayload(row);
+  const refs = sourceRefs(row);
+  const title =
+    nullableText(display.title) ??
+    nullableText(display.program_name) ??
+    row.title ??
+    row.row_key;
+  const gateStatus = payloadText(row, "claim_gate_status") ?? "gated";
+  const nextGate = payloadText(row, "next_gate");
   return {
-    laneKey: row.decision_ref,
-    programCode: nullableText(row.program_id ?? row.initiative_id),
-    programName: row.program_name,
-    ownerRole: nullableText(row.owner_role),
-    financeOwnerRole: nullableText(row.finance_owner_role),
-    decisionLane: decisionLane(row.decision_lane),
+    laneKey: row.row_key,
+    programCode: payloadText(row, "claim_id") ?? nullableText(display.program_id),
+    programName: title,
+    ownerRole: payloadText(row, "owner_role") ?? nullableText(display.owner_role),
+    financeOwnerRole: nullableText(display.finance_owner_role),
+    decisionLane: decisionLane(
+      gateStatus === "blocked" ? "fix" : (display.decision_lane as string | null),
+    ),
     decisionRationale:
-      nullableText(row.decision_rationale) ??
-      "Governed value evidence is not complete enough to claim outcomes.",
-    approvedFundingUsd: num(row.approved_funding_usd),
-    fundedAmount: num(row.funded_amount),
-    aiTaggedSpendUsd: num(row.ai_tagged_spend_usd),
-    promisedValueUsd: nullableNum(row.promised_value_usd),
-    financeValidatedValueUsd: num(row.finance_validated_value_usd),
-    knownSupportedValue: nullableNum(row.known_supported_value),
-    proofMaturityScore: nullableNum(row.proof_maturity_score),
-    riskPressureScore: nullableNum(row.risk_pressure_score),
-    usageStrengthScore: nullableNum(row.usage_strength_score),
-    lineageTrustState: nullableText(row.lineage_trust_state),
-    decisionReasonCode: nullableText(row.decision_reason_code),
-    amountBlocked: nullableNum(row.amount_blocked),
-    nextGate: nullableText(row.next_gate),
-    usageMetric: nullableText(row.usage_metric),
-    usageActual: nullableNum(row.usage_actual),
-    adoptionRatePct: nullableNum(row.adoption_rate_pct),
-    valueClaimStatus: nullableText(row.value_claim_status) ?? "evidence_gap",
-    towerClaimAllowed: nullableText(row.tower_claim_allowed) ?? "blocked",
-    requiredGates: Array.isArray(row.required_gates) ? row.required_gates : [],
-    caveat: nullableText(row.caveat) ?? "",
-    sourceFile: sourceFile(row),
-    sourceRow: nullableText(row.source_row),
+      payloadText(row, "claim_gate_reason_detail", row.summary) ??
+      "ECL serving row requires evidence review before the claim can advance.",
+    approvedFundingUsd: payloadNumber(row, "funded_amount_usd"),
+    fundedAmount: payloadNumber(row, "funded_amount_usd"),
+    aiTaggedSpendUsd:
+      row.page_key === "ai_portfolio" ? payloadNumber(row, "funded_amount_usd") : 0,
+    promisedValueUsd: payloadNullableNumber(row, "promised_value_usd"),
+    financeValidatedValueUsd: payloadNumber(row, "finance_validated_value_usd"),
+    knownSupportedValue: payloadNullableNumber(row, "usage_supported_value_usd"),
+    proofMaturityScore: payloadNullableNumber(row, "proof_maturity_score"),
+    riskPressureScore: payloadNullableNumber(row, "risk_pressure_score"),
+    usageStrengthScore: payloadNullableNumber(row, "usage_strength_score"),
+    lineageTrustState: row.basis,
+    decisionReasonCode: payloadText(row, "claim_gate_reason_code"),
+    amountBlocked: payloadNullableNumber(row, "blocked_value_usd"),
+    nextGate,
+    usageMetric: nullableText(display.usage_metric),
+    usageActual: nullableNum(display.usage_actual as Numeric),
+    adoptionRatePct: payloadNullableNumber(row, "usage_strength_score"),
+    valueClaimStatus: gateStatus,
+    towerClaimAllowed: gateStatus === "claimable" ? "allowed" : "blocked",
+    requiredGates: jsonArray(payload(row).evidence_needed_json).map((ask) => ({
+      ask,
+      status: gateStatus,
+    })) as Array<Record<string, unknown>>,
+    caveat:
+      payloadText(row, "claim_gate_reason_detail", row.summary) ??
+      "ECL serving row has no additional caveat.",
+    sourceFile: firstSourceLabel(refs),
+    sourceRow: nullableText(refs[0]?.source_record_id),
   };
 }
 
-function mapAiItem(row: AiPortfolioRow): TowerMartAiPortfolioItem {
+function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
+  const refs = sourceRefs(row);
+  const licensedUsers = payloadNumber(row, "licensed_users");
+  const activeUsers = payloadNumber(row, "active_users");
   return {
-    aiPortfolioKey: row.ai_portfolio_key,
-    itemName: row.item_name,
-    itemKind: nullableText(row.item_kind) ?? "usage_benefit",
-    vendorName: nullableText(row.vendor_name),
-    systemName: nullableText(row.system_name),
-    aiSpendType: nullableText(row.ai_spend_type),
-    aiSpendCategory: nullableText(row.ai_spend_category),
-    fundingStatus: nullableText(row.funding_status),
-    decisionLane: decisionLane(row.decision_lane),
-    approvedFundingUsd: num(row.approved_funding_usd),
-    aiTaggedSpendUsd: num(row.ai_tagged_spend_usd),
-    promisedValueUsd: nullableNum(row.promised_value_usd),
-    financeValidatedValueUsd: num(row.finance_validated_value_usd),
-    usageMetric: nullableText(row.usage_metric),
-    usageActual: nullableNum(row.usage_actual),
-    adoptionRatePct: nullableNum(row.adoption_rate_pct),
-    valueScore: num(row.value_score),
-    readinessScore: num(row.readiness_score),
-    riskScore: num(row.risk_score),
-    duplicateRisk: nullableText(row.duplicate_risk),
-    valueClaimStatus: nullableText(row.value_claim_status) ?? "usage_supported",
-    towerClaimAllowed: nullableText(row.tower_claim_allowed) ?? "blocked",
-    caveat: nullableText(row.caveat) ?? "",
-    sourceFile: sourceFile(row),
-    sourceRow: nullableText(row.source_row),
+    aiPortfolioKey: row.row_key,
+    itemName: payloadText(row, "use_case_name", row.title) ?? row.row_key,
+    itemKind: "usage_benefit",
+    vendorName: payloadText(row, "tool_name", row.summary),
+    systemName: payloadText(row, "tool_name", row.summary),
+    aiSpendType: "usage",
+    aiSpendCategory: "tool",
+    fundingStatus: row.review_state,
+    decisionLane: "fix",
+    approvedFundingUsd: payloadNumber(row, "monthly_cost_usd") * 12,
+    aiTaggedSpendUsd: payloadNumber(row, "monthly_cost_usd") * 12,
+    promisedValueUsd: null,
+    financeValidatedValueUsd: 0,
+    usageMetric: "active users",
+    usageActual: activeUsers,
+    adoptionRatePct:
+      payloadNullableNumber(row, "adoption_rate_percent") ??
+      (licensedUsers > 0 ? (activeUsers / licensedUsers) * 100 : null),
+    valueScore: payloadNumber(row, "usage_events") > 0 ? 55 : 20,
+    readinessScore: payloadNullableNumber(row, "adoption_rate_percent") ?? 25,
+    riskScore: 40,
+    duplicateRisk: null,
+    valueClaimStatus: "usage_supported",
+    towerClaimAllowed: "blocked",
+    caveat:
+      "AI usage is source-recorded; value remains blocked until outcome and finance evidence are linked.",
+    sourceFile: firstSourceLabel(refs),
+    sourceRow: nullableText(refs[0]?.source_record_id),
   };
 }
 
-function mapAction(row: ActionQueueRow): TowerMartCxoAction {
+function mapAction(row: TowerServingRow, index: number): TowerMartCxoAction {
+  const refs = sourceRefs(row);
   return {
-    actionKey: row.action_key,
-    sequence: Number(row.sequence ?? 0),
-    actionLane: nullableText(row.action_lane) ?? "fix",
-    title: row.title,
-    actionBody: row.action_body,
-    ownerHint: nullableText(row.owner_hint),
-    moduleHandoff: nullableText(row.module_handoff),
-    programId: nullableText(row.program_id),
-    claimId: nullableText(row.claim_id),
-    proofStage: nullableText(row.proof_stage),
-    blockedDecision: nullableText(row.blocked_decision),
-    amountExposed: num(row.amount_exposed),
-    evidenceRequirement: nullableText(row.evidence_requirement),
-    expectedSourceSystem: nullableText(row.expected_source_system),
-    evidencePackageId: nullableText(row.evidence_package_id),
-    ownerRole: nullableText(row.owner_role),
-    secondaryOwnerRole: nullableText(row.secondary_owner_role),
-    dueWindow: nullableText(row.due_window),
-    dueDate: nullableDateText(row.due_date),
-    handoffModule: nullableText(row.handoff_module),
-    handoffEntityId: nullableText(row.handoff_entity_id),
-    handoffReadiness: nullableText(row.handoff_readiness) ?? "not_ready",
-    actionState: nullableText(row.action_state) ?? "open",
-    priority: nullableText(row.priority) ?? "medium",
+    actionKey: row.row_key,
+    sequence: index + 1,
+    actionLane: "fix",
+    title: payloadText(row, "title", row.title) ?? row.row_key,
+    actionBody:
+      payloadText(row, "claim_gate_reason_detail", row.summary) ??
+      "Review the ECL evidence gate before advancing this Tower claim.",
+    ownerHint: payloadText(row, "owner_role"),
+    moduleHandoff: payloadText(row, "handoff_module"),
+    claimId: payloadText(row, "claim_id"),
+    proofStage: payloadText(row, "claim_gate_status"),
+    blockedDecision: payloadText(row, "claim_gate_reason_code"),
+    amountExposed: payloadNumber(row, "blocked_value_usd"),
+    evidenceRequirement: jsonArray(payload(row).evidence_needed_json).join(", "),
+    expectedSourceSystem: firstSourceLabel(refs),
+    evidencePackageId: nullableText(refs[0]?.source_record_id),
+    ownerRole: payloadText(row, "owner_role"),
+    dueWindow: payloadText(row, "next_gate"),
+    handoffModule: payloadText(row, "handoff_module"),
+    handoffEntityId: payloadText(row, "primary_object_id"),
+    handoffReadiness:
+      payloadText(row, "claim_gate_status") === "claimable" ? "ready" : "not_ready",
+    actionState: "open",
+    priority: payloadText(row, "claim_gate_status") === "blocked" ? "high" : "medium",
   };
 }
 
-function mapEvidence(row: SourceTrustRow): TowerMartEvidenceLineage {
+function mapEvidence(row: TowerServingRow): TowerMartEvidenceLineage {
+  const refs = sourceRefs(row);
+  const metric =
+    payloadText(row, "metric_key") ??
+    nullableText(jsonArray(payload(row).metric_keys_json)[0]);
   return {
-    lineageKey: row.lineage_key,
-    surfaceSection: row.surface_section,
-    displayedFact: row.displayed_fact,
-    displayedValueText: row.displayed_value_text,
-    displayedValueNumeric: nullableNum(row.displayed_value_numeric),
-    metricOrFactKey: nullableText(row.metric_or_fact_key),
-    boardVisibleLabel: nullableText(row.board_visible_label),
-    lineageState: nullableText(row.lineage_state),
-    sourceCount: count(row.source_count),
-    sourceRefs: Array.isArray(row.source_refs) ? row.source_refs : [],
-    conflictingValues: Array.isArray(row.conflicting_values)
-      ? row.conflicting_values
-      : [],
-    authoritativeValue: nullableText(row.authoritative_value),
-    resolutionOwnerRole: nullableText(row.resolution_owner_role),
-    resolutionState: nullableText(row.resolution_state),
-    sourceFile: sourceFile(row),
-    sourceRow: nullableText(row.source_row),
-    sourceSystem: nullableText(row.source_system),
-    caveat: nullableText(row.caveat) ?? "",
+    lineageKey: row.row_key,
+    surfaceSection: row.page_key,
+    displayedFact: payloadText(row, "title", row.title) ?? row.row_type,
+    displayedValueText:
+      payloadNullableNumber(row, "blocked_value_usd") !== null
+        ? formatCioTowerMoney(payloadNullableNumber(row, "blocked_value_usd"))
+        : null,
+    displayedValueNumeric: payloadNullableNumber(row, "blocked_value_usd"),
+    metricOrFactKey: metric,
+    boardVisibleLabel: payloadText(row, "claim_gate_reason_code") ?? row.row_type,
+    lineageState: row.basis,
+    sourceCount: refs.length,
+    sourceRefs: refs,
+    conflictingValues: [],
+    authoritativeValue: null,
+    resolutionOwnerRole: payloadText(row, "owner_role"),
+    resolutionState: payloadText(row, "claim_gate_status"),
+    sourceFile: firstSourceLabel(refs),
+    sourceRow: nullableText(refs[0]?.source_record_id),
+    sourceSystem: firstSourceLabel(refs),
+    caveat:
+      payloadText(row, "claim_gate_reason_detail", row.summary) ??
+      "Source refs are present; no additional caveat recorded.",
   };
 }
 
-function gapsFromActions(
-  actions: readonly ActionQueueRow[],
-): TowerMartRequiredFieldGap[] {
-  return actions
-    .filter((row) => (row.action_state ?? "open").toLowerCase() === "open")
-    .map((row) => ({
-      gapKey: `tower-action-gap:${row.action_key}`,
-      martTable: "consumption.tower_action_queue_v1",
-      martRecordKey: row.action_key,
-      requiredField: nullableText(row.proof_stage) ?? "proof_action",
-      sourceTemplate: nullableText(row.expected_source_system) ?? "tower",
-      sourceRecordId: nullableText(row.evidence_package_id),
-      severity: nullableText(row.priority) ?? "medium",
-      ownerHint: nullableText(row.owner_role ?? row.owner_hint),
-      remediationAction: row.action_body,
-      blocking: true,
-    }));
+function gapsFromRows(rows: readonly TowerServingRow[]): TowerMartRequiredFieldGap[] {
+  return rows
+    .filter((row) => {
+      const gate = payloadText(row, "claim_gate_status");
+      return gate === "gated" || gate === "blocked";
+    })
+    .map((row) => {
+      const refs = sourceRefs(row);
+      return {
+        gapKey: `tower-ecl-gap:${row.page_key}:${row.row_key}`,
+        martTable: `serving.tower_${row.page_key}`,
+        martRecordKey: row.row_key,
+        requiredField: payloadText(row, "next_gate") ?? "evidence_gate",
+        sourceTemplate: firstSourceLabel(refs) ?? "ECL source room",
+        sourceRecordId: nullableText(refs[0]?.source_record_id),
+        severity:
+          payloadText(row, "claim_gate_status") === "blocked" ? "high" : "medium",
+        ownerHint: payloadText(row, "owner_role"),
+        remediationAction:
+          payloadText(row, "claim_gate_reason_detail", row.summary) ??
+          "Resolve the evidence gate named on this ECL serving row.",
+        blocking: payloadText(row, "claim_gate_status") === "blocked",
+      };
+    });
+}
+
+function buildHeadline(
+  tenantName: string,
+  claimable: number,
+  blocked: number,
+  gatedRows: number,
+): string {
+  if (claimable > 0) {
+    return `${tenantName} has ${formatCioTowerMoney(claimable)} claimable value and ${formatCioTowerMoney(blocked)} still blocked by evidence gates.`;
+  }
+  return `${tenantName} has $0 claimable value in ECL; ${gatedRows} rows name the evidence gate that must clear before Tower can treat value as proven.`;
 }
 
 export async function readTowerCommandCenter(args: {
   tenantKeyCandidates: readonly (string | null | undefined)[];
+  tenantDisplayName?: string | null;
 }): Promise<TowerMartCommandViewModel | null> {
   for (const tenantKey of tenantCandidates(args.tenantKeyCandidates)) {
     const result = await withTowerTenantRead(tenantKey, async (query) => {
-      const [commandRow] = await query<BoardPostureRow>(
-        `select *
-         from consumption.tower_board_posture_v1
-        where tenant_key = $1
-        order by refresh_timestamp desc nulls last
-        limit 1`,
-        [tenantKey],
-        { missingTable: "empty" },
-      );
-      if (!commandRow) return null;
-
       const [
-        valueFunnel,
-        valueTrajectory,
-        programLanes,
-        toolRows,
-        agentRows,
-        cxoActions,
-        evidence,
+        commandRows,
+        valueRows,
+        decisionRows,
+        evidenceRows,
+        actionRows,
+        aiRows,
+        costRows,
+        riskRows,
+        adoptionRows,
       ] = await Promise.all([
-        query<ValueFunnelRow>(
-          `with posture as (
-             select *
-               from consumption.tower_board_posture_v1
-              where tenant_key = $1
-              limit 1
-           ),
-           stages as (
-             select 1 as sequence, 'promised'::text as stage_key, 'Explicit source-backed benefit'::text as stage_label,
-                    promised_value_exposure as value_numeric,
-                    value_claim_count as claim_count,
-                    known_value_claim_count,
-                    unknown_value_claim_count,
-                    known_value_amount_usd as known_value_amount,
-                    blocked_program_count as blocked_claim_count,
-                    promised_value_exposure - realized_value_ytd_allowed as blocked_known_value_amount,
-                    promised_value_board_status as primary_blocker,
-                    'Tower data steward'::text as primary_owner_role,
-                    null::text as denominator_stage_key,
-                    null::numeric as conversion_ratio,
-                    promised_value_trust_state as claim_status,
-                    executive_summary as caveat,
-                    'consumption.tower_board_posture_v1'::text as source_file,
-                    null::text as source_row
-               from posture
-             union all
-             select 2, 'usage_supported', 'Usage supported',
-                    coalesce(sum(financial_conversion_usd) filter (where usage_evidence_state = 'present'), 0),
-                    count(*) filter (where usage_evidence_state = 'present')::int,
-                    count(*) filter (where usage_evidence_state = 'present' and financial_conversion_usd is not null)::int,
-                    count(*) filter (where usage_evidence_state <> 'present')::int,
-                    coalesce(sum(financial_conversion_usd) filter (where usage_evidence_state = 'present'), 0),
-                    count(*) filter (where usage_evidence_state <> 'present')::int,
-                    coalesce(sum(business_case_value_usd), 0) - coalesce(sum(financial_conversion_usd), 0),
-                    'Usage evidence must be tied to value cases before value can move right.'::text,
-                    'Transformation owner'::text,
-                    'promised'::text,
-                    null::numeric,
-                    'usage_supported'::text,
-                    'Adoption alone is not outcome proof.'::text,
-                    'consumption.tower_value_trajectory_v1'::text,
-                    null::text
-               from consumption.tower_value_trajectory_v1
-              where tenant_key = $1
-             union all
-             select 3, 'finance_validated', 'Finance validated',
-                    partial_finance_validated_value_ytd,
-                    finance_attested_claim_count,
-                    finance_attested_claim_count,
-                    value_claim_count - finance_attested_claim_count,
-                    partial_finance_validated_value_ytd,
-                    value_claim_count - finance_attested_claim_count,
-                    finance_validated_blocked_value,
-                    'Finance validation remains blocked until source authority and attestation gates clear.'::text,
-                    'Finance partner'::text,
-                    'promised'::text,
-                    case when promised_value_exposure > 0 then partial_finance_validated_value_ytd / promised_value_exposure else null end,
-                    'finance_validated'::text,
-                    executive_summary,
-                    'consumption.tower_board_posture_v1'::text,
-                    null::text
-               from posture
-             union all
-             select 4, 'claimable', 'Claimable',
-                    realized_value_ytd_allowed,
-                    claimable_claim_count,
-                    claimable_claim_count,
-                    unknown_value_claim_count,
-                    realized_value_ytd_allowed,
-                    value_claim_count - claimable_claim_count,
-                    promised_value_exposure - realized_value_ytd_allowed,
-                    promised_value_board_status,
-                    'Finance partner'::text,
-                    'promised'::text,
-                    case when promised_value_exposure > 0 then realized_value_ytd_allowed / promised_value_exposure else null end,
-                    'claimable'::text,
-                    'Claimable requires usage, operational outcome, financial conversion, and attestation evidence.'::text,
-                    'consumption.tower_board_posture_v1'::text,
-                    null::text
-               from posture
-           )
-           select
-             concat('tower:', $1, ':funnel:', stage_key) as funnel_key,
-             sequence,
-             stage_key,
-             stage_label,
-             value_numeric,
-             claim_count,
-             known_value_claim_count,
-             unknown_value_claim_count,
-             known_value_amount,
-             blocked_claim_count,
-             blocked_known_value_amount,
-             primary_blocker,
-             primary_owner_role,
-             denominator_stage_key,
-             conversion_ratio,
-             claim_status,
-             caveat,
-             source_file,
-             source_row
-           from stages
-           order by sequence`,
-          [tenantKey],
-          { missingTable: "empty" },
-        ),
-        query<ValueTrajectoryRow>(
-          `select *
-             from consumption.tower_value_trajectory_v1
-            where tenant_key = $1
-              and scenario = 'forecast'
-            order by period_start, value_case_id
-            limit 1600`,
-          [tenantKey],
-          { missingTable: "empty" },
-        ),
-        query<PortfolioDecisionRow>(
-          `select *
-             from consumption.tower_portfolio_decision_v1
-            where tenant_key = $1
-            order by amount_blocked desc nulls last, proof_maturity_score asc, program_name
-            limit 80`,
-          [tenantKey],
-          { missingTable: "empty" },
-        ),
-        query<AiPortfolioRow>(
-          `select *
-             from consumption.tower_tool_productivity_v1
-            where tenant_key = $1
-            order by ai_tagged_spend_usd desc nulls last, item_name
-            limit 80`,
-          [tenantKey],
-          { missingTable: "empty" },
-        ),
-        query<AiPortfolioRow>(
-          `select *
-             from consumption.tower_agent_outcome_v1
-            where tenant_key = $1
-            order by promised_value_usd desc nulls last, item_name
-            limit 80`,
-          [tenantKey],
-          { missingTable: "empty" },
-        ),
-        query<ActionQueueRow>(
-          `select *
-             from consumption.tower_action_queue_v1
-            where tenant_key = $1
-            order by
-              case priority when 'critical' then 0 when 'high' then 1 when 'medium' then 2 else 3 end,
-              due_date nulls last,
-              amount_exposed desc nulls last`,
-          [tenantKey],
-          { missingTable: "empty" },
-        ),
-        query<SourceTrustRow>(
-          `select *
-             from consumption.tower_source_trust_v1
-            where tenant_key = $1
-            order by
-              case lineage_state when 'CONFLICT' then 0 when 'ABSENT' then 1 when 'ONE_SOURCE' then 2 else 3 end,
-              surface_section,
-              displayed_fact`,
-          [tenantKey],
-          { missingTable: "empty" },
-        ),
+        readServingView(query, "tower_command_center", tenantKey),
+        readServingView(query, "tower_value_proof", tenantKey),
+        readServingView(query, "tower_decision_lanes", tenantKey),
+        readServingView(query, "tower_evidence", tenantKey),
+        readServingView(query, "tower_recommended_actions", tenantKey),
+        readServingView(query, "tower_ai_portfolio", tenantKey),
+        readServingView(query, "tower_cost_lens", tenantKey),
+        readServingView(query, "tower_risk_lens", tenantKey),
+        readServingView(query, "tower_adoption_lens", tenantKey),
       ]);
 
-      const command = mapCommand(commandRow);
-      const aiPortfolio = [...toolRows, ...agentRows].map(mapAiItem);
-      const actions = cxoActions.map(mapAction);
-      const attributedSpendUsd = aiPortfolio.reduce(
-        (sum, row) => sum + row.aiTaggedSpendUsd,
-        0,
+      const allRows = uniqueRows([
+        ...commandRows,
+        ...valueRows,
+        ...decisionRows,
+        ...evidenceRows,
+        ...actionRows,
+        ...aiRows,
+        ...costRows,
+        ...riskRows,
+        ...adoptionRows,
+      ]);
+      if (allRows.length === 0) return null;
+
+      const projectionVersion = Math.max(
+        ...allRows.map((row) => Number(row.projection_version ?? 0)),
+      );
+      const valueRowsForTotals = valueRows;
+      const funded =
+        sumRows(decisionRows, "funded_amount_usd") +
+        sumRows(aiRows, "monthly_cost_usd") * 12;
+      const promised =
+        sumRows(valueRowsForTotals, "promised_value_usd") +
+        sumRows(valueRowsForTotals, "baseline_value");
+      const financeValidated = sumRows(
+        valueRowsForTotals,
+        "finance_validated_value_usd",
+      );
+      const claimable = sumRows(valueRowsForTotals, "claimable_value_usd");
+      const blocked = sumRows(valueRowsForTotals, "blocked_value_usd");
+      const gatedRows = allRows.filter((row) =>
+        ["gated", "blocked"].includes(
+          payloadText(row, "claim_gate_status") ?? "",
+        ),
+      ).length;
+      const aiPortfolio = aiRows.map(mapAiItem);
+      const sourceFiles = uniqueSourceFiles(allRows);
+      const tenantDisplayName =
+        canonicalClientDisplayName({
+          key: tenantKey,
+          name: args.tenantDisplayName,
+        }) ??
+        args.tenantDisplayName ??
+        tenantKey;
+      const claimRows = valueRowsForTotals.filter((row) =>
+        payloadText(row, "claim_id"),
       );
 
-      const headline =
-        commandRow.promised_value_trust_state === "CONFLICT"
-          ? `${command.tenantName} Tower has visible investment and adoption signals, but benefit source authority is CONFLICT - authority unresolved. ${formatCioTowerMoney(command.realizedValueYtdAllowed)} is claimable.`
-          : command.promisedValueFy26 === null
-            ? `${command.tenantName} Tower separates investment from benefit: approved investment is visible, but no explicit source-backed benefit assertion is loaded. ${formatCioTowerMoney(command.realizedValueYtdAllowed)} is claimable.`
-            : command.executiveSummary;
-
       return {
-        generatedFrom: "tower_schema" as const,
-        headline,
-        command,
-        valueFunnel: valueFunnel.map(mapValueFunnel),
-        valueTrajectory: valueTrajectory.map(mapValueTrajectory),
-        programLanes: programLanes.map(mapProgramLane),
+        generatedFrom: "ecl_serving" as const,
+        headline: buildHeadline(tenantDisplayName, claimable, blocked, gatedRows),
+        command: {
+          commandCenterKey: `tower:ecl:${tenantKey}:command-center`,
+          tenantKey,
+          tenantName: tenantDisplayName,
+          martVersion: `ecl-serving-v${projectionVersion}`,
+          sourceStandard:
+            "serving.tower_* views from ECL source/context/commercial projections",
+          formulaVersion: "tower_ecl_serving_reader_v1",
+          asOfPeriod: "2026-08-24",
+          refreshTimestamp: null,
+          totalItBudgetFy26: null,
+          runBudgetFy26: null,
+          changeBudgetFy26: null,
+          approvedProgramBudgetFy26: funded || null,
+          aiTaggedSpendFy26NonAdditive: aiPortfolio.reduce(
+            (sum, row) => sum + row.aiTaggedSpendUsd,
+            0,
+          ),
+          promisedValueFy26: promised || null,
+          partialFinanceValidatedValueYtd: financeValidated,
+          realizedValueYtdAllowed: claimable,
+          claimableValue: claimable,
+          financeValidatedBlockedValue: Math.max(0, financeValidated - claimable),
+          promisedValueExposure: promised || blocked || null,
+          totalProgramSubjectCount: decisionRows.length,
+          activeProgramSubjectCount: decisionRows.length,
+          materialProgramCount: decisionRows.length,
+          boardScopeProgramCount: decisionRows.length,
+          economicReviewQueueCount: gatedRows,
+          valueClaimCount: claimRows.length,
+          knownValueClaimCount: claimRows.filter(
+            (row) => payloadText(row, "claim_gate_status") === "claimable",
+          ).length,
+          unknownValueClaimCount: gatedRows,
+          knownZeroValueClaimCount: claimRows.filter(
+            (row) => payloadNumber(row, "claimable_value_usd") === 0,
+          ).length,
+          knownValueAmountUsd: promised,
+          financeAttestedClaimCount: valueRowsForTotals.filter(
+            (row) => payloadNumber(row, "finance_validated_value_usd") > 0,
+          ).length,
+          businessAttestedClaimCount: 0,
+          claimableClaimCount: claimRows.filter(
+            (row) => payloadNumber(row, "claimable_value_usd") > 0,
+          ).length,
+          usageSupportedClaimCount: valueRowsForTotals.filter(
+            (row) => payloadNumber(row, "usage_supported_value_usd") > 0,
+          ).length,
+          fundedNoBaselineClaimCount: valueRowsForTotals.filter(
+            (row) =>
+              payloadNumber(row, "funded_amount_usd") > 0 &&
+              payloadNumber(row, "baseline_value") === 0,
+          ).length,
+          staleClaimCount: 0,
+          disputedClaimCount: 0,
+          baselineLinkedClaimCount: valueRows.filter(
+            (row) => payloadNullableNumber(row, "baseline_value") !== null,
+          ).length,
+          targetLinkedClaimCount: valueRows.filter(
+            (row) => payloadNullableNumber(row, "target_value") !== null,
+          ).length,
+          actualLinkedClaimCount: valueRows.filter(
+            (row) => payloadNullableNumber(row, "current_value") !== null,
+          ).length,
+          outcomeMeasuredClaimCount: valueRows.filter(
+            (row) => payloadNullableNumber(row, "current_value") !== null,
+          ).length,
+          claimableProgramCount: 0,
+          blockedProgramCount: decisionRows.filter(
+            (row) => payloadText(row, "claim_gate_status") === "blocked",
+          ).length,
+          conflictedProgramCount: 0,
+          unmeasuredProgramCount: decisionRows.filter(
+            (row) => payloadText(row, "claim_gate_status") !== "claimable",
+          ).length,
+          aiInitiativeCount: aiPortfolio.length,
+          candidateAiOpportunities: aiPortfolio.length,
+          watchPressureSignals: riskRows.length + evidenceRows.length,
+          runRatio: null,
+          changeRatio: null,
+          financeValidationRatio: promised > 0 ? financeValidated / promised : null,
+          decisionQuestion:
+            "Which funded work can Tower prove, and which value claims remain gated by missing evidence?",
+          executiveSummary: buildHeadline(
+            tenantDisplayName,
+            claimable,
+            blocked,
+            gatedRows,
+          ),
+          sourceFiles,
+        },
+        valueFunnel: buildFunnel(valueRowsForTotals),
+        valueTrajectory: [],
+        programLanes: decisionRows.map(mapProgramLane),
         aiPortfolio,
         aiPortfolioCounts: {
           total: aiPortfolio.length,
-          candidate: aiPortfolio.filter(
-            (row) => row.itemKind === "candidate_opportunity",
-          ).length,
+          candidate: aiPortfolio.length,
           active: aiPortfolio.length,
-          funded: aiPortfolio.filter((row) => row.itemKind === "funded_program")
-            .length,
-          embeddedOrUsage: aiPortfolio.filter((row) =>
-            ["embedded_platform", "usage_benefit", "service_agent"].includes(
-              row.itemKind,
-            ),
-          ).length,
-          attributedSpendUsd,
+          funded: aiPortfolio.filter((row) => row.approvedFundingUsd > 0).length,
+          embeddedOrUsage: aiPortfolio.length,
+          attributedSpendUsd: aiPortfolio.reduce(
+            (sum, row) => sum + row.aiTaggedSpendUsd,
+            0,
+          ),
         },
-        cxoActions: actions,
-        evidenceLineage: evidence.map(mapEvidence),
-        requiredFieldGaps: gapsFromActions(cxoActions),
+        cxoActions: actionRows.map(mapAction),
+        evidenceLineage: [...evidenceRows, ...costRows, ...riskRows].map(
+          mapEvidence,
+        ),
+        requiredFieldGaps: gapsFromRows([
+          ...decisionRows,
+          ...evidenceRows,
+          ...actionRows,
+          ...costRows,
+          ...riskRows,
+        ]),
       };
     });
 
