@@ -1,6 +1,6 @@
 {
   "schema_version": "ecl_four_lane_completion_status/v1",
-  "generated_at": "2026-08-27T03:35:56.000Z",
+  "generated_at": "2026-08-27T05:10:34.683Z",
   "repo_ref": "HEAD",
   "policy": {
     "aggregate_percentage_retired": true,
@@ -16,7 +16,7 @@
       "denominator": 4,
       "run_id": "32995332853",
       "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
-      "timestamp": "2026-08-27T03:35:56.000Z"
+      "timestamp": "2026-08-27T05:10:34.683Z"
     },
     {
       "lane": "L-PROOF",
@@ -26,13 +26,13 @@
       "denominator": 63,
       "run_id": "32995332853",
       "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
-      "timestamp": "2026-08-27T03:35:56.000Z"
+      "timestamp": "2026-08-27T05:10:34.683Z"
     },
     {
       "lane": "L-CLEANUP",
       "slice": "legacy_data_plane_retirement",
       "status": "pending",
-      "numerator": 114,
+      "numerator": 156,
       "denominator": 851,
       "run_id": "33036683151",
       "digest": null,
@@ -46,7 +46,7 @@
       "denominator": 14,
       "run_id": null,
       "digest": null,
-      "timestamp": "2026-08-27T03:35:56.000Z"
+      "timestamp": "2026-08-27T05:10:34.683Z"
     }
   ],
   "live_product_proof": {
@@ -156,9 +156,13 @@
       ]
     },
     "legacy_cleanup": {
-      "numerator": 114,
+      "numerator": 156,
       "denominator": 851,
       "control_plane_hold_assets": 46,
+      "legacy_data_plane_denominator": 851,
+      "static_create_table_statements": 911,
+      "static_non_control_objects": 865,
+      "retained_ecl_target_credit": 42,
       "map_scope": "static repo-visible SQL CREATE TABLE inventory",
       "live_absent_schema_credit": {
         "numerator": 9,

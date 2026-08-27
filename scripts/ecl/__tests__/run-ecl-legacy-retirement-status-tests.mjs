@@ -23,7 +23,6 @@ const PENDING_STATUSES = new Set([
   "REPLACE_WITH_ECL_PROJECTION",
   "REPLACE_OR_BRIDGE",
   "REVIEW_FOR_MOVES_OR_CONTEXT_BRIDGE",
-  "NEW_ECL_TARGET",
 ]);
 
 function gitShow(file) {
@@ -52,16 +51,18 @@ const denominator = rows.length - (statusCounts.HOLD_PLATFORM_CONTROL ?? 0);
 const terminalResolved = rows.filter((row) => TERMINAL_STATUSES.has(row.sunset_status)).length;
 const pendingResolved = rows.filter((row) => PENDING_STATUSES.has(row.sunset_status)).length;
 
-assert.equal(rows.length, 897, "retirement map must remain the repo-visible CREATE TABLE statement inventory");
+assert.equal(rows.length, 911, "retirement map must remain the repo-visible CREATE TABLE statement inventory");
 assert.equal(statusCounts.HOLD_PLATFORM_CONTROL, 46, "platform/control-plane holds must remain outside L-CLEANUP");
-assert.equal(denominator, 851, "L-CLEANUP denominator must exclude only HOLD_PLATFORM_CONTROL rows");
+assert.equal(denominator, 865, "current non-control static inventory must exclude only HOLD_PLATFORM_CONTROL rows");
 assert.equal(statusCounts.RETIRED_ARCHIVE_ONLY, 25, "archive-only rows must be explicitly terminal");
+assert.equal(statusCounts.RETAINED_ECL_TARGET, 42, "current ECL target rows must be explicitly retained");
 assert.equal(statusCounts.ARCHIVE_ONLY ?? 0, 0, "ARCHIVE_ONLY must not remain as a pending/ambiguous status");
-assert.equal(terminalResolved, 25, "first cleanup slice resolves exactly the 25 archive-only rows");
-assert.equal(pendingResolved, 826, "all unresolved non-control rows must remain pending");
-assert.equal(summary.create_table_statements, 897);
+assert.equal(terminalResolved, 67, "static terminal rows must include archive-only plus retained ECL targets");
+assert.equal(pendingResolved, 798, "all unresolved non-control rows must remain pending");
+assert.equal(summary.create_table_statements, 911);
 assert.equal(summary.status_counts.HOLD_PLATFORM_CONTROL, 46);
 assert.equal(summary.status_counts.RETIRED_ARCHIVE_ONLY, 25);
+assert.equal(summary.status_counts.RETAINED_ECL_TARGET, 42);
 assert.equal(summary.status_counts.ARCHIVE_ONLY ?? 0, 0);
 
 console.log(
