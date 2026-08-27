@@ -14,6 +14,8 @@ const DEFAULT_RETIREMENT_MAP =
   "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_map.csv";
 const DEFAULT_STATUS = "docs/architecture/ecl-four-lane-completion-status.json";
 const DEFAULT_CLEANUP_PROOF = "docs/architecture/ecl-source-registry-retirement-proof-2026-08-26.json";
+const DEFAULT_OBJECT_CLEANUP_PROOF =
+  "docs/architecture/ecl-knowledge-entity-source-identity-retirement-proof-2026-08-27.json";
 
 const SURFACE_TARGETS = {
   Home: 16,
@@ -109,7 +111,7 @@ Options:
   --live-proof-summary <path>             compact-summary.json from ecl-product-live-proof.
   --browser-operator-summary <path>       Browser operator summary.json.
   --eval-operator-summary <path>          Eval operator summary.json.
-  --cleanup-proof-summary <path>          Compact retired-layer cleanup proof JSON.
+  --cleanup-proof-summary <path[,path]>   Compact retired-layer cleanup proof JSON path(s).
   --run-id <id>                           Proof or status run id.
   --digest <sha256>                       Digest pinned image under proof.
   --timestamp <iso>                       Status timestamp.
@@ -225,6 +227,25 @@ function countRetiredLegacyAssetsForSchemas(retirementMapCsv, schemas) {
     .length;
 }
 
+function countRetiredLegacyAssetsForObjects(retirementMapCsv, objects) {
+  if (!objects.length) return 0;
+  const objectSet = new Set(objects);
+  const lines = retirementMapCsv.trim().split(/\r?\n/);
+  if (lines.length < 2) return 0;
+  const headers = lines[0].split(",");
+  const fullTableIndex = headers.indexOf("full_table_name");
+  const statusIndex = headers.indexOf("sunset_status");
+  assert.notEqual(fullTableIndex, -1, "legacy retirement map must contain full_table_name");
+  assert.notEqual(statusIndex, -1, "legacy retirement map must contain sunset_status");
+  return lines
+    .slice(1)
+    .filter((line) => {
+      const columns = line.split(",");
+      return objectSet.has(columns[fullTableIndex]) && !TERMINAL_LEGACY_STATUSES.has(columns[statusIndex] ?? "");
+    })
+    .length;
+}
+
 function gitFileExists(ref, file) {
   try {
     execFileSync("git", ["cat-file", "-e", `${ref}:${file}`], { stdio: "ignore" });
@@ -234,14 +255,28 @@ function gitFileExists(ref, file) {
   }
 }
 
-function cleanupProofFromArgs(args) {
+function normalizeCleanupProofDocument(proof) {
+  if (!proof) return [];
+  if (Array.isArray(proof)) return proof;
+  if (Array.isArray(proof.proofs)) return proof.proofs;
+  return [proof];
+}
+
+function cleanupProofsFromArgs(args) {
   if (args.cleanupProofSummary) {
-    const proof = readJsonIfPresent(args.cleanupProofSummary);
-    assert(proof, `cleanup proof summary not found: ${args.cleanupProofSummary}`);
-    return proof;
+    return args.cleanupProofSummary
+      .split(",")
+      .map((file) => file.trim())
+      .filter(Boolean)
+      .flatMap((file) => {
+        const proof = readJsonIfPresent(file);
+        assert(proof, `cleanup proof summary not found: ${file}`);
+        return normalizeCleanupProofDocument(proof);
+      });
   }
-  if (!gitFileExists(args.ref, DEFAULT_CLEANUP_PROOF)) return null;
-  return JSON.parse(gitShow(args.ref, DEFAULT_CLEANUP_PROOF));
+  return [DEFAULT_CLEANUP_PROOF, DEFAULT_OBJECT_CLEANUP_PROOF]
+    .filter((file) => gitFileExists(args.ref, file))
+    .flatMap((file) => normalizeCleanupProofDocument(JSON.parse(gitShow(args.ref, file))));
 }
 
 function acceptedCleanupAbsentSchemas(cleanupProof) {
@@ -263,6 +298,21 @@ function acceptedCleanupAbsentSchemas(cleanupProof) {
         Number(summary.row_count ?? 0) === 0,
     )
     .map((summary) => summary.schema)
+    .filter(Boolean);
+}
+
+function acceptedCleanupAbsentObjects(cleanupProof) {
+  if (!cleanupProof?.accepted) return [];
+  if (cleanupProof.mode !== "dry_run") return [];
+  if (cleanupProof.dependencies_outside_retired_schemas_count !== 0) return [];
+  if (cleanupProof.active_code_references_count !== 0) return [];
+  if (cleanupProof.retirement_status_gate?.apply_allowed !== true) return [];
+
+  const summaries = cleanupProof.object_summaries ?? [];
+  if (!Array.isArray(summaries) || summaries.length === 0) return [];
+  return summaries
+    .filter((summary) => summary.exists === false && Number(summary.row_count ?? 0) === 0)
+    .map((summary) => summary.object)
     .filter(Boolean);
 }
 
@@ -501,10 +551,17 @@ function buildStatus(args) {
   const legacyDenominator =
     retirementSummary.create_table_statements - (retirementSummary.status_counts?.HOLD_PLATFORM_CONTROL ?? 0);
   assert.equal(legacyDenominator, 851, "legacy data-plane denominator is fixed at 851 by the retirement map");
-  const cleanupProof = cleanupProofFromArgs(args);
-  const cleanupAbsentSchemas = acceptedCleanupAbsentSchemas(cleanupProof);
+  const cleanupProofs = cleanupProofsFromArgs(args);
+  const cleanupProof = cleanupProofs.at(-1) ?? null;
+  const cleanupAbsentSchemas = [
+    ...new Set(cleanupProofs.flatMap((proof) => acceptedCleanupAbsentSchemas(proof))),
+  ];
+  const cleanupAbsentObjects = [
+    ...new Set(cleanupProofs.flatMap((proof) => acceptedCleanupAbsentObjects(proof))),
+  ];
   const cleanupAbsentRetired = countRetiredLegacyAssetsForSchemas(retirementMap, cleanupAbsentSchemas);
-  const legacyRetired = countRetiredLegacyAssets(retirementMap) + cleanupAbsentRetired;
+  const cleanupAbsentObjectRetired = countRetiredLegacyAssetsForObjects(retirementMap, cleanupAbsentObjects);
+  const legacyRetired = countRetiredLegacyAssets(retirementMap) + cleanupAbsentRetired + cleanupAbsentObjectRetired;
 
   const lanes = [
     {
@@ -620,8 +677,26 @@ function buildStatus(args) {
         live_absent_schema_credit: {
           numerator: cleanupAbsentRetired,
           schemas: cleanupAbsentSchemas,
-          proof_run_id: cleanupProof?.run_id ?? null,
-          proof_workflow_url: cleanupProof?.workflow_url ?? null,
+          proof_run_ids: cleanupProofs
+            .filter((proof) => acceptedCleanupAbsentSchemas(proof).length > 0)
+            .map((proof) => proof.run_id)
+            .filter(Boolean),
+          proof_workflow_urls: cleanupProofs
+            .filter((proof) => acceptedCleanupAbsentSchemas(proof).length > 0)
+            .map((proof) => proof.workflow_url)
+            .filter(Boolean),
+        },
+        live_absent_object_credit: {
+          numerator: cleanupAbsentObjectRetired,
+          objects: cleanupAbsentObjects,
+          proof_run_ids: cleanupProofs
+            .filter((proof) => acceptedCleanupAbsentObjects(proof).length > 0)
+            .map((proof) => proof.run_id)
+            .filter(Boolean),
+          proof_workflow_urls: cleanupProofs
+            .filter((proof) => acceptedCleanupAbsentObjects(proof).length > 0)
+            .map((proof) => proof.workflow_url)
+            .filter(Boolean),
         },
       },
       client_intake_adapters: {

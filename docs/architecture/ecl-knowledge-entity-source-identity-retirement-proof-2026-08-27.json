@@ -1,0 +1,47 @@
+{
+  "schema_version": "ecl_retired_layer_cleanup_proof/v1",
+  "accepted": true,
+  "lane": "L-CLEANUP",
+  "slice": "knowledge_entity_source_identity_live_absence",
+  "run_id": "33028715643",
+  "workflow_url": "https://github.com/abarva-platform/abarva/actions/runs/33028715643",
+  "timestamp": "2026-08-27T01:03:48.559Z",
+  "mode": "dry_run",
+  "schemas": [
+    "knowledge"
+  ],
+  "object_targets": [
+    "knowledge.entity_source_identity"
+  ],
+  "object_count": 1,
+  "objects_discovered": 0,
+  "object_summaries": [
+    {
+      "object": "knowledge.entity_source_identity",
+      "exists": false,
+      "relkind": null,
+      "row_count": 0
+    }
+  ],
+  "dependencies_outside_retired_schemas_count": 0,
+  "active_code_references_count": 0,
+  "declared_retired_code_references_count": 0,
+  "retirement_status_gate": {
+    "apply_allowed": true,
+    "allowed_apply_statuses": [
+      "ARCHIVE_ONLY",
+      "REPLACE_WITH_ECL_PROJECTION"
+    ],
+    "unknown_schemas": [],
+    "unsafe_schemas": [],
+    "unknown_objects": [],
+    "unsafe_objects": []
+  },
+  "idle_restore": {
+    "status": "Succeeded",
+    "restored": true,
+    "idle_verified": true,
+    "idle_verify_wait_seconds": 300,
+    "wait_attempts": 1
+  }
+}

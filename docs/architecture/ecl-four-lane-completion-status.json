@@ -32,11 +32,11 @@
       "lane": "L-CLEANUP",
       "slice": "legacy_data_plane_retirement",
       "status": "pending",
-      "numerator": 34,
+      "numerator": 35,
       "denominator": 851,
-      "run_id": "33020651518",
+      "run_id": "33028715643",
       "digest": null,
-      "timestamp": "2026-08-26T22:48:00.000Z"
+      "timestamp": "2026-08-27T01:03:48.559Z"
     },
     {
       "lane": "L-CLIENT",
@@ -155,20 +155,36 @@
         "F9"
       ]
     },
-    "legacy_cleanup": {
-      "numerator": 34,
-      "denominator": 851,
-      "control_plane_hold_assets": 46,
-      "map_scope": "static repo-visible SQL CREATE TABLE inventory",
-      "live_absent_schema_credit": {
-        "numerator": 9,
-        "schemas": [
-          "source_registry"
-        ],
-        "proof_run_id": "33020651518",
-        "proof_workflow_url": "https://github.com/abarva-platform/abarva/actions/runs/33020651518"
-      }
-    },
+      "legacy_cleanup": {
+        "numerator": 35,
+        "denominator": 851,
+        "control_plane_hold_assets": 46,
+        "map_scope": "static repo-visible SQL CREATE TABLE inventory",
+        "live_absent_schema_credit": {
+          "numerator": 9,
+          "schemas": [
+            "source_registry"
+          ],
+          "proof_run_ids": [
+            "33020651518"
+          ],
+          "proof_workflow_urls": [
+            "https://github.com/abarva-platform/abarva/actions/runs/33020651518"
+          ]
+        },
+        "live_absent_object_credit": {
+          "numerator": 1,
+          "objects": [
+            "knowledge.entity_source_identity"
+          ],
+          "proof_run_ids": [
+            "33028715643"
+          ],
+          "proof_workflow_urls": [
+            "https://github.com/abarva-platform/abarva/actions/runs/33028715643"
+          ]
+        }
+      },
     "client_intake_adapters": {
       "numerator": 14,
       "denominator": 14,
