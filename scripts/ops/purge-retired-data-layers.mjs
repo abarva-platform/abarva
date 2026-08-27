@@ -35,6 +35,12 @@ const CODE_REFERENCE_EXTENSIONS = new Set([
   ".tsx",
 ]);
 
+const STATUS_GATE_FAILURE_COUNT = (statusGate) =>
+  statusGate.unsafe_schemas.length +
+  statusGate.unknown_schemas.length +
+  (statusGate.unsafe_objects?.length ?? 0) +
+  (statusGate.unknown_objects?.length ?? 0);
+
 async function loadPgClient() {
   const pg = await import("pg");
   return pg.Client ?? pg.default?.Client;
@@ -79,6 +85,54 @@ function buildOutsideDependencyQuery() {
             join pg_namespace source_ns on source_ns.oid = source_class.relnamespace
            where not (source_ns.nspname = any($1::text[]))
            order by referencing_schema, referencing_object, retired.schema_name, retired.object_name`;
+}
+
+function buildOutsideObjectDependencyQuery() {
+  return `with target_objects as (
+            select *
+              from jsonb_to_recordset($1::jsonb) as target(schema_name text, object_name text)
+          ),
+          retired_objects as (
+            select c.oid, n.nspname as schema_name, c.relname as object_name, c.relkind
+              from pg_class c
+              join pg_namespace n on n.oid = c.relnamespace
+              join target_objects target
+                on target.schema_name = n.nspname
+               and target.object_name = c.relname
+          )
+          select distinct
+                 source_ns.nspname as referencing_schema,
+                 source_class.relname as referencing_object,
+                 source_class.relkind as referencing_kind,
+                 retired.schema_name as retired_schema,
+                 retired.object_name as retired_object,
+                 retired.relkind as retired_kind
+            from pg_depend dep
+            join retired_objects retired on retired.oid = dep.refobjid
+            join pg_rewrite rewrite on rewrite.oid = dep.objid
+            join pg_class source_class on source_class.oid = rewrite.ev_class
+            join pg_namespace source_ns on source_ns.oid = source_class.relnamespace
+           where not exists (
+             select 1
+               from target_objects target
+              where target.schema_name = source_ns.nspname
+                and target.object_name = source_class.relname
+           )
+           order by referencing_schema, referencing_object, retired.schema_name, retired.object_name`;
+}
+
+function parseObjectTargets(value) {
+  return String(value ?? "")
+    .split(",")
+    .map((raw) => raw.trim())
+    .filter(Boolean)
+    .map((raw) => {
+      const [schema, object, ...rest] = raw.split(".");
+      if (!schema || !object || rest.length > 0) {
+        throw new Error(`Object target must be schema.object: ${raw}`);
+      }
+      return { schema, object, full_name: `${schema}.${object}` };
+    });
 }
 
 function escapeRegExp(value) {
@@ -135,6 +189,7 @@ function readStatusMap(statusMapPath) {
   }
 
   const rowsBySchema = new Map();
+  const rowsByObject = new Map();
   for (const line of lines) {
     const cells = parseCsvLine(line);
     const schema = String(cells[schemaIndex] ?? "").trim();
@@ -146,6 +201,13 @@ function readStatusMap(statusMapPath) {
     entry.statuses.set(status, (entry.statuses.get(status) ?? 0) + 1);
     if (table) entry.objects.add(table);
     rowsBySchema.set(schema, entry);
+    if (table) {
+      const fullName = `${schema}.${table}`;
+      const objectEntry = rowsByObject.get(fullName) ?? { row_count: 0, statuses: new Map() };
+      objectEntry.row_count += 1;
+      objectEntry.statuses.set(status, (objectEntry.statuses.get(status) ?? 0) + 1);
+      rowsByObject.set(fullName, objectEntry);
+    }
   }
 
   return {
@@ -153,6 +215,7 @@ function readStatusMap(statusMapPath) {
     resolved_path: resolvedPath,
     available: true,
     rows_by_schema: rowsBySchema,
+    rows_by_object: rowsByObject,
   };
 }
 
@@ -280,6 +343,47 @@ function statusGateForSchemas(schemas, statusMap) {
   };
 }
 
+function statusGateForObjects(objectTargets, statusMap) {
+  const objectSummaries = objectTargets.map((target) => {
+    const fullName = `${target.schema}.${target.object}`;
+    const entry = statusMap.rows_by_object.get(fullName);
+    const statuses = Object.fromEntries(entry?.statuses ?? []);
+    const unsafeStatuses = Object.keys(statuses).filter((status) => !APPLY_SAFE_STATUSES.has(status));
+    return {
+      object: fullName,
+      status_map_rows: entry?.row_count ?? 0,
+      statuses,
+      status_map_known: Boolean(entry),
+      apply_status_safe: Boolean(entry) && unsafeStatuses.length === 0,
+      unsafe_statuses: unsafeStatuses,
+    };
+  });
+  const unknownObjects = objectSummaries
+    .filter((row) => !row.status_map_known)
+    .map((row) => row.object);
+  const unsafeObjects = objectSummaries
+    .filter((row) => row.status_map_known && !row.apply_status_safe)
+    .map((row) => ({
+      object: row.object,
+      unsafe_statuses: row.unsafe_statuses,
+      statuses: row.statuses,
+    }));
+  return {
+    status_map: {
+      path: statusMap.path,
+      resolved_path: statusMap.resolved_path,
+      available: statusMap.available,
+      allowed_apply_statuses: Array.from(APPLY_SAFE_STATUSES).sort(),
+    },
+    object_status_summaries: objectSummaries,
+    unknown_objects: unknownObjects,
+    unsafe_objects: unsafeObjects,
+    unknown_schemas: [],
+    unsafe_schemas: [],
+    apply_allowed: statusMap.available && unknownObjects.length === 0 && unsafeObjects.length === 0,
+  };
+}
+
 function isApplyAllowed({
   shouldApply,
   allowDependencies,
@@ -320,7 +424,14 @@ function listFilesRecursive(rootPath) {
   return files.sort();
 }
 
-function buildCodeReferencePatterns(schemas, statusMap) {
+function buildCodeReferencePatterns(schemas, statusMap, objectTargets = []) {
+  if (objectTargets.length > 0) {
+    return objectTargets.map((target) => ({
+      schema: target.schema,
+      object: target.object,
+      regex: new RegExp(`\\b${escapeRegExp(target.schema)}\\.${escapeRegExp(target.object)}\\b`, "g"),
+    }));
+  }
   return schemas.flatMap((schema) => {
     const objectNames = Array.from(statusMap?.rows_by_schema.get(schema)?.objects ?? []);
     if (objectNames.length === 0) {
@@ -340,8 +451,14 @@ function buildCodeReferencePatterns(schemas, statusMap) {
   });
 }
 
-function scanCodeReferences(schemas, statusMap = null, roots = DEFAULT_CODE_REFERENCE_ROOTS, manifest = readCodeReferenceManifest(DEFAULT_CODE_REFERENCE_MANIFEST)) {
-  const patterns = buildCodeReferencePatterns(schemas, statusMap);
+function scanCodeReferences(
+  schemas,
+  statusMap = null,
+  roots = DEFAULT_CODE_REFERENCE_ROOTS,
+  manifest = readCodeReferenceManifest(DEFAULT_CODE_REFERENCE_MANIFEST),
+  objectTargets = [],
+) {
+  const patterns = buildCodeReferencePatterns(schemas, statusMap, objectTargets);
   const references = [];
 
   for (const root of roots) {
@@ -374,6 +491,45 @@ async function countRows(client, schemaName, tableName) {
   const sql = `select count(*)::bigint as row_count from ${quoteIdent(schemaName)}.${quoteIdent(tableName)}`;
   const result = await client.query(sql);
   return Number(result.rows[0]?.row_count ?? 0);
+}
+
+async function inventoryObjectTargets(client, objectTargets) {
+  const inventory = [];
+  for (const target of objectTargets) {
+    const relation = await client.query(
+      `select c.relkind,
+              n.nspname as schema_name,
+              c.relname as object_name
+         from pg_class c
+         join pg_namespace n on n.oid = c.relnamespace
+        where n.nspname = $1
+          and c.relname = $2`,
+      [target.schema, target.object],
+    );
+    const row = relation.rows[0];
+    if (!row) {
+      inventory.push({
+        schema: target.schema,
+        object: target.object,
+        full_name: target.full_name,
+        exists: false,
+        relkind: null,
+        row_count: 0,
+      });
+      continue;
+    }
+
+    const isCountableTable = ["r", "p"].includes(row.relkind);
+    inventory.push({
+      schema: target.schema,
+      object: target.object,
+      full_name: target.full_name,
+      exists: true,
+      relkind: row.relkind,
+      row_count: isCountableTable ? await countRows(client, target.schema, target.object) : 0,
+    });
+  }
+  return inventory;
 }
 
 function selfTest() {
@@ -410,6 +566,23 @@ function selfTest() {
   }
   if (!statusGate.unknown_schemas.includes("unknown_schema")) {
     throw new Error("Status gate must identify schemas absent from the status map.");
+  }
+  const objectGate = statusGateForObjects(
+    [
+      { schema: "safe_schema", object: "a", full_name: "safe_schema.a" },
+      { schema: "mixed_schema", object: "c", full_name: "mixed_schema.c" },
+      { schema: "unknown_schema", object: "missing", full_name: "unknown_schema.missing" },
+    ],
+    readStatusMap(statusMapPath),
+  );
+  if (objectGate.apply_allowed) {
+    throw new Error("Object status gate must refuse unsafe and unknown objects.");
+  }
+  if (!objectGate.unsafe_objects.some((row) => row.object === "mixed_schema.c")) {
+    throw new Error("Object status gate must identify unsafe object statuses.");
+  }
+  if (!objectGate.unknown_objects.includes("unknown_schema.missing")) {
+    throw new Error("Object status gate must identify objects absent from the status map.");
   }
   if (formatStructuredOutput({ event: "test", proof: { ok: true } }, true).includes("\n")) {
     throw new Error("Compact structured output must be emitted as one log line.");
@@ -472,6 +645,16 @@ function selfTest() {
       statusGate: safeStatusGate,
     })) {
       throw new Error("Declared-retired code references must not block the apply summary gate.");
+    }
+    const objectReferences = scanCodeReferences(
+      ["legacy_schema"],
+      readStatusMap("map.csv"),
+      DEFAULT_CODE_REFERENCE_ROOTS,
+      readCodeReferenceManifest(DEFAULT_CODE_REFERENCE_MANIFEST),
+      [{ schema: "legacy_schema", object: "table", full_name: "legacy_schema.table" }],
+    );
+    if (objectReferences.length !== 2) {
+      throw new Error("Object-target code-reference gate must scan exact schema.table references.");
     }
   } finally {
     process.chdir(priorCwd);
@@ -565,19 +748,24 @@ async function main() {
     .split(",")
     .map((schema) => schema.trim())
     .filter(Boolean);
+  const objectTargets = parseObjectTargets(argValue("--objects", process.env.RETIRED_LAYER_PURGE_OBJECTS ?? ""));
+  const effectiveSchemas =
+    objectTargets.length > 0 ? Array.from(new Set(objectTargets.map((target) => target.schema))).sort() : schemas;
   const shouldApply = apply || envApply;
 
   fs.mkdirSync(outDir, { recursive: true });
 
   if (hasFlag("--static-preflight-only")) {
     const statusMap = readStatusMap(statusMapPath);
-    const statusGate = statusGateForSchemas(schemas, statusMap);
+    const statusGate =
+      objectTargets.length > 0 ? statusGateForObjects(objectTargets, statusMap) : statusGateForSchemas(schemas, statusMap);
     const codeReferenceManifest = readCodeReferenceManifest(codeReferenceManifestPath);
     const codeReferenceInventory = scanCodeReferences(
-      schemas,
+      effectiveSchemas,
       statusMap,
       DEFAULT_CODE_REFERENCE_ROOTS,
       codeReferenceManifest,
+      objectTargets,
     );
     const activeCodeReferenceInventory = codeReferenceInventory.filter(
       (reference) => reference.reference_state === "active",
@@ -589,7 +777,8 @@ async function main() {
       run_id: runId,
       generated_at: new Date().toISOString(),
       mode: "static_preflight_only",
-      schemas,
+      schemas: effectiveSchemas,
+      object_targets: objectTargets.map((target) => target.full_name),
       code_references_count: codeReferenceInventory.length,
       active_code_references_count: activeCodeReferenceInventory.length,
       declared_retired_code_references_count: declaredRetiredCodeReferenceInventory.length,
@@ -605,13 +794,14 @@ async function main() {
         status_map: statusGate.status_map,
         unknown_schemas: statusGate.unknown_schemas,
         unsafe_schemas: statusGate.unsafe_schemas,
+        unknown_objects: statusGate.unknown_objects ?? [],
+        unsafe_objects: statusGate.unsafe_objects ?? [],
         apply_allowed: statusGate.apply_allowed,
       },
       gates: {
         active_code_references: activeCodeReferenceInventory.length,
         declared_retired_code_references: declaredRetiredCodeReferenceInventory.length,
-        status_unsafe_or_unknown_schemas:
-          statusGate.unsafe_schemas.length + statusGate.unknown_schemas.length,
+        status_unsafe_or_unknown_schemas: STATUS_GATE_FAILURE_COUNT(statusGate),
         static_preflight_passed:
           activeCodeReferenceInventory.length === 0 && statusGate.apply_allowed,
       },
@@ -647,10 +837,12 @@ async function main() {
     await client.query("begin");
     const schemaInventory = [];
     const statusMap = readStatusMap(statusMapPath);
-    const statusGate = statusGateForSchemas(schemas, statusMap);
+    const statusGate =
+      objectTargets.length > 0 ? statusGateForObjects(objectTargets, statusMap) : statusGateForSchemas(schemas, statusMap);
     const codeReferenceManifest = readCodeReferenceManifest(codeReferenceManifestPath);
+    const objectInventory = objectTargets.length > 0 ? await inventoryObjectTargets(client, objectTargets) : [];
 
-    for (const schemaName of schemas) {
+    for (const schemaName of objectTargets.length > 0 ? [] : schemas) {
       const exists = await client.query(
         "select exists(select 1 from information_schema.schemata where schema_name = $1) as exists",
         [schemaName],
@@ -707,13 +899,17 @@ async function main() {
 
     }
 
-    const dependencies = await client.query(buildOutsideDependencyQuery(), [schemas]);
+    const dependencies =
+      objectTargets.length > 0
+        ? await client.query(buildOutsideObjectDependencyQuery(), [JSON.stringify(objectTargets)])
+        : await client.query(buildOutsideDependencyQuery(), [schemas]);
     const dependencyInventory = dependencies.rows;
     const codeReferenceInventory = scanCodeReferences(
-      schemas,
+      effectiveSchemas,
       statusMap,
       DEFAULT_CODE_REFERENCE_ROOTS,
       codeReferenceManifest,
+      objectTargets,
     );
     const activeCodeReferenceInventory = codeReferenceInventory.filter(
       (reference) => reference.reference_state === "active",
@@ -725,7 +921,8 @@ async function main() {
       run_id: runId,
       generated_at: new Date().toISOString(),
       mode: shouldApply ? "apply" : "dry_run",
-      schemas,
+      schemas: effectiveSchemas,
+      object_targets: objectTargets.map((target) => target.full_name),
       dependencies_outside_retired_schemas: dependencyInventory,
       code_references: codeReferenceInventory,
       active_code_references: activeCodeReferenceInventory,
@@ -738,15 +935,16 @@ async function main() {
       },
       retirement_status_gate: statusGate,
       schema_inventory: schemaInventory,
+      object_inventory: objectInventory,
       gates: {
         schemas_discovered: schemaInventory.filter((row) => row.exists).length,
+        objects_discovered: objectInventory.filter((row) => row.exists).length,
         outside_dependencies: dependencyInventory.length,
         code_references: codeReferenceInventory.length,
         active_code_references: activeCodeReferenceInventory.length,
         declared_retired_code_references: declaredRetiredCodeReferenceInventory.length,
         code_reference_gate_bypassed: allowCodeReferences,
-        status_unsafe_or_unknown_schemas:
-          statusGate.unsafe_schemas.length + statusGate.unknown_schemas.length,
+        status_unsafe_or_unknown_schemas: STATUS_GATE_FAILURE_COUNT(statusGate),
         status_gate_bypassed: allowStatusMix,
         apply_allowed: isApplyAllowed({
           shouldApply,
@@ -763,15 +961,24 @@ async function main() {
       run_id: proof.run_id,
       generated_at: proof.generated_at,
       mode: proof.mode,
-      schemas,
+      schemas: effectiveSchemas,
+      object_targets: objectTargets.map((target) => target.full_name),
       schema_count: schemaInventory.length,
       schemas_discovered: proof.gates.schemas_discovered,
+      object_count: objectInventory.length,
+      objects_discovered: proof.gates.objects_discovered,
       schema_summaries: schemaInventory.map((row) => ({
         schema: row.schema,
         exists: row.exists,
         table_count: row.tables.length,
         view_count: row.views.length,
         routine_count: row.routines.length,
+        row_count: row.row_count,
+      })),
+      object_summaries: objectInventory.map((row) => ({
+        object: row.full_name,
+        exists: row.exists,
+        relkind: row.relkind,
         row_count: row.row_count,
       })),
       table_count: schemaInventory.reduce((sum, row) => sum + row.tables.length, 0),
@@ -791,6 +998,8 @@ async function main() {
         status_map: statusGate.status_map,
         unknown_schemas: statusGate.unknown_schemas,
         unsafe_schemas: statusGate.unsafe_schemas,
+        unknown_objects: statusGate.unknown_objects ?? [],
+        unsafe_objects: statusGate.unsafe_objects ?? [],
         apply_allowed: statusGate.apply_allowed,
       },
       gates: proof.gates,
@@ -811,13 +1020,25 @@ async function main() {
     }
     if (shouldApply && !statusGate.apply_allowed && !allowStatusMix) {
       throw new Error(
-        `Refusing to apply: ${statusGate.unsafe_schemas.length} mixed-status schemas and ${statusGate.unknown_schemas.length} unknown schemas found. Review ${proofPath}.`,
+        `Refusing to apply: ${STATUS_GATE_FAILURE_COUNT(statusGate)} unsafe or unknown schema/object target(s) found. Review ${proofPath}.`,
       );
     }
 
     if (shouldApply) {
-      for (const schemaName of schemas) {
-        await client.query(`drop schema if exists ${quoteIdent(schemaName)} cascade`);
+      if (objectTargets.length > 0) {
+        for (const target of objectInventory.filter((row) => row.exists)) {
+          if (target.relkind === "v") {
+            await client.query(`drop view if exists ${quoteIdent(target.schema)}.${quoteIdent(target.object)} cascade`);
+          } else if (target.relkind === "m") {
+            await client.query(`drop materialized view if exists ${quoteIdent(target.schema)}.${quoteIdent(target.object)} cascade`);
+          } else {
+            await client.query(`drop table if exists ${quoteIdent(target.schema)}.${quoteIdent(target.object)} cascade`);
+          }
+        }
+      } else {
+        for (const schemaName of schemas) {
+          await client.query(`drop schema if exists ${quoteIdent(schemaName)} cascade`);
+        }
       }
       await client.query("commit");
       proof.applied_at = new Date().toISOString();

@@ -16,8 +16,13 @@ on:
         required: true
         type: string
         default: source_registry
+      objects:
+        description: "Optional comma-separated schema.table targets for mixed-schema cleanup."
+        required: false
+        type: string
+        default: ""
       confirm_apply:
-        description: "Required for apply: type APPLY_SOURCE_REGISTRY exactly."
+        description: "Required for apply: APPLY_SOURCE_REGISTRY for schema mode, APPLY_OBJECTS for object mode."
         required: false
         type: string
         default: ""
@@ -49,6 +54,7 @@ jobs:
       AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID || '701a8554-a166-46e9-bf13-743bc50e3b20' }}
       BASE_URL: ${{ inputs.base_url }}
       RETIRED_LAYER_PURGE_SCHEMAS: ${{ inputs.schemas }}
+      RETIRED_LAYER_PURGE_OBJECTS: ${{ inputs.objects }}
       RETIRED_LAYER_PURGE_COMPACT_STDOUT: "1"
       RETIRED_LAYER_PURGE_OUT_DIR: /tmp/ecl-retired-layer-cleanup-proof
     steps:
@@ -63,22 +69,33 @@ jobs:
         run: npm ci
 
       - name: Refuse unsafe apply request
-        if: inputs.mode == 'apply' && inputs.confirm_apply != 'APPLY_SOURCE_REGISTRY'
+        if: inputs.mode == 'apply' && inputs.objects == '' && inputs.confirm_apply != 'APPLY_SOURCE_REGISTRY'
         run: |
           echo "Apply requires confirm_apply=APPLY_SOURCE_REGISTRY." >&2
           exit 1
 
+      - name: Refuse unsafe object apply request
+        if: inputs.mode == 'apply' && inputs.objects != '' && inputs.confirm_apply != 'APPLY_OBJECTS'
+        run: |
+          echo "Object apply requires confirm_apply=APPLY_OBJECTS." >&2
+          exit 1
+
       - name: Refuse broad apply in this workflow
-        if: inputs.mode == 'apply' && inputs.schemas != 'source_registry'
+        if: inputs.mode == 'apply' && inputs.objects == '' && inputs.schemas != 'source_registry'
         run: |
           echo "This cleanup workflow only permits apply for source_registry. Use dry_run for other schemas." >&2
           exit 1
 
       - name: Static preflight
         run: |
+          object_args=()
+          if [[ -n "$RETIRED_LAYER_PURGE_OBJECTS" ]]; then
+            object_args+=(--objects "$RETIRED_LAYER_PURGE_OBJECTS")
+          fi
           npm run ops:purge-retired-data-layers -- \
             --static-preflight-only \
             --schemas "$RETIRED_LAYER_PURGE_SCHEMAS" \
+            "${object_args[@]}" \
             --out-dir audit-artifacts/ecl-retired-layer-cleanup/static-preflight \
             --run-id "ecl-retired-layer-static-preflight-${{ github.run_id }}" \
             --compact-stdout \
@@ -118,6 +135,7 @@ jobs:
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
             --env RETIRED_LAYER_PURGE_SCHEMAS="$RETIRED_LAYER_PURGE_SCHEMAS" \
+            --env RETIRED_LAYER_PURGE_OBJECTS="$RETIRED_LAYER_PURGE_OBJECTS" \
             --env RETIRED_LAYER_PURGE_COMPACT_STDOUT=1 \
             --env RETIRED_LAYER_PURGE_OUT_DIR=/tmp/ecl-retired-layer-cleanup-proof \
             --out-dir audit-artifacts/ecl-retired-layer-cleanup/live-dry-run \
@@ -133,6 +151,7 @@ jobs:
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
             --env RETIRED_LAYER_PURGE_SCHEMAS="$RETIRED_LAYER_PURGE_SCHEMAS" \
+            --env RETIRED_LAYER_PURGE_OBJECTS="$RETIRED_LAYER_PURGE_OBJECTS" \
             --env RETIRED_LAYER_PURGE_COMPACT_STDOUT=1 \
             --env RETIRED_LAYER_PURGE_OUT_DIR=/tmp/ecl-retired-layer-cleanup-proof \
             --out-dir audit-artifacts/ecl-retired-layer-cleanup/live-apply \
@@ -152,6 +171,7 @@ jobs:
             slice: 'retired_layer_cleanup',
             status: process.env.GITHUB_JOB_STATUS || 'completed_with_artifacts',
             schemas: process.env.RETIRED_LAYER_PURGE_SCHEMAS,
+            objects: process.env.RETIRED_LAYER_PURGE_OBJECTS,
             mode: '${{ inputs.mode }}',
             run_id: process.env.GITHUB_RUN_ID,
             digest: fs.existsSync(path.join(root, 'image.txt')) ? fs.readFileSync(path.join(root, 'image.txt'), 'utf8').trim() : null,
