@@ -14,6 +14,30 @@ const evalSummary = path.join(tmp, "eval-summary.json");
 const cleanupSummary = path.join(tmp, "cleanup-summary.json");
 const out = path.join(tmp, "status.json");
 const ref = process.env.ECL_RECONCILE_REF || "origin/main";
+const PUBLIC_OBJECT_BATCH = [
+  "public.tower_user_preferences",
+  "public.program_export_log",
+  "public.data_segment_program_inventory",
+  "public.data_segment_program_deliverables",
+  "public.data_segment_cross_program_signals",
+  "public.program_notifications",
+  "public.source_event_approvals",
+  "public.source_pricing_components",
+  "public.source_commercial_exceptions",
+  "public.source_requirements",
+  "public.source_graph_edges",
+  "public.source_event_gate_criterion_states",
+  "public.source_event_evidence_states",
+  "public.source_event_pricing_submissions",
+  "public.expert_reviews",
+  "public.source_event_code_backfill_audit",
+  "public.tower_workforce",
+  "public.tower_claude_code_usage",
+  "public.program_evidence_reviews",
+  "public.source_artifact_generation_jobs",
+  "public.source_reasoning_envelopes",
+  "public.tower_materialization_runs",
+];
 
 function run(command, args) {
   const result = spawnSync(command, args, {
@@ -157,6 +181,12 @@ try {
             relkind: null,
             row_count: 0,
           },
+          ...PUBLIC_OBJECT_BATCH.map((object) => ({
+            object,
+            exists: false,
+            relkind: null,
+            row_count: 0,
+          })),
         ],
         dependencies_outside_retired_schemas_count: 0,
         active_code_references_count: 0,
@@ -214,7 +244,7 @@ try {
     {
       cutover: "4/4",
       proof: "63/63",
-      cleanup: "35/851",
+      cleanup: "61/851",
       client: "14/14",
     },
   );
@@ -245,9 +275,10 @@ try {
   assert.equal(status.repo_denominators.client_intake_adapters.numerator, 14);
   assert.equal(status.repo_denominators.legacy_cleanup.live_absent_schema_credit.numerator, 9);
   assert.deepEqual(status.repo_denominators.legacy_cleanup.live_absent_schema_credit.schemas, ["source_registry"]);
-  assert.equal(status.repo_denominators.legacy_cleanup.live_absent_object_credit.numerator, 1);
+  assert.equal(status.repo_denominators.legacy_cleanup.live_absent_object_credit.numerator, 27);
   assert.deepEqual(status.repo_denominators.legacy_cleanup.live_absent_object_credit.objects, [
     "knowledge.entity_source_identity",
+    ...PUBLIC_OBJECT_BATCH,
   ]);
   assert.equal(committedStatus.repo_denominators.client_intake_adapters.denominator, 14);
   assert.equal(committedStatus.repo_denominators.client_intake_adapters.numerator, 14);

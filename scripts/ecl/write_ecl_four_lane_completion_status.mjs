@@ -16,6 +16,8 @@ const DEFAULT_STATUS = "docs/architecture/ecl-four-lane-completion-status.json";
 const DEFAULT_CLEANUP_PROOF = "docs/architecture/ecl-source-registry-retirement-proof-2026-08-26.json";
 const DEFAULT_OBJECT_CLEANUP_PROOF =
   "docs/architecture/ecl-knowledge-entity-source-identity-retirement-proof-2026-08-27.json";
+const DEFAULT_PUBLIC_OBJECT_BATCH_CLEANUP_PROOF =
+  "docs/architecture/ecl-public-object-batch-retirement-proof-2026-08-27.json";
 
 const SURFACE_TARGETS = {
   Home: 16,
@@ -274,7 +276,7 @@ function cleanupProofsFromArgs(args) {
         return normalizeCleanupProofDocument(proof);
       });
   }
-  return [DEFAULT_CLEANUP_PROOF, DEFAULT_OBJECT_CLEANUP_PROOF]
+  return [DEFAULT_CLEANUP_PROOF, DEFAULT_OBJECT_CLEANUP_PROOF, DEFAULT_PUBLIC_OBJECT_BATCH_CLEANUP_PROOF]
     .filter((file) => gitFileExists(args.ref, file))
     .flatMap((file) => normalizeCleanupProofDocument(JSON.parse(gitShow(args.ref, file))));
 }
