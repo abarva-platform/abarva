@@ -31,11 +31,14 @@ Tower now maps ECL serving rows into the command-center value trajectory only wh
 - `src/lib/tower/readTowerCommandCenter.ts`
 - `src/lib/tower/__tests__/readTowerCommandCenter.test.ts`
 - `src/components/tower/command-center/views/CommandCenterView.tsx`
+- `docs/architecture/sql-drafts/ecl_serving_views_v1_draft.sql`
+- `scripts/ecl/__tests__/run-ecl-projection-schema-reconciliation-tests.mjs`
 
 ## QA / Validation
 
 - PASS - `npm run test:behaviors -- --runTestsByPath src/lib/tower/__tests__/readTowerCommandCenter.test.ts`
 - PASS - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`
+- PENDING - `ECL_RECONCILE_REF=HEAD node scripts/ecl/__tests__/run-ecl-projection-schema-reconciliation-tests.mjs`
 
 ## Rollout Plan
 

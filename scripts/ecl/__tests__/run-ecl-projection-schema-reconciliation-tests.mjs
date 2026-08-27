@@ -311,6 +311,30 @@ if (committedServingViews.length > 0) {
       `${row["serving view"]} must not alias another product serving view`,
     );
   }
+  const towerValueRowsDefinition = servingSql.match(
+    /create or replace function serving\.tower_value_rows[\s\S]*?\$\$;/i,
+  )?.[0];
+  assert(
+    towerValueRowsDefinition,
+    "serving.tower_value_rows must be present when Tower serving views are declared",
+  );
+  assert.match(
+    towerValueRowsDefinition,
+    /left join\s+ecl_context\.measure\s+m[\s\S]+m\.id\s*=\s*p\.measure_id/i,
+    "serving.tower_value_rows must join the linked measure to expose period evidence",
+  );
+  for (const key of [
+    "measure_period_start",
+    "measure_period_end",
+    "measure_scenario",
+    "measure_value_number",
+  ]) {
+    assert.match(
+      towerValueRowsDefinition,
+      new RegExp(`'${key}'`, "i"),
+      `serving.tower_value_rows payload must expose ${key}`,
+    );
+  }
 }
 
 assert.doesNotMatch(
