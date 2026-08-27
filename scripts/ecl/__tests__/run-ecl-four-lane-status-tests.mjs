@@ -150,6 +150,14 @@ try {
             row_count: 0,
           },
         ],
+        object_summaries: [
+          {
+            object: "knowledge.entity_source_identity",
+            exists: false,
+            relkind: null,
+            row_count: 0,
+          },
+        ],
         dependencies_outside_retired_schemas_count: 0,
         active_code_references_count: 0,
         retirement_status_gate: {
@@ -206,7 +214,7 @@ try {
     {
       cutover: "4/4",
       proof: "63/63",
-      cleanup: "34/851",
+      cleanup: "35/851",
       client: "14/14",
     },
   );
@@ -237,6 +245,10 @@ try {
   assert.equal(status.repo_denominators.client_intake_adapters.numerator, 14);
   assert.equal(status.repo_denominators.legacy_cleanup.live_absent_schema_credit.numerator, 9);
   assert.deepEqual(status.repo_denominators.legacy_cleanup.live_absent_schema_credit.schemas, ["source_registry"]);
+  assert.equal(status.repo_denominators.legacy_cleanup.live_absent_object_credit.numerator, 1);
+  assert.deepEqual(status.repo_denominators.legacy_cleanup.live_absent_object_credit.objects, [
+    "knowledge.entity_source_identity",
+  ]);
   assert.equal(committedStatus.repo_denominators.client_intake_adapters.denominator, 14);
   assert.equal(committedStatus.repo_denominators.client_intake_adapters.numerator, 14);
   assert.equal(status.repo_denominators.client_intake_source_family_landing.numerator, 14);
