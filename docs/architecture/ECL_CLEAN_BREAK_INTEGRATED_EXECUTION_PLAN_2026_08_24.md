@@ -58,7 +58,12 @@ Current committed status, measured from the post-cutover proof artifact:
 |---|---|---:|---|
 | `L-CUTOVER` | Home, Source, Tower and Intelligence default entry routes serve ECL | **4/4** | complete |
 | `L-PROOF` | 40 named surfaces, F1-F10 and aVa baseline/ablation proof | **63/63** | complete |
-| `L-CLIENT` | Real workbook/source-family adapters proven end to end | **7/14** | pending |
+| `L-CLIENT` | Real workbook/source-family adapters proven locally | **14/14** | complete |
+
+These completion numbers are tenant-scoped. The current live product proof is for
+`meridian-health`; it must not be read as proof for every active tenant in
+`datasets/tenant-inputs/tenant-input-registry.json`. The status artifact records active tenant
+coverage explicitly and carries an open item for any active tenant without ECL live proof.
 
 `L-CLEANUP` is closed by the no-migration decision and must not be reported as a numeric
 legacy-retirement percentage. Runtime cleanup is tracked per product by proving the active read
@@ -86,7 +91,7 @@ Client-intake progress is split on purpose:
 | Client-Readiness Metric | Current | Denominator | Meaning |
 |---|---:|---:|---|
 | Source-family landing into `ecl_source` | 14 | 14 | All workbook/source-room families can land as governed `source_file` and `source_record` rows. |
-| Canonical/context adapters | 3 | 14 | Three families have proven adapters into canonical ECL objects/measures/relationships. |
+| Canonical/context adapters | 14 | 14 | All source-family adapters have local proof into canonical ECL objects, measures, relationships, or family-specific governed records. |
 
 Source-family landing does not count as canonical adapter completion. It proves intake can be
 received and hashed without forcing partially mapped rows into product semantics.
