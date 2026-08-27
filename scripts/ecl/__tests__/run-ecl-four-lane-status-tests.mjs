@@ -38,6 +38,61 @@ const PUBLIC_OBJECT_BATCH = [
   "public.source_reasoning_envelopes",
   "public.tower_materialization_runs",
 ];
+const PUBLIC_FOUNDATION_OBJECT_BATCH = [
+  "public.tower_read_model_initiatives",
+  "public.tower_read_model_vendors",
+  "public.tower_gap_register",
+  "public.tower_spend_realism_audit",
+  "public.tower_forbidden_identifiers",
+  "public.tower_answer_trace",
+  "public.tower_l3_answer_dossiers",
+  "public.tower_budget_rollups",
+  "public.source_stage_guidebooks",
+  "public.home_knowledge_relationship_nodes",
+  "public.home_knowledge_relationship_edges",
+  "public.home_knowledge_narratives",
+  "public.home_knowledge_executive_takeaways",
+  "public.home_knowledge_enterprise_model_items",
+  "public.home_knowledge_operating_model_items",
+  "public.home_knowledge_dimension_visual_specs",
+  "public.home_knowledge_relationship_explanations",
+  "public.home_knowledge_module_implications",
+  "public.pricing_taxonomy_versions",
+  "public.pricing_model_versions",
+  "public.pricing_towers",
+  "public.pricing_capabilities",
+  "public.pricing_role_families",
+  "public.pricing_seniority_levels",
+  "public.pricing_roles",
+  "public.pricing_role_aliases",
+  "public.pricing_provider_level_aliases",
+  "public.pricing_rate_bands",
+  "public.pricing_provider_classes",
+  "public.pricing_providers",
+  "public.pricing_delivery_locations",
+  "public.pricing_rate_cards",
+  "public.pricing_rate_card_lines",
+  "public.pricing_client_profiles",
+  "public.pricing_client_profile_values",
+  "public.pricing_technology_cost_defaults",
+  "public.pricing_estimate_snapshots",
+  "public.pricing_archetypes",
+  "public.pricing_activity_packs",
+  "public.pricing_effort_drivers",
+  "public.pricing_effort_rules",
+  "public.pricing_activity_role_mix",
+  "public.pricing_archetype_activity_map",
+  "public.pricing_range_policies",
+  "public.pricing_agent_costs",
+  "public.pricing_estimates",
+  "public.pricing_estimate_inputs",
+  "public.pricing_estimate_line_items",
+  "foundation_v2_meridian_health_demo.source_releases",
+  "foundation_v2_meridian_health_demo.source_files",
+  "foundation_v2_meridian_health_demo.source_file_context",
+  "foundation_v2_meridian_health_demo.source_records",
+  "foundation_v2_meridian_health_demo.source_field_values",
+];
 
 function run(command, args) {
   const result = spawnSync(command, args, {
@@ -187,6 +242,12 @@ try {
             relkind: null,
             row_count: 0,
           })),
+          ...PUBLIC_FOUNDATION_OBJECT_BATCH.map((object) => ({
+            object,
+            exists: false,
+            relkind: null,
+            row_count: 0,
+          })),
         ],
         dependencies_outside_retired_schemas_count: 0,
         active_code_references_count: 0,
@@ -244,7 +305,7 @@ try {
     {
       cutover: "4/4",
       proof: "63/63",
-      cleanup: "61/851",
+      cleanup: "114/851",
       client: "14/14",
     },
   );
@@ -275,10 +336,11 @@ try {
   assert.equal(status.repo_denominators.client_intake_adapters.numerator, 14);
   assert.equal(status.repo_denominators.legacy_cleanup.live_absent_schema_credit.numerator, 9);
   assert.deepEqual(status.repo_denominators.legacy_cleanup.live_absent_schema_credit.schemas, ["source_registry"]);
-  assert.equal(status.repo_denominators.legacy_cleanup.live_absent_object_credit.numerator, 27);
+  assert.equal(status.repo_denominators.legacy_cleanup.live_absent_object_credit.numerator, 80);
   assert.deepEqual(status.repo_denominators.legacy_cleanup.live_absent_object_credit.objects, [
     "knowledge.entity_source_identity",
     ...PUBLIC_OBJECT_BATCH,
+    ...PUBLIC_FOUNDATION_OBJECT_BATCH,
   ]);
   assert.equal(committedStatus.repo_denominators.client_intake_adapters.denominator, 14);
   assert.equal(committedStatus.repo_denominators.client_intake_adapters.numerator, 14);
