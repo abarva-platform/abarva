@@ -155,6 +155,18 @@ const CONTRACT_TABS = new Set([
   'Evidence',
   'Optimize',
 ]);
+const CONTRACT_TAB_BY_PARAM = new Map(
+  [...CONTRACT_TABS].map((tab) => [tab.toLowerCase(), tab]),
+);
+
+function normalizeContractTab(value: string | null | undefined): string {
+  const requestedTab = value?.trim();
+  if (!requestedTab) return INITIAL_STATE.tabs.contract;
+  return (
+    CONTRACT_TAB_BY_PARAM.get(requestedTab.toLowerCase()) ??
+    INITIAL_STATE.tabs.contract
+  );
+}
 
 export function buildInitialWorkspaceState(input?: {
   contractId?: string | null;
@@ -163,11 +175,7 @@ export function buildInitialWorkspaceState(input?: {
   const contractId = input?.contractId?.trim();
   if (!contractId) return INITIAL_STATE;
 
-  const requestedTab = input?.contractTab?.trim();
-  const contractTab =
-    requestedTab && CONTRACT_TABS.has(requestedTab)
-      ? requestedTab
-      : INITIAL_STATE.tabs.contract;
+  const contractTab = normalizeContractTab(input?.contractTab);
 
   return {
     ...INITIAL_STATE,
