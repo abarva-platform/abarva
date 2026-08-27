@@ -39,6 +39,20 @@ interface TowerPageProps {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+interface TrustedTowerTenant {
+  clientKey: string;
+  displayName?: string | null;
+}
+
+interface RenderTowerPageProps extends TowerPageProps {
+  /**
+   * Tenant-scoped routes call `assertTenantAccess` before rendering and pass the
+   * authorized tenant here. Generic `/tower?client=...` requests keep the
+   * existing locked-session rule below.
+   */
+  trustedTenant?: TrustedTowerTenant | null;
+}
+
 function firstSearchValue(value: string | string[] | undefined): string | null {
   if (Array.isArray(value)) return value[0] ?? null;
   return value ?? null;
@@ -104,8 +118,8 @@ function TowerEclProjectionPanel({
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#475467]">
             This route reads the governed ECL Tower serving view for the dense
-            assessment. It proves the projection exists and carries gate
-            reasons on the default Tower path.
+            assessment. It proves the projection exists and carries gate reasons
+            on the default Tower path.
           </p>
         </div>
         <div className="rounded border border-[#d6eadf] bg-white px-4 py-3 text-right">
@@ -176,9 +190,7 @@ function TowerEclProjectionPanel({
             </div>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-[#111827]">
-              Gate state
-            </h3>
+            <h3 className="text-sm font-semibold text-[#111827]">Gate state</h3>
             <div className="mt-2 space-y-2">
               {preview.gateCounts.map((row) => (
                 <div
@@ -249,25 +261,30 @@ function TowerEclProjectionPanel({
  * fact from everything below: the mart's figures are metered, these are what the client told us. Two
  * numbers with different provenance shown in one row invite a reader to treat them as one measure.
  */
-export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
+export async function renderTowerPage({
+  searchParams,
+  trustedTenant = null,
+}: RenderTowerPageProps = {}) {
   const resolved = await searchParams;
   const rawRequestedClient = firstSearchValue(resolved?.client);
   const requestedProvider = firstSearchValue(resolved?.provider);
   const productProvider = resolveEclProductProvider(requestedProvider);
-  const requestedClient = (await hasLockedTenantSession())
-    ? rawRequestedClient
-    : null;
+  const requestedClient =
+    trustedTenant?.clientKey ??
+    ((await hasLockedTenantSession()) ? rawRequestedClient : null);
   const [client, tenant] = await Promise.all([
     getActiveClientRow(requestedClient).catch(() => null),
     resolveTenant({ requestedClient }).catch(() => null),
   ]);
-  const effectiveClientKey = client?.key ?? tenant?.appClientKey ?? null;
+  const effectiveClientKey =
+    trustedTenant?.clientKey ?? client?.key ?? tenant?.appClientKey ?? null;
 
   const tenantName =
     canonicalClientDisplayName({
       key: effectiveClientKey,
-      name: client?.name ?? tenant?.displayName,
+      name: trustedTenant?.displayName ?? client?.name ?? tenant?.displayName,
     }) ??
+    trustedTenant?.displayName ??
     client?.name ??
     tenant?.displayName ??
     "AbarVa Client";
@@ -275,6 +292,8 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
   const towerView = await withTowerReadTimeout(
     readTowerCommandCenter({
       tenantKeyCandidates: [
+        trustedTenant?.clientKey,
+        canonicalTenantKey(trustedTenant?.clientKey),
         effectiveClientKey,
         requestedClient,
         client?.id,
@@ -289,16 +308,19 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
     tenantName,
   });
   const towerChatClientId =
-    client?.id ?? effectiveClientKey ?? requestedClient ?? null;
+    trustedTenant?.clientKey ??
+    client?.id ??
+    effectiveClientKey ??
+    requestedClient ??
+    null;
   // The ECL projection preview is an additive diagnostic panel, never a precondition for the
   // Command Center. Degrade it to null on any read failure for the same reason the canonical
   // reconciliation above does: a sparse tenant or a slow read must not take the whole route down.
-  const towerEclPreview =
-    isEclProductProvider(productProvider)
-      ? await readTowerEclProjectionPreview(
-          canonicalTenantKey(effectiveClientKey),
-        ).catch(() => null)
-      : null;
+  const towerEclPreview = isEclProductProvider(productProvider)
+    ? await readTowerEclProjectionPreview(
+        canonicalTenantKey(effectiveClientKey),
+      ).catch(() => null)
+    : null;
 
   return (
     <AppShell
@@ -327,4 +349,8 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
       </Suspense>
     </AppShell>
   );
+}
+
+export default async function TowerPage(props: TowerPageProps = {}) {
+  return renderTowerPage(props);
 }

@@ -1,7 +1,16 @@
-import { notFound, redirect } from 'next/navigation';
-import { findTenantByRouteSlug } from '@/lib/deliverables/seed-route-resolver';
-import { isTowerSubsurfaceSlug } from '@/lib/integrity/route-catalog';
-import { assertTenantAccess } from '@/lib/auth/tenant-access';
+import { notFound } from "next/navigation";
+import { isTowerSubsurfaceSlug } from "@/lib/integrity/route-catalog";
+import { assertTenantAccess } from "@/lib/auth/tenant-access";
+import { renderTowerPage } from "@/app/(maestro)/tower/page";
+
+const SURFACE_TO_TOWER_TAB: Record<string, string> = {
+  vendors: "evidence",
+  regulatory: "evidence",
+  council: "lanes",
+  models: "ai",
+  "shadow-ai": "ai",
+  value: "funnel",
+};
 
 export default async function TenantTowerSubsurfacePage({
   params,
@@ -9,11 +18,16 @@ export default async function TenantTowerSubsurfacePage({
   params: Promise<{ tenantSlug: string; surface: string }>;
 }) {
   const { tenantSlug, surface } = await params;
-  await assertTenantAccess(tenantSlug);
-  const tenant = findTenantByRouteSlug(tenantSlug);
-  if (!tenant || !isTowerSubsurfaceSlug(surface)) notFound();
+  const access = await assertTenantAccess(tenantSlug);
+  if (!isTowerSubsurfaceSlug(surface) && surface !== "value") notFound();
 
-  const redirectParams = new URLSearchParams({ client: tenant.tenantKey });
-  if (surface === 'vendors') redirectParams.set('view', 'evidence');
-  redirect(`/tower?${redirectParams.toString()}`);
+  return renderTowerPage({
+    searchParams: Promise.resolve({
+      tab: SURFACE_TO_TOWER_TAB[surface] ?? "command",
+    }),
+    trustedTenant: {
+      clientKey: access.clientKey,
+      displayName: access.tenant.displayName,
+    },
+  });
 }
