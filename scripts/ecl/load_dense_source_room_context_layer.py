@@ -13,6 +13,7 @@ import argparse
 import csv
 import hashlib
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,8 +25,18 @@ import load_dense_source_room_source_layer as source_layer
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DENSE_OUT_DIR = ROOT / "outputs/source-room-depth-catchup-2026-08-23"
 DEFAULT_OUT_DIR = ROOT / "reports/ecl-dense-context-layer-local-load-2026-08-23"
-TENANT_KEY = "meridian-health"
-ASSESSMENT_ID = "assessment-dense-source-room-20260823"
+TENANT_KEY = os.environ.get("ECL_DENSE_TENANT_KEY", source_layer.TENANT_KEY)
+ASSESSMENT_ID = os.environ.get("ECL_DENSE_ASSESSMENT_ID", source_layer.ASSESSMENT_ID)
+PROFILE = os.environ.get("ECL_DENSE_PROFILE", "meridian-health").strip().lower().replace("_", "-")
+IS_SKYHARBOR = PROFILE in {"skyharbor", "skyharbor-air", "skyharbor-airline", "airline"}
+ENTERPRISE_KEY = os.environ.get("ECL_DENSE_ENTERPRISE_KEY", "SKYHARBOR-GLOBAL" if IS_SKYHARBOR else "MERIDIAN-HEALTH")
+ENTERPRISE_NAME = os.environ.get("ECL_DENSE_ENTERPRISE_NAME", "SkyHarbor Global" if IS_SKYHARBOR else "Meridian Health")
+PROFILE_ANCHOR = os.environ.get(
+    "ECL_DENSE_PROFILE_ANCHOR",
+    "$50B+ global airline synthetic estate with mainframe, Teradata, airport operations, and loyalty complexity"
+    if IS_SKYHARBOR
+    else "$20B integrated payer-provider synthetic estate",
+)
 DDL_FILES = [
     ROOT / "docs/architecture/sql-drafts/ecl_physical_schema_v1_draft.sql",
 ]
@@ -248,11 +259,11 @@ class ContextBuilder:
         enterprise_source = source_record_id("SP03_CMDB", self.rows_by_family["SP03_CMDB"][0], 1)
         enterprise_id = self.add_object(
             object_type="enterprise",
-            object_key="MERIDIAN-HEALTH",
-            display_name="Meridian Health",
+            object_key=ENTERPRISE_KEY,
+            display_name=ENTERPRISE_NAME,
             business_domain="Enterprise",
             source_id=enterprise_source,
-            attributes={"profile_anchor": "$20B integrated payer-provider synthetic estate"},
+            attributes={"profile_anchor": PROFILE_ANCHOR},
         )
 
         function_ids: dict[str, str] = {}
@@ -640,7 +651,12 @@ def run_postgres_load(out_dir: Path, source_sql: Path, context_sql: Path, verify
             commands.append(source_layer.run(["psql", "-h", pg_tmp.as_posix(), "-p", str(port), "-d", db_name, "-v", "ON_ERROR_STOP=1", "-f", ddl.as_posix()], cwd=ROOT, env=env, stdout_path=load_log, append=True))
         commands.append(source_layer.run(["psql", "-h", pg_tmp.as_posix(), "-p", str(port), "-d", db_name, "-v", "ON_ERROR_STOP=1", "-f", source_sql.as_posix()], cwd=ROOT, env=env, stdout_path=load_log, append=True))
         commands.append(source_layer.run(["psql", "-h", pg_tmp.as_posix(), "-p", str(port), "-d", db_name, "-v", "ON_ERROR_STOP=1", "-f", context_sql.as_posix()], cwd=ROOT, env=env, stdout_path=load_log, append=True))
-        bad_rel_sql = "insert into ecl_context.relationship (tenant_key, assessment_id, from_object_id, relationship_type, to_object_id, basis, value_state, review_state) values ('meridian-health', 'assessment-dense-source-room-20260823', gen_random_uuid(), 'DEPENDS_ON', gen_random_uuid(), 'source_recorded', 'known', 'not_reviewed');"
+        bad_rel_sql = (
+            "insert into ecl_context.relationship "
+            "(tenant_key, assessment_id, from_object_id, relationship_type, to_object_id, basis, value_state, review_state) "
+            f"values ({source_layer.sql_text(TENANT_KEY)}, {source_layer.sql_text(ASSESSMENT_ID)}, "
+            "gen_random_uuid(), 'DEPENDS_ON', gen_random_uuid(), 'source_recorded', 'known', 'not_reviewed');"
+        )
         bad_measure_sql = "insert into ecl_context.measure (tenant_key, assessment_id, subject_object_id, metric_key, value_number, unit, scenario, basis, value_state, quality_state, review_state) select tenant_key, assessment_id, id, 'invented_metric_key', 1, 'count', 'current', 'source_recorded', 'known', 'usable', 'not_reviewed' from ecl_context.object limit 1;"
         planted_failures = []
         for key, sql in [("relationship_endpoint_fk", bad_rel_sql), ("measure_metric_definition_fk", bad_measure_sql)]:

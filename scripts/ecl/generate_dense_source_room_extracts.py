@@ -24,6 +24,7 @@ from typing import Any
 DEFAULT_OUT_DIR = Path("outputs/source-room-depth-catchup-2026-08-23")
 SEED = 20260823
 DEMO_AS_OF_DATE = date(2026, 9, 15)
+ACTIVE_PROFILE = "meridian-health"
 
 TARGETS = {
     "SP01_Documents_Interviews": ("Leadership_Interview_Notes_SYNTHETIC.csv", 220, "one row per interview answer or thematic excerpt"),
@@ -416,6 +417,257 @@ STRATEGIC_CONTRACT_VENDOR_WEIGHTS = {
     "HealthEdge Software": 7.0,
 }
 
+SKYHARBOR_PROFILE = {
+    "enterprise_name": "SkyHarbor Global",
+    "profile_anchor": "$50B+ global airline synthetic estate with mainframe, Teradata, NDC, airport operations, loyalty, cargo, maintenance, and disruption-recovery complexity",
+    "application_cost_total_usd": 1_540_000_000,
+    "contract_value_total_usd": 1_860_000_000,
+    "functions": [
+        "Airport and Ground Operations",
+        "Flight Operations",
+        "Network Planning",
+        "Revenue Management",
+        "Loyalty and Customer",
+        "Cargo Operations",
+        "Maintenance Engineering",
+        "Crew Operations",
+        "Safety Security Compliance",
+        "Data Analytics and AI",
+        "Information Technology",
+        "Finance and Accounting",
+        "Procurement and Supply Chain",
+        "Digital Commerce",
+    ],
+    "function_weights": [
+        ("Airport and Ground Operations", 18),
+        ("Flight Operations", 16),
+        ("Data Analytics and AI", 13),
+        ("Information Technology", 12),
+        ("Revenue Management", 11),
+        ("Digital Commerce", 10),
+        ("Loyalty and Customer", 9),
+        ("Maintenance Engineering", 9),
+        ("Crew Operations", 8),
+        ("Network Planning", 7),
+        ("Cargo Operations", 6),
+        ("Finance and Accounting", 6),
+        ("Procurement and Supply Chain", 5),
+        ("Safety Security Compliance", 5),
+    ],
+    "app_products": [
+        ("SabreSonic Passenger Services", "Sabre Corporation", "airline_operations", "passenger_service"),
+        ("Amadeus Altea Inventory", "Amadeus IT Group", "airline_operations", "inventory"),
+        ("Amadeus Altea Departure Control", "Amadeus IT Group", "airport", "departure_control"),
+        ("PROS Revenue Management", "PROS Holdings Inc.", "commercial", "revenue_management"),
+        ("PROS Network RM", "PROS Holdings Inc.", "commercial", "network_revenue"),
+        ("Lufthansa Systems NetLine", "Lufthansa Systems", "operations", "crew_and_network"),
+        ("Jeppesen Crew Pairing", "Boeing Jeppesen", "operations", "crew"),
+        ("SITA Bag Manager", "SITA", "airport", "baggage"),
+        ("SITA AirportConnect", "SITA", "airport", "common_use"),
+        ("IBS iCargo", "IBS Software", "cargo", "cargo_management"),
+        ("GE Digital Asset Performance", "GE Vernova", "maintenance", "asset_performance"),
+        ("IBM zOS Reservations Core", "IBM Corporation", "core_platform", "mainframe"),
+        ("Teradata Vantage Enterprise Warehouse", "Teradata Corporation", "data", "warehouse"),
+        ("Informatica PowerCenter", "Informatica LLC", "data", "etl"),
+        ("IBM DataStage", "IBM Corporation", "data", "etl"),
+        ("MicroStrategy Enterprise Analytics", "MicroStrategy Incorporated", "data", "bi"),
+        ("Tableau Server", "Salesforce Inc.", "data", "bi"),
+        ("Power BI Premium", "Microsoft Corporation", "data", "bi"),
+        ("Snowflake Enterprise", "Snowflake Inc.", "data", "warehouse"),
+        ("Databricks Lakehouse", "Databricks Inc.", "data", "lakehouse"),
+        ("Oracle E-Business Suite", "Oracle Corporation", "shared", "erp"),
+        ("Workday HCM", "Workday Inc.", "shared", "hr"),
+        ("ServiceNow ITSM", "ServiceNow Inc.", "shared", "it_ops"),
+        ("Salesforce Service Cloud", "Salesforce Inc.", "shared", "customer_service"),
+        ("MuleSoft API Platform", "Salesforce Inc.", "integration", "api"),
+        ("TIBCO BusinessWorks", "TIBCO Software Inc.", "integration", "middleware"),
+    ],
+    "vendors": [
+        "Accelya Group",
+        "Amadeus IT Group",
+        "Amazon Web Services Inc.",
+        "Boeing Jeppesen",
+        "Collins Aerospace",
+        "Databricks Inc.",
+        "GE Vernova",
+        "IBM Corporation",
+        "IBS Software",
+        "Informatica LLC",
+        "Lufthansa Systems",
+        "Microsoft Corporation",
+        "MicroStrategy Incorporated",
+        "Oracle Corporation",
+        "PROS Holdings Inc.",
+        "Sabre Corporation",
+        "Salesforce Inc.",
+        "ServiceNow Inc.",
+        "SITA",
+        "Snowflake Inc.",
+        "Teradata Corporation",
+        "TIBCO Software Inc.",
+        "VMware LLC",
+        "Workday Inc.",
+    ],
+    "vendor_tail_categories": ["Airport Services", "Cargo Technology", "Crew Services", "Data Services", "Distribution", "Engineering", "Loyalty", "Security", "Telecom", "Cloud Operations"],
+    "data_tech": ["Power BI", "Tableau", "SSRS", "Business Objects", "Cognos", "MicroStrategy", "SAS", "Informatica", "DataStage", "Ab Initio", "Control-M", "SQL Agent", "Python", "Teradata", "Snowflake", "Databricks"],
+    "data_tech_weights": [
+        ("Teradata", 18),
+        ("MicroStrategy", 13),
+        ("Tableau", 12),
+        ("Power BI", 12),
+        ("Business Objects", 9),
+        ("Cognos", 8),
+        ("SAS", 9),
+        ("Informatica", 11),
+        ("DataStage", 8),
+        ("Ab Initio", 6),
+        ("Control-M", 7),
+        ("SQL Agent", 8),
+        ("Python", 7),
+        ("Snowflake", 8),
+        ("Databricks", 7),
+        ("SSRS", 4),
+    ],
+    "infra_types": ["ibm_z_mainframe", "teradata_vantage_cluster", "oracle_exadata", "kafka_cluster", "mulesoft_runtime", "tibco_runtime", "vmware_cluster", "azure_subscription", "aws_account", "openshift_cluster", "storage_platform", "citrix_farm", "network_segment", "security_platform"],
+    "infra_type_weights": [
+        ("ibm_z_mainframe", 6),
+        ("teradata_vantage_cluster", 7),
+        ("oracle_exadata", 5),
+        ("kafka_cluster", 7),
+        ("mulesoft_runtime", 6),
+        ("tibco_runtime", 5),
+        ("vmware_cluster", 15),
+        ("azure_subscription", 10),
+        ("aws_account", 13),
+        ("openshift_cluster", 8),
+        ("storage_platform", 11),
+        ("citrix_farm", 3),
+        ("network_segment", 10),
+        ("security_platform", 9),
+    ],
+    "strategic_contract_vendor_counts": [
+        ("Sabre Corporation", 8),
+        ("Amadeus IT Group", 8),
+        ("IBM Corporation", 7),
+        ("Teradata Corporation", 7),
+        ("Microsoft Corporation", 7),
+        ("Amazon Web Services Inc.", 7),
+        ("SITA", 6),
+        ("PROS Holdings Inc.", 6),
+        ("Oracle Corporation", 6),
+        ("Salesforce Inc.", 5),
+        ("ServiceNow Inc.", 5),
+    ],
+    "strategic_contract_vendor_weights": {
+        "Sabre Corporation": 18.0,
+        "Amadeus IT Group": 18.0,
+        "IBM Corporation": 16.0,
+        "Teradata Corporation": 15.0,
+        "Microsoft Corporation": 13.0,
+        "Amazon Web Services Inc.": 13.0,
+        "SITA": 12.0,
+        "PROS Holdings Inc.": 12.0,
+        "Oracle Corporation": 11.0,
+        "Salesforce Inc.": 8.0,
+        "ServiceNow Inc.": 8.0,
+    },
+    "kpi_names": [
+        "on-time performance",
+        "completion factor",
+        "mishandled bags per thousand",
+        "load factor",
+        "passenger revenue per ASM",
+        "cost per available seat mile",
+        "loyalty conversion",
+        "crew legality exceptions",
+        "maintenance AOG hours",
+        "disruption recovery time",
+    ],
+    "ai_use_cases": [
+        "irregular operations recovery recommendation",
+        "crew disruption reassignment",
+        "baggage mishandling root-cause analysis",
+        "maintenance defect summarization",
+        "revenue management explainability",
+        "NDC offer optimization",
+        "contact center assist",
+        "loyalty churn propensity",
+        "airport turn-time prediction",
+        "fuel burn anomaly detection",
+        "cargo capacity optimization",
+        "supplier contract clause extraction",
+        "AP invoice anomaly review",
+        "IT incident triage",
+        "data quality issue clustering",
+        "BI narrative generation",
+        "SQL generation assist",
+        "meeting recap",
+        "cyber alert triage",
+        "policy Q&A",
+        "airport station performance summary",
+        "mainframe modernization assessment",
+        "Teradata workload migration sizing",
+        "gate allocation forecast",
+        "aircraft routing decision support",
+        "customer compensation assist",
+        "refund and exchange exception triage",
+        "safety report summarization",
+        "fleet reliability prediction",
+        "architecture decision support",
+    ],
+}
+
+
+def apply_profile(profile: str) -> None:
+    normalized = profile.strip().lower().replace("_", "-")
+    if normalized in {"", "meridian", "meridian-health", "healthcare"}:
+        return
+    if normalized not in {"skyharbor", "skyharbor-air", "skyharbor-airline", "airline"}:
+        raise SystemExit(f"Unsupported dense source-room profile: {profile}")
+
+    global FUNCTIONS
+    global FUNCTION_WEIGHTS
+    global APP_PRODUCTS
+    global VENDORS
+    global DATA_TECH
+    global DATA_TECH_WEIGHTS
+    global INFRA_TYPES
+    global INFRA_TYPE_WEIGHTS
+    global AI_USE_CASES
+    global KPI_NAMES
+    global APPLICATION_COST_TOTAL_USD
+    global CONTRACT_VALUE_TOTAL_USD
+    global STRATEGIC_CONTRACT_VENDOR_COUNTS
+    global STRATEGIC_CONTRACT_VENDOR_WEIGHTS
+    global ACTIVE_PROFILE
+
+    ACTIVE_PROFILE = "skyharbor-airline"
+    FUNCTIONS = list(SKYHARBOR_PROFILE["functions"])
+    FUNCTION_WEIGHTS = list(SKYHARBOR_PROFILE["function_weights"])
+    APP_PRODUCTS = list(SKYHARBOR_PROFILE["app_products"])
+    DATA_TECH = list(SKYHARBOR_PROFILE["data_tech"])
+    DATA_TECH_WEIGHTS = list(SKYHARBOR_PROFILE["data_tech_weights"])
+    INFRA_TYPES = list(SKYHARBOR_PROFILE["infra_types"])
+    INFRA_TYPE_WEIGHTS = list(SKYHARBOR_PROFILE["infra_type_weights"])
+    AI_USE_CASES = list(SKYHARBOR_PROFILE["ai_use_cases"])
+    KPI_NAMES = list(SKYHARBOR_PROFILE["kpi_names"])
+    APPLICATION_COST_TOTAL_USD = int(SKYHARBOR_PROFILE["application_cost_total_usd"])
+    CONTRACT_VALUE_TOTAL_USD = int(SKYHARBOR_PROFILE["contract_value_total_usd"])
+    STRATEGIC_CONTRACT_VENDOR_COUNTS = list(SKYHARBOR_PROFILE["strategic_contract_vendor_counts"])
+    STRATEGIC_CONTRACT_VENDOR_WEIGHTS = dict(SKYHARBOR_PROFILE["strategic_contract_vendor_weights"])
+
+    base_vendors = sorted({vendor for _product, vendor, _domain, _subdomain in APP_PRODUCTS} | set(SKYHARBOR_PROFILE["vendors"]))
+    tail = [
+        f"{category} Supplier {index:03d} LLC"
+        for category in SKYHARBOR_PROFILE["vendor_tail_categories"]
+        for index in range(1, 22)
+    ]
+    VENDORS = base_vendors + tail
+
+
+def is_skyharbor_profile() -> bool:
+    return ACTIVE_PROFILE == "skyharbor-airline"
+
 
 def write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) -> str:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -515,6 +767,37 @@ def applications(rng: Random, count: int) -> list[dict[str, Any]]:
 
 
 def plant_demo_application_findings(rows: list[dict[str, Any]]) -> None:
+    if is_skyharbor_profile():
+        f4_vendors = [
+            "Sabre Corporation",
+            "Amadeus IT Group",
+            "SITA",
+            "PROS Holdings Inc.",
+            "IBM Corporation",
+        ]
+        for offset, row in enumerate(rows[:5]):
+            row.update(
+                {
+                    "application_domain": "airline_operations",
+                    "application_subdomain": "passenger_service",
+                    "business_function": "Airport and Ground Operations",
+                    "vendor_name": f4_vendors[offset],
+                    "lifecycle_state": "current",
+                }
+            )
+
+        for row in rows[5:10]:
+            row.update(
+                {
+                    "application_domain": "core_platform",
+                    "application_subdomain": "mainframe",
+                    "business_function": "Flight Operations",
+                    "vendor_name": "IBM Corporation",
+                    "lifecycle_state": "current",
+                }
+            )
+        return
+
     f4_vendors = [
         "Epic Systems Corporation",
         "Oracle Corporation",
@@ -546,7 +829,11 @@ def plant_demo_application_findings(rows: list[dict[str, Any]]) -> None:
 
 
 def interviews(count: int) -> list[dict[str, Any]]:
-    roles = ["CIO", "CFO", "COO", "Chief Data Officer", "VP Clinical Operations", "VP Health Plan Ops", "Director Data Governance", "Director IT Finance", "Director Revenue Cycle", "Director Security"]
+    roles = (
+        ["CIO", "CFO", "COO", "Chief Data Officer", "VP Airport Operations", "VP Flight Operations", "Director Data Governance", "Director IT Finance", "Director Revenue Management", "Director Security"]
+        if is_skyharbor_profile()
+        else ["CIO", "CFO", "COO", "Chief Data Officer", "VP Clinical Operations", "VP Health Plan Ops", "Director Data Governance", "Director IT Finance", "Director Revenue Cycle", "Director Security"]
+    )
     themes = ["strategy", "operating model", "data quality", "governance", "application debt", "AI readiness", "vendor leverage", "budget pressure"]
     rows = []
     for i in range(1, count + 1):
@@ -622,12 +909,12 @@ def data_bi(count: int) -> list[dict[str, Any]]:
 
 
 def plant_demo_data_bi_findings(rows: list[dict[str, Any]]) -> None:
-    technologies = ["Power BI", "Tableau", "SSRS", "SAS"]
+    technologies = ["MicroStrategy", "Tableau", "Power BI", "SAS"] if is_skyharbor_profile() else ["Power BI", "Tableau", "SSRS", "SAS"]
     governance_states = ["governed", "partially_governed", "governed", "ungoverned"]
     for offset, row in enumerate(rows[:4]):
         row.update(
             {
-                "function": "Finance",
+                "function": "Finance and Accounting" if is_skyharbor_profile() else "Finance",
                 "platform_name": f"{technologies[offset]} finance-close reporting estate",
                 "technology_name": technologies[offset],
                 "workload_type": "reports",
@@ -675,6 +962,35 @@ def infrastructure(count: int) -> list[dict[str, Any]]:
 def plant_demo_infrastructure_findings(rows: list[dict[str, Any]]) -> None:
     if not rows:
         return
+    if is_skyharbor_profile():
+        rows[0].update(
+            {
+                "platform_name": "Revenue Management Teradata Vantage Cluster",
+                "platform_type": "teradata_vantage_cluster",
+                "hosting_location": "primary_dc",
+                "business_function": "Revenue Management",
+                "capacity_unit": "tb",
+                "capacity_value": 6400,
+                "utilization_percent": 89,
+                "dr_tier": "tier_2_warm",
+                "support_end_date": "2027-12-31",
+            }
+        )
+        rows[1].update(
+            {
+                "platform_name": "Reservations IBM zOS Mainframe Complex",
+                "platform_type": "ibm_z_mainframe",
+                "hosting_location": "primary_dc",
+                "business_function": "Flight Operations",
+                "capacity_unit": "mips",
+                "capacity_value": 42000,
+                "utilization_percent": 84,
+                "dr_tier": "tier_1_active_active",
+                "support_end_date": "2028-06-30",
+            }
+        )
+        return
+
     rows[0].update(
         {
             "platform_name": "Clinical Quality Netezza Appliance",
@@ -721,7 +1037,7 @@ def plant_demo_finance_findings(rows: list[dict[str, Any]]) -> None:
         if index < unattributed_count:
             row.update(
                 {
-                    "business_function": "Finance",
+                    "business_function": "Finance and Accounting" if is_skyharbor_profile() else "Finance",
                     "application_or_platform_ref": "",
                     "allocation_basis": "unknown",
                 }
@@ -770,7 +1086,11 @@ def contract_vendor_sequence(count: int) -> list[str]:
 
 def contracts(count: int) -> list[dict[str, Any]]:
     rows = []
-    towers = ["clinical_apps", "claims_admin", "hr_bpo", "finance_bpo", "supply_chain_bpo", "data_platform", "managed_infra", "ai_platform"]
+    towers = (
+        ["passenger_service", "airport_ops", "revenue_management", "loyalty_platform", "cargo_ops", "data_platform", "managed_infra", "ai_platform"]
+        if is_skyharbor_profile()
+        else ["clinical_apps", "claims_admin", "hr_bpo", "finance_bpo", "supply_chain_bpo", "data_platform", "managed_infra", "ai_platform"]
+    )
     suppliers = contract_vendor_sequence(count)
     weights: list[float] = []
     for i, supplier_name in enumerate(suppliers, start=1):
@@ -812,15 +1132,27 @@ def contracts(count: int) -> list[dict[str, Any]]:
 
 
 def plant_demo_contract_findings(rows: list[dict[str, Any]]) -> None:
-    for offset, row in enumerate(rows[:3]):
-        row.update(
-            {
-                "supplier_name": ["R1 RCM Inc.", "Optum Rx", "HealthEdge Software"][offset],
-                "service_tower": "claims_admin",
-                "annualized_value_usd": round(7_500_000 + (offset * 1_100_000), 2),
-                "scoped_applications": "APP-0001;APP-0002;APP-0003",
-            }
-        )
+    if is_skyharbor_profile():
+        suppliers = ["Sabre Corporation", "Amadeus IT Group", "Teradata Corporation"]
+        for offset, row in enumerate(rows[:3]):
+            row.update(
+                {
+                    "supplier_name": suppliers[offset],
+                    "service_tower": "passenger_service",
+                    "annualized_value_usd": round(18_500_000 + (offset * 3_700_000), 2),
+                    "scoped_applications": "APP-0001;APP-0002;APP-0003",
+                }
+            )
+    else:
+        for offset, row in enumerate(rows[:3]):
+            row.update(
+                {
+                    "supplier_name": ["R1 RCM Inc.", "Optum Rx", "HealthEdge Software"][offset],
+                    "service_tower": "claims_admin",
+                    "annualized_value_usd": round(7_500_000 + (offset * 1_100_000), 2),
+                    "scoped_applications": "APP-0001;APP-0002;APP-0003",
+                }
+            )
 
     for row in rows[:34]:
         row.update(
@@ -872,7 +1204,7 @@ def plant_demo_grc_findings(rows: list[dict[str, Any]]) -> None:
         row.update(
             {
                 "risk_type": "security",
-                "business_function": "Clinical Operations",
+                "business_function": "Flight Operations" if is_skyharbor_profile() else "Clinical Operations",
                 "object_ref": f"APP-{offset:04d}",
                 "severity": "high",
                 "control_state": "missing",
@@ -998,8 +1330,8 @@ def plant_demo_data_flow_findings(rows: list[dict[str, Any]]) -> None:
     for offset, row in enumerate(rows[:18]):
         row.update(
             {
-                "source_function": "Revenue Cycle",
-                "target_function": "Revenue Cycle",
+                "source_function": "Airport and Ground Operations" if is_skyharbor_profile() else "Revenue Cycle",
+                "target_function": "Airport and Ground Operations" if is_skyharbor_profile() else "Revenue Cycle",
                 "source_object_ref": f"APP-{100 + offset:04d}",
                 "target_object_ref": f"APP-{300 + offset:04d}",
                 "landing_layer": "unknown",
@@ -1154,7 +1486,9 @@ def contract_realism_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
+    parser.add_argument("--profile", default="meridian-health", choices=["meridian-health", "meridian", "healthcare", "skyharbor-air", "skyharbor", "skyharbor-airline", "airline"])
     args = parser.parse_args()
+    apply_profile(args.profile)
     out_dir = args.out_dir.resolve()
     source_root = out_dir / "__synthetic_sources__"
     inventory: list[dict[str, Any]] = []
@@ -1214,6 +1548,9 @@ def main() -> int:
         "field_dictionary_rows": len(dictionary_rows),
         "row_count": total_rows,
         "synthetic_dataset_id": "SOURCE_ROOM_DENSE_CATCHUP_2026_08_23",
+        "synthetic_profile": ACTIVE_PROFILE,
+        "enterprise_name": SKYHARBOR_PROFILE["enterprise_name"] if is_skyharbor_profile() else "Meridian Health",
+        "profile_anchor": SKYHARBOR_PROFILE["profile_anchor"] if is_skyharbor_profile() else "$20B integrated payer-provider synthetic estate",
         "client_attestation_state": "not_client_attested",
         "seed": SEED,
         **application_realism_summary(application_rows),

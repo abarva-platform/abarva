@@ -673,14 +673,25 @@ def planted_failure_probes(target_db_url: str, out_dir: Path) -> list[dict[str, 
     return [
         run_psql_query(
             target_db_url,
-            "begin; insert into ecl_context.relationship (tenant_key, assessment_id, from_object_id, relationship_type, to_object_id, basis, value_state, review_state) values ('meridian-health', 'assessment-dense-source-room-20260823', gen_random_uuid(), 'DEPENDS_ON', gen_random_uuid(), 'source_recorded', 'known', 'not_reviewed'); rollback;",
+            (
+                "begin; insert into ecl_context.relationship "
+                "(tenant_key, assessment_id, from_object_id, relationship_type, to_object_id, basis, value_state, review_state) "
+                f"values ({sql_text(TENANT_KEY)}, {sql_text(ASSESSMENT_ID)}, gen_random_uuid(), "
+                "'DEPENDS_ON', gen_random_uuid(), 'source_recorded', 'known', 'not_reviewed'); rollback;"
+            ),
             out_dir,
             "planted_relationship_endpoint_fk",
             expect_failure=True,
         ),
         run_psql_query(
             target_db_url,
-            "begin; insert into ecl_projection.cube_slice_metric (tenant_key, assessment_id, cube_slice_id, metric_key, metric_role, source_hash) select tenant_key, assessment_id, id, 'invented_metric_key', 'display', 'bad' from ecl_projection.cube_slice where tenant_key = 'meridian-health' and assessment_id = 'assessment-dense-source-room-20260823' limit 1; rollback;",
+            (
+                "begin; insert into ecl_projection.cube_slice_metric "
+                "(tenant_key, assessment_id, cube_slice_id, metric_key, metric_role, source_hash) "
+                "select tenant_key, assessment_id, id, 'invented_metric_key', 'display', 'bad' "
+                f"from ecl_projection.cube_slice where tenant_key = {sql_text(TENANT_KEY)} "
+                f"and assessment_id = {sql_text(ASSESSMENT_ID)} limit 1; rollback;"
+            ),
             out_dir,
             "planted_cube_metric_fk",
             expect_failure=True,

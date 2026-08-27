@@ -30,8 +30,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DENSE_OUT_DIR = ROOT / "outputs/source-room-depth-catchup-2026-08-23"
 DEFAULT_OUT_DIR = ROOT / "reports/ecl-dense-source-layer-local-load-2026-08-23"
-TENANT_KEY = "meridian-health"
-ASSESSMENT_ID = "assessment-dense-source-room-20260823"
+TENANT_KEY = os.environ.get("ECL_DENSE_TENANT_KEY", "meridian-health")
+ASSESSMENT_ID = os.environ.get("ECL_DENSE_ASSESSMENT_ID", "assessment-dense-source-room-20260823")
 DDL_FILES = [ROOT / "docs/architecture/sql-drafts/ecl_physical_schema_v1_draft.sql"]
 
 DOCUMENT_TYPE_BY_ARTIFACT = {
@@ -141,7 +141,11 @@ def find_open_port() -> int:
 
 
 def generate_dense_package(dense_out_dir: Path) -> None:
-    run([sys.executable, "scripts/ecl/generate_dense_source_room_extracts.py", "--out-dir", dense_out_dir.as_posix()], cwd=ROOT, env=command_env())
+    command = [sys.executable, "scripts/ecl/generate_dense_source_room_extracts.py", "--out-dir", dense_out_dir.as_posix()]
+    profile = os.environ.get("ECL_DENSE_PROFILE", "").strip()
+    if profile:
+        command.extend(["--profile", profile])
+    run(command, cwd=ROOT, env=command_env())
     run([sys.executable, "scripts/ecl/validate_dense_source_room_extracts.py", "--out-dir", dense_out_dir.as_posix()], cwd=ROOT, env=command_env())
 
 

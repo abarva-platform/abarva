@@ -13,6 +13,7 @@ import argparse
 import csv
 import hashlib
 import json
+import os
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -28,8 +29,10 @@ import load_dense_source_room_source_layer as source_layer
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DENSE_OUT_DIR = ROOT / "outputs/source-room-depth-catchup-2026-08-23"
 DEFAULT_OUT_DIR = ROOT / "reports/ecl-dense-source-projection-local-load-2026-08-23"
-TENANT_KEY = "meridian-health"
-ASSESSMENT_ID = "assessment-dense-source-room-20260823"
+TENANT_KEY = os.environ.get("ECL_DENSE_TENANT_KEY", source_layer.TENANT_KEY)
+ASSESSMENT_ID = os.environ.get("ECL_DENSE_ASSESSMENT_ID", source_layer.ASSESSMENT_ID)
+ENTERPRISE_NAME = os.environ.get("ECL_DENSE_ENTERPRISE_NAME", "SkyHarbor Global" if os.environ.get("ECL_DENSE_PROFILE", "").strip().lower().replace("_", "-") in {"skyharbor", "skyharbor-air", "skyharbor-airline", "airline"} else "Meridian Health")
+ENTERPRISE_KEY = os.environ.get("ECL_DENSE_ENTERPRISE_KEY", "SKYHARBOR-GLOBAL" if os.environ.get("ECL_DENSE_PROFILE", "").strip().lower().replace("_", "-") in {"skyharbor", "skyharbor-air", "skyharbor-airline", "airline"} else "MERIDIAN-HEALTH")
 PROJECTION_VERSION = 1
 DDL_FILES = [
     ROOT / "docs/architecture/sql-drafts/ecl_physical_schema_v1_draft.sql",
@@ -1247,7 +1250,7 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
             }
         )
 
-    enterprise_id = object_id("enterprise", "MERIDIAN-HEALTH")
+    enterprise_id = object_id("enterprise", ENTERPRISE_KEY)
     app_by_id = {row["application_id"]: row for row in apps}
     function_names = sorted(
         {
@@ -1308,7 +1311,7 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         row_key="executive_brief_summary",
         section_key="orientation",
         row_type="summary",
-        title="Meridian Health dense ECL source room loaded",
+        title=f"{ENTERPRISE_NAME} dense ECL source room loaded",
         summary=f"{len(apps)} applications, {len(contracts)} contracts, {len(flows)} data flows, and {len(ai_rows)} AI usage rows are available as governed ECL inputs. Missing retrieval/browser proof remains explicit.",
         primary_object_id=enterprise_id,
         metric_keys=["annual_cost_usd", "contract_annualized_value_usd", "data_volume_tb", "ai_active_users"],

@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -25,8 +26,8 @@ import load_dense_source_room_source_layer as source_layer
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DENSE_OUT_DIR = ROOT / "outputs/source-room-depth-catchup-2026-08-23"
 DEFAULT_OUT_DIR = ROOT / "reports/ecl-dense-review-layer-local-load-2026-08-23"
-TENANT_KEY = "meridian-health"
-ASSESSMENT_ID = "assessment-dense-source-room-20260823"
+TENANT_KEY = os.environ.get("ECL_DENSE_TENANT_KEY", source_layer.TENANT_KEY)
+ASSESSMENT_ID = os.environ.get("ECL_DENSE_ASSESSMENT_ID", source_layer.ASSESSMENT_ID)
 DDL_FILES = [ROOT / "docs/architecture/sql-drafts/ecl_physical_schema_v1_draft.sql"]
 
 
@@ -351,8 +352,18 @@ def run_postgres_load(
             commands.append(source_layer.run(["psql", "-h", pg_tmp.as_posix(), "-p", str(port), "-d", db_name, "-v", "ON_ERROR_STOP=1", "-f", ddl.as_posix()], cwd=ROOT, env=env, stdout_path=load_log, append=True))
         for sql_path in [source_sql, context_sql, commercial_sql, review_sql]:
             commands.append(source_layer.run(["psql", "-h", pg_tmp.as_posix(), "-p", str(port), "-d", db_name, "-v", "ON_ERROR_STOP=1", "-f", sql_path.as_posix()], cwd=ROOT, env=env, stdout_path=load_log, append=True))
-        bad_missing_subject_sql = "insert into ecl_review.review_event (tenant_key, assessment_id, subject_kind, review_event_type, decision_basis) values ('meridian-health', 'assessment-dense-source-room-20260823', 'contract', 'confirm', 'owner_confirmed');"
-        bad_contract_fk_sql = "insert into ecl_review.review_event (tenant_key, assessment_id, subject_kind, subject_contract_id, review_event_type, decision_basis) values ('meridian-health', 'assessment-dense-source-room-20260823', 'contract', gen_random_uuid(), 'confirm', 'owner_confirmed');"
+        bad_missing_subject_sql = (
+            "insert into ecl_review.review_event "
+            "(tenant_key, assessment_id, subject_kind, review_event_type, decision_basis) "
+            f"values ({source_layer.sql_text(TENANT_KEY)}, {source_layer.sql_text(ASSESSMENT_ID)}, "
+            "'contract', 'confirm', 'owner_confirmed');"
+        )
+        bad_contract_fk_sql = (
+            "insert into ecl_review.review_event "
+            "(tenant_key, assessment_id, subject_kind, subject_contract_id, review_event_type, decision_basis) "
+            f"values ({source_layer.sql_text(TENANT_KEY)}, {source_layer.sql_text(ASSESSMENT_ID)}, "
+            "'contract', gen_random_uuid(), 'confirm', 'owner_confirmed');"
+        )
         planted_failures = []
         for key, sql in [("review_event_missing_subject_check", bad_missing_subject_sql), ("review_event_contract_fk", bad_contract_fk_sql)]:
             result = source_layer.subprocess.run(["psql", "-h", pg_tmp.as_posix(), "-p", str(port), "-d", db_name, "-v", "ON_ERROR_STOP=1", "-c", sql], cwd=ROOT, env=env, text=True, capture_output=True)
