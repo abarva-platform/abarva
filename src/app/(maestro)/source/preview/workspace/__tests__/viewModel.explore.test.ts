@@ -171,6 +171,18 @@ describe("WorkspaceViewModel.explore — associative selection", () => {
     expect(state.hi).toBe(0);
   });
 
+  it("normalizes lower-case contract deep-link tab requests", () => {
+    const state = buildInitialWorkspaceState({
+      contractId: "CTR-090",
+      contractTab: "evidence",
+    });
+
+    expect(state.tabs.contract).toBe("Evidence");
+    expect(state.hist).toEqual([
+      { kind: "contract", id: "CTR-090", tab: "Evidence" },
+    ]);
+  });
+
   it("keeps contract deep-link tab requests inside known Contract 360 tabs", () => {
     const state = buildInitialWorkspaceState({
       contractId: "CTR-090",
