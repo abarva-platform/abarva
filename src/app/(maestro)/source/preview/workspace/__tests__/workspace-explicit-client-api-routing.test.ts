@@ -28,14 +28,19 @@ const optimizationRouteSource = fs.readFileSync(
 describe("Source workspace explicit-client API routing", () => {
   it("passes the resolved source client into contract-detail and optimization fetches", () => {
     expect(workspaceClientSource).toContain("sourceClientKey?: string | null");
+    expect(workspaceClientSource).toContain(
+      "sourceProviderKey?: SourceWorkspaceProviderMode | null",
+    );
     expect(workspaceClientSource).toContain("function buildContractApiUrl");
     expect(workspaceClientSource).toContain('params.set("client", client)');
     expect(workspaceClientSource).toContain(
-      "fetch(buildContractApiUrl(contractId, sourceClientKey))",
+      'params.set("sourceProvider", provider)',
     );
     expect(workspaceClientSource).toContain(
-      'buildContractApiUrl(contractId, sourceClientKey, "/optimization"',
+      "fetch(buildContractApiUrl(contractId, sourceClientKey, sourceProviderKey))",
     );
+    expect(workspaceClientSource).toContain('"/optimization"');
+    expect(workspaceClientSource).toContain("{ opportunityId }");
   });
 
   it("resolves explicit clients inside the contract-detail API instead of using only the session default", () => {
@@ -47,6 +52,12 @@ describe("Source workspace explicit-client API routing", () => {
     expect(contractDetailRouteSource).toContain("requestedClientKey !== tenancy.clientKey");
     expect(contractDetailRouteSource).toContain(
       "return NextResponse.json({ error: 'unknown_client' }, { status: 404 })",
+    );
+    expect(contractDetailRouteSource).toContain(
+      "loadSourceWorkspacePortfolio",
+    );
+    expect(contractDetailRouteSource).toContain(
+      "sourceProviderFromRequest(requestUrl)",
     );
   });
 

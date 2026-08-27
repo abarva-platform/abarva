@@ -21,10 +21,18 @@ import {
 } from '@/lib/source/data-model/read-adapter';
 import type {
   DocExtractionRow,
+  SourceContract360Row,
+  SourceContractApplicationScopeRow,
+  SourceContractInitiativeDependencyRow,
   SourceContractEvidencePerformanceSummary,
   SourceContractOperationalPerformanceRow,
 } from '@/lib/source/data-model/types';
 import { appClientKeyForTenant } from '@/lib/tenant/aliases';
+import {
+  loadSourceWorkspacePortfolio,
+  sourceWorkspaceProvider,
+  type SourceWorkspaceProviderMode,
+} from '@/app/(maestro)/source/preview/workspace/live/portfolioAdapter';
 
 // Lazy, per-contract detail read for the Source Workspace — mirrors exactly
 // what the retired /source/vendor-portfolio/[contractId] route used to do,
@@ -47,8 +55,9 @@ export async function GET(
 
   const { contractId: rawContractId } = await params;
   const contractId = decodeURIComponent(rawContractId);
-  const requestedClient =
-    new URL(request.url).searchParams.get('client')?.trim() || null;
+  const requestUrl = new URL(request.url);
+  const requestedClient = requestUrl.searchParams.get('client')?.trim() || null;
+  const requestedSourceProvider = sourceProviderFromRequest(requestUrl);
   const requestedClientKey = appClientKeyForTenant(requestedClient);
   if (requestedClient && !requestedClientKey) {
     return NextResponse.json({ error: 'unknown_client' }, { status: 404 });
@@ -73,12 +82,22 @@ export async function GET(
     return NextResponse.json({ error: 'no_tenant' }, { status: 404 });
   }
 
-  const contract = await getContract360(tenantKey, contractId).catch(() => null);
+  const eclProvider = sourceWorkspaceProvider(requestedSourceProvider);
+  let projectionDetail: ProjectionContractDetail | null = null;
+  let contract = await getContract360(tenantKey, contractId).catch(() => null);
+  if (!contract && eclProvider !== 'legacy') {
+    projectionDetail = await getProjectionContractDetail(
+      tenantKey,
+      contractId,
+      eclProvider,
+    );
+    contract = projectionDetail?.contract ?? null;
+  }
   if (!contract) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
 
-  const [applicationScope, financialExposure, operationalPerformance, initiativeDependencies, evidenceOverview, evidenceScope, evidencePricing, evidencePerformance] =
+  const [storedApplicationScope, financialExposure, operationalPerformance, storedInitiativeDependencies, evidenceOverview, evidenceScope, evidencePricing, evidencePerformance] =
     await Promise.all([
       listContractApplicationScope(tenantKey, contractId).catch(() => []),
       listContractFinancialExposure(tenantKey).catch(() => []),
@@ -89,6 +108,14 @@ export async function GET(
       listContractEvidencePricing(tenantKey, contractId).catch(() => []),
       getContractEvidencePerformanceSummary(tenantKey, contractId).catch(() => null),
     ]);
+  const applicationScope =
+    storedApplicationScope.length > 0
+      ? storedApplicationScope
+      : (projectionDetail?.applicationScope ?? []);
+  const initiativeDependencies =
+    storedInitiativeDependencies.length > 0
+      ? storedInitiativeDependencies
+      : (projectionDetail?.initiativeDependencies ?? []);
 
   const subjectRefs = collectContractSubjectRefs(contract, applicationScope);
   const [towerObservations, towerValueClaims, extractionsByContract, extractionsByVendor, optimizationEvidence, optimizationOpportunitySet] = await Promise.all([
@@ -123,6 +150,54 @@ export async function GET(
   });
 
   return NextResponse.json(view);
+}
+
+type ProjectionContractDetail = {
+  readonly contract: SourceContract360Row;
+  readonly applicationScope: readonly SourceContractApplicationScopeRow[];
+  readonly initiativeDependencies: readonly SourceContractInitiativeDependencyRow[];
+};
+
+async function getProjectionContractDetail(
+  tenantKey: string,
+  contractId: string,
+  provider: SourceWorkspaceProviderMode,
+): Promise<ProjectionContractDetail | null> {
+  const portfolio = await loadSourceWorkspacePortfolio(
+    tenantKey,
+    new Date().toISOString(),
+    provider,
+  ).catch(() => null);
+  const contract =
+    portfolio?.contracts.find((row) => row.contract_id === contractId) ?? null;
+  if (!contract || !portfolio) return null;
+  return {
+    contract,
+    applicationScope: portfolio.applicationScope.filter(
+      (row) => row.contract_id === contract.contract_id,
+    ),
+    initiativeDependencies: portfolio.initiativeDependencies.filter(
+      (row) => row.contract_id === contract.contract_id,
+    ),
+  };
+}
+
+function sourceProviderFromRequest(
+  requestUrl: URL,
+): SourceWorkspaceProviderMode | null {
+  const normalized = (
+    requestUrl.searchParams.get('sourceProvider') ??
+    requestUrl.searchParams.get('provider') ??
+    ''
+  ).trim();
+  if (
+    normalized === 'legacy' ||
+    normalized === 'ecl_projection' ||
+    normalized === 'ecl_projection_db'
+  ) {
+    return normalized;
+  }
+  return null;
 }
 
 function dedupeExtractions(rows: readonly DocExtractionRow[]): DocExtractionRow[] {

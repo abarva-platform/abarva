@@ -8,7 +8,10 @@ import {
   type WorkspaceState,
 } from "./viewModel";
 import { buildViewModel } from "./buildViewModel";
-import type { SourceWorkspacePortfolioData } from "./live/portfolioAdapter";
+import type {
+  SourceWorkspacePortfolioData,
+  SourceWorkspaceProviderMode,
+} from "./live/portfolioAdapter";
 import type { Contract360Response } from "./live/contractDetail";
 import {
   AgentDock,
@@ -39,12 +42,15 @@ const SOURCE_WORKSPACE_AGENT_API_URL = "/api/intelligence/ask";
 function buildContractApiUrl(
   contractId: string,
   sourceClientKey: string | null | undefined,
+  sourceProviderKey: SourceWorkspaceProviderMode | null | undefined,
   suffix = "",
   extraParams: Record<string, string | null | undefined> = {},
 ): string {
   const params = new URLSearchParams();
   const client = sourceClientKey?.trim();
   if (client) params.set("client", client);
+  const provider = sourceProviderKey?.trim();
+  if (provider) params.set("sourceProvider", provider);
   for (const [key, value] of Object.entries(extraParams)) {
     const trimmed = value?.trim();
     if (trimmed) params.set(key, trimmed);
@@ -118,12 +124,14 @@ export function WorkspaceClient({
   portfolio,
   tenantName,
   sourceClientKey,
+  sourceProviderKey,
   initialContractId,
   initialContractTab,
 }: {
   portfolio: SourceWorkspacePortfolioData;
   tenantName: string;
   sourceClientKey?: string | null;
+  sourceProviderKey?: SourceWorkspaceProviderMode | null;
   initialContractId?: string | null;
   initialContractTab?: string | null;
 }) {
@@ -159,7 +167,7 @@ export function WorkspaceClient({
           contractDetail: { ...prev.contractDetail, [contractId]: "loading" },
         };
       });
-      fetch(buildContractApiUrl(contractId, sourceClientKey))
+      fetch(buildContractApiUrl(contractId, sourceClientKey, sourceProviderKey))
         .then((r) =>
           r.ok
             ? (r.json() as Promise<Contract360Response>)
@@ -178,7 +186,7 @@ export function WorkspaceClient({
           })),
         );
     },
-    [sourceClientKey],
+    [sourceClientKey, sourceProviderKey],
   );
 
   const startContractOptimization = useCallback(
@@ -191,9 +199,13 @@ export function WorkspaceClient({
         },
       }));
       fetch(
-        buildContractApiUrl(contractId, sourceClientKey, "/optimization", {
-          opportunityId,
-        }),
+        buildContractApiUrl(
+          contractId,
+          sourceClientKey,
+          sourceProviderKey,
+          "/optimization",
+          { opportunityId },
+        ),
         {
           method: "POST",
           headers: opportunityId
@@ -249,7 +261,7 @@ export function WorkspaceClient({
           }));
         });
     },
-    [sourceClientKey],
+    [sourceClientKey, sourceProviderKey],
   );
 
   useEffect(() => {
