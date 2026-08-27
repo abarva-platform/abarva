@@ -56,7 +56,8 @@ class CommandFailure(RuntimeError):
 
 
 def stable_uuid(*parts: object) -> str:
-    digest = bytearray(hashlib.sha256("|".join(str(part) for part in parts).encode("utf-8")).digest()[:16])
+    namespace = ("ecl_dense", TENANT_KEY, ASSESSMENT_ID)
+    digest = bytearray(hashlib.sha256("|".join(str(part) for part in (*namespace, *parts)).encode("utf-8")).digest()[:16])
     digest[6] = (digest[6] & 0x0F) | 0x40
     digest[8] = (digest[8] & 0x3F) | 0x80
     return str(uuid.UUID(bytes=bytes(digest)))
