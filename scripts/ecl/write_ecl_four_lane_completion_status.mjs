@@ -8,6 +8,7 @@ import path from "node:path";
 const DEFAULT_PLAN = "docs/architecture/ECL_CLEAN_BREAK_INTEGRATED_EXECUTION_PLAN_2026_08_24.md";
 const DEFAULT_NEEDS = "docs/architecture/ECL_PRODUCT_DETERMINISTIC_NEEDS_2026_08_22.md";
 const DEFAULT_FINDINGS = "docs/architecture/meridian-demo-findings-20260824.json";
+const DEFAULT_TENANT_REGISTRY = "datasets/tenant-inputs/tenant-input-registry.json";
 const DEFAULT_RETIREMENT_SUMMARY =
   "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_summary.json";
 const DEFAULT_RETIREMENT_MAP =
@@ -151,6 +152,19 @@ function gitLsTree(ref, paths = []) {
 function readJsonIfPresent(file) {
   if (!file || !fs.existsSync(file)) return null;
   return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+function activeTenantsFromRegistry(registry) {
+  const active = registry.activeTenants ?? registry.tenants ?? [];
+  assert(Array.isArray(active), "tenant input registry must expose activeTenants or tenants");
+  return active
+    .map((tenant) => ({
+      tenant_key: tenant.tenantKey ?? tenant.tenant_key ?? tenant.key,
+      display_name: tenant.displayName ?? tenant.display_name ?? null,
+      canonical_input_root: tenant.canonicalInputRoot ?? tenant.canonical_input_root ?? null,
+    }))
+    .filter((tenant) => tenant.tenant_key)
+    .sort((left, right) => left.tenant_key.localeCompare(right.tenant_key));
 }
 
 function cleanCell(value) {
@@ -516,6 +530,7 @@ function buildStatus(args) {
   const plan = gitShow(args.ref, DEFAULT_PLAN);
   const needs = gitShow(args.ref, DEFAULT_NEEDS);
   const findings = JSON.parse(gitShow(args.ref, DEFAULT_FINDINGS)).findings ?? [];
+  const activeTenants = activeTenantsFromRegistry(JSON.parse(gitShow(args.ref, DEFAULT_TENANT_REGISTRY)));
   const retirementSummary = JSON.parse(gitShow(args.ref, DEFAULT_RETIREMENT_SUMMARY));
   const retirementMap = gitShow(args.ref, DEFAULT_RETIREMENT_MAP);
   const sql = ddlBlob(args.ref);
@@ -549,6 +564,11 @@ function buildStatus(args) {
   const evalEvent = evalSummary?.proof?.events?.find?.((event) => event.event === "ecl_ava_consultant_eval_compact_summary") ?? null;
   const digest = args.digest || operatorImageDigest(browserSummary) || operatorImageDigest(evalSummary);
   const runId = args.runId || liveProof?.run_id || process.env.GITHUB_RUN_ID || null;
+  const liveProofTenantKey = liveProof?.tenant_key ?? null;
+  const eclLiveProofTenants = liveProofTenantKey ? [liveProofTenantKey] : [];
+  const eclProofMissingActiveTenants = activeTenants
+    .map((tenant) => tenant.tenant_key)
+    .filter((tenantKey) => !eclLiveProofTenants.includes(tenantKey));
 
   const cutoverNumerator = browserEvent?.actual_route_repointing && proofRoutes?.accepted
     ? proofRoutes.numerator
@@ -586,6 +606,7 @@ function buildStatus(args) {
       status: cutoverNumerator === 4 ? "complete" : "pending",
       numerator: cutoverNumerator,
       denominator: 4,
+      tenant_scope: liveProofTenantKey,
       run_id: runId,
       digest,
       timestamp: args.timestamp,
@@ -596,6 +617,7 @@ function buildStatus(args) {
       status: proofNumerator === proofDenominator ? "complete" : "pending",
       numerator: proofNumerator,
       denominator: proofDenominator,
+      tenant_scope: liveProofTenantKey,
       run_id: runId,
       digest,
       timestamp: args.timestamp,
@@ -606,6 +628,7 @@ function buildStatus(args) {
       status: adapters.length === 14 ? "complete" : "pending",
       numerator: adapters.length,
       denominator: 14,
+      tenant_scope: "tenant_agnostic_adapter_contract",
       run_id: null,
       digest: null,
       timestamp: args.timestamp,
@@ -620,6 +643,17 @@ function buildStatus(args) {
       aggregate_percentage_retired: true,
       lane_percentages_reported_separately: true,
       source_of_truth: "Committed artifact generated from named-ref repo facts plus explicit proof artifacts.",
+      tenant_scoped_completion_required: true,
+    },
+    active_tenants: activeTenants,
+    tenant_coverage: {
+      scope: "Live route, surface, finding, and eval proof is tenant-scoped. Do not read one tenant's proof as active-tenant-wide completion.",
+      active_tenant_count: activeTenants.length,
+      ecl_live_proof_tenant_count: eclLiveProofTenants.length,
+      ecl_live_proof_tenants: eclLiveProofTenants,
+      active_tenants_without_ecl_live_proof: eclProofMissingActiveTenants,
+      all_active_tenants_ecl_live_proven:
+        activeTenants.length > 0 && eclProofMissingActiveTenants.length === 0,
     },
     lanes,
     closed_lanes: {
@@ -662,7 +696,7 @@ function buildStatus(args) {
       run_id: runId,
       digest,
       base_url: liveProof?.base_url ?? null,
-      tenant_key: liveProof?.tenant_key ?? null,
+      tenant_key: liveProofTenantKey,
       proof_execution: liveProof?.proof_execution ?? null,
       actual_route_repointing: Boolean(browserEvent?.actual_route_repointing),
       routes_accepted: proofRoutes
@@ -763,6 +797,7 @@ function buildStatus(args) {
       ...(surfaces.length === 40 ? [] : [`surface_enumeration_${surfaces.length}_expected_40`]),
       ...(sourceLandingFamilies.length === 14 ? [] : ["client_intake_source_family_landing_pending"]),
       ...(adapters.length === 14 ? [] : ["client_intake_adapters_pending"]),
+      ...eclProofMissingActiveTenants.map((tenantKey) => `active_tenant_without_ecl_live_proof:${tenantKey}`),
     ],
   };
 }

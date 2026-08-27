@@ -322,7 +322,16 @@ try {
   assert.equal(status.schema_version, "ecl_four_lane_completion_status/v1");
   assert.equal(status.policy.aggregate_percentage_retired, true);
   assert.equal(status.policy.lane_percentages_reported_separately, true);
+  assert.equal(status.policy.tenant_scoped_completion_required, true);
   assert(!Object.hasOwn(status, "overall_percentage"), "four-lane status must not report one blended percentage");
+  assert.deepEqual(
+    status.active_tenants.map((tenant) => tenant.tenant_key),
+    ["meridian-health", "skyharbor-air"],
+    "active tenant scope must come from the registry",
+  );
+  assert.deepEqual(status.tenant_coverage.ecl_live_proof_tenants, ["meridian-health"]);
+  assert.deepEqual(status.tenant_coverage.active_tenants_without_ecl_live_proof, ["skyharbor-air"]);
+  assert.equal(status.tenant_coverage.all_active_tenants_ecl_live_proven, false);
 
   const lanes = Object.fromEntries(status.lanes.map((lane) => [lane.lane, lane]));
   const committedLanes = Object.fromEntries(committedStatus.lanes.map((lane) => [lane.lane, lane]));
@@ -362,6 +371,9 @@ try {
       client: "14/14",
     },
   );
+  assert.equal(lanes["L-CUTOVER"].tenant_scope, "meridian-health");
+  assert.equal(lanes["L-PROOF"].tenant_scope, "meridian-health");
+  assert.equal(lanes["L-CLIENT"].tenant_scope, "tenant_agnostic_adapter_contract");
   assert.deepEqual(
     {
       cutover: `${committedLanes["L-CUTOVER"].numerator}/${committedLanes["L-CUTOVER"].denominator}`,
@@ -403,6 +415,7 @@ try {
     status.repo_denominators.client_intake_source_family_landing.scope,
     "ecl_source.source_file/source_record landing only; does not count as canonical adapter completion",
   );
+  assert(status.open_items.includes("active_tenant_without_ecl_live_proof:skyharbor-air"));
 
   console.log(JSON.stringify({ accepted: true, out }, null, 2));
 } finally {

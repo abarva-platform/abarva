@@ -5,7 +5,8 @@
   "policy": {
     "aggregate_percentage_retired": true,
     "lane_percentages_reported_separately": true,
-    "source_of_truth": "Committed artifact generated from named-ref repo facts plus explicit proof artifacts."
+    "source_of_truth": "Committed artifact generated from named-ref repo facts plus explicit proof artifacts.",
+    "tenant_scoped_completion_required": true
   },
   "lanes": [
     {
@@ -16,7 +17,8 @@
       "denominator": 4,
       "run_id": "32995332853",
       "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
-      "timestamp": "2026-08-27T07:20:00.000Z"
+      "timestamp": "2026-08-27T07:20:00.000Z",
+      "tenant_scope": "meridian-health"
     },
     {
       "lane": "L-PROOF",
@@ -26,7 +28,8 @@
       "denominator": 63,
       "run_id": "32995332853",
       "digest": "sha256:253a02bf1e7c105ddba4d9715bbd05033bbd5a03276389aae8b2542d6badad58",
-      "timestamp": "2026-08-27T07:20:00.000Z"
+      "timestamp": "2026-08-27T07:20:00.000Z",
+      "tenant_scope": "meridian-health"
     },
     {
       "lane": "L-CLIENT",
@@ -36,7 +39,8 @@
       "denominator": 14,
       "run_id": null,
       "digest": null,
-      "timestamp": "2026-08-27T07:20:00.000Z"
+      "timestamp": "2026-08-27T07:20:00.000Z",
+      "tenant_scope": "tenant_agnostic_adapter_contract"
     }
   ],
   "closed_lanes": {
@@ -356,5 +360,31 @@
       ]
     }
   },
-  "open_items": []
+  "open_items": [
+    "active_tenant_without_ecl_live_proof:skyharbor-air"
+  ],
+  "active_tenants": [
+    {
+      "tenant_key": "meridian-health",
+      "display_name": "Meridian Health",
+      "canonical_input_root": "datasets/tenant-inputs/active/meridian-health/current"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "display_name": "Airline Demo",
+      "canonical_input_root": "datasets/tenant-inputs/active/skyharbor-air/current"
+    }
+  ],
+  "tenant_coverage": {
+    "scope": "Live route, surface, finding, and eval proof is tenant-scoped. Do not read one tenant's proof as active-tenant-wide completion.",
+    "active_tenant_count": 2,
+    "ecl_live_proof_tenant_count": 1,
+    "ecl_live_proof_tenants": [
+      "meridian-health"
+    ],
+    "active_tenants_without_ecl_live_proof": [
+      "skyharbor-air"
+    ],
+    "all_active_tenants_ecl_live_proven": false
+  }
 }
