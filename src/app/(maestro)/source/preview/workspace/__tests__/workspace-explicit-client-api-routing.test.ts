@@ -40,25 +40,25 @@ describe("Source workspace explicit-client API routing", () => {
 
   it("resolves explicit clients inside the contract-detail API instead of using only the session default", () => {
     expect(contractDetailRouteSource).toContain("new URL(request.url)");
-    expect(contractDetailRouteSource).toContain("requestedClient,");
-    expect(contractDetailRouteSource).toContain("allowFallback: !requestedClient");
+    expect(contractDetailRouteSource).toContain("appClientKeyForTenant");
     expect(contractDetailRouteSource).toContain(
-      "getActiveClientRow(tenant.appClientKey)",
+      "checkTenantAccessByKey(requestedClientKey)",
     );
+    expect(contractDetailRouteSource).toContain("requestedClientKey !== tenancy.clientKey");
     expect(contractDetailRouteSource).toContain(
-      "(!requestedClient ? tenancy.clientKey : '')",
+      "return NextResponse.json({ error: 'unknown_client' }, { status: 404 })",
     );
   });
 
   it("resolves explicit clients inside the optimization API before creating an event", () => {
     expect(optimizationRouteSource).toContain("new URL(request.url)");
-    expect(optimizationRouteSource).toContain("requestedClient,");
-    expect(optimizationRouteSource).toContain("allowFallback: !requestedClient");
+    expect(optimizationRouteSource).toContain("appClientKeyForTenant");
     expect(optimizationRouteSource).toContain(
-      "getActiveClientRow(tenant.appClientKey)",
+      "checkTenantAccessByKey(requestedClientKey)",
     );
+    expect(optimizationRouteSource).toContain("requestedClientKey !== tenancy.clientKey");
     expect(optimizationRouteSource).toContain(
-      '(!requestedClient ? tenancy.clientKey : "")',
+      '{ ok: false, error: "unknown_client" }',
     );
   });
 });

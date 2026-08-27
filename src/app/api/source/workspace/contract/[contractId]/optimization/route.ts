@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { getActiveClientRow } from "@/lib/active-client";
+import { checkTenantAccessByKey } from "@/lib/auth/tenant-access";
 import { requireTenancy, TenancyError } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
-import { resolveTenant } from "@/lib/tenant/resolveTenant";
 import { selectSourceEventsReadAdapter } from "@/lib/data-plane/read-adapters/sourceEventsReadAdapter";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { appClientKeyForTenant } from "@/lib/tenant/aliases";
 import {
   getContract360,
   getContractOptimizationOpportunitySet,
@@ -78,18 +79,33 @@ export async function POST(request: Request, { params }: RouteContext) {
   const contractId = decodeURIComponent(rawContractId);
   const requestedClient =
     new URL(request.url).searchParams.get("client")?.trim() || null;
-  const tenant = await resolveTenant({
-    requestedClient,
-    allowFallback: !requestedClient,
-  }).catch(() => null);
-  const activeClient = tenant
-    ? await getActiveClientRow(tenant.appClientKey).catch(() => null)
+  const requestedClientKey = appClientKeyForTenant(requestedClient);
+  if (requestedClient && !requestedClientKey) {
+    return NextResponse.json(
+      { ok: false, error: "unknown_client" },
+      { status: 404 },
+    );
+  }
+  if (requestedClientKey && requestedClientKey !== tenancy.clientKey) {
+    const access = await checkTenantAccessByKey(requestedClientKey);
+    if (!access.ok) {
+      const status =
+        access.reason === "unauthenticated"
+          ? 401
+          : access.reason === "forbidden"
+            ? 403
+            : 404;
+      return NextResponse.json(
+        { ok: false, error: access.reason },
+        { status },
+      );
+    }
+  }
+  const activeClient = requestedClientKey
+    ? null
     : await getActiveClientRow().catch(() => null);
   const clientKey =
-    activeClient?.key ??
-    tenant?.appClientKey ??
-    (!requestedClient ? tenancy.clientKey : "") ??
-    "";
+    requestedClientKey ?? activeClient?.key ?? tenancy.clientKey ?? "";
   if (!clientKey) {
     return NextResponse.json(
       { ok: false, error: "no_client" },
