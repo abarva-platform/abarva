@@ -23,7 +23,9 @@ const CHECKS = [
     mustContain: [
       "eclPath(\"/source/preview/workspace\")",
       "/230\\s+contracts/i",
-      "/102\\s+vendors/i",
+      "sourceVendorCount: 102",
+      "sourceVendorCount: 94",
+      "TENANT_PROFILE.sourceVendorCount",
     ],
   },
   {
