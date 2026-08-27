@@ -87,6 +87,12 @@
       "replacement": "ECL source/context/projection loaders own current airline and healthcare candidate data movement."
     },
     {
+      "file": "scripts/knowledge/fs-airline-active-promotion-review.mjs",
+      "retired_schemas": ["cio_tower", "public"],
+      "disposition": "historical_airline_candidate_review",
+      "replacement": "ECL source/context/projection/readback proof owns current promotion and product-readiness checks."
+    },
+    {
       "file": "scripts/audit/build-module-data-integration-audit.mjs",
       "retired_schemas": ["cio_tower", "public"],
       "disposition": "historical_module_audit_script",
@@ -115,6 +121,18 @@
       "retired_schemas": ["tower"],
       "disposition": "historical_tenant_sql_fixture",
       "replacement": "ECL source and Tower projection loaders own current contract, value, risk, and evidence measurements."
+    },
+    {
+      "file": "scripts/source/load-skyharbor-contract-optimization.ts",
+      "retired_schemas": ["public"],
+      "disposition": "historical_contract_optimization_loader",
+      "replacement": "ECL Source projections and serving views own current contract optimization, renewal, and value-lever surfaces."
+    },
+    {
+      "file": "scripts/source/inspect-skyharbor-reconciliation.ts",
+      "retired_schemas": ["public"],
+      "disposition": "historical_contract_optimization_inspector",
+      "replacement": "ECL readback and findings proof own current Source reconciliation checks."
     },
     {
       "file": "scripts/foundation-v2/normalize-healthcare-source-volume-db.mjs",
