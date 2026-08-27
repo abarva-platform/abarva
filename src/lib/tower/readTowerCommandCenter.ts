@@ -629,6 +629,18 @@ function mapValueTrajectory(
     .filter((row): row is TowerMartValueTrajectoryPoint => row !== null);
 }
 
+function isTrajectoryOnlyRow(row: TowerServingRow): boolean {
+  const body = payload(row);
+  const display = displayPayload(row);
+  return (
+    body.trajectory_only === true ||
+    body.trajectoryOnly === true ||
+    display.trajectory_only === true ||
+    display.trajectoryOnly === true ||
+    payloadTextFrom(row, ["trajectory_only", "trajectoryOnly"]) === "true"
+  );
+}
+
 function gapsFromRows(rows: readonly TowerServingRow[]): TowerMartRequiredFieldGap[] {
   return rows
     .filter((row) => {
@@ -711,7 +723,9 @@ export async function readTowerCommandCenter(args: {
       const projectionVersion = Math.max(
         ...allRows.map((row) => Number(row.projection_version ?? 0)),
       );
-      const valueRowsForTotals = valueRows;
+      const valueRowsForTotals = valueRows.filter(
+        (row) => !isTrajectoryOnlyRow(row),
+      );
       const funded =
         sumRows(decisionRows, "funded_amount_usd") +
         sumRows(aiRows, "monthly_cost_usd") * 12;
@@ -837,7 +851,7 @@ export async function readTowerCommandCenter(args: {
           sourceFiles,
         },
         valueFunnel: buildFunnel(valueRowsForTotals),
-        valueTrajectory: mapValueTrajectory(valueRowsForTotals),
+        valueTrajectory: mapValueTrajectory(valueRows),
         programLanes: decisionRows.map(mapProgramLane),
         aiPortfolio,
         aiPortfolioCounts: {
