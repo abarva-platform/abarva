@@ -11,6 +11,7 @@ import type {
   TowerMartEvidenceLineage,
   TowerMartProgramLane,
   TowerMartRequiredFieldGap,
+  TowerMartValueTrajectoryPoint,
   TowerMartValueFunnelStage,
 } from "@/lib/tower/current-layer-view-model";
 
@@ -137,6 +138,33 @@ function payloadNumber(row: TowerServingRow, key: string): number {
 
 function payloadNullableNumber(row: TowerServingRow, key: string): number | null {
   return nullableNum(payload(row)[key] as Numeric);
+}
+
+function payloadNullableNumberFrom(
+  row: TowerServingRow,
+  keys: readonly string[],
+): number | null {
+  const body = payload(row);
+  const display = displayPayload(row);
+  for (const key of keys) {
+    const value =
+      nullableNum(body[key] as Numeric) ?? nullableNum(display[key] as Numeric);
+    if (value !== null) return value;
+  }
+  return null;
+}
+
+function payloadTextFrom(
+  row: TowerServingRow,
+  keys: readonly string[],
+): string | null {
+  const body = payload(row);
+  const display = displayPayload(row);
+  for (const key of keys) {
+    const value = nullableText(body[key]) ?? nullableText(display[key]);
+    if (value !== null) return value;
+  }
+  return null;
 }
 
 function firstSourceLabel(refs: readonly Record<string, unknown>[]): string | null {
@@ -486,6 +514,112 @@ function mapEvidence(row: TowerServingRow): TowerMartEvidenceLineage {
   };
 }
 
+function fiscalQuarterFromPeriodEnd(periodEnd: string): string | null {
+  const match = /^(\d{4})-(\d{2})-\d{2}$/.exec(periodEnd);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    return null;
+  }
+  return `${year}-Q${Math.floor((month - 1) / 3) + 1}`;
+}
+
+function mapValueTrajectoryRow(
+  row: TowerServingRow,
+): TowerMartValueTrajectoryPoint | null {
+  const refs = sourceRefs(row);
+  if (refs.length === 0) return null;
+
+  const periodStart = payloadTextFrom(row, [
+    "period_start",
+    "measure_period_start",
+    "value_period_start",
+  ]);
+  const periodEnd = payloadTextFrom(row, [
+    "period_end",
+    "measure_period_end",
+    "value_period_end",
+  ]);
+  if (!periodStart || !periodEnd) return null;
+
+  const fiscalQuarter =
+    payloadTextFrom(row, ["fiscal_quarter", "fiscalQuarter"]) ??
+    fiscalQuarterFromPeriodEnd(periodEnd);
+  if (!fiscalQuarter) return null;
+
+  return {
+    tenantKey: row.tenant_key,
+    valueCaseId: payloadText(row, "claim_id") ?? row.row_key,
+    programId: payloadTextFrom(row, ["program_id", "programId"]),
+    initiativeId: payloadTextFrom(row, ["initiative_id", "initiativeId"]),
+    valueCaseName: payloadText(row, "title", row.title) ?? row.row_key,
+    valueArchetype: row.row_type,
+    periodStart,
+    periodEnd,
+    fiscalQuarter,
+    scenario: payloadTextFrom(row, ["scenario", "measure_scenario"]) ?? "current",
+    plannedInvestmentUsd: payloadNullableNumberFrom(row, [
+      "planned_investment_usd",
+      "funded_amount_usd",
+    ]),
+    actualSpendUsd: payloadNullableNumberFrom(row, [
+      "actual_spend_usd",
+      "current_value",
+    ]),
+    remainingCommitmentUsd: payloadNullableNumberFrom(row, [
+      "remaining_commitment_usd",
+    ]),
+    businessCaseValueUsd: payloadNullableNumberFrom(row, [
+      "business_case_value_usd",
+      "promised_value_usd",
+      "baseline_value",
+    ]),
+    businessCaseBenefitUsd: payloadNullableNumberFrom(row, [
+      "business_case_benefit_usd",
+      "target_value",
+    ]),
+    riskAdjustedForecastUsd: payloadNullableNumberFrom(row, [
+      "risk_adjusted_forecast_usd",
+      "target_value",
+    ]),
+    financeValidatedRunRateUsd: payloadNullableNumberFrom(row, [
+      "finance_validated_run_rate_usd",
+      "finance_validated_value_usd",
+    ]),
+    realizedPAndLUsd: payloadNullableNumberFrom(row, ["realized_p_and_l_usd"]),
+    realizedCashUsd: payloadNullableNumberFrom(row, ["realized_cash_usd"]),
+    forecastAtCompletionUsd: payloadNullableNumberFrom(row, [
+      "forecast_at_completion_usd",
+    ]),
+    financialConversionUsd: payloadNullableNumberFrom(row, [
+      "financial_conversion_usd",
+    ]),
+    usageEvidenceState: payloadText(row, "evidence_state") ?? row.basis,
+    operationalOutcomeEvidenceState: payloadText(row, "quality_state"),
+    financeAttestationState: payloadText(row, "review_state") ?? row.review_state,
+    sourceTrustState: row.basis,
+    claimState: payloadText(row, "claim_gate_status"),
+    datasetVersion: `ecl-serving-v${row.projection_version}`,
+    sourceRunId: row.source_hash,
+    sourceRefs: refs,
+    economicClassification: payloadTextFrom(row, [
+      "economic_classification",
+    ]),
+    boardScopeState: payloadTextFrom(row, ["board_scope_state"]),
+    materialScopeState: payloadTextFrom(row, ["material_scope_state"]),
+    sourceCount: refs.length,
+  };
+}
+
+function mapValueTrajectory(
+  rows: readonly TowerServingRow[],
+): TowerMartValueTrajectoryPoint[] {
+  return rows
+    .map(mapValueTrajectoryRow)
+    .filter((row): row is TowerMartValueTrajectoryPoint => row !== null);
+}
+
 function gapsFromRows(rows: readonly TowerServingRow[]): TowerMartRequiredFieldGap[] {
   return rows
     .filter((row) => {
@@ -694,7 +828,7 @@ export async function readTowerCommandCenter(args: {
           sourceFiles,
         },
         valueFunnel: buildFunnel(valueRowsForTotals),
-        valueTrajectory: [],
+        valueTrajectory: mapValueTrajectory(valueRowsForTotals),
         programLanes: decisionRows.map(mapProgramLane),
         aiPortfolio,
         aiPortfolioCounts: {
