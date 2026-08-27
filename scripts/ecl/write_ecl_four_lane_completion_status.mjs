@@ -20,6 +20,8 @@ const DEFAULT_PUBLIC_OBJECT_BATCH_CLEANUP_PROOF =
   "docs/architecture/ecl-public-object-batch-retirement-proof-2026-08-27.json";
 const DEFAULT_PUBLIC_FOUNDATION_OBJECT_BATCH_CLEANUP_PROOF =
   "docs/architecture/ecl-public-foundation-object-batch-retirement-proof-2026-08-27.json";
+const DEFAULT_SOURCE_EVIDENCE_CONSUMPTION_OBJECT_BATCH_CLEANUP_PROOF =
+  "docs/architecture/ecl-source-evidence-consumption-object-batch-retirement-proof-2026-08-27.json";
 
 const SURFACE_TARGETS = {
   Home: 16,
@@ -284,6 +286,7 @@ function cleanupProofsFromArgs(args) {
     DEFAULT_OBJECT_CLEANUP_PROOF,
     DEFAULT_PUBLIC_OBJECT_BATCH_CLEANUP_PROOF,
     DEFAULT_PUBLIC_FOUNDATION_OBJECT_BATCH_CLEANUP_PROOF,
+    DEFAULT_SOURCE_EVIDENCE_CONSUMPTION_OBJECT_BATCH_CLEANUP_PROOF,
   ]
     .filter((file) => gitFileExists(args.ref, file))
     .flatMap((file) => normalizeCleanupProofDocument(JSON.parse(gitShow(args.ref, file))));
