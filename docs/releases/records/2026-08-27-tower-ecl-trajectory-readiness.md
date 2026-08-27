@@ -38,7 +38,7 @@ Tower now maps ECL serving rows into the command-center value trajectory only wh
 
 - PASS - `npm run test:behaviors -- --runTestsByPath src/lib/tower/__tests__/readTowerCommandCenter.test.ts`
 - PASS - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`
-- PENDING - `ECL_RECONCILE_REF=HEAD node scripts/ecl/__tests__/run-ecl-projection-schema-reconciliation-tests.mjs`
+- PASS - `ECL_RECONCILE_REF=HEAD node scripts/ecl/__tests__/run-ecl-projection-schema-reconciliation-tests.mjs`
 
 ## Rollout Plan
 
