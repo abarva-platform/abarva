@@ -71,6 +71,7 @@ const TERMINAL_LEGACY_STATUSES = new Set([
   "RETAINED_TRANSACTIONAL_NON_ECL",
   "RETAINED_COMPATIBILITY_BRIDGE",
 ]);
+const LEGACY_DATA_PLANE_DENOMINATOR = 851;
 
 function parseArgs(argv) {
   const args = {
@@ -557,9 +558,12 @@ function buildStatus(args) {
     (proofSurfaces?.denominator ?? 40) +
     (proofFindings?.denominator ?? 10) +
     (proofEval?.answers_evaluated ?? 13);
-  const legacyDenominator =
-    retirementSummary.create_table_statements - (retirementSummary.status_counts?.HOLD_PLATFORM_CONTROL ?? 0);
-  assert.equal(legacyDenominator, 851, "legacy data-plane denominator is fixed at 851 by the retirement map");
+  assert.equal(
+    retirementSummary.status_counts?.HOLD_PLATFORM_CONTROL,
+    46,
+    "platform/control-plane hold count must stay fixed unless the cleanup plan is amended",
+  );
+  const legacyDenominator = LEGACY_DATA_PLANE_DENOMINATOR;
   const cleanupProofs = cleanupProofsFromArgs(args);
   const cleanupProof = cleanupProofs.at(-1) ?? null;
   const cleanupAbsentSchemas = [
@@ -680,8 +684,13 @@ function buildStatus(args) {
       },
       legacy_cleanup: {
         numerator: legacyRetired,
-        denominator: 851,
+        denominator: legacyDenominator,
         control_plane_hold_assets: retirementSummary.status_counts?.HOLD_PLATFORM_CONTROL ?? 0,
+        legacy_data_plane_denominator: legacyDenominator,
+        static_create_table_statements: retirementSummary.create_table_statements,
+        static_non_control_objects:
+          retirementSummary.create_table_statements - (retirementSummary.status_counts?.HOLD_PLATFORM_CONTROL ?? 0),
+        retained_ecl_target_credit: retirementSummary.status_counts?.RETAINED_ECL_TARGET ?? 0,
         map_scope: retirementSummary.scope,
         live_absent_schema_credit: {
           numerator: cleanupAbsentRetired,

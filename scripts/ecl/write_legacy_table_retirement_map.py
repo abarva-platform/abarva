@@ -61,14 +61,14 @@ def classify(path: Path, schema: str, table: str) -> tuple[str, str, str]:
 
     if "docs/architecture/sql-drafts/ecl_" in path_text or schema.startswith("ecl_"):
         return (
-            "NEW_ECL_TARGET",
-            "New target schema/table drafted for ECL.",
-            "Keep as migration candidate; validate through RLS, migration, and product proof.",
+            "RETAINED_ECL_TARGET",
+            "ECL target schema/table retained as the clean-break substrate.",
+            "Keep as the active ECL target; exclude from legacy data-plane retirement.",
         )
 
     if "supabase/migrations-archive/" in path_text:
         return (
-            "ARCHIVE_ONLY",
+            "RETIRED_ARCHIVE_ONLY",
             "Archived Supabase-era migration evidence.",
             "Do not use as future source of truth; preserve for history until live object inventory is complete.",
         )
@@ -257,7 +257,7 @@ def write_outputs(rows: list[dict[str, object]], out_dir: Path) -> None:
         "deletion_authorization_required",
     ]
     with csv_path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 

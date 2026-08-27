@@ -305,7 +305,7 @@ try {
     {
       cutover: "4/4",
       proof: "63/63",
-      cleanup: "114/851",
+      cleanup: "156/851",
       client: "14/14",
     },
   );
@@ -337,6 +337,9 @@ try {
   assert.equal(status.repo_denominators.legacy_cleanup.live_absent_schema_credit.numerator, 9);
   assert.deepEqual(status.repo_denominators.legacy_cleanup.live_absent_schema_credit.schemas, ["source_registry"]);
   assert.equal(status.repo_denominators.legacy_cleanup.live_absent_object_credit.numerator, 80);
+  assert.equal(status.repo_denominators.legacy_cleanup.static_create_table_statements, 911);
+  assert.equal(status.repo_denominators.legacy_cleanup.static_non_control_objects, 865);
+  assert.equal(status.repo_denominators.legacy_cleanup.retained_ecl_target_credit, 42);
   assert.deepEqual(status.repo_denominators.legacy_cleanup.live_absent_object_credit.objects, [
     "knowledge.entity_source_identity",
     ...PUBLIC_OBJECT_BATCH,

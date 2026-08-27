@@ -6,21 +6,21 @@ Static repo-visible SQL inventory only. This does not connect to Azure/Postgres,
 
 | Metric | Count |
 | --- | ---: |
-| CREATE TABLE statements | 897 |
-| Unique table names | 736 |
+| CREATE TABLE statements | 911 |
+| Unique table names | 750 |
 | Duplicate table names across files | 133 |
 
 ## Status Counts
 
 | Status | Count |
 | --- | ---: |
-| `ARCHIVE_ONLY` | 25 |
 | `HOLD_PLATFORM_CONTROL` | 46 |
 | `HOLD_UNTIL_ECL_CONTEXT_PARITY` | 153 |
 | `HOLD_UNTIL_LIVE_READBACK` | 394 |
-| `NEW_ECL_TARGET` | 28 |
 | `REPLACE_OR_BRIDGE` | 1 |
 | `REPLACE_WITH_ECL_PROJECTION` | 215 |
+| `RETAINED_ECL_TARGET` | 42 |
+| `RETIRED_ARCHIVE_ONLY` | 25 |
 | `REVIEW_FOR_MOVES_OR_CONTEXT_BRIDGE` | 35 |
 
 ## Boundary

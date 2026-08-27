@@ -6,18 +6,18 @@
     "migration_authorization": false,
     "product_repointing": false
   },
-  "create_table_statements": 897,
+  "create_table_statements": 911,
   "csv": "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_map.csv",
   "duplicate_table_names": 133,
-  "generated_at": "2026-08-23T06:36:35.451343+00:00",
+  "generated_at": "2026-08-27T05:39:36.250071+00:00",
   "schema_counts_top": {
     "audit": 7,
     "cio_tower": 19,
     "consumption": 70,
     "doc": 4,
     "ecl_commercial": 5,
-    "ecl_context": 6,
-    "ecl_projection": 12,
+    "ecl_context": 7,
+    "ecl_projection": 24,
     "ecl_review": 1,
     "ecl_source": 4,
     "evidence": 10,
@@ -42,11 +42,11 @@
     "HOLD_PLATFORM_CONTROL": 46,
     "HOLD_UNTIL_ECL_CONTEXT_PARITY": 153,
     "HOLD_UNTIL_LIVE_READBACK": 394,
-    "NEW_ECL_TARGET": 28,
     "REPLACE_OR_BRIDGE": 1,
     "REPLACE_WITH_ECL_PROJECTION": 215,
+    "RETAINED_ECL_TARGET": 42,
     "RETIRED_ARCHIVE_ONLY": 25,
     "REVIEW_FOR_MOVES_OR_CONTEXT_BRIDGE": 35
   },
-  "unique_table_names": 736
+  "unique_table_names": 750
 }
