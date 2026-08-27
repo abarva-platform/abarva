@@ -206,4 +206,80 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.requiredFieldGaps[0]?.sourceRecordId).toBe("source-record-1");
     expect(view?.summary.valueClaimCount).toBeGreaterThan(0);
   });
+
+  it("maps ECL serving rows with recorded periods into value trajectory points", async () => {
+    mockServingRows({
+      tower_command_center: [servingRow()],
+      tower_value_proof: [
+        servingRow({
+          row_key: "value-q1",
+          page_key: "value_proof",
+          claim_id: "claim-q1",
+          period_start: "2026-01-01",
+          period_end: "2026-03-31",
+          planned_investment_usd: "1200000",
+          actual_spend_usd: "800000",
+          risk_adjusted_forecast_usd: "1750000",
+          finance_validated_run_rate_usd: "600000",
+          financial_conversion_usd: "250000",
+        }),
+      ],
+      tower_decision_lanes: [servingRow()],
+      tower_evidence: [servingRow({ page_key: "evidence" })],
+      tower_recommended_actions: [
+        servingRow({ page_key: "recommended_actions" }),
+      ],
+      tower_ai_portfolio: [servingRow({ page_key: "ai_portfolio" })],
+      tower_cost_lens: [servingRow({ page_key: "cost_lens" })],
+      tower_risk_lens: [servingRow({ page_key: "risk_lens" })],
+      tower_adoption_lens: [servingRow({ page_key: "adoption_lens" })],
+    });
+
+    const mart = await readTowerCommandCenter({
+      tenantKeyCandidates: ["meridian-health"],
+    });
+
+    expect(mart?.valueTrajectory).toHaveLength(1);
+    expect(mart?.valueTrajectory?.[0]).toMatchObject({
+      fiscalQuarter: "2026-Q1",
+      periodStart: "2026-01-01",
+      periodEnd: "2026-03-31",
+      plannedInvestmentUsd: 1200000,
+      actualSpendUsd: 800000,
+      riskAdjustedForecastUsd: 1750000,
+      financeValidatedRunRateUsd: 600000,
+      financialConversionUsd: 250000,
+      sourceCount: 1,
+    });
+  });
+
+  it("does not synthesize trajectory points when ECL rows lack period evidence", async () => {
+    mockServingRows({
+      tower_command_center: [servingRow()],
+      tower_value_proof: [
+        servingRow({
+          row_key: "value-without-period",
+          page_key: "value_proof",
+          baseline_value: "2500000",
+          current_value: "500000",
+          target_value: "2500000",
+        }),
+      ],
+      tower_decision_lanes: [servingRow()],
+      tower_evidence: [servingRow({ page_key: "evidence" })],
+      tower_recommended_actions: [
+        servingRow({ page_key: "recommended_actions" }),
+      ],
+      tower_ai_portfolio: [servingRow({ page_key: "ai_portfolio" })],
+      tower_cost_lens: [servingRow({ page_key: "cost_lens" })],
+      tower_risk_lens: [servingRow({ page_key: "risk_lens" })],
+      tower_adoption_lens: [servingRow({ page_key: "adoption_lens" })],
+    });
+
+    const mart = await readTowerCommandCenter({
+      tenantKeyCandidates: ["meridian-health"],
+    });
+
+    expect(mart?.valueTrajectory).toEqual([]);
+  });
 });

@@ -283,8 +283,17 @@ as $$
     p.claim_gate_reason_detail,
     p.primary_object_id,
     p.source_refs_json,
-    to_jsonb(p)
+    to_jsonb(p) || jsonb_build_object(
+      'measure_period_start', m.period_start,
+      'measure_period_end', m.period_end,
+      'measure_scenario', m.scenario,
+      'measure_value_number', m.value_number
+    )
   from ecl_projection.tower_value_chain p
+  left join ecl_context.measure m
+    on m.tenant_key = p.tenant_key
+   and m.assessment_id = p.assessment_id
+   and m.id = p.measure_id
   where page_key_arg = 'all' or p.page_key = page_key_arg;
 $$;
 

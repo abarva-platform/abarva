@@ -338,10 +338,11 @@ export function CommandCenterView({
           </p>
           {view.valueTrajectory.length === 0 ? (
             <div className={styles.emptyPanel}>
-              <h2>Trajectory is not loaded</h2>
+              <h2>Quarter schedule not supplied</h2>
               <p>
-                The Tower Value OS did not return quarter-level trajectory rows
-                for this tenant, so this cockpit leaves the forward path blank.
+                ECL has not supplied period-start and period-end evidence for
+                this trajectory yet, so Tower leaves the forward path blank
+                instead of spreading annual values across quarters.
               </p>
             </div>
           ) : (
