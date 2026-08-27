@@ -1,32 +1,25 @@
-// TOWER4 · Tower Lens Tabs wired into tenant Tower page.
-//
-// Replaces the flat ProgramPressureCards + SeedTenantTower render with a
-// four-tab lens surface: Portfolio · Scorecards · Pressure · Executive Brief.
-//
-// Tab switching is URL-searchParam-driven (?tab=<key>).
-// No client state. Server component only.
+// Tenant-scoped Tower route. Tenant access is proven here, then passed to the
+// shared Tower renderer so the route does not lose tenant scope through a
+// generic query-param hop.
 
-import { notFound, redirect } from 'next/navigation';
-import { findTenantByRouteSlug } from '@/lib/deliverables/seed-route-resolver';
-import { assertTenantAccess } from '@/lib/auth/tenant-access';
-import { resolveTowerTab } from '@/lib/tower/tower-lens-tabs-view';
+import { assertTenantAccess } from "@/lib/auth/tenant-access";
+import { renderTowerPage } from "@/app/(maestro)/tower/page";
 
 export default async function TenantTowerSeedPage({
   params,
   searchParams,
 }: {
   params: Promise<{ tenantSlug: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { tenantSlug } = await params;
-  const { tab } = await searchParams;
+  const access = await assertTenantAccess(tenantSlug);
 
-  await assertTenantAccess(tenantSlug);
-  const tenant = findTenantByRouteSlug(tenantSlug);
-  if (!tenant) notFound();
-
-  const activeTab = resolveTowerTab(tab);
-  const redirectParams = new URLSearchParams({ client: tenant.tenantKey });
-  if (activeTab !== 'portfolio') redirectParams.set('tab', activeTab);
-  redirect(`/tower?${redirectParams.toString()}`);
+  return renderTowerPage({
+    searchParams,
+    trustedTenant: {
+      clientKey: access.clientKey,
+      displayName: access.tenant.displayName,
+    },
+  });
 }
