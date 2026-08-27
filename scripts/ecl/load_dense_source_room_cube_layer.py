@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -27,8 +28,8 @@ import load_dense_source_room_source_projection_layer as source_projection_layer
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DENSE_OUT_DIR = ROOT / "outputs/source-room-depth-catchup-2026-08-23"
 DEFAULT_OUT_DIR = ROOT / "reports/ecl-dense-cube-layer-local-load-2026-08-23"
-TENANT_KEY = "meridian-health"
-ASSESSMENT_ID = "assessment-dense-source-room-20260823"
+TENANT_KEY = os.environ.get("ECL_DENSE_TENANT_KEY", source_layer.TENANT_KEY)
+ASSESSMENT_ID = os.environ.get("ECL_DENSE_ASSESSMENT_ID", source_layer.ASSESSMENT_ID)
 CUBE_VERSION = 1
 DDL_FILES = [
     ROOT / "docs/architecture/sql-drafts/ecl_physical_schema_v1_draft.sql",

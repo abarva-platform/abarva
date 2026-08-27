@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import sys
 from collections import Counter
 from pathlib import Path
@@ -65,6 +66,10 @@ REALISM_GATES = {
     "categorical_uniform_max_min_ratio": 1.15,
     "finance_min_fiscal_years": 2,
 }
+
+PROFILE = os.environ.get("ECL_DENSE_PROFILE", "meridian-health").strip().lower().replace("_", "-")
+if PROFILE in {"skyharbor", "skyharbor-air", "skyharbor-airline", "airline"}:
+    REALISM_GATES["application_cost_total_usd"] = 1_540_000_000
 
 
 def app_ref_indices(value: str) -> list[int]:
