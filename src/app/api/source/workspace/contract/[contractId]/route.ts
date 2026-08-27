@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getActiveClientRow } from '@/lib/active-client';
+import { checkTenantAccessByKey } from '@/lib/auth/tenant-access';
 import { requireTenancy, TenancyError } from '@/lib/auth/tenancy';
-import { resolveTenant } from '@/lib/tenant/resolveTenant';
 import { buildContract360View, collectContractSubjectRefs } from '@/lib/source/data-model/contract-360-view';
 import {
   getContract360,
@@ -24,6 +24,7 @@ import type {
   SourceContractEvidencePerformanceSummary,
   SourceContractOperationalPerformanceRow,
 } from '@/lib/source/data-model/types';
+import { appClientKeyForTenant } from '@/lib/tenant/aliases';
 
 // Lazy, per-contract detail read for the Source Workspace — mirrors exactly
 // what the retired /source/vendor-portfolio/[contractId] route used to do,
@@ -48,18 +49,26 @@ export async function GET(
   const contractId = decodeURIComponent(rawContractId);
   const requestedClient =
     new URL(request.url).searchParams.get('client')?.trim() || null;
-  const tenant = await resolveTenant({
-    requestedClient,
-    allowFallback: !requestedClient,
-  }).catch(() => null);
-  const activeClient = tenant
-    ? await getActiveClientRow(tenant.appClientKey).catch(() => null)
+  const requestedClientKey = appClientKeyForTenant(requestedClient);
+  if (requestedClient && !requestedClientKey) {
+    return NextResponse.json({ error: 'unknown_client' }, { status: 404 });
+  }
+  if (requestedClientKey && requestedClientKey !== tenancy.clientKey) {
+    const access = await checkTenantAccessByKey(requestedClientKey);
+    if (!access.ok) {
+      const status =
+        access.reason === 'unauthenticated'
+          ? 401
+          : access.reason === 'forbidden'
+            ? 403
+            : 404;
+      return NextResponse.json({ error: access.reason }, { status });
+    }
+  }
+  const activeClient = requestedClientKey
+    ? null
     : await getActiveClientRow().catch(() => null);
-  const tenantKey =
-    activeClient?.key ??
-    tenant?.appClientKey ??
-    (!requestedClient ? tenancy.clientKey : '') ??
-    '';
+  const tenantKey = requestedClientKey ?? activeClient?.key ?? tenancy.clientKey ?? '';
   if (!tenantKey) {
     return NextResponse.json({ error: 'no_tenant' }, { status: 404 });
   }
