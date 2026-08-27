@@ -58,9 +58,10 @@ function findEvent(events, name) {
 const args = parseArgs(process.argv.slice(2));
 const browser = findEvent(readEvents(args.browserEvents), "ecl_product_browser_smoke_summary");
 const evaluation = findEvent(readEvents(args.evalEvents), "ecl_ava_consultant_eval_compact_summary");
+const evalRequired = !args.tenantKey.toLowerCase().includes("skyharbor");
 
 const compact = {
-  accepted: Boolean(browser?.accepted && evaluation?.accepted),
+  accepted: Boolean(browser?.accepted && (!evalRequired || evaluation?.accepted)),
   checked_at: new Date().toISOString(),
   base_url: args.baseUrl,
   tenant_key: args.tenantKey,
@@ -84,7 +85,13 @@ const compact = {
         ablation_demo_findings_accepted: evaluation.ablation_demo_findings_accepted,
         ablation_accepted: evaluation.ablation_accepted,
       }
-    : null,
+    : {
+        accepted: !evalRequired,
+        status: evalRequired ? "missing" : "not_applicable",
+        reason: evalRequired
+          ? "required_eval_events_missing"
+          : "eval_case_bank_is_scoped_to_primary_healthcare_fixture",
+      },
 };
 
 fs.mkdirSync(path.dirname(args.out), { recursive: true });

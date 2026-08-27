@@ -7,18 +7,60 @@ import os from "node:os";
 import path from "node:path";
 
 const BASE_URL = process.env.BASE_URL || process.env.ECL_PRODUCT_BROWSER_BASE_URL || "https://app.abarva.ai";
-const TENANT_KEY = process.env.E2E_ACTIVE_CLIENT || "meridian-health";
-const EXPECTED_TENANT_NAME = process.env.E2E_EXPECTED_TENANT_NAME || "Meridian Health";
+const RAW_TENANT_KEY = process.env.E2E_ACTIVE_CLIENT || "meridian-health";
+const TENANT_PROFILES = {
+  "meridian-health": {
+    appClientKey: "meridian",
+    canonicalTenantKey: "meridian-health",
+    expectedTenantName: "Meridian Health",
+    proofEmail: "agent@meridian-health.example.com",
+    fallbackEmails: [
+      "admin@abarva.ai",
+      "cdio@meridian-health.example.com",
+      "demo-meridian+clerk_test@abarva.com",
+    ],
+    sourceVendorCount: 102,
+  },
+  meridian: {
+    appClientKey: "meridian",
+    canonicalTenantKey: "meridian-health",
+    expectedTenantName: "Meridian Health",
+    proofEmail: "agent@meridian-health.example.com",
+    fallbackEmails: [
+      "admin@abarva.ai",
+      "cdio@meridian-health.example.com",
+      "demo-meridian+clerk_test@abarva.com",
+    ],
+    sourceVendorCount: 102,
+  },
+  "skyharbor-air": {
+    appClientKey: "skyharbor",
+    canonicalTenantKey: "skyharbor-air",
+    expectedTenantName: "SkyHarbor Global",
+    proofEmail: "anand.sundaram+skyharbor@thesundaram.com",
+    fallbackEmails: [],
+    sourceVendorCount: 94,
+  },
+  skyharbor: {
+    appClientKey: "skyharbor",
+    canonicalTenantKey: "skyharbor-air",
+    expectedTenantName: "SkyHarbor Global",
+    proofEmail: "anand.sundaram+skyharbor@thesundaram.com",
+    fallbackEmails: [],
+    sourceVendorCount: 94,
+  },
+};
+const TENANT_PROFILE = TENANT_PROFILES[RAW_TENANT_KEY] || TENANT_PROFILES["meridian-health"];
+const TENANT_KEY = TENANT_PROFILE.canonicalTenantKey;
+const EXPECTED_TENANT_NAME = process.env.E2E_EXPECTED_TENANT_NAME || TENANT_PROFILE.expectedTenantName;
 const ROUTE_MODE = process.argv.includes("--default-routes")
   ? "default_routes"
   : "provider_opt_in";
 const EMAILS = [
   process.env.E2E_PRIVATE_PROOF_EMAIL,
   process.env.E2E_DEMO_EMAIL,
-  "agent@meridian-health.example.com",
-  "admin@abarva.ai",
-  "cdio@meridian-health.example.com",
-  "demo-meridian+clerk_test@abarva.com",
+  TENANT_PROFILE.proofEmail,
+  ...TENANT_PROFILE.fallbackEmails,
 ].filter(Boolean);
 const OUT_DIR = path.resolve(process.env.ECL_PRODUCT_BROWSER_PROOF_DIR || "job-output/ecl-product-browser-smoke");
 const EMIT_PROOF = process.env.EMIT_ACA_PROOF_BUNDLE !== "false";
@@ -38,7 +80,7 @@ const ROUTES = [
     key: "home_preview_ecl",
     path: eclPath(`/home/preview?tenant=${encodeURIComponent(TENANT_KEY)}`, "&"),
     requiredText: [
-      /Meridian Health/i,
+      new RegExp(EXPECTED_TENANT_NAME.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
       /750\s+applications/i,
       /1350\s+data\s+flows/i,
       /230\s+contracts/i,
@@ -48,7 +90,11 @@ const ROUTES = [
   {
     key: "source_workspace_ecl",
     path: eclPath("/source/preview/workspace"),
-    requiredText: [/Meridian Health|Source/i, /230\s+contracts/i, /102\s+vendors/i],
+    requiredText: [
+      new RegExp(`${EXPECTED_TENANT_NAME.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}|Source`, "i"),
+      /230\s+contracts/i,
+      new RegExp(`${TENANT_PROFILE.sourceVendorCount}\\s+vendors`, "i"),
+    ],
   },
   {
     key: "tower_ecl",

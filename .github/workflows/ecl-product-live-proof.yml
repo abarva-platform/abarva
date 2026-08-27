@@ -39,7 +39,8 @@ jobs:
       ECL_PRODUCT_BROWSER_BASE_URL: ${{ inputs.base_url || vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
       ECL_AVA_EVAL_BASE_URL: ${{ inputs.base_url || vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
       E2E_ACTIVE_CLIENT: ${{ inputs.tenant_key || 'meridian-health' }}
-      E2E_EXPECTED_TENANT_NAME: Meridian Health
+      E2E_EXPECTED_TENANT_NAME: ${{ contains(inputs.tenant_key || 'meridian-health', 'skyharbor') && 'SkyHarbor Global' || 'Meridian Health' }}
+      E2E_PRIVATE_PROOF_EMAIL: ${{ contains(inputs.tenant_key || 'meridian-health', 'skyharbor') && 'anand.sundaram+skyharbor@thesundaram.com' || 'agent@meridian-health.example.com' }}
       EMIT_ACA_PROOF_BUNDLE: "false"
     steps:
       - uses: actions/checkout@v6
@@ -95,6 +96,7 @@ jobs:
             --poll-seconds 15
 
       - name: Run default-path aVa live ablation eval in private operator
+        if: ${{ !contains(env.E2E_ACTIVE_CLIENT, 'skyharbor') }}
         run: |
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
