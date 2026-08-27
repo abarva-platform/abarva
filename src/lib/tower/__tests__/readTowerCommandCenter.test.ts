@@ -212,6 +212,13 @@ describe("readTowerCommandCenter", () => {
       tower_command_center: [servingRow()],
       tower_value_proof: [
         servingRow({
+          row_key: "contract-value",
+          page_key: "value_proof",
+          baseline_value: "2500000",
+          current_value: "500000",
+          target_value: "2500000",
+        }),
+        servingRow({
           row_key: "value-q1",
           page_key: "value_proof",
           claim_id: "claim-q1",
@@ -222,6 +229,7 @@ describe("readTowerCommandCenter", () => {
           risk_adjusted_forecast_usd: "1750000",
           finance_validated_run_rate_usd: "600000",
           financial_conversion_usd: "250000",
+          trajectory_only: true,
         }),
       ],
       tower_decision_lanes: [servingRow()],
@@ -240,6 +248,8 @@ describe("readTowerCommandCenter", () => {
     });
 
     expect(mart?.valueTrajectory).toHaveLength(1);
+    expect(mart?.command.promisedValueFy26).toBe(5000000);
+    expect(mart?.valueFunnel[0]?.valueNumeric).toBe(5000000);
     expect(mart?.valueTrajectory?.[0]).toMatchObject({
       fiscalQuarter: "2026-Q1",
       periodStart: "2026-01-01",

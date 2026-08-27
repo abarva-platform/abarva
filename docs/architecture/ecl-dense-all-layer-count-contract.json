@@ -139,12 +139,52 @@
       "key": "projection.projection_manifest"
     },
     {
-      "after": 230,
+      "after": 710,
       "before": 0,
       "classification": "expected_increase",
-      "delta": 230,
-      "explanation": "W2 adds one Tower value-chain projection row per contract with FK-backed claim-to-measure traceability.",
+      "delta": 710,
+      "explanation": "W2 adds one Tower value-chain projection row per contract with FK-backed claim-to-measure traceability, and the Tower period-trajectory slice adds 480 source-recorded finance-period rows that feed the trajectory chart without contributing to Tower aggregate totals.",
       "key": "projection.tower_value_chain"
+    },
+    {
+      "after": 6103,
+      "before": 5623,
+      "classification": "expected_increase",
+      "delta": 480,
+      "explanation": "Tower period-trajectory rows add one projection entry for each finance-period source row.",
+      "key": "projection.projection_entry"
+    },
+    {
+      "after": 1079,
+      "before": 599,
+      "classification": "expected_increase",
+      "delta": 480,
+      "explanation": "Each Tower period-trajectory row links to the corresponding governed finance actual measure.",
+      "key": "projection.projection_entry_measure_ref"
+    },
+    {
+      "after": 11170,
+      "before": 10690,
+      "classification": "expected_increase",
+      "delta": 480,
+      "explanation": "Each Tower period-trajectory row carries a metric reference to the existing actual spend metric definition.",
+      "key": "projection.projection_entry_metric_ref"
+    },
+    {
+      "after": 7464,
+      "before": 6984,
+      "classification": "expected_increase",
+      "delta": 480,
+      "explanation": "Each Tower period-trajectory row resolves to the application, platform, or business-function object from the finance extract.",
+      "key": "projection.projection_entry_object_ref"
+    },
+    {
+      "after": 6248,
+      "before": 5768,
+      "classification": "expected_increase",
+      "delta": 480,
+      "explanation": "Each Tower period-trajectory row keeps a source-record reference to the finance extract row that supplied the period evidence.",
+      "key": "projection.projection_entry_source_record_ref"
     },
     {
       "after": 369,
@@ -257,16 +297,16 @@
       "intelligence_primary_object_drift": 0,
       "intelligence_question_context": 6,
       "intelligence_question_context_pack_drift": 0,
-      "projection_entry": 5623,
+      "projection_entry": 6103,
       "projection_entry_count_drift": 0,
       "projection_entry_document_extraction_ref": 0,
-      "projection_entry_measure_ref": 599,
-      "projection_entry_metric_ref": 10690,
+      "projection_entry_measure_ref": 1079,
+      "projection_entry_metric_ref": 11170,
       "projection_entry_metric_ref_drift": 0,
-      "projection_entry_object_ref": 6984,
+      "projection_entry_object_ref": 7464,
       "projection_entry_object_ref_drift": 0,
       "projection_entry_relationship_ref": 0,
-      "projection_entry_source_record_ref": 5768,
+      "projection_entry_source_record_ref": 6248,
       "projection_entry_source_record_ref_drift": 0,
       "projection_manifest": 12,
       "projection_surface_entry_drift": 0,
@@ -284,7 +324,7 @@
       "tower_evidence_queue_missing_gate_payload": 0,
       "tower_gated_without_reason": 0,
       "tower_primary_object_drift": 0,
-      "tower_value_chain": 230,
+      "tower_value_chain": 710,
       "tower_value_chain_gated_without_reason": 0,
       "tower_value_chain_measure_drift": 0,
       "value_lever_metric_drift": 0,

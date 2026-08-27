@@ -61,6 +61,15 @@ def object_id(object_type: str, object_key: str) -> str:
     return source_layer.stable_uuid("object", object_type, object_key)
 
 
+def finance_subject_object_id(row: dict[str, str]) -> str:
+    ref = (row.get("application_or_platform_ref") or "").strip()
+    if ref.startswith("APP-"):
+        return object_id("application", ref)
+    if ref.startswith("PLAT-"):
+        return object_id("infrastructure", ref)
+    return object_id("business_function", row.get("business_function") or "unknown")
+
+
 def contract_id(contract_number: str) -> str:
     return source_layer.stable_uuid("commercial_contract", contract_number)
 
@@ -94,6 +103,18 @@ def context_pack_id() -> str:
 def slug(value: str | None) -> str:
     text = (value or "unknown").strip().lower()
     return "".join(char if char.isalnum() else "_" for char in text).strip("_") or "unknown"
+
+
+def fiscal_quarter(period: str | None) -> str | None:
+    if not period or len(period) < 7 or period[4] != "-":
+        return None
+    try:
+        month = int(period[5:7])
+    except ValueError:
+        return None
+    if month < 1 or month > 12:
+        return None
+    return f"{period[:4]}-Q{((month - 1) // 3) + 1}"
 
 
 def source_ref_for_family(family: str, row: dict[str, str], index: int) -> list[dict[str, Any]]:
@@ -1112,6 +1133,68 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
                     "source_hash": source_layer.sql_text(event_row_hash),
                 }
             )
+
+    for index, row in enumerate(finance, start=1):
+        fiscal_period = row.get("fiscal_period")
+        quarter = fiscal_quarter(fiscal_period)
+        if not quarter:
+            continue
+        subject_id = finance_subject_object_id(row)
+        finance_source_ref = source_ref("SP06_Finance_ERP", row, index)
+        actual_measure_id = context_layer.measure_id(
+            subject_id,
+            "actual_usd",
+            finance_source_ref["source_record_id"],
+        )
+        budget_amount = as_num(row.get("budget_usd"))
+        actual_amount = as_num(row.get("actual_usd"))
+        add_tower_value_chain_row(
+            row_key=f"finance-period::{row['source_row_id']}",
+            page_key="value_proof",
+            row_type="finance_period_trajectory_observation",
+            primary_object_id=subject_id,
+            claim_id=f"finance-period-{row['source_row_id']}",
+            observation_key=f"actual_usd::{row['source_row_id']}",
+            metric_key="actual_usd",
+            measure_id_value=actual_measure_id,
+            source_record_id_value=finance_source_ref["source_record_id"],
+            review_event_id_value=None,
+            evidence_state="source_recorded",
+            gate_status="not_applicable",
+            gate_reason_code=None,
+            gate_reason_detail=None,
+            next_gate=None,
+            evidence_needed=[],
+            baseline=budget_amount,
+            current=actual_amount,
+            target=budget_amount,
+            claimable=0,
+            blocked=0,
+            value_state="known",
+            quality_state="warning" if row.get("allocation_basis") == "unknown" else "passed",
+            source_refs=[finance_source_ref],
+            gap_flags=(
+                [{"gap": "finance_allocation_unknown"}]
+                if row.get("allocation_basis") == "unknown"
+                else []
+            ),
+            display_payload={
+                "title": f"{row.get('business_function') or 'Unassigned'} {fiscal_period} finance actuals",
+                "trajectory_only": True,
+                "fiscal_period": fiscal_period,
+                "fiscal_quarter": quarter,
+                "business_function": row.get("business_function"),
+                "cost_center": row.get("cost_center"),
+                "supplier_name": row.get("supplier_name"),
+                "account_category": row.get("account_category"),
+                "allocation_basis": row.get("allocation_basis"),
+                "planned_investment_usd": budget_amount,
+                "actual_spend_usd": actual_amount,
+                "risk_adjusted_forecast_usd": budget_amount,
+                "finance_validated_run_rate_usd": actual_amount,
+                "financial_conversion_usd": 0,
+            },
+        )
 
     vendor_projection: list[dict[str, str]] = []
     for vendor_name, rows in vendor_contracts.items():
