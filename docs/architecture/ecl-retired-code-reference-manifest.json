@@ -4,13 +4,13 @@
   "entries": [
     {
       "file": "scripts/qa/skyharbor-phase-a-candidate-readback.mjs",
-      "retired_schemas": ["source_registry"],
+      "retired_schemas": ["consumption", "evidence", "source_registry"],
       "disposition": "historical_qa_script",
       "replacement": "ECL source/readback proof uses ecl_source.source_file and ecl_source.source_record."
     },
     {
       "file": "scripts/qa/airline-e2e-live-reconciliation-readback.mjs",
-      "retired_schemas": ["source_registry"],
+      "retired_schemas": ["consumption", "source_registry"],
       "disposition": "historical_qa_script",
       "replacement": "ECL all-layer readback compares ecl_source, ecl_context, ecl_commercial, ecl_review, ecl_projection, cube, and serving outputs."
     },
@@ -40,13 +40,13 @@
     },
     {
       "file": "scripts/knowledge/backfill-exploration-evidence.mjs",
-      "retired_schemas": ["source_registry"],
+      "retired_schemas": ["consumption", "evidence", "source_registry"],
       "disposition": "pre_ecl_operator_script",
       "replacement": "ECL evidence references are ecl_source.document, ecl_source.document_extraction, and FK-backed projection refs."
     },
     {
       "file": "scripts/knowledge/build-foundation-v3-day-one-breach-report.mjs",
-      "retired_schemas": ["source_registry"],
+      "retired_schemas": ["evidence", "source_registry"],
       "disposition": "historical_report_script",
       "replacement": "ECL source coverage and findings proofs use the clean-break status/readback reports."
     },
@@ -64,21 +64,81 @@
     },
     {
       "file": "scripts/foundation-v2/execute-golden-slice-db.mjs",
-      "retired_schemas": ["source_registry"],
+      "retired_schemas": ["foundation_v2", "source_registry"],
       "disposition": "historical_foundation_v2_operator",
       "replacement": "ECL ACA data-build jobs own current source/context/projection execution."
     },
     {
       "file": "scripts/foundation-v2/verify-golden-slice-db.mjs",
-      "retired_schemas": ["source_registry"],
+      "retired_schemas": ["foundation_v2", "source_registry"],
       "disposition": "historical_foundation_v2_verifier",
       "replacement": "ECL separate readback job owns current verification."
     },
     {
       "file": "scripts/qa/skyharbor-day-one-breach-readback.mjs",
-      "retired_schemas": ["source_registry"],
+      "retired_schemas": ["evidence", "source_registry"],
       "disposition": "historical_qa_script",
       "replacement": "ECL browser/findings/readback proof supersedes this pre-ECL source registry check."
+    },
+    {
+      "file": "scripts/knowledge/fs-airline-azure-candidate-load.mjs",
+      "retired_schemas": ["cio_tower", "public"],
+      "disposition": "historical_airline_candidate_loader",
+      "replacement": "ECL source/context/projection loaders own current airline and healthcare candidate data movement."
+    },
+    {
+      "file": "scripts/audit/build-module-data-integration-audit.mjs",
+      "retired_schemas": ["cio_tower", "public"],
+      "disposition": "historical_module_audit_script",
+      "replacement": "ECL serving-contract, projection, and readback reconciliation gates now track module data integration."
+    },
+    {
+      "file": "scripts/source/skyharbor-v3/tower_measurement_layer.sql",
+      "retired_schemas": ["tower"],
+      "disposition": "historical_tenant_sql_fixture",
+      "replacement": "ECL tower projections and serving views own current value, risk, and evidence read models."
+    },
+    {
+      "file": "scripts/tower/verify-tower-value-os.mjs",
+      "retired_schemas": ["tower"],
+      "disposition": "historical_tower_value_os_verifier",
+      "replacement": "ECL tower_command_center, tower_value_chain, tower_evidence_queue, and serving views provide current Tower proof."
+    },
+    {
+      "file": "scripts/tower/project-meridian-v3-to-cio-tower.mjs",
+      "retired_schemas": ["cio_tower"],
+      "disposition": "historical_tower_projection_script",
+      "replacement": "ECL Tower projections replace the pre-ECL cio_tower mart projection path."
+    },
+    {
+      "file": "scripts/source/skyharbor-v3/load_source_tower_measurements.sql",
+      "retired_schemas": ["tower"],
+      "disposition": "historical_tenant_sql_fixture",
+      "replacement": "ECL source and Tower projection loaders own current contract, value, risk, and evidence measurements."
+    },
+    {
+      "file": "scripts/foundation-v2/normalize-healthcare-source-volume-db.mjs",
+      "retired_schemas": ["foundation_v2"],
+      "disposition": "historical_foundation_v2_operator",
+      "replacement": "ECL client-intake adapters and source/context loaders own current normalized healthcare source volume."
+    },
+    {
+      "file": "scripts/knowledge/load-tenant-candidate-context.mjs",
+      "retired_schemas": ["cio_tower", "public"],
+      "disposition": "pre_ecl_candidate_context_loader",
+      "replacement": "ECL source/context loaders and serving views own current tenant candidate context."
+    },
+    {
+      "file": "scripts/source/inspect-skyharbor-v3-live-proof.ts",
+      "retired_schemas": ["tower"],
+      "disposition": "historical_tenant_live_proof_script",
+      "replacement": "ECL browser/findings/readback proof supersedes this tenant-specific Tower proof."
+    },
+    {
+      "file": "scripts/ecl/__tests__/run-ecl-four-lane-status-tests.mjs",
+      "retired_schemas": ["foundation_v2_meridian_health_demo", "knowledge", "public"],
+      "disposition": "status_fixture_reference",
+      "replacement": "The test asserts committed retirement proof accounting; ECL serving and cleanup status are the current control."
     }
   ]
 }

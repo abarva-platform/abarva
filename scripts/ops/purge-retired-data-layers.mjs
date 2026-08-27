@@ -7,7 +7,7 @@ import process from "node:process";
 const DEFAULT_SCHEMAS = ["intelligence_v6", "intelligence_v7", "cio_tower"];
 const DEFAULT_STATUS_MAP = "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_map.csv";
 const DEFAULT_CODE_REFERENCE_MANIFEST = "docs/architecture/ecl-retired-code-reference-manifest.json";
-const APPLY_SAFE_STATUSES = new Set(["REPLACE_WITH_ECL_PROJECTION", "ARCHIVE_ONLY"]);
+const APPLY_SAFE_STATUSES = new Set(["REPLACE_WITH_ECL_PROJECTION", "ARCHIVE_ONLY", "RETIRED_ARCHIVE_ONLY"]);
 const DEFAULT_CODE_REFERENCE_ROOTS = ["src", "scripts"];
 const CODE_REFERENCE_EXCLUDE_PATHS = new Set([
   "scripts/ops/purge-retired-data-layers.mjs",
