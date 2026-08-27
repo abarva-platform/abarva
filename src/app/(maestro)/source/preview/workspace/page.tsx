@@ -11,6 +11,7 @@ import { resolveTenant } from "@/lib/tenant/resolveTenant";
 import {
   buildSourceVendor360Cockpit,
   loadSourceWorkspacePortfolio,
+  type SourceWorkspacePortfolioData,
   type SourceWorkspaceProviderMode,
 } from "./live/portfolioAdapter";
 
@@ -167,11 +168,24 @@ export default async function SourceWorkspacePreviewPage({
         portfolio={portfolio}
         tenantName={tenantName}
         sourceClientKey={tenant?.appClientKey ?? activeClient?.key ?? tenantKey}
+        sourceProviderKey={sourceProviderModeFromPortfolio(portfolio)}
         initialContractId={requestedContractId}
         initialContractTab={requestedContractTab}
       />
     </div>
   );
+}
+
+function sourceProviderModeFromPortfolio(
+  portfolio: SourceWorkspacePortfolioData,
+): SourceWorkspaceProviderMode {
+  if (portfolio.workspaceDiagnostics.exploreProvider === "EclProjectionDbProvider") {
+    return "ecl_projection_db";
+  }
+  if (portfolio.workspaceDiagnostics.exploreProvider === "EclProjectionCsvProvider") {
+    return "ecl_projection";
+  }
+  return "legacy";
 }
 
 function sourceProviderOverrideFromRequest(

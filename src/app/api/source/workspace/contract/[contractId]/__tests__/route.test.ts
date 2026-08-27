@@ -1,3 +1,5 @@
+jest.mock("server-only", () => ({}));
+
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(),
   TenancyError: class TenancyError extends Error {
@@ -39,10 +41,24 @@ jest.mock("@/lib/source/data-model/read-adapter", () => ({
   listTowerValueClaimsForSubjects: jest.fn(),
 }));
 
+jest.mock(
+  "@/app/(maestro)/source/preview/workspace/live/portfolioAdapter",
+  () => ({
+    loadSourceWorkspacePortfolio: jest.fn(),
+    sourceWorkspaceProvider: jest.fn(
+      (provider: string | null | undefined) => provider ?? "legacy",
+    ),
+  }),
+);
+
 import { GET } from "../route";
 import { getActiveClientRow } from "@/lib/active-client";
 import { checkTenantAccessByKey } from "@/lib/auth/tenant-access";
 import { requireTenancy } from "@/lib/auth/tenancy";
+import {
+  loadSourceWorkspacePortfolio,
+  sourceWorkspaceProvider,
+} from "@/app/(maestro)/source/preview/workspace/live/portfolioAdapter";
 import {
   buildContract360View,
   collectContractSubjectRefs,
@@ -68,6 +84,8 @@ const mockRequireTenancy = requireTenancy as jest.Mock;
 const mockGetActiveClientRow = getActiveClientRow as jest.Mock;
 const mockCheckTenantAccessByKey = checkTenantAccessByKey as jest.Mock;
 const mockBuildContract360View = buildContract360View as jest.Mock;
+const mockLoadSourceWorkspacePortfolio = loadSourceWorkspacePortfolio as jest.Mock;
+const mockSourceWorkspaceProvider = sourceWorkspaceProvider as jest.Mock;
 const mockCollectContractSubjectRefs = collectContractSubjectRefs as jest.Mock;
 const mockGetContract360 = getContract360 as jest.Mock;
 const mockListContractApplicationScope =
@@ -142,6 +160,14 @@ beforeEach(() => {
     contractId: "CTR-0006",
     evidence: [],
   });
+  mockLoadSourceWorkspacePortfolio.mockResolvedValue({
+    contracts: [],
+    applicationScope: [],
+    initiativeDependencies: [],
+  });
+  mockSourceWorkspaceProvider.mockImplementation(
+    (provider: string | null | undefined) => provider ?? "legacy",
+  );
 });
 
 function params(contractId = "CTR-0006") {
@@ -250,5 +276,41 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
 
     expect(res.status).toBe(404);
     await expect(res.json()).resolves.toEqual({ error: "not_found" });
+  });
+
+  it("hydrates detail from the active ECL projection provider when legacy detail has no row", async () => {
+    mockGetContract360.mockResolvedValueOnce(null);
+    const projectionScope = [
+      {
+        contract_id: "CTR-0006",
+        application_ref: "ehr-core",
+      },
+    ];
+    mockLoadSourceWorkspacePortfolio.mockResolvedValueOnce({
+      contracts: [contract],
+      applicationScope: projectionScope,
+      initiativeDependencies: [],
+    });
+
+    const res = await GET(
+      new Request(
+        "https://app.test/api/source/workspace/contract/CTR-0006?client=meridian&sourceProvider=ecl_projection_db",
+      ),
+      params(),
+    );
+
+    expect(res.status).toBe(200);
+    expect(sourceWorkspaceProvider).toHaveBeenCalledWith("ecl_projection_db");
+    expect(loadSourceWorkspacePortfolio).toHaveBeenCalledWith(
+      "meridian",
+      expect.any(String),
+      "ecl_projection_db",
+    );
+    expect(buildContract360View).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contract,
+        applicationScope: projectionScope,
+      }),
+    );
   });
 });

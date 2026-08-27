@@ -13,6 +13,12 @@ import {
   getContractOptimizationOpportunitySet,
   listContractFinancialExposure,
 } from "@/lib/source/data-model/read-adapter";
+import {
+  loadSourceWorkspacePortfolio,
+  sourceWorkspaceProvider,
+  type SourceWorkspaceProviderMode,
+} from "@/app/(maestro)/source/preview/workspace/live/portfolioAdapter";
+import type { SourceContract360Row } from "@/lib/source/data-model/types";
 import type { ContractOptimizationOpportunity } from "@/lib/source/data-model/contract-optimization-opportunity";
 import { factSpecByKey } from "@/lib/source/facts/fact-catalog";
 import type { SourceEventFactInsert } from "@/lib/source/facts/fact-types";
@@ -77,8 +83,9 @@ export async function POST(request: Request, { params }: RouteContext) {
 
   const { contractId: rawContractId } = await params;
   const contractId = decodeURIComponent(rawContractId);
-  const requestedClient =
-    new URL(request.url).searchParams.get("client")?.trim() || null;
+  const requestUrl = new URL(request.url);
+  const requestedClient = requestUrl.searchParams.get("client")?.trim() || null;
+  const requestedSourceProvider = sourceProviderFromRequest(requestUrl);
   const requestedClientKey = appClientKeyForTenant(requestedClient);
   if (requestedClient && !requestedClientKey) {
     return NextResponse.json(
@@ -128,9 +135,13 @@ export async function POST(request: Request, { params }: RouteContext) {
     );
   }
 
-  const contract = await getContract360(clientKey, contractId).catch(
+  let contract = await getContract360(clientKey, contractId).catch(
     () => null,
   );
+  const eclProvider = sourceWorkspaceProvider(requestedSourceProvider);
+  if (!contract && eclProvider !== "legacy") {
+    contract = await getProjectionContract(clientKey, contractId, eclProvider);
+  }
   if (!contract) {
     return NextResponse.json(
       { ok: false, error: "contract_not_found" },
@@ -256,6 +267,39 @@ export async function POST(request: Request, { params }: RouteContext) {
     },
     { headers: { "cache-control": "no-store" } },
   );
+}
+
+async function getProjectionContract(
+  clientKey: string,
+  contractId: string,
+  provider: SourceWorkspaceProviderMode,
+): Promise<SourceContract360Row | null> {
+  const portfolio = await loadSourceWorkspacePortfolio(
+    clientKey,
+    new Date().toISOString(),
+    provider,
+  ).catch(() => null);
+  return (
+    portfolio?.contracts.find((row) => row.contract_id === contractId) ?? null
+  );
+}
+
+function sourceProviderFromRequest(
+  requestUrl: URL,
+): SourceWorkspaceProviderMode | null {
+  const normalized = (
+    requestUrl.searchParams.get("sourceProvider") ??
+    requestUrl.searchParams.get("provider") ??
+    ""
+  ).trim();
+  if (
+    normalized === "legacy" ||
+    normalized === "ecl_projection" ||
+    normalized === "ecl_projection_db"
+  ) {
+    return normalized;
+  }
+  return null;
 }
 
 function optimizationEventUrl(event: SourceEventRow): string {
