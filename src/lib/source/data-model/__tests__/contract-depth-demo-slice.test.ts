@@ -1,5 +1,6 @@
 import {
   buildContractDepthScenario,
+  contractDepthOpportunityId,
   contractDepthQualityGate,
 } from "@/lib/source/data-model/contract-depth-demo-slice";
 
@@ -41,5 +42,22 @@ describe("contract depth demo slice", () => {
     ]);
     expect(scenario.unclaimedCreditUsd).toBe(43_000.02);
     expect(contractDepthQualityGate(scenario)).toEqual([]);
+  });
+
+  it("scopes optimization opportunity identity by dataset version", () => {
+    expect(
+      contractDepthOpportunityId({
+        contractId: "CTR-0002",
+        datasetVersion: "meridian-contract-depth-ctr0002-sla-credit-v1-20260828",
+      }),
+    ).toBe(
+      "CTR-0002:sla-credit-recovery:meridian-contract-depth-ctr0002-sla-credit-v1-20260828",
+    );
+    expect(
+      contractDepthOpportunityId({
+        contractId: "CTR-0002",
+        datasetVersion: "prior-load/v1",
+      }),
+    ).toBe("CTR-0002:sla-credit-recovery:prior-load-v1");
   });
 });

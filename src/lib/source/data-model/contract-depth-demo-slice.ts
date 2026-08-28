@@ -34,6 +34,20 @@ export interface ContractDepthScenario {
   readonly unclaimedCreditUsd: number;
 }
 
+export function contractDepthOpportunityId(args: {
+  readonly contractId: string;
+  readonly datasetVersion: string;
+}): string {
+  const datasetSuffix =
+    args.datasetVersion
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/gu, "-")
+      .replace(/^-+|-+$/gu, "")
+      .slice(0, 80) || "dataset";
+  return `${args.contractId}:sla-credit-recovery:${datasetSuffix}`;
+}
+
 const DEFAULT_ANNUAL_BASE_FEE_USD = 8_600_000;
 const DEFAULT_MONTHLY_BASE_FEE_USD = 716_667;
 const DEFAULT_AS_OF_MONTH = "2026-08-01";
