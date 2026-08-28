@@ -73,7 +73,7 @@ function servingRow(overrides: Record<string, unknown> = {}) {
     review_state: "not_reviewed",
     origin: "synthetic_generator",
     gap_flags_json: [],
-    projection_row_id: "projection-row-1",
+    projection_row_id: `projection-${payload.row_key}`,
     page_key: String(payload.page_key),
     row_key: String(payload.row_key),
     row_type: "program_value_gate",
@@ -204,7 +204,18 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.command.sourceFiles).toContain("SP08_Vendor_Contract");
     expect(mart?.programLanes[0]?.programName).toBe("Revenue-cycle automation");
     expect(mart?.requiredFieldGaps[0]?.sourceRecordId).toBe("source-record-1");
+    expect(mart?.headline).toContain("1 value claim");
+    expect(mart?.headline).toContain("8 separate review rows");
+    expect(mart?.headline).not.toContain("ECL");
+    expect(mart?.command.executiveSummary).toContain("1 value claim");
+    expect(mart?.command.executiveSummary).not.toContain("ECL");
     expect(view?.summary.valueClaimCount).toBeGreaterThan(0);
+    expect(view?.summary.valueClaimCount).toBe(1);
+    expect(view?.summary.knownValueClaimCount).toBe(1);
+    expect(view?.summary.unknownValueClaimCount).toBe(0);
+    expect(view?.summary.economicReviewQueueCount).toBeGreaterThan(
+      view?.summary.valueClaimCount ?? 0,
+    );
   });
 
   it("maps ECL serving rows with recorded periods into value trajectory points", async () => {

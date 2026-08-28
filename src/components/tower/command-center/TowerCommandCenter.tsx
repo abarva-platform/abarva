@@ -136,7 +136,7 @@ export function TowerCommandCenter({
   const selectedAi = useMemo(
     () =>
       drawer?.kind === "ai"
-        ? (view?.ai.find((a) => a.n === drawer.n) ?? null)
+        ? (view?.allInitiatives.find((a) => a.n === drawer.n) ?? null)
         : null,
     [drawer, view],
   );
@@ -193,6 +193,7 @@ export function TowerCommandCenter({
             view={view}
             onOpenAi={(n) => setDrawer({ kind: "ai", n })}
             onOpenAction={(id) => setDrawer({ kind: "action", id })}
+            onOpenGap={(id) => setDrawer({ kind: "gap", id })}
           />
         );
       case "actions":
@@ -208,8 +209,10 @@ export function TowerCommandCenter({
         return (
           <CommandCenterView
             view={view}
-            onOpenProgram={(id) => setDrawer({ kind: "program", id })}
+            onOpenGap={(id) => setDrawer({ kind: "gap", id })}
             onGoToFunnel={() => goToTab("funnel")}
+            onGoToAi={() => goToTab("ai")}
+            onGoToActions={() => goToTab("actions")}
           />
         );
     }
@@ -236,9 +239,7 @@ export function TowerCommandCenter({
                       view?.ai.length ??
                       null)
                     : t.id === "actions"
-                      ? (view?.actions.length ?? 0) +
-                        (view?.gaps.length ?? 0) +
-                        (view?.pipelineGaps.length ?? 0)
+                      ? (view?.summary.economicReviewQueueCount ?? null)
                       : null;
               const attn =
                 (t.id === "funnel" && attention.funnel) ||

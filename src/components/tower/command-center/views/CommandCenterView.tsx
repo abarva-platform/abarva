@@ -10,7 +10,6 @@ import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
 import type {
   TowerCommandCenterView,
   TowerEvidenceGapView,
-  TowerProgramView,
 } from "@/lib/tower/command-center/types";
 import {
   Bar,
@@ -50,7 +49,7 @@ interface ExecutiveDecision {
   metricValue: string;
   due: string;
   tone: "red" | "amber" | "gray";
-  programId: string | null;
+  reviewTarget: "funnel" | "ai" | "actions";
 }
 
 function percent(numerator: number, denominator: number): string {
@@ -117,8 +116,15 @@ function executiveHeadline(view: TowerCommandCenterView): string {
 function executiveSummary(view: TowerCommandCenterView): string {
   const s = view.summary;
   if (s.executiveSummary) return s.executiveSummary;
+  const claims = valueClaimCount(view);
+  const emitting = view.ai.filter(
+    (item) => item.usageHeadline || item.usageBars.some((bar) => bar.pct > 0),
+  ).length;
   if (s.usageSupportedUsd <= 0) {
-    return "No governed usage support is visible, so adoption evidence is empty and every gate downstream of it is unreachable. Instrument, measure, then attest, in that order.";
+    if (emitting > 0) {
+      return `${formatCount(emitting)} AI and BI assets emit usage signals, but none has been reconciled to the ${formatCount(claims)} value claims. The separate economic review queue has ${formatCount(s.economicReviewQueueCount)} rows.`;
+    }
+    return `${formatCount(claims)} value claims are loaded, but no governed usage-to-value support is visible yet. Instrument, measure, then attest, in that order.`;
   }
   if (s.financeValidatedUsd <= 0) {
     return "Usage evidence exists, but the finance-validation gate has not released board-claimable value. Measure the outcomes, then staff validation.";
@@ -172,18 +178,9 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
   ];
 }
 
-function topBlockedProgram(
-  view: TowerCommandCenterView,
-): TowerProgramView | null {
-  return (
-    [...view.programs].sort((a, b) => b.blockedUsd - a.blockedUsd)[0] ?? null
-  );
-}
-
 function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
   const s = view.summary;
   const claims = valueClaimCount(view);
-  const firstProgram = topBlockedProgram(view);
   const measured = measuredUsd(view);
   const proofClearedClaims =
     s.claimableUsd > 0 ? s.outcomeMeasuredClaimCount : 0;
@@ -230,7 +227,7 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
       ...firstDecision,
       due: "Next review",
       tone: "red",
-      programId: firstProgram?.id ?? null,
+      reviewTarget: "ai",
     },
     {
       order: "2",
@@ -244,7 +241,7 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
       metricValue: formatCount(claimsMissingActual),
       due: "Next month",
       tone: "amber",
-      programId: firstProgram?.id ?? null,
+      reviewTarget: "funnel",
     },
     {
       order: "3",
@@ -256,7 +253,7 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
       metricValue: formatUsdM(measured),
       due: "Following review",
       tone: "gray",
-      programId: firstProgram?.id ?? null,
+      reviewTarget: "actions",
     },
   ];
 }
@@ -397,12 +394,16 @@ function ExecutiveWaterfallChart({ view }: { view: TowerCommandCenterView }) {
 
 export function CommandCenterView({
   view,
-  onOpenProgram,
+  onOpenGap,
   onGoToFunnel,
+  onGoToAi,
+  onGoToActions,
 }: {
   view: TowerCommandCenterView;
-  onOpenProgram: (id: string) => void;
+  onOpenGap: (id: string) => void;
   onGoToFunnel: () => void;
+  onGoToAi: () => void;
+  onGoToActions: () => void;
 }) {
   const s = view.summary;
   const measured = measuredUsd(view);
@@ -494,11 +495,12 @@ export function CommandCenterView({
                 </div>
                 <button
                   type="button"
-                  onClick={() =>
-                    decision.programId
-                      ? onOpenProgram(decision.programId)
-                      : onGoToFunnel()
-                  }
+                  onClick={() => {
+                    if (decision.reviewTarget === "ai") onGoToAi();
+                    else if (decision.reviewTarget === "actions")
+                      onGoToActions();
+                    else onGoToFunnel();
+                  }}
                 >
                   Review →
                 </button>
@@ -554,11 +556,11 @@ export function CommandCenterView({
           {formatCount(valueClaimCount(view))} value claims and the gate that
           holds them →
         </button>
-        <button type="button">
+        <button type="button" onClick={onGoToAi}>
           {formatCount(s.aiInitiativeCount || view.ai.length)} AI and BI assets
           by cost, risk and adoption →
         </button>
-        <button type="button">
+        <button type="button" onClick={onGoToActions}>
           {formatCount(evidenceFooterCount(view))} open tasks in evidence queues
           →
         </button>
@@ -573,9 +575,7 @@ export function CommandCenterView({
             <button
               key={gap.id}
               type="button"
-              onClick={() =>
-                gap.sourceProgramId && onOpenProgram(gap.sourceProgramId)
-              }
+              onClick={() => onOpenGap(gap.id)}
             >
               <span>{gap.missing}</span>
               <strong>

@@ -703,11 +703,14 @@ function buildHeadline(
   claimable: number,
   blocked: number,
   gatedRows: number,
+  valueClaims: number,
 ): string {
   if (claimable > 0) {
     return `${tenantName} has ${formatCioTowerMoney(claimable)} claimable value and ${formatCioTowerMoney(blocked)} still blocked by evidence gates.`;
   }
-  return `${tenantName} has $0 claimable value in ECL; ${gatedRows} rows name the evidence gate that must clear before Tower can treat value as proven.`;
+  const claimWord = valueClaims === 1 ? "claim" : "claims";
+  const claimVerb = valueClaims === 1 ? "remains" : "remain";
+  return `${tenantName} has $0 board-claimable value. ${valueClaims} value ${claimWord} ${claimVerb} behind evidence gates; ${gatedRows} separate review rows describe the supporting backlog.`;
 }
 
 export async function readTowerCommandCenter(args: {
@@ -786,6 +789,16 @@ export async function readTowerCommandCenter(args: {
       const claimRows = valueRowsForTotals.filter((row) =>
         payloadText(row, "claim_id"),
       );
+      const knownValueClaimRows = claimRows.filter(
+        (row) =>
+          payloadNullableNumber(row, "promised_value_usd") !== null ||
+          payloadNullableNumber(row, "baseline_value") !== null,
+      );
+      const unknownValueClaimRows = claimRows.filter(
+        (row) =>
+          payloadNullableNumber(row, "promised_value_usd") === null &&
+          payloadNullableNumber(row, "baseline_value") === null,
+      );
 
       return {
         generatedFrom: "ecl_serving" as const,
@@ -794,6 +807,7 @@ export async function readTowerCommandCenter(args: {
           claimable,
           blocked,
           gatedRows,
+          claimRows.length,
         ),
         command: {
           commandCenterKey: `tower:ecl:${tenantKey}:command-center`,
@@ -828,41 +842,39 @@ export async function readTowerCommandCenter(args: {
           boardScopeProgramCount: decisionRows.length,
           economicReviewQueueCount: gatedRows,
           valueClaimCount: claimRows.length,
-          knownValueClaimCount: claimRows.filter(
-            (row) => payloadText(row, "claim_gate_status") === "claimable",
-          ).length,
-          unknownValueClaimCount: gatedRows,
+          knownValueClaimCount: knownValueClaimRows.length,
+          unknownValueClaimCount: unknownValueClaimRows.length,
           knownZeroValueClaimCount: claimRows.filter(
             (row) => payloadNumber(row, "claimable_value_usd") === 0,
           ).length,
           knownValueAmountUsd: promised,
-          financeAttestedClaimCount: valueRowsForTotals.filter(
+          financeAttestedClaimCount: claimRows.filter(
             (row) => payloadNumber(row, "finance_validated_value_usd") > 0,
           ).length,
           businessAttestedClaimCount: 0,
           claimableClaimCount: claimRows.filter(
             (row) => payloadNumber(row, "claimable_value_usd") > 0,
           ).length,
-          usageSupportedClaimCount: valueRowsForTotals.filter(
+          usageSupportedClaimCount: claimRows.filter(
             (row) => payloadNumber(row, "usage_supported_value_usd") > 0,
           ).length,
-          fundedNoBaselineClaimCount: valueRowsForTotals.filter(
+          fundedNoBaselineClaimCount: claimRows.filter(
             (row) =>
               payloadNumber(row, "funded_amount_usd") > 0 &&
               payloadNumber(row, "baseline_value") === 0,
           ).length,
           staleClaimCount: 0,
           disputedClaimCount: 0,
-          baselineLinkedClaimCount: valueRows.filter(
+          baselineLinkedClaimCount: claimRows.filter(
             (row) => payloadNullableNumber(row, "baseline_value") !== null,
           ).length,
-          targetLinkedClaimCount: valueRows.filter(
+          targetLinkedClaimCount: claimRows.filter(
             (row) => payloadNullableNumber(row, "target_value") !== null,
           ).length,
-          actualLinkedClaimCount: valueRows.filter(
+          actualLinkedClaimCount: claimRows.filter(
             (row) => payloadNullableNumber(row, "current_value") !== null,
           ).length,
-          outcomeMeasuredClaimCount: valueRows.filter(
+          outcomeMeasuredClaimCount: claimRows.filter(
             (row) => payloadNullableNumber(row, "current_value") !== null,
           ).length,
           claimableProgramCount: 0,
@@ -887,6 +899,7 @@ export async function readTowerCommandCenter(args: {
             claimable,
             blocked,
             gatedRows,
+            claimRows.length,
           ),
           sourceFiles,
         },

@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import {
   formatCount,
   formatPct,
@@ -30,6 +32,7 @@ import { ChartTooltip, HEX, toM, withSliver } from "../charts/chart-kit";
 import { cx } from "../primitives";
 
 type Tone = "teal" | "amber" | "red" | "gray";
+type AiLens = "cost" | "risk" | "adoption" | "table";
 
 const AI_KIND_LABEL: Record<TowerAiKind, string> = {
   funded: "funded",
@@ -159,7 +162,11 @@ function ValueGateChart({ view }: { view: TowerCommandCenterView }) {
       valueUsd: s.approvedInvestmentUsd,
       fill: HEX.tealDark,
     },
-    { gate: "Adoption evidence", valueUsd: s.usageSupportedUsd, fill: HEX.red },
+    {
+      gate: "Usage-to-value support",
+      valueUsd: s.usageSupportedUsd,
+      fill: HEX.red,
+    },
     {
       gate: "Workflow change",
       valueUsd: Math.min(s.usageSupportedUsd, s.promisedUsd),
@@ -235,18 +242,33 @@ function ValueGateChart({ view }: { view: TowerCommandCenterView }) {
 }
 
 function trajectoryRows(view: TowerCommandCenterView) {
-  const s = view.summary;
-  const planned = Math.max(s.approvedInvestmentUsd ?? 0, 1) / 8;
-  const measured = measuredUsd(view) / 8;
-  return Array.from({ length: 8 }, (_, index) => {
-    const step = index + 1;
-    const ramp = 0.52 + step * 0.075;
-    return {
-      quarter: `Q${step}`,
-      planned: toM(planned * ramp),
-      actual: toM(measured * Math.min(1, 0.18 + step * 0.07)),
-    };
-  });
+  return view.valueTrajectory.map((point) => ({
+    quarter: point.fiscalQuarter,
+    planned: toM(
+      point.businessCaseBenefitUsd ??
+        point.financialConversionUsd ??
+        point.plannedInvestmentUsd ??
+        0,
+    ),
+    actual: toM(
+      point.realizedPAndLUsd ??
+        point.realizedCashUsd ??
+        point.financeValidatedRunRateUsd ??
+        0,
+    ),
+  }));
+}
+
+function trajectoryActualUsd(view: TowerCommandCenterView): number {
+  return view.valueTrajectory.reduce(
+    (sum, point) =>
+      sum +
+      (point.realizedPAndLUsd ??
+        point.realizedCashUsd ??
+        point.financeValidatedRunRateUsd ??
+        0),
+    0,
+  );
 }
 
 function TrajectoryChart({ view }: { view: TowerCommandCenterView }) {
@@ -300,74 +322,60 @@ function TrajectoryChart({ view }: { view: TowerCommandCenterView }) {
 
 function claimLedgerRows(view: TowerCommandCenterView) {
   const total = Math.max(valueClaimCount(view), 1);
-  const finance = view.programs.filter(
-    (p) => p.financeStatus !== "none",
-  ).length;
-  const usage = view.programs.filter((p) => p.usageStatus !== "none").length;
-  const measured = view.programs.filter(
-    (p) => p.usageSupportedUsd > 0 || p.financeValidatedUsd > 0,
-  ).length;
-  const stale = Math.max(view.summary.unmeasuredProgramCount, 0);
+  const s = view.summary;
   return [
     {
       label: "Baseline linked",
-      count: view.programs.length,
-      pct: (view.programs.length / total) * 100,
+      count: s.baselineLinkedClaimCount,
+      pct: (s.baselineLinkedClaimCount / total) * 100,
       tone: "teal" as Tone,
     },
     {
       label: "Target linked",
-      count:
-        view.summary.blockedProgramCount + view.summary.claimableProgramCount,
-      pct:
-        ((view.summary.blockedProgramCount +
-          view.summary.claimableProgramCount) /
-          total) *
-        100,
+      count: s.targetLinkedClaimCount,
+      pct: (s.targetLinkedClaimCount / total) * 100,
       tone: "teal" as Tone,
     },
     {
       label: "Actual linked",
-      count: measured,
-      pct: (measured / total) * 100,
-      tone: measured ? ("amber" as Tone) : ("red" as Tone),
+      count: s.actualLinkedClaimCount,
+      pct: (s.actualLinkedClaimCount / total) * 100,
+      tone: s.actualLinkedClaimCount ? ("amber" as Tone) : ("red" as Tone),
     },
     {
       label: "Outcome measured",
-      count: measured,
-      pct: (measured / total) * 100,
-      tone: measured ? ("amber" as Tone) : ("red" as Tone),
+      count: s.outcomeMeasuredClaimCount,
+      pct: (s.outcomeMeasuredClaimCount / total) * 100,
+      tone: s.outcomeMeasuredClaimCount ? ("amber" as Tone) : ("red" as Tone),
     },
     {
       label: "Usage supported",
-      count: usage,
-      pct: (usage / total) * 100,
-      tone: usage ? ("amber" as Tone) : ("red" as Tone),
+      count: s.usageSupportedClaimCount,
+      pct: (s.usageSupportedClaimCount / total) * 100,
+      tone: s.usageSupportedClaimCount ? ("amber" as Tone) : ("red" as Tone),
     },
     {
       label: "Business attested",
-      count: view.summary.claimableProgramCount,
-      pct: (view.summary.claimableProgramCount / total) * 100,
-      tone: view.summary.claimableProgramCount
-        ? ("teal" as Tone)
-        : ("red" as Tone),
+      count: s.businessAttestedClaimCount,
+      pct: (s.businessAttestedClaimCount / total) * 100,
+      tone: s.businessAttestedClaimCount ? ("teal" as Tone) : ("red" as Tone),
     },
     {
       label: "Finance attested",
-      count: finance,
-      pct: (finance / total) * 100,
-      tone: finance ? ("amber" as Tone) : ("red" as Tone),
+      count: s.financeAttestedClaimCount,
+      pct: (s.financeAttestedClaimCount / total) * 100,
+      tone: s.financeAttestedClaimCount ? ("amber" as Tone) : ("red" as Tone),
     },
     {
       label: "Disputed",
-      count: view.summary.conflictedProgramCount,
-      pct: (view.summary.conflictedProgramCount / total) * 100,
+      count: s.disputedClaimCount,
+      pct: (s.disputedClaimCount / total) * 100,
       tone: "red" as Tone,
     },
     {
       label: "Stale",
-      count: stale,
-      pct: (stale / total) * 100,
+      count: s.staleClaimCount,
+      pct: (s.staleClaimCount / total) * 100,
       tone: "gray" as Tone,
     },
   ];
@@ -405,8 +413,9 @@ export function ValueProofContractView({
   onOpenProgram: (id: string) => void;
 }) {
   const s = view.summary;
-  const measured = measuredUsd(view);
+  const actual = trajectoryActualUsd(view);
   const programs = topPrograms(view, 20);
+  const hasTrajectory = view.valueTrajectory.length > 0;
   return (
     <div className={styles.contractView}>
       <ContractMasthead view={view} />
@@ -449,22 +458,26 @@ export function ValueProofContractView({
               <strong>{formatUsdM(s.promisedUsd)}</strong>
             </div>
             <div>
-              <span>Actual</span>
-              <strong>{formatUsdM(measured)}</strong>
+              <span>Recorded actual</span>
+              <strong>{formatUsdM(actual)}</strong>
             </div>
             <div>
-              <span>Over plan</span>
-              <strong>
-                {formatUsdM(Math.max(0, s.promisedUsd - measured))}
-              </strong>
+              <span>Not yet proven</span>
+              <strong>{formatUsdM(Math.max(0, s.promisedUsd - actual))}</strong>
             </div>
           </div>
-          <div className={styles.trajectoryChart}>
-            <TrajectoryChart view={view} />
-          </div>
+          {hasTrajectory ? (
+            <div className={styles.trajectoryChart}>
+              <TrajectoryChart view={view} />
+            </div>
+          ) : (
+            <div className={styles.contractEmpty}>
+              No quarterly trajectory rows are loaded for this tenant.
+            </div>
+          )}
           <p className={styles.contractCallout}>
-            Red line is measured value visible to Tower; gray bars are the
-            approved planning path.
+            Red line is recorded actual value visible to Tower; gray bars are
+            the loaded planning path.
           </p>
         </article>
 
@@ -488,7 +501,7 @@ export function ValueProofContractView({
                   <th>#</th>
                   <th>Case</th>
                   <th>At stake</th>
-                  <th>Proof</th>
+                  <th>Readiness</th>
                   <th>Risk</th>
                 </tr>
               </thead>
@@ -650,6 +663,30 @@ function topAiRows(view: TowerCommandCenterView): TowerAiView[] {
     .slice(0, 6);
 }
 
+function aiBenefitLabel(item: TowerAiView): string {
+  if (item.promisedUsd > 0) {
+    return `${formatUsdM(item.promisedUsd)} benefit under review`;
+  }
+  if (item.financeValidatedUsd > 0) {
+    return `${formatUsdM(item.financeValidatedUsd)} finance-validated`;
+  }
+  return "no benefit claim loaded";
+}
+
+function aiUsageLabel(item: TowerAiView): string {
+  if (item.usageHeadline) return item.usageHeadline;
+  if (item.usageBars.length > 0) return "usage evidence recorded";
+  return "no usage evidence";
+}
+
+function aiUsageScore(item: TowerAiView): number | null {
+  const scoredBars = item.usageBars
+    .map((bar) => bar.pct)
+    .filter((pct) => Number.isFinite(pct));
+  if (scoredBars.length > 0) return Math.max(...scoredBars);
+  return item.usageHeadline ? item.readinessScore : null;
+}
+
 function costFindings(view: TowerCommandCenterView) {
   const gaps = [...view.gaps].sort(
     (a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0),
@@ -696,27 +733,90 @@ function costFindings(view: TowerCommandCenterView) {
     },
     {
       id: "F7",
-      badge: "Attribute",
+      badge: view.summary.aiUnallocatedSpendUsd > 0 ? "Attribute" : "Evidence",
       amountUsd:
-        view.summary.aiUnallocatedSpendUsd || gaps[3]?.valueAtStakeUsd || 0,
-      title: "Unattributed spend is rendered as a named gap, never as zero",
-      body: `${formatUsdM(view.summary.aiUnallocatedSpendUsd || 0)} is currently not released as claimable value without attribution evidence.`,
+        view.summary.aiUnallocatedSpendUsd > 0
+          ? view.summary.aiUnallocatedSpendUsd
+          : (actions[3]?.amountExposedUsd ?? gaps[3]?.valueAtStakeUsd ?? 0),
+      title:
+        view.summary.aiUnallocatedSpendUsd > 0
+          ? "Unattributed spend is rendered as a named gap, never as zero"
+          : (actions[3]?.title ??
+            gaps[3]?.blockedDecision ??
+            "Review the next value evidence gap"),
+      body:
+        view.summary.aiUnallocatedSpendUsd > 0
+          ? `${formatUsdM(view.summary.aiUnallocatedSpendUsd)} is currently not released as claimable value without attribution evidence.`
+          : (actions[3]?.why ??
+            gaps[3]?.why ??
+            "The amount shown is tied to the next governed evidence gap."),
       actionId: actions[3]?.id ?? null,
     },
   ];
+}
+
+function riskRows(view: TowerCommandCenterView): TowerEvidenceGapView[] {
+  return [...view.gaps]
+    .sort((a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0))
+    .slice(0, 20);
+}
+
+function adoptionRows(view: TowerCommandCenterView): TowerAiView[] {
+  return [...view.allInitiatives]
+    .sort(
+      (a, b) =>
+        (aiUsageScore(b) ?? -1) - (aiUsageScore(a) ?? -1) ||
+        b.readinessScore - a.readinessScore ||
+        b.aiSpendUsd - a.aiSpendUsd,
+    )
+    .slice(0, 20);
+}
+
+function allAiRows(view: TowerCommandCenterView): TowerAiView[] {
+  return [...view.allInitiatives].sort(
+    (a, b) =>
+      b.aiSpendUsd - a.aiSpendUsd ||
+      (aiUsageScore(b) ?? -1) - (aiUsageScore(a) ?? -1) ||
+      a.name.localeCompare(b.name),
+  );
 }
 
 export function AiPortfolioContractView({
   view,
   onOpenAi,
   onOpenAction,
+  onOpenGap,
 }: {
   view: TowerCommandCenterView;
   onOpenAi: (n: number) => void;
   onOpenAction: (id: string) => void;
+  onOpenGap: (id: string) => void;
 }) {
   const s = view.summary;
   const aiRows = topAiRows(view);
+  const [lens, setLens] = useState<AiLens>("cost");
+  const lensOptions = [
+    {
+      key: "cost" as const,
+      label: "Cost lens",
+      detail: `${formatCount(costFindings(view).length)} findings`,
+    },
+    {
+      key: "risk" as const,
+      label: "Risk lens",
+      detail: `${formatCount(view.gaps.length)} rows`,
+    },
+    {
+      key: "adoption" as const,
+      label: "Adoption lens",
+      detail: `${formatCount(s.aiInitiativeCount || view.allInitiatives.length)} assets`,
+    },
+    {
+      key: "table" as const,
+      label: "All tools",
+      detail: `${formatCount(view.allInitiatives.length)} rows`,
+    },
+  ];
   return (
     <div className={styles.contractView}>
       <ContractMasthead view={view} />
@@ -725,82 +825,213 @@ export function AiPortfolioContractView({
           title="AI portfolio"
           subtitle={`${formatCount(s.aiInitiativeCount || view.allInitiatives.length)} assets · ${formatUsdM(s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd)} attributed`}
         />
-        <div className={styles.contractSegments} aria-label="AI portfolio lens">
-          <span>
-            Cost lens <b>{formatCount(costFindings(view).length)} findings</b>
-          </span>
-          <span>
-            Risk lens <b>{formatCount(view.gaps.length)} rows</b>
-          </span>
-          <span>
-            Adoption lens{" "}
-            <b>
-              {formatCount(s.aiInitiativeCount || view.allInitiatives.length)}{" "}
-              assets
-            </b>
-          </span>
+        <div
+          className={styles.contractSegments}
+          role="tablist"
+          aria-label="AI portfolio lens"
+        >
+          {lensOptions.map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              role="tab"
+              aria-selected={lens === option.key}
+              className={lens === option.key ? styles.segmentOn : undefined}
+              onClick={() => setLens(option.key)}
+            >
+              {option.label} <b>{option.detail}</b>
+            </button>
+          ))}
         </div>
       </div>
 
-      <section className={styles.aiPortfolioGrid}>
-        <div className={styles.aiPortfolioLeft}>
-          <div className={styles.contractMiniKicker}>
-            Attributed spend by vendor
-          </div>
-          <article className={styles.contractCard}>
-            <div className={styles.aiSpendChart}>
-              <AiSpendChart view={view} />
+      {lens === "cost" ? (
+        <section className={styles.aiPortfolioGrid}>
+          <div className={styles.aiPortfolioLeft}>
+            <div className={styles.contractMiniKicker}>
+              Attributed spend by vendor
             </div>
-          </article>
-          <div className={styles.aiSpendList}>
-            {aiRows.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onOpenAi(item.n)}
-              >
-                <span>
-                  <strong>{item.vendor ?? item.name}</strong>
-                  <i>{item.category ?? AI_KIND_LABEL[item.displayBucket]}</i>
-                </span>
-                <span>
-                  <strong>{formatUsdM(item.aiSpendUsd)}</strong>
-                  <i>
-                    {formatUsdM(item.promisedUsd || item.financeValidatedUsd)}{" "}
-                    exposed at review
-                  </i>
-                </span>
-              </button>
-            ))}
+            <article className={styles.contractCard}>
+              <div className={styles.aiSpendChart}>
+                <AiSpendChart view={view} />
+              </div>
+            </article>
+            <div className={styles.aiSpendList}>
+              {aiRows.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onOpenAi(item.n)}
+                >
+                  <span>
+                    <strong>{item.vendor ?? item.name}</strong>
+                    <i>{item.category ?? AI_KIND_LABEL[item.displayBucket]}</i>
+                  </span>
+                  <span>
+                    <strong>{formatUsdM(item.aiSpendUsd)}</strong>
+                    <i>{aiBenefitLabel(item)}</i>
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className={styles.aiPortfolioRight}>
-          <div className={styles.contractMiniKicker}>
-            Cost findings · evidenced
+          <div className={styles.aiPortfolioRight}>
+            <div className={styles.contractMiniKicker}>
+              Cost findings · evidenced
+            </div>
+            <div className={styles.findingStack}>
+              {costFindings(view).map((finding) => (
+                <button
+                  key={finding.id}
+                  type="button"
+                  className={styles.costFindingCard}
+                  onClick={() =>
+                    finding.actionId && onOpenAction(finding.actionId)
+                  }
+                >
+                  <div className={styles.findingTop}>
+                    <span>{finding.id}</span>
+                    <b>{finding.badge}</b>
+                    <strong>{formatUsdM(finding.amountUsd)}</strong>
+                  </div>
+                  <h3>{finding.title}</h3>
+                  <p>{finding.body}</p>
+                </button>
+              ))}
+            </div>
           </div>
-          <div className={styles.findingStack}>
-            {costFindings(view).map((finding) => (
-              <button
-                key={finding.id}
-                type="button"
-                className={styles.costFindingCard}
-                onClick={() =>
-                  finding.actionId && onOpenAction(finding.actionId)
-                }
-              >
-                <div className={styles.findingTop}>
-                  <span>{finding.id}</span>
-                  <b>{finding.badge}</b>
-                  <strong>{formatUsdM(finding.amountUsd)}</strong>
-                </div>
-                <h3>{finding.title}</h3>
-                <p>{finding.body}</p>
-              </button>
-            ))}
+        </section>
+      ) : null}
+
+      {lens === "risk" ? (
+        <article className={cx(styles.contractCard, styles.contractFullCard)}>
+          {cardTitle("Risk lens", "Top value evidence gaps by amount at stake")}
+          <div className={styles.decisionLaneTableWrap}>
+            <table className={styles.contractTable}>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Gap</th>
+                  <th>Owner</th>
+                  <th>At stake</th>
+                  <th>Priority</th>
+                </tr>
+              </thead>
+              <tbody>
+                {riskRows(view).map((gap, index) => (
+                  <tr key={gap.id}>
+                    <td>{index + 1}</td>
+                    <td>
+                      <button type="button" onClick={() => onOpenGap(gap.id)}>
+                        {gap.missing}
+                      </button>
+                      <span>{gap.blockedDecision}</span>
+                    </td>
+                    <td>{gap.owner ?? "Unassigned"}</td>
+                    <td>
+                      {gap.valueAtStakeUsd === null
+                        ? "Unknown"
+                        : formatUsdM(gap.valueAtStakeUsd)}
+                    </td>
+                    <td>{gap.priority}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-      </section>
+        </article>
+      ) : null}
+
+      {lens === "adoption" ? (
+        <article className={cx(styles.contractCard, styles.contractFullCard)}>
+          {cardTitle(
+            "Adoption lens",
+            "AI and BI assets ranked by recorded usage evidence",
+          )}
+          <div className={styles.decisionLaneTableWrap}>
+            <table className={styles.contractTable}>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Initiative / tool</th>
+                  <th>Usage</th>
+                  <th>Adoption</th>
+                  <th>Benefit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {adoptionRows(view).map((item, index) => (
+                  <tr key={item.id}>
+                    <td>{index + 1}</td>
+                    <td>
+                      <button type="button" onClick={() => onOpenAi(item.n)}>
+                        {item.name}
+                      </button>
+                      <span>
+                        {item.vendor ?? item.system ?? "No vendor loaded"}
+                      </span>
+                    </td>
+                    <td>{aiUsageLabel(item)}</td>
+                    <td>
+                      {aiUsageScore(item) === null
+                        ? "Unknown"
+                        : formatPct(aiUsageScore(item) ?? 0)}
+                    </td>
+                    <td>{aiBenefitLabel(item)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      ) : null}
+
+      {lens === "table" ? (
+        <article className={cx(styles.contractCard, styles.contractFullCard)}>
+          {cardTitle(
+            "All AI initiatives and tools",
+            `${formatCount(view.allInitiatives.length)} governed rows`,
+          )}
+          <div className={styles.decisionLaneTableWrap}>
+            <table className={styles.contractTable}>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Initiative / tool</th>
+                  <th>Vendor</th>
+                  <th>Type</th>
+                  <th>Spend</th>
+                  <th>Benefit</th>
+                  <th>Readiness</th>
+                  <th>Risk</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allAiRows(view).map((item, index) => (
+                  <tr key={item.id}>
+                    <td>{index + 1}</td>
+                    <td>
+                      <button type="button" onClick={() => onOpenAi(item.n)}>
+                        {item.name}
+                      </button>
+                      <span>{aiUsageLabel(item)}</span>
+                    </td>
+                    <td>{item.vendor ?? "Unassigned"}</td>
+                    <td>
+                      {item.category ?? AI_KIND_LABEL[item.displayBucket]}
+                    </td>
+                    <td>{formatUsdM(item.aiSpendUsd)}</td>
+                    <td>{aiBenefitLabel(item)}</td>
+                    <td>{formatPct(item.readinessScore)}</td>
+                    <td>{formatPct(item.riskScore)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      ) : null}
 
       <footer className={styles.contractFoot}>
         {s.tenantName} · adoption, finance validation and claimable value are
@@ -935,10 +1166,7 @@ export function EvidenceActionsContractView({
 }) {
   const s = view.summary;
   const economicRows =
-    (s.aiInitiativeCount || view.allInitiatives.length) +
-    valueClaimCount(view) +
-    view.gaps.length +
-    view.pipelineGaps.length;
+    s.economicReviewQueueCount || view.gaps.length + view.pipelineGaps.length;
   const campaigns = campaignRows(view);
   const rowsByPage = reconciliationRows(view);
   const rowsTotal = rowsByPage.reduce((sum, [, count]) => sum + count, 0);
