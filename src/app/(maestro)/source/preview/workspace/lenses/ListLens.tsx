@@ -12,7 +12,7 @@ export function ListLens({ vm }: { vm: SourceWorkspaceVM }) {
         binding="SourceRenewalExposure + SourceSourcingLeverage"
         columns={vm.listCols}
         rows={vm.listRows}
-        footnote="Saved views are filters on the governed register, not separate datasets — the full register holds 119 contracts."
+        footnote="Saved views are filters on the governed register, not separate datasets."
       />
     );
   }

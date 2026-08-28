@@ -26,6 +26,7 @@ import { stripGovernedArtifactPayloadsFromText } from "@/lib/intelligence/answer
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import { Tooltip } from "./Tooltip";
 import { ContextLens } from "./lenses/ContextLens";
+import { ListLens } from "./lenses/ListLens";
 import { VendorCanvas } from "./canvases/VendorCanvas";
 import { ContractCanvas } from "./canvases/ContractCanvas";
 import { OpportunityCanvas } from "./canvases/OpportunityCanvas";
@@ -281,8 +282,51 @@ export function WorkspaceClient({
     return buildViewModel(logic);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, portfolio, tenantName]);
+  const selectWorkspaceSurface = useCallback(
+    (kind: string, id: string | null = null, tab?: string) => {
+      setState((prev) => {
+        const hist = prev.hist
+          .slice(0, prev.hi + 1)
+          .concat([{ kind, id, tab }]);
+        const tabs = tab ? { ...prev.tabs, [kind]: tab } : prev.tabs;
+        return {
+          sel: { kind, id },
+          tabs,
+          hist,
+          hi: hist.length - 1,
+          quadrant: null,
+          tip: null,
+        };
+      });
+      if (kind === "contract" && id) fetchContractDetail(id);
+    },
+    [fetchContractDetail, setState],
+  );
+  const sourceSurfaceActions = useMemo(
+    () => ({
+      "Vendor portfolio": () => selectWorkspaceSurface("vendorList", null),
+      "Vendor 360": () => {
+        const vendorRef =
+          vm.conc.byVendor[0]?.vendorRef ??
+          portfolio.vendors[0]?.vendor_ref ??
+          null;
+        if (vendorRef) selectWorkspaceSurface("vendor", vendorRef, "Overview");
+      },
+      "Contract 360": () => {
+        const contractId = portfolio.contracts[0]?.contract_id ?? null;
+        if (contractId)
+          selectWorkspaceSurface("contract", contractId, "Story");
+      },
+    }),
+    [portfolio.contracts, portfolio.vendors, selectWorkspaceSurface, vm],
+  );
   const isVendor360Cockpit =
-    !vm.isVendor && !vm.isContract && !vm.isOpp && !vm.isEvidence;
+    !vm.isVendor &&
+    !vm.isContract &&
+    !vm.isOpp &&
+    !vm.isEvidence &&
+    !vm.isVendorList &&
+    !vm.isContractList;
 
   // The Source dock uses the rich aVa route so charts, tables, graphs, and
   // citations survive as structured packets instead of being flattened to text.
@@ -611,7 +655,10 @@ export function WorkspaceClient({
           <>
             <EclDemoFindingsPanel product="source" />
             <div style={{ padding: "0 20px 12px" }}>
-              <EclServingSurfaceCoverage product="source" />
+              <EclServingSurfaceCoverage
+                product="source"
+                actions={sourceSurfaceActions}
+              />
             </div>
           </>
         ) : null}
@@ -806,6 +853,9 @@ export function WorkspaceClient({
                 }}
               >
                 {isVendor360Cockpit ? <ContextLens vm={vm} /> : null}
+                {vm.isVendorList || vm.isContractList ? (
+                  <ListLens vm={vm} />
+                ) : null}
                 {vm.isVendor ? <VendorCanvas vm={vm} /> : null}
                 {vm.isContract ? <ContractCanvas vm={vm} /> : null}
                 {vm.isOpp ? <OpportunityCanvas vm={vm} /> : null}

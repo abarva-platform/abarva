@@ -574,15 +574,23 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     crumbLabels = ["Source", "Contracts", title];
     if (kind === "vendorList") {
       const vs = vm.portfolio.vendors.filter(
-        (v) => (v.vendor_category ?? "Unresolved") === sel.id,
+        (v) =>
+          !sel.id ||
+          sel.id === "all" ||
+          (v.vendor_category ?? "Unresolved") === sel.id,
       );
-      title = (sel.id ?? "Unresolved") + " vendors";
+      title =
+        !sel.id || sel.id === "all" ? "All vendors" : sel.id + " vendors";
       thesis =
         vs.length +
         " vendors · " +
         money(vs.reduce(addAnnualValue, 0)) +
         " annual contract value.";
-      crumbLabels = ["Source", "Vendors", sel.id ?? "Unresolved"];
+      crumbLabels = [
+        "Source",
+        "Vendors",
+        !sel.id || sel.id === "all" ? "All" : sel.id,
+      ];
     }
   }
   const crumbs = crumbLabels.map((l, i) => ({
@@ -1708,7 +1716,12 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     { label: "Auto-renewing", align: "right" },
   ];
   const vendorListRows: DataTableRow[] = vm.portfolio.vendors
-    .filter((v) => (v.vendor_category ?? "Unresolved") === sel.id)
+    .filter(
+      (v) =>
+        !sel.id ||
+        sel.id === "all" ||
+        (v.vendor_category ?? "Unresolved") === sel.id,
+    )
     .sort((a, b) => (b.annual_value ?? 0) - (a.annual_value ?? 0))
     .map((v) => ({
       onClick: () => vm.select("vendor", v.vendor_ref),

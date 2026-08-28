@@ -63,6 +63,9 @@ metadata.
 - Follow-up: Source workspace proof-layer aggregate reads set the database tenant context to the
   canonical tenant key while still filtering over the authorized alias set, so RLS-protected
   consumption rows are visible to the proof-layer panel.
+- Follow-up: Source serving-surface chips now open existing in-page vendor portfolio, Vendor 360,
+  and Contract 360 views instead of rendering as passive labels; the grouped vendor list supports
+  an all-vendor default while retaining category-filtered views.
 
 ## QA / Validation
 
@@ -95,6 +98,12 @@ metadata.
 - pass: focused malformed-date display regression:
   `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' --runInBand`.
 - pass: scoped `npx eslint` on the Source workspace date formatter and regression test.
+- pass: focused serving-surface action regressions:
+  `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' --runInBand`.
+- pass: scoped `npx eslint` on the serving-surface component, Source workspace, list lens, and
+  focused tests.
+- pass: serving-surface action typecheck:
+  `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --skipLibCheck --project tsconfig.json`.
 - partial: signed-in production proof showed the scoped contract loads cleanly without tenant
   leakage and the optimization opportunity is legible. It also found that monthly SLA rows and
   actual annual spend need the post-apply UI follow-up in this release record before final live

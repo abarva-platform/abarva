@@ -80,8 +80,10 @@ const PRODUCT_TONES: Record<
 };
 
 export function EclServingSurfaceCoverage({
+  actions,
   product,
 }: {
+  actions?: Partial<Record<(typeof SURFACE_LABELS)[EclServingProduct][number], () => void>>;
   product: EclServingProduct;
 }) {
   const labels = SURFACE_LABELS[product];
@@ -136,22 +138,38 @@ export function EclServingSurfaceCoverage({
           gap: 7,
         }}
       >
-        {labels.map((label) => (
-          <span
-            key={label}
-            style={{
-              background: tone.chip,
-              border: `1px solid ${tone.border}`,
-              color: "#111827",
-              fontSize: 12,
-              fontWeight: 650,
-              lineHeight: 1,
-              padding: "7px 9px",
-            }}
-          >
-            {label}
-          </span>
-        ))}
+        {labels.map((label) => {
+          const action = actions?.[label];
+          const chipStyle = {
+            background: tone.chip,
+            border: `1px solid ${tone.border}`,
+            color: "#111827",
+            fontSize: 12,
+            fontWeight: 650,
+            lineHeight: 1,
+            padding: "7px 9px",
+          };
+          return action ? (
+            <button
+              key={label}
+              type="button"
+              aria-label={`Open ${label}`}
+              onClick={action}
+              style={{
+                ...chipStyle,
+                appearance: "none",
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              {label}
+            </button>
+          ) : (
+            <span key={label} style={chipStyle}>
+              {label}
+            </span>
+          );
+        })}
       </div>
     </section>
   );
