@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-live-proven`
 
 ## Plain-English Summary
 
@@ -36,6 +36,8 @@ Canonical/projection layers: no change. The handoff uses existing Tower outcome-
 - `src/lib/programs/__tests__/cross-module-trace-view.test.ts`
 - `scripts/ecl/run_meridian_phs_moves_browser_smoke.mjs`
 - `scripts/ecl/write_meridian_phs_handoff_proof.mjs`
+- `scripts/ecl/write_meridian_phs_demo_status.mjs`
+- `docs/architecture/meridian-phs-demo-readiness-status.json`
 
 ## QA / Validation
 
@@ -44,19 +46,20 @@ Canonical/projection layers: no change. The handoff uses existing Tower outcome-
 - PASS: Moves browser proof contract validation.
 - PASS: handoff proof writer.
 - PASS: script syntax checks.
-- NOT-RUN: post-deploy signed-in Moves browser proof for the new trace text.
+- PASS: post-deploy signed-in Chrome proof on the live Moves trace route confirmed the new Tower-to-Moves action handoff text and next gate text render on the deployed default path.
+- PASS: demo-readiness status regeneration preserves the live trace proof and marks the old generated Moves narrative artifact as not consumed by live Strategic Moves routes.
 - PASS: release check.
 
 ## Rollout Plan
 
-Merge by pull request only. The repo-owned ACA deploy workflow may deploy the updated trace route after merge. After deploy, rerun the signed-in Moves browser proof against the current digest and regenerate the demo-readiness status from the proof artifacts.
+Completed by pull request and repo-owned ACA deploy workflow. Signed-in Chrome proof was captured against the deployed default Moves trace route after the traffic shift.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: required if route code is deployed.
 - Shared runtime mutators: none.
 - Approved image digest: produced by the repo-owned deploy workflow.
-- ACA runtime invariant: required before claiming live proof.
+- ACA runtime invariant: passed in repo-owned deploy workflow run `33154382972`.
 - Worker image invariant: not applicable.
 - Feature/env flag update path: none.
 - Live signed-in proof required: yes, for the Moves trace browser assertion.
@@ -69,7 +72,10 @@ Revert the PR and redeploy the prior digest-pinned image. No schema rollback or 
 
 - Pull request and CI checks.
 - Local focused test output.
-- Post-deploy signed-in Moves browser proof summary.
+- ACA deploy workflow run `33154382972`.
+- Post-deploy signed-in Chrome proof on `https://app.abarva.ai/strategic-moves/7d86b833-ca27-5fec-b105-ed6f74aaf884/trace`.
+- Screenshot: `/tmp/meridian-phs-moves-trace-live-after-2cd59c31-20260828.png`.
+- Screenshot SHA-256: `e647cda295c1d4c8b67b9192765be0af9323aefacf2a7babe279280121a6460f`.
 - Regenerated demo-readiness status JSON.
 
 ## Known Gaps

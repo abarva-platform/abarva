@@ -301,8 +301,10 @@ function moveContentQuality() {
   return {
     file,
     generated_at: generatedAt,
-    runtime_import_state: "no_direct_strategic_moves_route_import_found",
-    status: issues.length ? "needs_demo_refresh" : "current",
+    runtime_import_state: "not_consumed_by_strategic_moves_routes",
+    live_route_consumed: false,
+    demo_blocking: false,
+    status: issues.length ? "archived_generated_artifact_has_known_issues" : "current",
     issues,
   };
 }
@@ -331,6 +333,8 @@ function main() {
   const movesSurfaceProof = browserProof
     ? movesSurfaceProofFromSummary(browserProof)
     : movesSurfaceProofFromExistingStatus(existingStatus);
+  const latestLiveTraceProof =
+    existingStatus?.phs_executive_demo?.moves_surfaces?.latest_live_trace_proof ?? null;
   const handoffProofSummary = handoffProofFromSummary(handoffProof) ?? handoffProofFromExistingStatus(existingStatus);
 
   const movesRouteStatuses = MOVES_SURFACES.map((surface) => {
@@ -382,6 +386,7 @@ function main() {
         route_files_expected: MOVES_SURFACES.length,
         excluded: movesProof?.excluded ?? 0,
         proof_state: movesProof?.accepted ? "browser_proof_complete" : "browser_proof_required",
+        ...(latestLiveTraceProof ? { latest_live_trace_proof: latestLiveTraceProof } : {}),
         surfaces: movesRouteStatuses,
       },
       moves_operational_activation: {
@@ -419,8 +424,8 @@ function main() {
     next_backlog: [
       {
         order: 1,
-        slice: "Refresh Moves Meridian/PHS demo content",
-        reason: "Moves generated content is stale and planning-grade.",
+        slice: "Resolve Moves operational activation proof",
+        reason: "Moves live routes are browser-proven, but the activation tracker still has 0 of 38 operational rows proven by its dedicated load/readback artifact.",
         hard_gate: false,
       },
       {
