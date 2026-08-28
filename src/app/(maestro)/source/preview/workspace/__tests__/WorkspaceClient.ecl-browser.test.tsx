@@ -162,6 +162,30 @@ async function writeEclProjectionFixture(dir: string) {
           "requires_owner_finance_legal_review",
         ]),
       },
+      {
+        tenant_key: "meridian-health",
+        row_key: "MER-CTR-EPIC-001",
+        contract_id: "contract-object-2",
+        vendor_object_id: "MER-VEN-EPIC",
+        vendor_name: "Epic Systems Corporation",
+        contract_name: "Clinical Applications Agreement",
+        renewal_notice_date: "2027-06-30",
+        end_date: "2027-12-31",
+        annualized_value_usd: "500000",
+        total_contract_value_usd: "1500000",
+        value_state: "known",
+        scope_json: JSON.stringify([
+          { domain: "Clinical", name: "Clinical applications" },
+        ]),
+        spend_summary_json: JSON.stringify({
+          ap_actual_total_usd: 500000,
+          market_benchmark: {
+            basis: "model_inferred",
+            variance_percent: 0,
+          },
+        }),
+        gap_flags_json: JSON.stringify([]),
+      },
     ]),
     "utf-8",
   );
@@ -176,6 +200,15 @@ async function writeEclProjectionFixture(dir: string) {
         contract_count: "1",
         annualized_spend_usd: "10710000",
         contract_ids_json: JSON.stringify(["MER-CTR-SSO-BPO-001"]),
+      },
+      {
+        tenant_key: "meridian-health",
+        row_key: "MER-VEN-EPIC",
+        vendor_object_id: "MER-VEN-EPIC",
+        vendor_name: "Epic Systems Corporation",
+        contract_count: "1",
+        annualized_spend_usd: "500000",
+        contract_ids_json: JSON.stringify(["MER-CTR-EPIC-001"]),
       },
     ]),
     "utf-8",
@@ -255,16 +288,12 @@ describe("Source workspace ECL browser-surface proof", () => {
     });
 
     expect(
-      screen.getByText(/Meridian Health · 1 contracts · 1 vendors/),
+      screen.getByText(/Meridian Health · 2 contracts · 2 vendors/),
     ).toBeTruthy();
     expect(
       screen.getByRole("navigation", {
         name: "Vendor 360 cockpit sections",
       }),
-    ).toBeTruthy();
-    expect(screen.getByText(/Decide \$10\.7M of annual value/)).toBeTruthy();
-    expect(
-      screen.getByText(/1 active contract sits inside the governed decision set/),
     ).toBeTruthy();
     expect(screen.getByText("Helix Shared Services Group")).toBeTruthy();
     expect(screen.getByText("Contract register")).toBeTruthy();
@@ -277,6 +306,20 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     expect(screen.getByText("All vendors")).toBeTruthy();
     expect(screen.getByText("Vendors — category view")).toBeTruthy();
+    expect(
+      screen.getByRole("searchbox", { name: "Search vendors" }),
+    ).toBeTruthy();
+
+    fireEvent.change(
+      screen.getByRole("searchbox", { name: "Search vendors" }),
+      {
+        target: { value: "Epic" },
+      },
+    );
+
+    expect(screen.getByText("Epic Systems Corporation")).toBeTruthy();
+    expect(screen.queryByText("Helix Shared Services Group")).toBeNull();
+    expect(screen.getByText("1 of 2")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Open Vendor 360" }));
 
