@@ -9,6 +9,8 @@ const DEFAULT_PLAN = "docs/architecture/ECL_CLEAN_BREAK_INTEGRATED_EXECUTION_PLA
 const DEFAULT_NEEDS = "docs/architecture/ECL_PRODUCT_DETERMINISTIC_NEEDS_2026_08_22.md";
 const DEFAULT_FINDINGS = "docs/architecture/meridian-demo-findings-20260824.json";
 const DEFAULT_TENANT_REGISTRY = "datasets/tenant-inputs/tenant-input-registry.json";
+const DEFAULT_HOME_NARRATIVE_WRITER_QUALITY =
+  "docs/architecture/home-ecl-narrative-writer-quality-2026-08-28.json";
 const DEFAULT_RETIREMENT_SUMMARY =
   "reports/ecl-legacy-table-retirement-map-2026-08-22/legacy_table_retirement_summary.json";
 const DEFAULT_RETIREMENT_MAP =
@@ -84,6 +86,8 @@ function parseArgs(argv) {
     browserOperatorSummary: process.env.ECL_BROWSER_OPERATOR_SUMMARY || null,
     evalOperatorSummary: process.env.ECL_EVAL_OPERATOR_SUMMARY || null,
     cleanupProofSummary: process.env.ECL_CLEANUP_PROOF_SUMMARY || null,
+    homeNarrativeWriterQuality:
+      process.env.ECL_HOME_NARRATIVE_WRITER_QUALITY || DEFAULT_HOME_NARRATIVE_WRITER_QUALITY,
     runId: process.env.GITHUB_RUN_ID || null,
     digest: process.env.ECL_STATUS_IMAGE_DIGEST || null,
     timestamp: process.env.ECL_STATUS_TIMESTAMP || new Date().toISOString(),
@@ -103,6 +107,7 @@ function parseArgs(argv) {
     else if (arg === "--browser-operator-summary") args.browserOperatorSummary = next();
     else if (arg === "--eval-operator-summary") args.evalOperatorSummary = next();
     else if (arg === "--cleanup-proof-summary") args.cleanupProofSummary = next();
+    else if (arg === "--home-narrative-writer-quality") args.homeNarrativeWriterQuality = next();
     else if (arg === "--run-id") args.runId = next();
     else if (arg === "--digest") args.digest = next();
     else if (arg === "--timestamp") args.timestamp = next();
@@ -120,6 +125,7 @@ Options:
   --browser-operator-summary <path>       Browser operator summary.json.
   --eval-operator-summary <path>          Eval operator summary.json.
   --cleanup-proof-summary <path[,path]>   Compact retired-layer cleanup proof JSON path(s).
+  --home-narrative-writer-quality <path>  Home narrative writer quality JSON.
   --run-id <id>                           Proof or status run id.
   --digest <sha256>                       Digest pinned image under proof.
   --timestamp <iso>                       Status timestamp.
@@ -152,6 +158,12 @@ function gitLsTree(ref, paths = []) {
 function readJsonIfPresent(file) {
   if (!file || !fs.existsSync(file)) return null;
   return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+function readJsonFromRefIfPresent(ref, file) {
+  if (!file) return null;
+  if (gitFileExists(ref, file)) return JSON.parse(gitShow(ref, file));
+  return readJsonIfPresent(file);
 }
 
 function activeTenantsFromRegistry(registry) {
@@ -526,6 +538,31 @@ function operatorImageDigest(summary) {
   return summary.imageDigest || null;
 }
 
+function normalizeHomeNarrativeWriterQuality(proof) {
+  if (!proof) return null;
+  const generated = Number(proof.generated_claims ?? proof.ledger_rows ?? proof.generated ?? 0);
+  const semanticDrops = Number(proof.semantic_drops ?? proof.dropped_semantic ?? 0);
+  const repaired = Number(proof.repairs ?? proof.repaired ?? 0);
+  const keptClean = Number(proof.kept_clean ?? proof.kept ?? 0);
+  const structuralDrops = Number(proof.structural_drops ?? proof.dropped_structural ?? 0);
+  const published = Number(proof.published_claims ?? proof.chapter_claim_rows ?? generated - semanticDrops - structuralDrops);
+  return {
+    schema_version: proof.schema_version ?? "home_ecl_narrative_writer_quality/v1",
+    tenant_key: proof.tenant_key ?? "meridian-health",
+    assessment_id: proof.assessment_id ?? null,
+    generated_claims: generated,
+    published_claims: published,
+    semantic_drops: semanticDrops,
+    semantic_drop_rate_percent: generated ? Number(((semanticDrops / generated) * 100).toFixed(1)) : 0,
+    repairs: repaired,
+    kept_clean: keptClean,
+    kept_clean_rate_percent: generated ? Number(((keptClean / generated) * 100).toFixed(1)) : 0,
+    structural_drops: structuralDrops,
+    source_proof: proof.source_proof ?? null,
+    tracked_next_to_eval: true,
+  };
+}
+
 function buildStatus(args) {
   const plan = gitShow(args.ref, DEFAULT_PLAN);
   const needs = gitShow(args.ref, DEFAULT_NEEDS);
@@ -537,6 +574,9 @@ function buildStatus(args) {
   const liveProof = readJsonIfPresent(args.liveProofSummary);
   const browserSummary = readJsonIfPresent(args.browserOperatorSummary);
   const evalSummary = readJsonIfPresent(args.evalOperatorSummary);
+  const homeNarrativeWriterQuality = normalizeHomeNarrativeWriterQuality(
+    readJsonFromRefIfPresent(args.ref, args.homeNarrativeWriterQuality),
+  );
 
   const surfaces = extractMarkdownTable(plan, "### Serving Surface Enumeration");
   const productCounts = Object.fromEntries(
@@ -725,6 +765,7 @@ function buildStatus(args) {
       eval_baseline_denominator: proofEval?.answers_evaluated ?? null,
       eval_ablation_accepted: proofEval?.ablation_answers_accepted ?? null,
       eval_ablation_denominator: proofEval?.ablation_answers_evaluated ?? null,
+      home_narrative_writer_quality: homeNarrativeWriterQuality,
       alias_count: 77,
       alias_policy_status: evalEvent?.summary?.alias_policy?.status ?? "frozen",
     },
@@ -745,6 +786,17 @@ function buildStatus(args) {
         denominator: 10,
         finding_ids: findings.map((finding) => finding.id).sort(),
       },
+      home_narrative_writer_quality: homeNarrativeWriterQuality
+        ? {
+            numerator: homeNarrativeWriterQuality.published_claims,
+            denominator: homeNarrativeWriterQuality.generated_claims,
+            semantic_drops: homeNarrativeWriterQuality.semantic_drops,
+            repairs: homeNarrativeWriterQuality.repairs,
+            kept_clean: homeNarrativeWriterQuality.kept_clean,
+            structural_drops: homeNarrativeWriterQuality.structural_drops,
+            source_proof: homeNarrativeWriterQuality.source_proof,
+          }
+        : null,
       legacy_cleanup: {
         status: "closed_no_migration_decision",
         retired_aggregate_reported: false,

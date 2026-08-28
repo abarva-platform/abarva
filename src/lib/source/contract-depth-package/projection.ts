@@ -75,6 +75,11 @@ function sum(rows: readonly CsvRecord[], key: string): number {
   return rows.reduce((total, row) => total + numberValue(row, key), 0);
 }
 
+function omitKeys(row: CsvRecord, keys: readonly string[]): CsvRecord {
+  const omit = new Set(keys);
+  return Object.fromEntries(Object.entries(row).filter(([key]) => !omit.has(key)));
+}
+
 function hasSyntheticPolicy(row: CsvRecord): boolean {
   return value(row, 'synthetic_policy') === 'synthetic_demo_only_not_client_truth';
 }
@@ -154,9 +159,8 @@ export function projectContractDepthPackage(input: ContractDepthPackageInput): C
     };
   });
 
-  const contractVendor360 = contract360.map((row) => {
-    const copy: CsvRecord = { ...row };
-    for (const key of [
+  const contractVendor360 = contract360.map((row) =>
+    omitKeys(row, [
       'scoped_application_count',
       'critical_application_count',
       'linked_budget_amount',
@@ -165,11 +169,8 @@ export function projectContractDepthPackage(input: ContractDepthPackageInput): C
       'cloud_sev1_sev2_incidents',
       'operational_evidence_gap',
       'initiative_dependency_count',
-    ]) {
-      delete copy[key];
-    }
-    return copy;
-  });
+    ]),
+  );
 
   const vendorContractPortfolio = Array.from(groupBy(contract360, 'vendor_ref').entries()).map(([vendorRef, rows]) => ({
     tenant_key: value(rows[0], 'tenant_key'),

@@ -12,6 +12,7 @@ const compactSummary = path.join(tmp, "compact-summary.json");
 const browserSummary = path.join(tmp, "browser-summary.json");
 const evalSummary = path.join(tmp, "eval-summary.json");
 const cleanupSummary = path.join(tmp, "cleanup-summary.json");
+const homeNarrativeWriterQuality = path.join(tmp, "home-narrative-writer-quality.json");
 const out = path.join(tmp, "status.json");
 const ref = process.env.ECL_RECONCILE_REF || "origin/main";
 const PUBLIC_OBJECT_BATCH = [
@@ -297,6 +298,30 @@ try {
     "utf8",
   );
 
+  writeFileSync(
+    homeNarrativeWriterQuality,
+    `${JSON.stringify(
+      {
+        schema_version: "home_ecl_narrative_writer_quality/v1",
+        tenant_key: "meridian-health",
+        assessment_id: "MERIDIAN_PHS_ECL_DENSE_SYNTHETIC_2026_08_24",
+        generated_claims: 60,
+        published_claims: 37,
+        semantic_drops: 22,
+        repairs: 27,
+        kept_clean: 10,
+        structural_drops: 1,
+        source_proof: {
+          apply_execution: "home-narrative-apply-fixture",
+          readback_execution: "home-narrative-readback-fixture",
+        },
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+
   run("node", [
     "scripts/ecl/write_ecl_four_lane_completion_status.mjs",
     "--ref",
@@ -311,6 +336,8 @@ try {
     evalSummary,
     "--cleanup-proof-summary",
     cleanupSummary,
+    "--home-narrative-writer-quality",
+    homeNarrativeWriterQuality,
     "--run-id",
     "proof-run-fixture",
     "--timestamp",
@@ -393,10 +420,36 @@ try {
   assert.equal(status.live_product_proof.findings_demonstrable.numerator, 10);
   assert.equal(status.live_product_proof.eval_baseline_accepted, 13);
   assert.equal(status.live_product_proof.eval_ablation_accepted, 0);
+  assert.deepEqual(
+    {
+      published: status.live_product_proof.home_narrative_writer_quality.published_claims,
+      generated: status.live_product_proof.home_narrative_writer_quality.generated_claims,
+      semanticDrops: status.live_product_proof.home_narrative_writer_quality.semantic_drops,
+      semanticDropRate: status.live_product_proof.home_narrative_writer_quality.semantic_drop_rate_percent,
+      repairs: status.live_product_proof.home_narrative_writer_quality.repairs,
+      keptClean: status.live_product_proof.home_narrative_writer_quality.kept_clean,
+      keptCleanRate: status.live_product_proof.home_narrative_writer_quality.kept_clean_rate_percent,
+      structuralDrops: status.live_product_proof.home_narrative_writer_quality.structural_drops,
+    },
+    {
+      published: 37,
+      generated: 60,
+      semanticDrops: 22,
+      semanticDropRate: 36.7,
+      repairs: 27,
+      keptClean: 10,
+      keptCleanRate: 16.7,
+      structuralDrops: 1,
+    },
+    "Home narrative writer grounding quality must be tracked beside eval proof",
+  );
   assert.equal(status.live_product_proof.alias_count, 77);
   assert.equal(status.repo_denominators.serving_views.denominator, 40);
   assert.equal(status.repo_denominators.client_intake_adapters.denominator, 14);
   assert.equal(status.repo_denominators.client_intake_adapters.numerator, 14);
+  assert.equal(status.repo_denominators.home_narrative_writer_quality.numerator, 37);
+  assert.equal(status.repo_denominators.home_narrative_writer_quality.denominator, 60);
+  assert.equal(status.repo_denominators.home_narrative_writer_quality.semantic_drops, 22);
   assert.equal(status.repo_denominators.legacy_cleanup.status, "closed_no_migration_decision");
   assert.equal(status.repo_denominators.legacy_cleanup.retired_aggregate_reported, false);
   assert.equal(status.repo_denominators.tower_read_path_cleanup.live_runtime_path_clear.numerator, 7);
