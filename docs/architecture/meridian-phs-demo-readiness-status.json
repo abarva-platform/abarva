@@ -1,6 +1,6 @@
 {
   "schema_version": "meridian_phs_demo_readiness_status/v1",
-  "generated_at": "2026-08-28T01:59:17.132Z",
+  "generated_at": "2026-08-28T07:31:09.848Z",
   "tenant_key": "meridian-health",
   "scope": {
     "current_sprint_priority": "Meridian/PHS demo",
@@ -27,14 +27,14 @@
       "proof_state": "repo_status_complete"
     },
     "moves_surfaces": {
-      "numerator": 0,
+      "numerator": 6,
       "denominator": 6,
-      "percent": 0,
+      "percent": 100,
       "enumerated": true,
       "route_files_present": 6,
       "route_files_expected": 6,
       "excluded": 0,
-      "proof_state": "browser_proof_required",
+      "proof_state": "browser_proof_complete",
       "surfaces": [
         {
           "surface_key": "moves_index",
@@ -42,8 +42,8 @@
           "file": "src/app/(maestro)/strategic-moves/page.tsx",
           "current_source": "program operational rows plus canonical portfolio reconciliation",
           "route_file_present": true,
-          "browser_proven": false,
-          "build_state": "enumerated_not_browser_proven"
+          "browser_proven": true,
+          "build_state": "browser_proven"
         },
         {
           "surface_key": "moves_detail_redirect",
@@ -51,8 +51,8 @@
           "file": "src/app/(maestro)/strategic-moves/[moveId]/page.tsx",
           "current_source": "program operational row",
           "route_file_present": true,
-          "browser_proven": false,
-          "build_state": "enumerated_not_browser_proven"
+          "browser_proven": true,
+          "build_state": "browser_proven"
         },
         {
           "surface_key": "moves_phase_workspace",
@@ -60,8 +60,8 @@
           "file": "src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx",
           "current_source": "program row, phase module state, evidence readiness, artifacts and current-state readiness",
           "route_file_present": true,
-          "browser_proven": false,
-          "build_state": "enumerated_not_browser_proven"
+          "browser_proven": true,
+          "build_state": "browser_proven"
         },
         {
           "surface_key": "moves_evidence",
@@ -69,8 +69,8 @@
           "file": "src/app/(maestro)/strategic-moves/[moveId]/evidence/page.tsx",
           "current_source": "program row, board artifacts and phase documents",
           "route_file_present": true,
-          "browser_proven": false,
-          "build_state": "enumerated_not_browser_proven"
+          "browser_proven": true,
+          "build_state": "browser_proven"
         },
         {
           "surface_key": "moves_trace",
@@ -78,8 +78,8 @@
           "file": "src/app/(maestro)/strategic-moves/[moveId]/trace/page.tsx",
           "current_source": "program row, Source events, outcome ledger and control/eval matrix",
           "route_file_present": true,
-          "browser_proven": false,
-          "build_state": "enumerated_not_browser_proven"
+          "browser_proven": true,
+          "build_state": "browser_proven"
         },
         {
           "surface_key": "moves_workspace",
@@ -87,27 +87,20 @@
           "file": "src/app/(maestro)/strategic-moves/[moveId]/workspace/page.tsx",
           "current_source": "workspace-explorer Moves adapter and generated-artifact candidates",
           "route_file_present": true,
-          "browser_proven": false,
-          "build_state": "enumerated_not_browser_proven"
+          "browser_proven": true,
+          "build_state": "browser_proven"
         }
       ]
     },
     "moves_operational_activation": {
-      "numerator": 38,
+      "numerator": 0,
       "denominator": 38,
-      "percent": 100,
-      "proof_state": "activation_plan_ready_for_governed_load",
-      "generated_rows": {
-        "engagements": 38,
-        "program_modules": 228,
-        "program_milestones": 228,
-        "program_work_items": 228,
-        "program_risks": 38,
-        "pattern_match_logs": 38
-      },
-      "programs_from_home_snapshot": 28,
-      "programs_from_source_room_ppm": 10,
-      "unresolved_gap_count": 0
+      "percent": 0,
+      "proof_state": "activation_plan_required",
+      "generated_rows": null,
+      "programs_from_home_snapshot": 0,
+      "programs_from_source_room_ppm": 0,
+      "unresolved_gap_count": 38
     },
     "moves_content_quality": {
       "file": "src/lib/moves/narratives/generated/meridian-health-moves-readiness-blocks.ts",
