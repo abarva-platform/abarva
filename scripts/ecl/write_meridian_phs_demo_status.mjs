@@ -93,6 +93,7 @@ function parseArgs(argv) {
     browserProof: null,
     sourceProof: null,
     handoffProof: null,
+    movesActivationProof: null,
     json: false,
   };
 
@@ -109,6 +110,7 @@ function parseArgs(argv) {
     else if (arg === "--browser-proof") args.browserProof = next();
     else if (arg === "--source-proof") args.sourceProof = next();
     else if (arg === "--handoff-proof") args.handoffProof = next();
+    else if (arg === "--moves-activation-proof") args.movesActivationProof = next();
     else if (arg === "--json") args.json = true;
     else if (arg === "--help") {
       console.log(`Usage: node scripts/ecl/write_meridian_phs_demo_status.mjs [options]
@@ -123,6 +125,8 @@ Options:
   --browser-proof <path>   Optional signed-in PHS browser proof summary.
   --source-proof <path>    Optional Source sourcing-CXO proof summary.
   --handoff-proof <path>   Optional PHS cross-module handoff proof summary.
+  --moves-activation-proof <path>
+                            Optional Meridian Moves activation-plan proof summary.
   --json                   Print full JSON after writing.`);
       process.exit(0);
     } else {
@@ -201,6 +205,19 @@ function handoffProofFromSummary(summary) {
   };
 }
 
+function handoffProofFromExistingStatus(status) {
+  const proof = status?.phs_executive_demo?.cross_module_handoffs;
+  if (!proof || typeof proof !== "object") return null;
+  const handoffs = Array.isArray(proof.handoffs) ? proof.handoffs : [];
+  const proofState = String(proof.proof_state ?? "");
+  return {
+    numerator: Number(proof.numerator ?? 0),
+    denominator: Number(proof.denominator ?? HANDOFFS.length),
+    accepted: proofState.includes("complete") || Number(proof.numerator ?? 0) >= Number(proof.denominator ?? HANDOFFS.length),
+    handoffs,
+  };
+}
+
 function moveContentQuality() {
   const file = "src/lib/moves/narratives/generated/meridian-health-moves-readiness-blocks.ts";
   const text = readTextIfPresent(file);
@@ -239,6 +256,8 @@ function main() {
   const browserProof = readJsonIfPresent(args.browserProof);
   const sourceProof = readJsonIfPresent(args.sourceProof);
   const handoffProof = readJsonIfPresent(args.handoffProof);
+  const movesActivationProof = readJsonIfPresent(args.movesActivationProof);
+  const existingStatus = readJsonIfPresent(args.out);
 
   const phsExecutiveEclDenominator = sum(Object.values(PHS_EXECUTIVE_ECL_DENOMINATOR));
   const phsExecutiveEclProven =
@@ -251,7 +270,7 @@ function main() {
     proofCountFromSummary(browserProof, ["Source"]) ||
     (eclStatus?.lanes?.some?.((lane) => lane.lane === "L-PROOF" && lane.status === "complete") ? 9 : 0);
   const movesProof = movesProofFromSummary(browserProof);
-  const handoffProofSummary = handoffProofFromSummary(handoffProof);
+  const handoffProofSummary = handoffProofFromSummary(handoffProof) ?? handoffProofFromExistingStatus(existingStatus);
 
   const movesRouteStatuses = MOVES_SURFACES.map((surface) => ({
     ...surface,
@@ -300,6 +319,19 @@ function main() {
         excluded: movesProof?.excluded ?? 0,
         proof_state: movesProof?.accepted ? "browser_proof_complete" : "browser_proof_required",
         surfaces: movesRouteStatuses,
+      },
+      moves_operational_activation: {
+        numerator: Number(movesActivationProof?.activation_program_count ?? 0),
+        denominator: Number(movesActivationProof?.declared_program_count ?? 38),
+        percent: percent(
+          Number(movesActivationProof?.activation_program_count ?? 0),
+          Number(movesActivationProof?.declared_program_count ?? 38),
+        ),
+        proof_state: movesActivationProof?.accepted ? "activation_plan_ready_for_governed_load" : "activation_plan_required",
+        generated_rows: movesActivationProof?.generated_rows ?? null,
+        programs_from_home_snapshot: movesActivationProof?.programs_from_home_snapshot ?? 0,
+        programs_from_source_room_ppm: movesActivationProof?.programs_from_source_room_ppm ?? 0,
+        unresolved_gap_count: movesActivationProof?.unresolved_gap_count ?? 38,
       },
       moves_content_quality: moveContentQuality(),
       cross_module_handoffs: {
@@ -360,6 +392,7 @@ function main() {
     tenant_key: status.tenant_key,
     home_tower_intelligence: `${phsExecutiveEclProven} of ${phsExecutiveEclDenominator}`,
     moves: `${movesProof?.numerator ?? 0} of ${movesProof?.denominator ?? MOVES_SURFACES.length}`,
+    moves_activation: `${movesActivationProof?.activation_program_count ?? 0} of ${movesActivationProof?.declared_program_count ?? 38}`,
     handoffs: `${handoffProofSummary?.numerator ?? 0} of ${handoffProofSummary?.denominator ?? HANDOFFS.length}`,
     source: `${sourceProven} of ${sourceDenominator}`,
     out: args.out,
