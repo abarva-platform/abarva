@@ -35,14 +35,14 @@ jest.mock("next/navigation", () => ({
 }));
 
 // jsdom reports 0x0, so ResponsiveContainer would render nothing. Fix a size
-// approximating the real flex slot — in the shipped page the container fills
-// its parent, so exact chart height in these snapshots is a harness artifact.
+// approximating a half-canvas BI card; in the shipped page the browser gives
+// each chart its true flex/card width.
 jest.mock("recharts", () => {
   const actual = jest.requireActual("recharts");
   return {
     ...actual,
     ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
-      <actual.ResponsiveContainer width={900} height={230}>
+      <actual.ResponsiveContainer width={860} height={360}>
         {children}
       </actual.ResponsiveContainer>
     ),
@@ -88,7 +88,7 @@ function page(title: string, body: string): string {
 
 const view = buildTowerCommandCenterView(designFixtureMart(), {
   tenantName: "Fixture Tenant",
-});
+})!;
 
 function dump(name: string) {
   if (!OUT_DIR) return;
@@ -112,72 +112,49 @@ describe("Command Center render harness", () => {
     );
   });
 
-  it("writes every tab and sub-view", () => {
-    dump("01-command-center");
+  it("writes every executive contract tab", () => {
+    dump("01-executive-view");
 
     fireEvent.click(screen.getByRole("tab", { name: /Value Proof/ }));
     dump("02-value-proof");
 
-    fireEvent.click(screen.getByRole("tab", { name: /Decision Lanes/ }));
-    dump("03-decision-lanes-overview");
-    fireEvent.click(screen.getByRole("radio", { name: "Program table" }));
-    dump("03b-decision-lanes-table");
-    fireEvent.click(screen.getByRole("radio", { name: "Kanban lanes" }));
-    dump("03c-decision-lanes-kanban");
-    fireEvent.click(screen.getByRole("radio", { name: "Portfolio heatmap" }));
-    dump("03d-decision-lanes-heatmap");
-
     fireEvent.click(screen.getByRole("tab", { name: /AI Portfolio/ }));
-    dump("04-ai-integrated");
-    fireEvent.click(screen.getByRole("radio", { name: "Usage & Value Proof" }));
-    dump("04b-ai-bubble");
-    fireEvent.click(screen.getByRole("radio", { name: "Spend Attribution" }));
-    dump("04c-ai-lens");
-    fireEvent.click(screen.getByRole("radio", { name: "Candidate Pipeline" }));
-    dump("04d-ai-table");
-    fireEvent.click(
-      screen.getByRole("radio", { name: "Capability inventory" }),
-    );
-    dump("04e-ai-capability-inventory");
+    dump("03-ai-portfolio");
 
-    fireEvent.click(screen.getByRole("tab", { name: /Evidence/ }));
-    dump("05-evidence");
-
-    fireEvent.click(screen.getByRole("tab", { name: /Recommended Actions/ }));
-    dump("06-recommended-actions");
+    fireEvent.click(screen.getByRole("tab", { name: /Evidence & Actions/ }));
+    dump("04-evidence-actions");
 
     expect(true).toBe(true);
   });
 
   it("writes every drawer", () => {
-    fireEvent.click(screen.getByRole("tab", { name: /Decision Lanes/ }));
-    fireEvent.click(screen.getByRole("radio", { name: "Program table" }));
-    fireEvent.click(screen.getAllByRole("button", { name: /^Open / })[0]);
+    fireEvent.click(screen.getByRole("tab", { name: /Value Proof/ }));
+    fireEvent.click(screen.getByText("Risk & Compliance AI"));
     dump("07-drawer-program");
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
 
-    // The AI drawer opens from the numbered initiative list under
-    // "Usage & Value Proof"; "Candidate Pipeline" lists unfunded candidates,
-    // which are not openable.
     fireEvent.click(screen.getByRole("tab", { name: /AI Portfolio/ }));
-    fireEvent.click(screen.getByRole("radio", { name: "Usage & Value Proof" }));
     fireEvent.click(
-      screen.getAllByRole("button", { name: /Fraud Graph Analytics v2/ })[0],
+      screen
+        .getAllByRole("button")
+        .find((button) => button.textContent?.includes("exposed at review"))!,
     );
     dump("08-drawer-ai");
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
 
-    fireEvent.click(screen.getByRole("tab", { name: /Evidence/ }));
-    fireEvent.click(screen.getByRole("radio", { name: /What is missing/ }));
-    fireEvent.click(screen.getAllByText("View audit trace →")[0]);
+    fireEvent.click(screen.getByRole("tab", { name: /Evidence & Actions/ }));
+    const firstGap = [...view.gaps].sort(
+      (a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0),
+    )[0]!;
+    fireEvent.click(
+      screen
+        .getAllByRole("button")
+        .find((button) => button.textContent?.includes(firstGap.missing))!,
+    );
     dump("09-drawer-gap");
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
 
-    fireEvent.click(screen.getByRole("tab", { name: /Recommended Actions/ }));
-    fireEvent.click(
-      screen.getByRole("button", { name: "View priority action inventory" }),
-    );
-    fireEvent.click(screen.getAllByText(/Attest the avoidance method/)[0]);
+    fireEvent.click(screen.getByRole("button", { name: /Usage telemetry connection/ }));
     dump("10-drawer-action");
 
     expect(true).toBe(true);

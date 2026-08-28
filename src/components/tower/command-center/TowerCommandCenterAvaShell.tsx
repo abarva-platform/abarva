@@ -7,8 +7,8 @@ import {
   type AtlasMessage,
 } from "@/components/atlas/AtlasChatPanel";
 import type { AttachmentRef } from "@/components/agent/AgentDock";
-import { buildTowerChatAvaAnswerPacket } from "@/lib/tower/tower-chat-artifacts";
-import type { TowerChatVisibleAnswer } from "@/lib/tower/tower-chat-artifacts";
+import { buildTowerChatAvaAnswerPacket } from "@/lib/cio-tower/tower-chat-artifacts";
+import type { TowerChatVisibleAnswer } from "@/lib/cio-tower/tower-chat-artifacts";
 import type { AtlasSuggestion } from "@/lib/atlas/types";
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
 
@@ -94,7 +94,10 @@ async function readTowerChatStream(
 
 function towerSummaryPrompt(view: TowerCommandCenterView | null): string {
   if (!view) return "What Tower evidence is loaded for this tenant?";
-  return "Which board-scope Tower proof gaps should I close first?";
+  const blockedPrograms = view.gaps.filter(
+    (gap) => gap.primaryBlockingGap,
+  ).length;
+  return `Which ${blockedPrograms || "open"} Tower proof gaps should I close first?`;
 }
 
 function buildSuggestions(
@@ -136,7 +139,7 @@ export function TowerCommandCenterAvaShell({
       role: "atlas",
       content: view
         ? `${tenantName} Tower Command Center is loaded. aVa can explain the visible value proof, blocked claims, evidence gaps, AI portfolio posture, and recommended actions without approving anything on its own.`
-        : "aVa is waiting for tenant-bound Tower value-model rows before it can answer portfolio questions.",
+        : "aVa is waiting for tenant-bound Tower mart rows before it can answer portfolio questions.",
     }),
     [tenantName, view],
   );
@@ -303,7 +306,7 @@ export function TowerCommandCenterAvaShell({
         tenantName,
         context: `Command Center · ${tenantName}`,
         towerExperience: "outcome_proof_cockpit",
-        towerContextSource: "tower_value_os_command_center",
+        towerContextSource: "cio_tower_mart_command_center",
         answerRenderingPolicy: {
           visibleOutputOwner: "claude",
           rendererPolicy: "exact_visible_strings",
@@ -325,19 +328,14 @@ export function TowerCommandCenterAvaShell({
                 value: view.summary.budgetUsd,
               },
               {
-                measureKey: "approved_program_budget_fy26",
-                label: "Approved investment",
-                value: view.summary.approvedInvestmentUsd,
-              },
-              {
                 measureKey: "ai_tagged_spend_fy26_non_additive",
                 label: "AI-tagged spend",
                 value: view.summary.aiTaggedUsd,
               },
               {
-                measureKey: "business_case_benefit_fy26",
-                label: "Explicit source-backed benefit",
-                value: view.summary.promisedBenefitUsd,
+                measureKey: "promised_value_fy26",
+                label: "Promised value",
+                value: view.summary.promisedUsd,
               },
               {
                 measureKey: "realized_value_ytd_allowed",
@@ -349,21 +347,11 @@ export function TowerCommandCenterAvaShell({
         towerKnownGaps: view?.gaps.map((gap) => gap.missing).slice(0, 12) ?? [],
       }}
       defaultMode="collapsed"
-      disableStoredMode
+      respectStoredMode={false}
       collapsedRestoreMode="expand"
       collapsedSummary={{
         label: "Ask aVa",
         detail: "Outcome insights",
-      }}
-      collapsedChipStyle={{
-        right: 0,
-        bottom: 20,
-        minWidth: 58,
-        width: 58,
-        height: 54,
-        padding: "0 8px",
-        boxSizing: "border-box",
-        borderRadius: "18px 0 0 18px",
       }}
       placeholder="Ask aVa to explain proof, blocked value, or the next executive action..."
       defaultLeftPercent={52}

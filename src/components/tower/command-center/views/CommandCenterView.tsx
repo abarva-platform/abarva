@@ -1,223 +1,331 @@
 "use client";
 
-// Tab 1 — Outcome Proof Cockpit.
+// Tab 1 — Executive View.
 //
-// The Command Center now opens as a CFO operating room: verdict first, a compact
-// scope read, and two decision visuals. Detail inspection lives in the other
-// Tower tabs so the cockpit does not become a report appendix.
+// The attached design is the visual contract for this surface. This component
+// keeps the same Layer 4 boundary as the previous Command Center: it only
+// projects the governed Tower command-center view model.
 
 import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
-import type { ReactNode } from "react";
 import type {
-  TowerActionView,
   TowerCommandCenterView,
+  TowerEvidenceGapView,
   TowerProgramView,
 } from "@/lib/tower/command-center/types";
-
-import { EightQuarterTrajectoryChart } from "../charts/EightQuarterTrajectoryChart";
 import {
-  OutcomeDecisionMatrixChart,
-  decisionMatrixTextAlternative,
-} from "../charts/OutcomeDecisionMatrixChart";
-import { ValueConversionBridgeChart } from "../charts/ValueConversionBridgeChart";
-import { Card, cx } from "../primitives";
-import styles from "../TowerCommandCenter.module.css";
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  LabelList,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+} from "recharts";
 
-interface BoardMetric {
-  key: string;
+import styles from "../TowerCommandCenter.module.css";
+import {
+  ChartTooltip,
+  HEX,
+  toM,
+  twoLineTick,
+  withSliver,
+} from "../charts/chart-kit";
+import { cx } from "../primitives";
+
+interface ExecutiveMetric {
   label: string;
-  value: ReactNode;
+  badge?: string;
+  value: string;
   note: string;
   tone: "teal" | "amber" | "red" | "gray";
 }
 
-function boardMetrics(view: TowerCommandCenterView): BoardMetric[] {
-  const s = view.summary;
-  const financeBlockedUsd = s.financeValidatedBlockedUsd;
-
-  return [
-    {
-      key: "investment",
-      label: "Approved investment",
-      value: formatUsdM(s.approvedInvestmentUsd),
-      note: `${formatCount(s.boardScopeProgramCount)} board-scope value cases`,
-      tone: (s.approvedInvestmentUsd ?? 0) > 0 ? "gray" : "amber",
-    },
-    {
-      key: "explicit-benefit",
-      label: "Explicit source-backed benefit",
-      value:
-        s.promisedBenefitUsd === null
-          ? "Not loaded"
-          : formatUsdM(s.promisedBenefitUsd),
-      note: "only source-backed benefit assertions",
-      tone: s.promisedBenefitUsd === null ? "amber" : "teal",
-    },
-    {
-      key: "claimable",
-      label: "Claimable today",
-      value: formatUsdM(s.claimableUsd),
-      note: "board-bookable value",
-      tone: s.claimableUsd > 0 ? "teal" : "red",
-    },
-    {
-      key: "finance-blocked",
-      label: "Finance validated but blocked",
-      value: formatUsdM(financeBlockedUsd),
-      note: "validated value still held by the claim gate",
-      tone: financeBlockedUsd > 0 ? "amber" : "gray",
-    },
-  ];
+interface ExecutiveDecision {
+  order: string;
+  kicker: string;
+  title: string;
+  detail: string;
+  metricLabel: string;
+  metricValue: string;
+  due: string;
+  tone: "red" | "amber" | "gray";
+  programId: string | null;
 }
 
-function sourceTrustRows(view: TowerCommandCenterView) {
+function percent(numerator: number, denominator: number): string {
+  if (denominator <= 0) return "0%";
+  return `${Math.round((numerator / denominator) * 1000) / 10}%`;
+}
+
+function measuredUsd(view: TowerCommandCenterView): number {
+  return Math.max(
+    view.summary.financeValidatedUsd,
+    view.summary.usageSupportedUsd,
+    0,
+  );
+}
+
+function conflictCount(view: TowerCommandCenterView): number {
+  return Math.max(
+    view.summary.conflictedProgramCount,
+    view.evidenceFacts.filter((fact) => fact.lineageState === "CONFLICT")
+      .length,
+  );
+}
+
+function absentCount(view: TowerCommandCenterView): number {
+  return view.unknownSlots.length + view.pipelineGaps.length;
+}
+
+function executiveHeadline(view: TowerCommandCenterView): string {
   const s = view.summary;
-  const conflicts = view.evidenceFacts.filter(
-    (fact) => fact.lineageState === "CONFLICT",
+  const breakGate = s.usageSupportedUsd <= 0 ? 2 : s.financeValidatedUsd <= 0 ? 6 : 7;
+  return `${formatUsdM(s.budgetUsd || s.promisedUsd)} approved. ${formatUsdM(
+    s.claimableUsd,
+  )} provable. The chain breaks at gate ${breakGate} of 7.`;
+}
+
+function executiveSummary(view: TowerCommandCenterView): string {
+  const s = view.summary;
+  if (s.executiveSummary) return s.executiveSummary;
+  if (s.usageSupportedUsd <= 0) {
+    return "No governed usage support is visible, so adoption evidence is empty and every gate downstream of it is unreachable. Instrument, measure, then attest, in that order.";
+  }
+  if (s.financeValidatedUsd <= 0) {
+    return "Usage evidence exists, but the finance-validation gate has not released board-claimable value. Measure the outcomes, then staff validation.";
+  }
+  return "Tower shows measured value in the portfolio, but the claim gate still determines what can be represented as board-claimable.";
+}
+
+function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
+  const s = view.summary;
+  const claims =
+    s.unknownValueClaimCount + s.claimableProgramCount + s.blockedProgramCount ||
+    view.programs.length;
+  const emitting = view.ai.filter(
+    (item) => item.usageHeadline || item.usageBars.some((bar) => bar.pct > 0),
   ).length;
   return [
     {
-      label: "Claimable value",
-      value: formatUsdM(s.claimableUsd),
-      status: "VALUE OS",
-      tone: "teal" as const,
-    },
-    {
       label: "Approved investment",
-      value: formatUsdM(s.approvedInvestmentUsd),
-      status: "INVESTMENT",
-      tone: "teal" as const,
+      value: formatUsdM(s.budgetUsd || s.promisedUsd),
+      note: `${formatCount(s.programCount || view.programs.length)} programs · approved capital only`,
+      tone: "teal",
     },
     {
-      label: "Explicit source-backed benefit",
-      value:
-        s.promisedBenefitUsd === null
-          ? "Not loaded"
-          : formatUsdM(s.promisedBenefitUsd),
-      status:
-        s.promisedBenefitUsd === null
-          ? "ABSENT"
-          : conflicts > 0
-            ? "CONFLICT"
-            : "SOURCE BACKED",
-      tone:
-        s.promisedBenefitUsd === null || conflicts > 0
-          ? ("amber" as const)
-          : ("teal" as const),
+      label: "Asserted benefit",
+      badge: s.claimableUsd > 0 ? "PARTIAL" : "UNPROVEN",
+      value: formatUsdM(s.promisedUsd),
+      note: `${formatCount(claims)} claims · planning values, not outcomes`,
+      tone: "amber",
     },
     {
-      label: "AI spend grain",
-      value: formatUsdM(s.aiTaggedUsd),
-      status: s.aiSpendUnattributed ? "PORTFOLIO ONLY" : "ITEM ATTRIBUTED",
-      tone: s.aiSpendUnattributed ? ("amber" as const) : ("teal" as const),
+      label: "Board-claimable",
+      badge: s.claimableUsd > 0 ? "OPEN" : "BLOCKED",
+      value: formatUsdM(s.claimableUsd),
+      note: `${formatCount(s.claimableProgramCount)} of ${formatCount(
+        Math.max(claims, s.claimableProgramCount),
+      )} claims attested by Finance`,
+      tone: s.claimableUsd > 0 ? "teal" : "red",
     },
     {
-      label: "Conflict count",
-      value:
-        s.conflictedProgramCount > 0
-          ? formatCount(s.conflictedProgramCount)
-          : conflicts > 0
-            ? formatCount(conflicts)
-            : "—",
-      status:
-        s.conflictedProgramCount > 0 || conflicts > 0
-          ? "VALUE OS STATE"
-          : "NOT IN VALUE OS",
-      tone:
-        s.conflictedProgramCount > 0 || conflicts > 0
-          ? ("red" as const)
-          : ("amber" as const),
+      label: "AI & BI assets emitting usage",
+      badge: emitting > 0 ? "VISIBLE" : "DARK",
+      value: `${formatCount(emitting)} of ${formatCount(
+        s.aiInitiativeCount || view.ai.length,
+      )}`,
+      note: `${formatUsdM(s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd)} attributed, ${
+        emitting > 0 ? "partially instrumented" : "none instrumented"
+      }`,
+      tone: emitting > 0 ? "teal" : "red",
     },
   ];
 }
 
-function cockpitRead(view: TowerCommandCenterView): string {
+function topBlockedProgram(view: TowerCommandCenterView): TowerProgramView | null {
+  return (
+    [...view.programs].sort((a, b) => b.blockedUsd - a.blockedUsd)[0] ?? null
+  );
+}
+
+function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
   const s = view.summary;
-  const hasSourceConflict = view.evidenceFacts.some(
-    (fact) => fact.lineageState === "CONFLICT",
+  const claimsMissingActual = Math.max(
+    s.unknownValueClaimCount,
+    s.unmeasuredProgramCount,
   );
-  const blockedValueCases =
-    s.blockedProgramCount ||
-    view.programs.filter((program) => program.blockedUsd > 0).length;
-  if (s.claimableUsd > 0) {
-    return `${formatUsdM(s.claimableUsd)} is claimable today. Keep the remaining capital in proof-gated lanes until owners close usage, Finance, and attestation gaps.`;
-  }
-  if (!s.promisedBenefitLoaded) {
-    return `${formatUsdM(s.approvedInvestmentUsd)} of approved investment is visible across ${formatCount(s.boardScopeProgramCount)} board-scope value cases, but explicit source-backed benefit is absent. Keep benefit totals null until source-backed value cases are loaded and classified.`;
-  }
-  if (
-    s.promisedBenefitUsd !== null &&
-    s.promisedBenefitUsd > 0 &&
-    hasSourceConflict
-  ) {
-    return `${formatUsdM(s.promisedBenefitUsd)} is visible as explicit source-backed benefit, but source authority is unresolved. ${formatCount(blockedValueCases)} value cases remain blocked until evidence owners reconcile the proof chain.`;
-  }
-  if (s.promisedBenefitUsd !== null && s.promisedBenefitUsd > 0) {
-    return `${formatUsdM(s.promisedBenefitUsd)} is visible as explicit source-backed benefit, but ${formatCount(blockedValueCases)} value cases still fail the board-claimable proof chain. Hold scale decisions until the evidence queue clears.`;
-  }
-  return "Tower can see the operating surface, but no governed value case is loaded yet. Start with source-backed value cases before making capital calls.";
+  const firstProgram = topBlockedProgram(view);
+  const measured = measuredUsd(view);
+
+  return [
+    {
+      order: "1",
+      kicker: "Instrument · do this first",
+      title: "Connect usage telemetry on the attributed domains",
+      detail:
+        "Gate 2 is empty, so downstream gates cannot be measured, validated or attested until the assets emit.",
+      metricLabel: "Spend unmeasurable",
+      metricValue: formatUsdM(s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd),
+      due: "Next review",
+      tone: "red",
+      programId: firstProgram?.id ?? null,
+    },
+    {
+      order: "2",
+      kicker: "Measure · then this",
+      title: `Backfill measured outcome on the ${formatCount(
+        claimsMissingActual,
+      )} claims that carry no actual`,
+      detail:
+        "Measured outcomes create something a validator can sign. Until then, planning value remains planning value.",
+      metricLabel: "Claims short",
+      metricValue: formatCount(claimsMissingActual),
+      due: "Next month",
+      tone: "amber",
+      programId: firstProgram?.id ?? null,
+    },
+    {
+      order: "3",
+      kicker: "Assign · only then",
+      title: "Name a finance validator so the claim gate has an owner",
+      detail:
+        "Worth doing now, but it releases nothing on its own. The current sign-off ceiling is the measured amount in the portfolio.",
+      metricLabel: "Ceiling today",
+      metricValue: formatUsdM(measured),
+      due: "Following review",
+      tone: "gray",
+      programId: firstProgram?.id ?? null,
+    },
+  ];
 }
 
-function cockpitVerdict(view: TowerCommandCenterView): string {
-  const hasSourceConflict = view.evidenceFacts.some(
-    (fact) => fact.lineageState === "CONFLICT",
-  );
-  if (view.summary.claimableUsd > 0) {
-    return "Some value is claimable, but additional capital still depends on the proof gates below.";
-  }
-  if (!view.summary.promisedBenefitLoaded) {
-    return "Investment is visible. Explicit source-backed benefit proof is not loaded.";
-  }
-  if (
-    view.summary.promisedBenefitUsd !== null &&
-    view.summary.promisedBenefitUsd > 0 &&
-    hasSourceConflict
-  ) {
-    return "Investment and benefit assertions are visible. Source authority is not board-certified.";
-  }
-  if (
-    view.summary.promisedBenefitUsd !== null &&
-    view.summary.promisedBenefitUsd > 0
-  ) {
-    return "Investment is visible. Outcome proof is not yet board-claimable.";
-  }
-  return "Tower has spend posture in view, but no governed value case is loaded yet.";
+function evidenceFooterCount(view: TowerCommandCenterView): number {
+  return view.actions.length + view.gaps.length + view.pipelineGaps.length;
 }
 
-/**
- * The decision queue: programs with blocked value, worst first. This supports
- * the evidence-owner table and program drawer without inventing action fields
- * the mart does not yet carry.
- */
-function decisionQueue(view: TowerCommandCenterView): TowerProgramView[] {
-  const laneRank = {
-    stop: 0,
-    freeze: 1,
-    fix: 2,
-    watch: 3,
-    fund: 4,
-  } satisfies Record<TowerProgramView["lane"], number>;
-  return [...view.programs]
-    .filter(
-      (p) => p.valueAtStakeUsd > 0 || p.nextGate !== null || p.lane !== "fund",
-    )
-    .sort((a, b) => {
-      const laneDelta = laneRank[a.lane] - laneRank[b.lane];
-      if (laneDelta !== 0) return laneDelta;
-      return b.valueAtStakeUsd - a.valueAtStakeUsd;
-    })
-    .slice(0, 6);
-}
-
-function ownerQueue(view: TowerCommandCenterView): TowerActionView[] {
-  return [...view.actions]
-    .filter((action) => (action.actionState ?? "open") === "open")
-    .sort((a, b) => {
-      const amountDelta = b.amountExposedUsd - a.amountExposedUsd;
-      if (amountDelta !== 0) return amountDelta;
-      return a.sequence - b.sequence;
-    })
+function evidenceQueue(gaps: readonly TowerEvidenceGapView[]) {
+  return [...gaps]
+    .sort((a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0))
     .slice(0, 5);
+}
+
+function executiveWaterfallRows(view: TowerCommandCenterView) {
+  const s = view.summary;
+  const approved = Math.max(s.budgetUsd, s.promisedUsd, s.aiTaggedUsd);
+  const asserted = s.promisedUsd;
+  const measured = measuredUsd(view);
+  const claimable = s.claimableUsd;
+  const noBenefit = Math.max(0, approved - asserted);
+  const noMeasured = Math.max(0, asserted - measured);
+
+  return [
+    {
+      name: "Approved|investment",
+      baseUsd: 0,
+      usd: approved,
+      fill: HEX.tealDark,
+      label: formatUsdM(approved),
+    },
+    {
+      name: "No benefit|asserted",
+      baseUsd: asserted,
+      usd: noBenefit,
+      fill: HEX.gray300,
+      label: formatUsdM(noBenefit),
+    },
+    {
+      name: "Asserted|benefit",
+      baseUsd: 0,
+      usd: asserted,
+      fill: HEX.amber,
+      label: formatUsdM(asserted),
+    },
+    {
+      name: "No measured|amount",
+      baseUsd: measured,
+      usd: noMeasured,
+      fill: "#cfcbc1",
+      label: formatUsdM(noMeasured),
+    },
+    {
+      name: "Measured|amount",
+      baseUsd: 0,
+      usd: measured,
+      fill: HEX.red,
+      label: formatUsdM(measured),
+    },
+    {
+      name: "Board-|claimable",
+      baseUsd: 0,
+      usd: claimable,
+      fill: HEX.red,
+      label: formatUsdM(claimable),
+    },
+  ];
+}
+
+function ExecutiveWaterfallChart({ view }: { view: TowerCommandCenterView }) {
+  const rows = executiveWaterfallRows(view);
+  const axisMax = Math.max(...rows.map((row) => toM(row.baseUsd + row.usd)), 1);
+  const data = rows.map((row) => ({
+    ...row,
+    base: toM(row.baseUsd),
+    visible: withSliver(toM(row.usd), axisMax),
+  }));
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart
+        data={data}
+        margin={{ top: 28, right: 18, left: 6, bottom: 10 }}
+        barCategoryGap="24%"
+      >
+        <CartesianGrid vertical={false} stroke={HEX.border} />
+        <XAxis
+          dataKey="name"
+          interval={0}
+          tickLine={false}
+          axisLine={{ stroke: HEX.borderStrong }}
+          height={48}
+          tick={twoLineTick}
+        />
+        <YAxis
+          tickFormatter={(value: number) => `$${Math.round(value)}M`}
+          tick={{
+            fontSize: 10,
+            fill: HEX.gray500,
+            fontFamily: "var(--abarva-mono)",
+          }}
+          axisLine={false}
+          tickLine={false}
+          width={48}
+        />
+        <ChartTooltip formatter={(value) => `$${Number(value).toFixed(1)}M`} />
+        <Bar dataKey="base" stackId="value" fill="transparent" isAnimationActive={false} />
+        <Bar
+          dataKey="visible"
+          stackId="value"
+          radius={[4, 4, 0, 0]}
+          isAnimationActive={false}
+        >
+          {data.map((row) => (
+            <Cell key={row.name} fill={row.fill} />
+          ))}
+          <LabelList
+            dataKey="label"
+            position="top"
+            style={{
+              fontFamily: "var(--abarva-mono)",
+              fontSize: 11,
+              fontWeight: 700,
+              fill: HEX.gray700,
+            }}
+          />
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
 }
 
 export function CommandCenterView({
@@ -230,253 +338,182 @@ export function CommandCenterView({
   onGoToFunnel: () => void;
 }) {
   const s = view.summary;
-  const metrics = boardMetrics(view);
-  const queue = decisionQueue(view);
-  const owners = ownerQueue(view);
-  const trustRows = sourceTrustRows(view);
-  const openGapCount = view.gaps.length;
-  const groupedCampaignCount = view.evidenceMaturity.interventions.length;
+  const measured = measuredUsd(view);
+  const unmeasured = Math.max(0, s.promisedUsd - measured);
+  const unmeasuredPct = percent(unmeasured, s.promisedUsd);
+  const executiveMetrics = metrics(view);
+  const executiveDecisions = decisions(view);
 
   return (
-    <div className={cx(styles.view, styles.cockpitView)}>
-      <section
-        className={styles.boardPosture}
-        aria-labelledby="tcc-board-posture"
-      >
-        <div className={styles.boardVerdict}>
-          <div className={styles.eyebrow2}>Board value posture</div>
-          <h2 id="tcc-board-posture">{cockpitVerdict(view)}</h2>
-          <p>{cockpitRead(view)}</p>
+    <div className={styles.executiveView}>
+      <header className={styles.executiveHero}>
+        <div className={styles.executiveEyebrow}>
+          IT Investment Tower · FY26 · Today&apos;s verdict
         </div>
-        <div className={styles.boardMetrics}>
-          {metrics.map((metric) => (
-            <div
-              key={metric.key}
-              className={cx(styles.boardMetric, styles[`m${metric.tone}`])}
-            >
-              <span className={styles.bmLabel}>{metric.label}</span>
-              <span className={styles.bmValue}>{metric.value}</span>
-              <span className={styles.bmNote}>{metric.note}</span>
+        <h1>{executiveHeadline(view)}</h1>
+        <div className={styles.executiveSummaryGrid}>
+          <p>{executiveSummary(view)}</p>
+          <aside className={styles.executiveAudit}>
+            <div>
+              As of {s.martVersion || "current mart"} · {s.sourceStandard}
             </div>
+            <div>{s.sourceFiles.slice(0, 4).join(" · ") || "No source files"}</div>
+            <div className={styles.auditBadges}>
+              <span className={styles.auditRed}>
+                {formatCount(conflictCount(view))} conflict
+              </span>
+              <span className={styles.auditAmber}>
+                {formatCount(absentCount(view))} absent
+              </span>
+              <span>No build time</span>
+            </div>
+          </aside>
+        </div>
+
+        <section className={styles.executiveMetrics}>
+          {executiveMetrics.map((metric) => (
+            <article
+              key={metric.label}
+              className={cx(styles.executiveMetric, styles[`metric${metric.tone}`])}
+            >
+              <div className={styles.metricLabel}>
+                {metric.label}
+                {metric.badge ? <span>{metric.badge}</span> : null}
+              </div>
+              <div className={styles.metricValue}>{metric.value}</div>
+              <div className={styles.metricNote}>{metric.note}</div>
+            </article>
+          ))}
+        </section>
+      </header>
+
+      <section className={styles.reviewDecisions}>
+        <div className={styles.sectionTitle}>
+          <h2>Decisions for this review</h2>
+          <span>{executiveDecisions.length}</span>
+          <p>Each is a precondition for the next</p>
+        </div>
+        <div className={styles.decisionStack}>
+          {executiveDecisions.map((decision) => (
+            <article
+              key={decision.order}
+              className={cx(
+                styles.executiveDecision,
+                styles[`decision${decision.tone}`],
+              )}
+            >
+              <div className={styles.decisionOrder}>{decision.order}</div>
+              <div className={styles.decisionMain}>
+                <div className={styles.decisionKicker}>{decision.kicker}</div>
+                <h3>{decision.title}</h3>
+                <p>{decision.detail}</p>
+              </div>
+              <div className={styles.decisionMeta}>
+                <div>
+                  <span>{decision.metricLabel}</span>
+                  <strong>{decision.metricValue}</strong>
+                </div>
+                <div>
+                  <span>Due</span>
+                  <strong>{decision.due}</strong>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    decision.programId
+                      ? onOpenProgram(decision.programId)
+                      : onGoToFunnel()
+                  }
+                >
+                  Review →
+                </button>
+              </div>
+            </article>
           ))}
         </div>
       </section>
 
-      <section
-        className={styles.scopeStrip}
-        aria-label="Tower read model scope"
-      >
-        <div className={styles.scopeNarrative}>
-          <span className={styles.eyebrow2}>Read model scope</span>
-          <p>
-            This view is a governed Tower value-model projection. Adoption,
-            finance validation, and claimable value are separate gates; usage
-            does not become board-bookable value until outcome and attestation
-            evidence clear.
-          </p>
+      <section className={styles.valueLoss}>
+        <div className={styles.sectionTitle}>
+          <h2>Where the value is lost</h2>
+          <p>Double-click for the records behind any figure</p>
         </div>
-        <div className={styles.scopeFacts}>
-          <span>
-            {formatCount(s.totalProgramSubjectCount)} tracked program subjects
-          </span>
-          <span>
-            {formatCount(s.boardScopeProgramCount)} board-scope value cases
-          </span>
-          <span>
-            {formatCount(s.aiInitiativeCount)} AI tools, agents and linked
-            capabilities
-          </span>
-          <span>{formatCount(view.actions.length)} total evidence actions</span>
-          <span>{formatCount(openGapCount)} current priority actions</span>
-          <span>
-            {formatCount(groupedCampaignCount)} grouped action campaigns
-          </span>
-          <span>
-            {formatCount(s.economicReviewQueueCount)} economic reviews
-          </span>
-          <span>benefit source: {trustRows[2]?.status ?? "ABSENT"}</span>
+        <div className={styles.valueChartCard}>
+          <div className={styles.executiveWaterfall}>
+            <ExecutiveWaterfallChart view={view} />
+          </div>
+          <div className={styles.valueChartLegend}>
+            Each drop is a gate, not a loss. Of the {formatUsdM(s.promisedUsd)} asserted,
+            only {formatUsdM(measured)} has a measured amount behind it — and only{" "}
+            {formatUsdM(s.claimableUsd)} is claimable.
+          </div>
         </div>
       </section>
 
-      <div className={styles.cockpitCanvas}>
-        <Card
-          eyebrow="Investment to value conversion"
-          right="evidence gates · governed values"
-          headId="tcc-conversion-bridge"
-          bodyClassName={styles.cockpitChartBody}
-        >
-          <p className={styles.chartTruthNote}>
-            AI investment becomes economic value only when adoption, workflow
-            change, operating outcomes, conversion evidence, and Finance
-            attestation are all explicit.
+      <section className={styles.executiveFindings}>
+        <article className={styles.findingRed}>
+          <div className={styles.findingKicker}>The drop is the finding</div>
+          <strong>{unmeasuredPct}</strong>
+          <p>
+            of asserted benefit has no measured amount in the governed Tower
+            read. Nothing here is promoted to claimable value until evidence
+            clears.
           </p>
-          <div
-            className={styles.cockpitBridge}
-            aria-describedby="tcc-conversion-alt"
-          >
-            <ValueConversionBridgeChart stages={view.conversionBridge} />
-          </div>
-          <p id="tcc-conversion-alt" className={styles.srOnly}>
-            {view.conversionBridge
-              .map(
-                (stage) =>
-                  `${stage.label}: ${formatUsdM(stage.valueUsd)}, ${formatCount(stage.count)} records, ${stage.note}`,
-              )
-              .join(". ")}
+        </article>
+        <article className={styles.findingTeal}>
+          <div className={styles.findingKicker}>Ceiling on any sign-off today</div>
+          <strong>{formatUsdM(measured)}</strong>
+          <p>
+            {formatUsdM(measured)} is the measured amount currently visible in
+            the portfolio. No attestation can release more than that without new
+            measured evidence.
           </p>
-        </Card>
+        </article>
+      </section>
 
-        <Card
-          eyebrow="Eight-quarter value trajectory"
-          right="forecast schedule · consumption view"
-          headId="tcc-value-trajectory"
-          bodyClassName={styles.cockpitChartBody}
-        >
-          <p className={styles.chartTruthNote}>
-            Planned investment, spend, forecast, Finance run-rate, and
-            conversion are read from the governed eight-quarter schedule.
-          </p>
-          {view.valueTrajectory.length === 0 ? (
-            <div className={styles.emptyPanel}>
-              <h2>Quarter schedule not supplied</h2>
-              <p>
-                ECL has not supplied period-start and period-end evidence for
-                this trajectory yet, so Tower leaves the forward path blank
-                instead of spreading annual values across quarters.
-              </p>
-            </div>
-          ) : (
-            <div className={styles.cockpitTrajectory}>
-              <EightQuarterTrajectoryChart points={view.valueTrajectory} />
-            </div>
-          )}
-        </Card>
+      <section className={styles.executiveLinks}>
+        <span>Detail lives where it belongs:</span>
+        <button type="button" onClick={onGoToFunnel}>
+          {formatCount(view.programs.length)} value cases and the gate that holds them →
+        </button>
+        <button type="button">
+          {formatCount(s.aiInitiativeCount || view.ai.length)} AI and BI assets by cost,
+          risk and adoption →
+        </button>
+        <button type="button">
+          {formatCount(evidenceFooterCount(view))} open tasks in evidence queues →
+        </button>
+      </section>
 
-        <Card
-          eyebrow="Portfolio decision matrix"
-          right="risk pressure × proof maturity × exposure"
-          headId="tcc-decision-matrix"
-          bodyClassName={styles.cockpitChartBody}
-        >
-          {queue.length === 0 ? (
-            <p className={styles.lhSub}>
-              No program currently carries blocked value for this tenant.
-            </p>
-          ) : (
-            <>
-              <p className={styles.chartTruthNote}>
-                Each bubble is a material board-scope value case: X is proof
-                maturity, Y is risk pressure, and size is capital exposure.
-                Benefit remains a separate proof gate.
-              </p>
-              <div
-                className={styles.cockpitMatrix}
-                aria-describedby="tcc-matrix-alt"
-              >
-                <OutcomeDecisionMatrixChart
-                  programs={queue}
-                  onSelect={onOpenProgram}
-                />
-              </div>
-              <p id="tcc-matrix-alt" className={styles.srOnly}>
-                {decisionMatrixTextAlternative(queue)}
-              </p>
-            </>
-          )}
-        </Card>
+      {evidenceQueue(view.gaps).length > 0 ? (
+        <section className={styles.executiveEvidenceTail} aria-label="Top evidence queue">
+          {evidenceQueue(view.gaps).map((gap) => (
+            <button
+              key={gap.id}
+              type="button"
+              onClick={() => gap.sourceProgramId && onOpenProgram(gap.sourceProgramId)}
+            >
+              <span>{gap.missing}</span>
+              <strong>
+                {gap.valueAtStakeUsd === null
+                  ? "Unknown"
+                  : formatUsdM(gap.valueAtStakeUsd)}
+              </strong>
+              <small>{gap.owner ?? "No owner"}</small>
+            </button>
+          ))}
+        </section>
+      ) : null}
 
-        <Card
-          eyebrow="Proof operations"
-          right="evidence owners · source trust"
-          headId="tcc-proof-operations"
-          bodyClassName={styles.cockpitOpsBody}
-        >
-          <div className={styles.opsSplit}>
-            <section aria-label="Evidence-owner queue">
-              <div className={styles.opsHead}>
-                <span>Evidence-owner queue</span>
-                <b>{formatCount(owners.length)}</b>
-              </div>
-              {owners.length === 0 ? (
-                <p className={styles.lhSub}>
-                  No open owner actions are available in the governed queue.
-                </p>
-              ) : (
-                <div className={styles.opsQueue}>
-                  {owners.map((action) => (
-                    <article key={action.id} className={styles.opsAction}>
-                      <span className={styles.opsActionK}>
-                        {action.ownerRole}
-                      </span>
-                      <b>{action.title}</b>
-                      <small>
-                        {action.evidenceRequirement ??
-                          action.evidence ??
-                          "Evidence package required"}
-                      </small>
-                      <em>
-                        {formatUsdM(action.amountExposedUsd)} exposed ·{" "}
-                        {action.due ?? "due not loaded"}
-                      </em>
-                    </article>
-                  ))}
-                </div>
-              )}
-              <button
-                type="button"
-                className={styles.cockpitCta}
-                onClick={onGoToFunnel}
-              >
-                Inspect proof gates
-              </button>
-            </section>
-
-            <section aria-label="Source trust rail">
-              <div className={styles.opsHead}>
-                <span>Source trust rail</span>
-                <b>{trustRows[2]?.status ?? "ABSENT"}</b>
-              </div>
-              <div className={styles.sourceTrustRail}>
-                {trustRows.map((row) => (
-                  <div key={row.label} className={styles.trustMiniRow}>
-                    <span>
-                      <i
-                        className={cx(styles.dot, styles[row.tone])}
-                        aria-hidden="true"
-                      />
-                      {row.label}
-                    </span>
-                    <b>{row.value}</b>
-                    <span
-                      className={cx(
-                        styles.chip,
-                        styles.cMono,
-                        row.tone === "teal"
-                          ? styles.cTeal
-                          : row.tone === "red"
-                            ? styles.cRed
-                            : styles.cAmber,
-                      )}
-                    >
-                      {row.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-        </Card>
-      </div>
+      <footer className={styles.executiveFoot}>
+        {view.summary.tenantName} · adoption, finance validation and claimable
+        value are separate gates
+      </footer>
     </div>
   );
 }
 
 /** Re-exported so the tab bar can badge the same condition the verdict shows. */
 export function commandCenterAttention(view: TowerCommandCenterView): boolean {
-  return (
-    view.summary.claimableUsd <= 0 &&
-    ((view.summary.approvedInvestmentUsd ?? 0) > 0 ||
-      view.summary.promisedBenefitLoaded ||
-      view.summary.economicReviewQueueCount > 0)
-  );
+  return view.summary.claimableUsd <= 0 && view.summary.promisedUsd > 0;
 }
