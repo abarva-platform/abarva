@@ -29,11 +29,7 @@ import {
   ValueProofContractView,
 } from "./views/ContractTabs";
 
-export type TowerTab =
-  | "executive"
-  | "funnel"
-  | "ai"
-  | "actions";
+export type TowerTab = "executive" | "funnel" | "ai" | "actions";
 
 const TABS: ReadonlyArray<{ id: TowerTab; label: string }> = [
   { id: "executive", label: "Executive View" },
@@ -232,18 +228,17 @@ export function TowerCommandCenter({
               const selected = t.id === tab;
               const count =
                 t.id === "funnel"
-                  ? (view
-                    ? view.summary.unknownValueClaimCount +
-                        view.summary.claimableProgramCount +
-                        view.summary.blockedProgramCount ||
-                      view.programs.length
-                    : null)
+                  ? view
+                    ? view.summary.valueClaimCount
+                    : null
                   : t.id === "ai"
-                    ? (view?.summary.aiInitiativeCount ?? view?.ai.length ?? null)
+                    ? (view?.summary.aiInitiativeCount ??
+                      view?.ai.length ??
+                      null)
                     : t.id === "actions"
-                      ? ((view?.actions.length ?? 0) +
+                      ? (view?.actions.length ?? 0) +
                         (view?.gaps.length ?? 0) +
-                        (view?.pipelineGaps.length ?? 0))
+                        (view?.pipelineGaps.length ?? 0)
                       : null;
               const attn =
                 (t.id === "funnel" && attention.funnel) ||

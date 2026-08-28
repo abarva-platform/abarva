@@ -40,6 +40,21 @@ function renderPage() {
   return render(<TowerCommandCenter view={view} tenantName="Fixture Tenant" />);
 }
 
+function renderWithSummary(
+  summary: Partial<typeof view.summary>,
+): ReturnType<typeof render> {
+  const nextView = {
+    ...view,
+    summary: {
+      ...view.summary,
+      ...summary,
+    },
+  };
+  return render(
+    <TowerCommandCenter view={nextView} tenantName="Fixture Tenant" />,
+  );
+}
+
 function tab(name: RegExp) {
   return screen.getByRole("tab", { name });
 }
@@ -60,14 +75,12 @@ describe("TowerCommandCenter", () => {
 
   it("renders the four attached-contract tabs as a real tablist", () => {
     renderPage();
-    const labels = screen
-      .getAllByRole("tab")
-      .map((node) =>
-        (node.textContent ?? "")
-          .replace(/needs attention/g, "")
-          .replace(/\d+/g, "")
-          .trim(),
-      );
+    const labels = screen.getAllByRole("tab").map((node) =>
+      (node.textContent ?? "")
+        .replace(/needs attention/g, "")
+        .replace(/\d+/g, "")
+        .trim(),
+    );
     expect(labels).toEqual([
       "Executive View",
       "Value Proof",
@@ -79,12 +92,63 @@ describe("TowerCommandCenter", () => {
 
   it("opens on the attached-design Executive View", () => {
     renderPage();
-    expect(screen.getByText("IT Investment Tower · FY26 · Today's verdict")).toBeInTheDocument();
+    expect(
+      screen.getByText("IT Investment Tower · FY26 · Today's verdict"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Decisions for this review")).toBeInTheDocument();
     expect(screen.getByText("Where the value is lost")).toBeInTheDocument();
     expect(screen.getByText("The drop is the finding")).toBeInTheDocument();
-    expect(screen.getByText("Ceiling on any sign-off today")).toBeInTheDocument();
-    expect(screen.getAllByText(formatUsdM(view.summary.claimableUsd)).length).toBeGreaterThan(0);
+    expect(
+      screen.getByText("Ceiling on any sign-off today"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText(formatUsdM(view.summary.claimableUsd)).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("does not substitute promised benefit when approved investment is not loaded", () => {
+    renderWithSummary({
+      approvedInvestmentUsd: null,
+      budgetUsd: null,
+      promisedUsd: 492_500_000,
+      valueClaimCount: 230,
+      unknownValueClaimCount: 969,
+    });
+
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "not loaded approved",
+    );
+    expect(screen.queryByText(/\$492\.5M approved/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/969 claims/)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/230 claims/).length).toBeGreaterThan(0);
+  });
+
+  it("keeps approved investment, benefit, and claim populations distinct", () => {
+    renderWithSummary({
+      approvedInvestmentUsd: 703_100_000,
+      budgetUsd: null,
+      promisedUsd: 492_500_000,
+      valueClaimCount: 230,
+      unknownValueClaimCount: 969,
+      financeAttestedClaimCount: 0,
+      outcomeMeasuredClaimCount: 0,
+      usageSupportedUsd: 0,
+    });
+
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "$703.1M approved. $0 provable",
+    );
+    expect(screen.queryByText(/\$492\.5M approved/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/0 of 230 claims attested by Finance/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Backfill measured outcome on the 230 claims/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Reconcile usage signals to value claims"),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("$210.6M").length).toBeGreaterThan(0);
   });
 
   it("moves between tabs with arrow keys and reflects the tab in the URL", () => {
@@ -112,10 +176,12 @@ describe("TowerCommandCenter", () => {
     renderPage();
     fireEvent.click(tab(/Value Proof/));
     expect(screen.getByText("Value proof")).toBeInTheDocument();
-    expect(screen.getByText("Investment to value conversion")).toBeInTheDocument();
+    expect(
+      screen.getByText("Investment to value conversion"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Eight-quarter trajectory")).toBeInTheDocument();
     expect(screen.getByText("Claim ledger")).toBeInTheDocument();
-    expect(screen.getByText("Decision lanes")).toBeInTheDocument();
+    expect(screen.getByText("Value case lanes")).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
   });
 
@@ -131,7 +197,9 @@ describe("TowerCommandCenter", () => {
   it("renders the Evidence & Actions tab-specific contract layout", () => {
     renderPage();
     fireEvent.click(tab(/Evidence & Actions/));
-    expect(screen.getByText("Three populations, three names")).toBeInTheDocument();
+    expect(
+      screen.getByText("Three populations, three names"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Action campaigns")).toBeInTheDocument();
     expect(screen.getByText("Evidence-owner queue")).toBeInTheDocument();
     expect(screen.getByText("Projection reconciliation")).toBeInTheDocument();
@@ -140,7 +208,9 @@ describe("TowerCommandCenter", () => {
   it("opens the program drawer from Value Proof decision lanes", () => {
     renderPage();
     fireEvent.click(tab(/Value Proof/));
-    const firstProgram = [...view.programs].sort((a, b) => b.blockedUsd - a.blockedUsd)[0]!;
+    const firstProgram = [...view.programs].sort(
+      (a, b) => b.blockedUsd - a.blockedUsd,
+    )[0]!;
     clickFirstButtonContaining(firstProgram.name);
 
     const drawer = screen.getByRole("dialog");
@@ -174,21 +244,27 @@ describe("TowerCommandCenter", () => {
   it("opens the action drawer from an action campaign and keeps routing disabled", () => {
     renderPage();
     fireEvent.click(tab(/Evidence & Actions/));
-    fireEvent.click(screen.getByRole("button", { name: /Usage telemetry connection/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Usage telemetry connection/ }),
+    );
 
     const drawer = screen.getByRole("dialog");
     const approve = within(drawer).getByRole("button", {
       name: /Approve & route/,
     });
     expect(approve).toBeDisabled();
-    expect(within(drawer).getByText(/Routing is not available yet/)).toBeInTheDocument();
+    expect(
+      within(drawer).getByText(/Routing is not available yet/),
+    ).toBeInTheDocument();
   });
 });
 
 describe("TowerCommandCenter — empty tenant", () => {
   it("renders an honest empty state instead of zeros", () => {
     render(<TowerCommandCenter view={null} tenantName="Empty Tenant" />);
-    expect(screen.getByText("No governed Tower data for this tenant")).toBeInTheDocument();
+    expect(
+      screen.getByText("No governed Tower data for this tenant"),
+    ).toBeInTheDocument();
     expect(screen.getByText(/a zero would be a claim/)).toBeInTheDocument();
     expect(screen.getAllByRole("tab")).toHaveLength(4);
   });

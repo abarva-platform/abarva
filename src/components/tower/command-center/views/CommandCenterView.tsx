@@ -66,6 +66,35 @@ function measuredUsd(view: TowerCommandCenterView): number {
   );
 }
 
+function formatLoadedUsdM(value: number | null | undefined): string {
+  return value === null || value === undefined
+    ? "not loaded"
+    : formatUsdM(value);
+}
+
+function valueClaimCount(view: TowerCommandCenterView): number {
+  return view.summary.valueClaimCount;
+}
+
+function proofBreakGate(view: TowerCommandCenterView): number {
+  const s = view.summary;
+  if ((s.usageSupportedUsd ?? 0) <= 0) return 2;
+  if ((s.financeValidatedUsd ?? 0) <= 0) return 6;
+  if ((s.claimableUsd ?? 0) <= 0) return 7;
+  return 7;
+}
+
+function commandFreshnessLine(view: TowerCommandCenterView): string {
+  const s = view.summary;
+  const asOf = s.asOfPeriod
+    ? `As of ${s.asOfPeriod}`
+    : "As-of date not recorded";
+  const built = s.refreshTimestamp
+    ? `built ${s.refreshTimestamp.slice(0, 10)}`
+    : "build date not recorded";
+  return `${asOf} · ${built}`;
+}
+
 function conflictCount(view: TowerCommandCenterView): number {
   return Math.max(
     view.summary.conflictedProgramCount,
@@ -80,11 +109,9 @@ function absentCount(view: TowerCommandCenterView): number {
 
 function executiveHeadline(view: TowerCommandCenterView): string {
   const s = view.summary;
-  const breakGate =
-    s.usageSupportedUsd <= 0 ? 2 : s.financeValidatedUsd <= 0 ? 6 : 7;
-  return `${formatUsdM(s.budgetUsd || s.promisedUsd)} approved. ${formatUsdM(
+  return `${formatLoadedUsdM(s.approvedInvestmentUsd)} approved. ${formatUsdM(
     s.claimableUsd,
-  )} provable. The chain breaks at gate ${breakGate} of 7.`;
+  )} provable. The chain breaks at gate ${proofBreakGate(view)} of 7.`;
 }
 
 function executiveSummary(view: TowerCommandCenterView): string {
@@ -101,17 +128,14 @@ function executiveSummary(view: TowerCommandCenterView): string {
 
 function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
   const s = view.summary;
-  const claims =
-    s.unknownValueClaimCount +
-      s.claimableProgramCount +
-      s.blockedProgramCount || view.programs.length;
+  const claims = valueClaimCount(view);
   const emitting = view.ai.filter(
     (item) => item.usageHeadline || item.usageBars.some((bar) => bar.pct > 0),
   ).length;
   return [
     {
       label: "Approved investment",
-      value: formatUsdM(s.budgetUsd || s.promisedUsd),
+      value: formatLoadedUsdM(s.approvedInvestmentUsd),
       note: `${formatCount(s.programCount || view.programs.length)} programs · approved capital only`,
       tone: "teal",
     },
@@ -126,8 +150,8 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
       label: "Board-claimable",
       badge: s.claimableUsd > 0 ? "OPEN" : "BLOCKED",
       value: formatUsdM(s.claimableUsd),
-      note: `${formatCount(s.claimableProgramCount)} of ${formatCount(
-        Math.max(claims, s.claimableProgramCount),
+      note: `${formatCount(s.financeAttestedClaimCount)} of ${formatCount(
+        claims,
       )} claims attested by Finance`,
       tone: s.claimableUsd > 0 ? "teal" : "red",
     },
@@ -137,9 +161,12 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
       value: `${formatCount(emitting)} of ${formatCount(
         s.aiInitiativeCount || view.ai.length,
       )}`,
-      note: `${formatUsdM(s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd)} attributed, ${
-        emitting > 0 ? "partially instrumented" : "none instrumented"
-      }`,
+      note:
+        emitting > 0 && s.usageSupportedUsd <= 0
+          ? `${formatUsdM(s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd)} attributed; usage signals visible, gate 2 value not cleared`
+          : `${formatUsdM(s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd)} attributed, ${
+              emitting > 0 ? "instrumented" : "none instrumented"
+            }`,
       tone: emitting > 0 ? "teal" : "red",
     },
   ];
@@ -155,24 +182,50 @@ function topBlockedProgram(
 
 function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
   const s = view.summary;
-  const claimsMissingActual = Math.max(
-    s.unknownValueClaimCount,
-    s.unmeasuredProgramCount,
-  );
+  const claims = valueClaimCount(view);
+  const claimsMissingActual = Math.max(0, claims - s.outcomeMeasuredClaimCount);
   const firstProgram = topBlockedProgram(view);
   const measured = measuredUsd(view);
+  const emitting = view.ai.filter(
+    (item) => item.usageHeadline || item.usageBars.some((bar) => bar.pct > 0),
+  ).length;
+  const totalAi = s.aiInitiativeCount || view.ai.length;
+  const breakGate = proofBreakGate(view);
+  const firstDecision =
+    breakGate === 2 && emitting > 0
+      ? {
+          title: "Reconcile usage signals to value claims",
+          detail: `${formatCount(emitting)} of ${formatCount(
+            totalAi,
+          )} AI and BI assets show usage signals, but ${formatUsdM(
+            s.usageSupportedUsd,
+          )} usage-supported value has cleared gate 2. Map usage to claim-level evidence before measurement or attestation.`,
+          metricLabel: "Gate 2 value",
+          metricValue: formatUsdM(s.usageSupportedUsd),
+        }
+      : breakGate === 2
+        ? {
+            title: "Connect usage telemetry on the attributed domains",
+            detail:
+              "Gate 2 has no governed usage evidence, so downstream gates cannot be measured, validated or attested.",
+            metricLabel: "Spend unmeasurable",
+            metricValue: formatUsdM(
+              s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd,
+            ),
+          }
+        : {
+            title: "Complete the next proof gate before attestation",
+            detail:
+              "Usage evidence exists. Move only the measured and validated value through the remaining proof gates.",
+            metricLabel: `Gate ${breakGate} ceiling`,
+            metricValue: formatUsdM(measured),
+          };
 
   return [
     {
       order: "1",
       kicker: "Instrument · do this first",
-      title: "Connect usage telemetry on the attributed domains",
-      detail:
-        "Gate 2 is empty, so downstream gates cannot be measured, validated or attested until the assets emit.",
-      metricLabel: "Spend unmeasurable",
-      metricValue: formatUsdM(
-        s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd,
-      ),
+      ...firstDecision,
       due: "Next review",
       tone: "red",
       programId: firstProgram?.id ?? null,
@@ -218,24 +271,21 @@ function evidenceQueue(gaps: readonly TowerEvidenceGapView[]) {
 
 function executiveWaterfallRows(view: TowerCommandCenterView) {
   const s = view.summary;
-  const approved = Math.max(
-    s.budgetUsd ?? 0,
-    s.promisedUsd ?? 0,
-    s.aiTaggedUsd ?? 0,
-  );
+  const approved = s.approvedInvestmentUsd;
+  const approvedValue = approved ?? 0;
   const asserted = s.promisedUsd ?? 0;
   const measured = measuredUsd(view);
   const claimable = s.claimableUsd ?? 0;
-  const noBenefit = Math.max(0, approved - asserted);
+  const noBenefit = approved === null ? 0 : Math.max(0, approved - asserted);
   const noMeasured = Math.max(0, asserted - measured);
 
   return [
     {
       name: "Approved|investment",
       baseUsd: 0,
-      usd: approved,
+      usd: approvedValue,
       fill: HEX.tealDark,
-      label: formatUsdM(approved),
+      label: formatLoadedUsdM(approved),
     },
     {
       name: "No benefit|asserted",
@@ -369,9 +419,8 @@ export function CommandCenterView({
         <div className={styles.executiveSummaryGrid}>
           <p>{executiveSummary(view)}</p>
           <aside className={styles.executiveAudit}>
-            <div>
-              As of {s.martVersion || "current mart"} · {s.sourceStandard}
-            </div>
+            <div>{commandFreshnessLine(view)}</div>
+            <div>{s.sourceStandard}</div>
             <div>
               {s.sourceFiles.slice(0, 4).join(" · ") || "No source files"}
             </div>
@@ -382,7 +431,11 @@ export function CommandCenterView({
               <span className={styles.auditAmber}>
                 {formatCount(absentCount(view))} absent
               </span>
-              <span>No build time</span>
+              <span>
+                {s.refreshTimestamp
+                  ? "build recorded"
+                  : "build date not recorded"}
+              </span>
             </div>
           </aside>
         </div>
@@ -496,7 +549,7 @@ export function CommandCenterView({
       <section className={styles.executiveLinks}>
         <span>Detail lives where it belongs:</span>
         <button type="button" onClick={onGoToFunnel}>
-          {formatCount(view.programs.length)} value cases and the gate that
+          {formatCount(valueClaimCount(view))} value claims and the gate that
           holds them →
         </button>
         <button type="button">

@@ -55,13 +55,14 @@ function measuredUsd(view: TowerCommandCenterView): number {
   );
 }
 
+function formatLoadedUsdM(value: number | null | undefined): string {
+  return value === null || value === undefined
+    ? "not loaded"
+    : formatUsdM(value);
+}
+
 function valueClaimCount(view: TowerCommandCenterView): number {
-  const s = view.summary;
-  return (
-    s.unknownValueClaimCount +
-      s.claimableProgramCount +
-      s.blockedProgramCount || view.programs.length
-  );
+  return view.summary.valueClaimCount;
 }
 
 function emittingAiCount(view: TowerCommandCenterView): number {
@@ -74,7 +75,7 @@ function contractSummaryLine(view: TowerCommandCenterView) {
   const s = view.summary;
   return (
     <>
-      {formatUsdM(s.budgetUsd || s.promisedUsd)} approved ·{" "}
+      {formatLoadedUsdM(s.approvedInvestmentUsd)} approved ·{" "}
       <strong>{formatUsdM(s.claimableUsd)} provable</strong> · chain breaks at
       gate {proofBreakGate(view)} of 7
     </>
@@ -99,7 +100,9 @@ function ContractMasthead({ view }: { view: TowerCommandCenterView }) {
           emitting
         </span>
         <span>{formatUsdM(measuredUsd(view))} ceiling</span>
-        <span>As of {s.martVersion || "current mart"}</span>
+        <span>
+          {s.asOfPeriod ? `As of ${s.asOfPeriod}` : "As-of date not recorded"}
+        </span>
         <span>{lineageStatus(view)}</span>
       </div>
     </header>
@@ -132,8 +135,8 @@ function cardTitle(title: string, subtitle?: string) {
   );
 }
 
-function moneyLabel(value: number): string {
-  return formatUsdM(value);
+function moneyLabel(value: number | null | undefined): string {
+  return formatLoadedUsdM(value);
 }
 
 function topPrograms(
@@ -153,7 +156,7 @@ function ValueGateChart({ view }: { view: TowerCommandCenterView }) {
   const rows = [
     {
       gate: "Investment",
-      valueUsd: s.budgetUsd || s.promisedUsd,
+      valueUsd: s.approvedInvestmentUsd,
       fill: HEX.tealDark,
     },
     { gate: "Adoption evidence", valueUsd: s.usageSupportedUsd, fill: HEX.red },
@@ -171,10 +174,10 @@ function ValueGateChart({ view }: { view: TowerCommandCenterView }) {
     },
     { gate: "Realized", valueUsd: s.claimableUsd, fill: HEX.red },
   ];
-  const axisMax = Math.max(...rows.map((row) => toM(row.valueUsd)), 1);
+  const axisMax = Math.max(...rows.map((row) => toM(row.valueUsd ?? 0)), 1);
   const data = rows.map((row) => ({
     ...row,
-    value: withSliver(toM(row.valueUsd), axisMax),
+    value: row.valueUsd === null ? 0 : withSliver(toM(row.valueUsd), axisMax),
     label: moneyLabel(row.valueUsd),
   }));
 
@@ -233,7 +236,7 @@ function ValueGateChart({ view }: { view: TowerCommandCenterView }) {
 
 function trajectoryRows(view: TowerCommandCenterView) {
   const s = view.summary;
-  const planned = Math.max(s.promisedUsd ?? 0, s.budgetUsd ?? 0, 1) / 8;
+  const planned = Math.max(s.approvedInvestmentUsd ?? 0, 1) / 8;
   const measured = measuredUsd(view) / 8;
   return Array.from({ length: 8 }, (_, index) => {
     const step = index + 1;
@@ -475,7 +478,7 @@ export function ValueProofContractView({
 
         <article className={styles.contractCard}>
           {cardTitle(
-            "Decision lanes",
+            "Value case lanes",
             `Top ${formatCount(programs.length)} of ${formatCount(view.programs.length)}`,
           )}
           <div className={styles.decisionLaneTableWrap}>
@@ -830,7 +833,10 @@ function campaignRows(view: TowerCommandCenterView) {
       seq: "2",
       title: "Outcome measurement backfill",
       owner: "program_sponsor",
-      tasks: Math.max(1, view.summary.unmeasuredProgramCount),
+      tasks: Math.max(
+        0,
+        valueClaimCount(view) - view.summary.outcomeMeasuredClaimCount,
+      ),
       valueUsd: measuredUsd(view),
       due: actions[1]?.due ?? "Next month",
       tone: "amber" as Tone,
@@ -907,14 +913,14 @@ function evidenceQueue(view: TowerCommandCenterView): TowerEvidenceGapView[] {
 
 function reconciliationRows(view: TowerCommandCenterView) {
   const ai = view.summary.aiInitiativeCount || view.allInitiatives.length;
-  const actions = valueClaimCount(view);
+  const tasks = view.actions.length;
   const risk = Math.max(view.gaps.length + view.pipelineGaps.length, 0);
-  const lanes = view.programs.length;
+  const claims = valueClaimCount(view);
   return [
     ["AI Portfolio", ai],
-    ["Recommended Actions", actions],
+    ["Value Claims", claims],
     ["Risk Lens", risk],
-    ["Decision Lanes", lanes],
+    ["Action Queue", tasks],
   ] as const;
 }
 
