@@ -238,6 +238,20 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
+        if (sql.includes("consumption.sourcing_spend_monthly_v1")) {
+          return [
+            {
+              spend_row_count: "12",
+              spend_actual: "8587900.00",
+              spend_committed: "8600004.00",
+              performance_row_count: "12",
+              performance_breach_count: "3",
+              credit_calculated: "43000.02",
+              credit_claimed: "0",
+              credit_recovered: "0",
+            },
+          ] as R[];
+        }
         return [] as R[];
       };
       return fn(run);
@@ -267,8 +281,14 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       expect.arrayContaining([
         { lensId: "executive_portfolio", state: "available", rowCount: 1 },
         { lensId: "vendor_concentration", state: "available", rowCount: 1 },
+        { lensId: "spend_consumption", state: "available", rowCount: 12 },
+        { lensId: "performance_credits", state: "available", rowCount: 12 },
         { lensId: "context_coverage", state: "available", rowCount: 2 },
       ]),
+    );
+    expect(portfolio.v4Snapshot.spendConsumption.actualSpend).toBe(8587900);
+    expect(portfolio.v4Snapshot.performanceCredits.unclaimedCredit).toBe(
+      43000.02,
     );
     expect(
       portfolio.cockpit.proofLayers.sourceSystems.find(

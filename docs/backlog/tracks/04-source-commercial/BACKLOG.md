@@ -143,6 +143,111 @@ New proof/backlog items from that result:
 
 ---
 
+## SRC-DEMO-HARDENING-20260828 — Final Source demo hardening punch list
+
+**Priority:** P0
+**Status:** pending
+**Type:** QA / demo hardening
+**Primary surface:** Source Contract 360, Source aVa, Source demo path
+**Primary agent:** Nexus
+**Dependencies:** governed Source depth load, signed-in tenant-scoped proof lane
+
+### Purpose
+
+Close the last high-signal demo-readiness gaps with the lowest-risk checks and fixes before the
+Source Vendor/Contract 360 walkthrough.
+
+### Workflow and data requirements
+
+- Run a small signed-in Source aVa check after explicit chat-record approval: ask why the selected
+  contract is actionable, what remains missing before value can be claimed, and one cross-tenant
+  pricing isolation probe. Treat posted prompts and responses as tenant-scoped records.
+- Repair or suppress the malformed 5-digit contract date currently visible as `20210-12-31` before
+  clicking that contract in a live walkthrough.
+- After the contract-depth load lands, regression-check the already-proven Contract 360 pivots so
+  the new performance/spend slice does not break existing rendered detail pages.
+- Do not open the file-cabinet/event-detail route live until the known redirect-to-home gap is fixed
+  and signed-in proof confirms the route behavior.
+
+### Acceptance criteria
+
+- Source aVa returns evidence-bounded answers, refuses unsupported value claims, and blocks the
+  cross-tenant probe without leaking pricing or vendor detail.
+- The malformed contract date is no longer visible in the demo path, or the demo script explicitly
+  avoids that contract.
+- Previously proven Contract 360 pages still load without error text, cross-tenant strings, or
+  missing-tab regressions after the depth load.
+- Demo-driver notes explicitly exclude the file-cabinet/event-detail route until that route has a
+  separate fix and live proof.
+
+### Codex-ready slice prompt
+
+```text
+Execute SRC-DEMO-HARDENING-20260828.
+
+Scope:
+Run the small signed-in Source aVa smoke after explicit chat-record approval, repair or suppress the
+malformed 5-digit contract date if it remains on the demo path, regression-check the already-proven
+Contract 360 pages after the Source depth load, and add a demo-driver note not to open the
+file-cabinet/event-detail route until its redirect gap is fixed.
+
+Validation:
+Capture signed-in transcript proof for aVa, before/after date evidence or an explicit avoid-click
+note, Contract 360 regression screenshots, and the demo-driver route exclusion note.
+```
+
+---
+
+## SRC-VENDOR360-GROUPED-VENDOR-VIEW — Make vendor rollups navigable and searchable
+
+**Priority:** P1
+**Status:** pending
+**Type:** UI / projection consumption
+**Primary surface:** Source Vendor portfolio, Source Vendor 360
+**Primary agent:** Nexus
+**Dependencies:** `source.vendor_contract_portfolio`, Source workspace navigation model
+
+### Purpose
+
+Turn the already-computed vendor rollup into an operator-usable Vendor portfolio / Vendor 360 flow,
+instead of exposing it only as proof-layer row counts and separate top-contract rows.
+
+### Workflow and data requirements
+
+- The Serving Surfaces row should use real controls or links when a surface is named as available.
+- Vendor portfolio should render a searchable list of vendors with contract count and annual value
+  from the governed vendor rollup.
+- Selecting a vendor should show the vendor's grouped contracts in one place before the operator
+  pivots into individual Contract 360 pages.
+- Do not create new data or re-compute vendor concentration in the UI; consume the existing governed
+  vendor rollup projection.
+
+### Acceptance criteria
+
+- Clicking Vendor portfolio / Vendor 360 from the live Source workspace changes the active view or
+  route in an accessible, keyboard-operable way.
+- The vendor list displays governed rollup rows and supports finding a specific vendor by name.
+- A selected vendor view shows all contracts for that vendor together with annual value, term, gate,
+  and source-document state.
+- Signed-in proof confirms the surface is tenant-clean and visually presentable.
+
+### Codex-ready slice prompt
+
+```text
+Implement SRC-VENDOR360-GROUPED-VENDOR-VIEW.
+
+Scope:
+Make the Source Vendor portfolio / Vendor 360 surface row actionable and render a searchable
+vendor-rollup view backed by source.vendor_contract_portfolio. Selecting a vendor should show its
+contracts grouped together and preserve the existing Contract 360 drill path.
+
+Validation:
+Add focused UI/model tests for actionable surface controls, vendor search, grouped vendor contracts,
+and tenant-clean signed-in proof. Do not introduce new data-plane writes.
+```
+
+---
+
 ## SRC71 — Source artifact decision-package story contract
 
 **Priority:** P0

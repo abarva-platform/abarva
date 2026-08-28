@@ -3863,6 +3863,17 @@ function formatCurrency(value: number | null) {
   })}`;
 }
 
+function formatMonth(value: string | null | undefined) {
+  if (!value) return "Not established";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value.slice(0, 10);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 function SourceSystemEvidenceMap({ vm }: { vm: SourceWorkspaceVM }) {
   const spine = vm.optSpine;
   if (!spine) return null;
@@ -4102,6 +4113,78 @@ function DetailPanel({
   const d = vm.detail;
   if (kind === "performance") {
     const evidencePerf = vm.evidencePerformance;
+    const performanceRows = d.performancePeriods ?? [];
+    const monthlyUnclaimedCredits = performanceRows.reduce(
+      (sum, row) =>
+        sum +
+        Math.max(
+          0,
+          Number(row.credit_calculated ?? 0) -
+            Number(row.credit_claimed ?? 0),
+        ),
+      0,
+    );
+    const performancePeriodTable = performanceRows.length ? (
+      <DataTable
+        title="Monthly SLA history"
+        note={`${performanceRows.length} contract-period rows · ${formatCurrency(monthlyUnclaimedCredits)} earned and unclaimed`}
+        binding="source.contract_performance_observation"
+        columns={[
+          { label: "Period" },
+          { label: "Metric" },
+          { label: "Target", align: "right" },
+          { label: "Actual", align: "right" },
+          { label: "Status" },
+          { label: "Credit owed", align: "right" },
+          { label: "Claimed" },
+        ]}
+        rows={performanceRows.map((row) => {
+          const creditOwed = Number(row.credit_calculated ?? 0);
+          const claimed = Number(row.credit_claimed ?? 0);
+          const hasCredit = creditOwed > 0;
+          return {
+            cells: [
+              { text: formatMonth(row.period_start), mono: true },
+              { text: row.metric_name, wrap: true },
+              {
+                text: row.contracted_target ?? "Not established",
+                align: "right" as const,
+              },
+              {
+                text:
+                  row.actual_value ??
+                  (row.value_num == null ? "Not established" : String(row.value_num)),
+                align: "right" as const,
+                weight: row.performance_state === "breached" ? 800 : 400,
+                color: row.performance_state === "breached" ? "#a32d2d" : "#2c2c2a",
+              },
+              {
+                text:
+                  row.performance_state === "breached"
+                    ? "Missed"
+                    : row.performance_state === "not_loaded"
+                      ? "Not loaded"
+                      : "Met",
+                weight: row.performance_state === "breached" ? 800 : 500,
+                color: row.performance_state === "breached" ? "#a32d2d" : "#246b45",
+              },
+              {
+                text: hasCredit ? formatCurrency(creditOwed) : "-",
+                align: "right" as const,
+                weight: hasCredit ? 800 : 400,
+                color: hasCredit ? "#1d9e75" : "#888780",
+              },
+              {
+                text: hasCredit ? (claimed > 0 ? "Yes" : "No") : "-",
+                weight: hasCredit && claimed === 0 ? 800 : 400,
+                color: hasCredit && claimed === 0 ? "#a32d2d" : "#5f5e5a",
+              },
+            ],
+          };
+        })}
+        footnote="Credits shown here are owed/claim-state evidence only. They are not finance-confirmed outcomes until the remedy and finance gates close."
+      />
+    ) : null;
     if (evidencePerf) {
       const creditGap = Math.max(
         0,
@@ -4357,6 +4440,7 @@ function DetailPanel({
               "#246b45",
             )}
           </div>
+          {performancePeriodTable}
         </>
       );
     }
@@ -4760,6 +4844,7 @@ function DetailPanel({
             </div>
           ) : null}
         </div>
+        {performancePeriodTable}
       </>
     );
   }

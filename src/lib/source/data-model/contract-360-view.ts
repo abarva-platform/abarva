@@ -29,6 +29,8 @@ import type {
   SourceContractFinancialExposureRow,
   SourceContractInitiativeDependencyRow,
   SourceContractOperationalPerformanceRow,
+  SourceContractPerformancePeriodRow,
+  SourceContractSpendMonthlyRow,
   TowerMetricObservationRow,
   TowerValueClaimRow,
 } from "./types";
@@ -53,6 +55,8 @@ export interface Contract360View {
   readonly evidenceScope: readonly SourceContractEvidenceScopeRow[];
   readonly evidencePricing: readonly SourceContractEvidencePricingRow[];
   readonly evidencePerformance: SourceContractEvidencePerformanceSummary | null;
+  readonly performancePeriods: readonly SourceContractPerformancePeriodRow[];
+  readonly spendMonths: readonly SourceContractSpendMonthlyRow[];
 }
 
 export interface BuildContract360ViewInput {
@@ -70,6 +74,8 @@ export interface BuildContract360ViewInput {
   readonly evidenceScope?: readonly SourceContractEvidenceScopeRow[];
   readonly evidencePricing?: readonly SourceContractEvidencePricingRow[];
   readonly evidencePerformance?: SourceContractEvidencePerformanceSummary | null;
+  readonly performancePeriods?: readonly SourceContractPerformancePeriodRow[];
+  readonly spendMonths?: readonly SourceContractSpendMonthlyRow[];
   /** (contract_id, application_ref) pairs proven by an actual SOW/contract-scope reference. */
   readonly explicitApplicationPairs?: ReadonlySet<string>;
 }
@@ -92,6 +98,8 @@ export function buildContract360View(
     evidenceScope = [],
     evidencePricing = [],
     evidencePerformance = null,
+    performancePeriods = [],
+    spendMonths = [],
     explicitApplicationPairs,
   } = input;
 
@@ -124,6 +132,12 @@ export function buildContract360View(
     evidenceScope,
     evidencePricing,
     evidencePerformance,
+    performancePeriods: performancePeriods.filter(
+      (r) => r.contract_id === contract.contract_id,
+    ),
+    spendMonths: spendMonths.filter(
+      (r) => r.contract_id === contract.contract_id,
+    ),
   };
 }
 

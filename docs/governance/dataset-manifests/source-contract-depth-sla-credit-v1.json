@@ -1,0 +1,17 @@
+{
+  "dataset_id": "source-contract-depth-sla-credit-v1",
+  "title": "Source Contract Depth SLA Credit Demonstration Slice",
+  "client_key": "meridian-health",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "synthetic_demo_companion_extract",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": "Synthetic, PHI-free, planning-grade Source contract-depth slice. No patient, member, provider, claim-line, PHI, PII, or real production client records are included. Financial values are demonstration inputs and must not be treated as finance-confirmed realized value.",
+  "expected_object_count": 28,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-08-28",
+  "notes": "Manifest gates the governed ACA Job load for one contract-depth demonstration slice: 12 monthly spend rows, 12 monthly performance rows, 3 service-credit rows, and one persisted optimization opportunity. It does not activate a production client claim or realized-value assertion."
+}

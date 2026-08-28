@@ -1809,6 +1809,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const evidenceScope = detail?.evidenceScope ?? [];
   const evidencePricing = detail?.evidencePricing ?? [];
   const evidencePerformance = detail?.evidencePerformance ?? null;
+  const performancePeriods = detail?.performancePeriods ?? [];
+  const spendMonths = detail?.spendMonths ?? [];
   const opportunitySet = detail?.optimizationOpportunitySet ?? null;
   const cVm = c
     ? {
@@ -1856,6 +1858,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           evidenceOverview?.refresh_frequency ??
           evidencePerformance?.refresh_frequency ??
           null,
+        performancePeriods,
+        spendMonths,
       }
     : null;
   const termRows = c

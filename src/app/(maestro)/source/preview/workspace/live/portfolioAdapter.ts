@@ -66,6 +66,16 @@ type EclCubeSliceRow = {
   readonly primary_metric_key: string;
   readonly quality_state: string;
 };
+type EclRuntimeEvidenceSummary = {
+  readonly spendRowCount: number;
+  readonly spendActual: number;
+  readonly spendCommitted: number;
+  readonly performanceRowCount: number;
+  readonly performanceBreachCount: number;
+  readonly creditCalculated: number;
+  readonly creditClaimed: number;
+  readonly creditRecovered: number;
+};
 export type SourceWorkspaceProviderMode =
   | "legacy"
   | "ecl_projection"
@@ -331,7 +341,7 @@ async function loadEclProjectionWorkspacePortfolio(
     );
   }
 
-  const [contractRows, vendorRows, eventRows, cubeSliceRows] = await Promise.all([
+  const [contractRows, vendorRows, eventRows, cubeSliceRows, runtimeEvidence] = await Promise.all([
     provider === "ecl_projection_db"
       ? readProjectionTable(tenantKey, "source_contract_360")
       : readProjectionCsv(
@@ -356,6 +366,9 @@ async function loadEclProjectionWorkspacePortfolio(
     provider === "ecl_projection_db"
       ? readEclCubeSlices(tenantKey)
       : Promise.resolve([]),
+    provider === "ecl_projection_db"
+      ? readEclRuntimeEvidenceSummary(tenantKey).catch(() => emptyEclRuntimeEvidenceSummary())
+      : Promise.resolve(emptyEclRuntimeEvidenceSummary()),
   ]);
   const acceptedTenantKeys = new Set(
     [tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim()),
@@ -377,6 +390,7 @@ async function loadEclProjectionWorkspacePortfolio(
     vendors,
     applicationScope,
     cubeSliceRows,
+    runtimeEvidence,
   });
   const categoryQuality = evaluateContractCategoryQuality(contracts);
   const legacyVendorCount = new Set(contracts.map((contract) => contract.vendor_ref))
@@ -505,14 +519,91 @@ async function readEclCubeSlices(tenantKey: string): Promise<EclCubeSliceRow[]> 
   });
 }
 
+async function readEclRuntimeEvidenceSummary(
+  tenantKey: string,
+): Promise<EclRuntimeEvidenceSummary> {
+  const acceptedTenantKeys = Array.from(
+    new Set([tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim())),
+  );
+  const rows = await azureRead.withSession(async (run) => {
+    await run("SELECT set_config('app.tenant_key', $1, false)", [
+      acceptedTenantKeys[0] ?? tenantKey,
+    ]);
+    return run<{
+      spend_row_count: string | number | null;
+      spend_actual: string | number | null;
+      spend_committed: string | number | null;
+      performance_row_count: string | number | null;
+      performance_breach_count: string | number | null;
+      credit_calculated: string | number | null;
+      credit_claimed: string | number | null;
+      credit_recovered: string | number | null;
+    }>(
+      `WITH spend AS (
+         SELECT
+           count(*) AS row_count,
+           COALESCE(SUM(actual_spend), 0) AS actual_spend,
+           COALESCE(SUM(committed_amount), 0) AS committed_amount
+          FROM consumption.sourcing_spend_monthly_v1
+         WHERE tenant_key = ANY($1::text[])
+       ), performance AS (
+         SELECT
+           count(*) AS row_count,
+           COALESCE(SUM(CASE WHEN performance_state = 'breached' THEN 1 ELSE 0 END), 0) AS breach_count,
+           COALESCE(SUM(credit_calculated), 0) AS credit_calculated,
+           COALESCE(SUM(credit_claimed), 0) AS credit_claimed,
+           COALESCE(SUM(credit_recovered), 0) AS credit_recovered
+          FROM consumption.sourcing_performance_v1
+         WHERE tenant_key = ANY($1::text[])
+       )
+       SELECT
+         spend.row_count AS spend_row_count,
+         spend.actual_spend AS spend_actual,
+         spend.committed_amount AS spend_committed,
+         performance.row_count AS performance_row_count,
+         performance.breach_count AS performance_breach_count,
+         performance.credit_calculated,
+         performance.credit_claimed,
+         performance.credit_recovered
+        FROM spend CROSS JOIN performance`,
+      [acceptedTenantKeys],
+    );
+  });
+  const row = rows[0] ?? {};
+  return {
+    spendRowCount: numberFromValue(row.spend_row_count) ?? 0,
+    spendActual: numberFromValue(row.spend_actual) ?? 0,
+    spendCommitted: numberFromValue(row.spend_committed) ?? 0,
+    performanceRowCount: numberFromValue(row.performance_row_count) ?? 0,
+    performanceBreachCount: numberFromValue(row.performance_breach_count) ?? 0,
+    creditCalculated: numberFromValue(row.credit_calculated) ?? 0,
+    creditClaimed: numberFromValue(row.credit_claimed) ?? 0,
+    creditRecovered: numberFromValue(row.credit_recovered) ?? 0,
+  };
+}
+
+function emptyEclRuntimeEvidenceSummary(): EclRuntimeEvidenceSummary {
+  return {
+    spendRowCount: 0,
+    spendActual: 0,
+    spendCommitted: 0,
+    performanceRowCount: 0,
+    performanceBreachCount: 0,
+    creditCalculated: 0,
+    creditClaimed: 0,
+    creditRecovered: 0,
+  };
+}
+
 function eclSourceWorkspaceSnapshot(input: {
   readonly asOfDateIso: string;
   readonly contracts: readonly SourceContract360Row[];
   readonly vendors: readonly SourceVendorContractPortfolioRow[];
   readonly applicationScope: readonly SourceContractApplicationScopeRow[];
   readonly cubeSliceRows: readonly EclCubeSliceRow[];
+  readonly runtimeEvidence: EclRuntimeEvidenceSummary;
 }): SourceV4WorkspaceSnapshot {
-  const { asOfDateIso, contracts, vendors, applicationScope, cubeSliceRows } =
+  const { asOfDateIso, contracts, vendors, applicationScope, cubeSliceRows, runtimeEvidence } =
     input;
   const base = createEmptySourceV4WorkspaceSnapshot(asOfDateIso, {
     datasetId: "ecl-source-360-local-projection",
@@ -568,8 +659,16 @@ function eclSourceWorkspaceSnapshot(input: {
         applicationScope.length > 0 ? "available" : "missing",
         applicationScope.length,
       ),
-      eclAvailability("spend_consumption", "missing", 0),
-      eclAvailability("performance_credits", "missing", 0),
+      eclAvailability(
+        "spend_consumption",
+        runtimeEvidence.spendRowCount > 0 ? "available" : "missing",
+        runtimeEvidence.spendRowCount,
+      ),
+      eclAvailability(
+        "performance_credits",
+        runtimeEvidence.performanceRowCount > 0 ? "available" : "missing",
+        runtimeEvidence.performanceRowCount,
+      ),
       eclAvailability("ai_usage_value_proof", "missing", 0),
       eclAvailability("cloud_optimization", "missing", 0),
       eclAvailability("workforce_rate_card", "missing", 0),
@@ -585,10 +684,10 @@ function eclSourceWorkspaceSnapshot(input: {
       contracts: contracts.length,
       annualValue,
       scopeRows: applicationScope.length,
-      invoiceLines: 0,
+      invoiceLines: runtimeEvidence.spendRowCount,
       saasUsageRows: 0,
       cloudRows: 0,
-      performanceRows: 0,
+      performanceRows: runtimeEvidence.performanceRowCount,
     },
     executivePortfolio: {
       contractCount: contracts.length,
@@ -601,6 +700,24 @@ function eclSourceWorkspaceSnapshot(input: {
       rowCount: applicationScope.length,
       explicitScopeCount: applicationScope.length,
       inferredScopeCount: 0,
+    },
+    spendConsumption: {
+      rowCount: runtimeEvidence.spendRowCount,
+      invoiceLines: runtimeEvidence.spendRowCount,
+      actualSpend: runtimeEvidence.spendActual,
+      committedAmount: runtimeEvidence.spendCommitted,
+      offContractSpend: 0,
+    },
+    performanceCredits: {
+      rowCount: runtimeEvidence.performanceRowCount,
+      breachCount: runtimeEvidence.performanceBreachCount,
+      creditCalculated: runtimeEvidence.creditCalculated,
+      creditClaimed: runtimeEvidence.creditClaimed,
+      creditRecovered: runtimeEvidence.creditRecovered,
+      unclaimedCredit: Math.max(
+        0,
+        runtimeEvidence.creditCalculated - runtimeEvidence.creditClaimed,
+      ),
     },
     topVendors,
   };

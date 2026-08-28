@@ -298,6 +298,57 @@ export interface SourceContractEvidencePerformanceSummary {
   readonly review_status: string | null;
 }
 
+export interface SourceContractPerformancePeriodRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly observation_id: string;
+  readonly contract_id: string;
+  readonly service_id: string | null;
+  readonly metric_name: string;
+  readonly period_start: string;
+  readonly period_end: string;
+  readonly contracted_target: string | null;
+  readonly actual_value: string | null;
+  readonly value_num: number | null;
+  readonly unit: string | null;
+  readonly performance_state: string;
+  readonly credit_state: string;
+  readonly breach_count: number | null;
+  readonly credit_eligible: boolean | null;
+  readonly credit_calculated: number | null;
+  readonly credit_claimed: number | null;
+  readonly credit_recovered: number | null;
+  readonly currency: string;
+  readonly source_system: string | null;
+  readonly source_record_id: string | null;
+  readonly as_of_date: string | null;
+  readonly quality_state: string | null;
+  readonly evidence_reference: string | null;
+  readonly load_run_id: string | null;
+}
+
+export interface SourceContractSpendMonthlyRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly observation_id: string;
+  readonly contract_id: string;
+  readonly service_id: string | null;
+  readonly business_unit: string | null;
+  readonly cost_center: string | null;
+  readonly month: string;
+  readonly period_start: string;
+  readonly period_end: string;
+  readonly committed_amount: number | null;
+  readonly invoice_amount: number | null;
+  readonly paid_amount: number | null;
+  readonly actual_spend: number | null;
+  readonly currency: string;
+  readonly source_system: string | null;
+  readonly source_record_id: string | null;
+  readonly as_of_date: string | null;
+  readonly quality_state: string | null;
+  readonly evidence_reference: string | null;
+  readonly load_run_id: string | null;
+}
+
 // ---------------------------------------------------------------------------
 // source.contract_initiative_dependency
 // ---------------------------------------------------------------------------
