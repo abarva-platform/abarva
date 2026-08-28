@@ -60,8 +60,8 @@ function percent(numerator: number, denominator: number): string {
 
 function measuredUsd(view: TowerCommandCenterView): number {
   return Math.max(
-    view.summary.financeValidatedUsd,
-    view.summary.usageSupportedUsd,
+    view.summary.financeValidatedUsd ?? 0,
+    view.summary.usageSupportedUsd ?? 0,
     0,
   );
 }
@@ -80,7 +80,8 @@ function absentCount(view: TowerCommandCenterView): number {
 
 function executiveHeadline(view: TowerCommandCenterView): string {
   const s = view.summary;
-  const breakGate = s.usageSupportedUsd <= 0 ? 2 : s.financeValidatedUsd <= 0 ? 6 : 7;
+  const breakGate =
+    s.usageSupportedUsd <= 0 ? 2 : s.financeValidatedUsd <= 0 ? 6 : 7;
   return `${formatUsdM(s.budgetUsd || s.promisedUsd)} approved. ${formatUsdM(
     s.claimableUsd,
   )} provable. The chain breaks at gate ${breakGate} of 7.`;
@@ -101,8 +102,9 @@ function executiveSummary(view: TowerCommandCenterView): string {
 function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
   const s = view.summary;
   const claims =
-    s.unknownValueClaimCount + s.claimableProgramCount + s.blockedProgramCount ||
-    view.programs.length;
+    s.unknownValueClaimCount +
+      s.claimableProgramCount +
+      s.blockedProgramCount || view.programs.length;
   const emitting = view.ai.filter(
     (item) => item.usageHeadline || item.usageBars.some((bar) => bar.pct > 0),
   ).length;
@@ -143,7 +145,9 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
   ];
 }
 
-function topBlockedProgram(view: TowerCommandCenterView): TowerProgramView | null {
+function topBlockedProgram(
+  view: TowerCommandCenterView,
+): TowerProgramView | null {
   return (
     [...view.programs].sort((a, b) => b.blockedUsd - a.blockedUsd)[0] ?? null
   );
@@ -166,7 +170,9 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
       detail:
         "Gate 2 is empty, so downstream gates cannot be measured, validated or attested until the assets emit.",
       metricLabel: "Spend unmeasurable",
-      metricValue: formatUsdM(s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd),
+      metricValue: formatUsdM(
+        s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd,
+      ),
       due: "Next review",
       tone: "red",
       programId: firstProgram?.id ?? null,
@@ -212,10 +218,14 @@ function evidenceQueue(gaps: readonly TowerEvidenceGapView[]) {
 
 function executiveWaterfallRows(view: TowerCommandCenterView) {
   const s = view.summary;
-  const approved = Math.max(s.budgetUsd, s.promisedUsd, s.aiTaggedUsd);
-  const asserted = s.promisedUsd;
+  const approved = Math.max(
+    s.budgetUsd ?? 0,
+    s.promisedUsd ?? 0,
+    s.aiTaggedUsd ?? 0,
+  );
+  const asserted = s.promisedUsd ?? 0;
   const measured = measuredUsd(view);
-  const claimable = s.claimableUsd;
+  const claimable = s.claimableUsd ?? 0;
   const noBenefit = Math.max(0, approved - asserted);
   const noMeasured = Math.max(0, asserted - measured);
 
@@ -302,7 +312,12 @@ function ExecutiveWaterfallChart({ view }: { view: TowerCommandCenterView }) {
           width={48}
         />
         <ChartTooltip formatter={(value) => `$${Number(value).toFixed(1)}M`} />
-        <Bar dataKey="base" stackId="value" fill="transparent" isAnimationActive={false} />
+        <Bar
+          dataKey="base"
+          stackId="value"
+          fill="transparent"
+          isAnimationActive={false}
+        />
         <Bar
           dataKey="visible"
           stackId="value"
@@ -357,7 +372,9 @@ export function CommandCenterView({
             <div>
               As of {s.martVersion || "current mart"} · {s.sourceStandard}
             </div>
-            <div>{s.sourceFiles.slice(0, 4).join(" · ") || "No source files"}</div>
+            <div>
+              {s.sourceFiles.slice(0, 4).join(" · ") || "No source files"}
+            </div>
             <div className={styles.auditBadges}>
               <span className={styles.auditRed}>
                 {formatCount(conflictCount(view))} conflict
@@ -374,7 +391,10 @@ export function CommandCenterView({
           {executiveMetrics.map((metric) => (
             <article
               key={metric.label}
-              className={cx(styles.executiveMetric, styles[`metric${metric.tone}`])}
+              className={cx(
+                styles.executiveMetric,
+                styles[`metric${metric.tone}`],
+              )}
             >
               <div className={styles.metricLabel}>
                 {metric.label}
@@ -443,9 +463,9 @@ export function CommandCenterView({
             <ExecutiveWaterfallChart view={view} />
           </div>
           <div className={styles.valueChartLegend}>
-            Each drop is a gate, not a loss. Of the {formatUsdM(s.promisedUsd)} asserted,
-            only {formatUsdM(measured)} has a measured amount behind it — and only{" "}
-            {formatUsdM(s.claimableUsd)} is claimable.
+            Each drop is a gate, not a loss. Of the {formatUsdM(s.promisedUsd)}{" "}
+            asserted, only {formatUsdM(measured)} has a measured amount behind
+            it — and only {formatUsdM(s.claimableUsd)} is claimable.
           </div>
         </div>
       </section>
@@ -461,7 +481,9 @@ export function CommandCenterView({
           </p>
         </article>
         <article className={styles.findingTeal}>
-          <div className={styles.findingKicker}>Ceiling on any sign-off today</div>
+          <div className={styles.findingKicker}>
+            Ceiling on any sign-off today
+          </div>
           <strong>{formatUsdM(measured)}</strong>
           <p>
             {formatUsdM(measured)} is the measured amount currently visible in
@@ -474,24 +496,31 @@ export function CommandCenterView({
       <section className={styles.executiveLinks}>
         <span>Detail lives where it belongs:</span>
         <button type="button" onClick={onGoToFunnel}>
-          {formatCount(view.programs.length)} value cases and the gate that holds them →
+          {formatCount(view.programs.length)} value cases and the gate that
+          holds them →
         </button>
         <button type="button">
-          {formatCount(s.aiInitiativeCount || view.ai.length)} AI and BI assets by cost,
-          risk and adoption →
+          {formatCount(s.aiInitiativeCount || view.ai.length)} AI and BI assets
+          by cost, risk and adoption →
         </button>
         <button type="button">
-          {formatCount(evidenceFooterCount(view))} open tasks in evidence queues →
+          {formatCount(evidenceFooterCount(view))} open tasks in evidence queues
+          →
         </button>
       </section>
 
       {evidenceQueue(view.gaps).length > 0 ? (
-        <section className={styles.executiveEvidenceTail} aria-label="Top evidence queue">
+        <section
+          className={styles.executiveEvidenceTail}
+          aria-label="Top evidence queue"
+        >
           {evidenceQueue(view.gaps).map((gap) => (
             <button
               key={gap.id}
               type="button"
-              onClick={() => gap.sourceProgramId && onOpenProgram(gap.sourceProgramId)}
+              onClick={() =>
+                gap.sourceProgramId && onOpenProgram(gap.sourceProgramId)
+              }
             >
               <span>{gap.missing}</span>
               <strong>
