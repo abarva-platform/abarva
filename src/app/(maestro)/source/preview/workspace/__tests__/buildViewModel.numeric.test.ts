@@ -242,6 +242,22 @@ describe("buildViewModel numeric coercion", () => {
     expect(fmtDate("2027-12-31")).toBe("31 Dec 2027");
   });
 
+  it("opens the vendor portfolio as a grouped all-vendor list by default", () => {
+    const vm = buildVm();
+    vm.state.sel = { kind: "vendorList", id: null };
+    const built = buildViewModel(vm) as {
+      isVendorList: boolean;
+      title: string;
+      thesis: string;
+      vendorListRows: unknown[];
+    };
+
+    expect(built.isVendorList).toBe(true);
+    expect(built.title).toBe("All vendors");
+    expect(built.thesis).toContain("3 vendors");
+    expect(built.vendorListRows).toHaveLength(3);
+  });
+
   it("routes the workspace optimize entry to the dedicated Optimize module, not generic new sourcing", () => {
     const vm = buildVm();
     vm.state.open.events = true;

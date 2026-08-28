@@ -104,7 +104,7 @@ jest.mock("@/lib/source/data-model/read-adapter", () => ({
   listVendorContractPortfolio: jest.fn(),
 }));
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -234,9 +234,17 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(portfolio.workspaceDiagnostics.eclCompareResponseCount).toBe(1);
     expect(portfolio.isEmpty).toBe(false);
 
+    const dbPortfolio = {
+      ...portfolio,
+      workspaceDiagnostics: {
+        ...portfolio.workspaceDiagnostics,
+        exploreProvider: "EclProjectionDbProvider" as const,
+      },
+    };
+
     render(
       <WorkspaceClient
-        portfolio={portfolio}
+        portfolio={dbPortfolio}
         tenantName="Meridian Health"
         sourceClientKey="meridian-health"
       />,
@@ -262,5 +270,17 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByText("Contract register")).toBeTruthy();
     expect(screen.getByText("Application scope")).toBeTruthy();
     expect(screen.queryByText("No Source rows returned")).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open Vendor portfolio" }),
+    );
+
+    expect(screen.getByText("All vendors")).toBeTruthy();
+    expect(screen.getByText("Vendors — category view")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open Vendor 360" }));
+
+    expect(screen.getByText("Portfolio position")).toBeTruthy();
+    expect(screen.getByText("Material contracts")).toBeTruthy();
   });
 });
