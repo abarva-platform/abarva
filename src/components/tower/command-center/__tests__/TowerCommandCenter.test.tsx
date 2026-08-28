@@ -168,6 +168,19 @@ describe("TowerCommandCenter", () => {
     });
   });
 
+  it("does not let a stale URL tab value undo a local tab click", () => {
+    mockedSearchParams = new URLSearchParams("tab=executive&proof=stale");
+    renderPage();
+
+    fireEvent.click(tab(/Value Proof/));
+
+    expect(tab(/Value Proof/)).toHaveAttribute("aria-selected", "true");
+    expect(replace).toHaveBeenCalledWith(
+      "/tower/command?tab=funnel&proof=stale",
+      { scroll: false },
+    );
+  });
+
   it("normalizes stale tab URLs into the new four-tab contract", () => {
     mockedSearchParams = new URLSearchParams("tab=evidence&client=demo");
     renderPage();

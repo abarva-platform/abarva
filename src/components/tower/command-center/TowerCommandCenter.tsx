@@ -84,6 +84,7 @@ export function TowerCommandCenter({
   const [drawer, setDrawer] = useState<DrawerState>(null);
 
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const syncedUrlTabRef = useRef<string | null>(urlTab ?? null);
 
   // Reflect the active tab in `?tab=` so a link can deep-link into a tab and an
   // E2E spec can address one directly. Sub-view / filter / question stay client
@@ -100,15 +101,20 @@ export function TowerCommandCenter({
 
   // A tab landed on from the URL (back/forward, or a pasted link) must win.
   useEffect(() => {
-    if (!urlTab) return;
+    if (!urlTab) {
+      syncedUrlTabRef.current = null;
+      return;
+    }
     const normalized = normalizeTowerTab(urlTab);
-    if (normalized !== tab) setTab(normalized);
+    if (urlTab === normalized && urlTab === syncedUrlTabRef.current) return;
+    syncedUrlTabRef.current = normalized;
+    setTab((current) => (current === normalized ? current : normalized));
     if (urlTab !== normalized) {
       const params = new URLSearchParams(searchParams?.toString() ?? "");
       params.set("tab", normalized);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
-  }, [pathname, router, searchParams, tab, urlTab]);
+  }, [pathname, router, searchParams, urlTab]);
 
   const closeDrawer = useCallback(() => setDrawer(null), []);
 
