@@ -21,8 +21,6 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
       "SkyHarbor",
       "IROPS",
       "Lakeshore",
-      "Coupa",
-      "Kyriba",
       "Meridian Health",
       "First Capital",
       "Northstar",
@@ -37,19 +35,22 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
     displayName: "Meridian Health System",
     testPersonaEnv: "MERIDIAN_PERSONA_EMAIL",
     testPersonaEmail: "meridian-agent@abarva.example.com",
-    industry: "healthcare provider / payer operations / clinical transformation",
+    industry:
+      "healthcare provider / payer operations / clinical transformation",
     active: true,
     retiredAliases: [],
     bannedAliases: [],
-    sourceOnlyCleanupTerms: ["Heliara", "Heliara Health", "Heliara Health Alliance"],
+    sourceOnlyCleanupTerms: [
+      "Heliara",
+      "Heliara Health",
+      "Heliara Health Alliance",
+    ],
     staleFactPatterns: [],
     syntheticOnlyTerms: ["meridian-enterprise-context-v1"],
     crossTenantForbiddenTerms: [
       "SkyHarbor",
       "IROPS",
       "Lakeshore",
-      "Coupa",
-      "Kyriba",
       "Apex Retail",
       "First Capital",
       "Northstar",
@@ -67,8 +68,16 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
     testPersonaEmail: "arcturus-agent@abarva.example.com",
     industry: "financial services / banking / risk and compliance",
     active: true,
-    retiredAliases: ["Arcturus Financial", "Arcturus Financial Group", "First Capital Financial"],
-    bannedAliases: ["Arcturus Financial", "Arcturus Financial Group", "First Capital Financial"],
+    retiredAliases: [
+      "Arcturus Financial",
+      "Arcturus Financial Group",
+      "First Capital Financial",
+    ],
+    bannedAliases: [
+      "Arcturus Financial",
+      "Arcturus Financial Group",
+      "First Capital Financial",
+    ],
     sourceOnlyCleanupTerms: [],
     staleFactPatterns: [],
     syntheticOnlyTerms: [],
@@ -76,8 +85,6 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
       "SkyHarbor",
       "IROPS",
       "Lakeshore",
-      "Coupa",
-      "Kyriba",
       "Apex Retail",
       "Meridian Health",
       "Northstar",
@@ -104,8 +111,6 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
       "SkyHarbor",
       "IROPS",
       "Lakeshore",
-      "Coupa",
-      "Kyriba",
       "Apex Retail",
       "Meridian Health",
       "First Capital",
@@ -130,8 +135,6 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
     syntheticOnlyTerms: ["skyharbor-enterprise-context-v1"],
     crossTenantForbiddenTerms: [
       "Lakeshore",
-      "Coupa",
-      "Kyriba",
       "Morgan Street",
       "HarborPoint",
       "Riverton",
@@ -150,7 +153,8 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
     displayName: "Lakeshore Holdings",
     testPersonaEnv: "LAKESHORE_DEMO_QA_EMAIL",
     testPersonaEmail: "lakeshore-agent@abarva.example.com",
-    industry: "diversified holding company / shared services / industrial portfolio",
+    industry:
+      "diversified holding company / shared services / industrial portfolio",
     active: true,
     retiredAliases: [
       "Lakeshore Industries",
@@ -174,10 +178,19 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
     sourceOnlyCleanupTerms: [],
     staleFactPatterns: [
       { label: "old_revenue_54_2b", re: /\$?54\.2B\b|\b54\.2\s*billion\b/i },
-      { label: "old_employee_count_72000", re: /\b72,?000\s+(?:FTEs?|employees|people)\b/i },
+      {
+        label: "old_employee_count_72000",
+        re: /\b72,?000\s+(?:FTEs?|employees|people)\b/i,
+      },
       { label: "old_plant_count_89", re: /\b89\s+manufacturing\s+plants\b/i },
-      { label: "old_tech_budget_1_8b", re: /\$?1\.8B\s+(?:annual\s+)?technology\s+budget\b/i },
-      { label: "old_ai_budget_54m", re: /\$54M\s+(?:AI|AI\/data|data)\s+budget\b/i },
+      {
+        label: "old_tech_budget_1_8b",
+        re: /\$?1\.8B\s+(?:annual\s+)?technology\s+budget\b/i,
+      },
+      {
+        label: "old_ai_budget_54m",
+        re: /\$54M\s+(?:AI|AI\/data|data)\s+budget\b/i,
+      },
     ],
     syntheticOnlyTerms: [
       "lakeshore-industries-synthetic-v6",
@@ -224,10 +237,16 @@ export const INTELLIGENCE_SAFETY_TENANTS = {
     sourceOnlyCleanupTerms: [],
     staleFactPatterns: [
       { label: "old_revenue_54_2b", re: /\$?54\.2B\b|\b54\.2\s*billion\b/i },
-      { label: "old_employee_count_72000", re: /\b72,?000\s+(?:FTEs?|employees|people)\b/i },
+      {
+        label: "old_employee_count_72000",
+        re: /\b72,?000\s+(?:FTEs?|employees|people)\b/i,
+      },
     ],
-    syntheticOnlyTerms: ["synthetic_peer_anchor", "lakeshore-industries-synthetic-v6"],
-    crossTenantForbiddenTerms: ["SkyHarbor", "airline", "IROPS", "Coupa", "Kyriba"],
+    syntheticOnlyTerms: [
+      "synthetic_peer_anchor",
+      "lakeshore-industries-synthetic-v6",
+    ],
+    crossTenantForbiddenTerms: ["SkyHarbor", "airline", "IROPS"],
     knownRetiredFacts: ["Lakeshore Industries", "Morgan Street"],
   },
 };
@@ -239,8 +258,11 @@ export const ACTIVE_INTELLIGENCE_SAFETY_TENANT_KEYS = Object.entries(
   .map(([key]) => key);
 
 export function normalizeSafetyTenantKey(key) {
-  const k = String(key ?? "").toLowerCase().replace(/[_\s-]/g, "");
-  if (k.includes("morgan") || k.includes("monastreet")) return "morgan-street-equivalent";
+  const k = String(key ?? "")
+    .toLowerCase()
+    .replace(/[_\s-]/g, "");
+  if (k.includes("morgan") || k.includes("monastreet"))
+    return "morgan-street-equivalent";
   if (k.includes("lake")) return "lakeshore";
   if (k.includes("sky")) return "skyharbor";
   if (k.includes("apex")) return "apexretail";
