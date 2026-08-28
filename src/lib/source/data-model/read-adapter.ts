@@ -52,6 +52,8 @@ import type {
   SourceContractFinancialExposureRow,
   SourceContractInitiativeDependencyRow,
   SourceContractOperationalPerformanceRow,
+  SourceContractPerformancePeriodRow,
+  SourceContractSpendMonthlyRow,
   SourceContractVendor360Row,
   SourceVendorContractPortfolioRow,
   TowerMetricObservationRow,
@@ -711,6 +713,92 @@ export async function listContractOperationalPerformance(
   );
 }
 
+export async function listContractPerformancePeriods(
+  tenantKey: string,
+  contractId: string,
+): Promise<SourceContractPerformancePeriodRow[]> {
+  const rows = await safeQueryForTenant<SourceContractPerformancePeriodRow>(
+    tenantKey,
+    `SELECT
+       tenant_key,
+       observation_id,
+       contract_id,
+       service_id,
+       metric_name,
+       period_start,
+       period_end,
+       contracted_target,
+       actual_value,
+       value_num,
+       unit,
+       CASE
+         WHEN COALESCE(breach_count, 0) > 0 THEN 'breached'
+         WHEN actual_value IS NULL AND value_num IS NULL THEN 'not_loaded'
+         ELSE 'met_or_unclassified'
+       END AS performance_state,
+       CASE
+         WHEN COALESCE(credit_recovered, 0) > 0 THEN 'recovered'
+         WHEN COALESCE(credit_claimed, 0) > 0 THEN 'claimed'
+         WHEN COALESCE(credit_calculated, 0) > 0 THEN 'earned_unclaimed'
+         ELSE 'none'
+       END AS credit_state,
+       breach_count,
+       credit_eligible,
+       credit_calculated,
+       credit_claimed,
+       credit_recovered,
+       currency,
+       source_system,
+       source_record_id,
+       as_of_date,
+       quality_state,
+       evidence_reference,
+       load_run_id
+     FROM source.contract_performance_observation
+     WHERE tenant_key = ANY($1::text[])
+       AND contract_id = $2
+     ORDER BY period_start, observation_id`,
+    [contractId],
+  );
+  return rows.map(normalizePerformancePeriodRow);
+}
+
+export async function listContractSpendMonthly(
+  tenantKey: string,
+  contractId: string,
+): Promise<SourceContractSpendMonthlyRow[]> {
+  const rows = await safeQueryForTenant<SourceContractSpendMonthlyRow>(
+    tenantKey,
+    `SELECT
+       tenant_key,
+       observation_id,
+       contract_id,
+       service_id,
+       business_unit,
+       cost_center,
+       period_start AS month,
+       period_start,
+       period_end,
+       committed_amount,
+       invoice_amount,
+       paid_amount,
+       actual_spend,
+       currency,
+       source_system,
+       source_record_id,
+       as_of_date,
+       quality_state,
+       evidence_reference,
+       load_run_id
+     FROM source.contract_consumption_observation
+     WHERE tenant_key = ANY($1::text[])
+       AND contract_id = $2
+     ORDER BY period_start, observation_id`,
+    [contractId],
+  );
+  return rows.map(normalizeSpendMonthlyRow);
+}
+
 export async function getContractEvidenceOverview(
   tenantKey: string,
   contractId: string,
@@ -870,6 +958,31 @@ function normalizeEvidencePerformanceSummary(
       numberValue(row.negotiated_improvement_usd) ?? 0,
     realized_value_usd: numberValue(row.realized_value_usd) ?? 0,
     source_systems: jsonArray(row.source_systems),
+  };
+}
+
+function normalizePerformancePeriodRow(
+  row: SourceContractPerformancePeriodRow,
+): SourceContractPerformancePeriodRow {
+  return {
+    ...row,
+    value_num: numberValue(row.value_num),
+    breach_count: numberValue(row.breach_count),
+    credit_calculated: numberValue(row.credit_calculated),
+    credit_claimed: numberValue(row.credit_claimed),
+    credit_recovered: numberValue(row.credit_recovered),
+  };
+}
+
+function normalizeSpendMonthlyRow(
+  row: SourceContractSpendMonthlyRow,
+): SourceContractSpendMonthlyRow {
+  return {
+    ...row,
+    committed_amount: numberValue(row.committed_amount),
+    invoice_amount: numberValue(row.invoice_amount),
+    paid_amount: numberValue(row.paid_amount),
+    actual_spend: numberValue(row.actual_spend),
   };
 }
 

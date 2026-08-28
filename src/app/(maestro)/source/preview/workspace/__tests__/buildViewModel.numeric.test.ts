@@ -301,6 +301,8 @@ describe("buildViewModel numeric coercion", () => {
       evidenceScope: [],
       evidencePricing: [],
       evidencePerformance: null,
+      performancePeriods: [],
+      spendMonths: [],
       optimizationOpportunitySet: {
         tenantKey: "skyharbor_global",
         datasetVersion: "v4-golden-evidence",
@@ -408,6 +410,8 @@ describe("buildViewModel numeric coercion", () => {
       evidenceScope: [],
       evidencePricing: [],
       evidencePerformance: null,
+      performancePeriods: [],
+      spendMonths: [],
       optimizationOpportunitySet: {
         tenantKey: "skyharbor_global",
         datasetVersion: "v4-golden-evidence",
