@@ -1,0 +1,43 @@
+tenant_key,business_case_id,initiative_name,domain_name,business_value_type,approved_investment_usd,projected_annual_value_low_usd,projected_annual_value_high_usd,roi_low_multiple,finance_status,committee_decision,board_claimable_ytd_usd
+meridian-health,BC-MER-001,Enterprise AI platform foundation,Data & AI,Foundation,18000000,0,0,,sponsor_claimed,shape,0
+meridian-health,BC-MER-002,Digital front door personalization,Digital & Member Experience,Grow revenue,11200000,50055476,60740197,4,finance_challenged,fund,0
+meridian-health,BC-MER-003,ServiceNow operations AI rollout,Enterprise Applications,Reduce cost,10400000,51180318,65583033,4.4,cfo_approved_target,fund,0
+meridian-health,BC-MER-004,Epic ambulatory access optimization,Clinical / Epic,Create capacity,8900000,47820856,64527782,4.8,not_submitted,challenge,0
+meridian-health,BC-MER-005,Data quality and interoperability foundation,Data & AI,Foundation,9800000,0,0,,finance_validated_actual,shape,0
+meridian-health,BC-MER-006,Contact center AI assist,Digital & Member Experience,Reduce cost,8600000,34548723,41923410,3.6,sponsor_claimed,fund,0
+meridian-health,BC-MER-007,Workday finance close AI assistant,Corporate IT,Reduce cost,6400000,28603129,36652370,4,finance_challenged,challenge,0
+meridian-health,BC-MER-008,Clinical documentation ambient pilot,Clinical / Epic,Create capacity,7200000,35432528,47811407,4.4,cfo_approved_target,fund,0
+meridian-health,BC-MER-009,Copilot secure productivity rollout,Corporate IT,Reduce cost,4800000,25791024,29543720,4.8,not_submitted,shape,0
+meridian-health,BC-MER-010,Prior authorization automation,Enterprise Applications,Reduce cost,7900000,46018096,55841008,5.2,finance_validated_actual,fund,13136248
+meridian-health,BC-MER-011,Security operations automation,Cybersecurity & Risk,Reduce cost,5700000,22898572,29342487,3.6,sponsor_claimed,challenge,0
+meridian-health,BC-MER-012,ServiceNow knowledge article generation 1,Enterprise Applications,Reduce cost,2253514,10071492,13590117,4,finance_challenged,challenge,0
+meridian-health,BC-MER-013,claims intake document AI 1,Data & AI,Reduce cost,3830974,18852930,21596106,4.4,cfo_approved_target,fund,0
+meridian-health,BC-MER-014,clinical documentation queue summarization 1,Clinical / Epic,Create capacity,4056325,21795161,26447504,4.8,not_submitted,fund,0
+meridian-health,BC-MER-015,model monitoring and prompt-risk controls 1,Data & AI,Foundation,2704217,0,0,,finance_validated_actual,continue,0
+meridian-health,BC-MER-016,member identity resolution data product 1,Data & AI,Foundation,4281677,0,0,,sponsor_claimed,continue,0
+meridian-health,BC-MER-017,member mobile next-best-action pilot 1,Digital & Member Experience,Grow revenue,2929568,13092940,14998014,4,finance_challenged,challenge,0
+meridian-health,BC-MER-018,Microsoft 365 Copilot productivity wave 1,Corporate IT,Reduce cost,4507028,22179916,26914387,4.4,cfo_approved_target,fund,0
+meridian-health,BC-MER-019,SOC alert summarization assistant 1,Cybersecurity & Risk,Reduce cost,4732380,25427692,32583331,4.8,not_submitted,fund,0
+meridian-health,BC-MER-020,AI service management controls foundation 1,Enterprise Applications,Foundation,3380271,0,0,,finance_validated_actual,continue,0
+meridian-health,BC-MER-021,AI feature store governance uplift 1,Data & AI,Foundation,4957731,0,0,,sponsor_claimed,continue,0
+meridian-health,BC-MER-022,prior authorization clinical policy assistant 1,Enterprise Applications,Reduce cost,3605622,16114386,19554125,4,finance_challenged,challenge,0
+meridian-health,BC-MER-023,contact center agent assist rollout 1,Digital & Member Experience,Reduce cost,2253514,11089958,14210797,4.4,cfo_approved_target,fund,0
+meridian-health,BC-MER-024,ambulatory access waitlist optimization 1,Clinical / Epic,Create capacity,2478865,13319264,17972547,4.8,not_submitted,fund,0
+meridian-health,BC-MER-025,enterprise AI evaluation harness 1,Data & AI,Foundation,4056325,0,0,,finance_validated_actual,defer,0
+meridian-health,BC-MER-026,provider data matching remediation 1,Data & AI,Foundation,2704217,0,0,,sponsor_claimed,continue,0
+meridian-health,BC-MER-027,digital front door personalization wave 1,Digital & Member Experience,Grow revenue,4281677,19135838,24520877,4,finance_challenged,challenge,0
+meridian-health,BC-MER-028,engineering Copilot controlled rollout 1,Enterprise Architecture,Build faster,2929568,14416944,19453717,4.4,cfo_approved_target,fund,0
+meridian-health,BC-MER-029,claims appeal response assistant 1,Enterprise Applications,Reduce cost,3154920,16951795,19418348,4.8,not_submitted,fund,0
+meridian-health,BC-MER-030,regulated AI sandbox foundation 1,Data & AI,Foundation,4732380,0,0,,finance_validated_actual,continue,0
+meridian-health,BC-MER-031,business glossary and value lineage cleanup 1,Data & AI,Foundation,3380271,0,0,,sponsor_claimed,continue,0
+meridian-health,BC-MER-032,clinical inbox summarization pilot 1,Clinical / Epic,Create capacity,4957731,22157284,29898260,4,finance_challenged,challenge,0
+meridian-health,BC-MER-033,Workday finance close assistant expansion 1,Corporate IT,Reduce cost,3605622,17743931,20325744,4.4,cfo_approved_target,fund,0
+meridian-health,BC-MER-034,security incident narrative assistant 1,Cybersecurity & Risk,Reduce cost,3830974,20584321,24978201,4.8,not_submitted,fund,0
+meridian-health,BC-MER-035,AI model registry foundation 1,Data & AI,Foundation,2478865,0,0,,finance_validated_actual,continue,0
+meridian-health,BC-MER-036,contract and policy corpus normalization 1,Data & AI,Foundation,4056325,0,0,,sponsor_claimed,continue,0
+meridian-health,BC-MER-037,member service intent detection pilot 1,Digital & Member Experience,Reduce cost,2704217,12085792,13844323,4,finance_challenged,challenge,0
+meridian-health,BC-MER-038,ServiceNow virtual agent expansion 1,Enterprise Applications,Reduce cost,4281677,21070922,25568670,4.4,cfo_approved_target,fund,0
+meridian-health,BC-MER-039,clinical referral triage assistant 1,Clinical / Epic,Create capacity,4507028,24216847,31031740,4.8,not_submitted,fund,0
+meridian-health,BC-MER-040,enterprise AI access management foundation 1,Data & AI,Foundation,3154920,0,0,,finance_validated_actual,continue,0
+meridian-health,BC-MER-041,measurement baseline data product 1,Data & AI,Foundation,4732380,0,0,,sponsor_claimed,continue,0
+meridian-health,BC-MER-042,provider service request classification 1,Enterprise Applications,Reduce cost,3380271,15107238,18331994,4,finance_challenged,challenge,0

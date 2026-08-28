@@ -1,0 +1,9 @@
+tenant_key,canonical_budget_id,fiscal_year,domain_key,domain_name,budget_owner_role,approved_budget_usd,tower_reviewed_project_budget_usd,source_file,source_row,source_system,source_record_id,as_of_date
+meridian-health,BUDGET:clinical_epic:FY26,FY26,clinical_epic,Clinical / Epic,Chief Medical Information Officer,232000000,167040000,20_it_budget_by_domain.csv,2,IT Finance / FP&A,BUD-clinical_epic,2026-08-24
+meridian-health,BUDGET:infrastructure:FY26,FY26,infrastructure,Infrastructure & Cloud,CTO,178000000,81880000,20_it_budget_by_domain.csv,3,IT Finance / FP&A,BUD-infrastructure,2026-08-24
+meridian-health,BUDGET:apps:FY26,FY26,apps,Enterprise Applications,VP Enterprise Applications,184000000,99360000,20_it_budget_by_domain.csv,4,IT Finance / FP&A,BUD-apps,2026-08-24
+meridian-health,BUDGET:data_ai:FY26,FY26,data_ai,Data & AI,Chief Data and AI Officer,142000000,110760000,20_it_budget_by_domain.csv,5,IT Finance / FP&A,BUD-data_ai,2026-08-24
+meridian-health,BUDGET:digital:FY26,FY26,digital,Digital & Member Experience,Chief Digital Officer,112000000,71680000,20_it_budget_by_domain.csv,6,IT Finance / FP&A,BUD-digital,2026-08-24
+meridian-health,BUDGET:security:FY26,FY26,security,Cybersecurity & Risk,CISO,96000000,32640000,20_it_budget_by_domain.csv,7,IT Finance / FP&A,BUD-security,2026-08-24
+meridian-health,BUDGET:architecture:FY26,FY26,architecture,Enterprise Architecture,Chief Architect,43000000,17200000,20_it_budget_by_domain.csv,8,IT Finance / FP&A,BUD-architecture,2026-08-24
+meridian-health,BUDGET:corporate_it:FY26,FY26,corporate_it,Corporate IT,VP Corporate IT,63000000,13860000,20_it_budget_by_domain.csv,9,IT Finance / FP&A,BUD-corporate_it,2026-08-24

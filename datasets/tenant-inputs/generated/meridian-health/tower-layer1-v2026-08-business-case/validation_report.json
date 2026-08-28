@@ -1,0 +1,241 @@
+{
+  "status": "PASS",
+  "packageDir": "/private/tmp/nexus-tower-demo-data-sanity/datasets/tenant-inputs/generated/meridian-health/tower-layer1-v2026-08-business-case",
+  "totals": {
+    "totalItBudgetUsd": 1050000000,
+    "reviewedProjectBudgetUsd": 703100000,
+    "explicitAiRelatedBudgetUsd": 211801054,
+    "aiShareOfReviewedPortfolioPct": 30.1,
+    "aiCasePromisedValueLowUsd": 677763373,
+    "aiCasePromisedValueHighUsd": 847204216,
+    "aiPortfolioRoiLowMultiple": 3.2,
+    "aiPortfolioRoiHighMultiple": 4,
+    "projectRows": 140,
+    "aiBusinessCases": 42,
+    "toolRollouts": 13,
+    "monthlyValueRows": 504,
+    "financeApprovalRows": 84,
+    "evidenceRows": 196
+  },
+  "distributions": {
+    "domains": {
+      "Clinical / Epic": 18,
+      "Corporate IT": 18,
+      "Cybersecurity & Risk": 15,
+      "Data & AI": 28,
+      "Digital & Member Experience": 17,
+      "Enterprise Applications": 20,
+      "Enterprise Architecture": 12,
+      "Infrastructure & Cloud": 12
+    },
+    "projectClassifications": {
+      "ai_assisted_automation": 8,
+      "ai_enabled_tool_rollout": 9,
+      "ai_use_case": 11,
+      "analytics_bi": 6,
+      "clinical_epic": 18,
+      "data_readiness": 7,
+      "infrastructure": 19,
+      "mandatory_compliance": 18,
+      "ordinary_it_project": 18,
+      "platform_foundation": 7,
+      "security": 19
+    },
+    "committeeDecisions": {
+      "challenge": 10,
+      "continue": 95,
+      "defer": 14,
+      "fund": 18,
+      "shape": 3
+    },
+    "financeApprovalStates": {
+      "cfo_approved_target": 8,
+      "finance_challenged": 9,
+      "finance_validated_actual": 8,
+      "not_submitted": 8,
+      "sponsor_claimed": 9
+    },
+    "validationStates": {
+      "finance_validated_actual": 10,
+      "not_yet_measurable": 237,
+      "sponsor_claimed": 257
+    }
+  },
+  "gates": [
+    {
+      "id": "package_files_complete",
+      "status": "PASS",
+      "detail": "all required files present"
+    },
+    {
+      "id": "manifest_no_runtime_load",
+      "status": "PASS",
+      "detail": "package is marked no_runtime_load for signoff only"
+    },
+    {
+      "id": "tenant_key_consistent",
+      "status": "PASS",
+      "detail": "all rows use canonical tenant key"
+    },
+    {
+      "id": "it_budget_total",
+      "status": "PASS",
+      "detail": "$1050M total IT budget"
+    },
+    {
+      "id": "project_portfolio_total",
+      "status": "PASS",
+      "detail": "$703.1M reviewed project portfolio"
+    },
+    {
+      "id": "project_row_count",
+      "status": "PASS",
+      "detail": "140 project rows"
+    },
+    {
+      "id": "classification_variety",
+      "status": "PASS",
+      "detail": "11 project classifications"
+    },
+    {
+      "id": "bi_not_ai",
+      "status": "PASS",
+      "detail": "6 analytics_bi rows are not AI-related"
+    },
+    {
+      "id": "portfolio_not_all_ai",
+      "status": "PASS",
+      "detail": "$211.8M explicit AI/AI-enabled subset inside $703.1M reviewed IT portfolio"
+    },
+    {
+      "id": "top_investments_include_non_ai_context",
+      "status": "PASS",
+      "detail": "4 of top 10 investments are non-AI, including the largest"
+    },
+    {
+      "id": "ai_subset_reasonable",
+      "status": "PASS",
+      "detail": "$211.8M explicit AI/AI-enabled subset"
+    },
+    {
+      "id": "ai_flags_explicit",
+      "status": "PASS",
+      "detail": "0 inconsistent AI flags"
+    },
+    {
+      "id": "ai_business_case_count",
+      "status": "PASS",
+      "detail": "42 AI business cases for 42 explicit AI-related projects"
+    },
+    {
+      "id": "all_ai_projects_have_business_cases",
+      "status": "PASS",
+      "detail": "0 AI projects without cases; 0 duplicate project links"
+    },
+    {
+      "id": "ai_cases_link_to_projects",
+      "status": "PASS",
+      "detail": "every AI business case links to a project"
+    },
+    {
+      "id": "ai_cases_use_ai_projects",
+      "status": "PASS",
+      "detail": "AI business cases only attach to explicitly AI-related projects"
+    },
+    {
+      "id": "business_case_tool_registered",
+      "status": "PASS",
+      "detail": "0 business cases use unregistered tools"
+    },
+    {
+      "id": "business_case_tool_domain_fit",
+      "status": "PASS",
+      "detail": "0 tool/domain mismatches"
+    },
+    {
+      "id": "roi_distribution",
+      "status": "PASS",
+      "detail": "value multiples range 3.6x-5.2x"
+    },
+    {
+      "id": "direct_value_exceeds_build_cost",
+      "status": "PASS",
+      "detail": "28 direct-value cases have at least 3x low-case value against build-cost high estimate"
+    },
+    {
+      "id": "ai_portfolio_roi_3_to_4x",
+      "status": "PASS",
+      "detail": "3.2x low case and 4.0x high case on explicit AI/AI-enabled investment"
+    },
+    {
+      "id": "direct_value_story_is_simple",
+      "status": "PASS",
+      "detail": "0 direct-value cases missing simple value type, story, proof, or ROI"
+    },
+    {
+      "id": "direct_value_type_coherent",
+      "status": "PASS",
+      "detail": "0 direct-value cases have incoherent simple value types"
+    },
+    {
+      "id": "approved_and_promised_value_are_separate",
+      "status": "PASS",
+      "detail": "$703.1M approved vs $677.8M project low-case promised annual value vs $13.1M board-claimable YTD"
+    },
+    {
+      "id": "layer_2_adapter_lineage_complete",
+      "status": "PASS",
+      "detail": "987 emitted objects with preserved lineage"
+    },
+    {
+      "id": "layer_3_canonical_counts_match_source",
+      "status": "PASS",
+      "detail": "140 projects, 42 AI use cases, 504 value observations"
+    },
+    {
+      "id": "layer_3_relationships_present",
+      "status": "PASS",
+      "detail": "280 canonical relationships"
+    },
+    {
+      "id": "cube_reconciles_to_canonical",
+      "status": "PASS",
+      "detail": "42 case cube rows; $211.8M cube AI investment"
+    },
+    {
+      "id": "read_models_reconcile_to_cube",
+      "status": "PASS",
+      "detail": "42 initiative rows, 13 tool rows, 34 proof queue rows"
+    },
+    {
+      "id": "foundation_no_direct_roi",
+      "status": "PASS",
+      "detail": "14 foundation/readiness cases carry no direct ROI"
+    },
+    {
+      "id": "tool_rollout_goals",
+      "status": "PASS",
+      "detail": "13 tool rollout rows"
+    },
+    {
+      "id": "monthly_tracking_complete",
+      "status": "PASS",
+      "detail": "504 monthly value observations"
+    },
+    {
+      "id": "monthly_value_promotion_order",
+      "status": "PASS",
+      "detail": "0 rows violate sponsor -> finance -> claimable order"
+    },
+    {
+      "id": "finance_state_variety",
+      "status": "PASS",
+      "detail": "states: cfo_approved_target, finance_challenged, finance_validated_actual, not_submitted, sponsor_claimed"
+    },
+    {
+      "id": "evidence_coverage",
+      "status": "PASS",
+      "detail": "196 evidence rows"
+    }
+  ]
+}
