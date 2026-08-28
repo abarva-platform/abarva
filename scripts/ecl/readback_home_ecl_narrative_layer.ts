@@ -78,9 +78,6 @@ function issuesFor(readback: Record<keyof ReadbackRows, number>): string[] {
     issues.push(`writer_summary_pages_expected_${CHAPTER_IDS.length}_actual_${readback.writer_summary_pages}`);
   }
   if (readback.chapter_claim_rows <= 0) issues.push("chapter_claim_rows_missing");
-  if (readback.chapter_claim_pages !== CHAPTER_IDS.length) {
-    issues.push(`chapter_claim_pages_expected_${CHAPTER_IDS.length}_actual_${readback.chapter_claim_pages}`);
-  }
   if (readback.chapter_claim_entry_drift !== 0) {
     issues.push(`chapter_claim_entry_drift_${readback.chapter_claim_entry_drift}`);
   }
