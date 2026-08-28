@@ -1,0 +1,9 @@
+Check,Row count,Pass,Plain-English result
+Contracts,5,PASS,Every contract has stable IDs
+Documents,25,PASS,Five evidence documents per contract
+Monthly spend,60,PASS,Twelve monthly rows per contract
+Application scope,18,PASS,Every scope row matches contract and CMDB app
+Contract clauses,35,PASS,Every clause row matches a contract
+Ticket volumetrics,96,PASS,Every ticket row matches a managed-services contract
+SLA performance,36,PASS,Every SLA row matches a contract
+Optimization opportunities,5,PASS,Every opportunity cites real evidence row IDs

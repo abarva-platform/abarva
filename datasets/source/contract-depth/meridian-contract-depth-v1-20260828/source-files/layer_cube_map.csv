@@ -1,0 +1,11 @@
+Source file tab,Layer 2 adapter output,Layer 3 canonical/evidence object,Layer 4 cube/read model,Dashboard or Optimize use
+Contracts,contract_register_adapter,"Contract, Vendor, ContractTerm",source.contract_360; source.contract_vendor_360,"Contract count, annual value, dates, renewal posture, Contract 360 header"
+Contract Clauses,contract_clause_adapter,doc.extraction; ContractClause,source.contract_pdf_clause_extractions; doc.extraction,"Benchmarking, auto-renew, notice, termination, service-credit basis"
+CMDB Applications,cmdb_application_adapter,Application,source.application_vendor_exposure,Application/vendor exposure and Tower handoff
+CMDB Application Scope,contract_scope_adapter,ContractApplicationScope,source.contract_application_scope,In-scope apps and explicit SOW linkage
+Monthly Spend,ap_erp_spend_adapter,ContractConsumptionObservation,source.contract_financial_exposure; consumption.sourcing_spend_monthly_v1,"Actual spend, trend, variance vs committed"
+SaaS Usage,saas_usage_adapter,UsageEntitlementObservation,usage/entitlement projection; Optimize opportunity evidence,"Shelfware, support-tier, storage/API opportunity"
+Ticket Volumetrics,itsm_ticket_adapter,TicketVolumeObservation,source.contract_operational_performance; consumption.sourcing_performance_v1,"Demand profile, severity mix, operational workload"
+SLA Performance,sla_performance_adapter,ContractPerformanceObservation,source.contract_operational_performance; consumption.sourcing_performance_v1,"SLA misses, credits owed/claimed/recovered"
+Optimization Opportunities,optimization_case_adapter,"OptimizationOpportunity, CalculationRun, OpportunityEvidence",source.optimization_opportunity; source.opportunity_evidence,Optimize Contract actions and aVa grounded answers
+Evidence Manifest,document_manifest_adapter,"Evidence, SourceFile",source.contract_pdf_document_inventory; source.contract_pdf_page_text,Open evidence trail and document/source lineage

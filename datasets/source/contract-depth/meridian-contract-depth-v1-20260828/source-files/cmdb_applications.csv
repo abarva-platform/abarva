@@ -1,0 +1,13 @@
+tenant_key,application_ref,application_name,business_function,criticality,hosting_model,lifecycle_state
+meridian-health,APP-M365-EXCH,Exchange Online,Corporate Services,Tier 2,SaaS,active
+meridian-health,APP-M365-TEAMS,Teams Collaboration,Enterprise Operations,Tier 2,SaaS,active
+meridian-health,APP-M365-ENTRA,Entra ID,Security,Tier 1,SaaS,active
+meridian-health,APP-SFDC-PATIENT,Patient Access CRM,Patient Access,Tier 1,SaaS,active
+meridian-health,APP-SFDC-SERVICE,Service Cloud Case Management,Patient Access,Tier 1,SaaS,active
+meridian-health,APP-AWS-DATALAKE,Clinical Data Lake,Analytics,Tier 1,Cloud,active
+meridian-health,APP-AWS-PORTAL,Patient Portal Hosting,Digital Health,Tier 1,Cloud,active
+meridian-health,APP-EHR-CORE,Core EHR Scheduling,Clinical Operations,Tier 1,Private Cloud,active
+meridian-health,APP-PACS-IMG,Imaging Workflow,Radiology,Tier 1,Private Cloud,active
+meridian-health,APP-HL7-INTEGRATION,Integration Engine,Enterprise Integration,Tier 1,Hybrid,active
+meridian-health,APP-ITSM-SNOW,ITSM Platform,IT Operations,Tier 2,SaaS,active
+meridian-health,APP-ENDPOINT-MGMT,Endpoint Management,Infrastructure,Tier 2,Hybrid,active
