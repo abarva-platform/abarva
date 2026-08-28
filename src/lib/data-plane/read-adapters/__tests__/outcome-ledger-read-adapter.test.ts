@@ -95,6 +95,19 @@ describe('selectOutcomeLedgerReadAdapter', () => {
     process.env.ABARVA_DATA_PLANE = 'azure-postgres';
     expect(selectOutcomeLedgerReadAdapter().name).toBe('azure-postgres');
   });
+
+  it('routes foundation tenants to Azure when no plane is configured', () => {
+    delete process.env.ABARVA_DATA_PLANE;
+    expect(selectOutcomeLedgerReadAdapter(undefined, 'meridian-health').name).toBe(
+      'azure-postgres',
+    );
+  });
+
+  it('fails closed when a foundation tenant is explicitly routed away from Azure', () => {
+    expect(() =>
+      selectOutcomeLedgerReadAdapter('supabase', 'meridian-health'),
+    ).toThrow(/cannot use supabase/);
+  });
 });
 
 describe('azureOutcomeLedgerReadAdapter', () => {

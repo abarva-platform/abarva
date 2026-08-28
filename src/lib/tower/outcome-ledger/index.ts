@@ -63,7 +63,7 @@ export async function readOutcomeLedger(
   tenantClientKey: string,
   plane?: DataPlane,
 ): Promise<OutcomeLedgerView> {
-  const adapter = selectOutcomeLedgerReadAdapter(plane);
+  const adapter = selectOutcomeLedgerReadAdapter(plane, tenantClientKey);
   const rows = await adapter.getCurrentEntries(tenantClientKey);
   return buildOutcomeLedgerView(tenantClientKey, rows);
 }

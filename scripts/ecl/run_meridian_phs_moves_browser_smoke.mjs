@@ -49,7 +49,14 @@ const STATIC_SURFACES = [
   {
     surface_key: "moves_trace",
     route_template: "/strategic-moves/{moveId}/trace",
-    requiredText: [/Intelligence/i, /Move/i, /Source/i, /Tower/i, /linked|not yet linked/i],
+    requiredText: [
+      /Intelligence/i,
+      /Move/i,
+      /Source/i,
+      /Tower/i,
+      /4\s+of\s+4\s+steps\s+linked/i,
+      /Every cross-module hand-off in this decision is wired/i,
+    ],
   },
   {
     surface_key: "moves_workspace",

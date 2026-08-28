@@ -46,12 +46,11 @@ export default async function StrategicMoveWorkspacePage({
   if (!move) notFound();
 
   const showGenerateIntent = sp.intent === "generate";
-  const [items, generateCandidates] = await Promise.all([
-    listMovesWorkspaceItems(ctx, move.id),
-    Promise.resolve(
-      showGenerateIntent ? listMovesWorkspaceGenerateCandidates(move) : [],
-    ),
-  ]);
+  const items = await listMovesWorkspaceItems(ctx, move.id);
+  const generateCandidates =
+    showGenerateIntent || items.length === 0
+      ? listMovesWorkspaceGenerateCandidates(move)
+      : [];
 
   return (
     <AppShell
