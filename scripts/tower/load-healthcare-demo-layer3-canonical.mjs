@@ -335,7 +335,7 @@ function objectRow(options, objectType, canonicalId, displayName, source, attrs 
     value_state: sqlText("known"),
     review_state: sqlText(review),
     confidence: confidenceNumber(attrs.confidence_level ?? attrs.confidence),
-    canonical_semantic_type: objectType,
+    __canonicalSemanticType: objectType,
     attributes_json: sqlJson({
       ...attrs,
       canonical_semantic_type: objectType,
@@ -537,7 +537,7 @@ function buildCanonicalRows(options) {
     return acc;
   }, {});
   const objectSemanticTypes = objects.reduce((acc, row) => {
-    acc[row.canonical_semantic_type] = (acc[row.canonical_semantic_type] ?? 0) + 1;
+    acc[row.__canonicalSemanticType] = (acc[row.__canonicalSemanticType] ?? 0) + 1;
     return acc;
   }, {});
   assertObjectSemanticCounts(objectSemanticTypes);
