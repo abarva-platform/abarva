@@ -129,9 +129,11 @@ function boolish(value: unknown): boolean | string | null {
 }
 
 function rowPayload(row: HomeProjectionRow): JsonRecord {
-  return row.display_payload_json && typeof row.display_payload_json === "object"
-    ? row.display_payload_json
-    : {};
+  if (!row.display_payload_json || typeof row.display_payload_json !== "object") return {};
+  const payload = row.display_payload_json;
+  const nestedPayload = payload.display_payload_json;
+  if (!nestedPayload || typeof nestedPayload !== "object" || Array.isArray(nestedPayload)) return payload;
+  return { ...payload, ...(nestedPayload as JsonRecord) };
 }
 
 function applicationRow(row: HomeProjectionRow): JsonRecord {
