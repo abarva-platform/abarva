@@ -25,7 +25,7 @@ import {
   type SourceV4SliceAvailability,
   type SourceV4WorkspaceSnapshot,
 } from "@/lib/source/data-model/source-v4-workspace-snapshot";
-import { tenantAliasesFor } from "@/lib/tenant/aliases";
+import { canonicalTenantKey, tenantAliasesFor } from "@/lib/tenant/aliases";
 import {
   evaluateContractCategoryQuality,
   type SourceContractCategoryQualitySummary,
@@ -527,7 +527,7 @@ async function readEclRuntimeEvidenceSummary(
   );
   const rows = await azureRead.withSession(async (run) => {
     await run("SELECT set_config('app.tenant_key', $1, false)", [
-      acceptedTenantKeys[0] ?? tenantKey,
+      canonicalTenantKey(tenantKey),
     ]);
     return run<{
       spend_row_count: string | number | null;

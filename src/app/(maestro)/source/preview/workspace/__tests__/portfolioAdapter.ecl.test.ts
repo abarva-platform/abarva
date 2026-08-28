@@ -159,8 +159,13 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
   it("loads Source 360 portfolio data from flagged Azure ECL serving views", async () => {
     process.env.SOURCE_WORKSPACE_PROVIDER = "legacy";
     delete process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR;
+    const runCalls: { sql: string; params: readonly unknown[] }[] = [];
     mockWithSession.mockImplementation(async (fn) => {
-      const run = async <R,>(sql: string): Promise<R[]> => {
+      const run = async <R,>(
+        sql: string,
+        params: readonly unknown[] = [],
+      ): Promise<R[]> => {
+        runCalls.push({ sql, params });
         if (sql.includes("set_config")) return [] as R[];
         if (sql.includes("serving.source_contract_360")) {
           return [
@@ -289,6 +294,23 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(portfolio.v4Snapshot.spendConsumption.actualSpend).toBe(8587900);
     expect(portfolio.v4Snapshot.performanceCredits.unclaimedCredit).toBe(
       43000.02,
+    );
+    expect(
+      runCalls.filter((call) => call.sql.includes("set_config")),
+    ).toContainEqual({
+      sql: "SELECT set_config('app.tenant_key', $1, false)",
+      params: ["meridian-health"],
+    });
+    expect(
+      runCalls.find((call) =>
+        call.sql.includes("consumption.sourcing_spend_monthly_v1"),
+      )?.params[0],
+    ).toEqual(
+      expect.arrayContaining([
+        "meridian",
+        "meridian-health",
+        "meridian_health_global",
+      ]),
     );
     expect(
       portfolio.cockpit.proofLayers.sourceSystems.find(

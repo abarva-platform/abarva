@@ -56,6 +56,9 @@ metadata.
 - `src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts`
 - `docs/governance/dataset-manifests/source-contract-depth-sla-credit-v1.json`
 - `docs/backlog/tracks/04-source-commercial/BACKLOG.md`
+- Follow-up: Source workspace proof-layer aggregate reads set the database tenant context to the
+  canonical tenant key while still filtering over the authorized alias set, so RLS-protected
+  consumption rows are visible to the proof-layer panel.
 
 ## QA / Validation
 
@@ -75,6 +78,11 @@ metadata.
   `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' src/lib/source/data-model/__tests__/contract-depth-demo-slice.test.ts --runInBand`.
 - pass: scoped `npx eslint` on the post-apply UI/model test changes.
 - pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --skipLibCheck --project tsconfig.json`.
+- pass: focused proof-layer aggregate regression:
+  `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts' --runInBand`.
+- pass: scoped `npx eslint` on the proof-layer aggregate adapter and test files.
+- pass: proof-layer aggregate follow-up typecheck:
+  `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --skipLibCheck --project tsconfig.json`.
 - partial: signed-in production proof showed the scoped contract loads cleanly without tenant
   leakage and the optimization opportunity is legible. It also found that monthly SLA rows and
   actual annual spend need the post-apply UI follow-up in this release record before final live
