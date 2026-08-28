@@ -222,6 +222,7 @@ select
   (select count(*)::int
    from public.program_modules
    where engagement_id in (select id from activated)
+     and module_key like 'phase\\_%' escape '\\'
      and state_jsonb ->> 'activation_basis' = ${activationBasisLiteral}) as phase_capture_modules,
   (select count(*)::int from public.program_milestones where engagement_id in (select id from activated)) as program_milestones,
   (select count(*)::int from public.program_work_items where engagement_id in (select id from activated)) as program_work_items,

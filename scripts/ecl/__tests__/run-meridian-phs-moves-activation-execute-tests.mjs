@@ -76,6 +76,7 @@ assert.match(script, /charter ->> 'activation_basis'/);
 assert.match(script, /__SEMANTIC2_PROOF_TGZ_BEGIN__/);
 assert.match(script, /function sqlString\(value\)/);
 assert.match(script, /as phase_capture_modules/);
+assert.match(script, /module_key like 'phase\\\\_%' escape '\\\\'/);
 assert.match(script, /Object\.keys\(built\.activationSummary\.generated_rows\)/);
 assert.doesNotMatch(script, /:'client_id'|:'tenant_key'|:'activation_basis'/);
 
