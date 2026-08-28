@@ -46,5 +46,8 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain("0::numeric AS cloud_sev1_sev2_incidents");
     expect(source).toContain("COALESCE(op.cloud_sev1_sev2_incidents, 0)::int AS cloud_sev1_sev2_incidents");
     expect(source).not.toContain("COALESCE(op.cloud_sev1_sev2_incidents, 0)::numeric AS cloud_sev1_sev2_incidents");
+    expect(source).toContain("WHEN c.source_confidence ~ '^[0-9]+(\\\\.[0-9]+)?$' THEN c.source_confidence::numeric");
+    expect(source).toContain("ELSE 0.9::numeric");
+    expect(source).not.toContain("COALESCE(c.source_confidence, 0.9)::numeric AS confidence");
   });
 });

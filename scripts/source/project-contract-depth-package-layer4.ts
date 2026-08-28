@@ -685,7 +685,10 @@ async function rebuildViews(client: Client): Promise<void> {
       0::bigint AS modernization_dependency_count,
       COALESCE(c.critical_application_count, 0)::bigint AS lock_in_signal_count,
       true AS portfolio_rollup_eligible,
-      COALESCE(c.source_confidence, 0.9)::numeric AS confidence,
+      CASE
+        WHEN c.source_confidence ~ '^[0-9]+(\\.[0-9]+)?$' THEN c.source_confidence::numeric
+        ELSE 0.9::numeric
+      END AS confidence,
       'USD'::text AS currency,
       DATE '${AS_OF_DATE}' AS as_of_date,
       c.load_run_id AS knowledge_baseline_ref,
