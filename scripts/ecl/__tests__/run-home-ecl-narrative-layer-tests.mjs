@@ -5,8 +5,10 @@ import path from "node:path";
 
 const repoRoot = process.cwd();
 const scriptPath = path.join(repoRoot, "scripts/ecl/build_home_ecl_narrative_layer.ts");
+const readbackPath = path.join(repoRoot, "scripts/ecl/readback_home_ecl_narrative_layer.ts");
 const thesisPath = path.join(repoRoot, "scripts/data-build/build-enterprise-thesis.ts");
 const chaptersPath = path.join(repoRoot, "scripts/data-build/build-home-chapters.ts");
+const packagePath = path.join(repoRoot, "package.json");
 
 function assert(condition, message) {
   if (!condition) {
@@ -18,8 +20,10 @@ function assert(condition, message) {
 }
 
 const script = fs.readFileSync(scriptPath, "utf8");
+const readback = fs.readFileSync(readbackPath, "utf8");
 const thesis = fs.readFileSync(thesisPath, "utf8");
 const chapters = fs.readFileSync(chaptersPath, "utf8");
+const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
 
 assert(
   thesis.includes("export async function buildVerifiedEnterpriseThesisFromSignalPacket"),
@@ -70,6 +74,26 @@ assert(
 assert(
   script.includes("basis_summary = 'model_generated_from_ecl_projection'"),
   "Generated narrative rows carry an explicit ECL model-generated basis",
+);
+assert(
+  packageJson.scripts["ecl:home-narrative:readback"]?.includes("readback_home_ecl_narrative_layer.ts"),
+  "Home ECL narrative readback has an npm operator script",
+);
+assert(
+  readback.includes("structured_event: \"home_ecl_narrative_readback_summary\"") &&
+    readback.includes("data_mutation: false"),
+  "Home ECL narrative readback emits a structured read-only proof event",
+);
+assert(
+  readback.includes("chapter_claim_entry_drift") &&
+    readback.includes("refusal_payload_drift") &&
+    readback.includes("legacy_basis_rows"),
+  "Home ECL narrative readback checks claim linkage, admission payloads, and legacy basis drift",
+);
+assert(
+  readback.includes("process.env.ECL_DENSE_TENANT_KEY") &&
+    readback.includes("process.env.ECL_DENSE_ASSESSMENT_ID"),
+  "Home ECL narrative readback accepts operator tenant and assessment env overrides",
 );
 
 if (process.exitCode) {
