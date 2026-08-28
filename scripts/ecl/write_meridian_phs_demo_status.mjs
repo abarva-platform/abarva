@@ -193,6 +193,17 @@ function movesProofFromSummary(summary) {
   };
 }
 
+function movesSurfaceProofFromSummary(summary) {
+  const surfaces = Array.isArray(summary?.surfaces) ? summary.surfaces : [];
+  const proof = new Map();
+  for (const surface of surfaces) {
+    const key = String(surface?.surface_key ?? "");
+    if (!key) continue;
+    proof.set(key, Boolean(surface?.accepted));
+  }
+  return proof;
+}
+
 function handoffProofFromSummary(summary) {
   const proof = summary?.phs_cross_module_handoffs;
   if (!proof || typeof proof !== "object") return null;
@@ -293,14 +304,18 @@ function main() {
     proofCountFromSummary(browserProof, ["Source"]) ||
     (eclStatus?.lanes?.some?.((lane) => lane.lane === "L-PROOF" && lane.status === "complete") ? 9 : 0);
   const movesProof = movesProofFromSummary(browserProof);
+  const movesSurfaceProof = movesSurfaceProofFromSummary(browserProof);
   const handoffProofSummary = handoffProofFromSummary(handoffProof) ?? handoffProofFromExistingStatus(existingStatus);
 
-  const movesRouteStatuses = MOVES_SURFACES.map((surface) => ({
-    ...surface,
-    route_file_present: fs.existsSync(surface.file),
-    browser_proven: false,
-    build_state: "enumerated_not_browser_proven",
-  }));
+  const movesRouteStatuses = MOVES_SURFACES.map((surface) => {
+    const browserProven = movesSurfaceProof.get(surface.surface_key) === true;
+    return {
+      ...surface,
+      route_file_present: fs.existsSync(surface.file),
+      browser_proven: browserProven,
+      build_state: browserProven ? "browser_proven" : "enumerated_not_browser_proven",
+    };
+  });
 
   const movesFilesPresent = movesRouteStatuses.filter((surface) => surface.route_file_present).length;
   const handoffStatuses = HANDOFFS.map((handoff) => ({
