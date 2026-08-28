@@ -169,6 +169,20 @@ async function meridianVendor360CandidateRows<R>(
   );
 }
 
+function mergeByContractId<R extends { readonly contract_id: string | null | undefined }>(
+  legacyRows: readonly R[],
+  governedRows: readonly R[],
+): R[] {
+  const merged = new Map<string, R>();
+  for (const row of legacyRows) {
+    if (row.contract_id) merged.set(row.contract_id, row);
+  }
+  for (const row of governedRows) {
+    if (row.contract_id) merged.set(row.contract_id, row);
+  }
+  return [...merged.values()];
+}
+
 async function withMeridianFallback<R>(
   tenantKey: string,
   legacyRead: () => Promise<R[]>,
@@ -655,6 +669,10 @@ function listMeridianCanaryContractApplicationScope(
 export async function listContractFinancialExposure(
   tenantKey: string,
 ): Promise<SourceContractFinancialExposureRow[]> {
+  const governed = await queryForTenant<SourceContractFinancialExposureRow>(
+    tenantKey,
+    "SELECT * FROM source.contract_financial_exposure WHERE tenant_key = ANY($1::text[])",
+  );
   if (isMeridianTenantKey(tenantKey)) {
     const candidate =
       await meridianVendor360CandidateRows<SourceContractFinancialExposureRow>(
@@ -675,17 +693,18 @@ export async function listContractFinancialExposure(
           FROM source.meridian_vendor360_financial_exposure
          WHERE tenant_key = $1 AND dataset_id = $2`,
       );
-    if (candidate.length > 0) return candidate;
+    if (candidate.length > 0) return mergeByContractId(candidate, governed);
   }
-  return queryForTenant<SourceContractFinancialExposureRow>(
-    tenantKey,
-    "SELECT * FROM source.contract_financial_exposure WHERE tenant_key = ANY($1::text[])",
-  );
+  return governed;
 }
 
 export async function listContractOperationalPerformance(
   tenantKey: string,
 ): Promise<SourceContractOperationalPerformanceRow[]> {
+  const governed = await queryForTenant<SourceContractOperationalPerformanceRow>(
+    tenantKey,
+    "SELECT * FROM source.contract_operational_performance WHERE tenant_key = ANY($1::text[])",
+  );
   if (isMeridianTenantKey(tenantKey)) {
     const candidate =
       await meridianVendor360CandidateRows<SourceContractOperationalPerformanceRow>(
@@ -705,12 +724,9 @@ export async function listContractOperationalPerformance(
           FROM source.meridian_vendor360_operational_performance
          WHERE tenant_key = $1 AND dataset_id = $2`,
       );
-    if (candidate.length > 0) return candidate;
+    if (candidate.length > 0) return mergeByContractId(candidate, governed);
   }
-  return queryForTenant<SourceContractOperationalPerformanceRow>(
-    tenantKey,
-    "SELECT * FROM source.contract_operational_performance WHERE tenant_key = ANY($1::text[])",
-  );
+  return governed;
 }
 
 export async function listContractPerformancePeriods(
@@ -2200,7 +2216,7 @@ export async function getContractOptimizationEvidencePack(
             COALESCE(SUM(credit_claimed), 0) AS credit_claimed,
             COALESCE(SUM(credit_recovered), 0) AS credit_recovered,
             COALESCE(SUM(COALESCE(credit_calculated, 0) - COALESCE(credit_claimed, 0)), 0) AS unclaimed_credit
-           FROM consumption_v4_canary.sourcing_performance_v1
+           FROM consumption.sourcing_performance_v1
           WHERE tenant_key = ANY($1::text[]) AND contract_id = $2`,
       [contractId],
     ),
@@ -2211,7 +2227,7 @@ export async function getContractOptimizationEvidencePack(
             COALESCE(SUM(invoice_lines), 0) AS invoice_lines,
             COALESCE(SUM(CASE WHEN matching_state = 'off_contract' THEN actual_spend ELSE 0 END), 0) AS off_contract_spend,
             COALESCE(SUM(CASE WHEN matching_state ILIKE '%duplicate%' THEN actual_spend ELSE 0 END), 0) AS duplicate_spend
-           FROM consumption_v4_canary.sourcing_spend_monthly_v1
+           FROM consumption.sourcing_spend_monthly_v1
           WHERE tenant_key = ANY($1::text[]) AND contract_id = $2`,
       [contractId],
     ),
@@ -2435,7 +2451,7 @@ export async function getContractOptimizationEvidencePack(
       amount: unclaimedCredit,
       amount_state: "quantified",
       evidence_class: "system_evidenced",
-      evidence_refs: ["consumption_v4_canary.sourcing_performance_v1"],
+      evidence_refs: ["consumption.sourcing_performance_v1"],
       source_systems: ["ServiceNow"],
       source_record_ids: [`contract:${contractId}:sla-performance`],
       document_refs: [],
@@ -2464,7 +2480,7 @@ export async function getContractOptimizationEvidencePack(
       amount_state: invoiceVariance > 0 ? "quantified" : "not_quantified",
       evidence_class: invoiceVariance > 0 ? "system_evidenced" : "missing",
       evidence_refs: [
-        "consumption_v4_canary.sourcing_spend_monthly_v1",
+        "consumption.sourcing_spend_monthly_v1",
         "raw_source_v4.fieldglass_rate_card",
       ],
       source_systems: ["ERP / AP", "Fieldglass"],
