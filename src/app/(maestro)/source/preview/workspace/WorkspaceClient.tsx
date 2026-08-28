@@ -314,19 +314,19 @@ export function WorkspaceClient({
       },
       "Contract 360": () => {
         const contractId = portfolio.contracts[0]?.contract_id ?? null;
-        if (contractId)
-          selectWorkspaceSurface("contract", contractId, "Story");
+        if (contractId) selectWorkspaceSurface("contract", contractId, "Story");
       },
     }),
     [portfolio.contracts, portfolio.vendors, selectWorkspaceSurface, vm],
   );
-  const isVendor360Cockpit =
+  const isPortfolioCockpit =
     !vm.isVendor &&
     !vm.isContract &&
     !vm.isOpp &&
     !vm.isEvidence &&
     !vm.isVendorList &&
     !vm.isContractList;
+  const hidesWorkspaceHeader = isPortfolioCockpit || vm.isVendor;
 
   // The Source dock uses the rich aVa route so charts, tables, graphs, and
   // citations survive as structured packets instead of being flattened to text.
@@ -578,9 +578,7 @@ export function WorkspaceClient({
             fontWeight: 800,
           }}
         >
-          {portfolio.isEmpty
-            ? "No Source rows returned"
-            : "Source workspace"}
+          {portfolio.isEmpty ? "No Source rows returned" : "Source workspace"}
         </strong>
         <span style={{ color: "rgba(255,255,255,.74)" }}>
           {portfolio.isEmpty
@@ -683,7 +681,7 @@ export function WorkspaceClient({
                 overflowY: "auto",
               }}
             >
-              {isVendor360Cockpit ? null : (
+              {hidesWorkspaceHeader ? null : (
                 <div
                   style={{
                     background: "#fff",
@@ -840,7 +838,7 @@ export function WorkspaceClient({
 
               <div
                 style={{
-                  padding: isVendor360Cockpit
+                  padding: hidesWorkspaceHeader
                     ? "18px clamp(12px,2vw,28px) 70px"
                     : vm.isContract
                       ? "14px 24px 48px"
@@ -848,11 +846,11 @@ export function WorkspaceClient({
                   display: "flex",
                   flexDirection: "column",
                   gap: vm.isContract ? 12 : 18,
-                  width: isVendor360Cockpit ? "100%" : undefined,
+                  width: hidesWorkspaceHeader ? "100%" : undefined,
                   boxSizing: "border-box",
                 }}
               >
-                {isVendor360Cockpit ? <ContextLens vm={vm} /> : null}
+                {isPortfolioCockpit ? <ContextLens vm={vm} /> : null}
                 {vm.isVendorList || vm.isContractList ? (
                   <ListLens vm={vm} />
                 ) : null}
@@ -955,7 +953,7 @@ export function WorkspaceClient({
           background: "#fff",
           borderTop: "1px solid rgba(10,10,11,.12)",
           minHeight: 34,
-          display: isVendor360Cockpit ? "none" : "flex",
+          display: hidesWorkspaceHeader ? "none" : "flex",
           alignItems: "center",
           gap: 14,
           padding: "6px 20px",

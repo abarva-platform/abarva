@@ -323,7 +323,13 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Open Vendor 360" }));
 
-    expect(screen.getByText("Portfolio position")).toBeTruthy();
-    expect(screen.getByText("Material contracts")).toBeTruthy();
+    expect(screen.getByTestId("source-vendor360-exec-cockpit")).toBeTruthy();
+    expect(
+      screen.getByRole("navigation", { name: "Vendor 360 sections" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Quick actions")).toBeTruthy();
+    expect(screen.getByText("Active contracts (1)")).toBeTruthy();
+    expect(screen.queryByText("Portfolio position")).toBeNull();
+    expect(screen.queryByText("Material contracts")).toBeNull();
   });
 });
