@@ -41,6 +41,16 @@ const PHYSICAL_OBJECT_TYPE_BY_CANONICAL_TYPE = new Map([
   ["evidence_item", "control"],
 ]);
 
+const EXPECTED_OBJECT_SEMANTIC_TYPES = {
+  budget: 8,
+  program: 140,
+  ai_use_case: 42,
+  ai_tool: 13,
+  value_observation: 504,
+  finance_approval_event: 84,
+  evidence_item: 196,
+};
+
 const METRIC_DEFINITIONS = [
   ["approved_it_budget_usd", "Approved IT budget", "Approved IT budget for the domain.", "USD", "neutral", "annual", "sum"],
   ["tower_reviewed_project_budget_usd", "Tower reviewed project budget", "Project budget in Tower review scope.", "USD", "neutral", "annual", "sum"],
@@ -325,6 +335,7 @@ function objectRow(options, objectType, canonicalId, displayName, source, attrs 
     value_state: sqlText("known"),
     review_state: sqlText(review),
     confidence: confidenceNumber(attrs.confidence_level ?? attrs.confidence),
+    canonical_semantic_type: objectType,
     attributes_json: sqlJson({
       ...attrs,
       canonical_semantic_type: objectType,
@@ -372,6 +383,21 @@ function metricUnit(metricKey) {
 function addNumericMeasure(rows, options, subjectObjectType, subjectCanonicalId, metricKey, value, source, attrs = {}, valueState = "known", qualityState = "usable", reviewState = "in_review") {
   if (!numericPresent(value)) return;
   rows.push(measureRow(options, subjectObjectType, subjectCanonicalId, metricKey, value, source, attrs, valueState, qualityState, reviewState));
+}
+
+function assertObjectSemanticCounts(objectSemanticTypes) {
+  for (const [semanticType, expectedCount] of Object.entries(EXPECTED_OBJECT_SEMANTIC_TYPES)) {
+    const actualCount = Number(objectSemanticTypes[semanticType] ?? 0);
+    if (actualCount !== expectedCount) {
+      throw new Error(`Layer 3 semantic count drift: ${semanticType} expected ${expectedCount}, got ${actualCount}`);
+    }
+  }
+  const unexpectedTypes = Object.keys(objectSemanticTypes).filter(
+    (semanticType) => EXPECTED_OBJECT_SEMANTIC_TYPES[semanticType] === undefined,
+  );
+  if (unexpectedTypes.length) {
+    throw new Error(`Layer 3 unexpected semantic object types: ${unexpectedTypes.sort().join(", ")}`);
+  }
 }
 
 function buildCanonicalRows(options) {
@@ -505,6 +531,17 @@ function buildCanonicalRows(options) {
     aggregation_rule: sqlText(aggregationRule),
   }));
 
+  const objectTypes = objects.reduce((acc, row) => {
+    const type = row.object_type.replace(/^'|'$/g, "");
+    acc[type] = (acc[type] ?? 0) + 1;
+    return acc;
+  }, {});
+  const objectSemanticTypes = objects.reduce((acc, row) => {
+    acc[row.canonical_semantic_type] = (acc[row.canonical_semantic_type] ?? 0) + 1;
+    return acc;
+  }, {});
+  assertObjectSemanticCounts(objectSemanticTypes);
+
   return {
     data,
     objects,
@@ -512,11 +549,8 @@ function buildCanonicalRows(options) {
     relationships,
     metricDefinitions,
     countsBySourceFile,
-    objectTypes: objects.reduce((acc, row) => {
-      const type = row.object_type.replace(/^'|'$/g, "");
-      acc[type] = (acc[type] ?? 0) + 1;
-      return acc;
-    }, {}),
+    objectTypes,
+    objectSemanticTypes,
   };
 }
 
@@ -628,6 +662,23 @@ with readback as (
         group by object_type
       ) counts
     ),
+    'objects_by_semantic_type', (
+      select coalesce(jsonb_object_agg(canonical_semantic_type, row_count), '{}'::jsonb)
+      from (
+        select attributes_json ->> 'canonical_semantic_type' as canonical_semantic_type, count(*) as row_count
+        from ecl_context.object
+        where tenant_key = ${tenant} and assessment_id = ${assessment}
+          and attributes_json ->> 'layer3_build_version' = ${buildVersion}
+          and coalesce(attributes_json ->> 'canonical_semantic_type', '') <> ''
+        group by attributes_json ->> 'canonical_semantic_type'
+      ) counts
+    ),
+    'objects_missing_semantic_type', (
+      select count(*) from ecl_context.object
+      where tenant_key = ${tenant} and assessment_id = ${assessment}
+        and attributes_json ->> 'layer3_build_version' = ${buildVersion}
+        and coalesce(attributes_json ->> 'canonical_semantic_type', '') = ''
+    ),
     'measures_by_metric', (
       select coalesce(jsonb_object_agg(metric_key, row_count), '{}'::jsonb)
       from (
@@ -694,6 +745,7 @@ function expectedCounts(rows) {
     measure: rows.measures.length,
     metric_definition: rows.metricDefinitions.length,
     objects_by_type: rows.objectTypes,
+    objects_by_semantic_type: rows.objectSemanticTypes,
   };
 }
 
@@ -709,6 +761,12 @@ function validateReadback(readback, expected) {
       issues.push(`object_type_${type}_expected_${count}_got_${readback.objects_by_type?.[type] ?? 0}`);
     }
   }
+  for (const [semanticType, count] of Object.entries(expected.objects_by_semantic_type)) {
+    if (Number(readback.objects_by_semantic_type?.[semanticType] ?? 0) !== Number(count)) {
+      issues.push(`semantic_type_${semanticType}_expected_${count}_got_${readback.objects_by_semantic_type?.[semanticType] ?? 0}`);
+    }
+  }
+  if (Number(readback.objects_missing_semantic_type ?? 1) !== 0) issues.push("objects_missing_semantic_type");
   if (Number(readback.objects_missing_source_record ?? 1) !== 0) issues.push("objects_missing_source_record");
   if (Number(readback.relationships_missing_source_record ?? 1) !== 0) issues.push("relationships_missing_source_record");
   if (Number(readback.measures_missing_source_record ?? 1) !== 0) issues.push("measures_missing_source_record");

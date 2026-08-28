@@ -112,6 +112,8 @@ Layer 3 signoff requires:
 
 - 987 canonical objects loaded.
 - Physical object family counts match: 512 metric, 140 program, 42 AI use case, 13 AI tool, and 280 control.
+- Semantic object counts match: 8 budget, 140 program, 42 AI use case, 13 AI tool, 504 value observation, 84 finance approval event, and 196 evidence item.
+- 0 objects missing `canonical_semantic_type`.
 - 280 canonical relationships loaded.
 - 20 metric definitions loaded.
 - More than 2,500 measures loaded.
@@ -122,6 +124,6 @@ Layer 3 signoff requires:
 - 0 canonical objects whose source record is absent from Layer 2.
 - 0 product projection or cube rows written by the Layer 3 loader.
 
-Azure readback passed these gates with 987 canonical objects, 280 relationships, 20 metric definitions, 2,531 measures, 1,981 Layer 2 source records available, and no tenant drift or lineage gaps.
+Azure readback passed the original Layer 3 gates with 987 canonical objects, 280 relationships, 20 metric definitions, 2,531 measures, 1,981 Layer 2 source records available, and no tenant drift or lineage gaps. The follow-on semantic-count gate now requires any rerun to prove the same 987 objects by business meaning, not only by physical object family.
 
 Layer 3 signoff does not mean Tower, Home, Source, Intelligence, or cubes are refreshed. Those are Layer 4 and cube work.
