@@ -55,6 +55,22 @@ describe("Home/Admin boundary contract", () => {
     expect(pageSource).not.toContain("buildHomeRuntimeSummarySnapshot");
   });
 
+  it("keeps Home preview first render deterministic for hydration", () => {
+    const shellSource = readRepoFile("src/components/home/v4/HomeV4App.tsx");
+
+    expect(shellSource).toContain(
+      'const [activeView, setActiveView] = useState<ActiveView>("executive_brief")',
+    );
+    expect(shellSource).toContain("function formatCompiledDate(");
+    expect(shellSource).toContain('timeZone: "UTC"');
+    expect(shellSource).not.toContain(
+      'useState<ActiveView>(() =>\\n    typeof window === "undefined"',
+    );
+    expect(shellSource).not.toContain(
+      "new Date(provenance.generated_at).toLocaleDateString",
+    );
+  });
+
   it("keeps the Home explorer as canvas state, not hash-anchor document navigation", () => {
     const commandCenterSource = readRepoFile(
       "src/components/home/ai-success-command-center/AiSuccessCommandCenter.tsx",
