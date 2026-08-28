@@ -124,7 +124,7 @@ describe("TowerCommandCenter", () => {
   });
 
   it("keeps approved investment, benefit, and claim populations distinct", () => {
-    renderWithSummary({
+    const { container } = renderWithSummary({
       approvedInvestmentUsd: 703_100_000,
       budgetUsd: null,
       promisedUsd: 492_500_000,
@@ -132,6 +132,7 @@ describe("TowerCommandCenter", () => {
       unknownValueClaimCount: 969,
       financeAttestedClaimCount: 0,
       outcomeMeasuredClaimCount: 230,
+      economicReviewQueueCount: 969,
       claimableUsd: 0,
       usageSupportedUsd: 0,
     });
@@ -150,6 +151,10 @@ describe("TowerCommandCenter", () => {
       screen.getByText("Reconcile usage signals to value claims"),
     ).toBeInTheDocument();
     expect(screen.getAllByText("$210.6M").length).toBeGreaterThan(0);
+    expect(container).toHaveTextContent(
+      /969 review rows in the evidence queue/,
+    );
+    expect(screen.queryByText(/1,619 open tasks/)).not.toBeInTheDocument();
   });
 
   it("moves between tabs with arrow keys and reflects the tab in the URL", () => {

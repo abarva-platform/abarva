@@ -259,7 +259,10 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
 }
 
 function evidenceFooterCount(view: TowerCommandCenterView): number {
-  return view.actions.length + view.gaps.length + view.pipelineGaps.length;
+  return (
+    view.summary.economicReviewQueueCount ||
+    view.actions.length + view.gaps.length + view.pipelineGaps.length
+  );
 }
 
 function evidenceQueue(gaps: readonly TowerEvidenceGapView[]) {
@@ -561,8 +564,8 @@ export function CommandCenterView({
           by cost, risk and adoption →
         </button>
         <button type="button" onClick={onGoToActions}>
-          {formatCount(evidenceFooterCount(view))} open tasks in evidence queues
-          →
+          {formatCount(evidenceFooterCount(view))} review rows in the evidence
+          queue →
         </button>
       </section>
 
