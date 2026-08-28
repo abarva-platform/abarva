@@ -3,7 +3,8 @@ import { computeContractOptimizationExposureRollup } from "./exposure";
 import { buildContractOptimizationStoryPack } from "./story-pack";
 
 const money = (value: number | null): string => {
-  if (!value || !Number.isFinite(value)) return "Value to be quantified during vendor cure review";
+  if (!value || !Number.isFinite(value))
+    return "Value to be quantified during vendor cure review";
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
   return `$${Math.round(value / 1_000)}K`;
 };
@@ -16,10 +17,7 @@ const urgencyLabel = (
   return "Post-cure governance";
 };
 
-const impactRange = (
-  low: number | null,
-  high: number | null,
-): string => {
+const impactRange = (low: number | null, high: number | null): string => {
   if (!low && !high) return "Value to be quantified during vendor cure review";
   if (!low) return `Up to ${money(high)}`;
   if (!high) return `At least ${money(low)}`;
@@ -45,7 +43,9 @@ const topFindingTitles = (
   count: number,
 ): string[] =>
   profile.findings
-    .filter((finding) => finding.severity === "high" || finding.severity === "medium")
+    .filter(
+      (finding) => finding.severity === "high" || finding.severity === "medium",
+    )
     .slice(0, count)
     .map((finding) => finding.title);
 
@@ -67,7 +67,9 @@ const cureNoticeAsks = (profile: ContractOptimizationMveProfile): string[] => {
 const impactLabel = (value: string): string =>
   value.charAt(0).toUpperCase() + value.slice(1);
 
-const contractBriefTitle = (profile: ContractOptimizationMveProfile): string => {
+const contractBriefTitle = (
+  profile: ContractOptimizationMveProfile,
+): string => {
   if (/application managed services|ams/i.test(profile.contractName)) {
     return "AMS Contract Optimization Brief";
   }
@@ -101,7 +103,11 @@ const strategyConsultingExhibits = (
 ): string[] => {
   const exposure = computeContractOptimizationExposureRollup(profile);
   const exposureDrivers = profile.visualInsights.exposureByDriver
-    .filter((driver) => driver.annualImpactHighUsd || driver.valueBasis === "opportunity_to_test")
+    .filter(
+      (driver) =>
+        driver.annualImpactHighUsd ||
+        driver.valueBasis === "opportunity_to_test",
+    )
     .slice(0, 6);
   const invoiceTrend = profile.visualInsights.invoiceVarianceTrend;
   const maxVariance = Math.max(
@@ -120,12 +126,14 @@ const strategyConsultingExhibits = (
     "",
     "| Driver | Impact range | Basis | Buyer action |",
     "|---|---:|---|---|",
-    ...exposureDrivers.map((driver) => [
-      `| ${md(driver.driver)}`,
-      impactRange(driver.annualImpactLowUsd, driver.annualImpactHighUsd),
-      driver.valueBasis.replaceAll("_", " "),
-      `${md(driver.action)} |`,
-    ].join(" | ")),
+    ...exposureDrivers.map((driver) =>
+      [
+        `| ${md(driver.driver)}`,
+        impactRange(driver.annualImpactLowUsd, driver.annualImpactHighUsd),
+        driver.valueBasis.replaceAll("_", " "),
+        `${md(driver.action)} |`,
+      ].join(" | "),
+    ),
     "",
     `**Readout:** ${exposure.label}. Treat non-quantified productivity/SLA economics as negotiation upside until the vendor provides measurable cure evidence.`,
     "",
@@ -133,39 +141,45 @@ const strategyConsultingExhibits = (
     "",
     "| Month | Contracted | Invoiced | Variance | Variance % | Trend |",
     "|---|---:|---:|---:|---:|---|",
-    ...invoiceTrend.map((row) => [
-      `| ${row.month}`,
-      money(row.contractedAmountUsd),
-      money(row.invoicedAmountUsd),
-      money(row.varianceUsd),
-      percent(row.variancePct),
-      `${bar(row.varianceUsd, maxVariance)} |`,
-    ].join(" | ")),
+    ...invoiceTrend.map((row) =>
+      [
+        `| ${row.month}`,
+        money(row.contractedAmountUsd),
+        money(row.invoicedAmountUsd),
+        money(row.varianceUsd),
+        percent(row.variancePct),
+        `${bar(row.varianceUsd, maxVariance)} |`,
+      ].join(" | "),
+    ),
     "",
     "### Exhibit 3: Operational Pressure Versus Baseline",
     "",
     "| Metric | Baseline | Current | Delta | Sourcing implication |",
     "|---|---:|---:|---:|---|",
-    ...operationalPressure.map((metric) => [
-      `| ${md(metric.metric)}`,
-      `${number(metric.baseline)} ${metric.unit}`,
-      `${number(metric.current)} ${metric.unit}`,
-      percent(metric.deltaPct),
-      `${md(metric.implication)} |`,
-    ].join(" | ")),
+    ...operationalPressure.map((metric) =>
+      [
+        `| ${md(metric.metric)}`,
+        `${number(metric.baseline)} ${metric.unit}`,
+        `${number(metric.current)} ${metric.unit}`,
+        percent(metric.deltaPct),
+        `${md(metric.implication)} |`,
+      ].join(" | "),
+    ),
     "",
     "### Exhibit 4: Staffing Coverage Reconciliation",
     "",
     "| Tower | Committed FTE | Observed FTE | Gap | Gap % | Coverage note |",
     "|---|---:|---:|---:|---:|---|",
-    ...staffingCoverage.map((row) => [
-      `| ${md(row.tower)}`,
-      number(row.committedFte),
-      number(row.observedFte),
-      number(row.gapFte),
-      percent(row.gapPct),
-      `${md(row.coverage)} |`,
-    ].join(" | ")),
+    ...staffingCoverage.map((row) =>
+      [
+        `| ${md(row.tower)}`,
+        number(row.committedFte),
+        number(row.observedFte),
+        number(row.gapFte),
+        percent(row.gapPct),
+        `${md(row.coverage)} |`,
+      ].join(" | "),
+    ),
   ];
 };
 
@@ -206,8 +220,9 @@ export function buildContractOptimizationBriefMarkdown(
     "",
     "| Sequence | Leakage driver | Executive readout |",
     "|---:|---|---|",
-    ...storyPack.valueLeakageTree.map((item, index) =>
-      `| ${index + 1} | ${md(item)} | ${md(leakageDriverReadout(item))} |`,
+    ...storyPack.valueLeakageTree.map(
+      (item, index) =>
+        `| ${index + 1} | ${md(item)} | ${md(leakageDriverReadout(item))} |`,
     ),
     "",
     "### Commercial Opportunity Map",
@@ -215,8 +230,9 @@ export function buildContractOptimizationBriefMarkdown(
     "| Opportunity quadrant | What it means | Business impact |",
     "|---|---|---|",
     ...storyPack.opportunityMap.flatMap((quadrant) =>
-      quadrant.items.map((item) =>
-        `| ${md(quadrant.quadrant)} | ${md(item.title)} — ${md(item.summary)} | ${item.businessImpact.map(impactLabel).join(", ")} |`,
+      quadrant.items.map(
+        (item) =>
+          `| ${md(quadrant.quadrant)} | ${md(item.title)} — ${md(item.summary)} | ${item.businessImpact.map(impactLabel).join(", ")} |`,
       ),
     ),
     "",
@@ -232,7 +248,7 @@ export function buildContractOptimizationBriefMarkdown(
     "|---|---|---|",
     "| Invoice variance | Contracted run rate is being exceeded by pass-throughs, demand changes, and out-of-catalog charges. | Do not accept current invoice baseline as clean renewal pricing. |",
     "| Recurring change orders | Exceptions can become normalized run cost when catalog, approval, and recurring status are not governed. | Separate approved scope growth from recoverable leakage before renewal. |",
-    "| Weak SLA economics | Remedies are not strong enough for airline-critical service towers. | Vendor accountability must be repriced before renewal approval. |",
+    "| Weak SLA economics | Remedies are not strong enough for business-critical service towers. | Vendor accountability must be repriced before renewal approval. |",
     "| Staffing coverage gaps | Priced commitments are not fully visible in observed tower coverage. | Service quality and price are not comparable until staffing is reconciled. |",
     "| Operational pressure | Ticket, reopen, and emergency-change load is above the original model. | Demand reset and productivity glidepath must be explicit. |",
     "",
@@ -242,32 +258,36 @@ export function buildContractOptimizationBriefMarkdown(
     "",
     "| Step | Timing | Decision | Owner |",
     "|---|---|---|---|",
-    ...storyPack.actionTimeline.map((step) =>
-      `| ${md(step.label)} | ${md(step.timing)} | ${md(step.decision)} | ${md(step.ownerRole)} |`,
+    ...storyPack.actionTimeline.map(
+      (step) =>
+        `| ${md(step.label)} | ${md(step.timing)} | ${md(step.decision)} | ${md(step.ownerRole)} |`,
     ),
     "",
     "### Do-Nothing vs Renegotiate Scenario",
     "",
     "| Path | Outcome | Commercial effect | Risk effect |",
     "|---|---|---|---|",
-    ...storyPack.scenarios.map((scenario) =>
-      `| ${md(scenario.title)} | ${md(scenario.outcome)} | ${md(scenario.commercialEffect)} | ${md(scenario.riskEffect)} |`,
+    ...storyPack.scenarios.map(
+      (scenario) =>
+        `| ${md(scenario.title)} | ${md(scenario.outcome)} | ${md(scenario.commercialEffect)} | ${md(scenario.riskEffect)} |`,
     ),
     "",
     "## Page 5: Commercial Negotiation Strategy",
     "",
     "| Theme | Buyer ask | Evidence basis | Impact |",
     "|---|---|---|---|",
-    ...storyPack.negotiationThemes.map((theme) =>
-      `| ${md(theme.theme)} | ${md(theme.buyerAsk)} | ${md(theme.evidenceBasis)} | ${theme.businessImpact.map(impactLabel).join(", ")} |`,
+    ...storyPack.negotiationThemes.map(
+      (theme) =>
+        `| ${md(theme.theme)} | ${md(theme.buyerAsk)} | ${md(theme.evidenceBasis)} | ${theme.businessImpact.map(impactLabel).join(", ")} |`,
     ),
     "",
     "### Business Impact Scorecard",
     "",
     "| Impact category | Implication | Evidence basis |",
     "|---|---|---|",
-    ...storyPack.businessImpactScorecard.map((impact) =>
-      `| ${impactLabel(impact.category)} | ${md(impact.implication)} | ${md(impact.evidenceBasis)} |`,
+    ...storyPack.businessImpactScorecard.map(
+      (impact) =>
+        `| ${impactLabel(impact.category)} | ${md(impact.implication)} | ${md(impact.evidenceBasis)} |`,
     ),
     "",
     "## Procurement Appendix: Decision Snapshot",
