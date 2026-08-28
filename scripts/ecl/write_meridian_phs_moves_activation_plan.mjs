@@ -22,6 +22,53 @@ const MODULES = [
   ["p5_execution", "Execution and value proof", 5],
 ];
 
+const PHASE_CAPTURE_SECTIONS = {
+  1: [
+    ["sponsor_commitment", "Sponsor commitment"],
+    ["scope_boundary", "Scope boundary"],
+    ["success_criteria", "Success criteria"],
+    ["stakeholder_map", "Stakeholder map"],
+    ["decision_rights", "Decision rights"],
+    ["evidence_plan", "Evidence plan"],
+  ],
+  2: [
+    ["current_state_findings", "Current-state findings"],
+    ["baseline_metrics", "Baseline metrics"],
+    ["gaps_root_causes", "Gaps / root causes"],
+    ["process_handoffs", "Process handoffs"],
+    ["data_quality_governance", "Data quality / governance"],
+    ["evidence_confidence", "Evidence confidence"],
+    ["recommendation", "Recommendation"],
+  ],
+  3: [
+    ["solution_approach", "Solution approach & options"],
+    ["operating_model", "Operating model & work split"],
+    ["process_design", "Process / workflow design"],
+    ["controls_governance", "Controls & AI governance"],
+    ["architecture_integration", "Architecture & integration"],
+    ["evidence_confidence", "Evidence confidence"],
+    ["recommendation", "Recommended approach"],
+  ],
+  4: [
+    ["roadmap_sequencing", "Roadmap & sequencing"],
+    ["estimates_capacity", "Estimates & capacity"],
+    ["value_plan", "Value plan & business case"],
+    ["risks_dependencies", "Risks & dependencies"],
+    ["funding_governance", "Funding ask & governance"],
+    ["handoff_plan", "Source / Tower handoff"],
+    ["recommendation", "Recommendation to fund"],
+  ],
+  5: [
+    ["mobilization_plan", "Mobilization plan & RACI"],
+    ["launch_readiness", "Launch readiness"],
+    ["value_proof_rules", "Value-proof rules & metrics"],
+    ["first_90_days", "First 90 days & milestones"],
+    ["governance_cadence", "Governance & Tower cadence"],
+    ["risks_open_items", "Open risks & client-to-complete"],
+    ["recommendation", "Recommendation to launch"],
+  ],
+};
+
 function parseArgs(argv) {
   const args = {
     homeSnapshot: DEFAULT_HOME_SNAPSHOT,
@@ -198,6 +245,10 @@ function workItemStatus(phase, current, blocked) {
   if (phase < current) return "done";
   if (phase === current) return blocked ? "blocked" : "in_progress";
   return "open";
+}
+
+function phaseCaptureModuleKey(phase, sectionKey) {
+  return `phase_${phase}_${sectionKey}`;
 }
 
 function loadHomePrograms(snapshotFile) {
@@ -401,6 +452,100 @@ on conflict (id) do update set
   completed_at = excluded.completed_at;`;
 }
 
+function phaseCaptureValue(row, phase, sectionKey) {
+  const budget = `$${Math.round(row.approved_budget_usd / 1_000_000)}M`;
+  const forecast = `$${Math.round(row.forecast_usd / 1_000_000)}M`;
+  const value = `$${Math.round(row.target_value_usd / 1_000_000)}M`;
+  const source = row.activation_source === "source_room.SP07_PPM" ? "SP07 PPM extract" : "Home program snapshot";
+  const base =
+    `${row.program_name} is activated for Meridian/PHS as a governed Move from ${source}; ` +
+    `budget ${budget}, forecast ${forecast}, directional value ${value}, ` +
+    `basis ${row.charter.source_basis}, review state ${row.charter.review_state}.`;
+  if (phase === 1) {
+    if (sectionKey === "sponsor_commitment") return `${base} Sponsor and decision cadence remain to be confirmed in the client workshop.`;
+    if (sectionKey === "scope_boundary") return `${base} Scope is bounded to ${row.function_pack_key.replaceAll("_", " ")} and excludes unapproved value claims.`;
+    if (sectionKey === "success_criteria") return `${base} Success requires a Tower-measured baseline, named owner, and evidence-backed acceptance criteria.`;
+    if (sectionKey === "stakeholder_map") return `${base} Stakeholder map starts with business sponsor, IT owner, finance partner, risk/control reviewer, and data steward.`;
+    if (sectionKey === "decision_rights") return `${base} Phase advancement needs sponsor approval; value recognition remains gated by Tower evidence.`;
+    if (sectionKey === "evidence_plan") return `${base} Evidence plan uses Home context, source-room PPM fields, Intelligence citations, and Tower gate measurement.`;
+  }
+  if (phase === 2) {
+    if (sectionKey === "baseline_metrics") {
+      return JSON.stringify([
+        { metric: "approved_budget_usd", value: row.approved_budget_usd, unit: "USD", source },
+        { metric: "forecast_usd", value: row.forecast_usd, unit: "USD", source },
+        { metric: "target_value_usd", value: row.target_value_usd, unit: "USD", source },
+      ]);
+    }
+    if (sectionKey === "current_state_findings") return `${base} Current state is active but value remains unclaimable until Tower evidence gates clear.`;
+    if (sectionKey === "gaps_root_causes") return `${base} Root-cause work is limited by pending owner interviews, source-system detail, and finance attestation.`;
+    if (sectionKey === "process_handoffs") return `${base} Handoffs span Home context, Moves execution, Intelligence reasoning, and Tower value proof.`;
+    if (sectionKey === "data_quality_governance") return `${base} Unknowns are carried as gaps; missing evidence is not treated as zero or as verified value.`;
+    if (sectionKey === "evidence_confidence") return `${base} Confidence is partial: source-backed for inventory and budget fields, pending for realized value.`;
+    if (sectionKey === "recommendation") return `${base} Continue discovery and measurement; do not claim value until Tower converts the forecast into governed evidence.`;
+  }
+  if (phase === 3) {
+    if (sectionKey === "solution_approach") return `${base} Preferred approach is incremental modernization with measured gates before broader rollout.`;
+    if (sectionKey === "operating_model") return `${base} Operating model splits business ownership, IT enablement, finance validation, and risk review.`;
+    if (sectionKey === "process_design") return `${base} Design work should sequence current-state proof, targeted intervention, pilot, then scaled adoption.`;
+    if (sectionKey === "controls_governance") return `${base} Controls require privacy, security, access, auditability, and claim-gate review before launch.`;
+    if (sectionKey === "architecture_integration") return `${base} Architecture dependencies must reconcile applications, integrations, data assets, and hosting records.`;
+    if (sectionKey === "evidence_confidence") return `${base} Design choices remain evidence-backed where cited and explicitly partial where client completion is pending.`;
+    if (sectionKey === "recommendation") return `${base} Advance design only with the open evidence needs visible in the Move and Tower queue.`;
+  }
+  if (phase === 4) {
+    if (sectionKey === "roadmap_sequencing") return `${base} Roadmap should prioritize instrumentation, measurement, then delivery capacity.`;
+    if (sectionKey === "estimates_capacity") return `${base} Capacity estimates are directional and must be reconciled with finance and delivery owners.`;
+    if (sectionKey === "value_plan") return `${base} Value plan holds forecast separate from claimable value; Tower owns conversion to measured impact.`;
+    if (sectionKey === "risks_dependencies") return `${base} Dependencies include evidence completeness, integration availability, governance review, and adoption readiness.`;
+    if (sectionKey === "funding_governance") return `${base} Funding ask should be conditional on source-backed baselines and named gate owners.`;
+    if (sectionKey === "handoff_plan") return `${base} Source handles vendor/contract evidence when needed; Tower handles value proof and cadence.`;
+    if (sectionKey === "recommendation") return `${base} Fund only the next controlled increment while unresolved evidence remains visible.`;
+  }
+  if (phase === 5) {
+    if (sectionKey === "mobilization_plan") return `${base} Mobilization needs named executive sponsor, operating lead, IT lead, finance validator, and risk owner.`;
+    if (sectionKey === "launch_readiness") return `${base} Launch readiness requires access, environments, controls, evidence gates, and support model confirmation.`;
+    if (sectionKey === "value_proof_rules") return `${base} Value proof rules separate forecast, measured run-rate, finance attested value, and blocked value.`;
+    if (sectionKey === "first_90_days") return `${base} First 90 days should instrument baseline, run pilot, confirm adoption, and report Tower conversion.`;
+    if (sectionKey === "governance_cadence") return `${base} Governance cadence uses Moves for execution state and Tower for value/exception cadence.`;
+    if (sectionKey === "risks_open_items") return `${base} Open items stay explicit until owners close evidence gaps and control readiness.`;
+    if (sectionKey === "recommendation") return `${base} Launch only after Tower measurement and owner accountability are in place.`;
+  }
+  return base;
+}
+
+function phaseCaptureModuleSql(row, section, index) {
+  const [sectionKey, sectionLabel] = section;
+  const phase = row.current_phase;
+  const moduleKey = phaseCaptureModuleKey(phase, sectionKey);
+  const id = stableUuid("program-phase-capture", row.move_id, moduleKey);
+  return `insert into program_modules (
+  id, engagement_id, module_key, module_name, phase_number, module_order, status,
+  state_jsonb, started_at, completed_at
+) values (
+  ${sqlText(id)}, ${sqlText(row.move_id)}, ${sqlText(moduleKey)}, ${sqlText(sectionLabel)},
+  ${phase}, ${100 + index}, ${sqlText("completed")},
+  ${sqlJson({
+    activation_basis: "meridian_phs_demo_moves_activation_plan",
+    source_row_id: row.source_id,
+    source_hash: row.source_hash,
+    source_basis: row.charter.source_basis,
+    review_state: row.charter.review_state,
+    value: phaseCaptureValue(row, phase, sectionKey),
+  })},
+  ${sqlText(`${row.charter.as_of_date}T12:00:00.000Z`)},
+  ${sqlText(`${row.charter.as_of_date}T12:00:00.000Z`)}
+)
+on conflict (id) do update set
+  module_name = excluded.module_name,
+  phase_number = excluded.phase_number,
+  module_order = excluded.module_order,
+  status = excluded.status,
+  state_jsonb = excluded.state_jsonb,
+  started_at = excluded.started_at,
+  completed_at = excluded.completed_at;`;
+}
+
 function milestoneSql(row, module, index, args) {
   const [moduleKey, moduleName, phase] = module;
   const id = stableUuid("program-milestone", row.move_id, moduleKey);
@@ -521,6 +666,10 @@ function build(args) {
     .update([homeHash, ppm.ppmHash ?? "missing"].join("|"))
     .digest("hex");
   const programs = selected.map((row, index) => enrichProgram(row, index + 1, args, sourceHash));
+  const phaseCaptureRowCount = programs.reduce(
+    (sum, row) => sum + (PHASE_CAPTURE_SECTIONS[row.current_phase]?.length ?? 0),
+    0,
+  );
 
   const sql = [
     "-- Meridian/PHS Moves activation package.",
@@ -530,6 +679,9 @@ function build(args) {
     ...programs.flatMap((row) => [
       engagementSql(row, args),
       ...MODULES.map((module, index) => moduleSql(row, module, index)),
+      ...(PHASE_CAPTURE_SECTIONS[row.current_phase] ?? []).map((section, index) =>
+        phaseCaptureModuleSql(row, section, index),
+      ),
       ...MODULES.map((module, index) => milestoneSql(row, module, index, args)),
       ...MODULES.map((module, index) => workItemSql(row, module, index, args)),
       riskSql(row, row.ordinal),
@@ -558,7 +710,8 @@ function build(args) {
     unresolved_gap_count: Math.max(0, DECLARED_PROGRAM_COUNT - programs.length),
     generated_rows: {
       engagements: programs.length,
-      program_modules: programs.length * MODULES.length,
+      program_modules: programs.length * MODULES.length + phaseCaptureRowCount,
+      phase_capture_modules: phaseCaptureRowCount,
       program_milestones: programs.length * MODULES.length,
       program_work_items: programs.length * MODULES.length,
       program_risks: programs.length,
