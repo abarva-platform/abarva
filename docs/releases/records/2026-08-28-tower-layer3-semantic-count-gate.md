@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed`
 
 ## Plain-English Summary
 
@@ -53,6 +53,17 @@ Completed local validation:
 - Pass: `npm run tower:healthcare-demo-layer3-canonical:validate -- --summary /tmp/tower-layer3-semantic-gate-local/tower_layer3_ecl_context_load_summary.json --readback /tmp/tower-layer3-semantic-gate-local/postgres_readback.json`
 - Pass: negative validation fails when `objects_by_semantic_type` is removed from readback.
 
+Completed Azure validation:
+
+- Pass: PR #6965 merged to `main` at `5215b79647aed9aaa4d8e7670f2875878dcbf6bd`.
+- Pass: ACA main deploy run `33205727414` completed successfully for that SHA.
+- Pass: production ACA revision `ca-abarva-web-lab-eastus--m5215b796` received 100% traffic.
+- Pass: production template image was digest-pinned to `acrabarvalab001.azurecr.io/abarva/web@sha256:cc74769e4132a526c8ad806b4e78751c6c2b6ef53290d5a4a340cb3644d7458c`.
+- Pass: public health endpoint returned `ok: true` with Postgres checks green.
+- Pass: governed ACA operator execution `job-abarva-private-operator-eus-jqbfme9` completed successfully on the same digest.
+- Pass: Azure readback validation returned `status: PASS` with zero semantic-type gaps.
+- Pass: operator job restored to idle image `acrabarvalab001.azurecr.io/abarva/web@sha256:918b6cbf298ebd5bd20782b15f7d1817111d94e438436d64f2ea64db543db8a9`.
+
 Expected semantic object counts:
 
 - Budget: 8
@@ -65,7 +76,7 @@ Expected semantic object counts:
 
 ## Rollout Plan
 
-Merge by PR to `main`. The repo-owned Azure Container Apps deploy workflow builds the digest-pinned image. After that image is available, rerun the Layer 3 canonical write through the governed ACA operator wrapper so the Azure proof bundle includes semantic object readback counts.
+Merged by PR #6965 to `main`. The repo-owned Azure Container Apps deploy workflow built and deployed the digest-pinned image. The Layer 3 canonical write was rerun through the governed ACA operator wrapper, and the Azure proof bundle includes semantic object readback counts.
 
 Only after the Azure semantic readback passes should downstream cubes be built. Product projections and old-layer sunset remain later-layer work.
 
@@ -75,7 +86,7 @@ Repo-owned deploy workflow: Required before ACA job execution because the harden
 
 Shared runtime mutators: None for the web runtime outside the governed deploy workflow.
 
-Approved image digest: Required for the ACA operator job rerun.
+Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:cc74769e4132a526c8ad806b4e78751c6c2b6ef53290d5a4a340cb3644d7458c`.
 
 Live signed-in proof required: Not for this Layer 3 validator hardening alone. Product proof is required only after cube/projection and page refresh work.
 
@@ -88,6 +99,8 @@ Revert this candidate. Existing Azure Layer 3 data remains valid under the previ
 - Local dry-run summary: `/tmp/tower-layer3-semantic-gate-local/tower_layer3_ecl_context_load_summary.json`
 - Local readback: `/tmp/tower-layer3-semantic-gate-local/postgres_readback.json`
 - Negative readback fixture: `/tmp/tower-layer3-semantic-gate-local/postgres_readback_missing_semantic.json`
+- Azure operator proof bundle: `/tmp/tower-layer3-semantic-gate-aca-proof-5215b796-rerun/proof/meridian-tower-layer3-canonical`
+- Azure readback: `/tmp/tower-layer3-semantic-gate-aca-proof-5215b796-rerun/proof/meridian-tower-layer3-canonical/03-readback.json`
 
 ## Known Gaps
 
