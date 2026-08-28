@@ -31,7 +31,7 @@ canonical, registry, data-plane, or retrieval state changes.
 
 - `src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx` restores the chat-only shell.
 - `src/app/(maestro)/intelligence/page.tsx` limits the ECL context-pack preview to explicit
-  `?provider=ecl_projection_db` requests and labels it as a non-default preview.
+  ECL provider requests through the shared provider resolver and labels it as a non-default preview.
 
 ## QA / Validation
 

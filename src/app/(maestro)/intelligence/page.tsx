@@ -18,6 +18,10 @@ import {
 import { resolveIntelligenceViewModelClientKey } from "@/lib/intelligence/intelligence-view-model-client-key";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
+import {
+  isEclProductProvider,
+  resolveEclProductProvider,
+} from "@/lib/ecl/product-provider";
 
 export const metadata = {
   title: "Intelligence · Advisory Board | AbarVa",
@@ -48,12 +52,25 @@ function enterpriseContextTenantKey(
   return key;
 }
 
+function isExplicitEclPreviewRequest(
+  value: string | null | undefined,
+): boolean {
+  const normalized = value?.trim().toLowerCase();
+  return (
+    normalized === "ecl" ||
+    normalized === "ecl_projection" ||
+    normalized === "ecl_projection_db" ||
+    normalized === "serving"
+  );
+}
+
 export default async function IntelligencePage({
   searchParams,
 }: IntelligencePageProps = {}) {
   const resolvedSearchParams = await searchParams;
   const rawRequestedClient = firstSearchValue(resolvedSearchParams?.client);
   const requestedProvider = firstSearchValue(resolvedSearchParams?.provider);
+  const productProvider = resolveEclProductProvider(requestedProvider);
   const requestedClient = (await hasLockedTenantSession())
     ? rawRequestedClient
     : null;
@@ -98,7 +115,8 @@ export default async function IntelligencePage({
     ? { ...authored, sections: canonical.sections }
     : authored;
   const intelligenceEclPreview =
-    requestedProvider === "ecl_projection_db"
+    isExplicitEclPreviewRequest(requestedProvider) &&
+    isEclProductProvider(productProvider)
       ? await readIntelligenceEclContextPackPreview(
           canonicalTenantKey(contextTenantKey),
         )
