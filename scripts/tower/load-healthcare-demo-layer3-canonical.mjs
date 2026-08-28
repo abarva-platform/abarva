@@ -665,19 +665,31 @@ with readback as (
     'objects_by_semantic_type', (
       select coalesce(jsonb_object_agg(canonical_semantic_type, row_count), '{}'::jsonb)
       from (
-        select attributes_json ->> 'canonical_semantic_type' as canonical_semantic_type, count(*) as row_count
+        select canonical_semantic_type, count(*) as row_count
         from ecl_context.object
         where tenant_key = ${tenant} and assessment_id = ${assessment}
           and attributes_json ->> 'layer3_build_version' = ${buildVersion}
-          and coalesce(attributes_json ->> 'canonical_semantic_type', '') <> ''
-        group by attributes_json ->> 'canonical_semantic_type'
+          and coalesce(canonical_semantic_type, '') <> ''
+        group by canonical_semantic_type
       ) counts
     ),
     'objects_missing_semantic_type', (
       select count(*) from ecl_context.object
       where tenant_key = ${tenant} and assessment_id = ${assessment}
         and attributes_json ->> 'layer3_build_version' = ${buildVersion}
+        and coalesce(canonical_semantic_type, '') = ''
+    ),
+    'objects_missing_semantic_type_attribute', (
+      select count(*) from ecl_context.object
+      where tenant_key = ${tenant} and assessment_id = ${assessment}
+        and attributes_json ->> 'layer3_build_version' = ${buildVersion}
         and coalesce(attributes_json ->> 'canonical_semantic_type', '') = ''
+    ),
+    'objects_semantic_column_json_mismatch', (
+      select count(*) from ecl_context.object
+      where tenant_key = ${tenant} and assessment_id = ${assessment}
+        and attributes_json ->> 'layer3_build_version' = ${buildVersion}
+        and canonical_semantic_type <> attributes_json ->> 'canonical_semantic_type'
     ),
     'measures_by_metric', (
       select coalesce(jsonb_object_agg(metric_key, row_count), '{}'::jsonb)
@@ -767,6 +779,8 @@ function validateReadback(readback, expected) {
     }
   }
   if (Number(readback.objects_missing_semantic_type ?? 1) !== 0) issues.push("objects_missing_semantic_type");
+  if (Number(readback.objects_missing_semantic_type_attribute ?? 1) !== 0) issues.push("objects_missing_semantic_type_attribute");
+  if (Number(readback.objects_semantic_column_json_mismatch ?? 1) !== 0) issues.push("objects_semantic_column_json_mismatch");
   if (Number(readback.objects_missing_source_record ?? 1) !== 0) issues.push("objects_missing_source_record");
   if (Number(readback.relationships_missing_source_record ?? 1) !== 0) issues.push("relationships_missing_source_record");
   if (Number(readback.measures_missing_source_record ?? 1) !== 0) issues.push("measures_missing_source_record");

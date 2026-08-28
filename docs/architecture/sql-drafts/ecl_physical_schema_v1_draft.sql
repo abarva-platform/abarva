@@ -223,6 +223,9 @@ create table if not exists ecl_context.object (
   review_state text not null,
   confidence numeric(5,4),
   attributes_json jsonb not null default '{}'::jsonb,
+  canonical_semantic_type text generated always as (
+    coalesce(nullif(attributes_json ->> 'canonical_semantic_type', ''), object_type)
+  ) stored,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint object_source_record_fk foreign key (tenant_key, assessment_id, source_record_id)
@@ -242,7 +245,14 @@ create table if not exists ecl_context.object (
     review_state in ('not_reviewed', 'in_review', 'confirmed', 'corrected', 'rejected', 'blocked', 'superseded')
   ),
   constraint object_confidence_check check (confidence is null or confidence between 0 and 1),
-  constraint object_key_unique unique (tenant_key, assessment_id, object_type, object_key),
+  constraint object_canonical_semantic_type_check check (canonical_semantic_type <> ''),
+  constraint object_semantic_key_unique unique (
+    tenant_key,
+    assessment_id,
+    object_type,
+    canonical_semantic_type,
+    object_key
+  ),
   constraint object_tenant_assessment_id_unique unique (tenant_key, assessment_id, id)
 );
 

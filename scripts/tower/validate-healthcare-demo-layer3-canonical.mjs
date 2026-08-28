@@ -44,6 +44,10 @@ function argValue(argv, name, fallback) {
   return value;
 }
 
+function hasArg(argv, name) {
+  return argv.includes(name);
+}
+
 function parseCsv(text) {
   const rows = [];
   let row = [];
@@ -120,6 +124,7 @@ function main() {
   const argv = process.argv.slice(2);
   const packageDir = path.resolve(argValue(argv, "--package-dir", process.env.TOWER_LAYER3_PACKAGE_DIR ?? DEFAULT_PACKAGE_DIR));
   const summaryPath = argValue(argv, "--summary", process.env.TOWER_LAYER3_SUMMARY ?? DEFAULT_SUMMARY);
+  const summaryOnly = hasArg(argv, "--summary-only");
   const readbackPath = argValue(argv, "--readback", process.env.TOWER_LAYER3_READBACK ?? DEFAULT_READBACK);
 
   const layerDir = path.join(packageDir, "layer_3_canonical");
@@ -127,7 +132,7 @@ function main() {
     Object.entries(FILES).map(([key, fileName]) => [key, readCsv(path.join(layerDir, fileName))]),
   );
   const summary = readJsonIfPresent(summaryPath);
-  const readback = readJsonIfPresent(readbackPath);
+  const readback = summaryOnly && !hasArg(argv, "--readback") ? null : readJsonIfPresent(readbackPath);
   const gates = [];
 
   const aiProjects = rows.projects.filter((row) => row.is_ai_related === "true");
@@ -182,11 +187,18 @@ function main() {
     gate(gates, "readback_metric_definition_count", Number(readback.metric_definition) === Number(summary?.expected_counts?.metric_definition), `${readback.metric_definition} metric definitions`);
     gate(gates, "readback_semantic_object_counts", exactCountMatch(readback.objects_by_semantic_type, EXPECTED_OBJECT_SEMANTIC_TYPES), formatCounts(readback.objects_by_semantic_type));
     gate(gates, "readback_no_missing_semantic_type", Number(readback.objects_missing_semantic_type) === 0, `${readback.objects_missing_semantic_type ?? "missing"} objects missing canonical semantic type`);
+    gate(gates, "readback_no_missing_semantic_type_attribute", Number(readback.objects_missing_semantic_type_attribute) === 0, `${readback.objects_missing_semantic_type_attribute ?? "missing"} objects missing canonical semantic type attribute`);
+    gate(gates, "readback_semantic_column_matches_attribute", Number(readback.objects_semantic_column_json_mismatch) === 0, `${readback.objects_semantic_column_json_mismatch ?? "missing"} object semantic column mismatches`);
     gate(gates, "readback_no_missing_lineage", Number(readback.objects_missing_source_record) === 0 && Number(readback.relationships_missing_source_record) === 0 && Number(readback.measures_missing_source_record) === 0, "no object, relationship, or measure lineage gaps");
     gate(gates, "readback_no_tenant_or_source_drift", Number(readback.tenant_payload_drift) === 0 && Number(readback.canonical_to_source_gap) === 0, "no tenant payload drift or canonical-source gap");
     gate(gates, "readback_no_product_projection", Number(readback.product_projection_rows_written) === 0, "no Layer 4 projection rows written");
   } else {
-    gate(gates, "readback_present", false, `missing ${readbackPath}`);
+    gate(
+      gates,
+      "readback_present",
+      summaryOnly,
+      summaryOnly ? "not required for summary-only validation" : `missing ${readbackPath}`,
+    );
   }
 
   const result = {
@@ -194,6 +206,7 @@ function main() {
     packageDir,
     summaryPath,
     readbackPath,
+    summaryOnly,
     gates,
   };
   console.log(JSON.stringify(result, null, 2));
