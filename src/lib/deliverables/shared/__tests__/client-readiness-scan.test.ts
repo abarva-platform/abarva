@@ -144,6 +144,51 @@ describe("implementation detail", () => {
   });
 });
 
+describe("vendor capability claim boundaries", () => {
+  it("blocks named-vendor platform claims that do not say what evidence state they are in", () => {
+    const result = scanClientReadiness(
+      "MedeAnalytics Health Fabric runs on Snowflake and supports predictive analytics.",
+    );
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "vendor_claim_without_state",
+          match: expect.stringContaining("MedeAnalytics Health Fabric"),
+          severity: "blocker",
+        }),
+      ]),
+    );
+    expect(result.blockers).toBeGreaterThan(0);
+  });
+
+  it("allows the same statement when it is explicitly vendor-published context", () => {
+    const result = scanClientReadiness(
+      "Vendor-published context: MedeAnalytics Health Fabric runs on Snowflake; this is not proof of client deployment.",
+    );
+    expect(result.findings.map((f) => f.kind)).not.toContain(
+      "vendor_claim_without_state",
+    );
+  });
+
+  it("allows client-evidence state labels for named-vendor capability claims", () => {
+    const result = scanClientReadiness(
+      "Client-observed: MedeAnalytics analytics benchmarking is used in the current quarterly performance workflow.",
+    );
+    expect(result.findings.map((f) => f.kind)).not.toContain(
+      "vendor_claim_without_state",
+    );
+  });
+
+  it("does not block an ordinary named-vendor mention without a capability claim", () => {
+    const result = scanClientReadiness(
+      "MedeAnalytics is listed as the incumbent vendor for review.",
+    );
+    expect(result.findings.map((f) => f.kind)).not.toContain(
+      "vendor_claim_without_state",
+    );
+  });
+});
+
 describe("internal reference codes", () => {
   it.each(["SRC-4F2A1B", "RUN_9d8c1", "DLV-00123"])("catches %s", (code) => {
     expect(kinds(`See ${code} for provenance.`)).toContain(

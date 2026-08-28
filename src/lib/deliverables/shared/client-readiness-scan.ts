@@ -1,3 +1,5 @@
+import { listVendorPlatformProfiles } from "@/lib/programs/vendor-platform-intelligence";
+
 // Client-readiness scan — the "would this survive a client expert reading it"
 // pass, expressed as code.
 //
@@ -30,6 +32,7 @@ export type FindingKind =
   | "internal_type_key"
   | "pipeline_vocabulary"
   | "internal_reference_code"
+  | "vendor_claim_without_state"
   | "unresolved_placeholder"
   | "filler_language";
 
@@ -138,6 +141,9 @@ const FILLER_PHRASES = [
   "paradigm shift",
   "move the needle",
 ];
+
+const VENDOR_STATE_BOUNDARY_PATTERN =
+  /\b(?:vendor[-\s]published|public[-\s]hypothesis|public vendor|vendor materials?|public materials?|not proof of (?:a )?client deployment|not client truth|contract[-\s]confirmed|implementation[-\s]confirmed|client[-\s]observed|client evidence|client-side assertion|client[-\s]confirmed)\b/i;
 
 const BRACE_PLACEHOLDER_PATTERN = String.raw`\{\{[^}\n]{1,60}\}\}`;
 const BRACKET_PLACEHOLDER_WORDS = [
@@ -259,6 +265,120 @@ function contextAround(text: string, index: number, length: number): string {
     .trim();
 }
 
+function sentenceOrParagraphAround(
+  text: string,
+  index: number,
+  length: number,
+): string {
+  const beforeBreak = Math.max(
+    text.lastIndexOf("\n\n", index),
+    text.lastIndexOf(". ", index),
+    text.lastIndexOf("; ", index),
+  );
+  const afterParagraph = text.indexOf("\n\n", index + length);
+  const afterSentence = text.indexOf(". ", index + length);
+  const positiveEnds = [afterParagraph, afterSentence].filter(
+    (end) => end >= 0,
+  );
+  const end =
+    positiveEnds.length > 0 ? Math.min(...positiveEnds) + 1 : text.length;
+  return text
+    .slice(beforeBreak >= 0 ? beforeBreak + 1 : 0, end)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function capabilityTermsForProfile(
+  profile: ReturnType<typeof listVendorPlatformProfiles>[number],
+): string[] {
+  const terms = new Set<string>();
+  const vendorName = profile.vendorName.toLowerCase();
+
+  function addTerm(term: string) {
+    const normalized = term.toLowerCase();
+    if (normalized === vendorName) return;
+    if (normalized.startsWith(`${vendorName} `)) return;
+    if (normalized.length < 8) return;
+    terms.add(term);
+  }
+
+  for (const value of [
+    profile.platformFamily,
+    ...profile.sourceRefs.map((ref) => ref.title),
+  ]) {
+    for (const token of value.match(/\b[A-Z][A-Za-z]+(?:[A-Z][A-Za-z]+)+\b/g) ??
+      []) {
+      addTerm(token);
+    }
+    for (const phrase of value.match(
+      /\b[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){1,4}\b/g,
+    ) ?? []) {
+      addTerm(phrase);
+    }
+  }
+
+  for (const capability of profile.capabilityFamilies) {
+    for (const value of [
+      capability.name,
+      capability.publicDescription,
+      ...capability.commonProcessing,
+      ...capability.commonOutputs,
+    ]) {
+      for (const phrase of value.match(
+        /\b[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){1,4}\b/g,
+      ) ?? []) {
+        addTerm(phrase);
+      }
+      for (const productName of value.match(
+        /\b[A-Z][A-Za-z]+(?:[A-Z][A-Za-z]+)+\b/g,
+      ) ?? []) {
+        addTerm(productName);
+      }
+    }
+  }
+
+  return [...terms].sort((a, b) => b.length - a.length);
+}
+
+function findVendorClaimWithoutState(text: string): ScanFinding[] {
+  const findings: ScanFinding[] = [];
+
+  for (const profile of listVendorPlatformProfiles()) {
+    const vendorPattern = new RegExp(
+      `\\b${escapeForRegex(profile.vendorName)}\\b`,
+      "gi",
+    );
+    const terms = capabilityTermsForProfile(profile);
+    if (terms.length === 0) continue;
+    const capabilityPattern = new RegExp(
+      `\\b(?:${alternation(terms)})\\b`,
+      "i",
+    );
+
+    let match: RegExpExecArray | null;
+    while ((match = vendorPattern.exec(text)) !== null) {
+      const localClaim = sentenceOrParagraphAround(
+        text,
+        match.index,
+        match[0].length,
+      );
+      if (!capabilityPattern.test(localClaim)) continue;
+      if (VENDOR_STATE_BOUNDARY_PATTERN.test(localClaim)) continue;
+
+      const capabilityMatch = localClaim.match(capabilityPattern)?.[0];
+      findings.push({
+        kind: "vendor_claim_without_state",
+        severity: "blocker",
+        match: capabilityMatch ? `${match[0]} ${capabilityMatch}` : match[0],
+        context: contextAround(text, match.index, match[0].length),
+        why: "A named vendor capability claim must say whether it is vendor-published context, contract-confirmed, implementation-confirmed, or client-observed before it can be signed off.",
+      });
+    }
+  }
+
+  return findings;
+}
+
 /**
  * Scan already-extracted document text.
  *
@@ -296,6 +416,13 @@ export function scanClientReadiness(documentText: string): ScanResult {
         why: rule.why,
       });
     }
+  }
+
+  for (const finding of findVendorClaimWithoutState(text)) {
+    const dedupeKey = `${finding.kind}:${finding.match.toLowerCase()}`;
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
+    findings.push(finding);
   }
 
   const blockers = findings.filter((f) => f.severity === "blocker").length;
