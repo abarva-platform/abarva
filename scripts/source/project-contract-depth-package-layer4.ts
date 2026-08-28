@@ -385,8 +385,6 @@ async function rebuildViews(client: Client): Promise<void> {
       NULL::text AS sla_tier,
       cs.raw_payload->>'known_pain_risk' AS known_pain_risk,
       cs.scope_ref AS it_portfolio_ref,
-      cs.relationship_method,
-      cs.relationship_confidence,
       cs.load_run_id
     FROM source.contract_scope cs
     JOIN active_runs active
@@ -792,8 +790,8 @@ async function rebuildViews(client: Client): Promise<void> {
       cs.criticality,
       cs.lifecycle_state,
       cs.modernization_plan,
-      COALESCE(cs.relationship_method, 'reviewed_mapping') AS relationship_method,
-      COALESCE(cs.relationship_confidence, 0.8)::numeric AS relationship_confidence,
+      'reviewed_mapping'::text AS relationship_method,
+      0.8::numeric AS relationship_confidence,
       cs.criticality IN ('Tier 0', 'Tier 1', 'Mission critical', 'Critical') AS critical_application_flag,
       COALESCE(cs.lifecycle_state, '') ILIKE '%retire%' AS retire_application_flag,
       COALESCE(cs.modernization_plan, '') ILIKE '%replace%' AS replace_application_flag,
