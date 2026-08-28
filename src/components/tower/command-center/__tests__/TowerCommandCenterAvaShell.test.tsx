@@ -32,7 +32,7 @@ jest.mock("recharts", () => {
 
 const view = buildTowerCommandCenterView(designFixtureMart(), {
   tenantName: "Meridian",
-});
+})!;
 
 describe("TowerCommandCenterAvaShell", () => {
   beforeEach(() => {

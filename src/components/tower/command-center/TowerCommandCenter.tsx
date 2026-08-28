@@ -11,67 +11,57 @@
 // rule deliberately dropped (see the CSS module header).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
+import { formatCount } from "@/lib/tower/command-center/format";
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
 
 import { AiInitiativeDrawer } from "./drawers/AiInitiativeDrawer";
 import { ActionDrawer } from "./drawers/ActionDrawer";
 import { EvidenceGapDrawer } from "./drawers/EvidenceGapDrawer";
 import { ProgramDrawer } from "./drawers/ProgramDrawer";
-import { Dot, cx } from "./primitives";
+import { cx } from "./primitives";
 import styles from "./TowerCommandCenter.module.css";
+import { CommandCenterView } from "./views/CommandCenterView";
 import {
-  CommandCenterView,
-  commandCenterAttention,
-} from "./views/CommandCenterView";
-import {
-  AiPortfolioView,
-  type AiFilter,
-  type AiSubView,
-} from "./views/AiPortfolioView";
-import {
-  DecisionLanesView,
-  type LanesSubView,
-} from "./views/DecisionLanesView";
-import { EvidenceView, type EvidenceQuestion } from "./views/EvidenceView";
-import { RecommendedActionsView } from "./views/RecommendedActionsView";
-import { ValueProofView } from "./views/ValueProofView";
+  AiPortfolioContractView,
+  EvidenceActionsContractView,
+  ValueProofContractView,
+} from "./views/ContractTabs";
 
 export type TowerTab =
-  | "command"
+  | "executive"
   | "funnel"
-  | "lanes"
   | "ai"
-  | "evidence"
   | "actions";
 
 const TABS: ReadonlyArray<{ id: TowerTab; label: string }> = [
-  { id: "command", label: "Command Center" },
+  { id: "executive", label: "Executive View" },
   { id: "funnel", label: "Value Proof" },
-  { id: "lanes", label: "Decision Lanes" },
   { id: "ai", label: "AI Portfolio" },
-  { id: "evidence", label: "Evidence" },
-  { id: "actions", label: "Recommended Actions" },
+  { id: "actions", label: "Evidence & Actions" },
 ];
 
 const TAB_IDS = new Set<string>(TABS.map((t) => t.id));
-/**
- * Freshness is reported from the posture row, never from render time and never from a literal.
- * A frozen string and a `new Date()` at render both claim currency the data has not earned, which
- * is the one thing an evidence-governed surface cannot do. When the source records no period or
- * build time, say so plainly rather than substituting a plausible date.
- */
-function freshnessLabel(
-  asOfPeriod: string | null,
-  refreshTimestamp: string | null,
-): string {
-  const built = refreshTimestamp ? refreshTimestamp.slice(0, 10) : null;
-  if (asOfPeriod && built) return `As of ${asOfPeriod} · built ${built}`;
-  if (asOfPeriod) return `As of ${asOfPeriod} · build date not recorded`;
-  if (built) return `Built ${built} · reporting period not recorded`;
-  return "As-of date not recorded";
+
+const TAB_ALIASES: Readonly<Record<string, TowerTab>> = {
+  ai: "ai",
+  command: "executive",
+  decision_lanes: "funnel",
+  evidence: "actions",
+  executive: "executive",
+  funnel: "funnel",
+  lanes: "funnel",
+  recommended_actions: "actions",
+  value: "funnel",
+  value_proof: "funnel",
+  actions: "actions",
+};
+
+function normalizeTowerTab(raw: string | null | undefined): TowerTab {
+  if (raw && TAB_IDS.has(raw)) return raw as TowerTab;
+  if (raw && TAB_ALIASES[raw]) return TAB_ALIASES[raw];
+  return "executive";
 }
 
 type DrawerState =
@@ -85,53 +75,44 @@ export function TowerCommandCenter({
   view,
   tenantName,
 }: {
-  /** `null` when the tenant has no governed Tower read-model rows. */
+  /** `null` when the tenant has no governed Tower mart rows. */
   view: TowerCommandCenterView | null;
   tenantName: string;
 }) {
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const urlTab = searchParams?.get("tab");
-  const [tab, setTab] = useState<TowerTab>(
-    urlTab && TAB_IDS.has(urlTab) ? (urlTab as TowerTab) : "command",
-  );
-  const [lanesView, setLanesView] = useState<LanesSubView>("overview");
-  const [aiView, setAiView] = useState<AiSubView>("overview");
-  const [aiFilter, setAiFilter] = useState<AiFilter>("all");
-  const [aiSearch, setAiSearch] = useState("");
-  const [evidenceQ, setEvidenceQ] = useState<EvidenceQuestion>("missing");
+  const [tab, setTab] = useState<TowerTab>(normalizeTowerTab(urlTab));
   const [drawer, setDrawer] = useState<DrawerState>(null);
 
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   // Reflect the active tab in `?tab=` so a link can deep-link into a tab and an
-  // E2E spec can address one directly. This is local UI state, so use the
-  // browser history API instead of App Router navigation; otherwise rapid tab
-  // clicks can let older `router.replace` responses arrive late and snap the
-  // visible tab backward.
+  // E2E spec can address one directly. Sub-view / filter / question stay client
+  // state, exactly as the design has them.
   const goToTab = useCallback(
     (next: TowerTab) => {
       setTab(next);
-      const params = new URLSearchParams(
-        typeof window === "undefined"
-          ? (searchParams?.toString() ?? "")
-          : window.location.search,
-      );
+      const params = new URLSearchParams(searchParams?.toString() ?? "");
       params.set("tab", next);
-      if (typeof window !== "undefined") {
-        window.history.replaceState(null, "", `${pathname}?${params}`);
-      }
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [pathname, searchParams],
+    [pathname, router, searchParams],
   );
 
   // A tab landed on from the URL (back/forward, or a pasted link) must win.
   useEffect(() => {
-    if (urlTab && TAB_IDS.has(urlTab) && urlTab !== tab)
-      setTab(urlTab as TowerTab);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlTab]);
+    if (!urlTab) return;
+    const normalized = normalizeTowerTab(urlTab);
+    if (normalized !== tab) setTab(normalized);
+    if (urlTab !== normalized) {
+      const params = new URLSearchParams(searchParams?.toString() ?? "");
+      params.set("tab", normalized);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  }, [pathname, router, searchParams, tab, urlTab]);
 
   const closeDrawer = useCallback(() => setDrawer(null), []);
 
@@ -183,54 +164,6 @@ export function TowerCommandCenter({
     funnel: blockedValue > 0,
     evidence: (view?.gaps.length ?? 0) > 0,
   };
-  const headerScope = view
-    ? freshnessLabel(view.summary.asOfPeriod, view.summary.refreshTimestamp)
-    : "no governed rows";
-  const boardroomRail = view
-    ? [
-        {
-          value:
-            view.summary.approvedInvestmentUsd === null
-              ? "Not loaded"
-              : formatUsdM(view.summary.approvedInvestmentUsd),
-          label: "investment",
-          fullLabel: "approved investment",
-        },
-        {
-          value:
-            view.summary.promisedBenefitUsd === null
-              ? "Not loaded"
-              : formatUsdM(view.summary.promisedBenefitUsd),
-          label: "benefit",
-          fullLabel: "explicit source-backed benefit",
-        },
-        {
-          value: formatUsdM(view.summary.financeValidatedBlockedUsd),
-          label: "blocked",
-          fullLabel: "Finance-calculated but blocked",
-        },
-        {
-          value: formatUsdM(view.summary.claimableUsd),
-          label: "claimable",
-          fullLabel: "claimable",
-        },
-        {
-          value: formatCount(view.summary.boardScopeProgramCount),
-          label: "cases",
-          fullLabel: "board-scope value cases",
-        },
-        {
-          value: formatCount(view.summary.totalProgramSubjectCount),
-          label: "subjects",
-          fullLabel: "tracked program subjects",
-        },
-        {
-          value: formatCount(view.summary.aiInitiativeCount),
-          label: "AI assets",
-          fullLabel: "AI tools, agents and capabilities",
-        },
-      ]
-    : [];
 
   const body = (() => {
     if (!view) {
@@ -239,12 +172,11 @@ export function TowerCommandCenter({
           <div className={styles.emptyPanel}>
             <h2>No governed Tower data for this tenant</h2>
             <p>
-              The <code>tower</code> read model carries no rows for {tenantName}
-              . This page renders nothing rather than showing zeros — a zero
-              would be a claim that the budget, promised value and claimable
-              value are all nil, which is not what absent data means. Load
-              governed Tower metric observations, claims and provenance for this
-              tenant to populate it.
+              The <code>cio_tower.mart_*</code> read models carry no rows for{" "}
+              {tenantName}. This page renders nothing rather than showing zeros
+              — a zero would be a claim that the budget, promised value and
+              claimable value are all nil, which is not what absent data means.
+              Run the Tower mart projection job for this tenant to populate it.
             </p>
           </div>
         </div>
@@ -254,50 +186,28 @@ export function TowerCommandCenter({
     switch (tab) {
       case "funnel":
         return (
-          <ValueProofView
+          <ValueProofContractView
             view={view}
-            onOpenProgram={(id) => setDrawer({ kind: "program", id })}
-          />
-        );
-      case "lanes":
-        return (
-          <DecisionLanesView
-            view={view}
-            subView={lanesView}
-            onSubView={setLanesView}
             onOpenProgram={(id) => setDrawer({ kind: "program", id })}
           />
         );
       case "ai":
         return (
-          <AiPortfolioView
+          <AiPortfolioContractView
             view={view}
-            subView={aiView}
-            onSubView={setAiView}
-            filter={aiFilter}
-            onFilter={setAiFilter}
-            search={aiSearch}
-            onSearch={setAiSearch}
             onOpenAi={(n) => setDrawer({ kind: "ai", n })}
-          />
-        );
-      case "evidence":
-        return (
-          <EvidenceView
-            view={view}
-            question={evidenceQ}
-            onQuestion={setEvidenceQ}
-            onOpenGap={(id) => setDrawer({ kind: "gap", id })}
+            onOpenAction={(id) => setDrawer({ kind: "action", id })}
           />
         );
       case "actions":
         return (
-          <RecommendedActionsView
+          <EvidenceActionsContractView
             view={view}
             onOpenAction={(id) => setDrawer({ kind: "action", id })}
+            onOpenGap={(id) => setDrawer({ kind: "gap", id })}
           />
         );
-      case "command":
+      case "executive":
       default:
         return (
           <CommandCenterView
@@ -312,59 +222,32 @@ export function TowerCommandCenter({
   return (
     <div className={styles.root} data-testid="tower-command-center">
       <div className={styles.stage}>
-        <div className={cx(styles.wrap, styles.dash)}>
-          <div className={styles.dashTop}>
-            <div className={styles.dashId}>
-              <div className={styles.eyebrow}>
-                IT Investment Tower · FY26 · {tenantName}
-              </div>
-              <h1>AI value posture</h1>
-            </div>
-            <div className={styles.dashRight}>
-              <div className={styles.when}>
-                {headerScope}
-              </div>
-              {view && commandCenterAttention(view) ? (
-                <div className={styles.flag}>
-                  <Dot tone="red" /> Value proof — Critical
-                </div>
-              ) : null}
-            </div>
-            {boardroomRail.length > 0 ? (
-              <div
-                className={styles.scopeRail}
-                aria-label="Tower boardroom scope and value posture"
-              >
-                {boardroomRail.map((item) => (
-                  <span
-                    key={item.label}
-                    aria-label={`${item.value} ${item.fullLabel}`}
-                    title={`${item.value} ${item.fullLabel}`}
-                  >
-                    <b>{item.value}</b>
-                    {item.label}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
+        <div className={cx(styles.wrap, styles.executiveTabsShell)}>
           <nav
-            className={styles.tabs}
+            className={styles.executiveTabs}
             role="tablist"
             aria-label="Tower Command Center sections"
           >
             {TABS.map((t, i) => {
               const selected = t.id === tab;
               const count =
-                t.id === "actions" ? (view?.actions.length ?? 0) : null;
-              const tabLabel =
-                t.id === "actions" && count !== null
-                  ? `${t.label}, ${formatCount(count)} total evidence actions`
-                  : t.label;
+                t.id === "funnel"
+                  ? (view
+                    ? view.summary.unknownValueClaimCount +
+                        view.summary.claimableProgramCount +
+                        view.summary.blockedProgramCount ||
+                      view.programs.length
+                    : null)
+                  : t.id === "ai"
+                    ? (view?.summary.aiInitiativeCount ?? view?.ai.length ?? null)
+                    : t.id === "actions"
+                      ? ((view?.actions.length ?? 0) +
+                        (view?.gaps.length ?? 0) +
+                        (view?.pipelineGaps.length ?? 0))
+                      : null;
               const attn =
                 (t.id === "funnel" && attention.funnel) ||
-                (t.id === "evidence" && attention.evidence);
+                (t.id === "actions" && attention.evidence);
               return (
                 <button
                   key={t.id}
@@ -374,28 +257,21 @@ export function TowerCommandCenter({
                   type="button"
                   role="tab"
                   id={`tcc-tab-${t.id}`}
-                  aria-label={tabLabel}
                   aria-selected={selected}
                   aria-controls="tcc-panel"
                   tabIndex={selected ? 0 : -1}
-                  className={cx(styles.tab, selected && styles.on)}
+                  className={cx(styles.executiveTab, selected && styles.on)}
                   onClick={() => goToTab(t.id)}
                   onKeyDown={(e) => onTabKeyDown(e, i)}
                 >
                   {t.label}
                   {count !== null ? (
-                    <>
-                      {" "}
-                      <span className={styles.tnum}>
-                        {formatCount(count)} total
-                      </span>
-                    </>
+                    <span className={styles.tnum}>{formatCount(count)}</span>
                   ) : null}
                   {attn ? (
                     <>
-                      {" "}
                       <span className={styles.adot} aria-hidden />
-                      <span className={styles.srOnly}> needs attention</span>
+                      <span className={styles.srOnly}>needs attention</span>
                     </>
                   ) : null}
                 </button>
