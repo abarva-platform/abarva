@@ -121,7 +121,9 @@ function selectedContractFrom(
     annualValueUsd: numberValue(raw.annualValueUsd),
     actualAnnualSpendUsd: numberValue(raw.actualAnnualSpendUsd),
     totalCommittedValueUsd: numberValue(raw.totalCommittedValueUsd),
-    contractedToActualVarianceUsd: numberValue(raw.contractedToActualVarianceUsd),
+    contractedToActualVarianceUsd: numberValue(
+      raw.contractedToActualVarianceUsd,
+    ),
     endDate: stringValue(raw.endDate),
     noticeDate: stringValue(raw.noticeDate),
     autoRenew: booleanValue(raw.autoRenew),
@@ -162,7 +164,9 @@ function ledgerLinesFrom(context: AskSurfaceContext): SourceLedgerLine[] {
     .slice(0, 8);
 }
 
-function opportunityLinesFrom(context: AskSurfaceContext): SourceOpportunityLine[] {
+function opportunityLinesFrom(
+  context: AskSurfaceContext,
+): SourceOpportunityLine[] {
   const source = sourceV4(context);
   const opportunities = isRecord(source?.optimizationOpportunities)
     ? source.optimizationOpportunities
@@ -170,34 +174,36 @@ function opportunityLinesFrom(context: AskSurfaceContext): SourceOpportunityLine
   const rawOpportunities = Array.isArray(opportunities?.opportunities)
     ? opportunities.opportunities
     : [];
-  const mapped = rawOpportunities.flatMap((opportunity): SourceOpportunityLine[] => {
-    if (!isRecord(opportunity)) return [];
-    const id = stringValue(opportunity.id);
-    const label = stringValue(opportunity.label);
-    if (!id || !label) return [];
-    return [
-      {
-        id,
-        kind: stringValue(opportunity.valueType) ?? "commercial_opportunity",
-        label,
-        amount: stringValue(opportunity.amount) ?? "Not established",
-        amountUsd: numberValue(opportunity.amountUsd),
-        state:
-          stringValue(opportunity.stageRaw) ??
-          stringValue(opportunity.stage) ??
-          "Not established",
-        evidenceClass: stringValue(opportunity.grade) ?? "Not established",
-        evidence:
-          stringValue(opportunity.blockingGap) ??
-          "Governed Source opportunity row with calculation and evidence references.",
-        nextAction:
-          stringValue(opportunity.nextAction) ??
-          "Confirm evidence owner and decision path.",
-        owner: stringValue(opportunity.owner),
-        sourceRefs: stringArray(opportunity.sourceRefs),
-      },
-    ];
-  });
+  const mapped = rawOpportunities.flatMap(
+    (opportunity): SourceOpportunityLine[] => {
+      if (!isRecord(opportunity)) return [];
+      const id = stringValue(opportunity.id);
+      const label = stringValue(opportunity.label);
+      if (!id || !label) return [];
+      return [
+        {
+          id,
+          kind: stringValue(opportunity.valueType) ?? "commercial_opportunity",
+          label,
+          amount: stringValue(opportunity.amount) ?? "Not established",
+          amountUsd: numberValue(opportunity.amountUsd),
+          state:
+            stringValue(opportunity.stageRaw) ??
+            stringValue(opportunity.stage) ??
+            "Not established",
+          evidenceClass: stringValue(opportunity.grade) ?? "Not established",
+          evidence:
+            stringValue(opportunity.blockingGap) ??
+            "Governed Source opportunity row with calculation and evidence references.",
+          nextAction:
+            stringValue(opportunity.nextAction) ??
+            "Confirm evidence owner and decision path.",
+          owner: stringValue(opportunity.owner),
+          sourceRefs: stringArray(opportunity.sourceRefs),
+        },
+      ];
+    },
+  );
   if (mapped.length > 0) return mapped.slice(0, 8);
   return ledgerLinesFrom(context).map((line) => ({
     ...line,
@@ -226,7 +232,8 @@ function connectionsFrom(context: AskSurfaceContext): SourceConnection[] {
           ledgers: stringArray(connection.ledgers),
           extract: stringValue(connection.extract) ?? "Governed extract",
           fields: stringArray(connection.fields).slice(0, 6),
-          outcome: stringValue(connection.outcome) ?? "Supports evidence review.",
+          outcome:
+            stringValue(connection.outcome) ?? "Supports evidence review.",
         },
       ];
     })
@@ -234,7 +241,7 @@ function connectionsFrom(context: AskSurfaceContext): SourceConnection[] {
 }
 
 function wantsSourceVisualAnswer(query: string): boolean {
-  return /\b(chart|visual|graph|relationship|table|tabular|ledger|evidence|source systems?|where.*data|contract context|outside[-\s]?in|industry)\b/i.test(
+  return /\b(chart|visual|graph|relationship|table|tabular|ledger|evidence|source systems?|where.*data|contract context|outside[-\s]?in|industry|actionable|actionability|why.*action|optimi[sz]e|opportunit(?:y|ies)|claim value|claim savings|realized? value|what.*missing|missing.*before|before.*claim)\b/i.test(
     query,
   );
 }
@@ -246,9 +253,9 @@ export function canBuildSourceWorkspaceVisualAnswer(input: {
   const context = input.surfaceContext;
   return Boolean(
     context &&
-      stringValue(context.module)?.toLowerCase() === "source" &&
-      wantsSourceVisualAnswer(input.query) &&
-      selectedContractFrom(context),
+    stringValue(context.module)?.toLowerCase() === "source" &&
+    wantsSourceVisualAnswer(input.query) &&
+    selectedContractFrom(context),
   );
 }
 
@@ -256,7 +263,8 @@ function currencyLabel(value: number | null): string {
   if (value == null) return "Not established";
   const abs = Math.abs(value);
   const sign = value < 0 ? "-" : "";
-  if (abs >= 1_000_000_000) return `${sign}$${(abs / 1_000_000_000).toFixed(2)}B`;
+  if (abs >= 1_000_000_000)
+    return `${sign}$${(abs / 1_000_000_000).toFixed(2)}B`;
   if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`;
   if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(0)}K`;
   return `${sign}$${abs.toFixed(0)}`;
@@ -313,7 +321,9 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       recordId: contract.contractId,
       excerpt:
         "Opportunity values, evidence states, source references, and next actions are read from the current governed Source opportunity set.",
-      confidence: lines.some((line) => line.amountUsd != null) ? "high" : "medium",
+      confidence: lines.some((line) => line.amountUsd != null)
+        ? "high"
+        : "medium",
     },
     {
       id: graphCitationId,
@@ -368,8 +378,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         sourceRefs: row.sourceRefs,
         nextAction: row.nextAction,
       })),
-      note:
-        "Rows are governed Source opportunity rows. Missing evidence remains explicit and is not converted to zero.",
+      note: "Rows are governed Source opportunity rows. Missing evidence remains explicit and is not converted to zero.",
       citationIds: [opportunityCitationId],
     },
     {
@@ -377,14 +386,26 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       id: "source-contract-evidence-relationship-graph",
       title: "Contract Evidence Relationship",
       nodes: [
-        { id: "contract", label: `${contract.contractId}\n${contract.vendorName}`, kind: "contract" },
-        { id: "scope", label: `Scope\n${contract.scopeRowCount ?? 0} rows`, kind: "scope" },
+        {
+          id: "contract",
+          label: `${contract.contractId}\n${contract.vendorName}`,
+          kind: "contract",
+        },
+        {
+          id: "scope",
+          label: `Scope\n${contract.scopeRowCount ?? 0} rows`,
+          kind: "scope",
+        },
         ...connections.map((connection) => ({
           id: `source-${connection.id}`,
           label: connection.sourceSystem,
           kind: "source system",
         })),
-        { id: "opportunities", label: "Commercial opportunities", kind: "opportunity set" },
+        {
+          id: "opportunities",
+          label: "Commercial opportunities",
+          kind: "opportunity set",
+        },
         { id: "door1", label: "Door 1 action", kind: "workflow" },
       ],
       edges: [
@@ -414,8 +435,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         xKey: "opportunity",
         yKey: "valueUsd",
         unit: "USD",
-        note:
-          "Chart excludes opportunities without a governed numeric value rather than rendering them as zero.",
+        note: "Chart excludes opportunities without a governed numeric value rather than rendering them as zero.",
       },
       builder: "inlineChart",
       xKey: "opportunity",
@@ -428,7 +448,9 @@ export function buildSourceWorkspaceVisualAnswer(input: {
   }
 
   const evidenceReadyCount = lines.filter((line) =>
-    /quantified|validated|evidenced/i.test(`${line.state} ${line.evidenceClass}`),
+    /quantified|validated|evidenced/i.test(
+      `${line.state} ${line.evidenceClass}`,
+    ),
   ).length;
   const gapCount = lines.filter((line) =>
     /baseline_conflict|evidence_required|workflow_required|missing|needs evidence|not established|requires_/i.test(

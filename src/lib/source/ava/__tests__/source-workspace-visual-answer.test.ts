@@ -39,7 +39,10 @@ function sourceContext(): AskSurfaceContext {
             grade: "SYSTEM EVIDENCED",
             blockingGap: "SLA and invoice extracts reconciled.",
             nextAction: "Prepare recovery claim.",
-            sourceRefs: ["sla_incident_service_credit_monthly", "invoice_lines"],
+            sourceRefs: [
+              "sla_incident_service_credit_monthly",
+              "invoice_lines",
+            ],
             owner: "Vendor management",
           },
           {
@@ -76,8 +79,10 @@ function sourceContext(): AskSurfaceContext {
             amountUsd: 22_140,
             stageRaw: "quantified",
             grade: "SYSTEM EVIDENCED",
-            blockingGap: "VMS rate-card rows reconciled to CLM pricing schedule.",
-            nextAction: "Confirm no amendment approved the higher billed rates.",
+            blockingGap:
+              "VMS rate-card rows reconciled to CLM pricing schedule.",
+            nextAction:
+              "Confirm no amendment approved the higher billed rates.",
             sourceRefs: ["golden_contract_rate_card_variance"],
             owner: "Procurement",
           },
@@ -113,14 +118,19 @@ describe("Source Workspace visual aVa answer", () => {
     const query =
       "Show me a chart, table, and relationship graph for this contract evidence.";
 
-    expect(canBuildSourceWorkspaceVisualAnswer({ query, surfaceContext: context })).toBe(
-      true,
-    );
+    expect(
+      canBuildSourceWorkspaceVisualAnswer({ query, surfaceContext: context }),
+    ).toBe(true);
 
-    const answer = buildSourceWorkspaceVisualAnswer({ query, surfaceContext: context });
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query,
+      surfaceContext: context,
+    });
 
     expect(answer?.directAnswer).toContain("CTR-090");
-    expect(answer?.directAnswer).toContain("outside-in pattern is advisory only");
+    expect(answer?.directAnswer).toContain(
+      "outside-in pattern is advisory only",
+    );
     expect(answer?.directAnswer).toContain("commercial opportunity line");
     expect(answer?.artifacts.map((artifact) => artifact.artifact)).toEqual([
       "table",
@@ -139,23 +149,28 @@ describe("Source Workspace visual aVa answer", () => {
       artifact: "graph",
       id: "source-contract-evidence-relationship-graph",
     });
-    expect(answer?.citations.some((citation) => citation.sourceClass === "worldview")).toBe(
-      true,
-    );
+    expect(
+      answer?.citations.some(
+        (citation) => citation.sourceClass === "worldview",
+      ),
+    ).toBe(true);
   });
 
   it("does not fall back to raw conflicted values when the governed opportunity is blocked", () => {
     const context = sourceContext() as AskSurfaceContext & {
       sourceV4: {
         selectedContract: Record<string, unknown>;
-        optimizationOpportunities: { opportunities: Array<Record<string, unknown>> };
+        optimizationOpportunities: {
+          opportunities: Array<Record<string, unknown>>;
+        };
         optimizationLedger?: unknown;
         optimizationSpine: Record<string, unknown>;
       };
     };
     context.sourceV4.selectedContract.contractId = "CTR-061";
     context.sourceV4.selectedContract.vendorName = "Microsoft";
-    context.sourceV4.selectedContract.contractName = "Microsoft Cloud Platform Agreement 2";
+    context.sourceV4.selectedContract.contractName =
+      "Microsoft Cloud Platform Agreement 2";
     context.sourceV4.optimizationOpportunities = {
       opportunities: [
         {
@@ -168,8 +183,12 @@ describe("Source Workspace visual aVa answer", () => {
           grade: "CONFLICT CONTROLLED",
           blockingGap:
             "Do not surface raw recoverable or finance-confirmed values until baseline conflict is resolved.",
-          nextAction: "Resolve conflicting baseline evidence before calculating value.",
-          sourceRefs: ["golden_contract_reconciliation", "finance_value_confirmation"],
+          nextAction:
+            "Resolve conflicting baseline evidence before calculating value.",
+          sourceRefs: [
+            "golden_contract_reconciliation",
+            "finance_value_confirmation",
+          ],
           owner: "Finance and procurement",
         },
       ],
@@ -204,8 +223,38 @@ describe("Source Workspace visual aVa answer", () => {
       artifact: "table",
       id: "source-contract-opportunity-table",
     });
-    expect(answer?.caveats.some((caveat) => caveat.id === "chart-evidence-threshold")).toBe(
-      true,
-    );
+    expect(
+      answer?.caveats.some(
+        (caveat) => caveat.id === "chart-evidence-threshold",
+      ),
+    ).toBe(true);
+  });
+
+  it("routes actionability and value-readiness questions to the governed Source answer", () => {
+    const context = sourceContext();
+
+    expect(
+      canBuildSourceWorkspaceVisualAnswer({
+        query: "Why is CTR-090 actionable now?",
+        surfaceContext: context,
+      }),
+    ).toBe(true);
+    expect(
+      canBuildSourceWorkspaceVisualAnswer({
+        query: "What is missing before I can claim value from CTR-090?",
+        surfaceContext: context,
+      }),
+    ).toBe(true);
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query: "Why is CTR-090 actionable now?",
+      surfaceContext: context,
+    });
+
+    expect(answer?.directAnswer).toContain("CTR-090");
+    expect(answer?.directAnswer).toContain("commercial opportunity line");
+    expect(
+      answer?.citations.some((citation) => citation.recordId === "CTR-090"),
+    ).toBe(true);
   });
 });

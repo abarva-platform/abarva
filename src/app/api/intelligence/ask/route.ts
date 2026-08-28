@@ -76,6 +76,10 @@ import {
   buildSourceWorkspaceVisualAnswer,
   canBuildSourceWorkspaceVisualAnswer,
 } from "@/lib/source/ava/source-workspace-visual-answer";
+import {
+  buildTenantFenceAnswer,
+  shouldFenceForeignTenantQuery,
+} from "@/lib/intelligence/ask/tenant-fence-answer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -338,6 +342,89 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               }) + "\n",
             ),
           );
+        }
+        const activeTenantAliasesForFence =
+          signedInTenantAliases.length > 0
+            ? signedInTenantAliases
+            : [
+                tenantInventoryKey,
+                tenantClientKey,
+                requestedOrSurfaceClient,
+                surfaceContext?.clientKey,
+                surfaceContext?.activeClient,
+              ].filter(Boolean);
+        const surfaceModule = readString(surfaceContext?.module)?.toLowerCase();
+        const answerSurface =
+          surfaceModule === "source"
+            ? "source"
+            : surfaceModule === "home"
+              ? "home"
+              : "intelligence";
+        if (
+          shouldFenceForeignTenantQuery({
+            query,
+            activeTenantAliases: activeTenantAliasesForFence,
+          })
+        ) {
+          let answer = buildTenantFenceAnswer({
+            surface: answerSurface,
+            mode:
+              answerSurface === "home"
+                ? "KNOW"
+                : answerSurface === "source"
+                  ? "SOURCE"
+                  : "ANALYZE",
+            activeTenantDisplayName:
+              sessionTenant?.displayName ??
+              tenant?.displayName ??
+              surfaceContext?.activeClient ??
+              requestedOrSurfaceClient ??
+              "the signed-in tenant",
+          });
+          answer = applyProductTruthToAvaAnswer(
+            answer,
+            productTruthContext({ surface: answerSurface }),
+          );
+          if (
+            blockRetiredFacts({
+              textBlocks: [
+                {
+                  location: "route.tenant_fence.answer",
+                  text: JSON.stringify(answer),
+                },
+              ],
+            })
+          )
+            return;
+          assistantText = answer.directAnswer;
+          controller.enqueue(
+            encoder.encode(
+              JSON.stringify({
+                type: "agent-answer",
+                answer,
+              }) + "\n",
+            ),
+          );
+          const event = recordIntelligenceTelemetry({
+            startedAt,
+            tenantId,
+            instanceId:
+              memory?.sessionId ??
+              memory?.tabId ??
+              requestedOrSurfaceClient ??
+              `${answerSurface}-tenant-fence-ask`,
+            patternId: `${answerSurface}-tenant-fence`,
+            citationCount: 0,
+          });
+          controller.enqueue(
+            encoder.encode(
+              JSON.stringify({
+                type: "done",
+                telemetryEventId: event.id,
+              }) + "\n",
+            ),
+          );
+          return;
         }
         if (blockRetiredFacts({})) return;
         if (
@@ -1253,9 +1340,10 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                   label,
                 })),
               ],
-              corpusUsed: [...sourceVisualCitations, ...exhibits.citations].some(
-                (citation) => citation.sourceClass !== "tenant-fact",
-              )
+              corpusUsed: [
+                ...sourceVisualCitations,
+                ...exhibits.citations,
+              ].some((citation) => citation.sourceClass !== "tenant-fact")
                 ? [
                     {
                       id: "corpus-support",
@@ -1267,12 +1355,14 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 substrate: "module_read_model",
                 sourceCount:
                   sourceVisualCitations.length + exhibits.citations.length,
-                hasTenantFacts: [...sourceVisualCitations, ...exhibits.citations].some(
-                  (citation) => citation.sourceClass === "tenant-fact",
-                ),
-                hasCorpus: [...sourceVisualCitations, ...exhibits.citations].some(
-                  (citation) => citation.sourceClass !== "tenant-fact",
-                ),
+                hasTenantFacts: [
+                  ...sourceVisualCitations,
+                  ...exhibits.citations,
+                ].some((citation) => citation.sourceClass === "tenant-fact"),
+                hasCorpus: [
+                  ...sourceVisualCitations,
+                  ...exhibits.citations,
+                ].some((citation) => citation.sourceClass !== "tenant-fact"),
                 hasExperts: false,
               },
             });
@@ -1594,35 +1684,7 @@ function mentionsForeignTenant(
   query: string,
   activeTenantAliases: readonly (string | null | undefined)[],
 ): boolean {
-  const normalized = query.toLowerCase();
-  const current = new Set(
-    activeTenantAliases.flatMap((value) => tenantAliasesFor(value)),
-  );
-  const tenants = [
-    {
-      aliases: tenantAliasesFor("apexretail"),
-      terms: ["apex retail", "apexretail"],
-    },
-    {
-      aliases: tenantAliasesFor("arcturus"),
-      terms: ["first capital", "arcturus", "firstcapital"],
-    },
-    {
-      aliases: tenantAliasesFor("skyharbor"),
-      terms: ["skyharbor", "skyharbor air"],
-    },
-    {
-      aliases: tenantAliasesFor("meridian"),
-      terms: ["meridian", "meridian health"],
-    },
-    { aliases: tenantAliasesFor("lakeshore"), terms: ["lakeshore"] },
-  ];
-  for (const tenant of tenants) {
-    if (!tenant.terms.some((term) => normalized.includes(term))) continue;
-    if (tenant.aliases.some((alias) => current.has(alias))) continue;
-    return true;
-  }
-  return false;
+  return shouldFenceForeignTenantQuery({ query, activeTenantAliases });
 }
 
 function hasTenantAliasOverlap(
@@ -1731,33 +1793,10 @@ function shouldIncludeIntelligenceLatencyTrace(
 function buildHomeKnowTenantFenceAnswer(input: {
   activeTenantDisplayName: string;
 }): AvaAnswerPacket {
-  return composeAvaAnswer({
+  return buildTenantFenceAnswer({
     surface: "home",
     mode: "KNOW",
-    tenantKey: "signed-in-tenant",
-    question: "cross-tenant request",
-    intent: "tenant_fence",
-    status: "blocked",
-    directAnswer: `I can't share or use another tenant's data from Home. Your signed-in session is fenced to ${input.activeTenantDisplayName}; ask from this tenant's active enterprise context only.`,
-    citations: [],
-    gaps: [
-      {
-        id: "tenant-fence",
-        label: "Tenant fence",
-        detail: "Cross-tenant data is fenced by the signed-in session tenant.",
-      },
-    ],
-    caveats: [
-      {
-        id: "blocked-before-retrieval",
-        label: "Blocked before retrieval",
-        detail: "Cross-tenant request blocked before retrieval.",
-      },
-    ],
-    retrievalSummary: {
-      substrate: "none",
-      hasTenantFacts: false,
-    },
+    activeTenantDisplayName: input.activeTenantDisplayName,
   });
 }
 
