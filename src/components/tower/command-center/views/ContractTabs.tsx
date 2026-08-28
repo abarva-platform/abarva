@@ -441,7 +441,7 @@ export function ValueProofContractView({
         <article className={styles.contractCard}>
           {cardTitle(
             "Investment to value conversion",
-            "Seven gates · in order",
+            "Seven evidence states",
           )}
           <div className={styles.gateChart}>
             <ValueGateChart view={view} />
