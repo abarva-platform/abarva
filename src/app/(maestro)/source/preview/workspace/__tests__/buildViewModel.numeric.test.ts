@@ -888,10 +888,21 @@ describe("buildViewModel numeric coercion", () => {
     );
     const built = buildViewModel(vm) as {
       c: { spend: string } | null;
+      econBars: Array<{ label: string; value: string }>;
       thesis: string;
+      valueStrip: Array<{ label: string; value: string; sub: string }>;
     };
 
+    const actualSpendBar = built.econBars.find(
+      (bar) => bar.label === "Actual annual spend",
+    );
+    const actualSpendStripItem = built.valueStrip.find(
+      (item) => item.label === "Actual annual spend",
+    );
     expect(built.c?.spend).toBe("$8.6M");
+    expect(actualSpendBar?.value).toBe("$8.6M");
+    expect(actualSpendStripItem?.value).toBe("$8.6M");
+    expect(actualSpendStripItem?.sub).not.toBe("Not established");
     expect(built.thesis).toContain("$8.6M actual spend");
     expect(built.thesis).not.toContain("Not established actual spend");
   });

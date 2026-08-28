@@ -56,6 +56,8 @@ metadata.
 - `src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts`
 - `docs/governance/dataset-manifests/source-contract-depth-sla-credit-v1.json`
 - `docs/backlog/tracks/04-source-commercial/BACKLOG.md`
+- Follow-up: Contract 360 economics rows now use the selected-contract effective annual spend value
+  consistently, including the monthly-spend fallback used by the story header.
 - Follow-up: Source workspace proof-layer aggregate reads set the database tenant context to the
   canonical tenant key while still filtering over the authorized alias set, so RLS-protected
   consumption rows are visible to the proof-layer panel.
@@ -82,6 +84,11 @@ metadata.
   `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts' --runInBand`.
 - pass: scoped `npx eslint` on the proof-layer aggregate adapter and test files.
 - pass: proof-layer aggregate follow-up typecheck:
+  `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --skipLibCheck --project tsconfig.json`.
+- pass: focused selected-contract annual-spend fallback regression:
+  `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' --runInBand`.
+- pass: scoped `npx eslint` on the selected-contract economics fallback and test files.
+- pass: selected-contract economics fallback typecheck:
   `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --skipLibCheck --project tsconfig.json`.
 - partial: signed-in production proof showed the scoped contract loads cleanly without tenant
   leakage and the optimization opportunity is legible. It also found that monthly SLA rows and

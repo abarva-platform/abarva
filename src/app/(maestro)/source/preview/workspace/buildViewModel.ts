@@ -623,9 +623,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       ),
       vsItem(
         "Actual annual spend",
-        money(c.actual_annual_spend),
-        c.actual_annual_spend != null && c.annual_value != null
-          ? money(c.annual_value - c.actual_annual_spend) +
+        money(effectiveActualAnnualSpend),
+        effectiveActualAnnualSpend != null && c.annual_value != null
+          ? money(c.annual_value - effectiveActualAnnualSpend) +
               " contracted-to-actual variance · cause not yet established"
           : "Not established",
       ),
@@ -1932,23 +1932,24 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         },
         {
           label: "Actual annual spend",
-          value: money(c.actual_annual_spend),
+          value: money(effectiveActualAnnualSpend),
           pct: c.annual_value
-            ? ((c.actual_annual_spend ?? 0) / c.annual_value) * 100
+            ? ((effectiveActualAnnualSpend ?? 0) / c.annual_value) * 100
             : 0,
           color: "#3d6ea8",
         },
         {
           label: "Contracted-to-actual variance",
           value:
-            c.annual_value != null && c.actual_annual_spend != null
-              ? money(c.annual_value - c.actual_annual_spend)
+            c.annual_value != null && effectiveActualAnnualSpend != null
+              ? money(c.annual_value - effectiveActualAnnualSpend)
               : "Not established",
           pct:
-            c.annual_value && c.actual_annual_spend != null
+            c.annual_value && effectiveActualAnnualSpend != null
               ? Math.max(
                   0,
-                  ((c.annual_value - c.actual_annual_spend) / c.annual_value) *
+                  ((c.annual_value - effectiveActualAnnualSpend) /
+                    c.annual_value) *
                     100,
                 )
               : 0,
