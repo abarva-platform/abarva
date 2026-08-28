@@ -44,6 +44,15 @@ assert(
   "ECL narrative job is plan-only by default",
 );
 assert(
+  script.includes("process.env.ECL_DENSE_TENANT_KEY") &&
+    script.includes("process.env.ECL_DENSE_ASSESSMENT_ID"),
+  "ECL narrative job accepts operator tenant and assessment env overrides",
+);
+assert(
+  script.includes("structured_event: \"home_ecl_narrative_layer_summary\""),
+  "ECL narrative job emits structured proof for the ACA operator wrapper",
+);
+assert(
   script.includes("ecl_projection.home_enterprise_landscape") &&
     script.includes("ecl_projection.projection_entry"),
   "ECL narrative job writes to ECL projection tables",
