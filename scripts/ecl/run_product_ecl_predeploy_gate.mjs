@@ -33,8 +33,10 @@ const CHECKS = [
     file: "scripts/ecl/run_product_ecl_browser_smoke.mjs",
     mustContain: [
       "eclPath(\"/tower\")",
-      "/Tower command center projection is loaded/i",
-      "/Gate state/i",
+      "/IT INVESTMENT TOWER|Tower/i",
+      "/Value Proof/i",
+      "/Decision Lanes/i",
+      "/AI Portfolio/i",
     ],
   },
   {

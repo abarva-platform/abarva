@@ -20,6 +20,7 @@ const TENANT_PROFILES = {
       "demo-meridian+clerk_test@abarva.com",
     ],
     sourceVendorCount: 102,
+    requiresDemoFindings: true,
   },
   meridian: {
     appClientKey: "meridian",
@@ -32,6 +33,7 @@ const TENANT_PROFILES = {
       "demo-meridian+clerk_test@abarva.com",
     ],
     sourceVendorCount: 102,
+    requiresDemoFindings: true,
   },
   "skyharbor-air": {
     appClientKey: "skyharbor",
@@ -40,6 +42,7 @@ const TENANT_PROFILES = {
     proofEmail: "anand.sundaram+skyharbor@thesundaram.com",
     fallbackEmails: [],
     sourceVendorCount: 94,
+    requiresDemoFindings: false,
   },
   skyharbor: {
     appClientKey: "skyharbor",
@@ -48,6 +51,7 @@ const TENANT_PROFILES = {
     proofEmail: "anand.sundaram+skyharbor@thesundaram.com",
     fallbackEmails: [],
     sourceVendorCount: 94,
+    requiresDemoFindings: false,
   },
 };
 const TENANT_PROFILE = TENANT_PROFILES[RAW_TENANT_KEY] || TENANT_PROFILES["meridian-health"];
@@ -99,7 +103,7 @@ const ROUTES = [
   {
     key: "tower_ecl",
     path: eclPath("/tower"),
-    requiredText: [/Tower command center projection is loaded/i, /Gate state/i],
+    requiredText: [/IT INVESTMENT TOWER|Tower/i, /Value Proof/i, /Decision Lanes/i, /AI Portfolio/i],
   },
   {
     key: "intelligence_ecl",
@@ -325,6 +329,7 @@ function validateSurfaceAssertionContract() {
 }
 
 function routeDemoFindingChecks(routeKey, bodyText) {
+  if (!TENANT_PROFILE.requiresDemoFindings) return [];
   return DEMO_FINDING_ASSERTIONS.flatMap((finding) =>
     finding.routeChecks
       .filter((routeCheck) => routeCheck.routeKey === routeKey)
@@ -358,6 +363,17 @@ function routeSurfaceChecks(routeKey, bodyText) {
 }
 
 function summarizeDemoFindings(routes) {
+  if (!TENANT_PROFILE.requiresDemoFindings) {
+    return {
+      metric: "findings demonstrable on a real surface",
+      numerator: 0,
+      denominator: 0,
+      accepted: true,
+      status: "not_applicable",
+      reason: "demo_findings_spec_is_scoped_to_primary_healthcare_fixture",
+      findings: [],
+    };
+  }
   const routeChecks = routes.flatMap((route) => route.demo_finding_checks ?? []);
   const checksByFinding = new Map();
   for (const check of routeChecks) {

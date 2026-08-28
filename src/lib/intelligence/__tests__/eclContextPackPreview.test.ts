@@ -104,4 +104,36 @@ describe("readIntelligenceEclContextPackPreview", () => {
       "Intelligence ECL preview: no serving Intelligence context rows",
     );
   });
+
+  it("queries the SkyHarbor dense assessment id for SkyHarbor tenants", async () => {
+    mockAzureRead.query.mockResolvedValue([
+      {
+        payload_json: {
+          row_key: "pack-sky-001",
+          surface_key: "advisory",
+          retrieval_state: "cited",
+          value_state: "known",
+          quality_state: "passed",
+          access_class: "client_confidential",
+          prompt_context_json: {
+            title: "Airline disruption operations",
+          },
+          permitted_facts_json: [],
+          blocked_facts_json: [],
+          citation_refs_json: [],
+          gap_flags_json: [],
+          source_hash: "hash-sky",
+        },
+      },
+    ]);
+
+    const preview = await readIntelligenceEclContextPackPreview("skyharbor-air");
+
+    expect(mockAzureRead.query).toHaveBeenCalledWith(
+      expect.any(String),
+      ["skyharbor-air", "assessment-dense-skyharbor-20260827"],
+      { missingTable: "empty" },
+    );
+    expect(preview?.assessmentId).toBe("assessment-dense-skyharbor-20260827");
+  });
 });

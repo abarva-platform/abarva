@@ -1,6 +1,5 @@
 import { azureRead } from "@/lib/data-plane/azureRead";
-
-const DENSE_ASSESSMENT_ID = "assessment-dense-source-room-20260823";
+import { denseAssessmentIdForTenant } from "@/lib/ecl/denseAssessment";
 
 interface IntelligenceEclContextPackRow {
   row_key: string;
@@ -115,6 +114,7 @@ export async function readIntelligenceEclContextPackPreview(
   tenantKey: string | null,
 ): Promise<IntelligenceEclContextPackPreview | null> {
   if (!tenantKey) return null;
+  const assessmentId = denseAssessmentIdForTenant(tenantKey);
 
   const servingRows = await azureRead.query<IntelligenceServingRow>(
     `select payload_json
@@ -133,14 +133,14 @@ export async function readIntelligenceEclContextPackPreview(
        ) intelligence_rows
       order by surface_key, row_key
       limit 200`,
-    [tenantKey, DENSE_ASSESSMENT_ID],
+    [tenantKey, assessmentId],
     { missingTable: "empty" },
   );
   const rows = servingRows.map((row) => row.payload_json);
 
   if (rows.length === 0) {
     throw new Error(
-      `Intelligence ECL preview: no serving Intelligence context rows for ${tenantKey}/${DENSE_ASSESSMENT_ID}.`,
+      `Intelligence ECL preview: no serving Intelligence context rows for ${tenantKey}/${assessmentId}.`,
     );
   }
 
@@ -157,7 +157,7 @@ export async function readIntelligenceEclContextPackPreview(
   return {
     provider: "ecl_projection_db",
     tenantKey,
-    assessmentId: DENSE_ASSESSMENT_ID,
+    assessmentId,
     rowCount: rows.length,
     retrievalCounts,
     accessCounts,
