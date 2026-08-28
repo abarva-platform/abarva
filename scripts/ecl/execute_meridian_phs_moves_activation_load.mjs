@@ -197,15 +197,22 @@ function executeSql(databaseUrl, sqlPath, label) {
   runPsql(databaseUrl, ["-f", sqlPath], label);
 }
 
+function sqlString(value) {
+  return `'${String(value).replaceAll("'", "''")}'`;
+}
+
 function readback(databaseUrl, clientId) {
+  const clientIdLiteral = sqlString(clientId);
+  const tenantKeyLiteral = sqlString(TENANT_KEY);
+  const activationBasisLiteral = sqlString(ACTIVATION_BASIS);
   const sql = `
 with activated as (
   select id
   from public.engagements
-  where client_id = :'client_id'
+  where client_id = ${clientIdLiteral}
     and is_demo_data = true
-    and charter ->> 'tenant_key' = :'tenant_key'
-    and charter ->> 'activation_basis' = :'activation_basis'
+    and charter ->> 'tenant_key' = ${tenantKeyLiteral}
+    and charter ->> 'activation_basis' = ${activationBasisLiteral}
 )
 select row_to_json(q)::text
 from (
@@ -225,12 +232,6 @@ select
     databaseUrl,
     [
       "-At",
-      "-v",
-      `client_id=${clientId}`,
-      "-v",
-      `tenant_key=${TENANT_KEY}`,
-      "-v",
-      `activation_basis=${ACTIVATION_BASIS}`,
       "-c",
       sql,
     ],
