@@ -275,6 +275,44 @@ function movesActivationFromSummary(summary) {
   };
 }
 
+function buildNextBacklog({ movesActivation, movesProof, handoffProofSummary, sourceProven, sourceDenominator }) {
+  const backlog = [];
+  if (!movesActivation?.accepted || movesActivation.numerator < movesActivation.denominator) {
+    backlog.push({
+      order: backlog.length + 1,
+      slice: "Resolve Moves operational activation proof",
+      reason:
+        "Moves live routes are browser-proven, but the operational rows still need dedicated load/readback proof.",
+      hard_gate: false,
+    });
+  }
+  if (!movesProof?.accepted || movesProof.numerator < movesProof.denominator) {
+    backlog.push({
+      order: backlog.length + 1,
+      slice: "Build Moves browser proof harness",
+      reason: "Moves is not part of the ECL 40-surface denominator and needs its own proof.",
+      hard_gate: false,
+    });
+  }
+  if (!handoffProofSummary?.accepted || handoffProofSummary.numerator < handoffProofSummary.denominator) {
+    backlog.push({
+      order: backlog.length + 1,
+      slice: "Prove cross-module handoffs",
+      reason: "PHS demo needs Moves, Tower and Intelligence to tell one operating story.",
+      hard_gate: false,
+    });
+  }
+  if (sourceProven < sourceDenominator) {
+    backlog.push({
+      order: backlog.length + 1,
+      slice: "Refresh Source sourcing-CXO proof",
+      reason: "Source is a separate demo and should not mask PHS Moves gaps.",
+      hard_gate: false,
+    });
+  }
+  return backlog;
+}
+
 function moveContentQuality() {
   const file = "src/lib/moves/narratives/generated/meridian-health-moves-readiness-blocks.ts";
   const text = readTextIfPresent(file);
@@ -421,32 +459,13 @@ function main() {
         denominator_note: "Source remains a separate sourcing-CXO demo track.",
       },
     },
-    next_backlog: [
-      {
-        order: 1,
-        slice: "Resolve Moves operational activation proof",
-        reason: "Moves live routes are browser-proven, but the activation tracker still has 0 of 38 operational rows proven by its dedicated load/readback artifact.",
-        hard_gate: false,
-      },
-      {
-        order: 2,
-        slice: "Build Moves browser proof harness",
-        reason: "Moves is not part of the ECL 40-surface denominator and needs its own proof.",
-        hard_gate: false,
-      },
-      {
-        order: 3,
-        slice: "Prove cross-module handoffs",
-        reason: "PHS demo needs Moves, Tower and Intelligence to tell one operating story.",
-        hard_gate: false,
-      },
-      {
-        order: 4,
-        slice: "Refresh Source sourcing-CXO proof",
-        reason: "Source is a separate demo and should not mask PHS Moves gaps.",
-        hard_gate: false,
-      },
-    ],
+    next_backlog: buildNextBacklog({
+      movesActivation,
+      movesProof,
+      handoffProofSummary,
+      sourceProven,
+      sourceDenominator,
+    }),
     reporting_contract: {
       required_status_line:
         "Home/Tower/Intelligence: N of 31; Moves: N of M; Handoffs: N of 4; Source: N of 9.",
