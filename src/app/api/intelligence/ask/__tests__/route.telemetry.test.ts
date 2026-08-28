@@ -1,6 +1,6 @@
-import { displaySafeIntelligenceDelta, POST } from '../route';
-import { askIntelligence } from '@/lib/intelligence/ask';
-import { recordSynthesisEvent } from '@/lib/reasoning/synthesis-telemetry';
+import { displaySafeIntelligenceDelta, POST } from "../route";
+import { askIntelligence } from "@/lib/intelligence/ask";
+import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
 
 jest.mock("@clerk/nextjs/server", () => ({
   currentUser: jest.fn(async () => ({ id: "user-1" })),
@@ -83,11 +83,35 @@ async function readResponseText(response: Response): Promise<string> {
 }
 
 describe("POST /api/intelligence/ask telemetry", () => {
-  it("preserves chunk-boundary whitespace while display-scrubbing streamed deltas", () => {
+  it("preserves chunk-boundary whitespace in streamed deltas", () => {
     const first = displaySafeIntelligenceDelta("foundation work. ");
     const second = displaySafeIntelligenceDelta("Payment integrity");
 
     expect(`${first}${second}`).toBe("foundation work. Payment integrity");
+  });
+
+  it("preserves Claude-authored Markdown, tables, and strategic wording in visible deltas", () => {
+    const delta = [
+      "**Recommendation:** keep the operating-model decision visible.",
+      "",
+      "| Lens | Read |",
+      "|---|---|",
+      "| Source | Governed context is loaded |",
+    ].join("\n");
+
+    expect(displaySafeIntelligenceDelta(delta)).toBe(delta);
+  });
+
+  it("removes structured tab protocol from visible streamed deltas without rewriting the answer", () => {
+    const delta = [
+      "Keep the strategic answer exactly as written.",
+      "<<<TAB: Proof | grounding: evidence-backed>>>",
+      "Native tab payload follows.",
+    ].join("\n");
+
+    expect(displaySafeIntelligenceDelta(delta)).toBe(
+      "Keep the strategic answer exactly as written.",
+    );
   });
 
   it("records an Intelligence telemetry event and emits its id on the done event", async () => {
@@ -112,29 +136,31 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(text).toContain('"telemetryEventId":"tlm_intelligence_1"');
   });
 
-  it('forwards trace-enabled requests into the Intelligence synthesis path', async () => {
-    const response = await POST(makeRequest({
-      q: 'Where should we fund AI first?',
-      client: 'apexretail',
-      traceEnabled: true,
-      surfaceContext: {
-        activeTab: 'intelligence',
-        clientKey: 'apexretail',
-        pageFacts: ['Apex Retail context lens: AI portfolio'],
-      },
-    }) as never);
+  it("forwards trace-enabled requests into the Intelligence synthesis path", async () => {
+    const response = await POST(
+      makeRequest({
+        q: "Where should we fund AI first?",
+        client: "apexretail",
+        traceEnabled: true,
+        surfaceContext: {
+          activeTab: "intelligence",
+          clientKey: "apexretail",
+          pageFacts: ["Apex Retail context lens: AI portfolio"],
+        },
+      }) as never,
+    );
     await readResponseText(response);
 
     expect(askIntelligence).toHaveBeenCalledWith(
-      'Where should we fund AI first?',
+      "Where should we fund AI first?",
       expect.objectContaining({
         traceEnabled: true,
         traceSession: expect.objectContaining({
-          question: 'Where should we fund AI first?',
+          question: "Where should we fund AI first?",
         }),
         surfaceContext: expect.objectContaining({
-          activeTab: 'intelligence',
-          pageFacts: ['Apex Retail context lens: AI portfolio'],
+          activeTab: "intelligence",
+          pageFacts: ["Apex Retail context lens: AI portfolio"],
         }),
       }),
     );
@@ -143,19 +169,21 @@ describe("POST /api/intelligence/ask telemetry", () => {
   it("preserves ECL eval case context through the live ask route", async () => {
     (askIntelligence as jest.Mock).mockClear();
 
-    const response = await POST(makeRequest({
-      q: "Which named Meridian executive personally approved each vendor-protective contract clause?",
-      client: "meridian-health",
-      surfaceContext: {
-        activeTab: "ecl-consultant-eval",
-        clientKey: "meridian-health",
-        module: "intelligence",
-        substrate: "ecl_projection_db",
-        provider: "ecl_projection_db",
-        sourceProvider: "ecl_projection_db",
-        evaluationCaseId: "MER-ECL-INTEL-U2",
-      },
-    }) as never);
+    const response = await POST(
+      makeRequest({
+        q: "Which named Meridian executive personally approved each vendor-protective contract clause?",
+        client: "meridian-health",
+        surfaceContext: {
+          activeTab: "ecl-consultant-eval",
+          clientKey: "meridian-health",
+          module: "intelligence",
+          substrate: "ecl_projection_db",
+          provider: "ecl_projection_db",
+          sourceProvider: "ecl_projection_db",
+          evaluationCaseId: "MER-ECL-INTEL-U2",
+        },
+      }) as never,
+    );
     await readResponseText(response);
 
     expect(askIntelligence).toHaveBeenCalledWith(
@@ -254,7 +282,7 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(text).toContain("Contract Evidence Relationship");
   });
 
-  it("does not expose raw advisory trace events or internal data-state language", async () => {
+  it("does not expose raw advisory trace events while preserving the model-authored delta", async () => {
     (askIntelligence as jest.Mock).mockImplementationOnce(async function* () {
       yield {
         type: "sources",
@@ -304,9 +332,11 @@ describe("POST /api/intelligence/ask telemetry", () => {
     const text = await readResponseText(response);
 
     expect(text).toContain('"type":"context-summary"');
-    expect(text).toContain("not yet evidenced");
+    expect(text).toContain(
+      "Transcript governance is not loaded in the V7 substrate.",
+    );
     expect(text).not.toMatch(
-      /intelligence-dossier|advisory-packet|not loaded|not_loaded|V7|substrate|business records|retrieval chunks|v7_02/i,
+      /intelligence-dossier|advisory-packet|not_loaded|business records|retrieval chunks|v7_02/i,
     );
   });
 });

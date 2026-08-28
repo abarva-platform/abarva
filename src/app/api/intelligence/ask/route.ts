@@ -49,9 +49,7 @@ import { composeAvaAnswer } from "@/lib/ava-answer/composeAvaAnswer";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import {
   scrubInternalVisibleAvaTerms,
-  scrubPublicAvaAnswerText,
   scrubPublicAvaSourceText,
-  scrubVisibleAvaDataStateLanguage,
 } from "@/lib/ava-answer/public-answer-scrub";
 import { sanitizeAgentAnswerForRender } from "@/lib/intelligence/answer/answer-safety";
 import {
@@ -883,6 +881,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 surface: "intelligence",
                 groundingParts: [sentinelSources],
               }),
+              { preserveModelOutput: true },
             );
             if (
               blockRetiredFacts({
@@ -1216,6 +1215,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 surface: "intelligence",
                 groundingParts: [advisorSources, tabbedResponse.tabs],
               }),
+              { preserveModelOutput: true },
             );
             if (
               blockRetiredFacts({
@@ -1372,6 +1372,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 surface: "intelligence",
                 groundingParts: [advisorSources, exhibits],
               }),
+              { preserveModelOutput: true },
             );
             if (
               blockRetiredFacts({
@@ -1495,25 +1496,22 @@ function intelligenceSourcesFromCitations(
 }
 
 export function displaySafeIntelligenceDelta(text: string): string {
-  const scrubForDisplay = (value: string) => {
-    const leadingWhitespace = value.match(/^\s+/)?.[0] ?? "";
-    const trailingWhitespace = value.match(/\s+$/)?.[0] ?? "";
-    const scrubbed = scrubPublicAvaAnswerText(
-      scrubVisibleAvaDataStateLanguage(scrubInternalVisibleAvaTerms(value)),
-    );
-    if (!scrubbed) return value.trim() ? "" : value;
-    return `${leadingWhitespace && !/^\s/.test(scrubbed) ? leadingWhitespace : ""}${scrubbed}${trailingWhitespace && !/\s$/.test(scrubbed) ? trailingWhitespace : ""}`;
-  };
+  const protocolStart = text.search(/<<<TAB:/);
+  if (protocolStart >= 0) {
+    const visiblePrefix = text.slice(0, protocolStart).trimEnd();
+    if (visiblePrefix) return visiblePrefix;
+  }
+
   if (!text.includes("<<<TAB:") && !text.includes("grounding:")) {
-    return scrubForDisplay(text);
+    return text;
   }
 
   const parsed = parseIntelligenceTabbedResponse(text);
   if (parsed.mainAnswer.trim()) {
-    return scrubForDisplay(parsed.mainAnswer);
+    return parsed.mainAnswer;
   }
 
-  return scrubForDisplay(text.replace(/<<<TAB:[\s\S]*$/g, "").trimEnd());
+  return text.replace(/<<<TAB:[\s\S]*$/g, "").trimEnd();
 }
 
 function numberFromPath(value: unknown, path: readonly string[]): number {
@@ -1540,7 +1538,7 @@ function stringFromPath(value: unknown, path: readonly string[]): string {
     if (!current || typeof current !== "object") return "";
     current = (current as Record<string, unknown>)[key];
   }
-  return typeof current === "string" ? scrubPublicAvaAnswerText(current) : "";
+  return typeof current === "string" ? current : "";
 }
 
 function displaySafeContextSummary(
@@ -1619,27 +1617,35 @@ function displaySafeAskSource(source: AskSource, index: number): AskSource {
 
 function assistantMemoryText(text: string): string {
   const displayText = displaySafeIntelligenceDelta(text);
-  return displayText.trim() ? displayText : scrubPublicAvaAnswerText(text);
+  return displayText.trim() ? displayText : text;
 }
 
 function applyProductTruthToAvaAnswer(
   answer: AvaAnswerPacket,
   context: Parameters<typeof applyProductTruthRuntimeGuard>[1],
+  options: { preserveModelOutput?: boolean } = {},
 ): AvaAnswerPacket {
   const direct = applyProductTruthRuntimeGuard(answer.directAnswer, context);
   const answerMode = classifyAbarvaAnswerMode(context?.query ?? "");
-  const directAnswer = applyCxoAnswerModeFallbacks(direct.text, answerMode);
+  const directAnswer = options.preserveModelOutput
+    ? direct.text
+    : applyCxoAnswerModeFallbacks(direct.text, answerMode);
   const prose =
     typeof (answer as { prose?: unknown }).prose === "string"
-      ? applyCxoAnswerModeFallbacks(
-          applyProductTruthRuntimeGuard(
+      ? options.preserveModelOutput
+        ? applyProductTruthRuntimeGuard(
             (answer as { prose: string }).prose,
             context,
-          ).text,
-          answerMode,
-        )
+          ).text
+        : applyCxoAnswerModeFallbacks(
+            applyProductTruthRuntimeGuard(
+              (answer as { prose: string }).prose,
+              context,
+            ).text,
+            answerMode,
+          )
       : undefined;
-  return sanitizeAgentAnswerForRender({
+  const guardedAnswer = {
     ...answer,
     directAnswer,
     ...(prose ? { prose } : {}),
@@ -1656,7 +1662,29 @@ function applyProductTruthToAvaAnswer(
           ]
         : []),
     ],
-  });
+  };
+  if (!options.preserveModelOutput) {
+    return sanitizeAgentAnswerForRender(guardedAnswer);
+  }
+
+  const chromeSafeAnswer = sanitizeAgentAnswerForRender(guardedAnswer);
+  return {
+    ...chromeSafeAnswer,
+    directAnswer: guardedAnswer.directAnswer,
+    ...(guardedAnswer.prose ? { prose: guardedAnswer.prose } : {}),
+    artifacts: guardedAnswer.artifacts,
+    tables: guardedAnswer.tables,
+    charts: guardedAnswer.charts,
+    graphs: guardedAnswer.graphs,
+    decisionFrame:
+      guardedAnswer.decisionFrame &&
+      typeof guardedAnswer.decisionFrame === "object"
+        ? {
+            ...guardedAnswer.decisionFrame,
+            rawModelOutput: undefined,
+          }
+        : guardedAnswer.decisionFrame,
+  };
 }
 
 function recordIntelligenceTelemetry(input: {

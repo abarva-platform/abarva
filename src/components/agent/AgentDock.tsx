@@ -1242,6 +1242,7 @@ export function AgentDock(props: AgentDockProps) {
                       answer={turn.agentAnswer}
                       showChrome={!focused}
                       showProse={!focused}
+                      preserveOutput={preserveVisibleText}
                     />
                   </div>
                 ) : null}

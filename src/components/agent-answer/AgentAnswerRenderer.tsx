@@ -1443,13 +1443,17 @@ export function AgentAnswerRenderer({
   showChrome = true,
   showProse = true,
   showExport = true,
+  preserveOutput = false,
 }: {
   answer: AvaAnswerPacket;
   showChrome?: boolean;
   showProse?: boolean;
   showExport?: boolean;
+  preserveOutput?: boolean;
 }) {
-  const displayAnswer = sanitizeAvaAnswerForRender(answer);
+  const displayAnswer = preserveOutput
+    ? answer
+    : sanitizeAvaAnswerForRender(answer);
   const visibleArtifacts = displayAnswer.artifacts.filter(isVisibleAvaArtifact);
   const tables = visibleArtifacts.filter(
     (artifact): artifact is AnswerTable & { artifact: "table" } =>
