@@ -53,6 +53,11 @@ assert(
   "ECL narrative job accepts operator tenant and assessment env overrides",
 );
 assert(
+  script.includes('payloadNumber(data, "annualized_value_usd", "annual_spend_usd")') &&
+    script.includes('topSpendShareRows(contracts, "supplier_name", "annualized_value_usd", 8)'),
+  "ECL narrative job reads contract spend and supplier concentration from Home projection field names",
+);
+assert(
   script.includes("structured_event: \"home_ecl_narrative_layer_summary\""),
   "ECL narrative job emits structured proof for the ACA operator wrapper",
 );
