@@ -1,0 +1,182 @@
+{
+  "schema_version": "meridian_phs_demo_readiness_status/v1",
+  "generated_at": "2026-08-28T01:20:54.872Z",
+  "tenant_key": "meridian-health",
+  "scope": {
+    "current_sprint_priority": "Meridian/PHS demo",
+    "deferred": [
+      {
+        "tenant_key": "skyharbor-air",
+        "reason": "Airline-specific end-to-end demo proof is deferred; no active airline client demo is lined up."
+      }
+    ]
+  },
+  "phs_executive_demo": {
+    "products": [
+      "Home",
+      "Moves",
+      "Intelligence",
+      "Tower"
+    ],
+    "home_tower_intelligence_surfaces": {
+      "numerator": 31,
+      "denominator": 31,
+      "percent": 100,
+      "denominator_note": "Home 16 + Tower 9 + Intelligence 6 from the ECL serving-surface denominator.",
+      "proof_state": "repo_status_complete"
+    },
+    "moves_surfaces": {
+      "numerator": 0,
+      "denominator": 6,
+      "percent": 0,
+      "enumerated": true,
+      "route_files_present": 6,
+      "route_files_expected": 6,
+      "proof_state": "browser_proof_required",
+      "surfaces": [
+        {
+          "surface_key": "moves_index",
+          "route": "/strategic-moves",
+          "file": "src/app/(maestro)/strategic-moves/page.tsx",
+          "current_source": "program operational rows plus canonical portfolio reconciliation",
+          "route_file_present": true,
+          "browser_proven": false,
+          "build_state": "enumerated_not_browser_proven"
+        },
+        {
+          "surface_key": "moves_detail_redirect",
+          "route": "/strategic-moves/[moveId]",
+          "file": "src/app/(maestro)/strategic-moves/[moveId]/page.tsx",
+          "current_source": "program operational row",
+          "route_file_present": true,
+          "browser_proven": false,
+          "build_state": "enumerated_not_browser_proven"
+        },
+        {
+          "surface_key": "moves_phase_workspace",
+          "route": "/strategic-moves/[moveId]/phase/[phaseNum]",
+          "file": "src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx",
+          "current_source": "program row, phase module state, evidence readiness, artifacts and current-state readiness",
+          "route_file_present": true,
+          "browser_proven": false,
+          "build_state": "enumerated_not_browser_proven"
+        },
+        {
+          "surface_key": "moves_evidence",
+          "route": "/strategic-moves/[moveId]/evidence",
+          "file": "src/app/(maestro)/strategic-moves/[moveId]/evidence/page.tsx",
+          "current_source": "program row, board artifacts and phase documents",
+          "route_file_present": true,
+          "browser_proven": false,
+          "build_state": "enumerated_not_browser_proven"
+        },
+        {
+          "surface_key": "moves_trace",
+          "route": "/strategic-moves/[moveId]/trace",
+          "file": "src/app/(maestro)/strategic-moves/[moveId]/trace/page.tsx",
+          "current_source": "program row, Source events, outcome ledger and control/eval matrix",
+          "route_file_present": true,
+          "browser_proven": false,
+          "build_state": "enumerated_not_browser_proven"
+        },
+        {
+          "surface_key": "moves_workspace",
+          "route": "/strategic-moves/[moveId]/workspace",
+          "file": "src/app/(maestro)/strategic-moves/[moveId]/workspace/page.tsx",
+          "current_source": "workspace-explorer Moves adapter and generated-artifact candidates",
+          "route_file_present": true,
+          "browser_proven": false,
+          "build_state": "enumerated_not_browser_proven"
+        }
+      ]
+    },
+    "moves_content_quality": {
+      "file": "src/lib/moves/narratives/generated/meridian-health-moves-readiness-blocks.ts",
+      "generated_at": "2026-07-16T18:43:51.440Z",
+      "status": "needs_demo_refresh",
+      "issues": [
+        "generated_content_stale:2026-07-16T18:43:51.440Z",
+        "moves_content_planning_grade_not_demo_final",
+        "interview_group_repeated_ceo_enterprise_strategy"
+      ]
+    },
+    "cross_module_handoffs": {
+      "numerator": 0,
+      "denominator": 4,
+      "percent": 0,
+      "proof_state": "deterministic_handoff_proof_required",
+      "handoffs": [
+        {
+          "handoff_key": "moves_to_tower_measurement_prerequisites",
+          "from": "Moves",
+          "to": "Tower",
+          "required_proof": "A selected move names the measures Tower needs before value can be released.",
+          "proof_state": "not_proven"
+        },
+        {
+          "handoff_key": "tower_to_moves_next_action",
+          "from": "Tower",
+          "to": "Moves",
+          "required_proof": "A Tower gated claim creates or names an owner-bound move/action.",
+          "proof_state": "not_proven"
+        },
+        {
+          "handoff_key": "intelligence_to_moves_reasoning_context",
+          "from": "Intelligence",
+          "to": "Moves",
+          "required_proof": "aVa uses the same ECL context to explain why a move is or is not ready.",
+          "proof_state": "not_proven"
+        },
+        {
+          "handoff_key": "moves_to_source_vendor_evidence",
+          "from": "Moves",
+          "to": "Source",
+          "required_proof": "A move can hand off vendor or contract evidence needs to Source without fabricating value.",
+          "proof_state": "not_proven"
+        }
+      ]
+    }
+  },
+  "source_sourcing_cxo_demo": {
+    "products": [
+      "Source"
+    ],
+    "source_surfaces": {
+      "numerator": 9,
+      "denominator": 9,
+      "percent": 100,
+      "proof_state": "repo_status_complete",
+      "denominator_note": "Source remains a separate sourcing-CXO demo track."
+    }
+  },
+  "next_backlog": [
+    {
+      "order": 1,
+      "slice": "Refresh Moves Meridian/PHS demo content",
+      "reason": "Moves generated content is stale and planning-grade.",
+      "hard_gate": false
+    },
+    {
+      "order": 2,
+      "slice": "Build Moves browser proof harness",
+      "reason": "Moves is not part of the ECL 40-surface denominator and needs its own proof.",
+      "hard_gate": false
+    },
+    {
+      "order": 3,
+      "slice": "Prove cross-module handoffs",
+      "reason": "PHS demo needs Moves, Tower and Intelligence to tell one operating story.",
+      "hard_gate": false
+    },
+    {
+      "order": 4,
+      "slice": "Refresh Source sourcing-CXO proof",
+      "reason": "Source is a separate demo and should not mask PHS Moves gaps.",
+      "hard_gate": false
+    }
+  ],
+  "reporting_contract": {
+    "required_status_line": "Home/Tower/Intelligence: N of 31; Moves: N of M; Handoffs: N of 4; Source: N of 9.",
+    "no_single_aggregate_without_denominators": true
+  }
+}

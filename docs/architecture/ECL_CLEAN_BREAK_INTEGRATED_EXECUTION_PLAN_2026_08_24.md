@@ -9,6 +9,11 @@ reopen. It is the execution map for finishing the new Enterprise Context Layer a
 canonical/context layers, commercial layers, projections, cubes, serving views, product routes,
 browser QA, and staged legacy retirement.
 
+The current sprint priority is the Meridian/PHS demo readiness track in
+[MERIDIAN_PHS_DEMO_READINESS_PLAN_2026_08_28.md](./MERIDIAN_PHS_DEMO_READINESS_PLAN_2026_08_28.md).
+That plan separates the PHS executive demo from the Source sourcing-CXO demo and intentionally
+defers SkyHarbor airline-specific end-to-end demo proof.
+
 W2 is also constrained by
 [meridian-demo-findings-20260824.json](./meridian-demo-findings-20260824.json). The ten findings in
 that spec are not optional demo copy; they are deterministic assertions the source room, canonical

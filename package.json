@@ -888,6 +888,7 @@
     "ecl:heartbeat-agent:advance": "python3 scripts/ecl/run_ecl_heartbeat_status_agent.py",
     "ecl:heartbeat-agent:plan": "python3 scripts/ecl/run_ecl_heartbeat_status_agent.py --dry-run",
     "ecl:completion-status:write": "node scripts/ecl/write_ecl_four_lane_completion_status.mjs",
+    "ecl:meridian-phs-demo-status:write": "node scripts/ecl/write_meridian_phs_demo_status.mjs",
     "ecl:dense-all-layer:execute": "python3 scripts/ecl/execute_dense_all_layer_load.py",
     "ecl:dense-all-layer:readback": "python3 scripts/ecl/export_dense_all_layer_readback.py",
     "ecl:product-browser:predeploy-gate": "node scripts/ecl/run_product_ecl_predeploy_gate.mjs",
