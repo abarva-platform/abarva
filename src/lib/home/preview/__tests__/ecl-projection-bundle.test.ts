@@ -204,6 +204,48 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     expect(bundle.technologyEstate?.recordTypes.find((recordType) => recordType.objectType === "application_system")?.rows).toHaveLength(1);
   });
 
+  it("unwraps serving-view payloads before computing Home contract value signals", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    expect(base).toBeTruthy();
+
+    const bundle = buildHomeReviewBundleFromEclProjectionRows(base!, [
+      row({
+        page_key: "executive_brief",
+        row_key: "executive_brief_summary",
+        row_type: "summary",
+        title: "Dense ECL estate loaded",
+        summary: "750 applications and 230 contracts are available from the ECL projection.",
+      }),
+      row({
+        page_key: "vendor_contracts",
+        row_key: "CTR-001",
+        row_type: "contract",
+        title: "Epic Systems Corporation · Core platform",
+        display_payload_json: {
+          id: "projection-row-wrapper",
+          page_key: "vendor_contracts",
+          row_key: "CTR-001",
+          display_payload_json: {
+            contract_id: "CTR-001",
+            supplier_name: "Epic Systems Corporation",
+            contract_name: "Core platform agreement",
+            service_tower: "Clinical and payer platform",
+            annualized_value_usd: "9600000",
+          },
+        },
+      }),
+    ]);
+
+    expect(bundle.technologyEstate?.recordTypes.find((recordType) => recordType.objectType === "vendor_contract")?.rows[0]).toMatchObject({
+      vendorName: "Epic Systems Corporation",
+      annualSpendUsd: 9600000,
+    });
+    expect(bundle.thesis.signalPacket.signals.find((signal) => signal.id === "sig_ecl_vendor_002")?.statement).toContain(
+      "$9.6M annualized value",
+    );
+    expect(bundle.thesis.signalPacket.signals.find((signal) => signal.id === "sig_ecl_vendor_002")?.statement).not.toContain("$0.0M");
+  });
+
   it("uses the SkyHarbor dense assessment id for SkyHarbor ECL bundles", () => {
     const base = getHomeReviewBundle("skyharbor-air");
     expect(base).toBeTruthy();
