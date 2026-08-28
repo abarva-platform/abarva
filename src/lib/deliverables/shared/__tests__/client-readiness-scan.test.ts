@@ -179,6 +179,39 @@ describe("vendor capability claim boundaries", () => {
     );
   });
 
+  it("allows inline vendor-source attribution with retrieval context", () => {
+    const result = scanClientReadiness(
+      "MedeAnalytics announced Health Fabric on Snowflake (medeanalytics.com press release, retrieved 2026-08-28).",
+    );
+    expect(result.findings.map((f) => f.kind)).not.toContain(
+      "vendor_claim_without_state",
+    );
+  });
+
+  it("does not treat lowercase ordinary prose as a Title Case product claim", () => {
+    const result = scanClientReadiness(
+      "The reporting stack MedeAnalytics replaced had a brittle health fabric of spreadsheets.",
+    );
+    expect(result.findings.map((f) => f.kind)).not.toContain(
+      "vendor_claim_without_state",
+    );
+  });
+
+  it("still catches distinctive product-name claims case-insensitively", () => {
+    const result = scanClientReadiness(
+      "MedeAnalytics medeworks supports dashboard drill-down for the operating team.",
+    );
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "vendor_claim_without_state",
+          match: expect.stringMatching(/MedeAnalytics medeworks/i),
+          severity: "blocker",
+        }),
+      ]),
+    );
+  });
+
   it("does not block an ordinary named-vendor mention without a capability claim", () => {
     const result = scanClientReadiness(
       "MedeAnalytics is listed as the incumbent vendor for review.",
