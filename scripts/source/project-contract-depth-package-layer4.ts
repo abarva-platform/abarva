@@ -366,24 +366,6 @@ async function rebuildViews(client: Client): Promise<void> {
   `;
 
   await client.query(`
-    DROP VIEW IF EXISTS consumption.sourcing_context_coverage_v1;
-    DROP VIEW IF EXISTS consumption.sourcing_vendor_semantic_v1;
-    DROP VIEW IF EXISTS consumption.sourcing_event_supplier_v1;
-    DROP VIEW IF EXISTS consumption.sourcing_event_v1;
-    DROP VIEW IF EXISTS consumption.sourcing_opportunity_v1;
-    DROP VIEW IF EXISTS consumption.sourcing_performance_v1;
-    DROP VIEW IF EXISTS consumption.sourcing_spend_monthly_v1;
-    DROP VIEW IF EXISTS consumption.sourcing_contract_scope_v1;
-    DROP VIEW IF EXISTS consumption.sourcing_contract_v1;
-    DROP VIEW IF EXISTS consumption.sourcing_vendor_v1;
-    DROP VIEW IF EXISTS source.contract_360;
-    DROP VIEW IF EXISTS source.vendor_contract_portfolio;
-    DROP VIEW IF EXISTS source.contract_financial_exposure;
-    DROP VIEW IF EXISTS source.contract_operational_performance;
-    DROP VIEW IF EXISTS source.contract_application_scope;
-    DROP VIEW IF EXISTS source.contract_vendor_360`);
-
-  await client.query(`
     CREATE OR REPLACE VIEW source.contract_application_scope AS
     WITH active_runs AS (${activeRuns})
     SELECT

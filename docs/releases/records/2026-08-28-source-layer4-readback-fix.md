@@ -12,6 +12,8 @@
 
 Fixes the Source Layer 4 operator readiness check so it validates canonical contract rows using the load-run boundary that actually exists on the table. This keeps the Layer 4 plan gate from failing before any projection work begins.
 
+Also keeps the Layer 4 refresh path non-destructive by replacing views in place instead of dropping them first. This preserves dependent read-model views during the refresh and lets Postgres surface any incompatible view-signature change as an explicit operator failure.
+
 ## Layer Impact
 
 Release lane: `client-data-lane`.
@@ -30,6 +32,7 @@ Layer 4 - Products/projections operator path. The change affects only the readin
 
 - `scripts/source/project-contract-depth-package-layer4.ts`
 - `scripts/source/__tests__/project-contract-depth-package-layer4.test.ts`
+- Non-destructive `CREATE OR REPLACE VIEW` refresh behavior for Source Layer 4 read models.
 
 ## QA / Validation
 
@@ -37,10 +40,11 @@ Layer 4 - Products/projections operator path. The change affects only the readin
 - `npx eslint scripts/source/project-contract-depth-package-layer4.ts scripts/source/__tests__/project-contract-depth-package-layer4.test.ts src/lib/source/data-model/read-adapter.ts src/lib/source/data-model/__tests__/read-adapter.test.ts` - passed.
 - `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false` - passed.
 - `npm run release:check` - passed locally before adding this follow-up record; CI release gate validates this record against `main`.
+- Follow-up validation after the non-destructive view-refresh correction repeated the same focused Jest, ESLint, and TypeScript checks successfully.
 
 ## Rollout Plan
 
-Merge to main, deploy through the repo-owned Azure Container Apps main deploy workflow, then rerun the Source Layer 4 operator job in `plan` mode before any `apply`.
+Merge to main, deploy through the repo-owned Azure Container Apps main deploy workflow, then rerun the Source Layer 4 operator job in `plan` mode before any `apply`. If `CREATE OR REPLACE VIEW` reports an incompatible view signature, stop and treat that as a schema-change decision rather than using `DROP VIEW ... CASCADE`.
 
 ## Deployment Authority
 
@@ -61,6 +65,7 @@ Revert this PR and rerun the Source Layer 4 plan gate with the previous deployed
 - PR and commit for this release candidate.
 - Local focused Jest, ESLint, TypeScript, and release-check output.
 - ACA operator failure evidence for the prior plan attempt: `/tmp/source-contract-depth-package-layer4-plan-20260828T2052Z/summary.json`.
+- ACA operator failure evidence for the destructive-drop apply attempt: `/tmp/source-contract-depth-package-layer4-apply-20260828T2120Z/summary.json`.
 
 ## Known Gaps
 
