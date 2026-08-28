@@ -22,7 +22,9 @@ The third follow-up handles the transitional view state left by an earlier faile
 
 The fourth follow-up guards the Contract 360 confidence projection so text confidence labels do not get coalesced directly with numeric defaults. Numeric strings are preserved as numeric confidence; blank or non-numeric labels fall back to the reviewed default.
 
-The fifth follow-up preserves the established precision for contract-consumption money fields. Annual, actual, committed, and total committed values remain `numeric(18,2)` in the consumption projection so the view refresh can replace the existing read model in place.
+The fifth follow-up preserves the established precision for contract-consumption money fields. Annual display values remain `numeric(18,2)` in the consumption projection so the view refresh can replace the existing read model in place.
+
+The sixth follow-up preserves the mixed money-column contract already present in the live consumption projection: annual display fields keep `numeric(18,2)`, while actual, committed, and total committed spend fields remain unconstrained `numeric`.
 
 ## Layer Impact
 
@@ -48,6 +50,7 @@ Layer 4 - Products/projections operator path. The change affects only the readin
 - Transitional compatibility for the operational-performance incident-count source view and downstream Contract 360 projection.
 - Guarded confidence conversion for the Source contract consumption projection.
 - Money-field precision preservation for the Source contract consumption projection.
+- Mixed money-column type preservation for the Source contract consumption projection.
 
 ## QA / Validation
 
@@ -61,6 +64,7 @@ Layer 4 - Products/projections operator path. The change affects only the readin
 - Follow-up validation after the hybrid view-state correction repeated the focused Jest, ESLint, TypeScript, and release-control checks successfully.
 - Follow-up validation after the confidence conversion correction repeated the focused Jest, ESLint, TypeScript, and release-control checks successfully.
 - Follow-up validation after the money precision correction repeated the focused Jest, ESLint, TypeScript, and release-control checks successfully.
+- Follow-up validation after the mixed money-column correction repeated the focused Jest, ESLint, TypeScript, and release-control checks successfully.
 
 ## Rollout Plan
 
@@ -91,6 +95,7 @@ Revert this PR and rerun the Source Layer 4 plan gate with the previous deployed
 - ACA operator failure evidence for the hybrid view-state apply attempt: `/tmp/source-contract-depth-package-layer4-apply-20260828T2245Z/summary.json`.
 - ACA operator failure evidence for the confidence type apply attempt: `/tmp/source-contract-depth-package-layer4-apply-20260828T2305Z/summary.json`.
 - ACA operator failure evidence for the money precision apply attempt: `/tmp/source-contract-depth-package-layer4-apply-20260828T2325Z/summary.json`.
+- ACA operator failure evidence for the mixed money-column apply attempt: `/tmp/source-contract-depth-package-layer4-apply-20260828T2352Z/summary.json`.
 
 ## Known Gaps
 

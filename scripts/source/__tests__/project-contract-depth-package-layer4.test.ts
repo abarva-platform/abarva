@@ -51,8 +51,8 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).not.toContain("COALESCE(c.source_confidence, 0.9)::numeric AS confidence");
     expect(source).toContain("c.annual_value::numeric(18,2) AS annual_contract_value");
     expect(source).toContain("c.annual_value::numeric(18,2) AS annual_value");
-    expect(source).toContain("c.actual_annual_spend::numeric(18,2) AS actual_annual_spend");
-    expect(source).toContain("c.committed_annual_spend::numeric(18,2) AS committed_annual_spend");
-    expect(source).toContain("c.total_committed_value::numeric(18,2) AS total_committed_value");
+    expect(source).toContain("c.actual_annual_spend::numeric AS actual_annual_spend");
+    expect(source).toContain("c.committed_annual_spend::numeric AS committed_annual_spend");
+    expect(source).toContain("c.total_committed_value::numeric AS total_committed_value");
   });
 });
