@@ -338,10 +338,6 @@ function chapterSummaryRows(rows: HomeProjectionRow[]): Map<string, HomeProjecti
   );
 }
 
-function claim(statement: string, evidenceIds: string[], claimType: GroundedClaim["claim_type"] = "FACT", confidence: GroundedClaim["confidence"] = "high"): GroundedClaim {
-  return { statement, evidence_ids: evidenceIds, confidence, claim_type: claimType };
-}
-
 function visual(
   datasetRef: string,
   title: string,
@@ -432,7 +428,7 @@ function rowContextStatement(row: HomeProjectionRow): string {
 
 function projectionContextItems(rows: HomeProjectionRow[]): ContextItem[] {
   return rows
-    .filter((row) => row.row_type !== "summary")
+    .filter((row) => row.row_type !== "summary" && row.row_type !== "chapter_claim")
     .map((row) => ({
       id: contextIdForRow(row),
       statement: rowContextStatement(row),
@@ -507,34 +503,90 @@ function buildEclSignalPacket(
   } as unknown as EnterpriseSignalPacket;
 }
 
-function buildEclThesis(signalPacket: EnterpriseSignalPacket): EnterpriseThesis {
-  const estateClaim = claim(signalPacket.signals[0]?.statement ?? "The ECL estate projection is loaded.", ["sig_ecl_estate_001"]);
-  const vendorClaim = claim(signalPacket.signals[1]?.statement ?? "The ECL vendor projection is loaded.", ["sig_ecl_vendor_002"], "OBSERVATION");
-  const flowClaim = claim(signalPacket.signals[2]?.statement ?? "The ECL data-flow projection is loaded.", ["sig_ecl_data_flow_003"], "OBSERVATION");
-  const gapClaim = claim(signalPacket.signals[3]?.statement ?? "Retrieval indexing, client attestation, and narrative-quality review remain pending.", ["sig_ecl_gap_004"], "OBSERVATION", "medium");
+const CHAPTER_ID_SET = new Set<ChapterId>(CHAPTER_DEFS.map((definition) => definition.id));
+
+function isChapterId(value: string): value is ChapterId {
+  return CHAPTER_ID_SET.has(value as ChapterId);
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => String(item)).filter(Boolean);
+}
+
+function claimType(value: unknown): GroundedClaim["claim_type"] {
+  return ["FACT", "OBSERVATION", "ADVISORY_INFERENCE"].includes(String(value))
+    ? (String(value) as GroundedClaim["claim_type"])
+    : "OBSERVATION";
+}
+
+function confidence(value: unknown): GroundedClaim["confidence"] {
+  return ["high", "medium", "low"].includes(String(value))
+    ? (String(value) as GroundedClaim["confidence"])
+    : "medium";
+}
+
+function chapterClaimsByPage(rows: HomeProjectionRow[]): Map<ChapterId, GroundedClaim[]> {
+  const claims = new Map<ChapterId, GroundedClaim[]>();
+  for (const row of rows) {
+    if (row.row_type !== "chapter_claim" || !isChapterId(row.page_key)) continue;
+    const payload = rowPayload(row);
+    const statement = text(row.summary) ?? text(row.title);
+    if (!statement) continue;
+    const claim: GroundedClaim = {
+      statement,
+      evidence_ids: stringArray(payload.evidence_ids),
+      confidence: confidence(payload.confidence),
+      claim_type: claimType(payload.claim_type),
+    };
+    claims.set(row.page_key, [...(claims.get(row.page_key) ?? []), claim]);
+  }
+  return claims;
+}
+
+function summaryText(summaries: Map<string, HomeProjectionRow>, chapterId: ChapterId): string {
+  const summary = summaries.get(chapterId)?.summary;
+  if (!summary) throw new Error(`Home ECL preview: missing published summary for ${chapterId}.`);
+  return summary;
+}
+
+function publishedThesisFromRows(rows: HomeProjectionRow[]): EnterpriseThesis {
+  const summaries = chapterSummaryRows(rows);
+  const claims = chapterClaimsByPage(rows);
+  const claimCount = Array.from(claims.values()).reduce((sum, pageClaims) => sum + pageClaims.length, 0);
+  if (claimCount === 0) {
+    throw new Error("Home ECL preview: no published chapter_claim rows; refusing to synthesize fallback narrative.");
+  }
+  const executive = claims.get("executive_brief") ?? [];
+  const business = claims.get("our_business") ?? [];
+  const strategy = claims.get("strategy_value_creation") ?? [];
+  const operations = claims.get("how_we_operate") ?? [];
+  const technology = claims.get("technology_data") ?? [];
+  const performance = claims.get("performance_value") ?? [];
+  const leadership = claims.get("leadership_perspective") ?? [];
+  const attention = claims.get("what_needs_attention") ?? [];
+
   return {
-    enterprise_story: `${estateClaim.statement} The dense record is ready for current-state exploration; executive narrative generation and cutover remain governed follow-on decisions.`,
-    enterprise_story_claims: [estateClaim, gapClaim],
+    enterprise_story: summaryText(summaries, "executive_brief"),
+    enterprise_story_claims: executive,
     value_creation_model: {
-      summary: "ECL Home establishes estate shape, commercial concentration and data-movement context from governed projection rows; interpretation should stay tied to the cited projection facts.",
-      primary_value_drivers: [vendorClaim],
-      economic_dependencies: [vendorClaim],
+      summary: summaryText(summaries, "our_business"),
+      primary_value_drivers: business,
+      economic_dependencies: business,
     },
-    strategic_bets: [],
-    structural_constraints: [flowClaim],
-    operating_tensions: [gapClaim],
-    leadership_consensus: [],
+    strategic_bets: strategy,
+    structural_constraints: [...operations, ...technology],
+    operating_tensions: attention,
+    leadership_consensus: leadership,
     leadership_disagreements: [],
-    performance_story: { where_improving: [], where_off_track: [], where_unknown: [gapClaim] },
-    technology_and_data_implications: [estateClaim, flowClaim],
-    material_risks: [gapClaim],
-    value_realization_tensions: [vendorClaim, gapClaim],
-    what_needs_attention: [gapClaim],
-    evidence_gaps: ["Retrieval indexing, client attestation, and narrative-quality review are not established by the Home ECL projection itself."],
-    things_a_new_cxo_should_know: [estateClaim, vendorClaim, flowClaim, gapClaim],
-    questions_for_management: [
-      claim("Which Home chapter claims should remain in the executive narrative after narrative-quality review?", ["sig_ecl_gap_004"], "ADVISORY_INFERENCE", "medium"),
-    ],
+    performance_story: { where_improving: [], where_off_track: [], where_unknown: performance },
+    technology_and_data_implications: technology,
+    material_risks: attention,
+    value_realization_tensions: strategy,
+    what_needs_attention: attention,
+    evidence_gaps: [],
+    things_a_new_cxo_should_know: executive,
+    questions_for_management: [],
     visual_opportunities: [
       visual("application_landscape_by_function", "Applications grouped by business function", "The loaded ECL estate is function-segmented, not a 306-row legacy snapshot.", ["sig_ecl_estate_001"]),
       visual("vendor_spend_concentration", "Supplier concentration in loaded contract value", "Commercial concentration is now visible in the ECL contract projection.", ["sig_ecl_vendor_002"]),
@@ -542,38 +594,32 @@ function buildEclThesis(signalPacket: EnterpriseSignalPacket): EnterpriseThesis 
   };
 }
 
-function buildEclChapters(rows: HomeProjectionRow[], thesis: EnterpriseThesis): ChapterView[] {
+function buildPublishedChapters(rows: HomeProjectionRow[], claims: Map<ChapterId, GroundedClaim[]>): ChapterView[] {
   const summaries = chapterSummaryRows(rows);
-  const byChapterClaims: Record<ChapterId, GroundedClaim[]> = {
-    executive_brief: thesis.things_a_new_cxo_should_know,
-    our_business: thesis.value_creation_model.primary_value_drivers,
-    strategy_value_creation: thesis.value_realization_tensions,
-    how_we_operate: [thesis.structural_constraints[0]].filter(Boolean),
-    technology_data: thesis.technology_and_data_implications,
-    performance_value: thesis.performance_story.where_unknown,
-    leadership_perspective: [claim("Director-and-above interview rows are present in the dense source room, but leadership narrative synthesis has not been regenerated from ECL yet.", ["sig_ecl_gap_004"], "OBSERVATION", "medium")],
-    what_needs_attention: thesis.what_needs_attention,
-  };
   return CHAPTER_DEFS.map((definition) => {
     const summaryRow = summaries.get(definition.id);
-    const primary = byChapterClaims[definition.id][0] ?? thesis.things_a_new_cxo_should_know[0];
+    if (!summaryRow) throw new Error(`Home ECL preview: missing published summary row for ${definition.id}.`);
+    const pageClaims = claims.get(definition.id) ?? [];
     return {
       chapterId: definition.id,
       title: definition.title,
       guidingQuestion: definition.guidingQuestion,
-      headline: summaryRow?.title ?? primary.statement,
-      executive_synthesis: summaryRow?.summary ?? primary.statement,
-      key_insights: byChapterClaims[definition.id].slice(0, 3),
-      tensions: definition.id === "what_needs_attention" || definition.id === "executive_brief" ? thesis.operating_tensions : [],
-      what_to_watch: definition.id === "technology_data" ? thesis.structural_constraints : thesis.material_risks.slice(0, 1),
-      questions_to_ask: definition.id === "executive_brief" ? thesis.questions_for_management.map((item) => item.statement) : [],
+      headline: summaryRow.title,
+      executive_synthesis: summaryRow.summary ?? summaryRow.title,
+      key_insights: pageClaims,
+      tensions: [],
+      what_to_watch: [],
+      questions_to_ask: [],
       visual_opportunities:
         definition.id === "technology_data"
-          ? thesis.visual_opportunities
+          ? [
+              visual("application_landscape_by_function", "Applications grouped by business function", "The loaded ECL estate is function-segmented, not a 306-row legacy snapshot.", ["sig_ecl_estate_001"]),
+              visual("vendor_spend_concentration", "Supplier concentration in loaded contract value", "Commercial concentration is now visible in the ECL contract projection.", ["sig_ecl_vendor_002"]),
+            ]
           : definition.id === "executive_brief"
-            ? thesis.visual_opportunities.slice(0, 1)
+            ? [visual("application_landscape_by_function", "Applications grouped by business function", "The loaded ECL estate is function-segmented, not a 306-row legacy snapshot.", ["sig_ecl_estate_001"])]
             : [],
-      limitations: definition.id === "executive_brief" || definition.id === "what_needs_attention" ? thesis.evidence_gaps : [],
+      limitations: [],
     };
   });
 }
@@ -585,8 +631,9 @@ export function buildHomeReviewBundleFromEclProjectionRows(
 ): HomeReviewBundle {
   const technologyEstate = buildTechnologyEstateFromHomeProjectionRows(rows);
   const signalPacket = buildEclSignalPacket(rows, technologyEstate, assessmentId);
-  const thesis = buildEclThesis(signalPacket);
-  const chapters = buildEclChapters(rows, thesis);
+  const claims = chapterClaimsByPage(rows);
+  const thesis = publishedThesisFromRows(rows);
+  const chapters = buildPublishedChapters(rows, claims);
   return {
     tenantKey: base.tenantKey,
     provenance: {
