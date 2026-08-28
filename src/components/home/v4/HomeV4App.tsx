@@ -8,7 +8,11 @@ import { HomeAvaChat } from "@/components/home/preview/HomeAvaChat";
 import { RecordBrowser } from "./RecordBrowser";
 import { demoSafeClientText } from "@/lib/client-config";
 import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
-import type { ChapterId, HomeReviewBundle, TechObjectType } from "@/lib/home/preview/types";
+import type {
+  ChapterId,
+  HomeReviewBundle,
+  TechObjectType,
+} from "@/lib/home/preview/types";
 import { ArchitecturePage } from "./ArchitecturePage";
 import { ChapterPage } from "./ChapterPage";
 import { DataFlowPage } from "./DataFlowPage";
@@ -30,9 +34,18 @@ const TENANT_LABEL: Record<HomePreviewTenantKey, string> = {
   "skyharbor-air": demoSafeClientText("SkyHarbor Air"),
 };
 
-type ActiveView = ChapterId | "architecture" | "data-flow" | "current-state" | "browse-the-data" | `tech:${TechObjectType}`;
+type ActiveView =
+  | ChapterId
+  | "architecture"
+  | "data-flow"
+  | "current-state"
+  | "browse-the-data"
+  | `tech:${TechObjectType}`;
 
-function resolveHashView(hash: string, bundle: HomeReviewBundle): ActiveView | null {
+function resolveHashView(
+  hash: string,
+  bundle: HomeReviewBundle,
+): ActiveView | null {
   const requested = decodeURIComponent(hash.replace(/^#/, "")).trim();
   if (!requested) {
     return null;
@@ -42,13 +55,20 @@ function resolveHashView(hash: string, bundle: HomeReviewBundle): ActiveView | n
     return requested as ChapterId;
   }
 
-  if (requested === "architecture" || requested === "data-flow" || requested === "current-state" || requested === "browse-the-data") {
+  if (
+    requested === "architecture" ||
+    requested === "data-flow" ||
+    requested === "current-state" ||
+    requested === "browse-the-data"
+  ) {
     return requested;
   }
 
   if (
     requested.startsWith("tech:") &&
-    bundle.technologyEstate?.recordTypes.some((recordType) => `tech:${recordType.objectType}` === requested)
+    bundle.technologyEstate?.recordTypes.some(
+      (recordType) => `tech:${recordType.objectType}` === requested,
+    )
   ) {
     return requested as `tech:${TechObjectType}`;
   }
@@ -56,22 +76,44 @@ function resolveHashView(hash: string, bundle: HomeReviewBundle): ActiveView | n
   return null;
 }
 
-export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; tenantKey: HomePreviewTenantKey }) {
-  const [activeView, setActiveView] = useState<ActiveView>(() =>
-    typeof window === "undefined" ? "executive_brief" : (resolveHashView(window.location.hash, bundle) ?? "executive_brief"),
-  );
+function formatCompiledDate(value: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+export function HomeV4App({
+  bundle,
+  tenantKey,
+}: {
+  bundle: HomeReviewBundle;
+  tenantKey: HomePreviewTenantKey;
+}) {
+  const [activeView, setActiveView] = useState<ActiveView>("executive_brief");
 
   const chapters = bundle.chapters;
   const activeChapter = chapters.find((c) => c.chapterId === activeView);
   const activeIndex = chapters.findIndex((c) => c.chapterId === activeView);
-  const techRecordTypes = useMemo(() => bundle.technologyEstate?.recordTypes ?? [], [bundle.technologyEstate]);
+  const techRecordTypes = useMemo(
+    () => bundle.technologyEstate?.recordTypes ?? [],
+    [bundle.technologyEstate],
+  );
   const activeTechRecordType = activeView.startsWith("tech:")
     ? techRecordTypes.find((t) => `tech:${t.objectType}` === activeView)
     : undefined;
 
-  const applications = techRecordTypes.find((r) => r.objectType === "application_system");
-  const integrations = techRecordTypes.find((r) => r.objectType === "data_asset_or_integration");
-  const infrastructure = techRecordTypes.find((r) => r.objectType === "infrastructure_platform");
+  const applications = techRecordTypes.find(
+    (r) => r.objectType === "application_system",
+  );
+  const integrations = techRecordTypes.find(
+    (r) => r.objectType === "data_asset_or_integration",
+  );
+  const infrastructure = techRecordTypes.find(
+    (r) => r.objectType === "infrastructure_platform",
+  );
   const signalPacket = bundle.thesis.signalPacket;
   const visualDatasets = signalPacket.visualDatasets ?? {};
 
@@ -105,9 +147,14 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
    * worse than a missing one. */
   const exhibitMeta = useMemo(() => {
     const meta: Record<string, string> = {};
-    const contracts = techRecordTypes.find((t) => t.objectType === "vendor_contract");
+    const contracts = techRecordTypes.find(
+      (t) => t.objectType === "vendor_contract",
+    );
     if (contracts) {
-      const total = contracts.rows.reduce((sum, row) => sum + (Number(row.annualSpendUsd) || 0), 0);
+      const total = contracts.rows.reduce(
+        (sum, row) => sum + (Number(row.annualSpendUsd) || 0),
+        0,
+      );
       if (total > 0) {
         meta.vendor_spend_concentration = `${contracts.rows.length} contracts · $${(total / 1_000_000).toFixed(1)}M`;
       }
@@ -120,7 +167,9 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
    * few claims and still be drafted. */
   const isDrafted = (chapterId: ChapterId) => {
     const chapter = chapters.find((c) => c.chapterId === chapterId);
-    return Boolean(chapter?.headline && !chapter.headline.endsWith("synthesis unavailable"));
+    return Boolean(
+      chapter?.headline && !chapter.headline.endsWith("synthesis unavailable"),
+    );
   };
 
   /** Progress is counted from the items themselves rather than asserted alongside them. Stating a
@@ -135,16 +184,30 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
   const groups: RailGroup[] = [
     group(
       "The briefing",
-      chapters.map((c) => ({ id: c.chapterId, label: c.title, drafted: isDrafted(c.chapterId) })),
+      chapters.map((c) => ({
+        id: c.chapterId,
+        label: c.title,
+        drafted: isDrafted(c.chapterId),
+      })),
     ),
     group("The evidence", [
       // Architecture first: it is the only view here that answers what shape the estate is in.
       // Everything below it answers what is in the record, which is a different question.
-      { id: "architecture", label: "Current-state architecture", drafted: Boolean(applications), count: applications?.rows.length },
+      {
+        id: "architecture",
+        label: "Current-state architecture",
+        drafted: Boolean(applications),
+        count: applications?.rows.length,
+      },
       // The topology: what moves data to what, through what. Named for the question it answers,
       // and it now genuinely answers it -- the earlier item carrying this name showed a fact
       // inventory.
-      { id: "data-flow", label: "Current-state data flow", drafted: Boolean(integrations), count: integrations?.rows.length },
+      {
+        id: "data-flow",
+        label: "Current-state data flow",
+        drafted: Boolean(integrations),
+        count: integrations?.rows.length,
+      },
       // Renamed from "Current-state data flow", which promised a data flow and delivered a
       // per-domain fact inventory. A nav label that oversells its page is worse than a plain one.
       { id: "current-state", label: "What has been loaded", drafted: true },
@@ -160,13 +223,17 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
 
   const provenance = bundle.provenance;
   const compiledLine = [
-    new Date(provenance.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+    formatCompiledDate(provenance.generated_at),
     `from ${signalPacket.signals.length} signals`,
     `and ${signalPacket.contextItems.length} governed facts`,
   ];
 
   return (
-    <HomeAvaChat key={tenantKey} tenantKey={tenantKey} activeChapterId={activeChapter?.chapterId}>
+    <HomeAvaChat
+      key={tenantKey}
+      tenantKey={tenantKey}
+      activeChapterId={activeChapter?.chapterId}
+    >
       <div
         style={{
           display: "grid",
@@ -229,12 +296,19 @@ export function HomeV4App({ bundle, tenantKey }: { bundle: HomeReviewBundle; ten
             />
           ) : null}
 
-          {activeView === "current-state" ? <CurrentState signalPacket={signalPacket} /> : null}
+          {activeView === "current-state" ? (
+            <CurrentState signalPacket={signalPacket} />
+          ) : null}
 
-          {activeView === "browse-the-data" ? <BrowseTheData signalPacket={signalPacket} /> : null}
+          {activeView === "browse-the-data" ? (
+            <BrowseTheData signalPacket={signalPacket} />
+          ) : null}
 
           {activeTechRecordType ? (
-            <RecordBrowser key={activeTechRecordType.objectType} recordType={activeTechRecordType} />
+            <RecordBrowser
+              key={activeTechRecordType.objectType}
+              recordType={activeTechRecordType}
+            />
           ) : null}
         </main>
       </div>
