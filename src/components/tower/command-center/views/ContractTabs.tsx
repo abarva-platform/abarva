@@ -47,6 +47,21 @@ function proofBreakGate(view: TowerCommandCenterView): number {
   return 7;
 }
 
+/**
+ * Names the gap between the planning path and what Tower can actually measure.
+ *
+ * This was a fixed "Over plan" label sitting on `max(0, planned - measured)` — a quantity that is
+ * the SHORTFALL, and which the clamp made structurally incapable of ever expressing an overshoot.
+ * With measured value at zero it rendered "Over plan $492.5M" beside an Actual of $0, announcing a
+ * total measurement failure as outperformance. Derive the word from the sign so the label cannot
+ * contradict the number it sits on.
+ */
+function planVarianceLabel(plannedUsd: number, measuredUsd: number): string {
+  if (measuredUsd > plannedUsd) return "Over plan";
+  if (measuredUsd < plannedUsd) return "Short of plan";
+  return "On plan";
+}
+
 function measuredUsd(view: TowerCommandCenterView): number {
   return Math.max(
     view.summary.financeValidatedUsd ?? 0,
@@ -453,9 +468,9 @@ export function ValueProofContractView({
               <strong>{formatUsdM(measured)}</strong>
             </div>
             <div>
-              <span>Over plan</span>
+              <span>{planVarianceLabel(s.promisedUsd, measured)}</span>
               <strong>
-                {formatUsdM(Math.max(0, s.promisedUsd - measured))}
+                {formatUsdM(Math.abs(s.promisedUsd - measured))}
               </strong>
             </div>
           </div>
