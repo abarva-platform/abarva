@@ -94,6 +94,8 @@ export interface GroundedClaim {
   claim_type: ClaimType;
 }
 
+type MaybeGroundedClaim = GroundedClaim | null;
+
 /** The fixed grammar of visualizable shapes. Claude selects a type and a dataset_ref from what
  * the deterministic compiler actually computed (`signalPacket.visualDatasets`); it never supplies
  * or adjusts a plotted value, and it may not invent a renderer outside this list. Recharts owns
@@ -458,25 +460,31 @@ export function validateStructure(thesis: EnterpriseThesis, signalPacket: Return
     }
   }
 
-  thesis.enterprise_story_claims.forEach((c, i) => checkClaim(`enterprise_story_claims[${i}]`, c));
-  thesis.value_creation_model.primary_value_drivers.forEach((c, i) => checkClaim(`value_creation_model.primary_value_drivers[${i}]`, c));
-  thesis.value_creation_model.economic_dependencies.forEach((c, i) => checkClaim(`value_creation_model.economic_dependencies[${i}]`, c));
-  thesis.strategic_bets.forEach((c, i) => checkClaim(`strategic_bets[${i}]`, c));
-  thesis.structural_constraints.forEach((c, i) => checkClaim(`structural_constraints[${i}]`, c));
-  thesis.operating_tensions.forEach((c, i) => checkClaim(`operating_tensions[${i}]`, c));
-  thesis.leadership_consensus.forEach((c, i) => checkClaim(`leadership_consensus[${i}]`, c));
-  thesis.leadership_disagreements.forEach((c, i) => checkClaim(`leadership_disagreements[${i}]`, c));
-  thesis.performance_story.where_improving.forEach((c, i) => checkClaim(`performance_story.where_improving[${i}]`, c));
-  thesis.performance_story.where_off_track.forEach((c, i) => checkClaim(`performance_story.where_off_track[${i}]`, c));
+  function checkClaims(path: string, claims: MaybeGroundedClaim[]) {
+    claims.forEach((claim, i) => {
+      if (claim) checkClaim(`${path}[${i}]`, claim);
+    });
+  }
+
+  checkClaims("enterprise_story_claims", thesis.enterprise_story_claims);
+  checkClaims("value_creation_model.primary_value_drivers", thesis.value_creation_model.primary_value_drivers);
+  checkClaims("value_creation_model.economic_dependencies", thesis.value_creation_model.economic_dependencies);
+  checkClaims("strategic_bets", thesis.strategic_bets);
+  checkClaims("structural_constraints", thesis.structural_constraints);
+  checkClaims("operating_tensions", thesis.operating_tensions);
+  checkClaims("leadership_consensus", thesis.leadership_consensus);
+  checkClaims("leadership_disagreements", thesis.leadership_disagreements);
+  checkClaims("performance_story.where_improving", thesis.performance_story.where_improving);
+  checkClaims("performance_story.where_off_track", thesis.performance_story.where_off_track);
   // where_unknown was missing from this list entirely -- found while adding performance_story to
   // entailment verification below; it had neither the structural nor the semantic check.
-  thesis.performance_story.where_unknown.forEach((c, i) => checkClaim(`performance_story.where_unknown[${i}]`, c));
-  thesis.technology_and_data_implications.forEach((c, i) => checkClaim(`technology_and_data_implications[${i}]`, c));
-  thesis.material_risks.forEach((c, i) => checkClaim(`material_risks[${i}]`, c));
-  thesis.value_realization_tensions.forEach((c, i) => checkClaim(`value_realization_tensions[${i}]`, c));
-  thesis.what_needs_attention.forEach((c, i) => checkClaim(`what_needs_attention[${i}]`, c));
-  thesis.things_a_new_cxo_should_know.forEach((c, i) => checkClaim(`things_a_new_cxo_should_know[${i}]`, c));
-  thesis.questions_for_management.forEach((c, i) => checkClaim(`questions_for_management[${i}]`, c));
+  checkClaims("performance_story.where_unknown", thesis.performance_story.where_unknown);
+  checkClaims("technology_and_data_implications", thesis.technology_and_data_implications);
+  checkClaims("material_risks", thesis.material_risks);
+  checkClaims("value_realization_tensions", thesis.value_realization_tensions);
+  checkClaims("what_needs_attention", thesis.what_needs_attention);
+  checkClaims("things_a_new_cxo_should_know", thesis.things_a_new_cxo_should_know);
+  checkClaims("questions_for_management", thesis.questions_for_management);
 
   // Visuals get their own check: dataset_ref must be a real, precomputed dataset (nothing else is
   // plottable) and visual_type must be one of the fixed grammar's shapes -- the two guardrails
@@ -702,23 +710,28 @@ async function synthesizeProseFromClaims(
  * checked against real output. */
 function claimsRequiringVerification(thesis: EnterpriseThesis): Array<{ path: string; claim: GroundedClaim }> {
   const out: Array<{ path: string; claim: GroundedClaim }> = [];
-  thesis.enterprise_story_claims.forEach((c, i) => out.push({ path: `enterprise_story_claims[${i}]`, claim: c }));
-  thesis.value_creation_model.primary_value_drivers.forEach((c, i) => out.push({ path: `value_creation_model.primary_value_drivers[${i}]`, claim: c }));
-  thesis.value_creation_model.economic_dependencies.forEach((c, i) => out.push({ path: `value_creation_model.economic_dependencies[${i}]`, claim: c }));
-  thesis.strategic_bets.forEach((c, i) => out.push({ path: `strategic_bets[${i}]`, claim: c }));
-  thesis.structural_constraints.forEach((c, i) => out.push({ path: `structural_constraints[${i}]`, claim: c }));
-  thesis.operating_tensions.forEach((c, i) => out.push({ path: `operating_tensions[${i}]`, claim: c }));
-  thesis.leadership_consensus.forEach((c, i) => out.push({ path: `leadership_consensus[${i}]`, claim: c }));
-  thesis.leadership_disagreements.forEach((c, i) => out.push({ path: `leadership_disagreements[${i}]`, claim: c }));
-  thesis.performance_story.where_improving.forEach((c, i) => out.push({ path: `performance_story.where_improving[${i}]`, claim: c }));
-  thesis.performance_story.where_off_track.forEach((c, i) => out.push({ path: `performance_story.where_off_track[${i}]`, claim: c }));
-  thesis.performance_story.where_unknown.forEach((c, i) => out.push({ path: `performance_story.where_unknown[${i}]`, claim: c }));
-  thesis.technology_and_data_implications.forEach((c, i) => out.push({ path: `technology_and_data_implications[${i}]`, claim: c }));
-  thesis.material_risks.forEach((c, i) => out.push({ path: `material_risks[${i}]`, claim: c }));
-  thesis.value_realization_tensions.forEach((c, i) => out.push({ path: `value_realization_tensions[${i}]`, claim: c }));
-  thesis.what_needs_attention.forEach((c, i) => out.push({ path: `what_needs_attention[${i}]`, claim: c }));
-  thesis.things_a_new_cxo_should_know.forEach((c, i) => out.push({ path: `things_a_new_cxo_should_know[${i}]`, claim: c }));
-  thesis.questions_for_management.forEach((c, i) => out.push({ path: `questions_for_management[${i}]`, claim: c }));
+  const add = (path: string, claims: MaybeGroundedClaim[]) => {
+    claims.forEach((claim, i) => {
+      if (claim) out.push({ path: `${path}[${i}]`, claim });
+    });
+  };
+  add("enterprise_story_claims", thesis.enterprise_story_claims);
+  add("value_creation_model.primary_value_drivers", thesis.value_creation_model.primary_value_drivers);
+  add("value_creation_model.economic_dependencies", thesis.value_creation_model.economic_dependencies);
+  add("strategic_bets", thesis.strategic_bets);
+  add("structural_constraints", thesis.structural_constraints);
+  add("operating_tensions", thesis.operating_tensions);
+  add("leadership_consensus", thesis.leadership_consensus);
+  add("leadership_disagreements", thesis.leadership_disagreements);
+  add("performance_story.where_improving", thesis.performance_story.where_improving);
+  add("performance_story.where_off_track", thesis.performance_story.where_off_track);
+  add("performance_story.where_unknown", thesis.performance_story.where_unknown);
+  add("technology_and_data_implications", thesis.technology_and_data_implications);
+  add("material_risks", thesis.material_risks);
+  add("value_realization_tensions", thesis.value_realization_tensions);
+  add("what_needs_attention", thesis.what_needs_attention);
+  add("things_a_new_cxo_should_know", thesis.things_a_new_cxo_should_know);
+  add("questions_for_management", thesis.questions_for_management);
   return out;
 }
 

@@ -21,6 +21,7 @@ import {
   buildVerifiedEnterpriseThesisFromSignalPacket,
   callClaude,
   THESIS_PROMPT_VERSION,
+  validateStructure,
   type AnthropicLikeClient,
   type EnterpriseThesis,
   type GroundedClaim,
@@ -442,10 +443,14 @@ function actionTally(ledger: Array<{ action: string }>): Record<string, number> 
 
 function publicationGateIssues(
   thesisResult: Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>,
+  signalPacket: EnterpriseSignalPacket,
 ): string[] {
   const issues = [...(thesisResult.publicationIssues ?? [])];
-  if (thesisResult.structuralIssues.length) {
-    issues.push(`structural_issues_${thesisResult.structuralIssues.length}`);
+  if (thesisResult.publishedGeneration) {
+    const publishedStructuralIssues = validateStructure(thesisResult.publishedGeneration, signalPacket);
+    if (publishedStructuralIssues.length) {
+      issues.push(`published_structural_issues_${publishedStructuralIssues.length}`);
+    }
   }
   for (const row of thesisResult.verificationLedger) {
     if (row.verdict === "UNSUPPORTED" && row.action !== "dropped") {
@@ -506,7 +511,8 @@ async function writeNarrativeRows(
           source: "ecl_projection.home_enterprise_landscape",
           generated_at: generatedAt,
           provenance,
-          thesis_structural_issue_count: thesisResult.structuralIssues.length,
+          raw_thesis_structural_issue_count: thesisResult.structuralIssues.length,
+          published_thesis_structural_issue_count: validateStructure(thesisResult.publishedGeneration as EnterpriseThesis, signalPacket).length,
           verification_verdict_tally: verdictTally(thesisResult.verificationLedger),
           verification_action_tally: actionTally(thesisResult.verificationLedger),
           publication_gate: {
@@ -700,7 +706,7 @@ async function main() {
 
     const thesisResult = await buildVerifiedEnterpriseThesisFromSignalPacket(signalPacket, anthropic);
     if (!thesisResult.publishedGeneration) throw new Error("Home ECL narrative writer produced no publishable thesis.");
-    const publicationIssues = publicationGateIssues(thesisResult);
+    const publicationIssues = publicationGateIssues(thesisResult, signalPacket);
     if (publicationIssues.length) {
       throw new Error(`Home ECL narrative publication gate failed: ${publicationIssues.join("; ")}`);
     }
