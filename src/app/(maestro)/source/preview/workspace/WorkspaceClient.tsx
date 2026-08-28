@@ -23,12 +23,7 @@ import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { stripGovernedArtifactPayloadsFromText } from "@/lib/intelligence/answer/structured-fence-stream-filter";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import { Tooltip } from "./Tooltip";
-import { ContextLens } from "./lenses/ContextLens";
-import { ListLens } from "./lenses/ListLens";
-import { VendorCanvas } from "./canvases/VendorCanvas";
-import { ContractCanvas } from "./canvases/ContractCanvas";
-import { OpportunityCanvas } from "./canvases/OpportunityCanvas";
-import { EvidenceCanvas } from "./canvases/EvidenceCanvas";
+import { WorkspaceExecutiveShell } from "./WorkspaceExecutiveShell";
 
 const SOURCE_WORKSPACE_AGENT = {
   initials: "aVa",
@@ -268,26 +263,26 @@ export function WorkspaceClient({
     fetchContractDetail(initialContractId.trim());
   }, [fetchContractDetail, initialContractId]);
 
-  const vm = useMemo(() => {
-    const logic = new WorkspaceViewModel(
+  const logic = useMemo(
+    () =>
+      new WorkspaceViewModel(
+        state,
+        setState,
+        portfolio,
+        tenantName,
+        fetchContractDetail,
+        startContractOptimization,
+      ),
+    [
       state,
       setState,
       portfolio,
       tenantName,
       fetchContractDetail,
       startContractOptimization,
-    );
-    return buildViewModel(logic);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, portfolio, tenantName]);
-  const isPortfolioCockpit =
-    !vm.isVendor &&
-    !vm.isContract &&
-    !vm.isOpp &&
-    !vm.isEvidence &&
-    !vm.isVendorList &&
-    !vm.isContractList;
-  const hidesWorkspaceHeader = isPortfolioCockpit || vm.isVendor;
+    ],
+  );
+  const vm = useMemo(() => buildViewModel(logic), [logic]);
 
   // The Source dock uses the rich aVa route so charts, tables, graphs, and
   // citations survive as structured packets instead of being flattened to text.
@@ -509,16 +504,7 @@ export function WorkspaceClient({
   }, []);
 
   return (
-    <div
-      className="sw-root"
-      style={{
-        height: "calc(100dvh - 73px)",
-        display: "flex",
-        flexDirection: "column",
-        background: "#f5f1eb",
-        overflow: "hidden",
-      }}
-    >
+    <div className="sw-root sw-v2-root">
       {portfolio.isEmpty ? (
         <div
           role="status"
@@ -561,355 +547,14 @@ export function WorkspaceClient({
           suggestedActions={vm.avaSuggestedActions}
           surfaceContext={vm.avaSurfaceContext}
           workspace={
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                minHeight: 0,
-                height: "100%",
-                overflowY: "auto",
-              }}
-            >
-              {hidesWorkspaceHeader ? null : (
-                <div
-                  style={{
-                    background: "#fff",
-                    borderBottom: "1px solid rgba(10,10,11,.12)",
-                    padding: vm.isContract ? "10px 24px 0" : "16px 30px 0",
-                    position: "sticky",
-                    top: 0,
-                    zIndex: 30,
-                    flex: "0 0 auto",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: 10,
-                      letterSpacing: ".08em",
-                      textTransform: "uppercase",
-                      color: "#888780",
-                      marginBottom: vm.isContract ? 7 : 11,
-                    }}
-                  >
-                    {vm.crumbs.map((c, i) => (
-                      <span
-                        key={i}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                        }}
-                      >
-                        <span style={{ color: c.color }}>{c.label}</span>
-                        {c.sep ? (
-                          <span style={{ color: "#d3d1c7" }}>{c.sep}</span>
-                        ) : null}
-                      </span>
-                    ))}
-                    <span
-                      style={{
-                        marginLeft: "auto",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 9,
-                        textTransform: "none",
-                        letterSpacing: 0,
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 7,
-                          height: 7,
-                          borderRadius: "50%",
-                          background: vm.availDot,
-                        }}
-                      />
-                      <span style={{ color: "#5f5e5a" }}>{vm.availLabel}</span>
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-end",
-                      gap: 18,
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <div
-                      style={{
-                        flex: "1 1 460px",
-                        minWidth: "min(100%,420px)",
-                      }}
-                    >
-                      <h1
-                        style={{
-                          fontFamily: vm.isContract
-                            ? "Inter,system-ui,sans-serif"
-                            : "Fraunces,Georgia,serif",
-                          fontWeight: vm.isContract ? 760 : 500,
-                          fontSize: vm.isContract
-                            ? "clamp(19px,1.35vw,24px)"
-                            : "clamp(22px,1.8vw,28px)",
-                          lineHeight: 1.12,
-                          letterSpacing: 0,
-                          color: "#0a0a0b",
-                          margin: vm.isContract ? "0 0 6px" : "0 0 8px",
-                        }}
-                      >
-                        {vm.title}
-                      </h1>
-                      <p
-                        style={{
-                          fontSize: vm.isContract ? 13.2 : 14.5,
-                          lineHeight: vm.isContract ? 1.45 : 1.55,
-                          color: "#5f5e5a",
-                          margin: vm.isContract ? "0 0 9px" : "0 0 14px",
-                        }}
-                      >
-                        {vm.thesis}
-                      </p>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 8,
-                        paddingBottom: vm.isContract ? 10 : 14,
-                      }}
-                    >
-                      {vm.headerActions.map((a, i) => (
-                        <button
-                          key={i}
-                          onClick={a.onClick}
-                          style={{
-                            border: `1px solid ${a.border}`,
-                            background: a.bg,
-                            color: a.fg,
-                            borderRadius: 6,
-                            padding: "9px 16px",
-                            fontSize: 13,
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {a.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 2, overflowX: "auto" }}>
-                    {vm.tabs.map((t, i) => (
-                      <button
-                        key={i}
-                        onClick={t.onClick}
-                        style={{
-                          border: "none",
-                          borderBottom: `2px solid ${t.line}`,
-                          background: "transparent",
-                          color: t.fg,
-                          fontSize: vm.isContract ? 12.5 : 13,
-                          fontWeight: t.weight,
-                          padding: vm.isContract ? "8px 12px" : "11px 14px",
-                          cursor: "pointer",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {t.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div
-                style={{
-                  padding: hidesWorkspaceHeader
-                    ? "18px clamp(12px,2vw,28px) 70px"
-                    : vm.isContract
-                      ? "14px 24px 48px"
-                      : "22px 30px 60px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: vm.isContract ? 12 : 18,
-                  width: hidesWorkspaceHeader ? "100%" : undefined,
-                  boxSizing: "border-box",
-                }}
-              >
-                {isPortfolioCockpit ? <ContextLens vm={vm} /> : null}
-                {vm.isVendorList || vm.isContractList ? (
-                  <ListLens vm={vm} />
-                ) : null}
-                {vm.isVendor ? <VendorCanvas vm={vm} /> : null}
-                {vm.isContract ? <ContractCanvas vm={vm} /> : null}
-                {vm.isOpp ? <OpportunityCanvas vm={vm} /> : null}
-                {vm.isEvidence ? <EvidenceCanvas vm={vm} /> : null}
-
-                {vm.hasPins ? (
-                  <div
-                    style={{
-                      background: "#fff",
-                      border: "1px solid rgba(10,10,11,.12)",
-                      borderRadius: 8,
-                      padding: "18px 22px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontSize: 9.5,
-                        fontWeight: 600,
-                        letterSpacing: ".12em",
-                        textTransform: "uppercase",
-                        color: "#0066CC",
-                        marginBottom: 12,
-                      }}
-                    >
-                      Pinned analyses · part of this workspace
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 8,
-                      }}
-                    >
-                      {vm.pins.map((p, i) => (
-                        <div
-                          key={i}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 12,
-                            border: "1px solid rgba(10,10,11,.12)",
-                            borderRadius: 6,
-                            padding: "11px 14px",
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontFamily: "'JetBrains Mono', monospace",
-                              fontSize: 9,
-                              fontWeight: 600,
-                              letterSpacing: ".08em",
-                              textTransform: "uppercase",
-                              color: "#0066CC",
-                              border: "1px solid rgba(0,102,204,.3)",
-                              borderRadius: 3,
-                              padding: "2px 6px",
-                            }}
-                          >
-                            {p.type}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: 13,
-                              fontWeight: 600,
-                              color: "#0a0a0b",
-                            }}
-                          >
-                            {p.title}
-                          </span>
-                          <span style={{ fontSize: 12, color: "#5f5e5a" }}>
-                            {p.note}
-                          </span>
-                          <span
-                            style={{
-                              marginLeft: "auto",
-                              fontFamily: "'JetBrains Mono', monospace",
-                              fontSize: 10,
-                              color: "#b4b2a9",
-                            }}
-                          >
-                            {p.when}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </div>
+            <WorkspaceExecutiveShell
+              vm={vm}
+              logic={logic}
+              portfolio={portfolio}
+              tenantName={tenantName}
+            />
           }
         />
-      </div>
-
-      <div
-        style={{
-          background: "#fff",
-          borderTop: "1px solid rgba(10,10,11,.12)",
-          minHeight: 34,
-          display: hidesWorkspaceHeader ? "none" : "flex",
-          alignItems: "center",
-          gap: 14,
-          padding: "6px 20px",
-          flexShrink: 0,
-          fontSize: 11.5,
-          color: "#5f5e5a",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 10,
-            letterSpacing: ".08em",
-            textTransform: "uppercase",
-            color: "#888780",
-          }}
-        >
-          Selection
-        </span>
-        <span
-          style={{
-            fontWeight: 600,
-            color: "#2c2c2a",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {vm.statusSel}
-        </span>
-        <span
-          style={{
-            width: 1,
-            height: 14,
-            background: "rgba(10,10,11,.12)",
-            flexShrink: 0,
-          }}
-        />
-        <span>
-          Position as of{" "}
-          <b style={{ color: "#2c2c2a" }}>
-            {new Date(portfolio.asOfDateIso).toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-              timeZone: "UTC",
-            })}
-          </b>{" "}
-          · governed as_of_date
-        </span>
-        {vm.showStatusDetail ? (
-          <span style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <span
-              style={{ width: 1, height: 14, background: "rgba(10,10,11,.12)" }}
-            />
-            <span>
-              Freshness <b style={{ color: "#2c2c2a" }}>{vm.freshness}</b>
-            </span>
-            <span
-              style={{ width: 1, height: 14, background: "rgba(10,10,11,.12)" }}
-            />
-            <span>
-              Evidence <b style={{ color: "#2c2c2a" }}>{vm.evidenceState}</b>
-            </span>
-          </span>
-        ) : null}
       </div>
 
       <Tooltip tip={vm.tip} />

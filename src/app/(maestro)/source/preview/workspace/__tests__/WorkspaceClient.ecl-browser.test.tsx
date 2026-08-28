@@ -286,14 +286,21 @@ describe("Source workspace ECL browser-surface proof", () => {
     await waitFor(() => {
       expect(
         screen.getByRole("navigation", {
-          name: "Vendor 360 cockpit sections",
+          name: "Source workspace navigation",
         }),
       ).toBeTruthy();
     });
+    expect(screen.getByText("Nexus Source")).toBeTruthy();
+    expect(screen.getByLabelText("Portfolio facts")).toBeTruthy();
     expect(screen.getByText("Helix Shared Services Group")).toBeTruthy();
+    expect(screen.getByText("Executive position")).toBeTruthy();
+    expect(screen.getByText("Verified opportunity")).toBeTruthy();
+    expect(screen.getByText("Vendor concentration")).toBeTruthy();
+    expect(screen.getByText("Evidence posture")).toBeTruthy();
+    expect(screen.getByText("Unsupported dashboard claims")).toBeTruthy();
+    expect(screen.getByText("Hidden")).toBeTruthy();
     expect(screen.queryByText("Contract register")).toBeNull();
     expect(screen.queryByText("Application scope")).toBeNull();
-    expect(screen.queryByText("Source workspace")).toBeNull();
     expect(screen.queryByText("No Source rows returned")).toBeNull();
     expect(screen.queryByText(/Demo Findings/i)).toBeNull();
     expect(screen.queryByText(/Serving Surfaces/i)).toBeNull();
@@ -301,36 +308,21 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByText(/ECL Source/i)).toBeNull();
     expect(screen.queryByText(/load run/i)).toBeNull();
     expect(screen.queryByText(/computeRenewalExposure/i)).toBeNull();
-    expect(screen.getByText("Governed contract portfolio")).toBeTruthy();
+    expect(screen.queryByText(/Savings realized/i)).toBeNull();
+    expect(screen.queryByText(/Risk score/i)).toBeNull();
+    expect(screen.queryByText(/Spend by category/i)).toBeNull();
 
-    expect(screen.getByRole("button", { name: "View contracts" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "View vendors" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Vendors" })[0]);
 
-    expect(screen.getByText("All vendors")).toBeTruthy();
-    expect(screen.getByText("Vendors — category view")).toBeTruthy();
-    expect(
-      screen.getByRole("searchbox", { name: "Search vendors" }),
-    ).toBeTruthy();
+    expect(screen.getByText("Vendor 360")).toBeTruthy();
+    expect(screen.getByText("One row per supplier relationship")).toBeTruthy();
 
-    fireEvent.change(
-      screen.getByRole("searchbox", { name: "Search vendors" }),
-      {
-        target: { value: "Epic" },
-      },
+    fireEvent.click(
+      screen.getByRole("button", { name: /Epic Systems Corporation/ }),
     );
 
-    expect(screen.getByText("Epic Systems Corporation")).toBeTruthy();
-    expect(screen.queryByText("Helix Shared Services Group")).toBeNull();
-    expect(screen.getByText("1 of 2")).toBeTruthy();
-
-    fireEvent.click(screen.getByRole("button", { name: "Open Vendor 360" }));
-
-    expect(screen.getByTestId("source-vendor360-exec-cockpit")).toBeTruthy();
-    expect(
-      screen.getByRole("navigation", { name: "Vendor 360 sections" }),
-    ).toBeTruthy();
-    expect(screen.getByText("Quick actions")).toBeTruthy();
-    expect(screen.getByText("Active contracts (1)")).toBeTruthy();
+    expect(screen.getByText("Selected vendor")).toBeTruthy();
+    expect(screen.getByText("MER-CTR-EPIC-001")).toBeTruthy();
     expect(screen.queryByText("Portfolio position")).toBeNull();
     expect(screen.queryByText("Material contracts")).toBeNull();
   });
