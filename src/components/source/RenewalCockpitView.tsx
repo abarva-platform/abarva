@@ -125,7 +125,7 @@ export function RenewalCockpitView({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 860 }}>
       <header style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <Link
-          href="/source/portfolio"
+          href="/source/preview/workspace"
           style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, textDecoration: 'none' }}
         >
           ← Sourcing book

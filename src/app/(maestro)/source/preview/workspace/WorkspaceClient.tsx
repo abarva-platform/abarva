@@ -562,7 +562,7 @@ export function WorkspaceClient({
         >
           <button
             onClick={() => {
-              window.location.href = "/source/portfolio";
+              window.location.href = "/source/preview/workspace";
             }}
             style={{
               border: "1px solid rgba(255,255,255,.28)",

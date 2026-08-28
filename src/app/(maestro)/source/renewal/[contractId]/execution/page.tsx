@@ -75,7 +75,7 @@ export default async function SourceExecutionRoomRoute({
               fabricates a sourcing decision.
             </p>
             <Link
-              href="/source/portfolio"
+              href="/source/preview/workspace"
               style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_MID }}
             >
               Back to the sourcing book

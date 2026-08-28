@@ -562,7 +562,7 @@ function SecondaryDecisionAction({
           Confirm before changing deadlines. No queue date is changed silently.
         </span>
         <Link
-          href="/source/portfolio"
+          href="/source/preview/workspace"
           style={{
             fontFamily: SHELL.SANS,
             fontSize: 12,
@@ -766,7 +766,7 @@ export function SourceDecisionQueueView({
             </p>
           ) : null}
           <Link
-            href="/source/portfolio"
+            href="/source/preview/workspace"
             style={{
               fontFamily: SHELL.SANS,
               fontSize: 12,
@@ -802,7 +802,7 @@ function QueueToolbar({
 }) {
   return (
     <form
-      action="/source/portfolio"
+      action="/source/preview/workspace"
       style={{
         display: "flex",
         gap: 8,
