@@ -19,7 +19,9 @@ opportunity when the job is run and the post-run quality gate passes.
 
 - `client-data-lane`: the operator job writes idempotent contract performance, consumption,
   service-credit, and optimization-opportunity records for one scoped demonstration contract only
-  after an explicit apply gate is set.
+  after an explicit apply gate is set. The governed apply run also materialized the scoped
+  canonical contract backbone row from the already-authorized serving projection when the backbone
+  row was absent.
 
 - `global-control-lane`: Contract 360 now reads and renders monthly performance/spend rows, and the
   Source workspace proof-layer summary reads the governed consumption views instead of reporting
@@ -62,10 +64,21 @@ metadata.
 - pass: `npm run validate:context-corpus -- manifests`.
 - pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --skipLibCheck --project tsconfig.json`.
 - pass: `npm run release:check`.
-- pending: ACA Job dry-run and apply run using a digest-pinned image.
-- pending: signed-in production proof that the scoped contract renders monthly performance, missed
-  SLA months, unclaimed service-credit opportunity text, and non-zero proof-layer counts without
-  tenant leakage.
+- pass: repo-owned ACA main deploy workflow for merge commit `1309ec47970a7f34ab97a58dcda7b00e4036570e`;
+  runtime invariant passed for digest
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:a37124b455f5f1c779445163fe539c7407cad75fc76d3c30ac81b669f7ccd35b`.
+- pass: ACA Job dry-run and apply run using the same digest-pinned image; apply readback returned
+  12 consumption rows, 12 performance rows, 3 service-credit rows, 1 optimization opportunity,
+  and `$43,000.02` unclaimed credit for the scoped contract.
+- pass: focused post-apply UI tests added for monthly SLA rendering without the legacy aggregate
+  summary and actual-spend fallback from monthly rows:
+  `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' src/lib/source/data-model/__tests__/contract-depth-demo-slice.test.ts --runInBand`.
+- pass: scoped `npx eslint` on the post-apply UI/model test changes.
+- pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --skipLibCheck --project tsconfig.json`.
+- partial: signed-in production proof showed the scoped contract loads cleanly without tenant
+  leakage and the optimization opportunity is legible. It also found that monthly SLA rows and
+  actual annual spend need the post-apply UI follow-up in this release record before final live
+  screenshot proof.
 
 ## Rollout Plan
 
@@ -96,13 +109,16 @@ rebuild/read back the affected Source projections.
 
 ## Audit Evidence
 
-Pending:
-
-- PR URL and merge commit.
-- GitHub ACA main deploy run.
-- ACA Job proof bundle path.
-- Signed-in production screenshot/proof folder.
-- Quality gate JSON from the operator job.
+- PR #6905 merged to `main`; merge commit `1309ec47970a7f34ab97a58dcda7b00e4036570e`.
+- GitHub ACA main deploy run: `33143809110`.
+- ACA Job dry-run proof bundle:
+  `/tmp/source-contract-depth-ctr0002-dryrun-20260828T052300Z/proof/source-contract-depth-20260828T052244Z`.
+- ACA Job apply proof bundle:
+  `/tmp/source-contract-depth-ctr0002-apply-20260828T052900Z/proof/source-contract-depth-20260828T052655Z`.
+- Signed-in production screenshot/proof folder:
+  `/Users/anand/Projects/nexus-worktrees/source-ctr0002-depth/proof/source-ctr0002-depth-live-proof-20260828`.
+- Quality gate JSON from the operator job:
+  `/tmp/source-contract-depth-ctr0002-apply-20260828T052900Z/proof/source-contract-depth-20260828T052655Z/quality-gate.json`.
 
 ## Known Gaps
 

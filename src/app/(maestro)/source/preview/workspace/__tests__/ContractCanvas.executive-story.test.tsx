@@ -183,4 +183,58 @@ describe("ContractCanvas executive story", () => {
     expect(screen.getByText("$50.0M annual")).toBeTruthy();
     expect(screen.queryByText("Not sized annual")).toBeNull();
   });
+
+  it("renders monthly SLA rows even when legacy performance summary is absent", () => {
+    const vm = {
+      ...executiveStoryVm(),
+      cOverview: false,
+      cPerformance: true,
+      evidencePerformance: null,
+      detailState: "ready",
+      detail: {
+        performancePeriods: [
+          {
+            tenant_key: "test_tenant",
+            observation_id: "perf-1",
+            contract_id: "c1",
+            service_id: "claims-processing",
+            metric_name: "claims processed within 24 hours (%)",
+            period_start: "2026-02-01",
+            period_end: "2026-02-28",
+            contracted_target: "95%",
+            actual_value: "89%",
+            value_num: 89,
+            unit: "%",
+            performance_state: "breached",
+            credit_state: "earned_unclaimed",
+            breach_count: 1,
+            credit_eligible: true,
+            credit_calculated: 14333.34,
+            credit_claimed: 0,
+            credit_recovered: 0,
+            currency: "USD",
+            source_system: "governed_source_depth_loader",
+            source_record_id: "perf-1",
+            as_of_date: "2026-08-01",
+            quality_state: "reviewed",
+            evidence_reference: "source_contract_depth:test",
+            load_run_id: "test",
+          },
+        ],
+        operationalPerformance: null,
+        financialExposure: null,
+      },
+    };
+
+    render(<ContractCanvas vm={vm as never} />);
+
+    expect(
+      screen.getByText("Monthly SLA performance is reviewable for this contract."),
+    ).toBeTruthy();
+    expect(screen.getByText("Monthly SLA history")).toBeTruthy();
+    expect(screen.getByText("claims processed within 24 hours (%)")).toBeTruthy();
+    expect(screen.getByText("Missed")).toBeTruthy();
+    expect(screen.getByText("No")).toBeTruthy();
+    expect(screen.queryByText(/No operational performance/)).toBeNull();
+  });
 });

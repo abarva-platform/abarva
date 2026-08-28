@@ -176,6 +176,14 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         : detail
           ? "ready"
           : "idle";
+  const detailSpendMonths = detail?.spendMonths ?? [];
+  const detailActualAnnualSpend = detailSpendMonths.reduce(
+    (sum, row) => sum + (numberFromDb(row.actual_spend) ?? 0),
+    0,
+  );
+  const effectiveActualAnnualSpend =
+    numberFromDb(contract?.row.actual_annual_spend) ??
+    (detailActualAnnualSpend > 0 ? detailActualAnnualSpend : null);
 
   // ── explorer tree ──
   interface TreeNode {
@@ -531,11 +539,11 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         ". " +
         money(contract.row.annual_value) +
         " annual contract value, " +
-        money(contract.row.actual_annual_spend) +
+        money(effectiveActualAnnualSpend) +
         " actual spend."
       : money(contract.row.annual_value) +
         " annual contract value, " +
-        money(contract.row.actual_annual_spend) +
+        money(effectiveActualAnnualSpend) +
         " actual spend. Expiry " +
         fmtDate(contract.row.end_date) +
         ".";
@@ -1819,7 +1827,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         name: c.contract_name,
         cat: c.vendor_category ?? "Unresolved",
         acv: money(c.annual_value),
-        spend: money(c.actual_annual_spend),
+        spend: money(effectiveActualAnnualSpend),
+        actualAnnualSpendUsd: effectiveActualAnnualSpend,
         committed: money(c.total_committed_value),
         expiry: fmtDate(c.end_date),
         notice:

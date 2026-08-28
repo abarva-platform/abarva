@@ -4185,6 +4185,45 @@ function DetailPanel({
         footnote="Credits shown here are owed/claim-state evidence only. They are not finance-confirmed outcomes until the remedy and finance gates close."
       />
     ) : null;
+    if (!evidencePerf && performancePeriodTable) {
+      return (
+        <>
+          <div
+            style={{
+              background: "#fff",
+              border: "1px solid rgba(10,10,11,.12)",
+              borderRadius: 8,
+              padding: "16px 20px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 16,
+                fontWeight: 850,
+                color: "#0a0a0b",
+                lineHeight: 1.35,
+                marginBottom: 6,
+              }}
+            >
+              Monthly SLA performance is reviewable for this contract.
+            </div>
+            <div
+              style={{
+                fontSize: 12.8,
+                color: "#5f5e5a",
+                lineHeight: 1.5,
+                maxWidth: "96ch",
+              }}
+            >
+              Period-level performance rows are present even though no legacy
+              aggregate summary was returned. The table below separates met
+              months, missed months, earned credits, and claim state.
+            </div>
+          </div>
+          {performancePeriodTable}
+        </>
+      );
+    }
     if (evidencePerf) {
       const creditGap = Math.max(
         0,
