@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`candidate; merged and Azure-loaded`
 
 ## Plain-English Summary
 
@@ -61,6 +61,14 @@ Completed local validation:
 - Pass: `npx tsc --noEmit --pretty false`
 - Pass: `git diff --check`
 
+Completed Azure validation:
+
+- Pass: main ACA deploy run `33201786753` for merge SHA `268aa5b689c87dac807aee4a99eb19e61e4c847e`.
+- Pass: ACA runtime invariant showed the 100% traffic revision and template using `acrabarvalab001.azurecr.io/abarva/web@sha256:2629418746b419d8c6c8810fcf1ebefe65c851a252156178b95af1d4eeb9cc0d`.
+- Pass: production health endpoint returned healthy Postgres checks.
+- Pass: ACA operator execution `job-abarva-private-operator-eus-qml12rw` completed successfully.
+- Pass: `npm run tower:healthcare-demo-layer3-canonical:validate -- --summary /tmp/tower-layer3-aca-proof-268aa5b68/proof/meridian-tower-layer3-canonical/tower_layer3_ecl_context_load_summary.json --readback /tmp/tower-layer3-aca-proof-268aa5b68/proof/meridian-tower-layer3-canonical/03-readback.json`
+
 Expected Layer 3 load counts:
 
 - Canonical objects: 987
@@ -79,9 +87,23 @@ Expected physical object family counts:
 - AI tool objects: 13
 - Control objects: 280
 
+Azure readback counts:
+
+- Canonical objects: 987
+- Canonical relationships: 280
+- Metric definitions: 20
+- Measures: 2,531
+- Layer 2 source records available: 1,981
+- Tenant payload drift: 0
+- Canonical-to-source gap: 0
+- Objects missing source-record lineage: 0
+- Relationships missing source-record lineage: 0
+- Measures missing source-record lineage: 0
+- Product projection rows written: 0
+
 ## Rollout Plan
 
-Merge by PR to `main`. The repo-owned Azure Container Apps deploy workflow builds the digest-pinned image. After that image is available, run the canonical write through the governed ACA operator wrapper:
+Merged by PR to `main`. The repo-owned Azure Container Apps deploy workflow built the digest-pinned image, and the canonical write ran through the governed ACA operator wrapper. Use the same operator shape for approved reruns:
 
 ```bash
 npm run ops:aca-job -- \
@@ -124,8 +146,13 @@ Rerun the previous approved canonical load for the same tenant/assessment. If de
 - Generated SQL: `/tmp/tower-layer3-local-proof-v2/tower_layer3_ecl_context_load.sql`
 - Readback SQL: `/tmp/tower-layer3-local-proof-v2/tower_layer3_ecl_context_readback.sql`
 - Disposable Postgres readback: `/tmp/tower-layer3-local-proof-v2/postgres_readback.json`
+- Main ACA deploy run: `33201786753`
+- Azure operator execution: `job-abarva-private-operator-eus-qml12rw`
+- Azure proof bundle: `/tmp/tower-layer3-aca-proof-268aa5b68/proof/meridian-tower-layer3-canonical`
+- Azure write summary: `/tmp/tower-layer3-aca-proof-268aa5b68/proof/meridian-tower-layer3-canonical/tower_layer3_ecl_context_load_summary.json`
+- Azure readback: `/tmp/tower-layer3-aca-proof-268aa5b68/proof/meridian-tower-layer3-canonical/03-readback.json`
 - Layer 3 signoff: generated synthetic healthcare fixture package, Layer 3 signoff file
 
 ## Known Gaps
 
-Azure write has not run from this local branch. The ACA operator job can run only after this candidate is merged and built into a digest-pinned image. Cubes, read models, product UI, and old-layer sunset are explicitly later-layer work.
+Cubes, read models, product UI, and old-layer sunset are explicitly later-layer work. Layer 3 proves the canonical source of truth is loaded and traceable; it does not prove Tower, Home, Source, Intelligence, or any charting surface has been refreshed from it.

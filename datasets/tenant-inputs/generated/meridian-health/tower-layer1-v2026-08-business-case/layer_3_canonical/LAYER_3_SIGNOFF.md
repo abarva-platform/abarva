@@ -2,8 +2,9 @@
 
 Package: `tower-layer1-v2026-08-business-case`
 Layer: Canonical enterprise model
-Status: locally generated; Azure write path prepared; live Azure write pending merged digest image
+Status: Azure loaded and validator-passed for Layer 3; cubes and product projections pending
 As of: 2026-08-24
+Azure proof captured: 2026-08-28
 
 ## Layer 3 Purpose
 
@@ -74,7 +75,17 @@ The monthly refresh should run in this order:
 
 ## Azure Load Contract
 
-The real Azure load must run through the governed ACA operator job after this loader and package are merged and built into a digest-pinned image.
+The real Azure load must run through the governed ACA operator job after this loader and package are merged and built into a digest-pinned image. The completed Layer 3 load used this approved path.
+
+Completed Azure execution:
+
+- Main merge SHA: `268aa5b689c87dac807aee4a99eb19e61e4c847e`
+- ACA deploy run: `33201786753`
+- Deployed web image: `acrabarvalab001.azurecr.io/abarva/web@sha256:2629418746b419d8c6c8810fcf1ebefe65c851a252156178b95af1d4eeb9cc0d`
+- Operator execution: `job-abarva-private-operator-eus-qml12rw`
+- Proof bundle: `/tmp/tower-layer3-aca-proof-268aa5b68/proof/meridian-tower-layer3-canonical`
+
+Use this command shape for approved reruns:
 
 ```bash
 npm run ops:aca-job -- \
@@ -110,5 +121,7 @@ Layer 3 signoff requires:
 - 0 tenant payload drift rows.
 - 0 canonical objects whose source record is absent from Layer 2.
 - 0 product projection or cube rows written by the Layer 3 loader.
+
+Azure readback passed these gates with 987 canonical objects, 280 relationships, 20 metric definitions, 2,531 measures, 1,981 Layer 2 source records available, and no tenant drift or lineage gaps.
 
 Layer 3 signoff does not mean Tower, Home, Source, Intelligence, or cubes are refreshed. Those are Layer 4 and cube work.
