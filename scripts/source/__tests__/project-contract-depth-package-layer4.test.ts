@@ -14,6 +14,7 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain("UNION");
     expect(source).toContain("source.l4_cube_active_load_run");
     expect(source).toContain("source_contract_360_total regressed");
+    expect(source).not.toMatch(/\bDROP VIEW\b/i);
   });
 
   it("requires repaired canonical alternatives before product projection", () => {
