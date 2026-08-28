@@ -5,7 +5,7 @@ export const metadata = {
 };
 export const dynamic = "force-dynamic";
 
-const SOURCE_WORKSPACE_ROUTE = "/source/preview/workspace";
+const SOURCE_WORKSPACE_ROUTE = "/source/workspace";
 
 /**
  * Archived legacy Vendor & Contract Portfolio route.

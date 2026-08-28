@@ -17,7 +17,9 @@ const FORWARDED_PARAMS: Array<keyof SourcePortfolioSearchParams> = [
   "contractTab",
 ];
 
-function sourceWorkspaceRedirectUrl(params: SourcePortfolioSearchParams): string {
+function sourceWorkspaceRedirectUrl(
+  params: SourcePortfolioSearchParams,
+): string {
   const query = new URLSearchParams();
 
   for (const key of FORWARDED_PARAMS) {
@@ -28,7 +30,7 @@ function sourceWorkspaceRedirectUrl(params: SourcePortfolioSearchParams): string
   }
 
   const queryString = query.toString();
-  return `/source/preview/workspace${queryString ? `?${queryString}` : ""}`;
+  return `/source/workspace${queryString ? `?${queryString}` : ""}`;
 }
 
 /**

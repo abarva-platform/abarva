@@ -10,5 +10,5 @@ export const dynamic = "force-dynamic";
  * preserves old links without rendering a second, competing Source home.
  */
 export default function SourceDecisionQueuePage() {
-  redirect("/source/preview/workspace");
+  redirect("/source/workspace");
 }

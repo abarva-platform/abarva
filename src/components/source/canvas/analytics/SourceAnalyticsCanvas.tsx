@@ -865,7 +865,7 @@ function SourceShellRail({
       }}
     >
       <Link
-        href="/source/preview/workspace"
+        href="/source/workspace"
         style={{
           color: ANALYTICS.MUTED,
           fontSize: 12,
@@ -2268,7 +2268,9 @@ function EvidenceAskTable({
                 tone={need.requiredness === "Required" ? "warn" : "neutral"}
               />
               <EvidenceAskMicroStatus
-                label={captured ? "Parsed" : uploaded ? "Uploaded" : need.status}
+                label={
+                  captured ? "Parsed" : uploaded ? "Uploaded" : need.status
+                }
                 done={captured}
               />
             </span>

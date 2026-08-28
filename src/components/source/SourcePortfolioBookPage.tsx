@@ -98,7 +98,7 @@ function BookHeader({ tenantName }: { tenantName: string }) {
       </div>
       <div style={HEADER_ACTIONS_STYLE}>
         <Link
-          href="/source/preview/workspace"
+          href="/source/workspace"
           style={GHOST_BTN_STYLE}
           data-testid="source-book-vendor-portfolio"
         >

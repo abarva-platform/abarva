@@ -224,7 +224,11 @@ export async function loadSourceWorkspacePortfolio(
 ): Promise<SourceWorkspacePortfolioData> {
   const provider = sourceWorkspaceProvider(providerOverride);
   if (provider !== "legacy") {
-    return loadEclProjectionWorkspacePortfolio(tenantKey, asOfDateIso, provider);
+    return loadEclProjectionWorkspacePortfolio(
+      tenantKey,
+      asOfDateIso,
+      provider,
+    );
   }
 
   const [
@@ -344,39 +348,42 @@ async function loadEclProjectionWorkspacePortfolio(
     );
   }
 
-  const [contractRows, vendorRows, eventRows, cubeSliceRows, runtimeEvidence] = await Promise.all([
-    provider === "ecl_projection_db"
-      ? readProjectionTable(tenantKey, "source_contract_360")
-      : readProjectionCsv(
-          path.join(
-            projectionDir ?? "",
-            "source_contract_360_projection.csv",
+  const [contractRows, vendorRows, eventRows, cubeSliceRows, runtimeEvidence] =
+    await Promise.all([
+      provider === "ecl_projection_db"
+        ? readProjectionTable(tenantKey, "source_contract_360")
+        : readProjectionCsv(
+            path.join(
+              projectionDir ?? "",
+              "source_contract_360_projection.csv",
+            ),
           ),
-        ),
-    provider === "ecl_projection_db"
-      ? readProjectionView(tenantKey, "source_vendor_portfolio")
-      : readProjectionCsv(
-          path.join(projectionDir ?? "", "source_vendor_360_projection.csv"),
-        ),
-    provider === "ecl_projection_db"
-      ? readProjectionViews(tenantKey, [
-          "source_events",
-          "source_compare",
-          "source_approvals",
-        ])
-      : readProjectionCsv(
-          path.join(
-            projectionDir ?? "",
-            "source_event_workspace_projection.csv",
+      provider === "ecl_projection_db"
+        ? readProjectionView(tenantKey, "source_vendor_portfolio")
+        : readProjectionCsv(
+            path.join(projectionDir ?? "", "source_vendor_360_projection.csv"),
           ),
-        ),
-    provider === "ecl_projection_db"
-      ? readEclCubeSlices(tenantKey)
-      : Promise.resolve([]),
-    provider === "ecl_projection_db"
-      ? readEclRuntimeEvidenceSummary(tenantKey).catch(() => emptyEclRuntimeEvidenceSummary())
-      : Promise.resolve(emptyEclRuntimeEvidenceSummary()),
-  ]);
+      provider === "ecl_projection_db"
+        ? readProjectionViews(tenantKey, [
+            "source_events",
+            "source_compare",
+            "source_approvals",
+          ])
+        : readProjectionCsv(
+            path.join(
+              projectionDir ?? "",
+              "source_event_workspace_projection.csv",
+            ),
+          ),
+      provider === "ecl_projection_db"
+        ? readEclCubeSlices(tenantKey)
+        : Promise.resolve([]),
+      provider === "ecl_projection_db"
+        ? readEclRuntimeEvidenceSummary(tenantKey).catch(() =>
+            emptyEclRuntimeEvidenceSummary(),
+          )
+        : Promise.resolve(emptyEclRuntimeEvidenceSummary()),
+    ]);
   const acceptedTenantKeys = new Set(
     [tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim()),
   );
@@ -386,7 +393,9 @@ async function loadEclProjectionWorkspacePortfolio(
   const contracts = contractRows
     .filter(tenantMatches)
     .map(contractFromEclProjectionRow);
-  const vendors = vendorRows.filter(tenantMatches).map(vendorFromEclProjectionRow);
+  const vendors = vendorRows
+    .filter(tenantMatches)
+    .map(vendorFromEclProjectionRow);
   const applicationScope = contractRows
     .filter(tenantMatches)
     .flatMap(scopeFromEclProjectionRow);
@@ -400,8 +409,9 @@ async function loadEclProjectionWorkspacePortfolio(
     runtimeEvidence,
   });
   const categoryQuality = evaluateContractCategoryQuality(contracts);
-  const legacyVendorCount = new Set(contracts.map((contract) => contract.vendor_ref))
-    .size;
+  const legacyVendorCount = new Set(
+    contracts.map((contract) => contract.vendor_ref),
+  ).size;
   const workspaceDiagnostics = {
     datasetLabel: v4Snapshot.datasetLabel,
     datasetId: v4Snapshot.datasetId,
@@ -431,10 +441,13 @@ async function loadEclProjectionWorkspacePortfolio(
     ).length,
   };
   const reads = {
-    contracts: contracts.length > 0 ? ("available" as const) : ("missing" as const),
+    contracts:
+      contracts.length > 0 ? ("available" as const) : ("missing" as const),
     vendors: vendors.length > 0 ? ("available" as const) : ("missing" as const),
     applicationScope:
-      applicationScope.length > 0 ? ("available" as const) : ("missing" as const),
+      applicationScope.length > 0
+        ? ("available" as const)
+        : ("missing" as const),
     initiativeDependencies: "missing" as const,
   };
 
@@ -486,7 +499,10 @@ async function readProjectionTable(
   tenantKey: string,
   tableName: "source_contract_360" | "source_vendor_360",
 ): Promise<EclProjectionRow[]> {
-  const servingViewByTable: Record<typeof tableName, Extract<SourceServingViewName, "source_contract_360" | "source_vendor_360">> = {
+  const servingViewByTable: Record<
+    typeof tableName,
+    Extract<SourceServingViewName, "source_contract_360" | "source_vendor_360">
+  > = {
     source_contract_360: "source_contract_360",
     source_vendor_360: "source_vendor_360",
   };
@@ -498,7 +514,9 @@ async function readProjectionViews(
   servingViews: readonly SourceServingViewName[],
 ): Promise<EclProjectionRow[]> {
   const rows = await Promise.all(
-    servingViews.map((servingView) => readProjectionView(tenantKey, servingView)),
+    servingViews.map((servingView) =>
+      readProjectionView(tenantKey, servingView),
+    ),
   );
   return rows.flat();
 }
@@ -508,7 +526,9 @@ async function readProjectionView(
   servingView: SourceServingViewName,
 ): Promise<EclProjectionRow[]> {
   const acceptedTenantKeys = Array.from(
-    new Set([tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim())),
+    new Set(
+      [tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim()),
+    ),
   );
   return azureRead.withSession(async (run) => {
     await run("SELECT set_config('app.tenant_key', $1, false)", [
@@ -522,9 +542,13 @@ async function readProjectionView(
   });
 }
 
-async function readEclCubeSlices(tenantKey: string): Promise<EclCubeSliceRow[]> {
+async function readEclCubeSlices(
+  tenantKey: string,
+): Promise<EclCubeSliceRow[]> {
   const acceptedTenantKeys = Array.from(
-    new Set([tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim())),
+    new Set(
+      [tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim()),
+    ),
   );
   return azureRead.withSession(async (run) => {
     await run("SELECT set_config('app.tenant_key', $1, false)", [
@@ -545,7 +569,9 @@ async function readEclRuntimeEvidenceSummary(
   tenantKey: string,
 ): Promise<EclRuntimeEvidenceSummary> {
   const acceptedTenantKeys = Array.from(
-    new Set([tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim())),
+    new Set(
+      [tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim()),
+    ),
   );
   const rows = await azureRead.withSession(async (run) => {
     await run("SELECT set_config('app.tenant_key', $1, false)", [
@@ -625,8 +651,14 @@ function eclSourceWorkspaceSnapshot(input: {
   readonly cubeSliceRows: readonly EclCubeSliceRow[];
   readonly runtimeEvidence: EclRuntimeEvidenceSummary;
 }): SourceV4WorkspaceSnapshot {
-  const { asOfDateIso, contracts, vendors, applicationScope, cubeSliceRows, runtimeEvidence } =
-    input;
+  const {
+    asOfDateIso,
+    contracts,
+    vendors,
+    applicationScope,
+    cubeSliceRows,
+    runtimeEvidence,
+  } = input;
   const base = createEmptySourceV4WorkspaceSnapshot(asOfDateIso, {
     datasetId: "ecl-source-360-local-projection",
     datasetLabel: "ECL Source 360 local projection",
@@ -715,7 +747,8 @@ function eclSourceWorkspaceSnapshot(input: {
       contractCount: contracts.length,
       annualValue,
       totalCommittedValue,
-      autoRenewCount: contracts.filter((contract) => contract.auto_renew).length,
+      autoRenewCount: contracts.filter((contract) => contract.auto_renew)
+        .length,
       notice90DayCount: 0,
     },
     scopeConfidence: {
@@ -826,7 +859,9 @@ function scopeFromEclProjectionRow(
   const contractId = textValue(row.row_key || row.contract_id);
   return parseJsonArray(row.scope_json).map((scopeItem, index) => {
     const scope = parseJsonObject(scopeItem);
-    const applicationName = String(scope.name ?? `Scoped application ${index + 1}`);
+    const applicationName = String(
+      scope.name ?? `Scoped application ${index + 1}`,
+    );
     return {
       tenant_key: textValue(row.tenant_key),
       contract_id: contractId,
@@ -1175,7 +1210,7 @@ export function buildSourceVendor360Cockpit(input: {
         "CLM / ERP / AP / ITSM extracts -> source.* governed views -> Source workspace measures",
         "source.contract_360 -> computeRenewalExposure -> verdict and action queue",
         "source.contract_360 -> computeContractLeverageSignals -> gate and action verb",
-        "consumption.* -> Source governed cube slices -> proof layers",
+        "consumption.* -> Source governed cube slices -> evidence controls",
       ],
     },
   };

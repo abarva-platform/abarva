@@ -55,7 +55,7 @@ export function SourceContract360Page({
     >
       <main data-testid="source-contract-360" style={MAIN_STYLE}>
         <div style={CONTAINER_STYLE}>
-          <Link href="/source/preview/workspace" style={BACK_LINK_STYLE}>
+          <Link href="/source/workspace" style={BACK_LINK_STYLE}>
             &larr; Back to Source workspace
           </Link>
           <Header contract={contract} />

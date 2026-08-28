@@ -17,12 +17,13 @@ const BAND_ACCENT: Record<SourceTriageBand, string> = {
 
 function formatBandValue(value: number): string {
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `$${Math.round(value / 1_000).toLocaleString("en-US")}K`;
+  if (value >= 1_000)
+    return `$${Math.round(value / 1_000).toLocaleString("en-US")}K`;
   return `$${Math.round(value).toLocaleString("en-US")}`;
 }
 
 function bandHref(band: SourceTriageBand, sort: SourceTriageSort): string {
-  return `/source/preview/workspace?decisionBand=${band}&sort=${sort}`;
+  return `/source/workspace?decisionBand=${band}&sort=${sort}`;
 }
 
 export function SourceTriageBands({

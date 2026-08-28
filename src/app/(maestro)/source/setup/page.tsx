@@ -393,7 +393,7 @@ function SourceSetupArtifactOperationsPage() {
                 d24 decision quality, and d32 value proof.
               </p>
               <Link
-                href="/source/preview/workspace"
+                href="/source/workspace"
                 style={{
                   color: SHELL.INK,
                   fontWeight: 800,

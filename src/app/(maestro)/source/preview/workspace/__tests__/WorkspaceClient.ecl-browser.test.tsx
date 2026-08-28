@@ -284,25 +284,23 @@ describe("Source workspace ECL browser-surface proof", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Source workspace")).toBeTruthy();
+      expect(
+        screen.getByRole("navigation", {
+          name: "Vendor 360 cockpit sections",
+        }),
+      ).toBeTruthy();
     });
-
-    expect(
-      screen.getByText(/Meridian Health · 2 contracts · 2 vendors/),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("navigation", {
-        name: "Vendor 360 cockpit sections",
-      }),
-    ).toBeTruthy();
     expect(screen.getByText("Helix Shared Services Group")).toBeTruthy();
     expect(screen.getByText("Contract register")).toBeTruthy();
     expect(screen.getByText("Application scope")).toBeTruthy();
+    expect(screen.queryByText("Source workspace")).toBeNull();
     expect(screen.queryByText("No Source rows returned")).toBeNull();
+    expect(screen.queryByText(/Demo Findings/i)).toBeNull();
+    expect(screen.queryByText(/Serving Surfaces/i)).toBeNull();
+    expect(screen.queryByText(/Proof Layers/i)).toBeNull();
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Open Vendor portfolio" }),
-    );
+    expect(screen.getByRole("button", { name: "View contracts" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "View vendors" }));
 
     expect(screen.getByText("All vendors")).toBeTruthy();
     expect(screen.getByText("Vendors — category view")).toBeTruthy();

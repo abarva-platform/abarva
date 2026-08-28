@@ -356,9 +356,9 @@ export function SourceEventsPortfolio({
               when the client data layer has loaded them.
             </div>
             <div style={{ ...SOURCE_MUTED, fontSize: "12px", marginTop: 4 }}>
-              Ask aVa directly in the chat lane on the left of this
-              page — the dock supports portfolio-level questions, drag-and-drop
-              file uploads, and resize / pin / expand modes.
+              Ask aVa directly in the chat lane on the left of this page — the
+              dock supports portfolio-level questions, drag-and-drop file
+              uploads, and resize / pin / expand modes.
             </div>
           </div>
         </article>
@@ -431,7 +431,7 @@ export function SourceEventsPortfolio({
               </Link>
               {activeStage || activeStatus ? (
                 <Link
-                  href="/source/preview/workspace"
+                  href="/source/workspace"
                   style={SOURCE_ACTION_LINK_SECONDARY}
                 >
                   Reset filters
@@ -513,7 +513,7 @@ export function SourceEventsPortfolio({
             rather than this portfolio surface.
           </div>
           <div>
-            <Link href="/source/preview/workspace" style={SOURCE_ACTION_LINK_PRIMARY}>
+            <Link href="/source/workspace" style={SOURCE_ACTION_LINK_PRIMARY}>
               Reset filters
             </Link>
           </div>
@@ -628,7 +628,7 @@ function buildChoiceHref({
   if (stage) params.set("stage", stage);
   if (status) params.set("status", status);
   const query = params.toString();
-  return query ? `/source/preview/workspace?${query}` : "/source/preview/workspace";
+  return query ? `/source/workspace?${query}` : "/source/workspace";
 }
 
 function ContextTile({

@@ -187,12 +187,10 @@ export function SourceOptimizeContractPage({
             agentName: "aVa",
             surface: "/source/optimize",
             surfaceContext,
-            conversationHistory: thread
-              .slice(-6)
-              .map((turn) => ({
-                role: turn.role === "user" ? "user" : "assistant",
-                content: turn.body,
-              })),
+            conversationHistory: thread.slice(-6).map((turn) => ({
+              role: turn.role === "user" ? "user" : "assistant",
+              content: turn.body,
+            })),
           }),
         });
         if (!res.ok) throw new Error(`aVa returned ${res.status}`);
@@ -401,10 +399,10 @@ function ModuleHeader({
         <Link
           href={
             selected
-              ? `/source/preview/workspace?contractId=${encodeURIComponent(
+              ? `/source/workspace?contractId=${encodeURIComponent(
                   selected.contractId,
                 )}`
-              : "/source/preview/workspace"
+              : "/source/workspace"
           }
           style={GHOST_BUTTON_STYLE}
         >
@@ -843,8 +841,7 @@ function WorkflowActionPanel({
   const financeConfirmationOpportunityId =
     (opportunitySet.negotiatedOutcomes ?? []).find(
       (outcome) => outcome.outcomeState === "agreed",
-    )?.opportunityId ??
-    selectedOpportunityId;
+    )?.opportunityId ?? selectedOpportunityId;
 
   const canCreate =
     position.currentKey === "plan" &&

@@ -49,8 +49,7 @@ const SOURCE_QUEUE_SELECT_STYLE: CSSProperties = {
   fontFamily: SHELL.SANS,
   fontSize: 12,
   color: SHELL.INK,
-  background:
-    `${SHELL.CARD_WHITE} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23525866' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center`,
+  background: `${SHELL.CARD_WHITE} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23525866' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center`,
   border: "1px solid " + SHELL.CARD_LINE,
   borderRadius: 6,
   padding: "8px 26px 8px 10px",
@@ -126,7 +125,10 @@ function cleanQueueCopy(text: string): string {
     .replace(/\bposture:\s*consolidate\b/gi, "consolidation candidate")
     .replace(/\bposture:\s*right[_-]?size\b/gi, "right-size before renewal")
     .replace(/\bgrounding\b/gi, "evidence")
-    .replace(/\bAbarVa should decline rather than guess\b/g, "Do not recommend until the missing evidence is refreshed")
+    .replace(
+      /\bAbarVa should decline rather than guess\b/g,
+      "Do not recommend until the missing evidence is refreshed",
+    )
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -153,7 +155,8 @@ function formatUsd(value: number): string {
 
 function formatCompactUsd(value: number): string {
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `$${Math.round(value / 1_000).toLocaleString("en-US")}K`;
+  if (value >= 1_000)
+    return `$${Math.round(value / 1_000).toLocaleString("en-US")}K`;
   return formatUsd(value);
 }
 
@@ -348,7 +351,10 @@ function DecisionBundleCard({
   const urgency = URGENCY_META[bundle.urgency];
   const band = triageBandForUrgency(bundle.urgency);
   return (
-    <article style={CARD} data-testid={`source-decision-card-${bundle.bundleId}`}>
+    <article
+      style={CARD}
+      data-testid={`source-decision-card-${bundle.bundleId}`}
+    >
       <div
         style={{
           display: "flex",
@@ -364,7 +370,9 @@ function DecisionBundleCard({
           color={urgency.text}
         />
         <Pill
-          text={POSTURE_GUIDANCE[bundle.posture] ?? POSTURE_LABEL[bundle.posture]}
+          text={
+            POSTURE_GUIDANCE[bundle.posture] ?? POSTURE_LABEL[bundle.posture]
+          }
           bg={SHELL.PAPER_DEEP}
           line={SHELL.CARD_LINE}
           color={SHELL.INK_SOFT}
@@ -562,7 +570,7 @@ function SecondaryDecisionAction({
           Confirm before changing deadlines. No queue date is changed silently.
         </span>
         <Link
-          href="/source/preview/workspace"
+          href="/source/workspace"
           style={{
             fontFamily: SHELL.SANS,
             fontSize: 12,
@@ -766,7 +774,7 @@ export function SourceDecisionQueueView({
             </p>
           ) : null}
           <Link
-            href="/source/preview/workspace"
+            href="/source/workspace"
             style={{
               fontFamily: SHELL.SANS,
               fontSize: 12,
@@ -802,7 +810,7 @@ function QueueToolbar({
 }) {
   return (
     <form
-      action="/source/preview/workspace"
+      action="/source/workspace"
       style={{
         display: "flex",
         gap: 8,
