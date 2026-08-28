@@ -155,15 +155,19 @@ export function projectContractDepthPackage(input: ContractDepthPackageInput): C
   });
 
   const contractVendor360 = contract360.map((row) => {
-    const copy = { ...row };
-    delete copy.scoped_application_count;
-    delete copy.critical_application_count;
-    delete copy.linked_budget_amount;
-    delete copy.linked_actual_amount;
-    delete copy.linked_budget_lines;
-    delete copy.cloud_sev1_sev2_incidents;
-    delete copy.operational_evidence_gap;
-    delete copy.initiative_dependency_count;
+    const copy: CsvRecord = { ...row };
+    for (const key of [
+      'scoped_application_count',
+      'critical_application_count',
+      'linked_budget_amount',
+      'linked_actual_amount',
+      'linked_budget_lines',
+      'cloud_sev1_sev2_incidents',
+      'operational_evidence_gap',
+      'initiative_dependency_count',
+    ]) {
+      delete copy[key];
+    }
     return copy;
   });
 
