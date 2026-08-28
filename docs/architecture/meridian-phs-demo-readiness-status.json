@@ -1,6 +1,6 @@
 {
   "schema_version": "meridian_phs_demo_readiness_status/v1",
-  "generated_at": "2026-08-28T07:31:09.848Z",
+  "generated_at": "2026-08-28T07:54:29.144Z",
   "tenant_key": "meridian-health",
   "scope": {
     "current_sprint_priority": "Meridian/PHS demo",
@@ -114,9 +114,9 @@
       ]
     },
     "cross_module_handoffs": {
-      "numerator": 3,
+      "numerator": 4,
       "denominator": 4,
-      "percent": 75,
+      "percent": 100,
       "proof_state": "deterministic_handoff_proof_complete",
       "handoffs": [
         {
@@ -131,7 +131,7 @@
           "from": "Tower",
           "to": "Moves",
           "required_proof": "A Tower gated claim creates or names an owner-bound move/action.",
-          "proof_state": "partial_read_side_proven_write_side_gap_recorded"
+          "proof_state": "proven"
         },
         {
           "handoff_key": "intelligence_to_moves_reasoning_context",

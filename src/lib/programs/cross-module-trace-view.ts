@@ -25,6 +25,7 @@ import {
   isSr117RegulatedTenant,
   type Sr117ControlDeliverable,
 } from "@/lib/programs/regulatory/sr-11-7-control-deliverable";
+import { runTowerToMovesActionHandoff } from "@/lib/programs/tower-trigger/tower-to-moves-action-handoff";
 
 /**
  * The minimal Source-event shape the trace ID-joins on. A projection
@@ -292,13 +293,20 @@ function towerStep(input: CrossModuleTraceInput): TraceStep {
   );
   if (ledger) {
     const note = ledger.note ? ` ${ledger.note}` : "";
+    const actionHandoff = runTowerToMovesActionHandoff({
+      move: input.move,
+      outcomeLedgerRow: ledger,
+    });
+    const actionDetail = actionHandoff.seed
+      ? ` Move action: ${actionHandoff.seed.programWorkItem.title}. Owner: ${actionHandoff.seed.ownerRole}. Next gate: ${actionHandoff.seed.nextGate}.`
+      : "";
     return {
       module: "tower",
       moduleLabel: MODULE_LABELS.tower,
       artifactKind: "Tower outcome-ledger entry",
       linkState: "linked",
       title: ledger.subjectLabel || "Outcome ledger entry",
-      detail: `Value rung: ${ledger.valueRung.replace(/_/g, " ")} · governance: ${ledger.governanceReviewStatus.replace(/_/g, " ")}.${note}`,
+      detail: `Value rung: ${ledger.valueRung.replace(/_/g, " ")} · governance: ${ledger.governanceReviewStatus.replace(/_/g, " ")}.${note}${actionDetail}`,
       joinId: ledger.id,
       href: '/tower',
       gapRef: null,
