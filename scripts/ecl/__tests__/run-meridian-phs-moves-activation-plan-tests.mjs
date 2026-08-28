@@ -91,8 +91,11 @@ assert.equal(
 );
 
 const sql = fs.readFileSync(path.join(outDir, "meridian_phs_moves_activation.sql"), "utf8");
-assert.match(sql, /on conflict \(client_id, solution\) do update/i);
-assert.match(sql, /on conflict \(engagement_id, module_key\) do update/i);
+assert.match(sql, /on conflict \(id\) do update set/i);
+assert.match(sql, /client_id = excluded\.client_id/i);
+assert.match(sql, /solution = excluded\.solution/i);
+assert.doesNotMatch(sql, /on conflict \(client_id, solution\)/i);
+assert.doesNotMatch(sql, /on conflict \(engagement_id, module_key\)/i);
 assert.doesNotMatch(sql, /\bdelete\s+from\b/i, "activation SQL must not delete existing Move rows");
 assert.doesNotMatch(sql, /\bdatabase_url\b/i, "activation plan must not embed runtime database credentials");
 assert.match(sql, /value_is_not_claimable_until_tower_gate_passes/);

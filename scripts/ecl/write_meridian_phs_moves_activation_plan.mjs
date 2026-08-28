@@ -8,7 +8,7 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../.
 const DEFAULT_HOME_SNAPSHOT = "src/lib/home/preview/golden-snapshots/meridian-health.json";
 const DEFAULT_SOURCE_ROOM = "outputs/source-room-depth-catchup-2026-08-23";
 const DEFAULT_OUT_DIR = "outputs/meridian-phs-moves-activation-plan";
-const DEFAULT_CLIENT_ID = "d2e9b6f4-8c25-43a9-b8e0-7d2f41f0a612";
+const DEFAULT_CLIENT_ID = "d88769f2-0385-4215-93df-6db29c23162c";
 const TENANT_KEY = "meridian-health";
 const DECLARED_PROGRAM_COUNT = 38;
 const SP07_RELATIVE_PATH = "__synthetic_sources__/SP07_PPM/PPM_Programs_SYNTHETIC.csv";
@@ -340,6 +340,8 @@ function engagementSql(row, args) {
   ${sqlText(`move:${TENANT_KEY}:${row.solution}`)}
 )
 on conflict (id) do update set
+  client_id = excluded.client_id,
+  solution = excluded.solution,
   name = excluded.name,
   problem_statement = excluded.problem_statement,
   target_outcome = excluded.target_outcome,
