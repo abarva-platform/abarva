@@ -1,167 +1,1005 @@
-'use client';
+"use client";
 
-import { DataTable } from '../DataTable';
-import type { SourceWorkspaceVM } from '../buildViewModel';
+import type { CSSProperties, ReactNode } from "react";
+
+import {
+  DataTable,
+  type DataTableColumn,
+  type DataTableRow,
+} from "../DataTable";
+import type { SourceWorkspaceVM } from "../buildViewModel";
+import { COL } from "../viewModel";
 
 export function VendorCanvas({ vm }: { vm: SourceWorkspaceVM }) {
+  const category = vm.vendorCat ?? "Unclassified";
+  const contractCount = vm.vendorContractRows.length;
+  const primaryValue = vm.valueStrip.find((item) =>
+    /annual contract value/i.test(item.label),
+  );
+  const committedValue = vm.valueStrip.find((item) =>
+    /total committed/i.test(item.label),
+  );
+  const autoRenewValue = vm.valueStrip.find((item) =>
+    /auto-renew/i.test(item.label),
+  );
+  const renewalValue = vm.valueStrip.find((item) =>
+    /renewal exposure/i.test(item.label),
+  );
+  const weakSignalValue = vm.valueStrip.find((item) =>
+    /weak leverage/i.test(item.label),
+  );
+  const actionableRenewalValue = renewalValue ?? null;
+  const actionableWeakSignalValue =
+    weakSignalValue && weakSignalValue.value !== "0" ? weakSignalValue : null;
+  const metricCards = [
+    primaryValue,
+    committedValue,
+    autoRenewValue,
+    renewalValue,
+    weakSignalValue,
+  ].filter(isAvailableMetric);
+  const showOverview = vm.vOverview || (vm.vOppsTab && !vm.vendorHasOpps);
+  const tabs = vm.tabs.filter(
+    (tab) => tab.label !== "Opportunities" || vm.vendorHasOpps,
+  );
+
   return (
-    <>
-      {vm.vOverview ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(400px,1fr))', gap: 16, alignItems: 'start' }}>
-          <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px' }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 14 }}>
-              Portfolio position
+    <section data-testid="source-vendor360-exec-cockpit" style={SHELL}>
+      <header style={HEADER}>
+        <div style={IDENTITY}>
+          <VendorMark name={vm.vendorName} />
+          <div style={{ minWidth: 0 }}>
+            <div style={CRUMBS}>Vendor 360 / {vm.vendorName}</div>
+            <h1 style={TITLE}>{vm.vendorName}</h1>
+            <div style={META}>
+              <span>{category}</span>
+              <span>Source</span>
+              <span>{vm.tenantName}</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {vm.vendorStats.map((s, i) => (
-                <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'baseline', padding: '10px 0', borderBottom: '1px solid rgba(10,10,11,.07)' }}>
-                  <span style={{ fontSize: 13, color: '#5f5e5a' }}>{s.label}</span>
-                  <span style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 600, color: '#0a0a0b', textAlign: 'right' }}>{s.value}</span>
-                </div>
-              ))}
+            <div style={CHIP_ROW}>
+              <Pill tone="green">Governed</Pill>
+              <Pill>
+                Tier{" "}
+                {Math.max(
+                  1,
+                  vm.conc.byVendor.findIndex(
+                    (row) => row.vendorRef === vm.vendorRef,
+                  ) + 1 || 1,
+                )}
+              </Pill>
+              <Pill>
+                As of{" "}
+                {new Date(vm.asOfDateIso).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                  timeZone: "UTC",
+                })}
+              </Pill>
             </div>
           </div>
-          <DataTable
-            title="Material contracts"
-            note="Row click opens Contract 360."
-            binding="SourceRenewalExposure"
-            columns={vm.listCols}
-            rows={vm.vendorContractRows}
-            footnote="Material contract rows shown. If the vendor rollup groups rows into contract families, that family count is labeled separately."
-          />
         </div>
-      ) : null}
-
-      {vm.vOverview ? (
-        <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px' }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 4 }}>
-            Contract portfolio composition
-          </div>
-          <div style={{ fontSize: 12.5, color: '#5f5e5a', marginBottom: 16 }}>Annual contract value against actual spend, per governed contract. Row click opens Contract 360.</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {vm.vendorComposition.map((c) => (
-              <div key={c.id} onClick={c.onClick} className="sw-hover-cream" style={{ cursor: 'pointer', padding: '4px 6px', borderRadius: 6 }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'baseline', marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0a0a0b' }}>{c.name}</span>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#b4b2a9' }}>{c.id}</span>
-                  {c.autoRenew ? <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#ba7517', border: '1px solid rgba(186,117,23,.3)', borderRadius: 3, padding: '1px 6px' }}>Auto-renew</span> : null}
-                  {c.renewalExposed ? <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: c.urgColor, border: `1px solid ${c.urgColor}`, borderRadius: 3, padding: '1px 6px' }}>≤180d</span> : null}
-                  <span style={{ marginLeft: 'auto', fontSize: 12, color: '#5f5e5a' }}>{c.renewalLabel}</span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 88, fontSize: 10.5, color: '#888780' }}>Contract value</span>
-                    <div style={{ flex: 1, height: 10, background: '#f1efe8', borderRadius: 3, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${c.acvPct}%`, background: '#0a0a0b' }} />
-                    </div>
-                    <span style={{ width: 70, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textAlign: 'right', color: '#2c2c2a' }}>{c.acv}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 88, fontSize: 10.5, color: '#888780' }}>Actual spend</span>
-                    <div style={{ flex: 1, height: 10, background: '#f1efe8', borderRadius: 3, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${c.spendPct}%`, background: '#3d6ea8' }} />
-                    </div>
-                    <span style={{ width: 70, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, textAlign: 'right', color: '#5f5e5a' }}>{c.spend}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div style={CONTROL_ROW}>
+          <ReadOnlyScope>All contract rows</ReadOnlyScope>
+          <ReadOnlyScope>{vm.asOfDateIso.slice(0, 10)}</ReadOnlyScope>
         </div>
-      ) : null}
+      </header>
 
-      {vm.vOverview ? (
-        <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px' }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 4 }}>
-            Enterprise dependency map
-          </div>
-          <div style={{ fontSize: 12.5, color: '#5f5e5a', marginBottom: 16 }}>Vendor → contracts → critical applications → platforms → transformation initiatives. A layer that has nothing mapped for this vendor says so rather than showing zero.</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 16 }}>
-            <DepCol label="Contracts">
-              {vm.vendorDependencyMap.contracts.length ? vm.vendorDependencyMap.contracts.map((c) => (
-                <DepChip key={c.id} onClick={c.onClick}>{c.name}</DepChip>
-              )) : <DepEmpty />}
-            </DepCol>
-            <DepCol label="Critical applications">
-              {vm.vendorDependencyMap.criticalApplications > 0 ? <DepChip tone="#0066CC">{vm.vendorDependencyMap.criticalApplications} business-critical</DepChip> : <DepEmpty />}
-            </DepCol>
-            <DepCol label="Platforms">
-              {vm.vendorDependencyMap.platforms.length ? vm.vendorDependencyMap.platforms.map((p) => <DepChip key={p}>{p}</DepChip>) : <DepEmpty />}
-            </DepCol>
-            <DepCol label="Transformation initiatives">
-              {vm.vendorDependencyMap.initiatives.length ? vm.vendorDependencyMap.initiatives.map((i, idx) => <DepChip key={idx} tone="#ba7517">{i.name} · {i.status}</DepChip>) : <DepEmpty />}
-            </DepCol>
-          </div>
+      <section aria-label="Vendor headline metrics" style={SUMMARY_ROW}>
+        <div style={METRIC_STRIP}>
+          {metricCards.map((item) => (
+            <MetricCard
+              key={item.label}
+              label={item.label}
+              value={item.value}
+              sub={item.sub}
+            />
+          ))}
         </div>
-      ) : null}
-
-      {vm.vContracts ? (
-        <DataTable
-          title="Contracts and renewal posture"
-          note="Notice deadline, expiry, auto-renew and weak-signal count for every material contract with this vendor."
-          binding="computeRenewalExposure + computeContractLeverageSignals(source.contract_360)"
-          columns={vm.listCols}
-          rows={vm.vendorContractRows}
+        <QuickActions
+          hasOpportunities={vm.vendorHasOpps}
+          onContracts={() =>
+            vm.tabs.find((tab) => tab.label === "Contracts")?.onClick()
+          }
+          onDependencies={() =>
+            vm.tabs.find((tab) => tab.label === "Dependencies")?.onClick()
+          }
+          onOpportunities={() =>
+            vm.tabs.find((tab) => tab.label === "Opportunities")?.onClick()
+          }
         />
-      ) : null}
+      </section>
 
-      {vm.vDeps ? (
-        <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 24px' }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#888780', marginBottom: 4 }}>
-            Transformation dependencies
-          </div>
-          <div style={{ fontSize: 12.5, color: '#5f5e5a', marginBottom: 16 }}>source.contract_initiative_dependency, across every material contract with this vendor.</div>
-          {vm.vendorDependencyMap.initiatives.length ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {vm.vendorDependencyMap.initiatives.map((i, idx) => (
-                <div key={idx} style={{ display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'baseline', paddingBottom: 10, borderBottom: '1px solid rgba(10,10,11,.07)' }}>
-                  <span style={{ fontSize: 13.5, fontWeight: 600, color: '#0a0a0b' }}>{i.name}</span>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: '#888780', border: '1px solid rgba(10,10,11,.16)', borderRadius: 3, padding: '2px 7px' }}>{i.status}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ fontSize: 12.5, color: '#b4b2a9' }}>No initiative dependencies recorded for this vendor&rsquo;s contracts.</div>
-          )}
+      <nav aria-label="Vendor 360 sections" style={TAB_ROW}>
+        {tabs.map((tab) => (
+          <button
+            key={tab.label}
+            type="button"
+            onClick={tab.onClick}
+            style={{
+              ...TAB_BUTTON,
+              borderBottomColor: tab.line,
+              color: tab.fg,
+              fontWeight: tab.weight,
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
+
+      {showOverview ? (
+        <div style={MAIN_GRID}>
+          <section style={LEFT_STACK}>
+            <ContractTable vm={vm} />
+            <section style={VALUE_SUMMARY}>
+              <MiniStat
+                label="Annual value"
+                value={primaryValue?.value ?? "Not established"}
+              />
+              <MiniStat label="Contracts" value={String(contractCount)} />
+              {actionableRenewalValue ? (
+                <MiniStat
+                  label="Renewal exposure"
+                  value={actionableRenewalValue.value}
+                />
+              ) : null}
+              {actionableWeakSignalValue ? (
+                <MiniStat
+                  label="Weak leverage"
+                  value={actionableWeakSignalValue.value}
+                />
+              ) : null}
+              {vm.vendorHasOpps ? (
+                <MiniStat
+                  label="Opportunities"
+                  value={String(vm.vendorOpps.length)}
+                />
+              ) : null}
+            </section>
+          </section>
+          <aside style={RIGHT_STACK}>
+            <AlertsPanel vm={vm} />
+            <AssistantPanel vm={vm} />
+          </aside>
         </div>
       ) : null}
 
-      {vm.vOppsTab ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {vm.vendorHasOpps ? vm.vendorOpps.map((o) => (
-            <div key={o.ref} onClick={o.onClick} className="sw-hover-ink-border" style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '18px 22px', cursor: 'pointer' }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 12, marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#0a0a0b' }}>{o.reasons}</span>
-                <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 600, color: '#0a0a0b' }}>{o.exposed} exposed</span>
-              </div>
-              <div style={{ fontSize: 13, color: '#5f5e5a', lineHeight: 1.6, maxWidth: '100ch' }}>{o.why}</div>
-            </div>
-          )) : <div style={{ fontSize: 12.5, color: '#b4b2a9' }}>No deterministic opportunities flagged for this vendor.</div>}
-        </div>
-      ) : null}
-    </>
+      {vm.vContracts ? <ContractTable vm={vm} expanded /> : null}
+
+      {vm.vDeps ? <DependenciesPanel vm={vm} /> : null}
+
+      {vm.vOppsTab && vm.vendorHasOpps ? <OpportunitiesPanel vm={vm} /> : null}
+    </section>
   );
 }
 
-function DepCol({ label, children }: { label: string; children: React.ReactNode }) {
+function VendorMark({ name }: { name: string }) {
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+
   return (
-    <div>
-      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: '#888780', marginBottom: 8 }}>{label}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{children}</div>
+    <div aria-hidden style={MARK}>
+      {initials || "V"}
     </div>
   );
 }
-function DepChip({ children, onClick, tone }: { children: React.ReactNode; onClick?: () => void; tone?: string }) {
+
+function Pill({
+  children,
+  tone = "default",
+}: {
+  children: ReactNode;
+  tone?: "default" | "green";
+}) {
   return (
-    <div
-      onClick={onClick}
-      className={onClick ? 'sw-hover-cream' : undefined}
-      style={{ border: `1px solid ${tone ?? 'rgba(10,10,11,.14)'}`, borderRadius: 6, padding: '7px 10px', fontSize: 12.5, color: tone ?? '#2c2c2a', cursor: onClick ? 'pointer' : 'default' }}
+    <span
+      style={{
+        ...PILL,
+        background: tone === "green" ? "rgba(29,158,117,.10)" : "#f4f7fb",
+        borderColor:
+          tone === "green" ? "rgba(29,158,117,.28)" : "rgba(10,31,68,.14)",
+        color: tone === "green" ? "#176d52" : "#23395d",
+      }}
     >
       {children}
+    </span>
+  );
+}
+
+function ReadOnlyScope({ children }: { children: ReactNode }) {
+  return (
+    <span style={SCOPE_BADGE}>
+      <span>{children}</span>
+    </span>
+  );
+}
+
+function MetricCard({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+}) {
+  return (
+    <div style={METRIC_CARD}>
+      <div style={METRIC_LABEL}>{label}</div>
+      <div style={METRIC_VALUE}>{value}</div>
+      <div style={METRIC_SUB}>{sub}</div>
     </div>
   );
 }
+
+function QuickActions({
+  hasOpportunities,
+  onContracts,
+  onDependencies,
+  onOpportunities,
+}: {
+  hasOpportunities: boolean;
+  onContracts?: () => void;
+  onDependencies?: () => void;
+  onOpportunities?: () => void;
+}) {
+  const actions = [
+    ["Contracts", onContracts],
+    ["Relationships", onDependencies],
+    ...(hasOpportunities
+      ? ([["Opportunities", onOpportunities]] as const)
+      : []),
+  ] as const;
+
+  return (
+    <section aria-label="Quick actions" style={QUICK_ACTIONS}>
+      <h2 style={PANEL_TITLE}>Quick actions</h2>
+      <div style={QUICK_GRID}>
+        {actions.map(([label, onClick]) => (
+          <button
+            key={label}
+            type="button"
+            onClick={onClick}
+            style={QUICK_BUTTON}
+          >
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ContractTable({
+  vm,
+  expanded = false,
+}: {
+  vm: SourceWorkspaceVM;
+  expanded?: boolean;
+}) {
+  const rows = (
+    expanded ? vm.vendorContractRows : vm.vendorContractRows.slice(0, 5)
+  ).map(toCompactContractRow);
+
+  return (
+    <DataTable
+      title={
+        expanded
+          ? "Contracts and renewal posture"
+          : `Active contracts (${vm.vendorContractRows.length})`
+      }
+      note={
+        expanded
+          ? "Notice, expiry, renewal, and weak-signal posture for this vendor."
+          : "Click a row to open Contract 360."
+      }
+      columns={compactContractColumns}
+      rows={rows}
+      footnote={
+        expanded
+          ? undefined
+          : `Showing ${Math.min(5, vm.vendorContractRows.length)} of ${vm.vendorContractRows.length} contracts`
+      }
+    />
+  );
+}
+
+function toCompactContractRow(row: DataTableRow): DataTableRow {
+  return {
+    ...row,
+    cells: [
+      row.cells[1],
+      row.cells[2],
+      row.cells[3],
+      row.cells[5],
+      row.cells[6],
+      row.cells[7],
+      row.cells[8],
+    ].filter(Boolean),
+  };
+}
+
+function AlertsPanel({ vm }: { vm: SourceWorkspaceVM }) {
+  const alerts = [
+    ...vm.vendorComposition
+      .filter((contract) => contract.renewalExposed)
+      .slice(0, 2)
+      .map((contract) => ({
+        tone: COL.amber,
+        title: `${contract.id} renewal exposure`,
+        body: contract.renewalLabel,
+        onClick: contract.onClick,
+      })),
+    ...vm.vendorOpps.slice(0, 2).map((opportunity) => ({
+      tone: COL.blue,
+      title: "Sourcing opportunity identified",
+      body: `${opportunity.ref} · ${opportunity.exposed}`,
+      onClick: opportunity.onClick,
+    })),
+  ];
+
+  return (
+    <section style={SIDE_PANEL}>
+      <PanelHeader
+        title="Key alerts"
+        action={alerts.length ? `${alerts.length} open` : "Clear"}
+      />
+      <div style={ALERT_LIST}>
+        {alerts.length ? (
+          alerts.map((alert) => (
+            <button
+              key={`${alert.title}-${alert.body}`}
+              type="button"
+              onClick={alert.onClick}
+              style={ALERT_ROW}
+            >
+              <span
+                aria-hidden
+                style={{ ...ALERT_DOT, background: alert.tone }}
+              >
+                !
+              </span>
+              <span style={{ minWidth: 0 }}>
+                <strong style={ALERT_TITLE}>{alert.title}</strong>
+                <span style={ALERT_BODY}>{alert.body}</span>
+              </span>
+              <span style={ALERT_LINK}>View</span>
+            </button>
+          ))
+        ) : (
+          <div style={EMPTY_SIDE_COPY}>
+            No deterministic vendor alerts in the current cut.
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function AssistantPanel({ vm }: { vm: SourceWorkspaceVM }) {
+  const insights = vm.vendorOpps.length
+    ? vm.vendorOpps.slice(0, 3).map((opportunity) => ({
+        title: opportunity.reasons,
+        body: opportunity.why,
+        cta: "View details",
+        onClick: opportunity.onClick,
+      }))
+    : [
+        {
+          title: "No deterministic opportunities flagged",
+          body: "The current vendor rollup has no populated opportunity row; Source is not substituting an estimated claim.",
+          cta: "Review evidence",
+          onClick: () =>
+            vm.tabs.find((tab) => tab.label === "Dependencies")?.onClick(),
+        },
+      ];
+
+  return (
+    <section style={SIDE_PANEL}>
+      <PanelHeader
+        title="aVa insights"
+        action={vm.vendorHasOpps ? "Evidence-backed" : "No claim"}
+      />
+      <div style={ASSISTANT_LIST}>
+        {insights.map((insight) => (
+          <button
+            key={insight.title}
+            type="button"
+            onClick={insight.onClick}
+            style={ASSISTANT_CARD}
+          >
+            <span aria-hidden style={SPARK}>
+              *
+            </span>
+            <span style={{ minWidth: 0 }}>
+              <strong style={ALERT_TITLE}>{insight.title}</strong>
+              <span style={ALERT_BODY}>{insight.body}</span>
+              <span style={ASSISTANT_CTA}>{insight.cta} -&gt;</span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function DependenciesPanel({ vm }: { vm: SourceWorkspaceVM }) {
+  const dependencies = vm.vendorDependencyMap;
+
+  return (
+    <section style={PANEL}>
+      <PanelHeader
+        title="Relationships"
+        action={dependencies.vendorRef ?? "Vendor"}
+      />
+      <div style={DEPENDENCY_GRID}>
+        <DepCol label="Contracts">
+          {dependencies.contracts.length ? (
+            dependencies.contracts.map((contract) => (
+              <DepChip key={contract.id} onClick={contract.onClick}>
+                {contract.name}
+              </DepChip>
+            ))
+          ) : (
+            <DepEmpty />
+          )}
+        </DepCol>
+        <DepCol label="Critical applications">
+          {dependencies.criticalApplications > 0 ? (
+            <DepChip tone={COL.blue}>
+              {dependencies.criticalApplications} business-critical
+            </DepChip>
+          ) : (
+            <DepEmpty />
+          )}
+        </DepCol>
+        <DepCol label="Platforms">
+          {dependencies.platforms.length ? (
+            dependencies.platforms.map((platform) => (
+              <DepChip key={platform}>{platform}</DepChip>
+            ))
+          ) : (
+            <DepEmpty />
+          )}
+        </DepCol>
+        <DepCol label="Transformation initiatives">
+          {dependencies.initiatives.length ? (
+            dependencies.initiatives.map((initiative, index) => (
+              <DepChip key={`${initiative.name}-${index}`} tone={COL.amber}>
+                {initiative.name} · {initiative.status}
+              </DepChip>
+            ))
+          ) : (
+            <DepEmpty />
+          )}
+        </DepCol>
+      </div>
+    </section>
+  );
+}
+
+function OpportunitiesPanel({ vm }: { vm: SourceWorkspaceVM }) {
+  return (
+    <section style={PANEL}>
+      <PanelHeader
+        title="Opportunities"
+        action={`${vm.vendorOpps.length} populated`}
+      />
+      {vm.vendorHasOpps ? (
+        <div style={OPPORTUNITY_LIST}>
+          {vm.vendorOpps.map((opportunity) => (
+            <button
+              key={opportunity.ref}
+              type="button"
+              onClick={opportunity.onClick}
+              style={OPPORTUNITY_ROW}
+            >
+              <span>
+                <strong style={ALERT_TITLE}>{opportunity.reasons}</strong>
+                <span style={ALERT_BODY}>{opportunity.why}</span>
+              </span>
+              <span style={OPPORTUNITY_VALUE}>{opportunity.exposed}</span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div style={EMPTY_SIDE_COPY}>
+          No deterministic opportunities flagged for this vendor.
+        </div>
+      )}
+    </section>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={MINI_STAT}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function PanelHeader({ title, action }: { title: string; action: string }) {
+  return (
+    <div style={PANEL_HEADER}>
+      <h2 style={PANEL_TITLE}>{title}</h2>
+      <span style={PANEL_ACTION}>{action}</span>
+    </div>
+  );
+}
+
+function DepCol({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <div style={DEP_LABEL}>{label}</div>
+      <div style={DEP_STACK}>{children}</div>
+    </div>
+  );
+}
+
+function DepChip({
+  children,
+  onClick,
+  tone,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  tone?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={onClick ? "sw-hover-cream" : undefined}
+      style={{
+        ...DEP_CHIP,
+        borderColor: tone ?? "rgba(10,31,68,.14)",
+        color: tone ?? "#23395d",
+        cursor: onClick ? "pointer" : "default",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
 function DepEmpty() {
-  return <div style={{ fontSize: 12, color: '#b4b2a9' }}>Not mapped for this vendor.</div>;
+  return <div style={EMPTY_SIDE_COPY}>Not mapped for this vendor.</div>;
+}
+
+const SHELL: CSSProperties = {
+  display: "grid",
+  gap: 14,
+  color: "#06172f",
+};
+
+const HEADER: CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  gap: 24,
+  background: "#fff",
+  border: "1px solid rgba(10,31,68,.12)",
+  borderRadius: 8,
+  padding: "20px 22px",
+};
+
+const IDENTITY: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 18,
+  minWidth: 0,
+};
+
+const MARK: CSSProperties = {
+  width: 78,
+  height: 78,
+  borderRadius: 22,
+  display: "grid",
+  placeItems: "center",
+  flex: "0 0 auto",
+  background: "linear-gradient(135deg,#0f7cf6,#12b5cb)",
+  color: "#fff",
+  fontSize: 24,
+  fontWeight: 850,
+  letterSpacing: 0,
+};
+
+const CRUMBS: CSSProperties = {
+  color: "#66758c",
+  fontSize: 12,
+  fontWeight: 650,
+  marginBottom: 6,
+};
+
+const TITLE: CSSProperties = {
+  margin: 0,
+  color: "#06172f",
+  fontSize: 28,
+  fontWeight: 800,
+  letterSpacing: 0,
+  lineHeight: 1.08,
+};
+
+const META: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 9,
+  color: "#53657f",
+  fontSize: 12.5,
+  marginTop: 7,
+};
+
+const CHIP_ROW: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 7,
+  marginTop: 12,
+};
+
+const PILL: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  minHeight: 24,
+  border: "1px solid",
+  borderRadius: 999,
+  padding: "0 10px",
+  fontSize: 11.5,
+  fontWeight: 750,
+};
+
+const CONTROL_ROW: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  justifyContent: "flex-end",
+  gap: 10,
+};
+
+const SCOPE_BADGE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: 38,
+  border: "1px solid rgba(10,31,68,.16)",
+  borderRadius: 6,
+  background: "#f7f9fc",
+  color: "#06172f",
+  padding: "0 12px",
+  fontSize: 12.5,
+  fontWeight: 650,
+};
+
+const SUMMARY_ROW: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0,1fr) minmax(300px,400px)",
+  gap: 14,
+};
+
+const METRIC_STRIP: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
+  background: "#fff",
+  border: "1px solid rgba(10,31,68,.12)",
+  borderRadius: 8,
+  overflow: "hidden",
+};
+
+const METRIC_CARD: CSSProperties = {
+  minHeight: 82,
+  padding: "14px 15px",
+  borderRight: "1px solid rgba(10,31,68,.10)",
+};
+
+const METRIC_LABEL: CSSProperties = {
+  color: "#06172f",
+  fontSize: 11.5,
+  fontWeight: 750,
+  lineHeight: 1.25,
+};
+
+const METRIC_VALUE: CSSProperties = {
+  color: "#06172f",
+  fontSize: 22,
+  fontWeight: 850,
+  lineHeight: 1.05,
+  marginTop: 8,
+};
+
+const METRIC_SUB: CSSProperties = {
+  color: "#53657f",
+  fontSize: 11.5,
+  lineHeight: 1.35,
+  marginTop: 5,
+};
+
+const QUICK_ACTIONS: CSSProperties = {
+  background: "#fff",
+  border: "1px solid rgba(10,31,68,.12)",
+  borderRadius: 8,
+  padding: "15px 16px",
+};
+
+const QUICK_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(82px,1fr))",
+  gap: 8,
+  marginTop: 12,
+};
+
+const QUICK_BUTTON: CSSProperties = {
+  display: "grid",
+  justifyItems: "center",
+  alignContent: "center",
+  gap: 7,
+  border: "1px solid rgba(10,31,68,.12)",
+  borderRadius: 7,
+  background: "#f7f9fc",
+  color: "#06172f",
+  minHeight: 42,
+  padding: "0 10px",
+  fontSize: 11.5,
+  fontWeight: 700,
+  cursor: "pointer",
+};
+
+const TAB_ROW: CSSProperties = {
+  display: "flex",
+  gap: 2,
+  overflowX: "auto",
+  background: "#fff",
+  border: "1px solid rgba(10,31,68,.10)",
+  borderRadius: 8,
+  padding: "0 12px",
+};
+
+const TAB_BUTTON: CSSProperties = {
+  border: "none",
+  borderBottom: "2px solid transparent",
+  background: "transparent",
+  color: "#53657f",
+  cursor: "pointer",
+  fontSize: 12.5,
+  minHeight: 42,
+  padding: "0 14px",
+  whiteSpace: "nowrap",
+};
+
+const MAIN_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0,1fr) minmax(320px,400px)",
+  gap: 14,
+  alignItems: "start",
+};
+
+const LEFT_STACK: CSSProperties = {
+  display: "grid",
+  gap: 14,
+  minWidth: 0,
+};
+
+const RIGHT_STACK: CSSProperties = {
+  display: "grid",
+  gap: 14,
+  minWidth: 0,
+};
+
+const PANEL: CSSProperties = {
+  background: "#fff",
+  border: "1px solid rgba(10,31,68,.12)",
+  borderRadius: 8,
+  overflow: "hidden",
+};
+
+const SIDE_PANEL: CSSProperties = {
+  ...PANEL,
+  padding: "15px 16px",
+};
+
+const PANEL_HEADER: CSSProperties = {
+  display: "flex",
+  alignItems: "baseline",
+  justifyContent: "space-between",
+  gap: 12,
+};
+
+const PANEL_TITLE: CSSProperties = {
+  margin: 0,
+  color: "#06172f",
+  fontSize: 13.5,
+  fontWeight: 850,
+};
+
+const PANEL_ACTION: CSSProperties = {
+  color: "#005bd3",
+  fontSize: 11.5,
+  fontWeight: 750,
+};
+
+const VALUE_SUMMARY: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
+  background: "#fff",
+  border: "1px solid rgba(10,31,68,.12)",
+  borderRadius: 8,
+  padding: "13px 16px",
+};
+
+const MINI_STAT: CSSProperties = {
+  display: "grid",
+  gap: 4,
+  color: "#53657f",
+  fontSize: 11.5,
+  borderRight: "1px solid rgba(10,31,68,.10)",
+};
+
+const ALERT_LIST: CSSProperties = {
+  display: "grid",
+  marginTop: 12,
+};
+
+const ALERT_ROW: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "26px minmax(0,1fr) auto",
+  alignItems: "start",
+  gap: 10,
+  border: "none",
+  borderTop: "1px solid rgba(10,31,68,.09)",
+  background: "transparent",
+  color: "#06172f",
+  cursor: "pointer",
+  padding: "12px 0",
+  textAlign: "left",
+};
+
+const ALERT_DOT: CSSProperties = {
+  display: "grid",
+  placeItems: "center",
+  width: 21,
+  height: 21,
+  borderRadius: 999,
+  color: "#fff",
+  fontSize: 12,
+  fontWeight: 850,
+};
+
+const ALERT_TITLE: CSSProperties = {
+  display: "block",
+  color: "#06172f",
+  fontSize: 12.5,
+  lineHeight: 1.35,
+};
+
+const ALERT_BODY: CSSProperties = {
+  display: "block",
+  color: "#53657f",
+  fontSize: 11.5,
+  lineHeight: 1.4,
+  marginTop: 3,
+};
+
+const ALERT_LINK: CSSProperties = {
+  color: "#005bd3",
+  fontSize: 11.5,
+  fontWeight: 750,
+};
+
+const ASSISTANT_LIST: CSSProperties = {
+  display: "grid",
+  gap: 8,
+  marginTop: 12,
+};
+
+const ASSISTANT_CARD: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "24px minmax(0,1fr)",
+  gap: 10,
+  border: "1px solid rgba(10,31,68,.10)",
+  borderRadius: 8,
+  background: "#fff",
+  color: "#06172f",
+  cursor: "pointer",
+  padding: "12px",
+  textAlign: "left",
+};
+
+const SPARK: CSSProperties = {
+  color: "#0066cc",
+  fontSize: 18,
+  lineHeight: 1,
+};
+
+const ASSISTANT_CTA: CSSProperties = {
+  display: "block",
+  color: "#005bd3",
+  fontSize: 11.5,
+  fontWeight: 750,
+  marginTop: 8,
+};
+
+const EMPTY_SIDE_COPY: CSSProperties = {
+  color: "#7a8799",
+  fontSize: 12.5,
+  lineHeight: 1.45,
+  padding: "12px 0",
+};
+
+const DEPENDENCY_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(4,minmax(0,1fr))",
+  gap: 14,
+  padding: 16,
+};
+
+const DEP_LABEL: CSSProperties = {
+  color: "#66758c",
+  fontSize: 10,
+  fontWeight: 850,
+  letterSpacing: ".08em",
+  textTransform: "uppercase",
+  marginBottom: 8,
+};
+
+const DEP_STACK: CSSProperties = {
+  display: "grid",
+  gap: 7,
+};
+
+const DEP_CHIP: CSSProperties = {
+  border: "1px solid rgba(10,31,68,.14)",
+  borderRadius: 7,
+  background: "#fff",
+  padding: "8px 10px",
+  textAlign: "left",
+  fontSize: 12.5,
+  lineHeight: 1.35,
+};
+
+const OPPORTUNITY_LIST: CSSProperties = {
+  display: "grid",
+  gap: 10,
+  padding: 16,
+};
+
+const OPPORTUNITY_ROW: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0,1fr) auto",
+  gap: 14,
+  border: "1px solid rgba(10,31,68,.10)",
+  borderRadius: 8,
+  background: "#fff",
+  padding: "13px 14px",
+  textAlign: "left",
+  cursor: "pointer",
+};
+
+const OPPORTUNITY_VALUE: CSSProperties = {
+  color: "#06172f",
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: 12,
+  fontWeight: 850,
+  whiteSpace: "nowrap",
+};
+
+const compactContractColumns: DataTableColumn[] = [
+  { label: "Contract" },
+  { label: "Id" },
+  { label: "Annual value", align: "right" },
+  { label: "Notice deadline", align: "right" },
+  { label: "Expiry", align: "right" },
+  { label: "Renewal" },
+  { label: "Weak signals", align: "center" },
+];
+
+type ValueStripItem = SourceWorkspaceVM["valueStrip"][number];
+
+function isAvailableMetric(
+  item: ValueStripItem | undefined,
+): item is ValueStripItem {
+  return Boolean(item && item.value.trim() && item.value !== "Not established");
 }
