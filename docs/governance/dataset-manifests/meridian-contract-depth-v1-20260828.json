@@ -1,0 +1,17 @@
+{
+  "dataset_id": "meridian-contract-depth-v1-20260828",
+  "title": "Meridian Contract Depth V1 Demo Evidence Pack",
+  "client_key": "meridian-health",
+  "source_layer": "tenant_context",
+  "classification": "confidential",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "synthetic_demo_contract_depth_package",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": "Synthetic, PHI-free, planning-grade healthcare technology contract depth package. No patient, member, provider, claim-line, PHI, PII, or real production records are included. Synthetic evidence must remain labeled as demo-only and may not be represented as live-client truth or finance-confirmed realized value.",
+  "expected_object_count": 298,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-08-28",
+  "notes": "Manifest gates the local source-file and synthetic-document package at /Users/anand/Downloads/meridian-source-contract-depth-package-20260828. It authorizes only a controlled operator ACA data-build job with row-count reconciliation, quality-gate output, proof bundle, and live retrieval proof before product or aVa claims rely on the package."
+}
