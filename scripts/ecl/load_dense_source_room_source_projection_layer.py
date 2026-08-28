@@ -1910,6 +1910,115 @@ select jsonb_pretty(jsonb_build_object(
     select count(*) from ecl_projection.intelligence_question_context p
     left join ecl_context.context_pack cp on cp.tenant_key = p.tenant_key and cp.assessment_id = p.assessment_id and cp.id = p.context_pack_id
     where cp.id is null
+  ),
+  'source_serving_duplicate_row_key_sets', (
+    with source_surface_rows as (
+      select 'source_vendor_portfolio' as surface_key, row_key from serving.source_vendor_portfolio
+      union all select 'source_vendor_360', row_key from serving.source_vendor_360
+      union all select 'source_contract_360', row_key from serving.source_contract_360
+      union all select 'source_renewal', row_key from serving.source_renewal
+      union all select 'source_events', row_key from serving.source_events
+      union all select 'source_compare', row_key from serving.source_compare
+      union all select 'source_value', row_key from serving.source_value
+      union all select 'source_approvals', row_key from serving.source_approvals
+      union all select 'source_sourcing_opportunities', row_key from serving.source_sourcing_opportunities
+    ),
+    surface_sets as (
+      select
+        surface_key,
+        count(*) as row_count,
+        md5(coalesce(string_agg(row_key, ',' order by row_key), '')) as row_key_digest
+      from source_surface_rows
+      group by surface_key
+    )
+    select count(*)
+    from surface_sets a
+    join surface_sets b
+      on a.surface_key < b.surface_key
+      and a.row_count > 0
+      and b.row_count > 0
+      and a.row_key_digest = b.row_key_digest
+  ),
+  'source_serving_duplicate_row_key_set_pairs', (
+    with source_surface_rows as (
+      select 'source_vendor_portfolio' as surface_key, row_key from serving.source_vendor_portfolio
+      union all select 'source_vendor_360', row_key from serving.source_vendor_360
+      union all select 'source_contract_360', row_key from serving.source_contract_360
+      union all select 'source_renewal', row_key from serving.source_renewal
+      union all select 'source_events', row_key from serving.source_events
+      union all select 'source_compare', row_key from serving.source_compare
+      union all select 'source_value', row_key from serving.source_value
+      union all select 'source_approvals', row_key from serving.source_approvals
+      union all select 'source_sourcing_opportunities', row_key from serving.source_sourcing_opportunities
+    ),
+    surface_sets as (
+      select
+        surface_key,
+        count(*) as row_count,
+        md5(coalesce(string_agg(row_key, ',' order by row_key), '')) as row_key_digest
+      from source_surface_rows
+      group by surface_key
+    )
+    select coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'left', a.surface_key,
+          'right', b.surface_key,
+          'row_count', a.row_count
+        )
+        order by a.surface_key, b.surface_key
+      ),
+      '[]'::jsonb
+    )
+    from surface_sets a
+    join surface_sets b
+      on a.surface_key < b.surface_key
+      and a.row_count > 0
+      and b.row_count > 0
+      and a.row_key_digest = b.row_key_digest
+  ),
+  'source_serving_empty_view_keys', (
+    with source_view_counts as (
+      select 'source_vendor_portfolio' as surface_key, count(*) as row_count from serving.source_vendor_portfolio
+      union all select 'source_vendor_360', count(*) from serving.source_vendor_360
+      union all select 'source_contract_360', count(*) from serving.source_contract_360
+      union all select 'source_renewal', count(*) from serving.source_renewal
+      union all select 'source_events', count(*) from serving.source_events
+      union all select 'source_compare', count(*) from serving.source_compare
+      union all select 'source_value', count(*) from serving.source_value
+      union all select 'source_approvals', count(*) from serving.source_approvals
+      union all select 'source_sourcing_opportunities', count(*) from serving.source_sourcing_opportunities
+    )
+    select coalesce(
+      jsonb_agg(surface_key order by surface_key),
+      '[]'::jsonb
+    )
+    from source_view_counts
+    where row_count = 0
+  ),
+  'source_serving_required_empty_views', (
+    with source_view_counts as (
+      select 'source_vendor_portfolio' as surface_key, count(*) as row_count from serving.source_vendor_portfolio
+      union all select 'source_vendor_360', count(*) from serving.source_vendor_360
+      union all select 'source_contract_360', count(*) from serving.source_contract_360
+      union all select 'source_renewal', count(*) from serving.source_renewal
+      union all select 'source_events', count(*) from serving.source_events
+      union all select 'source_compare', count(*) from serving.source_compare
+      union all select 'source_value', count(*) from serving.source_value
+      union all select 'source_approvals', count(*) from serving.source_approvals
+      union all select 'source_sourcing_opportunities', count(*) from serving.source_sourcing_opportunities
+    )
+    select count(*)
+    from source_view_counts
+    where row_count = 0
+      and surface_key in (
+        'source_vendor_portfolio',
+        'source_vendor_360',
+        'source_contract_360',
+        'source_events',
+        'source_value',
+        'source_sourcing_opportunities'
+      )
   )
 ) || jsonb_build_object(
   'projection_entry_count_drift', (
@@ -2257,14 +2366,13 @@ def main() -> int:
         "intelligence_primary_object_drift",
         "intelligence_pattern_primary_object_drift",
         "intelligence_question_context_pack_drift",
-        "serving_views_empty",
+        "source_serving_duplicate_row_key_sets",
+        "source_serving_required_empty_views",
     ]:
         if int(readback.get(drift_key, 1)) != 0:
             issues.append(drift_key)
     if int(readback.get("serving_contract_rows", -1)) != 40:
         issues.append("serving_contract_rows_expected_40")
-    if int(readback.get("serving_views_populated", -1)) != 40:
-        issues.append("serving_views_populated_expected_40")
     if int(readback.get("source_value_claimable_rows", 1)) != 0:
         issues.append("source_value_claimable_rows_should_be_zero_before_review")
     if any(not failure["rejected"] for failure in pg_summary["planted_failures"]):

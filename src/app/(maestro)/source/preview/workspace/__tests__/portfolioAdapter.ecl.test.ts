@@ -200,7 +200,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("serving.source_vendor_360")) {
+        if (sql.includes("serving.source_vendor_portfolio")) {
           return [
             {
               payload_json: {
@@ -216,6 +216,9 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
           ] as R[];
         }
         if (sql.includes("serving.source_events")) {
+          return [] as R[];
+        }
+        if (sql.includes("serving.source_compare")) {
           return [
             {
               payload_json: {
@@ -223,6 +226,18 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
                 row_key: "MER-CTR-SSO-BPO-001:compare:bidder-a",
                 workspace_tab: "compare",
                 row_type: "vendor_response_compare",
+              },
+            },
+          ] as R[];
+        }
+        if (sql.includes("serving.source_approvals")) {
+          return [
+            {
+              payload_json: {
+                tenant_key: "meridian-health",
+                row_key: "MER-CTR-SSO-BPO-001:approvals",
+                workspace_tab: "approvals",
+                row_type: "approval_gate",
               },
             },
           ] as R[];
@@ -301,6 +316,9 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       sql: "SELECT set_config('app.tenant_key', $1, false)",
       params: ["meridian-health"],
     });
+    expect(runCalls.some((call) => call.sql.includes("serving.source_events"))).toBe(true);
+    expect(runCalls.some((call) => call.sql.includes("serving.source_compare"))).toBe(true);
+    expect(runCalls.some((call) => call.sql.includes("serving.source_approvals"))).toBe(true);
     expect(
       runCalls.find((call) =>
         call.sql.includes("consumption.sourcing_spend_monthly_v1"),

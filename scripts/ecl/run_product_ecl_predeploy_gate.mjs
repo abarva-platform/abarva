@@ -154,6 +154,50 @@ const CHECKS = [
     ],
   },
   {
+    key: "source_serving_views_filter_workspace_tabs",
+    file: "docs/architecture/sql-drafts/ecl_serving_views_v1_draft.sql",
+    mustContain: [
+      "source_event_rows('source_events', 'events', 'events')",
+      "source_event_rows('source_compare', 'compare', 'compare')",
+      "source_event_rows('source_approvals', 'approvals', 'approvals')",
+      "p.workspace_tab = workspace_tab_arg",
+    ],
+  },
+  {
+    key: "source_serving_views_separate_portfolio_and_opportunities",
+    file: "docs/architecture/sql-drafts/ecl_serving_views_v1_draft.sql",
+    mustContain: [
+      "page_key_arg = 'vendor_portfolio'",
+      "page_key_arg = 'vendor_360'",
+      "p.contract_count > 1",
+      "page_key_arg = 'sourcing_opportunities'",
+      "p.opportunity_type <> 'evidence_request'",
+    ],
+  },
+  {
+    key: "source_workspace_reads_distinct_event_views",
+    file: "src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts",
+    mustContain: [
+      "readProjectionViews(tenantKey, [",
+      "\"source_events\"",
+      "\"source_compare\"",
+      "\"source_approvals\"",
+      "readProjectionView(tenantKey, \"source_vendor_portfolio\")",
+    ],
+  },
+  {
+    key: "source_projection_load_checks_surface_rowset_distinctness",
+    file: "scripts/ecl/load_dense_source_room_source_projection_layer.py",
+    mustContain: [
+      "source_serving_duplicate_row_key_sets",
+      "source_serving_duplicate_row_key_set_pairs",
+      "source_serving_empty_view_keys",
+      "source_serving_required_empty_views",
+      "row_key_digest",
+      "source_sourcing_opportunities",
+    ],
+  },
+  {
     key: "source_tower_intelligence_import_surface_coverage",
     file: "src/app/(maestro)/source/preview/workspace/WorkspaceClient.tsx",
     mustContain: [
