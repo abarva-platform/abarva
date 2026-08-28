@@ -1,0 +1,17 @@
+{
+  "schema_version": "home_ecl_narrative_writer_quality/v1",
+  "tenant_key": "meridian-health",
+  "assessment_id": "MERIDIAN_PHS_ECL_DENSE_SYNTHETIC_2026_08_24",
+  "generated_claims": 60,
+  "published_claims": 37,
+  "semantic_drops": 22,
+  "repairs": 27,
+  "kept_clean": 10,
+  "structural_drops": 1,
+  "source_proof": {
+    "apply_execution": "job-abarva-private-operator-eus-v815k42",
+    "readback_execution": "job-abarva-private-operator-eus-39r1b2n",
+    "apply_output_dir": "/tmp/home-ecl-narrative-apply-after-888393d9-20260828T165643Z",
+    "readback_output_dir": "/tmp/home-ecl-narrative-readback-after-888393d9-20260828T170617Z"
+  }
+}
