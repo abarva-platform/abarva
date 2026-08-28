@@ -73,8 +73,16 @@ assert(
 assert(
   script.includes("'chapter_claim'") &&
     script.includes("writer_verdict_tally") === false &&
-    script.includes("verification_verdict_tally"),
-  "ECL narrative job records chapter claim rows and a verification summary",
+    script.includes("verification_verdict_tally") &&
+    script.includes("verification_action_tally") &&
+    script.includes("publication_gate"),
+  "ECL narrative job records chapter claim rows, verification actions, and a publication gate",
+);
+assert(
+  script.includes("publicationGateIssues") &&
+    script.includes("Home ECL narrative publication gate failed") &&
+    script.includes("thesisResult.publicationIssues"),
+  "ECL narrative job refuses to write when publication-gate issues remain",
 );
 assert(
   script.includes("basis_summary = 'model_generated_from_ecl_projection'"),
@@ -90,11 +98,12 @@ assert(
   "Home ECL narrative readback emits a structured read-only proof event",
 );
 assert(
-  readback.includes("chapter_claim_entry_drift") &&
+    readback.includes("chapter_claim_entry_drift") &&
     readback.includes("refusal_payload_drift") &&
+    readback.includes("writer_publication_gate_drift") &&
     readback.includes("legacy_basis_rows") &&
     readback.includes("chapter_claim_pages"),
-  "Home ECL narrative readback checks claim linkage, admission payloads, legacy basis drift, and claim coverage",
+  "Home ECL narrative readback checks claim linkage, admission payloads, publication gate, legacy basis drift, and claim coverage",
 );
 assert(
   !readback.includes("chapter_claim_pages_expected_"),

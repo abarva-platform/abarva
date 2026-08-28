@@ -866,6 +866,7 @@ export async function buildVerifiedEnterpriseThesisFromSignalPacket(
       publishedGeneration: null,
       structuralIssues: [],
       verificationLedger: [],
+      publicationIssues: [],
       usage,
     };
   }
@@ -892,6 +893,7 @@ export async function buildVerifiedEnterpriseThesisFromSignalPacket(
       publishedGeneration: null,
       structuralIssues: [],
       verificationLedger: [],
+      publicationIssues: [],
       usage,
     };
   }
@@ -907,6 +909,7 @@ export async function buildVerifiedEnterpriseThesisFromSignalPacket(
       publishedGeneration: null,
       structuralIssues: [],
       verificationLedger: [],
+      publicationIssues: [],
       usage,
     };
   }
@@ -949,6 +952,8 @@ export async function buildVerifiedEnterpriseThesisFromSignalPacket(
   for (const r of verificationLedger) tally[r.verdict] = (tally[r.verdict] ?? 0) + 1;
   console.log(`  verifier verdicts:`, tally);
 
+  const publicationIssues: string[] = [];
+
   // Published prose is always synthesized FROM the final approved claims, not conditionally
   // patched only when verification happened to flag something in that specific section.
   {
@@ -958,6 +963,7 @@ export async function buildVerifiedEnterpriseThesisFromSignalPacket(
       publishedGeneration.enterprise_story = finalText;
     } else {
       console.log("  ! enterprise_story prose synthesis failed -- publishing raw draft prose, verify manually before use");
+      publicationIssues.push("enterprise_story_prose_synthesis_failed");
     }
   }
 
@@ -971,10 +977,11 @@ export async function buildVerifiedEnterpriseThesisFromSignalPacket(
       publishedGeneration.value_creation_model.summary = finalText;
     } else {
       console.log("  ! value_creation_model.summary prose synthesis failed -- publishing raw draft prose, verify manually before use");
+      publicationIssues.push("value_creation_model_summary_prose_synthesis_failed");
     }
   }
 
-  return { rawGeneration, publishedGeneration, structuralIssues, verificationLedger, usage };
+  return { rawGeneration, publishedGeneration, structuralIssues, verificationLedger, publicationIssues, usage };
 }
 
 export async function buildTenant(tenantKey: string, client: Parameters<typeof callClaude>[0]) {

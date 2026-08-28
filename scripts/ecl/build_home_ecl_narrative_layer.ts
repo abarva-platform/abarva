@@ -433,6 +433,31 @@ function verdictTally(ledger: Array<{ verdict: string }>): Record<string, number
   }, {});
 }
 
+function actionTally(ledger: Array<{ action: string }>): Record<string, number> {
+  return ledger.reduce<Record<string, number>>((acc, row) => {
+    acc[row.action] = (acc[row.action] ?? 0) + 1;
+    return acc;
+  }, {});
+}
+
+function publicationGateIssues(
+  thesisResult: Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>,
+): string[] {
+  const issues = [...(thesisResult.publicationIssues ?? [])];
+  if (thesisResult.structuralIssues.length) {
+    issues.push(`structural_issues_${thesisResult.structuralIssues.length}`);
+  }
+  for (const row of thesisResult.verificationLedger) {
+    if (row.verdict === "UNSUPPORTED" && row.action !== "dropped") {
+      issues.push(`unsupported_claim_not_dropped:${row.path}:${row.action}`);
+    }
+    if (row.verdict === "OVERSTATED" && !row.action.startsWith("repaired") && !row.action.startsWith("dropped")) {
+      issues.push(`overstated_claim_not_repaired_or_dropped:${row.path}:${row.action}`);
+    }
+  }
+  return issues;
+}
+
 async function writeNarrativeRows(
   db: Client,
   options: CliOptions,
@@ -483,6 +508,11 @@ async function writeNarrativeRows(
           provenance,
           thesis_structural_issue_count: thesisResult.structuralIssues.length,
           verification_verdict_tally: verdictTally(thesisResult.verificationLedger),
+          verification_action_tally: actionTally(thesisResult.verificationLedger),
+          publication_gate: {
+            accepted: true,
+            issues: [],
+          },
           claim_rows_written: claimRowsForChapter(chapter).length,
         },
         writer_headline: chapter.headline,
@@ -670,6 +700,10 @@ async function main() {
 
     const thesisResult = await buildVerifiedEnterpriseThesisFromSignalPacket(signalPacket, anthropic);
     if (!thesisResult.publishedGeneration) throw new Error("Home ECL narrative writer produced no publishable thesis.");
+    const publicationIssues = publicationGateIssues(thesisResult);
+    if (publicationIssues.length) {
+      throw new Error(`Home ECL narrative publication gate failed: ${publicationIssues.join("; ")}`);
+    }
 
     const chapters = await buildChapterViewsFromVerifiedThesis(
       signalPacket,
@@ -699,6 +733,11 @@ async function main() {
     const verificationSummary = {
       structural_issue_count: thesisResult.structuralIssues.length,
       verdict_tally: verdictTally(thesisResult.verificationLedger),
+      action_tally: actionTally(thesisResult.verificationLedger),
+      publication_gate: {
+        accepted: true,
+        issues: [],
+      },
       ledger_rows: thesisResult.verificationLedger.length,
     };
 

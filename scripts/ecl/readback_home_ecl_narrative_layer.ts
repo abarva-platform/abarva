@@ -42,6 +42,7 @@ interface ReadbackRows {
   chapter_claim_entry_drift: string;
   writer_basis_drift: string;
   refusal_payload_drift: string;
+  writer_publication_gate_drift: string;
   projection_entry_claim_rows: string;
   legacy_basis_rows: string;
 }
@@ -83,6 +84,9 @@ function issuesFor(readback: Record<keyof ReadbackRows, number>): string[] {
   }
   if (readback.writer_basis_drift !== 0) issues.push(`writer_basis_drift_${readback.writer_basis_drift}`);
   if (readback.refusal_payload_drift !== 0) issues.push(`refusal_payload_drift_${readback.refusal_payload_drift}`);
+  if (readback.writer_publication_gate_drift !== 0) {
+    issues.push(`writer_publication_gate_drift_${readback.writer_publication_gate_drift}`);
+  }
   if (readback.projection_entry_claim_rows !== readback.chapter_claim_rows) {
     issues.push(`projection_entry_claim_rows_${readback.projection_entry_claim_rows}_home_claim_rows_${readback.chapter_claim_rows}`);
   }
@@ -177,6 +181,17 @@ async function main() {
                 and (h.admission_gate_key is not null or h.admission_result_json <> '{}'::jsonb)
               )
           )::text as refusal_payload_drift,
+          (
+            select count(*)
+            from home_rows h
+            join chapter_ids c on c.page_key = h.page_key
+            where h.row_type = 'summary'
+              and h.basis_summary = 'model_generated_from_ecl_projection'
+              and (
+                coalesce(h.display_payload_json->'writer'->'publication_gate'->>'accepted', 'false') <> 'true'
+                or coalesce(jsonb_array_length(h.display_payload_json->'writer'->'publication_gate'->'issues'), 0) <> 0
+              )
+          )::text as writer_publication_gate_drift,
           (
             select count(*)
             from ecl_projection.projection_entry e
