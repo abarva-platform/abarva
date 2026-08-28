@@ -65,12 +65,17 @@ assert.deepEqual(summary.generated_rows, {
   program_work_items: 228,
   program_risks: 38,
   pattern_match_logs: 38,
+  source_events: 38,
+  outcome_ledger: 38,
+  intelligence_evidence: 38,
+  trace_joinable_moves: 38,
 });
 assert.deepEqual(summary.proof_checks, {
   deterministic_ids: true,
   idempotent_upserts: true,
   no_database_connection: true,
   no_value_claimable_until_tower_gate: true,
+  cross_module_join_sql_present: true,
   contains_named_phs_moves: true,
 });
 
@@ -105,6 +110,17 @@ assert.match(sql, /phase_2_current_state_findings/);
 assert.match(sql, /phase_3_solution_approach/);
 assert.match(sql, /source_basis/);
 assert.match(sql, /review_state/);
+assert.match(sql, /insert into source_events/i);
+assert.match(sql, /linked_program_id/i);
+assert.match(sql, /insert into outcome_ledger/i);
+assert.match(sql, /subject_kind/i);
+assert.match(sql, /subject_ref/i);
+assert.match(sql, /baseline_pending/i);
+assert.match(sql, /insert into evidence/i);
+assert.match(sql, /meridian_phs_intelligence_pattern/i);
+assert.match(sql, /related_entity_type/i);
+assert.match(sql, /Next action: instrument baseline/i);
+assert.doesNotMatch(sql, /value_verified_status = 'verified'/i);
 
 console.log(
   JSON.stringify(

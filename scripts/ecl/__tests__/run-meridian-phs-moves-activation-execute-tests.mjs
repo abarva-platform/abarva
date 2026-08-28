@@ -52,8 +52,13 @@ assert.equal(plan.activation_summary.activation_program_count, 38);
 assert.equal(plan.activation_summary.generated_rows.engagements, 38);
 assert.equal(plan.activation_summary.generated_rows.program_modules, 490);
 assert.equal(plan.activation_summary.generated_rows.phase_capture_modules, 262);
+assert.equal(plan.activation_summary.generated_rows.source_events, 38);
+assert.equal(plan.activation_summary.generated_rows.outcome_ledger, 38);
+assert.equal(plan.activation_summary.generated_rows.intelligence_evidence, 38);
+assert.equal(plan.activation_summary.generated_rows.trace_joinable_moves, 38);
 assert.match(plan.sql_sha256, /^[0-9a-f]{64}$/);
 assert.equal(plan.activation_summary.proof_checks.idempotent_upserts, true);
+assert.equal(plan.activation_summary.proof_checks.cross_module_join_sql_present, true);
 assert.equal(
   fs.existsSync(path.join(planDir, "activation", "meridian_phs_moves_activation.sql")),
   true,
@@ -65,6 +70,9 @@ assert.match(generatedSql, /client_id = excluded\.client_id/i);
 assert.match(generatedSql, /solution = excluded\.solution/i);
 assert.match(generatedSql, /phase_2_current_state_findings/i);
 assert.match(generatedSql, /phase_3_solution_approach/i);
+assert.match(generatedSql, /insert into source_events/i);
+assert.match(generatedSql, /insert into outcome_ledger/i);
+assert.match(generatedSql, /insert into evidence/i);
 assert.doesNotMatch(generatedSql, /on conflict \(client_id, solution\)/i);
 assert.doesNotMatch(generatedSql, /on conflict \(engagement_id, module_key\)/i);
 
@@ -76,6 +84,11 @@ assert.match(script, /charter ->> 'activation_basis'/);
 assert.match(script, /__SEMANTIC2_PROOF_TGZ_BEGIN__/);
 assert.match(script, /function sqlString\(value\)/);
 assert.match(script, /as phase_capture_modules/);
+assert.match(script, /as source_events/);
+assert.match(script, /as outcome_ledger/);
+assert.match(script, /as intelligence_evidence/);
+assert.match(script, /as trace_joinable_moves/);
+assert.match(script, /created_by_user_id = 'ecl_meridian_phs_activation'/);
 assert.match(script, /module_key like 'phase\\\\_%' escape '\\\\'/);
 assert.match(script, /Object\.keys\(built\.activationSummary\.generated_rows\)/);
 assert.doesNotMatch(script, /:'client_id'|:'tenant_key'|:'activation_basis'/);

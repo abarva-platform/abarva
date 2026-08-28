@@ -26,6 +26,10 @@ const EXPECTED_ROWS = {
   program_work_items: 228,
   program_risks: 38,
   pattern_match_logs: 38,
+  source_events: 38,
+  outcome_ledger: 38,
+  intelligence_evidence: 38,
+  trace_joinable_moves: 38,
 };
 
 function parseArgs(argv) {
@@ -228,6 +232,45 @@ select
   (select count(*)::int from public.program_work_items where engagement_id in (select id from activated)) as program_work_items,
   (select count(*)::int from public.program_risks where engagement_id in (select id from activated)) as program_risks,
   (select count(*)::int from public.pattern_match_logs where engagement_id in (select id from activated)) as pattern_match_logs,
+  (select count(*)::int
+   from public.source_events
+   where client_key = ${tenantKeyLiteral}
+     and created_by_user_id = 'ecl_meridian_phs_activation'
+     and linked_program_id in (select id::text from activated)) as source_events,
+  (select count(*)::int
+   from public.outcome_ledger
+   where tenant_client_key = ${tenantKeyLiteral}
+     and subject_kind = 'move'
+     and is_current = true
+     and recorded_by = 'ecl_meridian_phs_activation'
+     and subject_ref in (select id::text from activated)) as outcome_ledger,
+  (select count(*)::int
+   from public.evidence
+   where source_id = 'meridian_phs_intelligence_pattern'
+     and related_entity_type = 'engagement'
+     and related_entity_id in (select id::text from activated)) as intelligence_evidence,
+  (select count(*)::int
+   from activated a
+   where exists (
+       select 1 from public.source_events se
+       where se.client_key = ${tenantKeyLiteral}
+         and se.created_by_user_id = 'ecl_meridian_phs_activation'
+         and se.linked_program_id = a.id::text
+     )
+     and exists (
+       select 1 from public.outcome_ledger ol
+       where ol.tenant_client_key = ${tenantKeyLiteral}
+         and ol.subject_kind = 'move'
+         and ol.subject_ref = a.id::text
+         and ol.is_current = true
+         and ol.recorded_by = 'ecl_meridian_phs_activation'
+     )
+     and exists (
+       select 1 from public.evidence ev
+       where ev.source_id = 'meridian_phs_intelligence_pattern'
+         and ev.related_entity_type = 'engagement'
+         and ev.related_entity_id = a.id::text
+     )) as trace_joinable_moves,
   (select count(*)::int from public.engagements where id in (select id from activated) and value_verified_status <> 'pending') as claimable_value_rows,
   (select count(distinct solution)::int from public.engagements where id in (select id from activated)) as distinct_solutions,
   (select count(distinct id)::int from activated) as distinct_engagement_ids
