@@ -143,6 +143,154 @@ New proof/backlog items from that result:
 
 ---
 
+## SRC-CONTRACT-DEPTH-TECH-ARCHETYPES-20260828 — Governed technology contract depth package
+
+**Priority:** P0
+**Status:** proposed
+**Type:** data-depth / governed pipeline
+**Primary surface:** Source workspace, Vendor 360, Contract 360, Optimize Contract, Source aVa
+**Primary agent:** Nexus
+**Dependencies:** dataset policy manifest, Source contract loader, Source L4 projection refresh,
+ACA data-build job lane, signed-in single-tenant proof
+
+### Purpose
+
+Create a governed contract-depth package that gives the current healthcare demo tenant a real-world
+technology contract book instead of isolated demo rows. Dashboards and Optimize Contract may only
+show executive claims that are populated from governed contract, spend, performance, clause, usage,
+and opportunity records with lineage.
+
+This is the backlog anchor for technology contracts such as productivity/platform agreements,
+CRM/SaaS vendors, cloud providers, application managed services, infrastructure managed services,
+and service-desk outsourcing. The first execution slice is single-tenant only; do not broaden this
+into a multi-tenant or generalized corpus load until the current tenant is reconciled and live
+proven. The goal is to stop redesigning around missing data: first define the contract archetypes
+and evidence bands, then load them through the real pipeline, then let the UI show only the views
+that the data actually supports.
+
+### Contract archetypes required
+
+- Productivity and enterprise-platform contracts, for example Microsoft-style M365, Azure, security,
+  and collaboration agreements.
+- CRM and revenue/customer SaaS contracts, for example Salesforce-style Sales Cloud, Service Cloud,
+  Marketing Cloud, analytics, integration, support, and storage/API add-ons.
+- ERP, HCM, ITSM, observability, and data-platform SaaS contracts where entitlement, usage, support,
+  and renewal terms drive leverage.
+- Cloud consumption contracts where commitment coverage, on-demand usage, right-sizing, support
+  tier, credits, and egress drive optimization.
+- Application managed-services and infrastructure/service-desk managed-services contracts where
+  ticket volumes, severity mix, SLA misses, service credits, staffing commitments, transition risk,
+  and exit rights drive leverage.
+- A clean control group of material contracts with no quantified opportunity, so ranking does not
+  imply every large contract has recoverable value.
+
+### Four governed data bands
+
+1. Portfolio-wide contract facts:
+   `source.contract` / `source.contract_360` must carry contract ID, vendor, contract name,
+   category/archetype, annual value, committed value, start/end dates, renewal notice date,
+   auto-renew, notice period, benchmarking clause, termination/exit rights, owner, confidence, and
+   source references. Vendor rollups must derive through `source.vendor` and
+   `source.vendor_contract_portfolio`, not from product-side calculations.
+2. Monthly spend and consumption:
+   `source.contract_consumption_observation` must feed
+   `consumption.sourcing_spend_monthly_v1` with contract ID, month, committed/base amount, invoice
+   amount, paid amount, actual spend, currency, source record, source file, and extract timestamp.
+3. Performance, SLA, and service-credit evidence:
+   `source.contract_performance_observation` must feed
+   `consumption.sourcing_performance_v1` with contract ID, period, metric, committed threshold,
+   actual result, breach state, calculated credit, claimed/recovered state, currency, and evidence
+   reference.
+4. Optimize Contract opportunity spine:
+   `source.optimization_opportunity`, `source.calculation_run`,
+   `source.opportunity_evidence`, `source.optimization_case`, and
+   `source.case_opportunity` must carry opportunity type, contract ID, calculation basis, amount,
+   row-level evidence, authority state, quality state, finance-confirmation state, and selected
+   action state.
+
+### Archetype-specific evidence requirements
+
+- Microsoft/productivity: licensed seats, active users, workload adoption, bundled-product overlap,
+  paid-but-unused add-ons, enterprise-agreement terms, true-up exposure, support tier, price uplift,
+  renewal notice, and benchmark/termination rights.
+- Salesforce/CRM SaaS: cloud/module mix, licensed seats, active users, storage/API usage, add-ons,
+  support tier, sandbox/integration entitlements, co-terming, true-up/overage terms, price uplift,
+  and shelfware signal.
+- Cloud: committed spend, on-demand spend, reserved-instance or savings-plan coverage, utilization,
+  right-sizing candidates, support tier, egress/data-transfer charges, committed-use discount, and
+  unused credits.
+- AMS / managed services: application/service scope, tower, L1/L2/L3 ticket volumes, severity mix,
+  MTTR, SLA targets and actuals, earned credits, claimed credits, recovered credits, staffing/FTE
+  commitment, change-order exposure, transition/exit cost, and retained-versus-vendor boundary.
+
+### Population pipeline
+
+- Layer 1 intake stays owner-oriented: CLM/legal, procurement/S2P, AP/ERP, SaaS admin, cloud billing,
+  ITSM/observability, CMDB/application ownership, HR/VMS, vendor management, and finance value office
+  each provide their own extract.
+- Layer 2 adapters normalize each owner extract into canonical objects and observations while
+  preserving source file, source row, source system, source record, extract timestamp, and value
+  source.
+- Layer 3 canonical Source objects own contract, vendor, spend, performance, usage, clause,
+  evidence, and opportunity identity. Products cannot hand-fill projection tables.
+- Layer 4 Source/Home/Tower/Intelligence projections are refreshed only after loader validation,
+  reconciliation, quality gate, and human review pass.
+- Source aVa receives only validated agent-ready context bundles; missing evidence remains missing,
+  not zero.
+
+### Dashboard and Optimize display rules
+
+- Show only fields that are populated across the relevant comparison set. If a KPI is sparse, show
+  it inside the applicable contract/archetype tab, not as a portfolio-wide headline.
+- Do not show vendor-wide SLA percentage, savings realized, portfolio risk score, benchmark savings,
+  or AI insight claims unless the required evidence is loaded broadly enough to support the claim.
+- A single contract can support a contract-specific opportunity; it cannot justify a portfolio-wide
+  savings headline.
+- Realized value remains Tower/Finance-confirmed only. Source can show identified, calculated,
+  claimed, and recovered states, but cannot relabel them as realized value.
+- Missing spend, performance, usage, or clause evidence must render as `EVIDENCE_MISSING`,
+  `NOT_ESTABLISHED`, or `WORKFLOW_REQUIRED`, never as `$0`, `0%`, or a fabricated score.
+
+### Acceptance criteria
+
+- A dataset manifest exists and passes context/corpus governance before any load runs.
+- The first load is explicitly scoped to the current healthcare demo tenant, with no cross-tenant
+  writes, shared demo corpus expansion, or tenant fallback behavior.
+- The governed loader runs as an ACA data-build job with job name, run ID, tenant scope, input source
+  version, idempotency key, proof bundle, validation output, quality gate, and release record.
+- At least 20-50 material technology contracts have complete portfolio facts and vendor rollups.
+- At least one Microsoft/productivity-style contract, one Salesforce/CRM-style SaaS contract, one
+  cloud contract, and one AMS/managed-services contract have 12 months of spend or usage evidence.
+- At least one managed-services contract has row-level SLA/service-credit history with calculated
+  earned credits and explicit claimed/recovered state.
+- At least three optimization candidates exist across different value levers: recoverable leakage,
+  avoided cost, and negotiated improvement.
+- Contract 360, Vendor 360, Optimize Contract, and Source aVa cite the same governed rows and refuse
+  unsupported value claims.
+- Signed-in proof verifies tenant isolation, projection row counts, dashboard field visibility,
+  Contract 360 tabs, Optimize Contract opportunity rendering, and aVa citation/refusal behavior.
+
+### Codex-ready slice prompt
+
+```text
+Implement SRC-CONTRACT-DEPTH-TECH-ARCHETYPES-20260828.
+
+Scope:
+Create the governed technology contract depth package and load plan for the current healthcare demo
+tenant only. Cover Microsoft/productivity, Salesforce/CRM SaaS, cloud, AMS/managed services, and a
+clean control group. Add or update the dataset manifest first. Use Layer 1 owner-oriented inputs,
+Layer 2 adapters, Layer 3 canonical Source objects, and Layer 4 projections. Do not hand-fill
+product projection tables and do not fabricate dashboard values.
+
+Validation:
+Run manifest validation, loader dry-run, ACA data-build job validation, row-count reconciliation
+per layer, Source projection refresh proof, signed-in Contract 360/Vendor 360/Optimize proof, and a
+small Source aVa citation/refusal smoke. Stop if a schema change is required or if the UI cannot
+surface the loaded opportunity as a legible finding.
+```
+
+---
+
 ## SRC-DEMO-HARDENING-20260828 — Final Source demo hardening punch list
 
 **Priority:** P0
