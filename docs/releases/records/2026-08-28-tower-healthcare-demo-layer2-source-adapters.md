@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds a governed Layer 2 load path for the synthetic Tower source-adapter package, and makes the generated Layer 1 and Layer 2 signoff artifacts reproducible from the generator. The loader prepares source files, source rows, adapter run records, and adapter-emission records with upstream row lineage so the data can be audited before canonical objects, cubes, read models, or product screens are refreshed.
+Adds a governed Layer 2 load path for the synthetic Tower source-adapter package, and makes the generated Layer 1 and Layer 2 signoff artifacts reproducible from the generator. The loader prepares source files, source rows, adapter run records, and adapter-emission records with upstream row lineage so the data can be audited before canonical objects, cubes, read models, or product screens are refreshed. Reloads are idempotent: stable source IDs are updated in place instead of deleting records that downstream canonical rows may reference.
 
 ## Layer Impact
 
@@ -18,7 +18,7 @@ Release lane: `client-data-lane`.
 
 Layer 1 client intake: Generates and validates the synthetic client-owned source extracts for the approved review package, including IT budget domains, reviewed project portfolio, AI business cases, tool rollouts, monthly value tracking, finance approvals, and evidence rows.
 
-Layer 2 source adapters: Adds the Azure/Postgres write entrypoint for source file registration, source record landing, adapter run landing, and adapter-emission lineage. The local validator can now explicitly pass as load-ready without pretending Azure readback has happened.
+Layer 2 source adapters: Adds the Azure/Postgres write entrypoint for source file registration, source record landing, adapter run landing, and adapter-emission lineage. The local validator can now explicitly pass as load-ready without pretending Azure readback has happened. The loader uses stable-ID upserts so re-running the same assessment does not violate Layer 3 foreign keys.
 
 Layer 3 canonical model: No canonical objects, relationships, measures, or facts are written by this release.
 
@@ -53,6 +53,8 @@ Feature flag: None.
 - Pass: `node scripts/tower/validate-meridian-layer1-source.mjs`
 - Pass: `node scripts/tower/load-healthcare-demo-layer2-source-adapters.mjs --out-dir=/tmp/tower-layer2-meridian-expanded-20260828`
 - Pass: `node scripts/tower/validate-healthcare-demo-layer2-source-adapters.mjs --local-only --package-dir=datasets/tenant-inputs/generated/meridian-health/tower-layer1-v2026-08-business-case --summary=/tmp/tower-layer2-meridian-expanded-20260828/tower_layer2_ecl_source_load_summary.json --readback=/tmp/tower-layer2-meridian-expanded-20260828/03-readback.json`
+- Pass: validator gate `reload_uses_upserts`
+- Pass: validator gate `reload_does_not_delete_referenced_source_records`
 - Pass: `git diff --check`
 
 Expected Layer 2 load counts:
@@ -123,3 +125,5 @@ Rerun the previous approved Layer 2 source-adapter load for the same tenant/asse
 ## Known Gaps
 
 Azure write has not run from this local branch. The local environment used for this update did not expose `DATABASE_URL`, `TOWER_LAYER2_AZURE_WRITE_APPROVED`, `ACA_OPERATOR_JOB`, or `ABARVA_OPERATOR_IMAGE_DIGEST`. The ACA operator job can run only after this candidate is merged and built into a digest-pinned image.
+
+After the first candidate was merged, the ACA operator execution `job-abarva-private-operator-eus-ds6m4dv` failed because the prior loader deleted `ecl_source.source_record` rows before reinsert, while existing downstream rows still referenced those stable source records. This update fixes the reload path with upserts and keeps Azure readback as the promotion gate.
