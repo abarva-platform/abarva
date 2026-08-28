@@ -13,6 +13,30 @@ function row(input: Partial<HomeProjectionRow> & Pick<HomeProjectionRow, "page_k
   };
 }
 
+const CHAPTER_IDS = [
+  "executive_brief",
+  "our_business",
+  "strategy_value_creation",
+  "how_we_operate",
+  "technology_data",
+  "performance_value",
+  "leadership_perspective",
+  "what_needs_attention",
+] as const;
+
+function chapterSummaryFixtures(overrides: Partial<Record<(typeof CHAPTER_IDS)[number], Partial<HomeProjectionRow>>> = {}): HomeProjectionRow[] {
+  return CHAPTER_IDS.map((chapterId) =>
+    row({
+      page_key: chapterId,
+      row_key: `${chapterId}_summary`,
+      row_type: "summary",
+      title: `${chapterId} published headline`,
+      summary: `${chapterId} published summary.`,
+      ...overrides[chapterId],
+    }),
+  );
+}
+
 describe("buildTechnologyEstateFromHomeProjectionRows", () => {
   it("maps ECL Home projection rows into the Home v4 technology estate contract", () => {
     const estate = buildTechnologyEstateFromHomeProjectionRows([
@@ -115,25 +139,33 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     expect(base).toBeTruthy();
 
     const bundle = buildHomeReviewBundleFromEclProjectionRows(base!, [
-      row({
-        page_key: "executive_brief",
-        row_key: "executive_brief_summary",
-        row_type: "summary",
-        title: "Dense ECL estate loaded",
-        summary: "750 applications and 230 contracts are available from the ECL projection.",
-        display_payload_json: {
-          applications: 750,
-          contracts: 230,
-          vendors: 101,
-          data_flows: 1350,
+      ...chapterSummaryFixtures({
+        executive_brief: {
+          title: "Dense ECL estate loaded",
+          summary: "750 applications and 230 contracts are available from the ECL projection.",
+          display_payload_json: {
+            applications: 750,
+            contracts: 230,
+            vendors: 101,
+            data_flows: 1350,
+          },
+        },
+        technology_data: {
+          title: "Technology and data estate represented",
+          summary: "750 applications, 220 infrastructure rows, and 1350 data flows are loaded.",
         },
       }),
       row({
-        page_key: "technology_data",
-        row_key: "technology_data_summary",
-        row_type: "summary",
-        title: "Technology and data estate represented",
-        summary: "750 applications, 220 infrastructure rows, and 1350 data flows are loaded.",
+        page_key: "executive_brief",
+        row_key: "executive_brief_writer_claim_001",
+        row_type: "chapter_claim",
+        title: "Published ECL writer claim",
+        summary: "The published writer claim is rendered from a chapter_claim row.",
+        display_payload_json: {
+          evidence_ids: ["sig_ecl_estate_001"],
+          claim_type: "FACT",
+          confidence: "high",
+        },
       }),
       row({
         page_key: "applications_systems",
@@ -180,12 +212,28 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       }),
     ]);
 
-    expect(bundle.provenance.canonical_snapshot_hash).toBe("ecl:assessment-dense-source-room-20260823:home_enterprise_landscape:6");
+    expect(bundle.provenance.canonical_snapshot_hash).toBe("ecl:assessment-dense-source-room-20260823:home_enterprise_landscape:13");
     expect(bundle.provenance.model).toBe("deterministic-ecl-projection");
     expect(bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.headline).toBe("Dense ECL estate loaded");
     expect(bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.headline).not.toBe(
       base?.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.headline,
     );
+    expect(bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.key_insights).toEqual([
+      {
+        statement: "The published writer claim is rendered from a chapter_claim row.",
+        evidence_ids: ["sig_ecl_estate_001"],
+        claim_type: "FACT",
+        confidence: "high",
+      },
+    ]);
+    expect(bundle.thesis.publishedGeneration.things_a_new_cxo_should_know).toEqual([
+      {
+        statement: "The published writer claim is rendered from a chapter_claim row.",
+        evidence_ids: ["sig_ecl_estate_001"],
+        claim_type: "FACT",
+        confidence: "high",
+      },
+    ]);
     expect(bundle.thesis.signalPacket.signals[0]?.statement).toContain("1 applications");
     expect(bundle.thesis.signalPacket.contextItems).toEqual(
       expect.arrayContaining([
@@ -201,6 +249,13 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         }),
       ]),
     );
+    expect(bundle.thesis.signalPacket.contextItems).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          statement: "The published writer claim is rendered from a chapter_claim row.",
+        }),
+      ]),
+    );
     expect(bundle.technologyEstate?.recordTypes.find((recordType) => recordType.objectType === "application_system")?.rows).toHaveLength(1);
   });
 
@@ -209,12 +264,23 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     expect(base).toBeTruthy();
 
     const bundle = buildHomeReviewBundleFromEclProjectionRows(base!, [
+      ...chapterSummaryFixtures({
+        executive_brief: {
+          title: "Dense ECL estate loaded",
+          summary: "750 applications and 230 contracts are available from the ECL projection.",
+        },
+      }),
       row({
         page_key: "executive_brief",
-        row_key: "executive_brief_summary",
-        row_type: "summary",
-        title: "Dense ECL estate loaded",
-        summary: "750 applications and 230 contracts are available from the ECL projection.",
+        row_key: "executive_brief_writer_claim_001",
+        row_type: "chapter_claim",
+        title: "Contract value claim",
+        summary: "Contract value remains traceable to published ECL writer claims.",
+        display_payload_json: {
+          evidence_ids: ["sig_ecl_vendor_002"],
+          claim_type: "OBSERVATION",
+          confidence: "medium",
+        },
       }),
       row({
         page_key: "vendor_contracts",
@@ -251,20 +317,48 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     expect(base).toBeTruthy();
 
     const bundle = buildHomeReviewBundleFromEclProjectionRows(base!, [
+      ...chapterSummaryFixtures({
+        executive_brief: {
+          title: "SkyHarbor ECL estate loaded",
+          summary: "750 applications and 230 contracts are available from the SkyHarbor ECL projection.",
+        },
+      }),
       row({
         page_key: "executive_brief",
-        row_key: "executive_brief_summary",
-        row_type: "summary",
-        title: "SkyHarbor ECL estate loaded",
-        summary: "750 applications and 230 contracts are available from the SkyHarbor ECL projection.",
+        row_key: "executive_brief_writer_claim_001",
+        row_type: "chapter_claim",
+        title: "SkyHarbor published claim",
+        summary: "SkyHarbor published claims use the SkyHarbor dense assessment id.",
+        display_payload_json: {
+          evidence_ids: ["sig_ecl_estate_001"],
+          claim_type: "FACT",
+          confidence: "high",
+        },
       }),
     ]);
 
     expect(bundle.provenance.canonical_snapshot_hash).toBe(
-      "ecl:assessment-dense-skyharbor-20260827:home_enterprise_landscape:1",
+      "ecl:assessment-dense-skyharbor-20260827:home_enterprise_landscape:9",
     );
     expect(bundle.thesis.signalPacket.contextItems[0]?.statement).toContain(
       "assessment-dense-skyharbor-20260827",
     );
+  });
+
+  it("refuses to synthesize a Home ECL narrative when no published chapter claims exist", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    expect(base).toBeTruthy();
+
+    expect(() =>
+      buildHomeReviewBundleFromEclProjectionRows(base!, [
+        row({
+          page_key: "executive_brief",
+          row_key: "executive_brief_summary",
+          row_type: "summary",
+          title: "Dense ECL estate loaded",
+          summary: "750 applications and 230 contracts are available from the ECL projection.",
+        }),
+      ]),
+    ).toThrow("no published chapter_claim rows");
   });
 });
