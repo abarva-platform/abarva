@@ -30,6 +30,7 @@ import {
 } from '@/lib/programs/regulatory/sr-11-7-control-deliverable';
 import { selectSourceEventsReadAdapter } from '@/lib/data-plane/read-adapters/sourceEventsReadAdapter';
 import { selectOutcomeLedgerReadAdapter } from '@/lib/data-plane/read-adapters/outcomeLedgerReadAdapter';
+import { canonicalTenantKey } from '@/lib/tenant-keys';
 import { CrossModuleTraceView } from '@/components/strategic-moves/CrossModuleTraceView';
 import { AppShell } from '@/components/shell/AppShell';
 import type { SourceEventDbRow } from '@/lib/data-plane/read-adapters/sourceEventsReadAdapter';
@@ -74,7 +75,7 @@ export default async function StrategicMoveTracePage({ params }: Props) {
   // to [] when their tables are absent — the trace then renders the
   // affected steps honestly as "not yet linked".
   const activeClient = await getActiveClientRow();
-  const clientKey = activeClient?.key ?? '';
+  const clientKey = canonicalTenantKey(activeClient?.key ?? ctx.clientKey ?? '');
 
   let sourceEvents: TraceSourceEvent[] = [];
   let outcomeEntries: Awaited<
@@ -88,7 +89,7 @@ export default async function StrategicMoveTracePage({ params }: Props) {
     const [active, pending, ledger] = await Promise.all([
       sourceAdapter.getActiveEventsForClient(clientKey).catch(() => []),
       sourceAdapter.getPendingEventsForClient(clientKey).catch(() => []),
-      selectOutcomeLedgerReadAdapter()
+      selectOutcomeLedgerReadAdapter(undefined, clientKey)
         .getCurrentEntries(clientKey)
         .catch(() => []),
     ]);

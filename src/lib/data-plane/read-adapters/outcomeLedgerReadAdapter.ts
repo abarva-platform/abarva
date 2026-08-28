@@ -36,7 +36,7 @@ import {
   VALUE_READINESS_STATES,
 } from '@/lib/tower/ai-value-outcome-ledger';
 import { createDefaultSession, type SessionRunner } from './azureSession';
-import { resolveDataPlane } from './resolveDataPlane';
+import { resolveDataPlaneForTenant } from './resolveDataPlane';
 import type { DataPlane } from './types';
 
 /** The columns the adapter reads, shared by both planes. */
@@ -220,8 +220,9 @@ export const azureOutcomeLedgerReadAdapter: OutcomeLedgerReadAdapter =
 /** Select the outcome-ledger read adapter for the configured data plane. */
 export function selectOutcomeLedgerReadAdapter(
   plane?: DataPlane,
+  tenantKey?: string | null,
 ): OutcomeLedgerReadAdapter {
-  const target = plane ?? resolveDataPlane();
+  const target = resolveDataPlaneForTenant(tenantKey, plane);
   return target === 'azure-postgres'
     ? azureOutcomeLedgerReadAdapter
     : supabaseOutcomeLedgerReadAdapter;
