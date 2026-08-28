@@ -7,6 +7,7 @@ import { Client, type QueryResultRow } from "pg";
 
 import {
   buildContractDepthScenario,
+  contractDepthOpportunityId,
   contractDepthQualityGate,
   type ContractDepthMonth,
 } from "../../src/lib/source/data-model/contract-depth-demo-slice";
@@ -603,7 +604,10 @@ async function replaceOptimizationSpine(
   identity: ContractIdentity,
   scenario: ReturnType<typeof buildContractDepthScenario>,
 ): Promise<void> {
-  const opportunityId = `${identity.contractId}:sla-credit-recovery`;
+  const opportunityId = contractDepthOpportunityId({
+    contractId: identity.contractId,
+    datasetVersion: args.datasetVersion,
+  });
   const calculationRunId = `${opportunityId}:calculation:1.0.0`;
   const baselineId = `${identity.contractId}:commercial-baseline`;
   const caseId = `${identity.contractId}:optimize-contract`;
