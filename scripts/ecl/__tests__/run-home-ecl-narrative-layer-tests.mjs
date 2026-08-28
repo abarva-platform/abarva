@@ -87,8 +87,13 @@ assert(
 assert(
   readback.includes("chapter_claim_entry_drift") &&
     readback.includes("refusal_payload_drift") &&
-    readback.includes("legacy_basis_rows"),
-  "Home ECL narrative readback checks claim linkage, admission payloads, and legacy basis drift",
+    readback.includes("legacy_basis_rows") &&
+    readback.includes("chapter_claim_pages"),
+  "Home ECL narrative readback checks claim linkage, admission payloads, legacy basis drift, and claim coverage",
+);
+assert(
+  !readback.includes("chapter_claim_pages_expected_"),
+  "Home ECL narrative readback reports claim page coverage without requiring every chapter to emit claim rows",
 );
 assert(
   readback.includes("process.env.ECL_DENSE_TENANT_KEY") &&
