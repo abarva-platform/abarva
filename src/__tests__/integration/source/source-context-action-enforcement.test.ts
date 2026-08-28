@@ -38,7 +38,7 @@ describe("Source context-used and action-enforcement slices", () => {
       "utf8",
     );
 
-    expect(source).toContain('redirect("/source/preview/workspace")');
+    expect(source).toContain('redirect("/source/workspace")');
     expect(source).not.toContain("SourceEventsPortfolio");
     expect(source).not.toContain("SourceEventsAgentDockView");
   });

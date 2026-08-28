@@ -1,16 +1,16 @@
-import Link from 'next/link';
-import { AppShell } from '@/components/shell/AppShell';
-import { SourceSubNav } from '@/components/source/SourceSubNav';
-import { SourceExecutionRoomPage } from '@/components/source/SourceExecutionRoomPage';
-import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
-import { getActiveClientRow } from '@/lib/active-client';
-import { canonicalClientDisplayName } from '@/lib/client-config';
-import { SHELL } from '@/lib/shell/shell-tokens';
-import { loadRenewalCockpitWithEvidence } from '@/lib/source/decision-queue/load';
-import { loadExecutionRoom } from '@/lib/source/execution-room/load';
+import Link from "next/link";
+import { AppShell } from "@/components/shell/AppShell";
+import { SourceSubNav } from "@/components/source/SourceSubNav";
+import { SourceExecutionRoomPage } from "@/components/source/SourceExecutionRoomPage";
+import { SourceWorkingPane } from "@/components/source/SourceWorkingPane";
+import { getActiveClientRow } from "@/lib/active-client";
+import { canonicalClientDisplayName } from "@/lib/client-config";
+import { SHELL } from "@/lib/shell/shell-tokens";
+import { loadRenewalCockpitWithEvidence } from "@/lib/source/decision-queue/load";
+import { loadExecutionRoom } from "@/lib/source/execution-room/load";
 
-export const metadata = { title: 'Source · Execution Room · AbarVa' };
-export const dynamic = 'force-dynamic';
+export const metadata = { title: "Source · Execution Room · AbarVa" };
+export const dynamic = "force-dynamic";
 
 /**
  * Source Execution Room — the operating surface for one sourcing decision.
@@ -26,10 +26,12 @@ export default async function SourceExecutionRoomRoute({
 }) {
   const { contractId } = await params;
   const activeClient = await getActiveClientRow().catch(() => null);
-  const clientKey = activeClient?.key ?? 'apexretail';
+  const clientKey = activeClient?.key ?? "apexretail";
   const activeClientDisplayName =
-    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
-    'AbarVa Client';
+    canonicalClientDisplayName({
+      key: activeClient?.key,
+      name: activeClient?.name,
+    }) ?? "AbarVa Client";
   const { cockpit, evidenceContext } = await loadRenewalCockpitWithEvidence(
     clientKey,
     decodeURIComponent(contractId),
@@ -46,7 +48,7 @@ export default async function SourceExecutionRoomRoute({
       topBarProps={{
         tenantName: activeClientDisplayName,
         showLocked: true,
-        context: 'Source · Execution Room',
+        context: "Source · Execution Room",
       }}
       subNav={<SourceSubNav />}
     >
@@ -57,11 +59,18 @@ export default async function SourceExecutionRoomRoute({
             evidenceContext={evidenceContext}
           />
         ) : (
-          <div style={{ maxWidth: 640, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div
+            style={{
+              maxWidth: 640,
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
             <h1
               style={{
                 fontFamily: SHELL.SERIF,
-                fontWeight: 'normal',
+                fontWeight: "normal",
                 fontSize: 24,
                 color: SHELL.INK,
                 margin: 0,
@@ -69,14 +78,25 @@ export default async function SourceExecutionRoomRoute({
             >
               Contract not found
             </h1>
-            <p style={{ fontFamily: SHELL.SANS, fontSize: 14, color: SHELL.INK_SOFT, margin: 0 }}>
+            <p
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 14,
+                color: SHELL.INK_SOFT,
+                margin: 0,
+              }}
+            >
               No vendor contract matches this id in the loaded tenant data. The
               Execution Room only renders for a real contract — it never
               fabricates a sourcing decision.
             </p>
             <Link
-              href="/source/preview/workspace"
-              style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_MID }}
+              href="/source/workspace"
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 13,
+                color: SHELL.INK_MID,
+              }}
             >
               Back to the sourcing book
             </Link>

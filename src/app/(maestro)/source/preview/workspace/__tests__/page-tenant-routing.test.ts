@@ -2,6 +2,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const pageSource = readFileSync(
+  join(process.cwd(), "src/app/(maestro)/source/workspace/page.tsx"),
+  "utf8",
+);
+
+const previewPageSource = readFileSync(
   join(process.cwd(), "src/app/(maestro)/source/preview/workspace/page.tsx"),
   "utf8",
 );
@@ -42,5 +47,14 @@ describe("Source workspace requested-client routing", () => {
     expect(pageSource).toContain('normalized === "ecl_projection_db"');
     expect(pageSource).toContain("params.sourceProvider ?? params.provider");
     expect(pageSource).toContain("requestedSourceProvider");
+  });
+
+  it("keeps the historical preview route as a query-preserving redirect only", () => {
+    expect(previewPageSource).toContain("SourceWorkspacePreviewRedirect");
+    expect(previewPageSource).toContain(
+      'redirect(`/source/workspace${queryString ? `?${queryString}` : ""}`);',
+    );
+    expect(previewPageSource).not.toContain("loadSourceWorkspacePortfolio(");
+    expect(previewPageSource).not.toContain("<WorkspaceClient");
   });
 });

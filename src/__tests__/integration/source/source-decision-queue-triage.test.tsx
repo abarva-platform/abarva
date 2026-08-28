@@ -73,7 +73,7 @@ describe("SourceDecisionQueueView triage bands", () => {
 
     expect(html).toContain('data-testid="source-triage-bands"');
     expect(html).toContain(
-      'href="/source/preview/workspace?decisionBand=overdue&amp;sort=deadline"',
+      'href="/source/workspace?decisionBand=overdue&amp;sort=deadline"',
     );
     expect(html).toContain("Overdue — act now");
     expect(html).toContain("Due this quarter");
@@ -112,7 +112,7 @@ describe("SourceDecisionQueueView triage bands", () => {
     );
 
     expect(html).toContain("Nothing needs you. 2 active events in Portfolio");
-    expect(html).toContain('href="/source/preview/workspace"');
+    expect(html).toContain('href="/source/workspace"');
   });
 
   it("guards secondary deadline actions behind a confirmation disclosure", () => {
@@ -153,7 +153,9 @@ describe("SourceDecisionQueueView triage bands", () => {
     expect(html).toContain("vendor contract evidence");
     expect(html).toContain("financial baseline evidence");
     expect(html).toContain("evidence are incomplete");
-    expect(html).toContain("Do not recommend until the missing evidence is refreshed");
+    expect(html).toContain(
+      "Do not recommend until the missing evidence is refreshed",
+    );
     expect(html).toContain("needs review clears");
     expect(html).toContain("Review required");
     expect(html).not.toContain("vendor_contracts");

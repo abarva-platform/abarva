@@ -18,8 +18,6 @@ import {
   type AttachmentRef,
   type ChatMessage,
 } from "@/components/agent/AgentDock";
-import { EclDemoFindingsPanel } from "@/components/ecl/EclDemoFindingsPanel";
-import { EclServingSurfaceCoverage } from "@/components/ecl/EclServingSurfaceCoverage";
 import { stripArtifactsForDisplay } from "@/lib/agent/artifacts";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { stripGovernedArtifactPayloadsFromText } from "@/lib/intelligence/answer/structured-fence-stream-filter";
@@ -282,43 +280,6 @@ export function WorkspaceClient({
     return buildViewModel(logic);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, portfolio, tenantName]);
-  const selectWorkspaceSurface = useCallback(
-    (kind: string, id: string | null = null, tab?: string) => {
-      setState((prev) => {
-        const hist = prev.hist
-          .slice(0, prev.hi + 1)
-          .concat([{ kind, id, tab }]);
-        const tabs = tab ? { ...prev.tabs, [kind]: tab } : prev.tabs;
-        return {
-          sel: { kind, id },
-          tabs,
-          hist,
-          hi: hist.length - 1,
-          quadrant: null,
-          tip: null,
-        };
-      });
-      if (kind === "contract" && id) fetchContractDetail(id);
-    },
-    [fetchContractDetail, setState],
-  );
-  const sourceSurfaceActions = useMemo(
-    () => ({
-      "Vendor portfolio": () => selectWorkspaceSurface("vendorList", null),
-      "Vendor 360": () => {
-        const vendorRef =
-          vm.conc.byVendor[0]?.vendorRef ??
-          portfolio.vendors[0]?.vendor_ref ??
-          null;
-        if (vendorRef) selectWorkspaceSurface("vendor", vendorRef, "Overview");
-      },
-      "Contract 360": () => {
-        const contractId = portfolio.contracts[0]?.contract_id ?? null;
-        if (contractId) selectWorkspaceSurface("contract", contractId, "Story");
-      },
-    }),
-    [portfolio.contracts, portfolio.vendors, selectWorkspaceSurface, vm],
-  );
   const isPortfolioCockpit =
     !vm.isVendor &&
     !vm.isContract &&
@@ -558,88 +519,28 @@ export function WorkspaceClient({
         overflow: "hidden",
       }}
     >
-      {/* Live-data banner — client-facing status only; implementation diagnostics
-          stay in the full-context drawer and aVa context. */}
-      <div
-        style={{
-          background: portfolio.isEmpty ? "#3a1f0c" : "#0c1a3a",
-          color: "rgba(255,255,255,.86)",
-          fontSize: 11,
-          padding: "5px 20px",
-          display: "flex",
-          gap: 10,
-          alignItems: "center",
-          flexShrink: 0,
-        }}
-      >
-        <strong
+      {portfolio.isEmpty ? (
+        <div
+          role="status"
           style={{
-            color: portfolio.isEmpty ? "#ffb066" : "#8fb8ff",
-            fontWeight: 800,
+            background: "#3a1f0c",
+            color: "rgba(255,255,255,.86)",
+            fontSize: 11,
+            padding: "5px 20px",
+            display: "flex",
+            gap: 10,
+            alignItems: "center",
+            flexShrink: 0,
           }}
         >
-          {portfolio.isEmpty ? "No Source rows returned" : "Source workspace"}
-        </strong>
-        <span style={{ color: "rgba(255,255,255,.74)" }}>
-          {portfolio.isEmpty
-            ? "Nothing below is estimated in its place."
-            : tenantName +
-              " · " +
-              portfolio.workspaceDiagnostics.v4ContractCount +
-              " contracts · " +
-              portfolio.workspaceDiagnostics.v4VendorCount +
-              " vendors · " +
-              new Date(portfolio.v4Snapshot.asOfDateIso).toLocaleDateString(
-                "en-GB",
-                {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                  timeZone: "UTC",
-                },
-              )}
-        </span>
-        <span
-          style={{ marginLeft: "auto", display: "flex", gap: 8, flexShrink: 0 }}
-        >
-          <button
-            onClick={() => {
-              window.location.href = "/source/preview/workspace";
-            }}
-            style={{
-              border: "1px solid rgba(255,255,255,.28)",
-              background: "transparent",
-              color: "inherit",
-              borderRadius: 5,
-              padding: "4px 10px",
-              fontSize: 11,
-              fontWeight: 600,
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Sourcing events ↗
-          </button>
-          <button
-            onClick={() => {
-              window.location.href = "/source/new";
-            }}
-            style={{
-              border: "1px solid rgba(255,255,255,.28)",
-              background: "transparent",
-              color: "inherit",
-              borderRadius: 5,
-              padding: "4px 10px",
-              fontSize: 11,
-              fontWeight: 600,
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
-          >
-            New event ↗
-          </button>
-        </span>
-      </div>
+          <strong style={{ color: "#ffb066", fontWeight: 800 }}>
+            No Source rows returned
+          </strong>
+          <span style={{ color: "rgba(255,255,255,.74)" }}>
+            Nothing below is estimated in its place.
+          </span>
+        </div>
+      ) : null}
 
       <div
         style={{
@@ -648,22 +549,10 @@ export function WorkspaceClient({
           minHeight: 0,
         }}
       >
-        {portfolio.workspaceDiagnostics.exploreProvider ===
-        "EclProjectionDbProvider" ? (
-          <>
-            <EclDemoFindingsPanel product="source" />
-            <div style={{ padding: "0 20px 12px" }}>
-              <EclServingSurfaceCoverage
-                product="source"
-                actions={sourceSurfaceActions}
-              />
-            </div>
-          </>
-        ) : null}
         {/* ── Canvas, wrapped in the shared aVa dock (same component/pattern as Moves' Move advisor) ── */}
         <AgentDock
           agent={SOURCE_WORKSPACE_AGENT}
-          surface="/source/preview/workspace"
+          surface="/source/workspace"
           defaultMode="collapsed"
           collapsedRestoreMode="expand"
           collapsedSummary={{ label: "aVa", detail: vm.title }}

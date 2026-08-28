@@ -3,7 +3,13 @@
  */
 
 import "@testing-library/jest-dom";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { TextDecoder, TextEncoder } from "util";
 
 import { SourceOptimizeContractPage } from "../SourceOptimizeContractPage";
@@ -322,9 +328,7 @@ describe("SourceOptimizeContractPage", () => {
       width: "100%",
       maxWidth: "none",
     });
-    expect(
-      screen.getByTestId("source-optimize-contract-frame"),
-    ).toHaveStyle({
+    expect(screen.getByTestId("source-optimize-contract-frame")).toHaveStyle({
       boxSizing: "border-box",
       gridTemplateColumns: "264px minmax(0, 1fr)",
       width: "100%",
@@ -420,7 +424,7 @@ describe("SourceOptimizeContractPage", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Source workspace" }),
-    ).toHaveAttribute("href", "/source/preview/workspace?contractId=CTR-090");
+    ).toHaveAttribute("href", "/source/workspace?contractId=CTR-090");
     expect(screen.getByText("Contract exposure")).toBeInTheDocument();
     expect(screen.getByText("Opportunity rows")).toBeInTheDocument();
     expect(screen.getByText("Open evidence gaps")).toBeInTheDocument();

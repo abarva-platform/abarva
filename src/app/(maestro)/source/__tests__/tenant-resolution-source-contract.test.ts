@@ -22,7 +22,7 @@ describe("Source tenant identity binding", () => {
     const source = readRepoFile("src/app/(maestro)/source/portfolio/page.tsx");
 
     expect(source).toContain('from "next/navigation"');
-    expect(source).toContain("/source/preview/workspace");
+    expect(source).toContain("/source/workspace");
     expect(source).toContain("sourceProvider");
     expect(source).toContain("contractId");
     expect(source).toContain("contractTab");

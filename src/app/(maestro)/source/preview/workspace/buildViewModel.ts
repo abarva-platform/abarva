@@ -375,7 +375,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         label: "Events dashboard",
         depth: 1,
         onClick: () => {
-          window.location.href = "/source/preview/workspace";
+          window.location.href = "/source/workspace";
         },
       }),
     );
@@ -486,7 +486,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     thesis = (
       {
         Portfolio: v4HasPortfolio
-          ? "AbarVa turns the governed Source workspace into one executive decision view: verdict, action queue, top contracts, and proof layers stay visibly separated."
+          ? "AbarVa turns the governed Source workspace into one executive decision view: verdict, action queue, top contracts, and available evidence stay visibly separated."
           : "AbarVa frames " +
             summary.vendorCount +
             " vendors and " +
@@ -554,7 +554,12 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       "The requested contract " +
       (sel.id ?? "unknown") +
       " was not returned by the active Source provider for this tenant. The workspace is withholding the contract view rather than substituting another contract.";
-    crumbLabels = ["Source", "Contracts", sel.id ?? "Requested contract", "Not found"];
+    crumbLabels = [
+      "Source",
+      "Contracts",
+      sel.id ?? "Requested contract",
+      "Not found",
+    ];
   } else if (kind === "opportunity" && opp) {
     title = REASON_LABEL[opp.reasons[0]] + " · " + opp.vendorName;
     thesis = opp.rationale.join(" ");
@@ -579,8 +584,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           sel.id === "all" ||
           (v.vendor_category ?? "Unresolved") === sel.id,
       );
-      title =
-        !sel.id || sel.id === "all" ? "All vendors" : sel.id + " vendors";
+      title = !sel.id || sel.id === "all" ? "All vendors" : sel.id + " vendors";
       thesis =
         vs.length +
         " vendors · " +
@@ -616,9 +620,22 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   let valueStrip: ReturnType<typeof vsItem>[] = [];
   if (kind === "contract" && selectedContractMissing) {
     valueStrip = [
-      vsItem("Requested contract", sel.id ?? null, "Query parameter contractId"),
-      vsItem("Governed contract rows", String(rows.length), "Rows returned by the active Source provider"),
-      vsItem("Evidence state", "Withheld", "No matching contract row; no substitute row rendered", COL.red),
+      vsItem(
+        "Requested contract",
+        sel.id ?? null,
+        "Query parameter contractId",
+      ),
+      vsItem(
+        "Governed contract rows",
+        String(rows.length),
+        "Rows returned by the active Source provider",
+      ),
+      vsItem(
+        "Evidence state",
+        "Withheld",
+        "No matching contract row; no substitute row rendered",
+        COL.red,
+      ),
     ];
   } else if (kind === "contract" && contract) {
     const c = contract.row;
@@ -1714,6 +1731,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     { label: "Annual contract value", align: "right" },
     { label: "Total committed", align: "right" },
     { label: "Auto-renewing", align: "right" },
+    { label: "Action" },
   ];
   const vendorListRows: DataTableRow[] = vm.portfolio.vendors
     .filter(
@@ -1740,6 +1758,13 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           color: "#5f5e5a",
         }),
         vm.cell(String(v.auto_renew_contracts), { align: "right", mono: true }),
+        {
+          text: "",
+          action: {
+            label: "Open Vendor 360",
+            onClick: () => vm.select("vendor", v.vendor_ref),
+          },
+        },
       ],
     }));
 
@@ -3434,6 +3459,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     categoryQuality,
     cockpit: vm.portfolio.cockpit,
     portfolioIsEmpty: vm.portfolio.isEmpty,
+    openCockpitVendors: () => vm.select("vendorList", null),
+    openCockpitContracts: () => vm.select("contractList", null),
     openCockpitContract: (contractId: string) =>
       vm.select("contract", contractId, "Story"),
     startCockpitOptimization: (

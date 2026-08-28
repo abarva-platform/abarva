@@ -327,7 +327,7 @@ function ContractsTable({
             >
               <td style={TD_STYLE}>
                 <Link
-                  href={`/source/preview/workspace?contractId=${encodeURIComponent(c.contractId)}`}
+                  href={`/source/workspace?contractId=${encodeURIComponent(c.contractId)}`}
                   style={{ color: ANALYTICS.INK, textDecoration: "underline" }}
                 >
                   {c.contractName}

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 export const metadata = { title: "Source Workspace · AbarVa" };
 export const dynamic = "force-dynamic";
 
-const SOURCE_WORKSPACE_ROUTE = "/source/preview/workspace";
+const SOURCE_WORKSPACE_ROUTE = "/source/workspace";
 
 /**
  * Archived legacy Contract 360 route.

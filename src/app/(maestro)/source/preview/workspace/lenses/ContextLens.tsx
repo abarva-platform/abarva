@@ -94,13 +94,56 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
           ["#vendor360-verdict", "Verdict"],
           ["#vendor360-action-queue", "Action queue"],
           ["#vendor360-top-contracts", "Top contracts"],
-          ["#vendor360-proof-layers", "Proof layers"],
+          ["#vendor360-evidence-controls", "Evidence"],
         ].map(([href, label]) => (
           <a key={href} href={href}>
             {label}
           </a>
         ))}
       </nav>
+
+      <div
+        aria-label="Workspace actions"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 10,
+          justifyContent: "flex-end",
+        }}
+      >
+        <button
+          type="button"
+          onClick={vm.openCockpitVendors}
+          style={{
+            border: "1px solid rgba(10,10,11,.16)",
+            background: "#fff",
+            color: "#0a0a0b",
+            borderRadius: 6,
+            padding: "9px 14px",
+            fontSize: 13,
+            fontWeight: 800,
+            cursor: "pointer",
+          }}
+        >
+          View vendors
+        </button>
+        <button
+          type="button"
+          onClick={vm.openCockpitContracts}
+          style={{
+            border: "1px solid #0a0a0b",
+            background: "#0a0a0b",
+            color: "#fff",
+            borderRadius: 6,
+            padding: "9px 14px",
+            fontSize: 13,
+            fontWeight: 800,
+            cursor: "pointer",
+          }}
+        >
+          View contracts
+        </button>
+      </div>
 
       <section
         id="vendor360-verdict"
@@ -596,7 +639,7 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
       </section>
 
       <section
-        id="vendor360-proof-layers"
+        id="vendor360-evidence-controls"
         className="sw-cockpit-proof"
         style={{
           display: "grid",
@@ -618,7 +661,7 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
             }}
           >
             <div style={{ ...labelStyle, color: "#888780", marginBottom: 7 }}>
-              03 proof layers
+              03 evidence controls
             </div>
             <h3
               style={{
@@ -633,10 +676,7 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
             </h3>
           </div>
 
-          <details
-            open
-            style={{ borderBottom: "1px solid rgba(10,10,11,.08)" }}
-          >
+          <details style={{ borderBottom: "1px solid rgba(10,10,11,.08)" }}>
             <summary style={summaryStyle}>Evidence behind the verdict</summary>
             <div style={proofGridStyle}>
               {proof.evidenceBehindVerdict.map((entry) => (
@@ -675,10 +715,7 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
             </div>
           </details>
 
-          <details
-            open
-            style={{ borderBottom: "1px solid rgba(10,10,11,.08)" }}
-          >
+          <details style={{ borderBottom: "1px solid rgba(10,10,11,.08)" }}>
             <summary style={summaryStyle}>
               Source systems, grain, freshness
             </summary>

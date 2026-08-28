@@ -55,9 +55,7 @@ describe("Source authenticated route smoke", () => {
     const proxySource = readWorkspaceFile("src/proxy.ts");
 
     expect(proxySource).toContain("shouldStripUnauthorizedClientParam(");
-    expect(proxySource).toContain(
-      "Source is intentionally not included here",
-    );
+    expect(proxySource).toContain("Source is intentionally not included here");
     expect(proxySource).not.toContain('pathname === "/source"');
     expect(proxySource).not.toContain('pathname.startsWith("/source/")');
   });
@@ -77,8 +75,10 @@ describe("Source authenticated route smoke", () => {
       "src/components/source/SourceIndexPage.tsx",
     );
 
-    expect(routeSource).toContain("redirect('/source/preview/workspace')");
-    expect(queueRouteSource).toContain('redirect("/source/preview/workspace")');
+    expect(routeSource).toMatch(
+      /redirect\(["\x27]\/source\/workspace["\x27]\)/,
+    );
+    expect(queueRouteSource).toContain('redirect("/source/workspace")');
     expect(queueRouteSource).not.toContain("SourceDecisionQueueView");
     expect(componentSource).toContain("AMS Vendor Consolidation 2026");
     expect(componentSource).toContain("SOURCE_INDEX_VIEW");

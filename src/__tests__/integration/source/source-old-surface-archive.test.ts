@@ -25,8 +25,8 @@ describe("Source old surface archive guard", () => {
     const root = read("src/app/(maestro)/source/page.tsx");
     const events = read("src/app/(maestro)/source/events/page.tsx");
 
-    expect(root).toContain("redirect('/source/preview/workspace')");
-    expect(events).toContain('redirect("/source/preview/workspace")');
+    expect(root).toMatch(/redirect\(["\x27]\/source\/workspace["\x27]\)/);
+    expect(events).toContain('redirect("/source/workspace")');
     expect(root).not.toContain("UniversalCanvasShell");
     expect(events).not.toContain("UniversalCanvasShell");
   });

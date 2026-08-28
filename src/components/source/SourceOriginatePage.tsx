@@ -335,7 +335,7 @@ function ContractOptimizationSelectionGate({
           specific contract.
         </div>
       )}
-      <a href="/source/preview/workspace" style={CONTRACT_SELECT_EXPLORE_LINK}>
+      <a href="/source/workspace" style={CONTRACT_SELECT_EXPLORE_LINK}>
         Open contract explorer →
       </a>
     </section>

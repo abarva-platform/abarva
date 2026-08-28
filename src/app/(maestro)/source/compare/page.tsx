@@ -18,25 +18,28 @@
 //
 // Design: AbarVa palette (SHELL tokens), Georgia/DM Sans typography.
 
-import Link from 'next/link';
-import { AppShell } from '@/components/shell/AppShell';
-import { SourceSubNav } from '@/components/source/SourceSubNav';
-import { getSourcingEvent, listSourcingEvents } from '@/lib/source/queries';
-import { SHELL } from '@/lib/shell/shell-tokens';
-import type { SourcingEventDetail, SourcingEventSummary } from '@/lib/source/types';
+import Link from "next/link";
+import { AppShell } from "@/components/shell/AppShell";
+import { SourceSubNav } from "@/components/source/SourceSubNav";
+import { getSourcingEvent, listSourcingEvents } from "@/lib/source/queries";
+import { SHELL } from "@/lib/shell/shell-tokens";
+import type {
+  SourcingEventDetail,
+  SourcingEventSummary,
+} from "@/lib/source/types";
 
 export const metadata = {
-  title: 'Compare Source Events · AbarVa',
+  title: "Compare Source Events · AbarVa",
 };
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 interface CompareSide {
   event: SourcingEventDetail | SourcingEventSummary;
   healthScore: number;
-  healthGrade: 'green' | 'amber' | 'red';
+  healthGrade: "green" | "amber" | "red";
   /** X/Y met out of total gate criteria */
   gateMet: number;
   gateTotal: number;
@@ -66,8 +69,7 @@ function resolveEventSummary(
   return (
     events.find(
       (event) =>
-        event.id.toLowerCase() === lower ||
-        event.code.toLowerCase() === lower,
+        event.id.toLowerCase() === lower || event.code.toLowerCase() === lower,
     ) ?? null
   );
 }
@@ -82,32 +84,38 @@ async function resolveComparableEvent(
   return (await getSourcingEvent(summary.id).catch(() => null)) ?? summary;
 }
 
-function buildSide(event: SourcingEventDetail | SourcingEventSummary): CompareSide {
-  const stages = 'stages' in event ? event.stages : [];
+function buildSide(
+  event: SourcingEventDetail | SourcingEventSummary,
+): CompareSide {
+  const stages = "stages" in event ? event.stages : [];
   const gateTotal = stages.length;
-  const gateMet = stages.filter((stage) => stage.gate.status === 'approved').length;
+  const gateMet = stages.filter(
+    (stage) => stage.gate.status === "approved",
+  ).length;
   const evidenceCount =
-    'artifacts' in event
+    "artifacts" in event
       ? event.artifacts.reduce((sum, artifact) => sum + artifact.sourceCount, 0)
       : 0;
   const contradictionCount = event.openAlerts;
-  const cascadeCount = 'alerts' in event ? event.alerts.length : event.openAlerts;
+  const cascadeCount =
+    "alerts" in event ? event.alerts.length : event.openAlerts;
   const healthScore = event.isAtRisk
     ? 42
     : event.openAlerts > 0
       ? 68
-      : event.status === 'active'
+      : event.status === "active"
         ? 84
         : 74;
   const healthGrade =
-    healthScore >= 80 ? 'green' : healthScore >= 60 ? 'amber' : 'red';
+    healthScore >= 80 ? "green" : healthScore >= 60 ? "amber" : "red";
 
   const raw =
-    'stages' in event
-      ? (event.stages.find((stage) => stage.key === event.currentStageKey)?.summary ??
-        event.nextAction)
+    "stages" in event
+      ? (event.stages.find((stage) => stage.key === event.currentStageKey)
+          ?.summary ?? event.nextAction)
       : event.nextAction;
-  const synthesisExcerpt = raw.length > 150 ? raw.slice(0, 150).trimEnd() + '…' : raw || '—';
+  const synthesisExcerpt =
+    raw.length > 150 ? raw.slice(0, 150).trimEnd() + "…" : raw || "—";
 
   return {
     event,
@@ -128,7 +136,7 @@ function buildSide(event: SourcingEventDetail | SourcingEventSummary): CompareSi
 
 // ── Tint logic ─────────────────────────────────────────────────────────────────
 
-type Tint = 'better' | 'worse' | 'neutral';
+type Tint = "better" | "worse" | "neutral";
 
 /**
  * Given two numeric values, decide which is "better" for a metric.
@@ -139,18 +147,18 @@ function tintPair(
   bVal: number,
   higherIsBetter: boolean,
 ): [Tint, Tint] {
-  if (aVal === bVal) return ['neutral', 'neutral'];
+  if (aVal === bVal) return ["neutral", "neutral"];
   if (higherIsBetter) {
-    return aVal > bVal ? ['better', 'worse'] : ['worse', 'better'];
+    return aVal > bVal ? ["better", "worse"] : ["worse", "better"];
   } else {
-    return aVal < bVal ? ['better', 'worse'] : ['worse', 'better'];
+    return aVal < bVal ? ["better", "worse"] : ["worse", "better"];
   }
 }
 
 function cellBg(tint: Tint): string {
-  if (tint === 'better') return SHELL.MINT_BG;
-  if (tint === 'worse') return SHELL.RUST_BG;
-  return 'transparent';
+  if (tint === "better") return SHELL.MINT_BG;
+  if (tint === "worse") return SHELL.RUST_BG;
+  return "transparent";
 }
 
 // ── Page ───────────────────────────────────────────────────────────────────────
@@ -181,82 +189,80 @@ export default async function SourceCompareEventsPage({
   return (
     <AppShell
       surface="source"
-      topBarProps={{ showLocked: true, context: 'Source · Compare events' }}
+      topBarProps={{ showLocked: true, context: "Source · Compare events" }}
       subNav={<SourceSubNav />}
     >
       <main
         style={{
           background: SHELL.PAPER,
           flex: 1,
-          overflowY: 'auto',
-          padding: '32px clamp(20px, 4vw, 48px)',
+          overflowY: "auto",
+          padding: "32px clamp(20px, 4vw, 48px)",
           fontFamily: SHELL.SANS,
           color: SHELL.INK,
         }}
       >
-      {/* ── Page header ── */}
-      <header style={{ marginBottom: 28, maxWidth: 1280 }}>
-        <div
-          style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 11,
-            color: SHELL.INK_MUTED,
-            textTransform: 'uppercase',
-            letterSpacing: '0.16em',
-            marginBottom: 8,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          <Link
-            href="/source/preview/workspace"
-            style={{ color: SHELL.INK_MUTED, textDecoration: 'none' }}
+        {/* ── Page header ── */}
+        <header style={{ marginBottom: 28, maxWidth: 1280 }}>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 11,
+              color: SHELL.INK_MUTED,
+              textTransform: "uppercase",
+              letterSpacing: "0.16em",
+              marginBottom: 8,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
           >
-            Source portfolio
-          </Link>
-          <span style={{ opacity: 0.4 }}>›</span>
-          <span>Compare</span>
-        </div>
-        <h1
-          style={{
-            fontFamily: SHELL.SERIF_DISPLAY,
-            fontSize: 28,
-            margin: 0,
-            letterSpacing: '-0.015em',
-            color: SHELL.INK,
-          }}
-        >
-          Source event comparison
-        </h1>
-        <p
-          style={{
-            margin: '10px 0 0',
-            color: SHELL.INK_SOFT,
-            fontSize: 14,
-            maxWidth: 680,
-            lineHeight: 1.55,
-          }}
-        >
-          Select two source events to view their health scores, gate progress,
-          evidence counts, contradiction counts, and synthesis guidance side by side.
-        </p>
-      </header>
+            <Link
+              href="/source/workspace"
+              style={{ color: SHELL.INK_MUTED, textDecoration: "none" }}
+            >
+              Source portfolio
+            </Link>
+            <span style={{ opacity: 0.4 }}>›</span>
+            <span>Compare</span>
+          </div>
+          <h1
+            style={{
+              fontFamily: SHELL.SERIF_DISPLAY,
+              fontSize: 28,
+              margin: 0,
+              letterSpacing: "-0.015em",
+              color: SHELL.INK,
+            }}
+          >
+            Source event comparison
+          </h1>
+          <p
+            style={{
+              margin: "10px 0 0",
+              color: SHELL.INK_SOFT,
+              fontSize: 14,
+              maxWidth: 680,
+              lineHeight: 1.55,
+            }}
+          >
+            Select two source events to view their health scores, gate progress,
+            evidence counts, contradiction counts, and synthesis guidance side
+            by side.
+          </p>
+        </header>
 
-      {showPicker ? (
-        <ComparePicker
-          aId={aId}
-          bId={bId}
-          aErr={aErr}
-          bErr={bErr}
-          events={events}
-        />
-      ) : (
-        <ComparisonView
-          left={buildSide(aEvent)}
-          right={buildSide(bEvent)}
-        />
-      )}
+        {showPicker ? (
+          <ComparePicker
+            aId={aId}
+            bId={bId}
+            aErr={aErr}
+            bErr={bErr}
+            events={events}
+          />
+        ) : (
+          <ComparisonView left={buildSide(aEvent)} right={buildSide(bEvent)} />
+        )}
       </main>
     </AppShell>
   );
@@ -285,10 +291,10 @@ function ComparePicker({
         background: SHELL.CARD_WHITE,
         border: `1px solid ${SHELL.CARD_LINE}`,
         borderRadius: 10,
-        padding: '28px 32px',
+        padding: "28px 32px",
         maxWidth: 640,
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         gap: 20,
       }}
     >
@@ -297,9 +303,9 @@ function ComparePicker({
           style={{
             fontFamily: SHELL.SERIF_DISPLAY,
             fontSize: 20,
-            margin: '0 0 6px',
+            margin: "0 0 6px",
             color: SHELL.INK,
-            letterSpacing: '-0.01em',
+            letterSpacing: "-0.01em",
           }}
         >
           Choose two source events
@@ -320,7 +326,7 @@ function ComparePicker({
       <EventPickerSelect
         name="a"
         label="Event A"
-        defaultValue={aId ?? ''}
+        defaultValue={aId ?? ""}
         events={events}
         invalid={aErr}
         invalidValue={aId}
@@ -329,26 +335,33 @@ function ComparePicker({
       <EventPickerSelect
         name="b"
         label="Event B"
-        defaultValue={bId ?? ''}
+        defaultValue={bId ?? ""}
         events={events}
         invalid={bErr}
         invalidValue={bId}
       />
 
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center', paddingTop: 4 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          alignItems: "center",
+          paddingTop: 4,
+        }}
+      >
         <button
           type="submit"
           style={{
             background: SHELL.INK,
             color: SHELL.PAPER,
-            border: 'none',
-            padding: '10px 22px',
+            border: "none",
+            padding: "10px 22px",
             borderRadius: 6,
             fontFamily: SHELL.SANS,
             fontSize: 13,
             fontWeight: 600,
-            cursor: 'pointer',
-            letterSpacing: '0.01em',
+            cursor: "pointer",
+            letterSpacing: "0.01em",
           }}
         >
           Compare →
@@ -358,7 +371,7 @@ function ComparePicker({
             fontFamily: SHELL.MONO,
             fontSize: 10,
             color: SHELL.INK_MUTED,
-            letterSpacing: '0.08em',
+            letterSpacing: "0.08em",
           }}
         >
           {events.length} events available for this client
@@ -384,14 +397,14 @@ function EventPickerSelect({
   invalidValue: string | undefined;
 }) {
   return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <span
         style={{
           fontFamily: SHELL.MONO,
           fontSize: 10,
           color: SHELL.INK_MUTED,
-          textTransform: 'uppercase',
-          letterSpacing: '0.14em',
+          textTransform: "uppercase",
+          letterSpacing: "0.14em",
           fontWeight: 500,
         }}
       >
@@ -401,14 +414,14 @@ function EventPickerSelect({
         name={name}
         defaultValue={defaultValue}
         style={{
-          padding: '10px 12px',
+          padding: "10px 12px",
           background: SHELL.PAPER,
           border: `1px solid ${invalid ? SHELL.RUST_TEXT : SHELL.CARD_LINE}`,
           borderRadius: 6,
           fontFamily: SHELL.SANS,
           fontSize: 13,
           color: SHELL.INK,
-          appearance: 'auto',
+          appearance: "auto",
         }}
       >
         <option value="">— select a source event —</option>
@@ -420,12 +433,12 @@ function EventPickerSelect({
       </select>
       {invalid && invalidValue !== undefined && (
         <span style={{ fontSize: 12, color: SHELL.RUST_TEXT }}>
-          Unknown event id:{' '}
+          Unknown event id:{" "}
           <code
             style={{
               fontFamily: SHELL.MONO,
               background: SHELL.RUST_BG,
-              padding: '1px 4px',
+              padding: "1px 4px",
               borderRadius: 3,
             }}
           >
@@ -446,7 +459,11 @@ function ComparisonView({
   left: CompareSide;
   right: CompareSide;
 }) {
-  const [healthTintA, healthTintB] = tintPair(left.healthScore, right.healthScore, true);
+  const [healthTintA, healthTintB] = tintPair(
+    left.healthScore,
+    right.healthScore,
+    true,
+  );
   const [gateRatioA, gateRatioB] = [
     left.gateTotal > 0 ? left.gateMet / left.gateTotal : 0,
     right.gateTotal > 0 ? right.gateMet / right.gateTotal : 0,
@@ -457,7 +474,11 @@ function ComparisonView({
     right.contradictionCount,
     false, // fewer contradictions = better
   );
-  const [evidTintA, evidTintB] = tintPair(left.evidenceCount, right.evidenceCount, true);
+  const [evidTintA, evidTintB] = tintPair(
+    left.evidenceCount,
+    right.evidenceCount,
+    true,
+  );
   const [cascadeTintA, cascadeTintB] = tintPair(
     left.cascadeCount,
     right.cascadeCount,
@@ -465,23 +486,30 @@ function ComparisonView({
   );
 
   const headerCellStyle: React.CSSProperties = {
-    padding: '0 16px 14px',
-    textAlign: 'left',
-    verticalAlign: 'bottom',
+    padding: "0 16px 14px",
+    textAlign: "left",
+    verticalAlign: "bottom",
   };
 
   return (
     <div style={{ maxWidth: 1200 }}>
       {/* Change selection link */}
-      <div style={{ marginBottom: 18, display: 'flex', gap: 10, alignItems: 'center' }}>
+      <div
+        style={{
+          marginBottom: 18,
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+        }}
+      >
         <Link
           href="/source/compare"
           style={{
             fontFamily: SHELL.MONO,
             fontSize: 10,
             color: SHELL.INK_SOFT,
-            letterSpacing: '0.08em',
-            textDecoration: 'underline',
+            letterSpacing: "0.08em",
+            textDecoration: "underline",
             textUnderlineOffset: 2,
           }}
         >
@@ -492,7 +520,7 @@ function ComparisonView({
             fontFamily: SHELL.MONO,
             fontSize: 10,
             color: SHELL.INK_MUTED,
-            letterSpacing: '0.06em',
+            letterSpacing: "0.06em",
           }}
         >
           {left.displayId} vs {right.displayId}
@@ -502,9 +530,9 @@ function ComparisonView({
       {/* Legend */}
       <div
         style={{
-          display: 'flex',
+          display: "flex",
           gap: 16,
-          alignItems: 'center',
+          alignItems: "center",
           marginBottom: 18,
         }}
       >
@@ -513,8 +541,8 @@ function ComparisonView({
             fontFamily: SHELL.MONO,
             fontSize: 9,
             color: SHELL.INK_MUTED,
-            textTransform: 'uppercase',
-            letterSpacing: '0.14em',
+            textTransform: "uppercase",
+            letterSpacing: "0.14em",
           }}
         >
           Key:
@@ -529,20 +557,20 @@ function ComparisonView({
           background: SHELL.CARD_WHITE,
           border: `1px solid ${SHELL.CARD_LINE}`,
           borderRadius: 10,
-          overflow: 'hidden',
+          overflow: "hidden",
         }}
       >
         <table
           style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            tableLayout: 'fixed',
+            width: "100%",
+            borderCollapse: "collapse",
+            tableLayout: "fixed",
           }}
         >
           <colgroup>
-            <col style={{ width: '22%' }} />
-            <col style={{ width: '39%' }} />
-            <col style={{ width: '39%' }} />
+            <col style={{ width: "22%" }} />
+            <col style={{ width: "39%" }} />
+            <col style={{ width: "39%" }} />
           </colgroup>
 
           {/* Column headers — event name + displayId */}
@@ -555,7 +583,10 @@ function ComparisonView({
             >
               <th style={{ ...headerCellStyle, paddingTop: 18 }} />
               <EventHeader side={left} href={`/source/events/${left.hrefId}`} />
-              <EventHeader side={right} href={`/source/events/${right.hrefId}`} />
+              <EventHeader
+                side={right}
+                href={`/source/events/${right.hrefId}`}
+              />
             </tr>
           </thead>
 
@@ -572,8 +603,15 @@ function ComparisonView({
             {/* Row: Health score */}
             <ComparisonRow
               label="Health score"
-              aContent={<HealthCell score={left.healthScore} grade={left.healthGrade} />}
-              bContent={<HealthCell score={right.healthScore} grade={right.healthGrade} />}
+              aContent={
+                <HealthCell score={left.healthScore} grade={left.healthGrade} />
+              }
+              bContent={
+                <HealthCell
+                  score={right.healthScore}
+                  grade={right.healthGrade}
+                />
+              }
               aTint={healthTintA}
               bTint={healthTintB}
             />
@@ -581,8 +619,12 @@ function ComparisonView({
             {/* Row: Gate pass rate */}
             <ComparisonRow
               label="Gate pass rate"
-              aContent={<GateRateCell met={left.gateMet} total={left.gateTotal} />}
-              bContent={<GateRateCell met={right.gateMet} total={right.gateTotal} />}
+              aContent={
+                <GateRateCell met={left.gateMet} total={left.gateTotal} />
+              }
+              bContent={
+                <GateRateCell met={right.gateMet} total={right.gateTotal} />
+              }
               aTint={gateTintA}
               bTint={gateTintB}
             />
@@ -590,8 +632,12 @@ function ComparisonView({
             {/* Row: Contradictions */}
             <ComparisonRow
               label="Contradictions"
-              aContent={<CountCell count={left.contradictionCount} warnIfPositive />}
-              bContent={<CountCell count={right.contradictionCount} warnIfPositive />}
+              aContent={
+                <CountCell count={left.contradictionCount} warnIfPositive />
+              }
+              bContent={
+                <CountCell count={right.contradictionCount} warnIfPositive />
+              }
               aTint={contradTintA}
               bTint={contradTintB}
             />
@@ -630,7 +676,7 @@ function ComparisonView({
       {/* Footer links to individual events */}
       <div
         style={{
-          display: 'flex',
+          display: "flex",
           gap: 24,
           marginTop: 20,
           paddingTop: 16,
@@ -654,23 +700,31 @@ function ComparisonView({
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function LegendChip({ bg, color, label }: { bg: string; color: string; label: string }) {
+function LegendChip({
+  bg,
+  color,
+  label,
+}: {
+  bg: string;
+  color: string;
+  label: string;
+}) {
   return (
     <span
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
+        display: "inline-flex",
+        alignItems: "center",
         gap: 5,
         fontFamily: SHELL.MONO,
         fontSize: 9,
         color,
-        textTransform: 'uppercase',
-        letterSpacing: '0.12em',
+        textTransform: "uppercase",
+        letterSpacing: "0.12em",
       }}
     >
       <span
         style={{
-          display: 'inline-block',
+          display: "inline-block",
           width: 10,
           height: 10,
           borderRadius: 2,
@@ -688,9 +742,9 @@ function EventHeader({ side, href }: { side: CompareSide; href: string }) {
   return (
     <th
       style={{
-        padding: '18px 16px 14px',
-        textAlign: 'left',
-        verticalAlign: 'bottom',
+        padding: "18px 16px 14px",
+        textAlign: "left",
+        verticalAlign: "bottom",
         borderLeft: `1px solid ${SHELL.CARD_LINE}`,
       }}
     >
@@ -699,8 +753,8 @@ function EventHeader({ side, href }: { side: CompareSide; href: string }) {
           fontFamily: SHELL.MONO,
           fontSize: 10,
           color: SHELL.INK_MUTED,
-          textTransform: 'uppercase',
-          letterSpacing: '0.12em',
+          textTransform: "uppercase",
+          letterSpacing: "0.12em",
           marginBottom: 4,
         }}
       >
@@ -713,10 +767,10 @@ function EventHeader({ side, href }: { side: CompareSide; href: string }) {
           fontSize: 17,
           fontWeight: 400,
           color: SHELL.INK,
-          textDecoration: 'none',
-          letterSpacing: '-0.01em',
+          textDecoration: "none",
+          letterSpacing: "-0.01em",
           lineHeight: 1.2,
-          display: 'block',
+          display: "block",
         }}
       >
         {side.displayName}
@@ -740,46 +794,46 @@ function ComparisonRow({
   bTint: Tint;
   isLast?: boolean;
 }) {
-  const borderStyle = isLast ? 'none' : `1px solid ${SHELL.CARD_LINE}`;
+  const borderStyle = isLast ? "none" : `1px solid ${SHELL.CARD_LINE}`;
 
   return (
     <tr>
       <td
         style={{
-          padding: '11px 16px',
+          padding: "11px 16px",
           fontFamily: SHELL.MONO,
           fontSize: 10,
-          textTransform: 'uppercase',
-          letterSpacing: '0.12em',
+          textTransform: "uppercase",
+          letterSpacing: "0.12em",
           color: SHELL.INK_MUTED,
           background: SHELL.PAPER,
-          whiteSpace: 'nowrap',
+          whiteSpace: "nowrap",
           borderBottom: borderStyle,
-          verticalAlign: 'middle',
+          verticalAlign: "middle",
         }}
       >
         {label}
       </td>
       <td
         style={{
-          padding: '11px 16px',
+          padding: "11px 16px",
           borderLeft: `1px solid ${SHELL.CARD_LINE}`,
           borderBottom: borderStyle,
           background: cellBg(aTint),
-          verticalAlign: 'middle',
-          transition: 'background 0.15s',
+          verticalAlign: "middle",
+          transition: "background 0.15s",
         }}
       >
         {aContent}
       </td>
       <td
         style={{
-          padding: '11px 16px',
+          padding: "11px 16px",
           borderLeft: `1px solid ${SHELL.CARD_LINE}`,
           borderBottom: borderStyle,
           background: cellBg(bTint),
-          verticalAlign: 'middle',
-          transition: 'background 0.15s',
+          verticalAlign: "middle",
+          transition: "background 0.15s",
         }}
       >
         {bContent}
@@ -797,7 +851,7 @@ function StageCell({ stage }: { stage: string }) {
         fontFamily: SHELL.MONO,
         fontSize: 13,
         color: SHELL.INK,
-        letterSpacing: '0.02em',
+        letterSpacing: "0.02em",
       }}
     >
       {stage}
@@ -810,7 +864,7 @@ function HealthCell({
   grade,
 }: {
   score: number;
-  grade: 'green' | 'amber' | 'red';
+  grade: "green" | "amber" | "red";
 }) {
   const colors: Record<string, { bg: string; text: string }> = {
     green: { bg: SHELL.MINT_BG, text: SHELL.MINT_TEXT },
@@ -818,17 +872,22 @@ function HealthCell({
     red: { bg: SHELL.RUST_BG, text: SHELL.RUST_TEXT },
   };
   const { bg, text } = colors[grade] ?? colors.amber;
-  const gradeLabel = grade === 'green' ? 'On track' : grade === 'amber' ? 'At risk' : 'In trouble';
+  const gradeLabel =
+    grade === "green"
+      ? "On track"
+      : grade === "amber"
+        ? "At risk"
+        : "In trouble";
 
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
       <span
         style={{
           fontFamily: SHELL.MONO,
           fontSize: 15,
           fontWeight: 600,
           color: SHELL.INK,
-          letterSpacing: '-0.01em',
+          letterSpacing: "-0.01em",
         }}
       >
         {score}
@@ -839,9 +898,9 @@ function HealthCell({
           color: text,
           fontFamily: SHELL.MONO,
           fontSize: 9,
-          textTransform: 'uppercase',
-          letterSpacing: '0.12em',
-          padding: '2px 7px',
+          textTransform: "uppercase",
+          letterSpacing: "0.12em",
+          padding: "2px 7px",
           borderRadius: 10,
           fontWeight: 600,
         }}
@@ -873,8 +932,8 @@ function GateRateCell({ met, total }: { met: number; total: number }) {
   return (
     <span
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
+        display: "inline-flex",
+        alignItems: "center",
         gap: 8,
       }}
     >
@@ -893,7 +952,7 @@ function GateRateCell({ met, total }: { met: number; total: number }) {
           fontFamily: SHELL.MONO,
           fontSize: 10,
           color: isGood ? SHELL.MINT_TEXT : SHELL.PEACH_TEXT,
-          letterSpacing: '0.06em',
+          letterSpacing: "0.06em",
         }}
       >
         {pct}% met
@@ -933,7 +992,7 @@ function ExcerptCell({ text }: { text: string }) {
         fontSize: 12,
         color: SHELL.INK_SOFT,
         lineHeight: 1.55,
-        display: 'block',
+        display: "block",
       }}
     >
       {text}
@@ -954,10 +1013,10 @@ function EventFooterLink({
     <Link
       href={href}
       style={{
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         gap: 2,
-        textDecoration: 'none',
+        textDecoration: "none",
       }}
     >
       <span
@@ -965,8 +1024,8 @@ function EventFooterLink({
           fontFamily: SHELL.MONO,
           fontSize: 9,
           color: SHELL.INK_MUTED,
-          textTransform: 'uppercase',
-          letterSpacing: '0.14em',
+          textTransform: "uppercase",
+          letterSpacing: "0.14em",
         }}
       >
         {displayId}
@@ -976,7 +1035,7 @@ function EventFooterLink({
           fontFamily: SHELL.SANS,
           fontSize: 13,
           color: SHELL.INK_SOFT,
-          textDecoration: 'underline',
+          textDecoration: "underline",
           textUnderlineOffset: 2,
         }}
       >

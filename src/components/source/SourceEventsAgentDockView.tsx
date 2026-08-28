@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // Source events portfolio · AgentDock chip. Uses the shared <AgentDock />
 // side-rail so portfolio chat, paperclip uploads, and resize / pin / expand
@@ -24,14 +24,14 @@
 // shared AgentDock — closes the layout-overlap bug on /source/events
 // and unifies the chat surface with the rest of the platform.
 
-import { useCallback, useState, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import {
   AgentDock,
   type AttachmentRef,
   type ChatMessage,
   type SuggestedAction,
-} from '@/components/agent/AgentDock';
+} from "@/components/agent/AgentDock";
 
 interface Props {
   /** Server-rendered portfolio body — becomes the AgentDock workspace. */
@@ -42,22 +42,26 @@ interface Props {
 }
 
 const SOURCE_AGENT = {
-  initials: 'aVa',
-  name: 'aVa',
-  role: 'Source portfolio advisor',
+  initials: "aVa",
+  name: "aVa",
+  role: "Source portfolio advisor",
 };
-const SOURCE_RUNTIME_AGENT_NAME = 'aVa';
+const SOURCE_RUNTIME_AGENT_NAME = "aVa";
 
 /** Keep the suggestion ids stable for telemetry. */
 const SUGGESTION_IDS = {
-  AT_RISK: 'at-risk',
-  STALLED_STRATEGY: 'stalled-strategy',
-  COMPARE_BAFO: 'compare-bafo',
+  AT_RISK: "at-risk",
+  STALLED_STRATEGY: "stalled-strategy",
+  COMPARE_BAFO: "compare-bafo",
 } as const;
 
-const SOURCE_AGENT_API_URL = '/api/chat/agent';
+const SOURCE_AGENT_API_URL = "/api/chat/agent";
 
-export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus }: Props) {
+export function SourceEventsAgentDockView({
+  workspace,
+  filterStage,
+  filterStatus,
+}: Props) {
   const router = useRouter();
   const [thread, setThread] = useState<ChatMessage[]>([]);
 
@@ -70,42 +74,48 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
       if (!text && attachments.length === 0) return;
       const userBody =
         attachments.length > 0
-          ? `${text}\n\n[attached: ${attachments.map((a) => a.file_name).join(', ')}]`
+          ? `${text}\n\n[attached: ${attachments.map((a) => a.file_name).join(", ")}]`
           : text;
       setThread((prev) => [
         ...prev,
-        { id: `u-${Date.now()}`, role: 'user', body: userBody },
+        { id: `u-${Date.now()}`, role: "user", body: userBody },
       ]);
 
       // Inline the extracted attachment text so aVa has file context even before
       // a long-form retrieval pipeline is wired up.
       const attachmentContext = attachments
-        .filter((a) => a.extracted_text_preview && a.extracted_text_preview.trim().length > 0)
+        .filter(
+          (a) =>
+            a.extracted_text_preview &&
+            a.extracted_text_preview.trim().length > 0,
+        )
         .map(
           (a) =>
             `--- attachment: ${a.file_name} (${a.mime}) ---\n${a.extracted_text_preview}\n--- end attachment ---`,
         )
-        .join('\n\n');
-      const messageForRuntime = attachmentContext ? `${text}\n\n${attachmentContext}` : text;
+        .join("\n\n");
+      const messageForRuntime = attachmentContext
+        ? `${text}\n\n${attachmentContext}`
+        : text;
 
       const filterSummary: string[] = [];
       if (filterStage) filterSummary.push(`stage=${filterStage}`);
       if (filterStatus) filterSummary.push(`status=${filterStatus}`);
       const portfolioContextLine =
         filterSummary.length > 0
-          ? ` Portfolio filters: ${filterSummary.join(', ')}.`
-          : ' Portfolio filters: none.';
+          ? ` Portfolio filters: ${filterSummary.join(", ")}.`
+          : " Portfolio filters: none.";
       const context = `Surface: /source/events. Agent: ${SOURCE_AGENT.name}.${portfolioContextLine} The user is asking within the AbarVa platform.`;
 
-      let acc = '';
+      let acc = "";
       try {
         const res = await fetch(SOURCE_AGENT_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             message: messageForRuntime,
             context,
-            surface: '/source/events',
+            surface: "/source/events",
             agentName: SOURCE_RUNTIME_AGENT_NAME,
           }),
         });
@@ -113,7 +123,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
           throw new Error(`aVa returned ${res.status}`);
         }
         const reader = res.body?.getReader();
-        if (!reader) throw new Error('No response body');
+        if (!reader) throw new Error("No response body");
         const decoder = new TextDecoder();
         let streaming = true;
         while (streaming) {
@@ -125,15 +135,16 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
           acc += decoder.decode(value, { stream: true });
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Connection error';
+        const message = err instanceof Error ? err.message : "Connection error";
         acc = `I hit an error: ${message}`;
       }
 
       const trimmed = acc.trim();
-      const finalBody = trimmed.length > 0 ? trimmed : 'aVa did not return a response.';
+      const finalBody =
+        trimmed.length > 0 ? trimmed : "aVa did not return a response.";
       setThread((prev) => [
         ...prev,
-        { id: `a-${Date.now()}`, role: 'agent', body: finalBody },
+        { id: `a-${Date.now()}`, role: "agent", body: finalBody },
       ]);
     },
     [filterStage, filterStatus],
@@ -144,32 +155,32 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
   const suggestedActions: SuggestedAction[] = [
     {
       id: SUGGESTION_IDS.AT_RISK,
-      label: 'Show me events at risk',
-      body: 'Show me the events that are currently at risk and tell me what is blocking each one.',
+      label: "Show me events at risk",
+      body: "Show me the events that are currently at risk and tell me what is blocking each one.",
       onClick: () => {
         const params = new URLSearchParams();
-        if (filterStage) params.set('stage', filterStage);
-        params.set('status', 'at_risk');
-        router.push(`/source/preview/workspace?${params.toString()}`);
+        if (filterStage) params.set("stage", filterStage);
+        params.set("status", "at_risk");
+        router.push(`/source/workspace?${params.toString()}`);
       },
     },
     {
       id: SUGGESTION_IDS.STALLED_STRATEGY,
       label: "What's stalled in Strategy?",
-      body: 'What sourcing events are stalled in the Strategy stage and why?',
+      body: "What sourcing events are stalled in the Strategy stage and why?",
       onClick: () => {
         const params = new URLSearchParams();
-        params.set('stage', 'Strategy');
-        if (filterStatus) params.set('status', filterStatus);
-        router.push(`/source/preview/workspace?${params.toString()}`);
+        params.set("stage", "Strategy");
+        if (filterStatus) params.set("status", filterStatus);
+        router.push(`/source/workspace?${params.toString()}`);
       },
     },
     {
       id: SUGGESTION_IDS.COMPARE_BAFO,
-      label: 'Compare BAFO finalists',
-      body: 'Compare the BAFO finalists across the portfolio.',
+      label: "Compare BAFO finalists",
+      body: "Compare the BAFO finalists across the portfolio.",
       onClick: () => {
-        router.push('/source/compare?stage=bafo');
+        router.push("/source/compare?stage=bafo");
       },
     },
   ];
@@ -182,7 +193,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
       defaultLeftPercent={30}
       minLeftPx={300}
       surfaceContext={{
-        context: 'Source events portfolio',
+        context: "Source events portfolio",
         filterStage: filterStage ?? null,
         filterStatus: filterStatus ?? null,
       }}
