@@ -1,0 +1,5 @@
+gate_name,rule
+finance_validated_required,Value is not board-claimable until Finance validates actuals.
+foundation_not_direct_roi,Foundation rows must not carry direct projected annual value.
+ai_classification_explicit,"AI status comes from project classification, not folder or BI label."
+roi_floor_required,Direct-value AI cases must clear the 3x low-case ROI floor.

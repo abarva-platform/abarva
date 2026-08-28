@@ -1,0 +1,205 @@
+{
+  "package_id": "meridian-layer1-synthetic-20260824",
+  "tenant_key": "meridian-health",
+  "generated_at": "2026-08-28T17:07:06.875Z",
+  "package_type": "tower_full_synthetic_layer_cube_package",
+  "status": "offline_layer_cube_proof_no_load_no_deploy",
+  "no_runtime_load": true,
+  "layers": {
+    "layer_1_client_intake": "generated",
+    "layer_2_source_adapters": "generated",
+    "layer_3_canonical": "generated",
+    "cube": "generated",
+    "layer_4_read_models": "generated"
+  },
+  "revenue_usd": 20400000000,
+  "total_it_budget_usd": 1050000000,
+  "tower_reviewed_project_budget_usd": 703100000,
+  "files": [
+    {
+      "file": "20_it_budget_by_domain.csv",
+      "rows": 8,
+      "sha256": "87ba86446e55b005f2feb20152e31d97287362eaeaa4378dedc51fce8f86b65f"
+    },
+    {
+      "file": "layer_1_client_intake/source_system_extracts/20_it_budget_by_domain.csv",
+      "rows": 8,
+      "sha256": "87ba86446e55b005f2feb20152e31d97287362eaeaa4378dedc51fce8f86b65f"
+    },
+    {
+      "file": "layer_1_client_intake/source_system_extracts/21_it_project_portfolio.csv",
+      "rows": 140,
+      "sha256": "1d6cce8ee882f2ec76c89c75dab5d3506d73bd3273c3d39ae44be96605fa81ae"
+    },
+    {
+      "file": "layer_1_client_intake/source_system_extracts/22_ai_business_cases.csv",
+      "rows": 42,
+      "sha256": "d60d8c9450cc10a877125381f3508a6673b193c9a47e5ef51de9ab1ef96c7eae"
+    },
+    {
+      "file": "layer_1_client_intake/source_system_extracts/23_ai_tool_rollout.csv",
+      "rows": 13,
+      "sha256": "52e00b5a9688d95c8985641e1d0cd1291b84ecc54b512e0ad83f24a674f2b3c0"
+    },
+    {
+      "file": "layer_1_client_intake/source_system_extracts/24_monthly_value_tracking.csv",
+      "rows": 504,
+      "sha256": "e99374c3402e0d15b09670b0737f7405e05688ae5bdfcccefb796fe40326bf8f"
+    },
+    {
+      "file": "layer_1_client_intake/source_system_extracts/25_finance_approval_ledger.csv",
+      "rows": 84,
+      "sha256": "251bbe7ed6d2f07802e4f33c637b0bd493792db0fc83d60bc795b16a13ab14f4"
+    },
+    {
+      "file": "layer_1_client_intake/source_system_extracts/26_evidence_register.csv",
+      "rows": 196,
+      "sha256": "ff06bba99332a2fac7485706899f0b748e592373b999e11c8a1b9afc7e992983"
+    },
+    {
+      "file": "21_it_project_portfolio.csv",
+      "rows": 140,
+      "sha256": "1d6cce8ee882f2ec76c89c75dab5d3506d73bd3273c3d39ae44be96605fa81ae"
+    },
+    {
+      "file": "22_ai_business_cases.csv",
+      "rows": 42,
+      "sha256": "d60d8c9450cc10a877125381f3508a6673b193c9a47e5ef51de9ab1ef96c7eae"
+    },
+    {
+      "file": "23_ai_tool_rollout.csv",
+      "rows": 13,
+      "sha256": "52e00b5a9688d95c8985641e1d0cd1291b84ecc54b512e0ad83f24a674f2b3c0"
+    },
+    {
+      "file": "24_monthly_value_tracking.csv",
+      "rows": 504,
+      "sha256": "e99374c3402e0d15b09670b0737f7405e05688ae5bdfcccefb796fe40326bf8f"
+    },
+    {
+      "file": "25_finance_approval_ledger.csv",
+      "rows": 84,
+      "sha256": "251bbe7ed6d2f07802e4f33c637b0bd493792db0fc83d60bc795b16a13ab14f4"
+    },
+    {
+      "file": "26_evidence_register.csv",
+      "rows": 196,
+      "sha256": "ff06bba99332a2fac7485706899f0b748e592373b999e11c8a1b9afc7e992983"
+    },
+    {
+      "file": "00_layer1_readme.csv",
+      "rows": 1,
+      "sha256": "0496c3754090ed7afbff8a5ad039be67e699adff817b8cc32b034441c5dbaa1e"
+    },
+    {
+      "file": "layer_1_client_intake/00_layer1_readme.csv",
+      "rows": 1,
+      "sha256": "0496c3754090ed7afbff8a5ad039be67e699adff817b8cc32b034441c5dbaa1e"
+    },
+    {
+      "file": "layer_1_client_intake/source_file_manifest.csv",
+      "rows": 7,
+      "sha256": "a2c4f2bf8aa7bcf94d4dc8423eb7ff54e2321934aec450aae56f460200d5906e"
+    },
+    {
+      "file": "layer_2_source_adapters/adapter_runs.csv",
+      "rows": 7,
+      "sha256": "c625a87036a9158873b48693bd15d43106ae4329ce5b0c3b182054b9916ed62b"
+    },
+    {
+      "file": "layer_2_source_adapters/adapter_emitted_objects.csv",
+      "rows": 987,
+      "sha256": "fddc18345ac6b2b328f27384dd465f4256cd86280c4856784978a099d3f95670"
+    },
+    {
+      "file": "layer_3_canonical/canonical_budgets.csv",
+      "rows": 8,
+      "sha256": "0c021d06f822e7fcb5d9d9d056a38b6b2fa935bb3b963cb276dd7a1a9aa76737"
+    },
+    {
+      "file": "layer_3_canonical/canonical_projects.csv",
+      "rows": 140,
+      "sha256": "27d9b98e0941185c210f2f7a954d7ae30bf17209aa8f8976e0ab552e476d625a"
+    },
+    {
+      "file": "layer_3_canonical/canonical_ai_use_cases.csv",
+      "rows": 42,
+      "sha256": "395861086e215bdfeb82e590e55eaf63ebd5fbc7011422562826ed7aa0c6dd2f"
+    },
+    {
+      "file": "layer_3_canonical/canonical_tools.csv",
+      "rows": 13,
+      "sha256": "837f0534e3d4fb09f45d51e075263e127697eefa5736df2d658298505c2743aa"
+    },
+    {
+      "file": "layer_3_canonical/canonical_monthly_value_observations.csv",
+      "rows": 504,
+      "sha256": "12af5b14ef3526dbf3b11fb19d272b1d8da29eb1f2b1ee486ee6412aadf6ca65"
+    },
+    {
+      "file": "layer_3_canonical/canonical_finance_approval_events.csv",
+      "rows": 84,
+      "sha256": "49ad1260f4ef6a2fc7e8a3d91e47c45aa44578e055a6f9e593de01b2e25c2676"
+    },
+    {
+      "file": "layer_3_canonical/canonical_evidence_items.csv",
+      "rows": 196,
+      "sha256": "17d48c84e0cfc0629ec9eb2a84ce632543623410886666ab975a2f28c421d228"
+    },
+    {
+      "file": "layer_3_canonical/canonical_relationships.csv",
+      "rows": 280,
+      "sha256": "26c50a61cab8c17b7c24f4cbf79d4e4407ef50879c5a3b294576870db7deb3ec"
+    },
+    {
+      "file": "cube/tower_ai_case_cube.csv",
+      "rows": 42,
+      "sha256": "3e7ce9c864be8a34d7a603f8180287da52f2025d0bc3b6770e463939b29dc1a7"
+    },
+    {
+      "file": "cube/tower_ai_portfolio_cube.csv",
+      "rows": 21,
+      "sha256": "4ffe5150c6ffbd5a3873e95c5b1710db542e2e307415a90f6f49f365d0bc30e3"
+    },
+    {
+      "file": "cube/cube_measures.csv",
+      "rows": 7,
+      "sha256": "6553c4763c897e7c24f321e2810d41a9563614d2f1316818d99880cd21d9b25f"
+    },
+    {
+      "file": "cube/cube_dimensions.csv",
+      "rows": 5,
+      "sha256": "826563671dc1def173ee39bf0c373abba87f7ab5a80ae777d45ef3db544decb3"
+    },
+    {
+      "file": "cube/cube_gate_flags.csv",
+      "rows": 4,
+      "sha256": "c8a33648730bb074906062613a95eeee8f37bd4cd2860112358813ff9b05dc8a"
+    },
+    {
+      "file": "layer_4_read_models/tower_executive_summary.csv",
+      "rows": 1,
+      "sha256": "eb82635950fa75cf2c03b31a05f8523b145647770991e1ba6cd473d11616cf50"
+    },
+    {
+      "file": "layer_4_read_models/tower_ai_initiatives_table.csv",
+      "rows": 42,
+      "sha256": "feaeb6c8d46fffc1e960bdec30bd2bf215b89de86097ad742a028f29662c2ee2"
+    },
+    {
+      "file": "layer_4_read_models/tower_tools_table.csv",
+      "rows": 13,
+      "sha256": "94c6de5cea92127e886354e7c6d273796df119e4d83db7f2b2ec246af8a05425"
+    },
+    {
+      "file": "layer_4_read_models/tower_value_proof_queue.csv",
+      "rows": 34,
+      "sha256": "1159f8f870cf0b5493feb54c93b0f3a0eb34d2bf8258da030cd3a6ea7593ec20"
+    },
+    {
+      "file": "README.md",
+      "rows": null,
+      "sha256": "7069212f892c83e1e6ea8c381d0e06a3be956589a275034a4a34373724965f83"
+    }
+  ]
+}

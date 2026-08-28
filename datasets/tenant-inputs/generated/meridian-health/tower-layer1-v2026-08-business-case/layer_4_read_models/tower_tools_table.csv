@@ -1,0 +1,14 @@
+tenant_key,tool_name,vendor_name,rollout_goal,linked_business_case_count,rollout_target_users,monthly_active_users,adoption_target_pct,adoption_actual_pct,rollout_stage
+meridian-health,Enterprise AI platform,Microsoft Azure / Databricks,governed model build and serving foundation,14,520,281,54,54,pilot
+meridian-health,ServiceNow Now Assist,ServiceNow,case deflection and ticket resolution,5,5200,2756,61,53,funded
+meridian-health,Microsoft 365 Copilot,Microsoft,knowledge worker productivity,2,8400,2688,48,32,scale
+meridian-health,GitHub Copilot,Microsoft GitHub,engineering productivity,0,1100,638,58,58,controlled_rollout
+meridian-health,AI coding agents,OpenAI / Anthropic / Microsoft GitHub,product engineering throughput and build-vs-buy leverage,1,680,299,52,44,pilot
+meridian-health,Workday AI,Workday,finance and HR workflow assist,2,1400,378,43,27,funded
+meridian-health,Epic clinical AI assist,Epic,clinical workflow summarization,6,2600,962,37,37,scale
+meridian-health,Databricks Mosaic AI,Databricks,model serving and governed AI platform,0,420,193,54,46,controlled_rollout
+meridian-health,Power BI Copilot,Microsoft,self-service analytics assistance,0,2300,690,46,30,pilot
+meridian-health,Contact center agent assist,Genesys,member service call guidance,3,1800,936,52,52,funded
+meridian-health,Prior auth document AI,Internal build,authorization document triage,3,620,130,29,21,scale
+meridian-health,Security operations assistant,Microsoft,SOC investigation summarization,3,260,65,41,25,controlled_rollout
+meridian-health,Digital front door AI decisioning,Internal build,personalized member navigation and offer selection,3,4100,1845,45,45,pilot

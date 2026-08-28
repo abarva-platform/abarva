@@ -1,0 +1,8 @@
+measure_name,additive,owner
+approved_investment_usd,yes,IT Finance
+projected_annual_value_low_usd,yes,business sponsor
+projected_annual_value_high_usd,yes,business sponsor
+finance_validated_ytd_usd,yes_by_month,Finance
+board_claimable_ytd_usd,yes_by_month,Finance
+roi_low_multiple,derived_ratio,deterministic cube
+roi_high_multiple,derived_ratio,deterministic cube

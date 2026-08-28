@@ -1,0 +1,8 @@
+tenant_key,source_file,owner_role,description,source_layer,refresh_cadence,quality_state
+meridian-health,20_it_budget_by_domain.csv,IT Finance / FP&A,IT budget by domain,Layer 1 client intake,monthly,synthetic_review_ready
+meridian-health,21_it_project_portfolio.csv,PMO,IT project portfolio,Layer 1 client intake,monthly,synthetic_review_ready
+meridian-health,22_ai_business_cases.csv,Business sponsors + Finance,AI business cases,Layer 1 client intake,monthly,synthetic_review_ready
+meridian-health,23_ai_tool_rollout.csv,Platform administrators,AI tool rollout,Layer 1 client intake,monthly,synthetic_review_ready
+meridian-health,24_monthly_value_tracking.csv,Business sponsors + Finance,Monthly value tracking,Layer 1 client intake,monthly,synthetic_review_ready
+meridian-health,25_finance_approval_ledger.csv,Finance,Finance approval ledger,Layer 1 client intake,monthly,synthetic_review_ready
+meridian-health,26_evidence_register.csv,Initiative owners,Evidence register,Layer 1 client intake,monthly,synthetic_review_ready

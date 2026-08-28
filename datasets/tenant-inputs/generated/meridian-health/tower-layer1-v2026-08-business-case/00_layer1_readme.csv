@@ -1,0 +1,2 @@
+tenant_key,package_id,layer,purpose,rule,generated_at
+meridian-health,meridian-layer1-synthetic-20260824,Layer 1 client intake,"Synthetic Meridian Tower source data for signoff before adapter, canonical, cube, or product changes.","Total IT budget is broader than AI. AI-related status is explicit classification, never inferred from BI/tool labels.",2026-08-28T17:07:06.870Z

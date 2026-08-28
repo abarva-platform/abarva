@@ -1,0 +1,8 @@
+tenant_key,adapter_id,source_file,emitted_object_type,run_id,run_status,lineage_status,no_runtime_load,extract_date,as_of_date
+meridian-health,meridian_budget_domain_adapter,20_it_budget_by_domain.csv,Budget,meridian-layer1-synthetic-20260824,synthetic_offline_pass,preserved,true,2026-08-24,2026-08-24
+meridian-health,meridian_it_project_adapter,21_it_project_portfolio.csv,Project,meridian-layer1-synthetic-20260824,synthetic_offline_pass,preserved,true,2026-08-24,2026-08-24
+meridian-health,meridian_ai_business_case_adapter,22_ai_business_cases.csv,AIUseCase,meridian-layer1-synthetic-20260824,synthetic_offline_pass,preserved,true,2026-08-24,2026-08-24
+meridian-health,meridian_tool_rollout_adapter,23_ai_tool_rollout.csv,Tool,meridian-layer1-synthetic-20260824,synthetic_offline_pass,preserved,true,2026-08-24,2026-08-24
+meridian-health,meridian_monthly_value_adapter,24_monthly_value_tracking.csv,MetricObservation,meridian-layer1-synthetic-20260824,synthetic_offline_pass,preserved,true,2026-08-24,2026-08-24
+meridian-health,meridian_finance_approval_adapter,25_finance_approval_ledger.csv,ApprovalEvent,meridian-layer1-synthetic-20260824,synthetic_offline_pass,preserved,true,2026-08-24,2026-08-24
+meridian-health,meridian_evidence_adapter,26_evidence_register.csv,Evidence,meridian-layer1-synthetic-20260824,synthetic_offline_pass,preserved,true,2026-08-24,2026-08-24
