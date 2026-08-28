@@ -12,6 +12,8 @@
 
 Source Vendor 360 now presents a compact operator cockpit instead of a long stacked report page. The surface only promotes cross-contract facts that are already present in the governed vendor and contract projections, and it keeps opportunity actions hidden when no deterministic opportunity row exists.
 
+Follow-up refinement: optional summary panels and contract-table columns now render only when the underlying vendor rollup or contract rows have populated values, so unavailable fields do not appear as executive-summary clutter.
+
 ## Layer Impact
 
 Release lane: `global-control-lane`.
@@ -31,6 +33,7 @@ Layer 4 PRODUCTS: Updates the Source workspace Vendor 360 rendering and workspac
 - `src/app/(maestro)/source/preview/workspace/canvases/VendorCanvas.tsx`
 - `src/app/(maestro)/source/preview/workspace/WorkspaceClient.tsx`
 - Focused Source workspace render tests for the Vendor 360 cockpit.
+- Follow-up test coverage that hides unavailable mini-stats, empty insight panels, and optional contract columns with placeholder values.
 
 ## QA / Validation
 

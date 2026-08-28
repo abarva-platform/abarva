@@ -39,9 +39,27 @@ export function VendorCanvas({ vm }: { vm: SourceWorkspaceVM }) {
     weakSignalValue,
   ].filter(isAvailableMetric);
   const showOverview = vm.vOverview || (vm.vOppsTab && !vm.vendorHasOpps);
+  const miniStats = [
+    primaryValue && isAvailableMetric(primaryValue)
+      ? { label: "Annual value", value: primaryValue.value }
+      : null,
+    contractCount > 0
+      ? { label: "Contracts", value: String(contractCount) }
+      : null,
+    actionableRenewalValue && isAvailableMetric(actionableRenewalValue)
+      ? { label: "Renewal exposure", value: actionableRenewalValue.value }
+      : null,
+    actionableWeakSignalValue
+      ? { label: "Weak leverage", value: actionableWeakSignalValue.value }
+      : null,
+    vm.vendorHasOpps
+      ? { label: "Opportunities", value: String(vm.vendorOpps.length) }
+      : null,
+  ].filter((item): item is { label: string; value: string } => Boolean(item));
   const tabs = vm.tabs.filter(
     (tab) => tab.label !== "Opportunities" || vm.vendorHasOpps,
   );
+  const hasSidePanels = hasDeterministicAlerts(vm) || vm.vendorHasOpps;
 
   return (
     <section data-testid="source-vendor360-exec-cockpit" style={SHELL}>
@@ -87,14 +105,20 @@ export function VendorCanvas({ vm }: { vm: SourceWorkspaceVM }) {
 
       <section aria-label="Vendor headline metrics" style={SUMMARY_ROW}>
         <div style={METRIC_STRIP}>
-          {metricCards.map((item) => (
-            <MetricCard
-              key={item.label}
-              label={item.label}
-              value={item.value}
-              sub={item.sub}
-            />
-          ))}
+          {metricCards.length ? (
+            metricCards.map((item) => (
+              <MetricCard
+                key={item.label}
+                label={item.label}
+                value={item.value}
+                sub={item.sub}
+              />
+            ))
+          ) : (
+            <div style={EMPTY_METRIC}>
+              No populated vendor-level contract metrics in this view.
+            </div>
+          )}
         </div>
         <QuickActions
           hasOpportunities={vm.vendorHasOpps}
@@ -129,39 +153,27 @@ export function VendorCanvas({ vm }: { vm: SourceWorkspaceVM }) {
       </nav>
 
       {showOverview ? (
-        <div style={MAIN_GRID}>
+        <div style={hasSidePanels ? MAIN_GRID : SINGLE_COLUMN_GRID}>
           <section style={LEFT_STACK}>
             <ContractTable vm={vm} />
-            <section style={VALUE_SUMMARY}>
-              <MiniStat
-                label="Annual value"
-                value={primaryValue?.value ?? "Not established"}
-              />
-              <MiniStat label="Contracts" value={String(contractCount)} />
-              {actionableRenewalValue ? (
-                <MiniStat
-                  label="Renewal exposure"
-                  value={actionableRenewalValue.value}
-                />
-              ) : null}
-              {actionableWeakSignalValue ? (
-                <MiniStat
-                  label="Weak leverage"
-                  value={actionableWeakSignalValue.value}
-                />
-              ) : null}
-              {vm.vendorHasOpps ? (
-                <MiniStat
-                  label="Opportunities"
-                  value={String(vm.vendorOpps.length)}
-                />
-              ) : null}
-            </section>
+            {miniStats.length ? (
+              <section style={VALUE_SUMMARY}>
+                {miniStats.map((stat) => (
+                  <MiniStat
+                    key={stat.label}
+                    label={stat.label}
+                    value={stat.value}
+                  />
+                ))}
+              </section>
+            ) : null}
           </section>
-          <aside style={RIGHT_STACK}>
-            <AlertsPanel vm={vm} />
-            <AssistantPanel vm={vm} />
-          </aside>
+          {hasSidePanels ? (
+            <aside style={RIGHT_STACK}>
+              <AlertsPanel vm={vm} />
+              <AssistantPanel vm={vm} />
+            </aside>
+          ) : null}
         </div>
       ) : null}
 
@@ -282,9 +294,30 @@ function ContractTable({
   vm: SourceWorkspaceVM;
   expanded?: boolean;
 }) {
-  const rows = (
-    expanded ? vm.vendorContractRows : vm.vendorContractRows.slice(0, 5)
-  ).map(toCompactContractRow);
+  const sourceRows = expanded
+    ? vm.vendorContractRows
+    : vm.vendorContractRows.slice(0, 5);
+  const optionalIndexes = [
+    [5, { label: "Notice deadline", align: "right" }],
+    [6, { label: "Expiry", align: "right" }],
+    [7, { label: "Renewal" }],
+    [8, { label: "Weak signals", align: "center" }],
+  ] as const;
+  const visibleOptionalIndexes = optionalIndexes.filter(([index]) =>
+    sourceRows.some((row) => isAvailableCell(row.cells[index]?.text)),
+  );
+  const columns: DataTableColumn[] = [
+    { label: "Contract" },
+    { label: "Id" },
+    { label: "Annual value", align: "right" },
+    ...visibleOptionalIndexes.map(([, column]) => column),
+  ];
+  const rows = sourceRows.map((row) =>
+    toCompactContractRow(
+      row,
+      visibleOptionalIndexes.map(([index]) => index),
+    ),
+  );
 
   return (
     <DataTable
@@ -298,7 +331,7 @@ function ContractTable({
           ? "Notice, expiry, renewal, and weak-signal posture for this vendor."
           : "Click a row to open Contract 360."
       }
-      columns={compactContractColumns}
+      columns={columns}
       rows={rows}
       footnote={
         expanded
@@ -309,17 +342,17 @@ function ContractTable({
   );
 }
 
-function toCompactContractRow(row: DataTableRow): DataTableRow {
+function toCompactContractRow(
+  row: DataTableRow,
+  optionalIndexes: readonly number[],
+): DataTableRow {
   return {
     ...row,
     cells: [
       row.cells[1],
       row.cells[2],
       row.cells[3],
-      row.cells[5],
-      row.cells[6],
-      row.cells[7],
-      row.cells[8],
+      ...optionalIndexes.map((index) => row.cells[index]),
     ].filter(Boolean),
   };
 }
@@ -343,6 +376,8 @@ function AlertsPanel({ vm }: { vm: SourceWorkspaceVM }) {
     })),
   ];
 
+  if (!alerts.length) return null;
+
   return (
     <section style={SIDE_PANEL}>
       <PanelHeader
@@ -350,54 +385,37 @@ function AlertsPanel({ vm }: { vm: SourceWorkspaceVM }) {
         action={alerts.length ? `${alerts.length} open` : "Clear"}
       />
       <div style={ALERT_LIST}>
-        {alerts.length ? (
-          alerts.map((alert) => (
-            <button
-              key={`${alert.title}-${alert.body}`}
-              type="button"
-              onClick={alert.onClick}
-              style={ALERT_ROW}
-            >
-              <span
-                aria-hidden
-                style={{ ...ALERT_DOT, background: alert.tone }}
-              >
-                !
-              </span>
-              <span style={{ minWidth: 0 }}>
-                <strong style={ALERT_TITLE}>{alert.title}</strong>
-                <span style={ALERT_BODY}>{alert.body}</span>
-              </span>
-              <span style={ALERT_LINK}>View</span>
-            </button>
-          ))
-        ) : (
-          <div style={EMPTY_SIDE_COPY}>
-            No deterministic vendor alerts in the current cut.
-          </div>
-        )}
+        {alerts.map((alert) => (
+          <button
+            key={`${alert.title}-${alert.body}`}
+            type="button"
+            onClick={alert.onClick}
+            style={ALERT_ROW}
+          >
+            <span aria-hidden style={{ ...ALERT_DOT, background: alert.tone }}>
+              !
+            </span>
+            <span style={{ minWidth: 0 }}>
+              <strong style={ALERT_TITLE}>{alert.title}</strong>
+              <span style={ALERT_BODY}>{alert.body}</span>
+            </span>
+            <span style={ALERT_LINK}>View</span>
+          </button>
+        ))}
       </div>
     </section>
   );
 }
 
 function AssistantPanel({ vm }: { vm: SourceWorkspaceVM }) {
-  const insights = vm.vendorOpps.length
-    ? vm.vendorOpps.slice(0, 3).map((opportunity) => ({
-        title: opportunity.reasons,
-        body: opportunity.why,
-        cta: "View details",
-        onClick: opportunity.onClick,
-      }))
-    : [
-        {
-          title: "No deterministic opportunities flagged",
-          body: "The current vendor rollup has no populated opportunity row; Source is not substituting an estimated claim.",
-          cta: "Review evidence",
-          onClick: () =>
-            vm.tabs.find((tab) => tab.label === "Dependencies")?.onClick(),
-        },
-      ];
+  if (!vm.vendorOpps.length) return null;
+
+  const insights = vm.vendorOpps.slice(0, 3).map((opportunity) => ({
+    title: opportunity.reasons,
+    body: opportunity.why,
+    cta: "View details",
+    onClick: opportunity.onClick,
+  }));
 
   return (
     <section style={SIDE_PANEL}>
@@ -430,6 +448,50 @@ function AssistantPanel({ vm }: { vm: SourceWorkspaceVM }) {
 
 function DependenciesPanel({ vm }: { vm: SourceWorkspaceVM }) {
   const dependencies = vm.vendorDependencyMap;
+  type DepColumn = { label: string; content: ReactNode };
+  const columns: Array<DepColumn | null> = [
+    dependencies.contracts.length
+      ? {
+          label: "Contracts",
+          content: dependencies.contracts.map((contract) => (
+            <DepChip key={contract.id} onClick={contract.onClick}>
+              {contract.name}
+            </DepChip>
+          )),
+        }
+      : null,
+    dependencies.criticalApplications > 0
+      ? {
+          label: "Critical applications",
+          content: (
+            <DepChip tone={COL.blue}>
+              {dependencies.criticalApplications} business-critical
+            </DepChip>
+          ),
+        }
+      : null,
+    dependencies.platforms.length
+      ? {
+          label: "Platforms",
+          content: dependencies.platforms.map((platform) => (
+            <DepChip key={platform}>{platform}</DepChip>
+          )),
+        }
+      : null,
+    dependencies.initiatives.length
+      ? {
+          label: "Transformation initiatives",
+          content: dependencies.initiatives.map((initiative, index) => (
+            <DepChip key={`${initiative.name}-${index}`} tone={COL.amber}>
+              {initiative.name} · {initiative.status}
+            </DepChip>
+          )),
+        }
+      : null,
+  ];
+  const populatedColumns = columns.filter((column): column is DepColumn =>
+    Boolean(column),
+  );
 
   return (
     <section style={PANEL}>
@@ -438,46 +500,17 @@ function DependenciesPanel({ vm }: { vm: SourceWorkspaceVM }) {
         action={dependencies.vendorRef ?? "Vendor"}
       />
       <div style={DEPENDENCY_GRID}>
-        <DepCol label="Contracts">
-          {dependencies.contracts.length ? (
-            dependencies.contracts.map((contract) => (
-              <DepChip key={contract.id} onClick={contract.onClick}>
-                {contract.name}
-              </DepChip>
-            ))
-          ) : (
-            <DepEmpty />
-          )}
-        </DepCol>
-        <DepCol label="Critical applications">
-          {dependencies.criticalApplications > 0 ? (
-            <DepChip tone={COL.blue}>
-              {dependencies.criticalApplications} business-critical
-            </DepChip>
-          ) : (
-            <DepEmpty />
-          )}
-        </DepCol>
-        <DepCol label="Platforms">
-          {dependencies.platforms.length ? (
-            dependencies.platforms.map((platform) => (
-              <DepChip key={platform}>{platform}</DepChip>
-            ))
-          ) : (
-            <DepEmpty />
-          )}
-        </DepCol>
-        <DepCol label="Transformation initiatives">
-          {dependencies.initiatives.length ? (
-            dependencies.initiatives.map((initiative, index) => (
-              <DepChip key={`${initiative.name}-${index}`} tone={COL.amber}>
-                {initiative.name} · {initiative.status}
-              </DepChip>
-            ))
-          ) : (
-            <DepEmpty />
-          )}
-        </DepCol>
+        {populatedColumns.length ? (
+          populatedColumns.map((column) => (
+            <DepCol key={column.label} label={column.label}>
+              {column.content}
+            </DepCol>
+          ))
+        ) : (
+          <div style={EMPTY_SIDE_COPY}>
+            No vendor relationship rows are populated in this view.
+          </div>
+        )}
       </div>
     </section>
   );
@@ -567,10 +600,6 @@ function DepChip({
       {children}
     </button>
   );
-}
-
-function DepEmpty() {
-  return <div style={EMPTY_SIDE_COPY}>Not mapped for this vendor.</div>;
 }
 
 const SHELL: CSSProperties = {
@@ -718,6 +747,13 @@ const METRIC_SUB: CSSProperties = {
   marginTop: 5,
 };
 
+const EMPTY_METRIC: CSSProperties = {
+  color: "#7a8799",
+  fontSize: 12.5,
+  lineHeight: 1.45,
+  padding: 16,
+};
+
 const QUICK_ACTIONS: CSSProperties = {
   background: "#fff",
   border: "1px solid rgba(10,31,68,.12)",
@@ -773,6 +809,13 @@ const TAB_BUTTON: CSSProperties = {
 const MAIN_GRID: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "minmax(0,1fr) minmax(320px,400px)",
+  gap: 14,
+  alignItems: "start",
+};
+
+const SINGLE_COLUMN_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0,1fr)",
   gap: 14,
   alignItems: "start",
 };
@@ -986,20 +1029,32 @@ const OPPORTUNITY_VALUE: CSSProperties = {
   whiteSpace: "nowrap",
 };
 
-const compactContractColumns: DataTableColumn[] = [
-  { label: "Contract" },
-  { label: "Id" },
-  { label: "Annual value", align: "right" },
-  { label: "Notice deadline", align: "right" },
-  { label: "Expiry", align: "right" },
-  { label: "Renewal" },
-  { label: "Weak signals", align: "center" },
-];
-
 type ValueStripItem = SourceWorkspaceVM["valueStrip"][number];
 
 function isAvailableMetric(
   item: ValueStripItem | undefined,
 ): item is ValueStripItem {
   return Boolean(item && item.value.trim() && item.value !== "Not established");
+}
+
+function isAvailableCell(value: ReactNode): boolean {
+  if (value == null || typeof value === "boolean") return false;
+  if (typeof value === "number") return Number.isFinite(value);
+  if (typeof value !== "string") return true;
+  const trimmed = value.trim();
+  return Boolean(
+    trimmed &&
+    trimmed !== "—" &&
+    trimmed !== "-" &&
+    trimmed !== "Not established" &&
+    trimmed !== "Not verified" &&
+    trimmed !== "Unresolved",
+  );
+}
+
+function hasDeterministicAlerts(vm: SourceWorkspaceVM): boolean {
+  return (
+    vm.vendorComposition.some((contract) => contract.renewalExposed) ||
+    vm.vendorOpps.length > 0
+  );
 }

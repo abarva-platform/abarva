@@ -84,9 +84,9 @@ function testVm(): SourceWorkspaceVM {
           { text: "CTR-090" },
           { text: "$19.5M" },
           { text: "$9.9M" },
-          { text: "30 Jun 2027" },
-          { text: "31 Dec 2027" },
-          { text: "Auto-renew" },
+          { text: "Not established" },
+          { text: "—" },
+          { text: "Not verified" },
           { text: "0 of 4" },
           { text: "Monitor" },
         ],
@@ -131,5 +131,12 @@ describe("VendorCanvas executive cockpit", () => {
     expect(screen.queryByText("Savings realized")).toBeNull();
     expect(screen.queryByText("Risk score")).toBeNull();
     expect(screen.queryByText("Run Optimize")).toBeNull();
+    expect(screen.queryByText("Notice deadline")).toBeNull();
+    expect(screen.queryByText("Expiry")).toBeNull();
+    expect(screen.queryByText("Renewal")).toBeNull();
+    expect(
+      screen.queryByText("No deterministic opportunities flagged"),
+    ).toBeNull();
+    expect(screen.queryByText("No deterministic vendor alerts")).toBeNull();
   });
 });
