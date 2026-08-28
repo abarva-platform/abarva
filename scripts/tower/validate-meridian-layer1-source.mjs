@@ -32,6 +32,7 @@ const REQUIRED_FILES = [
   "25_finance_approval_ledger.csv",
   "26_evidence_register.csv",
   "layer_1_client_intake/00_layer1_readme.csv",
+  "layer_1_client_intake/LAYER_1_SIGNOFF.md",
   "layer_1_client_intake/source_file_manifest.csv",
   "layer_1_client_intake/source_system_extracts/20_it_budget_by_domain.csv",
   "layer_1_client_intake/source_system_extracts/21_it_project_portfolio.csv",
@@ -42,6 +43,7 @@ const REQUIRED_FILES = [
   "layer_1_client_intake/source_system_extracts/26_evidence_register.csv",
   "layer_2_source_adapters/adapter_runs.csv",
   "layer_2_source_adapters/adapter_emitted_objects.csv",
+  "layer_2_source_adapters/LAYER_2_SIGNOFF.md",
   "layer_3_canonical/canonical_budgets.csv",
   "layer_3_canonical/canonical_projects.csv",
   "layer_3_canonical/canonical_ai_use_cases.csv",
@@ -50,6 +52,7 @@ const REQUIRED_FILES = [
   "layer_3_canonical/canonical_finance_approval_events.csv",
   "layer_3_canonical/canonical_evidence_items.csv",
   "layer_3_canonical/canonical_relationships.csv",
+  "layer_3_canonical/LAYER_3_SIGNOFF.md",
   "cube/tower_ai_case_cube.csv",
   "cube/tower_ai_portfolio_cube.csv",
   "cube/cube_measures.csv",
@@ -302,7 +305,6 @@ async function main() {
 
   const gates = [];
   const projectById = new Map(projects.map((row) => [row.project_id, row]));
-  const caseById = new Map(aiCases.map((row) => [row.business_case_id, row]));
   const aiProjects = projects.filter((row) => row.is_ai_related === "true");
   const aiProjectIds = new Set(aiProjects.map((row) => row.project_id));
   const analyticsRows = projects.filter(
@@ -655,7 +657,7 @@ async function main() {
 
   const summary = {
     status: gates.every((gate) => gate.status === "PASS") ? "PASS" : "FAIL",
-    packageDir: PACKAGE_DIR,
+    packageDir: path.relative(ROOT, PACKAGE_DIR),
     totals: {
       totalItBudgetUsd: totalItBudget,
       reviewedProjectBudgetUsd: reviewedProjectBudget,

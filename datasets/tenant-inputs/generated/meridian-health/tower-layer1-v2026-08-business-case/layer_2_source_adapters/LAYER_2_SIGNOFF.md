@@ -2,7 +2,7 @@
 
 Package: `tower-layer1-v2026-08-business-case`
 Layer: Source adapters
-Status: locally validated; Azure write path prepared; live Azure write pending merged digest image
+Status: locally validated; Azure write path prepared; live Azure write requires governed ACA job approval
 As of: 2026-08-24
 
 ## Layer 2 Purpose
@@ -44,7 +44,7 @@ The 9 source files are the 7 Layer 1 source extracts plus 2 Layer 2 adapter audi
 
 ## Validation Results
 
-Local validation passed:
+Local validation must pass:
 
 - 7 adapter runs
 - 987 adapter emissions for 987 Layer 1 source rows
@@ -53,12 +53,7 @@ Local validation passed:
 - 0 tenant payload drift rows
 - 0 adapter-lineage drift rows
 
-Disposable Postgres execution passed:
-
-- Generated SQL applied against the ECL physical schema.
-- Readback returned 9 source files and 1,981 source records.
-- Readback returned 987 client source extract records, 7 adapter run records, and 987 adapter emission records.
-- Readback returned zero tenant drift and zero adapter-lineage drift.
+Azure readback is a separate gate. It is not complete until a governed ACA operator job writes this package to `ecl_source` and the readback SQL confirms the same counts above.
 
 ## Azure Load Contract
 

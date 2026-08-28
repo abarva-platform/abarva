@@ -82,6 +82,7 @@ function main() {
   const packageDir = path.resolve(argValue(argv, "--package-dir", process.env.TOWER_LAYER2_PACKAGE_DIR ?? DEFAULT_PACKAGE_DIR));
   const summaryPath = argValue(argv, "--summary", process.env.TOWER_LAYER2_SUMMARY ?? DEFAULT_SUMMARY);
   const readbackPath = argValue(argv, "--readback", process.env.TOWER_LAYER2_READBACK ?? DEFAULT_READBACK);
+  const localOnly = argv.includes("--local-only");
 
   const adapterRuns = readCsv(path.join(packageDir, "layer_2_source_adapters/adapter_runs.csv"));
   const emissions = readCsv(path.join(packageDir, "layer_2_source_adapters/adapter_emitted_objects.csv"));
@@ -115,12 +116,15 @@ function main() {
     gate(gates, "readback_adapter_emission_count", Number(readback.adapter_emission_records) === 987, `${readback.adapter_emission_records} adapter emission records`);
     gate(gates, "readback_tenant_drift", Number(readback.tenant_payload_drift) === 0, `${readback.tenant_payload_drift} tenant payload drift rows`);
     gate(gates, "readback_lineage_drift", Number(readback.adapter_lineage_drift) === 0, `${readback.adapter_lineage_drift} adapter lineage drift rows`);
+  } else if (localOnly) {
+    gate(gates, "azure_readback_deferred", true, "local-only validation; Azure readback requires governed ACA job execution");
   } else {
     gate(gates, "readback_present", false, `missing ${readbackPath}`);
   }
 
   const result = {
     status: gates.every((item) => item.status === "PASS") ? "PASS" : "FAIL",
+    mode: localOnly ? "local_only" : "azure_readback_required",
     packageDir,
     summaryPath,
     readbackPath,

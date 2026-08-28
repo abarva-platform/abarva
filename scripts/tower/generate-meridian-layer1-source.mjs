@@ -22,6 +22,7 @@ const TOTAL_IT_BUDGET_USD = 1_050_000_000;
 const TOWER_REVIEWED_PROJECT_USD = 703_100_000;
 const TARGET_AI_PORTFOLIO_ROI_LOW = 3.2;
 const TARGET_AI_PORTFOLIO_ROI_HIGH = 4.0;
+const GENERATED_AT = "2026-08-28T17:07:06.875Z";
 
 const budgetDomains = [
   [
@@ -505,15 +506,6 @@ const aiFillerBlueprints = [
     "provider service request classification",
     "VP Provider Operations",
   ],
-];
-
-const aiClassCycle = [
-  "ai_use_case",
-  "ai_enabled_tool_rollout",
-  "analytics_bi",
-  "ai_assisted_automation",
-  "platform_foundation",
-  "data_readiness",
 ];
 
 const toolCatalog = [
@@ -1357,14 +1349,6 @@ function buildEvidence(projectRows, aiCases, monthlyRows) {
   return [...projectEvidence, ...caseEvidence, ...monthlyEvidence];
 }
 
-function sourceRow(row, file, rows) {
-  return {
-    ...row,
-    source_file: file,
-    source_row: rows.indexOf(row) + 2,
-  };
-}
-
 function buildAdapterArtifacts(sources) {
   const sourceFiles = [
     ["20_it_budget_by_domain.csv", "budget_domain", "Budget"],
@@ -1893,6 +1877,428 @@ function buildReadModels(sources, cube) {
   return { executiveSummary, initiativeTable, toolTable, proofQueue };
 }
 
+function formatUsdMillions(value) {
+  if (value >= 1_000_000_000) {
+    return `$${Math.round((value / 1_000_000_000) * 100) / 100}B`;
+  }
+  return `$${(Math.round(value / 100_000) / 10).toFixed(1)}M`;
+}
+
+function formatMultiple(value) {
+  return `${(Math.round(value * 10) / 10).toFixed(1)}x`;
+}
+
+function countBy(rows, field) {
+  const counts = new Map();
+  for (const row of rows) {
+    const key = String(row[field] ?? "").trim() || "(blank)";
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+}
+
+function orderedCounts(rows, field, preferredOrder) {
+  const counts = new Map(countBy(rows, field));
+  return [
+    ...preferredOrder.filter((key) => counts.has(key)).map((key) => [key, counts.get(key)]),
+    ...[...counts.entries()].filter(([key]) => !preferredOrder.includes(key)),
+  ];
+}
+
+function buildLayer1Signoff({ budgetRows, projectRows, aiCases, toolRollouts, monthlyValue, financeLedger, evidence }) {
+  const totalItBudget = budgetRows.reduce((sum, row) => sum + Number(row.approved_budget_usd), 0);
+  const reviewedProjectBudget = projectRows.reduce((sum, row) => sum + Number(row.approved_budget_usd), 0);
+  const aiProjects = projectRows.filter((row) => row.is_ai_related === "true");
+  const aiInvestment = aiProjects.reduce((sum, row) => sum + Number(row.approved_budget_usd), 0);
+  const projectedLow = aiCases.reduce((sum, row) => sum + Number(row.projected_annual_value_low_usd || 0), 0);
+  const projectedHigh = aiCases.reduce((sum, row) => sum + Number(row.projected_annual_value_high_usd || 0), 0);
+  const boardClaimable = monthlyValue.reduce((sum, row) => sum + Number(row.board_claimable_value_usd || 0), 0);
+  const directValueCases = aiCases.filter((row) => Number(row.projected_annual_value_low_usd || 0) > 0);
+  const foundationCases = aiCases.length - directValueCases.length;
+  const topProjects = [...projectRows]
+    .sort((a, b) => Number(b.approved_budget_usd) - Number(a.approved_budget_usd))
+    .slice(0, 10);
+  const valueTypeRows = orderedCounts(aiCases, "business_value_type", [
+    "Reduce cost",
+    "Create capacity",
+    "Grow revenue",
+    "Build faster",
+    "Foundation",
+  ]).map(([valueType, count]) => {
+    const rows = aiCases.filter((row) => row.business_value_type === valueType);
+    const highBuild = rows.reduce((sum, row) => sum + Number(row.cost_to_build_high_usd || 0), 0);
+    const lowValue = rows.reduce((sum, row) => sum + Number(row.projected_annual_value_low_usd || 0), 0);
+    const highValue = rows.reduce((sum, row) => sum + Number(row.projected_annual_value_high_usd || 0), 0);
+    return `| ${valueType} | ${count} | \`${formatUsdMillions(highBuild)}\` | \`${formatUsdMillions(lowValue)}-${formatUsdMillions(highValue)}\` |`;
+  });
+  const financeRows = orderedCounts(financeLedger, "approval_state", [
+    "sponsor_claimed",
+    "finance_challenged",
+    "cfo_approved_target",
+    "not_submitted",
+    "finance_validated_actual",
+  ]).map(
+    ([state, count]) => `| ${state} | ${count} |`,
+  );
+
+  return `# Meridian Tower Synthetic Source Data - Layer 1 Signoff
+
+Package: \`tower-layer1-v2026-08-business-case\`
+Tenant key: \`meridian-health\`
+Status: synthetic review package only; not loaded to runtime
+As of: ${AS_OF_DATE}
+
+## Layer 1 Purpose
+
+Layer 1 represents what Meridian would provide or maintain as client-owned source inputs. It is organized by data owner and business workflow, not by Tower screens or internal canonical tables.
+
+The source layer answers five simple executive questions:
+
+1. What is the overall IT budget?
+2. Which approved projects are under review?
+3. Which projects are explicitly AI or AI-enabled?
+4. What value did the sponsor project, and what proof is needed?
+5. What has Finance reviewed, approved, validated, or rejected?
+
+## Included Source Files
+
+| File | Owner | Purpose | Refresh |
+| --- | --- | --- | --- |
+| \`20_it_budget_by_domain.csv\` | IT Finance / FP&A | Total IT budget by function/domain | Monthly close |
+| \`21_it_project_portfolio.csv\` | PMO | Approved IT project portfolio, including AI flags | Monthly |
+| \`22_ai_business_cases.csv\` | Business sponsors + Finance | One business case per explicit AI / AI-enabled project | Monthly |
+| \`23_ai_tool_rollout.csv\` | Platform administrators | Tool rollout goals, target users, enabled users, active users | Monthly |
+| \`24_monthly_value_tracking.csv\` | Business sponsors + Finance | Sponsor, Finance, and board-claimable value tracking | Monthly |
+| \`25_finance_approval_ledger.csv\` | Finance | Sponsor claims, CFO target approvals, challenges, and actual validation events | Monthly |
+| \`26_evidence_register.csv\` | Initiative owners | Source evidence tied to projects, business cases, value observations, and finance events | Monthly |
+
+## Source-Layer Economics
+
+| Measure | Value | Source-layer meaning |
+| --- | ---: | --- |
+| Total IT budget | \`${formatUsdMillions(totalItBudget)}\` | Full IT budget context for a Meridian-scale organization |
+| Reviewed IT project portfolio | \`${formatUsdMillions(reviewedProjectBudget)}\` | Approved project portfolio in Tower scope |
+| Explicit AI / AI-enabled investment | \`${formatUsdMillions(aiInvestment)}\` | Subset of reviewed portfolio where \`is_ai_related=true\` |
+| Projected annual AI value, low case | \`${formatUsdMillions(projectedLow)}\` | Sponsor-projected annual value after business-case challenge |
+| Projected annual AI value, high case | \`${formatUsdMillions(projectedHigh)}\` | Upper planning case; not board-claimable without evidence |
+| AI portfolio ROI range | \`${formatMultiple(projectedLow / aiInvestment)}-${formatMultiple(projectedHigh / aiInvestment)}\` | Projected annual value divided by explicit AI / AI-enabled investment |
+| Board-claimable value YTD | \`${formatUsdMillions(boardClaimable)}\` | Finance-validated value released by the monthly workflow |
+
+| Source population | Rows | What it controls |
+| --- | ---: | --- |
+| IT budget domains | ${budgetRows.length} | Full IT budget context |
+| Reviewed IT projects | ${projectRows.length} | Approved work in Tower scope |
+| AI business cases | ${aiCases.length} | One case per explicit AI / AI-enabled project |
+| Direct-value AI cases | ${directValueCases.length} | Cases with projected annual value and ROI |
+| Foundation / readiness AI cases | ${foundationCases} | Enablement work without standalone ROI |
+| Tool rollouts | ${toolRollouts.length} | Adoption goals and active usage by tool |
+| Monthly value observations | ${monthlyValue.length} | Refreshable value-tracking rows |
+| Finance approval events | ${financeLedger.length} | Ongoing CFO / Finance review states |
+| Evidence rows | ${evidence.length} | Proof tied to source objects and monthly observations |
+
+These measures must remain separate:
+
+- Approved spend is not value.
+- Projected value is not Finance-validated actual value.
+- Finance-validated actual value is not automatically board-claimable.
+- Foundation work carries no direct ROI until linked downstream use cases prove value.
+
+## Top Investment Reality Check
+
+The top 10 approved projects are intentionally not all AI. This preserves the executive question a CFO would ask: where does AI sit inside the broader IT portfolio?
+
+| Rank | Project | Domain | Classification | AI-related | Approved budget |
+| ---: | --- | --- | --- | --- | ---: |
+${topProjects
+  .map(
+    (row, index) =>
+      `| ${index + 1} | ${row.project_name} | ${row.domain_name} | ${row.project_classification} | ${row.is_ai_related} | \`${formatUsdMillions(Number(row.approved_budget_usd))}\` |`,
+  )
+  .join("\n")}
+
+## Business Case Simplicity
+
+Every explicit AI / AI-enabled project has one business case. The value story uses plain categories:
+
+| Value type | Cases | Build cost, high case | Projected annual value |
+| --- | ---: | ---: | ---: |
+${valueTypeRows.join("\n")}
+
+Direct-value cases clear the investment hurdle: low-case annual value is at least 3x high-case build cost. Foundation/readiness cases are shown separately because they enable downstream use cases but should not be counted as standalone value.
+
+## Finance And Proof Workflow
+
+The source layer tracks value as a monthly workflow:
+
+1. Sponsor states the target value.
+2. Finance can challenge or approve the target.
+3. Monthly tracking records actual movement against the baseline.
+4. Finance validates actual value when evidence is sufficient.
+5. Board-claimable value is released only after the Finance validation gate.
+
+Finance ledger coverage:
+
+| Approval state | Rows |
+| --- | ---: |
+${financeRows.join("\n")}
+
+## Layer 1 Validation Gates
+
+Layer 1 is ready for signoff if the following remain true:
+
+- All rows use tenant key \`meridian-health\`.
+- Total IT budget equals \`${formatUsdMillions(TOTAL_IT_BUDGET_USD)}\`.
+- Reviewed project portfolio equals \`${formatUsdMillions(TOWER_REVIEWED_PROJECT_USD)}\`.
+- Explicit AI / AI-enabled investment equals \`${formatUsdMillions(aiInvestment)}\`.
+- AI is explicit through \`is_ai_related\`; BI is not automatically AI.
+- There are ${projectRows.length} project rows and ${aiCases.length} AI business cases.
+- Every explicit AI / AI-enabled project has exactly one business case.
+- Tool rollouts include goals, target users, enabled users, and active users across ${toolRollouts.length} tools.
+- Monthly tracking has ${monthlyValue.length} rows, Finance has ${financeLedger.length} approval events, and evidence has ${evidence.length} source rows.
+- Projected annual AI value remains in the 3x-4x portfolio range.
+- Sponsor value, Finance-reviewed value, Finance-validated value, and board-claimable value stay separate.
+
+## Open Signoff Decisions
+
+Before moving beyond Layer 2, sign off or revise these choices:
+
+1. Is \`${formatUsdMillions(aiInvestment)}\` the right synthetic AI / AI-enabled investment pool inside a \`${formatUsdMillions(reviewedProjectBudget)}\` reviewed IT project portfolio?
+2. Is \`${formatMultiple(projectedLow / aiInvestment)}-${formatMultiple(projectedHigh / aiInvestment)}\` the right projected annual AI value range for the demo story?
+3. Are the five value types simple enough: Reduce cost, Create capacity, Grow revenue, Build faster, Foundation?
+4. Should foundation/readiness work stay at zero direct ROI until linked use cases prove value?
+5. Are monthly Finance states sufficient for the demo: sponsor claimed, challenged, CFO-approved target, not submitted, finance-validated actual?
+
+Layer 1 signoff means the source inputs are credible enough to map forward. It does not mean the data has been loaded, projected, deployed, or proven in the live Tower UI.
+`;
+}
+
+function buildLayer2Signoff({ adapter, sourceRows }) {
+  const sourceExtractCount = Object.values(sourceRows).reduce((total, rows) => total + rows.length, 0);
+  const sourceRecordCount = sourceExtractCount + adapter.adapterRuns.length + adapter.emittedObjects.length;
+  return `# Tower Synthetic Source Data - Layer 2 Signoff
+
+Package: \`tower-layer1-v2026-08-business-case\`
+Layer: Source adapters
+Status: locally validated; Azure write path prepared; live Azure write requires governed ACA job approval
+As of: ${AS_OF_DATE}
+
+## Layer 2 Purpose
+
+Layer 2 converts client-owned Layer 1 source files into auditable adapter outputs. The client does not see this layer. It exists so every future canonical object can be traced back to the exact source file and CSV row that produced it.
+
+This layer answers four questions:
+
+1. Which source files were read?
+2. Which adapter handled each file?
+3. What canonical object did each source row emit?
+4. Can every emitted object be traced back to a source file and source row?
+
+## Adapter Coverage
+
+| Adapter | Source file | Emits |
+| --- | --- | --- |
+| \`meridian_budget_domain_adapter\` | \`20_it_budget_by_domain.csv\` | Budget |
+| \`meridian_it_project_adapter\` | \`21_it_project_portfolio.csv\` | Project |
+| \`meridian_ai_business_case_adapter\` | \`22_ai_business_cases.csv\` | AIUseCase |
+| \`meridian_tool_rollout_adapter\` | \`23_ai_tool_rollout.csv\` | Tool |
+| \`meridian_monthly_value_adapter\` | \`24_monthly_value_tracking.csv\` | MetricObservation |
+| \`meridian_finance_approval_adapter\` | \`25_finance_approval_ledger.csv\` | ApprovalEvent |
+| \`meridian_evidence_adapter\` | \`26_evidence_register.csv\` | Evidence |
+
+## Expected Azure Landing Counts
+
+The Layer 2 Azure load lands records into \`ecl_source\` only.
+
+| Record type | Count |
+| --- | ---: |
+| Source files | 9 |
+| Total source records | ${sourceRecordCount.toLocaleString("en-US")} |
+| Client source extract records | ${sourceExtractCount} |
+| Adapter run records | ${adapter.adapterRuns.length} |
+| Adapter emission records | ${adapter.emittedObjects.length} |
+
+The 9 source files are the 7 Layer 1 source extracts plus 2 Layer 2 adapter audit files.
+
+## Validation Results
+
+Local validation must pass:
+
+- ${adapter.adapterRuns.length} adapter runs
+- ${adapter.emittedObjects.length} adapter emissions for ${sourceExtractCount} Layer 1 source rows
+- 0 adapter emissions without preserved lineage
+- 0 duplicate emitted canonical object IDs
+- 0 tenant payload drift rows
+- 0 adapter-lineage drift rows
+
+Azure readback is a separate gate. It is not complete until a governed ACA operator job writes this package to \`ecl_source\` and the readback SQL confirms the same counts above.
+
+## Azure Load Contract
+
+The real Azure load must run through the governed ACA operator job after this loader and package are merged and built into a digest-pinned image.
+
+\`\`\`bash
+npm run ops:aca-job -- \\
+  --image acrabarvalab001.azurecr.io/abarva/web@sha256:<digest> \\
+  --script tower:healthcare-demo-layer2-source-adapters:write-job \\
+  --secret-env DATABASE_URL=azure-postgres-control-database-url \\
+  --env TOWER_LAYER2_TENANT_KEY=meridian-health \\
+  --env TOWER_LAYER2_ASSESSMENT_ID=meridian-tower-layer2-source-adapters-v2026-08 \\
+  --env TOWER_LAYER2_BUILD_VERSION=tower-layer2-source-adapters-v2026-08 \\
+  --env TOWER_LAYER2_INPUT_SOURCE_VERSION=tower-layer1-v2026-08-business-case \\
+  --env TOWER_LAYER2_IDEMPOTENCY_KEY=meridian-tower-layer2-source-adapters-v2026-08:<main-sha> \\
+  --out-dir /tmp/tower-layer2-aca-proof
+\`\`\`
+
+The loader refuses direct Azure writes unless both are true:
+
+- \`DATABASE_URL\` is present.
+- \`TOWER_LAYER2_AZURE_WRITE_APPROVED=true\`.
+
+## Sunset Rule
+
+After Azure readback passes, older overlapping Tower source-adapter demo slices can be sunset. The purge must be scoped by tenant and assessment ID. Do not delete unrelated source files, canonical rows, cube rows, product projections, or other tenant data.
+
+Layer 2 signoff means the adapter landing layer is credible and loadable. It does not mean Layer 3 canonical objects or Layer 4 Tower screens are refreshed.
+`;
+}
+
+function buildLayer3Signoff({ canonical, sources }) {
+  const directValueCases = sources.aiCases.filter(
+    (row) => Number(row.projected_annual_value_low_usd || 0) > 0,
+  );
+  const foundationCases = sources.aiCases.length - directValueCases.length;
+  return `# Tower Synthetic Source Data - Layer 3 Signoff
+
+Package: \`tower-layer1-v2026-08-business-case\`
+Layer: Canonical enterprise model
+Status: Azure loaded and validator-passed for Layer 3; cubes and product projections pending
+As of: ${AS_OF_DATE}
+Azure proof captured: 2026-08-28
+
+## Layer 3 Purpose
+
+Layer 3 is the source of truth for the synthetic Tower demo package. It converts the Layer 2 source-adapter rows into stable canonical objects, relationships, and measures.
+
+This layer answers six plain questions:
+
+1. What IT budgets exist by domain?
+2. Which projects are AI-related and which are ordinary IT?
+3. Which AI use cases have a business case?
+4. Which AI tools are being rolled out?
+5. Which values are promised, finance-reviewed, validated, or board-claimable?
+6. Which evidence item supports each project, business case, and monthly value observation?
+
+## Canonical Counts
+
+| Canonical object | Count | Meaning |
+| --- | ---: | --- |
+| Budget | ${canonical.canonicalBudgets.length} | IT budget by domain or segment |
+| Program / project | ${canonical.canonicalProjects.length} | Total IT project portfolio rows |
+| AI use case | ${canonical.canonicalCases.length} | AI-related business cases and foundation work |
+| AI tool | ${canonical.canonicalTools.length} | Tool rollouts such as copilots, workflow assistants, or analytic agents |
+| Monthly value observation | ${canonical.canonicalMonthlyValues.length} | Monthly tracking rows across AI use cases |
+| Finance approval event | ${canonical.canonicalFinanceEvents.length} | Sponsor claim, target review, or actual validation events |
+| Evidence item | ${canonical.canonicalEvidence.length} | Portfolio, business case, monthly metric, or finance-validation evidence |
+
+Layer 3 also carries ${canonical.canonicalRelationships.length} relationships and 20 governed metric definitions.
+
+Azure stores these rows using the approved physical object families: 512 \`metric\` objects, 140 \`program\` objects, 42 \`ai_use_case\` objects, 13 \`ai_tool\` objects, and 280 \`control\` objects. The more specific business meaning, such as Budget, Monthly value observation, Finance approval event, and Evidence item, is retained as \`canonical_semantic_type\` on each canonical object.
+
+## Value Semantics
+
+These terms must remain separate in every product projection:
+
+| Term | Plain meaning |
+| --- | --- |
+| Approved budget | What the organization approved to spend on the project or domain |
+| Promised value | The sponsor or business case estimate before full validation |
+| Finance-reviewed value | Value Finance has reviewed but not fully validated as actual |
+| Finance-validated value | Value Finance has accepted against a measurement method |
+| Board-claimable value | Validated value cleared for executive or board reporting |
+
+Approved budget is never a fallback for promised value. Promised value is never a fallback for validated value. If one value is missing, downstream products must show a gap instead of substituting another metric.
+
+## AI Portfolio Semantics
+
+The total IT project portfolio contains ${canonical.canonicalProjects.length} projects. Only ${canonical.canonicalCases.length} are AI-related. The non-AI projects stay in the canonical portfolio so Tower can compare AI investment against the full IT budget, but they do not receive synthetic promised-value measures.
+
+The AI-related population is intentionally split:
+
+| Population | Count | Tracking rule |
+| --- | ---: | --- |
+| Direct-value AI cases | ${directValueCases.length} | Carry promised annual value, ROI band, payback target, readiness, monthly value observations, and finance events |
+| Foundation AI cases | ${foundationCases} | Carry readiness and enablement evidence, but no direct ROI claim |
+| Tool rollouts | ${sources.toolRollouts.length} | Carry target users, active users, adoption target, actual adoption, and linked business-case count |
+
+## Refresh Process for All Product Pages
+
+The monthly refresh should run in this order:
+
+1. Layer 1 intake: Data owners refresh source extracts for IT budget, project portfolio, AI business cases, tool rollout, monthly value tracking, finance approvals, and evidence.
+2. Layer 2 adapters: Each source file lands into \`ecl_source\` with source file, source row, adapter run, and adapter emission lineage.
+3. Layer 3 canonical: Canonical objects, relationships, metric definitions, and measures are rebuilt from Layer 2 only.
+4. Cube build: Cubes are rebuilt from Layer 3 only. They may denormalize for speed, but they do not own facts.
+5. Product projections: Home, Source, Intelligence, Tower, and any charting surface read disposable projections derived from the cube or canonical layer.
+6. Product QA: Run fact-lineage checks, readback counts, route smoke tests, and signed-in visual QA before demo or client use.
+7. Sunset: Retire older overlapping layers only after the replacement layer has passed readback, parity checks, and product-route proof.
+
+## Azure Load Contract
+
+The real Azure load must run through the governed ACA operator job after this loader and package are merged and built into a digest-pinned image. The completed Layer 3 load used this approved path.
+
+Completed Azure execution:
+
+- Main merge SHA: \`268aa5b689c87dac807aee4a99eb19e61e4c847e\`
+- ACA deploy run: \`33201786753\`
+- Deployed web image: \`acrabarvalab001.azurecr.io/abarva/web@sha256:2629418746b419d8c6c8810fcf1ebefe65c851a252156178b95af1d4eeb9cc0d\`
+- Operator execution: \`job-abarva-private-operator-eus-qml12rw\`
+- Proof bundle: \`/tmp/tower-layer3-aca-proof-268aa5b68/proof/meridian-tower-layer3-canonical\`
+
+Use this command shape for approved reruns:
+
+\`\`\`bash
+npm run ops:aca-job -- \\
+  --image acrabarvalab001.azurecr.io/abarva/web@sha256:<digest> \\
+  --script tower:healthcare-demo-layer3-canonical:write-job \\
+  --secret-env DATABASE_URL=azure-postgres-control-database-url \\
+  --env TOWER_LAYER3_TENANT_KEY=meridian-health \\
+  --env TOWER_LAYER3_ASSESSMENT_ID=meridian-tower-layer2-source-adapters-v2026-08 \\
+  --env TOWER_LAYER3_BUILD_VERSION=tower-layer3-canonical-v2026-08 \\
+  --env TOWER_LAYER3_INPUT_SOURCE_VERSION=tower-layer1-v2026-08-business-case \\
+  --env TOWER_LAYER3_IDEMPOTENCY_KEY=meridian-tower-layer3-canonical-v2026-08:<main-sha> \\
+  --out-dir /tmp/tower-layer3-aca-proof
+\`\`\`
+
+The loader refuses direct Azure writes unless all are true:
+
+- \`DATABASE_URL\` is present.
+- \`TOWER_LAYER3_WRITE=true\`.
+- \`TOWER_LAYER3_AZURE_WRITE_APPROVED=true\`.
+
+## Validation Gates
+
+Layer 3 signoff requires:
+
+- 987 canonical objects loaded.
+- Physical object family counts match: 512 metric, 140 program, 42 AI use case, 13 AI tool, and 280 control.
+- Semantic object counts match: 8 budget, 140 program, 42 AI use case, 13 AI tool, 504 value observation, 84 finance approval event, and 196 evidence item.
+- 0 objects missing \`canonical_semantic_type\`.
+- 280 canonical relationships loaded.
+- 20 metric definitions loaded.
+- More than 2,500 measures loaded.
+- 0 objects without source-record lineage.
+- 0 relationships without source-record lineage.
+- 0 measures without source-record lineage.
+- 0 tenant payload drift rows.
+- 0 canonical objects whose source record is absent from Layer 2.
+- 0 product projection or cube rows written by the Layer 3 loader.
+
+Azure readback passed the original Layer 3 gates with 987 canonical objects, 280 relationships, 20 metric definitions, 2,531 measures, 1,981 Layer 2 source records available, and no tenant drift or lineage gaps. The follow-on semantic-count gate now requires any rerun to prove the same 987 objects by business meaning, not only by physical object family.
+
+Layer 3 signoff does not mean Tower, Home, Source, Intelligence, or cubes are refreshed. Those are Layer 4 and cube work.
+`;
+}
+
 async function writeFile(name, headers, rows, manifestFiles) {
   const text = toCsv(headers, rows);
   await fs.mkdir(path.dirname(path.join(OUT_DIR, name)), { recursive: true });
@@ -2055,7 +2461,7 @@ async function main() {
       purpose:
         "Synthetic Meridian Tower source data for signoff before adapter, canonical, cube, or product changes.",
       rule: "Total IT budget is broader than AI. AI-related status is explicit classification, never inferred from BI/tool labels.",
-      generated_at: new Date().toISOString(),
+      generated_at: GENERATED_AT,
     },
   ];
   await writeFile(
@@ -2248,11 +2654,51 @@ Rules:
 - Products read Layer 4 projections derived from Layer 3; no product owns source data.
 `;
   await writeTextFile("README.md", packageReadme, manifestFiles);
+  await writeTextFile(
+    "layer_1_client_intake/LAYER_1_SIGNOFF.md",
+    buildLayer1Signoff({
+      budgetRows,
+      projectRows,
+      aiCases,
+      toolRollouts,
+      monthlyValue,
+      financeLedger,
+      evidence,
+    }),
+    manifestFiles,
+  );
+  await writeTextFile(
+    "layer_2_source_adapters/LAYER_2_SIGNOFF.md",
+    buildLayer2Signoff({
+      adapter,
+      sourceRows: {
+        budgetRows,
+        projectRows,
+        aiCases,
+        toolRollouts,
+        monthlyValue,
+        financeLedger,
+        evidence,
+      },
+    }),
+    manifestFiles,
+  );
+  await writeTextFile(
+    "layer_3_canonical/LAYER_3_SIGNOFF.md",
+    buildLayer3Signoff({
+      canonical,
+      sources: {
+        aiCases,
+        toolRollouts,
+      },
+    }),
+    manifestFiles,
+  );
 
   const manifest = {
     package_id: LOAD_RUN_ID,
     tenant_key: TENANT_KEY,
-    generated_at: new Date().toISOString(),
+    generated_at: GENERATED_AT,
     package_type: "tower_full_synthetic_layer_cube_package",
     status: "offline_layer_cube_proof_no_load_no_deploy",
     no_runtime_load: true,

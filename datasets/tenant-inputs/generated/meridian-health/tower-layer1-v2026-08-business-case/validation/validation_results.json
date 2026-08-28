@@ -1,6 +1,6 @@
 {
   "status": "PASS",
-  "packageDir": "/private/tmp/nexus-tower-demo-data-sanity/datasets/tenant-inputs/generated/meridian-health/tower-layer1-v2026-08-business-case",
+  "packageDir": "datasets/tenant-inputs/generated/meridian-health/tower-layer1-v2026-08-business-case",
   "totals": {
     "totalItBudgetUsd": 1050000000,
     "reviewedProjectBudgetUsd": 703100000,
