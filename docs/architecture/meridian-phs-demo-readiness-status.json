@@ -1,6 +1,6 @@
 {
   "schema_version": "meridian_phs_demo_readiness_status/v1",
-  "generated_at": "2026-08-28T07:54:29.144Z",
+  "generated_at": "2026-08-28T08:34:33.593Z",
   "tenant_key": "meridian-health",
   "scope": {
     "current_sprint_priority": "Meridian/PHS demo",
@@ -35,6 +35,27 @@
       "route_files_expected": 6,
       "excluded": 0,
       "proof_state": "browser_proof_complete",
+      "latest_live_trace_proof": {
+        "checked_at": "2026-08-28T08:27:00.000Z",
+        "route": "https://app.abarva.ai/strategic-moves/7d86b833-ca27-5fec-b105-ed6f74aaf884/trace",
+        "deploy_run_id": "33154382972",
+        "merge_sha": "2cd59c31fa4ccb64cec33f732f276969e975565e",
+        "required_text_proven": [
+          "Move action: Instrument Tower baseline",
+          "Next gate: baseline_measurement"
+        ],
+        "banned_text_absent": [
+          "NaN",
+          "No governed Tower data",
+          "No governed rows",
+          "Unhandled Runtime Error",
+          "Application error",
+          "ecl_projection",
+          "projection_entry"
+        ],
+        "screenshot": "/tmp/meridian-phs-moves-trace-live-after-2cd59c31-20260828.png",
+        "screenshot_sha256": "e647cda295c1d4c8b67b9192765be0af9323aefacf2a7babe279280121a6460f"
+      },
       "surfaces": [
         {
           "surface_key": "moves_index",
@@ -105,8 +126,10 @@
     "moves_content_quality": {
       "file": "src/lib/moves/narratives/generated/meridian-health-moves-readiness-blocks.ts",
       "generated_at": "2026-07-16T18:43:51.440Z",
-      "runtime_import_state": "no_direct_strategic_moves_route_import_found",
-      "status": "needs_demo_refresh",
+      "runtime_import_state": "not_consumed_by_strategic_moves_routes",
+      "live_route_consumed": false,
+      "demo_blocking": false,
+      "status": "archived_generated_artifact_has_known_issues",
       "issues": [
         "generated_content_stale:2026-07-16T18:43:51.440Z",
         "moves_content_planning_grade_not_demo_final",
@@ -165,8 +188,8 @@
   "next_backlog": [
     {
       "order": 1,
-      "slice": "Refresh Moves Meridian/PHS demo content",
-      "reason": "Moves generated content is stale and planning-grade.",
+      "slice": "Resolve Moves operational activation proof",
+      "reason": "Moves live routes are browser-proven, but the activation tracker still has 0 of 38 operational rows proven by its dedicated load/readback artifact.",
       "hard_gate": false
     },
     {
