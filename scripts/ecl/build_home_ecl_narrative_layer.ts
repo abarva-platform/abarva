@@ -127,6 +127,24 @@ function numberValue(value: unknown): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function payloadText(data: JsonRecord, ...fields: string[]): string | null {
+  for (const field of fields) {
+    const value = text(data[field]);
+    if (value) return value;
+  }
+  return null;
+}
+
+function payloadNumber(data: JsonRecord, ...fields: string[]): number {
+  for (const field of fields) {
+    const value = data[field];
+    if (value === null || value === undefined || value === "") continue;
+    const parsed = numberValue(value);
+    if (parsed !== 0) return parsed;
+  }
+  return 0;
+}
+
 function payload(row: HomeProjectionWriteRow): JsonRecord {
   return row.display_payload_json && typeof row.display_payload_json === "object" ? row.display_payload_json : {};
 }
@@ -207,10 +225,10 @@ function rowStatement(row: HomeProjectionWriteRow): string {
     case "vendor_contracts":
       return [
         `${text(data.contract_name) ?? row.title} is loaded as a contract`,
-        text(data.vendor_name) ? `with ${text(data.vendor_name)}` : null,
+        payloadText(data, "supplier_name", "vendor_name") ? `with ${payloadText(data, "supplier_name", "vendor_name")}` : null,
         text(data.service_category) ? `for ${text(data.service_category)}` : null,
-        numberValue(data.annual_spend_usd) > 0 ? `with $${(numberValue(data.annual_spend_usd) / 1_000_000).toFixed(1)}M annualized value` : null,
-        numberValue(data.notice_period_days) > 0 ? `and ${numberValue(data.notice_period_days)} days notice` : null,
+        payloadNumber(data, "annualized_value_usd", "annual_spend_usd") > 0 ? `with $${(payloadNumber(data, "annualized_value_usd", "annual_spend_usd") / 1_000_000).toFixed(1)}M annualized value` : null,
+        payloadNumber(data, "notice_window_days", "notice_period_days") > 0 ? `and ${payloadNumber(data, "notice_window_days", "notice_period_days")} days notice` : null,
       ].filter(Boolean).join(" ") + ".";
     case "infrastructure_platforms":
       return [
@@ -258,8 +276,8 @@ function buildSignalPacket(rows: HomeProjectionWriteRow[], assessmentId: string)
     ...rowsOf(rows, "current_state_data_flow", "data_flow"),
     ...rowsOf(rows, "data_assets_integrations", "data_flow"),
   ];
-  const contractSpend = sumPayload(contracts, "annual_spend_usd");
-  const vendorRows = topSpendShareRows(contracts, "vendor_name", "annual_spend_usd", 8);
+  const contractSpend = contracts.reduce((sum, row) => sum + payloadNumber(payload(row), "annualized_value_usd", "annual_spend_usd"), 0);
+  const vendorRows = topSpendShareRows(contracts, "supplier_name", "annualized_value_usd", 8);
   const topVendor = vendorRows[0];
 
   const signals: Signal[] = [
