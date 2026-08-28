@@ -854,6 +854,129 @@ export function dropClaim(thesis: EnterpriseThesis, path: string) {
  * Build
  * ---------------------------------------------------------------------------------------------- */
 
+export async function buildVerifiedEnterpriseThesisFromSignalPacket(
+  signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>,
+  client: Parameters<typeof callClaude>[0],
+) {
+  const usage = { input: 0, output: 0 };
+
+  if (!client) {
+    return {
+      rawGeneration: null,
+      publishedGeneration: null,
+      structuralIssues: [],
+      verificationLedger: [],
+      usage,
+    };
+  }
+
+  const userPrompt = buildUserPrompt(signalPacket);
+  // The schema's array bounds are stated explicitly in SYSTEM_PROMPT (a spine, not a report -- 3-5
+  // items per array, 250-400 words for enterprise_story) and haven't grown; what changed in the
+  // hardening pass is real required structure per item: claim_type on every GroundedClaim,
+  // enterprise_story_claims (3-5 more claims), value_creation_model's drivers/dependencies going
+  // from bare strings to full claims, and up to 6 visual_opportunities. A live run at 10000 hit the
+  // ceiling on both tenants with content still incomplete; 16000 fixed that run, but a later live
+  // run truncated again on both tenants (stop_reason=max_tokens, unterminated JSON string) --
+  // confirmation that 16000 is marginal, not safely clear, for this schema's real output length,
+  // since the model's own response length varies run to run for the same input. 28000 gives
+  // meaningfully more headroom above the observed failure point while staying well under the
+  // 34000 this codebase already runs in production for a comparably large structured generation
+  // (src/lib/deliverables/strategic-moves-artifact-standard.ts). "medium" effort is unchanged --
+  // proportionate to genuine cross-domain synthesis across a 40+ signal packet.
+  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, 28000, "medium");
+  if (!generation) {
+    console.log("  ! thesis generation returned no text");
+    return {
+      rawGeneration: null,
+      publishedGeneration: null,
+      structuralIssues: [],
+      verificationLedger: [],
+      usage,
+    };
+  }
+  usage.input += generation.inputTokens;
+  usage.output += generation.outputTokens;
+
+  const rawGeneration = parseThesisJson(generation.text);
+  if (!rawGeneration) {
+    console.log("  ! thesis did not parse as JSON -- first 300 chars:");
+    console.log("   ", generation.text.slice(0, 300));
+    return {
+      rawGeneration: null,
+      publishedGeneration: null,
+      structuralIssues: [],
+      verificationLedger: [],
+      usage,
+    };
+  }
+
+  const structuralIssues = validateStructure(rawGeneration, signalPacket);
+  console.log(`  structural check: ${structuralIssues.length} issue(s)`);
+  for (const issue of structuralIssues.slice(0, 10)) console.log(`    - ${issue.path}: ${issue.reason}`);
+
+  // raw_generation is the untouched model output -- captured before any repair or drop mutates
+  // the working copy, so it survives independently of what verification decides to do with it.
+  const publishedGeneration: EnterpriseThesis = JSON.parse(JSON.stringify(rawGeneration));
+
+  const toVerify = claimsRequiringVerification(publishedGeneration);
+  console.log(`  verifying ${toVerify.length} high-stakes claims...`);
+  const verificationLedger: Array<{ path: string; verdict: Verdict; reasoning: string; action: string }> = [];
+  for (const { path: claimPath, claim } of toVerify) {
+    const result = await verifyClaim(client, claim, signalPacket);
+    if (result.verdict === "UNSUPPORTED") {
+      dropClaim(publishedGeneration, claimPath);
+      verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "dropped" });
+    } else if (result.verdict === "OVERSTATED") {
+      const repaired = await repairClaim(client, claim, result.reasoning, signalPacket);
+      if (repaired) {
+        claim.statement = repaired;
+        verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "repaired" });
+      } else {
+        // Repair itself failed (no client response, or bad JSON back) -- an overstated claim that
+        // can't be corrected is worse than no claim, so this is the one place drop still applies
+        // to an OVERSTATED verdict.
+        dropClaim(publishedGeneration, claimPath);
+        verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "dropped (repair failed)" });
+      }
+    } else {
+      // SUPPORTED and SUPPORTED_INFERENCE are both publishable as-is -- SUPPORTED_INFERENCE is
+      // reasonable, appropriately-hedged synthesis, not a defect to correct.
+      verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "kept" });
+    }
+  }
+  const tally: Record<string, number> = {};
+  for (const r of verificationLedger) tally[r.verdict] = (tally[r.verdict] ?? 0) + 1;
+  console.log(`  verifier verdicts:`, tally);
+
+  // Published prose is always synthesized FROM the final approved claims, not conditionally
+  // patched only when verification happened to flag something in that specific section.
+  {
+    const survivingClaims = publishedGeneration.enterprise_story_claims.filter((c): c is GroundedClaim => c !== null);
+    const finalText = await synthesizeProseFromClaims(client, publishedGeneration.enterprise_story, survivingClaims);
+    if (finalText) {
+      publishedGeneration.enterprise_story = finalText;
+    } else {
+      console.log("  ! enterprise_story prose synthesis failed -- publishing raw draft prose, verify manually before use");
+    }
+  }
+
+  {
+    const survivingClaims = [
+      ...publishedGeneration.value_creation_model.primary_value_drivers,
+      ...publishedGeneration.value_creation_model.economic_dependencies,
+    ].filter((c): c is GroundedClaim => c !== null);
+    const finalText = await synthesizeProseFromClaims(client, publishedGeneration.value_creation_model.summary, survivingClaims);
+    if (finalText) {
+      publishedGeneration.value_creation_model.summary = finalText;
+    } else {
+      console.log("  ! value_creation_model.summary prose synthesis failed -- publishing raw draft prose, verify manually before use");
+    }
+  }
+
+  return { rawGeneration, publishedGeneration, structuralIssues, verificationLedger, usage };
+}
+
 export async function buildTenant(tenantKey: string, client: Parameters<typeof callClaude>[0]) {
   const report = await buildCanonicalTenantDataReport({ repoRoot: process.cwd(), tenantKeys: [tenantKey] });
   const records: CanonicalIngestionRecord[] = report.canonicalRecords.filter((r) => r.tenantKey === tenantKey);
@@ -903,110 +1026,8 @@ export async function buildTenant(tenantKey: string, client: Parameters<typeof c
     };
   }
 
-  const userPrompt = buildUserPrompt(signalPacket);
-  const usage = { input: 0, output: 0 };
-  // The schema's array bounds are stated explicitly in SYSTEM_PROMPT (a spine, not a report -- 3-5
-  // items per array, 250-400 words for enterprise_story) and haven't grown; what changed in the
-  // hardening pass is real required structure per item: claim_type on every GroundedClaim,
-  // enterprise_story_claims (3-5 more claims), value_creation_model's drivers/dependencies going
-  // from bare strings to full claims, and up to 6 visual_opportunities. A live run at 10000 hit the
-  // ceiling on both tenants with content still incomplete; 16000 fixed that run, but a later live
-  // run truncated again on both tenants (stop_reason=max_tokens, unterminated JSON string) --
-  // confirmation that 16000 is marginal, not safely clear, for this schema's real output length,
-  // since the model's own response length varies run to run for the same input. 28000 gives
-  // meaningfully more headroom above the observed failure point while staying well under the
-  // 34000 this codebase already runs in production for a comparably large structured generation
-  // (src/lib/deliverables/strategic-moves-artifact-standard.ts). "medium" effort is unchanged --
-  // proportionate to genuine cross-domain synthesis across a 40+ signal packet.
-  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, 28000, "medium");
-  if (!generation) {
-    console.log("  ! thesis generation returned no text");
-    return {
-      signalPacket, rawGeneration: null, publishedGeneration: null,
-      structuralIssues: [], verificationLedger: [], usage, canonicalRecords: records,
-    };
-  }
-  usage.input += generation.inputTokens;
-  usage.output += generation.outputTokens;
-
-  const rawGeneration = parseThesisJson(generation.text);
-  if (!rawGeneration) {
-    console.log("  ! thesis did not parse as JSON — first 300 chars:");
-    console.log("   ", generation.text.slice(0, 300));
-    return {
-      signalPacket, rawGeneration: null, publishedGeneration: null,
-      structuralIssues: [], verificationLedger: [], usage, canonicalRecords: records,
-    };
-  }
-
-  const structuralIssues = validateStructure(rawGeneration, signalPacket);
-  console.log(`  structural check: ${structuralIssues.length} issue(s)`);
-  for (const issue of structuralIssues.slice(0, 10)) console.log(`    - ${issue.path}: ${issue.reason}`);
-
-  // raw_generation is the untouched model output -- captured before any repair or drop mutates
-  // the working copy, so it survives independently of what verification decides to do with it.
-  const publishedGeneration: EnterpriseThesis = JSON.parse(JSON.stringify(rawGeneration));
-
-  const toVerify = claimsRequiringVerification(publishedGeneration);
-  console.log(`  verifying ${toVerify.length} high-stakes claims...`);
-  const verificationLedger: Array<{ path: string; verdict: Verdict; reasoning: string; action: string }> = [];
-  for (const { path: claimPath, claim } of toVerify) {
-    const result = await verifyClaim(client, claim, signalPacket);
-    if (result.verdict === "UNSUPPORTED") {
-      dropClaim(publishedGeneration, claimPath);
-      verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "dropped" });
-    } else if (result.verdict === "OVERSTATED") {
-      const repaired = await repairClaim(client, claim, result.reasoning, signalPacket);
-      if (repaired) {
-        claim.statement = repaired;
-        verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "repaired" });
-      } else {
-        // Repair itself failed (no client response, or bad JSON back) -- an overstated claim that
-        // can't be corrected is worse than no claim, so this is the one place drop still applies
-        // to an OVERSTATED verdict.
-        dropClaim(publishedGeneration, claimPath);
-        verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "dropped (repair failed)" });
-      }
-    } else {
-      // SUPPORTED and SUPPORTED_INFERENCE are both publishable as-is -- SUPPORTED_INFERENCE is
-      // reasonable, appropriately-hedged synthesis, not a defect to correct.
-      verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "kept" });
-    }
-  }
-  const tally: Record<string, number> = {};
-  for (const r of verificationLedger) tally[r.verdict] = (tally[r.verdict] ?? 0) + 1;
-  console.log(`  verifier verdicts:`, tally);
-
-  // Published prose is always synthesized FROM the final approved claims, not conditionally
-  // patched only when verification happened to flag something in that specific section. A claim
-  // never decomposed into enterprise_story_claims in the first place would sail through a
-  // change-gated reconcile untouched -- this runs every time, on the full surviving claim set,
-  // so the prose can never assert more than the claims underneath it support regardless of
-  // whether anything was actually repaired or dropped.
-  {
-    const survivingClaims = publishedGeneration.enterprise_story_claims.filter((c): c is GroundedClaim => c !== null);
-    const finalText = await synthesizeProseFromClaims(client, publishedGeneration.enterprise_story, survivingClaims);
-    if (finalText) {
-      publishedGeneration.enterprise_story = finalText;
-    } else {
-      console.log("  ! enterprise_story prose synthesis failed -- publishing raw draft prose, verify manually before use");
-    }
-  }
-
-  {
-    const survivingClaims = [
-      ...publishedGeneration.value_creation_model.primary_value_drivers,
-      ...publishedGeneration.value_creation_model.economic_dependencies,
-    ].filter((c): c is GroundedClaim => c !== null);
-    const finalText = await synthesizeProseFromClaims(client, publishedGeneration.value_creation_model.summary, survivingClaims);
-    if (finalText) {
-      publishedGeneration.value_creation_model.summary = finalText;
-    } else {
-      console.log("  ! value_creation_model.summary prose synthesis failed -- publishing raw draft prose, verify manually before use");
-    }
-  }
-
-  return { signalPacket, rawGeneration, publishedGeneration, structuralIssues, verificationLedger, usage, canonicalRecords: records };
+  const thesisResult = await buildVerifiedEnterpriseThesisFromSignalPacket(signalPacket, client);
+  return { signalPacket, ...thesisResult, canonicalRecords: records };
 }
 
 async function main() {

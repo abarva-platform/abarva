@@ -78,7 +78,7 @@ export interface HomeReviewBundleProvenance {
   generation_image_digest: string | null;
 }
 
-function buildProvenance(signalPacket: EnterpriseSignalPacket, thesisPromptVersion: string, generatedAt: string): HomeReviewBundleProvenance {
+export function buildHomeChapterProvenance(signalPacket: EnterpriseSignalPacket, thesisPromptVersion: string, generatedAt: string): HomeReviewBundleProvenance {
   return {
     home_synthesis_contract_version: HOME_SYNTHESIS_CONTRACT_VERSION,
     thesis_prompt_version: thesisPromptVersion,
@@ -402,19 +402,13 @@ async function synthesizeChapterNarrative(
  * Build
  * ---------------------------------------------------------------------------------------------- */
 
-async function buildChaptersForTenant(tenantKey: string, client: Parameters<typeof callClaude>[0]) {
-  const built = await buildTenant(tenantKey, client);
-  // Deterministic, no model call, no dependency on the thesis succeeding -- computed here
-  // regardless of whether generation below produces a usable thesis, so a Claude failure doesn't
-  // also cost the one part of this bundle that never needed Claude in the first place.
-  const technologyEstate = buildTechnologyEstateBundle(built.canonicalRecords);
-  if (!built.publishedGeneration) {
-    return { tenantKey, chapters: null, thesisResult: built, provenance: null, technologyEstate };
-  }
-  const thesis = built.publishedGeneration;
-  const signalPacket = built.signalPacket;
-  const provenance = buildProvenance(signalPacket, THESIS_PROMPT_VERSION, new Date().toISOString());
-
+export async function buildChapterViewsFromVerifiedThesis(
+  signalPacket: EnterpriseSignalPacket,
+  thesis: EnterpriseThesis,
+  client: Parameters<typeof callClaude>[0],
+  chapterIds?: ChapterId[],
+): Promise<ChapterView[]> {
+  const wanted = chapterIds?.length ? new Set(chapterIds) : null;
   const slices = assembleChapterSlices(thesis, signalPacket);
   const visuals = assignVisuals(thesis);
   const questions = assignQuestions(thesis);
@@ -422,6 +416,7 @@ async function buildChaptersForTenant(tenantKey: string, client: Parameters<type
 
   const chapters: ChapterView[] = [];
   for (const def of CHAPTER_DEFS) {
+    if (wanted && !wanted.has(def.id)) continue;
     const slice = slices[def.id];
     const allClaims = [...slice.key_insights, ...slice.tensions, ...slice.what_to_watch];
     const synthesis = await synthesizeChapterNarrative(client, def, allClaims);
@@ -430,7 +425,7 @@ async function buildChaptersForTenant(tenantKey: string, client: Parameters<type
       limitations.push("No verified claims were routed to this chapter from the current thesis -- treat as a coverage gap.");
     }
     if (def.id === "our_business" && signalPacket.contextItems.filter((c) => c.id.startsWith("ctx_segment")).length === 0) {
-      limitations.push("Segment-level revenue economics are not represented in the current governed context (01b_business_segments is not read by the canonical build); this chapter describes what is available, not a complete value-creation model.");
+      limitations.push("Segment-level revenue economics are not represented in the current governed context; this chapter describes what is available, not a complete value-creation model.");
     }
     chapters.push({
       chapterId: def.id,
@@ -446,6 +441,23 @@ async function buildChaptersForTenant(tenantKey: string, client: Parameters<type
       limitations,
     });
   }
+
+  return chapters;
+}
+
+async function buildChaptersForTenant(tenantKey: string, client: Parameters<typeof callClaude>[0]) {
+  const built = await buildTenant(tenantKey, client);
+  // Deterministic, no model call, no dependency on the thesis succeeding -- computed here
+  // regardless of whether generation below produces a usable thesis, so a Claude failure doesn't
+  // also cost the one part of this bundle that never needed Claude in the first place.
+  const technologyEstate = buildTechnologyEstateBundle(built.canonicalRecords);
+  if (!built.publishedGeneration) {
+    return { tenantKey, chapters: null, thesisResult: built, provenance: null, technologyEstate };
+  }
+  const thesis = built.publishedGeneration;
+  const signalPacket = built.signalPacket;
+  const provenance = buildHomeChapterProvenance(signalPacket, THESIS_PROMPT_VERSION, new Date().toISOString());
+  const chapters = await buildChapterViewsFromVerifiedThesis(signalPacket, thesis, client);
 
   return { tenantKey, chapters, thesisResult: built, provenance, technologyEstate };
 }
