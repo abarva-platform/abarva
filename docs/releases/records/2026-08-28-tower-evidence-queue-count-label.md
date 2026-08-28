@@ -1,4 +1,4 @@
-# 2026-08-28-tower-evidence-queue-count-label — Tower Evidence Queue Count Label
+# 2026-08-28-tower-evidence-queue-count-label — Tower Evidence Queue Count And Tab Routing
 
 ## Release ID
 
@@ -10,15 +10,16 @@
 
 ## Plain-English Summary
 
-The Tower executive footer now points to the same Evidence & Actions review
-queue count shown in the tab label. The copy says "review rows in the evidence
-queue" so the page does not imply a larger blended backlog is made of assigned
-workflow tasks.
+The Tower executive footer points to the same Evidence & Actions review queue
+count shown in the tab label. The release also hardens Tower tab state so a
+stale `?tab=` query value cannot undo a local click on a top tab, footer link,
+or executive Review button.
 
 ## Layer Impact
 
 - Products: Tower presentation logic only in the `global-control-lane`. The
-  change updates a Layer 4 command-center label and fallback count.
+  change updates a Layer 4 command-center label, fallback count, and tab-state
+  synchronization.
 - Canonical model: No change.
 - Source adapters: No change.
 - Client intake: No change.
@@ -35,11 +36,13 @@ workflow tasks.
 ## Changes Included
 
 - `src/components/tower/command-center/views/CommandCenterView.tsx`
+- `src/components/tower/command-center/TowerCommandCenter.tsx`
 - `src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx`
 
 ## QA / Validation
 
 - PASS: `npx jest src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx --runInBand`
+- PASS: `npx eslint src/components/tower/command-center/TowerCommandCenter.tsx src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx`
 
 ## Rollout Plan
 
@@ -71,6 +74,5 @@ workflow. No schema, loader, adapter, or tenant-data rollback is required.
 
 ## Known Gaps
 
-This does not repair source-data quality or distribution. It only prevents the
-executive footer from blending review queue rows with other evidence backlog
-populations.
+This does not repair source-data quality or distribution. It keeps tab routing
+and executive copy aligned with the review queue population.
