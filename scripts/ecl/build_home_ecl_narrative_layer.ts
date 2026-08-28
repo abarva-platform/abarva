@@ -106,8 +106,8 @@ function parseChapterIds(raw: string | null): ChapterId[] {
 
 function parseCli(): CliOptions {
   return {
-    tenantKey: cliValue("--tenant") ?? DEFAULT_TENANT_KEY,
-    assessmentId: cliValue("--assessment") ?? DEFAULT_ASSESSMENT_ID,
+    tenantKey: cliValue("--tenant") ?? process.env.ECL_DENSE_TENANT_KEY ?? DEFAULT_TENANT_KEY,
+    assessmentId: cliValue("--assessment") ?? process.env.ECL_DENSE_ASSESSMENT_ID ?? DEFAULT_ASSESSMENT_ID,
     outDir: cliValue("--out-dir") ?? DEFAULT_OUT_DIR,
     chapterIds: parseChapterIds(cliValue("--chapter")),
   };
@@ -677,6 +677,27 @@ async function main() {
     } else {
       console.log("Plan-only complete. Set HOME_ECL_NARRATIVE_WRITE=true and HOME_ECL_NARRATIVE_WRITE_APPROVED=true to write ECL projection narrative rows.");
     }
+
+    const verificationSummary = {
+      structural_issue_count: thesisResult.structuralIssues.length,
+      verdict_tally: verdictTally(thesisResult.verificationLedger),
+      ledger_rows: thesisResult.verificationLedger.length,
+    };
+
+    console.log(JSON.stringify({
+      structured_event: "home_ecl_narrative_layer_summary",
+      tenant_key: options.tenantKey,
+      assessment_id: options.assessmentId,
+      write_applied: WRITE,
+      source_projection_rows: rows.length,
+      signal_count: signalPacket.signals.length,
+      context_item_count: signalPacket.contextItems.length,
+      chapter_count: chapters.length,
+      chapter_claim_rows: chapters.reduce((sum, chapter) => sum + claimRowsForChapter(chapter).length, 0),
+      thesis_prompt_version: THESIS_PROMPT_VERSION,
+      verification: verificationSummary,
+      out_file: outFile,
+    }));
 
     console.log(`__HOME_ECL_NARRATIVE_RESULT_BEGIN__${JSON.stringify(result)}__HOME_ECL_NARRATIVE_RESULT_END__`);
   } finally {
