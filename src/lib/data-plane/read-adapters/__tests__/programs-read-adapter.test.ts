@@ -125,12 +125,21 @@ describe("selectProgramsReadAdapter", () => {
     expect(selectProgramsReadAdapter(undefined, "airline-demo-new").name).toBe(
       "azure-postgres",
     );
+    expect(selectProgramsReadAdapter(undefined, "meridian").name).toBe(
+      "azure-postgres",
+    );
+    expect(selectProgramsReadAdapter(undefined, "meridian-health").name).toBe(
+      "azure-postgres",
+    );
   });
 
   it("fails closed when a governed foundation tenant is forced to Supabase", () => {
     expect(() =>
       selectProgramsReadAdapter("supabase", "airline-demo-new"),
     ).toThrow(/airline-demo-new.*Azure PostgreSQL/i);
+    expect(() =>
+      selectProgramsReadAdapter("supabase", "meridian"),
+    ).toThrow(/meridian-health.*Azure PostgreSQL/i);
   });
 });
 

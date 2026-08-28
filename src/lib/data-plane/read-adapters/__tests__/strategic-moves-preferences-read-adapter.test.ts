@@ -70,12 +70,22 @@ describe('selectStrategicMovesPreferencesReadAdapter', () => {
       selectStrategicMovesPreferencesReadAdapter(undefined, 'airline-demo-new')
         .name,
     ).toBe('azure-postgres');
+    expect(
+      selectStrategicMovesPreferencesReadAdapter(undefined, 'meridian').name,
+    ).toBe('azure-postgres');
+    expect(
+      selectStrategicMovesPreferencesReadAdapter(undefined, 'meridian-health')
+        .name,
+    ).toBe('azure-postgres');
   });
 
   it('fails closed when a governed foundation tenant is forced to Supabase', () => {
     expect(() =>
       selectStrategicMovesPreferencesReadAdapter('supabase', 'airline-demo-new'),
     ).toThrow(/airline-demo-new.*Azure PostgreSQL/i);
+    expect(() =>
+      selectStrategicMovesPreferencesReadAdapter('supabase', 'meridian'),
+    ).toThrow(/meridian-health.*Azure PostgreSQL/i);
   });
 });
 

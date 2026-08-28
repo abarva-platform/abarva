@@ -11,20 +11,15 @@
 // deployments keep their exact behavior with no env change.
 
 import type { DataPlane } from './types';
+import { isFoundationTenantKey } from "@/lib/tenant/foundation-tenants";
 import { canonicalTenantKey } from "@/lib/tenant-keys";
-
-const GOVERNED_AZURE_ONLY_TENANTS = new Set([
-  "airline-demo-new",
-  "healthcare-demo-new",
-]);
 
 function configuredPlane(raw?: string | null): string {
   return (raw ?? process.env.ABARVA_DATA_PLANE ?? "").trim().toLowerCase();
 }
 
 export function isGovernedAzureOnlyTenantKey(tenantKey?: string | null): boolean {
-  if (!tenantKey) return false;
-  return GOVERNED_AZURE_ONLY_TENANTS.has(canonicalTenantKey(tenantKey));
+  return isFoundationTenantKey(tenantKey);
 }
 
 /**
