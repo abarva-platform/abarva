@@ -652,6 +652,138 @@ on conflict (id) do update set
   matched_by_agent = excluded.matched_by_agent;`;
 }
 
+function valueCategoryFor(row) {
+  if (row.function_pack_key === "health_plan_operations") return "revenue_lift";
+  if (row.function_pack_key === "clinical_operations") return "productivity";
+  if (row.function_pack_key === "finance_and_shared_services") return "cost_avoidance";
+  if (row.function_pack_key === "data_and_technology") return "risk_reduction";
+  return "productivity";
+}
+
+function sourceEventSql(row) {
+  const id = stableUuid("meridian-phs-source-event", row.move_id);
+  const code = `PHS-SRC-${String(row.ordinal).padStart(3, "0")}`;
+  return `insert into source_events (
+  id, client_key, event_code, event_name, event_type, current_stage_key, lifecycle_state,
+  linked_program_id, estimated_value_usd, trigger_description, scope_description,
+  decision_owner, created_by_user_id, sourcing_motion
+) values (
+  ${sqlText(id)}, ${sqlText(TENANT_KEY)}, ${sqlText(code)}, ${sqlText(`${row.program_name} evidence handoff`)},
+  ${sqlText("consulting")}, ${sqlText("intake")}, ${sqlText("active")},
+  ${sqlText(row.move_id)}, null,
+  ${sqlText(`Moves activated ${row.program_name}; Source opens only when vendor, contract or third-party evidence is needed.`)},
+  ${sqlText(`Capture vendor, contract and evidence requests for ${row.program_name}; value remains governed by Tower before any claim is made.`)},
+  ${sqlText("PHS sourcing and transformation lead")}, ${sqlText("ecl_meridian_phs_activation")},
+  ${sqlText("contract_optimization")}
+)
+on conflict (id) do update set
+  client_key = excluded.client_key,
+  event_code = excluded.event_code,
+  event_name = excluded.event_name,
+  event_type = excluded.event_type,
+  current_stage_key = excluded.current_stage_key,
+  lifecycle_state = excluded.lifecycle_state,
+  linked_program_id = excluded.linked_program_id,
+  estimated_value_usd = excluded.estimated_value_usd,
+  trigger_description = excluded.trigger_description,
+  scope_description = excluded.scope_description,
+  decision_owner = excluded.decision_owner,
+  created_by_user_id = excluded.created_by_user_id,
+  sourcing_motion = excluded.sourcing_motion,
+  updated_at = now();`;
+}
+
+function outcomeLedgerSql(row, args) {
+  const id = stableUuid("meridian-phs-outcome-ledger", row.move_id);
+  return `insert into outcome_ledger (
+  id, supersedes_entry_id, is_current, tenant_client_key, client_id, subject_kind,
+  subject_ref, subject_label, value_rung, value_category, measurement_unit,
+  projected_amount, realized_amount, baseline_amount, counterfactual_confidence,
+  governance_review_status, measurement_owner_role, evidence_pointer, evidence_claim_ids,
+  note, metadata, recorded_by, recorded_at
+) values (
+  ${sqlText(id)}, null, true, ${sqlText(TENANT_KEY)}, ${sqlText(args.clientId)},
+  ${sqlText("move")}, ${sqlText(row.move_id)}, ${sqlText(`${row.program_name} value proof`)},
+  ${sqlText("baseline_pending")}, ${sqlText(valueCategoryFor(row))}, ${sqlText("usd_seed")},
+  ${row.target_value_usd}, null, null, ${sqlText("low")}, ${sqlText("not_started")},
+  ${sqlText("Tower value owner and finance validation partner")},
+  ${sqlText(`move:${row.move_id}:tower_measurement_needed`)},
+  ARRAY[${sqlText(`move:${row.move_id}:baseline_pending`)}]::text[],
+  ${sqlText("Next action: instrument baseline, measure run-rate, then assign finance validation before any value becomes claimable.")},
+  ${sqlJson({
+    activation_basis: "meridian_phs_demo_moves_activation_plan",
+    source_row_id: row.source_id,
+    source_hash: row.source_hash,
+    source_basis: row.charter.source_basis,
+    review_state: row.charter.review_state,
+    value_is_not_claimable_until_tower_gate_passes: true,
+  })},
+  ${sqlText("ecl_meridian_phs_activation")}, ${sqlText(`${row.charter.as_of_date}T12:00:00.000Z`)}
+)
+on conflict (id) do update set
+  supersedes_entry_id = excluded.supersedes_entry_id,
+  is_current = excluded.is_current,
+  tenant_client_key = excluded.tenant_client_key,
+  client_id = excluded.client_id,
+  subject_kind = excluded.subject_kind,
+  subject_ref = excluded.subject_ref,
+  subject_label = excluded.subject_label,
+  value_rung = excluded.value_rung,
+  value_category = excluded.value_category,
+  measurement_unit = excluded.measurement_unit,
+  projected_amount = excluded.projected_amount,
+  realized_amount = excluded.realized_amount,
+  baseline_amount = excluded.baseline_amount,
+  counterfactual_confidence = excluded.counterfactual_confidence,
+  governance_review_status = excluded.governance_review_status,
+  measurement_owner_role = excluded.measurement_owner_role,
+  evidence_pointer = excluded.evidence_pointer,
+  evidence_claim_ids = excluded.evidence_claim_ids,
+  note = excluded.note,
+  metadata = excluded.metadata,
+  recorded_by = excluded.recorded_by,
+  recorded_at = excluded.recorded_at;`;
+}
+
+function intelligenceEvidenceSql(row, args) {
+  const id = stableUuid("meridian-phs-intelligence-evidence", row.move_id);
+  return `insert into evidence (
+  id, client_id, source_id, title, summary, evidence_type, related_entity_type,
+  related_entity_id, observed_at, methodology_notes, as_of_date, confidence_level,
+  last_verified_at, evidence_payload
+) values (
+  ${sqlText(id)}, ${sqlText(args.clientId)}, ${sqlText("meridian_phs_intelligence_pattern")},
+  ${sqlText(`Intelligence pattern signal for ${row.program_name}`)},
+  ${sqlText(`Intelligence pattern signal promotes ${row.program_name} into Moves with Home context, Source evidence handoff, and Tower value gate required before value is claimed.`)},
+  ${sqlText("intelligence_pattern_signal")}, ${sqlText("engagement")}, ${sqlText(row.move_id)},
+  ${sqlText(args.asOfDate)}, ${sqlText("Generated from the Meridian/PHS activation plan; cites a pattern signal but does not create a claimable value fact.")},
+  ${sqlText(args.asOfDate)}, ${sqlText("medium")}, ${sqlText(`${row.charter.as_of_date}T12:00:00.000Z`)},
+  ${sqlJson({
+    activation_basis: "meridian_phs_demo_moves_activation_plan",
+    source_row_id: row.source_id,
+    source_hash: row.source_hash,
+    source_basis: row.charter.source_basis,
+    review_state: row.charter.review_state,
+    move_id: row.move_id,
+  })}
+)
+on conflict (id) do update set
+  client_id = excluded.client_id,
+  source_id = excluded.source_id,
+  title = excluded.title,
+  summary = excluded.summary,
+  evidence_type = excluded.evidence_type,
+  related_entity_type = excluded.related_entity_type,
+  related_entity_id = excluded.related_entity_id,
+  observed_at = excluded.observed_at,
+  methodology_notes = excluded.methodology_notes,
+  as_of_date = excluded.as_of_date,
+  confidence_level = excluded.confidence_level,
+  last_verified_at = excluded.last_verified_at,
+  evidence_payload = excluded.evidence_payload,
+  updated_at = now();`;
+}
+
 function build(args) {
   const homeSnapshotFile = path.resolve(ROOT, args.homeSnapshot);
   const sourceRoomDir = path.resolve(ROOT, args.sourceRoomDir);
@@ -686,6 +818,9 @@ function build(args) {
       ...MODULES.map((module, index) => workItemSql(row, module, index, args)),
       riskSql(row, row.ordinal),
       patternSql(row),
+      sourceEventSql(row),
+      outcomeLedgerSql(row, args),
+      intelligenceEvidenceSql(row, args),
     ]),
     "commit;",
     "",
@@ -716,6 +851,10 @@ function build(args) {
       program_work_items: programs.length * MODULES.length,
       program_risks: programs.length,
       pattern_match_logs: programs.length,
+      source_events: programs.length,
+      outcome_ledger: programs.length,
+      intelligence_evidence: programs.length,
+      trace_joinable_moves: programs.length,
     },
     proof_checks: {
       deterministic_ids: new Set(programs.map((row) => row.move_id)).size === programs.length,
@@ -724,6 +863,8 @@ function build(args) {
       no_value_claimable_until_tower_gate: programs.every(
         (row) => row.value_verified_status === undefined || row.baseline_metrics.value_verification_state === "pending",
       ),
+      cross_module_join_sql_present: ["insert into source_events", "insert into outcome_ledger", "insert into evidence"]
+        .every((needle) => sql.includes(needle)),
       contains_named_phs_moves: [
         "STARS 5.0 Improvement Program",
         "RAF Capture & Risk Adjustment Modernization",

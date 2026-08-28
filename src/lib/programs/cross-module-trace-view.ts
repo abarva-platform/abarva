@@ -291,13 +291,14 @@ function towerStep(input: CrossModuleTraceInput): TraceStep {
     (e) => e.subjectKind === "move" && e.subjectRef === input.move.id,
   );
   if (ledger) {
+    const note = ledger.note ? ` ${ledger.note}` : "";
     return {
       module: "tower",
       moduleLabel: MODULE_LABELS.tower,
       artifactKind: "Tower outcome-ledger entry",
       linkState: "linked",
       title: ledger.subjectLabel || "Outcome ledger entry",
-      detail: `Value rung: ${ledger.valueRung.replace(/_/g, " ")} · governance: ${ledger.governanceReviewStatus.replace(/_/g, " ")}.`,
+      detail: `Value rung: ${ledger.valueRung.replace(/_/g, " ")} · governance: ${ledger.governanceReviewStatus.replace(/_/g, " ")}.${note}`,
       joinId: ledger.id,
       href: '/tower',
       gapRef: null,

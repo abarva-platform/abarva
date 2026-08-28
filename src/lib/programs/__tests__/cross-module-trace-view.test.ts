@@ -165,12 +165,17 @@ describe("buildCrossModuleTrace", () => {
     const trace = buildCrossModuleTrace({
       move: makeMove(),
       sourceEvents: [],
-      outcomeEntries: [makeLedgerRow()],
+      outcomeEntries: [
+        makeLedgerRow({
+          note: "Next action: instrument baseline before value claim.",
+        }),
+      ],
     });
     const towerStep = trace.steps.find((s) => s.module === 'tower')!;
     expect(towerStep.linkState).toBe('linked');
     expect(towerStep.joinId).toBe('led-1');
     expect(towerStep.href).toBe('/tower');
+    expect(towerStep.detail).toContain("Next action: instrument baseline");
   });
 
   it("ignores ledger entries for other subjects", () => {

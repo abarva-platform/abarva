@@ -218,6 +218,28 @@ function handoffProofFromExistingStatus(status) {
   };
 }
 
+function movesActivationFromSummary(summary) {
+  if (!summary || typeof summary !== "object") return null;
+  const activation = summary.activation_summary ?? summary;
+  const readback = summary.readback && typeof summary.readback === "object" ? summary.readback : null;
+  const numerator = Number(activation.activation_program_count ?? readback?.engagements ?? 0);
+  const denominator = Number(activation.declared_program_count ?? 38);
+  const actualDatabaseMutation = Boolean(summary.actual_database_mutation);
+  return {
+    accepted: Boolean(summary.accepted && activation.accepted !== false),
+    actual_database_mutation: actualDatabaseMutation,
+    numerator,
+    denominator,
+    proof_state: actualDatabaseMutation
+      ? "activation_loaded_and_readback_proven"
+      : "activation_plan_ready_for_governed_load",
+    generated_rows: readback ?? activation.generated_rows ?? null,
+    programs_from_home_snapshot: Number(activation.programs_from_home_snapshot ?? 0),
+    programs_from_source_room_ppm: Number(activation.programs_from_source_room_ppm ?? 0),
+    unresolved_gap_count: Number(activation.unresolved_gap_count ?? denominator),
+  };
+}
+
 function moveContentQuality() {
   const file = "src/lib/moves/narratives/generated/meridian-health-moves-readiness-blocks.ts";
   const text = readTextIfPresent(file);
@@ -257,6 +279,7 @@ function main() {
   const sourceProof = readJsonIfPresent(args.sourceProof);
   const handoffProof = readJsonIfPresent(args.handoffProof);
   const movesActivationProof = readJsonIfPresent(args.movesActivationProof);
+  const movesActivation = movesActivationFromSummary(movesActivationProof);
   const existingStatus = readJsonIfPresent(args.out);
 
   const phsExecutiveEclDenominator = sum(Object.values(PHS_EXECUTIVE_ECL_DENOMINATOR));
@@ -321,17 +344,17 @@ function main() {
         surfaces: movesRouteStatuses,
       },
       moves_operational_activation: {
-        numerator: Number(movesActivationProof?.activation_program_count ?? 0),
-        denominator: Number(movesActivationProof?.declared_program_count ?? 38),
+        numerator: movesActivation?.numerator ?? 0,
+        denominator: movesActivation?.denominator ?? 38,
         percent: percent(
-          Number(movesActivationProof?.activation_program_count ?? 0),
-          Number(movesActivationProof?.declared_program_count ?? 38),
+          movesActivation?.numerator ?? 0,
+          movesActivation?.denominator ?? 38,
         ),
-        proof_state: movesActivationProof?.accepted ? "activation_plan_ready_for_governed_load" : "activation_plan_required",
-        generated_rows: movesActivationProof?.generated_rows ?? null,
-        programs_from_home_snapshot: movesActivationProof?.programs_from_home_snapshot ?? 0,
-        programs_from_source_room_ppm: movesActivationProof?.programs_from_source_room_ppm ?? 0,
-        unresolved_gap_count: movesActivationProof?.unresolved_gap_count ?? 38,
+        proof_state: movesActivation?.accepted ? movesActivation.proof_state : "activation_plan_required",
+        generated_rows: movesActivation?.generated_rows ?? null,
+        programs_from_home_snapshot: movesActivation?.programs_from_home_snapshot ?? 0,
+        programs_from_source_room_ppm: movesActivation?.programs_from_source_room_ppm ?? 0,
+        unresolved_gap_count: movesActivation?.unresolved_gap_count ?? 38,
       },
       moves_content_quality: moveContentQuality(),
       cross_module_handoffs: {
@@ -392,7 +415,7 @@ function main() {
     tenant_key: status.tenant_key,
     home_tower_intelligence: `${phsExecutiveEclProven} of ${phsExecutiveEclDenominator}`,
     moves: `${movesProof?.numerator ?? 0} of ${movesProof?.denominator ?? MOVES_SURFACES.length}`,
-    moves_activation: `${movesActivationProof?.activation_program_count ?? 0} of ${movesActivationProof?.declared_program_count ?? 38}`,
+    moves_activation: `${movesActivation?.numerator ?? 0} of ${movesActivation?.denominator ?? 38}`,
     handoffs: `${handoffProofSummary?.numerator ?? 0} of ${handoffProofSummary?.denominator ?? HANDOFFS.length}`,
     source: `${sourceProven} of ${sourceDenominator}`,
     out: args.out,
