@@ -244,31 +244,34 @@ function ValueGateChart({ view }: { view: TowerCommandCenterView }) {
 function trajectoryRows(view: TowerCommandCenterView) {
   return view.valueTrajectory.map((point) => ({
     quarter: point.fiscalQuarter,
-    planned: toM(
-      point.businessCaseBenefitUsd ??
-        point.financialConversionUsd ??
-        point.plannedInvestmentUsd ??
-        0,
-    ),
-    actual: toM(
-      point.realizedPAndLUsd ??
-        point.realizedCashUsd ??
-        point.financeValidatedRunRateUsd ??
-        0,
-    ),
+    planned: toMOrNull(point.businessCaseBenefitUsd),
+    actual: toMOrNull(point.realizedPAndLUsd),
   }));
 }
 
-function trajectoryActualUsd(view: TowerCommandCenterView): number {
-  return view.valueTrajectory.reduce(
-    (sum, point) =>
-      sum +
-      (point.realizedPAndLUsd ??
-        point.realizedCashUsd ??
-        point.financeValidatedRunRateUsd ??
-        0),
-    0,
-  );
+function toMOrNull(value: number | null | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value)
+    ? toM(value)
+    : null;
+}
+
+function sumLoadedUsd(values: readonly (number | null | undefined)[]): number | null {
+  let total = 0;
+  let sawValue = false;
+  for (const value of values) {
+    if (typeof value !== "number" || !Number.isFinite(value)) continue;
+    total += value;
+    sawValue = true;
+  }
+  return sawValue ? total : null;
+}
+
+function trajectoryRecordedPAndLUsd(view: TowerCommandCenterView): number | null {
+  return sumLoadedUsd(view.valueTrajectory.map((point) => point.realizedPAndLUsd));
+}
+
+function unprovenPromisedUsd(view: TowerCommandCenterView): number {
+  return view.summary.promisedUsd - view.summary.claimableUsd;
 }
 
 function TrajectoryChart({ view }: { view: TowerCommandCenterView }) {
@@ -413,7 +416,8 @@ export function ValueProofContractView({
   onOpenProgram: (id: string) => void;
 }) {
   const s = view.summary;
-  const actual = trajectoryActualUsd(view);
+  const recordedPAndL = trajectoryRecordedPAndLUsd(view);
+  const unproven = unprovenPromisedUsd(view);
   const programs = topPrograms(view, 20);
   const hasTrajectory = view.valueTrajectory.length > 0;
   return (
@@ -458,12 +462,12 @@ export function ValueProofContractView({
               <strong>{formatUsdM(s.promisedUsd)}</strong>
             </div>
             <div>
-              <span>Recorded actual</span>
-              <strong>{formatUsdM(actual)}</strong>
+              <span>Recorded P&amp;L</span>
+              <strong>{formatLoadedUsdM(recordedPAndL)}</strong>
             </div>
             <div>
               <span>Not yet proven</span>
-              <strong>{formatUsdM(Math.max(0, s.promisedUsd - actual))}</strong>
+              <strong>{formatUsdM(unproven)}</strong>
             </div>
           </div>
           {hasTrajectory ? (

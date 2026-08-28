@@ -12,10 +12,16 @@ describe("trajectory plan variance label", () => {
     expect(SOURCE).not.toMatch(/<span>Over plan<\/span>/);
   });
 
-  it("keeps the unproven remainder floored at zero", () => {
-    expect(SOURCE).toMatch(
-      /Math\.max\(0, s\.promisedUsd - actual\)/,
-    );
+  it("calculates unproven value from claimable value, not recorded actuals", () => {
+    expect(SOURCE).toMatch(/view\.summary\.promisedUsd - view\.summary\.claimableUsd/);
+    expect(SOURCE).not.toMatch(/Math\.max\(0, s\.promisedUsd - actual\)/);
     expect(SOURCE).not.toMatch(/Math\.abs\(s\.promisedUsd - actual\)/);
+  });
+
+  it("does not substitute finance run-rate or cash for recorded P&L", () => {
+    expect(SOURCE).toMatch(/point\.realizedPAndLUsd/);
+    expect(SOURCE).not.toMatch(
+      /point\.realizedPAndLUsd[\s\S]*\?\?[\s\S]*point\.realizedCashUsd[\s\S]*\?\?[\s\S]*point\.financeValidatedRunRateUsd/,
+    );
   });
 });
