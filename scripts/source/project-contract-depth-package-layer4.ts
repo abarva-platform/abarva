@@ -151,7 +151,7 @@ async function layer3Readback(client: Client, args: Args): Promise<Record<string
        (SELECT count(*)::text FROM source.contract_term WHERE tenant_key = $1 AND load_run_id = $3) AS source_contract_term,
        (SELECT count(*)::text FROM source.optimization_opportunity WHERE tenant_key = $1 AND dataset_version = $2) AS source_optimization_opportunity,
        (SELECT count(*)::text FROM source.optimization_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND payload->>'finance_confirmation_state' = 'not_confirmed') AS opportunities_not_finance_confirmed,
-       (SELECT count(*)::text FROM source.contract WHERE tenant_key = $1 AND dataset_version = $2 AND load_run_id = $3 AND COALESCE(raw_payload->>'alternatives_available', '') <> '') AS contracts_with_assessed_alternatives`,
+       (SELECT count(*)::text FROM source.contract WHERE tenant_key = $1 AND load_run_id = $3 AND COALESCE(raw_payload->>'alternatives_available', '') <> '') AS contracts_with_assessed_alternatives`,
     [args.tenantKey, args.datasetVersion, args.loadRunId],
   );
   return Object.fromEntries(Object.entries(result.rows[0] ?? {}).map(([key, value]) => [key, num(value)]));
