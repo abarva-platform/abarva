@@ -658,6 +658,7 @@
     "source:contract-depth-package:schema:apply": "npx tsx scripts/source/apply-contract-depth-package-schema.ts --apply",
     "source:contract-depth-package:project": "npx tsx scripts/source/project-contract-depth-package.ts --package-dir=datasets/source/contract-depth/meridian-contract-depth-v1-20260828",
     "source:contract-depth-package:load": "npx tsx scripts/source/load-contract-depth-package.ts",
+    "source:contract-depth-package:l4": "npx tsx scripts/source/project-contract-depth-package-layer4.ts",
     "source:controlled-upload-parse-readback:proof": "npx tsx scripts/source/controlled-upload-parse-readback-proof.ts",
     "source:contract-optimization:finance-handoff:plan": "npx tsx scripts/source/request-contract-optimization-finance-handoff.ts",
     "source:contract-optimization:finance-handoff:apply": "npx tsx scripts/source/request-contract-optimization-finance-handoff.ts --apply",

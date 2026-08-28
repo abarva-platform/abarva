@@ -7,6 +7,8 @@ import {
   listContract360,
   listContractEvidencePricing,
   listContractEvidenceScope,
+  listContractFinancialExposure,
+  listContractOperationalPerformance,
   listContractVendor360,
 } from "../read-adapter";
 
@@ -259,7 +261,9 @@ describe("listContractVendor360 tenant-key resolution", () => {
   });
 
   it("quantifies unapproved rate-card variance inside recoverable leakage evidence", async () => {
+    const observedSql: string[] = [];
     run.mockImplementation(async (sql: string) => {
+      observedSql.push(sql);
       if (sql.startsWith("SELECT set_config")) return [];
       if (sql.includes("sourcing_performance_v1")) {
         return [
@@ -314,6 +318,105 @@ describe("listContractVendor360 tenant-key resolution", () => {
     expect(invoiceRate?.calculation_rule).toContain(
       "unapproved rate-card variance",
     );
+    expect(observedSql.join("\n")).toContain(
+      "consumption.sourcing_performance_v1",
+    );
+    expect(observedSql.join("\n")).toContain(
+      "consumption.sourcing_spend_monthly_v1",
+    );
+    expect(observedSql.join("\n")).not.toContain("consumption_v4_canary");
+  });
+
+  it("merges governed Meridian financial and performance rows over legacy candidate rows", async () => {
+    run.mockImplementation(async (sql: string) => {
+      if (sql.startsWith("SELECT set_config")) return [];
+      if (sql.includes("source.contract_financial_exposure")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-TECH-AMS-001",
+            vendor_ref: "VND-AMS",
+            vendor_name: "Cognizant Technology Solutions",
+            contracted_annual_value: "12400000",
+            total_committed_value: "37200000",
+            committed_annual_spend: "12400000",
+            actual_annual_spend: "12320000",
+            linked_budget_amount: "12400000",
+            linked_forecast_amount: "12400000",
+            linked_actual_amount: "12320000",
+            linked_committed_amount: "12400000",
+            linked_budget_lines: "12",
+          },
+          {
+            tenant_key: "meridian-health",
+            contract_id: "CTR-LEGACY-001",
+            vendor_ref: "VND-LEGACY",
+            vendor_name: "Governed Override Vendor",
+            contracted_annual_value: "1100000",
+          },
+        ];
+      }
+      if (sql.includes("source.contract_operational_performance")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-TECH-AMS-001",
+            vendor_ref: "VND-AMS",
+            vendor_name: "Cognizant Technology Solutions",
+            sla_summary: "3 breached SLA periods across 12 periods.",
+            service_credits_earned: "37000",
+            service_credits_claimed: "0",
+            evidence_gap: "false",
+          },
+        ];
+      }
+      return [];
+    });
+    mockedQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("source.meridian_vendor360_financial_exposure")) {
+        return [
+          {
+            tenant_key: "meridian_health_global",
+            contract_id: "CTR-LEGACY-001",
+            vendor_ref: "VND-LEGACY",
+            vendor_name: "Legacy Candidate Vendor",
+            contracted_annual_value: "1000000",
+          },
+        ];
+      }
+      if (sql.includes("source.meridian_vendor360_operational_performance")) {
+        return [
+          {
+            tenant_key: "meridian_health_global",
+            contract_id: "CTR-LEGACY-001",
+            vendor_ref: "VND-LEGACY",
+            vendor_name: "Legacy Candidate Vendor",
+            sla_summary: "legacy row",
+          },
+        ];
+      }
+      return [];
+    });
+
+    const financial = await listContractFinancialExposure("meridian");
+    const performance = await listContractOperationalPerformance("meridian");
+
+    expect(financial.map((row) => row.contract_id)).toEqual([
+      "CTR-LEGACY-001",
+      "MER-TECH-AMS-001",
+    ]);
+    expect(
+      financial.find((row) => row.contract_id === "CTR-LEGACY-001")
+        ?.vendor_name,
+    ).toBe("Governed Override Vendor");
+    expect(performance.map((row) => row.contract_id)).toEqual([
+      "CTR-LEGACY-001",
+      "MER-TECH-AMS-001",
+    ]);
+    expect(
+      performance.find((row) => row.contract_id === "MER-TECH-AMS-001")
+        ?.service_credits_earned,
+    ).toBe("37000");
   });
 
   it("reads contract evidence detail rows from the loaded evidence package", async () => {
