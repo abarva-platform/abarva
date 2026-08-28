@@ -58,8 +58,11 @@ type SourceWorkspaceExploreProvider =
 type EclProjectionRow = Record<string, unknown>;
 type SourceServingViewName =
   | "source_contract_360"
+  | "source_vendor_portfolio"
   | "source_vendor_360"
-  | "source_events";
+  | "source_events"
+  | "source_compare"
+  | "source_approvals";
 type EclCubeSliceRow = {
   readonly cube_key: string;
   readonly slice_key: string;
@@ -351,12 +354,16 @@ async function loadEclProjectionWorkspacePortfolio(
           ),
         ),
     provider === "ecl_projection_db"
-      ? readProjectionTable(tenantKey, "source_vendor_360")
+      ? readProjectionView(tenantKey, "source_vendor_portfolio")
       : readProjectionCsv(
           path.join(projectionDir ?? "", "source_vendor_360_projection.csv"),
         ),
     provider === "ecl_projection_db"
-      ? readProjectionTable(tenantKey, "source_event_workspace")
+      ? readProjectionViews(tenantKey, [
+          "source_events",
+          "source_compare",
+          "source_approvals",
+        ])
       : readProjectionCsv(
           path.join(
             projectionDir ?? "",
@@ -477,14 +484,29 @@ async function readProjectionCsv(
 
 async function readProjectionTable(
   tenantKey: string,
-  tableName: "source_contract_360" | "source_vendor_360" | "source_event_workspace",
+  tableName: "source_contract_360" | "source_vendor_360",
 ): Promise<EclProjectionRow[]> {
-  const servingViewByTable: Record<typeof tableName, SourceServingViewName> = {
+  const servingViewByTable: Record<typeof tableName, Extract<SourceServingViewName, "source_contract_360" | "source_vendor_360">> = {
     source_contract_360: "source_contract_360",
     source_vendor_360: "source_vendor_360",
-    source_event_workspace: "source_events",
   };
-  const servingView = servingViewByTable[tableName];
+  return readProjectionView(tenantKey, servingViewByTable[tableName]);
+}
+
+async function readProjectionViews(
+  tenantKey: string,
+  servingViews: readonly SourceServingViewName[],
+): Promise<EclProjectionRow[]> {
+  const rows = await Promise.all(
+    servingViews.map((servingView) => readProjectionView(tenantKey, servingView)),
+  );
+  return rows.flat();
+}
+
+async function readProjectionView(
+  tenantKey: string,
+  servingView: SourceServingViewName,
+): Promise<EclProjectionRow[]> {
   const acceptedTenantKeys = Array.from(
     new Set([tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim())),
   );

@@ -481,7 +481,12 @@ as $$
     p.vendor_object_id,
     p.source_refs_json,
     to_jsonb(p)
-  from ecl_projection.source_vendor_360 p;
+  from ecl_projection.source_vendor_360 p
+  where page_key_arg = 'vendor_portfolio'
+    or (
+      page_key_arg = 'vendor_360'
+      and p.contract_count > 1
+    );
 $$;
 
 create or replace function serving.source_contract_rows(surface_key_arg text, page_key_arg text, renewal_only_arg boolean)
@@ -545,7 +550,6 @@ as $$
     to_jsonb(p)
   from ecl_projection.source_contract_360 p
   where not renewal_only_arg
-    or p.end_date is not null
     or p.renewal_notice_date is not null;
 $$;
 
@@ -671,7 +675,16 @@ as $$
     p.contract_object_id,
     p.source_refs_json,
     to_jsonb(p)
-  from ecl_projection.source_value_levers p;
+  from ecl_projection.source_value_levers p
+  where page_key_arg = 'value'
+    or (
+      page_key_arg = 'sourcing_opportunities'
+      and (
+        p.opportunity_type <> 'evidence_request'
+        or coalesce(p.addressable_spend_usd, 0) > 0
+        or coalesce(p.estimated_value_high_usd, 0) > 0
+      )
+    );
 $$;
 
 create or replace function serving.intelligence_context_rows(surface_key_arg text, context_surface_arg text)
@@ -925,11 +938,11 @@ select * from serving.source_contract_rows('source_renewal', 'renewal', true);
 create or replace view serving.source_events as
 select * from serving.source_event_rows('source_events', 'events', 'events');
 create or replace view serving.source_compare as
-select * from serving.source_event_rows('source_compare', 'compare', 'all');
+select * from serving.source_event_rows('source_compare', 'compare', 'compare');
 create or replace view serving.source_value as
 select * from serving.source_value_rows('source_value', 'value');
 create or replace view serving.source_approvals as
-select * from serving.source_event_rows('source_approvals', 'approvals', 'all');
+select * from serving.source_event_rows('source_approvals', 'approvals', 'approvals');
 create or replace view serving.source_sourcing_opportunities as
 select * from serving.source_value_rows('source_sourcing_opportunities', 'sourcing_opportunities');
 
