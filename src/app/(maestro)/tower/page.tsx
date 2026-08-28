@@ -6,6 +6,7 @@
 
 import { Suspense } from "react";
 
+import { EclDemoFindingsPanel } from "@/components/ecl/EclDemoFindingsPanel";
 import { EclServingSurfaceCoverage } from "@/components/ecl/EclServingSurfaceCoverage";
 import { AppShell } from "@/components/shell/AppShell";
 import { TowerCommandCenterAvaShell } from "@/components/tower/command-center/TowerCommandCenterAvaShell";
@@ -139,6 +140,9 @@ export async function renderTowerPage({
         />
       </Suspense>
       <TowerEclProjectionPanel preview={towerEclPreview} />
+      {isEclProductProvider(productProvider) ? (
+        <EclDemoFindingsPanel product="tower" />
+      ) : null}
       <EclServingSurfaceCoverage product="tower" />
     </AppShell>
   );
