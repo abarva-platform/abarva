@@ -166,8 +166,9 @@ Source Vendor/Contract 360 walkthrough.
   clicking that contract in a live walkthrough.
 - After the contract-depth load lands, regression-check the already-proven Contract 360 pivots so
   the new performance/spend slice does not break existing rendered detail pages.
-- Do not open the file-cabinet/event-detail route live until the known redirect-to-home gap is fixed
-  and signed-in proof confirms the route behavior.
+- Do not open retired event-detail/file-cabinet slugs live. The canonical Source workspace and
+  Contract 360 paths are the demo path; stale event slugs now land in the Source access guard, not a
+  Home redirect.
 
 ### Acceptance criteria
 
@@ -177,8 +178,8 @@ Source Vendor/Contract 360 walkthrough.
 - Closed: The malformed 5-digit contract date is no longer visible on the checked demo-path tabs.
 - Closed: Previously proven Contract 360 pages still load without error text, cross-tenant strings,
   or missing-tab regressions after the depth load and aVa routing fixes.
-- Still excluded: Demo-driver notes must continue to avoid the file-cabinet/event-detail route until
-  that route has a separate fix and live proof.
+- Still excluded: Demo-driver notes must continue to avoid retired event-detail/file-cabinet slugs;
+  the live check shows a tenant-safe access guard for the stale slug, not a working artifact route.
 
 ### Latest proof notes
 
@@ -188,7 +189,12 @@ Source Vendor/Contract 360 walkthrough.
   Story, Evidence, and Optimize.
 - PASS: signed-in malformed-date proof checked the affected contract across Story, Economics,
   Relationship, and Evidence.
-- Not run by design: file-cabinet/event-detail route fix and proof remain outside this demo slice.
+- PASS: signed-in file-cabinet/event-detail check confirmed the stale event slug no longer redirects
+  to Home and does not leak another tenant; it lands in the Source access guard because the slug is
+  not a current Meridian event.
+- PASS: signed-in default-route ECL browser proof confirmed Home, Source, Tower, and Intelligence
+  render the governed serving projection without provider query strings: 10/10 demo findings and
+  40/40 named surfaces passed.
 
 ### Codex-ready slice prompt
 
@@ -198,8 +204,8 @@ Execute SRC-DEMO-HARDENING-20260828.
 Scope:
 Run the small signed-in Source aVa smoke after explicit chat-record approval, repair or suppress the
 malformed 5-digit contract date if it remains on the demo path, regression-check the already-proven
-Contract 360 pages after the Source depth load, and add a demo-driver note not to open the
-file-cabinet/event-detail route until its redirect gap is fixed.
+Contract 360 pages after the Source depth load, and add a demo-driver note to avoid retired
+event-detail/file-cabinet slugs in favor of the canonical Source workspace and Contract 360 path.
 
 Validation:
 Capture signed-in transcript proof for aVa, before/after date evidence or an explicit avoid-click
@@ -211,7 +217,7 @@ note, Contract 360 regression screenshots, and the demo-driver route exclusion n
 ## SRC-VENDOR360-GROUPED-VENDOR-VIEW — Make vendor rollups navigable and searchable
 
 **Priority:** P1
-**Status:** pending
+**Status:** done
 **Type:** UI / projection consumption
 **Primary surface:** Source Vendor portfolio, Source Vendor 360
 **Primary agent:** Nexus
@@ -234,12 +240,23 @@ instead of exposing it only as proof-layer row counts and separate top-contract 
 
 ### Acceptance criteria
 
-- Clicking Vendor portfolio / Vendor 360 from the live Source workspace changes the active view or
+- Closed: Clicking Vendor portfolio / Vendor 360 from the live Source workspace changes the active view or
   route in an accessible, keyboard-operable way.
-- The vendor list displays governed rollup rows and supports finding a specific vendor by name.
-- A selected vendor view shows all contracts for that vendor together with annual value, term, gate,
+- Closed: The vendor list displays governed rollup rows and supports finding a specific vendor by name.
+- Closed: A selected vendor view shows all contracts for that vendor together with annual value, term, gate,
   and source-document state.
-- Signed-in proof confirms the surface is tenant-clean and visually presentable.
+- Closed: Signed-in proof confirms the surface is tenant-clean and visually presentable.
+
+### Latest proof notes
+
+- PASS: signed-in Vendor portfolio click-through shows 102 vendor rollups and `$492.5M` annual
+  contract value from the governed projection.
+- PASS: vendor search filters to Epic Systems Corporation and shows the expected grouped rollup:
+  5 contracts and `$50.9M` annual contract value.
+- PASS: Epic Vendor 360 groups `CTR-0004`, `CTR-0005`, `CTR-0006`, `CTR-0007`, and `CTR-0008` in
+  one vendor view with no load-error text or cross-tenant strings.
+- Caveat: the grouped view has no mapped critical applications, platforms, or initiatives for this
+  vendor, so demo narration should not imply Epic-specific dependency mapping is loaded.
 
 ### Codex-ready slice prompt
 
