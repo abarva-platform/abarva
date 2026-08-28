@@ -43,5 +43,9 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).not.toContain("cs.scope_ref AS it_portfolio_ref,\n      cs.relationship_method");
     expect(source).toContain("'reviewed_mapping'::text AS relationship_method");
     expect(source).toContain("0.8::numeric AS relationship_confidence");
+    expect(source).toContain("0::int AS cloud_sev1_sev2_incidents");
+    expect(source).toContain("COALESCE(op.cloud_sev1_sev2_incidents, 0)::int AS cloud_sev1_sev2_incidents");
+    expect(source).not.toContain("0::numeric AS cloud_sev1_sev2_incidents");
+    expect(source).not.toContain("COALESCE(op.cloud_sev1_sev2_incidents, 0)::numeric AS cloud_sev1_sev2_incidents");
   });
 });
