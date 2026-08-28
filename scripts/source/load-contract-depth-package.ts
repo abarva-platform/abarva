@@ -423,10 +423,11 @@ async function writeRunStatus(
        $1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11,
        $12::jsonb, CASE WHEN $7 IN ('completed', 'failed') THEN now() ELSE NULL END
      )
-     ON CONFLICT (tenant_key, dataset_version, idempotency_key, mode)
-     DO UPDATE SET load_run_id = EXCLUDED.load_run_id,
+     ON CONFLICT (tenant_key, dataset_version, load_run_id)
+     DO UPDATE SET idempotency_key = EXCLUDED.idempotency_key,
                    package_sha256 = EXCLUDED.package_sha256,
                    status = EXCLUDED.status,
+                   mode = EXCLUDED.mode,
                    layer2_row_count = EXCLUDED.layer2_row_count,
                    layer3_summary = EXCLUDED.layer3_summary,
                    quality_gate = EXCLUDED.quality_gate,
