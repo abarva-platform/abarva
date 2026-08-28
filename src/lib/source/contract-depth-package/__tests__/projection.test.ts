@@ -136,10 +136,15 @@ describe('projectContractDepthPackage', () => {
     });
     expect(projection.contract360[0]).toMatchObject({
       contract_id: 'MER-TECH-AMS-001',
+      alternatives_available: '',
       actual_annual_spend: '650000',
       service_credits_earned: '12333.33',
       service_credits_claimed: '0',
       operational_evidence_gap: 'false',
+    });
+    expect(projection.contractVendor360[0]).toMatchObject({
+      contract_id: 'MER-TECH-AMS-001',
+      alternatives_available: '',
     });
     expect(projection.contractOperationalPerformance[0]).toMatchObject({
       cloud_sev1_sev2_incidents: '12',

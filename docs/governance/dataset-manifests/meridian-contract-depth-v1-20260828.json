@@ -11,7 +11,7 @@
   "retrieval_proof_required": true,
   "pii_phi_handling": "Synthetic, PHI-free, planning-grade healthcare technology contract depth package. No patient, member, provider, claim-line, PHI, PII, or real production records are included. Synthetic evidence must remain labeled as demo-only and may not be represented as live-client truth or finance-confirmed realized value.",
   "expected_object_count": 298,
-  "approved_by": "Anand Sundaram",
+  "approved_by": "active-task-operator-approval",
   "approved_at": "2026-08-28",
-  "notes": "Manifest gates the local source-file and synthetic-document package at /Users/anand/Downloads/meridian-source-contract-depth-package-20260828. It authorizes only a controlled operator ACA data-build job with row-count reconciliation, quality-gate output, proof bundle, and live retrieval proof before product or aVa claims rely on the package."
+  "notes": "Manifest gates the local source-file and synthetic-document package at /Users/anand/Downloads/meridian-source-contract-depth-package-20260828. It authorizes only the explicitly approved active-task operator ACA data-build job with row-count reconciliation, quality-gate output, proof bundle, and live retrieval proof before product or aVa claims rely on the package. Synthetic evidence remains demo-only, not client truth, and not finance-confirmed realized value."
 }

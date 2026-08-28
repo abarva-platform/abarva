@@ -137,7 +137,7 @@ export function projectContractDepthPackage(input: ContractDepthPackageInput): C
       renewal_owner_ref: value(contract, 'business_owner'),
       benchmarking_clause: value(contract, 'benchmarking_clause'),
       exit_rights_summary: value(contract, 'termination_rights'),
-      alternatives_available: value(contract, 'archetype') === 'ehr_platform' ? 'limited' : 'available',
+      alternatives_available: '',
       concentration_note: '',
       source_confidence: value(contract, 'source_confidence'),
       resolved_annual_value: value(contract, 'annual_value_usd'),

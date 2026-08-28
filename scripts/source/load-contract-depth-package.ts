@@ -660,7 +660,7 @@ async function upsertContracts(client: Client, args: Args, contracts: readonly C
         JSON.stringify({
           ...contract,
           synthetic_policy: "synthetic_demo_only_not_client_truth",
-          alternatives_available: stringValue(contract, "archetype") === "ehr_platform" ? "limited" : "available",
+          alternatives_available: null,
         }),
       ],
     );
@@ -1303,6 +1303,7 @@ async function layer3Readback(
        (SELECT count(*)::text FROM source.opportunity_valuation WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS opportunity_valuation,
        (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[])) AS canonical_fact_assertion,
        (SELECT coalesce(sum(amount_usd), 0)::text FROM source.optimization_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS opportunity_amount_usd,
+       (SELECT count(*)::text FROM source.contract WHERE tenant_key = $1 AND contract_id = ANY($3::text[]) AND load_run_id = $5 AND coalesce(raw_payload->>'alternatives_available', '') <> '') AS contracts_with_assessed_alternatives,
        (SELECT count(*)::text FROM source.optimization_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[]) AND payload->>'finance_confirmation_state' = 'not_confirmed') AS opportunities_not_finance_confirmed`,
     [args.tenantKey, args.datasetVersion, contractIds, opportunityIds, args.loadRunId],
   );
@@ -1331,6 +1332,7 @@ function expectedLayer3(sourceFiles: ContractDepthSourceFileInput, rows: readonl
     calculation_run: sourceFiles.optimizationOpportunities.length,
     opportunity_valuation: sourceFiles.optimizationOpportunities.length,
     opportunities_not_finance_confirmed: sourceFiles.optimizationOpportunities.length,
+    contracts_with_assessed_alternatives: 0,
   };
 }
 

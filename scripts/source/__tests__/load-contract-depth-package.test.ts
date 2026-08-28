@@ -22,4 +22,19 @@ describe("Source contract depth package loader", () => {
       "ON CONFLICT (tenant_key, dataset_version, idempotency_key, mode)",
     );
   });
+
+  it("keeps unassessed market alternatives out of Layer 3 readback", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+
+    expect(loader).toContain("alternatives_available: null");
+    expect(loader).toContain("contracts_with_assessed_alternatives");
+    expect(loader).toContain("contracts_with_assessed_alternatives: 0");
+    expect(loader).not.toContain(
+      'alternatives_available: stringValue(contract, "archetype") === "ehr_platform" ? "limited" : "available"',
+    );
+  });
 });
