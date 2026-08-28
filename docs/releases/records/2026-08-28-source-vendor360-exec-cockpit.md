@@ -18,6 +18,8 @@ Second follow-up refinement: the governed commercial workspace now has a product
 
 Third follow-up refinement: normal workspace chrome no longer renders preview/debug panels by default. The cockpit exposes explicit product actions for vendor and contract lists, while detailed evidence controls remain available behind collapsed drilldowns.
 
+Fourth follow-up refinement: the first-screen cockpit keeps portfolio facts visible but removes internal projection, load-run, and calculation-function labels from the operator-facing summary.
+
 ## Layer Impact
 
 Release lane: `global-control-lane`.
@@ -40,6 +42,7 @@ Layer 4 PRODUCTS: Updates the Source workspace Vendor 360 rendering, workspace c
 - Source route redirects and product links that now target `/source/workspace`.
 - Normal workspace debug panels are removed from the default product view; empty-data warnings remain only for empty workspace reads.
 - Workspace vendor and contract list actions are reachable from the cockpit without relying on audit/debug scaffolding.
+- Internal projection/load-run labels are no longer visible in the default cockpit summary.
 - Focused Source workspace render tests for the Vendor 360 cockpit.
 - Follow-up test coverage that hides unavailable mini-stats, empty insight panels, and optional contract columns with placeholder values.
 - Route ownership coverage proving `/source/workspace` owns tenant resolution while `/source/preview/workspace` remains a query-preserving redirect.

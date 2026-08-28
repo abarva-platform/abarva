@@ -291,13 +291,17 @@ describe("Source workspace ECL browser-surface proof", () => {
       ).toBeTruthy();
     });
     expect(screen.getByText("Helix Shared Services Group")).toBeTruthy();
-    expect(screen.getByText("Contract register")).toBeTruthy();
-    expect(screen.getByText("Application scope")).toBeTruthy();
+    expect(screen.queryByText("Contract register")).toBeNull();
+    expect(screen.queryByText("Application scope")).toBeNull();
     expect(screen.queryByText("Source workspace")).toBeNull();
     expect(screen.queryByText("No Source rows returned")).toBeNull();
     expect(screen.queryByText(/Demo Findings/i)).toBeNull();
     expect(screen.queryByText(/Serving Surfaces/i)).toBeNull();
     expect(screen.queryByText(/Proof Layers/i)).toBeNull();
+    expect(screen.queryByText(/ECL Source/i)).toBeNull();
+    expect(screen.queryByText(/load run/i)).toBeNull();
+    expect(screen.queryByText(/computeRenewalExposure/i)).toBeNull();
+    expect(screen.getByText("Governed contract portfolio")).toBeTruthy();
 
     expect(screen.getByRole("button", { name: "View contracts" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "View vendors" }));
