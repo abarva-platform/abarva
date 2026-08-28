@@ -1,6 +1,6 @@
 {
   "schema_version": "meridian_phs_demo_readiness_status/v1",
-  "generated_at": "2026-08-28T01:25:57.990Z",
+  "generated_at": "2026-08-28T01:33:14.543Z",
   "tenant_key": "meridian-health",
   "scope": {
     "current_sprint_priority": "Meridian/PHS demo",
@@ -33,6 +33,7 @@
       "enumerated": true,
       "route_files_present": 6,
       "route_files_expected": 6,
+      "excluded": 0,
       "proof_state": "browser_proof_required",
       "surfaces": [
         {
