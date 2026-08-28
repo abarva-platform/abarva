@@ -77,8 +77,10 @@ const impactRange = (lever: ContractOptimizationLever): string => {
   if (!lever.annualImpactLowUsd && !lever.annualImpactHighUsd) {
     return "value to be quantified during vendor cure review";
   }
-  if (!lever.annualImpactLowUsd) return `up to ${formatMoney(lever.annualImpactHighUsd)}`;
-  if (!lever.annualImpactHighUsd) return `at least ${formatMoney(lever.annualImpactLowUsd)}`;
+  if (!lever.annualImpactLowUsd)
+    return `up to ${formatMoney(lever.annualImpactHighUsd)}`;
+  if (!lever.annualImpactHighUsd)
+    return `at least ${formatMoney(lever.annualImpactLowUsd)}`;
   return `${formatMoney(lever.annualImpactLowUsd)} to ${formatMoney(lever.annualImpactHighUsd)}`;
 };
 
@@ -118,14 +120,20 @@ export function buildContractOptimizationStoryPack(
   const exposure = computeContractOptimizationExposureRollup(profile);
   const invoiceFinding = findFinding(profile, "price_leakage");
   const staffingFinding = findFinding(profile, "staffing_coverage_gap");
-  const changeOrderFinding = findFinding(profile, "scope_change_order_exposure");
+  const changeOrderFinding = findFinding(
+    profile,
+    "scope_change_order_exposure",
+  );
   const slaFinding = findFinding(profile, "sla_credit_leakage");
   const operationalFinding = findFinding(profile, "service_performance_risk");
   const renewalFinding = findFinding(profile, "renewal_window");
 
   const invoiceLever = findLever(profile, "recover_invoice_leakage");
   const staffingLever = findLever(profile, "reprice_staffing_coverage");
-  const changeOrderLever = findLever(profile, "convert_change_orders_to_catalog");
+  const changeOrderLever = findLever(
+    profile,
+    "convert_change_orders_to_catalog",
+  );
   const slaLever = findLever(profile, "tighten_service_credit_economics");
   const productivityLever = findLever(profile, "force_productivity_commitment");
   const renewalLever = findLever(profile, "use_renewal_window");
@@ -201,7 +209,7 @@ export function buildContractOptimizationStoryPack(
         storyItem({
           title: "Strengthen SLA economics",
           summary:
-            "Service credits and chronic-miss language should match the operational criticality of airline applications.",
+            "Service credits and chronic-miss language should match the operational criticality of the services in scope.",
           finding: slaFinding,
           lever: slaLever,
           businessImpact: ["risk", "customer", "compliance"],
@@ -232,7 +240,8 @@ export function buildContractOptimizationStoryPack(
       buyerAsk:
         slaLever?.buyerAsk ??
         "Increase SLA remedies and chronic-miss escalation for critical towers.",
-      evidenceBasis: slaFinding?.title ?? "SLA exhibit and service performance evidence",
+      evidenceBasis:
+        slaFinding?.title ?? "SLA exhibit and service performance evidence",
       businessImpact: ["risk", "customer"],
     },
     {
@@ -240,7 +249,8 @@ export function buildContractOptimizationStoryPack(
       buyerAsk:
         staffingLever?.buyerAsk ??
         "Reconcile committed staffing, observed coverage, and tower-level ownership.",
-      evidenceBasis: staffingFinding?.title ?? "Staffing roster and coverage evidence",
+      evidenceBasis:
+        staffingFinding?.title ?? "Staffing roster and coverage evidence",
       businessImpact: ["risk", "speed"],
     },
     {
@@ -248,7 +258,8 @@ export function buildContractOptimizationStoryPack(
       buyerAsk:
         productivityLever?.buyerAsk ??
         "Convert operating pressure into a priced automation and productivity glidepath.",
-      evidenceBasis: operationalFinding?.title ?? "Operational baseline evidence",
+      evidenceBasis:
+        operationalFinding?.title ?? "Operational baseline evidence",
       businessImpact: ["cost", "speed"],
     },
     {
@@ -261,44 +272,48 @@ export function buildContractOptimizationStoryPack(
     },
   ];
 
-  const businessImpactScorecard: ContractOptimizationStoryPack["businessImpactScorecard"] = [
-    {
-      category: "cost",
-      implication:
-        "Recoverable leakage and normalized baseline economics drive the immediate value case.",
-      evidenceBasis: exposure.label,
-    },
-    {
-      category: "risk",
-      implication:
-        "Weak remedies, staffing gaps, and unresolved change-order treatment keep operational risk with the buyer.",
-      evidenceBasis: "SLA, staffing, change-order, and operational baseline evidence",
-    },
-    {
-      category: "speed",
-      implication:
-        "A cure-first path is faster than a full rebid, but only if the vendor supplies reconciliation evidence before the renewal window decays.",
-      evidenceBasis: profile.contractBaseline.renewalNoticeDate,
-    },
-    {
-      category: "customer",
-      implication:
-        "Ticket, reopen, restore, and emergency-change pressure can affect business-service reliability if not tied to stronger accountability.",
-      evidenceBasis: operationalFinding?.title ?? "Operational pressure evidence",
-    },
-    {
-      category: "compliance",
-      implication:
-        "Reservation-of-rights, approval evidence, and governance sign-off protect the buyer from accepting unsupported baseline cost.",
-      evidenceBasis: "Governance minutes, renewal rights, and approval evidence",
-    },
-    {
-      category: "compliance",
-      implication:
-        "The renewal steering committee needs a named decision gate before any renewal baseline becomes binding.",
-      evidenceBasis: profile.recommendedPath.decisionOwnerRole,
-    },
-  ];
+  const businessImpactScorecard: ContractOptimizationStoryPack["businessImpactScorecard"] =
+    [
+      {
+        category: "cost",
+        implication:
+          "Recoverable leakage and normalized baseline economics drive the immediate value case.",
+        evidenceBasis: exposure.label,
+      },
+      {
+        category: "risk",
+        implication:
+          "Weak remedies, staffing gaps, and unresolved change-order treatment keep operational risk with the buyer.",
+        evidenceBasis:
+          "SLA, staffing, change-order, and operational baseline evidence",
+      },
+      {
+        category: "speed",
+        implication:
+          "A cure-first path is faster than a full rebid, but only if the vendor supplies reconciliation evidence before the renewal window decays.",
+        evidenceBasis: profile.contractBaseline.renewalNoticeDate,
+      },
+      {
+        category: "customer",
+        implication:
+          "Ticket, reopen, restore, and emergency-change pressure can affect business-service reliability if not tied to stronger accountability.",
+        evidenceBasis:
+          operationalFinding?.title ?? "Operational pressure evidence",
+      },
+      {
+        category: "compliance",
+        implication:
+          "Reservation-of-rights, approval evidence, and governance sign-off protect the buyer from accepting unsupported baseline cost.",
+        evidenceBasis:
+          "Governance minutes, renewal rights, and approval evidence",
+      },
+      {
+        category: "compliance",
+        implication:
+          "The renewal steering committee needs a named decision gate before any renewal baseline becomes binding.",
+        evidenceBasis: profile.recommendedPath.decisionOwnerRole,
+      },
+    ];
 
   const validation = validateCxoStoryContract({
     contract: SOURCE_CONTRACT_OPTIMIZATION_STORY_CONTRACT,
@@ -357,8 +372,7 @@ export function buildContractOptimizationStoryPack(
       {
         label: "Issue cure notice",
         timing: "Now",
-        decision:
-          profile.recommendedPath.immediateAction,
+        decision: profile.recommendedPath.immediateAction,
         ownerRole: "Procurement / legal / IT service owner",
       },
       {
@@ -387,7 +401,7 @@ export function buildContractOptimizationStoryPack(
     scenarios: [
       {
         path: "do_nothing",
-        title: "If SkyHarbor renews as-is",
+        title: "If the buyer renews as-is",
         outcome:
           "The current baseline becomes the commercial anchor for the next term.",
         commercialEffect:
@@ -397,7 +411,7 @@ export function buildContractOptimizationStoryPack(
       },
       {
         path: "renegotiate",
-        title: "If SkyHarbor cures and renegotiates",
+        title: "If the buyer cures and renegotiates",
         outcome:
           "Renewal approval becomes conditional on evidence-backed commercial and operating commitments.",
         commercialEffect:
