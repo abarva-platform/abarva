@@ -27,6 +27,20 @@ interface TowerPageProps {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+interface TrustedTowerTenant {
+  clientKey: string;
+  displayName?: string | null;
+}
+
+interface RenderTowerPageProps extends TowerPageProps {
+  /**
+   * Tenant-scoped routes prove access before calling the shared renderer. This
+   * keeps legacy tenant Tower URLs on the new contract surface without falling
+   * back through a generic query-param route.
+   */
+  trustedTenant?: TrustedTowerTenant | null;
+}
+
 function firstSearchValue(value: string | string[] | undefined): string | null {
   if (Array.isArray(value)) return value[0] ?? null;
   return value ?? null;
@@ -51,22 +65,35 @@ async function withTowerReadTimeout<T>(
   }
 }
 
-export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
+export async function renderTowerPage({
+  searchParams,
+  trustedTenant = null,
+}: RenderTowerPageProps = {}) {
   const resolved = await searchParams;
   const rawRequestedClient = firstSearchValue(resolved?.client);
-  const requestedClient = (await hasLockedTenantSession())
-    ? rawRequestedClient
-    : null;
+  const requestedClient =
+    trustedTenant?.clientKey ??
+    ((await hasLockedTenantSession()) ? rawRequestedClient : null);
   const client = await getActiveClientRow(requestedClient).catch(() => null);
+  const effectiveClientKey = trustedTenant?.clientKey ?? client?.key ?? null;
 
   const tenantName =
-    canonicalClientDisplayName({ key: client?.key, name: client?.name }) ??
+    canonicalClientDisplayName({
+      key: effectiveClientKey,
+      name: trustedTenant?.displayName ?? client?.name,
+    }) ??
+    trustedTenant?.displayName ??
     client?.name ??
     "AbarVa Client";
 
   const martView = await withTowerReadTimeout(
     loadTowerMartCommandView({
-      tenantKeyCandidates: [client?.key, requestedClient, client?.id],
+      tenantKeyCandidates: [
+        trustedTenant?.clientKey,
+        effectiveClientKey,
+        requestedClient,
+        client?.id,
+      ],
     }),
     null,
   );
@@ -95,4 +122,8 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
       </Suspense>
     </AppShell>
   );
+}
+
+export default async function TowerPage(props: TowerPageProps = {}) {
+  return renderTowerPage(props);
 }
