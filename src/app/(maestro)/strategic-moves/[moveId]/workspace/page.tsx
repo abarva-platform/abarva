@@ -67,7 +67,7 @@ export default async function StrategicMoveWorkspacePage({
         backHref={`/strategic-moves/${move.id}`}
         items={items}
         generateIntent={
-          showGenerateIntent
+          generateCandidates.length > 0
             ? {
                 module: "moves",
                 eventId: move.id,

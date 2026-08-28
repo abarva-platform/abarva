@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release tightens the foundation healthcare demo Moves trace so it reads governed handoff rows through the tenant-aware data-plane path and only passes browser proof when all four trace steps are linked. It also makes an empty Moves workspace actionable by showing the existing draft candidates instead of a bare empty table.
+This release tightens the foundation healthcare demo Moves trace so it reads governed handoff rows through the tenant-aware data-plane path and only passes browser proof when all four trace steps are linked. It also makes an empty Moves workspace actionable by showing the existing draft candidates instead of a bare empty table, including the no-document default state.
 
 ## Layer Impact
 
@@ -41,6 +41,7 @@ This release tightens the foundation healthcare demo Moves trace so it reads gov
 - `npx jest src/lib/data-plane/read-adapters/__tests__/outcome-ledger-read-adapter.test.ts --runInBand` passed.
 - `npm run ecl:meridian-phs-moves-browser:smoke -- --validate-contract` passed.
 - `node --check scripts/ecl/run_meridian_phs_moves_browser_smoke.mjs` passed.
+- Follow-on workspace candidate wiring is validated by the same signed-in Moves browser smoke after deployment.
 
 ## Rollout Plan
 
