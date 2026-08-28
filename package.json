@@ -896,6 +896,7 @@
     "ecl:deterministic-content:sweep:browser-default": "node scripts/ecl/run_ecl_deterministic_content_sweep.mjs --browser-default-routes",
     "ecl:product-browser:smoke": "node scripts/ecl/run_product_ecl_browser_smoke.mjs",
     "ecl:product-browser:smoke:default": "node scripts/ecl/run_product_ecl_browser_smoke.mjs --default-routes",
+    "ecl:meridian-phs-moves-browser:smoke": "node scripts/ecl/run_meridian_phs_moves_browser_smoke.mjs",
     "ecl:ava-consultant-eval": "node scripts/ecl/run_ecl_ava_consultant_eval.mjs",
     "ecl:ava-consultant-eval:capture-live": "node scripts/ecl/run_ecl_ava_consultant_eval.mjs --capture-live",
     "ecl:ava-consultant-eval:capture-live-ablation": "node scripts/ecl/run_ecl_ava_consultant_eval.mjs --capture-live --capture-ablation",

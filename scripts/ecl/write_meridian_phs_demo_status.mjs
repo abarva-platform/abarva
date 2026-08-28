@@ -175,6 +175,17 @@ function proofCountFromSummary(summary, productKeys) {
   return 0;
 }
 
+function movesProofFromSummary(summary) {
+  const proof = summary?.moves_surfaces_browser_proven;
+  if (!proof || typeof proof !== "object") return null;
+  return {
+    numerator: Number(proof.numerator ?? 0),
+    denominator: Number(proof.denominator ?? MOVES_SURFACES.length),
+    excluded: Number(proof.excluded ?? 0),
+    accepted: Boolean(proof.accepted),
+  };
+}
+
 function moveContentQuality() {
   const file = "src/lib/moves/narratives/generated/meridian-health-moves-readiness-blocks.ts";
   const text = readTextIfPresent(file);
@@ -223,6 +234,7 @@ function main() {
     proofCountFromSummary(sourceProof, ["Source"]) ||
     proofCountFromSummary(browserProof, ["Source"]) ||
     (eclStatus?.lanes?.some?.((lane) => lane.lane === "L-PROOF" && lane.status === "complete") ? 9 : 0);
+  const movesProof = movesProofFromSummary(browserProof);
 
   const movesRouteStatuses = MOVES_SURFACES.map((surface) => ({
     ...surface,
@@ -261,13 +273,14 @@ function main() {
         proof_state: phsExecutiveEclProven === phsExecutiveEclDenominator ? "repo_status_complete" : "proof_artifact_required",
       },
       moves_surfaces: {
-        numerator: 0,
-        denominator: MOVES_SURFACES.length,
-        percent: 0,
+        numerator: movesProof?.numerator ?? 0,
+        denominator: movesProof?.denominator ?? MOVES_SURFACES.length,
+        percent: percent(movesProof?.numerator ?? 0, movesProof?.denominator ?? MOVES_SURFACES.length),
         enumerated: true,
         route_files_present: movesFilesPresent,
         route_files_expected: MOVES_SURFACES.length,
-        proof_state: "browser_proof_required",
+        excluded: movesProof?.excluded ?? 0,
+        proof_state: movesProof?.accepted ? "browser_proof_complete" : "browser_proof_required",
         surfaces: movesRouteStatuses,
       },
       moves_content_quality: moveContentQuality(),
@@ -328,7 +341,7 @@ function main() {
   const summary = {
     tenant_key: status.tenant_key,
     home_tower_intelligence: `${phsExecutiveEclProven} of ${phsExecutiveEclDenominator}`,
-    moves: `0 of ${MOVES_SURFACES.length}`,
+    moves: `${movesProof?.numerator ?? 0} of ${movesProof?.denominator ?? MOVES_SURFACES.length}`,
     handoffs: `0 of ${HANDOFFS.length}`,
     source: `${sourceProven} of ${sourceDenominator}`,
     out: args.out,
