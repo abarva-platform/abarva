@@ -1,6 +1,6 @@
 {
   "schema_version": "meridian_phs_demo_readiness_status/v1",
-  "generated_at": "2026-08-28T01:40:57.195Z",
+  "generated_at": "2026-08-28T01:59:17.132Z",
   "tenant_key": "meridian-health",
   "scope": {
     "current_sprint_priority": "Meridian/PHS demo",
@@ -91,6 +91,23 @@
           "build_state": "enumerated_not_browser_proven"
         }
       ]
+    },
+    "moves_operational_activation": {
+      "numerator": 38,
+      "denominator": 38,
+      "percent": 100,
+      "proof_state": "activation_plan_ready_for_governed_load",
+      "generated_rows": {
+        "engagements": 38,
+        "program_modules": 228,
+        "program_milestones": 228,
+        "program_work_items": 228,
+        "program_risks": 38,
+        "pattern_match_logs": 38
+      },
+      "programs_from_home_snapshot": 28,
+      "programs_from_source_room_ppm": 10,
+      "unresolved_gap_count": 0
     },
     "moves_content_quality": {
       "file": "src/lib/moves/narratives/generated/meridian-health-moves-readiness-blocks.ts",

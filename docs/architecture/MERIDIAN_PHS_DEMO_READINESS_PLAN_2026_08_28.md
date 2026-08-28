@@ -78,6 +78,13 @@ First slice for this track:
 Route/source audit:
 [MERIDIAN_PHS_MOVES_ROUTE_SOURCE_AUDIT_2026_08_28.md](./MERIDIAN_PHS_MOVES_ROUTE_SOURCE_AUDIT_2026_08_28.md).
 
+Activation package:
+`scripts/ecl/write_meridian_phs_moves_activation_plan.mjs` generates an idempotent operational
+Moves load package for Meridian. It turns the 38 declared programs into `engagements` plus
+program modules, milestones, work items, risks and pattern matches. The package does not connect
+to the database; it emits SQL and a proof summary for the governed data-build job. The route/browser
+proof remains incomplete until that SQL has been loaded and the signed-in routes have been crawled.
+
 ---
 
 ## Demo Track B - Source Sourcing-CXO Demo
@@ -132,6 +139,7 @@ Do not report one aggregate percent without these denominators.
 | 1 | PHS Moves route/source audit | Table of PHS Moves routes, visible claims, data source, and readiness issue per route. |
 | 2 | PHS demo status writer | Machine-readable status that separates Home/Tower/Intelligence, Moves, handoffs and Source. |
 | 3 | Moves demo proof harness | Browser proof for the selected Meridian Moves routes. |
-| 4 | Cross-module handoff proof | One deterministic proof tying Moves evidence needs to Tower gates and Intelligence context. |
-| 5 | Source sourcing-CXO proof refresh | Current signed-in proof for Source 9/9 plus contract/vendor visual quality findings. |
-| 6 | Final demo deploy/proof | ACA deploy through repo-owned workflow only, then signed-in proof for both tracks. |
+| 4 | Meridian Moves activation package | Idempotent SQL and proof summary that can load 38 operational Moves through the governed data-build job. |
+| 5 | Cross-module handoff proof | One deterministic proof tying Moves evidence needs to Tower gates and Intelligence context. |
+| 6 | Source sourcing-CXO proof refresh | Current signed-in proof for Source 9/9 plus contract/vendor visual quality findings. |
+| 7 | Final demo deploy/proof | ACA deploy through repo-owned workflow only, then signed-in proof for both tracks. |
