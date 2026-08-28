@@ -32,12 +32,14 @@ Layer 4/products: no product route or UI behavior changes. The script exists to 
 
 - `scripts/ecl/diagnose_meridian_moves_live_read_path.mjs`
 - `package.json` script `ecl:meridian-moves-live-readpath:diagnose`
+- Hardens the diagnostic to tolerate optional Azure columns when inspecting proof identities.
 
 ## QA / Validation
 
 - Pass: `node --check scripts/ecl/diagnose_meridian_moves_live_read_path.mjs`
 - Pass: `npm run ecl:meridian-moves-live-readpath:diagnose -- --plan-only`
-- Blocked until deployment: governed ACA operator job execution with the deployed digest-pinned image.
+- Pass: first governed ACA operator attempt restored idle after a read-only diagnostic schema mismatch.
+- Blocked until deployment: rerun governed ACA operator job execution with the deployed digest-pinned image.
 
 ## Rollout Plan
 
@@ -65,4 +67,4 @@ Revert the PR. The diagnostic is read-only and has no database side effects.
 
 ## Known Gaps
 
-The diagnostic classifies the read-path mismatch. It does not itself repoint, mutate data, or change access policy.
+The diagnostic classifies the read-path mismatch. It does not itself repoint, mutate data, or change access policy. The first operator attempt exposed an optional-column assumption before producing the read-path classification; rerun after this hardening lands.
