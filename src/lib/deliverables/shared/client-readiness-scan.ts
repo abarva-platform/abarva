@@ -1,4 +1,7 @@
-import { listVendorPlatformProfiles } from "@/lib/programs/vendor-platform-intelligence";
+import {
+  listVendorPlatformProfiles,
+  type VendorPlatformProfile,
+} from "@/lib/programs/vendor-platform-intelligence";
 
 // Client-readiness scan — the "would this survive a client expert reading it"
 // pass, expressed as code.
@@ -145,6 +148,9 @@ const FILLER_PHRASES = [
 const VENDOR_STATE_BOUNDARY_PATTERN =
   /\b(?:vendor[-\s]published|public[-\s]hypothesis|public vendor|vendor materials?|public materials?|not proof of (?:a )?client deployment|not client truth|contract[-\s]confirmed|implementation[-\s]confirmed|client[-\s]observed|client evidence|client-side assertion|client[-\s]confirmed)\b/i;
 
+const INLINE_VENDOR_SOURCE_PATTERN =
+  /\b(?:retrieved|accessed|press release|source|citation|cited|reference|according to)\b/i;
+
 const BRACE_PLACEHOLDER_PATTERN = String.raw`\{\{[^}\n]{1,60}\}\}`;
 const BRACKET_PLACEHOLDER_WORDS = [
   "TB" + "D",
@@ -288,10 +294,19 @@ function sentenceOrParagraphAround(
     .trim();
 }
 
+interface VendorCapabilityTerm {
+  value: string;
+  caseSensitive: boolean;
+}
+
+function isDistinctiveCamelCase(term: string): boolean {
+  return /^[A-Z][A-Za-z]*[a-z][A-Z][A-Za-z]*$/.test(term);
+}
+
 function capabilityTermsForProfile(
-  profile: ReturnType<typeof listVendorPlatformProfiles>[number],
-): string[] {
-  const terms = new Set<string>();
+  profile: VendorPlatformProfile,
+): VendorCapabilityTerm[] {
+  const terms = new Map<string, VendorCapabilityTerm>();
   const vendorName = profile.vendorName.toLowerCase();
 
   function addTerm(term: string) {
@@ -299,7 +314,13 @@ function capabilityTermsForProfile(
     if (normalized === vendorName) return;
     if (normalized.startsWith(`${vendorName} `)) return;
     if (normalized.length < 8) return;
-    terms.add(term);
+    terms.set(normalized, {
+      value: term,
+      // A Title Case product family like "Health Fabric" is also plausible
+      // English. Match it as written. Distinctive single-token product names
+      // like "MedeWorks" can still be matched case-insensitively.
+      caseSensitive: term.includes(" ") && !isDistinctiveCamelCase(term),
+    });
   }
 
   for (const value of [
@@ -337,7 +358,48 @@ function capabilityTermsForProfile(
     }
   }
 
-  return [...terms].sort((a, b) => b.length - a.length);
+  return [...terms.values()].sort((a, b) => b.value.length - a.value.length);
+}
+
+function matchCapabilityTerm(
+  text: string,
+  terms: readonly VendorCapabilityTerm[],
+): string | null {
+  for (const term of terms) {
+    const pattern = new RegExp(
+      `\\b${escapeForRegex(term.value)}\\b`,
+      term.caseSensitive ? "" : "i",
+    );
+    const match = text.match(pattern);
+    if (match) return match[0];
+  }
+  return null;
+}
+
+function sourceHostsForProfile(profile: VendorPlatformProfile): string[] {
+  const hosts = new Set<string>();
+  for (const ref of profile.sourceRefs) {
+    try {
+      hosts.add(new URL(ref.url).hostname.replace(/^www\./i, ""));
+    } catch {
+      // A malformed source URL is a profile-quality issue, but the scanner
+      // should keep evaluating the rest of the profile rather than throwing.
+    }
+  }
+  return [...hosts];
+}
+
+function hasVendorClaimBoundary(
+  localClaim: string,
+  profile: VendorPlatformProfile,
+): boolean {
+  if (VENDOR_STATE_BOUNDARY_PATTERN.test(localClaim)) return true;
+  if (!INLINE_VENDOR_SOURCE_PATTERN.test(localClaim)) return false;
+
+  const lowerClaim = localClaim.toLowerCase();
+  return sourceHostsForProfile(profile).some((host) =>
+    lowerClaim.includes(host.toLowerCase()),
+  );
 }
 
 function findVendorClaimWithoutState(text: string): ScanFinding[] {
@@ -350,10 +412,6 @@ function findVendorClaimWithoutState(text: string): ScanFinding[] {
     );
     const terms = capabilityTermsForProfile(profile);
     if (terms.length === 0) continue;
-    const capabilityPattern = new RegExp(
-      `\\b(?:${alternation(terms)})\\b`,
-      "i",
-    );
 
     let match: RegExpExecArray | null;
     while ((match = vendorPattern.exec(text)) !== null) {
@@ -362,10 +420,10 @@ function findVendorClaimWithoutState(text: string): ScanFinding[] {
         match.index,
         match[0].length,
       );
-      if (!capabilityPattern.test(localClaim)) continue;
-      if (VENDOR_STATE_BOUNDARY_PATTERN.test(localClaim)) continue;
+      const capabilityMatch = matchCapabilityTerm(localClaim, terms);
+      if (!capabilityMatch) continue;
+      if (hasVendorClaimBoundary(localClaim, profile)) continue;
 
-      const capabilityMatch = localClaim.match(capabilityPattern)?.[0];
       findings.push({
         kind: "vendor_claim_without_state",
         severity: "blocker",
