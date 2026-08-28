@@ -81,7 +81,9 @@ function nullableText(value: unknown): string | null {
 }
 
 function decisionLane(value: string | null | undefined): TowerDecisionLane {
-  const normalized = String(value ?? "").trim().toLowerCase();
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase();
   if (
     normalized === "fund" ||
     normalized === "fix" ||
@@ -142,7 +144,10 @@ function payloadNumber(row: TowerServingRow, key: string): number {
   return num(payload(row)[key] as Numeric);
 }
 
-function payloadNullableNumber(row: TowerServingRow, key: string): number | null {
+function payloadNullableNumber(
+  row: TowerServingRow,
+  key: string,
+): number | null {
   return nullableNum(payload(row)[key] as Numeric);
 }
 
@@ -173,7 +178,9 @@ function payloadTextFrom(
   return null;
 }
 
-function firstSourceLabel(refs: readonly Record<string, unknown>[]): string | null {
+function firstSourceLabel(
+  refs: readonly Record<string, unknown>[],
+): string | null {
   const ref = refs[0];
   if (!ref) return null;
   return (
@@ -384,12 +391,16 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
   const nextGate = payloadText(row, "next_gate");
   return {
     laneKey: row.row_key,
-    programCode: payloadText(row, "claim_id") ?? nullableText(display.program_id),
+    programCode:
+      payloadText(row, "claim_id") ?? nullableText(display.program_id),
     programName: title,
-    ownerRole: payloadText(row, "owner_role") ?? nullableText(display.owner_role),
+    ownerRole:
+      payloadText(row, "owner_role") ?? nullableText(display.owner_role),
     financeOwnerRole: nullableText(display.finance_owner_role),
     decisionLane: decisionLane(
-      gateStatus === "blocked" ? "fix" : (display.decision_lane as string | null),
+      gateStatus === "blocked"
+        ? "fix"
+        : (display.decision_lane as string | null),
     ),
     decisionRationale:
       payloadText(row, "claim_gate_reason_detail", row.summary) ??
@@ -397,10 +408,15 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
     approvedFundingUsd: payloadNumber(row, "funded_amount_usd"),
     fundedAmount: payloadNumber(row, "funded_amount_usd"),
     aiTaggedSpendUsd:
-      row.page_key === "ai_portfolio" ? payloadNumber(row, "funded_amount_usd") : 0,
+      row.page_key === "ai_portfolio"
+        ? payloadNumber(row, "funded_amount_usd")
+        : 0,
     promisedValueUsd: payloadNullableNumber(row, "promised_value_usd"),
     financeValidatedValueUsd: payloadNumber(row, "finance_validated_value_usd"),
-    knownSupportedValue: payloadNullableNumber(row, "usage_supported_value_usd"),
+    knownSupportedValue: payloadNullableNumber(
+      row,
+      "usage_supported_value_usd",
+    ),
     proofMaturityScore: payloadNullableNumber(row, "proof_maturity_score"),
     riskPressureScore: payloadNullableNumber(row, "risk_pressure_score"),
     usageStrengthScore: payloadNullableNumber(row, "usage_strength_score"),
@@ -477,7 +493,9 @@ function mapAction(row: TowerServingRow, index: number): TowerMartCxoAction {
     proofStage: payloadText(row, "claim_gate_status"),
     blockedDecision: payloadText(row, "claim_gate_reason_code"),
     amountExposed: payloadNumber(row, "blocked_value_usd"),
-    evidenceRequirement: jsonArray(payload(row).evidence_needed_json).join(", "),
+    evidenceRequirement: jsonArray(payload(row).evidence_needed_json).join(
+      ", ",
+    ),
     expectedSourceSystem: firstSourceLabel(refs),
     evidencePackageId: nullableText(refs[0]?.source_record_id),
     ownerRole: payloadText(row, "owner_role"),
@@ -485,9 +503,12 @@ function mapAction(row: TowerServingRow, index: number): TowerMartCxoAction {
     handoffModule: payloadText(row, "handoff_module"),
     handoffEntityId: payloadText(row, "primary_object_id"),
     handoffReadiness:
-      payloadText(row, "claim_gate_status") === "claimable" ? "ready" : "not_ready",
+      payloadText(row, "claim_gate_status") === "claimable"
+        ? "ready"
+        : "not_ready",
     actionState: "open",
-    priority: payloadText(row, "claim_gate_status") === "blocked" ? "high" : "medium",
+    priority:
+      payloadText(row, "claim_gate_status") === "blocked" ? "high" : "medium",
   };
 }
 
@@ -506,7 +527,8 @@ function mapEvidence(row: TowerServingRow): TowerMartEvidenceLineage {
         : null,
     displayedValueNumeric: payloadNullableNumber(row, "blocked_value_usd"),
     metricOrFactKey: metric,
-    boardVisibleLabel: payloadText(row, "claim_gate_reason_code") ?? row.row_type,
+    boardVisibleLabel:
+      payloadText(row, "claim_gate_reason_code") ?? row.row_type,
     lineageState: row.basis,
     sourceCount: refs.length,
     sourceRefs: refs,
@@ -528,7 +550,12 @@ function fiscalQuarterFromPeriodEnd(periodEnd: string): string | null {
   if (!match) return null;
   const year = Number(match[1]);
   const month = Number(match[2]);
-  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    month < 1 ||
+    month > 12
+  ) {
     return null;
   }
   return `${year}-Q${Math.floor((month - 1) / 3) + 1}`;
@@ -567,7 +594,8 @@ function mapValueTrajectoryRow(
     periodStart,
     periodEnd,
     fiscalQuarter,
-    scenario: payloadTextFrom(row, ["scenario", "measure_scenario"]) ?? "current",
+    scenario:
+      payloadTextFrom(row, ["scenario", "measure_scenario"]) ?? "current",
     plannedInvestmentUsd: payloadNullableNumberFrom(row, [
       "planned_investment_usd",
       "funded_amount_usd",
@@ -606,15 +634,14 @@ function mapValueTrajectoryRow(
     ]),
     usageEvidenceState: payloadText(row, "evidence_state") ?? row.basis,
     operationalOutcomeEvidenceState: payloadText(row, "quality_state"),
-    financeAttestationState: payloadText(row, "review_state") ?? row.review_state,
+    financeAttestationState:
+      payloadText(row, "review_state") ?? row.review_state,
     sourceTrustState: row.basis,
     claimState: payloadText(row, "claim_gate_status"),
     datasetVersion: `ecl-serving-v${row.projection_version}`,
     sourceRunId: row.source_hash,
     sourceRefs: refs,
-    economicClassification: payloadTextFrom(row, [
-      "economic_classification",
-    ]),
+    economicClassification: payloadTextFrom(row, ["economic_classification"]),
     boardScopeState: payloadTextFrom(row, ["board_scope_state"]),
     materialScopeState: payloadTextFrom(row, ["material_scope_state"]),
     sourceCount: refs.length,
@@ -641,7 +668,9 @@ function isTrajectoryOnlyRow(row: TowerServingRow): boolean {
   );
 }
 
-function gapsFromRows(rows: readonly TowerServingRow[]): TowerMartRequiredFieldGap[] {
+function gapsFromRows(
+  rows: readonly TowerServingRow[],
+): TowerMartRequiredFieldGap[] {
   return rows
     .filter((row) => {
       const gate = payloadText(row, "claim_gate_status");
@@ -657,7 +686,9 @@ function gapsFromRows(rows: readonly TowerServingRow[]): TowerMartRequiredFieldG
         sourceTemplate: firstSourceLabel(refs) ?? "ECL source room",
         sourceRecordId: nullableText(refs[0]?.source_record_id),
         severity:
-          payloadText(row, "claim_gate_status") === "blocked" ? "high" : "medium",
+          payloadText(row, "claim_gate_status") === "blocked"
+            ? "high"
+            : "medium",
         ownerHint: payloadText(row, "owner_role"),
         remediationAction:
           payloadText(row, "claim_gate_reason_detail", row.summary) ??
@@ -758,14 +789,19 @@ export async function readTowerCommandCenter(args: {
 
       return {
         generatedFrom: "ecl_serving" as const,
-        headline: buildHeadline(tenantDisplayName, claimable, blocked, gatedRows),
+        headline: buildHeadline(
+          tenantDisplayName,
+          claimable,
+          blocked,
+          gatedRows,
+        ),
         command: {
           commandCenterKey: `tower:ecl:${tenantKey}:command-center`,
           tenantKey,
           tenantName: tenantDisplayName,
           martVersion: `ecl-serving-v${projectionVersion}`,
           sourceStandard:
-            "serving.tower_* views from ECL source/context/commercial projections",
+            "Governed Tower read from finance, program, contract, and control evidence",
           formulaVersion: "tower_ecl_serving_reader_v1",
           asOfPeriod: "2026-08-24",
           refreshTimestamp: null,
@@ -781,7 +817,10 @@ export async function readTowerCommandCenter(args: {
           partialFinanceValidatedValueYtd: financeValidated,
           realizedValueYtdAllowed: claimable,
           claimableValue: claimable,
-          financeValidatedBlockedValue: Math.max(0, financeValidated - claimable),
+          financeValidatedBlockedValue: Math.max(
+            0,
+            financeValidated - claimable,
+          ),
           promisedValueExposure: promised || blocked || null,
           totalProgramSubjectCount: decisionRows.length,
           activeProgramSubjectCount: decisionRows.length,
@@ -839,7 +878,8 @@ export async function readTowerCommandCenter(args: {
           watchPressureSignals: riskRows.length + evidenceRows.length,
           runRatio: null,
           changeRatio: null,
-          financeValidationRatio: promised > 0 ? financeValidated / promised : null,
+          financeValidationRatio:
+            promised > 0 ? financeValidated / promised : null,
           decisionQuestion:
             "Which funded work can Tower prove, and which value claims remain gated by missing evidence?",
           executiveSummary: buildHeadline(
@@ -858,7 +898,8 @@ export async function readTowerCommandCenter(args: {
           total: aiPortfolio.length,
           candidate: aiPortfolio.length,
           active: aiPortfolio.length,
-          funded: aiPortfolio.filter((row) => row.approvedFundingUsd > 0).length,
+          funded: aiPortfolio.filter((row) => row.approvedFundingUsd > 0)
+            .length,
           embeddedOrUsage: aiPortfolio.length,
           attributedSpendUsd: aiPortfolio.reduce(
             (sum, row) => sum + row.aiTaggedSpendUsd,

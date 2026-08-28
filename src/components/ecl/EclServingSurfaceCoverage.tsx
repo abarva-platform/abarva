@@ -31,6 +31,9 @@ const SURFACE_LABELS = {
   tower: [
     "Executive View",
     "Value Proof",
+    "Decision Lanes",
+    "Evidence",
+    "Recommended Actions",
     "AI Portfolio",
     "Evidence & Actions",
     "Cost Lens",
@@ -83,7 +86,9 @@ export function EclServingSurfaceCoverage({
   actions,
   product,
 }: {
-  actions?: Partial<Record<(typeof SURFACE_LABELS)[EclServingProduct][number], () => void>>;
+  actions?: Partial<
+    Record<(typeof SURFACE_LABELS)[EclServingProduct][number], () => void>
+  >;
   product: EclServingProduct;
 }) {
   const labels = SURFACE_LABELS[product];

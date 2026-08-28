@@ -198,11 +198,11 @@ describe("readTowerCommandCenter", () => {
     });
 
     expect(mart?.generatedFrom).toBe("ecl_serving");
-    expect(mart?.command.sourceStandard).toContain("serving.tower_*");
-    expect(mart?.command.sourceFiles).toContain("SP08_Vendor_Contract");
-    expect(mart?.programLanes[0]?.programName).toBe(
-      "Revenue-cycle automation",
+    expect(mart?.command.sourceStandard).toContain(
+      "Governed Tower read from finance, program, contract, and control evidence",
     );
+    expect(mart?.command.sourceFiles).toContain("SP08_Vendor_Contract");
+    expect(mart?.programLanes[0]?.programName).toBe("Revenue-cycle automation");
     expect(mart?.requiredFieldGaps[0]?.sourceRecordId).toBe("source-record-1");
     expect(view?.summary.valueClaimCount).toBeGreaterThan(0);
   });

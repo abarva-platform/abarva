@@ -76,7 +76,7 @@ describe("Command Center owns the first viewport", () => {
     expect(route).toMatch(/<EclServingSurfaceCoverage product="tower" \/>/);
   });
 
-  it("uses the active four-tab Tower contract in serving-surface diagnostics", () => {
+  it("shows the Tower proof surfaces in serving-surface diagnostics", () => {
     const component = read("components/ecl/EclServingSurfaceCoverage.tsx");
     const towerLabels = component.slice(
       component.indexOf("tower: ["),
@@ -85,8 +85,9 @@ describe("Command Center owns the first viewport", () => {
 
     expect(towerLabels).toMatch(/"Executive View"/);
     expect(towerLabels).toMatch(/"Evidence & Actions"/);
-    expect(towerLabels).not.toMatch(/"Decision Lanes"/);
-    expect(towerLabels).not.toMatch(/"Recommended Actions"/);
+    expect(towerLabels).toMatch(/"Decision Lanes"/);
+    expect(towerLabels).toMatch(/"Evidence"/);
+    expect(towerLabels).toMatch(/"Recommended Actions"/);
   });
 
   it("keeps Tower tab controls out of the global toolbar layer", () => {
