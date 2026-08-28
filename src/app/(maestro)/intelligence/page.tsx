@@ -18,10 +18,6 @@ import {
 import { resolveIntelligenceViewModelClientKey } from "@/lib/intelligence/intelligence-view-model-client-key";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
-import {
-  isEclProductProvider,
-  resolveEclProductProvider,
-} from "@/lib/ecl/product-provider";
 
 export const metadata = {
   title: "Intelligence · Advisory Board | AbarVa",
@@ -58,7 +54,6 @@ export default async function IntelligencePage({
   const resolvedSearchParams = await searchParams;
   const rawRequestedClient = firstSearchValue(resolvedSearchParams?.client);
   const requestedProvider = firstSearchValue(resolvedSearchParams?.provider);
-  const productProvider = resolveEclProductProvider(requestedProvider);
   const requestedClient = (await hasLockedTenantSession())
     ? rawRequestedClient
     : null;
@@ -103,7 +98,7 @@ export default async function IntelligencePage({
     ? { ...authored, sections: canonical.sections }
     : authored;
   const intelligenceEclPreview =
-    isEclProductProvider(productProvider)
+    requestedProvider === "ecl_projection_db"
       ? await readIntelligenceEclContextPackPreview(
           canonicalTenantKey(contextTenantKey),
         )
@@ -147,10 +142,10 @@ function IntelligenceEclProjectionPanel({
               Intelligence context pack projection is loaded
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700">
-              This route reads the governed ECL Intelligence serving views for
-              the dense assessment. It proves the context pack has governed
-              rows, retrieval states, access classes, citations and gaps on the
-              default Intelligence path.
+              This non-default preview reads the governed ECL Intelligence
+              serving views for the dense assessment. It proves the context pack
+              has governed rows, retrieval states, access classes, citations and
+              gaps without repointing the default Intelligence advisory surface.
             </p>
           </div>
           <div className="border border-slate-200 bg-white px-6 py-4 text-right shadow-sm">
@@ -239,8 +234,8 @@ function IntelligenceEclProjectionPanel({
                     {row.accessClass.replaceAll("_", " ")}
                   </div>
                   <div className="font-mono text-xs text-slate-700">
-                    {row.permittedFactCount} facts · {row.citationCount} cites
-                    · {row.gapCount} gaps
+                    {row.permittedFactCount} facts · {row.citationCount} cites ·{" "}
+                    {row.gapCount} gaps
                   </div>
                 </div>
               ))}
