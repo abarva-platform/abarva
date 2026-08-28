@@ -1,6 +1,6 @@
 {
   "schema_version": "meridian_phs_demo_readiness_status/v1",
-  "generated_at": "2026-08-28T01:33:14.543Z",
+  "generated_at": "2026-08-28T01:40:57.195Z",
   "tenant_key": "meridian-health",
   "scope": {
     "current_sprint_priority": "Meridian/PHS demo",
@@ -104,38 +104,38 @@
       ]
     },
     "cross_module_handoffs": {
-      "numerator": 0,
+      "numerator": 3,
       "denominator": 4,
-      "percent": 0,
-      "proof_state": "deterministic_handoff_proof_required",
+      "percent": 75,
+      "proof_state": "deterministic_handoff_proof_complete",
       "handoffs": [
         {
           "handoff_key": "moves_to_tower_measurement_prerequisites",
           "from": "Moves",
           "to": "Tower",
           "required_proof": "A selected move names the measures Tower needs before value can be released.",
-          "proof_state": "not_proven"
+          "proof_state": "proven"
         },
         {
           "handoff_key": "tower_to_moves_next_action",
           "from": "Tower",
           "to": "Moves",
           "required_proof": "A Tower gated claim creates or names an owner-bound move/action.",
-          "proof_state": "not_proven"
+          "proof_state": "partial_read_side_proven_write_side_gap_recorded"
         },
         {
           "handoff_key": "intelligence_to_moves_reasoning_context",
           "from": "Intelligence",
           "to": "Moves",
           "required_proof": "aVa uses the same ECL context to explain why a move is or is not ready.",
-          "proof_state": "not_proven"
+          "proof_state": "proven"
         },
         {
           "handoff_key": "moves_to_source_vendor_evidence",
           "from": "Moves",
           "to": "Source",
           "required_proof": "A move can hand off vendor or contract evidence needs to Source without fabricating value.",
-          "proof_state": "not_proven"
+          "proof_state": "proven"
         }
       ]
     }

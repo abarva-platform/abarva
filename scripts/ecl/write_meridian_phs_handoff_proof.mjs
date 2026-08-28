@@ -1,0 +1,177 @@
+#!/usr/bin/env node
+
+import fs from "node:fs";
+import path from "node:path";
+
+const DEFAULT_OUT = "job-output/meridian-phs-handoff-proof/meridian_phs_handoff_proof_summary.json";
+const TENANT_KEY = "meridian-health";
+
+const HANDOFFS = [
+  {
+    handoff_key: "moves_to_tower_measurement_prerequisites",
+    from: "Moves",
+    to: "Tower",
+    evidence: [
+      {
+        file: "src/lib/programs/move-business-case.ts",
+        required: ["function deriveTowerHandoff", "Tower cannot", "expected source"],
+      },
+      {
+        file: "src/lib/programs/expert-kernel/exports/board-grade/move-cfo-pack-model.ts",
+        required: ["What Tower will measure", "seed-gapped metrics", "expectedDataSource"],
+      },
+    ],
+    success_detail:
+      "Moves board-grade value artifacts carry Tower measurement prerequisites and explicit not-yet-measurable gaps.",
+  },
+  {
+    handoff_key: "tower_to_moves_next_action",
+    from: "Tower",
+    to: "Moves",
+    evidence: [
+      {
+        file: "src/app/(maestro)/tower/page.tsx",
+        required: ["tower"],
+      },
+      {
+        file: "src/lib/programs/cross-module-trace-view.ts",
+        required: ["Tower outcome-ledger entry", "subjectKind === \"move\"", "subjectRef === input.move.id"],
+      },
+    ],
+    success_detail:
+      "Tower can resolve Move-subject outcome-ledger entries in the Moves trace.",
+    gap_if_not_all:
+      "This proves read-side traceability, not a Tower action that creates or updates a Move. A Tower-to-Moves action workflow still needs product proof.",
+  },
+  {
+    handoff_key: "intelligence_to_moves_reasoning_context",
+    from: "Intelligence",
+    to: "Moves",
+    evidence: [
+      {
+        file: "src/app/(maestro)/strategic-moves/new/page.tsx",
+        required: ["fromIntelligence", "patternId", "composeOriginateFirstMessage"],
+      },
+      {
+        file: "src/lib/programs/ava-chat/quality-gate.ts",
+        required: ["mentions_source_when_relevant", "mentions_tower_when_relevant"],
+      },
+    ],
+    success_detail:
+      "Moves origination accepts Intelligence-originating context and the Moves aVa quality gate requires Source/Tower awareness when relevant.",
+  },
+  {
+    handoff_key: "moves_to_source_vendor_evidence",
+    from: "Moves",
+    to: "Source",
+    evidence: [
+      {
+        file: "src/lib/programs/source-trigger/move-to-source-handoff.ts",
+        required: ["linkedProgramId", "SourceEventSeedPayload", "runMoveToSourceHandoff"],
+      },
+      {
+        file: "src/lib/programs/source-trigger/__tests__/move-to-source-handoff.test.ts",
+        required: ["linkedProgramId", "produces a seed payload", "is deterministic"],
+      },
+    ],
+    success_detail:
+      "Moves can deterministically seed a Source event with the Move id carried as the join key.",
+  },
+];
+
+function parseArgs(argv) {
+  const args = {
+    out: DEFAULT_OUT,
+    json: false,
+  };
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    const next = () => {
+      index += 1;
+      if (index >= argv.length) throw new Error(`${arg} requires a value`);
+      return argv[index];
+    };
+    if (arg === "--out") args.out = next();
+    else if (arg === "--json") args.json = true;
+    else if (arg === "--help") {
+      console.log(`Usage: node scripts/ecl/write_meridian_phs_handoff_proof.mjs [options]
+
+Writes deterministic Meridian/PHS cross-module handoff proof. This is a code-and-test contract
+proof, not a signed-in browser proof and not a data-plane mutation.
+
+Options:
+  --out <path>  Output JSON path.
+  --json        Print full JSON after writing.`);
+      process.exit(0);
+    } else {
+      throw new Error(`Unknown argument: ${arg}`);
+    }
+  }
+  return args;
+}
+
+function readText(file) {
+  return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+}
+
+function evaluateEvidence(item) {
+  const text = readText(item.file);
+  const missing = item.required.filter((needle) => !text.includes(needle));
+  return {
+    file: item.file,
+    exists: Boolean(text),
+    required_markers: item.required,
+    missing_markers: missing,
+    accepted: Boolean(text) && missing.length === 0,
+  };
+}
+
+function main() {
+  const args = parseArgs(process.argv.slice(2));
+  const handoffs = HANDOFFS.map((handoff) => {
+    const evidence = handoff.evidence.map(evaluateEvidence);
+    const allEvidenceAccepted = evidence.every((item) => item.accepted);
+    const proofState =
+      handoff.gap_if_not_all && allEvidenceAccepted
+        ? "partial_read_side_proven_write_side_gap_recorded"
+        : allEvidenceAccepted
+          ? "proven"
+          : "not_proven";
+    return {
+      handoff_key: handoff.handoff_key,
+      from: handoff.from,
+      to: handoff.to,
+      proof_state: proofState,
+      counted_as_proven: proofState === "proven",
+      detail: allEvidenceAccepted ? handoff.success_detail : "Required implementation markers are missing.",
+      gap_detail: proofState === "partial_read_side_proven_write_side_gap_recorded" ? handoff.gap_if_not_all : null,
+      evidence,
+    };
+  });
+
+  const numerator = handoffs.filter((handoff) => handoff.counted_as_proven).length;
+  const accepted = handoffs.every((handoff) => handoff.proof_state !== "not_proven");
+  const summary = {
+    schema_version: "meridian_phs_handoff_proof/v1",
+    generated_at: new Date().toISOString(),
+    tenant_key: TENANT_KEY,
+    proof_boundary:
+      "Deterministic code/test contract proof only. Browser proof and data readback are separate proof lanes.",
+    accepted,
+    phs_cross_module_handoffs: {
+      numerator,
+      denominator: HANDOFFS.length,
+      percent: Number(((numerator / HANDOFFS.length) * 100).toFixed(1)),
+      accepted,
+    },
+    handoffs,
+  };
+
+  fs.mkdirSync(path.dirname(args.out), { recursive: true });
+  fs.writeFileSync(args.out, `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+  if (args.json) console.log(JSON.stringify(summary, null, 2));
+  else console.log(JSON.stringify(summary.phs_cross_module_handoffs, null, 2));
+  if (!accepted) process.exitCode = 1;
+}
+
+main();

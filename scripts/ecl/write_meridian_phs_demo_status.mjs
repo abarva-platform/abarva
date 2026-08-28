@@ -92,6 +92,7 @@ function parseArgs(argv) {
     eclStatus: "docs/architecture/ecl-four-lane-completion-status.json",
     browserProof: null,
     sourceProof: null,
+    handoffProof: null,
     json: false,
   };
 
@@ -107,6 +108,7 @@ function parseArgs(argv) {
     else if (arg === "--ecl-status") args.eclStatus = next();
     else if (arg === "--browser-proof") args.browserProof = next();
     else if (arg === "--source-proof") args.sourceProof = next();
+    else if (arg === "--handoff-proof") args.handoffProof = next();
     else if (arg === "--json") args.json = true;
     else if (arg === "--help") {
       console.log(`Usage: node scripts/ecl/write_meridian_phs_demo_status.mjs [options]
@@ -120,6 +122,7 @@ Options:
   --ecl-status <path>      Existing ECL four-lane status JSON.
   --browser-proof <path>   Optional signed-in PHS browser proof summary.
   --source-proof <path>    Optional Source sourcing-CXO proof summary.
+  --handoff-proof <path>   Optional PHS cross-module handoff proof summary.
   --json                   Print full JSON after writing.`);
       process.exit(0);
     } else {
@@ -186,6 +189,18 @@ function movesProofFromSummary(summary) {
   };
 }
 
+function handoffProofFromSummary(summary) {
+  const proof = summary?.phs_cross_module_handoffs;
+  if (!proof || typeof proof !== "object") return null;
+  const handoffs = Array.isArray(summary?.handoffs) ? summary.handoffs : [];
+  return {
+    numerator: Number(proof.numerator ?? 0),
+    denominator: Number(proof.denominator ?? HANDOFFS.length),
+    accepted: Boolean(proof.accepted),
+    handoffs,
+  };
+}
+
 function moveContentQuality() {
   const file = "src/lib/moves/narratives/generated/meridian-health-moves-readiness-blocks.ts";
   const text = readTextIfPresent(file);
@@ -223,6 +238,7 @@ function main() {
   const eclStatus = readJsonIfPresent(args.eclStatus);
   const browserProof = readJsonIfPresent(args.browserProof);
   const sourceProof = readJsonIfPresent(args.sourceProof);
+  const handoffProof = readJsonIfPresent(args.handoffProof);
 
   const phsExecutiveEclDenominator = sum(Object.values(PHS_EXECUTIVE_ECL_DENOMINATOR));
   const phsExecutiveEclProven =
@@ -235,6 +251,7 @@ function main() {
     proofCountFromSummary(browserProof, ["Source"]) ||
     (eclStatus?.lanes?.some?.((lane) => lane.lane === "L-PROOF" && lane.status === "complete") ? 9 : 0);
   const movesProof = movesProofFromSummary(browserProof);
+  const handoffProofSummary = handoffProofFromSummary(handoffProof);
 
   const movesRouteStatuses = MOVES_SURFACES.map((surface) => ({
     ...surface,
@@ -246,7 +263,8 @@ function main() {
   const movesFilesPresent = movesRouteStatuses.filter((surface) => surface.route_file_present).length;
   const handoffStatuses = HANDOFFS.map((handoff) => ({
     ...handoff,
-    proof_state: "not_proven",
+    proof_state:
+      handoffProofSummary?.handoffs.find((item) => item.handoff_key === handoff.handoff_key)?.proof_state ?? "not_proven",
   }));
 
   const status = {
@@ -285,10 +303,10 @@ function main() {
       },
       moves_content_quality: moveContentQuality(),
       cross_module_handoffs: {
-        numerator: 0,
-        denominator: HANDOFFS.length,
-        percent: 0,
-        proof_state: "deterministic_handoff_proof_required",
+        numerator: handoffProofSummary?.numerator ?? 0,
+        denominator: handoffProofSummary?.denominator ?? HANDOFFS.length,
+        percent: percent(handoffProofSummary?.numerator ?? 0, handoffProofSummary?.denominator ?? HANDOFFS.length),
+        proof_state: handoffProofSummary?.accepted ? "deterministic_handoff_proof_complete" : "deterministic_handoff_proof_required",
         handoffs: handoffStatuses,
       },
     },
@@ -342,7 +360,7 @@ function main() {
     tenant_key: status.tenant_key,
     home_tower_intelligence: `${phsExecutiveEclProven} of ${phsExecutiveEclDenominator}`,
     moves: `${movesProof?.numerator ?? 0} of ${movesProof?.denominator ?? MOVES_SURFACES.length}`,
-    handoffs: `0 of ${HANDOFFS.length}`,
+    handoffs: `${handoffProofSummary?.numerator ?? 0} of ${handoffProofSummary?.denominator ?? HANDOFFS.length}`,
     source: `${sourceProven} of ${sourceDenominator}`,
     out: args.out,
   };
