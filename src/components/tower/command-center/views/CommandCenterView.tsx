@@ -183,9 +183,11 @@ function topBlockedProgram(
 function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
   const s = view.summary;
   const claims = valueClaimCount(view);
-  const claimsMissingActual = Math.max(0, claims - s.outcomeMeasuredClaimCount);
   const firstProgram = topBlockedProgram(view);
   const measured = measuredUsd(view);
+  const proofClearedClaims =
+    s.claimableUsd > 0 ? s.outcomeMeasuredClaimCount : 0;
+  const claimsMissingActual = claims - Math.min(claims, proofClearedClaims);
   const emitting = view.ai.filter(
     (item) => item.usageHeadline || item.usageBars.some((bar) => bar.pct > 0),
   ).length;

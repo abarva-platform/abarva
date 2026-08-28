@@ -705,11 +705,9 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
 
 /* ── 2026-08-27 Executive View contract ─────────────────────────────────── */
 .executiveTabsShell {
-  position: sticky;
-  top: 0;
-  z-index: 30;
   background: var(--canon-bg-cream);
-  margin-top: 22px;
+  border-bottom: 1px solid rgba(211, 209, 199, 0.72);
+  padding-top: 22px;
 }
 .executiveTabs {
   display: grid;
@@ -802,7 +800,6 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   font-weight: 600;
   line-height: 1.65;
   text-align: right;
-  text-transform: uppercase;
 }
 .auditBadges {
   align-items: center;

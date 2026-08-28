@@ -1,6 +1,6 @@
 "use client";
 
-// The action drawer — opened from any action card on the Recommended Actions
+// The action drawer — opened from any action card on the Evidence & Actions
 // tab. Transcribed from `actionDrawer()` (design line ~1181).
 //
 // ── On "Approve & route" ───────────────────────────────────────────────────

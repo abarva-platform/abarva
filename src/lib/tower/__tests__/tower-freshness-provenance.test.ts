@@ -88,4 +88,17 @@ describe("Command Center owns the first viewport", () => {
     expect(towerLabels).not.toMatch(/"Decision Lanes"/);
     expect(towerLabels).not.toMatch(/"Recommended Actions"/);
   });
+
+  it("keeps Tower tab controls out of the global toolbar layer", () => {
+    const styles = read(
+      "components/tower/command-center/TowerCommandCenter.module.css",
+    );
+    const tabShell = styles.slice(
+      styles.indexOf(".executiveTabsShell"),
+      styles.indexOf(".executiveTabs", styles.indexOf(".executiveTabsShell")),
+    );
+
+    expect(tabShell).not.toMatch(/position:\s*sticky/);
+    expect(tabShell).not.toMatch(/top:\s*0/);
+  });
 });

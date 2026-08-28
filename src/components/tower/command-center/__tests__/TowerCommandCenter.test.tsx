@@ -131,7 +131,8 @@ describe("TowerCommandCenter", () => {
       valueClaimCount: 230,
       unknownValueClaimCount: 969,
       financeAttestedClaimCount: 0,
-      outcomeMeasuredClaimCount: 0,
+      outcomeMeasuredClaimCount: 230,
+      claimableUsd: 0,
       usageSupportedUsd: 0,
     });
 
