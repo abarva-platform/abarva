@@ -12,7 +12,6 @@ import type {
   SuggestedAction,
 } from "@/components/agent/AgentDock";
 import { AvaChatShell } from "@/components/ava-chat/AvaChatShell";
-import { AdvisorySectionsCanvas } from "./AdvisorySectionsCanvas";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 
 type AssistantMessage = {
@@ -107,9 +106,7 @@ export function resolveAssistantAnswerText(
   void _hasArtifacts;
   const cleanPacketBody = packetBody.trim();
   return stripGovernedArtifactPayloadsFromText(
-    stripNestedCxoBriefLabels(
-      cleanPacketBody ? packetBody : rawStreamedAnswer,
-    ),
+    stripNestedCxoBriefLabels(cleanPacketBody ? packetBody : rawStreamedAnswer),
   );
 }
 
@@ -376,15 +373,12 @@ export function AdvisoryIntelligencePage({
       surface="intelligence"
       agent={AVA_INTELLIGENCE_AGENT}
       placeholder="Ask aVa"
-      layout="dock"
+      layout="chat-only"
       defaultLeftPercent={40}
       minLeftPx={380}
       thread={thread}
       onMessage={handleMessage}
-      // The sections were built, passed into surfaceContext for grounding, and then never shown.
-      // A reader got a chat box and no way to check a figure aVa quoted, because the section it came
-      // from was not on screen.
-      canvas={<AdvisorySectionsCanvas viewModel={viewModel} />}
+      canvas={null}
       suggestedActions={suggestedActions}
       keepSuggestedActionsVisible={true}
       isBusy={isAsking}
