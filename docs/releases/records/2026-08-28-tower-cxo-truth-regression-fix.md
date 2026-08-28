@@ -12,6 +12,8 @@
 
 Tower now keeps approved investment, asserted benefit, value claims, review queues, and evidence actions distinct in the executive presentation. Missing approved-investment data is shown as not loaded rather than substituted from another metric, and the supporting ECL diagnostics no longer occupy the first viewport ahead of the Tower experience.
 
+Follow-up: tenant-scoped Tower URLs now enter the same persisted NEXUS top navigation shell as the primary `/tower` route, and Tower's in-page tab controls no longer behave as sticky global toolbar chrome.
+
 ## Layer Impact
 
 Release lane: `global-control-lane`.
@@ -33,11 +35,18 @@ Layer 4 Products: Tower presentation logic and route composition only. The chang
 - Gate prose now follows the live proof gate and reconciles visible usage signals with gate-cleared value.
 - ECL projection and serving-surface diagnostics render after the Tower Command Center instead of before it.
 - Tower serving-surface diagnostics use the active four-tab contract labels.
+- Tenant-scoped Tower routes use the canonical NEXUS top navigation shell, with Tower active instead of falling through legacy chrome.
+- Tower in-page tabs are no longer sticky at the global toolbar layer.
+- The measured-outcome remediation count remains anchored to the value-claim population until value is proof-cleared for executive sign-off.
 
 ## QA / Validation
 
 - Pass: `npx eslint src/components/tower/command-center/views/CommandCenterView.tsx src/components/tower/command-center/views/ContractTabs.tsx src/components/tower/command-center/TowerCommandCenter.tsx src/components/tower/command-center/TowerCommandCenterAvaShell.tsx src/components/ecl/EclServingSurfaceCoverage.tsx 'src/app/(maestro)/tower/page.tsx' src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx src/lib/tower/__tests__/tower-freshness-provenance.test.ts tests/e2e/tower-command-center.spec.ts`
 - Pass: `npx jest src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx src/lib/tower/__tests__/tower-freshness-provenance.test.ts --runInBand`
+- Pass: `npx jest src/components/chrome/__tests__/MaestroChrome.test.tsx src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx src/lib/tower/__tests__/tower-freshness-provenance.test.ts --runInBand`
+- Pass: `npx eslint src/components/chrome/MaestroChrome.tsx src/components/chrome/__tests__/MaestroChrome.test.tsx src/components/tower/command-center/views/CommandCenterView.tsx src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx src/components/tower/command-center/drawers/ActionDrawer.tsx src/lib/tower/__tests__/tower-freshness-provenance.test.ts`
+- Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`
+- Pass: `npx prettier --check src/components/chrome/MaestroChrome.tsx src/components/chrome/__tests__/MaestroChrome.test.tsx src/components/tower/command-center/views/CommandCenterView.tsx src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx src/components/tower/command-center/drawers/ActionDrawer.tsx src/lib/tower/__tests__/tower-freshness-provenance.test.ts`
 - Note: Jest emitted existing duplicate manual-mock warnings before reporting all targeted suites passing.
 
 ## Rollout Plan
