@@ -80,23 +80,12 @@ function hasPacketArtifacts(answer: AvaAnswerPacket): boolean {
   );
 }
 
-export function stripNestedCxoBriefLabels(text: string): string {
-  return text.replace(
-    /((?:\*\*)?(?:Answer|Proof|Move):?(?:\*\*)?:?\s+)(?:Answer|Proof|Move)\.?\s+/gi,
-    "$1",
-  );
-}
-
 /**
  * Once the server has successfully extracted structured artifacts
  * (tables/charts/graphs), always prefer its clean packet body over the raw
- * streamed text. The raw stream is scrubbed PER CHUNK
- * (displaySafeIntelligenceDelta in route.ts), and governed fence markers
- * like ```decision-table are long enough to get split — and corrupted —
- * across multiple small token chunks, so pattern-matching for a "leak" on
- * the accumulated client-side text is unreliable. The server extracted the
- * SAME underlying text server-side (on the unscrubbed accumulator), so
- * packetBody is authoritative whenever it exists.
+ * streamed text. Governed artifact fences are protocol payloads for the
+ * native renderer; the visible chat should preserve Claude-authored advisory
+ * prose rather than rewrite it after generation.
  */
 export function resolveAssistantAnswerText(
   rawStreamedAnswer: string,
@@ -106,7 +95,7 @@ export function resolveAssistantAnswerText(
   void _hasArtifacts;
   const cleanPacketBody = packetBody.trim();
   return stripGovernedArtifactPayloadsFromText(
-    stripNestedCxoBriefLabels(cleanPacketBody ? packetBody : rawStreamedAnswer),
+    cleanPacketBody ? packetBody : rawStreamedAnswer,
   );
 }
 
@@ -238,7 +227,7 @@ export function AdvisoryIntelligencePage({
             ? {
                 ...m,
                 answer: stripGovernedArtifactPayloadsFromText(
-                  stripNestedCxoBriefLabels(`${m.answer}${delta}`),
+                  `${m.answer}${delta}`,
                 ),
                 streamStatus: undefined,
               }
@@ -382,6 +371,7 @@ export function AdvisoryIntelligencePage({
       suggestedActions={suggestedActions}
       keepSuggestedActionsVisible={true}
       isBusy={isAsking}
+      preserveVisibleText
       surfaceContext={buildSurfaceContext(viewModel, sectionList)}
     />
   );

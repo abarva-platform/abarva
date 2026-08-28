@@ -821,7 +821,9 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
         }
       }
       const cleanedText = stripInternalRecordIds(streamedText);
-      const finalText = applyCxoAnswerModeFallbacks(cleanedText, answerMode);
+      const finalText = args.richText
+        ? cleanedText
+        : applyCxoAnswerModeFallbacks(cleanedText, answerMode);
       const { remainder: deterministicRemainder, diverged } =
         reconcileStreamRemainder(streamedText, finalText);
       if (deterministicRemainder) {
@@ -835,7 +837,7 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
           outputChars: finalText.length,
           outputApproxTokens: summarizeTextPayload(finalText).approxTokens,
           strippedCodes: cleanedText.length !== streamedText.length,
-          deterministicFallbackApplied: finalText.length !== cleanedText.length,
+          deterministicFallbackApplied: finalText !== cleanedText,
           deterministicRemainderDiverged: diverged,
         }),
       );
@@ -1345,7 +1347,7 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
         ].join("\n\n");
       }
     }
-    if (args.richText) {
+    if (args.richText && blockingRepairEnabled) {
       const parserStartedAt = Date.now();
       text = ensureMandatoryCompanionCanvasFallback(text, {
         query: args.query,
@@ -1361,7 +1363,9 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
         }),
       );
     }
-    text = applyCxoAnswerModeFallbacks(text, answerMode);
+    if (!args.richText) {
+      text = applyCxoAnswerModeFallbacks(text, answerMode);
+    }
     args.onModelOutput?.({
       rawText: text,
       text,
@@ -1434,22 +1438,17 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
       return;
     }
 
-    // Sanitize cap with headroom over the prompt's named target.
-    //
-    // Rich-text surfaces render Markdown — skip stripMarkdownControl so bold,
-    // tables, and headers survive. Word-cap still applies as a safety net.
-    // Plain-text callers go through the full sanitize (strips markdown artifacts).
-    const sanitized = args.richText
+    const decisionGrade = args.richText
       ? text
-      : sanitizeAskSynthesis(text, chooseAdvisorWordCap(args.query, 240));
-    const evidenceDisciplined = applyPartialEvidencePolicy(
-      sanitized,
-      args.sources,
-    );
-    const decisionGrade = applyCxoAnswerModeFallbacks(
-      enforceDecisionGradeAnswer(evidenceDisciplined),
-      answerMode,
-    );
+      : applyCxoAnswerModeFallbacks(
+          enforceDecisionGradeAnswer(
+            applyPartialEvidencePolicy(
+              sanitizeAskSynthesis(text, chooseAdvisorWordCap(args.query, 240)),
+              args.sources,
+            ),
+          ),
+          answerMode,
+        );
     // No-tab-marker fallback + reconciliation. This branch is reached when the
     // final text has no parseable tabs. `decisionGrade` is the final answer.
     // If nothing was streamed live (plain-text path, or rich-text where no

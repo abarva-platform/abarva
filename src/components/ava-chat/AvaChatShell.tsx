@@ -49,6 +49,7 @@ export type AvaChatShellProps = {
    * by default. */
   defaultMode?: DockMode;
   collapsedRestoreMode?: RestorableDockMode;
+  preserveVisibleText?: boolean;
 };
 
 const DEFAULT_AVA_AGENT: AgentProfile = {
@@ -112,16 +113,25 @@ export function AvaChatShell({
   layout = "dock",
   defaultMode = "side-rail",
   collapsedRestoreMode,
+  preserveVisibleText = false,
 }: AvaChatShellProps) {
   const profile: AgentProfile = {
     ...DEFAULT_AVA_AGENT,
-    ...sanitizeVisibleStrings(agent),
+    ...(preserveVisibleText ? agent : sanitizeVisibleStrings(agent)),
     mark: "ava",
   };
-  const safeThread = sanitizeVisibleStrings(thread);
-  const safeSuggestedActions = sanitizeVisibleStrings(suggestedActions);
-  const safeSurfaceContext = sanitizeVisibleStrings(surfaceContext);
-  const safePlaceholder = demoSafeClientText(placeholder);
+  const safeThread = preserveVisibleText
+    ? thread
+    : sanitizeVisibleStrings(thread);
+  const safeSuggestedActions = preserveVisibleText
+    ? suggestedActions
+    : sanitizeVisibleStrings(suggestedActions);
+  const safeSurfaceContext = preserveVisibleText
+    ? surfaceContext
+    : sanitizeVisibleStrings(surfaceContext);
+  const safePlaceholder = preserveVisibleText
+    ? placeholder
+    : demoSafeClientText(placeholder);
 
   return (
     <div data-testid="ava-chat-shell" style={AVA_CHAT_SHELL_STYLE}>
@@ -142,6 +152,7 @@ export function AvaChatShell({
         workspace={canvas}
         isAgentBusy={isBusy}
         placeholder={safePlaceholder}
+        preserveVisibleText={preserveVisibleText}
         collapsedSummary={{
           label: "aVa",
           detail: "Open the advisor chat",

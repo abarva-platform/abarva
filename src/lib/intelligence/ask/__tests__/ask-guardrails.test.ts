@@ -1,7 +1,7 @@
 jest.mock("server-only", () => ({}));
 
-import { atlasStakeholderConflictHandoff } from '../index';
-import { retrieveSurfaceContextSources } from '../retrievers/surface-context';
+import { atlasStakeholderConflictHandoff } from "../index";
+import { retrieveSurfaceContextSources } from "../retrievers/surface-context";
 import {
   CONCISE_SYSTEM_PROMPT,
   SYSTEM_PROMPT,
@@ -9,10 +9,10 @@ import {
   chooseSynthesisTokenBudget,
   reconcileStreamRemainder,
   sanitizeAskSynthesis,
-} from '../synthesizer';
-import { buildDeterministicConciseFollowups } from '../followups';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+} from "../synthesizer";
+import { buildDeterministicConciseFollowups } from "../followups";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 describe("Ask Intelligence guardrails", () => {
   it("routes advice requests about executive contradictions to the decision workspace", () => {
@@ -86,18 +86,24 @@ describe("Ask Intelligence guardrails", () => {
     ).toBe(1300);
   });
 
-  it('uses aVa identity and current demo-industry coverage in Claude prompts', () => {
-    expect(SYSTEM_PROMPT).toContain("You are aVa, AbarVa's Intelligence advisor.");
-    expect(SYSTEM_PROMPT).toContain('industrial holding companies');
-    expect(SYSTEM_PROMPT).toContain('shared services');
-    expect(SYSTEM_PROMPT).toContain('airlines');
-    expect(CONCISE_SYSTEM_PROMPT).toContain('industrial/shared services');
-    expect(CONCISE_SYSTEM_PROMPT).toContain('airline operations');
-    expect(SYSTEM_PROMPT).not.toContain("You are Sentinel, AbarVa's Intelligence agent.");
-    expect(CONCISE_SYSTEM_PROMPT).not.toContain("You are Sentinel, AbarVa's Intelligence agent.");
+  it("uses aVa identity and current demo-industry coverage in Claude prompts", () => {
+    expect(SYSTEM_PROMPT).toContain(
+      "You are aVa, AbarVa's Intelligence advisor.",
+    );
+    expect(SYSTEM_PROMPT).toContain("industrial holding companies");
+    expect(SYSTEM_PROMPT).toContain("shared services");
+    expect(SYSTEM_PROMPT).toContain("airlines");
+    expect(CONCISE_SYSTEM_PROMPT).toContain("industrial/shared services");
+    expect(CONCISE_SYSTEM_PROMPT).toContain("airline operations");
+    expect(SYSTEM_PROMPT).not.toContain(
+      "You are Sentinel, AbarVa's Intelligence agent.",
+    );
+    expect(CONCISE_SYSTEM_PROMPT).not.toContain(
+      "You are Sentinel, AbarVa's Intelligence agent.",
+    );
   });
 
-  it('does not instruct aVa to print mechanical Answer/Proof/Move section labels anywhere in the prompt chain', () => {
+  it("does not instruct aVa to print mechanical Answer/Proof/Move section labels anywhere in the prompt chain", () => {
     // Regression guard for the 2026-07-19/20 finding: SYSTEM_PROMPT told aVa to
     // write a narrative, not a labeled template, but three OTHER always-on
     // prompt fragments in this file (buildUniversalAnswerVisualContract,
@@ -109,23 +115,26 @@ describe("Ask Intelligence guardrails", () => {
     // (buildUniversalAnswerVisualContract, answerOnlyDirective) that aren't
     // otherwise exported for direct assertion.
     const synthesizerSource = readFileSync(
-      join(__dirname, '..', 'synthesizer.ts'),
-      'utf8',
+      join(__dirname, "..", "synthesizer.ts"),
+      "utf8",
     );
-    expect(synthesizerSource).not.toContain('Pyramid Brief');
+    expect(synthesizerSource).not.toContain("Pyramid Brief");
     expect(synthesizerSource).not.toMatch(
       /Default to the AbarVa .*Answer,\s*Proof,\s*Move/i,
     );
   });
 
-  it('uses deterministic followups only for explicit concise Ask requests', () => {
-    expect(buildDeterministicConciseFollowups({
-      query: 'Name one modernization risk SkyHarbor should watch. Keep it concise.',
-      entities: ['IBM dependency'],
-    })).toEqual([
-      'Show the evidence behind IBM dependency',
-      'What would change this recommendation?',
-      'What should we do next?',
+  it("uses deterministic followups only for explicit concise Ask requests", () => {
+    expect(
+      buildDeterministicConciseFollowups({
+        query:
+          "Name one modernization risk SkyHarbor should watch. Keep it concise.",
+        entities: ["IBM dependency"],
+      }),
+    ).toEqual([
+      "Show the evidence behind IBM dependency",
+      "What would change this recommendation?",
+      "What should we do next?",
     ]);
 
     expect(
@@ -294,9 +303,7 @@ describe("Ask Intelligence guardrails", () => {
     });
 
     it("repairs strategic answers that omit the governed native canvas payload", () => {
-      expect(synthesizerCode).toContain(
-        "isBlockingIntelligenceRepairEnabled",
-      );
+      expect(synthesizerCode).toContain("isBlockingIntelligenceRepairEnabled");
       expect(synthesizerCode).toContain("requiresNativeExecutiveCanvas");
       expect(synthesizerCode).toContain("hasExecutiveCanvasPayload");
       expect(synthesizerCode).toContain("NATIVE EXECUTIVE CANVAS REPAIR");
@@ -305,15 +312,15 @@ describe("Ask Intelligence guardrails", () => {
       );
     });
 
-    it("contains a final mandatory-canvas fallback before old prose sanitization", () => {
+    it("keeps rich Intelligence output prompt-led while preserving guarded repair code", () => {
       expect(synthesizerCode).toContain(
         "ensureMandatoryCompanionCanvasFallback",
       );
-      expect(synthesizerCode).toMatch(
-        /ensureMandatoryCompanionCanvasFallback\(text,[\s\S]*?args\.onModelOutput/,
+      expect(synthesizerCode).toContain(
+        "if (args.richText && blockingRepairEnabled)",
       );
       expect(synthesizerCode).toMatch(
-        /const\s+tabbedResponse\s*=\s*parseIntelligenceTabbedResponse\(text\);[\s\S]*?sanitizeAskSynthesis/,
+        /const\s+decisionGrade\s*=\s*args\.richText\s*\?\s*text\s*:/,
       );
       expect(synthesizerCode).toContain("cleanUntabbedCanvasMainAnswer");
       expect(synthesizerCode).toContain("buildFallbackNativeCanvasBlock");

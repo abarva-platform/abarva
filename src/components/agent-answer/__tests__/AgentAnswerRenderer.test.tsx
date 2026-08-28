@@ -510,7 +510,9 @@ describe("AgentAnswerRenderer", () => {
     const { container } = render(<AgentAnswerRenderer answer={answer} />);
 
     expect(screen.getByText("Decision Table")).toBeInTheDocument();
-    expect(screen.getByText("Four-ledger Contract Evidence")).toBeInTheDocument();
+    expect(
+      screen.getByText("Four-ledger Contract Evidence"),
+    ).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
     expect(
       screen.getByText("Optimization Ledgers With Quantified Evidence"),
@@ -521,8 +523,12 @@ describe("AgentAnswerRenderer", () => {
       ),
     ).not.toBeNull();
     expect(screen.getByText("Relationship View")).toBeInTheDocument();
-    expect(screen.getByText("Contract Evidence Relationship")).toBeInTheDocument();
-    expect(screen.getByLabelText("Contract Evidence Relationship")).toBeInTheDocument();
+    expect(
+      screen.getByText("Contract Evidence Relationship"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Contract Evidence Relationship"),
+    ).toBeInTheDocument();
   });
 
   it("renders attribution and sources without persona-pack controls when no typed exhibits are present", () => {
@@ -642,7 +648,7 @@ describe("AgentAnswerRenderer", () => {
     const answer: AvaAnswerPacket = {
       surface: "intelligence",
       mode: "ANALYZE",
-      tenantKey: "lakeshore-holdings",
+      tenantKey: "tenant-alpha",
       question:
         "Where is finance AI spend committed but value not yet realized?",
       intent: "table",
@@ -685,6 +691,51 @@ describe("AgentAnswerRenderer", () => {
     expect(visibleText).not.toMatch(/\bsupporting material\b/i);
     expect(visibleText).toContain("business areas");
     expect(visibleText).toContain("business signals");
+  });
+
+  it("preserves model-authored prose when the caller opts into output preservation", () => {
+    const answer: AvaAnswerPacket = {
+      surface: "intelligence",
+      mode: "ANALYZE",
+      tenantKey: "lakeshore-holdings",
+      question: "What should the advisor say?",
+      intent: "recommendation",
+      status: "answered",
+      directAnswer:
+        "The supporting evidence is that 19 context dimensions loaded with 14,620 evidence points. Keep the exact advisory framing.",
+      factsUsed: [],
+      metricsUsed: [],
+      relationshipsUsed: [],
+      expertsUsed: [],
+      artifacts: [],
+      citations: [],
+      gaps: [],
+      caveats: [],
+      nextSteps: [],
+      quality: {
+        confidence: "medium",
+        evidenceStrength: "partial",
+        tenantGrounding: "partial",
+        answerCompleteness: "complete",
+      },
+      safety: {
+        tenantFencePassed: true,
+        rawIdsSuppressed: true,
+        forbiddenLanguagePassed: true,
+        unsupportedClaimsBlocked: true,
+      },
+    };
+
+    const { container } = render(
+      <AgentAnswerRenderer answer={answer} preserveOutput />,
+    );
+
+    expect(container.textContent ?? "").toContain(
+      "19 context dimensions loaded with 14,620 evidence points",
+    );
+    expect(container.textContent ?? "").toContain(
+      "Keep the exact advisory framing.",
+    );
   });
 
   it("removes numeric substrate counts from CXO-visible prose", () => {
