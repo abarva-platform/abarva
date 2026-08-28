@@ -198,6 +198,8 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByText("Investment to value conversion"),
     ).toBeInTheDocument();
+    expect(screen.getByText("Seven evidence states")).toBeInTheDocument();
+    expect(screen.queryByText("Seven gates · in order")).not.toBeInTheDocument();
     expect(screen.getByText("Eight-quarter trajectory")).toBeInTheDocument();
     expect(screen.getByText("Claim ledger")).toBeInTheDocument();
     expect(screen.getByText("Value case lanes")).toBeInTheDocument();
