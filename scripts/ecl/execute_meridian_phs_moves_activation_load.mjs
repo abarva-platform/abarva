@@ -219,6 +219,10 @@ from (
 select
   (select count(*)::int from activated) as engagements,
   (select count(*)::int from public.program_modules where engagement_id in (select id from activated)) as program_modules,
+  (select count(*)::int
+   from public.program_modules
+   where engagement_id in (select id from activated)
+     and state_jsonb ->> 'activation_basis' = ${activationBasisLiteral}) as phase_capture_modules,
   (select count(*)::int from public.program_milestones where engagement_id in (select id from activated)) as program_milestones,
   (select count(*)::int from public.program_work_items where engagement_id in (select id from activated)) as program_work_items,
   (select count(*)::int from public.program_risks where engagement_id in (select id from activated)) as program_risks,
@@ -323,7 +327,7 @@ async function main() {
       executeSql(args.databaseUrl, built.sqlPath, "apply_activation_sql_idempotency_second_run");
       secondReadback = readback(args.databaseUrl, args.clientId);
       idempotencyIssues = validateReadback(secondReadback, built.activationSummary.generated_rows);
-      for (const key of Object.keys(EXPECTED_ROWS)) {
+      for (const key of Object.keys(built.activationSummary.generated_rows)) {
         if (Number(firstReadback[key] ?? -1) !== Number(secondReadback[key] ?? -2)) {
           idempotencyIssues.push(`${key}_changed_after_second_run`);
         }
