@@ -68,6 +68,8 @@ assert.match(script, /MERIDIAN_PHS_MOVES_ACTIVATION_APPROVED_must_be_true/);
 assert.match(script, /idempotency_proven/);
 assert.match(script, /charter ->> 'activation_basis'/);
 assert.match(script, /__SEMANTIC2_PROOF_TGZ_BEGIN__/);
+assert.match(script, /function sqlString\(value\)/);
+assert.doesNotMatch(script, /:'client_id'|:'tenant_key'|:'activation_basis'/);
 
 console.log(
   JSON.stringify(
