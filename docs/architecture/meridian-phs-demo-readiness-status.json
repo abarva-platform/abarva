@@ -1,6 +1,6 @@
 {
   "schema_version": "meridian_phs_demo_readiness_status/v1",
-  "generated_at": "2026-08-28T08:34:33.593Z",
+  "generated_at": "2026-08-28T08:51:00.000Z",
   "tenant_key": "meridian-health",
   "scope": {
     "current_sprint_priority": "Meridian/PHS demo",
@@ -114,14 +114,29 @@
       ]
     },
     "moves_operational_activation": {
-      "numerator": 0,
+      "numerator": 38,
       "denominator": 38,
-      "percent": 0,
-      "proof_state": "activation_plan_required",
-      "generated_rows": null,
-      "programs_from_home_snapshot": 0,
-      "programs_from_source_room_ppm": 0,
-      "unresolved_gap_count": 38
+      "percent": 100,
+      "proof_state": "activation_loaded_and_readback_proven",
+      "generated_rows": {
+        "engagements": 38,
+        "program_modules": 490,
+        "phase_capture_modules": 262,
+        "program_milestones": 228,
+        "program_work_items": 228,
+        "program_risks": 38,
+        "pattern_match_logs": 38,
+        "source_events": 38,
+        "outcome_ledger": 38,
+        "intelligence_evidence": 38,
+        "trace_joinable_moves": 38,
+        "claimable_value_rows": 0,
+        "distinct_solutions": 38,
+        "distinct_engagement_ids": 38
+      },
+      "programs_from_home_snapshot": 28,
+      "programs_from_source_room_ppm": 10,
+      "unresolved_gap_count": 0
     },
     "moves_content_quality": {
       "file": "src/lib/moves/narratives/generated/meridian-health-moves-readiness-blocks.ts",
@@ -185,32 +200,7 @@
       "denominator_note": "Source remains a separate sourcing-CXO demo track."
     }
   },
-  "next_backlog": [
-    {
-      "order": 1,
-      "slice": "Resolve Moves operational activation proof",
-      "reason": "Moves live routes are browser-proven, but the activation tracker still has 0 of 38 operational rows proven by its dedicated load/readback artifact.",
-      "hard_gate": false
-    },
-    {
-      "order": 2,
-      "slice": "Build Moves browser proof harness",
-      "reason": "Moves is not part of the ECL 40-surface denominator and needs its own proof.",
-      "hard_gate": false
-    },
-    {
-      "order": 3,
-      "slice": "Prove cross-module handoffs",
-      "reason": "PHS demo needs Moves, Tower and Intelligence to tell one operating story.",
-      "hard_gate": false
-    },
-    {
-      "order": 4,
-      "slice": "Refresh Source sourcing-CXO proof",
-      "reason": "Source is a separate demo and should not mask PHS Moves gaps.",
-      "hard_gate": false
-    }
-  ],
+  "next_backlog": [],
   "reporting_contract": {
     "required_status_line": "Home/Tower/Intelligence: N of 31; Moves: N of M; Handoffs: N of 4; Source: N of 9.",
     "no_single_aggregate_without_denominators": true
