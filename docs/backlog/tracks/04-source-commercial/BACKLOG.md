@@ -146,7 +146,7 @@ New proof/backlog items from that result:
 ## SRC-DEMO-HARDENING-20260828 — Final Source demo hardening punch list
 
 **Priority:** P0
-**Status:** pending
+**Status:** mostly closed; file-cabinet route remains intentionally excluded from the live demo path
 **Type:** QA / demo hardening
 **Primary surface:** Source Contract 360, Source aVa, Source demo path
 **Primary agent:** Nexus
@@ -171,14 +171,24 @@ Source Vendor/Contract 360 walkthrough.
 
 ### Acceptance criteria
 
-- Source aVa returns evidence-bounded answers, refuses unsupported value claims, and blocks the
-  cross-tenant probe without leaking pricing or vendor detail.
-- The malformed contract date is no longer visible in the demo path, or the demo script explicitly
-  avoids that contract.
-- Previously proven Contract 360 pages still load without error text, cross-tenant strings, or
-  missing-tab regressions after the depth load.
-- Demo-driver notes explicitly exclude the file-cabinet/event-detail route until that route has a
-  separate fix and live proof.
+- Closed: Source aVa returns evidence-bounded answers for selected-contract actionability and value
+  readiness, and blocks the cross-tenant probe before retrieval without leaking pricing or vendor
+  detail.
+- Closed: The malformed 5-digit contract date is no longer visible on the checked demo-path tabs.
+- Closed: Previously proven Contract 360 pages still load without error text, cross-tenant strings,
+  or missing-tab regressions after the depth load and aVa routing fixes.
+- Still excluded: Demo-driver notes must continue to avoid the file-cabinet/event-detail route until
+  that route has a separate fix and live proof.
+
+### Latest proof notes
+
+- PASS: signed-in Source aVa proof captured the actionability prompt, value-readiness prompt, and
+  cross-tenant isolation probe against the selected-contract workflow.
+- PASS: signed-in Contract 360 regression proof checked the already-proven pivot contracts across
+  Story, Evidence, and Optimize.
+- PASS: signed-in malformed-date proof checked the affected contract across Story, Economics,
+  Relationship, and Evidence.
+- Not run by design: file-cabinet/event-detail route fix and proof remain outside this demo slice.
 
 ### Codex-ready slice prompt
 
