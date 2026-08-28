@@ -458,11 +458,20 @@ export function buildSourceWorkspaceVisualAnswer(input: {
     ),
   ).length;
   const quantified = numericRows.length;
+  const topOpportunity =
+    lines.find((line) => line.amountUsd != null) ?? lines[0] ?? null;
+  const topOpportunityValue =
+    topOpportunity?.amountUsd == null
+      ? (topOpportunity?.amount ?? "Not established")
+      : currencyLabel(topOpportunity.amountUsd);
+  const topOpportunitySummary = topOpportunity
+    ? ` The top governed opportunity is ${topOpportunity.label} (${topOpportunityValue}), with evidence state ${topOpportunity.evidenceClass} and next action: ${topOpportunity.nextAction}.`
+    : "";
 
   return {
     directAnswer:
       `${contract.vendorName} ${contract.contractName} (${contract.contractId}) is ready for an evidence-led optimization conversation when the opportunity rows below are visible: ${quantified} commercial opportunity line(s) carry governed numeric values, ${evidenceReadyCount} line(s) are evidence-ready, and ${gapCount} line(s) still require explicit workflow, review, or evidence if shown. ` +
-      `The outside-in pattern is advisory only: for large enterprise software and managed-service renewals, the strongest negotiation story usually combines contract terms, AP/ERP invoice proof, SLA/service-credit proof, usage or entitlement data, and a finance-confirmed value gate. It should guide the ask, not replace Source/Tower evidence.`,
+      `${topOpportunitySummary} The outside-in pattern is advisory only: for large enterprise software and managed-service renewals, the strongest negotiation story usually combines contract terms, AP/ERP invoice proof, SLA/service-credit proof, usage or entitlement data, and a finance-confirmed value gate. It should guide the ask, not replace Source/Tower evidence.`,
     artifacts,
     citations,
     factsUsed: [

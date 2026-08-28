@@ -252,6 +252,10 @@ describe("Source Workspace visual aVa answer", () => {
     });
 
     expect(answer?.directAnswer).toContain("CTR-090");
+    expect(answer?.directAnswer).toContain("$1.3M");
+    expect(answer?.directAnswer).toContain(
+      "SLA credits earned but not claimed",
+    );
     expect(answer?.directAnswer).toContain("commercial opportunity line");
     expect(
       answer?.citations.some((citation) => citation.recordId === "CTR-090"),
