@@ -254,4 +254,65 @@ describe("Moves adaptive depth", () => {
       expect.objectContaining({ applicability: "triggered" }),
     );
   });
+
+  it("treats opaque managed analytics exit as complex capability repatriation", () => {
+    const decision = resolveAdaptiveDepth({
+      archetype: "ANALYTICS_CAPABILITY_REPATRIATION",
+      text: [
+        "Managed analytics provider exit to internal Databricks.",
+        "Opaque vendor transformations, proprietary benchmark data, identity conformance, parallel run parity, data return and contract exit are in scope.",
+      ].join(" "),
+      artifactKeys: [
+        "discovery_report",
+        "target_state_architecture",
+        "requirements_traceability",
+        "sourcing_strategy",
+        "business_case",
+      ],
+    });
+
+    expect(decision.archetypeKey).toBe("ANALYTICS_CAPABILITY_REPATRIATION");
+    expect(decision.complexityTier).toBe("complex");
+    expect(decision.artifactApplicability.discovery_report).toEqual(
+      expect.objectContaining({ applicability: "required" }),
+    );
+    expect(decision.artifactApplicability.requirements_traceability).toEqual(
+      expect.objectContaining({ applicability: "required" }),
+    );
+    expect(decision.storyBeatApplicability.sourcing_analysis).toEqual(
+      expect.objectContaining({ applicability: "triggered" }),
+    );
+    expect(renderAdaptiveDepthPrompt(decision, "business_case")).toContain(
+      "Do not compute savings as vendor spend minus internal platform cost",
+    );
+  });
+
+  it("allows straightforward repatriation only when the deterministic safe conditions hold", () => {
+    const decision = resolveAdaptiveDepth({
+      archetype: "ANALYTICS_CAPABILITY_REPATRIATION",
+      text: [
+        "Straightforward managed analytics capability repatriation.",
+        "Transparent vendor processing, documented metric logic, fixed outputs, existing internal Databricks, no identity resolution, no real-time requirement, no contract exit risk.",
+      ].join(" "),
+      artifactKeys: [
+        "target_state_architecture",
+        "requirements_traceability",
+        "operating_model",
+      ],
+    });
+
+    expect(decision.complexityTier).toBe("straightforward");
+    expect(decision.artifactApplicability.target_state_architecture).toEqual(
+      expect.objectContaining({ applicability: "lightweight" }),
+    );
+    expect(decision.artifactApplicability.requirements_traceability).toEqual(
+      expect.objectContaining({ applicability: "lightweight" }),
+    );
+    expect(decision.artifactApplicability.operating_model).toEqual(
+      expect.objectContaining({
+        applicability: "merge_into_parent",
+        mergeInto: "solution_design",
+      }),
+    );
+  });
 });

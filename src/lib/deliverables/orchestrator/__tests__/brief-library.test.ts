@@ -20,19 +20,20 @@ function req(
 }
 
 describe("archetype packs", () => {
-  it("cover the four named use cases with distinct exhibits", () => {
+  it("cover the named use cases with distinct exhibits", () => {
     for (const a of [
       "AMS_IT_OUTSOURCING",
       "ERP_SI_SELECTION",
       "CLOUD_MODERNIZATION",
       "AI_PDLC",
+      "ANALYTICS_CAPABILITY_REPATRIATION",
     ]) {
       const pack = getArchetypePack(a)!;
       expect(pack.exhibits.length).toBeGreaterThanOrEqual(4);
       expect(pack.tables.length).toBeGreaterThanOrEqual(4);
       expect(pack.keyEvidenceFamilies.length).toBeGreaterThan(0);
     }
-    expect(Object.keys(ARCHETYPE_PACKS)).toHaveLength(4);
+    expect(Object.keys(ARCHETYPE_PACKS)).toHaveLength(5);
   });
 
   it("AMS exhibits differ from cloud-modernization exhibits", () => {
@@ -347,6 +348,30 @@ describe("composition — same deliverable type differs by archetype", () => {
     expect(brief.expectedExhibits.some((e) => /DORA/.test(e.title))).toBe(true);
     expect(brief.expectedTables.some((t) => /AI Tooling/.test(t.title))).toBe(
       true,
+    );
+  });
+
+  it("analytics repatriation business case surfaces parity, exit, and cost-stack intelligence", () => {
+    const brief = getArtifactBrief(
+      req({
+        module: "moves",
+        deliverableType: "business_case",
+        useCaseArchetype: "ANALYTICS_CAPABILITY_REPATRIATION",
+      }),
+    );
+
+    expect(
+      brief.expectedExhibits.some((exhibit) =>
+        /Transition Cost Stack/.test(exhibit.title),
+      ),
+    ).toBe(true);
+    expect(
+      brief.expectedTables.some((table) =>
+        /Contract, IP, Data Return and Exit/.test(table.title),
+      ),
+    ).toBe(true);
+    expect(brief.disallowedFabrication).toMatch(
+      /Never compute savings as vendor spend minus internal platform cost/,
     );
   });
 
