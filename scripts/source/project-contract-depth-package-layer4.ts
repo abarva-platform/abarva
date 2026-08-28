@@ -489,7 +489,7 @@ async function rebuildViews(client: Client): Promise<void> {
       END AS sla_summary,
       COALESCE(scope.scoped_application_count, 0)::bigint AS scoped_application_count,
       COALESCE(scope.critical_application_count, 0)::bigint AS critical_application_count,
-      0::int AS cloud_sev1_sev2_incidents,
+      0::numeric AS cloud_sev1_sev2_incidents,
       NULL::numeric AS avg_cloud_change_failure_rate,
       COALESCE(perf.credit_earned, 0)::numeric AS service_credits_earned,
       COALESCE(perf.credit_claimed, 0)::numeric AS service_credits_claimed,

@@ -18,6 +18,8 @@ The follow-up view-contract correction preserves the established `source.contrac
 
 The second follow-up view-contract correction preserves the established integer type for the Contract 360 incident-count field. The package projection keeps the field as an integer count instead of widening it during view replacement.
 
+The third follow-up handles the transitional view state left by an earlier failed projection attempt: the operational-performance source view keeps its widened numeric incident-count type, while the downstream Contract 360 projection casts the displayed incident-count field back to the established integer contract.
+
 ## Layer Impact
 
 Release lane: `client-data-lane`.
@@ -39,6 +41,7 @@ Layer 4 - Products/projections operator path. The change affects only the readin
 - Non-destructive `CREATE OR REPLACE VIEW` refresh behavior for Source Layer 4 read models.
 - Source-view contract preservation for `source.contract_application_scope`.
 - Contract 360 incident-count type preservation for `cloud_sev1_sev2_incidents`.
+- Transitional compatibility for the operational-performance incident-count source view and downstream Contract 360 projection.
 
 ## QA / Validation
 
@@ -49,6 +52,7 @@ Layer 4 - Products/projections operator path. The change affects only the readin
 - Follow-up validation after the non-destructive view-refresh correction repeated the same focused Jest, ESLint, and TypeScript checks successfully.
 - Follow-up validation after preserving the source view contract repeated the same focused Jest, ESLint, TypeScript, and release-control checks successfully.
 - Follow-up validation after preserving the Contract 360 incident-count type repeated the focused Jest, ESLint, and TypeScript checks successfully.
+- Follow-up validation after the hybrid view-state correction repeated the focused Jest, ESLint, TypeScript, and release-control checks successfully.
 
 ## Rollout Plan
 
@@ -76,6 +80,7 @@ Revert this PR and rerun the Source Layer 4 plan gate with the previous deployed
 - ACA operator failure evidence for the destructive-drop apply attempt: `/tmp/source-contract-depth-package-layer4-apply-20260828T2120Z/summary.json`.
 - ACA operator failure evidence for the view-signature apply attempt: `/tmp/source-contract-depth-package-layer4-apply-20260828T2143Z/summary.json`.
 - ACA operator failure evidence for the incident-count type apply attempt: `/tmp/source-contract-depth-package-layer4-apply-20260828T2220Z/summary.json`.
+- ACA operator failure evidence for the hybrid view-state apply attempt: `/tmp/source-contract-depth-package-layer4-apply-20260828T2245Z/summary.json`.
 
 ## Known Gaps
 
