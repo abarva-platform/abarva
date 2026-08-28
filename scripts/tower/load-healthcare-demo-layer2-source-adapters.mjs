@@ -152,13 +152,21 @@ function sqlJson(value) {
   return `${sqlText(JSON.stringify(value, Object.keys(value).sort()))}::jsonb`;
 }
 
-function insertSql(table, columns, rows, batchSize = 500) {
+function upsertSql(table, columns, rows, conflictColumns, batchSize = 500) {
   if (!rows.length) return `-- no rows for ${table}\n`;
+  const keySet = new Set(conflictColumns);
+  const updateColumns = columns.filter((column) => !keySet.has(column));
   const chunks = [];
   for (let index = 0; index < rows.length; index += batchSize) {
     const batch = rows.slice(index, index + batchSize);
     const values = batch.map((row) => `(${columns.map((column) => row[column]).join(", ")})`).join(",\n");
-    chunks.push(`insert into ${table} (${columns.join(", ")}) values\n${values};`);
+    const updates = updateColumns
+      .map((column) => `${column} = excluded.${column}`)
+      .join(", ");
+    chunks.push(
+      `insert into ${table} (${columns.join(", ")}) values\n${values}\n` +
+        `on conflict (${conflictColumns.join(", ")}) do update set ${updates};`,
+    );
   }
   return `${chunks.join("\n")}\n`;
 }
@@ -318,8 +326,6 @@ function buildSourceRows(options) {
 }
 
 function writeLoadSql(outPath, options, sourceFiles, sourceRecords) {
-  const tenant = sqlText(options.tenantKey);
-  const assessment = sqlText(options.assessmentId);
   const sourceFileColumns = [
     "id",
     "tenant_key",
@@ -349,10 +355,18 @@ function writeLoadSql(outPath, options, sourceFiles, sourceRecords) {
   ];
   const sql = [
     "begin;",
-    `delete from ecl_source.source_record where tenant_key = ${tenant} and assessment_id = ${assessment};`,
-    `delete from ecl_source.source_file where tenant_key = ${tenant} and assessment_id = ${assessment};`,
-    insertSql("ecl_source.source_file", sourceFileColumns, sourceFiles),
-    insertSql("ecl_source.source_record", sourceRecordColumns, sourceRecords),
+    upsertSql(
+      "ecl_source.source_file",
+      sourceFileColumns,
+      sourceFiles,
+      ["tenant_key", "assessment_id", "id"],
+    ),
+    upsertSql(
+      "ecl_source.source_record",
+      sourceRecordColumns,
+      sourceRecords,
+      ["tenant_key", "assessment_id", "id"],
+    ),
     "commit;",
   ].join("\n");
   fs.writeFileSync(outPath, sql, "utf8");

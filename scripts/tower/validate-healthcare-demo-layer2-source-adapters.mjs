@@ -105,6 +105,24 @@ function main() {
   if (summary) {
     gate(gates, "dry_run_expected_counts", summary.expected_counts?.source_record === 1981, `${summary.expected_counts?.source_record ?? "missing"} expected source records`);
     gate(gates, "dry_run_boundary", summary.boundary?.canonical_layer_written === false && summary.boundary?.product_projection_written === false, "dry-run writes no canonical or product projection rows");
+    const loadSqlPath = summary.load_sql;
+    const loadSql = loadSqlPath && fs.existsSync(loadSqlPath)
+      ? fs.readFileSync(loadSqlPath, "utf8").toLowerCase()
+      : "";
+    gate(
+      gates,
+      "reload_uses_upserts",
+      loadSql.includes("insert into ecl_source.source_file") &&
+        loadSql.includes("insert into ecl_source.source_record") &&
+        loadSql.includes("on conflict (tenant_key, assessment_id, id) do update"),
+      "Layer 2 reload updates stable source IDs instead of replacing referenced rows",
+    );
+    gate(
+      gates,
+      "reload_does_not_delete_referenced_source_records",
+      !loadSql.includes("delete from ecl_source.source_record where tenant_key"),
+      "Layer 2 reload does not delete source records that Layer 3 may reference",
+    );
   } else {
     gate(gates, "dry_run_summary_present", false, `missing ${summaryPath}`);
   }
