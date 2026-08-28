@@ -29,9 +29,7 @@ describe("retired fact gate", () => {
         "old_tech_budget_1_8b",
       ]),
     );
-    expect(buildRetiredFactError(findings)).toContain(
-      "retired_fact_violation",
-    );
+    expect(buildRetiredFactError(findings)).toContain("retired_fact_violation");
   });
 
   it("does not apply Lakeshore retired-fact numbers to other tenants", () => {
@@ -50,6 +48,74 @@ describe("retired fact gate", () => {
     });
 
     expect(findings).toEqual([]);
+  });
+
+  it("allows generic source-system names inside Source workspace context", () => {
+    const findings = scanRetiredFacts({
+      tenantKey: "meridian-health",
+      surfaceContext: {
+        module: "Source",
+        clientKey: "meridian-health",
+        sourceV4: {
+          optimizationSpine: {
+            sourceConnections: [
+              {
+                id: "procurement",
+                sourceSystem: "Procurement / S2P",
+                examples: ["SAP Ariba", "Coupa", "Workday Strategic Sourcing"],
+                extract:
+                  "Sourcing events, supplier responses, award summary, and approved savings case.",
+              },
+              {
+                id: "ap_erp",
+                sourceSystem: "AP / ERP / financial subledger",
+                examples: ["SAP S/4HANA", "Coupa Invoice"],
+                extract:
+                  "Invoice lines, payments, PO match, GL coding, credits, disputes, and pass-throughs.",
+              },
+              {
+                id: "treasury",
+                sourceSystem: "Treasury management",
+                examples: ["Kyriba"],
+                extract:
+                  "Payment controls and treasury evidence when those feeds are explicitly loaded.",
+              },
+            ],
+          },
+        },
+      },
+      textBlocks: [
+        {
+          location: "route.source_visual.agent_answer",
+          text: "Load Coupa invoice export rows before claiming leakage, and use Kyriba only if treasury payment-control evidence is actually in scope.",
+        },
+      ],
+    });
+
+    expect(findings).toEqual([]);
+  });
+
+  it("still hard-flags foreign tenant identifiers inside Source workspace context", () => {
+    const findings = scanRetiredFacts({
+      tenantKey: "meridian-health",
+      surfaceContext: {
+        module: "Source",
+        clientKey: "meridian-health",
+        sourceFacts: [
+          "SkyHarbor pricing rows are not valid evidence for this Source contract.",
+        ],
+      },
+    });
+
+    expect(findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          tenantKey: "meridian-health",
+          factId: "cross_tenant_skyharbor",
+          location: "surfaceContext",
+        }),
+      ]),
+    );
   });
 
   it("hard-flags retired First Capital aliases in source packets", () => {

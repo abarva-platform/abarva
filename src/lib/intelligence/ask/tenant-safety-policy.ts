@@ -15,7 +15,11 @@ export interface TenantSafetyPolicy {
   sourceOnlyCleanupTerms: string[];
 }
 
-function literalPattern(factId: string, label: string, term: string): TenantSafetyRegexPattern {
+function literalPattern(
+  factId: string,
+  label: string,
+  term: string,
+): TenantSafetyRegexPattern {
   return {
     factId,
     label,
@@ -71,8 +75,6 @@ const POLICIES: TenantSafetyPolicy[] = [
       "SkyHarbor",
       "IROPS",
       "Lakeshore",
-      "Coupa",
-      "Kyriba",
       "Meridian Health",
       "First Capital",
       "Northstar",
@@ -91,15 +93,17 @@ const POLICIES: TenantSafetyPolicy[] = [
       "SkyHarbor",
       "IROPS",
       "Lakeshore",
-      "Coupa",
-      "Kyriba",
       "Apex Retail",
       "First Capital",
       "Northstar",
       "airline",
       "Morgan Street",
     ],
-    sourceOnlyCleanupTerms: ["Heliara", "Heliara Health", "Heliara Health Alliance"],
+    sourceOnlyCleanupTerms: [
+      "Heliara",
+      "Heliara Health",
+      "Heliara Health Alliance",
+    ],
   },
   {
     tenantKey: "first-capital",
@@ -116,8 +120,6 @@ const POLICIES: TenantSafetyPolicy[] = [
       "SkyHarbor",
       "IROPS",
       "Lakeshore",
-      "Coupa",
-      "Kyriba",
       "Apex Retail",
       "Meridian Health",
       "Northstar",
@@ -137,8 +139,6 @@ const POLICIES: TenantSafetyPolicy[] = [
       "SkyHarbor",
       "IROPS",
       "Lakeshore",
-      "Coupa",
-      "Kyriba",
       "Apex Retail",
       "Meridian Health",
       "First Capital",
@@ -156,8 +156,6 @@ const POLICIES: TenantSafetyPolicy[] = [
     syntheticOnlyTerms: ["skyharbor-enterprise-context-v1"],
     crossTenantForbiddenTerms: [
       "Lakeshore",
-      "Coupa",
-      "Kyriba",
       "Morgan Street",
       "HarborPoint",
       "Riverton",
@@ -216,7 +214,11 @@ export const INTELLIGENCE_TENANT_SAFETY_POLICIES: TenantSafetyPolicy[] =
   POLICIES.map((policy) => ({
     ...policy,
     matchKeys: Array.from(
-      new Set([policy.tenantKey, policy.displayName, ...policy.matchKeys].map(normalizePolicyKey)),
+      new Set(
+        [policy.tenantKey, policy.displayName, ...policy.matchKeys].map(
+          normalizePolicyKey,
+        ),
+      ),
     ),
   }));
 
