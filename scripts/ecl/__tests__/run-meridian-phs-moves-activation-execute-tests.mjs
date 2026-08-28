@@ -50,6 +50,8 @@ assert.equal(plan.actual_database_mutation, false);
 assert.equal(plan.plan_only, true);
 assert.equal(plan.activation_summary.activation_program_count, 38);
 assert.equal(plan.activation_summary.generated_rows.engagements, 38);
+assert.equal(plan.activation_summary.generated_rows.program_modules, 490);
+assert.equal(plan.activation_summary.generated_rows.phase_capture_modules, 262);
 assert.match(plan.sql_sha256, /^[0-9a-f]{64}$/);
 assert.equal(plan.activation_summary.proof_checks.idempotent_upserts, true);
 assert.equal(
@@ -61,6 +63,8 @@ const generatedSql = fs.readFileSync(path.join(planDir, "activation", "meridian_
 assert.match(generatedSql, /on conflict \(id\) do update set/i);
 assert.match(generatedSql, /client_id = excluded\.client_id/i);
 assert.match(generatedSql, /solution = excluded\.solution/i);
+assert.match(generatedSql, /phase_2_current_state_findings/i);
+assert.match(generatedSql, /phase_3_solution_approach/i);
 assert.doesNotMatch(generatedSql, /on conflict \(client_id, solution\)/i);
 assert.doesNotMatch(generatedSql, /on conflict \(engagement_id, module_key\)/i);
 

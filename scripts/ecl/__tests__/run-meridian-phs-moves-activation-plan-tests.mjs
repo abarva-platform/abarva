@@ -59,7 +59,8 @@ assert.equal(summary.programs_from_source_room_ppm, 10);
 assert.equal(summary.unresolved_gap_count, 0);
 assert.deepEqual(summary.generated_rows, {
   engagements: 38,
-  program_modules: 228,
+  program_modules: 490,
+  phase_capture_modules: 262,
   program_milestones: 228,
   program_work_items: 228,
   program_risks: 38,
@@ -100,6 +101,10 @@ assert.doesNotMatch(sql, /\bdelete\s+from\b/i, "activation SQL must not delete e
 assert.doesNotMatch(sql, /\bdatabase_url\b/i, "activation plan must not embed runtime database credentials");
 assert.match(sql, /value_is_not_claimable_until_tower_gate_passes/);
 assert.match(sql, /phs_executive_value_chain/);
+assert.match(sql, /phase_2_current_state_findings/);
+assert.match(sql, /phase_3_solution_approach/);
+assert.match(sql, /source_basis/);
+assert.match(sql, /review_state/);
 
 console.log(
   JSON.stringify(
