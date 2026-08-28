@@ -1,6 +1,11 @@
 "use client";
 
-import type { CSSProperties, MouseEvent } from "react";
+import {
+  useState,
+  type CSSProperties,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import type { SourceWorkspaceVM } from "../buildViewModel";
 
 type Gate = "pass" | "warn" | "fail";
@@ -72,6 +77,31 @@ function gatePill(state: Gate, label: string = state) {
 
 function stop(e: MouseEvent) {
   e.stopPropagation();
+}
+
+function Disclosure({
+  title,
+  children,
+  bordered = true,
+}: {
+  title: string;
+  children: ReactNode;
+  bordered?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <details
+      open={isOpen}
+      onToggle={(event) => setIsOpen(event.currentTarget.open)}
+      style={{
+        borderBottom: bordered ? "1px solid rgba(10,10,11,.08)" : undefined,
+      }}
+    >
+      <summary style={summaryStyle}>{title}</summary>
+      {isOpen ? children : null}
+    </details>
+  );
 }
 
 export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
@@ -209,7 +239,7 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
                 maxWidth: "100%",
               }}
             >
-              {cockpit.verdict.bindingChip}
+              Governed contract portfolio
             </div>
           </div>
           <div
@@ -282,11 +312,6 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
           <strong style={{ fontSize: 13, color: "#0a0a0b" }}>
             {vm.tenantName}
           </strong>
-          <span
-            style={{ fontFamily: TYPE.mono, fontSize: 11, color: "#5f5e5a" }}
-          >
-            {cockpit.banner.datasetLabel}
-          </span>
         </div>
         <span style={{ fontFamily: TYPE.mono, fontSize: 11, color: "#5f5e5a" }}>
           {cockpit.banner.v4ContractCount} contracts
@@ -296,17 +321,6 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
         </span>
         <span style={{ fontFamily: TYPE.mono, fontSize: 11, color: "#5f5e5a" }}>
           as of {cockpit.verdict.eyebrow.replace(/^Position as of /, "")}
-        </span>
-        <span
-          style={{
-            marginLeft: "auto",
-            fontFamily: TYPE.mono,
-            fontSize: 10.5,
-            color: "#888780",
-            minWidth: 0,
-          }}
-        >
-          load run {cockpit.banner.activeLoadRunId ?? "not established"}
         </span>
       </section>
 
@@ -676,8 +690,7 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
             </h3>
           </div>
 
-          <details style={{ borderBottom: "1px solid rgba(10,10,11,.08)" }}>
-            <summary style={summaryStyle}>Evidence behind the verdict</summary>
+          <Disclosure title="Evidence behind the verdict">
             <div style={proofGridStyle}>
               {proof.evidenceBehindVerdict.map((entry) => (
                 <div key={entry.label} style={proofItemStyle}>
@@ -713,12 +726,9 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
                 </div>
               ))}
             </div>
-          </details>
+          </Disclosure>
 
-          <details style={{ borderBottom: "1px solid rgba(10,10,11,.08)" }}>
-            <summary style={summaryStyle}>
-              Source systems, grain, freshness
-            </summary>
+          <Disclosure title="Source systems, grain, freshness">
             <div style={{ padding: "0 22px 18px", overflowX: "auto" }}>
               <table
                 style={{
@@ -759,12 +769,9 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
                 </tbody>
               </table>
             </div>
-          </details>
+          </Disclosure>
 
-          <details style={{ borderBottom: "1px solid rgba(10,10,11,.08)" }}>
-            <summary style={summaryStyle}>
-              Reconciliation and audit trail
-            </summary>
+          <Disclosure title="Reconciliation and audit trail">
             <div
               style={{
                 padding: "0 22px 18px",
@@ -801,10 +808,9 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
               {proof.reconciliation.mismatchWarning ??
                 "Explore and V4 snapshot counts reconcile for this governed read."}
             </div>
-          </details>
+          </Disclosure>
 
-          <details>
-            <summary style={summaryStyle}>Source mapping table</summary>
+          <Disclosure title="Source mapping table" bordered={false}>
             <div style={{ padding: "0 22px 18px", overflowX: "auto" }}>
               <table
                 style={{
@@ -842,7 +848,7 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
                 </tbody>
               </table>
             </div>
-          </details>
+          </Disclosure>
         </div>
 
         <aside
@@ -854,26 +860,25 @@ export function ContextLens({ vm }: { vm: SourceWorkspaceVM }) {
             alignSelf: "start",
           }}
         >
-          <div style={{ ...labelStyle, color: "#888780", marginBottom: 12 }}>
-            lineage rail
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {proof.lineageRail.map((line) => (
-              <div
-                key={line}
-                style={{
-                  fontFamily: TYPE.mono,
-                  fontSize: 11.2,
-                  lineHeight: 1.5,
-                  color: "#2c2c2a",
-                  borderTop: "1px solid rgba(10,10,11,.08)",
-                  paddingTop: 12,
-                }}
-              >
-                {line}
-              </div>
-            ))}
-          </div>
+          <Disclosure title="Lineage rail" bordered={false}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {proof.lineageRail.map((line) => (
+                <div
+                  key={line}
+                  style={{
+                    fontFamily: TYPE.mono,
+                    fontSize: 11.2,
+                    lineHeight: 1.5,
+                    color: "#2c2c2a",
+                    borderTop: "1px solid rgba(10,10,11,.08)",
+                    paddingTop: 12,
+                  }}
+                >
+                  {line}
+                </div>
+              ))}
+            </div>
+          </Disclosure>
         </aside>
       </section>
     </div>
