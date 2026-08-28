@@ -644,6 +644,495 @@ export const IT_SOURCING_EVENT: StrategicMoveArchetype = {
   },
 };
 
+// ── ANALYTICS_CAPABILITY_REPATRIATION ───────────────────────────────────────
+// A managed analytics exit / capability repatriation Move. The object of work is
+// the capability and its controls, not the dashboard surface that happens to
+// expose it today.
+
+const ANALYTICS_REPATRIATION_FAMILIES: EvidenceFamilySpec[] = [
+  {
+    key: "analytics_capability_inventory",
+    label: "Managed analytics capability inventory",
+    kind: "inventory",
+    whyNeeded:
+      "Names the analytics/reporting/data-management/model capabilities the provider currently delivers, including owners, consumers, criticality, inputs, outputs, and workflows.",
+    sourceDocHint:
+      "Provider service catalog, report inventory, analytics catalog, or capability workbook",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["strategic_control_repatriation_readiness"],
+  },
+  {
+    key: "vendor_data_feed_register",
+    label: "Data sent to provider",
+    kind: "inventory",
+    whyNeeded:
+      "Identifies what client data leaves the enterprise boundary, frequency, sensitivity, source owners, return path, and controls.",
+    sourceDocHint:
+      "Interface inventory, file-transfer schedule, data-sharing register, or data-flow diagram",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["strategic_control_repatriation_readiness"],
+  },
+  {
+    key: "processing_transparency",
+    label: "Provider processing transparency",
+    kind: "qualitative",
+    whyNeeded:
+      "Determines whether transformations, enrichments, measure logic, and quality rules are visible enough to reconstruct safely.",
+    sourceDocHint:
+      "Data lineage, transformation specs, SQL/notebook extracts, runbook, or provider design documentation",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["strategic_control_repatriation_readiness"],
+  },
+  {
+    key: "business_rules_measure_logic",
+    label: "Business rules, measures, and model logic",
+    kind: "qualitative",
+    whyNeeded:
+      "Captures the logic that turns inputs into decision outputs; unknown logic becomes a parity gap, not an invented target design.",
+    sourceDocHint:
+      "Metric dictionary, semantic layer extract, business-rules catalog, model documentation",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["capability_parity_traceability"],
+  },
+  {
+    key: "output_workflow_inventory",
+    label: "Outputs and business workflows",
+    kind: "inventory",
+    whyNeeded:
+      "Shows which dashboards, files, APIs, alerts, operational routines, and decisions depend on each capability.",
+    sourceDocHint:
+      "Report inventory, workflow/SOP documentation, consumer list, usage logs",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+  },
+  {
+    key: "data_quality_identity_conformance",
+    label: "Data quality, identity, and conformance",
+    kind: "metric_baseline",
+    whyNeeded:
+      "Determines whether internal data can reproduce provider outputs without hidden matching, survivorship, conformance, or quality assumptions.",
+    sourceDocHint:
+      "Data-quality report, match/conformance rules, issue log, reconciliation workbook",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["capability_parity_traceability"],
+  },
+  {
+    key: "internal_databricks_readiness",
+    label: "Internal Databricks / analytics platform readiness",
+    kind: "inventory",
+    whyNeeded:
+      "Separates an already-ready internal analytics foundation from a net-new platform build; do not imply the platform exists if evidence does not say so.",
+    sourceDocHint:
+      "Platform architecture, landing-zone/readiness assessment, Databricks workspace inventory",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["workpackage_roadmap_estimate"],
+  },
+  {
+    key: "controls_privacy_security_regulatory",
+    label: "Controls, privacy, security, and regulatory posture",
+    kind: "qualitative",
+    whyNeeded:
+      "Defines privacy, access, audit, retention, segregation, and regulated-use constraints before any internal rebuild or exit path is recommended.",
+    sourceDocHint:
+      "Security/privacy assessment, DPIA, control matrix, audit findings, data-sharing controls",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+  },
+  {
+    key: "sla_operations_baseline",
+    label: "SLA and operating baseline",
+    kind: "metric_baseline",
+    whyNeeded:
+      "Captures current refresh cadence, uptime/support obligations, incident handling, timeliness, escalation, and service expectations.",
+    sourceDocHint:
+      "SLA report, operations runbook, incident/service-ticket extract",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["capability_parity_traceability"],
+  },
+  {
+    key: "contract_ip_data_return_exit",
+    label: "Contract, IP, data-return, and exit posture",
+    kind: "commercial",
+    whyNeeded:
+      "Determines whether the client can retrieve data, logic, documentation, and support needed for transition without breaching obligations or losing IP.",
+    sourceDocHint:
+      "Contract register, MSA/SOW exit clauses, data-return schedule, transition assistance terms",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["strategic_control_repatriation_readiness"],
+  },
+  {
+    key: "stakeholder_map",
+    label: "Stakeholder and decision-rights map",
+    kind: "qualitative",
+    whyNeeded:
+      "Names sponsors, data owners, analytics owners, procurement/legal stakeholders, platform owners, and operating decision rights for Discovery and transition decisions.",
+    sourceDocHint: "Captured in-charter with Nexus, or a stakeholder list",
+    acceptedFormats: ["csv", "xlsx", "docx"],
+  },
+  {
+    key: "current_cost_value_baseline",
+    label: "Current cost and value baseline",
+    kind: "financial",
+    whyNeeded:
+      "Establishes provider spend, retained obligations, internal/cloud run cost, business value, and the timing needed before any investment case can quantify value.",
+    sourceDocHint:
+      "Contract spend, invoice history, cloud cost baseline, KPI/value baseline",
+    acceptedFormats: ["csv", "xlsx"],
+    feedsMethods: ["workpackage_roadmap_estimate"],
+  },
+  {
+    key: "operating_model_readiness",
+    label: "Internal operating-model readiness",
+    kind: "org",
+    whyNeeded:
+      "Shows whether business, data, analytics, platform, security, and support owners can operate the repatriated capability after transition.",
+    sourceDocHint: "RACI, org model, support model, talent/capacity assessment",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["workpackage_roadmap_estimate"],
+  },
+];
+
+const ANALYTICS_REPATRIATION_PHASES: PhaseRequirements[] = [
+  {
+    phase: "originate",
+    requiredEvidence: [],
+    analysisMethods: [],
+    deliverables: ["origination_brief"],
+    gateRequirements: [
+      {
+        key: "program_seed_recorded",
+        describe:
+          "Brief signed off with analytics capability repatriation archetype",
+        severity: "hard",
+      },
+      {
+        key: "discovery_only_scope",
+        describe:
+          "Charter framing authorizes Discovery, not full repatriation or vendor exit",
+        severity: "hard",
+      },
+    ],
+  },
+  {
+    phase: "charter",
+    requiredEvidence: [
+      { family: "analytics_capability_inventory", severity: "hard" },
+      { family: "vendor_data_feed_register", severity: "hard" },
+      { family: "contract_ip_data_return_exit", severity: "hard" },
+      { family: "stakeholder_map", severity: "hard" },
+      { family: "internal_databricks_readiness", severity: "soft" },
+      { family: "current_cost_value_baseline", severity: "soft" },
+    ],
+    analysisMethods: [
+      "strategic_control_repatriation_readiness",
+      "capability_parity_traceability",
+    ],
+    deliverables: ["program_charter"],
+    gateRequirements: [
+      {
+        key: "charter_signed_off",
+        describe: "Charter signed off to fund capability-exit Discovery",
+        severity: "hard",
+      },
+    ],
+  },
+  {
+    phase: "diagnose",
+    requiredEvidence: [
+      { family: "analytics_capability_inventory", severity: "hard" },
+      { family: "vendor_data_feed_register", severity: "hard" },
+      { family: "processing_transparency", severity: "hard" },
+      { family: "business_rules_measure_logic", severity: "hard" },
+      { family: "output_workflow_inventory", severity: "hard" },
+      { family: "data_quality_identity_conformance", severity: "hard" },
+      { family: "internal_databricks_readiness", severity: "hard" },
+      { family: "controls_privacy_security_regulatory", severity: "hard" },
+      { family: "sla_operations_baseline", severity: "hard" },
+      { family: "contract_ip_data_return_exit", severity: "hard" },
+      { family: "current_cost_value_baseline", severity: "hard" },
+      { family: "operating_model_readiness", severity: "soft" },
+    ],
+    analysisMethods: [
+      "strategic_control_repatriation_readiness",
+      "capability_parity_traceability",
+      "workpackage_roadmap_estimate",
+    ],
+    deliverables: ["discovery_report"],
+    gateRequirements: [
+      {
+        key: "baseline_evidence_committed",
+        describe:
+          "Current managed-analytics capability, control, contract, and parity baseline committed + cited",
+        severity: "hard",
+      },
+    ],
+  },
+  {
+    phase: "design",
+    requiredEvidence: [
+      { family: "business_rules_measure_logic", severity: "hard" },
+      { family: "data_quality_identity_conformance", severity: "hard" },
+      { family: "internal_databricks_readiness", severity: "hard" },
+      { family: "contract_ip_data_return_exit", severity: "hard" },
+      { family: "operating_model_readiness", severity: "soft" },
+    ],
+    analysisMethods: ["capability_parity_traceability"],
+    deliverables: [
+      "target_state_architecture",
+      "solution_design",
+      "requirements_traceability",
+      "sourcing_strategy",
+    ],
+    gateRequirements: [
+      {
+        key: "capability_parity_trace_approved",
+        describe:
+          "Vendor-to-target capability traceability and parity tests approved",
+        severity: "hard",
+      },
+    ],
+  },
+  {
+    phase: "roadmap_business_case",
+    requiredEvidence: [
+      { family: "current_cost_value_baseline", severity: "hard" },
+      { family: "contract_ip_data_return_exit", severity: "hard" },
+      { family: "internal_databricks_readiness", severity: "hard" },
+      { family: "operating_model_readiness", severity: "hard" },
+    ],
+    analysisMethods: ["workpackage_roadmap_estimate"],
+    deliverables: ["estimate_model", "business_case", "execution_roadmap"],
+    gateRequirements: [
+      {
+        key: "investment_case_grounded",
+        describe:
+          "Business case separates retained vendor obligations, foundation investment, capability investment, transition/double-run, run cost, and reuse value",
+        severity: "hard",
+      },
+    ],
+  },
+];
+
+export const ANALYTICS_CAPABILITY_REPATRIATION: StrategicMoveArchetype = {
+  id: "ANALYTICS_CAPABILITY_REPATRIATION",
+  name: "Analytics Capability Repatriation",
+  description:
+    "Assess and execute a managed analytics exit or internalization of provider-delivered analytics, reporting, data-management, model, metric, and workflow capabilities. The Move migrates capabilities, not screens.",
+  version: "0.1.0",
+  status: "draft",
+  applicableIndustries: ["*"],
+  applicableFunctions: [
+    "analytics",
+    "data",
+    "finance",
+    "operations",
+    "procurement",
+    "technology",
+  ],
+  phaseModel: ANALYTICS_REPATRIATION_PHASES,
+  evidenceFamilies: ANALYTICS_REPATRIATION_FAMILIES,
+  analysisMethods: [
+    "strategic_control_repatriation_readiness",
+    "capability_parity_traceability",
+    "workpackage_roadmap_estimate",
+  ],
+  deliverablePack: [
+    {
+      key: "program_charter",
+      label: "Analytics Capability Repatriation Charter",
+      phase: "charter",
+      audience: "Sponsor · Data/analytics leadership · Procurement",
+      sections: [
+        "Discovery authorization decision",
+        "Capability and provider boundary",
+        "Known data sent to provider",
+        "Known contract/exit posture",
+        "Discovery evidence plan",
+        "Decision rights and next steps",
+      ],
+      qualityBar: {
+        minSections: 6,
+        requiresCitations: true,
+        altitude: "exec",
+        rubric: [
+          "Authorizes Discovery only; does not approve full repatriation",
+          "Names capability/provider/data boundaries from evidence",
+          "Marks platform, contract, and parity unknowns explicitly",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "docx"],
+      gateArtifact: true,
+    },
+    {
+      key: "discovery_report",
+      label: "Managed Analytics Current-State Assessment",
+      phase: "diagnose",
+      audience: "Sponsor · Steering committee",
+      sections: [
+        "Executive answer",
+        "Capability inventory",
+        "Data sent to provider",
+        "Processing transparency and logic gaps",
+        "Strategic Control x Repatriation Readiness",
+        "Contract, control, SLA, and operating posture",
+        "Recommendation and next decision",
+      ],
+      qualityBar: {
+        minSections: 7,
+        requiresCitations: true,
+        altitude: "exec",
+        rubric: [
+          "Uses the Strategic Control x Repatriation Readiness matrix",
+          "Separates real capability gaps from screen/report migration work",
+          "Treats unknown provider logic as a parity gap, not an inferred design",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "docx", "pptx"],
+      gateArtifact: true,
+    },
+    {
+      key: "target_state_architecture",
+      label: "Target Analytics Architecture",
+      phase: "design",
+      audience: "Architecture · Data platform · Security",
+      sections: [
+        "Approved approach and architecture thesis",
+        "Ingestion and medallion data flow",
+        "Identity/conformance and quality controls",
+        "Semantic/metric layer",
+        "Reporting, activation, and workflow interfaces",
+        "Coexistence, monitoring, and lineage",
+      ],
+      qualityBar: {
+        minSections: 6,
+        requiresCitations: true,
+        altitude: "full",
+        rubric: [
+          "Does not imply Databricks/platform readiness unless evidenced",
+          "Shows Bronze/Silver/Gold only when platform scope is established",
+          "Connects each target component to capability parity requirements",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "docx", "pptx"],
+      gateArtifact: true,
+    },
+    {
+      key: "solution_design",
+      label: "Capability Work-Package Solution Design",
+      phase: "design",
+      audience: "Delivery leadership · Data platform",
+      sections: [
+        "Capability work packages",
+        "Inputs and transformation logic",
+        "Controls and data-quality rules",
+        "Output/workflow activation",
+        "Acceptance and parity tests",
+      ],
+      qualityBar: {
+        minSections: 5,
+        requiresCitations: true,
+        altitude: "full",
+        rubric: [
+          "Organized by capability work package",
+          "Includes vendor-to-target traceability and parity tests",
+          "Leaves unknown logic as Insufficient Evidence with closure path",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "docx", "xlsx"],
+      gateArtifact: true,
+    },
+    {
+      key: "business_case",
+      label: "Repatriation Investment Case",
+      phase: "roadmap_business_case",
+      audience: "CFO · Sponsor · Procurement",
+      sections: [
+        "Investment decision",
+        "Current provider spend and retained obligations",
+        "Foundation and capability investment",
+        "Transition and double-run cost",
+        "Reuse/control/agility value",
+        "Risks, conditions, and recommendation",
+      ],
+      qualityBar: {
+        minSections: 6,
+        requiresCitations: true,
+        altitude: "board",
+        rubric: [
+          "Never uses vendor spend minus internal platform cost as savings",
+          "Separates shared foundation from capability-specific cost and reuse",
+          "Quantified benefits require validated timing, obligations, and run cost",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "docx", "xlsx"],
+      gateArtifact: true,
+    },
+    {
+      key: "execution_roadmap",
+      label: "Capability Repatriation Roadmap",
+      phase: "roadmap_business_case",
+      audience: "Sponsor · Delivery leadership",
+      sections: [
+        "Capability and contract fact base",
+        "Shared foundation",
+        "Low-risk pilot",
+        "Parallel parity",
+        "Capability waves",
+        "Operating-model transition",
+        "Exit/reset and value tracking",
+      ],
+      qualityBar: {
+        minSections: 7,
+        requiresCitations: true,
+        altitude: "exec",
+        rubric: [
+          "Sequences by capability readiness and contract constraints",
+          "Includes parallel parity before exit/decommission decisions",
+          "Separates pilot, waves, operating transition, and value tracking",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "pptx", "docx"],
+    },
+  ],
+  valueModel: {
+    key: "analytics_repatriation_value",
+    label:
+      "Managed analytics repatriation control, agility, reuse, and cost value",
+    method: "workpackage_roadmap_estimate",
+    baselineFamilies: [
+      "current_cost_value_baseline",
+      "contract_ip_data_return_exit",
+    ],
+    ratifiedAtPhase: "roadmap_business_case",
+  },
+  riskModel: {
+    key: "analytics_repatriation_risk",
+    label:
+      "Analytics repatriation delivery, parity, contract, and operating risk",
+    dimensions: [
+      "unknown provider processing or proprietary logic",
+      "data quality, identity, and metric-conformance gaps",
+      "Databricks/platform readiness",
+      "contract, IP, data-return, and transition obligations",
+      "parallel-run/parity and business adoption",
+    ],
+  },
+  agentGuidance: {
+    systemFraming:
+      "This Move is an Analytics Capability Repatriation archetype. Migrate provider-delivered analytics capabilities, logic, data contracts, controls, outputs, workflows, and operating ownership; do not reduce the work to screens or dashboards. Do not assume full repatriation is approved at Charter; P1 authorizes Discovery only.",
+    keyQuestions: [
+      "Which provider-delivered capabilities, data feeds, logic, outputs, workflows, controls, and contracts are in scope?",
+      "Which capabilities are strategically important and ready enough to repatriate versus retain, hybridize, pilot, or defer?",
+      "What Databricks/platform, identity/conformance, parity, contract, operating, and cost evidence must be proven before exit or investment?",
+    ],
+    requiresGroundedAnswer: true,
+  },
+};
+
 // ── AI_OPERATIONS_DECISION_SUPPORT (third archetype — operations work) ───────
 // An AI decision-support/recommendation layer for operational workflows (e.g.
 // airline IROPS recovery, claims operations, supply-chain exceptions). The
@@ -1060,7 +1549,8 @@ const CONTACT_CENTER_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "qualitative",
     whyNeeded:
       "Reveals the real question types, agent search patterns, repeat-contact drivers, transfer reasons, and knowledge gaps the agent-assist layer must handle.",
-    sourceDocHint: "Redacted call transcripts, intent taxonomy, QA samples, or speech analytics export",
+    sourceDocHint:
+      "Redacted call transcripts, intent taxonomy, QA samples, or speech analytics export",
     acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
     feedsMethods: ["two_gap", "leverage_ranking"],
   },
@@ -1070,7 +1560,8 @@ const CONTACT_CENTER_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "inventory",
     whyNeeded:
       "Identifies the systems and data sources the agent-assist layer must read from or link to: CRM, claims, prior auth, eligibility/benefits, pharmacy, knowledge base, telephony, and data platform.",
-    sourceDocHint: "Application inventory, data-source inventory, integration map, or architecture notes",
+    sourceDocHint:
+      "Application inventory, data-source inventory, integration map, or architecture notes",
     acceptedFormats: ["csv", "xlsx", "docx", "pdf", "pptx"],
     feedsMethods: ["maturity_scoring", "leverage_ranking"],
   },
@@ -1080,7 +1571,8 @@ const CONTACT_CENTER_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "inventory",
     whyNeeded:
       "Agent Assist can only answer consistently if the knowledge base, policies, scripts, and source-of-truth ownership are known and reviewable.",
-    sourceDocHint: "Knowledge-base export, policy inventory, script list, or content ownership matrix",
+    sourceDocHint:
+      "Knowledge-base export, policy inventory, script list, or content ownership matrix",
     acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
     feedsMethods: ["two_gap"],
   },
@@ -1090,7 +1582,8 @@ const CONTACT_CENTER_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "qualitative",
     whyNeeded:
       "Defines PHI handling, audit logging, role-based access, explainability, escalation, and where the assistant must inform rather than decide.",
-    sourceDocHint: "Security/privacy review notes, control matrix, PHI handling policy, or compliance attestation",
+    sourceDocHint:
+      "Security/privacy review notes, control matrix, PHI handling policy, or compliance attestation",
     acceptedFormats: ["docx", "pdf", "xlsx"],
     feedsMethods: ["maturity_scoring"],
   },
@@ -1100,7 +1593,8 @@ const CONTACT_CENTER_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "qualitative",
     whyNeeded:
       "Names the executive sponsor role, operating owner, technology/data owners, risk/privacy approvers, finance value owner, and change owner for this Move.",
-    sourceDocHint: "Stakeholder map, RACI, sponsor notes, or governance workshop output",
+    sourceDocHint:
+      "Stakeholder map, RACI, sponsor notes, or governance workshop output",
     acceptedFormats: ["csv", "xlsx", "docx", "pptx"],
   },
   {
@@ -1109,7 +1603,8 @@ const CONTACT_CENTER_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "org",
     whyNeeded:
       "Shows supervisor/agent roles, training model, adoption risks, workforce impacts, decision rights, and operating ownership for the assistant.",
-    sourceDocHint: "Org chart, change-readiness assessment, training plan, or stakeholder workshop notes",
+    sourceDocHint:
+      "Org chart, change-readiness assessment, training plan, or stakeholder workshop notes",
     acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
     feedsMethods: ["maturity_scoring"],
   },
@@ -1119,7 +1614,8 @@ const CONTACT_CENTER_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "qualitative",
     whyNeeded:
       "Optional later-phase context for sizing implementation effort: delivery cadence, change controls, ITSM/change windows, SDLC constraints, and vendor/platform team capacity. Useful for ROM estimates, not a P2 hard strategy blocker.",
-    sourceDocHint: "Optional delivery/ITSM/SDLC notes or implementation-capacity input",
+    sourceDocHint:
+      "Optional delivery/ITSM/SDLC notes or implementation-capacity input",
     acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
     feedsMethods: ["workpackage_roadmap_estimate"],
   },
@@ -1199,7 +1695,13 @@ export const CONTACT_CENTER_AGENT_ASSIST: StrategicMoveArchetype = {
     "Design and scale an AI-assisted agent layer for member/customer service workflows. Grounded in call-center operations, knowledge content, CRM/claims/auth/benefits data, controls, and change readiness — not SDLC metrics.",
   version: "0.1.0",
   status: "draft",
-  applicableIndustries: ["healthcare", "insurance", "retail", "financial services", "*"],
+  applicableIndustries: [
+    "healthcare",
+    "insurance",
+    "retail",
+    "financial services",
+    "*",
+  ],
   applicableFunctions: [
     "member services",
     "customer operations",
@@ -1262,7 +1764,8 @@ const COMMERCIAL_LENDING_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "qualitative",
     whyNeeded:
       "Shows how bankers, credit analysts, KYC reviewers, collateral teams, operations, and servicing move a loan package from intake to booking today.",
-    sourceDocHint: "Current-state workflow, SOP, workshop notes, or process observation notes",
+    sourceDocHint:
+      "Current-state workflow, SOP, workshop notes, or process observation notes",
     acceptedFormats: ["docx", "pdf", "pptx"],
     feedsMethods: ["two_gap", "leverage_ranking"],
   },
@@ -1272,7 +1775,8 @@ const COMMERCIAL_LENDING_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "metric_baseline",
     whyNeeded:
       "Cycle time, queue aging, application volume, touch time, rework, document defect rate, KYC completion, credit memo turnaround, and booking exceptions anchor the value case.",
-    sourceDocHint: "Loan operations KPI export, dashboard extract, or baseline metrics workbook",
+    sourceDocHint:
+      "Loan operations KPI export, dashboard extract, or baseline metrics workbook",
     acceptedFormats: ["csv", "xlsx", "pdf"],
     feedsMethods: ["maturity_scoring", "leverage_ranking"],
   },
@@ -1282,7 +1786,8 @@ const COMMERCIAL_LENDING_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "qualitative",
     whyNeeded:
       "Reveals the defect patterns, missing evidence, policy exceptions, rework loops, and control constraints the assistant must respect.",
-    sourceDocHint: "KYC exception log, document defect sample, audit finding extract, or compliance notes",
+    sourceDocHint:
+      "KYC exception log, document defect sample, audit finding extract, or compliance notes",
     acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
     feedsMethods: ["two_gap", "leverage_ranking"],
   },
@@ -1292,7 +1797,8 @@ const COMMERCIAL_LENDING_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "inventory",
     whyNeeded:
       "Identifies the systems and data sources the assistant must read from or link to: CRM, loan origination, core banking, document management, KYC/sanctions, policy, workflow, and data platform.",
-    sourceDocHint: "Application inventory, data-source inventory, integration map, or architecture notes",
+    sourceDocHint:
+      "Application inventory, data-source inventory, integration map, or architecture notes",
     acceptedFormats: ["csv", "xlsx", "docx", "pdf", "pptx"],
     feedsMethods: ["maturity_scoring", "leverage_ranking"],
   },
@@ -1302,7 +1808,8 @@ const COMMERCIAL_LENDING_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "inventory",
     whyNeeded:
       "Agent Assist can only support consistent banker/operations decisions if credit policy, KYC guidance, document checklists, covenant rules, and source-of-truth ownership are known.",
-    sourceDocHint: "Policy inventory, knowledge-base export, checklist catalog, or content ownership matrix",
+    sourceDocHint:
+      "Policy inventory, knowledge-base export, checklist catalog, or content ownership matrix",
     acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
     feedsMethods: ["two_gap"],
   },
@@ -1312,7 +1819,8 @@ const COMMERCIAL_LENDING_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "qualitative",
     whyNeeded:
       "Defines privacy, audit trail, role-based access, model limitations, credit authority, adverse-action boundaries, and where the assistant must inform rather than decide.",
-    sourceDocHint: "Risk/control matrix, compliance review notes, credit authority policy, or model-risk guardrails",
+    sourceDocHint:
+      "Risk/control matrix, compliance review notes, credit authority policy, or model-risk guardrails",
     acceptedFormats: ["docx", "pdf", "xlsx"],
     feedsMethods: ["maturity_scoring"],
   },
@@ -1322,7 +1830,8 @@ const COMMERCIAL_LENDING_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "qualitative",
     whyNeeded:
       "Names the sponsor role, commercial banking owner, loan operations owner, credit risk owner, KYC/AML owner, technology/data owner, finance owner, and change owner.",
-    sourceDocHint: "Stakeholder map, RACI, sponsor notes, or governance workshop output",
+    sourceDocHint:
+      "Stakeholder map, RACI, sponsor notes, or governance workshop output",
     acceptedFormats: ["csv", "xlsx", "docx", "pptx"],
   },
   {
@@ -1331,7 +1840,8 @@ const COMMERCIAL_LENDING_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "org",
     whyNeeded:
       "Shows role impacts, adoption risks, training needs, decision rights, and operating ownership for bankers, credit, KYC, collateral, operations, and servicing.",
-    sourceDocHint: "Org chart, change-readiness assessment, training plan, or stakeholder workshop notes",
+    sourceDocHint:
+      "Org chart, change-readiness assessment, training plan, or stakeholder workshop notes",
     acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
     feedsMethods: ["maturity_scoring"],
   },
@@ -1341,7 +1851,8 @@ const COMMERCIAL_LENDING_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     kind: "qualitative",
     whyNeeded:
       "Optional later-phase context for ROM sizing: delivery cadence, change controls, integration team capacity, vendor/platform constraints, and release windows. Useful for estimates, not a P2 hard strategy blocker.",
-    sourceDocHint: "Optional delivery/ITSM/SDLC notes or implementation-capacity input",
+    sourceDocHint:
+      "Optional delivery/ITSM/SDLC notes or implementation-capacity input",
     acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
     feedsMethods: ["workpackage_roadmap_estimate"],
   },
@@ -1356,7 +1867,8 @@ const COMMERCIAL_LENDING_AGENT_ASSIST_PHASES: PhaseRequirements[] = [
     gateRequirements: [
       {
         key: "program_seed_recorded",
-        describe: "Brief signed off with commercial-lending Agent Assist archetype",
+        describe:
+          "Brief signed off with commercial-lending Agent Assist archetype",
         severity: "hard",
       },
       {
@@ -1440,7 +1952,8 @@ export const COMMERCIAL_LENDING_AGENT_ASSIST: StrategicMoveArchetype = {
   deliverablePack: AI_OPERATIONS_DECISION_SUPPORT.deliverablePack,
   valueModel: {
     key: "commercial_lending_agent_assist_value",
-    label: "Commercial lending productivity, control quality, and cycle-time uplift",
+    label:
+      "Commercial lending productivity, control quality, and cycle-time uplift",
     method: "leverage_ranking",
     baselineFamilies: [
       "commercial_lending_metrics_baseline",
@@ -1476,6 +1989,7 @@ export const COMMERCIAL_LENDING_AGENT_ASSIST: StrategicMoveArchetype = {
 export const ARCHETYPE_REGISTRY: Record<string, StrategicMoveArchetype> = {
   [AI_PRODUCT_DEVELOPMENT_LIFECYCLE.id]: AI_PRODUCT_DEVELOPMENT_LIFECYCLE,
   [IT_SOURCING_EVENT.id]: IT_SOURCING_EVENT,
+  [ANALYTICS_CAPABILITY_REPATRIATION.id]: ANALYTICS_CAPABILITY_REPATRIATION,
   [AI_OPERATIONS_DECISION_SUPPORT.id]: AI_OPERATIONS_DECISION_SUPPORT,
   [CONTACT_CENTER_AGENT_ASSIST.id]: CONTACT_CENTER_AGENT_ASSIST,
   [COMMERCIAL_LENDING_AGENT_ASSIST.id]: COMMERCIAL_LENDING_AGENT_ASSIST,
@@ -1528,6 +2042,16 @@ export function resolveProgramArchetype(input: {
     )
   ) {
     return CONTACT_CENTER_AGENT_ASSIST;
+  }
+  if (
+    /managed analytics|analytics capability|analytics repatriation|capability repatriation|repatriat|provider[- ]delivered analytics|analytics provider|data return|vendor exit|databricks/.test(
+      haystack,
+    ) &&
+    /analytics|reporting|dashboard|measure|metric|model|databricks|provider|vendor/.test(
+      haystack,
+    )
+  ) {
+    return ANALYTICS_CAPABILITY_REPATRIATION;
   }
   if (/sourcing|vendor|renegoti/.test(haystack)) {
     return IT_SOURCING_EVENT;

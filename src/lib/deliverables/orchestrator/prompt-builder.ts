@@ -32,6 +32,8 @@ const USE_CASE_TITLE: Record<string, string> = {
   ERP_SI_SELECTION: "ERP and systems-integrator selection",
   CLOUD_MODERNIZATION: "cloud modernization and migration",
   AI_PDLC: "the AI-powered product development lifecycle",
+  ANALYTICS_CAPABILITY_REPATRIATION:
+    "analytics capability repatriation and managed analytics exit",
 };
 
 function describeUseCase(archetype: string): string {

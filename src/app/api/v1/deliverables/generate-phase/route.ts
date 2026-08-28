@@ -326,6 +326,7 @@ export async function POST(req: NextRequest) {
       : null;
 
     const adaptiveDepth: AdaptiveDepthDecision = resolveAdaptiveDepth({
+      archetype: useCaseArchetype,
       text: [
         useCaseArchetype,
         moveName,

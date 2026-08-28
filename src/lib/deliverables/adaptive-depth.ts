@@ -29,6 +29,7 @@ export type AdaptiveDepthResolutionConfidence = "high" | "medium" | "low";
 export interface AdaptiveDepthSignals {
   businessProcessCount: number;
   dataSourceCount: number;
+  analyticsCapabilityCount: number;
   identityResolutionNeeded: boolean;
   platformNovelty: boolean;
   workflowChange: boolean;
@@ -43,6 +44,12 @@ export interface AdaptiveDepthSignals {
   uncertaintyEvidenceGapCount: number;
   deploymentTopologyMature: boolean;
   securityBoundariesKnown: boolean;
+  transparentVendorProcessing: boolean;
+  fixedAnalyticsOutputs: boolean;
+  internalAnalyticsPlatformExists: boolean;
+  proprietaryExternalAugmentation: boolean;
+  parallelRunParityNeeded: boolean;
+  contractExitDataReturnRisk: boolean;
   missingRequiredDimensions: string[];
   declaredStraightforward: boolean;
 }
@@ -60,6 +67,7 @@ export interface StoryBeatDecision {
 }
 
 export interface AdaptiveDepthDecision {
+  archetypeKey?: string;
   complexityTier: ComplexityTier;
   score: number;
   reasons: string[];
@@ -75,6 +83,7 @@ export interface AdaptiveDepthDecision {
 const DEFAULT_SIGNALS: AdaptiveDepthSignals = {
   businessProcessCount: 1,
   dataSourceCount: 1,
+  analyticsCapabilityCount: 1,
   identityResolutionNeeded: false,
   platformNovelty: false,
   workflowChange: false,
@@ -89,9 +98,21 @@ const DEFAULT_SIGNALS: AdaptiveDepthSignals = {
   uncertaintyEvidenceGapCount: 0,
   deploymentTopologyMature: false,
   securityBoundariesKnown: false,
+  transparentVendorProcessing: false,
+  fixedAnalyticsOutputs: false,
+  internalAnalyticsPlatformExists: false,
+  proprietaryExternalAugmentation: false,
+  parallelRunParityNeeded: false,
+  contractExitDataReturnRisk: false,
   missingRequiredDimensions: [],
   declaredStraightforward: false,
 };
+
+const ANALYTICS_REPATRIATION_ARCHETYPE = "ANALYTICS_CAPABILITY_REPATRIATION";
+
+function isAnalyticsCapabilityRepatriation(archetype?: string): boolean {
+  return archetype === ANALYTICS_REPATRIATION_ARCHETYPE;
+}
 
 function hasAny(text: string, patterns: readonly RegExp[]): boolean {
   return patterns.some((pattern) => pattern.test(text));
@@ -123,6 +144,8 @@ export function signalsFromMoveText(
       /multi[- ]process/,
       /end[- ]to[- ]end/,
       /cross[- ]functional/,
+      /multiple capabilities/,
+      /capability waves/,
     ])
       ? 3
       : 1,
@@ -132,6 +155,17 @@ export function signalsFromMoveText(
       /system of record/,
       /warehouse/,
       /lakehouse/,
+      /data sent to (?:the )?vendor/,
+      /vendor data feed/,
+      /external provider feed/,
+    ])
+      ? 3
+      : 1,
+    analyticsCapabilityCount: hasAny(lower, [
+      /multiple analytics capabilities/,
+      /capability inventory/,
+      /capability waves/,
+      /managed analytics portfolio/,
     ])
       ? 3
       : 1,
@@ -143,6 +177,8 @@ export function signalsFromMoveText(
         /matching/,
         /duplicate/,
         /master data/,
+        /conformance/,
+        /external identity/,
       ],
       [/no identity resolution/, /without identity resolution/],
     ),
@@ -154,6 +190,7 @@ export function signalsFromMoveText(
         /new cloud/,
         /data platform/,
         /lakehouse/,
+        /databricks foundation/,
       ],
       [/no new platform/, /without a new platform/, /no platform change/],
     ),
@@ -165,6 +202,7 @@ export function signalsFromMoveText(
         /operating procedure/,
         /human workflow/,
         /handoff/,
+        /activation workflow/,
       ],
       [/no workflow change/, /without workflow change/, /no process redesign/],
     ),
@@ -186,6 +224,8 @@ export function signalsFromMoveText(
         /predictive model/,
         /clinical ai/,
         /regulated ai/,
+        /model logic/,
+        /analytics model/,
       ],
       [
         /no model risk/,
@@ -236,6 +276,9 @@ export function signalsFromMoveText(
         /procurement/,
         /outsourcing/,
         /\bams\b/,
+        /managed analytics/,
+        /provider exit/,
+        /vendor exit/,
       ],
       [
         /no vendor/,
@@ -254,6 +297,7 @@ export function signalsFromMoveText(
       /api/,
       /event bus/,
       /message queue/,
+      /data feed/,
     ])
       ? Math.max(
           2,
@@ -340,6 +384,78 @@ export function signalsFromMoveText(
         /security boundar(?:y|ies) .*not yet/,
       ],
     ),
+    transparentVendorProcessing: hasPositiveSignal(
+      lower,
+      [
+        /transparent (?:vendor )?(?:logic|processing|transformation)/,
+        /documented (?:business rules|measures|metric logic|model logic|transforms?)/,
+        /known (?:business rules|measure logic|metric logic|model logic)/,
+      ],
+      [
+        /opaque (?:vendor )?(?:logic|processing|transformation)/,
+        /unknown (?:business rules|measure logic|metric logic|model logic|transforms?)/,
+      ],
+    ),
+    fixedAnalyticsOutputs: hasPositiveSignal(
+      lower,
+      [
+        /fixed outputs?/,
+        /fixed reports?/,
+        /documented outputs?/,
+        /stable dashboard/,
+        /standard reports?/,
+      ],
+      [/unclear outputs?/, /unknown outputs?/, /outputs? .*not documented/],
+    ),
+    internalAnalyticsPlatformExists: hasPositiveSignal(
+      lower,
+      [
+        /existing (?:internal )?(?:databricks|analytics platform|lakehouse)/,
+        /databricks already exists/,
+        /internal platform exists/,
+        /foundation already exists/,
+      ],
+      [
+        /new databricks foundation/,
+        /no internal platform/,
+        /without internal platform/,
+        /platform .*not yet/,
+      ],
+    ),
+    proprietaryExternalAugmentation: hasPositiveSignal(
+      lower,
+      [
+        /proprietary/,
+        /third[- ]party enrichment/,
+        /external data/,
+        /black box/,
+        /opaque vendor/,
+      ],
+      [/no proprietary/, /without proprietary/, /no external data/],
+    ),
+    parallelRunParityNeeded: hasPositiveSignal(
+      lower,
+      [
+        /parallel run/,
+        /parity/,
+        /side[- ]by[- ]side/,
+        /dual run/,
+        /reconciliation period/,
+      ],
+      [/no parallel run/, /without parallel run/, /no parity/],
+    ),
+    contractExitDataReturnRisk: hasPositiveSignal(
+      lower,
+      [
+        /contract exit/,
+        /vendor exit/,
+        /data return/,
+        /ip rights/,
+        /termination assistance/,
+        /retained obligations/,
+      ],
+      [/no contract exit/, /no vendor exit/, /no data return risk/],
+    ),
     missingRequiredDimensions: [],
     declaredStraightforward: hasAny(lower, [
       /straightforward/,
@@ -361,6 +477,11 @@ function complexityScore(signals: AdaptiveDepthSignals): number {
         ? 1
         : 0,
     signals.dataSourceCount > 3 ? 2 : signals.dataSourceCount > 1 ? 1 : 0,
+    signals.analyticsCapabilityCount > 2
+      ? 2
+      : signals.analyticsCapabilityCount > 1
+        ? 1
+        : 0,
     signals.identityResolutionNeeded ? 2 : 0,
     signals.platformNovelty ? 1 : 0,
     signals.workflowChange ? 1 : 0,
@@ -379,10 +500,54 @@ function complexityScore(signals: AdaptiveDepthSignals): number {
       : signals.uncertaintyEvidenceGapCount > 0
         ? 1
         : 0,
+    signals.proprietaryExternalAugmentation ? 2 : 0,
+    signals.parallelRunParityNeeded ? 2 : 0,
+    signals.contractExitDataReturnRisk ? 2 : 0,
   ].reduce((sum, value) => sum + value, 0);
 }
 
-function tierFor(score: number, signals: AdaptiveDepthSignals): ComplexityTier {
+function analyticsRepatriationTier(
+  score: number,
+  signals: AdaptiveDepthSignals,
+): ComplexityTier | null {
+  const complex =
+    signals.proprietaryExternalAugmentation ||
+    signals.identityResolutionNeeded ||
+    signals.clinicalRegulatorySensitivity ||
+    signals.modelAiComplexity ||
+    signals.realTimeRequirement ||
+    signals.parallelRunParityNeeded ||
+    signals.contractExitDataReturnRisk ||
+    signals.analyticsCapabilityCount > 1 ||
+    signals.businessProcessCount > 1 ||
+    (signals.platformNovelty && !signals.internalAnalyticsPlatformExists) ||
+    score >= 8;
+
+  if (complex) return "complex";
+
+  if (
+    signals.declaredStraightforward &&
+    signals.transparentVendorProcessing &&
+    signals.fixedAnalyticsOutputs &&
+    signals.internalAnalyticsPlatformExists &&
+    signals.integrationPointCount <= 1 &&
+    signals.uncertaintyEvidenceGapCount === 0
+  ) {
+    return "straightforward";
+  }
+
+  return null;
+}
+
+function tierFor(
+  score: number,
+  signals: AdaptiveDepthSignals,
+  archetype?: string,
+): ComplexityTier {
+  if (isAnalyticsCapabilityRepatriation(archetype)) {
+    const analyticsTier = analyticsRepatriationTier(score, signals);
+    if (analyticsTier) return analyticsTier;
+  }
   if (
     (signals.clinicalRegulatorySensitivity && signals.modelAiComplexity) ||
     score >= 8
@@ -399,6 +564,8 @@ function reasonList(signals: AdaptiveDepthSignals, score: number): string[] {
     reasons.push(`${signals.businessProcessCount} business processes`);
   if (signals.dataSourceCount > 1)
     reasons.push(`${signals.dataSourceCount} data sources`);
+  if (signals.analyticsCapabilityCount > 1)
+    reasons.push(`${signals.analyticsCapabilityCount} analytics capabilities`);
   if (signals.identityResolutionNeeded)
     reasons.push("identity resolution required");
   if (signals.platformNovelty) reasons.push("platform novelty");
@@ -413,6 +580,17 @@ function reasonList(signals: AdaptiveDepthSignals, score: number): string[] {
   if (signals.operatingModelImpact) reasons.push("operating-model impact");
   if (signals.uncertaintyEvidenceGapCount > 0)
     reasons.push(`${signals.uncertaintyEvidenceGapCount} evidence gap(s)`);
+  if (signals.transparentVendorProcessing)
+    reasons.push("transparent vendor processing");
+  if (signals.fixedAnalyticsOutputs) reasons.push("fixed analytics outputs");
+  if (signals.internalAnalyticsPlatformExists)
+    reasons.push("internal analytics platform exists");
+  if (signals.proprietaryExternalAugmentation)
+    reasons.push("proprietary/external augmentation");
+  if (signals.parallelRunParityNeeded)
+    reasons.push("parallel-run/parity required");
+  if (signals.contractExitDataReturnRisk)
+    reasons.push("contract/IP/data-return risk");
   return reasons;
 }
 
@@ -489,7 +667,53 @@ function artifactDecision(
   artifactKey: string,
   tier: ComplexityTier,
   signals: AdaptiveDepthSignals,
+  archetype?: string,
 ): ArtifactApplicabilityDecision {
+  if (isAnalyticsCapabilityRepatriation(archetype)) {
+    if (
+      artifactKey === "discovery_report" ||
+      artifactKey === "current_state_assessment"
+    ) {
+      return {
+        applicability: "required",
+        reason:
+          "Managed analytics exit requires a current capability/control/contract fact base before design.",
+      };
+    }
+    if (
+      artifactKey === "requirements_traceability" ||
+      artifactKey === "target_state_architecture"
+    ) {
+      return {
+        applicability: tier === "straightforward" ? "lightweight" : "required",
+        reason:
+          "Capability traceability and target architecture are required to prove migrated capability parity.",
+      };
+    }
+    if (
+      artifactKey === "sourcing_strategy" &&
+      !(signals.vendorSourcingDecision || signals.contractExitDataReturnRisk)
+    ) {
+      return {
+        applicability: "lightweight",
+        reason:
+          "No new vendor decision is present, but retained-vendor/exit responsibilities still need lightweight treatment.",
+      };
+    }
+    if (
+      (artifactKey === "operating_model_design" ||
+        artifactKey === "operating_model") &&
+      tier === "straightforward" &&
+      !signals.operatingModelImpact
+    ) {
+      return {
+        applicability: "merge_into_parent",
+        mergeInto: "solution_design",
+        reason:
+          "Operating impact is limited; include the run/change ownership note inside Solution Design.",
+      };
+    }
+  }
   if (artifactKey === "sourcing_strategy" && !signals.vendorSourcingDecision) {
     return {
       applicability: "not_applicable",
@@ -539,6 +763,7 @@ function artifactDecision(
 
 function storyBeatDecisions(
   signals: AdaptiveDepthSignals,
+  archetype?: string,
 ): Record<string, StoryBeatDecision> {
   return {
     physical_architecture: requiredDimensionMissing(
@@ -554,7 +779,8 @@ function storyBeatDecisions(
       : signals.deploymentTopologyMature &&
           (signals.platformNovelty ||
             signals.integrationPointCount > 0 ||
-            signals.securityBoundariesKnown)
+            signals.securityBoundariesKnown ||
+            isAnalyticsCapabilityRepatriation(archetype))
         ? {
             applicability: "triggered",
             evidenceState: "sufficient",
@@ -589,16 +815,18 @@ function storyBeatDecisions(
             reason:
               "No governed human decision or regulated action is present.",
           },
-    sourcing_analysis: signals.vendorSourcingDecision
-      ? {
-          applicability: "triggered",
-          evidenceState: "sufficient",
-          reason: "A genuine vendor/build-buy/partner decision is present.",
-        }
-      : {
-          applicability: "not_applicable",
-          reason: "No vendor/build-buy/partner decision is present.",
-        },
+    sourcing_analysis:
+      signals.vendorSourcingDecision || signals.contractExitDataReturnRisk
+        ? {
+            applicability: "triggered",
+            evidenceState: "sufficient",
+            reason:
+              "A genuine vendor/build-buy/partner or contract-exit decision is present.",
+          }
+        : {
+            applicability: "not_applicable",
+            reason: "No vendor/build-buy/partner decision is present.",
+          },
     real_time_flow: signals.realTimeRequirement
       ? {
           applicability: "triggered",
@@ -614,6 +842,7 @@ function storyBeatDecisions(
 
 export function resolveAdaptiveDepth(args: {
   text?: string;
+  archetype?: string;
   signals?: Partial<AdaptiveDepthSignals>;
   artifactKeys?: readonly string[];
 }): AdaptiveDepthDecision {
@@ -630,7 +859,7 @@ export function resolveAdaptiveDepth(args: {
     signals,
   });
   const score = complexityScore(signals);
-  const complexityTier = tierFor(score, signals);
+  const complexityTier = tierFor(score, signals, args.archetype);
   const artifactKeys = args.artifactKeys?.length
     ? args.artifactKeys
     : [
@@ -643,10 +872,11 @@ export function resolveAdaptiveDepth(args: {
   const artifactApplicability = Object.fromEntries(
     artifactKeys.map((key) => [
       key,
-      artifactDecision(key, complexityTier, signals),
+      artifactDecision(key, complexityTier, signals, args.archetype),
     ]),
   );
   return {
+    ...(args.archetype ? { archetypeKey: args.archetype } : {}),
     complexityTier,
     score,
     reasons: reasonList(signals, score),
@@ -655,9 +885,15 @@ export function resolveAdaptiveDepth(args: {
     resolutionConfidence: confidence.confidence,
     resolutionConfidenceReasons: confidence.reasons,
     artifactApplicability,
-    storyBeatApplicability: storyBeatDecisions(signals),
-    guidance:
-      complexityTier === "straightforward"
+    storyBeatApplicability: storyBeatDecisions(signals, args.archetype),
+    guidance: isAnalyticsCapabilityRepatriation(args.archetype)
+      ? [
+          "Core principle: migrate analytics capabilities, data contracts, measures, workflows, controls, and operating ownership; do not treat this as a screen/dashboard migration.",
+          "P1 authorizes Discovery only. Do not assume full repatriation, roadmap, platform build, or vendor exit is approved.",
+          "P2 must use Strategic Control x Repatriation Readiness: retain/optimize, hybrid/coexistence, phased repatriation, or full repatriation.",
+          "Do not compute savings as vendor spend minus internal platform cost. Quantified value requires validated vendor cost, retained obligations, foundation investment, capability investment, transition/double-run cost, run cost, timing, and risk conditions.",
+        ]
+      : complexityTier === "straightforward"
         ? [
             "Prefer executive answer -> concise current-state issue -> relevant data/process readiness -> confirmed reusable solution pattern -> architecture on a page -> deterministic estimate -> risks/conditions -> next decision.",
             "Do not invent three options when only one credible pattern exists.",

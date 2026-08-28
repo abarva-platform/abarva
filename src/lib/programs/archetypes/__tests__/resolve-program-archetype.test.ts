@@ -3,6 +3,7 @@ import {
   getArchetype,
   DEFAULT_ARCHETYPE_ID,
   AI_OPERATIONS_DECISION_SUPPORT,
+  ANALYTICS_CAPABILITY_REPATRIATION,
   AI_PRODUCT_DEVELOPMENT_LIFECYCLE,
   COMMERCIAL_LENDING_AGENT_ASSIST,
   CONTACT_CENTER_AGENT_ASSIST,
@@ -84,6 +85,20 @@ describe("resolveProgramArchetype — per-Move archetype resolution", () => {
     );
   });
 
+  it("routes managed analytics exit language to analytics capability repatriation before generic sourcing", () => {
+    expect(
+      resolveProgramArchetype({
+        classification:
+          "Managed analytics provider exit to internal Databricks with data return, parity, contract transition, and vendor support in scope.",
+      }).id,
+    ).toBe("ANALYTICS_CAPABILITY_REPATRIATION");
+    expect(
+      resolveProgramArchetype({
+        name: "Analytics capability repatriation from managed provider",
+      }).id,
+    ).toBe("ANALYTICS_CAPABILITY_REPATRIATION");
+  });
+
   it("sourcing signals win over operations signals (declared precedence)", () => {
     expect(
       resolveProgramArchetype({ name: "Sourcing event for operations tools" })
@@ -96,6 +111,12 @@ describe("resolveProgramArchetype — per-Move archetype resolution", () => {
       resolveProgramArchetype({ archetype: "AI_OPERATIONS_DECISION_SUPPORT" })
         .id,
     ).toBe(AI_OPERATIONS_DECISION_SUPPORT.id);
+    expect(
+      resolveProgramArchetype({
+        archetype: "ANALYTICS_CAPABILITY_REPATRIATION",
+        name: "generic vendor sourcing", // exact id wins over heuristics
+      }).id,
+    ).toBe(ANALYTICS_CAPABILITY_REPATRIATION.id);
     expect(
       resolveProgramArchetype({
         archetype: "AI_PRODUCT_DEVELOPMENT_LIFECYCLE",
@@ -177,6 +198,63 @@ describe("AI_OPERATIONS_DECISION_SUPPORT — registry shape", () => {
   });
 });
 
+describe("ANALYTICS_CAPABILITY_REPATRIATION — registry shape", () => {
+  it("is registered and resolvable by id", () => {
+    expect(getArchetype("ANALYTICS_CAPABILITY_REPATRIATION")?.name).toBe(
+      "Analytics Capability Repatriation",
+    );
+  });
+
+  it("keeps P1 as Discovery authorization rather than full repatriation approval", () => {
+    const originate = ANALYTICS_CAPABILITY_REPATRIATION.phaseModel.find(
+      (p) => p.phase === "originate",
+    )!;
+    const charter = ANALYTICS_CAPABILITY_REPATRIATION.deliverablePack.find(
+      (d) => d.key === "program_charter",
+    )!;
+
+    expect(originate.gateRequirements.map((g) => g.key)).toContain(
+      "discovery_only_scope",
+    );
+    expect(charter.qualityBar.rubric.join(" ")).toMatch(
+      /Authorizes Discovery only/,
+    );
+    expect(charter.sections.join(" ")).not.toMatch(/roadmap|architecture/i);
+  });
+
+  it("declares every required evidence family and includes contract/parity/platform coverage", () => {
+    const declared = new Set(
+      ANALYTICS_CAPABILITY_REPATRIATION.evidenceFamilies.map((f) => f.key),
+    );
+    for (const phase of ANALYTICS_CAPABILITY_REPATRIATION.phaseModel) {
+      for (const requirement of phase.requiredEvidence) {
+        expect(declared.has(requirement.family)).toBe(true);
+      }
+    }
+    expect(declared.has("business_rules_measure_logic")).toBe(true);
+    expect(declared.has("internal_databricks_readiness")).toBe(true);
+    expect(declared.has("contract_ip_data_return_exit")).toBe(true);
+    expect(ANALYTICS_CAPABILITY_REPATRIATION.analysisMethods).toEqual(
+      expect.arrayContaining([
+        "strategic_control_repatriation_readiness",
+        "capability_parity_traceability",
+      ]),
+    );
+  });
+
+  it("business case prohibits simplistic vendor-spend-minus-platform-cost savings", () => {
+    const businessCase = ANALYTICS_CAPABILITY_REPATRIATION.deliverablePack.find(
+      (d) => d.key === "business_case",
+    )!;
+    expect(businessCase.qualityBar.rubric.join(" ")).toMatch(
+      /Never uses vendor spend minus internal platform cost/,
+    );
+    expect(
+      ANALYTICS_CAPABILITY_REPATRIATION.agentGuidance.systemFraming,
+    ).toMatch(/Migrate provider-delivered analytics capabilities/);
+  });
+});
+
 describe("CONTACT_CENTER_AGENT_ASSIST — registry shape", () => {
   it("is registered and resolvable by id", () => {
     expect(getArchetype("CONTACT_CENTER_AGENT_ASSIST")?.name).toBe(
@@ -224,9 +302,7 @@ describe("CONTACT_CENTER_AGENT_ASSIST — registry shape", () => {
       "diagnose",
       emptyProfile(),
     );
-    const byFamily = Object.fromEntries(
-      resolved.map((r) => [r.family.key, r]),
-    );
+    const byFamily = Object.fromEntries(resolved.map((r) => [r.family.key, r]));
 
     expect(byFamily["member_service_process_map"].severity).toBe("hard");
     expect(byFamily["member_service_process_map"].rationale).toContain(
@@ -235,9 +311,9 @@ describe("CONTACT_CENTER_AGENT_ASSIST — registry shape", () => {
     expect(byFamily["solution_delivery_estimation_context"].severity).toBe(
       "soft",
     );
-    expect(byFamily["solution_delivery_estimation_context"].rationale).toContain(
-      "as optional context",
-    );
+    expect(
+      byFamily["solution_delivery_estimation_context"].rationale,
+    ).toContain("as optional context");
     expect(
       byFamily["solution_delivery_estimation_context"].rationale,
     ).not.toContain("requires Solution delivery estimation context");
