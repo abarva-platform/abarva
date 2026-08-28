@@ -9,7 +9,7 @@ import process from "node:process";
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../..");
 const DEFAULT_OUT_DIR = "job-output/meridian-phs-moves-activation-load";
-const DEFAULT_CLIENT_ID = "d2e9b6f4-8c25-43a9-b8e0-7d2f41f0a612";
+const DEFAULT_CLIENT_ID = "d88769f2-0385-4215-93df-6db29c23162c";
 const DEFAULT_ASSESSMENT_ID = "meridian-phs-demo-readiness";
 const DEFAULT_AS_OF_DATE = "2026-08-28";
 const TENANT_KEY = "meridian-health";

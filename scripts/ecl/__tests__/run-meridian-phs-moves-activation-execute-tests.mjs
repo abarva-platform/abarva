@@ -59,6 +59,8 @@ assert.equal(
 );
 const generatedSql = fs.readFileSync(path.join(planDir, "activation", "meridian_phs_moves_activation.sql"), "utf8");
 assert.match(generatedSql, /on conflict \(id\) do update set/i);
+assert.match(generatedSql, /client_id = excluded\.client_id/i);
+assert.match(generatedSql, /solution = excluded\.solution/i);
 assert.doesNotMatch(generatedSql, /on conflict \(client_id, solution\)/i);
 assert.doesNotMatch(generatedSql, /on conflict \(engagement_id, module_key\)/i);
 
