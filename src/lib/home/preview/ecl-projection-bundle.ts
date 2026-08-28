@@ -481,7 +481,7 @@ function buildEclSignalPacket(
     {
       id: "sig_ecl_gap_004",
       kind: "gap",
-      statement: "This Home preview is a governed ECL projection read, but retrieval indexing and default-provider cutover remain separate gates.",
+      statement: "This Home preview is served from governed ECL rows by default; retrieval indexing, client attestation, and narrative-quality review remain separate gates.",
       domains: ["evidence_sources"],
       evidenceRefs: ["serving.home_executive_brief"],
     },
@@ -511,7 +511,7 @@ function buildEclThesis(signalPacket: EnterpriseSignalPacket): EnterpriseThesis 
   const estateClaim = claim(signalPacket.signals[0]?.statement ?? "The ECL estate projection is loaded.", ["sig_ecl_estate_001"]);
   const vendorClaim = claim(signalPacket.signals[1]?.statement ?? "The ECL vendor projection is loaded.", ["sig_ecl_vendor_002"], "OBSERVATION");
   const flowClaim = claim(signalPacket.signals[2]?.statement ?? "The ECL data-flow projection is loaded.", ["sig_ecl_data_flow_003"], "OBSERVATION");
-  const gapClaim = claim(signalPacket.signals[3]?.statement ?? "Retrieval indexing and default-provider cutover remain pending.", ["sig_ecl_gap_004"], "OBSERVATION", "medium");
+  const gapClaim = claim(signalPacket.signals[3]?.statement ?? "Retrieval indexing, client attestation, and narrative-quality review remain pending.", ["sig_ecl_gap_004"], "OBSERVATION", "medium");
   return {
     enterprise_story: `${estateClaim.statement} The dense record is ready for current-state exploration; executive narrative generation and cutover remain governed follow-on decisions.`,
     enterprise_story_claims: [estateClaim, gapClaim],
@@ -530,10 +530,10 @@ function buildEclThesis(signalPacket: EnterpriseSignalPacket): EnterpriseThesis 
     material_risks: [gapClaim],
     value_realization_tensions: [vendorClaim, gapClaim],
     what_needs_attention: [gapClaim],
-    evidence_gaps: ["Retrieval indexing and default-provider cutover are not established by the Home ECL projection itself."],
+    evidence_gaps: ["Retrieval indexing, client attestation, and narrative-quality review are not established by the Home ECL projection itself."],
     things_a_new_cxo_should_know: [estateClaim, vendorClaim, flowClaim, gapClaim],
     questions_for_management: [
-      claim("Which Home chapter claims should be promoted from deterministic ECL exploration into a regenerated executive narrative?", ["sig_ecl_gap_004"], "ADVISORY_INFERENCE", "medium"),
+      claim("Which Home chapter claims should remain in the executive narrative after narrative-quality review?", ["sig_ecl_gap_004"], "ADVISORY_INFERENCE", "medium"),
     ],
     visual_opportunities: [
       visual("application_landscape_by_function", "Applications grouped by business function", "The loaded ECL estate is function-segmented, not a 306-row legacy snapshot.", ["sig_ecl_estate_001"]),

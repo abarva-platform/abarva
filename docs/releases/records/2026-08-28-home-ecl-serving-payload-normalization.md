@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Home preview now unwraps the payload shape emitted by the ECL serving views before building deterministic evidence signals. This keeps Home's contract-value readout aligned with the governed serving rows instead of treating populated contract values as missing.
+Home preview now unwraps the payload shape emitted by the ECL serving views before building deterministic evidence signals. This keeps Home's contract-value readout aligned with the governed serving rows instead of treating populated contract values as missing. The Home ECL readout also no longer describes default-provider cutover as pending after the ECL default path is active.
 
 ## Layer Impact
 
@@ -30,6 +30,7 @@ Home preview now unwraps the payload shape emitted by the ECL serving views befo
 
 - `src/lib/home/preview/ecl-projection-bundle.ts`
 - `src/lib/home/preview/__tests__/ecl-projection-bundle.test.ts`
+- Home ECL gate language aligned with the current default-serving state.
 
 ## QA / Validation
 
