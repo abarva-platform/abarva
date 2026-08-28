@@ -192,7 +192,42 @@ describe("TowerCommandCenter", () => {
     expect(screen.getByText("AI portfolio")).toBeInTheDocument();
     expect(screen.getByText("Attributed spend by vendor")).toBeInTheDocument();
     expect(screen.getByText("Cost findings · evidenced")).toBeInTheDocument();
-    expect(screen.getByText(/Cost lens/)).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Cost lens/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    fireEvent.click(screen.getByRole("tab", { name: /Risk lens/ }));
+    expect(
+      screen.getByText("Top value evidence gaps by amount at stake"),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: /Adoption lens/ }));
+    expect(
+      screen.getByText("AI and BI assets ranked by recorded usage evidence"),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: /All tools/ }));
+    expect(
+      screen.getByText("All AI initiatives and tools"),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("table")).toBeInTheDocument();
+  });
+
+  it("routes executive review buttons to distinct review surfaces", () => {
+    renderPage();
+
+    const reviewButtons = screen.getAllByRole("button", { name: /Review/ });
+    fireEvent.click(reviewButtons[0]);
+    expect(tab(/AI Portfolio/)).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    fireEvent.click(tab(/Executive View/));
+    fireEvent.click(screen.getAllByRole("button", { name: /Review/ })[1]);
+    expect(tab(/Value Proof/)).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    fireEvent.click(tab(/Executive View/));
+    fireEvent.click(screen.getAllByRole("button", { name: /Review/ })[2]);
+    expect(tab(/Evidence & Actions/)).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("renders the Evidence & Actions tab-specific contract layout", () => {
@@ -222,7 +257,10 @@ describe("TowerCommandCenter", () => {
   it("opens the AI initiative drawer from the portfolio spend list", () => {
     renderPage();
     fireEvent.click(tab(/AI Portfolio/));
-    clickFirstButtonContaining("exposed at review");
+    const firstAi = [...view.allInitiatives].sort(
+      (a, b) => b.aiSpendUsd - a.aiSpendUsd || b.riskScore - a.riskScore,
+    )[0]!;
+    clickFirstButtonContaining(firstAi.vendor ?? firstAi.name);
 
     const drawer = screen.getByRole("dialog");
     expect(within(drawer).getByText("Value potential")).toBeInTheDocument();

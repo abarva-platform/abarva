@@ -1199,18 +1199,27 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   gap: 6px;
   justify-content: flex-end;
 }
-.contractSegments span {
+.contractSegments span,
+.contractSegments button {
   background: var(--canon-bg-surface);
   border: 1px solid var(--canon-border);
   border-radius: 6px;
   color: var(--canon-gray-700);
+  font-family: var(--abarva-sans);
   font-size: 12.5px;
   font-weight: 700;
   min-width: 150px;
   padding: 10px 16px;
   text-align: center;
 }
+.contractSegments button { cursor: pointer; }
+.contractSegments button:hover, .contractSegments button:focus-visible { border-color: var(--canon-border-strong); color: var(--canon-gray-900); outline: 0; }
 .contractSegments span:first-child {
+  background: var(--canon-teal-light);
+  border-color: var(--canon-teal);
+  color: var(--canon-teal-dark);
+}
+.contractSegments .segmentOn {
   background: var(--canon-teal-light);
   border-color: var(--canon-teal);
   color: var(--canon-teal-dark);
@@ -1226,6 +1235,7 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   box-shadow: var(--shadow-card);
   min-width: 0;
 }
+.contractFullCard { min-height: 520px; }
 .contractCardHeader {
   align-items: baseline;
   display: flex;
@@ -1272,6 +1282,7 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   margin-right: 8px;
   width: 7px;
 }
+.contractEmpty { align-items: center; color: var(--canon-gray-500); display: flex; font-size: 13px; height: clamp(236px, 22vw, 340px); justify-content: center; padding: 24px; text-align: center; }
 .contractFoot {
   border-top: 1px solid var(--canon-border);
   color: var(--canon-gray-500);
@@ -1706,7 +1717,7 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   .contractModeRow { align-items: flex-start; flex-direction: column; }
   .contractStatus { justify-content: flex-start; }
   .contractSegments { justify-content: flex-start; width: 100%; }
-  .contractSegments span { flex: 1 1 100%; }
+  .contractSegments span, .contractSegments button { flex: 1 1 100%; }
   .campaignRow {
     align-items: flex-start;
     grid-template-columns: 28px 1fr;
