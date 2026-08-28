@@ -1,5 +1,5 @@
 import { buildViewModel } from "../buildViewModel";
-import { INITIAL_STATE, WorkspaceViewModel } from "../viewModel";
+import { fmtDate, INITIAL_STATE, WorkspaceViewModel } from "../viewModel";
 import {
   buildSourceVendor360Cockpit,
   type SourceWorkspacePortfolioData,
@@ -237,6 +237,11 @@ function assertPlausibleMoney(label: string, value: string) {
 }
 
 describe("buildViewModel numeric coercion", () => {
+  it("withholds malformed five-digit contract dates", () => {
+    expect(fmtDate("20210-12-31")).toBe("Not established");
+    expect(fmtDate("2027-12-31")).toBe("31 Dec 2027");
+  });
+
   it("routes the workspace optimize entry to the dedicated Optimize module, not generic new sourcing", () => {
     const vm = buildVm();
     vm.state.open.events = true;

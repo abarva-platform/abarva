@@ -57,6 +57,7 @@ export function pct(v: number): string {
 }
 export function fmtDate(iso: string | null): string {
   if (!iso) return 'Not established';
+  if (!/^\d{4}(?:-\d{2}-\d{2}|T|$)/.test(iso.trim())) return 'Not established';
   const dt = new Date(iso);
   if (Number.isNaN(dt.getTime())) return 'Not established';
   return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
