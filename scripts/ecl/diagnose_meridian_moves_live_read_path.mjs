@@ -80,6 +80,28 @@ async function tableExists(client, tableName) {
   return Boolean(rows[0]?.table_name);
 }
 
+async function tableColumns(client, tableName) {
+  const [schema, table] = tableName.split(".", 2);
+  if (!schema || !table) return new Set();
+  const rows = await query(
+    client,
+    `
+    select column_name
+    from information_schema.columns
+    where table_schema = $1
+      and table_name = $2
+    `,
+    [schema, table],
+  );
+  return new Set(rows.map((row) => row.column_name));
+}
+
+function optionalColumn(columns, columnName, type = "text") {
+  return columns.has(columnName)
+    ? columnName
+    : `null::${type} as ${columnName}`;
+}
+
 function buildIssues(summary) {
   const issues = [];
   if (summary.client_resolution.candidate_clients.length === 0) {
@@ -172,6 +194,9 @@ async function main() {
       client,
       "public.engagement_participants",
     );
+    const personColumns = personsExists
+      ? await tableColumns(client, "public.persons")
+      : new Set();
 
     const candidateClients = clientsExists
       ? await query(
@@ -274,7 +299,11 @@ async function main() {
       ? await query(
           client,
           `
-          select id, email, role, tenant_role
+          select
+            id,
+            email,
+            ${optionalColumn(personColumns, "role")},
+            ${optionalColumn(personColumns, "tenant_role")}
           from public.persons
           where lower(email) = any($1::text[])
           order by email
