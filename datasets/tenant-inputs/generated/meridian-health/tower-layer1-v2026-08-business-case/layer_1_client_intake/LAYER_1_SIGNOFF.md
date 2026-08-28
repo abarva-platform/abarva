@@ -39,6 +39,19 @@ The source layer answers five simple executive questions:
 | Projected annual AI value, low case | `$677.8M` | Sponsor-projected annual value after business-case challenge |
 | Projected annual AI value, high case | `$847.2M` | Upper planning case; not board-claimable without evidence |
 | AI portfolio ROI range | `3.2x-4.0x` | Projected annual value divided by explicit AI / AI-enabled investment |
+| Board-claimable value YTD | `$13.1M` | Finance-validated value released by the monthly workflow |
+
+| Source population | Rows | What it controls |
+| --- | ---: | --- |
+| IT budget domains | 8 | Full IT budget context |
+| Reviewed IT projects | 140 | Approved work in Tower scope |
+| AI business cases | 42 | One case per explicit AI / AI-enabled project |
+| Direct-value AI cases | 28 | Cases with projected annual value and ROI |
+| Foundation / readiness AI cases | 14 | Enablement work without standalone ROI |
+| Tool rollouts | 13 | Adoption goals and active usage by tool |
+| Monthly value observations | 504 | Refreshable value-tracking rows |
+| Finance approval events | 84 | Ongoing CFO / Finance review states |
+| Evidence rows | 196 | Proof tied to source objects and monthly observations |
 
 These measures must remain separate:
 
@@ -109,13 +122,14 @@ Layer 1 is ready for signoff if the following remain true:
 - AI is explicit through `is_ai_related`; BI is not automatically AI.
 - There are 140 project rows and 42 AI business cases.
 - Every explicit AI / AI-enabled project has exactly one business case.
-- Tool rollouts include goals, target users, enabled users, and active users.
+- Tool rollouts include goals, target users, enabled users, and active users across 13 tools.
+- Monthly tracking has 504 rows, Finance has 84 approval events, and evidence has 196 source rows.
 - Projected annual AI value remains in the 3x-4x portfolio range.
 - Sponsor value, Finance-reviewed value, Finance-validated value, and board-claimable value stay separate.
 
 ## Open Signoff Decisions
 
-Before moving to Layer 2 adapters, sign off or revise these choices:
+Before moving beyond Layer 2, sign off or revise these choices:
 
 1. Is `$211.8M` the right synthetic AI / AI-enabled investment pool inside a `$703.1M` reviewed IT project portfolio?
 2. Is `3.2x-4.0x` the right projected annual AI value range for the demo story?

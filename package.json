@@ -771,6 +771,7 @@
     "ecl:client-intake-vendor-contract:load": "python3 scripts/ecl/load_client_intake_vendor_contract_layer.py",
     "tower:healthcare-demo-layer2-source-adapters:load": "node scripts/tower/load-healthcare-demo-layer2-source-adapters.mjs",
     "tower:healthcare-demo-layer2-source-adapters:validate": "node scripts/tower/validate-healthcare-demo-layer2-source-adapters.mjs",
+    "tower:healthcare-demo-layer2-source-adapters:validate:local": "node scripts/tower/validate-healthcare-demo-layer2-source-adapters.mjs --local-only",
     "tower:healthcare-demo-layer2-source-adapters:write-job": "TOWER_LAYER2_WRITE=true TOWER_LAYER2_AZURE_WRITE_APPROVED=true TOWER_LAYER2_EMIT_PROOF_BUNDLE=true node scripts/tower/load-healthcare-demo-layer2-source-adapters.mjs",
     "tower:healthcare-demo-layer3-canonical:load": "node scripts/tower/load-healthcare-demo-layer3-canonical.mjs",
     "tower:healthcare-demo-layer3-canonical:validate": "node scripts/tower/validate-healthcare-demo-layer3-canonical.mjs",

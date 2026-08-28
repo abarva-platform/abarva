@@ -89,12 +89,12 @@
     {
       "file": "00_layer1_readme.csv",
       "rows": 1,
-      "sha256": "0496c3754090ed7afbff8a5ad039be67e699adff817b8cc32b034441c5dbaa1e"
+      "sha256": "461ba9759c9dcdccccedd4ea89da1a0a3bddd4fe66595225227261eb1659c354"
     },
     {
       "file": "layer_1_client_intake/00_layer1_readme.csv",
       "rows": 1,
-      "sha256": "0496c3754090ed7afbff8a5ad039be67e699adff817b8cc32b034441c5dbaa1e"
+      "sha256": "461ba9759c9dcdccccedd4ea89da1a0a3bddd4fe66595225227261eb1659c354"
     },
     {
       "file": "layer_1_client_intake/source_file_manifest.csv",
@@ -200,6 +200,21 @@
       "file": "README.md",
       "rows": null,
       "sha256": "7069212f892c83e1e6ea8c381d0e06a3be956589a275034a4a34373724965f83"
+    },
+    {
+      "file": "layer_1_client_intake/LAYER_1_SIGNOFF.md",
+      "rows": null,
+      "sha256": "3079d696f140592a6c0f3fc54eb4bc1257c6cb201896856c0d59605990c6b50f"
+    },
+    {
+      "file": "layer_2_source_adapters/LAYER_2_SIGNOFF.md",
+      "rows": null,
+      "sha256": "64b15bc669921eb2b70caf4b5572fe06c9d95fa12c0ca08f268e2dc0646c8d75"
+    },
+    {
+      "file": "layer_3_canonical/LAYER_3_SIGNOFF.md",
+      "rows": null,
+      "sha256": "7610d8bbaea9ab0874f5fe9f5c8a96234fec00969ca6b9409f69fa62097c23ce"
     }
   ]
 }
