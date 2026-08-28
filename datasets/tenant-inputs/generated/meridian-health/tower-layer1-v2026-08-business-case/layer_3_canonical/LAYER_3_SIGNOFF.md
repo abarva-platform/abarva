@@ -32,6 +32,8 @@ This layer answers six plain questions:
 
 Layer 3 also carries 280 relationships and 20 governed metric definitions.
 
+Azure stores these rows using the approved physical object families: 512 `metric` objects, 140 `program` objects, 42 `ai_use_case` objects, 13 `ai_tool` objects, and 280 `control` objects. The more specific business meaning, such as Budget, Monthly value observation, Finance approval event, and Evidence item, is retained as `canonical_semantic_type` on each canonical object.
+
 ## Value Semantics
 
 These terms must remain separate in every product projection:
@@ -98,6 +100,7 @@ The loader refuses direct Azure writes unless all are true:
 Layer 3 signoff requires:
 
 - 987 canonical objects loaded.
+- Physical object family counts match: 512 metric, 140 program, 42 AI use case, 13 AI tool, and 280 control.
 - 280 canonical relationships loaded.
 - 20 metric definitions loaded.
 - More than 2,500 measures loaded.

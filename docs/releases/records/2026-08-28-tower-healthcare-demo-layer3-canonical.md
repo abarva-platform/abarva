@@ -20,9 +20,11 @@ Layer 1 client intake: Reads the approved synthetic source extracts. It does not
 
 Layer 2 source adapters: Requires the existing source-adapter landing rows in `ecl_source`. It does not rewrite Layer 2.
 
-Layer 3 canonical model: Adds the Azure/Postgres write entrypoint for canonical budgets, projects, AI use cases, AI tools, monthly value observations, finance approval events, evidence items, relationships, metric definitions, and measures.
+Layer 3 canonical model: Adds the Azure/Postgres write entrypoint for canonical budgets, projects, AI use cases, AI tools, monthly value observations, finance approval events, evidence items, relationships, metric definitions, and measures. The loader writes only approved physical object families and retains more specific semantic types in object attributes.
 
 Layer 4 products: No Tower, Home, Source, Moves, Intelligence, projection, cube, or UI rows are written by this release.
+
+Build gate compatibility: Also includes a TypeScript-only Source projection compile fix that preserves existing output shape while satisfying strict typecheck rules.
 
 ## Client Applicability
 
@@ -40,6 +42,7 @@ Feature flag: None.
 
 - `scripts/tower/load-healthcare-demo-layer3-canonical.mjs`
 - `scripts/tower/validate-healthcare-demo-layer3-canonical.mjs`
+- `src/lib/source/contract-depth-package/projection.ts`
 - `package.json` script entries:
   - `tower:healthcare-demo-layer3-canonical:load`
   - `tower:healthcare-demo-layer3-canonical:validate`
@@ -50,11 +53,12 @@ Feature flag: None.
 
 Completed local validation:
 
-- Pass: `npm run tower:healthcare-demo-layer3-canonical:load -- --out-dir /tmp/tower-layer3-local-proof-v1`
-- Pass: `npm run tower:healthcare-demo-layer3-canonical:validate -- --summary /tmp/tower-layer3-local-proof-v1/tower_layer3_ecl_context_load_summary.json --readback /tmp/tower-layer3-local-proof-v1/postgres_readback.json`
+- Pass: `npm run tower:healthcare-demo-layer3-canonical:load -- --out-dir /tmp/tower-layer3-local-proof-v2`
+- Pass: `npm run tower:healthcare-demo-layer3-canonical:validate -- --summary /tmp/tower-layer3-local-proof-v2/tower_layer3_ecl_context_load_summary.json --readback /tmp/tower-layer3-local-proof-v2/postgres_readback.json`
 - Pass: Disposable local Postgres load/readback of Layer 2 plus Layer 3 generated SQL with zero canonical lineage gaps.
 - Pass: `node scripts/tower/validate-meridian-layer1-source.mjs`
 - Pass: `npm run tower:healthcare-demo-layer2-source-adapters:validate -- --summary /tmp/tower-layer2-local-proof-for-layer3/tower_layer2_ecl_source_load_summary.json --readback /tmp/tower-layer2-local-proof-for-layer3/postgres_readback.json`
+- Pass: `npx tsc --noEmit --pretty false`
 - Pass: `git diff --check`
 
 Expected Layer 3 load counts:
@@ -66,6 +70,14 @@ Expected Layer 3 load counts:
 - Actual generated measure count: 2,531
 - Product projection rows written: 0
 - Cube rows written: 0
+
+Expected physical object family counts:
+
+- Metric objects: 512
+- Program objects: 140
+- AI use case objects: 42
+- AI tool objects: 13
+- Control objects: 280
 
 ## Rollout Plan
 
@@ -104,14 +116,14 @@ Live signed-in proof required: Not for Layer 3 canonical loading alone. Product 
 
 ## Rollback Plan
 
-Rerun the previous approved canonical load for the same tenant/assessment or delete only the rows written under that tenant key and assessment ID from `ecl_context.measure`, `ecl_context.relationship`, and `ecl_context.object`. Do not purge source rows, projections, cubes, or other tenant data as part of this rollback.
+Rerun the previous approved canonical load for the same tenant/assessment. If deletion is required, scope it to rows stamped with the Layer 3 build version under that tenant key and assessment ID in `ecl_context.measure`, `ecl_context.relationship`, and `ecl_context.object`. Do not purge source rows, projections, cubes, or other tenant data as part of this rollback.
 
 ## Audit Evidence
 
-- Local dry-run summary: `/tmp/tower-layer3-local-proof-v1/tower_layer3_ecl_context_load_summary.json`
-- Generated SQL: `/tmp/tower-layer3-local-proof-v1/tower_layer3_ecl_context_load.sql`
-- Readback SQL: `/tmp/tower-layer3-local-proof-v1/tower_layer3_ecl_context_readback.sql`
-- Disposable Postgres readback: `/tmp/tower-layer3-local-proof-v1/postgres_readback.json`
+- Local dry-run summary: `/tmp/tower-layer3-local-proof-v2/tower_layer3_ecl_context_load_summary.json`
+- Generated SQL: `/tmp/tower-layer3-local-proof-v2/tower_layer3_ecl_context_load.sql`
+- Readback SQL: `/tmp/tower-layer3-local-proof-v2/tower_layer3_ecl_context_readback.sql`
+- Disposable Postgres readback: `/tmp/tower-layer3-local-proof-v2/postgres_readback.json`
 - Layer 3 signoff: generated synthetic healthcare fixture package, Layer 3 signoff file
 
 ## Known Gaps

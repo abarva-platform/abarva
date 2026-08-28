@@ -34,12 +34,12 @@ const CANONICAL_FILES = {
 
 const SOURCE_RELATIVE_PREFIX = "layer_1_client_intake/source_system_extracts";
 
-const OBJECT_TYPE_ROWS = [
-  ["budget", "Budget", "metric", "metric_definition", "Budget record from finance planning source."],
-  ["value_observation", "Value Observation", "metric", "metric_definition", "Monthly value tracking observation."],
-  ["finance_approval_event", "Finance Approval Event", "control", "risk_control", "Finance or CFO review event for a value claim."],
-  ["evidence_item", "Evidence Item", "control", "risk_control", "Evidence artifact supporting a project, value claim, or metric observation."],
-];
+const PHYSICAL_OBJECT_TYPE_BY_CANONICAL_TYPE = new Map([
+  ["budget", "metric"],
+  ["value_observation", "metric"],
+  ["finance_approval_event", "control"],
+  ["evidence_item", "control"],
+]);
 
 const METRIC_DEFINITIONS = [
   ["approved_it_budget_usd", "Approved IT budget", "Approved IT budget for the domain.", "USD", "neutral", "annual", "sum"],
@@ -279,7 +279,11 @@ function readCanonicalPackage(options) {
 }
 
 function objectUuid(options, objectType, canonicalId) {
-  return stableUuid("object", options.tenantKey, options.assessmentId, objectType, canonicalId);
+  return stableUuid("object", options.tenantKey, options.assessmentId, physicalObjectType(objectType), canonicalId);
+}
+
+function physicalObjectType(objectType) {
+  return PHYSICAL_OBJECT_TYPE_BY_CANONICAL_TYPE.get(objectType) ?? objectType;
 }
 
 function reviewStateFrom(value) {
@@ -306,12 +310,13 @@ function numericPresent(value) {
 }
 
 function objectRow(options, objectType, canonicalId, displayName, source, attrs = {}, domain = null, review = "in_review") {
+  const physicalType = physicalObjectType(objectType);
   return {
-    id: sqlText(objectUuid(options, objectType, canonicalId)),
+    id: sqlText(objectUuid(options, physicalType, canonicalId)),
     tenant_key: sqlText(options.tenantKey),
     assessment_id: sqlText(options.assessmentId),
     object_key: sqlText(canonicalId),
-    object_type: sqlText(objectType),
+    object_type: sqlText(physicalType),
     display_name: sqlText(displayName),
     business_domain: sqlText(domain),
     lifecycle_state: sqlText(lifecycleStateFrom(attrs.lifecycle_stage, attrs.rollout_stage)),
@@ -322,6 +327,9 @@ function objectRow(options, objectType, canonicalId, displayName, source, attrs 
     confidence: confidenceNumber(attrs.confidence_level ?? attrs.confidence),
     attributes_json: sqlJson({
       ...attrs,
+      canonical_semantic_type: objectType,
+      layer3_build_version: options.buildVersion,
+      input_source_version: options.inputSourceVersion,
       canonical_source_file: source.source_file,
       canonical_source_row: source.source_row,
       canonical_source_system: source.source_system,
@@ -349,7 +357,11 @@ function measureRow(options, subjectObjectType, subjectCanonicalId, metricKey, v
     value_state: sqlText(valueState),
     quality_state: sqlText(qualityState),
     review_state: sqlText(reviewState),
-    attributes_json: sqlJson(attrs),
+    attributes_json: sqlJson({
+      ...attrs,
+      layer3_build_version: options.buildVersion,
+      input_source_version: options.inputSourceVersion,
+    }),
   };
 }
 
@@ -470,6 +482,8 @@ function buildCanonicalRows(options) {
       review_state: sqlText("in_review"),
       confidence: "0.6500",
       attributes_json: sqlJson({
+        layer3_build_version: options.buildVersion,
+        input_source_version: options.inputSourceVersion,
         source_relationship_type: row.relationship_type,
         source_from_object_type: row.from_object_type,
         source_to_object_type: row.to_object_type,
@@ -538,18 +552,6 @@ function canonicalRelationship(row, objectAliasToId) {
 function writeLoadSql(outPath, options, rows) {
   const tenant = sqlText(options.tenantKey);
   const assessment = sqlText(options.assessmentId);
-  const objectTypeSql = upsertSql(
-    "ecl_context.object_type_catalog",
-    ["object_type", "display_label", "grain", "counting_class", "description"],
-    OBJECT_TYPE_ROWS.map(([objectType, displayLabel, grain, countingClass, description]) => ({
-      object_type: sqlText(objectType),
-      display_label: sqlText(displayLabel),
-      grain: sqlText(grain),
-      counting_class: sqlText(countingClass),
-      description: sqlText(description),
-    })),
-    "on conflict (object_type) do update set display_label = excluded.display_label, grain = excluded.grain, counting_class = excluded.counting_class, description = excluded.description",
-  );
   const metricSql = upsertSql(
     "ecl_context.metric_definition",
     ["id", "tenant_key", "metric_key", "metric_name", "definition", "unit", "directionality", "cadence", "aggregation_rule"],
@@ -559,14 +561,13 @@ function writeLoadSql(outPath, options, rows) {
 
   const sql = [
     "begin;",
-    `delete from ecl_context.measure where tenant_key = ${tenant} and assessment_id = ${assessment};`,
-    `delete from ecl_context.relationship where tenant_key = ${tenant} and assessment_id = ${assessment};`,
-    `delete from ecl_context.object where tenant_key = ${tenant} and assessment_id = ${assessment};`,
-    objectTypeSql,
-    insertSql(
+    `delete from ecl_context.measure where tenant_key = ${tenant} and assessment_id = ${assessment} and attributes_json ->> 'layer3_build_version' = ${sqlText(options.buildVersion)};`,
+    `delete from ecl_context.relationship where tenant_key = ${tenant} and assessment_id = ${assessment} and attributes_json ->> 'layer3_build_version' = ${sqlText(options.buildVersion)};`,
+    upsertSql(
       "ecl_context.object",
       ["id", "tenant_key", "assessment_id", "object_key", "object_type", "display_name", "business_domain", "lifecycle_state", "source_record_id", "basis", "value_state", "review_state", "confidence", "attributes_json"],
       rows.objects,
+      "on conflict (tenant_key, assessment_id, object_type, object_key) do update set display_name = excluded.display_name, business_domain = excluded.business_domain, lifecycle_state = excluded.lifecycle_state, source_record_id = excluded.source_record_id, basis = excluded.basis, value_state = excluded.value_state, review_state = excluded.review_state, confidence = excluded.confidence, attributes_json = excluded.attributes_json, updated_at = now()",
     ),
     metricSql,
     insertSql(
@@ -587,6 +588,7 @@ function writeLoadSql(outPath, options, rows) {
 function readbackSql(options) {
   const tenant = sqlText(options.tenantKey);
   const assessment = sqlText(options.assessmentId);
+  const buildVersion = sqlText(options.buildVersion);
   return `
 with readback as (
   select jsonb_build_object(
@@ -599,14 +601,17 @@ with readback as (
     'object', (
       select count(*) from ecl_context.object
       where tenant_key = ${tenant} and assessment_id = ${assessment}
+        and attributes_json ->> 'layer3_build_version' = ${buildVersion}
     ),
     'relationship', (
       select count(*) from ecl_context.relationship
       where tenant_key = ${tenant} and assessment_id = ${assessment}
+        and attributes_json ->> 'layer3_build_version' = ${buildVersion}
     ),
     'measure', (
       select count(*) from ecl_context.measure
       where tenant_key = ${tenant} and assessment_id = ${assessment}
+        and attributes_json ->> 'layer3_build_version' = ${buildVersion}
     ),
     'metric_definition', (
       select count(*) from ecl_context.metric_definition
@@ -619,6 +624,7 @@ with readback as (
         select object_type, count(*) as row_count
         from ecl_context.object
         where tenant_key = ${tenant} and assessment_id = ${assessment}
+          and attributes_json ->> 'layer3_build_version' = ${buildVersion}
         group by object_type
       ) counts
     ),
@@ -628,25 +634,30 @@ with readback as (
         select metric_key, count(*) as row_count
         from ecl_context.measure
         where tenant_key = ${tenant} and assessment_id = ${assessment}
+          and attributes_json ->> 'layer3_build_version' = ${buildVersion}
         group by metric_key
       ) counts
     ),
     'objects_missing_source_record', (
       select count(*) from ecl_context.object
       where tenant_key = ${tenant} and assessment_id = ${assessment} and source_record_id is null
+        and attributes_json ->> 'layer3_build_version' = ${buildVersion}
     ),
     'relationships_missing_source_record', (
       select count(*) from ecl_context.relationship
       where tenant_key = ${tenant} and assessment_id = ${assessment} and source_record_id is null
+        and attributes_json ->> 'layer3_build_version' = ${buildVersion}
     ),
     'measures_missing_source_record', (
       select count(*) from ecl_context.measure
       where tenant_key = ${tenant} and assessment_id = ${assessment} and source_record_id is null
+        and attributes_json ->> 'layer3_build_version' = ${buildVersion}
     ),
     'tenant_payload_drift', (
       select count(*) from ecl_context.object
       where tenant_key = ${tenant}
         and assessment_id = ${assessment}
+        and attributes_json ->> 'layer3_build_version' = ${buildVersion}
         and attributes_json ? 'tenant_key'
         and attributes_json ->> 'tenant_key' <> ${tenant}
     ),
@@ -655,6 +666,7 @@ with readback as (
       from ecl_context.object o
       where o.tenant_key = ${tenant}
         and o.assessment_id = ${assessment}
+        and o.attributes_json ->> 'layer3_build_version' = ${buildVersion}
         and not exists (
           select 1
           from ecl_source.source_record sr
