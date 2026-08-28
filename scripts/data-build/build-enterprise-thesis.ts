@@ -935,9 +935,19 @@ export async function buildVerifiedEnterpriseThesisFromSignalPacket(
   // the working copy, so it survives independently of what verification decides to do with it.
   const publishedGeneration: EnterpriseThesis = JSON.parse(JSON.stringify(rawGeneration));
 
+  const verificationLedger: Array<{ path: string; verdict: Verdict; reasoning: string; action: string }> = [];
+  for (const issue of structuralIssues) {
+    dropClaim(publishedGeneration, issue.path);
+    verificationLedger.push({
+      path: issue.path,
+      verdict: "UNSUPPORTED",
+      reasoning: `structural issue: ${issue.reason}`,
+      action: "dropped_structural",
+    });
+  }
+
   const toVerify = claimsRequiringVerification(publishedGeneration);
   console.log(`  verifying ${toVerify.length} high-stakes claims...`);
-  const verificationLedger: Array<{ path: string; verdict: Verdict; reasoning: string; action: string }> = [];
   for (const { path: claimPath, claim } of toVerify) {
     const result = await verifyClaim(client, claim, signalPacket);
     if (result.verdict === "UNSUPPORTED") {

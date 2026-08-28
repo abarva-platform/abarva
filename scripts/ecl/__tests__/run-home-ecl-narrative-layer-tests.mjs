@@ -83,9 +83,16 @@ assert(
     script.includes("validateStructure") &&
     script.includes("thesisResult.publishedGeneration") &&
     script.includes("published_structural_issues_") &&
+    script.includes("!row.action.startsWith(\"dropped\")") &&
     script.includes("Home ECL narrative publication gate failed") &&
     script.includes("thesisResult.publicationIssues"),
   "ECL narrative job refuses to write when published publication-gate issues remain",
+);
+assert(
+  thesis.includes("action: \"dropped_structural\"") &&
+    thesis.includes("structural issue: ${issue.reason}") &&
+    thesis.includes("claimsRequiringVerification(publishedGeneration)"),
+  "EnterpriseThesis drops structurally invalid claims before semantic verification",
 );
 assert(
   script.includes("basis_summary = 'model_generated_from_ecl_projection'"),

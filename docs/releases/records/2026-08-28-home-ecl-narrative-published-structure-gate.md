@@ -35,8 +35,8 @@ the structural bar, and unresolved publication issues still block writes.
 
 ## Changes Included
 
-- `scripts/data-build/build-enterprise-thesis.ts` makes structural validation and claim enumeration
-  tolerate verifier-dropped claims.
+- `scripts/data-build/build-enterprise-thesis.ts` drops structurally invalid draft claims before
+  semantic verification and makes structural validation tolerate verifier-dropped claims.
 - `scripts/ecl/build_home_ecl_narrative_layer.ts` computes publication-gate structural issues from
   `publishedGeneration`, while retaining raw structural issue counts in writer metadata.
 - `scripts/ecl/__tests__/run-home-ecl-narrative-layer-tests.mjs` asserts the Home ECL publication

@@ -453,7 +453,7 @@ function publicationGateIssues(
     }
   }
   for (const row of thesisResult.verificationLedger) {
-    if (row.verdict === "UNSUPPORTED" && row.action !== "dropped") {
+    if (row.verdict === "UNSUPPORTED" && !row.action.startsWith("dropped")) {
       issues.push(`unsupported_claim_not_dropped:${row.path}:${row.action}`);
     }
     if (row.verdict === "OVERSTATED" && !row.action.startsWith("repaired") && !row.action.startsWith("dropped")) {
