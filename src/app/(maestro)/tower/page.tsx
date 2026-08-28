@@ -113,10 +113,11 @@ export async function renderTowerPage({
   const commandCenterView = buildTowerCommandCenterView(martView, {
     tenantName,
   });
-  const towerEclPreview =
-    isEclProductProvider(productProvider)
-      ? await readTowerEclProjectionPreview(canonicalTenantKey(effectiveClientKey))
-      : null;
+  const towerEclPreview = isEclProductProvider(productProvider)
+    ? await readTowerEclProjectionPreview(
+        canonicalTenantKey(effectiveClientKey),
+      ).catch(() => null)
+    : null;
   const towerChatClientId =
     client?.id ?? client?.key ?? requestedClient ?? null;
 
@@ -130,8 +131,6 @@ export async function renderTowerPage({
         context: `Command Center · ${tenantName}`,
       }}
     >
-      <TowerEclProjectionPanel preview={towerEclPreview} />
-      <EclServingSurfaceCoverage product="tower" />
       <Suspense fallback={null}>
         <TowerCommandCenterAvaShell
           view={commandCenterView}
@@ -139,6 +138,8 @@ export async function renderTowerPage({
           clientId={towerChatClientId}
         />
       </Suspense>
+      <TowerEclProjectionPanel preview={towerEclPreview} />
+      <EclServingSurfaceCoverage product="tower" />
     </AppShell>
   );
 }
@@ -172,13 +173,16 @@ function TowerEclProjectionPanel({
             Tower command center projection is loaded
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
-            This route reads governed Tower serving rows for the dense Meridian
+            This route reads governed Tower serving rows for the dense tenant
             assessment. It separates funded activity, promised value, claimable
             value, blocked value, evidence gates and source references.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2 text-right md:grid-cols-4">
-          <TowerEclStat label="Rows" value={preview.rowCount.toLocaleString()} />
+          <TowerEclStat
+            label="Rows"
+            value={preview.rowCount.toLocaleString()}
+          />
           <TowerEclStat
             label="Claimable"
             value={money.format(preview.totals.claimableUsd)}

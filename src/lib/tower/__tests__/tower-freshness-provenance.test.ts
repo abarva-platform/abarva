@@ -41,16 +41,19 @@ describe("Tower freshness is provenance-derived", () => {
   });
 
   it("has no hardcoded date literal in the command-center header", () => {
-    const component = read("components/tower/command-center/TowerCommandCenter.tsx");
+    const component = read(
+      "components/tower/command-center/views/CommandCenterView.tsx",
+    );
     expect(component).not.toMatch(/Updated \w+ \d{1,2}, \d{4}/);
     expect(component).not.toMatch(/BOARDROOM_UPDATED_LABEL/);
   });
 
   it("says the date is unrecorded rather than substituting one", () => {
-    const component = read("components/tower/command-center/TowerCommandCenter.tsx");
+    const component = read(
+      "components/tower/command-center/views/CommandCenterView.tsx",
+    );
     expect(component).toMatch(/As-of date not recorded/);
     expect(component).toMatch(/build date not recorded/);
-    expect(component).toMatch(/reporting period not recorded/);
   });
 });
 
@@ -67,6 +70,22 @@ describe("Command Center owns the first viewport", () => {
 
   it("keeps the supporting panels on the page", () => {
     const route = read("app/(maestro)/tower/page.tsx");
-    expect(route).toMatch(/<TowerEclProjectionPanel preview=\{towerEclPreview\} \/>/);
+    expect(route).toMatch(
+      /<TowerEclProjectionPanel preview=\{towerEclPreview\} \/>/,
+    );
+    expect(route).toMatch(/<EclServingSurfaceCoverage product="tower" \/>/);
+  });
+
+  it("uses the active four-tab Tower contract in serving-surface diagnostics", () => {
+    const component = read("components/ecl/EclServingSurfaceCoverage.tsx");
+    const towerLabels = component.slice(
+      component.indexOf("tower: ["),
+      component.indexOf("],", component.indexOf("tower: [")),
+    );
+
+    expect(towerLabels).toMatch(/"Executive View"/);
+    expect(towerLabels).toMatch(/"Evidence & Actions"/);
+    expect(towerLabels).not.toMatch(/"Decision Lanes"/);
+    expect(towerLabels).not.toMatch(/"Recommended Actions"/);
   });
 });

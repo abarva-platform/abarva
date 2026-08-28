@@ -138,7 +138,7 @@ export function TowerCommandCenterAvaShell({
       id: "tower-command-center-ava-opener",
       role: "atlas",
       content: view
-        ? `${tenantName} Tower Command Center is loaded. aVa can explain the visible value proof, blocked claims, evidence gaps, AI portfolio posture, and recommended actions without approving anything on its own.`
+        ? `${tenantName} Tower Command Center is loaded. aVa can explain the visible value proof, blocked claims, evidence actions, and AI portfolio posture without approving anything on its own.`
         : "aVa is waiting for tenant-bound Tower mart rows before it can answer portfolio questions.",
     }),
     [tenantName, view],
@@ -281,12 +281,7 @@ export function TowerCommandCenterAvaShell({
     [sendToAva],
   );
 
-  const workspace = (
-    <TowerCommandCenter
-      view={view}
-      tenantName={tenantName}
-    />
-  );
+  const workspace = <TowerCommandCenter view={view} tenantName={tenantName} />;
 
   return (
     <AtlasChatPanel
