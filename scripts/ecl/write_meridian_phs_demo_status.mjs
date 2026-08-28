@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const DEFAULT_OUT = "docs/architecture/meridian-phs-demo-readiness-status.json";
+const MOVES_ROUTE_AUDIT = "docs/architecture/MERIDIAN_PHS_MOVES_ROUTE_SOURCE_AUDIT_2026_08_28.md";
 const TENANT_KEY = "meridian-health";
 const STALE_CONTENT_CUTOFF = "2026-08-24T00:00:00.000Z";
 
@@ -200,6 +201,7 @@ function moveContentQuality() {
   return {
     file,
     generated_at: generatedAt,
+    runtime_import_state: "no_direct_strategic_moves_route_import_found",
     status: issues.length ? "needs_demo_refresh" : "current",
     issues,
   };
@@ -250,6 +252,7 @@ function main() {
     },
     phs_executive_demo: {
       products: ["Home", "Moves", "Intelligence", "Tower"],
+      moves_route_source_audit: MOVES_ROUTE_AUDIT,
       home_tower_intelligence_surfaces: {
         numerator: phsExecutiveEclProven,
         denominator: phsExecutiveEclDenominator,

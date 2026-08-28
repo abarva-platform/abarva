@@ -1,6 +1,6 @@
 {
   "schema_version": "meridian_phs_demo_readiness_status/v1",
-  "generated_at": "2026-08-28T01:20:54.872Z",
+  "generated_at": "2026-08-28T01:25:57.990Z",
   "tenant_key": "meridian-health",
   "scope": {
     "current_sprint_priority": "Meridian/PHS demo",
@@ -18,6 +18,7 @@
       "Intelligence",
       "Tower"
     ],
+    "moves_route_source_audit": "docs/architecture/MERIDIAN_PHS_MOVES_ROUTE_SOURCE_AUDIT_2026_08_28.md",
     "home_tower_intelligence_surfaces": {
       "numerator": 31,
       "denominator": 31,
@@ -93,6 +94,7 @@
     "moves_content_quality": {
       "file": "src/lib/moves/narratives/generated/meridian-health-moves-readiness-blocks.ts",
       "generated_at": "2026-07-16T18:43:51.440Z",
+      "runtime_import_state": "no_direct_strategic_moves_route_import_found",
       "status": "needs_demo_refresh",
       "issues": [
         "generated_content_stale:2026-07-16T18:43:51.440Z",

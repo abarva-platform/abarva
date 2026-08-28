@@ -75,6 +75,9 @@ First slice for this track:
 5. Record proof output beside the ECL proof artifacts, but do not fold Moves into the 40-surface
    ECL denominator unless the serving contract is amended.
 
+Route/source audit:
+[MERIDIAN_PHS_MOVES_ROUTE_SOURCE_AUDIT_2026_08_28.md](./MERIDIAN_PHS_MOVES_ROUTE_SOURCE_AUDIT_2026_08_28.md).
+
 ---
 
 ## Demo Track B - Source Sourcing-CXO Demo
