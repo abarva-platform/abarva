@@ -18,6 +18,8 @@ describe("contract depth package Layer 4 overlay job", () => {
 
   it("requires repaired canonical alternatives before product projection", () => {
     expect(source).toContain("contracts_with_assessed_alternatives");
+    expect(source).toContain("FROM source.contract WHERE tenant_key = $1 AND load_run_id = $3 AND COALESCE(raw_payload->>'alternatives_available', '') <> ''");
+    expect(source).not.toContain("FROM source.contract WHERE tenant_key = $1 AND dataset_version = $2");
     expect(source).toContain("not_assessed");
     expect(source).toContain("limited_alternatives_flag");
     expect(source).toContain("THEN false");
