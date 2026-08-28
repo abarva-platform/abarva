@@ -210,7 +210,7 @@ export default async function SourceCompareEventsPage({
           }}
         >
           <Link
-            href="/source/portfolio"
+            href="/source/preview/workspace"
             style={{ color: SHELL.INK_MUTED, textDecoration: 'none' }}
           >
             Source portfolio

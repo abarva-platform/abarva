@@ -51,11 +51,15 @@ describe("Source authenticated route smoke", () => {
     expect(proxySource).toContain("PUBLIC_ROUTE_PATTERNS");
   });
 
-  it("keeps Source in the protected client-param strip tree", () => {
+  it("keeps Source in explicit client-param access routing without blanket stripping", () => {
     const proxySource = readWorkspaceFile("src/proxy.ts");
 
-    expect(proxySource).toContain('pathname === "/source"');
-    expect(proxySource).toContain('pathname.startsWith("/source/")');
+    expect(proxySource).toContain("shouldStripUnauthorizedClientParam(");
+    expect(proxySource).toContain(
+      "Source is intentionally not included here",
+    );
+    expect(proxySource).not.toContain('pathname === "/source"');
+    expect(proxySource).not.toContain('pathname.startsWith("/source/")');
   });
 
   it("keeps the dashboard and event canvas route files present", () => {
@@ -64,7 +68,7 @@ describe("Source authenticated route smoke", () => {
     }
   });
 
-  it("keeps /source redirected to the governed workspace and preserves the legacy portfolio component", () => {
+  it("keeps Source landing and queue routes redirected to the governed workspace", () => {
     const routeSource = readWorkspaceFile("src/app/(maestro)/source/page.tsx");
     const queueRouteSource = readWorkspaceFile(
       "src/app/(maestro)/source/queue/page.tsx",
@@ -74,7 +78,7 @@ describe("Source authenticated route smoke", () => {
     );
 
     expect(routeSource).toContain("redirect('/source/preview/workspace')");
-    expect(queueRouteSource).toContain('redirect("/source/portfolio")');
+    expect(queueRouteSource).toContain('redirect("/source/preview/workspace")');
     expect(queueRouteSource).not.toContain("SourceDecisionQueueView");
     expect(componentSource).toContain("AMS Vendor Consolidation 2026");
     expect(componentSource).toContain("SOURCE_INDEX_VIEW");

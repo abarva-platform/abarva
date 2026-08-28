@@ -104,8 +104,8 @@ export default async function SourceNotFound() {
                 marginTop: 28,
               }}
             >
-              <SourceUnavailableLink href="/source/portfolio" primary>
-                Open Source portfolio
+              <SourceUnavailableLink href="/source/preview/workspace" primary>
+                Open Source workspace
               </SourceUnavailableLink>
               <SourceUnavailableLink href="/home">
                 Go to Home

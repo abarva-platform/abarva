@@ -15,7 +15,7 @@ describe("DESROUTE4 source route shell enforcement (analytics shell)", () => {
 
   it("target source routes use the supported shell or archive redirect", () => {
     const events = read(sourceEventsRoute);
-    expect(events).toContain('redirect("/source/portfolio")');
+    expect(events).toContain('redirect("/source/preview/workspace")');
     expect(events).not.toContain("AppShell");
 
     // Detail route mounts the redesigned analytics canvas for every tenant.

@@ -27,10 +27,10 @@ describe("Source legacy route archive", () => {
     expect(source).not.toContain("getContract360");
   });
 
-  it("archives the old Source event index into Portfolio", () => {
+  it("archives the old Source event index into the governed workspace", () => {
     const source = read("src/app/(maestro)/source/events/page.tsx");
 
-    expect(source).toContain('redirect("/source/portfolio")');
+    expect(source).toContain('redirect("/source/preview/workspace")');
     expect(source).not.toContain("SourceEventsPortfolio");
     expect(source).not.toContain("SourceEventsAgentDockView");
   });

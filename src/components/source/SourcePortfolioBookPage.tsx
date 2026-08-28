@@ -3,9 +3,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // "Your sourcing book" — the redesigned Source Portfolio home.
 //
-// Shipped behind the `source_analytics` platform flag. `/source/portfolio`
-// renders THIS for every tenant; the legacy table remains only as emergency
-// fallback plumbing in the route.
+// Retired Source portfolio book. Historical references redirect to the
+// governed Source Workspace so operators see one contract/vendor count surface.
 //
 // Design bridges to the analytics-canvas tokens (ANALYTICS) so this reads as one
 // system with the redesigned stage canvas — serif headings, paper ground,

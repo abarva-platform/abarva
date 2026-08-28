@@ -150,7 +150,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
         const params = new URLSearchParams();
         if (filterStage) params.set('stage', filterStage);
         params.set('status', 'at_risk');
-        router.push(`/source/portfolio?${params.toString()}`);
+        router.push(`/source/preview/workspace?${params.toString()}`);
       },
     },
     {
@@ -161,7 +161,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
         const params = new URLSearchParams();
         params.set('stage', 'Strategy');
         if (filterStatus) params.set('status', filterStatus);
-        router.push(`/source/portfolio?${params.toString()}`);
+        router.push(`/source/preview/workspace?${params.toString()}`);
       },
     },
     {
