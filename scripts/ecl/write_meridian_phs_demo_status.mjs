@@ -204,6 +204,30 @@ function movesSurfaceProofFromSummary(summary) {
   return proof;
 }
 
+function movesProofFromExistingStatus(status) {
+  const proof = status?.phs_executive_demo?.moves_surfaces;
+  if (!proof || typeof proof !== "object") return null;
+  return {
+    numerator: Number(proof.numerator ?? 0),
+    denominator: Number(proof.denominator ?? MOVES_SURFACES.length),
+    excluded: Number(proof.excluded ?? 0),
+    accepted: String(proof.proof_state ?? "") === "browser_proof_complete",
+  };
+}
+
+function movesSurfaceProofFromExistingStatus(status) {
+  const surfaces = Array.isArray(status?.phs_executive_demo?.moves_surfaces?.surfaces)
+    ? status.phs_executive_demo.moves_surfaces.surfaces
+    : [];
+  const proof = new Map();
+  for (const surface of surfaces) {
+    const key = String(surface?.surface_key ?? "");
+    if (!key) continue;
+    proof.set(key, Boolean(surface?.browser_proven));
+  }
+  return proof;
+}
+
 function handoffProofFromSummary(summary) {
   const proof = summary?.phs_cross_module_handoffs;
   if (!proof || typeof proof !== "object") return null;
@@ -303,8 +327,10 @@ function main() {
     proofCountFromSummary(sourceProof, ["Source"]) ||
     proofCountFromSummary(browserProof, ["Source"]) ||
     (eclStatus?.lanes?.some?.((lane) => lane.lane === "L-PROOF" && lane.status === "complete") ? 9 : 0);
-  const movesProof = movesProofFromSummary(browserProof);
-  const movesSurfaceProof = movesSurfaceProofFromSummary(browserProof);
+  const movesProof = movesProofFromSummary(browserProof) ?? movesProofFromExistingStatus(existingStatus);
+  const movesSurfaceProof = browserProof
+    ? movesSurfaceProofFromSummary(browserProof)
+    : movesSurfaceProofFromExistingStatus(existingStatus);
   const handoffProofSummary = handoffProofFromSummary(handoffProof) ?? handoffProofFromExistingStatus(existingStatus);
 
   const movesRouteStatuses = MOVES_SURFACES.map((surface) => {

@@ -176,6 +176,10 @@ describe("buildCrossModuleTrace", () => {
     expect(towerStep.joinId).toBe('led-1');
     expect(towerStep.href).toBe('/tower');
     expect(towerStep.detail).toContain("Next action: instrument baseline");
+    expect(towerStep.detail).toContain(
+      "Move action: Instrument Tower baseline: Contact Center AI Routing",
+    );
+    expect(towerStep.detail).toContain("Owner: Tower value owner");
   });
 
   it("ignores ledger entries for other subjects", () => {

@@ -31,18 +31,20 @@ const HANDOFFS = [
     to: "Moves",
     evidence: [
       {
-        file: "src/app/(maestro)/tower/page.tsx",
-        required: ["tower"],
+        file: "src/lib/programs/tower-trigger/tower-to-moves-action-handoff.ts",
+        required: ["TowerToMovesActionSeedPayload", "programWorkItem", "runTowerToMovesActionHandoff"],
       },
       {
         file: "src/lib/programs/cross-module-trace-view.ts",
-        required: ["Tower outcome-ledger entry", "subjectKind === \"move\"", "subjectRef === input.move.id"],
+        required: ["runTowerToMovesActionHandoff", "Move action:", "Next gate:"],
+      },
+      {
+        file: "src/lib/programs/tower-trigger/__tests__/tower-to-moves-action-handoff.test.ts",
+        required: ["owner-bound Move action", "is deterministic", "refuses rows that do not target"],
       },
     ],
     success_detail:
-      "Tower can resolve Move-subject outcome-ledger entries in the Moves trace.",
-    gap_if_not_all:
-      "This proves read-side traceability, not a Tower action that creates or updates a Move. A Tower-to-Moves action workflow still needs product proof.",
+      "Tower can derive and render an owner-bound Move work-item action from the gated outcome-ledger row.",
   },
   {
     handoff_key: "intelligence_to_moves_reasoning_context",

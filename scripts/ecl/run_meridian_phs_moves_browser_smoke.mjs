@@ -56,6 +56,8 @@ const STATIC_SURFACES = [
       /Tower/i,
       /4\s+of\s+4\s+steps\s+linked/i,
       /Every cross-module hand-off in this decision is wired/i,
+      /Move action: Instrument Tower baseline/i,
+      /Next gate: baseline_measurement/i,
     ],
   },
   {
