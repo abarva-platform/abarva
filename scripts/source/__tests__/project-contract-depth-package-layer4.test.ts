@@ -37,4 +37,11 @@ describe("contract depth package Layer 4 overlay job", () => {
     SELECT * FROM optimization
     WHERE source.can_read_sourcing_tenant(tenant_key)`);
   });
+
+  it("preserves established source view contracts during overlay refresh", () => {
+    expect(source).toContain("cs.scope_ref AS it_portfolio_ref,\n      cs.load_run_id");
+    expect(source).not.toContain("cs.scope_ref AS it_portfolio_ref,\n      cs.relationship_method");
+    expect(source).toContain("'reviewed_mapping'::text AS relationship_method");
+    expect(source).toContain("0.8::numeric AS relationship_confidence");
+  });
 });
