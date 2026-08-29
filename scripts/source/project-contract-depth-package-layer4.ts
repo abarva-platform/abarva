@@ -796,7 +796,7 @@ async function rebuildViews(client: Client): Promise<void> {
       cs.lifecycle_state,
       cs.modernization_plan,
       'reviewed_mapping'::text AS relationship_method,
-      0.8::numeric AS relationship_confidence,
+      0.8::numeric(5,4) AS relationship_confidence,
       cs.criticality IN ('Tier 0', 'Tier 1', 'Mission critical', 'Critical') AS critical_application_flag,
       COALESCE(cs.lifecycle_state, '') ILIKE '%retire%' AS retire_application_flag,
       COALESCE(cs.modernization_plan, '') ILIKE '%replace%' AS replace_application_flag,
