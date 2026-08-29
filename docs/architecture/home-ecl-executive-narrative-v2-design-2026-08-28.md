@@ -327,7 +327,8 @@ The current quality record, with 22 semantic drops out of 60 generated claims, f
 
 Home ECL narrative V2 is complete only when:
 
-- 8 of 8 Home briefing chapters are publishable or intentionally withheld from the CXO path.
+- 8 of 8 Home briefing chapters render one of three terminal states: `published`, `refused`, or
+  `deferred`. A chapter that is absent from the page is a gate failure.
 - 0 published chapters render generic empty-state prose.
 - 0 visible builder/provider/schema terms appear.
 - every visible sentence with a factual claim traces to a published claim row and evidence ids.
