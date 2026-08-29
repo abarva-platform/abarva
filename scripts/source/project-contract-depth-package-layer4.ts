@@ -151,6 +151,8 @@ async function layer3Readback(client: Client, args: Args): Promise<Record<string
        (SELECT count(*)::text FROM source.contract_term WHERE tenant_key = $1 AND load_run_id = $3) AS source_contract_term,
        (SELECT count(*)::text FROM source.optimization_opportunity WHERE tenant_key = $1 AND dataset_version = $2) AS source_optimization_opportunity,
        (SELECT count(*)::text FROM source.optimization_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND payload->>'finance_confirmation_state' = 'not_confirmed') AS opportunities_not_finance_confirmed,
+       (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND fact_key = 'document.page_text_char_count') AS source_page_text_fact_assertion,
+       (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND (fact_key LIKE 'change_order%' OR fact_key IN ('annual_change_order_spend', 'recurring_change_order_spend', 'recurring_avoidable_pct'))) AS source_change_order_fact_assertion,
        (SELECT count(*)::text FROM source.contract WHERE tenant_key = $1 AND load_run_id = $3 AND COALESCE(raw_payload->>'alternatives_available', '') <> '') AS contracts_with_assessed_alternatives`,
     [args.tenantKey, args.datasetVersion, args.loadRunId],
   );
@@ -205,6 +207,20 @@ async function l4Readback(client: Client, args: Args, beforeContractCount = 0): 
       `SELECT count(*) AS value FROM consumption.sourcing_opportunity_v1 WHERE tenant_key = $1 AND contract_id = ANY($2::text[])`,
       [args.tenantKey, contractIds],
     ),
+    source_contract_360_page_text_rows_package: await tableScalar(
+      client,
+      `SELECT COALESCE(SUM(COALESCE(document_page_text_count, 0)), 0) AS value
+         FROM source.contract_360
+        WHERE tenant_key = $1 AND contract_id = ANY($2::text[])`,
+      [args.tenantKey, contractIds],
+    ),
+    source_contract_360_change_order_rows_package: await tableScalar(
+      client,
+      `SELECT COALESCE(SUM(COALESCE(change_order_count, 0)), 0) AS value
+         FROM source.contract_360
+        WHERE tenant_key = $1 AND contract_id = ANY($2::text[])`,
+      [args.tenantKey, contractIds],
+    ),
     package_unclaimed_credit_usd: await tableScalar(
       client,
       `SELECT COALESCE(SUM(COALESCE(credit_calculated, 0) - COALESCE(credit_claimed, 0)), 0) AS value
@@ -254,8 +270,10 @@ function assertLayer3Ready(rows: Record<string, number>): void {
     source_contract_performance_observation: 36,
     source_contract_service_credit: 7,
     source_contract_term: 35,
-    source_optimization_opportunity: 5,
-    opportunities_not_finance_confirmed: 5,
+    source_optimization_opportunity: 6,
+    opportunities_not_finance_confirmed: 6,
+    source_page_text_fact_assertion: 30,
+    source_change_order_fact_assertion: 36,
     contracts_with_assessed_alternatives: 0,
   };
   const failures = Object.entries(expected)
@@ -274,7 +292,9 @@ function assertL4Ready(rows: Record<string, number>, beforeContractCount: number
     source_contract_application_scope_package: 18,
     consumption_sourcing_spend_monthly_v1_package: 60,
     consumption_sourcing_performance_v1_package: 36,
-    consumption_sourcing_opportunity_v1_package: 5,
+    consumption_sourcing_opportunity_v1_package: 6,
+    source_contract_360_page_text_rows_package: 30,
+    source_contract_360_change_order_rows_package: 8,
     package_contracts_with_assessed_alternatives: 0,
     skyharbor_strings_in_scope: 0,
   };
@@ -588,6 +608,21 @@ async function rebuildViews(client: Client): Promise<void> {
 
   await client.query(`
     CREATE OR REPLACE VIEW source.contract_360 AS
+    WITH depth AS (
+      SELECT
+        tenant_key,
+        contract_id,
+        count(*) FILTER (WHERE fact_key = 'document.page_text_char_count')::bigint AS document_page_text_count,
+        COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'change_order_count'), 0)::bigint AS change_order_count,
+        COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'annual_change_order_spend'), 0)::numeric AS annual_change_order_spend,
+        COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'recurring_change_order_spend'), 0)::numeric AS recurring_change_order_exposure_usd,
+        COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'recurring_avoidable_pct'), 0)::numeric AS recurring_avoidable_pct
+      FROM source.canonical_fact_assertion
+      WHERE fact_key = 'document.page_text_char_count'
+         OR fact_key LIKE 'change_order%'
+         OR fact_key IN ('annual_change_order_spend', 'recurring_change_order_spend', 'recurring_avoidable_pct')
+      GROUP BY tenant_key, contract_id
+    )
     SELECT
       c.*,
       COALESCE(app.scoped_application_count, 0)::bigint AS scoped_application_count,
@@ -597,7 +632,12 @@ async function rebuildViews(client: Client): Promise<void> {
       COALESCE(fin.linked_budget_lines, 0)::bigint AS linked_budget_lines,
       COALESCE(op.cloud_sev1_sev2_incidents, 0)::int AS cloud_sev1_sev2_incidents,
       op.evidence_gap AS operational_evidence_gap,
-      0::bigint AS initiative_dependency_count
+      0::bigint AS initiative_dependency_count,
+      COALESCE(depth.document_page_text_count, 0)::bigint AS document_page_text_count,
+      COALESCE(depth.change_order_count, 0)::bigint AS change_order_count,
+      COALESCE(depth.annual_change_order_spend, 0)::numeric AS annual_change_order_spend,
+      COALESCE(depth.recurring_change_order_exposure_usd, 0)::numeric AS recurring_change_order_exposure_usd,
+      COALESCE(depth.recurring_avoidable_pct, 0)::numeric AS recurring_avoidable_pct
     FROM source.contract_vendor_360 c
     LEFT JOIN (
       SELECT
@@ -621,7 +661,10 @@ async function rebuildViews(client: Client): Promise<void> {
     LEFT JOIN source.contract_operational_performance op
       ON op.tenant_key = c.tenant_key
      AND op.contract_id = c.contract_id
-     AND op.load_run_id = c.load_run_id`);
+     AND op.load_run_id = c.load_run_id
+    LEFT JOIN depth
+      ON depth.tenant_key = c.tenant_key
+     AND depth.contract_id = c.contract_id`);
 
   await client.query(`
     CREATE OR REPLACE VIEW consumption.sourcing_contract_v1 AS
@@ -697,7 +740,12 @@ async function rebuildViews(client: Client): Promise<void> {
       'reviewed'::text AS quality_state,
       'current'::text AS freshness_state,
       CASE WHEN c.annual_value IS NULL THEN 'partial' ELSE 'available' END AS availability_state,
-      c.load_run_id
+      c.load_run_id,
+      COALESCE(c.document_page_text_count, 0)::bigint AS document_page_text_count,
+      COALESCE(c.change_order_count, 0)::bigint AS change_order_count,
+      COALESCE(c.annual_change_order_spend, 0)::numeric AS annual_change_order_spend,
+      COALESCE(c.recurring_change_order_exposure_usd, 0)::numeric AS recurring_change_order_exposure_usd,
+      COALESCE(c.recurring_avoidable_pct, 0)::numeric AS recurring_avoidable_pct
     FROM source.contract_360 c`);
 
   await client.query(`

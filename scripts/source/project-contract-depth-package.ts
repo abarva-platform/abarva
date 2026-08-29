@@ -80,6 +80,8 @@ function main(): void {
     contracts: readCsv(path.join(sourceDir, 'contracts.csv')),
     applications: readCsv(path.join(sourceDir, 'cmdb_applications.csv')),
     applicationScope: readCsv(path.join(sourceDir, 'cmdb_application_scope.csv')),
+    changeOrders: readCsv(path.join(sourceDir, 'change_orders.csv')),
+    contractPageText: readCsv(path.join(sourceDir, 'contract_page_text.csv')),
     monthlySpend: readCsv(path.join(sourceDir, 'monthly_spend.csv')),
     saasUsage: readCsv(path.join(sourceDir, 'saas_usage.csv')),
     slaPerformance: readCsv(path.join(sourceDir, 'sla_performance.csv')),
@@ -92,6 +94,8 @@ function main(): void {
   const adapted = adaptContractDepthPackage(sourceFiles);
   writeJson(path.join(adapterOutDir, 'contract_register_adapter.json'), adapted.contractRegisterAdapter);
   writeJson(path.join(adapterOutDir, 'contract_clause_adapter.json'), adapted.contractClauseAdapter);
+  writeJson(path.join(adapterOutDir, 'change_order_adapter.json'), adapted.changeOrderAdapter);
+  writeJson(path.join(adapterOutDir, 'contract_page_text_adapter.json'), adapted.contractPageTextAdapter);
   writeJson(path.join(adapterOutDir, 'cmdb_application_adapter.json'), adapted.cmdbApplicationAdapter);
   writeJson(path.join(adapterOutDir, 'contract_scope_adapter.json'), adapted.contractScopeAdapter);
   writeJson(path.join(adapterOutDir, 'contract_consumption_adapter.json'), adapted.spendAdapter);
@@ -112,6 +116,9 @@ function main(): void {
   writeJson(path.join(outDir, 'source.contract_operational_performance.json'), projection.contractOperationalPerformance);
   writeJson(path.join(outDir, 'source.contract_pdf_document_inventory.json'), projection.contractPdfDocumentInventory);
   writeJson(path.join(outDir, 'source.contract_pdf_clause_extractions.json'), projection.contractPdfClauseExtractions);
+  writeJson(path.join(outDir, 'source.contract_pdf_page_text.json'), projection.contractPdfPageText);
+  writeJson(path.join(outDir, 'source.contract_change_orders.json'), projection.contractChangeOrders);
+  writeJson(path.join(outDir, 'source.contract_evidence_coverage.json'), projection.contractEvidenceCoverage);
   writeJson(path.join(outDir, 'source.optimization_opportunity.json'), projection.optimizationOpportunities);
   writeJson(path.join(outDir, 'projection-quality-gate.json'), projection.qualityGate);
 

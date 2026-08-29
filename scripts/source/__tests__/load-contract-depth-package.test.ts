@@ -37,4 +37,23 @@ describe("Source contract depth package loader", () => {
       'alternatives_available: stringValue(contract, "archetype") === "ehr_platform" ? "limited" : "available"',
     );
   });
+
+  it("requires document page text and change-order depth through adapter and Layer 3 readback", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+
+    expect(loader).toContain("change_order_adapter");
+    expect(loader).toContain("contract_page_text_adapter");
+    expect(loader).toContain("change_orders.csv");
+    expect(loader).toContain("contract_page_text.csv");
+    expect(loader).toContain("upsertChangeOrderFacts");
+    expect(loader).toContain("upsertPageTextFacts");
+    expect(loader).toContain("annual_change_order_spend");
+    expect(loader).toContain("document.page_text_char_count");
+    expect(loader).toContain("opportunity_evidence: opportunityEvidenceRows");
+    expect(loader).toContain("calculation_output: sourceFiles.optimizationOpportunities.length * 2");
+  });
 });
