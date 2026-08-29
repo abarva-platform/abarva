@@ -43,6 +43,7 @@ interface ReadbackRows {
   writer_basis_drift: string;
   refusal_payload_drift: string;
   writer_publication_gate_drift: string;
+  writer_zero_usable_context_rows: string;
   projection_entry_claim_rows: string;
   legacy_basis_rows: string;
 }
@@ -86,6 +87,9 @@ function issuesFor(readback: Record<keyof ReadbackRows, number>): string[] {
   if (readback.refusal_payload_drift !== 0) issues.push(`refusal_payload_drift_${readback.refusal_payload_drift}`);
   if (readback.writer_publication_gate_drift !== 0) {
     issues.push(`writer_publication_gate_drift_${readback.writer_publication_gate_drift}`);
+  }
+  if (readback.writer_zero_usable_context_rows !== 0) {
+    issues.push(`writer_zero_usable_context_rows_${readback.writer_zero_usable_context_rows}`);
   }
   if (readback.projection_entry_claim_rows !== readback.chapter_claim_rows) {
     issues.push(`projection_entry_claim_rows_${readback.projection_entry_claim_rows}_home_claim_rows_${readback.chapter_claim_rows}`);
@@ -192,6 +196,15 @@ async function main() {
                 or coalesce(jsonb_array_length(h.display_payload_json->'writer'->'publication_gate'->'issues'), 0) <> 0
               )
           )::text as writer_publication_gate_drift,
+          (
+            select count(*)
+            from home_rows h
+            join chapter_ids c on c.page_key = h.page_key
+            where h.row_type = 'summary'
+              and h.basis_summary = 'model_generated_from_ecl_projection'
+              and h.display_payload_json ? 'writer'
+              and coalesce((h.display_payload_json->'writer'->'context_policy'->>'usable_count')::int, 0) <= 0
+          )::text as writer_zero_usable_context_rows,
           (
             select count(*)
             from ecl_projection.projection_entry e

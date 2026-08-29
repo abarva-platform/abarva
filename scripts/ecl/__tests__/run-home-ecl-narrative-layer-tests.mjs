@@ -48,16 +48,25 @@ assert(
 assert(
   script.includes("candidateIsReady") &&
     script.includes("row.quality_state === \"passed\"") &&
+    script.includes("\"warning\"") &&
+    script.includes("confidenceForRow") &&
     script.includes("row.value_state === \"known\"") &&
     script.includes("row.admission_status === \"admitted\"") &&
     script.includes("sourceRefs.length > 0"),
-  "ECL narrative job requires quality, value, admission, source refs, and source hash before a row can enter the packet",
+  "ECL narrative job requires usable quality, value, admission, source refs, and source hash before a row can enter the packet",
 );
 assert(
   script.includes("The executive packet policy withheld") &&
     script.includes("withheld payloads are not included") &&
-    script.includes("blocked_count_by_reason"),
-  "ECL narrative job emits safe policy-gap metadata without copying blocked payloads into model context",
+    script.includes("blocked_count_by_reason") &&
+    script.includes("row_readiness_counts"),
+  "ECL narrative job emits safe policy-gap and readiness metadata without copying blocked payloads into model context",
+);
+assert(
+  script.includes("Home ECL narrative refused: no governed usable evidence reached the executive packet") &&
+    script.includes("contextPolicyProof.usable_count === 0") &&
+    script.includes("signalPacket.signals.length === 0"),
+  "ECL narrative job refuses before generation when the governed packet has zero usable evidence",
 );
 assert(
   script.includes("HOME_ECL_NARRATIVE_WRITE === \"true\"") &&
@@ -139,9 +148,10 @@ assert(
     readback.includes("chapter_claim_entry_drift") &&
     readback.includes("refusal_payload_drift") &&
     readback.includes("writer_publication_gate_drift") &&
+    readback.includes("writer_zero_usable_context_rows") &&
     readback.includes("legacy_basis_rows") &&
     readback.includes("chapter_claim_pages"),
-  "Home ECL narrative readback checks claim linkage, admission payloads, publication gate, legacy basis drift, and claim coverage",
+  "Home ECL narrative readback checks claim linkage, admission payloads, publication gate, usable context, legacy basis drift, and claim coverage",
 );
 assert(
   !readback.includes("chapter_claim_pages_expected_"),
