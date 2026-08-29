@@ -96,6 +96,10 @@ function parseArgs(argv) {
     outDir: path.resolve(argValue(argv, "--out-dir") ?? DEFAULT_OUT_DIR),
     write: argv.includes("--write") || envFlag("TOWER_LAYER4_WRITE"),
     readbackOnly: argv.includes("--readback-only"),
+    // When this projection was built. This is a build fact, so taking it from the clock here is
+    // correct — unlike a render-time date standing in for the age of the data, which is the defect
+    // this field exists to retire.
+    builtAt: new Date().toISOString(),
     purgeOnly: argv.includes("--purge-only") || envFlag("TOWER_LAYER4_PURGE_ONLY"),
     emitProofBundle:
       argv.includes("--emit-proof-bundle") ||
@@ -439,6 +443,12 @@ function buildRows(options) {
     page_key: "command_center",
     layer4_build_version: options.buildVersion,
     input_source_version: options.inputSourceVersion,
+    // Freshness, carried from the package rather than invented. Without these the surface honestly
+    // reports "as-of date not recorded" — correct, but only because the value was being dropped
+    // here. `as_of_date` is the period the figures cover; `refresh_timestamp` is when this
+    // projection was built, which is a different fact and must not stand in for the first.
+    as_of_period: data.summary.as_of_date ?? null,
+    refresh_timestamp: options.builtAt,
     total_it_budget_usd: num(data.summary.total_it_budget_usd),
     reviewed_project_count: data.projects.length,
     reviewed_project_budget_usd: num(data.summary.reviewed_project_budget_usd),
