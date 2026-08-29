@@ -170,8 +170,18 @@ export interface TowerMartAiPortfolioItem {
   usageActual: number | null;
   adoptionRatePct: number | null;
   valueScore: number;
-  readinessScore: number;
-  riskScore: number;
+  /** Declared 0-100 score. Null when the source did not record one — never substituted. */
+  readinessScore: number | null;
+  /** Written upstream as (100 - readinessScore); carries no independent signal. */
+  riskScore: number | null;
+  /** The named obstacle. Across the portfolio this, not readiness, separates validated from blocked. */
+  gatingConstraint?: string | null;
+  confidenceLevel?: string | null;
+  businessValueType?: string | null;
+  costToBuildLowUsd?: number | null;
+  costToBuildHighUsd?: number | null;
+  controlBlocker?: string | null;
+  sponsorRole?: string | null;
   duplicateRisk: string | null;
   valueClaimStatus: string;
   towerClaimAllowed: string;

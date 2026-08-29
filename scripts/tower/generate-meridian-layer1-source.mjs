@@ -1513,6 +1513,13 @@ function buildCanonicalArtifacts(sources) {
     finance_status: row.finance_status,
     readiness_score: row.readiness_score,
     confidence_level: row.confidence_level,
+    // Carried because products reason about them, not merely display them: gating_constraint is
+    // what actually separates a validated case from a blocked one, and the cost-to-build band is
+    // the only spend figure a case carries before a project budget is approved against it.
+    gating_constraint: row.gating_constraint,
+    cost_to_build_low_usd: row.cost_to_build_low_usd,
+    cost_to_build_high_usd: row.cost_to_build_high_usd,
+    business_sponsor_role: row.business_sponsor_role,
     source_file: "22_ai_business_cases.csv",
     source_row: index + 2,
     source_system: row.source_system,
@@ -1533,6 +1540,10 @@ function buildCanonicalArtifacts(sources) {
     adoption_target_pct: row.adoption_target_pct,
     adoption_actual_pct: row.adoption_actual_pct,
     rollout_stage: row.rollout_stage,
+    // The named reason a rollout cannot progress. Without it a tool reads as merely under-adopted
+    // when the actual obstacle is a control review nobody has scheduled.
+    control_blocker: row.control_blocker,
+    business_owner_role: row.business_owner_role,
     source_file: "23_ai_tool_rollout.csv",
     source_row: index + 2,
     source_system: row.source_system,

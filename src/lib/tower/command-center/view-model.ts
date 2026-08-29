@@ -264,7 +264,10 @@ export function aiKindFor(
  */
 export function postureFor(item: {
   valueScore: number;
-  readinessScore: number;
+  // Nullable at source: a case may simply not carry a readiness score. Bucketing treats an
+  // absent score as the lowest band, which is why the score itself is reported separately with
+  // a `readinessScoreLoaded` flag rather than rendered as a bare 0.
+  readinessScore: number | null;
   towerClaimAllowed: string;
 }): string {
   const value = num(item.valueScore);
@@ -415,7 +418,16 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
     system: trimOrNull(item.systemName),
     valueScore: Math.max(0, Math.min(100, num(item.valueScore))),
     readinessScore: Math.max(0, Math.min(100, num(item.readinessScore))),
+    readinessScoreLoaded: item.readinessScore !== null,
     riskScore: Math.max(0, Math.min(100, num(item.riskScore))),
+    riskScoreLoaded: item.riskScore !== null,
+    gatingConstraint: item.gatingConstraint ?? null,
+    confidenceLevel: item.confidenceLevel ?? null,
+    businessValueType: item.businessValueType ?? null,
+    costToBuildLowUsd: item.costToBuildLowUsd ?? null,
+    costToBuildHighUsd: item.costToBuildHighUsd ?? null,
+    controlBlocker: item.controlBlocker ?? null,
+    sponsorRole: item.sponsorRole ?? null,
     aiSpendUsd: num(item.aiTaggedSpendUsd),
     promisedUsd: num(item.promisedValueUsd),
     promisedBenefitLoaded: item.promisedValueUsd !== null,
