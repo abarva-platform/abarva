@@ -115,25 +115,30 @@ describe("Command Center render harness", () => {
   it("writes every executive contract tab", () => {
     dump("01-executive-view");
 
-    fireEvent.click(screen.getByRole("tab", { name: /Value Proof/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /AI bets/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Value proof/ }));
     dump("02-value-proof");
 
-    fireEvent.click(screen.getByRole("tab", { name: /AI Portfolio/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Tools/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /AI portfolio/ }));
     dump("03-ai-portfolio");
 
-    fireEvent.click(screen.getByRole("tab", { name: /Evidence & Actions/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /What must happen next/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Evidence queue/ }));
     dump("04-evidence-actions");
 
     expect(true).toBe(true);
   });
 
   it("writes every drawer", () => {
-    fireEvent.click(screen.getByRole("tab", { name: /Value Proof/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /AI bets/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Value proof/ }));
     fireEvent.click(screen.getByText("Risk & Compliance AI"));
     dump("07-drawer-program");
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
 
-    fireEvent.click(screen.getByRole("tab", { name: /AI Portfolio/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Tools/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /AI portfolio/ }));
     fireEvent.click(
       screen
         .getAllByRole("button")
@@ -142,7 +147,8 @@ describe("Command Center render harness", () => {
     dump("08-drawer-ai");
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
 
-    fireEvent.click(screen.getByRole("tab", { name: /Evidence & Actions/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /What must happen next/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Evidence queue/ }));
     const firstGap = [...view.gaps].sort(
       (a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0),
     )[0]!;

@@ -23,41 +23,108 @@ import { ProgramDrawer } from "./drawers/ProgramDrawer";
 import { cx } from "./primitives";
 import styles from "./TowerCommandCenter.module.css";
 import { CommandCenterView } from "./views/CommandCenterView";
+import { BudgetDomainPanel } from "./views/BudgetDomainPanel";
+import { BudgetShapePanel } from "./views/BudgetShapePanel";
+import { ConstraintPanel } from "./views/ConstraintPanel";
+import { FoundationsPanel } from "./views/FoundationsPanel";
+import { InitiativesDistributionPanel } from "./views/InitiativesDistributionPanel";
+import { InitiativesTablePanel } from "./views/InitiativesTablePanel";
+import { QueueOwnerPanel } from "./views/QueueOwnerPanel";
+import { ToolsTablePanel } from "./views/ToolsTablePanel";
+import { ToolsVendorPanel } from "./views/ToolsVendorPanel";
+import { VerdictPanel } from "./views/VerdictPanel";
 import {
   AiPortfolioContractView,
   EvidenceActionsContractView,
   ValueProofContractView,
 } from "./views/ContractTabs";
 
-export type TowerTab = "executive" | "funnel" | "ai" | "actions";
+/**
+ * The six tabs of the approved design, replacing the four the shell shipped with.
+ *
+ * The tab *chrome* is untouched — same grid, 6px gap and radius, #f1efe8 resting and #0f6e56
+ * filled, 14.5px 500 to 700, 120ms transition. Only the set and the labels change, from surface
+ * names to the questions a CXO is actually asking.
+ *
+ * Every old tab id still resolves through TAB_ALIASES, so existing links and the sunset URLs keep
+ * working rather than silently landing on the default.
+ */
+export type TowerTab =
+  | "verdict"
+  | "budget"
+  | "initiatives"
+  | "tools"
+  | "decisions"
+  | "foundations";
 
 const TABS: ReadonlyArray<{ id: TowerTab; label: string }> = [
-  { id: "executive", label: "Executive View" },
-  { id: "funnel", label: "Value Proof" },
-  { id: "ai", label: "AI Portfolio" },
-  { id: "actions", label: "Evidence & Actions" },
+  { id: "verdict", label: "Today's verdict" },
+  { id: "budget", label: "Where the money goes" },
+  { id: "initiatives", label: "AI bets" },
+  { id: "tools", label: "Tools" },
+  { id: "decisions", label: "What must happen next" },
+  { id: "foundations", label: "Foundations" },
 ];
 
 const TAB_IDS = new Set<string>(TABS.map((t) => t.id));
 
 const TAB_ALIASES: Readonly<Record<string, TowerTab>> = {
-  ai: "ai",
-  command: "executive",
-  decision_lanes: "funnel",
-  evidence: "actions",
-  executive: "executive",
-  funnel: "funnel",
-  lanes: "funnel",
-  recommended_actions: "actions",
-  value: "funnel",
-  value_proof: "funnel",
-  actions: "actions",
+  // Pre-redesign ids, kept so existing links and the sunset URLs still land somewhere sensible.
+  actions: "decisions",
+  ai: "initiatives",
+  command: "verdict",
+  decision_lanes: "initiatives",
+  evidence: "decisions",
+  executive: "verdict",
+  funnel: "initiatives",
+  lanes: "initiatives",
+  recommended_actions: "decisions",
+  value: "initiatives",
+  value_proof: "initiatives",
 };
+
+/**
+ * Sub-tabs within a tab. The design nests panels this way, and the nesting is information: a tab
+ * is a question, and its sub-tabs are the ways of answering it. Tabs with a single panel declare
+ * no sub-tabs and render it directly.
+ */
+type SubTab = { readonly id: string; readonly label: string };
+
+const SUB_TABS: Readonly<Record<TowerTab, readonly SubTab[]>> = {
+  verdict: [],
+  budget: [
+    { id: "shape", label: "Run, change, transform" },
+    { id: "domain", label: "By domain" },
+  ],
+  initiatives: [
+    { id: "constraint", label: "What blocks value" },
+    { id: "table", label: "All cases" },
+    { id: "distribution", label: "Distribution" },
+    { id: "proof", label: "Value proof" },
+  ],
+  tools: [
+    { id: "rollouts", label: "Rollouts" },
+    { id: "vendor", label: "Vendor exposure" },
+    { id: "portfolio", label: "AI portfolio" },
+  ],
+  decisions: [
+    // CommandCenterView carries the decision rail and the value-loss waterfall. The design puts
+    // decisions under their own tab rather than on the verdict, so this is where it lives now.
+    { id: "review", label: "Decisions for this review" },
+    { id: "queue", label: "Evidence queue" },
+    { id: "owner", label: "By owner" },
+  ],
+  foundations: [],
+};
+
+function defaultSubTab(tab: TowerTab): string {
+  return SUB_TABS[tab][0]?.id ?? "";
+}
 
 function normalizeTowerTab(raw: string | null | undefined): TowerTab {
   if (raw && TAB_IDS.has(raw)) return raw as TowerTab;
   if (raw && TAB_ALIASES[raw]) return TAB_ALIASES[raw];
-  return "executive";
+  return "verdict";
 }
 
 type DrawerState =
@@ -81,10 +148,16 @@ export function TowerCommandCenter({
 
   const urlTab = searchParams?.get("tab");
   const [tab, setTab] = useState<TowerTab>(normalizeTowerTab(urlTab));
+  // Sub-tab is per-tab and resets on tab change, so a tab never opens on a panel from another one.
+  const [subTab, setSubTab] = useState<string>(() =>
+    defaultSubTab(normalizeTowerTab(urlTab)),
+  );
   const [drawer, setDrawer] = useState<DrawerState>(null);
 
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const syncedUrlTabRef = useRef<string | null>(urlTab ?? null);
+  // Starts null so the first run always evaluates: a stale alias in the URL must be normalised
+  // once. After that the raw value is remembered, so the effect is idempotent per URL value.
+  const syncedUrlTabRef = useRef<string | null>(null);
 
   // Reflect the active tab in `?tab=` so a link can deep-link into a tab and an
   // E2E spec can address one directly. Sub-view / filter / question stay client
@@ -92,6 +165,7 @@ export function TowerCommandCenter({
   const goToTab = useCallback(
     (next: TowerTab) => {
       setTab(next);
+      setSubTab(defaultSubTab(next));
       const params = new URLSearchParams(searchParams?.toString() ?? "");
       params.set("tab", next);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
@@ -106,8 +180,12 @@ export function TowerCommandCenter({
       return;
     }
     const normalized = normalizeTowerTab(urlTab);
-    if (urlTab === normalized && urlTab === syncedUrlTabRef.current) return;
-    syncedUrlTabRef.current = normalized;
+    // Track the RAW url value, not the normalized one. With aliases, a stale id like `executive`
+    // never equals its normalized form, so a guard comparing normalized values never early-returns
+    // — and because `useRouter()` hands back a new object each render, the effect re-fires and
+    // resets the tab on every render, making the page unclickable from any old link.
+    if (urlTab === syncedUrlTabRef.current) return;
+    syncedUrlTabRef.current = urlTab;
     setTab((current) => (current === normalized ? current : normalized));
     if (urlTab !== normalized) {
       const params = new URLSearchParams(searchParams?.toString() ?? "");
@@ -185,24 +263,51 @@ export function TowerCommandCenter({
       );
     }
 
+    const sub = subTab || defaultSubTab(tab);
+
     switch (tab) {
-      case "funnel":
-        return (
-          <ValueProofContractView
-            view={view}
-            onOpenProgram={(id) => setDrawer({ kind: "program", id })}
-          />
+      case "budget":
+        return sub === "domain" ? (
+          <BudgetDomainPanel view={view} />
+        ) : (
+          <BudgetShapePanel view={view} />
         );
-      case "ai":
-        return (
-          <AiPortfolioContractView
-            view={view}
-            onOpenAi={(n) => setDrawer({ kind: "ai", n })}
-            onOpenAction={(id) => setDrawer({ kind: "action", id })}
-            onOpenGap={(id) => setDrawer({ kind: "gap", id })}
-          />
-        );
-      case "actions":
+      case "initiatives":
+        if (sub === "table") return <InitiativesTablePanel view={view} />;
+        if (sub === "distribution")
+          return <InitiativesDistributionPanel view={view} />;
+        if (sub === "proof")
+          return (
+            <ValueProofContractView
+              view={view}
+              onOpenProgram={(id) => setDrawer({ kind: "program", id })}
+            />
+          );
+        return <ConstraintPanel view={view} />;
+      case "tools":
+        if (sub === "vendor") return <ToolsVendorPanel view={view} />;
+        if (sub === "portfolio")
+          return (
+            <AiPortfolioContractView
+              view={view}
+              onOpenAi={(n) => setDrawer({ kind: "ai", n })}
+              onOpenAction={(id) => setDrawer({ kind: "action", id })}
+              onOpenGap={(id) => setDrawer({ kind: "gap", id })}
+            />
+          );
+        return <ToolsTablePanel view={view} />;
+      case "decisions":
+        if (sub === "owner") return <QueueOwnerPanel view={view} />;
+        if (sub === "review")
+          return (
+            <CommandCenterView
+              view={view}
+              onOpenGap={(id) => setDrawer({ kind: "gap", id })}
+              onGoToFunnel={() => goToTab("initiatives")}
+              onGoToAi={() => goToTab("tools")}
+              onGoToActions={() => goToTab("decisions")}
+            />
+          );
         return (
           <EvidenceActionsContractView
             view={view}
@@ -210,17 +315,11 @@ export function TowerCommandCenter({
             onOpenGap={(id) => setDrawer({ kind: "gap", id })}
           />
         );
-      case "executive":
+      case "foundations":
+        return <FoundationsPanel view={view} />;
+      case "verdict":
       default:
-        return (
-          <CommandCenterView
-            view={view}
-            onOpenGap={(id) => setDrawer({ kind: "gap", id })}
-            onGoToFunnel={() => goToTab("funnel")}
-            onGoToAi={() => goToTab("ai")}
-            onGoToActions={() => goToTab("actions")}
-          />
-        );
+        return <VerdictPanel view={view} />;
     }
   })();
 
@@ -236,20 +335,18 @@ export function TowerCommandCenter({
             {TABS.map((t, i) => {
               const selected = t.id === tab;
               const count =
-                t.id === "funnel"
-                  ? view
-                    ? view.summary.valueClaimCount
-                    : null
-                  : t.id === "ai"
+                t.id === "initiatives"
+                  ? (view?.summary.valueClaimCount ?? null)
+                  : t.id === "tools"
                     ? (view?.summary.aiInitiativeCount ??
                       view?.ai.length ??
                       null)
-                    : t.id === "actions"
+                    : t.id === "decisions"
                       ? (view?.actions.length ?? null)
                       : null;
               const attn =
-                (t.id === "funnel" && attention.funnel) ||
-                (t.id === "actions" && attention.evidence);
+                (t.id === "initiatives" && attention.funnel) ||
+                (t.id === "decisions" && attention.evidence);
               return (
                 <button
                   key={t.id}
@@ -291,6 +388,29 @@ export function TowerCommandCenter({
               tabIndex={-1}
               style={{ height: "100%" }}
             >
+              {SUB_TABS[tab].length > 0 ? (
+                <nav
+                  className={styles.contractSegments}
+                  role="tablist"
+                  aria-label={`${TABS.find((t) => t.id === tab)?.label ?? "Tower"} views`}
+                >
+                  {SUB_TABS[tab].map((st) => {
+                    const on = (subTab || defaultSubTab(tab)) === st.id;
+                    return (
+                      <button
+                        key={st.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={on}
+                        className={cx(on && styles.segmentOn)}
+                        onClick={() => setSubTab(st.id)}
+                      >
+                        {st.label}
+                      </button>
+                    );
+                  })}
+                </nav>
+              ) : null}
               {body}
             </div>
           </div>
@@ -302,7 +422,7 @@ export function TowerCommandCenter({
         onClose={closeDrawer}
         onSeeAction={() => {
           closeDrawer();
-          goToTab("actions");
+          goToTab("decisions");
         }}
       />
       <AiInitiativeDrawer item={selectedAi} onClose={closeDrawer} />
@@ -311,7 +431,7 @@ export function TowerCommandCenter({
         onClose={closeDrawer}
         onRouteToAction={() => {
           closeDrawer();
-          goToTab("actions");
+          goToTab("decisions");
         }}
       />
       {/* canRoute stays false until a governed Tower → Moves create path exists.
