@@ -160,8 +160,8 @@ async function layer3Readback(client: Client, args: Args): Promise<Record<string
 async function l4Readback(client: Client, args: Args, beforeContractCount = 0): Promise<Record<string, number>> {
   await setTenant(client, args.tenantKey);
   const contractIdsResult = await client.query<{ contract_id: string }>(
-    `SELECT contract_id FROM source.contract WHERE tenant_key = $1 AND load_run_id = $3 ORDER BY contract_id`,
-    [args.tenantKey, args.datasetVersion, args.loadRunId],
+    `SELECT contract_id FROM source.contract WHERE tenant_key = $1 AND load_run_id = $2 ORDER BY contract_id`,
+    [args.tenantKey, args.loadRunId],
   );
   const contractIds = contractIdsResult.rows.map((row) => row.contract_id);
   const result: Record<string, number> = {
