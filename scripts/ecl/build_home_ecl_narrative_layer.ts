@@ -492,8 +492,27 @@ function rawIdentifierFallback(id: string): string {
   return "a governed record";
 }
 
+function hasRawVisibleId(value: string): boolean {
+  RAW_VISIBLE_ID_PATTERN.lastIndex = 0;
+  const found = RAW_VISIBLE_ID_PATTERN.test(value);
+  RAW_VISIBLE_ID_PATTERN.lastIndex = 0;
+  return found;
+}
+
+function safeVisibleIdentifierLabel(id: string, label: string): string | null {
+  const candidate = label
+    .replace(RAW_VISIBLE_ID_PATTERN, (match) => rawIdentifierFallback(match))
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!candidate || candidate === id || hasRawVisibleId(candidate)) return null;
+  return candidate;
+}
+
 function scrubRawVisibleIds(value: string, labelByIdentifier: Map<string, string>): string {
-  return value.replace(RAW_VISIBLE_ID_PATTERN, (match) => labelByIdentifier.get(match) ?? rawIdentifierFallback(match));
+  return value.replace(RAW_VISIBLE_ID_PATTERN, (match) => {
+    const label = labelByIdentifier.get(match);
+    return label && !hasRawVisibleId(label) ? label : rawIdentifierFallback(match);
+  });
 }
 
 function preferredDisplayLabel(row: HomeProjectionWriteRow): string | null {
@@ -515,10 +534,12 @@ function preferredDisplayLabel(row: HomeProjectionWriteRow): string | null {
 
 function addIdentifierLabel(labelByIdentifier: Map<string, string>, id: unknown, label: string | null) {
   const key = text(id);
-  const safeLabel = text(label);
+  const rawLabel = text(label);
   RAW_VISIBLE_ID_PATTERN.lastIndex = 0;
-  if (!key || !safeLabel || !RAW_VISIBLE_ID_PATTERN.test(key) || key === safeLabel) return;
+  if (!key || !rawLabel || !RAW_VISIBLE_ID_PATTERN.test(key)) return;
   RAW_VISIBLE_ID_PATTERN.lastIndex = 0;
+  const safeLabel = safeVisibleIdentifierLabel(key, rawLabel);
+  if (!safeLabel) return;
   labelByIdentifier.set(key, safeLabel);
 }
 
